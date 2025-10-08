@@ -41,3 +41,5 @@ output json
     total: sum(input.Order.Items.Item.(@price * @quantity))
   }
 }
+
+[![CLA assistant](https://cla-assistant.io/readme/badge/grauwen/utl-x)](https://cla-assistant.io/grauwen/utl-x)
