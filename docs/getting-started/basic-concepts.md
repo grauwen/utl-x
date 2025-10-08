@@ -18,6 +18,14 @@ Understanding these core concepts will help you master UTL-X transformations.
 
 ---
 
+## Philosophy
+
+UTL-X is built on three principles:
+
+1. **Format Agnostic**: Write once, transform any format
+2. **Functional**: Immutable data, pure functions, composable operations
+3. **Declarative**: Describe what you want, not how to get it
+
 ## Format Agnostic
 
 ### What Does "Format Agnostic" Mean?
