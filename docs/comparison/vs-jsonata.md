@@ -6,7 +6,7 @@ Comparison between UTL-X and JSONata.
 
 | Feature | JSONata | UTL-X |
 |---------|---------|-------|
-| **License** | MIT (Open) | Apache 2.0 (Open) |
+| **License** | MIT (Open) |  GNU Affero General Public License v3.0 (AGPL-3.0) COPYLEFT|
 | **Formats** | JSON only | XML, JSON, CSV, YAML, extensible |
 | **Paradigm** | Functional, XPath-inspired | Functional + Templates |
 | **Runtime** | JavaScript only | JVM, JavaScript, Native |
