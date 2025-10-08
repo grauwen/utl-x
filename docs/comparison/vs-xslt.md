@@ -10,7 +10,7 @@ XSLT (eXtensible Stylesheet Language Transformations) is the most mature transfo
 
 | Feature | XSLT | UTL-X |
 |---------|------|-------|
-| **License** | W3C Standard (Open) | Apache 2.0 (Open) |
+| **License** | W3C Standard (Open) | AGPL-3.0 (COPYLEFT) |
 | **First Release** | 1999 | 2025 |
 | **Formats** | XML only | XML, JSON, CSV, YAML, extensible |
 | **Paradigm** | Declarative templates | Templates + Functional |
