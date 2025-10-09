@@ -26,6 +26,8 @@ UTL-X is in **early development**. We're building:
 - [ ] CLI tool
 - [ ] Documentation
 
+Start reading here for more information see [UTL-X Documentation](docs/README.md)
+
 **Want to contribute?** See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Quick Example
