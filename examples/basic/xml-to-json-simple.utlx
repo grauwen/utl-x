@@ -1,0 +1,22 @@
+# Simple XML to JSON transformation
+
+%utlx 1.0
+input xml
+output json
+---
+{
+  person: {
+    name: input.Person.Name,
+    age: parseNumber(input.Person.Age),
+    email: input.Person.Email
+  }
+}
+
+# Run with XML input:
+# <Person>
+#   <Name>Alice</Name>
+#   <Age>30</Age>
+#   <Email>alice@example.com</Email>
+# </Person>
+
+---
