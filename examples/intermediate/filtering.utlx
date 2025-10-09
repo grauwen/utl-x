@@ -1,0 +1,26 @@
+# Filtering example
+
+%utlx 1.0
+input json
+output json
+---
+{
+  highValueOrders: input.orders
+    |> filter(order => order.total > 1000)
+    |> sortBy(order => -order.total)
+    |> take(10),
+  
+  recentOrders: input.orders
+    |> filter(order => diffDays(now(), parseDate(order.date, "yyyy-MM-dd")) <= 7)
+    |> sortBy(order => order.date),
+  
+  vipCustomers: input.customers
+    |> filter(customer => customer.tier == "VIP" && customer.active == true)
+    |> map(customer => {
+         id: customer.id,
+         name: customer.name,
+         email: customer.email
+       })
+}
+
+---
