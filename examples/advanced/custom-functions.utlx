@@ -1,0 +1,66 @@
+# Custom functions example
+
+%utlx 1.0
+input json
+output json
+---
+
+// Calculate shipping cost based on weight and distance
+function calculateShipping(weight: Number, distance: Number, express: Boolean): Number {
+  let baseRate = 5.00,
+  let perPound = 0.50,
+  let perMile = 0.10,
+  let expressMultiplier = if (express) 2.0 else 1.0,
+  
+  (baseRate + (weight * perPound) + (distance * perMile)) * expressMultiplier
+}
+
+// Apply tiered discount
+function calculateDiscount(total: Number, tier: String): Number {
+  match tier {
+    "VIP" => if (total > 1000) 0.25 else 0.20,
+    "Premium" => if (total > 500) 0.15 else 0.10,
+    "Standard" => if (total > 1000) 0.05 else 0,
+    _ => 0
+  }
+}
+
+// Format currency with symbol
+function formatCurrency(amount: Number, currency: String): String {
+  let symbol = match currency {
+    "USD" => "$",
+    "EUR" => "€",
+    "GBP" => "£",
+    _ => currency + " "
+  },
+  let formatted = toString(round(amount * 100) / 100)
+  
+  symbol + formatted
+}
+
+// Apply functions to orders
+{
+  orders: input.orders |> map(order => {
+    let subtotal = sum(order.items.*.total),
+    let discount = calculateDiscount(subtotal, order.customer.tier),
+    let discountAmount = subtotal * discount,
+    let shipping = calculateShipping(
+      sum(order.items.*.weight),
+      order.shippingDistance,
+      order.express
+    ),
+    let total = subtotal - discountAmount + shipping
+    
+    {
+      orderId: order.id,
+      customer: order.customer.name,
+      subtotal: formatCurrency(subtotal, order.currency),
+      discount: discount * 100 + "%",
+      discountAmount: formatCurrency(discountAmount, order.currency),
+      shipping: formatCurrency(shipping, order.currency),
+      total: formatCurrency(total, order.currency)
+    }
+  })
+}
+
+---
