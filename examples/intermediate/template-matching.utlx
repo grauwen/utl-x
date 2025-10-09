@@ -1,0 +1,30 @@
+# Template matching example
+
+%utlx 1.0
+input xml
+output json
+---
+
+template match="Order" {
+  invoice: {
+    id: @id,
+    customer: apply(Customer),
+    items: apply(Items/Item),
+    total: sum(Items/Item.(parseNumber(@price) * parseNumber(@quantity)))
+  }
+}
+
+template match="Customer" {
+  name: Name,
+  email: Email,
+  phone: Phone
+}
+
+template match="Item" {
+  sku: @sku,
+  quantity: parseNumber(@quantity),
+  price: parseNumber(@price),
+  subtotal: parseNumber(@quantity) * parseNumber(@price)
+}
+
+---
