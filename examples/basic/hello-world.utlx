@@ -1,0 +1,17 @@
+# Hello World Example
+
+%utlx 1.0
+input json
+output json
+---
+{
+  greeting: "Hello, " + input.name
+}
+
+# Run with:
+# utlx transform hello-world.utlx input.json
+#
+# Where input.json contains:
+# {"name": "World"}
+
+---
