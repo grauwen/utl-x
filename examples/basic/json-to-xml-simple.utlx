@@ -1,0 +1,24 @@
+# Simple JSON to XML transformation
+
+%utlx 1.0
+input json
+output xml
+---
+{
+  Person: {
+    Name: input.person.name,
+    Age: input.person.age,
+    Email: input.person.email
+  }
+}
+
+# Run with JSON input:
+# {
+#   "person": {
+#     "name": "Alice",
+#     "age": 30,
+#     "email": "alice@example.com"
+#   }
+# }
+
+---
