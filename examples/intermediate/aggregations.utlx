@@ -1,0 +1,27 @@
+# Aggregation example
+
+%utlx 1.0
+input json
+output json
+---
+{
+  summary: {
+    totalOrders: count(input.orders),
+    totalRevenue: sum(input.orders.*.total),
+    avgOrderValue: avg(input.orders.*.total),
+    maxOrder: max(input.orders.*.total),
+    minOrder: min(input.orders.*.total)
+  },
+  
+  byCustomer: input.orders
+    |> groupBy(order => order.customerId)
+    |> entries()
+    |> map(([customerId, orders]) => {
+         customerId: customerId,
+         orderCount: count(orders),
+         totalSpent: sum(orders.*.total),
+         avgOrder: avg(orders.*.total)
+       })
+}
+
+---
