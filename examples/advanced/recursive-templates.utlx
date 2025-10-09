@@ -1,0 +1,31 @@
+# Recursive template example for hierarchical data
+
+%utlx 1.0
+input xml
+output json
+---
+
+template match="Category" {
+  {
+    id: @id,
+    name: @name,
+    products: if (Products/Product) 
+                apply(Products/Product) 
+              else 
+                [],
+    subcategories: if (Category) 
+                     apply(Category) 
+                   else 
+                     []
+  }
+}
+
+template match="Product" {
+  {
+    id: @id,
+    name: Name,
+    price: parseNumber(Price)
+  }
+}
+
+---
