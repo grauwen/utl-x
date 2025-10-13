@@ -1,46 +1,246 @@
+// modules/cli/src/test/kotlin/org/apache/utlx/cli/TransformCommandTest.kt
 package org.apache.utlx.cli
 
+import org.apache.utlx.cli.commands.TransformCommand
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import java.nio.file.Path
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class TransformCommandTest {
     
     @TempDir
-    lateinit var tempDir: File
+    lateinit var tempDir: Path
     
     @Test
-    fun `test basic transform`() {
-        // Create test files
-        val inputXml = tempDir.resolve("input.xml").apply {
-            writeText("""
-                <Order id="123">
-                    <Customer>John Doe</Customer>
-                    <Total>100.00</Total>
-                </Order>
-            """.trimIndent())
-        }
+    fun `test simple XML to JSON transformation`() {
+        // Create input XML
+        val inputXml = tempDir.resolve("input.xml").toFile()
+        inputXml.writeText("""
+            <person>
+                <name>John Doe</name>
+                <age>30</age>
+            </person>
+        """.trimIndent())
         
-        val transformUtlx = tempDir.resolve("transform.utlx").apply {
-            writeText("""
-                %utlx 1.0
-                input xml
-                output json
-                ---
-                {
-                    orderId: input.Order.@id,
-                    customer: input.Order.Customer,
-                    total: input.Order.Total
-                }
-            """.trimIndent())
-        }
+        // Create UTL-X script
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input xml
+            output json
+            ---
+            {
+              name: input.person.name,
+              age: input.person.age
+            }
+        """.trimIndent())
         
-        val output = tempDir.resolve("output.json")
+        // Output file
+        val output = tempDir.resolve("output.json").toFile()
         
-        // Run transform
-        // TODO: Execute CLI and verify output
+        // Execute transformation
+        val args = arrayOf(
+            inputXml.absolutePath,
+            script.absolutePath,
+            "-o", output.absolutePath
+        )
+        
+        TransformCommand.execute(args)
+        
+        // Verify output
+        assertTrue(output.exists(), "Output file should exist")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("\"name\""), "Should contain name field")
+        assertTrue(outputContent.contains("John Doe"), "Should contain name value")
+    }
+    
+    @Test
+    fun `test JSON to XML transformation`() {
+        val inputJson = tempDir.resolve("input.json").toFile()
+        inputJson.writeText("""
+            {
+              "order": {
+                "id": "ORD-001",
+                "customer": "Alice"
+              }
+            }
+        """.trimIndent())
+        
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output xml
+            ---
+            {
+              Order: {
+                @id: input.order.id,
+                Customer: input.order.customer
+              }
+            }
+        """.trimIndent())
+        
+        val output = tempDir.resolve("output.xml").toFile()
+        
+        val args = arrayOf(
+            inputJson.absolutePath,
+            script.absolutePath,
+            "-o", output.absolutePath
+        )
+        
+        TransformCommand.execute(args)
         
         assertTrue(output.exists())
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("<Order"))
+        assertTrue(outputContent.contains("id=\"ORD-001\""))
+    }
+    
+    @Test
+    fun `test CSV to JSON transformation`() {
+        val inputCsv = tempDir.resolve("input.csv").toFile()
+        inputCsv.writeText("""
+            Name,Age,City
+            Alice,25,New York
+            Bob,30,San Francisco
+        """.trimIndent())
+        
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input csv
+            output json
+            ---
+            {
+              people: input.rows |> map(row => {
+                name: row.Name,
+                age: row.Age,
+                city: row.City
+              })
+            }
+        """.trimIndent())
+        
+        val output = tempDir.resolve("output.json").toFile()
+        
+        val args = arrayOf(
+            inputCsv.absolutePath,
+            script.absolutePath,
+            "-o", output.absolutePath
+        )
+        
+        TransformCommand.execute(args)
+        
+        assertTrue(output.exists())
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("\"people\""))
+        assertTrue(outputContent.contains("Alice"))
+        assertTrue(outputContent.contains("New York"))
+    }
+    
+    @Test
+    fun `test auto format detection`() {
+        val inputXml = tempDir.resolve("input.xml").toFile()
+        inputXml.writeText("<data><value>42</value></data>")
+        
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input auto
+            output json
+            ---
+            { value: input.data.value }
+        """.trimIndent())
+        
+        val output = tempDir.resolve("output.json").toFile()
+        
+        val args = arrayOf(
+            inputXml.absolutePath,
+            script.absolutePath,
+            "-o", output.absolutePath
+        )
+        
+        TransformCommand.execute(args)
+        
+        assertTrue(output.exists())
+    }
+    
+    @Test
+    fun `test verbose mode`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("{\"test\": true}")
+        
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            { result: input.test }
+        """.trimIndent())
+        
+        val output = tempDir.resolve("output.json").toFile()
+        
+        val args = arrayOf(
+            input.absolutePath,
+            script.absolutePath,
+            "-o", output.absolutePath,
+            "--verbose"
+        )
+        
+        // Should not throw exception
+        TransformCommand.execute(args)
+        
+        assertTrue(output.exists())
+    }
+}
+
+// modules/cli/src/test/kotlin/org/apache/utlx/cli/ValidateCommandTest.kt
+package org.apache.utlx.cli
+
+import org.apache.utlx.cli.commands.ValidateCommand
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
+import kotlin.test.assertFailsWith
+
+class ValidateCommandTest {
+    
+    @TempDir
+    lateinit var tempDir: Path
+    
+    @Test
+    fun `test valid script passes validation`() {
+        val script = tempDir.resolve("valid.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            { value: input.data }
+        """.trimIndent())
+        
+        val args = arrayOf(script.absolutePath)
+        
+        // Should not throw
+        ValidateCommand.execute(args)
+    }
+    
+    @Test
+    fun `test invalid script fails validation`() {
+        val script = tempDir.resolve("invalid.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            this is not valid UTL-X syntax!!!
+        """.trimIndent())
+        
+        val args = arrayOf(script.absolutePath)
+        
+        // Should throw or exit
+        assertFailsWith<Exception> {
+            ValidateCommand.execute(args)
+        }
     }
 }
