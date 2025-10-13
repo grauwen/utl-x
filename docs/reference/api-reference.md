@@ -393,5 +393,64 @@ inputs.parallelStream()
         // Process output
     }
 ```
+### Multiple Input Transformations
+
+#### JVM API
+
+```kotlin
+// Compile transformation with multiple inputs
+val engine = UTLXEngine.builder()
+    .compile(File("transform.utlx"))
+    .build()
+
+// Transform with multiple inputs
+val inputs = mapOf(
+    "orders" to File("orders.json").readText(),
+    "customers" to File("customers.json").readText(),
+    "products" to File("products.json").readText()
+)
+
+val output = engine.transformMultiple(inputs)
+
+// Or with InputStreams
+val inputStreams = mapOf(
+    "orders" to FileInputStream("orders.json"),
+    "customers" to FileInputStream("customers.json"),
+    "products" to FileInputStream("products.json")
+)
+
+engine.transformMultiple(inputStreams, FileOutputStream("output.json"))
+```
+
+#### JavaScript API
+
+```javascript
+const utlx = require('@apache/utlx');
+const fs = require('fs');
+
+// Compile transformation
+const engine = utlx.compile(
+    fs.readFileSync('transform.utlx', 'utf8')
+);
+
+// Transform with multiple inputs
+const inputs = {
+    orders: fs.readFileSync('orders.json', 'utf8'),
+    customers: fs.readFileSync('customers.json', 'utf8'),
+    products: fs.readFileSync('products.json', 'utf8')
+};
+
+const output = engine.transformMultiple(inputs);
+
+// Or with streaming
+const inputStreams = {
+    orders: fs.createReadStream('orders.json'),
+    customers: fs.createReadStream('customers.json'),
+    products: fs.createReadStream('products.json')
+};
+
+const outputStream = fs.createWriteStream('output.json');
+engine.transformMultipleStream(inputStreams, outputStream);
+```
 
 ---
