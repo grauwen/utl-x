@@ -8,7 +8,7 @@ group = "org.apache.utlx"
 version = "0.1.0-SNAPSHOT"
 
 repositories {
-    mavenCentral()
+    // mavenCentral() // ❌ Remove this
 }
 
 dependencies {
