@@ -8,7 +8,7 @@ version = "0.1.0-SNAPSHOT"
 
 allprojects {
     repositories {
-        mavenCentral()
+        // mavenCentral()
     }
 }
 
@@ -28,12 +28,14 @@ subprojects {
 }
 
 tasks.register("clean") {
-    delete(rootProject.buildDir)
+   delete(rootProject.buildDir)
+// layout.buildDirectory.get().asFile  // ✅ Use this to replace buildDir
 }
 
 // Documentation generation
 tasks.dokkaHtmlMultiModule.configure {
     outputDirectory.set(buildDir.resolve("dokka"))
+// layout.buildDirectory.get().asFile  // ✅ Use this to replace buildDir
 }
 
 // Task to print project structure
@@ -52,6 +54,7 @@ tasks.register("projectStructure") {
 
 // Aggregate test reports
 tasks.register("aggregateTestReports", TestReport::class) {
+// layout.buildDirectory.get().asFile  // ✅ Use this to replace buildDir
     destinationDirectory.set(file("$buildDir/reports/tests"))
     testResults.from(subprojects.map { it.tasks.withType<Test>() })
 }
