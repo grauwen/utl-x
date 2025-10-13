@@ -1,5 +1,17 @@
 rootProject.name = "utl-x"
 
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+// Move repositories here (CRITICAL FIX)
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        google()
+    }
+}
+
 // Future modules (commented out until implemented)
 // include(":modules:jvm")
 // include(":modules:javascript")
