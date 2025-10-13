@@ -1,214 +1,291 @@
+// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt
 package org.apache.utlx.cli.commands
 
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.arguments.optional
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.types.enum
-import com.github.ajalt.clikt.parameters.types.file
-import org.apache.utlx.jvm.api.UTLXEngine
-import org.apache.utlx.jvm.api.Format
+import org.apache.utlx.core.lexer.Lexer
+import org.apache.utlx.core.parser.Parser
+import org.apache.utlx.core.types.TypeChecker
+import org.apache.utlx.core.interpreter.Interpreter
+import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.formats.xml.XMLParser
+import org.apache.utlx.formats.xml.XMLSerializer
+import org.apache.utlx.formats.json.JSONParser
+import org.apache.utlx.formats.json.JSONSerializer
+import org.apache.utlx.formats.csv.CSVParser
+import org.apache.utlx.formats.csv.CSVSerializer
 import java.io.File
-import kotlin.system.measureTimeMillis
+import kotlin.system.exitProcess
 
 /**
- * Transform command - Main transformation operation
+ * Transform command - converts data between formats using UTL-X scripts
+ * 
+ * Usage:
+ *   utlx transform <input-file> <script-file> [options]
+ *   utlx transform <script-file> [options]  # reads from stdin
  */
-class TransformCommand : CliktCommand(
-    name = "transform",
-    help = "Transform data from one format to another using UTL-X"
-) {
+object TransformCommand {
     
-    private val input by argument(
-        name = "INPUT",
-        help = "Input file (or - for stdin)"
-    ).file(mustExist = true, canBeDir = false, mustBeReadable = true).optional()
+    data class TransformOptions(
+        val inputFile: File? = null,
+        val scriptFile: File,
+        val outputFile: File? = null,
+        val inputFormat: String? = null,
+        val outputFormat: String? = null,
+        val verbose: Boolean = false,
+        val pretty: Boolean = true
+    )
     
-    private val transform by argument(
-        name = "TRANSFORM",
-        help = "UTL-X transformation file"
-    ).file(mustExist = true, canBeDir = false, mustBeReadable = true)
-    
-    private val output by option(
-        "-o", "--output",
-        help = "Output file (default: stdout)"
-    ).file(canBeDir = false)
-    
-    private val inputFormat by option(
-        "-i", "--input-format",
-        help = "Input format (auto-detected if not specified)"
-    ).enum<Format>()
-    
-    private val outputFormat by option(
-        "-f", "--output-format",
-        help = "Output format"
-    ).enum<Format>().default(Format.JSON)
-    
-    private val pretty by option(
-        "-p", "--pretty",
-        help = "Pretty-print output"
-    ).flag(default = true)
-    
-    private val watch by option(
-        "-w", "--watch",
-        help = "Watch for changes and re-transform"
-    ).flag()
-    
-    private val benchmark by option(
-        "-b", "--benchmark",
-        help = "Run benchmark (multiple iterations)"
-    ).flag()
-    
-    override fun run() {
-        val inputFile = input ?: readStdin()
+    fun execute(args: Array<String>) {
+        val options = parseOptions(args)
         
-        if (benchmark) {
-            runBenchmark(inputFile, transform)
-            return
+        if (options.verbose) {
+            println("UTL-X Transform")
+            println("Script: ${options.scriptFile.absolutePath}")
+            options.inputFile?.let { println("Input: ${it.absolutePath}") }
+            options.outputFile?.let { println("Output: ${it.absolutePath}") }
         }
         
-        if (watch) {
-            watchMode(inputFile, transform)
-            return
+        // Read and compile the UTL-X script
+        val scriptContent = options.scriptFile.readText()
+        val program = compileScript(scriptContent, options.verbose)
+        
+        // Read input data
+        val inputData = if (options.inputFile != null) {
+            options.inputFile.readText()
+        } else {
+            readStdin()
         }
         
-        executeTransform(inputFile, transform, output)
-    }
-    
-    private fun executeTransform(inputFile: File, transformFile: File, outputFile: File?) {
-        val startTime = System.currentTimeMillis()
+        // Detect or use specified input format
+        val inputFormat = options.inputFormat 
+            ?: detectFormat(inputData, options.inputFile?.extension)
         
-        // Compile transformation
-        val engine = UTLXEngine.builder()
-            .compile(transformFile)
-            .build()
+        if (options.verbose) {
+            println("Input format: $inputFormat")
+        }
         
-        val compileTime = System.currentTimeMillis() - startTime
-        logVerbose("Compilation time: ${compileTime}ms")
+        // Parse input to UDM
+        val inputUDM = parseInput(inputData, inputFormat)
         
         // Execute transformation
-        val transformStartTime = System.currentTimeMillis()
-        val result = engine.transform(
-            input = inputFile.readText(),
-            inputFormat = inputFormat ?: detectFormat(inputFile),
-            outputFormat = outputFormat,
-            pretty = pretty
-        )
+        val interpreter = Interpreter()
+        val outputUDM = interpreter.execute(program, inputUDM)
         
-        val transformTime = System.currentTimeMillis() - transformStartTime
-        logVerbose("Transformation time: ${transformTime}ms")
+        // Detect or use specified output format
+        val outputFormat = options.outputFormat ?: inputFormat
+        
+        if (options.verbose) {
+            println("Output format: $outputFormat")
+        }
+        
+        // Serialize output
+        val outputData = serializeOutput(outputUDM, outputFormat, options.pretty)
         
         // Write output
-        if (outputFile != null) {
-            outputFile.writeText(result)
-            echo("✓ Output written to: ${outputFile.absolutePath}")
+        if (options.outputFile != null) {
+            options.outputFile.writeText(outputData)
+            if (options.verbose) {
+                println("✓ Transformation complete: ${options.outputFile.absolutePath}")
+            }
         } else {
-            echo(result)
+            println(outputData)
         }
-        
-        val totalTime = System.currentTimeMillis() - startTime
-        logVerbose("Total time: ${totalTime}ms")
     }
     
-    private fun runBenchmark(inputFile: File, transformFile: File) {
-        echo("Running benchmark...")
-        
-        val warmupIterations = 10
-        val benchmarkIterations = 100
-        
-        // Compile once
-        val engine = UTLXEngine.builder()
-            .compile(transformFile)
-            .build()
-        
-        val inputText = inputFile.readText()
-        val inputFmt = inputFormat ?: detectFormat(inputFile)
-        
-        // Warmup
-        echo("Warmup: $warmupIterations iterations...")
-        repeat(warmupIterations) {
-            engine.transform(inputText, inputFmt, outputFormat, false)
-        }
-        
-        // Benchmark
-        echo("Benchmarking: $benchmarkIterations iterations...")
-        val times = mutableListOf<Long>()
-        
-        repeat(benchmarkIterations) {
-            val time = measureTimeMillis {
-                engine.transform(inputText, inputFmt, outputFormat, false)
+    private fun compileScript(script: String, verbose: Boolean): org.apache.utlx.core.ast.Program {
+        try {
+            if (verbose) println("Lexing...")
+            val lexer = Lexer(script)
+            val tokens = lexer.tokenize()
+            
+            if (verbose) println("Parsing...")
+            val parser = Parser(tokens)
+            val ast = parser.parse()
+            
+            if (verbose) println("Type checking...")
+            val typeChecker = TypeChecker()
+            typeChecker.check(ast)
+            
+            return ast
+        } catch (e: Exception) {
+            System.err.println("Error compiling script: ${e.message}")
+            if (verbose) {
+                e.printStackTrace()
             }
-            times.add(time)
+            exitProcess(1)
         }
-        
-        // Statistics
-        times.sort()
-        val min = times.first()
-        val max = times.last()
-        val avg = times.average()
-        val median = times[times.size / 2]
-        val p95 = times[(times.size * 0.95).toInt()]
-        val p99 = times[(times.size * 0.99).toInt()]
-        
-        echo("\nResults:")
-        echo("  Min:      ${min}ms")
-        echo("  Max:      ${max}ms")
-        echo("  Average:  ${"%.2f".format(avg)}ms")
-        echo("  Median:   ${median}ms")
-        echo("  P95:      ${p95}ms")
-        echo("  P99:      ${p99}ms")
-        echo("  Throughput: ${"%.2f".format(1000.0 / avg)} transforms/sec")
     }
     
-    private fun watchMode(inputFile: File, transformFile: File) {
-        echo("Watching for changes... (Ctrl+C to stop)")
+    private fun parseInput(data: String, format: String): UDM {
+        return try {
+            when (format.lowercase()) {
+                "xml" -> XMLParser().parse(data)
+                "json" -> JSONParser().parse(data)
+                "csv" -> CSVParser().parse(data)
+                else -> throw IllegalArgumentException("Unsupported input format: $format")
+            }
+        } catch (e: Exception) {
+            System.err.println("Error parsing input: ${e.message}")
+            throw e
+        }
+    }
+    
+    private fun serializeOutput(udm: UDM, format: String, pretty: Boolean): String {
+        return try {
+            when (format.lowercase()) {
+                "xml" -> XMLSerializer(pretty).serialize(udm)
+                "json" -> JSONSerializer(pretty).serialize(udm)
+                "csv" -> CSVSerializer().serialize(udm)
+                else -> throw IllegalArgumentException("Unsupported output format: $format")
+            }
+        } catch (e: Exception) {
+            System.err.println("Error serializing output: ${e.message}")
+            throw e
+        }
+    }
+    
+    private fun detectFormat(data: String, extension: String?): String {
+        // Try extension first
+        extension?.lowercase()?.let {
+            if (it in listOf("xml", "json", "csv", "yaml")) {
+                return it
+            }
+        }
         
-        var lastInputModified = inputFile.lastModified()
-        var lastTransformModified = transformFile.lastModified()
+        // Auto-detect from content
+        val trimmed = data.trim()
+        return when {
+            trimmed.startsWith("<") -> "xml"
+            trimmed.startsWith("{") || trimmed.startsWith("[") -> "json"
+            trimmed.contains(",") && !trimmed.startsWith("<") -> "csv"
+            else -> {
+                System.err.println("Warning: Could not detect format, assuming JSON")
+                "json"
+            }
+        }
+    }
+    
+    private fun readStdin(): String {
+        return generateSequence { readLine() }.joinToString("\n")
+    }
+    
+    private fun parseOptions(args: Array<String>): TransformOptions {
+        if (args.isEmpty()) {
+            printUsage()
+            exitProcess(1)
+        }
         
-        while (true) {
-            Thread.sleep(1000)
-            
-            val inputModified = inputFile.lastModified()
-            val transformModified = transformFile.lastModified()
-            
-            if (inputModified != lastInputModified || transformModified != lastTransformModified) {
-                echo("\n🔄 Changes detected, re-transforming...")
-                try {
-                    executeTransform(inputFile, transformFile, output)
-                    echo("✓ Transform complete")
-                } catch (e: Exception) {
-                    echo("✗ Error: ${e.message}", err = true)
+        var inputFile: File? = null
+        var scriptFile: File? = null
+        var outputFile: File? = null
+        var inputFormat: String? = null
+        var outputFormat: String? = null
+        var verbose = false
+        var pretty = true
+        
+        var i = 0
+        while (i < args.size) {
+            when (args[i]) {
+                "-o", "--output" -> {
+                    outputFile = File(args[++i])
                 }
-                
-                lastInputModified = inputModified
-                lastTransformModified = transformModified
+                "-i", "--input" -> {
+                    inputFile = File(args[++i])
+                }
+                "--input-format" -> {
+                    inputFormat = args[++i]
+                }
+                "--output-format" -> {
+                    outputFormat = args[++i]
+                }
+                "-v", "--verbose" -> {
+                    verbose = true
+                }
+                "--no-pretty" -> {
+                    pretty = false
+                }
+                "-h", "--help" -> {
+                    printUsage()
+                    exitProcess(0)
+                }
+                else -> {
+                    if (!args[i].startsWith("-")) {
+                        if (scriptFile == null) {
+                            scriptFile = File(args[i])
+                        } else if (inputFile == null) {
+                            inputFile = File(args[i])
+                        }
+                    } else {
+                        System.err.println("Unknown option: ${args[i]}")
+                        printUsage()
+                        exitProcess(1)
+                    }
+                }
+            }
+            i++
+        }
+        
+        if (scriptFile == null) {
+            System.err.println("Error: Script file is required")
+            printUsage()
+            exitProcess(1)
+        }
+        
+        if (!scriptFile.exists()) {
+            System.err.println("Error: Script file not found: ${scriptFile.absolutePath}")
+            exitProcess(1)
+        }
+        
+        inputFile?.let {
+            if (!it.exists()) {
+                System.err.println("Error: Input file not found: ${it.absolutePath}")
+                exitProcess(1)
             }
         }
+        
+        return TransformOptions(
+            inputFile = inputFile,
+            scriptFile = scriptFile,
+            outputFile = outputFile,
+            inputFormat = inputFormat,
+            outputFormat = outputFormat,
+            verbose = verbose,
+            pretty = pretty
+        )
     }
     
-    private fun readStdin(): File {
-        val tempFile = File.createTempFile("utlx-stdin-", ".tmp")
-        tempFile.deleteOnExit()
-        tempFile.writeText(System.`in`.bufferedReader().readText())
-        return tempFile
-    }
-    
-    private fun detectFormat(file: File): Format {
-        return when (file.extension.lowercase()) {
-            "xml" -> Format.XML
-            "json" -> Format.JSON
-            "csv" -> Format.CSV
-            "yaml", "yml" -> Format.YAML
-            else -> Format.AUTO
-        }
-    }
-    
-    private fun logVerbose(message: String) {
-        if (System.getProperty("utlx.verbose") == "true") {
-            echo("  $message")
-        }
+    private fun printUsage() {
+        println("""
+            |Transform data using UTL-X scripts
+            |
+            |Usage:
+            |  utlx transform [input-file] <script-file> [options]
+            |  utlx transform <script-file> [options] < input-file
+            |
+            |Arguments:
+            |  input-file      Input data file (if not provided, reads from stdin)
+            |  script-file     UTL-X transformation script (.utlx)
+            |
+            |Options:
+            |  -o, --output FILE           Write output to FILE (default: stdout)
+            |  -i, --input FILE            Read input from FILE
+            |  --input-format FORMAT       Force input format (xml, json, csv)
+            |  --output-format FORMAT      Force output format (xml, json, csv)
+            |  -v, --verbose               Enable verbose output
+            |  --no-pretty                 Disable pretty-printing
+            |  -h, --help                  Show this help message
+            |
+            |Examples:
+            |  # Transform XML to JSON
+            |  utlx transform input.xml transform.utlx -o output.json
+            |
+            |  # Read from stdin, write to stdout
+            |  cat input.xml | utlx transform script.utlx > output.json
+            |
+            |  # Force output format
+            |  utlx transform input.json script.utlx --output-format xml -o output.xml
+            |
+            |  # Verbose mode
+            |  utlx transform input.xml script.utlx -v -o output.json
+        """.trimMargin())
     }
 }
