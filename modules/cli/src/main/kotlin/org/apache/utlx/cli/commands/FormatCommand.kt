@@ -1,38 +1,80 @@
+
+// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/FormatCommand.kt
 package org.apache.utlx.cli.commands
 
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.types.file
+import java.io.File
+import kotlin.system.exitProcess
 
-/**
- * Format command - Format UTL-X code
- */
-class FormatCommand : CliktCommand(
-    name = "format",
-    help = "Format UTL-X transformation code"
-) {
-    
-    private val transform by argument(
-        name = "TRANSFORM",
-        help = "UTL-X file to format"
-    ).file(mustExist = true, mustBeReadable = true)
-    
-    private val check by option(
-        "--check",
-        help = "Check if formatting is needed (exit 1 if yes)"
-    ).flag()
-    
-    private val inPlace by option(
-        "-i", "--in-place",
-        help = "Format in place"
-    ).flag()
-    
-    override fun run() {
-        echo("Formatting: ${transform.absolutePath}")
+object FormatCommand {
+    fun execute(args: Array<String>) {
+        if (args.isEmpty()) {
+            printUsage()
+            exitProcess(1)
+        }
         
-        // TODO: Implement formatter
-        echo("TODO: Implement formatter")
+        val check = args.contains("--check")
+        val verbose = args.contains("-v") || args.contains("--verbose")
+        val scriptFiles = args.filter { !it.startsWith("-") }.map { File(it) }
+        
+        if (scriptFiles.isEmpty()) {
+            System.err.println("Error: No script files provided")
+            exitProcess(1)
+        }
+        
+        var hasChanges = false
+        
+        for (scriptFile in scriptFiles) {
+            if (!scriptFile.exists()) {
+                System.err.println("✗ ${scriptFile.name}: File not found")
+                continue
+            }
+            
+            val content = scriptFile.readText()
+            val formatted = formatScript(content)
+            
+            if (content != formatted) {
+                hasChanges = true
+                
+                if (check) {
+                    println("✗ ${scriptFile.name}: Would reformat")
+                } else {
+                    scriptFile.writeText(formatted)
+                    println("✓ ${scriptFile.name}: Formatted")
+                }
+            } else {
+                if (verbose) {
+                    println("✓ ${scriptFile.name}: Already formatted")
+                }
+            }
+        }
+        
+        if (check && hasChanges) {
+            exitProcess(1)
+        }
+    }
+    
+    private fun formatScript(content: String): String {
+        // Basic formatting implementation
+        // TODO: Implement proper AST-based formatting
+        return content.lines()
+            .map { it.trimEnd() }
+            .joinToString("\n")
+            .replace(Regex("\\{\\s+"), "{\n  ")
+            .replace(Regex("\\s+\\}"), "\n}")
+    }
+    
+    private fun printUsage() {
+        println("""
+            |Format UTL-X scripts
+            |
+            |Usage:
+            |  utlx format <script-file>... [options]
+            |
+            |Options:
+            |  --check         Check if files are formatted (exit 1 if not)
+            |  -v, --verbose   Show all files processed
+            |  -h, --help      Show this help message
+        """.trimMargin())
     }
 }
+
