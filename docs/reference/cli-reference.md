@@ -199,4 +199,45 @@ transform:
 - `4` - Runtime error
 - `5` - File not found
 
+### Multiple Input Files
+
+Transform data from multiple input sources:
+
+```bash
+utlx transform <script> --input <name>=<file> [--input <name>=<file> ...] [options]
+```
+
+**Example:**
+
+```bash
+utlx transform enrich-orders.utlx \
+  --input orders=orders.json \
+  --input customers=customers.json \
+  --input products=products.json \
+  -o enriched-orders.json
+```
+
+**With different formats:**
+
+```bash
+utlx transform employee-directory.utlx \
+  --input employees=employees.csv \
+  --input departments=departments.xml \
+  --input roles=roles.json
+```
+
+**Options:**
+- `--input <name>=<file>` - Specify named input file (can be used multiple times)
+- `-o, --output <file>` - Output file (default: stdout)
+- `--pretty` - Pretty-print output
+
+**Alternative syntax:**
+
+```bash
+# Using positional arguments (first file is 'main')
+utlx transform script.utlx main.json \
+  --supplement customers.json \
+  --supplement products.json
+```
+
 ---
