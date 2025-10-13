@@ -1,0 +1,16 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "org/apache/utlx/.*\\.properties"
+      },
+      {
+        "pattern": "org/apache/utlx/.*\\.utlx"
+      },
+      {
+        "pattern": "META-INF/services/.*"
+      }
+    ]
+  },
+  "bundles": []
+}
