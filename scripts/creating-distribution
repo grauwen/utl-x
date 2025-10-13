@@ -1,0 +1,5 @@
+# Build release distributions
+make dist
+
+# Output will be in dist/
+ls dist/
