@@ -1,0 +1,28 @@
+{
+  "name": "@apache/utlx",
+  "version": "1.0.0",
+  "description": "Universal Transformation Language Extended",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc && webpack",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts"
+  },
+  "keywords": ["transformation", "xml", "json", "data"],
+  "author": "UTL-X Contributors",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grauwen/utl-x.git"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.2.0",
+    "webpack": "^5.88.0",
+    "jest": "^29.6.0",
+    "eslint": "^8.47.0",
+    "prettier": "^3.0.0"
+  }
+}
