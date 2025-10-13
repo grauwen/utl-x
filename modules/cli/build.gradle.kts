@@ -1,128 +1,157 @@
+// modules/cli/build.gradle.kts
 plugins {
     kotlin("jvm")
     application
     id("org.graalvm.buildtools.native") version "0.10.2"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "org.apache.utlx"
 version = "1.0.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     // Internal dependencies
     implementation(project(":modules:core"))
-    implementation(project(":modules:jvm"))
     implementation(project(":formats:xml"))
     implementation(project(":formats:json"))
     implementation(project(":formats:csv"))
-    implementation(project(":formats:yaml"))
-    implementation(project(":stdlib"))
-
-    // CLI framework
-    implementation("com.github.ajalt.clikt:clikt:4.2.1")
     
-    // Logging
-    implementation("org.slf4j:slf4j-simple:2.0.9")
+    // Kotlin stdlib
+    implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
     
     // Testing
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
-    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
 }
 
 application {
-    mainClass.set("org.apache.utlx.cli.MainKt")
+    mainClass.set("org.apache.utlx.cli.Main")
+    
+    // Set JVM args for better performance
+    applicationDefaultJvmArgs = listOf(
+        "-Xmx512m",
+        "-XX:+UseG1GC"
+    )
 }
 
-// GraalVM Native Image Configuration
+tasks.jar {
+    manifest {
+        attributes(
+            "Main-Class" to "org.apache.utlx.cli.Main",
+            "Implementation-Title" to "UTL-X CLI",
+            "Implementation-Version" to project.version
+        )
+    }
+    
+    // Create fat JAR with all dependencies
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+}
+
+// GraalVM Native Image configuration
 graalvmNative {
     binaries {
         named("main") {
-            // Output binary name
             imageName.set("utlx")
+            mainClass.set("org.apache.utlx.cli.Main")
             
-            // Main class
-            mainClass.set("org.apache.utlx.cli.MainKt")
-            
-            // Build arguments for optimization
             buildArgs.addAll(
-                "--no-fallback",                    // No fallback to JVM
-                "--install-exit-handlers",          // Better error messages
-                "-H:+ReportExceptionStackTraces",   // Debug info
-                "-H:+AddAllCharsets",               // Support all encodings
-                "--enable-url-protocols=http,https", // Network support if needed
-                "--initialize-at-build-time=kotlin", // Kotlin runtime at build time
-                "--initialize-at-build-time=org.slf4j", // Logging at build time
-                "-H:ReflectionConfigurationFiles=src/main/resources/META-INF/native-image/reflect-config.json",
-                "-H:ResourceConfigurationFiles=src/main/resources/META-INF/native-image/resource-config.json",
-                "-H:DynamicProxyConfigurationFiles=src/main/resources/META-INF/native-image/proxy-config.json",
-                "-H:SerializationConfigurationFiles=src/main/resources/META-INF/native-image/serialization-config.json",
-                
-                // Optimization flags
-                "-O3",                              // Maximum optimization
-                "--gc=G1",                          // G1 garbage collector
-                "-march=native"                     // Optimize for current CPU
+                "--no-fallback",
+                "--initialize-at-build-time=kotlin,kotlinx",
+                "--report-unsupported-elements-at-runtime",
+                "-H:+ReportExceptionStackTraces",
+                "-H:+AddAllCharsets",
+                "--enable-url-protocols=http,https",
+                "--allow-incomplete-classpath"
             )
             
-            // JVM arguments during build
-            jvmArgs.addAll(
-                "-Xmx4g",                           // More memory for build
-                "--add-exports=org.graalvm.nativeimage.builder/com.oracle.svm.core.configure=ALL-UNNAMED"
-            )
-            
-            // Resource configuration
-            resources {
-                includedPatterns.addAll(
-                    "org/apache/utlx/**/*.properties",
-                    "org/apache/utlx/**/*.utlx",
-                    "META-INF/services/**"
-                )
+            // Add verbose output for debugging
+            if (System.getProperty("verbose") == "true") {
+                buildArgs.add("--verbose")
             }
-        }
-        
-        // Optional: Create a shared library version
-        create("shared") {
-            sharedLibrary.set(true)
-            imageName.set("libutlx")
-            mainClass.set("org.apache.utlx.cli.MainKt")
         }
     }
     
-    // Agent configuration for automatic metadata generation
-    agent {
-        enabled.set(true)
-        defaultMode.set("standard")
-        modes {
-            standard {
-                // Run tests with agent to generate config
-            }
-        }
+    // Test native image
+    binaries.named("test") {
+        buildArgs.add("--no-fallback")
     }
 }
 
-tasks {
-    // Test task for GraalVM agent
-    test {
-        useJUnitPlatform()
-        
-        // Enable GraalVM agent during tests
-        if (project.hasProperty("agent")) {
-            jvmArgs(
-                "-agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image"
-            )
-        }
-    }
+tasks.test {
+    useJUnitPlatform()
+}
+
+// Custom tasks
+tasks.register("createScripts") {
+    group = "distribution"
+    description = "Create shell scripts for running UTL-X"
     
-    // Shadow JAR for fallback
-    shadowJar {
-        archiveClassifier.set("all")
-        manifest {
-            attributes["Main-Class"] = "org.apache.utlx.cli.MainKt"
-        }
-        mergeServiceFiles()
+    doLast {
+        val scriptsDir = File(projectDir, "scripts")
+        scriptsDir.mkdirs()
+        
+        // Unix script
+        File(scriptsDir, "utlx").writeText("""
+            #!/bin/bash
+            SCRIPT_DIR="${'$'}( cd "${'$'}( dirname "${'$'}{BASH_SOURCE[0]}" )" && pwd )"
+            JAR="${'$'}SCRIPT_DIR/../build/libs/cli-${project.version}.jar"
+            
+            if [ ! -f "${'$'}JAR" ]; then
+                echo "Error: JAR not found at ${'$'}JAR"
+                echo "Run './gradlew :modules:cli:jar' first"
+                exit 1
+            fi
+            
+            exec java -jar "${'$'}JAR" "${'$'}@"
+        """.trimIndent())
+        
+        File(scriptsDir, "utlx").setExecutable(true)
+        
+        // Windows script
+        File(scriptsDir, "utlx.bat").writeText("""
+            @echo off
+            set SCRIPT_DIR=%~dp0
+            set JAR=%SCRIPT_DIR%..\build\libs\cli-${project.version}.jar
+            
+            if not exist "%JAR%" (
+                echo Error: JAR not found at %JAR%
+                echo Run 'gradlew :modules:cli:jar' first
+                exit /b 1
+            )
+            
+            java -jar "%JAR%" %*
+        """.trimIndent())
+        
+        println("Created scripts in $scriptsDir")
+    }
+}
+
+tasks.named("build") {
+    finalizedBy("createScripts")
+}
+
+// Task to build everything
+tasks.register("buildAll") {
+    group = "build"
+    description = "Build both JAR and native image"
+    
+    dependsOn("jar")
+    dependsOn("nativeCompile")
+}
+
+// Task to install native binary locally
+tasks.register<Copy>("installNative") {
+    group = "distribution"
+    description = "Install native binary to /usr/local/bin (requires sudo)"
+    
+    dependsOn("nativeCompile")
+    
+    from(layout.buildDirectory.file("native/nativeCompile/utlx"))
+    into("/usr/local/bin")
+    
+    doLast {
+        println("✓ Installed utlx to /usr/local/bin")
+        println("Run 'utlx --version' to verify")
     }
 }
