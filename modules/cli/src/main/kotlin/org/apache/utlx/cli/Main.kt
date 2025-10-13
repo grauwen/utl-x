@@ -1,66 +1,73 @@
+// modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt
 package org.apache.utlx.cli
 
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.subcommands
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.versionOption
+import org.apache.utlx.cli.commands.*
 import kotlin.system.exitProcess
 
 /**
- * Main entry point for UTL-X CLI
+ * UTL-X Command Line Interface
+ * 
+ * A practical CLI for transforming data between formats using UTL-X transformations.
  */
-fun main(args: Array<String>) {
-    try {
-        UTLX()
-            .subcommands(
-                TransformCommand(),
-                ValidateCommand(),
-                CompileCommand(),
-                FormatCommand(),
-                MigrateCommand(),
-                VersionCommand()
-            )
-            .main(args)
-    } catch (e: Exception) {
-        System.err.println("Error: ${e.message}")
-        if (System.getProperty("utlx.debug") == "true") {
-            e.printStackTrace()
+object Main {
+    private const val VERSION = "1.0.0-SNAPSHOT"
+    
+    @JvmStatic
+    fun main(args: Array<String>) {
+        if (args.isEmpty()) {
+            printUsage()
+            exitProcess(0)
         }
-        exitProcess(1)
-    }
-}
-
-/**
- * Root CLI command
- */
-class UTLX : CliktCommand(
-    name = "utlx",
-    help = """
-        Universal Transformation Language Extended (UTL-X)
         
-        A format-agnostic functional transformation language for XML, JSON, CSV, YAML and more.
-        
-        Examples:
-          utlx transform input.xml transform.utlx -o output.json
-          utlx validate transform.utlx
-          utlx compile transform.utlx -o transform.class
-    """.trimIndent()
-) {
-    
-    private val verbose by option("--verbose", "-v", help = "Enable verbose output").flag()
-    private val debug by option("--debug", "-d", help = "Enable debug mode").flag()
-    
-    init {
-        versionOption("1.0.0-SNAPSHOT")
+        try {
+            val command = args[0]
+            val commandArgs = args.drop(1).toTypedArray()
+            
+            when (command.lowercase()) {
+                "transform", "t" -> TransformCommand.execute(commandArgs)
+                "validate", "v" -> ValidateCommand.execute(commandArgs)
+                "compile", "c" -> CompileCommand.execute(commandArgs)
+                "format", "f" -> FormatCommand.execute(commandArgs)
+                "migrate", "m" -> MigrateCommand.execute(commandArgs)
+                "version", "--version", "-v" -> VersionCommand.execute(commandArgs)
+                "help", "--help", "-h" -> printUsage()
+                else -> {
+                    System.err.println("Unknown command: $command")
+                    printUsage()
+                    exitProcess(1)
+                }
+            }
+        } catch (e: Exception) {
+            System.err.println("Error: ${e.message}")
+            if (System.getProperty("utlx.debug") == "true") {
+                e.printStackTrace()
+            }
+            exitProcess(1)
+        }
     }
     
-    override fun run() {
-        if (verbose) {
-            System.setProperty("utlx.verbose", "true")
-        }
-        if (debug) {
-            System.setProperty("utlx.debug", "true")
-        }
+    private fun printUsage() {
+        println("""
+            |UTL-X CLI v$VERSION - Universal Transformation Language Extended
+            |
+            |Usage: utlx <command> [options]
+            |
+            |Commands:
+            |  transform (t)  Transform data using a UTL-X script
+            |  validate  (v)  Validate a UTL-X script without executing
+            |  compile   (c)  Compile a UTL-X script to bytecode
+            |  format    (f)  Format/pretty-print a UTL-X script
+            |  migrate   (m)  Migrate XSLT/DataWeave to UTL-X
+            |  version        Show version information
+            |  help           Show this help message
+            |
+            |Examples:
+            |  utlx transform input.xml script.utlx -o output.json
+            |  utlx validate script.utlx
+            |  utlx transform --input-format xml --output-format json script.utlx < input.xml
+            |
+            |For more information: https://github.com/grauwen/utl-x
+            |Documentation: https://utlx-lang.org/docs
+        """.trimMargin())
     }
 }
