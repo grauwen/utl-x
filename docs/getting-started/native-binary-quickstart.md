@@ -558,8 +558,8 @@ chmod +x utlx
 
 - **Bug Reports:** https://github.com/grauwen/utl-x/issues
 - **Questions:** https://github.com/grauwen/utl-x/discussions
-- **Commercial Support:** support@utlx-lang.org
-- **License Questions:** licensing@utlx-lang.org
+- **Commercial Support:** support@glomidco.com
+- **License Questions:** licensing@glomidco.com
 
 ---
 
@@ -567,7 +567,7 @@ chmod +x utlx
 
 **Dual-Licensed:**
 - **Open Source:** GNU AGPL v3.0 (for open source projects)
-- **Commercial:** Contact licensing@utlx-lang.org (for proprietary use)
+- **Commercial:** Contact licensing@glomidco.com (for proprietary use)
 
 **Quick License Guide:**
 
