@@ -1,39 +1,46 @@
+// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/MigrateCommand.kt
 package org.apache.utlx.cli.commands
 
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.types.choice
-import com.github.ajalt.clikt.parameters.types.file
+import kotlin.system.exitProcess
 
-/**
- * Migrate command - Convert XSLT/DataWeave to UTL-X
- */
-class MigrateCommand : CliktCommand(
-    name = "migrate",
-    help = "Migrate XSLT or DataWeave transformations to UTL-X"
-) {
-    
-    private val source by argument(
-        name = "SOURCE",
-        help = "Source transformation file"
-    ).file(mustExist = true, mustBeReadable = true)
-    
-    private val from by option(
-        "-f", "--from",
-        help = "Source format"
-    ).choice("xslt", "dataweave").default("xslt")
-    
-    private val output by option(
-        "-o", "--output",
-        help = "Output UTL-X file"
-    ).file()
-    
-    override fun run() {
-        echo("Migrating from $from: ${source.absolutePath}")
+object MigrateCommand {
+    fun execute(args: Array<String>) {
+        if (args.isEmpty()) {
+            printUsage()
+            exitProcess(1)
+        }
         
-        // TODO: Implement migration
-        echo("TODO: Implement migration from $from")
+        val sourceType = args.getOrNull(0)?.let {
+            when (it.lowercase()) {
+                "xslt", "dataweave", "dw" -> it
+                else -> null
+            }
+        }
+        
+        if (sourceType == null) {
+            System.err.println("Error: Invalid source type")
+            printUsage()
+            exitProcess(1)
+        }
+        
+        println("Migration from $sourceType - Coming soon!")
+        println("This will help you migrate XSLT/DataWeave scripts to UTL-X")
+    }
+    
+    private fun printUsage() {
+        println("""
+            |Migrate XSLT or DataWeave scripts to UTL-X
+            |
+            |Usage:
+            |  utlx migrate <type> <source-file> [options]
+            |
+            |Types:
+            |  xslt        Migrate from XSLT
+            |  dataweave   Migrate from DataWeave
+            |
+            |Options:
+            |  -o, --output FILE   Write output to FILE
+            |  -h, --help          Show this help message
+        """.trimMargin())
     }
 }
