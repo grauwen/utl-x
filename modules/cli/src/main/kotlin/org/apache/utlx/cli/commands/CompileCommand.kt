@@ -1,81 +1,167 @@
+// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/CompileCommand.kt
 package org.apache.utlx.cli.commands
 
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.types.choice
-import com.github.ajalt.clikt.parameters.types.file
-import org.apache.utlx.core.codegen.CodeGenerator
+import org.apache.utlx.core.lexer.Lexer
 import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.optimizer.Optimizer
+import org.apache.utlx.core.types.TypeChecker
+import java.io.File
+import kotlin.system.exitProcess
 
-/**
- * Compile command - Compile UTL-X to bytecode/JavaScript/native
- */
-class CompileCommand : CliktCommand(
-    name = "compile",
-    help = "Compile UTL-X transformation to optimized bytecode"
-) {
-    
-    private val transform by argument(
-        name = "TRANSFORM",
-        help = "UTL-X transformation file to compile"
-    ).file(mustExist = true, mustBeReadable = true)
-    
-    private val output by option(
-        "-o", "--output",
-        help = "Output file"
-    ).file()
-    
-    private val target by option(
-        "-t", "--target",
-        help = "Compilation target"
-    ).choice("jvm", "js", "native").default("jvm")
-    
-    private val optimize by option(
-        "-O", "--optimize",
-        help = "Optimization level (0-3)"
-    ).choice("0", "1", "2", "3").default("2")
-    
-    override fun run() {
-        echo("Compiling: ${transform.absolutePath}")
-        echo("  Target: $target")
-        echo("  Optimization level: $optimize")
+object CompileCommand {
+    fun execute(args: Array<String>) {
+        println("Compile command - Coming soon!")
+        println("This will compile UTL-X scripts to optimized bytecode")
+    }
+}
+
+// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/FormatCommand.kt
+package org.apache.utlx.cli.commands
+
+import java.io.File
+import kotlin.system.exitProcess
+
+object FormatCommand {
+    fun execute(args: Array<String>) {
+        if (args.isEmpty()) {
+            printUsage()
+            exitProcess(1)
+        }
         
-        try {
-            // Parse
-            val parser = Parser(transform.readText())
-            val ast = parser.parse()
+        val check = args.contains("--check")
+        val verbose = args.contains("-v") || args.contains("--verbose")
+        val scriptFiles = args.filter { !it.startsWith("-") }.map { File(it) }
+        
+        if (scriptFiles.isEmpty()) {
+            System.err.println("Error: No script files provided")
+            exitProcess(1)
+        }
+        
+        var hasChanges = false
+        
+        for (scriptFile in scriptFiles) {
+            if (!scriptFile.exists()) {
+                System.err.println("✗ ${scriptFile.name}: File not found")
+                continue
+            }
             
-            // Optimize
-            val optimizer = Optimizer(optimize.toInt())
-            val optimizedAst = optimizer.optimize(ast)
+            val content = scriptFile.readText()
+            val formatted = formatScript(content)
             
-            // Generate code
-            val generator = CodeGenerator.forTarget(target)
-            val bytecode = generator.generate(optimizedAst)
-            
-            // Write output
-            val outputFile = output ?: transform.resolveSibling(
-                "${transform.nameWithoutExtension}.${getExtension(target)}"
-            )
-            outputFile.writeBytes(bytecode)
-            
-            echo("\n✓ Compiled successfully")
-            echo("  Output: ${outputFile.absolutePath}")
-            echo("  Size: ${bytecode.size} bytes")
-            
-        } catch (e: Exception) {
-            echo("\n✗ Compilation failed: ${e.message}", err = true)
-            throw e
+            if (content != formatted) {
+                hasChanges = true
+                
+                if (check) {
+                    println("✗ ${scriptFile.name}: Would reformat")
+                } else {
+                    scriptFile.writeText(formatted)
+                    println("✓ ${scriptFile.name}: Formatted")
+                }
+            } else {
+                if (verbose) {
+                    println("✓ ${scriptFile.name}: Already formatted")
+                }
+            }
+        }
+        
+        if (check && hasChanges) {
+            exitProcess(1)
         }
     }
     
-    private fun getExtension(target: String): String = when (target) {
-        "jvm" -> "class"
-        "js" -> "js"
-        "native" -> "o"
-        else -> "out"
+    private fun formatScript(content: String): String {
+        // Basic formatting implementation
+        // TODO: Implement proper AST-based formatting
+        return content.lines()
+            .map { it.trimEnd() }
+            .joinToString("\n")
+            .replace(Regex("\\{\\s+"), "{\n  ")
+            .replace(Regex("\\s+\\}"), "\n}")
+    }
+    
+    private fun printUsage() {
+        println("""
+            |Format UTL-X scripts
+            |
+            |Usage:
+            |  utlx format <script-file>... [options]
+            |
+            |Options:
+            |  --check         Check if files are formatted (exit 1 if not)
+            |  -v, --verbose   Show all files processed
+            |  -h, --help      Show this help message
+        """.trimMargin())
+    }
+}
+
+// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/MigrateCommand.kt
+package org.apache.utlx.cli.commands
+
+import kotlin.system.exitProcess
+
+object MigrateCommand {
+    fun execute(args: Array<String>) {
+        if (args.isEmpty()) {
+            printUsage()
+            exitProcess(1)
+        }
+        
+        val sourceType = args.getOrNull(0)?.let {
+            when (it.lowercase()) {
+                "xslt", "dataweave", "dw" -> it
+                else -> null
+            }
+        }
+        
+        if (sourceType == null) {
+            System.err.println("Error: Invalid source type")
+            printUsage()
+            exitProcess(1)
+        }
+        
+        println("Migration from $sourceType - Coming soon!")
+        println("This will help you migrate XSLT/DataWeave scripts to UTL-X")
+    }
+    
+    private fun printUsage() {
+        println("""
+            |Migrate XSLT or DataWeave scripts to UTL-X
+            |
+            |Usage:
+            |  utlx migrate <type> <source-file> [options]
+            |
+            |Types:
+            |  xslt        Migrate from XSLT
+            |  dataweave   Migrate from DataWeave
+            |
+            |Options:
+            |  -o, --output FILE   Write output to FILE
+            |  -h, --help          Show this help message
+        """.trimMargin())
+    }
+}
+
+// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/VersionCommand.kt
+package org.apache.utlx.cli.commands
+
+object VersionCommand {
+    private const val VERSION = "1.0.0-SNAPSHOT"
+    private const val BUILD_DATE = "2025-01-15"
+    
+    fun execute(args: Array<String>) {
+        val verbose = args.contains("-v") || args.contains("--verbose")
+        
+        println("UTL-X v$VERSION")
+        
+        if (verbose) {
+            println("Build date: $BUILD_DATE")
+            println("Kotlin version: ${KotlinVersion.CURRENT}")
+            println("JVM version: ${System.getProperty("java.version")}")
+            println("OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")}")
+            println("Architecture: ${System.getProperty("os.arch")}")
+            
+            println("\nProject: https://github.com/grauwen/utl-x")
+            println("Documentation: https://utlx-lang.org/docs")
+            println("License: AGPL-3.0 / Commercial")
+        }
     }
 }
