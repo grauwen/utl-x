@@ -1,0 +1,35 @@
+[
+  {
+    "name": "org.apache.utlx.cli.MainKt",
+    "methods": [
+      {"name": "main", "parameterTypes": ["java.lang.String[]"]}
+    ]
+  },
+  {
+    "name": "org.apache.utlx.core.ast.Node",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.ast.Expression",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "kotlin.reflect.jvm.internal.KClassImpl",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "kotlin.Metadata",
+    "allDeclaredMethods": true
+  }
+]
