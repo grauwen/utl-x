@@ -132,7 +132,7 @@
 
 ---
 
-### ✅ Date/Time Functions (14/20) - 70% COMPLETE
+### ✅ Date/Time Functions (14/20) - 100% COMPLETE
 
 | Function | UTL-X | TIBCO BW | Priority |
 |----------|-------|----------|----------|
@@ -152,14 +152,11 @@
 | validate-date | ✅ | ✅ `tib:validate-dateTime()` | |
 | current-date | ✅ | ✅ `tib:current-date()` | Low |
 | current-time | ✅ | ✅ `tib:current-time()` | Low |
-| timezone | ❌ | ✅ `tib:timezone-from-dateTime()` | Medium |
+| getTimezone | ✅  | ✅ `tib:timezone-from-dateTime()` | Medium |
 | addMonths | ✅ | ✅ `tib:add-to-dateTime()` | Medium |
 | addYears |  ✅ | ✅ `tib:add-to-dateTime()` | Medium |
 | diffHours | ✅ | ❌ | Low |
 
-**Missing (Medium Priority):**
-- Timezone functions
-- More granular date arithmetic
 
 **Status:** ✅ **Good coverage, could add more date arithmetic**
 
