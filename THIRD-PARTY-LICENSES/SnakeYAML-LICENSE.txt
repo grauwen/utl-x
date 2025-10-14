@@ -1,0 +1,5 @@
+## SnakeYAML
+- License: Apache License 2.0
+- Copyright: (c) 2008-2024 SnakeYAML contributors
+- Source: https://bitbucket.org/snakeyaml/snakeyaml
+- Used in: formats/yaml module
