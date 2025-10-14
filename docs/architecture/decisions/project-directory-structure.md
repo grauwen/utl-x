@@ -13,6 +13,7 @@ utl-x/
 ├── examples/                   # Example transformations (already created)
 ├── modules/                    # Core modules (multi-runtime)
 │   ├── core/                   # Language core (shared)
+│   ├── analysis/               # Implements schema handling design-time (shared)
 │   ├── jvm/                    # JVM runtime
 │   ├── javascript/             # JavaScript runtime
 │   ├── native/                 # Native runtime (GraalVM/LLVM)
