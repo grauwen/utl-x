@@ -8,6 +8,9 @@ TODO's
 - tools/maven-plugin/
 - tools/intellij-plugin/
 
+-stlib: serialize
+-stlib cannonalize
+
 -lerna?
 
 - Comfornmance suite
