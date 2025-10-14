@@ -146,7 +146,14 @@ object StandardLibrary {
         register("take", ArrayFunctions::take)
         register("drop", ArrayFunctions::drop)
         register("unique", ArrayFunctions::unique)
-        register("zip", ArrayFunctions::zip)
+        register("zip", ArrayFunctions::zip) //not related to gzip or gunzip, pure array operations
+        
+        // Zip/Unzip operations
+        register("unzip", UnzipFunctions::unzip)
+        register("unzipN", UnzipFunctions::unzipN)
+        register("transpose", UnzipFunctions::transpose)
+        register("zipWith", UnzipFunctions::zipWith)
+        register("zipWithIndex", UnzipFunctions::zipWithIndex)
         
         // More array functions (Priority 2)
         register("remove", MoreArrayFunctions::remove)
