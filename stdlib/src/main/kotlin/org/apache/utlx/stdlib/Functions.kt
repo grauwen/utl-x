@@ -101,7 +101,7 @@ object StandardLibrary {
         register("normalize-space", ExtendedStringFunctions::normalizeSpace)
         register("repeat", ExtendedStringFunctions::repeat)
         
-        // More string functions (Priority 2)
+        // More string functions
         register("leftTrim", MoreStringFunctions::leftTrim)
         register("rightTrim", MoreStringFunctions::rightTrim)
         register("translate", MoreStringFunctions::translate)
@@ -113,6 +113,17 @@ object StandardLibrary {
         register("fromCharCode", MoreStringFunctions::fromCharCode)
         register("capitalize", MoreStringFunctions::capitalize)
         register("titleCase", MoreStringFunctions::titleCase)
+
+        // CaseFunctions
+        register("camelize", CaseFunctions::camelize)
+        register("pascalCase", CaseFunctions::pascalCase)
+        register("kebabCase", CaseFunctions::kebabCase)
+        register("snakeCase", CaseFunctions::snakeCase)
+        register("constantCase", CaseFunctions::constantCase)
+        register("titleCase", CaseFunctions::titleCase)
+        register("dotCase", CaseFunctions::dotCase)
+        register("pathCase", CaseFunctions::pathCase)
+                 
     }
     
     private fun registerArrayFunctions() {
