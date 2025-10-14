@@ -92,13 +92,13 @@ object StandardLibrary {
         register("replaceRegex", RegexFunctions::replaceRegex)
         
         // Extended string functions
-        register("substring-before", ExtendedStringFunctions::substringBefore)
-        register("substring-after", ExtendedStringFunctions::substringAfter)
-        register("substring-before-last", ExtendedStringFunctions::substringBeforeLast)
-        register("substring-after-last", ExtendedStringFunctions::substringAfterLast)
+        register("substringBefore", ExtendedStringFunctions::substringBefore)
+        register("substringAfter", ExtendedStringFunctions::substringAfter)
+        register("substringBeforeLast", ExtendedStringFunctions::substringBeforeLast)
+        register("substringAfterLast", ExtendedStringFunctions::substringAfterLast)
         register("pad", ExtendedStringFunctions::pad)
-        register("pad-right", ExtendedStringFunctions::padRight)
-        register("normalize-space", ExtendedStringFunctions::normalizeSpace)
+        register("padRight", ExtendedStringFunctions::padRight)
+        register("normalizeSpace", ExtendedStringFunctions::normalizeSpace)
         register("repeat", ExtendedStringFunctions::repeat)
         
         // More string functions
@@ -294,6 +294,13 @@ object StandardLibrary {
         register("urlDecode", EncodingFunctions::urlDecode)
         register("hexEncode", EncodingFunctions::hexEncode)
         register("hexDecode", EncodingFunctions::hexDecode)
+       // added
+        register("md5", EncodingFunctions::md5)
+        register("sha256", EncodingFunctions::sha256)
+        register("sha512", EncodingFunctions::sha512)
+        register("sha1", EncodingFunctions::sha1)
+        register("hash", EncodingFunctions::hash)
+        register("hmac", EncodingFunctions::hmac)
         
     }
     
