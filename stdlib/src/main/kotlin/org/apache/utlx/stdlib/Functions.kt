@@ -181,6 +181,16 @@ object StandardLibrary {
         register("min", Aggregations::min)
         register("max", Aggregations::max)
         register("count", Aggregations::count)
+
+        // Critical array utilities
+        register("compact", CriticalArrayFunctions::compact)
+        register("findIndex", CriticalArrayFunctions::findIndex)
+        register("findLastIndex", CriticalArrayFunctions::findLastIndex)
+ 
+       // Advanced functional operations
+       register("scan", CriticalArrayFunctions::scan)
+       register("windowed", CriticalArrayFunctions::windowed)
+       register("zipAll", CriticalArrayFunctions::zipAll)
     }
     
     private fun registerMathFunctions() {
