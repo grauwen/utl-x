@@ -1,0 +1,341 @@
+# .github/workflows/schema-validation.yml
+name: Schema Validation
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'transforms/**/*.utlx'
+      - 'schemas/**'
+      - 'modules/analysis/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'transforms/**/*.utlx'
+      - 'schemas/**'
+      - 'modules/analysis/**'
+
+jobs:
+  validate-schemas:
+    name: Validate Transformation Schemas
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+      
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      
+      - name: Build UTL-X CLI
+        run: |
+          ./gradlew :modules:cli:build
+          ./gradlew :modules:analysis:build
+      
+      - name: List transformations
+        id: list-transforms
+        run: |
+          echo "Found transformations:"
+          find transforms -name "*.utlx" -type f | tee transforms.txt
+          echo "transform_count=$(wc -l < transforms.txt)" >> $GITHUB_OUTPUT
+      
+      - name: Validate all transformations
+        id: validate
+        run: |
+          set -e
+          
+          FAILED=0
+          PASSED=0
+          
+          echo "# Schema Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Transformation | Input Schema | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------------|--------------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Find all transformation files
+          while IFS= read -r transform; do
+            transform_name=$(basename "$transform" .utlx)
+            input_schema="schemas/${transform_name}-input.xsd"
+            expected_output="schemas/${transform_name}-output.json"
+            
+            echo "Validating: $transform"
+            
+            # Check if input schema exists
+            if [ ! -f "$input_schema" ]; then
+              echo "⚠️  Warning: Input schema not found for $transform_name"
+              echo "| $transform_name | ❌ Missing | ⚠️ Skipped |" >> $GITHUB_STEP_SUMMARY
+              continue
+            fi
+            
+            # Validate transformation
+            if java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema validate \
+                --input-schema "$input_schema" \
+                --transform "$transform" \
+                $([ -f "$expected_output" ] && echo "--expected-output $expected_output") \
+                --verbose; then
+              echo "✅ $transform_name: PASSED"
+              echo "| $transform_name | ✅ Found | ✅ Valid |" >> $GITHUB_STEP_SUMMARY
+              ((PASSED++))
+            else
+              echo "❌ $transform_name: FAILED"
+              echo "| $transform_name | ✅ Found | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+              ((FAILED++))
+            fi
+            
+            echo ""
+          done < transforms.txt
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Summary:** $PASSED passed, $FAILED failed" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $FAILED -gt 0 ]; then
+            echo "::error::$FAILED transformation(s) failed validation"
+            exit 1
+          fi
+          
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+      
+      - name: Generate output schemas
+        if: success()
+        run: |
+          echo "# Generated Schemas" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Transformation | Generated Schema |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------------|------------------|" >> $GITHUB_STEP_SUMMARY
+          
+          mkdir -p build/generated-schemas
+          
+          while IFS= read -r transform; do
+            transform_name=$(basename "$transform" .utlx)
+            input_schema="schemas/${transform_name}-input.xsd"
+            output_file="build/generated-schemas/${transform_name}-output.json"
+            
+            if [ -f "$input_schema" ]; then
+              echo "Generating schema for: $transform_name"
+              
+              if java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema generate \
+                  --input-schema "$input_schema" \
+                  --transform "$transform" \
+                  --output-format json-schema \
+                  --output "$output_file"; then
+                echo "| $transform_name | ✅ Generated |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "| $transform_name | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done < transforms.txt
+      
+      - name: Upload generated schemas
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-schemas
+          path: build/generated-schemas/
+          retention-days: 30
+      
+      - name: Check for schema drift
+        if: success()
+        run: |
+          echo "# Schema Drift Detection" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          DRIFT_DETECTED=false
+          
+          while IFS= read -r transform; do
+            transform_name=$(basename "$transform" .utlx)
+            existing_schema="schemas/${transform_name}-output.json"
+            generated_schema="build/generated-schemas/${transform_name}-output.json"
+            
+            if [ -f "$existing_schema" ] && [ -f "$generated_schema" ]; then
+              if ! diff -q "$existing_schema" "$generated_schema" > /dev/null; then
+                echo "⚠️  Schema drift detected for: $transform_name"
+                echo "| $transform_name | ⚠️ Drift detected |" >> $GITHUB_STEP_SUMMARY
+                DRIFT_DETECTED=true
+                
+                # Show diff
+                echo "Differences:"
+                diff "$existing_schema" "$generated_schema" || true
+              else
+                echo "| $transform_name | ✅ No drift |" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done < transforms.txt
+          
+          if [ "$DRIFT_DETECTED" = true ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Schema drift detected!** Please regenerate schemas." >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Schema drift detected - schemas may need to be regenerated"
+          fi
+      
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync(process.env.GITHUB_STEP_SUMMARY, 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+      
+      - name: Add validation badge
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          COLOR=$([[ "$STATUS" == "success" ]] && echo "brightgreen" || echo "red")
+          
+          echo "![Schema Validation](https://img.shields.io/badge/schema%20validation-${STATUS}-${COLOR})" >> $GITHUB_STEP_SUMMARY
+
+  breaking-change-detection:
+    name: Detect Breaking Schema Changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          path: pr
+      
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Build UTL-X
+        working-directory: pr
+        run: |
+          chmod +x gradlew
+          ./gradlew :modules:cli:build :modules:analysis:build
+      
+      - name: Compare schemas
+        run: |
+          cd pr
+          
+          echo "# Breaking Change Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          BREAKING_CHANGES=false
+          
+          # Compare all schema files
+          for schema in schemas/*-output.json; do
+            if [ -f "$schema" ]; then
+              schema_name=$(basename "$schema")
+              base_schema="../base/$schema"
+              
+              if [ -f "$base_schema" ]; then
+                echo "Comparing: $schema_name"
+                
+                if java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema diff \
+                    --old-schema "$base_schema" \
+                    --new-schema "$schema" \
+                    --output "diff-$schema_name.txt"; then
+                  
+                  if grep -q "Breaking Changes:" "diff-$schema_name.txt"; then
+                    echo "❌ Breaking changes detected in: $schema_name"
+                    echo "| $schema_name | ❌ Breaking changes |" >> $GITHUB_STEP_SUMMARY
+                    BREAKING_CHANGES=true
+                    
+                    # Add details
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "### $schema_name" >> $GITHUB_STEP_SUMMARY
+                    echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+                    cat "diff-$schema_name.txt" >> $GITHUB_STEP_SUMMARY
+                    echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+                  else
+                    echo "| $schema_name | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
+                  fi
+                fi
+              fi
+            fi
+          done
+          
+          if [ "$BREAKING_CHANGES" = true ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Breaking changes detected!** Please review carefully." >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Breaking schema changes detected in this PR"
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ No breaking changes detected" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  openapi-generation:
+    name: Generate OpenAPI Specifications
+    runs-on: ubuntu-latest
+    needs: validate-schemas
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+      
+      - name: Build UTL-X
+        run: |
+          chmod +x gradlew
+          ./gradlew :modules:cli:build :modules:analysis:build
+      
+      - name: Generate OpenAPI specs
+        run: |
+          mkdir -p build/openapi
+          
+          echo "# Generated OpenAPI Specs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # For each transformation, generate OpenAPI spec
+          find transforms -name "*.utlx" -type f | while read transform; do
+            transform_name=$(basename "$transform" .utlx)
+            input_schema="schemas/${transform_name}-input.xsd"
+            output_spec="build/openapi/${transform_name}-api.yaml"
+            
+            if [ -f "$input_schema" ]; then
+              echo "Generating OpenAPI spec for: $transform_name"
+              
+              # Generate spec (command to be implemented)
+              java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema document \
+                --input-schema "$input_schema" \
+                --transform "$transform" \
+                --output-format openapi \
+                --api-path "/api/$transform_name" \
+                --output "$output_spec" || echo "OpenAPI generation not yet implemented"
+              
+              if [ -f "$output_spec" ]; then
+                echo "| $transform_name | ✅ Generated | [View](build/openapi/${transform_name}-api.yaml) |" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+      
+      - name: Upload OpenAPI specs
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-specs
+          path: build/openapi/
+          retention-days: 30
