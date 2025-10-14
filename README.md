@@ -4,7 +4,7 @@
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.9.0--beta-orange)](https://github.com/grauwen/utl-x/releases)
-[![Documentation](https://img.shields.io/badge/docs-utlx.dev-brightgreen)](https://utlx.dev/docs)
+[![Documentation](https://img.shields.io/badge/docs-utlx.dev-brightgreen)](https://utl-x.org/docs)
 
 ## Overview
 
