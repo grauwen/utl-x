@@ -1,5 +1,15 @@
 TODO's
 
+- formats/plugin/
+- stLib
+- javascript
+- JVM
+- tools/vscode-extension/
+- tools/maven-plugin/
+- tools/intellij-plugin/
+
+-lerna?
+
 - Comfornmance suite
 - Wasm 
 - LLVM Bitcode en MILR (two most used IRs for native)?
