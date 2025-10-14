@@ -150,16 +150,15 @@
 | seconds | ✅ | ✅ `tib:seconds-from-dateTime()` | |
 | compare-dates | ✅ | ✅ `tib:compare-dateTime()` | |
 | validate-date | ✅ | ✅ `tib:validate-dateTime()` | |
-| current-date | ❌ | ✅ `tib:current-date()` | Low |
-| current-time | ❌ | ✅ `tib:current-time()` | Low |
+| current-date | ✅ | ✅ `tib:current-date()` | Low |
+| current-time | ✅ | ✅ `tib:current-time()` | Low |
 | timezone | ❌ | ✅ `tib:timezone-from-dateTime()` | Medium |
-| addMonths | ❌ | ✅ `tib:add-to-dateTime()` | Medium |
-| addYears | ❌ | ✅ `tib:add-to-dateTime()` | Medium |
-| diffHours | ❌ | ❌ | Low |
+| addMonths | ✅ | ✅ `tib:add-to-dateTime()` | Medium |
+| addYears |  ✅ | ✅ `tib:add-to-dateTime()` | Medium |
+| diffHours | ✅ | ❌ | Low |
 
 **Missing (Medium Priority):**
 - Timezone functions
-- Add months/years
 - More granular date arithmetic
 
 **Status:** ✅ **Good coverage, could add more date arithmetic**
