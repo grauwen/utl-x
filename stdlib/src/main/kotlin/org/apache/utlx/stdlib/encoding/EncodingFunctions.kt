@@ -7,6 +7,19 @@ import java.util.Base64
 import java.net.URLEncoder
 import java.net.URLDecoder
 import java.security.MessageDigest
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
+
+/**
+ * Encoding and Hashing Functions
+ * 
+ * Provides 12 functions:
+ * - Base64: encode, decode
+ * - URL: encode, decode
+ * - Hex: encode, decode
+ * - Hash: md5, sha256, sha512, sha1
+ * - Advanced: hash, hmac
+ */
 
 /**
  * Encoding and decoding functions
