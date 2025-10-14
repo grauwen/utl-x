@@ -10,11 +10,13 @@ import org.apache.utlx.stdlib.type.*
 import org.apache.utlx.stdlib.objects.*
 import org.apache.utlx.stdlib.core.*
 import org.apache.utlx.stdlib.encoding.*
+import org.apache.utlx.stdlib.xml.*
 
 /**
  * UTL-X Standard Library Function Registry
  * 
- * ENTERPRISE EDITION: 167+ functions - Industry-leading transformation library
+ * ENTERPRISE EDITION: 188+ functions - Industry-leading transformation library
+ * Includes comprehensive XML/QName support for enterprise XML transformations
  */
 object StandardLibrary {
     
@@ -54,6 +56,9 @@ object StandardLibrary {
         
         // Encoding functions
         registerEncodingFunctions()
+        
+        // XML & QName functions
+        registerXmlFunctions()
     }
     
     private fun registerCoreFunctions() {
@@ -274,6 +279,33 @@ object StandardLibrary {
         register("url-decode", EncodingFunctions::urlDecode)
         register("hex-encode", EncodingFunctions::hexEncode)
         register("hex-decode", EncodingFunctions::hexDecode)
+    }
+    
+    private fun registerXmlFunctions() {
+        // QName functions
+        register("local-name", QNameFunctions::localName)
+        register("namespace-uri", QNameFunctions::namespaceUri)
+        register("name", QNameFunctions::qualifiedName)
+        register("namespace-prefix", QNameFunctions::namespacePrefix)
+        register("resolve-qname", QNameFunctions::resolveQName)
+        register("create-qname", QNameFunctions::createQName)
+        register("has-namespace", QNameFunctions::hasNamespace)
+        register("get-namespaces", QNameFunctions::getNamespaces)
+        register("matches-qname", QNameFunctions::matchesQName)
+        
+        // XML utility functions
+        register("node-type", XmlUtilityFunctions::nodeType)
+        register("text-content", XmlUtilityFunctions::textContent)
+        register("attributes", XmlUtilityFunctions::attributes)
+        register("attribute", XmlUtilityFunctions::attribute)
+        register("has-attribute", XmlUtilityFunctions::hasAttribute)
+        register("child-count", XmlUtilityFunctions::childCount)
+        register("child-names", XmlUtilityFunctions::childNames)
+        register("parent", XmlUtilityFunctions::parent)
+        register("element-path", XmlUtilityFunctions::elementPath)
+        register("is-empty-element", XmlUtilityFunctions::isEmptyElement)
+        register("xml-escape", XmlUtilityFunctions::xmlEscape)
+        register("xml-unescape", XmlUtilityFunctions::xmlUnescape)
     }
     
     private fun register(name: String, impl: (List<UDM>) -> UDM) {
