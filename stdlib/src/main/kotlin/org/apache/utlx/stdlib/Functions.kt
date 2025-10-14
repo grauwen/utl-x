@@ -207,6 +207,15 @@ object StandardLibrary {
         register("formatNumber", ExtendedMathFunctions::formatNumber)
         register("parseInt", ExtendedMathFunctions::parseInt)
         register("parseFloat", ExtendedMathFunctions::parseFloat)
+
+        // Statistical functions
+        register("median", StatisticalFunctions::median)
+        register("mode", StatisticalFunctions::mode)
+        register("stdDev", StatisticalFunctions::stdDev)
+        register("variance", StatisticalFunctions::variance)
+        register("percentile", StatisticalFunctions::percentile)
+        register("quartiles", StatisticalFunctions::quartiles)
+        register("iqr", StatisticalFunctions::iqr)
     }
     
     private fun registerDateFunctions() {
