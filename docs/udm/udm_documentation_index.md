@@ -58,7 +58,7 @@ This is the complete documentation for UTL-X's **Universal Data Model (UDM)**. T
 
 ---
 
-## 2. 🔧 [UDM Advanced Implementation Guide](./udm_advanced_guiden.md)
+## 2. 🔧 [UDM Advanced Implementation Guide](./udm_advanced_guide.md)
 
 **Purpose:** Deep dive into implementation details  
 **Audience:** UTL-X contributors, format parser developers, advanced users  
