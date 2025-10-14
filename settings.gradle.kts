@@ -39,7 +39,7 @@ include("modules:cli")
 include("formats:xml")
 include("formats:json")
 include("formats:csv")
-//include("formats:yaml")
+include("formats:yaml")
 //include("formats:plugin")
 
 // Standard library
