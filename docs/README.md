@@ -27,7 +27,8 @@ Learn the UTL-X language:
 - **[Templates](language-guide/templates.md)** - XSLT-style template matching
 - **[Control Flow](language-guide/control-flow.md)** - Conditionals and pattern matching
 - **[Operators](language-guide/operators.md)** - Arithmetic, logical, comparison
-- **[universal-data-model (UDM)](udm/udm_documentation_index.md)** - Arithmetic, logical, comparison
+- **[UDM](udm/udm_documentation_index.md)** - Universal Data Model
+- **[Schema Support ](modules/analysis/real_world_integration_examples.md)** - Universal Data Model
 
 ### 📄 Format Guides
 
