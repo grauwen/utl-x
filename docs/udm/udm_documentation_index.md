@@ -6,7 +6,7 @@ This is the complete documentation for UTL-X's **Universal Data Model (UDM)**. T
 
 ---
 
-## 1. 📘 [UDM Complete Guide](./udm-complete-guide.md)
+## 1. 📘 [UDM Complete Guide](./udm_complete_guide.md)
 
 **Purpose:** Foundational understanding of UDM  
 **Audience:** All UTL-X users, architects, developers  
@@ -58,7 +58,7 @@ This is the complete documentation for UTL-X's **Universal Data Model (UDM)**. T
 
 ---
 
-## 2. 🔧 [UDM Advanced Implementation Guide](./udm-advanced-implementation.md)
+## 2. 🔧 [UDM Advanced Implementation Guide](./udm_advanced_guiden.md)
 
 **Purpose:** Deep dive into implementation details  
 **Audience:** UTL-X contributors, format parser developers, advanced users  
@@ -106,7 +106,7 @@ This is the complete documentation for UTL-X's **Universal Data Model (UDM)**. T
 
 ---
 
-## 3. 🎨 [UDM Visual Guide & Real-World Examples](./udm-visual-examples.md)
+## 3. 🎨 [UDM Visual Guide & Real-World Examples](./udm_visual_examples.md)
 
 **Purpose:** Practical examples and visual understanding  
 **Audience:** All users looking for practical guidance  
