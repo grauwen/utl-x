@@ -177,9 +177,9 @@ object StandardLibrary {
         register("random", MathFunctions::random)
         
         // Extended math
-        register("format-number", ExtendedMathFunctions::formatNumber)
-        register("parse-int", ExtendedMathFunctions::parseInt)
-        register("parse-float", ExtendedMathFunctions::parseFloat)
+        register("formatNumber", ExtendedMathFunctions::formatNumber)
+        register("parseInt", ExtendedMathFunctions::parseInt)
+        register("parseFloat", ExtendedMathFunctions::parseFloat)
     }
     
     private fun registerDateFunctions() {
@@ -198,8 +198,8 @@ object StandardLibrary {
         register("hours", ExtendedDateFunctions::hours)
         register("minutes", ExtendedDateFunctions::minutes)
         register("seconds", ExtendedDateFunctions::seconds)
-        register("compare-dates", ExtendedDateFunctions::compareDates)
-        register("validate-date", ExtendedDateFunctions::validateDate)
+        register("compareDates", ExtendedDateFunctions::compareDates)
+        register("validateDate", ExtendedDateFunctions::validateDate)
         
         // More date functions
         register("addMonths", MoreDateFunctions::addMonths)
@@ -288,39 +288,40 @@ object StandardLibrary {
     }
     
     private fun registerEncodingFunctions() {
-        register("base64-encode", EncodingFunctions::base64Encode)
-        register("base64-decode", EncodingFunctions::base64Decode)
-        register("url-encode", EncodingFunctions::urlEncode)
-        register("url-decode", EncodingFunctions::urlDecode)
-        register("hex-encode", EncodingFunctions::hexEncode)
-        register("hex-decode", EncodingFunctions::hexDecode)
+        register("base64Encode", EncodingFunctions::base64Encode)
+        register("base64Decode", EncodingFunctions::base64Decode)
+        register("urlEncode", EncodingFunctions::urlEncode)
+        register("urlDecode", EncodingFunctions::urlDecode)
+        register("hexEncode", EncodingFunctions::hexEncode)
+        register("hexDecode", EncodingFunctions::hexDecode)
+        
     }
     
     private fun registerXmlFunctions() {
         // QName functions
-        register("local-name", QNameFunctions::localName)
-        register("namespace-uri", QNameFunctions::namespaceUri)
-        register("name", QNameFunctions::qualifiedName)
-        register("namespace-prefix", QNameFunctions::namespacePrefix)
-        register("resolve-qname", QNameFunctions::resolveQName)
-        register("create-qname", QNameFunctions::createQName)
-        register("has-namespace", QNameFunctions::hasNamespace)
-        register("get-namespaces", QNameFunctions::getNamespaces)
-        register("matches-qname", QNameFunctions::matchesQName)
+        register("localName", QNameFunctions::localName)
+        register("namespaceUri", QNameFunctions::namespaceUri)
+        register("qualifiedName", QNameFunctions::qualifiedName)
+        register("namespacePrefix", QNameFunctions::namespacePrefix)
+        register("resolveQname", QNameFunctions::resolveQName)
+        register("createQname", QNameFunctions::createQName)
+        register("hasNamespace", QNameFunctions::hasNamespace)
+        register("getNamespaces", QNameFunctions::getNamespaces)
+        register("matchesQname", QNameFunctions::matchesQName)
         
         // XML utility functions
-        register("node-type", XmlUtilityFunctions::nodeType)
-        register("text-content", XmlUtilityFunctions::textContent)
+        register("nodeType", XmlUtilityFunctions::nodeType)
+        register("textContent", XmlUtilityFunctions::textContent)
         register("attributes", XmlUtilityFunctions::attributes)
         register("attribute", XmlUtilityFunctions::attribute)
-        register("has-attribute", XmlUtilityFunctions::hasAttribute)
-        register("child-count", XmlUtilityFunctions::childCount)
-        register("child-names", XmlUtilityFunctions::childNames)
+        register("hasAttribute", XmlUtilityFunctions::hasAttribute)
+        register("childCount", XmlUtilityFunctions::childCount)
+        register("childNames", XmlUtilityFunctions::childNames)
         register("parent", XmlUtilityFunctions::parent)
-        register("element-path", XmlUtilityFunctions::elementPath)
-        register("is-empty-element", XmlUtilityFunctions::isEmptyElement)
-        register("xml-escape", XmlUtilityFunctions::xmlEscape)
-        register("xml-unescape", XmlUtilityFunctions::xmlUnescape)
+        register("elementPath", XmlUtilityFunctions::elementPath)
+        register("isEmptyElement", XmlUtilityFunctions::isEmptyElement)
+        register("xmlEscape", XmlUtilityFunctions::xmlEscape)
+        register("xmlUnescape", XmlUtilityFunctions::xmlUnescape)
     }
     
     private fun registerLogicalFunctions() {
