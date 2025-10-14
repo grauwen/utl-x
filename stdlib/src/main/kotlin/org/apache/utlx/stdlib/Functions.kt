@@ -312,6 +312,13 @@ object StandardLibrary {
         register("merge", ObjectFunctions::merge)
         register("pick", ObjectFunctions::pick)
         register("omit", ObjectFunctions::omit)
+        //added
+        register("invert", CriticalObjectFunctions::invert)
+        register("deepMerge", CriticalObjectFunctions::deepMerge)
+        register("deepMergeAll", CriticalObjectFunctions::deepMergeAll)
+        register("deepClone", CriticalObjectFunctions::deepClone)
+        register("getPath", CriticalObjectFunctions::getPath)
+        register("setPath", CriticalObjectFunctions::setPath)
     }
     
     private fun registerEncodingFunctions() {
