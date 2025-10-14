@@ -28,7 +28,7 @@ Learn the UTL-X language:
 - **[Control Flow](language-guide/control-flow.md)** - Conditionals and pattern matching
 - **[Operators](language-guide/operators.md)** - Arithmetic, logical, comparison
 - **[UDM](udm/udm_documentation_index.md)** - Universal Data Model
-- **[Schema Support ](../modules/analysis/real_world_integration_example.md)** - Integration support through design time schema generation (for example Apache Camel)
+- **[Schema Support ](https://github.com/grauwen/utl-x/blob/main/modules/analysis/real_world_integration_example.md)** - Integration support through design time schema generation (for example Apache Camel)
 
 ### 📄 Format Guides
 
