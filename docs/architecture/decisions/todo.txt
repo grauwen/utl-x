@@ -1,0 +1,4 @@
+TODO's
+
+- Comfornmance suite
+- Design time generate an output meta data representation like JSON SCHEMA or XSD based on either an XML input example + UTLX def or XSD (or JSON schema) input +UTLX def
