@@ -6,6 +6,7 @@ import org.apache.utlx.stdlib.FunctionArgumentException
 import java.util.Base64
 import java.net.URLEncoder
 import java.net.URLDecoder
+import java.security.MessageDigest
 
 /**
  * Encoding and decoding functions
@@ -87,6 +88,200 @@ object EncodingFunctions {
             throw FunctionArgumentException("Invalid hex string: $hex")
         }
     }
+
+        /**
+     * Calculate MD5 hash of a string
+     * 
+     * Returns hexadecimal string representation of the MD5 hash.
+     * 
+     * @param str Input string to hash
+     * @return MD5 hash as hex string (32 characters)
+     * 
+     * @example
+     * ```kotlin
+     * md5(UDM.Scalar("hello"))
+     * // Returns: UDM.Scalar("5d41402abc4b2a76b9719d911017c592")
+     * ```
+     */
+    fun md5(str: UDM): UDM {
+        val value = (str as? UDM.Scalar)?.value as? String
+            ?: throw IllegalArgumentException("md5() requires a string argument")
+        
+        val md = MessageDigest.getInstance("MD5")
+        val hashBytes = md.digest(value.toByteArray(Charsets.UTF_8))
+        val hexString = hashBytes.joinToString("") { "%02x".format(it) }
+        
+        return UDM.Scalar(hexString)
+    }
+    
+    /**
+     * Calculate SHA-256 hash of a string
+     * 
+     * Returns hexadecimal string representation of the SHA-256 hash.
+     * SHA-256 is part of the SHA-2 family and is cryptographically secure.
+     * 
+     * @param str Input string to hash
+     * @return SHA-256 hash as hex string (64 characters)
+     * 
+     * @example
+     * ```kotlin
+     * sha256(UDM.Scalar("hello"))
+     * // Returns: UDM.Scalar("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824")
+     * ```
+     */
+    fun sha256(str: UDM): UDM {
+        val value = (str as? UDM.Scalar)?.value as? String
+            ?: throw IllegalArgumentException("sha256() requires a string argument")
+        
+        val md = MessageDigest.getInstance("SHA-256")
+        val hashBytes = md.digest(value.toByteArray(Charsets.UTF_8))
+        val hexString = hashBytes.joinToString("") { "%02x".format(it) }
+        
+        return UDM.Scalar(hexString)
+    }
+    
+    /**
+     * Calculate SHA-512 hash of a string
+     * 
+     * Returns hexadecimal string representation of the SHA-512 hash.
+     * SHA-512 is part of the SHA-2 family and provides higher security than SHA-256.
+     * 
+     * @param str Input string to hash
+     * @return SHA-512 hash as hex string (128 characters)
+     * 
+     * @example
+     * ```kotlin
+     * sha512(UDM.Scalar("hello"))
+     * // Returns: UDM.Scalar("9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043")
+     * ```
+     */
+    fun sha512(str: UDM): UDM {
+        val value = (str as? UDM.Scalar)?.value as? String
+            ?: throw IllegalArgumentException("sha512() requires a string argument")
+        
+        val md = MessageDigest.getInstance("SHA-512")
+        val hashBytes = md.digest(value.toByteArray(Charsets.UTF_8))
+        val hexString = hashBytes.joinToString("") { "%02x".format(it) }
+        
+        return UDM.Scalar(hexString)
+    }
+    
+    /**
+     * Calculate SHA-1 hash of a string (DEPRECATED - use SHA-256 instead)
+     * 
+     * SHA-1 is considered cryptographically broken and should not be used
+     * for security purposes. Use SHA-256 or SHA-512 instead.
+     * Provided for compatibility with legacy systems only.
+     * 
+     * @param str Input string to hash
+     * @return SHA-1 hash as hex string (40 characters)
+     * 
+     * @deprecated Use sha256() or sha512() instead
+     */
+    @Deprecated(
+        message = "SHA-1 is cryptographically broken. Use sha256() or sha512() instead.",
+        replaceWith = ReplaceWith("sha256(str)")
+    )
+    fun sha1(str: UDM): UDM {
+        val value = (str as? UDM.Scalar)?.value as? String
+            ?: throw IllegalArgumentException("sha1() requires a string argument")
+        
+        val md = MessageDigest.getInstance("SHA-1")
+        val hashBytes = md.digest(value.toByteArray(Charsets.UTF_8))
+        val hexString = hashBytes.joinToString("") { "%02x".format(it) }
+        
+        return UDM.Scalar(hexString)
+    }
+    
+    /**
+     * Calculate hash using specified algorithm
+     * 
+     * Generic hash function that supports multiple algorithms.
+     * 
+     * @param str Input string to hash
+     * @param algorithm Hash algorithm name (e.g., "MD5", "SHA-256", "SHA-512")
+     * @return Hash as hex string
+     * 
+     * @example
+     * ```kotlin
+     * hash(UDM.Scalar("hello"), UDM.Scalar("SHA-256"))
+     * // Returns same as sha256("hello")
+     * ```
+     * 
+     * Supported algorithms:
+     * - MD5
+     * - SHA-1 (deprecated)
+     * - SHA-256
+     * - SHA-512
+     * - SHA-384
+     */
+    fun hash(str: UDM, algorithm: UDM): UDM {
+        val value = (str as? UDM.Scalar)?.value as? String
+            ?: throw IllegalArgumentException("hash() requires a string as first argument")
+        
+        val alg = (algorithm as? UDM.Scalar)?.value as? String
+            ?: throw IllegalArgumentException("hash() requires an algorithm name as second argument")
+        
+        try {
+            val md = MessageDigest.getInstance(alg)
+            val hashBytes = md.digest(value.toByteArray(Charsets.UTF_8))
+            val hexString = hashBytes.joinToString("") { "%02x".format(it) }
+            
+            return UDM.Scalar(hexString)
+        } catch (e: java.security.NoSuchAlgorithmException) {
+            throw IllegalArgumentException("Unsupported hash algorithm: $alg. Supported: MD5, SHA-1, SHA-256, SHA-512", e)
+        }
+    }
+    
+    /**
+     * Calculate HMAC (Hash-based Message Authentication Code)
+     * 
+     * HMAC provides message authentication using a cryptographic hash function
+     * in combination with a secret key.
+     * 
+     * @param str Input string to hash
+     * @param key Secret key for HMAC
+     * @param algorithm Hash algorithm (default: "HmacSHA256")
+     * @return HMAC as hex string
+     * 
+     * @example
+     * ```kotlin
+     * hmac(UDM.Scalar("hello"), UDM.Scalar("secret-key"), UDM.Scalar("HmacSHA256"))
+     * // Returns HMAC-SHA256 hash
+     * ```
+     * 
+     * Supported algorithms:
+     * - HmacMD5
+     * - HmacSHA1
+     * - HmacSHA256 (recommended)
+     * - HmacSHA512
+     */
+    fun hmac(str: UDM, key: UDM, algorithm: UDM = UDM.Scalar("HmacSHA256")): UDM {
+        val value = (str as? UDM.Scalar)?.value as? String
+            ?: throw IllegalArgumentException("hmac() requires a string as first argument")
+        
+        val keyValue = (key as? UDM.Scalar)?.value as? String
+            ?: throw IllegalArgumentException("hmac() requires a key as second argument")
+        
+        val alg = (algorithm as? UDM.Scalar)?.value as? String ?: "HmacSHA256"
+        
+        try {
+            val mac = javax.crypto.Mac.getInstance(alg)
+            val secretKey = javax.crypto.spec.SecretKeySpec(
+                keyValue.toByteArray(Charsets.UTF_8),
+                alg
+            )
+            mac.init(secretKey)
+            
+            val hashBytes = mac.doFinal(value.toByteArray(Charsets.UTF_8))
+            val hexString = hashBytes.joinToString("") { "%02x".format(it) }
+            
+            return UDM.Scalar(hexString)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("HMAC calculation failed: ${e.message}", e)
+        }
+    }
+
     
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
