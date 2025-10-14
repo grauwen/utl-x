@@ -1,0 +1,269 @@
+# Dockerfile
+# Multi-stage build for UTL-X CLI
+
+# Stage 1: Build
+FROM gradle:8.5-jdk17 AS builder
+
+WORKDIR /build
+
+# Copy gradle files first for better caching
+COPY build.gradle.kts settings.gradle.kts gradle.properties ./
+COPY modules/core/build.gradle.kts modules/core/
+COPY modules/cli/build.gradle.kts modules/cli/
+COPY formats/xml/build.gradle.kts formats/xml/
+COPY formats/json/build.gradle.kts formats/json/
+COPY formats/csv/build.gradle.kts formats/csv/
+
+# Download dependencies
+RUN gradle dependencies --no-daemon || true
+
+# Copy source code
+COPY modules/ modules/
+COPY formats/ formats/
+
+# Build the project
+RUN gradle :modules:cli:jar --no-daemon
+
+# Stage 2: Runtime (JVM-based)
+FROM eclipse-temurin:17-jre-alpine AS runtime-jvm
+
+LABEL maintainer="Ir. Marcel A. Grauwen"
+LABEL description="UTL-X CLI - Universal Transformation Language Extended"
+LABEL version="1.0.0-SNAPSHOT"
+
+# Install bash for script support
+RUN apk add --no-cache bash
+
+WORKDIR /utlx
+
+# Copy the JAR from builder
+COPY --from=builder /build/modules/cli/build/libs/cli-*.jar /utlx/utlx-cli.jar
+
+# Create a wrapper script
+RUN echo '#!/bin/bash' > /usr/local/bin/utlx && \
+    echo 'exec java -jar /utlx/utlx-cli.jar "$@"' >> /usr/local/bin/utlx && \
+    chmod +x /usr/local/bin/utlx
+
+# Create workspace directory
+RUN mkdir -p /workspace
+WORKDIR /workspace
+
+ENTRYPOINT ["utlx"]
+CMD ["--help"]
+
+# Stage 3: Native build (requires GraalVM)
+FROM ghcr.io/graalvm/graalvm-ce:ol8-java17-22 AS builder-native
+
+WORKDIR /build
+
+# Install dependencies
+RUN gu install native-image
+
+# Copy gradle files
+COPY build.gradle.kts settings.gradle.kts gradle.properties ./
+COPY gradle/ gradle/
+COPY gradlew ./
+COPY modules/ modules/
+COPY formats/ formats/
+
+# Build native image
+RUN ./gradlew :modules:cli:nativeCompile --no-daemon
+
+# Stage 4: Runtime (Native)
+FROM alpine:latest AS runtime-native
+
+LABEL maintainer="Ir. Marcel A. Grauwen"
+LABEL description="UTL-X CLI - Native Binary"
+LABEL version="1.0.0-SNAPSHOT"
+
+# Install required libraries for GraalVM native image
+RUN apk add --no-cache libstdc++ zlib
+
+WORKDIR /utlx
+
+# Copy native binary
+COPY --from=builder-native /build/modules/cli/build/native/nativeCompile/utlx /usr/local/bin/utlx
+
+# Create workspace
+RUN mkdir -p /workspace
+WORKDIR /workspace
+
+ENTRYPOINT ["utlx"]
+CMD ["--help"]
+
+---
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # JVM-based CLI
+  utlx-jvm:
+    build:
+      context: .
+      target: runtime-jvm
+    image: utlx-cli:jvm
+    container_name: utlx-cli-jvm
+    volumes:
+      - ./examples:/workspace/examples:ro
+      - ./output:/workspace/output
+    command: version
+
+  # Native binary CLI
+  utlx-native:
+    build:
+      context: .
+      target: runtime-native
+    image: utlx-cli:native
+    container_name: utlx-cli-native
+    volumes:
+      - ./examples:/workspace/examples:ro
+      - ./output:/workspace/output
+    command: version
+
+  # Development environment
+  utlx-dev:
+    build:
+      context: .
+      target: builder
+    image: utlx-cli:dev
+    container_name: utlx-cli-dev
+    volumes:
+      - .:/build
+      - gradle-cache:/root/.gradle
+    working_dir: /build
+    command: bash
+
+volumes:
+  gradle-cache:
+
+---
+# .dockerignore
+# Build artifacts
+build/
+*/build/
+.gradle/
+*.jar
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+LICENSE
+
+# Tests
+*/src/test/
+
+# CI
+.github/
+
+# Misc
+.DS_Store
+*.log
+tmp/
+temp/
+
+---
+# scripts/docker-build.sh
+#!/bin/bash
+# Build Docker images for UTL-X CLI
+
+set -e
+
+echo "Building UTL-X CLI Docker images..."
+
+# Build JVM image (default)
+echo "Building JVM-based image..."
+docker build --target runtime-jvm -t utlx-cli:jvm -t utlx-cli:latest .
+
+# Build native image (optional, takes longer)
+if [ "$1" == "--native" ]; then
+    echo "Building native binary image..."
+    docker build --target runtime-native -t utlx-cli:native .
+fi
+
+echo "✓ Build complete!"
+echo ""
+echo "Available images:"
+docker images | grep utlx-cli
+
+echo ""
+echo "Usage:"
+echo "  docker run -v \$(pwd):/workspace utlx-cli:latest transform input.xml script.utlx"
+echo ""
+echo "Or use docker-compose:"
+echo "  docker-compose run utlx-jvm transform examples/input.xml examples/script.utlx"
+
+---
+# scripts/docker-test.sh
+#!/bin/bash
+# Test Docker images
+
+set -e
+
+echo "Testing UTL-X CLI Docker images..."
+
+# Create test files
+mkdir -p /tmp/utlx-docker-test
+
+cat > /tmp/utlx-docker-test/test.xml << 'EOF'
+<data>
+  <item>Test</item>
+</data>
+EOF
+
+cat > /tmp/utlx-docker-test/test.utlx << 'EOF'
+%utlx 1.0
+input xml
+output json
+---
+{
+  result: input.data.item
+}
+EOF
+
+# Test JVM image
+echo "Testing JVM image..."
+docker run --rm \
+  -v /tmp/utlx-docker-test:/workspace \
+  utlx-cli:jvm \
+  version
+
+docker run --rm \
+  -v /tmp/utlx-docker-test:/workspace \
+  utlx-cli:jvm \
+  transform /workspace/test.xml /workspace/test.utlx
+
+echo "✓ JVM image test passed"
+
+# Test native image if available
+if docker images | grep -q "utlx-cli.*native"; then
+    echo "Testing native image..."
+    docker run --rm \
+      -v /tmp/utlx-docker-test:/workspace \
+      utlx-cli:native \
+      version
+    
+    docker run --rm \
+      -v /tmp/utlx-docker-test:/workspace \
+      utlx-cli:native \
+      transform /workspace/test.xml /workspace/test.utlx
+    
+    echo "✓ Native image test passed"
+fi
+
+# Cleanup
+rm -rf /tmp/utlx-docker-test
+
+echo ""
+echo "✓ All Docker tests passed!"
