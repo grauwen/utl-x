@@ -123,6 +123,16 @@ object StandardLibrary {
         register("titleCase", CaseFunctions::titleCase)
         register("dotCase", CaseFunctions::dotCase)
         register("pathCase", CaseFunctions::pathCase)
+
+         // Case conversion
+        register("camelize", CaseConversionFunctions::camelize)
+        register("snakeCase", CaseConversionFunctions::snakeCase)
+        register("titleCase", CaseConversionFunctions::titleCase)
+        register("uncamelize", CaseConversionFunctions::uncamelize)
+ 
+        // Utilities
+        register("truncate", CaseConversionFunctions::truncate)
+        register("slugify", CaseConversionFunctions::slugify)
                  
     }
     
