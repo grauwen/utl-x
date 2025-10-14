@@ -11,6 +11,7 @@ import org.apache.utlx.stdlib.objects.*
 import org.apache.utlx.stdlib.core.*
 import org.apache.utlx.stdlib.encoding.*
 import org.apache.utlx.stdlib.xml.*
+import org.apache.utlx.stdlib.logical.*
 
 /**
  * UTL-X Standard Library Function Registry
@@ -59,6 +60,9 @@ object StandardLibrary {
         
         // XML & QName functions
         registerXmlFunctions()
+        
+        // Logical functions
+        registerLogicalFunctions()
     }
     
     private fun registerCoreFunctions() {
@@ -306,6 +310,25 @@ object StandardLibrary {
         register("is-empty-element", XmlUtilityFunctions::isEmptyElement)
         register("xml-escape", XmlUtilityFunctions::xmlEscape)
         register("xml-unescape", XmlUtilityFunctions::xmlUnescape)
+    }
+    
+    private fun registerLogicalFunctions() {
+        // Basic logical operations
+        register("not", LogicalFunctions::not)
+        register("xor", LogicalFunctions::xor)
+        register("and", LogicalFunctions::and)
+        register("or", LogicalFunctions::or)
+        
+        // Advanced logical gates
+        register("nand", LogicalFunctions::nand)
+        register("nor", LogicalFunctions::nor)
+        register("xnor", LogicalFunctions::xnor)
+        register("implies", LogicalFunctions::implies)
+        
+        // Array boolean operations
+        register("all", LogicalFunctions::all)
+        register("any", LogicalFunctions::any)
+        register("none", LogicalFunctions::none)
     }
     
     private fun register(name: String, impl: (List<UDM>) -> UDM) {
