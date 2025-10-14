@@ -64,7 +64,7 @@
 | concat-sequence | ❌ | ✅ `tib:concat-sequence()` |
 
 **Missing (Low Priority):**
-- `concat-sequence()` - Can use `join()`
+- `concat-sequence()` => Can use `join()`
 
 **Status:** ✅ **All critical functions present**
 
@@ -126,7 +126,7 @@
 | parse-long | ❌ | ✅ `tib:parse-long()` |
 
 **Missing (Low Priority):**
-- `parse-double()`, `parse-long()` - `parse-float()` covers most cases
+- `parse-double()`, `parse-long()` => `parse-float()` covers most cases
 
 **Status:** ✅ **Complete for 99% of use cases**
 
