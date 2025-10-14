@@ -14,7 +14,7 @@ import org.apache.utlx.stdlib.encoding.*
 /**
  * UTL-X Standard Library Function Registry
  * 
- * COMPLETE: 120+ functions achieving 100%+ parity with TIBCO BW
+ * ENTERPRISE EDITION: 167+ functions - Industry-leading transformation library
  */
 object StandardLibrary {
     
@@ -181,7 +181,7 @@ object StandardLibrary {
         register("compare-dates", ExtendedDateFunctions::compareDates)
         register("validate-date", ExtendedDateFunctions::validateDate)
         
-        // More date functions (Priority 2)
+        // More date functions
         register("addMonths", MoreDateFunctions::addMonths)
         register("addYears", MoreDateFunctions::addYears)
         register("addMinutes", MoreDateFunctions::addMinutes)
@@ -192,6 +192,59 @@ object StandardLibrary {
         register("diffSeconds", MoreDateFunctions::diffSeconds)
         register("currentDate", MoreDateFunctions::currentDate)
         register("currentTime", MoreDateFunctions::currentTime)
+        
+        // Timezone functions
+        register("convertTimezone", TimezoneFunctions::convertTimezone)
+        register("getTimezoneName", TimezoneFunctions::getTimezoneName)
+        register("getTimezoneOffsetSeconds", TimezoneFunctions::getTimezoneOffsetSeconds)
+        register("getTimezoneOffsetHours", TimezoneFunctions::getTimezoneOffsetHours)
+        register("parseDateTimeWithTimezone", TimezoneFunctions::parseDateTimeWithTimezone)
+        register("formatDateTimeInTimezone", TimezoneFunctions::formatDateTimeInTimezone)
+        register("isValidTimezone", TimezoneFunctions::isValidTimezone)
+        register("toUTC", TimezoneFunctions::toUTC)
+        register("fromUTC", TimezoneFunctions::fromUTC)
+        
+        // Rich date arithmetic
+        register("addWeeks", RichDateFunctions::addWeeks)
+        register("addQuarters", RichDateFunctions::addQuarters)
+        register("diffWeeks", RichDateFunctions::diffWeeks)
+        register("diffMonths", RichDateFunctions::diffMonths)
+        register("diffYears", RichDateFunctions::diffYears)
+        
+        // Start/end of period
+        register("startOfDay", RichDateFunctions::startOfDay)
+        register("endOfDay", RichDateFunctions::endOfDay)
+        register("startOfWeek", RichDateFunctions::startOfWeek)
+        register("endOfWeek", RichDateFunctions::endOfWeek)
+        register("startOfMonth", RichDateFunctions::startOfMonth)
+        register("endOfMonth", RichDateFunctions::endOfMonth)
+        register("startOfYear", RichDateFunctions::startOfYear)
+        register("endOfYear", RichDateFunctions::endOfYear)
+        register("startOfQuarter", RichDateFunctions::startOfQuarter)
+        register("endOfQuarter", RichDateFunctions::endOfQuarter)
+        
+        // Date information
+        register("dayOfWeek", RichDateFunctions::dayOfWeek)
+        register("dayOfWeekName", RichDateFunctions::dayOfWeekName)
+        register("dayOfYear", RichDateFunctions::dayOfYear)
+        register("weekOfYear", RichDateFunctions::weekOfYear)
+        register("quarter", RichDateFunctions::quarter)
+        register("monthName", RichDateFunctions::monthName)
+        register("isLeapYear", RichDateFunctions::isLeapYearFunc)
+        register("daysInMonth", RichDateFunctions::daysInMonth)
+        register("daysInYear", RichDateFunctions::daysInYear)
+        
+        // Date comparisons
+        register("isBefore", RichDateFunctions::isBefore)
+        register("isAfter", RichDateFunctions::isAfter)
+        register("isSameDay", RichDateFunctions::isSameDay)
+        register("isBetween", RichDateFunctions::isBetween)
+        register("isToday", RichDateFunctions::isToday)
+        register("isWeekend", RichDateFunctions::isWeekend)
+        register("isWeekday", RichDateFunctions::isWeekday)
+        
+        // Age calculation
+        register("age", RichDateFunctions::age)
     }
     
     private fun registerTypeFunctions() {
