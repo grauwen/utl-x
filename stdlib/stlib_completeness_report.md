@@ -58,14 +58,12 @@
 | repeat | ✅ | ❌ |
 | matches (regex) | ✅ | ✅ `tib:matches()` |
 | replace-regex | ✅ | ✅ `tib:replace()` |
-| left-trim | ❌ | ✅ `tib:left-trim()` |
-| right-trim | ❌ | ✅ `tib:right-trim()` |
-| translate | ❌ | ✅ |
+| left-trim | ✅ | ✅ `tib:left-trim()` |
+| right-trim | ✅ | ✅ `tib:right-trim()` |
+| translate | ✅  | ✅ |
 | concat-sequence | ❌ | ✅ `tib:concat-sequence()` |
 
 **Missing (Low Priority):**
-- `left-trim()`, `right-trim()` - Can use `trim()`
-- `translate()` - Character-by-character replacement (niche use)
 - `concat-sequence()` - Can use `join()`
 
 **Status:** ✅ **All critical functions present**
@@ -102,9 +100,9 @@
 | max | ✅ | ✅ `tib:max()` | |
 | count | ✅ | ✅ `tib:count()` | |
 | **Missing in UTL-X** | | | |
-| remove | ❌ | ✅ `tib:remove()` | Low priority |
-| insert-before | ❌ | ✅ `tib:insert-before()` | Low priority |
-| subsequence | ❌ | ✅ `tib:subsequence()` | Have take/drop |
+| remove | ✅ | ✅ `tib:remove()` | Low priority |
+| insert-before | ✅  | ✅ `tib:insert-before()` | Low priority |
+| subsequence | ✅  | ✅ `tib:subsequence()` | Have take/drop |
 
 **Status:** ⭐ **UTL-X significantly superior** - Modern functional programming
 
