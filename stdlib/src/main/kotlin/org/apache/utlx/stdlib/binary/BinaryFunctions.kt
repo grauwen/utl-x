@@ -526,6 +526,172 @@ object BinaryFunctions {
         
         return createBinaryUDM(byteArrayOf(byte))
     }
+
+   // ============================================
+    // BIT OPERATIONS
+    // ============================================
+    
+    /**
+     * Performs bitwise AND operation on two binaries
+     * 
+     * @param binary1 First binary
+     * @param binary2 Second binary
+     * @return Result of AND operation
+     * 
+     * Example:
+     * ```
+     * bitwiseAnd(binary1, binary2)
+     * ```
+     */
+    fun bitwiseAnd(binary1: UDMValue, binary2: UDMValue): UDMValue {
+        val bytes1 = (binary1 as? UDMBinary)?.data ?: return UDMNull
+        val bytes2 = (binary2 as? UDMBinary)?.data ?: return UDMNull
+        
+        val minLen = minOf(bytes1.size, bytes2.size)
+        val result = ByteArray(minLen) { i ->
+            (bytes1[i].toInt() and bytes2[i].toInt()).toByte()
+        }
+        
+        return UDMBinary(result)
+    }
+    
+    /**
+     * Performs bitwise OR operation on two binaries
+     * 
+     * @param binary1 First binary
+     * @param binary2 Second binary
+     * @return Result of OR operation
+     * 
+     * Example:
+     * ```
+     * bitwiseOr(binary1, binary2)
+     * ```
+     */
+    fun bitwiseOr(binary1: UDMValue, binary2: UDMValue): UDMValue {
+        val bytes1 = (binary1 as? UDMBinary)?.data ?: return UDMNull
+        val bytes2 = (binary2 as? UDMBinary)?.data ?: return UDMNull
+        
+        val minLen = minOf(bytes1.size, bytes2.size)
+        val result = ByteArray(minLen) { i ->
+            (bytes1[i].toInt() or bytes2[i].toInt()).toByte()
+        }
+        
+        return UDMBinary(result)
+    }
+    
+    /**
+     * Performs bitwise XOR operation on two binaries
+     * 
+     * @param binary1 First binary
+     * @param binary2 Second binary
+     * @return Result of XOR operation
+     * 
+     * Example:
+     * ```
+     * bitwiseXor(binary1, binary2)
+     * ```
+     */
+    fun bitwiseXor(binary1: UDMValue, binary2: UDMValue): UDMValue {
+        val bytes1 = (binary1 as? UDMBinary)?.data ?: return UDMNull
+        val bytes2 = (binary2 as? UDMBinary)?.data ?: return UDMNull
+        
+        val minLen = minOf(bytes1.size, bytes2.size)
+        val result = ByteArray(minLen) { i ->
+            (bytes1[i].toInt() xor bytes2[i].toInt()).toByte()
+        }
+        
+        return UDMBinary(result)
+    }
+    
+    /**
+     * Performs bitwise NOT operation (inversion)
+     * 
+     * @param binary The binary data
+     * @return Inverted binary
+     * 
+     * Example:
+     * ```
+     * bitwiseNot(binary)
+     * ```
+     */
+    fun bitwiseNot(binary: UDMValue): UDMValue {
+        val bytes = (binary as? UDMBinary)?.data ?: return UDMNull
+        
+        val result = ByteArray(bytes.size) { i ->
+            bytes[i].inv()
+        }
+        
+        return UDMBinary(result)
+    }
+    
+    /**
+     * Shifts bits left by specified positions
+     * 
+     * @param binary The binary data
+     * @param positions Number of positions to shift
+     * @return Shifted binary
+     * 
+     * Example:
+     * ```
+     * shiftLeft(binary, 2) // Shift left by 2 bits
+     * ```
+     */
+    fun shiftLeft(binary: UDMValue, positions: UDMValue): UDMValue {
+        val bytes = (binary as? UDMBinary)?.data ?: return UDMNull
+        val shift = (positions as? UDMNumber)?.value?.toInt() ?: 0
+        
+        val result = ByteArray(bytes.size) { i ->
+            (bytes[i].toInt() shl shift).toByte()
+        }
+        
+        return UDMBinary(result)
+    }
+    
+    /**
+     * Shifts bits right by specified positions
+     * 
+     * @param binary The binary data
+     * @param positions Number of positions to shift
+     * @return Shifted binary
+     * 
+     * Example:
+     * ```
+     * shiftRight(binary, 2) // Shift right by 2 bits
+     * ```
+     */
+    fun shiftRight(binary: UDMValue, positions: UDMValue): UDMValue {
+        val bytes = (binary as? UDMBinary)?.data ?: return UDMNull
+        val shift = (positions as? UDMNumber)?.value?.toInt() ?: 0
+        
+        val result = ByteArray(bytes.size) { i ->
+            (bytes[i].toInt() shr shift).toByte()
+        }
+        
+        return UDMBinary(result)
+    }
+
+    // ============================================
+    // BINARY COMPARISON
+    // ============================================
+    
+    /**
+     * Compares two binaries for equality
+     * 
+     * @param binary1 First binary
+     * @param binary2 Second binary
+     * @return true if binaries are equal
+     * 
+     * Example:
+     * ```
+     * equals(binary1, binary2)
+     * ```
+     */
+    fun equals(binary1: UDMValue, binary2: UDMValue): UDMValue {
+        val bytes1 = (binary1 as? UDMBinary)?.data ?: return UDMBoolean(false)
+        val bytes2 = (binary2 as? UDMBinary)?.data ?: return UDMBoolean(false)
+        
+        return UDMBoolean(bytes1.contentEquals(bytes2))
+    }
     
     // ==================== HELPER FUNCTIONS ====================
     
@@ -620,6 +786,17 @@ object BinaryFunctions {
  *     register("writeFloat", BinaryFunctions::writeFloat)
  *     register("writeDouble", BinaryFunctions::writeDouble)
  *     register("writeByte", BinaryFunctions::writeByte)
+ *
+ *     // BIT operations
+ *      register("bitwiseAnd", BinaryFunctions::bitwiseAnd)
+ *      register("bitwiseOr", BinaryFunctions::bitwiseOr)
+ *      register("bitwiseXor", BinaryFunctions::bitwiseXor)
+ *      register("bitwiseNot", BinaryFunctions::bitwiseNot)
+ *      register("shiftLeft", BinaryFunctions::shiftLeft)
+ *      register("shiftRight", BinaryFunctions::shiftRight)
+ *
+ *     // BINARY COMPARISON
+ *     register("equalsBinary", BinaryFunctions::equals)
  * }
  * 
  * Then call in init block:
