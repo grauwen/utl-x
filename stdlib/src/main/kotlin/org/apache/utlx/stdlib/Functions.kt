@@ -15,6 +15,7 @@ import org.apache.utlx.stdlib.logical.*
 import org.apache.utlx.stdlib.url.*
 import org.apache.utlx.stdlib.util.*
 import org.apache.utlx.stdlib.binary.*
+import org.apache.utlx.stdlib.serialization.*
 
 
 
@@ -104,6 +105,9 @@ object StandardLibrary {
 
         //Debug functions
         registerDebugFunctions()
+
+        //Serialization
+        registerSerializationFunctions()
     }
     
     private fun registerCoreFunctions() {
@@ -697,6 +701,21 @@ object StandardLibrary {
            // BINARY COMPARISON
           register("equalsBinary", BinaryFunctions::equals)
       }
+
+
+    private fun  registerSerializationFunctions(){
+        //
+        register("parseJson", SerializationFunctions::parseJson)
+        register("renderJson", SerializationFunctions::renderJson)
+        register("parseXml", SerializationFunctions::parseXml)
+        register("renderXml", SerializationFunctions::renderXml)
+        register("parseYaml", SerializationFunctions::parseYaml)
+        register("renderYaml", SerializationFunctions::renderYaml)
+        register("parseCsv", SerializationFunctions::parseCsv)
+        register("renderCsv", SerializationFunctions::renderCsv)
+        register("parse", SerializationFunctions::parse)
+        register("render", SerializationFunctions::render)
+    }
 
     private fun register(name: String, impl: (List<UDM>) -> UDM) {
         functions[name] = UTLXFunction(name, impl)
