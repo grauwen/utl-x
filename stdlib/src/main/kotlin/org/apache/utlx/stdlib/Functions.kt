@@ -77,10 +77,22 @@ object StandardLibrary {
         registerTreeFunctions() 
 
         // CoercionFunctions
-         registerCoercionFunctions()     
+        registerCoercionFunctions()     
 
         //TimerFunctions
-          registerTimerFunctions()    
+        registerTimerFunctions()    
+
+        // Value functions
+        registerValueFunctions()     
+
+        //Diff functions
+        registerDiffFunctions()    
+
+        //Mime functions
+        registerMimeFunctions()      
+
+        //MultiPart functions
+        registerMultipartFunctions()
         
     }
     
@@ -503,47 +515,80 @@ object StandardLibrary {
           register("measure", TimerFunctions::measure)
      }
 
+      private fun registerValueFunctions() {
+          register("update", ValueFunctions::update)
+          register("mask", ValueFunctions::mask)
+          register("pick", ValueFunctions::pick)
+          register("omit", ValueFunctions::omit)
+          register("defaultValue", ValueFunctions::defaultValue)
+      }
+     
+      private fun registerDiffFunctions() {
+          register("diff", DiffFunctions::diff)
+          register("deepEquals", DiffFunctions::deepEquals)
+          register("patch", DiffFunctions::patch)
+     }
+     
+      private fun registerMimeFunctions() {
+         register("getMimeType", MimeFunctions::getMimeType)
+         register("getExtension", MimeFunctions::getExtension)
+         register("parseContentType", MimeFunctions::parseContentType)
+         register("buildContentType", MimeFunctions::buildContentType)
+      }
+      
+      private fun registerMultipartFunctions() {
+          register("parseBoundary", MultipartFunctions::parseBoundary)
+          register("buildMultipart", MultipartFunctions::buildMultipart)
+          register("generateBoundary", MultipartFunctions::generateBoundary)
+          register("createPart", MultipartFunctions::createPart)
+     }
+
+
+    
         /**
          * Registration in Functions.kt:
          * 
          * Add these to new registration methods:
          * 
-         * private fun registerTreeFunctions() {
-         *     register("treeMap", TreeFunctions::treeMap)
-         *     register("treeFilter", TreeFunctions::treeFilter)
-         *     register("treeFlatten", TreeFunctions::treeFlatten)
-         *     register("treeDepth", TreeFunctions::treeDepth)
-         *     register("treePaths", TreeFunctions::treePaths)
-         *     register("treeFind", TreeFunctions::treeFind)
+         * private fun registerValueFunctions() {
+         *     register("update", ValueFunctions::update)
+         *     register("mask", ValueFunctions::mask)
+         *     register("pick", ValueFunctions::pick)
+         *     register("omit", ValueFunctions::omit)
+         *     register("defaultValue", ValueFunctions::defaultValue)
          * }
          * 
-         * private fun registerCoercionFunctions() {
-         *     register("coerce", CoercionFunctions::coerce)
-         *     register("tryCoerce", CoercionFunctions::tryCoerce)
-         *     register("canCoerce", CoercionFunctions::canCoerce)
-         *     register("coerceAll", CoercionFunctions::coerceAll)
-         *     register("smartCoerce", CoercionFunctions::smartCoerce)
+         * private fun registerDiffFunctions() {
+         *     register("diff", DiffFunctions::diff)
+         *     register("deepEquals", DiffFunctions::deepEquals)
+         *     register("patch", DiffFunctions::patch)
          * }
          * 
-         * private fun registerTimerFunctions() {
-         *     register("timerStart", TimerFunctions::timerStart)
-         *     register("timerStop", TimerFunctions::timerStop)
-         *     register("timerCheck", TimerFunctions::timerCheck)
-         *     register("timerReset", TimerFunctions::timerReset)
-         *     register("timerStats", TimerFunctions::timerStats)
-         *     register("timerList", TimerFunctions::timerList)
-         *     register("timerClear", TimerFunctions::timerClear)
-         *     register("timestamp", TimerFunctions::timestamp)
-         *     register("measure", TimerFunctions::measure)
+         * private fun registerMimeFunctions() {
+         *     register("getMimeType", MimeFunctions::getMimeType)
+         *     register("getExtension", MimeFunctions::getExtension)
+         *     register("parseContentType", MimeFunctions::parseContentType)
+         *     register("buildContentType", MimeFunctions::buildContentType)
+         * }
+         * 
+         * private fun registerMultipartFunctions() {
+         *     register("parseBoundary", MultipartFunctions::parseBoundary)
+         *     register("buildMultipart", MultipartFunctions::buildMultipart)
+         *     register("generateBoundary", MultipartFunctions::generateBoundary)
+         *     register("createPart", MultipartFunctions::createPart)
          * }
          * 
          * Then call in init block:
          * init {
          *     registerConversionFunctions()
          *     registerURLFunctions()
-         *     registerTreeFunctions()         // ADD THIS!
-         *     registerCoercionFunctions()     // ADD THIS!
-         *     registerTimerFunctions()        // ADD THIS!
+         *     registerTreeFunctions()
+         *     registerCoercionFunctions()
+         *     registerTimerFunctions()
+         *     registerValueFunctions()      // ADD!
+         *     registerDiffFunctions()        // ADD!
+         *     registerMimeFunctions()        // ADD!
+         *     registerMultipartFunctions()   // ADD!
          *     // ... rest
          * }
          */
