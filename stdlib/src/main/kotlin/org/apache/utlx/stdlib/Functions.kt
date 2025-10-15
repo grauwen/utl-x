@@ -98,8 +98,6 @@ object StandardLibrary {
 
         //Binary functions
         registerBinaryFunctions()
-
-
         
     }
     
@@ -382,7 +380,7 @@ object StandardLibrary {
         register("urlDecode", EncodingFunctions::urlDecode)
         register("hexEncode", EncodingFunctions::hexEncode)
         register("hexDecode", EncodingFunctions::hexDecode)
-       // added
+       // basic crypto
         register("md5", EncodingFunctions::md5)
         register("sha256", EncodingFunctions::sha256)
         register("sha512", EncodingFunctions::sha512)
@@ -391,7 +389,30 @@ object StandardLibrary {
         register("hmac", EncodingFunctions::hmac)
 
         //AdvancedCryptoFunctions
-        //TODO add
+         
+        // HMAC functions
+        register("hmacMD5", AdvancedCryptoFunctions::hmacMD5)
+        register("hmacSHA1", AdvancedCryptoFunctions::hmacSHA1)
+        register("hmacSHA256", AdvancedCryptoFunctions::hmacSHA256)
+        register("hmacSHA384", AdvancedCryptoFunctions::hmacSHA384)
+        register("hmacSHA512", AdvancedCryptoFunctions::hmacSHA512)
+        register("hmacBase64", AdvancedCryptoFunctions::hmacBase64)
+        
+        // Encryption
+        register("encryptAES", AdvancedCryptoFunctions::encryptAES)
+        register("decryptAES", AdvancedCryptoFunctions::decryptAES)
+        register("encryptAES256", AdvancedCryptoFunctions::encryptAES256)
+        register("decryptAES256", AdvancedCryptoFunctions::decryptAES256)
+        
+        // Additional hashes
+        register("sha224", AdvancedCryptoFunctions::sha224)
+        register("sha384", AdvancedCryptoFunctions::sha384)
+        register("sha3_256", AdvancedCryptoFunctions::sha3_256)
+        register("sha3_512", AdvancedCryptoFunctions::sha3_512)
+        
+        // Utilities
+        register("generateIV", AdvancedCryptoFunctions::generateIV)
+        register("generateKey", AdvancedCryptoFunctions::generateKey)
     }
     
     private fun registerXmlFunctions() {
@@ -593,7 +614,18 @@ object StandardLibrary {
           register("writeFloat", BinaryFunctions::writeFloat)
           register("writeDouble", BinaryFunctions::writeDouble)
           register("writeByte", BinaryFunctions::writeByte)
+
+          //bit operation
+          //TODO add in code of BinaryFunctions
+          // register("bitwiseAnd", BinaryFunctions::bitwiseAnd)
+          // register("bitwiseOr", BinaryFunctions::bitwiseOr)
+          // register("bitwiseXor", BinaryFunctions::bitwiseXor)
+          // register("bitwiseNot", BinaryFunctions::bitwiseNot)
+          // register("shiftLeft", BinaryFunctions::shiftLeft)
+          // register("shiftRight", BinaryFunctions::shiftRight)
       }
+
+
     
  
 /**
