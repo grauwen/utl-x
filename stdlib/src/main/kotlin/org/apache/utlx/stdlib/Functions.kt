@@ -17,6 +17,7 @@ import org.apache.utlx.stdlib.util.*
 import org.apache.utlx.stdlib.binary.*
 import org.apache.utlx.stdlib.serialization.*
 import org.apache.utlx.stdlib.finance.*
+import org.apache.utlx.stdlib.geo.*
 
 
 
@@ -136,6 +137,8 @@ object StandardLibrary {
     
        // Financial functions
        registerFinancialFunctions()
+
+       //geo TODO ADD
 }
     }
     
