@@ -66,6 +66,10 @@ object StandardLibrary {
 
         //Conversion functions
         registerConversionFunctions()
+
+        //URL funcions
+        registerURLFunctions() 
+        
     }
     
     private fun registerCoreFunctions() {
@@ -426,6 +430,37 @@ object StandardLibrary {
          register("numberOrDefault", ConversionFunctions::numberOrDefault)
          register("stringOrDefault", ConversionFunctions::stringOrDefault)
      }
+
+    // Add new registration method
+    private fun registerURLFunctions() {
+        // URL parsing
+        register("parseURL", URLFunctions::parseURL)
+        register("getProtocol", URLFunctions::getProtocol)
+        register("getHost", URLFunctions::getHost)
+        register("getPort", URLFunctions::getPort)
+        register("getPath", URLFunctions::getPath)
+        register("getQuery", URLFunctions::getQuery)
+        register("getFragment", URLFunctions::getFragment)
+        register("getQueryParams", URLFunctions::getQueryParams)
+        register("getBaseURL", URLFunctions::getBaseURL)
+        
+        // Query string handling
+        register("parseQueryString", URLFunctions::parseQueryString)
+        register("buildQueryString", URLFunctions::buildQueryString)
+        
+        // URL construction
+        register("buildURL", URLFunctions::buildURL)
+        
+        // URL encoding/decoding
+        // NOTE: If these already exist in encoding module, skip these registrations
+        register("urlEncode", URLFunctions::urlEncode)
+        register("urlDecode", URLFunctions::urlDecode)
+        
+        // URL manipulation
+        register("addQueryParam", URLFunctions::addQueryParam)
+        register("removeQueryParam", URLFunctions::removeQueryParam)
+        register("isValidURL", URLFunctions::isValidURL)
+    }
     
     /**
      * Registration in Functions.kt:
