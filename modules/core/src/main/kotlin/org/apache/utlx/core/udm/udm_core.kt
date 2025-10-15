@@ -93,6 +93,23 @@ sealed class UDM {
             fun parse(iso8601: String) = DateTime(Instant.parse(iso8601))
         }
     }
+
+    /**
+    * Binary data type (byte arrays)
+    */
+    data class UDMBinary(val data: ByteArray) : UDMValue() {
+        override fun toJSON(): String = "\"<binary:${data.size} bytes>\""
+        
+        override fun toString(): String = "Binary(${data.size} bytes)"
+        
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is UDMBinary) return false
+            return data.contentEquals(other.data)
+        }
+        
+        override fun hashCode(): Int = data.contentHashCode()
+    }
     
     // Utility methods available on all UDM nodes
     fun isScalar(): Boolean = this is Scalar
