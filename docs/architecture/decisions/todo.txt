@@ -11,6 +11,7 @@ TODO's
 -stlib: serialize -> render (DOM -> string) , parse (string -> DOM) :: in theory also binary or string could be used :: distinct parsseJson, parseCsv, parseXml, parseYaml, renderXml, renderYaml, renderCsv, renderJson
 -stlib: parseNumber missing
 -stlib cannonalize  -> XML Canonicalization (C14N) standards:
+-stlib cdata handling in XML
 
 -lerna?
 
