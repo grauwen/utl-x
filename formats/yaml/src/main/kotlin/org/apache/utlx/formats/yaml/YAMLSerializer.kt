@@ -149,6 +149,10 @@ class YAMLSerializer {
                 
                 map
             }
+            
+            is UDM.Lambda -> {
+                "<function>"
+            }
         }
     }
     

@@ -41,17 +41,17 @@ object JoinFunctions {
     fun join(args: List<UDM>): UDM {
         require(args.size >= 4) { "join requires 4 arguments: leftArray, rightArray, leftKeyFn, rightKeyFn" }
         
-        val left = args[0].asArray()
-        val right = args[1].asArray()
+        val left = args[0].asArray() ?: throw IllegalArgumentException("First argument must be an array")
+        val right = args[1].asArray() ?: throw IllegalArgumentException("Second argument must be an array")
         val leftKeyFn = args[2]
         val rightKeyFn = args[3]
         
         val result = mutableListOf<Map<String, Any?>>()
         
-        for (leftItem in left) {
+        for (leftItem in left.elements) {
             val leftKey = evaluateKeyFunction(leftKeyFn, leftItem)
             
-            for (rightItem in right) {
+            for (rightItem in right.elements) {
                 val rightKey = evaluateKeyFunction(rightKeyFn, rightItem)
                 
                 if (keysMatch(leftKey, rightKey)) {
@@ -83,18 +83,18 @@ object JoinFunctions {
     fun leftJoin(args: List<UDM>): UDM {
         require(args.size >= 4) { "leftJoin requires 4 arguments: leftArray, rightArray, leftKeyFn, rightKeyFn" }
         
-        val left = args[0].asArray()
-        val right = args[1].asArray()
+        val left = args[0].asArray() ?: throw IllegalArgumentException("First argument must be an array")
+        val right = args[1].asArray() ?: throw IllegalArgumentException("Second argument must be an array")
         val leftKeyFn = args[2]
         val rightKeyFn = args[3]
         
         val result = mutableListOf<Map<String, Any?>>()
         
-        for (leftItem in left) {
+        for (leftItem in left.elements) {
             val leftKey = evaluateKeyFunction(leftKeyFn, leftItem)
             var foundMatch = false
             
-            for (rightItem in right) {
+            for (rightItem in right.elements) {
                 val rightKey = evaluateKeyFunction(rightKeyFn, rightItem)
                 
                 if (keysMatch(leftKey, rightKey)) {
@@ -135,18 +135,18 @@ object JoinFunctions {
     fun rightJoin(args: List<UDM>): UDM {
         require(args.size >= 4) { "rightJoin requires 4 arguments: leftArray, rightArray, leftKeyFn, rightKeyFn" }
         
-        val left = args[0].asArray()
-        val right = args[1].asArray()
+        val left = args[0].asArray() ?: throw IllegalArgumentException("First argument must be an array")
+        val right = args[1].asArray() ?: throw IllegalArgumentException("Second argument must be an array")
         val leftKeyFn = args[2]
         val rightKeyFn = args[3]
         
         val result = mutableListOf<Map<String, Any?>>()
         
-        for (rightItem in right) {
+        for (rightItem in right.elements) {
             val rightKey = evaluateKeyFunction(rightKeyFn, rightItem)
             var foundMatch = false
             
-            for (leftItem in left) {
+            for (leftItem in left.elements) {
                 val leftKey = evaluateKeyFunction(leftKeyFn, leftItem)
                 
                 if (keysMatch(leftKey, rightKey)) {
@@ -187,8 +187,8 @@ object JoinFunctions {
     fun fullOuterJoin(args: List<UDM>): UDM {
         require(args.size >= 4) { "fullOuterJoin requires 4 arguments: leftArray, rightArray, leftKeyFn, rightKeyFn" }
         
-        val left = args[0].asArray()
-        val right = args[1].asArray()
+        val left = args[0].asArray() ?: throw IllegalArgumentException("First argument must be an array")
+        val right = args[1].asArray() ?: throw IllegalArgumentException("Second argument must be an array")
         val leftKeyFn = args[2]
         val rightKeyFn = args[3]
         
@@ -196,11 +196,11 @@ object JoinFunctions {
         val matchedRightIndices = mutableSetOf<Int>()
         
         // Process all left items
-        for (leftItem in left) {
+        for (leftItem in left.elements) {
             val leftKey = evaluateKeyFunction(leftKeyFn, leftItem)
             var foundMatch = false
             
-            right.forEachIndexed { index, rightItem ->
+            right.elements.forEachIndexed { index, rightItem ->
                 val rightKey = evaluateKeyFunction(rightKeyFn, rightItem)
                 
                 if (keysMatch(leftKey, rightKey)) {

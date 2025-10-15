@@ -160,6 +160,14 @@ class XMLSerializer(
                 writer.write("</$elementName>")
                 if (prettyPrint) writer.write("\n")
             }
+            
+            is UDM.Lambda -> {
+                writeIndent(writer, depth)
+                writer.write("<$elementName>")
+                writer.write("<function>")
+                writer.write("</$elementName>")
+                if (prettyPrint) writer.write("\n")
+            }
         }
     }
     
