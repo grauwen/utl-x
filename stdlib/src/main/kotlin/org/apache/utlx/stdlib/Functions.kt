@@ -14,6 +14,8 @@ import org.apache.utlx.stdlib.xml.*
 import org.apache.utlx.stdlib.logical.*
 import org.apache.utlx.stdlib.url.*
 import org.apache.utlx.stdlib.util.*
+import org.apache.utlx.stdlib.binary.*
+
 
 
 /**
@@ -93,7 +95,9 @@ object StandardLibrary {
 
         //MultiPart functions
         registerMultipartFunctions()
-        
+
+        //Binary functions
+        registerBinaryFunctions()
     }
     
     private fun registerCoreFunctions() {
@@ -543,55 +547,99 @@ object StandardLibrary {
           register("createPart", MultipartFunctions::createPart)
      }
 
-
+     private fun registerBinaryFunctions() {
+          // Binary creation
+          register("toBinary", BinaryFunctions::toBinary)
+          register("fromBytes", BinaryFunctions::fromBytes)
+          register("fromBase64", BinaryFunctions::fromBase64)
+          register("fromHex", BinaryFunctions::fromHex)
+          
+          // Binary conversion
+          register("binaryToString", BinaryFunctions::binaryToString)
+          register("toBytes", BinaryFunctions::toBytes)
+          register("toBase64", BinaryFunctions::toBase64)
+          register("toHex", BinaryFunctions::toHex)
+          
+          // Binary operations
+          register("binaryLength", BinaryFunctions::binaryLength)
+          register("binaryConcat", BinaryFunctions::binaryConcat)
+          register("binarySlice", BinaryFunctions::binarySlice)
+          register("binaryEquals", BinaryFunctions::binaryEquals)
+          
+          // Binary reading
+          register("readInt16", BinaryFunctions::readInt16)
+          register("readInt32", BinaryFunctions::readInt32)
+          register("readInt64", BinaryFunctions::readInt64)
+          register("readFloat", BinaryFunctions::readFloat)
+          register("readDouble", BinaryFunctions::readDouble)
+          register("readByte", BinaryFunctions::readByte)
+          
+          // Binary writing
+          register("writeInt16", BinaryFunctions::writeInt16)
+          register("writeInt32", BinaryFunctions::writeInt32)
+          register("writeInt64", BinaryFunctions::writeInt64)
+          register("writeFloat", BinaryFunctions::writeFloat)
+          register("writeDouble", BinaryFunctions::writeDouble)
+          register("writeByte", BinaryFunctions::writeByte)
+      }
     
-        /**
-         * Registration in Functions.kt:
-         * 
-         * Add these to new registration methods:
-         * 
-         * private fun registerValueFunctions() {
-         *     register("update", ValueFunctions::update)
-         *     register("mask", ValueFunctions::mask)
-         *     register("pick", ValueFunctions::pick)
-         *     register("omit", ValueFunctions::omit)
-         *     register("defaultValue", ValueFunctions::defaultValue)
-         * }
-         * 
-         * private fun registerDiffFunctions() {
-         *     register("diff", DiffFunctions::diff)
-         *     register("deepEquals", DiffFunctions::deepEquals)
-         *     register("patch", DiffFunctions::patch)
-         * }
-         * 
-         * private fun registerMimeFunctions() {
-         *     register("getMimeType", MimeFunctions::getMimeType)
-         *     register("getExtension", MimeFunctions::getExtension)
-         *     register("parseContentType", MimeFunctions::parseContentType)
-         *     register("buildContentType", MimeFunctions::buildContentType)
-         * }
-         * 
-         * private fun registerMultipartFunctions() {
-         *     register("parseBoundary", MultipartFunctions::parseBoundary)
-         *     register("buildMultipart", MultipartFunctions::buildMultipart)
-         *     register("generateBoundary", MultipartFunctions::generateBoundary)
-         *     register("createPart", MultipartFunctions::createPart)
-         * }
-         * 
-         * Then call in init block:
-         * init {
-         *     registerConversionFunctions()
-         *     registerURLFunctions()
-         *     registerTreeFunctions()
-         *     registerCoercionFunctions()
-         *     registerTimerFunctions()
-         *     registerValueFunctions()      // ADD!
-         *     registerDiffFunctions()        // ADD!
-         *     registerMimeFunctions()        // ADD!
-         *     registerMultipartFunctions()   // ADD!
-         *     // ... rest
-         * }
-         */
+ 
+/**
+ * Registration in Functions.kt:
+ * 
+ * Add these to a new registerBinaryFunctions() method:
+ * 
+ * private fun registerBinaryFunctions() {
+ *     // Binary creation
+ *     register("toBinary", BinaryFunctions::toBinary)
+ *     register("fromBytes", BinaryFunctions::fromBytes)
+ *     register("fromBase64", BinaryFunctions::fromBase64)
+ *     register("fromHex", BinaryFunctions::fromHex)
+ *     
+ *     // Binary conversion
+ *     register("binaryToString", BinaryFunctions::binaryToString)
+ *     register("toBytes", BinaryFunctions::toBytes)
+ *     register("toBase64", BinaryFunctions::toBase64)
+ *     register("toHex", BinaryFunctions::toHex)
+ *     
+ *     // Binary operations
+ *     register("binaryLength", BinaryFunctions::binaryLength)
+ *     register("binaryConcat", BinaryFunctions::binaryConcat)
+ *     register("binarySlice", BinaryFunctions::binarySlice)
+ *     register("binaryEquals", BinaryFunctions::binaryEquals)
+ *     
+ *     // Binary reading
+ *     register("readInt16", BinaryFunctions::readInt16)
+ *     register("readInt32", BinaryFunctions::readInt32)
+ *     register("readInt64", BinaryFunctions::readInt64)
+ *     register("readFloat", BinaryFunctions::readFloat)
+ *     register("readDouble", BinaryFunctions::readDouble)
+ *     register("readByte", BinaryFunctions::readByte)
+ *     
+ *     // Binary writing
+ *     register("writeInt16", BinaryFunctions::writeInt16)
+ *     register("writeInt32", BinaryFunctions::writeInt32)
+ *     register("writeInt64", BinaryFunctions::writeInt64)
+ *     register("writeFloat", BinaryFunctions::writeFloat)
+ *     register("writeDouble", BinaryFunctions::writeDouble)
+ *     register("writeByte", BinaryFunctions::writeByte)
+ * }
+ * 
+ * Then call in init block:
+ * init {
+ *     registerConversionFunctions()
+ *     registerURLFunctions()
+ *     registerTreeFunctions()
+ *     registerCoercionFunctions()
+ *     registerTimerFunctions()
+ *     registerValueFunctions()
+ *     registerDiffFunctions()
+ *     registerMimeFunctions()
+ *     registerMultipartFunctions()
+ *     registerBinaryFunctions()      // ADD THIS!
+ *     // ... rest
+ * }
+ */
 }
 
 /**
