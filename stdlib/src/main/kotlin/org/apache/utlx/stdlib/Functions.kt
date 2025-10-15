@@ -98,7 +98,9 @@ object StandardLibrary {
 
         //Binary functions
         registerBinaryFunctions()
-        
+
+        //Debug functions
+        registerDebugFunctions()
     }
     
     private fun registerCoreFunctions() {
@@ -106,10 +108,39 @@ object StandardLibrary {
         register("coalesce", CoreFunctions::coalesce)
         register("generate-uuid", CoreFunctions::generateUuid)
         register("default", CoreFunctions::default)
-
-        //Debug functions
-        //TODO add
      
+    }
+
+    private fun registerDebugFunctions() {
+        // Configuration
+        register("setLogLevel", DebugFunctions::setLogLevel)
+        register("setConsoleLogging", DebugFunctions::setConsoleLogging)
+        
+        // Basic logging
+        register("log", DebugFunctions::log)
+        register("trace", DebugFunctions::trace)
+        register("debug", DebugFunctions::debug)
+        register("info", DebugFunctions::info)
+        register("warn", DebugFunctions::warn)
+        register("error", DebugFunctions::error)
+        
+        // Inspection
+        register("logType", DebugFunctions::logType)
+        register("logSize", DebugFunctions::logSize)
+        register("logPretty", DebugFunctions::logPretty)
+        
+        // Timing
+        register("startDebugTimer", DebugFunctions::startTimer)
+        register("endDebugTimer", DebugFunctions::endTimer)
+        
+        // Log management
+        register("getLogs", DebugFunctions::getLogs)
+        register("clearLogs", DebugFunctions::clearLogs)
+        register("logCount", DebugFunctions::logCount)
+        
+        // Assertions
+        register("assert", DebugFunctions::assert)
+        register("assertEqual", DebugFunctions::assertEqual)
     }
     
     private fun registerStringFunctions() {
@@ -175,7 +206,12 @@ object StandardLibrary {
         register("slugify", CaseConversionFunctions::slugify)
 
         //Pluralize functions
-        //TODO add
+        register("pluralize", PluralizationFunctions::pluralize)
+        register("singularize", PluralizationFunctions::singularize)
+        register("pluralizeWithCount", PluralizationFunctions::pluralizeWithCount)
+        register("isPlural", PluralizationFunctions::isPlural)
+        register("isSingular", PluralizationFunctions::isSingular)
+        register("formatPlural", PluralizationFunctions::formatPlural)
                  
     }
     
