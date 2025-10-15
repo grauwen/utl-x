@@ -12,6 +12,7 @@ import org.apache.utlx.stdlib.core.*
 import org.apache.utlx.stdlib.encoding.*
 import org.apache.utlx.stdlib.xml.*
 import org.apache.utlx.stdlib.logical.*
+import org.apache.utlx.stdlib.url.*
 
 /**
  * UTL-X Standard Library Function Registry
