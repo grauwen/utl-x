@@ -46,7 +46,7 @@ object DebugFunctions {
      * ```
      */
     fun setLogLevel(level: UDM): UDM {
-        val levelStr = (level as? UDM.Scalar)?.value?.uppercase() ?: return UDM.Scalar(false)
+        val levelStr = (level as? UDM.Scalar)?.value?.toString()?.uppercase() ?: return UDM.Scalar(false)
         
         currentLogLevel = when (levelStr) {
             "TRACE" -> LogLevel.TRACE
@@ -150,8 +150,8 @@ object DebugFunctions {
      * debug("Variable state", myVar)
      * ```
      */
-    fun debug(message: UDM, data: UDM = UDM.Scalar.nullValue()): UDM {
-        val msg = (message as? UDM.Scalar)?.value ?: ""
+    fun debug(message: UDM, data: UDM = UDM.Scalar(null)): UDM {
+        val msg = (message as? UDM.Scalar)?.value?.toString() ?: ""
         logInternal(LogLevel.DEBUG, msg, data)
         return data
     }
@@ -168,8 +168,8 @@ object DebugFunctions {
      * info("Processing completed", result)
      * ```
      */
-    fun info(message: UDM, data: UDM = UDM.Scalar.nullValue()): UDM {
-        val msg = (message as? UDM.Scalar)?.value ?: ""
+    fun info(message: UDM, data: UDM = UDM.Scalar(null)): UDM {
+        val msg = (message as? UDM.Scalar)?.value?.toString() ?: ""
         logInternal(LogLevel.INFO, msg, data)
         return data
     }
@@ -186,8 +186,8 @@ object DebugFunctions {
      * warn("Missing optional field", fieldName)
      * ```
      */
-    fun warn(message: UDM, data: UDM = UDM.Scalar.nullValue()): UDM {
-        val msg = (message as? UDM.Scalar)?.value ?: ""
+    fun warn(message: UDM, data: UDM = UDM.Scalar(null)): UDM {
+        val msg = (message as? UDM.Scalar)?.value?.toString() ?: ""
         logInternal(LogLevel.WARN, msg, data)
         return data
     }
@@ -204,8 +204,8 @@ object DebugFunctions {
      * error("Validation failed", invalidData)
      * ```
      */
-    fun error(message: UDM, data: UDM = UDM.Scalar.nullValue()): UDM {
-        val msg = (message as? UDM.Scalar)?.value ?: ""
+    fun error(message: UDM, data: UDM = UDM.Scalar(null)): UDM {
+        val msg = (message as? UDM.Scalar)?.value?.toString() ?: ""
         logInternal(LogLevel.ERROR, msg, data)
         return data
     }
@@ -265,7 +265,7 @@ object DebugFunctions {
     fun logSize(value: UDM, message: UDM = UDM.Scalar("Size")): UDM {
         val msg = (message as? UDM.Scalar)?.value ?: "Size"
         val size = when (value) {
-            is UDM.Scalar -> value.value.length
+            is UDM.Scalar -> (value.value as? String)?.length ?: value.value.toString().length
             is UDM.Array -> value.elements.size
             is UDM.Object -> value.properties.size
             else -> -1
@@ -293,11 +293,11 @@ object DebugFunctions {
      */
     fun logPretty(
         value: UDM, 
-        message: UDM = UDM.Scalar.nullValue(), 
+        message: UDM = UDM.Scalar(null), 
         indent: UDM = UDM.Scalar(2.0)
     ): UDM {
         val msg = (message as? UDM.Scalar)?.value
-        val indentSize = (indent as? UDM.Scalar)?.value?.toInt() ?: 2
+        val indentSize = (indent as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 2
         
         val pretty = prettyPrint(value, 0, indentSize)
         
@@ -352,7 +352,7 @@ object DebugFunctions {
     fun endTimer(timer: UDM): UDM {
         val timerObj = timer as? UDM.Object ?: return UDM.Scalar(0.0)
         val label = (timerObj.properties["label"] as? UDM.Scalar)?.value ?: "Timer"
-        val startTime = (timerObj.properties["startTime"] as? UDM.Scalar)?.value?.toLong() ?: 0L
+        val startTime = (timerObj.properties["startTime"] as? UDM.Scalar)?.value?.toString()?.toLongOrNull() ?: 0L
         
         val endTime = System.nanoTime()
         val elapsedMs = (endTime - startTime) / 1_000_000.0
@@ -382,7 +382,7 @@ object DebugFunctions {
                 "timestamp" to UDM.Scalar(entry.timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)),
                 "level" to UDM.Scalar(entry.level.name),
                 "message" to UDM.Scalar(entry.message),
-                "data" to (entry.data ?: UDM.Scalar.nullValue())
+                "data" to (entry.data ?: UDM.Scalar(null))
             ))
         }
         
@@ -436,8 +436,8 @@ object DebugFunctions {
      * ```
      */
     fun assert(condition: UDM, message: UDM = UDM.Scalar("Assertion failed")): UDM {
-        val isTrue = (condition as? UDM.Scalar)?.value ?: false
-        val msg = (message as? UDM.Scalar)?.value ?: "Assertion failed"
+        val isTrue = (condition as? UDM.Scalar)?.value as? Boolean ?: false
+        val msg = (message as? UDM.Scalar)?.value?.toString() ?: "Assertion failed"
         
         if (!isTrue) {
             logInternal(LogLevel.ERROR, "ASSERTION FAILED: $msg", null)
@@ -463,7 +463,7 @@ object DebugFunctions {
     fun assertEqual(
         actual: UDM, 
         expected: UDM, 
-        message: UDM = UDM.Scalar.nullValue()
+        message: UDM = UDM.Scalar(null)
     ): UDM {
         val equal = actual == expected
         

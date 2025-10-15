@@ -59,8 +59,8 @@ object CompressionFunctions {
         require(args.isNotEmpty()) { "gzip requires 1 argument: data" }
         
         val data = when {
-            args[0].isBinary() -> args[0].asByteArray()
-            args[0].isString() -> args[0].asString().toByteArray(Charsets.UTF_8)
+            args[0] is UDM.Binary -> (args[0] as UDM.Binary).data
+            args[0] is UDM.Scalar && (args[0] as UDM.Scalar).value is String -> ((args[0] as UDM.Scalar).value as String).toByteArray(Charsets.UTF_8)
             else -> throw IllegalArgumentException("gzip requires binary data or string")
         }
         
@@ -88,7 +88,7 @@ object CompressionFunctions {
     fun gunzip(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "gunzip requires 1 argument: compressedData" }
         
-        val compressedData = args[0].asByteArray()
+        val compressedData = (args[0] as UDM.Binary).data
         
         return try {
             val input = ByteArrayInputStream(compressedData)
@@ -120,7 +120,7 @@ object CompressionFunctions {
     fun isGzipped(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "isGzipped requires 1 argument: data" }
         
-        val data = args[0].asByteArray()
+        val data = (args[0] as UDM.Binary).data
         
         // Gzip magic number: 0x1f 0x8b
         val isGzip = data.size >= 2 && 
@@ -149,13 +149,13 @@ object CompressionFunctions {
         require(args.isNotEmpty()) { "deflate requires 1-2 arguments: data, [level]" }
         
         val data = when {
-            args[0].isBinary() -> args[0].asByteArray()
-            args[0].isString() -> args[0].asString().toByteArray(Charsets.UTF_8)
+            args[0] is UDM.Binary -> (args[0] as UDM.Binary).data
+            args[0] is UDM.Scalar && (args[0] as UDM.Scalar).value is String -> ((args[0] as UDM.Scalar).value as String).toByteArray(Charsets.UTF_8)
             else -> throw IllegalArgumentException("deflate requires binary data or string")
         }
         
         val level = if (args.size > 1) {
-            args[1].asInt().coerceIn(0, 9)
+            (args[1] as UDM.Scalar).value.toString().toIntOrNull() ?: 6.coerceIn(0, 9)
         } else {
             Deflater.DEFAULT_COMPRESSION
         }
@@ -192,7 +192,7 @@ object CompressionFunctions {
     fun inflate(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "inflate requires 1 argument: compressedData" }
         
-        val compressedData = args[0].asByteArray()
+        val compressedData = (args[0] as UDM.Binary).data
         
         return try {
             val inflater = Inflater()
@@ -259,7 +259,7 @@ object CompressionFunctions {
     fun decompress(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "decompress requires 1-2 arguments: compressedData, [algorithm]" }
         
-        val compressedData = args[0].asByteArray()
+        val compressedData = (args[0] as UDM.Binary).data
         
         val algorithm = if (args.size > 1) {
             args[1].asString().lowercase()
@@ -295,16 +295,16 @@ object CompressionFunctions {
     fun zipArchive(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "zipArchive requires 1 argument: files (map)" }
         
-        val files = args[0].asObject()
+        val files = (args[0] as UDM.Object).properties
         
         return try {
             val output = ByteArrayOutputStream()
             
             ZipOutputStream(output).use { zipStream ->
                 for ((filename, contentUdm) in files) {
-                    val content = when {
-                        contentUdm.isBinary() -> contentUdm.asByteArray()
-                        contentUdm.isString() -> contentUdm.asString().toByteArray(Charsets.UTF_8)
+                    val content = when (contentUdm) {
+                        is UDM.Binary -> contentUdm.data
+                        is UDM.Scalar -> (contentUdm.value as? String ?: contentUdm.value.toString()).toByteArray(Charsets.UTF_8)
                         else -> contentUdm.toString().toByteArray(Charsets.UTF_8)
                     }
                     
@@ -334,7 +334,7 @@ object CompressionFunctions {
     fun unzipArchive(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "unzipArchive requires 1 argument: zipData" }
         
-        val zipData = args[0].asByteArray()
+        val zipData = (args[0] as UDM.Binary).data
         
         return try {
             val input = ByteArrayInputStream(zipData)
@@ -378,7 +378,7 @@ object CompressionFunctions {
     fun readZipEntry(args: List<UDM>): UDM {
         require(args.size >= 2) { "readZipEntry requires 2 arguments: zipData, entryName" }
         
-        val zipData = args[0].asByteArray()
+        val zipData = (args[0] as UDM.Binary).data
         val entryName = args[1].asString()
         
         return try {
@@ -403,7 +403,7 @@ object CompressionFunctions {
                 }
             }
             
-            UDM.NULL  // Entry not found
+            UDM.Scalar(null)  // Entry not found
         } catch (e: IOException) {
             throw CompressionException("Failed to read zip entry: ${e.message}", e)
         }
@@ -422,7 +422,7 @@ object CompressionFunctions {
     fun listZipEntries(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "listZipEntries requires 1 argument: zipData" }
         
-        val zipData = args[0].asByteArray()
+        val zipData = (args[0] as UDM.Binary).data
         
         return try {
             val input = ByteArrayInputStream(zipData)
@@ -455,7 +455,7 @@ object CompressionFunctions {
     fun isZipArchive(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "isZipArchive requires 1 argument: data" }
         
-        val data = args[0].asByteArray()
+        val data = (args[0] as UDM.Binary).data
         
         // Zip magic number: 0x50 0x4B (PK)
         val isZip = data.size >= 4 && 
@@ -483,7 +483,7 @@ object CompressionFunctions {
     fun readJarEntry(args: List<UDM>): UDM {
         require(args.size >= 2) { "readJarEntry requires 2 arguments: jarData, entryName" }
         
-        val jarData = args[0].asByteArray()
+        val jarData = (args[0] as UDM.Binary).data
         val entryName = args[1].asString()
         
         return try {
@@ -503,12 +503,12 @@ object CompressionFunctions {
                         
                         return UDM.fromNative(output.toByteArray())
                     }
-                    jarStream.closeJarEntry()
+                    jarStream.closeEntry()
                     entry = jarStream.nextJarEntry
                 }
             }
             
-            UDM.NULL  // Entry not found
+            UDM.Scalar(null)  // Entry not found
         } catch (e: IOException) {
             throw CompressionException("Failed to read JAR entry: ${e.message}", e)
         }
@@ -526,7 +526,7 @@ object CompressionFunctions {
     fun listJarEntries(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "listJarEntries requires 1 argument: jarData" }
         
-        val jarData = args[0].asByteArray()
+        val jarData = (args[0] as UDM.Binary).data
         
         return try {
             val input = ByteArrayInputStream(jarData)
@@ -536,7 +536,7 @@ object CompressionFunctions {
                 var entry: JarEntry? = jarStream.nextJarEntry
                 while (entry != null) {
                     entries.add(entry.name)
-                    jarStream.closeJarEntry()
+                    jarStream.closeEntry()
                     entry = jarStream.nextJarEntry
                 }
             }
@@ -559,7 +559,7 @@ object CompressionFunctions {
     fun isJarFile(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "isJarFile requires 1 argument: data" }
         
-        val data = args[0].asByteArray()
+        val data = (args[0] as UDM.Binary).data
         
         // JAR is a zip file, check if it has META-INF/MANIFEST.MF
         return try {
@@ -590,7 +590,7 @@ object CompressionFunctions {
     fun readJarManifest(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "readJarManifest requires 1 argument: jarData" }
         
-        val jarData = args[0].asByteArray()
+        val jarData = (args[0] as UDM.Binary).data
         
         return try {
             val input = ByteArrayInputStream(jarData)
@@ -604,7 +604,7 @@ object CompressionFunctions {
                     }
                     UDM.fromNative(attributes)
                 } else {
-                    UDM.NULL
+                    UDM.Scalar(null)
                 }
             }
         } catch (e: IOException) {

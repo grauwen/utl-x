@@ -544,15 +544,15 @@ object BinaryFunctions {
      * ```
      */
     fun bitwiseAnd(binary1: UDM, binary2: UDM): UDM {
-        val bytes1 = (binary1 as? UDMBinary)?.data ?: return UDM.Scalar.nullValue()
-        val bytes2 = (binary2 as? UDMBinary)?.data ?: return UDM.Scalar.nullValue()
+        val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
+        val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         
         val minLen = minOf(bytes1.size, bytes2.size)
         val result = ByteArray(minLen) { i ->
             (bytes1[i].toInt() and bytes2[i].toInt()).toByte()
         }
         
-        return UDMBinary(result)
+        return UDM.Binary(result)
     }
     
     /**
@@ -568,15 +568,15 @@ object BinaryFunctions {
      * ```
      */
     fun bitwiseOr(binary1: UDM, binary2: UDM): UDM {
-        val bytes1 = (binary1 as? UDMBinary)?.data ?: return UDM.Scalar.nullValue()
-        val bytes2 = (binary2 as? UDMBinary)?.data ?: return UDM.Scalar.nullValue()
+        val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
+        val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         
         val minLen = minOf(bytes1.size, bytes2.size)
         val result = ByteArray(minLen) { i ->
             (bytes1[i].toInt() or bytes2[i].toInt()).toByte()
         }
         
-        return UDMBinary(result)
+        return UDM.Binary(result)
     }
     
     /**
@@ -592,15 +592,15 @@ object BinaryFunctions {
      * ```
      */
     fun bitwiseXor(binary1: UDM, binary2: UDM): UDM {
-        val bytes1 = (binary1 as? UDMBinary)?.data ?: return UDM.Scalar.nullValue()
-        val bytes2 = (binary2 as? UDMBinary)?.data ?: return UDM.Scalar.nullValue()
+        val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
+        val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         
         val minLen = minOf(bytes1.size, bytes2.size)
         val result = ByteArray(minLen) { i ->
             (bytes1[i].toInt() xor bytes2[i].toInt()).toByte()
         }
         
-        return UDMBinary(result)
+        return UDM.Binary(result)
     }
     
     /**
@@ -615,13 +615,13 @@ object BinaryFunctions {
      * ```
      */
     fun bitwiseNot(binary: UDM): UDM {
-        val bytes = (binary as? UDMBinary)?.data ?: return UDM.Scalar.nullValue()
+        val bytes = (binary as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         
         val result = ByteArray(bytes.size) { i ->
-            bytes[i].inv()
+            (bytes[i].toInt().inv()).toByte()
         }
         
-        return UDMBinary(result)
+        return UDM.Binary(result)
     }
     
     /**
@@ -637,14 +637,14 @@ object BinaryFunctions {
      * ```
      */
     fun shiftLeft(binary: UDM, positions: UDM): UDM {
-        val bytes = (binary as? UDMBinary)?.data ?: return UDM.Scalar.nullValue()
-        val shift = (positions as? UDM.Scalar)?.value?.toInt() ?: 0
+        val bytes = (binary as? UDM.Binary)?.data ?: return UDM.Scalar(null)
+        val shift = (positions as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 0
         
         val result = ByteArray(bytes.size) { i ->
             (bytes[i].toInt() shl shift).toByte()
         }
         
-        return UDMBinary(result)
+        return UDM.Binary(result)
     }
     
     /**
@@ -660,14 +660,14 @@ object BinaryFunctions {
      * ```
      */
     fun shiftRight(binary: UDM, positions: UDM): UDM {
-        val bytes = (binary as? UDMBinary)?.data ?: return UDM.Scalar.nullValue()
-        val shift = (positions as? UDM.Scalar)?.value?.toInt() ?: 0
+        val bytes = (binary as? UDM.Binary)?.data ?: return UDM.Scalar(null)
+        val shift = (positions as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 0
         
         val result = ByteArray(bytes.size) { i ->
             (bytes[i].toInt() shr shift).toByte()
         }
         
-        return UDMBinary(result)
+        return UDM.Binary(result)
     }
 
     // ============================================
@@ -687,8 +687,8 @@ object BinaryFunctions {
      * ```
      */
     fun equals(binary1: UDM, binary2: UDM): UDM {
-        val bytes1 = (binary1 as? UDMBinary)?.data ?: return UDM.Scalar(false)
-        val bytes2 = (binary2 as? UDMBinary)?.data ?: return UDM.Scalar(false)
+        val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(false)
+        val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(false)
         
         return UDM.Scalar(bytes1.contentEquals(bytes2))
     }
@@ -747,20 +747,7 @@ object BinaryFunctions {
     }
 }
 
-/**
- * UDM Binary type for representing byte arrays
- */
-data class UDMBinary(val data: ByteArray) : UDM() {
-    override fun toString(): String = "Binary(${data.size} bytes)"
-    
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is UDMBinary) return false
-        return data.contentEquals(other.data)
-    }
-    
-    override fun hashCode(): Int = data.contentHashCode()
-}
+// UDM.Binary is already defined in the core module
 
 /**
  * Registration in Functions.kt:

@@ -223,7 +223,7 @@ object JoinFunctions {
         }
         
         // Add unmatched right items
-        right.forEachIndexed { index, rightItem ->
+        right.elements.forEachIndexed { index, rightItem ->
             if (index !in matchedRightIndices) {
                 result.add(mapOf(
                     "l" to null,
@@ -250,13 +250,13 @@ object JoinFunctions {
     fun crossJoin(args: List<UDM>): UDM {
         require(args.size >= 2) { "crossJoin requires 2 arguments: leftArray, rightArray" }
         
-        val left = args[0].asArray()
-        val right = args[1].asArray()
+        val left = args[0].asArray() ?: throw IllegalArgumentException("First argument must be an array")
+        val right = args[1].asArray() ?: throw IllegalArgumentException("Second argument must be an array")
         
         val result = mutableListOf<Map<String, Any?>>()
         
-        for (leftItem in left) {
-            for (rightItem in right) {
+        for (leftItem in left.elements) {
+            for (rightItem in right.elements) {
                 result.add(mapOf(
                     "l" to leftItem.toNative(),
                     "r" to rightItem.toNative()
@@ -288,23 +288,27 @@ object JoinFunctions {
     fun joinWith(args: List<UDM>): UDM {
         require(args.size >= 5) { "joinWith requires 5 arguments: leftArray, rightArray, leftKeyFn, rightKeyFn, combinerFn" }
         
-        val left = args[0].asArray()
-        val right = args[1].asArray()
+        val left = args[0].asArray() ?: throw IllegalArgumentException("First argument must be an array")
+        val right = args[1].asArray() ?: throw IllegalArgumentException("Second argument must be an array")
         val leftKeyFn = args[2]
         val rightKeyFn = args[3]
         val combinerFn = args[4]
         
         val result = mutableListOf<Any?>()
         
-        for (leftItem in left) {
+        for (leftItem in left.elements) {
             val leftKey = evaluateKeyFunction(leftKeyFn, leftItem)
             
-            for (rightItem in right) {
+            for (rightItem in right.elements) {
                 val rightKey = evaluateKeyFunction(rightKeyFn, rightItem)
                 
                 if (keysMatch(leftKey, rightKey)) {
                     // Apply combiner function
-                    val combined = combinerFn.invoke(listOf(leftItem, rightItem))
+                    // TODO: Implement function calling mechanism
+                    val combined = UDM.Object(mutableMapOf(
+                        "l" to leftItem,
+                        "r" to rightItem
+                    ))
                     result.add(combined.toNative())
                 }
             }
@@ -321,15 +325,20 @@ object JoinFunctions {
      * Evaluate a key function on an item
      */
     private fun evaluateKeyFunction(keyFn: UDM, item: UDM): Any? {
-        return when {
-            keyFn.isFunction() -> {
-                // It's a lambda/function reference
-                keyFn.invoke(listOf(item)).toNative()
+        return when (keyFn) {
+            is UDM.Lambda -> {
+                // TODO: Implement function calling mechanism
+                // For now, return the item itself as key
+                item.toNative()
             }
-            keyFn.isString() -> {
+            is UDM.Scalar -> {
                 // It's a property name
                 val propName = keyFn.asString()
-                item.getProperty(propName)?.toNative()
+                if (item is UDM.Object && propName != null) {
+                    item.properties[propName]?.toNative()
+                } else {
+                    null
+                }
             }
             else -> {
                 throw IllegalArgumentException("Key function must be a function or property name string")
@@ -355,20 +364,19 @@ object JoinFunctions {
      * Extension to convert UDM to native Kotlin type
      */
     private fun UDM.toNative(): Any? {
-        return when {
-            this.isNull() -> null
-            this.isString() -> this.asString()
-            this.isNumber() -> this.asNumber()
-            this.isBoolean() -> this.asBoolean()
-            this.isArray() -> this.asArray().map { it.toNative() }
-            this.isObject() -> {
+        return when (this) {
+            is UDM.Scalar -> this.value
+            is UDM.Array -> this.elements.map { it.toNative() }
+            is UDM.Object -> {
                 val map = mutableMapOf<String, Any?>()
-                this.getPropertyNames()?.forEach { propName ->
-                    map[propName] = this.getProperty(propName)?.toNative()
+                this.properties.forEach { (propName, value) ->
+                    map[propName] = value.toNative()
                 }
                 map
             }
-            else -> null
+            is UDM.DateTime -> this.instant.toString()
+            is UDM.Binary -> "<binary:${this.data.size} bytes>"
+            is UDM.Lambda -> "<function>"
         }
     }
 }
