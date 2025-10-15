@@ -27,6 +27,9 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("org.assertj:assertj-core:3.24.2")
+
+    // Apache XML Security for C14N
+    implementation("org.apache.santuario:xmlsec:3.0.3")
 }
 
 tasks.test {
