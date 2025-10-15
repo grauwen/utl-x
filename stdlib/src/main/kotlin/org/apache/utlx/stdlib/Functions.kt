@@ -652,13 +652,15 @@ object StandardLibrary {
           register("writeByte", BinaryFunctions::writeByte)
 
           //bit operation
-          //TODO add in code of BinaryFunctions
-          // register("bitwiseAnd", BinaryFunctions::bitwiseAnd)
-          // register("bitwiseOr", BinaryFunctions::bitwiseOr)
-          // register("bitwiseXor", BinaryFunctions::bitwiseXor)
-          // register("bitwiseNot", BinaryFunctions::bitwiseNot)
-          // register("shiftLeft", BinaryFunctions::shiftLeft)
-          // register("shiftRight", BinaryFunctions::shiftRight)
+          register("bitwiseAnd", BinaryFunctions::bitwiseAnd)
+          register("bitwiseOr", BinaryFunctions::bitwiseOr)
+          register("bitwiseXor", BinaryFunctions::bitwiseXor)
+          register("bitwiseNot", BinaryFunctions::bitwiseNot)
+          register("shiftLeft", BinaryFunctions::shiftLeft)
+          register("shiftRight", BinaryFunctions::shiftRight)
+
+           // BINARY COMPARISON
+          register("equalsBinary", BinaryFunctions::equals)
       }
 
 
