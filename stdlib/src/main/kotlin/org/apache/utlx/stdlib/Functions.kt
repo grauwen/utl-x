@@ -108,6 +108,15 @@ object StandardLibrary {
 
         //Serialization
         registerSerializationFunctions()
+
+        // Collection JOIN operations
+        registerJoinFunctions()  
+
+        // Runtime/system information
+        registerRuntimeFunctions()   
+
+        // UUID v7 support
+        registerUUIDFunctions()        
     }
     
     private fun registerCoreFunctions() {
@@ -721,6 +730,82 @@ object StandardLibrary {
         register("tibco_render", SerializationFunctions::render)
     }
 
+/**
+     * Register collection JOIN functions
+     * SQL-style joins for combining arrays based on key matching
+     */
+    private fun registerJoinFunctions() {
+        register("join", JoinFunctions::join)
+        register("leftJoin", JoinFunctions::leftJoin)
+        register("rightJoin", JoinFunctions::rightJoin)
+        register("fullOuterJoin", JoinFunctions::fullOuterJoin)
+        register("crossJoin", JoinFunctions::crossJoin)
+        register("joinWith", JoinFunctions::joinWith)
+    }
+    
+    /**
+     * Register runtime and system information functions
+     * Environment variables, system properties, platform info
+     */
+    private fun registerRuntimeFunctions() {
+        // Environment variables
+        register("env", RuntimeFunctions::env)
+        register("envOrDefault", RuntimeFunctions::envOrDefault)
+        register("envAll", RuntimeFunctions::envAll)
+        register("hasEnv", RuntimeFunctions::hasEnv)
+        
+        // System properties
+        register("systemProperty", RuntimeFunctions::systemProperty)
+        register("systemPropertyOrDefault", RuntimeFunctions::systemPropertyOrDefault)
+        register("systemPropertiesAll", RuntimeFunctions::systemPropertiesAll)
+        
+        // Version and platform
+        register("version", RuntimeFunctions::version)
+        register("platform", RuntimeFunctions::platform)
+        register("osVersion", RuntimeFunctions::osVersion)
+        register("osArch", RuntimeFunctions::osArch)
+        register("javaVersion", RuntimeFunctions::javaVersion)
+        
+        // System resources
+        register("availableProcessors", RuntimeFunctions::availableProcessors)
+        register("memoryInfo", RuntimeFunctions::memoryInfo)
+        
+        // Directories
+        register("currentDir", RuntimeFunctions::currentDir)
+        register("homeDir", RuntimeFunctions::homeDir)
+        register("tempDir", RuntimeFunctions::tempDir)
+        
+        // User info
+        register("username", RuntimeFunctions::username)
+        
+        // Runtime info
+        register("uptime", RuntimeFunctions::uptime)
+        register("runtimeInfo", RuntimeFunctions::runtimeInfo)
+        
+        // Helpers
+        register("isDebugMode", RuntimeFunctions::isDebugMode)
+        register("environment", RuntimeFunctions::environment)
+    }
+    
+    /**
+     * Register UUID generation functions
+     * UUID v4 (random) and UUID v7 (time-ordered)
+     */
+    private fun registerUUIDFunctions() {
+        // UUID v7 generation (time-ordered, sortable)
+        register("generateUuidV7", UUIDFunctions::generateUuidV7)
+        register("generateUuidV7Batch", UUIDFunctions::generateUuidV7Batch)
+        
+        // UUID utilities
+        register("extractTimestampFromUuidV7", UUIDFunctions::extractTimestampFromUuidV7)
+        register("isUuidV7", UUIDFunctions::isUuidV7)
+        register("getUuidVersion", UUIDFunctions::getUuidVersion)
+        register("isValidUuid", UUIDFunctions::isValidUuid)
+        
+        // Alternative: also provide v4 explicitly
+        register("generateUuidV4", UUIDFunctions::generateUuidV4) // might be a duplication
+    }
+    
     private fun register(name: String, impl: (List<UDM>) -> UDM) {
         functions[name] = UTLXFunction(name, impl)
     }
