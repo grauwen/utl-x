@@ -7,9 +7,7 @@ plugins {
 group = "org.apache.utlx"
 version = "0.9.0-beta"
 
-repositories {
-    mavenCentral()
-}
+// Repository management is handled in settings.gradle.kts
 
 dependencies {
     // Core module dependency

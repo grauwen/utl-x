@@ -116,17 +116,17 @@ object PluralizationFunctions {
      * pluralize("person", 5) // "people" (count > 1)
      * ```
      */
-    fun pluralize(word: UDMValue, count: UDMValue = UDMNull): UDMValue {
-        val singular = (word as? UDMString)?.value?.trim()?.lowercase() 
-            ?: return UDMNull
+    fun pluralize(word: UDM, count: UDM = UDM.Scalar.nullValue()): UDM {
+        val singular = (word as? UDM.Scalar)?.value?.trim()?.lowercase() 
+            ?: return UDM.Scalar.nullValue()
         
         // Check if count is provided and equals 1
-        if (count is UDMNumber && count.value == 1.0) {
+        if (count is UDM.Scalar && count.value == 1.0) {
             return word // Return singular form
         }
         
         // Handle empty string
-        if (singular.isEmpty()) return UDMString("")
+        if (singular.isEmpty()) return UDM.Scalar("")
         
         // Check for uncountable nouns
         if (uncountableNouns.contains(singular)) {
@@ -135,7 +135,7 @@ object PluralizationFunctions {
         
         // Check for irregular plurals
         irregularPlurals[singular]?.let {
-            return UDMString(matchCase(singular, it, (word as UDMString).value))
+            return UDM.Scalar(matchCase(singular, it, (word as UDM.Scalar).value))
         }
         
         // Apply regular pluralization rules
@@ -174,7 +174,7 @@ object PluralizationFunctions {
         }
         
         // Match the case of the original word
-        return UDMString(matchCase(singular, plural, (word as UDMString).value))
+        return UDM.Scalar(matchCase(singular, plural, (word as UDM.Scalar).value))
     }
     
     /**
@@ -195,12 +195,12 @@ object PluralizationFunctions {
      * singularize("cities") // "city"
      * ```
      */
-    fun singularize(word: UDMValue): UDMValue {
-        val plural = (word as? UDMString)?.value?.trim()?.lowercase() 
-            ?: return UDMNull
+    fun singularize(word: UDM): UDM {
+        val plural = (word as? UDM.Scalar)?.value?.trim()?.lowercase() 
+            ?: return UDM.Scalar.nullValue()
         
         // Handle empty string
-        if (plural.isEmpty()) return UDMString("")
+        if (plural.isEmpty()) return UDM.Scalar("")
         
         // Check for uncountable nouns
         if (uncountableNouns.contains(plural)) {
@@ -209,7 +209,7 @@ object PluralizationFunctions {
         
         // Check for irregular singulars
         irregularSingulars[plural]?.let {
-            return UDMString(matchCase(plural, it, (word as UDMString).value))
+            return UDM.Scalar(matchCase(plural, it, (word as UDM.Scalar).value))
         }
         
         // Apply regular singularization rules
@@ -265,7 +265,7 @@ object PluralizationFunctions {
         }
         
         // Match the case of the original word
-        return UDMString(matchCase(plural, singular, (word as UDMString).value))
+        return UDM.Scalar(matchCase(plural, singular, (word as UDM.Scalar).value))
     }
     
     /**
@@ -283,8 +283,8 @@ object PluralizationFunctions {
      * pluralizeWithCount("child", 3) // "children"
      * ```
      */
-    fun pluralizeWithCount(word: UDMValue, count: UDMValue): UDMValue {
-        val num = (count as? UDMNumber)?.value ?: return word
+    fun pluralizeWithCount(word: UDM, count: UDM): UDM {
+        val num = (count as? UDM.Scalar)?.value ?: return word
         
         return if (num == 1.0) {
             word
@@ -307,18 +307,18 @@ object PluralizationFunctions {
      * isPlural("sheep") // false (can be both)
      * ```
      */
-    fun isPlural(word: UDMValue): UDMValue {
-        val text = (word as? UDMString)?.value?.trim()?.lowercase() 
-            ?: return UDMBoolean(false)
+    fun isPlural(word: UDM): UDM {
+        val text = (word as? UDM.Scalar)?.value?.trim()?.lowercase() 
+            ?: return UDM.Scalar(false)
         
         // Check if it's an irregular plural
         if (irregularSingulars.containsKey(text)) {
-            return UDMBoolean(true)
+            return UDM.Scalar(true)
         }
         
         // Check if it's an uncountable noun (ambiguous)
         if (uncountableNouns.contains(text)) {
-            return UDMBoolean(false)
+            return UDM.Scalar(false)
         }
         
         // Check common plural patterns
@@ -326,7 +326,7 @@ object PluralizationFunctions {
                          text.endsWith("es") ||
                          text.endsWith("ies")
         
-        return UDMBoolean(seemsPlural)
+        return UDM.Scalar(seemsPlural)
     }
     
     /**
@@ -343,18 +343,18 @@ object PluralizationFunctions {
      * isSingular("sheep") // false (can be both)
      * ```
      */
-    fun isSingular(word: UDMValue): UDMValue {
-        val text = (word as? UDMString)?.value?.trim()?.lowercase() 
-            ?: return UDMBoolean(false)
+    fun isSingular(word: UDM): UDM {
+        val text = (word as? UDM.Scalar)?.value?.trim()?.lowercase() 
+            ?: return UDM.Scalar(false)
         
         // Check if it's an irregular singular
         if (irregularPlurals.containsKey(text)) {
-            return UDMBoolean(true)
+            return UDM.Scalar(true)
         }
         
         // Check if it's an uncountable noun (ambiguous)
         if (uncountableNouns.contains(text)) {
-            return UDMBoolean(false)
+            return UDM.Scalar(false)
         }
         
         // Check if it doesn't match common plural patterns
@@ -362,7 +362,7 @@ object PluralizationFunctions {
                        !text.endsWith("es") &&
                        !text.endsWith("ies")
         
-        return UDMBoolean(notPlural)
+        return UDM.Scalar(notPlural)
     }
     
     /**
@@ -380,17 +380,17 @@ object PluralizationFunctions {
      * formatPlural(3, "child") // "3 children"
      * ```
      */
-    fun formatPlural(count: UDMValue, word: UDMValue): UDMValue {
-        val num = (count as? UDMNumber)?.value ?: return UDMNull
-        val text = (word as? UDMString)?.value ?: return UDMNull
+    fun formatPlural(count: UDM, word: UDM): UDM {
+        val num = (count as? UDM.Scalar)?.value ?: return UDM.Scalar.nullValue()
+        val text = (word as? UDM.Scalar)?.value ?: return UDM.Scalar.nullValue()
         
         val pluralForm = if (num == 1.0) {
             text
         } else {
-            (pluralize(word, count) as? UDMString)?.value ?: text
+            (pluralize(word, count) as? UDM.Scalar)?.value ?: text
         }
         
-        return UDMString("${num.toInt()} $pluralForm")
+        return UDM.Scalar("${num.toInt()} $pluralForm")
     }
     
     // ============================================

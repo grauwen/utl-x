@@ -36,7 +36,7 @@ object AdvancedCryptoFunctions {
      * hmacMD5("message", "secret-key")
      * ```
      */
-    fun hmacMD5(data: UDMValue, key: UDMValue): UDMValue {
+    fun hmacMD5(data: UDM, key: UDM): UDM {
         return hmac(data, key, "HmacMD5")
     }
     
@@ -52,7 +52,7 @@ object AdvancedCryptoFunctions {
      * hmacSHA1("message", "secret-key")
      * ```
      */
-    fun hmacSHA1(data: UDMValue, key: UDMValue): UDMValue {
+    fun hmacSHA1(data: UDM, key: UDM): UDM {
         return hmac(data, key, "HmacSHA1")
     }
     
@@ -68,7 +68,7 @@ object AdvancedCryptoFunctions {
      * hmacSHA256("message", "secret-key")
      * ```
      */
-    fun hmacSHA256(data: UDMValue, key: UDMValue): UDMValue {
+    fun hmacSHA256(data: UDM, key: UDM): UDM {
         return hmac(data, key, "HmacSHA256")
     }
     
@@ -84,7 +84,7 @@ object AdvancedCryptoFunctions {
      * hmacSHA384("message", "secret-key")
      * ```
      */
-    fun hmacSHA384(data: UDMValue, key: UDMValue): UDMValue {
+    fun hmacSHA384(data: UDM, key: UDM): UDM {
         return hmac(data, key, "HmacSHA384")
     }
     
@@ -100,7 +100,7 @@ object AdvancedCryptoFunctions {
      * hmacSHA512("message", "secret-key")
      * ```
      */
-    fun hmacSHA512(data: UDMValue, key: UDMValue): UDMValue {
+    fun hmacSHA512(data: UDM, key: UDM): UDM {
         return hmac(data, key, "HmacSHA512")
     }
     
@@ -112,17 +112,17 @@ object AdvancedCryptoFunctions {
      * @param algorithm HMAC algorithm name
      * @return HMAC hash (hex string)
      */
-    private fun hmac(data: UDMValue, key: UDMValue, algorithm: String): UDMValue {
+    private fun hmac(data: UDM, key: UDM, algorithm: String): UDM {
         val message = when (data) {
-            is UDMString -> data.value
+            is UDM.Scalar -> data.value
             is UDMBinary -> String(data.data, Charsets.UTF_8)
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         val secretKey = when (key) {
-            is UDMString -> key.value
+            is UDM.Scalar -> key.value
             is UDMBinary -> String(key.data, Charsets.UTF_8)
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         return try {
@@ -131,9 +131,9 @@ object AdvancedCryptoFunctions {
             mac.init(keySpec)
             
             val bytes = mac.doFinal(message.toByteArray(Charsets.UTF_8))
-            UDMString(bytesToHex(bytes))
+            UDM.Scalar(bytesToHex(bytes))
         } catch (e: Exception) {
-            UDMNull
+            UDM.Scalar.nullValue()
         }
     }
     
@@ -151,23 +151,23 @@ object AdvancedCryptoFunctions {
      * ```
      */
     fun hmacBase64(
-        data: UDMValue, 
-        key: UDMValue, 
-        algorithm: UDMValue = UDMString("HmacSHA256")
-    ): UDMValue {
+        data: UDM, 
+        key: UDM, 
+        algorithm: UDM = UDM.Scalar("HmacSHA256")
+    ): UDM {
         val message = when (data) {
-            is UDMString -> data.value
+            is UDM.Scalar -> data.value
             is UDMBinary -> String(data.data, Charsets.UTF_8)
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         val secretKey = when (key) {
-            is UDMString -> key.value
+            is UDM.Scalar -> key.value
             is UDMBinary -> String(key.data, Charsets.UTF_8)
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
-        val algo = (algorithm as? UDMString)?.value ?: "HmacSHA256"
+        val algo = (algorithm as? UDM.Scalar)?.value ?: "HmacSHA256"
         
         return try {
             val keySpec = SecretKeySpec(secretKey.toByteArray(Charsets.UTF_8), algo)
@@ -175,9 +175,9 @@ object AdvancedCryptoFunctions {
             mac.init(keySpec)
             
             val bytes = mac.doFinal(message.toByteArray(Charsets.UTF_8))
-            UDMString(Base64.getEncoder().encodeToString(bytes))
+            UDM.Scalar(Base64.getEncoder().encodeToString(bytes))
         } catch (e: Exception) {
-            UDMNull
+            UDM.Scalar.nullValue()
         }
     }
     
@@ -198,7 +198,7 @@ object AdvancedCryptoFunctions {
      * encryptAES("sensitive data", "16-byte-key-here", "16-byte-iv--here")
      * ```
      */
-    fun encryptAES(data: UDMValue, key: UDMValue, iv: UDMValue): UDMValue {
+    fun encryptAES(data: UDM, key: UDM, iv: UDM): UDM {
         return encryptDecryptAES(data, key, iv, Cipher.ENCRYPT_MODE)
     }
     
@@ -215,7 +215,7 @@ object AdvancedCryptoFunctions {
      * decryptAES(encryptedData, "16-byte-key-here", "16-byte-iv--here")
      * ```
      */
-    fun decryptAES(data: UDMValue, key: UDMValue, iv: UDMValue): UDMValue {
+    fun decryptAES(data: UDM, key: UDM, iv: UDM): UDM {
         return encryptDecryptAES(data, key, iv, Cipher.DECRYPT_MODE)
     }
     
@@ -223,35 +223,35 @@ object AdvancedCryptoFunctions {
      * Common AES encryption/decryption logic
      */
     private fun encryptDecryptAES(
-        data: UDMValue, 
-        key: UDMValue, 
-        iv: UDMValue, 
+        data: UDM, 
+        key: UDM, 
+        iv: UDM, 
         mode: Int
-    ): UDMValue {
+    ): UDM {
         val keyBytes = when (key) {
-            is UDMString -> key.value.toByteArray(Charsets.UTF_8).take(16).toByteArray()
+            is UDM.Scalar -> key.value.toByteArray(Charsets.UTF_8).take(16).toByteArray()
             is UDMBinary -> key.data.take(16).toByteArray()
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         val ivBytes = when (iv) {
-            is UDMString -> iv.value.toByteArray(Charsets.UTF_8).take(16).toByteArray()
+            is UDM.Scalar -> iv.value.toByteArray(Charsets.UTF_8).take(16).toByteArray()
             is UDMBinary -> iv.data.take(16).toByteArray()
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         val inputBytes = when {
             mode == Cipher.ENCRYPT_MODE -> when (data) {
-                is UDMString -> data.value.toByteArray(Charsets.UTF_8)
+                is UDM.Scalar -> data.value.toByteArray(Charsets.UTF_8)
                 is UDMBinary -> data.data
-                else -> return UDMNull
+                else -> return UDM.Scalar.nullValue()
             }
             mode == Cipher.DECRYPT_MODE -> when (data) {
-                is UDMString -> Base64.getDecoder().decode(data.value)
+                is UDM.Scalar -> Base64.getDecoder().decode(data.value)
                 is UDMBinary -> data.data
-                else -> return UDMNull
+                else -> return UDM.Scalar.nullValue()
             }
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         return try {
@@ -262,12 +262,12 @@ object AdvancedCryptoFunctions {
             val outputBytes = cipher.doFinal(inputBytes)
             
             when (mode) {
-                Cipher.ENCRYPT_MODE -> UDMString(Base64.getEncoder().encodeToString(outputBytes))
-                Cipher.DECRYPT_MODE -> UDMString(String(outputBytes, Charsets.UTF_8))
-                else -> UDMNull
+                Cipher.ENCRYPT_MODE -> UDM.Scalar(Base64.getEncoder().encodeToString(outputBytes))
+                Cipher.DECRYPT_MODE -> UDM.Scalar(String(outputBytes, Charsets.UTF_8))
+                else -> UDM.Scalar.nullValue()
             }
         } catch (e: Exception) {
-            UDMNull
+            UDM.Scalar.nullValue()
         }
     }
     
@@ -284,23 +284,23 @@ object AdvancedCryptoFunctions {
      * encryptAES256("sensitive data", "32-byte-key-here-for-aes-256!", "16-byte-iv--here")
      * ```
      */
-    fun encryptAES256(data: UDMValue, key: UDMValue, iv: UDMValue): UDMValue {
+    fun encryptAES256(data: UDM, key: UDM, iv: UDM): UDM {
         val keyBytes = when (key) {
-            is UDMString -> key.value.toByteArray(Charsets.UTF_8).take(32).toByteArray()
+            is UDM.Scalar -> key.value.toByteArray(Charsets.UTF_8).take(32).toByteArray()
             is UDMBinary -> key.data.take(32).toByteArray()
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         val ivBytes = when (iv) {
-            is UDMString -> iv.value.toByteArray(Charsets.UTF_8).take(16).toByteArray()
+            is UDM.Scalar -> iv.value.toByteArray(Charsets.UTF_8).take(16).toByteArray()
             is UDMBinary -> iv.data.take(16).toByteArray()
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         val inputBytes = when (data) {
-            is UDMString -> data.value.toByteArray(Charsets.UTF_8)
+            is UDM.Scalar -> data.value.toByteArray(Charsets.UTF_8)
             is UDMBinary -> data.data
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         return try {
@@ -309,9 +309,9 @@ object AdvancedCryptoFunctions {
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, IvParameterSpec(ivBytes))
             
             val outputBytes = cipher.doFinal(inputBytes)
-            UDMString(Base64.getEncoder().encodeToString(outputBytes))
+            UDM.Scalar(Base64.getEncoder().encodeToString(outputBytes))
         } catch (e: Exception) {
-            UDMNull
+            UDM.Scalar.nullValue()
         }
     }
     
@@ -328,23 +328,23 @@ object AdvancedCryptoFunctions {
      * decryptAES256(encryptedData, "32-byte-key-here-for-aes-256!", "16-byte-iv--here")
      * ```
      */
-    fun decryptAES256(data: UDMValue, key: UDMValue, iv: UDMValue): UDMValue {
+    fun decryptAES256(data: UDM, key: UDM, iv: UDM): UDM {
         val keyBytes = when (key) {
-            is UDMString -> key.value.toByteArray(Charsets.UTF_8).take(32).toByteArray()
+            is UDM.Scalar -> key.value.toByteArray(Charsets.UTF_8).take(32).toByteArray()
             is UDMBinary -> key.data.take(32).toByteArray()
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         val ivBytes = when (iv) {
-            is UDMString -> iv.value.toByteArray(Charsets.UTF_8).take(16).toByteArray()
+            is UDM.Scalar -> iv.value.toByteArray(Charsets.UTF_8).take(16).toByteArray()
             is UDMBinary -> iv.data.take(16).toByteArray()
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         val inputBytes = when (data) {
-            is UDMString -> Base64.getDecoder().decode(data.value)
+            is UDM.Scalar -> Base64.getDecoder().decode(data.value)
             is UDMBinary -> data.data
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         return try {
@@ -353,9 +353,9 @@ object AdvancedCryptoFunctions {
             cipher.init(Cipher.DECRYPT_MODE, secretKey, IvParameterSpec(ivBytes))
             
             val outputBytes = cipher.doFinal(inputBytes)
-            UDMString(String(outputBytes, Charsets.UTF_8))
+            UDM.Scalar(String(outputBytes, Charsets.UTF_8))
         } catch (e: Exception) {
-            UDMNull
+            UDM.Scalar.nullValue()
         }
     }
     
@@ -374,7 +374,7 @@ object AdvancedCryptoFunctions {
      * sha224("Hello World")
      * ```
      */
-    fun sha224(input: UDMValue): UDMValue {
+    fun sha224(input: UDM): UDM {
         return hash(input, "SHA-224")
     }
     
@@ -389,7 +389,7 @@ object AdvancedCryptoFunctions {
      * sha384("Hello World")
      * ```
      */
-    fun sha384(input: UDMValue): UDMValue {
+    fun sha384(input: UDM): UDM {
         return hash(input, "SHA-384")
     }
     
@@ -404,7 +404,7 @@ object AdvancedCryptoFunctions {
      * sha3_256("Hello World")
      * ```
      */
-    fun sha3_256(input: UDMValue): UDMValue {
+    fun sha3_256(input: UDM): UDM {
         return hash(input, "SHA3-256")
     }
     
@@ -419,26 +419,26 @@ object AdvancedCryptoFunctions {
      * sha3_512("Hello World")
      * ```
      */
-    fun sha3_512(input: UDMValue): UDMValue {
+    fun sha3_512(input: UDM): UDM {
         return hash(input, "SHA3-512")
     }
     
     /**
      * Generic hash function
      */
-    private fun hash(input: UDMValue, algorithm: String): UDMValue {
+    private fun hash(input: UDM, algorithm: String): UDM {
         val text = when (input) {
-            is UDMString -> input.value
+            is UDM.Scalar -> input.value
             is UDMBinary -> String(input.data, Charsets.UTF_8)
-            else -> return UDMNull
+            else -> return UDM.Scalar.nullValue()
         }
         
         return try {
             val digest = MessageDigest.getInstance(algorithm)
             val bytes = digest.digest(text.toByteArray(Charsets.UTF_8))
-            UDMString(bytesToHex(bytes))
+            UDM.Scalar(bytesToHex(bytes))
         } catch (e: Exception) {
-            UDMNull
+            UDM.Scalar.nullValue()
         }
     }
     
@@ -465,14 +465,14 @@ object AdvancedCryptoFunctions {
      * generateIV(32) // Returns 32-byte random IV
      * ```
      */
-    fun generateIV(size: UDMValue = UDMNumber(16.0)): UDMValue {
-        val byteSize = (size as? UDMNumber)?.value?.toInt() ?: 16
+    fun generateIV(size: UDM = UDM.Scalar(16.0)): UDM {
+        val byteSize = (size as? UDM.Scalar)?.value?.toInt() ?: 16
         
         val random = java.security.SecureRandom()
         val iv = ByteArray(byteSize)
         random.nextBytes(iv)
         
-        return UDMString(Base64.getEncoder().encodeToString(iv))
+        return UDM.Scalar(Base64.getEncoder().encodeToString(iv))
     }
     
     /**
@@ -487,13 +487,13 @@ object AdvancedCryptoFunctions {
      * generateKey(32) // AES-256 key
      * ```
      */
-    fun generateKey(size: UDMValue = UDMNumber(32.0)): UDMValue {
-        val byteSize = (size as? UDMNumber)?.value?.toInt() ?: 32
+    fun generateKey(size: UDM = UDM.Scalar(32.0)): UDM {
+        val byteSize = (size as? UDM.Scalar)?.value?.toInt() ?: 32
         
         val random = java.security.SecureRandom()
         val key = ByteArray(byteSize)
         random.nextBytes(key)
         
-        return UDMString(Base64.getEncoder().encodeToString(key))
+        return UDM.Scalar(Base64.getEncoder().encodeToString(key))
     }
 }

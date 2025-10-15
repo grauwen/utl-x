@@ -20,6 +20,8 @@ object TypeFunctions {
             is UDM.Array -> "array"
             is UDM.Object -> "object"
             is UDM.DateTime -> "datetime"
+            is UDM.Binary -> "binary"
+            is UDM.Lambda -> "function"
         }
         return UDM.Scalar(typeName)
     }

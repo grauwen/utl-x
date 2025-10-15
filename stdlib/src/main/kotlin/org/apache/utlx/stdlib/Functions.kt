@@ -146,7 +146,6 @@ object StandardLibrary {
       //AdvancedRegex
        registerAdvancedRegexFunctions()
    
-}
     }
 
     private fun registerAdvancedRegexFunctions() {
@@ -212,6 +211,7 @@ object StandardLibrary {
     }
      
     private fun registerCoreFunctions() {
+        // CoreFunctions already use List<UDM> signature, so these work directly
         register("if", CoreFunctions::ifThenElse)
         register("coalesce", CoreFunctions::coalesce)
         // register("generate-uuid", CoreFunctions::generateUuid)//alias
@@ -222,34 +222,34 @@ object StandardLibrary {
 
     private fun registerDebugFunctions() {
         // Configuration
-        register("setLogLevel", DebugFunctions::setLogLevel)
-        register("setConsoleLogging", DebugFunctions::setConsoleLogging)
+        register("setLogLevel") { args -> DebugFunctions.setLogLevel(args[0]) }
+        register("setConsoleLogging") { args -> DebugFunctions.setConsoleLogging(args[0]) }
         
         // Basic logging
-        register("log", DebugFunctions::log)
-        register("trace", DebugFunctions::trace)
-        register("debug", DebugFunctions::debug)
-        register("info", DebugFunctions::info)
-        register("warn", DebugFunctions::warn)
-        register("error", DebugFunctions::error)
+        register("log") { args -> DebugFunctions.log(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
+        register("trace") { args -> DebugFunctions.trace(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
+        register("debug") { args -> DebugFunctions.debug(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
+        register("info") { args -> DebugFunctions.info(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
+        register("warn") { args -> DebugFunctions.warn(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
+        register("error") { args -> DebugFunctions.error(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
         
         // Inspection
-        register("logType", DebugFunctions::logType)
-        register("logSize", DebugFunctions::logSize)
-        register("logPretty", DebugFunctions::logPretty)
+        register("logType") { args -> DebugFunctions.logType(args[0], args.getOrNull(1) ?: UDM.Scalar("Type")) }
+        register("logSize") { args -> DebugFunctions.logSize(args[0], args.getOrNull(1) ?: UDM.Scalar("Size")) }
+        register("logPretty") { args -> DebugFunctions.logPretty(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue(), args.getOrNull(2) ?: UDM.Scalar(2.0)) }
         
         // Timing
-        register("startDebugTimer", DebugFunctions::startTimer)
-        register("endDebugTimer", DebugFunctions::endTimer)
+        register("startDebugTimer") { args -> DebugFunctions.startTimer(args.getOrNull(0) ?: UDM.Scalar("Timer")) }
+        register("endDebugTimer") { args -> DebugFunctions.endTimer(args[0]) }
         
         // Log management
-        register("getLogs", DebugFunctions::getLogs)
-        register("clearLogs", DebugFunctions::clearLogs)
-        register("logCount", DebugFunctions::logCount)
+        register("getLogs") { _ -> DebugFunctions.getLogs() }
+        register("clearLogs") { _ -> DebugFunctions.clearLogs() }
+        register("logCount") { _ -> DebugFunctions.logCount() }
         
         // Assertions
-        register("assert", DebugFunctions::assert)
-        register("assertEqual", DebugFunctions::assertEqual)
+        register("assert") { args -> DebugFunctions.assert(args[0], args.getOrNull(1) ?: UDM.Scalar("Assertion failed")) }
+        register("assertEqual") { args -> DebugFunctions.assertEqual(args[0], args[1], args.getOrNull(2) ?: UDM.Scalar.nullValue()) }
     }
     
     private fun registerStringFunctions() {
@@ -295,32 +295,31 @@ object StandardLibrary {
         register("titleCase", MoreStringFunctions::titleCase)
 
         // CaseFunctions
-        register("camelize", CaseFunctions::camelize)
-        register("pascalCase", CaseFunctions::pascalCase)
-        register("kebabCase", CaseFunctions::kebabCase)
-        register("snakeCase", CaseFunctions::snakeCase)
-        register("constantCase", CaseFunctions::constantCase)
-        register("titleCase", CaseFunctions::titleCase)
-        register("dotCase", CaseFunctions::dotCase)
-        register("pathCase", CaseFunctions::pathCase)
+        register("camelize") { args -> CaseFunctions.camelize(args[0]) }
+        register("pascalCase") { args -> CaseFunctions.pascalCase(args[0]) }
+        register("kebabCase") { args -> CaseFunctions.kebabCase(args[0]) }
+        register("snakeCase") { args -> CaseFunctions.snakeCase(args[0]) }
+        register("constantCase") { args -> CaseFunctions.constantCase(args[0]) }
+        register("titleCase") { args -> CaseFunctions.titleCase(args[0]) }
+        register("dotCase") { args -> CaseFunctions.dotCase(args[0]) }
+        register("pathCase") { args -> CaseFunctions.pathCase(args[0]) }
 
-         // Case conversion
+         // Case conversion (these already use List<UDM> signature)
         register("camelize", CaseConversionFunctions::camelize)
         register("snakeCase", CaseConversionFunctions::snakeCase)
         register("titleCase", CaseConversionFunctions::titleCase)
         register("uncamelize", CaseConversionFunctions::uncamelize)
  
-        // Utilities
-        register("truncate", CaseConversionFunctions::truncate)
+        // Utilities - Note: truncate doesn't exist in CaseConversionFunctions, removing
         register("slugify", CaseConversionFunctions::slugify)
 
         //Pluralize functions
-        register("pluralize", PluralizationFunctions::pluralize)
-        register("singularize", PluralizationFunctions::singularize)
-        register("pluralizeWithCount", PluralizationFunctions::pluralizeWithCount)
-        register("isPlural", PluralizationFunctions::isPlural)
-        register("isSingular", PluralizationFunctions::isSingular)
-        register("formatPlural", PluralizationFunctions::formatPlural)
+        register("pluralize") { args -> PluralizationFunctions.pluralize(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
+        register("singularize") { args -> PluralizationFunctions.singularize(args[0]) }
+        register("pluralizeWithCount") { args -> PluralizationFunctions.pluralizeWithCount(args[0], args[1]) }
+        register("isPlural") { args -> PluralizationFunctions.isPlural(args[0]) }
+        register("isSingular") { args -> PluralizationFunctions.isSingular(args[0]) }
+        // formatPlural function doesn't exist, removing
                  
     }
     
@@ -526,38 +525,38 @@ object StandardLibrary {
         register("hexEncode", EncodingFunctions::hexEncode)
         register("hexDecode", EncodingFunctions::hexDecode)
        // basic crypto
-        register("md5", EncodingFunctions::md5)
-        register("sha256", EncodingFunctions::sha256)
-        register("sha512", EncodingFunctions::sha512)
-        register("sha1", EncodingFunctions::sha1)
-        register("hash", EncodingFunctions::hash)
-        register("hmac", EncodingFunctions::hmac)
+        register("md5") { args -> EncodingFunctions.md5(args[0]) }
+        register("sha256") { args -> EncodingFunctions.sha256(args[0]) }
+        register("sha512") { args -> EncodingFunctions.sha512(args[0]) }
+        register("sha1") { args -> EncodingFunctions.sha1(args[0]) }
+        register("hash") { args -> EncodingFunctions.hash(args[0], args.getOrNull(1) ?: UDM.Scalar("SHA-256")) }
+        register("hmac") { args -> EncodingFunctions.hmac(args[0], args[1], args.getOrNull(2) ?: UDM.Scalar("HmacSHA256")) }
 
         //AdvancedCryptoFunctions
          
         // HMAC functions
-        register("hmacMD5", AdvancedCryptoFunctions::hmacMD5)
-        register("hmacSHA1", AdvancedCryptoFunctions::hmacSHA1)
-        register("hmacSHA256", AdvancedCryptoFunctions::hmacSHA256)
-        register("hmacSHA384", AdvancedCryptoFunctions::hmacSHA384)
-        register("hmacSHA512", AdvancedCryptoFunctions::hmacSHA512)
-        register("hmacBase64", AdvancedCryptoFunctions::hmacBase64)
+        register("hmacMD5") { args -> AdvancedCryptoFunctions.hmacMD5(args[0], args[1]) }
+        register("hmacSHA1") { args -> AdvancedCryptoFunctions.hmacSHA1(args[0], args[1]) }
+        register("hmacSHA256") { args -> AdvancedCryptoFunctions.hmacSHA256(args[0], args[1]) }
+        register("hmacSHA384") { args -> AdvancedCryptoFunctions.hmacSHA384(args[0], args[1]) }
+        register("hmacSHA512") { args -> AdvancedCryptoFunctions.hmacSHA512(args[0], args[1]) }
+        register("hmacBase64") { args -> AdvancedCryptoFunctions.hmacBase64(args[0], args[1], args.getOrNull(2) ?: UDM.Scalar("HmacSHA256")) }
         
         // Encryption
-        register("encryptAES", AdvancedCryptoFunctions::encryptAES)
-        register("decryptAES", AdvancedCryptoFunctions::decryptAES)
-        register("encryptAES256", AdvancedCryptoFunctions::encryptAES256)
-        register("decryptAES256", AdvancedCryptoFunctions::decryptAES256)
+        register("encryptAES") { args -> AdvancedCryptoFunctions.encryptAES(args[0], args[1], args[2]) }
+        register("decryptAES") { args -> AdvancedCryptoFunctions.decryptAES(args[0], args[1], args[2]) }
+        register("encryptAES256") { args -> AdvancedCryptoFunctions.encryptAES256(args[0], args[1], args[2]) }
+        register("decryptAES256") { args -> AdvancedCryptoFunctions.decryptAES256(args[0], args[1], args[2]) }
         
         // Additional hashes
-        register("sha224", AdvancedCryptoFunctions::sha224)
-        register("sha384", AdvancedCryptoFunctions::sha384)
-        register("sha3_256", AdvancedCryptoFunctions::sha3_256)
-        register("sha3_512", AdvancedCryptoFunctions::sha3_512)
+        register("sha224") { args -> AdvancedCryptoFunctions.sha224(args[0]) }
+        register("sha384") { args -> AdvancedCryptoFunctions.sha384(args[0]) }
+        register("sha3_256") { args -> AdvancedCryptoFunctions.sha3_256(args[0]) }
+        register("sha3_512") { args -> AdvancedCryptoFunctions.sha3_512(args[0]) }
         
         // Utilities
-        register("generateIV", AdvancedCryptoFunctions::generateIV)
-        register("generateKey", AdvancedCryptoFunctions::generateKey)
+        register("generateIV") { args -> AdvancedCryptoFunctions.generateIV(args.getOrNull(0) ?: UDM.Scalar(16.0)) }
+        register("generateKey") { args -> AdvancedCryptoFunctions.generateKey(args.getOrNull(0) ?: UDM.Scalar(32.0)) }
     }
     
     private fun registerXmlFunctions() {
@@ -591,34 +590,34 @@ object StandardLibrary {
     private fun registerC14NFunctions() {
         // Canonicalization of XML (often abbreviated as XML C14N)
         // C14N 1.0
-        register("c14n", XMLCanonicalizationFunctions::c14n)
-        register("c14nWithComments", XMLCanonicalizationFunctions::c14nWithComments)
+        register("c14n") { args -> XMLCanonicalizationFunctions.c14n(args[0]) }
+        register("c14nWithComments") { args -> XMLCanonicalizationFunctions.c14nWithComments(args[0]) }
         
         // Exclusive C14N
-        register("excC14n", XMLCanonicalizationFunctions::excC14n)
-        register("excC14nWithComments", XMLCanonicalizationFunctions::excC14nWithComments)
+        register("excC14n") { args -> XMLCanonicalizationFunctions.excC14n(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
+        register("excC14nWithComments") { args -> XMLCanonicalizationFunctions.excC14nWithComments(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
         
         // C14N 1.1
-        register("c14n11", XMLCanonicalizationFunctions::c14n11)
-        register("c14n11WithComments", XMLCanonicalizationFunctions::c14n11WithComments)
+        register("c14n11") { args -> XMLCanonicalizationFunctions.c14n11(args[0]) }
+        register("c14n11WithComments") { args -> XMLCanonicalizationFunctions.c14n11WithComments(args[0]) }
         
         // Physical C14N
-        register("c14nPhysical", XMLCanonicalizationFunctions::c14nPhysical)
+        register("c14nPhysical") { args -> XMLCanonicalizationFunctions.c14nPhysical(args[0]) }
         
         // Generic
-        register("canonicalizeWithAlgorithm", XMLCanonicalizationFunctions::canonicalizeWithAlgorithm)
+        register("canonicalizeWithAlgorithm") { args -> XMLCanonicalizationFunctions.canonicalizeWithAlgorithm(args[0], args[1], args.getOrNull(2) ?: UDM.Scalar.nullValue()) }
         
         // XPath subset
-        register("c14nSubset", XMLCanonicalizationFunctions::c14nSubset)
+        register("c14nSubset") { args -> XMLCanonicalizationFunctions.c14nSubset(args[0], args[1], args.getOrNull(2) ?: UDM.Scalar.nullValue()) }
         
         // Hash and comparison
-        register("c14nHash", XMLCanonicalizationFunctions::c14nHash)
-        register("c14nEquals", XMLCanonicalizationFunctions::c14nEquals)
-        register("c14nFingerprint", XMLCanonicalizationFunctions::c14nFingerprint)
+        register("c14nHash") { args -> XMLCanonicalizationFunctions.c14nHash(args[0], args.getOrNull(1) ?: UDM.Scalar("SHA-256")) }
+        register("c14nEquals") { args -> XMLCanonicalizationFunctions.c14nEquals(args[0], args[1]) }
+        register("c14nFingerprint") { args -> XMLCanonicalizationFunctions.c14nFingerprint(args[0]) }
         
         // Digital signatures
-        register("prepareForSignature", XMLCanonicalizationFunctions::prepareForSignature)
-        register("validateDigest", XMLCanonicalizationFunctions::validateDigest)
+        register("prepareForSignature") { args -> XMLCanonicalizationFunctions.prepareForSignature(args[0], args.getOrNull(1) ?: UDM.Scalar("http://www.w3.org/2001/10/xml-exc-c14n#")) }
+        // validateDigest function doesn't exist, removing
     }
     
     private fun registerLogicalFunctions() {
@@ -793,15 +792,15 @@ object StandardLibrary {
           register("writeByte", BinaryFunctions::writeByte)
 
           //bit operation
-          register("bitwiseAnd", BinaryFunctions::bitwiseAnd)
-          register("bitwiseOr", BinaryFunctions::bitwiseOr)
-          register("bitwiseXor", BinaryFunctions::bitwiseXor)
-          register("bitwiseNot", BinaryFunctions::bitwiseNot)
-          register("shiftLeft", BinaryFunctions::shiftLeft)
-          register("shiftRight", BinaryFunctions::shiftRight)
+          register("bitwiseAnd") { args -> BinaryFunctions.bitwiseAnd(args[0], args[1]) }
+          register("bitwiseOr") { args -> BinaryFunctions.bitwiseOr(args[0], args[1]) }
+          register("bitwiseXor") { args -> BinaryFunctions.bitwiseXor(args[0], args[1]) }
+          register("bitwiseNot") { args -> BinaryFunctions.bitwiseNot(args[0]) }
+          register("shiftLeft") { args -> BinaryFunctions.shiftLeft(args[0], args[1]) }
+          register("shiftRight") { args -> BinaryFunctions.shiftRight(args[0], args[1]) }
 
            // BINARY COMPARISON
-          register("equalsBinary", BinaryFunctions::equals)
+          register("equalsBinary") { args -> BinaryFunctions.equals(args[0], args[1]) }
       }
 
 
@@ -1056,17 +1055,17 @@ object StandardLibrary {
     /**
      * Looks up a function by name.
      */
-    fun lookup(name: String): ((List<UDM>) -> UDM)? = registry[name]
+    fun lookup(name: String): ((List<UDM>) -> UDM)? = functions[name]?.implementation
 
     /**
      * Returns all registered function names.
      */
-    fun getAllFunctionNames(): Set<String> = registry.keys.toSet()
+    fun getAllFunctionNames(): Set<String> = functions.keys.toSet()
     
     /**
      * Returns the total number of registered functions.
      */
-    fun getFunctionCount(): Int = registry.size
+    fun getFunctionCount(): Int = functions.size
     
 }
 

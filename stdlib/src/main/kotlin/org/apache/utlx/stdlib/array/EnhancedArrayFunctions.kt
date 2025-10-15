@@ -204,19 +204,19 @@ object EnhancedArrayFunctions {
         }
         
         if (array.elements.isEmpty()) {
-            return UDM.Null()
+            return UDM.Scalar.nullValue()
         }
         
         val comparatorArg = args[1]
         // TODO: Implement function calling mechanism
         
         // Placeholder: return first element
-        return array.elements.firstOrNull() ?: UDM.Null()
+        return array.elements.firstOrNull() ?: UDM.Scalar.nullValue()
         
         /* Actual implementation would be:
         return array.elements.maxByOrNull { element ->
             comparator(element).asNumber()
-        } ?: UDM.Null()
+        } ?: UDM.Scalar.nullValue()
         */
     }
     
@@ -256,19 +256,19 @@ object EnhancedArrayFunctions {
         }
         
         if (array.elements.isEmpty()) {
-            return UDM.Null()
+            return UDM.Scalar.nullValue()
         }
         
         val comparatorArg = args[1]
         // TODO: Implement function calling mechanism
         
         // Placeholder: return first element
-        return array.elements.firstOrNull() ?: UDM.Null()
+        return array.elements.firstOrNull() ?: UDM.Scalar.nullValue()
         
         /* Actual implementation would be:
         return array.elements.minByOrNull { element ->
             comparator(element).asNumber()
-        } ?: UDM.Null()
+        } ?: UDM.Scalar.nullValue()
         */
     }
     
@@ -415,7 +415,7 @@ object EnhancedArrayFunctions {
         }
         
         if (array.elements.isEmpty()) {
-            return UDM.Null()
+            return UDM.Scalar.nullValue()
         }
         
         val mapperArg = args[1]

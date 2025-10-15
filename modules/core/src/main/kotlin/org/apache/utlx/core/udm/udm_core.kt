@@ -21,19 +21,15 @@ sealed class UDM {
             fun nullValue() = Scalar(null)
         }
         
-        fun asString(): String? = value?.toString()
-        fun asNumber(): Number? = when (value) {
-            is Number -> value
-            is String -> value.toDoubleOrNull()
-            else -> null
-        }
-        fun asBoolean(): Boolean? = when (value) {
-            is Boolean -> value
-            is String -> value.lowercase() in setOf("true", "1", "yes")
-            is Number -> value.toDouble() != 0.0
-            else -> null
-        }
-        fun isNull(): Boolean = value == null
+        // Type-specific methods for Scalar values
+        
+        // Safe value access that works better with smart casting
+        fun getValueSafe(): Any? = value
+        
+        // Type-specific getters that avoid smart cast issues
+        fun getStringValue(): String? = value as? String
+        fun getNumberValue(): Number? = value as? Number
+        fun getBooleanValue(): Boolean? = value as? Boolean
     }
     
     /**
@@ -111,16 +107,149 @@ sealed class UDM {
         override fun hashCode(): Int = data.contentHashCode()
     }
     
+    /**
+     * Lambda/Function values for functional programming support
+     * Used for map, filter, reduce operations
+     */
+    data class Lambda(val apply: (List<UDM>) -> UDM) : UDM() {
+        override fun toString(): String = "Lambda(function)"
+        
+        // Note: Lambda equality is based on reference equality since functions don't have structural equality
+        override fun equals(other: Any?): Boolean = this === other
+        override fun hashCode(): Int = System.identityHashCode(this)
+        
+        companion object {
+            /**
+             * Create a lambda from a function that takes a single UDM parameter
+             */
+            fun of(fn: (UDM) -> UDM): Lambda = Lambda { args -> fn(args.firstOrNull() ?: Scalar.nullValue()) }
+            
+            /**
+             * Create a lambda from a function that takes two UDM parameters
+             */
+            fun of2(fn: (UDM, UDM) -> UDM): Lambda = Lambda { args -> 
+                fn(
+                    args.getOrNull(0) ?: Scalar.nullValue(),
+                    args.getOrNull(1) ?: Scalar.nullValue()
+                )
+            }
+        }
+    }
+    
     // Utility methods available on all UDM nodes
     fun isScalar(): Boolean = this is Scalar
     fun isArray(): Boolean = this is Array
     fun isObject(): Boolean = this is Object
     fun isDateTime(): Boolean = this is DateTime
+    fun isBinary(): Boolean = this is Binary
+    fun isLambda(): Boolean = this is Lambda
     
     fun asScalar(): Scalar? = this as? Scalar
     fun asArray(): Array? = this as? Array
     fun asObject(): Object? = this as? Object
     fun asDateTime(): DateTime? = this as? DateTime
+    fun asBinary(): Binary? = this as? Binary
+    fun asLambda(): Lambda? = this as? Lambda
+    
+    // Additional type checking methods for compatibility
+    fun isNull(): Boolean = this is Scalar && this.value == null
+    fun isString(): Boolean = this is Scalar && this.value is String
+    fun isNumber(): Boolean = this is Scalar && this.value is Number
+    fun isBoolean(): Boolean = this is Scalar && this.value is Boolean
+    
+    // Safe casting methods with better error handling
+    fun asString(): String {
+        return when (this) {
+            is Scalar -> when (value) {
+                is String -> value
+                is Number -> value.toString()
+                is Boolean -> value.toString()
+                null -> ""
+                else -> value.toString()
+            }
+            else -> this.toString()
+        }
+    }
+    
+    fun asNumber(): Double {
+        return when (this) {
+            is Scalar -> when (value) {
+                is Number -> value.toDouble()
+                is String -> value.toDoubleOrNull() ?: 0.0
+                is Boolean -> if (value) 1.0 else 0.0
+                null -> 0.0
+                else -> 0.0
+            }
+            else -> 0.0
+        }
+    }
+    
+    fun asBoolean(): Boolean {
+        return when (this) {
+            is Scalar -> when (value) {
+                is Boolean -> value
+                is Number -> value.toDouble() != 0.0
+                is String -> value.isNotEmpty() && value.lowercase() in listOf("true", "yes", "1")
+                null -> false
+                else -> true
+            }
+            is Array -> elements.isNotEmpty()
+            is Object -> properties.isNotEmpty()
+            else -> true
+        }
+    }
+    
+    /**
+     * Get property from object or element from array using string key/index
+     */
+    fun getProperty(key: String): UDM? {
+        return when (this) {
+            is Object -> get(key)
+            is Array -> {
+                val index = key.toIntOrNull()
+                if (index != null) get(index) else null
+            }
+            else -> null
+        }
+    }
+    
+    /**
+     * Convert UDM to native Kotlin/Java values
+     */
+    fun toNative(): Any? {
+        return when (this) {
+            is Scalar -> value
+            is Array -> elements.map { it.toNative() }
+            is Object -> properties.mapValues { it.value.toNative() }
+            is DateTime -> instant
+            is Binary -> data
+            is Lambda -> this // Functions can't be converted to native values
+        }
+    }
+    
+    companion object {
+        /**
+         * Convert native Kotlin/Java values to UDM
+         */
+        fun fromNative(value: Any?): UDM {
+            return when (value) {
+                null -> Scalar.nullValue()
+                is String -> Scalar.string(value)
+                is Number -> Scalar.number(value)
+                is Boolean -> Scalar.boolean(value)
+                is List<*> -> Array(value.map { fromNative(it) })
+                is Map<*, *> -> {
+                    val properties = value.entries.associate { (k, v) ->
+                        k.toString() to fromNative(v)
+                    }
+                    Object(properties)
+                }
+                is ByteArray -> Binary(value)
+                is kotlin.Array<*> -> Array(value.map { fromNative(it) })
+                else -> Scalar(value) // Fallback for other types
+            }
+        }
+    }
 }
 
 /**

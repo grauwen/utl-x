@@ -158,6 +158,9 @@ object ConversionFunctions {
                 }
                 "{$props}"
             }
+            is UDM.DateTime -> value.instant.toString()
+            is UDM.Binary -> "<binary:${value.data.size} bytes>"
+            is UDM.Lambda -> "<function>"
         }
         
         return UDM.Scalar(result)

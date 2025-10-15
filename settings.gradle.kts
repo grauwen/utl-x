@@ -43,7 +43,7 @@ include("formats:yaml")
 //include("formats:plugin")
 
 // Standard library
-//include("stdlib")
+include("stdlib")
 
 // Development tools
 //include("tools:vscode-extension")
