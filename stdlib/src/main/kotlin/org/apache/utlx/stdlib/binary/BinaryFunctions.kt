@@ -748,6 +748,21 @@ object BinaryFunctions {
 }
 
 /**
+ * UDM Binary type for representing byte arrays
+ */
+data class UDMBinary(val data: ByteArray) : UDMValue() {
+    override fun toString(): String = "Binary(${data.size} bytes)"
+    
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is UDMBinary) return false
+        return data.contentEquals(other.data)
+    }
+    
+    override fun hashCode(): Int = data.contentHashCode()
+}
+
+/**
  * Registration in Functions.kt:
  * 
  * Add these to a new registerBinaryFunctions() method:
