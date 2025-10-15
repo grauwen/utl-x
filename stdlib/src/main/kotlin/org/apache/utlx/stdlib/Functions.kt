@@ -476,6 +476,9 @@ object StandardLibrary {
         register("isEmptyElement", XmlUtilityFunctions::isEmptyElement)
         register("xmlEscape", XmlUtilityFunctions::xmlEscape)
         register("xmlUnescape", XmlUtilityFunctions::xmlUnescape)
+
+        // Canonicalization of XML (often abbreviated as XML C14N)
+        // TODO add
     }
     
     private fun registerLogicalFunctions() {
