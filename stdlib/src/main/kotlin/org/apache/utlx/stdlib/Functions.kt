@@ -13,6 +13,8 @@ import org.apache.utlx.stdlib.encoding.*
 import org.apache.utlx.stdlib.xml.*
 import org.apache.utlx.stdlib.logical.*
 import org.apache.utlx.stdlib.url.*
+import org.apache.utlx.stdlib.util.*
+
 
 /**
  * UTL-X Standard Library Function Registry
@@ -70,6 +72,15 @@ object StandardLibrary {
 
         //URL funcions
         registerURLFunctions() 
+
+        // Tree functions
+        registerTreeFunctions() 
+
+        // CoercionFunctions
+         registerCoercionFunctions()     
+
+        //TimerFunctions
+          registerTimerFunctions()    
         
     }
     
@@ -462,47 +473,80 @@ object StandardLibrary {
         register("removeQueryParam", URLFunctions::removeQueryParam)
         register("isValidURL", URLFunctions::isValidURL)
     }
-    
-    /**
-     * Registration in Functions.kt:
-     * 
-     * Add these to a new registerConversionFunctions() method:
-     * 
-     * private fun registerConversionFunctions() {
-     *     // CRITICAL: Number parsing (used in examples!)
-     *     register("parseNumber", ConversionFunctions::parseNumber)
-     *     register("toNumber", ConversionFunctions::toNumber)
-     *     register("parseInt", ConversionFunctions::parseInt)
-     *     register("parseFloat", ConversionFunctions::parseFloat)
-     *     register("parseDouble", ConversionFunctions::parseDouble)
-     *     
-     *     // String conversion
-     *     register("toString", ConversionFunctions::toString)
-     *     
-     *     // Boolean conversion
-     *     register("parseBoolean", ConversionFunctions::parseBoolean)
-     *     register("toBoolean", ConversionFunctions::toBoolean)
-     *     
-     *     // Date conversion
-     *     register("parseDate", ConversionFunctions::parseDate)
-     *     
-     *     // Collection conversion
-     *     register("toArray", ConversionFunctions::toArray)
-     *     register("toObject", ConversionFunctions::toObject)
-     *     
-     *     // Safe conversion with defaults
-     *     register("numberOrDefault", ConversionFunctions::numberOrDefault)
-     *     register("stringOrDefault", ConversionFunctions::stringOrDefault)
-     * }
-     * 
-     * Then call this in the init block:
-     * init {
-     *     registerConversionFunctions()  // ADD THIS!
-     *     registerStringFunctions()
-     *     registerArrayFunctions()
-     *     // ... rest
-     * }
-     */
+
+      private fun registerTreeFunctions() {
+          register("treeMap", TreeFunctions::treeMap)
+          register("treeFilter", TreeFunctions::treeFilter)
+          register("treeFlatten", TreeFunctions::treeFlatten)
+          register("treeDepth", TreeFunctions::treeDepth)
+          register("treePaths", TreeFunctions::treePaths)
+          register("treeFind", TreeFunctions::treeFind)
+      }
+
+     private fun registerCoercionFunctions() {
+          register("coerce", CoercionFunctions::coerce)
+          register("tryCoerce", CoercionFunctions::tryCoerce)
+          register("canCoerce", CoercionFunctions::canCoerce)
+          register("coerceAll", CoercionFunctions::coerceAll)
+          register("smartCoerce", CoercionFunctions::smartCoerce)
+     }
+
+    private fun registerTimerFunctions() {
+          register("timerStart", TimerFunctions::timerStart)
+          register("timerStop", TimerFunctions::timerStop)
+          register("timerCheck", TimerFunctions::timerCheck)
+          register("timerReset", TimerFunctions::timerReset)
+          register("timerStats", TimerFunctions::timerStats)
+          register("timerList", TimerFunctions::timerList)
+          register("timerClear", TimerFunctions::timerClear)
+          register("timestamp", TimerFunctions::timestamp)
+          register("measure", TimerFunctions::measure)
+     }
+
+        /**
+         * Registration in Functions.kt:
+         * 
+         * Add these to new registration methods:
+         * 
+         * private fun registerTreeFunctions() {
+         *     register("treeMap", TreeFunctions::treeMap)
+         *     register("treeFilter", TreeFunctions::treeFilter)
+         *     register("treeFlatten", TreeFunctions::treeFlatten)
+         *     register("treeDepth", TreeFunctions::treeDepth)
+         *     register("treePaths", TreeFunctions::treePaths)
+         *     register("treeFind", TreeFunctions::treeFind)
+         * }
+         * 
+         * private fun registerCoercionFunctions() {
+         *     register("coerce", CoercionFunctions::coerce)
+         *     register("tryCoerce", CoercionFunctions::tryCoerce)
+         *     register("canCoerce", CoercionFunctions::canCoerce)
+         *     register("coerceAll", CoercionFunctions::coerceAll)
+         *     register("smartCoerce", CoercionFunctions::smartCoerce)
+         * }
+         * 
+         * private fun registerTimerFunctions() {
+         *     register("timerStart", TimerFunctions::timerStart)
+         *     register("timerStop", TimerFunctions::timerStop)
+         *     register("timerCheck", TimerFunctions::timerCheck)
+         *     register("timerReset", TimerFunctions::timerReset)
+         *     register("timerStats", TimerFunctions::timerStats)
+         *     register("timerList", TimerFunctions::timerList)
+         *     register("timerClear", TimerFunctions::timerClear)
+         *     register("timestamp", TimerFunctions::timestamp)
+         *     register("measure", TimerFunctions::measure)
+         * }
+         * 
+         * Then call in init block:
+         * init {
+         *     registerConversionFunctions()
+         *     registerURLFunctions()
+         *     registerTreeFunctions()         // ADD THIS!
+         *     registerCoercionFunctions()     // ADD THIS!
+         *     registerTimerFunctions()        // ADD THIS!
+         *     // ... rest
+         * }
+         */
 }
 
 /**
