@@ -534,9 +534,7 @@ object StandardLibrary {
         register("none", LogicalFunctions::none)
     }
     
-    private fun register(name: String, impl: (List<UDM>) -> UDM) {
-        functions[name] = UTLXFunction(name, impl)
-    }
+
 
     private fun registerConversionFunctions() {
     // CRITICAL: Number parsing (used in examples!)
@@ -700,65 +698,10 @@ object StandardLibrary {
           register("equalsBinary", BinaryFunctions::equals)
       }
 
-
+    private fun register(name: String, impl: (List<UDM>) -> UDM) {
+        functions[name] = UTLXFunction(name, impl)
+    }
     
- 
-/**
- * Registration in Functions.kt:
- * 
- * Add these to a new registerBinaryFunctions() method:
- * 
- * private fun registerBinaryFunctions() {
- *     // Binary creation
- *     register("toBinary", BinaryFunctions::toBinary)
- *     register("fromBytes", BinaryFunctions::fromBytes)
- *     register("fromBase64", BinaryFunctions::fromBase64)
- *     register("fromHex", BinaryFunctions::fromHex)
- *     
- *     // Binary conversion
- *     register("binaryToString", BinaryFunctions::binaryToString)
- *     register("toBytes", BinaryFunctions::toBytes)
- *     register("toBase64", BinaryFunctions::toBase64)
- *     register("toHex", BinaryFunctions::toHex)
- *     
- *     // Binary operations
- *     register("binaryLength", BinaryFunctions::binaryLength)
- *     register("binaryConcat", BinaryFunctions::binaryConcat)
- *     register("binarySlice", BinaryFunctions::binarySlice)
- *     register("binaryEquals", BinaryFunctions::binaryEquals)
- *     
- *     // Binary reading
- *     register("readInt16", BinaryFunctions::readInt16)
- *     register("readInt32", BinaryFunctions::readInt32)
- *     register("readInt64", BinaryFunctions::readInt64)
- *     register("readFloat", BinaryFunctions::readFloat)
- *     register("readDouble", BinaryFunctions::readDouble)
- *     register("readByte", BinaryFunctions::readByte)
- *     
- *     // Binary writing
- *     register("writeInt16", BinaryFunctions::writeInt16)
- *     register("writeInt32", BinaryFunctions::writeInt32)
- *     register("writeInt64", BinaryFunctions::writeInt64)
- *     register("writeFloat", BinaryFunctions::writeFloat)
- *     register("writeDouble", BinaryFunctions::writeDouble)
- *     register("writeByte", BinaryFunctions::writeByte)
- * }
- * 
- * Then call in init block:
- * init {
- *     registerConversionFunctions()
- *     registerURLFunctions()
- *     registerTreeFunctions()
- *     registerCoercionFunctions()
- *     registerTimerFunctions()
- *     registerValueFunctions()
- *     registerDiffFunctions()
- *     registerMimeFunctions()
- *     registerMultipartFunctions()
- *     registerBinaryFunctions()      // ADD THIS!
- *     // ... rest
- * }
- */
 }
 
 /**
