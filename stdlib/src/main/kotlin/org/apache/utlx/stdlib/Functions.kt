@@ -30,6 +30,8 @@ import org.apache.utlx.stdlib.geo.*
 object StandardLibrary {
     
     private val functions = mutableMapOf<String, UTLXFunction>()
+
+    private val registry = mutableMapOf<String, (List<UDM>) -> UDM>()
     
     init {
         registerAllFunctions()
@@ -147,13 +149,67 @@ object StandardLibrary {
 }
     }
 
-    private fun registerAdvancedRegexFunctions(){
-        //TODO
+    private fun registerAdvancedRegexFunctions() {
+        // Core regex analysis
+        register("analyzeString", AdvancedRegexFunctions::analyzeString)
+        register("analyze-string", AdvancedRegexFunctions::analyzeString) // XSLT compatibility
+        
+        // Group extraction
+        register("regexGroups", AdvancedRegexFunctions::regexGroups)
+        register("regex-groups", AdvancedRegexFunctions::regexGroups)
+        register("regexNamedGroups", AdvancedRegexFunctions::regexNamedGroups)
+        register("regex-named-groups", AdvancedRegexFunctions::regexNamedGroups)
+        
+        // Advanced matching
+        register("findAllMatches", AdvancedRegexFunctions::findAllMatches)
+        register("find-all-matches", AdvancedRegexFunctions::findAllMatches)
+        register("splitWithMatches", AdvancedRegexFunctions::splitWithMatches)
+        register("split-with-matches", AdvancedRegexFunctions::splitWithMatches)
+        
+        // Validation and replacement
+        register("matchesWhole", AdvancedRegexFunctions::matchesWhole)
+        register("matches-whole", AdvancedRegexFunctions::matchesWhole)
+        register("replaceWithFunction", AdvancedRegexFunctions::replaceWithFunction)
+        register("replace-with-function", AdvancedRegexFunctions::replaceWithFunction)
     }
-
-     private fun registerGeospatialFunctions(){  
-        //TODO
-     }  
+    
+    private fun registerGeospatialFunctions() {
+        // Distance calculations
+        register("distance", GeospatialFunctions::distance)
+        register("geoDistance", GeospatialFunctions::distance) // Alias
+        register("geo-distance", GeospatialFunctions::distance)
+        
+        register("bearing", GeospatialFunctions::bearing)
+        register("geoBearing", GeospatialFunctions::bearing)
+        register("geo-bearing", GeospatialFunctions::bearing)
+        
+        // Geofencing
+        register("isPointInCircle", GeospatialFunctions::isPointInCircle)
+        register("is-point-in-circle", GeospatialFunctions::isPointInCircle)
+        register("inCircle", GeospatialFunctions::isPointInCircle) // Short alias
+        
+        register("isPointInPolygon", GeospatialFunctions::isPointInPolygon)
+        register("is-point-in-polygon", GeospatialFunctions::isPointInPolygon)
+        register("inPolygon", GeospatialFunctions::isPointInPolygon) // Short alias
+        
+        // Utilities
+        register("midpoint", GeospatialFunctions::midpoint)
+        register("geoMidpoint", GeospatialFunctions::midpoint)
+        register("geo-midpoint", GeospatialFunctions::midpoint)
+        
+        register("destinationPoint", GeospatialFunctions::destinationPoint)
+        register("destination-point", GeospatialFunctions::destinationPoint)
+        register("geoDestination", GeospatialFunctions::destinationPoint)
+        
+        register("boundingBox", GeospatialFunctions::boundingBox)
+        register("bounding-box", GeospatialFunctions::boundingBox)
+        register("geoBounds", GeospatialFunctions::boundingBox)
+        
+        // Validation
+        register("isValidCoordinates", GeospatialFunctions::isValidCoordinates)
+        register("is-valid-coordinates", GeospatialFunctions::isValidCoordinates)
+        register("validCoords", GeospatialFunctions::isValidCoordinates) // Short alias
+    }
      
     private fun registerCoreFunctions() {
         register("if", CoreFunctions::ifThenElse)
@@ -995,6 +1051,21 @@ object StandardLibrary {
     private fun register(name: String, impl: (List<UDM>) -> UDM) {
         functions[name] = UTLXFunction(name, impl)
     }
+
+    /**
+     * Looks up a function by name.
+     */
+    fun lookup(name: String): ((List<UDM>) -> UDM)? = registry[name]
+
+    /**
+     * Returns all registered function names.
+     */
+    fun getAllFunctionNames(): Set<String> = registry.keys.toSet()
+    
+    /**
+     * Returns the total number of registered functions.
+     */
+    fun getFunctionCount(): Int = registry.size
     
 }
 
