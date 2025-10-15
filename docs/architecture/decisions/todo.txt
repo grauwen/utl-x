@@ -9,6 +9,7 @@ TODO's
 - tools/intellij-plugin/
 
 -stlib: serialize
+-stlib: parseNumber missing
 -stlib cannonalize  -> XML Canonicalization (C14N) standards:
 
 -lerna?
