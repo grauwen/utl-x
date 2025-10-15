@@ -715,6 +715,10 @@ object StandardLibrary {
         register("renderCsv", SerializationFunctions::renderCsv)
         register("parse", SerializationFunctions::parse)
         register("render", SerializationFunctions::render)
+
+        // Aliases for compatibility with Tibco BW\
+        register("tibco_parse", SerializationFunctions::parse)
+        register("tibco_render", SerializationFunctions::render)
     }
 
     private fun register(name: String, impl: (List<UDM>) -> UDM) {
