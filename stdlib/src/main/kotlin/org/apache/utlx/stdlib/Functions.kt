@@ -152,69 +152,69 @@ object StandardLibrary {
     private fun registerAdvancedRegexFunctions() {
         // Core regex analysis
         register("analyzeString", AdvancedRegexFunctions::analyzeString)
-        register("analyze-string", AdvancedRegexFunctions::analyzeString) // XSLT compatibility
+        // register("analyze-string", AdvancedRegexFunctions::analyzeString) // XSLT compatibility
         
         // Group extraction
         register("regexGroups", AdvancedRegexFunctions::regexGroups)
-        register("regex-groups", AdvancedRegexFunctions::regexGroups)
+        // register("regex-groups", AdvancedRegexFunctions::regexGroups)
         register("regexNamedGroups", AdvancedRegexFunctions::regexNamedGroups)
-        register("regex-named-groups", AdvancedRegexFunctions::regexNamedGroups)
+        // register("regex-named-groups", AdvancedRegexFunctions::regexNamedGroups)
         
         // Advanced matching
         register("findAllMatches", AdvancedRegexFunctions::findAllMatches)
-        register("find-all-matches", AdvancedRegexFunctions::findAllMatches)
+        // register("find-all-matches", AdvancedRegexFunctions::findAllMatches)
         register("splitWithMatches", AdvancedRegexFunctions::splitWithMatches)
-        register("split-with-matches", AdvancedRegexFunctions::splitWithMatches)
+        // register("split-with-matches", AdvancedRegexFunctions::splitWithMatches)
         
         // Validation and replacement
         register("matchesWhole", AdvancedRegexFunctions::matchesWhole)
-        register("matches-whole", AdvancedRegexFunctions::matchesWhole)
+        // register("matches-whole", AdvancedRegexFunctions::matchesWhole)
         register("replaceWithFunction", AdvancedRegexFunctions::replaceWithFunction)
-        register("replace-with-function", AdvancedRegexFunctions::replaceWithFunction)
+        //register("replace-with-function", AdvancedRegexFunctions::replaceWithFunction)
     }
     
     private fun registerGeospatialFunctions() {
         // Distance calculations
         register("distance", GeospatialFunctions::distance)
         register("geoDistance", GeospatialFunctions::distance) // Alias
-        register("geo-distance", GeospatialFunctions::distance)
+        // register("geo-distance", GeospatialFunctions::distance)
         
         register("bearing", GeospatialFunctions::bearing)
         register("geoBearing", GeospatialFunctions::bearing)
-        register("geo-bearing", GeospatialFunctions::bearing)
+        // register("geo-bearing", GeospatialFunctions::bearing)
         
         // Geofencing
         register("isPointInCircle", GeospatialFunctions::isPointInCircle)
-        register("is-point-in-circle", GeospatialFunctions::isPointInCircle)
+        // register("is-point-in-circle", GeospatialFunctions::isPointInCircle)
         register("inCircle", GeospatialFunctions::isPointInCircle) // Short alias
         
         register("isPointInPolygon", GeospatialFunctions::isPointInPolygon)
-        register("is-point-in-polygon", GeospatialFunctions::isPointInPolygon)
+        r// egister("is-point-in-polygon", GeospatialFunctions::isPointInPolygon)
         register("inPolygon", GeospatialFunctions::isPointInPolygon) // Short alias
         
         // Utilities
         register("midpoint", GeospatialFunctions::midpoint)
         register("geoMidpoint", GeospatialFunctions::midpoint)
-        register("geo-midpoint", GeospatialFunctions::midpoint)
+        // register("geo-midpoint", GeospatialFunctions::midpoint)
         
         register("destinationPoint", GeospatialFunctions::destinationPoint)
-        register("destination-point", GeospatialFunctions::destinationPoint)
+        // register("destination-point", GeospatialFunctions::destinationPoint)
         register("geoDestination", GeospatialFunctions::destinationPoint)
         
         register("boundingBox", GeospatialFunctions::boundingBox)
-        register("bounding-box", GeospatialFunctions::boundingBox)
+        // register("bounding-box", GeospatialFunctions::boundingBox)
         register("geoBounds", GeospatialFunctions::boundingBox)
         
         // Validation
         register("isValidCoordinates", GeospatialFunctions::isValidCoordinates)
-        register("is-valid-coordinates", GeospatialFunctions::isValidCoordinates) 
+        // register("is-valid-coordinates", GeospatialFunctions::isValidCoordinates) 
         register("validCoords", GeospatialFunctions::isValidCoordinates) // Short alias
     }
      
     private fun registerCoreFunctions() {
         register("if", CoreFunctions::ifThenElse)
         register("coalesce", CoreFunctions::coalesce)
-        register("generate-uuid", CoreFunctions::generateUuid)//alias
+        // register("generate-uuid", CoreFunctions::generateUuid)//alias
         register("generateUuid", CoreFunctions::generateUuid)
         register("default", CoreFunctions::default)
      
