@@ -73,10 +73,4 @@ pluginManagement {
     }
 }
 
-// Dependency resolution management
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        mavenCentral()
-    }
-}
+// Dependency resolution management is already defined at the top of this file

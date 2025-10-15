@@ -7,9 +7,10 @@ plugins {
 group = "org.apache.utlx.formats"
 version = "0.9.0-beta"
 
-repositories {
-    mavenCentral()
-}
+// Repository management is handled in settings.gradle.kts
+// repositories {
+//     mavenCentral()
+// }
 
 dependencies {
     // Core module dependency

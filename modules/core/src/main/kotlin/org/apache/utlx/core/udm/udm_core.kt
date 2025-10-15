@@ -97,14 +97,14 @@ sealed class UDM {
     /**
     * Binary data type (byte arrays)
     */
-    data class UDMBinary(val data: ByteArray) : UDMValue() {
-        override fun toJSON(): String = "\"<binary:${data.size} bytes>\""
+    data class Binary(val data: ByteArray) : UDM() {
+        fun toJSON(): String = "\"<binary:${data.size} bytes>\""
         
         override fun toString(): String = "Binary(${data.size} bytes)"
         
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-            if (other !is UDMBinary) return false
+            if (other !is Binary) return false
             return data.contentEquals(other.data)
         }
         

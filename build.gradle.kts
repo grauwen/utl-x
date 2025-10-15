@@ -28,14 +28,12 @@ subprojects {
 }
 
 tasks.register("clean") {
-   delete(rootProject.buildDir)
-// layout.buildDirectory.get().asFile  // ✅ Use this to replace buildDir
+    delete(layout.buildDirectory.get().asFile)
 }
 
 // Documentation generation
 tasks.dokkaHtmlMultiModule.configure {
-    outputDirectory.set(buildDir.resolve("dokka"))
-// layout.buildDirectory.get().asFile  // ✅ Use this to replace buildDir
+    outputDirectory.set(layout.buildDirectory.dir("dokka"))
 }
 
 // Task to print project structure
@@ -54,7 +52,6 @@ tasks.register("projectStructure") {
 
 // Aggregate test reports
 tasks.register("aggregateTestReports", TestReport::class) {
-// layout.buildDirectory.get().asFile  // ✅ Use this to replace buildDir
-    destinationDirectory.set(file("$buildDir/reports/tests"))
+    destinationDirectory.set(layout.buildDirectory.dir("reports/tests"))
     testResults.from(subprojects.map { it.tasks.withType<Test>() })
 }

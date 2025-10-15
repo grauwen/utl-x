@@ -398,7 +398,7 @@ class UDMTest {
 
 class IntegrationTest {
     @Test
-    fun `end-to-end: parse and represent simple transformation`() {
+    fun `end-to-end parse and represent simple transformation`() {
         val source = """
             %utlx 1.0
             input xml

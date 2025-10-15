@@ -7,9 +7,7 @@ plugins {
 group = "org.apache.utlx"
 version = "0.1.0-SNAPSHOT"
 
-repositories {
-    // mavenCentral() // ❌ Remove this
-}
+// Repository management is handled in settings.gradle.kts
 
 dependencies {
     // Kotlin standard library
