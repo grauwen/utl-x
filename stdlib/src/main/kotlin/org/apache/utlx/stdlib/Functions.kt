@@ -189,7 +189,7 @@ object StandardLibrary {
         register("inCircle", GeospatialFunctions::isPointInCircle) // Short alias
         
         register("isPointInPolygon", GeospatialFunctions::isPointInPolygon)
-        r// egister("is-point-in-polygon", GeospatialFunctions::isPointInPolygon)
+        // register("is-point-in-polygon", GeospatialFunctions::isPointInPolygon)
         register("inPolygon", GeospatialFunctions::isPointInPolygon) // Short alias
         
         // Utilities
