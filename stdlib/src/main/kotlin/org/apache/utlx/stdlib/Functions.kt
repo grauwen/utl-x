@@ -16,6 +16,7 @@ import org.apache.utlx.stdlib.url.*
 import org.apache.utlx.stdlib.util.*
 import org.apache.utlx.stdlib.binary.*
 import org.apache.utlx.stdlib.serialization.*
+import org.apache.utlx.stdlib.finance.*
 
 
 
@@ -120,6 +121,21 @@ object StandardLibrary {
 
         //Compression support alike gunzip
         registerCompressionFunctions()
+
+        // Advanced math functions
+        registerAdvancedMathFunctions()
+    
+        // Enhanced object functions
+        registerEnhancedObjectFunctions()
+    
+       // Character classification functions
+       registerCharacterFunctions()
+    
+       // Enhanced array functions
+       registerEnhancedArrayFunctions()
+    
+       // Financial functions
+       registerFinancialFunctions()
 }
     }
     
@@ -837,6 +853,128 @@ object StandardLibrary {
     register("isJarFile", CompressionFunctions::isJarFile)
     register("readJarManifest", CompressionFunctions::readJarManifest)
 }
+
+    //******
+/**
+     * Register advanced mathematical functions
+     * Trigonometric, logarithmic, hyperbolic, and angle conversions
+     */
+    private fun registerAdvancedMathFunctions() {
+        // Trigonometric functions
+        register("sin", AdvancedMathFunctions::sin)
+        register("cos", AdvancedMathFunctions::cos)
+        register("tan", AdvancedMathFunctions::tan)
+        register("asin", AdvancedMathFunctions::asin)
+        register("acos", AdvancedMathFunctions::acos)
+        register("atan", AdvancedMathFunctions::atan)
+        register("atan2", AdvancedMathFunctions::atan2)
+        
+        // Hyperbolic functions
+        register("sinh", AdvancedMathFunctions::sinh)
+        register("cosh", AdvancedMathFunctions::cosh)
+        register("tanh", AdvancedMathFunctions::tanh)
+        
+        // Logarithmic functions
+        register("ln", AdvancedMathFunctions::ln)
+        register("log", AdvancedMathFunctions::log)
+        register("log10", AdvancedMathFunctions::log10)
+        register("log2", AdvancedMathFunctions::log2)
+        register("exp", AdvancedMathFunctions::exp)
+        
+        // Angle conversion
+        register("toRadians", AdvancedMathFunctions::toRadians)
+        register("toDegrees", AdvancedMathFunctions::toDegrees)
+        
+        // Mathematical constants
+        register("pi", AdvancedMathFunctions::pi)
+        register("e", AdvancedMathFunctions::e)
+        register("goldenRatio", AdvancedMathFunctions::goldenRatio)
+    }
+    
+    /**
+     * Register enhanced object functions
+     * Advanced object introspection and manipulation
+     */
+    private fun registerEnhancedObjectFunctions() {
+        register("divideBy", EnhancedObjectFunctions::divideBy)
+        register("someEntry", EnhancedObjectFunctions::someEntry)
+        register("everyEntry", EnhancedObjectFunctions::everyEntry)
+        register("mapEntries", EnhancedObjectFunctions::mapEntries)
+        register("filterEntries", EnhancedObjectFunctions::filterEntries)
+        register("reduceEntries", EnhancedObjectFunctions::reduceEntries)
+        register("countEntries", EnhancedObjectFunctions::countEntries)
+        register("mapKeys", EnhancedObjectFunctions::mapKeys)
+        register("mapValues", EnhancedObjectFunctions::mapValues)
+    }
+    
+    /**
+     * Register character classification functions
+     * String character class tests for validation
+     */
+    private fun registerCharacterFunctions() {
+        register("isAlpha", CharacterFunctions::isAlpha)
+        register("isNumeric", CharacterFunctions::isNumeric)
+        register("isAlphanumeric", CharacterFunctions::isAlphanumeric)
+        register("isWhitespace", CharacterFunctions::isWhitespace)
+        register("isUpperCase", CharacterFunctions::isUpperCase)
+        register("isLowerCase", CharacterFunctions::isLowerCase)
+        register("isPrintable", CharacterFunctions::isPrintable)
+        register("isAscii", CharacterFunctions::isAscii)
+        register("isHexadecimal", CharacterFunctions::isHexadecimal)
+        register("hasAlpha", CharacterFunctions::hasAlpha)
+        register("hasNumeric", CharacterFunctions::hasNumeric)
+    }
+    
+    /**
+     * Register enhanced array functions
+     * Advanced array operations for functional programming
+     */
+    private fun registerEnhancedArrayFunctions() {
+        register("partition", EnhancedArrayFunctions::partition)
+        register("countBy", EnhancedArrayFunctions::countBy)
+        register("sumBy", EnhancedArrayFunctions::sumBy)
+        register("maxBy", EnhancedArrayFunctions::maxBy)
+        register("minBy", EnhancedArrayFunctions::minBy)
+        register("groupBy", EnhancedArrayFunctions::groupBy)
+        register("distinctBy", EnhancedArrayFunctions::distinctBy)
+        register("avgBy", EnhancedArrayFunctions::avgBy)
+    }
+    
+    /**
+     * Register financial functions
+     * UNIQUE FEATURE: The only transformation language with built-in financial functions
+     */
+    private fun registerFinancialFunctions() {
+        // Currency formatting
+        register("formatCurrency", FinancialFunctions::formatCurrency)
+        register("parseCurrency", FinancialFunctions::parseCurrency)
+        
+        // Rounding
+        register("roundToDecimalPlaces", FinancialFunctions::roundToDecimalPlaces)
+        register("roundToCents", FinancialFunctions::roundToCents)
+        
+        // Tax calculations
+        register("calculateTax", FinancialFunctions::calculateTax)
+        register("addTax", FinancialFunctions::addTax)
+        register("removeTax", FinancialFunctions::removeTax)
+        
+        // Discount and percentage
+        register("calculateDiscount", FinancialFunctions::calculateDiscount)
+        register("percentageChange", FinancialFunctions::percentageChange)
+        
+        // Time value of money
+        register("presentValue", FinancialFunctions::presentValue)
+        register("futureValue", FinancialFunctions::futureValue)
+        register("compoundInterest", FinancialFunctions::compoundInterest)
+        register("simpleInterest", FinancialFunctions::simpleInterest)
+        
+        // Validation
+        register("isValidCurrency", FinancialFunctions::isValidCurrency)
+        register("getCurrencyDecimals", FinancialFunctions::getCurrencyDecimals)
+        register("isValidAmount", FinancialFunctions::isValidAmount)
+    }
+
+    //******
     
     private fun register(name: String, impl: (List<UDM>) -> UDM) {
         functions[name] = UTLXFunction(name, impl)
