@@ -84,7 +84,7 @@ class YAMLParser {
         return if (documents.size == 1) {
             documents[0]
         } else {
-            UDMArray(documents)
+            UDM.Array(documents)
         }
     }
     
@@ -93,31 +93,25 @@ class YAMLParser {
      */
     private fun convertToUDM(obj: Any?, options: ParseOptions): UDM {
         return when (obj) {
-            null -> UDMNull
+            null -> UDM.Scalar.nullValue()
             
-            is String -> UDMString(obj)
+            is String -> UDM.Scalar.string(obj)
             
-            is Number -> when (obj) {
-                is Int -> UDMNumber(obj.toDouble(), obj.toLong())
-                is Long -> UDMNumber(obj.toDouble(), obj)
-                is Float -> UDMNumber(obj.toDouble(), obj.toLong())
-                is Double -> UDMNumber(obj, obj.toLong())
-                else -> UDMNumber(obj.toDouble(), obj.toLong())
-            }
+            is Number -> UDM.Scalar.number(obj)
             
-            is Boolean -> UDMBoolean(obj)
+            is Boolean -> UDM.Scalar.boolean(obj)
             
             is Date -> if (options.parseTimestamps) {
-                UDMDate(obj.toInstant())
+                UDM.DateTime(obj.toInstant())
             } else {
-                UDMString(obj.toString())
+                UDM.Scalar.string(obj.toString())
             }
             
             is List<*> -> {
                 val elements = obj.mapNotNull { element ->
                     convertToUDM(element, options)
                 }
-                UDMArray(elements)
+                UDM.Array(elements)
             }
             
             is Map<*, *> -> {
@@ -137,12 +131,12 @@ class YAMLParser {
                     properties[keyStr] = convertToUDM(value, options)
                 }
                 
-                UDMObject(properties)
+                UDM.Object(properties, emptyMap())
             }
             
             else -> {
                 // Handle custom objects by converting to string
-                UDMString(obj.toString())
+                UDM.Scalar.string(obj.toString())
             }
         }
     }

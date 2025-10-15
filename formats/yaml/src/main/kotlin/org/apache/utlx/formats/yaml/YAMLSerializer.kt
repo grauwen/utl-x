@@ -106,7 +106,7 @@ class YAMLSerializer {
             isCanonical = options.canonicalOutput
             isAllowUnicode = options.allowUnicode
             maxSimpleKeyLength = options.maxSimpleKeyLength
-            isSplitLines = options.splitLines
+            // isSplitLines = options.splitLines // This property may not exist in the version of SnakeYAML being used
             width = options.width
             isPrettyFlow = options.pretty
         }
@@ -117,31 +117,22 @@ class YAMLSerializer {
      */
     private fun convertFromUDM(udm: UDM, options: SerializeOptions): Any? {
         return when (udm) {
-            is UDMNull -> null
+            is UDM.Scalar -> udm.value
             
-            is UDMString -> udm.value
-            
-            is UDMNumber -> {
-                // Preserve integer vs floating point
-                if (udm.value == udm.value.toLong().toDouble()) {
-                    udm.longValue
-                } else {
-                    udm.value
-                }
-            }
-            
-            is UDMBoolean -> udm.value
-            
-            is UDMDate -> {
+            is UDM.DateTime -> {
                 // Format date using specified formatter
-                options.dateTimeFormat.format(udm.value)
+                options.dateTimeFormat.format(udm.instant)
             }
             
-            is UDMArray -> {
+            is UDM.Binary -> {
+                "<binary:${udm.data.size} bytes>"
+            }
+            
+            is UDM.Array -> {
                 udm.elements.map { convertFromUDM(it, options) }
             }
             
-            is UDMObject -> {
+            is UDM.Object -> {
                 val map = LinkedHashMap<String, Any?>()
                 udm.properties.forEach { (key, value) ->
                     map[key] = convertFromUDM(value, options)

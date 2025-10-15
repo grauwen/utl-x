@@ -56,6 +56,7 @@ class JSONSerializer(
             is UDM.Array -> serializeArray(udm, writer, depth)
             is UDM.Object -> serializeObject(udm, writer, depth)
             is UDM.DateTime -> writer.write("\"${udm.toISOString()}\"")
+            is UDM.Binary -> writer.write("\"<binary:${udm.data.size} bytes>\"")
         }
     }
     

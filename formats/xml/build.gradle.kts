@@ -17,6 +17,10 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
     testImplementation("io.kotest:kotest-assertions-core:5.8.0")
+    
+    // Test dependencies for examples that use other formats
+    testImplementation(project(":formats:json"))
+    testImplementation(project(":formats:csv"))
 }
 
 tasks.test {

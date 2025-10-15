@@ -152,6 +152,14 @@ class XMLSerializer(
                 writer.write("</$elementName>")
                 if (prettyPrint) writer.write("\n")
             }
+            
+            is UDM.Binary -> {
+                writeIndent(writer, depth)
+                writer.write("<$elementName>")
+                writer.write("<binary:${udm.data.size} bytes>")
+                writer.write("</$elementName>")
+                if (prettyPrint) writer.write("\n")
+            }
         }
     }
     
