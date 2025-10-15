@@ -207,14 +207,15 @@ object StandardLibrary {
         
         // Validation
         register("isValidCoordinates", GeospatialFunctions::isValidCoordinates)
-        register("is-valid-coordinates", GeospatialFunctions::isValidCoordinates)
+        register("is-valid-coordinates", GeospatialFunctions::isValidCoordinates) 
         register("validCoords", GeospatialFunctions::isValidCoordinates) // Short alias
     }
      
     private fun registerCoreFunctions() {
         register("if", CoreFunctions::ifThenElse)
         register("coalesce", CoreFunctions::coalesce)
-        register("generate-uuid", CoreFunctions::generateUuid)
+        register("generate-uuid", CoreFunctions::generateUuid)//alias
+        register("generateUuid", CoreFunctions::generateUuid)
         register("default", CoreFunctions::default)
      
     }
