@@ -63,6 +63,9 @@ object StandardLibrary {
         
         // Logical functions
         registerLogicalFunctions()
+
+        //Conversion functions
+        registerConversionFunctions()
     }
     
     private fun registerCoreFunctions() {
@@ -396,6 +399,74 @@ object StandardLibrary {
     private fun register(name: String, impl: (List<UDM>) -> UDM) {
         functions[name] = UTLXFunction(name, impl)
     }
+
+    private fun registerConversionFunctions() {
+    // CRITICAL: Number parsing (used in examples!)
+         register("parseNumber", ConversionFunctions::parseNumber)
+         register("toNumber", ConversionFunctions::toNumber)
+         register("parseInt", ConversionFunctions::parseInt)
+         register("parseFloat", ConversionFunctions::parseFloat)
+         register("parseDouble", ConversionFunctions::parseDouble)  
+         
+         // String conversion
+         register("toString", ConversionFunctions::toString)
+       
+         // Boolean conversion
+         register("parseBoolean", ConversionFunctions::parseBoolean)
+         register("toBoolean", ConversionFunctions::toBoolean)
+       
+         // Date conversion
+         register("parseDate", ConversionFunctions::parseDate)
+       
+         // Collection conversion
+         register("toArray", ConversionFunctions::toArray)
+         register("toObject", ConversionFunctions::toObject)
+       
+         // Safe conversion with defaults
+         register("numberOrDefault", ConversionFunctions::numberOrDefault)
+         register("stringOrDefault", ConversionFunctions::stringOrDefault)
+     }
+    
+    /**
+     * Registration in Functions.kt:
+     * 
+     * Add these to a new registerConversionFunctions() method:
+     * 
+     * private fun registerConversionFunctions() {
+     *     // CRITICAL: Number parsing (used in examples!)
+     *     register("parseNumber", ConversionFunctions::parseNumber)
+     *     register("toNumber", ConversionFunctions::toNumber)
+     *     register("parseInt", ConversionFunctions::parseInt)
+     *     register("parseFloat", ConversionFunctions::parseFloat)
+     *     register("parseDouble", ConversionFunctions::parseDouble)
+     *     
+     *     // String conversion
+     *     register("toString", ConversionFunctions::toString)
+     *     
+     *     // Boolean conversion
+     *     register("parseBoolean", ConversionFunctions::parseBoolean)
+     *     register("toBoolean", ConversionFunctions::toBoolean)
+     *     
+     *     // Date conversion
+     *     register("parseDate", ConversionFunctions::parseDate)
+     *     
+     *     // Collection conversion
+     *     register("toArray", ConversionFunctions::toArray)
+     *     register("toObject", ConversionFunctions::toObject)
+     *     
+     *     // Safe conversion with defaults
+     *     register("numberOrDefault", ConversionFunctions::numberOrDefault)
+     *     register("stringOrDefault", ConversionFunctions::stringOrDefault)
+     * }
+     * 
+     * Then call this in the init block:
+     * init {
+     *     registerConversionFunctions()  // ADD THIS!
+     *     registerStringFunctions()
+     *     registerArrayFunctions()
+     *     // ... rest
+     * }
+     */
 }
 
 /**
