@@ -98,6 +98,9 @@ object StandardLibrary {
 
         //Binary functions
         registerBinaryFunctions()
+
+
+        
     }
     
     private fun registerCoreFunctions() {
@@ -105,6 +108,10 @@ object StandardLibrary {
         register("coalesce", CoreFunctions::coalesce)
         register("generate-uuid", CoreFunctions::generateUuid)
         register("default", CoreFunctions::default)
+
+        //Debug functions
+        //TODO add
+     
     }
     
     private fun registerStringFunctions() {
@@ -168,6 +175,9 @@ object StandardLibrary {
         // Utilities
         register("truncate", CaseConversionFunctions::truncate)
         register("slugify", CaseConversionFunctions::slugify)
+
+        //Pluralize functions
+        //TODO add
                  
     }
     
@@ -379,7 +389,9 @@ object StandardLibrary {
         register("sha1", EncodingFunctions::sha1)
         register("hash", EncodingFunctions::hash)
         register("hmac", EncodingFunctions::hmac)
-        
+
+        //AdvancedCryptoFunctions
+        //TODO add
     }
     
     private fun registerXmlFunctions() {
