@@ -138,10 +138,23 @@ object StandardLibrary {
        // Financial functions
        registerFinancialFunctions()
 
-       //geo TODO ADD
+       //geo
+       registerGeospatialFunctions()
+       
+      //AdvancedRegex
+       registerAdvancedRegexFunctions()
+   
 }
     }
-    
+
+    private fun registerAdvancedRegexFunctions(){
+        //TODO
+    }
+
+     private fun registerGeospatialFunctions(){  
+        //TODO
+     }  
+     
     private fun registerCoreFunctions() {
         register("if", CoreFunctions::ifThenElse)
         register("coalesce", CoreFunctions::coalesce)
