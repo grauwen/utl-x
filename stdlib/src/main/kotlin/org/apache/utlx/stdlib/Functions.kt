@@ -65,6 +65,9 @@ object StandardLibrary {
         
         // XML & QName functions
         registerXmlFunctions()
+
+        // Canonicalization of XML (often abbreviated as XML C14N)
+        registerC14NFunctions()
         
         // Logical functions
         registerLogicalFunctions()
@@ -477,8 +480,39 @@ object StandardLibrary {
         register("xmlEscape", XmlUtilityFunctions::xmlEscape)
         register("xmlUnescape", XmlUtilityFunctions::xmlUnescape)
 
+    }
+
+    private fun registerC14NFunctions() {
         // Canonicalization of XML (often abbreviated as XML C14N)
-        // TODO add
+        // C14N 1.0
+        register("c14n", XMLCanonicalizationFunctions::c14n)
+        register("c14nWithComments", XMLCanonicalizationFunctions::c14nWithComments)
+        
+        // Exclusive C14N
+        register("excC14n", XMLCanonicalizationFunctions::excC14n)
+        register("excC14nWithComments", XMLCanonicalizationFunctions::excC14nWithComments)
+        
+        // C14N 1.1
+        register("c14n11", XMLCanonicalizationFunctions::c14n11)
+        register("c14n11WithComments", XMLCanonicalizationFunctions::c14n11WithComments)
+        
+        // Physical C14N
+        register("c14nPhysical", XMLCanonicalizationFunctions::c14nPhysical)
+        
+        // Generic
+        register("canonicalizeWithAlgorithm", XMLCanonicalizationFunctions::canonicalizeWithAlgorithm)
+        
+        // XPath subset
+        register("c14nSubset", XMLCanonicalizationFunctions::c14nSubset)
+        
+        // Hash and comparison
+        register("c14nHash", XMLCanonicalizationFunctions::c14nHash)
+        register("c14nEquals", XMLCanonicalizationFunctions::c14nEquals)
+        register("c14nFingerprint", XMLCanonicalizationFunctions::c14nFingerprint)
+        
+        // Digital signatures
+        register("prepareForSignature", XMLCanonicalizationFunctions::prepareForSignature)
+        register("validateDigest", XMLCanonicalizationFunctions::validateDigest)
     }
     
     private fun registerLogicalFunctions() {
