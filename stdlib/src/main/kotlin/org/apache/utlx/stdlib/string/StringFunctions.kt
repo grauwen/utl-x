@@ -162,12 +162,15 @@ object StringFunctions {
     
     private fun UDM.asString(): String {
         return when (this) {
-            is UDM.Scalar -> when (value) {
-                is String -> value
-                is Number -> value.toString()
-                is Boolean -> value.toString()
-                null -> ""
-                else -> value.toString()
+            is UDM.Scalar -> {
+                val v = value
+                when (v) {
+                    is String -> v
+                    is Number -> v.toString()
+                    is Boolean -> v.toString()
+                    null -> ""
+                    else -> v.toString()
+                }
             }
             else -> throw FunctionArgumentException("Expected string value, got ${this::class.simpleName}")
         }
@@ -175,11 +178,14 @@ object StringFunctions {
     
     private fun UDM.asNumber(): Double {
         return when (this) {
-            is UDM.Scalar -> when (value) {
-                is Number -> value.toDouble()
-                is String -> value.toDoubleOrNull() 
-                    ?: throw FunctionArgumentException("Cannot convert '$value' to number")
-                else -> throw FunctionArgumentException("Expected number value, got $value")
+            is UDM.Scalar -> {
+                val v = value
+                when (v) {
+                    is Number -> v.toDouble()
+                    is String -> v.toDoubleOrNull() 
+                        ?: throw FunctionArgumentException("Cannot convert '$v' to number")
+                    else -> throw FunctionArgumentException("Expected number value, got $v")
+                }
             }
             else -> throw FunctionArgumentException("Expected number value, got ${this::class.simpleName}")
         }

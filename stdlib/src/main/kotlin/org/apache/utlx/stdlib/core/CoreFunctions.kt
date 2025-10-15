@@ -65,12 +65,15 @@ object CoreFunctions {
     }
     
     private fun UDM.asBoolean(): Boolean = when (this) {
-        is UDM.Scalar -> when (value) {
-            is Boolean -> value
-            is Number -> value.toDouble() != 0.0
-            is String -> value.isNotEmpty()
-            null -> false
-            else -> true
+        is UDM.Scalar -> {
+            val v = value
+            when (v) {
+                is Boolean -> v
+                is Number -> v.toDouble() != 0.0
+                is String -> v.isNotEmpty()
+                null -> false
+                else -> true
+            }
         }
         is UDM.Array -> elements.isNotEmpty()
         is UDM.Object -> properties.isNotEmpty()

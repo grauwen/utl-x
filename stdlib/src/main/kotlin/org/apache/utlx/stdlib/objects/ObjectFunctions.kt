@@ -8,20 +8,20 @@ object ObjectFunctions {
     
     fun keys(args: List<UDM>): UDM {
         requireArgs(args, 1, "keys")
-        val obj = args[0].asObject()
+        val obj = args[0].asObject() ?: throw FunctionArgumentException("keys: first argument must be an object")
         val keysList = obj.properties.keys.map { UDM.Scalar(it) }
         return UDM.Array(keysList)
     }
     
     fun values(args: List<UDM>): UDM {
         requireArgs(args, 1, "values")
-        val obj = args[0].asObject()
+        val obj = args[0].asObject() ?: throw FunctionArgumentException("values: first argument must be an object")
         return UDM.Array(obj.properties.values.toList())
     }
     
     fun entries(args: List<UDM>): UDM {
         requireArgs(args, 1, "entries")
-        val obj = args[0].asObject()
+        val obj = args[0].asObject() ?: throw FunctionArgumentException("entries: first argument must be an object")
         val entriesList = obj.properties.map { (key, value) ->
             UDM.Array(listOf(UDM.Scalar(key), value))
         }
@@ -37,7 +37,7 @@ object ObjectFunctions {
         val mergedAttrs = mutableMapOf<String, String>()
         
         for (arg in args) {
-            val obj = arg.asObject()
+            val obj = arg.asObject() ?: throw FunctionArgumentException("merge: all arguments must be objects")
             mergedProps.putAll(obj.properties)
             mergedAttrs.putAll(obj.attributes)
         }
@@ -47,8 +47,8 @@ object ObjectFunctions {
     
     fun pick(args: List<UDM>): UDM {
         requireArgs(args, 2, "pick")
-        val obj = args[0].asObject()
-        val keys = args[1].asArray().elements.map { it.asString() }
+        val obj = args[0].asObject() ?: throw FunctionArgumentException("pick: first argument must be an object")
+        val keys = (args[1].asArray() ?: throw FunctionArgumentException("pick: second argument must be an array")).elements.map { it.asString() }
         
         val picked = obj.properties.filterKeys { it in keys }
         return UDM.Object(picked, emptyMap())
@@ -56,8 +56,8 @@ object ObjectFunctions {
     
     fun omit(args: List<UDM>): UDM {
         requireArgs(args, 2, "omit")
-        val obj = args[0].asObject()
-        val keys = args[1].asArray().elements.map { it.asString() }
+        val obj = args[0].asObject() ?: throw FunctionArgumentException("omit: first argument must be an object")
+        val keys = (args[1].asArray() ?: throw FunctionArgumentException("omit: second argument must be an array")).elements.map { it.asString() }
         
         val omitted = obj.properties.filterKeys { it !in keys }
         return UDM.Object(omitted, obj.attributes)
@@ -69,12 +69,12 @@ object ObjectFunctions {
         }
     }
     
-    private fun UDM.asObject(): UDM.Object {
-        return this as? UDM.Object ?: throw FunctionArgumentException("Expected object value")
+    private fun UDM.asObject(): UDM.Object? {
+        return this as? UDM.Object
     }
     
-    private fun UDM.asArray(): UDM.Array {
-        return this as? UDM.Array ?: throw FunctionArgumentException("Expected array value")
+    private fun UDM.asArray(): UDM.Array? {
+        return this as? UDM.Array
     }
     
     private fun UDM.asString(): String = when (this) {

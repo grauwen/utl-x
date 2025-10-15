@@ -62,9 +62,12 @@ object ExtendedMathFunctions {
     }
     
     private fun UDM.asNumber(): Double = when (this) {
-        is UDM.Scalar -> when (value) {
-            is Number -> value.toDouble()
-            else -> throw FunctionArgumentException("Expected number value")
+        is UDM.Scalar -> {
+            val v = value
+            when (v) {
+                is Number -> v.toDouble()
+                else -> throw FunctionArgumentException("Expected number value")
+            }
         }
         else -> throw FunctionArgumentException("Expected number value")
     }

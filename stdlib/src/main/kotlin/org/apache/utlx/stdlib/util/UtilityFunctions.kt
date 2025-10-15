@@ -77,7 +77,7 @@ object TreeFunctions {
         val tree = args[0]
         // Placeholder - in real impl would apply predicate
         
-        return filterTreeRecursive(tree)
+        return filterTreeRecursive(tree) ?: UDM.Scalar(null)
     }
     
     private fun filterTreeRecursive(node: UDM): UDM? {
@@ -330,6 +330,9 @@ object CoercionFunctions {
             }
             is UDM.Array -> UDM.Scalar(value.elements.size.toDouble())
             is UDM.Object -> UDM.Scalar(value.properties.size.toDouble())
+            is UDM.DateTime -> UDM.Scalar(value.instant.toEpochMilli().toDouble())
+            is UDM.Binary -> UDM.Scalar(value.data.size.toDouble())
+            is UDM.Lambda -> throw IllegalArgumentException("Cannot coerce function to number")
         }
     }
     
@@ -338,6 +341,9 @@ object CoercionFunctions {
             is UDM.Scalar -> UDM.Scalar(value.value?.toString() ?: "")
             is UDM.Array -> UDM.Scalar(value.elements.joinToString(", "))
             is UDM.Object -> UDM.Scalar(value.properties.toString())
+            is UDM.DateTime -> UDM.Scalar(value.instant.toString())
+            is UDM.Binary -> UDM.Scalar("<binary:${value.data.size} bytes>")
+            is UDM.Lambda -> UDM.Scalar("<function>")
         }
     }
     
@@ -354,6 +360,9 @@ object CoercionFunctions {
             }
             is UDM.Array -> UDM.Scalar(value.elements.isNotEmpty())
             is UDM.Object -> UDM.Scalar(value.properties.isNotEmpty())
+            is UDM.DateTime -> UDM.Scalar(true) // Dates are always truthy
+            is UDM.Binary -> UDM.Scalar(value.data.isNotEmpty())
+            is UDM.Lambda -> UDM.Scalar(true) // Functions are always truthy
         }
     }
     

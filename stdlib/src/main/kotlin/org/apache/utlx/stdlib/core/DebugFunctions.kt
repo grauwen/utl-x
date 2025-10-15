@@ -73,7 +73,19 @@ object DebugFunctions {
      */
     fun setConsoleLogging(enabled: UDM): UDM {
         val previousState = logToConsole
-        logToConsole = (enabled as? UDM.Scalar)?.value ?: true
+        logToConsole = when (val scalar = enabled as? UDM.Scalar) {
+            null -> true
+            else -> {
+                val v = scalar.value
+                when (v) {
+                    is Boolean -> v
+                    is Number -> v.toDouble() != 0.0
+                    is String -> v.isNotEmpty() && v != "false" && v != "0"
+                    null -> false
+                    else -> true
+                }
+            }
+        }
         return UDM.Scalar(previousState)
     }
     
@@ -102,8 +114,8 @@ object DebugFunctions {
      *   |> sum()
      * ```
      */
-    fun log(value: UDM, message: UDM = UDM.Scalar.nullValue()): UDM {
-        val msg = (message as? UDM.Scalar)?.value ?: "LOG"
+    fun log(value: UDM, message: UDM = UDM.Scalar(null)): UDM {
+        val msg = (message as? UDM.Scalar)?.value?.toString() ?: "LOG"
         logInternal(LogLevel.INFO, msg, value)
         return value // Passthrough
     }
@@ -120,8 +132,8 @@ object DebugFunctions {
      * trace("Entering function", input)
      * ```
      */
-    fun trace(message: UDM, data: UDM = UDM.Scalar.nullValue()): UDM {
-        val msg = (message as? UDM.Scalar)?.value ?: ""
+    fun trace(message: UDM, data: UDM = UDM.Scalar(null)): UDM {
+        val msg = (message as? UDM.Scalar)?.value?.toString() ?: ""
         logInternal(LogLevel.TRACE, msg, data)
         return data
     }
@@ -216,14 +228,20 @@ object DebugFunctions {
      * ```
      */
     fun logType(value: UDM, message: UDM = UDM.Scalar("Type")): UDM {
-        val msg = (message as? UDM.Scalar)?.value ?: "Type"
+        val msg = (message as? UDM.Scalar)?.value?.toString() ?: "Type"
         val type = when (value) {
-            is UDM.Scalar -> "String"
-            is UDM.Scalar -> "Number"
-            is UDM.Scalar -> "Boolean"
+            is UDM.Scalar -> when (value.value) {
+                is String -> "String"
+                is Number -> "Number"
+                is Boolean -> "Boolean"
+                null -> "Null"
+                else -> "Scalar"
+            }
             is UDM.Array -> "Array"
             is UDM.Object -> "Object"
-            is UDM.Scalar.nullValue() -> "Null"
+            is UDM.DateTime -> "DateTime"
+            is UDM.Binary -> "Binary"
+            is UDM.Lambda -> "Function"
             else -> "Unknown"
         }
         
@@ -496,7 +514,7 @@ object DebugFunctions {
             
             val output = buildString {
                 append("$timestamp $levelStr $message")
-                if (data != null && data !is UDM.Scalar.nullValue()) {
+                if (data != null && !(data is UDM.Scalar && data.value == null)) {
                     append("\n  Data: $data")
                 }
             }
@@ -513,10 +531,11 @@ object DebugFunctions {
         val nextIndent = " ".repeat((depth + 1) * indentSize)
         
         return when (value) {
-            is UDM.Scalar -> "\"${value.value}\""
-            is UDM.Scalar -> value.value.toString()
-            is UDM.Scalar -> value.value.toString()
-            is UDM.Scalar.nullValue() -> "null"
+            is UDM.Scalar -> when (value.value) {
+                is String -> "\"${value.value}\""
+                null -> "null"
+                else -> value.value.toString()
+            }
             is UDM.Array -> {
                 if (value.elements.isEmpty()) {
                     "[]"

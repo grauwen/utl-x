@@ -15,7 +15,9 @@ object Aggregations {
      */
     fun sum(args: List<UDM>): UDM {
         requireArgs(args, 1, "sum")
-        val array = args[0].asArray()
+        val array = args[0].asArray() 
+            ?: throw FunctionArgumentException("argument must be an array") 
+            ?: throw FunctionArgumentException("sum: argument must be an array")
         
         val total = array.elements.sumOf { element ->
             element.asNumber()
@@ -30,7 +32,9 @@ object Aggregations {
      */
     fun avg(args: List<UDM>): UDM {
         requireArgs(args, 1, "avg")
-        val array = args[0].asArray()
+        val array = args[0].asArray() 
+            ?: throw FunctionArgumentException("argument must be an array") 
+            ?: throw FunctionArgumentException("avg: argument must be an array")
         
         if (array.elements.isEmpty()) {
             return UDM.Scalar(null)
@@ -49,7 +53,8 @@ object Aggregations {
      */
     fun min(args: List<UDM>): UDM {
         requireArgs(args, 1, "min")
-        val array = args[0].asArray()
+        val array = args[0].asArray() 
+            ?: throw FunctionArgumentException("argument must be an array")
         
         if (array.elements.isEmpty()) {
             return UDM.Scalar(null)
@@ -68,7 +73,8 @@ object Aggregations {
      */
     fun max(args: List<UDM>): UDM {
         requireArgs(args, 1, "max")
-        val array = args[0].asArray()
+        val array = args[0].asArray() 
+            ?: throw FunctionArgumentException("argument must be an array")
         
         if (array.elements.isEmpty()) {
             return UDM.Scalar(null)
@@ -87,7 +93,8 @@ object Aggregations {
      */
     fun count(args: List<UDM>): UDM {
         requireArgs(args, 1, "count")
-        val array = args[0].asArray()
+        val array = args[0].asArray() 
+            ?: throw FunctionArgumentException("argument must be an array")
         return UDM.Scalar(array.elements.size.toDouble())
     }
     
@@ -108,11 +115,14 @@ object Aggregations {
     
     private fun UDM.asNumber(): Double {
         return when (this) {
-            is UDM.Scalar -> when (value) {
-                is Number -> value.toDouble()
-                is String -> value.toDoubleOrNull()
-                    ?: throw FunctionArgumentException("Cannot convert '$value' to number")
-                else -> throw FunctionArgumentException("Expected number value, got $value")
+            is UDM.Scalar -> {
+                val v = value
+                when (v) {
+                    is Number -> v.toDouble()
+                    is String -> v.toDoubleOrNull()
+                        ?: throw FunctionArgumentException("Cannot convert '$v' to number")
+                    else -> throw FunctionArgumentException("Expected number value, got $v")
+                }
             }
             else -> throw FunctionArgumentException("Expected number value, got ${this::class.simpleName}")
         }

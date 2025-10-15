@@ -230,12 +230,15 @@ object SerializationFunctions {
     
     private fun UDM.asString(): String {
         return when (this) {
-            is UDM.Scalar -> when (value) {
-                is String -> value
-                is Number -> value.toString()
-                is Boolean -> value.toString()
-                null -> ""
-                else -> value.toString()
+            is UDM.Scalar -> {
+                val v = value
+                when (v) {
+                    is String -> v
+                    is Number -> v.toString()
+                    is Boolean -> v.toString()
+                    null -> ""
+                    else -> v.toString()
+                }
             }
             else -> throw FunctionArgumentException("Expected string value, got ${this::class.simpleName}")
         }
@@ -243,12 +246,15 @@ object SerializationFunctions {
     
     private fun UDM.asBoolean(): Boolean {
         return when (this) {
-            is UDM.Scalar -> when (value) {
-                is Boolean -> value
-                is Number -> value.toDouble() != 0.0
-                is String -> value.isNotEmpty() && value.lowercase() in listOf("true", "yes", "1")
-                null -> false
-                else -> true
+            is UDM.Scalar -> {
+                val v = value
+                when (v) {
+                    is Boolean -> v
+                    is Number -> v.toDouble() != 0.0
+                    is String -> v.isNotEmpty() && v.lowercase() in listOf("true", "yes", "1")
+                    null -> false
+                    else -> true
+                }
             }
             is UDM.Array -> elements.isNotEmpty()
             is UDM.Object -> properties.isNotEmpty()

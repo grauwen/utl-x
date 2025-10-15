@@ -177,7 +177,7 @@ object LogicalFunctions {
      */
     fun all(args: List<UDM>): UDM {
         requireArgs(args, 1, "all")
-        val array = args[0].asArray()
+        val array = args[0].asArray() ?: throw FunctionArgumentException("all: first argument must be an array")
         
         return UDM.Scalar(array.elements.all { it.asBoolean() })
     }
@@ -191,7 +191,7 @@ object LogicalFunctions {
      */
     fun any(args: List<UDM>): UDM {
         requireArgs(args, 1, "any")
-        val array = args[0].asArray()
+        val array = args[0].asArray() ?: throw FunctionArgumentException("any: first argument must be an array")
         
         return UDM.Scalar(array.elements.any { it.asBoolean() })
     }
@@ -204,7 +204,7 @@ object LogicalFunctions {
      */
     fun none(args: List<UDM>): UDM {
         requireArgs(args, 1, "none")
-        val array = args[0].asArray()
+        val array = args[0].asArray() ?: throw FunctionArgumentException("none: first argument must be an array")
         
         return UDM.Scalar(array.elements.none { it.asBoolean() })
     }
@@ -218,20 +218,23 @@ object LogicalFunctions {
     }
     
     private fun UDM.asBoolean(): Boolean = when (this) {
-        is UDM.Scalar -> when (value) {
-            is Boolean -> value
-            is Number -> value.toDouble() != 0.0
-            is String -> value.isNotEmpty() && value != "false" && value != "0"
-            null -> false
-            else -> true
+        is UDM.Scalar -> {
+            val v = value
+            when (v) {
+                is Boolean -> v
+                is Number -> v.toDouble() != 0.0
+                is String -> v.isNotEmpty() && v != "false" && v != "0"
+                null -> false
+                else -> true
+            }
         }
         is UDM.Array -> elements.isNotEmpty()
         is UDM.Object -> properties.isNotEmpty()
         else -> true
     }
     
-    private fun UDM.asArray(): UDM.Array = when (this) {
+    private fun UDM.asArray(): UDM.Array? = when (this) {
         is UDM.Array -> this
-        else -> throw FunctionArgumentException("Expected array value")
+        else -> null
     }
 }

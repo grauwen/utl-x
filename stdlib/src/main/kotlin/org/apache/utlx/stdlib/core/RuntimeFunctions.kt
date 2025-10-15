@@ -50,7 +50,7 @@ object RuntimeFunctions {
         return if (value != null) {
             UDM.fromNative(value)
         } else {
-            UDM.NULL
+            UDM.Scalar(null)
         }
     }
     
@@ -126,7 +126,7 @@ object RuntimeFunctions {
         return if (value != null) {
             UDM.fromNative(value)
         } else {
-            UDM.NULL
+            UDM.Scalar(null)
         }
     }
     

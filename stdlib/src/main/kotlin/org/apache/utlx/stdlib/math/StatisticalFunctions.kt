@@ -96,6 +96,9 @@ object StatisticalFunctions {
                 is UDM.Scalar -> element.value.toString()
                 is UDM.Array -> "[Array]"
                 is UDM.Object -> "[Object]"
+                is UDM.DateTime -> "[DateTime:${element.instant}]"
+                is UDM.Binary -> "[Binary:${element.data.size}bytes]"
+                is UDM.Lambda -> "[Function]"
             }
             
             val (count, _) = frequencies[key] ?: (0 to element)

@@ -172,11 +172,14 @@ object MoreStringFunctions {
     }
     
     private fun UDM.asNumber(): Double = when (this) {
-        is UDM.Scalar -> when (value) {
-            is Number -> value.toDouble()
-            is String -> value.toDoubleOrNull()
-                ?: throw FunctionArgumentException("Cannot convert '$value' to number")
-            else -> throw FunctionArgumentException("Expected number value")
+        is UDM.Scalar -> {
+            val v = value
+            when (v) {
+                is Number -> v.toDouble()
+                is String -> v.toDoubleOrNull()
+                    ?: throw FunctionArgumentException("Cannot convert '$v' to number")
+                else -> throw FunctionArgumentException("Expected number value")
+            }
         }
         else -> throw FunctionArgumentException("Expected number value")
     }

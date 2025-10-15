@@ -352,7 +352,7 @@ object AdvancedRegexFunctions {
                     )
                 ))
             } else {
-                UDM.Null()
+                UDM.Scalar(null)
             }
         } catch (e: Exception) {
             throw IllegalArgumentException("Invalid regex pattern: $pattern", e)

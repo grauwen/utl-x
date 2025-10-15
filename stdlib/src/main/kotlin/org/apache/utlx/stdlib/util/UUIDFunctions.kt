@@ -80,7 +80,7 @@ object UUIDFunctions {
      */
     fun generateUuidV7(args: List<UDM>): UDM {
         val timestampMs = if (args.isNotEmpty()) {
-            args[0].asLong()
+            (args[0] as? UDM.Scalar)?.value?.toString()?.toLongOrNull() ?: Instant.now().toEpochMilli()
         } else {
             Instant.now().toEpochMilli()
         }
@@ -103,7 +103,7 @@ object UUIDFunctions {
     fun generateUuidV7Batch(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "generateUuidV7Batch requires count argument" }
         
-        val count = args[0].asInt()
+        val count = (args[0] as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 1
         require(count > 0) { "Count must be positive" }
         
         val baseTimestamp = Instant.now().toEpochMilli()

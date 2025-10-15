@@ -28,19 +28,22 @@ object TypeFunctions {
     
     fun isString(args: List<UDM>): UDM {
         requireArgs(args, 1, "isString")
-        val result = args[0] is UDM.Scalar && args[0].value is String
+        val arg = args[0]
+        val result = arg is UDM.Scalar && arg.value is String
         return UDM.Scalar(result)
     }
     
     fun isNumber(args: List<UDM>): UDM {
         requireArgs(args, 1, "isNumber")
-        val result = args[0] is UDM.Scalar && args[0].value is Number
+        val arg = args[0]
+        val result = arg is UDM.Scalar && arg.value is Number
         return UDM.Scalar(result)
     }
     
     fun isBoolean(args: List<UDM>): UDM {
         requireArgs(args, 1, "isBoolean")
-        val result = args[0] is UDM.Scalar && args[0].value is Boolean
+        val arg = args[0]
+        val result = arg is UDM.Scalar && arg.value is Boolean
         return UDM.Scalar(result)
     }
     
@@ -56,13 +59,15 @@ object TypeFunctions {
     
     fun isNull(args: List<UDM>): UDM {
         requireArgs(args, 1, "isNull")
-        val result = args[0] is UDM.Scalar && args[0].value == null
+        val arg = args[0]
+        val result = arg is UDM.Scalar && arg.value == null
         return UDM.Scalar(result)
     }
     
     fun isDefined(args: List<UDM>): UDM {
         requireArgs(args, 1, "isDefined")
-        val result = !(args[0] is UDM.Scalar && args[0].value == null)
+        val arg = args[0]
+        val result = !(arg is UDM.Scalar && arg.value == null)
         return UDM.Scalar(result)
     }
     

@@ -40,6 +40,9 @@ object CriticalObjectFunctions {
                 is UDM.Scalar -> value.value.toString()
                 is UDM.Array -> "[Array]"
                 is UDM.Object -> "[Object]"
+                is UDM.DateTime -> "[DateTime:${value.instant}]"
+                is UDM.Binary -> "[Binary:${value.data.size}bytes]"
+                is UDM.Lambda -> "[Function]"
             }
             
             // If duplicate values exist, last one wins
@@ -142,10 +145,11 @@ object CriticalObjectFunctions {
         }
         
         // Start with first object
-        var result = array.elements[0]
-        if (result !is UDM.Object) {
+        val firstElement = array.elements[0]
+        if (firstElement !is UDM.Object) {
             throw IllegalArgumentException("deepMergeAll expects array of objects")
         }
+        var result = firstElement
         
         // Merge remaining objects
         for (i in 1 until array.elements.size) {
@@ -196,6 +200,18 @@ object CriticalObjectFunctions {
                 // Clone attributes
                 val clonedAttributes = value.attributes.toMap()
                 UDM.Object(clonedProperties, clonedAttributes)
+            }
+            is UDM.DateTime -> {
+                // DateTime is immutable, safe to return as-is
+                UDM.DateTime(value.instant)
+            }
+            is UDM.Binary -> {
+                // Clone the byte array
+                UDM.Binary(value.data.copyOf())
+            }
+            is UDM.Lambda -> {
+                // Functions should probably be shared references, not cloned
+                value
             }
         }
     }

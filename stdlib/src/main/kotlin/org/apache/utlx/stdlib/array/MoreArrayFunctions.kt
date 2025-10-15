@@ -15,7 +15,7 @@ object MoreArrayFunctions {
      */
     fun remove(args: List<UDM>): UDM {
         requireArgs(args, 2, "remove")
-        val array = args[0].asArray()
+        val array = args[0].asArray() ?: throw FunctionArgumentException("remove: first argument must be an array")
         val index = args[1].asNumber().toInt()
         
         if (index < 0 || index >= array.elements.size) {
@@ -34,7 +34,7 @@ object MoreArrayFunctions {
      */
     fun insertBefore(args: List<UDM>): UDM {
         requireArgs(args, 3, "insertBefore")
-        val array = args[0].asArray()
+        val array = args[0].asArray() ?: throw FunctionArgumentException("insertBefore: first argument must be an array")
         val index = args[1].asNumber().toInt()
         val value = args[2]
         
@@ -54,7 +54,7 @@ object MoreArrayFunctions {
      */
     fun insertAfter(args: List<UDM>): UDM {
         requireArgs(args, 3, "insertAfter")
-        val array = args[0].asArray()
+        val array = args[0].asArray() ?: throw FunctionArgumentException("insertAfter: first argument must be an array")
         val index = args[1].asNumber().toInt()
         val value = args[2]
         
@@ -74,7 +74,7 @@ object MoreArrayFunctions {
      */
     fun indexOf(args: List<UDM>): UDM {
         requireArgs(args, 2, "indexOf")
-        val array = args[0].asArray()
+        val array = args[0].asArray() ?: throw FunctionArgumentException("indexOf: first argument must be an array")
         val searchValue = args[1]
         
         val index = array.elements.indexOfFirst { element ->
@@ -90,7 +90,7 @@ object MoreArrayFunctions {
      */
     fun lastIndexOf(args: List<UDM>): UDM {
         requireArgs(args, 2, "lastIndexOf")
-        val array = args[0].asArray()
+        val array = args[0].asArray() ?: throw FunctionArgumentException("lastIndexOf: first argument must be an array")
         val searchValue = args[1]
         
         val index = array.elements.indexOfLast { element ->
@@ -106,7 +106,7 @@ object MoreArrayFunctions {
      */
     fun includes(args: List<UDM>): UDM {
         requireArgs(args, 2, "includes")
-        val array = args[0].asArray()
+        val array = args[0].asArray() ?: throw FunctionArgumentException("includes: first argument must be an array")
         val searchValue = args[1]
         
         val found = array.elements.any { element ->
@@ -122,7 +122,7 @@ object MoreArrayFunctions {
      */
     fun slice(args: List<UDM>): UDM {
         requireArgs(args, 2..3, "slice")
-        val array = args[0].asArray()
+        val array = args[0].asArray() ?: throw FunctionArgumentException("slice: first argument must be an array")
         val start = args[1].asNumber().toInt()
         val end = if (args.size > 2) args[2].asNumber().toInt() else array.elements.size
         
@@ -148,7 +148,7 @@ object MoreArrayFunctions {
         
         val result = mutableListOf<UDM>()
         for (arg in args) {
-            val array = arg.asArray()
+            val array = arg.asArray() ?: throw FunctionArgumentException("concat: all arguments must be arrays")
             result.addAll(array.elements)
         }
         
@@ -186,18 +186,20 @@ object MoreArrayFunctions {
         }
     }
     
-    private fun UDM.asArray(): UDM.Array {
+    private fun UDM.asArray(): UDM.Array? {
         return this as? UDM.Array
-            ?: throw FunctionArgumentException("Expected array value, got ${this::class.simpleName}")
     }
     
     private fun UDM.asNumber(): Double {
         return when (this) {
-            is UDM.Scalar -> when (value) {
-                is Number -> value.toDouble()
-                is String -> value.toDoubleOrNull()
-                    ?: throw FunctionArgumentException("Cannot convert '$value' to number")
-                else -> throw FunctionArgumentException("Expected number value, got $value")
+            is UDM.Scalar -> {
+                val v = value
+                when (v) {
+                    is Number -> v.toDouble()
+                    is String -> v.toDoubleOrNull()
+                        ?: throw FunctionArgumentException("Cannot convert '$v' to number")
+                    else -> throw FunctionArgumentException("Expected number value, got $v")
+                }
             }
             else -> throw FunctionArgumentException("Expected number value, got ${this::class.simpleName}")
         }
