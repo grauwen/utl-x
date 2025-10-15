@@ -117,6 +117,10 @@ object StandardLibrary {
 
         // UUID v7 support
         registerUUIDFunctions()        
+
+        //Compression support alike gunzip
+        registerCompressionFunctions()
+}
     }
     
     private fun registerCoreFunctions() {
@@ -805,6 +809,34 @@ object StandardLibrary {
         // Alternative: also provide v4 explicitly
         register("generateUuidV4", UUIDFunctions::generateUuidV4) // might be a duplication
     }
+
+    private fun registerCompressionFunctions() {
+    // Gzip compression
+    register("gzip", CompressionFunctions::gzip)
+    register("gunzip", CompressionFunctions::gunzip)
+    register("isGzipped", CompressionFunctions::isGzipped)
+    
+    // Deflate compression
+    register("deflate", CompressionFunctions::deflate)
+    register("inflate", CompressionFunctions::inflate)
+    
+    // Generic compression
+    register("compress", CompressionFunctions::compress)
+    register("decompress", CompressionFunctions::decompress)
+    
+    // Zip archive operations
+    register("zipArchive", CompressionFunctions::zipArchive)
+    register("unzipArchive", CompressionFunctions::unzipArchive)
+    register("readZipEntry", CompressionFunctions::readZipEntry)
+    register("listZipEntries", CompressionFunctions::listZipEntries)
+    register("isZipArchive", CompressionFunctions::isZipArchive)
+    
+    // JAR file operations
+    register("readJarEntry", CompressionFunctions::readJarEntry)
+    register("listJarEntries", CompressionFunctions::listJarEntries)
+    register("isJarFile", CompressionFunctions::isJarFile)
+    register("readJarManifest", CompressionFunctions::readJarManifest)
+}
     
     private fun register(name: String, impl: (List<UDM>) -> UDM) {
         functions[name] = UTLXFunction(name, impl)
