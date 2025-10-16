@@ -2,6 +2,7 @@
 package org.apache.utlx.stdlib.core
 
 import org.apache.utlx.core.udm.*
+import org.apache.utlx.stdlib.FunctionArgumentException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -45,7 +46,11 @@ object DebugFunctions {
      * setLogLevel("DEBUG")
      * ```
      */
-    fun setLogLevel(level: UDM): UDM {
+    fun setLogLevel(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("setLogLevel expects 1 argument")
+        }
+        val level = args[0]
         val levelStr = (level as? UDM.Scalar)?.value?.toString()?.uppercase() ?: return UDM.Scalar(false)
         
         currentLogLevel = when (levelStr) {
@@ -71,7 +76,11 @@ object DebugFunctions {
      * setConsoleLogging(false) // Disable console output
      * ```
      */
-    fun setConsoleLogging(enabled: UDM): UDM {
+    fun setConsoleLogging(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("setConsoleLogging expects 1 argument")
+        }
+        val enabled = args[0]
         val previousState = logToConsole
         logToConsole = when (val scalar = enabled as? UDM.Scalar) {
             null -> true
@@ -114,7 +123,12 @@ object DebugFunctions {
      *   |> sum()
      * ```
      */
-    fun log(value: UDM, message: UDM = UDM.Scalar(null)): UDM {
+    fun log(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("log expects at least 1 argument")
+        }
+        val value = args[0]
+        val message = if (args.size > 1) args[1] else UDM.Scalar(null)
         val msg = (message as? UDM.Scalar)?.value?.toString() ?: "LOG"
         logInternal(LogLevel.INFO, msg, value)
         return value // Passthrough
@@ -132,7 +146,12 @@ object DebugFunctions {
      * trace("Entering function", input)
      * ```
      */
-    fun trace(message: UDM, data: UDM = UDM.Scalar(null)): UDM {
+    fun trace(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("trace expects at least 1 argument")
+        }
+        val message = args[0]
+        val data = if (args.size > 1) args[1] else UDM.Scalar(null)
         val msg = (message as? UDM.Scalar)?.value?.toString() ?: ""
         logInternal(LogLevel.TRACE, msg, data)
         return data
@@ -150,7 +169,12 @@ object DebugFunctions {
      * debug("Variable state", myVar)
      * ```
      */
-    fun debug(message: UDM, data: UDM = UDM.Scalar(null)): UDM {
+    fun debug(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("debug expects at least 1 argument")
+        }
+        val message = args[0]
+        val data = if (args.size > 1) args[1] else UDM.Scalar(null)
         val msg = (message as? UDM.Scalar)?.value?.toString() ?: ""
         logInternal(LogLevel.DEBUG, msg, data)
         return data
@@ -168,7 +192,12 @@ object DebugFunctions {
      * info("Processing completed", result)
      * ```
      */
-    fun info(message: UDM, data: UDM = UDM.Scalar(null)): UDM {
+    fun info(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("info expects at least 1 argument")
+        }
+        val message = args[0]
+        val data = if (args.size > 1) args[1] else UDM.Scalar(null)
         val msg = (message as? UDM.Scalar)?.value?.toString() ?: ""
         logInternal(LogLevel.INFO, msg, data)
         return data
@@ -186,7 +215,12 @@ object DebugFunctions {
      * warn("Missing optional field", fieldName)
      * ```
      */
-    fun warn(message: UDM, data: UDM = UDM.Scalar(null)): UDM {
+    fun warn(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("warn expects at least 1 argument")
+        }
+        val message = args[0]
+        val data = if (args.size > 1) args[1] else UDM.Scalar(null)
         val msg = (message as? UDM.Scalar)?.value?.toString() ?: ""
         logInternal(LogLevel.WARN, msg, data)
         return data
@@ -204,7 +238,12 @@ object DebugFunctions {
      * error("Validation failed", invalidData)
      * ```
      */
-    fun error(message: UDM, data: UDM = UDM.Scalar(null)): UDM {
+    fun error(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("error expects at least 1 argument")
+        }
+        val message = args[0]
+        val data = if (args.size > 1) args[1] else UDM.Scalar(null)
         val msg = (message as? UDM.Scalar)?.value?.toString() ?: ""
         logInternal(LogLevel.ERROR, msg, data)
         return data
@@ -227,7 +266,12 @@ object DebugFunctions {
      * // Logs: "Input type: Array"
      * ```
      */
-    fun logType(value: UDM, message: UDM = UDM.Scalar("Type")): UDM {
+    fun logType(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("logType expects at least 1 argument")
+        }
+        val value = args[0]
+        val message = if (args.size > 1) args[1] else UDM.Scalar("Type")
         val msg = (message as? UDM.Scalar)?.value?.toString() ?: "Type"
         val type = when (value) {
             is UDM.Scalar -> when (value.value) {
@@ -262,7 +306,12 @@ object DebugFunctions {
      * // Logs: "Item count: 25"
      * ```
      */
-    fun logSize(value: UDM, message: UDM = UDM.Scalar("Size")): UDM {
+    fun logSize(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("logSize expects at least 1 argument")
+        }
+        val value = args[0]
+        val message = if (args.size > 1) args[1] else UDM.Scalar("Size")
         val msg = (message as? UDM.Scalar)?.value ?: "Size"
         val size = when (value) {
             is UDM.Scalar -> (value.value as? String)?.length ?: value.value.toString().length
@@ -291,11 +340,13 @@ object DebugFunctions {
      * logPretty(complexObject, "Result:", 4)
      * ```
      */
-    fun logPretty(
-        value: UDM, 
-        message: UDM = UDM.Scalar(null), 
-        indent: UDM = UDM.Scalar(2.0)
-    ): UDM {
+    fun logPretty(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("logPretty expects at least 1 argument")
+        }
+        val value = args[0]
+        val message = if (args.size > 1) args[1] else UDM.Scalar(null)
+        val indent = if (args.size > 2) args[2] else UDM.Scalar(2.0)
         val msg = (message as? UDM.Scalar)?.value
         val indentSize = (indent as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 2
         
@@ -326,7 +377,8 @@ object DebugFunctions {
      * endTimer(timer)
      * ```
      */
-    fun startTimer(label: UDM = UDM.Scalar("Timer")): UDM {
+    fun startTimer(args: List<UDM>): UDM {
+        val label = if (args.isNotEmpty()) args[0] else UDM.Scalar("Timer")
         val lbl = (label as? UDM.Scalar)?.value ?: "Timer"
         val startTime = System.nanoTime()
         
@@ -349,7 +401,11 @@ object DebugFunctions {
      * endTimer(timer) // Logs: "Processing: 125.3ms"
      * ```
      */
-    fun endTimer(timer: UDM): UDM {
+    fun endTimer(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("endTimer expects 1 argument")
+        }
+        val timer = args[0]
         val timerObj = timer as? UDM.Object ?: return UDM.Scalar(0.0)
         val label = (timerObj.properties["label"] as? UDM.Scalar)?.value ?: "Timer"
         val startTime = (timerObj.properties["startTime"] as? UDM.Scalar)?.value?.toString()?.toLongOrNull() ?: 0L
@@ -376,7 +432,7 @@ object DebugFunctions {
      * getLogs() // Returns all logged entries
      * ```
      */
-    fun getLogs(): UDM {
+    fun getLogs(args: List<UDM>): UDM {
         val logs = logBuffer.map { entry ->
             UDM.Object(mapOf(
                 "timestamp" to UDM.Scalar(entry.timestamp.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)),
@@ -399,7 +455,7 @@ object DebugFunctions {
      * clearLogs() // Empties log buffer
      * ```
      */
-    fun clearLogs(): UDM {
+    fun clearLogs(args: List<UDM>): UDM {
         val count = logBuffer.size
         logBuffer.clear()
         return UDM.Scalar(count.toDouble())
@@ -415,7 +471,7 @@ object DebugFunctions {
      * logCount() // Returns: 42
      * ```
      */
-    fun logCount(): UDM {
+    fun logCount(args: List<UDM>): UDM {
         return UDM.Scalar(logBuffer.size.toDouble())
     }
     
@@ -435,7 +491,12 @@ object DebugFunctions {
      * assert(price > 0, "Price must be positive")
      * ```
      */
-    fun assert(condition: UDM, message: UDM = UDM.Scalar("Assertion failed")): UDM {
+    fun assert(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("assert expects at least 1 argument")
+        }
+        val condition = args[0]
+        val message = if (args.size > 1) args[1] else UDM.Scalar("Assertion failed")
         val isTrue = (condition as? UDM.Scalar)?.value as? Boolean ?: false
         val msg = (message as? UDM.Scalar)?.value?.toString() ?: "Assertion failed"
         
@@ -460,11 +521,13 @@ object DebugFunctions {
      * assertEqual(result, 42, "Result should be 42")
      * ```
      */
-    fun assertEqual(
-        actual: UDM, 
-        expected: UDM, 
-        message: UDM = UDM.Scalar(null)
-    ): UDM {
+    fun assertEqual(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("assertEqual expects at least 2 arguments")
+        }
+        val actual = args[0]
+        val expected = args[1]
+        val message = if (args.size > 2) args[2] else UDM.Scalar(null)
         val equal = actual == expected
         
         if (!equal) {

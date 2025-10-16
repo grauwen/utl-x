@@ -222,34 +222,34 @@ object StandardLibrary {
 
     private fun registerDebugFunctions() {
         // Configuration
-        register("setLogLevel") { args -> DebugFunctions.setLogLevel(args[0]) }
-        register("setConsoleLogging") { args -> DebugFunctions.setConsoleLogging(args[0]) }
+        register("setLogLevel", DebugFunctions::setLogLevel)
+        register("setConsoleLogging", DebugFunctions::setConsoleLogging)
         
         // Basic logging
-        register("log") { args -> DebugFunctions.log(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
-        register("trace") { args -> DebugFunctions.trace(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
-        register("debug") { args -> DebugFunctions.debug(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
-        register("info") { args -> DebugFunctions.info(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
-        register("warn") { args -> DebugFunctions.warn(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
-        register("error") { args -> DebugFunctions.error(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
+        register("log", DebugFunctions::log)
+        register("trace", DebugFunctions::trace)
+        register("debug", DebugFunctions::debug)
+        register("info", DebugFunctions::info)
+        register("warn", DebugFunctions::warn)
+        register("error", DebugFunctions::error)
         
         // Inspection
-        register("logType") { args -> DebugFunctions.logType(args[0], args.getOrNull(1) ?: UDM.Scalar("Type")) }
-        register("logSize") { args -> DebugFunctions.logSize(args[0], args.getOrNull(1) ?: UDM.Scalar("Size")) }
-        register("logPretty") { args -> DebugFunctions.logPretty(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue(), args.getOrNull(2) ?: UDM.Scalar(2.0)) }
+        register("logType", DebugFunctions::logType)
+        register("logSize", DebugFunctions::logSize)
+        register("logPretty", DebugFunctions::logPretty)
         
         // Timing
-        register("startDebugTimer") { args -> DebugFunctions.startTimer(args.getOrNull(0) ?: UDM.Scalar("Timer")) }
-        register("endDebugTimer") { args -> DebugFunctions.endTimer(args[0]) }
+        register("startDebugTimer", DebugFunctions::startTimer)
+        register("endDebugTimer", DebugFunctions::endTimer)
         
         // Log management
-        register("getLogs") { _ -> DebugFunctions.getLogs() }
-        register("clearLogs") { _ -> DebugFunctions.clearLogs() }
-        register("logCount") { _ -> DebugFunctions.logCount() }
+        register("getLogs", DebugFunctions::getLogs)
+        register("clearLogs", DebugFunctions::clearLogs)
+        register("logCount", DebugFunctions::logCount)
         
         // Assertions
-        register("assert") { args -> DebugFunctions.assert(args[0], args.getOrNull(1) ?: UDM.Scalar("Assertion failed")) }
-        register("assertEqual") { args -> DebugFunctions.assertEqual(args[0], args[1], args.getOrNull(2) ?: UDM.Scalar.nullValue()) }
+        register("assert", DebugFunctions::assert)
+        register("assertEqual", DebugFunctions::assertEqual)
     }
     
     private fun registerStringFunctions() {
