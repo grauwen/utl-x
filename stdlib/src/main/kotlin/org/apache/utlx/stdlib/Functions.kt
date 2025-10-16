@@ -613,6 +613,12 @@ object StandardLibrary {
         register("isEmptyElement", XmlUtilityFunctions::isEmptyElement)
         register("xmlEscape", XmlUtilityFunctions::xmlEscape)
         register("xmlUnescape", XmlUtilityFunctions::xmlUnescape)
+        
+        // XML Serialization Options functions
+        register("enforceNamespacePrefixes", XMLSerializationOptionsFunctions::enforceNamespacePrefixes)
+        register("formatEmptyElements", XMLSerializationOptionsFunctions::formatEmptyElements)
+        register("addNamespaceDeclarations", XMLSerializationOptionsFunctions::addNamespaceDeclarations)
+        register("createSOAPEnvelope", XMLSerializationOptionsFunctions::createSOAPEnvelope)
 
     }
 
