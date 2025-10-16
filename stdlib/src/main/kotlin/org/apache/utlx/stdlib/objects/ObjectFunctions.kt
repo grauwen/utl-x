@@ -63,6 +63,49 @@ object ObjectFunctions {
         return UDM.Object(omitted, obj.attributes)
     }
     
+    /**
+     * Checks if an object contains a specific key
+     * 
+     * @param obj The object to check
+     * @param key The key to look for
+     * @return true if the object contains the key, false otherwise
+     * 
+     * Example:
+     * ```
+     * containsKey({"name": "John", "age": 30}, "name") // true
+     * containsKey({"name": "John"}, "email") // false
+     * ```
+     */
+    fun containsKey(args: List<UDM>): UDM {
+        requireArgs(args, 2, "containsKey")
+        val obj = args[0].asObject() ?: throw FunctionArgumentException("containsKey: first argument must be an object")
+        val key = args[1].asString()
+        
+        return UDM.Scalar(obj.properties.containsKey(key))
+    }
+    
+    /**
+     * Checks if an object contains a specific value
+     * 
+     * @param obj The object to check
+     * @param value The value to look for
+     * @return true if the object contains the value, false otherwise
+     * 
+     * Example:
+     * ```
+     * containsValue({"name": "John", "age": 30}, "John") // true
+     * containsValue({"name": "John", "age": 30}, "Jane") // false
+     * containsValue({"name": "John", "age": 30}, 30) // true
+     * ```
+     */
+    fun containsValue(args: List<UDM>): UDM {
+        requireArgs(args, 2, "containsValue")
+        val obj = args[0].asObject() ?: throw FunctionArgumentException("containsValue: first argument must be an object")
+        val value = args[1]
+        
+        return UDM.Scalar(obj.properties.containsValue(value))
+    }
+    
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
             throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
