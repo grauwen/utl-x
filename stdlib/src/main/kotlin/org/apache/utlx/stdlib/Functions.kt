@@ -585,34 +585,34 @@ object StandardLibrary {
     private fun registerC14NFunctions() {
         // Canonicalization of XML (often abbreviated as XML C14N)
         // C14N 1.0
-        register("c14n") { args -> XMLCanonicalizationFunctions.c14n(args[0]) }
-        register("c14nWithComments") { args -> XMLCanonicalizationFunctions.c14nWithComments(args[0]) }
+        register("c14n", XMLCanonicalizationFunctions::c14n)
+        register("c14nWithComments", XMLCanonicalizationFunctions::c14nWithComments)
         
         // Exclusive C14N
-        register("excC14n") { args -> XMLCanonicalizationFunctions.excC14n(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
-        register("excC14nWithComments") { args -> XMLCanonicalizationFunctions.excC14nWithComments(args[0], args.getOrNull(1) ?: UDM.Scalar.nullValue()) }
+        register("excC14n", XMLCanonicalizationFunctions::excC14n)
+        register("excC14nWithComments", XMLCanonicalizationFunctions::excC14nWithComments)
         
         // C14N 1.1
-        register("c14n11") { args -> XMLCanonicalizationFunctions.c14n11(args[0]) }
-        register("c14n11WithComments") { args -> XMLCanonicalizationFunctions.c14n11WithComments(args[0]) }
+        register("c14n11", XMLCanonicalizationFunctions::c14n11)
+        register("c14n11WithComments", XMLCanonicalizationFunctions::c14n11WithComments)
         
         // Physical C14N
-        register("c14nPhysical") { args -> XMLCanonicalizationFunctions.c14nPhysical(args[0]) }
+        register("c14nPhysical", XMLCanonicalizationFunctions::c14nPhysical)
         
         // Generic
-        register("canonicalizeWithAlgorithm") { args -> XMLCanonicalizationFunctions.canonicalizeWithAlgorithm(args[0], args[1], args.getOrNull(2) ?: UDM.Scalar.nullValue()) }
+        register("canonicalizeWithAlgorithm", XMLCanonicalizationFunctions::canonicalizeWithAlgorithm)
         
         // XPath subset
-        register("c14nSubset") { args -> XMLCanonicalizationFunctions.c14nSubset(args[0], args[1], args.getOrNull(2) ?: UDM.Scalar.nullValue()) }
+        register("c14nSubset", XMLCanonicalizationFunctions::c14nSubset)
         
         // Hash and comparison
-        register("c14nHash") { args -> XMLCanonicalizationFunctions.c14nHash(args[0], args.getOrNull(1) ?: UDM.Scalar("SHA-256")) }
-        register("c14nEquals") { args -> XMLCanonicalizationFunctions.c14nEquals(args[0], args[1]) }
-        register("c14nFingerprint") { args -> XMLCanonicalizationFunctions.c14nFingerprint(args[0]) }
+        register("c14nHash", XMLCanonicalizationFunctions::c14nHash)
+        register("c14nEquals", XMLCanonicalizationFunctions::c14nEquals)
+        register("c14nFingerprint", XMLCanonicalizationFunctions::c14nFingerprint)
         
         // Digital signatures
-        register("prepareForSignature") { args -> XMLCanonicalizationFunctions.prepareForSignature(args[0], args.getOrNull(1) ?: UDM.Scalar("http://www.w3.org/2001/10/xml-exc-c14n#")) }
-        // validateDigest function doesn't exist, removing
+        register("prepareForSignature", XMLCanonicalizationFunctions::prepareForSignature)
+        register("validateDigest", XMLCanonicalizationFunctions::validateDigest)
     }
     
     private fun registerLogicalFunctions() {
