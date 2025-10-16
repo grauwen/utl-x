@@ -262,7 +262,7 @@ object StandardLibrary {
         register("lower", StringFunctions::lower)
         register("trim", StringFunctions::trim)
         register("substring", StringFunctions::substring)
-        register("concat", StringFunctions::concat)
+        //register("concat", StringFunctions::concat) // concat now resides in coreFunctions to handel concat of string, array, obejct, binary etc
         register("split", StringFunctions::split)
         register("joinBy", StringFunctions::join)  //join used in SQL style join, rename to joinBy according to DW style
         register("replace", StringFunctions::replace)
