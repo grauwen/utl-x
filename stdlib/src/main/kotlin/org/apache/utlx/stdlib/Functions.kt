@@ -705,10 +705,9 @@ object StandardLibrary {
         // URL construction
         register("buildURL", URLFunctions::buildURL)
         
-        // URL encoding/decoding
-        // NOTE: If these already exist in encoding module, skip these registrations
-        register("urlEncode", URLFunctions::urlEncode)
-        register("urlDecode", URLFunctions::urlDecode)
+        // URL encoding/decoding (now using EncodingFunctions to avoid duplication)
+        register("urlEncode", EncodingFunctions::urlEncode)
+        register("urlDecode", EncodingFunctions::urlDecode)
         
         // URL manipulation
         register("addQueryParam", URLFunctions::addQueryParam)

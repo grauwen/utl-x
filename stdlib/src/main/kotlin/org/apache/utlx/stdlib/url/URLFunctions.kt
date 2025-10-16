@@ -1,6 +1,7 @@
 package org.apache.utlx.stdlib.url
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.encoding.EncodingFunctions
 import java.net.URI
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -397,49 +398,6 @@ object URLFunctions {
     }
     
     // ==================== URL ENCODING/DECODING ====================
-    
-    /**
-     * URL encode a string
-     * 
-     * Usage: urlEncode("Hello World!") => "Hello+World%21"
-     * Usage: urlEncode("user@example.com") => "user%40example.com"
-     */
-    fun urlEncode(args: List<UDM>): UDM {
-        if (args.size != 1) {
-            throw IllegalArgumentException("urlEncode expects 1 argument, got ${args.size}")
-        }
-        
-        val value = args[0]
-        if (value !is UDM.Scalar) {
-            throw IllegalArgumentException("urlEncode expects a scalar value")
-        }
-        
-        val str = value.value?.toString() ?: ""
-        val encoded = URLEncoder.encode(str, StandardCharsets.UTF_8)
-        
-        return UDM.Scalar(encoded)
-    }
-    
-    /**
-     * URL decode a string
-     * 
-     * Usage: urlDecode("Hello+World%21") => "Hello World!"
-     * Usage: urlDecode("user%40example.com") => "user@example.com"
-     */
-    fun urlDecode(args: List<UDM>): UDM {
-        if (args.size != 1) {
-            throw IllegalArgumentException("urlDecode expects 1 argument, got ${args.size}")
-        }
-        
-        val value = args[0]
-        if (value !is UDM.Scalar || value.value !is String) {
-            throw IllegalArgumentException("urlDecode expects a string")
-        }
-        
-        val decoded = URLDecoder.decode(value.value as String, StandardCharsets.UTF_8)
-        
-        return UDM.Scalar(decoded)
-    }
     
     // ==================== URL MANIPULATION ====================
     
