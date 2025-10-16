@@ -26,6 +26,11 @@ Functions.kt
 2. With lambda wrapper (inline syntax):
   register("singularize") { args -> PluralizationFunctions.singularize(args[0]) }
 
+stlib
+JCS (JSON Canonicalization Scheme) - RFC 8785
+JWT token handling
+
+
 This inconsistency suggests that:
   - Some functions were designed to take List<UDM> directly (proper design)
   - Some functions were designed to take individual parameters and need adapters (inconsistent design)
