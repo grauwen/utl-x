@@ -345,6 +345,21 @@ object StandardLibrary {
         register("unique", ArrayFunctions::unique)
         register("zip", ArrayFunctions::zip) //not related to gzip or gunzip, pure array operations
         
+        // Additional array functions
+        register("size", ArrayFunctions::size)
+        register("get", ArrayFunctions::get)
+        register("tail", ArrayFunctions::tail)
+        register("distinct", ArrayFunctions::distinct)
+        register("distinctBy", ArrayFunctions::distinctBy)
+        register("union", ArrayFunctions::union)
+        register("intersect", ArrayFunctions::intersect)
+        register("difference", ArrayFunctions::difference)
+        register("symmetricDifference", ArrayFunctions::symmetricDifference)
+        register("flatMap", ArrayFunctions::flatMap)
+        register("flattenDeep", ArrayFunctions::flattenDeep)
+        register("chunk", ArrayFunctions::chunk)
+        register("joinToString", ArrayFunctions::joinToString)
+        
         // Zip/Unzip operations
         register("unzip", UnzipFunctions::unzip)
         register("unzipN", UnzipFunctions::unzipN)

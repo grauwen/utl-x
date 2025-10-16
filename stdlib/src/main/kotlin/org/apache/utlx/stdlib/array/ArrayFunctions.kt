@@ -273,6 +273,251 @@ object ArrayFunctions {
         return UDM.Array(zipped)
     }
     
+    /**
+     * Returns the size/length of an array
+     * @param array The input array
+     * @return Number of elements
+     */
+    fun size(args: List<UDM>): UDM {
+        requireArgs(args, 1, "size")
+        val array = args[0].asArray() ?: throw FunctionArgumentException("size: argument must be an array")
+        return UDM.Scalar(array.elements.size.toDouble())
+    }
+    
+    /**
+     * Gets element at specific index (0-based)
+     * @param array The input array
+     * @param index Zero-based index
+     * @return Element at index, or null if out of bounds
+     */
+    fun get(args: List<UDM>): UDM {
+        requireArgs(args, 2, "get")
+        val array = args[0].asArray() ?: throw FunctionArgumentException("get: first argument must be an array")
+        val index = args[1].asNumber().toInt()
+        
+        return if (index >= 0 && index < array.elements.size) {
+            array.elements[index]
+        } else {
+            UDM.Scalar(null)
+        }
+    }
+    
+    /**
+     * Returns all elements except the first (functional programming convention)
+     * @param array The input array
+     * @return New array with all elements except first
+     */
+    fun tail(args: List<UDM>): UDM {
+        requireArgs(args, 1, "tail")
+        val array = args[0].asArray() ?: throw FunctionArgumentException("tail: argument must be an array")
+        
+        return if (array.elements.isEmpty()) {
+            UDM.Array(emptyList())
+        } else {
+            UDM.Array(array.elements.drop(1))
+        }
+    }
+    
+    /**
+     * Removes duplicate elements from array
+     * @param array The input array
+     * @return New array with duplicates removed
+     */
+    fun distinct(args: List<UDM>): UDM {
+        requireArgs(args, 1, "distinct")
+        val array = args[0].asArray() ?: throw FunctionArgumentException("distinct: argument must be an array")
+        
+        val uniqueElements = array.elements.distinct()
+        return UDM.Array(uniqueElements)
+    }
+    
+    /**
+     * Removes duplicates based on function result
+     * @param array The input array
+     * @param selector Function to extract comparison value
+     * @return New array with duplicates removed
+     */
+    fun distinctBy(args: List<UDM>): UDM {
+        requireArgs(args, 2, "distinctBy")
+        val array = args[0].asArray() ?: throw FunctionArgumentException("distinctBy: first argument must be an array")
+        val lambda = args[1] as? UDM.Lambda 
+            ?: throw FunctionArgumentException("distinctBy: second argument must be a lambda")
+        
+        val uniqueElements = array.elements.distinctBy { element ->
+            lambda.apply(listOf(element))
+        }
+        
+        return UDM.Array(uniqueElements)
+    }
+    
+    /**
+     * Returns union of two arrays (all elements, no duplicates)
+     * Combines two arrays and removes duplicates (set union: A ∪ B)
+     * @param array1 First array
+     * @param array2 Second array
+     * @return New array with all unique elements from both arrays
+     */
+    fun union(args: List<UDM>): UDM {
+        requireArgs(args, 2, "union")
+        val array1 = args[0].asArray() ?: throw FunctionArgumentException("union: first argument must be an array")
+        val array2 = args[1].asArray() ?: throw FunctionArgumentException("union: second argument must be an array")
+        
+        val combined = array1.elements + array2.elements
+        val uniqueElements = combined.distinct()
+        return UDM.Array(uniqueElements)
+    }
+    
+    /**
+     * Returns intersection of two arrays (elements in both)
+     * @param array1 First array
+     * @param array2 Second array
+     * @return New array with elements present in both arrays
+     */
+    fun intersect(args: List<UDM>): UDM {
+        requireArgs(args, 2, "intersect")
+        val array1 = args[0].asArray() ?: throw FunctionArgumentException("intersect: first argument must be an array")
+        val array2 = args[1].asArray() ?: throw FunctionArgumentException("intersect: second argument must be an array")
+        
+        val intersection = array1.elements.filter { element ->
+            array2.elements.contains(element)
+        }.distinct()
+        
+        return UDM.Array(intersection)
+    }
+    
+    /**
+     * Returns difference of two arrays (elements in first but not second)
+     * @param array1 First array
+     * @param array2 Second array
+     * @return New array with elements in array1 not in array2
+     */
+    fun difference(args: List<UDM>): UDM {
+        requireArgs(args, 2, "difference")
+        val array1 = args[0].asArray() ?: throw FunctionArgumentException("difference: first argument must be an array")
+        val array2 = args[1].asArray() ?: throw FunctionArgumentException("difference: second argument must be an array")
+        
+        val diff = array1.elements.filter { element ->
+            !array2.elements.contains(element)
+        }
+        
+        return UDM.Array(diff)
+    }
+    
+    /**
+     * Symmetric difference - elements in either array but not both
+     * @param array1 First array
+     * @param array2 Second array  
+     * @return New array with elements in either but not both
+     */
+    fun symmetricDifference(args: List<UDM>): UDM {
+        requireArgs(args, 2, "symmetricDifference")
+        val array1 = args[0].asArray() ?: throw FunctionArgumentException("symmetricDifference: first argument must be an array")
+        val array2 = args[1].asArray() ?: throw FunctionArgumentException("symmetricDifference: second argument must be an array")
+        
+        val diff1 = array1.elements.filter { !array2.elements.contains(it) }
+        val diff2 = array2.elements.filter { !array1.elements.contains(it) }
+        
+        return UDM.Array(diff1 + diff2)
+    }
+    
+    /**
+     * Maps each element using function, then flattens result
+     * Example: [1,2,3].flatMap(x => [x, x*2]) => [1,2,2,4,3,6]
+     * @param array The input array
+     * @param mapper Function that returns an array for each element
+     * @return Mapped and flattened array
+     */
+    fun flatMap(args: List<UDM>): UDM {
+        requireArgs(args, 2, "flatMap")
+        val array = args[0].asArray() ?: throw FunctionArgumentException("flatMap: first argument must be an array")
+        val lambda = args[1] as? UDM.Lambda 
+            ?: throw FunctionArgumentException("flatMap: second argument must be a lambda")
+        
+        val result = array.elements.flatMap { element ->
+            val mapped = lambda.apply(listOf(element))
+            when (mapped) {
+                is UDM.Array -> mapped.elements
+                else -> listOf(mapped)
+            }
+        }
+        
+        return UDM.Array(result)
+    }
+    
+    /**
+     * Deep flatten - flattens all nested levels
+     * Example: [1,[2,[3,[4]]]] => [1,2,3,4]
+     * @param array The input array
+     * @return Fully flattened array
+     */
+    fun flattenDeep(args: List<UDM>): UDM {
+        requireArgs(args, 1, "flattenDeep")
+        val array = args[0].asArray() ?: throw FunctionArgumentException("flattenDeep: argument must be an array")
+        
+        fun flattenRecursive(elements: List<UDM>): List<UDM> {
+            val result = mutableListOf<UDM>()
+            for (element in elements) {
+                when (element) {
+                    is UDM.Array -> result.addAll(flattenRecursive(element.elements))
+                    else -> result.add(element)
+                }
+            }
+            return result
+        }
+        
+        return UDM.Array(flattenRecursive(array.elements))
+    }
+    
+    /**
+     * Chunks array into arrays of specified size
+     * @param array The input array
+     * @param size Chunk size
+     * @return Array of arrays, each of specified size (last may be smaller)
+     */
+    fun chunk(args: List<UDM>): UDM {
+        requireArgs(args, 2, "chunk")
+        val array = args[0].asArray() ?: throw FunctionArgumentException("chunk: first argument must be an array")
+        val chunkSize = args[1].asNumber().toInt()
+        
+        if (chunkSize <= 0) {
+            throw FunctionArgumentException("chunk: chunk size must be positive")
+        }
+        
+        val chunks = array.elements.chunked(chunkSize).map { chunk ->
+            UDM.Array(chunk)
+        }
+        
+        return UDM.Array(chunks)
+    }
+    
+    /**
+     * Joins array elements into string
+     * @param array The input array
+     * @param separator String to insert between elements
+     * @return Joined string
+     */
+    fun joinToString(args: List<UDM>): UDM {
+        if (args.size < 1 || args.size > 2) {
+            throw FunctionArgumentException("joinToString expects 1 or 2 arguments, got ${args.size}")
+        }
+        
+        val array = args[0].asArray() ?: throw FunctionArgumentException("joinToString: first argument must be an array")
+        val separator = if (args.size > 1) {
+            (args[1] as? UDM.Scalar)?.value?.toString() ?: ","
+        } else {
+            ","
+        }
+        
+        val joined = array.elements.joinToString(separator) { element ->
+            when (element) {
+                is UDM.Scalar -> element.value?.toString() ?: "null"
+                else -> element.toString()
+            }
+        }
+        
+        return UDM.Scalar(joined)
+    }
+    
     // Helper functions
     
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
