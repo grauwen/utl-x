@@ -24,6 +24,8 @@ Xml namespace alias changes, remove namespaces, enforce nullable, empty tags in 
 
 pretty print XML and JSON and YAML ??
 
+JSON Web Signatures (JWS) ?
+
 Functions.kt 
 1. With method reference (cleaner syntax):
   register("map", ArrayFunctions::map)
