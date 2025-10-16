@@ -220,6 +220,7 @@ object StandardLibrary {
         register("isEmpty", CoreFunctions::isEmpty)
         register("isNotEmpty", CoreFunctions::isNotEmpty)
         register("contains", CoreFunctions::contains)
+        register("concat", CoreFunctions::concat)
      
     }
 

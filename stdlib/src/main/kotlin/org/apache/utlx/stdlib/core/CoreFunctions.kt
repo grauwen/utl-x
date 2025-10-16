@@ -209,6 +209,150 @@ object CoreFunctions {
         return UDM.Scalar(result)
     }
     
+    /**
+     * Concatenates values of the same type
+     * - Strings: Combines into single string
+     * - Arrays: Combines into single array (preserves duplicates)
+     * - Objects: Merges properties (right overwrites left)
+     * 
+     * @param values Values to concatenate (must be same type)
+     * @return Concatenated result
+     * 
+     * Examples:
+     * ```
+     * concat("Hello", " ", "World") // "Hello World"
+     * concat([1, 2], [3, 4], [5]) // [1, 2, 3, 4, 5]
+     * concat({"a": 1}, {"b": 2}, {"a": 3}) // {"a": 3, "b": 2} (right overwrites)
+     * concat(42, 58) // 100 (numbers are added)
+     * ```
+     */
+    fun concat(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("concat expects at least 1 argument")
+        }
+        
+        if (args.size == 1) {
+            return args[0]
+        }
+        
+        // Determine the type from the first argument
+        val firstArg = args[0]
+        
+        return when (firstArg) {
+            is UDM.Scalar -> {
+                when (val firstValue = firstArg.value) {
+                    is String -> {
+                        // String concatenation
+                        val result = args.joinToString("") { arg ->
+                            when (arg) {
+                                is UDM.Scalar -> arg.value?.toString() ?: ""
+                                else -> throw FunctionArgumentException("concat: all arguments must be strings when concatenating strings")
+                            }
+                        }
+                        UDM.Scalar(result)
+                    }
+                    is Number -> {
+                        // Number addition (sum)
+                        var sum = firstValue.toDouble()
+                        for (i in 1 until args.size) {
+                            val arg = args[i]
+                            if (arg is UDM.Scalar) {
+                                val argValue = arg.value
+                                if (argValue is Number) {
+                                    sum += argValue.toDouble()
+                                } else {
+                                    throw FunctionArgumentException("concat: all arguments must be numbers when concatenating numbers")
+                                }
+                            } else {
+                                throw FunctionArgumentException("concat: all arguments must be numbers when concatenating numbers")
+                            }
+                        }
+                        UDM.Scalar(sum)
+                    }
+                    is Boolean -> {
+                        // Boolean logical OR
+                        var result: Boolean = firstValue
+                        for (i in 1 until args.size) {
+                            val arg = args[i]
+                            if (arg is UDM.Scalar) {
+                                val argValue = arg.value
+                                if (argValue is Boolean) {
+                                    result = result || argValue
+                                } else {
+                                    throw FunctionArgumentException("concat: all arguments must be booleans when concatenating booleans")
+                                }
+                            } else {
+                                throw FunctionArgumentException("concat: all arguments must be booleans when concatenating booleans")
+                            }
+                        }
+                        UDM.Scalar(result)
+                    }
+                    null -> {
+                        // Return first non-null value, or null if all are null
+                        for (arg in args) {
+                            if (arg is UDM.Scalar && arg.value != null) {
+                                return arg
+                            }
+                        }
+                        UDM.Scalar(null)
+                    }
+                    else -> {
+                        // Other scalar types - convert to strings and concatenate
+                        val result = args.joinToString("") { arg ->
+                            when (arg) {
+                                is UDM.Scalar -> arg.value?.toString() ?: ""
+                                else -> throw FunctionArgumentException("concat: all arguments must be scalars when concatenating scalar values")
+                            }
+                        }
+                        UDM.Scalar(result)
+                    }
+                }
+            }
+            is UDM.Array -> {
+                // Array concatenation
+                val allElements = mutableListOf<UDM>()
+                for (arg in args) {
+                    if (arg is UDM.Array) {
+                        allElements.addAll(arg.elements)
+                    } else {
+                        throw FunctionArgumentException("concat: all arguments must be arrays when concatenating arrays")
+                    }
+                }
+                UDM.Array(allElements)
+            }
+            is UDM.Object -> {
+                // Object merging (right overwrites left)
+                val mergedProps = mutableMapOf<String, UDM>()
+                val mergedAttrs = mutableMapOf<String, String>()
+                
+                for (arg in args) {
+                    if (arg is UDM.Object) {
+                        mergedProps.putAll(arg.properties)
+                        mergedAttrs.putAll(arg.attributes)
+                    } else {
+                        throw FunctionArgumentException("concat: all arguments must be objects when concatenating objects")
+                    }
+                }
+                UDM.Object(mergedProps, mergedAttrs)
+            }
+            is UDM.Binary -> {
+                // Binary data concatenation
+                val allBytes = mutableListOf<Byte>()
+                for (arg in args) {
+                    if (arg is UDM.Binary) {
+                        allBytes.addAll(arg.data.toList())
+                    } else {
+                        throw FunctionArgumentException("concat: all arguments must be binary when concatenating binary data")
+                    }
+                }
+                UDM.Binary(allBytes.toByteArray())
+            }
+            else -> {
+                throw FunctionArgumentException("concat: unsupported type for concatenation: ${firstArg::class.simpleName}")
+            }
+        }
+    }
+    
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
             throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
