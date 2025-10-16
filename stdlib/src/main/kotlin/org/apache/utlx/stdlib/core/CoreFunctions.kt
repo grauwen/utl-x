@@ -102,6 +102,33 @@ object CoreFunctions {
     }
     
     /**
+     * Checks if a value is not empty (inverse of isEmpty)
+     * Works with strings, arrays, objects, and null values
+     * 
+     * @param value The value to check
+     * @return true if not empty, false if empty
+     * 
+     * Examples:
+     * ```
+     * isNotEmpty("") // false
+     * isNotEmpty("hello") // true
+     * isNotEmpty([]) // false
+     * isNotEmpty([1, 2]) // true
+     * isNotEmpty({}) // false
+     * isNotEmpty({"name": "John"}) // true
+     * isNotEmpty(null) // false
+     * isNotEmpty(42) // true (numbers are never empty)
+     * isNotEmpty(true) // true (booleans are never empty)
+     * ```
+     */
+    fun isNotEmpty(args: List<UDM>): UDM {
+        requireArgs(args, 1, "isNotEmpty")
+        val isEmpty = isEmpty(args)
+        val isEmptyValue = (isEmpty as UDM.Scalar).value as Boolean
+        return UDM.Scalar(!isEmptyValue)
+    }
+    
+    /**
      * Checks if a value contains an element, substring, or key
      * 
      * Works with:

@@ -218,6 +218,7 @@ object StandardLibrary {
         register("generateUuid", CoreFunctions::generateUuid)
         register("default", CoreFunctions::default)
         register("isEmpty", CoreFunctions::isEmpty)
+        register("isNotEmpty", CoreFunctions::isNotEmpty)
         register("contains", CoreFunctions::contains)
      
     }
