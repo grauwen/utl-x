@@ -728,6 +728,12 @@ object StandardLibrary {
         register("getJWTSubject", JWTFunctions::getJWTSubject)
         register("getJWTIssuer", JWTFunctions::getJWTIssuer)
         register("getJWTAudience", JWTFunctions::getJWTAudience)
+        
+        // JWT verification and creation functions
+        register("verifyJWT", JWTVerification::verifyJWT)
+        register("verifyJWTWithJWKS", JWTVerification::verifyJWTWithJWKS)
+        register("createJWT", JWTVerification::createJWT)
+        register("validateJWTStructure", JWTVerification::validateJWTStructure)
     }
 
       private fun registerTreeFunctions() {
