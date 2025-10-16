@@ -117,7 +117,14 @@ object PluralizationFunctions {
      * pluralize("person", 5) // "people" (count > 1)
      * ```
      */
-    fun pluralize(word: UDM, count: UDM = UDM.Scalar.nullValue()): UDM {
+    fun pluralize(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("pluralize expects at least 1 argument")
+        }
+        
+        val word = args[0]
+        val count = if (args.size > 1) args[1] else UDM.Scalar.nullValue()
+        
         val singular = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
             ?: return UDM.Scalar.nullValue()
         
@@ -196,7 +203,12 @@ object PluralizationFunctions {
      * singularize("cities") // "city"
      * ```
      */
-    fun singularize(word: UDM): UDM {
+    fun singularize(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("singularize expects 1 argument")
+        }
+        
+        val word = args[0]
         val plural = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
             ?: return UDM.Scalar.nullValue()
         
@@ -284,13 +296,19 @@ object PluralizationFunctions {
      * pluralizeWithCount("child", 3) // "children"
      * ```
      */
-    fun pluralizeWithCount(word: UDM, count: UDM): UDM {
+    fun pluralizeWithCount(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("pluralizeWithCount expects 2 arguments")
+        }
+        
+        val word = args[0]
+        val count = args[1]
         val num = (count as? UDM.Scalar)?.value ?: return word
         
         return if (num == 1.0) {
             word
         } else {
-            pluralize(word, count)
+            pluralize(listOf(word, count))
         }
     }
     
@@ -308,7 +326,12 @@ object PluralizationFunctions {
      * isPlural("sheep") // false (can be both)
      * ```
      */
-    fun isPlural(word: UDM): UDM {
+    fun isPlural(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("isPlural expects 1 argument")
+        }
+        
+        val word = args[0]
         val text = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
             ?: return UDM.Scalar(false)
         
@@ -344,7 +367,12 @@ object PluralizationFunctions {
      * isSingular("sheep") // false (can be both)
      * ```
      */
-    fun isSingular(word: UDM): UDM {
+    fun isSingular(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("isSingular expects 1 argument")
+        }
+        
+        val word = args[0]
         val text = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
             ?: return UDM.Scalar(false)
         
@@ -381,14 +409,20 @@ object PluralizationFunctions {
      * formatPlural(3, "child") // "3 children"
      * ```
      */
-    fun formatPlural(count: UDM, word: UDM): UDM {
+    fun formatPlural(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("formatPlural expects 2 arguments")
+        }
+        
+        val count = args[0]
+        val word = args[1]
         val num = (count as? UDM.Scalar)?.value ?: return UDM.Scalar.nullValue()
         val text = (word as? UDM.Scalar)?.value?.toString() ?: return UDM.Scalar.nullValue()
         
         val pluralForm = if (num == 1.0) {
             text
         } else {
-            (pluralize(word, count) as? UDM.Scalar)?.value?.toString() ?: text
+            (pluralize(listOf(word, count)) as? UDM.Scalar)?.value?.toString() ?: text
         }
         
         val numInt = when (num) {

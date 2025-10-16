@@ -2,6 +2,7 @@
 package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.FunctionArgumentException
 
 /**
  * String Case Conversion Functions
@@ -33,9 +34,13 @@ object CaseFunctions {
      * @param str Input string
      * @return Camelized string
      */
-    fun camelize(str: UDM): UDM {
+    fun camelize(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("camelize expects 1 argument")
+        }
+        val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw IllegalArgumentException("camelize() requires a string argument")
+            ?: throw FunctionArgumentException("camelize() requires a string argument")
         
         if (value.isEmpty()) {
             return UDM.Scalar("")
@@ -76,9 +81,13 @@ object CaseFunctions {
      * @param str Input string
      * @return Pascal-cased string
      */
-    fun pascalCase(str: UDM): UDM {
+    fun pascalCase(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("pascalCase expects 1 argument")
+        }
+        val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw IllegalArgumentException("pascalCase() requires a string argument")
+            ?: throw FunctionArgumentException("pascalCase() requires a string argument")
         
         if (value.isEmpty()) {
             return UDM.Scalar("")
@@ -115,9 +124,13 @@ object CaseFunctions {
      * @param str Input string
      * @return Kebab-cased string
      */
-    fun kebabCase(str: UDM): UDM {
+    fun kebabCase(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("kebabCase expects 1 argument")
+        }
+        val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw IllegalArgumentException("kebabCase() requires a string argument")
+            ?: throw FunctionArgumentException("kebabCase() requires a string argument")
         
         if (value.isEmpty()) {
             return UDM.Scalar("")
@@ -147,9 +160,13 @@ object CaseFunctions {
      * @param str Input string
      * @return Snake-cased string
      */
-    fun snakeCase(str: UDM): UDM {
+    fun snakeCase(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("snakeCase expects 1 argument")
+        }
+        val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw IllegalArgumentException("snakeCase() requires a string argument")
+            ?: throw FunctionArgumentException("snakeCase() requires a string argument")
         
         if (value.isEmpty()) {
             return UDM.Scalar("")
@@ -179,9 +196,13 @@ object CaseFunctions {
      * @param str Input string
      * @return Constant-cased string
      */
-    fun constantCase(str: UDM): UDM {
+    fun constantCase(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("constantCase expects 1 argument")
+        }
+        val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw IllegalArgumentException("constantCase() requires a string argument")
+            ?: throw FunctionArgumentException("constantCase() requires a string argument")
         
         if (value.isEmpty()) {
             return UDM.Scalar("")
@@ -210,9 +231,13 @@ object CaseFunctions {
      * @param str Input string
      * @return Title-cased string
      */
-    fun titleCase(str: UDM): UDM {
+    fun titleCase(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("titleCase expects 1 argument")
+        }
+        val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw IllegalArgumentException("titleCase() requires a string argument")
+            ?: throw FunctionArgumentException("titleCase() requires a string argument")
         
         if (value.isEmpty()) {
             return UDM.Scalar("")
@@ -244,9 +269,13 @@ object CaseFunctions {
      * @param str Input string
      * @return Dot-cased string
      */
-    fun dotCase(str: UDM): UDM {
+    fun dotCase(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("dotCase expects 1 argument")
+        }
+        val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw IllegalArgumentException("dotCase() requires a string argument")
+            ?: throw FunctionArgumentException("dotCase() requires a string argument")
         
         if (value.isEmpty()) {
             return UDM.Scalar("")
@@ -276,9 +305,13 @@ object CaseFunctions {
      * @param str Input string
      * @return Path-cased string
      */
-    fun pathCase(str: UDM): UDM {
+    fun pathCase(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("pathCase expects 1 argument")
+        }
+        val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw IllegalArgumentException("pathCase() requires a string argument")
+            ?: throw FunctionArgumentException("pathCase() requires a string argument")
         
         if (value.isEmpty()) {
             return UDM.Scalar("")

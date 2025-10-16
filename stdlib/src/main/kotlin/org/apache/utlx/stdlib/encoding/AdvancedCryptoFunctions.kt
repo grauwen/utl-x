@@ -36,8 +36,11 @@ object AdvancedCryptoFunctions {
      * hmacMD5("message", "secret-key")
      * ```
      */
-    fun hmacMD5(data: UDM, key: UDM): UDM {
-        return hmac(data, key, "HmacMD5")
+    fun hmacMD5(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("hmacMD5 expects 2 arguments")
+        }
+        return hmac(args[0], args[1], "HmacMD5")
     }
     
     /**
@@ -52,8 +55,11 @@ object AdvancedCryptoFunctions {
      * hmacSHA1("message", "secret-key")
      * ```
      */
-    fun hmacSHA1(data: UDM, key: UDM): UDM {
-        return hmac(data, key, "HmacSHA1")
+    fun hmacSHA1(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("hmacSHA1 expects 2 arguments")
+        }
+        return hmac(args[0], args[1], "HmacSHA1")
     }
     
     /**
@@ -68,8 +74,11 @@ object AdvancedCryptoFunctions {
      * hmacSHA256("message", "secret-key")
      * ```
      */
-    fun hmacSHA256(data: UDM, key: UDM): UDM {
-        return hmac(data, key, "HmacSHA256")
+    fun hmacSHA256(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("hmacSHA256 expects 2 arguments")
+        }
+        return hmac(args[0], args[1], "HmacSHA256")
     }
     
     /**
@@ -84,8 +93,11 @@ object AdvancedCryptoFunctions {
      * hmacSHA384("message", "secret-key")
      * ```
      */
-    fun hmacSHA384(data: UDM, key: UDM): UDM {
-        return hmac(data, key, "HmacSHA384")
+    fun hmacSHA384(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("hmacSHA384 expects 2 arguments")
+        }
+        return hmac(args[0], args[1], "HmacSHA384")
     }
     
     /**
@@ -100,8 +112,11 @@ object AdvancedCryptoFunctions {
      * hmacSHA512("message", "secret-key")
      * ```
      */
-    fun hmacSHA512(data: UDM, key: UDM): UDM {
-        return hmac(data, key, "HmacSHA512")
+    fun hmacSHA512(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("hmacSHA512 expects 2 arguments")
+        }
+        return hmac(args[0], args[1], "HmacSHA512")
     }
     
     /**
@@ -150,11 +165,13 @@ object AdvancedCryptoFunctions {
      * hmacBase64("message", "secret-key", "HmacSHA256")
      * ```
      */
-    fun hmacBase64(
-        data: UDM, 
-        key: UDM, 
-        algorithm: UDM = UDM.Scalar("HmacSHA256")
-    ): UDM {
+    fun hmacBase64(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("hmacBase64 expects at least 2 arguments")
+        }
+        val data = args[0]
+        val key = args[1]
+        val algorithm = if (args.size > 2) args[2] else UDM.Scalar("HmacSHA256")
         val message = when (data) {
             is UDM.Scalar -> data.value?.toString() ?: ""
             is UDM.Binary -> String(data.data, Charsets.UTF_8)
@@ -198,8 +215,11 @@ object AdvancedCryptoFunctions {
      * encryptAES("sensitive data", "16-byte-key-here", "16-byte-iv--here")
      * ```
      */
-    fun encryptAES(data: UDM, key: UDM, iv: UDM): UDM {
-        return encryptDecryptAES(data, key, iv, Cipher.ENCRYPT_MODE)
+    fun encryptAES(args: List<UDM>): UDM {
+        if (args.size < 3) {
+            throw FunctionArgumentException("encryptAES expects 3 arguments")
+        }
+        return encryptDecryptAES(args[0], args[1], args[2], Cipher.ENCRYPT_MODE)
     }
     
     /**
@@ -215,8 +235,11 @@ object AdvancedCryptoFunctions {
      * decryptAES(encryptedData, "16-byte-key-here", "16-byte-iv--here")
      * ```
      */
-    fun decryptAES(data: UDM, key: UDM, iv: UDM): UDM {
-        return encryptDecryptAES(data, key, iv, Cipher.DECRYPT_MODE)
+    fun decryptAES(args: List<UDM>): UDM {
+        if (args.size < 3) {
+            throw FunctionArgumentException("decryptAES expects 3 arguments")
+        }
+        return encryptDecryptAES(args[0], args[1], args[2], Cipher.DECRYPT_MODE)
     }
     
     /**
@@ -284,7 +307,13 @@ object AdvancedCryptoFunctions {
      * encryptAES256("sensitive data", "32-byte-key-here-for-aes-256!", "16-byte-iv--here")
      * ```
      */
-    fun encryptAES256(data: UDM, key: UDM, iv: UDM): UDM {
+    fun encryptAES256(args: List<UDM>): UDM {
+        if (args.size < 3) {
+            throw FunctionArgumentException("encryptAES256 expects 3 arguments")
+        }
+        val data = args[0]
+        val key = args[1]
+        val iv = args[2]
         val keyBytes = when (key) {
             is UDM.Scalar -> (key.value?.toString() ?: "").toByteArray(Charsets.UTF_8).take(32).toByteArray()
             is UDM.Binary -> key.data.take(32).toByteArray()
@@ -328,7 +357,13 @@ object AdvancedCryptoFunctions {
      * decryptAES256(encryptedData, "32-byte-key-here-for-aes-256!", "16-byte-iv--here")
      * ```
      */
-    fun decryptAES256(data: UDM, key: UDM, iv: UDM): UDM {
+    fun decryptAES256(args: List<UDM>): UDM {
+        if (args.size < 3) {
+            throw FunctionArgumentException("decryptAES256 expects 3 arguments")
+        }
+        val data = args[0]
+        val key = args[1]
+        val iv = args[2]
         val keyBytes = when (key) {
             is UDM.Scalar -> (key.value?.toString() ?: "").toByteArray(Charsets.UTF_8).take(32).toByteArray()
             is UDM.Binary -> key.data.take(32).toByteArray()
@@ -374,7 +409,11 @@ object AdvancedCryptoFunctions {
      * sha224("Hello World")
      * ```
      */
-    fun sha224(input: UDM): UDM {
+    fun sha224(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("sha224 expects 1 argument")
+        }
+        val input = args[0]
         return hash(input, "SHA-224")
     }
     
@@ -389,7 +428,11 @@ object AdvancedCryptoFunctions {
      * sha384("Hello World")
      * ```
      */
-    fun sha384(input: UDM): UDM {
+    fun sha384(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("sha384 expects 1 argument")
+        }
+        val input = args[0]
         return hash(input, "SHA-384")
     }
     
@@ -404,7 +447,11 @@ object AdvancedCryptoFunctions {
      * sha3_256("Hello World")
      * ```
      */
-    fun sha3_256(input: UDM): UDM {
+    fun sha3_256(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("sha3_256 expects 1 argument")
+        }
+        val input = args[0]
         return hash(input, "SHA3-256")
     }
     
@@ -419,7 +466,11 @@ object AdvancedCryptoFunctions {
      * sha3_512("Hello World")
      * ```
      */
-    fun sha3_512(input: UDM): UDM {
+    fun sha3_512(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("sha3_512 expects 1 argument")
+        }
+        val input = args[0]
         return hash(input, "SHA3-512")
     }
     
@@ -465,7 +516,8 @@ object AdvancedCryptoFunctions {
      * generateIV(32) // Returns 32-byte random IV
      * ```
      */
-    fun generateIV(size: UDM = UDM.Scalar(16.0)): UDM {
+    fun generateIV(args: List<UDM>): UDM {
+        val size = if (args.isNotEmpty()) args[0] else UDM.Scalar(16.0)
         val byteSize = (size as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 16
         
         val random = java.security.SecureRandom()
@@ -487,7 +539,8 @@ object AdvancedCryptoFunctions {
      * generateKey(32) // AES-256 key
      * ```
      */
-    fun generateKey(size: UDM = UDM.Scalar(32.0)): UDM {
+    fun generateKey(args: List<UDM>): UDM {
+        val size = if (args.isNotEmpty()) args[0] else UDM.Scalar(32.0)
         val byteSize = (size as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 32
         
         val random = java.security.SecureRandom()

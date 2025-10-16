@@ -1,6 +1,7 @@
 package org.apache.utlx.stdlib.binary
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.FunctionArgumentException
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -543,7 +544,12 @@ object BinaryFunctions {
      * bitwiseAnd(binary1, binary2)
      * ```
      */
-    fun bitwiseAnd(binary1: UDM, binary2: UDM): UDM {
+    fun bitwiseAnd(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("bitwiseAnd expects 2 arguments")
+        }
+        val binary1 = args[0]
+        val binary2 = args[1]
         val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         
@@ -567,7 +573,12 @@ object BinaryFunctions {
      * bitwiseOr(binary1, binary2)
      * ```
      */
-    fun bitwiseOr(binary1: UDM, binary2: UDM): UDM {
+    fun bitwiseOr(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("bitwiseOr expects 2 arguments")
+        }
+        val binary1 = args[0]
+        val binary2 = args[1]
         val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         
@@ -591,7 +602,12 @@ object BinaryFunctions {
      * bitwiseXor(binary1, binary2)
      * ```
      */
-    fun bitwiseXor(binary1: UDM, binary2: UDM): UDM {
+    fun bitwiseXor(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("bitwiseXor expects 2 arguments")
+        }
+        val binary1 = args[0]
+        val binary2 = args[1]
         val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         
@@ -614,7 +630,11 @@ object BinaryFunctions {
      * bitwiseNot(binary)
      * ```
      */
-    fun bitwiseNot(binary: UDM): UDM {
+    fun bitwiseNot(args: List<UDM>): UDM {
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("bitwiseNot expects 1 argument")
+        }
+        val binary = args[0]
         val bytes = (binary as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         
         val result = ByteArray(bytes.size) { i ->
@@ -636,7 +656,12 @@ object BinaryFunctions {
      * shiftLeft(binary, 2) // Shift left by 2 bits
      * ```
      */
-    fun shiftLeft(binary: UDM, positions: UDM): UDM {
+    fun shiftLeft(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("shiftLeft expects 2 arguments")
+        }
+        val binary = args[0]
+        val positions = args[1]
         val bytes = (binary as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         val shift = (positions as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 0
         
@@ -659,7 +684,12 @@ object BinaryFunctions {
      * shiftRight(binary, 2) // Shift right by 2 bits
      * ```
      */
-    fun shiftRight(binary: UDM, positions: UDM): UDM {
+    fun shiftRight(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("shiftRight expects 2 arguments")
+        }
+        val binary = args[0]
+        val positions = args[1]
         val bytes = (binary as? UDM.Binary)?.data ?: return UDM.Scalar(null)
         val shift = (positions as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 0
         
@@ -686,7 +716,12 @@ object BinaryFunctions {
      * equals(binary1, binary2)
      * ```
      */
-    fun equals(binary1: UDM, binary2: UDM): UDM {
+    fun equals(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw FunctionArgumentException("equals expects 2 arguments")
+        }
+        val binary1 = args[0]
+        val binary2 = args[1]
         val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(false)
         val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(false)
         
