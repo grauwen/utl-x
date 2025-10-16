@@ -263,7 +263,7 @@ object StandardLibrary {
         register("substring", StringFunctions::substring)
         register("concat", StringFunctions::concat)
         register("split", StringFunctions::split)
-        register("join", StringFunctions::join)
+        register("joinBy", StringFunctions::join)  //join used in SQL style join, rename to joinBy according to DW style
         register("replace", StringFunctions::replace)
         //register("contains", StringFunctions::contains)//contains function moved to UDM layer so now it can work with Strings and Arrays, with convention: objects check keys only
         register("startsWith", StringFunctions::startsWith)
