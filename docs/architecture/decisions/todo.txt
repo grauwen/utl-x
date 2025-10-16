@@ -16,6 +16,17 @@ TODO's
 Test calls these functions that DON'T exist in the ArrayFunction: 
 size(), get(). head(), tail(), slice(), flatMap(), sortBy(), distinct(), distinctBy(), union(), intersect(), diff(), isEmpty(), contains(), none()
 
+Functions.kt 
+1. With method reference (cleaner syntax):
+  register("map", ArrayFunctions::map)
+2. With lambda wrapper (inline syntax):
+  register("singularize") { args -> PluralizationFunctions.singularize(args[0]) }
+
+This inconsistency suggests that:
+  - Some functions were designed to take List<UDM> directly (proper design)
+  - Some functions were designed to take individual parameters and need adapters (inconsistent design)
+
+
 -lerna?
 
 - Comfornmance suite
