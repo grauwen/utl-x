@@ -3,7 +3,6 @@
 **Module:** XMLCanonicalizationFunctions.kt  
 **Functions:** 17 functions  
 **Status:** ✅ Production-ready  
-**New Total:** 174 stdlib functions (was 157)
 
 ---
 
