@@ -5,11 +5,21 @@ import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import kotlinx.datetime.*
 import kotlin.math.abs
+import java.time.Instant as JavaInstant
 
 /**
  * Rich date arithmetic and utility functions
  */
 object RichDateFunctions {
+    
+    // Helper functions to convert between java.time.Instant and kotlinx.datetime.Instant
+    private fun toKotlinxInstant(javaInstant: JavaInstant): kotlinx.datetime.Instant {
+        return kotlinx.datetime.Instant.fromEpochSeconds(javaInstant.epochSecond, javaInstant.nano)
+    }
+    
+    private fun toJavaInstant(kotlinxInstant: kotlinx.datetime.Instant): JavaInstant {
+        return JavaInstant.ofEpochSecond(kotlinxInstant.epochSeconds, kotlinxInstant.nanosecondsOfSecond.toLong())
+    }
     
     // ========== PERIOD CALCULATIONS ==========
     
@@ -19,11 +29,11 @@ object RichDateFunctions {
      */
     fun addWeeks(args: List<UDM>): UDM {
         requireArgs(args, 2, "addWeeks")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         val weeks = args[1].asNumber().toInt()
         
-        val result = date.plus(weeks * 7, DateTimeUnit.DAY, TimeZone.UTC)
-        return UDM.DateTime(result)
+        val result = toKotlinxInstant(date).plus(weeks * 7, DateTimeUnit.DAY, TimeZone.UTC)
+        return UDM.DateTime(toJavaInstant(result))
     }
     
     /**
@@ -32,11 +42,11 @@ object RichDateFunctions {
      */
     fun addQuarters(args: List<UDM>): UDM {
         requireArgs(args, 2, "addQuarters")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         val quarters = args[1].asNumber().toInt()
         
-        val result = date.plus(quarters * 3, DateTimeUnit.MONTH, TimeZone.UTC)
-        return UDM.DateTime(result)
+        val result = toKotlinxInstant(date).plus(quarters * 3, DateTimeUnit.MONTH, TimeZone.UTC)
+        return UDM.DateTime(toJavaInstant(result))
     }
     
     /**
@@ -45,10 +55,12 @@ object RichDateFunctions {
      */
     fun diffWeeks(args: List<UDM>): UDM {
         requireArgs(args, 2, "diffWeeks")
-        val date1 = args[0].asDateTime()
-        val date2 = args[1].asDateTime()
+        val date1 = extractDateTime(args[0])
+        val date2 = extractDateTime(args[1])
         
-        val diff = date2.minus(date1, TimeZone.UTC)
+        val kotlinxDate1 = toKotlinxInstant(date1)
+        val kotlinxDate2 = toKotlinxInstant(date2)
+        val diff = kotlinxDate2.minus(kotlinxDate1)
         val weeks = diff.inWholeDays / 7.0
         
         return UDM.Scalar(weeks)
@@ -60,11 +72,13 @@ object RichDateFunctions {
      */
     fun diffMonths(args: List<UDM>): UDM {
         requireArgs(args, 2, "diffMonths")
-        val date1 = args[0].asDateTime()
-        val date2 = args[1].asDateTime()
+        val date1 = extractDateTime(args[0])
+        val date2 = extractDateTime(args[1])
         
-        val localDate1 = date1.toLocalDateTime(TimeZone.UTC).date
-        val localDate2 = date2.toLocalDateTime(TimeZone.UTC).date
+        val kotlinxDate1 = toKotlinxInstant(date1)
+        val kotlinxDate2 = toKotlinxInstant(date2)
+        val localDate1 = kotlinxDate1.toLocalDateTime(TimeZone.UTC).date
+        val localDate2 = kotlinxDate2.toLocalDateTime(TimeZone.UTC).date
         
         val yearDiff = localDate2.year - localDate1.year
         val monthDiff = localDate2.monthNumber - localDate1.monthNumber
@@ -81,11 +95,13 @@ object RichDateFunctions {
      */
     fun diffYears(args: List<UDM>): UDM {
         requireArgs(args, 2, "diffYears")
-        val date1 = args[0].asDateTime()
-        val date2 = args[1].asDateTime()
+        val date1 = extractDateTime(args[0])
+        val date2 = extractDateTime(args[1])
         
-        val localDate1 = date1.toLocalDateTime(TimeZone.UTC).date
-        val localDate2 = date2.toLocalDateTime(TimeZone.UTC).date
+        val kotlinxDate1 = toKotlinxInstant(date1)
+        val kotlinxDate2 = toKotlinxInstant(date2)
+        val localDate1 = kotlinxDate1.toLocalDateTime(TimeZone.UTC).date
+        val localDate2 = kotlinxDate2.toLocalDateTime(TimeZone.UTC).date
         
         val yearDiff = localDate2.year - localDate1.year
         val monthDiff = localDate2.monthNumber - localDate1.monthNumber
@@ -103,12 +119,12 @@ object RichDateFunctions {
      */
     fun startOfDay(args: List<UDM>): UDM {
         requireArgs(args, 1, "startOfDay")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC)
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC)
         val startOfDay = LocalDateTime(localDate.date, LocalTime(0, 0, 0))
         
-        return UDM.DateTime(startOfDay.toInstant(TimeZone.UTC))
+        return UDM.DateTime(toJavaInstant(startOfDay.toInstant(TimeZone.UTC)))
     }
     
     /**
@@ -117,12 +133,12 @@ object RichDateFunctions {
      */
     fun endOfDay(args: List<UDM>): UDM {
         requireArgs(args, 1, "endOfDay")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC)
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC)
         val endOfDay = LocalDateTime(localDate.date, LocalTime(23, 59, 59, 999_999_999))
         
-        return UDM.DateTime(endOfDay.toInstant(TimeZone.UTC))
+        return UDM.DateTime(toJavaInstant(endOfDay.toInstant(TimeZone.UTC)))
     }
     
     /**
@@ -131,14 +147,14 @@ object RichDateFunctions {
      */
     fun startOfWeek(args: List<UDM>): UDM {
         requireArgs(args, 1, "startOfWeek")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val dayOfWeek = localDate.dayOfWeek.ordinal // Monday = 0
         val startOfWeek = localDate.minus(dayOfWeek, DateTimeUnit.DAY)
         val startOfWeekDateTime = LocalDateTime(startOfWeek, LocalTime(0, 0, 0))
         
-        return UDM.DateTime(startOfWeekDateTime.toInstant(TimeZone.UTC))
+        return UDM.DateTime(toJavaInstant(startOfWeekDateTime.toInstant(TimeZone.UTC)))
     }
     
     /**
@@ -147,15 +163,15 @@ object RichDateFunctions {
      */
     fun endOfWeek(args: List<UDM>): UDM {
         requireArgs(args, 1, "endOfWeek")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val dayOfWeek = localDate.dayOfWeek.ordinal // Monday = 0
         val daysToSunday = 6 - dayOfWeek
         val endOfWeek = localDate.plus(daysToSunday, DateTimeUnit.DAY)
         val endOfWeekDateTime = LocalDateTime(endOfWeek, LocalTime(23, 59, 59, 999_999_999))
         
-        return UDM.DateTime(endOfWeekDateTime.toInstant(TimeZone.UTC))
+        return UDM.DateTime(toJavaInstant(endOfWeekDateTime.toInstant(TimeZone.UTC)))
     }
     
     /**
@@ -164,13 +180,13 @@ object RichDateFunctions {
      */
     fun startOfMonth(args: List<UDM>): UDM {
         requireArgs(args, 1, "startOfMonth")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val firstDay = LocalDate(localDate.year, localDate.month, 1)
         val startOfMonth = LocalDateTime(firstDay, LocalTime(0, 0, 0))
         
-        return UDM.DateTime(startOfMonth.toInstant(TimeZone.UTC))
+        return UDM.DateTime(toJavaInstant(startOfMonth.toInstant(TimeZone.UTC)))
     }
     
     /**
@@ -179,14 +195,14 @@ object RichDateFunctions {
      */
     fun endOfMonth(args: List<UDM>): UDM {
         requireArgs(args, 1, "endOfMonth")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val lastDayOfMonth = localDate.month.length(isLeapYear(localDate.year))
         val lastDay = LocalDate(localDate.year, localDate.month, lastDayOfMonth)
         val endOfMonth = LocalDateTime(lastDay, LocalTime(23, 59, 59, 999_999_999))
         
-        return UDM.DateTime(endOfMonth.toInstant(TimeZone.UTC))
+        return UDM.DateTime(toJavaInstant(endOfMonth.toInstant(TimeZone.UTC)))
     }
     
     /**
@@ -195,13 +211,13 @@ object RichDateFunctions {
      */
     fun startOfYear(args: List<UDM>): UDM {
         requireArgs(args, 1, "startOfYear")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val firstDay = LocalDate(localDate.year, 1, 1)
         val startOfYear = LocalDateTime(firstDay, LocalTime(0, 0, 0))
         
-        return UDM.DateTime(startOfYear.toInstant(TimeZone.UTC))
+        return UDM.DateTime(toJavaInstant(startOfYear.toInstant(TimeZone.UTC)))
     }
     
     /**
@@ -210,13 +226,13 @@ object RichDateFunctions {
      */
     fun endOfYear(args: List<UDM>): UDM {
         requireArgs(args, 1, "endOfYear")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val lastDay = LocalDate(localDate.year, 12, 31)
         val endOfYear = LocalDateTime(lastDay, LocalTime(23, 59, 59, 999_999_999))
         
-        return UDM.DateTime(endOfYear.toInstant(TimeZone.UTC))
+        return UDM.DateTime(toJavaInstant(endOfYear.toInstant(TimeZone.UTC)))
     }
     
     /**
@@ -225,14 +241,14 @@ object RichDateFunctions {
      */
     fun startOfQuarter(args: List<UDM>): UDM {
         requireArgs(args, 1, "startOfQuarter")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val quarterMonth = ((localDate.monthNumber - 1) / 3) * 3 + 1
         val firstDay = LocalDate(localDate.year, quarterMonth, 1)
         val startOfQuarter = LocalDateTime(firstDay, LocalTime(0, 0, 0))
         
-        return UDM.DateTime(startOfQuarter.toInstant(TimeZone.UTC))
+        return UDM.DateTime(toJavaInstant(startOfQuarter.toInstant(TimeZone.UTC)))
     }
     
     /**
@@ -241,15 +257,15 @@ object RichDateFunctions {
      */
     fun endOfQuarter(args: List<UDM>): UDM {
         requireArgs(args, 1, "endOfQuarter")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val quarterMonth = ((localDate.monthNumber - 1) / 3) * 3 + 3
         val lastDayOfMonth = Month(quarterMonth).length(isLeapYear(localDate.year))
         val lastDay = LocalDate(localDate.year, quarterMonth, lastDayOfMonth)
         val endOfQuarter = LocalDateTime(lastDay, LocalTime(23, 59, 59, 999_999_999))
         
-        return UDM.DateTime(endOfQuarter.toInstant(TimeZone.UTC))
+        return UDM.DateTime(toJavaInstant(endOfQuarter.toInstant(TimeZone.UTC)))
     }
     
     // ========== DATE INFORMATION ==========
@@ -260,9 +276,9 @@ object RichDateFunctions {
      */
     fun dayOfWeek(args: List<UDM>): UDM {
         requireArgs(args, 1, "dayOfWeek")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val dayOfWeek = localDate.dayOfWeek.ordinal + 1 // Monday = 1
         
         return UDM.Scalar(dayOfWeek.toDouble())
@@ -274,9 +290,9 @@ object RichDateFunctions {
      */
     fun dayOfWeekName(args: List<UDM>): UDM {
         requireArgs(args, 1, "dayOfWeekName")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         return UDM.Scalar(localDate.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() })
     }
     
@@ -286,9 +302,9 @@ object RichDateFunctions {
      */
     fun dayOfYear(args: List<UDM>): UDM {
         requireArgs(args, 1, "dayOfYear")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         return UDM.Scalar(localDate.dayOfYear.toDouble())
     }
     
@@ -298,9 +314,9 @@ object RichDateFunctions {
      */
     fun weekOfYear(args: List<UDM>): UDM {
         requireArgs(args, 1, "weekOfYear")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         
         // Simple week calculation (ISO week would be more complex)
         val firstDayOfYear = LocalDate(localDate.year, 1, 1)
@@ -316,9 +332,9 @@ object RichDateFunctions {
      */
     fun quarter(args: List<UDM>): UDM {
         requireArgs(args, 1, "quarter")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val quarter = ((localDate.monthNumber - 1) / 3) + 1
         
         return UDM.Scalar(quarter.toDouble())
@@ -330,9 +346,9 @@ object RichDateFunctions {
      */
     fun monthName(args: List<UDM>): UDM {
         requireArgs(args, 1, "monthName")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         return UDM.Scalar(localDate.month.name.lowercase().replaceFirstChar { it.uppercase() })
     }
     
@@ -342,9 +358,9 @@ object RichDateFunctions {
      */
     fun isLeapYearFunc(args: List<UDM>): UDM {
         requireArgs(args, 1, "isLeapYear")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         return UDM.Scalar(isLeapYear(localDate.year))
     }
     
@@ -354,9 +370,9 @@ object RichDateFunctions {
      */
     fun daysInMonth(args: List<UDM>): UDM {
         requireArgs(args, 1, "daysInMonth")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val days = localDate.month.length(isLeapYear(localDate.year))
         
         return UDM.Scalar(days.toDouble())
@@ -368,9 +384,9 @@ object RichDateFunctions {
      */
     fun daysInYear(args: List<UDM>): UDM {
         requireArgs(args, 1, "daysInYear")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val days = if (isLeapYear(localDate.year)) 366 else 365
         
         return UDM.Scalar(days.toDouble())
@@ -384,8 +400,8 @@ object RichDateFunctions {
      */
     fun isBefore(args: List<UDM>): UDM {
         requireArgs(args, 2, "isBefore")
-        val date1 = args[0].asDateTime()
-        val date2 = args[1].asDateTime()
+        val date1 = extractDateTime(args[0])
+        val date2 = extractDateTime(args[1])
         
         return UDM.Scalar(date1 < date2)
     }
@@ -396,8 +412,8 @@ object RichDateFunctions {
      */
     fun isAfter(args: List<UDM>): UDM {
         requireArgs(args, 2, "isAfter")
-        val date1 = args[0].asDateTime()
-        val date2 = args[1].asDateTime()
+        val date1 = extractDateTime(args[0])
+        val date2 = extractDateTime(args[1])
         
         return UDM.Scalar(date1 > date2)
     }
@@ -408,11 +424,13 @@ object RichDateFunctions {
      */
     fun isSameDay(args: List<UDM>): UDM {
         requireArgs(args, 2, "isSameDay")
-        val date1 = args[0].asDateTime()
-        val date2 = args[1].asDateTime()
+        val date1 = extractDateTime(args[0])
+        val date2 = extractDateTime(args[1])
         
-        val localDate1 = date1.toLocalDateTime(TimeZone.UTC).date
-        val localDate2 = date2.toLocalDateTime(TimeZone.UTC).date
+        val kotlinxDate1 = toKotlinxInstant(date1)
+        val kotlinxDate2 = toKotlinxInstant(date2)
+        val localDate1 = kotlinxDate1.toLocalDateTime(TimeZone.UTC).date
+        val localDate2 = kotlinxDate2.toLocalDateTime(TimeZone.UTC).date
         
         return UDM.Scalar(localDate1 == localDate2)
     }
@@ -423,9 +441,9 @@ object RichDateFunctions {
      */
     fun isBetween(args: List<UDM>): UDM {
         requireArgs(args, 3, "isBetween")
-        val date = args[0].asDateTime()
-        val startDate = args[1].asDateTime()
-        val endDate = args[2].asDateTime()
+        val date = extractDateTime(args[0])
+        val startDate = extractDateTime(args[1])
+        val endDate = extractDateTime(args[2])
         
         return UDM.Scalar(date >= startDate && date <= endDate)
     }
@@ -436,10 +454,10 @@ object RichDateFunctions {
      */
     fun isToday(args: List<UDM>): UDM {
         requireArgs(args, 1, "isToday")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
         val now = Clock.System.now()
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val today = now.toLocalDateTime(TimeZone.UTC).date
         
         return UDM.Scalar(localDate == today)
@@ -451,9 +469,9 @@ object RichDateFunctions {
      */
     fun isWeekend(args: List<UDM>): UDM {
         requireArgs(args, 1, "isWeekend")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val dayOfWeek = localDate.dayOfWeek
         
         return UDM.Scalar(dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY)
@@ -465,9 +483,9 @@ object RichDateFunctions {
      */
     fun isWeekday(args: List<UDM>): UDM {
         requireArgs(args, 1, "isWeekday")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         
-        val localDate = date.toLocalDateTime(TimeZone.UTC).date
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC).date
         val dayOfWeek = localDate.dayOfWeek
         
         return UDM.Scalar(dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY)
@@ -481,10 +499,11 @@ object RichDateFunctions {
      */
     fun age(args: List<UDM>): UDM {
         requireArgs(args, 1, "age")
-        val birthDate = args[0].asDateTime()
+        val birthDate = extractDateTime(args[0])
         
         val now = Clock.System.now()
-        val birthLocalDate = birthDate.toLocalDateTime(TimeZone.UTC).date
+        val kotlinxBirthDate = toKotlinxInstant(birthDate)
+        val birthLocalDate = kotlinxBirthDate.toLocalDateTime(TimeZone.UTC).date
         val nowLocalDate = now.toLocalDateTime(TimeZone.UTC).date
         
         var age = nowLocalDate.year - birthLocalDate.year
@@ -510,15 +529,18 @@ object RichDateFunctions {
         }
     }
     
-    private fun UDM.asDateTime(): Instant = when (this) {
-        is UDM.DateTime -> instant
+    private fun extractDateTime(udm: UDM): JavaInstant = when (udm) {
+        is UDM.DateTime -> udm.instant
         else -> throw FunctionArgumentException("Expected datetime value")
     }
     
     private fun UDM.asNumber(): Double = when (this) {
-        is UDM.Scalar -> when (value) {
-            is Number -> value.toDouble()
-            else -> throw FunctionArgumentException("Expected number value")
+        is UDM.Scalar -> {
+            val v = value
+            when (v) {
+                is Number -> v.toDouble()
+                else -> throw FunctionArgumentException("Expected number value")
+            }
         }
         else -> throw FunctionArgumentException("Expected number value")
     }

@@ -10,12 +10,12 @@ import java.time.Instant as JavaInstant
 object DateFunctions {
     
     // Helper functions to convert between java.time.Instant and kotlinx.datetime.Instant
-    private fun JavaInstant.toKotlinxInstant(): Instant {
-        return Instant.fromEpochSeconds(this.epochSecond, this.nano)
+    private fun toKotlinxInstant(javaInstant: JavaInstant): kotlinx.datetime.Instant {
+        return kotlinx.datetime.Instant.fromEpochSeconds(javaInstant.epochSecond, javaInstant.nano)
     }
     
-    private fun Instant.toJavaInstant(): JavaInstant {
-        return JavaInstant.ofEpochSecond(this.epochSeconds, this.nanosecondsOfSecond.toLong())
+    private fun toJavaInstant(kotlinxInstant: kotlinx.datetime.Instant): JavaInstant {
+        return JavaInstant.ofEpochSecond(kotlinxInstant.epochSeconds, kotlinxInstant.nanosecondsOfSecond.toLong())
     }
     
     fun now(args: List<UDM>): UDM {
@@ -39,7 +39,7 @@ object DateFunctions {
     
     fun formatDate(args: List<UDM>): UDM {
         requireArgs(args, 1..2, "formatDate")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         val format = if (args.size > 1) args[1].asString() else "yyyy-MM-dd'T'HH:mm:ss'Z'"
         
         val formatted = date.toString()
@@ -48,32 +48,33 @@ object DateFunctions {
     
     fun addDays(args: List<UDM>): UDM {
         requireArgs(args, 2, "addDays")
-        val date = args[0].asDateTime()
+        val dateUdm = args[0]
+        val date: JavaInstant = extractDateTime(dateUdm)
         val days = args[1].asNumber().toInt()
         
-        val kotlinxDate = date.toKotlinxInstant()
+        val kotlinxDate = toKotlinxInstant(date)
         val result = kotlinxDate.plus(days, DateTimeUnit.DAY, TimeZone.UTC)
-        return UDM.DateTime(result.toJavaInstant())
+        return UDM.DateTime(toJavaInstant(result))
     }
     
     fun addHours(args: List<UDM>): UDM {
         requireArgs(args, 2, "addHours")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         val hours = args[1].asNumber().toInt()
         
-        val kotlinxDate = date.toKotlinxInstant()
+        val kotlinxDate = toKotlinxInstant(date)
         val result = kotlinxDate.plus(hours, DateTimeUnit.HOUR, TimeZone.UTC)
-        return UDM.DateTime(result.toJavaInstant())
+        return UDM.DateTime(toJavaInstant(result))
     }
     
     fun diffDays(args: List<UDM>): UDM {
         requireArgs(args, 2, "diffDays")
-        val date1 = args[0].asDateTime()
-        val date2 = args[1].asDateTime()
+        val date1 = extractDateTime(args[0])
+        val date2 = extractDateTime(args[1])
         
-        val kotlinxDate1 = date1.toKotlinxInstant()
-        val kotlinxDate2 = date2.toKotlinxInstant()
-        val diff = kotlinxDate2.minus(kotlinxDate1, TimeZone.UTC)
+        val kotlinxDate1 = toKotlinxInstant(date1)
+        val kotlinxDate2 = toKotlinxInstant(date2)
+        val diff = kotlinxDate2.minus(kotlinxDate1)
         val days = diff.inWholeDays.toDouble()
         return UDM.Scalar(days)
     }
@@ -106,8 +107,8 @@ object DateFunctions {
         else -> throw FunctionArgumentException("Expected number value")
     }
     
-    private fun UDM.asDateTime(): JavaInstant = when (this) {
-        is UDM.DateTime -> instant
+    private fun extractDateTime(udm: UDM): JavaInstant = when (udm) {
+        is UDM.DateTime -> udm.instant
         else -> throw FunctionArgumentException("Expected datetime value")
     }
 }

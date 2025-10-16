@@ -4,11 +4,21 @@ package org.apache.utlx.stdlib.date
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import kotlinx.datetime.*
+import java.time.Instant as JavaInstant
 
 /**
  * Extended date/time functions
  */
 object ExtendedDateFunctions {
+    
+    // Helper functions to convert between java.time.Instant and kotlinx.datetime.Instant
+    private fun toKotlinxInstant(javaInstant: JavaInstant): kotlinx.datetime.Instant {
+        return kotlinx.datetime.Instant.fromEpochSeconds(javaInstant.epochSecond, javaInstant.nano)
+    }
+    
+    private fun toJavaInstant(kotlinxInstant: kotlinx.datetime.Instant): JavaInstant {
+        return JavaInstant.ofEpochSecond(kotlinxInstant.epochSeconds, kotlinxInstant.nanosecondsOfSecond.toLong())
+    }
     
     /**
      * Extract day component
@@ -16,8 +26,8 @@ object ExtendedDateFunctions {
      */
     fun day(args: List<UDM>): UDM {
         requireArgs(args, 1, "day")
-        val date = args[0].asDateTime()
-        val localDate = date.toLocalDateTime(TimeZone.UTC)
+        val date = extractDateTime(args[0])
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC)
         return UDM.Scalar(localDate.dayOfMonth.toDouble())
     }
     
@@ -27,8 +37,8 @@ object ExtendedDateFunctions {
      */
     fun month(args: List<UDM>): UDM {
         requireArgs(args, 1, "month")
-        val date = args[0].asDateTime()
-        val localDate = date.toLocalDateTime(TimeZone.UTC)
+        val date = extractDateTime(args[0])
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC)
         return UDM.Scalar(localDate.monthNumber.toDouble())
     }
     
@@ -38,8 +48,8 @@ object ExtendedDateFunctions {
      */
     fun year(args: List<UDM>): UDM {
         requireArgs(args, 1, "year")
-        val date = args[0].asDateTime()
-        val localDate = date.toLocalDateTime(TimeZone.UTC)
+        val date = extractDateTime(args[0])
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC)
         return UDM.Scalar(localDate.year.toDouble())
     }
     
@@ -49,8 +59,8 @@ object ExtendedDateFunctions {
      */
     fun hours(args: List<UDM>): UDM {
         requireArgs(args, 1, "hours")
-        val date = args[0].asDateTime()
-        val localDate = date.toLocalDateTime(TimeZone.UTC)
+        val date = extractDateTime(args[0])
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC)
         return UDM.Scalar(localDate.hour.toDouble())
     }
     
@@ -60,8 +70,8 @@ object ExtendedDateFunctions {
      */
     fun minutes(args: List<UDM>): UDM {
         requireArgs(args, 1, "minutes")
-        val date = args[0].asDateTime()
-        val localDate = date.toLocalDateTime(TimeZone.UTC)
+        val date = extractDateTime(args[0])
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC)
         return UDM.Scalar(localDate.minute.toDouble())
     }
     
@@ -71,8 +81,8 @@ object ExtendedDateFunctions {
      */
     fun seconds(args: List<UDM>): UDM {
         requireArgs(args, 1, "seconds")
-        val date = args[0].asDateTime()
-        val localDate = date.toLocalDateTime(TimeZone.UTC)
+        val date = extractDateTime(args[0])
+        val localDate = toKotlinxInstant(date).toLocalDateTime(TimeZone.UTC)
         return UDM.Scalar(localDate.second.toDouble())
     }
     
@@ -83,8 +93,8 @@ object ExtendedDateFunctions {
      */
     fun compareDates(args: List<UDM>): UDM {
         requireArgs(args, 2, "compare-dates")
-        val date1 = args[0].asDateTime()
-        val date2 = args[1].asDateTime()
+        val date1 = extractDateTime(args[0])
+        val date2 = extractDateTime(args[1])
         
         val result = when {
             date1 < date2 -> -1.0
@@ -118,8 +128,8 @@ object ExtendedDateFunctions {
         }
     }
     
-    private fun UDM.asDateTime(): Instant = when (this) {
-        is UDM.DateTime -> instant
+    private fun extractDateTime(udm: UDM): JavaInstant = when (udm) {
+        is UDM.DateTime -> udm.instant
         else -> throw FunctionArgumentException("Expected datetime value")
     }
     

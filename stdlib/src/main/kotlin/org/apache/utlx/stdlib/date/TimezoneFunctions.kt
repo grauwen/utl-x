@@ -4,6 +4,7 @@ package org.apache.utlx.stdlib.date
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import kotlinx.datetime.*
+import java.time.Instant as JavaInstant
 
 /**
  * Comprehensive timezone manipulation functions
@@ -16,7 +17,7 @@ object TimezoneFunctions {
      */
     fun convertTimezone(args: List<UDM>): UDM {
         requireArgs(args, 3, "convertTimezone")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         val fromTz = args[1].asString()
         val toTz = args[2].asString()
         
@@ -25,12 +26,13 @@ object TimezoneFunctions {
             val toZone = TimeZone.of(toTz)
             
             // Convert through UTC
-            val localInFrom = date.toLocalDateTime(fromZone)
+            val kotlinxDate = toKotlinxInstant(date)
+            val localInFrom = kotlinxDate.toLocalDateTime(fromZone)
             val instantInUTC = localInFrom.toInstant(fromZone)
             val localInTo = instantInUTC.toLocalDateTime(toZone)
             
             // Return the instant (which is timezone-agnostic)
-            UDM.DateTime(instantInUTC)
+            UDM.DateTime(toJavaInstant(instantInUTC))
         } catch (e: Exception) {
             throw FunctionArgumentException("Invalid timezone: $fromTz or $toTz")
         }
@@ -51,12 +53,13 @@ object TimezoneFunctions {
      */
     fun getTimezoneOffsetSeconds(args: List<UDM>): UDM {
         requireArgs(args, 2, "getTimezoneOffsetSeconds")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         val tzId = args[1].asString()
         
         return try {
             val tz = TimeZone.of(tzId)
-            val offset = tz.offsetAt(date)
+            val kotlinxDate = toKotlinxInstant(date)
+            val offset = tz.offsetAt(kotlinxDate)
             UDM.Scalar(offset.totalSeconds.toDouble())
         } catch (e: Exception) {
             throw FunctionArgumentException("Invalid timezone: $tzId")
@@ -69,12 +72,13 @@ object TimezoneFunctions {
      */
     fun getTimezoneOffsetHours(args: List<UDM>): UDM {
         requireArgs(args, 2, "getTimezoneOffsetHours")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         val tzId = args[1].asString()
         
         return try {
             val tz = TimeZone.of(tzId)
-            val offset = tz.offsetAt(date)
+            val kotlinxDate = toKotlinxInstant(date)
+            val offset = tz.offsetAt(kotlinxDate)
             UDM.Scalar(offset.totalSeconds / 3600.0)
         } catch (e: Exception) {
             throw FunctionArgumentException("Invalid timezone: $tzId")
@@ -94,7 +98,7 @@ object TimezoneFunctions {
             val tz = TimeZone.of(tzId)
             val localDateTime = LocalDateTime.parse(dateStr)
             val instant = localDateTime.toInstant(tz)
-            UDM.DateTime(instant)
+            UDM.DateTime(toJavaInstant(instant))
         } catch (e: Exception) {
             throw FunctionArgumentException("Cannot parse datetime: $dateStr with timezone: $tzId")
         }
@@ -106,13 +110,14 @@ object TimezoneFunctions {
      */
     fun formatDateTimeInTimezone(args: List<UDM>): UDM {
         requireArgs(args, 2..3, "formatDateTimeInTimezone")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         val tzId = args[1].asString()
         val format = if (args.size > 2) args[2].asString() else "yyyy-MM-dd'T'HH:mm:ss"
         
         return try {
             val tz = TimeZone.of(tzId)
-            val localDateTime = date.toLocalDateTime(tz)
+            val kotlinxDate = toKotlinxInstant(date)
+            val localDateTime = kotlinxDate.toLocalDateTime(tz)
             
             // Simple formatting (could be enhanced with more patterns)
             val formatted = when (format) {
@@ -151,14 +156,15 @@ object TimezoneFunctions {
      */
     fun toUTC(args: List<UDM>): UDM {
         requireArgs(args, 2, "toUTC")
-        val date = args[0].asDateTime()
+        val date = extractDateTime(args[0])
         val tzId = args[1].asString()
         
         return try {
             val tz = TimeZone.of(tzId)
-            val localDateTime = date.toLocalDateTime(tz)
+            val kotlinxDate = toKotlinxInstant(date)
+            val localDateTime = kotlinxDate.toLocalDateTime(tz)
             val utcInstant = localDateTime.toInstant(tz)
-            UDM.DateTime(utcInstant)
+            UDM.DateTime(toJavaInstant(utcInstant))
         } catch (e: Exception) {
             throw FunctionArgumentException("Invalid timezone: $tzId")
         }
@@ -170,12 +176,13 @@ object TimezoneFunctions {
      */
     fun fromUTC(args: List<UDM>): UDM {
         requireArgs(args, 2, "fromUTC")
-        val utcDate = args[0].asDateTime()
+        val utcDate = extractDateTime(args[0])
         val tzId = args[1].asString()
         
         return try {
             val tz = TimeZone.of(tzId)
-            val localDateTime = utcDate.toLocalDateTime(tz)
+            val kotlinxUtcDate = toKotlinxInstant(utcDate)
+            val localDateTime = kotlinxUtcDate.toLocalDateTime(tz)
             // Return as instant but user understands it's in that timezone
             UDM.DateTime(utcDate)
         } catch (e: Exception) {
@@ -195,8 +202,17 @@ object TimezoneFunctions {
         }
     }
     
-    private fun UDM.asDateTime(): Instant = when (this) {
-        is UDM.DateTime -> instant
+    // Helper functions to convert between java.time.Instant and kotlinx.datetime.Instant
+    private fun toKotlinxInstant(javaInstant: JavaInstant): kotlinx.datetime.Instant {
+        return kotlinx.datetime.Instant.fromEpochSeconds(javaInstant.epochSecond, javaInstant.nano)
+    }
+    
+    private fun toJavaInstant(kotlinxInstant: kotlinx.datetime.Instant): JavaInstant {
+        return JavaInstant.ofEpochSecond(kotlinxInstant.epochSeconds, kotlinxInstant.nanosecondsOfSecond.toLong())
+    }
+    
+    private fun extractDateTime(udm: UDM): JavaInstant = when (udm) {
+        is UDM.DateTime -> udm.instant
         else -> throw FunctionArgumentException("Expected datetime value")
     }
     

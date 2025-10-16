@@ -107,8 +107,8 @@ object XMLCanonicalizationFunctions {
      * excC14n(xmlDoc, "ds xenc") // Include ds and xenc namespaces
      * ```
      */
-    fun excC14n(xml: UDM, inclusiveNamespaces: UDM = UDM.Scalar.nullValue()): UDM {
-        val inclusivePrefixes = (inclusiveNamespaces as? UDM.Scalar)?.value
+    fun excC14n(xml: UDM, inclusiveNamespaces: UDM = UDM.Scalar(null)): UDM {
+        val inclusivePrefixes = (inclusiveNamespaces as? UDM.Scalar)?.value?.toString()
         return canonicalize(xml, Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS, inclusivePrefixes)
     }
     
@@ -128,8 +128,8 @@ object XMLCanonicalizationFunctions {
      * excC14nWithComments(xmlDoc, "ds")
      * ```
      */
-    fun excC14nWithComments(xml: UDM, inclusiveNamespaces: UDM = UDM.Scalar.nullValue()): UDM {
-        val inclusivePrefixes = (inclusiveNamespaces as? UDM.Scalar)?.value
+    fun excC14nWithComments(xml: UDM, inclusiveNamespaces: UDM = UDM.Scalar(null)): UDM {
+        val inclusivePrefixes = (inclusiveNamespaces as? UDM.Scalar)?.value?.toString()
         return canonicalize(xml, Canonicalizer.ALGO_ID_C14N_EXCL_WITH_COMMENTS, inclusivePrefixes)
     }
     
@@ -230,11 +230,11 @@ object XMLCanonicalizationFunctions {
     fun canonicalizeWithAlgorithm(
         xml: UDM, 
         algorithm: UDM,
-        inclusiveNamespaces: UDM = UDM.Scalar.nullValue()
+        inclusiveNamespaces: UDM = UDM.Scalar(null)
     ): UDM {
-        val algo = (algorithm as? UDM.Scalar)?.value ?: return UDM.Scalar.nullValue()
+        val algo = (algorithm as? UDM.Scalar)?.value ?: return UDM.Scalar(null)
         
-        val algoId = when (algo.lowercase()) {
+        val algoId = when (algo.toString().lowercase()) {
             "c14n" -> Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS
             "c14n-with-comments" -> Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS
             "exc-c14n" -> Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS
@@ -242,10 +242,10 @@ object XMLCanonicalizationFunctions {
             "c14n11" -> Canonicalizer.ALGO_ID_C14N11_OMIT_COMMENTS
             "c14n11-with-comments" -> Canonicalizer.ALGO_ID_C14N11_WITH_COMMENTS
             "physical" -> Canonicalizer.ALGO_ID_C14N_PHYSICAL
-            else -> return UDM.Scalar.nullValue()
+            else -> return UDM.Scalar(null)
         }
         
-        val inclusivePrefixes = (inclusiveNamespaces as? UDM.Scalar)?.value
+        val inclusivePrefixes = (inclusiveNamespaces as? UDM.Scalar)?.value?.toString()
         return canonicalize(xml, algoId, inclusivePrefixes)
     }
     
@@ -277,11 +277,11 @@ object XMLCanonicalizationFunctions {
         xpathExpr: UDM,
         algorithm: UDM = UDM.Scalar("c14n")
     ): UDM {
-        val xpath = (xpathExpr as? UDM.Scalar)?.value ?: return UDM.Scalar.nullValue()
-        val algo = (algorithm as? UDM.Scalar)?.value ?: "c14n"
+        val xpath = (xpathExpr as? UDM.Scalar)?.value?.toString() ?: return UDM.Scalar(null)
+        val algo = (algorithm as? UDM.Scalar)?.value?.toString() ?: "c14n"
         
         return try {
-            val doc = parseXML(xml) ?: return UDM.Scalar.nullValue()
+            val doc = parseXML(xml) ?: return UDM.Scalar(null)
             
             // Select nodes using XPath
             val xpathFactory = javax.xml.xpath.XPathFactory.newInstance()
@@ -299,13 +299,12 @@ object XMLCanonicalizationFunctions {
             
             for (i in 0 until nodeList.length) {
                 val node = nodeList.item(i)
-                val canonical = canonicalizer.canonicalizeSubtree(node)
-                output.write(canonical)
+                canonicalizer.canonicalizeSubtree(node, output)
             }
             
             UDM.Scalar(output.toString(Charsets.UTF_8))
         } catch (e: Exception) {
-            UDM.Scalar.nullValue()
+            UDM.Scalar(null)
         }
     }
     
@@ -339,33 +338,33 @@ object XMLCanonicalizationFunctions {
     ): UDM {
         // First canonicalize
         val canonical = canonicalizeWithAlgorithm(xml, c14nAlgorithm)
-        if (canonical is UDM.Scalar.nullValue()) return UDM.Scalar.nullValue()
+        if (canonical == UDM.Scalar(null)) return UDM.Scalar(null)
         
         // Then hash
-        val algo = (hashAlgorithm as? UDM.Scalar)?.value?.lowercase() ?: "sha256"
+        val algo = (hashAlgorithm as? UDM.Scalar)?.value?.toString()?.lowercase() ?: "sha256"
         
         return when (algo) {
             "md5" -> {
                 val digest = java.security.MessageDigest.getInstance("MD5")
-                val bytes = digest.digest((canonical as UDM.Scalar).value.toByteArray())
+                val bytes = digest.digest((canonical as UDM.Scalar).value?.toString()?.toByteArray() ?: ByteArray(0))
                 UDM.Scalar(bytesToHex(bytes))
             }
             "sha1" -> {
                 val digest = java.security.MessageDigest.getInstance("SHA-1")
-                val bytes = digest.digest((canonical as UDM.Scalar).value.toByteArray())
+                val bytes = digest.digest((canonical as UDM.Scalar).value?.toString()?.toByteArray() ?: ByteArray(0))
                 UDM.Scalar(bytesToHex(bytes))
             }
             "sha256" -> {
                 val digest = java.security.MessageDigest.getInstance("SHA-256")
-                val bytes = digest.digest((canonical as UDM.Scalar).value.toByteArray())
+                val bytes = digest.digest((canonical as UDM.Scalar).value?.toString()?.toByteArray() ?: ByteArray(0))
                 UDM.Scalar(bytesToHex(bytes))
             }
             "sha512" -> {
                 val digest = java.security.MessageDigest.getInstance("SHA-512")
-                val bytes = digest.digest((canonical as UDM.Scalar).value.toByteArray())
+                val bytes = digest.digest((canonical as UDM.Scalar).value?.toString()?.toByteArray() ?: ByteArray(0))
                 UDM.Scalar(bytesToHex(bytes))
             }
-            else -> UDM.Scalar.nullValue()
+            else -> UDM.Scalar(null)
         }
     }
     
@@ -397,7 +396,7 @@ object XMLCanonicalizationFunctions {
         val canonical1 = canonicalizeWithAlgorithm(xml1, algorithm)
         val canonical2 = canonicalizeWithAlgorithm(xml2, algorithm)
         
-        if (canonical1 is UDM.Scalar.nullValue() || canonical2 is UDM.Scalar.nullValue()) {
+        if (canonical1 == UDM.Scalar(null) || canonical2 == UDM.Scalar(null)) {
             return UDM.Scalar(false)
         }
         
@@ -425,10 +424,10 @@ object XMLCanonicalizationFunctions {
      */
     fun c14nFingerprint(xml: UDM): UDM {
         val hash = c14nHash(xml, UDM.Scalar("sha256"), UDM.Scalar("c14n"))
-        if (hash is UDM.Scalar.nullValue()) return UDM.Scalar.nullValue()
+        if (hash == UDM.Scalar(null)) return UDM.Scalar(null)
         
         // Return first 16 characters of hash as fingerprint
-        val fullHash = (hash as UDM.Scalar).value
+        val fullHash = (hash as UDM.Scalar).value?.toString() ?: ""
         return UDM.Scalar(fullHash.take(16))
     }
     
@@ -462,11 +461,11 @@ object XMLCanonicalizationFunctions {
     ): UDM {
         // Canonicalize using Exc-C14N (recommended for signatures)
         val canonical = excC14n(xml)
-        if (canonical is UDM.Scalar.nullValue()) return UDM.Scalar.nullValue()
+        if (canonical == UDM.Scalar(null)) return UDM.Scalar(null)
         
         // Compute digest
         val digest = c14nHash(xml, digestAlgorithm, UDM.Scalar("exc-c14n"))
-        if (digest is UDM.Scalar.nullValue()) return UDM.Scalar.nullValue()
+        if (digest == UDM.Scalar(null)) return UDM.Scalar(null)
         
         return UDM.Object(mapOf(
             "canonical" to canonical,
@@ -505,15 +504,15 @@ object XMLCanonicalizationFunctions {
         digestAlgorithm: UDM = UDM.Scalar("sha256"),
         c14nAlgorithm: UDM = UDM.Scalar("exc-c14n")
     ): UDM {
-        val expected = (expectedDigest as? UDM.Scalar)?.value ?: return UDM.Scalar(false)
+        val expected = (expectedDigest as? UDM.Scalar)?.value?.toString() ?: return UDM.Scalar(false)
         
         val actualDigest = c14nHash(xml, digestAlgorithm, c14nAlgorithm)
-        if (actualDigest is UDM.Scalar.nullValue()) return UDM.Scalar(false)
+        if (actualDigest == UDM.Scalar(null)) return UDM.Scalar(false)
         
-        val actual = (actualDigest as UDM.Scalar).value
+        val actual = (actualDigest as UDM.Scalar).value?.toString() ?: ""
         
         // Case-insensitive comparison
-        return UDM.Scalar(actual.equals(expected, ignoreCase = true))
+        return UDM.Scalar(actual.lowercase() == expected.lowercase())
     }
     
     // ============================================
@@ -529,23 +528,25 @@ object XMLCanonicalizationFunctions {
         inclusiveNamespaces: String? = null
     ): UDM {
         return try {
-            val doc = parseXML(xml) ?: return UDM.Scalar.nullValue()
+            val doc = parseXML(xml) ?: return UDM.Scalar(null)
             
             val canonicalizer = Canonicalizer.getInstance(algorithm)
             
-            val canonical = if (inclusiveNamespaces != null && algorithm.contains("EXCL")) {
+            val output = ByteArrayOutputStream()
+            
+            if (inclusiveNamespaces != null && algorithm.contains("EXCL")) {
                 // Exclusive C14N with inclusive namespaces
-                canonicalizer.canonicalizeSubtree(doc, inclusiveNamespaces)
+                canonicalizer.canonicalizeSubtree(doc, inclusiveNamespaces, output)
             } else {
                 // Standard C14N
-                canonicalizer.canonicalizeSubtree(doc)
+                canonicalizer.canonicalizeSubtree(doc, output)
             }
             
-            UDM.Scalar(String(canonical, Charsets.UTF_8))
+            UDM.Scalar(output.toString(Charsets.UTF_8))
         } catch (e: InvalidCanonicalizerException) {
-            UDM.Scalar.nullValue()
+            UDM.Scalar(null)
         } catch (e: Exception) {
-            UDM.Scalar.nullValue()
+            UDM.Scalar(null)
         }
     }
     
@@ -555,7 +556,7 @@ object XMLCanonicalizationFunctions {
     private fun parseXML(xml: UDM): Document? {
         return try {
             val xmlString = when (xml) {
-                is UDM.Scalar -> xml.value
+                is UDM.Scalar -> xml.value?.toString() ?: ""
                 is UDM.Object -> {
                     // Convert UDM Object to XML string
                     // This would require XML serialization logic
