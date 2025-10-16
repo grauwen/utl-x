@@ -334,6 +334,7 @@ object StandardLibrary {
         register("sort", ArrayFunctions::sort)
         register("sortBy", ArrayFunctions::sortBy)
         register("first", ArrayFunctions::first)
+        register("head", ArrayFunctions::first) //alias for first
         register("last", ArrayFunctions::last)
         register("take", ArrayFunctions::take)
         register("drop", ArrayFunctions::drop)
