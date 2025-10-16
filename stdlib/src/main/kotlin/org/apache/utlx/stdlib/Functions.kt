@@ -20,6 +20,7 @@ import org.apache.utlx.stdlib.finance.*
 import org.apache.utlx.stdlib.geo.*
 import org.apache.utlx.stdlib.jwt.*
 import org.apache.utlx.stdlib.json.*
+import org.apache.utlx.stdlib.jws.*
 
 
 
@@ -90,6 +91,9 @@ object StandardLibrary {
 
         // JSON Canonicalization functions (RFC 8785)
         registerJSONFunctions()
+        
+        // JWS (JSON Web Signature) functions
+        registerJWSFunctions()
 
         // Tree functions
         registerTreeFunctions() 
@@ -1120,6 +1124,22 @@ object StandardLibrary {
         register("jsonEquals", JSONCanonicalizationFunctions::jsonEquals)
         register("isCanonicalJSON", JSONCanonicalizationFunctions::isCanonicalJSON)
         register("canonicalJSONSize", JSONCanonicalizationFunctions::canonicalJSONSize)
+    }
+    
+    /**
+     * Register JWS (JSON Web Signature) functions
+     * RFC 7515 - Decoding and inspection of JWS tokens (no signature verification)
+     */
+    private fun registerJWSFunctions() {
+        register("decodeJWS", JWSBasicFunctions::decodeJWS)
+        register("getJWSPayload", JWSBasicFunctions::getJWSPayload)
+        register("getJWSHeader", JWSBasicFunctions::getJWSHeader)
+        register("getJWSAlgorithm", JWSBasicFunctions::getJWSAlgorithm)
+        register("getJWSKeyId", JWSBasicFunctions::getJWSKeyId)
+        register("getJWSTokenType", JWSBasicFunctions::getJWSTokenType)
+        register("isJWSFormat", JWSBasicFunctions::isJWSFormat)
+        register("getJWSSigningInput", JWSBasicFunctions::getJWSSigningInput)
+        register("getJWSInfo", JWSBasicFunctions::getJWSInfo)
     }
     
 }
