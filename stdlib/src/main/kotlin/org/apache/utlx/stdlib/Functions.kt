@@ -264,7 +264,7 @@ object StandardLibrary {
         register("split", StringFunctions::split)
         register("join", StringFunctions::join)
         register("replace", StringFunctions::replace)
-        register("contains", StringFunctions::contains)
+        //register("contains", StringFunctions::contains)//contains function moved to UDM layer so now it can work with Strings and Arrays, with convention: objects check keys only
         register("startsWith", StringFunctions::startsWith)
         register("endsWith", StringFunctions::endsWith)
         register("length", StringFunctions::length)
