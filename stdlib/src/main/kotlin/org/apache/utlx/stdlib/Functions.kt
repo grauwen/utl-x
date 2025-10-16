@@ -882,6 +882,22 @@ object StandardLibrary {
         // Aliases for compatibility with Tibco BW\
         register("tibco_parse", SerializationFunctions::parse)
         register("tibco_render", SerializationFunctions::render)
+        
+        // Pretty-Print functions
+        register("prettyPrintJSON", PrettyPrintFunctions::prettyPrintJSON)
+        register("udmToJSON", PrettyPrintFunctions::udmToJSON)
+        register("compactJSON", PrettyPrintFunctions::compactJSON)
+        register("prettyPrintXML", PrettyPrintFunctions::prettyPrintXML)
+        register("udmToXML", PrettyPrintFunctions::udmToXML)
+        register("compactXML", PrettyPrintFunctions::compactXML)
+        register("prettyPrintYAML", PrettyPrintFunctions::prettyPrintYAML)
+        register("udmToYAML", PrettyPrintFunctions::udmToYAML)
+        register("prettyPrintCSV", PrettyPrintFunctions::prettyPrintCSV)
+        register("compactCSV", PrettyPrintFunctions::compactCSV)
+        register("prettyPrint", PrettyPrintFunctions::prettyPrint)
+        register("prettyPrintFormat", PrettyPrintFunctions::prettyPrintFormat)
+        register("debugPrint", PrettyPrintFunctions::debugPrint)
+        register("debugPrintCompact", PrettyPrintFunctions::debugPrintCompact)
     }
 
 /**
@@ -1157,6 +1173,7 @@ object StandardLibrary {
         register("getJWSSigningInput", JWSBasicFunctions::getJWSSigningInput)
         register("getJWSInfo", JWSBasicFunctions::getJWSInfo)
     }
+    
     
 }
 
