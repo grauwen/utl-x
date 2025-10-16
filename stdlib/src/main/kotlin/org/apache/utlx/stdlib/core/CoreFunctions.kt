@@ -58,6 +58,49 @@ object CoreFunctions {
         }
     }
     
+    /**
+     * Checks if a value is empty
+     * Works with strings, arrays, objects
+     * @param value The value to check
+     * @return true if empty
+     * 
+     * Examples:
+     * ```
+     * isEmpty("") // true
+     * isEmpty("hello") // false
+     * isEmpty([]) // true
+     * isEmpty([1, 2]) // false
+     * isEmpty({}) // true
+     * isEmpty({"name": "John"}) // false
+     * isEmpty(null) // true
+     * ```
+     */
+    fun isEmpty(args: List<UDM>): UDM {
+        requireArgs(args, 1, "isEmpty")
+        val value = args[0]
+        
+        val empty = when (value) {
+            is UDM.Scalar -> {
+                val v = value.value
+                when (v) {
+                    null -> true
+                    is String -> v.isEmpty()
+                    is Number -> false  // Numbers are never considered "empty"
+                    is Boolean -> false // Booleans are never considered "empty"
+                    else -> false
+                }
+            }
+            is UDM.Array -> value.elements.isEmpty()
+            is UDM.Object -> value.properties.isEmpty()
+            is UDM.DateTime -> false // DateTime values are never considered "empty"
+            is UDM.Binary -> value.data.isEmpty()
+            is UDM.Lambda -> false // Functions are never considered "empty"
+            else -> true
+        }
+        
+        return UDM.Scalar(empty)
+    }
+    
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
             throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")

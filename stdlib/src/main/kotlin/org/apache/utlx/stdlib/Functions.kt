@@ -217,6 +217,7 @@ object StandardLibrary {
         // register("generate-uuid", CoreFunctions::generateUuid)//alias
         register("generateUuid", CoreFunctions::generateUuid)
         register("default", CoreFunctions::default)
+        register("isEmpty", CoreFunctions::isEmpty)
      
     }
 
