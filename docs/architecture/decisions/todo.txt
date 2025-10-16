@@ -8,10 +8,10 @@ TODO's
 - tools/maven-plugin/
 - tools/intellij-plugin/
 
--stlib: serialize -> render (DOM -> string) , parse (string -> DOM) :: in theory also binary or string could be used :: distinct parsseJson, parseCsv, parseXml, parseYaml, renderXml, renderYaml, renderCsv, renderJson
--stlib: parseNumber missing
--stlib cannonalize  -> XML Canonicalization (C14N) standards:
--stlib cdata handling in XML
+DONE -stlib: serialize -> render (DOM -> string) , parse (string -> DOM) :: in theory also binary or string could be used :: distinct parsseJson, parseCsv, parseXml, parseYaml, renderXml, renderYaml, renderCsv, renderJson
+DONE -stlib: parseNumber missing
+DONE -stlib cannonalize  -> XML Canonicalization (C14N) standards:
+-stlib cdata handling in XML?
 
 Test calls these functions that DON'T exist in the ArrayFunction: 
 size(), get(). head(), tail(), slice(), flatMap(), sortBy(), distinct(), distinctBy(), union(), intersect(), diff(), isEmpty(), contains(), none()
