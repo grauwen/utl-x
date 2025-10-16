@@ -730,10 +730,11 @@ object StandardLibrary {
         register("getJWTAudience", JWTFunctions::getJWTAudience)
         
         // JWT verification and creation functions
-        register("verifyJWT", JWTVerification::verifyJWT)
-        register("verifyJWTWithJWKS", JWTVerification::verifyJWTWithJWKS)
-        register("createJWT", JWTVerification::createJWT)
-        register("validateJWTStructure", JWTVerification::validateJWTStructure)
+        // moved them out of stlib to stdlib-security to keep the footprint of the stloib small
+        //register("verifyJWT", JWTVerification::verifyJWT)
+        //register("verifyJWTWithJWKS", JWTVerification::verifyJWTWithJWKS)
+        //register("createJWT", JWTVerification::createJWT)
+        //register("validateJWTStructure", JWTVerification::validateJWTStructure)
     }
 
       private fun registerTreeFunctions() {
