@@ -149,7 +149,7 @@ object CriticalObjectFunctions {
         if (firstElement !is UDM.Object) {
             throw IllegalArgumentException("deepMergeAll expects array of objects")
         }
-        var result = firstElement
+        var result: UDM.Object = firstElement
         
         // Merge remaining objects
         for (i in 1 until array.elements.size) {

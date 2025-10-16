@@ -2,6 +2,7 @@
 package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.*
+import org.apache.utlx.stdlib.FunctionArgumentException
 
 /**
  * English pluralization functions for UTL-X
@@ -117,7 +118,7 @@ object PluralizationFunctions {
      * ```
      */
     fun pluralize(word: UDM, count: UDM = UDM.Scalar.nullValue()): UDM {
-        val singular = (word as? UDM.Scalar)?.value?.trim()?.lowercase() 
+        val singular = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
             ?: return UDM.Scalar.nullValue()
         
         // Check if count is provided and equals 1
@@ -135,7 +136,7 @@ object PluralizationFunctions {
         
         // Check for irregular plurals
         irregularPlurals[singular]?.let {
-            return UDM.Scalar(matchCase(singular, it, (word as UDM.Scalar).value))
+            return UDM.Scalar(matchCase(singular, it, (word as UDM.Scalar).value?.toString() ?: ""))
         }
         
         // Apply regular pluralization rules
@@ -174,7 +175,7 @@ object PluralizationFunctions {
         }
         
         // Match the case of the original word
-        return UDM.Scalar(matchCase(singular, plural, (word as UDM.Scalar).value))
+        return UDM.Scalar(matchCase(singular, plural, (word as UDM.Scalar).value?.toString() ?: ""))
     }
     
     /**
@@ -196,7 +197,7 @@ object PluralizationFunctions {
      * ```
      */
     fun singularize(word: UDM): UDM {
-        val plural = (word as? UDM.Scalar)?.value?.trim()?.lowercase() 
+        val plural = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
             ?: return UDM.Scalar.nullValue()
         
         // Handle empty string
@@ -209,7 +210,7 @@ object PluralizationFunctions {
         
         // Check for irregular singulars
         irregularSingulars[plural]?.let {
-            return UDM.Scalar(matchCase(plural, it, (word as UDM.Scalar).value))
+            return UDM.Scalar(matchCase(plural, it, (word as UDM.Scalar).value?.toString() ?: ""))
         }
         
         // Apply regular singularization rules
@@ -265,7 +266,7 @@ object PluralizationFunctions {
         }
         
         // Match the case of the original word
-        return UDM.Scalar(matchCase(plural, singular, (word as UDM.Scalar).value))
+        return UDM.Scalar(matchCase(plural, singular, (word as UDM.Scalar).value?.toString() ?: ""))
     }
     
     /**
@@ -308,7 +309,7 @@ object PluralizationFunctions {
      * ```
      */
     fun isPlural(word: UDM): UDM {
-        val text = (word as? UDM.Scalar)?.value?.trim()?.lowercase() 
+        val text = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
             ?: return UDM.Scalar(false)
         
         // Check if it's an irregular plural
@@ -344,7 +345,7 @@ object PluralizationFunctions {
      * ```
      */
     fun isSingular(word: UDM): UDM {
-        val text = (word as? UDM.Scalar)?.value?.trim()?.lowercase() 
+        val text = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
             ?: return UDM.Scalar(false)
         
         // Check if it's an irregular singular
@@ -382,15 +383,19 @@ object PluralizationFunctions {
      */
     fun formatPlural(count: UDM, word: UDM): UDM {
         val num = (count as? UDM.Scalar)?.value ?: return UDM.Scalar.nullValue()
-        val text = (word as? UDM.Scalar)?.value ?: return UDM.Scalar.nullValue()
+        val text = (word as? UDM.Scalar)?.value?.toString() ?: return UDM.Scalar.nullValue()
         
         val pluralForm = if (num == 1.0) {
             text
         } else {
-            (pluralize(word, count) as? UDM.Scalar)?.value ?: text
+            (pluralize(word, count) as? UDM.Scalar)?.value?.toString() ?: text
         }
         
-        return UDM.Scalar("${num.toInt()} $pluralForm")
+        val numInt = when (num) {
+            is Number -> num.toInt()
+            else -> 0
+        }
+        return UDM.Scalar("$numInt $pluralForm")
     }
     
     // ============================================

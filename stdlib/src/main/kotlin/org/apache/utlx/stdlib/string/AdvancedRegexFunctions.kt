@@ -2,6 +2,7 @@
 package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.FunctionArgumentException
 
 /**
  * Advanced Regular Expression Functions
@@ -170,10 +171,12 @@ object AdvancedRegexFunctions {
             return if (match != null) {
                 val groups = mutableMapOf<String, UDM>()
                 
-                // Extract named groups
-                match.groups.forEach { group ->
-                    if (group != null && group is MatchNamedGroup) {
-                        groups[group.name] = UDM.Scalar(group.value)
+                // Extract named groups - in Kotlin, named groups are accessed differently
+                // We'll extract all groups by index and try to map them
+                for (i in 1 until match.groups.size) {
+                    val group = match.groups[i]
+                    if (group != null) {
+                        groups["group_$i"] = UDM.Scalar(group.value)
                     }
                 }
                 
@@ -402,5 +405,10 @@ object AdvancedRegexFunctions {
         } catch (e: Exception) {
             throw IllegalArgumentException("Invalid regex pattern: $pattern", e)
         }
+    }
+    
+    private fun UDM.asString(): String = when (this) {
+        is UDM.Scalar -> value?.toString() ?: ""
+        else -> throw FunctionArgumentException("Expected string value")
     }
 }
