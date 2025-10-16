@@ -18,6 +18,7 @@ import org.apache.utlx.stdlib.binary.*
 import org.apache.utlx.stdlib.serialization.*
 import org.apache.utlx.stdlib.finance.*
 import org.apache.utlx.stdlib.geo.*
+import org.apache.utlx.stdlib.jwt.*
 
 
 
@@ -82,6 +83,9 @@ object StandardLibrary {
 
         //URL funcions
         registerURLFunctions() 
+
+        // JWT functions
+        registerJWTFunctions()
 
         // Tree functions
         registerTreeFunctions() 
@@ -709,6 +713,21 @@ object StandardLibrary {
         register("addQueryParam", URLFunctions::addQueryParam)
         register("removeQueryParam", URLFunctions::removeQueryParam)
         register("isValidURL", URLFunctions::isValidURL)
+    }
+
+    private fun registerJWTFunctions() {
+        // JWT decoding and parsing
+        register("decodeJWT", JWTFunctions::decodeJWT)
+        register("getJWTClaims", JWTFunctions::getJWTClaims)
+        register("getJWTClaim", JWTFunctions::getJWTClaim)
+        
+        // JWT validation
+        register("isJWTExpired", JWTFunctions::isJWTExpired)
+        
+        // Standard JWT claims
+        register("getJWTSubject", JWTFunctions::getJWTSubject)
+        register("getJWTIssuer", JWTFunctions::getJWTIssuer)
+        register("getJWTAudience", JWTFunctions::getJWTAudience)
     }
 
       private fun registerTreeFunctions() {
