@@ -21,3 +21,12 @@ stdlib-security/                           ⚠️ OPTIONAL MODULE
     └── jwt/
         └── JWTVerification.kt             ⚠️ JWT verification
 ```
+
+```
+JWT (RFC 7519)
+    ↓ Authentication tokens
+JWS (RFC 7515)
+    ↓ Digital signatures
+JCS (RFC 8785)
+    ↓ Canonical JSON
+```
