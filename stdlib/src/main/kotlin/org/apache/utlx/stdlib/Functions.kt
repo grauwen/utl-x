@@ -619,6 +619,16 @@ object StandardLibrary {
         register("formatEmptyElements", XMLSerializationOptionsFunctions::formatEmptyElements)
         register("addNamespaceDeclarations", XMLSerializationOptionsFunctions::addNamespaceDeclarations)
         register("createSOAPEnvelope", XMLSerializationOptionsFunctions::createSOAPEnvelope)
+        
+        // CDATA functions
+        register("createCDATA", CDATAFunctions::createCDATA)
+        register("isCDATA", CDATAFunctions::isCDATA)
+        register("extractCDATA", CDATAFunctions::extractCDATA)
+        register("unwrapCDATA", CDATAFunctions::unwrapCDATA)
+        register("shouldUseCDATA", CDATAFunctions::shouldUseCDATA)
+        register("wrapIfNeeded", CDATAFunctions::wrapIfNeeded)
+        register("escapeXML", CDATAFunctions::escapeXML)
+        register("unescapeXML", CDATAFunctions::unescapeXML)
 
     }
 
