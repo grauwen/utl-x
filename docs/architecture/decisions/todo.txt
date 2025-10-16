@@ -16,6 +16,10 @@ TODO's
 Test calls these functions that DON'T exist in the ArrayFunction: 
 size(), get(). head(), tail(), slice(), flatMap(), sortBy(), distinct(), distinctBy(), union(), intersect(), diff(), isEmpty(), contains(), none()
 
+        register("urlEncode", EncodingFunctions::urlEncode)
+        register("urlDecode", EncodingFunctions::urlDecode)
+duplication in both EncodingFunctions and URL functions -> make a choise
+
 Functions.kt 
 1. With method reference (cleaner syntax):
   register("map", ArrayFunctions::map)
