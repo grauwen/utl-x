@@ -287,7 +287,7 @@ object StandardLibrary {
         register("rightTrim", MoreStringFunctions::rightTrim)
         register("translate", MoreStringFunctions::translate)
         register("reverse", MoreStringFunctions::reverse)
-        register("isEmpty", MoreStringFunctions::isEmpty)
+        //register("isEmpty", MoreStringFunctions::isEmpty)// now generic UDM isEmpty check for all types: strings, arrays, objects, binary, numbers, datetime
         register("isBlank", MoreStringFunctions::isBlank)
         register("charAt", MoreStringFunctions::charAt)
         register("charCodeAt", MoreStringFunctions::charCodeAt)
