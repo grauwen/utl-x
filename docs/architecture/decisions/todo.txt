@@ -20,6 +20,10 @@ size(), get(). head(), tail(), slice(), flatMap(), sortBy(), distinct(), distinc
         register("urlDecode", EncodingFunctions::urlDecode)
 duplication in both EncodingFunctions and URL functions -> make a choise
 
+Xml namespace alias changes, remove namespaces, enforce nullable, empty tags in certain format
+
+pretty print XML and JSON and YAML ??
+
 Functions.kt 
 1. With method reference (cleaner syntax):
   register("map", ArrayFunctions::map)
