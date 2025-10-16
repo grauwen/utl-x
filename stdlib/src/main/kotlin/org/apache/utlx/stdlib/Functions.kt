@@ -19,6 +19,7 @@ import org.apache.utlx.stdlib.serialization.*
 import org.apache.utlx.stdlib.finance.*
 import org.apache.utlx.stdlib.geo.*
 import org.apache.utlx.stdlib.jwt.*
+import org.apache.utlx.stdlib.json.*
 
 
 
@@ -86,6 +87,9 @@ object StandardLibrary {
 
         // JWT functions
         registerJWTFunctions()
+
+        // JSON Canonicalization functions (RFC 8785)
+        registerJSONFunctions()
 
         // Tree functions
         registerTreeFunctions() 
@@ -1104,6 +1108,19 @@ object StandardLibrary {
      * Returns the total number of registered functions.
      */
     fun getFunctionCount(): Int = functions.size
+    
+    /**
+     * Register JSON Canonicalization functions
+     * RFC 8785 - JSON Canonicalization Scheme for digital signatures and cryptographic operations
+     */
+    private fun registerJSONFunctions() {
+        register("canonicalizeJSON", JSONCanonicalizationFunctions::canonicalizeJSON)
+        register("jcs", JSONCanonicalizationFunctions::jcs)
+        register("canonicalJSONHash", JSONCanonicalizationFunctions::canonicalJSONHash)
+        register("jsonEquals", JSONCanonicalizationFunctions::jsonEquals)
+        register("isCanonicalJSON", JSONCanonicalizationFunctions::isCanonicalJSON)
+        register("canonicalJSONSize", JSONCanonicalizationFunctions::canonicalJSONSize)
+    }
     
 }
 
