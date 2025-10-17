@@ -3,7 +3,7 @@
 package org.apache.utlx.stdlib.jwt
 
 import org.apache.utlx.core.udm.UDM
-import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.core.FunctionArgumentException
 import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec

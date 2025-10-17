@@ -1,0 +1,10 @@
+%utlx 1.0
+input auto
+output json
+---
+
+{
+  upperName: input.name | upper,
+  totalItems: input.items | sum,
+  itemCount: input.items | count
+}

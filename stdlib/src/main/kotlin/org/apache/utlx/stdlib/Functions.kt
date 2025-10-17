@@ -1274,5 +1274,6 @@ data class UTLXFunction(
     }
 }
 
-class FunctionArgumentException(message: String) : IllegalArgumentException(message)
+// FunctionArgumentException is now in core module
+typealias FunctionArgumentException = org.apache.utlx.core.FunctionArgumentException
 class FunctionExecutionException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)

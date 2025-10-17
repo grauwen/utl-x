@@ -8,9 +8,7 @@ plugins {
 group = "org.apache.utlx.analysis"
 version = "0.9.0-beta"
 
-repositories {
-    mavenCentral()
-}
+// Repositories managed in settings.gradle.kts
 
 dependencies {
     // Core module dependency
@@ -64,7 +62,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 // Generate documentation
 tasks.dokkaHtml.configure {
-    outputDirectory.set(buildDir.resolve("dokka"))
+    outputDirectory.set(layout.buildDirectory.dir("dokka"))
 }
 
 // Create JAR with dependencies for CLI usage

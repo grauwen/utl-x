@@ -14,6 +14,8 @@ dependencies {
     implementation(project(":formats:xml"))
     implementation(project(":formats:json"))
     implementation(project(":formats:csv"))
+    implementation(project(":stdlib"))
+    // implementation(project(":stdlib-security"))  // Temporarily disabled
     
     // Kotlin stdlib
     implementation(kotlin("stdlib"))
@@ -46,6 +48,9 @@ tasks.jar {
     // Create fat JAR with all dependencies
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    
+    // Ensure dependencies are built first
+    dependsOn(configurations.runtimeClasspath)
 }
 
 // GraalVM Native Image configuration

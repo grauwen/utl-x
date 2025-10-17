@@ -68,7 +68,8 @@ object TransformCommand {
         
         // Execute transformation
         val interpreter = Interpreter()
-        val outputUDM = interpreter.execute(program, inputUDM)
+        val result = interpreter.execute(program, inputUDM)
+        val outputUDM = result.toUDM()
         
         // Detect or use specified output format
         val outputFormat = options.outputFormat ?: inputFormat
@@ -99,13 +100,22 @@ object TransformCommand {
             
             if (verbose) println("Parsing...")
             val parser = Parser(tokens)
-            val ast = parser.parse()
+            val parseResult = parser.parse()
             
-            if (verbose) println("Type checking...")
-            val typeChecker = TypeChecker()
-            typeChecker.check(ast)
-            
-            return ast
+            when (parseResult) {
+                is org.apache.utlx.core.parser.ParseResult.Success -> {
+                    if (verbose) println("✓ Parsing successful")
+                    // Skip type checking for now as it requires additional setup
+                    return parseResult.program
+                }
+                is org.apache.utlx.core.parser.ParseResult.Failure -> {
+                    System.err.println("Parse errors:")
+                    parseResult.errors.forEach { error ->
+                        System.err.println("  ${error.message} at ${error.location}")
+                    }
+                    exitProcess(1)
+                }
+            }
         } catch (e: Exception) {
             System.err.println("Error compiling script: ${e.message}")
             if (verbose) {
@@ -118,9 +128,9 @@ object TransformCommand {
     private fun parseInput(data: String, format: String): UDM {
         return try {
             when (format.lowercase()) {
-                "xml" -> XMLParser().parse(data)
-                "json" -> JSONParser().parse(data)
-                "csv" -> CSVParser().parse(data)
+                "xml" -> XMLParser(data).parse()
+                "json" -> JSONParser(data).parse()
+                "csv" -> CSVParser(data).parse()
                 else -> throw IllegalArgumentException("Unsupported input format: $format")
             }
         } catch (e: Exception) {

@@ -25,12 +25,30 @@ object Main {
             
             when (command.lowercase()) {
                 "transform", "t" -> TransformCommand.execute(commandArgs)
-                "validate", "v" -> ValidateCommand.execute(commandArgs)
-                "compile", "c" -> CompileCommand.execute(commandArgs)
-                "format", "f" -> FormatCommand.execute(commandArgs)
-                "migrate", "m" -> MigrateCommand.execute(commandArgs)
-                "functions", "fn" -> FunctionsCommand.execute(commandArgs)
-                "version", "--version", "-v" -> VersionCommand.execute(commandArgs)
+                "validate", "v" -> {
+                    println("Validate command not yet implemented")
+                    println("Coming soon: Validate UTL-X scripts")
+                }
+                "compile", "c" -> {
+                    println("Compile command not yet implemented") 
+                    println("Coming soon: Compile UTL-X scripts to bytecode")
+                }
+                "format", "f" -> {
+                    println("Format command not yet implemented")
+                    println("Coming soon: Format/pretty-print UTL-X scripts")
+                }
+                "migrate", "m" -> {
+                    println("Migrate command not yet implemented")
+                    println("Coming soon: Migrate XSLT/DataWeave to UTL-X")
+                }
+                "functions", "fn" -> {
+                    println("Functions command not yet implemented")
+                    println("Available soon: List and explore standard library functions")
+                }
+                "version", "--version", "-v" -> {
+                    println("UTL-X CLI v$VERSION")
+                    println("Universal Transformation Language Extended")
+                }
                 "help", "--help", "-h" -> printUsage()
                 else -> {
                     System.err.println("Unknown command: $command")

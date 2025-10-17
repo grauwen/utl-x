@@ -102,7 +102,7 @@ class RuntimeError(message: String, val location: Location? = null) : Exception(
  */
 class Interpreter {
     private val globalEnv = Environment()
-    private val stdlib = StandardLibraryRegistry()
+    private val stdlib = StandardLibraryImpl()
     
     init {
         // Register standard library functions
