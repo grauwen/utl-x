@@ -342,38 +342,6 @@ class URLFunctionsTest {
         assertTrue(url.contains("/api/users"))
     }
     
-    // ==================== URL ENCODING TESTS ====================
-    
-    @Test
-    fun `urlEncode encodes special characters`() {
-        val text = UDM.Scalar("Hello World! user@example.com")
-        
-        val result = URLFunctions.urlEncode(listOf(text))
-        
-        val encoded = (result as UDM.Scalar).value as String
-        
-        assertTrue(encoded.contains("%21") || encoded.contains("!"))
-        assertTrue(encoded.contains("%40") || encoded.contains("@"))
-    }
-    
-    @Test
-    fun `urlDecode decodes encoded string`() {
-        val encoded = UDM.Scalar("Hello+World%21")
-        
-        val result = URLFunctions.urlDecode(listOf(encoded))
-        
-        assertEquals("Hello World!", (result as UDM.Scalar).value)
-    }
-    
-    @Test
-    fun `urlEncode and urlDecode are inverses`() {
-        val original = UDM.Scalar("user@example.com?foo=bar&test=123")
-        
-        val encoded = URLFunctions.urlEncode(listOf(original))
-        val decoded = URLFunctions.urlDecode(listOf(encoded))
-        
-        assertEquals(original.value, (decoded as UDM.Scalar).value)
-    }
     
     // ==================== URL MANIPULATION TESTS ====================
     

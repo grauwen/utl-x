@@ -186,7 +186,7 @@ class FinancialFunctionsTest {
     }
     
     @Test
-    fun `test calculateTax - 8.875 percent (NYC sales tax)`() {
+    fun `test calculateTax - 8_875 percent (NYC sales tax)`() {
         val amount = UDM.Scalar(100.00)
         val taxRate = UDM.Scalar(0.08875)
         
