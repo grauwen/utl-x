@@ -1,0 +1,86 @@
+test
+└── kotlin
+    └── org
+        └── apache
+            └── utlx
+                └── stdlib
+                    ├── array
+                    │   ├── AggregationsTest.kt
+                    │   ├── ArrayFunctionsTest.kt
+                    │   ├── CriticalArrayFunctionsTest.kt
+                    │   ├── EnhancedArrayFunctionsTest.kt
+                    │   ├── JoinFunctionsTest.kt
+                    │   ├── MoreArrayFunctionsTest.kt
+                    │   └── UnzipFunctionsTest.kt
+                    ├── binary
+                    │   ├── BinaryFunctionsTest.kt
+                    │   └── CompressionFunctionsTest.kt
+                    ├── core
+                    │   ├── CoreFunctionsTest.kt
+                    │   ├── DebugFunctionsTest.kt
+                    │   └── RuntimeFunctionsTest.kt
+                    ├── csv
+                    │   └── CSVFunctionsTest.kt
+                    ├── DataWeaveAliasesTest.kt
+                    ├── date
+                    │   ├── DateFunctionsTest.kt
+                    │   ├── ExtendedDateFunctionsTest.kt
+                    │   ├── MoreDateFunctionsTest.kt
+                    │   ├── RichDateFunctionsTest.kt
+                    │   └── TimezoneFunctionsTest.kt
+                    ├── encoding
+                    │   ├── AdvancedCryptoFunctionsTest.kt
+                    │   └── EncodingHashFunctionsTest.kt
+                    ├── finance
+                    │   └── FinancialFunctionsTest.kt
+                    ├── FunctionsTest.kt
+                    ├── geo
+                    │   └── GeospatialFunctionsTest.kt
+                    ├── json
+                    │   └── JSONCanonicalizationFunctionsTest.kt
+                    ├── jws
+                    │   └── JWSBasicFunctionsTest.kt
+                    ├── jwt
+                    │   └── JWTFunctionsTest.kt
+                    ├── logical
+                    │   └── LogicalFunctionsTest.kt
+                    ├── math
+                    │   ├── AdvancedMathFunctionsTest.k
+                    │   ├── AdvancedMathFunctionsTest.kt
+                    │   ├── ExtendedMathFunctionsTest.kt
+                    │   ├── MathFunctionsTest.kt
+                    │   └── StatisticalFunctionsTest.kt
+                    ├── objects
+                    │   ├── CriticalObjectFunctionsTest.kt
+                    │   ├── EnhancedObjectFunctionsTest.kt
+                    │   └── ObjectFunctionsTest.kt
+                    ├── serialization
+                    │   ├── PrettyprintFunctionsTest.kt
+                    │   └── SerializationFunctionsTest.kt
+                    ├── string
+                    │   ├── AdvancedRegexFunctionsTest.kt
+                    │   ├── CaseConversionFunctionsTest.kt
+                    │   ├── CaseFunctionsTest.kt
+                    │   ├── CharacterFunctionsTest.kt
+                    │   ├── ExtendedStringFunctionsTest.kt
+                    │   ├── MoreStringFunctionsTest.kt
+                    │   ├── PluralizationFunctionsTest.kt
+                    │   ├── RegexFunctionsTest.kt
+                    │   └── StringFunctionsTest.kt
+                    ├── type
+                    │   ├── ConversionFunctionsTest.kt
+                    │   └── TypeFunctionsTest.kt
+                    ├── url
+                    │   └── URLFunctionsTest.kt
+                    ├── util
+                    │   ├── AdvancedUtilitiesTest.kt
+                    │   ├── UtilityFunctionsTest.kt
+                    │   └── UUIDFunctionsTest.kt
+                    ├── xml
+                    │   ├── CDATAFunctionsTest.kt
+                    │   ├── XMLCanonicalizationFunctionsTest.kt
+                    │   └── XMLSerializationOptionsFunctionsTest.kt
+                    └── yaml
+                        └── YAMLFunctionsTest.kt
+
+27 directories, 57 files
