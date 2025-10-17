@@ -22,6 +22,7 @@ import org.apache.utlx.stdlib.jwt.*
 import org.apache.utlx.stdlib.json.*
 import org.apache.utlx.stdlib.jws.*
 import org.apache.utlx.stdlib.csv.*
+import org.apache.utlx.stdlib.yaml.*
 
 
 
@@ -161,6 +162,9 @@ object StandardLibrary {
        
        // CSV functions
        registerCSVFunctions()
+       
+       // YAML functions
+       registerYAMLFunctions()
    
     }
 
@@ -1204,6 +1208,46 @@ object StandardLibrary {
         
         // Aggregation functions
         register("csvSummarize", CSVFunctions::csvSummarize)
+    }
+    
+    /**
+     * Register YAML Functions
+     * YAML-specific operations for transformation scenarios
+     */
+    private fun registerYAMLFunctions() {
+        // Multi-document operations
+        register("yamlSplitDocuments", YAMLFunctions::yamlSplitDocuments)
+        register("yamlMergeDocuments", YAMLFunctions::yamlMergeDocuments)
+        register("yamlGetDocument", YAMLFunctions::yamlGetDocument)
+        
+        // Path operations
+        register("yamlPath", YAMLFunctions::yamlPath)
+        register("yamlSet", YAMLFunctions::yamlSet)
+        register("yamlDelete", YAMLFunctions::yamlDelete)
+        register("yamlExists", YAMLFunctions::yamlExists)
+        
+        // Dynamic key operations
+        register("yamlKeys", YAMLFunctions::yamlKeys)
+        register("yamlValues", YAMLFunctions::yamlValues)
+        register("yamlEntries", YAMLFunctions::yamlEntries)
+        register("yamlFilterByKeyPattern", YAMLFunctions::yamlFilterByKeyPattern)
+        register("yamlSelectKeys", YAMLFunctions::yamlSelectKeys)
+        register("yamlOmitKeys", YAMLFunctions::yamlOmitKeys)
+        register("yamlFromEntries", YAMLFunctions::yamlFromEntries)
+        
+        // Deep merge operations
+        register("yamlMerge", YAMLFunctions::yamlMerge)
+        register("yamlMergeAll", YAMLFunctions::yamlMergeAll)
+        
+        // Structural query operations
+        register("yamlFindByField", YAMLFunctions::yamlFindByField)
+        register("yamlFindObjectsWithField", YAMLFunctions::yamlFindObjectsWithField)
+        
+        // Formatting and validation
+        register("yamlSort", YAMLFunctions::yamlSort)
+        register("yamlValidate", YAMLFunctions::yamlValidate)
+        register("yamlValidateKeyPattern", YAMLFunctions::yamlValidateKeyPattern)
+        register("yamlHasRequiredFields", YAMLFunctions::yamlHasRequiredFields)
     }
     
     
