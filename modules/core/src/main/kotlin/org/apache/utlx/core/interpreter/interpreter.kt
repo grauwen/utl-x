@@ -102,7 +102,7 @@ class RuntimeError(message: String, val location: Location? = null) : Exception(
  */
 class Interpreter {
     private val globalEnv = Environment()
-    private val stdlib = StandardLibraryImpl()
+    private val stdlib = StandardLibraryRegistry()
     
     init {
         // Register standard library functions
@@ -379,6 +379,14 @@ class Interpreter {
         // Check if it's a built-in function
         if (expr.function is Expression.Identifier) {
             val funcName = expr.function.name
+            
+            // Check if it's a native stdlib function
+            if (StandardLibraryImpl.nativeFunctions.containsKey(funcName)) {
+                val nativeFunc = StandardLibraryImpl.nativeFunctions[funcName]!!
+                val argValues = expr.arguments.map { evaluate(it, env) }
+                return nativeFunc(argValues)
+            }
+            
             if (env.has(funcName)) {
                 val func = env.get(funcName)
                 if (func is RuntimeValue.FunctionValue) {

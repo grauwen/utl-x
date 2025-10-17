@@ -33,6 +33,7 @@ include("modules:core")
 //include("modules:javascript")
 //include("modules:native")
 include("modules:cli")
+include("modules:analysis")
 
 
 // Format parsers/serializers
@@ -44,6 +45,7 @@ include("formats:yaml")
 
 // Standard library
 include("stdlib")
+include("stdlib-security")
 
 // Development tools
 //include("tools:vscode-extension")

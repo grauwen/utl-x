@@ -29,6 +29,7 @@ object Main {
                 "compile", "c" -> CompileCommand.execute(commandArgs)
                 "format", "f" -> FormatCommand.execute(commandArgs)
                 "migrate", "m" -> MigrateCommand.execute(commandArgs)
+                "functions", "fn" -> FunctionsCommand.execute(commandArgs)
                 "version", "--version", "-v" -> VersionCommand.execute(commandArgs)
                 "help", "--help", "-h" -> printUsage()
                 else -> {
@@ -58,6 +59,7 @@ object Main {
             |  compile   (c)  Compile a UTL-X script to bytecode
             |  format    (f)  Format/pretty-print a UTL-X script
             |  migrate   (m)  Migrate XSLT/DataWeave to UTL-X
+            |  functions (fn) List available standard library functions
             |  version        Show version information
             |  help           Show this help message
             |
