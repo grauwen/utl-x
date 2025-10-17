@@ -21,6 +21,7 @@ import org.apache.utlx.stdlib.geo.*
 import org.apache.utlx.stdlib.jwt.*
 import org.apache.utlx.stdlib.json.*
 import org.apache.utlx.stdlib.jws.*
+import org.apache.utlx.stdlib.csv.*
 
 
 
@@ -157,6 +158,9 @@ object StandardLibrary {
        
       //AdvancedRegex
        registerAdvancedRegexFunctions()
+       
+       // CSV functions
+       registerCSVFunctions()
    
     }
 
@@ -1172,6 +1176,34 @@ object StandardLibrary {
         register("isJWSFormat", JWSBasicFunctions::isJWSFormat)
         register("getJWSSigningInput", JWSBasicFunctions::getJWSSigningInput)
         register("getJWSInfo", JWSBasicFunctions::getJWSInfo)
+    }
+    
+    /**
+     * Register CSV Functions
+     * Advanced CSV data manipulation and analysis functions
+     */
+    private fun registerCSVFunctions() {
+        // Structure access functions
+        register("csvRows", CSVFunctions::csvRows)
+        register("csvColumns", CSVFunctions::csvColumns)
+        register("csvColumn", CSVFunctions::csvColumn)
+        register("csvRow", CSVFunctions::csvRow)
+        register("csvCell", CSVFunctions::csvCell)
+        
+        // Transformation functions
+        register("csvTranspose", CSVFunctions::csvTranspose)
+        
+        // Filter and sort functions
+        register("csvFilter", CSVFunctions::csvFilter)
+        register("csvSort", CSVFunctions::csvSort)
+        
+        // Column operations
+        register("csvAddColumn", CSVFunctions::csvAddColumn)
+        register("csvRemoveColumns", CSVFunctions::csvRemoveColumns)
+        register("csvSelectColumns", CSVFunctions::csvSelectColumns)
+        
+        // Aggregation functions
+        register("csvSummarize", CSVFunctions::csvSummarize)
     }
     
     
