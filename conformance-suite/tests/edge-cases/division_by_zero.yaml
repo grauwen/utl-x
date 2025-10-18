@@ -1,0 +1,46 @@
+name: "division_by_zero"
+category: "edge-cases"
+description: "Test division by zero error handling"
+tags: ["edge-case", "error", "math", "division"]
+
+input:
+  format: json
+  data: 10
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  @input / 0
+
+error_expected:
+  type: "runtime_error"
+  message_pattern: ".*division by zero.*"
+  code: "DIVISION_BY_ZERO"
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 5
+
+variants:
+  - name: "modulo_by_zero"
+    input:
+      format: json
+      data: 10
+    error_expected:
+      type: "runtime_error"
+      message_pattern: ".*modulo by zero.*"
+      
+  - name: "zero_divided_by_zero"
+    input:
+      format: json
+      data: 0
+    error_expected:
+      type: "runtime_error"
+      message_pattern: ".*indeterminate.*"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Error Handling Specification"]

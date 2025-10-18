@@ -1,0 +1,57 @@
+name: "now_basic"
+category: "stdlib/datetime"
+description: "Test current date/time function"
+tags: ["datetime", "now", "current"]
+
+input:
+  format: json
+  data: {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    current_time: now(),
+    is_string: typeOf(now())
+  }
+
+expected:
+  format: json
+  data: {
+    "current_time": "2024-01-15T10:30:00Z",
+    "is_string": "string"
+  }
+
+# Note: This test validates structure, not exact time value
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "multiple_calls"
+    input:
+      format: json
+      data: {}
+    expected:
+      format: json
+      data: {
+        "time1": "2024-01-15T10:30:00Z",
+        "time2": "2024-01-15T10:30:00Z",
+        "same_minute": true
+      }
+      
+  - name: "with_formatting"
+    input:
+      format: json
+      data: {}
+    expected:
+      format: json
+      data: "2024-01-15"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Date/Time Functions"]
+  notes: ["Time values will vary - test validates format and type only"]

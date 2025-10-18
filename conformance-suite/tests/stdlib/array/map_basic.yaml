@@ -1,0 +1,64 @@
+name: "map_basic"
+category: "stdlib/array"
+description: "Test basic map function over arrays"
+tags: ["core", "array", "map", "functional"]
+
+input:
+  format: json
+  data: [1, 2, 3, 4, 5]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  map(@input, x -> x * 2)
+
+expected:
+  format: json
+  data: [2, 4, 6, 8, 10]
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "empty_array"
+    input:
+      format: json
+      data: []
+    expected:
+      format: json
+      data: []
+      
+  - name: "single_element"
+    input:
+      format: json
+      data: [42]
+    expected:
+      format: json
+      data: [84]
+      
+  - name: "string_transform"
+    input:
+      format: json
+      data: ["hello", "world"]
+    expected:
+      format: json
+      data: ["HELLO", "WORLD"]
+      
+  - name: "object_property_access"
+    input:
+      format: json
+      data: [
+        {"name": "Alice", "age": 25},
+        {"name": "Bob", "age": 30}
+      ]
+    expected:
+      format: json
+      data: ["Alice", "Bob"]
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Array Functions"]

@@ -1,0 +1,86 @@
+name: "distance_basic"
+category: "stdlib/geospatial"
+description: "Test geographic distance calculation function"
+tags: ["geospatial", "distance", "coordinates"]
+
+input:
+  format: json
+  data: {
+    "lat1": 40.7128,
+    "lon1": -74.0060,
+    "lat2": 34.0522,
+    "lon2": -118.2437
+  }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  distance(@input.lat1, @input.lon1, @input.lat2, @input.lon2)
+
+expected:
+  format: json
+  data: 3944.42
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "same_location"
+    input:
+      format: json
+      data: {
+        "lat1": 40.7128,
+        "lon1": -74.0060,
+        "lat2": 40.7128,
+        "lon2": -74.0060
+      }
+    expected:
+      format: json
+      data: 0.0
+      
+  - name: "short_distance"
+    input:
+      format: json
+      data: {
+        "lat1": 40.7128,
+        "lon1": -74.0060,
+        "lat2": 40.7589,
+        "lon2": -73.9851
+      }
+    expected:
+      format: json
+      data: 6.15
+      
+  - name: "cross_equator"
+    input:
+      format: json
+      data: {
+        "lat1": 51.5074,
+        "lon1": -0.1278,
+        "lat2": -33.8688,
+        "lon2": 151.2093
+      }
+    expected:
+      format: json
+      data: 17016.0
+      
+  - name: "antipodal_points"
+    input:
+      format: json
+      data: {
+        "lat1": 0.0,
+        "lon1": 0.0,
+        "lat2": 0.0,
+        "lon2": 180.0
+      }
+    expected:
+      format: json
+      data: 20003.93
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Geospatial Functions", "Haversine Formula"]

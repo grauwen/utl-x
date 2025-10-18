@@ -1,0 +1,122 @@
+{
+  "conformance_suite_version": "1.0.0",
+  "utlx_version_compatibility": ">=1.0.0",
+  "total_tests": 13,
+  "last_updated": "2024-01-15",
+  
+  "categories": {
+    "core/syntax": {
+      "description": "Core language syntax tests",
+      "test_count": 2,
+      "tests": [
+        "basic_literals",
+        "input_binding"
+      ]
+    },
+    "stdlib/array": {
+      "description": "Array function tests",
+      "test_count": 3,
+      "tests": [
+        "map_basic",
+        "filter_basic", 
+        "reduce_basic"
+      ]
+    },
+    "stdlib/string": {
+      "description": "String function tests",
+      "test_count": 1,
+      "tests": [
+        "upper_basic"
+      ]
+    },
+    "stdlib/math": {
+      "description": "Mathematical function tests",
+      "test_count": 1,
+      "tests": [
+        "pow_basic"
+      ]
+    },
+    "stdlib/crypto": {
+      "description": "Cryptographic function tests",
+      "test_count": 1,
+      "tests": [
+        "sha256_basic"
+      ]
+    },
+    "stdlib/datetime": {
+      "description": "Date/time function tests",
+      "test_count": 1,
+      "tests": [
+        "now_basic"
+      ]
+    },
+    "stdlib/geospatial": {
+      "description": "Geospatial function tests",
+      "test_count": 1,
+      "tests": [
+        "distance_basic"
+      ]
+    },
+    "edge-cases": {
+      "description": "Error handling and edge case tests",
+      "test_count": 2,
+      "tests": [
+        "division_by_zero",
+        "array_index_bounds"
+      ]
+    },
+    "performance": {
+      "description": "Performance and scalability tests",
+      "test_count": 1,
+      "tests": [
+        "large_array_processing"
+      ]
+    }
+  },
+  
+  "coverage": {
+    "core_language": {
+      "syntax": 20,
+      "types": 0,
+      "semantics": 0,
+      "total_possible": 100,
+      "percentage": 20
+    },
+    "stdlib_functions": {
+      "array": 3,
+      "string": 1,
+      "math": 1,
+      "datetime": 1,
+      "object": 0,
+      "encoding": 0,
+      "crypto": 1,
+      "validation": 0,
+      "compression": 0,
+      "serialization": 0,
+      "geospatial": 1,
+      "runtime": 0,
+      "integration": 0,
+      "total_implemented": 8,
+      "total_possible": 656,
+      "percentage": 1.2
+    },
+    "formats": {
+      "json": 0,
+      "xml": 0,
+      "csv": 0,
+      "yaml": 0,
+      "total_possible": 50,
+      "percentage": 0
+    }
+  },
+  
+  "tags": {
+    "core": ["basic_literals", "input_binding", "map_basic", "filter_basic", "reduce_basic", "upper_basic", "pow_basic"],
+    "functional": ["map_basic", "filter_basic", "reduce_basic"],
+    "error": ["division_by_zero", "array_index_bounds"],
+    "performance": ["large_array_processing"],
+    "crypto": ["sha256_basic"],
+    "geospatial": ["distance_basic"],
+    "datetime": ["now_basic"]
+  }
+}

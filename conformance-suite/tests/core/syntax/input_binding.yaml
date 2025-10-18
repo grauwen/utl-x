@@ -1,0 +1,71 @@
+name: "input_binding"
+category: "core/syntax"
+description: "Test @input variable binding and access"
+tags: ["core", "syntax", "input", "variables"]
+
+input:
+  format: json
+  data: {
+    "name": "John Doe",
+    "age": 30,
+    "email": "john@example.com"
+  }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    original_input: @input,
+    name_only: @input.name,
+    age_only: @input.age,
+    computed: @input.name + " (" + toString(@input.age) + ")"
+  }
+
+expected:
+  format: json
+  data: {
+    "original_input": {
+      "name": "John Doe",
+      "age": 30,
+      "email": "john@example.com"
+    },
+    "name_only": "John Doe",
+    "age_only": 30,
+    "computed": "John Doe (30)"
+  }
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "array_input"
+    input:
+      format: json
+      data: [1, 2, 3, 4, 5]
+    expected:
+      format: json
+      data: {
+        "original": [1, 2, 3, 4, 5],
+        "first": 1,
+        "length": 5
+      }
+      
+  - name: "nested_access"
+    input:
+      format: json
+      data: {
+        "user": {
+          "profile": {
+            "name": "Alice",
+            "settings": {
+              "theme": "dark"
+            }
+          }
+        }
+      }
+    expected:
+      format: json
+      data: "dark"

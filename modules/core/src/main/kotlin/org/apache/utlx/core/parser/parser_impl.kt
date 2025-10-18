@@ -329,6 +329,10 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.IDENTIFIER) -> {
                 Expression.Identifier(previous().lexeme, Location.from(previous()))
             }
+            // Allow certain keywords to be used as identifiers in expressions
+            match(TokenType.INPUT, TokenType.OUTPUT, TokenType.MAP, TokenType.FILTER, TokenType.REDUCE) -> {
+                Expression.Identifier(previous().lexeme, Location.from(previous()))
+            }
             match(TokenType.LPAREN) -> {
                 val expr = parseExpression()
                 consume(TokenType.RPAREN, "Expected ')' after expression")
@@ -342,6 +346,25 @@ class Parser(private val tokens: List<Token>) {
             }
             match(TokenType.LET) -> {
                 parseLetBinding()
+            }
+            match(TokenType.AT) -> {
+                // Handle @input or @variable
+                val atToken = previous()
+                val name = when {
+                    check(TokenType.IDENTIFIER) -> {
+                        advance().lexeme
+                    }
+                    check(TokenType.INPUT) -> {
+                        advance().lexeme
+                    }
+                    check(TokenType.OUTPUT) -> {
+                        advance().lexeme
+                    }
+                    else -> {
+                        error("Expected variable name after '@'")
+                    }
+                }
+                Expression.Identifier(name, Location.from(atToken))
             }
             else -> {
                 throw ParseException("Expected expression", Location.from(token))
@@ -409,11 +432,32 @@ class Parser(private val tokens: List<Token>) {
         
         if (!check(TokenType.RPAREN)) {
             do {
-                args.add(parseExpression())
+                args.add(parseArgument())
             } while (match(TokenType.COMMA))
         }
         
         return args
+    }
+    
+    private fun parseArgument(): Expression {
+        // Check if this could be a lambda parameter (identifier followed by ->)
+        if (check(TokenType.IDENTIFIER)) {
+            val checkpoint = current
+            val paramName = advance().lexeme
+            
+            if (match(TokenType.ARROW)) {
+                // This is a lambda: param -> body
+                val parameter = Parameter(paramName, null, Location.from(tokens[checkpoint]))
+                val body = parseExpression()
+                return Expression.Lambda(listOf(parameter), body, Location.from(tokens[checkpoint]))
+            } else {
+                // Not a lambda, backtrack and parse as normal expression
+                current = checkpoint
+                return parseExpression()
+            }
+        }
+        
+        return parseExpression()
     }
     
     // Utility functions

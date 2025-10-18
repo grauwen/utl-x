@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://utl-x.org/conformance/test-case-schema",
+  "title": "UTL-X Conformance Test Case",
+  "description": "Schema for UTL-X conformance test cases",
+  "type": "object",
+  "anyOf": [
+    {
+      "required": ["name", "category", "description", "input", "transformation", "expected"]
+    },
+    {
+      "required": ["name", "category", "description", "input", "transformation", "error_expected"]
+    }
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "description": "Unique test identifier using snake_case"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "core/syntax", "core/types", "core/semantics",
+        "stdlib/array", "stdlib/string", "stdlib/math", "stdlib/datetime", 
+        "stdlib/object", "stdlib/encoding", "stdlib/crypto", "stdlib/validation",
+        "stdlib/compression", "stdlib/serialization", "stdlib/geospatial", 
+        "stdlib/runtime", "stdlib/integration",
+        "formats/json", "formats/xml", "formats/csv", "formats/yaml",
+        "integration", "performance", "edge-cases"
+      ],
+      "description": "Test category for organization"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 200,
+      "description": "Human-readable test description"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "description": "Tags for filtering and grouping tests"
+    },
+    "input": {
+      "type": "object",
+      "required": ["format", "data"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["json", "xml", "csv", "yaml", "text", "binary"]
+        },
+        "data": {
+          "description": "Input data in the specified format"
+        },
+        "file": {
+          "type": "string",
+          "description": "Path to input data file (alternative to inline data)"
+        },
+        "schema": {
+          "type": "object",
+          "description": "Input schema for validation"
+        }
+      }
+    },
+    "transformation": {
+      "type": "string",
+      "description": "UTL-X transformation code"
+    },
+    "expected": {
+      "type": "object",
+      "required": ["format", "data"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["json", "xml", "csv", "yaml", "text", "binary"]
+        },
+        "data": {
+          "description": "Expected output data"
+        },
+        "file": {
+          "type": "string",
+          "description": "Path to expected output file"
+        },
+        "schema": {
+          "type": "object",
+          "description": "Expected output schema"
+        }
+      }
+    },
+    "error_expected": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["parse_error", "runtime_error", "type_error", "validation_error"]
+        },
+        "message_pattern": {
+          "type": "string",
+          "description": "Regex pattern for expected error message"
+        },
+        "code": {
+          "type": "string",
+          "description": "Expected error code"
+        }
+      },
+      "description": "Expected error conditions (for negative tests)"
+    },
+    "performance_limits": {
+      "type": "object",
+      "properties": {
+        "max_duration_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum execution time in milliseconds"
+        },
+        "max_memory_mb": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum memory usage in megabytes"
+        },
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum iterations for performance tests"
+        }
+      },
+      "description": "Performance constraints for the test"
+    },
+    "variants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "anyOf": [
+          {
+            "required": ["name", "input", "expected"]
+          },
+          {
+            "required": ["name", "input", "error_expected"]
+          }
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Variant name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Variant description"
+          },
+          "input": {
+            "$ref": "#/properties/input"
+          },
+          "expected": {
+            "$ref": "#/properties/expected"
+          },
+          "error_expected": {
+            "$ref": "#/properties/error_expected"
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      },
+      "description": "Test variants with different inputs/outputs"
+    },
+    "requirements": {
+      "type": "object",
+      "properties": {
+        "min_utlx_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+(\\.\\d+)?$",
+          "description": "Minimum UTL-X version required"
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["windows", "linux", "macos", "all"]
+          },
+          "description": "Supported platforms"
+        },
+        "features": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Required UTL-X features or extensions"
+        }
+      },
+      "description": "Test requirements and constraints"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "author": {
+          "type": "string",
+          "description": "Test author"
+        },
+        "created": {
+          "type": "string",
+          "format": "date",
+          "description": "Test creation date"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date",
+          "description": "Last update date"
+        },
+        "issues": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Related issue numbers or URLs"
+        },
+        "references": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Reference documentation or specifications"
+        }
+      },
+      "description": "Test metadata"
+    }
+  }
+}

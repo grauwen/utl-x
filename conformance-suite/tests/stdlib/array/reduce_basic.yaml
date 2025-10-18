@@ -1,0 +1,64 @@
+name: "reduce_basic"
+category: "stdlib/array"
+description: "Test basic reduce function over arrays"
+tags: ["core", "array", "reduce", "functional"]
+
+input:
+  format: json
+  data: [1, 2, 3, 4, 5]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  reduce(@input, (acc, x) -> acc + x, 0)
+
+expected:
+  format: json
+  data: 15
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "empty_array"
+    input:
+      format: json
+      data: []
+    expected:
+      format: json
+      data: 0
+      
+  - name: "single_element"
+    input:
+      format: json
+      data: [42]
+    expected:
+      format: json
+      data: 42
+      
+  - name: "product_reduce"
+    input:
+      format: json
+      data: [2, 3, 4]
+    expected:
+      format: json
+      data: 24
+      
+  - name: "string_concatenation"
+    input:
+      format: json
+      data: ["Hello", " ", "World", "!"]
+    expected:
+      format: json
+      data: "Hello World!"
+      
+  - name: "find_maximum"
+    input:
+      format: json
+      data: [3, 7, 2, 9, 1, 8]
+    expected:
+      format: json
+      data: 9

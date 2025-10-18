@@ -1,0 +1,5 @@
+%utlx 1.0
+input json
+output json
+---
+pow(@input[0], @input[1])

@@ -80,6 +80,8 @@ class Lexer(private val source: String) {
             '-' -> {
                 if (match('-') && match('-')) {
                     addToken(TokenType.TRIPLE_DASH, start, startColumn)
+                } else if (match('>')) {
+                    addToken(TokenType.ARROW, start, startColumn)
                 } else if (peek() in '0'..'9') {
                     // Negative number
                     current-- // back up

@@ -1,0 +1,11 @@
+#!/bin/bash
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+JAR="$SCRIPT_DIR/../build/libs/cli-1.0.0-SNAPSHOT.jar"
+
+if [ ! -f "$JAR" ]; then
+    echo "Error: JAR not found at $JAR"
+    echo "Run './gradlew :modules:cli:jar' first"
+    exit 1
+fi
+
+exec java -jar "$JAR" "$@"

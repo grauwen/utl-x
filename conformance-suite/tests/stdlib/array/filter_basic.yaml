@@ -1,0 +1,71 @@
+name: "filter_basic"
+category: "stdlib/array"
+description: "Test basic filter function over arrays"
+tags: ["core", "array", "filter", "functional"]
+
+input:
+  format: json
+  data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  filter(@input, x -> x % 2 == 0)
+
+expected:
+  format: json
+  data: [2, 4, 6, 8, 10]
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "empty_array"
+    input:
+      format: json
+      data: []
+    expected:
+      format: json
+      data: []
+      
+  - name: "no_matches"
+    input:
+      format: json
+      data: [1, 3, 5, 7, 9]
+    expected:
+      format: json
+      data: []
+      
+  - name: "all_matches"
+    input:
+      format: json
+      data: [2, 4, 6, 8]
+    expected:
+      format: json
+      data: [2, 4, 6, 8]
+      
+  - name: "string_filter"
+    input:
+      format: json
+      data: ["apple", "banana", "cherry", "date"]
+    expected:
+      format: json
+      data: ["apple", "cherry", "date"]
+      
+  - name: "object_filter"
+    input:
+      format: json
+      data: [
+        {"name": "Alice", "age": 25},
+        {"name": "Bob", "age": 30},
+        {"name": "Charlie", "age": 20}
+      ]
+    expected:
+      format: json
+      data: [
+        {"name": "Alice", "age": 25},
+        {"name": "Bob", "age": 30}
+      ]

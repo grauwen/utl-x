@@ -1,0 +1,64 @@
+name: "pow_basic"
+category: "stdlib/math"
+description: "Test mathematical power function"
+tags: ["core", "math", "arithmetic"]
+
+input:
+  format: json
+  data: [2, 3]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  pow(@input[0], @input[1])
+
+expected:
+  format: json
+  data: 8
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "power_of_zero"
+    input:
+      format: json
+      data: [5, 0]
+    expected:
+      format: json
+      data: 1
+      
+  - name: "power_of_one"
+    input:
+      format: json
+      data: [7, 1]
+    expected:
+      format: json
+      data: 7
+      
+  - name: "negative_base"
+    input:
+      format: json
+      data: [-2, 3]
+    expected:
+      format: json
+      data: -8
+      
+  - name: "fractional_power"
+    input:
+      format: json
+      data: [9, 0.5]
+    expected:
+      format: json
+      data: 3.0
+      
+  - name: "large_numbers"
+    input:
+      format: json
+      data: [10, 6]
+    expected:
+      format: json
+      data: 1000000

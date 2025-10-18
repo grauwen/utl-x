@@ -1,0 +1,61 @@
+name: "sha256_basic"
+category: "stdlib/crypto"
+description: "Test SHA-256 hash function"
+tags: ["crypto", "hash", "sha256"]
+
+input:
+  format: json
+  data: "hello world"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  sha256(@input)
+
+expected:
+  format: json
+  data: "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "empty_string"
+    input:
+      format: json
+      data: ""
+    expected:
+      format: json
+      data: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      
+  - name: "short_string"
+    input:
+      format: json
+      data: "a"
+    expected:
+      format: json
+      data: "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb"
+      
+  - name: "longer_text"
+    input:
+      format: json
+      data: "The quick brown fox jumps over the lazy dog"
+    expected:
+      format: json
+      data: "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592"
+      
+  - name: "unicode_text"
+    input:
+      format: json
+      data: "Hello 世界"
+    expected:
+      format: json
+      data: "b8dddc90d8cd6a98e7c3d83b00b7be61b38b7bd45b4f7555e1f1a8b5c98f1b6d"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Cryptographic Functions", "RFC 6234 - SHA-2"]

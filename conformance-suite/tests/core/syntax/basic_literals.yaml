@@ -1,0 +1,70 @@
+name: "basic_literals"
+category: "core/syntax"
+description: "Test basic literal values in UTL-X transformations"
+tags: ["core", "syntax", "literals"]
+
+input:
+  format: json
+  data: {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    string_literal: "hello world",
+    integer_literal: 42,
+    float_literal: 3.14159,
+    boolean_true: true,
+    boolean_false: false,
+    null_literal: null
+  }
+
+expected:
+  format: json
+  data: {
+    "string_literal": "hello world",
+    "integer_literal": 42,
+    "float_literal": 3.14159,
+    "boolean_true": true,
+    "boolean_false": false,
+    "null_literal": null
+  }
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "empty_string"
+    input:
+      format: json
+      data: {}
+    expected:
+      format: json
+      data: ""
+    
+  - name: "large_integer"
+    input:
+      format: json
+      data: {}
+    expected:
+      format: json
+      data: 9223372036854775807
+      
+  - name: "negative_numbers"
+    input:
+      format: json
+      data: {}
+    expected:
+      format: json
+      data: {
+        "negative_int": -42,
+        "negative_float": -3.14
+      }
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Language Specification - Literals"]

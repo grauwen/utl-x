@@ -1,0 +1,53 @@
+name: "array_index_bounds"
+category: "edge-cases"
+description: "Test array index out of bounds error handling"
+tags: ["edge-case", "error", "array", "bounds"]
+
+input:
+  format: json
+  data: [1, 2, 3]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  @input[10]
+
+error_expected:
+  type: "runtime_error"
+  message_pattern: ".*index out of bounds.*"
+  code: "INDEX_OUT_OF_BOUNDS"
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "negative_index"
+    input:
+      format: json
+      data: [1, 2, 3]
+    error_expected:
+      type: "runtime_error"
+      message_pattern: ".*negative index.*"
+      
+  - name: "empty_array_access"
+    input:
+      format: json
+      data: []
+    error_expected:
+      type: "runtime_error"
+      message_pattern: ".*index out of bounds.*"
+      
+  - name: "valid_boundary_access"
+    input:
+      format: json
+      data: [1, 2, 3]
+    expected:
+      format: json
+      data: 3
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"

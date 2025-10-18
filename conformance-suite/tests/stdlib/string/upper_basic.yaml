@@ -1,0 +1,64 @@
+name: "upper_basic"
+category: "stdlib/string"
+description: "Test string uppercase conversion function"
+tags: ["core", "string", "case"]
+
+input:
+  format: json
+  data: "hello world"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  upper(@input)
+
+expected:
+  format: json
+  data: "HELLO WORLD"
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "empty_string"
+    input:
+      format: json
+      data: ""
+    expected:
+      format: json
+      data: ""
+      
+  - name: "already_uppercase"
+    input:
+      format: json
+      data: "HELLO WORLD"
+    expected:
+      format: json
+      data: "HELLO WORLD"
+      
+  - name: "mixed_case"
+    input:
+      format: json
+      data: "HeLLo WoRLd"
+    expected:
+      format: json
+      data: "HELLO WORLD"
+      
+  - name: "numbers_and_symbols"
+    input:
+      format: json
+      data: "hello123!@#"
+    expected:
+      format: json
+      data: "HELLO123!@#"
+      
+  - name: "unicode_characters"
+    input:
+      format: json
+      data: "café naïve"
+    expected:
+      format: json
+      data: "CAFÉ NAÏVE"

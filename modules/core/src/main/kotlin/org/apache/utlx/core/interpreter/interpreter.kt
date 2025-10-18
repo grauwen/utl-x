@@ -283,37 +283,38 @@ class Interpreter {
         return when (expr.operator) {
             BinaryOperator.PLUS -> {
                 when {
-                    left is RuntimeValue.StringValue || right is RuntimeValue.StringValue -> {
+                    left is RuntimeValue.StringValue || right is RuntimeValue.StringValue || 
+                    (left is RuntimeValue.UDMValue && left.udm is UDM.Scalar && left.udm.value is String) ||
+                    (right is RuntimeValue.UDMValue && right.udm is UDM.Scalar && right.udm.value is String) -> {
                         RuntimeValue.StringValue(left.toString() + right.toString())
                     }
-                    left is RuntimeValue.NumberValue && right is RuntimeValue.NumberValue -> {
-                        RuntimeValue.NumberValue(left.value + right.value)
+                    else -> {
+                        try {
+                            val l = extractNumber(left, "Left operand must be number for arithmetic", expr.location)
+                            val r = extractNumber(right, "Right operand must be number for arithmetic", expr.location)
+                            RuntimeValue.NumberValue(l + r)
+                        } catch (e: RuntimeError) {
+                            throw RuntimeError("Invalid operands for +", expr.location)
+                        }
                     }
-                    else -> throw RuntimeError("Invalid operands for +", expr.location)
                 }
             }
             
             BinaryOperator.MINUS -> {
-                val l = (left as? RuntimeValue.NumberValue)?.value 
-                    ?: throw RuntimeError("Left operand must be number", expr.location)
-                val r = (right as? RuntimeValue.NumberValue)?.value
-                    ?: throw RuntimeError("Right operand must be number", expr.location)
+                val l = extractNumber(left, "Left operand must be number", expr.location)
+                val r = extractNumber(right, "Right operand must be number", expr.location)
                 RuntimeValue.NumberValue(l - r)
             }
             
             BinaryOperator.MULTIPLY -> {
-                val l = (left as? RuntimeValue.NumberValue)?.value
-                    ?: throw RuntimeError("Left operand must be number", expr.location)
-                val r = (right as? RuntimeValue.NumberValue)?.value
-                    ?: throw RuntimeError("Right operand must be number", expr.location)
+                val l = extractNumber(left, "Left operand must be number", expr.location)
+                val r = extractNumber(right, "Right operand must be number", expr.location)
                 RuntimeValue.NumberValue(l * r)
             }
             
             BinaryOperator.DIVIDE -> {
-                val l = (left as? RuntimeValue.NumberValue)?.value
-                    ?: throw RuntimeError("Left operand must be number", expr.location)
-                val r = (right as? RuntimeValue.NumberValue)?.value
-                    ?: throw RuntimeError("Right operand must be number", expr.location)
+                val l = extractNumber(left, "Left operand must be number", expr.location)
+                val r = extractNumber(right, "Right operand must be number", expr.location)
                 if (r == 0.0) throw RuntimeError("Division by zero", expr.location)
                 RuntimeValue.NumberValue(l / r)
             }
@@ -375,61 +376,6 @@ class Interpreter {
         }
     }
     
-    private fun evaluateFunctionCall(expr: Expression.FunctionCall, env: Environment): RuntimeValue {
-        // Check if it's a built-in function
-        if (expr.function is Expression.Identifier) {
-            val funcName = expr.function.name
-            
-            // Check if it's a native stdlib function
-            if (StandardLibraryImpl.nativeFunctions.containsKey(funcName)) {
-                val nativeFunc = StandardLibraryImpl.nativeFunctions[funcName]!!
-                val argValues = expr.arguments.map { evaluate(it, env) }
-                return nativeFunc(argValues)
-            }
-            
-            if (env.has(funcName)) {
-                val func = env.get(funcName)
-                if (func is RuntimeValue.FunctionValue) {
-                    return callFunction(func, expr.arguments, env, expr.location)
-                }
-            }
-        }
-        
-        val func = evaluate(expr.function, env)
-        if (func !is RuntimeValue.FunctionValue) {
-            throw RuntimeError("Cannot call non-function", expr.location)
-        }
-        
-        return callFunction(func, expr.arguments, env, expr.location)
-    }
-    
-    private fun callFunction(
-        func: RuntimeValue.FunctionValue,
-        argExprs: List<Expression>,
-        callEnv: Environment,
-        location: Location
-    ): RuntimeValue {
-        if (argExprs.size != func.parameters.size) {
-            throw RuntimeError(
-                "Function expects ${func.parameters.size} arguments, got ${argExprs.size}",
-                location
-            )
-        }
-        
-        // Evaluate arguments in caller's environment
-        val argValues = argExprs.map { evaluate(it, callEnv) }
-        
-        // Create new environment with function's closure
-        val funcEnv = func.closure.createChild()
-        
-        // Bind parameters
-        func.parameters.zip(argValues).forEach { (param, value) ->
-            funcEnv.define(param, value)
-        }
-        
-        // Execute function body
-        return evaluate(func.body, funcEnv)
-    }
     
     private fun evaluateMatch(expr: Expression.Match, env: Environment): RuntimeValue {
         val value = evaluate(expr.value, env)
@@ -475,6 +421,56 @@ class Interpreter {
         }
     }
     
+    private fun evaluateFunctionCall(expr: Expression.FunctionCall, env: Environment): RuntimeValue {
+        val function = evaluate(expr.function, env)
+        val args = expr.arguments.map { evaluate(it, env) }
+        
+        return when (function) {
+            is RuntimeValue.FunctionValue -> {
+                // User-defined function or lambda
+                if (function.parameters.isEmpty() && StandardLibraryImpl.nativeFunctions.containsKey((expr.function as? Expression.Identifier)?.name)) {
+                    // Native function
+                    val functionName = (expr.function as Expression.Identifier).name
+                    val nativeImpl = StandardLibraryImpl.nativeFunctions[functionName]!!
+                    nativeImpl(args)
+                } else {
+                    // User-defined function
+                    if (args.size != function.parameters.size) {
+                        throw RuntimeError("Function expects ${function.parameters.size} arguments, got ${args.size}", expr.location)
+                    }
+                    
+                    val funcEnv = function.closure.createChild()
+                    for ((param, arg) in function.parameters.zip(args)) {
+                        funcEnv.define(param, arg)
+                    }
+                    
+                    evaluate(function.body, funcEnv)
+                }
+            }
+            else -> throw RuntimeError("Cannot call non-function value", expr.location)
+        }
+    }
+    
+    private fun extractNumber(value: RuntimeValue, errorMessage: String, location: Location): Double {
+        return when (value) {
+            is RuntimeValue.NumberValue -> value.value
+            is RuntimeValue.UDMValue -> {
+                when (val udm = value.udm) {
+                    is UDM.Scalar -> {
+                        when (val scalarValue = udm.value) {
+                            is Number -> scalarValue.toDouble()
+                            is String -> scalarValue.toDoubleOrNull() 
+                                ?: throw RuntimeError(errorMessage, location)
+                            else -> throw RuntimeError(errorMessage, location)
+                        }
+                    }
+                    else -> throw RuntimeError(errorMessage, location)
+                }
+            }
+            else -> throw RuntimeError(errorMessage, location)
+        }
+    }
+    
     private fun literalToRuntimeValue(value: Any?): RuntimeValue {
         return when (value) {
             is String -> RuntimeValue.StringValue(value)
@@ -490,11 +486,39 @@ class Interpreter {
  * Standard library implementations
  */
 class StandardLibraryImpl {
+    private fun extractNumber(value: RuntimeValue, errorMessage: String): Double {
+        return when (value) {
+            is RuntimeValue.NumberValue -> value.value
+            is RuntimeValue.UDMValue -> {
+                when (val udm = value.udm) {
+                    is UDM.Scalar -> {
+                        when (val scalarValue = udm.value) {
+                            is Number -> scalarValue.toDouble()
+                            is String -> scalarValue.toDoubleOrNull() 
+                                ?: throw RuntimeError(errorMessage)
+                            else -> throw RuntimeError(errorMessage)
+                        }
+                    }
+                    else -> throw RuntimeError(errorMessage)
+                }
+            }
+            else -> throw RuntimeError(errorMessage)
+        }
+    }
+    
     fun registerAll(env: Environment) {
         // String functions
         registerFunction(env, "upper") { args ->
-            val str = (args[0] as? RuntimeValue.StringValue)?.value
-                ?: throw RuntimeError("upper() requires string argument")
+            val str = when (val arg = args[0]) {
+                is RuntimeValue.StringValue -> arg.value
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Scalar -> udm.value.toString()
+                        else -> throw RuntimeError("upper() requires string argument")
+                    }
+                }
+                else -> throw RuntimeError("upper() requires string argument")
+            }
             RuntimeValue.StringValue(str.uppercase())
         }
         
@@ -578,6 +602,196 @@ class StandardLibraryImpl {
             val b = (args[1] as? RuntimeValue.NumberValue)?.value
                 ?: throw RuntimeError("max() requires number arguments")
             RuntimeValue.NumberValue(max(a, b))
+        }
+        
+        registerFunction(env, "pow") { args ->
+            val base = extractNumber(args[0], "pow() requires number arguments")
+            val exponent = extractNumber(args[1], "pow() requires number arguments")
+            RuntimeValue.NumberValue(base.pow(exponent))
+        }
+        
+        registerFunction(env, "sqrt") { args ->
+            val num = (args[0] as? RuntimeValue.NumberValue)?.value
+                ?: throw RuntimeError("sqrt() requires number argument")
+            RuntimeValue.NumberValue(sqrt(num))
+        }
+        
+        // Array functions with lambdas
+        registerFunction(env, "map") { args ->
+            val arr = when (val arg = args[0]) {
+                is RuntimeValue.ArrayValue -> arg.elements
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Array -> udm.elements.map { RuntimeValue.UDMValue(it) }
+                        else -> throw RuntimeError("map() requires array as first argument")
+                    }
+                }
+                else -> throw RuntimeError("map() requires array as first argument")
+            }
+            val lambda = args[1] as? RuntimeValue.FunctionValue
+                ?: throw RuntimeError("map() requires function as second argument")
+            
+            val results = arr.map { element ->
+                // Create environment for lambda execution
+                val lambdaEnv = lambda.closure.createChild()
+                if (lambda.parameters.isNotEmpty()) {
+                    lambdaEnv.define(lambda.parameters[0], element)
+                }
+                // Execute lambda body
+                val interpreter = Interpreter()
+                interpreter.evaluate(lambda.body, lambdaEnv)
+            }
+            RuntimeValue.ArrayValue(results)
+        }
+        
+        registerFunction(env, "filter") { args ->
+            val arr = when (val arg = args[0]) {
+                is RuntimeValue.ArrayValue -> arg.elements
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Array -> udm.elements.map { RuntimeValue.UDMValue(it) }
+                        else -> throw RuntimeError("filter() requires array as first argument")
+                    }
+                }
+                else -> throw RuntimeError("filter() requires array as first argument")
+            }
+            val lambda = args[1] as? RuntimeValue.FunctionValue
+                ?: throw RuntimeError("filter() requires function as second argument")
+            
+            val results = arr.filter { element ->
+                // Create environment for lambda execution
+                val lambdaEnv = lambda.closure.createChild()
+                if (lambda.parameters.isNotEmpty()) {
+                    lambdaEnv.define(lambda.parameters[0], element)
+                }
+                // Execute lambda body
+                val interpreter = Interpreter()
+                val result = interpreter.evaluate(lambda.body, lambdaEnv)
+                result.isTruthy()
+            }
+            RuntimeValue.ArrayValue(results)
+        }
+        
+        registerFunction(env, "reduce") { args ->
+            val arr = (args[0] as? RuntimeValue.ArrayValue)?.elements
+                ?: throw RuntimeError("reduce() requires array as first argument")
+            val lambda = args[1] as? RuntimeValue.FunctionValue
+                ?: throw RuntimeError("reduce() requires function as second argument")
+            val initial = args.getOrNull(2) ?: RuntimeValue.NullValue
+            
+            var accumulator = initial
+            for (element in arr) {
+                val lambdaEnv = lambda.closure.createChild()
+                if (lambda.parameters.size >= 2) {
+                    lambdaEnv.define(lambda.parameters[0], accumulator)
+                    lambdaEnv.define(lambda.parameters[1], element)
+                }
+                val interpreter = Interpreter()
+                accumulator = interpreter.evaluate(lambda.body, lambdaEnv)
+            }
+            accumulator
+        }
+        
+        // Conversion functions
+        registerFunction(env, "toString") { args ->
+            val value = args[0]
+            val str = when (value) {
+                is RuntimeValue.StringValue -> value.value
+                is RuntimeValue.NumberValue -> value.value.toString()
+                is RuntimeValue.BooleanValue -> value.value.toString()
+                is RuntimeValue.NullValue -> "null"
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = value.udm) {
+                        is UDM.Scalar -> udm.value.toString()
+                        else -> value.toString()
+                    }
+                }
+                else -> value.toString()
+            }
+            RuntimeValue.StringValue(str)
+        }
+        
+        registerFunction(env, "typeOf") { args ->
+            val value = args[0]
+            val typeName = when (value) {
+                is RuntimeValue.StringValue -> "string"
+                is RuntimeValue.NumberValue -> "number"
+                is RuntimeValue.BooleanValue -> "boolean"
+                is RuntimeValue.NullValue -> "null"
+                is RuntimeValue.ArrayValue -> "array"
+                is RuntimeValue.ObjectValue -> "object"
+                is RuntimeValue.FunctionValue -> "function"
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = value.udm) {
+                        is UDM.Scalar -> when (udm.value) {
+                            is String -> "string"
+                            is Number -> "number"
+                            is Boolean -> "boolean"
+                            else -> "unknown"
+                        }
+                        is UDM.Array -> "array"
+                        is UDM.Object -> "object"
+                        else -> "unknown"
+                    }
+                }
+            }
+            RuntimeValue.StringValue(typeName)
+        }
+        
+        registerFunction(env, "toNumber") { args ->
+            val str = (args[0] as? RuntimeValue.StringValue)?.value
+                ?: throw RuntimeError("toNumber() requires string argument")
+            try {
+                RuntimeValue.NumberValue(str.toDouble())
+            } catch (e: NumberFormatException) {
+                throw RuntimeError("Cannot convert '$str' to number")
+            }
+        }
+        
+        // Date/time functions
+        registerFunction(env, "now") { args ->
+            RuntimeValue.StringValue(java.time.Instant.now().toString())
+        }
+        
+        // Crypto functions (simplified implementations)
+        registerFunction(env, "sha256") { args ->
+            val str = when (val arg = args[0]) {
+                is RuntimeValue.StringValue -> arg.value
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Scalar -> udm.value.toString()
+                        else -> throw RuntimeError("sha256() requires string argument")
+                    }
+                }
+                else -> throw RuntimeError("sha256() requires string argument")
+            }
+            try {
+                val digest = java.security.MessageDigest.getInstance("SHA-256")
+                val hash = digest.digest(str.toByteArray())
+                val hexString = hash.joinToString("") { "%02x".format(it) }
+                RuntimeValue.StringValue(hexString)
+            } catch (e: Exception) {
+                throw RuntimeError("Error computing SHA-256: ${e.message}")
+            }
+        }
+        
+        // Geospatial functions (using Haversine formula)
+        registerFunction(env, "distance") { args ->
+            val lat1 = extractNumber(args[0], "distance() requires number arguments")
+            val lon1 = extractNumber(args[1], "distance() requires number arguments")
+            val lat2 = extractNumber(args[2], "distance() requires number arguments")
+            val lon2 = extractNumber(args[3], "distance() requires number arguments")
+            
+            val earthRadius = 6371.0 // Earth radius in kilometers
+            val dLat = Math.toRadians(lat2 - lat1)
+            val dLon = Math.toRadians(lon2 - lon1)
+            val a = sin(dLat / 2) * sin(dLat / 2) +
+                    cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                    sin(dLon / 2) * sin(dLon / 2)
+            val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            val distance = earthRadius * c
+            
+            RuntimeValue.NumberValue(distance)
         }
     }
     
