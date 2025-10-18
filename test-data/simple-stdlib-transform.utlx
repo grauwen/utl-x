@@ -1,0 +1,31 @@
+%utlx 1.0
+input xml
+output json
+---
+{
+  stringOps: {
+    uppercased: upper("hello world"),
+    lowercased: lower("HELLO WORLD"),
+    trimmed: trim("  spaced  "),
+    split: split("a,b,c", ",")
+  },
+  mathOps: {
+    rounded: round(3.7),
+    absolute: abs(-42),
+    power: pow(2, 3),
+    sqrt: sqrt(16)
+  },
+  dateOps: {
+    currentTime: now(),
+    parsedDate: parseDate("2023-12-25")
+  },
+  typeOps: {
+    typeCheck: typeOf("hello"),
+    isStringCheck: isString("hello"),
+    isNumberCheck: isNumber(42)
+  },
+  encodingOps: {
+    base64: base64Encode("hello world"),
+    hash: sha256("hello world")
+  }
+}

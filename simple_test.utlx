@@ -1,0 +1,17 @@
+%utlx input=json output=json
+
+input json: [
+  {
+    "name": "string",
+    "age": 0,
+    "email": "string"
+  }
+]
+
+output json: {
+  "names": @input | map(x -> x.name),
+  "adult_count": @input | filter(x -> x.age > 18) | length,
+  "hash_test": "test" | sha256,
+  "time_test": now(),
+  "distance_test": distance(40.0, -74.0, 34.0, -118.0)
+}

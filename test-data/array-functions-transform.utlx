@@ -1,0 +1,27 @@
+%utlx 1.0
+input xml
+output json
+---
+{
+  arrayTests: {
+    sourceArray: [1, 2, 3, 4, 5],
+    sumResult: sum([1, 2, 3, 4, 5]),
+    countResult: count([1, 2, 3, 4, 5]),
+    firstElement: first([1, 2, 3, 4, 5]),
+    lastElement: last([1, 2, 3, 4, 5]),
+    avgResult: avg([1, 2, 3, 4, 5]),
+    minResult: min([1, 2, 3, 4, 5]),
+    maxResult: max([1, 2, 3, 4, 5]),
+    uniqueResult: unique([1, 2, 2, 3, 3, 3]),
+    reversedResult: reverse([1, 2, 3, 4, 5]),
+    sortedResult: sort([5, 2, 8, 1, 9]),
+    flattenResult: flatten([[1, 2], [3, 4], [5]]),
+    sizeResult: size([1, 2, 3, 4, 5]),
+    lengthResult: length([1, 2, 3, 4, 5])
+  },
+  stringArrays: {
+    words: ["hello", "world", "UTL-X"],
+    joined: joinBy(["hello", "world"], " "),
+    wordLengths: length("hello world")
+  }
+}

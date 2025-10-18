@@ -9,10 +9,10 @@ import org.apache.utlx.core.ast.*
  * Analyzes UTL-X AST nodes to infer output types based on:
  * - Input type constraints
  * - Transformation logic
- * - Function signatures
+ * - Function signatures from stdlib (188+ functions)
  * - Data flow analysis
  */
-class AdvancedTypeInference {
+class AdvancedTypeInference : TypeInferenceContext {
     
     private var inputType: TypeDefinition = TypeDefinition.Any
     private val typeContext = mutableMapOf<String, TypeDefinition>()
@@ -38,7 +38,7 @@ class AdvancedTypeInference {
     /**
      * Analyze an expression and infer its type
      */
-    private fun analyzeExpression(expression: Expression): TypeDefinition {
+    override fun analyzeExpression(expression: Expression): TypeDefinition {
         return when (expression) {
             is Expression.StringLiteral -> TypeDefinition.Scalar(ScalarKind.STRING)
             is Expression.NumberLiteral -> TypeDefinition.Scalar(ScalarKind.NUMBER)
@@ -132,7 +132,7 @@ class AdvancedTypeInference {
     }
     
     /**
-     * Analyze function call expressions
+     * Analyze function call expressions using the function type registry
      */
     private fun analyzeFunctionCall(call: Expression.FunctionCall): TypeDefinition {
         // Get function name from the function expression
@@ -141,45 +141,76 @@ class AdvancedTypeInference {
             else -> null
         }
         
+        if (functionName == null) {
+            return TypeDefinition.Any
+        }
+        
+        // Look up function signature in registry
+        val signature = FunctionTypeRegistry.getFunctionSignature(functionName)
+        if (signature != null) {
+            return evaluateReturnType(signature.returnType, call.arguments)
+        }
+        
+        // Fallback to legacy function analysis for unregistered functions
         return when (functionName) {
-            // Array functions
-            "map" -> {
-                if (call.arguments.isNotEmpty()) {
-                    val sourceType = analyzeExpression(call.arguments[0])
-                    when (sourceType) {
-                        is TypeDefinition.Array -> {
-                            // Map returns array with potentially different element type
-                            // For now, return array of Any
-                            TypeDefinition.Array(TypeDefinition.Any)
-                        }
-                        else -> TypeDefinition.Any
-                    }
-                } else TypeDefinition.Any
-            }
-            "filter" -> {
-                if (call.arguments.isNotEmpty()) {
-                    analyzeExpression(call.arguments[0]) // Filter preserves type
-                } else TypeDefinition.Any
-            }
-            "sum" -> TypeDefinition.Scalar(ScalarKind.NUMBER)
-            "count" -> TypeDefinition.Scalar(ScalarKind.INTEGER)
-            "length" -> TypeDefinition.Scalar(ScalarKind.INTEGER)
-            
-            // String functions
-            "upper", "lower", "trim" -> TypeDefinition.Scalar(ScalarKind.STRING)
-            "split" -> TypeDefinition.Array(TypeDefinition.Scalar(ScalarKind.STRING))
-            
-            // Date functions
-            "now" -> TypeDefinition.Scalar(ScalarKind.DATETIME)
-            "parseDate" -> TypeDefinition.Scalar(ScalarKind.DATE)
-            
-            // Type functions
-            "typeOf" -> TypeDefinition.Scalar(ScalarKind.STRING)
-            "isEmpty" -> TypeDefinition.Scalar(ScalarKind.BOOLEAN)
-            "isArray" -> TypeDefinition.Scalar(ScalarKind.BOOLEAN)
-            
-            // Default
+            // Legacy fallbacks (most should be covered by registry now)
             else -> TypeDefinition.Any
+        }
+    }
+    
+    /**
+     * Evaluate return type based on return type logic and actual arguments
+     */
+    private fun evaluateReturnType(logic: ReturnTypeLogic, arguments: List<Expression>): TypeDefinition {
+        return when (logic) {
+            is ReturnTypeLogic.Fixed -> logic.type
+            
+            is ReturnTypeLogic.PreserveFirstArgument -> {
+                if (arguments.isNotEmpty()) {
+                    analyzeExpression(arguments[0])
+                } else TypeDefinition.Any
+            }
+            
+            is ReturnTypeLogic.ArrayElementType -> {
+                if (arguments.isNotEmpty()) {
+                    val arrayType = analyzeExpression(arguments[0])
+                    if (arrayType is TypeDefinition.Array) {
+                        arrayType.elementType
+                    } else TypeDefinition.Any
+                } else TypeDefinition.Any
+            }
+            
+            is ReturnTypeLogic.ArrayFlatten -> {
+                if (arguments.isNotEmpty()) {
+                    val arrayType = analyzeExpression(arguments[0])
+                    if (arrayType is TypeDefinition.Array) {
+                        // If array of arrays, flatten one level
+                        if (arrayType.elementType is TypeDefinition.Array) {
+                            arrayType.elementType
+                        } else {
+                            arrayType // Already flat
+                        }
+                    } else TypeDefinition.Any
+                } else TypeDefinition.Any
+            }
+            
+            is ReturnTypeLogic.ThirdArgumentOrAny -> {
+                if (arguments.size >= 3) {
+                    analyzeExpression(arguments[2])
+                } else TypeDefinition.Any
+            }
+            
+            is ReturnTypeLogic.ArrayTransform -> {
+                if (arguments.isNotEmpty()) {
+                    val sourceType = analyzeExpression(arguments[0])
+                    val argumentTypes = arguments.map { analyzeExpression(it) }
+                    logic.transformer(sourceType, argumentTypes)
+                } else TypeDefinition.Any
+            }
+            
+            is ReturnTypeLogic.Custom -> {
+                logic.analyzer(arguments, this)
+            }
         }
     }
     

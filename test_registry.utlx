@@ -1,0 +1,12 @@
+%utlx 1.0
+input json
+output json
+---
+{
+  stringTest: upper("hello"),
+  mathTest: pow(2, 3),
+  arrayTest: sum([1, 2, 3]),
+  newHash: sha256("test"),
+  newDate: now(),
+  newGeo: distance(40.0, -74.0, 34.0, -118.0)
+}

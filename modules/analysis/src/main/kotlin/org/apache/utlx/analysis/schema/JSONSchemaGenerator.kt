@@ -178,6 +178,6 @@ class JSONSchemaGenerator : OutputSchemaGenerator {
         ScalarKind.NUMBER -> "number"
         ScalarKind.BOOLEAN -> "boolean"
         ScalarKind.NULL -> "null"
-        ScalarKind.DATE, ScalarKind.DATETIME -> "string"
+        ScalarKind.DATE, ScalarKind.DATETIME, ScalarKind.BINARY -> "string"
     }
 }

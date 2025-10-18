@@ -1,0 +1,56 @@
+%utlx 1.0
+input xml
+output json
+---
+{
+  stringOperations: {
+    uppercased: upper("hello world"),
+    lowercased: lower("HELLO WORLD"),
+    trimmed: trim("  spaced  "),
+    split: split("a,b,c", ","),
+    replaced: replace("hello world", "world", "UTL-X"),
+    matched: matches("test@example.com", ".*@.*\\..*")
+  },
+  arrayOperations: {
+    numbers: [1, 2, 3, 4, 5],
+    doubled: map([1, 2, 3], x => x * 2),
+    filtered: filter([1, 2, 3, 4, 5], x => x > 3),
+    sum: sum([1, 2, 3, 4, 5]),
+    count: count([1, 2, 3, 4, 5]),
+    first: first([1, 2, 3, 4, 5]),
+    last: last([1, 2, 3, 4, 5]),
+    sorted: sort([5, 2, 8, 1, 9]),
+    unique: unique([1, 2, 2, 3, 3, 3])
+  },
+  mathOperations: {
+    rounded: round(3.7),
+    absolute: abs(-42),
+    power: pow(2, 3),
+    sqrt: sqrt(16),
+    random: random()
+  },
+  dateOperations: {
+    currentTime: now(),
+    parsedDate: parseDate("2023-12-25"),
+    dayExtract: day(parseDate("2023-12-25")),
+    monthExtract: month(parseDate("2023-12-25")),
+    yearExtract: year(parseDate("2023-12-25"))
+  },
+  typeOperations: {
+    typeCheck: typeOf("hello"),
+    isStringCheck: isString("hello"),
+    isNumberCheck: isNumber(42),
+    isArrayCheck: isArray([1, 2, 3]),
+    emptyCheck: isEmpty("")
+  },
+  encodingOperations: {
+    base64: base64Encode("hello world"),
+    urlEncoded: urlEncode("hello world"),
+    hash: sha256("hello world")
+  },
+  conditionalLogic: {
+    ifResult: if(true, "yes", "no"),
+    coalesced: coalesce(null, null, "default value"),
+    defaulted: default(null, "fallback")
+  }
+}

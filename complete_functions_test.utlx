@@ -1,0 +1,26 @@
+%utlx 1.0
+input json
+output json
+---
+{
+  basicFunctions: {
+    stringTest: "hello world" | upper | length,
+    arrayTest: [1, 2, 3, 4, 5] | map(x -> x * 2) | sum,
+    mathTest: pow(2, 3) | sqrt
+  },
+  newFunctions: {
+    cryptoTest: "test" | sha256,
+    dateTest: now(),
+    geoTest: distance(40.0, -74.0, 34.0, -118.0),
+    binaryTest: "hello" | toBinary | binaryLength,
+    validationTest: isAlpha("hello"),
+    uuidTest: generateUuid(),
+    compressionTest: "test data" | gzip | isGzipped
+  },
+  advancedFunctions: {
+    arrayOps: [1, 2, 3] | union([4, 5, 6]) | chunk(2),
+    stringOps: "hello world" | substringBefore(" ") | capitalize,
+    objectOps: {"a": 1, "b": 2} | keys | length,
+    conversionOps: "123" | parseInt | toString
+  }
+}

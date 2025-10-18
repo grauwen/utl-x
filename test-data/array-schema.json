@@ -1,0 +1,126 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "description": "Generated schema from UTL-X transformation",
+    "type": "object",
+    "properties": {
+        "arrayTests": {
+            "type": "object",
+            "properties": {
+                "sourceArray": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 5,
+                    "maxItems": 5
+                },
+                "sumResult": {
+                    "type": "number"
+                },
+                "countResult": {
+                    "type": "integer"
+                },
+                "firstElement": {
+                    "type": "number"
+                },
+                "lastElement": {
+                    "type": "number"
+                },
+                "avgResult": {
+                    "type": "number"
+                },
+                "minResult": {
+                    "type": "number"
+                },
+                "maxResult": {
+                    "type": "number"
+                },
+                "uniqueResult": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 6,
+                    "maxItems": 6
+                },
+                "reversedResult": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 5,
+                    "maxItems": 5
+                },
+                "sortedResult": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 5,
+                    "maxItems": 5
+                },
+                "flattenResult": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "sizeResult": {
+                    "type": "integer"
+                },
+                "lengthResult": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "sourceArray",
+                "sumResult",
+                "countResult",
+                "firstElement",
+                "lastElement",
+                "avgResult",
+                "minResult",
+                "maxResult",
+                "uniqueResult",
+                "reversedResult",
+                "sortedResult",
+                "flattenResult",
+                "sizeResult",
+                "lengthResult"
+            ],
+            "additionalProperties": false
+        },
+        "stringArrays": {
+            "type": "object",
+            "properties": {
+                "words": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                },
+                "joined": {
+                    "type": "string"
+                },
+                "wordLengths": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "words",
+                "joined",
+                "wordLengths"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "arrayTests",
+        "stringArrays"
+    ],
+    "additionalProperties": false
+}

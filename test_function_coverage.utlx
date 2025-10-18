@@ -1,0 +1,13 @@
+%utlx input=json output=json
+
+{
+  "test_basic": @input | map(x -> x.name) | length,
+  "test_extended": @input | filter(x -> x.age > 25) | sort | first,
+  "test_new_functions": @input | flatMap(x -> x.items) | union([1,2,3]) | chunk(5),
+  "test_crypto": "test" | sha256 | base64Encode,
+  "test_date": now() | addMinutes(30) | formatDate("yyyy-MM-dd"),
+  "test_validation": "test@example.com" | isValidURL,
+  "test_geospatial": distance(40.7128, -74.0060, 34.0522, -118.2437),
+  "test_jwt": createJWT({"sub": "1234"}, "secret"),
+  "test_yaml": {"key": "value"} | yamlMerge({"other": "data"})
+}

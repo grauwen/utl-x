@@ -1,0 +1,13 @@
+%utlx 1.0
+input json
+output json
+---
+{
+  basic: upper("hello"),
+  crypto: md5("test"),
+  datetime: addMinutes(now(), 30),
+  geo: bearing(40.0, -74.0, 34.0, -118.0),
+  binary: bitwiseAnd(255, 128),
+  conversion: toBoolean("true"),
+  runtime: platform()
+}

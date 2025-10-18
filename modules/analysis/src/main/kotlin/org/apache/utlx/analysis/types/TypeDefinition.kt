@@ -150,7 +150,8 @@ enum class ScalarKind {
     BOOLEAN,    // true/false
     NULL,       // Null value
     DATE,       // Date only (YYYY-MM-DD)
-    DATETIME;   // Date and time with timezone
+    DATETIME,   // Date and time with timezone
+    BINARY;     // Binary data
     
     /**
      * Check if this kind is numeric
@@ -171,7 +172,7 @@ enum class ScalarKind {
         NUMBER -> "number"
         BOOLEAN -> "boolean"
         NULL -> "null"
-        DATE, DATETIME -> "string"
+        DATE, DATETIME, BINARY -> "string"
     }
 }
 
