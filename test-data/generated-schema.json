@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "description": "Generated schema from UTL-X transformation",
+    "type": "object",
+    "properties": {
+        "result": {
+            "type": "string"
+        },
+        "count": {
+            "type": "number"
+        },
+        "active": {
+            "type": "boolean"
+        }
+    },
+    "required": [
+        "result",
+        "count",
+        "active"
+    ],
+    "additionalProperties": false
+}

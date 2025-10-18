@@ -1,0 +1,7 @@
+%utlx 1.0
+input xml
+output json
+---
+{
+  testField: "hello world"
+}

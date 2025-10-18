@@ -25,6 +25,7 @@ object Main {
             
             when (command.lowercase()) {
                 "transform", "t" -> TransformCommand.execute(commandArgs)
+                "schema", "s" -> SchemaCommand.execute(commandArgs)
                 "validate", "v" -> {
                     println("Validate command not yet implemented")
                     println("Coming soon: Validate UTL-X scripts")
@@ -73,6 +74,7 @@ object Main {
             |
             |Commands:
             |  transform (t)  Transform data using a UTL-X script
+            |  schema    (s)  Generate and validate schemas (design-time analysis)
             |  validate  (v)  Validate a UTL-X script without executing
             |  compile   (c)  Compile a UTL-X script to bytecode
             |  format    (f)  Format/pretty-print a UTL-X script
@@ -83,6 +85,7 @@ object Main {
             |
             |Examples:
             |  utlx transform input.xml script.utlx -o output.json
+            |  utlx schema generate --input-schema order.xsd --transform script.utlx --output-format json-schema
             |  utlx validate script.utlx
             |  utlx transform --input-format xml --output-format json script.utlx < input.xml
             |  utlx transform data.yaml script.utlx --output-format json

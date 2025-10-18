@@ -61,9 +61,11 @@ class Lexer(private val source: String) {
             '*' -> addToken(TokenType.STAR, start, startColumn)
             '%' -> {
                 // Could be % operator or %utlx directive
-                if (current == 0 || (current > 0 && source[current - 2] == '\n')) {
+                if (start == 0 || (start > 0 && source[start - 1] == '\n')) {
                     // Start of line, might be directive
                     if (matchWord("utlx") || matchWord("dw")) {
+                        // Read the rest of the line
+                        while (peek() != '\n' && !isAtEnd()) advance()
                         val directive = source.substring(start, current)
                         addToken(TokenType.PERCENT_DIRECTIVE, start, startColumn, directive)
                     } else {

@@ -9,14 +9,6 @@ import org.apache.utlx.analysis.types.*
  * 
  * Converts JSON Schema specifications to internal TypeDefinition representation
  * for use in type inference and validation.
- * 
- * Supports:
- * - Basic types (string, number, integer, boolean, null, object, array)
- * - Constraints (minLength, maxLength, pattern, minimum, maximum, etc.)
- * - Required properties
- * - oneOf/anyOf/allOf combinators
- * - $ref references (simplified)
- * - format specifiers (date-time, email, uri, etc.)
  */
 class JSONSchemaParser : InputSchemaParser {
     
@@ -44,273 +36,191 @@ class JSONSchemaParser : InputSchemaParser {
     private fun parseJsonSchema(schema: JsonObject): TypeDefinition {
         // Handle $ref (simplified - doesn't resolve external refs)
         if (schema.containsKey("\$ref")) {
-            val ref = schema["\$ref"]!!.jsonPrimitive.content
             // For now, treat refs as Any type (proper resolution would need context)
             return TypeDefinition.Any
         }
         
-        // Handle combinators (oneOf, anyOf, allOf)
-        when {
-            schema.containsKey("anyOf") || schema.containsKey("oneOf") -> {
-                val key = if (schema.containsKey("anyOf")) "anyOf" else "oneOf"
-                val types = schema[key]!!.jsonArray.map { parseJsonSchema(it.jsonObject) }
-                return TypeDefinition.Union(types)
-            }
-            schema.containsKey("allOf") -> {
-                // Merge all schemas (simplified intersection)
-                val types = schema["allOf"]!!.jsonArray.map { parseJsonSchema(it.jsonObject) }
-                return mergeAllOf(types)
-            }
-        }
+        // Get the type field
+        val typeField = schema["type"]
         
-        // Get type (can be string or array)
-        val type = when {
-            schema.containsKey("type") -> {
-                val typeElement = schema["type"]!!
+        return when {
+            typeField == null -> {
+                // No type specified - check for other indicators
                 when {
-                    typeElement is JsonPrimitive -> typeElement.content
-                    typeElement is JsonArray -> typeElement.jsonArray.first().jsonPrimitive.content
-                    else -> null
+                    schema.containsKey("properties") -> parseObjectSchema(schema)
+                    schema.containsKey("items") -> parseArraySchema(schema)
+                    schema.containsKey("enum") -> parseEnumSchema(schema)
+                    schema.containsKey("oneOf") || schema.containsKey("anyOf") -> parseUnionSchema(schema)
+                    else -> TypeDefinition.Any
                 }
             }
-            else -> null
-        }
-        
-        // Get description
-        val description = schema["description"]?.jsonPrimitive?.content
-        
-        return when (type) {
-            "object" -> parseObjectSchema(schema, description)
-            "array" -> parseArraySchema(schema, description)
-            "string" -> parseStringSchema(schema, description)
-            "integer" -> parseIntegerSchema(schema, description)
-            "number" -> parseNumberSchema(schema, description)
-            "boolean" -> TypeDefinition.Scalar(ScalarKind.BOOLEAN)
-            "null" -> TypeDefinition.Scalar(ScalarKind.NULL)
-            else -> {
-                // No type specified - could be any type
-                if (schema.containsKey("properties")) {
-                    parseObjectSchema(schema, description)
-                } else {
-                    TypeDefinition.Any
+            typeField.jsonPrimitive.isString -> {
+                when (typeField.jsonPrimitive.content) {
+                    "string" -> parseStringSchema(schema)
+                    "number" -> parseNumberSchema(schema)
+                    "integer" -> parseIntegerSchema(schema)
+                    "boolean" -> TypeDefinition.Scalar(ScalarKind.BOOLEAN)
+                    "null" -> TypeDefinition.Scalar(ScalarKind.NULL)
+                    "object" -> parseObjectSchema(schema)
+                    "array" -> parseArraySchema(schema)
+                    else -> TypeDefinition.Any
                 }
             }
+            typeField.jsonArray.isNotEmpty() -> {
+                // Multiple types - create union
+                val types = typeField.jsonArray.map { element ->
+                    val singleTypeSchema = JsonObject(schema.toMutableMap().apply {
+                        put("type", element)
+                    })
+                    parseJsonSchema(singleTypeSchema)
+                }
+                if (types.size == 1) types.first() else TypeDefinition.Union(types)
+            }
+            else -> TypeDefinition.Any
         }
     }
     
-    /**
-     * Parse object schema
-     */
-    private fun parseObjectSchema(schema: JsonObject, description: String?): TypeDefinition {
-        val properties = mutableMapOf<String, PropertyType>()
-        val required = schema["required"]?.jsonArray?.map { 
-            it.jsonPrimitive.content 
-        }?.toSet() ?: emptySet()
-        
-        // Parse properties
-        schema["properties"]?.jsonObject?.forEach { (name, propSchema) ->
-            val propType = parseJsonSchema(propSchema.jsonObject)
-            val propDesc = propSchema.jsonObject["description"]?.jsonPrimitive?.content
-            
-            properties[name] = PropertyType(
-                type = propType,
-                nullable = !required.contains(name),
-                description = propDesc
-            )
-        }
-        
-        // Get additionalProperties setting
-        val additionalProperties = when {
-            schema.containsKey("additionalProperties") -> {
-                val addProp = schema["additionalProperties"]!!
-                when {
-                    addProp is JsonPrimitive -> addProp.boolean
-                    else -> true // Schema object means additional props with that schema
-                }
-            }
-            else -> false
-        }
-        
-        return TypeDefinition.Object(
-            properties = properties,
-            required = required,
-            additionalProperties = additionalProperties,
-            description = description
-        )
-    }
-    
-    /**
-     * Parse array schema
-     */
-    private fun parseArraySchema(schema: JsonObject, description: String?): TypeDefinition {
-        val items = schema["items"]?.jsonObject
-        val elementType = if (items != null) {
-            parseJsonSchema(items)
-        } else {
-            TypeDefinition.Any
-        }
-        
-        val minItems = schema["minItems"]?.jsonPrimitive?.int
-        val maxItems = schema["maxItems"]?.jsonPrimitive?.int
-        val uniqueItems = schema["uniqueItems"]?.jsonPrimitive?.boolean ?: false
-        
-        val constraints = mutableListOf<Constraint>()
-        if (uniqueItems) {
-            constraints.add(Constraint.Custom("uniqueItems", "true"))
-        }
-        
-        return TypeDefinition.Array(
-            elementType = elementType,
-            minItems = minItems,
-            maxItems = maxItems,
-            description = description
-        )
-    }
-    
-    /**
-     * Parse string schema
-     */
-    private fun parseStringSchema(schema: JsonObject, description: String?): TypeDefinition {
+    private fun parseStringSchema(schema: JsonObject): TypeDefinition.Scalar {
         val constraints = mutableListOf<Constraint>()
         
-        // Determine scalar kind based on format
-        val format = schema["format"]?.jsonPrimitive?.content
-        val kind = when (format) {
+        schema["minLength"]?.jsonPrimitive?.intOrNull?.let {
+            constraints.add(Constraint(ConstraintKind.MIN_LENGTH, it))
+        }
+        
+        schema["maxLength"]?.jsonPrimitive?.intOrNull?.let {
+            constraints.add(Constraint(ConstraintKind.MAX_LENGTH, it))
+        }
+        
+        schema["pattern"]?.jsonPrimitive?.contentOrNull?.let {
+            constraints.add(Constraint(ConstraintKind.PATTERN, it))
+        }
+        
+        schema["enum"]?.jsonArray?.let { enumArray ->
+            val enumValues = enumArray.map { it.jsonPrimitive.content }
+            constraints.add(Constraint(ConstraintKind.ENUM, enumValues))
+        }
+        
+        // Check format for special string types
+        val format = schema["format"]?.jsonPrimitive?.contentOrNull
+        val scalarKind = when (format) {
             "date" -> ScalarKind.DATE
             "date-time" -> ScalarKind.DATETIME
-            "time" -> ScalarKind.TIME
-            "email" -> {
-                constraints.add(Constraint.Pattern("^[^@]+@[^@]+\\.[^@]+$"))
-                ScalarKind.STRING
-            }
-            "uri", "url" -> {
-                constraints.add(Constraint.Custom("format", "uri"))
-                ScalarKind.STRING
-            }
-            "uuid" -> {
-                constraints.add(Constraint.Pattern("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"))
-                ScalarKind.STRING
-            }
             else -> ScalarKind.STRING
         }
         
-        // Length constraints
-        schema["minLength"]?.jsonPrimitive?.int?.let {
-            constraints.add(Constraint.MinLength(it))
-        }
-        schema["maxLength"]?.jsonPrimitive?.int?.let {
-            constraints.add(Constraint.MaxLength(it))
-        }
-        
-        // Pattern constraint
-        schema["pattern"]?.jsonPrimitive?.content?.let {
-            constraints.add(Constraint.Pattern(it))
-        }
-        
-        // Enum constraint
-        schema["enum"]?.jsonArray?.let { enumArray ->
-            val values = enumArray.map { it.jsonPrimitive.content }
-            constraints.add(Constraint.Enum(values))
-        }
-        
-        return TypeDefinition.Scalar(
-            kind = kind,
-            constraints = constraints,
-            description = description
-        )
+        return TypeDefinition.Scalar(scalarKind, constraints)
     }
     
-    /**
-     * Parse integer schema
-     */
-    private fun parseIntegerSchema(schema: JsonObject, description: String?): TypeDefinition {
+    private fun parseNumberSchema(schema: JsonObject): TypeDefinition.Scalar {
         val constraints = mutableListOf<Constraint>()
         
-        // Numeric constraints
-        schema["minimum"]?.jsonPrimitive?.long?.let {
-            constraints.add(Constraint.Minimum(it.toDouble()))
-        }
-        schema["maximum"]?.jsonPrimitive?.long?.let {
-            constraints.add(Constraint.Maximum(it.toDouble()))
-        }
-        schema["exclusiveMinimum"]?.jsonPrimitive?.long?.let {
-            constraints.add(Constraint.ExclusiveMinimum(it.toDouble()))
-        }
-        schema["exclusiveMaximum"]?.jsonPrimitive?.long?.let {
-            constraints.add(Constraint.ExclusiveMaximum(it.toDouble()))
-        }
-        schema["multipleOf"]?.jsonPrimitive?.long?.let {
-            constraints.add(Constraint.MultipleOf(it.toDouble()))
+        schema["minimum"]?.jsonPrimitive?.doubleOrNull?.let {
+            constraints.add(Constraint(ConstraintKind.MINIMUM, it))
         }
         
-        // Enum constraint
-        schema["enum"]?.jsonArray?.let { enumArray ->
-            val values = enumArray.map { it.jsonPrimitive.long.toString() }
-            constraints.add(Constraint.Enum(values))
+        schema["maximum"]?.jsonPrimitive?.doubleOrNull?.let {
+            constraints.add(Constraint(ConstraintKind.MAXIMUM, it))
         }
         
-        return TypeDefinition.Scalar(
-            kind = ScalarKind.INTEGER,
-            constraints = constraints,
-            description = description
-        )
+        return TypeDefinition.Scalar(ScalarKind.NUMBER, constraints)
     }
     
-    /**
-     * Parse number (float/double) schema
-     */
-    private fun parseNumberSchema(schema: JsonObject, description: String?): TypeDefinition {
+    private fun parseIntegerSchema(schema: JsonObject): TypeDefinition.Scalar {
         val constraints = mutableListOf<Constraint>()
         
-        // Numeric constraints
-        schema["minimum"]?.jsonPrimitive?.double?.let {
-            constraints.add(Constraint.Minimum(it))
-        }
-        schema["maximum"]?.jsonPrimitive?.double?.let {
-            constraints.add(Constraint.Maximum(it))
-        }
-        schema["exclusiveMinimum"]?.jsonPrimitive?.double?.let {
-            constraints.add(Constraint.ExclusiveMinimum(it))
-        }
-        schema["exclusiveMaximum"]?.jsonPrimitive?.double?.let {
-            constraints.add(Constraint.ExclusiveMaximum(it))
-        }
-        schema["multipleOf"]?.jsonPrimitive?.double?.let {
-            constraints.add(Constraint.MultipleOf(it))
+        schema["minimum"]?.jsonPrimitive?.intOrNull?.let {
+            constraints.add(Constraint(ConstraintKind.MINIMUM, it.toDouble()))
         }
         
-        // Enum constraint
-        schema["enum"]?.jsonArray?.let { enumArray ->
-            val values = enumArray.map { it.jsonPrimitive.double.toString() }
-            constraints.add(Constraint.Enum(values))
+        schema["maximum"]?.jsonPrimitive?.intOrNull?.let {
+            constraints.add(Constraint(ConstraintKind.MAXIMUM, it.toDouble()))
+        }
+        
+        return TypeDefinition.Scalar(ScalarKind.INTEGER, constraints)
+    }
+    
+    private fun parseObjectSchema(schema: JsonObject): TypeDefinition.Object {
+        val properties = mutableMapOf<String, PropertyType>()
+        val required = mutableSetOf<String>()
+        
+        // Parse properties
+        schema["properties"]?.jsonObject?.let { propsObj ->
+            propsObj.forEach { (propName, propSchema) ->
+                val propType = parseJsonSchema(propSchema.jsonObject)
+                properties[propName] = PropertyType(propType, nullable = false)
+            }
+        }
+        
+        // Parse required fields
+        schema["required"]?.jsonArray?.let { requiredArray ->
+            requiredArray.forEach { element ->
+                required.add(element.jsonPrimitive.content)
+            }
+        }
+        
+        // Check additionalProperties
+        val additionalProperties = schema["additionalProperties"]?.jsonPrimitive?.booleanOrNull ?: false
+        
+        return TypeDefinition.Object(properties, required, additionalProperties)
+    }
+    
+    private fun parseArraySchema(schema: JsonObject): TypeDefinition.Array {
+        val elementType = schema["items"]?.let { items ->
+            when (items) {
+                is JsonObject -> parseJsonSchema(items)
+                is JsonArray -> {
+                    // Multiple item schemas - create union
+                    val types = items.map { parseJsonSchema(it.jsonObject) }
+                    if (types.size == 1) types.first() else TypeDefinition.Union(types)
+                }
+                else -> TypeDefinition.Any
+            }
+        } ?: TypeDefinition.Any
+        
+        val minItems = schema["minItems"]?.jsonPrimitive?.intOrNull
+        val maxItems = schema["maxItems"]?.jsonPrimitive?.intOrNull
+        
+        return TypeDefinition.Array(elementType, minItems, maxItems)
+    }
+    
+    private fun parseEnumSchema(schema: JsonObject): TypeDefinition {
+        val enumArray = schema["enum"]?.jsonArray ?: return TypeDefinition.Any
+        
+        // Determine the type of enum values
+        val firstValue = enumArray.firstOrNull()?.jsonPrimitive
+        val scalarKind = when {
+            firstValue?.isString == true -> ScalarKind.STRING
+            firstValue?.booleanOrNull != null -> ScalarKind.BOOLEAN
+            firstValue?.intOrNull != null -> ScalarKind.INTEGER
+            firstValue?.doubleOrNull != null -> ScalarKind.NUMBER
+            else -> ScalarKind.STRING
+        }
+        
+        val enumValues = enumArray.map { 
+            when (scalarKind) {
+                ScalarKind.STRING -> it.jsonPrimitive.content
+                ScalarKind.BOOLEAN -> it.jsonPrimitive.boolean.toString()
+                ScalarKind.INTEGER -> it.jsonPrimitive.int.toString()
+                ScalarKind.NUMBER -> it.jsonPrimitive.double.toString()
+                else -> it.jsonPrimitive.content
+            }
         }
         
         return TypeDefinition.Scalar(
-            kind = ScalarKind.NUMBER,
-            constraints = constraints,
-            description = description
+            scalarKind, 
+            listOf(Constraint(ConstraintKind.ENUM, enumValues))
         )
     }
     
-    /**
-     * Merge allOf schemas (simplified intersection)
-     */
-    private fun mergeAllOf(types: List<TypeDefinition>): TypeDefinition {
-        // Simplified: just return first object type found, or first type
-        return types.firstOrNull { it is TypeDefinition.Object } ?: types.firstOrNull() ?: TypeDefinition.Any
-    }
-    
-    companion object {
-        /**
-         * Quick parse method
-         */
-        fun fromJSONSchema(schema: String): TypeDefinition {
-            return JSONSchemaParser().parse(schema, SchemaFormat.JSON_SCHEMA)
-        }
+    private fun parseUnionSchema(schema: JsonObject): TypeDefinition {
+        val oneOf = schema["oneOf"]?.jsonArray
+        val anyOf = schema["anyOf"]?.jsonArray
+        val allOf = schema["allOf"]?.jsonArray
+        
+        val schemas = oneOf ?: anyOf ?: allOf ?: return TypeDefinition.Any
+        
+        val types = schemas.map { parseJsonSchema(it.jsonObject) }
+        
+        return if (types.size == 1) types.first() else TypeDefinition.Union(types)
     }
 }
-
-/**
- * Exception thrown when schema parsing fails
- */
-class SchemaParseException(message: String, cause: Throwable? = null) : Exception(message, cause)

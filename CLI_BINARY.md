@@ -45,6 +45,7 @@ utlx version
 
 ### Core Commands
 - **`transform (t)`** - Transform data using UTL-X scripts ✅ **WORKING**
+- **`schema (s)`** - Generate and validate schemas (design-time analysis) ✅ **INTEGRATED**
 - **`version`** - Show version information ✅ **WORKING**
 - **`help`** - Show help message ✅ **WORKING**
 
@@ -92,6 +93,43 @@ cat input.xml | ./utlx transform script.utlx > output.json
 - `--output-format FORMAT` - Force output format (xml, json, csv, yaml)
 - `-v, --verbose` - Enable verbose output
 - `--no-pretty` - Disable pretty-printing
+
+## Schema Command (Design-Time Analysis)
+
+The schema command provides design-time analysis capabilities:
+
+### Schema Subcommands
+- **`generate (gen)`** - Generate output schema from transformation and input schema
+- **`validate (val)`** - Validate transformation against expected output schema
+- **`infer (inf)`** - Infer schema from transformation without input schema
+- **`diff`** - Compare two schemas and show differences
+
+### Schema Command Examples
+```bash
+# See planned functionality
+./utlx schema generate
+./utlx schema validate
+./utlx schema infer
+./utlx schema diff
+
+# Show schema command help
+./utlx schema help
+```
+
+### Current Status
+- ✅ **CLI Integration Complete** - Schema command integrated into CLI
+- ✅ **Documentation Ready** - Full analysis module documentation available
+- ✅ **Architecture Defined** - Complete type system and inference engine designed
+- 🚧 **Implementation Pending** - Analysis module needs compilation fixes for full integration
+
+The analysis module (`modules/analysis/`) contains complete documentation and architecture for:
+- Type inference engine for UTL-X transformations
+- Schema parsing (XSD, JSON Schema support)
+- Schema generation (JSON Schema implemented, XSD planned)
+- Schema validation and comparison capabilities
+- Complete type system with constraints
+
+See `modules/analysis/analysis_module_readme.md` for detailed documentation.
 
 ## Standard Library Integration
 

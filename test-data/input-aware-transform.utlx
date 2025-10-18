@@ -1,0 +1,9 @@
+%utlx 1.0
+input xml
+output json
+---
+{
+  result: "processed data",
+  count: 42,
+  active: true
+}

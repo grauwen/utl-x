@@ -1,0 +1,8 @@
+%utlx 1.0
+input xml
+output json
+---
+{
+  name: input.customer.name,
+  id: input.customer.id
+}

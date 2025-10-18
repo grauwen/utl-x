@@ -1,0 +1,26 @@
+%utlx 1.0
+input xml
+output json
+---
+{
+  customerId: input.customer.id,
+  fullName: input.customer.name,
+  contactInfo: {
+    email: input.customer.email,
+    address: if (input.customer.address != null) {
+      street: input.customer.address.street,
+      city: input.customer.address.city,
+      postalCode: input.customer.address.zipCode,
+      country: input.customer.address.country
+    } else null
+  },
+  orderSummary: if (input.customer.orders != null) {
+    totalOrders: length(input.customer.orders.order),
+    totalAmount: sum(input.customer.orders.order.amount),
+    recentOrders: map(input.customer.orders.order, {
+      id: orderId,
+      value: amount,
+      orderDate: date
+    })
+  } else null
+}
