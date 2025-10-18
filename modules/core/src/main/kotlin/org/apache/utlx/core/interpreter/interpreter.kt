@@ -463,32 +463,121 @@ class Interpreter {
     }
     
     private fun evaluateFunctionCall(expr: Expression.FunctionCall, env: Environment): RuntimeValue {
-        val function = evaluate(expr.function, env)
-        val args = expr.arguments.map { evaluate(it, env) }
+        // First try to resolve the function from the environment
+        val functionName = (expr.function as? Expression.Identifier)?.name
         
-        return when (function) {
-            is RuntimeValue.FunctionValue -> {
-                // User-defined function or lambda
-                if (function.parameters.isEmpty() && StandardLibraryImpl.nativeFunctions.containsKey((expr.function as? Expression.Identifier)?.name)) {
-                    // Native function
-                    val functionName = (expr.function as Expression.Identifier).name
-                    val nativeImpl = StandardLibraryImpl.nativeFunctions[functionName]!!
-                    nativeImpl(args)
+        try {
+            val function = evaluate(expr.function, env)
+            val args = expr.arguments.map { evaluate(it, env) }
+            
+            return when (function) {
+                is RuntimeValue.FunctionValue -> {
+                    // User-defined function or lambda
+                    if (function.parameters.isEmpty() && functionName != null && StandardLibraryImpl.nativeFunctions.containsKey(functionName)) {
+                        // Native function
+                        val nativeImpl = StandardLibraryImpl.nativeFunctions[functionName]!!
+                        nativeImpl(args)
+                    } else {
+                        // User-defined function
+                        if (args.size != function.parameters.size) {
+                            throw RuntimeError("Function expects ${function.parameters.size} arguments, got ${args.size}", expr.location)
+                        }
+                        
+                        val funcEnv = function.closure.createChild()
+                        for ((param, arg) in function.parameters.zip(args)) {
+                            funcEnv.define(param, arg)
+                        }
+                        
+                        evaluate(function.body, funcEnv)
+                    }
+                }
+                else -> throw RuntimeError("Cannot call non-function value", expr.location)
+            }
+        } catch (e: RuntimeError) {
+            // If function is not found in environment, try dynamic loading from stdlib
+            if (functionName != null && e.message?.contains("Undefined variable") == true) {
+                return tryLoadStdlibFunction(functionName, expr.arguments, env, expr.location)
+            }
+            throw e
+        }
+    }
+    
+    /**
+     * Dynamic function loader - attempts to load stdlib functions on demand
+     */
+    private fun tryLoadStdlibFunction(functionName: String, arguments: List<Expression>, env: Environment, location: Location): RuntimeValue {
+        try {
+            // Use reflection to access stdlib functions dynamically
+            val stdlibClass = Class.forName("org.apache.utlx.stdlib.StandardLibrary")
+            val getAllFunctionsMethod = stdlibClass.getMethod("getAllFunctions")
+            val functions = getAllFunctionsMethod.invoke(null) as Map<String, Any>
+            
+            if (functions.containsKey(functionName)) {
+                val stdlibFunction = functions[functionName]
+                if (stdlibFunction != null) {
+                    val executeMethod = stdlibFunction.javaClass.getMethod("execute", List::class.java)
+                    
+                    // Evaluate arguments and convert to UDM
+                    val args = arguments.map { evaluate(it, env) }
+                    val udmArgs = args.map { runtimeValueToUDM(it) }
+                    
+                    // Execute stdlib function
+                    val result = executeMethod.invoke(stdlibFunction, udmArgs)
+                    
+                    // Convert result back to RuntimeValue
+                    return udmToRuntimeValue(result)
                 } else {
-                    // User-defined function
-                    if (args.size != function.parameters.size) {
-                        throw RuntimeError("Function expects ${function.parameters.size} arguments, got ${args.size}", expr.location)
-                    }
-                    
-                    val funcEnv = function.closure.createChild()
-                    for ((param, arg) in function.parameters.zip(args)) {
-                        funcEnv.define(param, arg)
-                    }
-                    
-                    evaluate(function.body, funcEnv)
+                    throw RuntimeError("Stdlib function '$functionName' is null in registry", location)
                 }
             }
-            else -> throw RuntimeError("Cannot call non-function value", expr.location)
+        } catch (e: ClassNotFoundException) {
+            // Stdlib module not available in classpath
+            throw RuntimeError("Stdlib module not available - function '$functionName' cannot be loaded", location)
+        } catch (e: NoSuchMethodException) {
+            // Method not found
+            throw RuntimeError("Stdlib function '$functionName' has incompatible interface", location)
+        } catch (e: Exception) {
+            // Other reflection errors
+            throw RuntimeError("Failed to load stdlib function '$functionName': ${e.message}", location)
+        }
+        
+        throw RuntimeError("Undefined function: $functionName", location)
+    }
+    
+    /**
+     * Convert RuntimeValue to UDM for stdlib function calls
+     */
+    private fun runtimeValueToUDM(value: RuntimeValue): org.apache.utlx.core.udm.UDM {
+        return when (value) {
+            is RuntimeValue.StringValue -> org.apache.utlx.core.udm.UDM.Scalar(value.value)
+            is RuntimeValue.NumberValue -> org.apache.utlx.core.udm.UDM.Scalar(value.value)
+            is RuntimeValue.BooleanValue -> org.apache.utlx.core.udm.UDM.Scalar(value.value)
+            is RuntimeValue.NullValue -> org.apache.utlx.core.udm.UDM.Scalar(null)
+            is RuntimeValue.ArrayValue -> org.apache.utlx.core.udm.UDM.Array(value.elements.map { runtimeValueToUDM(it) })
+            is RuntimeValue.ObjectValue -> org.apache.utlx.core.udm.UDM.Object(value.properties.mapValues { runtimeValueToUDM(it.value) })
+            is RuntimeValue.UDMValue -> value.udm
+            else -> throw RuntimeError("Cannot convert ${value::class.simpleName} to UDM for stdlib function call")
+        }
+    }
+    
+    /**
+     * Convert UDM result back to RuntimeValue
+     */
+    private fun udmToRuntimeValue(result: Any?): RuntimeValue {
+        return when (result) {
+            is org.apache.utlx.core.udm.UDM.Scalar -> {
+                when (val value = result.value) {
+                    is String -> RuntimeValue.StringValue(value)
+                    is Number -> RuntimeValue.NumberValue(value.toDouble())
+                    is Boolean -> RuntimeValue.BooleanValue(value)
+                    null -> RuntimeValue.NullValue
+                    else -> RuntimeValue.StringValue(value.toString())
+                }
+            }
+            is org.apache.utlx.core.udm.UDM.Array -> RuntimeValue.ArrayValue(result.elements.map { udmToRuntimeValue(it) })
+            is org.apache.utlx.core.udm.UDM.Object -> RuntimeValue.ObjectValue(result.properties.mapValues { udmToRuntimeValue(it.value) })
+            is org.apache.utlx.core.udm.UDM -> RuntimeValue.UDMValue(result)
+            else -> RuntimeValue.StringValue(result.toString())
         }
     }
     

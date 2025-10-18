@@ -14,6 +14,7 @@ import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.csv.CSVSerializer
 import org.apache.utlx.formats.yaml.YAMLParser
 import org.apache.utlx.formats.yaml.YAMLSerializer
+import org.apache.utlx.stdlib.StandardLibrary
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -68,8 +69,9 @@ object TransformCommand {
         // Parse input to UDM
         val inputUDM = parseInput(inputData, inputFormat)
         
-        // Execute transformation
+        // Execute transformation using core Interpreter with dynamic stdlib loading
         val interpreter = Interpreter()
+        
         val result = interpreter.execute(program, inputUDM)
         val outputUDM = result.toUDM()
         

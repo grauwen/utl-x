@@ -309,14 +309,14 @@ object StandardLibrary {
         register("leftTrim", MoreStringFunctions::leftTrim)
         register("rightTrim", MoreStringFunctions::rightTrim)
         register("translate", MoreStringFunctions::translate)
-        register("reverse", MoreStringFunctions::reverse)
+        register("reverseString", MoreStringFunctions::reverse) // Renamed to avoid conflict with array reverse
         //register("isEmpty", MoreStringFunctions::isEmpty)// now generic UDM isEmpty check for all types: strings, arrays, objects, binary, numbers, datetime
         register("isBlank", MoreStringFunctions::isBlank)
         register("charAt", MoreStringFunctions::charAt)
         register("charCodeAt", MoreStringFunctions::charCodeAt)
         register("fromCharCode", MoreStringFunctions::fromCharCode)
         register("capitalize", MoreStringFunctions::capitalize)
-        register("titleCase", MoreStringFunctions::titleCase)
+        // register("titleCase", MoreStringFunctions::titleCase) // DUPLICATE: titleCase already registered in CaseFunctions
 
         // Case conversion functions
         register("camelize", CaseFunctions::camelize)
@@ -395,7 +395,7 @@ object StandardLibrary {
         register("lastIndexOf", MoreArrayFunctions::lastIndexOf)
         register("includes", MoreArrayFunctions::includes)
         register("slice", MoreArrayFunctions::slice)
-        register("concat", MoreArrayFunctions::concat)
+        // register("concat", MoreArrayFunctions::concat) // DUPLICATE: concat already registered in CoreFunctions with generic implementation
         
         // Aggregation functions
         register("sum", Aggregations::sum)
@@ -406,7 +406,7 @@ object StandardLibrary {
 
         // Critical array utilities
         register("compact", CriticalArrayFunctions::compact)
-        register("findIndex", CriticalArrayFunctions::findIndex)
+        // register("findIndex", CriticalArrayFunctions::findIndex) // DUPLICATE: findIndex already registered in ArrayFunctions
         register("findLastIndex", CriticalArrayFunctions::findLastIndex)
  
        // Advanced functional operations
@@ -698,8 +698,8 @@ object StandardLibrary {
     // CRITICAL: Number parsing (used in examples!)
          register("parseNumber", ConversionFunctions::parseNumber)
          register("toNumber", ConversionFunctions::toNumber)
-         register("parseInt", ConversionFunctions::parseInt)
-         register("parseFloat", ConversionFunctions::parseFloat)
+         // register("parseInt", ConversionFunctions::parseInt) // DUPLICATE: parseInt already registered in ExtendedMathFunctions
+         // register("parseFloat", ConversionFunctions::parseFloat) // DUPLICATE: parseFloat already registered in ExtendedMathFunctions
          register("parseDouble", ConversionFunctions::parseDouble)  
          
          // String conversion
@@ -710,7 +710,7 @@ object StandardLibrary {
          register("toBoolean", ConversionFunctions::toBoolean)
        
          // Date conversion
-         register("parseDate", ConversionFunctions::parseDate)
+         // register("parseDate", ConversionFunctions::parseDate) // DUPLICATE: parseDate already registered in DateFunctions
        
          // Collection conversion
          register("toArray", ConversionFunctions::toArray)
@@ -728,7 +728,7 @@ object StandardLibrary {
         register("getProtocol", URLFunctions::getProtocol)
         register("getHost", URLFunctions::getHost)
         register("getPort", URLFunctions::getPort)
-        register("getPath", URLFunctions::getPath)
+        register("getURLPath", URLFunctions::getPath) // Renamed to avoid conflict with object getPath
         register("getQuery", URLFunctions::getQuery)
         register("getFragment", URLFunctions::getFragment)
         register("getQueryParams", URLFunctions::getQueryParams)
@@ -801,8 +801,8 @@ object StandardLibrary {
       private fun registerValueFunctions() {
           register("update", ValueFunctions::update)
           register("mask", ValueFunctions::mask)
-          register("pick", ValueFunctions::pick)
-          register("omit", ValueFunctions::omit)
+          // register("pick", ValueFunctions::pick) // DUPLICATE: pick already registered in ObjectFunctions
+          // register("omit", ValueFunctions::omit) // DUPLICATE: omit already registered in ObjectFunctions
           register("defaultValue", ValueFunctions::defaultValue)
       }
      
@@ -1034,7 +1034,7 @@ object StandardLibrary {
         
         // Logarithmic functions
         register("ln", AdvancedMathFunctions::ln)
-        register("log", AdvancedMathFunctions::log)
+        register("logBase", AdvancedMathFunctions::log) // Renamed to avoid conflict with debug log
         register("log10", AdvancedMathFunctions::log10)
         register("log2", AdvancedMathFunctions::log2)
         register("exp", AdvancedMathFunctions::exp)
@@ -1094,7 +1094,7 @@ object StandardLibrary {
         register("maxBy", EnhancedArrayFunctions::maxBy)
         register("minBy", EnhancedArrayFunctions::minBy)
         register("groupBy", EnhancedArrayFunctions::groupBy)
-        register("distinctBy", EnhancedArrayFunctions::distinctBy)
+        // register("distinctBy", EnhancedArrayFunctions::distinctBy) // DUPLICATE: distinctBy already registered in ArrayFunctions
         register("avgBy", EnhancedArrayFunctions::avgBy)
     }
     
