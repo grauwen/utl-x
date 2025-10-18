@@ -11,6 +11,20 @@ TODO's
 
 integrate module analysis (design time) into CLI
 
+stdlib isowestern, u
+
+Byte-Order-Mark (BOM)
+First bytes        Encoding assumed
+-----------------------------------------
+EF BB BF           UTF-8
+FE FF              UTF-16 (big-endian)
+FF FE              UTF-16 (little-endian)
+00 00 FE FF        UTF-32 (big-endian)
+FF FE 00 00        UTF-32 (little-endian)
+None of the above  UTF-8
+
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
 DONE -stlib: serialize -> render (DOM -> string) , parse (string -> DOM) :: in theory also binary or string could be used :: distinct parsseJson, parseCsv, parseXml, parseYaml, renderXml, renderYaml, renderCsv, renderJson
 DONE -stlib: parseNumber missing
 DONE -stlib cannonalize  -> XML Canonicalization (C14N) standards:
