@@ -1,0 +1,51 @@
+name: "flatten_basic"
+category: "stdlib/array"
+description: "Test array flatten function"
+tags: ["array", "flatten", "nested"]
+
+input:
+  format: json
+  data: [[1, 2], [3, 4], [5, 6]]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  flatten(@input)
+
+expected:
+  format: json
+  data: [1, 2, 3, 4, 5, 6]
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "already_flat"
+    input:
+      format: json
+      data: [1, 2, 3, 4, 5]
+    expected:
+      format: json
+      data: [1, 2, 3, 4, 5]
+      
+  - name: "deeply_nested"
+    input:
+      format: json
+      data: [[[1, 2]], [[3, 4]], [[5, 6]]]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      flattenDeep(@input)
+    expected:
+      format: json
+      data: [1, 2, 3, 4, 5, 6]
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Array Functions"]

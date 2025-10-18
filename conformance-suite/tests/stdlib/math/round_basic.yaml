@@ -1,0 +1,61 @@
+name: "round_basic"
+category: "stdlib/math"
+description: "Test math round function"
+tags: ["math", "round", "rounding"]
+
+input:
+  format: json
+  data: 3.7
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  round(@input)
+
+expected:
+  format: json
+  data: 4
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "round_down"
+    input:
+      format: json
+      data: 3.2
+    expected:
+      format: json
+      data: 3
+      
+  - name: "round_half"
+    input:
+      format: json
+      data: 3.5
+    expected:
+      format: json
+      data: 4
+      
+  - name: "negative_number"
+    input:
+      format: json
+      data: -3.7
+    expected:
+      format: json
+      data: -4
+      
+  - name: "whole_number"
+    input:
+      format: json
+      data: 5
+    expected:
+      format: json
+      data: 5
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Math Functions"]

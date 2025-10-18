@@ -1,0 +1,51 @@
+name: "sqrt_basic"
+category: "stdlib/math"
+description: "Test math sqrt function"
+tags: ["math", "sqrt", "root"]
+
+input:
+  format: json
+  data: 16
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  sqrt(@input)
+
+expected:
+  format: json
+  data: 4
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "perfect_square"
+    input:
+      format: json
+      data: 25
+    expected:
+      format: json
+      data: 5
+      
+  - name: "decimal_result"
+    input:
+      format: json
+      data: 2
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      round(sqrt(@input) * 1000) / 1000
+    expected:
+      format: json
+      data: 1.414
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Math Functions"]

@@ -43,6 +43,12 @@ variants:
     input:
       format: json
       data: [2, 3, 4]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      reduce(@input, (acc, x) -> acc * x, 1)
     expected:
       format: json
       data: 24
@@ -51,14 +57,26 @@ variants:
     input:
       format: json
       data: ["Hello", " ", "World", "!"]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      reduce(@input, (acc, x) -> acc + x, "")
     expected:
       format: json
       data: "Hello World!"
       
-  - name: "find_maximum"
+  - name: "sum_of_squares"
     input:
       format: json
-      data: [3, 7, 2, 9, 1, 8]
+      data: [1, 2, 3, 4, 5]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      reduce(@input, (acc, x) -> acc + x * x, 0)
     expected:
       format: json
-      data: 9
+      data: 55

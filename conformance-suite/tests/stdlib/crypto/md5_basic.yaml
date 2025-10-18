@@ -1,0 +1,45 @@
+name: "md5_basic"
+category: "stdlib/crypto"
+description: "Test MD5 hash function"
+tags: ["crypto", "hash", "md5"]
+
+input:
+  format: json
+  data: "hello world"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  md5(@input)
+
+expected:
+  format: json
+  data: "5d41402abc4b2a76b9719d911017c592"
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "empty_string"
+    input:
+      format: json
+      data: ""
+    expected:
+      format: json
+      data: "d41d8cd98f00b204e9800998ecf8427e"
+      
+  - name: "longer_text"
+    input:
+      format: json
+      data: "The quick brown fox jumps over the lazy dog"
+    expected:
+      format: json
+      data: "9e107d9d372bb6826bd81d3542a419d6"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Cryptographic Functions"]

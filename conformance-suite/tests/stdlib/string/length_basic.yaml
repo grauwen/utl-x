@@ -1,0 +1,53 @@
+name: "length_basic"
+category: "stdlib/string"
+description: "Test string length function"
+tags: ["string", "length", "size"]
+
+input:
+  format: json
+  data: "hello world"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  length(@input)
+
+expected:
+  format: json
+  data: 11
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "empty_string"
+    input:
+      format: json
+      data: ""
+    expected:
+      format: json
+      data: 0
+      
+  - name: "single_char"
+    input:
+      format: json
+      data: "a"
+    expected:
+      format: json
+      data: 1
+      
+  - name: "unicode_chars"
+    input:
+      format: json
+      data: "Hello 世界"
+    expected:
+      format: json
+      data: 8
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - String Functions"]

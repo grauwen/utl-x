@@ -1,0 +1,65 @@
+name: "min_basic"
+category: "stdlib/math"
+description: "Test math min function"
+tags: ["math", "min", "comparison"]
+
+input:
+  format: json
+  data: [5, 2]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  min(@input[0], @input[1])
+
+expected:
+  format: json
+  data: 2
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "equal_values"
+    input:
+      format: json
+      data: [5, 5]
+    expected:
+      format: json
+      data: 5
+      
+  - name: "negative_numbers"
+    input:
+      format: json
+      data: [-3, -7]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      min(@input[0], @input[1])
+    expected:
+      format: json
+      data: -7
+      
+  - name: "decimal_numbers"
+    input:
+      format: json
+      data: [3.14, 2.71]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      min(@input[0], @input[1])
+    expected:
+      format: json
+      data: 2.71
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Math Functions"]

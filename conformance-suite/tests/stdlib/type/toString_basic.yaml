@@ -1,0 +1,61 @@
+name: "toString_basic"
+category: "stdlib/type"
+description: "Test toString conversion function"
+tags: ["type", "toString", "conversion"]
+
+input:
+  format: json
+  data: 42
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  toString(@input)
+
+expected:
+  format: json
+  data: "42"
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "boolean_true"
+    input:
+      format: json
+      data: true
+    expected:
+      format: json
+      data: "true"
+      
+  - name: "boolean_false"
+    input:
+      format: json
+      data: false
+    expected:
+      format: json
+      data: "false"
+      
+  - name: "decimal_number"
+    input:
+      format: json
+      data: 3.14
+    expected:
+      format: json
+      data: "3.14"
+      
+  - name: "already_string"
+    input:
+      format: json
+      data: "hello"
+    expected:
+      format: json
+      data: "hello"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Type Functions"]

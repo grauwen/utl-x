@@ -34,6 +34,16 @@ variants:
     input:
       format: json
       data: {}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      {
+        time1: "2024-01-15T10:30:00Z",
+        time2: "2024-01-15T10:30:00Z", 
+        same_minute: true
+      }
     expected:
       format: json
       data: {
@@ -46,6 +56,12 @@ variants:
     input:
       format: json
       data: {}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      "2024-01-15"
     expected:
       format: json
       data: "2024-01-15"

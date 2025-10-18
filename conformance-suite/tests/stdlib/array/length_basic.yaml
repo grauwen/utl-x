@@ -1,0 +1,53 @@
+name: "length_basic"
+category: "stdlib/array"
+description: "Test array length function"
+tags: ["array", "length", "size"]
+
+input:
+  format: json
+  data: [1, 2, 3, 4, 5]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  length(@input)
+
+expected:
+  format: json
+  data: 5
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "empty_array"
+    input:
+      format: json
+      data: []
+    expected:
+      format: json
+      data: 0
+      
+  - name: "single_element"
+    input:
+      format: json
+      data: ["test"]
+    expected:
+      format: json
+      data: 1
+      
+  - name: "nested_arrays"
+    input:
+      format: json
+      data: [[1, 2], [3, 4], [5, 6]]
+    expected:
+      format: json
+      data: 3
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Array Functions"]

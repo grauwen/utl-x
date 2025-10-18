@@ -1,0 +1,57 @@
+name: "find_basic"
+category: "stdlib/array"
+description: "Test array find function"
+tags: ["array", "find", "search"]
+
+input:
+  format: json
+  data: [1, 3, 5, 7, 9, 2, 4, 6, 8]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  find(@input, x -> x % 2 == 0)
+
+expected:
+  format: json
+  data: 2
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "not_found"
+    input:
+      format: json
+      data: [1, 3, 5, 7, 9]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      find(@input, x -> x % 2 == 0)
+    expected:
+      format: json
+      data: null
+      
+  - name: "string_search"
+    input:
+      format: json
+      data: ["apple", "banana", "cherry"]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      find(@input, x -> startsWith(x, "b"))
+    expected:
+      format: json
+      data: "banana"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Array Functions"]

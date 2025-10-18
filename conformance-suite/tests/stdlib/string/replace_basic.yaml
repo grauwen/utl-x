@@ -1,0 +1,57 @@
+name: "replace_basic"
+category: "stdlib/string"
+description: "Test string replace function"
+tags: ["string", "replace", "substitution"]
+
+input:
+  format: json
+  data: "Hello, World!"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  replace(@input, "World", "Universe")
+
+expected:
+  format: json
+  data: "Hello, Universe!"
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "multiple_occurrences"
+    input:
+      format: json
+      data: "test test test"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      replace(@input, "test", "hello")
+    expected:
+      format: json
+      data: "hello hello hello"
+      
+  - name: "no_match"
+    input:
+      format: json
+      data: "Hello, World!"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      replace(@input, "Universe", "Galaxy")
+    expected:
+      format: json
+      data: "Hello, World!"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - String Functions"]

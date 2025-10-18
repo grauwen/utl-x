@@ -1,0 +1,54 @@
+name: "renderJson_basic"
+category: "stdlib/serialization"
+description: "Test JSON rendering function"
+tags: ["serialization", "json", "render"]
+
+input:
+  format: json
+  data: {
+    "name": "John",
+    "age": 30
+  }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  renderJson(@input)
+
+expected:
+  format: json
+  data: "{\"name\":\"John\",\"age\":30}"
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "array"
+    input:
+      format: json
+      data: [1, 2, 3, "test"]
+    expected:
+      format: json
+      data: "[1,2,3,\"test\"]"
+      
+  - name: "round_trip"
+    input:
+      format: json
+      data: {"test": "value", "number": 42}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      parseJson(renderJson(@input))
+    expected:
+      format: json
+      data: {"test": "value", "number": 42}
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Serialization Functions"]

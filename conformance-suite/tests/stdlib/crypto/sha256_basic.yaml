@@ -53,7 +53,7 @@ variants:
       data: "Hello 世界"
     expected:
       format: json
-      data: "b8dddc90d8cd6a98e7c3d83b00b7be61b38b7bd45b4f7555e1f1a8b5c98f1b6d"
+      data: "4487dd5e89032c1794903afe6f4b90aaab69972697ea5d3baa215df27c679803"
 
 metadata:
   author: "UTL-X Team"

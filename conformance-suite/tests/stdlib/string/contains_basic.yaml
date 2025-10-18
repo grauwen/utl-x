@@ -1,0 +1,57 @@
+name: "contains_basic"
+category: "stdlib/string"
+description: "Test string contains function"
+tags: ["string", "contains", "search"]
+
+input:
+  format: json
+  data: "Hello, World!"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  contains(@input, "World")
+
+expected:
+  format: json
+  data: true
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "not_found"
+    input:
+      format: json
+      data: "Hello, World!"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      contains(@input, "Universe")
+    expected:
+      format: json
+      data: false
+      
+  - name: "case_sensitive"
+    input:
+      format: json
+      data: "Hello, World!"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      contains(@input, "world")
+    expected:
+      format: json
+      data: false
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - String Functions"]

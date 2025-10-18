@@ -1,0 +1,61 @@
+name: "values_basic"
+category: "stdlib/object"
+description: "Test object values function"
+tags: ["object", "values", "properties"]
+
+input:
+  format: json
+  data: {
+    "a": 1,
+    "b": 2,
+    "c": 3
+  }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  sort(values(@input))
+
+expected:
+  format: json
+  data: [1, 2, 3]
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "empty_object"
+    input:
+      format: json
+      data: {}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      values(@input)
+    expected:
+      format: json
+      data: []
+      
+  - name: "mixed_types"
+    input:
+      format: json
+      data: {"str": "hello", "num": 42, "bool": true}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      values(@input)
+    expected:
+      format: json
+      data: ["hello", 42, true]
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Object Functions"]

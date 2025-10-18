@@ -1,0 +1,44 @@
+name: "parseDate_basic"
+category: "stdlib/datetime"
+description: "Test date parsing function"
+tags: ["datetime", "parse", "iso8601"]
+
+input:
+  format: json
+  data: "2024-01-15T10:30:00Z"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  now()
+
+expected:
+  format: json
+  data: "2024-01-15T10:30:00Z"
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "current_time"
+    input:
+      format: json
+      data: {}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      now()
+    expected:
+      format: json
+      data: "2024-01-15T10:30:00Z"
+
+metadata:
+  author: "UTL-X Team"  
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - DateTime Functions"]
+  notes: ["This test verifies now() returns ISO 8601 format timestamps"]

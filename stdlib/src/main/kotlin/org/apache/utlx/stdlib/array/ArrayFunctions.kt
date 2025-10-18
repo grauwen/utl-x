@@ -211,8 +211,14 @@ object ArrayFunctions {
      */
     fun first(args: List<UDM>): UDM {
         requireArgs(args, 1, "first")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("first: first argument must be an array")
-        return array.elements.firstOrNull() ?: UDM.Scalar(null)
+        val arg = args[0]
+        val array = arg.asArray() ?: throw FunctionArgumentException(
+            "first() requires an array argument, got ${getTypeDescription(arg)}"
+        )
+        if (array.elements.isEmpty()) {
+            throw FunctionArgumentException("first() called on empty array")
+        }
+        return array.elements.first()
     }
     
     /**
@@ -221,8 +227,14 @@ object ArrayFunctions {
      */
     fun last(args: List<UDM>): UDM {
         requireArgs(args, 1, "last")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("last: first argument must be an array")
-        return array.elements.lastOrNull() ?: UDM.Scalar(null)
+        val arg = args[0]
+        val array = arg.asArray() ?: throw FunctionArgumentException(
+            "last() requires an array argument, got ${getTypeDescription(arg)}"
+        )
+        if (array.elements.isEmpty()) {
+            throw FunctionArgumentException("last() called on empty array")
+        }
+        return array.elements.last()
     }
     
     /**
@@ -280,7 +292,10 @@ object ArrayFunctions {
      */
     fun size(args: List<UDM>): UDM {
         requireArgs(args, 1, "size")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("size: argument must be an array")
+        val arg = args[0]
+        val array = arg.asArray() ?: throw FunctionArgumentException(
+            "size() requires an array argument, got ${getTypeDescription(arg)}"
+        )
         return UDM.Scalar(array.elements.size.toDouble())
     }
     
@@ -562,6 +577,29 @@ object ArrayFunctions {
                 }
             }
             else -> throw FunctionArgumentException("Expected number value, got ${this::class.simpleName}")
+        }
+    }
+    
+    /**
+     * Get type description for error messages
+     */
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
         }
     }
 }

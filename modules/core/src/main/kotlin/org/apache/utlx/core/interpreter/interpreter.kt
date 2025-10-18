@@ -416,6 +416,40 @@ class Interpreter {
             left is RuntimeValue.BooleanValue && right is RuntimeValue.BooleanValue -> 
                 left.value == right.value
             left is RuntimeValue.NullValue && right is RuntimeValue.NullValue -> true
+            
+            // Handle UDM value comparisons
+            left is RuntimeValue.UDMValue && right is RuntimeValue.StringValue -> {
+                val udm = left.udm
+                if (udm is UDM.Scalar && udm.value is String) {
+                    udm.value == right.value
+                } else false
+            }
+            left is RuntimeValue.StringValue && right is RuntimeValue.UDMValue -> {
+                val udm = right.udm
+                if (udm is UDM.Scalar && udm.value is String) {
+                    left.value == udm.value
+                } else false
+            }
+            left is RuntimeValue.UDMValue && right is RuntimeValue.NumberValue -> {
+                val udm = left.udm
+                if (udm is UDM.Scalar && udm.value is Number) {
+                    udm.value.toDouble() == right.value
+                } else false
+            }
+            left is RuntimeValue.NumberValue && right is RuntimeValue.UDMValue -> {
+                val udm = right.udm
+                if (udm is UDM.Scalar && udm.value is Number) {
+                    left.value == udm.value.toDouble()
+                } else false
+            }
+            left is RuntimeValue.UDMValue && right is RuntimeValue.UDMValue -> {
+                val leftUdm = left.udm
+                val rightUdm = right.udm
+                if (leftUdm is UDM.Scalar && rightUdm is UDM.Scalar) {
+                    leftUdm.value == rightUdm.value
+                } else false
+            }
+            
             else -> false
         }
     }
@@ -789,51 +823,108 @@ class StandardLibraryImpl {
     fun registerAll(env: Environment) {
         // String functions
         registerFunction(env, "upper") { args ->
-            val str = when (val arg = args[0]) {
+            val arg = args[0]
+            val str = when (arg) {
                 is RuntimeValue.StringValue -> arg.value
                 is RuntimeValue.UDMValue -> {
                     when (val udm = arg.udm) {
-                        is UDM.Scalar -> udm.value.toString()
-                        else -> throw RuntimeError("upper() requires string argument")
+                        is UDM.Scalar -> {
+                            val value = udm.value
+                            if (value is String) value
+                            else throw RuntimeError("upper() requires a string argument, got ${value?.javaClass?.simpleName ?: "null"}")
+                        }
+                        is UDM.Array -> throw RuntimeError("upper() requires a string argument, got array")
+                        is UDM.Object -> throw RuntimeError("upper() requires a string argument, got object")
+                        else -> throw RuntimeError("upper() requires a string argument, got ${udm.javaClass.simpleName}")
                     }
                 }
-                else -> throw RuntimeError("upper() requires string argument")
+                is RuntimeValue.NumberValue -> throw RuntimeError("upper() requires a string argument, got number")
+                is RuntimeValue.BooleanValue -> throw RuntimeError("upper() requires a string argument, got boolean")
+                is RuntimeValue.ArrayValue -> throw RuntimeError("upper() requires a string argument, got array")
+                is RuntimeValue.ObjectValue -> throw RuntimeError("upper() requires a string argument, got object")
+                is RuntimeValue.NullValue -> throw RuntimeError("upper() requires a string argument, got null")
+                else -> throw RuntimeError("upper() requires a string argument, got ${arg.javaClass.simpleName}")
             }
             RuntimeValue.StringValue(str.uppercase())
         }
         
         registerFunction(env, "lower") { args ->
-            val str = when (val arg = args[0]) {
+            val arg = args[0]
+            val str = when (arg) {
                 is RuntimeValue.StringValue -> arg.value
                 is RuntimeValue.UDMValue -> {
                     when (val udm = arg.udm) {
-                        is UDM.Scalar -> udm.value.toString()
-                        else -> throw RuntimeError("lower() requires string argument")
+                        is UDM.Scalar -> {
+                            val value = udm.value
+                            if (value is String) value
+                            else throw RuntimeError("lower() requires a string argument, got ${value?.javaClass?.simpleName ?: "null"}")
+                        }
+                        is UDM.Array -> throw RuntimeError("lower() requires a string argument, got array")
+                        is UDM.Object -> throw RuntimeError("lower() requires a string argument, got object")
+                        else -> throw RuntimeError("lower() requires a string argument, got ${udm.javaClass.simpleName}")
                     }
                 }
-                else -> throw RuntimeError("lower() requires string argument")
+                is RuntimeValue.NumberValue -> throw RuntimeError("lower() requires a string argument, got number")
+                is RuntimeValue.BooleanValue -> throw RuntimeError("lower() requires a string argument, got boolean")
+                is RuntimeValue.ArrayValue -> throw RuntimeError("lower() requires a string argument, got array")
+                is RuntimeValue.ObjectValue -> throw RuntimeError("lower() requires a string argument, got object")
+                is RuntimeValue.NullValue -> throw RuntimeError("lower() requires a string argument, got null")
+                else -> throw RuntimeError("lower() requires a string argument, got ${arg.javaClass.simpleName}")
             }
             RuntimeValue.StringValue(str.lowercase())
         }
         
         registerFunction(env, "trim") { args ->
-            val str = (args[0] as? RuntimeValue.StringValue)?.value
-                ?: throw RuntimeError("trim() requires string argument")
+            val arg = args[0]
+            val str = when (arg) {
+                is RuntimeValue.StringValue -> arg.value
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Scalar -> {
+                            val value = udm.value
+                            if (value is String) value
+                            else throw RuntimeError("trim() requires a string argument, got ${value?.javaClass?.simpleName ?: "null"}")
+                        }
+                        is UDM.Array -> throw RuntimeError("trim() requires a string argument, got array")
+                        is UDM.Object -> throw RuntimeError("trim() requires a string argument, got object")
+                        else -> throw RuntimeError("trim() requires a string argument, got ${udm.javaClass.simpleName}")
+                    }
+                }
+                is RuntimeValue.NumberValue -> throw RuntimeError("trim() requires a string argument, got number")
+                is RuntimeValue.BooleanValue -> throw RuntimeError("trim() requires a string argument, got boolean")
+                is RuntimeValue.ArrayValue -> throw RuntimeError("trim() requires a string argument, got array")
+                is RuntimeValue.ObjectValue -> throw RuntimeError("trim() requires a string argument, got object")
+                is RuntimeValue.NullValue -> throw RuntimeError("trim() requires a string argument, got null")
+                else -> throw RuntimeError("trim() requires a string argument, got ${arg.javaClass.simpleName}")
+            }
             RuntimeValue.StringValue(str.trim())
         }
         
         // Array functions
         registerFunction(env, "sum") { args ->
-            val arr = when (val arg = args[0]) {
+            val arg = args[0]
+            val arr = when (arg) {
                 is RuntimeValue.ArrayValue -> arg.elements
                 is RuntimeValue.UDMValue -> {
                     when (val udm = arg.udm) {
                         is UDM.Array -> udm.elements.map { RuntimeValue.UDMValue(it) }
-                        else -> throw RuntimeError("sum() requires array argument")
+                        is UDM.Scalar -> throw RuntimeError("sum() requires an array argument, got ${udm.value?.javaClass?.simpleName ?: "null"}")
+                        is UDM.Object -> throw RuntimeError("sum() requires an array argument, got object")
+                        else -> throw RuntimeError("sum() requires an array argument, got ${udm.javaClass.simpleName}")
                     }
                 }
-                else -> throw RuntimeError("sum() requires array argument")
+                is RuntimeValue.StringValue -> throw RuntimeError("sum() requires an array argument, got string")
+                is RuntimeValue.NumberValue -> throw RuntimeError("sum() requires an array argument, got number")
+                is RuntimeValue.BooleanValue -> throw RuntimeError("sum() requires an array argument, got boolean")
+                is RuntimeValue.ObjectValue -> throw RuntimeError("sum() requires an array argument, got object")
+                is RuntimeValue.NullValue -> throw RuntimeError("sum() requires an array argument, got null")
+                else -> throw RuntimeError("sum() requires an array argument, got ${arg.javaClass.simpleName}")
             }
+            
+            if (arr.isEmpty()) {
+                return@registerFunction RuntimeValue.NumberValue(0.0)
+            }
+            
             val sum = arr.sumOf { element ->
                 extractNumber(element, "sum() requires array of numbers")
             }
@@ -841,20 +932,78 @@ class StandardLibraryImpl {
         }
         
         registerFunction(env, "count") { args ->
-            val arr = (args[0] as? RuntimeValue.ArrayValue)?.elements
-                ?: throw RuntimeError("count() requires array argument")
+            val arg = args[0]
+            val arr = when (arg) {
+                is RuntimeValue.ArrayValue -> arg.elements
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Array -> udm.elements
+                        is UDM.Scalar -> throw RuntimeError("count() requires an array argument, got ${udm.value?.javaClass?.simpleName ?: "null"}")
+                        is UDM.Object -> throw RuntimeError("count() requires an array argument, got object")
+                        else -> throw RuntimeError("count() requires an array argument, got ${udm.javaClass.simpleName}")
+                    }
+                }
+                is RuntimeValue.StringValue -> throw RuntimeError("count() requires an array argument, got string")
+                is RuntimeValue.NumberValue -> throw RuntimeError("count() requires an array argument, got number")
+                is RuntimeValue.BooleanValue -> throw RuntimeError("count() requires an array argument, got boolean")
+                is RuntimeValue.ObjectValue -> throw RuntimeError("count() requires an array argument, got object")
+                is RuntimeValue.NullValue -> throw RuntimeError("count() requires an array argument, got null")
+                else -> throw RuntimeError("count() requires an array argument, got ${arg.javaClass.simpleName}")
+            }
             RuntimeValue.NumberValue(arr.size.toDouble())
         }
         
         registerFunction(env, "first") { args ->
-            val arr = (args[0] as? RuntimeValue.ArrayValue)?.elements
-                ?: throw RuntimeError("first() requires array argument")
+            val arg = args[0]
+            val arr = when (arg) {
+                is RuntimeValue.ArrayValue -> arg.elements
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Array -> udm.elements.map { RuntimeValue.UDMValue(it) }
+                        is UDM.Scalar -> throw RuntimeError("first() requires an array argument, got ${udm.value?.javaClass?.simpleName ?: "null"}")
+                        is UDM.Object -> throw RuntimeError("first() requires an array argument, got object")
+                        else -> throw RuntimeError("first() requires an array argument, got ${udm.javaClass.simpleName}")
+                    }
+                }
+                is RuntimeValue.StringValue -> throw RuntimeError("first() requires an array argument, got string")
+                is RuntimeValue.NumberValue -> throw RuntimeError("first() requires an array argument, got number")
+                is RuntimeValue.BooleanValue -> throw RuntimeError("first() requires an array argument, got boolean")
+                is RuntimeValue.ObjectValue -> throw RuntimeError("first() requires an array argument, got object")
+                is RuntimeValue.NullValue -> throw RuntimeError("first() requires an array argument, got null")
+                else -> throw RuntimeError("first() requires an array argument, got ${arg.javaClass.simpleName}")
+            }
+            
+            if (arr.isEmpty()) {
+                throw RuntimeError("first() called on empty array")
+            }
+            
             arr.firstOrNull() ?: RuntimeValue.NullValue
         }
         
         registerFunction(env, "last") { args ->
-            val arr = (args[0] as? RuntimeValue.ArrayValue)?.elements
-                ?: throw RuntimeError("last() requires array argument")
+            val arg = args[0]
+            val arr = when (arg) {
+                is RuntimeValue.ArrayValue -> arg.elements
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Array -> udm.elements.map { RuntimeValue.UDMValue(it) }
+                        is UDM.Scalar -> throw RuntimeError("last() requires an array argument, got ${udm.value?.javaClass?.simpleName ?: "null"}")
+                        is UDM.Object -> throw RuntimeError("last() requires an array argument, got object")
+                        else -> throw RuntimeError("last() requires an array argument, got ${udm.javaClass.simpleName}")
+                    }
+                }
+                is RuntimeValue.StringValue -> throw RuntimeError("last() requires an array argument, got string")
+                is RuntimeValue.NumberValue -> throw RuntimeError("last() requires an array argument, got number")
+                is RuntimeValue.BooleanValue -> throw RuntimeError("last() requires an array argument, got boolean")
+                is RuntimeValue.ObjectValue -> throw RuntimeError("last() requires an array argument, got object")
+                is RuntimeValue.NullValue -> throw RuntimeError("last() requires an array argument, got null")
+                else -> throw RuntimeError("last() requires an array argument, got ${arg.javaClass.simpleName}")
+            }
+            
+            if (arr.isEmpty()) {
+                throw RuntimeError("last() called on empty array")
+            }
+            
             arr.lastOrNull() ?: RuntimeValue.NullValue
         }
         
@@ -865,36 +1014,29 @@ class StandardLibraryImpl {
         }
         
         registerFunction(env, "round") { args ->
-            val num = (args[0] as? RuntimeValue.NumberValue)?.value
-                ?: throw RuntimeError("round() requires number argument")
+            val num = extractNumber(args[0], "round() requires number argument")
             RuntimeValue.NumberValue(round(num))
         }
         
         registerFunction(env, "ceil") { args ->
-            val num = (args[0] as? RuntimeValue.NumberValue)?.value
-                ?: throw RuntimeError("ceil() requires number argument")
+            val num = extractNumber(args[0], "ceil() requires number argument")
             RuntimeValue.NumberValue(ceil(num))
         }
         
         registerFunction(env, "floor") { args ->
-            val num = (args[0] as? RuntimeValue.NumberValue)?.value
-                ?: throw RuntimeError("floor() requires number argument")
+            val num = extractNumber(args[0], "floor() requires number argument")
             RuntimeValue.NumberValue(floor(num))
         }
         
         registerFunction(env, "min") { args ->
-            val a = (args[0] as? RuntimeValue.NumberValue)?.value
-                ?: throw RuntimeError("min() requires number arguments")
-            val b = (args[1] as? RuntimeValue.NumberValue)?.value
-                ?: throw RuntimeError("min() requires number arguments")
+            val a = extractNumber(args[0], "min() requires number arguments")
+            val b = extractNumber(args[1], "min() requires number arguments")
             RuntimeValue.NumberValue(min(a, b))
         }
         
         registerFunction(env, "max") { args ->
-            val a = (args[0] as? RuntimeValue.NumberValue)?.value
-                ?: throw RuntimeError("max() requires number arguments")
-            val b = (args[1] as? RuntimeValue.NumberValue)?.value
-                ?: throw RuntimeError("max() requires number arguments")
+            val a = extractNumber(args[0], "max() requires number arguments")
+            val b = extractNumber(args[1], "max() requires number arguments")
             RuntimeValue.NumberValue(max(a, b))
         }
         
@@ -905,8 +1047,7 @@ class StandardLibraryImpl {
         }
         
         registerFunction(env, "sqrt") { args ->
-            val num = (args[0] as? RuntimeValue.NumberValue)?.value
-                ?: throw RuntimeError("sqrt() requires number argument")
+            val num = extractNumber(args[0], "sqrt() requires number argument")
             RuntimeValue.NumberValue(sqrt(num))
         }
         
@@ -1054,10 +1195,17 @@ class StandardLibraryImpl {
             }
             val lambda = args[1] as? RuntimeValue.FunctionValue
                 ?: throw RuntimeError("reduce() requires function as second argument")
-            val initial = args.getOrNull(2) ?: RuntimeValue.NullValue
             
-            var accumulator = initial
-            for (element in arr) {
+            if (arr.isEmpty()) {
+                return@registerFunction args.getOrNull(2) ?: RuntimeValue.NullValue
+            }
+            
+            val hasInitial = args.size > 2
+            var accumulator = if (hasInitial) args[2] else arr[0]
+            val startIndex = if (hasInitial) 0 else 1
+            
+            for (i in startIndex until arr.size) {
+                val element = arr[i]
                 val lambdaEnv = lambda.closure.createChild()
                 if (lambda.parameters.size >= 2) {
                     lambdaEnv.define(lambda.parameters[0], accumulator)
@@ -1132,8 +1280,30 @@ class StandardLibraryImpl {
         }
         
         registerFunction(env, "toNumber") { args ->
-            val str = (args[0] as? RuntimeValue.StringValue)?.value
-                ?: throw RuntimeError("toNumber() requires string argument")
+            val arg = args[0]
+            val str = when (arg) {
+                is RuntimeValue.StringValue -> arg.value
+                is RuntimeValue.NumberValue -> return@registerFunction arg // Already a number
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Scalar -> {
+                            when (val value = udm.value) {
+                                is String -> value
+                                is Number -> return@registerFunction RuntimeValue.NumberValue(value.toDouble())
+                                else -> throw RuntimeError("toNumber() requires string or number argument, got ${value?.javaClass?.simpleName ?: "null"}")
+                            }
+                        }
+                        is UDM.Array -> throw RuntimeError("toNumber() requires string or number argument, got array")
+                        is UDM.Object -> throw RuntimeError("toNumber() requires string or number argument, got object")
+                        else -> throw RuntimeError("toNumber() requires string or number argument, got ${udm.javaClass.simpleName}")
+                    }
+                }
+                is RuntimeValue.BooleanValue -> throw RuntimeError("toNumber() requires string or number argument, got boolean")
+                is RuntimeValue.ArrayValue -> throw RuntimeError("toNumber() requires string or number argument, got array")
+                is RuntimeValue.ObjectValue -> throw RuntimeError("toNumber() requires string or number argument, got object")
+                is RuntimeValue.NullValue -> throw RuntimeError("toNumber() requires string or number argument, got null")
+                else -> throw RuntimeError("toNumber() requires string or number argument, got ${arg.javaClass.simpleName}")
+            }
             try {
                 RuntimeValue.NumberValue(str.toDouble())
             } catch (e: NumberFormatException) {

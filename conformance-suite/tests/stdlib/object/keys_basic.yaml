@@ -1,0 +1,61 @@
+name: "keys_basic"
+category: "stdlib/object"
+description: "Test object keys function"
+tags: ["object", "keys", "properties"]
+
+input:
+  format: json
+  data: {
+    "name": "John",
+    "age": 30,
+    "city": "New York"
+  }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  sort(keys(@input))
+
+expected:
+  format: json
+  data: ["age", "city", "name"]
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "empty_object"
+    input:
+      format: json
+      data: {}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      keys(@input)
+    expected:
+      format: json
+      data: []
+      
+  - name: "single_key"
+    input:
+      format: json
+      data: {"test": "value"}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      keys(@input)
+    expected:
+      format: json
+      data: ["test"]
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Object Functions"]

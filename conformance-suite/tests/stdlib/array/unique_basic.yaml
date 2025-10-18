@@ -1,0 +1,45 @@
+name: "unique_basic"
+category: "stdlib/array"
+description: "Test array unique function"
+tags: ["array", "unique", "distinct"]
+
+input:
+  format: json
+  data: [1, 2, 2, 3, 3, 3, 4, 4, 4, 4]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  unique(@input)
+
+expected:
+  format: json
+  data: [1, 2, 3, 4]
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "strings"
+    input:
+      format: json
+      data: ["apple", "banana", "apple", "cherry", "banana"]
+    expected:
+      format: json
+      data: ["apple", "banana", "cherry"]
+      
+  - name: "already_unique"
+    input:
+      format: json
+      data: [1, 2, 3, 4, 5]
+    expected:
+      format: json
+      data: [1, 2, 3, 4, 5]
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Array Functions"]

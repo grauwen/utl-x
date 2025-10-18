@@ -1,0 +1,51 @@
+name: "url_basic"
+category: "stdlib/encoding"
+description: "Test URL encoding and decoding functions"
+tags: ["encoding", "url", "percent"]
+
+input:
+  format: json
+  data: "hello world & test"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  urlEncode(@input)
+
+expected:
+  format: json
+  data: "hello%20world%20%26%20test"
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "decode"
+    input:
+      format: json
+      data: "hello%20world%20%26%20test"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlDecode(@input)
+    expected:
+      format: json
+      data: "hello world & test"
+      
+  - name: "no_encoding_needed"
+    input:
+      format: json
+      data: "helloworld"
+    expected:
+      format: json
+      data: "helloworld"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Encoding Functions"]

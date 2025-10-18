@@ -39,7 +39,7 @@ variants:
       }
     expected:
       format: json
-      data: 0.0
+      data: 0
       
   - name: "short_distance"
     input:

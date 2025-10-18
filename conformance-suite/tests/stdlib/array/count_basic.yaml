@@ -1,0 +1,45 @@
+name: "count_basic"
+category: "stdlib/array"
+description: "Test array count function"
+tags: ["array", "count", "size"]
+
+input:
+  format: json
+  data: [1, 2, 3, 4, 5]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  count(@input)
+
+expected:
+  format: json
+  data: 5
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "empty_array"
+    input:
+      format: json
+      data: []
+    expected:
+      format: json
+      data: 0
+      
+  - name: "string_array"
+    input:
+      format: json
+      data: ["a", "b", "c"]
+    expected:
+      format: json
+      data: 3
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Array Functions"]

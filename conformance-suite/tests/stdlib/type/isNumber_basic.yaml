@@ -1,0 +1,53 @@
+name: "isNumber_basic"
+category: "stdlib/type"
+description: "Test isNumber type checking function"
+tags: ["type", "isNumber", "validation"]
+
+input:
+  format: json
+  data: 42
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  isNumber(@input)
+
+expected:
+  format: json
+  data: true
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "decimal"
+    input:
+      format: json
+      data: 3.14
+    expected:
+      format: json
+      data: true
+      
+  - name: "string"
+    input:
+      format: json
+      data: "42"
+    expected:
+      format: json
+      data: false
+      
+  - name: "boolean"
+    input:
+      format: json
+      data: true
+    expected:
+      format: json
+      data: false
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Type Functions"]

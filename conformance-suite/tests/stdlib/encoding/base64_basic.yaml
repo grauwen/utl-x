@@ -1,0 +1,65 @@
+name: "base64_basic"
+category: "stdlib/encoding"
+description: "Test base64 encoding and decoding functions"
+tags: ["encoding", "base64", "crypto"]
+
+input:
+  format: json
+  data: "hello world"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  base64Encode(@input)
+
+expected:
+  format: json
+  data: "aGVsbG8gd29ybGQ="
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "decode"
+    input:
+      format: json
+      data: "aGVsbG8gd29ybGQ="
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      base64Decode(@input)
+    expected:
+      format: json
+      data: "hello world"
+      
+  - name: "empty_string"
+    input:
+      format: json
+      data: ""
+    expected:
+      format: json
+      data: ""
+      
+  - name: "round_trip"
+    input:
+      format: json
+      data: "The quick brown fox jumps over the lazy dog"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      base64Decode(base64Encode(@input))
+    expected:
+      format: json
+      data: "The quick brown fox jumps over the lazy dog"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Encoding Functions"]
