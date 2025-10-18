@@ -1,0 +1,88 @@
+name: "data_normalization"
+category: "examples/intermediate"
+description: "Data normalization with string manipulation and conditional logic"
+tags: ["json", "string-manipulation", "conditional", "normalization", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "customers": [
+        {"name": "  JOHN DOE  ", "email": "John.Doe@EXAMPLE.COM", "phone": "(555) 123-4567", "status": "active"},
+        {"name": "jane smith", "email": "jane@example.org", "phone": "555.987.6543", "status": "INACTIVE"},
+        {"name": "Bob Johnson", "email": "BOB@TEST.NET", "phone": "5551234567", "status": "Active"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    normalized_customers: map(@input.customers, customer -> {
+      name: toTitleCase(trim(customer.name)),
+      email: lower(customer.email),
+      phone: formatPhone(customer.phone),
+      status: lower(customer.status),
+      is_active: lower(customer.status) == "active",
+      contact_score: calculateContactScore(customer.email, customer.phone)
+    })
+  }
+
+  def formatPhone(phone) {
+    let digits = replace(phone, "[^0-9]", "")
+    if (length(digits) == 10) {
+      "(" + substring(digits, 0, 3) + ") " + substring(digits, 3, 6) + "-" + substring(digits, 6, 10)
+    } else {
+      phone
+    }
+  }
+
+  def calculateContactScore(email, phone) {
+    let emailScore = if (contains(email, "@") && contains(email, ".")) 50 else 0
+    let phoneScore = if (length(replace(phone, "[^0-9]", "")) == 10) 50 else 0
+    emailScore + phoneScore
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "normalized_customers": [
+        {
+          "name": "John Doe",
+          "email": "john.doe@example.com",
+          "phone": "(555) 123-4567",
+          "status": "active",
+          "is_active": true,
+          "contact_score": 100
+        },
+        {
+          "name": "Jane Smith", 
+          "email": "jane@example.org",
+          "phone": "(555) 987-6543",
+          "status": "inactive",
+          "is_active": false,
+          "contact_score": 100
+        },
+        {
+          "name": "Bob Johnson",
+          "email": "bob@test.net", 
+          "phone": "(555) 123-4567",
+          "status": "active",
+          "is_active": true,
+          "contact_score": 100
+        }
+      ]
+    }
+
+performance_limits:
+  max_duration_ms: 400
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Documentation"
+  source: "docs/examples/data-cleaning.md"
+  complexity: "intermediate"
+  notes: ["Demonstrates string normalization, custom functions, and data quality scoring"]

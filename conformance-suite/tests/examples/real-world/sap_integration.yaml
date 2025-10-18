@@ -1,0 +1,172 @@
+name: "sap_integration"
+category: "examples/real-world"
+description: "SAP system integration with encoding handling and business logic"
+tags: ["xml", "sap", "encoding", "business-logic", "real-world"]
+
+input:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="ISO-8859-1"?>
+    <SAP_Response>
+      <Material>
+        <MaterialNumber>MAT-001</MaterialNumber>
+        <Description>Stahl Röhre 100mm</Description>
+        <Price>125.50</Price>
+        <Currency>EUR</Currency>
+        <Availability>
+          <Warehouse>WH01</Warehouse>
+          <Stock>150</Stock>
+          <Reserved>25</Reserved>
+        </Availability>
+        <Availability>
+          <Warehouse>WH02</Warehouse>
+          <Stock>75</Stock>
+          <Reserved>10</Reserved>
+        </Availability>
+      </Material>
+    </SAP_Response>
+
+transformation: |
+  %utlx 1.0
+  input xml {encoding: "auto"}
+  output json
+  ---
+  let material = @input.SAP_Response.Material
+  let totalStock = sum(map(material.Availability, avail -> toNumber(avail.Stock)))
+  let totalReserved = sum(map(material.Availability, avail -> toNumber(avail.Reserved)))
+  let availableStock = totalStock - totalReserved
+  
+  {
+    product: {
+      sku: material.MaterialNumber,
+      name: material.Description,
+      price: {
+        amount: toNumber(material.Price),
+        currency: material.Currency
+      },
+      inventory: {
+        total_stock: totalStock,
+        reserved: totalReserved,
+        available: availableStock,
+        status: if (availableStock > 50) "IN_STOCK" 
+               else if (availableStock > 0) "LOW_STOCK" 
+               else "OUT_OF_STOCK",
+        warehouses: map(material.Availability, avail -> {
+          id: avail.Warehouse,
+          stock: toNumber(avail.Stock),
+          reserved: toNumber(avail.Reserved),
+          available: toNumber(avail.Stock) - toNumber(avail.Reserved)
+        })
+      }
+    },
+    metadata: {
+      source: "SAP",
+      encoding_detected: detectXMLEncoding(@input),
+      processed_at: now(),
+      total_locations: count(material.Availability)
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "product": {
+        "sku": "MAT-001",
+        "name": "Stahl Röhre 100mm",
+        "price": {
+          "amount": 125.50,
+          "currency": "EUR"
+        },
+        "inventory": {
+          "total_stock": 225,
+          "reserved": 35,
+          "available": 190,
+          "status": "IN_STOCK",
+          "warehouses": [
+            {
+              "id": "WH01",
+              "stock": 150,
+              "reserved": 25,
+              "available": 125
+            },
+            {
+              "id": "WH02", 
+              "stock": 75,
+              "reserved": 10,
+              "available": 65
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "source": "SAP",
+        "encoding_detected": "ISO-8859-1",
+        "processed_at": "2024-01-15T10:30:00Z",
+        "total_locations": 2
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 500
+  max_memory_mb: 25
+
+variants:
+  - name: "out_of_stock_scenario"
+    input:
+      format: xml
+      data: |
+        <?xml version="1.0" encoding="ISO-8859-1"?>
+        <SAP_Response>
+          <Material>
+            <MaterialNumber>MAT-002</MaterialNumber>
+            <Description>Premium Widget</Description>
+            <Price>299.99</Price>
+            <Currency>USD</Currency>
+            <Availability>
+              <Warehouse>WH01</Warehouse>
+              <Stock>5</Stock>
+              <Reserved>8</Reserved>
+            </Availability>
+          </Material>
+        </SAP_Response>
+    expected:
+      format: json
+      data: |
+        {
+          "product": {
+            "sku": "MAT-002",
+            "name": "Premium Widget",
+            "price": {
+              "amount": 299.99,
+              "currency": "USD"
+            },
+            "inventory": {
+              "total_stock": 5,
+              "reserved": 8,
+              "available": -3,
+              "status": "OUT_OF_STOCK",
+              "warehouses": [
+                {
+                  "id": "WH01",
+                  "stock": 5,
+                  "reserved": 8,
+                  "available": -3
+                }
+              ]
+            }
+          },
+          "metadata": {
+            "source": "SAP",
+            "encoding_detected": "ISO-8859-1",
+            "processed_at": "2024-01-15T10:30:00Z",
+            "total_locations": 1
+          }
+        }
+
+metadata:
+  author: "UTL-X Documentation"
+  source: "docs/examples/enterprise-integration.md"
+  complexity: "advanced"
+  business_case: "SAP Material Master integration"
+  notes: ["Demonstrates encoding detection, business logic, inventory calculations"]

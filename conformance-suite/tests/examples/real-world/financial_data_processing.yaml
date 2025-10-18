@@ -1,0 +1,263 @@
+name: "financial_data_processing"
+category: "examples/real-world"
+description: "Financial transaction processing with aggregations and validation"
+tags: ["json", "financial", "aggregation", "validation", "real-world"]
+
+input:
+  format: json
+  data: |
+    {
+      "account_id": "ACC-12345",
+      "statement_period": "2024-01",
+      "transactions": [
+        {
+          "id": "TXN-001",
+          "date": "2024-01-02",
+          "type": "debit",
+          "amount": -150.75,
+          "category": "groceries",
+          "merchant": "SuperMarket Inc",
+          "description": "Weekly shopping"
+        },
+        {
+          "id": "TXN-002", 
+          "date": "2024-01-03",
+          "type": "credit",
+          "amount": 2500.00,
+          "category": "salary",
+          "merchant": "ACME Corp",
+          "description": "Salary deposit"
+        },
+        {
+          "id": "TXN-003",
+          "date": "2024-01-05",
+          "type": "debit", 
+          "amount": -89.99,
+          "category": "utilities",
+          "merchant": "Power Company",
+          "description": "Electric bill"
+        },
+        {
+          "id": "TXN-004",
+          "date": "2024-01-10",
+          "type": "debit",
+          "amount": -1200.00,
+          "category": "rent",
+          "merchant": "Property Management LLC",
+          "description": "Monthly rent"
+        }
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let txns = @input.transactions
+  let debits = filter(txns, txn -> txn.type == "debit")
+  let credits = filter(txns, txn -> txn.type == "credit")
+  
+  {
+    account_summary: {
+      account_id: @input.account_id,
+      period: @input.statement_period,
+      transaction_count: count(txns),
+      balance_change: sum(map(txns, txn -> txn.amount)),
+      
+      credits: {
+        count: count(credits),
+        total: sum(map(credits, credit -> credit.amount)),
+        transactions: map(credits, credit -> {
+          id: credit.id,
+          date: credit.date,
+          amount: credit.amount,
+          source: credit.merchant,
+          category: credit.category
+        })
+      },
+      
+      debits: {
+        count: count(debits),
+        total: abs(sum(map(debits, debit -> debit.amount))),
+        transactions: map(debits, debit -> {
+          id: debit.id,
+          date: debit.date,
+          amount: abs(debit.amount),
+          payee: debit.merchant,
+          category: debit.category
+        })
+      },
+      
+      spending_by_category: map(groupBy(debits, "category"), group -> {
+        category: group.key,
+        total_spent: abs(sum(map(group.value, txn -> txn.amount))),
+        transaction_count: count(group.value),
+        avg_transaction: round(abs(sum(map(group.value, txn -> txn.amount))) / count(group.value), 2)
+      }),
+      
+      financial_health: {
+        net_income: sum(map(credits, credit -> credit.amount)),
+        total_expenses: abs(sum(map(debits, debit -> debit.amount))),
+        savings_rate: round((sum(map(credits, credit -> credit.amount)) + sum(map(debits, debit -> debit.amount))) / sum(map(credits, credit -> credit.amount)) * 100, 2),
+        largest_expense: let minAmount = min(map(debits, debit -> debit.amount)) in let largestExpense = first(filter(debits, debit -> debit.amount == minAmount)) in {
+          amount: abs(minAmount),
+          merchant: largestExpense.merchant,
+          category: largestExpense.category
+        }
+      }
+    },
+    
+    alerts: generateAlerts(txns),
+    
+    metadata: {
+      processed_at: now(),
+      currency: "USD",
+      validation: validateTransactions(txns)
+    }
+  }
+  
+  def generateAlerts(transactions) {
+    let alerts = []
+    let largeTransactions = filter(transactions, txn -> abs(txn.amount) > 1000)
+    
+    if (count(largeTransactions) > 0) {
+      alerts + {
+        type: "LARGE_TRANSACTION",
+        message: "Large transactions detected",
+        transactions: map(largeTransactions, txn -> txn.id)
+      }
+    } else {
+      alerts
+    }
+  }
+  
+  def validateTransactions(transactions) {
+    {
+      all_have_ids: count(filter(transactions, txn -> txn.id == null || txn.id == "")) == 0,
+      all_have_dates: count(filter(transactions, txn -> txn.date == null || txn.date == "")) == 0,
+      all_have_amounts: count(filter(transactions, txn -> txn.amount == null)) == 0,
+      date_range_valid: isValidDateRange(map(transactions, txn -> txn.date))
+    }
+  }
+  
+  def isValidDateRange(dates) {
+    let sortedDates = sort(dates)
+    daysBetween(first(sortedDates), last(sortedDates)) <= 31
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "account_summary": {
+        "account_id": "ACC-12345",
+        "period": "2024-01",
+        "transaction_count": 4,
+        "balance_change": 1059.26,
+        
+        "credits": {
+          "count": 1,
+          "total": 2500.00,
+          "transactions": [
+            {
+              "id": "TXN-002",
+              "date": "2024-01-03",
+              "amount": 2500.00,
+              "source": "ACME Corp",
+              "category": "salary"
+            }
+          ]
+        },
+        
+        "debits": {
+          "count": 3, 
+          "total": 1440.74,
+          "transactions": [
+            {
+              "id": "TXN-001",
+              "date": "2024-01-02", 
+              "amount": 150.75,
+              "payee": "SuperMarket Inc",
+              "category": "groceries"
+            },
+            {
+              "id": "TXN-003",
+              "date": "2024-01-05",
+              "amount": 89.99,
+              "payee": "Power Company", 
+              "category": "utilities"
+            },
+            {
+              "id": "TXN-004",
+              "date": "2024-01-10",
+              "amount": 1200.00,
+              "payee": "Property Management LLC",
+              "category": "rent"
+            }
+          ]
+        },
+        
+        "spending_by_category": [
+          {
+            "category": "groceries",
+            "total_spent": 150.75,
+            "transaction_count": 1,
+            "avg_transaction": 150.75
+          },
+          {
+            "category": "utilities", 
+            "total_spent": 89.99,
+            "transaction_count": 1,
+            "avg_transaction": 89.99
+          },
+          {
+            "category": "rent",
+            "total_spent": 1200.00,
+            "transaction_count": 1, 
+            "avg_transaction": 1200.00
+          }
+        ],
+        
+        "financial_health": {
+          "net_income": 2500.00,
+          "total_expenses": 1440.74,
+          "savings_rate": 42.37,
+          "largest_expense": {
+            "amount": 1200.00,
+            "merchant": "Property Management LLC",
+            "category": "rent"
+          }
+        }
+      },
+      
+      "alerts": [
+        {
+          "type": "LARGE_TRANSACTION",
+          "message": "Large transactions detected",
+          "transactions": ["TXN-002", "TXN-004"]
+        }
+      ],
+      
+      "metadata": {
+        "processed_at": "2024-01-15T10:30:00Z",
+        "currency": "USD",
+        "validation": {
+          "all_have_ids": true,
+          "all_have_dates": true,
+          "all_have_amounts": true,
+          "date_range_valid": true
+        }
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 600
+  max_memory_mb: 30
+
+metadata:
+  author: "UTL-X Documentation"
+  source: "docs/examples/financial-processing.md"
+  complexity: "advanced"
+  business_case: "Bank statement processing and analysis"
+  notes: ["Complex aggregations, financial calculations, data validation"]

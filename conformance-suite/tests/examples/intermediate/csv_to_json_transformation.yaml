@@ -1,0 +1,214 @@
+name: "csv_to_json_transformation"
+category: "examples/intermediate"
+description: "CSV to JSON conversion with data type inference and validation"
+tags: ["csv", "json", "format-conversion", "data-types", "intermediate"]
+
+input:
+  format: csv
+  data: |
+    employee_id,name,department,salary,hire_date,is_active
+    1001,John Doe,Engineering,75000,2020-03-15,true
+    1002,Jane Smith,Marketing,68000,2019-07-22,true
+    1003,Bob Johnson,Sales,52000,2021-11-08,false
+    1004,Alice Brown,Engineering,82000,2018-01-10,true
+    1005,Charlie Wilson,HR,58000,2022-05-03,true
+
+transformation: |
+  %utlx 1.0
+  input csv {headers: true}
+  output json
+  ---
+  {
+    employees: map(@input, row -> {
+      id: toNumber(row.employee_id),
+      personal: {
+        name: row.name,
+        full_name: let nameParts = split(row.name, " ") in {
+          first: nameParts[0],
+          last: nameParts[1]
+        }
+      },
+      employment: {
+        department: row.department,
+        salary: toNumber(row.salary),
+        hire_date: toDate(row.hire_date),
+        is_active: toBoolean(row.is_active),
+        years_employed: yearsFromDate(toDate(row.hire_date)),
+        salary_grade: classifySalary(toNumber(row.salary))
+      }
+    }),
+    
+    summary: {
+      total_employees: count(@input),
+      active_employees: count(filter(@input, row -> row.is_active == "true")),
+      departments: unique(map(@input, row -> row.department)),
+      salary_stats: {
+        average: round(avg(map(@input, row -> toNumber(row.salary))), 2),
+        minimum: min(map(@input, row -> toNumber(row.salary))),
+        maximum: max(map(@input, row -> toNumber(row.salary))),
+        total_payroll: sum(map(@input, row -> toNumber(row.salary)))
+      },
+      by_department: map(groupBy(@input, "department"), group -> {
+        department: group.key,
+        count: count(group.value),
+        avg_salary: round(avg(map(group.value, row -> toNumber(row.salary))), 2),
+        active_count: count(filter(group.value, row -> row.is_active == "true"))
+      })
+    }
+  }
+  
+  def classifySalary(salary) {
+    if (salary >= 80000) "Senior"
+    else if (salary >= 65000) "Mid"
+    else "Junior"
+  }
+  
+  def yearsFromDate(date) {
+    round(daysBetween(date, now()) / 365.25, 1)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "employees": [
+        {
+          "id": 1001,
+          "personal": {
+            "name": "John Doe",
+            "full_name": {
+              "first": "John",
+              "last": "Doe"
+            }
+          },
+          "employment": {
+            "department": "Engineering",
+            "salary": 75000,
+            "hire_date": "2020-03-15",
+            "is_active": true,
+            "years_employed": 3.8,
+            "salary_grade": "Senior"
+          }
+        },
+        {
+          "id": 1002,
+          "personal": {
+            "name": "Jane Smith",
+            "full_name": {
+              "first": "Jane", 
+              "last": "Smith"
+            }
+          },
+          "employment": {
+            "department": "Marketing",
+            "salary": 68000,
+            "hire_date": "2019-07-22",
+            "is_active": true,
+            "years_employed": 4.4,
+            "salary_grade": "Mid"
+          }
+        },
+        {
+          "id": 1003,
+          "personal": {
+            "name": "Bob Johnson",
+            "full_name": {
+              "first": "Bob",
+              "last": "Johnson"
+            }
+          },
+          "employment": {
+            "department": "Sales",
+            "salary": 52000,
+            "hire_date": "2021-11-08",
+            "is_active": false,
+            "years_employed": 2.2,
+            "salary_grade": "Junior"
+          }
+        },
+        {
+          "id": 1004,
+          "personal": {
+            "name": "Alice Brown",
+            "full_name": {
+              "first": "Alice",
+              "last": "Brown"
+            }
+          },
+          "employment": {
+            "department": "Engineering",
+            "salary": 82000,
+            "hire_date": "2018-01-10",
+            "is_active": true,
+            "years_employed": 6.0,
+            "salary_grade": "Senior"
+          }
+        },
+        {
+          "id": 1005,
+          "personal": {
+            "name": "Charlie Wilson",
+            "full_name": {
+              "first": "Charlie",
+              "last": "Wilson"
+            }
+          },
+          "employment": {
+            "department": "HR",
+            "salary": 58000,
+            "hire_date": "2022-05-03",
+            "is_active": true,
+            "years_employed": 1.7,
+            "salary_grade": "Junior"
+          }
+        }
+      ],
+      
+      "summary": {
+        "total_employees": 5,
+        "active_employees": 4,
+        "departments": ["Engineering", "Marketing", "Sales", "HR"],
+        "salary_stats": {
+          "average": 67000,
+          "minimum": 52000,
+          "maximum": 82000,
+          "total_payroll": 335000
+        },
+        "by_department": [
+          {
+            "department": "Engineering",
+            "count": 2,
+            "avg_salary": 78500,
+            "active_count": 2
+          },
+          {
+            "department": "Marketing",
+            "count": 1,
+            "avg_salary": 68000,
+            "active_count": 1
+          },
+          {
+            "department": "Sales",
+            "count": 1,
+            "avg_salary": 52000,
+            "active_count": 0
+          },
+          {
+            "department": "HR",
+            "count": 1,
+            "avg_salary": 58000,
+            "active_count": 1
+          }
+        ]
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 400
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Documentation"
+  source: "docs/formats/csv.md"
+  complexity: "intermediate"
+  notes: ["CSV parsing, type conversion, data analysis, grouping operations"]

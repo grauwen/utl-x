@@ -1,0 +1,68 @@
+name: "json_to_xml_conversion"
+category: "examples/basic"
+description: "Basic JSON to XML format conversion"
+tags: ["json", "xml", "format-conversion", "basic"]
+
+input:
+  format: json
+  data: |
+    {
+      "order": {
+        "id": "ORD-123",
+        "customer": "John Doe",
+        "items": [
+          {"product": "Laptop", "quantity": 1, "price": 999.99},
+          {"product": "Mouse", "quantity": 2, "price": 25.50}
+        ],
+        "total": 1050.99
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    Order: {
+      "@id": @input.order.id,
+      Customer: @input.order.customer,
+      Items: {
+        Item: map(@input.order.items, item -> {
+          "@product": item.product,
+          Quantity: item.quantity,
+          Price: item.price
+        })
+      },
+      Total: @input.order.total
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Order id="ORD-123">
+      <Customer>John Doe</Customer>
+      <Items>
+        <Item product="Laptop">
+          <Quantity>1</Quantity>
+          <Price>999.99</Price>
+        </Item>
+        <Item product="Mouse">
+          <Quantity>2</Quantity>
+          <Price>25.50</Price>
+        </Item>
+      </Items>
+      <Total>1050.99</Total>
+    </Order>
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Documentation"
+  source: "docs/formats/xml.md"
+  complexity: "basic"
+  notes: ["Shows JSON to XML conversion with attributes and nested elements"]

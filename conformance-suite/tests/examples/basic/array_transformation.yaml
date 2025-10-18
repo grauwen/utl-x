@@ -1,0 +1,54 @@
+name: "array_transformation"
+category: "examples/basic"
+description: "Array mapping and filtering operations"
+tags: ["json", "array", "map", "filter", "basic"]
+
+input:
+  format: json
+  data: |
+    {
+      "employees": [
+        {"name": "Alice", "salary": 50000, "department": "Engineering"},
+        {"name": "Bob", "salary": 45000, "department": "Sales"},
+        {"name": "Charlie", "salary": 60000, "department": "Engineering"},
+        {"name": "Diana", "salary": 55000, "department": "Marketing"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    engineering_team: map(filter(@input.employees, emp -> emp.department == "Engineering"), emp -> {
+      name: emp.name,
+      salary: emp.salary
+    }),
+    high_earners: map(filter(@input.employees, emp -> emp.salary > 50000), emp -> emp.name),
+    total_salary: sum(map(@input.employees, emp -> emp.salary)),
+    avg_salary: avg(map(@input.employees, emp -> emp.salary))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "engineering_team": [
+        {"name": "Alice", "salary": 50000},
+        {"name": "Charlie", "salary": 60000}
+      ],
+      "high_earners": ["Charlie", "Diana"],
+      "total_salary": 210000,
+      "avg_salary": 52500
+    }
+
+performance_limits:
+  max_duration_ms: 250
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Documentation"
+  source: "docs/examples/array-operations.md"
+  complexity: "basic"
+  notes: ["Demonstrates array filtering, mapping, and aggregation"]

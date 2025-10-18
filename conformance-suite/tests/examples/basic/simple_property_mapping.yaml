@@ -1,0 +1,51 @@
+name: "simple_property_mapping"
+category: "examples/basic"
+description: "Basic JSON property mapping - extract and rename fields"
+tags: ["json", "property-mapping", "basic", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "customerName": "John Doe",
+      "customerEmail": "john@example.com",
+      "orderDate": "2023-01-15",
+      "items": [
+        {"product": "Laptop", "price": 999.99},
+        {"product": "Mouse", "price": 25.50}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    name: @input.customerName,
+    email: @input.customerEmail,
+    date: @input.orderDate,
+    products: map(@input.items, item -> item.product),
+    total: sum(map(@input.items, item -> item.price))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "name": "John Doe",
+      "email": "john@example.com", 
+      "date": "2023-01-15",
+      "products": ["Laptop", "Mouse"],
+      "total": 1025.49
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Documentation"
+  source: "docs/examples/basic-transformations.md"
+  complexity: "basic"
+  notes: ["Common pattern for property extraction and aggregation"]

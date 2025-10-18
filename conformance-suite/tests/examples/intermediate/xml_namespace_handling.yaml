@@ -1,0 +1,71 @@
+name: "xml_namespace_handling"
+category: "examples/intermediate"
+description: "XML transformation with namespace handling and SOAP envelope"
+tags: ["xml", "namespace", "soap", "intermediate"]
+
+input:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+                   xmlns:cust="http://example.com/customer">
+      <soap:Header/>
+      <soap:Body>
+        <cust:GetCustomerRequest>
+          <cust:CustomerId>12345</cust:CustomerId>
+          <cust:IncludeOrders>true</cust:IncludeOrders>
+        </cust:GetCustomerRequest>
+      </soap:Body>
+    </soap:Envelope>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  {
+    request_type: localName(@input.Envelope.Body.*[0]),
+    customer_id: @input.Envelope.Body.GetCustomerRequest.CustomerId,
+    include_orders: toBoolean(@input.Envelope.Body.GetCustomerRequest.IncludeOrders),
+    namespace_info: {
+      soap_ns: namespaceUri(@input.Envelope),
+      customer_ns: namespaceUri(@input.Envelope.Body.GetCustomerRequest),
+      request_qname: qualifiedName(@input.Envelope.Body.*[0])
+    },
+    headers: if (hasContent(@input.Envelope.Header)) 
+             extractHeaders(@input.Envelope.Header) 
+             else null
+  }
+
+  def extractHeaders(header) {
+    map(header.*, elem -> {
+      name: localName(elem),
+      namespace: namespaceUri(elem),
+      value: textContent(elem)
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "request_type": "GetCustomerRequest",
+      "customer_id": "12345",
+      "include_orders": true,
+      "namespace_info": {
+        "soap_ns": "http://schemas.xmlsoap.org/soap/envelope/",
+        "customer_ns": "http://example.com/customer",
+        "request_qname": "cust:GetCustomerRequest"
+      },
+      "headers": null
+    }
+
+performance_limits:
+  max_duration_ms: 350
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Documentation"
+  source: "docs/examples/soap-processing.md"
+  complexity: "intermediate"
+  notes: ["Demonstrates XML namespace functions and SOAP envelope processing"]
