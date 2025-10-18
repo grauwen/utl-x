@@ -1,0 +1,40 @@
+name: "arithmetic_basic"
+category: "core/operators"
+description: "Test basic arithmetic operations"
+tags: ["core", "operators", "arithmetic"]
+
+input:
+  format: json
+  data: {"a": 10, "b": 3}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    addition: @input.a + @input.b,
+    subtraction: @input.a - @input.b,
+    multiplication: @input.a * @input.b,
+    division: @input.a / @input.b,
+    modulo: @input.a % @input.b
+  }
+
+expected:
+  format: json
+  data: {
+    "addition": 13,
+    "subtraction": 7,
+    "multiplication": 30,
+    "division": 3.3333333333333335,
+    "modulo": 1
+  }
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Language Reference - Operators"]

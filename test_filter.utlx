@@ -1,0 +1,5 @@
+%utlx 1.0
+input json
+output json
+---
+filter(@input, x -> x % 2 == 0)

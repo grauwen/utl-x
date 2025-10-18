@@ -51,6 +51,12 @@ variants:
     input:
       format: json
       data: ["apple", "banana", "cherry", "date"]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      filter(@input, x -> x == "apple" || x == "cherry" || x == "date")
     expected:
       format: json
       data: ["apple", "cherry", "date"]
@@ -63,6 +69,12 @@ variants:
         {"name": "Bob", "age": 30},
         {"name": "Charlie", "age": 20}
       ]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      filter(@input, x -> x.age >= 25)
     expected:
       format: json
       data: [

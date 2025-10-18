@@ -84,7 +84,7 @@ object Main {
             |  help           Show this help message
             |
             |Examples:
-            |  utlx transform input.xml script.utlx -o output.json
+            |  utlx transform script.utlx input.xml -o output.json
             |  utlx schema generate --input-schema order.xsd --transform script.utlx --output-format json-schema
             |  utlx validate script.utlx
             |  utlx transform --input-format xml --output-format json script.utlx < input.xml

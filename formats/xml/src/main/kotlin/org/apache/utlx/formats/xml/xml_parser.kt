@@ -42,6 +42,7 @@ class XMLParser(private val source: Reader) {
         // Skip XML declaration if present
         if (peek(5) == "<?xml") {
             skipUntil("?>")
+            advance() // ?
             advance() // >
             skipWhitespace()
         }

@@ -1,0 +1,8 @@
+%utlx 1.0
+input json
+output json
+---
+{
+  array_filter: filter([1, 2, 3, 4, 5], x -> x > 3),
+  string_filter: filter("hello", c -> c != "l")
+}

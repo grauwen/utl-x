@@ -345,7 +345,7 @@ object StandardLibrary {
     private fun registerArrayFunctions() {
         // Functional operations
         register("map", ArrayFunctions::map)
-        register("filter", ArrayFunctions::filter)
+        register("filter", CoreFunctions::filter)
         register("reduce", ArrayFunctions::reduce)
         register("find", ArrayFunctions::find)
         register("findIndex", ArrayFunctions::findIndex)

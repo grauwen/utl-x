@@ -286,7 +286,9 @@ class Interpreter {
                     left is RuntimeValue.StringValue || right is RuntimeValue.StringValue || 
                     (left is RuntimeValue.UDMValue && left.udm is UDM.Scalar && left.udm.value is String) ||
                     (right is RuntimeValue.UDMValue && right.udm is UDM.Scalar && right.udm.value is String) -> {
-                        RuntimeValue.StringValue(left.toString() + right.toString())
+                        val leftStr = extractStringValue(left)
+                        val rightStr = extractStringValue(right)
+                        RuntimeValue.StringValue(leftStr + rightStr)
                     }
                     else -> {
                         try {
@@ -320,10 +322,9 @@ class Interpreter {
             }
             
             BinaryOperator.MODULO -> {
-                val l = (left as? RuntimeValue.NumberValue)?.value
-                    ?: throw RuntimeError("Left operand must be number", expr.location)
-                val r = (right as? RuntimeValue.NumberValue)?.value
-                    ?: throw RuntimeError("Right operand must be number", expr.location)
+                val l = extractNumber(left, "Left operand must be number", expr.location)
+                val r = extractNumber(right, "Right operand must be number", expr.location)
+                if (r == 0.0) throw RuntimeError("Division by zero", expr.location)
                 RuntimeValue.NumberValue(l % r)
             }
             
@@ -412,9 +413,49 @@ class Interpreter {
     }
     
     private fun compareValues(left: RuntimeValue, right: RuntimeValue, location: Location): Int {
+        // Try to extract numbers for comparison
+        try {
+            val leftNum = when (left) {
+                is RuntimeValue.NumberValue -> left.value
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = left.udm) {
+                        is UDM.Scalar -> {
+                            when (val value = udm.value) {
+                                is Number -> value.toDouble()
+                                else -> null
+                            }
+                        }
+                        else -> null
+                    }
+                }
+                else -> null
+            }
+            
+            val rightNum = when (right) {
+                is RuntimeValue.NumberValue -> right.value
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = right.udm) {
+                        is UDM.Scalar -> {
+                            when (val value = udm.value) {
+                                is Number -> value.toDouble()
+                                else -> null
+                            }
+                        }
+                        else -> null
+                    }
+                }
+                else -> null
+            }
+            
+            if (leftNum != null && rightNum != null) {
+                return leftNum.compareTo(rightNum)
+            }
+        } catch (e: Exception) {
+            // Fall through to string comparison
+        }
+        
+        // Try string comparison
         return when {
-            left is RuntimeValue.NumberValue && right is RuntimeValue.NumberValue -> 
-                left.value.compareTo(right.value)
             left is RuntimeValue.StringValue && right is RuntimeValue.StringValue -> 
                 left.value.compareTo(right.value)
             else -> throw RuntimeError("Cannot compare these types", location)
@@ -471,6 +512,22 @@ class Interpreter {
         }
     }
     
+    private fun extractStringValue(value: RuntimeValue): String {
+        return when (value) {
+            is RuntimeValue.StringValue -> value.value
+            is RuntimeValue.NumberValue -> value.value.toString()
+            is RuntimeValue.BooleanValue -> value.value.toString()
+            is RuntimeValue.NullValue -> "null"
+            is RuntimeValue.UDMValue -> {
+                when (val udm = value.udm) {
+                    is UDM.Scalar -> udm.value.toString()
+                    else -> value.toString()
+                }
+            }
+            else -> value.toString()
+        }
+    }
+    
     private fun literalToRuntimeValue(value: Any?): RuntimeValue {
         return when (value) {
             is String -> RuntimeValue.StringValue(value)
@@ -523,8 +580,16 @@ class StandardLibraryImpl {
         }
         
         registerFunction(env, "lower") { args ->
-            val str = (args[0] as? RuntimeValue.StringValue)?.value
-                ?: throw RuntimeError("lower() requires string argument")
+            val str = when (val arg = args[0]) {
+                is RuntimeValue.StringValue -> arg.value
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Scalar -> udm.value.toString()
+                        else -> throw RuntimeError("lower() requires string argument")
+                    }
+                }
+                else -> throw RuntimeError("lower() requires string argument")
+            }
             RuntimeValue.StringValue(str.lowercase())
         }
         
@@ -536,11 +601,18 @@ class StandardLibraryImpl {
         
         // Array functions
         registerFunction(env, "sum") { args ->
-            val arr = (args[0] as? RuntimeValue.ArrayValue)?.elements
-                ?: throw RuntimeError("sum() requires array argument")
-            val sum = arr.sumOf { 
-                (it as? RuntimeValue.NumberValue)?.value 
-                    ?: throw RuntimeError("sum() requires array of numbers")
+            val arr = when (val arg = args[0]) {
+                is RuntimeValue.ArrayValue -> arg.elements
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Array -> udm.elements.map { RuntimeValue.UDMValue(it) }
+                        else -> throw RuntimeError("sum() requires array argument")
+                    }
+                }
+                else -> throw RuntimeError("sum() requires array argument")
+            }
+            val sum = arr.sumOf { element ->
+                extractNumber(element, "sum() requires array of numbers")
             }
             RuntimeValue.NumberValue(sum)
         }
@@ -565,8 +637,7 @@ class StandardLibraryImpl {
         
         // Math functions
         registerFunction(env, "abs") { args ->
-            val num = (args[0] as? RuntimeValue.NumberValue)?.value
-                ?: throw RuntimeError("abs() requires number argument")
+            val num = extractNumber(args[0], "abs() requires number argument")
             RuntimeValue.NumberValue(abs(num))
         }
         
@@ -644,37 +715,120 @@ class StandardLibraryImpl {
             RuntimeValue.ArrayValue(results)
         }
         
+        // Generic filter function - works on arrays, objects, and strings
         registerFunction(env, "filter") { args ->
+            if (args.size < 2) {
+                throw RuntimeError("filter() requires 2 arguments")
+            }
+            
+            val value = args[0]
+            val predicate = args[1] as? RuntimeValue.FunctionValue
+                ?: throw RuntimeError("filter() requires function as second argument")
+
+            when (value) {
+                is RuntimeValue.ArrayValue -> {
+                    val filteredElements = value.elements.filter { element ->
+                        val lambdaEnv = predicate.closure.createChild()
+                        if (predicate.parameters.isNotEmpty()) {
+                            lambdaEnv.define(predicate.parameters[0], element)
+                        }
+                        val interpreter = Interpreter()
+                        val result = interpreter.evaluate(predicate.body, lambdaEnv)
+                        result.isTruthy()
+                    }
+                    RuntimeValue.ArrayValue(filteredElements)
+                }
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = value.udm) {
+                        is UDM.Array -> {
+                            val filteredElements = udm.elements.filter { element ->
+                                val lambdaEnv = predicate.closure.createChild()
+                                if (predicate.parameters.isNotEmpty()) {
+                                    lambdaEnv.define(predicate.parameters[0], RuntimeValue.UDMValue(element))
+                                }
+                                val interpreter = Interpreter()
+                                val result = interpreter.evaluate(predicate.body, lambdaEnv)
+                                result.isTruthy()
+                            }
+                            RuntimeValue.UDMValue(UDM.Array(filteredElements))
+                        }
+                        is UDM.Object -> {
+                            val filteredProperties = udm.properties.filter { (key, objValue) ->
+                                val lambdaEnv = predicate.closure.createChild()
+                                if (predicate.parameters.size >= 2) {
+                                    lambdaEnv.define(predicate.parameters[0], RuntimeValue.StringValue(key))
+                                    lambdaEnv.define(predicate.parameters[1], RuntimeValue.UDMValue(objValue))
+                                } else if (predicate.parameters.isNotEmpty()) {
+                                    lambdaEnv.define(predicate.parameters[0], RuntimeValue.UDMValue(objValue))
+                                }
+                                val interpreter = Interpreter()
+                                val result = interpreter.evaluate(predicate.body, lambdaEnv)
+                                result.isTruthy()
+                            }
+                            RuntimeValue.UDMValue(UDM.Object(filteredProperties, udm.attributes))
+                        }
+                        is UDM.Scalar -> {
+                            val scalarValue = udm.value
+                            if (scalarValue is String) {
+                                val filteredChars = scalarValue.filter { char ->
+                                    val lambdaEnv = predicate.closure.createChild()
+                                    if (predicate.parameters.isNotEmpty()) {
+                                        lambdaEnv.define(predicate.parameters[0], RuntimeValue.StringValue(char.toString()))
+                                    }
+                                    val interpreter = Interpreter()
+                                    val result = interpreter.evaluate(predicate.body, lambdaEnv)
+                                    result.isTruthy()
+                                }
+                                RuntimeValue.StringValue(filteredChars)
+                            } else {
+                                throw RuntimeError("filter() on scalars only supports strings")
+                            }
+                        }
+                        else -> throw RuntimeError("filter() first argument must be an array, object, or string")
+                    }
+                }
+                is RuntimeValue.StringValue -> {
+                    val filteredChars = value.value.filter { char ->
+                        val lambdaEnv = predicate.closure.createChild()
+                        if (predicate.parameters.isNotEmpty()) {
+                            lambdaEnv.define(predicate.parameters[0], RuntimeValue.StringValue(char.toString()))
+                        }
+                        val interpreter = Interpreter()
+                        val result = interpreter.evaluate(predicate.body, lambdaEnv)
+                        result.isTruthy()
+                    }
+                    RuntimeValue.StringValue(filteredChars)
+                }
+                is RuntimeValue.ObjectValue -> {
+                    val filteredProperties = value.properties.filter { (key, objValue) ->
+                        val lambdaEnv = predicate.closure.createChild()
+                        if (predicate.parameters.size >= 2) {
+                            lambdaEnv.define(predicate.parameters[0], RuntimeValue.StringValue(key))
+                            lambdaEnv.define(predicate.parameters[1], objValue)
+                        } else if (predicate.parameters.isNotEmpty()) {
+                            lambdaEnv.define(predicate.parameters[0], objValue)
+                        }
+                        val interpreter = Interpreter()
+                        val result = interpreter.evaluate(predicate.body, lambdaEnv)
+                        result.isTruthy()
+                    }
+                    RuntimeValue.ObjectValue(filteredProperties)
+                }
+                else -> throw RuntimeError("filter() first argument must be an array, object, or string")
+            }
+        }
+        
+        registerFunction(env, "reduce") { args ->
             val arr = when (val arg = args[0]) {
                 is RuntimeValue.ArrayValue -> arg.elements
                 is RuntimeValue.UDMValue -> {
                     when (val udm = arg.udm) {
                         is UDM.Array -> udm.elements.map { RuntimeValue.UDMValue(it) }
-                        else -> throw RuntimeError("filter() requires array as first argument")
+                        else -> throw RuntimeError("reduce() requires array as first argument")
                     }
                 }
-                else -> throw RuntimeError("filter() requires array as first argument")
+                else -> throw RuntimeError("reduce() requires array as first argument")
             }
-            val lambda = args[1] as? RuntimeValue.FunctionValue
-                ?: throw RuntimeError("filter() requires function as second argument")
-            
-            val results = arr.filter { element ->
-                // Create environment for lambda execution
-                val lambdaEnv = lambda.closure.createChild()
-                if (lambda.parameters.isNotEmpty()) {
-                    lambdaEnv.define(lambda.parameters[0], element)
-                }
-                // Execute lambda body
-                val interpreter = Interpreter()
-                val result = interpreter.evaluate(lambda.body, lambdaEnv)
-                result.isTruthy()
-            }
-            RuntimeValue.ArrayValue(results)
-        }
-        
-        registerFunction(env, "reduce") { args ->
-            val arr = (args[0] as? RuntimeValue.ArrayValue)?.elements
-                ?: throw RuntimeError("reduce() requires array as first argument")
             val lambda = args[1] as? RuntimeValue.FunctionValue
                 ?: throw RuntimeError("reduce() requires function as second argument")
             val initial = args.getOrNull(2) ?: RuntimeValue.NullValue
@@ -697,12 +851,28 @@ class StandardLibraryImpl {
             val value = args[0]
             val str = when (value) {
                 is RuntimeValue.StringValue -> value.value
-                is RuntimeValue.NumberValue -> value.value.toString()
+                is RuntimeValue.NumberValue -> {
+                    if (value.value % 1.0 == 0.0) {
+                        value.value.toInt().toString()
+                    } else {
+                        value.value.toString()
+                    }
+                }
                 is RuntimeValue.BooleanValue -> value.value.toString()
                 is RuntimeValue.NullValue -> "null"
                 is RuntimeValue.UDMValue -> {
                     when (val udm = value.udm) {
-                        is UDM.Scalar -> udm.value.toString()
+                        is UDM.Scalar -> when (val scalarValue = udm.value) {
+                            is Number -> {
+                                val doubleValue = scalarValue.toDouble()
+                                if (doubleValue % 1.0 == 0.0) {
+                                    doubleValue.toInt().toString()
+                                } else {
+                                    doubleValue.toString()
+                                }
+                            }
+                            else -> scalarValue.toString()
+                        }
                         else -> value.toString()
                     }
                 }

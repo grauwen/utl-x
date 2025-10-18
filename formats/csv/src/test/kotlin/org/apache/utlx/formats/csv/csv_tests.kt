@@ -45,11 +45,9 @@ class CSVParserTest {
     
     @Test
     fun `parse CSV with quoted fields`() {
-        val csv = """
-            Name,Description
-            "Alice, Jr.","A person named ""Alice"""
-            Bob,"Simple description"
-        """.trimIndent()
+        val csv = "Name,Description\n" +
+                  "\"Alice, Jr.\",\"A person named \"\"Alice\"\"\"\n" +
+                  "Bob,\"Simple description\""
         
         val result = CSV.parse(csv) as UDM.Array
         

@@ -1,0 +1,53 @@
+name: "sum_basic"
+category: "stdlib/array"
+description: "Test array sum function"
+tags: ["core", "array", "aggregation"]
+
+input:
+  format: json
+  data: [1, 2, 3, 4, 5]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  sum(@input)
+
+expected:
+  format: json
+  data: 15
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "empty_array"
+    input:
+      format: json
+      data: []
+    expected:
+      format: json
+      data: 0
+      
+  - name: "single_element"
+    input:
+      format: json
+      data: [42]
+    expected:
+      format: json
+      data: 42
+      
+  - name: "negative_numbers"
+    input:
+      format: json
+      data: [-1, 2, -3, 4]
+    expected:
+      format: json
+      data: 2
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Array Functions"]

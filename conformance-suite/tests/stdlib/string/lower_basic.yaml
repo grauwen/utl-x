@@ -1,0 +1,53 @@
+name: "lower_basic"
+category: "stdlib/string"
+description: "Test string lowercase conversion function"
+tags: ["core", "string", "case"]
+
+input:
+  format: json
+  data: "HELLO WORLD"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  lower(@input)
+
+expected:
+  format: json
+  data: "hello world"
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "empty_string"
+    input:
+      format: json
+      data: ""
+    expected:
+      format: json
+      data: ""
+      
+  - name: "already_lowercase"
+    input:
+      format: json
+      data: "hello world"
+    expected:
+      format: json
+      data: "hello world"
+      
+  - name: "mixed_case"
+    input:
+      format: json
+      data: "HeLLo WoRLd"
+    expected:
+      format: json
+      data: "hello world"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - String Functions"]

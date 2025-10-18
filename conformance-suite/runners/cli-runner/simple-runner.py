@@ -107,11 +107,14 @@ def run_test_variants(test_case: Dict[str, Any], utlx_cli: Path, base_name: str)
         
         # Create a temporary test case for the variant
         variant_test = {
-            'transformation': test_case['transformation'],
+            'transformation': variant.get('transformation', test_case['transformation']),
             'input': variant['input'],
-            'expected': variant.get('expected'),
-            'error_expected': variant.get('error_expected')
+            'expected': variant.get('expected')
         }
+        
+        # Only add error_expected if it exists in the variant
+        if 'error_expected' in variant:
+            variant_test['error_expected'] = variant['error_expected']
         
         if run_single_test(variant_test, utlx_cli, variant_name):
             passed += 1

@@ -1,0 +1,46 @@
+name: "typeof_basic"
+category: "stdlib/type"
+description: "Test typeOf function for type inspection"
+tags: ["core", "type", "introspection"]
+
+input:
+  format: json
+  data: {
+    "str": "hello",
+    "num": 42,
+    "bool": true,
+    "arr": [1, 2, 3],
+    "obj": {"key": "value"}
+  }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    string_type: typeOf(@input.str),
+    number_type: typeOf(@input.num),
+    boolean_type: typeOf(@input.bool),
+    array_type: typeOf(@input.arr),
+    object_type: typeOf(@input.obj)
+  }
+
+expected:
+  format: json
+  data: {
+    "string_type": "string",
+    "number_type": "number",
+    "boolean_type": "boolean",
+    "array_type": "array",
+    "object_type": "object"
+  }
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Type Functions"]

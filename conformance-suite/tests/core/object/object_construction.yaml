@@ -1,0 +1,42 @@
+name: "object_construction"
+category: "core/object"
+description: "Test object literal construction"
+tags: ["core", "object", "construction"]
+
+input:
+  format: json
+  data: {"name": "Alice", "age": 25}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    user: @input,
+    computed: {
+      display_name: @input.name,
+      is_adult: @input.age >= 18,
+      info: "User " + @input.name + " is " + toString(@input.age) + " years old"
+    }
+  }
+
+expected:
+  format: json
+  data: {
+    "user": {"name": "Alice", "age": 25},
+    "computed": {
+      "display_name": "Alice",
+      "is_adult": true,
+      "info": "User Alice is 25 years old"
+    }
+  }
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Language Reference - Object Literals"]

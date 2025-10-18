@@ -1,0 +1,53 @@
+name: "abs_basic"
+category: "stdlib/math"
+description: "Test absolute value function"
+tags: ["core", "math", "absolute"]
+
+input:
+  format: json
+  data: -42
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  abs(@input)
+
+expected:
+  format: json
+  data: 42
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "positive_number"
+    input:
+      format: json
+      data: 42
+    expected:
+      format: json
+      data: 42
+      
+  - name: "zero"
+    input:
+      format: json
+      data: 0
+    expected:
+      format: json
+      data: 0
+      
+  - name: "decimal_negative"
+    input:
+      format: json
+      data: -3.14
+    expected:
+      format: json
+      data: 3.14
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - Math Functions"]

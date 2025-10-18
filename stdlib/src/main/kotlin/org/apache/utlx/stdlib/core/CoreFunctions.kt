@@ -359,6 +359,57 @@ object CoreFunctions {
         }
     }
     
+    /**
+     * Generic filter function that works on arrays, objects, and strings
+     * 
+     * For arrays: filters elements based on predicate
+     * For objects: filters properties based on predicate (key, value)
+     * For strings: filters characters based on predicate
+     * 
+     * Examples:
+     * ```
+     * filter([1, 2, 3, 4], x -> x > 2) // [3, 4]
+     * filter({"a": 1, "b": 2}, (k, v) -> v > 1) // {"b": 2}
+     * filter("hello", c -> c != "l") // "heo"
+     * ```
+     */
+    fun filter(args: List<UDM>): UDM {
+        requireArgs(args, 2, "filter")
+        val value = args[0]
+        val predicate = args[1] as? UDM.Lambda
+            ?: throw FunctionArgumentException("filter: second argument must be a lambda")
+
+        return when (value) {
+            is UDM.Array -> {
+                val filteredElements = value.elements.filter { element ->
+                    val result = predicate.apply(listOf(element))
+                    result.asBoolean()
+                }
+                UDM.Array(filteredElements)
+            }
+            is UDM.Object -> {
+                val filteredProperties = value.properties.filter { (key, objValue) ->
+                    val result = predicate.apply(listOf(UDM.Scalar(key), objValue))
+                    result.asBoolean()
+                }
+                UDM.Object(filteredProperties, value.attributes)
+            }
+            is UDM.Scalar -> {
+                val scalarValue = value.value
+                if (scalarValue is String) {
+                    val filteredChars = scalarValue.filter { char ->
+                        val result = predicate.apply(listOf(UDM.Scalar(char.toString())))
+                        result.asBoolean()
+                    }
+                    UDM.Scalar(filteredChars)
+                } else {
+                    throw FunctionArgumentException("filter: first argument must be an array, object, or string")
+                }
+            }
+            else -> throw FunctionArgumentException("filter: first argument must be an array, object, or string")
+        }
+    }
+
     private fun UDM.asBoolean(): Boolean = when (this) {
         is UDM.Scalar -> {
             val v = value

@@ -1,7 +1,7 @@
 package org.apache.utlx.stdlib.jwt
 
 import org.apache.utlx.core.udm.UDM
-import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.core.FunctionArgumentException
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals

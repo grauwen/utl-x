@@ -43,6 +43,12 @@ variants:
     input:
       format: json
       data: ["hello", "world"]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      map(@input, x -> upper(x))
     expected:
       format: json
       data: ["HELLO", "WORLD"]
@@ -54,6 +60,12 @@ variants:
         {"name": "Alice", "age": 25},
         {"name": "Bob", "age": 30}
       ]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      map(@input, x -> x.name)
     expected:
       format: json
       data: ["Alice", "Bob"]

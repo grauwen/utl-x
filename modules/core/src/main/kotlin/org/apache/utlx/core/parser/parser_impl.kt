@@ -440,13 +440,44 @@ class Parser(private val tokens: List<Token>) {
     }
     
     private fun parseArgument(): Expression {
-        // Check if this could be a lambda parameter (identifier followed by ->)
+        // Check for multi-parameter lambda: (param1, param2) -> body
+        if (check(TokenType.LPAREN)) {
+            val checkpoint = current
+            advance() // consume '('
+            
+            // Try to parse parameter list
+            val parameters = mutableListOf<Parameter>()
+            if (!check(TokenType.RPAREN)) {
+                do {
+                    if (check(TokenType.IDENTIFIER)) {
+                        val paramName = advance().lexeme
+                        parameters.add(Parameter(paramName, null, Location.from(previous())))
+                    } else {
+                        // Not a parameter list, backtrack
+                        current = checkpoint
+                        return parseExpression()
+                    }
+                } while (match(TokenType.COMMA))
+            }
+            
+            if (match(TokenType.RPAREN) && match(TokenType.ARROW)) {
+                // This is a multi-parameter lambda: (param1, param2) -> body
+                val body = parseExpression()
+                return Expression.Lambda(parameters, body, Location.from(tokens[checkpoint]))
+            } else {
+                // Not a lambda, backtrack and parse as normal expression
+                current = checkpoint
+                return parseExpression()
+            }
+        }
+        
+        // Check if this could be a single-parameter lambda: param -> body
         if (check(TokenType.IDENTIFIER)) {
             val checkpoint = current
             val paramName = advance().lexeme
             
             if (match(TokenType.ARROW)) {
-                // This is a lambda: param -> body
+                // This is a single-parameter lambda: param -> body
                 val parameter = Parameter(paramName, null, Location.from(tokens[checkpoint]))
                 val body = parseExpression()
                 return Expression.Lambda(listOf(parameter), body, Location.from(tokens[checkpoint]))

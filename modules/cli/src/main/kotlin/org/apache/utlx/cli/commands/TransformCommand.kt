@@ -273,7 +273,7 @@ object TransformCommand {
             |Transform data using UTL-X scripts
             |
             |Usage:
-            |  utlx transform [input-file] <script-file> [options]
+            |  utlx transform <script-file> [input-file] [options]
             |  utlx transform <script-file> [options] < input-file
             |
             |Arguments:

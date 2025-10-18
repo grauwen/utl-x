@@ -41,6 +41,12 @@ variants:
     input:
       format: json
       data: {}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      ""
     expected:
       format: json
       data: ""
@@ -49,6 +55,12 @@ variants:
     input:
       format: json
       data: {}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      9223372036854775807
     expected:
       format: json
       data: 9223372036854775807
@@ -57,6 +69,15 @@ variants:
     input:
       format: json
       data: {}
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      {
+        negative_int: -42,
+        negative_float: -3.14
+      }
     expected:
       format: json
       data: {

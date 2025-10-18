@@ -1,0 +1,9 @@
+%utlx 1.0
+input json
+output json
+---
+{
+  "sum_result": sum([1, 2, 3, 4, 5]),
+  "abs_result": abs(-42),
+  "abs_positive": abs(42)
+}
