@@ -8,6 +8,7 @@ TODO's
 - tools/maven-plugin/
 - tools/intellij-plugin/
 - module analysis
+- Agentic agent added? How to get an utl for a given inpu and given output
 
 integrate module analysis (design time) into CLI
 
