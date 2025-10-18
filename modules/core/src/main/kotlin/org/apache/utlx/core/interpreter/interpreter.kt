@@ -555,8 +555,13 @@ class Interpreter {
             // Direct invocation failed, try the registry approach
             try {
                 val stdlibClass = Class.forName("org.apache.utlx.stdlib.StandardLibrary")
+                
+                // Get the Kotlin object instance (INSTANCE field for object singletons)
+                val instanceField = stdlibClass.getField("INSTANCE")
+                val stdlibInstance = instanceField.get(null)
+                
                 val getAllFunctionsMethod = stdlibClass.getMethod("getAllFunctions")
-                val functions = getAllFunctionsMethod.invoke(null) as Map<String, Any>
+                val functions = getAllFunctionsMethod.invoke(stdlibInstance) as Map<String, Any>
                 
                 if (functions.containsKey(functionName) && functions[functionName] != null) {
                     val stdlibFunction = functions[functionName]!!

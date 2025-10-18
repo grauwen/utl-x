@@ -651,7 +651,6 @@ object StandardLibrary {
         register("getBOMBytes", XMLEncodingBomFunctions::getBOMBytes)
         register("stripBOM", XMLEncodingBomFunctions::stripBOM)
         register("normalizeBOM", XMLEncodingBomFunctions::normalizeBOM)
-
     }
 
     private fun registerC14NFunctions() {
