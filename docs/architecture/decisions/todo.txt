@@ -11,7 +11,8 @@ TODO's
 
 integrate module analysis (design time) into CLI
 
-stdlib isowestern, u
+
+utlx piped working? validate
 
 Byte-Order-Mark (BOM)
 First bytes        Encoding assumed
