@@ -7,6 +7,9 @@ TODO's
 - tools/vscode-extension/
 - tools/maven-plugin/
 - tools/intellij-plugin/
+- module analysis
+
+integrate module analysis (design time) into CLI
 
 DONE -stlib: serialize -> render (DOM -> string) , parse (string -> DOM) :: in theory also binary or string could be used :: distinct parsseJson, parseCsv, parseXml, parseYaml, renderXml, renderYaml, renderCsv, renderJson
 DONE -stlib: parseNumber missing
