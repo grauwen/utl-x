@@ -22,7 +22,13 @@ dependencies {
     // Kotlin stdlib
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
-    
+
+    // Jackson for JSON/YAML output in functions command
+    implementation("com.fasterxml.jackson.core:jackson-core:2.16.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.16.1")
+
     // Testing
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")

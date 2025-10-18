@@ -2,6 +2,7 @@
 package org.apache.utlx.stdlib
 
 import org.apache.utlx.core.udm.UDM
+import kotlin.reflect.full.*
 import org.apache.utlx.stdlib.array.*
 import org.apache.utlx.stdlib.string.*
 import org.apache.utlx.stdlib.math.*
@@ -1165,6 +1166,221 @@ object StandardLibrary {
      * Returns the total number of registered functions.
      */
     fun getFunctionCount(): Int = functions.size
+
+    /**
+     * Export function registry for CLI tools and IDE plugins
+     *
+     * Scans all @UTLXFunction annotations across stdlib and builds a comprehensive registry
+     * with metadata for documentation, autocomplete, and function discovery.
+     */
+    fun exportRegistry(): FunctionRegistry {
+        val allFunctions = mutableListOf<FunctionInfo>()
+
+        // List of all function object classes to scan
+        val functionClasses = listOf(
+            // Core functions
+            org.apache.utlx.stdlib.core.CoreFunctions::class,
+            org.apache.utlx.stdlib.core.DebugFunctions::class,
+            org.apache.utlx.stdlib.core.RuntimeFunctions::class,
+
+            // String functions
+            org.apache.utlx.stdlib.string.StringFunctions::class,
+            org.apache.utlx.stdlib.string.RegexFunctions::class,
+            org.apache.utlx.stdlib.string.ExtendedStringFunctions::class,
+            org.apache.utlx.stdlib.string.MoreStringFunctions::class,
+            org.apache.utlx.stdlib.string.CaseFunctions::class,
+            org.apache.utlx.stdlib.string.CaseConversionFunctions::class,
+            org.apache.utlx.stdlib.string.PluralizationFunctions::class,
+            org.apache.utlx.stdlib.string.CharacterFunctions::class,
+            org.apache.utlx.stdlib.string.AdvancedRegexFunctions::class,
+
+            // Array functions
+            org.apache.utlx.stdlib.array.ArrayFunctions::class,
+            org.apache.utlx.stdlib.array.MoreArrayFunctions::class,
+            org.apache.utlx.stdlib.array.Aggregations::class,
+            org.apache.utlx.stdlib.array.CriticalArrayFunctions::class,
+            org.apache.utlx.stdlib.array.UnzipFunctions::class,
+            org.apache.utlx.stdlib.array.EnhancedArrayFunctions::class,
+            org.apache.utlx.stdlib.array.JoinFunctions::class,
+
+            // Math functions
+            org.apache.utlx.stdlib.math.MathFunctions::class,
+            org.apache.utlx.stdlib.math.ExtendedMathFunctions::class,
+            org.apache.utlx.stdlib.math.StatisticalFunctions::class,
+            org.apache.utlx.stdlib.math.AdvancedMathFunctions::class,
+
+            // Date functions
+            org.apache.utlx.stdlib.date.DateFunctions::class,
+            org.apache.utlx.stdlib.date.ExtendedDateFunctions::class,
+            org.apache.utlx.stdlib.date.MoreDateFunctions::class,
+            org.apache.utlx.stdlib.date.TimezoneFunctions::class,
+            org.apache.utlx.stdlib.date.RichDateFunctions::class,
+
+            // Type functions
+            org.apache.utlx.stdlib.type.TypeFunctions::class,
+            org.apache.utlx.stdlib.type.ConversionFunctions::class,
+
+            // Object functions
+            org.apache.utlx.stdlib.objects.ObjectFunctions::class,
+            org.apache.utlx.stdlib.objects.CriticalObjectFunctions::class,
+            org.apache.utlx.stdlib.objects.EnhancedObjectFunctions::class,
+
+            // Encoding functions
+            org.apache.utlx.stdlib.encoding.EncodingFunctions::class,
+            org.apache.utlx.stdlib.encoding.AdvancedCryptoFunctions::class,
+
+            // XML functions
+            org.apache.utlx.stdlib.xml.QNameFunctions::class,
+            org.apache.utlx.stdlib.xml.XmlUtilityFunctions::class,
+            org.apache.utlx.stdlib.xml.XMLSerializationOptionsFunctions::class,
+            org.apache.utlx.stdlib.xml.CDATAFunctions::class,
+            org.apache.utlx.stdlib.xml.XMLEncodingBomFunctions::class,
+            org.apache.utlx.stdlib.xml.XMLCanonicalizationFunctions::class,
+
+            // Logical functions
+            org.apache.utlx.stdlib.logical.LogicalFunctions::class,
+
+            // URL functions
+            org.apache.utlx.stdlib.url.URLFunctions::class,
+
+            // JWT functions
+            org.apache.utlx.stdlib.jwt.JWTFunctions::class,
+
+            // JSON functions
+            org.apache.utlx.stdlib.json.JSONCanonicalizationFunctions::class,
+
+            // JWS functions
+            org.apache.utlx.stdlib.jws.JWSBasicFunctions::class,
+
+            // Binary functions
+            org.apache.utlx.stdlib.binary.BinaryFunctions::class,
+            org.apache.utlx.stdlib.binary.CompressionFunctions::class,
+
+            // Serialization functions
+            org.apache.utlx.stdlib.serialization.SerializationFunctions::class,
+            org.apache.utlx.stdlib.serialization.PrettyPrintFunctions::class,
+
+            // Util functions
+            org.apache.utlx.stdlib.util.UUIDFunctions::class,
+            org.apache.utlx.stdlib.util.TimerFunctions::class,
+            org.apache.utlx.stdlib.util.MimeFunctions::class,
+            org.apache.utlx.stdlib.util.MultipartFunctions::class,
+            org.apache.utlx.stdlib.util.CoercionFunctions::class,
+            org.apache.utlx.stdlib.util.ValueFunctions::class,
+            org.apache.utlx.stdlib.util.TreeFunctions::class,
+            org.apache.utlx.stdlib.util.DiffFunctions::class,
+
+            // Finance functions
+            org.apache.utlx.stdlib.finance.FinancialFunctions::class,
+
+            // Geo functions
+            org.apache.utlx.stdlib.geo.GeospatialFunctions::class,
+
+            // CSV functions
+            org.apache.utlx.stdlib.csv.CSVFunctions::class,
+
+            // YAML functions
+            org.apache.utlx.stdlib.yaml.YAMLFunctions::class
+        )
+
+        // Scan each class for @UTLXFunction annotations
+        for (klass in functionClasses) {
+            for (member in klass.members) {
+                val annotation = member.annotations
+                    .filterIsInstance<org.apache.utlx.stdlib.annotations.UTLXFunction>()
+                    .firstOrNull()
+
+                if (annotation != null) {
+                    allFunctions.add(convertAnnotationToFunctionInfo(member.name, annotation))
+                }
+            }
+        }
+
+        // Group by category
+        val categories = allFunctions
+            .groupBy { it.category }
+            .mapValues { it.value.sortedBy { func -> func.name } }
+
+        return FunctionRegistry(
+            version = "1.0.0",
+            generatedAt = java.time.Instant.now().toString(),
+            totalFunctions = allFunctions.size,
+            functions = allFunctions.sortedBy { it.name },
+            categories = categories
+        )
+    }
+
+    private fun convertAnnotationToFunctionInfo(
+        functionName: String,
+        annotation: org.apache.utlx.stdlib.annotations.UTLXFunction
+    ): FunctionInfo {
+        // Parse parameters from annotation string array
+        val parameters = annotation.parameters.map { paramStr ->
+            // Expected format: "paramName: type - description"
+            val parts = paramStr.split(":", limit = 2)
+            val name = parts.getOrNull(0)?.trim() ?: ""
+
+            val rest = parts.getOrNull(1)?.trim() ?: ""
+            val typeParts = rest.split("-", limit = 2)
+            val type = typeParts.getOrNull(0)?.trim() ?: "Any"
+            val description = typeParts.getOrNull(1)?.trim() ?: ""
+
+            ParameterInfo(
+                name = name,
+                type = type,
+                description = description
+            )
+        }
+
+        // Parse return value
+        val returns = if (annotation.returns.isNotBlank()) {
+            // Expected format: "type - description" or just "description"
+            val parts = annotation.returns.split("-", limit = 2)
+            if (parts.size == 2) {
+                ReturnInfo(
+                    type = parts[0].trim(),
+                    description = parts[1].trim()
+                )
+            } else {
+                ReturnInfo(
+                    type = "Any",
+                    description = annotation.returns.trim()
+                )
+            }
+        } else {
+            null
+        }
+
+        // Collect all examples
+        val examples = mutableListOf<String>()
+        if (annotation.example.isNotBlank()) {
+            examples.add(annotation.example)
+        }
+        examples.addAll(annotation.additionalExamples.filter { it.isNotBlank() })
+
+        // Build signature from parameters
+        val paramSignature = parameters.joinToString(", ") { "${it.name}: ${it.type}" }
+        val returnType = returns?.type ?: "Any"
+        val signature = "$functionName($paramSignature) => $returnType"
+
+        return FunctionInfo(
+            name = functionName,
+            category = annotation.category.ifBlank { "Core" },
+            description = annotation.description,
+            signature = signature,
+            minArgs = if (annotation.minArgs >= 0) annotation.minArgs else -1,
+            maxArgs = if (annotation.maxArgs >= 0) annotation.maxArgs else -1,
+            parameters = parameters,
+            returns = returns,
+            examples = examples,
+            notes = annotation.notes.ifBlank { null },
+            tags = annotation.tags.toList(),
+            seeAlso = annotation.seeAlso.toList(),
+            since = annotation.since.ifBlank { "1.0" },
+            deprecated = annotation.deprecated,
+            deprecationMessage = annotation.deprecationMessage.ifBlank { null }
+        )
+    }
     
     /**
      * Register JSON Canonicalization functions

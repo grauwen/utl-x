@@ -66,8 +66,8 @@ tasks.register<JavaExec>("generateFunctionRegistry") {
 // Auto-generate registry after compilation
 tasks.jar {
     dependsOn("generateFunctionRegistry")
-    
+
     from("$buildDir/generated/function-registry") {
-        into("META-INF/utlx")
+        into("function-registry")
     }
 }

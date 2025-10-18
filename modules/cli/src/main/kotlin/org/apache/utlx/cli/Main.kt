@@ -42,10 +42,7 @@ object Main {
                     println("Migrate command not yet implemented")
                     println("Coming soon: Migrate XSLT/DataWeave to UTL-X")
                 }
-                "functions", "fn" -> {
-                    println("Functions command not yet implemented")
-                    println("Available soon: List and explore standard library functions")
-                }
+                "functions", "fn" -> FunctionsCommand.execute(commandArgs)
                 "version", "--version", "-v" -> {
                     println("UTL-X CLI v$VERSION")
                     println("Universal Transformation Language Extended")
