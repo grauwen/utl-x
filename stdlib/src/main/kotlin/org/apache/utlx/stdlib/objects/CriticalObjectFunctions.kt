@@ -2,12 +2,36 @@
 package org.apache.utlx.stdlib.objects
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Critical missing object functions
  */
 object CriticalObjectFunctions {
     
+    @UTLXFunction(
+        description = "Invert object - swap keys and values",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "invert({US: \"United States\", UK: \"United Kingdom\"})",
+        additionalExamples = [
+            "invert({a: 1, b: 2, c: 1})"
+        ],
+        notes = """=> {"United States": "US", "United Kingdom": "UK"}
+=> {1: "c", 2: "b"}  // Note: duplicate values keep last key
+Essential for:
+- Creating reverse lookup tables
+- Code-to-name mappings
+- Bidirectional maps""",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Invert object - swap keys and values
      * 
@@ -52,6 +76,36 @@ object CriticalObjectFunctions {
         return UDM.Object(inverted, emptyMap())
     }
     
+    @UTLXFunction(
+        description = "Deep merge objects recursively",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "obj2: Obj2 value"
+        ],
+        returns = "Result of the operation",
+        example = "",
+        notes = """deepMerge(
+{a: {b: 1, c: 2}, d: 3},
+{a: {c: 4, e: 5}, f: 6}
+)
+=> {a: {b: 1, c: 4, e: 5}, d: 3, f: 6}
+Unlike shallow merge which overwrites nested objects entirely,
+deepMerge recursively merges nested structures.
+Critical for:
+- Configuration merging
+- Deep object updates
+- Layered settings
+Comparison with shallow merge:
+Shallow merge:
+merge({a: {b: 1}}, {a: {c: 2}}) => {a: {c: 2}}  // Overwrites!
+Deep merge:
+deepMerge({a: {b: 1}}, {a: {c: 2}}) => {a: {b: 1, c: 2}}  // Merges!""",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Deep merge objects recursively
      * 
@@ -123,6 +177,20 @@ object CriticalObjectFunctions {
         return UDM.Object(result, mergedAttributes)
     }
     
+    @UTLXFunction(
+        description = "Deep merge multiple objects",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "deepMergeAll([{a: 1}, {b: 2}, {c: 3}]) => {a: 1, b: 2, c: 3}",
+        notes = "Convenience function for merging more than 2 objects",
+        tags = ["other", "predicate"],
+        since = "1.0"
+    )
     /**
      * Deep merge multiple objects
      * 
@@ -163,6 +231,21 @@ object CriticalObjectFunctions {
         return result
     }
     
+    @UTLXFunction(
+        description = "Deep clone an object (recursive copy)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "deepClone({a: {b: {c: 1}}}) => {a: {b: {c: 1}}}",
+        notes = "Creates a completely independent copy with no shared references",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Deep clone an object (recursive copy)
      * 
@@ -216,6 +299,25 @@ object CriticalObjectFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get nested value using path",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "path: Path value"
+        ],
+        returns = "null if path doesn't exist",
+        example = "getPath({a: {b: {c: 1}}}, [\"a\", \"b\", \"c\"]) => 1",
+        additionalExamples = [
+            "getPath({users: [{name: \"Alice\"}]}, [\"users\", 0, \"name\"]) => \"Alice\""
+        ],
+        notes = """Returns null if path doesn't exist
+Safer alternative to direct navigation when path might not exist""",
+        tags = ["null-handling", "other"],
+        since = "1.0"
+    )
     /**
      * Get nested value using path
      * 
@@ -264,6 +366,25 @@ object CriticalObjectFunctions {
         return current
     }
     
+    @UTLXFunction(
+        description = "Set nested value using path",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "path: Path value",
+        "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "setPath({a: {b: 1}}, [\"a\", \"c\"], 2) => {a: {b: 1, c: 2}}",
+        additionalExamples = [
+            "setPath({}, [\"a\", \"b\", \"c\"], 1) => {a: {b: {c: 1}}}  // Creates path"
+        ],
+        notes = "Creates intermediate objects if they don't exist",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Set nested value using path
      * 

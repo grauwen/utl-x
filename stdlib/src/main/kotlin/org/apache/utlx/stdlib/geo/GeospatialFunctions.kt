@@ -3,6 +3,7 @@ package org.apache.utlx.stdlib.geo
 
 import org.apache.utlx.core.udm.UDM
 import kotlin.math.*
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Geospatial Functions Module
@@ -38,6 +39,17 @@ object GeospatialFunctions {
     // DISTANCE CALCULATIONS
     // ============================================
     
+    @UTLXFunction(
+        description = "Calculates the distance between two geographic coordinates using the Haversine formula.",
+        minArgs = 4,
+        maxArgs = 4,
+        category = "Geospatial",
+        returns = "Result of the operation",
+        example = "distance(...) => result",
+        notes = "The Haversine formula determines the great-circle distance between two points\non a sphere given their longitudes and latitudes.\nCoordinates should be in decimal degrees:\n- Latitude: -90 (South) to +90 (North)\n- Longitude: -180 (West) to +180 (East)\n[1] longitude1 (Number, decimal degrees)\n[2] latitude2 (Number, decimal degrees)\n[3] longitude2 (Number, decimal degrees)\n[4] unit (String, optional: \"km\", \"mi\", \"m\", \"nm\", default: \"km\")\nExample:\n```\n// New York to London\ndistance(40.7128, -74.0060, 51.5074, -0.1278)\n→ 5570.22 (km)\ndistance(40.7128, -74.0060, 51.5074, -0.1278, \"mi\")\n→ 3461.34 (miles)\n// San Francisco to Los Angeles\ndistance(37.7749, -122.4194, 34.0522, -118.2437, \"mi\")\n→ 347.38\n// Short distance in meters\ndistance(40.7589, -73.9851, 40.7614, -73.9776, \"m\")\n→ 623.45\n```",
+        tags = ["geospatial"],
+        since = "1.0"
+    )
     /**
      * Calculates the distance between two geographic coordinates using the Haversine formula.
      * 
@@ -106,6 +118,17 @@ object GeospatialFunctions {
         return UDM.Scalar(distance)
     }
     
+    @UTLXFunction(
+        description = "Calculates the initial bearing (forward azimuth) from point1 to point2.",
+        minArgs = 4,
+        maxArgs = 4,
+        category = "Geospatial",
+        returns = "Result of the operation",
+        example = "bearing(...) => result",
+        notes = "Bearing is the compass direction in degrees (0-360):\n- 0° = North\n- 90° = East\n- 180° = South\n- 270° = West\n[1] longitude1 (Number)\n[2] latitude2 (Number)\n[3] longitude2 (Number)\nExample:\n```\n// New York to London (Northeast)\nbearing(40.7128, -74.0060, 51.5074, -0.1278)\n→ 51.36° (Northeast)\n// Los Angeles to Tokyo (West-Northwest)\nbearing(34.0522, -118.2437, 35.6762, 139.6503)\n→ 298.45° (Northwest)\n// Sydney to Auckland (East-Southeast)\nbearing(-33.8688, 151.2093, -36.8485, 174.7633)\n→ 108.92° (East-Southeast)\n```",
+        tags = ["geospatial"],
+        since = "1.0"
+    )
     /**
      * Calculates the initial bearing (forward azimuth) from point1 to point2.
      * 
@@ -163,6 +186,24 @@ object GeospatialFunctions {
     // GEOFENCING
     // ============================================
     
+    @UTLXFunction(
+        description = "Checks if a point is within a circular radius from a center point.",
+        minArgs = 5,
+        maxArgs = 5,
+        category = "Geospatial",
+        parameters = [
+            "array: Input array to process",
+        "pointLon: Pointlon value",
+        "centerLat: Centerlat value",
+        "centerLon: Centerlon value",
+        "radius: Radius value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isPointInCircle(...) => result",
+        notes = "Useful for geofencing applications like \"show stores within 10 miles\"\nor \"alert when asset leaves 5km zone\".\n[1] point longitude (Number)\n[2] center latitude (Number)\n[3] center longitude (Number)\n[4] radius (Number)\n[5] unit (String, optional: \"km\", \"mi\", \"m\", default: \"km\")\nExample:\n```\n// Is this location within 10km of downtown?\nisPointInCircle(37.7749, -122.4194, 37.7849, -122.4094, 10)\n→ true\n// Store locator: within 5 miles?\nisPointInCircle(40.7589, -73.9851, 40.7128, -74.0060, 5, \"mi\")\n→ false (too far)\n// Asset tracking: within 100m safety zone?\nisPointInCircle(51.5074, -0.1278, 51.5076, -0.1280, 100, \"m\")\n→ true\n```",
+        tags = ["geospatial"],
+        since = "1.0"
+    )
     /**
      * Checks if a point is within a circular radius from a center point.
      * 
@@ -213,6 +254,22 @@ object GeospatialFunctions {
         return UDM.Scalar(dist <= radius)
     }
     
+    @UTLXFunction(
+        description = "Checks if a point is inside a polygon using the ray casting algorithm.",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Geospatial",
+        parameters = [
+            "array: Input array to process",
+        "pointLon: Pointlon value",
+        "polygonArg: Polygonarg value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isPointInPolygon(...) => result",
+        notes = "The polygon is defined as an array of coordinate pairs [lat, lon].\nUses the \"even-odd rule\" (ray casting) algorithm.\n[1] point longitude (Number)\n[2] polygon vertices (Array of [lat, lon] arrays)\nExample:\n```\n// Is point inside this delivery zone?\nisPointInPolygon(\n40.7128, -74.0060,\n[[40.7, -74.1], [40.8, -74.1], [40.8, -74.0], [40.7, -74.0]]\n)\n→ true\n// Geofencing: inside city boundary?\nisPointInPolygon(\n51.5074, -0.1278,\n[[51.5, -0.2], [51.6, -0.2], [51.6, -0.05], [51.5, -0.05]]\n)\n→ true\n```",
+        tags = ["geospatial"],
+        since = "1.0"
+    )
     /**
      * Checks if a point is inside a polygon using the ray casting algorithm.
      * 
@@ -293,6 +350,17 @@ object GeospatialFunctions {
     // CALCULATIONS & UTILITIES
     // ============================================
     
+    @UTLXFunction(
+        description = "Calculates the midpoint between two coordinates.",
+        minArgs = 4,
+        maxArgs = 4,
+        category = "Geospatial",
+        returns = "the geographic center point (approximate for long distances).",
+        example = "midpoint(...) => result",
+        notes = "Returns the geographic center point (approximate for long distances).\n[1] longitude1 (Number)\n[2] latitude2 (Number)\n[3] longitude2 (Number)\nExample:\n```\n// Midpoint between New York and London\nmidpoint(40.7128, -74.0060, 51.5074, -0.1278)\n→ {lat: 51.3826, lon: -42.0609}\n// Meeting point between two cities\nmidpoint(37.7749, -122.4194, 34.0522, -118.2437)\n→ {lat: 35.9135, lon: -120.3315}\n```",
+        tags = ["geospatial"],
+        since = "1.0"
+    )
     /**
      * Calculates the midpoint between two coordinates.
      * 
@@ -345,6 +413,22 @@ object GeospatialFunctions {
         ))
     }
     
+    @UTLXFunction(
+        description = "Calculates a destination point given a starting point, bearing, and distance.",
+        minArgs = 4,
+        maxArgs = 4,
+        category = "Geospatial",
+        parameters = [
+            "array: Input array to process",
+        "bearingDeg: Bearingdeg value",
+        "distance: Distance value"
+        ],
+        returns = "Result of the operation",
+        example = "destinationPoint(...) => result",
+        notes = "Useful for \"travel X km in direction Y\" calculations.\n[1] starting longitude (Number)\n[2] bearing in degrees (Number, 0-360)\n[3] distance (Number)\n[4] unit (String, optional: \"km\", \"mi\", \"m\", default: \"km\")\nExample:\n```\n// Travel 100km north from starting point\ndestinationPoint(40.7128, -74.0060, 0, 100)\n→ {lat: 41.6128, lon: -74.0060}\n// Travel 50 miles east\ndestinationPoint(34.0522, -118.2437, 90, 50, \"mi\")\n→ {lat: 34.0522, lon: -117.5237}\n```",
+        tags = ["geospatial"],
+        since = "1.0"
+    )
     /**
      * Calculates a destination point given a starting point, bearing, and distance.
      * 
@@ -407,6 +491,20 @@ object GeospatialFunctions {
         ))
     }
     
+    @UTLXFunction(
+        description = "Calculates the bounding box (min/max lat/lon) for an array of coordinates.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Geospatial",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "boundingBox(...) => result",
+        notes = "Useful for map viewport calculations or data validation.\nExample:\n```\nboundingBox([\n{lat: 40.7128, lon: -74.0060},\n{lat: 51.5074, lon: -0.1278},\n{lat: 35.6762, lon: 139.6503}\n])\n→ {\nminLat: 35.6762, maxLat: 51.5074,\nminLon: -74.0060, maxLon: 139.6503\n}\n```",
+        tags = ["geospatial"],
+        since = "1.0"
+    )
     /**
      * Calculates the bounding box (min/max lat/lon) for an array of coordinates.
      * 
@@ -485,6 +583,21 @@ object GeospatialFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Checks if coordinates are valid.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Geospatial",
+        parameters = [
+            "lat: Lat value",
+        "lon: Lon value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isValidCoordinates(...) => result",
+        notes = "[1] longitude (Number)\nExample:\n```\nisValidCoordinates(40.7128, -74.0060) → true\nisValidCoordinates(100, 0) → false (lat out of range)\nisValidCoordinates(0, 200) → false (lon out of range)\n```",
+        tags = ["geospatial"],
+        since = "1.0"
+    )
     /**
      * Checks if coordinates are valid.
      * 

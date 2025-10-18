@@ -25,12 +25,30 @@ package org.apache.utlx.stdlib.core
 import org.apache.utlx.core.udm.UDM
 import java.lang.management.ManagementFactory
 import java.util.Properties
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 object RuntimeFunctions {
     
     // Version information (should be read from build.gradle.kts or MANIFEST.MF)
     private const val UTLX_VERSION = "1.0.0"
     
+    @UTLXFunction(
+        description = "Get environment variable value",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Core",
+        parameters = [
+            "key: Key value",
+        "default: Default value"
+        ],
+        returns = "Result of the operation",
+        example = "env(...) => result",
+        notes = """Example:
+env("PATH")
+env("API_KEY")""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get environment variable value
      * 
@@ -54,6 +72,23 @@ object RuntimeFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get environment variable with default fallback",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Core",
+        parameters = [
+            "key: Key value",
+        "default: Default value"
+        ],
+        returns = "Result of the operation",
+        example = "envOrDefault(...) => result",
+        notes = """Example:
+envOrDefault("API_URL", "http://localhost:8080")
+envOrDefault("TIMEOUT", "30")""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get environment variable with default fallback
      * 
@@ -75,6 +110,22 @@ object RuntimeFunctions {
         return UDM.fromNative(value)
     }
     
+    @UTLXFunction(
+        description = "Get all environment variables",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "key: Key value"
+        ],
+        returns = "Result of the operation",
+        example = "envAll(...) => result",
+        notes = """Example:
+envAll()
+// Returns: {PATH: "...", HOME: "...", ...}""",
+        tags = ["core", "predicate"],
+        since = "1.0"
+    )
     /**
      * Get all environment variables
      * 
@@ -89,6 +140,22 @@ object RuntimeFunctions {
         return UDM.fromNative(allEnv)
     }
     
+    @UTLXFunction(
+        description = "Check if environment variable exists",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Core",
+        parameters = [
+            "key: Key value",
+        "default: Default value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "hasEnv(...) => result",
+        notes = """Example:
+hasEnv("API_KEY")""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Check if environment variable exists
      * 
@@ -107,6 +174,23 @@ object RuntimeFunctions {
         return UDM.fromNative(exists)
     }
     
+    @UTLXFunction(
+        description = "Get Java system property",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Core",
+        parameters = [
+            "key: Key value",
+        "default: Default value"
+        ],
+        returns = "Result of the operation",
+        example = "systemProperty(...) => result",
+        notes = """Example:
+systemProperty("java.version")
+systemProperty("user.home")""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get Java system property
      * 
@@ -130,6 +214,22 @@ object RuntimeFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get system property with default fallback",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Core",
+        parameters = [
+            "key: Key value",
+        "default: Default value"
+        ],
+        returns = "Result of the operation",
+        example = "systemPropertyOrDefault(...) => result",
+        notes = """Example:
+systemPropertyOrDefault("java.io.tmpdir", "/tmp")""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get system property with default fallback
      * 
@@ -150,6 +250,18 @@ object RuntimeFunctions {
         return UDM.fromNative(value)
     }
     
+    @UTLXFunction(
+        description = "Get all system properties",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "systemPropertiesAll(...) => result",
+        notes = """Example:
+systemPropertiesAll()""",
+        tags = ["core", "predicate"],
+        since = "1.0"
+    )
     /**
      * Get all system properties
      * 
@@ -166,6 +278,18 @@ object RuntimeFunctions {
         return UDM.fromNative(propsMap)
     }
     
+    @UTLXFunction(
+        description = "Get UTL-X version",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "version(...) => result",
+        notes = """Example:
+version()  // Returns: "1.0.0"""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get UTL-X version
      * 
@@ -178,6 +302,18 @@ object RuntimeFunctions {
         return UDM.fromNative(UTLX_VERSION)
     }
     
+    @UTLXFunction(
+        description = "Get platform/operating system name",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "platform(...) => result",
+        notes = """Example:
+platform()  // Returns: "Linux", "Mac OS X", "Windows 10"""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get platform/operating system name
      * 
@@ -191,6 +327,18 @@ object RuntimeFunctions {
         return UDM.fromNative(osName)
     }
     
+    @UTLXFunction(
+        description = "Get operating system version",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "osVersion(...) => result",
+        notes = """Example:
+osVersion()  // Returns: "10.15.7"""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get operating system version
      * 
@@ -204,6 +352,18 @@ object RuntimeFunctions {
         return UDM.fromNative(osVersion)
     }
     
+    @UTLXFunction(
+        description = "Get operating system architecture",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "osArch(...) => result",
+        notes = """Example:
+osArch()  // Returns: "x86_64"""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get operating system architecture
      * 
@@ -217,6 +377,18 @@ object RuntimeFunctions {
         return UDM.fromNative(osArch)
     }
     
+    @UTLXFunction(
+        description = "Get Java/JVM version",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "javaVersion(...) => result",
+        notes = """Example:
+javaVersion()  // Returns: "11.0.12"""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get Java/JVM version
      * 
@@ -230,6 +402,18 @@ object RuntimeFunctions {
         return UDM.fromNative(javaVersion)
     }
     
+    @UTLXFunction(
+        description = "Get number of available CPU cores/processors",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "availableProcessors(...) => result",
+        notes = """Example:
+availableProcessors()  // Returns: 8""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get number of available CPU cores/processors
      * 
@@ -243,6 +427,24 @@ object RuntimeFunctions {
         return UDM.fromNative(processors)
     }
     
+    @UTLXFunction(
+        description = "Get JVM memory information in bytes",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "memoryInfo(...) => result",
+        notes = """Example:
+memoryInfo()
+// Returns: {
+//   maxMemory: 4294967296,
+//   totalMemory: 2147483648,
+//   freeMemory: 1073741824,
+//   usedMemory: 1073741824
+// }""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get JVM memory information in bytes
      * 
@@ -278,6 +480,18 @@ object RuntimeFunctions {
         return UDM.fromNative(info)
     }
     
+    @UTLXFunction(
+        description = "Get current working directory",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "currentDir(...) => result",
+        notes = """Example:
+currentDir()  // Returns: "/home/user/project"""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get current working directory
      * 
@@ -291,6 +505,18 @@ object RuntimeFunctions {
         return UDM.fromNative(userDir)
     }
     
+    @UTLXFunction(
+        description = "Get user home directory",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "homeDir(...) => result",
+        notes = """Example:
+homeDir()  // Returns: "/home/user"""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get user home directory
      * 
@@ -304,6 +530,18 @@ object RuntimeFunctions {
         return UDM.fromNative(userHome)
     }
     
+    @UTLXFunction(
+        description = "Get temporary directory",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "tempDir(...) => result",
+        notes = """Example:
+tempDir()  // Returns: "/tmp"""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get temporary directory
      * 
@@ -317,6 +555,18 @@ object RuntimeFunctions {
         return UDM.fromNative(tmpDir)
     }
     
+    @UTLXFunction(
+        description = "Get current username",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "username(...) => result",
+        notes = """Example:
+username()  // Returns: "john"""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get current username
      * 
@@ -330,6 +580,18 @@ object RuntimeFunctions {
         return UDM.fromNative(userName)
     }
     
+    @UTLXFunction(
+        description = "Get JVM uptime in milliseconds",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "uptime(...) => result",
+        notes = """Example:
+uptime()  // Returns: 12345678""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get JVM uptime in milliseconds
      * 
@@ -344,6 +606,30 @@ object RuntimeFunctions {
         return UDM.fromNative(uptime)
     }
     
+    @UTLXFunction(
+        description = "Get comprehensive runtime information",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "runtimeInfo(...) => result",
+        notes = """Example:
+runtimeInfo()
+// Returns: {
+//   utlxVersion: "1.0.0",
+//   javaVersion: "11.0.12",
+//   osName: "Linux",
+//   osVersion: "5.10.0",
+//   osArch: "x86_64",
+//   availableProcessors: 8,
+//   maxMemory: 4294967296,
+//   currentDir: "/home/user/project",
+//   userHome: "/home/user",
+//   userName: "john"
+// }""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get comprehensive runtime information
      * 
@@ -406,6 +692,19 @@ object RuntimeFunctions {
         return UDM.fromNative(info)
     }
     
+    @UTLXFunction(
+        description = "Check if running in debug mode",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Boolean indicating the result",
+        example = "isDebugMode(...) => result",
+        notes = """Checks for common debug flags in environment and system properties
+Example:
+isDebugMode()""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Check if running in debug mode
      * Checks for common debug flags in environment and system properties
@@ -430,6 +729,19 @@ object RuntimeFunctions {
         return UDM.fromNative(isDebug)
     }
     
+    @UTLXFunction(
+        description = "Get current environment name",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        returns = "Result of the operation",
+        example = "environment(...) => result",
+        notes = """Checks common environment variable patterns
+Example:
+environment()  // Returns: "production"""",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Get current environment name
      * Checks common environment variable patterns

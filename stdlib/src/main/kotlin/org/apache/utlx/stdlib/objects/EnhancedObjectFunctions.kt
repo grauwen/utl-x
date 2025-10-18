@@ -2,6 +2,7 @@
 package org.apache.utlx.stdlib.objects
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Enhanced Object Functions
@@ -21,6 +22,21 @@ import org.apache.utlx.core.udm.UDM
  */
 object EnhancedObjectFunctions {
     
+    @UTLXFunction(
+        description = "Divides an object into sub-objects containing n key-value pairs each.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "divideBy(...) => result",
+        notes = "This is useful for batching operations on large objects or\ncreating pages/chunks of object data.\n[1] number of entries per chunk (Number)\nExample:\n```\n{a: 1, b: 2, c: 3, d: 4, e: 5} divideBy 2\n→ [{a: 1, b: 2}, {c: 3, d: 4}, {e: 5}]\n{name: \"Alice\", age: 30, city: \"NYC\"} divideBy 1\n→ [{name: \"Alice\"}, {age: 30}, {city: \"NYC\"}]\n```",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Divides an object into sub-objects containing n key-value pairs each.
      * 
@@ -65,6 +81,21 @@ object EnhancedObjectFunctions {
         return UDM.Array(result)
     }
     
+    @UTLXFunction(
+        description = "The predicate function receives two arguments: key and value.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "predicate: Function to test each element (element) => boolean",
+        "predicateArg: Predicatearg value"
+        ],
+        returns = "true if any entry in the object satisfies the predicate function.",
+        example = "someEntry(...) => result",
+        notes = "Returns true if any entry in the object satisfies the predicate function.\nReturns true if at least one entry makes the predicate return true.\n[1] predicate function (key, value) => boolean\nExample:\n```\n{a: 5, b: 15, c: 3} someEntry (k, v) => v > 10\n→ true\n{name: \"Alice\", age: 30} someEntry (k, v) => k == \"age\"\n→ true\n{x: 1, y: 2, z: 3} someEntry (k, v) => v > 10\n→ false\n```",
+        tags = ["other", "predicate"],
+        since = "1.0"
+    )
     /**
      * Returns true if any entry in the object satisfies the predicate function.
      * 
@@ -115,6 +146,21 @@ object EnhancedObjectFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "The predicate function receives two arguments: key and value.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "predicate: Function to test each element (element) => boolean",
+        "predicateArg: Predicatearg value"
+        ],
+        returns = "true if all entries in the object satisfy the predicate function.",
+        example = "everyEntry(...) => result",
+        notes = "Returns true if all entries in the object satisfy the predicate function.\nReturns true only if all entries make the predicate return true.\nReturns true for empty objects.\n[1] predicate function (key, value) => boolean\nExample:\n```\n{a: 1, b: 2, c: 3} everyEntry (k, v) => isNumber(v)\n→ true\n{a: 1, b: \"2\", c: 3} everyEntry (k, v) => isNumber(v)\n→ false\n{x: 10, y: 20, z: 30} everyEntry (k, v) => v > 5\n→ true\n{} everyEntry (k, v) => false\n→ true (vacuously true for empty object)\n```",
+        tags = ["cleanup", "other", "predicate"],
+        since = "1.0"
+    )
     /**
      * Returns true if all entries in the object satisfy the predicate function.
      * 
@@ -164,6 +210,21 @@ object EnhancedObjectFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Transforms each entry in the object using a mapping function.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "predicate: Function to test each element (element) => boolean",
+        "mapperArg: Mapperarg value"
+        ],
+        returns = "Result of the operation",
+        example = "mapEntries(...) => result",
+        notes = "The mapper function receives two arguments: key and value.\nIt should return an object with 'key' and 'value' properties\nrepresenting the new key and value for that entry.\n[1] mapper function (key, value) => {key: newKey, value: newValue}\nExample:\n```\n{a: 1, b: 2} mapEntries (k, v) => {key: upper(k), value: v * 2}\n→ {A: 2, B: 4}\n{first: \"John\", last: \"Doe\"} mapEntries (k, v) => {key: k + \"_name\", value: upper(v)}\n→ {first_name: \"JOHN\", last_name: \"DOE\"}\n{x: 10, y: 20} mapEntries (k, v) => {key: k, value: v / 10}\n→ {x: 1, y: 2}\n```",
+        tags = ["other", "transform"],
+        since = "1.0"
+    )
     /**
      * Transforms each entry in the object using a mapping function.
      * 
@@ -215,6 +276,21 @@ object EnhancedObjectFunctions {
         return UDM.Object(result)
     }
     
+    @UTLXFunction(
+        description = "Filters an object to include only entries that satisfy the predicate.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "predicate: Function to test each element (element) => boolean",
+        "predicateArg: Predicatearg value"
+        ],
+        returns = "New array with filtered elements",
+        example = "filterEntries(...) => result",
+        notes = "The predicate function receives two arguments: key and value.\nOnly entries where the predicate returns true are included.\n[1] predicate function (key, value) => boolean\nExample:\n```\n{a: 1, b: 2, c: 3, d: 4} filterEntries (k, v) => v > 2\n→ {c: 3, d: 4}\n{name: \"Alice\", age: 30, city: \"NYC\"} filterEntries (k, v) => k != \"age\"\n→ {name: \"Alice\", city: \"NYC\"}\n{x: 10, y: 20, z: 5} filterEntries (k, v) => v >= 10\n→ {x: 10, y: 20}\n```",
+        tags = ["filter", "other", "predicate"],
+        since = "1.0"
+    )
     /**
      * Filters an object to include only entries that satisfy the predicate.
      * 
@@ -263,6 +339,21 @@ object EnhancedObjectFunctions {
         return UDM.Object(result)
     }
     
+    @UTLXFunction(
+        description = "Reduces all entries in an object to a single value.",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "predicate: Function to test each element (element) => boolean",
+        "reducerArg: Reducerarg value"
+        ],
+        returns = "Result of the operation",
+        example = "reduceEntries(...) => result",
+        notes = "The reducer function receives three arguments:\n- accumulator: the accumulated value so far\n- key: current entry's key\n- value: current entry's value\n[1] reducer function (acc, key, value) => newAcc\n[2] initial accumulator value\nExample:\n```\n{a: 1, b: 2, c: 3} reduceEntries ((acc, k, v) => acc + v, 0)\n→ 6\n{x: 10, y: 20, z: 30} reduceEntries ((acc, k, v) => acc ++ k, \"\")\n→ \"xyz\"\n{items: 3, price: 10} reduceEntries ((acc, k, v) => acc * v, 1)\n→ 30\n```",
+        tags = ["aggregate", "other"],
+        since = "1.0"
+    )
     /**
      * Reduces all entries in an object to a single value.
      * 
@@ -309,6 +400,21 @@ object EnhancedObjectFunctions {
         return accumulator
     }
     
+    @UTLXFunction(
+        description = "[1] predicate function (key, value) => boolean",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "predicate: Function to test each element (element) => boolean",
+        "predicateArg: Predicatearg value"
+        ],
+        returns = "the number of entries in an object that satisfy the predicate.",
+        example = "countEntries(...) => result",
+        notes = "Returns the number of entries in an object that satisfy the predicate.\nExample:\n```\n{a: 1, b: 2, c: 3, d: 4} countEntries (k, v) => v > 2\n→ 2\n{name: \"Alice\", age: 30, city: \"NYC\"} countEntries (k, v) => isString(v)\n→ 2\n```",
+        tags = ["other", "predicate"],
+        since = "1.0"
+    )
     /**
      * Returns the number of entries in an object that satisfy the predicate.
      * 
@@ -346,6 +452,21 @@ object EnhancedObjectFunctions {
         return UDM.Scalar(count)
     }
     
+    @UTLXFunction(
+        description = "Transforms an object's keys using a mapping function.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "obj: Obj value",
+        "mapperArg: Mapperarg value"
+        ],
+        returns = "Result of the operation",
+        example = "mapKeys(...) => result",
+        notes = "[1] mapper function (key) => newKey\nExample:\n```\n{firstName: \"Alice\", lastName: \"Smith\"} mapKeys (k) => snakeCase(k)\n→ {first_name: \"Alice\", last_name: \"Smith\"}\n{a: 1, b: 2, c: 3} mapKeys (k) => upper(k)\n→ {A: 1, B: 2, C: 3}\n```",
+        tags = ["other", "transform"],
+        since = "1.0"
+    )
     /**
      * Transforms an object's keys using a mapping function.
      * 
@@ -387,6 +508,21 @@ object EnhancedObjectFunctions {
         return UDM.Object(result)
     }
     
+    @UTLXFunction(
+        description = "Transforms an object's values using a mapping function.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "obj: Obj value",
+        "mapperArg: Mapperarg value"
+        ],
+        returns = "Result of the operation",
+        example = "mapValues(...) => result",
+        notes = "[1] mapper function (value) => newValue\nExample:\n```\n{a: 1, b: 2, c: 3} mapValues (v) => v * 2\n→ {a: 2, b: 4, c: 6}\n{name: \"alice\", city: \"new york\"} mapValues (v) => upper(v)\n→ {name: \"ALICE\", city: \"NEW YORK\"}\n```",
+        tags = ["other", "transform"],
+        since = "1.0"
+    )
     /**
      * Transforms an object's values using a mapping function.
      * 

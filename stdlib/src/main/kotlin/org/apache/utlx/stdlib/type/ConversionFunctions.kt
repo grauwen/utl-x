@@ -8,6 +8,7 @@ import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * CRITICAL: Type Conversion and Parsing Functions
@@ -19,6 +20,24 @@ object ConversionFunctions {
     
     // ==================== NUMBER CONVERSIONS ====================
     
+    @UTLXFunction(
+        description = "This is the PRIMARY function for converting XML/CSV string values to numbers",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Type",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "parseNumber(\"123.45\") => 123.45",
+        additionalExamples = [
+            "parseNumber(\"1,234.56\") => 1234.56  (removes commas)",
+            "parseNumber(\"$99.99\") => 99.99  (removes currency symbols)",
+            "parseNumber(\"not a number\") => null  (safe parsing)"
+        ],
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * 
      * Usage: parseNumber("123.45") => 123.45
@@ -58,6 +77,20 @@ object ConversionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Convert value to number (alias for parseNumber, stricter)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        returns = "Result of the operation",
+        example = "toNumber(\"42\") => 42",
+        additionalExamples = [
+            "toNumber(42) => 42"
+        ],
+        notes = "Throws error if conversion fails (unlike parseNumber which returns null)",
+        tags = ["null-handling", "type"],
+        since = "1.0"
+    )
     /**
      * Convert value to number (alias for parseNumber, stricter)
      * 
@@ -79,6 +112,23 @@ object ConversionFunctions {
         return result
     }
     
+    @UTLXFunction(
+        description = "Parse integer from string",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Type",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "parseInt(\"42\") => 42",
+        additionalExamples = [
+            "parseInt(\"42.7\") => 42  (truncates)",
+            "parseInt(\"not a number\") => null"
+        ],
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Parse integer from string
      * 
@@ -103,11 +153,38 @@ object ConversionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Parse float/decimal from string (alias for parseNumber)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "parseFloat(...) => result",
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Parse float/decimal from string (alias for parseNumber)
      */
     fun parseFloat(args: List<UDM>): UDM = parseNumber(args)
     
+    @UTLXFunction(
+        description = "Parse double from string (alias for parseNumber)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "parseDouble(...) => result",
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Parse double from string (alias for parseNumber)
      */
@@ -115,6 +192,25 @@ object ConversionFunctions {
     
     // ==================== STRING CONVERSIONS ====================
     
+    @UTLXFunction(
+        description = "Convert any value to string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "toString(42) => \"42\"",
+        additionalExamples = [
+            "toString(true) => \"true\"",
+            "toString([1,2,3]) => \"[1, 2, 3]\"",
+            "toString(null) => \"\""
+        ],
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Convert any value to string
      * 
@@ -168,6 +264,29 @@ object ConversionFunctions {
     
     // ==================== BOOLEAN CONVERSIONS ====================
     
+    @UTLXFunction(
+        description = "Parse boolean from string or number",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Type",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "parseBoolean(\"true\") => true",
+        additionalExamples = [
+            "parseBoolean(\"yes\") => true",
+            "parseBoolean(\"1\") => true",
+            "parseBoolean(1) => true",
+            "parseBoolean(\"false\") => false",
+            "parseBoolean(\"no\") => false",
+            "parseBoolean(\"0\") => false",
+            "parseBoolean(0) => false",
+            "parseBoolean(\"other\") => null"
+        ],
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Parse boolean from string or number
      * 
@@ -207,6 +326,25 @@ object ConversionFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Convert value to boolean (stricter than parseBoolean)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "value: Value value",
+        "format: Format value"
+        ],
+        returns = "Result of the operation",
+        example = "toBoolean(1) => true",
+        additionalExamples = [
+            "toBoolean(0) => false",
+            "toBoolean(\"true\") => true"
+        ],
+        notes = "Throws error if conversion fails",
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Convert value to boolean (stricter than parseBoolean)
      * 
@@ -231,6 +369,25 @@ object ConversionFunctions {
     
     // ==================== DATE CONVERSIONS ====================
     
+    @UTLXFunction(
+        description = "Parse date from string with optional format",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Type",
+        parameters = [
+            "array: Input array to process",
+        "format: Format value"
+        ],
+        returns = "Result of the operation",
+        example = "parseDate(\"2025-10-15\") => Date",
+        additionalExamples = [
+            "parseDate(\"10/15/2025\", \"MM/dd/yyyy\") => Date",
+            "parseDate(\"2025-10-15T14:30:00Z\") => DateTime",
+            "parseDate(\"invalid\") => null"
+        ],
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Parse date from string with optional format
      * 
@@ -287,6 +444,23 @@ object ConversionFunctions {
     
     // ==================== ARRAY/OBJECT CONVERSIONS ====================
     
+    @UTLXFunction(
+        description = "Convert value to array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "toArray(42) => [42]",
+        additionalExamples = [
+            "toArray([1,2,3]) => [1,2,3]",
+            "toArray(\"hello\") => [\"hello\"]"
+        ],
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Convert value to array
      * 
@@ -314,6 +488,19 @@ object ConversionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Try to convert value to object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "toObject([[\"a\", 1], [\"b\", 2]]) => {a: 1, b: 2}",
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Try to convert value to object
      * 
@@ -351,6 +538,23 @@ object ConversionFunctions {
     
     // ==================== SAFE CONVERSION WITH DEFAULTS ====================
     
+    @UTLXFunction(
+        description = "Safely convert to number with default",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Type",
+        parameters = [
+            "value: Value value",
+        "default: Default value"
+        ],
+        returns = "Result of the operation",
+        example = "numberOrDefault(\"123\", 0) => 123",
+        additionalExamples = [
+            "numberOrDefault(\"invalid\", 0) => 0"
+        ],
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Safely convert to number with default
      * 
@@ -365,6 +569,20 @@ object ConversionFunctions {
         return parseNumber(args)
     }
     
+    @UTLXFunction(
+        description = "Safely convert to string with default",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Type",
+        parameters = [
+            "array: Input array to process",
+        "default: Default value"
+        ],
+        returns = "Result of the operation",
+        example = "stringOrDefault(null, \"N/A\") => \"N/A\"",
+        tags = ["type"],
+        since = "1.0"
+    )
     /**
      * Safely convert to string with default
      * 

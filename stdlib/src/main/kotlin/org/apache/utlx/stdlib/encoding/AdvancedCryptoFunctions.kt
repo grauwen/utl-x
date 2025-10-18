@@ -10,6 +10,7 @@ import javax.crypto.Mac
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 import javax.crypto.spec.IvParameterSpec
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Advanced cryptographic functions for UTL-X
@@ -24,6 +25,17 @@ object AdvancedCryptoFunctions {
     // HMAC FUNCTIONS
     // ============================================
     
+    @UTLXFunction(
+        description = "Computes HMAC-MD5 hash",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Encoding",
+        returns = "Result of the operation",
+        example = "hmacMD5(...) => result",
+        notes = "Example:\n```\nhmacMD5(\"message\", \"secret-key\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Computes HMAC-MD5 hash
      * 
@@ -43,6 +55,17 @@ object AdvancedCryptoFunctions {
         return hmac(args[0], args[1], "HmacMD5")
     }
     
+    @UTLXFunction(
+        description = "Computes HMAC-SHA1 hash",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Encoding",
+        returns = "Result of the operation",
+        example = "hmacSHA1(...) => result",
+        notes = "Example:\n```\nhmacSHA1(\"message\", \"secret-key\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Computes HMAC-SHA1 hash
      * 
@@ -62,6 +85,17 @@ object AdvancedCryptoFunctions {
         return hmac(args[0], args[1], "HmacSHA1")
     }
     
+    @UTLXFunction(
+        description = "Computes HMAC-SHA256 hash",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Encoding",
+        returns = "Result of the operation",
+        example = "hmacSHA256(...) => result",
+        notes = "Example:\n```\nhmacSHA256(\"message\", \"secret-key\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Computes HMAC-SHA256 hash
      * 
@@ -81,6 +115,20 @@ object AdvancedCryptoFunctions {
         return hmac(args[0], args[1], "HmacSHA256")
     }
     
+    @UTLXFunction(
+        description = "Computes HMAC-SHA384 hash",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "hmacSHA384(...) => result",
+        notes = "Example:\n```\nhmacSHA384(\"message\", \"secret-key\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Computes HMAC-SHA384 hash
      * 
@@ -100,6 +148,20 @@ object AdvancedCryptoFunctions {
         return hmac(args[0], args[1], "HmacSHA384")
     }
     
+    @UTLXFunction(
+        description = "Computes HMAC-SHA512 hash",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "hmacSHA512(...) => result",
+        notes = "Example:\n```\nhmacSHA512(\"message\", \"secret-key\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Computes HMAC-SHA512 hash
      * 
@@ -152,6 +214,21 @@ object AdvancedCryptoFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Computes HMAC and returns as base64",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process",
+        "key: Key value"
+        ],
+        returns = "Result of the operation",
+        example = "hmacBase64(...) => result",
+        notes = "Example:\n```\nhmacBase64(\"message\", \"secret-key\", \"HmacSHA256\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Computes HMAC and returns as base64
      * 
@@ -202,6 +279,20 @@ object AdvancedCryptoFunctions {
     // SYMMETRIC ENCRYPTION (AES)
     // ============================================
     
+    @UTLXFunction(
+        description = "Encrypts data using AES-128-CBC",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "encryptAES(...) => result",
+        notes = "Example:\n```\nencryptAES(\"sensitive data\", \"16-byte-key-here\", \"16-byte-iv--here\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Encrypts data using AES-128-CBC
      * 
@@ -222,6 +313,20 @@ object AdvancedCryptoFunctions {
         return encryptDecryptAES(args[0], args[1], args[2], Cipher.ENCRYPT_MODE)
     }
     
+    @UTLXFunction(
+        description = "Decrypts data using AES-128-CBC",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "decryptAES(...) => result",
+        notes = "Example:\n```\ndecryptAES(encryptedData, \"16-byte-key-here\", \"16-byte-iv--here\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Decrypts data using AES-128-CBC
      * 
@@ -294,6 +399,22 @@ object AdvancedCryptoFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Encrypts data using AES-256-CBC (requires key length of 32 bytes)",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process",
+        "key: Key value",
+        "iv: Iv value"
+        ],
+        returns = "Result of the operation",
+        example = "encryptAES256(...) => result",
+        notes = "Example:\n```\nencryptAES256(\"sensitive data\", \"32-byte-key-here-for-aes-256!\", \"16-byte-iv--here\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Encrypts data using AES-256-CBC (requires key length of 32 bytes)
      * 
@@ -344,6 +465,22 @@ object AdvancedCryptoFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Decrypts data using AES-256-CBC",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process",
+        "key: Key value",
+        "iv: Iv value"
+        ],
+        returns = "Result of the operation",
+        example = "decryptAES256(...) => result",
+        notes = "Example:\n```\ndecryptAES256(encryptedData, \"32-byte-key-here-for-aes-256!\", \"16-byte-iv--here\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Decrypts data using AES-256-CBC
      * 
@@ -398,6 +535,20 @@ object AdvancedCryptoFunctions {
     // ADDITIONAL HASH FUNCTIONS
     // ============================================
     
+    @UTLXFunction(
+        description = "Computes SHA-224 hash",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "input: Input value"
+        ],
+        returns = "Result of the operation",
+        example = "sha224(...) => result",
+        notes = "Example:\n```\nsha224(\"Hello World\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Computes SHA-224 hash
      * 
@@ -417,6 +568,20 @@ object AdvancedCryptoFunctions {
         return hash(input, "SHA-224")
     }
     
+    @UTLXFunction(
+        description = "Computes SHA-384 hash",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "input: Input value"
+        ],
+        returns = "Result of the operation",
+        example = "sha384(...) => result",
+        notes = "Example:\n```\nsha384(\"Hello World\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Computes SHA-384 hash
      * 
@@ -436,6 +601,20 @@ object AdvancedCryptoFunctions {
         return hash(input, "SHA-384")
     }
     
+    @UTLXFunction(
+        description = "Computes SHA3-256 hash (if available)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "sha3_256(...) => result",
+        notes = "Example:\n```\nsha3_256(\"Hello World\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Computes SHA3-256 hash (if available)
      * 
@@ -455,6 +634,20 @@ object AdvancedCryptoFunctions {
         return hash(input, "SHA3-256")
     }
     
+    @UTLXFunction(
+        description = "Computes SHA3-512 hash (if available)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "sha3_512(...) => result",
+        notes = "Example:\n```\nsha3_512(\"Hello World\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Computes SHA3-512 hash (if available)
      * 
@@ -504,6 +697,20 @@ object AdvancedCryptoFunctions {
         return bytes.joinToString("") { "%02x".format(it) }
     }
     
+    @UTLXFunction(
+        description = "Generates a random initialization vector (IV) for encryption",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "generateIV(...) => result",
+        notes = "Example:\n```\ngenerateIV() // Returns 16-byte random IV\ngenerateIV(32) // Returns 32-byte random IV\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Generates a random initialization vector (IV) for encryption
      * 
@@ -527,6 +734,20 @@ object AdvancedCryptoFunctions {
         return UDM.Scalar(Base64.getEncoder().encodeToString(iv))
     }
     
+    @UTLXFunction(
+        description = "Generates a random encryption key",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "generateKey(...) => result",
+        notes = "Example:\n```\ngenerateKey(16) // AES-128 key\ngenerateKey(32) // AES-256 key\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Generates a random encryption key
      * 

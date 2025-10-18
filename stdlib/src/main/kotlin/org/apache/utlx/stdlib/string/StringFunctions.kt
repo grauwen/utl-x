@@ -3,12 +3,27 @@ package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * String manipulation functions for UTL-X
  */
 object StringFunctions {
     
+    @UTLXFunction(
+        description = "Convert string to uppercase",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "start: Start value"
+        ],
+        returns = "Result of the operation",
+        example = "upper(\"hello\") => \"HELLO\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to uppercase
      * Usage: upper("hello") => "HELLO"
@@ -19,6 +34,20 @@ object StringFunctions {
         return UDM.Scalar(str.uppercase())
     }
     
+    @UTLXFunction(
+        description = "Convert string to lowercase",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "start: Start value"
+        ],
+        returns = "Result of the operation",
+        example = "lower(\"HELLO\") => \"hello\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to lowercase
      * Usage: lower("HELLO") => "hello"
@@ -29,6 +58,20 @@ object StringFunctions {
         return UDM.Scalar(str.lowercase())
     }
     
+    @UTLXFunction(
+        description = "Trim whitespace from both ends",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "start: Start value"
+        ],
+        returns = "Result of the operation",
+        example = "trim(\"  hello  \") => \"hello\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Trim whitespace from both ends
      * Usage: trim("  hello  ") => "hello"
@@ -39,6 +82,20 @@ object StringFunctions {
         return UDM.Scalar(str.trim())
     }
     
+    @UTLXFunction(
+        description = "Extract substring",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "start: Start value"
+        ],
+        returns = "Result of the operation",
+        example = "substring(\"hello\", 1, 4) => \"ell\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Extract substring
      * Usage: substring("hello", 1, 4) => "ell"
@@ -52,6 +109,21 @@ object StringFunctions {
         return UDM.Scalar(str.substring(start, end))
     }
     
+    @UTLXFunction(
+        description = "Concatenate strings",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "delimiter: Delimiter value",
+        "replacement: Replacement value"
+        ],
+        returns = "Result of the operation",
+        example = "concat(\"hello\", \" \", \"world\") => \"hello world\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Concatenate strings
      * Usage: concat("hello", " ", "world") => "hello world"
@@ -62,6 +134,21 @@ object StringFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Split string by delimiter",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "delimiter: Delimiter value",
+        "replacement: Replacement value"
+        ],
+        returns = "Result of the operation",
+        example = "split(\"a,b,c\", \",\") => [\"a\", \"b\", \"c\"]",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Split string by delimiter
      * Usage: split("a,b,c", ",") => ["a", "b", "c"]
@@ -74,6 +161,21 @@ object StringFunctions {
         return UDM.Array(parts.map { UDM.Scalar(it) })
     }
     
+    @UTLXFunction(
+        description = "Join array elements with delimiter",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "delimiter: Delimiter value",
+        "replacement: Replacement value"
+        ],
+        returns = "Result of the operation",
+        example = "join([\"a\", \"b\", \"c\"], \",\") => \"a,b,c\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Join array elements with delimiter
      * Usage: join(["a", "b", "c"], ",") => "a,b,c"
@@ -87,6 +189,21 @@ object StringFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Replace occurrences in string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "search: Search value",
+        "replacement: Replacement value"
+        ],
+        returns = "Result of the operation",
+        example = "replace(\"hello world\", \"world\", \"there\") => \"hello there\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Replace occurrences in string
      * Usage: replace("hello world", "world", "there") => "hello there"
@@ -99,6 +216,20 @@ object StringFunctions {
         return UDM.Scalar(str.replace(search, replacement))
     }
     
+    @UTLXFunction(
+        description = "Check if string contains substring",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "search: Search value"
+        ],
+        returns = "Result of the operation",
+        example = "contains(\"hello world\", \"world\") => true",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Check if string contains substring
      * Usage: contains("hello world", "world") => true
@@ -110,6 +241,20 @@ object StringFunctions {
         return UDM.Scalar(str.contains(search))
     }
     
+    @UTLXFunction(
+        description = "Check if string starts with prefix",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "prefix: Prefix value"
+        ],
+        returns = "Result of the operation",
+        example = "startsWith(\"hello\", \"he\") => true",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Check if string starts with prefix
      * Usage: startsWith("hello", "he") => true
@@ -121,6 +266,20 @@ object StringFunctions {
         return UDM.Scalar(str.startsWith(prefix))
     }
     
+    @UTLXFunction(
+        description = "Check if string ends with suffix",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "suffix: Suffix value"
+        ],
+        returns = "Result of the operation",
+        example = "endsWith(\"hello\", \"lo\") => true",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Check if string ends with suffix
      * Usage: endsWith("hello", "lo") => true
@@ -132,6 +291,19 @@ object StringFunctions {
         return UDM.Scalar(str.endsWith(suffix))
     }
     
+    @UTLXFunction(
+        description = "Get string length",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "length(\"hello\") => 5",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Get string length
      * Usage: length("hello") => 5

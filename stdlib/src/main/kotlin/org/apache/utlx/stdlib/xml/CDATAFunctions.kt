@@ -2,6 +2,7 @@ package org.apache.utlx.stdlib.xml
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * CDATA (Character Data) Section Functions
@@ -16,6 +17,20 @@ import org.apache.utlx.stdlib.FunctionArgumentException
  */
 object CDATAFunctions {
 
+    @UTLXFunction(
+        description = "Creates a CDATA section with the given content",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "content: Content value"
+        ],
+        returns = "Result of the operation",
+        example = "createCDATA(...) => result",
+        notes = "Example:\n```\ncreateCDATA(\"Price: <$100 & tax\")\n// Returns: UDM.Scalar(\"<![CDATA[Price: <$100 & tax]]>\")\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Creates a CDATA section with the given content
      * 
@@ -41,6 +56,20 @@ object CDATAFunctions {
         return UDM.Scalar("<![CDATA[$content]]>")
     }
 
+    @UTLXFunction(
+        description = "Checks if a string is a CDATA section",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "text: Text value",
+        "thresholdUDM: Thresholdudm value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isCDATA(...) => result",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Checks if a string is a CDATA section
      * 
@@ -56,6 +85,20 @@ object CDATAFunctions {
         return UDM.Scalar(result)
     }
 
+    @UTLXFunction(
+        description = "Extracts content from a CDATA section",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "text: Text value",
+        "thresholdUDM: Thresholdudm value"
+        ],
+        returns = "Result of the operation",
+        example = "extractCDATA(...) => result",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Extracts content from a CDATA section
      * 
@@ -75,6 +118,21 @@ object CDATAFunctions {
         return UDM.Scalar(result)
     }
 
+    @UTLXFunction(
+        description = "Unwraps CDATA if present, otherwise returns original",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "content: Content value",
+        "thresholdUDM: Thresholdudm value",
+        "thresholdUDM: Thresholdudm value"
+        ],
+        returns = "Result of the operation",
+        example = "unwrapCDATA(...) => result",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Unwraps CDATA if present, otherwise returns original
      * 
@@ -83,6 +141,21 @@ object CDATAFunctions {
      */
     fun unwrapCDATA(args: List<UDM>): UDM = extractCDATA(args)
 
+    @UTLXFunction(
+        description = "Determines if content should be wrapped in CDATA",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "content: Content value",
+        "thresholdUDM: Thresholdudm value",
+        "thresholdUDM: Thresholdudm value"
+        ],
+        returns = "Result of the operation",
+        example = "shouldUseCDATA(...) => result",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Determines if content should be wrapped in CDATA
      * 
@@ -106,6 +179,21 @@ object CDATAFunctions {
         return UDM.Scalar(result)
     }
 
+    @UTLXFunction(
+        description = "Automatically wraps content in CDATA if beneficial",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "XML",
+        parameters = [
+            "content: Content value",
+        "forceUDM: Forceudm value",
+        "thresholdUDM: Thresholdudm value"
+        ],
+        returns = "Result of the operation",
+        example = "wrapIfNeeded(...) => result",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Automatically wraps content in CDATA if beneficial
      * 
@@ -151,6 +239,19 @@ object CDATAFunctions {
         else -> throw FunctionArgumentException("Expected string value, got ${this::class.simpleName}")
     }
 
+    @UTLXFunction(
+        description = "Escapes text for XML without using CDATA",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "text: Text value"
+        ],
+        returns = "Result of the operation",
+        example = "escapeXML(...) => result",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Escapes text for XML without using CDATA
      * 
@@ -171,6 +272,19 @@ object CDATAFunctions {
         return UDM.Scalar(result)
     }
 
+    @UTLXFunction(
+        description = "Unescapes XML entities",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "text: Text value"
+        ],
+        returns = "Result of the operation",
+        example = "unescapeXML(...) => result",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Unescapes XML entities
      * 

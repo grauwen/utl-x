@@ -28,6 +28,12 @@ dependencies {
 
     // Apache XML Security for C14N
     implementation("org.apache.santuario:xmlsec:3.0.3")
+    
+    // JSON/YAML for function registry generation
+    implementation("com.fasterxml.jackson.core:jackson-core:2.16.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.16.1")
 }
 
 tasks.test {
@@ -36,4 +42,32 @@ tasks.test {
 
 kotlin {
     jvmToolchain(17)
+}
+
+// Function Registry Generation Task
+tasks.register<JavaExec>("generateFunctionRegistry") {
+    group = "build"
+    description = "Generate UTL-X function registry for external tools"
+    
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.apache.utlx.stdlib.buildtools.FunctionRegistryGeneratorKt")
+    
+    val outputDir = file("$buildDir/generated/function-registry")
+    args(outputDir.absolutePath)
+    
+    outputs.dir(outputDir)
+    dependsOn(tasks.compileKotlin)
+    
+    doFirst {
+        println("Generating UTL-X function registry...")
+    }
+}
+
+// Auto-generate registry after compilation
+tasks.jar {
+    dependsOn("generateFunctionRegistry")
+    
+    from("$buildDir/generated/function-registry") {
+        into("META-INF/utlx")
+    }
 }

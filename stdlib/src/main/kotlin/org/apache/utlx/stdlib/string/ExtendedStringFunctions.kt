@@ -3,12 +3,27 @@ package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Extended string manipulation functions
  */
 object ExtendedStringFunctions {
     
+    @UTLXFunction(
+        description = "Substring before first occurrence",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "delimiter: Delimiter value"
+        ],
+        returns = "Result of the operation",
+        example = "substring-before(\"hello-world\", \"-\") => \"hello\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Substring before first occurrence
      * Usage: substring-before("hello-world", "-") => "hello"
@@ -23,6 +38,21 @@ object ExtendedStringFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Substring after first occurrence",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "delimiter: Delimiter value",
+        "padChar: Padchar value"
+        ],
+        returns = "Result of the operation",
+        example = "substring-after(\"hello-world\", \"-\") => \"world\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Substring after first occurrence
      * Usage: substring-after("hello-world", "-") => "world"
@@ -37,6 +67,21 @@ object ExtendedStringFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Substring before last occurrence",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "delimiter: Delimiter value",
+        "padChar: Padchar value"
+        ],
+        returns = "Result of the operation",
+        example = "substring-before-last(\"a/b/c.txt\", \"/\") => \"a/b\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Substring before last occurrence
      * Usage: substring-before-last("a/b/c.txt", "/") => "a/b"
@@ -51,6 +96,21 @@ object ExtendedStringFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Substring after last occurrence",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "delimiter: Delimiter value",
+        "padChar: Padchar value"
+        ],
+        returns = "Result of the operation",
+        example = "substring-after-last(\"a/b/c.txt\", \"/\") => \"c.txt\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Substring after last occurrence
      * Usage: substring-after-last("a/b/c.txt", "/") => "c.txt"
@@ -65,6 +125,21 @@ object ExtendedStringFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Pad string to length with character",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "length: Length value",
+        "padChar: Padchar value"
+        ],
+        returns = "Result of the operation",
+        example = "pad(\"42\", 5, \"0\") => \"00042\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Pad string to length with character
      * Usage: pad("42", 5, "0") => "00042"
@@ -79,6 +154,21 @@ object ExtendedStringFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Pad string on right",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "length: Length value",
+        "padChar: Padchar value"
+        ],
+        returns = "Result of the operation",
+        example = "pad-right(\"42\", 5, \"0\") => \"42000\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Pad string on right
      * Usage: pad-right("42", 5, "0") => "42000"
@@ -93,6 +183,20 @@ object ExtendedStringFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Normalize whitespace (collapse multiple spaces to single space)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "times: Times value"
+        ],
+        returns = "Result of the operation",
+        example = "normalize-space(\"hello    world\") => \"hello world\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Normalize whitespace (collapse multiple spaces to single space)
      * Usage: normalize-space("hello    world") => "hello world"
@@ -104,6 +208,20 @@ object ExtendedStringFunctions {
         return UDM.Scalar(normalized)
     }
     
+    @UTLXFunction(
+        description = "Repeat string n times",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "times: Times value"
+        ],
+        returns = "Result of the operation",
+        example = "repeat(\"*\", 5) => \"*****\"",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Repeat string n times
      * Usage: repeat("*", 5) => "*****"

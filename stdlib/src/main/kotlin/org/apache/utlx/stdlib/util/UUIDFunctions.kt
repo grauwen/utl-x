@@ -36,11 +36,30 @@ import java.nio.ByteBuffer
 import java.security.SecureRandom
 import java.time.Instant
 import java.util.UUID
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 object UUIDFunctions {
     
     private val secureRandom = SecureRandom()
     
+    @UTLXFunction(
+        description = "Generate UUID v4 (random)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "generateUuidV4(...) => result",
+        notes = """Standard random UUID using cryptographically strong random number generator
+Example:
+generateUuidV4()
+// Returns: "550e8400-e29b-41d4-a716-446655440000"
+Note: This is the same as the existing CoreFunctions::generateUuid""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Generate UUID v4 (random)
      * Standard random UUID using cryptographically strong random number generator
@@ -58,6 +77,30 @@ object UUIDFunctions {
         return UDM.fromNative(uuid)
     }
     
+    @UTLXFunction(
+        description = "Generate UUID v7 (time-ordered)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "generateUuidV7(...) => result",
+        notes = """RFC 9562 compliant UUID with millisecond-precision timestamp prefix
+Format: tttttttt-tttt-7xxx-yxxx-xxxxxxxxxxxx
+- t: 48-bit timestamp (milliseconds since Unix epoch)
+- 7: version indicator
+- y: variant indicator (10xx in binary)
+- x: random bits
+Example:
+generateUuidV7()
+// Returns: "01890a5d-ac96-7000-8000-123456789abc"
+// With custom timestamp
+generateUuidV7(1609459200000)  // 2021-01-01 00:00:00 UTC""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Generate UUID v7 (time-ordered)
      * RFC 9562 compliant UUID with millisecond-precision timestamp prefix
@@ -89,6 +132,23 @@ object UUIDFunctions {
         return UDM.fromNative(uuid)
     }
     
+    @UTLXFunction(
+        description = "Generate batch of UUID v7s with monotonic guarantee",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "uuidString: Uuidstring value"
+        ],
+        returns = "Result of the operation",
+        example = "generateUuidV7Batch(...) => result",
+        notes = """Ensures UUIDs are strictly increasing even if generated in same millisecond
+Example:
+generateUuidV7Batch(100)
+// Returns: ["01890a5d-...", "01890a5d-...", ...]""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Generate batch of UUID v7s with monotonic guarantee
      * Ensures UUIDs are strictly increasing even if generated in same millisecond
@@ -120,6 +180,22 @@ object UUIDFunctions {
         return UDM.fromNative(uuids)
     }
     
+    @UTLXFunction(
+        description = "Extract timestamp from UUID v7",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "uuidString: Uuidstring value"
+        ],
+        returns = "Result of the operation",
+        example = "extractTimestampFromUuidV7(...) => result",
+        notes = """Example:
+extractTimestampFromUuidV7("01890a5d-ac96-7000-8000-123456789abc")
+// Returns: 1672531200000""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Extract timestamp from UUID v7
      * 
@@ -139,6 +215,22 @@ object UUIDFunctions {
         return UDM.fromNative(timestamp)
     }
     
+    @UTLXFunction(
+        description = "Check if UUID is version 7",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "uuidString: Uuidstring value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isUuidV7(...) => result",
+        notes = """Example:
+isUuidV7("01890a5d-ac96-7000-8000-123456789abc")  // true
+isUuidV7("550e8400-e29b-41d4-a716-446655440000")  // false (v4)""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Check if UUID is version 7
      * 
@@ -158,6 +250,22 @@ object UUIDFunctions {
         return UDM.fromNative(isV7)
     }
     
+    @UTLXFunction(
+        description = "Get UUID version number",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "getUuidVersion(...) => result",
+        notes = """Example:
+getUuidVersion("01890a5d-ac96-7000-8000-123456789abc")  // 7
+getUuidVersion("550e8400-e29b-41d4-a716-446655440000")  // 4""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Get UUID version number
      * 
@@ -177,6 +285,22 @@ object UUIDFunctions {
         return UDM.fromNative(version)
     }
     
+    @UTLXFunction(
+        description = "Validate UUID format",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isValidUuid(...) => result",
+        notes = """Example:
+isValidUuid("01890a5d-ac96-7000-8000-123456789abc")  // true
+isValidUuid("not-a-uuid")  // false""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Validate UUID format
      * 

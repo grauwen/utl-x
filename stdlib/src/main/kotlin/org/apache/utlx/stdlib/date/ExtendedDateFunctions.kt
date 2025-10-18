@@ -5,6 +5,7 @@ import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import kotlinx.datetime.*
 import java.time.Instant as JavaInstant
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Extended date/time functions
@@ -20,6 +21,16 @@ object ExtendedDateFunctions {
         return JavaInstant.ofEpochSecond(kotlinxInstant.epochSeconds, kotlinxInstant.nanosecondsOfSecond.toLong())
     }
     
+    @UTLXFunction(
+        description = "Extract day component",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "day(now()) => 14",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Extract day component
      * Usage: day(now()) => 14
@@ -31,6 +42,16 @@ object ExtendedDateFunctions {
         return UDM.Scalar(localDate.dayOfMonth.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Extract month component (1-12)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "month(now()) => 10",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Extract month component (1-12)
      * Usage: month(now()) => 10
@@ -42,6 +63,16 @@ object ExtendedDateFunctions {
         return UDM.Scalar(localDate.monthNumber.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Extract year component",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "year(now()) => 2025",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Extract year component
      * Usage: year(now()) => 2025
@@ -53,6 +84,16 @@ object ExtendedDateFunctions {
         return UDM.Scalar(localDate.year.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Extract hours component (0-23)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "hours(now()) => 14",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Extract hours component (0-23)
      * Usage: hours(now()) => 14
@@ -64,6 +105,20 @@ object ExtendedDateFunctions {
         return UDM.Scalar(localDate.hour.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Extract minutes component (0-59)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "pattern: Pattern value",
+        "dateStr: Datestr value"
+        ],
+        returns = "Result of the operation",
+        example = "minutes(now()) => 30",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Extract minutes component (0-59)
      * Usage: minutes(now()) => 30
@@ -75,6 +130,20 @@ object ExtendedDateFunctions {
         return UDM.Scalar(localDate.minute.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Extract seconds component (0-59)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "pattern: Pattern value",
+        "dateStr: Datestr value"
+        ],
+        returns = "Result of the operation",
+        example = "seconds(now()) => 45",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Extract seconds component (0-59)
      * Usage: seconds(now()) => 45
@@ -86,6 +155,21 @@ object ExtendedDateFunctions {
         return UDM.Scalar(localDate.second.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Compare two dates",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "pattern: Pattern value",
+        "dateStr: Datestr value"
+        ],
+        returns = ": -1 if date1 < date2, 0 if equal, 1 if date1 > date2",
+        example = "compare-dates(date1, date2)",
+        notes = "Returns: -1 if date1 < date2, 0 if equal, 1 if date1 > date2",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Compare two dates
      * Returns: -1 if date1 < date2, 0 if equal, 1 if date1 > date2
@@ -104,6 +188,20 @@ object ExtendedDateFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Validate date string against pattern",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "pattern: Pattern value",
+        "dateStr: Datestr value"
+        ],
+        returns = "Result of the operation",
+        example = "validate-date(\"yyyy-MM-dd\", \"2025-10-14\") => true",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Validate date string against pattern
      * Usage: validate-date("yyyy-MM-dd", "2025-10-14") => true

@@ -3,8 +3,24 @@ package org.apache.utlx.stdlib.type
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 object TypeFunctions {
+
+    @UTLXFunction(
+        description = "Performs typeOf operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "typeOf(...) => result",
+        tags = ["type"],
+        since = "1.0"
+    )
     
     fun typeOf(args: List<UDM>): UDM {
         requireArgs(args, 1, "typeOf")
@@ -25,6 +41,20 @@ object TypeFunctions {
         }
         return UDM.Scalar(typeName)
     }
+
+    @UTLXFunction(
+        description = "Performs isString operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isString(...) => result",
+        tags = ["type"],
+        since = "1.0"
+    )
     
     fun isString(args: List<UDM>): UDM {
         requireArgs(args, 1, "isString")
@@ -32,6 +62,20 @@ object TypeFunctions {
         val result = arg is UDM.Scalar && arg.value is String
         return UDM.Scalar(result)
     }
+
+    @UTLXFunction(
+        description = "Performs isNumber operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isNumber(...) => result",
+        tags = ["type"],
+        since = "1.0"
+    )
     
     fun isNumber(args: List<UDM>): UDM {
         requireArgs(args, 1, "isNumber")
@@ -39,6 +83,20 @@ object TypeFunctions {
         val result = arg is UDM.Scalar && arg.value is Number
         return UDM.Scalar(result)
     }
+
+    @UTLXFunction(
+        description = "Performs isBoolean operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isBoolean(...) => result",
+        tags = ["type"],
+        since = "1.0"
+    )
     
     fun isBoolean(args: List<UDM>): UDM {
         requireArgs(args, 1, "isBoolean")
@@ -46,16 +104,58 @@ object TypeFunctions {
         val result = arg is UDM.Scalar && arg.value is Boolean
         return UDM.Scalar(result)
     }
+
+    @UTLXFunction(
+        description = "Performs isArray operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isArray(...) => result",
+        tags = ["type"],
+        since = "1.0"
+    )
     
     fun isArray(args: List<UDM>): UDM {
         requireArgs(args, 1, "isArray")
         return UDM.Scalar(args[0] is UDM.Array)
     }
+
+    @UTLXFunction(
+        description = "Performs isObject operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "arg: Arg value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isObject(...) => result",
+        tags = ["type"],
+        since = "1.0"
+    )
     
     fun isObject(args: List<UDM>): UDM {
         requireArgs(args, 1, "isObject")
         return UDM.Scalar(args[0] is UDM.Object)
     }
+
+    @UTLXFunction(
+        description = "Performs isNull operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "arg: Arg value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isNull(...) => result",
+        tags = ["type"],
+        since = "1.0"
+    )
     
     fun isNull(args: List<UDM>): UDM {
         requireArgs(args, 1, "isNull")
@@ -63,6 +163,20 @@ object TypeFunctions {
         val result = arg is UDM.Scalar && arg.value == null
         return UDM.Scalar(result)
     }
+
+    @UTLXFunction(
+        description = "Performs isDefined operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Type",
+        parameters = [
+            "arg: Arg value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isDefined(...) => result",
+        tags = ["type"],
+        since = "1.0"
+    )
     
     fun isDefined(args: List<UDM>): UDM {
         requireArgs(args, 1, "isDefined")

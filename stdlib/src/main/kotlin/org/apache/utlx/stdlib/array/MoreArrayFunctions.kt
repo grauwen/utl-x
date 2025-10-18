@@ -3,12 +3,28 @@ package org.apache.utlx.stdlib.array
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Additional array utility functions
  */
 object MoreArrayFunctions {
     
+    @UTLXFunction(
+        description = "Remove element at index from array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "index: Index value",
+        "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "remove([1, 2, 3, 4], 2) => [1, 2, 4]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Remove element at index from array
      * Usage: remove([1, 2, 3, 4], 2) => [1, 2, 4]
@@ -28,6 +44,21 @@ object MoreArrayFunctions {
         return UDM.Array(newElements)
     }
     
+    @UTLXFunction(
+        description = "Insert element before index in array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "index: Index value",
+        "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "insertBefore([1, 2, 4], 2, 3) => [1, 2, 3, 4]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Insert element before index in array
      * Usage: insertBefore([1, 2, 4], 2, 3) => [1, 2, 3, 4]
@@ -48,6 +79,21 @@ object MoreArrayFunctions {
         return UDM.Array(newElements)
     }
     
+    @UTLXFunction(
+        description = "Insert element after index in array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "index: Index value",
+        "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "insertAfter([1, 2, 4], 1, 3) => [1, 2, 3, 4]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Insert element after index in array
      * Usage: insertAfter([1, 2, 4], 1, 3) => [1, 2, 3, 4]
@@ -68,6 +114,21 @@ object MoreArrayFunctions {
         return UDM.Array(newElements)
     }
     
+    @UTLXFunction(
+        description = "Find index of value in array (simple equality)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "array: Array to search",
+        "predicate: Condition to match"
+        ],
+        returns = "Index of the element",
+        example = "indexOf([1, 2, 3, 2], 2) => 1 (first occurrence)",
+        tags = ["array", "index"],
+        since = "1.0"
+    )
     /**
      * Find index of value in array (simple equality)
      * Usage: indexOf([1, 2, 3, 2], 2) => 1 (first occurrence)
@@ -84,6 +145,21 @@ object MoreArrayFunctions {
         return UDM.Scalar(if (index >= 0) index.toDouble() else null)
     }
     
+    @UTLXFunction(
+        description = "Find last index of value in array",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "array: Array to search",
+        "predicate: Condition to match"
+        ],
+        returns = "Index of the element",
+        example = "lastIndexOf([1, 2, 3, 2], 2) => 3 (last occurrence)",
+        tags = ["array", "index"],
+        since = "1.0"
+    )
     /**
      * Find last index of value in array
      * Usage: lastIndexOf([1, 2, 3, 2], 2) => 3 (last occurrence)
@@ -100,6 +176,20 @@ object MoreArrayFunctions {
         return UDM.Scalar(if (index >= 0) index.toDouble() else null)
     }
     
+    @UTLXFunction(
+        description = "Check if array includes value",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "searchValue: Searchvalue value"
+        ],
+        returns = "Result of the operation",
+        example = "includes([1, 2, 3], 2) => true",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Check if array includes value
      * Usage: includes([1, 2, 3], 2) => true
@@ -116,6 +206,20 @@ object MoreArrayFunctions {
         return UDM.Scalar(found)
     }
     
+    @UTLXFunction(
+        description = "Slice array from start to end index",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "start: Start value"
+        ],
+        returns = "Result of the operation",
+        example = "slice([1, 2, 3, 4, 5], 1, 4) => [2, 3, 4]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Slice array from start to end index
      * Usage: slice([1, 2, 3, 4, 5], 1, 4) => [2, 3, 4]
@@ -137,6 +241,19 @@ object MoreArrayFunctions {
         return UDM.Array(sliced)
     }
     
+    @UTLXFunction(
+        description = "Concatenate multiple arrays",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "concat([1, 2], [3, 4], [5]) => [1, 2, 3, 4, 5]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Concatenate multiple arrays
      * Usage: concat([1, 2], [3, 4], [5]) => [1, 2, 3, 4, 5]

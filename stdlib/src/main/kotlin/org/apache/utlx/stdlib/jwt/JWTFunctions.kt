@@ -3,6 +3,7 @@ package org.apache.utlx.stdlib.jwt
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import java.util.Base64
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * JWT (JSON Web Token) Functions for UTL-X
@@ -13,6 +14,20 @@ import java.util.Base64
  */
 object JWTFunctions {
 
+    @UTLXFunction(
+        description = "Decodes a JWT token WITHOUT verification",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value"
+        ],
+        returns = "Result of the operation",
+        example = "decodeJWT(...) => result",
+        notes = "SECURITY WARNING: Does not verify signature - use only for trusted tokens\nExample:\n```\ndecodeJWT(\"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...\")\n// Returns: {\n//   \"header\": {...},\n//   \"payload\": {...},\n//   \"signature\": \"...\",\n//   \"verified\": false\n// }\n```",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Decodes a JWT token WITHOUT verification
      * SECURITY WARNING: Does not verify signature - use only for trusted tokens
@@ -55,6 +70,21 @@ object JWTFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Extracts claims from JWT payload WITHOUT verification",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value",
+        "claimName: Claimname value"
+        ],
+        returns = "Result of the operation",
+        example = "getJWTClaims(...) => result",
+        notes = "SECURITY WARNING: Does not verify signature - use only for trusted tokens\nExample:\n```\ngetJWTClaims(\"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...\")\n// Returns: {\"sub\": \"1234567890\", \"name\": \"John Doe\", \"iat\": 1516239022}\n```",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Extracts claims from JWT payload WITHOUT verification
      * SECURITY WARNING: Does not verify signature - use only for trusted tokens
@@ -84,6 +114,21 @@ object JWTFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Gets a specific claim from JWT",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value",
+        "claimName: Claimname value"
+        ],
+        returns = "Result of the operation",
+        example = "getJWTClaim(...) => result",
+        notes = "SECURITY WARNING: Does not verify signature\nExample:\n```\ngetJWTClaim(\"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...\", \"sub\")\n// Returns: \"1234567890\"\n```",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Gets a specific claim from JWT
      * SECURITY WARNING: Does not verify signature
@@ -108,6 +153,20 @@ object JWTFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Checks if JWT is expired based on 'exp' claim",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isJWTExpired(...) => result",
+        notes = "SECURITY WARNING: Does not verify signature\nExample:\n```\nisJWTExpired(\"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...\")\n// Returns: true or false\n```",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Checks if JWT is expired based on 'exp' claim
      * SECURITY WARNING: Does not verify signature
@@ -142,6 +201,20 @@ object JWTFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Gets the subject (sub) claim from JWT",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "getJWTSubject(...) => result",
+        notes = "SECURITY WARNING: Does not verify signature",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Gets the subject (sub) claim from JWT
      * SECURITY WARNING: Does not verify signature
@@ -154,6 +227,20 @@ object JWTFunctions {
         return getJWTClaim(listOf(args[0], UDM.Scalar("sub")))
     }
 
+    @UTLXFunction(
+        description = "Gets the issuer (iss) claim from JWT",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "getJWTIssuer(...) => result",
+        notes = "SECURITY WARNING: Does not verify signature",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Gets the issuer (iss) claim from JWT
      * SECURITY WARNING: Does not verify signature
@@ -166,6 +253,20 @@ object JWTFunctions {
         return getJWTClaim(listOf(args[0], UDM.Scalar("iss")))
     }
 
+    @UTLXFunction(
+        description = "Gets the audience (aud) claim from JWT",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "getJWTAudience(...) => result",
+        notes = "SECURITY WARNING: Does not verify signature",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Gets the audience (aud) claim from JWT
      * SECURITY WARNING: Does not verify signature

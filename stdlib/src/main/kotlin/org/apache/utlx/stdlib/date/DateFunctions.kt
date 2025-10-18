@@ -6,6 +6,7 @@ import org.apache.utlx.stdlib.FunctionArgumentException
 import kotlinx.datetime.*
 import kotlinx.datetime.format.*
 import java.time.Instant as JavaInstant
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 object DateFunctions {
     
@@ -17,12 +18,42 @@ object DateFunctions {
     private fun toJavaInstant(kotlinxInstant: kotlinx.datetime.Instant): JavaInstant {
         return JavaInstant.ofEpochSecond(kotlinxInstant.epochSeconds, kotlinxInstant.nanosecondsOfSecond.toLong())
     }
+
+    @UTLXFunction(
+        description = "Performs now operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "dateStr: Datestr value",
+        "days: Days value"
+        ],
+        returns = "Result of the operation",
+        example = "now(...) => result",
+        tags = ["date"],
+        since = "1.0"
+    )
     
     fun now(args: List<UDM>): UDM {
         requireArgs(args, 0, "now")
         val now = Clock.System.now()
         return UDM.DateTime(JavaInstant.ofEpochSecond(now.epochSeconds, now.nanosecondsOfSecond.toLong()))
     }
+
+    @UTLXFunction(
+        description = "Performs parseDate operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "dateStr: Datestr value",
+        "days: Days value"
+        ],
+        returns = "Result of the operation",
+        example = "parseDate(...) => result",
+        tags = ["date"],
+        since = "1.0"
+    )
     
     fun parseDate(args: List<UDM>): UDM {
         requireArgs(args, 1..2, "parseDate")
@@ -36,6 +67,21 @@ object DateFunctions {
             throw FunctionArgumentException("Cannot parse date: $dateStr")
         }
     }
+
+    @UTLXFunction(
+        description = "Performs formatDate operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "dateUdm: Dateudm value",
+        "days: Days value"
+        ],
+        returns = "Result of the operation",
+        example = "formatDate(...) => result",
+        tags = ["date"],
+        since = "1.0"
+    )
     
     fun formatDate(args: List<UDM>): UDM {
         requireArgs(args, 1..2, "formatDate")
@@ -45,6 +91,21 @@ object DateFunctions {
         val formatted = date.toString()
         return UDM.Scalar(formatted)
     }
+
+    @UTLXFunction(
+        description = "Performs addDays operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "dateUdm: Dateudm value",
+        "days: Days value"
+        ],
+        returns = "Result of the operation",
+        example = "addDays(...) => result",
+        tags = ["date"],
+        since = "1.0"
+    )
     
     fun addDays(args: List<UDM>): UDM {
         requireArgs(args, 2, "addDays")
@@ -56,6 +117,20 @@ object DateFunctions {
         val result = kotlinxDate.plus(days, DateTimeUnit.DAY, TimeZone.UTC)
         return UDM.DateTime(toJavaInstant(result))
     }
+
+    @UTLXFunction(
+        description = "Performs addHours operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "hours: Hours value"
+        ],
+        returns = "Result of the operation",
+        example = "addHours(...) => result",
+        tags = ["date"],
+        since = "1.0"
+    )
     
     fun addHours(args: List<UDM>): UDM {
         requireArgs(args, 2, "addHours")
@@ -66,6 +141,17 @@ object DateFunctions {
         val result = kotlinxDate.plus(hours, DateTimeUnit.HOUR, TimeZone.UTC)
         return UDM.DateTime(toJavaInstant(result))
     }
+
+    @UTLXFunction(
+        description = "Performs diffDays operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "diffDays(...) => result",
+        tags = ["date"],
+        since = "1.0"
+    )
     
     fun diffDays(args: List<UDM>): UDM {
         requireArgs(args, 2, "diffDays")

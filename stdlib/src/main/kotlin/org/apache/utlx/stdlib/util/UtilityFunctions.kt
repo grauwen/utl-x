@@ -2,6 +2,7 @@ package org.apache.utlx.stdlib.util
 
 import org.apache.utlx.core.udm.UDM
 import java.time.Instant
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Utility Functions: Tree, Coercion, and Timer
@@ -24,6 +25,22 @@ import java.time.Instant
  */
 object TreeFunctions {
     
+    @UTLXFunction(
+        description = "Map over all nodes in a tree structure",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "treeMap(tree, (node, path) => transform(node))",
+        notes = """Traverses tree depth-first and applies function to each node.
+Function receives: (node, path) where path is array of keys to node.""",
+        tags = ["transform", "utility"],
+        since = "1.0"
+    )
     /**
      * Map over all nodes in a tree structure
      * 
@@ -62,6 +79,21 @@ object TreeFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Filter tree nodes by predicate",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "New array with filtered elements",
+        example = "treeFilter(tree, node => node.type == \"visible\")",
+        notes = "Removes nodes that don't match predicate, preserving tree structure.",
+        tags = ["filter", "predicate", "utility"],
+        since = "1.0"
+    )
     /**
      * Filter tree nodes by predicate
      * 
@@ -96,6 +128,21 @@ object TreeFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Flatten tree to array of leaf nodes",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "treeFlatten(tree)",
+        notes = """Result: [leaf1, leaf2, leaf3, ...]
+Extracts all leaf values from tree structure.""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Flatten tree to array of leaf nodes
      * 
@@ -137,6 +184,20 @@ object TreeFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get tree depth (maximum nesting level)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "maximum depth of nested structures.",
+        example = "treeDepth(tree) => 4",
+        notes = "Returns maximum depth of nested structures.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Get tree depth (maximum nesting level)
      * 
@@ -179,6 +240,21 @@ object TreeFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get all paths in tree",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "array of all paths from root to leaves.",
+        example = "treePaths(tree)",
+        notes = """Result: [["a", "b", "c"], ["a", "d"], ["e"]]
+Returns array of all paths from root to leaves.""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Get all paths in tree
      * 
@@ -228,6 +304,22 @@ object TreeFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Find node by path in tree",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process",
+        "path: Path value"
+        ],
+        returns = "null if path doesn't exist.",
+        example = "treeFind(tree, [\"a\", \"b\", \"c\"])",
+        notes = """Navigate to specific node using path array.
+Returns null if path doesn't exist.""",
+        tags = ["null-handling", "search", "utility"],
+        since = "1.0"
+    )
     /**
      * Find node by path in tree
      * 
@@ -281,6 +373,21 @@ object TreeFunctions {
  */
 object CoercionFunctions {
     
+    @UTLXFunction(
+        description = "Coerce value to target type with default",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "coerce(value, \"number\", 0)",
+        notes = "Attempts to convert value to target type, returns default if fails.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Coerce value to target type with default
      * 
@@ -387,6 +494,21 @@ object CoercionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Try to coerce, return null on failure",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process",
+        "targetType: Targettype value"
+        ],
+        returns = "Result of the operation",
+        example = "tryCoerce(value, \"number\") => number or null",
+        notes = "Safe coercion that returns null instead of throwing.",
+        tags = ["null-handling", "utility"],
+        since = "1.0"
+    )
     /**
      * Try to coerce, return null on failure
      * 
@@ -406,6 +528,21 @@ object CoercionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Check if value can be coerced to type",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process",
+        "targetType: Targettype value"
+        ],
+        returns = "Result of the operation",
+        example = "canCoerce(value, \"number\") => true/false",
+        notes = "Tests if coercion would succeed without performing it.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Check if value can be coerced to type
      * 
@@ -426,6 +563,21 @@ object CoercionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Coerce all values in array to target type",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process",
+        "targetType: Targettype value"
+        ],
+        returns = "Result of the operation",
+        example = "coerceAll([1, \"2\", true], \"number\") => [1.0, 2.0, 1.0]",
+        notes = "Maps coercion over array, filtering out failures.",
+        tags = ["predicate", "utility"],
+        since = "1.0"
+    )
     /**
      * Coerce all values in array to target type
      * 
@@ -457,6 +609,20 @@ object CoercionFunctions {
         return UDM.Array(coerced)
     }
     
+    @UTLXFunction(
+        description = "Smart coercion - infers target type from context",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "smartCoerce(\"42\") => 42 (detects it's a number)",
+        notes = "Attempts intelligent type inference.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Smart coercion - infers target type from context
      * 
@@ -514,6 +680,20 @@ object TimerFunctions {
     private val timers = mutableMapOf<String, Long>()
     private val measurements = mutableMapOf<String, MutableList<Long>>()
     
+    @UTLXFunction(
+        description = "Start a named timer",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "name: Name value"
+        ],
+        returns = "Result of the operation",
+        example = "timerStart(\"operation1\")",
+        notes = "Begins timing for named operation.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Start a named timer
      * 
@@ -537,6 +717,20 @@ object TimerFunctions {
         return UDM.Scalar("Timer '$timerName' started")
     }
     
+    @UTLXFunction(
+        description = "Stop a named timer and get elapsed time",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "name: Name value"
+        ],
+        returns = "elapsed time in milliseconds.",
+        example = "timerStop(\"operation1\") => {elapsed: 123.45, unit: \"ms\"}",
+        notes = "Returns elapsed time in milliseconds.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Stop a named timer and get elapsed time
      * 
@@ -576,6 +770,20 @@ object TimerFunctions {
         ), emptyMap())
     }
     
+    @UTLXFunction(
+        description = "Get elapsed time without stopping timer",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "name: Name value"
+        ],
+        returns = "Result of the operation",
+        example = "timerCheck(\"operation1\") => {elapsed: 123.45, unit: \"ms\"}",
+        notes = "Peek at elapsed time, timer continues running.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Get elapsed time without stopping timer
      * 
@@ -608,6 +816,20 @@ object TimerFunctions {
         ), emptyMap())
     }
     
+    @UTLXFunction(
+        description = "Reset a timer",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "name: Name value"
+        ],
+        returns = "Result of the operation",
+        example = "timerReset(\"operation1\")",
+        notes = "Restarts timer from zero.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Reset a timer
      * 
@@ -631,6 +853,21 @@ object TimerFunctions {
         return UDM.Scalar("Timer '$timerName' reset")
     }
     
+    @UTLXFunction(
+        description = "Get statistics for a timer",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "statistics from all measurements of named timer.",
+        example = "timerStats(\"operation1\")",
+        notes = """Result: {count: 10, min: 5.2, max: 15.8, avg: 8.3, total: 83.0}
+Returns statistics from all measurements of named timer.""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Get statistics for a timer
      * 
@@ -669,6 +906,20 @@ object TimerFunctions {
         ), emptyMap())
     }
     
+    @UTLXFunction(
+        description = "List all active timers",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "names of all currently running timers.",
+        example = "timerList() => [\"operation1\", \"operation2\"]",
+        notes = "Returns names of all currently running timers.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * List all active timers
      * 
@@ -685,6 +936,20 @@ object TimerFunctions {
         return UDM.Array(names)
     }
     
+    @UTLXFunction(
+        description = "Clear all timers and measurements",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "result: Result value"
+        ],
+        returns = "Result of the operation",
+        example = "timerClear()",
+        notes = "Resets all timing data.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Clear all timers and measurements
      * 
@@ -703,6 +968,20 @@ object TimerFunctions {
         return UDM.Scalar("All timers cleared")
     }
     
+    @UTLXFunction(
+        description = "Get current timestamp",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "result: Result value"
+        ],
+        returns = "current time in milliseconds since epoch.",
+        example = "timestamp() => 1697472000000",
+        notes = "Returns current time in milliseconds since epoch.",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Get current timestamp
      * 
@@ -718,6 +997,21 @@ object TimerFunctions {
         return UDM.Scalar(System.currentTimeMillis().toDouble())
     }
     
+    @UTLXFunction(
+        description = "Measure execution time of expression (would need runtime support)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Utility",
+        parameters = [
+            "result: Result value"
+        ],
+        returns = "Result of the operation",
+        example = "measure(() => expensiveOperation())",
+        notes = """Result: {result: ..., elapsed: 123.45, unit: "ms"}
+Placeholder - requires function execution support.""",
+        tags = ["utility"],
+        since = "1.0"
+    )
     /**
      * Measure execution time of expression (would need runtime support)
      * 

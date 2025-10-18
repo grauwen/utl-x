@@ -4,6 +4,7 @@ package org.apache.utlx.stdlib.jws
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import java.util.Base64
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 /**
  * JSON Web Signature (JWS) Basic Functions - RFC 7515
  * 
@@ -17,6 +18,20 @@ import java.util.Base64
  */
 object JWSBasicFunctions {
 
+    @UTLXFunction(
+        description = "Decodes a JWS token WITHOUT verifying the signature",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value"
+        ],
+        returns = "Result of the operation",
+        example = "decodeJWS(...) => result",
+        notes = "⚠️ SECURITY WARNING: Does NOT verify signature\nExample:\n```\ndecodeJWS(\"eyJhbGc...eyJzdWI...signature\")\n// Returns: UDM.Object with header, payload, signature, verified=false\n```",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Decodes a JWS token WITHOUT verifying the signature
      * 
@@ -69,6 +84,17 @@ object JWSBasicFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Extracts the payload from a JWS token WITHOUT verification",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        returns = "Result of the operation",
+        example = "getJWSPayload(...) => result",
+        notes = "⚠️ SECURITY WARNING: Does NOT verify signature",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Extracts the payload from a JWS token WITHOUT verification
      * 
@@ -85,6 +111,16 @@ object JWSBasicFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Extracts the header from a JWS token",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        returns = "Result of the operation",
+        example = "getJWSHeader(...) => result",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Extracts the header from a JWS token
      * 
@@ -99,6 +135,19 @@ object JWSBasicFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Gets the algorithm from a JWS token header",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value"
+        ],
+        returns = "Result of the operation",
+        example = "getJWSAlgorithm(...) => result",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Gets the algorithm from a JWS token header
      * 
@@ -115,6 +164,19 @@ object JWSBasicFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Gets the Key ID (kid) from a JWS token header",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value"
+        ],
+        returns = "Result of the operation",
+        example = "getJWSKeyId(...) => result",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Gets the Key ID (kid) from a JWS token header
      * 
@@ -129,6 +191,19 @@ object JWSBasicFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Gets the token type from a JWS token header",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value"
+        ],
+        returns = "Result of the operation",
+        example = "getJWSTokenType(...) => result",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Gets the token type from a JWS token header
      * 
@@ -143,6 +218,19 @@ object JWSBasicFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Checks if a string is in valid JWS format",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isJWSFormat(...) => result",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Checks if a string is in valid JWS format
      * 
@@ -161,6 +249,19 @@ object JWSBasicFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Extracts the signing input from a JWS token",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value"
+        ],
+        returns = "Result of the operation",
+        example = "getJWSSigningInput(...) => result",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Extracts the signing input from a JWS token
      * 
@@ -178,6 +279,19 @@ object JWSBasicFunctions {
         return UDM.Scalar("${parts[0]}.${parts[1]}")
     }
 
+    @UTLXFunction(
+        description = "Gets information about the JWS token structure",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Security",
+        parameters = [
+            "token: Token value"
+        ],
+        returns = "Result of the operation",
+        example = "getJWSInfo(...) => result",
+        tags = ["security"],
+        since = "1.0"
+    )
     /**
      * Gets information about the JWS token structure
      * 

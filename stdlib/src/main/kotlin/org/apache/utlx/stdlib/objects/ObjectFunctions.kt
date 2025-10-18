@@ -3,8 +3,23 @@ package org.apache.utlx.stdlib.objects
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 object ObjectFunctions {
+
+    @UTLXFunction(
+        description = "Performs keys operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "keys(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     
     fun keys(args: List<UDM>): UDM {
         requireArgs(args, 1, "keys")
@@ -12,12 +27,40 @@ object ObjectFunctions {
         val keysList = obj.properties.keys.map { UDM.Scalar(it) }
         return UDM.Array(keysList)
     }
+
+    @UTLXFunction(
+        description = "Performs values operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "values(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     
     fun values(args: List<UDM>): UDM {
         requireArgs(args, 1, "values")
         val obj = args[0].asObject() ?: throw FunctionArgumentException("values: first argument must be an object")
         return UDM.Array(obj.properties.values.toList())
     }
+
+    @UTLXFunction(
+        description = "Performs entries operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "entries(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     
     fun entries(args: List<UDM>): UDM {
         requireArgs(args, 1, "entries")
@@ -27,6 +70,20 @@ object ObjectFunctions {
         }
         return UDM.Array(entriesList)
     }
+
+    @UTLXFunction(
+        description = "Performs merge operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "merge(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     
     fun merge(args: List<UDM>): UDM {
         if (args.isEmpty()) {
@@ -44,6 +101,21 @@ object ObjectFunctions {
         
         return UDM.Object(mergedProps, mergedAttrs)
     }
+
+    @UTLXFunction(
+        description = "Performs pick operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "key: Key value"
+        ],
+        returns = "Result of the operation",
+        example = "pick(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     
     fun pick(args: List<UDM>): UDM {
         requireArgs(args, 2, "pick")
@@ -53,6 +125,21 @@ object ObjectFunctions {
         val picked = obj.properties.filterKeys { it in keys }
         return UDM.Object(picked, emptyMap())
     }
+
+    @UTLXFunction(
+        description = "Performs omit operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "key: Key value"
+        ],
+        returns = "Result of the operation",
+        example = "omit(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     
     fun omit(args: List<UDM>): UDM {
         requireArgs(args, 2, "omit")
@@ -63,6 +150,21 @@ object ObjectFunctions {
         return UDM.Object(omitted, obj.attributes)
     }
     
+    @UTLXFunction(
+        description = "Checks if an object contains a specific key",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "key: Key value"
+        ],
+        returns = "Result of the operation",
+        example = "containsKey(...) => result",
+        notes = "Example:\n```\ncontainsKey({\"name\": \"John\", \"age\": 30}, \"name\") // true\ncontainsKey({\"name\": \"John\"}, \"email\") // false\n```",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Checks if an object contains a specific key
      * 
@@ -84,6 +186,21 @@ object ObjectFunctions {
         return UDM.Scalar(obj.properties.containsKey(key))
     }
     
+    @UTLXFunction(
+        description = "Checks if an object contains a specific value",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "containsValue(...) => result",
+        notes = "Example:\n```\ncontainsValue({\"name\": \"John\", \"age\": 30}, \"John\") // true\ncontainsValue({\"name\": \"John\", \"age\": 30}, \"Jane\") // false\ncontainsValue({\"name\": \"John\", \"age\": 30}, 30) // true\n```",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Checks if an object contains a specific value
      * 

@@ -3,6 +3,7 @@ package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * String Case Conversion Functions
@@ -18,6 +19,27 @@ import org.apache.utlx.stdlib.FunctionArgumentException
  */
 object CaseFunctions {
     
+    @UTLXFunction(
+        description = "Convert string to camelCase",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "camelize(...) => result",
+        notes = """Converts first word to lowercase, capitalizes first letter of subsequent words.
+Removes spaces, hyphens, and underscores.
+Examples:
+- "hello world" => "helloWorld"
+- "hello-world" => "helloWorld"
+- "hello_world" => "helloWorld"
+- "HelloWorld" => "helloWorld"
+- "HELLO WORLD" => "helloWorld"""",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to camelCase
      * 
@@ -68,6 +90,24 @@ object CaseFunctions {
         return UDM.Scalar(camelized)
     }
     
+    @UTLXFunction(
+        description = "Convert string to PascalCase (also called UpperCamelCase)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "pascalCase(...) => result",
+        notes = """Similar to camelCase but first letter is also capitalized.
+Examples:
+- "hello world" => "HelloWorld"
+- "hello-world" => "HelloWorld"
+- "hello_world" => "HelloWorld"""",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to PascalCase (also called UpperCamelCase)
      * 
@@ -110,6 +150,25 @@ object CaseFunctions {
         return UDM.Scalar(pascalized)
     }
     
+    @UTLXFunction(
+        description = "Convert string to kebab-case",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "kebabCase(...) => result",
+        notes = """Converts to lowercase with hyphens between words.
+Examples:
+- "hello world" => "hello-world"
+- "helloWorld" => "hello-world"
+- "hello_world" => "hello-world"
+- "HelloWorld" => "hello-world"""",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to kebab-case
      * 
@@ -146,6 +205,25 @@ object CaseFunctions {
         return UDM.Scalar(kebab)
     }
     
+    @UTLXFunction(
+        description = "Convert string to snake_case",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "snakeCase(...) => result",
+        notes = """Converts to lowercase with underscores between words.
+Examples:
+- "hello world" => "hello_world"
+- "helloWorld" => "hello_world"
+- "hello-world" => "hello_world"
+- "HelloWorld" => "hello_world"""",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to snake_case
      * 
@@ -182,6 +260,25 @@ object CaseFunctions {
         return UDM.Scalar(snake)
     }
     
+    @UTLXFunction(
+        description = "Convert string to CONSTANT_CASE",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "constantCase(...) => result",
+        notes = """Converts to uppercase with underscores between words.
+Commonly used for constants and environment variables.
+Examples:
+- "hello world" => "HELLO_WORLD"
+- "helloWorld" => "HELLO_WORLD"
+- "hello-world" => "HELLO_WORLD"""",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to CONSTANT_CASE
      * 
@@ -218,6 +315,24 @@ object CaseFunctions {
         return UDM.Scalar(constant)
     }
     
+    @UTLXFunction(
+        description = "Convert string to Title Case",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "titleCase(...) => result",
+        notes = """Capitalizes first letter of each word, rest lowercase.
+Examples:
+- "hello world" => "Hello World"
+- "HELLO WORLD" => "Hello World"
+- "hello-world" => "Hello-World"""",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to Title Case
      * 
@@ -255,6 +370,25 @@ object CaseFunctions {
         return UDM.Scalar(titled)
     }
     
+    @UTLXFunction(
+        description = "Convert string to dot.case",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "dotCase(...) => result",
+        notes = """Converts to lowercase with dots between words.
+Useful for object paths and property names.
+Examples:
+- "hello world" => "hello.world"
+- "helloWorld" => "hello.world"
+- "hello_world" => "hello.world"""",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to dot.case
      * 
@@ -291,6 +425,25 @@ object CaseFunctions {
         return UDM.Scalar(dotted)
     }
     
+    @UTLXFunction(
+        description = "Convert string to path/case",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "pathCase(...) => result",
+        notes = """Converts to lowercase with slashes between words.
+Useful for URL paths and file paths.
+Examples:
+- "hello world" => "hello/world"
+- "helloWorld" => "hello/world"
+- "hello_world" => "hello/world"""",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to path/case
      * 

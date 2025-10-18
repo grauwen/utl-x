@@ -19,6 +19,7 @@ package org.apache.utlx.stdlib.csv
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Advanced CSV Functions for data manipulation and analysis
@@ -28,6 +29,20 @@ import org.apache.utlx.stdlib.FunctionArgumentException
  */
 object CSVFunctions {
 
+    @UTLXFunction(
+        description = "Get all rows from CSV data",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "CSV",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "csvRows(...) => result",
+        notes = "Example:\n```\ncsvRows(csvData)\n// Returns: UDM.Array of row objects\n```",
+        tags = ["csv"],
+        since = "1.0"
+    )
     /**
      * Get all rows from CSV data
      * 
@@ -65,6 +80,20 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Get all column names/headers from CSV data",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "CSV",
+        parameters = [
+            "array: Input array to process",
+        "columnName: Columnname value"
+        ],
+        returns = "Result of the operation",
+        example = "csvColumns(...) => result",
+        tags = ["csv"],
+        since = "1.0"
+    )
     /**
      * Get all column names/headers from CSV data
      * 
@@ -92,6 +121,20 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Get a specific column as array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "CSV",
+        parameters = [
+            "array: Input array to process",
+        "columnName: Columnname value"
+        ],
+        returns = "Result of the operation",
+        example = "csvColumn(...) => result",
+        tags = ["csv"],
+        since = "1.0"
+    )
     /**
      * Get a specific column as array
      * 
@@ -122,6 +165,21 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Get a specific row by index",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "CSV",
+        parameters = [
+            "csv: Csv value",
+        "index: Index value",
+        "columnName: Columnname value"
+        ],
+        returns = "Result of the operation",
+        example = "csvRow(...) => result",
+        tags = ["csv"],
+        since = "1.0"
+    )
     /**
      * Get a specific row by index
      * 
@@ -150,6 +208,21 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Get a specific cell value",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "CSV",
+        parameters = [
+            "csv: Csv value",
+        "rowIndex: Rowindex value",
+        "columnName: Columnname value"
+        ],
+        returns = "Result of the operation",
+        example = "csvCell(...) => result",
+        tags = ["csv"],
+        since = "1.0"
+    )
     /**
      * Get a specific cell value
      * 
@@ -186,6 +259,22 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Transpose CSV (swap rows and columns)",
+        minArgs = 4,
+        maxArgs = 4,
+        category = "CSV",
+        parameters = [
+            "csv: Csv value",
+        "columnName: Columnname value",
+        "operator: Operator value",
+        "filterValue: Filtervalue value"
+        ],
+        returns = "Result of the operation",
+        example = "csvTranspose(...) => result",
+        tags = ["csv"],
+        since = "1.0"
+    )
     /**
      * Transpose CSV (swap rows and columns)
      * 
@@ -226,6 +315,22 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Filter CSV rows based on column value",
+        minArgs = 4,
+        maxArgs = 4,
+        category = "CSV",
+        parameters = [
+            "csv: Csv value",
+        "columnName: Columnname value",
+        "operator: Operator value",
+        "filterValue: Filtervalue value"
+        ],
+        returns = "New array with filtered elements",
+        example = "csvFilter(...) => result",
+        tags = ["csv", "filter"],
+        since = "1.0"
+    )
     /**
      * Filter CSV rows based on column value
      * 
@@ -283,6 +388,20 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Sort CSV by specified columns",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "CSV",
+        parameters = [
+            "csv: Csv value",
+        "columnName: Columnname value"
+        ],
+        returns = "Result of the operation",
+        example = "csvSort(...) => result",
+        tags = ["csv", "sort"],
+        since = "1.0"
+    )
     /**
      * Sort CSV by specified columns
      * 
@@ -331,6 +450,21 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Add a new column to CSV with computed values",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "CSV",
+        parameters = [
+            "array: Input array to process",
+        "columnName: Columnname value",
+        "defaultValue: Defaultvalue value"
+        ],
+        returns = "Result of the operation",
+        example = "csvAddColumn(...) => result",
+        tags = ["csv"],
+        since = "1.0"
+    )
     /**
      * Add a new column to CSV with computed values
      * 
@@ -376,6 +510,20 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Remove columns from CSV",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "CSV",
+        parameters = [
+            "array: Input array to process",
+        "columnsToRemove: Columnstoremove value"
+        ],
+        returns = "Result of the operation",
+        example = "csvRemoveColumns(...) => result",
+        tags = ["csv"],
+        since = "1.0"
+    )
     /**
      * Remove columns from CSV
      * 
@@ -414,6 +562,20 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Select/project specific columns from CSV",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "CSV",
+        parameters = [
+            "array: Input array to process",
+        "columnsToSelect: Columnstoselect value"
+        ],
+        returns = "Result of the operation",
+        example = "csvSelectColumns(...) => result",
+        tags = ["csv"],
+        since = "1.0"
+    )
     /**
      * Select/project specific columns from CSV
      * 
@@ -453,6 +615,19 @@ object CSVFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Calculate summary statistics for CSV columns",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "CSV",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "csvSummarize(...) => result",
+        tags = ["csv"],
+        since = "1.0"
+    )
     /**
      * Calculate summary statistics for CSV columns
      * 

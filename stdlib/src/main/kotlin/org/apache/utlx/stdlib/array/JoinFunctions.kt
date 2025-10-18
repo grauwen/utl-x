@@ -23,9 +23,28 @@
 package org.apache.utlx.stdlib.array
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 object JoinFunctions {
     
+    @UTLXFunction(
+        description = "Inner join - returns only items that have matches in both arrays",
+        minArgs = 4,
+        maxArgs = 4,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "right: Right value",
+        "leftKeyFn: Leftkeyfn value",
+        "rightKeyFn: Rightkeyfn value"
+        ],
+        returns = "Result of the operation",
+        example = "join(...) => result",
+        notes = """Example:
+join(customers, orders, (c) => c.id, (o) => o.customerId)""",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Inner join - returns only items that have matches in both arrays
      * 
@@ -66,6 +85,26 @@ object JoinFunctions {
         return UDM.fromNative(result)
     }
     
+    @UTLXFunction(
+        description = "Left join - returns all items from left array, with matching items from right",
+        minArgs = 4,
+        maxArgs = 4,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "right: Right value",
+        "leftKeyFn: Leftkeyfn value",
+        "rightKeyFn: Rightkeyfn value"
+        ],
+        returns = "Result of the operation",
+        example = "leftJoin(...) => result",
+        notes = """If no match is found, right side is null
+Example:
+leftJoin(customers, orders, (c) => c.id, (o) => o.customerId)
+// All customers, even those without orders (r will be null)""",
+        tags = ["array", "null-handling"],
+        since = "1.0"
+    )
     /**
      * Left join - returns all items from left array, with matching items from right
      * If no match is found, right side is null
@@ -118,6 +157,26 @@ object JoinFunctions {
         return UDM.fromNative(result)
     }
     
+    @UTLXFunction(
+        description = "Right join - returns all items from right array, with matching items from left",
+        minArgs = 4,
+        maxArgs = 4,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "right: Right value",
+        "leftKeyFn: Leftkeyfn value",
+        "rightKeyFn: Rightkeyfn value"
+        ],
+        returns = "Result of the operation",
+        example = "rightJoin(...) => result",
+        notes = """If no match is found, left side is null
+Example:
+rightJoin(customers, orders, (c) => c.id, (o) => o.customerId)
+// All orders, even orphaned ones (l will be null if no customer)""",
+        tags = ["array", "null-handling"],
+        since = "1.0"
+    )
     /**
      * Right join - returns all items from right array, with matching items from left
      * If no match is found, left side is null
@@ -170,6 +229,26 @@ object JoinFunctions {
         return UDM.fromNative(result)
     }
     
+    @UTLXFunction(
+        description = "Full outer join - returns all items from both arrays",
+        minArgs = 4,
+        maxArgs = 4,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "right: Right value",
+        "leftKeyFn: Leftkeyfn value",
+        "rightKeyFn: Rightkeyfn value"
+        ],
+        returns = "Result of the operation",
+        example = "fullOuterJoin(...) => result",
+        notes = """Matches are paired, unmatched items have null for the other side
+Example:
+fullOuterJoin(customers, orders, (c) => c.id, (o) => o.customerId)
+// All customers and all orders, matched where possible""",
+        tags = ["array", "null-handling"],
+        since = "1.0"
+    )
     /**
      * Full outer join - returns all items from both arrays
      * Matches are paired, unmatched items have null for the other side
@@ -235,6 +314,27 @@ object JoinFunctions {
         return UDM.fromNative(result)
     }
     
+    @UTLXFunction(
+        description = "Cross join - Cartesian product of both arrays",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "right: Right value",
+        "leftKeyFn: Leftkeyfn value",
+        "rightKeyFn: Rightkeyfn value",
+        "combinerFn: Combinerfn value"
+        ],
+        returns = "every possible combination of items from both arrays",
+        example = "crossJoin(...) => result",
+        notes = """Returns every possible combination of items from both arrays
+Example:
+crossJoin([1, 2], ["a", "b"])
+// Returns: [{l: 1, r: "a"}, {l: 1, r: "b"}, {l: 2, r: "a"}, {l: 2, r: "b"}]""",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Cross join - Cartesian product of both arrays
      * Returns every possible combination of items from both arrays
@@ -267,6 +367,30 @@ object JoinFunctions {
         return UDM.fromNative(result)
     }
     
+    @UTLXFunction(
+        description = "Join with custom combiner function",
+        minArgs = 5,
+        maxArgs = 5,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean",
+        "leftKeyFn: Leftkeyfn value",
+        "rightKeyFn: Rightkeyfn value",
+        "combinerFn: Combinerfn value"
+        ],
+        returns = "Result of the operation",
+        example = "joinWith(...) => result",
+        notes = """Allows custom logic for combining matched items
+Example:
+joinWith(customers, orders,
+(c) => c.id,
+(o) => o.customerId,
+(c, o) => {name: c.name, product: o.product}
+)""",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Join with custom combiner function
      * Allows custom logic for combining matched items

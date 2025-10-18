@@ -3,6 +3,7 @@ package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Advanced Regular Expression Functions
@@ -24,6 +25,21 @@ import org.apache.utlx.stdlib.FunctionArgumentException
  */
 object AdvancedRegexFunctions {
     
+    @UTLXFunction(
+        description = "Analyzes a string with a regex pattern and returns detailed match information.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "an array of match objects, each containing:",
+        example = "analyzeString(...) => result",
+        notes = "Similar to XSLT's analyze-string() function.\nReturns an array of match objects, each containing:\n- match: the full matched text\n- start: starting index\n- end: ending index\n- groups: array of capture group values\n[1] regex pattern (String)\nExample:\n```\nanalyzeString(\"test123abc456\", \"([a-z]+)(\\\\d+)\")\n→ [\n{match: \"test123\", start: 0, end: 6, groups: [\"test\", \"123\"]},\n{match: \"abc456\", start: 7, end: 12, groups: [\"abc\", \"456\"]}\n]\nanalyzeString(\"email@example.com\", \"(\\\\w+)@([\\\\w.]+)\")\n→ [\n{match: \"email@example.com\", start: 0, end: 16, groups: [\"email\", \"example.com\"]}\n]\nanalyzeString(\"no match here\", \"\\\\d+\")\n→ []\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Analyzes a string with a regex pattern and returns detailed match information.
      * 
@@ -82,6 +98,21 @@ object AdvancedRegexFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Extracts all capture groups from the first match of a pattern.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "an array of captured strings. If no match is found, returns empty array.",
+        example = "regexGroups(...) => result",
+        notes = "Returns an array of captured strings. If no match is found, returns empty array.\nCapture groups are numbered from 1 (group 0 is the full match).\n[1] regex pattern with capture groups (String)\nExample:\n```\nregexGroups(\"John Doe\", \"(\\\\w+) (\\\\w+)\")\n→ [\"John\", \"Doe\"]\nregexGroups(\"Price: $123.45\", \"\\\\$(\\\\d+)\\\\.(\\\\d+)\")\n→ [\"123\", \"45\"]\nregexGroups(\"2023-10-15\", \"(\\\\d{4})-(\\\\d{2})-(\\\\d{2})\")\n→ [\"2023\", \"10\", \"15\"]\nregexGroups(\"no match\", \"(\\\\d+)\")\n→ []\n```",
+        tags = ["cleanup", "string"],
+        since = "1.0"
+    )
     /**
      * Extracts all capture groups from the first match of a pattern.
      * 
@@ -131,6 +162,21 @@ object AdvancedRegexFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Extracts named capture groups from the first match.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "an object mapping group names to their captured values.",
+        example = "regexNamedGroups(...) => result",
+        notes = "Returns an object mapping group names to their captured values.\nIf no match is found, returns empty object.\n[1] regex pattern with named groups (String)\nExample:\n```\nregexNamedGroups(\"user@example.com\", \"(?<user>\\\\w+)@(?<domain>[\\\\w.]+)\")\n→ {user: \"user\", domain: \"example.com\"}\nregexNamedGroups(\"2023-10-15\", \"(?<year>\\\\d{4})-(?<month>\\\\d{2})-(?<day>\\\\d{2})\")\n→ {year: \"2023\", month: \"10\", day: \"15\"}\nregexNamedGroups(\"Price: $123.45\", \"\\\\$(?<dollars>\\\\d+)\\\\.(?<cents>\\\\d+)\")\n→ {dollars: \"123\", cents: \"45\"}\nregexNamedGroups(\"no match\", \"(?<num>\\\\d+)\")\n→ {}\n```",
+        tags = ["cleanup", "string"],
+        since = "1.0"
+    )
     /**
      * Extracts named capture groups from the first match.
      * 
@@ -189,6 +235,21 @@ object AdvancedRegexFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Finds all matches of a pattern and returns them with positions.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "First matching element, or null if none found",
+        example = "findAllMatches(...) => result",
+        notes = "Similar to analyzeString but simpler - only returns the matched text and positions.\n[1] regex pattern (String)\nExample:\n```\nfindAllMatches(\"The year is 2023 and the month is 10\", \"\\\\d+\")\n→ [\n{match: \"2023\", start: 12, end: 16},\n{match: \"10\", start: 38, end: 40}\n]\nfindAllMatches(\"cat dog cat bird\", \"cat\")\n→ [\n{match: \"cat\", start: 0, end: 3},\n{match: \"cat\", start: 8, end: 11}\n]\n```",
+        tags = ["predicate", "search", "string"],
+        since = "1.0"
+    )
     /**
      * Finds all matches of a pattern and returns them with positions.
      * 
@@ -237,6 +298,21 @@ object AdvancedRegexFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Splits a string by a pattern, but keeps the matched parts.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "an array alternating between non-matching and matching parts.",
+        example = "splitWithMatches(...) => result",
+        notes = "Returns an array alternating between non-matching and matching parts.\nUseful for parsing while preserving delimiters.\n[1] regex pattern (String)\nExample:\n```\nsplitWithMatches(\"hello123world456\", \"\\\\d+\")\n→ [\n{text: \"hello\", isMatch: false},\n{text: \"123\", isMatch: true},\n{text: \"world\", isMatch: false},\n{text: \"456\", isMatch: true}\n]\nsplitWithMatches(\"a,b,c\", \",\")\n→ [\n{text: \"a\", isMatch: false},\n{text: \",\", isMatch: true},\n{text: \"b\", isMatch: false},\n{text: \",\", isMatch: true},\n{text: \"c\", isMatch: false}\n]\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Splits a string by a pattern, but keeps the matched parts.
      * 
@@ -314,6 +390,21 @@ object AdvancedRegexFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Tests if a string matches a pattern completely (not just contains).",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "Result of the operation",
+        example = "matchesWhole(...) => result",
+        notes = "Similar to matches() but returns the match object if successful.\n[1] regex pattern (String)\nExample:\n```\nmatchesWhole(\"123\", \"\\\\d+\")\n→ {match: \"123\", groups: []}\nmatchesWhole(\"abc123\", \"\\\\d+\")\n→ null (doesn't match the whole string)\nmatchesWhole(\"user@example.com\", \"(\\\\w+)@([\\\\w.]+)\")\n→ {match: \"user@example.com\", groups: [\"user\", \"example.com\"]}\n```",
+        tags = ["null-handling", "string"],
+        since = "1.0"
+    )
     /**
      * Tests if a string matches a pattern completely (not just contains).
      * 
@@ -362,6 +453,22 @@ object AdvancedRegexFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Replaces all matches with results from a function.",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "String",
+        parameters = [
+            "text: Text value",
+        "pattern: Pattern value",
+        "functionArg: Functionarg value"
+        ],
+        returns = "Result of the operation",
+        example = "replaceWithFunction(...) => result",
+        notes = "The function receives the match object and returns replacement text.\nMore powerful than simple string replacement.\n[1] regex pattern (String)\n[2] replacement function (match) => string\nExample:\n```\nreplaceWithFunction(\"hello123world456\", \"\\\\d+\", (m) => \"[\" + m.match + \"]\")\n→ \"hello[123]world[456]\"\nreplaceWithFunction(\"user@example.com\", \"@(\\\\w+)\", (m) => \"@\" + upper(m.groups[0]))\n→ \"user@EXAMPLE.com\"\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Replaces all matches with results from a function.
      * 

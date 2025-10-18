@@ -6,6 +6,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.NumberFormat
 import java.util.*
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Financial Functions Module
@@ -30,6 +31,20 @@ object FinancialFunctions {
     // CURRENCY FORMATTING
     // ============================================
     
+    @UTLXFunction(
+        description = "Formats a number as currency with locale-specific formatting.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Financial",
+        parameters = [
+            "amount: Amount value"
+        ],
+        returns = "Result of the operation",
+        example = "formatCurrency(...) => result",
+        notes = "Supports all ISO 4217 currency codes and locales.\n[1] currency code (String, optional, default: \"USD\")\n[2] locale (String, optional, default: \"en_US\")\nExample:\n```\nformatCurrency(1234.56) → \"$1,234.56\"\nformatCurrency(1234.56, \"EUR\") → \"€1,234.56\"\nformatCurrency(1234.56, \"EUR\", \"de_DE\") → \"1.234,56 €\"\nformatCurrency(1234.56, \"JPY\") → \"¥1,235\" (no decimals)\nformatCurrency(1234.56, \"GBP\", \"en_GB\") → \"£1,234.56\"\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Formats a number as currency with locale-specific formatting.
      * 
@@ -69,6 +84,21 @@ object FinancialFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Parses a currency string to a number.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Financial",
+        parameters = [
+            "currencyStr: Currencystr value",
+        "places: Places value"
+        ],
+        returns = "Result of the operation",
+        example = "parseCurrency(...) => result",
+        notes = "Handles locale-specific formatting and currency symbols.\n[1] locale (String, optional, default: \"en_US\")\nExample:\n```\nparseCurrency(\"$1,234.56\") → 1234.56\nparseCurrency(\"€1.234,56\", \"de_DE\") → 1234.56\nparseCurrency(\"¥1,235\") → 1235.0\nparseCurrency(\"£1,234.56\", \"en_GB\") → 1234.56\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Parses a currency string to a number.
      * 
@@ -109,6 +139,21 @@ object FinancialFunctions {
     // ROUNDING & PRECISION
     // ============================================
     
+    @UTLXFunction(
+        description = "Rounds a number to a specified number of decimal places using banker's rounding.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Financial",
+        parameters = [
+            "number: Number value",
+        "places: Places value"
+        ],
+        returns = "Result of the operation",
+        example = "roundToDecimalPlaces(...) => result",
+        notes = "Banker's rounding (round half to even) minimizes bias in financial calculations.\nAlso known as \"round half to even\" or \"statistical rounding.\"\n[1] decimal places (Number)\nExample:\n```\nroundToDecimalPlaces(1.2349, 2) → 1.23\nroundToDecimalPlaces(1.2351, 2) → 1.24\nroundToDecimalPlaces(1.235, 2) → 1.24 (banker's rounding: round to even)\nroundToDecimalPlaces(1.245, 2) → 1.24 (banker's rounding: round to even)\nroundToDecimalPlaces(123.456, 0) → 123.0\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Rounds a number to a specified number of decimal places using banker's rounding.
      * 
@@ -146,6 +191,21 @@ object FinancialFunctions {
         return UDM.Scalar(rounded.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Rounds up to the nearest cent (2 decimal places).",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Financial",
+        parameters = [
+            "amount: Amount value",
+        "rate: Rate value"
+        ],
+        returns = "Result of the operation",
+        example = "roundToCents(...) => result",
+        notes = "Common in pricing to avoid fractions of a cent.\nExample:\n```\nroundToCents(1.234) → 1.23\nroundToCents(1.235) → 1.24\nroundToCents(9.999) → 10.00\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Rounds up to the nearest cent (2 decimal places).
      * 
@@ -169,6 +229,21 @@ object FinancialFunctions {
     // TAX & DISCOUNT CALCULATIONS
     // ============================================
     
+    @UTLXFunction(
+        description = "Calculates tax amount for a given amount and rate.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Financial",
+        parameters = [
+            "amount: Amount value",
+        "rate: Rate value"
+        ],
+        returns = "Result of the operation",
+        example = "calculateTax(...) => result",
+        notes = "[1] tax rate as decimal (Number, e.g., 0.08 for 8%)\nExample:\n```\ncalculateTax(100, 0.08) → 8.0\ncalculateTax(250, 0.10) → 25.0\ncalculateTax(99.99, 0.0625) → 6.249375\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Calculates tax amount for a given amount and rate.
      * 
@@ -195,6 +270,21 @@ object FinancialFunctions {
         return UDM.Scalar(tax)
     }
     
+    @UTLXFunction(
+        description = "Calculates the total amount including tax.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Financial",
+        parameters = [
+            "amount: Amount value",
+        "rate: Rate value"
+        ],
+        returns = "Result of the operation",
+        example = "addTax(...) => result",
+        notes = "[1] tax rate as decimal (Number)\nExample:\n```\naddTax(100, 0.08) → 108.0\naddTax(250, 0.10) → 275.0\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Calculates the total amount including tax.
      * 
@@ -220,6 +310,21 @@ object FinancialFunctions {
         return UDM.Scalar(total)
     }
     
+    @UTLXFunction(
+        description = "Calculates the original amount from a total that includes tax.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Financial",
+        parameters = [
+            "totalWithTax: Totalwithtax value",
+        "rate: Rate value"
+        ],
+        returns = "Result of the operation",
+        example = "removeTax(...) => result",
+        notes = "[1] tax rate as decimal (Number)\nExample:\n```\nremoveTax(108, 0.08) → 100.0\nremoveTax(275, 0.10) → 250.0\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Calculates the original amount from a total that includes tax.
      * 
@@ -245,6 +350,21 @@ object FinancialFunctions {
         return UDM.Scalar(originalAmount)
     }
     
+    @UTLXFunction(
+        description = "Calculates the price after applying a discount.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Financial",
+        parameters = [
+            "price: Price value",
+        "discount: Discount value"
+        ],
+        returns = "Result of the operation",
+        example = "calculateDiscount(...) => result",
+        notes = "[1] discount as decimal (Number, e.g., 0.10 for 10% off)\nExample:\n```\ncalculateDiscount(100, 0.10) → 90.0\ncalculateDiscount(250, 0.25) → 187.5\ncalculateDiscount(49.99, 0.15) → 42.4915\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Calculates the price after applying a discount.
      * 
@@ -275,6 +395,22 @@ object FinancialFunctions {
         return UDM.Scalar(discountedPrice)
     }
     
+    @UTLXFunction(
+        description = "Calculates the percentage change between two values.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Financial",
+        parameters = [
+            "oldValue: Oldvalue value",
+        "newValue: Newvalue value",
+        "periods: Periods value"
+        ],
+        returns = "Result of the operation",
+        example = "percentageChange(...) => result",
+        notes = "[1] new value (Number)\nExample:\n```\npercentageChange(100, 110) → 10.0 (10% increase)\npercentageChange(100, 90) → -10.0 (10% decrease)\npercentageChange(50, 100) → 100.0 (doubled)\npercentageChange(100, 50) → -50.0 (halved)\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Calculates the percentage change between two values.
      * 
@@ -310,6 +446,22 @@ object FinancialFunctions {
     // TIME VALUE OF MONEY
     // ============================================
     
+    @UTLXFunction(
+        description = "Calculates the present value of a future amount.",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Financial",
+        parameters = [
+            "futureValue: Futurevalue value",
+        "rate: Rate value",
+        "periods: Periods value"
+        ],
+        returns = "Result of the operation",
+        example = "presentValue(...) => result",
+        notes = "PV = FV / (1 + r)^n\n[1] interest rate per period (Number, as decimal)\n[2] number of periods (Number)\nExample:\n```\npresentValue(1000, 0.05, 1) → 952.38 (what $1000 next year is worth today)\npresentValue(10000, 0.08, 5) → 6805.83\npresentValue(5000, 0.03, 10) → 3720.46\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Calculates the present value of a future amount.
      * 
@@ -340,6 +492,22 @@ object FinancialFunctions {
         return UDM.Scalar(pv)
     }
     
+    @UTLXFunction(
+        description = "Calculates the future value of a present amount.",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Financial",
+        parameters = [
+            "presentValue: Presentvalue value",
+        "rate: Rate value",
+        "periods: Periods value"
+        ],
+        returns = "Result of the operation",
+        example = "futureValue(...) => result",
+        notes = "FV = PV * (1 + r)^n\n[1] interest rate per period (Number, as decimal)\n[2] number of periods (Number)\nExample:\n```\nfutureValue(1000, 0.05, 1) → 1050.0 ($1000 today will be worth $1050 next year)\nfutureValue(1000, 0.08, 5) → 1469.33\nfutureValue(5000, 0.03, 10) → 6719.58\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Calculates the future value of a present amount.
      * 
@@ -370,6 +538,22 @@ object FinancialFunctions {
         return UDM.Scalar(fv)
     }
     
+    @UTLXFunction(
+        description = "Calculates compound interest.",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Financial",
+        parameters = [
+            "principal: Principal value",
+        "annualRate: Annualrate value",
+        "timeYears: Timeyears value"
+        ],
+        returns = "Result of the operation",
+        example = "compoundInterest(...) => result",
+        notes = "A = P * (1 + r/n)^(n*t)\nwhere:\n- A = final amount\n- P = principal\n- r = annual interest rate\n- n = compounding frequency per year\n- t = time in years\n[1] annual interest rate (Number, as decimal)\n[2] time in years (Number)\n[3] compounding frequency per year (Number, optional, default: 1)\nExample:\n```\ncompoundInterest(1000, 0.05, 1) → 1050.0 (annual)\ncompoundInterest(1000, 0.05, 1, 12) → 1051.16 (monthly)\ncompoundInterest(1000, 0.05, 1, 365) → 1051.27 (daily)\ncompoundInterest(10000, 0.08, 10, 4) → 22080.40 (quarterly over 10 years)\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Calculates compound interest.
      * 
@@ -409,6 +593,22 @@ object FinancialFunctions {
         return UDM.Scalar(amount)
     }
     
+    @UTLXFunction(
+        description = "Calculates simple interest.",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Financial",
+        parameters = [
+            "principal: Principal value",
+        "rate: Rate value",
+        "time: Time value"
+        ],
+        returns = "Result of the operation",
+        example = "simpleInterest(...) => result",
+        notes = "I = P * r * t\n[1] interest rate per period (Number, as decimal)\n[2] number of periods (Number)\nExample:\n```\nsimpleInterest(1000, 0.05, 1) → 50.0\nsimpleInterest(1000, 0.08, 3) → 240.0\nsimpleInterest(5000, 0.06, 5) → 1500.0\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Calculates simple interest.
      * 
@@ -443,6 +643,20 @@ object FinancialFunctions {
     // VALIDATION & UTILITIES
     // ============================================
     
+    @UTLXFunction(
+        description = "Validates if a currency code is valid (ISO 4217).",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Financial",
+        parameters = [
+            "code: Code value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isValidCurrency(...) => result",
+        notes = "Example:\n```\nisValidCurrency(\"USD\") → true\nisValidCurrency(\"EUR\") → true\nisValidCurrency(\"ABC\") → false\nisValidCurrency(\"usd\") → false (must be uppercase)\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Validates if a currency code is valid (ISO 4217).
      * 
@@ -472,6 +686,20 @@ object FinancialFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Gets the number of decimal places for a currency.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Financial",
+        parameters = [
+            "code: Code value"
+        ],
+        returns = "Result of the operation",
+        example = "getCurrencyDecimals(...) => result",
+        notes = "Example:\n```\ngetCurrencyDecimals(\"USD\") → 2\ngetCurrencyDecimals(\"JPY\") → 0\ngetCurrencyDecimals(\"KWD\") → 3 (Kuwaiti Dinar)\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Gets the number of decimal places for a currency.
      * 
@@ -500,6 +728,20 @@ object FinancialFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Validates if an amount is within acceptable range.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Financial",
+        parameters = [
+            "amount: Amount value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isValidAmount(...) => result",
+        notes = "[1] minimum (Number, optional, default: 0)\n[2] maximum (Number, optional, default: infinity)\nExample:\n```\nisValidAmount(100) → true (positive)\nisValidAmount(-10) → false (negative)\nisValidAmount(50, 10, 100) → true (within range)\nisValidAmount(150, 10, 100) → false (exceeds max)\n```",
+        tags = ["financial"],
+        since = "1.0"
+    )
     /**
      * Validates if an amount is within acceptable range.
      * 

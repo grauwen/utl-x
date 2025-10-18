@@ -1,0 +1,128 @@
+{
+  "utlx-abs": {
+    "prefix": "abs",
+    "body": "abs(${1:arg1})",
+    "description": "Return absolute value of a number",
+    "scope": "utlx"
+  },
+  "utlx-avg": {
+    "prefix": "avg",
+    "body": "avg(${1:arg1})",
+    "description": "Calculate average of numeric array elements",
+    "scope": "utlx"
+  },
+  "utlx-ceil": {
+    "prefix": "ceil",
+    "body": "ceil(${1:arg1})",
+    "description": "Round number up to next integer",
+    "scope": "utlx"
+  },
+  "utlx-floor": {
+    "prefix": "floor",
+    "body": "floor(${1:arg1})",
+    "description": "Round number down to previous integer",
+    "scope": "utlx"
+  },
+  "utlx-max": {
+    "prefix": "max",
+    "body": "max(${1:arg1})",
+    "description": "Find maximum value in numeric array",
+    "scope": "utlx"
+  },
+  "utlx-min": {
+    "prefix": "min",
+    "body": "min(${1:arg1})",
+    "description": "Find minimum value in numeric array",
+    "scope": "utlx"
+  },
+  "utlx-round": {
+    "prefix": "round",
+    "body": "round(${1:arg1})",
+    "description": "Round number to nearest integer",
+    "scope": "utlx"
+  },
+  "utlx-sum": {
+    "prefix": "sum",
+    "body": "sum(${1:arg1})",
+    "description": "Calculate sum of numeric array elements",
+    "scope": "utlx"
+  },
+  "utlx-base64Decode": {
+    "prefix": "base64Decode",
+    "body": "base64Decode(${1:arg1})",
+    "description": "Decode Base64 encoded string",
+    "scope": "utlx"
+  },
+  "utlx-base64Encode": {
+    "prefix": "base64Encode",
+    "body": "base64Encode(${1:arg1})",
+    "description": "Encode string to Base64 format",
+    "scope": "utlx"
+  },
+  "utlx-urlDecode": {
+    "prefix": "urlDecode",
+    "body": "urlDecode(${1:arg1})",
+    "description": "URL decode encoded string",
+    "scope": "utlx"
+  },
+  "utlx-urlEncode": {
+    "prefix": "urlEncode",
+    "body": "urlEncode(${1:arg1})",
+    "description": "URL encode string for web safety",
+    "scope": "utlx"
+  },
+  "utlx-lower": {
+    "prefix": "lower",
+    "body": "lower(${1:arg1})",
+    "description": "Convert string to lowercase",
+    "scope": "utlx"
+  },
+  "utlx-upper": {
+    "prefix": "upper",
+    "body": "upper(${1:arg1})",
+    "description": "Convert string to uppercase",
+    "scope": "utlx"
+  },
+  "utlx-every": {
+    "prefix": "every",
+    "body": "every(${1:arg1}, ${2:arg2})",
+    "description": "Check if all elements match a condition",
+    "scope": "utlx"
+  },
+  "utlx-filter": {
+    "prefix": "filter",
+    "body": "filter(${1:arg1}, ${2:arg2})",
+    "description": "Filter array elements that match a condition",
+    "scope": "utlx"
+  },
+  "utlx-find": {
+    "prefix": "find",
+    "body": "find(${1:arg1}, ${2:arg2})",
+    "description": "Find first element matching a condition",
+    "scope": "utlx"
+  },
+  "utlx-findIndex": {
+    "prefix": "findIndex",
+    "body": "findIndex(${1:arg1}, ${2:arg2})",
+    "description": "Find index of first element matching condition",
+    "scope": "utlx"
+  },
+  "utlx-map": {
+    "prefix": "map",
+    "body": "map(${1:arg1}, ${2:arg2})",
+    "description": "Transform each element of an array using a function",
+    "scope": "utlx"
+  },
+  "utlx-reduce": {
+    "prefix": "reduce",
+    "body": "reduce(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Reduce array to single value using accumulator function",
+    "scope": "utlx"
+  },
+  "utlx-some": {
+    "prefix": "some",
+    "body": "some(${1:arg1}, ${2:arg2})",
+    "description": "Check if any element matches a condition",
+    "scope": "utlx"
+  }
+}

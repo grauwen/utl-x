@@ -3,6 +3,7 @@ package org.apache.utlx.stdlib.xml
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * XML QName (Qualified Name) functions for namespace handling
@@ -12,6 +13,20 @@ import org.apache.utlx.stdlib.FunctionArgumentException
  */
 object QNameFunctions {
     
+    @UTLXFunction(
+        description = "Get local name (without namespace prefix) from XML element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "Result of the operation",
+        example = "local-name(element) => \"Envelope\" (from \"soap:Envelope\")",
+        notes = "For non-XML data, returns the property name.",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get local name (without namespace prefix) from XML element
      * Usage: local-name(element) => "Envelope" (from "soap:Envelope")
@@ -41,6 +56,20 @@ object QNameFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get namespace URI from XML element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "empty string if no namespace.",
+        example = "namespace-uri(element) => \"http://schemas.xmlsoap.org/soap/envelope/\"",
+        notes = "Returns empty string if no namespace.",
+        tags = ["cleanup", "xml"],
+        since = "1.0"
+    )
     /**
      * Get namespace URI from XML element
      * Usage: namespace-uri(element) => "http://schemas.xmlsoap.org/soap/envelope/"
@@ -61,6 +90,19 @@ object QNameFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get qualified name (with prefix) from XML element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "Result of the operation",
+        example = "name(element) => \"soap:Envelope\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get qualified name (with prefix) from XML element
      * Usage: name(element) => "soap:Envelope"
@@ -78,6 +120,21 @@ object QNameFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get namespace prefix from XML element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value",
+        "context: Context value"
+        ],
+        returns = "empty string if no prefix.",
+        example = "namespace-prefix(element) => \"soap\" (from \"soap:Envelope\")",
+        notes = "Returns empty string if no prefix.",
+        tags = ["cleanup", "xml"],
+        since = "1.0"
+    )
     /**
      * Get namespace prefix from XML element
      * Usage: namespace-prefix(element) => "soap" (from "soap:Envelope")
@@ -106,6 +163,22 @@ object QNameFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Resolve QName string to full qualified name with namespace",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "qnameStr: Qnamestr value",
+        "context: Context value"
+        ],
+        returns = "Result of the operation",
+        example = "resolve-qname(\"soap:Envelope\", context)",
+        notes = """=> { localName: "Envelope", prefix: "soap", uri: "http://..." }
+Context provides namespace bindings.""",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Resolve QName string to full qualified name with namespace
      * Usage: resolve-qname("soap:Envelope", context) 
@@ -144,6 +217,21 @@ object QNameFunctions {
         )
     }
     
+    @UTLXFunction(
+        description = "Create QName string from local name and namespace URI",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "localName: Localname value",
+        "namespaceUri: Namespaceuri value"
+        ],
+        returns = "Result of the operation",
+        example = "create-qname(\"Envelope\", \"http://schemas.xmlsoap.org/soap/envelope/\", \"soap\")",
+        notes = "=> \"soap:Envelope\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Create QName string from local name and namespace URI
      * Usage: create-qname("Envelope", "http://schemas.xmlsoap.org/soap/envelope/", "soap")
@@ -164,6 +252,19 @@ object QNameFunctions {
         return UDM.Scalar(qname)
     }
     
+    @UTLXFunction(
+        description = "Check if element has namespace",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "has-namespace(element) => true",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Check if element has namespace
      * Usage: has-namespace(element) => true
@@ -181,6 +282,21 @@ object QNameFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get all namespace declarations from element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value",
+        "qnamePattern: Qnamepattern value"
+        ],
+        returns = "Result of the operation",
+        example = "get-namespaces(element)",
+        notes = "=> { \"soap\": \"http://...\", \"wsa\": \"http://...\" }",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get all namespace declarations from element
      * Usage: get-namespaces(element) 
@@ -213,6 +329,20 @@ object QNameFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Match element by qualified name",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value",
+        "qnamePattern: Qnamepattern value"
+        ],
+        returns = "Result of the operation",
+        example = "matches-qname(element, \"soap:Envelope\") => true",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Match element by qualified name
      * Usage: matches-qname(element, "soap:Envelope") => true

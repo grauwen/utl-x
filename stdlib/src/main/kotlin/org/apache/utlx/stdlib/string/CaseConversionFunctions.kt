@@ -2,12 +2,32 @@
 package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Critical missing string case conversion functions
  */
 object CaseConversionFunctions {
     
+    @UTLXFunction(
+        description = "Convert string to camelCase",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "camelize(\"hello-world\") => \"helloWorld\"",
+        additionalExamples = [
+            "camelize(\"hello_world\") => \"helloWorld\"",
+            "camelize(\"hello world\") => \"helloWorld\""
+        ],
+        notes = """This is the INVERSE of kebabCase/snakeCase
+Commonly needed for API field transformations""",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to camelCase
      * 
@@ -54,6 +74,24 @@ object CaseConversionFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Convert string to snake_case",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "snakeCase(\"helloWorld\") => \"hello_world\"",
+        additionalExamples = [
+            "snakeCase(\"HelloWorld\") => \"hello_world\"",
+            "snakeCase(\"hello-world\") => \"hello_world\""
+        ],
+        notes = "Commonly used for database field names",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to snake_case
      * 
@@ -102,6 +140,24 @@ object CaseConversionFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Convert string to Title Case",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "titleCase(\"hello world\") => \"Hello World\"",
+        additionalExamples = [
+            "titleCase(\"hello-world\") => \"Hello World\"",
+            "titleCase(\"HELLO WORLD\") => \"Hello World\""
+        ],
+        notes = "Capitalizes first letter of each word",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to Title Case
      * 
@@ -139,6 +195,23 @@ object CaseConversionFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Convert from camelCase to separate words",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "uncamelize(\"helloWorld\") => \"hello world\"",
+        additionalExamples = [
+            "uncamelize(\"firstName\") => \"first name\""
+        ],
+        notes = "Useful for converting programmatic names to human-readable text",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert from camelCase to separate words
      * 
@@ -176,6 +249,25 @@ object CaseConversionFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Truncate string with ellipsis",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "maxLength: Maxlength value",
+        "ellipsisArg: Ellipsisarg value"
+        ],
+        returns = "Result of the operation",
+        example = "truncate(\"Hello World\", 8) => \"Hello...\"",
+        additionalExamples = [
+            "truncate(\"Short\", 10) => \"Short\"",
+            "truncate(\"Hello World\", 8, \">>\") => \"Hello>>\""
+        ],
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Truncate string with ellipsis
      * 
@@ -229,6 +321,24 @@ object CaseConversionFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Convert string to URL-safe slug",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "slugify(\"Hello World!\") => \"hello-world\"",
+        additionalExamples = [
+            "slugify(\"  Foo & Bar  \") => \"foo-and-bar\"",
+            "slugify(\"C++ Programming\") => \"c-programming\""
+        ],
+        notes = "Converts to lowercase, replaces spaces with dashes, removes special chars",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Convert string to URL-safe slug
      * 

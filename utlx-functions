@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+
+# UTL-X Function Registry CLI Tool
+# Usage: ./utlx-functions [command] [options]
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STDLIB_DIR="$SCRIPT_DIR/stdlib"
+PROJECT_ROOT="$SCRIPT_DIR"
+
+show_help() {
+    cat << EOF
+UTL-X Function Registry Tool
+
+USAGE:
+    ./utlx-functions <command> [options]
+
+COMMANDS:
+    list                List all functions
+    categories          Show functions by category  
+    count               Show function count
+    search <pattern>    Search functions by name/description
+    info <function>     Show detailed function info
+    generate            Generate function registry files
+    help                Show this help
+
+EXAMPLES:
+    ./utlx-functions list
+    ./utlx-functions categories  
+    ./utlx-functions search xml
+    ./utlx-functions info map
+    ./utlx-functions generate
+
+EOF
+}
+
+ensure_built() {
+    if [[ ! -f "$STDLIB_DIR/build/libs"/*.jar ]]; then
+        echo "Building stdlib..."
+        cd "$PROJECT_ROOT" && ./gradlew :stdlib:build
+    fi
+}
+
+ensure_registry() {
+    local registry_file="$STDLIB_DIR/build/generated/function-registry/utlx-functions.txt"
+    if [[ ! -f "$registry_file" ]]; then
+        echo "Generating function registry..."
+        ensure_built
+        cd "$PROJECT_ROOT" && ./gradlew :stdlib:generateFunctionRegistry
+    fi
+}
+
+show_functions_from_file() {
+    local registry_file="$STDLIB_DIR/build/generated/function-registry/utlx-functions.txt"
+    if [[ -f "$registry_file" ]]; then
+        cat "$registry_file"
+    else
+        echo "Error: Function registry not found. Run './utlx-functions generate' first."
+        exit 1
+    fi
+}
+
+count_functions() {
+    local registry_file="$STDLIB_DIR/build/generated/function-registry/utlx-functions.txt"
+    if [[ -f "$registry_file" ]]; then
+        local total=$(grep "Total Functions:" "$registry_file" | sed 's/.*: //')
+        echo "UTL-X Function Count: $total"
+        echo
+        grep "Functions (" "$registry_file" | sed 's/://g'
+    else
+        echo "Error: Function registry not found. Run './utlx-functions generate' first."
+        exit 1
+    fi
+}
+
+search_functions() {
+    local pattern="$1"
+    local registry_file="$STDLIB_DIR/build/generated/function-registry/utlx-functions.txt"
+    if [[ -f "$registry_file" ]]; then
+        echo "Functions matching '$pattern':"
+        echo "=========================="
+        grep -i "$pattern" "$registry_file" | grep -E "^  [a-zA-Z]" | head -20
+    else
+        echo "Error: Function registry not found. Run './utlx-functions generate' first."
+        exit 1
+    fi
+}
+
+case "${1:-help}" in
+    list)
+        ensure_registry
+        show_functions_from_file
+        ;;
+    categories)
+        ensure_registry
+        show_functions_from_file | grep -A 100 "Functions ("
+        ;;
+    count)
+        ensure_registry
+        count_functions
+        ;;
+    search)
+        if [[ -z "$2" ]]; then
+            echo "Error: search requires a pattern"
+            echo "Usage: ./utlx-functions search <pattern>"
+            exit 1
+        fi
+        ensure_registry
+        search_functions "$2"
+        ;;
+    info)
+        if [[ -z "$2" ]]; then
+            echo "Error: info requires a function name"
+            echo "Usage: ./utlx-functions info <function>"
+            exit 1
+        fi
+        ensure_registry
+        echo "Function: $2"
+        search_functions "$2" | head -5
+        ;;
+    generate)
+        ensure_built
+        cd "$PROJECT_ROOT" && ./gradlew :stdlib:generateFunctionRegistry
+        echo "Function registry generated in: $STDLIB_DIR/build/generated/function-registry/"
+        ;;
+    help|--help|-h)
+        show_help
+        ;;
+    *)
+        echo "Error: Unknown command '$1'"
+        echo "Run './utlx-functions help' for usage information"
+        exit 1
+        ;;
+esac

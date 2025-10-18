@@ -2,12 +2,29 @@
 package org.apache.utlx.stdlib.array
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Critical missing array functions
  */
 object CriticalArrayFunctions {
     
+    @UTLXFunction(
+        description = "Remove null, undefined, and empty values from array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "New array with filtered elements",
+        example = "compact([1, null, 2, \"\", 3, false, 4]) => [1, 2, 3, false, 4]",
+        notes = """Filters out: null values, empty strings, undefined (represented as null in UDM)
+Keeps: 0, false (they're valid values), Empty arrays/objects (they're valid structures)""",
+        tags = ["array", "filter"],
+        since = "1.0"
+    )
     /**
      * Remove null, undefined, and empty values from array
      * 
@@ -46,6 +63,25 @@ object CriticalArrayFunctions {
         return UDM.Array(filtered)
     }
     
+    @UTLXFunction(
+        description = "Find the index of the first element matching predicate",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "-1 if no match found",
+        example = "findIndex([{id: 1}, {id: 2}, {id: 3}], item => item.id == 2) => 1",
+        additionalExamples = [
+            "findIndex([1, 2, 3, 4], n => n > 2) => 2  (index of 3)"
+        ],
+        notes = """Returns -1 if no match found
+This complements `find` which returns the element itself""",
+        tags = ["array", "index", "search"],
+        since = "1.0"
+    )
     /**
      * Find the index of the first element matching predicate
      * 
@@ -80,6 +116,26 @@ object CriticalArrayFunctions {
         return UDM.Scalar(index.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Find the index of the last element matching predicate",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean",
+        "initial: Initial value"
+        ],
+        returns = "-1 if no match found",
+        example = "findLastIndex([1, 2, 3, 2, 1], n => n == 2) => 3",
+        additionalExamples = [
+            "findLastIndex([\"a\", \"b\", \"a\"], s => s == \"a\") => 2"
+        ],
+        notes = """Returns -1 if no match found
+Complement to findIndex - searches from the end""",
+        tags = ["array", "index", "search"],
+        since = "1.0"
+    )
     /**
      * Find the index of the last element matching predicate
      * 
@@ -111,6 +167,27 @@ object CriticalArrayFunctions {
         return UDM.Scalar(index.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Scan - like reduce but returns all intermediate results",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "reducer: Reducer value",
+        "initial: Initial value"
+        ],
+        returns = "Result of the operation",
+        example = "scan([1, 2, 3, 4], (acc, n) => acc + n, 0) => [1, 3, 6, 10]",
+        notes = """Similar to reduce, but instead of returning only final result,
+returns array of all intermediate accumulator values.
+Useful for:
+- Running totals
+- Cumulative sums
+- Progressive calculations""",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Scan - like reduce but returns all intermediate results
      * 
@@ -151,6 +228,31 @@ object CriticalArrayFunctions {
         return UDM.Array(results)
     }
     
+    @UTLXFunction(
+        description = "Windowed - create sliding window over array",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "size: Size value",
+        "stepArg: Steparg value"
+        ],
+        returns = "Result of the operation",
+        example = "windowed([1, 2, 3, 4, 5], 3) => [[1,2,3], [2,3,4], [3,4,5]]",
+        additionalExamples = [
+            "windowed([1, 2, 3, 4], 2) => [[1,2], [2,3], [3,4]]",
+            "windowed([1, 2, 3, 4, 5], 2, 2) => [[1,2], [3,4]]"
+        ],
+        notes = """Creates overlapping subarrays of specified size.
+With step parameter:
+Useful for:
+- Moving averages
+- Pattern detection
+- Sequence analysis""",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Windowed - create sliding window over array
      * 
@@ -214,6 +316,23 @@ object CriticalArrayFunctions {
         return UDM.Array(windows)
     }
     
+    @UTLXFunction(
+        description = "ZipAll - zip arrays with padding for different lengths",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "defaultValue: Defaultvalue value"
+        ],
+        returns = "Result of the operation",
+        example = "zipAll([[1,2,3], [\"a\",\"b\"]], null) => [[1,\"a\"], [2,\"b\"], [3,null]]",
+        notes = """Unlike regular zip (stops at shortest), zipAll continues to longest array
+and pads missing values with specified default.
+Useful when you need to preserve all data from all arrays""",
+        tags = ["array", "predicate"],
+        since = "1.0"
+    )
     /**
      * ZipAll - zip arrays with padding for different lengths
      * 

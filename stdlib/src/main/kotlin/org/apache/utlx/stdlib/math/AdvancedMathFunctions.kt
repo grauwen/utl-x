@@ -3,6 +3,7 @@ package org.apache.utlx.stdlib.math
 
 import org.apache.utlx.core.udm.UDM
 import kotlin.math.*
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Advanced Mathematical Functions
@@ -24,6 +25,20 @@ object AdvancedMathFunctions {
     // TRIGONOMETRIC FUNCTIONS
     // ============================================
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "angle: Angle value"
+        ],
+        returns = "the sine of an angle in radians.",
+        example = "sin(...) => result",
+        notes = "Returns the sine of an angle in radians.\n```\nsin(0) → 0.0\nsin(PI/2) → 1.0\nsin(PI) → 0.0 (approximately)\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the sine of an angle in radians.
      * 
@@ -45,6 +60,20 @@ object AdvancedMathFunctions {
         return UDM.Scalar(sin(angle))
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "angle: Angle value"
+        ],
+        returns = "the cosine of an angle in radians.",
+        example = "cos(...) => result",
+        notes = "Returns the cosine of an angle in radians.\n```\ncos(0) → 1.0\ncos(PI) → -1.0\ncos(PI/2) → 0.0 (approximately)\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the cosine of an angle in radians.
      * 
@@ -66,6 +95,20 @@ object AdvancedMathFunctions {
         return UDM.Scalar(cos(angle))
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "angle: Angle value"
+        ],
+        returns = "the tangent of an angle in radians.",
+        example = "tan(...) => result",
+        notes = "Returns the tangent of an angle in radians.\n```\ntan(0) → 0.0\ntan(PI/4) → 1.0\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the tangent of an angle in radians.
      * 
@@ -86,6 +129,20 @@ object AdvancedMathFunctions {
         return UDM.Scalar(tan(angle))
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "the arc sine (inverse sine) of a value.",
+        example = "asin(...) => result",
+        notes = "Returns the arc sine (inverse sine) of a value.\n```\nasin(0) → 0.0\nasin(1) → π/2 (1.5707963...)\nasin(-1) → -π/2\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the arc sine (inverse sine) of a value.
      * 
@@ -110,6 +167,20 @@ object AdvancedMathFunctions {
         return UDM.Scalar(asin(value))
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "the arc cosine (inverse cosine) of a value.",
+        example = "acos(...) => result",
+        notes = "Returns the arc cosine (inverse cosine) of a value.\n```\nacos(1) → 0.0\nacos(0) → π/2 (1.5707963...)\nacos(-1) → π\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the arc cosine (inverse cosine) of a value.
      * 
@@ -134,6 +205,21 @@ object AdvancedMathFunctions {
         return UDM.Scalar(acos(value))
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Math",
+        parameters = [
+            "value: Value value",
+        "x: X value"
+        ],
+        returns = "the arc tangent (inverse tangent) of a value.",
+        example = "atan(...) => result",
+        notes = "Returns the arc tangent (inverse tangent) of a value.\n```\natan(0) → 0.0\natan(1) → π/4 (0.785398...)\natan(-1) → -π/4\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the arc tangent (inverse tangent) of a value.
      * 
@@ -155,6 +241,21 @@ object AdvancedMathFunctions {
         return UDM.Scalar(atan(value))
     }
     
+    @UTLXFunction(
+        description = "coordinates (x, y) to polar coordinates (r, theta).",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Math",
+        parameters = [
+            "y: Y value",
+        "x: X value"
+        ],
+        returns = "the angle theta from the conversion of rectangular",
+        example = "atan2(...) => result",
+        notes = "Returns the angle theta from the conversion of rectangular\nThis is useful for calculating bearing/direction between two points.\n[1] x coordinate (Number)\nExample:\n```\natan2(1, 1) → π/4 (0.785398... = 45 degrees)\natan2(1, 0) → π/2 (90 degrees)\natan2(0, 1) → 0.0 (0 degrees)\natan2(-1, 0) → -π/2 (-90 degrees)\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the angle theta from the conversion of rectangular 
      * coordinates (x, y) to polar coordinates (r, theta).
@@ -186,6 +287,20 @@ object AdvancedMathFunctions {
     // HYPERBOLIC FUNCTIONS
     // ============================================
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "the hyperbolic sine of a value.",
+        example = "sinh(...) => result",
+        notes = "Returns the hyperbolic sine of a value.\n```\nsinh(0) → 0.0\nsinh(1) → 1.175201...\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the hyperbolic sine of a value.
      * 
@@ -206,6 +321,20 @@ object AdvancedMathFunctions {
         return UDM.Scalar(sinh(value))
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "the hyperbolic cosine of a value.",
+        example = "cosh(...) => result",
+        notes = "Returns the hyperbolic cosine of a value.\n```\ncosh(0) → 1.0\ncosh(1) → 1.543080...\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the hyperbolic cosine of a value.
      * 
@@ -226,6 +355,20 @@ object AdvancedMathFunctions {
         return UDM.Scalar(cosh(value))
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "the hyperbolic tangent of a value.",
+        example = "tanh(...) => result",
+        notes = "Returns the hyperbolic tangent of a value.\n```\ntanh(0) → 0.0\ntanh(1) → 0.761594...\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the hyperbolic tangent of a value.
      * 
@@ -250,6 +393,21 @@ object AdvancedMathFunctions {
     // LOGARITHMIC & EXPONENTIAL FUNCTIONS
     // ============================================
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "value: Value value",
+        "b: B value"
+        ],
+        returns = "the natural logarithm (base e) of a value.",
+        example = "ln(...) => result",
+        notes = "Returns the natural logarithm (base e) of a value.\n```\nln(1) → 0.0\nln(E) → 1.0\nln(10) → 2.302585...\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the natural logarithm (base e) of a value.
      * 
@@ -274,6 +432,21 @@ object AdvancedMathFunctions {
         return UDM.Scalar(ln(value))
     }
     
+    @UTLXFunction(
+        description = "If no base is provided, uses natural logarithm (base e).",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "value: Value value",
+        "b: B value"
+        ],
+        returns = "the logarithm of a value with specified base.",
+        example = "log(...) => result",
+        notes = "Returns the logarithm of a value with specified base.\n[1] base (optional, defaults to e)\nExample:\n```\nlog(100, 10) → 2.0\nlog(8, 2) → 3.0\nlog(E) → 1.0 (natural log)\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the logarithm of a value with specified base.
      * If no base is provided, uses natural logarithm (base e).
@@ -311,6 +484,20 @@ object AdvancedMathFunctions {
         return UDM.Scalar(log(value, base))
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "the base-10 logarithm of a value.",
+        example = "log10(...) => result",
+        notes = "Returns the base-10 logarithm of a value.\n```\nlog10(100) → 2.0\nlog10(1000) → 3.0\nlog10(1) → 0.0\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the base-10 logarithm of a value.
      * 
@@ -335,6 +522,20 @@ object AdvancedMathFunctions {
         return UDM.Scalar(log10(value))
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "e raised to the power of the given value.",
+        example = "exp(...) => result",
+        notes = "Returns e raised to the power of the given value.\n```\nexp(0) → 1.0\nexp(1) → 2.718281... (e)\nexp(2) → 7.389056...\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns e raised to the power of the given value.
      * 
@@ -356,6 +557,20 @@ object AdvancedMathFunctions {
         return UDM.Scalar(exp(value))
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "the base-2 logarithm of a value.",
+        example = "log2(...) => result",
+        notes = "Returns the base-2 logarithm of a value.\n```\nlog2(8) → 3.0\nlog2(1024) → 10.0\nlog2(1) → 0.0\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the base-2 logarithm of a value.
      * 
@@ -384,6 +599,20 @@ object AdvancedMathFunctions {
     // ANGLE CONVERSION UTILITIES
     // ============================================
     
+    @UTLXFunction(
+        description = "Converts degrees to radians.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "degrees: Degrees value"
+        ],
+        returns = "Result of the operation",
+        example = "toRadians(...) => result",
+        notes = "Example:\n```\ntoRadians(180) → π (3.14159...)\ntoRadians(90) → π/2 (1.5707...)\ntoRadians(0) → 0.0\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Converts degrees to radians.
      * 
@@ -405,6 +634,20 @@ object AdvancedMathFunctions {
         return UDM.Scalar(Math.toRadians(degrees))
     }
     
+    @UTLXFunction(
+        description = "Converts radians to degrees.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "radians: Radians value"
+        ],
+        returns = "Result of the operation",
+        example = "toDegrees(...) => result",
+        notes = "Example:\n```\ntoDegrees(PI) → 180.0\ntoDegrees(PI/2) → 90.0\ntoDegrees(0) → 0.0\n```",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Converts radians to degrees.
      * 
@@ -430,18 +673,51 @@ object AdvancedMathFunctions {
     // MATHEMATICAL CONSTANTS
     // ============================================
     
+    @UTLXFunction(
+        description = "Approximately 3.14159265358979323846",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        returns = "the mathematical constant π (pi).",
+        example = "pi(...) => result",
+        notes = "Returns the mathematical constant π (pi).",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the mathematical constant π (pi).
      * Approximately 3.14159265358979323846
      */
     fun pi(args: List<UDM>): UDM = UDM.Scalar(PI)
     
+    @UTLXFunction(
+        description = "Approximately 2.71828182845904523536",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        returns = "the mathematical constant e (Euler's number).",
+        example = "e(...) => result",
+        notes = "Returns the mathematical constant e (Euler's number).",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the mathematical constant e (Euler's number).
      * Approximately 2.71828182845904523536
      */
     fun e(args: List<UDM>): UDM = UDM.Scalar(E)
     
+    @UTLXFunction(
+        description = "Approximately 1.61803398874989484820",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        returns = "the golden ratio φ (phi).",
+        example = "goldenRatio(...) => result",
+        notes = "Returns the golden ratio φ (phi).",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Returns the golden ratio φ (phi).
      * Approximately 1.61803398874989484820

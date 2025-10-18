@@ -3,6 +3,7 @@ package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.*
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * English pluralization functions for UTL-X
@@ -96,6 +97,20 @@ object PluralizationFunctions {
     // PLURALIZATION RULES
     // ============================================
     
+    @UTLXFunction(
+        description = "Converts a singular noun to its plural form",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "word: Word value"
+        ],
+        returns = "Result of the operation",
+        example = "pluralize(...) => result",
+        notes = "Handles regular pluralization rules and irregular forms in English.\nExamples:\n```\npluralize(\"cat\") // \"cats\"\npluralize(\"dog\") // \"dogs\"\npluralize(\"child\") // \"children\" (irregular)\npluralize(\"sheep\") // \"sheep\" (unchanged)\npluralize(\"box\") // \"boxes\"\npluralize(\"city\") // \"cities\"\npluralize(\"person\", 1) // \"person\" (count = 1)\npluralize(\"person\", 5) // \"people\" (count > 1)\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Converts a singular noun to its plural form
      * 
@@ -185,6 +200,20 @@ object PluralizationFunctions {
         return UDM.Scalar(matchCase(singular, plural, (word as UDM.Scalar).value?.toString() ?: ""))
     }
     
+    @UTLXFunction(
+        description = "Converts a plural noun to its singular form",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "word: Word value"
+        ],
+        returns = "Result of the operation",
+        example = "singularize(...) => result",
+        notes = "Handles regular singularization rules and irregular forms.\nExamples:\n```\nsingularize(\"cats\") // \"cat\"\nsingularize(\"dogs\") // \"dog\"\nsingularize(\"children\") // \"child\" (irregular)\nsingularize(\"sheep\") // \"sheep\" (unchanged)\nsingularize(\"boxes\") // \"box\"\nsingularize(\"cities\") // \"city\"\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Converts a plural noun to its singular form
      * 
@@ -281,6 +310,21 @@ object PluralizationFunctions {
         return UDM.Scalar(matchCase(plural, singular, (word as UDM.Scalar).value?.toString() ?: ""))
     }
     
+    @UTLXFunction(
+        description = "Examples:",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "word: Word value",
+        "count: Count value"
+        ],
+        returns = "the appropriate form (singular or plural) based on count",
+        example = "pluralizeWithCount(...) => result",
+        notes = "Returns the appropriate form (singular or plural) based on count\n```\npluralizeWithCount(\"cat\", 0) // \"cats\"\npluralizeWithCount(\"cat\", 1) // \"cat\"\npluralizeWithCount(\"cat\", 5) // \"cats\"\npluralizeWithCount(\"child\", 3) // \"children\"\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Returns the appropriate form (singular or plural) based on count
      * 
@@ -312,6 +356,20 @@ object PluralizationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Checks if a word is in plural form",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "word: Word value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isPlural(...) => result",
+        notes = "Examples:\n```\nisPlural(\"cats\") // true\nisPlural(\"cat\") // false\nisPlural(\"children\") // true\nisPlural(\"sheep\") // false (can be both)\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Checks if a word is in plural form
      * 
@@ -353,6 +411,21 @@ object PluralizationFunctions {
         return UDM.Scalar(seemsPlural)
     }
     
+    @UTLXFunction(
+        description = "Checks if a word is in singular form",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "word: Word value",
+        "word: Word value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isSingular(...) => result",
+        notes = "Examples:\n```\nisSingular(\"cat\") // true\nisSingular(\"cats\") // false\nisSingular(\"child\") // true\nisSingular(\"sheep\") // false (can be both)\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Checks if a word is in singular form
      * 
@@ -394,6 +467,21 @@ object PluralizationFunctions {
         return UDM.Scalar(notPlural)
     }
     
+    @UTLXFunction(
+        description = "Creates a formatted string with count and correctly pluralized word",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "String",
+        parameters = [
+            "count: Count value",
+        "word: Word value"
+        ],
+        returns = "Result of the operation",
+        example = "formatPlural(...) => result",
+        notes = "Examples:\n```\nformatPlural(1, \"cat\") // \"1 cat\"\nformatPlural(5, \"cat\") // \"5 cats\"\nformatPlural(0, \"item\") // \"0 items\"\nformatPlural(3, \"child\") // \"3 children\"\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Creates a formatted string with count and correctly pluralized word
      * 

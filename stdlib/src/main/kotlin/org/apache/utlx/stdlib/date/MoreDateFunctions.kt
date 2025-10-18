@@ -5,6 +5,7 @@ import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import kotlinx.datetime.*
 import java.time.Instant as JavaInstant
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Additional date/time functions for complete parity with TIBCO BW
@@ -20,6 +21,19 @@ object MoreDateFunctions {
         return JavaInstant.ofEpochSecond(kotlinxInstant.epochSeconds, kotlinxInstant.nanosecondsOfSecond.toLong())
     }
     
+    @UTLXFunction(
+        description = "Add months to date",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "months: Months value"
+        ],
+        returns = "Result of the operation",
+        example = "addMonths(now(), 3) => 3 months from now",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Add months to date
      * Usage: addMonths(now(), 3) => 3 months from now
@@ -33,6 +47,19 @@ object MoreDateFunctions {
         return UDM.DateTime(toJavaInstant(result))
     }
     
+    @UTLXFunction(
+        description = "Add years to date",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "years: Years value"
+        ],
+        returns = "Result of the operation",
+        example = "addYears(now(), 1) => 1 year from now",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Add years to date
      * Usage: addYears(now(), 1) => 1 year from now
@@ -46,6 +73,19 @@ object MoreDateFunctions {
         return UDM.DateTime(toJavaInstant(result))
     }
     
+    @UTLXFunction(
+        description = "Add minutes to date",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "minutes: Minutes value"
+        ],
+        returns = "Result of the operation",
+        example = "addMinutes(now(), 30) => 30 minutes from now",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Add minutes to date
      * Usage: addMinutes(now(), 30) => 30 minutes from now
@@ -59,6 +99,19 @@ object MoreDateFunctions {
         return UDM.DateTime(toJavaInstant(result))
     }
     
+    @UTLXFunction(
+        description = "Add seconds to date",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "seconds: Seconds value"
+        ],
+        returns = "Result of the operation",
+        example = "addSeconds(now(), 45) => 45 seconds from now",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Add seconds to date
      * Usage: addSeconds(now(), 45) => 45 seconds from now
@@ -72,6 +125,16 @@ object MoreDateFunctions {
         return UDM.DateTime(toJavaInstant(result))
     }
     
+    @UTLXFunction(
+        description = "Get timezone offset from datetime",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "getTimezone(now()) => \"+00:00\" or \"-05:00\"",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get timezone offset from datetime
      * Usage: getTimezone(now()) => "+00:00" or "-05:00"
@@ -93,6 +156,16 @@ object MoreDateFunctions {
         return UDM.Scalar(timezone)
     }
     
+    @UTLXFunction(
+        description = "Difference in hours between two dates",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "diffHours(date1, date2) => 24.5",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Difference in hours between two dates
      * Usage: diffHours(date1, date2) => 24.5
@@ -110,6 +183,16 @@ object MoreDateFunctions {
         return UDM.Scalar(hours)
     }
     
+    @UTLXFunction(
+        description = "Difference in minutes between two dates",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "diffMinutes(date1, date2) => 1440",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Difference in minutes between two dates
      * Usage: diffMinutes(date1, date2) => 1440
@@ -127,6 +210,16 @@ object MoreDateFunctions {
         return UDM.Scalar(minutes)
     }
     
+    @UTLXFunction(
+        description = "Difference in seconds between two dates",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "diffSeconds(date1, date2) => 86400",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Difference in seconds between two dates
      * Usage: diffSeconds(date1, date2) => 86400
@@ -144,6 +237,16 @@ object MoreDateFunctions {
         return UDM.Scalar(seconds)
     }
     
+    @UTLXFunction(
+        description = "Get current date only (no time component)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "currentDate() => \"2025-10-14\"",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get current date only (no time component)
      * Usage: currentDate() => "2025-10-14"
@@ -155,6 +258,16 @@ object MoreDateFunctions {
         return UDM.Scalar(localDate.toString())
     }
     
+    @UTLXFunction(
+        description = "Get current time only (no date component)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "currentTime() => \"14:30:45\"",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get current time only (no date component)
      * Usage: currentTime() => "14:30:45"

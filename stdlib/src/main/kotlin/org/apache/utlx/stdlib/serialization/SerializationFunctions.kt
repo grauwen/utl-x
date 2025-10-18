@@ -3,6 +3,7 @@ package org.apache.utlx.stdlib.serialization
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Serialization Functions for UTL-X Standard Library
@@ -18,6 +19,19 @@ import org.apache.utlx.stdlib.FunctionArgumentException
  */
 object SerializationFunctions {
     
+    @UTLXFunction(
+        description = "Parse a JSON string into a UDM object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "jsonString: Jsonstring value"
+        ],
+        returns = "Result of the operation",
+        example = "parseJson(\"{'name': 'John'}\")",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Parse a JSON string into a UDM object
      * Usage: parseJson("{'name': 'John'}")
@@ -38,6 +52,19 @@ object SerializationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Render a UDM object as a JSON string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "obj: Obj value"
+        ],
+        returns = "Result of the operation",
+        example = "renderJson(data, pretty?)",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Render a UDM object as a JSON string
      * Usage: renderJson(data, pretty?)
@@ -55,6 +82,19 @@ object SerializationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Parse an XML string into a UDM object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "xmlString: Xmlstring value"
+        ],
+        returns = "Result of the operation",
+        example = "parseXml(\"<root><item>value</item></root>\")",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Parse an XML string into a UDM object
      * Usage: parseXml("<root><item>value</item></root>")
@@ -75,6 +115,19 @@ object SerializationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Render a UDM object as an XML string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "obj: Obj value"
+        ],
+        returns = "Result of the operation",
+        example = "renderXml(data, pretty?)",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Render a UDM object as an XML string
      * Usage: renderXml(data, pretty?)
@@ -92,6 +145,19 @@ object SerializationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Parse a YAML string into a UDM object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "parseYaml(\"name: John\\nage: 30\")",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Parse a YAML string into a UDM object
      * Usage: parseYaml("name: John\nage: 30")
@@ -112,6 +178,19 @@ object SerializationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Render a UDM object as a YAML string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "renderYaml(data)",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Render a UDM object as a YAML string
      * Usage: renderYaml(data)
@@ -128,6 +207,19 @@ object SerializationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Parse a CSV string into a UDM array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "parseCsv(\"name,age\\nJohn,30\")",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Parse a CSV string into a UDM array
      * Usage: parseCsv("name,age\nJohn,30")
@@ -149,6 +241,20 @@ object SerializationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Render a UDM array as a CSV string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "obj: Obj value",
+        "format: Format value"
+        ],
+        returns = "Result of the operation",
+        example = "renderCsv(data, includeHeaders?)",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Render a UDM array as a CSV string
      * Usage: renderCsv(data, includeHeaders?)
@@ -166,6 +272,20 @@ object SerializationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Auto-detect format and parse",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "dataString: Datastring value",
+        "format: Format value"
+        ],
+        returns = "Result of the operation",
+        example = "parse(data, format?)",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Auto-detect format and parse
      * Usage: parse(data, format?)
@@ -195,6 +315,20 @@ object SerializationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Render object to specified format",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "obj: Obj value",
+        "format: Format value"
+        ],
+        returns = "Result of the operation",
+        example = "render(data, format, pretty?)",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Render object to specified format
      * Usage: render(data, format, pretty?)

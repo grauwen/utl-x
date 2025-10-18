@@ -3,12 +3,26 @@ package org.apache.utlx.stdlib.xml
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Additional XML utility functions for common XML operations
  */
 object XmlUtilityFunctions {
     
+    @UTLXFunction(
+        description = "Get node type (element, attribute, text, etc.)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "node-type(node) => \"element\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get node type (element, attribute, text, etc.)
      * Usage: node-type(node) => "element"
@@ -29,6 +43,20 @@ object XmlUtilityFunctions {
         return UDM.Scalar(type)
     }
     
+    @UTLXFunction(
+        description = "Get text content from XML element (all text nodes concatenated)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value",
+        "attrName: Attrname value"
+        ],
+        returns = "Result of the operation",
+        example = "text-content(element) => \"Hello World\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get text content from XML element (all text nodes concatenated)
      * Usage: text-content(element) => "Hello World"
@@ -48,6 +76,20 @@ object XmlUtilityFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get all attributes from XML element as object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value",
+        "attrName: Attrname value"
+        ],
+        returns = "Result of the operation",
+        example = "attributes(element) => { id: \"123\", type: \"order\" }",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get all attributes from XML element as object
      * Usage: attributes(element) => { id: "123", type: "order" }
@@ -68,6 +110,20 @@ object XmlUtilityFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get specific attribute value",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "array: Input array to process",
+        "attrName: Attrname value"
+        ],
+        returns = "Result of the operation",
+        example = "attribute(element, \"id\") => \"123\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get specific attribute value
      * Usage: attribute(element, "id") => "123"
@@ -85,6 +141,20 @@ object XmlUtilityFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Check if element has attribute",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "array: Input array to process",
+        "attrName: Attrname value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "has-attribute(element, \"id\") => true",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Check if element has attribute
      * Usage: has-attribute(element, "id") => true
@@ -102,6 +172,19 @@ object XmlUtilityFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Count child elements",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "child-count(element) => 5",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Count child elements
      * Usage: child-count(element) => 5
@@ -125,6 +208,19 @@ object XmlUtilityFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get child element names",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "child-names(element) => [\"Order\", \"Customer\", \"Items\"]",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get child element names
      * Usage: child-names(element) => ["Order", "Customer", "Items"]
@@ -146,6 +242,19 @@ object XmlUtilityFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get parent element (if metadata available)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "Result of the operation",
+        example = "parent(element) => parentElement",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get parent element (if metadata available)
      * Usage: parent(element) => parentElement
@@ -162,6 +271,19 @@ object XmlUtilityFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get element path (like XPath)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "Result of the operation",
+        example = "element-path(element) => \"/Order/Customer/Name\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get element path (like XPath)
      * Usage: element-path(element) => "/Order/Customer/Name"
@@ -180,6 +302,19 @@ object XmlUtilityFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Check if element is empty (no children, no text)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "is-empty-element(element) => false",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Check if element is empty (no children, no text)
      * Usage: is-empty-element(element) => false
@@ -203,6 +338,19 @@ object XmlUtilityFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Escape XML special characters",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "text: Text value"
+        ],
+        returns = "Result of the operation",
+        example = "xml-escape(\"<tag>\") => \"&lt;tag&gt;\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Escape XML special characters
      * Usage: xml-escape("<tag>") => "&lt;tag&gt;"
@@ -221,6 +369,19 @@ object XmlUtilityFunctions {
         return UDM.Scalar(escaped)
     }
     
+    @UTLXFunction(
+        description = "Unescape XML special characters",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "text: Text value"
+        ],
+        returns = "Result of the operation",
+        example = "xml-unescape(\"&lt;tag&gt;\") => \"<tag>\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Unescape XML special characters
      * Usage: xml-unescape("&lt;tag&gt;") => "<tag>"

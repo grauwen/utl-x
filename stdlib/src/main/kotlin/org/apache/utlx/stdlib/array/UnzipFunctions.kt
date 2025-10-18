@@ -1,12 +1,35 @@
 package org.apache.utlx.stdlib.array
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Additional array transformation functions including unzip
  */
 object UnzipFunctions {
     
+    @UTLXFunction(
+        description = "Unzip array of pairs into two arrays (inverse of zip)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "unzip([[1, \"a\"], [2, \"b\"], [3, \"c\"]])",
+        notes = """Result: [[1, 2, 3], ["a", "b", "c"]]
+This is the fundamental inverse operation of zip:
+- zip([1,2,3], ["a","b","c"]) => [[1,"a"], [2,"b"], [3,"c"]]
+- unzip([[1,"a"], [2,"b"], [3,"c"]]) => [[1,2,3], ["a","b","c"]]
+Common use cases:
+- Separating paired data back into separate columns
+- Processing results from zip operations
+- Data transformation pipelines
+- Converting row-oriented to column-oriented data""",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Unzip array of pairs into two arrays (inverse of zip)
      * 
@@ -67,6 +90,22 @@ object UnzipFunctions {
         ))
     }
     
+    @UTLXFunction(
+        description = "Unzip array of N-tuples into N arrays",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "unzipN([[1, \"a\", true], [2, \"b\", false]])",
+        notes = """Result: [[1, 2], ["a", "b"], [true, false]]
+Generalized version of unzip that works with tuples of any size.
+All tuples must have the same length.""",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Unzip array of N-tuples into N arrays
      * 
@@ -129,6 +168,26 @@ object UnzipFunctions {
         )
     }
     
+    @UTLXFunction(
+        description = "Transpose a 2D array (swap rows and columns)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "transpose([[1, 2, 3], [4, 5, 6]])",
+        notes = """Result: [[1, 4], [2, 5], [3, 6]]
+This is essentially unzipN but works with jagged arrays (different row lengths)
+and is semantically clearer for matrix operations.
+Similar to unzip but:
+- Works for any number of arrays (not just pairs)
+- Handles jagged arrays (rows with different lengths)
+- More intuitive name for matrix transformations""",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Transpose a 2D array (swap rows and columns)
      * 
@@ -183,6 +242,22 @@ object UnzipFunctions {
         return UDM.Array(transposed)
     }
     
+    @UTLXFunction(
+        description = "Zip multiple arrays together (generalized zip)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "zipWith([1, 2], [\"a\", \"b\"], [true, false])",
+        notes = """Result: [[1, "a", true], [2, "b", false]]
+Inverse of unzipN. Takes N arrays and creates array of N-tuples.
+Stops at the length of the shortest array.""",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Zip multiple arrays together (generalized zip)
      * 
@@ -221,6 +296,23 @@ object UnzipFunctions {
         return UDM.Array(zipped)
     }
     
+    @UTLXFunction(
+        description = "Zip arrays with indices",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "array: Array to search",
+        "predicate: Condition to match"
+        ],
+        returns = "Index of the element",
+        example = "zipWithIndex([10, 20, 30])",
+        notes = """Result: [[0, 10], [1, 20], [2, 30]]
+Useful for tracking positions during transformations.""",
+        tags = ["array", "index"],
+        since = "1.0"
+    )
     /**
      * Zip arrays with indices
      * 

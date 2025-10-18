@@ -20,6 +20,7 @@ package org.apache.utlx.stdlib.yaml
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * YAML Functions for data manipulation and analysis
@@ -29,6 +30,20 @@ import org.apache.utlx.stdlib.FunctionArgumentException
  */
 object YAMLFunctions {
 
+    @UTLXFunction(
+        description = "Split multi-document YAML into array of documents",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "yamlSplitDocuments(...) => result",
+        notes = "Example:\n```\nyamlSplitDocuments(multiDocYaml)\n// Returns: UDM.Array of separate documents\n```",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Split multi-document YAML into array of documents
      * 
@@ -60,6 +75,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Merge multiple YAML documents into single multi-document string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "index: Index value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlMergeDocuments(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Merge multiple YAML documents into single multi-document string
      * 
@@ -84,6 +113,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Get specific document from multi-document YAML by index",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "index: Index value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlGetDocument(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Get specific document from multi-document YAML by index
      * 
@@ -112,6 +155,21 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Query YAML using path expression",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "YAML",
+        parameters = [
+            "yaml: Yaml value",
+        "path: Path value",
+        "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlPath(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Query YAML using path expression
      * 
@@ -131,6 +189,21 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Set value at YAML path",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "YAML",
+        parameters = [
+            "yaml: Yaml value",
+        "path: Path value",
+        "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlSet(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Set value at YAML path
      * 
@@ -155,6 +228,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Delete value at YAML path",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "path: Path value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlDelete(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Delete value at YAML path
      * 
@@ -175,6 +262,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Check if path exists in YAML",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "path: Path value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlExists(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Check if path exists in YAML
      * 
@@ -194,6 +295,19 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Get all keys from a YAML object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "yamlKeys(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Get all keys from a YAML object
      * 
@@ -212,6 +326,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Get all values from a YAML object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlValues(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Get all values from a YAML object
      * 
@@ -228,6 +356,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Get entries (key-value pairs) from a YAML object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlEntries(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Get entries (key-value pairs) from a YAML object
      * 
@@ -252,6 +394,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Filter YAML object by key pattern",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "New array with filtered elements",
+        example = "yamlFilterByKeyPattern(...) => result",
+        tags = ["filter", "yaml"],
+        since = "1.0"
+    )
     /**
      * Filter YAML object by key pattern
      * 
@@ -279,6 +435,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Select specific keys from YAML object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "keys: Keys value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlSelectKeys(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Select specific keys from YAML object
      * 
@@ -301,6 +471,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Omit specific keys from YAML object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "keys: Keys value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlOmitKeys(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Omit specific keys from YAML object
      * 
@@ -323,6 +507,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Create YAML object from entries array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "overlay: Overlay value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlFromEntries(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Create YAML object from entries array
      * 
@@ -354,6 +552,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Deep merge two YAML objects",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "overlay: Overlay value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlMerge(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Deep merge two YAML objects
      * 
@@ -368,6 +580,20 @@ object YAMLFunctions {
         return yamlMergeInternal(base, overlay)
     }
 
+    @UTLXFunction(
+        description = "Merge multiple YAML documents in order",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "fieldName: Fieldname value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlMergeAll(...) => result",
+        tags = ["predicate", "yaml"],
+        since = "1.0"
+    )
     /**
      * Merge multiple YAML documents in order
      * 
@@ -396,6 +622,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Find all values in YAML structure by field name",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "fieldName: Fieldname value"
+        ],
+        returns = "First matching element, or null if none found",
+        example = "yamlFindByField(...) => result",
+        tags = ["search", "yaml"],
+        since = "1.0"
+    )
     /**
      * Find all values in YAML structure by field name
      * 
@@ -416,6 +656,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Find all objects containing specific field",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "fieldName: Fieldname value"
+        ],
+        returns = "First matching element, or null if none found",
+        example = "yamlFindObjectsWithField(...) => result",
+        tags = ["search", "yaml"],
+        since = "1.0"
+    )
     /**
      * Find all objects containing specific field
      * 
@@ -436,6 +690,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Sort YAML object keys alphabetically",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "YAML",
+        parameters = [
+            "yaml: Yaml value",
+        "pattern: Pattern value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlSort(...) => result",
+        tags = ["sort", "yaml"],
+        since = "1.0"
+    )
     /**
      * Sort YAML object keys alphabetically
      * 
@@ -453,6 +721,20 @@ object YAMLFunctions {
         return yamlSortInternal(yaml, recursive)
     }
 
+    @UTLXFunction(
+        description = "Validate YAML syntax",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlValidate(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Validate YAML syntax
      * 
@@ -471,6 +753,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Validate all keys match a pattern",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "pattern: Pattern value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlValidateKeyPattern(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Validate all keys match a pattern
      * 
@@ -495,6 +791,20 @@ object YAMLFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Check if YAML has required fields",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "YAML",
+        parameters = [
+            "array: Input array to process",
+        "requiredFields: Requiredfields value"
+        ],
+        returns = "Result of the operation",
+        example = "yamlHasRequiredFields(...) => result",
+        tags = ["yaml"],
+        since = "1.0"
+    )
     /**
      * Check if YAML has required fields
      * 

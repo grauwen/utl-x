@@ -5,6 +5,7 @@ import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * XML Encoding and BOM (Byte Order Mark) functions for UTL-X
@@ -20,6 +21,22 @@ object XMLEncodingBomFunctions {
     // XML ENCODING FUNCTIONS
     // ================================
     
+    @UTLXFunction(
+        description = "Detect encoding from XML declaration or BOM",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "array: Input array to process",
+        "fromEncoding: Fromencoding value",
+        "toEncoding: Toencoding value"
+        ],
+        returns = ": \"ISO-8859-1\"",
+        example = "detectXMLEncoding('<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><root/>')",
+        notes = "Returns: \"ISO-8859-1\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Detect encoding from XML declaration or BOM
      * Usage: detectXMLEncoding('<?xml version="1.0" encoding="ISO-8859-1"?><root/>')
@@ -44,6 +61,21 @@ object XMLEncodingBomFunctions {
         return UDM.Scalar(encoding)
     }
     
+    @UTLXFunction(
+        description = "Convert XML from one encoding to another",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "array: Input array to process",
+        "fromEncoding: Fromencoding value",
+        "toEncoding: Toencoding value"
+        ],
+        returns = "Result of the operation",
+        example = "convertXMLEncoding(xml, \"ISO-8859-1\", \"UTF-8\")",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Convert XML from one encoding to another
      * Usage: convertXMLEncoding(xml, "ISO-8859-1", "UTF-8")
@@ -78,6 +110,20 @@ object XMLEncodingBomFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Update encoding in XML declaration",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value",
+        "encoding: Encoding value"
+        ],
+        returns = "Result of the operation",
+        example = "updateXMLEncoding(xml, \"UTF-8\")",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Update encoding in XML declaration
      * Usage: updateXMLEncoding(xml, "UTF-8")
@@ -95,6 +141,20 @@ object XMLEncodingBomFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Check if encoding name is valid",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "encoding: Encoding value",
+        "targetEncoding: Targetencoding value"
+        ],
+        returns = "Result of the operation",
+        example = "validateEncoding(\"UTF-8\") -> true",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Check if encoding name is valid
      * Usage: validateEncoding("UTF-8") -> true
@@ -115,6 +175,20 @@ object XMLEncodingBomFunctions {
         return UDM.Scalar(isValid)
     }
     
+    @UTLXFunction(
+        description = "Auto-detect and convert to target encoding",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value",
+        "targetEncoding: Targetencoding value"
+        ],
+        returns = "Result of the operation",
+        example = "normalizeXMLEncoding(xml, \"UTF-8\")",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Auto-detect and convert to target encoding
      * Usage: normalizeXMLEncoding(xml, "UTF-8")
@@ -144,6 +218,20 @@ object XMLEncodingBomFunctions {
     // BOM (BYTE ORDER MARK) FUNCTIONS  
     // ================================
     
+    @UTLXFunction(
+        description = "Detect BOM type from binary data",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "data: Data value",
+        "encoding: Encoding value"
+        ],
+        returns = "Result of the operation",
+        example = "detectBOM(data) -> \"UTF-8\", \"UTF-16LE\", \"UTF-16BE\", etc.",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Detect BOM type from binary data
      * Usage: detectBOM(data) -> "UTF-8", "UTF-16LE", "UTF-16BE", etc.
@@ -158,6 +246,20 @@ object XMLEncodingBomFunctions {
         return UDM.Scalar(bomType)
     }
     
+    @UTLXFunction(
+        description = "Add BOM to data for specified encoding",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "data: Data value",
+        "encoding: Encoding value"
+        ],
+        returns = "Result of the operation",
+        example = "addBOM(data, \"UTF-8\")",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Add BOM to data for specified encoding
      * Usage: addBOM(data, "UTF-8")
@@ -179,6 +281,19 @@ object XMLEncodingBomFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Remove BOM if present",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "data: Data value"
+        ],
+        returns = "Result of the operation",
+        example = "removeBOM(data)",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Remove BOM if present
      * Usage: removeBOM(data)
@@ -193,6 +308,19 @@ object XMLEncodingBomFunctions {
         return UDM.Binary(withoutBOM)
     }
     
+    @UTLXFunction(
+        description = "Check if data starts with BOM",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "data: Data value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "hasBOM(data) -> true/false",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Check if data starts with BOM
      * Usage: hasBOM(data) -> true/false
@@ -207,6 +335,21 @@ object XMLEncodingBomFunctions {
         return UDM.Scalar(hasBoM)
     }
     
+    @UTLXFunction(
+        description = "Get BOM bytes for encoding",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "encoding: Encoding value",
+        "targetEncoding: Targetencoding value",
+        "addBOMFlag: Addbomflag value"
+        ],
+        returns = "Result of the operation",
+        example = "getBOMBytes(\"UTF-8\") -> [0xEF, 0xBB, 0xBF]",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Get BOM bytes for encoding
      * Usage: getBOMBytes("UTF-8") -> [0xEF, 0xBB, 0xBF]
@@ -221,6 +364,21 @@ object XMLEncodingBomFunctions {
         return UDM.Binary(bomBytes)
     }
     
+    @UTLXFunction(
+        description = "Remove BOM character from string (U+FEFF)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "text: Text value",
+        "targetEncoding: Targetencoding value",
+        "addBOMFlag: Addbomflag value"
+        ],
+        returns = "Result of the operation",
+        example = "stripBOM(\"\\uFEFF<?xml version='1.0'?>\") -> \"<?xml version='1.0'?>\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Remove BOM character from string (U+FEFF)
      * Usage: stripBOM("\uFEFF<?xml version='1.0'?>") -> "<?xml version='1.0'?>"
@@ -240,6 +398,21 @@ object XMLEncodingBomFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Convert to target encoding with BOM handling",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "data: Data value",
+        "targetEncoding: Targetencoding value",
+        "addBOMFlag: Addbomflag value"
+        ],
+        returns = "Result of the operation",
+        example = "normalizeBOM(data, \"UTF-8\", false)",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Convert to target encoding with BOM handling
      * Usage: normalizeBOM(data, "UTF-8", false)

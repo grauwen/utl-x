@@ -13,6 +13,7 @@ import org.apache.xml.security.c14n.Canonicalizer
 import org.apache.xml.security.c14n.InvalidCanonicalizerException
 import java.io.ByteArrayInputStream
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * XML Canonicalization (C14N) functions for UTL-X
@@ -42,6 +43,20 @@ object XMLCanonicalizationFunctions {
     // C14N 1.0 - CANONICAL XML 1.0
     // ============================================
     
+    @UTLXFunction(
+        description = "Canonicalizes XML using Canonical XML 1.0 (without comments)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value"
+        ],
+        returns = "Result of the operation",
+        example = "c14n(...) => result",
+        notes = "Algorithm: http://www.w3.org/TR/2001/REC-xml-c14n-20010315\nTransforms XML into a canonical form by:\n- Normalizing whitespace in attribute values\n- Sorting namespace declarations and attributes\n- Removing XML/DOCTYPE declarations\n- Normalizing empty elements\n- Removing comments (in this variant)\nExample:\n```\nc14n(xmlDoc) // Canonical form without comments\n```",
+        tags = ["cleanup", "xml"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes XML using Canonical XML 1.0 (without comments)
      * 
@@ -70,6 +85,20 @@ object XMLCanonicalizationFunctions {
         return canonicalize(xml, Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS)
     }
     
+    @UTLXFunction(
+        description = "Canonicalizes XML using Canonical XML 1.0 (with comments)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value"
+        ],
+        returns = "Result of the operation",
+        example = "c14nWithComments(...) => result",
+        notes = "Algorithm: http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments\nSame as c14n() but preserves XML comments in canonical form.\nExample:\n```\nc14nWithComments(xmlDoc) // Preserves comments\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes XML using Canonical XML 1.0 (with comments)
      * 
@@ -97,6 +126,20 @@ object XMLCanonicalizationFunctions {
     // EXC-C14N - EXCLUSIVE CANONICAL XML
     // ============================================
     
+    @UTLXFunction(
+        description = "Canonicalizes XML using Exclusive Canonical XML (without comments)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value"
+        ],
+        returns = "Result of the operation",
+        example = "excC14n(...) => result",
+        notes = "Algorithm: http://www.w3.org/2001/10/xml-exc-c14n#\nExclusive canonicalization only includes namespace declarations\nthat are actually used, making it ideal for XML signatures in\nSOAP envelopes where the document is embedded in other XML.\nExample:\n```\nexcC14n(xmlDoc) // Exclusive canonical form\nexcC14n(xmlDoc, \"ds xenc\") // Include ds and xenc namespaces\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes XML using Exclusive Canonical XML (without comments)
      * 
@@ -126,6 +169,20 @@ object XMLCanonicalizationFunctions {
         return canonicalize(xml, Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS, inclusivePrefixes)
     }
     
+    @UTLXFunction(
+        description = "Canonicalizes XML using Exclusive Canonical XML (with comments)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value"
+        ],
+        returns = "Result of the operation",
+        example = "excC14nWithComments(...) => result",
+        notes = "Algorithm: http://www.w3.org/2001/10/xml-exc-c14n#WithComments\nSame as excC14n() but preserves comments.\nExample:\n```\nexcC14nWithComments(xmlDoc, \"ds\")\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes XML using Exclusive Canonical XML (with comments)
      * 
@@ -156,6 +213,20 @@ object XMLCanonicalizationFunctions {
     // C14N 1.1 - CANONICAL XML 1.1
     // ============================================
     
+    @UTLXFunction(
+        description = "Canonicalizes XML using Canonical XML 1.1 (without comments)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value"
+        ],
+        returns = "Result of the operation",
+        example = "c14n11(...) => result",
+        notes = "Algorithm: http://www.w3.org/2006/12/xml-c14n11\nC14N 1.1 improves upon 1.0 by:\n- Better handling of xml:id attributes\n- Improved namespace handling\n- Better support for XML 1.1 features\nExample:\n```\nc14n11(xmlDoc) // Canonical XML 1.1\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes XML using Canonical XML 1.1 (without comments)
      * 
@@ -182,6 +253,20 @@ object XMLCanonicalizationFunctions {
         return canonicalize(xml, Canonicalizer.ALGO_ID_C14N11_OMIT_COMMENTS)
     }
     
+    @UTLXFunction(
+        description = "Canonicalizes XML using Canonical XML 1.1 (with comments)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value"
+        ],
+        returns = "Result of the operation",
+        example = "c14n11WithComments(...) => result",
+        notes = "Algorithm: http://www.w3.org/2006/12/xml-c14n11#WithComments\nExample:\n```\nc14n11WithComments(xmlDoc)\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes XML using Canonical XML 1.1 (with comments)
      * 
@@ -207,6 +292,21 @@ object XMLCanonicalizationFunctions {
     // PHYSICAL CANONICAL XML (NON-STANDARD)
     // ============================================
     
+    @UTLXFunction(
+        description = "Canonicalizes XML using Physical Canonical XML",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "xml: Xml value",
+        "algorithm: Algorithm value"
+        ],
+        returns = "Result of the operation",
+        example = "c14nPhysical(...) => result",
+        notes = "Physical canonicalization preserves the physical structure\nof the XML document, including insignificant whitespace.\nThis is a non-standard algorithm useful for debugging\nand preserving the exact structure of source documents.\nExample:\n```\nc14nPhysical(xmlDoc) // Preserves physical structure\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes XML using Physical Canonical XML
      * 
@@ -236,6 +336,21 @@ object XMLCanonicalizationFunctions {
     // GENERIC CANONICALIZATION
     // ============================================
     
+    @UTLXFunction(
+        description = "Canonicalizes XML using specified algorithm",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "xml: Xml value",
+        "algorithm: Algorithm value"
+        ],
+        returns = "Result of the operation",
+        example = "canonicalizeWithAlgorithm(...) => result",
+        notes = "Supported algorithms:\n- \"c14n\" - Canonical XML 1.0 without comments\n- \"c14n-with-comments\" - Canonical XML 1.0 with comments\n- \"exc-c14n\" - Exclusive C14N without comments\n- \"exc-c14n-with-comments\" - Exclusive C14N with comments\n- \"c14n11\" - Canonical XML 1.1 without comments\n- \"c14n11-with-comments\" - Canonical XML 1.1 with comments\n- \"physical\" - Physical C14N\nExample:\n```\ncanonicalize(xmlDoc, \"exc-c14n\", \"ds xenc\")\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes XML using specified algorithm
      * 
@@ -286,6 +401,21 @@ object XMLCanonicalizationFunctions {
     // XPATH SUBSET CANONICALIZATION
     // ============================================
     
+    @UTLXFunction(
+        description = "Canonicalizes a subset of XML selected by XPath",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "array: Input array to process",
+        "xpathExpr: Xpathexpr value"
+        ],
+        returns = "Result of the operation",
+        example = "c14nSubset(...) => result",
+        notes = "Useful for signing or hashing specific parts of an XML document.\nExample:\n```\n// Canonicalize only the body element\nc14nSubset(soapEnvelope, \"//soap:Body\", \"exc-c14n\")\n// Canonicalize specific elements\nc14nSubset(doc, \"/root/data[@type='sensitive']\")\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes a subset of XML selected by XPath
      * 
@@ -347,6 +477,20 @@ object XMLCanonicalizationFunctions {
     // HASH AND SIGN HELPERS
     // ============================================
     
+    @UTLXFunction(
+        description = "Canonicalizes XML and computes its hash",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "c14nHash(...) => result",
+        notes = "Useful for XML comparison, caching, and digital signatures.\nExample:\n```\n// Compute SHA-256 hash of canonical XML\nc14nHash(xmlDoc, \"sha256\", \"exc-c14n\")\n// Quick hash for comparison\nc14nHash(doc1, \"sha256\") == c14nHash(doc2, \"sha256\")\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes XML and computes its hash
      * 
@@ -405,6 +549,21 @@ object XMLCanonicalizationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Compares two XML documents for canonical equivalence",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "xml1: Xml1 value",
+        "xml2: Xml2 value"
+        ],
+        returns = "true if the canonical forms are byte-for-byte identical,",
+        example = "c14nEquals(...) => result",
+        notes = "Returns true if the canonical forms are byte-for-byte identical,\neven if the original documents differ in formatting, attribute order,\nnamespace prefixes, etc.\nExample:\n```\n// These are canonically equivalent:\nlet xml1 = '<root a=\"1\" b=\"2\"/>'\nlet xml2 = '<root b=\"2\" a=\"1\"></root>'\nc14nEquals(xml1, xml2) // true\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Compares two XML documents for canonical equivalence
      * 
@@ -445,6 +604,20 @@ object XMLCanonicalizationFunctions {
         return UDM.Scalar(str1 == str2)
     }
     
+    @UTLXFunction(
+        description = "Creates a normalized fingerprint of XML for deduplication",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value"
+        ],
+        returns = "a short hash that can be used to detect duplicate",
+        example = "c14nFingerprint(...) => result",
+        notes = "Returns a short hash that can be used to detect duplicate\nXML documents regardless of formatting differences.\nExample:\n```\nlet fingerprint = c14nFingerprint(xmlDoc)\n// Use for caching or deduplication\ncache.put(fingerprint, transformedData)\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Creates a normalized fingerprint of XML for deduplication
      * 
@@ -478,6 +651,20 @@ object XMLCanonicalizationFunctions {
     // DIGITAL SIGNATURE PREPARATION
     // ============================================
     
+    @UTLXFunction(
+        description = "Prepares XML for digital signature (XMLDSig)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value"
+        ],
+        returns = "Result of the operation",
+        example = "prepareForSignature(...) => result",
+        notes = "Canonicalizes XML using Exclusive C14N (the recommended algorithm\nfor XML signatures) and returns both the canonical form and its hash.\nExample:\n```\nlet prepared = prepareForSignature(xmlDoc)\n// prepared.canonical - Canonical XML\n// prepared.digest - SHA-256 digest\n// Use digest with HMAC or RSA signing\nlet signature = hmacSHA256(prepared.digest, secretKey)\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Prepares XML for digital signature (XMLDSig)
      * 
@@ -520,6 +707,21 @@ object XMLCanonicalizationFunctions {
         ))
     }
     
+    @UTLXFunction(
+        description = "Validates that XML digest matches expected value",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "array: Input array to process",
+        "expectedDigest: Expecteddigest value"
+        ],
+        returns = "Result of the operation",
+        example = "validateDigest(...) => result",
+        notes = "Used to verify XML digital signatures by comparing the digest\nof canonical XML against a known reference value.\nExample:\n```\n// Verify signature\nlet valid = validateDigest(\nreceivedXML,\nsignatureDigest,\n\"sha256\",\n\"exc-c14n\"\n)\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Validates that XML digest matches expected value
      * 

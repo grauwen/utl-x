@@ -3,12 +3,27 @@ package org.apache.utlx.stdlib.array
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Array manipulation functions for UTL-X
  */
 object ArrayFunctions {
     
+    @UTLXFunction(
+        description = "Map function over array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "map([1, 2, 3], x => x * 2) => [2, 4, 6]",
+        tags = ["array", "transform"],
+        since = "1.0"
+    )
     /**
      * Map function over array
      * Usage: map([1, 2, 3], x => x * 2) => [2, 4, 6]
@@ -26,6 +41,20 @@ object ArrayFunctions {
         return UDM.Array(result)
     }
     
+    @UTLXFunction(
+        description = "Filter array by predicate",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "New array with filtered elements",
+        example = "filter([1, 2, 3, 4], x => x > 2) => [3, 4]",
+        tags = ["array", "filter"],
+        since = "1.0"
+    )
     /**
      * Filter array by predicate
      * Usage: filter([1, 2, 3, 4], x => x > 2) => [3, 4]
@@ -44,6 +73,20 @@ object ArrayFunctions {
         return UDM.Array(result)
     }
     
+    @UTLXFunction(
+        description = "Reduce array to single value",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "reduce([1, 2, 3, 4], (acc, x) => acc + x, 0) => 10",
+        tags = ["aggregate", "array"],
+        since = "1.0"
+    )
     /**
      * Reduce array to single value
      * Usage: reduce([1, 2, 3, 4], (acc, x) => acc + x, 0) => 10
@@ -62,6 +105,20 @@ object ArrayFunctions {
         return accumulator
     }
     
+    @UTLXFunction(
+        description = "Find first element matching predicate",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "First matching element, or null if none found",
+        example = "find([1, 2, 3, 4], x => x > 2) => 3",
+        tags = ["array", "search"],
+        since = "1.0"
+    )
     /**
      * Find first element matching predicate
      * Usage: find([1, 2, 3, 4], x => x > 2) => 3
@@ -77,6 +134,20 @@ object ArrayFunctions {
         } ?: UDM.Scalar(null)
     }
     
+    @UTLXFunction(
+        description = "Find index of first element matching predicate",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Index of the element",
+        example = "findIndex([1, 2, 3, 4], x => x > 2) => 2",
+        tags = ["array", "index", "search"],
+        since = "1.0"
+    )
     /**
      * Find index of first element matching predicate
      * Usage: findIndex([1, 2, 3, 4], x => x > 2) => 2
@@ -94,6 +165,20 @@ object ArrayFunctions {
         return UDM.Scalar(if (index >= 0) index.toDouble() else null)
     }
     
+    @UTLXFunction(
+        description = "Check if all elements match predicate",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "every([2, 4, 6], x => x % 2 == 0) => true",
+        tags = ["array", "predicate"],
+        since = "1.0"
+    )
     /**
      * Check if all elements match predicate
      * Usage: every([2, 4, 6], x => x % 2 == 0) => true
@@ -111,6 +196,20 @@ object ArrayFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Check if any element matches predicate",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "some([1, 2, 3], x => x > 2) => true",
+        tags = ["array", "predicate"],
+        since = "1.0"
+    )
     /**
      * Check if any element matches predicate
      * Usage: some([1, 2, 3], x => x > 2) => true
@@ -128,6 +227,19 @@ object ArrayFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Flatten nested arrays",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "flatten([[1, 2], [3, 4]]) => [1, 2, 3, 4]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Flatten nested arrays
      * Usage: flatten([[1, 2], [3, 4]]) => [1, 2, 3, 4]
@@ -148,6 +260,20 @@ object ArrayFunctions {
         return UDM.Array(flattened)
     }
     
+    @UTLXFunction(
+        description = "Reverse array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "reverse([1, 2, 3]) => [3, 2, 1]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Reverse array
      * Usage: reverse([1, 2, 3]) => [3, 2, 1]
@@ -158,6 +284,20 @@ object ArrayFunctions {
         return UDM.Array(array.elements.reversed())
     }
     
+    @UTLXFunction(
+        description = "Sort array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "sort([3, 1, 2]) => [1, 2, 3]",
+        tags = ["array", "sort"],
+        since = "1.0"
+    )
     /**
      * Sort array
      * Usage: sort([3, 1, 2]) => [1, 2, 3]
@@ -180,6 +320,20 @@ object ArrayFunctions {
         return UDM.Array(sorted)
     }
     
+    @UTLXFunction(
+        description = "Sort array by key function",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "sortBy([{age: 30}, {age: 20}], x => x.age) => [{age: 20}, {age: 30}]",
+        tags = ["array", "sort"],
+        since = "1.0"
+    )
     /**
      * Sort array by key function
      * Usage: sortBy([{age: 30}, {age: 20}], x => x.age) => [{age: 20}, {age: 30}]
@@ -205,6 +359,20 @@ object ArrayFunctions {
         return UDM.Array(sorted)
     }
     
+    @UTLXFunction(
+        description = "Get first element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "n: N value"
+        ],
+        returns = "Result of the operation",
+        example = "first([1, 2, 3]) => 1",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Get first element
      * Usage: first([1, 2, 3]) => 1
@@ -221,6 +389,20 @@ object ArrayFunctions {
         return array.elements.first()
     }
     
+    @UTLXFunction(
+        description = "Get last element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "n: N value"
+        ],
+        returns = "Result of the operation",
+        example = "last([1, 2, 3]) => 3",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Get last element
      * Usage: last([1, 2, 3]) => 3
@@ -237,6 +419,20 @@ object ArrayFunctions {
         return array.elements.last()
     }
     
+    @UTLXFunction(
+        description = "Take first n elements",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "n: N value"
+        ],
+        returns = "Result of the operation",
+        example = "take([1, 2, 3, 4], 2) => [1, 2]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Take first n elements
      * Usage: take([1, 2, 3, 4], 2) => [1, 2]
@@ -248,6 +444,20 @@ object ArrayFunctions {
         return UDM.Array(array.elements.take(n))
     }
     
+    @UTLXFunction(
+        description = "Drop first n elements",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "n: N value"
+        ],
+        returns = "Result of the operation",
+        example = "drop([1, 2, 3, 4], 2) => [3, 4]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Drop first n elements
      * Usage: drop([1, 2, 3, 4], 2) => [3, 4]
@@ -259,6 +469,20 @@ object ArrayFunctions {
         return UDM.Array(array.elements.drop(n))
     }
     
+    @UTLXFunction(
+        description = "Get unique elements",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "array2: Array2 value"
+        ],
+        returns = "Result of the operation",
+        example = "unique([1, 2, 2, 3, 1]) => [1, 2, 3]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Get unique elements
      * Usage: unique([1, 2, 2, 3, 1]) => [1, 2, 3]
@@ -269,6 +493,20 @@ object ArrayFunctions {
         return UDM.Array(array.elements.distinct())
     }
     
+    @UTLXFunction(
+        description = "Zip two arrays together",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "array2: Array2 value"
+        ],
+        returns = "Result of the operation",
+        example = "zip([1, 2], [\"a\", \"b\"]) => [[1, \"a\"], [2, \"b\"]]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Zip two arrays together
      * Usage: zip([1, 2], ["a", "b"]) => [[1, "a"], [2, "b"]]
@@ -285,6 +523,21 @@ object ArrayFunctions {
         return UDM.Array(zipped)
     }
     
+    @UTLXFunction(
+        description = "Performs size operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "index: Index value"
+        ],
+        returns = "the size/length of an array",
+        example = "size(...) => result",
+        notes = "Returns the size/length of an array",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Returns the size/length of an array
      * @param array The input array
@@ -299,6 +552,20 @@ object ArrayFunctions {
         return UDM.Scalar(array.elements.size.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Gets element at specific index (0-based)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "index: Index value"
+        ],
+        returns = "Result of the operation",
+        example = "get(...) => result",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Gets element at specific index (0-based)
      * @param array The input array
@@ -317,6 +584,21 @@ object ArrayFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Performs tail operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "all elements except the first (functional programming convention)",
+        example = "tail(...) => result",
+        notes = "Returns all elements except the first (functional programming convention)",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Returns all elements except the first (functional programming convention)
      * @param array The input array
@@ -333,6 +615,20 @@ object ArrayFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Removes duplicate elements from array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "distinct(...) => result",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Removes duplicate elements from array
      * @param array The input array
@@ -346,6 +642,20 @@ object ArrayFunctions {
         return UDM.Array(uniqueElements)
     }
     
+    @UTLXFunction(
+        description = "Removes duplicates based on function result",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "distinctBy(...) => result",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Removes duplicates based on function result
      * @param array The input array
@@ -365,6 +675,21 @@ object ArrayFunctions {
         return UDM.Array(uniqueElements)
     }
     
+    @UTLXFunction(
+        description = "Combines two arrays and removes duplicates (set union: A ∪ B)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "array2: Array2 value"
+        ],
+        returns = "union of two arrays (all elements, no duplicates)",
+        example = "union(...) => result",
+        notes = "Returns union of two arrays (all elements, no duplicates)",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Returns union of two arrays (all elements, no duplicates)
      * Combines two arrays and removes duplicates (set union: A ∪ B)
@@ -382,6 +707,21 @@ object ArrayFunctions {
         return UDM.Array(uniqueElements)
     }
     
+    @UTLXFunction(
+        description = "Performs intersect operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "array2: Array2 value"
+        ],
+        returns = "intersection of two arrays (elements in both)",
+        example = "intersect(...) => result",
+        notes = "Returns intersection of two arrays (elements in both)",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Returns intersection of two arrays (elements in both)
      * @param array1 First array
@@ -400,6 +740,21 @@ object ArrayFunctions {
         return UDM.Array(intersection)
     }
     
+    @UTLXFunction(
+        description = "Performs difference operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "difference of two arrays (elements in first but not second)",
+        example = "difference(...) => result",
+        notes = "Returns difference of two arrays (elements in first but not second)",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Returns difference of two arrays (elements in first but not second)
      * @param array1 First array
@@ -418,6 +773,20 @@ object ArrayFunctions {
         return UDM.Array(diff)
     }
     
+    @UTLXFunction(
+        description = "Symmetric difference - elements in either array but not both",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "symmetricDifference(...) => result",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Symmetric difference - elements in either array but not both
      * @param array1 First array
@@ -435,6 +804,21 @@ object ArrayFunctions {
         return UDM.Array(diff1 + diff2)
     }
     
+    @UTLXFunction(
+        description = "Maps each element using function, then flattens result",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "flatMap(...) => result",
+        notes = "Example: [1,2,3].flatMap(x => [x, x*2]) => [1,2,2,4,3,6]",
+        tags = ["array", "transform"],
+        since = "1.0"
+    )
     /**
      * Maps each element using function, then flattens result
      * Example: [1,2,3].flatMap(x => [x, x*2]) => [1,2,2,4,3,6]
@@ -459,6 +843,21 @@ object ArrayFunctions {
         return UDM.Array(result)
     }
     
+    @UTLXFunction(
+        description = "Deep flatten - flattens all nested levels",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "chunkSize: Chunksize value"
+        ],
+        returns = "Result of the operation",
+        example = "flattenDeep(...) => result",
+        notes = "Example: [1,[2,[3,[4]]]] => [1,2,3,4]",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Deep flatten - flattens all nested levels
      * Example: [1,[2,[3,[4]]]] => [1,2,3,4]
@@ -483,6 +882,20 @@ object ArrayFunctions {
         return UDM.Array(flattenRecursive(array.elements))
     }
     
+    @UTLXFunction(
+        description = "Chunks array into arrays of specified size",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "chunkSize: Chunksize value"
+        ],
+        returns = "Result of the operation",
+        example = "chunk(...) => result",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Chunks array into arrays of specified size
      * @param array The input array
@@ -505,6 +918,19 @@ object ArrayFunctions {
         return UDM.Array(chunks)
     }
     
+    @UTLXFunction(
+        description = "Joins array elements into string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Array",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "joinToString(...) => result",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Joins array elements into string
      * @param array The input array

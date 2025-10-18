@@ -38,6 +38,7 @@ import java.io.*
 import java.util.zip.*
 import java.util.jar.JarInputStream
 import java.util.jar.JarEntry
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 object CompressionFunctions {
     
@@ -45,6 +46,22 @@ object CompressionFunctions {
     // GZIP COMPRESSION (Most common for HTTP)
     // ============================================================================
     
+    @UTLXFunction(
+        description = "Compress data using Gzip",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "gzip(...) => result",
+        notes = """Example:
+gzip(toBinary("Large text data..."))
+gzip("Text string")  // Auto-converts to binary""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Compress data using Gzip
      * 
@@ -75,6 +92,22 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Decompress Gzip data",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "gunzip(...) => result",
+        notes = """Example:
+let original = gunzip(compressed)
+let text = binaryToString(original)""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Decompress Gzip data
      * 
@@ -108,6 +141,21 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Check if data is gzip compressed",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isGzipped(...) => result",
+        notes = """Example:
+isGzipped(data)""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Check if data is gzip compressed
      * 
@@ -134,6 +182,22 @@ object CompressionFunctions {
     // DEFLATE COMPRESSION (Raw compression without headers)
     // ============================================================================
     
+    @UTLXFunction(
+        description = "Compress data using Deflate algorithm (raw)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "deflate(...) => result",
+        notes = """Example:
+deflate(data)
+deflate(data, 9)  // Maximum compression""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Compress data using Deflate algorithm (raw)
      * 
@@ -180,6 +244,21 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Decompress Deflate data",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "inflate(...) => result",
+        notes = """Example:
+inflate(compressed)""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Decompress Deflate data
      * 
@@ -217,6 +296,22 @@ object CompressionFunctions {
     // GENERIC COMPRESSION (Algorithm selection)
     // ============================================================================
     
+    @UTLXFunction(
+        description = "Compress data using specified algorithm",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "compress(...) => result",
+        notes = """Example:
+compress(data, "gzip")
+compress(data, "deflate", 9)""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Compress data using specified algorithm
      * 
@@ -245,6 +340,22 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Decompress data using specified algorithm",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "decompress(...) => result",
+        notes = """Example:
+decompress(compressed)
+decompress(compressed, "deflate")""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Decompress data using specified algorithm
      * 
@@ -279,6 +390,25 @@ object CompressionFunctions {
     // ZIP ARCHIVE OPERATIONS (Multiple files)
     // ============================================================================
     
+    @UTLXFunction(
+        description = "Create a zip archive from multiple files",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "zipArchive(...) => result",
+        notes = """Example:
+zipArchive({
+"file1.txt": toBinary("content1"),
+"file2.json": toBinary("{...}"),
+"dir/file3.xml": toBinary("<xml>...")
+})""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Create a zip archive from multiple files
      * 
@@ -321,6 +451,23 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Extract all files from a zip archive",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "entryName: Entryname value"
+        ],
+        returns = "Result of the operation",
+        example = "unzipArchive(...) => result",
+        notes = """Example:
+let files = unzipArchive(zipData)
+let content = files["file1.txt"]""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Extract all files from a zip archive
      * 
@@ -365,6 +512,22 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Read a single entry from a zip archive",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "entryName: Entryname value"
+        ],
+        returns = "Result of the operation",
+        example = "readZipEntry(...) => result",
+        notes = """Example:
+readZipEntry(zipData, "config/app.json")""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Read a single entry from a zip archive
      * 
@@ -409,6 +572,22 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "List all entries in a zip archive",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "listZipEntries(...) => result",
+        notes = """Example:
+listZipEntries(zipData)
+// Returns: ["file1.txt", "dir/file2.json", ...]""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * List all entries in a zip archive
      * 
@@ -443,6 +622,22 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Check if data is a zip archive",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "entryName: Entryname value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isZipArchive(...) => result",
+        notes = """Example:
+isZipArchive(data)""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Check if data is a zip archive
      * 
@@ -469,6 +664,23 @@ object CompressionFunctions {
     // JAR FILE OPERATIONS (JAR is specialized zip)
     // ============================================================================
     
+    @UTLXFunction(
+        description = "Read a single entry from a JAR file",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "entryName: Entryname value"
+        ],
+        returns = "Result of the operation",
+        example = "readJarEntry(...) => result",
+        notes = """Example:
+readJarEntry(jarData, "META-INF/MANIFEST.MF")
+readJarEntry(jarData, "com/example/Main.class")""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Read a single entry from a JAR file
      * 
@@ -514,6 +726,21 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "List all entries in a JAR file",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "listJarEntries(...) => result",
+        notes = """Example:
+listJarEntries(jarData)""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * List all entries in a JAR file
      * 
@@ -547,6 +774,21 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Check if data is a JAR file",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isJarFile(...) => result",
+        notes = """Example:
+isJarFile(data)""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Check if data is a JAR file
      * 
@@ -577,6 +819,22 @@ object CompressionFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Read JAR manifest",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "readJarManifest(...) => result",
+        notes = """Example:
+let manifest = readJarManifest(jarData)
+let mainClass = manifest["Main-Class"]""",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Read JAR manifest
      * 

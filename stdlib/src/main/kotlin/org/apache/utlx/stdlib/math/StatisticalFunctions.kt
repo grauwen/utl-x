@@ -4,12 +4,31 @@ package org.apache.utlx.stdlib.math
 import org.apache.utlx.core.udm.UDM
 import kotlin.math.pow
 import kotlin.math.sqrt
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Statistical math functions - nice-to-have additions
  */
 object StatisticalFunctions {
     
+    @UTLXFunction(
+        description = "Calculate median (middle value)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "median([1, 3, 5, 7, 9]) => 5",
+        additionalExamples = [
+            "median([1, 2, 3, 4]) => 2.5  (average of middle two)",
+            "median([85, 90, 78, 92, 88]) => 88"
+        ],
+        notes = "Essential for statistical analysis where mean can be skewed by outliers",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Calculate median (middle value)
      * 
@@ -65,6 +84,25 @@ object StatisticalFunctions {
         return UDM.Scalar(median)
     }
     
+    @UTLXFunction(
+        description = "Calculate mode (most frequent value)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "null for empty array",
+        example = "mode([1, 2, 2, 3, 3, 3, 4]) => 3",
+        additionalExamples = [
+            "mode([\"a\", \"b\", \"b\", \"c\"]) => \"b\""
+        ],
+        notes = """If multiple modes exist, returns the first one
+Returns null for empty array""",
+        tags = ["cleanup", "math", "null-handling"],
+        since = "1.0"
+    )
     /**
      * Calculate mode (most frequent value)
      * 
@@ -112,6 +150,21 @@ object StatisticalFunctions {
         return mostFrequentElement
     }
     
+    @UTLXFunction(
+        description = "Calculate standard deviation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "stdDev([2, 4, 4, 4, 5, 5, 7, 9]) => ~2.0",
+        notes = """Measures spread of values around the mean
+Uses sample standard deviation (n-1 denominator)""",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Calculate standard deviation
      * 
@@ -159,6 +212,21 @@ object StatisticalFunctions {
         return UDM.Scalar(stdDev)
     }
     
+    @UTLXFunction(
+        description = "Calculate variance",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "variance([2, 4, 4, 4, 5, 5, 7, 9]) => ~4.0",
+        notes = """Measures spread of values (standard deviation squared)
+Uses sample variance (n-1 denominator)""",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Calculate variance
      * 
@@ -203,6 +271,24 @@ object StatisticalFunctions {
         return UDM.Scalar(variance)
     }
     
+    @UTLXFunction(
+        description = "Calculate percentile",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Math",
+        parameters = [
+            "array: Input array to process",
+        "percent: Percent value"
+        ],
+        returns = "the value below which a percentage of data falls",
+        example = "percentile([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 50) => 5.5  (median)",
+        additionalExamples = [
+            "percentile([1, 2, 3, 4, 5], 90) => 4.6"
+        ],
+        notes = "Returns the value below which a percentage of data falls",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Calculate percentile
      * 
@@ -256,6 +342,21 @@ object StatisticalFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Calculate quartiles (Q1, Q2/median, Q3)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "array of [Q1, Q2, Q3]",
+        example = "quartiles([1, 2, 3, 4, 5, 6, 7, 8, 9]) => [2.5, 5, 7.5]",
+        notes = """Returns array of [Q1, Q2, Q3]
+Useful for box plots and understanding data distribution""",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Calculate quartiles (Q1, Q2/median, Q3)
      * 
@@ -276,6 +377,20 @@ object StatisticalFunctions {
         return UDM.Array(listOf(q1, q2, q3))
     }
     
+    @UTLXFunction(
+        description = "Calculate interquartile range (IQR)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "iqr([1, 2, 3, 4, 5, 6, 7, 8, 9]) => 5.0  (Q3 - Q1)",
+        notes = "Measures statistical dispersion, useful for outlier detection",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Calculate interquartile range (IQR)
      * 

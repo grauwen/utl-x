@@ -6,6 +6,7 @@ import org.apache.utlx.stdlib.FunctionArgumentException
 import kotlinx.datetime.*
 import kotlin.math.abs
 import java.time.Instant as JavaInstant
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Rich date arithmetic and utility functions
@@ -23,6 +24,19 @@ object RichDateFunctions {
     
     // ========== PERIOD CALCULATIONS ==========
     
+    @UTLXFunction(
+        description = "Add weeks to date",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "weeks: Weeks value"
+        ],
+        returns = "Result of the operation",
+        example = "addWeeks(now(), 2) => 2 weeks from now",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Add weeks to date
      * Usage: addWeeks(now(), 2) => 2 weeks from now
@@ -36,6 +50,19 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(result))
     }
     
+    @UTLXFunction(
+        description = "Add quarters to date",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "quarters: Quarters value"
+        ],
+        returns = "Result of the operation",
+        example = "addQuarters(now(), 1) => 3 months from now",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Add quarters to date
      * Usage: addQuarters(now(), 1) => 3 months from now
@@ -49,6 +76,16 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(result))
     }
     
+    @UTLXFunction(
+        description = "Difference in weeks between two dates",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "diffWeeks(date1, date2) => 2.5",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Difference in weeks between two dates
      * Usage: diffWeeks(date1, date2) => 2.5
@@ -66,6 +103,16 @@ object RichDateFunctions {
         return UDM.Scalar(weeks)
     }
     
+    @UTLXFunction(
+        description = "Difference in months between two dates (approximate)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "diffMonths(date1, date2) => 3.5",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Difference in months between two dates (approximate)
      * Usage: diffMonths(date1, date2) => 3.5
@@ -89,6 +136,16 @@ object RichDateFunctions {
         return UDM.Scalar(totalMonths)
     }
     
+    @UTLXFunction(
+        description = "Difference in years between two dates",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "diffYears(date1, date2) => 2.5",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Difference in years between two dates
      * Usage: diffYears(date1, date2) => 2.5
@@ -113,6 +170,16 @@ object RichDateFunctions {
     
     // ========== START/END OF PERIOD ==========
     
+    @UTLXFunction(
+        description = "Get start of day",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "startOfDay(now()) => 2025-10-14T00:00:00",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get start of day
      * Usage: startOfDay(now()) => 2025-10-14T00:00:00
@@ -127,6 +194,16 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(startOfDay.toInstant(TimeZone.UTC)))
     }
     
+    @UTLXFunction(
+        description = "Get end of day",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "endOfDay(now()) => 2025-10-14T23:59:59.999",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get end of day
      * Usage: endOfDay(now()) => 2025-10-14T23:59:59.999
@@ -141,6 +218,16 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(endOfDay.toInstant(TimeZone.UTC)))
     }
     
+    @UTLXFunction(
+        description = "Get start of week (Monday)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "startOfWeek(now())",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get start of week (Monday)
      * Usage: startOfWeek(now())
@@ -157,6 +244,16 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(startOfWeekDateTime.toInstant(TimeZone.UTC)))
     }
     
+    @UTLXFunction(
+        description = "Get end of week (Sunday)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "endOfWeek(now())",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get end of week (Sunday)
      * Usage: endOfWeek(now())
@@ -174,6 +271,16 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(endOfWeekDateTime.toInstant(TimeZone.UTC)))
     }
     
+    @UTLXFunction(
+        description = "Get start of month",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "startOfMonth(now()) => 2025-10-01T00:00:00",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get start of month
      * Usage: startOfMonth(now()) => 2025-10-01T00:00:00
@@ -189,6 +296,16 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(startOfMonth.toInstant(TimeZone.UTC)))
     }
     
+    @UTLXFunction(
+        description = "Get end of month",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "endOfMonth(now()) => 2025-10-31T23:59:59",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get end of month
      * Usage: endOfMonth(now()) => 2025-10-31T23:59:59
@@ -205,6 +322,16 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(endOfMonth.toInstant(TimeZone.UTC)))
     }
     
+    @UTLXFunction(
+        description = "Get start of year",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "startOfYear(now()) => 2025-01-01T00:00:00",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get start of year
      * Usage: startOfYear(now()) => 2025-01-01T00:00:00
@@ -220,6 +347,16 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(startOfYear.toInstant(TimeZone.UTC)))
     }
     
+    @UTLXFunction(
+        description = "Get end of year",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "endOfYear(now()) => 2025-12-31T23:59:59",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get end of year
      * Usage: endOfYear(now()) => 2025-12-31T23:59:59
@@ -235,6 +372,16 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(endOfYear.toInstant(TimeZone.UTC)))
     }
     
+    @UTLXFunction(
+        description = "Get start of quarter",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "startOfQuarter(now())",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get start of quarter
      * Usage: startOfQuarter(now())
@@ -251,6 +398,16 @@ object RichDateFunctions {
         return UDM.DateTime(toJavaInstant(startOfQuarter.toInstant(TimeZone.UTC)))
     }
     
+    @UTLXFunction(
+        description = "Get end of quarter",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "endOfQuarter(now())",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get end of quarter
      * Usage: endOfQuarter(now())
@@ -270,6 +427,16 @@ object RichDateFunctions {
     
     // ========== DATE INFORMATION ==========
     
+    @UTLXFunction(
+        description = "Get day of week (1=Monday, 7=Sunday)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "dayOfWeek(now()) => 2 (Tuesday)",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get day of week (1=Monday, 7=Sunday)
      * Usage: dayOfWeek(now()) => 2 (Tuesday)
@@ -284,6 +451,16 @@ object RichDateFunctions {
         return UDM.Scalar(dayOfWeek.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Get day of week name",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "dayOfWeekName(now()) => \"Tuesday\"",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get day of week name
      * Usage: dayOfWeekName(now()) => "Tuesday"
@@ -296,6 +473,16 @@ object RichDateFunctions {
         return UDM.Scalar(localDate.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() })
     }
     
+    @UTLXFunction(
+        description = "Get day of year (1-365/366)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "dayOfYear(now()) => 287",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get day of year (1-365/366)
      * Usage: dayOfYear(now()) => 287
@@ -308,6 +495,16 @@ object RichDateFunctions {
         return UDM.Scalar(localDate.dayOfYear.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Get week of year (ISO week)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "weekOfYear(now()) => 42",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get week of year (ISO week)
      * Usage: weekOfYear(now()) => 42
@@ -326,6 +523,16 @@ object RichDateFunctions {
         return UDM.Scalar(weekNumber.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Get quarter (1-4)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "quarter(now()) => 4",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get quarter (1-4)
      * Usage: quarter(now()) => 4
@@ -340,6 +547,16 @@ object RichDateFunctions {
         return UDM.Scalar(quarter.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Get month name",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "monthName(now()) => \"October\"",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get month name
      * Usage: monthName(now()) => "October"
@@ -352,6 +569,16 @@ object RichDateFunctions {
         return UDM.Scalar(localDate.month.name.lowercase().replaceFirstChar { it.uppercase() })
     }
     
+    @UTLXFunction(
+        description = "Check if leap year",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Boolean indicating the result",
+        example = "isLeapYear(now()) => false",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Check if leap year
      * Usage: isLeapYear(now()) => false
@@ -364,6 +591,16 @@ object RichDateFunctions {
         return UDM.Scalar(isLeapYear(localDate.year))
     }
     
+    @UTLXFunction(
+        description = "Get days in month",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "daysInMonth(now()) => 31",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get days in month
      * Usage: daysInMonth(now()) => 31
@@ -378,6 +615,16 @@ object RichDateFunctions {
         return UDM.Scalar(days.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Get days in year",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "daysInYear(now()) => 365",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get days in year
      * Usage: daysInYear(now()) => 365
@@ -394,6 +641,16 @@ object RichDateFunctions {
     
     // ========== DATE COMPARISONS ==========
     
+    @UTLXFunction(
+        description = "Check if date is before another date",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Boolean indicating the result",
+        example = "isBefore(date1, date2) => true",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Check if date is before another date
      * Usage: isBefore(date1, date2) => true
@@ -406,6 +663,16 @@ object RichDateFunctions {
         return UDM.Scalar(date1 < date2)
     }
     
+    @UTLXFunction(
+        description = "Check if date is after another date",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Boolean indicating the result",
+        example = "isAfter(date1, date2) => false",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Check if date is after another date
      * Usage: isAfter(date1, date2) => false
@@ -418,6 +685,16 @@ object RichDateFunctions {
         return UDM.Scalar(date1 > date2)
     }
     
+    @UTLXFunction(
+        description = "Check if dates are same day",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Boolean indicating the result",
+        example = "isSameDay(date1, date2) => true",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Check if dates are same day
      * Usage: isSameDay(date1, date2) => true
@@ -435,6 +712,16 @@ object RichDateFunctions {
         return UDM.Scalar(localDate1 == localDate2)
     }
     
+    @UTLXFunction(
+        description = "Check if date is between two dates (inclusive)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Boolean indicating the result",
+        example = "isBetween(date, startDate, endDate) => true",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Check if date is between two dates (inclusive)
      * Usage: isBetween(date, startDate, endDate) => true
@@ -448,6 +735,16 @@ object RichDateFunctions {
         return UDM.Scalar(date >= startDate && date <= endDate)
     }
     
+    @UTLXFunction(
+        description = "Check if date is today",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Boolean indicating the result",
+        example = "isToday(date) => true",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Check if date is today
      * Usage: isToday(date) => true
@@ -463,6 +760,16 @@ object RichDateFunctions {
         return UDM.Scalar(localDate == today)
     }
     
+    @UTLXFunction(
+        description = "Check if date is weekend (Saturday or Sunday)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Boolean indicating the result",
+        example = "isWeekend(date) => false",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Check if date is weekend (Saturday or Sunday)
      * Usage: isWeekend(date) => false
@@ -477,6 +784,16 @@ object RichDateFunctions {
         return UDM.Scalar(dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY)
     }
     
+    @UTLXFunction(
+        description = "Check if date is weekday (Monday-Friday)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Boolean indicating the result",
+        example = "isWeekday(date) => true",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Check if date is weekday (Monday-Friday)
      * Usage: isWeekday(date) => true
@@ -493,6 +810,16 @@ object RichDateFunctions {
     
     // ========== AGE CALCULATIONS ==========
     
+    @UTLXFunction(
+        description = "Calculate age in years from birthdate",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        returns = "Result of the operation",
+        example = "age(birthDate) => 30",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Calculate age in years from birthdate
      * Usage: age(birthDate) => 30

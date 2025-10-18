@@ -8,6 +8,7 @@ import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 /**
  * JSON Canonicalization Functions (RFC 8785 - JSON Canonicalization Scheme)
  * 
@@ -23,6 +24,20 @@ import kotlin.math.pow
  */
 object JSONCanonicalizationFunctions {
 
+    @UTLXFunction(
+        description = "Canonicalizes JSON according to RFC 8785 (JSON Canonicalization Scheme)",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "JSON",
+        parameters = [
+            "json: Json value"
+        ],
+        returns = "Result of the operation",
+        example = "canonicalizeJSON(...) => result",
+        notes = "Example:\n```\ncanonicalizeJSON({\"b\": 2, \"a\": 1})\n// Returns: UDM.Scalar(\"{\\\"a\\\":1,\\\"b\\\":2}\")\n```",
+        tags = ["json"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes JSON according to RFC 8785 (JSON Canonicalization Scheme)
      * 
@@ -47,6 +62,20 @@ object JSONCanonicalizationFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Alias for canonicalizeJSON - shorter form (JCS)",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "JSON",
+        parameters = [
+            "json: Json value",
+        "json2: Json2 value"
+        ],
+        returns = "Result of the operation",
+        example = "jcs(...) => result",
+        tags = ["json"],
+        since = "1.0"
+    )
     /**
      * Alias for canonicalizeJSON - shorter form (JCS)
      * 
@@ -55,6 +84,21 @@ object JSONCanonicalizationFunctions {
      */
     fun jcs(args: List<UDM>): UDM = canonicalizeJSON(args)
 
+    @UTLXFunction(
+        description = "Canonicalizes JSON and computes cryptographic hash",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "JSON",
+        parameters = [
+            "json: Json value",
+        "json2: Json2 value"
+        ],
+        returns = "Result of the operation",
+        example = "canonicalJSONHash(...) => result",
+        notes = "Example:\n```\ncanonicalJSONHash({\"id\": 123}, \"SHA-256\")\n// Returns: UDM.Scalar(\"a1b2c3d4...\")\n```",
+        tags = ["json"],
+        since = "1.0"
+    )
     /**
      * Canonicalizes JSON and computes cryptographic hash
      * 
@@ -84,6 +128,21 @@ object JSONCanonicalizationFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Compares two JSON values for semantic equality using canonicalization",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "JSON",
+        parameters = [
+            "array: Input array to process",
+        "json2: Json2 value"
+        ],
+        returns = "Result of the operation",
+        example = "jsonEquals(...) => result",
+        notes = "Example:\n```\njsonEquals({\"b\": 2, \"a\": 1}, {\"a\": 1, \"b\": 2})\n// Returns: UDM.Scalar(true)\n```",
+        tags = ["json"],
+        since = "1.0"
+    )
     /**
      * Compares two JSON values for semantic equality using canonicalization
      * 
@@ -311,6 +370,19 @@ private fun hashString(input: String, algorithm: String): String {
 // VALIDATION AND TESTING UTILITIES
 // ============================================================================
 
+    @UTLXFunction(
+        description = "Validates that a string is valid canonical JSON per RFC 8785",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "JSON",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isCanonicalJSON(...) => result",
+        tags = ["json"],
+        since = "1.0"
+    )
     /**
      * Validates that a string is valid canonical JSON per RFC 8785
      * 
@@ -346,6 +418,19 @@ private fun hashString(input: String, algorithm: String): String {
         }
     }
 
+    @UTLXFunction(
+        description = "Gets the canonical form size in bytes (UTF-8)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "JSON",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "canonicalJSONSize(...) => result",
+        tags = ["json"],
+        since = "1.0"
+    )
     /**
      * Gets the canonical form size in bytes (UTF-8)
      * 

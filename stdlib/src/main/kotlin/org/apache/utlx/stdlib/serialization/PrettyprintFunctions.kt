@@ -18,6 +18,7 @@ package org.apache.utlx.stdlib.serialization
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Pretty-Print Functions for various data formats
@@ -27,6 +28,21 @@ import org.apache.utlx.stdlib.FunctionArgumentException
  */
 object PrettyPrintFunctions {
 
+    @UTLXFunction(
+        description = "Pretty-prints a JSON string with optional indentation",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "jsonString: Jsonstring value",
+        "indentUDM: Indentudm value"
+        ],
+        returns = "Result of the operation",
+        example = "prettyPrintJSON(...) => result",
+        notes = "Example:\n```\nprettyPrintJSON(\"{\\\"name\\\":\\\"Alice\\\",\\\"age\\\":30}\", 2)\n// Returns: UDM.Scalar with formatted JSON\n```",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Pretty-prints a JSON string with optional indentation
      * 
@@ -60,6 +76,20 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Pretty-prints a UDM object as JSON",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "udm: Udm value",
+        "indentUDM: Indentudm value"
+        ],
+        returns = "Result of the operation",
+        example = "udmToJSON(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Pretty-prints a UDM object as JSON
      * 
@@ -87,6 +117,21 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Compacts a JSON string (removes all unnecessary whitespace)",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "jsonString: Jsonstring value",
+        "indentUDM: Indentudm value",
+        "preserveUDM: Preserveudm value"
+        ],
+        returns = "New array with filtered elements",
+        example = "compactJSON(...) => result",
+        tags = ["filter", "other"],
+        since = "1.0"
+    )
     /**
      * Compacts a JSON string (removes all unnecessary whitespace)
      * 
@@ -105,6 +150,21 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Pretty-prints an XML string with optional formatting options",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "xmlString: Xmlstring value",
+        "indentUDM: Indentudm value",
+        "preserveUDM: Preserveudm value"
+        ],
+        returns = "Result of the operation",
+        example = "prettyPrintXML(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Pretty-prints an XML string with optional formatting options
      * 
@@ -138,6 +198,21 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Pretty-prints a UDM object as XML",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "udm: Udm value",
+        "indentUDM: Indentudm value",
+        "preserveUDM: Preserveudm value"
+        ],
+        returns = "Result of the operation",
+        example = "udmToXML(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Pretty-prints a UDM object as XML
      * 
@@ -171,6 +246,21 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Compacts an XML string (removes unnecessary whitespace)",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "xmlString: Xmlstring value",
+        "indentUDM: Indentudm value",
+        "flowUDM: Flowudm value"
+        ],
+        returns = "New array with filtered elements",
+        example = "compactXML(...) => result",
+        tags = ["filter", "other"],
+        since = "1.0"
+    )
     /**
      * Compacts an XML string (removes unnecessary whitespace)
      * 
@@ -189,6 +279,21 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Pretty-prints a YAML string with optional formatting options",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "yamlString: Yamlstring value",
+        "indentUDM: Indentudm value",
+        "flowUDM: Flowudm value"
+        ],
+        returns = "Result of the operation",
+        example = "prettyPrintYAML(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Pretty-prints a YAML string with optional formatting options
      * 
@@ -222,6 +327,21 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Pretty-prints a UDM object as YAML",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "udm: Udm value",
+        "indentUDM: Indentudm value",
+        "flowUDM: Flowudm value"
+        ],
+        returns = "Result of the operation",
+        example = "udmToYAML(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Pretty-prints a UDM object as YAML
      * 
@@ -255,6 +375,21 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Formats a CSV string with aligned columns",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "csvString: Csvstring value",
+        "delimiterUDM: Delimiterudm value",
+        "alignUDM: Alignudm value"
+        ],
+        returns = "Result of the operation",
+        example = "prettyPrintCSV(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Formats a CSV string with aligned columns
      * 
@@ -288,6 +423,20 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Compacts a CSV string (removes extra whitespace)",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "csvString: Csvstring value",
+        "delimiterUDM: Delimiterudm value"
+        ],
+        returns = "New array with filtered elements",
+        example = "compactCSV(...) => result",
+        tags = ["filter", "other"],
+        since = "1.0"
+    )
     /**
      * Compacts a CSV string (removes extra whitespace)
      * 
@@ -320,6 +469,21 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Automatically detects format and pretty-prints",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "data: Data value",
+        "indentUDM: Indentudm value",
+        "indentUDM: Indentudm value"
+        ],
+        returns = "Result of the operation",
+        example = "prettyPrint(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Automatically detects format and pretty-prints
      * 
@@ -347,6 +511,21 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Pretty-prints a UDM object in the specified format",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "udm: Udm value",
+        "format: Format value",
+        "indentUDM: Indentudm value"
+        ],
+        returns = "Result of the operation",
+        example = "prettyPrintFormat(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Pretty-prints a UDM object in the specified format
      * 
@@ -381,6 +560,21 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Creates a human-readable debug representation of UDM",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "udm: Udm value",
+        "indentUDM: Indentudm value",
+        "depthUDM: Depthudm value"
+        ],
+        returns = "Result of the operation",
+        example = "debugPrint(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Creates a human-readable debug representation of UDM
      * 
@@ -414,6 +608,20 @@ object PrettyPrintFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Creates a compact single-line debug representation",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "array: Input array to process",
+        "maxLengthUDM: Maxlengthudm value"
+        ],
+        returns = "New array with filtered elements",
+        example = "debugPrintCompact(...) => result",
+        tags = ["filter", "other"],
+        since = "1.0"
+    )
     /**
      * Creates a compact single-line debug representation
      * 

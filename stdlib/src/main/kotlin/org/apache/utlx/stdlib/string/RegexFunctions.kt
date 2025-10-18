@@ -3,8 +3,25 @@ package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 object RegexFunctions {
+
+    @UTLXFunction(
+        description = "Performs matches operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "pattern: Pattern value",
+        "replacement: Replacement value"
+        ],
+        returns = "Result of the operation",
+        example = "matches(...) => result",
+        tags = ["string"],
+        since = "1.0"
+    )
     
     fun matches(args: List<UDM>): UDM {
         requireArgs(args, 2, "matches")
@@ -18,6 +35,22 @@ object RegexFunctions {
             throw FunctionArgumentException("Invalid regex pattern: $pattern")
         }
     }
+
+    @UTLXFunction(
+        description = "Performs replaceRegex operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value",
+        "pattern: Pattern value",
+        "replacement: Replacement value"
+        ],
+        returns = "Result of the operation",
+        example = "replaceRegex(...) => result",
+        tags = ["string"],
+        since = "1.0"
+    )
     
     fun replaceRegex(args: List<UDM>): UDM {
         requireArgs(args, 3, "replaceRegex")

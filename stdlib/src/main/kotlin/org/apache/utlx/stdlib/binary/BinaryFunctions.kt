@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Base64
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Binary Data Operations
@@ -19,6 +20,23 @@ object BinaryFunctions {
     
     // ==================== BINARY CREATION ====================
     
+    @UTLXFunction(
+        description = "Create binary from string",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "enc: Enc value"
+        ],
+        returns = "Result of the operation",
+        example = "toBinary(\"Hello World\") => Binary data",
+        additionalExamples = [
+            "toBinary(\"Hello\", \"UTF-16\") => Binary with specific encoding"
+        ],
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Create binary from string
      * 
@@ -50,6 +68,19 @@ object BinaryFunctions {
         return createBinaryUDM(bytes)
     }
     
+    @UTLXFunction(
+        description = "Create binary from byte array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "fromBytes([72, 101, 108, 108, 111]) => Binary \"Hello\"",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Create binary from byte array
      * 
@@ -76,6 +107,19 @@ object BinaryFunctions {
         return createBinaryUDM(bytes)
     }
     
+    @UTLXFunction(
+        description = "Create binary from Base64 string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "fromBase64(\"SGVsbG8gV29ybGQ=\") => Binary \"Hello World\"",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Create binary from Base64 string
      * 
@@ -96,6 +140,20 @@ object BinaryFunctions {
         return createBinaryUDM(bytes)
     }
     
+    @UTLXFunction(
+        description = "Create binary from hex string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "enc: Enc value"
+        ],
+        returns = "Result of the operation",
+        example = "fromHex(\"48656c6c6f\") => Binary \"Hello\"",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Create binary from hex string
      * 
@@ -126,6 +184,23 @@ object BinaryFunctions {
     
     // ==================== BINARY CONVERSION ====================
     
+    @UTLXFunction(
+        description = "Convert binary to string",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "enc: Enc value"
+        ],
+        returns = "Result of the operation",
+        example = "binaryToString(binary) => \"Hello World\"",
+        additionalExamples = [
+            "binaryToString(binary, \"UTF-16\") => String with encoding"
+        ],
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Convert binary to string
      * 
@@ -154,6 +229,19 @@ object BinaryFunctions {
         return UDM.Scalar(str)
     }
     
+    @UTLXFunction(
+        description = "Convert binary to byte array",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "toBytes(binary) => [72, 101, 108, 108, 111]",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Convert binary to byte array
      * 
@@ -171,6 +259,16 @@ object BinaryFunctions {
         return UDM.Array(array)
     }
     
+    @UTLXFunction(
+        description = "Convert binary to Base64 string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        returns = "Result of the operation",
+        example = "toBase64(binary) => \"SGVsbG8gV29ybGQ=\"",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Convert binary to Base64 string
      * 
@@ -187,6 +285,19 @@ object BinaryFunctions {
         return UDM.Scalar(base64)
     }
     
+    @UTLXFunction(
+        description = "Convert binary to hex string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "toHex(binary) => \"48656c6c6f\"",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Convert binary to hex string
      * 
@@ -205,6 +316,21 @@ object BinaryFunctions {
     
     // ==================== BINARY OPERATIONS ====================
     
+    @UTLXFunction(
+        description = "Get binary length in bytes",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "start: Start value",
+        "end: End value"
+        ],
+        returns = "Result of the operation",
+        example = "binaryLength(binary) => 11",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Get binary length in bytes
      * 
@@ -220,6 +346,21 @@ object BinaryFunctions {
         return UDM.Scalar(bytes.size.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Concatenate binary data",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "start: Start value",
+        "end: End value"
+        ],
+        returns = "Result of the operation",
+        example = "binaryConcat(binary1, binary2) => Combined binary",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Concatenate binary data
      * 
@@ -240,6 +381,20 @@ object BinaryFunctions {
         return createBinaryUDM(output.toByteArray())
     }
     
+    @UTLXFunction(
+        description = "Slice binary data",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Binary",
+        parameters = [
+            "start: Start value",
+        "end: End value"
+        ],
+        returns = "Result of the operation",
+        example = "binarySlice(binary, 0, 5) => First 5 bytes",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Slice binary data
      * 
@@ -270,6 +425,16 @@ object BinaryFunctions {
         return createBinaryUDM(sliced)
     }
     
+    @UTLXFunction(
+        description = "Compare two binary values",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        returns = "Result of the operation",
+        example = "binaryEquals(binary1, binary2) => true/false",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Compare two binary values
      * 
@@ -290,6 +455,16 @@ object BinaryFunctions {
     
     // ==================== BINARY READING (BIG ENDIAN) ====================
     
+    @UTLXFunction(
+        description = "Read 16-bit integer from binary (big endian)",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        returns = "Result of the operation",
+        example = "readInt16(binary, 0) => 256",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Read 16-bit integer from binary (big endian)
      * 
@@ -309,6 +484,16 @@ object BinaryFunctions {
         return UDM.Scalar(value.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Read 32-bit integer from binary (big endian)",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        returns = "Result of the operation",
+        example = "readInt32(binary, 0) => 16777216",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Read 32-bit integer from binary (big endian)
      * 
@@ -328,6 +513,16 @@ object BinaryFunctions {
         return UDM.Scalar(value.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Read 64-bit integer from binary (big endian)",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        returns = "Result of the operation",
+        example = "readInt64(binary, 0) => 72057594037927936",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Read 64-bit integer from binary (big endian)
      * 
@@ -347,6 +542,16 @@ object BinaryFunctions {
         return UDM.Scalar(value.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Read float (32-bit) from binary",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        returns = "Result of the operation",
+        example = "readFloat(binary, 0) => 3.14",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Read float (32-bit) from binary
      * 
@@ -366,6 +571,19 @@ object BinaryFunctions {
         return UDM.Scalar(value.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Read double (64-bit) from binary",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "readDouble(binary, 0) => 3.141592653589793",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Read double (64-bit) from binary
      * 
@@ -385,6 +603,19 @@ object BinaryFunctions {
         return UDM.Scalar(value)
     }
     
+    @UTLXFunction(
+        description = "Read single byte",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "readByte(binary, 0) => 72",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Read single byte
      * 
@@ -403,6 +634,19 @@ object BinaryFunctions {
     
     // ==================== BINARY WRITING ====================
     
+    @UTLXFunction(
+        description = "Write 16-bit integer to binary (big endian)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "writeInt16(256) => Binary with 2 bytes",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Write 16-bit integer to binary (big endian)
      * 
@@ -424,6 +668,19 @@ object BinaryFunctions {
         return createBinaryUDM(buffer.array())
     }
     
+    @UTLXFunction(
+        description = "Write 32-bit integer to binary (big endian)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "writeInt32(16777216) => Binary with 4 bytes",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Write 32-bit integer to binary (big endian)
      * 
@@ -445,6 +702,19 @@ object BinaryFunctions {
         return createBinaryUDM(buffer.array())
     }
     
+    @UTLXFunction(
+        description = "Write 64-bit integer to binary (big endian)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "writeInt64(72057594037927936) => Binary with 8 bytes",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Write 64-bit integer to binary (big endian)
      * 
@@ -466,6 +736,19 @@ object BinaryFunctions {
         return createBinaryUDM(buffer.array())
     }
     
+    @UTLXFunction(
+        description = "Write float (32-bit) to binary",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "writeFloat(3.14) => Binary with 4 bytes",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Write float (32-bit) to binary
      * 
@@ -487,6 +770,19 @@ object BinaryFunctions {
         return createBinaryUDM(buffer.array())
     }
     
+    @UTLXFunction(
+        description = "Write double (64-bit) to binary",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "writeDouble(3.141592653589793) => Binary with 8 bytes",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Write double (64-bit) to binary
      * 
@@ -508,6 +804,20 @@ object BinaryFunctions {
         return createBinaryUDM(buffer.array())
     }
     
+    @UTLXFunction(
+        description = "Write single byte",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "binary2: Binary2 value"
+        ],
+        returns = "Result of the operation",
+        example = "writeByte(72) => Binary with 1 byte",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Write single byte
      * 
@@ -532,6 +842,21 @@ object BinaryFunctions {
     // BIT OPERATIONS
     // ============================================
     
+    @UTLXFunction(
+        description = "Performs bitwise AND operation on two binaries",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "binary2: Binary2 value"
+        ],
+        returns = "Result of the operation",
+        example = "bitwiseAnd(...) => result",
+        notes = "Example:\n```\nbitwiseAnd(binary1, binary2)\n```",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Performs bitwise AND operation on two binaries
      * 
@@ -561,6 +886,21 @@ object BinaryFunctions {
         return UDM.Binary(result)
     }
     
+    @UTLXFunction(
+        description = "Performs bitwise OR operation on two binaries",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "binary2: Binary2 value"
+        ],
+        returns = "Result of the operation",
+        example = "bitwiseOr(...) => result",
+        notes = "Example:\n```\nbitwiseOr(binary1, binary2)\n```",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Performs bitwise OR operation on two binaries
      * 
@@ -590,6 +930,21 @@ object BinaryFunctions {
         return UDM.Binary(result)
     }
     
+    @UTLXFunction(
+        description = "Performs bitwise XOR operation on two binaries",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "binary2: Binary2 value"
+        ],
+        returns = "Result of the operation",
+        example = "bitwiseXor(...) => result",
+        notes = "Example:\n```\nbitwiseXor(binary1, binary2)\n```",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Performs bitwise XOR operation on two binaries
      * 
@@ -619,6 +974,21 @@ object BinaryFunctions {
         return UDM.Binary(result)
     }
     
+    @UTLXFunction(
+        description = "Performs bitwise NOT operation (inversion)",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "positions: Positions value"
+        ],
+        returns = "Result of the operation",
+        example = "bitwiseNot(...) => result",
+        notes = "Example:\n```\nbitwiseNot(binary)\n```",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Performs bitwise NOT operation (inversion)
      * 
@@ -644,6 +1014,21 @@ object BinaryFunctions {
         return UDM.Binary(result)
     }
     
+    @UTLXFunction(
+        description = "Shifts bits left by specified positions",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "positions: Positions value"
+        ],
+        returns = "Result of the operation",
+        example = "shiftLeft(...) => result",
+        notes = "Example:\n```\nshiftLeft(binary, 2) // Shift left by 2 bits\n```",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Shifts bits left by specified positions
      * 
@@ -672,6 +1057,21 @@ object BinaryFunctions {
         return UDM.Binary(result)
     }
     
+    @UTLXFunction(
+        description = "Shifts bits right by specified positions",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "positions: Positions value"
+        ],
+        returns = "Result of the operation",
+        example = "shiftRight(...) => result",
+        notes = "Example:\n```\nshiftRight(binary, 2) // Shift right by 2 bits\n```",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Shifts bits right by specified positions
      * 
@@ -704,6 +1104,21 @@ object BinaryFunctions {
     // BINARY COMPARISON
     // ============================================
     
+    @UTLXFunction(
+        description = "Compares two binaries for equality",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Binary",
+        parameters = [
+            "array: Input array to process",
+        "binary2: Binary2 value"
+        ],
+        returns = "Result of the operation",
+        example = "equals(...) => result",
+        notes = "Example:\n```\nequals(binary1, binary2)\n```",
+        tags = ["binary"],
+        since = "1.0"
+    )
     /**
      * Compares two binaries for equality
      * 

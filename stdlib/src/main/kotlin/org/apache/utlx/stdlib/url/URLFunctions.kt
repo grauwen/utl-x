@@ -6,6 +6,7 @@ import java.net.URI
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * URL Parsing and Manipulation Functions
@@ -19,6 +20,29 @@ object URLFunctions {
     
     // ==================== URL PARSING ====================
     
+    @UTLXFunction(
+        description = "Parse URL into components",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "url: Url value"
+        ],
+        returns = "Result of the operation",
+        example = "parseURL(\"https://example.com:8080/path?key=value#section\")",
+        notes = """Result: {
+protocol: "https",
+host: "example.com",
+port: 8080,
+path: "/path",
+query: "key=value",
+fragment: "section",
+queryParams: {key: "value"}
+}
+CRITICAL: Primary function for URL decomposition""",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Parse URL into components
      * 
@@ -95,6 +119,19 @@ object URLFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get protocol/scheme from URL",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        returns = "Result of the operation",
+        example = "getProtocol(\"https://example.com\") => \"https\"",
+        additionalExamples = [
+            "getProtocol(\"ftp://files.example.com\") => \"ftp\""
+        ],
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Get protocol/scheme from URL
      * 
@@ -110,6 +147,19 @@ object URLFunctions {
         return parsed.properties["protocol"] ?: UDM.Scalar(null)
     }
     
+    @UTLXFunction(
+        description = "Get host from URL",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        returns = "Result of the operation",
+        example = "getHost(\"https://example.com:8080/path\") => \"example.com\"",
+        additionalExamples = [
+            "getHost(\"http://192.168.1.1\") => \"192.168.1.1\""
+        ],
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Get host from URL
      * 
@@ -125,6 +175,19 @@ object URLFunctions {
         return parsed.properties["host"] ?: UDM.Scalar(null)
     }
     
+    @UTLXFunction(
+        description = "Get port from URL",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        returns = "Result of the operation",
+        example = "getPort(\"https://example.com:8080\") => 8080",
+        additionalExamples = [
+            "getPort(\"https://example.com\") => null  (default port)"
+        ],
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Get port from URL
      * 
@@ -140,6 +203,19 @@ object URLFunctions {
         return parsed.properties["port"] ?: UDM.Scalar(null)
     }
     
+    @UTLXFunction(
+        description = "Get path from URL",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        returns = "Result of the operation",
+        example = "getPath(\"https://example.com/api/users\") => \"/api/users\"",
+        additionalExamples = [
+            "getPath(\"https://example.com\") => null"
+        ],
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Get path from URL
      * 
@@ -155,6 +231,16 @@ object URLFunctions {
         return parsed.properties["path"] ?: UDM.Scalar(null)
     }
     
+    @UTLXFunction(
+        description = "Get query string from URL",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        returns = "Result of the operation",
+        example = "getQuery(\"https://example.com?key=value&foo=bar\") => \"key=value&foo=bar\"",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Get query string from URL
      * 
@@ -169,6 +255,19 @@ object URLFunctions {
         return parsed.properties["query"] ?: UDM.Scalar(null)
     }
     
+    @UTLXFunction(
+        description = "Get fragment/hash from URL",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "getFragment(\"https://example.com#section\") => \"section\"",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Get fragment/hash from URL
      * 
@@ -183,6 +282,20 @@ object URLFunctions {
         return parsed.properties["fragment"] ?: UDM.Scalar(null)
     }
     
+    @UTLXFunction(
+        description = "Get query parameters as object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "getQueryParams(\"https://example.com?name=John&age=30\")",
+        notes = "Result: {name: \"John\", age: \"30\"}",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Get query parameters as object
      * 
@@ -247,6 +360,19 @@ object URLFunctions {
         return UDM.Object(result, emptyMap())
     }
     
+    @UTLXFunction(
+        description = "Parse query string from string (public wrapper)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "parseQueryString(...) => result",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Parse query string from string (public wrapper)
      */
@@ -263,6 +389,24 @@ object URLFunctions {
         return parseQueryString(query.value as String)
     }
     
+    @UTLXFunction(
+        description = "Build query string from object",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "buildQueryString({name: \"John Doe\", age: 30})",
+        additionalExamples = [
+            "buildQueryString({tags: [\"red\", \"blue\", \"green\"]})"
+        ],
+        notes = """Result: "name=John%20Doe&age=30"
+Result: "tags=red&tags=blue&tags=green"""",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Build query string from object
      * 
@@ -317,6 +461,26 @@ object URLFunctions {
     
     // ==================== URL CONSTRUCTION ====================
     
+    @UTLXFunction(
+        description = "Build URL from components",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "components: Components value"
+        ],
+        returns = "Result of the operation",
+        example = "buildURL({",
+        notes = """protocol: "https",
+host: "example.com",
+port: 8080,
+path: "/api/users",
+query: {id: 123, type: "admin"}
+})
+Result: "https://example.com:8080/api/users?id=123&type=admin"""",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Build URL from components
      * 
@@ -401,6 +565,22 @@ object URLFunctions {
     
     // ==================== URL MANIPULATION ====================
     
+    @UTLXFunction(
+        description = "Add query parameter to URL",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Other",
+        parameters = [
+            "url: Url value",
+        "key: Key value",
+        "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "addQueryParam(\"https://example.com?foo=bar\", \"key\", \"value\")",
+        notes = "Result: \"https://example.com?foo=bar&key=value\"",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Add query parameter to URL
      * 
@@ -437,6 +617,21 @@ object URLFunctions {
         return buildURL(listOf(UDM.Object(components, emptyMap())))
     }
     
+    @UTLXFunction(
+        description = "Remove query parameter from URL",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "url: Url value",
+        "key: Key value"
+        ],
+        returns = "Result of the operation",
+        example = "removeQueryParam(\"https://example.com?foo=bar&key=value\", \"key\")",
+        notes = "Result: \"https://example.com?foo=bar\"",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Remove query parameter from URL
      * 
@@ -477,6 +672,22 @@ object URLFunctions {
         return buildURL(listOf(UDM.Object(components, emptyMap())))
     }
     
+    @UTLXFunction(
+        description = "Validate URL",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "url: Url value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isValidURL(\"https://example.com\") => true",
+        additionalExamples = [
+            "isValidURL(\"not a url\") => false"
+        ],
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Validate URL
      * 
@@ -501,6 +712,17 @@ object URLFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get base URL (protocol + host + port)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        returns = "Result of the operation",
+        example = "getBaseURL(\"https://example.com:8080/path?query#fragment\")",
+        notes = "Result: \"https://example.com:8080\"",
+        tags = ["other"],
+        since = "1.0"
+    )
     /**
      * Get base URL (protocol + host + port)
      * 

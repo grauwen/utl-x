@@ -5,12 +5,27 @@ import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import kotlinx.datetime.*
 import java.time.Instant as JavaInstant
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Comprehensive timezone manipulation functions
  */
 object TimezoneFunctions {
     
+    @UTLXFunction(
+        description = "Convert datetime between timezones",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "fromTz: Fromtz value",
+        "toTz: Totz value"
+        ],
+        returns = "Result of the operation",
+        example = "convertTimezone(now(), \"UTC\", \"America/New_York\")",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Convert datetime between timezones
      * Usage: convertTimezone(now(), "UTC", "America/New_York")
@@ -38,6 +53,20 @@ object TimezoneFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get timezone name/ID for current system",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "dateStr: Datestr value",
+        "tzId: Tzid value"
+        ],
+        returns = "Result of the operation",
+        example = "getTimezoneName() => \"America/New_York\"",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get timezone name/ID for current system
      * Usage: getTimezoneName() => "America/New_York"
@@ -47,6 +76,20 @@ object TimezoneFunctions {
         return UDM.Scalar(TimeZone.currentSystemDefault().id)
     }
     
+    @UTLXFunction(
+        description = "Get timezone offset in seconds",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "dateStr: Datestr value",
+        "tzId: Tzid value"
+        ],
+        returns = "Result of the operation",
+        example = "getTimezoneOffsetSeconds(now(), \"America/New_York\") => -18000",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get timezone offset in seconds
      * Usage: getTimezoneOffsetSeconds(now(), "America/New_York") => -18000
@@ -66,6 +109,20 @@ object TimezoneFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get timezone offset in hours",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Date",
+        parameters = [
+            "dateStr: Datestr value",
+        "tzId: Tzid value"
+        ],
+        returns = "Result of the operation",
+        example = "getTimezoneOffsetHours(now(), \"America/New_York\") => -5.0",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get timezone offset in hours
      * Usage: getTimezoneOffsetHours(now(), "America/New_York") => -5.0
@@ -85,6 +142,20 @@ object TimezoneFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Parse datetime with timezone",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Date",
+        parameters = [
+            "dateStr: Datestr value",
+        "tzId: Tzid value"
+        ],
+        returns = "Result of the operation",
+        example = "parseDateTimeWithTimezone(\"2025-10-14T12:00:00\", \"America/New_York\")",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Parse datetime with timezone
      * Usage: parseDateTimeWithTimezone("2025-10-14T12:00:00", "America/New_York")
@@ -104,6 +175,20 @@ object TimezoneFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Format datetime in specific timezone",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Date",
+        parameters = [
+            "tzId: Tzid value",
+        "tzId: Tzid value"
+        ],
+        returns = "Result of the operation",
+        example = "formatDateTimeInTimezone(now(), \"America/New_York\", \"yyyy-MM-dd HH:mm:ss z\")",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Format datetime in specific timezone
      * Usage: formatDateTimeInTimezone(now(), "America/New_York", "yyyy-MM-dd HH:mm:ss z")
@@ -134,6 +219,20 @@ object TimezoneFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Check if timezone is valid",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "tzId: Tzid value",
+        "tzId: Tzid value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isValidTimezone(\"America/New_York\") => true",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Check if timezone is valid
      * Usage: isValidTimezone("America/New_York") => true
@@ -150,6 +249,19 @@ object TimezoneFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get UTC datetime from local datetime and timezone",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "tzId: Tzid value"
+        ],
+        returns = "Result of the operation",
+        example = "toUTC(localDateTime, \"America/New_York\")",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get UTC datetime from local datetime and timezone
      * Usage: toUTC(localDateTime, "America/New_York")
@@ -170,6 +282,19 @@ object TimezoneFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Get local datetime from UTC in specified timezone",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "tzId: Tzid value"
+        ],
+        returns = "Result of the operation",
+        example = "fromUTC(utcDateTime, \"America/New_York\")",
+        tags = ["date"],
+        since = "1.0"
+    )
     /**
      * Get local datetime from UTC in specified timezone
      * Usage: fromUTC(utcDateTime, "America/New_York")

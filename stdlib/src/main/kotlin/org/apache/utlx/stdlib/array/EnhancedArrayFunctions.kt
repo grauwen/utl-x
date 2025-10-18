@@ -2,6 +2,7 @@
 package org.apache.utlx.stdlib.array
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Enhanced Array Functions
@@ -22,6 +23,21 @@ import org.apache.utlx.core.udm.UDM
  */
 object EnhancedArrayFunctions {
     
+    @UTLXFunction(
+        description = "Splits an array into two groups based on a predicate function.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "an object with two keys:",
+        example = "partition(...) => result",
+        notes = "Returns an object with two keys:\n- 'true': array of elements that matched the predicate\n- 'false': array of elements that didn't match\nThis is useful for separating data into categories.\n[1] predicate function (item) => boolean\nExample:\n```\n[1, 2, 3, 4, 5] partition (x) => x > 3\n→ {true: [4, 5], false: [1, 2, 3]}\n[\"apple\", \"apricot\", \"banana\"] partition (x) => startsWith(x, \"a\")\n→ {true: [\"apple\", \"apricot\"], false: [\"banana\"]}\n[{age: 25}, {age: 35}, {age: 18}] partition (x) => x.age >= 21\n→ {true: [{age: 25}, {age: 35}], false: [{age: 18}]}\n```",
+        tags = ["array", "predicate"],
+        since = "1.0"
+    )
     /**
      * Splits an array into two groups based on a predicate function.
      * 
@@ -81,6 +97,21 @@ object EnhancedArrayFunctions {
         ))
     }
     
+    @UTLXFunction(
+        description = "Counts the number of elements in an array that match a predicate.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "countBy(...) => result",
+        notes = "This is more efficient than filtering and getting the length.\n[1] predicate function (item) => boolean\nExample:\n```\n[1, 2, 3, 4, 5] countBy (x) => x > 3\n→ 2\n[\"apple\", \"apricot\", \"banana\"] countBy (x) => startsWith(x, \"a\")\n→ 2\n[{status: \"active\"}, {status: \"inactive\"}, {status: \"active\"}]\ncountBy (x) => x.status == \"active\"\n→ 2\n```",
+        tags = ["array", "predicate"],
+        since = "1.0"
+    )
     /**
      * Counts the number of elements in an array that match a predicate.
      * 
@@ -124,6 +155,21 @@ object EnhancedArrayFunctions {
         return UDM.Scalar(count)
     }
     
+    @UTLXFunction(
+        description = "Maps each element with a function and sums the results.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "mapperArg: Mapperarg value"
+        ],
+        returns = "Result of the operation",
+        example = "sumBy(...) => result",
+        notes = "Equivalent to: sum(map(array, mapper))\nMore efficient and expressive for calculating totals.\n[1] mapper function (item) => number\nExample:\n```\n[1, 2, 3, 4] sumBy (x) => x * 2\n→ 20\n[{qty: 2, price: 10}, {qty: 3, price: 20}] sumBy (x) => x.qty * x.price\n→ 80\n[\"hello\", \"world\"] sumBy (x) => length(x)\n→ 10\n```",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Maps each element with a function and sums the results.
      * 
@@ -168,6 +214,21 @@ object EnhancedArrayFunctions {
         return UDM.Scalar(sum)
     }
     
+    @UTLXFunction(
+        description = "Finds the element with the maximum value according to a comparator function.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "comparatorArg: Comparatorarg value"
+        ],
+        returns = "null if the array is empty.",
+        example = "maxBy(...) => result",
+        notes = "The comparator extracts a comparable value from each element.\nReturns null if the array is empty.\n[1] comparator function (item) => comparable value\nExample:\n```\n[{name: \"Alice\", age: 30}, {name: \"Bob\", age: 25}] maxBy (x) => x.age\n→ {name: \"Alice\", age: 30}\n[\"cat\", \"elephant\", \"dog\"] maxBy (x) => length(x)\n→ \"elephant\"\n[5, 2, 8, 1] maxBy (x) => x\n→ 8\n[] maxBy (x) => x\n→ null\n```",
+        tags = ["array", "cleanup", "null-handling"],
+        since = "1.0"
+    )
     /**
      * Finds the element with the maximum value according to a comparator function.
      * 
@@ -220,6 +281,21 @@ object EnhancedArrayFunctions {
         */
     }
     
+    @UTLXFunction(
+        description = "Finds the element with the minimum value according to a comparator function.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "comparatorArg: Comparatorarg value"
+        ],
+        returns = "null if the array is empty.",
+        example = "minBy(...) => result",
+        notes = "The comparator extracts a comparable value from each element.\nReturns null if the array is empty.\n[1] comparator function (item) => comparable value\nExample:\n```\n[{name: \"Alice\", age: 30}, {name: \"Bob\", age: 25}] minBy (x) => x.age\n→ {name: \"Bob\", age: 25}\n[\"cat\", \"elephant\", \"dog\"] minBy (x) => length(x)\n→ \"cat\"\n[5, 2, 8, 1] minBy (x) => x\n→ 1\n[] minBy (x) => x\n→ null\n```",
+        tags = ["array", "cleanup", "null-handling"],
+        since = "1.0"
+    )
     /**
      * Finds the element with the minimum value according to a comparator function.
      * 
@@ -272,6 +348,21 @@ object EnhancedArrayFunctions {
         */
     }
     
+    @UTLXFunction(
+        description = "Groups array elements by a key function.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "keyFunctionArg: Keyfunctionarg value"
+        ],
+        returns = "an object where keys are the results of the key function",
+        example = "groupBy(...) => result",
+        notes = "Returns an object where keys are the results of the key function\nand values are arrays of elements with that key.\n[1] key function (item) => string key\nExample:\n```\n[1, 2, 3, 4, 5, 6] groupBy (x) => if (x % 2 == 0) \"even\" else \"odd\"\n→ {odd: [1, 3, 5], even: [2, 4, 6]}\n[{city: \"NYC\", name: \"Alice\"}, {city: \"LA\", name: \"Bob\"}, {city: \"NYC\", name: \"Carol\"}]\ngroupBy (x) => x.city\n→ {NYC: [{city: \"NYC\", name: \"Alice\"}, {city: \"NYC\", name: \"Carol\"}],\nLA: [{city: \"LA\", name: \"Bob\"}]}\n[\"apple\", \"apricot\", \"banana\", \"blueberry\"]\ngroupBy (x) => substring(x, 0, 1)\n→ {a: [\"apple\", \"apricot\"], b: [\"banana\", \"blueberry\"]}\n```",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Groups array elements by a key function.
      * 
@@ -327,6 +418,21 @@ object EnhancedArrayFunctions {
         return UDM.Object(result.toMutableMap())
     }
     
+    @UTLXFunction(
+        description = "Similar to distinct(), but uses a key function to determine uniqueness.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "keyFunctionArg: Keyfunctionarg value"
+        ],
+        returns = "unique elements based on a key function.",
+        example = "distinctBy(...) => result",
+        notes = "Returns unique elements based on a key function.\nFirst occurrence of each unique key is kept.\n[1] key function (item) => comparison key\nExample:\n```\n[{id: 1, name: \"Alice\"}, {id: 2, name: \"Bob\"}, {id: 1, name: \"Alice2\"}]\ndistinctBy (x) => x.id\n→ [{id: 1, name: \"Alice\"}, {id: 2, name: \"Bob\"}]\n[\"APPLE\", \"apple\", \"BANANA\", \"banana\"]\ndistinctBy (x) => lower(x)\n→ [\"APPLE\", \"BANANA\"]\n[1.1, 1.9, 2.1, 2.9]\ndistinctBy (x) => floor(x)\n→ [1.1, 2.1]\n```",
+        tags = ["array"],
+        since = "1.0"
+    )
     /**
      * Returns unique elements based on a key function.
      * 
@@ -382,6 +488,21 @@ object EnhancedArrayFunctions {
         return UDM.Array(result)
     }
     
+    @UTLXFunction(
+        description = "Calculates the average value using a mapping function.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Array",
+        parameters = [
+            "array: Input array to process",
+        "mapperArg: Mapperarg value"
+        ],
+        returns = "null for empty arrays.",
+        example = "avgBy(...) => result",
+        notes = "Maps each element and returns the arithmetic mean.\nReturns null for empty arrays.\n[1] mapper function (item) => number\nExample:\n```\n[1, 2, 3, 4, 5] avgBy (x) => x\n→ 3.0\n[{score: 80}, {score: 90}, {score: 85}] avgBy (x) => x.score\n→ 85.0\n[] avgBy (x) => x\n→ null\n```",
+        tags = ["array", "cleanup", "null-handling"],
+        since = "1.0"
+    )
     /**
      * Calculates the average value using a mapping function.
      * 

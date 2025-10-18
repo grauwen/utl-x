@@ -3,12 +3,27 @@ package org.apache.utlx.stdlib.core
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Core control flow and utility functions
  */
 object CoreFunctions {
     
+    @UTLXFunction(
+        description = "Inline if-then-else conditional",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "if(price > 100, \"expensive\", \"affordable\")",
+        notes = "This is CRITICAL for concise transformations",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Inline if-then-else conditional
      * Usage: if(price > 100, "expensive", "affordable")
@@ -22,6 +37,19 @@ object CoreFunctions {
         return if (condition) args[1] else args[2]
     }
     
+    @UTLXFunction(
+        description = "Coalesce - return first non-null value",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "coalesce(input.email, input.contact.email, \"no-email@example.com\")",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Coalesce - return first non-null value
      * Usage: coalesce(input.email, input.contact.email, "no-email@example.com")
@@ -35,6 +63,19 @@ object CoreFunctions {
         return UDM.Scalar(null)
     }
     
+    @UTLXFunction(
+        description = "Generate UUID/GUID",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "generate-uuid()",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Generate UUID/GUID
      * Usage: generate-uuid()
@@ -44,6 +85,20 @@ object CoreFunctions {
         return UDM.Scalar(java.util.UUID.randomUUID().toString())
     }
     
+    @UTLXFunction(
+        description = "Default value if undefined or null",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "default(input.optional, \"default-value\")",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Default value if undefined or null
      * Usage: default(input.optional, "default-value")
@@ -58,6 +113,21 @@ object CoreFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Checks if a value is empty",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isEmpty(...) => result",
+        notes = "Works with strings, arrays, objects\nExamples:\n```\nisEmpty(\"\") // true\nisEmpty(\"hello\") // false\nisEmpty([]) // true\nisEmpty([1, 2]) // false\nisEmpty({}) // true\nisEmpty({\"name\": \"John\"}) // false\nisEmpty(null) // true\n```",
+        tags = ["cleanup", "core", "null-handling"],
+        since = "1.0"
+    )
     /**
      * Checks if a value is empty
      * Works with strings, arrays, objects
@@ -101,6 +171,21 @@ object CoreFunctions {
         return UDM.Scalar(empty)
     }
     
+    @UTLXFunction(
+        description = "Checks if a value is not empty (inverse of isEmpty)",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Core",
+        parameters = [
+            "array: Input array to process",
+        "element: Element value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "isNotEmpty(...) => result",
+        notes = "Works with strings, arrays, objects, and null values\nExamples:\n```\nisNotEmpty(\"\") // false\nisNotEmpty(\"hello\") // true\nisNotEmpty([]) // false\nisNotEmpty([1, 2]) // true\nisNotEmpty({}) // false\nisNotEmpty({\"name\": \"John\"}) // true\nisNotEmpty(null) // false\nisNotEmpty(42) // true (numbers are never empty)\nisNotEmpty(true) // true (booleans are never empty)\n```",
+        tags = ["cleanup", "core", "null-handling"],
+        since = "1.0"
+    )
     /**
      * Checks if a value is not empty (inverse of isEmpty)
      * Works with strings, arrays, objects, and null values
@@ -128,6 +213,21 @@ object CoreFunctions {
         return UDM.Scalar(!isEmptyValue)
     }
     
+    @UTLXFunction(
+        description = "Checks if a value contains an element, substring, or key",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Core",
+        parameters = [
+            "array: Input array to process",
+        "element: Element value"
+        ],
+        returns = "Result of the operation",
+        example = "contains(...) => result",
+        notes = "Works with:\n- Strings: checks if string contains substring\n- Arrays: checks if array contains element\n- Objects: checks if object contains key (key existence only, not value)\nExamples:\n```\ncontains(\"hello world\", \"world\") // true\ncontains(\"hello\", \"xyz\") // false\ncontains([1, 2, 3], 2) // true\ncontains([1, 2, 3], 5) // false\ncontains({\"name\": \"John\", \"age\": 30}, \"name\") // true (key exists)\ncontains({\"name\": \"John\"}, \"email\") // false (key doesn't exist)\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Checks if a value contains an element, substring, or key
      * 
@@ -209,6 +309,20 @@ object CoreFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Concatenates values of the same type",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "firstArg: Firstarg value"
+        ],
+        returns = "Result of the operation",
+        example = "concat(...) => result",
+        notes = "- Strings: Combines into single string\n- Arrays: Combines into single array (preserves duplicates)\n- Objects: Merges properties (right overwrites left)\nExamples:\n```\nconcat(\"Hello\", \" \", \"World\") // \"Hello World\"\nconcat([1, 2], [3, 4], [5]) // [1, 2, 3, 4, 5]\nconcat({\"a\": 1}, {\"b\": 2}, {\"a\": 3}) // {\"a\": 3, \"b\": 2} (right overwrites)\nconcat(42, 58) // 100 (numbers are added)\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Concatenates values of the same type
      * - Strings: Combines into single string
@@ -359,6 +473,21 @@ object CoreFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Generic filter function that works on arrays, objects, and strings",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "New array with filtered elements",
+        example = "filter(...) => result",
+        notes = "For arrays: filters elements based on predicate\nFor objects: filters properties based on predicate (key, value)\nFor strings: filters characters based on predicate\nExamples:\n```\nfilter([1, 2, 3, 4], x -> x > 2) // [3, 4]\nfilter({\"a\": 1, \"b\": 2}, (k, v) -> v > 1) // {\"b\": 2}\nfilter(\"hello\", c -> c != \"l\") // \"heo\"\n```",
+        tags = ["core", "filter", "predicate"],
+        since = "1.0"
+    )
     /**
      * Generic filter function that works on arrays, objects, and strings
      * 

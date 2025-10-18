@@ -2,6 +2,7 @@
 package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Character Classification Functions
@@ -23,6 +24,20 @@ import org.apache.utlx.core.udm.UDM
  */
 object CharacterFunctions {
     
+    @UTLXFunction(
+        description = "Alphabetic characters include A-Z, a-z, and Unicode letters.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if all characters in the string are alphabetic letters.",
+        example = "isAlpha(...) => result",
+        notes = "Returns true if all characters in the string are alphabetic letters.\nReturns false for empty strings.\nExample:\n```\nisAlpha(\"Hello\") → true\nisAlpha(\"Hello123\") → false\nisAlpha(\"Hello World\") → false (space is not alphabetic)\nisAlpha(\"Ñoño\") → true (Unicode letters)\nisAlpha(\"\") → false\n```",
+        tags = ["cleanup", "string"],
+        since = "1.0"
+    )
     /**
      * Returns true if all characters in the string are alphabetic letters.
      * 
@@ -57,6 +72,20 @@ object CharacterFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Only recognizes 0-9 as numeric digits.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if all characters in the string are numeric digits.",
+        example = "isNumeric(...) => result",
+        notes = "Returns true if all characters in the string are numeric digits.\nReturns false for empty strings and decimal points.\nExample:\n```\nisNumeric(\"12345\") → true\nisNumeric(\"123.45\") → false (decimal point)\nisNumeric(\"123abc\") → false\nisNumeric(\"0\") → true\nisNumeric(\"\") → false\nisNumeric(\"-123\") → false (minus sign)\n```",
+        tags = ["cleanup", "string"],
+        since = "1.0"
+    )
     /**
      * Returns true if all characters in the string are numeric digits.
      * 
@@ -92,6 +121,20 @@ object CharacterFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Combines isAlpha and isNumeric: characters must be A-Z, a-z, 0-9, or Unicode letters.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if all characters are alphabetic letters or numeric digits.",
+        example = "isAlphanumeric(...) => result",
+        notes = "Returns true if all characters are alphabetic letters or numeric digits.\nReturns false for empty strings.\nExample:\n```\nisAlphanumeric(\"Hello123\") → true\nisAlphanumeric(\"Hello 123\") → false (space)\nisAlphanumeric(\"abc\") → true\nisAlphanumeric(\"123\") → true\nisAlphanumeric(\"abc-123\") → false (hyphen)\nisAlphanumeric(\"\") → false\n```",
+        tags = ["cleanup", "string"],
+        since = "1.0"
+    )
     /**
      * Returns true if all characters are alphabetic letters or numeric digits.
      * 
@@ -127,6 +170,20 @@ object CharacterFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Whitespace includes spaces, tabs, newlines, and other Unicode whitespace.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if all characters in the string are whitespace.",
+        example = "isWhitespace(...) => result",
+        notes = "Returns true if all characters in the string are whitespace.\nReturns false for empty strings (no whitespace to check).\nExample:\n```\nisWhitespace(\"   \") → true\nisWhitespace(\"\\t\\n\") → true\nisWhitespace(\"Hello World\") → false\nisWhitespace(\" a \") → false\nisWhitespace(\"\") → false\n```",
+        tags = ["cleanup", "string"],
+        since = "1.0"
+    )
     /**
      * Returns true if all characters in the string are whitespace.
      * 
@@ -161,6 +218,20 @@ object CharacterFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Non-alphabetic characters (digits, spaces, etc.) are ignored.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if all alphabetic characters in the string are uppercase.",
+        example = "isUpperCase(...) => result",
+        notes = "Returns true if all alphabetic characters in the string are uppercase.\nReturns true if there are no alphabetic characters.\nReturns false for empty strings.\nExample:\n```\nisUpperCase(\"HELLO\") → true\nisUpperCase(\"HELLO123\") → true (digits ignored)\nisUpperCase(\"HELLO WORLD\") → true\nisUpperCase(\"Hello\") → false\nisUpperCase(\"123\") → true (no letters)\nisUpperCase(\"\") → false\n```",
+        tags = ["cleanup", "string"],
+        since = "1.0"
+    )
     /**
      * Returns true if all alphabetic characters in the string are uppercase.
      * 
@@ -205,6 +276,20 @@ object CharacterFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Non-alphabetic characters (digits, spaces, etc.) are ignored.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if all alphabetic characters in the string are lowercase.",
+        example = "isLowerCase(...) => result",
+        notes = "Returns true if all alphabetic characters in the string are lowercase.\nReturns true if there are no alphabetic characters.\nReturns false for empty strings.\nExample:\n```\nisLowerCase(\"hello\") → true\nisLowerCase(\"hello123\") → true (digits ignored)\nisLowerCase(\"hello world\") → true\nisLowerCase(\"Hello\") → false\nisLowerCase(\"123\") → true (no letters)\nisLowerCase(\"\") → false\n```",
+        tags = ["cleanup", "string"],
+        since = "1.0"
+    )
     /**
      * Returns true if all alphabetic characters in the string are lowercase.
      * 
@@ -249,6 +334,20 @@ object CharacterFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Printable characters include letters, digits, punctuation, and spaces.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if all characters in the string are printable.",
+        example = "isPrintable(...) => result",
+        notes = "Returns true if all characters in the string are printable.\nNon-printable characters include control characters, null bytes, etc.\nReturns false for empty strings.\nExample:\n```\nisPrintable(\"Hello World!\") → true\nisPrintable(\"Line1\\nLine2\") → false (newline)\nisPrintable(\"Tab\\there\") → false (tab)\nisPrintable(\"abc123!@#\") → true\nisPrintable(\"\") → false\n```",
+        tags = ["cleanup", "null-handling", "string"],
+        since = "1.0"
+    )
     /**
      * Returns true if all characters in the string are printable.
      * 
@@ -287,6 +386,20 @@ object CharacterFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "ASCII includes standard English letters, digits, and punctuation.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if all characters are in the ASCII range (0-127).",
+        example = "isAscii(...) => result",
+        notes = "Returns true if all characters are in the ASCII range (0-127).\nReturns false for empty strings and Unicode characters.\nExample:\n```\nisAscii(\"Hello\") → true\nisAscii(\"Hello123\") → true\nisAscii(\"Ñoño\") → false (Ñ is not ASCII)\nisAscii(\"你好\") → false (Chinese characters)\nisAscii(\"\") → false\n```",
+        tags = ["cleanup", "string"],
+        since = "1.0"
+    )
     /**
      * Returns true if all characters are in the ASCII range (0-127).
      * 
@@ -321,6 +434,20 @@ object CharacterFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if the string contains only hexadecimal digits (0-9, A-F, a-f).",
+        example = "isHexadecimal(...) => result",
+        notes = "Returns true if the string contains only hexadecimal digits (0-9, A-F, a-f).\n```\nisHexadecimal(\"1A2F\") → true\nisHexadecimal(\"ABCDEF\") → true\nisHexadecimal(\"123xyz\") → false\nisHexadecimal(\"0x1A2F\") → false (has '0x' prefix)\nisHexadecimal(\"\") → false\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Returns true if the string contains only hexadecimal digits (0-9, A-F, a-f).
      * 
@@ -354,6 +481,20 @@ object CharacterFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if the string contains at least one alphabetic character.",
+        example = "hasAlpha(...) => result",
+        notes = "Returns true if the string contains at least one alphabetic character.\n```\nhasAlpha(\"Hello123\") → true\nhasAlpha(\"123\") → false\nhasAlpha(\"123a\") → true\nhasAlpha(\"\") → false\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Returns true if the string contains at least one alphabetic character.
      * 
@@ -378,6 +519,20 @@ object CharacterFunctions {
         return UDM.Scalar(result)
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "true if the string contains at least one numeric digit.",
+        example = "hasNumeric(...) => result",
+        notes = "Returns true if the string contains at least one numeric digit.\n```\nhasNumeric(\"Hello123\") → true\nhasNumeric(\"Hello\") → false\nhasNumeric(\"a1\") → true\nhasNumeric(\"\") → false\n```",
+        tags = ["string"],
+        since = "1.0"
+    )
     /**
      * Returns true if the string contains at least one numeric digit.
      * 

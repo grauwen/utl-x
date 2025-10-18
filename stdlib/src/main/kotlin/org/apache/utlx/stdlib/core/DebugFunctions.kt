@@ -5,6 +5,7 @@ import org.apache.utlx.core.udm.*
 import org.apache.utlx.stdlib.FunctionArgumentException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Debug and logging functions for UTL-X
@@ -35,6 +36,20 @@ object DebugFunctions {
         val data: UDM?
     )
     
+    @UTLXFunction(
+        description = "Sets the minimum log level",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "level: Level value"
+        ],
+        returns = "Result of the operation",
+        example = "setLogLevel(...) => result",
+        notes = "Example:\n```\nsetLogLevel(\"DEBUG\")\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Sets the minimum log level
      * 
@@ -65,6 +80,20 @@ object DebugFunctions {
         return UDM.Scalar(true)
     }
     
+    @UTLXFunction(
+        description = "Enables or disables console logging",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "enabled: Enabled value"
+        ],
+        returns = "Result of the operation",
+        example = "setConsoleLogging(...) => result",
+        notes = "Example:\n```\nsetConsoleLogging(false) // Disable console output\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Enables or disables console logging
      * 
@@ -102,6 +131,20 @@ object DebugFunctions {
     // BASIC LOGGING
     // ============================================
     
+    @UTLXFunction(
+        description = "Logs a value with optional message (passthrough)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "the value unchanged, allowing use in pipelines.",
+        example = "log(...) => result",
+        notes = "Returns the value unchanged, allowing use in pipelines.\nExamples:\n```\nlog(data) // Logs and returns data\nlog(data, \"Processing:\") // With message\n// In pipeline:\ninput.items\n|> map(item => item.price)\n|> log(\"Prices:\")\n|> sum()\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs a value with optional message (passthrough)
      * 
@@ -134,6 +177,20 @@ object DebugFunctions {
         return value // Passthrough
     }
     
+    @UTLXFunction(
+        description = "Logs with TRACE level",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "message: Message value"
+        ],
+        returns = "Result of the operation",
+        example = "trace(...) => result",
+        notes = "Example:\n```\ntrace(\"Entering function\", input)\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs with TRACE level
      * 
@@ -157,6 +214,20 @@ object DebugFunctions {
         return data
     }
     
+    @UTLXFunction(
+        description = "Logs with DEBUG level",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "message: Message value"
+        ],
+        returns = "Result of the operation",
+        example = "debug(...) => result",
+        notes = "Example:\n```\ndebug(\"Variable state\", myVar)\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs with DEBUG level
      * 
@@ -180,6 +251,20 @@ object DebugFunctions {
         return data
     }
     
+    @UTLXFunction(
+        description = "Logs with INFO level",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "message: Message value"
+        ],
+        returns = "Result of the operation",
+        example = "info(...) => result",
+        notes = "Example:\n```\ninfo(\"Processing completed\", result)\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs with INFO level
      * 
@@ -203,6 +288,20 @@ object DebugFunctions {
         return data
     }
     
+    @UTLXFunction(
+        description = "Logs with WARN level",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "warn(...) => result",
+        notes = "Example:\n```\nwarn(\"Missing optional field\", fieldName)\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs with WARN level
      * 
@@ -226,6 +325,21 @@ object DebugFunctions {
         return data
     }
     
+    @UTLXFunction(
+        description = "Logs with ERROR level",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "error(...) => result",
+        notes = "Example:\n```\nerror(\"Validation failed\", invalidData)\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs with ERROR level
      * 
@@ -253,6 +367,21 @@ object DebugFunctions {
     // INSPECTION FUNCTIONS
     // ============================================
     
+    @UTLXFunction(
+        description = "Logs the type of a value",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process",
+        "predicate: Function to test each element (element) => boolean"
+        ],
+        returns = "Result of the operation",
+        example = "logType(...) => result",
+        notes = "Example:\n```\nlogType(data, \"Input type:\")\n// Logs: \"Input type: Array\"\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs the type of a value
      * 
@@ -293,6 +422,20 @@ object DebugFunctions {
         return value
     }
     
+    @UTLXFunction(
+        description = "Logs the size/length of a value",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "logSize(...) => result",
+        notes = "Example:\n```\nlogSize(items, \"Item count:\")\n// Logs: \"Item count: 25\"\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs the size/length of a value
      * 
@@ -327,6 +470,20 @@ object DebugFunctions {
         return value
     }
     
+    @UTLXFunction(
+        description = "Logs a pretty-printed representation of a value",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "value: Value value"
+        ],
+        returns = "Result of the operation",
+        example = "logPretty(...) => result",
+        notes = "Example:\n```\nlogPretty(complexObject, \"Result:\", 4)\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs a pretty-printed representation of a value
      * 
@@ -361,6 +518,20 @@ object DebugFunctions {
         return value
     }
     
+    @UTLXFunction(
+        description = "Logs execution time of a block",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "startTimer(...) => result",
+        notes = "Note: This is a placeholder for actual timing implementation\nin the UTL-X runtime.\nExample:\n```\nlet timer = startTimer(\"Data processing\")\n// ... do work ...\nendTimer(timer)\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs execution time of a block
      * 
@@ -388,6 +559,20 @@ object DebugFunctions {
         ))
     }
     
+    @UTLXFunction(
+        description = "Logs elapsed time since startTimer()",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "endTimer(...) => result",
+        notes = "Example:\n```\nlet timer = startTimer(\"Processing\")\n// ... work ...\nendTimer(timer) // Logs: \"Processing: 125.3ms\"\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Logs elapsed time since startTimer()
      * 
@@ -422,6 +607,20 @@ object DebugFunctions {
     // LOG MANAGEMENT
     // ============================================
     
+    @UTLXFunction(
+        description = "Retrieves all log entries",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "getLogs(...) => result",
+        notes = "Example:\n```\ngetLogs() // Returns all logged entries\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Retrieves all log entries
      * 
@@ -445,6 +644,20 @@ object DebugFunctions {
         return UDM.Array(logs)
     }
     
+    @UTLXFunction(
+        description = "Clears all log entries",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "condition: Condition value"
+        ],
+        returns = "Result of the operation",
+        example = "clearLogs(...) => result",
+        notes = "Example:\n```\nclearLogs() // Empties log buffer\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Clears all log entries
      * 
@@ -461,6 +674,20 @@ object DebugFunctions {
         return UDM.Scalar(count.toDouble())
     }
     
+    @UTLXFunction(
+        description = "Example:",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "condition: Condition value"
+        ],
+        returns = "count of log entries",
+        example = "logCount(...) => result",
+        notes = "Returns count of log entries\n```\nlogCount() // Returns: 42\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Returns count of log entries
      * 
@@ -479,6 +706,21 @@ object DebugFunctions {
     // ASSERTION FUNCTIONS
     // ============================================
     
+    @UTLXFunction(
+        description = "Asserts a condition is true",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Core",
+        parameters = [
+            "condition: Condition value",
+        "expected: Expected value"
+        ],
+        returns = "Result of the operation",
+        example = "assert(...) => result",
+        notes = "Example:\n```\nassert(price > 0, \"Price must be positive\")\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Asserts a condition is true
      * 
@@ -508,6 +750,21 @@ object DebugFunctions {
         return condition
     }
     
+    @UTLXFunction(
+        description = "Asserts two values are equal",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Core",
+        parameters = [
+            "actual: Actual value",
+        "expected: Expected value"
+        ],
+        returns = "Result of the operation",
+        example = "assertEqual(...) => result",
+        notes = "Example:\n```\nassertEqual(result, 42, \"Result should be 42\")\n```",
+        tags = ["core"],
+        since = "1.0"
+    )
     /**
      * Asserts two values are equal
      * 

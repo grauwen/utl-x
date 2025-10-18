@@ -4,12 +4,27 @@ package org.apache.utlx.stdlib.math
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import java.text.DecimalFormat
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Extended numeric functions
  */
 object ExtendedMathFunctions {
     
+    @UTLXFunction(
+        description = "Format number with pattern",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "number: Number value",
+        "pattern: Pattern value"
+        ],
+        returns = "Result of the operation",
+        example = "format-number(1234.56, \"#,##0.00\") => \"1,234.56\"",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Format number with pattern
      * Usage: format-number(1234.56, "#,##0.00") => "1,234.56"
@@ -27,6 +42,19 @@ object ExtendedMathFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Parse integer from string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "parse-int(\"42\") => 42",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Parse integer from string
      * Usage: parse-int("42") => 42
@@ -41,6 +69,19 @@ object ExtendedMathFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Parse float from string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "str: Str value"
+        ],
+        returns = "Result of the operation",
+        example = "parse-float(\"3.14\") => 3.14",
+        tags = ["math"],
+        since = "1.0"
+    )
     /**
      * Parse float from string
      * Usage: parse-float("3.14") => 3.14

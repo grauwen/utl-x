@@ -9,6 +9,7 @@ import java.net.URLDecoder
 import java.security.MessageDigest
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Encoding and Hashing Functions
@@ -26,6 +27,19 @@ import javax.crypto.spec.SecretKeySpec
  */
 object EncodingFunctions {
     
+    @UTLXFunction(
+        description = "Base64 encode",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "base64-encode(\"Hello World\")",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Base64 encode
      * Usage: base64-encode("Hello World")
@@ -37,6 +51,19 @@ object EncodingFunctions {
         return UDM.Scalar(encoded)
     }
     
+    @UTLXFunction(
+        description = "Base64 decode",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "base64-decode(\"SGVsbG8gV29ybGQ=\")",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Base64 decode
      * Usage: base64-decode("SGVsbG8gV29ybGQ=")
@@ -52,6 +79,19 @@ object EncodingFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "URL encode",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "url-encode(\"hello world!\")",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * URL encode
      * Usage: url-encode("hello world!")
@@ -63,6 +103,19 @@ object EncodingFunctions {
         return UDM.Scalar(encoded)
     }
     
+    @UTLXFunction(
+        description = "URL decode",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "url-decode(\"hello+world%21\")",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * URL decode
      * Usage: url-decode("hello+world%21")
@@ -74,6 +127,19 @@ object EncodingFunctions {
         return UDM.Scalar(decoded)
     }
     
+    @UTLXFunction(
+        description = "Hex encode",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "hex-encode(\"Hello\")",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Hex encode
      * Usage: hex-encode("Hello")
@@ -87,6 +153,19 @@ object EncodingFunctions {
         return UDM.Scalar(hex)
     }
     
+    @UTLXFunction(
+        description = "Hex decode",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "hex-decode(\"48656c6c6f\")",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Hex decode
      * Usage: hex-decode("48656c6c6f")
@@ -102,6 +181,20 @@ object EncodingFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Calculate MD5 hash of a string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "hexadecimal string representation of the MD5 hash.",
+        example = "md5(...) => result",
+        notes = "Returns hexadecimal string representation of the MD5 hash.\n```kotlin\nmd5(UDM.Scalar(\"hello\"))\n// Returns: UDM.Scalar(\"5d41402abc4b2a76b9719d911017c592\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
         /**
      * Calculate MD5 hash of a string
      * 
@@ -129,6 +222,20 @@ object EncodingFunctions {
         return UDM.Scalar(hexString)
     }
     
+    @UTLXFunction(
+        description = "Calculate SHA-256 hash of a string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "hexadecimal string representation of the SHA-256 hash.",
+        example = "sha256(...) => result",
+        notes = "Returns hexadecimal string representation of the SHA-256 hash.\nSHA-256 is part of the SHA-2 family and is cryptographically secure.\n```kotlin\nsha256(UDM.Scalar(\"hello\"))\n// Returns: UDM.Scalar(\"2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Calculate SHA-256 hash of a string
      * 
@@ -157,6 +264,20 @@ object EncodingFunctions {
         return UDM.Scalar(hexString)
     }
     
+    @UTLXFunction(
+        description = "Calculate SHA-512 hash of a string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "hexadecimal string representation of the SHA-512 hash.",
+        example = "sha512(...) => result",
+        notes = "Returns hexadecimal string representation of the SHA-512 hash.\nSHA-512 is part of the SHA-2 family and provides higher security than SHA-256.\n```kotlin\nsha512(UDM.Scalar(\"hello\"))\n// Returns: UDM.Scalar(\"9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043\")\n```",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Calculate SHA-512 hash of a string
      * 
@@ -201,6 +322,20 @@ object EncodingFunctions {
         message = "SHA-1 is cryptographically broken. Use sha256() or sha512() instead.",
         replaceWith = ReplaceWith("sha256(str)")
     )
+
+    @UTLXFunction(
+        description = "Performs sha1 operation",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Result of the operation",
+        example = "sha1(...) => result",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     fun sha1(args: List<UDM>): UDM {
         requireArgs(args, 1, "sha1")
         val str = args[0]
@@ -214,6 +349,20 @@ object EncodingFunctions {
         return UDM.Scalar(hexString)
     }
     
+    @UTLXFunction(
+        description = "Calculate hash using specified algorithm",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process"
+        ],
+        returns = "Boolean indicating the result",
+        example = "hash(...) => result",
+        notes = "Generic hash function that supports multiple algorithms.\n```kotlin\nhash(UDM.Scalar(\"hello\"), UDM.Scalar(\"SHA-256\"))\n// Returns same as sha256(\"hello\")\n```\nSupported algorithms:\n- MD5\n- SHA-1 (deprecated)\n- SHA-256\n- SHA-512\n- SHA-384",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Calculate hash using specified algorithm
      * 
@@ -259,6 +408,21 @@ object EncodingFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Calculate HMAC (Hash-based Message Authentication Code)",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Encoding",
+        parameters = [
+            "array: Input array to process",
+        "key: Key value"
+        ],
+        returns = "Result of the operation",
+        example = "hmac(...) => result",
+        notes = "HMAC provides message authentication using a cryptographic hash function\nin combination with a secret key.\n```kotlin\nhmac(UDM.Scalar(\"hello\"), UDM.Scalar(\"secret-key\"), UDM.Scalar(\"HmacSHA256\"))\n// Returns HMAC-SHA256 hash\n```\nSupported algorithms:\n- HmacMD5\n- HmacSHA1\n- HmacSHA256 (recommended)\n- HmacSHA512",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     /**
      * Calculate HMAC (Hash-based Message Authentication Code)
      * 

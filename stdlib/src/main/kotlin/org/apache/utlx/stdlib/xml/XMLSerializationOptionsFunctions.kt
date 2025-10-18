@@ -3,6 +3,7 @@ package org.apache.utlx.stdlib.xml
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 
 /**
@@ -16,6 +17,21 @@ import org.apache.utlx.stdlib.FunctionArgumentException
  */
 object XMLSerializationOptionsFunctions {
 
+    @UTLXFunction(
+        description = "Enforces specific namespace prefixes on an XML string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value",
+        "mappings: Mappings value"
+        ],
+        returns = "Result of the operation",
+        example = "enforceNamespacePrefixes(...) => result",
+        notes = "Example:\n```\nenforceNamespacePrefixes(\"<ns1:Element xmlns:ns1='http://example.com'/>\",\n{\"http://example.com\": \"ex\"})\n// Returns: \"<ex:Element xmlns:ex='http://example.com'/>\"\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Enforces specific namespace prefixes on an XML string
      * 
@@ -51,6 +67,25 @@ object XMLSerializationOptionsFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Formats empty elements according to specified style",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "xml: Xml value",
+        "style: Style value"
+        ],
+        returns = "Result of the operation",
+        example = "formatEmptyElements(...) => result",
+        notes = """Styles:
+- "self-closing": <element/>
+- "explicit": <element></element>
+- "nil": <element xsi:nil="true"/>
+- "omit": remove empty elements entirely""",
+        tags = ["cleanup", "xml"],
+        since = "1.0"
+    )
     /**
      * Formats empty elements according to specified style
      * 
@@ -82,6 +117,21 @@ object XMLSerializationOptionsFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Adds namespace declarations to XML",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "xml: Xml value",
+        "namespaces: Namespaces value"
+        ],
+        returns = "Result of the operation",
+        example = "addNamespaceDeclarations(...) => result",
+        notes = "Example:\n```\naddNamespaceDeclarations(\"<root/>\", {\"xsi\": \"http://www.w3.org/2001/XMLSchema-instance\"})\n// Returns: \"<root xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'/>\"\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Adds namespace declarations to XML
      * 
@@ -116,6 +166,20 @@ object XMLSerializationOptionsFunctions {
         }
     }
 
+    @UTLXFunction(
+        description = "Creates SOAP envelope with proper namespace prefixes",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "body: Body value"
+        ],
+        returns = "Result of the operation",
+        example = "createSOAPEnvelope(...) => result",
+        notes = "Example:\n```\ncreateSOAPEnvelope(bodyContent, \"1.1\")\n// Returns SOAP 1.1 envelope with proper soap: prefix\n```",
+        tags = ["xml"],
+        since = "1.0"
+    )
     /**
      * Creates SOAP envelope with proper namespace prefixes
      * 
