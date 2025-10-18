@@ -1,0 +1,61 @@
+name: "validateEncoding_basic"
+category: "stdlib/xml"
+description: "Test encoding validation function"
+tags: ["xml", "encoding", "validation"]
+
+input:
+  format: json
+  data: "UTF-8"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  validateEncoding(@input)
+
+expected:
+  format: json
+  data: true
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "valid_iso_8859_1"
+    input:
+      format: json
+      data: "ISO-8859-1"
+    expected:
+      format: json
+      data: true
+      
+  - name: "valid_windows_1252"
+    input:
+      format: json
+      data: "windows-1252"
+    expected:
+      format: json
+      data: true
+      
+  - name: "invalid_encoding"
+    input:
+      format: json
+      data: "INVALID-ENCODING-NAME"
+    expected:
+      format: json
+      data: false
+      
+  - name: "case_insensitive"
+    input:
+      format: json
+      data: "utf-8"
+    expected:
+      format: json
+      data: true
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - XML Encoding Functions"]

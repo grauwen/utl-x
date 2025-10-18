@@ -1,0 +1,53 @@
+name: "stripBOM_basic"
+category: "stdlib/xml"
+description: "Test BOM character removal from string"
+tags: ["xml", "bom", "string"]
+
+input:
+  format: json
+  data: "\uFEFF<?xml version=\"1.0\"?><root/>"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  stripBOM(@input)
+
+expected:
+  format: json
+  data: "<?xml version=\"1.0\"?><root/>"
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "no_bom_present"
+    input:
+      format: json
+      data: "<?xml version=\"1.0\"?><root/>"
+    expected:
+      format: json
+      data: "<?xml version=\"1.0\"?><root/>"
+      
+  - name: "bom_with_text"
+    input:
+      format: json
+      data: "\uFEFFHello World"
+    expected:
+      format: json
+      data: "Hello World"
+      
+  - name: "empty_string_with_bom"
+    input:
+      format: json
+      data: "\uFEFF"
+    expected:
+      format: json
+      data: ""
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - XML BOM Functions"]

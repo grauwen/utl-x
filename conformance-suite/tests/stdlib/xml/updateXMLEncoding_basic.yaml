@@ -1,0 +1,53 @@
+name: "updateXMLEncoding_basic"
+category: "stdlib/xml"
+description: "Test XML encoding declaration update function"
+tags: ["xml", "encoding", "update"]
+
+input:
+  format: json
+  data: ["<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><root/>", "UTF-8"]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  updateXMLEncoding(@input[0], @input[1])
+
+expected:
+  format: json
+  data: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root/>"
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 5
+
+variants:
+  - name: "add_encoding_to_declaration"
+    input:
+      format: json
+      data: ["<?xml version=\"1.0\"?><root/>", "UTF-8"]
+    expected:
+      format: json
+      data: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root/>"
+      
+  - name: "no_xml_declaration"
+    input:
+      format: json
+      data: ["<root/>", "UTF-8"]
+    expected:
+      format: json
+      data: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root/>"
+      
+  - name: "case_insensitive_encoding"
+    input:
+      format: json
+      data: ["<?xml version=\"1.0\" ENCODING=\"utf-8\"?><root/>", "ISO-8859-1"]
+    expected:
+      format: json
+      data: "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><root/>"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - XML Encoding Functions"]

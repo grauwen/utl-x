@@ -1,0 +1,45 @@
+name: "convertXMLEncoding_basic"
+category: "stdlib/xml"
+description: "Test XML encoding conversion function"
+tags: ["xml", "encoding", "conversion"]
+
+input:
+  format: json
+  data: ["<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><root><text>Hello</text></root>", "ISO-8859-1", "UTF-8"]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  convertXMLEncoding(@input[0], @input[1], @input[2])
+
+expected:
+  format: json
+  data: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root><text>Hello</text></root>"
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "utf8_to_iso"
+    input:
+      format: json
+      data: ["<?xml version=\"1.0\" encoding=\"UTF-8\"?><root><text>Test</text></root>", "UTF-8", "ISO-8859-1"]
+    expected:
+      format: json
+      data: "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><root><text>Test</text></root>"
+      
+  - name: "windows_1252_to_utf8"
+    input:
+      format: json
+      data: ["<?xml version=\"1.0\" encoding=\"windows-1252\"?><root/>", "windows-1252", "UTF-8"]
+    expected:
+      format: json
+      data: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root/>"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - XML Encoding Functions"]

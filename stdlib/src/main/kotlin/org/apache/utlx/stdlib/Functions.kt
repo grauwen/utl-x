@@ -638,6 +638,20 @@ object StandardLibrary {
         register("escapeXML", CDATAFunctions::escapeXML)
         register("unescapeXML", CDATAFunctions::unescapeXML)
 
+        // XML Encoding and BOM functions
+        register("detectXMLEncoding", XMLEncodingBomFunctions::detectXMLEncoding)
+        register("convertXMLEncoding", XMLEncodingBomFunctions::convertXMLEncoding)
+        register("updateXMLEncoding", XMLEncodingBomFunctions::updateXMLEncoding)
+        register("validateEncoding", XMLEncodingBomFunctions::validateEncoding)
+        register("normalizeXMLEncoding", XMLEncodingBomFunctions::normalizeXMLEncoding)
+        register("detectBOM", XMLEncodingBomFunctions::detectBOM)
+        register("addBOM", XMLEncodingBomFunctions::addBOM)
+        register("removeBOM", XMLEncodingBomFunctions::removeBOM)
+        register("hasBOM", XMLEncodingBomFunctions::hasBOM)
+        register("getBOMBytes", XMLEncodingBomFunctions::getBOMBytes)
+        register("stripBOM", XMLEncodingBomFunctions::stripBOM)
+        register("normalizeBOM", XMLEncodingBomFunctions::normalizeBOM)
+
     }
 
     private fun registerC14NFunctions() {

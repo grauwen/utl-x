@@ -1,0 +1,62 @@
+name: "detectXMLEncoding_basic"
+category: "stdlib/xml"
+description: "Test XML encoding detection function"
+tags: ["xml", "encoding", "detection"]
+
+input:
+  format: json
+  data: "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><root/>"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  detectXMLEncoding(@input)
+
+expected:
+  format: json
+  data: "ISO-8859-1"
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "utf8_bom"
+    input:
+      format: json
+      data: "\uFEFF<?xml version=\"1.0\"?><root/>"
+    expected:
+      format: json
+      data: "UTF-8"
+      
+  - name: "no_encoding_declaration"
+    input:
+      format: json
+      data: "<?xml version=\"1.0\"?><root/>"
+    expected:
+      format: json
+      data: "UTF-8"
+      
+  - name: "windows_1252"
+    input:
+      format: json
+      data: "<?xml version=\"1.0\" encoding=\"windows-1252\"?><root/>"
+    expected:
+      format: json
+      data: "WINDOWS-1252"
+      
+  - name: "case_insensitive"
+    input:
+      format: json
+      data: "<?xml version=\"1.0\" ENCODING=\"utf-8\"?><root/>"
+    expected:
+      format: json
+      data: "UTF-8"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2024-01-15"
+  references: ["UTL-X Stdlib Reference - XML Encoding Functions"]
+  notes: ["Auto-detects encoding from XML declaration or BOM"]
