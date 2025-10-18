@@ -11,6 +11,7 @@ TODO's
 
 integrate module analysis (design time) into CLI
 
+TEST for duplicates in the stdlib. e.g. upper
 
 utlx piped working? validate
 
