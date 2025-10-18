@@ -1,5 +1,0 @@
-%utlx 1.0
-input json
-output json
----
-reduce(@input, (acc, x) -> acc + x, 0)

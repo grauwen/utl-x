@@ -1,5 +1,0 @@
-%utlx 1.0
-input json
-output json
----
-map(@input, x -> x * 2)
