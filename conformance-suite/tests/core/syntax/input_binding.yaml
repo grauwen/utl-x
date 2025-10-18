@@ -45,6 +45,16 @@ variants:
     input:
       format: json
       data: [1, 2, 3, 4, 5]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      {
+        original: @input,
+        first: @input[0],
+        length: 5
+      }
     expected:
       format: json
       data: {
@@ -66,6 +76,12 @@ variants:
           }
         }
       }
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      @input.user.profile.settings.theme
     expected:
       format: json
       data: "dark"

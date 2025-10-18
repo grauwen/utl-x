@@ -257,17 +257,25 @@ class Interpreter {
         
         return when (target) {
             is RuntimeValue.ArrayValue -> {
-                if (indexNum < 0 || indexNum >= target.elements.size) {
-                    RuntimeValue.NullValue
-                } else {
-                    target.elements[indexNum]
+                if (indexNum < 0) {
+                    throw RuntimeError("Array index out of bounds: negative index $indexNum", expr.location)
                 }
+                if (indexNum >= target.elements.size) {
+                    throw RuntimeError("Array index out of bounds: index $indexNum, size ${target.elements.size}", expr.location)
+                }
+                target.elements[indexNum]
             }
             is RuntimeValue.UDMValue -> {
                 when (val udm = target.udm) {
                     is UDM.Array -> {
+                        if (indexNum < 0) {
+                            throw RuntimeError("Array index out of bounds: negative index $indexNum", expr.location)
+                        }
+                        if (indexNum >= udm.size()) {
+                            throw RuntimeError("Array index out of bounds: index $indexNum, size ${udm.size()}", expr.location)
+                        }
                         val element = udm.get(indexNum)
-                        element?.let { RuntimeValue.UDMValue(it) } ?: RuntimeValue.NullValue
+                        RuntimeValue.UDMValue(element!!)
                     }
                     else -> throw RuntimeError("Cannot index non-array UDM type", expr.location)
                 }
@@ -600,6 +608,65 @@ class Interpreter {
                     val hashBytes = md.digest(str.toByteArray(Charsets.UTF_8))
                     val hexString = hashBytes.joinToString("") { "%02x".format(it) }
                     return RuntimeValue.StringValue(hexString)
+                }
+                "length" -> {
+                    if (arguments.size != 1) throw RuntimeError("length expects 1 argument", location)
+                    val arg = evaluate(arguments[0], env)
+                    val len = when (arg) {
+                        is RuntimeValue.StringValue -> arg.value.length
+                        is RuntimeValue.ArrayValue -> arg.elements.size
+                        is RuntimeValue.ObjectValue -> arg.properties.size
+                        else -> throw RuntimeError("length expects string, array, or object argument", location)
+                    }
+                    return RuntimeValue.NumberValue(len.toDouble())
+                }
+                "count" -> {
+                    if (arguments.size != 1) throw RuntimeError("count expects 1 argument", location)
+                    val arg = evaluate(arguments[0], env)
+                    val count = when (arg) {
+                        is RuntimeValue.ArrayValue -> arg.elements.size
+                        is RuntimeValue.ObjectValue -> arg.properties.size
+                        is RuntimeValue.StringValue -> arg.value.length
+                        else -> throw RuntimeError("count expects array, object, or string argument", location)
+                    }
+                    return RuntimeValue.NumberValue(count.toDouble())
+                }
+                "toString" -> {
+                    if (arguments.size != 1) throw RuntimeError("toString expects 1 argument", location)
+                    val arg = evaluate(arguments[0], env)
+                    val str = when (arg) {
+                        is RuntimeValue.StringValue -> arg.value
+                        is RuntimeValue.NumberValue -> arg.value.toString()
+                        is RuntimeValue.BooleanValue -> arg.value.toString()
+                        is RuntimeValue.NullValue -> "null"
+                        else -> arg.toString()
+                    }
+                    return RuntimeValue.StringValue(str)
+                }
+                "distance" -> {
+                    if (arguments.size != 4) throw RuntimeError("distance expects 4 arguments (lat1, lon1, lat2, lon2)", location)
+                    val args = arguments.map { evaluate(it, env) }
+                    val lat1 = (args[0] as? RuntimeValue.NumberValue)?.value ?: throw RuntimeError("distance expects numeric arguments", location)
+                    val lon1 = (args[1] as? RuntimeValue.NumberValue)?.value ?: throw RuntimeError("distance expects numeric arguments", location)
+                    val lat2 = (args[2] as? RuntimeValue.NumberValue)?.value ?: throw RuntimeError("distance expects numeric arguments", location)
+                    val lon2 = (args[3] as? RuntimeValue.NumberValue)?.value ?: throw RuntimeError("distance expects numeric arguments", location)
+                    
+                    // Haversine formula for distance calculation
+                    val R = 6371.0 // Earth's radius in kilometers
+                    val dLat = Math.toRadians(lat2 - lat1)
+                    val dLon = Math.toRadians(lon2 - lon1)
+                    val a = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
+                            kotlin.math.cos(Math.toRadians(lat1)) * kotlin.math.cos(Math.toRadians(lat2)) *
+                            kotlin.math.sin(dLon / 2) * kotlin.math.sin(dLon / 2)
+                    val c = 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+                    val distance = R * c
+                    
+                    return RuntimeValue.NumberValue(distance)
+                }
+                "now" -> {
+                    if (arguments.isNotEmpty()) throw RuntimeError("now expects no arguments", location)
+                    val currentTime = java.time.Instant.now().toString()
+                    return RuntimeValue.StringValue(currentTime)
                 }
             }
         } catch (e: RuntimeError) {

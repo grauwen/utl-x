@@ -28,6 +28,12 @@ variants:
     input:
       format: json
       data: [1, 2, 3]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      @input[-1]
     error_expected:
       type: "runtime_error"
       message_pattern: ".*negative index.*"
@@ -36,6 +42,12 @@ variants:
     input:
       format: json
       data: []
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      @input[0]
     error_expected:
       type: "runtime_error"
       message_pattern: ".*index out of bounds.*"
@@ -44,6 +56,12 @@ variants:
     input:
       format: json
       data: [1, 2, 3]
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      @input[2]
     expected:
       format: json
       data: 3
