@@ -85,6 +85,7 @@ object Main {
             |  utlx transform input.xml script.utlx -o output.json
             |  utlx validate script.utlx
             |  utlx transform --input-format xml --output-format json script.utlx < input.xml
+            |  utlx transform data.yaml script.utlx --output-format json
             |
             |For more information: https://github.com/grauwen/utl-x
             |Documentation: https://utlx-lang.org/docs

@@ -1,0 +1,16 @@
+name: Jane Smith
+age: 28
+hobbies:
+  - reading
+  - hiking
+  - coding
+contact:
+  email: jane@example.com
+  phone: "+1-555-0123"
+skills:
+  - language: Python
+    level: Expert
+  - language: JavaScript
+    level: Intermediate
+  - language: Kotlin
+    level: Beginner

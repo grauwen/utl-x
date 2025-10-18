@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":formats:xml"))
     implementation(project(":formats:json"))
     implementation(project(":formats:csv"))
+    implementation(project(":formats:yaml"))
     implementation(project(":stdlib"))
     // implementation(project(":stdlib-security"))  // Temporarily disabled
     

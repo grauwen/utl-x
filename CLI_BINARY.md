@@ -63,6 +63,7 @@ The transform command is fully functional with:
 - **XML** - Parse and generate XML
 - **JSON** - Parse and generate JSON  
 - **CSV** - Parse and generate CSV
+- **YAML** - Parse and generate YAML (including .yml extension) ✅ **NEW**
 - **Auto-detection** - Automatically detect input format
 
 ### Transform Command Usage
@@ -76,6 +77,10 @@ cat input.xml | ./utlx transform script.utlx > output.json
 # Force formats
 ./utlx transform input.txt script.utlx --input-format json --output-format xml
 
+# YAML support
+./utlx transform data.yaml script.utlx --output-format json
+./utlx transform data.json script.utlx --output-format yaml
+
 # Verbose mode
 ./utlx transform input.xml script.utlx -v -o output.json
 ```
@@ -83,8 +88,8 @@ cat input.xml | ./utlx transform script.utlx > output.json
 ### Transform Options
 - `-o, --output FILE` - Write output to file
 - `-i, --input FILE` - Read input from file
-- `--input-format FORMAT` - Force input format (xml, json, csv)
-- `--output-format FORMAT` - Force output format (xml, json, csv)
+- `--input-format FORMAT` - Force input format (xml, json, csv, yaml)
+- `--output-format FORMAT` - Force output format (xml, json, csv, yaml)
 - `-v, --verbose` - Enable verbose output
 - `--no-pretty` - Disable pretty-printing
 

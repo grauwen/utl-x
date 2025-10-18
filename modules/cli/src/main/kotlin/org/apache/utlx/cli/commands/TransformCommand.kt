@@ -12,6 +12,8 @@ import org.apache.utlx.formats.json.JSONParser
 import org.apache.utlx.formats.json.JSONSerializer
 import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.csv.CSVSerializer
+import org.apache.utlx.formats.yaml.YAMLParser
+import org.apache.utlx.formats.yaml.YAMLSerializer
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -131,6 +133,7 @@ object TransformCommand {
                 "xml" -> XMLParser(data).parse()
                 "json" -> JSONParser(data).parse()
                 "csv" -> CSVParser(data).parse()
+                "yaml", "yml" -> YAMLParser().parse(data)
                 else -> throw IllegalArgumentException("Unsupported input format: $format")
             }
         } catch (e: Exception) {
@@ -145,6 +148,7 @@ object TransformCommand {
                 "xml" -> XMLSerializer(pretty).serialize(udm)
                 "json" -> JSONSerializer(pretty).serialize(udm)
                 "csv" -> CSVSerializer().serialize(udm)
+                "yaml", "yml" -> YAMLSerializer().serialize(udm)
                 else -> throw IllegalArgumentException("Unsupported output format: $format")
             }
         } catch (e: Exception) {
@@ -156,8 +160,8 @@ object TransformCommand {
     private fun detectFormat(data: String, extension: String?): String {
         // Try extension first
         extension?.lowercase()?.let {
-            if (it in listOf("xml", "json", "csv", "yaml")) {
-                return it
+            if (it in listOf("xml", "json", "csv", "yaml", "yml")) {
+                return if (it == "yml") "yaml" else it
             }
         }
         
@@ -166,6 +170,7 @@ object TransformCommand {
         return when {
             trimmed.startsWith("<") -> "xml"
             trimmed.startsWith("{") || trimmed.startsWith("[") -> "json"
+            trimmed.contains("---") || trimmed.contains(":") && !trimmed.contains(",") -> "yaml"
             trimmed.contains(",") && !trimmed.startsWith("<") -> "csv"
             else -> {
                 System.err.println("Warning: Could not detect format, assuming JSON")
@@ -278,8 +283,8 @@ object TransformCommand {
             |Options:
             |  -o, --output FILE           Write output to FILE (default: stdout)
             |  -i, --input FILE            Read input from FILE
-            |  --input-format FORMAT       Force input format (xml, json, csv)
-            |  --output-format FORMAT      Force output format (xml, json, csv)
+            |  --input-format FORMAT       Force input format (xml, json, csv, yaml)
+            |  --output-format FORMAT      Force output format (xml, json, csv, yaml)
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing
             |  -h, --help                  Show this help message
