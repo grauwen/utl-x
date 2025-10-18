@@ -10,6 +10,8 @@ TODO's
 - module analysis
 - Agentic agent added? How to get an utl for a given inpu and given output
 
+modules/cli/build/libs <-        check if touched by gitore
+
 integrate module analysis (design time) into CLI
 
 TEST for duplicates in the stdlib. e.g. upper
