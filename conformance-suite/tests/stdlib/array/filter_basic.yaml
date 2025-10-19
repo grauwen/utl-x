@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  filter(@input, x -> x % 2 == 0)
+  filter(@input, x => x % 2 == 0)
 
 expected:
   format: json
@@ -56,7 +56,7 @@ variants:
       input json
       output json
       ---
-      filter(@input, x -> x == "apple" || x == "cherry" || x == "date")
+      filter(@input, x => x == "apple" || x == "cherry" || x == "date")
     expected:
       format: json
       data: ["apple", "cherry", "date"]
@@ -74,7 +74,7 @@ variants:
       input json
       output json
       ---
-      filter(@input, x -> x.age >= 25)
+      filter(@input, x => x.age >= 25)
     expected:
       format: json
       data: [

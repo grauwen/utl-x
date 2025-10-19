@@ -20,7 +20,7 @@ transformation: |
   output json
   ---
   {
-    normalized_customers: map(@input.customers, customer -> {
+    normalized_customers: map(@input.customers, customer => {
       name: toTitleCase(trim(customer.name)),
       email: lower(customer.email),
       phone: formatPhone(customer.phone),

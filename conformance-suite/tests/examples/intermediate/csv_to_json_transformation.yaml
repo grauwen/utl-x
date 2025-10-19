@@ -19,7 +19,7 @@ transformation: |
   output json
   ---
   {
-    employees: map(@input, row -> {
+    employees: map(@input, row => {
       id: toNumber(row.employee_id),
       personal: {
         name: row.name,
@@ -40,19 +40,19 @@ transformation: |
     
     summary: {
       total_employees: count(@input),
-      active_employees: count(filter(@input, row -> row.is_active == "true")),
-      departments: unique(map(@input, row -> row.department)),
+      active_employees: count(filter(@input, row => row.is_active == "true")),
+      departments: unique(map(@input, row => row.department)),
       salary_stats: {
-        average: round(avg(map(@input, row -> toNumber(row.salary))), 2),
-        minimum: min(map(@input, row -> toNumber(row.salary))),
-        maximum: max(map(@input, row -> toNumber(row.salary))),
-        total_payroll: sum(map(@input, row -> toNumber(row.salary)))
+        average: round(avg(map(@input, row => toNumber(row.salary))), 2),
+        minimum: min(map(@input, row => toNumber(row.salary))),
+        maximum: max(map(@input, row => toNumber(row.salary))),
+        total_payroll: sum(map(@input, row => toNumber(row.salary)))
       },
-      by_department: map(groupBy(@input, "department"), group -> {
+      by_department: map(groupBy(@input, "department"), group => {
         department: group.key,
         count: count(group.value),
-        avg_salary: round(avg(map(group.value, row -> toNumber(row.salary))), 2),
-        active_count: count(filter(group.value, row -> row.is_active == "true"))
+        avg_salary: round(avg(map(group.value, row => toNumber(row.salary))), 2),
+        active_count: count(filter(group.value, row => row.is_active == "true"))
       })
     }
   }

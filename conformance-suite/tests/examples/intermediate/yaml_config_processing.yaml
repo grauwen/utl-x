@@ -80,13 +80,13 @@ transformation: |
     if (isString(obj)) {
       resolveVariable(obj, env_vars)
     } else if (isArray(obj)) {
-      map(obj, item -> substituteVariables(item, env_vars))
+      map(obj, item => substituteVariables(item, env_vars))
     } else if (isObject(obj)) {
-      let entries = map(keys(obj), key -> {
+      let entries = map(keys(obj), key => {
         key: key,
         value: substituteVariables(obj[key], env_vars)
       })
-      fromEntries(map(entries, entry -> [entry.key, entry.value]))
+      fromEntries(map(entries, entry => [entry.key, entry.value]))
     } else {
       obj
     }
@@ -115,9 +115,9 @@ transformation: |
     if (isString(obj) && matches(obj, "\\$\\{([^}]+)\\}")) {
       [extractBetween(obj, "${", "}")]
     } else if (isArray(obj)) {
-      flatten(map(obj, item -> extractVariables(item)))
+      flatten(map(obj, item => extractVariables(item)))
     } else if (isObject(obj)) {
-      flatten(map(values(obj), value -> extractVariables(value)))
+      flatten(map(values(obj), value => extractVariables(value)))
     } else {
       []
     }
@@ -128,7 +128,7 @@ transformation: |
       has_database: hasKey(config, "database"),
       database_host_set: config.database.host != "",
       redis_configured: config.cache.redis.enabled == false || config.cache.redis.host != "",
-      features_enabled: count(filter(config.features, feature -> feature.enabled == true)) > 0,
+      features_enabled: count(filter(config.features, feature => feature.enabled == true)) > 0,
       logging_level_valid: contains(["DEBUG", "INFO", "WARN", "ERROR"], config.logging.level)
     }
   }

@@ -38,7 +38,7 @@ transformation: |
   }
 
   def extractHeaders(header) {
-    map(header.*, elem -> {
+    map(header.*, elem => {
       name: localName(elem),
       namespace: namespaceUri(elem),
       value: textContent(elem)

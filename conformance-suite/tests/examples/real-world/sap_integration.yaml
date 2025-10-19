@@ -32,8 +32,8 @@ transformation: |
   output json
   ---
   let material = @input.SAP_Response.Material
-  let totalStock = sum(map(material.Availability, avail -> toNumber(avail.Stock)))
-  let totalReserved = sum(map(material.Availability, avail -> toNumber(avail.Reserved)))
+  let totalStock = sum(map(material.Availability, avail => toNumber(avail.Stock)))
+  let totalReserved = sum(map(material.Availability, avail => toNumber(avail.Reserved)))
   let availableStock = totalStock - totalReserved
   
   {
@@ -51,7 +51,7 @@ transformation: |
         status: if (availableStock > 50) "IN_STOCK" 
                else if (availableStock > 0) "LOW_STOCK" 
                else "OUT_OF_STOCK",
-        warehouses: map(material.Availability, avail -> {
+        warehouses: map(material.Availability, avail => {
           id: avail.Warehouse,
           stock: toNumber(avail.Stock),
           reserved: toNumber(avail.Reserved),

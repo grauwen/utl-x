@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  map(@input, x -> x * 2)
+  map(@input, x => x * 2)
 
 expected:
   format: json
@@ -48,7 +48,7 @@ variants:
       input json
       output json
       ---
-      map(@input, x -> upper(x))
+      map(@input, x => upper(x))
     expected:
       format: json
       data: ["HELLO", "WORLD"]
@@ -65,7 +65,7 @@ variants:
       input json
       output json
       ---
-      map(@input, x -> x.name)
+      map(@input, x => x.name)
     expected:
       format: json
       data: ["Alice", "Bob"]

@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  find(@input, x -> x % 2 == 0)
+  find(@input, x => x % 2 == 0)
 
 expected:
   format: json
@@ -32,7 +32,7 @@ variants:
       input json
       output json
       ---
-      find(@input, x -> x % 2 == 0)
+      find(@input, x => x % 2 == 0)
     expected:
       format: json
       data: null
@@ -46,7 +46,7 @@ variants:
       input json
       output json
       ---
-      find(@input, x -> startsWith(x, "b"))
+      find(@input, x => startsWith(x, "b"))
     expected:
       format: json
       data: "banana"
