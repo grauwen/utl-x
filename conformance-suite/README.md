@@ -11,6 +11,48 @@ The UTL-X Conformance Suite ensures:
 - **Documentation by Example**: Canonical examples of every language feature
 - **Quality Assurance**: Systematic testing of edge cases and error conditions
 
+## 🚀 Quick Start
+
+### Running Tests
+
+```bash
+# Run all tests
+./runners/cli-runner/run-all.sh
+
+# Run specific category
+./runners/cli-runner/run-category.sh stdlib/array
+
+# Run performance benchmarks
+./runners/cli-runner/run-performance.sh
+
+# Generate coverage report
+./runners/cli-runner/generate-coverage.sh
+
+#direct 0 (direct output)
+cd conformance-suite
+python3 runners/cli-runner/simple-runner.py
+
+#direct 1 (suppressed output)
+cd conformance-suite
+python3 runners/cli-runner/simple-runner.py 2>&1 | tail -15
+
+#direct 2
+cd conformance-suite
+python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|✗" | awk '/Running:/{test=$2} /✗/{print test}' | sort | uniq
+
+#direct 3
+cd conformance-suite
+python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|  ✗" | grep -B 1 "✗" | grep "Running:" | awk '{print $2}'
+```
+
+### Adding New Tests
+
+1. Create test case in appropriate category directory
+2. Follow the standard test case format (see `test-case-schema.json`)
+3. Add test data to `data/` directory if needed
+4. Update test registry in `tests/registry.json`
+
+
 ## 📁 Structure
 
 ```
@@ -189,46 +231,6 @@ conformance-suite
 
 ```
 
-## 🚀 Quick Start
-
-### Running Tests
-
-```bash
-# Run all tests
-./runners/cli-runner/run-all.sh
-
-# Run specific category
-./runners/cli-runner/run-category.sh stdlib/array
-
-# Run performance benchmarks
-./runners/cli-runner/run-performance.sh
-
-# Generate coverage report
-./runners/cli-runner/generate-coverage.sh
-
-#direct 0 (direct output)
-cd conformance-suite
-python3 runners/cli-runner/simple-runner.py
-
-#direct 1 (suppressed output)
-cd conformance-suite
-python3 runners/cli-runner/simple-runner.py 2>&1 | tail -15
-
-#direct 2
-cd conformance-suite
-python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|✗" | awk '/Running:/{test=$2} /✗/{print test}' | sort | uniq
-
-#direct 3
-cd conformance-suite
-python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|  ✗" | grep -B 1 "✗" | grep "Running:" | awk '{print $2}'
-```
-
-### Adding New Tests
-
-1. Create test case in appropriate category directory
-2. Follow the standard test case format (see `test-case-schema.json`)
-3. Add test data to `data/` directory if needed
-4. Update test registry in `tests/registry.json`
 
 ## 📋 Test Categories
 
