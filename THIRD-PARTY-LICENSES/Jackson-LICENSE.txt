@@ -1,0 +1,6 @@
+Jackson JSON Processor
+Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
+
+Licensed under the Apache License, Version 2.0
+
+[Full Apache 2.0 license text here]
