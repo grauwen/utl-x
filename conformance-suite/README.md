@@ -45,7 +45,11 @@ conformance-suite/
 # Generate coverage report
 ./runners/cli-runner/generate-coverage.sh
 
-#direct 1
+#direct 0 (direct output)
+cd conformance-suite
+python3 runners/cli-runner/simple-runner.py
+
+#direct 1 (suppressed output)
 cd conformance-suite
 python3 runners/cli-runner/simple-runner.py 2>&1 | tail -15
 
