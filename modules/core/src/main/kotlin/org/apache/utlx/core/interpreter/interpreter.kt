@@ -169,12 +169,20 @@ class Interpreter {
                 env.define(expr.name, value)
                 value
             }
-            
+
+            is Expression.Block -> {
+                var result: RuntimeValue = RuntimeValue.NullValue
+                for (expression in expr.expressions) {
+                    result = evaluate(expression, env)
+                }
+                result
+            }
+
             is Expression.Lambda -> {
                 val paramNames = expr.parameters.map { it.name }
                 RuntimeValue.FunctionValue(paramNames, expr.body, env)
             }
-            
+
             is Expression.FunctionCall -> evaluateFunctionCall(expr, env)
             
             is Expression.Pipe -> {

@@ -50,18 +50,37 @@ class Parser(private val tokens: List<Token>) {
     private fun parseProgram(): Program {
         val startToken = peek()
         val header = parseHeader()
-        
+
         // Expect --- separator
         if (!match(TokenType.TRIPLE_DASH)) {
             error("Expected '---' separator after header")
         }
-        
-        val body = parseExpression()
-        
+
+        // Parse body: can be multiple let bindings followed by a final expression
+        val expressions = mutableListOf<Expression>()
+
+        // Collect let bindings and other expressions
+        while (!isAtEnd()) {
+            val expr = parseExpression()
+            expressions.add(expr)
+
+            // If this is not a let binding, it should be the final expression
+            if (expr !is Expression.LetBinding) {
+                break
+            }
+        }
+
         if (!isAtEnd()) {
             error("Unexpected tokens after program body")
         }
-        
+
+        // Create body: if single expression, use it directly; otherwise wrap in Block
+        val body = if (expressions.size == 1) {
+            expressions[0]
+        } else {
+            Expression.Block(expressions, Location.from(startToken))
+        }
+
         return Program(header, body, Location.from(startToken))
     }
     
@@ -347,6 +366,9 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.LET) -> {
                 parseLetBinding()
             }
+            match(TokenType.IF) -> {
+                parsePrefixIfExpression()
+            }
             match(TokenType.AT) -> {
                 // Handle @input or @variable
                 val atToken = previous()
@@ -423,10 +445,34 @@ class Parser(private val tokens: List<Token>) {
         val name = consume(TokenType.IDENTIFIER, "Expected variable name").lexeme
         consume(TokenType.ASSIGN, "Expected '=' after variable name")
         val value = parseExpression()
-        
+
         return Expression.LetBinding(name, value, Location.from(startToken))
     }
-    
+
+    private fun parsePrefixIfExpression(): Expression {
+        val startToken = previous() // IF
+        consume(TokenType.LPAREN, "Expected '(' after 'if'")
+        val condition = parseExpression()
+        consume(TokenType.RPAREN, "Expected ')' after condition")
+        val thenBranch = parsePrimary() // Don't use parseExpression to avoid operator precedence issues
+        val elseBranch = if (match(TokenType.ELSE)) {
+            parsePrefixIfOrPrimary()
+        } else {
+            null
+        }
+
+        return Expression.Conditional(condition, thenBranch, elseBranch, Location.from(startToken))
+    }
+
+    private fun parsePrefixIfOrPrimary(): Expression {
+        return if (check(TokenType.IF)) {
+            advance()
+            parsePrefixIfExpression()
+        } else {
+            parsePrimary()
+        }
+    }
+
     private fun parseArguments(): List<Expression> {
         val args = mutableListOf<Expression>()
         

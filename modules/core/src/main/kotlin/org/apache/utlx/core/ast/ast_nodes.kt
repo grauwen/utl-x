@@ -201,7 +201,7 @@ sealed class Expression : Node() {
         val cases: List<MatchCase>,
         override val location: Location
     ) : Expression()
-    
+
     /**
      * Template application: apply(selector)
      */
