@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Console appender for errors only -->
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Suppress Apache XML Security DEBUG messages -->
+    <logger name="org.apache.xml.security" level="WARN"/>
+
+    <!-- Suppress SLF4J warnings -->
+    <logger name="org.slf4j" level="WARN"/>
+
+    <!-- Root logger - only show errors -->
+    <root level="ERROR">
+        <appender-ref ref="STDERR"/>
+    </root>
+</configuration>
