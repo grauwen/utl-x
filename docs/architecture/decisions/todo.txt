@@ -19,7 +19,15 @@ python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|✗" | awk 
 - als previous test add to conformance suite as test
 
 Lexer accpets both => and ->     should we add a depricate warning for ->
+---
+BUGS
 
+The XML serializer expects attributes to be in udm.attributes, but there's no syntax to create attributes from transformations. The @id: value syntax isn't implemented in the parser yet.
+
+tests/examples/basic/json_to_xml_conversion.yaml
+These tests use unimplemented syntax features.
+——
+----
 modules/cli/build/libs <-        check if touched by gitore
 
 integrate module analysis (design time) into CLI
