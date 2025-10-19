@@ -1,0 +1,5 @@
+JLine 3.x
+Copyright (c) 2002-2024, the original author or authors.
+All rights reserved.
+
+Licensed under the BSD License
