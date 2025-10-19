@@ -50,10 +50,20 @@ def run_utlx_transform(utlx_cli: Path, transformation: str, input_data: str) -> 
 def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -> bool:
     """Run a single test case"""
     print(f"Running: {test_name}")
-    
+
     # Extract test data
     transformation = test_case['transformation']
-    input_data = json.dumps(test_case['input']['data'])
+    input_format = test_case['input'].get('format', 'json')
+
+    # Handle input data based on format
+    raw_data = test_case['input']['data']
+    if isinstance(raw_data, str) and input_format in ['xml', 'csv', 'yaml', 'yml']:
+        # For text-based formats (XML, CSV, YAML), use string as-is
+        input_data = raw_data
+    else:
+        # For JSON or any other format, convert to JSON
+        # This handles both Python objects and string values that need JSON encoding
+        input_data = json.dumps(raw_data)
     
     # Check if this is an error test
     if 'error_expected' in test_case:
