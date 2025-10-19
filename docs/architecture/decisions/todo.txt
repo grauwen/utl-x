@@ -14,6 +14,8 @@ modules/cli/build/libs <-        check if touched by gitore
 
 integrate module analysis (design time) into CLI
 
+log4j alike capabilities?
+
 TEST for duplicates in the stdlib. e.g. upper
 
 utlx piped working? validate
