@@ -37,6 +37,24 @@ integrate module analysis (design time) into CLI
 
 log4j alike capabilities?
 
+To unblock the 5 remaining function-related tests, we need to implement let ... in expressions:
+
+  let variable = expression in body
+
+  This is a scoped let binding where the variable is only available within the body expression.
+
+  Would you like me to:
+  1. Implement let ... in expressions to fix the remaining 5 tests?
+  2. Continue with other grammar gaps (match expressions, try-catch, ternary operator)?
+  3. Focus on fixing the other failing tests first?
+
+The cleanest approach is to desugar them to lambda applications during parsing:
+
+  let x = value in body → ((x) => body)(value)
+
+  This automatically creates the proper scoping without AST changes:
+
+
 REPL
 $ utlx repl
   utlx> filter([1,2,3,4,5], x => x % 2 == 0)
