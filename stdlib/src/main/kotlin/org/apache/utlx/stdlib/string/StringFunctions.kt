@@ -292,26 +292,37 @@ object StringFunctions {
     }
     
     @UTLXFunction(
-        description = "Get string length",
+        description = "Get length of string or array",
         minArgs = 1,
         maxArgs = 1,
         category = "String",
         parameters = [
-            "str: Str value"
+            "value: String or Array to get length of"
         ],
-        returns = "Result of the operation",
-        example = "length(\"hello\") => 5",
-        tags = ["string"],
+        returns = "Length of string or array",
+        example = "length(\"hello\") => 5, length([1,2,3]) => 3",
+        tags = ["string", "array"],
         since = "1.0"
     )
     /**
-     * Get string length
-     * Usage: length("hello") => 5
+     * Get length of string or array (polymorphic)
+     * Usage: length("hello") => 5, length([1,2,3]) => 3
      */
     fun length(args: List<UDM>): UDM {
         requireArgs(args, 1, "length")
-        val str = args[0].asString()
-        return UDM.Scalar(str.length.toDouble())
+        val value = args[0]
+        return when (value) {
+            is UDM.Array -> UDM.Scalar(value.elements.size.toDouble())
+            is UDM.Scalar -> {
+                val str = value.asString()
+                UDM.Scalar(str.length.toDouble())
+            }
+            is UDM.Object -> UDM.Scalar(value.properties.size.toDouble())
+            else -> {
+                val str = value.asString()
+                UDM.Scalar(str.length.toDouble())
+            }
+        }
     }
     
     // Helper functions
