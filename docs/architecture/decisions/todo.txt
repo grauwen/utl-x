@@ -18,6 +18,11 @@ integrate module analysis (design time) into CLI
 
 log4j alike capabilities?
 
+REPL
+$ utlx repl
+  utlx> filter([1,2,3,4,5], x => x % 2 == 0)
+  [2, 4]
+
 TEST for duplicates in the stdlib. e.g. upper
 
 utlx piped working? validate
