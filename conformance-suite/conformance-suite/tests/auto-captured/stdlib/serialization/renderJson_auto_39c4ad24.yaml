@@ -1,19 +1,13 @@
-name: "renderJson_auto_df69e6e1"
+name: "renderJson_auto_39c4ad24"
 category: "stdlib/serialization"
 description: "Auto-captured test for renderJson"
 tags: ["auto-generated", "renderJson", "renderJson"]
 auto_generated: true
-captured_at: "2025-10-19T13:43:17.254183Z"
+captured_at: "2025-10-19T14:17:52.703890Z"
 
 input:
   format: xml
-  data: |
-    <?xml version="1.0" encoding="ISO-8859-1"?>
-    <SAP_Response>
-      <Material>
-        <MaterialNumber>MAT-001</MaterialNumber>
-      </Material>
-    </SAP_Response>
+  data: "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><SAP_Response><Material><MaterialNumber>MAT-001</MaterialNumber></Material></SAP_Response>"
 
 transformation: |
   %utlx 1.0
@@ -25,11 +19,10 @@ transformation: |
 
 expected:
   format: json
-  data: "{\"Material\":{\"MaterialNumber\":{\"_text\":\"MAT-001\"}}}"
-    
+  data: "\"{\\"Material\\":{\\"MaterialNumber\\":{\\"_text\\":\\"MAT-001\\"}}}\""
 
 performance_limits:
-  max_duration_ms: 504
+  max_duration_ms: 558
   max_memory_mb: 10
 
 metadata:

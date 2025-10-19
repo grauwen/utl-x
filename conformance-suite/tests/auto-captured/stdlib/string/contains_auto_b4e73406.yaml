@@ -28,18 +28,9 @@ transformation: |
   
 
 expected:
-  format: xml
+  format: json
   data: |
-    <?xml version="1.0" encoding="UTF-8"?>
-    <root>
-      <SAP_Response>
-        <Material>
-          <MaterialNumber>MAT-001</MaterialNumber>
-        </Material>
-      </SAP_Response>
-      <has_SAP_Response>false</has_SAP_Response>
-      <type>object</type>
-    </root>
+    {"has_SAP_Response": false, "root": {"Material": {"MaterialNumber": {"_text": "MAT-001"}}}, "type": "object"}
     
 
 performance_limits:

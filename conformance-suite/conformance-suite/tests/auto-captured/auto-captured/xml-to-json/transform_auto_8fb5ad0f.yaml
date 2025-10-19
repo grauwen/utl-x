@@ -1,19 +1,13 @@
-name: "transform_auto_0b0f9dfa"
-category: "auto-captured/xml-transform"
+name: "transform_auto_8fb5ad0f"
+category: "auto-captured/xml-to-json"
 description: "Auto-captured test for transformation"
 tags: ["auto-generated"]
 auto_generated: true
-captured_at: "2025-10-19T13:42:49.594261Z"
+captured_at: "2025-10-19T14:18:14.438006Z"
 
 input:
   format: xml
-  data: |
-    <?xml version="1.0" encoding="ISO-8859-1"?>
-    <SAP_Response>
-      <Material>
-        <MaterialNumber>MAT-001</MaterialNumber>
-      </Material>
-    </SAP_Response>
+  data: "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><SAP_Response><Material><MaterialNumber>MAT-001</MaterialNumber></Material></SAP_Response>"
 
 transformation: |
   %utlx 1.0
@@ -33,10 +27,9 @@ expected:
         }
       }
     }
-    
 
 performance_limits:
-  max_duration_ms: 60
+  max_duration_ms: 58
   max_memory_mb: 10
 
 metadata:

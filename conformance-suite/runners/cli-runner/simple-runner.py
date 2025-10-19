@@ -98,16 +98,8 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
         print(f"  ✗ Test missing 'expected' section")
         return False
 
+    expected_format = test_case['expected'].get('format', 'json')
     expected_data = test_case['expected']['data']
-    # If expected data is a multiline string (YAML |), try parsing as JSON
-    # Multiline strings have newlines; single-line strings should be kept as-is even if they look like JSON
-    if isinstance(expected_data, str) and '\n' in expected_data and expected_data.strip() and expected_data.strip()[0] in '{[':
-        try:
-            expected_data = json.loads(expected_data)
-        except json.JSONDecodeError:
-            # Not valid JSON, use as-is
-            pass
-    expected_json = json.dumps(expected_data, sort_keys=True)
 
     success, stdout, stderr = run_utlx_transform(utlx_cli, transformation, input_data)
 
@@ -115,23 +107,61 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
         print(f"  ✗ Transformation failed: {stderr}")
         return False
 
-    try:
-        # Parse and normalize output for comparison
-        actual_data = json.loads(stdout.strip())
-        actual_json = json.dumps(actual_data, sort_keys=True)
+    # Compare output based on expected format
+    if expected_format == 'json':
+        # JSON comparison - parse and normalize both sides
+        # If expected data is a multiline string (YAML |), try parsing as JSON
+        if isinstance(expected_data, str) and '\n' in expected_data and expected_data.strip() and expected_data.strip()[0] in '{[':
+            try:
+                expected_data = json.loads(expected_data)
+            except json.JSONDecodeError:
+                # Not valid JSON, use as-is
+                pass
+        expected_json = json.dumps(expected_data, sort_keys=True)
 
-        if actual_json == expected_json:
+        try:
+            actual_data = json.loads(stdout.strip())
+            actual_json = json.dumps(actual_data, sort_keys=True)
+
+            if actual_json == expected_json:
+                print(f"  ✓ Test passed")
+                return True
+            else:
+                print(f"  ✗ Output mismatch")
+                print(f"    Expected: {expected_json}")
+                print(f"    Actual:   {actual_json}")
+                return False
+
+        except json.JSONDecodeError as e:
+            print(f"  ✗ Invalid JSON output: {e}")
+            print(f"    Raw output: {stdout}")
+            return False
+
+    elif expected_format in ['xml', 'csv', 'yaml', 'yml', 'text']:
+        # Text-based comparison - normalize whitespace for XML/YAML
+        expected_str = expected_data if isinstance(expected_data, str) else str(expected_data)
+        actual_str = stdout
+
+        if expected_format in ['xml', 'yaml', 'yml']:
+            # Normalize whitespace for XML and YAML
+            expected_normalized = '\n'.join(line.strip() for line in expected_str.strip().split('\n') if line.strip())
+            actual_normalized = '\n'.join(line.strip() for line in actual_str.strip().split('\n') if line.strip())
+        else:
+            # For CSV and plain text, just strip outer whitespace
+            expected_normalized = expected_str.strip()
+            actual_normalized = actual_str.strip()
+
+        if expected_normalized == actual_normalized:
             print(f"  ✓ Test passed")
             return True
         else:
             print(f"  ✗ Output mismatch")
-            print(f"    Expected: {expected_json}")
-            print(f"    Actual:   {actual_json}")
+            print(f"    Expected: {expected_normalized[:200]}")
+            print(f"    Actual:   {actual_normalized[:200]}")
             return False
-            
-    except json.JSONDecodeError as e:
-        print(f"  ✗ Invalid JSON output: {e}")
-        print(f"    Raw output: {stdout}")
+
+    else:
+        print(f"  ✗ Unsupported expected format: {expected_format}")
         return False
 
 def run_test_variants(test_case: Dict[str, Any], utlx_cli: Path, base_name: str) -> tuple[int, int]:
