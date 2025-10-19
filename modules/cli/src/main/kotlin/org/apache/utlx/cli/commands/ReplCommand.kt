@@ -12,6 +12,11 @@ import org.apache.utlx.formats.xml.XMLParser
 import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.yaml.YAMLParser
 import java.io.File
+import org.jline.reader.LineReaderBuilder
+import org.jline.reader.LineReader
+import org.jline.reader.impl.history.DefaultHistory
+import org.jline.terminal.TerminalBuilder
+import java.nio.file.Paths
 
 /**
  * REPL command - interactive Read-Eval-Print Loop for UTL-X
@@ -43,29 +48,60 @@ object ReplCommand {
         // Initialize standard library in environment
         stdlib.registerAll(env)
 
+        // Set up JLine terminal and line reader with history
+        val terminal = TerminalBuilder.builder()
+            .system(true)
+            .build()
+
+        val historyFile = Paths.get(System.getProperty("user.home"), ".utlx", "repl_history")
+        historyFile.parent?.toFile()?.mkdirs()  // Create .utlx directory if needed
+
+        val lineReader = LineReaderBuilder.builder()
+            .terminal(terminal)
+            .history(DefaultHistory())
+            .variable(LineReader.HISTORY_FILE, historyFile)
+            .variable(LineReader.HISTORY_SIZE, 500)
+            .build()
+
+        // Load history from file
+        lineReader.history.load()
+
         // Main REPL loop
-        while (true) {
-            print("utlx> ")
-            val input = readLine() ?: break
+        try {
+            while (true) {
+                val input = try {
+                    lineReader.readLine("utlx> ")
+                } catch (e: org.jline.reader.UserInterruptException) {
+                    // Ctrl+C pressed
+                    println()
+                    continue
+                } catch (e: org.jline.reader.EndOfFileException) {
+                    // Ctrl+D pressed
+                    break
+                }
 
-            if (input.isBlank()) continue
+                if (input.isBlank()) continue
 
-            // Handle special commands
-            if (input.startsWith(":")) {
-                if (!handleCommand(input.trim())) break
-                continue
-            }
+                // Handle special commands
+                if (input.startsWith(":")) {
+                    if (!handleCommand(input.trim(), lineReader)) break
+                    continue
+                }
 
-            // Evaluate expression
-            try {
-                val result = evaluateExpression(input)
-                println(formatResult(result))
-            } catch (e: Exception) {
-                System.err.println("Error: ${e.message}")
-                if (System.getProperty("utlx.debug") == "true") {
-                    e.printStackTrace()
+                // Evaluate expression
+                try {
+                    val result = evaluateExpression(input)
+                    println(formatResult(result))
+                } catch (e: Exception) {
+                    System.err.println("Error: ${e.message}")
+                    if (System.getProperty("utlx.debug") == "true") {
+                        e.printStackTrace()
+                    }
                 }
             }
+        } finally {
+            // Save history on exit
+            lineReader.history.save()
         }
 
         println("\nGoodbye!")
@@ -128,7 +164,7 @@ object ReplCommand {
         }
     }
 
-    private fun handleCommand(command: String): Boolean {
+    private fun handleCommand(command: String, lineReader: LineReader): Boolean {
         val parts = command.substring(1).split(Regex("\\s+"), 2)
         val cmd = parts[0].lowercase()
         val arg = parts.getOrNull(1)
@@ -141,6 +177,7 @@ object ReplCommand {
             "type", "t" -> { if (arg != null) showType(arg) else println("Usage: :type <expression>"); true }
             "functions", "fn", "f" -> { listFunctions(arg); true }
             "info", "i" -> { if (arg != null) showFunctionInfo(arg) else println("Usage: :info <function>"); true }
+            "history" -> { showHistory(lineReader, arg); true }
             else -> { println("Unknown command: :$cmd (type :help for commands)"); true }
         }
     }
@@ -219,6 +256,26 @@ object ReplCommand {
         FunctionsCommand.execute(arrayOf("info", name))
     }
 
+    private fun showHistory(lineReader: LineReader, arg: String?) {
+        when (arg?.lowercase()) {
+            "clear" -> {
+                lineReader.history.purge()
+                println("History cleared")
+            }
+            else -> {
+                val history = lineReader.history
+                if (history.size() == 0) {
+                    println("No history yet")
+                } else {
+                    val entries = history.iterator().asSequence().toList()
+                    entries.forEachIndexed { index, entry ->
+                        println("${index + 1}: ${entry.line()}")
+                    }
+                }
+            }
+        }
+    }
+
     private fun printWelcome() {
         println("""
             |UTL-X REPL v$VERSION
@@ -239,6 +296,13 @@ object ReplCommand {
             |  :type <expr>, :t       Show type of expression
             |  :functions [pattern]   List all functions or search by pattern
             |  :info <function>, :i   Show detailed function documentation
+            |  :history               Show command history
+            |  :history clear         Clear command history
+            |
+            |Navigation:
+            |  Up/Down arrows         Navigate through command history
+            |  Ctrl+D                 Exit REPL
+            |  Ctrl+C                 Cancel current input
             |
             |Examples:
             |  Basic operations:

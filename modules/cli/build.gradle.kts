@@ -29,6 +29,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.16.1")
 
+    // JLine for REPL command history and line editing
+    implementation("org.jline:jline:3.24.1")
+
     // Logging - suppress DEBUG messages during transformations
     implementation("ch.qos.logback:logback-classic:1.4.14")
 
