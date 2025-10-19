@@ -1,0 +1,31 @@
+name: "lower_auto_df3ec09c"
+category: "stdlib/string"
+description: "Auto-captured test for lower"
+tags: ["auto-generated", "lower", "lower"]
+auto_generated: true
+captured_at: "2025-10-19T12:52:21.752349Z"
+
+input:
+  format: json
+  data: "\"HELLO\""
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  lower(@input)
+  
+
+expected:
+  format: json
+  data: "\"hello\""
+
+performance_limits:
+  max_duration_ms: 38
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]

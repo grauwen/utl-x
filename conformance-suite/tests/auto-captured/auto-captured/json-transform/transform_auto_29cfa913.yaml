@@ -1,0 +1,33 @@
+name: "transform_auto_29cfa913"
+category: "auto-captured/json-transform"
+description: "Auto-captured test for transformation"
+tags: ["auto-generated"]
+auto_generated: true
+captured_at: "2025-10-19T12:46:11.856605Z"
+
+input:
+  format: json
+  data: ""
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  nonExistentFunction(@input)
+  
+
+known_issue:
+  status: "failing"
+  captured_output: "Undefined function: nonExistentFunction"
+  issue_description: "Undefined function: nonExistentFunction"
+  captured_at: "2025-10-19T12:46:11.856686Z"
+
+performance_limits:
+  max_duration_ms: 352
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]

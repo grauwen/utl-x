@@ -15,6 +15,7 @@ import org.apache.utlx.formats.csv.CSVSerializer
 import org.apache.utlx.formats.yaml.YAMLParser
 import org.apache.utlx.formats.yaml.YAMLSerializer
 import org.apache.utlx.stdlib.StandardLibrary
+import org.apache.utlx.cli.capture.TestCaptureService
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -39,60 +40,120 @@ object TransformCommand {
     
     fun execute(args: Array<String>) {
         val options = parseOptions(args)
-        
+
         if (options.verbose) {
             println("UTL-X Transform")
             println("Script: ${options.scriptFile.absolutePath}")
             options.inputFile?.let { println("Input: ${it.absolutePath}") }
             options.outputFile?.let { println("Output: ${it.absolutePath}") }
         }
-        
-        // Read and compile the UTL-X script
-        val scriptContent = options.scriptFile.readText()
-        val program = compileScript(scriptContent, options.verbose)
-        
-        // Read input data
-        val inputData = if (options.inputFile != null) {
-            options.inputFile.readText()
-        } else {
-            readStdin()
-        }
-        
-        // Detect or use specified input format
-        val inputFormat = options.inputFormat 
-            ?: detectFormat(inputData, options.inputFile?.extension)
-        
-        if (options.verbose) {
-            println("Input format: $inputFormat")
-        }
-        
-        // Parse input to UDM
-        val inputUDM = parseInput(inputData, inputFormat)
-        
-        // Execute transformation using core Interpreter with dynamic stdlib loading
-        val interpreter = Interpreter()
-        
-        val result = interpreter.execute(program, inputUDM)
-        val outputUDM = result.toUDM()
-        
-        // Detect or use specified output format
-        val outputFormat = options.outputFormat ?: inputFormat
-        
-        if (options.verbose) {
-            println("Output format: $outputFormat")
-        }
-        
-        // Serialize output
-        val outputData = serializeOutput(outputUDM, outputFormat, options.pretty)
-        
-        // Write output
-        if (options.outputFile != null) {
-            options.outputFile.writeText(outputData)
-            if (options.verbose) {
-                println("✓ Transformation complete: ${options.outputFile.absolutePath}")
+
+        // Track execution time for capture
+        val startTime = System.currentTimeMillis()
+        var captureSuccess = false
+        var captureError: String? = null
+        var captureOutputData = ""
+
+        try {
+            // Read and compile the UTL-X script
+            val scriptContent = options.scriptFile.readText()
+            val program = compileScript(scriptContent, options.verbose)
+
+            // Read input data
+            val inputData = if (options.inputFile != null) {
+                options.inputFile.readText()
+            } else {
+                readStdin()
             }
-        } else {
-            println(outputData)
+
+            // Detect or use specified input format
+            val inputFormat = options.inputFormat
+                ?: detectFormat(inputData, options.inputFile?.extension)
+
+            if (options.verbose) {
+                println("Input format: $inputFormat")
+            }
+
+            // Parse input to UDM
+            val inputUDM = parseInput(inputData, inputFormat)
+
+            // Execute transformation using core Interpreter with dynamic stdlib loading
+            val interpreter = Interpreter()
+
+            val result = interpreter.execute(program, inputUDM)
+            val outputUDM = result.toUDM()
+
+            // Detect or use specified output format
+            val outputFormat = options.outputFormat ?: inputFormat
+
+            if (options.verbose) {
+                println("Output format: $outputFormat")
+            }
+
+            // Serialize output
+            val outputData = serializeOutput(outputUDM, outputFormat, options.pretty)
+            captureOutputData = outputData
+            captureSuccess = true
+
+            // Write output
+            if (options.outputFile != null) {
+                options.outputFile.writeText(outputData)
+                if (options.verbose) {
+                    println("✓ Transformation complete: ${options.outputFile.absolutePath}")
+                }
+            } else {
+                println(outputData)
+            }
+
+            // Capture successful execution
+            val durationMs = System.currentTimeMillis() - startTime
+            TestCaptureService.captureExecution(
+                transformation = scriptContent,
+                inputData = inputData,
+                inputFormat = inputFormat,
+                outputData = outputData,
+                outputFormat = outputFormat,
+                success = true,
+                error = null,
+                durationMs = durationMs,
+                scriptFile = options.scriptFile
+            )
+
+        } catch (e: Exception) {
+            // Capture failed execution
+            captureError = e.message ?: "Unknown error"
+            val durationMs = System.currentTimeMillis() - startTime
+
+            // Try to capture the failure
+            try {
+                val scriptContent = options.scriptFile.readText()
+                val inputData = if (options.inputFile != null) {
+                    options.inputFile.readText()
+                } else {
+                    "" // Can't capture stdin after error
+                }
+                val inputFormat = options.inputFormat ?: "json"
+
+                TestCaptureService.captureExecution(
+                    transformation = scriptContent,
+                    inputData = inputData,
+                    inputFormat = inputFormat,
+                    outputData = captureError,
+                    outputFormat = options.outputFormat ?: inputFormat,
+                    success = false,
+                    error = captureError,
+                    durationMs = durationMs,
+                    scriptFile = options.scriptFile
+                )
+            } catch (captureException: Exception) {
+                // Silently fail capture on error
+                if (options.verbose) {
+                    System.err.println("  [Capture] Failed to capture error: ${captureException.message}")
+                }
+            }
+
+            // Re-throw the original error
+            throw e
         }
     }
     
