@@ -411,12 +411,33 @@ class Parser(private val tokens: List<Token>) {
                     ))
                     continue
                 }
-                
-                val key = consume(TokenType.IDENTIFIER, "Expected property name").lexeme
+
+                // Check for attribute syntax (@key or "@key")
+                var isAttribute = match(TokenType.AT)
+                var key: String
+
+                if (check(TokenType.IDENTIFIER)) {
+                    key = advance().lexeme
+                } else if (check(TokenType.STRING)) {
+                    // Handle quoted property names like "@id" or "name"
+                    key = advance().lexeme
+                    // Remove quotes
+                    if (key.startsWith("\"") && key.endsWith("\"")) {
+                        key = key.substring(1, key.length - 1)
+                    }
+                    // Check if it's an attribute (starts with @)
+                    if (key.startsWith("@")) {
+                        isAttribute = true
+                        key = key.substring(1)  // Remove @ prefix
+                    }
+                } else {
+                    throw error("Expected property name")
+                }
+
                 consume(TokenType.COLON, "Expected ':' after property name")
                 val value = parseExpression()
-                
-                properties.add(Property(key, value, Location.from(previous())))
+
+                properties.add(Property(key, value, Location.from(previous()), isAttribute))
             } while (match(TokenType.COMMA))
         }
         

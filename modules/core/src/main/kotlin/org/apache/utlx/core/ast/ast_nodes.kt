@@ -225,7 +225,8 @@ sealed class Expression : Node() {
 data class Property(
     val key: String,
     val value: Expression,
-    val location: Location
+    val location: Location,
+    val isAttribute: Boolean = false  // True if property represents an XML attribute (@key)
 )
 
 /**

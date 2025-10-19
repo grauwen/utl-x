@@ -136,10 +136,39 @@ class Interpreter {
             
             is Expression.ObjectLiteral -> {
                 val properties = mutableMapOf<String, RuntimeValue>()
+                val attributes = mutableMapOf<String, String>()
+
                 for (prop in expr.properties) {
-                    properties[prop.key] = evaluate(prop.value, env)
+                    val value = evaluate(prop.value, env)
+                    if (prop.isAttribute) {
+                        // Attributes must be strings - extract string value
+                        val attrValue = when (value) {
+                            is RuntimeValue.StringValue -> value.value
+                            is RuntimeValue.NumberValue -> value.value.toString()
+                            is RuntimeValue.BooleanValue -> value.value.toString()
+                            is RuntimeValue.NullValue -> ""
+                            is RuntimeValue.UDMValue -> {
+                                // Extract scalar value from UDM
+                                when (val udm = value.udm) {
+                                    is UDM.Scalar -> udm.asString() ?: ""
+                                    else -> udm.toString()
+                                }
+                            }
+                            else -> value.toString()
+                        }
+                        attributes[prop.key] = attrValue
+                    } else {
+                        properties[prop.key] = value
+                    }
                 }
-                RuntimeValue.ObjectValue(properties)
+
+                // If there are attributes, create a UDM.Object; otherwise use RuntimeValue.ObjectValue
+                if (attributes.isNotEmpty()) {
+                    val udmProperties = properties.mapValues { it.value.toUDM() }
+                    RuntimeValue.UDMValue(UDM.Object(udmProperties, attributes))
+                } else {
+                    RuntimeValue.ObjectValue(properties)
+                }
             }
             
             is Expression.ArrayLiteral -> {

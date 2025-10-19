@@ -1,0 +1,43 @@
+name: "transform_auto_b900b260"
+category: "auto-captured/json-to-xml"
+description: "Auto-captured test for transformation"
+tags: ["auto-generated"]
+auto_generated: true
+captured_at: "2025-10-19T14:24:45.134386Z"
+
+input:
+  format: json
+  data: {"order": {"id": "ORD-123", "customer": "John"}}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    Order: {
+      @id: @input.order.id,
+      Customer: @input.order.customer
+    }
+  }
+  
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <root>
+      <Order id="UDMValue(udm=Scalar(value=ORD-123))">
+        <Customer>John</Customer>
+      </Order>
+    </root>
+    
+
+performance_limits:
+  max_duration_ms: 52
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]
