@@ -1,5 +1,7 @@
 TODO's
 
+cd conformance-suite && python3 runners/cli-runner/simple-runner.py 2>&1 | tail -15)
+
 - formats/plugin/
 - stLib
 - javascript
