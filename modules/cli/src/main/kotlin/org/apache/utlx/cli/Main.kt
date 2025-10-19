@@ -25,6 +25,7 @@ object Main {
             
             when (command.lowercase()) {
                 "transform", "t" -> TransformCommand.execute(commandArgs)
+                "repl", "r" -> ReplCommand.execute(commandArgs)
                 "schema", "s" -> SchemaCommand.execute(commandArgs)
                 "validate", "v" -> {
                     println("Validate command not yet implemented")
@@ -71,6 +72,7 @@ object Main {
             |
             |Commands:
             |  transform (t)  Transform data using a UTL-X script
+            |  repl      (r)  Start interactive REPL session
             |  schema    (s)  Generate and validate schemas (design-time analysis)
             |  validate  (v)  Validate a UTL-X script without executing
             |  compile   (c)  Compile a UTL-X script to bytecode
@@ -81,6 +83,7 @@ object Main {
             |  help           Show this help message
             |
             |Examples:
+            |  utlx repl
             |  utlx transform script.utlx input.xml -o output.json
             |  utlx schema generate --input-schema order.xsd --transform script.utlx --output-format json-schema
             |  utlx validate script.utlx
