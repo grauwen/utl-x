@@ -20,3 +20,19 @@ THIRD-PARTY-LICENSES/SnakeYAML-LICENSE.txt
 - Used in: CLI REPL
 
 See THIRD-PARTY-LICENSES/JLine-LICENSE.txt for full license text.
+
+## Jackson JSON Processor
+
+This software includes Jackson (https://github.com/FasterXML/jackson)
+Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
+Licensed under the Apache License, Version 2.0.
+
+Jackson components used:
+- jackson-core (streaming API)
+- jackson-databind (data binding)
+- jackson-annotations (annotations)
+- jackson-dataformat-xml (XML support)
+- jackson-dataformat-yaml (YAML support)
+- jackson-dataformat-csv (CSV support)
+
+See THIRD-PARTY-LICENSES/Jackson-LICENSE.txt for full license text.
