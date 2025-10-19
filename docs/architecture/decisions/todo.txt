@@ -1,5 +1,7 @@
 TODO's
 
+See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/Next-steps.md
+
 cd conformance-suite && python3 runners/cli-runner/simple-runner.py 2>&1 | tail -15)
 python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|✗" | awk '/Running:/{test=$2} /✗/{print test}' | sort | uniq
 
