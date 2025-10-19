@@ -5,6 +5,7 @@ python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|✗" | awk 
 
 python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|  ✗" | grep -B 1 "✗" | grep "Running:" | awk '{print $2}'
 
+-TypeOf is both a standard grammar keyword and in the same time a stdlib keyword. -> rename the function typeOf to getType
 - formats/plugin/
 - stLib
 - javascript
