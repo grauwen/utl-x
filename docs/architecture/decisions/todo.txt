@@ -10,6 +10,11 @@ TODO's
 - module analysis
 - Agentic agent added? How to get an utl for a given inpu and given output
 
+-Parallelization using streams to improve performance
+
+-functions in functions testing to add to conformance suite
+- als previous test add to conformance suite as test
+
 Lexer accpets both => and ->     should we add a depricate warning for ->
 
 modules/cli/build/libs <-        check if touched by gitore
