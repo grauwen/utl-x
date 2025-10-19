@@ -1,0 +1,35 @@
+name: "parseJson_auto_3521f712"
+category: "stdlib/serialization"
+description: "Auto-captured test for parseJson"
+tags: ["auto-generated", "parseJson", "parseJson"]
+auto_generated: true
+captured_at: "2025-10-19T13:34:39.925605Z"
+
+input:
+  format: json
+  data: "\"{\\"name\\": \\"John\\", \\"age\\": 30}\""
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  parseJson(@input)
+  
+
+expected:
+  format: json
+  data: |
+    {
+      "name": "John",
+      "age": 30
+    }
+
+performance_limits:
+  max_duration_ms: 486
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]

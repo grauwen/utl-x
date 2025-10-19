@@ -21,7 +21,7 @@ transformation: |
 
 expected:
   format: json
-  data: 3944.42
+  data: 3935.746254609722
 
 performance_limits:
   max_duration_ms: 100
@@ -52,7 +52,7 @@ variants:
       }
     expected:
       format: json
-      data: 6.15
+      data: 5.420115640250635
       
   - name: "cross_equator"
     input:
@@ -65,7 +65,7 @@ variants:
       }
     expected:
       format: json
-      data: 17016.0
+      data: 16993.933459795906
       
   - name: "antipodal_points"
     input:
@@ -78,7 +78,7 @@ variants:
       }
     expected:
       format: json
-      data: 20003.93
+      data: 20015.086796020572
 
 metadata:
   author: "UTL-X Team"

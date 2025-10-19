@@ -1,28 +1,28 @@
-name: "lower_auto_df3ec09c"
-category: "stdlib/string"
-description: "Auto-captured test for lower"
-tags: ["auto-generated", "lower", "lower"]
+name: "md5_auto_09f6088a"
+category: "stdlib/crypto"
+description: "Auto-captured test for md5"
+tags: ["auto-generated", "md5", "md5"]
 auto_generated: true
-captured_at: "2025-10-19T12:52:21.752349Z"
+captured_at: "2025-10-19T13:27:48.653492Z"
 
 input:
   format: json
-  data: "\"HELLO\""
+  data: "\"hello world\""
 
 transformation: |
   %utlx 1.0
   input json
   output json
   ---
-  lower(@input)
+  md5(@input)
   
 
 expected:
   format: json
-  data: "\"hello\""
+  data: "\"5eb63bbbe01eeed093cb22bb8f5acdc3\""
 
 performance_limits:
-  max_duration_ms: 38
+  max_duration_ms: 372
   max_memory_mb: 10
 
 metadata:

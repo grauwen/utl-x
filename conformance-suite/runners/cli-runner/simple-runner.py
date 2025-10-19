@@ -100,8 +100,8 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
 
     expected_data = test_case['expected']['data']
     # If expected data is a multiline string (YAML |), try parsing as JSON
-    # Only parse if it looks like JSON (starts with { or [) to avoid breaking simple strings
-    if isinstance(expected_data, str) and expected_data.strip() and expected_data.strip()[0] in '{[':
+    # Multiline strings have newlines; single-line strings should be kept as-is even if they look like JSON
+    if isinstance(expected_data, str) and '\n' in expected_data and expected_data.strip() and expected_data.strip()[0] in '{[':
         try:
             expected_data = json.loads(expected_data)
         except json.JSONDecodeError:
