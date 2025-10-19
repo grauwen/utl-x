@@ -1186,7 +1186,77 @@ class StandardLibraryImpl {
                 else -> throw RuntimeError("filter() first argument must be an array, object, or string")
             }
         }
-        
+
+        // find function - returns first element matching predicate
+        registerFunction(env, "find") { args ->
+            if (args.size < 2) {
+                throw RuntimeError("find() requires 2 arguments")
+            }
+
+            val array = when (val arg = args[0]) {
+                is RuntimeValue.ArrayValue -> arg.elements
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Array -> udm.elements.map { RuntimeValue.UDMValue(it) }
+                        else -> throw RuntimeError("find() requires array as first argument")
+                    }
+                }
+                else -> throw RuntimeError("find() requires array as first argument")
+            }
+
+            val predicate = args[1] as? RuntimeValue.FunctionValue
+                ?: throw RuntimeError("find() requires function as second argument")
+
+            val found = array.firstOrNull { element ->
+                val lambdaEnv = predicate.closure.createChild()
+                if (predicate.parameters.isNotEmpty()) {
+                    lambdaEnv.define(predicate.parameters[0], element)
+                }
+                val interpreter = Interpreter()
+                val result = interpreter.evaluate(predicate.body, lambdaEnv)
+                result.isTruthy()
+            }
+
+            found ?: RuntimeValue.NullValue
+        }
+
+        // findIndex function - returns index of first element matching predicate
+        registerFunction(env, "findIndex") { args ->
+            if (args.size < 2) {
+                throw RuntimeError("findIndex() requires 2 arguments")
+            }
+
+            val array = when (val arg = args[0]) {
+                is RuntimeValue.ArrayValue -> arg.elements
+                is RuntimeValue.UDMValue -> {
+                    when (val udm = arg.udm) {
+                        is UDM.Array -> udm.elements.map { RuntimeValue.UDMValue(it) }
+                        else -> throw RuntimeError("findIndex() requires array as first argument")
+                    }
+                }
+                else -> throw RuntimeError("findIndex() requires array as first argument")
+            }
+
+            val predicate = args[1] as? RuntimeValue.FunctionValue
+                ?: throw RuntimeError("findIndex() requires function as second argument")
+
+            val index = array.indexOfFirst { element ->
+                val lambdaEnv = predicate.closure.createChild()
+                if (predicate.parameters.isNotEmpty()) {
+                    lambdaEnv.define(predicate.parameters[0], element)
+                }
+                val interpreter = Interpreter()
+                val result = interpreter.evaluate(predicate.body, lambdaEnv)
+                result.isTruthy()
+            }
+
+            if (index >= 0) {
+                RuntimeValue.NumberValue(index.toDouble())
+            } else {
+                RuntimeValue.NumberValue(-1.0)
+            }
+        }
+
         registerFunction(env, "reduce") { args ->
             val arr = when (val arg = args[0]) {
                 is RuntimeValue.ArrayValue -> arg.elements
