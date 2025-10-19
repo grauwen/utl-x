@@ -1,0 +1,34 @@
+name: "transform_auto_43d9da56"
+category: "auto-captured/xml-transform"
+description: "Auto-captured test for transformation"
+tags: ["auto-generated"]
+auto_generated: true
+captured_at: "2025-10-19T14:01:34.595740Z"
+
+input:
+  format: xml
+  data: "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><SAP_Response><Material><MaterialNumber>MAT-001</MaterialNumber></Material></SAP_Response>"
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  @input.Material.MaterialNumber
+  
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <root>MAT-001</root>
+    
+
+performance_limits:
+  max_duration_ms: 66
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]

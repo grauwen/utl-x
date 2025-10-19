@@ -31,11 +31,11 @@ transformation: |
   input xml {encoding: "auto"}
   output json
   ---
-  let material = @input.SAP_Response.Material
+  let material = @input.Material
   let totalStock = sum(map(material.Availability, avail => toNumber(avail.Stock)))
   let totalReserved = sum(map(material.Availability, avail => toNumber(avail.Reserved)))
   let availableStock = totalStock - totalReserved
-  
+
   {
     product: {
       sku: material.MaterialNumber,

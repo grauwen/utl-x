@@ -134,9 +134,16 @@ class XMLParser(private val source: Reader) {
                 UDM.Object(emptyMap(), attributes, name)
             }
             children.isEmpty() && content.isNotEmpty() -> {
-                // Leaf element with text only - wrap text as special property
+                // Leaf element with text only
                 val textValue = tryParseNumber(content) ?: UDM.Scalar.string(content)
-                UDM.Object(mapOf("_text" to textValue), attributes, name)
+                // If there are attributes, wrap as object with _text property
+                // Otherwise, return the text value directly for easier access
+                if (attributes.isNotEmpty()) {
+                    UDM.Object(mapOf("_text" to textValue), attributes, name)
+                } else {
+                    // No attributes - return text directly, but wrap in an object to preserve element name
+                    UDM.Object(mapOf("_text" to textValue), emptyMap(), name)
+                }
             }
             else -> {
                 // Element with children

@@ -238,7 +238,13 @@ class Interpreter {
                             attrValue?.let { RuntimeValue.StringValue(it) } ?: RuntimeValue.NullValue
                         } else {
                             val propValue = udm.get(expr.property)
-                            propValue?.let { RuntimeValue.UDMValue(it) } ?: RuntimeValue.NullValue
+                            if (propValue != null) {
+                                // Auto-unwrap _text property for XML text nodes
+                                val unwrapped = unwrapTextNode(propValue)
+                                RuntimeValue.UDMValue(unwrapped)
+                            } else {
+                                RuntimeValue.NullValue
+                            }
                         }
                     }
                     else -> throw RuntimeError(
@@ -253,7 +259,25 @@ class Interpreter {
             )
         }
     }
-    
+
+    /**
+     * Unwrap XML text nodes that have only a _text property.
+     * This makes XML text content directly accessible without needing to access ._text
+     */
+    private fun unwrapTextNode(udm: UDM): UDM {
+        return when (udm) {
+            is UDM.Object -> {
+                // If object has only _text property and no attributes, unwrap it
+                if (udm.properties.size == 1 && udm.properties.containsKey("_text") && udm.attributes.isEmpty()) {
+                    udm.properties["_text"]!!
+                } else {
+                    udm
+                }
+            }
+            else -> udm
+        }
+    }
+
     private fun evaluateIndexAccess(expr: Expression.IndexAccess, env: Environment): RuntimeValue {
         val target = evaluate(expr.target, env)
         val index = evaluate(expr.index, env)
@@ -1458,7 +1482,7 @@ class StandardLibraryImpl {
         nativeFunctions[name] = impl
         env.define(name, wrapper)
     }
-    
+
     companion object {
         val nativeFunctions = mutableMapOf<String, (List<RuntimeValue>) -> RuntimeValue>()
     }

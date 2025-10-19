@@ -1,0 +1,52 @@
+name: "contains_auto_b4e73406"
+category: "stdlib/string"
+description: "Auto-captured test for contains"
+tags: ["auto-generated", "contains", "contains", "typeOf"]
+auto_generated: true
+captured_at: "2025-10-19T13:42:57.946154Z"
+
+input:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="ISO-8859-1"?>
+    <SAP_Response>
+      <Material>
+        <MaterialNumber>MAT-001</MaterialNumber>
+      </Material>
+    </SAP_Response>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  {
+    root: @input,
+    has_SAP_Response: contains(@input, "SAP_Response"),
+    type: typeOf(@input)
+  }
+  
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <root>
+      <SAP_Response>
+        <Material>
+          <MaterialNumber>MAT-001</MaterialNumber>
+        </Material>
+      </SAP_Response>
+      <has_SAP_Response>false</has_SAP_Response>
+      <type>object</type>
+    </root>
+    
+
+performance_limits:
+  max_duration_ms: 388
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]

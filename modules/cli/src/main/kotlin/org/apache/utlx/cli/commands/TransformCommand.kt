@@ -84,7 +84,8 @@ object TransformCommand {
             val outputUDM = result.toUDM()
 
             // Detect or use specified output format
-            val outputFormat = options.outputFormat ?: inputFormat
+            // Priority: 1) CLI option, 2) script header, 3) input format
+            val outputFormat = options.outputFormat ?: program.header.outputFormat.type.name.lowercase() ?: inputFormat
 
             if (options.verbose) {
                 println("Output format: $outputFormat")

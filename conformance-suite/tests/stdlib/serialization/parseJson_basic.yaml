@@ -5,7 +5,7 @@ tags: ["serialization", "json", "parse"]
 
 input:
   format: json
-  data: "{\"name\": \"John\", \"age\": 30}"
+  data: "\"{\\\"name\\\": \\\"John\\\", \\\"age\\\": 30}\""
 
 transformation: |
   %utlx 1.0
@@ -29,7 +29,7 @@ variants:
   - name: "array"
     input:
       format: json
-      data: "[1, 2, 3, \"test\"]"
+      data: "\"[1, 2, 3, \\\"test\\\"]\""
     expected:
       format: json
       data: [1, 2, 3, "test"]
@@ -37,7 +37,7 @@ variants:
   - name: "nested_object"
     input:
       format: json
-      data: "{\"user\": {\"name\": \"John\", \"details\": {\"age\": 30}}}"
+      data: "\"{\\\"user\\\": {\\\"name\\\": \\\"John\\\", \\\"details\\\": {\\\"age\\\": 30}}}\""
     expected:
       format: json
       data: {

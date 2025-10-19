@@ -1,0 +1,38 @@
+name: "transform_auto_f5df96cd"
+category: "auto-captured/json-transform"
+description: "Auto-captured test for transformation"
+tags: ["auto-generated"]
+auto_generated: true
+captured_at: "2025-10-19T13:42:00.044896Z"
+
+input:
+  format: json
+  data: 50
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    status: if (@input > 50) "HIGH" 
+           else if (@input > 25) "MEDIUM"
+           else "LOW"
+  }
+  
+
+expected:
+  format: json
+  data: |
+    {
+      "status": "MEDIUM"
+    }
+
+performance_limits:
+  max_duration_ms: 50
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]
