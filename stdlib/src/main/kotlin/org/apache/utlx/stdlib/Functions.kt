@@ -527,7 +527,7 @@ object StandardLibrary {
     }
     
     private fun registerTypeFunctions() {
-        register("typeOf", TypeFunctions::typeOf)
+        register("getType", TypeFunctions::getType)
         register("isString", TypeFunctions::isString)
         register("isNumber", TypeFunctions::isNumber)
         register("isBoolean", TypeFunctions::isBoolean)

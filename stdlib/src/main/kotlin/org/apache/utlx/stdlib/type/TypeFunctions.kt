@@ -8,22 +8,21 @@ import org.apache.utlx.stdlib.annotations.UTLXFunction
 object TypeFunctions {
 
     @UTLXFunction(
-        description = "Performs typeOf operation",
+        description = "Returns the type of a value as a string",
         minArgs = 1,
         maxArgs = 1,
         category = "Type",
         parameters = [
-            "array: Input array to process",
-        "predicate: Function to test each element (element) => boolean"
+            "value: The value to check the type of"
         ],
-        returns = "Result of the operation",
-        example = "typeOf(...) => result",
+        returns = "String representing the type (string, number, boolean, null, array, object, datetime, binary, function)",
+        example = "getType(42) => \"number\"",
         tags = ["type"],
         since = "1.0"
     )
-    
-    fun typeOf(args: List<UDM>): UDM {
-        requireArgs(args, 1, "typeOf")
+
+    fun getType(args: List<UDM>): UDM {
+        requireArgs(args, 1, "getType")
         val value = args[0]
         val typeName = when (value) {
             is UDM.Scalar -> when (value.value) {

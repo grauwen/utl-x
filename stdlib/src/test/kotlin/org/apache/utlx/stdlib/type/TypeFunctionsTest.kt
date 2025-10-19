@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions.*
  * Comprehensive test suite for Type functions.
  * 
  * Tests cover:
- * - Type identification (typeOf)
+ * - Type identification (getType)
  * - Type checking (isString, isNumber, isBoolean, etc.)
  * - Type validation
  * - Edge cases and null handling
@@ -17,110 +17,110 @@ import org.junit.jupiter.api.Assertions.*
  */
 class TypeFunctionsTest {
 
-    // ==================== typeOf Tests ====================
+    // ==================== getType Tests ====================
     
     @Test
-    fun `test typeOf - string`() {
+    fun `test getType - string`() {
         val value = UDM.Scalar("hello")
         
-        val result = TypeFunctions.typeOf(listOf(value))
+        val result = TypeFunctions.getType(listOf(value))
         val type = (result as UDM.Scalar).value as String
         
         assertEquals("string", type.lowercase())
     }
     
     @Test
-    fun `test typeOf - integer`() {
+    fun `test getType - integer`() {
         val value = UDM.Scalar(42)
         
-        val result = TypeFunctions.typeOf(listOf(value))
+        val result = TypeFunctions.getType(listOf(value))
         val type = (result as UDM.Scalar).value as String
         
         assertTrue(type.lowercase().contains("number") || type.lowercase().contains("int"))
     }
     
     @Test
-    fun `test typeOf - double`() {
+    fun `test getType - double`() {
         val value = UDM.Scalar(3.14)
         
-        val result = TypeFunctions.typeOf(listOf(value))
+        val result = TypeFunctions.getType(listOf(value))
         val type = (result as UDM.Scalar).value as String
         
         assertTrue(type.lowercase().contains("number") || type.lowercase().contains("double"))
     }
     
     @Test
-    fun `test typeOf - boolean true`() {
+    fun `test getType - boolean true`() {
         val value = UDM.Scalar(true)
         
-        val result = TypeFunctions.typeOf(listOf(value))
+        val result = TypeFunctions.getType(listOf(value))
         val type = (result as UDM.Scalar).value as String
         
         assertEquals("boolean", type.lowercase())
     }
     
     @Test
-    fun `test typeOf - boolean false`() {
+    fun `test getType - boolean false`() {
         val value = UDM.Scalar(false)
         
-        val result = TypeFunctions.typeOf(listOf(value))
+        val result = TypeFunctions.getType(listOf(value))
         val type = (result as UDM.Scalar).value as String
         
         assertEquals("boolean", type.lowercase())
     }
     
     @Test
-    fun `test typeOf - array`() {
+    fun `test getType - array`() {
         val value = UDM.Array(listOf(
             UDM.Scalar(1),
             UDM.Scalar(2),
             UDM.Scalar(3)
         ))
         
-        val result = TypeFunctions.typeOf(listOf(value))
+        val result = TypeFunctions.getType(listOf(value))
         val type = (result as UDM.Scalar).value as String
         
         assertEquals("array", type.lowercase())
     }
     
     @Test
-    fun `test typeOf - object`() {
+    fun `test getType - object`() {
         val value = UDM.Object(mutableMapOf(
             "name" to UDM.Scalar("John"),
             "age" to UDM.Scalar(30)
         ))
         
-        val result = TypeFunctions.typeOf(listOf(value))
+        val result = TypeFunctions.getType(listOf(value))
         val type = (result as UDM.Scalar).value as String
         
         assertEquals("object", type.lowercase())
     }
     
     @Test
-    fun `test typeOf - null`() {
+    fun `test getType - null`() {
         val value = UDM.Scalar(null)
         
-        val result = TypeFunctions.typeOf(listOf(value))
+        val result = TypeFunctions.getType(listOf(value))
         val type = (result as UDM.Scalar).value as String
         
         assertEquals("null", type.lowercase())
     }
     
     @Test
-    fun `test typeOf - empty array`() {
+    fun `test getType - empty array`() {
         val value = UDM.Array(emptyList())
         
-        val result = TypeFunctions.typeOf(listOf(value))
+        val result = TypeFunctions.getType(listOf(value))
         val type = (result as UDM.Scalar).value as String
         
         assertEquals("array", type.lowercase())
     }
     
     @Test
-    fun `test typeOf - empty object`() {
+    fun `test getType - empty object`() {
         val value = UDM.Object(mutableMapOf())
         
-        val result = TypeFunctions.typeOf(listOf(value))
+        val result = TypeFunctions.getType(listOf(value))
         val type = (result as UDM.Scalar).value as String
         
         assertEquals("object", type.lowercase())
@@ -708,7 +708,7 @@ class TypeFunctionsTest {
     fun `test edge case - type of type`() {
         // What is the type of a type string?
         val typeString = UDM.Scalar("string")
-        val typeOfType = TypeFunctions.typeOf(listOf(typeString))
+        val typeOfType = TypeFunctions.getType(listOf(typeString))
         val type = (typeOfType as UDM.Scalar).value as String
         
         assertEquals("string", type.lowercase(), "Type of 'string' is string")
@@ -742,7 +742,7 @@ class TypeFunctionsTest {
         )
         
         tests.forEach { test ->
-            val typeOf = (TypeFunctions.typeOf(listOf(test.value)) as UDM.Scalar).value as String
+            val typeOf = (TypeFunctions.getType(listOf(test.value)) as UDM.Scalar).value as String
             assertTrue(typeOf.lowercase().contains(test.expectedType), 
                 "Expected type ${test.expectedType}, got $typeOf")
             

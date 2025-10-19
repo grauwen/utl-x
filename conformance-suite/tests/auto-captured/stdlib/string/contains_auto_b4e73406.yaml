@@ -1,7 +1,7 @@
 name: "contains_auto_b4e73406"
 category: "stdlib/string"
 description: "Auto-captured test for contains"
-tags: ["auto-generated", "contains", "contains", "typeOf"]
+tags: ["auto-generated", "contains", "contains", "getType"]
 auto_generated: true
 captured_at: "2025-10-19T13:42:57.946154Z"
 
@@ -23,7 +23,7 @@ transformation: |
   {
     root: @input,
     has_SAP_Response: contains(@input, "SAP_Response"),
-    type: typeOf(@input)
+    type: getType(@input)
   }
   
 

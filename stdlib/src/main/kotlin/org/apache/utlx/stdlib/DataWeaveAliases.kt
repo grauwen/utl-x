@@ -246,7 +246,7 @@ object DataWeaveMigrationGuide {
         "minus" to "subtractDays, etc.",
         
         // Type functions
-        "typeOf" to "typeOf",
+        "typeOf" to "getType",
         "isArray" to "isArray",
         "isString" to "isString",
         "isNumber" to "isNumber",

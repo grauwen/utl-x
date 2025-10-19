@@ -1,6 +1,6 @@
-name: "typeof_basic"
+name: "gettype_basic"
 category: "stdlib/type"
-description: "Test typeOf function for type inspection"
+description: "Test getType function for type inspection"
 tags: ["core", "type", "introspection"]
 
 input:
@@ -19,11 +19,11 @@ transformation: |
   output json
   ---
   {
-    string_type: typeOf(@input.str),
-    number_type: typeOf(@input.num),
-    boolean_type: typeOf(@input.bool),
-    array_type: typeOf(@input.arr),
-    object_type: typeOf(@input.obj)
+    string_type: getType(@input.str),
+    number_type: getType(@input.num),
+    boolean_type: getType(@input.bool),
+    array_type: getType(@input.arr),
+    object_type: getType(@input.obj)
   }
 
 expected:

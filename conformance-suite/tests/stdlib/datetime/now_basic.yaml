@@ -14,7 +14,7 @@ transformation: |
   ---
   {
     current_time: now(),
-    is_string: typeOf(now())
+    is_string: getType(now())
   }
 
 expected:

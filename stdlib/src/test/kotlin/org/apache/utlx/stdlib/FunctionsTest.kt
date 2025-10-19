@@ -32,7 +32,7 @@ class FunctionsTest {
         assertTrue(functionNames.contains("lower"))
         assertTrue(functionNames.contains("abs"))
         assertTrue(functionNames.contains("now"))
-        assertTrue(functionNames.contains("typeOf"))
+        assertTrue(functionNames.contains("getType"))
     }
 
     @Test
@@ -198,7 +198,7 @@ class FunctionsTest {
     @Test
     fun testTypeFunctions() {
         val typeFunctions = listOf(
-            "typeOf", "isString", "isNumber", "isBoolean", "isArray", "isObject",
+            "getType", "isString", "isNumber", "isBoolean", "isArray", "isObject",
             "isNull", "isDefined", "parseNumber", "toNumber", "parseInt",
             "parseFloat", "parseDouble", "toString", "parseBoolean", "toBoolean",
             "toArray", "toObject", "numberOrDefault", "stringOrDefault"
