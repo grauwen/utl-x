@@ -44,6 +44,18 @@ conformance-suite/
 
 # Generate coverage report
 ./runners/cli-runner/generate-coverage.sh
+
+#direct 1
+cd conformance-suite
+python3 runners/cli-runner/simple-runner.py 2>&1 | tail -15
+
+#direct 2
+cd conformance-suite
+python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|✗" | awk '/Running:/{test=$2} /✗/{print test}' | sort | uniq
+
+#direct 3
+cd conformance-suite
+python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|  ✗" | grep -B 1 "✗" | grep "Running:" | awk '{print $2}'
 ```
 
 ### Adding New Tests
