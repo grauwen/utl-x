@@ -232,7 +232,7 @@ object TransformCommand {
         val trimmed = data.trim()
         return when {
             trimmed.startsWith("<") -> "xml"
-            trimmed.startsWith("{") || trimmed.startsWith("[") -> "json"
+            trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.startsWith("\"") -> "json"
             trimmed.contains("---") || trimmed.contains(":") && !trimmed.contains(",") -> "yaml"
             trimmed.contains(",") && !trimmed.startsWith("<") -> "csv"
             else -> {

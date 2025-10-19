@@ -1,0 +1,33 @@
+name: "transform_auto_bd4d3f5b"
+category: "auto-captured/yaml-transform"
+description: "Auto-captured test for transformation"
+tags: ["auto-generated"]
+auto_generated: true
+captured_at: "2025-10-19T13:15:14.984489Z"
+
+input:
+  format: yaml
+  data: "\"{\\"employees\\": [{\\"name\\": \\"Alice\\"}]}\""
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  @input
+  
+
+expected:
+  format: yaml
+  data: |
+    --- '{"employees": [{"name": "Alice"}]}'
+    
+
+performance_limits:
+  max_duration_ms: 116
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]

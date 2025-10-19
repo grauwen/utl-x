@@ -1,0 +1,39 @@
+name: "transform_auto_81081c90"
+category: "auto-captured/json-transform"
+description: "Auto-captured test for transformation"
+tags: ["auto-generated"]
+auto_generated: true
+captured_at: "2025-10-19T13:14:49.825908Z"
+
+input:
+  format: json
+  data: {"employees": [{"name": "Alice", "salary": 50000}]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  @input
+  
+
+expected:
+  format: json
+  data: |
+    {
+      "employees": [
+        {
+          "name": "Alice",
+          "salary": 50000
+        }
+      ]
+    }
+
+performance_limits:
+  max_duration_ms: 64
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]

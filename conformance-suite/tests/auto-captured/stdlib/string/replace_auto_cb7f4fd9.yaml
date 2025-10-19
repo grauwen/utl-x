@@ -1,0 +1,31 @@
+name: "replace_auto_cb7f4fd9"
+category: "stdlib/string"
+description: "Auto-captured test for replace"
+tags: ["auto-generated", "replace", "replace"]
+auto_generated: true
+captured_at: "2025-10-19T13:20:52.280760Z"
+
+input:
+  format: csv
+  data: "\"Hello, World\!\""
+
+transformation: |
+  %utlx 1.0
+  input json  
+  output json
+  ---
+  replace(@input, "World", "Universe")
+  
+
+expected:
+  format: csv
+  data: "Array(elements=[])"
+
+performance_limits:
+  max_duration_ms: 364
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]

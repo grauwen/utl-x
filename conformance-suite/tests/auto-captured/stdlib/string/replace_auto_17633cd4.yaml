@@ -1,0 +1,31 @@
+name: "replace_auto_17633cd4"
+category: "stdlib/string"
+description: "Auto-captured test for replace"
+tags: ["auto-generated", "replace", "replace"]
+auto_generated: true
+captured_at: "2025-10-19T13:23:43.223267Z"
+
+input:
+  format: json
+  data: "\"Hello, World\""
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  replace(@input, "World", "Universe")
+  
+
+expected:
+  format: json
+  data: "\"Hello, Universe\""
+
+performance_limits:
+  max_duration_ms: 358
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]
