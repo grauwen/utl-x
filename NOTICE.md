@@ -14,6 +14,7 @@ THIRD-PARTY-LICENSES/SnakeYAML-LICENSE.txt
 ## JLine 3
 
 This software includes JLine 3 (https://github.com/jline/jline3)
-Copyright (c) 2002-2024, the original author or authors.
-Licensed under the BSD License.
-See THIRD-PARTY-LICENSES/JLine-LICENSE.txt for full license text.
+- Copyright (c) 2002-2024, the original author or authors.
+- Licensed under the BSD License.
+S
+ee THIRD-PARTY-LICENSES/JLine-LICENSE.txt for full license text.
