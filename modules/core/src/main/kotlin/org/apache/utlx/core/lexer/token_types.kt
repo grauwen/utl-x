@@ -19,7 +19,9 @@ enum class TokenType {
     TEMPLATE,        // template
     MATCH,           // match
     FUNCTION,        // function
+    DEF,             // def (alias for function)
     LET,             // let
+    IN,              // in (for let...in expressions)
     IF,              // if
     ELSE,            // else
     MAP,             // map (can also be identifier)
@@ -109,7 +111,7 @@ data class Token(
     
     fun isKeyword(): Boolean = type in setOf(
         TokenType.INPUT, TokenType.OUTPUT, TokenType.TEMPLATE, TokenType.MATCH,
-        TokenType.FUNCTION, TokenType.LET, TokenType.IF, TokenType.ELSE,
+        TokenType.FUNCTION, TokenType.DEF, TokenType.LET, TokenType.IN, TokenType.IF, TokenType.ELSE,
         TokenType.MAP, TokenType.FILTER, TokenType.REDUCE, TokenType.APPLY,
         TokenType.IMPORT, TokenType.AS, TokenType.AUTO,
         TokenType.XML, TokenType.JSON, TokenType.CSV, TokenType.YAML
@@ -137,7 +139,9 @@ object Keywords {
         "template" to TokenType.TEMPLATE,
         "match" to TokenType.MATCH,
         "function" to TokenType.FUNCTION,
+        "def" to TokenType.DEF,
         "let" to TokenType.LET,
+        "in" to TokenType.IN,
         "if" to TokenType.IF,
         "else" to TokenType.ELSE,
         "map" to TokenType.MAP,

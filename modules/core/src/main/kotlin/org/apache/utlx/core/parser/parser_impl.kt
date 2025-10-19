@@ -56,25 +56,24 @@ class Parser(private val tokens: List<Token>) {
             error("Expected '---' separator after header")
         }
 
-        // Parse body: can be multiple let bindings followed by a final expression
-        val expressions = mutableListOf<Expression>()
+        // Parse body: can be multiple let bindings/function definitions followed by a final expression
+        val allExpressions = mutableListOf<Expression>()
 
-        // Collect let bindings and other expressions
+        // Collect all expressions (let bindings, function definitions, and final expression)
         while (!isAtEnd()) {
             val expr = parseExpression()
-            expressions.add(expr)
-
-            // If this is not a let binding, it should be the final expression
-            if (expr !is Expression.LetBinding) {
-                break
-            }
+            allExpressions.add(expr)
         }
 
-        if (!isAtEnd()) {
-            error("Unexpected tokens after program body")
-        }
+        // Separate let bindings (including function definitions) from other expressions
+        // This allows function definitions to appear after their use (hoisting)
+        val letBindings = allExpressions.filterIsInstance<Expression.LetBinding>()
+        val otherExpressions = allExpressions.filter { it !is Expression.LetBinding }
 
-        // Create body: if single expression, use it directly; otherwise wrap in Block
+        // Reorder: let bindings first, then other expressions
+        val expressions = letBindings + otherExpressions
+
+        // The body is either all expressions wrapped in a Block, or a single expression
         val body = if (expressions.size == 1) {
             expressions[0]
         } else {
@@ -366,6 +365,9 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.LET) -> {
                 parseLetBinding()
             }
+            match(TokenType.DEF, TokenType.FUNCTION) -> {
+                parseFunctionDefinition()
+            }
             match(TokenType.IF) -> {
                 parsePrefixIfExpression()
             }
@@ -467,7 +469,59 @@ class Parser(private val tokens: List<Token>) {
         consume(TokenType.ASSIGN, "Expected '=' after variable name")
         val value = parseExpression()
 
+        // Check for "in" keyword for scoped let binding: let x = value in body
+        if (match(TokenType.IN)) {
+            // Parse the body expression
+            val body = parseExpression()
+
+            // Desugar to lambda application: ((x) => body)(value)
+            val parameter = Parameter(name, null, Location.from(startToken))
+            val lambda = Expression.Lambda(listOf(parameter), body, Location.from(startToken))
+            return Expression.FunctionCall(lambda, listOf(value), Location.from(startToken))
+        }
+
         return Expression.LetBinding(name, value, Location.from(startToken))
+    }
+
+    private fun parseFunctionDefinition(): Expression {
+        val startToken = previous() // DEF or FUNCTION
+        val name = consume(TokenType.IDENTIFIER, "Expected function name").lexeme
+
+        // Parse parameter list
+        consume(TokenType.LPAREN, "Expected '(' after function name")
+        val parameters = mutableListOf<Parameter>()
+
+        if (!check(TokenType.RPAREN)) {
+            do {
+                val paramName = consume(TokenType.IDENTIFIER, "Expected parameter name").lexeme
+                parameters.add(Parameter(paramName, null, Location.from(previous())))
+            } while (match(TokenType.COMMA))
+        }
+
+        consume(TokenType.RPAREN, "Expected ')' after parameters")
+
+        // Parse body - expect { expressions... }
+        consume(TokenType.LBRACE, "Expected '{' before function body")
+
+        // Parse multiple expressions in the function body
+        val bodyExpressions = mutableListOf<Expression>()
+        while (!check(TokenType.RBRACE) && !isAtEnd()) {
+            bodyExpressions.add(parseExpression())
+        }
+
+        consume(TokenType.RBRACE, "Expected '}' after function body")
+
+        // If multiple expressions, wrap in Block; otherwise use single expression
+        val body = if (bodyExpressions.size == 1) {
+            bodyExpressions[0]
+        } else {
+            Expression.Block(bodyExpressions, Location.from(startToken))
+        }
+
+        // Desugar to: let name = (parameters) => body
+        val lambda = Expression.Lambda(parameters, body, Location.from(startToken))
+
+        return Expression.LetBinding(name, lambda, Location.from(startToken))
     }
 
     private fun parsePrefixIfExpression(): Expression {
