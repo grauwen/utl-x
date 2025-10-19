@@ -4,6 +4,8 @@ package org.apache.utlx.stdlib.serialization
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import org.apache.utlx.stdlib.annotations.UTLXFunction
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 
 /**
  * Serialization Functions for UTL-X Standard Library
@@ -39,16 +41,39 @@ object SerializationFunctions {
     fun parseJson(args: List<UDM>): UDM {
         requireArgs(args, 1, "parseJson")
         val jsonString = args[0].asString()
-        
+
         if (jsonString.isBlank()) {
             throw FunctionArgumentException("Cannot parse empty JSON string")
         }
-        
+
         return try {
-            // Simple JSON parsing - in real implementation would use JSONParser
-            UDM.Scalar(jsonString) // Placeholder implementation
+            val mapper = ObjectMapper()
+            val jsonNode = mapper.readTree(jsonString)
+            jsonNodeToUDM(jsonNode)
         } catch (e: Exception) {
             throw FunctionArgumentException("Failed to parse JSON: ${e.message}")
+        }
+    }
+
+    /**
+     * Convert Jackson JsonNode to UDM
+     */
+    private fun jsonNodeToUDM(node: com.fasterxml.jackson.databind.JsonNode): UDM {
+        return when {
+            node.isNull -> UDM.Scalar(null)
+            node.isBoolean -> UDM.Scalar(node.booleanValue())
+            node.isNumber -> UDM.Scalar(node.doubleValue())
+            node.isTextual -> UDM.Scalar(node.textValue())
+            node.isArray -> {
+                val elements = node.elements().asSequence().map { jsonNodeToUDM(it) }.toList()
+                UDM.Array(elements)
+            }
+            node.isObject -> {
+                val properties = node.fields().asSequence()
+                    .associate { (key, value) -> key to jsonNodeToUDM(value) }
+                UDM.Object(properties)
+            }
+            else -> UDM.Scalar(node.toString())
         }
     }
     
@@ -73,12 +98,57 @@ object SerializationFunctions {
         requireArgs(args, 1..2, "renderJson")
         val obj = args[0]
         val pretty = if (args.size > 1) args[1].asBoolean() else false
-        
+
         return try {
-            // Simple JSON rendering - in real implementation would use JSONSerializer
-            UDM.Scalar(obj.toString()) // Placeholder implementation
+            val mapper = ObjectMapper()
+            if (pretty) {
+                mapper.enable(SerializationFeature.INDENT_OUTPUT)
+            }
+
+            // Convert UDM to JSON-serializable structure
+            val jsonValue = udmToJsonValue(obj)
+            val jsonString = mapper.writeValueAsString(jsonValue)
+
+            UDM.Scalar(jsonString)
         } catch (e: Exception) {
             throw FunctionArgumentException("Failed to render JSON: ${e.message}")
+        }
+    }
+
+    /**
+     * Convert UDM to a structure that Jackson can serialize
+     */
+    private fun udmToJsonValue(udm: UDM): Any? {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    null -> null
+                    is String -> value
+                    is Number -> {
+                        // If it's a whole number, convert to Int/Long for proper JSON output
+                        val doubleValue = value.toDouble()
+                        if (doubleValue.isFinite() && doubleValue == doubleValue.toLong().toDouble()) {
+                            doubleValue.toLong()
+                        } else {
+                            doubleValue
+                        }
+                    }
+                    is Boolean -> value
+                    else -> value.toString()
+                }
+            }
+            is UDM.Array -> {
+                udm.elements.map { udmToJsonValue(it) }
+            }
+            is UDM.Object -> {
+                udm.properties.mapValues { (_, v) -> udmToJsonValue(v) }
+            }
+            is UDM.DateTime -> udm.toISOString()
+            is UDM.Binary -> {
+                // Encode binary data as base64 string
+                java.util.Base64.getEncoder().encodeToString(udm.data)
+            }
+            is UDM.Lambda -> "<lambda>"
         }
     }
     
