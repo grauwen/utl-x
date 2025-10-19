@@ -22,6 +22,15 @@ REPL
 $ utlx repl
   utlx> filter([1,2,3,4,5], x => x % 2 == 0)
   [2, 4]
+Future improvements could include:
+  - Command history (arrow keys)
+  - Tab completion
+  - Syntax highlighting
+  - Multi-line input
+  - Session save/load
+  - Auto-save history
+
+
 
 TEST for duplicates in the stdlib. e.g. upper
 
