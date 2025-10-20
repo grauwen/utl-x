@@ -28,6 +28,9 @@ The UTL-X Conformance Suite ensures:
 # Generate coverage report
 ./runners/cli-runner/generate-coverage.sh
 
+#direct call and show faild
+python3 runners/cli-runner/simple-runner.py --show-failed
+
 #direct 0 (direct output)
 cd conformance-suite
 python3 runners/cli-runner/simple-runner.py
