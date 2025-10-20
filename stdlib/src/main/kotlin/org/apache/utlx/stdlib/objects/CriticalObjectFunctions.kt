@@ -65,10 +65,13 @@ Essential for:
                 is UDM.Array -> "[Array]"
                 is UDM.Object -> "[Object]"
                 is UDM.DateTime -> "[DateTime:${value.instant}]"
+                is UDM.Date -> "[Date:${value.toISOString()}]"
+                is UDM.LocalDateTime -> "[LocalDateTime:${value.toISOString()}]"
+                is UDM.Time -> "[Time:${value.toISOString()}]"
                 is UDM.Binary -> "[Binary:${value.data.size}bytes]"
                 is UDM.Lambda -> "[Function]"
             }
-            
+
             // If duplicate values exist, last one wins
             inverted[newKey] = UDM.Scalar(key)
         }
@@ -287,6 +290,18 @@ deepMerge({a: {b: 1}}, {a: {c: 2}}) => {a: {b: 1, c: 2}}  // Merges!""",
             is UDM.DateTime -> {
                 // DateTime is immutable, safe to return as-is
                 UDM.DateTime(value.instant)
+            }
+            is UDM.Date -> {
+                // Date is immutable, safe to return as-is
+                UDM.Date(value.date)
+            }
+            is UDM.LocalDateTime -> {
+                // LocalDateTime is immutable, safe to return as-is
+                UDM.LocalDateTime(value.dateTime)
+            }
+            is UDM.Time -> {
+                // Time is immutable, safe to return as-is
+                UDM.Time(value.time)
             }
             is UDM.Binary -> {
                 // Clone the byte array

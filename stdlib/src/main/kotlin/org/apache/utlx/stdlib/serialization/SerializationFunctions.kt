@@ -144,6 +144,9 @@ object SerializationFunctions {
                 udm.properties.mapValues { (_, v) -> udmToJsonValue(v) }
             }
             is UDM.DateTime -> udm.toISOString()
+            is UDM.Date -> udm.toISOString()
+            is UDM.LocalDateTime -> udm.toISOString()
+            is UDM.Time -> udm.toISOString()
             is UDM.Binary -> {
                 // Encode binary data as base64 string
                 java.util.Base64.getEncoder().encodeToString(udm.data)

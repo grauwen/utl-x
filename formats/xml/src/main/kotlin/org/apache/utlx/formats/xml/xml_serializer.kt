@@ -148,11 +148,35 @@ class XMLSerializer(
             is UDM.DateTime -> {
                 writeIndent(writer, depth)
                 writer.write("<$elementName>")
-                writer.write(udm.toISOString())
+                writer.write(udm.toISOString())  // "2020-03-15T10:30:00Z"
                 writer.write("</$elementName>")
                 if (prettyPrint) writer.write("\n")
             }
-            
+
+            is UDM.Date -> {
+                writeIndent(writer, depth)
+                writer.write("<$elementName>")
+                writer.write(udm.toISOString())  // "2020-03-15"
+                writer.write("</$elementName>")
+                if (prettyPrint) writer.write("\n")
+            }
+
+            is UDM.LocalDateTime -> {
+                writeIndent(writer, depth)
+                writer.write("<$elementName>")
+                writer.write(udm.toISOString())  // "2020-03-15T10:30:00"
+                writer.write("</$elementName>")
+                if (prettyPrint) writer.write("\n")
+            }
+
+            is UDM.Time -> {
+                writeIndent(writer, depth)
+                writer.write("<$elementName>")
+                writer.write(udm.toISOString())  // "14:30:00"
+                writer.write("</$elementName>")
+                if (prettyPrint) writer.write("\n")
+            }
+
             is UDM.Binary -> {
                 writeIndent(writer, depth)
                 writer.write("<$elementName>")

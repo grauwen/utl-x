@@ -159,6 +159,9 @@ object ReplCommand {
                 "\"${it.key}\": ${formatUDM(it.value)}"
             } + "}"
             is UDM.DateTime -> "\"${udm.toISOString()}\""
+            is UDM.Date -> "\"${udm.toISOString()}\""
+            is UDM.LocalDateTime -> "\"${udm.toISOString()}\""
+            is UDM.Time -> "\"${udm.toISOString()}\""
             is UDM.Binary -> "\"<binary:${udm.data.size} bytes>\""
             is UDM.Lambda -> "<lambda>"
         }
@@ -233,6 +236,9 @@ object ReplCommand {
                     is UDM.Array -> "UDM.Array"
                     is UDM.Object -> "UDM.Object"
                     is UDM.DateTime -> "UDM.DateTime"
+                    is UDM.Date -> "UDM.Date"
+                    is UDM.LocalDateTime -> "UDM.LocalDateTime"
+                    is UDM.Time -> "UDM.Time"
                     is UDM.Binary -> "UDM.Binary"
                     is UDM.Lambda -> "UDM.Lambda"
                 }

@@ -499,6 +499,9 @@ joinWith(customers, orders,
                 map
             }
             is UDM.DateTime -> this.instant.toString()
+            is UDM.Date -> this.toISOString()
+            is UDM.LocalDateTime -> this.toISOString()
+            is UDM.Time -> this.toISOString()
             is UDM.Binary -> "<binary:${this.data.size} bytes>"
             is UDM.Lambda -> "<function>"
         }

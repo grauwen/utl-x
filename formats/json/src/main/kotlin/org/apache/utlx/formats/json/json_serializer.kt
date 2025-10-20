@@ -55,7 +55,10 @@ class JSONSerializer(
             is UDM.Scalar -> serializeScalar(udm, writer)
             is UDM.Array -> serializeArray(udm, writer, depth)
             is UDM.Object -> serializeObject(udm, writer, depth)
-            is UDM.DateTime -> writer.write("\"${udm.toISOString()}\"")
+            is UDM.DateTime -> writer.write("\"${udm.toISOString()}\"")  // "2020-03-15T10:30:00Z"
+            is UDM.Date -> writer.write("\"${udm.toISOString()}\"")      // "2020-03-15"
+            is UDM.LocalDateTime -> writer.write("\"${udm.toISOString()}\"")  // "2020-03-15T10:30:00"
+            is UDM.Time -> writer.write("\"${udm.toISOString()}\"")      // "14:30:00"
             is UDM.Binary -> writer.write("\"<binary:${udm.data.size} bytes>\"")
             is UDM.Lambda -> writer.write("\"<function>\"")
         }

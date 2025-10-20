@@ -41,43 +41,62 @@ object DateFunctions {
     }
 
     @UTLXFunction(
-        description = "Performs parseDate operation",
+        description = "Smart date parser - auto-detects Date vs DateTime based on input format",
         minArgs = 1,
-        maxArgs = 1,
+        maxArgs = 2,
         category = "Date",
         parameters = [
-            "dateStr: Datestr value",
-        "days: Days value"
+            "dateStr: Date string in ISO format or custom format",
+            "format: Optional custom format pattern"
         ],
-        returns = "Result of the operation",
-        example = "parseDate(...) => result",
+        returns = "UDM.Date for date-only strings, UDM.DateTime for timestamps",
+        example = "parseDate(\"2020-03-15\") => Date, parseDate(\"2020-03-15T10:30:00Z\") => DateTime",
         tags = ["date"],
         since = "1.0"
     )
-    
+
     fun parseDate(args: List<UDM>): UDM {
         requireArgs(args, 1..2, "parseDate")
         val dateStr = args[0].asString()
         val format = if (args.size > 1) args[1].asString() else null
 
         return try {
-            // Try parsing as ISO instant first (handles full timestamps)
-            val instant = try {
-                Instant.parse(dateStr)
-            } catch (e: Exception) {
-                // If that fails and dateStr is date-only (yyyy-MM-dd), append time
-                if (dateStr.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) && format == null) {
-                    Instant.parse("${dateStr}T00:00:00Z")
-                } else if (format != null) {
+            // Auto-detect based on input format
+            when {
+                // Date-only: "2020-03-15", "2020/03/15"
+                format == null && dateStr.matches(Regex("^\\d{4}[-/]\\d{2}[-/]\\d{2}$")) -> {
+                    val localDate = java.time.LocalDate.parse(dateStr.replace('/', '-'))
+                    UDM.Date(localDate)
+                }
+
+                // DateTime with time component: has 'T' or space separator
+                format == null && (dateStr.contains('T') || dateStr.contains(' ')) -> {
+                    try {
+                        // Try parsing as ISO instant (with timezone)
+                        val instant = Instant.parse(dateStr)
+                        UDM.DateTime(JavaInstant.ofEpochSecond(instant.epochSeconds, instant.nanosecondsOfSecond.toLong()))
+                    } catch (e: Exception) {
+                        // If that fails, try parsing as LocalDateTime (no timezone)
+                        val localDateTime = java.time.LocalDateTime.parse(dateStr.replace(' ', 'T'))
+                        UDM.LocalDateTime(localDateTime)
+                    }
+                }
+
+                // Custom format specified
+                format != null -> {
                     // TODO: Implement custom format parsing using java.time.format.DateTimeFormatter
                     throw FunctionArgumentException("Custom date format parsing not yet implemented")
-                } else {
-                    throw e
+                }
+
+                // Unknown format
+                else -> {
+                    throw FunctionArgumentException("Cannot parse date: $dateStr - unknown format")
                 }
             }
-            UDM.DateTime(JavaInstant.ofEpochSecond(instant.epochSeconds, instant.nanosecondsOfSecond.toLong()))
+        } catch (e: FunctionArgumentException) {
+            throw e
         } catch (e: Exception) {
-            throw FunctionArgumentException("Cannot parse date: $dateStr (format: ${format ?: "ISO-8601"})")
+            throw FunctionArgumentException("Cannot parse date: $dateStr (format: ${format ?: "ISO-8601"}) - ${e.message}")
         }
     }
 
@@ -106,29 +125,41 @@ object DateFunctions {
     }
 
     @UTLXFunction(
-        description = "Performs addDays operation",
-        minArgs = 1,
-        maxArgs = 1,
+        description = "Add days to a date or datetime",
+        minArgs = 2,
+        maxArgs = 2,
         category = "Date",
         parameters = [
-            "dateUdm: Dateudm value",
-        "days: Days value"
+            "date: Date or DateTime value",
+            "days: Number of days to add (can be negative)"
         ],
-        returns = "Result of the operation",
-        example = "addDays(...) => result",
+        returns = "Date or DateTime with days added (preserves input type)",
+        example = "addDays(parseDate(\"2020-03-15\"), 7) => \"2020-03-22\"",
         tags = ["date"],
         since = "1.0"
     )
-    
+
     fun addDays(args: List<UDM>): UDM {
         requireArgs(args, 2, "addDays")
         val dateUdm = args[0]
-        val date: JavaInstant = extractDateTime(dateUdm)
-        val days = args[1].asNumber().toInt()
-        
-        val kotlinxDate = toKotlinxInstant(date)
-        val result = kotlinxDate.plus(days, DateTimeUnit.DAY, TimeZone.UTC)
-        return UDM.DateTime(toJavaInstant(result))
+        val days = args[1].asNumber().toLong()
+
+        return when (dateUdm) {
+            is UDM.Date -> {
+                val result = dateUdm.date.plusDays(days)
+                UDM.Date(result)
+            }
+            is UDM.DateTime -> {
+                val kotlinxDate = toKotlinxInstant(dateUdm.instant)
+                val result = kotlinxDate.plus(days.toInt(), DateTimeUnit.DAY, TimeZone.UTC)
+                UDM.DateTime(toJavaInstant(result))
+            }
+            is UDM.LocalDateTime -> {
+                val result = dateUdm.dateTime.plusDays(days)
+                UDM.LocalDateTime(result)
+            }
+            else -> throw FunctionArgumentException("addDays requires a Date or DateTime value")
+        }
     }
 
     @UTLXFunction(
@@ -156,25 +187,42 @@ object DateFunctions {
     }
 
     @UTLXFunction(
-        description = "Performs diffDays operation",
-        minArgs = 1,
-        maxArgs = 1,
+        description = "Calculate difference in days between two dates",
+        minArgs = 2,
+        maxArgs = 2,
         category = "Date",
-        returns = "Result of the operation",
-        example = "diffDays(...) => result",
+        parameters = [
+            "date1: First date or datetime",
+            "date2: Second date or datetime"
+        ],
+        returns = "Number of days between date1 and date2 (date2 - date1)",
+        example = "diffDays(parseDate(\"2020-01-01\"), parseDate(\"2020-01-31\")) => 30",
         tags = ["date"],
         since = "1.0"
     )
-    
+
     fun diffDays(args: List<UDM>): UDM {
         requireArgs(args, 2, "diffDays")
-        val date1 = extractDateTime(args[0])
-        val date2 = extractDateTime(args[1])
-        
-        val kotlinxDate1 = toKotlinxInstant(date1)
-        val kotlinxDate2 = toKotlinxInstant(date2)
-        val diff = kotlinxDate2.minus(kotlinxDate1)
-        val days = diff.inWholeDays.toDouble()
+
+        val days = when {
+            args[0] is UDM.Date && args[1] is UDM.Date -> {
+                val date1 = (args[0] as UDM.Date).date
+                val date2 = (args[1] as UDM.Date).date
+                java.time.temporal.ChronoUnit.DAYS.between(date1, date2).toDouble()
+            }
+            args[0] is UDM.DateTime && args[1] is UDM.DateTime -> {
+                val date1 = toKotlinxInstant((args[0] as UDM.DateTime).instant)
+                val date2 = toKotlinxInstant((args[1] as UDM.DateTime).instant)
+                date2.minus(date1).inWholeDays.toDouble()
+            }
+            args[0] is UDM.LocalDateTime && args[1] is UDM.LocalDateTime -> {
+                val date1 = (args[0] as UDM.LocalDateTime).dateTime
+                val date2 = (args[1] as UDM.LocalDateTime).dateTime
+                java.time.temporal.ChronoUnit.DAYS.between(date1, date2).toDouble()
+            }
+            else -> throw FunctionArgumentException("diffDays requires two dates of the same type (Date, DateTime, or LocalDateTime)")
+        }
+
         return UDM.Scalar(days)
     }
     

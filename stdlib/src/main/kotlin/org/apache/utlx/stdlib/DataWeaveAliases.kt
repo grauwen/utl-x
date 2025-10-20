@@ -143,6 +143,9 @@ object DataWeaveAliases {
                 v == null || (v is String && v.isEmpty())
             }
             is UDM.DateTime -> false
+            is UDM.Date -> false
+            is UDM.LocalDateTime -> false
+            is UDM.Time -> false
             is UDM.Binary -> value.data.isEmpty()
             is UDM.Lambda -> false // Functions are never considered empty
         }

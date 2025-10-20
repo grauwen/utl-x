@@ -118,26 +118,41 @@ class YAMLSerializer {
     private fun convertFromUDM(udm: UDM, options: SerializeOptions): Any? {
         return when (udm) {
             is UDM.Scalar -> udm.value
-            
+
             is UDM.DateTime -> {
                 // Format date using specified formatter
                 options.dateTimeFormat.format(udm.instant)
             }
-            
+
+            is UDM.Date -> {
+                // Format date as ISO string
+                udm.toISOString()
+            }
+
+            is UDM.LocalDateTime -> {
+                // Format local datetime as ISO string
+                udm.toISOString()
+            }
+
+            is UDM.Time -> {
+                // Format time as ISO string
+                udm.toISOString()
+            }
+
             is UDM.Binary -> {
                 "<binary:${udm.data.size} bytes>"
             }
-            
+
             is UDM.Array -> {
                 udm.elements.map { convertFromUDM(it, options) }
             }
-            
+
             is UDM.Object -> {
                 val map = LinkedHashMap<String, Any?>()
                 udm.properties.forEach { (key, value) ->
                     map[key] = convertFromUDM(value, options)
                 }
-                
+
                 // Add attributes as metadata (if any)
                 if (udm.attributes.isNotEmpty()) {
                     val attrMap = LinkedHashMap<String, String>()
@@ -146,10 +161,10 @@ class YAMLSerializer {
                     }
                     map["_attributes"] = attrMap
                 }
-                
+
                 map
             }
-            
+
             is UDM.Lambda -> {
                 "<function>"
             }

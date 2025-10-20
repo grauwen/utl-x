@@ -1,6 +1,9 @@
 package org.apache.utlx.core.udm
 
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime as JavaLocalDateTime
+import java.time.LocalTime
 
 /**
  * Universal Data Model (UDM) - Format-agnostic internal representation
@@ -77,16 +80,63 @@ sealed class UDM {
     }
     
     /**
-     * Date/time values with timezone support
+     * Full timestamp with timezone (e.g., "2020-03-15T10:30:00Z")
+     * Use for: events, logs, timestamps
      */
     data class DateTime(val instant: Instant) : UDM() {
         fun toISOString(): String = instant.toString()
         fun toEpochMillis(): Long = instant.toEpochMilli()
-        
+
         companion object {
             fun now() = DateTime(Instant.now())
             fun fromEpochMillis(millis: Long) = DateTime(Instant.ofEpochMilli(millis))
             fun parse(iso8601: String) = DateTime(Instant.parse(iso8601))
+        }
+    }
+
+    /**
+     * Date only (no time component) (e.g., "2020-03-15")
+     * Use for: birth dates, due dates, calendar dates
+     * Serializes without time component: "2020-03-15"
+     */
+    data class Date(val date: LocalDate) : UDM() {
+        fun toISOString(): String = date.toString()  // "2020-03-15"
+        fun toEpochDay(): Long = date.toEpochDay()
+
+        companion object {
+            fun now() = Date(LocalDate.now())
+            fun parse(dateStr: String) = Date(LocalDate.parse(dateStr))
+            fun of(year: Int, month: Int, day: Int) = Date(LocalDate.of(year, month, day))
+        }
+    }
+
+    /**
+     * Date and time without timezone (e.g., "2020-03-15T10:30:00")
+     * Use for: scheduled events, appointments (timezone handled separately)
+     */
+    data class LocalDateTime(val dateTime: JavaLocalDateTime) : UDM() {
+        fun toISOString(): String = dateTime.toString()  // "2020-03-15T10:30:00"
+
+        companion object {
+            fun now() = LocalDateTime(JavaLocalDateTime.now())
+            fun parse(dateTimeStr: String) = LocalDateTime(JavaLocalDateTime.parse(dateTimeStr))
+            fun of(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int = 0) =
+                LocalDateTime(JavaLocalDateTime.of(year, month, day, hour, minute, second))
+        }
+    }
+
+    /**
+     * Time only (no date component) (e.g., "14:30:00")
+     * Use for: opening hours, time durations
+     */
+    data class Time(val time: LocalTime) : UDM() {
+        fun toISOString(): String = time.toString()  // "14:30:00"
+        fun toSecondOfDay(): Int = time.toSecondOfDay()
+
+        companion object {
+            fun now() = Time(LocalTime.now())
+            fun parse(timeStr: String) = Time(LocalTime.parse(timeStr))
+            fun of(hour: Int, minute: Int, second: Int = 0) = Time(LocalTime.of(hour, minute, second))
         }
     }
 
@@ -141,13 +191,19 @@ sealed class UDM {
     fun isArray(): Boolean = this is Array
     fun isObject(): Boolean = this is Object
     fun isDateTime(): Boolean = this is DateTime
+    fun isDate(): Boolean = this is Date
+    fun isLocalDateTime(): Boolean = this is LocalDateTime
+    fun isTime(): Boolean = this is Time
     fun isBinary(): Boolean = this is Binary
     fun isLambda(): Boolean = this is Lambda
-    
+
     fun asScalar(): Scalar? = this as? Scalar
     fun asArray(): Array? = this as? Array
     fun asObject(): Object? = this as? Object
     fun asDateTime(): DateTime? = this as? DateTime
+    fun asDate(): Date? = this as? Date
+    fun asLocalDateTime(): LocalDateTime? = this as? LocalDateTime
+    fun asTime(): Time? = this as? Time
     fun asBinary(): Binary? = this as? Binary
     fun asLambda(): Lambda? = this as? Lambda
     
@@ -222,6 +278,9 @@ sealed class UDM {
             is Array -> elements.map { it.toNative() }
             is Object -> properties.mapValues { it.value.toNative() }
             is DateTime -> instant
+            is Date -> date
+            is LocalDateTime -> dateTime
+            is Time -> time
             is Binary -> data
             is Lambda -> this // Functions can't be converted to native values
         }
@@ -402,7 +461,7 @@ class UDMNavigator(private val root: UDM) {
             is UDM.Array -> {
                 node.elements.forEach { collectRecursive(it, propertyName, results) }
             }
-            else -> { /* Scalars and DateTime are leaf nodes */ }
+            else -> { /* Scalars, DateTime, Date, LocalDateTime, Time, Binary, Lambda are leaf nodes */ }
         }
     }
 }

@@ -537,6 +537,10 @@ object StandardLibrary {
         register("isObject", TypeFunctions::isObject)
         register("isNull", TypeFunctions::isNull)
         register("isDefined", TypeFunctions::isDefined)
+        register("isDate", TypeFunctions::isDate)
+        register("isDateTime", TypeFunctions::isDateTime)
+        register("isLocalDateTime", TypeFunctions::isLocalDateTime)
+        register("isTime", TypeFunctions::isTime)
     }
     
     private fun registerObjectFunctions() {

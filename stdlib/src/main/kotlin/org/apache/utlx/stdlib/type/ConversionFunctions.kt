@@ -243,8 +243,8 @@ object ConversionFunctions {
                 else -> v.toString()
             }
             is UDM.Array -> {
-                val elements = value.elements.map { 
-                    (toString(listOf(it)) as UDM.Scalar).value 
+                val elements = value.elements.map {
+                    (toString(listOf(it)) as UDM.Scalar).value
                 }
                 "[${elements.joinToString(", ")}]"
             }
@@ -255,10 +255,13 @@ object ConversionFunctions {
                 "{$props}"
             }
             is UDM.DateTime -> value.instant.toString()
+            is UDM.Date -> value.toISOString()
+            is UDM.LocalDateTime -> value.toISOString()
+            is UDM.Time -> value.toISOString()
             is UDM.Binary -> "<binary:${value.data.size} bytes>"
             is UDM.Lambda -> "<function>"
         }
-        
+
         return UDM.Scalar(result)
     }
     

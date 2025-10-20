@@ -315,6 +315,9 @@ object CompleteTransformationExample {
                 }
             }
             is UDM.DateTime -> "\"${instant}\""
+            is UDM.Date -> "\"${date}\""
+            is UDM.LocalDateTime -> "\"${dateTime}\""
+            is UDM.Time -> "\"${time}\""
             is UDM.Binary -> "\"<binary:${data.size} bytes>\""
             is UDM.Lambda -> "\"<function>\""
         }

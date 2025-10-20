@@ -438,6 +438,9 @@ object CoercionFunctions {
             is UDM.Array -> UDM.Scalar(value.elements.size.toDouble())
             is UDM.Object -> UDM.Scalar(value.properties.size.toDouble())
             is UDM.DateTime -> UDM.Scalar(value.instant.toEpochMilli().toDouble())
+            is UDM.Date -> UDM.Scalar(value.toEpochDay().toDouble())
+            is UDM.LocalDateTime -> UDM.Scalar(value.dateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli().toDouble())
+            is UDM.Time -> UDM.Scalar(value.toSecondOfDay().toDouble())
             is UDM.Binary -> UDM.Scalar(value.data.size.toDouble())
             is UDM.Lambda -> throw IllegalArgumentException("Cannot coerce function to number")
         }
@@ -449,6 +452,9 @@ object CoercionFunctions {
             is UDM.Array -> UDM.Scalar(value.elements.joinToString(", "))
             is UDM.Object -> UDM.Scalar(value.properties.toString())
             is UDM.DateTime -> UDM.Scalar(value.instant.toString())
+            is UDM.Date -> UDM.Scalar(value.toISOString())
+            is UDM.LocalDateTime -> UDM.Scalar(value.toISOString())
+            is UDM.Time -> UDM.Scalar(value.toISOString())
             is UDM.Binary -> UDM.Scalar("<binary:${value.data.size} bytes>")
             is UDM.Lambda -> UDM.Scalar("<function>")
         }
@@ -468,6 +474,9 @@ object CoercionFunctions {
             is UDM.Array -> UDM.Scalar(value.elements.isNotEmpty())
             is UDM.Object -> UDM.Scalar(value.properties.isNotEmpty())
             is UDM.DateTime -> UDM.Scalar(true) // Dates are always truthy
+            is UDM.Date -> UDM.Scalar(true) // Dates are always truthy
+            is UDM.LocalDateTime -> UDM.Scalar(true) // DateTimes are always truthy
+            is UDM.Time -> UDM.Scalar(true) // Times are always truthy
             is UDM.Binary -> UDM.Scalar(value.data.isNotEmpty())
             is UDM.Lambda -> UDM.Scalar(true) // Functions are always truthy
         }

@@ -135,10 +135,13 @@ Returns null for empty array""",
                 is UDM.Array -> "[Array]"
                 is UDM.Object -> "[Object]"
                 is UDM.DateTime -> "[DateTime:${element.instant}]"
+                is UDM.Date -> "[Date:${element.toISOString()}]"
+                is UDM.LocalDateTime -> "[LocalDateTime:${element.toISOString()}]"
+                is UDM.Time -> "[Time:${element.toISOString()}]"
                 is UDM.Binary -> "[Binary:${element.data.size}bytes]"
                 is UDM.Lambda -> "[Function]"
             }
-            
+
             val (count, _) = frequencies[key] ?: (0 to element)
             frequencies[key] = (count + 1) to element
         }
