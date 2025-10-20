@@ -10,7 +10,7 @@ Issue discovered: The CLI binary appears to not be picking up the stdlib functio
   This appears to be a runtime linkage issue between the CLI and stdlib that needs investigation beyond the scope of the current session.
 
 Missing function: daysBetween not implemented in stdlib
-
+The parser doesn't support if expressions with braces { } inside function bodies!
 
 
 -TypeOf is both a standard grammar keyword and in the same time a stdlib keyword. -> rename the function typeOf to getType
