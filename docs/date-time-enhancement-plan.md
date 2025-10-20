@@ -750,6 +750,677 @@ formatDate(date, "dd-MM-yy", "en-GB")           // → "15-10-20"
 
 ---
 
+## Locale Identifier Standard (BCP 47)
+
+### Why BCP 47?
+
+UTL-X uses **BCP 47** (Best Current Practice 47) for locale identifiers, aligning with industry standards used by:
+- **DataWeave** - MuleSoft's transformation language
+- **JavaScript** - `Intl.DateTimeFormat` API
+- **Java** - `java.util.Locale` class
+- **.NET** - `CultureInfo` class
+- **Unicode CLDR** - Common Locale Data Repository
+
+**BCP 47 Format:**
+```
+language[-script][-region][-variant]
+
+Examples:
+nl-NL        → Dutch (Netherlands)
+en-US        → English (United States)
+en-GB        → English (United Kingdom)
+de-DE        → German (Germany)
+fr-FR        → French (France)
+zh-Hans-CN   → Chinese (Simplified, China)
+```
+
+### Supported Locale Tags
+
+**Primary Locales:**
+- `nl-NL` - Dutch (Netherlands)
+- `en-US` - English (United States)
+- `en-GB` - English (United Kingdom)
+- `de-DE` - German (Germany)
+- `fr-FR` - French (France)
+- `es-ES` - Spanish (Spain)
+- `it-IT` - Italian (Italy)
+- `pt-BR` - Portuguese (Brazil)
+- `ja-JP` - Japanese (Japan)
+- `zh-CN` - Chinese (Simplified, China)
+
+**Fallback Behavior:**
+```javascript
+// If "nl-BE" (Belgian Dutch) not available, falls back to "nl" then "en"
+formatDate(date, "d MMMM yyyy", "nl-BE")  // → Uses "nl-NL" data
+```
+
+### Locale Resolution Algorithm
+
+```kotlin
+fun resolveLocale(requestedLocale: String): Locale {
+    // 1. Try exact match
+    if (cldrData.hasLocale(requestedLocale)) {
+        return Locale.forLanguageTag(requestedLocale)
+    }
+
+    // 2. Try language only (nl-BE → nl)
+    val languageOnly = requestedLocale.substringBefore('-')
+    if (cldrData.hasLocale(languageOnly)) {
+        return Locale.forLanguageTag(languageOnly)
+    }
+
+    // 3. Fall back to default (en-US)
+    return Locale.US
+}
+```
+
+---
+
+## CLDR Data Integration Architecture
+
+### What is CLDR?
+
+**Unicode CLDR (Common Locale Data Repository)** provides:
+- Locale-specific date/time patterns
+- Month and day names in 500+ languages
+- Number formats, currencies, timezones
+- Calendar systems (Gregorian, Buddhist, Islamic, etc.)
+
+**Data Sources:**
+- **JVM Runtime:** Bundled with JDK via `java.text.DateFormatSymbols`
+- **JavaScript Runtime:** Browser `Intl` API (CLDR-based)
+- **Native Runtime:** ICU library (International Components for Unicode)
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────┐
+│          UTL-X Transformation               │
+│  formatDate(date, "d MMMM yyyy", "nl-NL")   │
+└─────────────────┬───────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────┐
+│     DateTimeFormatter (stdlib)              │
+│  - Resolves locale (BCP 47)                 │
+│  - Looks up pattern from CLDR               │
+│  - Applies localized symbols                │
+└─────────────────┬───────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────┐
+│       CLDR Data Provider (Platform)         │
+│                                             │
+│  JVM:        java.time + Locale             │
+│  JavaScript: Intl.DateTimeFormat            │
+│  Native:     ICU (libicu)                   │
+└─────────────────────────────────────────────┘
+```
+
+### Implementation: DateTimeFormatter with CLDR
+
+**Core Implementation:**
+
+```kotlin
+// stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/DateTimeFormatter.kt
+
+package org.apache.utlx.stdlib.date
+
+import java.time.format.DateTimeFormatter as JavaDTF
+import java.time.format.FormatStyle
+import java.util.Locale
+
+class DateTimeFormatter(
+    private val cldrProvider: CldrDataProvider
+) {
+    /**
+     * Format date with CLDR-aware pattern and locale
+     */
+    fun format(
+        date: java.time.LocalDate,
+        pattern: String,
+        localeTag: String
+    ): String {
+        val locale = resolveLocale(localeTag)
+
+        // Handle predefined styles (SHORT, MEDIUM, LONG, FULL)
+        if (pattern in listOf("SHORT", "MEDIUM", "LONG", "FULL")) {
+            return formatWithStyle(date, pattern, locale)
+        }
+
+        // Custom pattern - use CLDR symbols
+        val formatter = JavaDTF.ofPattern(pattern, locale)
+        return date.format(formatter)
+    }
+
+    /**
+     * Parse date string with locale-aware pattern
+     */
+    fun parse(
+        dateStr: String,
+        pattern: String,
+        localeTag: String
+    ): java.time.LocalDate {
+        val locale = resolveLocale(localeTag)
+        val formatter = JavaDTF.ofPattern(pattern, locale)
+        return java.time.LocalDate.parse(dateStr, formatter)
+    }
+
+    private fun formatWithStyle(
+        date: java.time.LocalDate,
+        style: String,
+        locale: Locale
+    ): String {
+        val formatStyle = when (style) {
+            "SHORT" -> FormatStyle.SHORT
+            "MEDIUM" -> FormatStyle.MEDIUM
+            "LONG" -> FormatStyle.LONG
+            "FULL" -> FormatStyle.FULL
+            else -> FormatStyle.MEDIUM
+        }
+
+        val formatter = JavaDTF.ofLocalizedDate(formatStyle).withLocale(locale)
+        return date.format(formatter)
+    }
+
+    private fun resolveLocale(localeTag: String): Locale {
+        return try {
+            Locale.forLanguageTag(localeTag)
+        } catch (e: Exception) {
+            Locale.US // Default fallback
+        }
+    }
+}
+```
+
+**CLDR Data Provider Interface:**
+
+```kotlin
+// stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/CldrDataProvider.kt
+
+interface CldrDataProvider {
+    /**
+     * Get localized month names
+     * @param locale BCP 47 locale tag (e.g., "nl-NL")
+     * @param style FULL, SHORT, or NARROW
+     * @return Array of 12 month names
+     */
+    fun getMonthNames(locale: String, style: MonthStyle): Array<String>
+
+    /**
+     * Get localized day names
+     * @param locale BCP 47 locale tag
+     * @param style FULL, SHORT, or NARROW
+     * @return Array of 7 day names (Monday=0)
+     */
+    fun getDayNames(locale: String, style: DayStyle): Array<String>
+
+    /**
+     * Get locale-specific date pattern
+     * @param locale BCP 47 locale tag
+     * @param style SHORT, MEDIUM, LONG, or FULL
+     * @return Pattern string (e.g., "dd-MM-yyyy")
+     */
+    fun getDatePattern(locale: String, style: String): String
+
+    /**
+     * Check if locale is supported
+     */
+    fun hasLocale(locale: String): Boolean
+
+    enum class MonthStyle { FULL, SHORT, NARROW }
+    enum class DayStyle { FULL, SHORT, NARROW }
+}
+```
+
+**JVM Implementation (Using java.time):**
+
+```kotlin
+// stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/JvmCldrProvider.kt
+
+class JvmCldrProvider : CldrDataProvider {
+    private val cache = ConcurrentHashMap<String, Any>()
+
+    override fun getMonthNames(locale: String, style: MonthStyle): Array<String> {
+        val cacheKey = "$locale:month:$style"
+        return cache.getOrPut(cacheKey) {
+            val loc = Locale.forLanguageTag(locale)
+            val symbols = java.text.DateFormatSymbols.getInstance(loc)
+
+            when (style) {
+                MonthStyle.FULL -> symbols.months.take(12).toTypedArray()
+                MonthStyle.SHORT -> symbols.shortMonths.take(12).toTypedArray()
+                MonthStyle.NARROW -> symbols.months.map { it.take(1) }.take(12).toTypedArray()
+            }
+        } as Array<String>
+    }
+
+    override fun getDayNames(locale: String, style: DayStyle): Array<String> {
+        val cacheKey = "$locale:day:$style"
+        return cache.getOrPut(cacheKey) {
+            val loc = Locale.forLanguageTag(locale)
+            val symbols = java.text.DateFormatSymbols.getInstance(loc)
+
+            // Java uses Sunday=1, we use Monday=0, so reorder
+            val days = when (style) {
+                DayStyle.FULL -> symbols.weekdays
+                DayStyle.SHORT -> symbols.shortWeekdays
+                DayStyle.NARROW -> symbols.weekdays.map { it.take(1) }
+            }
+
+            // Reorder: [Sun, Mon, Tue, ...] → [Mon, Tue, ..., Sun]
+            (days.drop(2) + days[1]).toTypedArray()
+        } as Array<String>
+    }
+
+    override fun getDatePattern(locale: String, style: String): String {
+        val loc = Locale.forLanguageTag(locale)
+        val formatStyle = when (style) {
+            "SHORT" -> java.text.DateFormat.SHORT
+            "MEDIUM" -> java.text.DateFormat.MEDIUM
+            "LONG" -> java.text.DateFormat.LONG
+            "FULL" -> java.text.DateFormat.FULL
+            else -> java.text.DateFormat.MEDIUM
+        }
+
+        val dateFormat = java.text.DateFormat.getDateInstance(formatStyle, loc)
+        if (dateFormat is java.text.SimpleDateFormat) {
+            return dateFormat.toPattern()
+        }
+        return "yyyy-MM-dd" // Fallback
+    }
+
+    override fun hasLocale(locale: String): Boolean {
+        val available = Locale.getAvailableLocales()
+        return available.any { it.toLanguageTag() == locale || it.language == locale.substringBefore('-') }
+    }
+}
+```
+
+### Platform-Specific Implementations
+
+#### JVM Runtime (Primary)
+
+**Uses:** `java.time.format.DateTimeFormatter` with `java.util.Locale`
+
+**Advantages:**
+- CLDR data bundled with JDK (no external dependencies)
+- Comprehensive locale support (500+ locales)
+- High performance with caching
+- Well-tested and mature
+
+**Example:**
+```kotlin
+val locale = Locale.forLanguageTag("nl-NL")
+val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", locale)
+val formatted = LocalDate.of(2020, 10, 15).format(formatter)
+// → "15 oktober 2020"
+```
+
+---
+
+#### JavaScript Runtime (Planned)
+
+**Uses:** `Intl.DateTimeFormat` API
+
+**Advantages:**
+- Native browser support
+- Automatic CLDR updates from browser
+- Zero external dependencies
+- Works in Node.js and browsers
+
+**Example:**
+```javascript
+const date = new Date(2020, 9, 15); // October 15, 2020
+const formatter = new Intl.DateTimeFormat('nl-NL', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+});
+formatter.format(date);
+// → "15 oktober 2020"
+```
+
+**UTL-X JavaScript Transpilation:**
+```javascript
+// Transpiled from UTL-X
+function formatDate(date, pattern, locale) {
+    // Map UTL-X pattern to Intl options
+    const options = parsePatternToIntlOptions(pattern);
+    const formatter = new Intl.DateTimeFormat(locale, options);
+    return formatter.format(date);
+}
+```
+
+---
+
+#### Native Runtime (Future)
+
+**Uses:** ICU (International Components for Unicode)
+
+**Advantages:**
+- C/C++ library for maximum performance
+- Used by Node.js, Chrome, Android
+- Same CLDR data as JVM and JavaScript
+- No runtime dependency
+
+**Example (C++):**
+```cpp
+#include <unicode/dtfmtsym.h>
+#include <unicode/smpdtfmt.h>
+
+UErrorCode status = U_ZERO_ERROR;
+Locale locale("nl_NL");
+SimpleDateFormat formatter("d MMMM yyyy", locale, status);
+
+UDate date = ...; // Date value
+UnicodeString result;
+formatter.format(date, result);
+// → "15 oktober 2020"
+```
+
+**Integration with UTL-X Native:**
+- Link against `libicu` (libicu-dev on Ubuntu, icu4c on macOS)
+- Use ICU DateFormat API
+- Cache formatters per locale
+
+---
+
+## UTL-X Configuration Syntax
+
+### Config Block Specification
+
+UTL-X scripts can include a `config` block to set default locale, timezone, and calendar settings:
+
+**Basic Syntax:**
+```utlx
+%utlx 1.0
+input json
+output json
+config {
+    defaultLocale: "nl-NL",
+    timezone: "Europe/Amsterdam",
+    calendar: "gregory"
+}
+---
+{
+    // Transformation uses config settings
+    formatted_date: formatDate(@input.date)  // Uses nl-NL by default
+}
+```
+
+### Config Options
+
+#### `defaultLocale` (String)
+**BCP 47 locale identifier** used when no locale specified in function calls.
+
+**Default:** `"en-US"`
+
+**Examples:**
+```utlx
+config {
+    defaultLocale: "nl-NL"  // Dutch
+}
+---
+formatDate(date)  // Uses nl-NL automatically
+formatDate(date, "d MMMM yyyy")  // Still uses nl-NL
+formatDate(date, "d MMMM yyyy", "en-US")  // Explicit override
+```
+
+---
+
+#### `timezone` (String)
+**IANA timezone identifier** for date/time operations.
+
+**Default:** System timezone
+
+**Examples:**
+```utlx
+config {
+    timezone: "Europe/Amsterdam"  // CET/CEST
+}
+---
+now()  // Returns datetime in Europe/Amsterdam timezone
+```
+
+**Common Timezones:**
+- `"UTC"` - Coordinated Universal Time
+- `"Europe/Amsterdam"` - Netherlands
+- `"America/New_York"` - US Eastern
+- `"America/Los_Angeles"` - US Pacific
+- `"Asia/Tokyo"` - Japan
+- `"Europe/London"` - UK
+
+---
+
+#### `calendar` (String)
+**Calendar system** for date calculations.
+
+**Default:** `"gregory"` (Gregorian calendar)
+
+**Supported:**
+- `"gregory"` - Gregorian (ISO 8601)
+- `"buddhist"` - Thai Buddhist calendar
+- `"islamic"` - Islamic/Hijri calendar
+- `"hebrew"` - Hebrew calendar
+- `"japanese"` - Japanese Imperial calendar
+
+**Example:**
+```utlx
+config {
+    calendar: "buddhist",
+    defaultLocale: "th-TH"
+}
+---
+formatDate(parseDate("2020-10-15"), "d MMMM yyyy")
+// → "15 ตุลาคม 2563" (Buddhist year 2563 = Gregorian 2020)
+```
+
+---
+
+### Full Config Example
+
+**Invoice Processing (Dutch):**
+```utlx
+%utlx 1.0
+input json
+output json
+config {
+    defaultLocale: "nl-NL",
+    timezone: "Europe/Amsterdam",
+    calendar: "gregory",
+    dateFormat: "dd-MM-yyyy",  // Custom default format
+    timestampFormat: "dd-MM-yyyy HH:mm:ss"
+}
+---
+{
+    invoice_number: @input.invoice_number,
+
+    // Uses nl-NL from config
+    invoice_date: formatDate(parseDate(@input.invoice_date)),
+
+    // Uses Europe/Amsterdam timezone
+    processed_at: formatDate(now(), "dd-MM-yyyy HH:mm:ss"),
+
+    // Explicit locale override
+    invoice_date_us: formatDate(parseDate(@input.invoice_date), "MM/dd/yyyy", "en-US"),
+
+    items: map(@input.items, item => {
+        description: item.description,
+        amount: item.amount,
+        due_date: formatDate(addDays(parseDate(@input.invoice_date), 30))
+    })
+}
+```
+
+**Output:**
+```json
+{
+    "invoice_number": "INV-2020-001",
+    "invoice_date": "15-10-2020",
+    "processed_at": "20-10-2025 14:30:45",
+    "invoice_date_us": "10/15/2020",
+    "items": [...]
+}
+```
+
+---
+
+### Config Validation
+
+**Parser validates config at compile time:**
+```utlx
+config {
+    defaultLocale: "xx-YY"  // ❌ Error: Invalid BCP 47 locale tag
+}
+
+config {
+    timezone: "Invalid/Zone"  // ❌ Error: Unknown timezone
+}
+
+config {
+    calendar: "martian"  // ❌ Error: Unsupported calendar system
+}
+```
+
+---
+
+## Project Structure for Localization
+
+### Directory Layout
+
+```
+utl-x/
+├── stdlib/
+│   ├── src/main/kotlin/org/apache/utlx/stdlib/
+│   │   ├── date/
+│   │   │   ├── DateFunctions.kt           # Core date functions
+│   │   │   ├── DateTimeFormatter.kt       # CLDR-aware formatter
+│   │   │   ├── CldrDataProvider.kt        # CLDR interface
+│   │   │   ├── JvmCldrProvider.kt         # JVM implementation
+│   │   │   └── DatePatterns.kt            # Predefined patterns
+│   │   └── config/
+│   │       ├── ConfigParser.kt            # Parse config block
+│   │       └── LocaleResolver.kt          # BCP 47 resolution
+│   └── src/main/resources/
+│       └── cldr/                          # Optional: Custom CLDR data
+│           ├── locales/
+│           │   ├── nl-NL.json            # Dutch locale data
+│           │   ├── en-US.json            # US English
+│           │   └── en-GB.json            # UK English
+│           └── patterns/
+│               ├── date-patterns.json    # Common date patterns
+│               └── time-patterns.json    # Common time patterns
+│
+├── modules/core/
+│   └── src/main/kotlin/org/apache/utlx/core/
+│       ├── parser/
+│       │   └── ConfigParser.kt           # Parse config block in UTL-X
+│       └── config/
+│           └── TransformationConfig.kt   # Runtime config holder
+│
+└── formats/
+    └── json/
+        └── src/main/kotlin/
+            └── JsonSerializer.kt         # Uses locale-aware formatting
+```
+
+### CLDR Resource Files (Optional)
+
+**If bundling custom CLDR data:**
+
+**`stdlib/src/main/resources/cldr/locales/nl-NL.json`:**
+```json
+{
+    "locale": "nl-NL",
+    "language": "nl",
+    "region": "NL",
+    "displayName": "Nederlands (Nederland)",
+    "months": {
+        "full": ["januari", "februari", "maart", "april", "mei", "juni",
+                 "juli", "augustus", "september", "oktober", "november", "december"],
+        "short": ["jan", "feb", "mrt", "apr", "mei", "jun",
+                  "jul", "aug", "sep", "okt", "nov", "dec"],
+        "narrow": ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
+    },
+    "days": {
+        "full": ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"],
+        "short": ["ma", "di", "wo", "do", "vr", "za", "zo"],
+        "narrow": ["M", "D", "W", "D", "V", "Z", "Z"]
+    },
+    "patterns": {
+        "short": "dd-MM-yy",
+        "medium": "d MMM yyyy",
+        "long": "d MMMM yyyy",
+        "full": "EEEE d MMMM yyyy"
+    }
+}
+```
+
+**`stdlib/src/main/resources/cldr/patterns/date-patterns.json`:**
+```json
+{
+    "iso": "yyyy-MM-dd",
+    "iso_compact": "yyyyMMdd",
+    "dutch": "dd-MM-yyyy",
+    "us": "MM/dd/yyyy",
+    "uk": "dd/MM/yyyy",
+    "german": "dd.MM.yyyy",
+    "french": "dd/MM/yyyy"
+}
+```
+
+### Build Configuration
+
+**Update `stdlib/build.gradle.kts` to include CLDR resources:**
+
+```kotlin
+// stdlib/build.gradle.kts
+
+dependencies {
+    // No external CLDR dependency needed - use JDK bundled data
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+
+    // For enhanced CLDR features (optional)
+    // implementation("com.ibm.icu:icu4j:72.1")  // Optional: ICU4J for advanced features
+}
+
+tasks {
+    processResources {
+        // Include CLDR JSON files if present
+        from("src/main/resources/cldr") {
+            into("cldr")
+        }
+    }
+}
+```
+
+### Runtime Locale Loading
+
+**Lazy loading with caching:**
+
+```kotlin
+// stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/LocaleManager.kt
+
+object LocaleManager {
+    private val providers = ConcurrentHashMap<String, CldrDataProvider>()
+
+    fun getProvider(runtime: Runtime): CldrDataProvider {
+        return providers.getOrPut(runtime.name) {
+            when (runtime) {
+                Runtime.JVM -> JvmCldrProvider()
+                Runtime.JAVASCRIPT -> JsCldrProvider()
+                Runtime.NATIVE -> IcuCldrProvider()
+            }
+        }
+    }
+
+    enum class Runtime { JVM, JAVASCRIPT, NATIVE }
+}
+```
+
+---
+
 ## Migration Guide
 
 ### For New Code
