@@ -9,6 +9,9 @@ Issue discovered: The CLI binary appears to not be picking up the stdlib functio
 
 See xsd-discussions-style.md ; the generation of an XSD for the output has to be in a default style and potentially might need configuration to choose the XSD style
 
+utlx schema -h 
+ Output: json-schema (xsd, csv-schema, yaml-schema planned) TODO
+
 SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 
   This appears to be a runtime linkage issue between the CLI and stdlib that needs investigation beyond the scope of the current session.
