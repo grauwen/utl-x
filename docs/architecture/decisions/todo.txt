@@ -20,17 +20,6 @@ keyword.
 xml_namespace_handling test uses wildcard selectors (*[0]) which aren't supported by the current parser. This would require parser enhancements. Let me skip this for now and move to the next failure:
 
 
-Next Steps (Phase 3 - Optional)
-
-  Per the design document, the next phase would add:
-
-  1. Locale-aware formatDate() with BCP 47 support
-  2. Custom date patterns (Dutch, US, UK formats)
-  3. CLDR data integration for localized month/day names
-  4. Config block support for default locale/timezone
-
-
-
 -TypeOf is both a standard grammar keyword and in the same time a stdlib keyword. -> rename the function typeOf to getType
 - formats/plugin/
 - stLib
