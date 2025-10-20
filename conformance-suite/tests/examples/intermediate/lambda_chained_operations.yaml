@@ -1,0 +1,34 @@
+name: "lambda_chained_operations"
+category: "examples/intermediate"
+description: "Chained map and filter operations using pipeline operator"
+tags: ["lambda", "map", "filter", "pipeline", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "items": [
+        {"name": "apple", "price": 1.5},
+        {"name": "banana", "price": 0.8},
+        {"name": "orange", "price": 2.0},
+        {"name": "grape", "price": 3.5}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    expensiveItems: @input.items
+      |> filter(item => item.price > 1.0)
+      |> map(item => item.name)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "expensiveItems": ["apple", "orange", "grape"]
+    }

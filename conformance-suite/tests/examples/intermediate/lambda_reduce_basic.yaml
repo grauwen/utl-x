@@ -1,0 +1,27 @@
+name: "lambda_reduce_basic"
+category: "examples/intermediate"
+description: "Reduce operation with lambda to sum array of numbers"
+tags: ["lambda", "reduce", "functional", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "numbers": [1, 2, 3, 4, 5]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    sum: reduce(@input.numbers, (acc, x) => acc + x, 0)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "sum": 15
+    }

@@ -1,0 +1,39 @@
+name: "lambda_object_transformation"
+category: "examples/intermediate"
+description: "Transform array of objects using lambda with object construction"
+tags: ["lambda", "map", "object", "transformation", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "users": [
+        {"id": 1, "name": "Alice", "age": 30},
+        {"id": 2, "name": "Bob", "age": 25},
+        {"id": 3, "name": "Charlie", "age": 35}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    transformed: map(@input.users, user => {
+      userId: user.id,
+      fullName: upper(user.name),
+      isAdult: user.age >= 18
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "transformed": [
+        {"userId": 1, "fullName": "ALICE", "isAdult": true},
+        {"userId": 2, "fullName": "BOB", "isAdult": true},
+        {"userId": 3, "fullName": "CHARLIE", "isAdult": true}
+      ]
+    }

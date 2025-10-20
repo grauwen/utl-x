@@ -1,0 +1,27 @@
+name: "lambda_map_basic"
+category: "examples/intermediate"
+description: "Basic map operation with lambda function to double numbers"
+tags: ["lambda", "map", "functional", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "numbers": [1, 2, 3, 4, 5]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    doubled: map(@input.numbers, x => x * 2)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "doubled": [2, 4, 6, 8, 10]
+    }
