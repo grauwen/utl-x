@@ -57,7 +57,35 @@ object StringFunctions {
         val str = args[0].asString()
         return UDM.Scalar(str.lowercase())
     }
-    
+
+    @UTLXFunction(
+        description = "Convert string to title case (capitalize first letter of each word)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: String to convert"
+        ],
+        returns = "Title cased string",
+        example = "toTitleCase(\"john doe\") => \"John Doe\"",
+        tags = ["string"],
+        since = "1.0"
+    )
+    /**
+     * Convert string to title case
+     * Usage: toTitleCase("john doe") => "John Doe"
+     */
+    fun toTitleCase(args: List<UDM>): UDM {
+        requireArgs(args, 1, "toTitleCase")
+        val str = args[0].asString()
+        val titleCased = str.split(" ")
+            .joinToString(" ") { word ->
+                if (word.isEmpty()) word
+                else word.lowercase().replaceFirstChar { it.uppercase() }
+            }
+        return UDM.Scalar(titleCased)
+    }
+
     @UTLXFunction(
         description = "Trim whitespace from both ends",
         minArgs = 2,
@@ -211,9 +239,15 @@ object StringFunctions {
     fun replace(args: List<UDM>): UDM {
         requireArgs(args, 3, "replace")
         val str = args[0].asString()
-        val search = args[1].asString()
+        val pattern = args[1].asString()
         val replacement = args[2].asString()
-        return UDM.Scalar(str.replace(search, replacement))
+        // Try as regex first, fallback to literal if regex is invalid
+        return try {
+            UDM.Scalar(str.replace(Regex(pattern), replacement))
+        } catch (e: Exception) {
+            // If regex is invalid, do literal replacement
+            UDM.Scalar(str.replace(pattern, replacement))
+        }
     }
     
     @UTLXFunction(

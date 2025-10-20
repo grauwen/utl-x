@@ -77,50 +77,31 @@ transformation: |
   }
   
   def substituteVariables(obj, env_vars) {
-    if (isString(obj)) {
-      resolveVariable(obj, env_vars)
-    } else if (isArray(obj)) {
-      map(obj, item => substituteVariables(item, env_vars))
-    } else if (isObject(obj)) {
-      let entries = map(keys(obj), key => {
-        key: key,
-        value: substituteVariables(obj[key], env_vars)
-      })
-      fromEntries(map(entries, entry => [entry.key, entry.value]))
-    } else {
-      obj
-    }
+    if (isString(obj)) resolveVariable(obj, env_vars)
+    else if (isArray(obj)) map(obj, item => substituteVariables(item, env_vars))
+    else if (isObject(obj)) let entries = map(keys(obj), key => { key: key, value: substituteVariables(obj[key], env_vars) }) in fromEntries(map(entries, entry => [entry.key, entry.value]))
+    else obj
   }
   
   def resolveVariable(str, env_vars) {
-    if (matches(str, "\\$\\{([^}]+)\\}")) {
-      let variable = extractBetween(str, "${", "}")
-      let parts = split(variable, ":-")
-      let var_name = parts[0]
-      let default_value = if (count(parts) > 1) parts[1] else ""
-      
-      let resolved = if (hasKey(env_vars, var_name)) env_vars[var_name] else default_value
-      
-      # Convert to appropriate type
+    if (matches(str, "\\$\\{([^}]+)\\}"))
+      let variable = extractBetween(str, "${", "}") in
+      let parts = split(variable, ":-") in
+      let var_name = parts[0] in
+      let default_value = if (count(parts) > 1) parts[1] else "" in
+      let resolved = if (hasKey(env_vars, var_name)) env_vars[var_name] else default_value in
       if (matches(resolved, "^\\d+$")) toNumber(resolved)
       else if (lower(resolved) == "true") true
-      else if (lower(resolved) == "false") false  
+      else if (lower(resolved) == "false") false
       else resolved
-    } else {
-      str
-    }
+    else str
   }
   
   def extractVariables(obj) {
-    if (isString(obj) && matches(obj, "\\$\\{([^}]+)\\}")) {
-      [extractBetween(obj, "${", "}")]
-    } else if (isArray(obj)) {
-      flatten(map(obj, item => extractVariables(item)))
-    } else if (isObject(obj)) {
-      flatten(map(values(obj), value => extractVariables(value)))
-    } else {
-      []
-    }
+    if (isString(obj) && matches(obj, "\\$\\{([^}]+)\\}")) [extractBetween(obj, "${", "}")]
+    else if (isArray(obj)) flatten(map(obj, item => extractVariables(item)))
+    else if (isObject(obj)) flatten(map(values(obj), value => extractVariables(value)))
+    else []
   }
   
   def validateConfig(config) {

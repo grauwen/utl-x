@@ -108,7 +108,7 @@ class Interpreter {
         // Register standard library functions
         stdlib.registerAll(globalEnv)
     }
-    
+
     /**
      * Execute a program with input data
      */
@@ -639,10 +639,13 @@ class Interpreter {
                     return udmToRuntimeValue(result)
                 }
             } catch (ex: Exception) {
-                // Registry approach also failed
+                // Registry approach also failed - log the error for debugging
+                System.err.println("DEBUG: Failed to load stdlib function '$functionName' via reflection:")
+                System.err.println("  ${ex.javaClass.simpleName}: ${ex.message}")
+                ex.printStackTrace(System.err)
             }
         }
-        
+
         throw RuntimeError("Undefined function: $functionName", location)
     }
     
@@ -763,11 +766,7 @@ class Interpreter {
                     
                     return RuntimeValue.NumberValue(distance)
                 }
-                "now" -> {
-                    if (arguments.isNotEmpty()) throw RuntimeError("now expects no arguments", location)
-                    val currentTime = java.time.Instant.now().toString()
-                    return RuntimeValue.StringValue(currentTime)
-                }
+                // "now" removed - use stdlib DateFunctions::now which returns UDM.DateTime instead of string
             }
         } catch (e: RuntimeError) {
             throw e
@@ -1424,10 +1423,8 @@ class StandardLibraryImpl {
         }
         
         // Date/time functions
-        registerFunction(env, "now") { args ->
-            RuntimeValue.StringValue(java.time.Instant.now().toString())
-        }
-        
+        // now() removed - use stdlib DateFunctions::now which returns UDM.DateTime instead of string
+
         // Crypto functions (simplified implementations)
         registerFunction(env, "sha256") { args ->
             val str = when (val arg = args[0]) {

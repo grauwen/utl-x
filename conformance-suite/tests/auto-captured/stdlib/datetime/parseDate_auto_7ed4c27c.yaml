@@ -1,0 +1,36 @@
+name: "parseDate_auto_7ed4c27c"
+category: "stdlib/datetime"
+description: "Auto-captured test for parseDate"
+tags: ["auto-generated", "parseDate", "parseDate"]
+auto_generated: true
+captured_at: "2025-10-20T11:54:26.047842Z"
+
+input:
+  format: json
+  data: {"date": "2024-01-15"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    parsed: parseDate(@input.date)
+  }
+  
+
+expected:
+  format: json
+  data: |
+    {
+      "parsed": "2024-01-15T00:00:00Z"
+    }
+
+performance_limits:
+  max_duration_ms: 424
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-20"
+  references: ["Auto-generated test case"]

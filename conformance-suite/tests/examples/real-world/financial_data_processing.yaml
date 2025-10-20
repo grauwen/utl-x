@@ -118,18 +118,9 @@ transformation: |
   }
   
   def generateAlerts(transactions) {
-    let alerts = []
-    let largeTransactions = filter(transactions, txn => abs(txn.amount) > 1000)
-    
-    if (count(largeTransactions) > 0) {
-      alerts + {
-        type: "LARGE_TRANSACTION",
-        message: "Large transactions detected",
-        transactions: map(largeTransactions, txn => txn.id)
-      }
-    } else {
-      alerts
-    }
+    let alerts = [] in
+    let largeTransactions = filter(transactions, txn => abs(txn.amount) > 1000) in
+    if (count(largeTransactions) > 0) alerts + { type: "LARGE_TRANSACTION", message: "Large transactions detected", transactions: map(largeTransactions, txn => txn.id) } else alerts
   }
   
   def validateTransactions(transactions) {
@@ -142,7 +133,7 @@ transformation: |
   }
   
   def isValidDateRange(dates) {
-    let sortedDates = sort(dates)
+    let sortedDates = sort(dates) in
     daysBetween(first(sortedDates), last(sortedDates)) <= 31
   }
 

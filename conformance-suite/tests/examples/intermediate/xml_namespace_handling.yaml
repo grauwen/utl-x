@@ -32,9 +32,7 @@ transformation: |
       customer_ns: namespaceUri(@input.Envelope.Body.GetCustomerRequest),
       request_qname: qualifiedName(@input.Envelope.Body.*[0])
     },
-    headers: if (hasContent(@input.Envelope.Header)) 
-             extractHeaders(@input.Envelope.Header) 
-             else null
+    headers: if (hasContent(@input.Envelope.Header)) extractHeaders(@input.Envelope.Header) else null
   }
 
   def extractHeaders(header) {

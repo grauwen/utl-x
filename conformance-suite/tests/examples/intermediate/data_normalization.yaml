@@ -31,17 +31,13 @@ transformation: |
   }
 
   def formatPhone(phone) {
-    let digits = replace(phone, "[^0-9]", ""),
-    if (length(digits) == 10) {
-      "(" + substring(digits, 0, 3) + ") " + substring(digits, 3, 6) + "-" + substring(digits, 6, 10)
-    } else {
-      phone
-    }
+    let digits = replace(phone, "[^0-9]", "") in
+    if (length(digits) == 10) "(" + substring(digits, 0, 3) + ") " + substring(digits, 3, 6) + "-" + substring(digits, 6, 10) else phone
   }
 
   def calculateContactScore(email, phone) {
-    let emailScore = if (contains(email, "@") && contains(email, ".")) 50 else 0,
-    let phoneScore = if (length(replace(phone, "[^0-9]", "")) == 10) 50 else 0,
+    let emailScore = if (contains(email, "@") && contains(email, ".")) 50 else 0 in
+    let phoneScore = if (length(replace(phone, "[^0-9]", "")) == 10) 50 else 0 in
     emailScore + phoneScore
   }
 

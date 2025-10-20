@@ -281,6 +281,7 @@ object StandardLibrary {
         // Basic string operations
         register("upper", StringFunctions::upper)
         register("lower", StringFunctions::lower)
+        register("toTitleCase", StringFunctions::toTitleCase)
         register("trim", StringFunctions::trim)
         register("substring", StringFunctions::substring)
         //register("concat", StringFunctions::concat) // concat now resides in coreFunctions to handel concat of string, array, obejct, binary etc
@@ -449,7 +450,8 @@ object StandardLibrary {
         register("addDays", DateFunctions::addDays)
         register("addHours", DateFunctions::addHours)
         register("diffDays", DateFunctions::diffDays)
-        
+        register("daysBetween", DateFunctions::diffDays)  // DataWeave alias
+
         // Extended date functions
         register("day", ExtendedDateFunctions::day)
         register("month", ExtendedDateFunctions::month)

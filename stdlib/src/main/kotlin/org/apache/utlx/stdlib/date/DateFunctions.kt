@@ -58,13 +58,26 @@ object DateFunctions {
     fun parseDate(args: List<UDM>): UDM {
         requireArgs(args, 1..2, "parseDate")
         val dateStr = args[0].asString()
-        val format = if (args.size > 1) args[1].asString() else "yyyy-MM-dd'T'HH:mm:ss'Z'"
-        
+        val format = if (args.size > 1) args[1].asString() else null
+
         return try {
-            val instant = Instant.parse(dateStr)
+            // Try parsing as ISO instant first (handles full timestamps)
+            val instant = try {
+                Instant.parse(dateStr)
+            } catch (e: Exception) {
+                // If that fails and dateStr is date-only (yyyy-MM-dd), append time
+                if (dateStr.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) && format == null) {
+                    Instant.parse("${dateStr}T00:00:00Z")
+                } else if (format != null) {
+                    // TODO: Implement custom format parsing using java.time.format.DateTimeFormatter
+                    throw FunctionArgumentException("Custom date format parsing not yet implemented")
+                } else {
+                    throw e
+                }
+            }
             UDM.DateTime(JavaInstant.ofEpochSecond(instant.epochSeconds, instant.nanosecondsOfSecond.toLong()))
         } catch (e: Exception) {
-            throw FunctionArgumentException("Cannot parse date: $dateStr")
+            throw FunctionArgumentException("Cannot parse date: $dateStr (format: ${format ?: "ISO-8601"})")
         }
     }
 
