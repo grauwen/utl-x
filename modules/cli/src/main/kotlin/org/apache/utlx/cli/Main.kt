@@ -27,12 +27,13 @@ object Main {
                 "transform", "t" -> TransformCommand.execute(commandArgs)
                 "repl", "r" -> ReplCommand.execute(commandArgs)
                 "schema", "s" -> SchemaCommand.execute(commandArgs)
+                "capture" -> CaptureCommand.execute(commandArgs)
                 "validate", "v" -> {
                     println("Validate command not yet implemented")
                     println("Coming soon: Validate UTL-X scripts")
                 }
                 "compile", "c" -> {
-                    println("Compile command not yet implemented") 
+                    println("Compile command not yet implemented")
                     println("Coming soon: Compile UTL-X scripts to bytecode")
                 }
                 "format", "f" -> {
@@ -74,6 +75,7 @@ object Main {
             |  transform (t)  Transform data using a UTL-X script
             |  repl      (r)  Start interactive REPL session
             |  schema    (s)  Generate and validate schemas (design-time analysis)
+            |  capture        Manage test capture settings (enable/disable/status)
             |  validate  (v)  Validate a UTL-X script without executing
             |  compile   (c)  Compile a UTL-X script to bytecode
             |  format    (f)  Format/pretty-print a UTL-X script
@@ -85,6 +87,7 @@ object Main {
             |Examples:
             |  utlx repl
             |  utlx transform script.utlx input.xml -o output.json
+            |  utlx capture status
             |  utlx schema generate --input-schema order.xsd --transform script.utlx --output-format json-schema
             |  utlx validate script.utlx
             |  utlx transform --input-format xml --output-format json script.utlx < input.xml
