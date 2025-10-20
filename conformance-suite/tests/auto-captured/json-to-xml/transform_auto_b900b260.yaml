@@ -27,7 +27,7 @@ expected:
   data: |
     <?xml version="1.0" encoding="UTF-8"?>
     <root>
-      <Order id="UDMValue(udm=Scalar(value=ORD-123))">
+      <Order id="ORD-123">
         <Customer>John</Customer>
       </Order>
     </root>
