@@ -13,6 +13,11 @@ object TestCaptureService {
 
     /**
      * Capture a transformation execution
+     *
+     * @param overrideEnabled Optional override for capture enabled state:
+     *   - null: use config.enabled (default behavior)
+     *   - true: force enable capture (ignore config)
+     *   - false: force disable capture (ignore config)
      */
     fun captureExecution(
         transformation: String,
@@ -23,11 +28,20 @@ object TestCaptureService {
         success: Boolean,
         error: String? = null,
         durationMs: Long,
-        scriptFile: File
+        scriptFile: File,
+        overrideEnabled: Boolean? = null
     ) {
-        // Check if capture is enabled
-        if (!config.enabled) {
+        // Check if capture is enabled (with CLI override support)
+        val captureEnabled = overrideEnabled ?: config.enabled
+        if (!captureEnabled) {
+            if (config.verbose && overrideEnabled == false) {
+                println("  [Capture] Disabled via --no-capture flag")
+            }
             return
+        }
+
+        if (config.verbose && overrideEnabled == true) {
+            println("  [Capture] Enabled via --capture flag (overriding config)")
         }
 
         // Check if script file matches ignore patterns

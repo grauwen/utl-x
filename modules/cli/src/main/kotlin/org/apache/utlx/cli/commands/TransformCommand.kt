@@ -35,7 +35,8 @@ object TransformCommand {
         val inputFormat: String? = null,
         val outputFormat: String? = null,
         val verbose: Boolean = false,
-        val pretty: Boolean = true
+        val pretty: Boolean = true,
+        val captureEnabled: Boolean? = null  // null = use config, true = force enable, false = force disable
     )
     
     fun execute(args: Array<String>) {
@@ -117,7 +118,8 @@ object TransformCommand {
                 success = true,
                 error = null,
                 durationMs = durationMs,
-                scriptFile = options.scriptFile
+                scriptFile = options.scriptFile,
+                overrideEnabled = options.captureEnabled
             )
 
         } catch (e: Exception) {
@@ -144,7 +146,8 @@ object TransformCommand {
                     success = false,
                     error = captureError,
                     durationMs = durationMs,
-                    scriptFile = options.scriptFile
+                    scriptFile = options.scriptFile,
+                    overrideEnabled = options.captureEnabled
                 )
             } catch (captureException: Exception) {
                 // Silently fail capture on error
@@ -260,7 +263,8 @@ object TransformCommand {
         var outputFormat: String? = null
         var verbose = false
         var pretty = true
-        
+        var captureEnabled: Boolean? = null
+
         var i = 0
         while (i < args.size) {
             when (args[i]) {
@@ -281,6 +285,12 @@ object TransformCommand {
                 }
                 "--no-pretty" -> {
                     pretty = false
+                }
+                "--capture" -> {
+                    captureEnabled = true
+                }
+                "--no-capture" -> {
+                    captureEnabled = false
                 }
                 "-h", "--help" -> {
                     printUsage()
@@ -328,7 +338,8 @@ object TransformCommand {
             inputFormat = inputFormat,
             outputFormat = outputFormat,
             verbose = verbose,
-            pretty = pretty
+            pretty = pretty,
+            captureEnabled = captureEnabled
         )
     }
     
@@ -351,6 +362,8 @@ object TransformCommand {
             |  --output-format FORMAT      Force output format (xml, json, csv, yaml)
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing
+            |  --capture                   Force enable test capture (overrides config)
+            |  --no-capture                Force disable test capture (overrides config)
             |  -h, --help                  Show this help message
             |
             |Examples:
@@ -365,6 +378,9 @@ object TransformCommand {
             |
             |  # Verbose mode
             |  utlx transform input.xml script.utlx -v -o output.json
+            |
+            |  # Disable capture for this run
+            |  utlx transform input.xml script.utlx --no-capture -o output.json
         """.trimMargin())
     }
 }

@@ -1,0 +1,42 @@
+name: "upper_auto_eb60ea88"
+category: "stdlib/string"
+description: "Auto-captured test for upper"
+tags: ["auto-generated", "upper", "upper", "length"]
+auto_generated: true
+captured_at: "2025-10-20T07:54:51.165777Z"
+
+input:
+  format: json
+  data: |
+    {"id": "unique_12345", "text": "hello capture system"}
+    
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    result_id: "capture_verification_" + @input.id,
+    uppercase_text: upper(@input.text),
+    length_check: length(@input.text)
+  }
+  
+
+expected:
+  format: json
+  data: |
+    {
+      "result_id": "capture_verification_unique_12345",
+      "uppercase_text": "HELLO CAPTURE SYSTEM",
+      "length_check": 20
+    }
+
+performance_limits:
+  max_duration_ms: 398
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-20"
+  references: ["Auto-generated test case"]
