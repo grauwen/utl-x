@@ -2,10 +2,14 @@ TODO's
 
 See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/Next-steps.md
 
-cd conformance-suite && python3 runners/cli-runner/simple-runner.py 2>&1 | tail -15)
-python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|✗" | awk '/Running:/{test=$2} /✗/{print test}' | sort | uniq
+Issue discovered: The CLI binary appears to not be picking up the stdlib functions properly at runtime, even though:
+  - parseDate is defined and registered in stdlib
+  - Function registry is up to date
+  - CLI jar was rebuilt
 
-python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|  ✗" | grep -B 1 "✗" | grep "Running:" | awk '{print $2}'
+  This appears to be a runtime linkage issue between the CLI and stdlib that needs investigation beyond the scope of the current session.
+
+
 
 -TypeOf is both a standard grammar keyword and in the same time a stdlib keyword. -> rename the function typeOf to getType
 - formats/plugin/
