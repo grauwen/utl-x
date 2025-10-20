@@ -50,8 +50,22 @@ class XMLSerializer(
         if (includeDeclaration) {
             writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
         }
-        
-        serializeUDM(udm, writer, 0, rootName)
+
+        // Special case: If UDM is an Object with a single property and no attributes,
+        // unwrap it and use that property as the root element
+        val actualUdm = if (udm is UDM.Object &&
+                             udm.properties.size == 1 &&
+                             udm.attributes.isEmpty() &&
+                             udm.name == null) {
+            // Unwrap: serialize the single property value with the property name as element name
+            val (propertyName, propertyValue) = udm.properties.entries.first()
+            serializeUDM(propertyValue, writer, 0, propertyName)
+            return
+        } else {
+            udm
+        }
+
+        serializeUDM(actualUdm, writer, 0, rootName)
     }
     
     /**
@@ -61,7 +75,16 @@ class XMLSerializer(
         if (includeDeclaration) {
             writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
         }
-        
+
+        // Special case: If RuntimeValue is an ObjectValue with a single property,
+        // unwrap it and use that property as the root element
+        if (value is RuntimeValue.ObjectValue &&
+            value.properties.size == 1) {
+            val (propertyName, propertyValue) = value.properties.entries.first()
+            serializeRuntimeValue(propertyValue, writer, 0, propertyName)
+            return
+        }
+
         serializeRuntimeValue(value, writer, 0, rootName)
     }
     
@@ -71,7 +94,7 @@ class XMLSerializer(
                 // Scalar at top level - wrap in element
                 writeIndent(writer, depth)
                 writer.write("<$elementName>")
-                writeEscaped(writer, udm.asString() ?: "")
+                writeEscaped(writer, formatScalarValue(udm.value))
                 writer.write("</$elementName>")
                 if (prettyPrint) writer.write("\n")
             }
@@ -111,7 +134,7 @@ class XMLSerializer(
                         writer.write(">")
                         val textValue = udm.properties["_text"]!!
                         when (textValue) {
-                            is UDM.Scalar -> writeEscaped(writer, textValue.asString() ?: "")
+                            is UDM.Scalar -> writeEscaped(writer, formatScalarValue(textValue.value))
                             else -> serializeUDM(textValue, writer, depth + 1, "value")
                         }
                         writer.write("</$name>")
@@ -128,7 +151,7 @@ class XMLSerializer(
                             val textValue = udm.properties["_text"]!!
                             if (textValue is UDM.Scalar) {
                                 writeIndent(writer, depth + 1)
-                                writeEscaped(writer, textValue.asString() ?: "")
+                                writeEscaped(writer, formatScalarValue(textValue.value))
                                 if (prettyPrint) writer.write("\n")
                             }
                         }
@@ -275,6 +298,28 @@ class XMLSerializer(
                 '"' -> writer.write("&quot;")
                 else -> writer.write(c.toString())
             }
+        }
+    }
+
+    /**
+     * Format scalar value for XML output
+     * - Numbers: Format integers without decimal point (1 instead of 1.0)
+     * - Others: Use default toString()
+     */
+    private fun formatScalarValue(value: Any?): String {
+        return when (value) {
+            null -> ""
+            is Number -> {
+                val d = value.toDouble()
+                if (d == d.toLong().toDouble()) {
+                    // It's an integer, format without decimal point
+                    d.toLong().toString()
+                } else {
+                    // It's a decimal, keep as is
+                    d.toString()
+                }
+            }
+            else -> value.toString()
         }
     }
 }

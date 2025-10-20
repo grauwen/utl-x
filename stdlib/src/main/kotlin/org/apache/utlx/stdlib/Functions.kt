@@ -446,6 +446,7 @@ object StandardLibrary {
         // Basic date functions
         register("now", DateFunctions::now)
         register("parseDate", DateFunctions::parseDate)
+        register("toDate", DateFunctions::toDate)  // Conversion alias
         register("formatDate", DateFunctions::formatDate)
         register("addDays", DateFunctions::addDays)
         register("addHours", DateFunctions::addHours)

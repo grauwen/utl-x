@@ -128,6 +128,25 @@ object DateFunctions {
     }
 
     @UTLXFunction(
+        description = "Convert string to date (alias for parseDate, simpler for single argument)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = [
+            "dateStr: Date string in ISO format (e.g., '2020-03-15', '2020-03-15T10:30:00Z')"
+        ],
+        returns = "UDM.Date for date-only, UDM.DateTime for timestamps",
+        example = "toDate(\"2020-03-15\") => Date",
+        tags = ["date", "conversion"],
+        since = "1.0"
+    )
+
+    fun toDate(args: List<UDM>): UDM {
+        requireArgs(args, 1, "toDate")
+        return parseDate(args)
+    }
+
+    @UTLXFunction(
         description = "Format a date/time value with optional pattern and locale",
         minArgs = 1,
         maxArgs = 3,
@@ -281,24 +300,28 @@ object DateFunctions {
     fun diffDays(args: List<UDM>): UDM {
         requireArgs(args, 2, "diffDays")
 
-        val days = when {
-            args[0] is UDM.Date && args[1] is UDM.Date -> {
-                val date1 = (args[0] as UDM.Date).date
-                val date2 = (args[1] as UDM.Date).date
-                java.time.temporal.ChronoUnit.DAYS.between(date1, date2).toDouble()
+        // Helper function to convert any date type to Instant for comparison
+        fun toInstant(date: UDM): kotlinx.datetime.Instant {
+            return when (date) {
+                is UDM.Date -> {
+                    // Convert LocalDate to Instant at start of day UTC
+                    val localDateTime = date.date.atStartOfDay()
+                    val zonedDateTime = localDateTime.atZone(java.time.ZoneId.of("UTC"))
+                    toKotlinxInstant(zonedDateTime.toInstant())
+                }
+                is UDM.DateTime -> toKotlinxInstant(date.instant)
+                is UDM.LocalDateTime -> {
+                    // Convert LocalDateTime to Instant assuming UTC
+                    val zonedDateTime = date.dateTime.atZone(java.time.ZoneId.of("UTC"))
+                    toKotlinxInstant(zonedDateTime.toInstant())
+                }
+                else -> throw FunctionArgumentException("diffDays requires Date, DateTime, or LocalDateTime values, got ${date::class.simpleName}")
             }
-            args[0] is UDM.DateTime && args[1] is UDM.DateTime -> {
-                val date1 = toKotlinxInstant((args[0] as UDM.DateTime).instant)
-                val date2 = toKotlinxInstant((args[1] as UDM.DateTime).instant)
-                date2.minus(date1).inWholeDays.toDouble()
-            }
-            args[0] is UDM.LocalDateTime && args[1] is UDM.LocalDateTime -> {
-                val date1 = (args[0] as UDM.LocalDateTime).dateTime
-                val date2 = (args[1] as UDM.LocalDateTime).dateTime
-                java.time.temporal.ChronoUnit.DAYS.between(date1, date2).toDouble()
-            }
-            else -> throw FunctionArgumentException("diffDays requires two dates of the same type (Date, DateTime, or LocalDateTime)")
         }
+
+        val instant1 = toInstant(args[0])
+        val instant2 = toInstant(args[1])
+        val days = instant2.minus(instant1).inWholeDays.toDouble()
 
         return UDM.Scalar(days)
     }
