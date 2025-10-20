@@ -308,7 +308,12 @@ class Parser(private val tokens: List<Token>) {
             expr = when {
                 match(TokenType.DOT) -> {
                     val isAttribute = match(TokenType.AT)
-                    val property = consume(TokenType.IDENTIFIER, "Expected property name").lexeme
+                    // Allow wildcard selector: .* or .@*
+                    val property = if (match(TokenType.STAR)) {
+                        "*"
+                    } else {
+                        consume(TokenType.IDENTIFIER, "Expected property name").lexeme
+                    }
                     Expression.MemberAccess(expr, property, isAttribute, Location.from(previous()))
                 }
                 match(TokenType.LBRACKET) -> {

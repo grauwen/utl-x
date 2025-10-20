@@ -370,6 +370,52 @@ object XmlUtilityFunctions {
     }
     
     @UTLXFunction(
+        description = "Check if XML element has any content (child elements or text)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: XML element to check"
+        ],
+        returns = "Boolean indicating whether element has content",
+        example = "hasContent(element) => true",
+        tags = ["xml"],
+        since = "1.0"
+    )
+    /**
+     * Check if XML element has any content (child elements or text)
+     * Usage: hasContent(element) => true
+     */
+    fun hasContent(args: List<UDM>): UDM {
+        requireArgs(args, 1, "hasContent")
+        val element = args[0]
+
+        return when (element) {
+            is UDM.Object -> {
+                // Has content if it has properties (excluding _text if empty)
+                val hasProperties = element.properties.filterKeys { key ->
+                    if (key == "_text") {
+                        val textVal = element.properties[key]
+                        (textVal as? UDM.Scalar)?.value?.toString()?.isNotEmpty() ?: false
+                    } else {
+                        true
+                    }
+                }.isNotEmpty()
+                UDM.Scalar(hasProperties)
+            }
+            is UDM.Scalar -> {
+                // Scalar has content if non-empty
+                UDM.Scalar(element.value?.toString()?.isNotEmpty() ?: false)
+            }
+            is UDM.Array -> {
+                // Array has content if non-empty
+                UDM.Scalar(element.elements.isNotEmpty())
+            }
+            else -> UDM.Scalar(false)
+        }
+    }
+
+    @UTLXFunction(
         description = "Unescape XML special characters",
         minArgs = 1,
         maxArgs = 1,

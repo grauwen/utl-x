@@ -38,7 +38,7 @@ class XMLParser(private val source: Reader) {
      */
     fun parse(): UDM {
         skipWhitespace()
-        
+
         // Skip XML declaration if present
         if (peek(5) == "<?xml") {
             skipUntil("?>")
@@ -46,24 +46,24 @@ class XMLParser(private val source: Reader) {
             advance() // >
             skipWhitespace()
         }
-        
-        // Parse root element
-        val root = parseElement()
-        
+
+        // Parse root element with empty namespace context
+        val root = parseElement(emptyMap())
+
         skipWhitespace()
         if (!isAtEnd()) {
             throw XMLParseException("Content after root element", line, column)
         }
-        
+
         return root
     }
     
-    private fun parseElement(): UDM {
+    private fun parseElement(parentNamespaces: Map<String, String>): UDM {
         consume('<', "Expected '<'")
-        
+
         val name = parseName()
         val attributes = mutableMapOf<String, String>()
-        
+
         // Parse attributes
         skipWhitespace()
         while (peek() != '>' && peek() != '/') {
@@ -75,23 +75,38 @@ class XMLParser(private val source: Reader) {
             attributes[attrName] = attrValue
             skipWhitespace()
         }
-        
+
+        // Build complete namespace context by merging parent namespaces with element's declarations
+        val namespaces = mutableMapOf<String, String>()
+        namespaces.putAll(parentNamespaces)  // Inherit from parent
+
+        // Add new namespace declarations from this element
+        for ((attrName, attrValue) in attributes) {
+            if (attrName == "xmlns" || attrName.startsWith("xmlns:")) {
+                namespaces[attrName] = attrValue
+            }
+        }
+
+        // Merge namespaces into attributes so they're accessible from this element
+        val mergedAttributes = attributes.toMutableMap()
+        mergedAttributes.putAll(namespaces)
+
         // Self-closing tag
         if (peek() == '/') {
             advance() // /
             consume('>', "Expected '>'")
-            return UDM.Object(emptyMap(), attributes, name)
+            return UDM.Object(emptyMap(), mergedAttributes, name)
         }
-        
+
         consume('>', "Expected '>'")
-        
+
         // Parse content (text, child elements, or mixed)
         val children = mutableListOf<Pair<String, UDM>>()
         val textContent = StringBuilder()
-        
+
         while (true) {
             skipWhitespace()
-            
+
             if (peek(2) == "</") {
                 // End tag
                 break
@@ -102,8 +117,8 @@ class XMLParser(private val source: Reader) {
                     val cdata = parseCDATA()
                     textContent.append(cdata)
                 } else {
-                    // Child element
-                    val child = parseElement()
+                    // Child element - pass down namespace context
+                    val child = parseElement(namespaces)
                     val childName = (child as? UDM.Object)?.name ?: "element"
                     children.add(childName to child)
                 }
@@ -114,7 +129,7 @@ class XMLParser(private val source: Reader) {
                 break
             }
         }
-        
+
         // Parse end tag
         consume('<', "Expected '<'")
         consume('/', "Expected '/'")
@@ -124,31 +139,34 @@ class XMLParser(private val source: Reader) {
         }
         skipWhitespace()
         consume('>', "Expected '>'")
-        
+
         // Build UDM based on content
         val content = textContent.toString().trim()
-        
+
+        // Check if element has real attributes (not just inherited xmlns declarations)
+        val hasRealAttributes = attributes.isNotEmpty()
+
         return when {
             children.isEmpty() && content.isEmpty() -> {
                 // Empty element
-                UDM.Object(emptyMap(), attributes, name)
+                UDM.Object(emptyMap(), mergedAttributes, name)
             }
             children.isEmpty() && content.isNotEmpty() -> {
                 // Leaf element with text only
                 val textValue = tryParseNumber(content) ?: UDM.Scalar.string(content)
-                // If there are attributes, wrap as object with _text property
+                // If there are REAL attributes (not just inherited xmlns), wrap as object with _text property
                 // Otherwise, return the text value directly for easier access
-                if (attributes.isNotEmpty()) {
-                    UDM.Object(mapOf("_text" to textValue), attributes, name)
+                if (hasRealAttributes) {
+                    UDM.Object(mapOf("_text" to textValue), mergedAttributes, name)
                 } else {
-                    // No attributes - return text directly, but wrap in an object to preserve element name
-                    UDM.Object(mapOf("_text" to textValue), emptyMap(), name)
+                    // No real attributes - return text directly, but wrap in an object to preserve element name
+                    UDM.Object(mapOf("_text" to textValue), mergedAttributes, name)
                 }
             }
             else -> {
                 // Element with children
                 val properties = mutableMapOf<String, UDM>()
-                
+
                 // Group children by name
                 val grouped = children.groupBy { it.first }
                 grouped.forEach { (childName, childElements) ->
@@ -159,13 +177,13 @@ class XMLParser(private val source: Reader) {
                         UDM.Array(childElements.map { it.second })
                     }
                 }
-                
+
                 // Add text content if any (mixed content)
                 if (content.isNotEmpty()) {
                     properties["_text"] = UDM.Scalar.string(content)
                 }
-                
-                UDM.Object(properties, attributes, name)
+
+                UDM.Object(properties, mergedAttributes, name)
             }
         }
     }

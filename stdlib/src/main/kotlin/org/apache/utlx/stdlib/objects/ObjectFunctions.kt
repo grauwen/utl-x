@@ -219,10 +219,76 @@ object ObjectFunctions {
         requireArgs(args, 2, "containsValue")
         val obj = args[0].asObject() ?: throw FunctionArgumentException("containsValue: first argument must be an object")
         val value = args[1]
-        
+
         return UDM.Scalar(obj.properties.containsValue(value))
     }
-    
+
+    @UTLXFunction(
+        description = "Check if object has a specific key/property",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Other",
+        parameters = [
+            "object: Object to check",
+            "key: Property key to look for"
+        ],
+        returns = "Boolean indicating whether the key exists",
+        example = "hasKey({name: \"John\", age: 30}, \"name\") => true",
+        tags = ["other", "objects"],
+        since = "1.0"
+    )
+    /**
+     * Check if object has a specific key/property
+     * Usage: hasKey({name: "John", age: 30}, "name") => true
+     */
+    fun hasKey(args: List<UDM>): UDM {
+        requireArgs(args, 2, "hasKey")
+        val obj = args[0].asObject() ?: throw FunctionArgumentException("hasKey: first argument must be an object")
+        val key = args[1].asString()
+
+        return UDM.Scalar(obj.properties.containsKey(key))
+    }
+
+    @UTLXFunction(
+        description = "Create object from array of [key, value] pairs (inverse of entries)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Other",
+        parameters = [
+            "array: Array of [key, value] pairs"
+        ],
+        returns = "Object created from the key-value pairs",
+        example = "fromEntries([[\"name\", \"John\"], [\"age\", 30]]) => {name: \"John\", age: 30}",
+        tags = ["other", "objects"],
+        since = "1.0"
+    )
+    /**
+     * Create object from array of [key, value] pairs (inverse of entries)
+     * Usage: fromEntries([["name", "John"], ["age", 30]]) => {name: "John", age: 30}
+     */
+    fun fromEntries(args: List<UDM>): UDM {
+        requireArgs(args, 1, "fromEntries")
+        val array = args[0].asArray() ?: throw FunctionArgumentException("fromEntries: first argument must be an array")
+
+        val properties = mutableMapOf<String, UDM>()
+
+        for (element in array.elements) {
+            val pair = element.asArray()
+                ?: throw FunctionArgumentException("fromEntries: each element must be a [key, value] array")
+
+            if (pair.elements.size != 2) {
+                throw FunctionArgumentException("fromEntries: each element must have exactly 2 items [key, value]")
+            }
+
+            val key = pair.elements[0].asString()
+            val value = pair.elements[1]
+
+            properties[key] = value
+        }
+
+        return UDM.Object(properties)
+    }
+
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
             throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")

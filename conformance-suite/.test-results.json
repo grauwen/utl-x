@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-10-20T17:03:18.898378Z",
+  "timestamp": "2025-10-20T17:40:02.806671Z",
   "total_tests": 239,
-  "passed_tests": 233,
-  "failed_tests": 6,
+  "passed_tests": 234,
+  "failed_tests": 5,
   "failures": [
     {
       "name": "csv_to_json_transformation",
@@ -11,14 +11,8 @@
       "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/intermediate/csv_to_json_transformation.yaml"
     },
     {
-      "name": "xml_namespace_handling",
-      "reason": "Transformation failed: Parse errors:\n  Expected property name at Location(line=6, column=48)\n",
-      "category": "examples/intermediate",
-      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/intermediate/xml_namespace_handling.yaml"
-    },
-    {
       "name": "yaml_config_processing",
-      "reason": "Transformation failed: Error: Array index must be a number\n",
+      "reason": "Transformation failed: Error: Undefined function: extractBetween\n",
       "category": "examples/intermediate",
       "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/intermediate/yaml_config_processing.yaml"
     },
@@ -30,7 +24,7 @@
     },
     {
       "name": "sap_integration",
-      "reason": "Output mismatch - Expected: {\"metadata\": {\"encoding_detected\": \"ISO-8859-1\", \"processed_at\": \"2024-01-15T10:30:00Z\", \"source\": \"... | Actual: {\"metadata\": {\"encoding_detected\": \"UTF-8\", \"processed_at\": \"2025-10-20T17:02:46.823612Z\", \"source\":...",
+      "reason": "Output mismatch - Expected: {\"metadata\": {\"encoding_detected\": \"ISO-8859-1\", \"processed_at\": \"2024-01-15T10:30:00Z\", \"source\": \"... | Actual: {\"metadata\": {\"encoding_detected\": \"UTF-8\", \"processed_at\": \"2025-10-20T17:39:31.058Z\", \"source\": \"S...",
       "category": "examples/real-world",
       "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/real-world/sap_integration.yaml"
     },

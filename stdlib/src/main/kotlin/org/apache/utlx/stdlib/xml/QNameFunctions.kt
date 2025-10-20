@@ -36,20 +36,19 @@ object QNameFunctions {
     fun localName(args: List<UDM>): UDM {
         requireArgs(args, 1, "local-name")
         val element = args[0]
-        
+
         return when (element) {
             is UDM.Object -> {
-                // If this is an XML element, get the local name
-                val nodeName = element.properties["__nodeName"] as? UDM.Scalar
-                val nameStr = nodeName?.value?.toString() ?: ""
-                
+                // Get element name from UDM.Object.name field
+                val nameStr = element.name ?: ""
+
                 // Extract local name from qualified name (after colon)
                 val localName = if (nameStr.contains(":")) {
                     nameStr.substringAfter(":")
                 } else {
                     nameStr
                 }
-                
+
                 UDM.Scalar(localName)
             }
             else -> throw FunctionArgumentException("local-name expects an object/element")
@@ -79,11 +78,24 @@ object QNameFunctions {
     fun namespaceUri(args: List<UDM>): UDM {
         requireArgs(args, 1, "namespace-uri")
         val element = args[0]
-        
+
         return when (element) {
             is UDM.Object -> {
-                // Look for namespace information in attributes
-                val namespaceUri = element.attributes["__namespaceUri"] ?: ""
+                // Extract prefix from element name
+                val nameStr = element.name ?: ""
+                val prefix = if (nameStr.contains(":")) {
+                    nameStr.substringBefore(":")
+                } else {
+                    "" // No prefix, check for default namespace
+                }
+
+                // Look up namespace URI from xmlns attributes
+                val namespaceUri = if (prefix.isNotEmpty()) {
+                    element.attributes["xmlns:$prefix"] ?: ""
+                } else {
+                    element.attributes["xmlns"] ?: ""
+                }
+
                 UDM.Scalar(namespaceUri)
             }
             else -> UDM.Scalar("")
@@ -110,11 +122,11 @@ object QNameFunctions {
     fun qualifiedName(args: List<UDM>): UDM {
         requireArgs(args, 1, "name")
         val element = args[0]
-        
+
         return when (element) {
             is UDM.Object -> {
-                val nodeName = element.properties["__nodeName"] as? UDM.Scalar
-                UDM.Scalar(nodeName?.value?.toString() ?: "")
+                // Get element name from UDM.Object.name field
+                UDM.Scalar(element.name ?: "")
             }
             else -> throw FunctionArgumentException("name expects an object/element")
         }
@@ -144,19 +156,19 @@ object QNameFunctions {
     fun namespacePrefix(args: List<UDM>): UDM {
         requireArgs(args, 1, "namespace-prefix")
         val element = args[0]
-        
+
         return when (element) {
             is UDM.Object -> {
-                val nodeName = element.properties["__nodeName"] as? UDM.Scalar
-                val nameStr = nodeName?.value?.toString() ?: ""
-                
+                // Get element name from UDM.Object.name field
+                val nameStr = element.name ?: ""
+
                 // Extract prefix (before colon)
                 val prefix = if (nameStr.contains(":")) {
                     nameStr.substringBefore(":")
                 } else {
                     ""
                 }
-                
+
                 UDM.Scalar(prefix)
             }
             else -> UDM.Scalar("")
@@ -272,11 +284,21 @@ Context provides namespace bindings.""",
     fun hasNamespace(args: List<UDM>): UDM {
         requireArgs(args, 1, "has-namespace")
         val element = args[0]
-        
+
         return when (element) {
             is UDM.Object -> {
-                val namespaceUri = element.attributes["__namespaceUri"]
-                UDM.Scalar(!namespaceUri.isNullOrEmpty())
+                // Check if element name has a namespace prefix
+                val nameStr = element.name ?: ""
+                val hasPrefix = nameStr.contains(":")
+
+                if (!hasPrefix) {
+                    // Check for default namespace
+                    UDM.Scalar(element.attributes.containsKey("xmlns"))
+                } else {
+                    // Has prefix, check if xmlns:prefix is declared
+                    val prefix = nameStr.substringBefore(":")
+                    UDM.Scalar(element.attributes.containsKey("xmlns:$prefix"))
+                }
             }
             else -> UDM.Scalar(false)
         }
@@ -351,11 +373,11 @@ Context provides namespace bindings.""",
         requireArgs(args, 2, "matches-qname")
         val element = args[0]
         val qnamePattern = args[1].asString()
-        
+
         return when (element) {
             is UDM.Object -> {
-                val nodeName = element.properties["__nodeName"] as? UDM.Scalar
-                val actualName = nodeName?.value?.toString() ?: ""
+                // Get element name from UDM.Object.name field
+                val actualName = element.name ?: ""
                 UDM.Scalar(actualName == qnamePattern)
             }
             else -> UDM.Scalar(false)

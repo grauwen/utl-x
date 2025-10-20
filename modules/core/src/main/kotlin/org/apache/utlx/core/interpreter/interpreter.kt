@@ -254,15 +254,35 @@ class Interpreter {
     
     private fun evaluateMemberAccess(expr: Expression.MemberAccess, env: Environment): RuntimeValue {
         val target = evaluate(expr.target, env)
-        
+
         return when (target) {
             is RuntimeValue.ObjectValue -> {
-                target.properties[expr.property] ?: RuntimeValue.NullValue
+                // Handle wildcard selector for regular objects
+                if (expr.property == "*") {
+                    val children = target.properties.values.toList()
+                    RuntimeValue.ArrayValue(children)
+                } else {
+                    target.properties[expr.property] ?: RuntimeValue.NullValue
+                }
             }
             is RuntimeValue.UDMValue -> {
                 when (val udm = target.udm) {
                     is UDM.Object -> {
-                        if (expr.isAttribute) {
+                        // Handle wildcard selector for UDM objects
+                        if (expr.property == "*") {
+                            if (expr.isAttribute) {
+                                // Wildcard attributes: return all attribute values as array
+                                val attrValues = udm.attributes.values.map { RuntimeValue.StringValue(it) }
+                                RuntimeValue.ArrayValue(attrValues)
+                            } else {
+                                // Wildcard properties: return all child elements as array
+                                // Exclude _text from wildcard results (it's not a child element)
+                                val children = udm.properties.filterKeys { it != "_text" }.values.map { child ->
+                                    RuntimeValue.UDMValue(unwrapTextNode(child))
+                                }
+                                RuntimeValue.ArrayValue(children)
+                            }
+                        } else if (expr.isAttribute) {
                             val attrValue = udm.getAttribute(expr.property)
                             attrValue?.let { RuntimeValue.StringValue(it) } ?: RuntimeValue.NullValue
                         } else {
@@ -296,8 +316,9 @@ class Interpreter {
     private fun unwrapTextNode(udm: UDM): UDM {
         return when (udm) {
             is UDM.Object -> {
-                // If object has only _text property and no attributes, unwrap it
-                if (udm.properties.size == 1 && udm.properties.containsKey("_text") && udm.attributes.isEmpty()) {
+                // If object has only _text property and no real attributes (ignoring xmlns declarations), unwrap it
+                val nonXmlnsAttributes = udm.attributes.filterKeys { !it.startsWith("xmlns") && it != "xmlns" }
+                if (udm.properties.size == 1 && udm.properties.containsKey("_text") && nonXmlnsAttributes.isEmpty()) {
                     udm.properties["_text"]!!
                 } else {
                     udm
@@ -310,38 +331,64 @@ class Interpreter {
     private fun evaluateIndexAccess(expr: Expression.IndexAccess, env: Environment): RuntimeValue {
         val target = evaluate(expr.target, env)
         val index = evaluate(expr.index, env)
-        
-        val indexNum = when (index) {
-            is RuntimeValue.NumberValue -> index.value.toInt()
-            else -> throw RuntimeError("Array index must be a number", expr.location)
-        }
-        
-        return when (target) {
-            is RuntimeValue.ArrayValue -> {
-                if (indexNum < 0) {
-                    throw RuntimeError("Array index out of bounds: negative index $indexNum", expr.location)
-                }
-                if (indexNum >= target.elements.size) {
-                    throw RuntimeError("Array index out of bounds: index $indexNum, size ${target.elements.size}", expr.location)
-                }
-                target.elements[indexNum]
-            }
-            is RuntimeValue.UDMValue -> {
-                when (val udm = target.udm) {
-                    is UDM.Array -> {
+
+        // Handle both numeric indices (for arrays) and string indices (for object properties)
+        return when (index) {
+            is RuntimeValue.NumberValue -> {
+                // Numeric index - array access
+                val indexNum = index.value.toInt()
+                when (target) {
+                    is RuntimeValue.ArrayValue -> {
                         if (indexNum < 0) {
                             throw RuntimeError("Array index out of bounds: negative index $indexNum", expr.location)
                         }
-                        if (indexNum >= udm.size()) {
-                            throw RuntimeError("Array index out of bounds: index $indexNum, size ${udm.size()}", expr.location)
+                        if (indexNum >= target.elements.size) {
+                            throw RuntimeError("Array index out of bounds: index $indexNum, size ${target.elements.size}", expr.location)
                         }
-                        val element = udm.get(indexNum)
-                        RuntimeValue.UDMValue(element!!)
+                        target.elements[indexNum]
                     }
-                    else -> throw RuntimeError("Cannot index non-array UDM type", expr.location)
+                    is RuntimeValue.UDMValue -> {
+                        when (val udm = target.udm) {
+                            is UDM.Array -> {
+                                if (indexNum < 0) {
+                                    throw RuntimeError("Array index out of bounds: negative index $indexNum", expr.location)
+                                }
+                                if (indexNum >= udm.size()) {
+                                    throw RuntimeError("Array index out of bounds: index $indexNum, size ${udm.size()}", expr.location)
+                                }
+                                val element = udm.get(indexNum)
+                                RuntimeValue.UDMValue(element!!)
+                            }
+                            else -> throw RuntimeError("Cannot index non-array UDM type with number", expr.location)
+                        }
+                    }
+                    else -> throw RuntimeError("Cannot index ${target::class.simpleName} with number", expr.location)
                 }
             }
-            else -> throw RuntimeError("Cannot index ${target::class.simpleName}", expr.location)
+            is RuntimeValue.StringValue -> {
+                // String index - object property access
+                val propertyName = index.value
+                when (target) {
+                    is RuntimeValue.ObjectValue -> {
+                        target.properties[propertyName] ?: RuntimeValue.NullValue
+                    }
+                    is RuntimeValue.UDMValue -> {
+                        when (val udm = target.udm) {
+                            is UDM.Object -> {
+                                val propValue = udm.get(propertyName)
+                                if (propValue != null) {
+                                    RuntimeValue.UDMValue(unwrapTextNode(propValue))
+                                } else {
+                                    RuntimeValue.NullValue
+                                }
+                            }
+                            else -> throw RuntimeError("Cannot index non-object UDM type with string", expr.location)
+                        }
+                    }
+                    else -> throw RuntimeError("Cannot index ${target::class.simpleName} with string", expr.location)
+                }
+            }
+            else -> throw RuntimeError("Index must be a number or string, got ${index::class.simpleName}", expr.location)
         }
     }
     

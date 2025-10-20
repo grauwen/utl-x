@@ -232,7 +232,52 @@ object ExtendedStringFunctions {
         val times = args[1].asNumber().toInt()
         return UDM.Scalar(str.repeat(times))
     }
-    
+
+    @UTLXFunction(
+        description = "Extract substring between two delimiters",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "String",
+        parameters = [
+            "str: Input string",
+            "startDelimiter: Start delimiter",
+            "endDelimiter: End delimiter"
+        ],
+        returns = "Substring between delimiters, or empty string if not found",
+        example = "extractBetween(\"\${ENV:-production}\", \"\${}\", \"}\") => \"ENV:-production\"",
+        tags = ["string", "parsing"],
+        since = "1.0"
+    )
+    /**
+     * Extract substring between two delimiters
+     * Usage: extractBetween("${ENV:-production}", "${", "}") => "ENV:-production"
+     *
+     * Returns empty string if delimiters not found
+     */
+    fun extractBetween(args: List<UDM>): UDM {
+        requireArgs(args, 3, "extractBetween")
+        val str = args[0].asString()
+        val startDelimiter = args[1].asString()
+        val endDelimiter = args[2].asString()
+
+        // Find start delimiter
+        val startIndex = str.indexOf(startDelimiter)
+        if (startIndex < 0) {
+            return UDM.Scalar("")
+        }
+
+        // Find end delimiter after start delimiter
+        val searchStart = startIndex + startDelimiter.length
+        val endIndex = str.indexOf(endDelimiter, searchStart)
+        if (endIndex < 0) {
+            return UDM.Scalar("")
+        }
+
+        // Extract substring between delimiters
+        val result = str.substring(searchStart, endIndex)
+        return UDM.Scalar(result)
+    }
+
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
             throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")

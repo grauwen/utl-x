@@ -306,7 +306,8 @@ object StandardLibrary {
         register("padRight", ExtendedStringFunctions::padRight)
         register("normalizeSpace", ExtendedStringFunctions::normalizeSpace)
         register("repeat", ExtendedStringFunctions::repeat)
-        
+        register("extractBetween", ExtendedStringFunctions::extractBetween)
+
         // More string functions
         register("leftTrim", MoreStringFunctions::leftTrim)
         register("rightTrim", MoreStringFunctions::rightTrim)
@@ -548,10 +549,12 @@ object StandardLibrary {
         register("keys", ObjectFunctions::keys)
         register("values", ObjectFunctions::values)
         register("entries", ObjectFunctions::entries)
+        register("fromEntries", ObjectFunctions::fromEntries)
         register("merge", ObjectFunctions::merge)
         register("pick", ObjectFunctions::pick)
         register("omit", ObjectFunctions::omit)
         register("containsKey", ObjectFunctions::containsKey)
+        register("hasKey", ObjectFunctions::hasKey)  // Alias for hasKey
         register("containsValue", ObjectFunctions::containsValue)
         //added
         register("invert", CriticalObjectFunctions::invert)
@@ -627,6 +630,7 @@ object StandardLibrary {
         register("parent", XmlUtilityFunctions::parent)
         register("elementPath", XmlUtilityFunctions::elementPath)
         register("isEmptyElement", XmlUtilityFunctions::isEmptyElement)
+        register("hasContent", XmlUtilityFunctions::hasContent)
         register("xmlEscape", XmlUtilityFunctions::xmlEscape)
         register("xmlUnescape", XmlUtilityFunctions::xmlUnescape)
         

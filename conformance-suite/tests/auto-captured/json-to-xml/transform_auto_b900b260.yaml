@@ -26,11 +26,9 @@ expected:
   format: xml
   data: |
     <?xml version="1.0" encoding="UTF-8"?>
-    <root>
-      <Order id="ORD-123">
-        <Customer>John</Customer>
-      </Order>
-    </root>
+    <Order id="ORD-123">
+      <Customer>John</Customer>
+    </Order>
 
 performance_limits:
   max_duration_ms: 52

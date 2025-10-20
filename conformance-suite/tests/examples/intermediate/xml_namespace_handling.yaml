@@ -23,16 +23,19 @@ transformation: |
   input xml
   output json
   ---
+  let soapBody = @input["soap:Body"] in
+  let soapHeader = @input["soap:Header"] in
+  let custRequest = soapBody["cust:GetCustomerRequest"] in
   {
-    request_type: localName(@input.Envelope.Body.*[0]),
-    customer_id: @input.Envelope.Body.GetCustomerRequest.CustomerId,
-    include_orders: toBoolean(@input.Envelope.Body.GetCustomerRequest.IncludeOrders),
+    request_type: localName(soapBody.*[0]),
+    customer_id: toNumber(custRequest["cust:CustomerId"]),
+    include_orders: toBoolean(custRequest["cust:IncludeOrders"]),
     namespace_info: {
-      soap_ns: namespaceUri(@input.Envelope),
-      customer_ns: namespaceUri(@input.Envelope.Body.GetCustomerRequest),
-      request_qname: qualifiedName(@input.Envelope.Body.*[0])
+      soap_ns: namespaceUri(@input),
+      customer_ns: namespaceUri(custRequest),
+      request_qname: qualifiedName(soapBody.*[0])
     },
-    headers: if (hasContent(@input.Envelope.Header)) extractHeaders(@input.Envelope.Header) else null
+    headers: if (hasContent(soapHeader)) extractHeaders(soapHeader) else null
   }
 
   def extractHeaders(header) {
@@ -48,7 +51,7 @@ expected:
   data: |
     {
       "request_type": "GetCustomerRequest",
-      "customer_id": "12345",
+      "customer_id": 12345,
       "include_orders": true,
       "namespace_info": {
         "soap_ns": "http://schemas.xmlsoap.org/soap/envelope/",
