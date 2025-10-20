@@ -31,9 +31,9 @@ transformation: |
       employment: {
         department: row.department,
         salary: toNumber(row.salary),
-        hire_date: toDate(row.hire_date),
+        hire_date: parseDate(row.hire_date),
         is_active: toBoolean(row.is_active),
-        years_employed: yearsFromDate(toDate(row.hire_date)),
+        years_employed: yearsFromDate(parseDate(row.hire_date)),
         salary_grade: classifySalary(toNumber(row.salary))
       }
     }),

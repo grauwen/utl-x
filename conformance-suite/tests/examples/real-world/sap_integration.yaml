@@ -31,12 +31,12 @@ transformation: |
   input xml {encoding: "auto"}
   output json
   ---
-  let material = @input.Material
-  let totalStock = sum(map(material.Availability, avail => toNumber(avail.Stock)))
-  let totalReserved = sum(map(material.Availability, avail => toNumber(avail.Reserved)))
-  let availableStock = totalStock - totalReserved
-
   {
+    let material = @input.Material,
+    let totalStock = sum(map(material.Availability, avail => toNumber(avail.Stock))),
+    let totalReserved = sum(map(material.Availability, avail => toNumber(avail.Reserved))),
+    let availableStock = totalStock - totalReserved,
+
     product: {
       sku: material.MaterialNumber,
       name: material.Description,
