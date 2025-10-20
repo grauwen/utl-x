@@ -260,7 +260,7 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
         print(f"  ✗ {reason}")
         return False, reason
 
-def run_test_variants(test_case: Dict[str, Any], utlx_cli: Path, base_name: str, failures_list: List[Dict[str, str]]) -> tuple[int, int]:
+def run_test_variants(test_case: Dict[str, Any], utlx_cli: Path, base_name: str, failures_list: List[Dict[str, str]], test_file_path: str = None) -> tuple[int, int]:
     """Run test variants and return (passed, total) counts"""
     if 'variants' not in test_case:
         return 0, 0
@@ -290,7 +290,8 @@ def run_test_variants(test_case: Dict[str, Any], utlx_cli: Path, base_name: str,
             failures_list.append({
                 'name': variant_name,
                 'reason': reason,
-                'category': test_case.get('category', 'unknown')
+                'category': test_case.get('category', 'unknown'),
+                'file_path': test_file_path or 'unknown'
             })
 
     return passed, total
@@ -440,12 +441,13 @@ def main():
                 failures_list.append({
                     'name': test_name,
                     'reason': reason,
-                    'category': test_case.get('category', 'unknown')
+                    'category': test_case.get('category', 'unknown'),
+                    'file_path': str(test_file)
                 })
             total_tests += 1
 
             # Run variants
-            variant_passed, variant_total = run_test_variants(test_case, utlx_cli, test_name, failures_list)
+            variant_passed, variant_total = run_test_variants(test_case, utlx_cli, test_name, failures_list, str(test_file))
             passed_tests += variant_passed
             total_tests += variant_total
 
@@ -472,6 +474,7 @@ def main():
             for failure in failures_list:
                 print(f"\n❌ {failure['name']}")
                 print(f"   Category: {failure['category']}")
+                print(f"   File: {failure.get('file_path', 'unknown')}")
                 print(f"   Reason: {failure['reason']}")
 
     finally:
