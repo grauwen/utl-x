@@ -45,6 +45,23 @@ python3 runners/cli-runner/simple-runner.py 2>&1 | tail -15
 cd conformance-suite
 python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|✗" | awk '/Running:/{test=$2} /✗/{print test}' | sort | uniq
 
+
+# Run tests and save results for later
+python3 runners/cli-runner/simple-runner.py --save-results
+
+# Instantly view failures from last run (0.08s - no test execution!)
+python3 runners/cli-runner/simple-runner.py --show-failures
+
+# Run specific category and save
+python3 runners/cli-runner/simple-runner.py stdlib/array --save-results
+
+# Combine: run tests and immediately show failures
+python3 runners/cli-runner/simple-runner.py --save-results --show-failures
+
+# Auto-run if no previous results exist
+rm .test-results.json
+python3 runners/cli-runner/simple-runner.py --show-failures  # Runs tests first
+
 #direct 3
 cd conformance-suite
 python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|  ✗" | grep -B 1 "✗" | grep "Running:" | awk '{print $2}'
