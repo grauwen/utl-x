@@ -390,32 +390,47 @@ object EnhancedArrayFunctions {
      */
     fun groupBy(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw IllegalArgumentException("groupBy() requires 2 arguments: array, keyFunction")
+            throw IllegalArgumentException("groupBy() requires 2 arguments: array, keySelector")
         }
-        
+
         val array = args[0]
         if (array !is UDM.Array) {
             throw IllegalArgumentException("groupBy() first argument must be an array")
         }
-        
-        val keyFunctionArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+
+        val keySelector = args[1]
         val groups = mutableMapOf<String, MutableList<UDM>>()
-        
+
+        // Extract key from each element
         array.elements.forEach { element ->
-            // val key = keyFunction(element).asString()
-            // groups.getOrPut(key) { mutableListOf() }.add(element)
-            
-            // Placeholder: single group
-            groups.getOrPut("default") { mutableListOf() }.add(element)
+            val key = when {
+                // String property name - extract from object
+                keySelector is UDM.Scalar && keySelector.value is String -> {
+                    val propertyName = keySelector.value as String
+                    when (element) {
+                        is UDM.Object -> element.properties[propertyName]?.asString() ?: "null"
+                        else -> "null"
+                    }
+                }
+                // Lambda function - apply to element
+                keySelector is UDM.Lambda -> {
+                    val result = keySelector.apply(listOf(element))
+                    result.asString()
+                }
+                else -> "null"
+            }
+            groups.getOrPut(key) { mutableListOf() }.add(element)
         }
-        
-        val result = groups.mapValues { (_, elements) ->
-            UDM.Array(elements)
+
+        // Convert to array of {key, value} objects
+        val result = groups.map { (key, elements) ->
+            UDM.Object(mutableMapOf(
+                "key" to UDM.Scalar(key),
+                "value" to UDM.Array(elements)
+            ))
         }
-        
-        return UDM.Object(result.toMutableMap())
+
+        return UDM.Array(result)
     }
     
     @UTLXFunction(

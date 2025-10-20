@@ -1092,19 +1092,9 @@ class StandardLibraryImpl {
             val num = extractNumber(args[0], "floor() requires number argument")
             RuntimeValue.NumberValue(floor(num))
         }
-        
-        registerFunction(env, "min") { args ->
-            val a = extractNumber(args[0], "min() requires number arguments")
-            val b = extractNumber(args[1], "min() requires number arguments")
-            RuntimeValue.NumberValue(min(a, b))
-        }
-        
-        registerFunction(env, "max") { args ->
-            val a = extractNumber(args[0], "max() requires number arguments")
-            val b = extractNumber(args[1], "max() requires number arguments")
-            RuntimeValue.NumberValue(max(a, b))
-        }
-        
+
+        // min/max removed - use stdlib array aggregation functions instead
+
         registerFunction(env, "pow") { args ->
             val base = extractNumber(args[0], "pow() requires number arguments")
             val exponent = extractNumber(args[1], "pow() requires number arguments")
