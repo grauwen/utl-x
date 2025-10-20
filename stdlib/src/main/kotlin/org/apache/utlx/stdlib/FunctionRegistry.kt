@@ -77,7 +77,13 @@ data class FunctionInfo(
     val deprecated: Boolean = false,
 
     @JsonProperty("deprecationMessage")
-    val deprecationMessage: String? = null
+    val deprecationMessage: String? = null,
+
+    @JsonProperty("isAlias")
+    val isAlias: Boolean = false,
+
+    @JsonProperty("aliasOf")
+    val aliasOf: String? = null
 )
 
 /**

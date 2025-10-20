@@ -70,7 +70,10 @@ object FunctionRegistryGenerator {
                     func.maxArgs != null -> " (≤${func.maxArgs} args)"
                     else -> ""
                 }
-                sb.appendLine("  ${func.name}${args} - ${func.description}")
+                val aliasMarker = if (func.isAlias && func.aliasOf != null) {
+                    " [alias → ${func.aliasOf}]"
+                } else ""
+                sb.appendLine("  ${func.name}${args}${aliasMarker} - ${func.description}")
             }
             sb.appendLine()
         }
@@ -105,7 +108,8 @@ private fun handleCommands(args: Array<String>) {
             println("=".repeat(60))
             registry.functions.forEach { func ->
                 val args = formatArguments(func)
-                println("${func.name}${args} - ${func.description}")
+                val aliasMarker = if (func.isAlias && func.aliasOf != null) " [alias → ${func.aliasOf}]" else ""
+                println("${func.name}${args}${aliasMarker} - ${func.description}")
             }
         }
         
@@ -135,17 +139,19 @@ private fun handleCommands(args: Array<String>) {
                 println("Error: search requires a pattern")
                 return
             }
-            
+
             val matches = registry.functions.filter { func ->
-                func.name.contains(pattern, ignoreCase = true) || 
-                func.description.contains(pattern, ignoreCase = true)
+                func.name.contains(pattern, ignoreCase = true) ||
+                func.description.contains(pattern, ignoreCase = true) ||
+                (func.isAlias && func.aliasOf?.contains(pattern, ignoreCase = true) == true)
             }
-            
+
             println("Functions matching '$pattern' (${matches.size} found):")
             println("=".repeat(50))
             matches.forEach { func ->
                 val args = formatArguments(func)
-                println("${func.name}${args} - ${func.description}")
+                val aliasMarker = if (func.isAlias && func.aliasOf != null) " [alias → ${func.aliasOf}]" else ""
+                println("${func.name}${args}${aliasMarker} - ${func.description}")
             }
         }
         

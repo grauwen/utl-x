@@ -38,7 +38,15 @@ object StandardLibrary {
     private val functions = mutableMapOf<String, UTLXFunction>()
 
     private val registry = mutableMapOf<String, (List<UDM>) -> UDM>()
-    
+
+    // Alias tracking for function registry and discoverability
+    private data class AliasInfo(
+        val aliasName: String,
+        val canonicalName: String,
+        val reason: String
+    )
+    private val aliases = mutableMapOf<String, AliasInfo>()
+
     init {
         registerAllFunctions()
     }
@@ -452,7 +460,7 @@ object StandardLibrary {
         register("addDays", DateFunctions::addDays)
         register("addHours", DateFunctions::addHours)
         register("diffDays", DateFunctions::diffDays)
-        register("daysBetween", DateFunctions::diffDays)  // DataWeave alias
+        registerAlias("daysBetween", "diffDays", "DataWeave compatibility")
 
         // Extended date functions
         register("day", ExtendedDateFunctions::day)
@@ -554,7 +562,7 @@ object StandardLibrary {
         register("pick", ObjectFunctions::pick)
         register("omit", ObjectFunctions::omit)
         register("containsKey", ObjectFunctions::containsKey)
-        register("hasKey", ObjectFunctions::hasKey)  // Alias for hasKey
+        registerAlias("hasKey", "containsKey", "Common object method name")
         register("containsValue", ObjectFunctions::containsValue)
         //added
         register("invert", CriticalObjectFunctions::invert)
@@ -1164,6 +1172,34 @@ object StandardLibrary {
     }
 
     /**
+     * Register a function alias for discoverability and compatibility.
+     *
+     * Aliases allow the same function to be called by different names, useful for:
+     * - DataWeave compatibility (e.g., daysBetween → diffDays)
+     * - Alternative naming conventions (e.g., hasKey → containsKey)
+     * - Legacy support
+     *
+     * Aliases are included in the function registry and are discoverable via `utlx functions --search`
+     *
+     * @param aliasName The alias name to register
+     * @param canonicalName The canonical function name that the alias points to
+     * @param reason Optional description of why the alias exists (e.g., "DataWeave compatibility")
+     * @throws IllegalArgumentException if canonical function doesn't exist
+     */
+    private fun registerAlias(aliasName: String, canonicalName: String, reason: String = "") {
+        // Validate that canonical function exists
+        require(functions.containsKey(canonicalName)) {
+            "Cannot create alias '$aliasName' for non-existent function '$canonicalName'"
+        }
+
+        // Store alias metadata for function registry
+        aliases[aliasName] = AliasInfo(aliasName, canonicalName, reason)
+
+        // Register the alias to work at runtime (delegates to canonical function)
+        functions[aliasName] = functions[canonicalName]!!
+    }
+
+    /**
      * Looks up a function by name.
      */
     fun lookup(name: String): ((List<UDM>) -> UDM)? = functions[name]?.implementation
@@ -1304,6 +1340,29 @@ object StandardLibrary {
                 if (annotation != null) {
                     allFunctions.add(convertAnnotationToFunctionInfo(member.name, annotation))
                 }
+            }
+        }
+
+        // Add alias entries to the registry
+        for ((aliasName, aliasInfo) in aliases) {
+            // Find the canonical function's info
+            val canonicalFunc = allFunctions.find { it.name == aliasInfo.canonicalName }
+            if (canonicalFunc != null) {
+                // Create alias entry with same metadata but marked as alias
+                val aliasDescription = if (aliasInfo.reason.isNotEmpty()) {
+                    "${canonicalFunc.description} (${aliasInfo.reason})"
+                } else {
+                    canonicalFunc.description
+                }
+
+                allFunctions.add(
+                    canonicalFunc.copy(
+                        name = aliasName,
+                        isAlias = true,
+                        aliasOf = aliasInfo.canonicalName,
+                        description = aliasDescription
+                    )
+                )
             }
         }
 
