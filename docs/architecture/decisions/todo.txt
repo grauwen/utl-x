@@ -14,6 +14,17 @@ The parser doesn't support if expressions with braces { } inside function bodies
 
 ⏺ Found the parser bug! let...in followed by inline if/else doesn't parse correctly. This is a parser limitation. Since I can't fix the parser easily, let me restructure the functions to avoid this pattern by using nested lets:
 
+Next Steps (Phase 3 - Optional)
+
+  Per the design document, the next phase would add:
+
+  1. Locale-aware formatDate() with BCP 47 support
+  2. Custom date patterns (Dutch, US, UK formats)
+  3. CLDR data integration for localized month/day names
+  4. Config block support for default locale/timezone
+
+
+
 -TypeOf is both a standard grammar keyword and in the same time a stdlib keyword. -> rename the function typeOf to getType
 - formats/plugin/
 - stLib
