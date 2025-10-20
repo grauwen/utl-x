@@ -19,6 +19,8 @@ SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 Missing function: daysBetween not implemented in stdlib
 The parser doesn't support if expressions with braces { } inside function bodies!
 
+hasKey has two entries (one from the @UTLXFunction annotation in ObjectFunctions.kt, and one as an alias to containsKey). This is a minor duplicate that could be cleaned up later by removing the duplicate implementation.
+
 ⏺ Found the parser bug! let...in followed by inline if/else doesn't parse correctly. This is a parser limitation. Since I can't fix the parser easily, let me restructure the functions to avoid this pattern by using nested lets:
 
 The test failure (expected: <IDENTIFIER> but was: <INPUT>) is unrelated to the new token types - it's a pre-existing issue where the test expects "input" to be an identifier, but it's defined as a 
