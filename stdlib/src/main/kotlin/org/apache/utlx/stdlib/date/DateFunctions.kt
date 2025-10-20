@@ -41,36 +41,38 @@ object DateFunctions {
     }
 
     @UTLXFunction(
-        description = "Smart date parser - auto-detects Date vs DateTime based on input format",
+        description = "Smart date parser with auto-detection and custom pattern support",
         minArgs = 1,
-        maxArgs = 2,
+        maxArgs = 3,
         category = "Date",
         parameters = [
             "dateStr: Date string in ISO format or custom format",
-            "format: Optional custom format pattern"
+            "pattern: Optional format pattern (e.g., 'dd/MM/yyyy', 'MMM dd, yyyy')",
+            "locale: Optional BCP 47 locale tag (e.g., 'nl-NL', 'en-US') for month/day name parsing"
         ],
-        returns = "UDM.Date for date-only strings, UDM.DateTime for timestamps",
-        example = "parseDate(\"2020-03-15\") => Date, parseDate(\"2020-03-15T10:30:00Z\") => DateTime",
+        returns = "UDM.Date for date-only, UDM.DateTime for timestamps, UDM.LocalDateTime for datetime without timezone",
+        example = "parseDate(\"2020-03-15\") => Date, parseDate(\"15 maart 2020\", \"dd MMMM yyyy\", \"nl-NL\") => Date",
         tags = ["date"],
         since = "1.0"
     )
 
     fun parseDate(args: List<UDM>): UDM {
-        requireArgs(args, 1..2, "parseDate")
+        requireArgs(args, 1..3, "parseDate")
         val dateStr = args[0].asString()
-        val format = if (args.size > 1) args[1].asString() else null
+        val pattern = if (args.size > 1) args[1].asString() else null
+        val locale = if (args.size > 2) args[2].asString() else "en-US"
 
         return try {
             // Auto-detect based on input format
             when {
                 // Date-only: "2020-03-15", "2020/03/15"
-                format == null && dateStr.matches(Regex("^\\d{4}[-/]\\d{2}[-/]\\d{2}$")) -> {
+                pattern == null && dateStr.matches(Regex("^\\d{4}[-/]\\d{2}[-/]\\d{2}$")) -> {
                     val localDate = java.time.LocalDate.parse(dateStr.replace('/', '-'))
                     UDM.Date(localDate)
                 }
 
                 // DateTime with time component: has 'T' or space separator
-                format == null && (dateStr.contains('T') || dateStr.contains(' ')) -> {
+                pattern == null && (dateStr.contains('T') || dateStr.contains(' ')) -> {
                     try {
                         // Try parsing as ISO instant (with timezone)
                         val instant = Instant.parse(dateStr)
@@ -82,10 +84,35 @@ object DateFunctions {
                     }
                 }
 
-                // Custom format specified
-                format != null -> {
-                    // TODO: Implement custom format parsing using java.time.format.DateTimeFormatter
-                    throw FunctionArgumentException("Custom date format parsing not yet implemented")
+                // Custom pattern specified
+                pattern != null -> {
+                    val javaLocale = java.util.Locale.forLanguageTag(locale)
+                    val formatter = java.time.format.DateTimeFormatter.ofPattern(pattern, javaLocale)
+
+                    // Determine what type to return based on the pattern
+                    when {
+                        // Pattern has time components (H, m, s, a)
+                        pattern.matches(Regex(".*[HhmsaSn].*")) -> {
+                            try {
+                                // Try parsing as LocalDateTime
+                                val localDateTime = java.time.LocalDateTime.parse(dateStr, formatter)
+                                UDM.LocalDateTime(localDateTime)
+                            } catch (e: Exception) {
+                                // If that fails, try parsing as LocalTime
+                                try {
+                                    val time = java.time.LocalTime.parse(dateStr, formatter)
+                                    UDM.Time(time)
+                                } catch (e2: Exception) {
+                                    throw FunctionArgumentException("Cannot parse time: $dateStr with pattern: $pattern")
+                                }
+                            }
+                        }
+                        // Date-only pattern
+                        else -> {
+                            val localDate = java.time.LocalDate.parse(dateStr, formatter)
+                            UDM.Date(localDate)
+                        }
+                    }
                 }
 
                 // Unknown format
@@ -96,31 +123,81 @@ object DateFunctions {
         } catch (e: FunctionArgumentException) {
             throw e
         } catch (e: Exception) {
-            throw FunctionArgumentException("Cannot parse date: $dateStr (format: ${format ?: "ISO-8601"}) - ${e.message}")
+            throw FunctionArgumentException("Cannot parse date: $dateStr (pattern: ${pattern ?: "ISO-8601"}, locale: $locale) - ${e.message}")
         }
     }
 
     @UTLXFunction(
-        description = "Performs formatDate operation",
+        description = "Format a date/time value with optional pattern and locale",
         minArgs = 1,
-        maxArgs = 1,
+        maxArgs = 3,
         category = "Date",
         parameters = [
-            "dateUdm: Dateudm value",
-        "days: Days value"
+            "date: Date, DateTime, LocalDateTime, or Time value",
+            "pattern: Optional format pattern (ISO, SHORT, MEDIUM, LONG, FULL, or custom pattern)",
+            "locale: Optional BCP 47 locale tag (e.g., 'nl-NL', 'en-US')"
         ],
-        returns = "Result of the operation",
-        example = "formatDate(...) => result",
+        returns = "Formatted date/time string",
+        example = "formatDate(parseDate(\"2020-03-15\"), \"LONG\", \"nl-NL\") => \"15 maart 2020\"",
         tags = ["date"],
         since = "1.0"
     )
-    
+
     fun formatDate(args: List<UDM>): UDM {
-        requireArgs(args, 1..2, "formatDate")
-        val date = extractDateTime(args[0])
-        val format = if (args.size > 1) args[1].asString() else "yyyy-MM-dd'T'HH:mm:ss'Z'"
-        
-        val formatted = date.toString()
+        requireArgs(args, 1..3, "formatDate")
+        val dateValue = args[0]
+        val pattern = if (args.size > 1) args[1].asString() else "ISO"
+        val locale = if (args.size > 2) args[2].asString() else "en-US"
+
+        val cldrProvider = JvmCldrProvider()
+
+        // Determine the actual pattern to use
+        val actualPattern = when (pattern.uppercase()) {
+            "ISO" -> null  // Use default ISO format
+            "SHORT", "MEDIUM", "LONG", "FULL" -> {
+                cldrProvider.getDatePattern(locale, pattern)
+            }
+            else -> pattern  // Custom pattern
+        }
+
+        // Format based on the date type
+        val formatted = when (dateValue) {
+            is UDM.Date -> {
+                if (actualPattern == null) {
+                    dateValue.date.toString()  // ISO: "2020-03-15"
+                } else {
+                    val formatter = java.time.format.DateTimeFormatter.ofPattern(actualPattern, java.util.Locale.forLanguageTag(locale))
+                    dateValue.date.format(formatter)
+                }
+            }
+            is UDM.DateTime -> {
+                if (actualPattern == null) {
+                    dateValue.instant.toString()  // ISO: "2020-03-15T10:30:00Z"
+                } else {
+                    val formatter = java.time.format.DateTimeFormatter.ofPattern(actualPattern, java.util.Locale.forLanguageTag(locale))
+                    val zdt = java.time.ZonedDateTime.ofInstant(dateValue.instant, java.time.ZoneId.of("UTC"))
+                    zdt.format(formatter)
+                }
+            }
+            is UDM.LocalDateTime -> {
+                if (actualPattern == null) {
+                    dateValue.dateTime.toString()  // ISO: "2020-03-15T10:30:00"
+                } else {
+                    val formatter = java.time.format.DateTimeFormatter.ofPattern(actualPattern, java.util.Locale.forLanguageTag(locale))
+                    dateValue.dateTime.format(formatter)
+                }
+            }
+            is UDM.Time -> {
+                if (actualPattern == null) {
+                    dateValue.time.toString()  // ISO: "14:30:00"
+                } else {
+                    val formatter = java.time.format.DateTimeFormatter.ofPattern(actualPattern, java.util.Locale.forLanguageTag(locale))
+                    dateValue.time.format(formatter)
+                }
+            }
+            else -> throw FunctionArgumentException("formatDate requires a Date, DateTime, LocalDateTime, or Time value")
+        }
+
         return UDM.Scalar(formatted)
     }
 
