@@ -22,7 +22,7 @@ object ConformanceGenerator {
 
         // Header
         yaml.appendLine("name: \"$testName\"")
-        yaml.appendLine("category: \"${test.category ?: "auto-captured/uncategorized"}\"")
+        yaml.appendLine("category: \"${test.category ?: "uncategorized"}\"")
         yaml.appendLine("description: \"Auto-captured test for ${primaryFunction ?: "transformation"}\"")
 
         // Tags
@@ -90,7 +90,7 @@ object ConformanceGenerator {
      * Save captured test to file
      */
     fun saveTest(test: CapturedTest, config: CaptureConfig, knownIssue: KnownIssue? = null): File {
-        val category = test.category ?: "auto-captured/uncategorized"
+        val category = test.category ?: "uncategorized"
         val primaryFunction = TestCategorizer.getPrimaryFunction(test.transformation)
         val testName = generateTestName(primaryFunction, test.id)
 

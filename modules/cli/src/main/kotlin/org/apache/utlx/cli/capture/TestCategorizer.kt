@@ -106,16 +106,16 @@ object TestCategorizer {
         // If we found recognized functions, use the category of the first one
         if (functions.isNotEmpty()) {
             val primaryFunction = functions.first()
-            return functionCategories[primaryFunction] ?: "auto-captured/uncategorized"
+            return functionCategories[primaryFunction] ?: "uncategorized"
         }
 
         // Fallback: categorize by format transformation
         return when {
-            inputFormat == "xml" && outputFormat == "json" -> "auto-captured/xml-to-json"
-            inputFormat == "json" && outputFormat == "xml" -> "auto-captured/json-to-xml"
-            inputFormat == "csv" && outputFormat == "json" -> "auto-captured/csv-to-json"
-            inputFormat == outputFormat -> "auto-captured/$inputFormat-transform"
-            else -> "auto-captured/uncategorized"
+            inputFormat == "xml" && outputFormat == "json" -> "xml-to-json"
+            inputFormat == "json" && outputFormat == "xml" -> "json-to-xml"
+            inputFormat == "csv" && outputFormat == "json" -> "csv-to-json"
+            inputFormat == outputFormat -> "$inputFormat-transform"
+            else -> "uncategorized"
         }
     }
 

@@ -1,0 +1,38 @@
+name: "transform_auto_8fb5ad0f"
+category: "auto-captured/xml-to-json"
+description: "Auto-captured test for transformation"
+tags: ["auto-generated"]
+auto_generated: true
+captured_at: "2025-10-19T14:18:14.438006Z"
+
+input:
+  format: xml
+  data: "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><SAP_Response><Material><MaterialNumber>MAT-001</MaterialNumber></Material></SAP_Response>"
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  @input
+  
+
+expected:
+  format: json
+  data: |
+    {
+      "Material": {
+        "MaterialNumber": {
+          "_text": "MAT-001"
+        }
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 58
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-19"
+  references: ["Auto-generated test case"]

@@ -56,6 +56,41 @@ python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|  ✗" | gr
 4. Update test registry in `tests/registry.json`
 
 
+
+## 🗂️ Auto-Captured Tests Directory Structure
+
+The `tests/auto-captured/` directory contains automatically generated test cases captured from UTL-X transformations. This directory is organized as follows:
+
+```
+tests/auto-captured/
+├── stdlib/                    # Tests for standard library functions
+│   ├── array/                # Array manipulation functions
+│   ├── crypto/               # Cryptographic functions
+│   ├── serialization/        # JSON/XML/YAML parsing and rendering
+│   └── string/               # String manipulation functions
+├── json-to-xml/              # JSON → XML format conversions
+├── xml-to-json/              # XML → JSON format conversions
+├── json-transform/           # JSON → JSON transformations
+├── xml-transform/            # XML → XML transformations
+├── yaml-transform/           # YAML → YAML transformations
+└── uncategorized/            # Uncategorized test captures
+```
+
+### Auto-Capture Configuration
+
+Auto-capture is controlled by `~/.utlx/capture-config.yaml`:
+
+```yaml
+enabled: true
+capture_location: "conformance-suite/tests/auto-captured/"
+deduplicate: true
+capture_failures: true
+max_tests_per_function: 50
+```
+
+**Note**: The capture location is relative to where the `utlx` command is executed. Always run from the project root to ensure proper test organization.
+
+
 ## 📁 Structure
 
 ```
