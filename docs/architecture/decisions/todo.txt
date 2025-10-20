@@ -17,6 +17,7 @@ python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|  ✗" | gr
 - tools/intellij-plugin/
 - module analysis
 - Agentic agent added? How to get an utl for a given inpu and given output
+- CLI validate NOT implemented yet
 
 -Parallelization using streams to improve performance
 
