@@ -19,6 +19,9 @@ from typing import Dict, List, Any, Optional, Tuple
 _original_capture_env = None
 _capture_was_enabled = False
 
+# Test results file location
+RESULTS_FILE = Path('.test-results.json')
+
 def load_test_case(file_path: Path) -> Optional[Dict[str, Any]]:
     """Load a test case YAML file"""
     try:
@@ -355,6 +358,58 @@ def restore_capture_state():
         print()
         print("✓ Test capture state restored to: ENABLED")
 
+def save_test_results(total_tests: int, passed_tests: int, failures_list: List[Dict[str, str]], results_file: Path):
+    """Save test results to JSON file"""
+    results = {
+        'timestamp': datetime.utcnow().isoformat() + 'Z',
+        'total_tests': total_tests,
+        'passed_tests': passed_tests,
+        'failed_tests': total_tests - passed_tests,
+        'failures': failures_list
+    }
+
+    try:
+        with open(results_file, 'w') as f:
+            json.dump(results, f, indent=2)
+        print(f"\n💾 Test results saved to {results_file}")
+    except Exception as e:
+        print(f"\n⚠ Warning: Could not save test results: {e}")
+
+def load_test_results(results_file: Path) -> Optional[Dict[str, Any]]:
+    """Load test results from JSON file"""
+    try:
+        if not results_file.exists():
+            return None
+
+        with open(results_file, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"⚠ Warning: Could not load test results: {e}")
+        return None
+
+def display_failures(results: Dict[str, Any]):
+    """Display failure information from test results"""
+    print()
+    print("=" * 50)
+    print("FAILED TESTS DETAILS:")
+    print("=" * 50)
+    print(f"\nTest Run: {results.get('timestamp', 'unknown')}")
+    print(f"Total Tests: {results.get('total_tests', 0)}")
+    print(f"Passed: {results.get('passed_tests', 0)}")
+    print(f"Failed: {results.get('failed_tests', 0)}")
+    print()
+
+    failures = results.get('failures', [])
+    if not failures:
+        print("✓ No failures!")
+        return
+
+    for failure in failures:
+        print(f"\n❌ {failure['name']}")
+        print(f"   Category: {failure['category']}")
+        print(f"   File: {failure.get('file_path', 'unknown')}")
+        print(f"   Reason: {failure['reason']}")
+
 def find_test_files(test_dir: Path, category: str = None, test_name: str = None) -> List[Path]:
     """Find test files matching criteria"""
     test_files = []
@@ -386,27 +441,47 @@ def main():
     parser.add_argument('test_name', nargs='?', help='Specific test name')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
     parser.add_argument('--utlx-cli', help='Path to UTL-X CLI')
-    parser.add_argument('--show-failures', action='store_true', help='Show detailed failure information')
-    
+    parser.add_argument('--show-failures', action='store_true',
+                        help='Show failures from last test run (or run tests if no results exist)')
+    parser.add_argument('--save-results', action='store_true',
+                        help='Save test results to file for later viewing')
+
     args = parser.parse_args()
-    
-    # Find UTL-X CLI
+
+    # Find paths
     script_dir = Path(__file__).parent
     suite_root = script_dir.parent.parent
-    
+    results_file = suite_root / RESULTS_FILE
+
+    # Handle --show-failures flag
+    if args.show_failures:
+        # Try to load previous results
+        previous_results = load_test_results(results_file)
+
+        if previous_results:
+            # Display failures from previous run
+            display_failures(previous_results)
+            sys.exit(0)
+        else:
+            # No previous results, auto-run tests
+            print("No previous test results found. Running tests...\n")
+            # Continue with normal test execution, will save results automatically
+            args.save_results = True  # Auto-enable saving
+
+    # Find UTL-X CLI
     if args.utlx_cli:
         utlx_cli = Path(args.utlx_cli)
     else:
         utlx_cli = suite_root.parent / 'utlx'
-    
+
     if not utlx_cli.exists():
         print(f"Error: UTL-X CLI not found at {utlx_cli}")
         sys.exit(1)
-    
+
     # Find test files
     test_dir = suite_root / 'tests'
     test_files = find_test_files(test_dir, args.category, args.test_name)
-    
+
     if not test_files:
         print("No test files found matching criteria")
         sys.exit(0)
@@ -465,17 +540,21 @@ def main():
             print(f"✗ {total_tests - passed_tests} tests failed")
             exit_code = 1
 
+        # Save results if requested
+        if args.save_results:
+            save_test_results(total_tests, passed_tests, failures_list, results_file)
+
         # Show detailed failure information if requested
-        if args.show_failures and failures_list:
-            print()
-            print("=" * 50)
-            print("FAILED TESTS DETAILS:")
-            print("=" * 50)
-            for failure in failures_list:
-                print(f"\n❌ {failure['name']}")
-                print(f"   Category: {failure['category']}")
-                print(f"   File: {failure.get('file_path', 'unknown')}")
-                print(f"   Reason: {failure['reason']}")
+        if args.show_failures:
+            # Create results dict for display
+            results_dict = {
+                'timestamp': datetime.utcnow().isoformat() + 'Z',
+                'total_tests': total_tests,
+                'passed_tests': passed_tests,
+                'failed_tests': total_tests - passed_tests,
+                'failures': failures_list
+            }
+            display_failures(results_dict)
 
     finally:
         # Always restore capture state, even if tests fail

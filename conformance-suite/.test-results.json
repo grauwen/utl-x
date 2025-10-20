@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-10-20T09:29:12.235835Z",
+  "total_tests": 233,
+  "passed_tests": 222,
+  "failed_tests": 11,
+  "failures": [
+    {
+      "name": "transform_auto_b900b260",
+      "reason": "Output mismatch (xml) - Expected: <?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n<Order id=\"UDMValue(udm=Scalar(value=ORD-123))\">\n<Cust... | Actual: <?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n<Order id=\"ORD-123\">\n<Customer>John</Customer>\n</Order...",
+      "category": "auto-captured/json-to-xml",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/auto-captured/json-to-xml/transform_auto_b900b260.yaml"
+    },
+    {
+      "name": "md5_auto_09f6088a",
+      "reason": "Output mismatch - Expected: \"\\\"5eb63bbbe01eeed093cb22bb8f5acdc3\\\"\"... | Actual: \"5eb63bbbe01eeed093cb22bb8f5acdc3\"...",
+      "category": "stdlib/crypto",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/auto-captured/stdlib/crypto/md5_auto_09f6088a.yaml"
+    },
+    {
+      "name": "transform_auto_43d9da56",
+      "reason": "Output mismatch (xml) - Expected: <?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>MAT-001</root>... | Actual: \"MAT-001\"...",
+      "category": "auto-captured/xml-transform",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/auto-captured/xml-transform/transform_auto_43d9da56.yaml"
+    },
+    {
+      "name": "json_to_xml_conversion",
+      "reason": "Output mismatch (xml) - Expected: <?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Order id=\"ORD-123\">\n<Customer>John Doe</Customer>\n<Items>\n<I... | Actual: <?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n<Order id=\"ORD-123\">\n<Customer>John Doe</Customer>\n<It...",
+      "category": "examples/basic",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/basic/json_to_xml_conversion.yaml"
+    },
+    {
+      "name": "csv_to_json_transformation",
+      "reason": "Transformation failed: Error: Undefined function: toDate\n",
+      "category": "examples/intermediate",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/intermediate/csv_to_json_transformation.yaml"
+    },
+    {
+      "name": "data_normalization",
+      "reason": "Transformation failed: Parse errors:\n  Expected ':' after property name at Location(line=19, column=9)\n",
+      "category": "examples/intermediate",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/intermediate/data_normalization.yaml"
+    },
+    {
+      "name": "xml_namespace_handling",
+      "reason": "Transformation failed: Parse errors:\n  Expected property name at Location(line=6, column=48)\n",
+      "category": "examples/intermediate",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/intermediate/xml_namespace_handling.yaml"
+    },
+    {
+      "name": "yaml_config_processing",
+      "reason": "Transformation failed: Parse errors:\n  Expected ':' after property name at Location(line=33, column=20)\n",
+      "category": "examples/intermediate",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/intermediate/yaml_config_processing.yaml"
+    },
+    {
+      "name": "financial_data_processing",
+      "reason": "Transformation failed: Parse errors:\n  Expected ':' after property name at Location(line=73, column=12)\n",
+      "category": "examples/real-world",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/real-world/financial_data_processing.yaml"
+    },
+    {
+      "name": "sap_integration",
+      "reason": "Output mismatch - Expected: {\"metadata\": {\"encoding_detected\": \"ISO-8859-1\", \"processed_at\": \"2024-01-15T10:30:00Z\", \"source\": \"... | Actual: {\"metadata\": {\"encoding_detected\": \"UTF-8\", \"processed_at\": \"2025-10-20T09:28:41.443981Z\", \"source\":...",
+      "category": "examples/real-world",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/real-world/sap_integration.yaml"
+    },
+    {
+      "name": "sap_integration_out_of_stock_scenario",
+      "reason": "Transformation failed: Error: map() requires array as first argument\n",
+      "category": "examples/real-world",
+      "file_path": "/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/conformance-suite/tests/examples/real-world/sap_integration.yaml"
+    }
+  ]
+}
