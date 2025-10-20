@@ -26,18 +26,11 @@ expected:
   format: xml
   data: |
     <?xml version="1.0" encoding="UTF-8"?>
-<<<<<<< HEAD
     <root>
       <Order id="ORD-123">
         <Customer>John</Customer>
       </Order>
     </root>
-=======
-    <Order id="ORD-123">
-      <Customer>John</Customer>
-    </Order>
->>>>>>> 8ed9dff (improvements)
-    
 
 performance_limits:
   max_duration_ms: 52
