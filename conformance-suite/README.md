@@ -46,6 +46,27 @@ python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|✗" | awk 
 #direct 3
 cd conformance-suite
 python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|  ✗" | grep -B 1 "✗" | grep "Running:" | awk '{print $2}'
+
+# Force enable capture (overrides config)
+./utlx transform script.utlx input.json --capture -v
+
+# Force disable capture (overrides config)
+./utlx transform script.utlx input.json --no-capture
+
+# View failures with file paths
+cd conformance-suite
+python3 runners/cli-runner/simple-runner.py --show-failures
+
+#transform with override on the capture
+./utlx transform --help
+
+  The output shows:
+  Options:
+    ...
+    --capture                   Force enable test capture (overrides config)
+    --no-capture                Force disable test capture (overrides config)
+    ...
+
 ```
 
 ### Adding New Tests
