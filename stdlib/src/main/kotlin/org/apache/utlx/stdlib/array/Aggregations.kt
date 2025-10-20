@@ -48,42 +48,56 @@ object Aggregations {
     }
     
     /**
-     * Minimum value in array
-     * Usage: min([3, 1, 4, 1, 5]) => 1
+     * Minimum value - supports both array and variadic arguments
+     * Usage:
+     *   min([3, 1, 4, 1, 5]) => 1
+     *   min(3, 1) => 1
+     *   min(5, 2, 8, 1) => 1
      */
     fun min(args: List<UDM>): UDM {
-        requireArgs(args, 1, "min")
-        val array = args[0].asArray() 
-            ?: throw FunctionArgumentException("argument must be an array")
-        
-        if (array.elements.isEmpty()) {
-            return UDM.Scalar(null)
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("min requires at least 1 argument")
         }
-        
-        val minValue = array.elements.minOf { element ->
-            element.asNumber()
+
+        // If single argument that's an array, find min of array elements
+        if (args.size == 1 && args[0] is UDM.Array) {
+            val array = args[0] as UDM.Array
+            if (array.elements.isEmpty()) {
+                return UDM.Scalar(null)
+            }
+            val minValue = array.elements.minOf { it.asNumber() }
+            return UDM.Scalar(minValue)
         }
-        
+
+        // Otherwise treat all arguments as numbers to compare
+        val minValue = args.minOf { it.asNumber() }
         return UDM.Scalar(minValue)
     }
-    
+
     /**
-     * Maximum value in array
-     * Usage: max([3, 1, 4, 1, 5]) => 5
+     * Maximum value - supports both array and variadic arguments
+     * Usage:
+     *   max([3, 1, 4, 1, 5]) => 5
+     *   max(3, 1) => 3
+     *   max(5, 2, 8, 1) => 8
      */
     fun max(args: List<UDM>): UDM {
-        requireArgs(args, 1, "max")
-        val array = args[0].asArray() 
-            ?: throw FunctionArgumentException("argument must be an array")
-        
-        if (array.elements.isEmpty()) {
-            return UDM.Scalar(null)
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("max requires at least 1 argument")
         }
-        
-        val maxValue = array.elements.maxOf { element ->
-            element.asNumber()
+
+        // If single argument that's an array, find max of array elements
+        if (args.size == 1 && args[0] is UDM.Array) {
+            val array = args[0] as UDM.Array
+            if (array.elements.isEmpty()) {
+                return UDM.Scalar(null)
+            }
+            val maxValue = array.elements.maxOf { it.asNumber() }
+            return UDM.Scalar(maxValue)
         }
-        
+
+        // Otherwise treat all arguments as numbers to compare
+        val maxValue = args.maxOf { it.asNumber() }
         return UDM.Scalar(maxValue)
     }
     
