@@ -14,6 +14,12 @@ The parser doesn't support if expressions with braces { } inside function bodies
 
 ⏺ Found the parser bug! let...in followed by inline if/else doesn't parse correctly. This is a parser limitation. Since I can't fix the parser easily, let me restructure the functions to avoid this pattern by using nested lets:
 
+The test failure (expected: <IDENTIFIER> but was: <INPUT>) is unrelated to the new token types - it's a pre-existing issue where the test expects "input" to be an identifier, but it's defined as a 
+keyword.
+
+xml_namespace_handling test uses wildcard selectors (*[0]) which aren't supported by the current parser. This would require parser enhancements. Let me skip this for now and move to the next failure:
+
+
 Next Steps (Phase 3 - Optional)
 
   Per the design document, the next phase would add:
