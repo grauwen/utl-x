@@ -176,7 +176,7 @@ This section provides detailed examples for each of the four main XML Schema (XS
 
 ---
 
-#circulair references
+# Circulair references
 
 ### 🔄 Cross-Referencing in Modular XSDs
 
@@ -242,4 +242,3 @@ This can lead to:
 4. **Validate schemas with multiple tools** (e.g., XMLSpy, Xerces, JAXB) to ensure compatibility.
 5. **Use a master schema** that imports/includes others, and validate against that.
 
-Would you like a template or script to validate modular schemas across tools, or a checklist for schema design compatibility?
