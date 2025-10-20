@@ -28,8 +28,10 @@ The UTL-X Conformance Suite ensures:
 # Generate coverage report
 ./runners/cli-runner/generate-coverage.sh
 
-#direct call and show faild
-python3 runners/cli-runner/simple-runner.py --show-failed
+
+# direct  call and View failures with file paths
+cd conformance-suite
+python3 runners/cli-runner/simple-runner.py --show-failures
 
 #direct 0 (direct output)
 cd conformance-suite
@@ -52,10 +54,6 @@ python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|  ✗" | gr
 
 # Force disable capture (overrides config)
 ./utlx transform script.utlx input.json --no-capture
-
-# View failures with file paths
-cd conformance-suite
-python3 runners/cli-runner/simple-runner.py --show-failures
 
 #transform with override on the capture
 ./utlx transform --help
