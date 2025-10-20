@@ -31,6 +31,16 @@ xml_namespace_handling test uses wildcard selectors (*[0]) which aren't supporte
   - yaml_config_processing - complex let bindings with array indexing
   - financial_data_processing - expression evaluation issue
 
+### Timezone Support
+Based on IANA Time Zone Database (tzdata)
+
+### Available Calendars
+- `gregory` - Gregorian (default)
+- `buddhist` - Buddhist calendar
+- `chinese` - Chinese calendar
+- `hebrew` - Hebrew calendar
+- `islamic` - Islamic calendar
+- `japanese` - Japanese calendar
 
 -TypeOf is both a standard grammar keyword and in the same time a stdlib keyword. -> rename the function typeOf to getType
 - formats/plugin/
