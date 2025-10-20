@@ -665,7 +665,7 @@ echo "org.gradle.jvmargs=-Xmx2g" >> gradle.properties
 4. **Check types:**
    ```utlx
    {
-     _type: typeOf(input.value),
+     _type: getType(input.value),
      _parsed: parseNumber(input.value)
    }
    ```

@@ -1387,34 +1387,10 @@ class StandardLibraryImpl {
             }
             RuntimeValue.StringValue(str)
         }
-        
-        registerFunction(env, "typeOf") { args ->
-            val value = args[0]
-            val typeName = when (value) {
-                is RuntimeValue.StringValue -> "string"
-                is RuntimeValue.NumberValue -> "number"
-                is RuntimeValue.BooleanValue -> "boolean"
-                is RuntimeValue.NullValue -> "null"
-                is RuntimeValue.ArrayValue -> "array"
-                is RuntimeValue.ObjectValue -> "object"
-                is RuntimeValue.FunctionValue -> "function"
-                is RuntimeValue.UDMValue -> {
-                    when (val udm = value.udm) {
-                        is UDM.Scalar -> when (udm.value) {
-                            is String -> "string"
-                            is Number -> "number"
-                            is Boolean -> "boolean"
-                            else -> "unknown"
-                        }
-                        is UDM.Array -> "array"
-                        is UDM.Object -> "object"
-                        else -> "unknown"
-                    }
-                }
-            }
-            RuntimeValue.StringValue(typeName)
-        }
-        
+
+        // Note: typeOf() function removed - use stdlib getType() instead
+        // Keyword 'typeof' reserved in grammar for potential operator implementation
+
         registerFunction(env, "toNumber") { args ->
             val arg = args[0]
             val str = when (arg) {

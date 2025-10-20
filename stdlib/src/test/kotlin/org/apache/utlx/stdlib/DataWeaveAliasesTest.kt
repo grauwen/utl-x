@@ -206,7 +206,7 @@ class DataWeaveAliasesTest {
         assertTrue(mapping.containsKey("ceil"))
         assertTrue(mapping.containsKey("floor"))
         assertTrue(mapping.containsKey("now"))
-        assertTrue(mapping.containsKey("typeOf"))
+        // Note: typeOf removed - use getType() directly. Keyword 'typeof' reserved for future operator.
         assertTrue(mapping.containsKey("isArray"))
         assertTrue(mapping.containsKey("isString"))
         
@@ -277,8 +277,8 @@ class DataWeaveAliasesTest {
     @Test
     fun testTypeFunctionMappings() {
         val mapping = DataWeaveMigrationGuide.functionMapping
-        
-        assertEquals("typeOf", mapping["typeOf"])
+
+        // Note: typeOf removed - use getType() directly. Keyword 'typeof' reserved for future operator.
         assertEquals("isArray", mapping["isArray"])
         assertEquals("isString", mapping["isString"])
         assertEquals("isNumber", mapping["isNumber"])

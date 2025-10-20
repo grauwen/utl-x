@@ -378,16 +378,16 @@ diffDays(parseDate("2025-10-15", "yyyy-MM-dd"),
 
 ### Type Functions
 
-#### typeOf(value: Any): String
+#### getType(value: Any): String
 Get type name.
 
 ```utlx
-typeOf(42)                       // "number"
-typeOf("hello")                  // "string"
-typeOf(true)                     // "boolean"
-typeOf([1, 2])                   // "array"
-typeOf({a: 1})                   // "object"
-typeOf(null)                     // "null"
+getType(42)                      // "number"
+getType("hello")                 // "string"
+getType(true)                    // "boolean"
+getType([1, 2])                  // "array"
+getType({a: 1})                  // "object"
+getType(null)                    // "null"
 ```
 
 #### isString(value: Any): Boolean

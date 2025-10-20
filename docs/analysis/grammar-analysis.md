@@ -302,11 +302,25 @@ keyword ::= 'let' | 'function' | 'if' | 'else' | 'match'
 | `try` / `catch` | ? Unknown | No tests, might be implemented |
 | `return` | ✗ Unnecessary | Expression-based, no return needed |
 | `import` / `export` | ✗ Unimplemented | No module system |
-| `typeof` | ✗ Renamed | Changed to `getType` recently |
+| `typeof` | ✗ Reserved | Keyword reserved for future operator |
 
 **Missing from Grammar:**
 - `def` - Actually used for function definitions
-- `getType` - Renamed from `typeof`
+
+**Important Clarification: `typeof` keyword vs `getType()` function**
+
+The grammar reserves `typeof` as a keyword for a potential **operator** (like JavaScript's `typeof`), which would:
+- Work without parentheses: `typeof value`
+- Be evaluated at parse/compile time
+- Return a type identifier or string
+
+Currently, UTL-X provides `getType()` as a **function** in the standard library:
+- Called with parentheses: `getType(value)`
+- Evaluated at runtime
+- Composable in pipes: `value |> getType()`
+- Returns type name as string
+
+The `typeof` keyword is intentionally reserved to keep the option open for implementing a true operator in the future, distinct from the compositional function approach of `getType()`.
 
 ### 3.5 Type System: Overspecified or Unused? ⚠️
 

@@ -234,8 +234,8 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
     - Status: ❌ Not implemented
     - Impact: Low - expressions return last value
   14. Typeof Operator (grammar line 35)
-    - Status: ❌ Keyword missing
-    - Impact: Low - typeOf() function exists in stdlib
+    - Status: ❌ Keyword reserved but not implemented
+    - Impact: Low - getType() function exists in stdlib
 
   ---
   3. CURRENT PARSE TREE STRUCTURE
@@ -415,5 +415,5 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
   11. ❌ Exponentiation (**) - Can use pow(base, exp)
   12. ❌ Nullish coalescing (??) - Can use || or if
   13. ❌ Return statement - Expressions return last value
-  14. ❌ Typeof operator - typeOf() function exists
+  14. ❌ Typeof operator - getType() function exists
   15. ❌ Import/Export - Modularity feature

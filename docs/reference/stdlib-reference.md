@@ -1450,17 +1450,17 @@ fromJSON('{"name":"John"}')  // {name: "John"}
 
 ### Type Checking
 
-#### `typeOf(value: Any): String`
+#### `getType(value: Any): String`
 Get type name.
 
 **Example:**
 ```utlx
-typeOf("hello")          // "String"
-typeOf(123)              // "Number"
-typeOf(true)             // "Boolean"
-typeOf([1, 2])           // "Array"
-typeOf({a: 1})           // "Object"
-typeOf(null)             // "Null"
+getType("hello")          // "String"
+getType(123)              // "Number"
+getType(true)             // "Boolean"
+getType([1, 2])           // "Array"
+getType({a: 1})           // "Object"
+getType(null)             // "Null"
 ```
 
 #### `isString(value: Any): Boolean`

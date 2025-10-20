@@ -305,7 +305,7 @@ distinct(array)                    // Remove duplicates
 ### 6.5 Type Functions
 
 ```utlx
-typeOf(value)                      // Get type as string
+getType(value)                     // Get type as string
 isString(value)                    // Check if string
 isNumber(value)                    // Check if number
 isBoolean(value)                   // Check if boolean

@@ -172,7 +172,7 @@ match input.customer {
 ### Match on Types
 
 ```utlx
-match typeOf(input.value) {
+match getType(input.value) {
   "string" => upper(input.value),
   "number" => input.value * 2,
   "boolean" => if (input.value) "Yes" else "No",
