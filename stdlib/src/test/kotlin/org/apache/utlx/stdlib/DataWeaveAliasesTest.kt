@@ -75,7 +75,7 @@ class DataWeaveAliasesTest {
         assertTrue(!DataWeaveAliases.isEmpty(nonEmptyBinary))
         
         // Test with lambda (functions are never empty)
-        val lambda = UDM.Lambda { listOf() }
+        val lambda = UDM.Lambda { _ -> UDM.Array(emptyList()) }
         assertTrue(!DataWeaveAliases.isEmpty(lambda))
     }
 

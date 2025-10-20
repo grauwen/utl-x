@@ -232,8 +232,16 @@ class JoinFunctionsTest {
             UDM.Object(mapOf("customerId" to UDM.Scalar(2), "product" to UDM.Scalar("Tool")))
         ))
         
-        // Use a dummy combiner function (implementation would need function calling)
-        val combinerFn = UDM.Lambda(emptyList(), UDM.Scalar("dummy"))
+        // Use a dummy combiner function that combines left and right objects
+        val combinerFn = UDM.Lambda { args ->
+            // args[0] is left object, args[1] is right object
+            val left = args.getOrNull(0) ?: UDM.Scalar(null)
+            val right = args.getOrNull(1) ?: UDM.Scalar(null)
+            UDM.Object(mapOf(
+                "l" to left,
+                "r" to right
+            ))
+        }
         
         val result = JoinFunctions.joinWith(listOf(
             customers,

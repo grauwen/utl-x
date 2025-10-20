@@ -30,7 +30,7 @@ class UtilityFunctionsTest {
             ))
         ))
         
-        val dummyFunction = UDM.Lambda(emptyList(), UDM.Scalar("mapped"))
+        val dummyFunction = UDM.Lambda { _ -> UDM.Scalar("mapped") }
         val result = TreeFunctions.treeMap(listOf(tree, dummyFunction))
         
         assertTrue(result is UDM.Object)
@@ -62,7 +62,7 @@ class UtilityFunctionsTest {
             ))
         ))
         
-        val dummyPredicate = UDM.Lambda(emptyList(), UDM.Scalar(true))
+        val dummyPredicate = UDM.Lambda { _ -> UDM.Scalar(true) }
         val result = TreeFunctions.treeFilter(listOf(tree, dummyPredicate))
         
         assertTrue(result is UDM.Object)
@@ -505,7 +505,7 @@ class UtilityFunctionsTest {
         // Run timer multiple times
         repeat(3) { i ->
             TimerFunctions.timerStart(listOf(UDM.Scalar(timerName)))
-            Thread.sleep(5 + i) // Varying delays
+            Thread.sleep(5L + i) // Varying delays
             TimerFunctions.timerStop(listOf(UDM.Scalar(timerName)))
         }
         
@@ -580,7 +580,7 @@ class UtilityFunctionsTest {
     @Test
     fun testMeasure() {
         // Test measure function (placeholder implementation)
-        val dummyFunction = UDM.Lambda(emptyList(), UDM.Scalar("result"))
+        val dummyFunction = UDM.Lambda { _ -> UDM.Scalar("result") }
         val result = TimerFunctions.measure(listOf(dummyFunction))
         
         assertTrue(result is UDM.Object)

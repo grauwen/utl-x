@@ -354,7 +354,7 @@ class FunctionsTest {
     @Test
     fun testFunctionArgumentException() {
         val exception = FunctionArgumentException("Test argument error")
-        assertTrue(exception is IllegalArgumentException)
+        assertTrue(exception is FunctionArgumentException)
         assertEquals("Test argument error", exception.message)
     }
 

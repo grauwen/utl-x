@@ -89,7 +89,7 @@ class EnhancedObjectFunctionsTest {
         ))
         
         // Test basic functionality (currently returns false due to placeholder implementation)
-        val dummyPredicate = UDM.Lambda(emptyList(), UDM.Scalar(true))
+        val dummyPredicate = UDM.Lambda { _ -> UDM.Scalar(true) }
         val result = EnhancedObjectFunctions.someEntry(listOf(obj, dummyPredicate))
         
         assertTrue(result is UDM.Scalar)
@@ -107,7 +107,7 @@ class EnhancedObjectFunctionsTest {
         ))
         
         // Test basic functionality (currently returns true due to placeholder implementation)
-        val dummyPredicate = UDM.Lambda(emptyList(), UDM.Scalar(true))
+        val dummyPredicate = UDM.Lambda { _ -> UDM.Scalar(true) }
         val result = EnhancedObjectFunctions.everyEntry(listOf(obj, dummyPredicate))
         
         assertTrue(result is UDM.Scalar)
@@ -128,7 +128,7 @@ class EnhancedObjectFunctionsTest {
         ))
         
         // Test basic functionality (currently returns original object due to placeholder)
-        val dummyMapper = UDM.Lambda(emptyList(), UDM.Scalar(true))
+        val dummyMapper = UDM.Lambda { _ -> UDM.Scalar(true) }
         val result = EnhancedObjectFunctions.mapEntries(listOf(obj, dummyMapper))
         
         assertTrue(result is UDM.Object)
@@ -152,7 +152,7 @@ class EnhancedObjectFunctionsTest {
         ))
         
         // Test basic functionality (currently returns all entries due to placeholder)
-        val dummyPredicate = UDM.Lambda(emptyList(), UDM.Scalar(true))
+        val dummyPredicate = UDM.Lambda { _ -> UDM.Scalar(true) }
         val result = EnhancedObjectFunctions.filterEntries(listOf(obj, dummyPredicate))
         
         assertTrue(result is UDM.Object)
@@ -179,7 +179,7 @@ class EnhancedObjectFunctionsTest {
             "c" to UDM.Scalar(3)
         ))
         
-        val dummyReducer = UDM.Lambda(emptyList(), UDM.Scalar(true))
+        val dummyReducer = UDM.Lambda { _ -> UDM.Scalar(true) }
         val initialValue = UDM.Scalar(0)
         
         // Test basic functionality (currently returns initial value due to placeholder)
@@ -203,7 +203,7 @@ class EnhancedObjectFunctionsTest {
             "d" to UDM.Scalar(4)
         ))
         
-        val dummyPredicate = UDM.Lambda(emptyList(), UDM.Scalar(true))
+        val dummyPredicate = UDM.Lambda { _ -> UDM.Scalar(true) }
         val result = EnhancedObjectFunctions.countEntries(listOf(obj, dummyPredicate))
         
         assertTrue(result is UDM.Scalar)
@@ -223,7 +223,7 @@ class EnhancedObjectFunctionsTest {
             "lastName" to UDM.Scalar("Smith")
         ))
         
-        val dummyMapper = UDM.Lambda(emptyList(), UDM.Scalar("mapped"))
+        val dummyMapper = UDM.Lambda { _ -> UDM.Scalar("mapped") }
         val result = EnhancedObjectFunctions.mapKeys(listOf(obj, dummyMapper))
         
         assertTrue(result is UDM.Object)
@@ -245,7 +245,7 @@ class EnhancedObjectFunctionsTest {
             "c" to UDM.Scalar(3)
         ))
         
-        val dummyMapper = UDM.Lambda(emptyList(), UDM.Scalar("mapped"))
+        val dummyMapper = UDM.Lambda { _ -> UDM.Scalar("mapped") }
         val result = EnhancedObjectFunctions.mapValues(listOf(obj, dummyMapper))
         
         assertTrue(result is UDM.Object)
@@ -261,7 +261,7 @@ class EnhancedObjectFunctionsTest {
     @Test
     fun testArgumentValidation() {
         val validObj = UDM.Object(mutableMapOf("key" to UDM.Scalar("value")))
-        val dummyFunction = UDM.Lambda(emptyList(), UDM.Scalar(true))
+        val dummyFunction = UDM.Lambda { _ -> UDM.Scalar(true) }
         
         // Test insufficient arguments for various functions
         assertThrows<IllegalArgumentException> {
@@ -370,7 +370,7 @@ class EnhancedObjectFunctionsTest {
     @Test
     fun testFunctionsWithEmptyObjects() {
         val emptyObj = UDM.Object(mutableMapOf())
-        val dummyFunction = UDM.Lambda(emptyList(), UDM.Scalar(true))
+        val dummyFunction = UDM.Lambda { _ -> UDM.Scalar(true) }
         
         // Test all functions with empty objects
         val divideResult = EnhancedObjectFunctions.divideBy(listOf(emptyObj, UDM.Scalar(2)))

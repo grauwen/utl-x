@@ -260,7 +260,8 @@ class AdvancedMathFunctionsTest {
 
         // tanh approaches -1 as x approaches negative infinity
         val negLargeTanh = AdvancedMathFunctions.tanh(listOf(UDM.Scalar(-10.0)))
-        assertTrue((negLargeTanh as UDM.Scalar).value as Double < -0.99)
+        val negLargeTanhValue = (negLargeTanh as UDM.Scalar).value as Double
+        assertTrue(negLargeTanhValue < -0.99)
     }
 
     // ========== LOGARITHMIC & EXPONENTIAL FUNCTIONS ==========
