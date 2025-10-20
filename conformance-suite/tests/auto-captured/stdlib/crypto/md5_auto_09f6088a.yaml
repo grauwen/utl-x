@@ -19,7 +19,7 @@ transformation: |
 
 expected:
   format: json
-  data: "\"5eb63bbbe01eeed093cb22bb8f5acdc3\""
+  data: "5eb63bbbe01eeed093cb22bb8f5acdc3"
 
 performance_limits:
   max_duration_ms: 372

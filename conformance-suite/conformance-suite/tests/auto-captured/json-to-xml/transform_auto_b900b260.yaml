@@ -1,9 +1,9 @@
 name: "transform_auto_b900b260"
-category: "auto-captured/json-to-xml"
+category: "json-to-xml"
 description: "Auto-captured test for transformation"
 tags: ["auto-generated"]
 auto_generated: true
-captured_at: "2025-10-19T14:24:45.134386Z"
+captured_at: "2025-10-20T16:47:44.707982Z"
 
 input:
   format: json
@@ -26,24 +26,16 @@ expected:
   format: xml
   data: |
     <?xml version="1.0" encoding="UTF-8"?>
-<<<<<<< HEAD
-    <root>
-      <Order id="ORD-123">
-        <Customer>John</Customer>
-      </Order>
-    </root>
-=======
     <Order id="ORD-123">
       <Customer>John</Customer>
     </Order>
->>>>>>> 8ed9dff (improvements)
     
 
 performance_limits:
-  max_duration_ms: 52
+  max_duration_ms: 60
   max_memory_mb: 10
 
 metadata:
   author: "UTL-X Auto-Capture"
-  captured_date: "2025-10-19"
+  captured_date: "2025-10-20"
   references: ["Auto-generated test case"]

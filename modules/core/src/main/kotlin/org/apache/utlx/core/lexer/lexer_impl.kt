@@ -58,7 +58,20 @@ class Lexer(private val source: String) {
             ';' -> addToken(TokenType.SEMICOLON, start, startColumn)
             '@' -> addToken(TokenType.AT, start, startColumn)
             '+' -> addToken(TokenType.PLUS, start, startColumn)
-            '*' -> addToken(TokenType.STAR, start, startColumn)
+            '*' -> {
+                if (match('*')) {
+                    addToken(TokenType.STAR_STAR, start, startColumn)  // **
+                } else {
+                    addToken(TokenType.STAR, start, startColumn)        // *
+                }
+            }
+            '?' -> {
+                when {
+                    match('.') -> addToken(TokenType.QUESTION_DOT, start, startColumn)      // ?.
+                    match('?') -> addToken(TokenType.QUESTION_QUESTION, start, startColumn) // ??
+                    else -> addToken(TokenType.QUESTION, start, startColumn)                // ?
+                }
+            }
             '%' -> {
                 // Could be % operator or %utlx directive
                 if (start == 0 || (start > 0 && source[start - 1] == '\n')) {
@@ -116,10 +129,16 @@ class Lexer(private val source: String) {
                 }
             }
             '.' -> {
-                if (match('.')) {
-                    addToken(TokenType.DOTDOT, start, startColumn)
+                // Check for ... (spread) or .. (dotdot) or . (dot)
+                if (peek() == '.' && peekNext() == '.') {
+                    advance() // second .
+                    advance() // third .
+                    addToken(TokenType.SPREAD, start, startColumn)   // ...
+                } else if (peek() == '.') {
+                    advance() // second .
+                    addToken(TokenType.DOTDOT, start, startColumn)   // ..
                 } else {
-                    addToken(TokenType.DOT, start, startColumn)
+                    addToken(TokenType.DOT, start, startColumn)       // .
                 }
             }
             '=' -> {

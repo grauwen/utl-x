@@ -42,9 +42,10 @@ enum class TokenType {
     PLUS,            // +
     MINUS,           // -
     STAR,            // *
+    STAR_STAR,       // ** (exponentiation)
     SLASH,           // /
     PERCENT,         // %
-    
+
     // Comparison
     EQ,              // ==
     NE,              // !=
@@ -52,12 +53,17 @@ enum class TokenType {
     LE,              // <=
     GT,              // >
     GE,              // >=
-    
+
     // Logical
     AND,             // &&
     OR,              // ||
     NOT,             // !
-    
+
+    // Null handling
+    QUESTION,        // ? (ternary operator)
+    QUESTION_DOT,    // ?. (safe navigation)
+    QUESTION_QUESTION, // ?? (nullish coalescing)
+
     // Assignment and pipes
     ASSIGN,          // =
     ARROW,           // =>
@@ -78,6 +84,7 @@ enum class TokenType {
     SEMICOLON,       // ;
     AT,              // @ (for attributes)
     DOTDOT,          // .. (recursive descent)
+    SPREAD,          // ... (spread operator)
     
     // Special
     PERCENT_DIRECTIVE, // %utlx, %dw (at start of file)
@@ -118,9 +125,10 @@ data class Token(
     )
     
     fun isOperator(): Boolean = type in setOf(
-        TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH, TokenType.PERCENT,
+        TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.STAR_STAR, TokenType.SLASH, TokenType.PERCENT,
         TokenType.EQ, TokenType.NE, TokenType.LT, TokenType.LE, TokenType.GT, TokenType.GE,
-        TokenType.AND, TokenType.OR, TokenType.NOT
+        TokenType.AND, TokenType.OR, TokenType.NOT,
+        TokenType.QUESTION, TokenType.QUESTION_DOT, TokenType.QUESTION_QUESTION
     )
     
     fun isDelimiter(): Boolean = type in setOf(

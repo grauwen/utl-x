@@ -1,7 +1,9 @@
-name: "json_to_xml_conversion"
-category: "examples/basic"
-description: "Basic JSON to XML format conversion"
-tags: ["json", "xml", "format-conversion", "basic"]
+name: "map_auto_856bfe76"
+category: "stdlib/array"
+description: "Auto-captured test for map"
+tags: ["auto-generated", "map", "map"]
+auto_generated: true
+captured_at: "2025-10-20T16:46:34.952791Z"
 
 input:
   format: json
@@ -37,6 +39,7 @@ transformation: |
       Total: @input.order.total
     }
   }
+  
 
 expected:
   format: xml
@@ -56,13 +59,13 @@ expected:
       </Items>
       <Total>1050.99</Total>
     </Order>
+    
 
 performance_limits:
-  max_duration_ms: 300
-  max_memory_mb: 15
+  max_duration_ms: 66
+  max_memory_mb: 10
 
 metadata:
-  author: "UTL-X Documentation"
-  source: "docs/formats/xml.md"
-  complexity: "basic"
-  notes: ["Shows JSON to XML conversion with attributes and nested elements"]
+  author: "UTL-X Auto-Capture"
+  captured_date: "2025-10-20"
+  references: ["Auto-generated test case"]

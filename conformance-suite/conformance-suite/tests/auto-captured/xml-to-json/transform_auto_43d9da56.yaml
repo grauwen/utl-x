@@ -1,9 +1,9 @@
 name: "transform_auto_43d9da56"
-category: "auto-captured/xml-transform"
+category: "xml-to-json"
 description: "Auto-captured test for transformation"
 tags: ["auto-generated"]
 auto_generated: true
-captured_at: "2025-10-19T14:01:34.595740Z"
+captured_at: "2025-10-20T16:57:01.861749Z"
 
 input:
   format: xml
@@ -19,14 +19,13 @@ transformation: |
 
 expected:
   format: json
-  data: "MAT-001"
-    
+  data: "\"MAT-001\""
 
 performance_limits:
-  max_duration_ms: 66
+  max_duration_ms: 50
   max_memory_mb: 10
 
 metadata:
   author: "UTL-X Auto-Capture"
-  captured_date: "2025-10-19"
+  captured_date: "2025-10-20"
   references: ["Auto-generated test case"]
