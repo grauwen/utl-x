@@ -38,6 +38,15 @@ utlx schema -h
 stlib has IO -> how to handle uniform path over unix and windows?
 writeFile function does not exist. Maybe needed for dynamic lookups?
 ----
+Fix FunctionRegistryGenerator compilation errors
+
+Add stub exportRegistry() method to StandardLibrary/Functions.kt
+Implement registry generation from @UTLXFunction annotations
+Configure build to bundle registry
+
+Update CLI gradle to include registry in resources
+Test that registry loads from JAR
+----
 SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 
   This appears to be a runtime linkage issue between the CLI and stdlib that needs investigation beyond the scope of the current session.
