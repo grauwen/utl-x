@@ -9,17 +9,15 @@ CLI: Documentation: https://utlx-lang.org/docs -> URL is not registered. Change 
 
 (dynamic date calculations giving different results). This is a pre-existing test issue ->  boolean comparison bug in the interpreter.
 
-    For existing code (if any user functions exist):
-     1. Add lint/migration tool: utlx migrate --fix-function-names
-     2. Auto-capitalize first letter
-     3. Show diff for review
-     4. Include deprecation period (warnings before errors)
 
-See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/xsd-discussions-style.md ; the generation of an XSD for the output has to be in a default style and potentially might need configuration to choose the XSD style
+See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/xsd-discussions-style.md ; the generation of an XSD for the output has to be in a default style and potentially might need configuration to choose the XSD style. 
+In the analysis mode there should be more complex logic for nested XSD's and potentially a test for:  --Element Declaration [Local|Global] --Type Declaration [Local|Global]
+
 ```
 utlx schema -h 
  Output: json-schema (xsd, csv-schema, yaml-schema planned) TODO
 ```
+
 SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 
   This appears to be a runtime linkage issue between the CLI and stdlib that needs investigation beyond the scope of the current session.
