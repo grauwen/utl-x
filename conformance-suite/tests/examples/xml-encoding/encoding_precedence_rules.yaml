@@ -1,0 +1,61 @@
+name: "encoding_precedence_rules"
+category: "xml-encoding"
+description: "Demonstrates encoding precedence: explicit > metadata > UTF-8 default"
+tags: ["xml", "encoding", "precedence", "metadata"]
+
+input:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="ISO-8859-1"?>
+    <SAPSystem>
+      <Material>
+        <Number>MAT-001</Number>
+        <Description>Müller AG Product</Description>
+      </Material>
+    </SAPSystem>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output xml {encoding: "UTF-8"}
+  ---
+  {
+    Integration: {
+      SourceSystem: "SAP",
+      SourceEncoding: detectXMLEncoding(@input),
+      OutputEncoding: "UTF-8",
+      Data: @input
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Integration>
+      <SourceSystem>SAP</SourceSystem>
+      <SourceEncoding>ISO-8859-1</SourceEncoding>
+      <OutputEncoding>UTF-8</OutputEncoding>
+      <SAPSystem>
+        <Material>
+          <Number>MAT-001</Number>
+          <Description>Müller AG Product</Description>
+        </Material>
+      </SAPSystem>
+    </Integration>
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-21"
+  references:
+    - "Output encoding configuration"
+    - "Encoding precedence rules"
+  notes:
+    - "Input has ISO-8859-1 encoding (detected by detectXMLEncoding)"
+    - "Explicit output encoding UTF-8 overrides input metadata"
+    - "This demonstrates: explicit config > metadata > default"
+    - "Use case: Normalize SAP (ISO-8859-1) to modern UTF-8 systems"

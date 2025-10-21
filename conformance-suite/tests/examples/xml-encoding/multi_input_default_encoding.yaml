@@ -1,0 +1,76 @@
+name: "multi_input_default_encoding"
+category: "xml-encoding"
+description: "Test multiple XML inputs with different encodings - default output encoding (UTF-8)"
+tags: ["xml", "encoding", "multi-input"]
+
+# Note: This is a conceptual test showing expected behavior
+# Current limitation: UTL-X doesn't support multiple file inputs yet
+# This test documents the expected behavior for when feature is implemented
+
+input:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="ISO-8859-1"?>
+    <SystemA>
+      <Customer>
+        <Name>Müller GmbH</Name>
+        <Country>DE</Country>
+      </Customer>
+    </SystemA>
+
+# Additional input (conceptual - for documentation)
+# input2:
+#   format: xml
+#   data: |
+#     <?xml version="1.0" encoding="UTF-16"?>
+#     <SystemB>
+#       <Product>
+#         <SKU>PRD-001</SKU>
+#         <Price>99.99</Price>
+#       </Product>
+#     </SystemB>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output xml
+  ---
+  {
+    Combined: {
+      Source1: @input,
+      Metadata1: {
+        encoding: detectXMLEncoding(@input)
+      }
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Combined>
+      <SystemA>
+        <Customer>
+          <Name>Müller GmbH</Name>
+          <Country>DE</Country>
+        </Customer>
+      </SystemA>
+      <Metadata1>
+        <encoding>ISO-8859-1</encoding>
+      </Metadata1>
+    </Combined>
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-21"
+  references:
+    - "Output encoding configuration"
+    - "Multiple inputs with different encodings default to UTF-8"
+  notes:
+    - "When merging multiple XML inputs, root object has no metadata"
+    - "Default behavior: output encoding = UTF-8 (safest default)"
+    - "Input metadata is preserved per-object for detectXMLEncoding()"

@@ -85,26 +85,66 @@ class Parser(private val tokens: List<Token>) {
     
     private fun parseHeader(): Header {
         val startToken = peek()
-        
+
         // %utlx 1.0
         if (!match(TokenType.PERCENT_DIRECTIVE)) {
             error("Expected UTL-X directive (e.g., %utlx 1.0)")
         }
         val version = previous().lexeme.substringAfter(' ').trim()
-        
-        // input <format>
+
+        // Parse inputs: either "input xml" or "input: input1 xml, input2 json"
         if (!match(TokenType.INPUT)) {
             error("Expected 'input' declaration")
         }
-        val inputFormat = parseFormatSpec()
-        
-        // output <format>
+        val inputs = parseInputsOrOutputs(isInput = true)
+
+        // Parse outputs: either "output json" or "output: summary json, details xml"
         if (!match(TokenType.OUTPUT)) {
             error("Expected 'output' declaration")
         }
-        val outputFormat = parseFormatSpec()
-        
-        return Header(version, inputFormat, outputFormat, Location.from(startToken))
+        val outputs = parseInputsOrOutputs(isInput = false)
+
+        return Header(version, inputs, outputs, Location.from(startToken))
+    }
+
+    /**
+     * Parse input or output declarations.
+     * Supports:
+     * - Single: "xml" → [("input"/"output", FormatSpec)]
+     * - Multiple with colon: ": input1 xml, input2 json" → [(name1, spec1), (name2, spec2)]
+     */
+    private fun parseInputsOrOutputs(isInput: Boolean): List<Pair<String, FormatSpec>> {
+        val defaultName = if (isInput) "input" else "output"
+
+        // Check if there's a colon (multiple named inputs/outputs)
+        if (match(TokenType.COLON)) {
+            val result = mutableListOf<Pair<String, FormatSpec>>()
+
+            // Parse comma-separated list: input1 xml, input2 json, input3 csv
+            do {
+                // Stop if we hit the output/--- separator
+                if (check(TokenType.OUTPUT) || check(TokenType.TRIPLE_DASH) || isAtEnd()) {
+                    break
+                }
+
+                // Parse: name format {options}
+                val name = consume(TokenType.IDENTIFIER, "Expected input/output name").lexeme
+                val formatSpec = parseFormatSpec()
+                result.add(name to formatSpec)
+
+                // Continue if comma-separated
+            } while (match(TokenType.COMMA))
+
+            if (result.isEmpty()) {
+                error("Expected at least one input/output declaration after colon")
+            }
+
+            return result
+        } else {
+            // Single input/output (backward compatible): "xml" → [("input", spec)]
+            val formatSpec = parseFormatSpec()
+            return listOf(defaultName to formatSpec)
+        }
     }
     
     private fun parseFormatSpec(): FormatSpec {

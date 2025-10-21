@@ -29,15 +29,21 @@ import kotlin.system.exitProcess
 object TransformCommand {
     
     data class TransformOptions(
-        val inputFile: File? = null,
+        val namedInputs: Map<String, File> = emptyMap(),        // Named inputs: input1=file1.xml, input2=file2.json
+        val namedOutputs: Map<String, File> = emptyMap(),       // Named outputs: summary=out.json, details=out.xml
         val scriptFile: File,
-        val outputFile: File? = null,
         val inputFormat: String? = null,
         val outputFormat: String? = null,
         val verbose: Boolean = false,
         val pretty: Boolean = true,
         val captureEnabled: Boolean? = null  // null = use config, true = force enable, false = force disable
-    )
+    ) {
+        // Backward compatibility properties
+        val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
+        val outputFile: File? get() = namedOutputs["output"] ?: namedOutputs.values.firstOrNull()
+        val hasMultipleInputs: Boolean get() = namedInputs.size > 1
+        val hasMultipleOutputs: Boolean get() = namedOutputs.size > 1
+    }
     
     fun execute(args: Array<String>) {
         val options = parseOptions(args)
@@ -60,34 +66,46 @@ object TransformCommand {
             val scriptContent = options.scriptFile.readText()
             val program = compileScript(scriptContent, options.verbose)
 
-            // Read input data
-            val inputData = if (options.inputFile != null) {
-                options.inputFile.readText()
+            // Read and parse all input data files
+            val namedInputsUDM = if (options.namedInputs.isNotEmpty()) {
+                // Named inputs from --input flags
+                options.namedInputs.mapValues { (name, file) ->
+                    val inputData = file.readText()
+                    val inputFormat = options.inputFormat ?: detectFormat(inputData, file.extension)
+
+                    // Get format options from script header for this specific input
+                    val inputSpec = program.header.inputs.find { it.first == name }?.second
+                    val inputOptions = inputSpec?.options ?: emptyMap()
+
+                    if (options.verbose) {
+                        println("Input '$name' format: $inputFormat (from ${file.name})")
+                    }
+
+                    parseInput(inputData, inputFormat, inputOptions)
+                }
             } else {
-                readStdin()
+                // No named inputs - read from stdin (backward compat)
+                val inputData = readStdin()
+                val inputFormat = options.inputFormat ?: detectFormat(inputData, null)
+
+                if (options.verbose) {
+                    println("Input format: $inputFormat (from stdin)")
+                }
+
+                val inputOptions = program.header.inputFormat.options
+                val inputUDM = parseInput(inputData, inputFormat, inputOptions)
+                mapOf("input" to inputUDM)
             }
-
-            // Detect or use specified input format
-            val inputFormat = options.inputFormat
-                ?: detectFormat(inputData, options.inputFile?.extension)
-
-            if (options.verbose) {
-                println("Input format: $inputFormat")
-            }
-
-            // Parse input to UDM with format options from script header
-            val inputOptions = program.header.inputFormat.options
-            val inputUDM = parseInput(inputData, inputFormat, inputOptions)
 
             // Execute transformation using core Interpreter with dynamic stdlib loading
             val interpreter = Interpreter()
 
-            val result = interpreter.execute(program, inputUDM)
+            val result = interpreter.execute(program, namedInputsUDM)
             val outputUDM = result.toUDM()
 
             // Detect or use specified output format
-            // Priority: 1) CLI option, 2) script header, 3) input format
-            val outputFormat = options.outputFormat ?: program.header.outputFormat.type.name.lowercase() ?: inputFormat
+            // Priority: 1) CLI option, 2) script header, 3) default json
+            val outputFormat = options.outputFormat ?: program.header.outputFormat.type.name.lowercase()
 
             if (options.verbose) {
                 println("Output format: $outputFormat")
@@ -99,61 +117,70 @@ object TransformCommand {
             captureSuccess = true
 
             // Write output
-            if (options.outputFile != null) {
-                options.outputFile.writeText(outputData)
+            val outputFilePath = options.outputFile
+            if (outputFilePath != null) {
+                outputFilePath.writeText(outputData)
                 if (options.verbose) {
-                    println("✓ Transformation complete: ${options.outputFile.absolutePath}")
+                    println("✓ Transformation complete: ${outputFilePath.absolutePath}")
                 }
             } else {
                 println(outputData)
             }
 
-            // Capture successful execution
+            // Capture successful execution (for single input only)
             val durationMs = System.currentTimeMillis() - startTime
-            TestCaptureService.captureExecution(
-                transformation = scriptContent,
-                inputData = inputData,
-                inputFormat = inputFormat,
-                outputData = outputData,
-                outputFormat = outputFormat,
-                success = true,
-                error = null,
-                durationMs = durationMs,
-                scriptFile = options.scriptFile,
-                overrideEnabled = options.captureEnabled
-            )
+            if (!options.hasMultipleInputs) {
+                val primaryInput = namedInputsUDM.values.firstOrNull()
+                val captureInputFormat = options.inputFormat ?: detectFormat("", options.inputFile?.extension)
+
+                TestCaptureService.captureExecution(
+                    transformation = scriptContent,
+                    inputData = options.inputFile?.readText() ?: "",
+                    inputFormat = captureInputFormat,
+                    outputData = outputData,
+                    outputFormat = outputFormat,
+                    success = true,
+                    error = null,
+                    durationMs = durationMs,
+                    scriptFile = options.scriptFile,
+                    overrideEnabled = options.captureEnabled
+                )
+            }
 
         } catch (e: Exception) {
             // Capture failed execution
             captureError = e.message ?: "Unknown error"
             val durationMs = System.currentTimeMillis() - startTime
 
-            // Try to capture the failure
-            try {
-                val scriptContent = options.scriptFile.readText()
-                val inputData = if (options.inputFile != null) {
-                    options.inputFile.readText()
-                } else {
-                    "" // Can't capture stdin after error
-                }
-                val inputFormat = options.inputFormat ?: "json"
+            // Try to capture the failure (only for single input)
+            if (!options.hasMultipleInputs) {
+                try {
+                    val scriptContent = options.scriptFile.readText()
+                    val inputFilePath = options.inputFile
+                    val inputData = if (inputFilePath != null) {
+                        inputFilePath.readText()
+                    } else {
+                        "" // Can't capture stdin after error
+                    }
+                    val inputFormat = options.inputFormat ?: "json"
 
-                TestCaptureService.captureExecution(
-                    transformation = scriptContent,
-                    inputData = inputData,
-                    inputFormat = inputFormat,
-                    outputData = captureError,
-                    outputFormat = options.outputFormat ?: inputFormat,
+                    TestCaptureService.captureExecution(
+                        transformation = scriptContent,
+                        inputData = inputData,
+                        inputFormat = inputFormat,
+                        outputData = captureError,
+                        outputFormat = options.outputFormat ?: inputFormat,
                     success = false,
                     error = captureError,
                     durationMs = durationMs,
                     scriptFile = options.scriptFile,
-                    overrideEnabled = options.captureEnabled
-                )
-            } catch (captureException: Exception) {
-                // Silently fail capture on error
-                if (options.verbose) {
-                    System.err.println("  [Capture] Failed to capture error: ${captureException.message}")
+                        overrideEnabled = options.captureEnabled
+                    )
+                } catch (captureException: Exception) {
+                    // Silently fail capture on error
+                    if (options.verbose) {
+                        System.err.println("  [Capture] Failed to capture error: ${captureException.message}")
+                    }
                 }
             }
 
@@ -267,10 +294,10 @@ object TransformCommand {
             printUsage()
             exitProcess(1)
         }
-        
-        var inputFile: File? = null
+
+        val namedInputs = mutableMapOf<String, File>()
+        val namedOutputs = mutableMapOf<String, File>()
         var scriptFile: File? = null
-        var outputFile: File? = null
         var inputFormat: String? = null
         var outputFormat: String? = null
         var verbose = false
@@ -281,10 +308,24 @@ object TransformCommand {
         while (i < args.size) {
             when (args[i]) {
                 "-o", "--output" -> {
-                    outputFile = File(args[++i])
+                    val arg = args[++i]
+                    // Parse: either "file.xml" or "name=file.xml"
+                    if (arg.contains("=")) {
+                        val (name, path) = arg.split("=", limit = 2)
+                        namedOutputs[name] = File(path)
+                    } else {
+                        namedOutputs["output"] = File(arg)
+                    }
                 }
                 "-i", "--input" -> {
-                    inputFile = File(args[++i])
+                    val arg = args[++i]
+                    // Parse: either "file.xml" or "name=file.xml"
+                    if (arg.contains("=")) {
+                        val (name, path) = arg.split("=", limit = 2)
+                        namedInputs[name] = File(path)
+                    } else {
+                        namedInputs["input"] = File(arg)
+                    }
                 }
                 "--input-format" -> {
                     inputFormat = args[++i]
@@ -312,8 +353,9 @@ object TransformCommand {
                     if (!args[i].startsWith("-")) {
                         if (scriptFile == null) {
                             scriptFile = File(args[i])
-                        } else if (inputFile == null) {
-                            inputFile = File(args[i])
+                        } else if (namedInputs.isEmpty()) {
+                            // Positional input file (backward compat)
+                            namedInputs["input"] = File(args[i])
                         }
                     } else {
                         System.err.println("Unknown option: ${args[i]}")
@@ -324,29 +366,30 @@ object TransformCommand {
             }
             i++
         }
-        
+
         if (scriptFile == null) {
             System.err.println("Error: Script file is required")
             printUsage()
             exitProcess(1)
         }
-        
+
         if (!scriptFile.exists()) {
             System.err.println("Error: Script file not found: ${scriptFile.absolutePath}")
             exitProcess(1)
         }
-        
-        inputFile?.let {
-            if (!it.exists()) {
-                System.err.println("Error: Input file not found: ${it.absolutePath}")
+
+        // Validate all input files exist
+        namedInputs.forEach { (name, file) ->
+            if (!file.exists()) {
+                System.err.println("Error: Input file not found: ${file.absolutePath} (input: $name)")
                 exitProcess(1)
             }
         }
-        
+
         return TransformOptions(
-            inputFile = inputFile,
+            namedInputs = namedInputs,
+            namedOutputs = namedOutputs,
             scriptFile = scriptFile,
-            outputFile = outputFile,
             inputFormat = inputFormat,
             outputFormat = outputFormat,
             verbose = verbose,
@@ -362,6 +405,7 @@ object TransformCommand {
             |Usage:
             |  utlx transform <script-file> [input-file] [options]
             |  utlx transform <script-file> [options] < input-file
+            |  utlx transform <script-file> --input input1=file1.xml --input input2=file2.json [options]
             |
             |Arguments:
             |  input-file      Input data file (if not provided, reads from stdin)
@@ -369,7 +413,9 @@ object TransformCommand {
             |
             |Options:
             |  -o, --output FILE           Write output to FILE (default: stdout)
+            |      --output name=FILE      Named output for multi-output transformations
             |  -i, --input FILE            Read input from FILE
+            |      --input name=FILE       Named input for multi-input transformations
             |  --input-format FORMAT       Force input format (xml, json, csv, yaml)
             |  --output-format FORMAT      Force output format (xml, json, csv, yaml)
             |  -v, --verbose               Enable verbose output
@@ -379,20 +425,14 @@ object TransformCommand {
             |  -h, --help                  Show this help message
             |
             |Examples:
-            |  # Transform XML to JSON
-            |  utlx transform input.xml transform.utlx -o output.json
+            |  # Single input/output (backward compatible)
+            |  utlx transform script.utlx input.xml -o output.json
             |
-            |  # Read from stdin, write to stdout
-            |  cat input.xml | utlx transform script.utlx > output.json
+            |  # Multiple named inputs
+            |  utlx transform script.utlx --input input1=customer.xml --input input2=orders.json -o output.xml
             |
-            |  # Force output format
-            |  utlx transform input.json script.utlx --output-format xml -o output.xml
-            |
-            |  # Verbose mode
-            |  utlx transform input.xml script.utlx -v -o output.json
-            |
-            |  # Disable capture for this run
-            |  utlx transform input.xml script.utlx --no-capture -o output.json
+            |  # Multiple named outputs
+            |  utlx transform script.utlx -i data.xml --output summary=sum.json --output details=det.xml
         """.trimMargin())
     }
 }

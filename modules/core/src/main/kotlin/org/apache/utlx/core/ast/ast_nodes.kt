@@ -32,10 +32,34 @@ data class Program(
  */
 data class Header(
     val version: String,
-    val inputFormat: FormatSpec,
-    val outputFormat: FormatSpec,
+    val inputs: List<Pair<String, FormatSpec>>,   // Named inputs: [(name, formatSpec), ...]
+    val outputs: List<Pair<String, FormatSpec>>,  // Named outputs: [(name, formatSpec), ...]
     override val location: Location
-) : Node()
+) : Node() {
+    /**
+     * Backward compatibility: Get primary input format
+     */
+    val inputFormat: FormatSpec
+        get() = inputs.firstOrNull()?.second ?: FormatSpec(FormatType.AUTO, emptyMap(), location)
+
+    /**
+     * Backward compatibility: Get primary output format
+     */
+    val outputFormat: FormatSpec
+        get() = outputs.firstOrNull()?.second ?: FormatSpec(FormatType.JSON, emptyMap(), location)
+
+    /**
+     * Check if header has multiple inputs
+     */
+    val hasMultipleInputs: Boolean
+        get() = inputs.size > 1
+
+    /**
+     * Check if header has multiple outputs
+     */
+    val hasMultipleOutputs: Boolean
+        get() = outputs.size > 1
+}
 
 /**
  * Format specification

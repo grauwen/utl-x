@@ -1,0 +1,14 @@
+%utlx 1.0
+input: input1 xml, input2 xml
+output xml {encoding: "UTF-8"}
+---
+{
+  Combined: {
+    Source1: @input1,
+    Source2: @input2,
+    Metadata: {
+      encoding1: detectXMLEncoding(@input1),
+      encoding2: detectXMLEncoding(@input2)
+    }
+  }
+}

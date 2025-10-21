@@ -1,0 +1,60 @@
+name: "multi_input_no_encoding"
+category: "xml-encoding"
+description: "Test multiple XML inputs with different encodings - no encoding declaration in output"
+tags: ["xml", "encoding", "multi-input", "encoding-none"]
+
+input:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="ISO-8859-1"?>
+    <SystemA>
+      <Customer>
+        <Name>Müller GmbH</Name>
+        <Country>DE</Country>
+      </Customer>
+    </SystemA>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output xml {encoding: "NONE"}
+  ---
+  {
+    Combined: {
+      Source1: @input,
+      Metadata1: {
+        encoding: detectXMLEncoding(@input)
+      }
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0"?>
+    <Combined>
+      <SystemA>
+        <Customer>
+          <Name>Müller GmbH</Name>
+          <Country>DE</Country>
+        </Customer>
+      </SystemA>
+      <Metadata1>
+        <encoding>ISO-8859-1</encoding>
+      </Metadata1>
+    </Combined>
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-21"
+  references:
+    - "Output encoding configuration"
+    - "encoding=\"NONE\" suppresses encoding declaration"
+  notes:
+    - "encoding=\"NONE\" produces <?xml version=\"1.0\"?> without encoding attribute"
+    - "Per XML spec, no encoding means UTF-8 or UTF-16 (detected by BOM)"
+    - "Useful for testing or when encoding is externally managed"

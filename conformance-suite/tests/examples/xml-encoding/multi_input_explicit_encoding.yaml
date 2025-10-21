@@ -1,0 +1,61 @@
+name: "multi_input_explicit_encoding"
+category: "xml-encoding"
+description: "Test multiple XML inputs with different encodings - explicit output encoding overrides"
+tags: ["xml", "encoding", "multi-input", "explicit-override"]
+
+input:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="ISO-8859-1"?>
+    <SystemA>
+      <Customer>
+        <Name>Müller GmbH</Name>
+        <Country>DE</Country>
+      </Customer>
+    </SystemA>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output xml {encoding: "UTF-16"}
+  ---
+  {
+    Combined: {
+      Source1: @input,
+      Metadata1: {
+        encoding: detectXMLEncoding(@input)
+      }
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-16"?>
+    <Combined>
+      <SystemA>
+        <Customer>
+          <Name>Müller GmbH</Name>
+          <Country>DE</Country>
+        </Customer>
+      </SystemA>
+      <Metadata1>
+        <encoding>ISO-8859-1</encoding>
+      </Metadata1>
+    </Combined>
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-21"
+  references:
+    - "Output encoding configuration"
+    - "Explicit encoding overrides input metadata"
+  notes:
+    - "Explicit output encoding has highest precedence"
+    - "Input encoding (ISO-8859-1) is preserved in metadata for detectXMLEncoding()"
+    - "Output encoding (UTF-16) is explicitly set regardless of inputs"
+    - "Use case: Normalize mixed-encoding inputs to single output encoding"

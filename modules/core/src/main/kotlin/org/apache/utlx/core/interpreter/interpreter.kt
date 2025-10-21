@@ -110,14 +110,29 @@ class Interpreter {
     }
 
     /**
-     * Execute a program with input data
+     * Execute a program with input data (single input - backward compatible)
      */
     fun execute(program: Program, inputData: UDM): RuntimeValue {
+        return execute(program, mapOf("input" to inputData))
+    }
+
+    /**
+     * Execute a program with multiple named inputs
+     */
+    fun execute(program: Program, namedInputs: Map<String, UDM>): RuntimeValue {
         val env = globalEnv.createChild()
-        
-        // Bind input data
-        env.define("input", RuntimeValue.UDMValue(inputData))
-        
+
+        // Bind all named inputs to environment
+        namedInputs.forEach { (name, data) ->
+            env.define(name, RuntimeValue.UDMValue(data))
+        }
+
+        // Backward compatibility: if no "input" was provided, use first input
+        if (!namedInputs.containsKey("input") && namedInputs.isNotEmpty()) {
+            val firstInput = namedInputs.values.first()
+            env.define("input", RuntimeValue.UDMValue(firstInput))
+        }
+
         // Evaluate body
         return evaluate(program.body, env)
     }
