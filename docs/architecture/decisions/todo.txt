@@ -8,6 +8,12 @@ JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
 
 3.2.5 Functions (User-Defined) <- should not overwrite a standard function I presume. Functionname needs to start with something like a capital? Or F- or else?
 
+    For existing code (if any user functions exist):
+     1. Add lint/migration tool: utlx migrate --fix-function-names
+     2. Auto-capitalize first letter
+     3. Show diff for review
+     4. Include deprecation period (warnings before errors)
+
 See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/xsd-discussions-style.md ; the generation of an XSD for the output has to be in a default style and potentially might need configuration to choose the XSD style
 ```
 utlx schema -h 
