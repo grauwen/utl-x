@@ -78,6 +78,9 @@ __pycache__/
 # Test results cache
 .test-results.json
 
+# Prevent duplicate nested conformance-suite directory
+conformance-suite/conformance-suite/
+
 # Generated documentation
 site/
 _site/
