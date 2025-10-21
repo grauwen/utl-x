@@ -45,6 +45,8 @@ python3 runners/cli-runner/simple-runner.py 2>&1 | tail -15
 cd conformance-suite
 python3 runners/cli-runner/simple-runner.py 2>&1 | grep -E "Running:|✗" | awk '/Running:/{test=$2} /✗/{print test}' | sort | uniq
 
+#test one test
+runners/cli-runner/simple-runner.py stdlib/serialization parseCSV_with_bom 2>&1)
 
 # Run tests and save results for later
 python3 runners/cli-runner/simple-runner.py --save-results
