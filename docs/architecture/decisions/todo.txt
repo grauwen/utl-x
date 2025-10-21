@@ -8,6 +8,8 @@ JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
 
 3.2.5 Functions (User-Defined) <- should not overwrite a standard function I presume. Functionname needs to start with something like a capital? Or F- or else?
 
+(dynamic date calculations giving different results). This is a pre-existing test issue
+
     For existing code (if any user functions exist):
      1. Add lint/migration tool: utlx migrate --fix-function-names
      2. Auto-capitalize first letter
