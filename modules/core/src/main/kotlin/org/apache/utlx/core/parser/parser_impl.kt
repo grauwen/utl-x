@@ -490,7 +490,23 @@ class Parser(private val tokens: List<Token>) {
 
     private fun parseFunctionDefinition(): Expression {
         val startToken = previous() // DEF or FUNCTION
-        val name = consume(TokenType.IDENTIFIER, "Expected function name").lexeme
+        val nameToken = consume(TokenType.IDENTIFIER, "Expected function name")
+        val name = nameToken.lexeme
+
+        // Validate user-defined function naming: must start with uppercase letter (PascalCase)
+        // This prevents collisions with stdlib functions (which all use lowercase/camelCase)
+        if (name.isEmpty() || !name[0].isUpperCase()) {
+            val suggestion = if (name.isNotEmpty()) {
+                name.replaceFirstChar { it.uppercase() }
+            } else {
+                "MyFunction"
+            }
+            error(
+                "User-defined functions must start with uppercase letter (PascalCase). " +
+                "Got: '$name'. Try: '$suggestion'. " +
+                "This prevents collisions with stdlib functions which use lowercase/camelCase."
+            )
+        }
 
         // Parse parameter list
         consume(TokenType.LPAREN, "Expected '(' after function name")

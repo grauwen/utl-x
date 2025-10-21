@@ -351,23 +351,37 @@ match input.orderType {
 
 #### 3.2.5 Functions (User-Defined)
 
+**Naming Requirement**: User-defined functions **MUST** start with an uppercase letter (PascalCase) to prevent collisions with stdlib functions.
+
 ```utlx
-// Function definition
-function calculateTax(amount: Number, rate: Number): Number {
+// ✅ VALID - User-defined functions start with uppercase (PascalCase)
+function CalculateTax(amount: Number, rate: Number): Number {
   amount * rate
 }
 
-function formatCurrency(value: Number): String {
+function FormatCurrency(value: Number): String {
   "$" + value.toFixed(2)
 }
 
 // Usage
 {
   subtotal: input.total,
-  tax: calculateTax(input.total, 0.08),
-  total: formatCurrency(input.total * 1.08)
+  tax: CalculateTax(input.total, 0.08),
+  total: FormatCurrency(input.total * 1.08)
+}
+
+// ❌ INVALID - lowercase function names are reserved for stdlib
+function calculateTax(amount, rate) {
+  // ERROR: User-defined functions must start with uppercase letter (PascalCase).
+  // Got: 'calculateTax'. Try: 'CalculateTax'.
+  // This prevents collisions with stdlib functions which use lowercase/camelCase.
 }
 ```
+
+**Why PascalCase?**
+- **Prevents collisions**: All stdlib functions use lowercase/camelCase (`sum`, `map`, `filter`, etc.)
+- **Visual distinction**: Immediately clear which functions are user-defined
+- **Future-proof**: Enables module system in future versions
 
 **Built-in Functions:**
 ```utlx

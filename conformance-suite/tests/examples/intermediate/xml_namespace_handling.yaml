@@ -35,10 +35,10 @@ transformation: |
       customer_ns: namespaceUri(custRequest),
       request_qname: qualifiedName(soapBody.*[0])
     },
-    headers: if (hasContent(soapHeader)) extractHeaders(soapHeader) else null
+    headers: if (hasContent(soapHeader)) ExtractHeaders(soapHeader) else null
   }
 
-  def extractHeaders(header) {
+  def ExtractHeaders(header) {
     map(header.*, elem => {
       name: localName(elem),
       namespace: namespaceUri(elem),

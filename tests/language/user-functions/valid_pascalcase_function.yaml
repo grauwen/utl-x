@@ -1,0 +1,46 @@
+name: "valid_pascalcase_function"
+category: "language/user-functions"
+description: "User-defined function with valid PascalCase naming"
+tags: ["function", "user-defined", "pascalcase", "valid"]
+
+input:
+  format: json
+  data: |
+    {
+      "amount": 100,
+      "rate": 0.08
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  function CalculateTax(amount, rate) {
+    amount * rate
+  }
+  
+  {
+    amount: @input.amount,
+    taxRate: @input.rate,
+    taxAmount: CalculateTax(@input.amount, @input.rate),
+    total: @input.amount + CalculateTax(@input.amount, @input.rate)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "amount": 100,
+      "taxRate": 0.08,
+      "taxAmount": 8.0,
+      "total": 108.0
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  notes: ["Tests that PascalCase user-defined functions work correctly"]

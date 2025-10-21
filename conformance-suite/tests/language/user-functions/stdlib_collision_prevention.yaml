@@ -1,0 +1,37 @@
+name: "stdlib_collision_prevention"
+category: "language/user-functions"
+description: "PascalCase naming prevents collision with stdlib camelCase/lowercase functions"
+tags: ["function", "user-defined", "error", "stdlib", "collision", "naming"]
+
+input:
+  format: json
+  data: |
+    {
+      "numbers": [1, 2, 3]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  function sum(array) {
+    // Trying to use lowercase name (reserved for stdlib)
+    0
+  }
+
+  {
+    result: sum(@input.numbers)
+  }
+
+error_expected:
+  type: "parse_error"
+  message_pattern: ".*User-defined functions must start with uppercase letter.*"
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  notes: ["Tests that stdlib functions cannot be overridden by user functions"]

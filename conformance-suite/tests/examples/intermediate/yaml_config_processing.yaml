@@ -64,26 +64,26 @@ transformation: |
   }
   
   {
-    config: processConfig(@input, env_vars),
+    config: ProcessConfig(@input, env_vars),
     metadata: {
-      resolved_variables: extractVariables(@input),
+      resolved_variables: ExtractVariables(@input),
       environment: env_vars.ENV,
-      config_validation: validateConfig(processConfig(@input, env_vars))
+      config_validation: ValidateConfig(ProcessConfig(@input, env_vars))
     }
   }
   
-  def processConfig(config, env_vars) {
-    substituteVariables(config, env_vars)
+  def ProcessConfig(config, env_vars) {
+    SubstituteVariables(config, env_vars)
   }
   
-  def substituteVariables(obj, env_vars) {
-    if (isString(obj)) resolveVariable(obj, env_vars)
-    else if (isArray(obj)) map(obj, item => substituteVariables(item, env_vars))
-    else if (isObject(obj)) let entries = map(keys(obj), key => { key: key, value: substituteVariables(obj[key], env_vars) }) in fromEntries(map(entries, entry => [entry.key, entry.value]))
+  def SubstituteVariables(obj, env_vars) {
+    if (isString(obj)) ResolveVariable(obj, env_vars)
+    else if (isArray(obj)) map(obj, item => SubstituteVariables(item, env_vars))
+    else if (isObject(obj)) let entries = map(keys(obj), key => { key: key, value: SubstituteVariables(obj[key], env_vars) }) in fromEntries(map(entries, entry => [entry.key, entry.value]))
     else obj
   }
   
-  def resolveVariable(str, env_vars) {
+  def ResolveVariable(str, env_vars) {
     if (matches(str, "\\$\\{([^}]+)\\}"))
       let variable = extractBetween(str, "${", "}") in
       let parts = split(variable, ":-") in
@@ -97,14 +97,14 @@ transformation: |
     else str
   }
   
-  def extractVariables(obj) {
+  def ExtractVariables(obj) {
     if (isString(obj) && matches(obj, "\\$\\{([^}]+)\\}")) [extractBetween(obj, "${", "}")]
-    else if (isArray(obj)) flatten(map(obj, item => extractVariables(item)))
-    else if (isObject(obj)) flatten(map(values(obj), value => extractVariables(value)))
+    else if (isArray(obj)) flatten(map(obj, item => ExtractVariables(item)))
+    else if (isObject(obj)) flatten(map(values(obj), value => ExtractVariables(value)))
     else []
   }
   
-  def validateConfig(config) {
+  def ValidateConfig(config) {
     {
       has_database: hasKey(config, "database"),
       database_host_set: config.database.host != "",

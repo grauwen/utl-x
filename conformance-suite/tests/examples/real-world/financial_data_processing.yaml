@@ -108,31 +108,31 @@ transformation: |
       }
     },
     
-    alerts: generateAlerts(txns),
+    alerts: GenerateAlerts(txns),
     
     metadata: {
       processed_at: now(),
       currency: "USD",
-      validation: validateTransactions(txns)
+      validation: ValidateTransactions(txns)
     }
   }
   
-  def generateAlerts(transactions) {
+  def GenerateAlerts(transactions) {
     let alerts = [] in
     let largeTransactions = filter(transactions, txn => abs(txn.amount) > 1000) in
     if (count(largeTransactions) > 0) alerts + { type: "LARGE_TRANSACTION", message: "Large transactions detected", transactions: map(largeTransactions, txn => txn.id) } else alerts
   }
   
-  def validateTransactions(transactions) {
+  def ValidateTransactions(transactions) {
     {
       all_have_ids: count(filter(transactions, txn => txn.id == null || txn.id == "")) == 0,
       all_have_dates: count(filter(transactions, txn => txn.date == null || txn.date == "")) == 0,
       all_have_amounts: count(filter(transactions, txn => txn.amount == null)) == 0,
-      date_range_valid: isValidDateRange(map(transactions, txn => txn.date))
+      date_range_valid: IsValidDateRange(map(transactions, txn => txn.date))
     }
   }
   
-  def isValidDateRange(dates) {
+  def IsValidDateRange(dates) {
     let sortedDates = sort(dates) in
     daysBetween(first(sortedDates), last(sortedDates)) <= 31
   }
