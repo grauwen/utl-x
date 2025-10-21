@@ -2,6 +2,8 @@ TODO's
 
 See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/Next-steps.md
 
+UTL-X doesn't support multiple file inputs yet
+
 .gitnore exclude the build jars going into the GIT repo. utlx is a script calling the jar which is not checkin. Keep till a release version?
 JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
 
