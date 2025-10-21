@@ -8,7 +8,7 @@
 
 ## User Question
 
-Continue from previous conversations (15) about the stdlib in UTL-X. DateTime might have localizations. Where is there a complete list of locations? Is there an ISO standard for different date/time localizations? How would that fit in the project?
+stdlib in UTL-X: DateTime might have localizations. Where is there a complete list of locations? Is there an ISO standard for different date/time localizations? How would that fit in the project?
 
 ---
 
