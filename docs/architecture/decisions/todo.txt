@@ -11,6 +11,7 @@ CLI: Documentation: https://utlx-lang.org/docs -> URL is not registered. Change 
 
 (dynamic date calculations giving different results). This is a pre-existing test issue ->  boolean comparison bug in the interpreter.
 
+utlx transform --input input1=file1.xml --input input2=file2.json script.utlx
 
 See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/xsd-discussions-style.md ; the generation of an XSD for the output has to be in a default style and potentially might need configuration to choose the XSD style. 
 In the analysis mode there should be more complex logic for nested XSD's and potentially a test for:  --Element Declaration [Local|Global] --Type Declaration [Local|Global]
