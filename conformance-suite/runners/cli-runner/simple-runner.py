@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 import argparse
 import re
+import difflib
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
@@ -21,6 +22,450 @@ _capture_was_enabled = False
 
 # Test results file location
 RESULTS_FILE = Path('.test-results.json')
+
+# ANSI color codes for terminal output
+class Colors:
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+
+def find_json_differences(expected_data: Any, actual_data: Any, path: str = '') -> List[Dict[str, Any]]:
+    """
+    Recursively find differences between two JSON structures.
+    Returns a list of difference objects with path, expected, and actual values.
+    """
+    differences = []
+
+    # Type mismatch
+    if type(expected_data) != type(actual_data):
+        differences.append({
+            'path': path or 'root',
+            'expected': expected_data,
+            'actual': actual_data,
+            'type': 'type_mismatch',
+            'expected_type': type(expected_data).__name__,
+            'actual_type': type(actual_data).__name__
+        })
+        return differences
+
+    # Dictionary comparison
+    if isinstance(expected_data, dict):
+        all_keys = set(expected_data.keys()) | set(actual_data.keys())
+        for key in sorted(all_keys):
+            new_path = f"{path}.{key}" if path else key
+
+            if key not in expected_data:
+                differences.append({
+                    'path': new_path,
+                    'expected': None,
+                    'actual': actual_data[key],
+                    'type': 'extra_key'
+                })
+            elif key not in actual_data:
+                differences.append({
+                    'path': new_path,
+                    'expected': expected_data[key],
+                    'actual': None,
+                    'type': 'missing_key'
+                })
+            else:
+                differences.extend(find_json_differences(
+                    expected_data[key], actual_data[key], new_path
+                ))
+
+    # Array comparison
+    elif isinstance(expected_data, list):
+        max_len = max(len(expected_data), len(actual_data))
+
+        if len(expected_data) != len(actual_data):
+            differences.append({
+                'path': path,
+                'expected': f"array length {len(expected_data)}",
+                'actual': f"array length {len(actual_data)}",
+                'type': 'array_length_mismatch'
+            })
+
+        for i in range(max_len):
+            new_path = f"{path}[{i}]"
+
+            if i >= len(expected_data):
+                differences.append({
+                    'path': new_path,
+                    'expected': None,
+                    'actual': actual_data[i],
+                    'type': 'extra_element'
+                })
+            elif i >= len(actual_data):
+                differences.append({
+                    'path': new_path,
+                    'expected': expected_data[i],
+                    'actual': None,
+                    'type': 'missing_element'
+                })
+            else:
+                differences.extend(find_json_differences(
+                    expected_data[i], actual_data[i], new_path
+                ))
+
+    # Scalar comparison
+    else:
+        if expected_data != actual_data:
+            differences.append({
+                'path': path or 'value',
+                'expected': expected_data,
+                'actual': actual_data,
+                'type': 'value_mismatch'
+            })
+
+    return differences
+
+def show_json_diff(expected_json: str, actual_json: str, verbose: bool = False, transformation: str = None):
+    """Show a detailed diff of JSON structures with color highlighting"""
+    try:
+        expected_data = json.loads(expected_json)
+        actual_data = json.loads(actual_json)
+
+        # Find all differences
+        differences = find_json_differences(expected_data, actual_data)
+
+        if not differences:
+            print(f"    {Colors.GREEN}✓ JSON structures are identical{Colors.RESET}")
+            return differences
+
+        # Show summary
+        print(f"\n    {Colors.BOLD}{Colors.RED}Found {len(differences)} difference(s):{Colors.RESET}")
+
+        # Show each difference with clear formatting
+        for i, diff in enumerate(differences[:10], 1):  # Limit to first 10 differences
+            print(f"\n    {Colors.YELLOW}[{i}] Path: {Colors.CYAN}{diff['path']}{Colors.RESET}")
+
+            if diff['type'] == 'type_mismatch':
+                print(f"        {Colors.RED}✗ Type mismatch:{Colors.RESET}")
+                print(f"          Expected type: {Colors.GREEN}{diff['expected_type']}{Colors.RESET}")
+                print(f"          Actual type:   {Colors.RED}{diff['actual_type']}{Colors.RESET}")
+                print(f"          Expected: {Colors.GREEN}{json.dumps(diff['expected'])}{Colors.RESET}")
+                print(f"          Actual:   {Colors.RED}{json.dumps(diff['actual'])}{Colors.RESET}")
+
+            elif diff['type'] == 'missing_key':
+                print(f"        {Colors.RED}✗ Key missing in actual output{Colors.RESET}")
+                print(f"          Expected: {Colors.GREEN}{json.dumps(diff['expected'])}{Colors.RESET}")
+
+            elif diff['type'] == 'extra_key':
+                print(f"        {Colors.RED}✗ Unexpected key in actual output{Colors.RESET}")
+                print(f"          Actual: {Colors.RED}{json.dumps(diff['actual'])}{Colors.RESET}")
+
+            elif diff['type'] == 'array_length_mismatch':
+                print(f"        {Colors.RED}✗ Array length mismatch:{Colors.RESET}")
+                print(f"          Expected: {Colors.GREEN}{diff['expected']}{Colors.RESET}")
+                print(f"          Actual:   {Colors.RED}{diff['actual']}{Colors.RESET}")
+
+            elif diff['type'] == 'value_mismatch':
+                print(f"        {Colors.RED}✗ Value mismatch:{Colors.RESET}")
+                print(f"          Expected: {Colors.GREEN}{json.dumps(diff['expected'])}{Colors.RESET}")
+                print(f"          Actual:   {Colors.RED}{json.dumps(diff['actual'])}{Colors.RESET}")
+
+            else:
+                print(f"        {Colors.RED}✗ {diff['type']}{Colors.RESET}")
+                if diff['expected'] is not None:
+                    print(f"          Expected: {Colors.GREEN}{json.dumps(diff['expected'])}{Colors.RESET}")
+                if diff['actual'] is not None:
+                    print(f"          Actual:   {Colors.RED}{json.dumps(diff['actual'])}{Colors.RESET}")
+
+        if len(differences) > 10:
+            print(f"\n    {Colors.YELLOW}... and {len(differences) - 10} more difference(s){Colors.RESET}")
+
+        # Show transformation hints if available
+        if transformation:
+            show_transformation_hints(transformation, differences)
+
+        # Optionally show unified diff
+        if verbose:
+            print(f"\n    {Colors.BOLD}Unified Diff:{Colors.RESET}")
+            expected_pretty = json.dumps(expected_data, indent=2, sort_keys=True)
+            actual_pretty = json.dumps(actual_data, indent=2, sort_keys=True)
+
+            diff_lines = difflib.unified_diff(
+                expected_pretty.splitlines(keepends=True),
+                actual_pretty.splitlines(keepends=True),
+                fromfile='Expected',
+                tofile='Actual',
+                lineterm=''
+            )
+
+            for line in diff_lines:
+                if line.startswith('+++') or line.startswith('---'):
+                    print(f"    {Colors.BOLD}{line}{Colors.RESET}", end='')
+                elif line.startswith('+'):
+                    print(f"    {Colors.GREEN}{line}{Colors.RESET}", end='')
+                elif line.startswith('-'):
+                    print(f"    {Colors.RED}{line}{Colors.RESET}", end='')
+                elif line.startswith('@@'):
+                    print(f"    {Colors.CYAN}{line}{Colors.RESET}", end='')
+                else:
+                    print(f"    {line}", end='')
+
+        return differences
+
+    except json.JSONDecodeError as e:
+        # Fallback to text diff if JSON parsing fails
+        print(f"    {Colors.RED}✗ JSON parse error: {e}{Colors.RESET}")
+        print(f"    {Colors.YELLOW}Falling back to text comparison{Colors.RESET}")
+        show_text_diff(expected_json, actual_json)
+        return []
+
+def show_text_diff(expected_text: str, actual_text: str):
+    """Show a unified diff for text content"""
+    print(f"\n    {Colors.BOLD}Unified Diff:{Colors.RESET}")
+
+    diff_lines = difflib.unified_diff(
+        expected_text.splitlines(keepends=True),
+        actual_text.splitlines(keepends=True),
+        fromfile='Expected',
+        tofile='Actual',
+        lineterm=''
+    )
+
+    for line in diff_lines:
+        if line.startswith('+++') or line.startswith('---'):
+            print(f"    {Colors.BOLD}{line}{Colors.RESET}", end='')
+        elif line.startswith('+'):
+            print(f"    {Colors.GREEN}{line}{Colors.RESET}", end='')
+        elif line.startswith('-'):
+            print(f"    {Colors.RED}{line}{Colors.RESET}", end='')
+        elif line.startswith('@@'):
+            print(f"    {Colors.CYAN}{line}{Colors.RESET}", end='')
+        else:
+            print(f"    {line}", end='')
+
+def show_xml_diff(expected_xml: str, actual_xml: str):
+    """Show structural diff for XML content"""
+    try:
+        import xml.etree.ElementTree as ET
+
+        # Parse both XML strings
+        expected_root = ET.fromstring(expected_xml)
+        actual_root = ET.fromstring(actual_xml)
+
+        # Convert to normalized dictionaries for comparison
+        def xml_to_dict(element):
+            result = {
+                'tag': element.tag,
+                'text': (element.text or '').strip(),
+                'attrib': dict(element.attrib),
+                'children': [xml_to_dict(child) for child in element]
+            }
+            return result
+
+        expected_dict = xml_to_dict(expected_root)
+        actual_dict = xml_to_dict(actual_root)
+
+        # Convert to JSON for comparison using existing diff logic
+        expected_json = json.dumps(expected_dict, sort_keys=True)
+        actual_json = json.dumps(actual_dict, sort_keys=True)
+
+        differences = find_json_differences(expected_dict, actual_dict)
+
+        if not differences:
+            print(f"    {Colors.GREEN}✓ XML structures are identical{Colors.RESET}")
+            return
+
+        print(f"\n    {Colors.BOLD}{Colors.RED}Found {len(differences)} XML difference(s):{Colors.RESET}")
+
+        for i, diff in enumerate(differences[:10], 1):
+            path = diff['path'].replace('.children', '').replace('.tag', '/tag').replace('.text', '/text').replace('.attrib.', '/@')
+            print(f"\n    {Colors.YELLOW}[{i}] Path: {Colors.CYAN}{path}{Colors.RESET}")
+
+            if diff['type'] == 'value_mismatch':
+                print(f"        {Colors.RED}✗ Value mismatch:{Colors.RESET}")
+                print(f"          Expected: {Colors.GREEN}{json.dumps(diff['expected'])}{Colors.RESET}")
+                print(f"          Actual:   {Colors.RED}{json.dumps(diff['actual'])}{Colors.RESET}")
+            elif diff['type'] == 'missing_key':
+                print(f"        {Colors.RED}✗ Missing element/attribute{Colors.RESET}")
+                print(f"          Expected: {Colors.GREEN}{json.dumps(diff['expected'])}{Colors.RESET}")
+            elif diff['type'] == 'extra_key':
+                print(f"        {Colors.RED}✗ Unexpected element/attribute{Colors.RESET}")
+                print(f"          Actual: {Colors.RED}{json.dumps(diff['actual'])}{Colors.RESET}")
+
+        if len(differences) > 10:
+            print(f"\n    {Colors.YELLOW}... and {len(differences) - 10} more difference(s){Colors.RESET}")
+
+    except ET.ParseError as e:
+        print(f"    {Colors.RED}✗ XML parse error: {e}{Colors.RESET}")
+        print(f"    {Colors.YELLOW}Falling back to text comparison{Colors.RESET}")
+        show_text_diff(expected_xml, actual_xml)
+
+def show_csv_diff(expected_csv: str, actual_csv: str):
+    """Show row-by-row diff for CSV content"""
+    import csv
+    from io import StringIO
+
+    try:
+        # Parse both CSV strings
+        expected_reader = list(csv.reader(StringIO(expected_csv)))
+        actual_reader = list(csv.reader(StringIO(actual_csv)))
+
+        print(f"\n    {Colors.BOLD}{Colors.RED}CSV Comparison:{Colors.RESET}")
+
+        # Compare row counts
+        if len(expected_reader) != len(actual_reader):
+            print(f"\n    {Colors.RED}✗ Row count mismatch:{Colors.RESET}")
+            print(f"      Expected: {Colors.GREEN}{len(expected_reader)} rows{Colors.RESET}")
+            print(f"      Actual:   {Colors.RED}{len(actual_reader)} rows{Colors.RESET}")
+
+        # Compare row by row
+        max_rows = max(len(expected_reader), len(actual_reader))
+        differences_found = 0
+
+        for i in range(max_rows):
+            if i >= len(expected_reader):
+                differences_found += 1
+                print(f"\n    {Colors.YELLOW}[Row {i+1}]{Colors.RESET} {Colors.RED}Extra row in actual:{Colors.RESET}")
+                print(f"      {Colors.RED}{actual_reader[i]}{Colors.RESET}")
+            elif i >= len(actual_reader):
+                differences_found += 1
+                print(f"\n    {Colors.YELLOW}[Row {i+1}]{Colors.RESET} {Colors.RED}Missing row in actual:{Colors.RESET}")
+                print(f"      {Colors.GREEN}{expected_reader[i]}{Colors.RESET}")
+            elif expected_reader[i] != actual_reader[i]:
+                differences_found += 1
+                print(f"\n    {Colors.YELLOW}[Row {i+1}]{Colors.RESET} {Colors.RED}Row mismatch:{Colors.RESET}")
+
+                # Compare column by column
+                max_cols = max(len(expected_reader[i]), len(actual_reader[i]))
+                for j in range(max_cols):
+                    if j >= len(expected_reader[i]):
+                        print(f"      Column {j+1}: {Colors.RED}Extra column: {actual_reader[i][j]}{Colors.RESET}")
+                    elif j >= len(actual_reader[i]):
+                        print(f"      Column {j+1}: {Colors.RED}Missing column: {expected_reader[i][j]}{Colors.RESET}")
+                    elif expected_reader[i][j] != actual_reader[i][j]:
+                        print(f"      Column {j+1}:")
+                        print(f"        Expected: {Colors.GREEN}{expected_reader[i][j]}{Colors.RESET}")
+                        print(f"        Actual:   {Colors.RED}{actual_reader[i][j]}{Colors.RESET}")
+
+                if differences_found >= 10:
+                    break
+
+        if differences_found == 0:
+            print(f"    {Colors.GREEN}✓ CSV files are identical{Colors.RESET}")
+        elif differences_found > 10:
+            print(f"\n    {Colors.YELLOW}... and more differences (showing first 10){Colors.RESET}")
+
+    except Exception as e:
+        print(f"    {Colors.RED}✗ CSV parse error: {e}{Colors.RESET}")
+        print(f"    {Colors.YELLOW}Falling back to text comparison{Colors.RESET}")
+        show_text_diff(expected_csv, actual_csv)
+
+def show_yaml_diff(expected_yaml: str, actual_yaml: str):
+    """Show structural diff for YAML content"""
+    try:
+        import yaml as yaml_module
+
+        # Parse both YAML strings
+        expected_data = yaml_module.safe_load(expected_yaml)
+        actual_data = yaml_module.safe_load(actual_yaml)
+
+        # Use the same JSON diff logic since YAML parses to dicts/lists/scalars
+        differences = find_json_differences(expected_data, actual_data)
+
+        if not differences:
+            print(f"    {Colors.GREEN}✓ YAML structures are identical{Colors.RESET}")
+            return
+
+        print(f"\n    {Colors.BOLD}{Colors.RED}Found {len(differences)} YAML difference(s):{Colors.RESET}")
+
+        # Show each difference with clear formatting
+        for i, diff in enumerate(differences[:10], 1):
+            print(f"\n    {Colors.YELLOW}[{i}] Path: {Colors.CYAN}{diff['path']}{Colors.RESET}")
+
+            if diff['type'] == 'type_mismatch':
+                print(f"        {Colors.RED}✗ Type mismatch:{Colors.RESET}")
+                print(f"          Expected type: {Colors.GREEN}{diff['expected_type']}{Colors.RESET}")
+                print(f"          Actual type:   {Colors.RED}{diff['actual_type']}{Colors.RESET}")
+                print(f"          Expected: {Colors.GREEN}{json.dumps(diff['expected'])}{Colors.RESET}")
+                print(f"          Actual:   {Colors.RED}{json.dumps(diff['actual'])}{Colors.RESET}")
+
+            elif diff['type'] == 'missing_key':
+                print(f"        {Colors.RED}✗ Key missing in actual output{Colors.RESET}")
+                print(f"          Expected: {Colors.GREEN}{json.dumps(diff['expected'])}{Colors.RESET}")
+
+            elif diff['type'] == 'extra_key':
+                print(f"        {Colors.RED}✗ Unexpected key in actual output{Colors.RESET}")
+                print(f"          Actual: {Colors.RED}{json.dumps(diff['actual'])}{Colors.RESET}")
+
+            elif diff['type'] == 'array_length_mismatch':
+                print(f"        {Colors.RED}✗ Array length mismatch:{Colors.RESET}")
+                print(f"          Expected: {Colors.GREEN}{diff['expected']}{Colors.RESET}")
+                print(f"          Actual:   {Colors.RED}{diff['actual']}{Colors.RESET}")
+
+            elif diff['type'] == 'value_mismatch':
+                print(f"        {Colors.RED}✗ Value mismatch:{Colors.RESET}")
+                print(f"          Expected: {Colors.GREEN}{json.dumps(diff['expected'])}{Colors.RESET}")
+                print(f"          Actual:   {Colors.RED}{json.dumps(diff['actual'])}{Colors.RESET}")
+
+            else:
+                print(f"        {Colors.RED}✗ {diff['type']}{Colors.RESET}")
+                if diff['expected'] is not None:
+                    print(f"          Expected: {Colors.GREEN}{json.dumps(diff['expected'])}{Colors.RESET}")
+                if diff['actual'] is not None:
+                    print(f"          Actual:   {Colors.RED}{json.dumps(diff['actual'])}{Colors.RESET}")
+
+        if len(differences) > 10:
+            print(f"\n    {Colors.YELLOW}... and {len(differences) - 10} more difference(s){Colors.RESET}")
+
+    except yaml_module.YAMLError as e:
+        print(f"    {Colors.RED}✗ YAML parse error: {e}{Colors.RESET}")
+        print(f"    {Colors.YELLOW}Falling back to text comparison{Colors.RESET}")
+        show_text_diff(expected_yaml, actual_yaml)
+    except Exception as e:
+        print(f"    {Colors.RED}✗ Error comparing YAML: {e}{Colors.RESET}")
+        print(f"    {Colors.YELLOW}Falling back to text comparison{Colors.RESET}")
+        show_text_diff(expected_yaml, actual_yaml)
+
+def find_transformation_lines(transformation: str, field_path: str) -> List[str]:
+    """
+    Try to find relevant lines in the transformation that might produce the given field path.
+    This is a simple heuristic search - not perfect but helpful.
+    """
+    lines = transformation.split('\n')
+    relevant_lines = []
+
+    # Extract the last part of the path (field name)
+    path_parts = field_path.replace('[', '.').replace(']', '').split('.')
+
+    for i, line in enumerate(lines, 1):
+        # Skip header lines
+        if line.strip().startswith('%utlx') or line.strip().startswith('input ') or \
+           line.strip().startswith('output ') or line.strip() == '---':
+            continue
+
+        # Look for field assignments or references
+        for part in path_parts:
+            if part and part in line:
+                # Found a line mentioning this field
+                relevant_lines.append(f"    Line {i}: {line}")
+                break
+
+    return relevant_lines
+
+def show_transformation_hints(transformation: str, differences: List[Dict[str, Any]]):
+    """Show hints about which transformation lines might be causing issues"""
+    if not differences:
+        return
+
+    print(f"\n    {Colors.BOLD}{Colors.CYAN}💡 Transformation hints:{Colors.RESET}")
+
+    # Get unique paths from differences
+    paths = list(set(diff['path'] for diff in differences[:5]))  # Limit to first 5
+
+    for path in paths:
+        lines = find_transformation_lines(transformation, path)
+        if lines:
+            print(f"\n    {Colors.YELLOW}Field '{path}' might be generated by:{Colors.RESET}")
+            for line in lines[:3]:  # Show max 3 lines per field
+                print(line)
 
 def load_test_case(file_path: Path) -> Optional[Dict[str, Any]]:
     """Load a test case YAML file"""
@@ -222,10 +667,9 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
                 print(f"  ✓ Test passed")
                 return True, None
             else:
-                reason = f"Output mismatch - Expected: {expected_json[:100]}... | Actual: {actual_json[:100]}..."
                 print(f"  ✗ Output mismatch")
-                print(f"    Expected: {expected_json}")
-                print(f"    Actual:   {actual_json}")
+                show_json_diff(expected_json, actual_json, verbose=False, transformation=transformation)
+                reason = f"Output mismatch - See detailed diff above"
                 return False, reason
 
         except json.JSONDecodeError as e:
@@ -252,10 +696,20 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
             print(f"  ✓ Test passed")
             return True, None
         else:
-            reason = f"Output mismatch ({expected_format}) - Expected: {expected_normalized[:100]}... | Actual: {actual_normalized[:100]}..."
-            print(f"  ✗ Output mismatch")
-            print(f"    Expected: {expected_normalized[:200]}")
-            print(f"    Actual:   {actual_normalized[:200]}")
+            print(f"  ✗ Output mismatch ({expected_format})")
+
+            # Use format-specific diff display
+            if expected_format == 'xml':
+                show_xml_diff(expected_normalized, actual_normalized)
+            elif expected_format == 'csv':
+                show_csv_diff(expected_normalized, actual_normalized)
+            elif expected_format in ['yaml', 'yml']:
+                show_yaml_diff(expected_normalized, actual_normalized)
+            else:
+                # For plain text, use text diff
+                show_text_diff(expected_normalized, actual_normalized)
+
+            reason = f"Output mismatch ({expected_format}) - See detailed diff above"
             return False, reason
 
     else:
