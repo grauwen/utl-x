@@ -460,44 +460,83 @@ output json
 }
 ```
 
-#### 3.2.8 Multiple Outputs
+#### 3.2.7 Multiple Inputs (✅ IMPLEMENTED - 2025-10-21)
 
+**Implemented Syntax:**
+```utlx
+%utlx 1.0
+input: input1 xml, input2 json, input3 csv
+output xml
+---
+{
+  Combined: {
+    FromXML: @input1.Customer,
+    FromJSON: @input2.order,
+    FromCSV: @input3.rows[0]
+  }
+}
+```
+
+**CLI Usage:**
+```bash
+utlx transform script.utlx \
+  --input input1=file1.xml \
+  --input input2=file2.json \
+  --input input3=file3.csv \
+  -o output.xml
+```
+
+**Key Features:**
+- ✅ Comma-separated input declarations with colon
+- ✅ Named inputs accessible via `@inputName`
+- ✅ Per-input format options
+- ✅ Backward compatible with single input
+- ✅ Encoding detection per input
+- ✅ CLI support for multiple `--input` flags
+
+**Documentation:** See `docs/language-guide/multiple-inputs-outputs.md`
+
+**Advantages over DataWeave:**
+- Cleaner syntax (`:` separator vs `%input` directive)
+- Inline in header (no separate directives)
+- Consistent `@` prefix for inputs
+
+#### 3.2.8 Multiple Outputs (📋 PLANNED)
+
+**Proposed Syntax:**
 ```utlx
 %utlx 1.0
 input xml
-output {
-  summary: json,
-  details: xml,
-  report: csv
-}
+output: summary json, details xml, report csv
 ---
-
-output.summary = {
-  orderCount: count(input.Orders.Order),
-  totalValue: sum(input.Orders.Order.Total)
-}
-
-output.details = {
-  Report: {
-    Orders: input.Orders.Order |> map(order => {
-      Order: {
-        @id: order.@id,
-        Customer: order.Customer.Name,
-        Total: order.Total
-      }
-    })
+{
+  summary: {
+    orderCount: count(@input.Orders.Order),
+    totalValue: sum(@input.Orders.Order.Total)
+  },
+  details: @input,
+  report: {
+    headers: ["Order ID", "Customer", "Total"],
+    rows: @input.Orders.Order |> map(order => [
+      order.@id,
+      order.Customer.Name,
+      order.Total
+    ])
   }
 }
-
-output.report = {
-  headers: ["Order ID", "Customer", "Total"],
-  rows: input.Orders.Order |> map(order => [
-    order.@id,
-    order.Customer.Name,
-    order.Total
-  ])
-}
 ```
+
+**Planned CLI Usage:**
+```bash
+utlx transform script.utlx -i data.xml \
+  --output summary=summary.json \
+  --output details=details.xml \
+  --output report=report.csv
+```
+
+**Status:** Syntax designed, implementation pending
+
+**Note:** This gives UTL-X a major advantage over DataWeave, which requires multiple Transform Message components for multiple outputs.
 
 ---
 
