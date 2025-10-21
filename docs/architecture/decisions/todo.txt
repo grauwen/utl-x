@@ -30,12 +30,14 @@ utlx transform --input input1=file1.xml --input input2=file2.json script.utlx
 ----
 See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/xsd-discussions-style.md ; the generation of an XSD for the output has to be in a default style and potentially might need configuration to choose the XSD style. 
 In the analysis mode there should be more complex logic for nested XSD's and potentially a test for:  --Element Declaration [Local|Global] --Type Declaration [Local|Global]
-
 ```
 utlx schema -h 
  Output: json-schema (xsd, csv-schema, yaml-schema planned) TODO
 ```
-
+----
+stlib has IO -> how to handle uniform path over unix and windows?
+writeFile function does not exist. Maybe needed for dynamic lookups?
+----
 SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 
   This appears to be a runtime linkage issue between the CLI and stdlib that needs investigation beyond the scope of the current session.
