@@ -5,10 +5,7 @@ See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/Next-
 .gitnore exclude the build jars going into the GIT repo. utlx is a script calling the jar which is not checkin. Keep till a release version?
 JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
 
-
-3.2.5 Functions (User-Defined) <- should not overwrite a standard function I presume. Functionname needs to start with something like a capital? Or F- or else?
-
-(dynamic date calculations giving different results). This is a pre-existing test issue
+(dynamic date calculations giving different results). This is a pre-existing test issue ->  boolean comparison bug in the interpreter.
 
     For existing code (if any user functions exist):
      1. Add lint/migration tool: utlx migrate --fix-function-names
