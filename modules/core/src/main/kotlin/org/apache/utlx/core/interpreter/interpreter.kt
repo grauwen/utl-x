@@ -550,6 +550,18 @@ class Interpreter {
                     left.value == udm.value.toDouble()
                 } else false
             }
+            left is RuntimeValue.UDMValue && right is RuntimeValue.BooleanValue -> {
+                val udm = left.udm
+                if (udm is UDM.Scalar && udm.value is Boolean) {
+                    udm.value == right.value
+                } else false
+            }
+            left is RuntimeValue.BooleanValue && right is RuntimeValue.UDMValue -> {
+                val udm = right.udm
+                if (udm is UDM.Scalar && udm.value is Boolean) {
+                    left.value == udm.value
+                } else false
+            }
             left is RuntimeValue.UDMValue && right is RuntimeValue.UDMValue -> {
                 val leftUdm = left.udm
                 val rightUdm = right.udm
