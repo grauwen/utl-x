@@ -2,10 +2,9 @@ TODO's
 
 See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/Next-steps.md
 
-Issue discovered: The CLI binary appears to not be picking up the stdlib functions properly at runtime, even though:
-  - parseDate is defined and registered in stdlib
-  - Function registry is up to date
-  - CLI jar was rebuilt
+.gitnore exclude the build jars going into the GIT repo. utlx is a script calling the jar which is not checkin. Keep till a release version?
+JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
+
 
 3.2.5 Functions (User-Defined) <- should not overwrite a standard function I presume. Functionname needs to start with something like a capital? Or F- or else?
 
