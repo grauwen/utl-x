@@ -1,0 +1,139 @@
+name: "multi_input_csv_csv_to_json"
+category: "multi-input"
+description: "Two CSV inputs merged to JSON output - Employee and Department data"
+tags: ["multi-input", "csv", "json", "hr", "reporting"]
+
+inputs:
+  employees:
+    format: csv
+    data: |
+      EmployeeID,Name,DeptID,Salary,HireDate
+      E001,Alice Chen,D001,75000,2020-03-15
+      E002,Bob Taylor,D002,82000,2019-07-01
+      E003,Carol Davis,D001,68000,2021-01-10
+      E004,David Wilson,D003,95000,2018-11-20
+
+  departments:
+    format: csv
+    data: |
+      DeptID,DepartmentName,Location,Budget
+      D001,Engineering,Building A,500000
+      D002,Sales,Building B,300000
+      D003,Management,Building C,400000
+
+transformation: |
+  %utlx 1.0
+  input: employees csv {headers: true}, departments csv {headers: true}
+  output json
+  ---
+  {
+    HRReport: {
+      Source: "CSV+CSV",
+      Employees: @employees.rows |> map(emp => {
+        let deptId = emp.DeptID
+        let dept = @departments.rows |> filter(d => d.DeptID == deptId) |> first()
+
+        EmployeeID: emp.EmployeeID,
+        Name: emp.Name,
+        Salary: parseNumber(emp.Salary),
+        HireDate: emp.HireDate,
+        Department: {
+          DeptID: deptId,
+          Name: dept.DepartmentName,
+          Location: dept.Location,
+          Budget: parseNumber(dept.Budget)
+        },
+        SalaryBudgetRatio: parseNumber(emp.Salary) / parseNumber(dept.Budget)
+      }),
+      Summary: {
+        TotalEmployees: count(@employees.rows),
+        TotalDepartments: count(@departments.rows),
+        TotalSalaries: sum(@employees.rows |> map(e => parseNumber(e.Salary))),
+        AverageSalary: sum(@employees.rows |> map(e => parseNumber(e.Salary))) / count(@employees.rows)
+      }
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "HRReport": {
+        "Source": "CSV+CSV",
+        "Employees": [
+          {
+            "EmployeeID": "E001",
+            "Name": "Alice Chen",
+            "Salary": 75000,
+            "HireDate": "2020-03-15",
+            "Department": {
+              "DeptID": "D001",
+              "Name": "Engineering",
+              "Location": "Building A",
+              "Budget": 500000
+            },
+            "SalaryBudgetRatio": 0.15
+          },
+          {
+            "EmployeeID": "E002",
+            "Name": "Bob Taylor",
+            "Salary": 82000,
+            "HireDate": "2019-07-01",
+            "Department": {
+              "DeptID": "D002",
+              "Name": "Sales",
+              "Location": "Building B",
+              "Budget": 300000
+            },
+            "SalaryBudgetRatio": 0.27333333333333337
+          },
+          {
+            "EmployeeID": "E003",
+            "Name": "Carol Davis",
+            "Salary": 68000,
+            "HireDate": "2021-01-10",
+            "Department": {
+              "DeptID": "D001",
+              "Name": "Engineering",
+              "Location": "Building A",
+              "Budget": 500000
+            },
+            "SalaryBudgetRatio": 0.136
+          },
+          {
+            "EmployeeID": "E004",
+            "Name": "David Wilson",
+            "Salary": 95000,
+            "HireDate": "2018-11-20",
+            "Department": {
+              "DeptID": "D003",
+              "Name": "Management",
+              "Location": "Building C",
+              "Budget": 400000
+            },
+            "SalaryBudgetRatio": 0.2375
+          }
+        ],
+        "Summary": {
+          "TotalEmployees": 4,
+          "TotalDepartments": 3,
+          "TotalSalaries": 320000,
+          "AverageSalary": 80000
+        }
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-21"
+  references:
+    - "Multiple inputs feature"
+    - "CSV data processing"
+  notes:
+    - "Both inputs are CSV files with headers"
+    - "Employee master + Department master"
+    - "Salary budget ratio calculation"
