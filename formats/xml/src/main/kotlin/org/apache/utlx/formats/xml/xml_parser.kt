@@ -45,9 +45,22 @@ class XMLParser(
     fun parse(): UDM {
         skipWhitespace()
 
-        // Skip XML declaration if present
+        // Extract encoding from XML declaration if present
+        var xmlEncoding: String? = null
         if (peek(5) == "<?xml") {
+            // Read the entire declaration to extract encoding
+            val declarationStart = current
             skipUntil("?>")
+            val declarationEnd = current
+
+            // Extract the declaration text
+            val declaration = text.substring(declarationStart, declarationEnd)
+
+            // Parse encoding attribute using regex
+            val encodingRegex = """encoding\s*=\s*["']([^"']+)["']""".toRegex(RegexOption.IGNORE_CASE)
+            val match = encodingRegex.find(declaration)
+            xmlEncoding = match?.groupValues?.get(1)
+
             advance() // ?
             advance() // >
             skipWhitespace()
@@ -61,7 +74,13 @@ class XMLParser(
             throw XMLParseException("Content after root element", line, column)
         }
 
-        return root
+        // Store encoding in metadata if it was found (not serialized)
+        return if (xmlEncoding != null && root is UDM.Object) {
+            val metadata = mapOf("xmlEncoding" to xmlEncoding)
+            UDM.Object(root.properties, root.attributes, root.name, metadata)
+        } else {
+            root
+        }
     }
     
     private fun parseElement(parentNamespaces: Map<String, String>): UDM {

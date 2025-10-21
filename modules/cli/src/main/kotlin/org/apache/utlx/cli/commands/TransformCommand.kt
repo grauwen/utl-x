@@ -94,7 +94,7 @@ object TransformCommand {
             }
 
             // Serialize output
-            val outputData = serializeOutput(outputUDM, outputFormat, options.pretty)
+            val outputData = serializeOutput(outputUDM, outputFormat, program.header.outputFormat, options.pretty)
             captureOutputData = outputData
             captureSuccess = true
 
@@ -217,10 +217,14 @@ object TransformCommand {
         }
     }
     
-    private fun serializeOutput(udm: UDM, format: String, pretty: Boolean): String {
+    private fun serializeOutput(udm: UDM, format: String, formatSpec: org.apache.utlx.core.ast.FormatSpec, pretty: Boolean): String {
         return try {
             when (format.lowercase()) {
-                "xml" -> XMLSerializer(pretty).serialize(udm)
+                "xml" -> {
+                    // Get encoding option from FormatSpec
+                    val encoding = formatSpec.options["encoding"] as? String
+                    XMLSerializer(prettyPrint = pretty, outputEncoding = encoding).serialize(udm)
+                }
                 "json" -> JSONSerializer(pretty).serialize(udm)
                 "csv" -> CSVSerializer().serialize(udm)
                 "yaml", "yml" -> YAMLSerializer().serialize(udm)

@@ -23,7 +23,8 @@ import java.io.StringWriter
 class XMLSerializer(
     private val prettyPrint: Boolean = true,
     private val indent: String = "  ",
-    private val includeDeclaration: Boolean = true
+    private val includeDeclaration: Boolean = true,
+    private val outputEncoding: String? = null  // null = use metadata or UTF-8, "NONE" = no encoding
 ) {
     /**
      * Serialize UDM to XML string
@@ -48,7 +49,19 @@ class XMLSerializer(
      */
     fun serialize(udm: UDM, writer: Writer, rootName: String = "root") {
         if (includeDeclaration) {
-            writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+            // Determine encoding: outputEncoding > metadata > UTF-8
+            val encoding = when {
+                outputEncoding != null && outputEncoding.uppercase() == "NONE" -> null
+                outputEncoding != null -> outputEncoding
+                else -> (udm as? UDM.Object)?.getMetadata("xmlEncoding") ?: "UTF-8"
+            }
+
+            // Write declaration with or without encoding
+            if (encoding != null) {
+                writer.write("<?xml version=\"1.0\" encoding=\"$encoding\"?>\n")
+            } else {
+                writer.write("<?xml version=\"1.0\"?>\n")
+            }
         }
 
         // Special case: If UDM is an Object with a single property and no attributes,

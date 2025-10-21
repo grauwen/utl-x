@@ -44,20 +44,31 @@ object XMLEncodingBomFunctions {
      */
     fun detectXMLEncoding(args: List<UDM>): UDM {
         requireArgs(args, 1, "detectXMLEncoding")
+
+        // Check if input is a UDM.Object with preserved encoding in metadata
+        if (args[0] is UDM.Object) {
+            val obj = args[0] as UDM.Object
+            val preservedEncoding = obj.getMetadata("xmlEncoding")
+            if (preservedEncoding != null) {
+                return UDM.Scalar(preservedEncoding.uppercase())
+            }
+        }
+
+        // Fall back to string-based detection for raw XML strings
         val xml = args[0].asString() ?: throw FunctionArgumentException(
-            "detectXMLEncoding() requires a string argument, got ${getTypeDescription(args[0])}"
+            "detectXMLEncoding() requires a string or XML object argument, got ${getTypeDescription(args[0])}"
         )
-        
+
         // Check BOM first (if string starts with BOM character)
         if (xml.startsWith('\uFEFF')) {
             return UDM.Scalar("UTF-8")
         }
-        
+
         // Parse XML declaration for encoding attribute
         val encodingRegex = """encoding\s*=\s*["']([^"']+)["']""".toRegex(RegexOption.IGNORE_CASE)
         val match = encodingRegex.find(xml)
         val encoding = match?.groupValues?.get(1)?.uppercase() ?: "UTF-8"
-        
+
         return UDM.Scalar(encoding)
     }
     

@@ -60,15 +60,19 @@ sealed class UDM {
     data class Object(
         val properties: Map<String, UDM>,
         val attributes: Map<String, String> = emptyMap(),
-        val name: String? = null  // Element/object name (for XML)
+        val name: String? = null,  // Element/object name (for XML)
+        val metadata: Map<String, String> = emptyMap()  // Internal metadata (not serialized)
     ) : UDM() {
         fun get(key: String): UDM? = properties[key]
         fun getAttribute(key: String): String? = attributes[key]
+        fun getMetadata(key: String): String? = metadata[key]
         fun hasProperty(key: String): Boolean = properties.containsKey(key)
         fun hasAttribute(key: String): Boolean = attributes.containsKey(key)
+        fun hasMetadata(key: String): Boolean = metadata.containsKey(key)
         fun keys(): Set<String> = properties.keys
         fun attributeKeys(): Set<String> = attributes.keys
-        
+        fun metadataKeys(): Set<String> = metadata.keys
+
         companion object {
             fun empty() = Object(emptyMap())
             fun of(vararg pairs: Pair<String, UDM>) = Object(pairs.toMap())
@@ -76,6 +80,12 @@ sealed class UDM {
                 properties: Map<String, UDM>,
                 attributes: Map<String, String>
             ) = Object(properties, attributes)
+            fun withMetadata(
+                properties: Map<String, UDM>,
+                attributes: Map<String, String> = emptyMap(),
+                name: String? = null,
+                metadata: Map<String, String>
+            ) = Object(properties, attributes, name, metadata)
         }
     }
     
