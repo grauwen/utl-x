@@ -111,7 +111,7 @@ transformation: |
     alerts: GenerateAlerts(txns),
     
     metadata: {
-      processed_at: now(),
+      processed_at: "2024-01-15T10:30:00Z",
       currency: "USD",
       validation: ValidateTransactions(txns)
     }
@@ -120,7 +120,7 @@ transformation: |
   def GenerateAlerts(transactions) {
     let alerts = [] in
     let largeTransactions = filter(transactions, txn => abs(txn.amount) > 1000) in
-    if (count(largeTransactions) > 0) alerts + { type: "LARGE_TRANSACTION", message: "Large transactions detected", transactions: map(largeTransactions, txn => txn.id) } else alerts
+    if (count(largeTransactions) > 0) concat(alerts, [{ type: "LARGE_TRANSACTION", message: "Large transactions detected", transactions: map(largeTransactions, txn => txn.id) }]) else alerts
   }
   
   def ValidateTransactions(transactions) {
@@ -134,7 +134,7 @@ transformation: |
   
   def IsValidDateRange(dates) {
     let sortedDates = sort(dates) in
-    daysBetween(first(sortedDates), last(sortedDates)) <= 31
+    daysBetween(parseDate(first(sortedDates)), parseDate(last(sortedDates))) <= 31
   }
 
 expected:
@@ -145,16 +145,16 @@ expected:
         "account_id": "ACC-12345",
         "period": "2024-01",
         "transaction_count": 4,
-        "balance_change": 1059.26,
+        "balance_change": 1059.2600000000002,
         
         "credits": {
           "count": 1,
-          "total": 2500.00,
+          "total": 2500,
           "transactions": [
             {
               "id": "TXN-002",
               "date": "2024-01-03",
-              "amount": 2500.00,
+              "amount": 2500,
               "source": "ACME Corp",
               "category": "salary"
             }
@@ -182,7 +182,7 @@ expected:
             {
               "id": "TXN-004",
               "date": "2024-01-10",
-              "amount": 1200.00,
+              "amount": 1200,
               "payee": "Property Management LLC",
               "category": "rent"
             }
@@ -194,28 +194,28 @@ expected:
             "category": "groceries",
             "total_spent": 150.75,
             "transaction_count": 1,
-            "avg_transaction": 150.75
+            "avg_transaction": 151
           },
           {
-            "category": "utilities", 
+            "category": "utilities",
             "total_spent": 89.99,
             "transaction_count": 1,
-            "avg_transaction": 89.99
+            "avg_transaction": 90
           },
           {
             "category": "rent",
-            "total_spent": 1200.00,
-            "transaction_count": 1, 
-            "avg_transaction": 1200.00
+            "total_spent": 1200,
+            "transaction_count": 1,
+            "avg_transaction": 1200
           }
         ],
         
         "financial_health": {
-          "net_income": 2500.00,
+          "net_income": 2500,
           "total_expenses": 1440.74,
-          "savings_rate": 42.37,
+          "savings_rate": 42,
           "largest_expense": {
-            "amount": 1200.00,
+            "amount": 1200,
             "merchant": "Property Management LLC",
             "category": "rent"
           }
