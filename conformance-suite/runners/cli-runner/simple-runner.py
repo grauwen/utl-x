@@ -458,9 +458,115 @@ def main():
         # Try to load previous results
         previous_results = load_test_results(results_file)
 
-        if previous_results:
-            # Display failures from previous run
-            display_failures(previous_results)
+        if previous_results and previous_results.get('failures'):
+            # Re-test the previously failed tests to see if they're still failing
+            print("Re-testing previously failed tests to verify current status...\n")
+
+            # Find UTL-X CLI
+            if args.utlx_cli:
+                utlx_cli = Path(args.utlx_cli)
+            else:
+                utlx_cli = suite_root.parent / 'utlx'
+
+            if not utlx_cli.exists():
+                print(f"Error: UTL-X CLI not found at {utlx_cli}")
+                sys.exit(1)
+
+            # Disable test capture during re-testing
+            disable_capture_temporarily()
+
+            # Re-test each failed test
+            still_failing = []
+            now_passing = []
+            tested_names = set()  # Track what we've tested to avoid duplicates
+
+            for failure in previous_results['failures']:
+                test_name = failure['name']
+
+                # Skip if already tested (happens with variants)
+                if test_name in tested_names:
+                    continue
+                tested_names.add(test_name)
+
+                file_path = Path(failure.get('file_path', ''))
+                if not file_path.exists():
+                    still_failing.append(failure)  # Can't re-test, keep in list
+                    continue
+
+                test_case = load_test_case(file_path)
+                if not test_case:
+                    still_failing.append(failure)
+                    continue
+
+                base_test_name = test_case.get('name', file_path.stem)
+
+                # Check if this is a variant by looking at the test_name
+                is_variant = test_name != base_test_name and test_name.startswith(base_test_name + "_")
+
+                if is_variant:
+                    # This is a variant - find and test it specifically
+                    if 'variants' in test_case:
+                        variant_suffix = test_name[len(base_test_name) + 1:]  # Remove "base_name_" prefix
+                        found_variant = False
+                        for variant in test_case['variants']:
+                            if variant['name'] == variant_suffix:
+                                variant_case = dict(test_case)
+                                variant_case['name'] = test_name
+                                variant_case['input'] = variant['input']
+                                variant_case['expected'] = variant['expected']
+
+                                success, reason = run_single_test(variant_case, utlx_cli, test_name)
+                                if success:
+                                    now_passing.append(test_name)
+                                else:
+                                    failure['reason'] = reason
+                                    still_failing.append(failure)
+                                found_variant = True
+                                break
+                        if not found_variant:
+                            still_failing.append(failure)  # Variant not found, keep failure
+                else:
+                    # This is a base test
+                    success, reason = run_single_test(test_case, utlx_cli, base_test_name)
+                    if success:
+                        now_passing.append(base_test_name)
+                    else:
+                        failure['reason'] = reason
+                        still_failing.append(failure)
+
+            restore_capture_state()
+
+            # Display updated results
+            print()
+            print("=" * 50)
+            print("FAILED TESTS DETAILS (Re-tested):")
+            print("=" * 50)
+            print(f"\nOriginal Test Run: {previous_results.get('timestamp', 'unknown')}")
+            print(f"Re-tested: {datetime.utcnow().isoformat()}Z")
+            print(f"Total Previously Failed: {len(previous_results['failures'])}")
+            print(f"Now Passing: {len(now_passing)}")
+            print(f"Still Failing: {len(still_failing)}")
+            print()
+
+            if now_passing:
+                print("✓ Now Passing:")
+                for name in now_passing:
+                    print(f"  • {name}")
+                print()
+
+            if not still_failing:
+                print("✓ All previously failed tests are now passing!")
+            else:
+                for failure in still_failing:
+                    print(f"\n❌ {failure['name']}")
+                    print(f"   Category: {failure['category']}")
+                    print(f"   File: {failure.get('file_path', 'unknown')}")
+                    print(f"   Reason: {failure['reason']}")
+
+            sys.exit(0)
+        elif previous_results:
+            # No failures in cache
+            print("✓ No failures in previous test run!")
             sys.exit(0)
         else:
             # No previous results, auto-run tests
