@@ -7,6 +7,8 @@ Issue discovered: The CLI binary appears to not be picking up the stdlib functio
   - Function registry is up to date
   - CLI jar was rebuilt
 
+3.2.5 Functions (User-Defined)
+
 See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/xsd-discussions-style.md ; the generation of an XSD for the output has to be in a default style and potentially might need configuration to choose the XSD style
 ```
 utlx schema -h 
