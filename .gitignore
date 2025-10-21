@@ -75,6 +75,9 @@ htmlcov/
 __pycache__/
 .pytest_cache/
 
+# Test results cache
+.test-results.json
+
 # Generated documentation
 site/
 _site/
