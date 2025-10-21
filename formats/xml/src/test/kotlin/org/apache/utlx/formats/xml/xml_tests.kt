@@ -5,12 +5,26 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertThrows
 
+/**
+ * Helper function to unwrap the root element from the wrapper object
+ *
+ * Since XML parser now wraps root elements to preserve the root element name,
+ * <root>...</root> becomes { "root": UDM.Object(...) }
+ * This helper extracts the actual root element.
+ */
+fun UDM.Object.unwrapRoot(): UDM.Object {
+    // Wrapper should have exactly one property which is the root element
+    val rootPropertyName = this.properties.keys.first()
+    return this.get(rootPropertyName)?.asObject()
+        ?: throw IllegalStateException("Expected root element in wrapper")
+}
+
 class XMLParserTest {
     @Test
     fun `parse simple element`() {
         val xml = "<root>Hello</root>"
-        val result = XML.parse(xml) as UDM.Object
-        
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
+
         assertEquals("root", result.name)
         assertEquals("Hello", result.get("_text")?.asScalar()?.asString())
     }
@@ -18,7 +32,7 @@ class XMLParserTest {
     @Test
     fun `parse element with attributes`() {
         val xml = """<Order id="123" date="2025-10-01">Content</Order>"""
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         
         assertEquals("Order", result.name)
         assertEquals("123", result.getAttribute("id"))
@@ -34,7 +48,7 @@ class XMLParserTest {
             </Order>
         """.trimIndent()
         
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         assertEquals("Order", result.name)
         
         val customer = result.get("Customer")?.asObject()
@@ -55,7 +69,7 @@ class XMLParserTest {
             </Items>
         """.trimIndent()
         
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         val items = result.get("Item")?.asArray()
         
         assertNotNull(items)
@@ -66,7 +80,7 @@ class XMLParserTest {
     @Test
     fun `parse self-closing element`() {
         val xml = """<Empty/>"""
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         
         assertEquals("Empty", result.name)
         assertTrue(result.properties.isEmpty())
@@ -75,7 +89,7 @@ class XMLParserTest {
     @Test
     fun `parse element with attributes only`() {
         val xml = """<Item sku="WIDGET-001" price="29.99"/>"""
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         
         assertEquals("Item", result.name)
         assertEquals("WIDGET-001", result.getAttribute("sku"))
@@ -89,7 +103,7 @@ class XMLParserTest {
             <root>Content</root>
         """.trimIndent()
         
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         assertEquals("root", result.name)
     }
     
@@ -102,14 +116,14 @@ class XMLParserTest {
             </root>
         """.trimIndent()
         
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         assertNotNull(result.get("data"))
     }
     
     @Test
     fun `parse with CDATA`() {
         val xml = """<root><![CDATA[<special>content</special>]]></root>"""
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         
         assertEquals("<special>content</special>", result.get("_text")?.asScalar()?.asString())
     }
@@ -117,7 +131,7 @@ class XMLParserTest {
     @Test
     fun `parse with entity references`() {
         val xml = """<root>Tom &amp; Jerry &lt;heroes&gt;</root>"""
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         
         assertEquals("Tom & Jerry <heroes>", result.get("_text")?.asScalar()?.asString())
     }
@@ -125,7 +139,7 @@ class XMLParserTest {
     @Test
     fun `parse numeric text as number`() {
         val xml = """<Price>49.99</Price>"""
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         
         assertEquals(49.99, result.get("_text")?.asScalar()?.asNumber())
     }
@@ -146,7 +160,7 @@ class XMLParserTest {
             </Order>
         """.trimIndent()
         
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         assertEquals("Order", result.name)
         assertEquals("ORD-001", result.getAttribute("id"))
         
@@ -307,9 +321,9 @@ class XMLSerializerTest {
         val serialized = XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(parsed)
         val reparsed = XML.parse(serialized)
         
-        // Compare structures
-        val obj1 = parsed as UDM.Object
-        val obj2 = reparsed as UDM.Object
+        // Compare structures (unwrap root elements)
+        val obj1 = (parsed as UDM.Object).unwrapRoot()
+        val obj2 = (reparsed as UDM.Object).unwrapRoot()
         
         assertEquals(obj1.name, obj2.name)
         assertEquals(obj1.getAttribute("id"), obj2.getAttribute("id"))
@@ -334,7 +348,7 @@ class XMLIntegrationTest {
         
         // Transform (would use UTL-X interpreter here)
         // For now, just verify structure
-        val order = inputUDM as UDM.Object
+        val order = (inputUDM as UDM.Object).unwrapRoot()
         assertEquals("Order", order.name)
         assertEquals("ORD-001", order.getAttribute("id"))
         
@@ -366,7 +380,7 @@ class XMLIntegrationTest {
             </catalog>
         """.trimIndent()
         
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         assertEquals("catalog", result.name)
         
         val books = result.get("book")?.asArray()
@@ -386,7 +400,7 @@ class XMLIntegrationTest {
             </paragraph>
         """.trimIndent()
         
-        val result = XML.parse(xml) as UDM.Object
+        val result = (XML.parse(xml) as UDM.Object).unwrapRoot()
         
         // Should have both text and child element
         assertNotNull(result.get("_text"))

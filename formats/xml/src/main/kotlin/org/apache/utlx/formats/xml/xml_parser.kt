@@ -74,13 +74,29 @@ class XMLParser(
             throw XMLParseException("Content after root element", line, column)
         }
 
-        // Store encoding in metadata if it was found (not serialized)
-        return if (xmlEncoding != null && root is UDM.Object) {
-            val metadata = mapOf("xmlEncoding" to xmlEncoding)
-            UDM.Object(root.properties, root.attributes, root.name, metadata)
+        // Wrap root element to preserve root element name in structure
+        // This ensures that XML like <Products>...</Products> becomes
+        // { "Products": { ... } } instead of just { ... }
+        val wrappedRoot = if (root is UDM.Object && root.name != null) {
+            // Create a wrapper object with the root element's name as a property
+            val metadata = if (xmlEncoding != null) mapOf("xmlEncoding" to xmlEncoding) else emptyMap()
+            UDM.Object(
+                properties = mapOf(root.name!! to root),  // root.name is non-null here
+                attributes = emptyMap(),
+                name = null,  // Wrapper has no name
+                metadata = metadata
+            )
         } else {
-            root
+            // Fallback for non-object roots (shouldn't happen for well-formed XML)
+            if (xmlEncoding != null && root is UDM.Object) {
+                val metadata = mapOf("xmlEncoding" to xmlEncoding)
+                UDM.Object(root.properties, root.attributes, root.name, metadata)
+            } else {
+                root
+            }
         }
+
+        return wrappedRoot
     }
     
     private fun parseElement(parentNamespaces: Map<String, String>): UDM {

@@ -41,7 +41,7 @@ transformation: |
       Source: "XML+CSV",
       Items: @products.Products.Product |> map(product => {
         let productId = product.@id
-        let stock = @inventory.rows |> filter(row => row.ProductID == productId) |> first()
+        let stock = @inventory |> filter(row => row.ProductID == productId) |> first()
 
         ProductID: productId,
         Name: product.Name,

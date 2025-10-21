@@ -29,9 +29,9 @@ transformation: |
   {
     HRReport: {
       Source: "CSV+CSV",
-      Employees: @employees |> map(emp => {
+      Employees: @employees.rows |> map(emp => {
         let deptId = emp.DeptID
-        let dept = @departments |> filter(d => d.DeptID == deptId) |> first()
+        let dept = @departments.rows |> filter(d => d.DeptID == deptId) |> first()
 
         EmployeeID: emp.EmployeeID,
         Name: emp.Name,
@@ -46,10 +46,10 @@ transformation: |
         SalaryBudgetRatio: parseNumber(emp.Salary) / parseNumber(dept.Budget)
       }),
       Summary: {
-        TotalEmployees: count(@employees),
-        TotalDepartments: count(@departments),
-        TotalSalaries: sum(@employees |> map(e => parseNumber(e.Salary))),
-        AverageSalary: sum(@employees |> map(e => parseNumber(e.Salary))) / count(@employees)
+        TotalEmployees: count(@employees.rows),
+        TotalDepartments: count(@departments.rows),
+        TotalSalaries: sum(@employees.rows |> map(e => parseNumber(e.Salary))),
+        AverageSalary: sum(@employees.rows |> map(e => parseNumber(e.Salary))) / count(@employees.rows)
       }
     }
   }

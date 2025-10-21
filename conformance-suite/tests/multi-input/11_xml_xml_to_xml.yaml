@@ -1,0 +1,136 @@
+name: "multi_input_xml_xml_to_xml"
+category: "multi-input"
+description: "Two XML inputs merged to XML output - Order fulfillment integration"
+tags: ["multi-input", "xml", "round-trip", "sap"]
+
+inputs:
+  orders:
+    format: xml
+    data: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Orders>
+        <Order id="ORD001" customerId="C001">
+          <Product>Laptop</Product>
+          <Quantity>2</Quantity>
+          <OrderDate>2025-10-15</OrderDate>
+        </Order>
+        <Order id="ORD002" customerId="C002">
+          <Product>Monitor</Product>
+          <Quantity>4</Quantity>
+          <OrderDate>2025-10-16</OrderDate>
+        </Order>
+      </Orders>
+
+  customers:
+    format: xml
+    data: |
+      <?xml version="1.0" encoding="ISO-8859-1"?>
+      <Customers>
+        <Customer id="C001">
+          <Name>Müller Corporation</Name>
+          <ShippingAddress>
+            <Street>Hauptstraße 123</Street>
+            <City>München</City>
+            <Country>DE</Country>
+          </ShippingAddress>
+        </Customer>
+        <Customer id="C002">
+          <Name>Schröder GmbH</Name>
+          <ShippingAddress>
+            <Street>Königsallee 45</Street>
+            <City>Düsseldorf</City>
+            <Country>DE</Country>
+          </ShippingAddress>
+        </Customer>
+      </Customers>
+
+transformation: |
+  %utlx 1.0
+  input: orders xml, customers xml
+  output xml {encoding: "UTF-8"}
+  ---
+  {
+    Fulfillment: {
+      ProcessingDate: "2025-10-21",
+      SourceEncodings: {
+        Orders: detectXMLEncoding(@orders),
+        Customers: detectXMLEncoding(@customers)
+      },
+      Shipments: @orders.Orders.Order |> map(order => {
+        let custId = order.@customerId
+        let customer = @customers.Customers.Customer |> filter(c => c.@id == custId) |> first()
+
+        Shipment: {
+          @orderId: order.@id,
+          Product: order.Product,
+          Quantity: order.Quantity,
+          OrderDate: order.OrderDate,
+          Customer: {
+            Name: customer.Name,
+            Address: {
+              Street: customer.ShippingAddress.Street,
+              City: customer.ShippingAddress.City,
+              Country: customer.ShippingAddress.Country
+            }
+          }
+        }
+      })
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Fulfillment>
+      <ProcessingDate>2025-10-21</ProcessingDate>
+      <SourceEncodings>
+        <Orders>UTF-8</Orders>
+        <Customers>ISO-8859-1</Customers>
+      </SourceEncodings>
+      <Shipments>
+        <Shipment orderId="ORD001">
+          <Product>Laptop</Product>
+          <Quantity>2</Quantity>
+          <OrderDate>2025-10-15</OrderDate>
+          <Customer>
+            <Name>Müller Corporation</Name>
+            <Address>
+              <Street>Hauptstraße 123</Street>
+              <City>München</City>
+              <Country>DE</Country>
+            </Address>
+          </Customer>
+        </Shipment>
+        <Shipment orderId="ORD002">
+          <Product>Monitor</Product>
+          <Quantity>4</Quantity>
+          <OrderDate>2025-10-16</OrderDate>
+          <Customer>
+            <Name>Schröder GmbH</Name>
+            <Address>
+              <Street>Königsallee 45</Street>
+              <City>Düsseldorf</City>
+              <Country>DE</Country>
+            </Address>
+          </Customer>
+        </Shipment>
+      </Shipments>
+    </Fulfillment>
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-21"
+  references:
+    - "Multiple inputs feature"
+    - "XML to XML transformation"
+    - "Encoding normalization"
+  notes:
+    - "XML round-trip: XML inputs → XML output"
+    - "Encoding detection and normalization to UTF-8"
+    - "Typical SAP order fulfillment scenario"
+    - "German characters preserved (Müller, Schröder)"

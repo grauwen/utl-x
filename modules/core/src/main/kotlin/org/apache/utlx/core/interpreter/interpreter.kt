@@ -150,11 +150,25 @@ class Interpreter {
             is Expression.Identifier -> env.get(expr.name)
             
             is Expression.ObjectLiteral -> {
+                // Create a new environment for let bindings
+                val objectEnv = if (expr.letBindings.isNotEmpty()) {
+                    val childEnv = env.createChild()
+                    // Define all let bindings in the new scope
+                    for (binding in expr.letBindings) {
+                        val value = evaluate(binding.value, childEnv)
+                        childEnv.define(binding.name, value)
+                    }
+                    childEnv
+                } else {
+                    env
+                }
+
                 val properties = mutableMapOf<String, RuntimeValue>()
                 val attributes = mutableMapOf<String, String>()
 
+                // Evaluate properties in the environment with let bindings
                 for (prop in expr.properties) {
-                    val value = evaluate(prop.value, env)
+                    val value = evaluate(prop.value, objectEnv)
                     if (prop.isAttribute) {
                         // Attributes must be strings - extract string value
                         val attrValue = when (value) {

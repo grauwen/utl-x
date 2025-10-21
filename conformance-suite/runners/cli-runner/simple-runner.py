@@ -476,30 +476,65 @@ def load_test_case(file_path: Path) -> Optional[Dict[str, Any]]:
         print(f"Error loading {file_path}: {e}")
         return None
 
-def run_utlx_transform(utlx_cli: Path, transformation: str, input_data: str) -> tuple[bool, str, str]:
-    """Run UTL-X transformation and return success, stdout, stderr"""
+def run_utlx_transform(utlx_cli: Path, transformation: str, input_data: str = None, named_inputs: Dict[str, str] = None) -> tuple[bool, str, str]:
+    """Run UTL-X transformation and return success, stdout, stderr
+
+    Args:
+        utlx_cli: Path to UTL-X CLI
+        transformation: UTL-X transformation script
+        input_data: Single input data (for backward compatibility)
+        named_inputs: Dictionary of input_name -> input_data for multi-input tests
+    """
     with tempfile.NamedTemporaryFile(mode='w', suffix='.utlx', delete=False) as tf:
         tf.write(transformation)
         transform_file = tf.name
-    
+
+    temp_input_files = []
+
     try:
-        # Run UTL-X with input data
-        result = subprocess.run(
-            [str(utlx_cli), 'transform', transform_file],
-            input=input_data,
-            text=True,
-            capture_output=True,
-            timeout=30
-        )
-        
+        # Build command
+        cmd = [str(utlx_cli), 'transform', transform_file]
+
+        # Handle multi-input case
+        if named_inputs:
+            for input_name, data in named_inputs.items():
+                # Create temp file for this input
+                with tempfile.NamedTemporaryFile(mode='w', suffix=f'_{input_name}', delete=False) as inf:
+                    inf.write(data)
+                    temp_input_files.append(inf.name)
+                    cmd.extend(['--input', f'{input_name}={inf.name}'])
+
+            # Run without stdin
+            result = subprocess.run(
+                cmd,
+                text=True,
+                capture_output=True,
+                timeout=30
+            )
+        else:
+            # Single input via stdin (backward compatible)
+            result = subprocess.run(
+                cmd,
+                input=input_data,
+                text=True,
+                capture_output=True,
+                timeout=30
+            )
+
         return result.returncode == 0, result.stdout, result.stderr
-        
+
     except subprocess.TimeoutExpired:
         return False, "", "Timeout"
     except Exception as e:
         return False, "", str(e)
     finally:
         os.unlink(transform_file)
+        # Clean up temp input files
+        for temp_file in temp_input_files:
+            try:
+                os.unlink(temp_file)
+            except:
+                pass
 
 def is_valid_iso_timestamp(value: str) -> bool:
     """Check if a value is a valid ISO 8601 timestamp"""
@@ -588,26 +623,57 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
 
     # Extract test data
     transformation = test_case['transformation']
-    input_format = test_case['input'].get('format', 'json')
 
-    # Handle input data based on format
-    raw_data = test_case['input']['data']
-    if isinstance(raw_data, str) and input_format in ['xml', 'csv', 'yaml', 'yml']:
-        # For text-based formats (XML, CSV, YAML), use string as-is
-        input_data = raw_data
-    elif isinstance(raw_data, str) and input_format == 'json':
-        # For JSON format with string data, check if it's already valid JSON (multiline from YAML |)
-        # Valid JSON strings/objects/arrays start with ", {, or [
-        stripped = raw_data.strip()
-        if stripped and stripped[0] in '"{[':
-            # Looks like valid JSON, use as-is
-            input_data = raw_data
-        else:
-            # Simple string value, needs JSON encoding
-            input_data = json.dumps(raw_data)
+    # Check if this is a multi-input test or single-input test
+    if 'inputs' in test_case:
+        # Multi-input test
+        named_inputs = {}
+        for input_name, input_spec in test_case['inputs'].items():
+            input_format = input_spec.get('format', 'json')
+            raw_data = input_spec['data']
+
+            # Handle input data based on format
+            if isinstance(raw_data, str) and input_format in ['xml', 'csv', 'yaml', 'yml']:
+                # For text-based formats (XML, CSV, YAML), use string as-is
+                named_inputs[input_name] = raw_data
+            elif isinstance(raw_data, str) and input_format == 'json':
+                # For JSON format with string data, check if it's already valid JSON (multiline from YAML |)
+                stripped = raw_data.strip()
+                if stripped and stripped[0] in '"{[':
+                    # Looks like valid JSON, use as-is
+                    named_inputs[input_name] = raw_data
+                else:
+                    # Simple string value, needs JSON encoding
+                    named_inputs[input_name] = json.dumps(raw_data)
+            else:
+                # For JSON Python objects (dict/list) or any other format, convert to JSON
+                named_inputs[input_name] = json.dumps(raw_data)
+
+        input_data = None  # No single input
     else:
-        # For JSON Python objects (dict/list) or any other format, convert to JSON
-        input_data = json.dumps(raw_data)
+        # Single-input test (backward compatible)
+        input_format = test_case['input'].get('format', 'json')
+        raw_data = test_case['input']['data']
+
+        # Handle input data based on format
+        if isinstance(raw_data, str) and input_format in ['xml', 'csv', 'yaml', 'yml']:
+            # For text-based formats (XML, CSV, YAML), use string as-is
+            input_data = raw_data
+        elif isinstance(raw_data, str) and input_format == 'json':
+            # For JSON format with string data, check if it's already valid JSON (multiline from YAML |)
+            # Valid JSON strings/objects/arrays start with ", {, or [
+            stripped = raw_data.strip()
+            if stripped and stripped[0] in '"{[':
+                # Looks like valid JSON, use as-is
+                input_data = raw_data
+            else:
+                # Simple string value, needs JSON encoding
+                input_data = json.dumps(raw_data)
+        else:
+            # For JSON Python objects (dict/list) or any other format, convert to JSON
+            input_data = json.dumps(raw_data)
+
+        named_inputs = None  # No named inputs
     
     # Check if this is a known issue (auto-captured failure)
     if 'known_issue' in test_case:
@@ -616,7 +682,7 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
 
     # Check if this is an error test
     if 'error_expected' in test_case:
-        success, stdout, stderr = run_utlx_transform(utlx_cli, transformation, input_data)
+        success, stdout, stderr = run_utlx_transform(utlx_cli, transformation, input_data, named_inputs)
         if success:
             reason = "Expected error but transformation succeeded"
             print(f"  ✗ {reason}")
@@ -634,7 +700,7 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
     expected_format = test_case['expected'].get('format', 'json')
     expected_data = test_case['expected']['data']
 
-    success, stdout, stderr = run_utlx_transform(utlx_cli, transformation, input_data)
+    success, stdout, stderr = run_utlx_transform(utlx_cli, transformation, input_data, named_inputs)
 
     if not success:
         reason = f"Transformation failed: {stderr}"

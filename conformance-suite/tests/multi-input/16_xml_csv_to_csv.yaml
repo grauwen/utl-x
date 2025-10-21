@@ -1,0 +1,116 @@
+name: "multi_input_xml_csv_to_csv"
+category: "multi-input"
+description: "XML and CSV inputs merged to CSV output - Product master with inventory stock report"
+tags: ["multi-input", "xml", "csv", "inventory", "warehouse"]
+
+inputs:
+  products:
+    format: xml
+    data: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <ProductMaster>
+        <Product sku="PRD001">
+          <Name>Industrial Drill</Name>
+          <Category>Tools</Category>
+          <MinStockLevel>50</MinStockLevel>
+          <ReorderQuantity>100</ReorderQuantity>
+        </Product>
+        <Product sku="PRD002">
+          <Name>Safety Goggles</Name>
+          <Category>Safety</Category>
+          <MinStockLevel>200</MinStockLevel>
+          <ReorderQuantity>500</ReorderQuantity>
+        </Product>
+        <Product sku="PRD003">
+          <Name>Welding Machine</Name>
+          <Category>Equipment</Category>
+          <MinStockLevel>10</MinStockLevel>
+          <ReorderQuantity>20</ReorderQuantity>
+        </Product>
+        <Product sku="PRD004">
+          <Name>Measuring Tape</Name>
+          <Category>Tools</Category>
+          <MinStockLevel>100</MinStockLevel>
+          <ReorderQuantity>200</ReorderQuantity>
+        </Product>
+      </ProductMaster>
+
+  inventory:
+    format: csv
+    data: |
+      SKU,WarehouseLocation,CurrentStock,LastUpdated,Supplier
+      PRD001,Warehouse-A,45,2025-10-20,Müller Tools GmbH
+      PRD002,Warehouse-B,180,2025-10-21,Schneider Safety AG
+      PRD003,Warehouse-A,8,2025-10-19,König Equipment Ltd
+      PRD004,Warehouse-C,120,2025-10-21,Fischer Supplies
+
+transformation: |
+  %utlx 1.0
+  input: products xml, inventory csv {headers: true}
+  output csv {headers: true}
+  ---
+  {
+    headers: [
+      "SKU",
+      "ProductName",
+      "Category",
+      "Warehouse",
+      "CurrentStock",
+      "MinStockLevel",
+      "StockStatus",
+      "ReorderNeeded",
+      "ReorderQuantity",
+      "Supplier",
+      "LastUpdated"
+    ],
+    rows: @inventory |> map(inv => {
+      let sku = inv.SKU
+      let product = @products.ProductMaster.Product |> filter(p => p.@sku == sku) |> first()
+      let currentStock = parseNumber(inv.CurrentStock)
+      let minStock = parseNumber(product.MinStockLevel)
+      let needsReorder = currentStock < minStock
+      let stockStatus = if (currentStock < minStock) "LOW"
+                        else if (currentStock < (minStock * 1.5)) "MEDIUM"
+                        else "OK"
+
+      [
+        sku,
+        product.Name,
+        product.Category,
+        inv.WarehouseLocation,
+        currentStock,
+        minStock,
+        stockStatus,
+        needsReorder,
+        product.ReorderQuantity,
+        inv.Supplier,
+        inv.LastUpdated
+      ]
+    })
+  }
+
+expected:
+  format: csv
+  data: |
+    SKU,ProductName,Category,Warehouse,CurrentStock,MinStockLevel,StockStatus,ReorderNeeded,ReorderQuantity,Supplier,LastUpdated
+    PRD001,Industrial Drill,Tools,Warehouse-A,45,50,LOW,true,100,Müller Tools GmbH,2025-10-20
+    PRD002,Safety Goggles,Safety,Warehouse-B,180,200,LOW,true,500,Schneider Safety AG,2025-10-21
+    PRD003,Welding Machine,Equipment,Warehouse-A,8,10,LOW,true,20,König Equipment Ltd,2025-10-19
+    PRD004,Measuring Tape,Tools,Warehouse-C,120,100,OK,false,200,Fischer Supplies,2025-10-21
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-21"
+  references:
+    - "Multiple inputs feature"
+    - "XML to CSV transformation"
+    - "Inventory management"
+  notes:
+    - "XML (product master) + CSV (inventory) → CSV (stock report)"
+    - "Stock status calculation based on thresholds"
+    - "Reorder recommendation logic"
+    - "German supplier names preserved (Müller, Schneider, König, Fischer)"

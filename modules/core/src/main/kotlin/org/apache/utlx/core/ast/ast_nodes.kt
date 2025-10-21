@@ -80,9 +80,11 @@ enum class FormatType {
 sealed class Expression : Node() {
     /**
      * Object literal: { key: value, ... }
+     * Can include let bindings: { let x = value; key: x }
      */
     data class ObjectLiteral(
         val properties: List<Property>,
+        val letBindings: List<LetBinding> = emptyList(),
         override val location: Location
     ) : Expression()
     

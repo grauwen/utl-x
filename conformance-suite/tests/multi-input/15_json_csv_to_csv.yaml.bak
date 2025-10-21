@@ -1,0 +1,127 @@
+name: "multi_input_json_csv_to_csv"
+category: "multi-input"
+description: "JSON and CSV inputs merged to CSV output - Product catalog with sales analytics"
+tags: ["multi-input", "json", "csv", "analytics", "sales"]
+
+inputs:
+  products:
+    format: json
+    data: |
+      {
+        "catalog": [
+          {
+            "sku": "SKU001",
+            "name": "Premium Laptop",
+            "category": "Electronics",
+            "cost": 800,
+            "listPrice": 1299
+          },
+          {
+            "sku": "SKU002",
+            "name": "Wireless Mouse",
+            "category": "Accessories",
+            "cost": 15,
+            "listPrice": 29
+          },
+          {
+            "sku": "SKU003",
+            "name": "USB-C Hub",
+            "category": "Accessories",
+            "cost": 25,
+            "listPrice": 49
+          },
+          {
+            "sku": "SKU004",
+            "name": "Monitor 27\"",
+            "category": "Electronics",
+            "cost": 200,
+            "listPrice": 399
+          }
+        ]
+      }
+
+  sales:
+    format: csv
+    data: |
+      TransactionID,SKU,Quantity,SalePrice,SaleDate,Region
+      TXN001,SKU001,2,1199,2025-10-15,EMEA
+      TXN002,SKU002,10,25,2025-10-16,AMER
+      TXN003,SKU003,5,45,2025-10-17,APAC
+      TXN004,SKU001,1,1299,2025-10-18,AMER
+      TXN005,SKU004,3,379,2025-10-19,EMEA
+      TXN006,SKU002,8,27,2025-10-20,APAC
+
+transformation: |
+  %utlx 1.0
+  input: products json, sales csv {headers: true}
+  output csv {headers: true}
+  ---
+  {
+    headers: [
+      "TransactionID",
+      "ProductName",
+      "Category",
+      "SKU",
+      "Quantity",
+      "SalePrice",
+      "Revenue",
+      "Cost",
+      "Profit",
+      "Margin",
+      "Region",
+      "SaleDate"
+    ],
+    rows: @sales.rows |> map(sale => {
+      let sku = sale.SKU
+      let product = @products.catalog |> filter(p => p.sku == sku) |> first()
+      let qty = parseNumber(sale.Quantity)
+      let salePrice = parseNumber(sale.SalePrice)
+      let revenue = qty * salePrice
+      let cost = qty * product.cost
+      let profit = revenue - cost
+      let margin = round((profit / revenue) * 100, 1)
+
+      [
+        sale.TransactionID,
+        product.name,
+        product.category,
+        sku,
+        qty,
+        salePrice,
+        revenue,
+        cost,
+        profit,
+        margin,
+        sale.Region,
+        sale.SaleDate
+      ]
+    })
+  }
+
+expected:
+  format: csv
+  data: |
+    TransactionID,ProductName,Category,SKU,Quantity,SalePrice,Revenue,Cost,Profit,Margin,Region,SaleDate
+    TXN001,Premium Laptop,Electronics,SKU001,2,1199,2398,1600,798,33.3,EMEA,2025-10-15
+    TXN002,Wireless Mouse,Accessories,SKU002,10,25,250,150,100,40.0,AMER,2025-10-16
+    TXN003,USB-C Hub,Accessories,SKU003,5,45,225,125,100,44.4,APAC,2025-10-17
+    TXN004,Premium Laptop,Electronics,SKU001,1,1299,1299,800,499,38.4,AMER,2025-10-18
+    TXN005,Monitor 27",Electronics,SKU004,3,379,1137,600,537,47.2,EMEA,2025-10-19
+    TXN006,Wireless Mouse,Accessories,SKU002,8,27,216,120,96,44.4,APAC,2025-10-20
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-21"
+  references:
+    - "Multiple inputs feature"
+    - "JSON to CSV transformation"
+    - "Sales analytics"
+  notes:
+    - "JSON (product catalog) + CSV (sales transactions) → CSV (analytics report)"
+    - "Profit/margin calculations"
+    - "Common e-commerce reporting pattern"
+    - "Flat output suitable for Excel/BI tools"

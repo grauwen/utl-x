@@ -38,6 +38,7 @@ class TypeCheckerTest {
                 Property("name", Expression.StringLiteral("Alice", Location(1, 1)), Location(1, 1)),
                 Property("age", Expression.NumberLiteral(30.0, Location(1, 1)), Location(1, 1))
             ),
+            emptyList(),
             Location(1, 1)
         )
         
@@ -202,6 +203,7 @@ class InterpreterTest {
                 Property("name", Expression.StringLiteral("Alice", Location(1, 1)), Location(1, 1)),
                 Property("age", Expression.NumberLiteral(30.0, Location(1, 1)), Location(1, 1))
             ),
+            emptyList(),
             Location(1, 1)
         )
         
