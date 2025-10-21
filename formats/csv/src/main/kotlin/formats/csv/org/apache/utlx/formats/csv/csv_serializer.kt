@@ -31,13 +31,18 @@ import java.io.StringWriter
  */
 class CSVSerializer(
     private val dialect: CSVDialect = CSVDialect.DEFAULT,
-    private val includeHeaders: Boolean = true
+    private val includeHeaders: Boolean = true,
+    private val includeBOM: Boolean = false
 ) {
     /**
      * Serialize UDM to CSV string
      */
     fun serialize(udm: UDM): String {
         val writer = StringWriter()
+        // Add BOM if requested (useful for Excel UTF-8 compatibility)
+        if (includeBOM) {
+            writer.write("\uFEFF")
+        }
         serialize(udm, writer)
         return writer.toString()
     }
@@ -47,6 +52,10 @@ class CSVSerializer(
      */
     fun serialize(value: RuntimeValue): String {
         val writer = StringWriter()
+        // Add BOM if requested (useful for Excel UTF-8 compatibility)
+        if (includeBOM) {
+            writer.write("\uFEFF")
+        }
         serialize(value, writer)
         return writer.toString()
     }
@@ -290,7 +299,19 @@ object CSVFormat {
     fun stringifyTSV(udm: UDM): String {
         return CSVSerializer(CSVDialect.TSV, includeHeaders = true).serialize(udm)
     }
-    
+
+    /**
+     * Serialize to CSV with BOM (for Excel UTF-8 compatibility)
+     * BOM (Byte Order Mark) helps Excel recognize UTF-8 encoded CSV files
+     */
+    fun stringifyWithBOM(udm: UDM, dialect: CSVDialect = CSVDialect.DEFAULT): String {
+        return CSVSerializer(dialect, includeHeaders = true, includeBOM = true).serialize(udm)
+    }
+
+    fun stringifyWithBOM(value: RuntimeValue, dialect: CSVDialect = CSVDialect.DEFAULT): String {
+        return CSVSerializer(dialect, includeHeaders = true, includeBOM = true).serialize(value)
+    }
+
     /**
      * Parse CSV string to UDM
      */

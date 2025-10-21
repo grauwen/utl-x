@@ -34,7 +34,15 @@ class CSVParser(
     private var current = 0
     private var line = 1
     private var column = 1
-    private val text = source.readText()
+    private val text = run {
+        // CSV may begin with BOM (U+FEFF) - strip it if present
+        val rawText = source.readText()
+        if (rawText.isNotEmpty() && rawText[0] == '\uFEFF') {
+            rawText.substring(1)
+        } else {
+            rawText
+        }
+    }
     
     constructor(csv: String, dialect: CSVDialect = CSVDialect.DEFAULT) : 
         this(StringReader(csv), dialect)

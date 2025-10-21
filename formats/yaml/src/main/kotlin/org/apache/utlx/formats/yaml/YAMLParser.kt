@@ -45,14 +45,27 @@ class YAMLParser {
      * Parse YAML from a string
      */
     fun parse(yamlString: String, options: ParseOptions = ParseOptions()): UDM {
-        return parse(StringReader(yamlString), options)
+        // YAML may begin with BOM (U+FEFF) - strip it if present
+        val cleanYaml = if (yamlString.isNotEmpty() && yamlString[0] == '\uFEFF') {
+            yamlString.substring(1)
+        } else {
+            yamlString
+        }
+        return parse(StringReader(cleanYaml), options)
     }
     
     /**
      * Parse YAML from an InputStream
      */
     fun parse(input: InputStream, options: ParseOptions = ParseOptions()): UDM {
-        return parse(input.reader(), options)
+        // Read and strip BOM if present (UTF-8 BOM: EF BB BF)
+        val text = input.reader().readText()
+        val cleanText = if (text.isNotEmpty() && text[0] == '\uFEFF') {
+            text.substring(1)
+        } else {
+            text
+        }
+        return parse(StringReader(cleanText), options)
     }
     
     /**
