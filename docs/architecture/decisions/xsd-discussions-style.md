@@ -82,6 +82,181 @@ Russian Doll is less reusable and harder to transform into other patterns withou
 
 
 ---
+Here are the 4 most commonly used XSD design patterns:
+
+## 1. Russian Doll Pattern
+
+**Description**: All elements are defined locally within their parent elements. No global elements except the root.
+
+**Pros**: Simple, self-contained, easy for small schemas
+**Cons**: No reusability, can become verbose
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  
+  <!-- Only root element is global -->
+  <xs:element name="library">
+    <xs:complexType>
+      <xs:sequence>
+        <!-- All nested elements defined locally -->
+        <xs:element name="book" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="title" type="xs:string"/>
+              <xs:element name="author" type="xs:string"/>
+              <xs:element name="isbn" type="xs:string"/>
+              <xs:element name="year" type="xs:int"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+</xs:schema>
+```
+
+## 2. Salami Slice Pattern
+
+**Description**: All elements are defined globally at the top level. Elements reference each other.
+
+**Pros**: Maximum reusability, elements can be used as document roots
+**Cons**: Flat structure, namespace pollution, less clear hierarchy
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  
+  <!-- All elements defined globally -->
+  <xs:element name="library">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="book" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="book">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="title"/>
+        <xs:element ref="author"/>
+        <xs:element ref="isbn"/>
+        <xs:element ref="year"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="title" type="xs:string"/>
+  <xs:element name="author" type="xs:string"/>
+  <xs:element name="isbn" type="xs:string"/>
+  <xs:element name="year" type="xs:int"/>
+  
+</xs:schema>
+```
+
+## 3. Venetian Blind Pattern
+
+**Description**: Types are defined globally, elements are defined locally but reference global types.
+
+**Pros**: Good balance of reusability and structure, types can be reused, cleaner namespace
+**Cons**: Slightly more complex than Russian Doll
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  
+  <!-- Root element -->
+  <xs:element name="library">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="book" type="BookType" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <!-- Global type definitions -->
+  <xs:complexType name="BookType">
+    <xs:sequence>
+      <xs:element name="title" type="xs:string"/>
+      <xs:element name="author" type="PersonType"/>
+      <xs:element name="isbn" type="ISBNType"/>
+      <xs:element name="year" type="xs:int"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="PersonType">
+    <xs:sequence>
+      <xs:element name="firstName" type="xs:string"/>
+      <xs:element name="lastName" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:simpleType name="ISBNType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]{3}-[0-9]{10}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  
+</xs:schema>
+```
+
+## 4. Garden of Eden Pattern
+
+**Description**: Combines Salami Slice and Venetian Blind - both elements and types are defined globally.
+
+**Pros**: Maximum flexibility and reusability for both elements and types
+**Cons**: Most complex, heavy namespace usage, can be overwhelming
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  
+  <!-- Global elements -->
+  <xs:element name="library" type="LibraryType"/>
+  <xs:element name="book" type="BookType"/>
+  <xs:element name="title" type="xs:string"/>
+  <xs:element name="author" type="PersonType"/>
+  <xs:element name="isbn" type="ISBNType"/>
+  <xs:element name="year" type="xs:int"/>
+  
+  <!-- Global types -->
+  <xs:complexType name="LibraryType">
+    <xs:sequence>
+      <xs:element ref="book" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="BookType">
+    <xs:sequence>
+      <xs:element ref="title"/>
+      <xs:element ref="author"/>
+      <xs:element ref="isbn"/>
+      <xs:element ref="year"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="PersonType">
+    <xs:sequence>
+      <xs:element name="firstName" type="xs:string"/>
+      <xs:element name="lastName" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:simpleType name="ISBNType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]{3}-[0-9]{10}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  
+</xs:schema>
+```
+
+## Which to Choose?
+
+**Venetian Blind** is generally considered the best practice for most scenarios, as it provides the best balance of reusability, maintainability, and clean namespace management. It’s the most commonly recommended pattern in enterprise environments.​​​​​​​​​​​​​​​​
+---
 
 # XML Schema Design Patterns: Detailed Examples
 
