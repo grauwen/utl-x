@@ -6,32 +6,38 @@ import java.io.StringReader
 
 /**
  * XML Parser - Converts XML to UDM
- * 
+ *
  * Mapping:
  * - XML Elements → UDM.Object
  * - Attributes → UDM.Object attributes map
  * - Text content → UDM.Scalar (when leaf element)
  * - Multiple same-name children → UDM.Array
- * 
+ *
  * Example:
  * <Order id="123">
  *   <Customer>Alice</Customer>
  *   <Total>299.99</Total>
  * </Order>
- * 
+ *
  * Becomes:
  * UDM.Object(
  *   properties = { "Customer": Scalar("Alice"), "Total": Scalar(299.99) },
  *   attributes = { "id": "123" }
  * )
+ *
+ * @param arrayHints Set of element names that should always be returned as arrays,
+ *                   even if there's only one occurrence. Solves the "single element vs array" problem.
  */
-class XMLParser(private val source: Reader) {
+class XMLParser(
+    private val source: Reader,
+    private val arrayHints: Set<String> = emptySet()
+) {
     private var current = 0
     private var line = 1
     private var column = 1
     private val text = source.readText()
-    
-    constructor(xml: String) : this(StringReader(xml))
+
+    constructor(xml: String, arrayHints: Set<String> = emptySet()) : this(StringReader(xml), arrayHints)
     
     /**
      * Parse XML to UDM
@@ -170,11 +176,15 @@ class XMLParser(private val source: Reader) {
                 // Group children by name
                 val grouped = children.groupBy { it.first }
                 grouped.forEach { (childName, childElements) ->
-                    properties[childName] = if (childElements.size == 1) {
-                        childElements[0].second
-                    } else {
-                        // Multiple elements with same name → array
+                    // Check if this element should always be an array (via arrayHints or multiple occurrences)
+                    val shouldBeArray = childElements.size > 1 || arrayHints.contains(childName)
+
+                    properties[childName] = if (shouldBeArray) {
+                        // Multiple elements with same name OR in arrayHints → array
                         UDM.Array(childElements.map { it.second })
+                    } else {
+                        // Single element, not in arrayHints → unwrapped
+                        childElements[0].second
                     }
                 }
 
@@ -377,8 +387,10 @@ class XMLParseException(
 object XML {
     /**
      * Parse XML string to UDM
+     *
+     * @param arrayHints Set of element names that should always be returned as arrays
      */
-    fun parse(xml: String): UDM {
-        return XMLParser(xml).parse()
+    fun parse(xml: String, arrayHints: Set<String> = emptySet()): UDM {
+        return XMLParser(xml, arrayHints).parse()
     }
 }

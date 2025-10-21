@@ -28,7 +28,7 @@ input:
 
 transformation: |
   %utlx 1.0
-  input xml {encoding: "auto"}
+  input xml {encoding: "auto", arrays: ["Availability"]}
   output json
   ---
   let material = @input.Material in

@@ -146,6 +146,18 @@ class Parser(private val tokens: List<Token>) {
                     match(TokenType.STRING) -> previous().literal as String
                     match(TokenType.NUMBER) -> previous().literal as Double
                     match(TokenType.BOOLEAN) -> previous().literal as Boolean
+                    match(TokenType.LBRACKET) -> {
+                        // Parse array of strings (for now, only string arrays)
+                        val arrayItems = mutableListOf<String>()
+                        if (!check(TokenType.RBRACKET)) {
+                            do {
+                                val item = consume(TokenType.STRING, "Expected string in array").literal as String
+                                arrayItems.add(item)
+                            } while (match(TokenType.COMMA))
+                        }
+                        consume(TokenType.RBRACKET, "Expected ']'")
+                        arrayItems
+                    }
                     else -> error("Expected option value")
                 }
                 

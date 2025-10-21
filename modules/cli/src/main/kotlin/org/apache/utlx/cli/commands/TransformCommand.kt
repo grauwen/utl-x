@@ -75,8 +75,9 @@ object TransformCommand {
                 println("Input format: $inputFormat")
             }
 
-            // Parse input to UDM
-            val inputUDM = parseInput(inputData, inputFormat)
+            // Parse input to UDM with format options from script header
+            val inputOptions = program.header.inputFormat.options
+            val inputUDM = parseInput(inputData, inputFormat, inputOptions)
 
             // Execute transformation using core Interpreter with dynamic stdlib loading
             val interpreter = Interpreter()
@@ -194,10 +195,17 @@ object TransformCommand {
         }
     }
     
-    private fun parseInput(data: String, format: String): UDM {
+    private fun parseInput(data: String, format: String, options: Map<String, Any> = emptyMap()): UDM {
         return try {
             when (format.lowercase()) {
-                "xml" -> XMLParser(data).parse()
+                "xml" -> {
+                    // Extract array hints from options (elements that should always be arrays)
+                    val arrayHints = (options["arrays"] as? List<*>)
+                        ?.mapNotNull { it as? String }
+                        ?.toSet()
+                        ?: emptySet()
+                    XMLParser(data, arrayHints).parse()
+                }
                 "json" -> JSONParser(data).parse()
                 "csv" -> CSVParser(data).parse()
                 "yaml", "yml" -> YAMLParser().parse(data)
