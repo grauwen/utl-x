@@ -1,0 +1,46 @@
+name: "parseYAML_with_bom"
+category: "stdlib/serialization"
+description: "Parse YAML with UTF-8 BOM - Windows text editor compatibility"
+tags: ["yaml", "bom", "encoding", "windows"]
+
+input:
+  format: yaml
+  data: "﻿environment: production\ndatabase:\n  host: localhost\n  port: 5432\nfeatures:\n  logging: true\n  caching: false"
+
+transformation: |
+  %utlx 1.0
+  input yaml
+  output json
+  ---
+  {
+    config: @input,
+    bomHandled: true,
+    environment: @input.environment
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "config": {
+        "environment": "production",
+        "database": {
+          "host": "localhost",
+          "port": 5432
+        },
+        "features": {
+          "logging": true,
+          "caching": false
+        }
+      },
+      "bomHandled": true,
+      "environment": "production"
+    }
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  notes: ["YAML parsers must tolerate and ignore BOM from Windows text editors"]

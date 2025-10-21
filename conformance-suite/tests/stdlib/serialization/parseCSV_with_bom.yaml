@@ -1,0 +1,47 @@
+name: "parseCSV_with_bom"
+category: "stdlib/serialization"
+description: "Parse CSV with UTF-8 BOM - Excel compatibility test"
+tags: ["csv", "bom", "encoding", "excel"]
+
+input:
+  format: csv
+  data: "﻿name,age,active\nAlice,30,true\nBob,25,false"
+
+transformation: |
+  %utlx 1.0
+  input csv
+  output json
+  ---
+  {
+    employees: @input,
+    bomHandled: true,
+    recordCount: length(@input)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "employees": [
+        {
+          "name": "Alice",
+          "age": 30,
+          "active": true
+        },
+        {
+          "name": "Bob",
+          "age": 25,
+          "active": false
+        }
+      ],
+      "bomHandled": true,
+      "recordCount": 2
+    }
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  notes: ["CSV parsers must tolerate and ignore BOM for Excel compatibility"]
