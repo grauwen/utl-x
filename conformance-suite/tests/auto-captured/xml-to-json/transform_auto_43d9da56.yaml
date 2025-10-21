@@ -19,7 +19,7 @@ transformation: |
 
 expected:
   format: json
-  data: "\"MAT-001\""
+  data: "MAT-001"
 
 performance_limits:
   max_duration_ms: 50
