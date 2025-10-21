@@ -27,14 +27,20 @@ class JSONParser(private val source: Reader) {
      * Parse JSON to UDM
      */
     fun parse(): UDM {
+        // RFC 8259: JSON text MAY begin with a BOM (U+FEFF)
+        // Strip it if present (though discouraged, parsers must tolerate it)
+        if (!isAtEnd() && peek() == '\uFEFF') {
+            advance()
+        }
+
         skipWhitespace()
         val result = parseValue()
         skipWhitespace()
-        
+
         if (!isAtEnd()) {
             throw JSONParseException("Unexpected content after JSON value", line, column)
         }
-        
+
         return result
     }
     
