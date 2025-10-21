@@ -60,8 +60,8 @@ transformation: |
     K8sManifests: {
       Source: "JSON+YAML",
       Applications: @deployments.deployments |> map(deploy => {
-        let appId = deploy.appId;
-        let config = @helmconfig.applications |> filter(app => app.appId == appId) |> first();
+        let appId = deploy.appId
+        let config = @helmconfig.applications |> filter(app => app.appId == appId) |> first()
 
         AppID: appId,
         Name: deploy.name,

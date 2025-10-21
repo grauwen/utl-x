@@ -81,8 +81,8 @@ transformation: |
       source: "YAML+YAML"
     },
     deployments: @services.microservices |> map(svc => {
-      let serviceId = svc.serviceId;
-      let config = @deployConfig.deploymentSpecs |> filter(c => c.serviceId == serviceId) |> first();
+      let serviceId = svc.serviceId
+      let config = @deployConfig.deploymentSpecs |> filter(c => c.serviceId == serviceId) |> first()
 
       {
         serviceId: serviceId,

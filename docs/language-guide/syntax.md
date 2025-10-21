@@ -657,16 +657,85 @@ Variables are scoped to their containing block:
 ```utlx
 {
   let outer = 10,
-  
+
   nested: {
     let inner = 20,
     sum: outer + inner    // ✅ Both accessible
   },
-  
+
   value: outer,           // ✅ Accessible
   wrong: inner            // ❌ Not accessible here
 }
 ```
+
+### Block Expressions vs Object Literals
+
+UTL-X distinguishes between **object literals** (which create objects) and **block expressions** (which execute statements and return values).
+
+#### Object Literals
+
+When let bindings are followed by property definitions, use commas as separators:
+
+```utlx
+{
+  let tax = subtotal * 0.08,
+  let total = subtotal + tax,
+
+  // These are object properties
+  subtotal: subtotal,
+  tax: tax,
+  total: total
+}
+```
+
+#### Block Expressions
+
+When let bindings are followed by a **return expression** (array, object, or any other expression), **semicolons are required**:
+
+```utlx
+// ✅ CORRECT - semicolons required before array return
+employees |> map(emp => {
+  let salary = parseNumber(emp.Salary);
+  let bonus = salary * 0.10;
+
+  [emp.Name, salary + bonus]  // Array return
+})
+
+// ✅ CORRECT - semicolons required before object return
+items |> map(item => {
+  let price = parseNumber(item.Price);
+  let tax = price * 0.08;
+
+  {  // Object return
+    name: item.Name,
+    total: price + tax
+  }
+})
+```
+
+#### Why Semicolons Are Required
+
+Without semicolons, the parser cannot distinguish between:
+- A let binding followed by an array: `let x = val; [array]`
+- Array indexing: `let x = val[array]`
+
+```utlx
+// ❌ INCORRECT - causes parse error
+{
+  let x = 10
+  let y = 20
+  [x, y]  // Parser thinks: let y = 20[x, y]
+}
+
+// ✅ CORRECT - semicolons make intent clear
+{
+  let x = 10;
+  let y = 20;
+  [x, y]
+}
+```
+
+**Best Practice:** Always use semicolons after let bindings in lambda bodies or block expressions to avoid ambiguity.
 
 ---
 

@@ -444,13 +444,13 @@ template match="Item[@special=true]" {
 let name = expression
 ```
 
-**Example:**
+**Example (Object Literal):**
 ```utlx
 {
   let subtotal = sum(items.*.price),
   let tax = subtotal * 0.08,
   let total = subtotal + tax
-  
+
   invoice: {
     subtotal: subtotal,
     tax: tax,
@@ -459,6 +459,67 @@ let name = expression
 }
 ```
 
+**Example (Block Expression):**
+```utlx
+employees |> map(emp => {
+  let deptId = emp.DeptID;
+  let salary = parseNumber(emp.Salary);
+  let bonus = salary * 0.10;
+
+  {
+    name: emp.Name,
+    total: salary + bonus
+  }
+})
+```
+
+#### 9.1.1 Semicolon Requirements
+
+**Block Expressions:** When let bindings are followed by a non-property expression (such as an array literal, object literal, or any other expression), a semicolon (`;`) or comma (`,`) **must** terminate each let binding.
+
+```utlx
+// ✓ CORRECT - semicolons required before array return
+{
+  let x = 10;
+  let y = 20;
+
+  [x, y, x + y]
+}
+
+// ✗ INCORRECT - missing semicolons causes ambiguity
+{
+  let x = 10
+  let y = 20
+  [x, y, x + y]  // Parser interprets as: let y = 20[x, y, x + y]
+}
+```
+
+**Object Literals:** When let bindings are followed by object properties, commas are used (semicolons also work):
+
+```utlx
+// ✓ CORRECT - commas between let bindings and properties
+{
+  let tax = subtotal * 0.08,
+  let total = subtotal + tax,
+
+  subtotal: subtotal,
+  total: total
+}
+
+// ✓ ALSO CORRECT - semicolons work too
+{
+  let tax = subtotal * 0.08;
+  let total = subtotal + tax;
+
+  subtotal: subtotal,
+  total: total
+}
+```
+
+**Rationale:** Without terminators, the parser cannot distinguish between:
+- `let x = value` followed by `[array]` (two separate statements)
+- `let x = value[array]` (array indexing operation)
+
 ### 9.2 Scoping
 
 Variables are lexically scoped:
@@ -466,12 +527,12 @@ Variables are lexically scoped:
 ```utlx
 {
   let x = 10,
-  
+
   outer: {
     let y = 20,
     sum: x + y        // x is accessible here
   },
-  
+
   value: x            // y is NOT accessible here
 }
 ```

@@ -114,8 +114,8 @@ transformation: |
         xmlEncoding: detectXMLEncoding(@services)
       },
       services: @services.ServiceCatalog.Service |> map(svc => {
-        let serviceId = svc.@id;
-        let policy = @monitoring.monitoringPolicies |> filter(p => p.serviceId == serviceId) |> first();
+        let serviceId = svc.@id
+        let policy = @monitoring.monitoringPolicies |> filter(p => p.serviceId == serviceId) |> first()
 
         {
           serviceId: serviceId,

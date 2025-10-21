@@ -63,7 +63,7 @@ transformation: |
       "Supplier",
       "LastUpdated"
     ],
-    rows: @inventory.rows |> map(inv => {
+    rows: @inventory |> map(inv => {
       let sku = inv.SKU
       let product = @products.ProductMaster.Product |> filter(p => p.@sku == sku) |> first()
       let currentStock = parseNumber(inv.CurrentStock)

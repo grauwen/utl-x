@@ -49,7 +49,7 @@ transformation: |
       Source: "JSON+CSV",
       ProductPerformance: @products.products |> map(product => {
         let productId = product.productId
-        let salesData = @sales.rows |> filter(row => row.ProductID == productId)
+        let salesData = @sales |> filter(row => row.ProductID == productId)
 
         ProductID: productId,
         Name: product.name,

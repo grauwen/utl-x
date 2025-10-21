@@ -90,8 +90,8 @@ transformation: |
     },
     spec: {
       deployments: @deployments.applications |> map(app => {
-        let appId = app.appId;
-        let helm = @helmValues.helmConfig |> filter(h => h.appId == appId) |> first();
+        let appId = app.appId
+        let helm = @helmValues.helmConfig |> filter(h => h.appId == appId) |> first()
 
         {
           name: app.name,

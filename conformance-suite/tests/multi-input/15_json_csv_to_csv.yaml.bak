@@ -71,7 +71,7 @@ transformation: |
       "Region",
       "SaleDate"
     ],
-    rows: @sales.rows |> map(sale => {
+    rows: @sales |> map(sale => {
       let sku = sale.SKU
       let product = @products.catalog |> filter(p => p.sku == sku) |> first()
       let qty = parseNumber(sale.Quantity)

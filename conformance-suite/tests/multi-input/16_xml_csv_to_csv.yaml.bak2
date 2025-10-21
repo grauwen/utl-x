@@ -69,10 +69,9 @@ transformation: |
       let currentStock = parseNumber(inv.CurrentStock);
       let minStock = parseNumber(product.MinStockLevel);
       let needsReorder = currentStock < minStock;
-      let stockStatus = if (currentStock < minStock) "LOW"
+      let stockStatus = if (currentStock < minStock) "LOW";
                         else if (currentStock < (minStock * 1.5)) "MEDIUM"
-                        else "OK";
-
+                        else "OK"
 
       [
         sku,

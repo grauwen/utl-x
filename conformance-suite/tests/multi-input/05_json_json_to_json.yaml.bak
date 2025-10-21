@@ -53,8 +53,8 @@ transformation: |
     UserReport: {
       Source: "JSON+JSON",
       Users: @profiles.users |> map(user => {
-        let userId = user.userId;
-        let act = @activity.userActivity |> filter(a => a.userId == userId) |> first();
+        let userId = user.userId
+        let act = @activity.userActivity |> filter(a => a.userId == userId) |> first()
 
         UserID: userId,
         Name: user.name,

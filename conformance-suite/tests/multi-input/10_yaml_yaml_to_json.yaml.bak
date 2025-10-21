@@ -69,8 +69,8 @@ transformation: |
     MicroservicesArchitecture: {
       Source: "YAML+YAML",
       Services: @services.microservices |> map(service => {
-        let serviceId = service.serviceId;
-        let pipeline = @pipelines.cicdPipelines |> filter(p => p.serviceId == serviceId) |> first();
+        let serviceId = service.serviceId
+        let pipeline = @pipelines.cicdPipelines |> filter(p => p.serviceId == serviceId) |> first()
 
         ServiceID: serviceId,
         Name: service.name,

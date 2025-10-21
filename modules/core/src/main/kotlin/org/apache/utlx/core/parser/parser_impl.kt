@@ -463,6 +463,58 @@ class Parser(private val tokens: List<Token>) {
             while (match(TokenType.LET)) {
                 val letExpr = parseLetBinding()
                 letBindings.add(letExpr as Expression.LetBinding)
+
+                // In blocks, let bindings should be terminated with semicolon or comma
+                // to prevent ambiguity with subsequent expressions (especially arrays)
+                // If there are let bindings and more content follows, require separator
+                if (!check(TokenType.RBRACE) && !check(TokenType.LET)) {
+                    // More content follows that's not another let - require separator
+                    if (!match(TokenType.SEMICOLON) && !match(TokenType.COMMA)) {
+                        throw error("Expected ';' or ',' after let binding in block expression")
+                    }
+                } else {
+                    // Optional separator between let bindings or before closing brace
+                    match(TokenType.COMMA) || match(TokenType.SEMICOLON)
+                }
+            }
+
+            // Check if this is a block expression (let bindings + expression) or object literal
+            // Block expression: { let x = ...; expression }
+            // Object literal: { let x = ...; prop: value }
+            if (letBindings.isNotEmpty() && !check(TokenType.RBRACE)) {
+                // Lookahead to check if next token pattern is "identifier :"
+                // If so, it's an object literal property. Otherwise, it's a block expression.
+                val isObjectLiteral = when {
+                    check(TokenType.AT) -> true  // @attr: value
+                    check(TokenType.STRING) -> {
+                        // Could be "prop": value (object) or just a string expression (block)
+                        // Need to look ahead for colon
+                        val checkpoint = current
+                        advance() // consume string
+                        val hasColon = check(TokenType.COLON)
+                        current = checkpoint // backtrack
+                        hasColon
+                    }
+                    check(TokenType.IDENTIFIER) -> {
+                        // Could be prop: value (object) or identifier expression (block)
+                        val checkpoint = current
+                        advance() // consume identifier
+                        val hasColon = check(TokenType.COLON)
+                        current = checkpoint // backtrack
+                        hasColon
+                    }
+                    else -> false  // Anything else (array, number, etc.) is a block expression
+                }
+
+                if (!isObjectLiteral) {
+                    // This is a block expression: { let x = ...; expression }
+                    val finalExpression = parseExpression()
+                    consume(TokenType.RBRACE, "Expected '}' after block expression")
+
+                    // Return a Block expression with let bindings + final expression
+                    val allExpressions = letBindings + finalExpression
+                    return Expression.Block(allExpressions, Location.from(startToken))
+                }
             }
 
             // Then parse properties (if any)
@@ -506,15 +558,15 @@ class Parser(private val tokens: List<Token>) {
     private fun parseArrayLiteral(): Expression {
         val startToken = previous() // LBRACKET
         val elements = mutableListOf<Expression>()
-        
+
         if (!check(TokenType.RBRACKET)) {
             do {
                 elements.add(parseExpression())
             } while (match(TokenType.COMMA))
         }
-        
+
         consume(TokenType.RBRACKET, "Expected ']' after array elements")
-        
+
         return Expression.ArrayLiteral(elements, Location.from(startToken))
     }
     

@@ -57,8 +57,8 @@ transformation: |
         Customers: detectXMLEncoding(@customers)
       },
       Shipments: @orders.Orders.Order |> map(order => {
-        let custId = order.@customerId;
-        let customer = @customers.Customers.Customer |> filter(c => c.@id == custId) |> first();
+        let custId = order.@customerId
+        let customer = @customers.Customers.Customer |> filter(c => c.@id == custId) |> first()
 
         Shipment: {
           @orderId: order.@id,

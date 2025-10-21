@@ -51,7 +51,7 @@ transformation: |
   {
     InfrastructureMonitoring: {
       Source: "CSV+YAML",
-      Servers: @servers.rows |> map(server => {
+      Servers: @servers |> map(server => {
         let serverId = server.ServerID
         let monConfig = @monitoring.monitoringConfig |> filter(m => m.serverId == serverId) |> first()
 

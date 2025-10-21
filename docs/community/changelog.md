@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING**: Let bindings in block expressions now require semicolons or commas when followed by non-property expressions
+  - **Reason**: Without terminators, the parser cannot distinguish `let x = val; [array]` from `let x = val[array]` (array indexing)
+  - **Migration**: Add semicolons after each let binding in lambda bodies: `let x = 10;` instead of `let x = 10`
+  - **Example**:
+    ```utlx
+    // Old (no longer valid):
+    map(items, item => {
+      let price = item.Price
+      let tax = price * 0.08
+      [price, tax]
+    })
+
+    // New (required):
+    map(items, item => {
+      let price = item.Price;
+      let tax = price * 0.08;
+      [price, tax]
+    })
+    ```
+  - **Note**: Object literals still use commas: `{ let x = 10, prop: x }` works as before
+
+### Fixed
+- Block expressions now properly parse when returning arrays or objects
+- Parser correctly distinguishes between array indexing and array literals after let bindings
+
 ### Planned
 - CSV input/output support
 - YAML input/output support

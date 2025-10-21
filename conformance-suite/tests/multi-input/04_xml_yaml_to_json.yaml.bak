@@ -45,8 +45,8 @@ transformation: |
     ServiceConfiguration: {
       Source: "XML+YAML",
       Services: @services.Services.Service |> map(service => {
-        let serviceId = service.@id;
-        let cfg = @config.configurations |> filter(c => c.serviceId == serviceId) |> first();
+        let serviceId = service.@id
+        let cfg = @config.configurations |> filter(c => c.serviceId == serviceId) |> first()
 
         ServiceID: serviceId,
         Name: service.Name,

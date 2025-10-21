@@ -79,8 +79,8 @@ transformation: |
         LegacyEncoding: detectXMLEncoding(@permissions)
       },
       Users: @users.users |> map(user => {
-        let userId = user.userId;
-        let perms = @permissions.Permissions.UserPermissions |> filter(p => p.@userId == userId) |> first();
+        let userId = user.userId
+        let perms = @permissions.Permissions.UserPermissions |> filter(p => p.@userId == userId) |> first()
 
         User: {
           @id: userId,

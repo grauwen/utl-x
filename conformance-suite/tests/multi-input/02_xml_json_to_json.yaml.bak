@@ -50,8 +50,8 @@ transformation: |
     Catalog: {
       Source: "XML+JSON",
       Items: @products.Products.Product |> map(product => {
-        let sku = product.@sku;
-        let priceData = @pricing.prices |> filter(p => p.sku == sku) |> first();
+        let sku = product.@sku
+        let priceData = @pricing.prices |> filter(p => p.sku == sku) |> first()
 
         SKU: sku,
         Name: product.Name,

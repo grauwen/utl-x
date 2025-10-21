@@ -69,8 +69,8 @@ transformation: |
         PricingFormat: "JSON"
       },
       Products: @products.Products.Product |> map(product => {
-        let prodId = product.@id;
-        let price = @pricing.prices |> filter(p => p.productId == prodId) |> first();
+        let prodId = product.@id
+        let price = @pricing.prices |> filter(p => p.productId == prodId) |> first()
 
         Product: {
           @id: prodId,
