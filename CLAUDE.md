@@ -196,7 +196,7 @@ Command-line tool for JSON processing with its own query language.
 Input and output can be XML, JSON, CSV, YAML, or custom formats—transformation logic remains the same.
 
 **2. Functional Programming:**
-Inspired by DataWeave's functional approach but with XSLT's declarative template matching.
+Inspired by DataWeave's functional approach with immutable data structures, pure functions, and composability.
 
 **3. XSLT Heritage:**
 Learn from 25+ years of XSLT design, adoption patterns, and mistakes.
@@ -261,42 +261,37 @@ input.Order[Total > 1000]          // Predicate filtering
 - **JSON:** `input.Order.Customer.Name` → JSONPath `$.Order.Customer.Name`
 - **CSV:** `input.Order.Customer.Name` → Column access with headers
 
-#### 3.2.3 Template Matching (XSLT-inspired)
+#### 3.2.3 Pattern Matching
+
+UTL-X provides expression-based pattern matching (similar to DataWeave's `match` statement):
 
 ```utlx
 %utlx 1.0
-input xml
+input json
 output json
 ---
-
-// Template matching (like XSLT)
-template match="Order" {
-  invoice: {
-    id: @id,
-    date: @date,
-    customer: apply(Customer),
-    items: apply(Items/Item),
-    total: sum(Items/Item/(@price * @quantity))
-  }
-}
-
-template match="Customer" {
-  name: Name,
-  email: Email
-}
-
-template match="Item" {
-  sku: @sku,
-  quantity: @quantity,
-  price: @price,
-  subtotal: @price * @quantity
+{
+  orders: @input.orders |> map(order => {
+    status: match order.status {
+      "pending" => "Awaiting Processing",
+      "shipped" => "In Transit",
+      "delivered" => "Completed",
+      _ => "Unknown"
+    },
+    priority: match {
+      case order.total > 1000 => "high",
+      case order.total > 100 => "medium",
+      case _ => "low"
+    }
+  })
 }
 ```
 
 **Key Features:**
-- Pattern matching on structure
-- Recursive template application
-- Context-aware transformations
+- Value-based pattern matching
+- Type matching support
+- Predicate expressions
+- Default case with `_`
 
 #### 3.2.4 Functional Constructs
 
@@ -602,6 +597,8 @@ type UDM =
 - Init time: 50-200ms (compilation)
 - Runtime: 3-15ms per document (competitive with DataWeave)
 
+**Note:** Template inlining mentioned above refers to function inlining optimization, not XSLT-style templates.
+
 ---
 
 ## 5. Implementation Roadmap
@@ -700,7 +697,7 @@ UTL-X Source → LLVM IR → Native Binary
 | **License** | W3C (Open) | Proprietary | AGPL-3.0 / Commercial |
 | **Commercial Use** | Free | Requires MuleSoft | Commercial License Available |
 | **Formats** | XML only | XML, JSON, CSV, Java | XML, JSON, CSV, YAML, extensible |
-| **Paradigm** | Declarative templates | Functional expressions | Hybrid (templates + functional) |
+| **Paradigm** | Declarative templates | Pure functional | Pure functional |
 | **Learning Curve** | Steep | Medium | Medium |
 | **Performance** | Good (compiled) | Good | Excellent (optimized compilation) |
 | **Tooling** | Excellent (mature) | Good (MuleSoft ecosystem) | TBD (planned) |
@@ -708,7 +705,7 @@ UTL-X Source → LLVM IR → Native Binary
 | **Runtime** | JVM, .NET, C++ | JVM only | JVM, JavaScript, Native |
 | **Type System** | XSD-aware | Strong, inferred | Strong, inferred |
 | **Functions** | Built-in + custom (XSLT 2.0+) | Rich standard library | Rich standard library |
-| **Pattern Matching** | Yes (templates) | Yes (case/match) | Yes (templates + match) |
+| **Pattern Matching** | Declarative templates | Expression-based match | Expression-based match |
 | **Governance** | W3C | MuleSoft/Salesforce | Independent / Commercial |
 | **Project Leadership** | W3C Working Group | Salesforce/MuleSoft | Ir. Marcel A. Grauwen |
 | **Business Model** | Standards body | SaaS Platform | Open Core (AGPL + Commercial) |
@@ -733,19 +730,24 @@ UTL-X Source → LLVM IR → Native Binary
 
 **From XSLT:**
 ```
-XSLT Template → UTL Template (1:1 mapping for most cases)
-XPath expressions → UTL selectors (similar syntax)
+XSLT templates → UTL-X functions with composition
+<xsl:template match="Order"> → let processOrder = (order) => { ... }
+<xsl:apply-templates select="Items"/> → items |> map(processItem)
+XPath expressions → UTL-X selectors (similar syntax)
 ```
 
 **From DataWeave:**
 ```
-DataWeave scripts → UTL scripts (syntax similarity)
-MuleSoft modules → UTL standard library
+DataWeave scripts → UTL-X scripts (very similar syntax)
+%dw 2.0 → %utlx 1.0
+payload → @input
+MuleSoft modules → UTL-X standard library
 ```
 
 **From Custom Code:**
 ```
-Java/JavaScript transformation logic → UTL declarative transformation
+Java/JavaScript transformation logic → UTL-X functional transformation
+Imperative loops → map/filter/reduce pipelines
 ```
 
 ### 7.3 Integration Points

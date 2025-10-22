@@ -317,24 +317,25 @@ input.items
   |> take(10)
 ```
 
-### Template Matching (XSLT-style)
+### Pattern Matching
 ```utlx
-template match="Order" {
-  invoice: {
-    id: @id,
-    customer: apply(Customer),
-    items: apply(Items/Item)
+match order.status {
+  "pending" => {
+    message: "Awaiting Processing",
+    priority: "high"
+  },
+  "shipped" => {
+    message: "In Transit",
+    priority: "medium"
+  },
+  "delivered" => {
+    message: "Completed",
+    priority: "low"
+  },
+  _ => {
+    message: "Unknown",
+    priority: "urgent"
   }
-}
-
-template match="Customer" {
-  name: Name,
-  email: Email
-}
-
-template match="Item" {
-  sku: @sku,
-  price: parseNumber(@price)
 }
 ```
 

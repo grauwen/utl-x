@@ -18,15 +18,15 @@ UTL-X (Universal Transformation Language Extended) is a format-agnostic function
 
 1. **Format Agnostic:** Single syntax works across all data formats
 2. **Functional:** Immutable data structures, pure functions, composability
-3. **Declarative:** XSLT-inspired template matching with modern syntax
+3. **Declarative:** Expression-based transformations with pattern matching
 4. **Performance:** Compile-time optimization, efficient runtime
 5. **Type Safe:** Strong type system with type inference
 6. **Extensible:** Plugin architecture for custom formats
 
 ### 1.3 Influences
 
-- **XSLT** - Template matching and declarative transformations
-- **DataWeave** - Format abstraction and functional approach
+- **DataWeave** - Format abstraction, functional programming, pattern matching
+- **XSLT** - Format-agnostic principles, selector syntax
 - **JSONata** - Concise query syntax
 - **Kotlin** - Modern, expressive syntax
 
@@ -372,73 +372,9 @@ match orderType {
 
 ---
 
-## 8. Template Matching
+## 8. Variable Bindings
 
-### 8.1 Template Definition
-
-XSLT-inspired declarative templates:
-
-```utlx
-template match="<pattern>" {
-  <transformation>
-}
-```
-
-**Example:**
-```utlx
-template match="Order" {
-  invoice: {
-    id: @id,
-    total: sum(Items/Item/(@price * @quantity))
-  }
-}
-```
-
-### 8.2 Template Application
-
-```utlx
-apply(<selector>)
-```
-
-**Example:**
-```utlx
-template match="Order" {
-  order: {
-    customer: apply(Customer),
-    items: apply(Items/Item)
-  }
-}
-
-template match="Customer" {
-  name: Name,
-  email: Email
-}
-
-template match="Item" {
-  sku: @sku,
-  quantity: @quantity
-}
-```
-
-### 8.3 Template Priority
-
-When multiple templates match, the most specific wins:
-
-```utlx
-template match="Item" {
-  // General item handling
-}
-
-template match="Item[@special=true]" {
-  // Special item handling (higher priority)
-}
-```
-
----
-
-## 9. Variable Bindings
-
-### 9.1 Let Expressions
+### 8.1 Let Expressions
 
 ```utlx
 let name = expression
@@ -520,7 +456,7 @@ employees |> map(emp => {
 - `let x = value` followed by `[array]` (two separate statements)
 - `let x = value[array]` (array indexing operation)
 
-### 9.2 Scoping
+### 8.2 Scoping
 
 Variables are lexically scoped:
 
@@ -539,9 +475,9 @@ Variables are lexically scoped:
 
 ---
 
-## 10. User-Defined Functions
+## 9. User-Defined Functions
 
-### 10.1 Function Definition
+### 9.1 Function Definition
 
 ```utlx
 function name(param1: Type1, param2: Type2): ReturnType {
@@ -560,7 +496,7 @@ function formatCurrency(value: Number): String {
 }
 ```
 
-### 10.2 Function Usage
+### 9.2 Function Usage
 
 ```utlx
 {
@@ -572,9 +508,9 @@ function formatCurrency(value: Number): String {
 
 ---
 
-## 11. Format-Specific Features
+## 10. Format-Specific Features
 
-### 11.1 XML Namespaces
+### 10.1 XML Namespaces
 
 ```utlx
 input xml {
@@ -589,7 +525,7 @@ input xml {
 }
 ```
 
-### 11.2 CSV Options
+### 10.2 CSV Options
 
 ```utlx
 input csv {
@@ -601,7 +537,7 @@ input csv {
 }
 ```
 
-### 11.3 JSON Schema Validation
+### 10.3 JSON Schema Validation
 
 ```utlx
 input json {
@@ -612,7 +548,7 @@ input json {
 
 ---
 
-## 12. Single Output Philosophy
+## 11. Single Output Philosophy
 
 UTL-X follows DataWeave's principle: **one transformation = one output**.
 
@@ -638,7 +574,7 @@ See [Multiple Inputs documentation](../language-guide/multiple-inputs-outputs.md
 
 ---
 
-## 13. Comments
+## 12. Comments
 
 ```utlx
 // Single-line comment
@@ -656,9 +592,9 @@ See [Multiple Inputs documentation](../language-guide/multiple-inputs-outputs.md
 
 ---
 
-## 14. Type System
+## 13. Type System
 
-### 14.1 Type Inference
+### 13.1 Type Inference
 
 UTL-X infers types automatically:
 
@@ -668,7 +604,7 @@ let name = "Alice"   // Inferred as String
 let items = [1, 2]   // Inferred as Array<Number>
 ```
 
-### 14.2 Type Annotations
+### 13.2 Type Annotations
 
 Optional type annotations:
 
@@ -681,7 +617,7 @@ function process(data: Array<Object>): Object {
 }
 ```
 
-### 14.3 Type Checking
+### 13.3 Type Checking
 
 Type errors are caught at compile time:
 
@@ -691,9 +627,9 @@ let x: Number = "hello"  // ERROR: Type mismatch
 
 ---
 
-## 15. Error Handling
+## 14. Error Handling
 
-### 15.1 Try-Catch (Future)
+### 14.1 Try-Catch (Future)
 
 ```utlx
 try {
@@ -703,7 +639,7 @@ try {
 }
 ```
 
-### 15.2 Default Values
+### 14.2 Default Values
 
 Use `||` operator for defaults:
 
@@ -716,7 +652,7 @@ Use `||` operator for defaults:
 
 ---
 
-## 16. Pipeline Operator
+## 15. Pipeline Operator
 
 Chain transformations:
 
@@ -729,20 +665,20 @@ input.items
 
 ---
 
-## 17. Keywords
+## 16. Keywords
 
 Reserved keywords:
 
 ```
-and, apply, as, break, case, catch, const, continue, default,
+and, as, break, case, catch, const, continue, default,
 do, else, false, finally, for, function, if, import, in,
 input, let, match, module, null, or, output, return,
-template, throw, true, try, typeof, var, when, while
+throw, true, try, typeof, var, when, while
 ```
 
 ---
 
-## 18. Operators Precedence
+## 17. Operators Precedence
 
 From highest to lowest:
 
@@ -759,9 +695,9 @@ From highest to lowest:
 
 ---
 
-## 19. Examples
+## 18. Examples
 
-### 19.1 Simple Transformation
+### 18.1 Simple Transformation
 
 ```utlx
 %utlx 1.0
@@ -775,36 +711,48 @@ output json
 }
 ```
 
-### 19.2 Template Matching
+### 18.2 Pattern Matching
 
 ```utlx
 %utlx 1.0
-input xml
+input json
 output json
 ---
+{
+  orders: input.orders |> map(order => {
+    let shippingInfo = match order.type {
+      "express" => {
+        cost: 15.00,
+        days: 1,
+        message: "Next-day delivery"
+      },
+      "standard" => {
+        cost: 5.00,
+        days: 5,
+        message: "Standard shipping"
+      },
+      "economy" => {
+        cost: 0.00,
+        days: 10,
+        message: "Free economy shipping"
+      },
+      _ => {
+        cost: 5.00,
+        days: 7,
+        message: "Default shipping"
+      }
+    }
 
-template match="Order" {
-  invoice: {
-    id: @id,
-    date: @date,
-    customer: apply(Customer),
-    items: apply(Items/Item)
-  }
-}
-
-template match="Customer" {
-  name: Name,
-  email: Email
-}
-
-template match="Item" {
-  sku: @sku,
-  price: @price,
-  quantity: @quantity
+    {
+      orderId: order.id,
+      type: order.type,
+      shipping: shippingInfo
+    }
+  })
 }
 ```
 
-### 19.3 Complex Transformation
+### 18.3 Complex Transformation
 
 ```utlx
 %utlx 1.0
@@ -840,7 +788,7 @@ output json
 
 ---
 
-## 20. Grammar (ANTLR4 notation)
+## 19. Grammar (ANTLR4 notation)
 
 ```antlr
 // Simplified grammar
@@ -883,15 +831,15 @@ functionCall
 
 ---
 
-## 21. Conformance
+## 20. Conformance
 
-### 21.1 Levels
+### 20.1 Levels
 
 - **Level 0:** Basic transformations, simple selectors
 - **Level 1:** Functions, control flow, type system
-- **Level 2:** Template matching, advanced features
+- **Level 2:** Pattern matching, advanced features
 
-### 21.2 Optional Features
+### 20.2 Optional Features
 
 - CSV support
 - YAML support
