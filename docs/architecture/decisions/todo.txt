@@ -2,6 +2,8 @@ TODO's
 
 See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/Next-steps.md
 ----
+See https://github.com/grauwen/utl-x/blob/main/docs/architecture/parallelization-analysis.md
+----
 UTL-X doesn't support multiple file inputs yet
 
 ```
