@@ -24,7 +24,6 @@ import org.apache.utlx.stdlib.json.*
 import org.apache.utlx.stdlib.jws.*
 import org.apache.utlx.stdlib.csv.*
 import org.apache.utlx.stdlib.yaml.*
-import org.apache.utlx.stdlib.io.*
 
 
 
@@ -175,9 +174,6 @@ object StandardLibrary {
        
        // YAML functions
        registerYAMLFunctions()
-
-       // File I/O functions
-       registerIOFunctions()
 
     }
 
@@ -1551,12 +1547,6 @@ object StandardLibrary {
         register("yamlValidate", YAMLFunctions::yamlValidate)
         register("yamlValidateKeyPattern", YAMLFunctions::yamlValidateKeyPattern)
         register("yamlHasRequiredFields", YAMLFunctions::yamlHasRequiredFields)
-    }
-
-    private fun registerIOFunctions() {
-        register("readFile", IOFunctions::readFile)
-        register("fileExists", IOFunctions::fileExists)
-        register("fileSize", IOFunctions::fileSize)
     }
 }
 
