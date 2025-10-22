@@ -6,6 +6,8 @@ Paralellization, see https://github.com/grauwen/utl-x/blob/main/docs/architectur
 ----
 Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architecture/module-system-design.md
 ----
+JVM Design, init, runtime: see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-runtime-design.md
+----
 Dependency graph construction from AST?
 ----
 .gitnore exclude the build jars going into the GIT repo. utlx is a script calling the jar which is not checkin. Keep till a release version?
