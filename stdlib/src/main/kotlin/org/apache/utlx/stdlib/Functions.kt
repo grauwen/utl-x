@@ -540,6 +540,8 @@ object StandardLibrary {
     
     private fun registerTypeFunctions() {
         register("getType", TypeFunctions::getType)
+        registerAlias("typeof", "getType", "JavaScript/TypeScript compatibility")
+        registerAlias("typeOf", "getType", "UTL-X camelCase naming convention")
         register("isString", TypeFunctions::isString)
         register("isNumber", TypeFunctions::isNumber)
         register("isBoolean", TypeFunctions::isBoolean)
