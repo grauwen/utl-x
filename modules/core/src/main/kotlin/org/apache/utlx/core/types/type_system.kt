@@ -26,13 +26,24 @@ sealed class UTLXType {
     object Null : UTLXType() {
         override fun toString() = "Null"
     }
-    
+
+    object Date : UTLXType() {
+        override fun toString() = "Date"
+    }
+
     object Any : UTLXType() {
         override fun toString() = "Any"
     }
-    
+
     object Unknown : UTLXType() {
         override fun toString() = "Unknown"
+    }
+
+    /**
+     * Nullable type: T?
+     */
+    data class Nullable(val innerType: UTLXType) : UTLXType() {
+        override fun toString() = "$innerType?"
     }
     
     /**
@@ -268,7 +279,37 @@ class TypeChecker(private val stdlib: StandardLibrary) {
                     }
                 }
             }
-            
+
+            is Expression.SafeNavigation -> {
+                // Safe navigation always returns nullable type
+                val targetType = inferType(expr.target, env)
+
+                // Get the property type (same logic as MemberAccess)
+                val propertyType = when (targetType) {
+                    is UTLXType.Nullable -> {
+                        // If target is already nullable, unwrap it first
+                        when (val innerType = targetType.innerType) {
+                            is UTLXType.Object -> {
+                                innerType.properties[expr.property] ?: UTLXType.Unknown
+                            }
+                            is UTLXType.Any, is UTLXType.Unknown -> UTLXType.Any
+                            else -> UTLXType.Unknown
+                        }
+                    }
+                    is UTLXType.Object -> {
+                        targetType.properties[expr.property] ?: UTLXType.Unknown
+                    }
+                    is UTLXType.Any, is UTLXType.Unknown -> UTLXType.Any
+                    else -> UTLXType.Unknown
+                }
+
+                // Always wrap result in Nullable (safe navigation returns null if target is null or property doesn't exist)
+                when (propertyType) {
+                    is UTLXType.Nullable -> propertyType  // Already nullable
+                    else -> UTLXType.Nullable(propertyType)
+                }
+            }
+
             is Expression.IndexAccess -> {
                 val targetType = inferType(expr.target, env)
                 val indexType = inferType(expr.index, env)
@@ -320,8 +361,24 @@ class TypeChecker(private val stdlib: StandardLibrary) {
             
             is Expression.LetBinding -> {
                 val valueType = inferType(expr.value, env)
-                env.define(expr.name, valueType)
-                valueType
+
+                // Check type annotation if present
+                if (expr.typeAnnotation != null) {
+                    val annotatedType = expr.typeAnnotation.toUTLXType()
+                    if (!valueType.isAssignableTo(annotatedType)) {
+                        errors.add(TypeError(
+                            "Type mismatch in let binding '${expr.name}': " +
+                            "expected ${annotatedType}, got ${valueType}",
+                            expr.location
+                        ))
+                    }
+                    // Use the annotated type (more specific than inferred)
+                    env.define(expr.name, annotatedType)
+                    annotatedType
+                } else {
+                    env.define(expr.name, valueType)
+                    valueType
+                }
             }
             
             is Expression.FunctionCall -> {
@@ -391,9 +448,25 @@ class TypeChecker(private val stdlib: StandardLibrary) {
                     childEnv.define(param.name, type)
                     type
                 }
-                
-                val returnType = inferType(expr.body, childEnv)
-                UTLXType.Function(paramTypes, returnType)
+
+                val inferredReturnType = inferType(expr.body, childEnv)
+
+                // Check return type annotation if present
+                val actualReturnType = if (expr.returnType != null) {
+                    val annotatedReturnType = expr.returnType.toUTLXType()
+                    if (!inferredReturnType.isAssignableTo(annotatedReturnType)) {
+                        errors.add(TypeError(
+                            "Type mismatch in lambda return type: " +
+                            "expected ${annotatedReturnType}, got ${inferredReturnType}",
+                            expr.location
+                        ))
+                    }
+                    annotatedReturnType
+                } else {
+                    inferredReturnType
+                }
+
+                UTLXType.Function(paramTypes, actualReturnType)
             }
             
             is Expression.Pipe -> {
@@ -538,6 +611,8 @@ fun Type.toUTLXType(): UTLXType {
         is Type.String -> UTLXType.String
         is Type.Number -> UTLXType.Number
         is Type.Boolean -> UTLXType.Boolean
+        is Type.Null -> UTLXType.Null
+        is Type.Date -> UTLXType.Date
         is Type.Any -> UTLXType.Any
         is Type.Array -> UTLXType.Array(this.elementType.toUTLXType())
         is Type.Object -> UTLXType.Object(this.properties.mapValues { it.value.toUTLXType() })
@@ -546,6 +621,7 @@ fun Type.toUTLXType(): UTLXType {
             this.returnType.toUTLXType()
         )
         is Type.Union -> UTLXType.Union(this.types.map { it.toUTLXType() }.toSet())
+        is Type.Nullable -> UTLXType.Nullable(this.innerType.toUTLXType())
     }
 }
 

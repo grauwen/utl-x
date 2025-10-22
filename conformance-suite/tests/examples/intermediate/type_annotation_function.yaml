@@ -1,0 +1,42 @@
+name: "type_annotation_function"
+category: "examples/intermediate"
+description: "Type annotations in function definitions"
+tags: ["type-checking", "type-annotation", "function", "intermediate", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "x": 10,
+      "y": 20
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  function Add(a: Number, b: Number): Number {
+    a + b
+  }
+
+  {
+    sum: Add(@input.x, @input.y)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "sum": 30
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  source: "type-checking-implementation"
+  complexity: "intermediate"
+  notes: ["Tests type annotations in user-defined functions with parameters and return type"]

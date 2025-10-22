@@ -1,0 +1,35 @@
+name: "type_annotation_let_binding"
+category: "examples/basic"
+description: "Type annotations in let bindings - valid assignment"
+tags: ["type-checking", "type-annotation", "let-binding", "basic", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "value": 42
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  (let x: Number = @input.value in { result: x * 2 })
+
+expected:
+  format: json
+  data: |
+    {
+      "result": 84
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  source: "type-checking-implementation"
+  complexity: "basic"
+  notes: ["Tests type annotation in let binding with valid type"]

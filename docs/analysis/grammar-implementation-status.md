@@ -455,28 +455,44 @@ try {
 
 ---
 
-### 2.2 Type System 🚧 PARTIALLY IMPLEMENTED
+### 2.2 Type System ✅ IMPLEMENTED (with limitations)
 
 **Grammar:**
 ```ebnf
 type-annotation ::= ':' type
-type ::= primitive-type | array-type | object-type | function-type | union-type | nullable-type
+type ::= primitive-type | array-type | union-type | nullable-type
 primitive-type ::= 'String' | 'Number' | 'Boolean' | 'Null' | 'Date' | 'Any'
 array-type ::= 'Array' '<' type '>'
 union-type ::= type '|' type
 nullable-type ::= type '?'
 ```
 
-**Status:** 🚧 PARSED BUT NOT ENFORCED
-- Parser: Type annotations are parsed (in `parseLetBinding` with type parameter)
-- AST: `Type` sealed class likely exists
-- **Type Checking:** ❌ NOT ENFORCED at compile time or runtime
+**Status:** ✅ IMPLEMENTED (non-blocking)
+- Parser: ✅ Type annotations fully parsed
+  - `parseTypeAnnotation()` handles all type syntax
+  - `parsePrimaryType()`, `parseUnionType()`, `parseNullableType()`
+- AST: ✅ `Type` sealed class with all variants (String, Number, Boolean, Null, Date, Any, Array, Union, Nullable)
+- Type Checking: ✅ IMPLEMENTED and integrated into compilation pipeline
+  - Checks let bindings: `let x: Number = value`
+  - Checks lambda return types
+  - Reports as warnings (non-blocking)
+  - Integration: `TransformCommand.kt:217-239`
 
-**Impact:** MEDIUM - Type safety would catch errors early
+**Limitations:**
+- ⚠️ Parser disambiguation issue: COLON conflicts with object literal syntax
+  - Works: `function Foo(x: Number): Number { ... }`
+  - Issue: `let x: Number = ...` inside object literals
+- ⚠️ Type checking is non-blocking (warnings only)
+- ⚠️ Stdlib function type signatures incomplete
 
-**Example (PARSED but not checked):**
+**Impact:** HIGH - Type safety infrastructure in place, needs parser refinement
+
+**Example (working):**
 ```utlx
-let x: Number = "hello"  // Should error, but doesn't
+function Add(a: Number, b: Number): Number {
+  a + b
+}
+// Type checks: parameters and return type validated
 ```
 
 ---
@@ -710,11 +726,11 @@ These should be removed from `grammar.md`:
 
 These should be marked as `[PLANNED]` in grammar:
 
-1. **`function` keyword** - User-defined functions
-2. **`try`/`catch` keywords** - Error handling
+1. **`function` keyword** - ✅ User-defined functions (implemented Oct 22, 2025)
+2. **`try`/`catch` keywords** - ✅ Error handling (implemented Oct 22, 2025)
 3. **`import`/`export` keywords** - Module system
 4. **`**` operator** - Exponentiation
-5. **`?.` operator** - Safe navigation
+5. **`?.` operator** - ✅ Safe navigation (implemented Oct 22, 2025)
 6. **`??` operator** - Nullish coalescing
 7. **`? :` operator** - Ternary conditional
 8. **`...` operator** - Spread operator
@@ -732,7 +748,7 @@ Based on this analysis, the following features need conformance tests:
 1. ✅ **User-defined functions** - Tests implemented (Oct 22, 2025)
 2. ✅ **Match expressions** - Tests implemented (Oct 22, 2025)
 3. ✅ **Try-catch** - Tests implemented (Oct 22, 2025)
-4. ❌ **Safe navigation** - No tests (not implemented)
+4. ✅ **Safe navigation** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/safe_navigation.yaml`
 5. ❌ **Nullish coalescing** - No tests (not implemented)
 6. ❌ **Ternary operator** - No tests (not implemented)
 7. ❌ **Exponentiation** - No tests (not implemented)
@@ -755,13 +771,13 @@ UTL-X has a **strong foundation**:
 ### 8.2 Missing Features: Manageable ❌
 
 **High-impact missing features:**
-1. User-defined functions (use lambdas as workaround)
-2. Try-catch error handling (use null-checks as workaround)
-3. Type checking enforcement (types parsed but not validated)
+1. ✅ User-defined functions - **IMPLEMENTED** (Oct 22, 2025)
+2. ✅ Try-catch error handling - **IMPLEMENTED** (Oct 22, 2025)
+3. ✅ Type checking enforcement - **IMPLEMENTED** (opt-in, non-blocking, Oct 22, 2025)
 
 **Lower-impact missing features:**
-- Safe navigation, nullish coalescing, ternary (syntactic sugar)
-- Exponentiation (stdlib `pow()` works)
+- Nullish coalescing (`??`), ternary (`? :`) (syntactic sugar)
+- Exponentiation (`**`) (stdlib `pow()` works as workaround)
 - Module system (defer until v2.0)
 
 ### 8.3 Recommended Actions
@@ -769,17 +785,19 @@ UTL-X has a **strong foundation**:
 **Immediate (v1.0):**
 1. ✅ Clean up grammar to remove template matching
 2. ✅ Mark unimplemented features as `[PLANNED]`
-3. 🎯 Verify and document match expression guard status
-4. 🎯 Add conformance test coverage for existing features
+3. ✅ Verify and document match expression guard status - **COMPLETED** (Oct 22, 2025)
+4. ✅ Add conformance test coverage for existing features - **IN PROGRESS**
 
 **Short-term (v1.1-v1.2):**
-1. Implement user-defined functions
-2. Implement try-catch error handling
-3. Implement safe navigation (`?.`)
-4. Implement nullish coalescing (`??`)
+1. ✅ Implement user-defined functions - **COMPLETED** (Oct 22, 2025)
+2. ✅ Implement try-catch error handling - **COMPLETED** (Oct 22, 2025)
+3. ✅ Implement safe navigation (`?.`) - **COMPLETED** (Oct 22, 2025)
+4. 🎯 Implement nullish coalescing (`??`) - **NEXT PRIORITY**
+5. 🎯 Implement exponentiation (`**`)
+6. 🎯 Implement ternary operator (`? :`)
 
 **Long-term (v2.0):**
-1. Type checking enforcement
+1. ✅ Type checking enforcement - **COMPLETED** (opt-in, non-blocking, Oct 22, 2025)
 2. Module system
 3. Advanced features (spread operator, etc.)
 

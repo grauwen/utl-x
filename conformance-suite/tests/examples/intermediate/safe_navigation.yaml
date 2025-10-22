@@ -1,0 +1,62 @@
+name: "safe_navigation"
+category: "examples/intermediate"
+description: "Safe navigation operator (?.) for null-safe property access"
+tags: ["json", "safe-navigation", "null-safety", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "user": {
+        "name": "Alice",
+        "address": {
+          "city": "New York",
+          "zip": "10001"
+        }
+      },
+      "guest": {
+        "name": "Bob"
+      },
+      "anonymous": null
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    userName: input.user?.name,
+    userCity: input.user?.address?.city,
+    userZip: input.user?.address?.zip,
+    guestCity: input.guest?.address?.city,
+    anonymousName: input.anonymous?.name,
+    missingField: input.user?.nonexistent,
+    deepChain: input.anonymous?.level1?.level2?.level3
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "userName": "Alice",
+      "userCity": "New York",
+      "userZip": "10001",
+      "guestCity": null,
+      "anonymousName": null,
+      "missingField": null,
+      "deepChain": null
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Core Team"
+  source: "Safe navigation operator implementation"
+  complexity: "intermediate"
+  notes:
+    - "Safe navigation returns null if target is null"
+    - "Safe navigation returns null if property doesn't exist"
+    - "Can be chained for deep null-safe access"

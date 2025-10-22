@@ -366,6 +366,11 @@ class Parser(private val tokens: List<Token>) {
         
         while (true) {
             expr = when {
+                match(TokenType.QUESTION_DOT) -> {
+                    // Safe navigation: obj?.property
+                    val property = consume(TokenType.IDENTIFIER, "Expected property name after '?.'").lexeme
+                    Expression.SafeNavigation(expr, property, Location.from(previous()))
+                }
                 match(TokenType.DOT) -> {
                     val isAttribute = match(TokenType.AT)
                     // Allow wildcard selector: .* or .@*
@@ -594,6 +599,14 @@ class Parser(private val tokens: List<Token>) {
     private fun parseLetBinding(): Expression {
         val startToken = previous() // LET
         val name = consume(TokenType.IDENTIFIER, "Expected variable name").lexeme
+
+        // Parse optional type annotation: let x: Type = value
+        val typeAnnotation = if (match(TokenType.COLON)) {
+            parseTypeAnnotation()
+        } else {
+            null
+        }
+
         consume(TokenType.ASSIGN, "Expected '=' after variable name")
         val value = parseExpression()
 
@@ -603,12 +616,12 @@ class Parser(private val tokens: List<Token>) {
             val body = parseExpression()
 
             // Desugar to lambda application: ((x) => body)(value)
-            val parameter = Parameter(name, null, Location.from(startToken))
-            val lambda = Expression.Lambda(listOf(parameter), body, Location.from(startToken))
+            val parameter = Parameter(name, typeAnnotation, Location.from(startToken))
+            val lambda = Expression.Lambda(listOf(parameter), body, null, Location.from(startToken))
             return Expression.FunctionCall(lambda, listOf(value), Location.from(startToken))
         }
 
-        return Expression.LetBinding(name, value, Location.from(startToken))
+        return Expression.LetBinding(name, value, typeAnnotation, Location.from(startToken))
     }
 
     private fun parseFunctionDefinition(): Expression {
@@ -638,11 +651,26 @@ class Parser(private val tokens: List<Token>) {
         if (!check(TokenType.RPAREN)) {
             do {
                 val paramName = consume(TokenType.IDENTIFIER, "Expected parameter name").lexeme
-                parameters.add(Parameter(paramName, null, Location.from(previous())))
+
+                // Parse optional type annotation: paramName: Type
+                val paramType = if (match(TokenType.COLON)) {
+                    parseTypeAnnotation()
+                } else {
+                    null
+                }
+
+                parameters.add(Parameter(paramName, paramType, Location.from(previous())))
             } while (match(TokenType.COMMA))
         }
 
         consume(TokenType.RPAREN, "Expected ')' after parameters")
+
+        // Parse optional return type annotation: function Foo(): ReturnType
+        val returnType = if (match(TokenType.COLON)) {
+            parseTypeAnnotation()
+        } else {
+            null
+        }
 
         // Parse body - expect { expressions... }
         consume(TokenType.LBRACE, "Expected '{' before function body")
@@ -663,9 +691,9 @@ class Parser(private val tokens: List<Token>) {
         }
 
         // Desugar to: let name = (parameters) => body
-        val lambda = Expression.Lambda(parameters, body, Location.from(startToken))
+        val lambda = Expression.Lambda(parameters, body, returnType, Location.from(startToken))
 
-        return Expression.LetBinding(name, lambda, Location.from(startToken))
+        return Expression.LetBinding(name, lambda, returnType, Location.from(startToken))
     }
 
     private fun parsePrefixIfExpression(): Expression {
@@ -796,6 +824,78 @@ class Parser(private val tokens: List<Token>) {
         return Expression.TryCatch(tryBlock, errorVariable, catchBlock, Location.from(startToken))
     }
 
+    /**
+     * Parse type annotation
+     *
+     * Grammar:
+     *   type ::= union-type
+     *   union-type ::= nullable-type ('|' nullable-type)*
+     *   nullable-type ::= primary-type '?'?
+     *   primary-type ::= 'String' | 'Number' | 'Boolean' | 'Null' | 'Date' | 'Any'
+     *                 | 'Array' '<' type '>'
+     */
+    private fun parseTypeAnnotation(): Type {
+        return parseUnionType()
+    }
+
+    private fun parseUnionType(): Type {
+        var left = parseNullableType()
+
+        while (match(TokenType.PIPE)) {
+            val right = parseNullableType()
+            // Flatten unions: Type.Union(List(left, right))
+            val types = mutableListOf<Type>()
+            if (left is Type.Union) {
+                types.addAll(left.types)
+            } else {
+                types.add(left)
+            }
+            if (right is Type.Union) {
+                types.addAll(right.types)
+            } else {
+                types.add(right)
+            }
+            left = Type.Union(types)
+        }
+
+        return left
+    }
+
+    private fun parseNullableType(): Type {
+        val baseType = parsePrimaryType()
+
+        return if (match(TokenType.QUESTION)) {
+            Type.Nullable(baseType)
+        } else {
+            baseType
+        }
+    }
+
+    private fun parsePrimaryType(): Type {
+        if (!check(TokenType.IDENTIFIER)) {
+            throw ParseException("Expected type name", Location.from(peek()))
+        }
+
+        val typeName = advance().lexeme
+
+        return when (typeName) {
+            "String" -> Type.String
+            "Number" -> Type.Number
+            "Boolean" -> Type.Boolean
+            "Null" -> Type.Null
+            "Date" -> Type.Date
+            "Any" -> Type.Any
+            "Array" -> {
+                // Array<ElementType>
+                consume(TokenType.LT, "Expected '<' after 'Array'")
+                val elementType = parseTypeAnnotation()
+                consume(TokenType.GT, "Expected '>' after array element type")
+                Type.Array(elementType)
+            }
+            else -> throw ParseException("Unknown type: $typeName", Location.from(previous()))
+        }
+    }
+
     private fun parseArguments(): List<Expression> {
         val args = mutableListOf<Expression>()
         
@@ -820,7 +920,15 @@ class Parser(private val tokens: List<Token>) {
                 do {
                     if (check(TokenType.IDENTIFIER)) {
                         val paramName = advance().lexeme
-                        parameters.add(Parameter(paramName, null, Location.from(previous())))
+
+                        // Parse optional type annotation: paramName: Type
+                        val paramType = if (match(TokenType.COLON)) {
+                            parseTypeAnnotation()
+                        } else {
+                            null
+                        }
+
+                        parameters.add(Parameter(paramName, paramType, Location.from(previous())))
                     } else {
                         // Not a parameter list, backtrack
                         current = checkpoint
@@ -832,7 +940,7 @@ class Parser(private val tokens: List<Token>) {
             if (match(TokenType.RPAREN) && match(TokenType.ARROW)) {
                 // This is a multi-parameter lambda: (param1, param2) -> body
                 val body = parseExpression()
-                return Expression.Lambda(parameters, body, Location.from(tokens[checkpoint]))
+                return Expression.Lambda(parameters, body, null, Location.from(tokens[checkpoint]))
             } else {
                 // Not a lambda, backtrack and parse as normal expression
                 current = checkpoint
@@ -849,7 +957,7 @@ class Parser(private val tokens: List<Token>) {
                 // This is a single-parameter lambda: param -> body
                 val parameter = Parameter(paramName, null, Location.from(tokens[checkpoint]))
                 val body = parseExpression()
-                return Expression.Lambda(listOf(parameter), body, Location.from(tokens[checkpoint]))
+                return Expression.Lambda(listOf(parameter), body, null, Location.from(tokens[checkpoint]))
             } else {
                 // Not a lambda, backtrack and parse as normal expression
                 current = checkpoint

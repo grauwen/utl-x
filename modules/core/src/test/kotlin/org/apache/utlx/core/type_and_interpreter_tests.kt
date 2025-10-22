@@ -312,6 +312,7 @@ class InterpreterTest {
         val letExpr = Expression.LetBinding(
             "x",
             Expression.NumberLiteral(42.0, Location(1, 1)),
+            null,  // typeAnnotation
             Location(1, 1)
         )
         

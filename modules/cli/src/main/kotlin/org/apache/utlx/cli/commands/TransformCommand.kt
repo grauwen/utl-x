@@ -213,8 +213,30 @@ object TransformCommand {
             when (parseResult) {
                 is org.apache.utlx.core.parser.ParseResult.Success -> {
                     if (verbose) println("✓ Parsing successful")
-                    // Skip type checking for now as it requires additional setup
-                    return parseResult.program
+
+                    // Type checking
+                    if (verbose) println("Type checking...")
+                    val stdlib = org.apache.utlx.core.types.StandardLibrary()
+                    val typeChecker = TypeChecker(stdlib)
+                    val typeCheckResult = typeChecker.check(parseResult.program)
+
+                    when (typeCheckResult) {
+                        is org.apache.utlx.core.types.TypeCheckResult.Success -> {
+                            if (verbose) println("✓ Type checking successful (inferred type: ${typeCheckResult.type})")
+                            return parseResult.program
+                        }
+                        is org.apache.utlx.core.types.TypeCheckResult.Failure -> {
+                            // For now, print type errors as warnings but don't fail
+                            // Type checking is opt-in via type annotations
+                            if (verbose) {
+                                System.err.println("Type warnings:")
+                                typeCheckResult.errors.forEach { error ->
+                                    System.err.println("  ${error.message} at ${error.location}")
+                                }
+                            }
+                            return parseResult.program
+                        }
+                    }
                 }
                 is org.apache.utlx.core.parser.ParseResult.Failure -> {
                     System.err.println("Parse errors:")

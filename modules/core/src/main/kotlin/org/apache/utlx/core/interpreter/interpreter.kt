@@ -216,7 +216,9 @@ class Interpreter {
             }
             
             is Expression.MemberAccess -> evaluateMemberAccess(expr, env)
-            
+
+            is Expression.SafeNavigation -> evaluateSafeNavigation(expr, env)
+
             is Expression.IndexAccess -> evaluateIndexAccess(expr, env)
             
             is Expression.BinaryOp -> evaluateBinaryOp(expr, env)
@@ -347,6 +349,42 @@ class Interpreter {
                 "Cannot access property '${expr.property}' on ${target::class.simpleName}",
                 expr.location
             )
+        }
+    }
+
+    /**
+     * Evaluate safe navigation operator: target?.property
+     * Returns null if target is null, otherwise accesses property
+     */
+    private fun evaluateSafeNavigation(expr: Expression.SafeNavigation, env: Environment): RuntimeValue {
+        val target = evaluate(expr.target, env)
+
+        // If target is null, return null instead of throwing an error
+        if (target is RuntimeValue.NullValue) {
+            return RuntimeValue.NullValue
+        }
+
+        // Otherwise, access the property normally (same logic as MemberAccess)
+        return when (target) {
+            is RuntimeValue.ObjectValue -> {
+                target.properties[expr.property] ?: RuntimeValue.NullValue
+            }
+            is RuntimeValue.UDMValue -> {
+                when (val udm = target.udm) {
+                    is UDM.Object -> {
+                        val propValue = udm.get(expr.property)
+                        if (propValue != null) {
+                            // Auto-unwrap _text property for XML text nodes
+                            val unwrapped = unwrapTextNode(propValue)
+                            RuntimeValue.UDMValue(unwrapped)
+                        } else {
+                            RuntimeValue.NullValue
+                        }
+                    }
+                    else -> RuntimeValue.NullValue
+                }
+            }
+            else -> RuntimeValue.NullValue
         }
     }
 

@@ -144,7 +144,17 @@ sealed class Expression : Node() {
         val isAttribute: Boolean = false, // true for @attribute
         override val location: Location
     ) : Expression()
-    
+
+    /**
+     * Safe navigation: obj?.property
+     * Returns null if target is null, otherwise accesses property
+     */
+    data class SafeNavigation(
+        val target: Expression,
+        val property: String,
+        override val location: Location
+    ) : Expression()
+
     /**
      * Index access: array[0]
      */
@@ -208,6 +218,7 @@ sealed class Expression : Node() {
     data class LetBinding(
         val name: String,
         val value: Expression,
+        val typeAnnotation: Type? = null,
         override val location: Location
     ) : Expression()
     
@@ -217,6 +228,7 @@ sealed class Expression : Node() {
     data class Lambda(
         val parameters: List<Parameter>,
         val body: Expression,
+        val returnType: Type? = null,
         override val location: Location
     ) : Expression()
     
@@ -321,11 +333,14 @@ sealed class Type {
     object String : Type()
     object Number : Type()
     object Boolean : Type()
+    object Null : Type()
+    object Date : Type()
     object Any : Type()
     data class Array(val elementType: Type) : Type()
     data class Object(val properties: Map<kotlin.String, Type>) : Type()
     data class Function(val parameters: List<Type>, val returnType: Type) : Type()
     data class Union(val types: List<Type>) : Type()
+    data class Nullable(val innerType: Type) : Type()
 }
 
 /**
