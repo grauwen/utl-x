@@ -417,7 +417,7 @@ input.items
 
 ## 2. Advanced Features
 
-### 2.1 Try-Catch ❌ NOT IMPLEMENTED
+### 2.1 Try-Catch ✅ IMPLEMENTED
 
 **Grammar:**
 ```ebnf
@@ -426,29 +426,32 @@ try-catch-expression ::= 'try' block 'catch' ['(' identifier ')'] block
 block ::= '{' {statement} expression '}'
 ```
 
-**Status:** ❌ NOT IMPLEMENTED
-- Tokens: `TokenType.TRY`, `TokenType.CATCH` - NOT DEFINED
-- Parser: Does NOT parse try-catch
-- AST: No `TryCatch` node
-- Interpreter: No error catching
+**Status:** ✅ FULLY IMPLEMENTED (Oct 22, 2025)
+- Tokens: `TokenType.TRY`, `TokenType.CATCH` defined ✅
+- Parser: `parseTryCatchExpression()` method implemented ✅
+- AST: `TryCatch` node with try block, optional error variable, and catch block ✅
+- Interpreter: `evaluateTryCatch()` with exception catching ✅
 
-**Impact:** MEDIUM - Error handling currently relies on if-checks
+**Impact:** MEDIUM - Enables robust error handling in transformations
 
-**Example (NOT working):**
+**Example (WORKS):**
 ```utlx
 try {
-  parseNumber(input.value)
+  @input.value / @input.divisor
 } catch (e) {
-  0  // Default value
+  "Error: " + e  // e contains the error message
 }
 ```
 
-**Workaround:**
-```utlx
-// Use functions that return null on error, then check:
-let parsed = parseNumber(input.value)
-if (parsed != null) parsed else 0
-```
+**Key Features:**
+- **Optional error variable:** Can capture error with `catch (e)` or just `catch`
+- **Exception catching:** Catches all runtime errors in try block
+- **Error message binding:** Error variable contains the exception message string
+- **Type inference:** Return type is common type of try and catch blocks
+
+**Conformance Tests:**
+- ✅ `examples/basic/try_catch_basic.yaml` - Basic try-catch without error variable
+- ✅ `examples/intermediate/try_catch_with_error_variable.yaml` - Error variable binding
 
 ---
 
@@ -602,7 +605,7 @@ output-formats ::= '{' output-format-list '}'
 | `match` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `template` | ✅ (legacy) | ❌ | ❌ | ❌ REMOVED |
 | `apply` | ✅ (legacy) | ❌ | ❌ | ❌ REMOVED |
-| `try` / `catch` | ❌ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
+| `try` / `catch` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `import` / `export` | ✅ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
 | `return` | ✅ | ❌ | ❌ | ❌ NOT NEEDED |
 | `typeof` | ❌ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
@@ -631,22 +634,22 @@ output-formats ::= '{' output-format-list '}'
 
 ## 5. Priority Recommendations
 
-### 5.1 HIGH PRIORITY (Should implement)
+### 5.1 HIGH PRIORITY (Completed ✅)
 
-1. **User-Defined Functions** ❌
-   - Rationale: Code reuse, cleaner transformations
-   - Workaround exists: Use lambdas with `let`
-   - Effort: Medium (2-3 weeks)
+1. **User-Defined Functions** ✅ IMPLEMENTED (Oct 22, 2025)
+   - PascalCase naming convention
+   - Desugared to let bindings with lambdas
+   - Full composition support
 
-2. **Match Expressions** ❌
-   - Rationale: Core functional programming feature, cleaner than nested if-else
-   - Example: `match x { "A" => 1, "B" => 2, _ => 0 }`
-   - Effort: Medium (2-3 weeks for basic match, +1 week for guards)
+2. **Match Expressions** ✅ IMPLEMENTED (Oct 22, 2025)
+   - Literal patterns, wildcard, variable binding
+   - Guard conditions fully supported
+   - First-match semantics
 
-3. **Try-Catch** ❌
-   - Rationale: Better error handling
-   - Workaround: Use null-checking
-   - Effort: Medium (2-3 weeks)
+3. **Try-Catch** ✅ IMPLEMENTED (Oct 22, 2025)
+   - Exception catching with optional error variable
+   - Error message binding
+   - Works in all expression contexts
 
 ---
 
@@ -728,7 +731,7 @@ Based on this analysis, the following features need conformance tests:
 
 1. ✅ **User-defined functions** - Tests implemented (Oct 22, 2025)
 2. ✅ **Match expressions** - Tests implemented (Oct 22, 2025)
-3. ❌ **Try-catch** - No tests (not implemented)
+3. ✅ **Try-catch** - Tests implemented (Oct 22, 2025)
 4. ❌ **Safe navigation** - No tests (not implemented)
 5. ❌ **Nullish coalescing** - No tests (not implemented)
 6. ❌ **Ternary operator** - No tests (not implemented)

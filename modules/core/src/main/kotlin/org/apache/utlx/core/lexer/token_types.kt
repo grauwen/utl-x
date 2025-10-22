@@ -24,6 +24,8 @@ enum class TokenType {
     IN,              // in (for let...in expressions)
     IF,              // if
     ELSE,            // else
+    TRY,             // try
+    CATCH,           // catch
     MAP,             // map (can also be identifier)
     FILTER,          // filter
     REDUCE,          // reduce
@@ -119,6 +121,7 @@ data class Token(
     fun isKeyword(): Boolean = type in setOf(
         TokenType.INPUT, TokenType.OUTPUT, TokenType.TEMPLATE, TokenType.MATCH,
         TokenType.FUNCTION, TokenType.DEF, TokenType.LET, TokenType.IN, TokenType.IF, TokenType.ELSE,
+        TokenType.TRY, TokenType.CATCH,
         TokenType.MAP, TokenType.FILTER, TokenType.REDUCE, TokenType.APPLY,
         TokenType.IMPORT, TokenType.AS, TokenType.AUTO,
         TokenType.XML, TokenType.JSON, TokenType.CSV, TokenType.YAML
@@ -152,6 +155,8 @@ object Keywords {
         "in" to TokenType.IN,
         "if" to TokenType.IF,
         "else" to TokenType.ELSE,
+        "try" to TokenType.TRY,
+        "catch" to TokenType.CATCH,
         "map" to TokenType.MAP,
         "filter" to TokenType.FILTER,
         "reduce" to TokenType.REDUCE,

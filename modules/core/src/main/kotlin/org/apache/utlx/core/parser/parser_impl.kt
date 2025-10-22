@@ -439,6 +439,9 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.MATCH) -> {
                 parseMatchExpression()
             }
+            match(TokenType.TRY) -> {
+                parseTryCatchExpression()
+            }
             match(TokenType.AT) -> {
                 // Handle @input or @variable
                 val atToken = previous()
@@ -765,6 +768,32 @@ class Parser(private val tokens: List<Token>) {
                 throw ParseException("Expected pattern (literal, identifier, or '_')", Location.from(token))
             }
         }
+    }
+
+    private fun parseTryCatchExpression(): Expression {
+        val startToken = previous() // TRY
+
+        // Parse try block: try { expression }
+        consume(TokenType.LBRACE, "Expected '{' after 'try'")
+        val tryBlock = parseExpression()
+        consume(TokenType.RBRACE, "Expected '}' after try block")
+
+        // Parse catch: catch (errorVar) { expression } or catch { expression }
+        consume(TokenType.CATCH, "Expected 'catch' after try block")
+
+        // Optional error variable: catch (e) or just catch
+        var errorVariable: String? = null
+        if (match(TokenType.LPAREN)) {
+            errorVariable = consume(TokenType.IDENTIFIER, "Expected error variable name").lexeme
+            consume(TokenType.RPAREN, "Expected ')' after error variable")
+        }
+
+        // Parse catch block
+        consume(TokenType.LBRACE, "Expected '{' before catch block")
+        val catchBlock = parseExpression()
+        consume(TokenType.RBRACE, "Expected '}' after catch block")
+
+        return Expression.TryCatch(tryBlock, errorVariable, catchBlock, Location.from(startToken))
     }
 
     private fun parseArguments(): List<Expression> {

@@ -191,7 +191,17 @@ sealed class Expression : Node() {
         val elseBranch: Expression?,
         override val location: Location
     ) : Expression()
-    
+
+    /**
+     * Try-catch: try { expr } catch (errorVar) { handler }
+     */
+    data class TryCatch(
+        val tryBlock: Expression,
+        val errorVariable: String?,
+        val catchBlock: Expression,
+        override val location: Location
+    ) : Expression()
+
     /**
      * Let binding: let x = value
      */

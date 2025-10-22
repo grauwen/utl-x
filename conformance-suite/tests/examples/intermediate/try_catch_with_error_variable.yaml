@@ -1,0 +1,69 @@
+name: "try_catch_with_error_variable"
+category: "examples/intermediate"
+description: "Try-catch error handling with error variable binding"
+tags: ["try-catch", "error-handling", "error-variable", "intermediate", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "items": [
+        {"name": "Item1", "price": 10},
+        {"name": "Item2"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    results: map(@input.items, item => try {
+      {
+        name: item.name,
+        price: item.price,
+        taxedPrice: item.price * 1.08,
+        status: "success"
+      }
+    } catch (e) {
+      {
+        name: item.name,
+        price: null,
+        taxedPrice: null,
+        status: "error",
+        error: e
+      }
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "results": [
+        {
+          "name": "Item1",
+          "price": 10,
+          "taxedPrice": 10.8,
+          "status": "success"
+        },
+        {
+          "name": "Item2",
+          "price": null,
+          "taxedPrice": null,
+          "status": "error",
+          "error": "Left operand must be number"
+        }
+      ]
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  source: "grammar-implementation"
+  complexity: "intermediate"
+  notes: ["Demonstrates try-catch with error variable in map function"]

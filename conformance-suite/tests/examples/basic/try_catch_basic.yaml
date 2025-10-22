@@ -1,0 +1,44 @@
+name: "try_catch_basic"
+category: "examples/basic"
+description: "Basic try-catch error handling without error variable"
+tags: ["try-catch", "error-handling", "basic", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "value": 100,
+      "divisor": 0
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    result: try {
+      @input.value / @input.divisor
+    } catch {
+      -1
+    },
+    message: "Division attempted"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "result": -1,
+      "message": "Division attempted"
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  source: "grammar-implementation"
+  complexity: "basic"
+  notes: ["Demonstrates basic try-catch without error variable"]

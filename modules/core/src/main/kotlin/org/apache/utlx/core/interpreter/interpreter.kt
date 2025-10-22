@@ -283,7 +283,9 @@ class Interpreter {
             }
             
             is Expression.Match -> evaluateMatch(expr, env)
-            
+
+            is Expression.TryCatch -> evaluateTryCatch(expr, env)
+
             is Expression.TemplateApplication -> {
                 // Template application not yet implemented
                 throw RuntimeError("Template application not yet implemented", expr.location)
@@ -568,7 +570,25 @@ class Interpreter {
 
         throw RuntimeError("No matching case in match expression", expr.location)
     }
-    
+
+    private fun evaluateTryCatch(expr: Expression.TryCatch, env: Environment): RuntimeValue {
+        return try {
+            // Try to evaluate the try block
+            evaluate(expr.tryBlock, env)
+        } catch (e: Exception) {
+            // If an error occurs, evaluate the catch block
+            val catchEnv = env.createChild()
+
+            // If an error variable is specified, bind the error message to it
+            if (expr.errorVariable != null) {
+                val errorMessage = e.message ?: "Unknown error"
+                catchEnv.define(expr.errorVariable, RuntimeValue.StringValue(errorMessage))
+            }
+
+            evaluate(expr.catchBlock, catchEnv)
+        }
+    }
+
     private fun valuesEqual(left: RuntimeValue, right: RuntimeValue): Boolean {
         return when {
             left is RuntimeValue.StringValue && right is RuntimeValue.StringValue -> 

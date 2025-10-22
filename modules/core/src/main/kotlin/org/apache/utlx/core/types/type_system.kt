@@ -415,14 +415,21 @@ class TypeChecker(private val stdlib: StandardLibrary) {
                 val caseTypes = expr.cases.map { case ->
                     inferType(case.expression, env)
                 }
-                
+
                 if (caseTypes.isEmpty()) {
                     UTLXType.Null
                 } else {
                     caseTypes.reduce { acc, type -> acc.commonType(type) }
                 }
             }
-            
+
+            is Expression.TryCatch -> {
+                // Try-catch returns the common type of both try and catch blocks
+                val tryType = inferType(expr.tryBlock, env)
+                val catchType = inferType(expr.catchBlock, env)
+                tryType.commonType(catchType)
+            }
+
             is Expression.TemplateApplication -> {
                 // Templates produce UDM structures, typically objects
                 UTLXType.Any
