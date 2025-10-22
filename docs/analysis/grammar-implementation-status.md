@@ -353,20 +353,23 @@ property ::= (identifier | string-literal | '[' expression ']') ':' expression
            | '...' expression  (* spread operator *)
 ```
 
-**Status:** ✅ MOSTLY IMPLEMENTED
+**Status:** ✅ FULLY IMPLEMENTED
 - Basic properties: `{ name: "Alice", age: 30 }`
 - String keys: `{ "first-name": "Alice" }`
 - Computed keys: `{ [keyVar]: value }` (needs verification)
-- **Spread operator (`...`):** ❌ NOT IMPLEMENTED
+- **Spread operator (`...`):** ✅ IMPLEMENTED (Oct 22, 2025)
 
 **Evidence:**
-- AST: `ObjectLiteral`, `Property`
-- Parser: `parseObjectLiteral()`
-- Tests: Heavily used
+- AST: `ObjectLiteral`, `Property` (with `isSpread` flag), `SpreadElement`
+- Parser: `parseObjectLiteral()` handles spread syntax
+- Interpreter: Merges properties from spread objects
+- Type inference: Merges property types
+- Tests: `tests/examples/intermediate/spread_operator.yaml`
 
 **Spread Operator:**
 ```utlx
-{ ...existingObj, newKey: "value" }  // NOT IMPLEMENTED
+{ ...existingObj, newKey: "value" }  // ✅ Works
+{ ...obj1, ...obj2, c: 3 }           // ✅ Multiple spreads work
 ```
 
 ---
@@ -377,17 +380,22 @@ property ::= (identifier | string-literal | '[' expression ']') ':' expression
 ```ebnf
 array-literal ::= '[' [expression-list] ']'
 expression-list ::= expression {',' expression}
+expression ::= ... | '...' expression  (* spread operator *)
 ```
 
 **Status:** ✅ FULLY IMPLEMENTED
 - Arrays: `[1, 2, 3]`
 - Nested: `[[1, 2], [3, 4]]`
 - Mixed types: `[1, "two", true]`
+- **Spread operator (`...`):** ✅ IMPLEMENTED (Oct 22, 2025)
+  - `[...arr1, item, ...arr2]` - Flattens arrays in place
 
 **Evidence:**
-- AST: `ArrayLiteral`
-- Parser: `parseArrayLiteral()`
-- Tests: Widely used
+- AST: `ArrayLiteral`, `SpreadElement`
+- Parser: `parseArrayLiteral()` handles spread syntax
+- Interpreter: Flattens spread arrays
+- Type inference: Merges element types
+- Tests: `tests/examples/intermediate/spread_operator.yaml`
 
 ---
 
@@ -645,7 +653,7 @@ output-formats ::= '{' output-format-list '}'
 | `?.` (safe navigation) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED (Oct 22, 2025) |
 | `??` (nullish coalescing) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED (Oct 22, 2025) |
 | `? :` (ternary) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED (Oct 22, 2025) |
-| `...` (spread) | ✅ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
+| `...` (spread) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED (Oct 22, 2025) |
 
 ---
 
@@ -753,7 +761,7 @@ Based on this analysis, the following features need conformance tests:
 5. ✅ **Nullish coalescing** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/nullish_coalescing.yaml`
 6. ✅ **Exponentiation** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/exponentiation.yaml`
 7. ✅ **Ternary operator** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/ternary_operator.yaml`
-8. ❌ **Spread operator** - No tests (not implemented)
+8. ✅ **Spread operator** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/spread_operator.yaml`
 
 ---
 

@@ -1,0 +1,147 @@
+name: "spread_operator"
+category: "examples/intermediate"
+description: "Spread operator (...) for objects and arrays"
+tags: ["spread", "operators", "objects", "arrays", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "obj1": {"a": 1, "b": 2},
+      "obj2": {"c": 3, "d": 4},
+      "obj3": {"b": 99, "e": 5},
+      "arr1": [1, 2, 3],
+      "arr2": [4, 5],
+      "arr3": [6, 7, 8]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    // Object spread - basic
+    basicObjectSpread: { ...input.obj1 },
+
+    // Object spread - multiple spreads
+    multipleObjectSpread: { ...input.obj1, ...input.obj2 },
+
+    // Object spread - with additional properties
+    spreadWithProperties: { ...input.obj1, c: 3, d: 4 },
+
+    // Object spread - property override (later wins)
+    propertyOverride: { ...input.obj1, b: 99, ...input.obj3 },
+
+    // Object spread - spread after properties
+    spreadAfterProps: { x: 100, ...input.obj1, y: 200 },
+
+    // Object spread - inline object
+    inlineObjectSpread: { ...{name: "Alice", age: 30}, city: "NYC" },
+
+    // Object spread - empty object
+    emptyObjectSpread: { ...{}, a: 1 },
+
+    // Array spread - basic
+    basicArraySpread: [...input.arr1],
+
+    // Array spread - multiple spreads
+    multipleArraySpread: [...input.arr1, ...input.arr2],
+
+    // Array spread - with additional elements
+    spreadWithElements: [...input.arr1, 10, 20],
+
+    // Array spread - elements before and after
+    elementsAround: [0, ...input.arr1, 10],
+
+    // Array spread - inline array
+    inlineArraySpread: [...[1, 2], 3, ...[4, 5]],
+
+    // Array spread - empty array
+    emptyArraySpread: [...[], 1, 2],
+
+    // Array spread - multiple arrays
+    multipleArrays: [...input.arr1, ...input.arr2, ...input.arr3],
+
+    // Combined - array of objects with spread
+    arrayOfObjects: [
+      {...input.obj1, id: 1},
+      {...input.obj2, id: 2}
+    ],
+
+    // Combined - object with array spread
+    objectWithArraySpread: {
+      items: [...input.arr1, ...input.arr2],
+      count: 5
+    },
+
+    // Nested spread
+    nestedSpread: {
+      outer: {
+        ...input.obj1,
+        inner: [...input.arr1]
+      }
+    },
+
+    // Spread with expressions
+    spreadWithExpressions: {
+      ...input.obj1,
+      total: input.obj1.a + input.obj1.b
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "basicObjectSpread": {"a": 1, "b": 2},
+      "multipleObjectSpread": {"a": 1, "b": 2, "c": 3, "d": 4},
+      "spreadWithProperties": {"a": 1, "b": 2, "c": 3, "d": 4},
+      "propertyOverride": {"a": 1, "b": 99, "e": 5},
+      "spreadAfterProps": {"x": 100, "a": 1, "b": 2, "y": 200},
+      "inlineObjectSpread": {"name": "Alice", "age": 30, "city": "NYC"},
+      "emptyObjectSpread": {"a": 1},
+      "basicArraySpread": [1, 2, 3],
+      "multipleArraySpread": [1, 2, 3, 4, 5],
+      "spreadWithElements": [1, 2, 3, 10, 20],
+      "elementsAround": [0, 1, 2, 3, 10],
+      "inlineArraySpread": [1, 2, 3, 4, 5],
+      "emptyArraySpread": [1, 2],
+      "multipleArrays": [1, 2, 3, 4, 5, 6, 7, 8],
+      "arrayOfObjects": [
+        {"a": 1, "b": 2, "id": 1},
+        {"c": 3, "d": 4, "id": 2}
+      ],
+      "objectWithArraySpread": {
+        "items": [1, 2, 3, 4, 5],
+        "count": 5
+      },
+      "nestedSpread": {
+        "outer": {
+          "a": 1,
+          "b": 2,
+          "inner": [1, 2, 3]
+        }
+      },
+      "spreadWithExpressions": {
+        "a": 1,
+        "b": 2,
+        "total": 3
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Core Team"
+  source: "Spread operator implementation"
+  complexity: "intermediate"
+  notes:
+    - "Spread operator (...) expands objects and arrays in place"
+    - "Object spread: { ...obj } copies all properties from obj"
+    - "Array spread: [...arr] copies all elements from arr"
+    - "Later properties override earlier ones in object spread"
+    - "Multiple spreads can be combined"
+    - "Works with inline literals and expressions"
