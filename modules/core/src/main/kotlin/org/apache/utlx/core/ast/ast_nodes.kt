@@ -311,12 +311,15 @@ sealed class Pattern {
 enum class BinaryOperator {
     // Arithmetic
     PLUS, MINUS, MULTIPLY, DIVIDE, MODULO,
-    
+
     // Comparison
     EQUAL, NOT_EQUAL, LESS_THAN, LESS_EQUAL, GREATER_THAN, GREATER_EQUAL,
-    
+
     // Logical
-    AND, OR
+    AND, OR,
+
+    // Null handling
+    NULLISH_COALESCE  // ?? operator
 }
 
 /**

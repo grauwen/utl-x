@@ -569,6 +569,18 @@ class TypeChecker(private val stdlib: StandardLibrary) {
                 }
                 UTLXType.Boolean
             }
+
+            BinaryOperator.NULLISH_COALESCE -> {
+                // Nullish coalescing: left ?? right
+                // If left is null, returns right; otherwise returns left
+                // Result type is the non-nullable version of left unified with right
+                val unwrappedLeft = when (leftType) {
+                    is UTLXType.Nullable -> leftType.innerType
+                    else -> leftType
+                }
+                // Return the common type of unwrapped left and right
+                unwrappedLeft.commonType(rightType)
+            }
         }
     }
     

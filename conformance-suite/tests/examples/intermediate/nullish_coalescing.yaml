@@ -1,0 +1,75 @@
+name: "nullish_coalescing"
+category: "examples/intermediate"
+description: "Nullish coalescing operator (??) for providing default values for null"
+tags: ["json", "nullish-coalescing", "null-handling", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "user": {
+        "name": "Alice",
+        "age": 30,
+        "email": null,
+        "phone": null
+      },
+      "settings": {
+        "theme": "dark",
+        "notifications": null
+      },
+      "emptyString": "",
+      "zero": 0,
+      "boolFalse": false
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    userName: input.user.name ?? "Unknown",
+    userAge: input.user.age ?? 18,
+    userEmail: input.user.email ?? "no-email@example.com",
+    userPhone: input.user.phone ?? "N/A",
+    theme: input.settings.theme ?? "light",
+    notifications: input.settings.notifications ?? true,
+    missingField: input.settings.missingField ?? "default",
+    emptyStringPreserved: input.emptyString ?? "default",
+    zeroPreserved: input.zero ?? 999,
+    falsePreserved: input.boolFalse ?? true,
+    chainedCoalesce: input.user.missing ?? input.settings.missing ?? "fallback",
+    nullChain: input.user.email ?? input.user.phone ?? "No contact"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "userName": "Alice",
+      "userAge": 30,
+      "userEmail": "no-email@example.com",
+      "userPhone": "N/A",
+      "theme": "dark",
+      "notifications": true,
+      "missingField": "default",
+      "emptyStringPreserved": "",
+      "zeroPreserved": 0,
+      "falsePreserved": false,
+      "chainedCoalesce": "fallback",
+      "nullChain": "No contact"
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Core Team"
+  source: "Nullish coalescing operator implementation"
+  complexity: "intermediate"
+  notes:
+    - "Nullish coalescing only replaces null/undefined, not falsy values"
+    - "Unlike OR (||), it preserves empty strings, 0, and false"
+    - "Can be chained for multiple fallback values"
+    - "Short-circuits: right side not evaluated if left is not null"

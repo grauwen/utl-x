@@ -472,9 +472,28 @@ class Interpreter {
     }
     
     private fun evaluateBinaryOp(expr: Expression.BinaryOp, env: Environment): RuntimeValue {
+        // Handle nullish coalescing with short-circuit evaluation
+        if (expr.operator == BinaryOperator.NULLISH_COALESCE) {
+            val left = evaluate(expr.left, env)
+            // Check if left is null (either RuntimeValue.NullValue or UDM.Scalar(null))
+            val isNull = when (left) {
+                is RuntimeValue.NullValue -> true
+                is RuntimeValue.UDMValue -> {
+                    left.udm is UDM.Scalar && left.udm.value == null
+                }
+                else -> false
+            }
+            return if (isNull) {
+                evaluate(expr.right, env)
+            } else {
+                left
+            }
+        }
+
+        // For all other operators, evaluate both sides
         val left = evaluate(expr.left, env)
         val right = evaluate(expr.right, env)
-        
+
         return when (expr.operator) {
             BinaryOperator.PLUS -> {
                 when {
@@ -549,9 +568,14 @@ class Interpreter {
             BinaryOperator.AND -> {
                 RuntimeValue.BooleanValue(left.isTruthy() && right.isTruthy())
             }
-            
+
             BinaryOperator.OR -> {
                 RuntimeValue.BooleanValue(left.isTruthy() || right.isTruthy())
+            }
+
+            BinaryOperator.NULLISH_COALESCE -> {
+                // This case should never be reached due to early return above
+                throw RuntimeError("Nullish coalesce should have been handled earlier", expr.location)
             }
         }
     }

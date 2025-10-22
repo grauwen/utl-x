@@ -234,19 +234,31 @@ class Parser(private val tokens: List<Token>) {
     }
     
     private fun parseConditional(): Expression {
-        var expr = parseLogicalOr()
-        
+        var expr = parseNullishCoalesce()
+
         if (match(TokenType.IF)) {
             val ifToken = previous()
-            val condition = parseLogicalOr()
-            
+            val condition = parseNullishCoalesce()
+
             val elseBranch = if (match(TokenType.ELSE)) {
                 parseConditional()
             } else null
-            
+
             expr = Expression.Conditional(condition, expr, elseBranch, Location.from(ifToken))
         }
-        
+
+        return expr
+    }
+
+    private fun parseNullishCoalesce(): Expression {
+        var expr = parseLogicalOr()
+
+        while (match(TokenType.QUESTION_QUESTION)) {
+            val operator = previous()
+            val right = parseLogicalOr()
+            expr = Expression.BinaryOp(expr, BinaryOperator.NULLISH_COALESCE, right, Location.from(operator))
+        }
+
         return expr
     }
     

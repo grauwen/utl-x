@@ -236,10 +236,15 @@ class AdvancedTypeInference : TypeInferenceContext {
                     else -> TypeDefinition.Any
                 }
             }
-            BinaryOperator.EQUAL, BinaryOperator.NOT_EQUAL, 
+            BinaryOperator.EQUAL, BinaryOperator.NOT_EQUAL,
             BinaryOperator.LESS_THAN, BinaryOperator.LESS_EQUAL,
             BinaryOperator.GREATER_THAN, BinaryOperator.GREATER_EQUAL -> TypeDefinition.Scalar(ScalarKind.BOOLEAN)
             BinaryOperator.AND, BinaryOperator.OR -> TypeDefinition.Scalar(ScalarKind.BOOLEAN)
+            BinaryOperator.NULLISH_COALESCE -> {
+                // Nullish coalescing returns right if left is null, otherwise left
+                // Result type is union of non-nullable left and right
+                TypeDefinition.Union(listOf(leftType, rightType))
+            }
         }
     }
     
