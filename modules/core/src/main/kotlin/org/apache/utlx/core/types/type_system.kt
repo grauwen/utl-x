@@ -338,9 +338,27 @@ class TypeChecker(private val stdlib: StandardLibrary) {
             }
             
             is Expression.BinaryOp -> inferBinaryOpType(expr, env)
-            
+
             is Expression.UnaryOp -> inferUnaryOpType(expr, env)
-            
+
+            is Expression.Ternary -> {
+                val condType = inferType(expr.condition, env)
+                if (!condType.isAssignableTo(UTLXType.Boolean) &&
+                    condType !is UTLXType.Any && condType !is UTLXType.Unknown) {
+                    errors.add(TypeError(
+                        "Ternary condition must be boolean",
+                        expr.location,
+                        expected = UTLXType.Boolean,
+                        actual = condType
+                    ))
+                }
+
+                val thenType = inferType(expr.thenExpr, env)
+                val elseType = inferType(expr.elseExpr, env)
+
+                thenType.commonType(elseType)
+            }
+
             is Expression.Conditional -> {
                 val condType = inferType(expr.condition, env)
                 if (!condType.isAssignableTo(UTLXType.Boolean) && 

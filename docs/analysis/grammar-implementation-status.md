@@ -172,29 +172,30 @@ input.name || "Unknown"  // Works, but treats false/0/"" as falsy
 
 ---
 
-#### 1.3.5 Ternary Operator (`? :`) ❌ NOT IMPLEMENTED
+#### 1.3.5 Ternary Operator (`? :`) ✅ IMPLEMENTED (Oct 22, 2025)
 
 **Grammar:**
 ```ebnf
 ternary-expression ::= logical-or-expression ['?' expression ':' expression]
 ```
 
-**Status:** ❌ NOT IMPLEMENTED
-- Token defined: `TokenType.QUESTION`
-- Parser: Does NOT parse ternary
-- AST: No `Ternary` node
+**Status:** ✅ IMPLEMENTED
+- Token defined: `TokenType.QUESTION` and `TokenType.COLON`
+- Parser: ✅ Parses ternary expressions (right-associative)
+- AST: ✅ `Expression.Ternary` node
+- Interpreter: ✅ Evaluates condition and returns appropriate branch
+- Type inference: ✅ Returns union of both branch types
 
-**Impact:** LOW - `if-else` expression works well
-
-**Example (NOT working):**
+**Example:**
 ```utlx
-x > 10 ? "high" : "low"  // NOT IMPLEMENTED
+x > 10 ? "high" : "low"  // ✅ Works
+age >= 90 ? "A" : age >= 80 ? "B" : "F"  // ✅ Nested ternaries work
 ```
 
-**Workaround:**
-```utlx
-if (x > 10) "high" else "low"  // Works - use if-expression
-```
+**Notes:**
+- Right-associative: `a ? b : c ? d : e` = `a ? b : (c ? d : e)`
+- Lower precedence than logical operators
+- Alternative to if-else expressions
 
 ---
 
@@ -641,9 +642,9 @@ output-formats ::= '{' output-format-list '}'
 | `|>` (pipe) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `=>` (lambda) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `@` (attribute) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
-| `?.` (safe navigation) | ✅ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
-| `??` (nullish coalescing) | ✅ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
-| `? :` (ternary) | ✅ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
+| `?.` (safe navigation) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED (Oct 22, 2025) |
+| `??` (nullish coalescing) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED (Oct 22, 2025) |
+| `? :` (ternary) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED (Oct 22, 2025) |
 | `...` (spread) | ✅ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
 
 ---
@@ -751,7 +752,7 @@ Based on this analysis, the following features need conformance tests:
 4. ✅ **Safe navigation** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/safe_navigation.yaml`
 5. ✅ **Nullish coalescing** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/nullish_coalescing.yaml`
 6. ✅ **Exponentiation** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/exponentiation.yaml`
-7. ❌ **Ternary operator** - No tests (not implemented)
+7. ✅ **Ternary operator** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/ternary_operator.yaml`
 8. ❌ **Spread operator** - No tests (not implemented)
 
 ---
@@ -776,7 +777,6 @@ UTL-X has a **strong foundation**:
 3. ✅ Type checking enforcement - **IMPLEMENTED** (opt-in, non-blocking, Oct 22, 2025)
 
 **Lower-impact missing features:**
-- Ternary operator (`? :`) (syntactic sugar, can use if-else)
 - Module system (defer until v2.0)
 
 ### 8.3 Recommended Actions
@@ -793,7 +793,7 @@ UTL-X has a **strong foundation**:
 3. ✅ Implement safe navigation (`?.`) - **COMPLETED** (Oct 22, 2025)
 4. ✅ Implement nullish coalescing (`??`) - **COMPLETED** (Oct 22, 2025)
 5. ✅ Implement exponentiation (`**`) - **COMPLETED** (Oct 22, 2025)
-6. 🎯 Implement ternary operator (`? :`) - **NEXT PRIORITY**
+6. ✅ Implement ternary operator (`? :`) - **COMPLETED** (Oct 22, 2025)
 
 **Long-term (v2.0):**
 1. ✅ Type checking enforcement - **COMPLETED** (opt-in, non-blocking, Oct 22, 2025)

@@ -234,17 +234,32 @@ class Parser(private val tokens: List<Token>) {
     }
     
     private fun parseConditional(): Expression {
-        var expr = parseNullishCoalesce()
+        var expr = parseTernary()
 
         if (match(TokenType.IF)) {
             val ifToken = previous()
-            val condition = parseNullishCoalesce()
+            val condition = parseTernary()
 
             val elseBranch = if (match(TokenType.ELSE)) {
                 parseConditional()
             } else null
 
             expr = Expression.Conditional(condition, expr, elseBranch, Location.from(ifToken))
+        }
+
+        return expr
+    }
+
+    private fun parseTernary(): Expression {
+        var expr = parseNullishCoalesce()
+
+        // Ternary operator: condition ? thenExpr : elseExpr
+        if (match(TokenType.QUESTION)) {
+            val questionToken = previous()
+            val thenExpr = parseNullishCoalesce()  // Parse at same level to avoid : ambiguity with object literals
+            consume(TokenType.COLON, "Expected ':' after then-expression in ternary operator")
+            val elseExpr = parseTernary()  // Right-associative: a ? b : c ? d : e = a ? b : (c ? d : e)
+            expr = Expression.Ternary(expr, thenExpr, elseExpr, Location.from(questionToken))
         }
 
         return expr

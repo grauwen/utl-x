@@ -48,6 +48,12 @@ class AdvancedTypeInference : TypeInferenceContext {
             is Expression.ArrayLiteral -> analyzeArray(expression)
             is Expression.FunctionCall -> analyzeFunctionCall(expression)
             is Expression.BinaryOp -> analyzeBinary(expression)
+            is Expression.Ternary -> {
+                // Analyze both branches and return union type
+                val thenType = analyzeExpression(expression.thenExpr)
+                val elseType = analyzeExpression(expression.elseExpr)
+                if (thenType == elseType) thenType else TypeDefinition.Union(listOf(thenType, elseType))
+            }
             is Expression.Identifier -> analyzeVariable(expression)
             is Expression.MemberAccess -> analyzeMemberAccess(expression)
             is Expression.IndexAccess -> analyzeIndexAccess(expression)

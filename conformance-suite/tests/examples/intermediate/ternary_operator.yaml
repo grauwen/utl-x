@@ -1,0 +1,109 @@
+name: "ternary_operator"
+category: "examples/intermediate"
+description: "Ternary operator (? :) for conditional expressions"
+tags: ["conditional", "ternary", "operators", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "age": 25,
+      "score": 85,
+      "enabled": true,
+      "name": "Alice"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    basic: true ? "yes" : "no",
+    basicFalse: false ? "yes" : "no",
+
+    comparison: input.age >= 18 ? "adult" : "minor",
+    comparisonFalse: input.age >= 30 ? "senior" : "not senior",
+
+    numeric: input.score >= 90 ? 100 : input.score,
+    numericCalc: input.score >= 60 ? input.score * 1.1 : input.score * 0.9,
+
+    nested: input.score >= 90 ? "A" : input.score >= 80 ? "B" : input.score >= 70 ? "C" : "F",
+
+    inputBased: input.enabled ? "on" : "off",
+
+    withNull: input.missing ? "found" : "not found",
+
+    precedence: 1 + (input.age > 20 ? 10 : 5),
+
+    withLogical: input.enabled && input.score > 50 ? "pass" : "fail",
+
+    stringConcat: (input.age >= 18 ? "adult" : "minor") + " user",
+
+    booleanResult: input.score >= 80 ? true : false,
+
+    complexCondition: input.age >= 18 && input.score >= 70 ? "qualified" : "not qualified",
+
+    rightAssociative: true ? "a" : false ? "b" : "c",
+
+    withParens: (input.age > 20 ? input.score : 50) + 10,
+
+    multipleInExpression: {
+      status: input.enabled ? "active" : "inactive",
+      level: input.score >= 80 ? "high" : "low"
+    },
+
+    inArray: [
+      input.age >= 18 ? "adult" : "minor",
+      input.score >= 90 ? "excellent" : "good"
+    ],
+
+    zeroOne: input.score >= 60 ? 1 : 0
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "basic": "yes",
+      "basicFalse": "no",
+      "comparison": "adult",
+      "comparisonFalse": "not senior",
+      "numeric": 85,
+      "numericCalc": 93.50000000000001,
+      "nested": "B",
+      "inputBased": "on",
+      "withNull": "not found",
+      "precedence": 11,
+      "withLogical": "pass",
+      "stringConcat": "adult user",
+      "booleanResult": true,
+      "complexCondition": "qualified",
+      "rightAssociative": "a",
+      "withParens": 95,
+      "multipleInExpression": {
+        "status": "active",
+        "level": "high"
+      },
+      "inArray": [
+        "adult",
+        "good"
+      ],
+      "zeroOne": 1
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Core Team"
+  source: "Ternary operator implementation"
+  complexity: "intermediate"
+  notes:
+    - "Ternary operator (? :) provides concise conditional expressions"
+    - "Right-associative: a ? b : c ? d : e = a ? b : (c ? d : e)"
+    - "Condition must evaluate to boolean"
+    - "Can be nested for multi-way conditionals"
+    - "Lower precedence than logical operators"
+    - "Alternative to if-else expressions"

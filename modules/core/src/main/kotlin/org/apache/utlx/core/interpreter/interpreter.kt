@@ -222,9 +222,18 @@ class Interpreter {
             is Expression.IndexAccess -> evaluateIndexAccess(expr, env)
             
             is Expression.BinaryOp -> evaluateBinaryOp(expr, env)
-            
+
             is Expression.UnaryOp -> evaluateUnaryOp(expr, env)
-            
+
+            is Expression.Ternary -> {
+                val condition = evaluate(expr.condition, env)
+                if (condition.isTruthy()) {
+                    evaluate(expr.thenExpr, env)
+                } else {
+                    evaluate(expr.elseExpr, env)
+                }
+            }
+
             is Expression.Conditional -> {
                 val condition = evaluate(expr.condition, env)
                 if (condition.isTruthy()) {

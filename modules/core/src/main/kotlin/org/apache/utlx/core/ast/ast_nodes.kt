@@ -191,7 +191,17 @@ sealed class Expression : Node() {
         val operand: Expression,
         override val location: Location
     ) : Expression()
-    
+
+    /**
+     * Ternary operator: condition ? thenExpr : elseExpr
+     */
+    data class Ternary(
+        val condition: Expression,
+        val thenExpr: Expression,
+        val elseExpr: Expression,
+        override val location: Location
+    ) : Expression()
+
     /**
      * Conditional: if (condition) thenExpr else elseExpr
      */
