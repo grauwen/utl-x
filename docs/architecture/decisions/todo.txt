@@ -2,7 +2,9 @@ TODO's
 
 See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/Next-steps.md
 ----
-See https://github.com/grauwen/utl-x/blob/main/docs/architecture/parallelization-analysis.md
+Paralellization, see https://github.com/grauwen/utl-x/blob/main/docs/architecture/parallelization-analysis.md
+----
+Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architecture/module-system-design.md
 ----
 UTL-X doesn't support multiple file inputs yet
 
