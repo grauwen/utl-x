@@ -86,7 +86,7 @@ logical-op ::= '&&' | '||' | '!'
 
 ---
 
-#### 1.3.2 Exponentiation ❌ NOT IMPLEMENTED
+#### 1.3.2 Exponentiation ✅ IMPLEMENTED (Oct 22, 2025)
 
 **Grammar:**
 ```ebnf
@@ -94,27 +94,29 @@ arithmetic-op ::= ... | '**'
 exponentiation-expression ::= unary-expression ['**' exponentiation-expression]
 ```
 
-**Status:** ❌ NOT IMPLEMENTED
+**Status:** ✅ IMPLEMENTED
 - Token defined: `TokenType.STAR_STAR`
-- Parser: Does NOT parse `**`
-- AST: No `EXPONENTIATION` operator in `BinaryOperator` enum
-- Interpreter: No evaluation code
+- Parser: ✅ Parses `**` operator (right-associative)
+- AST: ✅ `BinaryOperator.EXPONENT` enum value
+- Interpreter: ✅ Evaluates using `pow()` function
+- Type inference: ✅ Returns NUMBER type
 
-**Impact:** LOW - Can use `pow(base, exp)` function instead
-
-**Example (NOT working):**
+**Example:**
 ```utlx
-2 ** 3  // Should be 8, but NOT IMPLEMENTED
+2 ** 3           // ✅ Returns 8
+2 ** 3 ** 2      // ✅ Returns 512 (right-associative: 2^(3^2))
+4 ** 0.5         // ✅ Returns 2.0 (square root)
+2 ** -1          // ✅ Returns 0.5 (reciprocal)
 ```
 
-**Workaround:**
-```utlx
-pow(2, 3)  // Works - stdlib function
-```
+**Notes:**
+- Right-associative: `2 ** 3 ** 2` = `2 ** (3 ** 2)` = 512
+- Higher precedence than multiplication
+- Always returns NUMBER type (not INTEGER) due to potential fractional results
 
 ---
 
-#### 1.3.3 Safe Navigation (`?.`) ❌ NOT IMPLEMENTED
+#### 1.3.3 Safe Navigation (`?.`) ✅ IMPLEMENTED (Oct 22, 2025)
 
 **Grammar:**
 ```ebnf
@@ -122,53 +124,51 @@ special-op ::= ... | '?.'
 safe-navigation ::= '?.' identifier
 ```
 
-**Status:** ❌ NOT IMPLEMENTED
+**Status:** ✅ IMPLEMENTED
 - Token defined: `TokenType.QUESTION_DOT`
-- Parser: Does NOT parse `?.`
-- AST: No `SafeNavigation` node
-- Interpreter: No evaluation code
+- Parser: ✅ Parses `?.` operator
+- AST: ✅ `Expression.SafeNavigation` node
+- Interpreter: ✅ Returns null if target is null, otherwise accesses property
+- Type inference: ✅ Makes result type nullable
 
-**Impact:** MEDIUM - Useful for null-safe property access
-
-**Example (NOT working):**
+**Example:**
 ```utlx
-input.customer?.address?.city  // NOT IMPLEMENTED
+input.customer?.address?.city  // ✅ Returns city or null if any part is null
+input.orders?.length           // ✅ Safe length access
 ```
 
-**Workaround:**
-```utlx
-if (input.customer != null && input.customer.address != null)
-  input.customer.address.city
-else
-  null
-```
+**Notes:**
+- Returns null if the target expression evaluates to null
+- Short-circuits evaluation (doesn't evaluate further if null found)
+- Makes the result type nullable in type inference
 
 ---
 
-#### 1.3.4 Nullish Coalescing (`??`) ❌ NOT IMPLEMENTED
+#### 1.3.4 Nullish Coalescing (`??`) ✅ IMPLEMENTED (Oct 22, 2025)
 
 **Grammar:**
 ```ebnf
 special-op ::= ... | '??'
 ```
 
-**Status:** ❌ NOT IMPLEMENTED
+**Status:** ✅ IMPLEMENTED
 - Token defined: `TokenType.QUESTION_QUESTION`
-- Parser: Does NOT parse `??`
-- AST: No support
-- Interpreter: No evaluation code
+- Parser: ✅ Parses `??` operator
+- AST: ✅ `BinaryOperator.NULLISH_COALESCE` enum value
+- Interpreter: ✅ Returns right operand only if left is null
+- Type inference: ✅ Returns union of both operand types
 
-**Impact:** MEDIUM - Useful for default values
-
-**Example (NOT working):**
+**Example:**
 ```utlx
-input.name ?? "Unknown"  // NOT IMPLEMENTED
+input.name ?? "Unknown"     // ✅ Returns name or "Unknown" if null
+input.count ?? 0            // ✅ Returns count or 0 if null
+false ?? true               // ✅ Returns false (only null/undefined trigger coalescing)
 ```
 
-**Workaround:**
-```utlx
-input.name || "Unknown"  // Works, but treats false/0/"" as falsy
-```
+**Notes:**
+- Only coalesces on null/undefined, not on false/0/""
+- Different from `||` which treats all falsy values as trigger
+- Left-associative: `a ?? b ?? c` = `(a ?? b) ?? c`
 
 ---
 
@@ -636,7 +636,7 @@ output-formats ::= '{' output-format-list '}'
 | Operator | Token | Parser | Interpreter | Status |
 |----------|-------|--------|-------------|--------|
 | `+` `-` `*` `/` `%` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
-| `**` (exponentiation) | ✅ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
+| `**` (exponentiation) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED (Oct 22, 2025) |
 | `==` `!=` `<` `>` `<=` `>=` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `&&` `||` `!` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `|>` (pipe) | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
