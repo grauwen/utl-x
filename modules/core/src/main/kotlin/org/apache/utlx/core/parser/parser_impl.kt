@@ -436,6 +436,9 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.IF) -> {
                 parsePrefixIfExpression()
             }
+            match(TokenType.MATCH) -> {
+                parseMatchExpression()
+            }
             match(TokenType.AT) -> {
                 // Handle @input or @variable
                 val atToken = previous()
@@ -684,6 +687,83 @@ class Parser(private val tokens: List<Token>) {
             parsePrefixIfExpression()
         } else {
             parseLogicalOr()
+        }
+    }
+
+    private fun parseMatchExpression(): Expression {
+        val startToken = previous() // MATCH
+
+        // Parse match value: match (expression) { ... }
+        consume(TokenType.LPAREN, "Expected '(' after 'match'")
+        val value = parseExpression()
+        consume(TokenType.RPAREN, "Expected ')' after match value")
+
+        // Parse match cases: { pattern [if guard] => expression, ... }
+        consume(TokenType.LBRACE, "Expected '{' before match cases")
+
+        val cases = mutableListOf<MatchCase>()
+
+        if (!check(TokenType.RBRACE)) {
+            do {
+                val caseStartToken = peek()
+
+                // Parse pattern
+                val pattern = parsePattern()
+
+                // Parse optional guard: if expression
+                val guard = if (match(TokenType.IF)) {
+                    parseExpression()
+                } else {
+                    null
+                }
+
+                // Parse arrow: =>
+                consume(TokenType.ARROW, "Expected '=>' after match pattern")
+
+                // Parse result expression
+                val expression = parseExpression()
+
+                cases.add(MatchCase(pattern, guard, expression, Location.from(caseStartToken)))
+
+            } while (match(TokenType.COMMA))
+        }
+
+        consume(TokenType.RBRACE, "Expected '}' after match cases")
+
+        return Expression.Match(value, cases, Location.from(startToken))
+    }
+
+    private fun parsePattern(): Pattern {
+        val token = peek()
+
+        return when {
+            match(TokenType.NUMBER) -> {
+                val value = previous().literal as Double
+                Pattern.Literal(value, Location.from(previous()))
+            }
+            match(TokenType.STRING) -> {
+                val value = previous().literal as String
+                Pattern.Literal(value, Location.from(previous()))
+            }
+            match(TokenType.BOOLEAN) -> {
+                val value = previous().literal as Boolean
+                Pattern.Literal(value, Location.from(previous()))
+            }
+            match(TokenType.NULL) -> {
+                Pattern.Literal(null, Location.from(previous()))
+            }
+            match(TokenType.IDENTIFIER) -> {
+                val name = previous().lexeme
+                // Check if it's a wildcard pattern
+                if (name == "_") {
+                    Pattern.Wildcard(Location.from(previous()))
+                } else {
+                    Pattern.Variable(name, Location.from(previous()))
+                }
+            }
+            else -> {
+                throw ParseException("Expected pattern (literal, identifier, or '_')", Location.from(token))
+            }
         }
     }
 

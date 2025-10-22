@@ -1,0 +1,49 @@
+name: "match_expression_basic"
+category: "examples/basic"
+description: "Basic match expression with literal patterns"
+tags: ["match", "pattern-matching", "basic", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "type": "express",
+      "score": 90
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    matchString: match (@input.type) {
+      "express" => "fast",
+      "standard" => "normal",
+      _ => "unknown"
+    },
+    matchNumber: match (@input.score) {
+      90 => "A",
+      80 => "B",
+      70 => "C",
+      _ => "F"
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "matchString": "fast",
+      "matchNumber": "A"
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  source: "grammar-implementation"
+  complexity: "basic"
+  notes: ["Demonstrates basic match expression with literal patterns and wildcard"]

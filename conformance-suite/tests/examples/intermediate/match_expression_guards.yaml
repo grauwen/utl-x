@@ -1,0 +1,53 @@
+name: "match_expression_guards"
+category: "examples/intermediate"
+description: "Match expression with guard conditions"
+tags: ["match", "pattern-matching", "guards", "intermediate", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "score": 85,
+      "orderType": "express",
+      "total": 120
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    gradeByScore: match (@input.score) {
+      n if n >= 90 => "A",
+      n if n >= 80 => "B",
+      n if n >= 70 => "C",
+      n if n >= 60 => "D",
+      _ => "F"
+    },
+    shippingCost: match (@input.orderType) {
+      "express" if @input.total > 100 => 0,
+      "express" => 15.00,
+      "standard" if @input.total > 50 => 0,
+      "standard" => 5.00,
+      _ => 10.00
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "gradeByScore": "B",
+      "shippingCost": 0
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  source: "grammar-implementation"
+  complexity: "intermediate"
+  notes: ["Demonstrates match expressions with guard conditions for conditional pattern matching"]

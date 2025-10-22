@@ -535,22 +535,37 @@ class Interpreter {
     
     private fun evaluateMatch(expr: Expression.Match, env: Environment): RuntimeValue {
         val value = evaluate(expr.value, env)
-        
+
         for (case in expr.cases) {
+            // Create a child environment for pattern variables
+            val caseEnv = env.createChild()
+
+            // Check if pattern matches
             val matches = when (val pattern = case.pattern) {
                 is Pattern.Wildcard -> true
                 is Pattern.Literal -> valuesEqual(value, literalToRuntimeValue(pattern.value))
                 is Pattern.Variable -> {
-                    env.define(pattern.name, value)
+                    // Bind the matched value to the variable name in the case environment
+                    caseEnv.define(pattern.name, value)
                     true
                 }
             }
-            
+
+            // If pattern matches, check guard (if present)
             if (matches) {
-                return evaluate(case.expression, env)
+                val guardPasses = if (case.guard != null) {
+                    val guardResult = evaluate(case.guard, caseEnv)
+                    guardResult.isTruthy()
+                } else {
+                    true // No guard means it passes
+                }
+
+                if (guardPasses) {
+                    return evaluate(case.expression, caseEnv)
+                }
             }
         }
-        
+
         throw RuntimeError("No matching case in match expression", expr.location)
     }
     

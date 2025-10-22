@@ -265,10 +265,11 @@ data class Parameter(
 )
 
 /**
- * Match case: pattern => expression
+ * Match case: pattern [if guard] => expression
  */
 data class MatchCase(
     val pattern: Pattern,
+    val guard: Expression? = null,
     val expression: Expression,
     val location: Location
 )

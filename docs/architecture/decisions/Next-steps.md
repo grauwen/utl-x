@@ -21,7 +21,7 @@ A comprehensive analysis comparing [docs/reference/grammar.md](https://github.co
 
   🚧 PARTIALLY IMPLEMENTED
 
-  - Match expressions - Basic matching likely works, but guard status unclear
+ 
   - Type annotations - Parsed but NOT enforced (no type checking)
 
   ❌ NOT IMPLEMENTED (Grammar-Only)
@@ -30,6 +30,8 @@ A comprehensive analysis comparing [docs/reference/grammar.md](https://github.co
   1. User-defined functions (function name() {}) - Use lambda workaround
   2. Try-catch error handling - Use null-check workaround
   3. Match expression guards (match x { n if n > 10 => ... })
+  4. Match expressions - Basic matching likely works, but 
+  5. guard status unclear
 
   Medium Priority:
   4. Safe navigation (?.) - Cleaner null handling

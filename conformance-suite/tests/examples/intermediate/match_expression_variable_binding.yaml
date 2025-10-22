@@ -1,0 +1,43 @@
+name: "match_expression_variable_binding"
+category: "examples/intermediate"
+description: "Match expression with variable binding patterns"
+tags: ["match", "pattern-matching", "variable-binding", "intermediate", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "value": 42
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    result: match (@input.value) {
+      0 => "zero",
+      n if n < 0 => "negative: " + n,
+      n if n < 10 => "single digit: " + n,
+      n if n < 100 => "double digit: " + n,
+      n => "large number: " + n
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "result": "double digit: 42.0"
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  source: "grammar-implementation"
+  complexity: "intermediate"
+  notes: ["Demonstrates variable binding in match patterns with guards"]

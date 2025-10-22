@@ -224,7 +224,7 @@ else "C"
 
 ---
 
-#### 1.4.2 Match Expressions 🚧 PARTIALLY IMPLEMENTED
+#### 1.4.2 Match Expressions ✅ IMPLEMENTED
 
 **Grammar:**
 ```ebnf
@@ -234,19 +234,35 @@ pattern ::= literal | identifier | '_'
 guard ::= 'if' expression
 ```
 
-**Status:** 🚧 PARTIALLY IMPLEMENTED
-- Token: `TokenType.MATCH` defined
-- Parser: Likely parses basic match (needs verification)
-- AST: `Match` node, `MatchCase`, `Pattern` classes exist
-- Interpreter: Likely has basic evaluation
-- **Guards (`if` in pattern):** Unknown status
+**Status:** ✅ FULLY IMPLEMENTED (Oct 22, 2025)
+- Token: `TokenType.MATCH` defined ✅
+- Parser: `parseMatchExpression()` and `parsePattern()` methods implemented ✅
+- AST: `Match` node, `MatchCase` (with `guard` field), `Pattern` classes ✅
+- Interpreter: `evaluateMatch()` with guard support ✅
+- **Guards:** Fully implemented ✅
 
-**Impact:** MEDIUM - Core feature for pattern matching
+**Impact:** HIGH - Pattern matching is a core functional programming feature
 
-**Needs Investigation:**
-- Are guards implemented?
-- What pattern types work? (literals, wildcards, bindings?)
-- Are there conformance tests?
+**Example (WORKS):**
+```utlx
+match (@input.score) {
+  n if n >= 90 => "A",
+  n if n >= 80 => "B",
+  n if n >= 70 => "C",
+  _ => "F"
+}
+```
+
+**Supported Patterns:**
+- **Literal patterns:** Match exact values (strings, numbers, booleans, null)
+- **Variable patterns:** Bind matched value to a variable name
+- **Wildcard pattern:** `_` matches anything (typically used as fallback)
+- **Guards:** Optional `if` conditions after patterns
+
+**Conformance Tests:**
+- ✅ `examples/basic/match_expression_basic.yaml` - Basic literal pattern matching
+- ✅ `examples/intermediate/match_expression_guards.yaml` - Guards with conditions
+- ✅ `examples/intermediate/match_expression_variable_binding.yaml` - Variable binding with guards
 
 ---
 
@@ -568,7 +584,7 @@ output-formats ::= '{' output-format-list '}'
 | `let` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `function` | ✅ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
 | `if` / `else` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
-| `match` | ✅ | 🚧 | 🚧 | 🚧 PARTIAL |
+| `match` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `template` | ✅ (legacy) | ❌ | ❌ | ❌ REMOVED |
 | `apply` | ✅ (legacy) | ❌ | ❌ | ❌ REMOVED |
 | `try` / `catch` | ❌ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
@@ -607,10 +623,10 @@ output-formats ::= '{' output-format-list '}'
    - Workaround exists: Use lambdas with `let`
    - Effort: Medium (2-3 weeks)
 
-2. **Match Expression Guards** 🚧
-   - Rationale: More powerful pattern matching
-   - Example: `match x { n if n > 10 => "high" }`
-   - Effort: Small (1 week)
+2. **Match Expressions** ❌
+   - Rationale: Core functional programming feature, cleaner than nested if-else
+   - Example: `match x { "A" => 1, "B" => 2, _ => 0 }`
+   - Effort: Medium (2-3 weeks for basic match, +1 week for guards)
 
 3. **Try-Catch** ❌
    - Rationale: Better error handling
@@ -685,9 +701,9 @@ These should be marked as `[PLANNED]` in grammar:
 7. **`? :` operator** - Ternary conditional
 8. **`...` operator** - Spread operator
 
-### 6.3 Mark as Partial
+### 6.3 Mark as Not Implemented (Update Needed)
 
-1. **`match` expression** - Basic matching works, guards status unclear
+1. **`match` expression** - ✅ Fully implemented with guard support (Oct 22, 2025)
 
 ---
 
@@ -696,8 +712,8 @@ These should be marked as `[PLANNED]` in grammar:
 Based on this analysis, the following features need conformance tests:
 
 1. ❌ **User-defined functions** - No tests (not implemented)
-2. ❌ **Try-catch** - No tests (not implemented)
-3. 🚧 **Match with guards** - Need to verify if tests exist
+2. ✅ **Match expressions** - Tests implemented (Oct 22, 2025)
+3. ❌ **Try-catch** - No tests (not implemented)
 4. ❌ **Safe navigation** - No tests (not implemented)
 5. ❌ **Nullish coalescing** - No tests (not implemented)
 6. ❌ **Ternary operator** - No tests (not implemented)
