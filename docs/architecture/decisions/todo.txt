@@ -9,6 +9,16 @@ Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architectu
 JVM Design, init, runtime: 
 see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-runtime-design.md 
 see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-runtime-validation-first.md
+  Use Template-Based (Previous Document):
+  - Cloud-native microservices
+  - High throughput (>100K msg/s)
+  - Validation not critical
+
+  Use Copy-Based Validation-First (This Document):
+  - Enterprise middleware (Tibco, IIB, OSB integration)
+  - Regulated industries (finance, healthcare)
+  - Legacy system integration
+  - Security/compliance requirements
 ----
 Dependency graph construction from AST?
 ----
