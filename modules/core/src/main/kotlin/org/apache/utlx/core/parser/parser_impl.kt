@@ -520,22 +520,32 @@ class Parser(private val tokens: List<Token>) {
         logger.trace { "parseObjectLiteral: start, current=${peek().type}" }
 
         if (!check(TokenType.RBRACE)) {
-            // First, parse all let bindings (they come before properties)
-            while (match(TokenType.LET)) {
-                logger.trace { "parseObjectLiteral: parsing let binding" }
-                val letExpr = parseLetBinding()
+            // First, parse all let bindings and function definitions (they come before properties)
+            while (match(TokenType.LET) || match(TokenType.FUNCTION) || match(TokenType.DEF)) {
+                val tokenType = previous().type
+                logger.trace { "parseObjectLiteral: parsing ${tokenType}" }
+
+                val letExpr = when (tokenType) {
+                    TokenType.LET -> parseLetBinding()
+                    TokenType.FUNCTION, TokenType.DEF -> parseFunctionDefinition()
+                    else -> error("Unexpected token: $tokenType")
+                }
+
                 letBindings.add(letExpr as Expression.LetBinding)
 
-                // In blocks, let bindings should be terminated with semicolon or comma
+                // In blocks, let bindings and function definitions should be terminated with semicolon or comma
                 // to prevent ambiguity with subsequent expressions (especially arrays)
                 // If there are let bindings and more content follows, require separator
-                if (!check(TokenType.RBRACE) && !check(TokenType.LET)) {
-                    // More content follows that's not another let - require separator
+                if (!check(TokenType.RBRACE) &&
+                    !check(TokenType.LET) &&
+                    !check(TokenType.FUNCTION) &&
+                    !check(TokenType.DEF)) {
+                    // More content follows that's not another let/function - require separator
                     if (!match(TokenType.SEMICOLON) && !match(TokenType.COMMA)) {
-                        throw error("Expected ';' or ',' after let binding in block expression")
+                        throw error("Expected ';' or ',' after let binding or function definition in block expression")
                     }
                 } else {
-                    // Optional separator between let bindings or before closing brace
+                    // Optional separator between let bindings/functions or before closing brace
                     match(TokenType.COMMA) || match(TokenType.SEMICOLON)
                 }
             }

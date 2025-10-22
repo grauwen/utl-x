@@ -358,19 +358,45 @@ property ::= (identifier | string-literal | '[' expression ']') ':' expression
 - String keys: `{ "first-name": "Alice" }`
 - Computed keys: `{ [keyVar]: value }` (needs verification)
 - **Spread operator (`...`):** ✅ IMPLEMENTED (Oct 22, 2025)
+- **Let bindings in objects:** ✅ IMPLEMENTED
+- **Function definitions in objects:** ✅ IMPLEMENTED (Oct 22, 2025)
 
 **Evidence:**
 - AST: `ObjectLiteral`, `Property` (with `isSpread` flag), `SpreadElement`
-- Parser: `parseObjectLiteral()` handles spread syntax
+- Parser: `parseObjectLiteral()` handles spread syntax, let bindings, and function definitions
 - Interpreter: Merges properties from spread objects
 - Type inference: Merges property types
-- Tests: `tests/examples/intermediate/spread_operator.yaml`
+- Tests: `tests/examples/intermediate/spread_operator.yaml`, `tests/examples/intermediate/function_definitions_in_objects.yaml`
 
 **Spread Operator:**
 ```utlx
 { ...existingObj, newKey: "value" }  // ✅ Works
 { ...obj1, ...obj2, c: 3 }           // ✅ Multiple spreads work
 ```
+
+**Let Bindings and Functions in Object Literals:**
+```utlx
+{
+  // Let bindings with type annotations (must come before properties)
+  let x: Number = 10;
+  let name: String = "Alice";
+
+  // Function definitions with type annotations (must come before properties)
+  function Add(a: Number, b: Number): Number {
+    a + b
+  };
+
+  // Properties using the bindings and functions
+  value: x * 2,
+  sum: Add(5, 10)
+}
+```
+
+**Important Rules:**
+- Let bindings and function definitions must come BEFORE properties
+- Both must be terminated with semicolons (`;`) when followed by properties
+- Functions must use PascalCase naming (uppercase first letter)
+- COLON token successfully disambiguated across: type annotations, property separators, ternary operators
 
 ---
 
@@ -762,6 +788,7 @@ Based on this analysis, the following features need conformance tests:
 6. ✅ **Exponentiation** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/exponentiation.yaml`
 7. ✅ **Ternary operator** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/ternary_operator.yaml`
 8. ✅ **Spread operator** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/spread_operator.yaml`
+9. ✅ **Function definitions in object literals** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/function_definitions_in_objects.yaml`
 
 ---
 
@@ -802,11 +829,13 @@ UTL-X has a **strong foundation**:
 4. ✅ Implement nullish coalescing (`??`) - **COMPLETED** (Oct 22, 2025)
 5. ✅ Implement exponentiation (`**`) - **COMPLETED** (Oct 22, 2025)
 6. ✅ Implement ternary operator (`? :`) - **COMPLETED** (Oct 22, 2025)
+7. ✅ Implement spread operator (`...`) - **COMPLETED** (Oct 22, 2025)
+8. ✅ Function definitions in object literals - **COMPLETED** (Oct 22, 2025)
 
 **Long-term (v2.0):**
 1. ✅ Type checking enforcement - **COMPLETED** (opt-in, non-blocking, Oct 22, 2025)
 2. Module system
-3. Advanced features (spread operator, etc.)
+3. Advanced features (destructuring, pattern matching enhancements, etc.)
 
 ---
 

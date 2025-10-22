@@ -1,0 +1,108 @@
+name: "function_definitions_in_objects"
+category: "examples/intermediate"
+description: "Function definitions with type annotations in object literals"
+tags: ["functions", "objects", "type-annotations", "colon-disambiguation", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "x": 5,
+      "y": 10,
+      "name": "World"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    // Let bindings with type annotations
+    let baseValue: Number = 100;
+    let greeting: String = "Hello";
+
+    // Function definitions with type annotations
+    function Add(a: Number, b: Number): Number {
+      a + b
+    };
+
+    function Multiply(a: Number, b: Number): Number {
+      a * b
+    };
+
+    function FormatMessage(prefix: String, name: String): String {
+      prefix + ", " + name + "!"
+    };
+
+    function ProcessNumbers(x: Number, y: Number): Number {
+      Multiply(Add(x, y), 2)
+    };
+
+    // Properties using the functions
+    sum: Add(input.x, input.y),
+    product: Multiply(input.x, input.y),
+    message: FormatMessage(greeting, input.name),
+    processed: ProcessNumbers(input.x, input.y),
+    withBase: Add(baseValue, input.x),
+
+    // Nested object with functions
+    calculations: {
+      function Square(n: Number): Number {
+        n * n
+      };
+
+      xSquared: Square(input.x),
+      ySquared: Square(input.y),
+      sumOfSquares: Add(Square(input.x), Square(input.y))
+    },
+
+    // Test COLON disambiguation with ternary
+    status: input.x > 3 ? "large" : "small",
+
+    // Test with spread operator
+    combined: {
+      ...input,
+      computed: Multiply(input.x, input.y)
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "sum": 15,
+      "product": 50,
+      "message": "Hello, World!",
+      "processed": 30,
+      "withBase": 105,
+      "calculations": {
+        "xSquared": 25,
+        "ySquared": 100,
+        "sumOfSquares": 125
+      },
+      "status": "large",
+      "combined": {
+        "x": 5,
+        "y": 10,
+        "name": "World",
+        "computed": 50
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Core Team"
+  source: "Parser enhancement for function definitions in object literals"
+  complexity: "intermediate"
+  notes:
+    - "Function definitions can now appear in object literals alongside let bindings"
+    - "Function definitions must be followed by semicolons (like let bindings)"
+    - "All functions must start with uppercase letter (PascalCase)"
+    - "Type annotations work in function parameters and return types"
+    - "COLON token successfully disambiguated across: type annotations, property separators, ternary operators"
+    - "Functions can be nested within object literals"
+    - "Functions desugar to let bindings internally"
