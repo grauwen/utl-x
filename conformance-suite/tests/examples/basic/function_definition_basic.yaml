@@ -1,0 +1,52 @@
+name: "function_definition_basic"
+category: "examples/basic"
+description: "Basic user-defined functions with single and multiple parameters"
+tags: ["function", "user-defined", "basic", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "amount": 100,
+      "rate": 0.08
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  function CalculateTax(amount, rate) {
+    amount * rate
+  }
+
+  function FormatCurrency(value) {
+    "$" + value
+  }
+
+  {
+    subtotal: @input.amount,
+    tax: CalculateTax(@input.amount, @input.rate),
+    total: @input.amount + CalculateTax(@input.amount, @input.rate),
+    formatted: FormatCurrency(@input.amount + CalculateTax(@input.amount, @input.rate))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "subtotal": 100,
+      "tax": 8,
+      "total": 108,
+      "formatted": "$108.0"
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  source: "grammar-implementation"
+  complexity: "basic"
+  notes: ["Demonstrates basic user-defined functions with PascalCase naming"]

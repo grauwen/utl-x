@@ -1,0 +1,59 @@
+name: "function_composition"
+category: "examples/intermediate"
+description: "User-defined functions calling other user-defined functions"
+tags: ["function", "user-defined", "composition", "intermediate", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "quantity": 3,
+      "price": 25.99,
+      "taxRate": 0.08
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  function Add(a, b) {
+    a + b
+  }
+
+  function Multiply(a, b) {
+    a * b
+  }
+
+  function CalculateTotal(quantity, price, taxRate) {
+    let subtotal = Multiply(quantity, price)
+    let tax = Multiply(subtotal, taxRate)
+    Add(subtotal, tax)
+  }
+
+  function FormatMoney(amount) {
+    "$" + amount
+  }
+
+  {
+    result: CalculateTotal(@input.quantity, @input.price, @input.taxRate),
+    formatted: FormatMoney(CalculateTotal(@input.quantity, @input.price, @input.taxRate))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "result": 84.2076,
+      "formatted": "$84.2076"
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  source: "grammar-implementation"
+  complexity: "intermediate"
+  notes: ["Demonstrates function composition and functions calling other user-defined functions"]

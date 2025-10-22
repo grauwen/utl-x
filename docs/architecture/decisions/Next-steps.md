@@ -18,6 +18,8 @@ A comprehensive analysis comparing [docs/reference/grammar.md](https://github.co
   - Object and array literals
   - Member access, index access, attribute access (@)
   - Multiple named inputs
+  - Match expression with guards
+  - User-defined functions
 
   🚧 PARTIALLY IMPLEMENTED
 
@@ -27,16 +29,12 @@ A comprehensive analysis comparing [docs/reference/grammar.md](https://github.co
   ❌ NOT IMPLEMENTED (Grammar-Only)
 
   High Priority:
-  1. User-defined functions (function name() {}) - Use lambda workaround
-  2. Try-catch error handling - Use null-check workaround
-  3. Match expression guards (match x { n if n > 10 => ... })
-  4. Match expressions - Basic matching likely works, but 
-  5. guard status unclear
+  1. Try-catch error handling - Use null-check workaround
 
   Medium Priority:
-  4. Safe navigation (?.) - Cleaner null handling
-  5. Nullish coalescing (??) - Better defaults than ||
-  6. Type checking enforcement - Currently parsed but ignored
+  1. Safe navigation (?.) - Cleaner null handling
+  2. Nullish coalescing (??) - Better defaults than ||
+  3. Type checking enforcement - Currently parsed but ignored
 
   Low Priority:
   7. Exponentiation (**) - pow() function works

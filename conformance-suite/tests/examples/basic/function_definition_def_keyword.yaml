@@ -1,0 +1,49 @@
+name: "function_definition_def_keyword"
+category: "examples/basic"
+description: "User-defined functions using the 'def' keyword"
+tags: ["function", "user-defined", "def", "basic", "example"]
+
+input:
+  format: json
+  data: |
+    {
+      "value": 5
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  def Square(n) {
+    n * n
+  }
+
+  def Cube(n) {
+    n * n * n
+  }
+
+  {
+    value: @input.value,
+    squared: Square(@input.value),
+    cubed: Cube(@input.value)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "value": 5,
+      "squared": 25,
+      "cubed": 125
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  source: "grammar-implementation"
+  complexity: "basic"
+  notes: ["Demonstrates the 'def' keyword as an alias for 'function'"]

@@ -288,7 +288,7 @@ parameter-list ::= '(' [identifier {',' identifier}] ')'
 
 ---
 
-#### 1.5.2 User-Defined Functions ❌ NOT IMPLEMENTED
+#### 1.5.2 User-Defined Functions ✅ IMPLEMENTED
 
 **Grammar:**
 ```ebnf
@@ -296,33 +296,48 @@ function-definition ::= 'function' identifier '(' [parameter-list] ')' [type-ann
 parameter ::= identifier [type-annotation]
 ```
 
-**Status:** ❌ NOT IMPLEMENTED
-- Token: `TokenType.FUNCTION` defined
-- Parser: Does NOT parse `function` keyword
-- AST: No `FunctionDefinition` node
-- Interpreter: No support
+**Status:** ✅ FULLY IMPLEMENTED (Oct 22, 2025)
+- Token: `TokenType.FUNCTION` and `TokenType.DEF` defined ✅
+- Parser: `parseFunctionDefinition()` method implemented ✅
+- Implementation: Desugared to let bindings with lambdas ✅
+- Naming: **PascalCase required** (prevents stdlib collisions) ✅
 
 **Impact:** HIGH - Important for code reuse
 
-**Example (NOT working):**
+**Example (WORKS):**
 ```utlx
-function calculateTax(amount: Number, rate: Number): Number {
+function CalculateTax(amount, rate) {
   amount * rate
 }
 
+function FormatCurrency(value) {
+  "$" + value
+}
+
 {
-  tax: calculateTax(100, 0.08)
+  tax: CalculateTax(100, 0.08),
+  formatted: FormatCurrency(108)
 }
 ```
 
-**Workaround:**
+**Key Features:**
+- **Both keywords work:** `function` and `def` are supported
+- **PascalCase naming:** User functions must start with uppercase (e.g., `MyFunction`)
+- **Desugaring:** Functions are converted to `let name = (params) => body`
+- **Composition:** Functions can call other user-defined functions
+- **Scope:** Functions defined at top level are available throughout the transformation
+
+**PascalCase Requirement:**
+User-defined functions MUST start with an uppercase letter to prevent naming collisions with stdlib functions (which use camelCase). This is enforced at parse time:
 ```utlx
-let calculateTax = (amount, rate) => amount * rate
-
-{
-  tax: calculateTax(100, 0.08)
-}
+function calculateTax(...) { }  // ❌ ERROR: Must be PascalCase
+function CalculateTax(...) { }  // ✅ WORKS
 ```
+
+**Conformance Tests:**
+- ✅ `examples/basic/function_definition_basic.yaml` - Basic function definitions
+- ✅ `examples/intermediate/function_composition.yaml` - Function composition
+- ✅ `examples/basic/function_definition_def_keyword.yaml` - Using `def` keyword
 
 ---
 
@@ -582,7 +597,7 @@ output-formats ::= '{' output-format-list '}'
 | Keyword | Token Defined | Parser Support | Interpreter Support | Status |
 |---------|---------------|----------------|---------------------|--------|
 | `let` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
-| `function` | ✅ | ❌ | ❌ | ❌ NOT IMPLEMENTED |
+| `function` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `if` / `else` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `match` | ✅ | ✅ | ✅ | ✅ IMPLEMENTED |
 | `template` | ✅ (legacy) | ❌ | ❌ | ❌ REMOVED |
@@ -711,7 +726,7 @@ These should be marked as `[PLANNED]` in grammar:
 
 Based on this analysis, the following features need conformance tests:
 
-1. ❌ **User-defined functions** - No tests (not implemented)
+1. ✅ **User-defined functions** - Tests implemented (Oct 22, 2025)
 2. ✅ **Match expressions** - Tests implemented (Oct 22, 2025)
 3. ❌ **Try-catch** - No tests (not implemented)
 4. ❌ **Safe navigation** - No tests (not implemented)
