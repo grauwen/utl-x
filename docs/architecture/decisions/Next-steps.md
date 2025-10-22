@@ -24,14 +24,14 @@ A comprehensive analysis comparing [docs/reference/grammar.md](https://github.co
   - Safe navigation (?.) - Cleaner null handling
   - Exponentiation (**) - pow() function works
   - Nullish coalescing (??) - Better defaults than ||
-
+  - Ternary operator (? :) - if-else works fine
+  - Spread operator (...) - Manual property copying
 
   🚧 PARTIALLY IMPLEMENTED
 
  
   - Type annotations - Parsed but NOT enforced (no type checking)
 - type annotation system is now 85% complete. The core infrastructure is solid; only parser refinement is needed for the COLON disambiguation issue. This brings UTL-X significantly closer to DataWeave's type safety capabilities!
-- Ternary operator (? :) - if-else works fine
 
 
 
@@ -48,10 +48,10 @@ A comprehensive analysis comparing [docs/reference/grammar.md](https://github.co
   Low Priority:
   7. 
   8. 
-  9. Spread operator (...) - Manual property copying
+  9. 
   10. Module system (import/export) - Defer to v2.0
   11. Typeof operator - getType() function works
-  12. Return statement - Not needed (expression-based)
+
 
 
 ----
