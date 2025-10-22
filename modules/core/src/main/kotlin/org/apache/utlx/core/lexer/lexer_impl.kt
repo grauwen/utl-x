@@ -1,8 +1,12 @@
 package org.apache.utlx.core.lexer
 
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
+
 /**
  * Lexer - Converts UTL-X source code into tokens
- * 
+ *
  * Example input:
  * ```
  * %utlx 1.0
@@ -19,16 +23,19 @@ class Lexer(private val source: String) {
     private var line = 1
     private var column = 1
     private val tokens = mutableListOf<Token>()
-    
+
     /**
      * Tokenize the entire source
      */
     fun tokenize(): List<Token> {
+        logger.debug { "Starting tokenization, source length: ${source.length}" }
+
         while (!isAtEnd()) {
             scanToken()
         }
-        
+
         tokens.add(Token(TokenType.EOF, "", null, line, column))
+        logger.debug { "Tokenization complete, generated ${tokens.size} tokens" }
         return tokens
     }
     

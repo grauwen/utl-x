@@ -16,6 +16,7 @@ import org.apache.utlx.formats.yaml.YAMLParser
 import org.apache.utlx.formats.yaml.YAMLSerializer
 import org.apache.utlx.stdlib.StandardLibrary
 import org.apache.utlx.cli.capture.TestCaptureService
+import org.apache.utlx.core.debug.DebugConfig
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -36,7 +37,9 @@ object TransformCommand {
         val outputFormat: String? = null,
         val verbose: Boolean = false,
         val pretty: Boolean = true,
-        val captureEnabled: Boolean? = null  // null = use config, true = force enable, false = force disable
+        val captureEnabled: Boolean? = null,  // null = use config, true = force enable, false = force disable
+        val debugLevel: DebugConfig.LogLevel? = null,  // Global debug level
+        val debugComponents: Set<DebugConfig.Component> = emptySet()  // Component-specific debug
     ) {
         // Backward compatibility properties
         val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
@@ -47,6 +50,14 @@ object TransformCommand {
     
     fun execute(args: Array<String>) {
         val options = parseOptions(args)
+
+        // Apply debug settings from CLI flags
+        options.debugLevel?.let { level ->
+            DebugConfig.setGlobalLogLevel(level)
+        }
+        options.debugComponents.forEach { component ->
+            DebugConfig.enableComponent(component)
+        }
 
         if (options.verbose) {
             println("UTL-X Transform")
@@ -303,6 +314,8 @@ object TransformCommand {
         var verbose = false
         var pretty = true
         var captureEnabled: Boolean? = null
+        var debugLevel: DebugConfig.LogLevel? = null
+        val debugComponents = mutableSetOf<DebugConfig.Component>()
 
         var i = 0
         while (i < args.size) {
@@ -344,6 +357,27 @@ object TransformCommand {
                 }
                 "--no-capture" -> {
                     captureEnabled = false
+                }
+                "--debug" -> {
+                    debugLevel = DebugConfig.LogLevel.DEBUG
+                }
+                "--debug-parser" -> {
+                    debugComponents.add(DebugConfig.Component.PARSER)
+                }
+                "--debug-lexer" -> {
+                    debugComponents.add(DebugConfig.Component.LEXER)
+                }
+                "--debug-interpreter" -> {
+                    debugComponents.add(DebugConfig.Component.INTERPRETER)
+                }
+                "--debug-types" -> {
+                    debugComponents.add(DebugConfig.Component.TYPE_SYSTEM)
+                }
+                "--debug-all" -> {
+                    debugLevel = DebugConfig.LogLevel.DEBUG
+                }
+                "--trace" -> {
+                    debugLevel = DebugConfig.LogLevel.TRACE
                 }
                 "-h", "--help" -> {
                     printUsage()
@@ -394,7 +428,9 @@ object TransformCommand {
             outputFormat = outputFormat,
             verbose = verbose,
             pretty = pretty,
-            captureEnabled = captureEnabled
+            captureEnabled = captureEnabled,
+            debugLevel = debugLevel,
+            debugComponents = debugComponents
         )
     }
     
@@ -423,6 +459,15 @@ object TransformCommand {
             |  --capture                   Force enable test capture (overrides config)
             |  --no-capture                Force disable test capture (overrides config)
             |  -h, --help                  Show this help message
+            |
+            |Debug Options:
+            |  --debug                     Enable DEBUG level logging for all components
+            |  --debug-parser              Enable DEBUG logging for parser only
+            |  --debug-lexer               Enable DEBUG logging for lexer only
+            |  --debug-interpreter         Enable DEBUG logging for interpreter only
+            |  --debug-types               Enable DEBUG logging for type system only
+            |  --debug-all                 Enable DEBUG logging for all components (same as --debug)
+            |  --trace                     Enable TRACE level logging (most verbose)
             |
             |Examples:
             |  # Single input/output (backward compatible)

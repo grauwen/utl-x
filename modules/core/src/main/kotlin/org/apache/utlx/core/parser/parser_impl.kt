@@ -1,8 +1,11 @@
 package org.apache.utlx.core.parser
 
+import mu.KotlinLogging
 import org.apache.utlx.core.ast.*
 import org.apache.utlx.core.lexer.Token
 import org.apache.utlx.core.lexer.TokenType
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Recursive descent parser for UTL-X
@@ -35,14 +38,19 @@ class Parser(private val tokens: List<Token>) {
      * Parse the token stream into an AST
      */
     fun parse(): ParseResult {
+        logger.debug { "Starting parse, ${tokens.size} tokens" }
+
         return try {
             val program = parseProgram()
             if (errors.isEmpty()) {
+                logger.debug { "Parse completed successfully" }
                 ParseResult.Success(program)
             } else {
+                logger.warn { "Parse completed with ${errors.size} error(s)" }
                 ParseResult.Failure(errors)
             }
         } catch (e: ParseException) {
+            logger.error(e) { "Parse exception: ${e.message}" }
             ParseResult.Failure(errors + ParseError(e.message ?: "Parse error", e.location))
         }
     }
@@ -458,9 +466,12 @@ class Parser(private val tokens: List<Token>) {
         val properties = mutableListOf<Property>()
         val letBindings = mutableListOf<Expression.LetBinding>()
 
+        logger.trace { "parseObjectLiteral: start, current=${peek().type}" }
+
         if (!check(TokenType.RBRACE)) {
             // First, parse all let bindings (they come before properties)
             while (match(TokenType.LET)) {
+                logger.trace { "parseObjectLiteral: parsing let binding" }
                 val letExpr = parseLetBinding()
                 letBindings.add(letExpr as Expression.LetBinding)
 
@@ -477,6 +488,8 @@ class Parser(private val tokens: List<Token>) {
                     match(TokenType.COMMA) || match(TokenType.SEMICOLON)
                 }
             }
+
+            logger.trace { "parseObjectLiteral: parsed ${letBindings.size} let bindings, current=${peek().type}" }
 
             // Check if this is a block expression (let bindings + expression) or object literal
             // Block expression: { let x = ...; expression }
@@ -508,11 +521,13 @@ class Parser(private val tokens: List<Token>) {
 
                 if (!isObjectLiteral) {
                     // This is a block expression: { let x = ...; expression }
+                    logger.trace { "parseObjectLiteral: detected block expression, parsing final expression" }
                     val finalExpression = parseExpression()
                     consume(TokenType.RBRACE, "Expected '}' after block expression")
 
                     // Return a Block expression with let bindings + final expression
                     val allExpressions = letBindings + finalExpression
+                    logger.debug { "parseObjectLiteral: created block with ${letBindings.size} let bindings + ${finalExpression::class.simpleName}" }
                     return Expression.Block(allExpressions, Location.from(startToken))
                 }
             }

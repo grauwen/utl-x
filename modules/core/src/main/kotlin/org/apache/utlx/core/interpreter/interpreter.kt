@@ -1,8 +1,11 @@
 package org.apache.utlx.core.interpreter
 
+import mu.KotlinLogging
 import org.apache.utlx.core.ast.*
 import org.apache.utlx.core.udm.UDM
 import kotlin.math.*
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Runtime value - result of evaluating an expression
@@ -120,21 +123,28 @@ class Interpreter {
      * Execute a program with multiple named inputs
      */
     fun execute(program: Program, namedInputs: Map<String, UDM>): RuntimeValue {
+        logger.debug { "Starting execution with ${namedInputs.size} input(s): ${namedInputs.keys.joinToString()}" }
+
         val env = globalEnv.createChild()
 
         // Bind all named inputs to environment
         namedInputs.forEach { (name, data) ->
+            logger.trace { "Binding input '$name' to environment" }
             env.define(name, RuntimeValue.UDMValue(data))
         }
 
         // Backward compatibility: if no "input" was provided, use first input
         if (!namedInputs.containsKey("input") && namedInputs.isNotEmpty()) {
             val firstInput = namedInputs.values.first()
+            logger.trace { "Binding first input as 'input' for backward compatibility" }
             env.define("input", RuntimeValue.UDMValue(firstInput))
         }
 
         // Evaluate body
-        return evaluate(program.body, env)
+        logger.debug { "Evaluating transformation body" }
+        val result = evaluate(program.body, env)
+        logger.debug { "Execution completed, result type: ${result::class.simpleName}" }
+        return result
     }
     
     /**

@@ -4,15 +4,14 @@
     <property name="LOG_PATTERN" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
     <property name="COLOR_PATTERN" value="%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{36}) - %msg%n"/>
 
-    <!-- Console Appender - dynamically controlled by DebugConfig -->
+    <!-- Console Appender with colors -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <target>System.err</target>
         <encoder>
             <pattern>${COLOR_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <!-- File Appender (optional) -->
+    <!-- File Appender (optional, can be enabled via config) -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/utlx-debug.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -24,17 +23,14 @@
         </encoder>
     </appender>
 
-    <!-- Suppress noisy third-party DEBUG messages -->
-    <logger name="org.apache.xml.security" level="WARN"/>
-    <logger name="org.slf4j" level="WARN"/>
-
     <!-- Component-specific loggers - controlled programmatically by DebugConfig -->
     <!-- Don't set levels here to allow DebugConfig to control them dynamically -->
 
-    <!-- Root logger - default INFO, controlled by DebugConfig -->
+    <!-- Root logger -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <!-- Uncomment to also log to file -->
         <!-- <appender-ref ref="FILE"/> -->
     </root>
+
 </configuration>

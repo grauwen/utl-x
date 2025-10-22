@@ -2,6 +2,7 @@
 package org.apache.utlx.cli
 
 import org.apache.utlx.cli.commands.*
+import org.apache.utlx.core.debug.DebugConfig
 import kotlin.system.exitProcess
 
 /**
@@ -14,6 +15,9 @@ object Main {
     
     @JvmStatic
     fun main(args: Array<String>) {
+        // Initialize debug configuration early (reads env vars and config files)
+        DebugConfig.initialize()
+
         if (args.isEmpty()) {
             printUsage()
             exitProcess(0)
