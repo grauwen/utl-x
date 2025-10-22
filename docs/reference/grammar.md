@@ -29,8 +29,8 @@ letter ::= 'a'..'z' | 'A'..'Z'
 digit ::= '0'..'9'
 
 (* Keywords *)
-keyword ::= 'let' | 'function' | 'if' | 'else' | 'match' 
-          | 'template' | 'apply' | 'input' | 'output' 
+keyword ::= 'let' | 'function' | 'if' | 'else' | 'match'
+          | 'input' | 'output'
           | 'true' | 'false' | 'null' | 'try' | 'catch'
           | 'return' | 'import' | 'export' | 'typeof'
 
@@ -185,16 +185,6 @@ function-definition ::= 'function' identifier '(' [parameter-list] ')' [type-ann
 
 parameter-list ::= parameter {',' parameter}
 parameter ::= identifier [type-annotation]
-```
-
-### Template Definitions
-
-```ebnf
-template-definition ::= 'template' 'match' '=' string-literal [priority] block
-priority ::= 'priority' '=' number-literal
-
-template-application ::= 'apply' '(' expression [',' mode] ')'
-mode ::= 'mode' '=' string-literal
 ```
 
 ## Operator Precedence (High to Low)

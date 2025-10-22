@@ -6,11 +6,34 @@
 
 ---
 
+## ⚠️ RESOLUTION UPDATE (October 22, 2025)
+
+**Decision Made:** After analyzing the trade-offs, **XSLT-style template matching will NOT be implemented** in UTL-X.
+
+**Rationale:**
+- UTL-X already has expression-based pattern matching (like DataWeave's `match` statement)
+- Functional composition achieves same goals without complexity
+- XSLT templates would be negative differentiation (signals "legacy XML tool")
+- High implementation cost (3-6 months) with questionable ROI
+- Goes against modern functional programming trends
+
+**Actions Taken:**
+- ✅ Removed template matching from all documentation (README, CLAUDE.md, language-spec.md, grammar.md)
+- ✅ Updated project positioning as "pure functional" transformation language
+- ✅ Removed `template` and `apply` keywords from grammar
+- ✅ Repositioned UTL-X as DataWeave-inspired, not XSLT-hybrid
+
+**This analysis document is preserved for historical context.** It documents the considerations that led to this decision.
+
+---
+
 ## Executive Summary
 
 The UTL-X grammar (`docs/reference/grammar.md`) is **architecturally sound** but contains **significant semantic inconsistencies** with the current implementation. The grammar reflects an aspirational design that includes unimplemented features (notably XSLT-style template matching) while mischaracterizing some implemented constructs (particularly the `@` operator).
 
 **Key Finding:** The grammar appears to be a design document from the project's inception rather than a living specification tracking actual implementation.
+
+**Resolution (Oct 22, 2025):** Template matching has been removed from the language specification. UTL-X is now positioned as a pure functional transformation language with expression-based pattern matching.
 
 ---
 
