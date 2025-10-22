@@ -197,22 +197,18 @@ output json
 
 ```utlx
 %utlx 1.0
-input {
-  orders: json,
-  customers: json,
-  products: json
-}
+input: orders json, customers json, products json
 output json
 ---
 {
-  enrichedOrders: input.orders |> map(order => {
-    let customer = input.customers 
-      |> filter(c => c.id == order.customerId) 
+  enrichedOrders: @orders |> map(order => {
+    let customer = @customers
+      |> filter(c => c.id == order.customerId)
       |> first(),
-    let product = input.products 
-      |> filter(p => p.id == order.productId) 
+    let product = @products
+      |> filter(p => p.id == order.productId)
       |> first()
-    
+
     {
       orderId: order.id,
       customerName: customer.name,
@@ -222,6 +218,8 @@ output json
   })
 }
 ```
+
+**Note:** Multiple named inputs use `@` prefix to access each input. This separates concerns: the transformation logic uses `@orders`, `@customers`, `@products`, while file paths are specified via CLI `--input` flags.
 
 ## Installation
 
