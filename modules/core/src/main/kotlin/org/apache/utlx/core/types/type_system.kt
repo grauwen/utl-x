@@ -535,8 +535,8 @@ class TypeChecker(private val stdlib: StandardLibrary) {
                 }
             }
             
-            BinaryOperator.MINUS, BinaryOperator.MULTIPLY, 
-            BinaryOperator.DIVIDE, BinaryOperator.MODULO -> {
+            BinaryOperator.MINUS, BinaryOperator.MULTIPLY,
+            BinaryOperator.DIVIDE, BinaryOperator.MODULO, BinaryOperator.EXPONENT -> {
                 if (!leftType.isAssignableTo(UTLXType.Number) || !rightType.isAssignableTo(UTLXType.Number)) {
                     if (leftType !is UTLXType.Any && rightType !is UTLXType.Any) {
                         errors.add(TypeError(

@@ -340,8 +340,8 @@ class Parser(private val tokens: List<Token>) {
     }
     
     private fun parseFactor(): Expression {
-        var expr = parseUnary()
-        
+        var expr = parseExponentiation()
+
         while (true) {
             val op = when {
                 match(TokenType.STAR) -> BinaryOperator.MULTIPLY
@@ -350,10 +350,23 @@ class Parser(private val tokens: List<Token>) {
                 else -> break
             }
             val operator = previous()
-            val right = parseUnary()
+            val right = parseExponentiation()
             expr = Expression.BinaryOp(expr, op, right, Location.from(operator))
         }
-        
+
+        return expr
+    }
+
+    private fun parseExponentiation(): Expression {
+        var expr = parseUnary()
+
+        // Right-associative: 2^3^2 = 2^(3^2) = 512, not (2^3)^2 = 64
+        if (match(TokenType.STAR_STAR)) {
+            val operator = previous()
+            val right = parseExponentiation()  // Right-recursive for right-associativity
+            expr = Expression.BinaryOp(expr, BinaryOperator.EXPONENT, right, Location.from(operator))
+        }
+
         return expr
     }
     

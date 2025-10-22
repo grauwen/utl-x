@@ -729,7 +729,7 @@ These should be marked as `[PLANNED]` in grammar:
 1. **`function` keyword** - ✅ User-defined functions (implemented Oct 22, 2025)
 2. **`try`/`catch` keywords** - ✅ Error handling (implemented Oct 22, 2025)
 3. **`import`/`export` keywords** - Module system
-4. **`**` operator** - Exponentiation
+4. **`**` operator** - ✅ Exponentiation (implemented Oct 22, 2025)
 5. **`?.` operator** - ✅ Safe navigation (implemented Oct 22, 2025)
 6. **`??` operator** - ✅ Nullish coalescing (implemented Oct 22, 2025)
 7. **`? :` operator** - Ternary conditional
@@ -750,8 +750,8 @@ Based on this analysis, the following features need conformance tests:
 3. ✅ **Try-catch** - Tests implemented (Oct 22, 2025)
 4. ✅ **Safe navigation** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/safe_navigation.yaml`
 5. ✅ **Nullish coalescing** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/nullish_coalescing.yaml`
-6. ❌ **Ternary operator** - No tests (not implemented)
-7. ❌ **Exponentiation** - No tests (not implemented)
+6. ✅ **Exponentiation** - Tests implemented (Oct 22, 2025) - `tests/examples/intermediate/exponentiation.yaml`
+7. ❌ **Ternary operator** - No tests (not implemented)
 8. ❌ **Spread operator** - No tests (not implemented)
 
 ---
@@ -777,7 +777,6 @@ UTL-X has a **strong foundation**:
 
 **Lower-impact missing features:**
 - Ternary operator (`? :`) (syntactic sugar, can use if-else)
-- Exponentiation (`**`) (stdlib `pow()` works as workaround)
 - Module system (defer until v2.0)
 
 ### 8.3 Recommended Actions
@@ -793,8 +792,8 @@ UTL-X has a **strong foundation**:
 2. ✅ Implement try-catch error handling - **COMPLETED** (Oct 22, 2025)
 3. ✅ Implement safe navigation (`?.`) - **COMPLETED** (Oct 22, 2025)
 4. ✅ Implement nullish coalescing (`??`) - **COMPLETED** (Oct 22, 2025)
-5. 🎯 Implement exponentiation (`**`) - **NEXT PRIORITY**
-6. 🎯 Implement ternary operator (`? :`)
+5. ✅ Implement exponentiation (`**`) - **COMPLETED** (Oct 22, 2025)
+6. 🎯 Implement ternary operator (`? :`) - **NEXT PRIORITY**
 
 **Long-term (v2.0):**
 1. ✅ Type checking enforcement - **COMPLETED** (opt-in, non-blocking, Oct 22, 2025)

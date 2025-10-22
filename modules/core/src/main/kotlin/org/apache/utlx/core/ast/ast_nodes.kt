@@ -310,7 +310,7 @@ sealed class Pattern {
  */
 enum class BinaryOperator {
     // Arithmetic
-    PLUS, MINUS, MULTIPLY, DIVIDE, MODULO,
+    PLUS, MINUS, MULTIPLY, DIVIDE, MODULO, EXPONENT,
 
     // Comparison
     EQUAL, NOT_EQUAL, LESS_THAN, LESS_EQUAL, GREATER_THAN, GREATER_EQUAL,

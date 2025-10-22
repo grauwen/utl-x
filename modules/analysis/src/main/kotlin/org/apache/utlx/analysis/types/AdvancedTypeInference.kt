@@ -222,12 +222,14 @@ class AdvancedTypeInference : TypeInferenceContext {
         val rightType = analyzeExpression(binary.right)
         
         return when (binary.operator) {
-            BinaryOperator.PLUS, BinaryOperator.MINUS, BinaryOperator.MULTIPLY, BinaryOperator.DIVIDE, BinaryOperator.MODULO -> {
+            BinaryOperator.PLUS, BinaryOperator.MINUS, BinaryOperator.MULTIPLY, BinaryOperator.DIVIDE, BinaryOperator.MODULO, BinaryOperator.EXPONENT -> {
                 // Arithmetic operations
                 when {
                     leftType is TypeDefinition.Scalar && leftType.kind.isNumeric() &&
                     rightType is TypeDefinition.Scalar && rightType.kind.isNumeric() -> {
-                        if (leftType.kind == ScalarKind.INTEGER && rightType.kind == ScalarKind.INTEGER) {
+                        if (leftType.kind == ScalarKind.INTEGER && rightType.kind == ScalarKind.INTEGER &&
+                            binary.operator != BinaryOperator.EXPONENT) {
+                            // Exponentiation can produce non-integers even with integer inputs (e.g., 2^-1 = 0.5)
                             TypeDefinition.Scalar(ScalarKind.INTEGER)
                         } else {
                             TypeDefinition.Scalar(ScalarKind.NUMBER)

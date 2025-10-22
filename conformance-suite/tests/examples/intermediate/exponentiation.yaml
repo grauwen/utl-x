@@ -1,0 +1,80 @@
+name: "exponentiation"
+category: "examples/intermediate"
+description: "Exponentiation operator (**) for power calculations"
+tags: ["math", "exponentiation", "arithmetic", "intermediate"]
+
+input:
+  format: json
+  data: |
+    {
+      "base": 10,
+      "exponent": 3
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    basicPower: 2 ** 3,
+    square: 5 ** 2,
+    cube: 3 ** 3,
+    powerOfTen: 10 ** 4,
+    squareRoot: 4 ** 0.5,
+    cubeRoot: 8 ** (1/3),
+    negativeExponent: 2 ** -1,
+    reciprocal: 10 ** -2,
+    zeroExponent: 5 ** 0,
+    oneExponent: 7 ** 1,
+    rightAssociative: 2 ** 3 ** 2,
+    compoundInterest: 1000 * (1 + 0.05) ** 10,
+    inputBased: input.base ** input.exponent,
+    scientificNotation: 3.5 * (10 ** 8),
+    distance: ((10 - 5) ** 2 + (20 - 10) ** 2) ** 0.5,
+    precedence: 2 + 3 ** 2,
+    withParens: (2 + 3) ** 2,
+    negativeBase: (-2) ** 3,
+    fractionalBase: 0.5 ** 2
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "basicPower": 8,
+      "square": 25,
+      "cube": 27,
+      "powerOfTen": 10000,
+      "squareRoot": 2,
+      "cubeRoot": 2,
+      "negativeExponent": 0.5,
+      "reciprocal": 0.01,
+      "zeroExponent": 1,
+      "oneExponent": 7,
+      "rightAssociative": 512,
+      "compoundInterest": 1628.8946267774422,
+      "inputBased": 1000,
+      "scientificNotation": 350000000,
+      "distance": 11.180339887498949,
+      "precedence": 11,
+      "withParens": 25,
+      "negativeBase": -8,
+      "fractionalBase": 0.25
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Core Team"
+  source: "Exponentiation operator implementation"
+  complexity: "intermediate"
+  notes:
+    - "Exponentiation operator (**) provides cleaner syntax than pow() function"
+    - "Right-associative: 2^3^2 = 2^(3^2) = 512, not (2^3)^2 = 64"
+    - "Supports fractional exponents for roots (n^0.5 = square root)"
+    - "Supports negative exponents for reciprocals (n^-1 = 1/n)"
+    - "Zero exponent always returns 1 (n^0 = 1)"
+    - "Higher precedence than multiplication: 2 + 3^2 = 2 + 9 = 11"

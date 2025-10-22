@@ -541,7 +541,13 @@ class Interpreter {
                 if (r == 0.0) throw RuntimeError("Division by zero", expr.location)
                 RuntimeValue.NumberValue(l % r)
             }
-            
+
+            BinaryOperator.EXPONENT -> {
+                val base = extractNumber(left, "Base must be number", expr.location)
+                val exponent = extractNumber(right, "Exponent must be number", expr.location)
+                RuntimeValue.NumberValue(base.pow(exponent))
+            }
+
             BinaryOperator.EQUAL -> RuntimeValue.BooleanValue(valuesEqual(left, right))
             BinaryOperator.NOT_EQUAL -> RuntimeValue.BooleanValue(!valuesEqual(left, right))
             
