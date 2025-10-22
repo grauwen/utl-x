@@ -267,7 +267,17 @@ sealed class Expression : Node() {
         val selector: Expression,
         override val location: Location
     ) : Expression()
-    
+
+    /**
+     * Spread element: ...expression
+     * Used in object literals: { ...obj, key: value }
+     * Used in array literals: [...arr1, item, ...arr2]
+     */
+    data class SpreadElement(
+        val expression: Expression,
+        override val location: Location
+    ) : Expression()
+
     /**
      * Block with multiple expressions (last one is returned)
      */
@@ -279,12 +289,14 @@ sealed class Expression : Node() {
 
 /**
  * Object property
+ * Can be a regular property (key: value) or a spread property (...expression)
  */
 data class Property(
-    val key: String,
+    val key: String?,  // Null for spread properties
     val value: Expression,
     val location: Location,
-    val isAttribute: Boolean = false  // True if property represents an XML attribute (@key)
+    val isAttribute: Boolean = false,  // True if property represents an XML attribute (@key)
+    val isSpread: Boolean = false  // True for spread properties (...obj)
 )
 
 /**

@@ -178,7 +178,38 @@ class Interpreter {
 
                 // Evaluate properties in the environment with let bindings
                 for (prop in expr.properties) {
+                    if (prop.isSpread) {
+                        // Handle spread property: ...obj
+                        val spreadValue = evaluate(prop.value, objectEnv)
+                        when (spreadValue) {
+                            is RuntimeValue.ObjectValue -> {
+                                // Merge all properties from the spread object
+                                properties.putAll(spreadValue.properties)
+                            }
+                            is RuntimeValue.UDMValue -> {
+                                // If it's a UDM object, extract its properties
+                                when (val udm = spreadValue.udm) {
+                                    is UDM.Object -> {
+                                        // Convert UDM properties to RuntimeValue and merge
+                                        udm.properties.forEach { (key, value) ->
+                                            properties[key] = RuntimeValue.UDMValue(value)
+                                        }
+                                    }
+                                    else -> {
+                                        // Can't spread non-object UDM values - ignore
+                                    }
+                                }
+                            }
+                            else -> {
+                                // Can't spread non-object values - ignore
+                            }
+                        }
+                        continue
+                    }
+
                     val value = evaluate(prop.value, objectEnv)
+                    val key = prop.key ?: error("Non-spread property must have a key")
+
                     if (prop.isAttribute) {
                         // Attributes must be strings - extract string value
                         val attrValue = when (value) {
@@ -195,9 +226,9 @@ class Interpreter {
                             }
                             else -> value.toString()
                         }
-                        attributes[prop.key] = attrValue
+                        attributes[key] = attrValue
                     } else {
-                        properties[prop.key] = value
+                        properties[key] = value
                     }
                 }
 
@@ -211,8 +242,45 @@ class Interpreter {
             }
             
             is Expression.ArrayLiteral -> {
-                val elements = expr.elements.map { evaluate(it, env) }
+                val elements = mutableListOf<RuntimeValue>()
+                for (element in expr.elements) {
+                    if (element is Expression.SpreadElement) {
+                        // Handle spread element: [...arr]
+                        val spreadValue = evaluate(element.expression, env)
+                        when (spreadValue) {
+                            is RuntimeValue.ArrayValue -> {
+                                // Flatten the spread array into the result
+                                elements.addAll(spreadValue.elements)
+                            }
+                            is RuntimeValue.UDMValue -> {
+                                // If it's a UDM array, extract its elements
+                                when (val udm = spreadValue.udm) {
+                                    is UDM.Array -> {
+                                        // Convert UDM elements to RuntimeValue and add
+                                        udm.elements.forEach { value ->
+                                            elements.add(RuntimeValue.UDMValue(value))
+                                        }
+                                    }
+                                    else -> {
+                                        // Can't spread non-array UDM values - ignore
+                                    }
+                                }
+                            }
+                            else -> {
+                                // Can't spread non-array values - ignore
+                            }
+                        }
+                    } else {
+                        elements.add(evaluate(element, env))
+                    }
+                }
                 RuntimeValue.ArrayValue(elements)
+            }
+
+            is Expression.SpreadElement -> {
+                // SpreadElement should only be used within array/object literals
+                // If evaluated directly, just evaluate the inner expression
+                evaluate(expr.expression, env)
             }
             
             is Expression.MemberAccess -> evaluateMemberAccess(expr, env)

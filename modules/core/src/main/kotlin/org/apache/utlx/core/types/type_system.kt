@@ -237,19 +237,55 @@ class TypeChecker(private val stdlib: StandardLibrary) {
             }
             
             is Expression.ObjectLiteral -> {
-                val propTypes = expr.properties.associate { prop ->
-                    prop.key to inferType(prop.value, env)
+                val propTypes = mutableMapOf<String, UTLXType>()
+
+                for (prop in expr.properties) {
+                    if (prop.isSpread) {
+                        // Handle spread property
+                        val spreadType = inferType(prop.value, env)
+                        when (spreadType) {
+                            is UTLXType.Object -> {
+                                // Merge properties from spread object
+                                propTypes.putAll(spreadType.properties)
+                            }
+                            else -> {
+                                // Can't spread non-object - ignore for type inference
+                            }
+                        }
+                    } else {
+                        val key = prop.key ?: error("Non-spread property must have a key")
+                        propTypes[key] = inferType(prop.value, env)
+                    }
                 }
+
                 UTLXType.Object(propTypes)
+            }
+
+            is Expression.SpreadElement -> {
+                // SpreadElement should only be used within array/object literals
+                // If type-checked directly, infer the type of the inner expression
+                inferType(expr.expression, env)
             }
             
             is Expression.ArrayLiteral -> {
                 if (expr.elements.isEmpty()) {
                     UTLXType.Array(UTLXType.Any)
                 } else {
-                    val elementTypes = expr.elements.map { inferType(it, env) }
-                    val commonType = elementTypes.reduce { acc, type -> 
-                        acc.commonType(type) 
+                    val elementTypes = expr.elements.map { element ->
+                        when (element) {
+                            is Expression.SpreadElement -> {
+                                // For spread, get the element type of the array being spread
+                                val spreadType = inferType(element.expression, env)
+                                when (spreadType) {
+                                    is UTLXType.Array -> spreadType.elementType
+                                    else -> UTLXType.Any // Can't spread non-array
+                                }
+                            }
+                            else -> inferType(element, env)
+                        }
+                    }
+                    val commonType = elementTypes.reduce { acc, type ->
+                        acc.commonType(type)
                     }
                     UTLXType.Array(commonType)
                 }

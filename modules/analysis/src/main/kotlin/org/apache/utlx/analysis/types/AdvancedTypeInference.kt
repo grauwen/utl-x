@@ -99,13 +99,29 @@ class AdvancedTypeInference : TypeInferenceContext {
     private fun analyzeObject(obj: Expression.ObjectLiteral): TypeDefinition {
         val properties = mutableMapOf<String, PropertyType>()
         val required = mutableSetOf<String>()
-        
+
         obj.properties.forEach { property ->
-            val propType = analyzeExpression(property.value)
-            properties[property.key] = PropertyType(propType, nullable = false)
-            required.add(property.key)
+            if (property.isSpread) {
+                // Handle spread property
+                val spreadType = analyzeExpression(property.value)
+                when (spreadType) {
+                    is TypeDefinition.Object -> {
+                        // Merge properties from spread object
+                        properties.putAll(spreadType.properties)
+                        required.addAll(spreadType.required)
+                    }
+                    else -> {
+                        // Can't spread non-object - ignore
+                    }
+                }
+            } else {
+                val key = property.key ?: error("Non-spread property must have a key")
+                val propType = analyzeExpression(property.value)
+                properties[key] = PropertyType(propType, nullable = false)
+                required.add(key)
+            }
         }
-        
+
         return TypeDefinition.Object(properties, required, additionalProperties = false)
     }
     
@@ -116,22 +132,34 @@ class AdvancedTypeInference : TypeInferenceContext {
         if (array.elements.isEmpty()) {
             return TypeDefinition.Array(TypeDefinition.Any)
         }
-        
-        // Infer element type from first element
-        val firstElementType = analyzeExpression(array.elements.first())
-        
-        // Check if all elements have the same type
-        val allSameType = array.elements.all { element ->
-            val elementType = analyzeExpression(element)
-            elementType.isCompatibleWith(firstElementType)
+
+        // Collect element types, handling spread elements
+        val elementTypes = array.elements.map { element ->
+            when (element) {
+                is Expression.SpreadElement -> {
+                    // For spread, get the element type of the array being spread
+                    val spreadType = analyzeExpression(element.expression)
+                    when (spreadType) {
+                        is TypeDefinition.Array -> spreadType.elementType
+                        else -> TypeDefinition.Any // Can't spread non-array
+                    }
+                }
+                else -> analyzeExpression(element)
+            }
         }
-        
+
+        // Infer element type from first element
+        val firstElementType = elementTypes.first()
+
+        // Check if all elements have the same type
+        val allSameType = elementTypes.all { it.isCompatibleWith(firstElementType) }
+
         val elementType = if (allSameType) {
             firstElementType
         } else {
             // Create union of all element types
-            val elementTypes = array.elements.map { analyzeExpression(it) }.distinct()
-            if (elementTypes.size == 1) elementTypes.first() else TypeDefinition.Union(elementTypes)
+            val distinctTypes = elementTypes.distinct()
+            if (distinctTypes.size == 1) distinctTypes.first() else TypeDefinition.Union(distinctTypes)
         }
         
         return TypeDefinition.Array(elementType, minItems = array.elements.size, maxItems = array.elements.size)

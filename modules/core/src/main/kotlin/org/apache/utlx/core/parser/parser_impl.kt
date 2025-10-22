@@ -586,6 +586,14 @@ class Parser(private val tokens: List<Token>) {
             // Then parse properties (if any)
             if (!check(TokenType.RBRACE)) {
                 do {
+                    // Check for spread syntax: ...expression
+                    if (match(TokenType.SPREAD)) {
+                        val spreadToken = previous()
+                        val spreadExpr = parseExpression()
+                        properties.add(Property(null, spreadExpr, Location.from(spreadToken), isAttribute = false, isSpread = true))
+                        continue
+                    }
+
                     // Check for attribute syntax (@key or "@key")
                     var isAttribute = match(TokenType.AT)
                     var key: String
@@ -605,7 +613,7 @@ class Parser(private val tokens: List<Token>) {
                             key = key.substring(1)  // Remove @ prefix
                         }
                     } else {
-                        throw error("Expected property name")
+                        throw error("Expected property name or spread operator")
                     }
 
                     consume(TokenType.COLON, "Expected ':' after property name")
@@ -627,7 +635,14 @@ class Parser(private val tokens: List<Token>) {
 
         if (!check(TokenType.RBRACKET)) {
             do {
-                elements.add(parseExpression())
+                // Check for spread syntax: ...expression
+                if (match(TokenType.SPREAD)) {
+                    val spreadToken = previous()
+                    val spreadExpr = parseExpression()
+                    elements.add(Expression.SpreadElement(spreadExpr, Location.from(spreadToken)))
+                } else {
+                    elements.add(parseExpression())
+                }
             } while (match(TokenType.COMMA))
         }
 
