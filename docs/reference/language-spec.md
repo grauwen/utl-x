@@ -612,36 +612,29 @@ input json {
 
 ---
 
-## 12. Multiple Outputs
+## 12. Single Output Philosophy
 
-Generate multiple output files:
+UTL-X follows DataWeave's principle: **one transformation = one output**.
 
 ```utlx
-output {
-  summary: json,
-  details: xml,
-  report: csv
-}
+%utlx 1.0
+input xml
+output json
 ---
-
-output.summary = {
-  count: count(input.orders)
-}
-
-output.details = {
-  Orders: input.orders |> map(order => {
-    Order: {
-      @id: order.id,
-      Total: order.total
-    }
-  })
-}
-
-output.report = {
-  headers: ["Order ID", "Total"],
-  rows: input.orders |> map(order => [order.id, order.total])
+{
+  transformed: input.data
 }
 ```
+
+**For multiple output files**, use external orchestration:
+
+```bash
+# Run multiple transformations
+utlx transform summary.utlx data.xml > summary.json
+utlx transform details.utlx data.xml > details.xml
+```
+
+See [Multiple Inputs documentation](../language-guide/multiple-inputs-outputs.md#external-orchestration-for-multiple-outputs) for detailed patterns.
 
 ---
 

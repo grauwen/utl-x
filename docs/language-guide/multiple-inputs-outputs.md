@@ -1,22 +1,23 @@
-# Multiple Inputs and Outputs in UTL-X
+# Multiple Inputs in UTL-X
 
 ## Overview
 
-UTL-X supports multiple named inputs and outputs, enabling you to:
+UTL-X supports multiple named inputs, enabling you to:
 - Merge data from multiple sources (e.g., combining XML from SAP with JSON from REST APIs)
-- Generate multiple output files in different formats from a single transformation
-- Handle complex enterprise integration scenarios without external orchestration
+- Handle complex enterprise integration scenarios
 
 This feature provides similar capabilities to DataWeave but with a cleaner, more intuitive syntax.
+
+**Note on Outputs:** Like DataWeave, UTL-X follows the principle that **one transformation produces one output**. If you need multiple output files, use external orchestration (shell scripts, workflow tools) to run multiple transformations or split a compound output.
 
 ## Table of Contents
 
 1. [Multiple Inputs](#multiple-inputs)
-2. [Multiple Outputs](#multiple-outputs)
-3. [CLI Usage](#cli-usage)
-4. [Real-World Examples](#real-world-examples)
-5. [Comparison with DataWeave](#comparison-with-dataweave)
-6. [Best Practices](#best-practices)
+2. [CLI Usage](#cli-usage)
+3. [Real-World Examples](#real-world-examples)
+4. [Comparison with DataWeave](#comparison-with-dataweave)
+5. [Best Practices](#best-practices)
+6. [External Orchestration for Multiple Outputs](#external-orchestration-for-multiple-outputs)
 
 ---
 
@@ -100,44 +101,6 @@ output json
 
 ---
 
-## Multiple Outputs
-
-### Syntax (Planned - Not Yet Implemented)
-
-**Single Output (Current):**
-```utlx
-%utlx 1.0
-input xml
-output json
----
-{ transformed: @input.data }
-```
-
-**Multiple Named Outputs (Future):**
-```utlx
-%utlx 1.0
-input xml
-output: summary json, details xml, report csv
----
-{
-  summary: {
-    totalOrders: count(@input.Orders.Order),
-    totalValue: sum(@input.Orders.Order.*.Total)
-  },
-  details: @input,
-  report: {
-    headers: ["OrderID", "Customer", "Total"],
-    rows: @input.Orders.Order |> map(order => [
-      order.@id,
-      order.Customer.Name,
-      order.Total
-    ])
-  }
-}
-```
-
----
-
 ## CLI Usage
 
 ### Single Input/Output (Backward Compatible)
@@ -167,17 +130,6 @@ utlx transform script.utlx \
   -i input1=sap.xml \
   -i input2=rest.json \
   -o integrated.json
-```
-
-### Multiple Named Outputs (Future)
-
-```bash
-# Named outputs with --output flag
-utlx transform script.utlx \
-  -i data.xml \
-  --output summary=summary.json \
-  --output details=details.xml \
-  --output report=report.csv
 ```
 
 ### Format Override
@@ -374,17 +326,17 @@ output xml
 |---------|-----------|-------|
 | **Multiple Inputs** | `%input in0 application/json` | `input: input1 json, input2 xml` |
 | **Input Access** | `in0.customer` | `@input1.customer` |
-| **Multiple Outputs** | Not supported (requires multiple Transform components) | `output: summary json, details xml` |
+| **Single Output** | One Transform = One Output | One Transform = One Output |
 | **Syntax Style** | Directive-based (`%input`) | Declarative (`:` separator) |
 | **Line-by-line** | Each input on separate line | Comma-separated or multi-line |
 
 ### UTL-X Advantages
 
-✅ **Multiple outputs in single script** (DataWeave requires multiple Transform Message components)
 ✅ **Cleaner comma-separated syntax** for compact declarations
 ✅ **Consistent `@` prefix** for all inputs
 ✅ **Per-input format options** inline
 ✅ **Backward compatible** with single input/output scripts
+✅ **Same functional purity as DataWeave** (no file I/O, single output)
 
 ---
 
@@ -508,18 +460,134 @@ output xml {encoding: "UTF-8"}  # Normalize to UTF-8
 
 ---
 
+## External Orchestration for Multiple Outputs
+
+UTL-X follows DataWeave's design principle: **one transformation = one output**. This keeps transformations pure and functional. If you need multiple output files, use external orchestration.
+
+### Approach 1: Run Multiple Transformations
+
+Create separate transformation scripts for each output:
+
+**summary.utlx:**
+```utlx
+%utlx 1.0
+input xml
+output json
+---
+{
+  totalOrders: count(@input.Orders.Order),
+  totalValue: sum(@input.Orders.Order.*.Total)
+}
+```
+
+**details.utlx:**
+```utlx
+%utlx 1.0
+input xml
+output xml
+---
+{
+  Report: {
+    Orders: @input.Orders.Order
+  }
+}
+```
+
+**Shell orchestration:**
+```bash
+# Run each transformation separately
+utlx transform summary.utlx data.xml > summary.json
+utlx transform details.utlx data.xml > details.xml
+utlx transform report.utlx data.xml > report.csv
+```
+
+### Approach 2: Single Output + External Split
+
+Create a compound output and split it:
+
+**combined.utlx:**
+```utlx
+%utlx 1.0
+input xml
+output json
+---
+{
+  summary: {
+    totalOrders: count(@input.Orders.Order),
+    totalValue: sum(@input.Orders.Order.*.Total)
+  },
+  details: {
+    Orders: @input.Orders.Order
+  },
+  report: {
+    headers: ["OrderID", "Customer", "Total"],
+    rows: @input.Orders.Order |> map(order => [
+      order.@id,
+      order.Customer.Name,
+      order.Total
+    ])
+  }
+}
+```
+
+**Split with external tools:**
+```bash
+# Transform once, extract parts with jq
+utlx transform combined.utlx data.xml -o combined.json
+
+# Split into separate files
+jq '.summary' combined.json > summary.json
+jq '.details' combined.json > details.json
+jq '.report' combined.json > report.json
+
+# Convert report to CSV (using jq + jq2csv or similar)
+jq -r '.report | [.headers] + .rows | .[] | @csv' combined.json > report.csv
+```
+
+### Approach 3: Workflow Orchestration
+
+Use workflow tools (Make, Airflow, Prefect, MuleSoft):
+
+**Makefile:**
+```makefile
+all: summary.json details.xml report.csv
+
+summary.json: data.xml summary.utlx
+	utlx transform summary.utlx data.xml > $@
+
+details.xml: data.xml details.utlx
+	utlx transform details.utlx data.xml > $@
+
+report.csv: data.xml report.utlx
+	utlx transform report.utlx data.xml > $@
+```
+
+**Run:**
+```bash
+make -j3  # Run 3 transformations in parallel
+```
+
+### Why This Approach is Better
+
+✅ **Separation of Concerns**: Transformation logic stays pure, orchestration handles I/O
+✅ **DTAP Portability**: File paths managed by orchestration, not hardcoded in transformations
+✅ **Testability**: Each transformation can be tested independently with known inputs/outputs
+✅ **Reusability**: Individual transformations can be reused in different contexts
+✅ **Functional Purity**: No side effects in transformation code
+✅ **Industry Alignment**: Matches DataWeave's design philosophy
+
+---
+
 ## Limitations and Future Enhancements
 
 ### Current Limitations
 
-1. **Multiple Outputs**: Syntax defined but not yet implemented
-2. **Streaming**: Large inputs are fully loaded into memory
-3. **Dynamic Inputs**: Cannot determine input names at runtime
-4. **Test Capture**: Multi-input transformations not captured for conformance tests
+1. **Streaming**: Large inputs are fully loaded into memory
+2. **Dynamic Inputs**: Cannot determine input names at runtime
+3. **Test Capture**: Multi-input transformations not yet fully captured for conformance tests
 
 ### Planned Enhancements
 
-- [ ] Full multiple outputs implementation
 - [ ] Streaming support for large files
 - [ ] Input validation rules in header
 - [ ] Per-input error handling
@@ -585,5 +653,5 @@ All existing single-input scripts continue to work without changes:
 
 ---
 
-**Last Updated:** 2025-10-21
-**Status:** Multiple Inputs - ✅ Implemented | Multiple Outputs - 🔄 Planned
+**Last Updated:** 2025-10-22
+**Status:** Multiple Inputs - ✅ Implemented | Single Output Philosophy - ✅ Aligned with DataWeave

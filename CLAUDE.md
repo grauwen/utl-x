@@ -501,42 +501,30 @@ utlx transform script.utlx \
 - Inline in header (no separate directives)
 - Consistent `@` prefix for inputs
 
-#### 3.2.8 Multiple Outputs (📋 PLANNED)
+#### 3.2.8 Single Output Philosophy (✅ IMPLEMENTED)
 
-**Proposed Syntax:**
-```utlx
-%utlx 1.0
-input xml
-output: summary json, details xml, report csv
----
-{
-  summary: {
-    orderCount: count(@input.Orders.Order),
-    totalValue: sum(@input.Orders.Order.Total)
-  },
-  details: @input,
-  report: {
-    headers: ["Order ID", "Customer", "Total"],
-    rows: @input.Orders.Order |> map(order => [
-      order.@id,
-      order.Customer.Name,
-      order.Total
-    ])
-  }
-}
-```
+**Design Principle:** Like DataWeave, UTL-X follows **one transformation = one output**.
 
-**Planned CLI Usage:**
+**Rationale:**
+- ✅ Maintains functional purity (no file I/O side effects)
+- ✅ DTAP portability (file paths managed by orchestration, not transformation)
+- ✅ Better testability (clear input→output mapping)
+- ✅ Industry alignment with DataWeave best practices
+- ✅ Separation of concerns (transformation vs. orchestration)
+
+**For Multiple Outputs:** Use external orchestration:
+
 ```bash
-utlx transform script.utlx -i data.xml \
-  --output summary=summary.json \
-  --output details=details.xml \
-  --output report=report.csv
+# Approach 1: Multiple transformations
+utlx transform summary.utlx data.xml > summary.json
+utlx transform details.utlx data.xml > details.xml
+
+# Approach 2: Compound output + split
+utlx transform combined.utlx data.xml | jq '.summary' > summary.json
+utlx transform combined.utlx data.xml | jq '.details' > details.xml
 ```
 
-**Status:** Syntax designed, implementation pending
-
-**Note:** This gives UTL-X a major advantage over DataWeave, which requires multiple Transform Message components for multiple outputs.
+**Documentation:** See `docs/language-guide/multiple-inputs-outputs.md#external-orchestration-for-multiple-outputs`
 
 ---
 
