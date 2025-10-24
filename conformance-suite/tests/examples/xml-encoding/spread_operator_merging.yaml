@@ -1,0 +1,75 @@
+name: "spread_operator_merging"
+category: "xml-encoding"
+description: "Demonstrates spread operator merges child elements directly without wrapper"
+tags: ["xml", "encoding", "spread-operator", "merge", "no-wrapper"]
+
+input:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Customer>
+      <Name>Bob Schmidt</Name>
+      <Email>bob@example.com</Email>
+      <Orders>
+        <Order id="002">
+          <Product>Monitor</Product>
+          <Price>350</Price>
+        </Order>
+      </Orders>
+    </Customer>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output xml {encoding: "UTF-8"}
+  ---
+  {
+    Envelope: {
+      Metadata: {
+        Source: "CRM",
+        Encoding: detectXMLEncoding($input),
+        ProcessedAt: "2025-10-24T14:00:00Z"
+      },
+      ...$input
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Envelope>
+      <Metadata>
+        <Source>CRM</Source>
+        <Encoding>UTF-8</Encoding>
+        <ProcessedAt>2025-10-24T14:00:00Z</ProcessedAt>
+      </Metadata>
+      <Customer>
+        <Name>Bob Schmidt</Name>
+        <Email>bob@example.com</Email>
+        <Orders>
+          <Order id="002">
+            <Product>Monitor</Product>
+            <Price>350</Price>
+          </Order>
+        </Orders>
+      </Customer>
+    </Envelope>
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-24"
+  references:
+    - "Property assignment vs spread operator"
+    - "XML child element merging"
+  notes:
+    - "Spread operator (...$input) merges child elements directly"
+    - "This is the CORRECT behavior for merging content without nesting"
+    - "Compare with property assignment (OriginContent: $input) which adds wrapper"
+    - "Use case: Flattening structures, combining elements at same level"
+    - "Contrast: property_assignment_wrapping.yaml uses property for wrapper"
+    - "Notice: Customer element is direct child of Envelope, not wrapped"

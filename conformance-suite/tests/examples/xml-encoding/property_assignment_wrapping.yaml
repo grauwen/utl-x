@@ -1,0 +1,76 @@
+name: "property_assignment_wrapping"
+category: "xml-encoding"
+description: "Demonstrates property assignment creates wrapper element vs spread operator merges directly"
+tags: ["xml", "encoding", "spread-operator", "property-assignment", "wrapper"]
+
+input:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Customer>
+      <Name>Alice Müller</Name>
+      <Email>alice@example.com</Email>
+      <Orders>
+        <Order id="001">
+          <Product>Laptop</Product>
+          <Price>1200</Price>
+        </Order>
+      </Orders>
+    </Customer>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output xml {encoding: "UTF-8"}
+  ---
+  {
+    Envelope: {
+      Metadata: {
+        Source: "CRM",
+        Encoding: detectXMLEncoding($input),
+        ProcessedAt: "2025-10-24T14:00:00Z"
+      },
+      OriginContent: $input
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Envelope>
+      <Metadata>
+        <Source>CRM</Source>
+        <Encoding>UTF-8</Encoding>
+        <ProcessedAt>2025-10-24T14:00:00Z</ProcessedAt>
+      </Metadata>
+      <OriginContent>
+        <Customer>
+          <Name>Alice Müller</Name>
+          <Email>alice@example.com</Email>
+          <Orders>
+            <Order id="001">
+              <Product>Laptop</Product>
+              <Price>1200</Price>
+            </Order>
+          </Orders>
+        </Customer>
+      </OriginContent>
+    </Envelope>
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-24"
+  references:
+    - "Property assignment vs spread operator"
+    - "XML wrapper elements"
+  notes:
+    - "Property assignment (OriginContent: $input) creates wrapper element"
+    - "This is the CORRECT behavior for creating nested structures"
+    - "Compare with spread operator (...$input) which merges children directly"
+    - "Use case: Envelope pattern where original content needs wrapping"
+    - "Contrast: encoding_precedence_rules.yaml uses ...$input for direct merge"
