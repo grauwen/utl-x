@@ -79,7 +79,10 @@ object XMLCanonicalizationFunctions {
      */
     fun c14n(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("c14n expects 1 argument")
+            throw FunctionArgumentException(
+                "c14n expects 1 argument, got ${args.size}. " +
+                "Hint: Provide an XML string or document to canonicalize."
+            )
         }
         val xml = args[0]
         return canonicalize(xml, Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS)
@@ -116,7 +119,10 @@ object XMLCanonicalizationFunctions {
      */
     fun c14nWithComments(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("c14nWithComments expects 1 argument")
+            throw FunctionArgumentException(
+                "c14nWithComments expects 1 argument, got ${args.size}. " +
+                "Hint: Provide an XML string or document to canonicalize."
+            )
         }
         val xml = args[0]
         return canonicalize(xml, Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS)
@@ -161,7 +167,10 @@ object XMLCanonicalizationFunctions {
      */
     fun excC14n(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("excC14n expects at least 1 argument")
+            throw FunctionArgumentException(
+                "excC14n expects at least 1 argument, got ${args.size}. " +
+                "Hint: Provide an XML string or document to canonicalize."
+            )
         }
         val xml = args[0]
         val inclusiveNamespaces = if (args.size > 1) args[1] else UDM.Scalar(null)
@@ -201,7 +210,7 @@ object XMLCanonicalizationFunctions {
      */
     fun excC14nWithComments(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("excC14nWithComments expects at least 1 argument")
+            throw FunctionArgumentException("excC14nWithComments expects at least 1 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml = args[0]
         val inclusiveNamespaces = if (args.size > 1) args[1] else UDM.Scalar(null)
@@ -247,7 +256,7 @@ object XMLCanonicalizationFunctions {
      */
     fun c14n11(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("c14n11 expects 1 argument")
+            throw FunctionArgumentException("c14n11 expects 1 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml = args[0]
         return canonicalize(xml, Canonicalizer.ALGO_ID_C14N11_OMIT_COMMENTS)
@@ -282,7 +291,7 @@ object XMLCanonicalizationFunctions {
      */
     fun c14n11WithComments(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("c14n11WithComments expects 1 argument")
+            throw FunctionArgumentException("c14n11WithComments expects 1 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml = args[0]
         return canonicalize(xml, Canonicalizer.ALGO_ID_C14N11_WITH_COMMENTS)
@@ -326,7 +335,7 @@ object XMLCanonicalizationFunctions {
      */
     fun c14nPhysical(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("c14nPhysical expects 1 argument")
+            throw FunctionArgumentException("c14nPhysical expects 1 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml = args[0]
         return canonicalize(xml, Canonicalizer.ALGO_ID_C14N_PHYSICAL)
@@ -375,7 +384,7 @@ object XMLCanonicalizationFunctions {
      */
     fun canonicalizeWithAlgorithm(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("canonicalizeWithAlgorithm expects at least 2 arguments")
+            throw FunctionArgumentException("canonicalizeWithAlgorithm expects at least 2 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml = args[0]
         val algorithm = args[1]
@@ -437,7 +446,7 @@ object XMLCanonicalizationFunctions {
      */
     fun c14nSubset(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("c14nSubset expects at least 2 arguments")
+            throw FunctionArgumentException("c14nSubset expects at least 2 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml = args[0]
         val xpathExpr = args[1]
@@ -512,7 +521,7 @@ object XMLCanonicalizationFunctions {
      */
     fun c14nHash(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("c14nHash expects at least 1 argument")
+            throw FunctionArgumentException("c14nHash expects at least 1 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml = args[0]
         val hashAlgorithm = if (args.size > 1) args[1] else UDM.Scalar("sha256")
@@ -586,7 +595,7 @@ object XMLCanonicalizationFunctions {
      */
     fun c14nEquals(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("c14nEquals expects at least 2 arguments")
+            throw FunctionArgumentException("c14nEquals expects at least 2 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml1 = args[0]
         val xml2 = args[1]
@@ -636,7 +645,7 @@ object XMLCanonicalizationFunctions {
      */
     fun c14nFingerprint(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("c14nFingerprint expects 1 argument")
+            throw FunctionArgumentException("c14nFingerprint expects 1 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml = args[0]
         val hash = c14nHash(listOf(xml, UDM.Scalar("sha256"), UDM.Scalar("c14n")))
@@ -687,7 +696,7 @@ object XMLCanonicalizationFunctions {
      */
     fun prepareForSignature(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("prepareForSignature expects at least 1 argument")
+            throw FunctionArgumentException("prepareForSignature expects at least 1 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml = args[0]
         val digestAlgorithm = if (args.size > 1) args[1] else UDM.Scalar("sha256")
@@ -747,7 +756,7 @@ object XMLCanonicalizationFunctions {
      */
     fun validateDigest(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("validateDigest expects at least 2 arguments")
+            throw FunctionArgumentException("validateDigest expects at least 2 argument(s), got ${args.size}. Hint: Check the function signature and provide the correct number of arguments")
         }
         val xml = args[0]
         val expectedDigest = args[1]
