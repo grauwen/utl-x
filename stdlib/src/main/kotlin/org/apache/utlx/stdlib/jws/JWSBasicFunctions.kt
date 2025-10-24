@@ -351,13 +351,16 @@ object JWSBasicFunctions {
     // Helper functions
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
     
     private fun UDM.asString(): String = when (this) {
-        is UDM.Scalar -> value?.toString() ?: throw FunctionArgumentException("Expected string value")
-        else -> throw FunctionArgumentException("Expected string value, got ${this::class.simpleName}")
+        is UDM.Scalar -> value?.toString() ?: throw FunctionArgumentException("Expected string value, but got ${getTypeDescription(this)}. Hint: Use toString() to convert values to strings.")
+        else -> throw FunctionArgumentException("Expected string value, got ${getTypeDescription(this)}")
     }
     
     /**
@@ -443,6 +446,30 @@ object JWSBasicFunctions {
         
         // Simplified parsing - would need full implementation for production
         return UDM.Array(emptyList())
+    }
+
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 
 }

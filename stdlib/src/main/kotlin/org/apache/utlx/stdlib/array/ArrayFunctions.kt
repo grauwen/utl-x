@@ -1111,7 +1111,7 @@ object ArrayFunctions {
                 }
             }
             else -> throw FunctionArgumentException(
-                "Expected number value, but got ${this::class.simpleName}. " +
+                "Expected number value, but got ${getTypeDescription(this)}. " +
                 "Hint: Use toNumber() to convert values to numbers."
             )
         }
