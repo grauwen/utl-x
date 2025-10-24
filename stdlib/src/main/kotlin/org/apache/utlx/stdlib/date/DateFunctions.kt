@@ -322,7 +322,7 @@ object DateFunctions {
                     toKotlinxInstant(zonedDateTime.toInstant())
                 }
                 else -> throw FunctionArgumentException(
-                    "diffDays requires Date, DateTime, or LocalDateTime values, but got ${date.javaClass.simpleName}. " +
+                    "diffDays requires Date, DateTime, or LocalDateTime values, but got ${getTypeDescription(date)}. " +
                     "Hint: Use parseDate() to create date values."
                 )
             }
@@ -337,46 +337,79 @@ object DateFunctions {
     
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
-    
+
     private fun requireArgs(args: List<UDM>, range: IntRange, functionName: String) {
         if (args.size !in range) {
-            throw FunctionArgumentException("$functionName expects ${range.first}..${range.last} arguments, got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects ${range.first}..${range.last} arguments, got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
-    
+
     private fun UDM.asString(): String = when (this) {
         is UDM.Scalar -> value?.toString() ?: ""
         else -> throw FunctionArgumentException(
-            "Expected string value, but got ${this.javaClass.simpleName}. " +
+            "Expected string value, but got ${getTypeDescription(this)}. " +
             "Hint: Use toString() to convert values to strings."
         )
     }
-    
+
     private fun UDM.asNumber(): Double = when (this) {
         is UDM.Scalar -> {
             val v = value
             when (v) {
                 is Number -> v.toDouble()
+                is String -> v.toDoubleOrNull() ?: throw FunctionArgumentException(
+                    "Cannot convert '$v' to number. " +
+                    "Hint: Ensure the string contains a valid numeric value."
+                )
                 else -> throw FunctionArgumentException(
-                    "Expected number value, but got ${v?.javaClass?.simpleName ?: "null"}. " +
-                    "Hint: Use toNumber() to convert strings to numbers."
+                    "Expected number value, but got ${getTypeDescription(this)}. " +
+                    "Hint: Use toNumber() to convert values to numbers."
                 )
             }
         }
         else -> throw FunctionArgumentException(
-            "Expected number value, but got ${this.javaClass.simpleName}. " +
+            "Expected number value, but got ${getTypeDescription(this)}. " +
             "Hint: Use toNumber() to convert values to numbers."
         )
     }
-    
+
     private fun extractDateTime(udm: UDM): JavaInstant = when (udm) {
         is UDM.DateTime -> udm.instant
         else -> throw FunctionArgumentException(
-            "Expected datetime value, but got ${udm.javaClass.simpleName}. " +
+            "Expected datetime value, but got ${getTypeDescription(udm)}. " +
             "Hint: Use parseDate() with timestamp format to create datetime values."
         )
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 }

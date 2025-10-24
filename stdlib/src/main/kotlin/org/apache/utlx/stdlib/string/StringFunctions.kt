@@ -212,8 +212,8 @@ object StringFunctions {
         requireArgs(args, 2, "join")
         val array = args[0] as? UDM.Array
             ?: throw FunctionArgumentException(
-                "join requires an array as first argument, but got ${args[0].javaClass.simpleName}. " +
-                "Hint: Make sure you're passing an array, not a single value."
+                "join requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+                "Hint: Provide an array of values to join, e.g., [\"a\", \"b\", \"c\"]."
             )
         val delimiter = args[1].asString()
         val result = array.elements.joinToString(delimiter) { it.asString() }
@@ -363,23 +363,25 @@ object StringFunctions {
     }
     
     // Helper functions
-    
+
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
             throw FunctionArgumentException(
-                "$functionName expects $expected argument(s), got ${args.size}"
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
             )
         }
     }
-    
+
     private fun requireArgs(args: List<UDM>, range: IntRange, functionName: String) {
         if (args.size !in range) {
             throw FunctionArgumentException(
-                "$functionName expects ${range.first}..${range.last} arguments, got ${args.size}"
+                "$functionName expects ${range.first}..${range.last} arguments, got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
             )
         }
     }
-    
+
     private fun UDM.asString(): String {
         return when (this) {
             is UDM.Scalar -> {
@@ -393,12 +395,12 @@ object StringFunctions {
                 }
             }
             else -> throw FunctionArgumentException(
-                "Expected string value, but got ${this::class.simpleName}. " +
+                "Expected string value, but got ${getTypeDescription(this)}. " +
                 "Hint: Use toString() to convert values to strings."
             )
         }
     }
-    
+
     private fun UDM.asNumber(): Double {
         return when (this) {
             is UDM.Scalar -> {
@@ -408,18 +410,41 @@ object StringFunctions {
                     is String -> v.toDoubleOrNull()
                         ?: throw FunctionArgumentException(
                             "Cannot convert '$v' to number. " +
-                            "Hint: Make sure the string contains a valid numeric value."
+                            "Hint: Ensure the string contains a valid numeric value."
                         )
                     else -> throw FunctionArgumentException(
-                        "Expected number value, but got ${v?.javaClass?.simpleName ?: "null"}. " +
-                        "Hint: Use toNumber() to convert strings to numbers."
+                        "Expected number value, but got ${getTypeDescription(this)}. " +
+                        "Hint: Use toNumber() to convert values to numbers."
                     )
                 }
             }
             else -> throw FunctionArgumentException(
-                "Expected number value, but got ${this::class.simpleName}. " +
+                "Expected number value, but got ${getTypeDescription(this)}. " +
                 "Hint: Use toNumber() to convert values to numbers."
             )
+        }
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
         }
     }
 }

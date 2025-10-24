@@ -50,7 +50,10 @@ object AdvancedCryptoFunctions {
      */
     fun hmacMD5(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("hmacMD5 expects 2 arguments")
+            throw FunctionArgumentException(
+                "hmacMD5 expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide data and secret key as arguments."
+            )
         }
         return hmac(args[0], args[1], "HmacMD5")
     }
@@ -80,7 +83,10 @@ object AdvancedCryptoFunctions {
      */
     fun hmacSHA1(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("hmacSHA1 expects 2 arguments")
+            throw FunctionArgumentException(
+                "hmacSHA1 expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide data and secret key as arguments."
+            )
         }
         return hmac(args[0], args[1], "HmacSHA1")
     }
@@ -110,7 +116,10 @@ object AdvancedCryptoFunctions {
      */
     fun hmacSHA256(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("hmacSHA256 expects 2 arguments")
+            throw FunctionArgumentException(
+                "hmacSHA256 expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide data and secret key as arguments."
+            )
         }
         return hmac(args[0], args[1], "HmacSHA256")
     }
@@ -143,7 +152,10 @@ object AdvancedCryptoFunctions {
      */
     fun hmacSHA384(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("hmacSHA384 expects 2 arguments")
+            throw FunctionArgumentException(
+                "hmacSHA384 expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide data and secret key as arguments."
+            )
         }
         return hmac(args[0], args[1], "HmacSHA384")
     }
@@ -176,7 +188,10 @@ object AdvancedCryptoFunctions {
      */
     fun hmacSHA512(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("hmacSHA512 expects 2 arguments")
+            throw FunctionArgumentException(
+                "hmacSHA512 expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide data and secret key as arguments."
+            )
         }
         return hmac(args[0], args[1], "HmacSHA512")
     }
@@ -244,7 +259,10 @@ object AdvancedCryptoFunctions {
      */
     fun hmacBase64(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("hmacBase64 expects at least 2 arguments")
+            throw FunctionArgumentException(
+                "hmacBase64 expects at least 2 arguments, got ${args.size}. " +
+                "Hint: Provide data, secret key, and optional algorithm (default: SHA256)."
+            )
         }
         val data = args[0]
         val key = args[1]
@@ -308,7 +326,10 @@ object AdvancedCryptoFunctions {
      */
     fun encryptAES(args: List<UDM>): UDM {
         if (args.size < 3) {
-            throw FunctionArgumentException("encryptAES expects 3 arguments")
+            throw FunctionArgumentException(
+                "encryptAES expects 3 arguments, got ${args.size}. " +
+                "Hint: Provide data, encryption key, and initialization vector (IV)."
+            )
         }
         return encryptDecryptAES(args[0], args[1], args[2], Cipher.ENCRYPT_MODE)
     }
@@ -342,7 +363,10 @@ object AdvancedCryptoFunctions {
      */
     fun decryptAES(args: List<UDM>): UDM {
         if (args.size < 3) {
-            throw FunctionArgumentException("decryptAES expects 3 arguments")
+            throw FunctionArgumentException(
+                "decryptAES expects 3 arguments, got ${args.size}. " +
+                "Hint: Provide encrypted data, decryption key, and initialization vector (IV)."
+            )
         }
         return encryptDecryptAES(args[0], args[1], args[2], Cipher.DECRYPT_MODE)
     }
@@ -430,7 +454,10 @@ object AdvancedCryptoFunctions {
      */
     fun encryptAES256(args: List<UDM>): UDM {
         if (args.size < 3) {
-            throw FunctionArgumentException("encryptAES256 expects 3 arguments")
+            throw FunctionArgumentException(
+                "encryptAES256 expects 3 arguments, got ${args.size}. " +
+                "Hint: Provide data, 256-bit encryption key, and initialization vector (IV)."
+            )
         }
         val data = args[0]
         val key = args[1]
@@ -496,7 +523,10 @@ object AdvancedCryptoFunctions {
      */
     fun decryptAES256(args: List<UDM>): UDM {
         if (args.size < 3) {
-            throw FunctionArgumentException("decryptAES256 expects 3 arguments")
+            throw FunctionArgumentException(
+                "decryptAES256 expects 3 arguments, got ${args.size}. " +
+                "Hint: Provide encrypted data, 256-bit decryption key, and initialization vector (IV)."
+            )
         }
         val data = args[0]
         val key = args[1]
@@ -562,7 +592,10 @@ object AdvancedCryptoFunctions {
      */
     fun sha224(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("sha224 expects 1 argument")
+            throw FunctionArgumentException(
+                "sha224 expects 1 argument, got 0. " +
+                "Hint: Provide the data to hash."
+            )
         }
         val input = args[0]
         return hash(input, "SHA-224")
@@ -595,7 +628,10 @@ object AdvancedCryptoFunctions {
      */
     fun sha384(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("sha384 expects 1 argument")
+            throw FunctionArgumentException(
+                "sha384 expects 1 argument, got 0. " +
+                "Hint: Provide the data to hash."
+            )
         }
         val input = args[0]
         return hash(input, "SHA-384")
@@ -628,7 +664,10 @@ object AdvancedCryptoFunctions {
      */
     fun sha3_256(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("sha3_256 expects 1 argument")
+            throw FunctionArgumentException(
+                "sha3_256 expects 1 argument, got 0. " +
+                "Hint: Provide the data to hash."
+            )
         }
         val input = args[0]
         return hash(input, "SHA3-256")
@@ -661,7 +700,10 @@ object AdvancedCryptoFunctions {
      */
     fun sha3_512(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("sha3_512 expects 1 argument")
+            throw FunctionArgumentException(
+                "sha3_512 expects 1 argument, got 0. " +
+                "Hint: Provide the data to hash."
+            )
         }
         val input = args[0]
         return hash(input, "SHA3-512")

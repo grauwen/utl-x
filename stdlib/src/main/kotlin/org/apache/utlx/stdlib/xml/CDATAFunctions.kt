@@ -49,7 +49,8 @@ object CDATAFunctions {
         
         if (content.contains("]]>")) {
             throw FunctionArgumentException(
-                "CDATA content cannot contain ']]>' sequence. Use splitCDATA() to handle content with this sequence."
+                "CDATA content cannot contain ']]>' sequence. " +
+                "Hint: Use splitCDATA() to handle content with this sequence."
             )
         }
         
@@ -164,7 +165,10 @@ object CDATAFunctions {
      */
     fun shouldUseCDATA(args: List<UDM>): UDM {
         if (args.isEmpty() || args.size > 2) {
-            throw FunctionArgumentException("shouldUseCDATA expects 1 or 2 arguments (content, threshold?), got ${args.size}")
+            throw FunctionArgumentException(
+                "shouldUseCDATA expects 1 or 2 arguments (content, threshold?), got ${args.size}. " +
+                "Hint: Provide content as first argument, optional threshold as second."
+            )
         }
         
         val content = args[0].asString()
@@ -202,7 +206,10 @@ object CDATAFunctions {
      */
     fun wrapIfNeeded(args: List<UDM>): UDM {
         if (args.isEmpty() || args.size > 3) {
-            throw FunctionArgumentException("wrapIfNeeded expects 1-3 arguments (content, force?, threshold?), got ${args.size}")
+            throw FunctionArgumentException(
+                "wrapIfNeeded expects 1-3 arguments (content, force?, threshold?), got ${args.size}. " +
+                "Hint: Provide content, optional force boolean, and optional threshold number."
+            )
         }
         
         val content = args[0].asString()
@@ -223,20 +230,52 @@ object CDATAFunctions {
             val result = wrapIfNeededInternal(content, force, threshold.toInt())
             UDM.Scalar(result)
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to wrap CDATA: ${e.message}")
+            throw FunctionArgumentException(
+                "Failed to wrap CDATA: ${e.message}. " +
+                "Hint: Check that content doesn't contain ']]>' sequence."
+            )
         }
     }
 
     // Helper functions
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
-    
+
     private fun UDM.asString(): String = when (this) {
-        is UDM.Scalar -> value?.toString() ?: throw FunctionArgumentException("Expected string value")
-        else -> throw FunctionArgumentException("Expected string value, got ${this::class.simpleName}")
+        is UDM.Scalar -> value?.toString() ?: ""
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 
     @UTLXFunction(
@@ -355,15 +394,21 @@ object CDATAFunctions {
         // Force wrap
         if (force) {
             if (content.contains("]]>")) {
-                throw FunctionArgumentException("Content contains ']]>' which cannot be used in CDATA")
+                throw FunctionArgumentException(
+                    "Content contains ']]>' which cannot be used in CDATA. " +
+                    "Hint: Use splitCDATA() to handle content with this sequence."
+                )
             }
             return "<![CDATA[$content]]>"
         }
-        
+
         // Auto-detect
         return if (shouldUseCDATAInternal(content, threshold)) {
             if (content.contains("]]>")) {
-                throw FunctionArgumentException("Content contains ']]>' which cannot be used in CDATA")
+                throw FunctionArgumentException(
+                    "Content contains ']]>' which cannot be used in CDATA. " +
+                    "Hint: Use splitCDATA() to handle content with this sequence."
+                )
             }
             "<![CDATA[$content]]>"
         } else {

@@ -333,22 +333,25 @@ object ObjectFunctions {
 
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
-    
+
     private fun UDM.asObject(): UDM.Object? {
         return this as? UDM.Object
     }
-    
+
     private fun UDM.asArray(): UDM.Array? {
         return this as? UDM.Array
     }
-    
+
     private fun UDM.asString(): String = when (this) {
         is UDM.Scalar -> value?.toString() ?: ""
         else -> throw FunctionArgumentException(
-            "Expected string value, but got ${this::class.simpleName}. " +
+            "Expected string value, but got ${getTypeDescription(this)}. " +
             "Hint: Use toString() to convert values to strings."
         )
     }
