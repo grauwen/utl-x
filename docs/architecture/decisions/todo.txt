@@ -20,6 +20,9 @@ see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-run
   - Legacy system integration
   - Security/compliance requirements
 ----
+The mapEntries() function exists but it's not implemented - it's just a stub with // TODO: Implement function calling mechanism at lines 262 and 272. All the enhanced
+  object functions that take lambda arguments are placeholders!
+----
 YAML MAP constructions see https://github.com/grauwen/utl-x/blob/main/stdlib/yaml-maps-json-schema-summary.md
 
  1. Verify existing stdlib - Check if keys(), values(), hasKey() already exist
