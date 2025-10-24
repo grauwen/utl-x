@@ -31,7 +31,7 @@ transformation: |
   input xml {encoding: "auto", arrays: ["Availability"]}
   output json
   ---
-  let material = @input.Material in
+  let material = @input.SAP_Response.Material in
   let totalStock = sum(map(material.Availability, avail => toNumber(avail.Stock))) in
   let totalReserved = sum(map(material.Availability, avail => toNumber(avail.Reserved))) in
   let availableStock = totalStock - totalReserved in
@@ -47,8 +47,8 @@ transformation: |
         total_stock: totalStock,
         reserved: totalReserved,
         available: availableStock,
-        status: if (availableStock > 50) "IN_STOCK" 
-               else if (availableStock > 0) "LOW_STOCK" 
+        status: if (availableStock > 50) "IN_STOCK"
+               else if (availableStock > 0) "LOW_STOCK"
                else "OUT_OF_STOCK",
         warehouses: map(material.Availability, avail => {
           id: avail.Warehouse,

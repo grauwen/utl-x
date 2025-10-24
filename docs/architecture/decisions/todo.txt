@@ -22,6 +22,15 @@ see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-run
 ----
 Dependency graph construction from AST?
 ----
+The @ symbol is reserved for XML attribute access, not for referencing inputs.??
+@ prefix is ONLY for XML attributes, not for input references
+   - @input.field → WRONG
+    - input.field → CORRECT
+    - element.@attribute → CORRECT
+----
+Dropdown <list> when an argument is given in an UTLX. (more LSP like capability), sort of API?
+----
+
 .gitnore exclude the build jars going into the GIT repo. utlx is a script calling the jar which is not checkin. Keep till a release version?
 JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
 -----

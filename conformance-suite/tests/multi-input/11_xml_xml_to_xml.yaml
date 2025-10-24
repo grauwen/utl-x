@@ -46,19 +46,19 @@ inputs:
 
 transformation: |
   %utlx 1.0
-  input: orders xml, customers xml
+  input: orders xml {arrays: ["Order"]}, customers xml {arrays: ["Customer"]}
   output xml {encoding: "UTF-8"}
   ---
   {
     Fulfillment: {
       ProcessingDate: "2025-10-21",
       SourceEncodings: {
-        Orders: detectXMLEncoding(@orders),
-        Customers: detectXMLEncoding(@customers)
+        Orders: detectXMLEncoding(orders),
+        Customers: detectXMLEncoding(customers)
       },
-      Shipments: @orders.Orders.Order |> map(order => {
+      Shipments: orders.Orders.Order |> map(order => {
         let custId = order.@customerId;
-        let customer = @customers.Customers.Customer |> filter(c => c.@id == custId) |> first();
+        let customer = customers.Customers.Customer |> filter(c => c.@id == custId) |> first();
 
         Shipment: {
           @orderId: order.@id,
