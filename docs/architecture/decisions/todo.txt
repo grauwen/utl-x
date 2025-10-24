@@ -20,8 +20,19 @@ see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-run
   - Legacy system integration
   - Security/compliance requirements
 ----
+add functions to abreviate XML tags
+----
 The mapEntries() function exists but it's not implemented - it's just a stub with // TODO: Implement function calling mechanism at lines 262 and 272. All the enhanced
   object functions that take lambda arguments are placeholders!
+
+  The lambda conversion fix enables ALL lambda-based stdlib functions:
+  - ✅ mapEntries(obj, mapper) - NOW WORKING
+  - ⏳ filterEntries(obj, predicate) - Ready to implement
+  - ⏳ reduceEntries(obj, reducer, init) - Ready to implement
+  - ⏳ mapKeys(obj, mapper) - Ready to implement
+  - ⏳ mapValues(obj, mapper) - Ready to implement
+  - ⏳ someEntry(obj, predicate) - Ready to implement
+  - ⏳ everyEntry(obj, predicate) - Ready to implement
 ----
 YAML MAP constructions see https://github.com/grauwen/utl-x/blob/main/stdlib/yaml-maps-json-schema-summary.md
 
