@@ -52,6 +52,21 @@ utlx schema -h
  Output: json-schema (xsd, csv-schema, yaml-schema planned) TODO
 ```
 ----
+KEEP Workaround -> DONE
+XML 2 JSON cardinality ISSUE
+The issue is that when XML has multiple <Module> elements, they might be parsed as an array, but if there's only one, it's a single value. I need to ensure perms.Access.Module is always treated
+  as an array. Let me use the ensureArray() function or wrap it:
+
+  The current behavior is actually correct for most cases - it's a well-known XML-to-JSON issue that has no perfect solution. The problem is:
+
+  1. We can't always use arrays - breaks existing code that expects single elements
+  2. We can't always use singles - breaks code when cardinality changes
+
+  The real solution is to keep the workaround we added to the test file - check with isArray() before mapping. This is the standard pattern used by all XML-to-JSON converters.
+
+No problem! The XML serializer handles both arrays and single objects correctly, outputting multiple <Module> elements for arrays and single <Module> for single objects.
+----
+
 stlib has IO -> how to handle uniform path over unix and windows?
 writeFile function does not exist. Maybe needed for dynamic lookups?
 ----

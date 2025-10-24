@@ -402,6 +402,67 @@ output xml {
 input xml
 output json
 ---
+template match="Order" {
+  {
+    id: $id,
+    customer: apply(Customer),
+    items: apply(Items/Item)
+  }
+}
+```
+
+---
+
+## Important: XML Array Handling
+
+### The XML-to-JSON Cardinality Problem
+
+When transforming XML to JSON/YAML, repeated elements can be single or array depending on cardinality:
+
+```xml
+<!-- Multiple elements → becomes array in JSON -->
+<Access>
+  <Module>Users</Module>
+  <Module>Reports</Module>
+</Access>
+
+<!-- Single element → becomes single object in JSON -->
+<Access>
+  <Module>Dashboard</Module>
+</Access>
+```
+
+This means code that works for multiple elements breaks for single elements!
+
+### Recommended Solution: Defensive Coding
+
+Always ensure elements are arrays before using `map()`:
+
+```utlx
+// ✅ Correct: Handle both single and multiple
+Modules: (if (isArray($input.Access.Module))
+           $input.Access.Module
+         else
+           [$input.Access.Module])
+         |> map(mod => { Module: mod })
+
+// Or use a helper function:
+def ensureArray(value) {
+  if (isArray(value)) value else [value]
+}
+
+Modules: ensureArray($input.Access.Module) |> map(...)
+```
+
+**📖 Read the full explanation:** [XML Array Handling Guide](xml-array-handling.md)
+
+**Key Points:**
+- ✅ This is NOT a bug - it's an industry-wide XML-to-JSON issue
+- ✅ Same problem exists in Jackson, xmltodict, xml2js, DataWeave, etc.
+- ✅ Only affects XML → JSON/YAML (not XML → XML)
+- ✅ Defensive coding is the standard solution
+
+---
 
 template match="Order" {
   {

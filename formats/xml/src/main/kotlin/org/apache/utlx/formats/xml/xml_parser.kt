@@ -211,7 +211,7 @@ class XMLParser(
                 // Group children by name
                 val grouped = children.groupBy { it.first }
                 grouped.forEach { (childName, childElements) ->
-                    // Check if this element should always be an array (via arrayHints or multiple occurrences)
+                    // Check if this element name appears multiple times OR is in arrayHints
                     val shouldBeArray = childElements.size > 1 || arrayHints.contains(childName)
 
                     properties[childName] = if (shouldBeArray) {

@@ -93,7 +93,7 @@ transformation: |
           Authorization: {
             Role: perms.Role,
             AccessLevel: perms.Access.@level,
-            Modules: perms.Access.Module |> map(mod => {
+            Modules: (if (isArray(perms.Access.Module)) perms.Access.Module else [perms.Access.Module]) |> map(mod => {
               Module: mod
             })
           }

@@ -1,30 +1,47 @@
 # Conformance Suite Outstanding Issues - Detailed Analysis
 
-**Status**: 92.7% Pass Rate (267/288 tests passing)
-**Outstanding**: 21 failing tests (19 unique tests, 2 counted twice)
-**Last Updated**: 2025-10-24
+**Status**: 93.8% Pass Rate (270/288 tests passing) ⬆️ +3 tests
+**Outstanding**: 18 failing tests
+**Last Updated**: 2025-10-24 (Latest: Fixed all transformation errors!)
 
 ---
 
-## Current Failing Tests (21 total, 19 unique)
+## Latest Fixes (2025-10-24 Evening)
 
-### Transformation Errors (3 tests)
-Tests that fail during execution with runtime errors:
+### ✅ All Transformation Errors Fixed! (3 tests)
 
-1. **transform_auto_43d9da56** (counted 2x - appears in xml-to-json and xml-transform)
-   - File: [`tests/auto-captured/xml-to-json/transform_auto_43d9da56.yaml`](conformance-suite/tests/auto-captured/xml-to-json/transform_auto_43d9da56.yaml)
-   - Error: `Cannot access property 'MaterialNumber' on NullValue`
-   - Issue: Accessing property on null/undefined value - likely XML parsing returned null
+**Progress**: 267/288 (92.7%) → **270/288 (93.8%)** ⬆️ +3 tests
 
-2. **xml_namespace_handling**
-   - File: [`tests/examples/intermediate/xml_namespace_handling.yaml`](conformance-suite/tests/examples/intermediate/xml_namespace_handling.yaml)
-   - Error: `Cannot index NullValue with string`
-   - Issue: Null value being indexed - XML namespace handling issue
+**Fixed Tests:**
+1. **transform_auto_43d9da56** (xml-to-json + xml-transform) - Missing XML root element in path
+   - Changed: `$input.Material.MaterialNumber`
+   - To: `$input.SAP_Response.Material.MaterialNumber`
 
-3. **multi_input_json_xml_to_xml**
-   - File: [`tests/multi-input/13_json_xml_to_xml.yaml`](conformance-suite/tests/multi-input/13_json_xml_to_xml.yaml)
-   - Error: `map() requires array as first argument`
-   - Issue: Trying to map() over non-array value
+2. **xml_namespace_handling** - Missing SOAP envelope root element
+   - Changed: `$input["soap:Body"]`
+   - To: `$input["soap:Envelope"]["soap:Body"]`
+
+3. **multi_input_json_xml_to_xml** - Two issues fixed:
+   - Changed `@permissions` and `@users` to `$permissions` and `$users` (@ is for XML attributes, $ for inputs)
+   - Added array handling: `if (isArray(perms.Access.Module)) perms.Access.Module else [perms.Access.Module]`
+
+**Root Cause**:
+- Auto-captured and example tests had incorrect XML path syntax - missing root element references. XML parsing always includes the root element as a property.
+- The `isArray()` check is required due to the XML-to-JSON cardinality issue (not a bug - see [XML Array Handling Guide](docs/formats/xml-array-handling.md))
+
+**Impact**: All tests now execute successfully - no more runtime errors! Remaining 18 failures are all output mismatches (tests run but produce different output than expected).
+
+---
+
+## Current Failing Tests (18 total - all output mismatches)
+
+### Transformation Errors (0 tests) ✅ ALL FIXED!
+
+~~All transformation errors have been resolved!~~
+
+1. ~~**transform_auto_43d9da56**~~ ✅ **FIXED** - Added missing `SAP_Response` root element to XML path
+2. ~~**xml_namespace_handling**~~ ✅ **FIXED** - Added missing `soap:Envelope` root element to XML path
+3. ~~**multi_input_json_xml_to_xml**~~ ✅ **FIXED** - Changed `@` to `$` for multi-input refs + added array check for Module elements
 
 ### Output Mismatches (16 tests)
 Tests that execute successfully but produce different output than expected:
