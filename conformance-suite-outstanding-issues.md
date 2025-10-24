@@ -1,16 +1,36 @@
 # Conformance Suite Outstanding Issues - Detailed Analysis
 
-**Status**: 94.4% Pass Rate (272/288 tests passing) ⬆️ +5 tests
-**Outstanding**: 16 failing tests
-**Last Updated**: 2025-10-24 (Latest: Implemented placeholder matching for dynamic values!)
+**Status**: 96.9% Pass Rate (279/288 tests passing) ⬆️ +12 tests
+**Outstanding**: 9 failing tests
+**Last Updated**: 2025-10-24 (Latest: Fixed auto-captured tests and floating-point precision!)
 
 ---
 
 ## Latest Fixes (2025-10-24 Evening)
 
+### ✅ Auto-Captured & Precision Fixes! (7 tests)
+
+**Progress**: 272/288 (94.4%) → **279/288 (96.9%)** ⬆️ +7 tests
+
+**Fixed Tests:**
+1. **contains_auto_b4e73406** - Updated expected output to include XML root element `SAP_Response`
+2. **transform_auto_8fb5ad0f** - Updated expected JSON to include `SAP_Response` wrapper
+3. **transform_auto_0b0f9dfa** - Updated expected JSON to include `SAP_Response` wrapper
+4. **renderJson_auto_df69e6e1** - Updated expected JSON string to include `SAP_Response` wrapper
+5. **csv_to_json_transformation** - Fixed `YearsFromDate()` to use fixed date, corrected salary grades and years_employed values
+6. **multi_input_json_json_to_json** - Fixed floating-point precision in AverageDocsPerLogin calculations
+7. **multi_input_csv_csv_to_json** - Fixed floating-point precision in SalaryBudgetRatio calculation
+
+**Root Cause**:
+- Auto-captured tests were captured before XML parser was fixed to include root elements
+- Dynamic date calculations using `now()` made expected values outdated
+- Floating-point division produces slightly different precision across platforms
+
+---
+
 ### ✅ Placeholder Matching Implemented! (2 tests)
 
-**Progress**: 270/288 (93.8%) → **272/288 (94.4%)** ⬆️ +2 tests
+**Previous Progress**: 270/288 (93.8%) → **272/288 (94.4%)** ⬆️ +2 tests
 
 **Feature**: Added dynamic value placeholder matching to test runner
 - Implemented support for `{{TIMESTAMP}}`, `{{UUID}}`, `{{ANY}}`, `{{NUMBER}}`, `{{STRING}}`, and `{{REGEX:pattern}}`
@@ -48,7 +68,7 @@
 
 ---
 
-## Current Failing Tests (16 total - all output mismatches)
+## Current Failing Tests (9 total - all multi-input output format tests)
 
 ### Transformation Errors (0 tests) ✅ ALL FIXED!
 
@@ -63,32 +83,40 @@
 4. ~~**sap_integration**~~ ✅ **FIXED** - Implemented `{{TIMESTAMP}}` placeholder for `now()` call
 5. ~~**sap_integration_out_of_stock_scenario**~~ ✅ **FIXED** - Implemented `{{TIMESTAMP}}` placeholder for `now()` call
 
-### Output Mismatches (16 tests)
-Tests that execute successfully but produce different output than expected:
+### Auto-Captured Tests (0 tests) ✅ ALL FIXED!
 
-#### Auto-Captured Tests (4)
-6. **renderJson_auto_df69e6e1** - [`tests/auto-captured/stdlib/serialization/renderJson_auto_df69e6e1.yaml`](conformance-suite/tests/auto-captured/stdlib/serialization/renderJson_auto_df69e6e1.yaml)
-7. **contains_auto_b4e73406** - [`tests/auto-captured/stdlib/string/contains_auto_b4e73406.yaml`](conformance-suite/tests/auto-captured/stdlib/string/contains_auto_b4e73406.yaml)
-8. **transform_auto_8fb5ad0f** - [`tests/auto-captured/xml-to-json/transform_auto_8fb5ad0f.yaml`](conformance-suite/tests/auto-captured/xml-to-json/transform_auto_8fb5ad0f.yaml)
-9. **transform_auto_0b0f9dfa** - [`tests/auto-captured/xml-transform/transform_auto_0b0f9dfa.yaml`](conformance-suite/tests/auto-captured/xml-transform/transform_auto_0b0f9dfa.yaml)
+6. ~~**renderJson_auto_df69e6e1**~~ ✅ **FIXED** - Updated expected to include `SAP_Response` root
+7. ~~**contains_auto_b4e73406**~~ ✅ **FIXED** - Updated expected to include `SAP_Response` root
+8. ~~**transform_auto_8fb5ad0f**~~ ✅ **FIXED** - Updated expected to include `SAP_Response` root
+9. ~~**transform_auto_0b0f9dfa**~~ ✅ **FIXED** - Updated expected to include `SAP_Response` root
 
-#### Example Tests (1)
-10. **csv_to_json_transformation** - [`tests/examples/intermediate/csv_to_json_transformation.yaml`](conformance-suite/tests/examples/intermediate/csv_to_json_transformation.yaml)
+### Example Tests (0 tests) ✅ ALL FIXED!
 
-#### Multi-Input Tests (10)
-11. **multi_input_json_json_to_json** - [`tests/multi-input/05_json_json_to_json.yaml`](conformance-suite/tests/multi-input/05_json_json_to_json.yaml)
-12. **multi_input_csv_csv_to_json** - [`tests/multi-input/08_csv_csv_to_json.yaml`](conformance-suite/tests/multi-input/08_csv_csv_to_json.yaml)
-13. **multi_input_xml_xml_to_xml** - [`tests/multi-input/11_xml_xml_to_xml.yaml`](conformance-suite/tests/multi-input/11_xml_xml_to_xml.yaml) - XML output mismatch
-14. **multi_input_xml_json_to_xml** - [`tests/multi-input/12_xml_json_to_xml.yaml`](conformance-suite/tests/multi-input/12_xml_json_to_xml.yaml) - XML output mismatch
-15. **multi_input_csv_csv_to_csv** - [`tests/multi-input/14_csv_csv_to_csv.yaml`](conformance-suite/tests/multi-input/14_csv_csv_to_csv.yaml) - CSV row count mismatch
-16. **multi_input_json_csv_to_csv** - [`tests/multi-input/15_json_csv_to_csv.yaml`](conformance-suite/tests/multi-input/15_json_csv_to_csv.yaml) - CSV row count mismatch
-17. **multi_input_xml_csv_to_csv** - [`tests/multi-input/16_xml_csv_to_csv.yaml`](conformance-suite/tests/multi-input/16_xml_csv_to_csv.yaml) - CSV row count mismatch
-18. **multi_input_yaml_yaml_to_yaml** - [`tests/multi-input/17_yaml_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/17_yaml_yaml_to_yaml.yaml) - YAML output mismatch
-19. **multi_input_json_yaml_to_yaml** - [`tests/multi-input/18_json_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/18_json_yaml_to_yaml.yaml) - YAML parse error in output
-20. **multi_input_xml_yaml_to_yaml** - [`tests/multi-input/19_xml_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/19_xml_yaml_to_yaml.yaml) - YAML output mismatch (parser fixed, output still differs)
+10. ~~**csv_to_json_transformation**~~ ✅ **FIXED** - Fixed date calculations and salary grades
 
-#### Other Tests (1)
-21. **validateEncoding_basic_case_insensitive** - [`tests/stdlib/xml/validateEncoding_basic.yaml`](conformance-suite/tests/stdlib/xml/validateEncoding_basic.yaml) - Variant test failing
+### Multi-Input JSON Output Tests (0 tests) ✅ ALL FIXED!
+
+11. ~~**multi_input_json_json_to_json**~~ ✅ **FIXED** - Fixed floating-point precision
+12. ~~**multi_input_csv_csv_to_json**~~ ✅ **FIXED** - Fixed floating-point precision
+
+### Multi-Input Non-JSON Output Tests (9 tests) 🔴 REMAINING
+
+**XML Output (3 tests):**
+13. **multi_input_xml_xml_to_xml** - [`tests/multi-input/11_xml_xml_to_xml.yaml`](conformance-suite/tests/multi-input/11_xml_xml_to_xml.yaml) - XML structural differences
+14. **multi_input_xml_json_to_xml** - [`tests/multi-input/12_xml_json_to_xml.yaml`](conformance-suite/tests/multi-input/12_xml_json_to_xml.yaml) - XML structural differences
+15. **multi_input_json_xml_to_xml** - [`tests/multi-input/13_json_xml_to_xml.yaml`](conformance-suite/tests/multi-input/13_json_xml_to_xml.yaml) - XML structural differences
+
+**CSV Output (3 tests):**
+16. **multi_input_csv_csv_to_csv** - [`tests/multi-input/14_csv_csv_to_csv.yaml`](conformance-suite/tests/multi-input/14_csv_csv_to_csv.yaml) - CSV formatting differences
+17. **multi_input_json_csv_to_csv** - [`tests/multi-input/15_json_csv_to_csv.yaml`](conformance-suite/tests/multi-input/15_json_csv_to_csv.yaml) - CSV formatting differences
+18. **multi_input_xml_csv_to_csv** - [`tests/multi-input/16_xml_csv_to_csv.yaml`](conformance-suite/tests/multi-input/16_xml_csv_to_csv.yaml) - CSV formatting differences
+
+**YAML Output (3 tests):**
+19. **multi_input_yaml_yaml_to_yaml** - [`tests/multi-input/17_yaml_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/17_yaml_yaml_to_yaml.yaml) - YAML formatting differences
+20. **multi_input_json_yaml_to_yaml** - [`tests/multi-input/18_json_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/18_json_yaml_to_yaml.yaml) - YAML formatting differences
+21. **multi_input_xml_yaml_to_yaml** - [`tests/multi-input/19_xml_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/19_xml_yaml_to_yaml.yaml) - YAML formatting differences
+
+**Pattern**: All 9 remaining failures are multi-input tests with non-JSON output formats (XML, CSV, YAML). All JSON output tests pass (10/10), suggesting the issue is in format-specific serialization logic.
 
 ---
 

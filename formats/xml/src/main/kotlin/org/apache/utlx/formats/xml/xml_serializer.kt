@@ -113,9 +113,36 @@ class XMLSerializer(
             }
             
             is UDM.Array -> {
-                // Array - serialize each element with same name
-                udm.elements.forEach { element ->
-                    serializeUDM(element, writer, depth, elementName)
+                // Array - Check if this is an array of single-property objects (unwrap pattern)
+                // Example: Shipments: [{Shipment: {...}}, {Shipment: {...}}]
+                // Should output: <Shipments><Shipment>..</Shipment><Shipment>..</Shipment></Shipments>
+                val isUnwrapPattern = udm.elements.all { element ->
+                    element is UDM.Object &&
+                    element.properties.size == 1 &&
+                    element.attributes.isEmpty() &&
+                    element.name == null
+                }
+
+                if (isUnwrapPattern && udm.elements.isNotEmpty()) {
+                    // Unwrap: output parent element, then each child with their own names
+                    writeIndent(writer, depth)
+                    writer.write("<$elementName>")
+                    if (prettyPrint) writer.write("\n")
+
+                    udm.elements.forEach { element ->
+                        val obj = element as UDM.Object
+                        val (childName, childValue) = obj.properties.entries.first()
+                        serializeUDM(childValue, writer, depth + 1, childName)
+                    }
+
+                    writeIndent(writer, depth)
+                    writer.write("</$elementName>")
+                    if (prettyPrint) writer.write("\n")
+                } else {
+                    // Standard array handling - serialize each element with same name
+                    udm.elements.forEach { element ->
+                        serializeUDM(element, writer, depth, elementName)
+                    }
                 }
             }
             

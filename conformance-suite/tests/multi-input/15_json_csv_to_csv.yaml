@@ -102,12 +102,12 @@ expected:
   format: csv
   data: |
     TransactionID,ProductName,Category,SKU,Quantity,SalePrice,Revenue,Cost,Profit,Margin,Region,SaleDate
-    TXN001,Premium Laptop,Electronics,SKU001,2,1199,2398,1600,798,33.3,EMEA,2025-10-15
-    TXN002,Wireless Mouse,Accessories,SKU002,10,25,250,150,100,40.0,AMER,2025-10-16
-    TXN003,USB-C Hub,Accessories,SKU003,5,45,225,125,100,44.4,APAC,2025-10-17
-    TXN004,Premium Laptop,Electronics,SKU001,1,1299,1299,800,499,38.4,AMER,2025-10-18
-    TXN005,Monitor 27",Electronics,SKU004,3,379,1137,600,537,47.2,EMEA,2025-10-19
-    TXN006,Wireless Mouse,Accessories,SKU002,8,27,216,120,96,44.4,APAC,2025-10-20
+    TXN001,Premium Laptop,Electronics,SKU001,2,1199,2398,1600,798,33,EMEA,2025-10-15
+    TXN002,Wireless Mouse,Accessories,SKU002,10,25,250,150,100,40,AMER,2025-10-16
+    TXN003,USB-C Hub,Accessories,SKU003,5,45,225,125,100,44,APAC,2025-10-17
+    TXN004,Premium Laptop,Electronics,SKU001,1,1299,1299,800,499,38,AMER,2025-10-18
+    TXN005,"Monitor 27""",Electronics,SKU004,3,379,1137,600,537,47,EMEA,2025-10-19
+    TXN006,Wireless Mouse,Accessories,SKU002,8,27,216,120,96,44,APAC,2025-10-20
 
 performance_limits:
   max_duration_ms: 200

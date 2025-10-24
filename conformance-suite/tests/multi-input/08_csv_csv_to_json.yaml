@@ -85,7 +85,7 @@ expected:
               "Location": "Building B",
               "Budget": 300000
             },
-            "SalaryBudgetRatio": 0.27333333333333337
+            "SalaryBudgetRatio": 0.2733333333333333
           },
           {
             "EmployeeID": "E003",

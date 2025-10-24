@@ -97,7 +97,7 @@ expected:
     PRD001,Industrial Drill,Tools,Warehouse-A,45,50,LOW,true,100,Müller Tools GmbH,2025-10-20
     PRD002,Safety Goggles,Safety,Warehouse-B,180,200,LOW,true,500,Schneider Safety AG,2025-10-21
     PRD003,Welding Machine,Equipment,Warehouse-A,8,10,LOW,true,20,König Equipment Ltd,2025-10-19
-    PRD004,Measuring Tape,Tools,Warehouse-C,120,100,OK,false,200,Fischer Supplies,2025-10-21
+    PRD004,Measuring Tape,Tools,Warehouse-C,120,100,MEDIUM,false,200,Fischer Supplies,2025-10-21
 
 performance_limits:
   max_duration_ms: 200

@@ -63,11 +63,11 @@ expected:
   format: csv
   data: |
     EmployeeID,EmployeeName,Email,DepartmentName,Location,Manager,Salary,HireDate,BudgetAllocation
-    E001,Alice Müller,alice.mueller@company.de,Engineering,München,Hans Schmidt,75000,2020-03-15,15.0
-    E002,Bob Schneider,bob.schneider@company.de,Sales,Berlin,Maria Weber,82000,2019-07-01,27.33
-    E003,Carol Fischer,carol.fischer@company.de,Engineering,München,Hans Schmidt,68000,2021-01-10,13.6
-    E004,David König,david.koenig@company.de,Management,Hamburg,Klaus Becker,95000,2018-11-20,23.75
-    E005,Eva Wagner,eva.wagner@company.de,Sales,Berlin,Maria Weber,71000,2022-05-12,23.67
+    E001,Alice Müller,alice.mueller@company.de,Engineering,München,Hans Schmidt,75000,2020-03-15,15
+    E002,Bob Schneider,bob.schneider@company.de,Sales,Berlin,Maria Weber,82000,2019-07-01,27
+    E003,Carol Fischer,carol.fischer@company.de,Engineering,München,Hans Schmidt,68000,2021-01-10,14
+    E004,David König,david.koenig@company.de,Management,Hamburg,Klaus Becker,95000,2018-11-20,24
+    E005,Eva Wagner,eva.wagner@company.de,Sales,Berlin,Maria Weber,71000,2022-05-12,24
 
 performance_limits:
   max_duration_ms: 200

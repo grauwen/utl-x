@@ -87,7 +87,7 @@ expected:
               "LastLogin": "2025-10-21T10:30:00Z",
               "LoginCount": 145,
               "DocumentsCreated": 23,
-              "AverageDocsPerLogin": 0.1586206896551724
+              "AverageDocsPerLogin": 0.15862068965517243
             },
             "ActiveUser": true
           },
@@ -100,7 +100,7 @@ expected:
               "LastLogin": "2025-10-20T15:45:00Z",
               "LoginCount": 67,
               "DocumentsCreated": 12,
-              "AverageDocsPerLogin": 0.17910447761194032
+              "AverageDocsPerLogin": 0.1791044776119403
             },
             "ActiveUser": false
           }

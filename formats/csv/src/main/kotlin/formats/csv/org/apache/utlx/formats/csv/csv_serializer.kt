@@ -67,6 +67,29 @@ class CSVSerializer(
         when (udm) {
             is UDM.Array -> serializeArray(udm, writer)
             is UDM.Object -> {
+                // Check for special {headers: [...], rows: [...]} pattern
+                if (udm.properties.containsKey("headers") && udm.properties.containsKey("rows")) {
+                    val headersValue = udm.properties["headers"]
+                    val rowsValue = udm.properties["rows"]
+
+                    if (headersValue is UDM.Array && rowsValue is UDM.Array) {
+                        // Write headers
+                        if (includeHeaders) {
+                            val headers = headersValue.elements.map { extractValue(it) }
+                            writeRow(writer, headers)
+                        }
+
+                        // Write rows
+                        rowsValue.elements.forEach { row ->
+                            if (row is UDM.Array) {
+                                val values = row.elements.map { extractValue(it) }
+                                writeRow(writer, values)
+                            }
+                        }
+                        return
+                    }
+                }
+
                 // Single object - treat as one-row table
                 val headers = udm.keys().toList()
                 if (includeHeaders) {
@@ -89,7 +112,30 @@ class CSVSerializer(
         when (value) {
             is RuntimeValue.ArrayValue -> serializeRuntimeArray(value, writer)
             is RuntimeValue.ObjectValue -> {
-                // Single object
+                // Check for special {headers: [...], rows: [...]} pattern
+                if (value.properties.containsKey("headers") && value.properties.containsKey("rows")) {
+                    val headersValue = value.properties["headers"]
+                    val rowsValue = value.properties["rows"]
+
+                    if (headersValue is RuntimeValue.ArrayValue && rowsValue is RuntimeValue.ArrayValue) {
+                        // Write headers
+                        if (includeHeaders) {
+                            val headers = headersValue.elements.map { extractRuntimeValue(it) }
+                            writeRow(writer, headers)
+                        }
+
+                        // Write rows
+                        rowsValue.elements.forEach { row ->
+                            if (row is RuntimeValue.ArrayValue) {
+                                val values = row.elements.map { extractRuntimeValue(it) }
+                                writeRow(writer, values)
+                            }
+                        }
+                        return
+                    }
+                }
+
+                // Single object - treat as one-row table
                 val headers = value.properties.keys.toList()
                 if (includeHeaders) {
                     writeRow(writer, headers)
