@@ -319,25 +319,63 @@ in replaceChars. If replaceChars is shorter, characters are deleted.""",
     
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
-    
+
     private fun UDM.asString(): String = when (this) {
         is UDM.Scalar -> value?.toString() ?: ""
-        else -> throw FunctionArgumentException("Expected string value")
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
     }
-    
+
     private fun UDM.asNumber(): Double = when (this) {
         is UDM.Scalar -> {
             val v = value
             when (v) {
                 is Number -> v.toDouble()
                 is String -> v.toDoubleOrNull()
-                    ?: throw FunctionArgumentException("Cannot convert '$v' to number")
-                else -> throw FunctionArgumentException("Expected number value")
+                    ?: throw FunctionArgumentException(
+                        "Cannot convert '$v' to number. " +
+                        "Hint: Ensure the string contains a valid numeric value."
+                    )
+                else -> throw FunctionArgumentException(
+                    "Expected number value, but got ${getTypeDescription(this)}. " +
+                    "Hint: Use toNumber() to convert values to numbers."
+                )
             }
         }
-        else -> throw FunctionArgumentException("Expected number value")
+        else -> throw FunctionArgumentException(
+            "Expected number value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toNumber() to convert values to numbers."
+        )
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 }

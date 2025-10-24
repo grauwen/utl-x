@@ -1065,7 +1065,8 @@ object ArrayFunctions {
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
             throw FunctionArgumentException(
-                "$functionName expects $expected argument(s), got ${args.size}"
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
             )
         }
     }
