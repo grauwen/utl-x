@@ -122,27 +122,34 @@ object EnhancedObjectFunctions {
         if (args.size < 2) {
             throw IllegalArgumentException("someEntry() requires 2 arguments: object, predicate")
         }
-        
+
         val obj = args[0]
         if (obj !is UDM.Object) {
             throw IllegalArgumentException("someEntry() first argument must be an object")
         }
-        
-        // In a real implementation, args[1] would be a function type
-        // For now, we simulate this with a placeholder
-        // The actual implementation would use the function type from the type system
-        
-        val predicateArg = args[1]
-        // TODO: Implement function calling mechanism
-        // This is a simplified version showing the structure
-        
+
+        val predicate = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("someEntry() second argument must be a lambda function. Got: ${args[1]::class.simpleName}")
+
         val result = obj.properties.entries.any { (key, value) ->
             // Call predicate with key and value
-            // predicate(UDM.Scalar(key), value).asBoolean()
-            // For now, return false as placeholder
-            false
+            val predicateResult = predicate.apply(listOf(UDM.Scalar(key), value))
+
+            // Check if result is truthy
+            when (predicateResult) {
+                is UDM.Scalar -> {
+                    when (val scalarValue = predicateResult.value) {
+                        is Boolean -> scalarValue
+                        is Number -> scalarValue.toDouble() != 0.0
+                        is String -> scalarValue.isNotEmpty()
+                        null -> false
+                        else -> true
+                    }
+                }
+                else -> true
+            }
         }
-        
+
         return UDM.Scalar(result)
     }
     
@@ -191,22 +198,34 @@ object EnhancedObjectFunctions {
         if (args.size < 2) {
             throw IllegalArgumentException("everyEntry() requires 2 arguments: object, predicate")
         }
-        
+
         val obj = args[0]
         if (obj !is UDM.Object) {
             throw IllegalArgumentException("everyEntry() first argument must be an object")
         }
-        
-        val predicateArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+
+        val predicate = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("everyEntry() second argument must be a lambda function. Got: ${args[1]::class.simpleName}")
+
         val result = obj.properties.entries.all { (key, value) ->
             // Call predicate with key and value
-            // predicate(UDM.Scalar(key), value).asBoolean()
-            // For now, return true as placeholder
-            true
+            val predicateResult = predicate.apply(listOf(UDM.Scalar(key), value))
+
+            // Check if result is truthy
+            when (predicateResult) {
+                is UDM.Scalar -> {
+                    when (val scalarValue = predicateResult.value) {
+                        is Boolean -> scalarValue
+                        is Number -> scalarValue.toDouble() != 0.0
+                        is String -> scalarValue.isNotEmpty()
+                        null -> false
+                        else -> true
+                    }
+                }
+                else -> true
+            }
         }
-        
+
         return UDM.Scalar(result)
     }
     
@@ -329,25 +348,39 @@ object EnhancedObjectFunctions {
         if (args.size < 2) {
             throw IllegalArgumentException("filterEntries() requires 2 arguments: object, predicate")
         }
-        
+
         val obj = args[0]
         if (obj !is UDM.Object) {
             throw IllegalArgumentException("filterEntries() first argument must be an object")
         }
-        
-        val predicateArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+
+        val predicate = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("filterEntries() second argument must be a lambda function. Got: ${args[1]::class.simpleName}")
+
         val result = mutableMapOf<String, UDM>()
         obj.properties.entries.forEach { (key, value) ->
-            // if (predicate(UDM.Scalar(key), value).asBoolean()) {
-            //     result[key] = value
-            // }
-            
-            // Placeholder: include all entries
-            result[key] = value
+            // Call predicate with key and value
+            val predicateResult = predicate.apply(listOf(UDM.Scalar(key), value))
+
+            // Check if result is truthy
+            val include = when (predicateResult) {
+                is UDM.Scalar -> {
+                    when (val scalarValue = predicateResult.value) {
+                        is Boolean -> scalarValue
+                        is Number -> scalarValue.toDouble() != 0.0
+                        is String -> scalarValue.isNotEmpty()
+                        null -> false
+                        else -> true
+                    }
+                }
+                else -> true // Non-scalar values are truthy
+            }
+
+            if (include) {
+                result[key] = value
+            }
         }
-        
+
         return UDM.Object(result)
     }
     
@@ -395,20 +428,22 @@ object EnhancedObjectFunctions {
         if (args.size < 3) {
             throw IllegalArgumentException("reduceEntries() requires 3 arguments: object, reducer, initial")
         }
-        
+
         val obj = args[0]
         if (obj !is UDM.Object) {
             throw IllegalArgumentException("reduceEntries() first argument must be an object")
         }
-        
-        val reducerArg = args[1]
+
+        val reducer = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("reduceEntries() second argument must be a lambda function. Got: ${args[1]::class.simpleName}")
+
         var accumulator = args[2]
-        
-        // TODO: Implement function calling mechanism
+
         obj.properties.entries.forEach { (key, value) ->
-            // accumulator = reducer(accumulator, UDM.Scalar(key), value)
+            // Call reducer with (accumulator, key, value)
+            accumulator = reducer.apply(listOf(accumulator, UDM.Scalar(key), value))
         }
-        
+
         return accumulator
     }
     
@@ -447,20 +482,34 @@ object EnhancedObjectFunctions {
         if (args.size < 2) {
             throw IllegalArgumentException("countEntries() requires 2 arguments: object, predicate")
         }
-        
+
         val obj = args[0]
         if (obj !is UDM.Object) {
             throw IllegalArgumentException("countEntries() first argument must be an object")
         }
-        
-        val predicateArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+
+        val predicate = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("countEntries() second argument must be a lambda function. Got: ${args[1]::class.simpleName}")
+
         val count = obj.properties.entries.count { (key, value) ->
-            // predicate(UDM.Scalar(key), value).asBoolean()
-            true // Placeholder
+            // Call predicate with key and value
+            val predicateResult = predicate.apply(listOf(UDM.Scalar(key), value))
+
+            // Check if result is truthy
+            when (predicateResult) {
+                is UDM.Scalar -> {
+                    when (val scalarValue = predicateResult.value) {
+                        is Boolean -> scalarValue
+                        is Number -> scalarValue.toDouble() != 0.0
+                        is String -> scalarValue.isNotEmpty()
+                        null -> false
+                        else -> true
+                    }
+                }
+                else -> true
+            }
         }
-        
+
         return UDM.Scalar(count)
     }
     
@@ -499,24 +548,29 @@ object EnhancedObjectFunctions {
         if (args.size < 2) {
             throw IllegalArgumentException("mapKeys() requires 2 arguments: object, mapper")
         }
-        
+
         val obj = args[0]
         if (obj !is UDM.Object) {
             throw IllegalArgumentException("mapKeys() first argument must be an object")
         }
-        
-        val mapperArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+
+        val mapper = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("mapKeys() second argument must be a lambda function. Got: ${args[1]::class.simpleName}")
+
         val result = mutableMapOf<String, UDM>()
         obj.properties.entries.forEach { (key, value) ->
-            // val newKey = mapper(UDM.Scalar(key)).asString()
-            // result[newKey] = value
-            
-            // Placeholder
-            result[key] = value
+            // Call mapper with just the key
+            val newKeyUdm = mapper.apply(listOf(UDM.Scalar(key)))
+
+            // Extract string key from result
+            val newKey = when (newKeyUdm) {
+                is UDM.Scalar -> newKeyUdm.value?.toString() ?: key
+                else -> throw IllegalArgumentException("mapKeys mapper must return a scalar value for the key")
+            }
+
+            result[newKey] = value
         }
-        
+
         return UDM.Object(result)
     }
     
@@ -555,24 +609,22 @@ object EnhancedObjectFunctions {
         if (args.size < 2) {
             throw IllegalArgumentException("mapValues() requires 2 arguments: object, mapper")
         }
-        
+
         val obj = args[0]
         if (obj !is UDM.Object) {
             throw IllegalArgumentException("mapValues() first argument must be an object")
         }
-        
-        val mapperArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+
+        val mapper = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("mapValues() second argument must be a lambda function. Got: ${args[1]::class.simpleName}")
+
         val result = mutableMapOf<String, UDM>()
         obj.properties.entries.forEach { (key, value) ->
-            // val newValue = mapper(value)
-            // result[key] = newValue
-            
-            // Placeholder
-            result[key] = value
+            // Call mapper with just the value
+            val newValue = mapper.apply(listOf(value))
+            result[key] = newValue
         }
-        
+
         return UDM.Object(result)
     }
 }

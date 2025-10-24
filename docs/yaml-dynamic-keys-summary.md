@@ -16,11 +16,18 @@
 - `values(obj)` - Get all values ✅
 - `hasKey(obj, key)` - Check key existence ✅
 - `entries(obj)` - Get `[key, value]` pairs ✅
-- `mapEntries(obj, fn)` - Transform keys/values ✅ **NOW WORKING!**
-- `filterEntries(obj, pred)` - Filter properties ⚠️ Not yet implemented
-- `reduceEntries(obj, fn, init)` - Aggregate ⚠️ Not yet implemented
+- `mapEntries(obj, fn)` - Transform keys/values ✅ **WORKING!**
+- `filterEntries(obj, pred)` - Filter properties ✅ **WORKING!**
+- `reduceEntries(obj, fn, init)` - Aggregate entries ✅ **WORKING!**
+- `mapKeys(obj, fn)` - Transform just keys ✅ **WORKING!**
+- `mapValues(obj, fn)` - Transform just values ✅ **WORKING!**
+- `someEntry(obj, pred)` - Test if any entry matches ✅ **WORKING!**
+- `everyEntry(obj, pred)` - Test if all entries match ✅ **WORKING!**
+- `countEntries(obj, pred)` - Count matching entries ✅ **WORKING!**
 
-✅ **UPDATE (2025-10-25):** `mapEntries()` is now fully functional! Lambda conversion has been fixed.
+✅ **UPDATE (2025-10-25):** All lambda-based object functions are now fully functional!
+- Fixed lambda conversion in interpreter (FunctionValue → UDM.Lambda)
+- Implemented 8 lambda-based functions in stdlib
 
 **Access Patterns:**
 ```utlx
