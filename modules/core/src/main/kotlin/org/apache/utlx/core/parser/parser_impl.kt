@@ -561,8 +561,18 @@ class Parser(private val tokens: List<Token>) {
             logger.trace { "parseObjectLiteral: parsed ${letBindings.size} let bindings, current=${peek().type}" }
 
             // Check if this is a block expression (let bindings + expression) or object literal
-            // Block expression: { let x = ...; expression }
-            // Object literal: { let x = ...; prop: value }
+            // Block expression: { let x = ...; expression } or { expression }
+            // Object literal: { let x = ...; prop: value } or { prop: value }
+
+            // Special case: if no let bindings and first token is LBRACE, this is a block with single expression
+            // Example: { { prop: value } } is a block containing an object literal
+            if (letBindings.isEmpty() && check(TokenType.LBRACE)) {
+                logger.trace { "parseObjectLiteral: detected block expression (no let bindings, starts with LBRACE)" }
+                val finalExpression = parseExpression()
+                consume(TokenType.RBRACE, "Expected '}' after block expression")
+                return Expression.Block(listOf(finalExpression), Location.from(startToken))
+            }
+
             if (letBindings.isNotEmpty() && !check(TokenType.RBRACE)) {
                 // Lookahead to check if next token pattern is "identifier :"
                 // If so, it's an object literal property. Otherwise, it's a block expression.
@@ -630,6 +640,10 @@ class Parser(private val tokens: List<Token>) {
                             isAttribute = true
                             key = key.substring(1)  // Remove @ prefix
                         }
+                    } else if (peek().isKeyword()) {
+                        // Allow keywords as property names in object literals
+                        // e.g., { template: value, match: value, input: value }
+                        key = advance().lexeme
                     } else {
                         throw error("Expected property name or spread operator")
                     }

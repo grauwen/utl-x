@@ -1,8 +1,33 @@
 # Conformance Suite Outstanding Issues - Detailed Analysis
 
-**Status**: 91.6% Pass Rate (262/286 tests passing)
-**Outstanding**: 24 failing tests
+**Status**: 91.3% Pass Rate (261/286 tests passing)
+**Outstanding**: 25 failing tests
 **Last Updated**: 2025-10-24
+
+## Recent Changes (2025-10-24)
+
+### Parser Fix: DataWeave-Style If/Else with Object Literals ✅
+
+**Fixed Issue:** Parser now supports DataWeave-style `if/else` expressions that return object literals.
+
+**Syntax Supported:**
+```utlx
+property: if (condition) {
+  key1: value1,
+  key2: value2
+} else {
+  key: value
+}
+```
+
+**Technical Change:** Modified `parsePrefixIfExpression()` to use `parseTernary()` instead of `parseLogicalOr()`, allowing the parser to reach `parsePrimary()` where object literals are handled.
+
+**Files Modified:**
+- `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+- `conformance-suite/tests/multi-input/18_json_yaml_to_yaml.yaml` - Fixed @ to $ migration
+- `conformance-suite/tests/multi-input/19_xml_yaml_to_yaml.yaml` - Fixed @ to $ migration
+
+**Status:** Parser fix verified working with simple test cases. Two multi-input tests still failing - needs further investigation.
 
 ---
 
@@ -12,9 +37,9 @@
 
 | Category | Total | Passing | Failing | Pass Rate |
 |----------|-------|---------|---------|-----------|
-| **Overall** | **286** | **262** | **24** | **91.6%** |
+| **Overall** | **286** | **261** | **25** | **91.3%** |
 | Parse Errors | 2 | 0 | 2 | 0% |
-| Output Mismatches | 19 | 0 | 19 | 0% |
+| Output Mismatches | 20 | 0 | 20 | 0% |
 | Unknown/Other | 3 | 0 | 3 | 0% |
 
 ### Failures by Test Category
@@ -472,11 +497,12 @@ cd ..
 
 ## Notes
 
-- Test success rate improved from 12.9% to 91.6% after `@input` → `$input` migration
+- Test success rate improved from 12.9% to 91.3% after `@input` → `$input` migration
+- Parser enhanced to support DataWeave-style if/else with object literals (2025-10-24)
 - Most failures are output mismatches, suggesting core functionality works
-- Multi-input feature (v0.2.0) needs attention - 13 of 24 failures
+- Multi-input feature (v0.2.0) needs attention - 13 of 25 failures
 - All 4 XML encoding tests failing - critical gap in encoding support
-- Only 2 parse errors - relatively clean parser implementation
+- Only 2 parse errors remaining - relatively clean parser implementation
 - No NullPointerExceptions - good null safety
 
 ---
