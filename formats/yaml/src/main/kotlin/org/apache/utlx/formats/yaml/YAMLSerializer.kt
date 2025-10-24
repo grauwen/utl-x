@@ -117,7 +117,28 @@ class YAMLSerializer {
      */
     private fun convertFromUDM(udm: UDM, options: SerializeOptions): Any? {
         return when (udm) {
-            is UDM.Scalar -> udm.value
+            is UDM.Scalar -> {
+                // Handle numbers specially to preserve integer vs float distinction
+                when (val value = udm.value) {
+                    is Double -> {
+                        // Convert whole numbers to Long for proper YAML serialization
+                        if (value.isFinite() && value % 1.0 == 0.0) {
+                            value.toLong()
+                        } else {
+                            value
+                        }
+                    }
+                    is Float -> {
+                        // Convert whole numbers to Int for proper YAML serialization
+                        if (value.isFinite() && value % 1.0f == 0.0f) {
+                            value.toInt()
+                        } else {
+                            value
+                        }
+                    }
+                    else -> value
+                }
+            }
 
             is UDM.DateTime -> {
                 // Format date using specified formatter

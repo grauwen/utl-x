@@ -428,8 +428,12 @@ def show_csv_diff(expected_csv: str, actual_csv: str):
         print(f"    {Colors.YELLOW}Falling back to text comparison{Colors.RESET}")
         show_text_diff(expected_csv, actual_csv)
 
-def show_yaml_diff(expected_yaml: str, actual_yaml: str):
-    """Show structural diff for YAML content"""
+def show_yaml_diff(expected_yaml: str, actual_yaml: str) -> bool:
+    """Show structural diff for YAML content
+
+    Returns:
+        True if YAML structures are identical, False otherwise
+    """
     try:
         import yaml as yaml_module
 
@@ -442,7 +446,7 @@ def show_yaml_diff(expected_yaml: str, actual_yaml: str):
 
         if not differences:
             print(f"    {Colors.GREEN}✓ YAML structures are identical{Colors.RESET}")
-            return
+            return True
 
         print(f"\n    {Colors.BOLD}{Colors.RED}Found {len(differences)} YAML difference(s):{Colors.RESET}")
 
@@ -485,14 +489,18 @@ def show_yaml_diff(expected_yaml: str, actual_yaml: str):
         if len(differences) > 10:
             print(f"\n    {Colors.YELLOW}... and {len(differences) - 10} more difference(s){Colors.RESET}")
 
+        return False
+
     except yaml_module.YAMLError as e:
         print(f"    {Colors.RED}✗ YAML parse error: {e}{Colors.RESET}")
         print(f"    {Colors.YELLOW}Falling back to text comparison{Colors.RESET}")
         show_text_diff(expected_yaml, actual_yaml)
+        return False
     except Exception as e:
         print(f"    {Colors.RED}✗ Error comparing YAML: {e}{Colors.RESET}")
         print(f"    {Colors.YELLOW}Falling back to text comparison{Colors.RESET}")
         show_text_diff(expected_yaml, actual_yaml)
+        return False
 
 def find_transformation_lines(transformation: str, field_path: str) -> List[str]:
     """
@@ -831,6 +839,18 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
             expected_normalized = expected_str.strip()
             actual_normalized = actual_str.strip()
 
+        # For YAML, use structural comparison instead of string comparison
+        if expected_format in ['yaml', 'yml']:
+            yaml_identical = show_yaml_diff(expected_str, actual_str)
+            if yaml_identical:
+                print(f"  ✓ Test passed")
+                return True, None
+            else:
+                print(f"  ✗ Output mismatch ({expected_format})")
+                reason = f"Output mismatch ({expected_format}) - See detailed diff above"
+                return False, reason
+
+        # For other formats, use string comparison
         if expected_normalized == actual_normalized:
             print(f"  ✓ Test passed")
             return True, None
@@ -842,8 +862,6 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
                 show_xml_diff(expected_normalized, actual_normalized)
             elif expected_format == 'csv':
                 show_csv_diff(expected_normalized, actual_normalized)
-            elif expected_format in ['yaml', 'yml']:
-                show_yaml_diff(expected_normalized, actual_normalized)
             else:
                 # For plain text, use text diff
                 show_text_diff(expected_normalized, actual_normalized)

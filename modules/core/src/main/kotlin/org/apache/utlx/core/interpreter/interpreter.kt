@@ -40,6 +40,21 @@ sealed class RuntimeValue {
         is NullValue -> false
         is NumberValue -> value != 0.0
         is StringValue -> value.isNotEmpty()
+        is UDMValue -> {
+            // Handle UDM values (from input data)
+            when (val udm = this.udm) {
+                is UDM.Scalar -> {
+                    when (val scalarValue = udm.value) {
+                        null -> false
+                        is Boolean -> scalarValue
+                        is Number -> scalarValue.toDouble() != 0.0
+                        is String -> scalarValue.isNotEmpty()
+                        else -> true
+                    }
+                }
+                else -> true // Arrays and Objects are truthy
+            }
+        }
         else -> true
     }
     
