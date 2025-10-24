@@ -12,13 +12,15 @@
 📄 **Document:** `docs/yaml-dynamic-keys-support.md`
 
 **Key Functions:**
-- `keys(obj)` - Get all key names
-- `values(obj)` - Get all values
-- `hasKey(obj, key)` - Check key existence
-- `entries(obj)` - Get `[key, value]` pairs
-- `mapEntries(obj, fn)` - Transform keys/values
-- `filterEntries(obj, pred)` - Filter properties
-- `reduceEntries(obj, fn, init)` - Aggregate
+- `keys(obj)` - Get all key names ✅
+- `values(obj)` - Get all values ✅
+- `hasKey(obj, key)` - Check key existence ✅
+- `entries(obj)` - Get `[key, value]` pairs ✅
+- `mapEntries(obj, fn)` - Transform keys/values ⚠️ **NOT IMPLEMENTED**
+- `filterEntries(obj, pred)` - Filter properties ⚠️ **NOT IMPLEMENTED**
+- `reduceEntries(obj, fn, init)` - Aggregate ⚠️ **NOT IMPLEMENTED**
+
+⚠️ **CRITICAL:** Functions that take lambda arguments are not yet implemented. See workarounds below.
 
 **Access Patterns:**
 ```utlx
@@ -34,7 +36,7 @@ entries($input.servers) |> map(...) # Iteration with keys
 ### Generating Dynamic Keys (OUTPUT)
 📄 **Document:** `docs/yaml-dynamic-keys-output.md`
 
-**Primary Pattern - `fromEntries()`:**
+**✅ Pattern 1: `fromEntries()` (WORKING)**
 ```utlx
 {
   servers: fromEntries(
@@ -49,13 +51,24 @@ entries($input.servers) |> map(...) # Iteration with keys
 }
 ```
 
-**Secondary Pattern - `mapEntries()`:**
+**⚠️ Pattern 2: `mapEntries()` (NOT IMPLEMENTED)**
 ```utlx
+# ❌ THIS DOES NOT WORK YET
 {
   servers: mapEntries($input.servers, (env, config) => {
     key: upper(env),        # Transform key
     value: config           # Keep/transform value
   })
+}
+
+# ✅ USE THIS WORKAROUND INSTEAD
+{
+  servers: fromEntries(
+    entries($input.servers) |> map(entry => [
+      upper(entry[0]),      # Transform key
+      entry[1]              # Keep value
+    ])
+  )
 }
 ```
 
@@ -94,19 +107,24 @@ entries($input.servers) |> map(...) # Iteration with keys
 
 ### Conformance Tests Created
 
-| Test | Focus | Status |
-|------|-------|--------|
-| 01_servers_static_keys | Static access | ✅ PASSING |
-| 02_servers_wildcard | Wildcard selection | ⚠️ Syntax fixes needed |
-| 03_servers_dynamic_access | Bracket notation | ⚠️ Syntax fixes needed |
-| 04_servers_introspection | keys(), values(), hasKey() | ⚠️ Syntax fixes needed |
-| 05_servers_transform | entries(), mapEntries() | ⚠️ Syntax fixes needed |
-| 06_models_dynamic_fields | Nested dynamic keys | ⚠️ Syntax fixes needed |
-| 07_full_datacontract | Complete spec | ⚠️ Syntax fixes needed |
-| 08_generate_datacontract | **OUTPUT pattern** | ✅ **PASSING** |
+| Test | Focus | Status | Blocker |
+|------|-------|--------|---------|
+| 01_servers_static_keys | Static access | ✅ PASSING | None |
+| 02_servers_wildcard | Wildcard selection | ⚠️ Fixable | Syntax only |
+| 03_servers_dynamic_access | Bracket notation | ❓ Unknown | Syntax + testing |
+| 04_servers_introspection | keys(), values(), hasKey() | ⚠️ Fixable | Syntax only |
+| 05_servers_transform | entries(), mapEntries() | ❌ **BLOCKED** | **mapEntries not implemented** |
+| 06_models_dynamic_fields | Nested dynamic keys | ⚠️ Fixable | Syntax only |
+| 07_full_datacontract | Complete spec | ❌ **BLOCKED** | **Uses mapEntries** |
+| 08_generate_datacontract | fromEntries OUTPUT | ✅ **PASSING** | None |
+| 09_transform_datacontract_keys | mapEntries OUTPUT | ❌ **BLOCKED** | **mapEntries not implemented** |
 
-**Current:** 2/8 passing (25%)
-**After syntax fixes:** Expected 8/8 (100%)
+**Current:** 2/9 passing (22%)
+**After syntax fixes:** Expected 5/9 (56%) - Tests 05, 07, 09 blocked by missing implementation
+**After mapEntries implementation:** Expected 9/9 (100%)
+
+⚠️ **CRITICAL FINDING:** `mapEntries()`, `filterEntries()`, and `reduceEntries()` are stub implementations.
+All functions that accept lambda arguments cannot be called. See `yaml-dynamic-keys-implementation-status.md`.
 
 ---
 
