@@ -58,7 +58,10 @@ object JSONCanonicalizationFunctions {
             val result = canonicalizeJSONInternal(json)
             UDM.Scalar(result)
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to canonicalize JSON: ${e.message}")
+            throw FunctionArgumentException(
+                "Failed to canonicalize JSON: ${e.message}. " +
+                "Hint: Ensure the input is valid JSON (object, array, or scalar value)."
+            )
         }
     }
 
@@ -113,7 +116,10 @@ object JSONCanonicalizationFunctions {
      */
     fun canonicalJSONHash(args: List<UDM>): UDM {
         if (args.isEmpty() || args.size > 2) {
-            throw FunctionArgumentException("canonicalJSONHash expects 1 or 2 arguments (json, algorithm?), got ${args.size}")
+            throw FunctionArgumentException(
+                "canonicalJSONHash expects 1 or 2 arguments (json, algorithm?), got ${args.size}. " +
+                "Hint: Usage is canonicalJSONHash(json) or canonicalJSONHash(json, \"SHA-256\")."
+            )
         }
         
         val json = args[0]
@@ -124,7 +130,10 @@ object JSONCanonicalizationFunctions {
             val hash = hashString(canonical, algorithm)
             UDM.Scalar(hash)
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to compute canonical JSON hash: ${e.message}")
+            throw FunctionArgumentException(
+                "Failed to compute canonical JSON hash: ${e.message}. " +
+                "Hint: Ensure JSON is valid and algorithm is supported (e.g., \"SHA-256\", \"MD5\")."
+            )
         }
     }
 
@@ -446,20 +455,33 @@ private fun hashString(input: String, algorithm: String): String {
             val size = canonical.toByteArray(Charsets.UTF_8).size
             UDM.Scalar(size.toDouble())
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to compute canonical JSON size: ${e.message}")
+            throw FunctionArgumentException(
+                "Failed to compute canonical JSON size: ${e.message}. " +
+                "Hint: Ensure the input is valid JSON (object, array, or scalar value)."
+            )
         }
     }
 
     // Helper functions
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
     
     private fun UDM.asString(): String = when (this) {
-        is UDM.Scalar -> value?.toString() ?: throw FunctionArgumentException("Expected string value")
-        else -> throw FunctionArgumentException("Expected string value, got ${this::class.simpleName}")
+        is UDM.Scalar -> value?.toString()
+            ?: throw FunctionArgumentException(
+                "Expected non-null string value, but got null. " +
+                "Hint: Ensure the value is a non-empty string."
+            )
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
     }
     
     // Private helper function for internal canonicalization (returns String directly)
@@ -469,8 +491,32 @@ private fun hashString(input: String, algorithm: String): String {
             is UDM.Array -> canonicalizeArray(json)
             is UDM.Scalar -> canonicalizeScalar(json)
             else -> throw FunctionArgumentException(
-                "Cannot canonicalize type: ${json::class.simpleName}"
+                "Cannot canonicalize type: ${getTypeDescription(json)}. " +
+                "Hint: JSON canonicalization supports objects, arrays, and scalar values (string, number, boolean, null)."
             )
+        }
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
         }
     }
 }

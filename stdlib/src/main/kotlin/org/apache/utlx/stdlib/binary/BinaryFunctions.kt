@@ -871,7 +871,10 @@ object BinaryFunctions {
      */
     fun bitwiseAnd(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("bitwiseAnd expects 2 arguments")
+            throw FunctionArgumentException(
+                "bitwiseAnd expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide two binary values to perform bitwise AND operation."
+            )
         }
         val binary1 = args[0]
         val binary2 = args[1]
@@ -915,7 +918,10 @@ object BinaryFunctions {
      */
     fun bitwiseOr(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("bitwiseOr expects 2 arguments")
+            throw FunctionArgumentException(
+                "bitwiseOr expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide two binary values to perform bitwise OR operation."
+            )
         }
         val binary1 = args[0]
         val binary2 = args[1]
@@ -959,7 +965,10 @@ object BinaryFunctions {
      */
     fun bitwiseXor(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("bitwiseXor expects 2 arguments")
+            throw FunctionArgumentException(
+                "bitwiseXor expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide two binary values to perform bitwise XOR operation."
+            )
         }
         val binary1 = args[0]
         val binary2 = args[1]
@@ -1002,7 +1011,10 @@ object BinaryFunctions {
      */
     fun bitwiseNot(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("bitwiseNot expects 1 argument")
+            throw FunctionArgumentException(
+                "bitwiseNot expects 1 argument, got ${args.size}. " +
+                "Hint: Provide a binary value to perform bitwise NOT (inversion) operation."
+            )
         }
         val binary = args[0]
         val bytes = (binary as? UDM.Binary)?.data ?: return UDM.Scalar(null)
@@ -1043,7 +1055,10 @@ object BinaryFunctions {
      */
     fun shiftLeft(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("shiftLeft expects 2 arguments")
+            throw FunctionArgumentException(
+                "shiftLeft expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide binary value and number of positions to shift left."
+            )
         }
         val binary = args[0]
         val positions = args[1]
@@ -1086,7 +1101,10 @@ object BinaryFunctions {
      */
     fun shiftRight(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("shiftRight expects 2 arguments")
+            throw FunctionArgumentException(
+                "shiftRight expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide binary value and number of positions to shift right."
+            )
         }
         val binary = args[0]
         val positions = args[1]
@@ -1133,7 +1151,10 @@ object BinaryFunctions {
      */
     fun equals(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("equals expects 2 arguments")
+            throw FunctionArgumentException(
+                "equals expects 2 arguments, got ${args.size}. " +
+                "Hint: Provide two binary values to compare for equality."
+            )
         }
         val binary1 = args[0]
         val binary2 = args[1]
@@ -1167,10 +1188,16 @@ object BinaryFunctions {
                     if (data != null) {
                         Base64.getDecoder().decode(data)
                     } else {
-                        throw IllegalArgumentException("Invalid binary object")
+                        throw FunctionArgumentException(
+                            "Invalid binary object - missing or invalid data field. " +
+                            "Hint: Binary objects should have a Base64-encoded 'data' field."
+                        )
                     }
                 } else {
-                    throw IllegalArgumentException("Not a binary object")
+                    throw FunctionArgumentException(
+                        "Expected binary object, but got object with type '$type'. " +
+                        "Hint: Use toBinary() to create binary data, or ensure the object has _type='binary'."
+                    )
                 }
             }
             is UDM.Scalar -> {
@@ -1179,13 +1206,22 @@ object BinaryFunctions {
                     try {
                         Base64.getDecoder().decode(value.value as String)
                     } catch (e: Exception) {
-                        throw IllegalArgumentException("Invalid binary data")
+                        throw FunctionArgumentException(
+                            "Invalid binary data - cannot decode Base64 string. " +
+                            "Hint: Provide a valid Base64-encoded string or use fromBase64()."
+                        )
                     }
                 } else {
-                    throw IllegalArgumentException("Expected binary data")
+                    throw FunctionArgumentException(
+                        "Expected binary data, but got ${getTypeDescription(value)}. " +
+                        "Hint: Use toBinary() to create binary data from a string."
+                    )
                 }
             }
-            else -> throw IllegalArgumentException("Expected binary data")
+            else -> throw FunctionArgumentException(
+                "Expected binary data, but got ${getTypeDescription(value)}. " +
+                "Hint: Use toBinary(), fromBytes(), fromBase64(), or fromHex() to create binary data."
+            )
         }
     }
     
@@ -1194,6 +1230,29 @@ object BinaryFunctions {
             throw IllegalArgumentException("Offset must be number")
         }
         return (value.value as Number).toInt()
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 }
 

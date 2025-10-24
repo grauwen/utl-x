@@ -333,8 +333,12 @@ Equivalent to: and(...array)""",
      */
     fun all(args: List<UDM>): UDM {
         requireArgs(args, 1, "all")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("all: first argument must be an array")
-        
+        val array = args[0].asArray()
+            ?: throw FunctionArgumentException(
+                "all requires an array as argument, but got ${getTypeDescription(args[0])}. " +
+                "Hint: Provide an array of boolean values like [true, false, true]."
+            )
+
         return UDM.Scalar(array.elements.all { it.asBoolean() })
     }
     
@@ -362,8 +366,12 @@ Equivalent to: or(...array)""",
      */
     fun any(args: List<UDM>): UDM {
         requireArgs(args, 1, "any")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("any: first argument must be an array")
-        
+        val array = args[0].asArray()
+            ?: throw FunctionArgumentException(
+                "any requires an array as argument, but got ${getTypeDescription(args[0])}. " +
+                "Hint: Provide an array of boolean values like [false, false, true]."
+            )
+
         return UDM.Scalar(array.elements.any { it.asBoolean() })
     }
     
@@ -389,8 +397,12 @@ Equivalent to: or(...array)""",
      */
     fun none(args: List<UDM>): UDM {
         requireArgs(args, 1, "none")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("none: first argument must be an array")
-        
+        val array = args[0].asArray()
+            ?: throw FunctionArgumentException(
+                "none requires an array as argument, but got ${getTypeDescription(args[0])}. " +
+                "Hint: Provide an array of boolean values like [false, false, false]."
+            )
+
         return UDM.Scalar(array.elements.none { it.asBoolean() })
     }
     
@@ -398,7 +410,10 @@ Equivalent to: or(...array)""",
     
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
     
@@ -421,5 +436,28 @@ Equivalent to: or(...array)""",
     private fun UDM.asArray(): UDM.Array? = when (this) {
         is UDM.Array -> this
         else -> null
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 }

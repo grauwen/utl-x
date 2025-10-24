@@ -52,7 +52,10 @@ object JWTFunctions {
         
         val parts = token.split(".")
         if (parts.size != 3) {
-            throw FunctionArgumentException("Invalid JWT format - expected 3 parts separated by dots")
+            throw FunctionArgumentException(
+                "Invalid JWT format - expected 3 parts separated by dots, got ${parts.size}. " +
+                "Hint: Valid JWT format is 'header.payload.signature' (e.g., 'eyJ...').eyJ...).abc...')."
+            )
         }
         
         return try {
@@ -66,7 +69,10 @@ object JWTFunctions {
                 "verified" to UDM.Scalar(false)  // Explicitly mark as unverified
             ))
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to decode JWT: ${e.message}")
+            throw FunctionArgumentException(
+                "Failed to decode JWT: ${e.message}. " +
+                "Hint: Ensure the token is a valid Base64URL-encoded JWT string."
+            )
         }
     }
     
@@ -104,13 +110,19 @@ object JWTFunctions {
         
         val parts = token.split(".")
         if (parts.size != 3) {
-            throw FunctionArgumentException("Invalid JWT format")
+            throw FunctionArgumentException(
+                "Invalid JWT format - expected 3 parts separated by dots, got ${parts.size}. " +
+                "Hint: Valid JWT format is 'header.payload.signature'."
+            )
         }
         
         return try {
             decodeJWTPart(parts[1])
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to decode JWT claims: ${e.message}")
+            throw FunctionArgumentException(
+                "Failed to decode JWT claims: ${e.message}. " +
+                "Hint: Ensure the JWT payload is valid Base64URL-encoded JSON."
+            )
         }
     }
     
@@ -280,16 +292,26 @@ object JWTFunctions {
     }
 
     // Helper functions
-    
+
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
     
     private fun UDM.asString(): String = when (this) {
-        is UDM.Scalar -> value?.toString() ?: throw FunctionArgumentException("Expected string value")
-        else -> throw FunctionArgumentException("Expected string value, got ${this::class.simpleName}")
+        is UDM.Scalar -> value?.toString()
+            ?: throw FunctionArgumentException(
+                "Expected non-null string value, but got null. " +
+                "Hint: Provide a valid JWT token string."
+            )
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
     }
 
     private fun decodeJWTPart(part: String): UDM {
@@ -316,7 +338,10 @@ object JWTFunctions {
                 UDM.Scalar(jsonString) // Return as string if not valid JSON
             }
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to parse JSON: ${e.message}")
+            throw FunctionArgumentException(
+                "Failed to parse JSON: ${e.message}. " +
+                "Hint: Ensure the JWT part contains valid JSON data."
+            )
         }
     }
     
@@ -458,7 +483,27 @@ object JWTFunctions {
         return -1
     }
 
-
-
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
+    }
 }
 
