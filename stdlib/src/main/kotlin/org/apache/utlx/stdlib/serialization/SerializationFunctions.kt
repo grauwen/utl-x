@@ -467,13 +467,19 @@ object SerializationFunctions {
     
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
-    
+
     private fun requireArgs(args: List<UDM>, range: IntRange, functionName: String) {
         if (args.size !in range) {
-            throw FunctionArgumentException("$functionName expects ${range.first}..${range.last} arguments, got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects ${range.first}..${range.last} arguments, got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
     

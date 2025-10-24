@@ -540,10 +540,13 @@ object XMLEncodingBomFunctions {
     
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
-    
+
     private fun getTypeDescription(udm: UDM): String {
         return when (udm) {
             is UDM.Scalar -> {
@@ -559,11 +562,14 @@ object XMLEncodingBomFunctions {
             is UDM.Object -> "object"
             is UDM.Binary -> "binary"
             is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
             is UDM.Lambda -> "lambda"
             else -> udm.javaClass.simpleName
         }
     }
-    
+
     // Extension functions for UDM type checking
     private fun UDM.asString(): String? = (this as? UDM.Scalar)?.value as? String
     private fun UDM.asBoolean(): Boolean? = (this as? UDM.Scalar)?.value as? Boolean

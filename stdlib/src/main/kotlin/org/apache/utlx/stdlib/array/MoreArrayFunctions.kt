@@ -293,20 +293,26 @@ object MoreArrayFunctions {
     
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
-    
+
     private fun requireArgs(args: List<UDM>, range: IntRange, functionName: String) {
         if (args.size !in range) {
-            throw FunctionArgumentException("$functionName expects ${range.first}..${range.last} arguments, got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects ${range.first}..${range.last} arguments, got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
-    
+
     private fun UDM.asArray(): UDM.Array? {
         return this as? UDM.Array
     }
-    
+
     private fun UDM.asNumber(): Double {
         return when (this) {
             is UDM.Scalar -> {
@@ -314,11 +320,43 @@ object MoreArrayFunctions {
                 when (v) {
                     is Number -> v.toDouble()
                     is String -> v.toDoubleOrNull()
-                        ?: throw FunctionArgumentException("Cannot convert '$v' to number")
-                    else -> throw FunctionArgumentException("Expected number value, got $v")
+                        ?: throw FunctionArgumentException(
+                            "Cannot convert '$v' to number. " +
+                            "Hint: Ensure the string contains a valid numeric value."
+                        )
+                    else -> throw FunctionArgumentException(
+                        "Expected number value, but got ${getTypeDescription(this)}. " +
+                        "Hint: Use toNumber() to convert values to numbers."
+                    )
                 }
             }
-            else -> throw FunctionArgumentException("Expected number value, got ${this::class.simpleName}")
+            else -> throw FunctionArgumentException(
+                "Expected number value, but got ${getTypeDescription(this)}. " +
+                "Hint: Use toNumber() to convert values to numbers."
+            )
+        }
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
         }
     }
 }
