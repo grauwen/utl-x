@@ -16,7 +16,7 @@ transformation: |
   output json
   ---
   {
-    sum: reduce(@input.numbers, (acc, x) => acc + x, 0)
+    sum: reduce($input.numbers, (acc, x) => acc + x, 0)
   }
 
 expected:

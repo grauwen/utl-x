@@ -31,7 +31,7 @@ transformation: |
   input xml {encoding: "auto", arrays: ["Availability"]}
   output json
   ---
-  let material = @input.SAP_Response.Material in
+  let material = $input.SAP_Response.Material in
   let totalStock = sum(map(material.Availability, avail => toNumber(avail.Stock))) in
   let totalReserved = sum(map(material.Availability, avail => toNumber(avail.Reserved))) in
   let availableStock = totalStock - totalReserved in
@@ -60,7 +60,7 @@ transformation: |
     },
     metadata: {
       source: "SAP",
-      encoding_detected: detectXMLEncoding(@input),
+      encoding_detected: detectXMLEncoding($input),
       processed_at: now(),
       total_locations: count(material.Availability)
     }

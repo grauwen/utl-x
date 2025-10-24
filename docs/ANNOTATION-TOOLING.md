@@ -7,7 +7,7 @@ All annotation work should use the v3 scripts:
 
 - **`scripts/enhance-annotations-v3.py`** - Main annotation generation script
   - Extracts comprehensive metadata from KDoc comments
-  - Generates @UTLXFunction annotations with proper formatting
+  - Generates $UTLXFunction annotations with proper formatting
   - Handles code blocks, multi-line notes, and spacing correctly
   - Usage: `python3 scripts/enhance-annotations-v3.py <file.kt>`
 

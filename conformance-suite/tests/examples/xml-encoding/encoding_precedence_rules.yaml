@@ -22,9 +22,9 @@ transformation: |
   {
     Integration: {
       SourceSystem: "SAP",
-      SourceEncoding: detectXMLEncoding(@input),
+      SourceEncoding: detectXMLEncoding($input),
       OutputEncoding: "UTF-8",
-      Data: @input
+      Data: $input
     }
   }
 

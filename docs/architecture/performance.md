@@ -63,14 +63,14 @@ CSV processing          15ms     N/A         N/A     20ms
 **Before:**
 ```utlx
 {
-  tax: input.total * 0.08,
-  total: input.total * 1.08
+  tax: $input.total * 0.08,
+  total: $input.total * 1.08
 }
 ```
 
 **After:**
 ```utlx
-let temp = input.total
+let temp = $input.total
 {
   tax: temp * 0.08,
   total: temp * 1.08
@@ -116,15 +116,15 @@ input.products.*.code  // Specific path
 **❌ Slow:**
 ```utlx
 {
-  field1: sum(input.items.*.price),
-  field2: sum(input.items.*.price),
-  field3: sum(input.items.*.price)
+  field1: sum($input.items.*.price),
+  field2: sum($input.items.*.price),
+  field3: sum($input.items.*.price)
 }
 ```
 
 **✅ Fast:**
 ```utlx
-let totalPrice = sum(input.items.*.price)
+let totalPrice = sum($input.items.*.price)
 {
   field1: totalPrice,
   field2: totalPrice,
@@ -169,7 +169,7 @@ val modified = original.copy(oneField = newValue)
 
 ```utlx
 // Array is not materialized until needed
-let lazyResult = input.items |> filter(item => item.price > 100)
+let lazyResult = $input.items |> filter(item => item.price > 100)
 
 // Only materialized when accessed
 {
@@ -212,7 +212,7 @@ jhat heap.dump
 ### UTL-X Built-in Profiler
 
 ```bash
-utlx transform script.utlx input.xml --profile
+utlx transform script.utlx $input.xml --profile
 ```
 
 **Output:**

@@ -76,7 +76,7 @@ A clear description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce:
-1. Create file input.xml with: ...
+1. Create file $input.xml with: ...
 2. Run command: utlx transform ...
 3. See error: ...
 
@@ -366,7 +366,7 @@ input json
 output json
 ---
 {
-  result: input.value * 2
+  result: $input.value * 2
 }
 ```
 
@@ -403,7 +403,7 @@ input xml
 output json
 ---
 {
-  result: input.data
+  result: $input.data
 }
 ```
 

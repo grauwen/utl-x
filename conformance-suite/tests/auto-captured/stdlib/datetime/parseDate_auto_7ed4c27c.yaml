@@ -15,7 +15,7 @@ transformation: |
   output json
   ---
   {
-    parsed: parseDate(@input.date)
+    parsed: parseDate($input.date)
   }
   
 

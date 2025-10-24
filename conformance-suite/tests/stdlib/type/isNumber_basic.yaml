@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  isNumber(@input)
+  isNumber($input)
 
 expected:
   format: json

@@ -24,9 +24,9 @@ interface FormatSerializer {
 class PropertiesParser : FormatParser {
     override fun canParse(input: InputStream): Boolean {
         // Check if input is a properties file
-        return input.markSupported() && 
-               input.peek().startsWith("#") || 
-               input.peek().contains("=")
+        return $input.markSupported() && 
+               $input.peek().startsWith("#") || 
+               $input.peek().contains("=")
     }
     
     override fun parse(input: InputStream): UDM {
@@ -58,8 +58,8 @@ output json
 ---
 {
   database: {
-    host: input.db_host,
-    port: parseNumber(input.db_port)
+    host: $input.db_host,
+    port: parseNumber($input.db_port)
   }
 }
 ```

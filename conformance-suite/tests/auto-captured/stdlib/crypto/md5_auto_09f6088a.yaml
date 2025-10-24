@@ -14,7 +14,7 @@ transformation: |
   input json
   output json
   ---
-  md5(@input)
+  md5($input)
   
 
 expected:

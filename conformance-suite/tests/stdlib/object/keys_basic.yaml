@@ -16,7 +16,7 @@ transformation: |
   input json
   output json
   ---
-  sort(keys(@input))
+  sort(keys($input))
 
 expected:
   format: json
@@ -36,7 +36,7 @@ variants:
       input json
       output json
       ---
-      keys(@input)
+      keys($input)
     expected:
       format: json
       data: []
@@ -50,7 +50,7 @@ variants:
       input json
       output json
       ---
-      keys(@input)
+      keys($input)
     expected:
       format: json
       data: ["test"]

@@ -52,7 +52,7 @@ input xml
 output json
 ---
 {
-  result: input.root.value
+  result: $input.root.value
 }
 ```
 
@@ -270,11 +270,11 @@ input.items |> reduce((acc, item) => acc + item.price, 0)
 ### 6.2 Aggregation Functions
 
 ```utlx
-sum(input.items.*.price)           // Sum of all prices
-avg(input.items.*.quantity)        // Average quantity
-min(input.items.*.price)           // Minimum price
-max(input.items.*.price)           // Maximum price
-count(input.items)                 // Count items
+sum($input.items.*.price)           // Sum of all prices
+avg($input.items.*.quantity)        // Average quantity
+min($input.items.*.price)           // Minimum price
+max($input.items.*.price)           // Maximum price
+count($input.items)                 // Count items
 ```
 
 ### 6.3 String Functions
@@ -521,7 +521,7 @@ input xml {
 }
 ---
 {
-  body: input.{"soap:Envelope"}.{"soap:Body"}.{"m:Message"}
+  body: $input.{"soap:Envelope"}.{"soap:Body"}.{"m:Message"}
 }
 ```
 
@@ -558,7 +558,7 @@ input xml
 output json
 ---
 {
-  transformed: input.data
+  transformed: $input.data
 }
 ```
 
@@ -633,7 +633,7 @@ let x: Number = "hello"  // ERROR: Type mismatch
 
 ```utlx
 try {
-  parseNumber(input.value)
+  parseNumber($input.value)
 } catch (e) {
   0  // Default value
 }
@@ -645,8 +645,8 @@ Use `||` operator for defaults:
 
 ```utlx
 {
-  name: input.customer.name || "Unknown",
-  quantity: input.quantity || 0
+  name: $input.customer.name || "Unknown",
+  quantity: $input.quantity || 0
 }
 ```
 
@@ -705,9 +705,9 @@ input xml
 output json
 ---
 {
-  orderId: input.Order.@id,
-  customer: input.Order.Customer.Name,
-  total: sum(input.Order.Items.Item.(@price * @quantity))
+  orderId: $input.Order.@id,
+  customer: $input.Order.Customer.Name,
+  total: sum($input.Order.Items.Item.($price * $quantity))
 }
 ```
 
@@ -719,7 +719,7 @@ input json
 output json
 ---
 {
-  orders: input.orders |> map(order => {
+  orders: $input.orders |> map(order => {
     let shippingInfo = match order.type {
       "express" => {
         cost: 15.00,
@@ -761,11 +761,11 @@ output json
 ---
 
 {
-  let expensiveItems = input.items |> filter(item => item.price > 1000),
-  let avgPrice = avg(input.items.*.price),
+  let expensiveItems = $input.items |> filter(item => item.price > 1000),
+  let avgPrice = avg($input.items.*.price),
   
   summary: {
-    totalItems: count(input.items),
+    totalItems: count($input.items),
     averagePrice: avgPrice,
     expensiveItemCount: count(expensiveItems)
   },
@@ -776,7 +776,7 @@ output json
     discount: item.price * 0.10
   }),
   
-  categories: input.items 
+  categories: $input.items 
     |> groupBy(item => item.category)
     |> map((category, items) => {
         name: category,

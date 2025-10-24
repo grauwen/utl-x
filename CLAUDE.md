@@ -224,7 +224,7 @@ input auto      // Auto-detect format (XML, JSON, CSV)
 output json     // Output as JSON
 ---
 {
-  message: "Hello, " + input.name
+  message: "Hello, " + $input.name
 }
 ```
 
@@ -257,9 +257,9 @@ input.Order[Total > 1000]          // Predicate filtering
 ```
 
 **Translation to native format:**
-- **XML:** `input.Order.Customer.Name` → XPath `/Order/Customer/Name`
-- **JSON:** `input.Order.Customer.Name` → JSONPath `$.Order.Customer.Name`
-- **CSV:** `input.Order.Customer.Name` → Column access with headers
+- **XML:** `$input.Order.Customer.Name` → XPath `/Order/Customer/Name`
+- **JSON:** `$input.Order.Customer.Name` → JSONPath `$.Order.Customer.Name`
+- **CSV:** `$input.Order.Customer.Name` → Column access with headers
 
 #### 3.2.3 Pattern Matching
 
@@ -271,7 +271,7 @@ input json
 output json
 ---
 {
-  orders: @input.orders |> map(order => {
+  orders: $input.orders |> map(order => {
     status: match order.status {
       "pending" => "Awaiting Processing",
       "shipped" => "In Transit",
@@ -298,7 +298,7 @@ output json
 **Map/Filter/Reduce:**
 ```utlx
 {
-  expensiveItems: input.items 
+  expensiveItems: $input.items 
     |> filter(item => item.price > 100)
     |> map(item => {
          sku: item.sku,
@@ -306,7 +306,7 @@ output json
        })
     |> sortBy(item => item.sku),
     
-  totalValue: input.items 
+  totalValue: $input.items 
     |> map(item => item.price * item.quantity)
     |> sum()
 }
@@ -314,7 +314,7 @@ output json
 
 **Pattern Matching:**
 ```utlx
-match input.orderType {
+match $input.orderType {
   "express" => {
     processingTime: "24 hours",
     shippingCost: 15.00
@@ -333,14 +333,14 @@ match input.orderType {
 **Conditionals:**
 ```utlx
 {
-  discount: if (input.customer.type == "VIP") 
-              input.total * 0.20 
-            else if (input.total > 1000) 
-              input.total * 0.10 
+  discount: if ($input.customer.type == "VIP") 
+              $input.total * 0.20 
+            else if ($input.total > 1000) 
+              $input.total * 0.10 
             else 
               0,
               
-  freeShipping: input.customer.type == "VIP" && input.total > 500
+  freeShipping: $input.customer.type == "VIP" && $input.total > 500
 }
 ```
 
@@ -360,9 +360,9 @@ function FormatCurrency(value: Number): String {
 
 // Usage
 {
-  subtotal: input.total,
-  tax: CalculateTax(input.total, 0.08),
-  total: FormatCurrency(input.total * 1.08)
+  subtotal: $input.total,
+  tax: CalculateTax($input.total, 0.08),
+  total: FormatCurrency($input.total * 1.08)
 }
 
 // ❌ INVALID - lowercase function names are reserved for stdlib
@@ -405,8 +405,8 @@ typeOf(value), isString(value), isNumber(value), isArray(value)
 
 ```utlx
 {
-  let subtotal = sum(input.items.(price * quantity)),
-  let taxRate = if (input.customer.state == "CA") 0.0875 else 0.06,
+  let subtotal = sum($input.items.(price * quantity)),
+  let taxRate = if ($input.customer.state == "CA") 0.0875 else 0.06,
   let tax = subtotal * taxRate
   
   invoice: {
@@ -430,7 +430,7 @@ input csv {
 output json
 ---
 {
-  customers: input.rows |> map(row => {
+  customers: $input.rows |> map(row => {
     id: row.CustomerID,
     name: row.Name,
     email: row.Email
@@ -450,8 +450,8 @@ input xml {
 output json
 ---
 {
-  orderId: input.{"ord:Order"}.@id,
-  customer: input.{"ord:Order"}.{"cust:Customer"}.Name
+  orderId: $input.{"ord:Order"}.@id,
+  customer: $input.{"ord:Order"}.{"cust:Customer"}.Name
 }
 ```
 
@@ -465,9 +465,9 @@ output xml
 ---
 {
   Combined: {
-    FromXML: @input1.Customer,
-    FromJSON: @input2.order,
-    FromCSV: @input3.rows[0]
+    FromXML: $input1.Customer,
+    FromJSON: $input2.order,
+    FromCSV: $input3.rows[0]
   }
 }
 ```
@@ -660,7 +660,7 @@ class ProtobufParser : FormatParser { ... }
 **Deliverables:**
 - VS Code extension (syntax highlighting, autocomplete)
 - IntelliJ IDEA plugin
-- CLI tool (`utl transform input.xml transform.utl`)
+- CLI tool (`utl transform $input.xml transform.utl`)
 - Maven/Gradle plugins
 - Online playground (try UTL in browser)
 
@@ -740,7 +740,7 @@ XPath expressions → UTL-X selectors (similar syntax)
 ```
 DataWeave scripts → UTL-X scripts (very similar syntax)
 %dw 2.0 → %utlx 1.0
-payload → @input
+payload → $input
 MuleSoft modules → UTL-X standard library
 ```
 
@@ -1074,7 +1074,7 @@ output json
 ---
 
 {
-  invoices: input.Orders.Order |> map(order => {
+  invoices: $input.Orders.Order |> map(order => {
     invoiceId: "INV-" + order.@id,
     invoiceDate: now(),
     orderDate: parseDate(order.@date, "yyyy-MM-dd"),
@@ -1095,7 +1095,7 @@ output json
       subtotal: parseNumber(item.@quantity) * parseNumber(item.@price)
     }),
     
-    let subtotal = sum(order.Items.Item.(parseNumber(@quantity) * parseNumber(@price))),
+    let subtotal = sum(order.Items.Item.(parseNumber($quantity) * parseNumber($price))),
     let discount = if (order.Customer.@type == "VIP") subtotal * 0.20 else 0,
     let tax = (subtotal - discount) * 0.08,
     
@@ -1246,8 +1246,8 @@ make lint
 ### Running the CLI
 ```bash
 # Run CLI with arguments
-./gradlew :modules:cli:run --args="transform input.xml output.json"
-make run ARGS="transform input.xml output.json"
+./gradlew :modules:cli:run --args="transform $input.xml output.json"
+make run ARGS="transform $input.xml output.json"
 ```
 
 ## Architecture Overview
@@ -1329,7 +1329,7 @@ output json   # target format
 ---
 {
   // Transformation logic using functional operators
-  result: input.data |> map(item => transform(item))
+  result: $input.data |> map(item => transform(item))
 }
 ```
 

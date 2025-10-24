@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  abs(@input)
+  abs($input)
 
 expected:
   format: json

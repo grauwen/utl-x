@@ -210,7 +210,7 @@ parameter ::= identifier [type-annotation]
 
 ## Example Parse Tree
 
-For the expression: `input.items |> filter(x => x.price > 100)`
+For the expression: `$input.items |> filter(x => x.price > 100)`
 
 ```
 pipe-expression

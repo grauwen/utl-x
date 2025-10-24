@@ -14,7 +14,7 @@ input xml                    // 2. Configuration directives
 output json
 ---                          // 3. Separator (required)
 {                           // 4. Transformation body
-  result: input.data
+  result: $input.data
 }
 ```
 
@@ -753,8 +753,8 @@ template match="pattern" {
 ```utlx
 template match="Order" {
   order: {
-    id: @id,
-    total: sum(Items/Item/(@price * @quantity))
+    id: $id,
+    total: sum(Items/Item/($price * $quantity))
   }
 }
 ```
@@ -780,8 +780,8 @@ template match="Customer" {
 }
 
 template match="Item" {
-  sku: @sku,
-  price: @price
+  sku: $sku,
+  price: $price
 }
 ```
 
@@ -825,9 +825,9 @@ let x = 10
 ```utlx
 /**
  * Calculates the total with tax.
- * @param subtotal - The amount before tax
- * @param taxRate - Tax rate (e.g., 0.08 for 8%)
- * @return Total amount including tax
+ * $param subtotal - The amount before tax
+ * $param taxRate - Tax rate (e.g., 0.08 for 8%)
+ * $return Total amount including tax
  */
 function calculateTotal(subtotal: Number, taxRate: Number): Number {
   subtotal * (1 + taxRate)
@@ -944,7 +944,7 @@ input xml
 output json
 // ❌ ERROR: Missing ---
 {
-  result: input.data
+  result: $input.data
 }
 ```
 
@@ -1029,10 +1029,10 @@ templateDef  = "template" "match=" STRING "{" expression "}"
 
 ```utlx
 // ❌ Bad
-let x = input.o.c.n
+let x = $input.o.c.n
 
 // ✅ Good
-let customerName = input.order.customer.name
+let customerName = $input.order.customer.name
 ```
 
 ### 2. Format for Readability

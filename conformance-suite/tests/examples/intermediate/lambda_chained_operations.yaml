@@ -21,7 +21,7 @@ transformation: |
   output json
   ---
   {
-    expensiveItems: @input.items
+    expensiveItems: $input.items
       |> filter(item => item.price > 1.0)
       |> map(item => item.name)
   }

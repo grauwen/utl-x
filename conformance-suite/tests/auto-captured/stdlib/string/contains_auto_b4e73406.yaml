@@ -21,9 +21,9 @@ transformation: |
   output json
   ---
   {
-    root: @input,
-    has_SAP_Response: contains(@input, "SAP_Response"),
-    type: getType(@input)
+    root: $input,
+    has_SAP_Response: contains($input, "SAP_Response"),
+    type: getType($input)
   }
   
 

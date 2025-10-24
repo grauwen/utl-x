@@ -30,9 +30,9 @@ input yaml
 output json
 ---
 {
-  orderId: input.order.id,
-  customerName: input.order.customer.name,
-  total: sum(input.order.items.(quantity * price))
+  orderId: $input.order.id,
+  customerName: $input.order.customer.name,
+  total: sum($input.order.items.(quantity * price))
 }
 ```
 
@@ -61,8 +61,8 @@ output yaml
 ---
 {
   order: {
-    id: input.orderId,
-    customer: input.customerName
+    id: $input.orderId,
+    customer: $input.customerName
   }
 }
 ```

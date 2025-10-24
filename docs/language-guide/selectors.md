@@ -344,7 +344,7 @@ input.order.items[price > 100].name
 ```
 
 **Breakdown:**
-1. `input.order` - Navigate to order
+1. `$input.order` - Navigate to order
 2. `.items` - Get items array
 3. `[price > 100]` - Filter by price
 4. `.name` - Extract name from each
@@ -452,7 +452,7 @@ input xml {
 }
 ---
 {
-  body: input.{"soap:Envelope"}.{"soap:Body"}.{"app:Data"}
+  body: $input.{"soap:Envelope"}.{"soap:Body"}.{"app:Data"}
 }
 ```
 
@@ -483,8 +483,8 @@ input.product.description.text()       // "A useful widget"
 input csv { headers: true }
 ---
 {
-  names: input.rows[*].Name,
-  emails: input.rows[*].Email
+  names: $input.rows[*].Name,
+  emails: $input.rows[*].Email
 }
 ```
 
@@ -493,8 +493,8 @@ input csv { headers: true }
 input csv { headers: false }
 ---
 {
-  firstColumn: input.rows[*][0],
-  secondColumn: input.rows[*][1]
+  firstColumn: $input.rows[*][0],
+  secondColumn: $input.rows[*][1]
 }
 ```
 
@@ -544,16 +544,16 @@ input..items
 **❌ Bad - Repeated computation:**
 ```utlx
 {
-  count: count(input.order.items[active == true]),
-  total: sum(input.order.items[active == true].*.price),
-  names: input.order.items[active == true].*.name
+  count: count($input.order.items[active == true]),
+  total: sum($input.order.items[active == true].*.price),
+  names: $input.order.items[active == true].*.name
 }
 ```
 
 **✅ Good - Compute once:**
 ```utlx
 {
-  let activeItems = input.order.items[active == true],
+  let activeItems = $input.order.items[active == true],
   
   count: count(activeItems),
   total: sum(activeItems.*.price),
@@ -591,7 +591,7 @@ input.categories[*].products[featured == true]
 ### Pattern 4: Conditional Access
 
 ```utlx
-input.customer.premium.benefits || input.customer.standard.benefits
+input.customer.premium.benefits || $input.customer.standard.benefits
 // Try premium first, fallback to standard
 ```
 
@@ -624,8 +624,8 @@ input.order.customer.name  // Returns null
 input.order.customer.name || "Unknown"
 
 // Check existence
-if (input.order.customer != null) 
-  input.order.customer.name 
+if ($input.order.customer != null) 
+  $input.order.customer.name 
 else 
   "No customer"
 
@@ -652,14 +652,14 @@ input.items[parseNumber(price) > 100]
 
 // Debug: check what you're comparing
 {
-  _debug: input.items[*].price,
-  result: input.items[price > 100]
+  _debug: $input.items[*].price,
+  result: $input.items[price > 100]
 }
 
 // Check property names
 {
-  _keys: keys(input.items[0]),
-  result: input.items[Price > 100]  // Capital P?
+  _keys: keys($input.items[0]),
+  result: $input.items[Price > 100]  // Capital P?
 }
 ```
 
@@ -667,7 +667,7 @@ input.items[parseNumber(price) > 100]
 
 **Problem:**
 ```utlx
-input.Order.id  // Should be @id
+input.Order.id  // Should be $id
 ```
 
 **Solution:**
@@ -710,7 +710,7 @@ input.products[
 ].*.name
 
 // Count matching products
-count(input.products[
+count($input.products[
   category == "Electronics" && 
   price < 1000 && 
   inStock == true
@@ -733,19 +733,19 @@ count(input.products[
 ```utlx
 // Pending orders over $100
 input.Orders.Order[
-  @status == "pending" && 
-  parseNumber(@total) > 100
+  $status == "pending" && 
+  parseNumber($total) > 100
 ]
 
 // Their IDs
 input.Orders.Order[
-  @status == "pending" && 
-  parseNumber(@total) > 100
+  $status == "pending" && 
+  parseNumber($total) > 100
 ].@id
 
 // Total of pending orders
-sum(input.Orders.Order[
-  @status == "pending"
+sum($input.Orders.Order[
+  $status == "pending"
 ] |> map(o => parseNumber(o.@total)))
 ```
 
@@ -755,14 +755,14 @@ sum(input.Orders.Order[
 
 | Selector | Description | Example |
 |----------|-------------|---------|
-| `.property` | Property access | `input.name` |
-| `.@attribute` | Attribute (XML) | `input.Order.@id` |
-| `[index]` | Array index | `input.items[0]` |
-| `[*]` | All elements | `input.items[*]` |
-| `.*` | All properties | `input.order.*` |
-| `..property` | Recursive search | `input..productId` |
-| `[condition]` | Filter | `input.items[price > 100]` |
-| `.text()` | Text content (XML) | `input.element.text()` |
+| `.property` | Property access | `$input.name` |
+| `.@attribute` | Attribute (XML) | `$input.Order.@id` |
+| `[index]` | Array index | `$input.items[0]` |
+| `[*]` | All elements | `$input.items[*]` |
+| `.*` | All properties | `$input.order.*` |
+| `..property` | Recursive search | `$input..productId` |
+| `[condition]` | Filter | `$input.items[price > 100]` |
+| `.text()` | Text content (XML) | `$input.element.text()` |
 
 ---
 

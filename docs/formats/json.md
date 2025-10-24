@@ -31,17 +31,17 @@ input json
 output json
 ---
 {
-  orderId: input.order.id,
-  orderDate: input.order.date,
+  orderId: $input.order.id,
+  orderDate: $input.order.date,
   customer: {
-    name: input.order.customer.name,
-    email: input.order.customer.email
+    name: $input.order.customer.name,
+    email: $input.order.customer.email
   },
-  items: input.order.items |> map(item => {
+  items: $input.order.items |> map(item => {
     sku: item.sku,
     total: item.quantity * item.price
   }),
-  total: sum(input.order.items.(quantity * price))
+  total: sum($input.order.items.(quantity * price))
 }
 ```
 
@@ -76,8 +76,8 @@ output json
 
 ```utlx
 {
-  upper: upper(input.name),
-  length: length(input.description)
+  upper: upper($input.name),
+  length: length($input.description)
 }
 ```
 
@@ -94,8 +94,8 @@ output json
 
 ```utlx
 {
-  doubled: input.integer * 2,
-  rounded: round(input.decimal)
+  doubled: $input.integer * 2,
+  rounded: round($input.decimal)
 }
 ```
 
@@ -110,7 +110,7 @@ output json
 
 ```utlx
 {
-  status: if (input.active) "Active" else "Inactive"
+  status: if ($input.active) "Active" else "Inactive"
 }
 ```
 
@@ -124,7 +124,7 @@ output json
 
 ```utlx
 {
-  value: input.optional ?? "default"
+  value: $input.optional ?? "default"
 }
 ```
 
@@ -139,8 +139,8 @@ output json
 
 ```utlx
 {
-  sum: sum(input.numbers),
-  count: count(input.mixed)
+  sum: sum($input.numbers),
+  count: count($input.mixed)
 }
 ```
 
@@ -160,8 +160,8 @@ output json
 
 ```utlx
 {
-  name: input.person.name,
-  city: input.person.address.city
+  name: $input.person.name,
+  city: $input.person.address.city
 }
 ```
 
@@ -212,10 +212,10 @@ input.items |> filter(item => item.price > 50)
 
 ```utlx
 {
-  first: first(input.items),
-  last: last(input.items),
-  count: count(input.items),
-  prices: input.items.*.price
+  first: first($input.items),
+  last: last($input.items),
+  count: count($input.items),
+  prices: $input.items.*.price
 }
 ```
 
@@ -242,9 +242,9 @@ output xml
 ---
 {
   Person: {
-    Name: input.person.name,
-    Age: input.person.age,
-    Email: input.person.email
+    Name: $input.person.name,
+    Age: $input.person.age,
+    Email: $input.person.email
   }
 }
 ```
@@ -275,7 +275,7 @@ output xml
 ```utlx
 {
   Products: {
-    Product: input.products |> map(p => {
+    Product: $input.products |> map(p => {
       @id: p.id,
       Name: p.name
     })
@@ -343,9 +343,9 @@ output json {
 **Transform:**
 ```utlx
 {
-  name: input.user.profile.personal.firstName + " " + 
-        input.user.profile.personal.lastName,
-  email: input.user.profile.contact.email
+  name: $input.user.profile.personal.firstName + " " + 
+        $input.user.profile.personal.lastName,
+  email: $input.user.profile.contact.email
 }
 ```
 
@@ -368,7 +368,7 @@ output json {
 
 ```utlx
 {
-  merged: [...input.list1, ...input.list2]
+  merged: [...$input.list1, ...$input.list2]
 }
 ```
 
@@ -386,7 +386,7 @@ output json {
 
 ```utlx
 {
-  byCustomer: input.orders 
+  byCustomer: $input.orders 
     |> groupBy(o => o.customer)
     |> entries()
     |> map(([customer, orders]) => {
@@ -415,7 +415,7 @@ output json {
 
 ```utlx
 {
-  allProducts: input.categories 
+  allProducts: $input.categories 
     |> flatMap(cat => cat.products)
 }
 ```
@@ -427,13 +427,13 @@ output json {
 ```utlx
 // ✅ Good
 {
-  email: input.customer?.email ?? "no-email@example.com",
-  phone: input.customer?.phone ?? null
+  email: $input.customer?.email ?? "no-email@example.com",
+  phone: $input.customer?.phone ?? null
 }
 
 // ❌ Bad - might crash
 {
-  email: input.customer.email
+  email: $input.customer.email
 }
 ```
 
@@ -441,7 +441,7 @@ output json {
 
 ```utlx
 // ✅ Good
-if (isNumber(input.quantity) && input.quantity > 0) {
+if (isNumber($input.quantity) && $input.quantity > 0) {
   processOrder(input)
 } else {
   {error: "Invalid quantity"}
@@ -452,10 +452,10 @@ if (isNumber(input.quantity) && input.quantity > 0) {
 
 ```utlx
 // ✅ Good
-age: parseNumber(input.ageString)
+age: parseNumber($input.ageString)
 
 // ❌ Bad - might not work as expected
-age: input.ageString
+age: $input.ageString
 ```
 
 ### 4. Keep JSON Output Clean
@@ -463,14 +463,14 @@ age: input.ageString
 ```utlx
 // ✅ Good - omit null fields
 {
-  name: input.name,
-  ...(if (input.email) {email: input.email} else {})
+  name: $input.name,
+  ...(if ($input.email) {email: $input.email} else {})
 }
 
 // ❌ Bad - includes null
 {
-  name: input.name,
-  email: input.email  // Might be null
+  name: $input.name,
+  email: $input.email  // Might be null
 }
 ```
 

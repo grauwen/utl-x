@@ -29,7 +29,7 @@ dependencies {
 ### Before (Manual)
 ```kotlin
 object Main {
-    @JvmStatic
+    $JvmStatic
     fun main(args: Array<String>) {
         if (args.isEmpty()) {
             printUsage()

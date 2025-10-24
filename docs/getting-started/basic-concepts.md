@@ -40,8 +40,8 @@ input auto  // Auto-detect: XML, JSON, CSV, YAML
 output json
 ---
 {
-  name: input.person.name,
-  age: input.person.age
+  name: $input.person.name,
+  age: $input.person.age
 }
 ```
 
@@ -244,7 +244,7 @@ input.items
 ```
 
 **Reads as:** 
-1. Take `input.items`
+1. Take `$input.items`
 2. Filter for active items
 3. Extract prices
 4. Sum them up
@@ -252,7 +252,7 @@ input.items
 ### Without Pipeline (Nested)
 
 ```utlx
-sum(map(filter(input.items, item => item.active), item => item.price))
+sum(map(filter($input.items, item => item.active), item => item.price))
 ```
 
 **With Pipeline (Readable):**
@@ -532,9 +532,9 @@ let result = calculate()
 ```utlx
 /**
  * Calculates the total price including tax.
- * @param subtotal - The pre-tax amount
- * @param taxRate - Tax rate as decimal (e.g., 0.08 for 8%)
- * @return Total amount with tax
+ * $param subtotal - The pre-tax amount
+ * $param taxRate - Tax rate as decimal (e.g., 0.08 for 8%)
+ * $return Total amount with tax
  */
 function calculateTotal(subtotal: Number, taxRate: Number): Number {
   subtotal * (1 + taxRate)
@@ -551,7 +551,7 @@ Print intermediate values:
 
 ```utlx
 {
-  let items = input.items,
+  let items = $input.items,
   
   // Debug: print items
   _debug: items,
@@ -566,11 +566,11 @@ Split into steps:
 
 ```utlx
 // Instead of this (hard to debug):
-result: sum(input.items |> filter(i => i.active) |> map(i => i.price))
+result: sum($input.items |> filter(i => i.active) |> map(i => i.price))
 
 // Do this (easy to debug):
 {
-  let allItems = input.items,
+  let allItems = $input.items,
   let activeItems = allItems |> filter(i => i.active),
   let prices = activeItems |> map(i => i.price),
   let total = sum(prices),
@@ -596,10 +596,10 @@ result: sum(input.items |> filter(i => i.active) |> map(i => i.price))
 ```utlx
 {
   // Check if filter works
-  _filteredCount: count(input.items |> filter(i => i.price > 100)),
+  _filteredCount: count($input.items |> filter(i => i.price > 100)),
   
   // Your actual result
-  result: input.items |> filter(i => i.price > 100)
+  result: $input.items |> filter(i => i.price > 100)
 }
 ```
 
@@ -607,11 +607,11 @@ result: sum(input.items |> filter(i => i.active) |> map(i => i.price))
 ```utlx
 {
   // Make sure path exists
-  _hasCustomer: input.order.customer != null,
-  _customerName: input.order.customer.name || "NOT FOUND",
+  _hasCustomer: $input.order.customer != null,
+  _customerName: $input.order.customer.name || "NOT FOUND",
   
   // Your transformation
-  result: input.order.customer
+  result: $input.order.customer
 }
 ```
 
@@ -625,7 +625,7 @@ UTL-X evaluates expressions lazily when possible:
 
 ```utlx
 // Only processes items until condition is met
-first(input.items |> filter(item => item.id == targetId))
+first($input.items |> filter(item => item.id == targetId))
 ```
 
 ### Avoid Repeated Computations
@@ -635,14 +635,14 @@ Use `let` to compute once:
 ```utlx
 // ❌ Bad: computes sum multiple times
 {
-  subtotal: sum(input.items.*.price),
-  tax: sum(input.items.*.price) * 0.08,
-  total: sum(input.items.*.price) * 1.08
+  subtotal: sum($input.items.*.price),
+  tax: sum($input.items.*.price) * 0.08,
+  total: sum($input.items.*.price) * 1.08
 }
 
 // ✅ Good: computes sum once
 {
-  let subtotal = sum(input.items.*.price),
+  let subtotal = sum($input.items.*.price),
   
   subtotal: subtotal,
   tax: subtotal * 0.08,
@@ -673,21 +673,21 @@ input.items
 
 ```utlx
 // ❌ Bad
-let x = input.o.c.n
+let x = $input.o.c.n
 
 // ✅ Good
-let customerName = input.order.customer.name
+let customerName = $input.order.customer.name
 ```
 
 ### 2. Keep Expressions Simple
 
 ```utlx
 // ❌ Bad: too complex
-result: sum(input.items |> filter(i => i.active && i.price > 10) |> map(i => i.price * i.quantity * (1 - i.discount)))
+result: sum($input.items |> filter(i => i.active && i.price > 10) |> map(i => i.price * i.quantity * (1 - i.discount)))
 
 // ✅ Good: broken into steps
 {
-  let eligibleItems = input.items |> filter(i => i.active && i.price > 10),
+  let eligibleItems = $input.items |> filter(i => i.active && i.price > 10),
   let itemTotals = eligibleItems |> map(i => i.price * i.quantity * (1 - i.discount)),
   
   result: sum(itemTotals)
@@ -698,10 +698,10 @@ result: sum(input.items |> filter(i => i.active && i.price > 10) |> map(i => i.p
 
 ```utlx
 // ❌ Bad: may fail if missing
-name: input.customer.name
+name: $input.customer.name
 
 // ✅ Good: handles missing data
-name: input.customer.name || "Unknown"
+name: $input.customer.name || "Unknown"
 ```
 
 ### 4. Use Type Annotations for Functions

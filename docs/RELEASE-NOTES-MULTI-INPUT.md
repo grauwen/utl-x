@@ -20,7 +20,7 @@ UTL-X now supports **multiple named inputs**, enabling enterprise integration sc
 input xml
 output json
 ---
-{ data: @input.Customer }
+{ data: $input.Customer }
 ```
 
 **Now (Multiple Inputs):**
@@ -31,9 +31,9 @@ output json
 ---
 {
   integrated: {
-    sap: @sapData.Material,
-    pricing: @restAPI.prices,
-    stock: @inventory.rows
+    sap: $sapData.Material,
+    pricing: $restAPI.prices,
+    stock: $inventory.rows
   }
 }
 ```
@@ -64,8 +64,8 @@ output json
 ```utlx
 {
   encodings: {
-    sap: detectXMLEncoding(@sapData),
-    modern: detectXMLEncoding(@modernAPI)
+    sap: detectXMLEncoding($sapData),
+    modern: detectXMLEncoding($modernAPI)
   }
 }
 ```
@@ -98,7 +98,7 @@ output json
 3. **Interpreter (`interpreter.kt`)**
    - Overloaded `execute()` method for `Map<String, UDM>`
    - Binds all named inputs to environment
-   - Maintains `@input` for backward compatibility
+   - Maintains `$input` for backward compatibility
 
 4. **CLI (`TransformCommand.kt`)**
    - `TransformOptions` now has `namedInputs: Map<String, File>`
@@ -109,12 +109,12 @@ output json
 
 **Single Input (Backward Compatible):**
 - `input xml` → Treated as `input: input xml`
-- Accessible as `@input`
+- Accessible as `$input`
 
 **Multiple Inputs:**
 - `input: name1 format1, name2 format2, ...`
 - Each accessible as `@name1`, `@name2`, etc.
-- `@input` always refers to first input
+- `$input` always refers to first input
 
 **Format Options:**
 - Inline: `input: data xml {encoding: "ISO-8859-1"}`
@@ -171,7 +171,7 @@ output json
    - Best practices and patterns
    - Error handling strategies
 
-2. **`docs/language-guide/quick-reference-multi-input.md`**
+2. **`docs/language-guide/quick-reference-multi-$input.md`**
    - Quick syntax cheat sheet
    - Common patterns
    - CLI examples
@@ -207,7 +207,7 @@ All existing UTL-X scripts continue to work without modification:
 input xml
 output json
 ---
-{ data: @input.Customer }
+{ data: $input.Customer }
 ```
 
 ### Adding Multiple Inputs to Existing Script
@@ -224,11 +224,11 @@ input: mainData xml, referenceData xml
 **Step 2:** Update CLI command
 ```bash
 # Before
-utlx transform script.utlx input.xml -o output.json
+utlx transform script.utlx $input.xml -o output.json
 
 # After
 utlx transform script.utlx \
-  --input mainData=input.xml \
+  --input mainData=$input.xml \
   --input referenceData=reference.xml \
   -o output.json
 ```
@@ -236,11 +236,11 @@ utlx transform script.utlx \
 **Step 3:** Update input references
 ```utlx
 # Before
-@input.Customer
+$input.Customer
 
 # After
-@mainData.Customer
-@referenceData.Lookup
+$mainData.Customer
+$referenceData.Lookup
 ```
 
 ---
@@ -274,8 +274,8 @@ input: customers json, orders xml
 output xml
 ---
 {
-  data: @customers.customer,
-  orders: @orders.Order
+  data: $customers.customer,
+  orders: $orders.Order
 }
 ```
 
@@ -320,8 +320,8 @@ output xml {encoding: "UTF-8"}
 ---
 {
   Catalog: {
-    Products: @sapMaterials.Materials.Material |> map(mat => {
-      let price = @apiPricing.prices
+    Products: $sapMaterials.Materials.Material |> map(mat => {
+      let price = $apiPricing.prices
         |> filter(p => p.sku == mat.Number)
         |> first()
 
@@ -329,7 +329,7 @@ output xml {encoding: "UTF-8"}
         SKU: mat.Number,
         Description: mat.Description,
         Price: price.value,
-        SourceEncoding: detectXMLEncoding(@sapMaterials)
+        SourceEncoding: detectXMLEncoding($sapMaterials)
       }
     })
   }
@@ -352,10 +352,10 @@ output json
 ---
 {
   Report: {
-    TotalSales: sum(@sales.rows |> map(r => parseNumber(r.Amount))),
-    TotalInventory: count(@inventory.Items.Item),
-    AvgOrderValue: @analytics.metrics.avgOrderValue,
-    TopProducts: @sales.rows
+    TotalSales: sum($sales.rows |> map(r => parseNumber(r.Amount))),
+    TotalInventory: count($inventory.Items.Item),
+    AvgOrderValue: $analytics.metrics.avgOrderValue,
+    TopProducts: $sales.rows
       |> groupBy(r => r.ProductID)
       |> sortBy(g => -sum(g.items |> map(i => parseNumber(i.Amount))))
       |> take(10)
@@ -368,7 +368,7 @@ output json
 ## 🔗 See Also
 
 - [Complete Multi-Input Documentation](docs/language-guide/multiple-inputs-outputs.md)
-- [Quick Reference Guide](docs/language-guide/quick-reference-multi-input.md)
+- [Quick Reference Guide](docs/language-guide/quick-reference-multi-$input.md)
 - [XML Encoding Guide](docs/formats/xml.md)
 - [CLAUDE.md - Project Overview](CLAUDE.md)
 

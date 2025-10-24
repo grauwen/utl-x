@@ -37,9 +37,9 @@ transformation: |
   ---
   {
     Combined: {
-      Source1: @input,
+      Source1: $input,
       Metadata1: {
-        encoding: detectXMLEncoding(@input)
+        encoding: detectXMLEncoding($input)
       }
     }
   }

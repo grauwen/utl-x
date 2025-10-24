@@ -19,7 +19,7 @@ transformation: |
   output json
   ---
   {
-    results: map(@input.items, item => try {
+    results: map($input.items, item => try {
       {
         name: item.name,
         price: item.price,

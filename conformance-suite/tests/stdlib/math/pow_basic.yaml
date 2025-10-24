@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  pow(@input[0], @input[1])
+  pow($input[0], $input[1])
 
 expected:
   format: json

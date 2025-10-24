@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  flatten(@input)
+  flatten($input)
 
 expected:
   format: json
@@ -40,7 +40,7 @@ variants:
       input json
       output json
       ---
-      flattenDeep(@input)
+      flattenDeep($input)
     expected:
       format: json
       data: [1, 2, 3, 4, 5, 6]

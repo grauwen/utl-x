@@ -16,7 +16,7 @@ transformation: |
   output json
   ---
   {
-    evens: filter(@input.numbers, x => x % 2 == 0)
+    evens: filter($input.numbers, x => x % 2 == 0)
   }
 
 expected:

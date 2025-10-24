@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  min(@input[0], @input[1])
+  min($input[0], $input[1])
 
 expected:
   format: json
@@ -40,7 +40,7 @@ variants:
       input json
       output json
       ---
-      min(@input[0], @input[1])
+      min($input[0], $input[1])
     expected:
       format: json
       data: -7
@@ -54,7 +54,7 @@ variants:
       input json
       output json
       ---
-      min(@input[0], @input[1])
+      min($input[0], $input[1])
     expected:
       format: json
       data: 2.71

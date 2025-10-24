@@ -13,11 +13,11 @@ transformation: |
   output json
   ---
   {
-    user: @input,
+    user: $input,
     computed: {
-      display_name: @input.name,
-      is_adult: @input.age >= 18,
-      info: "User " + @input.name + " is " + toString(@input.age) + " years old"
+      display_name: $input.name,
+      is_adult: $input.age >= 18,
+      info: "User " + $input.name + " is " + toString($input.age) + " years old"
     }
   }
 

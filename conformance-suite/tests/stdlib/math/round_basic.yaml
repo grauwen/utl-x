@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  round(@input)
+  round($input)
 
 expected:
   format: json

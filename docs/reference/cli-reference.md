@@ -44,19 +44,19 @@ utlx transform <script> <input> [options]
 
 ```bash
 # Basic transformation
-utlx transform script.utlx input.json
+utlx transform script.utlx $input.json
 
 # With output file
-utlx transform script.utlx input.xml -o output.json
+utlx transform script.utlx $input.xml -o output.json
 
 # Override output format
-utlx transform script.utlx input.xml --output-format csv
+utlx transform script.utlx $input.xml --output-format csv
 
 # Pretty print
-utlx transform script.utlx input.json --pretty
+utlx transform script.utlx $input.json --pretty
 
 # Profile performance
-utlx transform script.utlx input.xml --profile
+utlx transform script.utlx $input.xml --profile
 ```
 
 ### utlx validate

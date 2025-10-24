@@ -20,7 +20,7 @@ transformation: |
   output json
   ---
   {
-    transformed: map(@input.users, user => {
+    transformed: map($input.users, user => {
       userId: user.id,
       fullName: upper(user.name),
       isAdult: user.age >= 18

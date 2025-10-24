@@ -1,6 +1,6 @@
 name: "input_binding"
 category: "core/syntax"
-description: "Test @input variable binding and access"
+description: "Test $input variable binding and access"
 tags: ["core", "syntax", "input", "variables"]
 
 input:
@@ -17,10 +17,10 @@ transformation: |
   output json
   ---
   {
-    original_input: @input,
-    name_only: @input.name,
-    age_only: @input.age,
-    computed: @input.name + " (" + toString(@input.age) + ")"
+    original_input: $input,
+    name_only: $input.name,
+    age_only: $input.age,
+    computed: $input.name + " (" + toString($input.age) + ")"
   }
 
 expected:
@@ -51,8 +51,8 @@ variants:
       output json
       ---
       {
-        original: @input,
-        first: @input[0],
+        original: $input,
+        first: $input[0],
         length: 5
       }
     expected:
@@ -81,7 +81,7 @@ variants:
       input json
       output json
       ---
-      @input.user.profile.settings.theme
+      $input.user.profile.settings.theme
     expected:
       format: json
       data: "dark"

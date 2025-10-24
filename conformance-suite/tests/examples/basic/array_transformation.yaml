@@ -21,13 +21,13 @@ transformation: |
   output json
   ---
   {
-    engineering_team: map(filter(@input.employees, emp => emp.department == "Engineering"), emp => {
+    engineering_team: map(filter($input.employees, emp => emp.department == "Engineering"), emp => {
       name: emp.name,
       salary: emp.salary
     }),
-    high_earners: map(filter(@input.employees, emp => emp.salary > 50000), emp => emp.name),
-    total_salary: sum(map(@input.employees, emp => emp.salary)),
-    avg_salary: avg(map(@input.employees, emp => emp.salary))
+    high_earners: map(filter($input.employees, emp => emp.salary > 50000), emp => emp.name),
+    total_salary: sum(map($input.employees, emp => emp.salary)),
+    avg_salary: avg(map($input.employees, emp => emp.salary))
   }
 
 expected:

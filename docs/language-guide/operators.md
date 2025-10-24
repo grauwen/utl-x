@@ -144,8 +144,8 @@ true && false            // false
 false && true            // false
 
 // Short-circuit evaluation
-let x = input.customer && input.customer.name
-// If input.customer is null, returns null without evaluating .name
+let x = $input.customer && $input.customer.name
+// If $input.customer is null, returns null without evaluating .name
 ```
 
 ### Logical OR (||)
@@ -158,7 +158,7 @@ false || true            // true
 false || false           // false
 
 // Default values
-let name = input.nickname || input.fullName || "Anonymous"
+let name = $input.nickname || $input.fullName || "Anonymous"
 ```
 
 ### Logical NOT (!)
@@ -206,8 +206,8 @@ input.customer?.address?.city
 **Equivalent to:**
 
 ```utlx
-if (input.customer != null && input.customer.address != null)
-  input.customer.address.city
+if ($input.customer != null && $input.customer.address != null)
+  $input.customer.address.city
 else
   null
 ```
@@ -247,8 +247,8 @@ condition ? valueIfTrue : valueIfFalse
 **Example:**
 
 ```utlx
-let status = input.quantity > 0 ? "Available" : "Out of Stock"
-let discount = input.total > 100 ? 0.10 : 0
+let status = $input.quantity > 0 ? "Available" : "Out of Stock"
+let discount = $input.total > 100 ? 0.10 : 0
 ```
 
 ## Member Access Operator (.)
@@ -412,10 +412,10 @@ true || expensiveFunction()   // expensiveFunction() not called
 
 ```utlx
 {
-  subtotal: sum(input.items.*.price),
-  tax: sum(input.items.*.price) * 0.08,
-  shipping: input.total > 100 ? 0 : 10,
-  total: sum(input.items.*.price) * 1.08 + (input.total > 100 ? 0 : 10)
+  subtotal: sum($input.items.*.price),
+  tax: sum($input.items.*.price) * 0.08,
+  shipping: $input.total > 100 ? 0 : 10,
+  total: sum($input.items.*.price) * 1.08 + ($input.total > 100 ? 0 : 10)
 }
 ```
 
@@ -423,9 +423,9 @@ true || expensiveFunction()   // expensiveFunction() not called
 
 ```utlx
 {
-  discount: (input.customer.type == "VIP" && input.total > 1000) ? 0.25 :
-            (input.customer.type == "VIP") ? 0.20 :
-            (input.total > 500) ? 0.10 :
+  discount: ($input.customer.type == "VIP" && $input.total > 1000) ? 0.25 :
+            ($input.customer.type == "VIP") ? 0.20 :
+            ($input.total > 500) ? 0.10 :
             0
 }
 ```
@@ -434,9 +434,9 @@ true || expensiveFunction()   // expensiveFunction() not called
 
 ```utlx
 {
-  city: input.customer?.address?.city ?? "Unknown",
-  phone: input.customer?.contact?.phone ?? "N/A",
-  backup: input.primary || input.secondary || input.default
+  city: $input.customer?.address?.city ?? "Unknown",
+  phone: $input.customer?.contact?.phone ?? "N/A",
+  backup: $input.primary || $input.secondary || $input.default
 }
 ```
 
@@ -468,10 +468,10 @@ let result = a + b * c + d
 
 ```utlx
 // ✅ Good - only replaces null
-let quantity = input.quantity ?? 1
+let quantity = $input.quantity ?? 1
 
 // ❌ Bad - 0 would be replaced
-let quantity = input.quantity || 1
+let quantity = $input.quantity || 1
 ```
 
 ### 3. Use Safe Navigation

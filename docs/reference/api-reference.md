@@ -36,7 +36,7 @@ val script = """
     input json
     output json
     ---
-    {result: input.value * 2}
+    {result: $input.value * 2}
 """
 val engine = UTLXEngine.builder()
     .compile(script)
@@ -79,7 +79,7 @@ val output = engine.transform(inputJson)
 Stream-based transformation.
 
 ```kotlin
-FileInputStream("input.json").use { input ->
+FileInputStream("$input.json").use { input ->
     FileOutputStream("output.json").use { output ->
         engine.transform(input, output)
     }
@@ -120,9 +120,9 @@ enum class OptimizationLevel {
 ### Example: Spring Boot Integration
 
 ```kotlin
-@Configuration
+$Configuration
 class UTLXConfig {
-    @Bean
+    $Bean
     fun utlxEngine(): UTLXEngine {
         return UTLXEngine.builder()
             .compile(ClassPathResource("transform.utlx").file)
@@ -131,12 +131,12 @@ class UTLXConfig {
     }
 }
 
-@RestController
+$RestController
 class TransformController(
     private val engine: UTLXEngine
 ) {
     @PostMapping("/transform")
-    fun transform(@RequestBody input: String): String {
+    fun transform($RequestBody input: String): String {
         return engine.transform(input)
     }
 }
@@ -156,7 +156,7 @@ const engine = utlx.compile(`
   input json
   output json
   ---
-  {result: input.value * 2}
+  {result: $input.value * 2}
 `);
 ```
 
@@ -246,7 +246,7 @@ exports.handler = async (event) => {
     input json
     output json
     ---
-    {result: input.value * 2}
+    {result: $input.value * 2}
   `);
   
   const output = engine.transform('{"value": 21}');
@@ -298,11 +298,11 @@ val engine = UTLXEngine.builder()
 ```javascript
 class PropertiesParser {
     canParse(input) {
-        return input.includes('=');
+        return $input.includes('=');
     }
     
     parse(input) {
-        const lines = input.split('\n');
+        const lines = $input.split('\n');
         const obj = {};
         lines.forEach(line => {
             const [key, value] = line.split('=');
@@ -373,7 +373,7 @@ object EngineCache {
 ### Streaming Large Files
 
 ```kotlin
-FileInputStream("large-input.xml").use { input ->
+FileInputStream("large-$input.xml").use { input ->
     FileOutputStream("output.json").use { output ->
         engine.transform(input, output)
     }

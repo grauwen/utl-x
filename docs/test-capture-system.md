@@ -108,7 +108,7 @@ cat > my_transform.utlx <<'EOF'
 input json
 output json
 ---
-upper(@input)
+upper($input)
 EOF
 
 # Run it - test is auto-captured
@@ -150,7 +150,7 @@ transformation: |
   input json
   output json
   ---
-  upper(@input)
+  upper($input)
 
 expected:
   format: json
@@ -186,7 +186,7 @@ transformation: |
   input json
   output json
   ---
-  nonExistentFunction(@input)
+  nonExistentFunction($input)
 
 known_issue:
   status: "failing"
@@ -446,7 +446,7 @@ echo '"hello"' | utlx transform <(cat <<'EOF'
 input json
 output json
 ---
-upper(@input)
+upper($input)
 EOF
 )
 
@@ -462,7 +462,7 @@ echo '[1,2,3]' | utlx transform <(cat <<'EOF'
 input json
 output json
 ---
-map(@input, x => x * 2)
+map($input, x => x * 2)
 EOF
 )
 
@@ -478,7 +478,7 @@ echo '"test"' | utlx transform <(cat <<'EOF'
 input json
 output json
 ---
-buggyFunction(@input)
+buggyFunction($input)
 EOF
 )
 

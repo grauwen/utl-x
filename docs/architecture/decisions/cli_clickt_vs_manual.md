@@ -239,7 +239,7 @@ Options:
 $ utlx transform nonexistent.xml script.utlx
 Error: Invalid value for "INPUT": nonexistent.xml is not readable
 
-$ utlx transform input.xml --input-format yaml
+$ utlx transform $input.xml --input-format yaml
 Error: Invalid value for "--input-format": invalid choice: yaml. 
 (choose from xml, json, csv, auto)
 ```

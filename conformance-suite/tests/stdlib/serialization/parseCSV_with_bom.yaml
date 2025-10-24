@@ -13,9 +13,9 @@ transformation: |
   output json
   ---
   {
-    employees: @input,
+    employees: $input,
     bomHandled: true,
-    recordCount: length(@input)
+    recordCount: length($input)
   }
 
 expected:

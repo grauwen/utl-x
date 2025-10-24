@@ -67,9 +67,9 @@ output xml
 ---
 template match="Order" {
   invoice: {
-    id: @id,
+    id: $id,
     customer: Customer.Name,
-    total: sum(Items.Item.(parseNumber(@price) * parseNumber(@quantity)))
+    total: sum(Items.Item.(parseNumber($price) * parseNumber($quantity)))
   }
 }
 ```
@@ -98,7 +98,7 @@ template match="Order" {
 **UTL-X:**
 ```utlx
 {
-  invoices: input.Orders.Order |> map(order => {
+  invoices: $input.Orders.Order |> map(order => {
     invoice: {
       id: order.@id,
       total: order.@total
@@ -139,7 +139,7 @@ template match="Order" {
 template match="Customer" {
   customer: {
     name: Name,
-    discount: if (@type == "VIP") 
+    discount: if ($type == "VIP") 
                 20 
               else if (OrderTotal > 1000) 
                 10 
@@ -178,7 +178,7 @@ template match="Customer" {
 ```utlx
 template match="Category" {
   category: {
-    name: @name,
+    name: $name,
     subcategories: if (Subcategory) apply(Subcategory) else null
   }
 }
@@ -203,8 +203,8 @@ output json
 ---
 {
   summary: {
-    total: sum(input.orders.*.total),
-    count: count(input.orders)
+    total: sum($input.orders.*.total),
+    count: count($input.orders)
   }
 }
 ```
@@ -274,7 +274,7 @@ output xml
 ```utlx
 template match="Order" {
   invoice: {
-    id: @id
+    id: $id
   }
 }
 ```
@@ -342,7 +342,7 @@ You don't have to choose one or the other!
 ```utlx
 // Call XSLT from UTL-X (planned v1.2)
 {
-  result: xslt("legacy-transform.xsl", input.xmlData)
+  result: xslt("legacy-transform.xsl", $input.xmlData)
 }
 ```
 

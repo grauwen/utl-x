@@ -22,11 +22,11 @@ transformation: |
   output json
   ---
   {
-    name: @input.customerName,
-    email: @input.customerEmail,
-    date: @input.orderDate,
-    products: map(@input.items, item => item.product),
-    total: sum(map(@input.items, item => item.price))
+    name: $input.customerName,
+    email: $input.customerEmail,
+    date: $input.orderDate,
+    products: map($input.items, item => item.product),
+    total: sum(map($input.items, item => item.price))
   }
 
 expected:

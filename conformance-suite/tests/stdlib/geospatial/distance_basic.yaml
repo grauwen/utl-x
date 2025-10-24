@@ -17,7 +17,7 @@ transformation: |
   input json
   output json
   ---
-  distance(@input.lat1, @input.lon1, @input.lat2, @input.lon2)
+  distance($input.lat1, $input.lon1, $input.lat2, $input.lon2)
 
 expected:
   format: json

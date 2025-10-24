@@ -109,7 +109,7 @@ The module system is **NOT** about runtime file I/O operations. This is a common
 ```utlx
 import { TaxRate } from "./config.utlx"  // ✅ Compile-time code import
 
-{ tax: input.amount * TaxRate }
+{ tax: $input.amount * TaxRate }
 ```
 
 **Example of what the module system IS NOT:**
@@ -251,7 +251,7 @@ import * as TaxUtils from "./tax-utils.utlx"
 
 // Usage: TaxUtils.CalculateTax(100, 0.08)
 {
-  tax: TaxUtils.CalculateTax(input.amount, TaxUtils.TAX_RATE)
+  tax: TaxUtils.CalculateTax($input.amount, TaxUtils.TAX_RATE)
 }
 ```
 
@@ -300,7 +300,7 @@ export function Helper(x: Number): Number { x * 2 }
 
 ---
 {
-  result: Helper(input.value)
+  result: Helper($input.value)
 }
 ```
 
@@ -937,7 +937,7 @@ To fix: Remove one of the imports or refactor into a third module.
 Type mismatch: Function 'Process' expects Number but got String
   at /project/main.utlx:5:15
 
-  result: Process(input.name)
+  result: Process($input.name)
                   ^^^^^^^^^^^ String
 
 Function signature in /project/utils.utlx:3:1:
@@ -1072,7 +1072,7 @@ input json
 output json
 ---
 {
-  result: input.value * 2
+  result: $input.value * 2
 }
 ```
 
@@ -1094,8 +1094,8 @@ function CalculateDiscount(amount: Number, percent: Number): Number {
 };
 
 {
-  tax: CalculateTax(input.amount, 0.08),
-  discount: CalculateDiscount(input.amount, 10)
+  tax: CalculateTax($input.amount, 0.08),
+  discount: CalculateDiscount($input.amount, 10)
 }
 ```
 
@@ -1121,8 +1121,8 @@ import { CalculateTax, CalculateDiscount } from "./lib/financial.utlx"
 
 ---
 {
-  tax: CalculateTax(input.amount, 0.08),
-  discount: CalculateDiscount(input.amount, 10)
+  tax: CalculateTax($input.amount, 0.08),
+  discount: CalculateDiscount($input.amount, 10)
 }
 ```
 
@@ -1165,10 +1165,10 @@ project/
 
 ```bash
 # Explicit module mode (v2.0)
-./utlx transform --modules main.utlx input.json
+./utlx transform --modules main.utlx $input.json
 
 # Auto-detect (if file has imports)
-./utlx transform main.utlx input.json  # Detects imports automatically
+./utlx transform main.utlx $input.json  # Detects imports automatically
 ```
 
 **Bundler (Future):**
@@ -1178,7 +1178,7 @@ project/
 ./utlx bundle main.utlx --output bundled.utlx
 
 # Bundled file has no imports (all inlined)
-./utlx transform bundled.utlx input.json  # No module resolution needed
+./utlx transform bundled.utlx $input.json  # No module resolution needed
 ```
 
 ---
@@ -1217,11 +1217,11 @@ import { CalculateUSTax, US_TAX_RATE } from "./lib/tax.utlx"
 
 ---
 {
-  orderId: input.id,
-  subtotal: input.amount,
+  orderId: $input.id,
+  subtotal: $input.amount,
   taxRate: US_TAX_RATE,
-  tax: CalculateUSTax(input.amount),
-  total: input.amount + CalculateUSTax(input.amount)
+  tax: CalculateUSTax($input.amount),
+  total: $input.amount + CalculateUSTax($input.amount)
 }
 ```
 
@@ -1283,20 +1283,20 @@ import { CheckStock } from "../lib/inventory.utlx"
 
 ---
 {
-  orderId: input.orderId,
+  orderId: $input.orderId,
 
   // Calculate pricing
-  subtotal: sum(input.items |> map(item => item.price * item.quantity)),
+  subtotal: sum($input.items |> map(item => item.price * item.quantity)),
 
-  let discount = CalculateDiscount(subtotal, input.customerType);
-  let shipping = CalculateShippingCost(input.totalWeight, input.shippingDistance);
+  let discount = CalculateDiscount(subtotal, $input.customerType);
+  let shipping = CalculateShippingCost($input.totalWeight, $input.shippingDistance);
 
   discount: discount,
   shipping: shipping,
   total: subtotal - discount + shipping,
 
   // Check inventory
-  items: input.items |> map(item => {
+  items: $input.items |> map(item => {
     productId: item.productId,
     quantity: item.quantity,
     inStock: CheckStock(item.productId, item.quantity),
@@ -1330,17 +1330,17 @@ import * as Math from "./lib/math-utils.utlx"
 ---
 {
   // Use namespace-qualified calls
-  sum: Math.Add(input.a, input.b),
-  product: Math.Multiply(input.a, input.b),
-  power: Math.Power(input.a, 2),
+  sum: Math.Add($input.a, $input.b),
+  product: Math.Multiply($input.a, $input.b),
+  power: Math.Power($input.a, 2),
 
   // Access constants via namespace
-  circleArea: Math.PI * Math.Power(input.radius, 2),
+  circleArea: Math.PI * Math.Power($input.radius, 2),
 
   // Complex expression
   result: Math.Divide(
-    Math.Add(input.x, Math.Multiply(input.y, Math.E)),
-    Math.Subtract(input.z, Math.PI)
+    Math.Add($input.x, Math.Multiply($input.y, Math.E)),
+    Math.Subtract($input.z, Math.PI)
   )
 }
 ```
@@ -1387,21 +1387,21 @@ import { GetEnvironment } from "./config/environments.utlx"
 
 ---
 {
-  let env = GetEnvironment(input.environment ?? "production");
+  let env = GetEnvironment($input.environment ?? "production");
 
   // Use environment config
   apiEndpoint: env.apiUrl + "/orders",
 
   order: {
-    items: input.items,
-    subtotal: sum(input.items |> map(i => i.price * i.quantity)),
+    items: $input.items,
+    subtotal: sum($input.items |> map(i => i.price * i.quantity)),
     tax: subtotal * env.taxRate,
     total: subtotal + (subtotal * env.taxRate)
   },
 
   debug: env.debugMode ? {
     rawInput: input,
-    environment: input.environment,
+    environment: $input.environment,
     config: env
   } : null
 }

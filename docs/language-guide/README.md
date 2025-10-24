@@ -6,7 +6,7 @@ Welcome to the UTL-X Language Guide. This documentation covers all aspects of th
 
 - 📖 [Language Overview](overview.md) - Start here if you're new to UTL-X
 - 🚀 [Syntax Guide](syntax.md) - Core language syntax and structure
-- 🔍 [Quick Reference - Multiple Inputs](quick-reference-multi-input.md) - Fast lookup for multi-input scenarios
+- 🔍 [Quick Reference - Multiple Inputs](quick-reference-multi-$input.md) - Fast lookup for multi-input scenarios
 
 ## Core Concepts
 
@@ -63,8 +63,8 @@ output xml
 ---
 {
   Customer: {
-    Name: @input.customer.name,
-    Email: @input.customer.email
+    Name: $input.customer.name,
+    Email: $input.customer.email
   }
 }
 ```
@@ -78,9 +78,9 @@ output json
 ---
 {
   Combined: {
-    fromXML: @data1.Customer,
-    fromJSON: @data2.order,
-    fromCSV: @data3.rows[0]
+    fromXML: $data1.Customer,
+    fromJSON: $data2.order,
+    fromCSV: $data3.rows[0]
   }
 }
 ```
@@ -105,10 +105,10 @@ output xml {encoding: "UTF-8"}
 ---
 {
   Integration: {
-    Materials: @sapData.Materials.Material,
-    Pricing: @apiData.prices,
+    Materials: $sapData.Materials.Material,
+    Pricing: $apiData.prices,
     Metadata: {
-      sapEncoding: detectXMLEncoding(@sapData)
+      sapEncoding: detectXMLEncoding($sapData)
     }
   }
 }
@@ -122,8 +122,8 @@ input: crm json, erp xml
 output json
 ---
 {
-  Customers: @crm.customers |> map(customer => {
-    let erpData = @erp.Customers.Customer
+  Customers: $crm.customers |> map(customer => {
+    let erpData = $erp.Customers.Customer
       |> filter(c => c.@id == customer.id)
       |> first()
 
@@ -170,7 +170,7 @@ docs/
 │   ├── selectors.md
 │   ├── templates.md
 │   ├── multiple-inputs-outputs.md ⭐ NEW
-│   └── quick-reference-multi-input.md ⭐ NEW
+│   └── quick-reference-multi-$input.md ⭐ NEW
 ├── formats/
 │   ├── xml.md
 │   ├── json.md

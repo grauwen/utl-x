@@ -15,7 +15,7 @@ transformation: |
   input json
   output json
   ---
-  (let x: Number = @input.value in { result: x * 2 })
+  (let x: Number = $input.value in { result: x * 2 })
 
 expected:
   format: json

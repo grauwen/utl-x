@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  replace(@input, "World", "Universe")
+  replace($input, "World", "Universe")
 
 expected:
   format: json
@@ -32,7 +32,7 @@ variants:
       input json
       output json
       ---
-      replace(@input, "test", "hello")
+      replace($input, "test", "hello")
     expected:
       format: json
       data: "hello hello hello"
@@ -46,7 +46,7 @@ variants:
       input json
       output json
       ---
-      replace(@input, "Universe", "Galaxy")
+      replace($input, "Universe", "Galaxy")
     expected:
       format: json
       data: "Hello, World!"

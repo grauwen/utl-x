@@ -20,8 +20,8 @@ else
 
 ```utlx
 {
-  discount: if (input.customer.type == "VIP") 
-              input.total * 0.20 
+  discount: if ($input.customer.type == "VIP") 
+              $input.total * 0.20 
             else 
               0
 }
@@ -60,11 +60,11 @@ else
 
 ```utlx
 {
-  shipping: if (input.total > 100)
+  shipping: if ($input.total > 100)
               0
-            else if (input.customer.type == "Premium")
+            else if ($input.customer.type == "Premium")
               5.00
-            else if (input.weight < 5)
+            else if ($input.weight < 5)
               7.50
             else
               10.00
@@ -74,14 +74,14 @@ else
 ### Nested Conditionals
 
 ```utlx
-if (input.customer.type == "VIP") {
-  if (input.total > 1000)
-    input.total * 0.25
+if ($input.customer.type == "VIP") {
+  if ($input.total > 1000)
+    $input.total * 0.25
   else
-    input.total * 0.20
+    $input.total * 0.20
 } else {
-  if (input.total > 500)
-    input.total * 0.10
+  if ($input.total > 500)
+    $input.total * 0.10
   else
     0
 }
@@ -99,8 +99,8 @@ condition ? valueIfTrue : valueIfFalse
 
 ```utlx
 {
-  status: input.quantity > 0 ? "In Stock" : "Out of Stock",
-  eligible: input.age >= 18 ? true : false
+  status: $input.quantity > 0 ? "In Stock" : "Out of Stock",
+  eligible: $input.age >= 18 ? true : false
 }
 ```
 
@@ -123,7 +123,7 @@ match value {
 
 ```utlx
 {
-  shippingMethod: match input.orderType {
+  shippingMethod: match $input.orderType {
     "express" => "Overnight",
     "priority" => "2-Day",
     "standard" => "Ground",
@@ -137,7 +137,7 @@ match value {
 Match multiple values:
 
 ```utlx
-match input.status {
+match $input.status {
   "pending" | "processing" => "In Progress",
   "shipped" | "delivered" => "Completed",
   "cancelled" | "returned" => "Closed",
@@ -150,7 +150,7 @@ match input.status {
 Add conditions to patterns:
 
 ```utlx
-match input.order {
+match $input.order {
   order if order.total > 1000 => "High Value",
   order if order.total > 500 => "Medium Value",
   order if order.total > 0 => "Low Value",
@@ -161,7 +161,7 @@ match input.order {
 ### Destructuring in Patterns (v1.1+)
 
 ```utlx
-match input.customer {
+match $input.customer {
   {type: "VIP", total: t} if t > 1000 => "VIP Platinum",
   {type: "VIP"} => "VIP",
   {type: "Premium"} => "Premium",
@@ -172,10 +172,10 @@ match input.customer {
 ### Match on Types
 
 ```utlx
-match getType(input.value) {
-  "string" => upper(input.value),
-  "number" => input.value * 2,
-  "boolean" => if (input.value) "Yes" else "No",
+match getType($input.value) {
+  "string" => upper($input.value),
+  "number" => $input.value * 2,
+  "boolean" => if ($input.value) "Yes" else "No",
   _ => "Unknown type"
 }
 ```
@@ -195,7 +195,7 @@ input.items |> map(item => {
 
 ```utlx
 {
-  transformedOrders: input.orders |> map(order => {
+  transformedOrders: $input.orders |> map(order => {
     id: order.id,
     total: sum(order.items.*.price),
     itemCount: count(order.items)
@@ -213,7 +213,7 @@ input.items |> filter(item => item.price > 100)
 
 ```utlx
 {
-  expensiveItems: input.items 
+  expensiveItems: $input.items 
     |> filter(item => item.price > 100)
     |> map(item => item.name)
 }
@@ -230,8 +230,8 @@ input.items |> reduce((acc, item) => acc + item.price, 0)
 ```utlx
 {
   stats: {
-    total: input.items |> reduce((acc, item) => acc + item.price, 0),
-    categories: input.items |> reduce((acc, item) => {
+    total: $input.items |> reduce((acc, item) => acc + item.price, 0),
+    categories: $input.items |> reduce((acc, item) => {
       acc + (if (contains(acc, item.category)) "" else item.category + ",")
     }, "")
   }
@@ -259,7 +259,7 @@ Handle errors gracefully:
 
 ```utlx
 try {
-  parseNumber(input.stringValue)
+  parseNumber($input.stringValue)
 } catch {
   0
 }
@@ -270,13 +270,13 @@ try {
 ```utlx
 {
   price: try {
-    parseNumber(input.priceString)
+    parseNumber($input.priceString)
   } catch {
     0.00
   },
   
   date: try {
-    parseDate(input.dateString, "yyyy-MM-dd")
+    parseDate($input.dateString, "yyyy-MM-dd")
   } catch {
     now()
   }
@@ -303,13 +303,13 @@ try {
 ```utlx
 {
   result: try {
-    let value = parseNumber(input.value)
+    let value = parseNumber($input.value)
     value * 2
   } catch (e) {
     {
       success: false,
       error: e.message,
-      input: input.value
+      input: $input.value
     }
   }
 }
@@ -319,9 +319,9 @@ try {
 
 ```utlx
 {
-  price: try { parseNumber(input.price) } catch { 0 },
-  quantity: try { parseNumber(input.quantity) } catch { 1 },
-  date: try { parseDate(input.date, "yyyy-MM-dd") } catch { now() }
+  price: try { parseNumber($input.price) } catch { 0 },
+  quantity: try { parseNumber($input.quantity) } catch { 1 },
+  date: try { parseDate($input.date, "yyyy-MM-dd") } catch { now() }
 }
 ```
 
@@ -337,9 +337,9 @@ input.customer?.address?.city
 
 ```utlx
 {
-  city: input.customer?.address?.city ?? "Unknown",
-  phone: input.customer?.contact?.phone ?? "N/A",
-  email: input.customer?.contact?.email ?? "no-email@example.com"
+  city: $input.customer?.address?.city ?? "Unknown",
+  phone: $input.customer?.contact?.phone ?? "N/A",
+  email: $input.customer?.contact?.email ?? "no-email@example.com"
 }
 ```
 
@@ -355,10 +355,10 @@ input.value ?? defaultValue
 
 ```utlx
 {
-  name: input.customer.name ?? "Anonymous",
-  quantity: input.quantity ?? 1,
-  price: input.price ?? 0.00,
-  notes: input.notes ?? ""
+  name: $input.customer.name ?? "Anonymous",
+  quantity: $input.quantity ?? 1,
+  price: $input.price ?? 0.00,
+  notes: $input.notes ?? ""
 }
 ```
 
@@ -369,7 +369,7 @@ input.value ?? defaultValue
 Returns first falsy value or last value:
 
 ```utlx
-let result = input.customer && input.customer.address && input.customer.address.city
+let result = $input.customer && $input.customer.address && $input.customer.address.city
 // Returns city if all exist, otherwise null/undefined
 ```
 
@@ -378,7 +378,7 @@ let result = input.customer && input.customer.address && input.customer.address.
 Returns first truthy value:
 
 ```utlx
-let name = input.nickname || input.fullName || "Anonymous"
+let name = $input.nickname || $input.fullName || "Anonymous"
 // Returns first non-null/non-empty value
 ```
 
@@ -409,10 +409,10 @@ Include fields conditionally:
 
 ```utlx
 {
-  name: input.name,
-  email: input.email,
-  ...(if (input.phone != null) {phone: input.phone} else {}),
-  ...(if (input.address != null) {address: input.address} else {})
+  name: $input.name,
+  email: $input.email,
+  ...(if ($input.phone != null) {phone: $input.phone} else {}),
+  ...(if ($input.address != null) {address: $input.address} else {})
 }
 ```
 
@@ -420,10 +420,10 @@ Or using the spread operator (v1.1+):
 
 ```utlx
 {
-  name: input.name,
-  email: input.email,
-  ...if (input.phone) {phone: input.phone},
-  ...if (input.address) {address: input.address}
+  name: $input.name,
+  email: $input.email,
+  ...if ($input.phone) {phone: $input.phone},
+  ...if ($input.address) {address: $input.address}
 }
 ```
 
@@ -450,7 +450,7 @@ function calculateDiscount(order: Object): Number {
 
 ```utlx
 {
-  orders: input.orders |> map(order => {
+  orders: $input.orders |> map(order => {
     // Early validation
     let isValid = order.items != null && count(order.items) > 0,
     
@@ -473,7 +473,7 @@ function calculateDiscount(order: Object): Number {
       
       // Calculate tax
       let taxRate = try {
-        parseNumber(input.config.taxRate)
+        parseNumber($input.config.taxRate)
       } catch {
         0.08
       },
@@ -540,10 +540,10 @@ else
 input.customer?.address?.city ?? "Unknown"
 
 // ❌ Bad
-if (input.customer != null && 
-    input.customer.address != null && 
-    input.customer.address.city != null)
-  input.customer.address.city
+if ($input.customer != null && 
+    $input.customer.address != null && 
+    $input.customer.address.city != null)
+  $input.customer.address.city
 else
   "Unknown"
 ```
@@ -553,24 +553,24 @@ else
 ```utlx
 // ✅ Good
 try {
-  parseNumber(input.value)
+  parseNumber($input.value)
 } catch {
   0
 }
 
 // ❌ Bad
-parseNumber(input.value)  // Might crash
+parseNumber($input.value)  // Might crash
 ```
 
 ### 4. Keep Conditions Simple
 
 ```utlx
 // ✅ Good
-let isEligible = input.age >= 18 && input.country == "US"
+let isEligible = $input.age >= 18 && $input.country == "US"
 if (isEligible) { ... }
 
 // ❌ Bad
-if (input.age >= 18 && input.country == "US" && input.verified == true && ...) { ... }
+if ($input.age >= 18 && $input.country == "US" && $input.verified == true && ...) { ... }
 ```
 
 ### 5. Use Early Returns

@@ -54,14 +54,14 @@ transformation: |
   input json
   output json
   ---
-  let txns = @input.transactions
+  let txns = $input.transactions
   let debits = filter(txns, txn => txn.type == "debit")
   let credits = filter(txns, txn => txn.type == "credit")
   
   {
     account_summary: {
-      account_id: @input.account_id,
-      period: @input.statement_period,
+      account_id: $input.account_id,
+      period: $input.statement_period,
       transaction_count: count(txns),
       balance_change: sum(map(txns, txn => txn.amount)),
       

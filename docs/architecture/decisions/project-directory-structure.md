@@ -578,7 +578,7 @@ cd modules/jvm
 
 # Work on CLI
 cd modules/cli
-./gradlew run --args="transform test.utlx input.json"
+./gradlew run --args="transform test.utlx $input.json"
 ```
 
 ### Creating Distribution

@@ -28,7 +28,7 @@ The `utlx functions` command provides a comprehensive interface for exploring th
                          │ Generated at build time from
                          ▼
             ┌────────────────────────────┐
-            │  @UTLXFunction Annotations │
+            │  $UTLXFunction Annotations │
             │  (in stdlib/*.kt files)    │
             └────────────────────────────┘
 ```
@@ -336,7 +336,7 @@ Benefits:
 
 1. **Fix FunctionRegistryGenerator compilation errors**
    - Add stub `exportRegistry()` method to StandardLibrary/Functions.kt
-   - Implement registry generation from @UTLXFunction annotations
+   - Implement registry generation from $UTLXFunction annotations
 
 2. **Configure build to bundle registry**
    - Update CLI gradle to include registry in resources

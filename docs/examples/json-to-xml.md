@@ -25,9 +25,9 @@ output xml
 ---
 {
   Order: {
-    @id: input.orderId,
-    Customer: input.customer,
-    Total: input.total
+    @id: $input.orderId,
+    Customer: $input.customer,
+    Total: $input.total
   }
 }
 ```
@@ -80,15 +80,15 @@ output xml
 ---
 {
   Order: {
-    @id: input.order.id,
-    @date: input.order.date,
+    @id: $input.order.id,
+    @date: $input.order.date,
     Customer: {
-      Name: input.order.customer.name,
-      Email: input.order.customer.email,
+      Name: $input.order.customer.name,
+      Email: $input.order.customer.email,
       Address: {
-        Street: input.order.customer.address.street,
-        City: input.order.customer.address.city,
-        Zip: input.order.customer.address.zip
+        Street: $input.order.customer.address.street,
+        City: $input.order.customer.address.city,
+        Zip: $input.order.customer.address.zip
       }
     }
   }
@@ -149,7 +149,7 @@ output xml
 ---
 {
   Products: {
-    Product: input.products |> map(p => {
+    Product: $input.products |> map(p => {
       @id: p.id,
       Name: p.name,
       Price: p.price
@@ -216,14 +216,14 @@ output xml
 ---
 {
   Article: {
-    @published: input.article.published,
-    Title: input.article.title,
-    Author: input.article.author,
+    @published: $input.article.published,
+    Title: $input.article.title,
+    Author: $input.article.author,
     Tags: {
-      Tag: input.article.tags
+      Tag: $input.article.tags
     },
     Content: {
-      Paragraph: input.article.content.paragraphs
+      Paragraph: $input.article.content.paragraphs
     }
   }
 }
@@ -282,16 +282,16 @@ output xml
 ---
 {
   Book: {
-    @isbn: input.book.isbn,
-    @year: input.book.year,
-    Title: input.book.title,
+    @isbn: $input.book.isbn,
+    @year: $input.book.year,
+    Title: $input.book.title,
     Author: {
-      @country: input.book.author.country,
-      _text: input.book.author.name
+      @country: $input.book.author.country,
+      _text: $input.book.author.name
     },
     Price: {
-      @currency: input.book.price.currency,
-      _text: input.book.price.amount
+      @currency: $input.book.price.currency,
+      _text: $input.book.price.amount
     }
   }
 }
@@ -338,7 +338,7 @@ output xml
 ---
 {
   Orders: {
-    Order: input.orders |> map(order => {
+    Order: $input.orders |> map(order => {
       @id: order.id,
       @status: order.status,
       @express: if (order.express) "yes" else "no",
@@ -417,14 +417,14 @@ output xml {
     @xmlns:app: "http://example.com/application",
     
     "soap:Header": {
-      "app:MessageId": input.envelope.header.messageId,
-      "app:Timestamp": input.envelope.header.timestamp
+      "app:MessageId": $input.envelope.header.messageId,
+      "app:Timestamp": $input.envelope.header.timestamp
     },
     
     "soap:Body": {
       "app:Data": {
-        @userId: input.envelope.body.data.userId,
-        "app:Action": input.envelope.body.data.action
+        @userId: $input.envelope.body.data.userId,
+        "app:Action": $input.envelope.body.data.action
       }
     }
   }
@@ -478,12 +478,12 @@ output xml
 {
   SalesReport: {
     Summary: {
-      TotalSales: sum(input.sales.*.amount),
-      TransactionCount: count(input.sales)
+      TotalSales: sum($input.sales.*.amount),
+      TransactionCount: count($input.sales)
     },
     
     ByRegion: {
-      Region: input.sales 
+      Region: $input.sales 
         |> groupBy(sale => sale.region)
         |> map((region, sales) => {
             @name: region,
@@ -549,7 +549,7 @@ output xml
 ```utlx
 // JSON property → XML element
 {
-  ElementName: input.jsonProperty
+  ElementName: $input.jsonProperty
 }
 ```
 
@@ -559,7 +559,7 @@ output xml
 // JSON property → XML attribute
 {
   Element: {
-    @attributeName: input.jsonProperty
+    @attributeName: $input.jsonProperty
   }
 }
 ```
@@ -570,7 +570,7 @@ output xml
 // JSON array → repeated XML elements
 {
   Wrapper: {
-    Item: input.jsonArray
+    Item: $input.jsonArray
   }
 }
 ```
@@ -582,7 +582,7 @@ output xml
 {
   Parent: {
     Child: {
-      GrandChild: input.nested.deep.value
+      GrandChild: $input.nested.deep.value
     }
   }
 }
@@ -610,12 +610,12 @@ output xml
 ```utlx
 // ❌ Bad
 {
-  d: input.data
+  d: $input.data
 }
 
 // ✅ Good
 {
-  Data: input.data
+  Data: $input.data
 }
 ```
 
@@ -625,10 +625,10 @@ output xml
 // ✅ Good practice
 {
   Product: {
-    @id: input.id,          // Metadata: attribute
-    @sku: input.sku,        // Metadata: attribute
-    Name: input.name,       // Data: element
-    Price: input.price      // Data: element
+    @id: $input.id,          // Metadata: attribute
+    @sku: $input.sku,        // Metadata: attribute
+    Name: $input.name,       // Data: element
+    Price: $input.price      // Data: element
   }
 }
 ```
@@ -639,8 +639,8 @@ output xml
 // Choose either PascalCase or camelCase and stick with it
 {
   Order: {                  // PascalCase (recommended for XML)
-    OrderId: input.orderId,
-    CustomerName: input.customerName
+    OrderId: $input.orderId,
+    CustomerName: $input.customerName
   }
 }
 ```
@@ -650,8 +650,8 @@ output xml
 ```utlx
 {
   Customer: {
-    Name: input.customer.name || "Unknown",
-    Email: input.customer.email || ""
+    Name: $input.customer.name || "Unknown",
+    Email: $input.customer.email || ""
   }
 }
 ```
@@ -668,7 +668,7 @@ output xml
 
 ```utlx
 {
-  Description: escape(input.description)
+  Description: escape($input.description)
 }
 ```
 
@@ -680,7 +680,7 @@ output xml
 
 ```utlx
 {
-  Item: input.items 
+  Item: $input.items 
     |> filter(item => item.name != null && item.name != "")
     |> map(item => {
         Name: item.name
@@ -697,7 +697,7 @@ output xml
 ```utlx
 // When reading XML back
 {
-  price: parseNumber(input.Product.Price)
+  price: parseNumber($input.Product.Price)
 }
 ```
 
@@ -709,13 +709,13 @@ Save the script and run:
 
 ```bash
 # Transform JSON to XML
-utlx transform input.json transform.utlx
+utlx transform $input.json transform.utlx
 
 # Save to file
-utlx transform input.json transform.utlx -o output.xml
+utlx transform $input.json transform.utlx -o output.xml
 
 # Pretty print
-utlx transform input.json transform.utlx --pretty
+utlx transform $input.json transform.utlx --pretty
 ```
 
 ---

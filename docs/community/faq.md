@@ -136,8 +136,8 @@ input xml
 output json
 ---
 {
-  orderId: input.Order.@id,
-  customer: input.Order.Customer.Name
+  orderId: $input.Order.@id,
+  customer: $input.Order.Customer.Name
 }
 ```
 
@@ -155,9 +155,9 @@ output xml
 ---
 {
   Order: {
-    @id: input.orderId,
+    @id: $input.orderId,
     Customer: {
-      Name: input.customer.name
+      Name: $input.customer.name
     }
   }
 }
@@ -176,7 +176,7 @@ input xml {
 }
 ---
 {
-  body: input.{"soap:Envelope"}.{"soap:Body"}.{"app:Data"}
+  body: $input.{"soap:Envelope"}.{"soap:Body"}.{"app:Data"}
 }
 ```
 
@@ -186,9 +186,9 @@ Use the `||` operator for default values:
 
 ```utlx
 {
-  name: input.customer.name || "Unknown",
-  quantity: input.quantity || 0,
-  active: input.active || false
+  name: $input.customer.name || "Unknown",
+  quantity: $input.quantity || 0,
+  active: $input.active || false
 }
 ```
 
@@ -319,7 +319,7 @@ Yes! UTL-X can be used as:
 
 1. **Command-line tool**
    ```bash
-   utlx transform input.xml script.utlx
+   utlx transform $input.xml script.utlx
    ```
 
 2. **Library (Java/Kotlin)**
@@ -397,7 +397,7 @@ See [Performance](../architecture/performance.md) for details.
 ```utlx
 {
   _debug_input: input,
-  _debug_items: input.items,
+  _debug_items: $input.items,
   result: transform(input)
 }
 ```
@@ -405,7 +405,7 @@ See [Performance](../architecture/performance.md) for details.
 **2. Break down complex expressions:**
 ```utlx
 {
-  let step1 = filter(input.items, i => i.active),
+  let step1 = filter($input.items, i => i.active),
   let step2 = map(step1, i => i.price),
   let step3 = sum(step2),
   result: step3
@@ -415,9 +415,9 @@ See [Performance](../architecture/performance.md) for details.
 **3. Test predicates:**
 ```utlx
 {
-  _count_before: count(input.items),
-  _count_after: count(input.items |> filter(i => i.price > 100)),
-  result: filter(input.items, i => i.price > 100)
+  _count_before: count($input.items),
+  _count_after: count($input.items |> filter(i => i.price > 100)),
+  result: filter($input.items, i => i.price > 100)
 }
 ```
 
@@ -426,17 +426,17 @@ See [Performance](../architecture/performance.md) for details.
 **Use default values:**
 ```utlx
 {
-  name: input.customer.name || "Unknown",
-  quantity: parseNumber(input.quantity) || 0
+  name: $input.customer.name || "Unknown",
+  quantity: parseNumber($input.quantity) || 0
 }
 ```
 
 **Check existence:**
 ```utlx
 {
-  hasCustomer: input.customer != null,
-  customerName: if (input.customer != null) 
-                  input.customer.name 
+  hasCustomer: $input.customer != null,
+  customerName: if ($input.customer != null) 
+                  $input.customer.name 
                 else 
                   "N/A"
 }
@@ -604,7 +604,7 @@ export PATH=$PATH:/path/to/utl-x/build/install/utlx/bin
 sudo ln -s /path/to/utl-x/build/install/utlx/bin/utlx /usr/local/bin/utlx
 
 # Option 3: Use full path
-/path/to/utl-x/build/install/utlx/bin/utlx transform input.xml script.utlx
+/path/to/utl-x/build/install/utlx/bin/utlx transform $input.xml script.utlx
 ```
 
 ### Build fails with "OutOfMemoryError"
@@ -643,20 +643,20 @@ echo "org.gradle.jvmargs=-Xmx2g" >> gradle.properties
 
 1. **Verify input format:**
    ```bash
-   cat input.xml  # Is it valid XML?
+   cat $input.xml  # Is it valid XML?
    ```
 
 2. **Test selector paths:**
    ```utlx
    {
-     _debug: input.Order  // See what data exists
+     _debug: $input.Order  // See what data exists
    }
    ```
 
 3. **Break down transformation:**
    ```utlx
    {
-     let step1 = input.Order,
+     let step1 = $input.Order,
      let step2 = step1.Customer,
      _debug: step2
    }
@@ -665,8 +665,8 @@ echo "org.gradle.jvmargs=-Xmx2g" >> gradle.properties
 4. **Check types:**
    ```utlx
    {
-     _type: getType(input.value),
-     _parsed: parseNumber(input.value)
+     _type: getType($input.value),
+     _parsed: parseNumber($input.value)
    }
    ```
 

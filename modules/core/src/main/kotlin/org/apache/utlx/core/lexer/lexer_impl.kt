@@ -64,6 +64,16 @@ class Lexer(private val source: String) {
             ':' -> addToken(TokenType.COLON, start, startColumn)
             ';' -> addToken(TokenType.SEMICOLON, start, startColumn)
             '@' -> addToken(TokenType.AT, start, startColumn)
+            '$' -> {
+                // $ can be followed by an identifier for input bindings ($input, $input1, etc.)
+                if (peek().isLetter() || peek() == '_') {
+                    current-- // back up to include $ in identifier
+                    column--
+                    dollarIdentifier(start, startColumn)
+                } else {
+                    error(start, startColumn, "Unexpected character: $ (must be followed by identifier)")
+                }
+            }
             '+' -> addToken(TokenType.PLUS, start, startColumn)
             '*' -> {
                 if (match('*')) {
@@ -284,17 +294,35 @@ class Lexer(private val source: String) {
     
     private fun identifier(start: Int, startColumn: Int) {
         while (peek().isLetterOrDigit() || peek() == '_') advance()
-        
+
         val lexeme = source.substring(start, current)
         val type = Keywords.get(lexeme) ?: TokenType.IDENTIFIER
-        
+
         val literal = when (type) {
             TokenType.BOOLEAN -> lexeme == "true"
             TokenType.NULL -> null
             else -> null
         }
-        
+
         addToken(type, start, startColumn, literal)
+    }
+
+    private fun dollarIdentifier(start: Int, startColumn: Int) {
+        // Consume the $ character
+        advance()
+
+        // Consume the identifier part (must start with letter or _)
+        if (!peek().isLetter() && peek() != '_') {
+            error(start, startColumn, "$ must be followed by identifier")
+            return
+        }
+
+        while (peek().isLetterOrDigit() || peek() == '_') advance()
+
+        val lexeme = source.substring(start, current)
+        // $identifier is always treated as an IDENTIFIER token (not a keyword)
+        // The lexeme includes the $ prefix
+        addToken(TokenType.IDENTIFIER, start, startColumn, null)
     }
     
     private fun matchWord(word: String): Boolean {

@@ -18,7 +18,7 @@ transformation: |
   ---
   {
     result: try {
-      @input.value / @input.divisor
+      $input.value / $input.divisor
     } catch {
       -1
     },

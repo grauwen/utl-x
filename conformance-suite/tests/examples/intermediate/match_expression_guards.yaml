@@ -18,17 +18,17 @@ transformation: |
   output json
   ---
   {
-    gradeByScore: match (@input.score) {
+    gradeByScore: match ($input.score) {
       n if n >= 90 => "A",
       n if n >= 80 => "B",
       n if n >= 70 => "C",
       n if n >= 60 => "D",
       _ => "F"
     },
-    shippingCost: match (@input.orderType) {
-      "express" if @input.total > 100 => 0,
+    shippingCost: match ($input.orderType) {
+      "express" if $input.total > 100 => 0,
       "express" => 15.00,
-      "standard" if @input.total > 50 => 0,
+      "standard" if $input.total > 50 => 0,
       "standard" => 5.00,
       _ => 10.00
     }

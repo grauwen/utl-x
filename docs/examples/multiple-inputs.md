@@ -71,14 +71,14 @@ output json
 ---
 
 // Create lookup maps for efficient access
-let customerMap = input.customers.customers 
+let customerMap = $input.customers.customers 
   |> map(c => [c.id, c])
   |> reduce((acc, [id, customer]) => {
        ...acc,
        [id]: customer
      }, {}),
 
-let productMap = input.products.products
+let productMap = $input.products.products
   |> map(p => [p.id, p])
   |> reduce((acc, [id, product]) => {
        ...acc,
@@ -87,7 +87,7 @@ let productMap = input.products.products
 
 // Enrich orders with customer and product data
 {
-  enrichedOrders: input.orders.orders |> map(order => {
+  enrichedOrders: $input.orders.orders |> map(order => {
     let customer = customerMap[order.customerId] ?? {name: "Unknown", tier: "Standard"},
     let product = productMap[order.productId] ?? {name: "Unknown", price: 0, category: "Other"},
     
@@ -125,8 +125,8 @@ let productMap = input.products.products
   }),
   
   summary: {
-    totalOrders: count(input.orders.orders),
-    totalRevenue: sum(input.orders.orders |> map(order => {
+    totalOrders: count($input.orders.orders),
+    totalRevenue: sum($input.orders.orders |> map(order => {
       let product = productMap[order.productId] ?? {price: 0}
       let customer = customerMap[order.customerId] ?? {tier: "Standard"}
       let subtotal = product.price * order.quantity
@@ -236,7 +236,7 @@ output json
 ---
 
 // Create department lookup
-let deptMap = input.departments.Departments.Department
+let deptMap = $input.departments.Departments.Department
   |> map(dept => [
        dept.@id,
        {name: dept.@name, location: dept.@location}
@@ -244,13 +244,13 @@ let deptMap = input.departments.Departments.Department
   |> reduce((acc, [id, dept]) => {...acc, [id]: dept}, {}),
 
 // Create role lookup
-let roleMap = input.roles.roles
+let roleMap = $input.roles.roles
   |> map(role => [role.empId, role])
   |> reduce((acc, [id, role]) => {...acc, [id]: role}, {})
 
 // Combine all data
 {
-  employees: input.employees.rows |> map(emp => {
+  employees: $input.employees.rows |> map(emp => {
     let dept = deptMap[emp.dept_id] ?? {name: "Unknown", location: "N/A"},
     let role = roleMap[emp.emp_id] ?? {title: "Staff", level: 1}
     
@@ -276,15 +276,15 @@ let roleMap = input.roles.roles
   }),
   
   statistics: {
-    totalEmployees: count(input.employees.rows),
-    departmentCounts: input.employees.rows
+    totalEmployees: count($input.employees.rows),
+    departmentCounts: $input.employees.rows
       |> groupBy(emp => emp.dept_id)
       |> entries()
       |> map(([deptId, emps]) => {
            department: deptMap[deptId]?.name ?? "Unknown",
            count: count(emps)
          }),
-    avgSalary: avg(input.employees.rows.(parseNumber(salary)))
+    avgSalary: avg($input.employees.rows.(parseNumber(salary)))
   }
 }
 ```
@@ -380,8 +380,8 @@ function deepMerge(base: Object, override: Object): Object {
 }
 
 // Merge with priority: defaults < environment < user
-let step1 = deepMerge(input.defaults, input.environment),
-let final = deepMerge(step1, input.user)
+let step1 = deepMerge($input.defaults, $input.environment),
+let final = deepMerge(step1, $input.user)
 
 {
   config: final,
@@ -410,12 +410,12 @@ input {
 output json
 ---
 
-let customerIds = input.customers.customers.*.id,
-let productIds = input.products.products.*.id
+let customerIds = $input.customers.customers.*.id,
+let productIds = $input.products.products.*.id
 
 {
   validation: {
-    orders: input.orders.orders |> map(order => {
+    orders: $input.orders.orders |> map(order => {
       let customerExists = contains(customerIds, order.customerId),
       let productExists = contains(productIds, order.productId)
       
@@ -431,23 +431,23 @@ let productIds = input.products.products.*.id
   },
   
   summary: {
-    totalOrders: count(input.orders.orders),
-    validOrders: count(input.orders.orders |> filter(order =>
+    totalOrders: count($input.orders.orders),
+    validOrders: count($input.orders.orders |> filter(order =>
       contains(customerIds, order.customerId) &&
       contains(productIds, order.productId)
     )),
-    orphanedOrders: count(input.orders.orders |> filter(order =>
+    orphanedOrders: count($input.orders.orders |> filter(order =>
       !contains(customerIds, order.customerId) ||
       !contains(productIds, order.productId)
     ))
   },
   
-  orphanedCustomerIds: input.orders.orders
+  orphanedCustomerIds: $input.orders.orders
     |> filter(order => !contains(customerIds, order.customerId))
     |> map(order => order.customerId)
     |> distinct(),
   
-  orphanedProductIds: input.orders.orders
+  orphanedProductIds: $input.orders.orders
     |> filter(order => !contains(productIds, order.productId))
     |> map(order => order.productId)
     |> distinct()
@@ -515,12 +515,12 @@ input {
 
 ```utlx
 // ✅ Good - O(1) lookups
-let customerMap = input.customers |> toMap(c => c.id)
+let customerMap = $input.customers |> toMap(c => c.id)
 let customer = customerMap[customerId]
 
 // ❌ Bad - O(n) lookups in loop
 input.orders |> map(order => {
-  let customer = input.customers |> filter(c => c.id == order.customerId) |> first()
+  let customer = $input.customers |> filter(c => c.id == order.customerId) |> first()
 })
 ```
 
@@ -567,8 +567,8 @@ output json
 ---
 
 {
-  mainData: input.main,
-  supplementalData: input.supplements |> map(supplement => 
+  mainData: $input.main,
+  supplementalData: $input.supplements |> map(supplement => 
     processSupplemental(supplement)
   )
 }

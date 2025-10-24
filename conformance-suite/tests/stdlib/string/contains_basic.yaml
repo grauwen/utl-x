@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  contains(@input, "World")
+  contains($input, "World")
 
 expected:
   format: json
@@ -32,7 +32,7 @@ variants:
       input json
       output json
       ---
-      contains(@input, "Universe")
+      contains($input, "Universe")
     expected:
       format: json
       data: false
@@ -46,7 +46,7 @@ variants:
       input json
       output json
       ---
-      contains(@input, "world")
+      contains($input, "world")
     expected:
       format: json
       data: false

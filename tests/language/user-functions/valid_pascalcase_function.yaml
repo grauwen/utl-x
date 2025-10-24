@@ -21,10 +21,10 @@ transformation: |
   }
   
   {
-    amount: @input.amount,
-    taxRate: @input.rate,
-    taxAmount: CalculateTax(@input.amount, @input.rate),
-    total: @input.amount + CalculateTax(@input.amount, @input.rate)
+    amount: $input.amount,
+    taxRate: $input.rate,
+    taxAmount: CalculateTax($input.amount, $input.rate),
+    total: $input.amount + CalculateTax($input.amount, $input.rate)
   }
 
 expected:

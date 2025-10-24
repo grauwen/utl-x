@@ -214,7 +214,7 @@ object ReplCommand {
             }
 
             env.define("input", RuntimeValue.UDMValue(udm))
-            println("Loaded ${file.name} as @input")
+            println("Loaded ${file.name} as ${'$'}input")
         } catch (e: Exception) {
             println("Error loading file: ${e.message}")
         }
@@ -298,7 +298,7 @@ object ReplCommand {
             |  :help, :h, :?          Show this help message
             |  :quit, :exit, :q       Exit REPL
             |  :clear, :c             Clear session (reset all variables)
-            |  :load <file>, :l       Load JSON/XML/CSV/YAML file as @input
+            |  :load <file>, :l       Load JSON/XML/CSV/YAML file as ${'$'}input
             |  :type <expr>, :t       Show type of expression
             |  :functions [pattern]   List all functions or search by pattern
             |  :info <function>, :i   Show detailed function documentation
@@ -331,9 +331,9 @@ object ReplCommand {
             |
             |  Loading data:
             |    utlx> :load data.json
-            |    utlx> @input
-            |    utlx> @input.orders
-            |    utlx> map(@input.orders, o => o.total)
+            |    utlx> ${'$'}input
+            |    utlx> ${'$'}input.orders
+            |    utlx> map(${'$'}input.orders, o => o.total)
             |
             |  Function exploration:
             |    utlx> :functions map

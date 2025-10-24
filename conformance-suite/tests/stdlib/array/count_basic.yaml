@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  count(@input)
+  count($input)
 
 expected:
   format: json

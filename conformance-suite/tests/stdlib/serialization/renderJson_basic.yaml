@@ -15,7 +15,7 @@ transformation: |
   input json
   output json
   ---
-  renderJson(@input)
+  renderJson($input)
 
 expected:
   format: json
@@ -43,7 +43,7 @@ variants:
       input json
       output json
       ---
-      parseJson(renderJson(@input))
+      parseJson(renderJson($input))
     expected:
       format: json
       data: {"test": "value", "number": 42}

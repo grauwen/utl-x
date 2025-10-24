@@ -455,7 +455,15 @@ class Parser(private val tokens: List<Token>) {
                 Expression.NullLiteral(Location.from(previous()))
             }
             match(TokenType.IDENTIFIER) -> {
-                Expression.Identifier(previous().lexeme, Location.from(previous()))
+                val lexeme = previous().lexeme
+                // Handle $identifier syntax (e.g., $input, $input1, etc.)
+                // Strip the $ prefix to get the actual variable name
+                val name = if (lexeme.startsWith('$')) {
+                    lexeme.substring(1)
+                } else {
+                    lexeme
+                }
+                Expression.Identifier(name, Location.from(previous()))
             }
             // Allow certain keywords to be used as identifiers in expressions
             match(TokenType.INPUT, TokenType.OUTPUT, TokenType.MAP, TokenType.FILTER, TokenType.REDUCE) -> {

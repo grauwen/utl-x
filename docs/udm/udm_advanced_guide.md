@@ -851,14 +851,14 @@ parserRegistry.register(AvroParser())
 
 ```kotlin
 class UDMTest {
-    @Test
+    $Test
     fun `should create scalar node`() {
         val node = ScalarNode("Hello", ValueType.STRING)
         assertEquals("Hello", node.value)
         assertEquals(ValueType.STRING, node.type)
     }
     
-    @Test
+    $Test
     fun `should navigate object properties`() {
         val udm = ObjectNode(mapOf(
             "user" to ObjectNode(mapOf(
@@ -873,7 +873,7 @@ class UDMTest {
         assertEquals("Alice", (result as ScalarNode).value)
     }
     
-    @Test
+    $Test
     fun `should handle wildcard navigation`() {
         val udm = ObjectNode(mapOf(
             "items" to ArrayNode(listOf(

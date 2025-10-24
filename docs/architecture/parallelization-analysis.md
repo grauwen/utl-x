@@ -72,7 +72,7 @@ function Double(x: Number): Number {
 
 // All UTL-X functions are pure (no I/O, no mutation)
 {
-  result: input.items |> map(item => Double(item.value))
+  result: $input.items |> map(item => Double(item.value))
 }
 ```
 
@@ -124,9 +124,9 @@ Thread2: val new2 = immutableList.drop(1)  // Creates new list
 ```utlx
 {
   // These can run in parallel
-  a: input.x * 2,        // Only depends on input.x
-  b: input.y + 10,       // Only depends on input.y
-  c: input.z ** 2        // Only depends on input.z
+  a: $input.x * 2,        // Only depends on $input.x
+  b: $input.y + 10,       // Only depends on $input.y
+  c: $input.z ** 2        // Only depends on $input.z
 }
 ```
 
@@ -134,7 +134,7 @@ Thread2: val new2 = immutableList.drop(1)  // Creates new list
 ```utlx
 {
   // These MUST run sequentially
-  a: input.x * 2,        // Compute first
+  a: $input.x * 2,        // Compute first
   b: a + 10,             // Depends on a - must wait
   c: b ** 2              // Depends on b - must wait
 }
@@ -367,7 +367,7 @@ Parallel (divide-and-conquer):
 
 **Sum (highly parallelizable):**
 ```utlx
-sum(input.items |> map(i => i.price))
+sum($input.items |> map(i => i.price))
 ```
 
 **Implementation:**
@@ -392,11 +392,11 @@ fun parallelSum(array: RuntimeValue.ArrayValue): RuntimeValue {
 ```utlx
 {
   // Each property depends only on input
-  total: sum(input.items |> map(i => i.price)),
-  count: length(input.items),
+  total: sum($input.items |> map(i => i.price)),
+  count: length($input.items),
   average: total / count,  // ❌ Depends on total and count
-  maxPrice: max(input.items |> map(i => i.price)),
-  minPrice: min(input.items |> map(i => i.price))
+  maxPrice: max($input.items |> map(i => i.price)),
+  minPrice: min($input.items |> map(i => i.price))
 }
 ```
 
@@ -456,7 +456,7 @@ fun evaluateObjectParallel(
 ```utlx
 {
   // Outer parallel: multiple customers
-  customers: input.customers |> map(customer => {
+  customers: $input.customers |> map(customer => {
 
     // Inner parallel: multiple orders per customer
     orders: customer.orders |> map(order => {
@@ -643,8 +643,8 @@ fun findReadVariables(expr: Expression): Set<String> {
 **Example:**
 ```utlx
 {
-  a: input.x * 2,      // Reads: [input]
-  b: input.y + 10,     // Reads: [input]
+  a: $input.x * 2,      // Reads: [input]
+  b: $input.y + 10,     // Reads: [input]
   c: a + b,            // Reads: [a, b]
   d: a * 3             // Reads: [a]
 }
@@ -796,11 +796,11 @@ fun shouldParallelize(phase: Set<Node>): Boolean {
 ```utlx
 {
   // User hints that this is expensive
-  @parallel
-  results: input.largeArray |> map(item => complexTransform(item)),
+  $parallel
+  results: $input.largeArray |> map(item => complexTransform(item)),
 
   // User hints NOT to parallelize (too small)
-  @sequential
+  $sequential
   metadata: {version: "1.0", timestamp: now()}
 }
 ```
@@ -1034,13 +1034,13 @@ class ParallelizingOptimizer {
 
 ```bash
 # Auto-detect and parallelize
-utlx transform --parallel=auto script.utlx input.json
+utlx transform --parallel=auto script.utlx $input.json
 
 # Force parallel
-utlx transform --parallel=force script.utlx input.json
+utlx transform --parallel=force script.utlx $input.json
 
 # Disable parallel
-utlx transform --parallel=off script.utlx input.json
+utlx transform --parallel=off script.utlx $input.json
 ```
 
 **Configuration file:**
@@ -1104,7 +1104,7 @@ input json
 output json
 ---
 {
-  orders: input.orders |> map(order => {
+  orders: $input.orders |> map(order => {
 
     // Inner parallel: 20 items per order
     lineItems: order.items |> map(item => {
@@ -1152,14 +1152,14 @@ Parallel (8 cores):
 **UTL-X Code:**
 ```utlx
 {
-  customerId: input.id,
+  customerId: $input.id,
 
   // All these lookups are independent and can be parallelized
-  accountDetails: lookupAccount(input.id),
-  orderHistory: lookupOrders(input.id),
-  preferences: lookupPreferences(input.id),
-  loyaltyPoints: lookupLoyalty(input.id),
-  recommendations: generateRecommendations(input.id)
+  accountDetails: lookupAccount($input.id),
+  orderHistory: lookupOrders($input.id),
+  preferences: lookupPreferences($input.id),
+  loyaltyPoints: lookupLoyalty($input.id),
+  recommendations: generateRecommendations($input.id)
 }
 ```
 
@@ -1250,7 +1250,7 @@ Parallel:    5ms (5x SLOWER)
 ```utlx
 // ❌ BAD: Everything depends on previous
 {
-  a: input.x,
+  a: $input.x,
   b: a * 2,
   c: b + 10,
   d: c ** 2,
@@ -1264,8 +1264,8 @@ Parallel:    5ms (5x SLOWER)
 ```utlx
 // ❌ BAD: Already <10ms total
 {
-  a: input.x + 1,
-  b: input.y + 2
+  a: $input.x + 1,
+  b: $input.y + 2
 }
 
 // Adding parallelization complexity not worth it
@@ -1600,7 +1600,7 @@ register("psum") { args -> /* parallel sum */ }
 - Effort: 1 week
 
 ```bash
-utlx transform --parallel=auto script.utlx input.json
+utlx transform --parallel=auto script.utlx $input.json
 ```
 
 ### 11.2 Medium-Term (v2.1)

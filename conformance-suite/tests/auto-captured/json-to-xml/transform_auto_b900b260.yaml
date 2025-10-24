@@ -16,8 +16,8 @@ transformation: |
   ---
   {
     Order: {
-      @id: @input.order.id,
-      Customer: @input.order.customer
+      @id: $input.order.id,
+      Customer: $input.order.customer
     }
   }
   

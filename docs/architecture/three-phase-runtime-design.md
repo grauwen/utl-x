@@ -340,15 +340,15 @@ class PathAccessAnalyzer {
         fun visit(expr: Expression) {
             when (expr) {
                 is PropertyAccess -> {
-                    // input.Order.Customer.Name
+                    // $input.Order.Customer.Name
                     paths.add(expr.fullPath)
                 }
                 is ArrayAccess -> {
-                    // input.items[0].price
+                    // $input.items[0].price
                     paths.add(expr.fullPath)
                 }
                 is AttributeAccess -> {
-                    // input.Order.@id
+                    // $input.Order.@id
                     paths.add(expr.fullPath)
                 }
                 else -> {
@@ -365,7 +365,7 @@ class PathAccessAnalyzer {
 
 // Example usage
 val paths = analyzer.analyze(compiledTransform.ast)
-// Result: ["input.Order.Customer.Name", "input.Order.@id", "input.items[*].price"]
+// Result: ["$input.Order.Customer.Name", "$input.Order.@id", "$input.items[*].price"]
 ```
 
 ### 2.5 Design-Time API
@@ -866,7 +866,7 @@ class PropertyAccessOptimizer {
     ): OptimizedExpression {
         return when (ast) {
             is PropertyAccess -> {
-                // input.Order.Customer.Name
+                // $input.Order.Customer.Name
                 val accessPath = resolveAccessPath(ast.path, inputSchema)
 
                 when (accessPath) {
@@ -2804,8 +2804,8 @@ val compiled = compiler.compile("""
     output json
     ---
     {
-        invoiceId: "INV-" + input.orderId,
-        total: sum(input.items.*.price)
+        invoiceId: "INV-" + $input.orderId,
+        total: sum($input.items.*.price)
     }
 """)
 
@@ -2873,7 +2873,7 @@ GC pressure         Low              Low
 ```java
 // DESIGN TIME
 RouteBuilder route = new RouteBuilder() {
-    @Override
+    $Override
     public void configure() {
         from("file:input")
             .unmarshal().json()
@@ -2964,7 +2964,7 @@ val compiled = compiler.compile(utlxTransformation)
 
 // INIT TIME (in Flink operator)
 class UTLXMapFunction : MapFunction<String, String> {
-    @transient private var executor: TransformExecutor? = null
+    $transient private var executor: TransformExecutor? = null
 
     override fun open(parameters: Configuration) {
         executor = compiled.createExecutor(config)
@@ -3160,7 +3160,7 @@ object UTLX {
 // Usage
 val result = UTLX.transform(
     transformation = File("transform.utlx").readText(),
-    input = File("input.json").readText()
+    input = File("$input.json").readText()
 )
 ```
 
@@ -3258,11 +3258,11 @@ repeat(1_000_000) {
 /**
  * Spring Boot auto-configuration
  */
-@Configuration
+$Configuration
 @EnableConfigurationProperties(UTLXProperties::class)
 class UTLXAutoConfiguration {
 
-    @Bean
+    $Bean
     fun utlxEngine(properties: UTLXProperties): UTLXEngine {
         return UTLXEngine.builder()
             .transformationFile(File(properties.transformationPath))
@@ -3292,12 +3292,12 @@ data class PoolingProperties(
 )
 
 // Usage in Spring Boot application
-@RestController
+$RestController
 class OrderController(
     private val utlxEngine: UTLXEngine
 ) {
     @PostMapping("/transform")
-    fun transform(@RequestBody input: String): String {
+    fun transform($RequestBody input: String): String {
         return utlxEngine.transform(input)
     }
 }
@@ -3375,7 +3375,7 @@ val result = engine.transform(input)
 
 ```bash
 # CLI automatically uses simple execution (current behavior)
-./utlx transform input.json transform.utlx
+./utlx transform $input.json transform.utlx
 
 # Performance is unchanged for single-message CLI use
 ```

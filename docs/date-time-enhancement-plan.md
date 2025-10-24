@@ -334,14 +334,14 @@ fun parseDate(args: List<UDM>): UDM {
 
     return when {
         // Date only: "2020-03-15", "2020/10/15", "15-10-2020"
-        format == null && input.matches(Regex("^\\d{4}[-/]\\d{2}[-/]\\d{2}$"))
+        format == null && $input.matches(Regex("^\\d{4}[-/]\\d{2}[-/]\\d{2}$"))
             -> UDM.Date(LocalDate.parse(input, DateTimeFormatter.ISO_LOCAL_DATE))
 
-        format == null && input.matches(Regex("^\\d{2}[-/]\\d{2}[-/]\\d{4}$"))
+        format == null && $input.matches(Regex("^\\d{2}[-/]\\d{2}[-/]\\d{4}$"))
             -> parseDateWithFormat(input, detectFormat(input))
 
         // DateTime: has time component
-        format == null && (input.contains('T') || input.contains(' '))
+        format == null && ($input.contains('T') || $input.contains(' '))
             -> UDM.DateTime(Instant.parse(input))
 
         // Custom format specified
@@ -941,25 +941,25 @@ class DateTimeFormatter(
 interface CldrDataProvider {
     /**
      * Get localized month names
-     * @param locale BCP 47 locale tag (e.g., "nl-NL")
-     * @param style FULL, SHORT, or NARROW
-     * @return Array of 12 month names
+     * $param locale BCP 47 locale tag (e.g., "nl-NL")
+     * $param style FULL, SHORT, or NARROW
+     * $return Array of 12 month names
      */
     fun getMonthNames(locale: String, style: MonthStyle): Array<String>
 
     /**
      * Get localized day names
-     * @param locale BCP 47 locale tag
-     * @param style FULL, SHORT, or NARROW
-     * @return Array of 7 day names (Monday=0)
+     * $param locale BCP 47 locale tag
+     * $param style FULL, SHORT, or NARROW
+     * $return Array of 7 day names (Monday=0)
      */
     fun getDayNames(locale: String, style: DayStyle): Array<String>
 
     /**
      * Get locale-specific date pattern
-     * @param locale BCP 47 locale tag
-     * @param style SHORT, MEDIUM, LONG, or FULL
-     * @return Pattern string (e.g., "dd-MM-yyyy")
+     * $param locale BCP 47 locale tag
+     * $param style SHORT, MEDIUM, LONG, or FULL
+     * $return Pattern string (e.g., "dd-MM-yyyy")
      */
     fun getDatePattern(locale: String, style: String): String
 
@@ -1145,7 +1145,7 @@ config {
 ---
 {
     // Transformation uses config settings
-    formatted_date: formatDate(@input.date)  // Uses nl-NL by default
+    formatted_date: formatDate($input.date)  // Uses nl-NL by default
 }
 ```
 
@@ -1234,21 +1234,21 @@ config {
 }
 ---
 {
-    invoice_number: @input.invoice_number,
+    invoice_number: $input.invoice_number,
 
     // Uses nl-NL from config
-    invoice_date: formatDate(parseDate(@input.invoice_date)),
+    invoice_date: formatDate(parseDate($input.invoice_date)),
 
     // Uses Europe/Amsterdam timezone
     processed_at: formatDate(now(), "dd-MM-yyyy HH:mm:ss"),
 
     // Explicit locale override
-    invoice_date_us: formatDate(parseDate(@input.invoice_date), "MM/dd/yyyy", "en-US"),
+    invoice_date_us: formatDate(parseDate($input.invoice_date), "MM/dd/yyyy", "en-US"),
 
-    items: map(@input.items, item => {
+    items: map($input.items, item => {
         description: item.description,
         amount: item.amount,
-        due_date: formatDate(addDays(parseDate(@input.invoice_date), 30))
+        due_date: formatDate(addDays(parseDate($input.invoice_date), 30))
     })
 }
 ```
@@ -1494,7 +1494,7 @@ let age = yearsBetween(birthDate, now())
 ```javascript
 // formatDate not fully implemented
 {
-  date: parseDate(input.date)
+  date: parseDate($input.date)
 }
 ```
 
@@ -1502,9 +1502,9 @@ let age = yearsBetween(birthDate, now())
 ```javascript
 // Now can format
 {
-  date_iso: parseDate(input.date),
-  date_dutch: formatDate(parseDate(input.date), "d MMMM yyyy", "nl-NL"),
-  date_us: formatDate(parseDate(input.date), "MMMM d, yyyy", "en-US")
+  date_iso: parseDate($input.date),
+  date_dutch: formatDate(parseDate($input.date), "d MMMM yyyy", "nl-NL"),
+  date_us: formatDate(parseDate($input.date), "MMMM d, yyyy", "en-US")
 }
 // → {
 //   "date_iso": "2020-03-15",
@@ -1536,21 +1536,21 @@ if (value is UDM.DateTime || value is UDM.Date) { ... }
 ### Phase 1 Tests: Date Type
 
 ```kotlin
-@Test
+$Test
 fun `parseDateOnly returns Date type`() {
     val result = parseDateOnly("2020-03-15")
     assertTrue(result is UDM.Date)
     assertEquals("2020-03-15", result.toISOString())
 }
 
-@Test
+$Test
 fun `Date serializes without time component`() {
     val date = UDM.Date(LocalDate.of(2020, 3, 15))
     val json = JsonSerializer.serialize(date)
     assertEquals("\"2020-03-15\"", json)
 }
 
-@Test
+$Test
 fun `getType recognizes Date`() {
     val date = parseDateOnly("2020-03-15")
     assertEquals("date", getType(date))
@@ -1562,19 +1562,19 @@ fun `getType recognizes Date`() {
 ### Phase 2 Tests: Smart parseDate
 
 ```kotlin
-@Test
+$Test
 fun `parseDate auto-detects Date from date-only string`() {
     val result = parseDate("2020-03-15")
     assertTrue(result is UDM.Date)
 }
 
-@Test
+$Test
 fun `parseDate auto-detects DateTime from timestamp`() {
     val result = parseDate("2020-03-15T10:30:00Z")
     assertTrue(result is UDM.DateTime)
 }
 
-@Test
+$Test
 fun `parseDate handles various date formats`() {
     assertEquals(Date(2020, 3, 15), parseDate("2020-03-15"))
     assertEquals(Date(2020, 3, 15), parseDate("2020/03/15"))
@@ -1587,7 +1587,7 @@ fun `parseDate handles various date formats`() {
 ### Phase 3 Tests: Locale Support
 
 ```kotlin
-@Test
+$Test
 fun `formatDate supports Dutch locale`() {
     val date = Date(2020, 10, 15)
 
@@ -1596,13 +1596,13 @@ fun `formatDate supports Dutch locale`() {
     assertEquals("donderdag 15 oktober", formatDate(date, "EEEE d MMMM", "nl-NL"))
 }
 
-@Test
+$Test
 fun `parseDate parses Dutch format`() {
     val date = parseDate("15 oktober 2020", "d MMMM yyyy", "nl-NL")
     assertEquals(Date(2020, 10, 15), date)
 }
 
-@Test
+$Test
 fun `formatDate supports US and UK locales`() {
     val date = Date(2020, 10, 15)
 
@@ -1647,7 +1647,7 @@ Jane Smith,2019-08-10,1990-11-05
 **Transformation:**
 ```javascript
 {
-  employees: map(@input, row => {
+  employees: map($input, row => {
     name: row.name,
     hire_date: parseDate(row.hire_date),              // → Date
     birth_date: parseDate(row.birth_date),            // → Date
@@ -1697,16 +1697,16 @@ Jane Smith,2019-08-10,1990-11-05
 **Transformation:**
 ```javascript
 {
-  invoice_date: parseDate(@input.invoice_date, "dd-MM-yyyy", "nl-NL"),
-  due_date: parseDate(@input.due_date, "dd-MM-yyyy", "nl-NL"),
-  days_until_due: daysBetween(now(), parseDate(@input.due_date, "dd-MM-yyyy")),
-  status: if (daysBetween(now(), parseDate(@input.due_date, "dd-MM-yyyy")) < 0)
+  invoice_date: parseDate($input.invoice_date, "dd-MM-yyyy", "nl-NL"),
+  due_date: parseDate($input.due_date, "dd-MM-yyyy", "nl-NL"),
+  days_until_due: daysBetween(now(), parseDate($input.due_date, "dd-MM-yyyy")),
+  status: if (daysBetween(now(), parseDate($input.due_date, "dd-MM-yyyy")) < 0)
             "OVERDUE"
           else
             "CURRENT",
   formatted_dates: {
-    invoice: formatDate(parseDate(@input.invoice_date, "dd-MM-yyyy"), "d MMMM yyyy", "nl-NL"),
-    due: formatDate(parseDate(@input.due_date, "dd-MM-yyyy"), "EEEE d MMMM", "nl-NL")
+    invoice: formatDate(parseDate($input.invoice_date, "dd-MM-yyyy"), "d MMMM yyyy", "nl-NL"),
+    due: formatDate(parseDate($input.due_date, "dd-MM-yyyy"), "EEEE d MMMM", "nl-NL")
   }
 }
 ```
@@ -1741,20 +1741,20 @@ Jane Smith,2019-08-10,1990-11-05
 ```javascript
 {
   event: {
-    timestamp: parseDate(@input.event_date),          // → DateTime
-    date_only: parseDateOnly(@input.event_date),      // Extract just date
+    timestamp: parseDate($input.event_date),          // → DateTime
+    date_only: parseDateOnly($input.event_date),      // Extract just date
     time_only: parseTime("14:30:00"),                 // → Time
 
-    formatted_dutch: formatDate(parseDate(@input.event_date), "EEEE d MMMM yyyy 'om' HH:mm", "nl-NL"),
-    formatted_us: formatDate(parseDate(@input.event_date), "EEEE, MMMM d, yyyy 'at' h:mm a", "en-US"),
-    formatted_uk: formatDate(parseDate(@input.event_date), "EEEE d MMMM yyyy 'at' HH:mm", "en-GB")
+    formatted_dutch: formatDate(parseDate($input.event_date), "EEEE d MMMM yyyy 'om' HH:mm", "nl-NL"),
+    formatted_us: formatDate(parseDate($input.event_date), "EEEE, MMMM d, yyyy 'at' h:mm a", "en-US"),
+    formatted_uk: formatDate(parseDate($input.event_date), "EEEE d MMMM yyyy 'at' HH:mm", "en-GB")
   },
   registration: {
-    deadline: parseDate(@input.registration_deadline),  // → Date
-    days_remaining: daysBetween(now(), parseDate(@input.registration_deadline)),
+    deadline: parseDate($input.registration_deadline),  // → Date
+    days_remaining: daysBetween(now(), parseDate($input.registration_deadline)),
 
-    formatted_dutch: formatDate(parseDate(@input.registration_deadline), "d MMMM yyyy", "nl-NL"),
-    formatted_short: formatDate(parseDate(@input.registration_deadline), "SHORT", "nl-NL")
+    formatted_dutch: formatDate(parseDate($input.registration_deadline), "d MMMM yyyy", "nl-NL"),
+    formatted_short: formatDate(parseDate($input.registration_deadline), "SHORT", "nl-NL")
   }
 }
 ```

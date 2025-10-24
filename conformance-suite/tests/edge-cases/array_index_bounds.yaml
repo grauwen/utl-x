@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  @input[10]
+  $input[10]
 
 error_expected:
   type: "runtime_error"
@@ -33,7 +33,7 @@ variants:
       input json
       output json
       ---
-      @input[-1]
+      $input[-1]
     error_expected:
       type: "runtime_error"
       message_pattern: ".*negative index.*"
@@ -47,7 +47,7 @@ variants:
       input json
       output json
       ---
-      @input[0]
+      $input[0]
     error_expected:
       type: "runtime_error"
       message_pattern: ".*index out of bounds.*"
@@ -61,7 +61,7 @@ variants:
       input json
       output json
       ---
-      @input[2]
+      $input[2]
     expected:
       format: json
       data: 3

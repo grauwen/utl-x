@@ -20,7 +20,7 @@ transformation: |
   }
   
   {
-    result: calculateTax(@input.amount, 0.08)
+    result: calculateTax($input.amount, 0.08)
   }
 
 expected_error: "User-defined functions must start with uppercase letter"

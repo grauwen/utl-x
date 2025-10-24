@@ -14,7 +14,7 @@ transformation: |
   input xml
   output json
   ---
-  @input.Material.MaterialNumber
+  $input.Material.MaterialNumber
   
 
 expected:

@@ -29,7 +29,7 @@ Excellent idea! A comprehensive conformance suite would be invaluable for ensuri
 │   └── Type inference validation
 │
 └── Variable Binding & Scoping
-    ├── @input binding
+    ├── $input binding
     ├── Local variable scoping
     ├── Function parameter binding
     └── Closure behavior
@@ -268,7 +268,7 @@ transformation: |
   input json
   output json
   ---
-  @input | map(x -> x * 2)
+  $input | map(x -> x * 2)
 
 expected:
   format: json

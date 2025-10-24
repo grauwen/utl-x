@@ -70,20 +70,20 @@ The transform command is fully functional with:
 ### Transform Command Usage
 ```bash
 # Basic transformation
-./utlx transform input.xml script.utlx -o output.json
+./utlx transform $input.xml script.utlx -o output.json
 
 # Read from stdin
-cat input.xml | ./utlx transform script.utlx > output.json
+cat $input.xml | ./utlx transform script.utlx > output.json
 
 # Force formats
-./utlx transform input.txt script.utlx --input-format json --output-format xml
+./utlx transform $input.txt script.utlx --input-format json --output-format xml
 
 # YAML support
 ./utlx transform data.yaml script.utlx --output-format json
 ./utlx transform data.json script.utlx --output-format yaml
 
 # Verbose mode
-./utlx transform input.xml script.utlx -v -o output.json
+./utlx transform $input.xml script.utlx -v -o output.json
 ```
 
 ### Transform Options
@@ -153,10 +153,10 @@ output json
 
 {
   processedAt: now(),
-  upperName: input.name | upper,
-  total: input.items | sum,
-  itemCount: input.items | count,
-  isValid: input.items | isEmpty | not
+  upperName: $input.name | upper,
+  total: $input.items | sum,
+  itemCount: $input.items | count,
+  isValid: $input.items | isEmpty | not
 }
 ```
 
@@ -223,7 +223,7 @@ output json
 ### Debug Mode
 ```bash
 # Enable debug output
-UTLX_DEBUG=true ./utlx transform input.xml script.utlx -v
+UTLX_DEBUG=true ./utlx transform $input.xml script.utlx -v
 ```
 
 ## Roadmap

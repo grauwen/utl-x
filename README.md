@@ -46,15 +46,15 @@ output json
 ---
 {
   invoice: {
-    id: "INV-" + input.Order.@id,
-    date: input.Order.@date,
+    id: "INV-" + $input.Order.@id,
+    date: $input.Order.@date,
     
     customer: {
-      name: input.Order.Customer.Name,
-      email: input.Order.Customer.Email
+      name: $input.Order.Customer.Name,
+      email: $input.Order.Customer.Email
     },
     
-    items: input.Order.Items.Item |> map(item => {
+    items: $input.Order.Items.Item |> map(item => {
       sku: item.@sku,
       quantity: parseNumber(item.@quantity),
       unitPrice: parseNumber(item.@price),
@@ -62,15 +62,15 @@ output json
     }),
     
     summary: {
-      itemCount: count(input.Order.Items.Item),
-      subtotal: sum(input.Order.Items.Item.(
-        parseNumber(@quantity) * parseNumber(@price)
+      itemCount: count($input.Order.Items.Item),
+      subtotal: sum($input.Order.Items.Item.(
+        parseNumber($quantity) * parseNumber($price)
       )),
-      tax: sum(input.Order.Items.Item.(
-        parseNumber(@quantity) * parseNumber(@price)
+      tax: sum($input.Order.Items.Item.(
+        parseNumber($quantity) * parseNumber($price)
       )) * 0.08,
-      grandTotal: sum(input.Order.Items.Item.(
-        parseNumber(@quantity) * parseNumber(@price)
+      grandTotal: sum($input.Order.Items.Item.(
+        parseNumber($quantity) * parseNumber($price)
       )) * 1.08
     }
   }
@@ -159,7 +159,7 @@ input json
 output json
 ---
 {
-  byCategory: input.products
+  byCategory: $input.products
     |> groupBy(product => product.category)
     |> entries()
     |> map(([category, products]) => {
@@ -180,7 +180,7 @@ input json
 output json
 ---
 {
-  premiumCustomers: input.customers
+  premiumCustomers: $input.customers
     |> filter(c => c.totalSpent > 10000 && c.active == true)
     |> sortBy(c => -c.totalSpent)
     |> take(10)
@@ -201,11 +201,11 @@ input: orders json, customers json, products json
 output json
 ---
 {
-  enrichedOrders: @orders |> map(order => {
-    let customer = @customers
+  enrichedOrders: $orders |> map(order => {
+    let customer = $customers
       |> filter(c => c.id == order.customerId)
       |> first(),
-    let product = @products
+    let product = $products
       |> filter(p => p.id == order.productId)
       |> first()
 
@@ -219,7 +219,7 @@ output json
 }
 ```
 
-**Note:** Multiple named inputs use `@` prefix to access each input. This separates concerns: the transformation logic uses `@orders`, `@customers`, `@products`, while file paths are specified via CLI `--input` flags.
+**Note:** Multiple named inputs use `$` prefix to access each input. This separates concerns: the transformation logic uses `$orders`, `$customers`, `$products`, while file paths are specified via CLI `--input` flags.
 
 ## Installation
 
@@ -259,14 +259,14 @@ input json
 output json
 ---
 {
-  greeting: "Hello, " + input.name + "!",
+  greeting: "Hello, " + $input.name + "!",
   timestamp: formatDate(now(), "yyyy-MM-dd HH:mm:ss")
 }
 ```
 
 ### 2. Create Input Data
 
-Create `input.json`:
+Create `$input.json`:
 ```json
 {"name": "World"}
 ```
@@ -274,7 +274,7 @@ Create `input.json`:
 ### 3. Run Transformation
 
 ```bash
-utlx transform hello.utlx input.json
+utlx transform hello.utlx $input.json
 ```
 
 Output:
@@ -288,7 +288,7 @@ Output:
 ### 4. Save Output to File
 
 ```bash
-utlx transform hello.utlx input.json -o output.json
+utlx transform hello.utlx $input.json -o output.json
 ```
 
 ## Key Features
@@ -301,7 +301,7 @@ input auto      # Auto-detect format
 output json
 ---
 {
-  result: input.data |> map(item => transform(item))
+  result: $input.data |> map(item => transform(item))
 }
 ```
 

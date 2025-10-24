@@ -18,8 +18,8 @@ template match="Pattern" {
 ```utlx
 template match="Order" {
   invoice: {
-    id: @id,
-    date: @date
+    id: $id,
+    date: $date
   }
 }
 ```
@@ -43,8 +43,8 @@ template match="Order" {
 
 template match="Item" {
   lineItem: {
-    sku: @sku,
-    price: @price
+    sku: $sku,
+    price: $price
   }
 }
 ```
@@ -109,10 +109,10 @@ output json
 
 template match="Order" {
   invoice: {
-    id: @id,
+    id: $id,
     customer: apply(Customer),
     items: apply(Items/Item),
-    total: sum(Items/Item.(@price * @quantity))
+    total: sum(Items/Item.($price * $quantity))
   }
 }
 
@@ -123,11 +123,11 @@ template match="Customer" {
 }
 
 template match="Item" {
-  sku: @sku,
+  sku: $sku,
   description: Description,
-  quantity: parseNumber(@quantity),
-  price: parseNumber(@price),
-  subtotal: parseNumber(@quantity) * parseNumber(@price)
+  quantity: parseNumber($quantity),
+  price: parseNumber($price),
+  subtotal: parseNumber($quantity) * parseNumber($price)
 }
 ```
 
@@ -161,7 +161,7 @@ Templates can be recursive:
 ```utlx
 template match="Category" {
   category: {
-    name: @name,
+    name: $name,
     subcategories: if (Subcategory) 
                      apply(Subcategory) 
                    else 
@@ -213,8 +213,8 @@ Inside a template, selectors are relative to the matched element:
 ```utlx
 template match="Order" {
   // 'this' context is the Order element
-  id: @id,              // Order's id attribute
-  date: @date,          // Order's date attribute
+  id: $id,              // Order's id attribute
+  date: $date,          // Order's date attribute
   customer: Customer.Name  // Customer/Name under this Order
 }
 ```
@@ -225,8 +225,8 @@ Use `input` to access document root:
 
 ```utlx
 template match="Item" {
-  sku: @sku,
-  taxRate: input.Configuration.TaxRate  // Access root
+  sku: $sku,
+  taxRate: $input.Configuration.TaxRate  // Access root
 }
 ```
 
@@ -265,9 +265,9 @@ Pass parameters to templates:
 ```utlx
 template match="Item" (discount: Number) {
   {
-    sku: @sku,
-    price: parseNumber(@price),
-    discountedPrice: parseNumber(@price) * (1 - discount)
+    sku: $sku,
+    price: parseNumber($price),
+    discountedPrice: parseNumber($price) * (1 - discount)
   }
 }
 
@@ -281,7 +281,7 @@ Define templates inline within transformations:
 
 ```utlx
 {
-  orders: input.Orders.Order |> map(order => {
+  orders: $input.Orders.Order |> map(order => {
     // Inline template-like transformation
     id: order.@id,
     items: order.Items.Item |> map(item => {
@@ -325,8 +325,8 @@ template match="Order" {
 
 template match="Item" {
   {
-    sku: @sku,
-    price: parseNumber(@price)
+    sku: $sku,
+    price: parseNumber($price)
   }
 }
 ```
@@ -368,12 +368,12 @@ template match="Orders" {
 
 template match="Order" {
   {
-    invoiceId: "INV-" + @id,
-    orderDate: @date,
+    invoiceId: "INV-" + $id,
+    orderDate: $date,
     customer: apply(Customer),
     lineItems: apply(Items/Item),
     
-    let subtotal = sum(Items/Item.(parseNumber(@quantity) * parseNumber(@price))),
+    let subtotal = sum(Items/Item.(parseNumber($quantity) * parseNumber($price))),
     let discount = if (Customer.@type == "VIP") subtotal * 0.20 else 0,
     let tax = (subtotal - discount) * 0.08,
     
@@ -390,17 +390,17 @@ template match="Customer" {
   {
     name: Name,
     email: Email,
-    tier: @type
+    tier: $type
   }
 }
 
 template match="Item" {
   {
-    sku: @sku,
+    sku: $sku,
     description: Description,
-    quantity: parseNumber(@quantity),
-    unitPrice: parseNumber(@price),
-    lineTotal: parseNumber(@quantity) * parseNumber(@price)
+    quantity: parseNumber($quantity),
+    unitPrice: parseNumber($price),
+    lineTotal: parseNumber($quantity) * parseNumber($price)
   }
 }
 ```
@@ -467,21 +467,21 @@ template match="*" {
 // ✅ Good - simple template
 template match="Item" {
   {
-    sku: @sku,
-    price: parseNumber(@price)
+    sku: $sku,
+    price: parseNumber($price)
   }
 }
 
 // ❌ Bad - too much logic
 template match="Item" {
   {
-    sku: @sku,
-    price: if (@discounted == "true") 
-             parseNumber(@price) * 0.90
-           else if (@clearance == "true")
-             parseNumber(@price) * 0.50
+    sku: $sku,
+    price: if ($discounted == "true") 
+             parseNumber($price) * 0.90
+           else if ($clearance == "true")
+             parseNumber($price) * 0.50
            else
-             parseNumber(@price),
+             parseNumber($price),
     // Many more fields...
   }
 }
@@ -499,7 +499,7 @@ function calculatePrice(item: Object): Number {
 
 template match="Item" {
   {
-    sku: @sku,
+    sku: $sku,
     price: calculatePrice(.)
   }
 }

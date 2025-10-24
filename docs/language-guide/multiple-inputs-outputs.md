@@ -31,7 +31,7 @@ This feature provides similar capabilities to DataWeave but with a cleaner, more
 input xml
 output json
 ---
-{ data: @input.Customer }
+{ data: $input.Customer }
 ```
 
 **Multiple Named Inputs:**
@@ -42,9 +42,9 @@ output json
 ---
 {
   Combined: {
-    fromXML: @input1.Customer,
-    fromJSON: @input2.order,
-    fromCSV: @input3.rows[0]
+    fromXML: $input1.Customer,
+    fromJSON: $input2.order,
+    fromCSV: $input3.rows[0]
   }
 }
 ```
@@ -52,10 +52,10 @@ output json
 ### Accessing Named Inputs
 
 Each named input is accessible via `@` prefix:
-- `@input1` - First input
-- `@input2` - Second input
-- `@input3` - Third input
-- `@input` - Alias for first input (backward compatibility)
+- `$input1` - First input
+- `$input2` - Second input
+- `$input3` - Third input
+- `$input` - Alias for first input (backward compatibility)
 
 ### Format-Specific Options
 
@@ -71,9 +71,9 @@ output json
 ---
 {
   Integration: {
-    SAP: @sapData.Material,
-    REST: @restAPI.products,
-    Inventory: @inventory.rows
+    SAP: $sapData.Material,
+    REST: $restAPI.products,
+    Inventory: $inventory.rows
   }
 }
 ```
@@ -89,12 +89,12 @@ output json
 ---
 {
   Metadata: {
-    legacyEncoding: detectXMLEncoding(@legacy),
-    modernEncoding: detectXMLEncoding(@modern)
+    legacyEncoding: detectXMLEncoding($legacy),
+    modernEncoding: detectXMLEncoding($modern)
   },
   Data: {
-    Legacy: @legacy,
-    Modern: @modern
+    Legacy: $legacy,
+    Modern: $modern
   }
 }
 ```
@@ -107,13 +107,13 @@ output json
 
 ```bash
 # Positional arguments
-utlx transform script.utlx input.xml -o output.json
+utlx transform script.utlx $input.xml -o output.json
 
 # With flags
-utlx transform script.utlx -i input.xml -o output.json
+utlx transform script.utlx -i $input.xml -o output.json
 
 # From stdin
-cat input.xml | utlx transform script.utlx > output.json
+cat $input.xml | utlx transform script.utlx > output.json
 ```
 
 ### Multiple Named Inputs
@@ -184,16 +184,16 @@ output xml {encoding: "UTF-8"}
 ---
 {
   IntegratedCatalog: {
-    Products: @sap.Materials.Material |> map(material => {
+    Products: $sap.Materials.Material |> map(material => {
       let sku = material.Number
-      let priceData = @pricing.prices |> filter(p => p.sku == sku) |> first()
+      let priceData = $pricing.prices |> filter(p => p.sku == sku) |> first()
 
       Product: {
         SKU: sku,
         Description: material.Description,
         Price: priceData.price,
         Currency: priceData.currency,
-        SourceEncoding: detectXMLEncoding(@sap)
+        SourceEncoding: detectXMLEncoding($sap)
       }
     })
   }
@@ -235,8 +235,8 @@ input: crm json, erp xml
 output json
 ---
 {
-  Customers: @crm.customers |> map(customer => {
-    let erpData = @erp.Customers.Customer
+  Customers: $crm.customers |> map(customer => {
+    let erpData = $erp.Customers.Customer
       |> filter(c => c.@id == customer.id)
       |> first()
 
@@ -269,18 +269,18 @@ output json
   Report: {
     GeneratedAt: now(),
     Summary: {
-      TotalSales: sum(@sales.rows |> map(row => parseNumber(row.Amount))),
-      InventoryCount: count(@inventory.Items.Item),
-      AverageOrderValue: @analytics.metrics.avgOrderValue
+      TotalSales: sum($sales.rows |> map(row => parseNumber(row.Amount))),
+      InventoryCount: count($inventory.Items.Item),
+      AverageOrderValue: $analytics.metrics.avgOrderValue
     },
     DetailedData: {
-      TopProducts: @sales.rows
+      TopProducts: $sales.rows
         |> groupBy(row => row.ProductID)
         |> map(group => {
             ProductID: group.key,
             SalesCount: count(group.items),
             TotalRevenue: sum(group.items |> map(item => parseNumber(item.Amount))),
-            InStock: hasKey(@inventory.Items.Item, ProductID)
+            InStock: hasKey($inventory.Items.Item, ProductID)
           })
         |> sortBy(item => -item.TotalRevenue)
         |> take(10)
@@ -315,8 +315,8 @@ input: input1 json, input2 xml
 output xml
 ---
 {
-  data: @input1.customer,
-  orders: @input2.Order
+  data: $input1.customer,
+  orders: $input2.Order
 }
 ```
 
@@ -325,7 +325,7 @@ output xml
 | Feature | DataWeave | UTL-X |
 |---------|-----------|-------|
 | **Multiple Inputs** | `%input in0 application/json` | `input: input1 json, input2 xml` |
-| **Input Access** | `in0.customer` | `@input1.customer` |
+| **Input Access** | `in0.customer` | `$input1.customer` |
 | **Single Output** | One Transform = One Output | One Transform = One Output |
 | **Syntax Style** | Directive-based (`%input`) | Declarative (`:` separator) |
 | **Line-by-line** | Each input on separate line | Comma-separated or multi-line |
@@ -370,8 +370,8 @@ output xml {encoding: "UTF-8"}
 
 ```utlx
 {
-  Products: @sapMaterials.Materials.Material |> map(material => {
-    let priceData = @restPricing.prices
+  Products: $sapMaterials.Materials.Material |> map(material => {
+    let priceData = $restPricing.prices
       |> filter(p => p.sku == material.Number)
       |> first()
 
@@ -405,8 +405,8 @@ output xml {encoding: "UTF-8"}  # Normalize to UTF-8
 ---
 {
   Combined: {
-    Legacy: @legacy,
-    Modern: @modern
+    Legacy: $legacy,
+    Modern: $modern
   }
 }
 ```
@@ -415,9 +415,9 @@ output xml {encoding: "UTF-8"}  # Normalize to UTF-8
 
 ```utlx
 {
-  Orders: @orders.Orders.Order |> map(order => {
+  Orders: $orders.Orders.Order |> map(order => {
     let customerId = order.CustomerID
-    let customerData = @customers.Customers.Customer
+    let customerData = $customers.Customers.Customer
       |> filter(c => c.@id == customerId)
       |> first()
 
@@ -434,8 +434,8 @@ output xml {encoding: "UTF-8"}  # Normalize to UTF-8
 
 ```utlx
 {
-  Results: @input1.data |> map(item => {
-    let enrichment = @input2.lookup
+  Results: $input1.data |> map(item => {
+    let enrichment = $input2.lookup
       |> filter(e => e.key == item.id)
       |> first()
 
@@ -475,8 +475,8 @@ input xml
 output json
 ---
 {
-  totalOrders: count(@input.Orders.Order),
-  totalValue: sum(@input.Orders.Order.*.Total)
+  totalOrders: count($input.Orders.Order),
+  totalValue: sum($input.Orders.Order.*.Total)
 }
 ```
 
@@ -488,7 +488,7 @@ output xml
 ---
 {
   Report: {
-    Orders: @input.Orders.Order
+    Orders: $input.Orders.Order
   }
 }
 ```
@@ -513,15 +513,15 @@ output json
 ---
 {
   summary: {
-    totalOrders: count(@input.Orders.Order),
-    totalValue: sum(@input.Orders.Order.*.Total)
+    totalOrders: count($input.Orders.Order),
+    totalValue: sum($input.Orders.Order.*.Total)
   },
   details: {
-    Orders: @input.Orders.Order
+    Orders: $input.Orders.Order
   },
   report: {
     headers: ["OrderID", "Customer", "Total"],
-    rows: @input.Orders.Order |> map(order => [
+    rows: $input.Orders.Order |> map(order => [
       order.@id,
       order.Customer.Name,
       order.Total
@@ -606,7 +606,7 @@ make -j3  # Run 3 transformations in parallel
 input xml
 output json
 ---
-{ data: @input.Customer }
+{ data: $input.Customer }
 ```
 
 **After:**
@@ -616,20 +616,20 @@ input: mainData xml, referenceData xml
 output json
 ---
 {
-  data: @mainData.Customer,
-  reference: @referenceData.Lookup
+  data: $mainData.Customer,
+  reference: $referenceData.Lookup
 }
 ```
 
 **CLI Before:**
 ```bash
-utlx transform script.utlx input.xml -o output.json
+utlx transform script.utlx $input.xml -o output.json
 ```
 
 **CLI After:**
 ```bash
 utlx transform script.utlx \
-  --input mainData=input.xml \
+  --input mainData=$input.xml \
   --input referenceData=reference.xml \
   -o output.json
 ```
@@ -639,7 +639,7 @@ utlx transform script.utlx \
 All existing single-input scripts continue to work without changes:
 - `input xml` is treated as `input: input xml`
 - `-i file.xml` is treated as `--input input=file.xml`
-- `@input` works in all scripts
+- `$input` works in all scripts
 
 ---
 

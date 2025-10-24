@@ -17,9 +17,9 @@ transformation: |
   output json
   ---
   {
-    result_id: "capture_verification_" + @input.id,
-    uppercase_text: upper(@input.text),
-    length_check: length(@input.text)
+    result_id: "capture_verification_" + $input.id,
+    uppercase_text: upper($input.text),
+    length_check: length($input.text)
   }
   
 

@@ -212,17 +212,17 @@ python3 runners/cli-runner/simple-runner.py --tag sap
 
 ✅ **Multiple Named Inputs**
 - All tests use `input: name1 format1, name2 format2` syntax
-- Named input references: `@input1`, `@input2`
+- Named input references: `$input1`, `$input2`
 
 ✅ **Format-Specific Options**
 - CSV headers: `csv {headers: true}`
 - XML encoding: `xml {encoding: "ISO-8859-1"}`
 
 ✅ **Data Navigation**
-- XML: `@input.Products.Product`
-- JSON: `@input.users |> map(...)`
-- CSV: `@input.rows |> filter(...)`
-- YAML: `@input.configurations`
+- XML: `$input.Products.Product`
+- JSON: `$input.users |> map(...)`
+- CSV: `$input.rows |> filter(...)`
+- YAML: `$input.configurations`
 
 ✅ **Join Operations**
 - Filter + first pattern for lookups

@@ -33,9 +33,9 @@ output json
 ---
 {
   invoice: {
-    id: input.Order.@id,
-    customer: input.Order.Customer.Name,
-    total: sum(input.Order.Items.Item.(parseNumber(@price) * parseNumber(@quantity)))
+    id: $input.Order.@id,
+    customer: $input.Order.Customer.Name,
+    total: sum($input.Order.Items.Item.(parseNumber($price) * parseNumber($quantity)))
   }
 }
 ```
@@ -83,7 +83,7 @@ var subtotal = sum(payload.items.price)
 
 **UTL-X:**
 ```utlx
-let subtotal = sum(input.items.*.price)
+let subtotal = sum($input.items.*.price)
 ```
 
 #### Function Definition
@@ -130,10 +130,10 @@ else
 
 **UTL-X:**
 ```utlx
-if (input.customer.type == "VIP") 
-  input.total * 0.80 
+if ($input.customer.type == "VIP") 
+  $input.total * 0.80 
 else 
-  input.total
+  $input.total
 ```
 
 ### 3. Template Matching
@@ -145,7 +145,7 @@ else
 ```utlx
 template match="Order" {
   invoice: {
-    id: @id,
+    id: $id,
     customer: apply(Customer),
     items: apply(Items/Item)
   }
@@ -157,8 +157,8 @@ template match="Customer" {
 }
 
 template match="Item" {
-  sku: @sku,
-  price: @price
+  sku: $sku,
+  price: $price
 }
 ```
 
@@ -274,7 +274,7 @@ payload.status match {
 
 **UTL-X:**
 ```utlx
-match input.status {
+match $input.status {
   "pending" => "Awaiting",
   "shipped" => "In Transit",
   _ => "Unknown"

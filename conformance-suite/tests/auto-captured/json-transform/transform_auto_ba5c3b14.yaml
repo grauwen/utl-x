@@ -15,7 +15,7 @@ transformation: |
   output json
   ---
   {
-    status: if (@input > 50) "HIGH" else "LOW"
+    status: if ($input > 50) "HIGH" else "LOW"
   }
   
 

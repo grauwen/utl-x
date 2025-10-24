@@ -19,11 +19,11 @@ transformation: |
   output json
   ---
   {
-    string_type: getType(@input.str),
-    number_type: getType(@input.num),
-    boolean_type: getType(@input.bool),
-    array_type: getType(@input.arr),
-    object_type: getType(@input.obj)
+    string_type: getType($input.str),
+    number_type: getType($input.num),
+    boolean_type: getType($input.bool),
+    array_type: getType($input.arr),
+    object_type: getType($input.obj)
   }
 
 expected:

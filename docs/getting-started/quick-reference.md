@@ -233,9 +233,9 @@ input xml
 output json
 ---
 {
-  id: input.Order.@id,
-  customer: input.Order.Customer.Name,
-  total: sum(input.Order.Items.Item.(@price * @quantity))
+  id: $input.Order.@id,
+  customer: $input.Order.Customer.Name,
+  total: sum($input.Order.Items.Item.($price * $quantity))
 }
 ```
 
@@ -248,9 +248,9 @@ output xml
 ---
 {
   Order: {
-    @id: input.orderId,
+    @id: $input.orderId,
     Customer: {
-      Name: input.customer.name
+      Name: $input.customer.name
     }
   }
 }
@@ -264,7 +264,7 @@ input csv { headers: true }
 output json
 ---
 {
-  records: input.rows |> map(row => {
+  records: $input.rows |> map(row => {
     name: row.Name,
     age: parseNumber(row.Age),
     email: row.Email
@@ -381,8 +381,8 @@ input.items |> groupBy(item => item.category)
 
 ```utlx
 {
-  newName: input.oldName,
-  newEmail: input.oldEmail
+  newName: $input.oldName,
+  newEmail: $input.oldEmail
 }
 ```
 
@@ -390,9 +390,9 @@ input.items |> groupBy(item => item.category)
 
 ```utlx
 {
-  id: input.order.id,
-  customerName: input.order.customer.name,
-  customerEmail: input.order.customer.email
+  id: $input.order.id,
+  customerName: $input.order.customer.name,
+  customerEmail: $input.order.customer.email
 }
 ```
 
@@ -400,9 +400,9 @@ input.items |> groupBy(item => item.category)
 
 ```utlx
 {
-  total: sum(input.items.*.price),
-  count: count(input.items),
-  average: avg(input.items.*.price)
+  total: sum($input.items.*.price),
+  count: count($input.items),
+  average: avg($input.items.*.price)
 }
 ```
 
@@ -411,8 +411,8 @@ input.items |> groupBy(item => item.category)
 ## Keyboard Shortcuts (CLI)
 
 ```bash
-utlx transform input.xml script.utlx           # Transform
-utlx transform input.xml script.utlx -o out.json  # With output
+utlx transform $input.xml script.utlx           # Transform
+utlx transform $input.xml script.utlx -o out.json  # With output
 utlx validate script.utlx                      # Validate syntax
 utlx --help                                    # Help
 utlx --version                                 # Version

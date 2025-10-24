@@ -21,7 +21,7 @@ transformation: |
   }
 
   {
-    sum: Add(@input.x, @input.y)
+    sum: Add($input.x, $input.y)
   }
 
 expected:

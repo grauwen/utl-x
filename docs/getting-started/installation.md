@@ -153,7 +153,7 @@ Create a test file:
 
 ```bash
 # Create test input
-echo '<root><message>Hello UTL-X!</message></root>' > test-input.xml
+echo '<root><message>Hello UTL-X!</message></root>' > test-$input.xml
 
 # Create test transformation
 cat > test-transform.utlx << 'EOF'
@@ -162,12 +162,12 @@ input xml
 output json
 ---
 {
-  greeting: input.root.message
+  greeting: $input.root.message
 }
 EOF
 
 # Run transformation
-utlx transform test-input.xml test-transform.utlx
+utlx transform test-$input.xml test-transform.utlx
 ```
 
 **Expected output:**

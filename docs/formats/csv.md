@@ -24,7 +24,7 @@ input csv {
 output json
 ---
 {
-  orders: input.rows 
+  orders: $input.rows 
     |> groupBy(row => row.order_id)
     |> entries()
     |> map(([orderId, rows]) => {
@@ -114,7 +114,7 @@ input csv {
 }
 ---
 {
-  people: input.rows |> map(row => {
+  people: $input.rows |> map(row => {
     name: row.name,
     age: parseNumber(row.age),
     city: row.city
@@ -135,7 +135,7 @@ input csv {
 }
 ---
 {
-  people: input.rows |> map(row => {
+  people: $input.rows |> map(row => {
     name: row[0],
     age: parseNumber(row[1]),
     city: row[2]
@@ -152,7 +152,7 @@ input csv {
 }
 ---
 {
-  people: input.rows |> map(row => {
+  people: $input.rows |> map(row => {
     name: row.name,
     age: parseNumber(row.age)
   })
@@ -181,7 +181,7 @@ output csv
 ---
 {
   headers: ["Name", "Email", "Total"],
-  rows: input.customers |> map(c => [
+  rows: $input.customers |> map(c => [
     c.name,
     c.email,
     c.total
@@ -215,7 +215,7 @@ Bob,bob@example.com,200
 ```utlx
 {
   headers: ["OrderID", "Customer", "ItemSKU", "Quantity"],
-  rows: input.orders |> flatMap(order =>
+  rows: $input.orders |> flatMap(order =>
     order.items |> map(item => [
       order.id,
       order.customer.name,
@@ -274,8 +274,8 @@ Multi-line fields are quoted.
 
 ```utlx
 {
-  headers: input.headers,
-  rows: input.rows |> filter(row => parseNumber(row.total) > 100)
+  headers: $input.headers,
+  rows: $input.rows |> filter(row => parseNumber(row.total) > 100)
 }
 ```
 
@@ -283,8 +283,8 @@ Multi-line fields are quoted.
 
 ```utlx
 {
-  headers: [...input.headers, "Tax"],
-  rows: input.rows |> map(row => [
+  headers: [...$input.headers, "Tax"],
+  rows: $input.rows |> map(row => [
     ...row,
     parseNumber(row.total) * 0.08
   ])
@@ -303,7 +303,7 @@ Tools,Hammer,50
 ```utlx
 {
   headers: ["Category", "TotalSales"],
-  rows: input.rows 
+  rows: $input.rows 
     |> groupBy(row => row.category)
     |> entries()
     |> map(([category, rows]) => [
@@ -344,8 +344,8 @@ function validateRow(row: Object): Boolean {
 }
 
 {
-  valid: input.rows |> filter(row => validateRow(row)),
-  invalid: input.rows |> filter(row => !validateRow(row))
+  valid: $input.rows |> filter(row => validateRow(row)),
+  invalid: $input.rows |> filter(row => !validateRow(row))
 }
 ```
 
@@ -353,7 +353,7 @@ function validateRow(row: Object): Boolean {
 
 ```utlx
 {
-  rows: input.rows |> map(row => {
+  rows: $input.rows |> map(row => {
     id: row.id,
     quantity: try { parseNumber(row.quantity) } catch { 0 },
     price: try { parseNumber(row.price) } catch { 0.00 },
@@ -406,7 +406,7 @@ input csv {
 
 ```utlx
 {
-  rows: input.rows |> filter(row =>
+  rows: $input.rows |> filter(row =>
     row.name != null &&
     row.email != null &&
     try { parseNumber(row.age) > 0 } catch { false }

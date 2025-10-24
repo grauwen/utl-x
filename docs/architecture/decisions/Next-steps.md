@@ -197,7 +197,7 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
     - Comparison: ==, !=, <, <=, >, >=
     - Logical: &&, ||
   - Unary operators: !, -
-  - Attribute access: @attribute
+  - Attribute access: $attribute
 
   Special Features
 
@@ -291,7 +291,7 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
   ---
   3. CURRENT PARSE TREE STRUCTURE
 
-  Example: input.items |> filter(x => x.price > 100)
+  Example: $input.items |> filter(x => x.price > 100)
 
   Grammar Specifies (lines 222-243):
   pipe-expression

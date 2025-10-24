@@ -21,7 +21,7 @@ transformation: |
   }
 
   {
-    result: sum(@input.numbers)
+    result: sum($input.numbers)
   }
 
 expected_error: "User-defined functions must start with uppercase letter"

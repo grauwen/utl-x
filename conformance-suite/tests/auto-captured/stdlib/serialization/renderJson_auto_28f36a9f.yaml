@@ -14,7 +14,7 @@ transformation: |
   input json
   output json
   ---
-  renderJson(@input)
+  renderJson($input)
   
 
 expected:

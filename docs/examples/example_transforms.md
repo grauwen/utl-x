@@ -39,26 +39,26 @@ output json
 ---
 {
   invoice: {
-    invoiceNumber: "INV-" + input.Order.@id,
+    invoiceNumber: "INV-" + $input.Order.@id,
     invoiceDate: now(),
-    orderDate: parseDate(input.Order.@date, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
-    currency: input.Order.@currency,
+    orderDate: parseDate($input.Order.@date, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    currency: $input.Order.@currency,
     
     customer: {
-      id: input.Order.Customer.CustomerID,
-      name: input.Order.Customer.Name,
-      email: input.Order.Customer.Email,
-      phone: input.Order.Customer.Phone,
+      id: $input.Order.Customer.CustomerID,
+      name: $input.Order.Customer.Name,
+      email: $input.Order.Customer.Email,
+      phone: $input.Order.Customer.Phone,
       billingAddress: {
-        street: input.Order.Customer.Address.Street,
-        city: input.Order.Customer.Address.City,
-        state: input.Order.Customer.Address.State,
-        postalCode: input.Order.Customer.Address.ZipCode,
-        country: input.Order.Customer.Address.Country
+        street: $input.Order.Customer.Address.Street,
+        city: $input.Order.Customer.Address.City,
+        state: $input.Order.Customer.Address.State,
+        postalCode: $input.Order.Customer.Address.ZipCode,
+        country: $input.Order.Customer.Address.Country
       }
     },
     
-    lineItems: input.Order.Items.Item |> map(item => {
+    lineItems: $input.Order.Items.Item |> map(item => {
       let subtotal = parseFloat(item.@unitPrice) * parseInt(item.@quantity),
       let tax = subtotal * parseFloat(item.@taxRate)
       
@@ -71,10 +71,10 @@ output json
     }),
     
     summary: {
-      let items = input.Order.Items.Item,
-      let subtotal = sum(items.(parseFloat(@unitPrice) * parseInt(@quantity))),
-      let tax = sum(items.(parseFloat(@unitPrice) * parseInt(@quantity) * parseFloat(@taxRate))),
-      let shipping = if (input.Order.ShippingMethod == "Express") 25.00 else 10.00
+      let items = $input.Order.Items.Item,
+      let subtotal = sum(items.(parseFloat($unitPrice) * parseInt($quantity))),
+      let tax = sum(items.(parseFloat($unitPrice) * parseInt($quantity) * parseFloat($taxRate))),
+      let shipping = if ($input.Order.ShippingMethod == "Express") 25.00 else 10.00
       
       subtotal: subtotal,
       tax: tax,
@@ -83,15 +83,15 @@ output json
     },
     
     shipping: {
-      method: input.Order.ShippingMethod,
-      estimatedDelivery: if (input.Order.ShippingMethod == "Express")
+      method: $input.Order.ShippingMethod,
+      estimatedDelivery: if ($input.Order.ShippingMethod == "Express")
         addDays(now(), 1)
       else
         addDays(now(), 5)
     },
     
     payment: {
-      method: input.Order.PaymentMethod,
+      method: $input.Order.PaymentMethod,
       status: "Pending"
     }
   }
@@ -213,7 +213,7 @@ output csv
 ---
 {
   headers: ["User ID", "Full Name", "Email", "Status", "Roles", "Member Since"],
-  rows: input.data.users |> map(user => [
+  rows: $input.data.users |> map(user => [
     user.id,
     user.first_name + " " + user.last_name,
     user.email,
@@ -261,23 +261,23 @@ output json
 ---
 {
   summary: {
-    totalLogs: count(input.logs),
+    totalLogs: count($input.logs),
     period: {
-      start: first(input.logs).timestamp,
-      end: last(input.logs).timestamp
+      start: first($input.logs).timestamp,
+      end: last($input.logs).timestamp
     },
     byLevel: {
-      errors: count(input.logs |> filter(log => log.level == "ERROR")),
-      warnings: count(input.logs |> filter(log => log.level == "WARN")),
-      info: count(input.logs |> filter(log => log.level == "INFO"))
+      errors: count($input.logs |> filter(log => log.level == "ERROR")),
+      warnings: count($input.logs |> filter(log => log.level == "WARN")),
+      info: count($input.logs |> filter(log => log.level == "INFO"))
     },
     byService: {
-      api: count(input.logs |> filter(log => log.service == "api")),
-      worker: count(input.logs |> filter(log => log.service == "worker"))
+      api: count($input.logs |> filter(log => log.service == "api")),
+      worker: count($input.logs |> filter(log => log.service == "worker"))
     }
   },
   
-  errors: input.logs 
+  errors: $input.logs 
     |> filter(log => log.level == "ERROR")
     |> map(log => {
          timestamp: log.timestamp,
@@ -286,12 +286,12 @@ output json
        }),
        
   recommendations: [
-    if (count(input.logs |> filter(log => log.level == "ERROR")) > 2)
+    if (count($input.logs |> filter(log => log.level == "ERROR")) > 2)
       "High error rate detected - investigate immediately"
     else
       "Error rate normal",
       
-    if (count(input.logs |> filter(log => log.level == "WARN")) > 0)
+    if (count($input.logs |> filter(log => log.level == "WARN")) > 0)
       "Warnings present - monitor closely"
     else
       "No warnings"
@@ -318,7 +318,7 @@ input csv
 output json
 ---
 {
-  products: input.rows |> map(row => {
+  products: $input.rows |> map(row => {
     let price = parseFloat(row.Price),
     let category = row.Category
     
@@ -392,11 +392,11 @@ output json
 ---
 {
   order: {
-    id: input.{"soap:Envelope"}.{"soap:Body"}.{"ord:OrderResponse"}.{"ord:OrderId"},
-    status: input.{"soap:Envelope"}.{"soap:Body"}.{"ord:OrderResponse"}.{"ord:Status"},
+    id: $input.{"soap:Envelope"}.{"soap:Body"}.{"ord:OrderResponse"}.{"ord:OrderId"},
+    status: $input.{"soap:Envelope"}.{"soap:Body"}.{"ord:OrderResponse"}.{"ord:Status"},
     customer: {
-      name: input.{"soap:Envelope"}.{"soap:Body"}.{"ord:OrderResponse"}.{"cust:CustomerInfo"}.{"cust:Name"},
-      email: input.{"soap:Envelope"}.{"soap:Body"}.{"ord:OrderResponse"}.{"cust:CustomerInfo"}.{"cust:Email"}
+      name: $input.{"soap:Envelope"}.{"soap:Body"}.{"ord:OrderResponse"}.{"cust:CustomerInfo"}.{"cust:Name"},
+      email: $input.{"soap:Envelope"}.{"soap:Body"}.{"ord:OrderResponse"}.{"cust:CustomerInfo"}.{"cust:Email"}
     }
   }
 }
@@ -427,24 +427,24 @@ output json
 ---
 {
   report: {
-    totalRevenue: sum(input.sales.(revenue)),
-    totalQuantity: sum(input.sales.(quantity)),
+    totalRevenue: sum($input.sales.(revenue)),
+    totalQuantity: sum($input.sales.(quantity)),
     
-    byRegion: groupBy(input.sales, sale => sale.region) |> map((region, sales) => {
+    byRegion: groupBy($input.sales, sale => sale.region) |> map((region, sales) => {
       region: region,
       revenue: sum(sales.(revenue)),
       quantity: sum(sales.(quantity)),
       products: count(unique(sales.(product)))
     }),
     
-    byProduct: groupBy(input.sales, sale => sale.product) |> map((product, sales) => {
+    byProduct: groupBy($input.sales, sale => sale.product) |> map((product, sales) => {
       product: product,
       revenue: sum(sales.(revenue)),
       quantity: sum(sales.(quantity)),
       regions: count(unique(sales.(region)))
     }),
     
-    topProducts: input.sales
+    topProducts: $input.sales
       |> groupBy(sale => sale.product)
       |> map((product, sales) => {
            product: product,

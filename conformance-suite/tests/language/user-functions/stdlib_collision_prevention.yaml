@@ -21,7 +21,7 @@ transformation: |
   }
 
   {
-    result: sum(@input.numbers)
+    result: sum($input.numbers)
   }
 
 error_expected:

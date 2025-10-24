@@ -28,13 +28,13 @@ input xml
 output json
 ---
 {
-  orderId: input.Order.@id,
-  orderDate: input.Order.@date,
+  orderId: $input.Order.@id,
+  orderDate: $input.Order.@date,
   customer: {
-    name: input.Order.Customer.Name,
-    email: input.Order.Customer.Email
+    name: $input.Order.Customer.Name,
+    email: $input.Order.Customer.Email
   },
-  items: input.Order.Items.Item |> map(item => {
+  items: $input.Order.Items.Item |> map(item => {
     sku: item.@sku,
     quantity: parseNumber(item.@quantity),
     price: parseNumber(item.@price)
@@ -101,8 +101,8 @@ input.Order.Items.Item.@sku      // All sku attributes
 **UTL-X:**
 ```utlx
 {
-  id: input.Product.@id,         // Attribute
-  name: input.Product.Name       // Element
+  id: $input.Product.@id,         // Attribute
+  name: $input.Product.Name       // Element
 }
 ```
 
@@ -137,7 +137,7 @@ output json
 ```utlx
 {
   customer: {
-    name: input.{"ord:Order"}.{"cust:Customer"}.{"cust:Name"}
+    name: $input.{"ord:Order"}.{"cust:Customer"}.{"cust:Name"}
   }
 }
 ```
@@ -235,9 +235,9 @@ input xml
 output json
 ---
 {
-  name: input.Person.Name,
-  age: parseNumber(input.Person.Age),
-  active: input.Person.Active == "true"
+  name: $input.Person.Name,
+  age: parseNumber($input.Person.Age),
+  active: $input.Person.Active == "true"
 }
 ```
 
@@ -264,7 +264,7 @@ output json
 **UTL-X:**
 ```utlx
 {
-  products: input.Products.Product |> map(p => {
+  products: $input.Products.Product |> map(p => {
     id: p.@id,
     name: p
   })
@@ -304,8 +304,8 @@ output xml
 ---
 {
   Person: {
-    Name: input.person.name,
-    Age: input.person.age
+    Name: $input.person.name,
+    Age: $input.person.age
   }
 }
 ```
@@ -345,7 +345,7 @@ Use `@` prefix:
 ```utlx
 {
   Products: {
-    Product: input.items |> map(item => {
+    Product: $input.items |> map(item => {
       @id: item.id,
       Name: item.name
     })
@@ -405,7 +405,7 @@ output json
 
 template match="Order" {
   {
-    id: @id,
+    id: $id,
     customer: apply(Customer),
     items: apply(Items/Item)
   }
@@ -420,9 +420,9 @@ template match="Customer" {
 
 template match="Item" {
   {
-    sku: @sku,
-    quantity: parseNumber(@quantity),
-    price: parseNumber(@price)
+    sku: $sku,
+    quantity: parseNumber($quantity),
+    price: parseNumber($price)
   }
 }
 ```
@@ -433,12 +433,12 @@ UTL-X selectors are similar to XPath:
 
 | XPath | UTL-X |
 |-------|-------|
-| `/Order` | `input.Order` |
-| `/Order/@id` | `input.Order.@id` |
-| `/Order/Items/Item` | `input.Order.Items.Item` |
-| `/Order/Items/Item[1]` | `input.Order.Items.Item[0]` |
-| `/Order/Items/Item[@price>100]` | `input.Order.Items.Item[price>100]` |
-| `//ProductCode` | `input..ProductCode` |
+| `/Order` | `$input.Order` |
+| `/Order/@id` | `$input.Order.@id` |
+| `/Order/Items/Item` | `$input.Order.Items.Item` |
+| `/Order/Items/Item[1]` | `$input.Order.Items.Item[0]` |
+| `/Order/Items/Item[@price>100]` | `$input.Order.Items.Item[price>100]` |
+| `//ProductCode` | `$input..ProductCode` |
 
 ## Common XML Patterns
 
@@ -446,9 +446,9 @@ UTL-X selectors are similar to XPath:
 
 ```utlx
 {
-  name: input.Person.Name,
-  email: input.Person.Email ?? "no-email@example.com",
-  phone: input.Person.Phone ?? null
+  name: $input.Person.Name,
+  email: $input.Person.Email ?? "no-email@example.com",
+  phone: $input.Person.Phone ?? null
 }
 ```
 
@@ -467,8 +467,8 @@ UTL-X selectors are similar to XPath:
 
 ```utlx
 {
-  city: input.Order.Shipping.Address.City,
-  state: input.Order.Shipping.Address.State
+  city: $input.Order.Shipping.Address.City,
+  state: $input.Order.Shipping.Address.State
 }
 ```
 
@@ -484,7 +484,7 @@ UTL-X selectors are similar to XPath:
 
 ```utlx
 {
-  grouped: input.Items.Item 
+  grouped: $input.Items.Item 
     |> groupBy(item => item.@category)
     |> entries()
     |> map(([category, items]) => {
@@ -521,10 +521,10 @@ input xml {
 
 ```utlx
 // ✅ Good
-city: input.Order.Shipping?.Address?.City ?? "Unknown"
+city: $input.Order.Shipping?.Address?.City ?? "Unknown"
 
 // ❌ Bad - might crash
-city: input.Order.Shipping.Address.City
+city: $input.Order.Shipping.Address.City
 ```
 
 ### 4. Validate Input

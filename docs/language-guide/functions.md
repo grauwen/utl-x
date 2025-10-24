@@ -598,7 +598,7 @@ triple(5)  // 15
 Chain function calls:
 
 ```utlx
-let result = input.items
+let result = $input.items
   |> filter(item => item.price > 50)
   |> map(item => item.name)
   |> sort()
@@ -614,7 +614,7 @@ let processItems = compose(
   names => sort(names)
 )
 
-processItems(input.items)
+processItems($input.items)
 ```
 
 ## Recursion

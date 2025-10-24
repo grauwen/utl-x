@@ -246,7 +246,7 @@ guard ::= 'if' expression
 
 **Example (WORKS):**
 ```utlx
-match (@input.score) {
+match ($input.score) {
   n if n >= 90 => "A",
   n if n >= 80 => "B",
   n if n >= 70 => "C",
@@ -472,7 +472,7 @@ block ::= '{' {statement} expression '}'
 **Example (WORKS):**
 ```utlx
 try {
-  @input.value / @input.divisor
+  $input.value / $input.divisor
 } catch (e) {
   "Error: " + e  // e contains the error message
 }
@@ -574,12 +574,12 @@ keyword ::= ... | 'typeof'
 
 **Example (NOT working):**
 ```utlx
-typeof input.value  // NOT IMPLEMENTED
+typeof $input.value  // NOT IMPLEMENTED
 ```
 
 **Workaround:**
 ```utlx
-getType(input.value)  // Works - stdlib function
+getType($input.value)  // Works - stdlib function
 ```
 
 ---

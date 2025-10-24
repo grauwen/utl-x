@@ -25,7 +25,7 @@ output xml {encoding: "UTF-8"}
 
 ```bash
 # Single input (backward compatible)
-utlx transform script.utlx input.xml -o output.json
+utlx transform script.utlx $input.xml -o output.json
 
 # Multiple named inputs
 utlx transform script.utlx \
@@ -44,12 +44,12 @@ utlx transform script.utlx \
 
 ```utlx
 # Access by name
-@input1.Customer.Name
-@input2.order.total
-@input3.rows[0]
+$input1.Customer.Name
+$input2.order.total
+$input3.rows[0]
 
 # Backward compatible
-@input  # Always refers to first input
+$input  # Always refers to first input
 ```
 
 ## Common Patterns
@@ -63,8 +63,8 @@ output xml
 ---
 {
   Merged: {
-    FromSource1: @source1,
-    FromSource2: @source2
+    FromSource1: $source1,
+    FromSource2: $source2
   }
 }
 ```
@@ -77,8 +77,8 @@ input: mainData json, lookupData xml
 output json
 ---
 {
-  EnrichedData: @mainData.items |> map(item => {
-    let lookup = @lookupData.Lookup.Item
+  EnrichedData: $mainData.items |> map(item => {
+    let lookup = $lookupData.Lookup.Item
       |> filter(l => l.@id == item.id)
       |> first()
 
@@ -99,9 +99,9 @@ output json
 ---
 {
   Report: {
-    SalesData: @sales.rows,
-    InventoryData: @inventory.Items.Item,
-    PricingData: @pricing.prices
+    SalesData: $sales.rows,
+    InventoryData: $inventory.Items.Item,
+    PricingData: $pricing.prices
   }
 }
 ```
@@ -115,12 +115,12 @@ output json
 ---
 {
   Metadata: {
-    legacyEncoding: detectXMLEncoding(@legacy),
-    modernEncoding: detectXMLEncoding(@modern)
+    legacyEncoding: detectXMLEncoding($legacy),
+    modernEncoding: detectXMLEncoding($modern)
   },
   Data: {
-    Legacy: @legacy,
-    Modern: @modern
+    Legacy: $legacy,
+    Modern: $modern
   }
 }
 ```
@@ -167,9 +167,9 @@ output xml {encoding: "UTF-8"}
 ---
 {
   Normalized: {
-    SAP: @sapData,
-    API: @modernAPI,
-    SAPOriginalEncoding: detectXMLEncoding(@sapData)
+    SAP: $sapData,
+    API: $modernAPI,
+    SAPOriginalEncoding: detectXMLEncoding($sapData)
   }
 }
 ```
@@ -192,12 +192,12 @@ output json
 {
   Sources: [
     {
-      data: @source1,
-      encoding: detectXMLEncoding(@source1)
+      data: $source1,
+      encoding: detectXMLEncoding($source1)
     },
     {
-      data: @source2,
-      encoding: detectXMLEncoding(@source2)
+      data: $source2,
+      encoding: detectXMLEncoding($source2)
     }
   ]
 }
@@ -208,7 +208,7 @@ output json
 ### Pattern 1: Safe Lookup
 
 ```utlx
-let enrichment = @lookupData.items
+let enrichment = $lookupData.items
   |> filter(item => item.id == currentId)
   |> first()
 
@@ -219,8 +219,8 @@ let value = enrichment?.value ?? "DEFAULT"
 
 ```utlx
 {
-  Results: @mainData.items |> map(item => {
-    let ref = @refData.refs |> filter(r => r.key == item.key) |> first()
+  Results: $mainData.items |> map(item => {
+    let ref = $refData.refs |> filter(r => r.key == item.key) |> first()
 
     {
       id: item.id,
@@ -237,10 +237,10 @@ let value = enrichment?.value ?? "DEFAULT"
 ```utlx
 {
   Validation: {
-    input1Present: count(@input1) > 0,
-    input2Present: count(@input2) > 0
+    input1Present: count($input1) > 0,
+    input2Present: count($input2) > 0
   },
-  Data: if (count(@input1) > 0 && count(@input2) > 0) {
+  Data: if (count($input1) > 0 && count($input2) > 0) {
     # Process data
     Combined: {...}
   } else {
@@ -251,7 +251,7 @@ let value = enrichment?.value ?? "DEFAULT"
 
 ## Performance Tips
 
-1. **Use specific paths:** `@input1.Customer.Name` vs `@input1..Name`
+1. **Use specific paths:** `$input1.Customer.Name` vs `$input1..Name`
 2. **Filter early:** Filter before mapping to reduce iterations
 3. **Avoid nested lookups:** Use let bindings to cache lookups
 4. **Minimize deep copies:** Reference data when possible

@@ -19,8 +19,8 @@ input auto
 output json
 ---
 {
-  name: input.person.name,
-  age: input.person.age
+  name: $input.person.name,
+  age: $input.person.age
 }
 ```
 
@@ -126,8 +126,8 @@ let wrong: Number = "hello"  // ❌ ERROR
 ```utlx
 // UTL-X: Concise, modern syntax
 template match="Order" {
-  orderId: @id,
-  total: sum(Items/Item/(@price * @quantity))
+  orderId: $id,
+  total: sum(Items/Item/($price * $quantity))
 }
 ```
 
@@ -149,8 +149,8 @@ input xml
 output json
 ---
 {
-  orderId: input.Order.@id,
-  total: sum(input.Order.Items.Item.(@price * @quantity))
+  orderId: $input.Order.@id,
+  total: sum($input.Order.Items.Item.($price * $quantity))
 }
 ```
 
@@ -188,7 +188,7 @@ output json
 
 // 4. Transformation
 {
-  result: input.data
+  result: $input.data
 }
 ```
 
@@ -252,7 +252,7 @@ Built-in and user-defined:
 // Built-in functions
 sum([1, 2, 3])              // 6
 upper("hello")              // "HELLO"
-count(input.items)          // Number of items
+count($input.items)          // Number of items
 
 // User-defined functions
 function calculateTax(amount: Number, rate: Number): Number {
@@ -267,7 +267,7 @@ XSLT-style template matching:
 ```utlx
 template match="Order" {
   order: {
-    id: @id,
+    id: $id,
     customer: apply(Customer),
     items: apply(Items/Item)
   }
@@ -347,8 +347,8 @@ match orderType {
 
 ```utlx
 {
-  newName: input.oldName,
-  newEmail: input.oldEmail
+  newName: $input.oldName,
+  newEmail: $input.oldEmail
 }
 ```
 
@@ -356,9 +356,9 @@ match orderType {
 
 ```utlx
 {
-  orderId: input.order.id,
-  customerName: input.order.customer.name,
-  customerEmail: input.order.customer.email
+  orderId: $input.order.id,
+  customerName: $input.order.customer.name,
+  customerEmail: $input.order.customer.email
 }
 ```
 
@@ -366,7 +366,7 @@ match orderType {
 
 ```utlx
 {
-  products: input.products |> map(p => {
+  products: $input.products |> map(p => {
     id: p.id,
     name: upper(p.name),
     price: p.price * 1.1
@@ -378,9 +378,9 @@ match orderType {
 
 ```utlx
 {
-  expensiveItems: input.items |> filter(i => i.price > 100),
-  totalValue: sum(input.items.*.price),
-  itemCount: count(input.items)
+  expensiveItems: $input.items |> filter(i => i.price > 100),
+  totalValue: sum($input.items.*.price),
+  itemCount: count($input.items)
 }
 ```
 
@@ -388,7 +388,7 @@ match orderType {
 
 ```utlx
 {
-  byCategory: input.products 
+  byCategory: $input.products 
     |> groupBy(p => p.category)
     |> map((category, products) => {
         category: category,
@@ -480,8 +480,8 @@ output json
 ---
 {
   user: {
-    id: input.soap:Envelope.soap:Body.GetUserResponse.User.@id,
-    name: input.soap:Envelope.soap:Body.GetUserResponse.User.Name
+    id: $input.soap:Envelope.soap:Body.GetUserResponse.User.@id,
+    name: $input.soap:Envelope.soap:Body.GetUserResponse.User.Name
   }
 }
 ```
@@ -497,7 +497,7 @@ input csv { headers: true }
 output json
 ---
 {
-  records: input.rows |> map(row => {
+  records: $input.rows |> map(row => {
     id: parseNumber(row.ID),
     fullName: row.FirstName + " " + row.LastName,
     email: lower(row.Email)
@@ -517,11 +517,11 @@ output json
 ---
 {
   summary: {
-    totalOrders: count(input.Orders.Order),
-    totalRevenue: sum(input.Orders.Order.*.Total),
-    avgOrderValue: avg(input.Orders.Order.*.Total)
+    totalOrders: count($input.Orders.Order),
+    totalRevenue: sum($input.Orders.Order.*.Total),
+    avgOrderValue: avg($input.Orders.Order.*.Total)
   },
-  byRegion: input.Orders.Order 
+  byRegion: $input.Orders.Order 
     |> groupBy(o => o.Region)
     |> map((region, orders) => {
         region: region,
@@ -543,9 +543,9 @@ output yaml
 ---
 {
   application: {
-    name: input.config.app.@name,
-    version: input.config.app.@version,
-    settings: input.config.settings.* |> map(s => {
+    name: $input.config.app.@name,
+    version: $input.config.app.@version,
+    settings: $input.config.settings.* |> map(s => {
       key: s.@key,
       value: s.text()
     })

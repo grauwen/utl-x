@@ -24,9 +24,9 @@ transformation: |
   }
 
   {
-    value: @input.value,
-    squared: Square(@input.value),
-    cubed: Cube(@input.value)
+    value: $input.value,
+    squared: Square($input.value),
+    cubed: Cube($input.value)
   }
 
 expected:

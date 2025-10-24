@@ -29,7 +29,7 @@ input json
 output json
 ---
 {
-  items: input.data |> filter(item => item.price > 100)
+  items: $input.data |> filter(item => item.price > 100)
 }
  ⁠
 

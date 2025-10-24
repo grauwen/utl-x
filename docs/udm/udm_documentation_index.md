@@ -217,12 +217,12 @@ This is the complete documentation for UTL-X's **Universal Data Model (UDM)**. T
 
 | Pattern | Example | Result |
 |---------|---------|--------|
-| Property | `input.customer.name` | Single node |
-| Index | `input.items[0]` | Element at index |
-| Wildcard | `input.items[*].price` | All prices |
-| Attribute | `input.order.@id` | Attribute value |
-| Recursive | `input..name` | All name properties |
-| Predicate | `input.items[price > 50]` | Filtered items |
+| Property | `$input.customer.name` | Single node |
+| Index | `$input.items[0]` | Element at index |
+| Wildcard | `$input.items[*].price` | All prices |
+| Attribute | `$input.order.@id` | Attribute value |
+| Recursive | `$input..name` | All name properties |
+| Predicate | `$input.items[price > 50]` | Filtered items |
 
 ### Format Mappings
 
@@ -330,7 +330,7 @@ ArrayNode([
 **A:** Yes, use streaming parsers. See: [Advanced Guide → Streaming](./udm-advanced-implementation.md#streaming--large-files)
 
 ### Q: How do I navigate UDM?
-**A:** Use path expressions like `input.order.customer.name`. See: [Complete Guide → Navigation](./udm-complete-guide.md#navigation--selectors)
+**A:** Use path expressions like `$input.order.customer.name`. See: [Complete Guide → Navigation](./udm-complete-guide.md#navigation--selectors)
 
 ### Q: Can I extend UDM?
 **A:** Yes, through custom parsers, value types, and validators. See: [Advanced Guide → Extension Points](./udm-advanced-implementation.md#extension-points)

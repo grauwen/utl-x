@@ -16,35 +16,35 @@ UTL-X includes a comprehensive logging system built on industry-standard framewo
 **Via CLI flags** (recommended for interactive use):
 ```bash
 # Enable DEBUG for all components
-./utlx transform script.utlx input.json --debug
+./utlx transform script.utlx $input.json --debug
 
 # Enable DEBUG for specific component
-./utlx transform script.utlx input.json --debug-parser
-./utlx transform script.utlx input.json --debug-lexer
-./utlx transform script.utlx input.json --debug-interpreter
+./utlx transform script.utlx $input.json --debug-parser
+./utlx transform script.utlx $input.json --debug-lexer
+./utlx transform script.utlx $input.json --debug-interpreter
 
 # Combine multiple components
-./utlx transform script.utlx input.json --debug-parser --debug-lexer
+./utlx transform script.utlx $input.json --debug-parser --debug-lexer
 
 # Enable TRACE level (most verbose)
-./utlx transform script.utlx input.json --trace
+./utlx transform script.utlx $input.json --trace
 ```
 
 **Via environment variables** (recommended for scripts/automation):
 ```bash
 # Set global log level
 export UTLX_LOG_LEVEL=DEBUG
-./utlx transform script.utlx input.json
+./utlx transform script.utlx $input.json
 
 # Enable specific component
 export UTLX_DEBUG_PARSER=true
-./utlx transform script.utlx input.json
+./utlx transform script.utlx $input.json
 
 # Multiple components
 export UTLX_DEBUG_LEXER=true
 export UTLX_DEBUG_PARSER=true
 export UTLX_DEBUG_INTERPRETER=true
-./utlx transform script.utlx input.json
+./utlx transform script.utlx $input.json
 ```
 
 **Via configuration file** (recommended for persistent settings):
@@ -166,7 +166,7 @@ Format parsers and serializers (XML, JSON, CSV, YAML).
 
 ```bash
 # Enable lexer and parser debugging
-./utlx transform script.utlx input.json --debug-lexer --debug-parser
+./utlx transform script.utlx $input.json --debug-lexer --debug-parser
 ```
 
 This shows:
@@ -177,7 +177,7 @@ This shows:
 
 ```bash
 # Enable interpreter debugging
-./utlx transform script.utlx input.json --debug-interpreter
+./utlx transform script.utlx $input.json --debug-interpreter
 ```
 
 This shows:
@@ -189,7 +189,7 @@ This shows:
 
 ```bash
 # Enable all components with timestamps
-./utlx transform script.utlx input.json --debug --verbose
+./utlx transform script.utlx $input.json --debug --verbose
 ```
 
 Log timestamps show execution timing for each phase.
@@ -198,7 +198,7 @@ Log timestamps show execution timing for each phase.
 
 ```bash
 # Enable TRACE level for maximum verbosity
-./utlx transform script.utlx input.json --trace
+./utlx transform script.utlx $input.json --trace
 ```
 
 **Warning:** TRACE level generates significant output. Use for small test cases only.
@@ -284,13 +284,13 @@ Logs are written to: `logs/utlx-debug.log` with 7-day rotation.
 **Check 1:** Verify the log level
 ```bash
 # Ensure DEBUG is enabled
-./utlx transform script.utlx input.json --debug 2>&1 | grep DEBUG
+./utlx transform script.utlx $input.json --debug 2>&1 | grep DEBUG
 ```
 
 **Check 2:** Ensure stderr isn't redirected
 ```bash
 # Logs go to stderr, not stdout
-./utlx transform script.utlx input.json --debug 2>&1
+./utlx transform script.utlx $input.json --debug 2>&1
 ```
 
 **Check 3:** Check for conflicting environment variables
@@ -303,7 +303,7 @@ unset UTLX_LOG_LEVEL UTLX_DEBUG_PARSER UTLX_DEBUG_LEXER
 
 ```bash
 # Enable only specific components
-./utlx transform script.utlx input.json --debug-parser
+./utlx transform script.utlx $input.json --debug-parser
 
 # Or reduce to INFO level
 export UTLX_LOG_LEVEL=INFO
@@ -323,10 +323,10 @@ Debug logging has minimal performance impact due to:
 1. **Start specific, then broaden**
    ```bash
    # Start with one component
-   ./utlx transform script.utlx input.json --debug-parser
+   ./utlx transform script.utlx $input.json --debug-parser
 
    # If needed, add more
-   ./utlx transform script.utlx input.json --debug-parser --debug-lexer
+   ./utlx transform script.utlx $input.json --debug-parser --debug-lexer
    ```
 
 2. **Use environment variables for CI/CD**
@@ -340,7 +340,7 @@ Debug logging has minimal performance impact due to:
    ```bash
    # Create ./utlx-logging.properties with your preferred settings
    # No need to remember CLI flags
-   ./utlx transform script.utlx input.json
+   ./utlx transform script.utlx $input.json
    ```
 
 4. **Disable logging in production**
@@ -354,7 +354,7 @@ Debug logging has minimal performance impact due to:
 ### Debug a Parse Error
 
 ```bash
-$ ./utlx transform bad-script.utlx input.json --debug-parser
+$ ./utlx transform bad-script.utlx $input.json --debug-parser
 
 11:35:09.793 DEBUG o.a.utlx.core.parser.Parser_impl - Starting parse, 24 tokens
 11:35:09.802 ERROR o.a.utlx.core.parser.Parser_impl - Parse exception: Expected ':' after property name

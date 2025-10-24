@@ -40,8 +40,8 @@ The **Universal Data Model (UDM)** is UTL-X's internal representation of data th
 ```utlx
 // Same transformation works for XML, JSON, CSV input
 {
-  name: input.Customer.Name,
-  total: sum(input.Orders.*.Total)
+  name: $input.Customer.Name,
+  total: sum($input.Orders.*.Total)
 }
 ```
 
@@ -448,7 +448,7 @@ input.items[price > 50]
 
 **Example 1: Simple Path**
 ```kotlin
-// input.order.customer.name
+// $input.order.customer.name
 val result = input
     .get("order")
     .get("customer")
@@ -458,8 +458,8 @@ val result = input
 
 **Example 2: Array Wildcard**
 ```kotlin
-// input.items[*].price
-val items = input.get("items") as ArrayNode
+// $input.items[*].price
+val items = $input.get("items") as ArrayNode
 val prices = items.elements.map { item ->
     (item as ObjectNode).get("price")
 }
@@ -468,8 +468,8 @@ val prices = items.elements.map { item ->
 
 **Example 3: Attribute Access**
 ```kotlin
-// input.order.@id
-val order = input.get("order") as ObjectNode
+// $input.order.@id
+val order = $input.get("order") as ObjectNode
 val id = order.metadata.attributes["id"]
 // Result: "ORD-001"
 ```
@@ -685,7 +685,7 @@ fun transform(input: UDMNode): UDMNode {
         is ObjectNode -> {
             // Only create new node if properties change
             if (needsTransformation(input)) {
-                ObjectNode(transformProperties(input.properties))
+                ObjectNode(transformProperties($input.properties))
             } else {
                 input  // Reuse existing node
             }
@@ -755,7 +755,7 @@ input xml
 output json
 ---
 {
-  customers: input.customers.customer |> map(c => {
+  customers: $input.customers.customer |> map(c => {
     id: c.@id,
     name: c.name,
     orderCount: count(c.orders.order),
@@ -815,7 +815,7 @@ output csv
 ---
 {
   headers: ["Name", "Age", "Email"],
-  rows: input.users |> map(u => [u.name, u.age, u.email])
+  rows: $input.users |> map(u => [u.name, u.age, u.email])
 }
 ```
 
@@ -856,10 +856,10 @@ output json
 ---
 {
   summary: {
-    totalOrders: count(input..order),
-    totalValue: sum(input..order.*.total),
-    averageValue: avg(input..order.*.total),
-    customers: distinct(input..customer.*.name)
+    totalOrders: count($input..order),
+    totalValue: sum($input..order.*.total),
+    averageValue: avg($input..order.*.total),
+    customers: distinct($input..customer.*.name)
   }
 }
 ```
@@ -890,10 +890,10 @@ ObjectNode(mapOf(
 
 ```kotlin
 // ❌ Bad: Losing XML attributes
-val name = input.get("customer").get("name")
+val name = $input.get("customer").get("name")
 
 // ✅ Good: Preserve metadata
-val customer = input.get("customer") as ObjectNode
+val customer = $input.get("customer") as ObjectNode
 val customerId = customer.metadata.attributes["id"]
 val name = customer.get("name")
 ```

@@ -369,7 +369,7 @@ output json schema "invoice-v1.json"
 validation policy WARN_AND_CONTINUE
 ---
 {
-    invoiceId: "INV-" + input.Order.@id,
+    invoiceId: "INV-" + $input.Order.@id,
     /* ... transformation ... */
 }
 ```
@@ -466,11 +466,11 @@ class SchemaAwareCompiler {
 Error: Input path validation failed
   --> transform.utlx:12:15
    |
-12 |     customer: input.Order.Client.Name
+12 |     customer: $input.Order.Client.Name
    |               ^^^^^^^^^^^^^^^^^^^^^^^ Path 'Order.Client.Name' not found
    |
 Note: Schema defines 'Order.Customer.Name', not 'Order.Client.Name'
-Help: Did you mean 'input.Order.Customer.Name'?
+Help: Did you mean '$input.Order.Customer.Name'?
 ```
 
 ### 2.3 Compiled Transform with Schema Metadata
@@ -2028,7 +2028,7 @@ class UTLXMessageFlow {
     }
 
     fun evaluate(input: MbMessage): MbMessage {
-        val inputXML = input.root.toString()
+        val inputXML = $input.root.toString()
 
         try {
             val output = executor.transform(inputXML)
@@ -2077,10 +2077,10 @@ class UTLXMessageFlow {
 
 ```kotlin
 // Old CLI (still works)
-./utlx transform input.xml transform.utlx
+./utlx transform $input.xml transform.utlx
 
 // New CLI with validation
-./utlx transform input.xml transform.utlx \
+./utlx transform $input.xml transform.utlx \
     --schema input-schema.xsd \
     --validate \
     --validation-policy WARN_AND_CONTINUE

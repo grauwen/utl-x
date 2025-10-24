@@ -96,17 +96,17 @@ output json
 
 {
   // Format date for different locales
-  usDate: formatDate(input.eventDate, "MMMM dd, yyyy", "en-US"),
+  usDate: formatDate($input.eventDate, "MMMM dd, yyyy", "en-US"),
   // Output: "October 20, 2025"
   
-  deDate: formatDate(input.eventDate, "dd. MMMM yyyy", "de-DE"),
+  deDate: formatDate($input.eventDate, "dd. MMMM yyyy", "de-DE"),
   // Output: "20. Oktober 2025"
   
-  frDate: formatDate(input.eventDate, "dd MMMM yyyy", "fr-FR"),
+  frDate: formatDate($input.eventDate, "dd MMMM yyyy", "fr-FR"),
   // Output: "20 octobre 2025"
   
   // Locale-aware with options
-  localizedFull: toLocaleDateString(input.eventDate, "es-419", {
+  localizedFull: toLocaleDateString($input.eventDate, "es-419", {
     weekday: "long",
     year: "numeric",
     month: "long",

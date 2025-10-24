@@ -23,7 +23,7 @@ input csv {
 output json
 ---
 {
-  users: input.rows |> map(row => {
+  users: $input.rows |> map(row => {
     id: parseNumber(row.id),
     name: row.name,
     email: row.email,
@@ -68,7 +68,7 @@ output csv
 ---
 {
   headers: ["SKU", "Product Name", "Price", "In Stock"],
-  rows: input.products |> map(p => [
+  rows: $input.products |> map(p => [
     p.sku,
     p.name,
     p.price,
@@ -106,8 +106,8 @@ input csv {headers: true}
 output csv
 ---
 {
-  headers: input.headers,
-  rows: input.rows 
+  headers: $input.headers,
+  rows: $input.rows 
     |> filter(row => row.status == "completed")
     |> filter(row => parseNumber(row.total) > 200)
 }
@@ -140,8 +140,8 @@ input csv {headers: true}
 output csv
 ---
 {
-  headers: [...input.headers, "total"],
-  rows: input.rows |> map(row => [
+  headers: [...$input.headers, "total"],
+  rows: $input.rows |> map(row => [
     row.product,
     row.quantity,
     row.price_per_unit,
@@ -181,7 +181,7 @@ output csv
 ---
 {
   headers: ["Category", "Total Sales", "Product Count"],
-  rows: input.rows 
+  rows: $input.rows 
     |> groupBy(row => row.category)
     |> entries()
     |> map(([category, rows]) => [
@@ -220,7 +220,7 @@ input csv {headers: true}
 output json
 ---
 {
-  pivot: input.rows 
+  pivot: $input.rows 
     |> groupBy(row => row.date)
     |> entries()
     |> map(([date, rows]) => {
@@ -264,13 +264,13 @@ input csv {headers: true}
 output json
 ---
 {
-  valid: input.rows |> filter(row =>
+  valid: $input.rows |> filter(row =>
     row.id != null &&
     matches(row.email, ".*@.*\\..*") &&
     try { parseNumber(row.age) > 0 } catch { false }
   ),
   
-  invalid: input.rows |> filter(row =>
+  invalid: $input.rows |> filter(row =>
     row.id == null ||
     !matches(row.email, ".*@.*\\..*") ||
     try { parseNumber(row.age) <= 0 } catch { true }

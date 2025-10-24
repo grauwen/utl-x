@@ -54,8 +54,8 @@ UTL-X was designed to support **two transformation styles**:
 **Style 1: Functional/Expression-Based** (like DataWeave, JSONata)
 ```utlx
 {
-  name: @input.customerName,
-  total: sum(map(@input.items, item => item.price))
+  name: $input.customerName,
+  total: sum(map($input.items, item => item.price))
 }
 ```
 
@@ -63,7 +63,7 @@ UTL-X was designed to support **two transformation styles**:
 ```utlx
 template match="Order" {
   invoice: {
-    id: @id,
+    id: $id,
     customer: apply(Customer)
   }
 }
@@ -91,8 +91,8 @@ expression ::= assignment-expression
 
 **Evidence from tests:**
 ```utlx
-@input / 0                           # Single expression
-@input.items |> filter(...) |> map(...)  # Composed expressions
+$input / 0                           # Single expression
+$input.items |> filter(...) |> map(...)  # Composed expressions
 ```
 
 ### 2.2 Operator Precedence Hierarchy ✓
@@ -135,10 +135,10 @@ postfix-operator ::= member-access | index-access | ... | attribute-access
 
 **Reality in All Tests:**
 ```utlx
-@input                          # @ is INPUT BINDING prefix
-@input.customerName             # @ prefixes input, not attributes
-map(@input.items, item => ...)  # @ always means "the input data"
-@input / 0                      # @ is a primary construct
+$input                          # @ is INPUT BINDING prefix
+$input.customerName             # @ prefixes input, not attributes
+map($input.items, item => ...)  # @ always means "the input data"
+$input / 0                      # @ is a primary construct
 ```
 
 **Analysis:** FUNDAMENTAL MISMATCH
@@ -152,7 +152,7 @@ map(@input.items, item => ...)  # @ always means "the input data"
 - DataWeave uses `payload` for input
 - JSONata uses `$` for context
 - XSLT uses `/` for current context
-- UTL-X uses `@input` but grammar doesn't model this
+- UTL-X uses `$input` but grammar doesn't model this
 
 **What Grammar Should Say:**
 ```ebnf
@@ -209,8 +209,8 @@ mode ::= 'mode' '=' string-literal
 ```utlx
 template match="Order" {
   invoice: {
-    id: @id,
-    date: @date,
+    id: $id,
+    date: $date,
     customer: apply(Customer),
     items: apply(Items/Item)
   }
@@ -261,12 +261,12 @@ Without templates, users must write imperative transformations:
 ```utlx
 {
   invoice: {
-    id: @input.Order.id,
+    id: $input.Order.id,
     customer: {
-      name: @input.Order.Customer.Name,
-      email: @input.Order.Customer.Email
+      name: $input.Order.Customer.Name,
+      email: $input.Order.Customer.Email
     },
-    items: map(@input.Order.Items.Item, item => {
+    items: map($input.Order.Items.Item, item => {
       sku: item.sku,
       quantity: item.quantity
     })
@@ -424,9 +424,9 @@ Let me check what the actual implementation looks like to ground this analysis:
 Based on test file analysis:
 
 **Working Features:**
-- ✓ Input binding with `@input`
-- ✓ Property access: `@input.customerName`
-- ✓ Array indexing: `@input[0]`
+- ✓ Input binding with `$input`
+- ✓ Property access: `$input.customerName`
+- ✓ Array indexing: `$input[0]`
 - ✓ Function calls: `sum(...)`, `map(...)`
 - ✓ Lambda expressions: `item => item.price`
 - ✓ Object literals: `{ name: "value" }`
@@ -510,7 +510,7 @@ mode ::= 'mode' '=' string-literal
 
 (* Example:
    template match="Order" {
-     invoice: { id: @id, customer: apply(Customer) }
+     invoice: { id: $id, customer: apply(Customer) }
    }
 *)
 ```
@@ -563,12 +563,12 @@ argument-list ::= (expression | spread-in-call) {',' (expression | spread-in-cal
 ## Semantic Notes
 
 ### Input Binding
-The `@input` construct binds to the parsed Universal Data Model (UDM) of the input data.
+The `$input` construct binds to the parsed Universal Data Model (UDM) of the input data.
 All format-specific details (XML attributes, JSON properties) are normalized to UDM.
 
 ### Format Abstraction
-- XML attribute: `<Order id="123">` → UDM property access: `@input.Order.id`
-- JSON property: `{"Order": {"id": "123"}}` → Same access: `@input.Order.id`
+- XML attribute: `<Order id="123">` → UDM property access: `$input.Order.id`
+- JSON property: `{"Order": {"id": "123"}}` → Same access: `$input.Order.id`
 - The grammar specifies syntax, UDM handles semantic unification
 
 ### Scope Rules
@@ -591,7 +591,7 @@ Templates represent the **declarative half** of UTL-X's vision. Without them, UT
 **Imperative (Current):**
 ```utlx
 {
-  orders: map(@input.Orders.Order, order => {
+  orders: map($input.Orders.Order, order => {
     id: order.id,
     customer: if (order.Customer != null) {
       name: order.Customer.Name,
@@ -619,10 +619,10 @@ template match="Orders" {
 }
 
 template match="Order" {
-  id: @id,
+  id: $id,
   customer: apply(Customer),
   items: apply(Items/Item),
-  total: sum(Items/Item/(@price * @quantity))
+  total: sum(Items/Item/($price * $quantity))
 }
 
 template match="Customer" {
@@ -631,11 +631,11 @@ template match="Customer" {
 }
 
 template match="Item" {
-  sku: @sku,
-  description: @description,
-  price: @price,
-  quantity: @quantity,
-  total: @price * @quantity
+  sku: $sku,
+  description: $description,
+  price: $price,
+  quantity: $quantity,
+  total: $price * $quantity
 }
 ```
 
@@ -674,8 +674,8 @@ apply(Customer)                  (* Default mode *)
 apply(Items/Item, mode="summary")   (* Specific mode *)
 
 template match="Item" mode="summary" {
-  sku: @sku,
-  total: @price * @quantity
+  sku: $sku,
+  total: $price * $quantity
 }
 ```
 
@@ -683,7 +683,7 @@ template match="Item" mode="summary" {
 Inside a template, what does `@` refer to?
 ```utlx
 template match="Order" {
-  id: @id        (* @ = current Order node *)
+  id: $id        (* @ = current Order node *)
   name: Name     (* implicit: @/Name *)
 }
 ```

@@ -23,9 +23,9 @@ input xml
 output json
 ---
 {
-  orderId: input.Order.@id,
-  customer: input.Order.Customer,
-  total: parseNumber(input.Order.Total)
+  orderId: $input.Order.@id,
+  customer: $input.Order.Customer,
+  total: parseNumber($input.Order.Total)
 }
 ```
 
@@ -72,18 +72,18 @@ output json
 ---
 {
   order: {
-    id: input.Order.@id,
-    date: input.Order.@date,
+    id: $input.Order.@id,
+    date: $input.Order.@date,
     customer: {
-      name: input.Order.Customer.Name,
-      email: input.Order.Customer.Email,
+      name: $input.Order.Customer.Name,
+      email: $input.Order.Customer.Email,
       address: {
-        street: input.Order.Customer.Address.Street,
-        city: input.Order.Customer.Address.City,
-        zip: input.Order.Customer.Address.Zip
+        street: $input.Order.Customer.Address.Street,
+        city: $input.Order.Customer.Address.City,
+        zip: $input.Order.Customer.Address.Zip
       }
     },
-    items: input.Order.Items.Item |> map(item => {
+    items: $input.Order.Items.Item |> map(item => {
       sku: item.@sku,
       quantity: parseNumber(item.@quantity),
       price: parseNumber(item.@price),
@@ -161,7 +161,7 @@ input xml
 output json
 ---
 {
-  products: input.Products.Product |> map(product => {
+  products: $input.Products.Product |> map(product => {
     id: parseNumber(product.@id),
     category: product.@category,
     name: product.Name,
@@ -225,7 +225,7 @@ input xml
 output json
 ---
 {
-  let sales = input.Sales.Sale,
+  let sales = $input.Sales.Sale,
   
   summary: {
     total: sum(sales |> map(s => parseNumber(s.@amount))),
@@ -318,8 +318,8 @@ template match="Library" {
 }
 
 template match="Book" {
-  isbn: @isbn,
-  year: parseNumber(@year),
+  isbn: $isbn,
+  year: parseNumber($year),
   title: Title,
   author: apply(Author),
   price: parseNumber(Price)
@@ -386,7 +386,7 @@ input xml
 output json
 ---
 {
-  let items = input.Inventory.Item,
+  let items = $input.Inventory.Item,
   
   // Items with low stock (< 10)
   lowStock: items 
@@ -506,7 +506,7 @@ input xml
 output json
 ---
 {
-  orders: input.Orders.Order |> map(order => {
+  orders: $input.Orders.Order |> map(order => {
     let total = parseNumber(order.@total),
     let isVIP = order.@customerType == "VIP",
     
@@ -582,8 +582,8 @@ output json
 
 ```utlx
 {
-  newName: input.OldName,
-  newEmail: input.OldEmail
+  newName: $input.OldName,
+  newEmail: $input.OldEmail
 }
 ```
 
@@ -591,9 +591,9 @@ output json
 
 ```utlx
 {
-  orderId: input.Order.@id,
-  customerName: input.Order.Customer.Name,
-  customerEmail: input.Order.Customer.Email
+  orderId: $input.Order.@id,
+  customerName: $input.Order.Customer.Name,
+  customerEmail: $input.Order.Customer.Email
 }
 ```
 
@@ -627,13 +627,13 @@ Save each script as a `.utlx` file and run:
 
 ```bash
 # Transform XML to JSON
-utlx transform input.xml transform.utlx
+utlx transform $input.xml transform.utlx
 
 # Save output to file
-utlx transform input.xml transform.utlx -o output.json
+utlx transform $input.xml transform.utlx -o output.json
 
 # Pretty print JSON
-utlx transform input.xml transform.utlx --pretty
+utlx transform $input.xml transform.utlx --pretty
 ```
 
 ---

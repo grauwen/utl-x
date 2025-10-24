@@ -151,7 +151,7 @@ If you were using development builds:
    ```
 3. **Test your transformations:**
    ```bash
-   utlx transform input.xml script.utlx
+   utlx transform $input.xml script.utlx
    ```
 4. **No breaking changes expected** - all development features remain
 

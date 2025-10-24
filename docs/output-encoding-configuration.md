@@ -21,7 +21,7 @@ Specify exact encoding for XML output:
 input json
 output xml {encoding: "ISO-8859-1"}
 ---
-@input
+$input
 ```
 
 **Output:**
@@ -39,7 +39,7 @@ Use `"NONE"` to omit encoding from declaration:
 input json
 output xml {encoding: "NONE"}
 ---
-@input
+$input
 ```
 
 **Output:**
@@ -59,7 +59,7 @@ When no encoding specified, uses metadata (for XML input) or UTF-8:
 input json
 output xml
 ---
-@input
+$input
 ```
 
 **Output:**
@@ -80,7 +80,7 @@ Explicit encoding > Input metadata > UTF-8 default
 input xml                          # Input has ISO-8859-1 encoding
 output xml {encoding: "UTF-16"}    # Override with UTF-16
 ---
-@input
+$input
 ```
 
 Result: Output uses **UTF-16** (explicit overrides metadata)
@@ -145,7 +145,7 @@ Alternative to config files for CI/CD environments:
 export UTLX_XML_OUTPUT_ENCODING="ISO-8859-1"
 export UTLX_JSON_PRETTY_PRINT="true"
 
-utlx transform script.utlx input.json
+utlx transform script.utlx $input.json
 ```
 
 Precedence:
@@ -267,7 +267,7 @@ Input encoding is preserved in **metadata** (not serialized):
 input xml
 output xml   # No explicit encoding
 ---
-@input
+$input
 ```
 
 If input has `encoding="ISO-8859-1"`, output also has `encoding="ISO-8859-1"`.
@@ -281,7 +281,7 @@ No input metadata, defaults to UTF-8:
 input json
 output xml   # No explicit encoding
 ---
-@input
+$input
 ```
 
 Output: `<?xml version="1.0" encoding="UTF-8"?>`
@@ -296,8 +296,8 @@ input xml
 output xml
 ---
 {
-  file1: @input,           # ISO-8859-1 metadata
-  file2: @otherInput       # UTF-16 metadata
+  file1: $input,           # ISO-8859-1 metadata
+  file2: $otherInput       # UTF-16 metadata
 }
 ```
 

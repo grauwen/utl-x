@@ -94,7 +94,7 @@ Architecture:   amd64
 
 ### 2. Your First Transformation
 
-**Create input data (input.xml):**
+**Create input data ($input.xml):**
 ```xml
 <Order id="ORD-001">
     <Customer>Alice Johnson</Customer>
@@ -112,23 +112,23 @@ input xml
 output json
 ---
 {
-    orderId: input.Order.@id,
-    customer: input.Order.Customer,
-    items: input.Order.Items.Item |> map(item => {
+    orderId: $input.Order.@id,
+    customer: $input.Order.Customer,
+    items: $input.Order.Items.Item |> map(item => {
         sku: item.@sku,
         price: parseNumber(item.@price),
         quantity: parseNumber(item.@quantity),
         subtotal: parseNumber(item.@price) * parseNumber(item.@quantity)
     }),
-    total: sum(input.Order.Items.Item.(
-        parseNumber(@price) * parseNumber(@quantity)
+    total: sum($input.Order.Items.Item.(
+        parseNumber($price) * parseNumber($quantity)
     ))
 }
 ```
 
 **Transform:**
 ```bash
-utlx transform input.xml transform.utlx -o output.json
+utlx transform $input.xml transform.utlx -o output.json
 ```
 
 **Output (output.json):**
@@ -173,19 +173,19 @@ utlx transform data.json transform.utlx -f csv -o result.csv
 ### 3. Pipe from stdin
 
 ```bash
-cat input.xml | utlx transform - transform.utlx
+cat $input.xml | utlx transform - transform.utlx
 ```
 
 ### 4. Watch mode (auto-reload on changes)
 
 ```bash
-utlx transform input.xml transform.utlx -w -o output.json
+utlx transform $input.xml transform.utlx -w -o output.json
 ```
 
 ### 5. Benchmark performance
 
 ```bash
-utlx transform input.xml transform.utlx -b
+utlx transform $input.xml transform.utlx -b
 ```
 
 Output:
@@ -249,11 +249,11 @@ time java -jar utlx-all.jar --version
 
 ```bash
 # Native binary
-/usr/bin/time -v utlx transform input.xml transform.utlx
+/usr/bin/time -v utlx transform $input.xml transform.utlx
 # Maximum resident set size: 42MB 🪶
 
 # JAR (JVM)
-/usr/bin/time -v java -jar utlx-all.jar transform input.xml transform.utlx
+/usr/bin/time -v java -jar utlx-all.jar transform $input.xml transform.utlx
 # Maximum resident set size: 185MB 🐘
 
 # Savings: 77% less memory!
@@ -328,7 +328,7 @@ Compare to JVM-based image: **300-500MB**
 docker build -t utlx:native .
 
 # Run transformation
-docker run -v $(pwd):/data utlx:native transform /data/input.xml /data/transform.utlx
+docker run -v $(pwd):/data utlx:native transform /data/$input.xml /data/transform.utlx
 ```
 
 ---
@@ -340,11 +340,11 @@ docker run -v $(pwd):/data utlx:native transform /data/input.xml /data/transform
 ```bash
 # Enable verbose output
 export UTLX_VERBOSE=true
-utlx transform input.xml transform.utlx
+utlx transform $input.xml transform.utlx
 
 # Enable debug mode
 export UTLX_DEBUG=true
-utlx transform input.xml transform.utlx
+utlx transform $input.xml transform.utlx
 ```
 
 ### Configuration File
@@ -390,7 +390,7 @@ utlx completion fish > ~/.config/fish/completions/utlx.fish
     sudo mv utlx /usr/local/bin/
 
 - name: Transform data
-  run: utlx transform input.xml transform.utlx -o output.json
+  run: utlx transform $input.xml transform.utlx -o output.json
 ```
 
 ### GitLab CI
@@ -402,7 +402,7 @@ transform:
     - wget https://github.com/grauwen/utl-x/releases/latest/download/utlx-linux-x64 -O utlx
     - chmod +x utlx
   script:
-    - ./utlx transform input.xml transform.utlx -o output.json
+    - ./utlx transform $input.xml transform.utlx -o output.json
 ```
 
 ### Jenkins
@@ -416,7 +416,7 @@ pipeline {
                 sh '''
                     curl -L https://github.com/grauwen/utl-x/releases/latest/download/utlx-linux-x64 -o utlx
                     chmod +x utlx
-                    ./utlx transform input.xml transform.utlx -o output.json
+                    ./utlx transform $input.xml transform.utlx -o output.json
                 '''
             }
         }
@@ -437,7 +437,7 @@ cd utl-x/examples
 
 # Run basic example
 cd basic/01-xml-to-json
-utlx transform input.xml transform.utlx -o output.json
+utlx transform $input.xml transform.utlx -o output.json
 
 # Run intermediate example
 cd ../../intermediate/03-data-aggregation

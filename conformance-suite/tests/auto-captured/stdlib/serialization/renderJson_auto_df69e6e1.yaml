@@ -20,7 +20,7 @@ transformation: |
   input xml
   output json
   ---
-  renderJson(@input)
+  renderJson($input)
   
 
 expected:

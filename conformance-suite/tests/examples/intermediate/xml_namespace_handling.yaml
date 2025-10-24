@@ -23,15 +23,15 @@ transformation: |
   input xml
   output json
   ---
-  let soapBody = @input["soap:Body"] in
-  let soapHeader = @input["soap:Header"] in
+  let soapBody = $input["soap:Body"] in
+  let soapHeader = $input["soap:Header"] in
   let custRequest = soapBody["cust:GetCustomerRequest"] in
   {
     request_type: localName(soapBody.*[0]),
     customer_id: toNumber(custRequest["cust:CustomerId"]),
     include_orders: toBoolean(custRequest["cust:IncludeOrders"]),
     namespace_info: {
-      soap_ns: namespaceUri(@input),
+      soap_ns: namespaceUri($input),
       customer_ns: namespaceUri(custRequest),
       request_qname: qualifiedName(soapBody.*[0])
     },

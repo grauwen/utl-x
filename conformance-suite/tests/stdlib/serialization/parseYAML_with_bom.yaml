@@ -13,9 +13,9 @@ transformation: |
   output json
   ---
   {
-    config: @input,
+    config: $input,
     bomHandled: true,
-    environment: @input.environment
+    environment: $input.environment
   }
 
 expected:

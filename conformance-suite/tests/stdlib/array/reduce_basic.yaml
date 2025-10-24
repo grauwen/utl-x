@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  reduce(@input, (acc, x) => acc + x, 0)
+  reduce($input, (acc, x) => acc + x, 0)
 
 expected:
   format: json
@@ -48,7 +48,7 @@ variants:
       input json
       output json
       ---
-      reduce(@input, (acc, x) => acc * x, 1)
+      reduce($input, (acc, x) => acc * x, 1)
     expected:
       format: json
       data: 24
@@ -62,7 +62,7 @@ variants:
       input json
       output json
       ---
-      reduce(@input, (acc, x) => acc + x, "")
+      reduce($input, (acc, x) => acc + x, "")
     expected:
       format: json
       data: "Hello World!"
@@ -76,7 +76,7 @@ variants:
       input json
       output json
       ---
-      reduce(@input, (acc, x) => acc + x * x, 0)
+      reduce($input, (acc, x) => acc + x * x, 0)
     expected:
       format: json
       data: 55

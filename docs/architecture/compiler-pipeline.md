@@ -254,10 +254,10 @@ Improve performance through code transformations.
 ```kotlin
 // Before
 let x = 42  // x never used
-{result: input.value}
+{result: $input.value}
 
 // After
-{result: input.value}
+{result: $input.value}
 ```
 
 #### 3. Template Inlining
@@ -276,12 +276,12 @@ Items.Item |> map(item => {sku: item.@sku})
 ```kotlin
 // Before
 {
-  a: input.items.*.price |> sum(),
-  b: input.items.*.price |> sum()
+  a: $input.items.*.price |> sum(),
+  b: $input.items.*.price |> sum()
 }
 
 // After
-let temp = input.items.*.price |> sum()
+let temp = $input.items.*.price |> sum()
 {
   a: temp,
   b: temp
@@ -474,7 +474,7 @@ Help: Convert one operand to match the other type
 
 ```kotlin
 class ParserTest {
-    @Test
+    $Test
     fun `parse let binding`() {
         val source = "let x = 42"
         val tokens = Lexer(source).tokenize()
@@ -490,14 +490,14 @@ class ParserTest {
 
 ```kotlin
 class CompilerTest {
-    @Test
+    $Test
     fun `compile and execute simple transform`() {
         val source = """
             %utlx 1.0
             input json
             output json
             ---
-            {result: input.value * 2}
+            {result: $input.value * 2}
         """
         
         val compiled = Compiler().compile(source)

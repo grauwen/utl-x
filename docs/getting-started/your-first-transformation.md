@@ -65,10 +65,10 @@ input xml
 output json
 ---
 {
-  orderId: input.Order.@id,
-  orderDate: input.Order.@date,
-  customerName: input.Order.Customer.Name,
-  customerEmail: input.Order.Customer.Email
+  orderId: $input.Order.@id,
+  orderDate: $input.Order.@date,
+  customerName: $input.Order.Customer.Name,
+  customerEmail: $input.Order.Customer.Email
 }
 ```
 
@@ -97,10 +97,10 @@ Separates directives from the transformation body.
 ### Lines 5-10: Transformation Body
 ```utlx
 {
-  orderId: input.Order.@id,
-  orderDate: input.Order.@date,
-  customerName: input.Order.Customer.Name,
-  customerEmail: input.Order.Customer.Email
+  orderId: $input.Order.@id,
+  orderDate: $input.Order.@date,
+  customerName: $input.Order.Customer.Name,
+  customerEmail: $input.Order.Customer.Email
 }
 ```
 Creates a JSON object with:
@@ -166,15 +166,15 @@ input xml
 output json
 ---
 {
-  orderId: input.Order.@id,
-  orderDate: input.Order.@date,
+  orderId: $input.Order.@id,
+  orderDate: $input.Order.@date,
   
   customer: {
-    name: input.Order.Customer.Name,
-    email: input.Order.Customer.Email
+    name: $input.Order.Customer.Name,
+    email: $input.Order.Customer.Email
   },
   
-  items: input.Order.Items.Item |> map(item => {
+  items: $input.Order.Items.Item |> map(item => {
     sku: item.@sku,
     quantity: parseNumber(item.@quantity),
     price: parseNumber(item.@price),
@@ -182,7 +182,7 @@ output json
   }),
   
   total: sum(
-    input.Order.Items.Item |> map(item => 
+    $input.Order.Items.Item |> map(item => 
       parseNumber(item.@quantity) * parseNumber(item.@price)
     )
   )
@@ -194,14 +194,14 @@ output json
 1. **Nested customer object:**
    ```utlx
    customer: {
-     name: input.Order.Customer.Name,
-     email: input.Order.Customer.Email
+     name: $input.Order.Customer.Name,
+     email: $input.Order.Customer.Email
    }
    ```
 
 2. **Array transformation with `map`:**
    ```utlx
-   items: input.Order.Items.Item |> map(item => {
+   items: $input.Order.Items.Item |> map(item => {
      sku: item.@sku,
      quantity: parseNumber(item.@quantity),
      price: parseNumber(item.@price),
@@ -215,7 +215,7 @@ output json
 3. **Calculated total:**
    ```utlx
    total: sum(
-     input.Order.Items.Item |> map(item => 
+     $input.Order.Items.Item |> map(item => 
        parseNumber(item.@quantity) * parseNumber(item.@price)
      )
    )
@@ -270,7 +270,7 @@ input xml
 output json
 ---
 {
-  let order = input.Order,
+  let order = $input.Order,
   let customer = order.Customer,
   let items = order.Items.Item,
   
@@ -314,7 +314,7 @@ input xml
 output json
 ---
 {
-  let order = input.Order,
+  let order = $input.Order,
   let items = order.Items.Item,
   let subtotal = sum(items |> map(item => 
     parseNumber(item.@quantity) * parseNumber(item.@price)
@@ -416,7 +416,7 @@ output json
 input xml
 output json
 {
-  result: input.data
+  result: $input.data
 }
 ```
 
@@ -427,7 +427,7 @@ input xml
 output json
 ---
 {
-  result: input.data
+  result: $input.data
 }
 ```
 
@@ -435,12 +435,12 @@ output json
 
 ❌ **Wrong:**
 ```utlx
-orderId: input.Order.id  // Treats 'id' as an element
+orderId: $input.Order.id  // Treats 'id' as an element
 ```
 
 ✅ **Correct:**
 ```utlx
-orderId: input.Order.@id  // Accesses 'id' attribute with @
+orderId: $input.Order.@id  // Accesses 'id' attribute with @
 ```
 
 ### Mistake 4: Not Converting Strings to Numbers
@@ -474,8 +474,8 @@ total: parseNumber(item.@quantity) * parseNumber(item.@price)
 
 **Solution:**
 - Verify the input path is correct
-- Use `input..ElementName` to search recursively
-- Add default values: `input.missing || "default"`
+- Use `$input..ElementName` to search recursively
+- Add default values: `$input.missing || "default"`
 
 ### Problem: Numbers appear as strings
 
@@ -531,7 +531,7 @@ Try transforming this XML on your own:
 
 You learned:
 - ✅ UTL-X document structure (`%utlx 1.0`, directives, `---`, body)
-- ✅ Basic selectors (`input.Element`, `.@attribute`)
+- ✅ Basic selectors (`$input.Element`, `.@attribute`)
 - ✅ Creating JSON objects and arrays
 - ✅ Using `map` to transform arrays
 - ✅ Pipeline operator (`|>`)

@@ -101,7 +101,7 @@ class JavaScriptRuntime {
     const {map, filter, sum} = context.functions;
     
     return {
-        result: map(input.items, item => item.price * 2)
+        result: map($input.items, item => item.price * 2)
     };
 })
 ```
@@ -249,7 +249,7 @@ fun streamingTransform(
     input: Sequence<UDM>,
     transform: CompiledTransform
 ): Sequence<UDM> = sequence {
-    input.forEach { element ->
+    $input.forEach { element ->
         yield(transform.execute(element))
     }
 }

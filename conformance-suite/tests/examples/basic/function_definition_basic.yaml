@@ -25,10 +25,10 @@ transformation: |
   }
 
   {
-    subtotal: @input.amount,
-    tax: CalculateTax(@input.amount, @input.rate),
-    total: @input.amount + CalculateTax(@input.amount, @input.rate),
-    formatted: FormatCurrency(@input.amount + CalculateTax(@input.amount, @input.rate))
+    subtotal: $input.amount,
+    tax: CalculateTax($input.amount, $input.rate),
+    total: $input.amount + CalculateTax($input.amount, $input.rate),
+    formatted: FormatCurrency($input.amount + CalculateTax($input.amount, $input.rate))
   }
 
 expected:

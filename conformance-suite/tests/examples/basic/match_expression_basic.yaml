@@ -17,12 +17,12 @@ transformation: |
   output json
   ---
   {
-    matchString: match (@input.type) {
+    matchString: match ($input.type) {
       "express" => "fast",
       "standard" => "normal",
       _ => "unknown"
     },
-    matchNumber: match (@input.score) {
+    matchNumber: match ($input.score) {
       90 => "A",
       80 => "B",
       70 => "C",

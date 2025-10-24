@@ -159,14 +159,14 @@ metadata:
 
 ```utlx
 # ✅ Correct UTL-X syntax
-products: map(@input.items, item -> item.product)
-total: sum(map(@input.items, item -> item.price))
-engineers: map(filter(@input.employees, emp -> emp.dept == "Engineering"), emp -> emp.name)
+products: map($input.items, item -> item.product)
+total: sum(map($input.items, item -> item.price))
+engineers: map(filter($input.employees, emp -> emp.dept == "Engineering"), emp -> emp.name)
 
 # ❌ Incorrect syntax (not implemented)
-products: @input.items[].product
-total: sum(@input.items[].price)  
-engineers: @input.employees[dept == "Engineering"].name
+products: $input.items[].product
+total: sum($input.items[].price)  
+engineers: $input.employees[dept == "Engineering"].name
 ```
 
 ## Test Coverage Goals

@@ -13,11 +13,11 @@ transformation: |
   output json
   ---
   {
-    addition: @input.a + @input.b,
-    subtraction: @input.a - @input.b,
-    multiplication: @input.a * @input.b,
-    division: @input.a / @input.b,
-    modulo: @input.a % @input.b
+    addition: $input.a + $input.b,
+    subtraction: $input.a - $input.b,
+    multiplication: $input.a * $input.b,
+    division: $input.a / $input.b,
+    modulo: $input.a % $input.b
   }
 
 expected:

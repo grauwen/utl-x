@@ -85,7 +85,7 @@ ObjectNode
             │
             └── custom: Map<String, Any>
                     ├── "lineNumber" → 42
-                    └── "sourceFile" → "input.xml"
+                    └── "sourceFile" → "$input.xml"
 ```
 
 ---
@@ -179,18 +179,18 @@ input xml
 output json
 ---
 {
-  orderId: input.orders.order.@id,
-  orderDate: parseDate(input.orders.order.@date, "ISO8601"),
-  status: input.orders.order.@status,
+  orderId: $input.orders.order.@id,
+  orderDate: parseDate($input.orders.order.@date, "ISO8601"),
+  status: $input.orders.order.@status,
   
   customer: {
-    id: input.orders.order.customer.@custId,
-    name: input.orders.order.customer.name,
-    email: input.orders.order.customer.email,
-    vip: input.orders.order.customer.tier == "GOLD"
+    id: $input.orders.order.customer.@custId,
+    name: $input.orders.order.customer.name,
+    email: $input.orders.order.customer.email,
+    vip: $input.orders.order.customer.tier == "GOLD"
   },
   
-  items: input.orders.order.items.item |> map(item => {
+  items: $input.orders.order.items.item |> map(item => {
     sku: item.@sku,
     name: item.name,
     category: item.category,
@@ -200,26 +200,26 @@ output json
   }),
   
   shipping: {
-    method: input.orders.order.shipping.method,
+    method: $input.orders.order.shipping.method,
     address: {
-      street: input.orders.order.shipping.address.street,
-      city: input.orders.order.shipping.address.city,
-      state: input.orders.order.shipping.address.state,
-      zipCode: input.orders.order.shipping.address.zip
+      street: $input.orders.order.shipping.address.street,
+      city: $input.orders.order.shipping.address.city,
+      state: $input.orders.order.shipping.address.state,
+      zipCode: $input.orders.order.shipping.address.zip
     }
   },
   
   payment: {
-    method: input.orders.order.payment.method,
-    cardLast4: input.orders.order.payment.last4
+    method: $input.orders.order.payment.method,
+    cardLast4: $input.orders.order.payment.last4
   },
   
   summary: {
-    itemCount: count(input.orders.order.items.item),
-    subtotal: sum(input.orders.order.items.item |> map(i => 
+    itemCount: count($input.orders.order.items.item),
+    subtotal: sum($input.orders.order.items.item |> map(i => 
       toNumber(i.@quantity) * toNumber(i.@unitPrice)
     )),
-    shippingFee: if (input.orders.order.shipping.method == "EXPRESS") 15.00 else 5.00
+    shippingFee: if ($input.orders.order.shipping.method == "EXPRESS") 15.00 else 5.00
   }
 }
 ```
@@ -338,13 +338,13 @@ output json
 ---
 {
   summary: {
-    totalRevenue: sum(input.*.revenue),
-    totalQuantity: sum(input.*.quantity),
-    averageRevenue: avg(input.*.revenue),
-    uniqueProducts: distinct(input.*.product) |> count(),
+    totalRevenue: sum($input.*.revenue),
+    totalQuantity: sum($input.*.quantity),
+    averageRevenue: avg($input.*.revenue),
+    uniqueProducts: distinct($input.*.product) |> count(),
     dateRange: {
-      start: min(input.*.date),
-      end: max(input.*.date)
+      start: min($input.*.date),
+      end: max($input.*.date)
     }
   },
   

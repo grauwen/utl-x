@@ -98,7 +98,7 @@ function normalizeOrder(source: Object): Object {
         state: po.DeliveryAddress.State,
         postalCode: po.DeliveryAddress.PostalCode
       },
-      total: sum(po.OrderLines.Line.(parseNumber(@quantity) * parseNumber(@price)))
+      total: sum(po.OrderLines.Line.(parseNumber($quantity) * parseNumber($price)))
     }
   } else {
     error("Unknown order format")
@@ -205,14 +205,14 @@ output json
 ---
 
 // Load bank statement from CSV
-let bankTxns = input.bankStatement.rows |> map(row => {
+let bankTxns = $input.bankStatement.rows |> map(row => {
   date: row.Date,
   description: row.Description,
   amount: parseNumber(row.Amount)
 })
 
 // Load ledger transactions
-let ledgerTxns = input.ledger.transactions
+let ledgerTxns = $input.ledger.transactions
 
 // Match transactions
 function findMatch(bankTxn: Object, ledgerTxns: Array): Object? {
@@ -277,7 +277,7 @@ output json
 ---
 
 {
-  byDevice: input.readings
+  byDevice: $input.readings
     |> groupBy(r => r.deviceId)
     |> entries()
     |> map(([deviceId, readings]) => {
@@ -308,11 +308,11 @@ output json
        }),
   
   overall: {
-    totalReadings: count(input.readings),
-    avgTemperature: avg(input.readings.*.temperature),
-    avgHumidity: avg(input.readings.*.humidity),
-    devicesOnline: count(distinct(input.readings.*.deviceId)),
-    alerts: count(input.readings |> filter(r => r.temperature > 25 || r.temperature < 18))
+    totalReadings: count($input.readings),
+    avgTemperature: avg($input.readings.*.temperature),
+    avgHumidity: avg($input.readings.*.humidity),
+    devicesOnline: count(distinct($input.readings.*.deviceId)),
+    alerts: count($input.readings |> filter(r => r.temperature > 25 || r.temperature < 18))
   }
 }
 ```
@@ -347,7 +347,7 @@ output json
 ---
 
 {
-  articles: input.channel.item |> map(item => {
+  articles: $input.channel.item |> map(item => {
     title: item.title,
     slug: lower(replace(item.title, " ", "-")),
     author: item.creator,

@@ -38,7 +38,7 @@ output xml
 ```utlx
 template match="Order" {
   invoice: {
-    id: @id
+    id: $id
   }
 }
 ```
@@ -105,8 +105,8 @@ utlx migrate dataweave-file.dwl --output utlx-file.utlx
 
 | jq | UTL-X |
 |----|-------|
-| `.field` | `input.field` |
-| `.field[]` | `input.field[*]` |
+| `.field` | `$input.field` |
+| `.field[]` | `$input.field[*]` |
 | `map(.price)` | `|> map(item => item.price)` |
 | `select(.price > 100)` | `|> filter(item => item.price > 100)` |
 
@@ -133,8 +133,8 @@ input.orders
 
 | JSONata | UTL-X |
 |---------|-------|
-| `Order.id` | `input.Order.id` |
-| `$sum(items.price)` | `sum(input.items.*.price)` |
+| `Order.id` | `$input.Order.id` |
+| `$sum(items.price)` | `sum($input.items.*.price)` |
 | `$map(items, function($i) {...})` | `items |> map(i => {...})` |
 
 ---

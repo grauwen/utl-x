@@ -212,9 +212,9 @@ input.customers
 ```utlx
 {
   processedAt: now(),
-  dueDate: input.createdAt | parseDate | addDays(30),
-  daysSinceCreated: daysBetween(input.createdAt | parseDate, now()),
-  quarter: input.createdAt | parseDate | quarter
+  dueDate: $input.createdAt | parseDate | addDays(30),
+  daysSinceCreated: daysBetween($input.createdAt | parseDate, now()),
+  quarter: $input.createdAt | parseDate | quarter
 }
 ```
 

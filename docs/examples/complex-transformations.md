@@ -50,7 +50,7 @@ output json
 ---
 {
   // Regional summary
-  byRegion: input.orders
+  byRegion: $input.orders
     |> groupBy(order => order.region)
     |> entries()
     |> map(([region, orders]) => {
@@ -68,7 +68,7 @@ output json
        }),
   
   // Product summary
-  byProduct: input.orders
+  byProduct: $input.orders
     |> flatMap(order => order.items |> map(item => {
          product: item.product,
          quantity: item.quantity,
@@ -86,11 +86,11 @@ output json
   
   // Overall metrics
   summary: {
-    totalOrders: count(input.orders),
-    totalRevenue: sum(input.orders.(sum(items.(quantity * price)))),
-    avgOrderValue: avg(input.orders.(sum(items.(quantity * price)))),
-    uniqueCustomers: count(distinct(input.orders.*.customer)),
-    uniqueProducts: count(distinct(input.orders.*.items.*.product))
+    totalOrders: count($input.orders),
+    totalRevenue: sum($input.orders.(sum(items.(quantity * price)))),
+    avgOrderValue: avg($input.orders.(sum(items.(quantity * price)))),
+    uniqueCustomers: count(distinct($input.orders.*.customer)),
+    uniqueProducts: count(distinct($input.orders.*.items.*.product))
   }
 }
 ```
@@ -208,7 +208,7 @@ function processCategory(cat: Object): Object {
 }
 
 {
-  hierarchy: processCategory(input.Categories.Category)
+  hierarchy: processCategory($input.Categories.Category)
 }
 ```
 
@@ -259,7 +259,7 @@ output json
 
 // Helper function to lookup customer
 function lookupCustomer(customerId: String): Object {
-  input.customers
+  $input.customers
     |> filter(c => c.id == customerId)
     |> first()
     ?? {id: customerId, name: "Unknown", tier: "Standard", discount: 0}
@@ -267,14 +267,14 @@ function lookupCustomer(customerId: String): Object {
 
 // Helper function to lookup product
 function lookupProduct(productId: String): Object {
-  input.products
+  $input.products
     |> filter(p => p.id == productId)
     |> first()
     ?? {id: productId, name: "Unknown", price: 0, category: "Other"}
 }
 
 {
-  enrichedOrders: input.orders |> map(order => {
+  enrichedOrders: $input.orders |> map(order => {
     let customer = lookupCustomer(order.customerId),
     let product = lookupProduct(order.productId),
     let subtotal = product.price * order.quantity,
@@ -372,11 +372,11 @@ function validateCustomer(customer: Object): Object {
   }
 }
 
-let validated = input.customers |> map(c => validateCustomer(c))
+let validated = $input.customers |> map(c => validateCustomer(c))
 
 {
   summary: {
-    total: count(input.customers),
+    total: count($input.customers),
     valid: count(validated |> filter(v => v.isValid)),
     invalid: count(validated |> filter(v => !v.isValid))
   },
@@ -423,7 +423,7 @@ function getHour(timestamp: String): String {
 }
 
 {
-  hourly: input.events
+  hourly: $input.events
     |> groupBy(event => getHour(event.timestamp))
     |> entries()
     |> map(([hour, events]) => {
@@ -437,11 +437,11 @@ function getHour(timestamp: String): String {
     |> sortBy(entry => entry.hour),
     
   daily: {
-    totalSales: count(input.events |> filter(e => e.type == "sale")),
-    totalRefunds: count(input.events |> filter(e => e.type == "refund")),
-    grossRevenue: sum(input.events |> filter(e => e.type == "sale") |> map(e => e.amount)),
-    refundAmount: abs(sum(input.events |> filter(e => e.type == "refund") |> map(e => e.amount))),
-    netRevenue: sum(input.events.*.amount)
+    totalSales: count($input.events |> filter(e => e.type == "sale")),
+    totalRefunds: count($input.events |> filter(e => e.type == "refund")),
+    grossRevenue: sum($input.events |> filter(e => e.type == "sale") |> map(e => e.amount)),
+    refundAmount: abs(sum($input.events |> filter(e => e.type == "refund") |> map(e => e.amount))),
+    netRevenue: sum($input.events.*.amount)
   }
 }
 ```

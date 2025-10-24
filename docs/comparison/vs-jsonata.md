@@ -30,9 +30,9 @@ Comparison between UTL-X and JSONata.
 ```utlx
 {
   invoice: {
-    id: input.Order.id,
-    customer: input.Order.customer.name,
-    total: sum(input.Order.items.(price * quantity))
+    id: $input.Order.id,
+    customer: $input.Order.customer.name,
+    total: sum($input.Order.items.(price * quantity))
   }
 }
 ```

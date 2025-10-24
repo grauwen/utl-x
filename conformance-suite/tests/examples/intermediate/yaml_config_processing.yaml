@@ -64,11 +64,11 @@ transformation: |
   }
   
   {
-    config: ProcessConfig(@input, env_vars),
+    config: ProcessConfig($input, env_vars),
     metadata: {
-      resolved_variables: ExtractVariables(@input),
+      resolved_variables: ExtractVariables($input),
       environment: env_vars.ENV,
-      config_validation: ValidateConfig(ProcessConfig(@input, env_vars))
+      config_validation: ValidateConfig(ProcessConfig($input, env_vars))
     }
   }
   

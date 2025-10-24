@@ -12,7 +12,7 @@ transformation: |
   input json
   output json
   ---
-  @input / 0
+  $input / 0
 
 error_expected:
   type: "runtime_error"

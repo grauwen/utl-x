@@ -27,16 +27,16 @@ transformation: |
   ---
   {
     Order: {
-      "@id": @input.order.id,
-      Customer: @input.order.customer,
+      "@id": $input.order.id,
+      Customer: $input.order.customer,
       Items: {
-        Item: map(@input.order.items, item => {
+        Item: map($input.order.items, item => {
           "@product": item.product,
           Quantity: item.quantity,
           Price: item.price
         })
       },
-      Total: @input.order.total
+      Total: $input.order.total
     }
   }
   

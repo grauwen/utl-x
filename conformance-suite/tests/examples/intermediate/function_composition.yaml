@@ -36,8 +36,8 @@ transformation: |
   }
 
   {
-    result: CalculateTotal(@input.quantity, @input.price, @input.taxRate),
-    formatted: FormatMoney(CalculateTotal(@input.quantity, @input.price, @input.taxRate))
+    result: CalculateTotal($input.quantity, $input.price, $input.taxRate),
+    formatted: FormatMoney(CalculateTotal($input.quantity, $input.price, $input.taxRate))
   }
 
 expected:

@@ -15,8 +15,8 @@ Common transformation patterns and solutions.
 // Output: {newName: "Alice", newAge: 30}
 
 {
-  newName: input.oldName,
-  newAge: input.oldAge
+  newName: $input.oldName,
+  newAge: $input.oldAge
 }
 ```
 
@@ -29,8 +29,8 @@ Common transformation patterns and solutions.
 // Output: {customerName: "Alice"}
 
 {
-  customerName: input.order.customer.name,
-  customerId: input.order.customer.id
+  customerName: $input.order.customer.name,
+  customerId: $input.order.customer.id
 }
 ```
 
@@ -44,8 +44,8 @@ Common transformation patterns and solutions.
 
 {
   customer: {
-    name: input.customerName,
-    email: input.customerEmail
+    name: $input.customerName,
+    email: $input.customerEmail
   }
 }
 ```
@@ -59,12 +59,12 @@ Common transformation patterns and solutions.
 
 {
   personal: {
-    name: input.name,
-    age: input.age
+    name: $input.name,
+    age: $input.age
   },
   address: {
-    street: input.street,
-    city: input.city
+    street: $input.street,
+    city: $input.city
   }
 }
 ```
@@ -77,9 +77,9 @@ Common transformation patterns and solutions.
 // Input: {user: {...}, profile: {...}, settings: {...}}
 
 {
-  ...input.user,
-  ...input.profile,
-  ...input.settings
+  ...$input.user,
+  ...$input.profile,
+  ...$input.settings
 }
 ```
 
@@ -194,10 +194,10 @@ input.orders |> flatMap(order => order.items)
 
 ```utlx
 // Sum all prices
-sum(input.items.*.price)
+sum($input.items.*.price)
 
 // Conditional sum
-sum(input.items 
+sum($input.items 
   |> filter(i => i.category == "Electronics")
   |> map(i => i.price))
 ```
@@ -206,20 +206,20 @@ sum(input.items
 
 ```utlx
 // Count all items
-count(input.items)
+count($input.items)
 
 // Count matching
-count(input.items |> filter(i => i.inStock))
+count($input.items |> filter(i => i.inStock))
 ```
 
 ### Average
 
 ```utlx
 // Average price
-avg(input.items.*.price)
+avg($input.items.*.price)
 
 // Average of active users' age
-avg(input.users 
+avg($input.users 
   |> filter(u => u.active)
   |> map(u => u.age))
 ```
@@ -228,10 +228,10 @@ avg(input.users
 
 ```utlx
 // Minimum price
-min(input.items.*.price)
+min($input.items.*.price)
 
 // Maximum price
-max(input.items.*.price)
+max($input.items.*.price)
 
 // Item with max price
 input.items 
@@ -245,7 +245,7 @@ input.items
 
 ```utlx
 {
-  let prices = input.items.*.price,
+  let prices = $input.items.*.price,
   
   count: count(prices),
   sum: sum(prices),
@@ -301,12 +301,12 @@ input.items
 
 ```utlx
 {
-  name: input.name,
-  email: input.email,
+  name: $input.name,
+  email: $input.email,
   
   // Only include premium benefits if user is premium
-  ...(if (input.isPremium) {
-    premiumBenefits: input.benefits
+  ...(if ($input.isPremium) {
+    premiumBenefits: $input.benefits
   } else {})
 }
 ```
@@ -319,9 +319,9 @@ input.items
 
 ```utlx
 {
-  uppercase: upper(input.name),
-  lowercase: lower(input.name),
-  titlecase: titleCase(input.name)
+  uppercase: upper($input.name),
+  lowercase: lower($input.name),
+  titlecase: titleCase($input.name)
 }
 ```
 
@@ -329,9 +329,9 @@ input.items
 
 ```utlx
 {
-  trimmed: trim(input.text),
-  trimStart: trimStart(input.text),
-  trimEnd: trimEnd(input.text)
+  trimmed: trim($input.text),
+  trimStart: trimStart($input.text),
+  trimEnd: trimEnd($input.text)
 }
 ```
 
@@ -339,9 +339,9 @@ input.items
 
 ```utlx
 {
-  fullName: input.firstName + " " + input.lastName,
-  greeting: "Hello, " + input.name + "!",
-  url: "https://" + input.domain + "/" + input.path
+  fullName: $input.firstName + " " + $input.lastName,
+  greeting: "Hello, " + $input.name + "!",
+  url: "https://" + $input.domain + "/" + $input.path
 }
 ```
 
@@ -350,10 +350,10 @@ input.items
 ```utlx
 {
   // First 10 characters
-  preview: substring(input.description, 0, 10),
+  preview: substring($input.description, 0, 10),
   
   // Extract domain from email
-  domain: split(input.email, "@")[1]
+  domain: split($input.email, "@")[1]
 }
 ```
 
@@ -362,10 +362,10 @@ input.items
 ```utlx
 {
   // Split CSV string
-  tags: split(input.tagString, ","),
+  tags: split($input.tagString, ","),
   
   // Join array to string
-  tagString: join(input.tags, ", ")
+  tagString: join($input.tags, ", ")
 }
 ```
 
@@ -374,11 +374,11 @@ input.items
 ```utlx
 {
   // Check if contains
-  hasKeyword: contains(input.text, "important"),
+  hasKeyword: contains($input.text, "important"),
   
   // Starts/ends with
-  isHttps: startsWith(input.url, "https://"),
-  isPdf: endsWith(input.filename, ".pdf")
+  isHttps: startsWith($input.url, "https://"),
+  isPdf: endsWith($input.filename, ".pdf")
 }
 ```
 
@@ -390,7 +390,7 @@ input.items
 
 ```utlx
 {
-  subtotal: input.quantity * input.price,
+  subtotal: $input.quantity * $input.price,
   tax: subtotal * 0.08,
   total: subtotal + tax,
   discount: subtotal * 0.10,
@@ -402,10 +402,10 @@ input.items
 
 ```utlx
 {
-  rounded: round(input.value),           // 3.7 → 4
-  roundedUp: ceil(input.value),          // 3.1 → 4
-  roundedDown: floor(input.value),       // 3.9 → 3
-  twoDecimals: round(input.value * 100) / 100
+  rounded: round($input.value),           // 3.7 → 4
+  roundedUp: ceil($input.value),          // 3.1 → 4
+  roundedDown: floor($input.value),       // 3.9 → 3
+  twoDecimals: round($input.value * 100) / 100
 }
 ```
 
@@ -414,10 +414,10 @@ input.items
 ```utlx
 {
   // Format as currency
-  price: "$" + (round(input.price * 100) / 100).toFixed(2),
+  price: "$" + (round($input.price * 100) / 100).toFixed(2),
   
   // Format percentage
-  discount: (round(input.discount * 100)) + "%"
+  discount: (round($input.discount * 100)) + "%"
 }
 ```
 
@@ -426,10 +426,10 @@ input.items
 ```utlx
 {
   // String to number
-  quantity: parseNumber(input.quantityString),
+  quantity: parseNumber($input.quantityString),
   
   // Number to string
-  quantityString: toString(input.quantity)
+  quantityString: toString($input.quantity)
 }
 ```
 
@@ -452,10 +452,10 @@ input.items
 ```utlx
 {
   // Parse ISO date
-  parsedDate: parseDate(input.dateString),
+  parsedDate: parseDate($input.dateString),
   
   // Parse with format
-  customDate: parseDate(input.dateString, "MM/DD/YYYY")
+  customDate: parseDate($input.dateString, "MM/DD/YYYY")
 }
 ```
 
@@ -464,10 +464,10 @@ input.items
 ```utlx
 {
   // Format as ISO
-  isoDate: formatDate(input.date, "YYYY-MM-DD"),
+  isoDate: formatDate($input.date, "YYYY-MM-DD"),
   
   // Custom format
-  displayDate: formatDate(input.date, "MMM DD, YYYY")
+  displayDate: formatDate($input.date, "MMM DD, YYYY")
 }
 ```
 
@@ -479,7 +479,7 @@ input.items
   nextWeek: addDays(today(), 7),
   lastMonth: addMonths(today(), -1),
   
-  daysSince: diffDays(today(), input.startDate)
+  daysSince: diffDays(today(), $input.startDate)
 }
 ```
 
@@ -492,9 +492,9 @@ input.items
 ```utlx
 {
   // Use default if null/undefined
-  name: input.name || "Unknown",
-  quantity: input.quantity || 0,
-  active: input.active || false
+  name: $input.name || "Unknown",
+  quantity: $input.quantity || 0,
+  active: $input.active || false
 }
 ```
 
@@ -502,8 +502,8 @@ input.items
 
 ```utlx
 {
-  email: input.customer.email 
-      || input.user.email 
+  email: $input.customer.email 
+      || $input.user.email 
       || "no-email@example.com"
 }
 ```
@@ -512,9 +512,9 @@ input.items
 
 ```utlx
 {
-  discount: input.discount || (
-    if (input.total > 1000) 0.20
-    else if (input.total > 500) 0.10
+  discount: $input.discount || (
+    if ($input.total > 1000) 0.20
+    else if ($input.total > 500) 0.10
     else 0
   )
 }
@@ -528,8 +528,8 @@ input.items
 
 ```utlx
 {
-  name: input.name || throw("Name is required"),
-  email: input.email || throw("Email is required")
+  name: $input.name || throw("Name is required"),
+  email: $input.email || throw("Email is required")
 }
 ```
 
@@ -537,9 +537,9 @@ input.items
 
 ```utlx
 {
-  isValid: isString(input.name) && 
-           isNumber(input.age) && 
-           isBoolean(input.active)
+  isValid: isString($input.name) && 
+           isNumber($input.age) && 
+           isBoolean($input.active)
 }
 ```
 
@@ -547,10 +547,10 @@ input.items
 
 ```utlx
 {
-  age: if (input.age >= 0 && input.age <= 150)
-         input.age
+  age: if ($input.age >= 0 && $input.age <= 150)
+         $input.age
        else
-         throw("Invalid age: " + input.age)
+         throw("Invalid age: " + $input.age)
 }
 ```
 
@@ -558,8 +558,8 @@ input.items
 
 ```utlx
 {
-  email: if (contains(input.email, "@"))
-           input.email
+  email: if (contains($input.email, "@"))
+           $input.email
          else
            throw("Invalid email format")
 }
@@ -579,7 +579,7 @@ input.items
     "R": "Rejected"
   },
   
-  statusText: statusMap[input.statusCode]
+  statusText: statusMap[$input.statusCode]
 }
 ```
 
@@ -592,7 +592,7 @@ input.items
     {id: "P002", name: "Gadget"}
   ],
   
-  productName: (products |> find(p => p.id == input.productId)).name
+  productName: (products |> find(p => p.id == $input.productId)).name
 }
 ```
 
@@ -600,9 +600,9 @@ input.items
 
 ```utlx
 {
-  let productCatalog = input.catalog,
+  let productCatalog = $input.catalog,
   
-  enrichedItems: input.order.items |> map(item => {
+  enrichedItems: $input.order.items |> map(item => {
     ...item,
     productName: (productCatalog 
       |> find(p => p.sku == item.sku)).name,
@@ -621,12 +621,12 @@ input.items
 ```utlx
 {
   // Avoid null reference errors
-  city: input.customer.address.city || "N/A",
+  city: $input.customer.address.city || "N/A",
   
   // Check existence first
-  hasAddress: input.customer.address != null,
-  city: if (input.customer.address != null)
-          input.customer.address.city
+  hasAddress: $input.customer.address != null,
+  city: if ($input.customer.address != null)
+          $input.customer.address.city
         else
           "No address"
 }
@@ -637,7 +637,7 @@ input.items
 ```utlx
 {
   parsed: try {
-    parseNumber(input.value)
+    parseNumber($input.value)
   } catch (e) {
     0  // Default value on error
   }
@@ -648,10 +648,10 @@ input.items
 
 ```utlx
 {
-  let isValid = input.items != null && count(input.items) > 0,
+  let isValid = $input.items != null && count($input.items) > 0,
   
   result: if (isValid)
-            processItems(input.items)
+            processItems($input.items)
           else
             {error: "No items to process"}
 }
@@ -666,16 +666,16 @@ input.items
 **❌ Bad:**
 ```utlx
 {
-  subtotal: sum(input.items.*.price),
-  tax: sum(input.items.*.price) * 0.08,        // Computed again
-  total: sum(input.items.*.price) * 1.08       // Computed again
+  subtotal: sum($input.items.*.price),
+  tax: sum($input.items.*.price) * 0.08,        // Computed again
+  total: sum($input.items.*.price) * 1.08       // Computed again
 }
 ```
 
 **✅ Good:**
 ```utlx
 {
-  let subtotal = sum(input.items.*.price),
+  let subtotal = sum($input.items.*.price),
   
   subtotal: subtotal,
   tax: subtotal * 0.08,
@@ -688,16 +688,16 @@ input.items
 **❌ Bad:**
 ```utlx
 {
-  activeCount: count(input.users |> filter(u => u.active)),
-  activeNames: input.users |> filter(u => u.active) |> map(u => u.name),
-  activeEmails: input.users |> filter(u => u.active) |> map(u => u.email)
+  activeCount: count($input.users |> filter(u => u.active)),
+  activeNames: $input.users |> filter(u => u.active) |> map(u => u.name),
+  activeEmails: $input.users |> filter(u => u.active) |> map(u => u.email)
 }
 ```
 
 **✅ Good:**
 ```utlx
 {
-  let activeUsers = input.users |> filter(u => u.active),
+  let activeUsers = $input.users |> filter(u => u.active),
   
   activeCount: count(activeUsers),
   activeNames: activeUsers |> map(u => u.name),
@@ -727,7 +727,7 @@ input json
 output json
 ---
 {
-  let order = input.order,
+  let order = $input.order,
   let items = order.items,
   let customer = order.customer,
   
@@ -784,7 +784,7 @@ input json
 output json
 ---
 {
-  let records = input.records,
+  let records = $input.records,
   
   summary: {
     totalRecords: count(records),
@@ -842,15 +842,15 @@ output json
 
 | Task | Pattern |
 |------|---------|
-| Rename | `newName: input.oldName` |
-| Flatten | `field: input.nested.deep.field` |
-| Filter | `input.array \|> filter(x => condition)` |
-| Map | `input.array \|> map(x => transform)` |
-| Sort | `input.array \|> sortBy(x => x.field)` |
-| Group | `input.array \|> groupBy(x => x.field)` |
-| Sum | `sum(input.array.*.field)` |
-| Count | `count(input.array)` |
-| Default | `input.field \|\| defaultValue` |
+| Rename | `newName: $input.oldName` |
+| Flatten | `field: $input.nested.deep.field` |
+| Filter | `$input.array \|> filter(x => condition)` |
+| Map | `$input.array \|> map(x => transform)` |
+| Sort | `$input.array \|> sortBy(x => x.field)` |
+| Group | `$input.array \|> groupBy(x => x.field)` |
+| Sum | `sum($input.array.*.field)` |
+| Count | `count($input.array)` |
+| Default | `$input.field \|\| defaultValue` |
 | Conditional | `if (condition) value1 else value2` |
 
 ---
