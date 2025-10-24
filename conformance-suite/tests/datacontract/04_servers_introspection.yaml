@@ -1,0 +1,91 @@
+name: "datacontract_servers_introspection"
+category: "datacontract"
+description: "DataContract YAML with key introspection - keys(), values(), hasKey()"
+tags: ["datacontract", "yaml", "dynamic-keys", "introspection"]
+
+inputs:
+  datacontract:
+    format: yaml
+    data: |
+      dataContractSpecification: "1.2.1"
+
+      servers:
+        production:
+          type: postgres
+          host: prod.db.example.com
+        staging:
+          type: postgres
+          host: staging.db.example.com
+        development:
+          type: postgres
+          host: dev.db.example.com
+
+transformation: |
+  %utlx 1.0
+  input: datacontract yaml
+  output json
+  ---
+  {
+    environments: keys($datacontract.servers),
+
+    environmentCount: count($datacontract.servers),
+
+    hasProd: hasKey($datacontract.servers, "production"),
+    hasStaging: hasKey($datacontract.servers, "staging"),
+    hasDev: hasKey($datacontract.servers, "development"),
+    hasQa: hasKey($datacontract.servers, "qa"),
+
+    allConfigs: values($datacontract.servers),
+
+    primaryServer: if (hasKey($datacontract.servers, "production"))
+                     $datacontract.servers.production
+                   else if (hasKey($datacontract.servers, "staging"))
+                     $datacontract.servers.staging
+                   else
+                     $datacontract.servers[first(keys($datacontract.servers))],
+
+    backupServer: if (hasKey($datacontract.servers, "backup"))
+                    $datacontract.servers.backup
+                  else
+                    { type: "none", host: "not-configured" }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "environments": ["production", "staging", "development"],
+      "environmentCount": 3,
+      "hasProd": true,
+      "hasStaging": true,
+      "hasDev": true,
+      "hasQa": false,
+      "allConfigs": [
+        {"type": "postgres", "host": "prod.db.example.com"},
+        {"type": "postgres", "host": "staging.db.example.com"},
+        {"type": "postgres", "host": "dev.db.example.com"}
+      ],
+      "primaryServer": {
+        "type": "postgres",
+        "host": "prod.db.example.com"
+      },
+      "backupServer": {
+        "type": "none",
+        "host": "not-configured"
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-24"
+  references:
+    - "docs/yaml-dynamic-keys-support.md - Variant 4"
+  notes:
+    - "Demonstrates key introspection functions"
+    - "keys(), values(), hasKey(), count()"
+    - "Safe navigation and fallback patterns"
+    - "Conditional logic based on key existence"

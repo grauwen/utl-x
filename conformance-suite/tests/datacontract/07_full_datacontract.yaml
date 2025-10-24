@@ -1,0 +1,175 @@
+name: "datacontract_full_specification"
+category: "datacontract"
+description: "Complete DataContract v1.2.1 specification with multiple dynamic key patterns"
+tags: ["datacontract", "yaml", "dynamic-keys", "complete"]
+
+inputs:
+  datacontract:
+    format: yaml
+    data: |
+      dataContractSpecification: "1.2.1"
+      id: "complete-orders-datacontract"
+      info:
+        title: "Complete Orders Data Contract"
+        version: "2.0.0"
+        owner: "Data Team"
+
+      servers:
+        production:
+          type: postgres
+          host: prod.db.example.com
+          port: 5432
+          database: orders_prod
+        staging:
+          type: postgres
+          host: stage.db.example.com
+          port: 5432
+          database: orders_stage
+
+      models:
+        orders:
+          type: table
+          fields:
+            id:
+              type: integer
+              primaryKey: true
+            customer_id:
+              type: integer
+              required: true
+            amount:
+              type: decimal
+              required: true
+
+        customers:
+          type: table
+          fields:
+            id:
+              type: integer
+              primaryKey: true
+            name:
+              type: varchar
+              required: true
+
+transformation: |
+  %utlx 1.0
+  input: datacontract yaml
+  output json
+  ---
+  {
+    metadata: {
+      id: $datacontract.id,
+      title: $datacontract.info.title,
+      version: $datacontract.info.version,
+      owner: $datacontract.info.owner
+    },
+
+    servers: {
+      count: count($datacontract.servers),
+      environments: keys($datacontract.servers),
+
+      configurations: entries($datacontract.servers) |> map(e => {
+        env: e.key,
+        conn: e.value.host + ":" + toString(e.value.port) + "/" + e.value.database
+      }),
+
+      hasProduction: hasKey($datacontract.servers, "production"),
+      productionHost: if (hasKey($datacontract.servers, "production"))
+                        $datacontract.servers.production.host
+                      else
+                        "not-configured"
+    },
+
+    models: {
+      count: count($datacontract.models),
+      tableNames: keys($datacontract.models),
+
+      schemas: entries($datacontract.models) |> map(modelEntry => {
+        table: modelEntry.key,
+        fieldCount: count(modelEntry.value.fields),
+        fieldNames: keys(modelEntry.value.fields),
+        primaryKeys: entries(modelEntry.value.fields)
+          |> filter(fe => fe.value.primaryKey == true)
+          |> map(fe => fe.key)
+      })
+    },
+
+    deployment: entries($datacontract.servers) |> map(serverEntry => {
+      environment: serverEntry.key,
+      server: serverEntry.value.host,
+      tables: keys($datacontract.models),
+      totalFields: reduceEntries($datacontract.models, (acc, name, model) =>
+        acc + count(model.fields), 0
+      )
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "metadata": {
+        "id": "complete-orders-datacontract",
+        "title": "Complete Orders Data Contract",
+        "version": "2.0.0",
+        "owner": "Data Team"
+      },
+      "servers": {
+        "count": 2,
+        "environments": ["production", "staging"],
+        "configurations": [
+          {"env": "production", "conn": "prod.db.example.com:5432/orders_prod"},
+          {"env": "staging", "conn": "stage.db.example.com:5432/orders_stage"}
+        ],
+        "hasProduction": true,
+        "productionHost": "prod.db.example.com"
+      },
+      "models": {
+        "count": 2,
+        "tableNames": ["orders", "customers"],
+        "schemas": [
+          {
+            "table": "orders",
+            "fieldCount": 3,
+            "fieldNames": ["id", "customer_id", "amount"],
+            "primaryKeys": ["id"]
+          },
+          {
+            "table": "customers",
+            "fieldCount": 2,
+            "fieldNames": ["id", "name"],
+            "primaryKeys": ["id"]
+          }
+        ]
+      },
+      "deployment": [
+        {
+          "environment": "production",
+          "server": "prod.db.example.com",
+          "tables": ["orders", "customers"],
+          "totalFields": 5
+        },
+        {
+          "environment": "staging",
+          "server": "stage.db.example.com",
+          "tables": ["orders", "customers"],
+          "totalFields": 5
+        }
+      ]
+    }
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 30
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-24"
+  references:
+    - "DataContract Specification v1.2.1"
+    - "docs/yaml-dynamic-keys-support.md - All variants"
+  notes:
+    - "Comprehensive DataContract transformation"
+    - "Combines all dynamic key patterns"
+    - "Static access, wildcards, introspection, transformation"
+    - "Real-world use case: contract analysis and deployment planning"
+    - "Demonstrates UTL-X's complete support for DataContract spec"

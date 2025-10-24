@@ -1,0 +1,121 @@
+name: "datacontract_servers_transform"
+category: "datacontract"
+description: "DataContract YAML with object transformation - entries(), mapEntries(), filterEntries()"
+tags: ["datacontract", "yaml", "dynamic-keys", "transformation"]
+
+inputs:
+  datacontract:
+    format: yaml
+    data: |
+      dataContractSpecification: "1.2.1"
+
+      servers:
+        production:
+          type: postgres
+          host: prod.db.example.com
+          port: 5432
+          database: orders_db
+        staging:
+          type: postgres
+          host: staging.db.example.com
+          port: 5432
+          database: orders_db_staging
+        qa-env:
+          type: postgres
+          host: qa.db.example.com
+          port: 5432
+          database: orders_db_qa
+
+transformation: |
+  %utlx 1.0
+  input: datacontract yaml
+  output json
+  ---
+  {
+    serverList: entries($datacontract.servers) |> map(entry => {
+      environment: entry.key,
+      type: entry.value.type,
+      connectionString: entry.value.host + ":" + toString(entry.value.port) + "/" + entry.value.database
+    }),
+
+    serversUppercase: mapEntries($datacontract.servers, (env, cfg) => {
+      key: upper(env),
+      value: {
+        endpoint: cfg.host + ":" + toString(cfg.port),
+        db: cfg.database
+      }
+    }),
+
+    prodServers: filterEntries($datacontract.servers, (name, cfg) =>
+      contains(lower(name), "prod")
+    ),
+
+    allHosts: reduceEntries($datacontract.servers, (acc, name, cfg) =>
+      acc + [cfg.host], []
+    )
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "serverList": [
+        {
+          "environment": "production",
+          "type": "postgres",
+          "connectionString": "prod.db.example.com:5432/orders_db"
+        },
+        {
+          "environment": "staging",
+          "type": "postgres",
+          "connectionString": "staging.db.example.com:5432/orders_db_staging"
+        },
+        {
+          "environment": "qa-env",
+          "type": "postgres",
+          "connectionString": "qa.db.example.com:5432/orders_db_qa"
+        }
+      ],
+      "serversUppercase": {
+        "PRODUCTION": {
+          "endpoint": "prod.db.example.com:5432",
+          "db": "orders_db"
+        },
+        "STAGING": {
+          "endpoint": "staging.db.example.com:5432",
+          "db": "orders_db_staging"
+        },
+        "QA-ENV": {
+          "endpoint": "qa.db.example.com:5432",
+          "db": "orders_db_qa"
+        }
+      },
+      "prodServers": {
+        "production": {
+          "type": "postgres",
+          "host": "prod.db.example.com",
+          "port": 5432,
+          "database": "orders_db"
+        }
+      },
+      "allHosts": [
+        "prod.db.example.com",
+        "staging.db.example.com",
+        "qa.db.example.com"
+      ]
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-24"
+  references:
+    - "docs/yaml-dynamic-keys-support.md - Variant 5"
+  notes:
+    - "Demonstrates object transformation functions"
+    - "entries(), mapEntries(), filterEntries(), reduceEntries()"
+    - "Transform keys and values with full context"
+    - "Filter by key pattern, aggregate values"

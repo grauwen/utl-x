@@ -1,0 +1,93 @@
+name: "datacontract_servers_dynamic_access"
+category: "datacontract"
+description: "DataContract YAML with bracket notation - dynamic key access by variable"
+tags: ["datacontract", "yaml", "dynamic-keys", "bracket-notation"]
+
+inputs:
+  datacontract:
+    format: yaml
+    data: |
+      dataContractSpecification: "1.2.1"
+      environment: prod
+
+      servers:
+        production:
+          type: postgres
+          host: prod.db.example.com
+          port: 5432
+        staging:
+          type: postgres
+          host: staging.db.example.com
+          port: 5432
+        development:
+          type: postgres
+          host: dev.db.example.com
+          port: 5432
+
+transformation: |
+  %utlx 1.0
+  input: datacontract yaml
+  output json
+  ---
+  {
+    activeEnvironment: let env = "production" in $datacontract.servers[env],
+
+    selectedServer: match $datacontract.environment {
+      "prod" => $datacontract.servers["production"],
+      "stage" => $datacontract.servers["staging"],
+      "dev" => $datacontract.servers["development"],
+      _ => $datacontract.servers["staging"]
+    },
+
+    computedServer: $datacontract.servers[
+      if ($datacontract.environment == "prod")
+        "production"
+      else if ($datacontract.environment == "stage")
+        "staging"
+      else
+        "development"
+    ],
+
+    serverByConcat: $datacontract.servers[$datacontract.environment + "uction"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "activeEnvironment": {
+        "type": "postgres",
+        "host": "prod.db.example.com",
+        "port": 5432
+      },
+      "selectedServer": {
+        "type": "postgres",
+        "host": "prod.db.example.com",
+        "port": 5432
+      },
+      "computedServer": {
+        "type": "postgres",
+        "host": "prod.db.example.com",
+        "port": 5432
+      },
+      "serverByConcat": {
+        "type": "postgres",
+        "host": "prod.db.example.com",
+        "port": 5432
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-24"
+  references:
+    - "docs/yaml-dynamic-keys-support.md - Variant 3"
+  notes:
+    - "Demonstrates bracket notation for dynamic key access"
+    - "Variable-based key selection"
+    - "Conditional key selection with match expression"
+    - "Expression evaluation in brackets"

@@ -1,0 +1,138 @@
+name: "datacontract_models_dynamic_fields"
+category: "datacontract"
+description: "DataContract models with dynamic field definitions"
+tags: ["datacontract", "yaml", "dynamic-keys", "models", "schema"]
+
+inputs:
+  datacontract:
+    format: yaml
+    data: |
+      dataContractSpecification: "1.2.1"
+
+      models:
+        orders:
+          type: table
+          fields:
+            order_id:
+              type: integer
+              required: true
+              primaryKey: true
+            customer_id:
+              type: integer
+              required: true
+            order_date:
+              type: timestamp
+              required: true
+            total_amount:
+              type: decimal
+              required: true
+
+        customers:
+          type: table
+          fields:
+            customer_id:
+              type: integer
+              required: true
+              primaryKey: true
+            name:
+              type: varchar
+              required: true
+            email:
+              type: varchar
+              required: false
+
+transformation: |
+  %utlx 1.0
+  input: datacontract yaml
+  output json
+  ---
+  {
+    models: entries($datacontract.models) |> map(modelEntry => {
+      tableName: modelEntry.key,
+      type: modelEntry.value.type,
+
+      fields: entries(modelEntry.value.fields) |> map(fieldEntry => {
+        name: fieldEntry.key,
+        type: fieldEntry.value.type,
+        required: fieldEntry.value.required,
+        primaryKey: fieldEntry.value.primaryKey ?? false
+      }),
+
+      primaryKeys: entries(modelEntry.value.fields)
+        |> filter(fe => fe.value.primaryKey == true)
+        |> map(fe => fe.key),
+
+      fieldCount: count(modelEntry.value.fields)
+    }),
+
+    ddl: entries($datacontract.models) |> map(modelEntry => {
+      let tableName = modelEntry.key
+      let fields = modelEntry.value.fields
+
+      createTable: "CREATE TABLE " + tableName + " (" +
+        join(
+          entries(fields) |> map(fieldEntry =>
+            fieldEntry.key + " " +
+            upper(fieldEntry.value.type) +
+            (if (fieldEntry.value.required) " NOT NULL" else "") +
+            (if (fieldEntry.value.primaryKey ?? false) " PRIMARY KEY" else "")
+          ),
+          ", "
+        ) + ");"
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "models": [
+        {
+          "tableName": "orders",
+          "type": "table",
+          "fields": [
+            {"name": "order_id", "type": "integer", "required": true, "primaryKey": true},
+            {"name": "customer_id", "type": "integer", "required": true, "primaryKey": false},
+            {"name": "order_date", "type": "timestamp", "required": true, "primaryKey": false},
+            {"name": "total_amount", "type": "decimal", "required": true, "primaryKey": false}
+          ],
+          "primaryKeys": ["order_id"],
+          "fieldCount": 4
+        },
+        {
+          "tableName": "customers",
+          "type": "table",
+          "fields": [
+            {"name": "customer_id", "type": "integer", "required": true, "primaryKey": true},
+            {"name": "name", "type": "varchar", "required": true, "primaryKey": false},
+            {"name": "email", "type": "varchar", "required": false, "primaryKey": false}
+          ],
+          "primaryKeys": ["customer_id"],
+          "fieldCount": 3
+        }
+      ],
+      "ddl": [
+        {
+          "createTable": "CREATE TABLE orders (order_id INTEGER NOT NULL PRIMARY KEY, customer_id INTEGER NOT NULL, order_date TIMESTAMP NOT NULL, total_amount DECIMAL NOT NULL);"
+        },
+        {
+          "createTable": "CREATE TABLE customers (customer_id INTEGER NOT NULL PRIMARY KEY, name VARCHAR NOT NULL, email VARCHAR);"
+        }
+      ]
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-24"
+  references:
+    - "DataContract Specification v1.2.1 - models section"
+    - "docs/yaml-dynamic-keys-support.md"
+  notes:
+    - "Demonstrates nested dynamic keys (models -> fields)"
+    - "Extract schema information with unknown field names"
+    - "Generate SQL DDL from DataContract models"
+    - "Real-world data contract schema transformation"

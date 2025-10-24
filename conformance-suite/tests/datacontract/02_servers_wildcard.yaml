@@ -1,0 +1,167 @@
+name: "datacontract_servers_wildcard"
+category: "datacontract"
+description: "DataContract YAML with wildcard selection - process all servers regardless of names"
+tags: ["datacontract", "yaml", "dynamic-keys", "wildcard"]
+
+inputs:
+  datacontract:
+    format: yaml
+    data: |
+      dataContractSpecification: "1.2.1"
+      id: "orders-datacontract"
+
+      servers:
+        production:
+          type: postgres
+          host: prod.db.example.com
+          port: 5432
+          database: orders_db
+        staging:
+          type: postgres
+          host: staging.db.example.com
+          port: 5432
+          database: orders_db_staging
+        qa-europe:
+          type: postgres
+          host: qa-eu.db.example.com
+          port: 5432
+          database: orders_db_qa
+        qa-asia:
+          type: mysql
+          host: qa-ap.db.example.com
+          port: 3306
+          database: orders_db_qa
+
+transformation: |
+  %utlx 1.0
+  input: datacontract yaml
+  output json
+  ---
+  {
+    contractId: $datacontract.id,
+
+    allServers: $datacontract.servers.*,
+
+    serverList: $datacontract.servers.* |> map(server => {
+      type: server.type,
+      endpoint: server.host + ":" + toString(server.port),
+      database: server.database
+    }),
+
+    postgresServers: $datacontract.servers.* |> filter(s => s.type == "postgres"),
+
+    mysqlServers: $datacontract.servers.* |> filter(s => s.type == "mysql"),
+
+    allHosts: $datacontract.servers.* |> map(s => s.host),
+
+    totalServers: count($datacontract.servers),
+
+    port5432Servers: $datacontract.servers.* |> filter(s => s.port == 5432) |> count()
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "contractId": "orders-datacontract",
+      "allServers": [
+        {
+          "type": "postgres",
+          "host": "prod.db.example.com",
+          "port": 5432,
+          "database": "orders_db"
+        },
+        {
+          "type": "postgres",
+          "host": "staging.db.example.com",
+          "port": 5432,
+          "database": "orders_db_staging"
+        },
+        {
+          "type": "postgres",
+          "host": "qa-eu.db.example.com",
+          "port": 5432,
+          "database": "orders_db_qa"
+        },
+        {
+          "type": "mysql",
+          "host": "qa-ap.db.example.com",
+          "port": 3306,
+          "database": "orders_db_qa"
+        }
+      ],
+      "serverList": [
+        {
+          "type": "postgres",
+          "endpoint": "prod.db.example.com:5432",
+          "database": "orders_db"
+        },
+        {
+          "type": "postgres",
+          "endpoint": "staging.db.example.com:5432",
+          "database": "orders_db_staging"
+        },
+        {
+          "type": "postgres",
+          "endpoint": "qa-eu.db.example.com:5432",
+          "database": "orders_db_qa"
+        },
+        {
+          "type": "mysql",
+          "endpoint": "qa-ap.db.example.com:3306",
+          "database": "orders_db_qa"
+        }
+      ],
+      "postgresServers": [
+        {
+          "type": "postgres",
+          "host": "prod.db.example.com",
+          "port": 5432,
+          "database": "orders_db"
+        },
+        {
+          "type": "postgres",
+          "host": "staging.db.example.com",
+          "port": 5432,
+          "database": "orders_db_staging"
+        },
+        {
+          "type": "postgres",
+          "host": "qa-eu.db.example.com",
+          "port": 5432,
+          "database": "orders_db_qa"
+        }
+      ],
+      "mysqlServers": [
+        {
+          "type": "mysql",
+          "host": "qa-ap.db.example.com",
+          "port": 3306,
+          "database": "orders_db_qa"
+        }
+      ],
+      "allHosts": [
+        "prod.db.example.com",
+        "staging.db.example.com",
+        "qa-eu.db.example.com",
+        "qa-ap.db.example.com"
+      ],
+      "totalServers": 4,
+      "port5432Servers": 3
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-24"
+  references:
+    - "DataContract Specification v1.2.1"
+    - "docs/yaml-dynamic-keys-support.md - Variant 2"
+  notes:
+    - "Demonstrates wildcard selection pattern"
+    - "Processes all servers without knowing environment names"
+    - "Filters, maps, and aggregates across unknown keys"
+    - "Mix of postgres and mysql servers"
