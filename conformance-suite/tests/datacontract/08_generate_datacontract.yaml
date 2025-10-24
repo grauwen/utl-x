@@ -1,0 +1,193 @@
+name: "datacontract_generate_from_data"
+category: "datacontract"
+description: "Generate DataContract YAML with dynamic keys from structured data (OUTPUT pattern)"
+tags: ["datacontract", "yaml", "dynamic-keys", "output", "fromEntries"]
+
+inputs:
+  metadata:
+    format: json
+    data: |
+      {
+        "contractInfo": {
+          "id": "orders-api-v2",
+          "title": "Orders API Data Contract",
+          "version": "2.0.0",
+          "owner": "Data Platform Team"
+        },
+        "serverConfigs": [
+          {
+            "env": "production",
+            "type": "postgres",
+            "host": "prod-db.company.com",
+            "port": 5432,
+            "database": "orders_prod",
+            "schema": "public"
+          },
+          {
+            "env": "staging",
+            "type": "postgres",
+            "host": "stage-db.company.com",
+            "port": 5432,
+            "database": "orders_stage",
+            "schema": "public"
+          },
+          {
+            "env": "development",
+            "type": "postgres",
+            "host": "dev-db.company.com",
+            "port": 5432,
+            "database": "orders_dev",
+            "schema": "public"
+          }
+        ],
+        "tableDefinitions": [
+          {
+            "tableName": "orders",
+            "tableType": "table",
+            "columns": [
+              {"name": "order_id", "type": "integer", "required": true, "isPrimaryKey": true},
+              {"name": "customer_id", "type": "integer", "required": true, "isPrimaryKey": false},
+              {"name": "order_date", "type": "timestamp", "required": true, "isPrimaryKey": false},
+              {"name": "total_amount", "type": "decimal", "required": true, "isPrimaryKey": false}
+            ]
+          },
+          {
+            "tableName": "customers",
+            "tableType": "table",
+            "columns": [
+              {"name": "customer_id", "type": "integer", "required": true, "isPrimaryKey": true},
+              {"name": "name", "type": "varchar", "required": true, "isPrimaryKey": false},
+              {"name": "email", "type": "varchar", "required": false, "isPrimaryKey": false}
+            ]
+          }
+        ]
+      }
+
+transformation: |
+  %utlx 1.0
+  input: metadata json
+  output yaml
+  ---
+  {
+    dataContractSpecification: "1.2.1",
+    id: $metadata.contractInfo.id,
+    info: {
+      title: $metadata.contractInfo.title,
+      version: $metadata.contractInfo.version,
+      owner: $metadata.contractInfo.owner
+    },
+
+    servers: fromEntries(
+      $metadata.serverConfigs |> map(server => [
+        server.env,
+        {
+          type: server.type,
+          host: server.host,
+          port: server.port,
+          database: server.database,
+          schema: server.schema
+        }
+      ])
+    ),
+
+    models: fromEntries(
+      $metadata.tableDefinitions |> map(table => [
+        table.tableName,
+        {
+          type: table.tableType,
+          fields: fromEntries(
+            table.columns |> map(col => [
+              col.name,
+              {
+                type: col.type,
+                required: col.required,
+                primaryKey: col.isPrimaryKey
+              }
+            ])
+          )
+        }
+      ])
+    )
+  }
+
+expected:
+  format: yaml
+  data: |
+    dataContractSpecification: '1.2.1'
+    id: orders-api-v2
+    info:
+      title: Orders API Data Contract
+      version: '2.0.0'
+      owner: Data Platform Team
+    servers:
+      production:
+        type: postgres
+        host: prod-db.company.com
+        port: 5432
+        database: orders_prod
+        schema: public
+      staging:
+        type: postgres
+        host: stage-db.company.com
+        port: 5432
+        database: orders_stage
+        schema: public
+      development:
+        type: postgres
+        host: dev-db.company.com
+        port: 5432
+        database: orders_dev
+        schema: public
+    models:
+      orders:
+        type: table
+        fields:
+          order_id:
+            type: integer
+            required: true
+            primaryKey: true
+          customer_id:
+            type: integer
+            required: true
+            primaryKey: false
+          order_date:
+            type: timestamp
+            required: true
+            primaryKey: false
+          total_amount:
+            type: decimal
+            required: true
+            primaryKey: false
+      customers:
+        type: table
+        fields:
+          customer_id:
+            type: integer
+            required: true
+            primaryKey: true
+          name:
+            type: varchar
+            required: true
+            primaryKey: false
+          email:
+            type: varchar
+            required: false
+            primaryKey: false
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 30
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-24"
+  references:
+    - "DataContract Specification v1.2.1"
+    - "docs/yaml-dynamic-keys-output.md"
+  notes:
+    - "Demonstrates OUTPUT pattern - generating YAML with dynamic keys"
+    - "Uses fromEntries() to create dynamic server environment keys"
+    - "Uses nested fromEntries() for model table names and field names"
+    - "Converts structured array data to DataContract specification"
+    - "Triple-nested dynamic keys: servers, models, fields"
+    - "Real-world use case: Generate DataContract from database metadata"
