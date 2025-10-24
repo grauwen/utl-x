@@ -20,7 +20,7 @@ see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-run
   - Legacy system integration
   - Security/compliance requirements
 ----
-YAML MAP constructions
+YAML MAP constructions see https://github.com/grauwen/utl-x/blob/main/stdlib/yaml-maps-json-schema-summary.md
 ----
 Dependency graph construction from AST?
 ----
