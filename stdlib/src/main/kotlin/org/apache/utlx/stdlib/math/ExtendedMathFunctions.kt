@@ -38,7 +38,10 @@ object ExtendedMathFunctions {
             val formatter = DecimalFormat(pattern)
             UDM.Scalar(formatter.format(number))
         } catch (e: Exception) {
-            throw FunctionArgumentException("Invalid number format pattern: $pattern")
+            throw FunctionArgumentException(
+                "Invalid number format pattern: $pattern. " +
+                "Hint: Use patterns like '#,##0.00' for decimal formatting or '#,##0' for integers."
+            )
         }
     }
     
@@ -65,7 +68,10 @@ object ExtendedMathFunctions {
         return try {
             UDM.Scalar(str.toInt().toDouble())
         } catch (e: NumberFormatException) {
-            throw FunctionArgumentException("Cannot parse integer: $str")
+            throw FunctionArgumentException(
+                "Cannot parse integer from '$str'. " +
+                "Hint: Ensure the string contains a valid integer value (e.g., '42', '-10')."
+            )
         }
     }
     
@@ -92,7 +98,10 @@ object ExtendedMathFunctions {
         return try {
             UDM.Scalar(str.toDouble())
         } catch (e: NumberFormatException) {
-            throw FunctionArgumentException("Cannot parse float: $str")
+            throw FunctionArgumentException(
+                "Cannot parse float from '$str'. " +
+                "Hint: Ensure the string contains a valid decimal value (e.g., '3.14', '-2.5')."
+            )
         }
     }
     
@@ -107,14 +116,23 @@ object ExtendedMathFunctions {
             val v = value
             when (v) {
                 is Number -> v.toDouble()
-                else -> throw FunctionArgumentException("Expected number value")
+                else -> throw FunctionArgumentException(
+                    "Expected number value, but got ${v?.javaClass?.simpleName ?: "null"}. " +
+                    "Hint: Use toNumber() to convert strings to numbers."
+                )
             }
         }
-        else -> throw FunctionArgumentException("Expected number value")
+        else -> throw FunctionArgumentException(
+            "Expected number value, but got ${this::class.simpleName}. " +
+            "Hint: Use toNumber() to convert values to numbers."
+        )
     }
     
     private fun UDM.asString(): String = when (this) {
         is UDM.Scalar -> value?.toString() ?: ""
-        else -> throw FunctionArgumentException("Expected string value")
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${this::class.simpleName}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
     }
 }

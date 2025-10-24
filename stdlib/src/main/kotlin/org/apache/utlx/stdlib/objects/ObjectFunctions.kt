@@ -23,7 +23,10 @@ object ObjectFunctions {
     
     fun keys(args: List<UDM>): UDM {
         requireArgs(args, 1, "keys")
-        val obj = args[0].asObject() ?: throw FunctionArgumentException("keys: first argument must be an object")
+        val obj = args[0].asObject() ?: throw FunctionArgumentException(
+            "keys requires an object as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an object."
+        )
         val keysList = obj.properties.keys.map { UDM.Scalar(it) }
         return UDM.Array(keysList)
     }
@@ -44,7 +47,10 @@ object ObjectFunctions {
     
     fun values(args: List<UDM>): UDM {
         requireArgs(args, 1, "values")
-        val obj = args[0].asObject() ?: throw FunctionArgumentException("values: first argument must be an object")
+        val obj = args[0].asObject() ?: throw FunctionArgumentException(
+            "values requires an object as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an object."
+        )
         return UDM.Array(obj.properties.values.toList())
     }
 
@@ -64,7 +70,10 @@ object ObjectFunctions {
     
     fun entries(args: List<UDM>): UDM {
         requireArgs(args, 1, "entries")
-        val obj = args[0].asObject() ?: throw FunctionArgumentException("entries: first argument must be an object")
+        val obj = args[0].asObject() ?: throw FunctionArgumentException(
+            "entries requires an object as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an object."
+        )
         val entriesList = obj.properties.map { (key, value) ->
             UDM.Array(listOf(UDM.Scalar(key), value))
         }
@@ -94,7 +103,10 @@ object ObjectFunctions {
         val mergedAttrs = mutableMapOf<String, String>()
         
         for (arg in args) {
-            val obj = arg.asObject() ?: throw FunctionArgumentException("merge: all arguments must be objects")
+            val obj = arg.asObject() ?: throw FunctionArgumentException(
+                "merge requires all arguments to be objects, but got ${getTypeDescription(arg)}. " +
+                "Hint: Ensure all values passed to merge are objects."
+            )
             mergedProps.putAll(obj.properties)
             mergedAttrs.putAll(obj.attributes)
         }
@@ -119,8 +131,14 @@ object ObjectFunctions {
     
     fun pick(args: List<UDM>): UDM {
         requireArgs(args, 2, "pick")
-        val obj = args[0].asObject() ?: throw FunctionArgumentException("pick: first argument must be an object")
-        val keys = (args[1].asArray() ?: throw FunctionArgumentException("pick: second argument must be an array")).elements.map { it.asString() }
+        val obj = args[0].asObject() ?: throw FunctionArgumentException(
+            "pick requires an object as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an object."
+        )
+        val keys = (args[1].asArray() ?: throw FunctionArgumentException(
+            "pick requires an array as second argument, but got ${getTypeDescription(args[1])}. " +
+            "Hint: Pass an array of key names to pick."
+        )).elements.map { it.asString() }
         
         val picked = obj.properties.filterKeys { it in keys }
         return UDM.Object(picked, emptyMap())
@@ -143,8 +161,14 @@ object ObjectFunctions {
     
     fun omit(args: List<UDM>): UDM {
         requireArgs(args, 2, "omit")
-        val obj = args[0].asObject() ?: throw FunctionArgumentException("omit: first argument must be an object")
-        val keys = (args[1].asArray() ?: throw FunctionArgumentException("omit: second argument must be an array")).elements.map { it.asString() }
+        val obj = args[0].asObject() ?: throw FunctionArgumentException(
+            "omit requires an object as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an object."
+        )
+        val keys = (args[1].asArray() ?: throw FunctionArgumentException(
+            "omit requires an array as second argument, but got ${getTypeDescription(args[1])}. " +
+            "Hint: Pass an array of key names to omit."
+        )).elements.map { it.asString() }
         
         val omitted = obj.properties.filterKeys { it !in keys }
         return UDM.Object(omitted, obj.attributes)
@@ -180,7 +204,10 @@ object ObjectFunctions {
      */
     fun containsKey(args: List<UDM>): UDM {
         requireArgs(args, 2, "containsKey")
-        val obj = args[0].asObject() ?: throw FunctionArgumentException("containsKey: first argument must be an object")
+        val obj = args[0].asObject() ?: throw FunctionArgumentException(
+            "containsKey requires an object as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an object."
+        )
         val key = args[1].asString()
         
         return UDM.Scalar(obj.properties.containsKey(key))
@@ -217,7 +244,10 @@ object ObjectFunctions {
      */
     fun containsValue(args: List<UDM>): UDM {
         requireArgs(args, 2, "containsValue")
-        val obj = args[0].asObject() ?: throw FunctionArgumentException("containsValue: first argument must be an object")
+        val obj = args[0].asObject() ?: throw FunctionArgumentException(
+            "containsValue requires an object as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an object."
+        )
         val value = args[1]
 
         return UDM.Scalar(obj.properties.containsValue(value))
@@ -243,7 +273,10 @@ object ObjectFunctions {
      */
     fun hasKey(args: List<UDM>): UDM {
         requireArgs(args, 2, "hasKey")
-        val obj = args[0].asObject() ?: throw FunctionArgumentException("hasKey: first argument must be an object")
+        val obj = args[0].asObject() ?: throw FunctionArgumentException(
+            "hasKey requires an object as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an object."
+        )
         val key = args[1].asString()
 
         return UDM.Scalar(obj.properties.containsKey(key))
@@ -268,16 +301,25 @@ object ObjectFunctions {
      */
     fun fromEntries(args: List<UDM>): UDM {
         requireArgs(args, 1, "fromEntries")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("fromEntries: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "fromEntries requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Pass an array of [key, value] pairs."
+        )
 
         val properties = mutableMapOf<String, UDM>()
 
         for (element in array.elements) {
             val pair = element.asArray()
-                ?: throw FunctionArgumentException("fromEntries: each element must be a [key, value] array")
+                ?: throw FunctionArgumentException(
+                    "fromEntries requires each element to be a [key, value] array, but got ${getTypeDescription(element)}. " +
+                    "Hint: Each element should be an array like [\"name\", \"John\"]."
+                )
 
             if (pair.elements.size != 2) {
-                throw FunctionArgumentException("fromEntries: each element must have exactly 2 items [key, value]")
+                throw FunctionArgumentException(
+                    "fromEntries requires each element to have exactly 2 items [key, value], but got ${pair.elements.size} items. " +
+                    "Hint: Use arrays with exactly 2 elements: [key, value]."
+                )
             }
 
             val key = pair.elements[0].asString()
@@ -305,6 +347,32 @@ object ObjectFunctions {
     
     private fun UDM.asString(): String = when (this) {
         is UDM.Scalar -> value?.toString() ?: ""
-        else -> throw FunctionArgumentException("Expected string value")
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${this::class.simpleName}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 }
