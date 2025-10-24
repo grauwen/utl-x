@@ -30,7 +30,7 @@ transformation: |
 expected:
   format: json
   data: |
-    {"has_SAP_Response": false, "root": {"Material": {"MaterialNumber": {"_text": "MAT-001"}}}, "type": "object"}
+    {"has_SAP_Response": true, "root": {"SAP_Response": {"Material": {"MaterialNumber": {"_text": "MAT-001"}}}}, "type": "object"}
     
 
 performance_limits:

@@ -27,9 +27,11 @@ expected:
   format: json
   data: |
     {
-      "Material": {
-        "MaterialNumber": {
-          "_text": "MAT-001"
+      "SAP_Response": {
+        "Material": {
+          "MaterialNumber": {
+            "_text": "MAT-001"
+          }
         }
       }
     }

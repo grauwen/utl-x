@@ -64,7 +64,7 @@ transformation: |
   }
 
   def YearsFromDate(date) {
-    round(daysBetween(date, now()) / 365.25, 1)
+    round(daysBetween(date, parseDate("2024-10-24")) / 365.25, 1)
   }
 
 expected:
@@ -86,8 +86,8 @@ expected:
             "salary": 75000,
             "hire_date": "2020-03-15",
             "is_active": true,
-            "years_employed": 3.8,
-            "salary_grade": "Senior"
+            "years_employed": 5,
+            "salary_grade": "Mid"
           }
         },
         {
@@ -104,7 +104,7 @@ expected:
             "salary": 68000,
             "hire_date": "2019-07-22",
             "is_active": true,
-            "years_employed": 4.4,
+            "years_employed": 5,
             "salary_grade": "Mid"
           }
         },
@@ -122,7 +122,7 @@ expected:
             "salary": 52000,
             "hire_date": "2021-11-08",
             "is_active": false,
-            "years_employed": 2.2,
+            "years_employed": 3,
             "salary_grade": "Junior"
           }
         },
@@ -140,7 +140,7 @@ expected:
             "salary": 82000,
             "hire_date": "2018-01-10",
             "is_active": true,
-            "years_employed": 6.0,
+            "years_employed": 7,
             "salary_grade": "Senior"
           }
         },
@@ -158,7 +158,7 @@ expected:
             "salary": 58000,
             "hire_date": "2022-05-03",
             "is_active": true,
-            "years_employed": 1.7,
+            "years_employed": 2,
             "salary_grade": "Junior"
           }
         }

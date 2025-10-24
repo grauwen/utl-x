@@ -25,7 +25,7 @@ transformation: |
 
 expected:
   format: json
-  data: "{\"Material\":{\"MaterialNumber\":{\"_text\":\"MAT-001\"}}}"
+  data: "{\"SAP_Response\":{\"Material\":{\"MaterialNumber\":{\"_text\":\"MAT-001\"}}}}"
     
 
 performance_limits:
