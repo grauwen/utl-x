@@ -16,11 +16,11 @@
 - `values(obj)` - Get all values ✅
 - `hasKey(obj, key)` - Check key existence ✅
 - `entries(obj)` - Get `[key, value]` pairs ✅
-- `mapEntries(obj, fn)` - Transform keys/values ⚠️ **NOT IMPLEMENTED**
-- `filterEntries(obj, pred)` - Filter properties ⚠️ **NOT IMPLEMENTED**
-- `reduceEntries(obj, fn, init)` - Aggregate ⚠️ **NOT IMPLEMENTED**
+- `mapEntries(obj, fn)` - Transform keys/values ✅ **NOW WORKING!**
+- `filterEntries(obj, pred)` - Filter properties ⚠️ Not yet implemented
+- `reduceEntries(obj, fn, init)` - Aggregate ⚠️ Not yet implemented
 
-⚠️ **CRITICAL:** Functions that take lambda arguments are not yet implemented. See workarounds below.
+✅ **UPDATE (2025-10-25):** `mapEntries()` is now fully functional! Lambda conversion has been fixed.
 
 **Access Patterns:**
 ```utlx
@@ -51,9 +51,9 @@ entries($input.servers) |> map(...) # Iteration with keys
 }
 ```
 
-**⚠️ Pattern 2: `mapEntries()` (NOT IMPLEMENTED)**
+**✅ Pattern 2: `mapEntries()` (WORKING)**
 ```utlx
-# ❌ THIS DOES NOT WORK YET
+# ✅ THIS NOW WORKS!
 {
   servers: mapEntries($input.servers, (env, config) => {
     key: upper(env),        # Transform key
@@ -61,7 +61,7 @@ entries($input.servers) |> map(...) # Iteration with keys
   })
 }
 
-# ✅ USE THIS WORKAROUND INSTEAD
+# Alternative: fromEntries + entries + map (more verbose)
 {
   servers: fromEntries(
     entries($input.servers) |> map(entry => [
@@ -110,21 +110,22 @@ entries($input.servers) |> map(...) # Iteration with keys
 | Test | Focus | Status | Blocker |
 |------|-------|--------|---------|
 | 01_servers_static_keys | Static access | ✅ PASSING | None |
-| 02_servers_wildcard | Wildcard selection | ⚠️ Fixable | Syntax only |
-| 03_servers_dynamic_access | Bracket notation | ❓ Unknown | Syntax + testing |
-| 04_servers_introspection | keys(), values(), hasKey() | ⚠️ Fixable | Syntax only |
-| 05_servers_transform | entries(), mapEntries() | ❌ **BLOCKED** | **mapEntries not implemented** |
-| 06_models_dynamic_fields | Nested dynamic keys | ⚠️ Fixable | Syntax only |
-| 07_full_datacontract | Complete spec | ❌ **BLOCKED** | **Uses mapEntries** |
+| 02_servers_wildcard | Wildcard selection | ⚠️ Fixable | count() on object syntax |
+| 03_servers_dynamic_access | Bracket notation | ⚠️ Fixable | match expression syntax |
+| 04_servers_introspection | keys(), values(), hasKey() | ⚠️ Fixable | count() on object syntax |
+| 05_servers_transform | entries(), mapEntries() | ⚠️ Fixable | entries() returns arrays not objects |
+| 06_models_dynamic_fields | Nested dynamic keys | ⚠️ Fixable | let binding syntax |
+| 07_full_datacontract | Complete spec | ⚠️ Fixable | count() on object syntax |
 | 08_generate_datacontract | fromEntries OUTPUT | ✅ **PASSING** | None |
-| 09_transform_datacontract_keys | mapEntries OUTPUT | ❌ **BLOCKED** | **mapEntries not implemented** |
+| 09_transform_datacontract_keys | mapEntries OUTPUT | ✅ **PASSING** | None |
 
-**Current:** 2/9 passing (22%)
-**After syntax fixes:** Expected 5/9 (56%) - Tests 05, 07, 09 blocked by missing implementation
-**After mapEntries implementation:** Expected 9/9 (100%)
+**Current:** 3/9 passing (33%) - Tests 01, 08, 09 ✅
+**After syntax fixes:** Expected 9/9 (100%)
 
-⚠️ **CRITICAL FINDING:** `mapEntries()`, `filterEntries()`, and `reduceEntries()` are stub implementations.
-All functions that accept lambda arguments cannot be called. See `yaml-dynamic-keys-implementation-status.md`.
+✅ **SUCCESS:** `mapEntries()` is now fully implemented and working!
+- Fixed lambda conversion in interpreter (interpreter.kt:1101)
+- Implemented mapEntries in stdlib (EnhancedObjectFunctions.kt:251)
+- Test 09 passes - demonstrates Pattern 2 (mapEntries for OUTPUT)
 
 ---
 

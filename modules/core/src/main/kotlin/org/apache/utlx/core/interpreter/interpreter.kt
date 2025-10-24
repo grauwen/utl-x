@@ -1098,6 +1098,22 @@ class Interpreter {
             is RuntimeValue.ArrayValue -> org.apache.utlx.core.udm.UDM.Array(value.elements.map { runtimeValueToUDM(it) })
             is RuntimeValue.ObjectValue -> org.apache.utlx.core.udm.UDM.Object(value.properties.mapValues { runtimeValueToUDM(it.value) })
             is RuntimeValue.UDMValue -> value.udm
+            is RuntimeValue.FunctionValue -> {
+                // Convert RuntimeValue.FunctionValue to UDM.Lambda
+                // This enables stdlib functions to receive lambda arguments
+                val fnValue = value
+                org.apache.utlx.core.udm.UDM.Lambda { udmArgs ->
+                    // Create lambda environment with arguments
+                    val lambdaEnv = fnValue.closure.createChild()
+                    for ((param, arg) in fnValue.parameters.zip(udmArgs)) {
+                        lambdaEnv.define(param, RuntimeValue.UDMValue(arg))
+                    }
+                    // Execute lambda body in the context of this interpreter
+                    val result = this@Interpreter.evaluate(fnValue.body, lambdaEnv)
+                    // Convert result back to UDM
+                    runtimeValueToUDM(result)
+                }
+            }
             else -> throw RuntimeError("Cannot convert ${value::class.simpleName} to UDM for stdlib function call")
         }
     }

@@ -252,27 +252,39 @@ object EnhancedObjectFunctions {
         if (args.size < 2) {
             throw IllegalArgumentException("mapEntries() requires 2 arguments: object, mapper")
         }
-        
+
         val obj = args[0]
         if (obj !is UDM.Object) {
             throw IllegalArgumentException("mapEntries() first argument must be an object")
         }
-        
-        val mapperArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+
+        val mapper = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("mapEntries() second argument must be a lambda function. Got: ${args[1]::class.simpleName}")
+
         val result = mutableMapOf<String, UDM>()
         obj.properties.entries.forEach { (key, value) ->
             // Call mapper with key and value
-            // val mapped = mapper(UDM.Scalar(key), value)
-            // val newKey = mapped["key"]?.asString() ?: key
-            // val newValue = mapped["value"] ?: value
-            // result[newKey] = newValue
-            
-            // Placeholder: keep original entries
-            result[key] = value
+            val mapped = mapper.apply(listOf(UDM.Scalar(key), value))
+
+            // Extract {key: newKey, value: newValue} from result
+            val mappedObj = mapped as? UDM.Object
+                ?: throw IllegalArgumentException(
+                    "mapEntries mapper must return an object with 'key' and 'value' properties. " +
+                    "Got: ${mapped::class.simpleName}"
+                )
+
+            val newKey = mappedObj.properties["key"]?.let { keyUdm ->
+                when (keyUdm) {
+                    is UDM.Scalar -> keyUdm.value?.toString() ?: key
+                    else -> throw IllegalArgumentException("'key' property must be a scalar value")
+                }
+            } ?: key
+
+            val newValue = mappedObj.properties["value"] ?: value
+
+            result[newKey] = newValue
         }
-        
+
         return UDM.Object(result)
     }
     
