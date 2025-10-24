@@ -21,6 +21,26 @@ see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-run
   - Security/compliance requirements
 ----
 YAML MAP constructions see https://github.com/grauwen/utl-x/blob/main/stdlib/yaml-maps-json-schema-summary.md
+
+ 1. Verify existing stdlib - Check if keys(), values(), hasKey() already exist
+  2. Implement missing functions - Add the essential object manipulation functions
+  3. Create comprehensive test suite - DataContract-style YAML with dynamic keys
+  4. Document patterns - Best practices for handling dynamic keys in UTL-X
+  5. Add examples - Real-world DataContract transformation examples
+
+ see the issue! The parser is complaining about comments inside object literals. UTL-X doesn't support # comments inside object literals - comments must be on their own lines. Let me check a
+  working test to see the proper syntax:
+
+COMMENTS in YAML, Comments (documentation in XML), Need design document
+
+docs/yaml-dynamic-keys-findings.md
+
+UTL-X has 3 primary patterns for creating dynamic keys in output:                                                                                                                   
+1. fromEntries() - Build object from [key, value] pairs array                                                                                                                   
+2. mapEntries() - Transform existing object while changing keys/values                                                                                                          
+ 3. Direct object construction - Compute keys dynamically in literal                                                                                                             
+Plan: Create Comprehensive Documentation 
+
 ----
 Dependency graph construction from AST?
 ----
