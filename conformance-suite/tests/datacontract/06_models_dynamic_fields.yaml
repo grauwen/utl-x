@@ -48,34 +48,34 @@ transformation: |
   ---
   {
     models: entries($datacontract.models) |> map(modelEntry => {
-      tableName: modelEntry.key,
-      type: modelEntry.value.type,
+      tableName: modelEntry[0],
+      type: modelEntry[1].type,
 
-      fields: entries(modelEntry.value.fields) |> map(fieldEntry => {
-        name: fieldEntry.key,
-        type: fieldEntry.value.type,
-        required: fieldEntry.value.required,
-        primaryKey: fieldEntry.value.primaryKey ?? false
+      fields: entries(modelEntry[1].fields) |> map(fieldEntry => {
+        name: fieldEntry[0],
+        type: fieldEntry[1].type,
+        required: fieldEntry[1].required,
+        primaryKey: fieldEntry[1].primaryKey ?? false
       }),
 
-      primaryKeys: entries(modelEntry.value.fields)
-        |> filter(fe => fe.value.primaryKey == true)
-        |> map(fe => fe.key),
+      primaryKeys: entries(modelEntry[1].fields)
+        |> filter(fe => fe[1].primaryKey == true)
+        |> map(fe => fe[0]),
 
-      fieldCount: count(modelEntry.value.fields)
+      fieldCount: count(keys(modelEntry[1].fields))
     }),
 
     ddl: entries($datacontract.models) |> map(modelEntry => {
-      let tableName = modelEntry.key
-      let fields = modelEntry.value.fields
+      let tableName = modelEntry[0];
+      let fields = modelEntry[1].fields;
 
       createTable: "CREATE TABLE " + tableName + " (" +
-        join(
+        joinToString(
           entries(fields) |> map(fieldEntry =>
-            fieldEntry.key + " " +
-            upper(fieldEntry.value.type) +
-            (if (fieldEntry.value.required) " NOT NULL" else "") +
-            (if (fieldEntry.value.primaryKey ?? false) " PRIMARY KEY" else "")
+            fieldEntry[0] + " " +
+            upper(fieldEntry[1].type) +
+            (if (fieldEntry[1].required) " NOT NULL" else "") +
+            (if (fieldEntry[1].primaryKey ?? false) " PRIMARY KEY" else "")
           ),
           ", "
         ) + ");"

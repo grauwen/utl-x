@@ -64,12 +64,12 @@ transformation: |
     },
 
     servers: {
-      count: count($datacontract.servers),
+      count: count(keys($datacontract.servers)),
       environments: keys($datacontract.servers),
 
       configurations: entries($datacontract.servers) |> map(e => {
-        env: e.key,
-        conn: e.value.host + ":" + toString(e.value.port) + "/" + e.value.database
+        env: e[0],
+        conn: e[1].host + ":" + toString(e[1].port) + "/" + e[1].database
       }),
 
       hasProduction: hasKey($datacontract.servers, "production"),
@@ -80,25 +80,25 @@ transformation: |
     },
 
     models: {
-      count: count($datacontract.models),
+      count: count(keys($datacontract.models)),
       tableNames: keys($datacontract.models),
 
       schemas: entries($datacontract.models) |> map(modelEntry => {
-        table: modelEntry.key,
-        fieldCount: count(modelEntry.value.fields),
-        fieldNames: keys(modelEntry.value.fields),
-        primaryKeys: entries(modelEntry.value.fields)
-          |> filter(fe => fe.value.primaryKey == true)
-          |> map(fe => fe.key)
+        table: modelEntry[0],
+        fieldCount: count(keys(modelEntry[1].fields)),
+        fieldNames: keys(modelEntry[1].fields),
+        primaryKeys: entries(modelEntry[1].fields)
+          |> filter(fe => fe[1].primaryKey == true)
+          |> map(fe => fe[0])
       })
     },
 
     deployment: entries($datacontract.servers) |> map(serverEntry => {
-      environment: serverEntry.key,
-      server: serverEntry.value.host,
+      environment: serverEntry[0],
+      server: serverEntry[1].host,
       tables: keys($datacontract.models),
       totalFields: reduceEntries($datacontract.models, (acc, name, model) =>
-        acc + count(model.fields), 0
+        acc + count(keys(model.fields)), 0
       )
     })
   }

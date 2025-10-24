@@ -32,7 +32,7 @@ transformation: |
   {
     activeEnvironment: let env = "production" in $datacontract.servers[env],
 
-    selectedServer: match $datacontract.environment {
+    selectedServer: match ($datacontract.environment) {
       "prod" => $datacontract.servers["production"],
       "stage" => $datacontract.servers["staging"],
       "dev" => $datacontract.servers["development"],

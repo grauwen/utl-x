@@ -28,7 +28,7 @@ transformation: |
   {
     environments: keys($datacontract.servers),
 
-    environmentCount: count($datacontract.servers),
+    environmentCount: count(keys($datacontract.servers)),
 
     hasProd: hasKey($datacontract.servers, "production"),
     hasStaging: hasKey($datacontract.servers, "staging"),

@@ -54,7 +54,7 @@ transformation: |
 
     allHosts: $datacontract.servers.* |> map(s => s.host),
 
-    totalServers: count($datacontract.servers),
+    totalServers: count(keys($datacontract.servers)),
 
     port5432Servers: $datacontract.servers.* |> filter(s => s.port == 5432) |> count()
   }

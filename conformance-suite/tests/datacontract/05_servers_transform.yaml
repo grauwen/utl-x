@@ -33,9 +33,9 @@ transformation: |
   ---
   {
     serverList: entries($datacontract.servers) |> map(entry => {
-      environment: entry.key,
-      type: entry.value.type,
-      connectionString: entry.value.host + ":" + toString(entry.value.port) + "/" + entry.value.database
+      environment: entry[0],
+      type: entry[1].type,
+      connectionString: entry[1].host + ":" + toString(entry[1].port) + "/" + entry[1].database
     }),
 
     serversUppercase: mapEntries($datacontract.servers, (env, cfg) => {
@@ -51,7 +51,7 @@ transformation: |
     ),
 
     allHosts: reduceEntries($datacontract.servers, (acc, name, cfg) =>
-      acc + [cfg.host], []
+      concat(acc, [cfg.host]), []
     )
   }
 
