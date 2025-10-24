@@ -1,0 +1,138 @@
+name: "datacontract_transform_keys_output"
+category: "datacontract"
+description: "Transform DataContract keys using mapEntries() for OUTPUT - Pattern 2 demonstration"
+tags: ["datacontract", "yaml", "dynamic-keys", "output", "mapEntries"]
+
+inputs:
+  datacontract:
+    format: yaml
+    data: |
+      dataContractSpecification: "1.2.1"
+      id: "orders-api-shortnames"
+      info:
+        title: "Orders API (Short Names)"
+        version: "1.0.0"
+
+      servers:
+        prod:
+          type: postgres
+          host: prod.db.company.com
+          port: 5432
+          database: orders_prod
+          schema: public
+        stage:
+          type: postgres
+          host: stage.db.company.com
+          port: 5432
+          database: orders_stage
+          schema: public
+        dev:
+          type: postgres
+          host: dev.db.company.com
+          port: 5432
+          database: orders_dev
+          schema: public
+        qa:
+          type: postgres
+          host: qa.db.company.com
+          port: 5432
+          database: orders_qa
+          schema: public
+
+      models:
+        ord:
+          type: table
+          description: "Orders table"
+        cust:
+          type: table
+          description: "Customers table"
+
+transformation: |
+  %utlx 1.0
+  input: datacontract yaml
+  output yaml
+  ---
+  {
+    dataContractSpecification: $datacontract.dataContractSpecification,
+    id: "orders-api-standardized",
+    info: {
+      title: "Orders API (Standardized Names)",
+      version: $datacontract.info.version
+    },
+
+    servers: mapEntries($datacontract.servers, (env, config) => {
+      key: if (env == "prod") "production"
+           else if (env == "stage") "staging"
+           else if (env == "dev") "development"
+           else if (env == "qa") "quality-assurance"
+           else env,
+      value: config
+    }),
+
+    models: mapEntries($datacontract.models, (modelKey, modelDef) => {
+      key: if (modelKey == "ord") "orders"
+           else if (modelKey == "cust") "customers"
+           else modelKey,
+      value: modelDef
+    })
+  }
+
+expected:
+  format: yaml
+  data: |
+    dataContractSpecification: '1.2.1'
+    id: orders-api-standardized
+    info:
+      title: Orders API (Standardized Names)
+      version: '1.0.0'
+    servers:
+      production:
+        type: postgres
+        host: prod.db.company.com
+        port: 5432
+        database: orders_prod
+        schema: public
+      staging:
+        type: postgres
+        host: stage.db.company.com
+        port: 5432
+        database: orders_stage
+        schema: public
+      development:
+        type: postgres
+        host: dev.db.company.com
+        port: 5432
+        database: orders_dev
+        schema: public
+      quality-assurance:
+        type: postgres
+        host: qa.db.company.com
+        port: 5432
+        database: orders_qa
+        schema: public
+    models:
+      orders:
+        type: table
+        description: Orders table
+      customers:
+        type: table
+        description: Customers table
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-24"
+  references:
+    - "DataContract Specification v1.2.1"
+    - "docs/yaml-dynamic-keys-output.md - Pattern 2"
+  notes:
+    - "Demonstrates Pattern 2 (mapEntries) for OUTPUT"
+    - "Transforms existing DataContract keys to standardized names"
+    - "Input has shorthand keys: prod, stage, dev, qa, ord, cust"
+    - "Output has full keys: production, staging, development, quality-assurance, orders, customers"
+    - "Real-world use case: Standardizing naming conventions across DataContracts"
+    - "Complements test 08 (Pattern 1 - fromEntries)"
+    - "mapEntries() used for key transformation during YAML generation"
