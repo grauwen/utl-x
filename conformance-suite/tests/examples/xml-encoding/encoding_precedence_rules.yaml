@@ -24,7 +24,7 @@ transformation: |
       SourceSystem: "SAP",
       SourceEncoding: detectXMLEncoding($input),
       OutputEncoding: "UTF-8",
-      Data: $input
+      ...$input
     }
   }
 

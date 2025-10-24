@@ -21,7 +21,7 @@ transformation: |
   ---
   {
     Combined: {
-      Source1: $input,
+      ...$input,
       Metadata1: {
         encoding: detectXMLEncoding($input)
       }
