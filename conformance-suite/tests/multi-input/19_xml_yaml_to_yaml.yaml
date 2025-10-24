@@ -111,11 +111,11 @@ transformation: |
       sourceFormats: {
         serviceCatalog: "XML",
         policies: "YAML",
-        xmlEncoding: detectXMLEncoding(@services)
+        xmlEncoding: detectXMLEncoding($services)
       },
-      services: @services.ServiceCatalog.Service |> map(svc => {
+      services: $services.ServiceCatalog.Service |> map(svc => {
         let serviceId = svc.@id;
-        let policy = @monitoring.monitoringPolicies |> filter(p => p.serviceId == serviceId) |> first();
+        let policy = $monitoring.monitoringPolicies |> filter(p => p.serviceId == serviceId) |> first();
 
         {
           serviceId: serviceId,

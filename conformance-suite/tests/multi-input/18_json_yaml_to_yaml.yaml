@@ -89,9 +89,9 @@ transformation: |
       timestamp: "2025-10-21T10:00:00Z"
     },
     spec: {
-      deployments: @deployments.applications |> map(app => {
+      deployments: $deployments.applications |> map(app => {
         let appId = app.appId;
-        let helm = @helmValues.helmConfig |> filter(h => h.appId == appId) |> first();
+        let helm = $helmValues.helmConfig |> filter(h => h.appId == appId) |> first();
 
         {
           name: app.name,
@@ -134,15 +134,11 @@ transformation: |
             ]
           },
           ingress: if (helm.ingress.enabled) {
-            {
-              enabled: true,
-              host: helm.ingress.host,
-              tls: helm.ingress.tls
-            }
+            enabled: true,
+            host: helm.ingress.host,
+            tls: helm.ingress.tls
           } else {
-            {
-              enabled: false
-            }
+            enabled: false
           }
         }
       })

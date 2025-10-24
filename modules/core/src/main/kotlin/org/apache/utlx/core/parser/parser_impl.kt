@@ -774,10 +774,10 @@ class Parser(private val tokens: List<Token>) {
         consume(TokenType.LPAREN, "Expected '(' after 'if'")
         val condition = parseExpression()
         consume(TokenType.RPAREN, "Expected ')' after condition")
-        // Parse up to LogicalOr level to allow binary operations but not nested conditionals
-        val thenBranch = parseLogicalOr()
+        // Parse then branch - use parseTernary to allow all expressions except nested if/ternary
+        val thenBranch = parseTernary()
         val elseBranch = if (match(TokenType.ELSE)) {
-            parsePrefixIfOrLogicalOr()
+            parsePrefixIfOrTernary()
         } else {
             null
         }
@@ -785,12 +785,12 @@ class Parser(private val tokens: List<Token>) {
         return Expression.Conditional(condition, thenBranch, elseBranch, Location.from(startToken))
     }
 
-    private fun parsePrefixIfOrLogicalOr(): Expression {
+    private fun parsePrefixIfOrTernary(): Expression {
         return if (check(TokenType.IF)) {
             advance()
             parsePrefixIfExpression()
         } else {
-            parseLogicalOr()
+            parseTernary()
         }
     }
 
