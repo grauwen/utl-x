@@ -1,16 +1,31 @@
 # Conformance Suite Outstanding Issues - Detailed Analysis
 
-**Status**: 93.8% Pass Rate (270/288 tests passing) ⬆️ +3 tests
-**Outstanding**: 18 failing tests
-**Last Updated**: 2025-10-24 (Latest: Fixed all transformation errors!)
+**Status**: 94.4% Pass Rate (272/288 tests passing) ⬆️ +5 tests
+**Outstanding**: 16 failing tests
+**Last Updated**: 2025-10-24 (Latest: Implemented placeholder matching for dynamic values!)
 
 ---
 
 ## Latest Fixes (2025-10-24 Evening)
 
+### ✅ Placeholder Matching Implemented! (2 tests)
+
+**Progress**: 270/288 (93.8%) → **272/288 (94.4%)** ⬆️ +2 tests
+
+**Feature**: Added dynamic value placeholder matching to test runner
+- Implemented support for `{{TIMESTAMP}}`, `{{UUID}}`, `{{ANY}}`, `{{NUMBER}}`, `{{STRING}}`, and `{{REGEX:pattern}}`
+- Updated `sap_integration` tests to use `{{TIMESTAMP}}` placeholder for `now()` calls
+- Documentation: [`conformance-suite/docs/placeholder-matching.md`](conformance-suite/docs/placeholder-matching.md)
+
+**Fixed Tests:**
+1. **sap_integration** - Now uses `{{TIMESTAMP}}` placeholder for `processed_at` field
+2. **sap_integration_out_of_stock_scenario** - Now uses `{{TIMESTAMP}}` placeholder
+
+---
+
 ### ✅ All Transformation Errors Fixed! (3 tests)
 
-**Progress**: 267/288 (92.7%) → **270/288 (93.8%)** ⬆️ +3 tests
+**Previous Progress**: 267/288 (92.7%) → **270/288 (93.8%)** ⬆️ +3 tests
 
 **Fixed Tests:**
 1. **transform_auto_43d9da56** (xml-to-json + xml-transform) - Missing XML root element in path
@@ -33,7 +48,7 @@
 
 ---
 
-## Current Failing Tests (18 total - all output mismatches)
+## Current Failing Tests (16 total - all output mismatches)
 
 ### Transformation Errors (0 tests) ✅ ALL FIXED!
 
@@ -43,21 +58,24 @@
 2. ~~**xml_namespace_handling**~~ ✅ **FIXED** - Added missing `soap:Envelope` root element to XML path
 3. ~~**multi_input_json_xml_to_xml**~~ ✅ **FIXED** - Changed `@` to `$` for multi-input refs + added array check for Module elements
 
+### Dynamic Value Tests (0 tests) ✅ ALL FIXED!
+
+4. ~~**sap_integration**~~ ✅ **FIXED** - Implemented `{{TIMESTAMP}}` placeholder for `now()` call
+5. ~~**sap_integration_out_of_stock_scenario**~~ ✅ **FIXED** - Implemented `{{TIMESTAMP}}` placeholder for `now()` call
+
 ### Output Mismatches (16 tests)
 Tests that execute successfully but produce different output than expected:
 
 #### Auto-Captured Tests (4)
-4. **renderJson_auto_df69e6e1** - [`tests/auto-captured/stdlib/serialization/renderJson_auto_df69e6e1.yaml`](conformance-suite/tests/auto-captured/stdlib/serialization/renderJson_auto_df69e6e1.yaml)
-5. **contains_auto_b4e73406** - [`tests/auto-captured/stdlib/string/contains_auto_b4e73406.yaml`](conformance-suite/tests/auto-captured/stdlib/string/contains_auto_b4e73406.yaml)
-6. **transform_auto_8fb5ad0f** - [`tests/auto-captured/xml-to-json/transform_auto_8fb5ad0f.yaml`](conformance-suite/tests/auto-captured/xml-to-json/transform_auto_8fb5ad0f.yaml)
-7. **transform_auto_0b0f9dfa** - [`tests/auto-captured/xml-transform/transform_auto_0b0f9dfa.yaml`](conformance-suite/tests/auto-captured/xml-transform/transform_auto_0b0f9dfa.yaml)
+6. **renderJson_auto_df69e6e1** - [`tests/auto-captured/stdlib/serialization/renderJson_auto_df69e6e1.yaml`](conformance-suite/tests/auto-captured/stdlib/serialization/renderJson_auto_df69e6e1.yaml)
+7. **contains_auto_b4e73406** - [`tests/auto-captured/stdlib/string/contains_auto_b4e73406.yaml`](conformance-suite/tests/auto-captured/stdlib/string/contains_auto_b4e73406.yaml)
+8. **transform_auto_8fb5ad0f** - [`tests/auto-captured/xml-to-json/transform_auto_8fb5ad0f.yaml`](conformance-suite/tests/auto-captured/xml-to-json/transform_auto_8fb5ad0f.yaml)
+9. **transform_auto_0b0f9dfa** - [`tests/auto-captured/xml-transform/transform_auto_0b0f9dfa.yaml`](conformance-suite/tests/auto-captured/xml-transform/transform_auto_0b0f9dfa.yaml)
 
-#### Example Tests (3)
-8. **csv_to_json_transformation** - [`tests/examples/intermediate/csv_to_json_transformation.yaml`](conformance-suite/tests/examples/intermediate/csv_to_json_transformation.yaml)
-9. **sap_integration** - [`tests/examples/real-world/sap_integration.yaml`](conformance-suite/tests/examples/real-world/sap_integration.yaml) - Likely timestamp (`now()`) difference
-10. **sap_integration_out_of_stock_scenario** - [`tests/examples/real-world/sap_integration.yaml`](conformance-suite/tests/examples/real-world/sap_integration.yaml) - Likely timestamp (`now()`) difference
+#### Example Tests (1)
+10. **csv_to_json_transformation** - [`tests/examples/intermediate/csv_to_json_transformation.yaml`](conformance-suite/tests/examples/intermediate/csv_to_json_transformation.yaml)
 
-#### Multi-Input Tests (11)
+#### Multi-Input Tests (10)
 11. **multi_input_json_json_to_json** - [`tests/multi-input/05_json_json_to_json.yaml`](conformance-suite/tests/multi-input/05_json_json_to_json.yaml)
 12. **multi_input_csv_csv_to_json** - [`tests/multi-input/08_csv_csv_to_json.yaml`](conformance-suite/tests/multi-input/08_csv_csv_to_json.yaml)
 13. **multi_input_xml_xml_to_xml** - [`tests/multi-input/11_xml_xml_to_xml.yaml`](conformance-suite/tests/multi-input/11_xml_xml_to_xml.yaml) - XML output mismatch
@@ -67,7 +85,10 @@ Tests that execute successfully but produce different output than expected:
 17. **multi_input_xml_csv_to_csv** - [`tests/multi-input/16_xml_csv_to_csv.yaml`](conformance-suite/tests/multi-input/16_xml_csv_to_csv.yaml) - CSV row count mismatch
 18. **multi_input_yaml_yaml_to_yaml** - [`tests/multi-input/17_yaml_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/17_yaml_yaml_to_yaml.yaml) - YAML output mismatch
 19. **multi_input_json_yaml_to_yaml** - [`tests/multi-input/18_json_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/18_json_yaml_to_yaml.yaml) - YAML parse error in output
-21. **multi_input_xml_yaml_to_yaml** - [`tests/multi-input/19_xml_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/19_xml_yaml_to_yaml.yaml) - YAML output mismatch (parser fixed, output still differs)
+20. **multi_input_xml_yaml_to_yaml** - [`tests/multi-input/19_xml_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/19_xml_yaml_to_yaml.yaml) - YAML output mismatch (parser fixed, output still differs)
+
+#### Other Tests (1)
+21. **validateEncoding_basic_case_insensitive** - [`tests/stdlib/xml/validateEncoding_basic.yaml`](conformance-suite/tests/stdlib/xml/validateEncoding_basic.yaml) - Variant test failing
 
 ---
 

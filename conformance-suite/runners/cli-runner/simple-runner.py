@@ -33,10 +33,76 @@ class Colors:
     RESET = '\033[0m'
     BOLD = '\033[1m'
 
+def is_placeholder_match(expected: str, actual: Any) -> bool:
+    """
+    Check if an expected value is a placeholder and if the actual value matches it.
+
+    Supported placeholders:
+    - {{TIMESTAMP}} or {{ISO8601}} - Matches ISO 8601 timestamp strings
+    - {{UUID}} - Matches UUID v4 strings
+    - {{ANY}} - Matches any value
+    - {{NUMBER}} - Matches any numeric value
+    - {{STRING}} - Matches any string value
+    - {{REGEX:pattern}} - Matches against custom regex pattern
+    """
+    if not expected.startswith('{{') or not expected.endswith('}}'):
+        return False
+
+    placeholder = expected[2:-2].strip()
+
+    # {{ANY}} - accepts any value
+    if placeholder == 'ANY':
+        return True
+
+    # {{TIMESTAMP}} or {{ISO8601}} - validate ISO 8601 timestamp
+    if placeholder in ['TIMESTAMP', 'ISO8601']:
+        if not isinstance(actual, str):
+            return False
+        # Match ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ or with timezone
+        iso_pattern = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$'
+        return re.match(iso_pattern, actual) is not None
+
+    # {{UUID}} - validate UUID format
+    if placeholder == 'UUID':
+        if not isinstance(actual, str):
+            return False
+        uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        return re.match(uuid_pattern, actual.lower()) is not None
+
+    # {{NUMBER}} - validate numeric value
+    if placeholder == 'NUMBER':
+        return isinstance(actual, (int, float))
+
+    # {{STRING}} - validate string value
+    if placeholder == 'STRING':
+        return isinstance(actual, str)
+
+    # {{REGEX:pattern}} - custom regex matching
+    if placeholder.startswith('REGEX:'):
+        if not isinstance(actual, str):
+            return False
+        regex_pattern = placeholder[6:]  # Remove 'REGEX:' prefix
+        try:
+            return re.match(regex_pattern, actual) is not None
+        except re.error:
+            # Invalid regex pattern, treat as non-match
+            return False
+
+    # Unknown placeholder, treat as literal value
+    return False
+
 def find_json_differences(expected_data: Any, actual_data: Any, path: str = '') -> List[Dict[str, Any]]:
     """
     Recursively find differences between two JSON structures.
     Returns a list of difference objects with path, expected, and actual values.
+
+    Supports placeholder values in expected data:
+    - {{TIMESTAMP}} - matches ISO 8601 timestamps
+    - {{UUID}} - matches UUID strings
+    - {{ANY}} - matches any value
+    - {{NUMBER}} - matches numeric values
+    - {{STRING}} - matches string values
+    - {{REGEX:pattern}} - matches custom regex patterns
     """
     differences = []
 
@@ -113,7 +179,11 @@ def find_json_differences(expected_data: Any, actual_data: Any, path: str = '') 
 
     # Scalar comparison
     else:
-        if expected_data != actual_data:
+        # Check if expected value is a placeholder
+        if isinstance(expected_data, str) and is_placeholder_match(expected_data, actual_data):
+            # Placeholder matches, no difference
+            pass
+        elif expected_data != actual_data:
             differences.append({
                 'path': path or 'value',
                 'expected': expected_data,
@@ -729,7 +799,10 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
             actual_data = json.loads(stdout.strip())
             actual_json = json.dumps(actual_data, sort_keys=True)
 
-            if actual_json == expected_json:
+            # Use find_json_differences to support placeholder matching
+            differences = find_json_differences(expected_data, actual_data)
+
+            if not differences:
                 print(f"  ✓ Test passed")
                 return True, None
             else:
