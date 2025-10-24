@@ -51,7 +51,10 @@ object QNameFunctions {
 
                 UDM.Scalar(localName)
             }
-            else -> throw FunctionArgumentException("local-name expects an object/element")
+            else -> throw FunctionArgumentException(
+                "local-name requires an XML element (object), but got ${getTypeDescription(element)}. " +
+                "Hint: Ensure you're passing an XML element/node."
+            )
         }
     }
     
@@ -128,7 +131,10 @@ object QNameFunctions {
                 // Get element name from UDM.Object.name field
                 UDM.Scalar(element.name ?: "")
             }
-            else -> throw FunctionArgumentException("name expects an object/element")
+            else -> throw FunctionArgumentException(
+                "name requires an XML element (object), but got ${getTypeDescription(element)}. " +
+                "Hint: Ensure you're passing an XML element/node."
+            )
         }
     }
     
@@ -398,6 +404,32 @@ Context provides namespace bindings.""",
     
     private fun UDM.asString(): String = when (this) {
         is UDM.Scalar -> value?.toString() ?: ""
-        else -> throw FunctionArgumentException("Expected string value")
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 }

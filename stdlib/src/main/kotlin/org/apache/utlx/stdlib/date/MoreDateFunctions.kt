@@ -287,17 +287,49 @@ object MoreDateFunctions {
     
     private fun extractDateTime(udm: UDM): JavaInstant = when (udm) {
         is UDM.DateTime -> udm.instant
-        else -> throw FunctionArgumentException("Expected datetime value")
+        else -> throw FunctionArgumentException(
+            "Expected datetime value, but got ${getTypeDescription(udm)}. " +
+            "Hint: Use parseDate() or now() to create datetime values."
+        )
     }
-    
+
     private fun UDM.asNumber(): Double = when (this) {
         is UDM.Scalar -> {
             val v = value
             when (v) {
                 is Number -> v.toDouble()
-                else -> throw FunctionArgumentException("Expected number value")
+                else -> throw FunctionArgumentException(
+                    "Expected number value, but got ${getTypeDescription(this)}. " +
+                    "Hint: Use toNumber() to convert strings to numbers."
+                )
             }
         }
-        else -> throw FunctionArgumentException("Expected number value")
+        else -> throw FunctionArgumentException(
+            "Expected number value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toNumber() to convert values to numbers."
+        )
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 }
