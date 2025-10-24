@@ -829,33 +829,83 @@ object YAMLFunctions {
     // Helper functions
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
-            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
         }
     }
-    
+
     private fun UDM.asString(): String = when (this) {
-        is UDM.Scalar -> value?.toString() ?: throw FunctionArgumentException("Expected string value")
-        else -> throw FunctionArgumentException("Expected string value, got ${this::class.simpleName}")
+        is UDM.Scalar -> value?.toString() ?: throw FunctionArgumentException(
+            "Expected string value, but got null. " +
+            "Hint: Ensure the value is not null."
+        )
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
     }
-    
+
     private fun UDM.asInt(): Int = when (this) {
-        is UDM.Scalar -> (value as? Number)?.toInt() ?: throw FunctionArgumentException("Expected integer value")
-        else -> throw FunctionArgumentException("Expected integer value, got ${this::class.simpleName}")
+        is UDM.Scalar -> (value as? Number)?.toInt() ?: throw FunctionArgumentException(
+            "Expected integer value, but got ${getTypeDescription(this)}. " +
+            "Hint: Ensure the value is a valid integer."
+        )
+        else -> throw FunctionArgumentException(
+            "Expected integer value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toNumber() to convert values to numbers."
+        )
     }
-    
+
     private fun UDM.asBoolean(): Boolean = when (this) {
-        is UDM.Scalar -> value as? Boolean ?: throw FunctionArgumentException("Expected boolean value")
-        else -> throw FunctionArgumentException("Expected boolean value, got ${this::class.simpleName}")
+        is UDM.Scalar -> value as? Boolean ?: throw FunctionArgumentException(
+            "Expected boolean value, but got ${getTypeDescription(this)}. " +
+            "Hint: Ensure the value is true or false."
+        )
+        else -> throw FunctionArgumentException(
+            "Expected boolean value, but got ${getTypeDescription(this)}. " +
+            "Hint: Provide a boolean value (true or false)."
+        )
     }
-    
+
     private fun UDM.asStringArray(): List<String> = when (this) {
-        is UDM.Array -> elements.map { 
+        is UDM.Array -> elements.map {
             when (it) {
                 is UDM.Scalar -> it.value?.toString() ?: ""
-                else -> throw FunctionArgumentException("Expected array of strings")
+                else -> throw FunctionArgumentException(
+                    "Expected array of strings, but array contains ${getTypeDescription(it)}. " +
+                    "Hint: Ensure all array elements are strings."
+                )
             }
         }
-        else -> throw FunctionArgumentException("Expected array value, got ${this::class.simpleName}")
+        else -> throw FunctionArgumentException(
+            "Expected array value, but got ${getTypeDescription(this)}. " +
+            "Hint: Provide an array of strings."
+        )
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 
     // Path parsing internals
