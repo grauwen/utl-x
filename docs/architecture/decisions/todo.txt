@@ -33,6 +33,9 @@ The mapEntries() function exists but it's not implemented - it's just a stub wit
   - ⏳ mapValues(obj, mapper) - Ready to implement
   - ⏳ someEntry(obj, predicate) - Ready to implement
   - ⏳ everyEntry(obj, predicate) - Ready to implement
+All 8 lambda functions implemented
+
+=> add tests for the above to the conformance-suite
 
 Implement remaining 7 lambda-based object functions (now straightforward - same pattern as mapEntries)
   2. Fix syntax issues in tests 02-07 (count(), match, entries structure, let bindings)
