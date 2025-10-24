@@ -22,24 +22,15 @@ see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-run
 ----
 add functions to abreviate XML tags
 ----
-The mapEntries() function exists but it's not implemented - it's just a stub with // TODO: Implement function calling mechanism at lines 262 and 272. All the enhanced
-  object functions that take lambda arguments are placeholders!
+All missing lambda functions implemented including conformance-suite tests
 
-  The lambda conversion fix enables ALL lambda-based stdlib functions:
-  - ✅ mapEntries(obj, mapper) - NOW WORKING
-  - ⏳ filterEntries(obj, predicate) - Ready to implement
-  - ⏳ reduceEntries(obj, reducer, init) - Ready to implement
-  - ⏳ mapKeys(obj, mapper) - Ready to implement
-  - ⏳ mapValues(obj, mapper) - Ready to implement
-  - ⏳ someEntry(obj, predicate) - Ready to implement
-  - ⏳ everyEntry(obj, predicate) - Ready to implement
-All 8 lambda functions implemented
 
-=> add tests for the above to the conformance-suite
-
-Implement remaining 7 lambda-based object functions (now straightforward - same pattern as mapEntries)
   2. Fix syntax issues in tests 02-07 (count(), match, entries structure, let bindings)
   3. Achieve 9/9 passing tests for complete DataContract dynamic key support
+
+  1. Fix remaining syntax issues in tests 02-07 (count(), match, entries, let bindings)
+  2. Run full conformance suite - target: 9/9 DataContract tests passing
+  3. Consider implementing additional higher-order functions (groupBy, indexBy, etc.)
 ----
 YAML MAP constructions see https://github.com/grauwen/utl-x/blob/main/stdlib/yaml-maps-json-schema-summary.md
 
