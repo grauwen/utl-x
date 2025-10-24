@@ -210,8 +210,11 @@ object StringFunctions {
      */
     fun join(args: List<UDM>): UDM {
         requireArgs(args, 2, "join")
-        val array = args[0] as? UDM.Array 
-            ?: throw FunctionArgumentException("join: first argument must be an array")
+        val array = args[0] as? UDM.Array
+            ?: throw FunctionArgumentException(
+                "join requires an array as first argument, but got ${args[0].javaClass.simpleName}. " +
+                "Hint: Make sure you're passing an array, not a single value."
+            )
         val delimiter = args[1].asString()
         val result = array.elements.joinToString(delimiter) { it.asString() }
         return UDM.Scalar(result)
@@ -389,7 +392,10 @@ object StringFunctions {
                     else -> v.toString()
                 }
             }
-            else -> throw FunctionArgumentException("Expected string value, got ${this::class.simpleName}")
+            else -> throw FunctionArgumentException(
+                "Expected string value, but got ${this::class.simpleName}. " +
+                "Hint: Use toString() to convert values to strings."
+            )
         }
     }
     
@@ -399,12 +405,21 @@ object StringFunctions {
                 val v = value
                 when (v) {
                     is Number -> v.toDouble()
-                    is String -> v.toDoubleOrNull() 
-                        ?: throw FunctionArgumentException("Cannot convert '$v' to number")
-                    else -> throw FunctionArgumentException("Expected number value, got $v")
+                    is String -> v.toDoubleOrNull()
+                        ?: throw FunctionArgumentException(
+                            "Cannot convert '$v' to number. " +
+                            "Hint: Make sure the string contains a valid numeric value."
+                        )
+                    else -> throw FunctionArgumentException(
+                        "Expected number value, but got ${v?.javaClass?.simpleName ?: "null"}. " +
+                        "Hint: Use toNumber() to convert strings to numbers."
+                    )
                 }
             }
-            else -> throw FunctionArgumentException("Expected number value, got ${this::class.simpleName}")
+            else -> throw FunctionArgumentException(
+                "Expected number value, but got ${this::class.simpleName}. " +
+                "Hint: Use toNumber() to convert values to numbers."
+            )
         }
     }
 }

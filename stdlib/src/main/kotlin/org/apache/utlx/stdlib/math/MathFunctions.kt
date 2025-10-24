@@ -161,10 +161,19 @@ object MathFunctions {
             val v = value
             when (v) {
                 is Number -> v.toDouble()
-                is String -> v.toDoubleOrNull() ?: throw FunctionArgumentException("Cannot convert '$v' to number")
-                else -> throw FunctionArgumentException("Expected number value")
+                is String -> v.toDoubleOrNull() ?: throw FunctionArgumentException(
+                    "Cannot convert '$v' to number. " +
+                    "Hint: Make sure the string contains a valid numeric value."
+                )
+                else -> throw FunctionArgumentException(
+                    "Expected number value, but got ${v?.javaClass?.simpleName ?: "null"}. " +
+                    "Hint: Use toNumber() to convert strings to numbers."
+                )
             }
         }
-        else -> throw FunctionArgumentException("Expected number value")
+        else -> throw FunctionArgumentException(
+            "Expected number value, but got ${this::class.simpleName}. " +
+            "Hint: Use toNumber() to convert values to numbers."
+        )
     }
 }

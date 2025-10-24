@@ -917,10 +917,26 @@ class Interpreter {
                     return udmToRuntimeValue(result)
                 }
             } catch (ex: Exception) {
-                // Registry approach also failed - log the error for debugging
-                System.err.println("DEBUG: Failed to load stdlib function '$functionName' via reflection:")
-                System.err.println("  ${ex.javaClass.simpleName}: ${ex.message}")
-                ex.printStackTrace(System.err)
+                // Unwrap InvocationTargetException to get the real cause
+                val actualException = if (ex is java.lang.reflect.InvocationTargetException && ex.cause != null) {
+                    ex.cause!!
+                } else {
+                    ex
+                }
+
+                // For user-friendly errors, throw them directly with better message
+                if (actualException is org.apache.utlx.core.FunctionArgumentException ||
+                    actualException is IllegalArgumentException) {
+                    throw RuntimeError(
+                        "Error in function '$functionName': ${actualException.message}",
+                        location
+                    )
+                }
+
+                // For other errors, show debug info
+                System.err.println("DEBUG: Failed to execute stdlib function '$functionName':")
+                System.err.println("  ${actualException.javaClass.simpleName}: ${actualException.message}")
+                actualException.printStackTrace(System.err)
             }
         }
 

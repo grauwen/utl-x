@@ -30,9 +30,15 @@ object ArrayFunctions {
      */
     fun map(args: List<UDM>): UDM {
         requireArgs(args, 2, "map")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("map: first argument must be an array")
-        val lambda = args[1] as? UDM.Lambda 
-            ?: throw FunctionArgumentException("map: second argument must be a lambda")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "map requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array or use filter() to get array values."
+        )
+        val lambda = args[1] as? UDM.Lambda
+            ?: throw FunctionArgumentException(
+                "map requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use x => expression syntax to create a lambda function."
+            )
         
         val result = array.elements.map { element ->
             lambda.apply(listOf(element))
@@ -61,9 +67,15 @@ object ArrayFunctions {
      */
     fun filter(args: List<UDM>): UDM {
         requireArgs(args, 2, "filter")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("filter: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "filter requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val lambda = args[1] as? UDM.Lambda
-            ?: throw FunctionArgumentException("filter: second argument must be a lambda")
+            ?: throw FunctionArgumentException(
+                "filter requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use x => boolean expression syntax to create a filter function."
+            )
         
         val result = array.elements.filter { element ->
             val predicateResult = lambda.apply(listOf(element))
@@ -93,9 +105,15 @@ object ArrayFunctions {
      */
     fun reduce(args: List<UDM>): UDM {
         requireArgs(args, 3, "reduce")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("reduce: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "reduce requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val lambda = args[1] as? UDM.Lambda
-            ?: throw FunctionArgumentException("reduce: second argument must be a lambda")
+            ?: throw FunctionArgumentException(
+                "reduce requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use (accumulator, element) => expression syntax to create a reduce function."
+            )
         var accumulator = args[2]
         
         for (element in array.elements) {
@@ -125,9 +143,15 @@ object ArrayFunctions {
      */
     fun find(args: List<UDM>): UDM {
         requireArgs(args, 2, "find")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("find: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "find requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val lambda = args[1] as? UDM.Lambda
-            ?: throw FunctionArgumentException("find: second argument must be a lambda")
+            ?: throw FunctionArgumentException(
+                "find requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use x => boolean expression syntax to create a predicate function."
+            )
         
         return array.elements.firstOrNull { element ->
             lambda.apply(listOf(element)).asBoolean()
@@ -154,9 +178,15 @@ object ArrayFunctions {
      */
     fun findIndex(args: List<UDM>): UDM {
         requireArgs(args, 2, "findIndex")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("findIndex: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "findIndex requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val lambda = args[1] as? UDM.Lambda
-            ?: throw FunctionArgumentException("findIndex: second argument must be a lambda")
+            ?: throw FunctionArgumentException(
+                "findIndex requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use x => boolean expression syntax to create a predicate function."
+            )
         
         val index = array.elements.indexOfFirst { element ->
             lambda.apply(listOf(element)).asBoolean()
@@ -185,9 +215,15 @@ object ArrayFunctions {
      */
     fun every(args: List<UDM>): UDM {
         requireArgs(args, 2, "every")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("every: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "every requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val lambda = args[1] as? UDM.Lambda
-            ?: throw FunctionArgumentException("every: second argument must be a lambda")
+            ?: throw FunctionArgumentException(
+                "every requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use x => boolean expression to test all elements."
+            )
         
         val result = array.elements.all { element ->
             lambda.apply(listOf(element)).asBoolean()
@@ -216,9 +252,15 @@ object ArrayFunctions {
      */
     fun some(args: List<UDM>): UDM {
         requireArgs(args, 2, "some")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("some: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "some requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val lambda = args[1] as? UDM.Lambda
-            ?: throw FunctionArgumentException("some: second argument must be a lambda")
+            ?: throw FunctionArgumentException(
+                "some requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use x => boolean expression to test for any matching element."
+            )
         
         val result = array.elements.any { element ->
             lambda.apply(listOf(element)).asBoolean()
@@ -246,7 +288,10 @@ object ArrayFunctions {
      */
     fun flatten(args: List<UDM>): UDM {
         requireArgs(args, 1, "flatten")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("flatten: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "flatten requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         
         val flattened = mutableListOf<UDM>()
         for (element in array.elements) {
@@ -280,7 +325,10 @@ object ArrayFunctions {
      */
     fun reverse(args: List<UDM>): UDM {
         requireArgs(args, 1, "reverse")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("reverse: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "reverse requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         return UDM.Array(array.elements.reversed())
     }
     
@@ -304,7 +352,10 @@ object ArrayFunctions {
      */
     fun sort(args: List<UDM>): UDM {
         requireArgs(args, 1, "sort")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("sort: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "sort requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         
         val sorted = array.elements.sortedWith(compareBy { element ->
             when (element) {
@@ -340,9 +391,15 @@ object ArrayFunctions {
      */
     fun sortBy(args: List<UDM>): UDM {
         requireArgs(args, 2, "sortBy")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("sortBy: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "sortBy requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val lambda = args[1] as? UDM.Lambda
-            ?: throw FunctionArgumentException("sortBy: second argument must be a lambda")
+            ?: throw FunctionArgumentException(
+                "sortBy requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use x => key expression to extract sort key from each element."
+            )
         
         val sorted = array.elements.sortedBy { element ->
             val key = lambda.apply(listOf(element))
@@ -384,7 +441,10 @@ object ArrayFunctions {
             "first() requires an array argument, got ${getTypeDescription(arg)}"
         )
         if (array.elements.isEmpty()) {
-            throw FunctionArgumentException("first() called on empty array")
+            throw FunctionArgumentException(
+                "first() called on empty array. " +
+                "Hint: Check if the array has elements before calling first()."
+            )
         }
         return array.elements.first()
     }
@@ -414,7 +474,10 @@ object ArrayFunctions {
             "last() requires an array argument, got ${getTypeDescription(arg)}"
         )
         if (array.elements.isEmpty()) {
-            throw FunctionArgumentException("last() called on empty array")
+            throw FunctionArgumentException(
+                "last() called on empty array. " +
+                "Hint: Check if the array has elements before calling last()."
+            )
         }
         return array.elements.last()
     }
@@ -439,7 +502,10 @@ object ArrayFunctions {
      */
     fun take(args: List<UDM>): UDM {
         requireArgs(args, 2, "take")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("take: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "take requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val n = args[1].asNumber().toInt()
         return UDM.Array(array.elements.take(n))
     }
@@ -464,7 +530,10 @@ object ArrayFunctions {
      */
     fun drop(args: List<UDM>): UDM {
         requireArgs(args, 2, "drop")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("drop: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "drop requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val n = args[1].asNumber().toInt()
         return UDM.Array(array.elements.drop(n))
     }
@@ -489,7 +558,10 @@ object ArrayFunctions {
      */
     fun unique(args: List<UDM>): UDM {
         requireArgs(args, 1, "unique")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("unique: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "unique requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         return UDM.Array(array.elements.distinct())
     }
     
@@ -513,8 +585,14 @@ object ArrayFunctions {
      */
     fun zip(args: List<UDM>): UDM {
         requireArgs(args, 2, "zip")
-        val array1 = args[0].asArray() ?: throw FunctionArgumentException("zip: first argument must be an array")
-        val array2 = args[1].asArray() ?: throw FunctionArgumentException("zip: second argument must be an array")
+        val array1 = args[0].asArray() ?: throw FunctionArgumentException(
+            "zip requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
+        val array2 = args[1].asArray() ?: throw FunctionArgumentException(
+            "zip requires an array as second argument, but got ${getTypeDescription(args[1])}. " +
+            "Hint: Check if your second input is an array."
+        )
         
         val zipped = array1.elements.zip(array2.elements).map { (a, b) ->
             UDM.Array(listOf(a, b))
@@ -574,7 +652,10 @@ object ArrayFunctions {
      */
     fun get(args: List<UDM>): UDM {
         requireArgs(args, 2, "get")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("get: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "get requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val index = args[1].asNumber().toInt()
         
         return if (index >= 0 && index < array.elements.size) {
@@ -606,7 +687,10 @@ object ArrayFunctions {
      */
     fun tail(args: List<UDM>): UDM {
         requireArgs(args, 1, "tail")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("tail: argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "tail requires an array argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         
         return if (array.elements.isEmpty()) {
             UDM.Array(emptyList())
@@ -636,7 +720,10 @@ object ArrayFunctions {
      */
     fun distinct(args: List<UDM>): UDM {
         requireArgs(args, 1, "distinct")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("distinct: argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "distinct requires an array argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         
         val uniqueElements = array.elements.distinct()
         return UDM.Array(uniqueElements)
@@ -664,9 +751,15 @@ object ArrayFunctions {
      */
     fun distinctBy(args: List<UDM>): UDM {
         requireArgs(args, 2, "distinctBy")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("distinctBy: first argument must be an array")
-        val lambda = args[1] as? UDM.Lambda 
-            ?: throw FunctionArgumentException("distinctBy: second argument must be a lambda")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "distinctBy requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
+        val lambda = args[1] as? UDM.Lambda
+            ?: throw FunctionArgumentException(
+                "distinctBy requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use x => key expression to extract comparison value."
+            )
         
         val uniqueElements = array.elements.distinctBy { element ->
             lambda.apply(listOf(element))
@@ -699,8 +792,14 @@ object ArrayFunctions {
      */
     fun union(args: List<UDM>): UDM {
         requireArgs(args, 2, "union")
-        val array1 = args[0].asArray() ?: throw FunctionArgumentException("union: first argument must be an array")
-        val array2 = args[1].asArray() ?: throw FunctionArgumentException("union: second argument must be an array")
+        val array1 = args[0].asArray() ?: throw FunctionArgumentException(
+            "union requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your first input is an array."
+        )
+        val array2 = args[1].asArray() ?: throw FunctionArgumentException(
+            "union requires an array as second argument, but got ${getTypeDescription(args[1])}. " +
+            "Hint: Check if your second input is an array."
+        )
         
         val combined = array1.elements + array2.elements
         val uniqueElements = combined.distinct()
@@ -730,8 +829,14 @@ object ArrayFunctions {
      */
     fun intersect(args: List<UDM>): UDM {
         requireArgs(args, 2, "intersect")
-        val array1 = args[0].asArray() ?: throw FunctionArgumentException("intersect: first argument must be an array")
-        val array2 = args[1].asArray() ?: throw FunctionArgumentException("intersect: second argument must be an array")
+        val array1 = args[0].asArray() ?: throw FunctionArgumentException(
+            "intersect requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your first input is an array."
+        )
+        val array2 = args[1].asArray() ?: throw FunctionArgumentException(
+            "intersect requires an array as second argument, but got ${getTypeDescription(args[1])}. " +
+            "Hint: Check if your second input is an array."
+        )
         
         val intersection = array1.elements.filter { element ->
             array2.elements.contains(element)
@@ -763,8 +868,14 @@ object ArrayFunctions {
      */
     fun difference(args: List<UDM>): UDM {
         requireArgs(args, 2, "difference")
-        val array1 = args[0].asArray() ?: throw FunctionArgumentException("difference: first argument must be an array")
-        val array2 = args[1].asArray() ?: throw FunctionArgumentException("difference: second argument must be an array")
+        val array1 = args[0].asArray() ?: throw FunctionArgumentException(
+            "difference requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your first input is an array."
+        )
+        val array2 = args[1].asArray() ?: throw FunctionArgumentException(
+            "difference requires an array as second argument, but got ${getTypeDescription(args[1])}. " +
+            "Hint: Check if your second input is an array."
+        )
         
         val diff = array1.elements.filter { element ->
             !array2.elements.contains(element)
@@ -795,8 +906,14 @@ object ArrayFunctions {
      */
     fun symmetricDifference(args: List<UDM>): UDM {
         requireArgs(args, 2, "symmetricDifference")
-        val array1 = args[0].asArray() ?: throw FunctionArgumentException("symmetricDifference: first argument must be an array")
-        val array2 = args[1].asArray() ?: throw FunctionArgumentException("symmetricDifference: second argument must be an array")
+        val array1 = args[0].asArray() ?: throw FunctionArgumentException(
+            "symmetricDifference requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your first input is an array."
+        )
+        val array2 = args[1].asArray() ?: throw FunctionArgumentException(
+            "symmetricDifference requires an array as second argument, but got ${getTypeDescription(args[1])}. " +
+            "Hint: Check if your second input is an array."
+        )
         
         val diff1 = array1.elements.filter { !array2.elements.contains(it) }
         val diff2 = array2.elements.filter { !array1.elements.contains(it) }
@@ -828,9 +945,15 @@ object ArrayFunctions {
      */
     fun flatMap(args: List<UDM>): UDM {
         requireArgs(args, 2, "flatMap")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("flatMap: first argument must be an array")
-        val lambda = args[1] as? UDM.Lambda 
-            ?: throw FunctionArgumentException("flatMap: second argument must be a lambda")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "flatMap requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
+        val lambda = args[1] as? UDM.Lambda
+            ?: throw FunctionArgumentException(
+                "flatMap requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use x => array expression to map and flatten."
+            )
         
         val result = array.elements.flatMap { element ->
             val mapped = lambda.apply(listOf(element))
@@ -866,7 +989,10 @@ object ArrayFunctions {
      */
     fun flattenDeep(args: List<UDM>): UDM {
         requireArgs(args, 1, "flattenDeep")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("flattenDeep: argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "flattenDeep requires an array argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         
         fun flattenRecursive(elements: List<UDM>): List<UDM> {
             val result = mutableListOf<UDM>()
@@ -904,11 +1030,17 @@ object ArrayFunctions {
      */
     fun chunk(args: List<UDM>): UDM {
         requireArgs(args, 2, "chunk")
-        val array = args[0].asArray() ?: throw FunctionArgumentException("chunk: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "chunk requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val chunkSize = args[1].asNumber().toInt()
-        
+
         if (chunkSize <= 0) {
-            throw FunctionArgumentException("chunk: chunk size must be positive")
+            throw FunctionArgumentException(
+                "chunk requires a positive chunk size, but got $chunkSize. " +
+                "Hint: Chunk size must be greater than 0."
+            )
         }
         
         val chunks = array.elements.chunked(chunkSize).map { chunk ->
@@ -942,7 +1074,10 @@ object ArrayFunctions {
             throw FunctionArgumentException("joinToString expects 1 or 2 arguments, got ${args.size}")
         }
         
-        val array = args[0].asArray() ?: throw FunctionArgumentException("joinToString: first argument must be an array")
+        val array = args[0].asArray() ?: throw FunctionArgumentException(
+            "joinToString requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
+            "Hint: Check if your input is an array."
+        )
         val separator = if (args.size > 1) {
             (args[1] as? UDM.Scalar)?.value?.toString() ?: ","
         } else {
@@ -998,11 +1133,20 @@ object ArrayFunctions {
                 when (v) {
                     is Number -> v.toDouble()
                     is String -> v.toDoubleOrNull()
-                        ?: throw FunctionArgumentException("Cannot convert '$v' to number")
-                    else -> throw FunctionArgumentException("Expected number value, got $v")
+                        ?: throw FunctionArgumentException(
+                            "Cannot convert '$v' to number. " +
+                            "Hint: Make sure the string contains a valid numeric value."
+                        )
+                    else -> throw FunctionArgumentException(
+                        "Expected number value, but got ${v?.javaClass?.simpleName ?: "null"}. " +
+                        "Hint: Use toNumber() to convert strings to numbers."
+                    )
                 }
             }
-            else -> throw FunctionArgumentException("Expected number value, got ${this::class.simpleName}")
+            else -> throw FunctionArgumentException(
+                "Expected number value, but got ${this::class.simpleName}. " +
+                "Hint: Use toNumber() to convert values to numbers."
+            )
         }
     }
     

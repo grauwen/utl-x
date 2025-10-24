@@ -214,7 +214,10 @@ object DateFunctions {
                     dateValue.time.format(formatter)
                 }
             }
-            else -> throw FunctionArgumentException("formatDate requires a Date, DateTime, LocalDateTime, or Time value")
+            else -> throw FunctionArgumentException(
+                "formatDate requires a Date, DateTime, LocalDateTime, or Time value, but got ${dateValue.javaClass.simpleName}. " +
+                "Hint: Use parseDate() to create a date from a string."
+            )
         }
 
         return UDM.Scalar(formatted)
@@ -254,7 +257,10 @@ object DateFunctions {
                 val result = dateUdm.dateTime.plusDays(days)
                 UDM.LocalDateTime(result)
             }
-            else -> throw FunctionArgumentException("addDays requires a Date or DateTime value")
+            else -> throw FunctionArgumentException(
+                "addDays requires a Date or DateTime value, but got ${dateUdm.javaClass.simpleName}. " +
+                "Hint: Use parseDate() or currentDate() to create a date value."
+            )
         }
     }
 
@@ -315,7 +321,10 @@ object DateFunctions {
                     val zonedDateTime = date.dateTime.atZone(java.time.ZoneId.of("UTC"))
                     toKotlinxInstant(zonedDateTime.toInstant())
                 }
-                else -> throw FunctionArgumentException("diffDays requires Date, DateTime, or LocalDateTime values, got ${date::class.simpleName}")
+                else -> throw FunctionArgumentException(
+                    "diffDays requires Date, DateTime, or LocalDateTime values, but got ${date.javaClass.simpleName}. " +
+                    "Hint: Use parseDate() to create date values."
+                )
             }
         }
 
@@ -340,7 +349,10 @@ object DateFunctions {
     
     private fun UDM.asString(): String = when (this) {
         is UDM.Scalar -> value?.toString() ?: ""
-        else -> throw FunctionArgumentException("Expected string value")
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${this.javaClass.simpleName}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
     }
     
     private fun UDM.asNumber(): Double = when (this) {
@@ -348,14 +360,23 @@ object DateFunctions {
             val v = value
             when (v) {
                 is Number -> v.toDouble()
-                else -> throw FunctionArgumentException("Expected number value")
+                else -> throw FunctionArgumentException(
+                    "Expected number value, but got ${v?.javaClass?.simpleName ?: "null"}. " +
+                    "Hint: Use toNumber() to convert strings to numbers."
+                )
             }
         }
-        else -> throw FunctionArgumentException("Expected number value")
+        else -> throw FunctionArgumentException(
+            "Expected number value, but got ${this.javaClass.simpleName}. " +
+            "Hint: Use toNumber() to convert values to numbers."
+        )
     }
     
     private fun extractDateTime(udm: UDM): JavaInstant = when (udm) {
         is UDM.DateTime -> udm.instant
-        else -> throw FunctionArgumentException("Expected datetime value")
+        else -> throw FunctionArgumentException(
+            "Expected datetime value, but got ${udm.javaClass.simpleName}. " +
+            "Hint: Use parseDate() with timestamp format to create datetime values."
+        )
     }
 }
