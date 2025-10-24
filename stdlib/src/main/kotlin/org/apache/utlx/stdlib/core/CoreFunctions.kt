@@ -252,7 +252,10 @@ object CoreFunctions {
      */
     fun contains(args: List<UDM>): UDM {
         if (args.size != 2) {
-            throw FunctionArgumentException("contains expects 2 arguments, got ${args.size}")
+            throw FunctionArgumentException(
+                "contains expects 2 arguments, got ${args.size}. " +
+                "Hint: Usage is contains(collection, element) - e.g., contains([1,2,3], 2) or contains(\"hello\", \"lo\")"
+            )
         }
         
         val collection = args[0]
@@ -342,7 +345,10 @@ object CoreFunctions {
      */
     fun concat(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("concat expects at least 1 argument")
+            throw FunctionArgumentException(
+                "concat expects at least 1 argument, got 0. " +
+                "Hint: Provide values to concatenate - e.g., concat(\"Hello\", \" \", \"World\") or concat([1,2], [3,4])"
+            )
         }
         
         if (args.size == 1) {
@@ -360,7 +366,10 @@ object CoreFunctions {
                         val result = args.joinToString("") { arg ->
                             when (arg) {
                                 is UDM.Scalar -> arg.value?.toString() ?: ""
-                                else -> throw FunctionArgumentException("concat: all arguments must be strings when concatenating strings")
+                                else -> throw FunctionArgumentException(
+                                    "concat requires all arguments to be strings when concatenating strings, but got ${getTypeDescription(arg)}. " +
+                                    "Hint: Convert non-string values using toString() before concatenating."
+                                )
                             }
                         }
                         UDM.Scalar(result)
@@ -375,10 +384,16 @@ object CoreFunctions {
                                 if (argValue is Number) {
                                     sum += argValue.toDouble()
                                 } else {
-                                    throw FunctionArgumentException("concat: all arguments must be numbers when concatenating numbers")
+                                    throw FunctionArgumentException(
+                                        "concat requires all arguments to be numbers when concatenating numbers, but got ${getTypeDescription(arg)}. " +
+                                        "Hint: Use toNumber() to convert string values to numbers before concatenating."
+                                    )
                                 }
                             } else {
-                                throw FunctionArgumentException("concat: all arguments must be numbers when concatenating numbers")
+                                throw FunctionArgumentException(
+                                    "concat requires all arguments to be numbers when concatenating numbers, but got ${getTypeDescription(arg)}. " +
+                                    "Hint: Use toNumber() to convert string values to numbers before concatenating."
+                                )
                             }
                         }
                         UDM.Scalar(sum)
@@ -393,10 +408,16 @@ object CoreFunctions {
                                 if (argValue is Boolean) {
                                     result = result || argValue
                                 } else {
-                                    throw FunctionArgumentException("concat: all arguments must be booleans when concatenating booleans")
+                                    throw FunctionArgumentException(
+                                        "concat requires all arguments to be booleans when concatenating booleans, but got ${getTypeDescription(arg)}. " +
+                                        "Hint: Boolean concatenation uses logical OR. Ensure all values are true/false."
+                                    )
                                 }
                             } else {
-                                throw FunctionArgumentException("concat: all arguments must be booleans when concatenating booleans")
+                                throw FunctionArgumentException(
+                                    "concat requires all arguments to be booleans when concatenating booleans, but got ${getTypeDescription(arg)}. " +
+                                    "Hint: Boolean concatenation uses logical OR. Ensure all values are true/false."
+                                )
                             }
                         }
                         UDM.Scalar(result)
@@ -415,7 +436,10 @@ object CoreFunctions {
                         val result = args.joinToString("") { arg ->
                             when (arg) {
                                 is UDM.Scalar -> arg.value?.toString() ?: ""
-                                else -> throw FunctionArgumentException("concat: all arguments must be scalars when concatenating scalar values")
+                                else -> throw FunctionArgumentException(
+                                    "concat requires all arguments to be scalars when concatenating scalar values, but got ${getTypeDescription(arg)}. " +
+                                    "Hint: Cannot mix scalar values with arrays or objects in concat()."
+                                )
                             }
                         }
                         UDM.Scalar(result)
@@ -429,7 +453,10 @@ object CoreFunctions {
                     if (arg is UDM.Array) {
                         allElements.addAll(arg.elements)
                     } else {
-                        throw FunctionArgumentException("concat: all arguments must be arrays when concatenating arrays")
+                        throw FunctionArgumentException(
+                            "concat requires all arguments to be arrays when concatenating arrays, but got ${getTypeDescription(arg)}. " +
+                            "Hint: Use [element] to wrap single values in an array, or ensure all arguments are arrays."
+                        )
                     }
                 }
                 UDM.Array(allElements)
@@ -438,13 +465,16 @@ object CoreFunctions {
                 // Object merging (right overwrites left)
                 val mergedProps = mutableMapOf<String, UDM>()
                 val mergedAttrs = mutableMapOf<String, String>()
-                
+
                 for (arg in args) {
                     if (arg is UDM.Object) {
                         mergedProps.putAll(arg.properties)
                         mergedAttrs.putAll(arg.attributes)
                     } else {
-                        throw FunctionArgumentException("concat: all arguments must be objects when concatenating objects")
+                        throw FunctionArgumentException(
+                            "concat requires all arguments to be objects when concatenating objects, but got ${getTypeDescription(arg)}. " +
+                            "Hint: Object concatenation merges properties (right overwrites left). Ensure all arguments are objects."
+                        )
                     }
                 }
                 UDM.Object(mergedProps, mergedAttrs)
@@ -456,13 +486,19 @@ object CoreFunctions {
                     if (arg is UDM.Binary) {
                         allBytes.addAll(arg.data.toList())
                     } else {
-                        throw FunctionArgumentException("concat: all arguments must be binary when concatenating binary data")
+                        throw FunctionArgumentException(
+                            "concat requires all arguments to be binary data when concatenating binary values, but got ${getTypeDescription(arg)}. " +
+                            "Hint: Binary concatenation joins byte arrays. Ensure all arguments are binary data."
+                        )
                     }
                 }
                 UDM.Binary(allBytes.toByteArray())
             }
             else -> {
-                throw FunctionArgumentException("concat: unsupported type for concatenation: ${firstArg::class.simpleName}")
+                throw FunctionArgumentException(
+                    "concat does not support concatenation of ${getTypeDescription(firstArg)} type. " +
+                    "Hint: concat() supports strings, numbers, booleans, arrays, objects, and binary data."
+                )
             }
         }
     }
@@ -506,7 +542,10 @@ object CoreFunctions {
         requireArgs(args, 2, "filter")
         val value = args[0]
         val predicate = args[1] as? UDM.Lambda
-            ?: throw FunctionArgumentException("filter: second argument must be a lambda")
+            ?: throw FunctionArgumentException(
+                "filter requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
+                "Hint: Use x => expression syntax to create a lambda function, e.g., filter([1,2,3], x => x > 1)"
+            )
 
         return when (value) {
             is UDM.Array -> {
@@ -532,10 +571,16 @@ object CoreFunctions {
                     }
                     UDM.Scalar(filteredChars)
                 } else {
-                    throw FunctionArgumentException("filter: first argument must be an array, object, or string")
+                    throw FunctionArgumentException(
+                        "filter requires first argument to be an array, object, or string, but got ${getTypeDescription(value)}. " +
+                        "Hint: filter() works on collections and strings. Use it to select matching elements."
+                    )
                 }
             }
-            else -> throw FunctionArgumentException("filter: first argument must be an array, object, or string")
+            else -> throw FunctionArgumentException(
+                "filter requires first argument to be an array, object, or string, but got ${getTypeDescription(value)}. " +
+                "Hint: filter() works on collections and strings. Use it to select matching elements."
+            )
         }
     }
 
@@ -553,5 +598,28 @@ object CoreFunctions {
         is UDM.Array -> elements.isNotEmpty()
         is UDM.Object -> properties.isNotEmpty()
         else -> true
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 }

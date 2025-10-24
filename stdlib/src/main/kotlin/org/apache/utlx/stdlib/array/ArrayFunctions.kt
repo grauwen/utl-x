@@ -46,45 +46,11 @@ object ArrayFunctions {
         
         return UDM.Array(result)
     }
-    
-    @UTLXFunction(
-        description = "Filter array by predicate",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "Array",
-        parameters = [
-            "array: Input array to process",
-        "predicate: Function to test each element (element) => boolean"
-        ],
-        returns = "New array with filtered elements",
-        example = "filter([1, 2, 3, 4], x => x > 2) => [3, 4]",
-        tags = ["array", "filter"],
-        since = "1.0"
-    )
-    /**
-     * Filter array by predicate
-     * Usage: filter([1, 2, 3, 4], x => x > 2) => [3, 4]
-     */
-    fun filter(args: List<UDM>): UDM {
-        requireArgs(args, 2, "filter")
-        val array = args[0].asArray() ?: throw FunctionArgumentException(
-            "filter requires an array as first argument, but got ${getTypeDescription(args[0])}. " +
-            "Hint: Check if your input is an array."
-        )
-        val lambda = args[1] as? UDM.Lambda
-            ?: throw FunctionArgumentException(
-                "filter requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
-                "Hint: Use x => boolean expression syntax to create a filter function."
-            )
-        
-        val result = array.elements.filter { element ->
-            val predicateResult = lambda.apply(listOf(element))
-            predicateResult.asBoolean()
-        }
-        
-        return UDM.Array(result)
-    }
-    
+
+    // NOTE: filter() function removed - now in CoreFunctions.kt
+    // The CoreFunctions version is more generic (handles arrays, objects, and strings)
+    // rather than just arrays. Using the more capable version.
+
     @UTLXFunction(
         description = "Reduce array to single value",
         minArgs = 1,
