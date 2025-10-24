@@ -43,7 +43,10 @@ object SerializationFunctions {
         val jsonString = args[0].asString()
 
         if (jsonString.isBlank()) {
-            throw FunctionArgumentException("Cannot parse empty JSON string")
+            throw FunctionArgumentException(
+                "parseJson cannot parse empty or blank JSON string. " +
+                "Hint: Provide a valid JSON string like '{\"key\": \"value\"}' or '[1,2,3]'."
+            )
         }
 
         return try {
@@ -51,7 +54,10 @@ object SerializationFunctions {
             val jsonNode = mapper.readTree(jsonString)
             jsonNodeToUDM(jsonNode)
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to parse JSON: ${e.message}")
+            throw FunctionArgumentException(
+                "parseJson failed to parse JSON string: ${e.message}. " +
+                "Hint: Ensure the string is valid JSON. Common issues include missing quotes, trailing commas, or unescaped characters."
+            )
         }
     }
 
@@ -111,7 +117,10 @@ object SerializationFunctions {
 
             UDM.Scalar(jsonString)
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to render JSON: ${e.message}")
+            throw FunctionArgumentException(
+                "renderJson failed to serialize to JSON: ${e.message}. " +
+                "Hint: Ensure the data structure is serializable. Complex types may need conversion."
+            )
         }
     }
 
@@ -177,14 +186,20 @@ object SerializationFunctions {
         val xmlString = args[0].asString()
         
         if (xmlString.isBlank()) {
-            throw FunctionArgumentException("Cannot parse empty XML string")
+            throw FunctionArgumentException(
+                "parseXml cannot parse empty or blank XML string. " +
+                "Hint: Provide a valid XML string like '<root><item>value</item></root>'."
+            )
         }
         
         return try {
             // Simple XML parsing - in real implementation would use XMLParser
             UDM.Scalar(xmlString) // Placeholder implementation
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to parse XML: ${e.message}")
+            throw FunctionArgumentException(
+                "parseXml failed to parse XML string: ${e.message}. " +
+                "Hint: Ensure the string is well-formed XML. Check for matching tags and proper escaping."
+            )
         }
     }
     
@@ -214,7 +229,10 @@ object SerializationFunctions {
             // Simple XML rendering - in real implementation would use XMLSerializer
             UDM.Scalar(obj.toString()) // Placeholder implementation
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to render XML: ${e.message}")
+            throw FunctionArgumentException(
+                "renderXml failed to serialize to XML: ${e.message}. " +
+                "Hint: Ensure the data structure can be represented as XML."
+            )
         }
     }
     
@@ -240,14 +258,20 @@ object SerializationFunctions {
         val yamlString = args[0].asString()
         
         if (yamlString.isBlank()) {
-            throw FunctionArgumentException("Cannot parse empty YAML string")
+            throw FunctionArgumentException(
+                "parseYaml cannot parse empty or blank YAML string. " +
+                "Hint: Provide a valid YAML string like 'name: John\\nage: 30'."
+            )
         }
         
         return try {
             // Simple YAML parsing - in real implementation would use YAMLParser
             UDM.Scalar(yamlString) // Placeholder implementation
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to parse YAML: ${e.message}")
+            throw FunctionArgumentException(
+                "parseYaml failed to parse YAML string: ${e.message}. " +
+                "Hint: Ensure the string is valid YAML. Check indentation and syntax."
+            )
         }
     }
     
@@ -276,7 +300,10 @@ object SerializationFunctions {
             // Simple YAML rendering - in real implementation would use YAMLSerializer
             UDM.Scalar(obj.toString()) // Placeholder implementation
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to render YAML: ${e.message}")
+            throw FunctionArgumentException(
+                "renderYaml failed to serialize to YAML: ${e.message}. " +
+                "Hint: Ensure the data structure can be represented as YAML."
+            )
         }
     }
     
@@ -303,14 +330,20 @@ object SerializationFunctions {
         val hasHeaders = if (args.size > 1) args[1].asBoolean() else true
         
         if (csvString.isBlank()) {
-            throw FunctionArgumentException("Cannot parse empty CSV string")
+            throw FunctionArgumentException(
+                "parseCsv cannot parse empty or blank CSV string. " +
+                "Hint: Provide a valid CSV string like 'name,age\\nJohn,30'."
+            )
         }
         
         return try {
             // Simple CSV parsing - in real implementation would use CSVParser
             UDM.Array(listOf(UDM.Scalar(csvString))) // Placeholder implementation
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to parse CSV: ${e.message}")
+            throw FunctionArgumentException(
+                "parseCsv failed to parse CSV string: ${e.message}. " +
+                "Hint: Ensure the string is valid CSV. Check for proper delimiters and quoted fields."
+            )
         }
     }
     
@@ -341,7 +374,10 @@ object SerializationFunctions {
             // Simple CSV rendering - in real implementation would use CSVSerializer
             UDM.Scalar(obj.toString()) // Placeholder implementation
         } catch (e: Exception) {
-            throw FunctionArgumentException("Failed to render CSV: ${e.message}")
+            throw FunctionArgumentException(
+                "renderCsv failed to serialize to CSV: ${e.message}. " +
+                "Hint: Ensure the data is an array of objects with consistent fields."
+            )
         }
     }
     
@@ -380,11 +416,14 @@ object SerializationFunctions {
                         parseJson(listOf(args[0]))
                     dataString.trim().startsWith("<") -> 
                         parseXml(listOf(args[0]))
-                    else -> 
+                    else ->
                         UDM.Scalar(dataString)
                 }
             }
-            else -> throw FunctionArgumentException("Unsupported format: $format")
+            else -> throw FunctionArgumentException(
+                "parse does not support format '$format'. " +
+                "Hint: Supported formats are: json, xml, yaml, yml, csv, auto."
+            )
         }
     }
     
@@ -417,7 +456,10 @@ object SerializationFunctions {
             "xml" -> renderXml(listOf(obj, UDM.Scalar(pretty)))
             "yaml", "yml" -> renderYaml(listOf(obj))
             "csv" -> renderCsv(listOf(obj))
-            else -> throw FunctionArgumentException("Unsupported format: $format")
+            else -> throw FunctionArgumentException(
+                "render does not support format '$format'. " +
+                "Hint: Supported formats are: json, xml, yaml, yml, csv."
+            )
         }
     }
     
@@ -447,7 +489,33 @@ object SerializationFunctions {
                     else -> v.toString()
                 }
             }
-            else -> throw FunctionArgumentException("Expected string value, got ${this::class.simpleName}")
+            else -> throw FunctionArgumentException(
+                "Expected string value, but got ${getTypeDescription(this)}. " +
+                "Hint: Use toString() to convert values to strings."
+            )
+        }
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
         }
     }
     

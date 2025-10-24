@@ -75,7 +75,10 @@ object EncodingFunctions {
             val decoded = String(Base64.getDecoder().decode(str))
             UDM.Scalar(decoded)
         } catch (e: IllegalArgumentException) {
-            throw FunctionArgumentException("Invalid base64 string: $str")
+            throw FunctionArgumentException(
+                "base64-decode received invalid base64 string: $str. " +
+                "Hint: Ensure the string contains only valid base64 characters (A-Z, a-z, 0-9, +, /, =)."
+            )
         }
     }
     
@@ -177,7 +180,10 @@ object EncodingFunctions {
             val bytes = hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
             UDM.Scalar(String(bytes))
         } catch (e: Exception) {
-            throw FunctionArgumentException("Invalid hex string: $hex")
+            throw FunctionArgumentException(
+                "hex-decode received invalid hex string: $hex. " +
+                "Hint: Hex strings must contain only characters 0-9 and a-f (or A-F), with even length."
+            )
         }
     }
 
@@ -213,7 +219,10 @@ object EncodingFunctions {
         requireArgs(args, 1, "md5")
         val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw FunctionArgumentException("md5() requires a string argument")
+            ?: throw FunctionArgumentException(
+                "md5 requires a string argument, but got ${getTypeDescription(str)}. " +
+                "Hint: Convert the value to a string using toString()."
+            )
         
         val md = MessageDigest.getInstance("MD5")
         val hashBytes = md.digest(value.toByteArray(Charsets.UTF_8))
@@ -255,7 +264,10 @@ object EncodingFunctions {
         requireArgs(args, 1, "sha256")
         val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw FunctionArgumentException("sha256() requires a string argument")
+            ?: throw FunctionArgumentException(
+                "sha256 requires a string argument, but got ${getTypeDescription(str)}. " +
+                "Hint: Convert the value to a string using toString()."
+            )
         
         val md = MessageDigest.getInstance("SHA-256")
         val hashBytes = md.digest(value.toByteArray(Charsets.UTF_8))
@@ -297,7 +309,10 @@ object EncodingFunctions {
         requireArgs(args, 1, "sha512")
         val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw FunctionArgumentException("sha512() requires a string argument")
+            ?: throw FunctionArgumentException(
+                "sha512 requires a string argument, but got ${getTypeDescription(str)}. " +
+                "Hint: Convert the value to a string using toString()."
+            )
         
         val md = MessageDigest.getInstance("SHA-512")
         val hashBytes = md.digest(value.toByteArray(Charsets.UTF_8))
@@ -340,7 +355,10 @@ object EncodingFunctions {
         requireArgs(args, 1, "sha1")
         val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw FunctionArgumentException("sha1() requires a string argument")
+            ?: throw FunctionArgumentException(
+                "sha1 requires a string argument, but got ${getTypeDescription(str)}. " +
+                "Hint: Convert the value to a string using toString(). Note: SHA-1 is deprecated, use sha256() instead."
+            )
         
         val md = MessageDigest.getInstance("SHA-1")
         val hashBytes = md.digest(value.toByteArray(Charsets.UTF_8))
@@ -387,12 +405,18 @@ object EncodingFunctions {
      */
     fun hash(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("hash expects at least 1 argument")
+            throw FunctionArgumentException(
+                "hash expects at least 1 argument, got 0. " +
+                "Hint: Usage is hash(string, algorithm?) - e.g., hash(\"hello\", \"SHA-256\")."
+            )
         }
         val str = args[0]
         val algorithm = if (args.size > 1) args[1] else UDM.Scalar("SHA-256")
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw FunctionArgumentException("hash() requires a string as first argument")
+            ?: throw FunctionArgumentException(
+                "hash requires a string as first argument, but got ${getTypeDescription(str)}. " +
+                "Hint: Convert the value to a string using toString()."
+            )
         
         val alg = (algorithm as? UDM.Scalar)?.value as? String
             ?: "SHA-256"
@@ -404,7 +428,10 @@ object EncodingFunctions {
             
             return UDM.Scalar(hexString)
         } catch (e: java.security.NoSuchAlgorithmException) {
-            throw FunctionArgumentException("Unsupported hash algorithm: $alg. Supported: MD5, SHA-1, SHA-256, SHA-512")
+            throw FunctionArgumentException(
+                "hash does not support algorithm '$alg'. " +
+                "Hint: Supported algorithms are: MD5, SHA-1 (deprecated), SHA-256, SHA-512, SHA-384."
+            )
         }
     }
     
@@ -448,17 +475,26 @@ object EncodingFunctions {
      */
     fun hmac(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw FunctionArgumentException("hmac expects at least 2 arguments")
+            throw FunctionArgumentException(
+                "hmac expects at least 2 arguments (string, key, algorithm?), got ${args.size}. " +
+                "Hint: Usage is hmac(\"data\", \"secret-key\", \"HmacSHA256\")."
+            )
         }
         val str = args[0]
         val key = args[1]
         val algorithm = if (args.size > 2) args[2] else UDM.Scalar("HmacSHA256")
-        
+
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw FunctionArgumentException("hmac() requires a string as first argument")
-        
+            ?: throw FunctionArgumentException(
+                "hmac requires a string as first argument, but got ${getTypeDescription(str)}. " +
+                "Hint: Convert the value to a string using toString()."
+            )
+
         val keyValue = (key as? UDM.Scalar)?.value as? String
-            ?: throw FunctionArgumentException("hmac() requires a key as second argument")
+            ?: throw FunctionArgumentException(
+                "hmac requires a string key as second argument, but got ${getTypeDescription(key)}. " +
+                "Hint: The secret key must be a string value."
+            )
         
         val alg = (algorithm as? UDM.Scalar)?.value as? String ?: "HmacSHA256"
         
@@ -488,6 +524,32 @@ object EncodingFunctions {
     
     private fun UDM.asString(): String = when (this) {
         is UDM.Scalar -> value?.toString() ?: ""
-        else -> throw FunctionArgumentException("Expected string value")
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
     }
 }
