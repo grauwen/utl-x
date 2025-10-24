@@ -1,0 +1,128 @@
+name: "object_mapEntries_basic"
+category: "stdlib-object-lambda"
+description: "Test mapEntries() function - transform object keys and/or values"
+tags: ["stdlib", "object", "lambda", "mapEntries"]
+
+inputs:
+  data:
+    format: json
+    data: |
+      {
+        "servers": {
+          "prod": {
+            "type": "postgres",
+            "host": "prod.db.company.com",
+            "port": 5432
+          },
+          "stage": {
+            "type": "postgres",
+            "host": "stage.db.company.com",
+            "port": 5432
+          },
+          "dev": {
+            "type": "mysql",
+            "host": "dev.db.company.com",
+            "port": 3306
+          }
+        }
+      }
+
+transformation: |
+  %utlx 1.0
+  input: data json
+  output json
+  ---
+  {
+    transformBoth: mapEntries($data.servers, (key, value) => {
+      key: upper(key),
+      value: {
+        type: upper(value.type),
+        host: value.host,
+        port: value.port
+      }
+    }),
+
+    transformKeysOnly: mapEntries($data.servers, (key, value) => {
+      key: key + "_server",
+      value: value
+    }),
+
+    transformValuesOnly: mapEntries($data.servers, (key, value) => {
+      key: key,
+      value: {
+        endpoint: value.host + ":" + toString(value.port),
+        database: value.type
+      }
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "transformBoth": {
+        "PROD": {
+          "type": "POSTGRES",
+          "host": "prod.db.company.com",
+          "port": 5432
+        },
+        "STAGE": {
+          "type": "POSTGRES",
+          "host": "stage.db.company.com",
+          "port": 5432
+        },
+        "DEV": {
+          "type": "MYSQL",
+          "host": "dev.db.company.com",
+          "port": 3306
+        }
+      },
+      "transformKeysOnly": {
+        "prod_server": {
+          "type": "postgres",
+          "host": "prod.db.company.com",
+          "port": 5432
+        },
+        "stage_server": {
+          "type": "postgres",
+          "host": "stage.db.company.com",
+          "port": 5432
+        },
+        "dev_server": {
+          "type": "mysql",
+          "host": "dev.db.company.com",
+          "port": 3306
+        }
+      },
+      "transformValuesOnly": {
+        "prod": {
+          "endpoint": "prod.db.company.com:5432",
+          "database": "postgres"
+        },
+        "stage": {
+          "endpoint": "stage.db.company.com:5432",
+          "database": "postgres"
+        },
+        "dev": {
+          "endpoint": "dev.db.company.com:3306",
+          "database": "mysql"
+        }
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-25"
+  references:
+    - "Lambda functions implementation"
+    - "EnhancedObjectFunctions.kt:251"
+  notes:
+    - "Tests mapEntries() with lambda function"
+    - "Demonstrates transforming both keys and values"
+    - "Demonstrates transforming keys only"
+    - "Demonstrates transforming values only"
+    - "Lambda receives (key, value) and returns {key: newKey, value: newValue}"

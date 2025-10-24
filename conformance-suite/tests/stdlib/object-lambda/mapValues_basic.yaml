@@ -1,0 +1,93 @@
+name: "object_mapValues_basic"
+category: "stdlib-object-lambda"
+description: "Test mapValues() function - transform object values only"
+tags: ["stdlib", "object", "lambda", "mapValues"]
+
+inputs:
+  data:
+    format: json
+    data: |
+      {
+        "prices": {
+          "apple": 1.5,
+          "orange": 2.0,
+          "banana": 0.75
+        },
+        "names": {
+          "user1": "alice",
+          "user2": "bob",
+          "user3": "charlie"
+        },
+        "ports": {
+          "http": 80,
+          "https": 443,
+          "ssh": 22
+        }
+      }
+
+transformation: |
+  %utlx 1.0
+  input: data json
+  output json
+  ---
+  {
+    doubledPrices: mapValues($data.prices, value => value * 2),
+
+    capitalizedNames: mapValues($data.names, value => upper(value)),
+
+    portsAsStrings: mapValues($data.ports, value => toString(value)),
+
+    pricesWithTax: mapValues($data.prices, value => value * 1.08),
+
+    portsPlusThousand: mapValues($data.ports, value => value + 1000)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "doubledPrices": {
+        "apple": 3,
+        "orange": 4,
+        "banana": 1.5
+      },
+      "capitalizedNames": {
+        "user1": "ALICE",
+        "user2": "BOB",
+        "user3": "CHARLIE"
+      },
+      "portsAsStrings": {
+        "http": "80",
+        "https": "443",
+        "ssh": "22"
+      },
+      "pricesWithTax": {
+        "apple": 1.62,
+        "orange": 2.16,
+        "banana": 0.81
+      },
+      "portsPlusThousand": {
+        "http": 1080,
+        "https": 1443,
+        "ssh": 1022
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-25"
+  references:
+    - "Lambda functions implementation"
+    - "EnhancedObjectFunctions.kt:608"
+  notes:
+    - "Tests mapValues() with lambda mapper"
+    - "Demonstrates doubling numeric values"
+    - "Demonstrates uppercasing string values"
+    - "Demonstrates type conversion (number to string)"
+    - "Demonstrates arithmetic on values"
+    - "Lambda receives (value) and returns new value"
+    - "Keys remain unchanged"

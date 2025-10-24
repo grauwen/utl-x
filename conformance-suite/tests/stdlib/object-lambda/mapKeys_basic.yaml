@@ -1,0 +1,88 @@
+name: "object_mapKeys_basic"
+category: "stdlib-object-lambda"
+description: "Test mapKeys() function - transform object keys only"
+tags: ["stdlib", "object", "lambda", "mapKeys"]
+
+inputs:
+  data:
+    format: json
+    data: |
+      {
+        "user": {
+          "firstName": "John",
+          "lastName": "Doe",
+          "emailAddress": "john.doe@example.com"
+        },
+        "counters": {
+          "a": 1,
+          "b": 2,
+          "c": 3
+        }
+      }
+
+transformation: |
+  %utlx 1.0
+  input: data json
+  output json
+  ---
+  {
+    upperCaseKeys: mapKeys($data.user, key => upper(key)),
+
+    lowerCaseKeys: mapKeys($data.user, key => lower(key)),
+
+    prefixedKeys: mapKeys($data.user, key => "user_" + key),
+
+    suffixedKeys: mapKeys($data.user, key => key + "_field"),
+
+    uppercaseLetters: mapKeys($data.counters, key => upper(key))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "upperCaseKeys": {
+        "FIRSTNAME": "John",
+        "LASTNAME": "Doe",
+        "EMAILADDRESS": "john.doe@example.com"
+      },
+      "lowerCaseKeys": {
+        "firstname": "John",
+        "lastname": "Doe",
+        "emailaddress": "john.doe@example.com"
+      },
+      "prefixedKeys": {
+        "user_firstName": "John",
+        "user_lastName": "Doe",
+        "user_emailAddress": "john.doe@example.com"
+      },
+      "suffixedKeys": {
+        "firstName_field": "John",
+        "lastName_field": "Doe",
+        "emailAddress_field": "john.doe@example.com"
+      },
+      "uppercaseLetters": {
+        "A": 1,
+        "B": 2,
+        "C": 3
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-25"
+  references:
+    - "Lambda functions implementation"
+    - "EnhancedObjectFunctions.kt:547"
+  notes:
+    - "Tests mapKeys() with lambda mapper"
+    - "Demonstrates uppercasing keys"
+    - "Demonstrates lowercasing keys"
+    - "Demonstrates adding prefix to keys"
+    - "Demonstrates adding suffix to keys"
+    - "Lambda receives (key) and returns new key"
+    - "Values remain unchanged"

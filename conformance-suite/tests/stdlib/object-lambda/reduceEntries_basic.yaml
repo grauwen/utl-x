@@ -1,0 +1,73 @@
+name: "object_reduceEntries_basic"
+category: "stdlib-object-lambda"
+description: "Test reduceEntries() function - reduce object entries to single value"
+tags: ["stdlib", "object", "lambda", "reduceEntries"]
+
+inputs:
+  data:
+    format: json
+    data: |
+      {
+        "inventory": {
+          "apples": 10,
+          "oranges": 15,
+          "bananas": 8
+        },
+        "prices": {
+          "apples": 1.5,
+          "oranges": 2.0,
+          "bananas": 0.75
+        }
+      }
+
+transformation: |
+  %utlx 1.0
+  input: data json
+  output json
+  ---
+  {
+    totalItems: reduceEntries($data.inventory, (acc, key, value) => acc + value, 0),
+
+    concatenatedKeys: reduceEntries($data.inventory, (acc, key, value) =>
+      if (acc == "") key else acc + "," + key,
+      ""
+    ),
+
+    maxValue: reduceEntries($data.inventory, (acc, key, value) =>
+      if (value > acc) value else acc,
+      0
+    ),
+
+    totalPrice: reduceEntries($data.prices, (acc, key, value) => acc + value, 0),
+
+    productOfValues: reduceEntries($data.inventory, (acc, key, value) => acc * value, 1)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "totalItems": 33,
+      "concatenatedKeys": "apples,oranges,bananas",
+      "maxValue": 15,
+      "totalPrice": 4.25,
+      "productOfValues": 1200
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-25"
+  references:
+    - "Lambda functions implementation"
+    - "EnhancedObjectFunctions.kt:408"
+  notes:
+    - "Tests reduceEntries() with lambda reducer"
+    - "Demonstrates summing all values"
+    - "Demonstrates concatenating keys"
+    - "Demonstrates finding maximum value"
+    - "Demonstrates product of values"
+    - "Lambda receives (accumulator, key, value) and returns new accumulator"

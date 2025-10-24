@@ -1,0 +1,89 @@
+name: "object_someEntry_basic"
+category: "stdlib-object-lambda"
+description: "Test someEntry() function - test if at least one entry matches predicate"
+tags: ["stdlib", "object", "lambda", "someEntry", "predicate"]
+
+inputs:
+  data:
+    format: json
+    data: |
+      {
+        "servers": {
+          "prod": {"type": "postgres", "port": 5432},
+          "stage": {"type": "postgres", "port": 5432},
+          "dev": {"type": "mysql", "port": 3306}
+        },
+        "numbers": {
+          "a": 5,
+          "b": 10,
+          "c": 3
+        },
+        "flags": {
+          "feature1": false,
+          "feature2": false,
+          "feature3": false
+        }
+      }
+
+transformation: |
+  %utlx 1.0
+  input: data json
+  output json
+  ---
+  {
+    hasMysql: someEntry($data.servers, (k, v) => v.type == "mysql"),
+
+    hasPostgres: someEntry($data.servers, (k, v) => v.type == "postgres"),
+
+    hasPort3306: someEntry($data.servers, (k, v) => v.port == 3306),
+
+    hasPort8080: someEntry($data.servers, (k, v) => v.port == 8080),
+
+    hasProdKey: someEntry($data.servers, (k, v) => k == "prod"),
+
+    hasTestKey: someEntry($data.servers, (k, v) => k == "test"),
+
+    hasValueOver5: someEntry($data.numbers, (k, v) => v > 5),
+
+    hasValueOver100: someEntry($data.numbers, (k, v) => v > 100),
+
+    hasEnabledFlag: someEntry($data.flags, (k, v) => v),
+
+    hasDisabledFlag: someEntry($data.flags, (k, v) => !v)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasMysql": true,
+      "hasPostgres": true,
+      "hasPort3306": true,
+      "hasPort8080": false,
+      "hasProdKey": true,
+      "hasTestKey": false,
+      "hasValueOver5": true,
+      "hasValueOver100": false,
+      "hasEnabledFlag": false,
+      "hasDisabledFlag": true
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-25"
+  references:
+    - "Lambda functions implementation"
+    - "EnhancedObjectFunctions.kt:121"
+  notes:
+    - "Tests someEntry() with lambda predicate"
+    - "Returns true if at least one entry matches"
+    - "Returns false if no entries match"
+    - "Demonstrates testing by value property"
+    - "Demonstrates testing by key"
+    - "Demonstrates testing by numeric comparison"
+    - "Demonstrates testing by boolean value"
+    - "Lambda receives (key, value) and returns boolean"

@@ -1,0 +1,87 @@
+name: "object_countEntries_basic"
+category: "stdlib-object-lambda"
+description: "Test countEntries() function - count entries matching predicate"
+tags: ["stdlib", "object", "lambda", "countEntries", "predicate"]
+
+inputs:
+  data:
+    format: json
+    data: |
+      {
+        "servers": {
+          "prod": {"type": "postgres", "port": 5432, "active": true},
+          "stage": {"type": "postgres", "port": 5432, "active": true},
+          "dev": {"type": "mysql", "port": 3306, "active": true},
+          "test": {"type": "postgres", "port": 5433, "active": false}
+        },
+        "scores": {
+          "alice": 85,
+          "bob": 92,
+          "charlie": 78,
+          "diana": 95,
+          "eve": 88
+        }
+      }
+
+transformation: |
+  %utlx 1.0
+  input: data json
+  output json
+  ---
+  {
+    postgresCount: countEntries($data.servers, (k, v) => v.type == "postgres"),
+
+    mysqlCount: countEntries($data.servers, (k, v) => v.type == "mysql"),
+
+    port5432Count: countEntries($data.servers, (k, v) => v.port == 5432),
+
+    activeCount: countEntries($data.servers, (k, v) => v.active),
+
+    inactiveCount: countEntries($data.servers, (k, v) => !v.active),
+
+    scoresOver85: countEntries($data.scores, (k, v) => v > 85),
+
+    scoresOver90: countEntries($data.scores, (k, v) => v > 90),
+
+    scoresBelow80: countEntries($data.scores, (k, v) => v < 80),
+
+    keysWithE: countEntries($data.scores, (k, v) => contains(k, "e")),
+
+    allEntries: countEntries($data.servers, (k, v) => true)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "postgresCount": 3,
+      "mysqlCount": 1,
+      "port5432Count": 2,
+      "activeCount": 3,
+      "inactiveCount": 1,
+      "scoresOver85": 3,
+      "scoresOver90": 2,
+      "scoresBelow80": 1,
+      "keysWithE": 3,
+      "allEntries": 4
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-25"
+  references:
+    - "Lambda functions implementation"
+    - "EnhancedObjectFunctions.kt:481"
+  notes:
+    - "Tests countEntries() with lambda predicate"
+    - "Returns count of entries matching predicate"
+    - "Returns 0 if no entries match"
+    - "Demonstrates counting by value property"
+    - "Demonstrates counting by key pattern"
+    - "Demonstrates counting by numeric comparison"
+    - "Demonstrates counting by boolean value"
+    - "Lambda receives (key, value) and returns boolean"

@@ -1,0 +1,85 @@
+name: "object_everyEntry_basic"
+category: "stdlib-object-lambda"
+description: "Test everyEntry() function - test if all entries match predicate"
+tags: ["stdlib", "object", "lambda", "everyEntry", "predicate"]
+
+inputs:
+  data:
+    format: json
+    data: |
+      {
+        "postgresServers": {
+          "prod": {"type": "postgres", "port": 5432},
+          "stage": {"type": "postgres", "port": 5432},
+          "dev": {"type": "postgres", "port": 5433}
+        },
+        "mixedServers": {
+          "prod": {"type": "postgres", "port": 5432},
+          "stage": {"type": "postgres", "port": 5432},
+          "dev": {"type": "mysql", "port": 3306}
+        },
+        "positiveNumbers": {
+          "a": 5,
+          "b": 10,
+          "c": 3
+        },
+        "mixedNumbers": {
+          "a": 5,
+          "b": -2,
+          "c": 3
+        }
+      }
+
+transformation: |
+  %utlx 1.0
+  input: data json
+  output json
+  ---
+  {
+    allPostgres: everyEntry($data.postgresServers, (k, v) => v.type == "postgres"),
+
+    mixedAllPostgres: everyEntry($data.mixedServers, (k, v) => v.type == "postgres"),
+
+    allPort5432: everyEntry($data.postgresServers, (k, v) => v.port == 5432),
+
+    allPositive: everyEntry($data.positiveNumbers, (k, v) => v > 0),
+
+    mixedAllPositive: everyEntry($data.mixedNumbers, (k, v) => v > 0),
+
+    allGreaterThan2: everyEntry($data.positiveNumbers, (k, v) => v > 2),
+
+    allKeysLength4: everyEntry($data.postgresServers, (k, v) => length(k) >= 3)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "allPostgres": true,
+      "mixedAllPostgres": false,
+      "allPort5432": false,
+      "allPositive": true,
+      "mixedAllPositive": false,
+      "allGreaterThan2": true,
+      "allKeysLength4": true
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-25"
+  references:
+    - "Lambda functions implementation"
+    - "EnhancedObjectFunctions.kt:197"
+  notes:
+    - "Tests everyEntry() with lambda predicate"
+    - "Returns true if all entries match"
+    - "Returns false if any entry doesn't match"
+    - "Demonstrates testing by value property"
+    - "Demonstrates testing by key property"
+    - "Demonstrates testing by numeric comparison"
+    - "Returns true for empty objects (vacuously true)"
+    - "Lambda receives (key, value) and returns boolean"

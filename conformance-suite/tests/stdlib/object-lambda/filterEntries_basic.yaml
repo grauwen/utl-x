@@ -1,0 +1,140 @@
+name: "object_filterEntries_basic"
+category: "stdlib-object-lambda"
+description: "Test filterEntries() function - filter object properties by predicate"
+tags: ["stdlib", "object", "lambda", "filterEntries"]
+
+inputs:
+  data:
+    format: json
+    data: |
+      {
+        "servers": {
+          "production": {
+            "type": "postgres",
+            "port": 5432,
+            "active": true
+          },
+          "staging": {
+            "type": "postgres",
+            "port": 5432,
+            "active": true
+          },
+          "development": {
+            "type": "mysql",
+            "port": 3306,
+            "active": true
+          },
+          "test": {
+            "type": "postgres",
+            "port": 5433,
+            "active": false
+          }
+        }
+      }
+
+transformation: |
+  %utlx 1.0
+  input: data json
+  output json
+  ---
+  {
+    postgresOnly: filterEntries($data.servers, (key, value) => value.type == "postgres"),
+
+    port5432Only: filterEntries($data.servers, (key, value) => value.port == 5432),
+
+    activeOnly: filterEntries($data.servers, (key, value) => value.active),
+
+    productionKey: filterEntries($data.servers, (key, value) => key == "production"),
+
+    postgresAndActive: filterEntries($data.servers, (key, value) =>
+      value.type == "postgres" && value.active
+    )
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "postgresOnly": {
+        "production": {
+          "type": "postgres",
+          "port": 5432,
+          "active": true
+        },
+        "staging": {
+          "type": "postgres",
+          "port": 5432,
+          "active": true
+        },
+        "test": {
+          "type": "postgres",
+          "port": 5433,
+          "active": false
+        }
+      },
+      "port5432Only": {
+        "production": {
+          "type": "postgres",
+          "port": 5432,
+          "active": true
+        },
+        "staging": {
+          "type": "postgres",
+          "port": 5432,
+          "active": true
+        }
+      },
+      "activeOnly": {
+        "production": {
+          "type": "postgres",
+          "port": 5432,
+          "active": true
+        },
+        "staging": {
+          "type": "postgres",
+          "port": 5432,
+          "active": true
+        },
+        "development": {
+          "type": "mysql",
+          "port": 3306,
+          "active": true
+        }
+      },
+      "productionKey": {
+        "production": {
+          "type": "postgres",
+          "port": 5432,
+          "active": true
+        }
+      },
+      "postgresAndActive": {
+        "production": {
+          "type": "postgres",
+          "port": 5432,
+          "active": true
+        },
+        "staging": {
+          "type": "postgres",
+          "port": 5432,
+          "active": true
+        }
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 20
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-10-25"
+  references:
+    - "Lambda functions implementation"
+    - "EnhancedObjectFunctions.kt:328"
+  notes:
+    - "Tests filterEntries() with lambda predicate"
+    - "Demonstrates filtering by value property"
+    - "Demonstrates filtering by key"
+    - "Demonstrates combining multiple conditions"
+    - "Lambda receives (key, value) and returns boolean"
