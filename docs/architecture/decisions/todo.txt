@@ -33,6 +33,10 @@ The mapEntries() function exists but it's not implemented - it's just a stub wit
   - ⏳ mapValues(obj, mapper) - Ready to implement
   - ⏳ someEntry(obj, predicate) - Ready to implement
   - ⏳ everyEntry(obj, predicate) - Ready to implement
+
+Implement remaining 7 lambda-based object functions (now straightforward - same pattern as mapEntries)
+  2. Fix syntax issues in tests 02-07 (count(), match, entries structure, let bindings)
+  3. Achieve 9/9 passing tests for complete DataContract dynamic key support
 ----
 YAML MAP constructions see https://github.com/grauwen/utl-x/blob/main/stdlib/yaml-maps-json-schema-summary.md
 
