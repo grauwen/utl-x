@@ -76,11 +76,11 @@ transformation: |
       Integration: {
         ModernAPI: "JSON",
         LegacySystem: "XML",
-        LegacyEncoding: detectXMLEncoding(@permissions)
+        LegacyEncoding: detectXMLEncoding($permissions)
       },
-      Users: @users.users |> map(user => {
+      Users: $users.users |> map(user => {
         let userId = user.userId;
-        let perms = @permissions.Permissions.UserPermissions |> filter(p => p.@userId == userId) |> first();
+        let perms = $permissions.Permissions.UserPermissions |> filter(p => p.@userId == userId) |> first();
 
         User: {
           @id: userId,

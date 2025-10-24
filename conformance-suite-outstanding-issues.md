@@ -1,8 +1,58 @@
 # Conformance Suite Outstanding Issues - Detailed Analysis
 
-**Status**: 92.7% Pass Rate (265/286 tests passing)
-**Outstanding**: 21 failing tests
+**Status**: 92.7% Pass Rate (267/288 tests passing)
+**Outstanding**: 21 failing tests (19 unique tests, 2 counted twice)
 **Last Updated**: 2025-10-24
+
+---
+
+## Current Failing Tests (21 total, 19 unique)
+
+### Transformation Errors (3 tests)
+Tests that fail during execution with runtime errors:
+
+1. **transform_auto_43d9da56** (counted 2x - appears in xml-to-json and xml-transform)
+   - File: [`tests/auto-captured/xml-to-json/transform_auto_43d9da56.yaml`](conformance-suite/tests/auto-captured/xml-to-json/transform_auto_43d9da56.yaml)
+   - Error: `Cannot access property 'MaterialNumber' on NullValue`
+   - Issue: Accessing property on null/undefined value - likely XML parsing returned null
+
+2. **xml_namespace_handling**
+   - File: [`tests/examples/intermediate/xml_namespace_handling.yaml`](conformance-suite/tests/examples/intermediate/xml_namespace_handling.yaml)
+   - Error: `Cannot index NullValue with string`
+   - Issue: Null value being indexed - XML namespace handling issue
+
+3. **multi_input_json_xml_to_xml**
+   - File: [`tests/multi-input/13_json_xml_to_xml.yaml`](conformance-suite/tests/multi-input/13_json_xml_to_xml.yaml)
+   - Error: `map() requires array as first argument`
+   - Issue: Trying to map() over non-array value
+
+### Output Mismatches (16 tests)
+Tests that execute successfully but produce different output than expected:
+
+#### Auto-Captured Tests (4)
+4. **renderJson_auto_df69e6e1** - [`tests/auto-captured/stdlib/serialization/renderJson_auto_df69e6e1.yaml`](conformance-suite/tests/auto-captured/stdlib/serialization/renderJson_auto_df69e6e1.yaml)
+5. **contains_auto_b4e73406** - [`tests/auto-captured/stdlib/string/contains_auto_b4e73406.yaml`](conformance-suite/tests/auto-captured/stdlib/string/contains_auto_b4e73406.yaml)
+6. **transform_auto_8fb5ad0f** - [`tests/auto-captured/xml-to-json/transform_auto_8fb5ad0f.yaml`](conformance-suite/tests/auto-captured/xml-to-json/transform_auto_8fb5ad0f.yaml)
+7. **transform_auto_0b0f9dfa** - [`tests/auto-captured/xml-transform/transform_auto_0b0f9dfa.yaml`](conformance-suite/tests/auto-captured/xml-transform/transform_auto_0b0f9dfa.yaml)
+
+#### Example Tests (3)
+8. **csv_to_json_transformation** - [`tests/examples/intermediate/csv_to_json_transformation.yaml`](conformance-suite/tests/examples/intermediate/csv_to_json_transformation.yaml)
+9. **sap_integration** - [`tests/examples/real-world/sap_integration.yaml`](conformance-suite/tests/examples/real-world/sap_integration.yaml) - Likely timestamp (`now()`) difference
+10. **sap_integration_out_of_stock_scenario** - [`tests/examples/real-world/sap_integration.yaml`](conformance-suite/tests/examples/real-world/sap_integration.yaml) - Likely timestamp (`now()`) difference
+
+#### Multi-Input Tests (11)
+11. **multi_input_json_json_to_json** - [`tests/multi-input/05_json_json_to_json.yaml`](conformance-suite/tests/multi-input/05_json_json_to_json.yaml)
+12. **multi_input_csv_csv_to_json** - [`tests/multi-input/08_csv_csv_to_json.yaml`](conformance-suite/tests/multi-input/08_csv_csv_to_json.yaml)
+13. **multi_input_xml_xml_to_xml** - [`tests/multi-input/11_xml_xml_to_xml.yaml`](conformance-suite/tests/multi-input/11_xml_xml_to_xml.yaml) - XML output mismatch
+14. **multi_input_xml_json_to_xml** - [`tests/multi-input/12_xml_json_to_xml.yaml`](conformance-suite/tests/multi-input/12_xml_json_to_xml.yaml) - XML output mismatch
+15. **multi_input_csv_csv_to_csv** - [`tests/multi-input/14_csv_csv_to_csv.yaml`](conformance-suite/tests/multi-input/14_csv_csv_to_csv.yaml) - CSV row count mismatch
+16. **multi_input_json_csv_to_csv** - [`tests/multi-input/15_json_csv_to_csv.yaml`](conformance-suite/tests/multi-input/15_json_csv_to_csv.yaml) - CSV row count mismatch
+17. **multi_input_xml_csv_to_csv** - [`tests/multi-input/16_xml_csv_to_csv.yaml`](conformance-suite/tests/multi-input/16_xml_csv_to_csv.yaml) - CSV row count mismatch
+18. **multi_input_yaml_yaml_to_yaml** - [`tests/multi-input/17_yaml_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/17_yaml_yaml_to_yaml.yaml) - YAML output mismatch
+19. **multi_input_json_yaml_to_yaml** - [`tests/multi-input/18_json_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/18_json_yaml_to_yaml.yaml) - YAML parse error in output
+21. **multi_input_xml_yaml_to_yaml** - [`tests/multi-input/19_xml_yaml_to_yaml.yaml`](conformance-suite/tests/multi-input/19_xml_yaml_to_yaml.yaml) - YAML output mismatch (parser fixed, output still differs)
+
+---
 
 ## Recent Changes (2025-10-24)
 
@@ -124,11 +174,11 @@ map(items, item => {
 
 | Category | Total | Passing | Failing | Pass Rate |
 |----------|-------|---------|---------|-----------|
-| **Overall** | **286** | **265** | **21** | **92.7%** |
+| **Overall** | **288** | **267** | **21** | **92.7%** |
 | Parse Errors | 2 | 2 | 0 | 100% ✅ |
 | XML Encoding | 4 | 4 | 0 | 100% ✅ |
-| Output Mismatches | 17 | 0 | 17 | 0% |
-| Unknown/Other | 3 | 0 | 3 | 0% |
+| Transformation Errors | 3 | 0 | 3 | 0% |
+| Output Mismatches | 16 | 0 | 16 | 0% |
 
 ### Failures by Test Category
 
@@ -504,10 +554,11 @@ All XML encoding tests fixed by correcting spread operator syntax. See Category 
 
 ### Goal
 
-- **Target**: 95%+ pass rate (271+ tests passing)
-- **Current**: 92.7% (265/286)
-- **Needed**: Fix 6 tests to reach 95%
-- **Progress**: 6 issues fixed (2 parse errors + 4 XML encoding tests = 6/21 issues resolved)
+- **Target**: 95%+ pass rate (274+ tests passing out of 288)
+- **Current**: 92.7% (267/288)
+- **Needed**: Fix 7 tests to reach 95%
+- **Progress**: 6 issues fixed (2 parse errors + 4 XML encoding tests = 6/27 total issues resolved)
+- **Recommendation**: Focus on transformation errors first (3 tests) - these are blocking execution
 
 ---
 
@@ -571,7 +622,7 @@ cd ..
 
 ---
 
-## Appendix: All Failing Tests (21 remaining)
+## Appendix: All Failing Tests (21 remaining, 19 unique)
 
 ### Parse Errors (0) ✅
 ~~All parse errors resolved~~
@@ -579,34 +630,43 @@ cd ..
 ### XML Encoding Tests (0) ✅
 ~~All XML encoding tests now passing~~
 
-### Output Mismatches (17)
-1. renderJson_auto_df69e6e1
-2. contains_auto_b4e73406
-3. transform_auto_8fb5ad0f
-4. transform_auto_0b0f9dfa
-5. csv_to_json_transformation
-6. sap_integration (timestamp issue only)
-7. sap_integration_out_of_stock_scenario (timestamp issue only)
-8. ~~encoding_precedence_rules~~ ✅ FIXED
-9. ~~multi_input_default_encoding~~ ✅ FIXED
-10. ~~multi_input_explicit_encoding~~ ✅ FIXED
-11. ~~multi_input_no_encoding~~ ✅ FIXED
-12. multi_input_json_json_to_json
-13. multi_input_csv_csv_to_json
-14. multi_input_xml_xml_to_xml
-15. multi_input_xml_json_to_xml
-16. multi_input_csv_csv_to_csv
-17. multi_input_json_csv_to_csv
-18. multi_input_xml_csv_to_csv
-19. multi_input_yaml_yaml_to_yaml
-20. ~~multi_input_json_yaml_to_yaml~~ ✅ PARSER FIXED (output mismatch remains)
-21. ~~multi_input_xml_yaml_to_yaml~~ ✅ PARSER FIXED (output mismatch remains)
+### Transformation Errors (3 tests - 2 unique due to duplicate)
+1. transform_auto_43d9da56 **(counted 2x)** - `Cannot access property 'MaterialNumber' on NullValue`
+   - Appears in both `xml-to-json` and `xml-transform` categories
+2. xml_namespace_handling - `Cannot index NullValue with string`
+3. multi_input_json_xml_to_xml - `map() requires array as first argument`
 
-### Unknown/Other (3)
-22. transform_auto_43d9da56 (transformation failure)
-23. xml_namespace_handling (transformation failure)
-24. multi_input_json_xml_to_xml (transformation failure)
+### Output Mismatches (16 tests)
 
-**Total Failing:** 21 tests (0 parse errors ✅, 0 XML encoding ✅, 17 output mismatches, 3 transformation failures)
-**Total Fixed:** 6 tests (2 parse errors + 4 XML encoding)
-**Progress:** 265/286 tests passing (92.7%)
+**Auto-Captured Tests (4):**
+4. renderJson_auto_df69e6e1
+5. contains_auto_b4e73406
+6. transform_auto_8fb5ad0f
+7. transform_auto_0b0f9dfa
+
+**Example Tests (3):**
+8. csv_to_json_transformation
+9. sap_integration (timestamp issue only - `now()` function)
+10. sap_integration_out_of_stock_scenario (timestamp issue only - `now()` function)
+
+**Multi-Input Tests (11):**
+11. ~~multi_input_default_encoding~~ ✅ FIXED (was #8)
+12. ~~multi_input_explicit_encoding~~ ✅ FIXED (was #9)
+13. ~~multi_input_no_encoding~~ ✅ FIXED (was #10)
+14. ~~encoding_precedence_rules~~ ✅ FIXED (was #11)
+15. multi_input_json_json_to_json
+16. multi_input_csv_csv_to_json
+17. multi_input_xml_xml_to_xml (XML output mismatch)
+18. multi_input_xml_json_to_xml (XML output mismatch)
+19. multi_input_csv_csv_to_csv (CSV row count mismatch)
+20. multi_input_json_csv_to_csv (CSV row count mismatch)
+21. multi_input_xml_csv_to_csv (CSV row count mismatch)
+22. multi_input_yaml_yaml_to_yaml (YAML output mismatch)
+23. multi_input_json_yaml_to_yaml (YAML parse error - ✅ parser fixed, output still differs)
+24. multi_input_xml_yaml_to_yaml (YAML output mismatch - ✅ parser fixed, output still differs)
+
+**Summary:**
+- **Total Failing:** 21 test results (19 unique tests, `transform_auto_43d9da56` counted twice)
+- **Total Fixed:** 6 tests (2 parse errors + 4 XML encoding)
+- **Progress:** 267/288 tests passing (92.7%)
+- **Remaining:** 3 transformation errors + 16 output mismatches = 19 unique issues

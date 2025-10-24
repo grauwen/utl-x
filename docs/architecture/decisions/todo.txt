@@ -32,6 +32,9 @@ The @ symbol is reserved for XML attribute access, not for referencing inputs.??
 ----
 Dropdown <list> when an argument is given in an UTLX. (more LSP like capability), sort of API?
 ----
+ The parseCurrency() function has issues with some locale-specific formats (e.g., German Euro parsing), but US format works perfectly. This is a minor edge case that doesn't affect the overall
+  excellence of the currency support.
+----
 
 .gitnore exclude the build jars going into the GIT repo. utlx is a script calling the jar which is not checkin. Keep till a release version?
 JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
@@ -82,6 +85,13 @@ xml_namespace_handling test uses wildcard selectors (*[0]) which aren't supporte
   - yaml_config_processing - complex let bindings with array indexing
   - financial_data_processing - expression evaluation issue
 
+----
+CLEANUP-LATER Feedback is enhanced, but also now there is feedback put on private functions (which you don't want probably)
+----
+CLEANUP-LATER All Functions have duplicated Helper functions. Need some code improvements -> UDMHelper or in another file
+----
+
+
 ### Timezone Support
 Based on IANA Time Zone Database (tzdata)
 
@@ -92,8 +102,10 @@ Based on IANA Time Zone Database (tzdata)
 - `hebrew` - Hebrew calendar
 - `islamic` - Islamic calendar
 - `japanese` - Japanese calendar
+Would require external functions. -> leave to Dwafult
+----
 
--TypeOf is both a standard grammar keyword and in the same time a stdlib keyword. -> rename the function typeOf to getType
+DONE -TypeOf is both a standard grammar keyword and in the same time a stdlib keyword. -> rename the function typeOf to getType
 - formats/plugin/
 - stLib
 - javascript
