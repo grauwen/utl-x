@@ -14,7 +14,18 @@ Later
   - ASYNCAPI
 and more. Need to rethink
 ----
-The CLI needs to be rebuilt with the updated parser that recognizes XSD and JSCH formats:
+conformance-suite input JSCH and XSD examples have no real test output condition
+
+Issues:
+
+The test failed as expected - it's trying to access __metadata fields that aren't implemented yet
+
+Now I can see the actual structure. The xs:schema wrapper is NOT being removed
+
+When there's only ONE xs:complexType, it's an object, not an array. XML-to-JSON conversion only creates arrays when there are multiple elements with the same name.
+  Since the test transformation uses map(), it fails when given a single object instead of an array.
+
+
 ----
 create output format examples for XSD and JSCH
 ----
