@@ -143,7 +143,8 @@ sealed class Expression : Node() {
     data class MemberAccess(
         val target: Expression,
         val property: String,
-        val isAttribute: Boolean = false, // true for @attribute
+        val isAttribute: Boolean = false,  // true for @attribute
+        val isMetadata: Boolean = false,   // true for ^metadata
         override val location: Location
     ) : Expression()
 

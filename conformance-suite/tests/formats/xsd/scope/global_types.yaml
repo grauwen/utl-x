@@ -24,8 +24,8 @@ transformation: |
     {
       complexType: {
         name: $input["xs:complexType"].__attributes.name,
-        scope: $input["xs:complexType"].__metadata.__scope,
-        schemaType: $input["xs:complexType"].__metadata.__schemaType
+        scope: $input["xs:complexType"].^scope,
+        schemaType: $input["xs:complexType"].^schemaType
       }
     }
 

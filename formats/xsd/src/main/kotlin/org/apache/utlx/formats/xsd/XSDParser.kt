@@ -59,19 +59,27 @@ class XSDParser(
         // Step 1: Parse as XML with array hints
         val xmlParser = XMLParser(source, arrayHints)
         val xmlUDM = xmlParser.parse()
+        if (xmlUDM is UDM.Object) {
+        }
 
         // Step 2: Enhance with XSD-specific metadata
         val enhanced = enhanceWithXSDMetadata(xmlUDM)
+        if (enhanced is UDM.Object) {
+        }
 
         // Step 3: Unwrap if XMLParser wrapped the document
         // Return the actual xs:schema element, not the wrapper
-        if (enhanced is UDM.Object && enhanced.name == null) {
+        // Check if this is a wrapper object (has null name and contains xs:schema property)
+        if (enhanced is UDM.Object) {
             val schemaKey = enhanced.properties.keys.firstOrNull { key ->
                 key == "xs:schema" || key == "xsd:schema" || key == "schema"
             }
-            if (schemaKey != null) {
-                return enhanced.properties[schemaKey] ?: enhanced
+            if (schemaKey != null && enhanced.properties[schemaKey] is UDM.Object) {
+                // Return the unwrapped schema element
+                return enhanced.properties[schemaKey]!!
+            } else {
             }
+        } else {
         }
 
         return enhanced
@@ -157,15 +165,16 @@ class XSDParser(
             tagWithScope(value, isTopLevel = true)
         }
 
+        val newMetadata = schema.metadata + mapOf(
+            "schemaType" to "xsd-schema",
+            "xsdVersion" to xsdVersion,
+            "targetNamespace" to targetNamespace
+        )
         return UDM.Object(
             properties = enhancedProperties,
             attributes = schema.attributes,
             name = schema.name,
-            metadata = schema.metadata + mapOf(
-                "__schemaType" to "xsd-schema",
-                "__xsdVersion" to xsdVersion,
-                "__targetNamespace" to targetNamespace
-            )
+            metadata = newMetadata
         )
     }
 
@@ -220,8 +229,8 @@ class XSDParser(
                 // Add metadata
                 val newMetadata = udm.metadata.toMutableMap()
                 if (schemaType != null) {
-                    newMetadata["__schemaType"] = schemaType
-                    newMetadata["__scope"] = scope
+                    newMetadata["schemaType"] = schemaType
+                    newMetadata["scope"] = scope
                 }
 
                 UDM.Object(
@@ -247,7 +256,7 @@ class XSDParser(
         // If this looks like an XSD element but wasn't caught earlier
         val elementName = udm.name?.substringAfter(":") ?: ""
         if (elementName in XSD_ELEMENTS) {
-            metadata["__schemaType"] = "xsd-$elementName"
+            metadata["schemaType"] = "xsd-$elementName"
         }
 
         return metadata

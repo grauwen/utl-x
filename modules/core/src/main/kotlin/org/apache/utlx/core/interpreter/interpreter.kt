@@ -420,6 +420,10 @@ class Interpreter {
                         } else if (expr.isAttribute) {
                             val attrValue = udm.getAttribute(expr.property)
                             attrValue?.let { RuntimeValue.StringValue(it) } ?: RuntimeValue.NullValue
+                        } else if (expr.isMetadata) {
+                            // Handle metadata access: $input^schemaType
+                            val metadataValue = udm.getMetadata(expr.property)
+                            metadataValue?.let { RuntimeValue.StringValue(it) } ?: RuntimeValue.NullValue
                         } else {
                             val propValue = udm.get(expr.property)
                             if (propValue != null) {
@@ -546,8 +550,18 @@ class Interpreter {
                     is RuntimeValue.UDMValue -> {
                         when (val udm = target.udm) {
                             is UDM.Object -> {
+                                // Check if accessing metadata (starts with ^)
+                                if (propertyName.startsWith("^")) {
+                                    val metadataKey = propertyName.substring(1) // Remove ^ prefix
+                                    val metadataValue = udm.getMetadata(metadataKey) ?: udm.getMetadata(propertyName)
+                                    if (metadataValue != null) {
+                                        RuntimeValue.StringValue(metadataValue)
+                                    } else {
+                                        RuntimeValue.NullValue
+                                    }
+                                }
                                 // Check if accessing an attribute (starts with @)
-                                if (propertyName.startsWith("@")) {
+                                else if (propertyName.startsWith("@")) {
                                     val attrName = propertyName.substring(1) // Remove @ prefix
                                     val attrValue = udm.getAttribute(attrName) ?: udm.getAttribute(propertyName)
                                     if (attrValue != null) {

@@ -36,7 +36,7 @@ transformation: |
       pattern: "Russian Doll",
       rootElement: {
         name: $input["xs:element"].__attributes.name,
-        scope: $input["xs:element"].__metadata.__scope,
+        scope: $input["xs:element"].^scope,
         hasInlineType: hasKey($input["xs:element"], "xs:complexType")
       },
       description: "All types defined inline within the root element"

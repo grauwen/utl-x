@@ -27,8 +27,8 @@ transformation: |
     output json
     ---
     {
-      schemaType: $input.__metadata.__schemaType,
-      version: $input.__metadata.__version,
+      schemaType: $input.^schemaType,
+      version: $input.^version,
       title: $input.title,
       hasProperties: hasKey($input, "properties")
     }

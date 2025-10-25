@@ -326,7 +326,7 @@ transformation: |
     ---
     {
       order: {
-        schemaVersion: $input.__metadata.__version,
+        schemaVersion: $input.^version,
         title: $input.title,
         hasDefs: hasKey($input, "$defs"),
         orderStatuses: $input["$defs"].orderStatus.enum,

@@ -268,7 +268,7 @@ transformation: |
     ---
     {
       payment: {
-        schemaVersion: $input.__metadata.__version,
+        schemaVersion: $input.^version,
         title: $input.title,
         hasDefinitions: hasKey($input, "definitions"),
         requiredFields: count($input.required),

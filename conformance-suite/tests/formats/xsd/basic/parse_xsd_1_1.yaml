@@ -21,8 +21,8 @@ transformation: |
     output json
     ---
     {
-      schemaType: $input.__metadata.__schemaType,
-      version: $input.__metadata.__xsdVersion,
+      schemaType: $input.^schemaType,
+      version: $input.^xsdVersion,
       hasAssertions: hasKey($input, "xs:element")
     }
 
@@ -30,3 +30,7 @@ expected:
   format: json
   data: |
     {
+      "schemaType": "xsd-schema",
+      "version": "1.1",
+      "hasAssertions": true
+    }

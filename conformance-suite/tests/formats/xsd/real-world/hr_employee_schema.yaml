@@ -196,7 +196,7 @@ transformation: |
     ---
     {
       hrSystem: {
-        namespace: $input.__metadata.__targetNamespace,
+        namespace: $input.^targetNamespace,
         rootElement: $input["xs:element"].__attributes.name,
         employeeTypeExists: hasKey($input, "xs:complexType[name=EmployeeType]"),
         hasPersonalInfo: true,

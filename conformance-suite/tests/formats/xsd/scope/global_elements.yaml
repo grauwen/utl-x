@@ -19,8 +19,8 @@ transformation: |
     {
       element: {
         name: $input["xs:element"].__attributes.name,
-        scope: $input["xs:element"].__metadata.__scope,
-        schemaType: $input["xs:element"].__metadata.__schemaType
+        scope: $input["xs:element"].^scope,
+        schemaType: $input["xs:element"].^schemaType
       }
     }
 

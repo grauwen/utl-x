@@ -19,9 +19,9 @@ transformation: |
   output json
   ---
   {
-    schemaType: $input.__metadata.__schemaType,
-    version: $input.__metadata.__xsdVersion,
-    targetNamespace: $input.__metadata.__targetNamespace,
+    schemaType: $input.^schemaType,
+    version: $input.^xsdVersion,
+    targetNamespace: $input.^targetNamespace,
     hasElements: hasKey($input, "xs:element")
   }
 

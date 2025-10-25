@@ -179,7 +179,7 @@ transformation: |
     ---
     {
       api: {
-        schemaVersion: $input.__metadata.__version,
+        schemaVersion: $input.^version,
         title: $input.title,
         description: $input.description,
         requiredFields: $input.required,

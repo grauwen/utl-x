@@ -272,18 +272,27 @@ object TransformCommand {
                         ?: emptySet()
                     XMLParser(data, arrayHints).parse()
                 }
-                "json" -> JSONParser(data).parse()
-                "csv" -> CSVParser(data).parse()
-                "yaml", "yml" -> YAMLParser().parse(data)
+                "json" -> {
+                    JSONParser(data).parse()
+                }
+                "csv" -> {
+                    CSVParser(data).parse()
+                }
+                "yaml", "yml" -> {
+                    YAMLParser().parse(data)
+                }
                 "xsd" -> {
                     // Extract array hints from options (same as XML)
                     val arrayHints = (options["arrays"] as? List<*>)
                         ?.mapNotNull { it as? String }
                         ?.toSet()
                         ?: emptySet()
-                    XSDParser(data, arrayHints).parse()
+                    val result = XSDParser(data, arrayHints).parse()
+                    result
                 }
-                "jsch" -> JSONSchemaParser(data).parse()
+                "jsch" -> {
+                    JSONSchemaParser(data).parse()
+                }
                 else -> throw IllegalArgumentException("Unsupported input format: $format")
             }
         } catch (e: Exception) {
@@ -314,8 +323,12 @@ object TransformCommand {
     private fun detectFormat(data: String, extension: String?): String {
         // Try extension first
         extension?.lowercase()?.let {
-            if (it in listOf("xml", "json", "csv", "yaml", "yml")) {
-                return if (it == "yml") "yaml" else it
+            if (it in listOf("xml", "json", "csv", "yaml", "yml", "xsd", "jsch")) {
+                return when (it) {
+                    "yml" -> "yaml"
+                    "jsch" -> "jsch"  // JSON Schema files
+                    else -> it
+                }
             }
         }
         

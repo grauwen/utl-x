@@ -415,13 +415,14 @@ class Parser(private val tokens: List<Token>) {
                 }
                 match(TokenType.DOT) -> {
                     val isAttribute = match(TokenType.AT)
-                    // Allow wildcard selector: .* or .@*
+                    val isMetadata = match(TokenType.CARET)
+                    // Allow wildcard selector: .* or .@* or .^*
                     val property = if (match(TokenType.STAR)) {
                         "*"
                     } else {
                         consume(TokenType.IDENTIFIER, "Expected property name").lexeme
                     }
-                    Expression.MemberAccess(expr, property, isAttribute, Location.from(previous()))
+                    Expression.MemberAccess(expr, property, isAttribute, isMetadata, Location.from(previous()))
                 }
                 match(TokenType.LBRACKET) -> {
                     val index = parseExpression()

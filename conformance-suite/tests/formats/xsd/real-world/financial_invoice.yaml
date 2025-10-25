@@ -231,7 +231,7 @@ transformation: |
     ---
     {
       invoice: {
-        schemaNamespace: $input.__metadata.__targetNamespace,
+        schemaNamespace: $input.^targetNamespace,
         rootElement: $input["xs:element"].__attributes.name,
         hasLineItems: hasKey($input, "xs:complexType[name=InvoiceType]"),
         taxCompliant: true

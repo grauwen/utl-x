@@ -64,6 +64,7 @@ class Lexer(private val source: String) {
             ':' -> addToken(TokenType.COLON, start, startColumn)
             ';' -> addToken(TokenType.SEMICOLON, start, startColumn)
             '@' -> addToken(TokenType.AT, start, startColumn)
+            '^' -> addToken(TokenType.CARET, start, startColumn)
             '$' -> {
                 // $ can be followed by an identifier for input bindings ($input, $input1, etc.)
                 if (peek().isLetter() || peek() == '_') {

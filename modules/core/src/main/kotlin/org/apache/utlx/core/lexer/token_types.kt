@@ -87,6 +87,7 @@ enum class TokenType {
     COLON,           // :
     SEMICOLON,       // ;
     AT,              // @ (for attributes)
+    CARET,           // ^ (for metadata)
     DOTDOT,          // .. (recursive descent)
     SPREAD,          // ... (spread operator)
     

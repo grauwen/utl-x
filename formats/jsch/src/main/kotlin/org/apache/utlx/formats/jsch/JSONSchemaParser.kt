@@ -38,13 +38,13 @@ import java.io.StringReader
  *       properties = mapOf(
  *         "name" to UDM.Object(
  *           properties = mapOf("type" to UDM.Scalar("string")),
- *           metadata = mapOf("__schemaType" to "jsch-property")
+ *           metadata = mapOf("schemaType" to "jsch-property")
  *         )
  *       )
  *     )
  *   ),
  *   metadata = mapOf(
- *     "__schemaType" to "jsch-schema",
+ *     "schemaType" to "jsch-schema",
  *     "__version" to "draft-07"
  *   )
  * )
@@ -120,7 +120,7 @@ class JSONSchemaParser(private val source: Reader) {
             attributes = schema.attributes,
             name = schema.name,
             metadata = schema.metadata + mapOf(
-                "__schemaType" to "jsch-schema",
+                "schemaType" to "jsch-schema",
                 "__version" to version
             )
         )
@@ -151,14 +151,14 @@ class JSONSchemaParser(private val source: Reader) {
                     properties = udm.properties.mapValues { (_, value) ->
                         when (value) {
                             is UDM.Object -> value.copy(
-                                metadata = value.metadata + mapOf("__schemaType" to "jsch-property")
+                                metadata = value.metadata + mapOf("schemaType" to "jsch-property")
                             )
                             else -> value
                         }
                     },
                     attributes = udm.attributes,
                     name = udm.name,
-                    metadata = udm.metadata + mapOf("__schemaType" to "jsch-properties")
+                    metadata = udm.metadata + mapOf("schemaType" to "jsch-properties")
                 )
             }
             else -> udm
@@ -175,14 +175,14 @@ class JSONSchemaParser(private val source: Reader) {
                     properties = udm.properties.mapValues { (_, value) ->
                         when (value) {
                             is UDM.Object -> value.copy(
-                                metadata = value.metadata + mapOf("__schemaType" to "jsch-definition")
+                                metadata = value.metadata + mapOf("schemaType" to "jsch-definition")
                             )
                             else -> value
                         }
                     },
                     attributes = udm.attributes,
                     name = udm.name,
-                    metadata = udm.metadata + mapOf("__schemaType" to "jsch-definitions")
+                    metadata = udm.metadata + mapOf("schemaType" to "jsch-definitions")
                 )
             }
             else -> udm
@@ -196,7 +196,7 @@ class JSONSchemaParser(private val source: Reader) {
         return when (udm) {
             is UDM.Object -> {
                 udm.copy(
-                    metadata = udm.metadata + mapOf("__schemaType" to "jsch-items")
+                    metadata = udm.metadata + mapOf("schemaType" to "jsch-items")
                 )
             }
             else -> udm

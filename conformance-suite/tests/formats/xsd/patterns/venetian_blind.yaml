@@ -31,12 +31,12 @@ transformation: |
       pattern: "Venetian Blind",
       globalElement: {
         name: $input["xs:element"].__attributes.name,
-        scope: $input["xs:element"].__metadata.__scope,
+        scope: $input["xs:element"].^scope,
         typeRef: $input["xs:element"].__attributes.type
       },
       globalType: {
         name: $input["xs:complexType"].__attributes.name,
-        scope: $input["xs:complexType"].__metadata.__scope
+        scope: $input["xs:complexType"].^scope
       }
     }
 

@@ -103,8 +103,8 @@ transformation: |
     {
       catalog: {
         schemaInfo: {
-          targetNamespace: $input.__metadata.__targetNamespace,
-          version: $input.__metadata.__xsdVersion,
+          targetNamespace: $input.^targetNamespace,
+          version: $input.^xsdVersion,
           elementFormDefault: $input.__attributes.elementFormDefault
         },
         rootElement: $input["xs:element"].__attributes.name,
