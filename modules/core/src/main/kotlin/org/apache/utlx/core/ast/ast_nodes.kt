@@ -71,7 +71,9 @@ data class FormatSpec(
 ) : Node()
 
 enum class FormatType {
-    AUTO, XML, JSON, CSV, YAML, CUSTOM
+    AUTO, XML, JSON, CSV, YAML, CUSTOM,
+    XSD,   // XML Schema Definition (W3C XSD 1.0/1.1)
+    JSCH   // JSON Schema (draft-07, 2020-12)
 }
 
 /**

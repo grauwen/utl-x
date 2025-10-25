@@ -39,6 +39,8 @@ enum class TokenType {
     JSON,            // json
     CSV,             // csv
     YAML,            // yaml
+    XSD,             // xsd (XML Schema Definition)
+    JSCH,            // jsch (JSON Schema)
     
     // Operators
     PLUS,            // +
@@ -124,7 +126,7 @@ data class Token(
         TokenType.TRY, TokenType.CATCH,
         TokenType.MAP, TokenType.FILTER, TokenType.REDUCE, TokenType.APPLY,
         TokenType.IMPORT, TokenType.AS, TokenType.AUTO,
-        TokenType.XML, TokenType.JSON, TokenType.CSV, TokenType.YAML
+        TokenType.XML, TokenType.JSON, TokenType.CSV, TokenType.YAML, TokenType.XSD, TokenType.JSCH
     )
     
     fun isOperator(): Boolean = type in setOf(
@@ -170,7 +172,9 @@ object Keywords {
         "xml" to TokenType.XML,
         "json" to TokenType.JSON,
         "csv" to TokenType.CSV,
-        "yaml" to TokenType.YAML
+        "yaml" to TokenType.YAML,
+        "xsd" to TokenType.XSD,
+        "jsch" to TokenType.JSCH
     )
     
     fun get(identifier: String): TokenType? = keywords[identifier]

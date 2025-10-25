@@ -164,8 +164,10 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.JSON) -> FormatType.JSON
             match(TokenType.CSV) -> FormatType.CSV
             match(TokenType.YAML) -> FormatType.YAML
+            match(TokenType.XSD) -> FormatType.XSD
+            match(TokenType.JSCH) -> FormatType.JSCH
             else -> {
-                error("Expected format type (auto, xml, json, csv, yaml)")
+                error("Expected format type (auto, xml, json, csv, yaml, xsd, jsch)")
                 FormatType.AUTO
             }
         }

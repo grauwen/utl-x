@@ -41,6 +41,8 @@ include("formats:xml")
 include("formats:json")
 include("formats:csv")
 include("formats:yaml")
+include("formats:xsd")
+include("formats:jsch")
 //include("formats:plugin")
 
 // Standard library
