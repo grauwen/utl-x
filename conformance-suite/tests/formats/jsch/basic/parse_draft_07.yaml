@@ -1,0 +1,39 @@
+name: "jsch_parse_draft_07"
+category: "formats/jsch/basic"
+description: "Parse JSON Schema draft-07 and extract metadata"
+tags: ['jsch', 'json-schema', 'parsing']
+
+input:
+  format: jsch
+  data: |
+    {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "User Schema",
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": ["username", "email"]
+      }
+
+transformation: |
+  %utlx 1.0
+    input jsch
+    output json
+    ---
+    {
+      schemaType: $input.__metadata.__schemaType,
+      version: $input.__metadata.__version,
+      title: $input.title,
+      hasProperties: hasKey($input, "properties")
+    }
+
+expected:
+  format: json
+  data: |
+    {

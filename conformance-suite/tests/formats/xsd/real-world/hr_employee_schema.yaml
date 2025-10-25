@@ -1,0 +1,210 @@
+name: "xsd_hr_employee_schema"
+category: "formats/xsd/real-world"
+description: "Real-world example - HR Employee Management System XSD"
+tags: ['xsd', 'real-world', 'examples']
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://hr.example.com/employees"
+                 xmlns:hr="http://hr.example.com/employees"
+                 elementFormDefault="qualified">
+    
+        <xs:annotation>
+          <xs:documentation>
+            Human Resources Employee Management Schema
+    
+            This schema defines employee records for HRIS (Human Resources Information System).
+            Compliant with data protection regulations (GDPR, CCPA).
+    
+            Version: 3.1
+            Author: HR Systems Team
+            Last Modified: 2025-01-20
+          </xs:documentation>
+        </xs:annotation>
+    
+        <xs:element name="employeeDirectory" type="hr:EmployeeDirectoryType"/>
+    
+        <xs:complexType name="EmployeeDirectoryType">
+          <xs:sequence>
+            <xs:element name="employee" type="hr:EmployeeType" maxOccurs="unbounded"/>
+          </xs:sequence>
+          <xs:attribute name="companyId" type="xs:string" use="required"/>
+          <xs:attribute name="asOfDate" type="xs:date" use="required"/>
+        </xs:complexType>
+    
+        <xs:complexType name="EmployeeType">
+          <xs:sequence>
+            <xs:element name="employeeId" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Unique employee identifier (format: EMP-XXXXXX)</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="personalInfo" type="hr:PersonalInfoType"/>
+            <xs:element name="employmentDetails" type="hr:EmploymentDetailsType"/>
+            <xs:element name="compensation" type="hr:CompensationType"/>
+            <xs:element name="benefits" type="hr:BenefitsType" minOccurs="0"/>
+            <xs:element name="emergencyContact" type="hr:EmergencyContactType"/>
+          </xs:sequence>
+          <xs:attribute name="status" type="hr:EmploymentStatus" use="required"/>
+        </xs:complexType>
+    
+        <xs:complexType name="PersonalInfoType">
+          <xs:sequence>
+            <xs:element name="firstName" type="xs:string"/>
+            <xs:element name="middleName" type="xs:string" minOccurs="0"/>
+            <xs:element name="lastName" type="xs:string"/>
+            <xs:element name="dateOfBirth" type="xs:date"/>
+            <xs:element name="ssn" type="hr:SSNType">
+              <xs:annotation>
+                <xs:documentation>Social Security Number - encrypted in transit and at rest</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="email" type="xs:string"/>
+            <xs:element name="phone" type="xs:string"/>
+            <xs:element name="address" type="hr:AddressType"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="EmploymentDetailsType">
+          <xs:sequence>
+            <xs:element name="hireDate" type="xs:date"/>
+            <xs:element name="department" type="hr:DepartmentCode"/>
+            <xs:element name="jobTitle" type="xs:string"/>
+            <xs:element name="employmentType" type="hr:EmploymentType"/>
+            <xs:element name="workLocation" type="xs:string"/>
+            <xs:element name="manager" type="xs:string" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>Manager employee ID reference</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="CompensationType">
+          <xs:sequence>
+            <xs:element name="baseSalary" type="xs:decimal"/>
+            <xs:element name="currency" type="xs:string" fixed="USD"/>
+            <xs:element name="payFrequency" type="hr:PayFrequency"/>
+            <xs:element name="bonus" type="xs:decimal" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="BenefitsType">
+          <xs:sequence>
+            <xs:element name="healthInsurance" type="xs:boolean"/>
+            <xs:element name="dentalInsurance" type="xs:boolean"/>
+            <xs:element name="visionInsurance" type="xs:boolean"/>
+            <xs:element name="retirement401k" type="xs:boolean"/>
+            <xs:element name="ptoBalance" type="xs:decimal">
+              <xs:annotation>
+                <xs:documentation>Paid Time Off balance in hours</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="EmergencyContactType">
+          <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="relationship" type="xs:string"/>
+            <xs:element name="phone" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="AddressType">
+          <xs:sequence>
+            <xs:element name="street" type="xs:string"/>
+            <xs:element name="city" type="xs:string"/>
+            <xs:element name="state" type="hr:USStateCode"/>
+            <xs:element name="zipCode" type="xs:string"/>
+            <xs:element name="country" type="xs:string" default="USA"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:simpleType name="SSNType">
+          <xs:restriction base="xs:string">
+            <xs:pattern value="\d{3}-\d{2}-\d{4}"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:simpleType name="EmploymentStatus">
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="Active"/>
+            <xs:enumeration value="OnLeave"/>
+            <xs:enumeration value="Terminated"/>
+            <xs:enumeration value="Retired"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:simpleType name="EmploymentType">
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="FullTime"/>
+            <xs:enumeration value="PartTime"/>
+            <xs:enumeration value="Contractor"/>
+            <xs:enumeration value="Intern"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:simpleType name="DepartmentCode">
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="ENG">
+              <xs:annotation><xs:documentation>Engineering</xs:documentation></xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="SAL">
+              <xs:annotation><xs:documentation>Sales</xs:documentation></xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="MKT">
+              <xs:annotation><xs:documentation>Marketing</xs:documentation></xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="FIN">
+              <xs:annotation><xs:documentation>Finance</xs:documentation></xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="HR">
+              <xs:annotation><xs:documentation>Human Resources</xs:documentation></xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="OPS">
+              <xs:annotation><xs:documentation>Operations</xs:documentation></xs:annotation>
+            </xs:enumeration>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:simpleType name="PayFrequency">
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="Weekly"/>
+            <xs:enumeration value="BiWeekly"/>
+            <xs:enumeration value="Monthly"/>
+            <xs:enumeration value="Annual"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:simpleType name="USStateCode">
+          <xs:restriction base="xs:string">
+            <xs:length value="2"/>
+            <xs:pattern value="[A-Z]{2}"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+      </xs:schema>
+
+transformation: |
+  %utlx 1.0
+    input xsd
+    output json
+    ---
+    {
+      hrSystem: {
+        namespace: $input.__metadata.__targetNamespace,
+        rootElement: $input["xs:element"].__attributes.name,
+        employeeTypeExists: hasKey($input, "xs:complexType[name=EmployeeType]"),
+        hasPersonalInfo: true,
+        hasEmploymentDetails: true
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

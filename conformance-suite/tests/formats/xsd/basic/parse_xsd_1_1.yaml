@@ -1,0 +1,32 @@
+name: "parse_xsd_1_1"
+category: "formats/xsd/basic"
+description: "Parse XSD 1.1 schema and detect version correctly"
+tags: ['xsd', 'parsing']
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                 xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+                 vc:minVersion="1.1">
+        <xs:element name="test" type="xs:string">
+          <xs:assert test="string-length(.) > 0"/>
+        </xs:element>
+      </xs:schema>
+
+transformation: |
+  %utlx 1.0
+    input xsd
+    output json
+    ---
+    {
+      schemaType: $input.__metadata.__schemaType,
+      version: $input.__metadata.__xsdVersion,
+      hasAssertions: hasKey($input, "xs:element")
+    }
+
+expected:
+  format: json
+  data: |
+    {

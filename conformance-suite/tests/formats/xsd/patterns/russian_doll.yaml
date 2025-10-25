@@ -1,0 +1,48 @@
+name: "xsd_russian_doll_pattern"
+category: "formats/xsd/patterns"
+description: "Russian Doll pattern - single global element with nested local types"
+tags: ['xsd', 'design-patterns']
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    
+        <xs:element name="order">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="orderId" type="xs:string"/>
+              <xs:element name="customer">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="name" type="xs:string"/>
+                    <xs:element name="email" type="xs:string"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+    
+      </xs:schema>
+
+transformation: |
+  %utlx 1.0
+    input xsd
+    output json
+    ---
+    {
+      pattern: "Russian Doll",
+      rootElement: {
+        name: $input["xs:element"].__attributes.name,
+        scope: $input["xs:element"].__metadata.__scope,
+        hasInlineType: hasKey($input["xs:element"], "xs:complexType")
+      },
+      description: "All types defined inline within the root element"
+    }
+
+expected:
+  format: json
+  data: |
+    {

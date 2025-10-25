@@ -1,0 +1,340 @@
+name: "jsch_customer_order"
+category: "formats/jsch/real-world"
+description: "Real-world example - E-commerce customer order API JSON Schema"
+tags: ['jsch', 'json-schema', 'real-world', 'examples']
+
+input:
+  format: jsch
+  data: |
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://api.store.example.com/schemas/order.json",
+        "title": "Customer Order",
+        "description": "E-commerce customer order schema for order management system",
+        "type": "object",
+        "required": ["orderId", "customerId", "items", "totals", "orderDate", "status"],
+        "$defs": {
+          "address": {
+            "type": "object",
+            "required": ["street", "city", "postalCode", "country"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Recipient name"
+              },
+              "company": {
+                "type": "string",
+                "description": "Company name (optional)"
+              },
+              "street": {
+                "type": "string",
+                "minLength": 1
+              },
+              "street2": {
+                "type": "string",
+                "description": "Apartment, suite, etc."
+              },
+              "city": {
+                "type": "string",
+                "minLength": 1
+              },
+              "state": {
+                "type": "string",
+                "description": "State/province/region"
+              },
+              "postalCode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "country": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$",
+                "description": "ISO 3166-1 alpha-2 country code"
+              },
+              "phone": {
+                "type": "string"
+              }
+            }
+          },
+          "orderItem": {
+            "type": "object",
+            "required": ["itemId", "sku", "name", "quantity", "unitPrice", "totalPrice"],
+            "properties": {
+              "itemId": {
+                "type": "string",
+                "description": "Line item identifier"
+              },
+              "sku": {
+                "type": "string",
+                "description": "Product SKU"
+              },
+              "name": {
+                "type": "string",
+                "description": "Product name"
+              },
+              "description": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "unitPrice": {
+                "type": "number",
+                "minimum": 0,
+                "multipleOf": 0.01
+              },
+              "totalPrice": {
+                "type": "number",
+                "minimum": 0,
+                "multipleOf": 0.01
+              },
+              "taxAmount": {
+                "type": "number",
+                "minimum": 0
+              },
+              "discount": {
+                "type": "number",
+                "minimum": 0
+              },
+              "weight": {
+                "type": "object",
+                "properties": {
+                  "value": {"type": "number"},
+                  "unit": {
+                    "type": "string",
+                    "enum": ["kg", "lb", "oz", "g"]
+                  }
+                }
+              },
+              "options": {
+                "type": "object",
+                "description": "Product options (size, color, etc.)",
+                "additionalProperties": {"type": "string"}
+              }
+            }
+          },
+          "orderStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "processing",
+              "shipped",
+              "delivered",
+              "cancelled",
+              "refunded",
+              "on_hold"
+            ]
+          },
+          "shippingMethod": {
+            "type": "object",
+            "required": ["methodId", "name", "cost"],
+            "properties": {
+              "methodId": {
+                "type": "string",
+                "examples": ["standard", "express", "overnight"]
+              },
+              "name": {
+                "type": "string",
+                "examples": ["Standard Shipping", "2-Day Express", "Next Day"]
+              },
+              "carrier": {
+                "type": "string",
+                "examples": ["UPS", "FedEx", "USPS", "DHL"]
+              },
+              "cost": {
+                "type": "number",
+                "minimum": 0
+              },
+              "estimatedDelivery": {
+                "type": "string",
+                "format": "date"
+              },
+              "trackingNumber": {
+                "type": "string"
+              },
+              "trackingUrl": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        },
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "description": "Unique order identifier",
+            "pattern": "^ORD-[0-9]{4}-[0-9]{6}$",
+            "examples": ["ORD-2025-000123"]
+          },
+          "customerId": {
+            "type": "string",
+            "description": "Customer account identifier"
+          },
+          "customerEmail": {
+            "type": "string",
+            "format": "email",
+            "description": "Customer email address"
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/orderItem"
+            },
+            "description": "Line items in the order"
+          },
+          "totals": {
+            "type": "object",
+            "required": ["subtotal", "tax", "shipping", "total"],
+            "properties": {
+              "subtotal": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Sum of all items before tax and shipping"
+              },
+              "tax": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Total tax amount"
+              },
+              "shipping": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Shipping cost"
+              },
+              "discount": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Total discount applied"
+              },
+              "total": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Grand total (subtotal + tax + shipping - discount)"
+              }
+            }
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "default": "USD",
+            "description": "ISO 4217 currency code"
+          },
+          "billingAddress": {
+            "$ref": "#/$defs/address",
+            "description": "Billing address"
+          },
+          "shippingAddress": {
+            "$ref": "#/$defs/address",
+            "description": "Shipping address"
+          },
+          "shipping": {
+            "$ref": "#/$defs/shippingMethod",
+            "description": "Shipping method and tracking"
+          },
+          "payment": {
+            "type": "object",
+            "required": ["method", "status"],
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": ["credit_card", "debit_card", "paypal", "bank_transfer", "cash_on_delivery"]
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "authorized", "captured", "failed", "refunded"]
+              },
+              "transactionId": {
+                "type": "string"
+              },
+              "lastFour": {
+                "type": "string",
+                "pattern": "^[0-9]{4}$",
+                "description": "Last 4 digits of payment card (if applicable)"
+              }
+            }
+          },
+          "status": {
+            "$ref": "#/$defs/orderStatus",
+            "description": "Current order status"
+          },
+          "orderDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When order was placed"
+          },
+          "confirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When order was confirmed"
+          },
+          "shippedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When order was shipped"
+          },
+          "deliveredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When order was delivered"
+          },
+          "discountCodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {"type": "string"},
+                "amount": {"type": "number"},
+                "type": {
+                  "type": "string",
+                  "enum": ["percentage", "fixed"]
+                }
+              }
+            },
+            "description": "Applied discount/promo codes"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Customer order notes"
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Order tags for internal use",
+            "examples": [["vip", "gift"], ["wholesale"]]
+          },
+          "source": {
+            "type": "string",
+            "enum": ["web", "mobile_app", "phone", "in_store", "marketplace"],
+            "description": "Order source/channel"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional custom metadata",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+
+transformation: |
+  %utlx 1.0
+    input jsch
+    output json
+    ---
+    {
+      order: {
+        schemaVersion: $input.__metadata.__version,
+        title: $input.title,
+        hasDefs: hasKey($input, "$defs"),
+        orderStatuses: $input["$defs"].orderStatus.enum,
+        requiredFields: $input.required
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

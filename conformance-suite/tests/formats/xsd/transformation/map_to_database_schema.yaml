@@ -1,0 +1,65 @@
+name: "map_to_database_schema"
+category: "formats/xsd/transformation"
+description: "Transform XSD to database DDL specification"
+tags: ["xsd", "transformation", "database", "ddl"]
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="employee">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="employeeId" type="xs:string"/>
+            <xs:element name="firstName" type="xs:string"/>
+            <xs:element name="lastName" type="xs:string"/>
+            <xs:element name="salary" type="xs:decimal"/>
+            <xs:element name="hireDate" type="xs:date"/>
+            <xs:element name="active" type="xs:boolean"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:schema>
+
+transformation: |
+  %utlx 1.0
+  input xsd {
+    arrays: ["xs:element"]
+  }
+  output json
+  ---
+  {
+    let xsdToSqlType = type => match type {
+      "xs:string" => "VARCHAR(255)",
+      "xs:decimal" => "DECIMAL(10,2)",
+      "xs:date" => "DATE",
+      "xs:boolean" => "BOOLEAN",
+      _ => "TEXT"
+    };
+
+    tableName: $input["xs:element"]["@name"],
+    columns: map(
+      $input["xs:element"]["xs:complexType"]["xs:sequence"]["xs:element"],
+      field => {
+        name: field["@name"],
+        xsdType: field["@type"],
+        sqlType: xsdToSqlType(field["@type"])
+      }
+    )
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "tableName": "employee",
+      "columns": [
+        {"name": "employeeId", "xsdType": "xs:string", "sqlType": "VARCHAR(255)"},
+        {"name": "firstName", "xsdType": "xs:string", "sqlType": "VARCHAR(255)"},
+        {"name": "lastName", "xsdType": "xs:string", "sqlType": "VARCHAR(255)"},
+        {"name": "salary", "xsdType": "xs:decimal", "sqlType": "DECIMAL(10,2)"},
+        {"name": "hireDate", "xsdType": "xs:date", "sqlType": "DATE"},
+        {"name": "active", "xsdType": "xs:boolean", "sqlType": "BOOLEAN"}
+      ]
+    }

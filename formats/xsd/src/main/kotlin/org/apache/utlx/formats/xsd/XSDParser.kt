@@ -46,15 +46,18 @@ import java.io.StringReader
  *   )
  * )
  */
-class XSDParser(private val source: Reader) {
-    constructor(xsd: String) : this(StringReader(xsd))
+class XSDParser(
+    private val source: Reader,
+    private val arrayHints: Set<String> = emptySet()
+) {
+    constructor(xsd: String, arrayHints: Set<String> = emptySet()) : this(StringReader(xsd), arrayHints)
 
     /**
      * Parse XSD to UDM
      */
     fun parse(): UDM {
-        // Step 1: Parse as XML
-        val xmlParser = XMLParser(source)
+        // Step 1: Parse as XML with array hints
+        val xmlParser = XMLParser(source, arrayHints)
         val xmlUDM = xmlParser.parse()
 
         // Step 2: Enhance with XSD-specific metadata

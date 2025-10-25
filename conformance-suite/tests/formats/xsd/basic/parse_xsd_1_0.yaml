@@ -1,0 +1,36 @@
+name: "parse_xsd_1_0"
+category: "formats/xsd/basic"
+description: "Parse basic XSD 1.0 schema and extract metadata"
+tags: ["xsd", "parsing", "metadata"]
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+               targetNamespace="http://example.com/test"
+               elementFormDefault="qualified">
+      <xs:element name="root" type="xs:string"/>
+    </xs:schema>
+
+transformation: |
+  %utlx 1.0
+  input xsd
+  output json
+  ---
+  {
+    schemaType: $input.__metadata.__schemaType,
+    version: $input.__metadata.__xsdVersion,
+    targetNamespace: $input.__metadata.__targetNamespace,
+    hasElements: hasKey($input, "xs:element")
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "schemaType": "xsd-schema",
+      "version": "1.0",
+      "targetNamespace": "http://example.com/test",
+      "hasElements": true
+    }

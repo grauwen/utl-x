@@ -1,0 +1,193 @@
+name: "jsch_api_user_profile"
+category: "formats/jsch/real-world"
+description: "Real-world example - User Profile API JSON Schema"
+tags: ['jsch', 'json-schema', 'real-world', 'examples']
+
+input:
+  format: jsch
+  data: |
+    {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$id": "https://api.example.com/schemas/user-profile.json",
+        "title": "User Profile",
+        "description": "User profile data for social media platform API",
+        "type": "object",
+        "required": ["userId", "username", "email", "createdAt"],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Unique user identifier (UUID v4)",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "examples": ["550e8400-e29b-41d4-a716-446655440000"]
+          },
+          "username": {
+            "type": "string",
+            "description": "Unique username for the platform",
+            "minLength": 3,
+            "maxLength": 20,
+            "pattern": "^[a-zA-Z0-9_-]+$",
+            "examples": ["john_doe", "jane-smith"]
+          },
+          "email": {
+            "type": "string",
+            "description": "User's email address",
+            "format": "email",
+            "examples": ["user@example.com"]
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name shown to other users",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "avatar": {
+            "type": "object",
+            "description": "User avatar image information",
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to avatar image"
+              },
+              "thumbnailUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to thumbnail version"
+              }
+            }
+          },
+          "bio": {
+            "type": "string",
+            "description": "User biography/about text",
+            "maxLength": 500
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "city": {"type": "string"},
+              "country": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$",
+                "description": "ISO 3166-1 alpha-2 country code"
+              },
+              "timezone": {
+                "type": "string",
+                "description": "IANA timezone identifier",
+                "examples": ["America/New_York", "Europe/London"]
+              }
+            }
+          },
+          "preferences": {
+            "type": "object",
+            "description": "User preferences and settings",
+            "properties": {
+              "language": {
+                "type": "string",
+                "enum": ["en", "es", "fr", "de", "it", "pt", "ja", "zh"],
+                "default": "en"
+              },
+              "theme": {
+                "type": "string",
+                "enum": ["light", "dark", "auto"],
+                "default": "auto"
+              },
+              "emailNotifications": {
+                "type": "boolean",
+                "default": true
+              },
+              "pushNotifications": {
+                "type": "boolean",
+                "default": true
+              },
+              "privacyLevel": {
+                "type": "string",
+                "enum": ["public", "friends", "private"],
+                "default": "friends"
+              }
+            }
+          },
+          "social": {
+            "type": "object",
+            "description": "Social media links",
+            "properties": {
+              "twitter": {
+                "type": "string",
+                "pattern": "^@[a-zA-Z0-9_]{1,15}$"
+              },
+              "linkedin": {
+                "type": "string",
+                "format": "uri"
+              },
+              "website": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          },
+          "stats": {
+            "type": "object",
+            "description": "User statistics",
+            "readOnly": true,
+            "properties": {
+              "followers": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "following": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "posts": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "Whether the user account is verified",
+            "default": false
+          },
+          "accountType": {
+            "type": "string",
+            "enum": ["free", "premium", "business", "enterprise"],
+            "description": "Type of user account"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp (ISO 8601)"
+          },
+          "lastActive": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last activity timestamp (ISO 8601)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "suspended", "deleted", "pending"],
+            "description": "Account status"
+          }
+        },
+        "additionalProperties": false
+      }
+
+transformation: |
+  %utlx 1.0
+    input jsch
+    output json
+    ---
+    {
+      api: {
+        schemaVersion: $input.__metadata.__version,
+        title: $input.title,
+        description: $input.description,
+        requiredFields: $input.required,
+        hasNestedObjects: hasKey($input.properties.preferences, "type")
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

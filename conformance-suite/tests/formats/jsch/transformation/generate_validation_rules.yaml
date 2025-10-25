@@ -1,0 +1,92 @@
+name: "generate_validation_rules"
+category: "formats/jsch/transformation"
+description: "Extract validation rules from JSON Schema for form generation"
+tags: ["jsch", "transformation", "validation", "forms"]
+
+input:
+  format: jsch
+  data: |
+    {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "required": ["email", "phone"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "pattern": "^\\+?[1-9]\\d{1,14}$"
+        },
+        "age": {
+          "type": "integer",
+          "minimum": 18,
+          "maximum": 120
+        },
+        "website": {
+          "type": "string",
+          "format": "uri"
+        },
+        "bio": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input jsch
+  output json
+  ---
+  map(
+    keys($input.properties),
+    fieldName => {
+      field: fieldName,
+      rules: [
+        if (contains($input.required, fieldName)) "required" else null,
+        if ($input.properties[fieldName].format != null)
+          "format:" + $input.properties[fieldName].format
+        else null,
+        if ($input.properties[fieldName].pattern != null)
+          "pattern:" + $input.properties[fieldName].pattern
+        else null,
+        if ($input.properties[fieldName].minimum != null)
+          "min:" + toString($input.properties[fieldName].minimum)
+        else null,
+        if ($input.properties[fieldName].maximum != null)
+          "max:" + toString($input.properties[fieldName].maximum)
+        else null,
+        if ($input.properties[fieldName].maxLength != null)
+          "maxLength:" + toString($input.properties[fieldName].maxLength)
+        else null
+      ] |> filter(rule => rule != null)
+    }
+  )
+
+expected:
+  format: json
+  data: |
+    [
+      {
+        "field": "email",
+        "rules": ["required", "format:email"]
+      },
+      {
+        "field": "phone",
+        "rules": ["required", "pattern:^\\+?[1-9]\\d{1,14}$"]
+      },
+      {
+        "field": "age",
+        "rules": ["min:18", "max:120"]
+      },
+      {
+        "field": "website",
+        "rules": ["format:uri"]
+      },
+      {
+        "field": "bio",
+        "rules": ["maxLength:500"]
+      }
+    ]

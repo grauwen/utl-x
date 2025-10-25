@@ -1,0 +1,244 @@
+name: "xsd_financial_invoice"
+category: "formats/xsd/real-world"
+description: "Real-world example - Financial invoice/billing system XSD"
+tags: ['xsd', 'real-world', 'examples']
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://finance.example.com/invoice"
+                 xmlns:inv="http://finance.example.com/invoice"
+                 elementFormDefault="qualified">
+    
+        <xs:annotation>
+          <xs:documentation>
+            Financial Invoice Schema - UBL (Universal Business Language) inspired
+    
+            Supports:
+            - B2B and B2C invoicing
+            - Multi-currency transactions
+            - Tax calculations (VAT, Sales Tax, GST)
+            - Payment terms and methods
+            - Electronic invoice delivery
+    
+            Compliance: SOX, IFRS, GAAP
+            Standard: Based on UBL 2.1
+            Version: 4.2
+          </xs:documentation>
+        </xs:annotation>
+    
+        <xs:element name="invoice" type="inv:InvoiceType"/>
+    
+        <xs:complexType name="InvoiceType">
+          <xs:sequence>
+            <xs:element name="invoiceHeader" type="inv:InvoiceHeaderType"/>
+            <xs:element name="seller" type="inv:PartyType"/>
+            <xs:element name="buyer" type="inv:PartyType"/>
+            <xs:element name="lineItems" type="inv:LineItemsType"/>
+            <xs:element name="totals" type="inv:TotalsType"/>
+            <xs:element name="paymentTerms" type="inv:PaymentTermsType"/>
+            <xs:element name="notes" type="xs:string" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="InvoiceHeaderType">
+          <xs:sequence>
+            <xs:element name="invoiceNumber" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Unique invoice identifier (e.g., INV-2025-0001)</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="invoiceDate" type="xs:date"/>
+            <xs:element name="dueDate" type="xs:date"/>
+            <xs:element name="issueTime" type="xs:time" minOccurs="0"/>
+            <xs:element name="invoiceType" type="inv:InvoiceTypeCode"/>
+            <xs:element name="currency" type="inv:CurrencyCode"/>
+            <xs:element name="purchaseOrderReference" type="xs:string" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="PartyType">
+          <xs:sequence>
+            <xs:element name="partyId" type="xs:string"/>
+            <xs:element name="legalName" type="xs:string"/>
+            <xs:element name="tradingName" type="xs:string" minOccurs="0"/>
+            <xs:element name="taxId" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>VAT number, EIN, or equivalent tax identifier</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="address" type="inv:AddressType"/>
+            <xs:element name="contact" type="inv:ContactType"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="AddressType">
+          <xs:sequence>
+            <xs:element name="streetAddress" type="xs:string"/>
+            <xs:element name="city" type="xs:string"/>
+            <xs:element name="postalCode" type="xs:string"/>
+            <xs:element name="state" type="xs:string" minOccurs="0"/>
+            <xs:element name="country" type="inv:CountryCode"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="ContactType">
+          <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="email" type="xs:string"/>
+            <xs:element name="phone" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="LineItemsType">
+          <xs:sequence>
+            <xs:element name="lineItem" type="inv:LineItemType" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="LineItemType">
+          <xs:sequence>
+            <xs:element name="lineNumber" type="xs:int"/>
+            <xs:element name="itemId" type="xs:string"/>
+            <xs:element name="description" type="xs:string"/>
+            <xs:element name="quantity" type="xs:decimal"/>
+            <xs:element name="unitOfMeasure" type="inv:UnitCode"/>
+            <xs:element name="unitPrice" type="xs:decimal"/>
+            <xs:element name="discount" type="inv:DiscountType" minOccurs="0"/>
+            <xs:element name="taxRate" type="xs:decimal">
+              <xs:annotation>
+                <xs:documentation>Tax rate as percentage (e.g., 20.0 for 20%)</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="lineTotal" type="xs:decimal"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="DiscountType">
+          <xs:sequence>
+            <xs:element name="amount" type="xs:decimal"/>
+            <xs:element name="percentage" type="xs:decimal" minOccurs="0"/>
+            <xs:element name="reason" type="xs:string" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="TotalsType">
+          <xs:sequence>
+            <xs:element name="subtotal" type="xs:decimal">
+              <xs:annotation>
+                <xs:documentation>Sum of all line items before tax and discounts</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="totalDiscounts" type="xs:decimal"/>
+            <xs:element name="taxableAmount" type="xs:decimal"/>
+            <xs:element name="totalTax" type="xs:decimal"/>
+            <xs:element name="totalAmount" type="xs:decimal">
+              <xs:annotation>
+                <xs:documentation>Grand total including all taxes and fees</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="amountDue" type="xs:decimal"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="PaymentTermsType">
+          <xs:sequence>
+            <xs:element name="paymentMethod" type="inv:PaymentMethod"/>
+            <xs:element name="paymentDueDays" type="xs:int"/>
+            <xs:element name="earlyPaymentDiscount" type="xs:decimal" minOccurs="0"/>
+            <xs:element name="latePaymentFee" type="xs:decimal" minOccurs="0"/>
+            <xs:element name="bankAccount" type="inv:BankAccountType" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:complexType name="BankAccountType">
+          <xs:sequence>
+            <xs:element name="accountName" type="xs:string"/>
+            <xs:element name="accountNumber" type="xs:string"/>
+            <xs:element name="routingNumber" type="xs:string"/>
+            <xs:element name="bankName" type="xs:string"/>
+            <xs:element name="swift" type="xs:string" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:simpleType name="InvoiceTypeCode">
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="Standard"/>
+            <xs:enumeration value="CreditNote"/>
+            <xs:enumeration value="DebitNote"/>
+            <xs:enumeration value="Proforma"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:simpleType name="CurrencyCode">
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{3}"/>
+            <xs:enumeration value="USD"/>
+            <xs:enumeration value="EUR"/>
+            <xs:enumeration value="GBP"/>
+            <xs:enumeration value="JPY"/>
+            <xs:enumeration value="CAD"/>
+            <xs:enumeration value="AUD"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:simpleType name="CountryCode">
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{2}"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:simpleType name="UnitCode">
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="EA">
+              <xs:annotation><xs:documentation>Each (unit)</xs:documentation></xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="HR">
+              <xs:annotation><xs:documentation>Hour</xs:documentation></xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="DAY">
+              <xs:annotation><xs:documentation>Day</xs:documentation></xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="KG">
+              <xs:annotation><xs:documentation>Kilogram</xs:documentation></xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="MTR">
+              <xs:annotation><xs:documentation>Meter</xs:documentation></xs:annotation>
+            </xs:enumeration>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:simpleType name="PaymentMethod">
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="BankTransfer"/>
+            <xs:enumeration value="CreditCard"/>
+            <xs:enumeration value="DebitCard"/>
+            <xs:enumeration value="Check"/>
+            <xs:enumeration value="Cash"/>
+            <xs:enumeration value="PayPal"/>
+            <xs:enumeration value="WireTransfer"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+      </xs:schema>
+
+transformation: |
+  %utlx 1.0
+    input xsd
+    output json
+    ---
+    {
+      invoice: {
+        schemaNamespace: $input.__metadata.__targetNamespace,
+        rootElement: $input["xs:element"].__attributes.name,
+        hasLineItems: hasKey($input, "xs:complexType[name=InvoiceType]"),
+        taxCompliant: true
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

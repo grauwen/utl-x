@@ -1,0 +1,39 @@
+name: "xsd_annotations"
+category: "formats/xsd/features"
+description: "Extract annotations and documentation from XSD"
+tags: ['xsd', 'features']
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    
+        <xs:element name="productCode" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              Unique identifier for the product in the catalog.
+              Format: PRD-XXXXXX where X is alphanumeric.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+    
+      </xs:schema>
+
+transformation: |
+  %utlx 1.0
+    input xsd
+    output json
+    ---
+    {
+      element: {
+        name: $input["xs:element"].__attributes.name,
+        hasAnnotation: hasKey($input["xs:element"], "xs:annotation"),
+        documentation: $input["xs:element"]["xs:annotation"]["xs:documentation"].__text
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

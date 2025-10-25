@@ -1,0 +1,30 @@
+name: "xsd_global_elements"
+category: "formats/xsd/scope"
+description: "Verify global elements are tagged with scope=global"
+tags: ['xsd', 'scope', 'metadata']
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+        <xs:element name="customer" type="xs:string"/>
+      </xs:schema>
+
+transformation: |
+  %utlx 1.0
+    input xsd
+    output json
+    ---
+    {
+      element: {
+        name: $input["xs:element"].__attributes.name,
+        scope: $input["xs:element"].__metadata.__scope,
+        schemaType: $input["xs:element"].__metadata.__schemaType
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

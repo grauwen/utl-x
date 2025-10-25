@@ -13,6 +13,8 @@ import org.apache.utlx.formats.json.JSONSerializer
 import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.csv.CSVSerializer
 import org.apache.utlx.formats.yaml.YAMLParser
+import org.apache.utlx.formats.xsd.XSDParser
+import org.apache.utlx.formats.jsch.JSONSchemaParser
 import org.apache.utlx.formats.yaml.YAMLSerializer
 import org.apache.utlx.stdlib.StandardLibrary
 import org.apache.utlx.cli.capture.TestCaptureService
@@ -97,7 +99,11 @@ object TransformCommand {
             } else {
                 // No named inputs - read from stdin (backward compat)
                 val inputData = readStdin()
-                val inputFormat = options.inputFormat ?: detectFormat(inputData, null)
+
+                // Priority: 1) CLI option, 2) script header, 3) auto-detect
+                val scriptFormat = program.header.inputFormat.type.name.lowercase()
+                val inputFormat = options.inputFormat
+                    ?: if (scriptFormat != "auto") scriptFormat else detectFormat(inputData, null)
 
                 if (options.verbose) {
                     println("Input format: $inputFormat (from stdin)")
@@ -269,6 +275,15 @@ object TransformCommand {
                 "json" -> JSONParser(data).parse()
                 "csv" -> CSVParser(data).parse()
                 "yaml", "yml" -> YAMLParser().parse(data)
+                "xsd" -> {
+                    // Extract array hints from options (same as XML)
+                    val arrayHints = (options["arrays"] as? List<*>)
+                        ?.mapNotNull { it as? String }
+                        ?.toSet()
+                        ?: emptySet()
+                    XSDParser(data, arrayHints).parse()
+                }
+                "jsch" -> JSONSchemaParser(data).parse()
                 else -> throw IllegalArgumentException("Unsupported input format: $format")
             }
         } catch (e: Exception) {

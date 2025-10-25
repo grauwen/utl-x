@@ -1,0 +1,78 @@
+name: "generate_field_documentation"
+category: "formats/xsd/transformation"
+description: "Generate human-readable documentation from XSD annotations"
+tags: ["xsd", "transformation", "documentation"]
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="customer">
+        <xs:annotation>
+          <xs:documentation>Customer master data record</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="customerId" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Unique customer identifier (UUID format)</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="name" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Customer full name</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="creditLimit" type="xs:decimal">
+              <xs:annotation>
+                <xs:documentation>Maximum credit limit in USD</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:schema>
+
+transformation: |
+  %utlx 1.0
+  input xsd
+  output json
+  ---
+  {
+    entity: $input["xs:element"]["@name"],
+    description: $input["xs:element"]["xs:annotation"]["xs:documentation"],
+    fields: map(
+      $input["xs:element"]["xs:complexType"]["xs:sequence"]["xs:element"],
+      field => {
+        name: field["@name"],
+        type: field["@type"],
+        description: field["xs:annotation"]["xs:documentation"]
+      }
+    )
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "entity": "customer",
+      "description": "Customer master data record",
+      "fields": [
+        {
+          "name": "customerId",
+          "type": "xs:string",
+          "description": "Unique customer identifier (UUID format)"
+        },
+        {
+          "name": "name",
+          "type": "xs:string",
+          "description": "Customer full name"
+        },
+        {
+          "name": "creditLimit",
+          "type": "xs:decimal",
+          "description": "Maximum credit limit in USD"
+        }
+      ]
+    }

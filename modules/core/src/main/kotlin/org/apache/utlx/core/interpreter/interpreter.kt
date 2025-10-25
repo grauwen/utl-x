@@ -546,11 +546,23 @@ class Interpreter {
                     is RuntimeValue.UDMValue -> {
                         when (val udm = target.udm) {
                             is UDM.Object -> {
-                                val propValue = udm.get(propertyName)
-                                if (propValue != null) {
-                                    RuntimeValue.UDMValue(unwrapTextNode(propValue))
+                                // Check if accessing an attribute (starts with @)
+                                if (propertyName.startsWith("@")) {
+                                    val attrName = propertyName.substring(1) // Remove @ prefix
+                                    val attrValue = udm.getAttribute(attrName) ?: udm.getAttribute(propertyName)
+                                    if (attrValue != null) {
+                                        RuntimeValue.StringValue(attrValue)
+                                    } else {
+                                        RuntimeValue.NullValue
+                                    }
                                 } else {
-                                    RuntimeValue.NullValue
+                                    // Regular property access
+                                    val propValue = udm.get(propertyName)
+                                    if (propValue != null) {
+                                        RuntimeValue.UDMValue(unwrapTextNode(propValue))
+                                    } else {
+                                        RuntimeValue.NullValue
+                                    }
                                 }
                             }
                             else -> throw RuntimeError("Cannot index non-object UDM type with string", expr.location)

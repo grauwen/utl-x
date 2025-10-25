@@ -1,0 +1,123 @@
+name: "xsd_ecommerce_product_catalog"
+category: "formats/xsd/real-world"
+description: "Real-world example - E-commerce product catalog XSD schema"
+tags: ['xsd', 'real-world', 'examples']
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://shop.example.com/catalog"
+                 xmlns:cat="http://shop.example.com/catalog"
+                 elementFormDefault="qualified">
+    
+        <xs:annotation>
+          <xs:documentation>
+            E-Commerce Product Catalog Schema
+            Version: 2.0
+            Last Updated: 2025-01-15
+    
+            This schema defines the structure for product catalog data
+            used across all sales channels (web, mobile, POS).
+          </xs:documentation>
+        </xs:annotation>
+    
+        <xs:element name="productCatalog" type="cat:CatalogType"/>
+    
+        <xs:complexType name="CatalogType">
+          <xs:sequence>
+            <xs:element name="product" type="cat:ProductType" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+          <xs:attribute name="catalogId" type="xs:string" use="required"/>
+          <xs:attribute name="effectiveDate" type="xs:date" use="required"/>
+        </xs:complexType>
+    
+        <xs:complexType name="ProductType">
+          <xs:sequence>
+            <xs:element name="sku" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Stock Keeping Unit - unique product identifier</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="description" type="xs:string"/>
+            <xs:element name="category" type="cat:CategoryType"/>
+            <xs:element name="price" type="cat:PriceType"/>
+            <xs:element name="stockQuantity" type="xs:int"/>
+            <xs:element name="manufacturer" type="xs:string" minOccurs="0"/>
+            <xs:element name="images" type="cat:ImageListType" minOccurs="0"/>
+          </xs:sequence>
+          <xs:attribute name="productId" type="xs:ID" use="required"/>
+          <xs:attribute name="active" type="xs:boolean" default="true"/>
+        </xs:complexType>
+    
+        <xs:complexType name="PriceType">
+          <xs:sequence>
+            <xs:element name="amount" type="xs:decimal"/>
+            <xs:element name="currency" type="cat:CurrencyCode"/>
+            <xs:element name="taxIncluded" type="xs:boolean" default="false"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+        <xs:simpleType name="CurrencyCode">
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="USD"/>
+            <xs:enumeration value="EUR"/>
+            <xs:enumeration value="GBP"/>
+            <xs:enumeration value="JPY"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:simpleType name="CategoryType">
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="Electronics"/>
+            <xs:enumeration value="Clothing"/>
+            <xs:enumeration value="HomeGarden"/>
+            <xs:enumeration value="Books"/>
+            <xs:enumeration value="Sports"/>
+          </xs:restriction>
+        </xs:simpleType>
+    
+        <xs:complexType name="ImageListType">
+          <xs:sequence>
+            <xs:element name="image" maxOccurs="unbounded">
+              <xs:complexType>
+                <xs:sequence>
+                  <xs:element name="url" type="xs:anyURI"/>
+                  <xs:element name="altText" type="xs:string"/>
+                </xs:sequence>
+                <xs:attribute name="primary" type="xs:boolean" default="false"/>
+              </xs:complexType>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+    
+      </xs:schema>
+
+transformation: |
+  %utlx 1.0
+    input xsd
+    output json
+    ---
+    {
+      catalog: {
+        schemaInfo: {
+          targetNamespace: $input.__metadata.__targetNamespace,
+          version: $input.__metadata.__xsdVersion,
+          elementFormDefault: $input.__attributes.elementFormDefault
+        },
+        rootElement: $input["xs:element"].__attributes.name,
+        productType: {
+          name: $input["xs:complexType"].__attributes.name,
+          fields: keys($input["xs:complexType"]["xs:sequence"]),
+          hasPrice: hasKey($input["xs:complexType"]["xs:sequence"], "xs:element[name=price]"),
+          hasInventory: hasKey($input["xs:complexType"]["xs:sequence"], "xs:element[name=stockQuantity]")
+        }
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

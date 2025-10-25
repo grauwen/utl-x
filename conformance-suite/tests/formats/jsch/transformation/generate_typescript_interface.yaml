@@ -1,0 +1,109 @@
+name: "generate_typescript_interface"
+category: "formats/jsch/transformation"
+description: "Generate TypeScript interface definition from JSON Schema"
+tags: ["jsch", "transformation", "typescript", "codegen"]
+
+input:
+  format: jsch
+  data: |
+    {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "required": ["id", "name", "price"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Product UUID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Product name"
+        },
+        "price": {
+          "type": "number",
+          "description": "Price in USD"
+        },
+        "inStock": {
+          "type": "boolean",
+          "description": "Availability status"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Product tags"
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input jsch
+  output json
+  ---
+  let jsonTypeToTS = type => match type {
+    "string" => "string",
+    "number" => "number",
+    "integer" => "number",
+    "boolean" => "boolean",
+    "array" => "Array",
+    "object" => "object",
+    _ => "any"
+  }
+
+  {
+    interfaceName: $input.title,
+    properties: map(
+      keys($input.properties),
+      fieldName => {
+        name: fieldName,
+        tsType: if ($input.properties[fieldName].type == "array")
+                  jsonTypeToTS($input.properties[fieldName].items.type) + "[]"
+                else
+                  jsonTypeToTS($input.properties[fieldName].type),
+        optional: !contains($input.required, fieldName),
+        comment: $input.properties[fieldName].description
+      }
+    )
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "interfaceName": "Product",
+      "properties": [
+        {
+          "name": "id",
+          "tsType": "string",
+          "optional": false,
+          "comment": "Product UUID"
+        },
+        {
+          "name": "name",
+          "tsType": "string",
+          "optional": false,
+          "comment": "Product name"
+        },
+        {
+          "name": "price",
+          "tsType": "number",
+          "optional": false,
+          "comment": "Price in USD"
+        },
+        {
+          "name": "inStock",
+          "tsType": "boolean",
+          "optional": true,
+          "comment": "Availability status"
+        },
+        {
+          "name": "tags",
+          "tsType": "string[]",
+          "optional": true,
+          "comment": "Product tags"
+        }
+      ]
+    }

@@ -1,0 +1,48 @@
+name: "jsch_parse_2020_12"
+category: "formats/jsch/basic"
+description: "Parse JSON Schema 2020-12 with $defs support"
+tags: ['jsch', 'json-schema', 'parsing']
+
+input:
+  format: jsch
+  data: |
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "$defs": {
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {"type": "string"},
+              "city": {"type": "string"}
+            }
+          },
+          "person": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "address": {"$ref": "#/$defs/address"}
+            }
+          }
+        },
+        "properties": {
+          "customer": {"$ref": "#/$defs/person"}
+        }
+      }
+
+transformation: |
+  %utlx 1.0
+    input jsch
+    output json
+    ---
+    {
+      schemaType: $input.__metadata.__schemaType,
+      version: $input.__metadata.__version,
+      hasDefs: hasKey($input, "$defs"),
+      defCount: count(keys($input["$defs"]))
+    }
+
+expected:
+  format: json
+  data: |
+    {

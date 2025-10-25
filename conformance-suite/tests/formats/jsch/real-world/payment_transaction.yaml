@@ -1,0 +1,282 @@
+name: "jsch_payment_transaction"
+category: "formats/jsch/real-world"
+description: "Real-world example - Payment transaction processing JSON Schema"
+tags: ['jsch', 'json-schema', 'real-world', 'examples']
+
+input:
+  format: jsch
+  data: |
+    {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$id": "https://api.payments.example.com/schemas/transaction.json",
+        "title": "Payment Transaction",
+        "description": "Payment transaction schema for PCI-DSS compliant payment processing",
+        "type": "object",
+        "required": [
+          "transactionId",
+          "merchantId",
+          "amount",
+          "currency",
+          "paymentMethod",
+          "timestamp",
+          "status"
+        ],
+        "definitions": {
+          "moneyAmount": {
+            "type": "object",
+            "required": ["value", "currency"],
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "multipleOf": 0.01,
+                "description": "Amount value with 2 decimal precision"
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$",
+                "enum": ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF"],
+                "description": "ISO 4217 currency code"
+              }
+            }
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "credit_card",
+              "debit_card",
+              "bank_transfer",
+              "paypal",
+              "apple_pay",
+              "google_pay",
+              "cryptocurrency"
+            ]
+          },
+          "cardData": {
+            "type": "object",
+            "description": "Tokenized card data (never store raw PAN)",
+            "required": ["token", "lastFour", "brand"],
+            "properties": {
+              "token": {
+                "type": "string",
+                "description": "Payment gateway token for card"
+              },
+              "lastFour": {
+                "type": "string",
+                "pattern": "^[0-9]{4}$",
+                "description": "Last 4 digits of card number"
+              },
+              "brand": {
+                "type": "string",
+                "enum": ["Visa", "Mastercard", "Amex", "Discover", "JCB", "UnionPay"]
+              },
+              "expiryMonth": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 12
+              },
+              "expiryYear": {
+                "type": "integer",
+                "minimum": 2025
+              },
+              "holderName": {
+                "type": "string",
+                "description": "Cardholder name"
+              }
+            }
+          },
+          "billingAddress": {
+            "type": "object",
+            "required": ["country", "postalCode"],
+            "properties": {
+              "street": {"type": "string"},
+              "city": {"type": "string"},
+              "state": {"type": "string"},
+              "postalCode": {"type": "string"},
+              "country": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$",
+                "description": "ISO 3166-1 alpha-2 country code"
+              }
+            }
+          }
+        },
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "Unique transaction identifier",
+            "pattern": "^TXN-[A-Z0-9]{16}$",
+            "examples": ["TXN-A1B2C3D4E5F6G7H8"]
+          },
+          "merchantId": {
+            "type": "string",
+            "description": "Merchant account identifier",
+            "examples": ["MERCH-12345"]
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Reference to order/invoice",
+            "examples": ["ORD-2025-00123"]
+          },
+          "amount": {
+            "$ref": "#/definitions/moneyAmount",
+            "description": "Transaction amount"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "description": "Transaction currency (deprecated, use amount.currency)"
+          },
+          "paymentMethod": {
+            "$ref": "#/definitions/paymentMethod",
+            "description": "Payment method used"
+          },
+          "cardData": {
+            "$ref": "#/definitions/cardData",
+            "description": "Card payment details (if applicable)"
+          },
+          "billingAddress": {
+            "$ref": "#/definitions/billingAddress",
+            "description": "Billing address for payment"
+          },
+          "customer": {
+            "type": "object",
+            "description": "Customer information",
+            "properties": {
+              "customerId": {"type": "string"},
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "name": {"type": "string"},
+              "phone": {"type": "string"}
+            }
+          },
+          "fees": {
+            "type": "object",
+            "description": "Transaction fees breakdown",
+            "properties": {
+              "processingFee": {
+                "type": "number",
+                "minimum": 0
+              },
+              "platformFee": {
+                "type": "number",
+                "minimum": 0
+              },
+              "total": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "authorized",
+              "captured",
+              "completed",
+              "failed",
+              "cancelled",
+              "refunded",
+              "chargeback"
+            ],
+            "description": "Transaction status"
+          },
+          "statusReason": {
+            "type": "string",
+            "description": "Reason for current status (especially for failures)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Transaction timestamp (ISO 8601)"
+          },
+          "processedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When transaction was processed"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata",
+            "properties": {
+              "ipAddress": {
+                "type": "string",
+                "oneOf": [
+                  {"format": "ipv4"},
+                  {"format": "ipv6"}
+                ]
+              },
+              "userAgent": {"type": "string"},
+              "deviceId": {"type": "string"},
+              "sessionId": {"type": "string"}
+            }
+          },
+          "riskScore": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Fraud risk score (0-100, higher = riskier)"
+          },
+          "threeDSecure": {
+            "type": "object",
+            "description": "3D Secure authentication details",
+            "properties": {
+              "authenticated": {"type": "boolean"},
+              "eci": {"type": "string"},
+              "cavv": {"type": "string"},
+              "xid": {"type": "string"}
+            }
+          },
+          "refunds": {
+            "type": "array",
+            "description": "Refund history for this transaction",
+            "items": {
+              "type": "object",
+              "properties": {
+                "refundId": {"type": "string"},
+                "amount": {"$ref": "#/definitions/moneyAmount"},
+                "reason": {"type": "string"},
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "gatewayResponse": {
+            "type": "object",
+            "description": "Response from payment gateway",
+            "properties": {
+              "code": {"type": "string"},
+              "message": {"type": "string"},
+              "authCode": {"type": "string"},
+              "avsResult": {"type": "string"},
+              "cvvResult": {"type": "string"}
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+
+transformation: |
+  %utlx 1.0
+    input jsch
+    output json
+    ---
+    {
+      payment: {
+        schemaVersion: $input.__metadata.__version,
+        title: $input.title,
+        hasDefinitions: hasKey($input, "definitions"),
+        requiredFields: count($input.required),
+        paymentMethods: $input.definitions.paymentMethod.enum
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

@@ -1,0 +1,128 @@
+name: "generate_api_documentation"
+category: "formats/jsch/transformation"
+description: "Generate API documentation from JSON Schema"
+tags: ["jsch", "transformation", "documentation", "api"]
+
+input:
+  format: jsch
+  data: |
+    {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User Registration Request",
+      "type": "object",
+      "required": ["email", "password", "username"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User's email address (used for login)"
+        },
+        "username": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 20,
+          "pattern": "^[a-zA-Z0-9_]+$",
+          "description": "Unique username (alphanumeric and underscore only)"
+        },
+        "password": {
+          "type": "string",
+          "minLength": 8,
+          "description": "Password (minimum 8 characters)"
+        },
+        "age": {
+          "type": "integer",
+          "minimum": 13,
+          "description": "User's age (must be 13 or older)"
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input jsch
+  output json
+  ---
+  {
+    endpoint: "POST /api/users/register",
+    title: $input.title,
+    requiredFields: $input.required,
+    fields: map(
+      keys($input.properties),
+      fieldName => {
+        name: fieldName,
+        type: $input.properties[fieldName].type,
+        required: contains($input.required, fieldName),
+        description: $input.properties[fieldName].description,
+        validation: {
+          format: $input.properties[fieldName].format,
+          minLength: $input.properties[fieldName].minLength,
+          maxLength: $input.properties[fieldName].maxLength,
+          pattern: $input.properties[fieldName].pattern,
+          minimum: $input.properties[fieldName].minimum
+        }
+      }
+    )
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "endpoint": "POST /api/users/register",
+      "title": "User Registration Request",
+      "requiredFields": ["email", "password", "username"],
+      "fields": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": "User's email address (used for login)",
+          "validation": {
+            "format": "email",
+            "minLength": null,
+            "maxLength": null,
+            "pattern": null,
+            "minimum": null
+          }
+        },
+        {
+          "name": "username",
+          "type": "string",
+          "required": true,
+          "description": "Unique username (alphanumeric and underscore only)",
+          "validation": {
+            "format": null,
+            "minLength": 3,
+            "maxLength": 20,
+            "pattern": "^[a-zA-Z0-9_]+$",
+            "minimum": null
+          }
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "required": true,
+          "description": "Password (minimum 8 characters)",
+          "validation": {
+            "format": null,
+            "minLength": 8,
+            "maxLength": null,
+            "pattern": null,
+            "minimum": null
+          }
+        },
+        {
+          "name": "age",
+          "type": "integer",
+          "required": false,
+          "description": "User's age (must be 13 or older)",
+          "validation": {
+            "format": null,
+            "minLength": null,
+            "maxLength": null,
+            "pattern": null,
+            "minimum": 13
+          }
+        }
+      ]
+    }

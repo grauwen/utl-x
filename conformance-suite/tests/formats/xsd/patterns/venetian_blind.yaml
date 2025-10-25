@@ -1,0 +1,46 @@
+name: "xsd_venetian_blind_pattern"
+category: "formats/xsd/patterns"
+description: "Venetian Blind pattern - global types, local elements"
+tags: ['xsd', 'design-patterns']
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                 targetNamespace="http://example.com/venetian">
+    
+        <xs:element name="person" type="PersonType"/>
+    
+        <xs:complexType name="PersonType">
+          <xs:sequence>
+            <xs:element name="firstName" type="xs:string"/>
+            <xs:element name="lastName" type="xs:string"/>
+            <xs:element name="age" type="xs:int"/>
+          </xs:sequence>
+        </xs:complexType>
+    
+      </xs:schema>
+
+transformation: |
+  %utlx 1.0
+    input xsd
+    output json
+    ---
+    {
+      pattern: "Venetian Blind",
+      globalElement: {
+        name: $input["xs:element"].__attributes.name,
+        scope: $input["xs:element"].__metadata.__scope,
+        typeRef: $input["xs:element"].__attributes.type
+      },
+      globalType: {
+        name: $input["xs:complexType"].__attributes.name,
+        scope: $input["xs:complexType"].__metadata.__scope
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

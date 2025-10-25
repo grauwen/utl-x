@@ -1,0 +1,35 @@
+name: "xsd_global_types"
+category: "formats/xsd/scope"
+description: "Verify global complex types are tagged with scope=global"
+tags: ['xsd', 'scope', 'metadata']
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+        <xs:complexType name="AddressType">
+          <xs:sequence>
+            <xs:element name="street" type="xs:string"/>
+            <xs:element name="city" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:schema>
+
+transformation: |
+  %utlx 1.0
+    input xsd
+    output json
+    ---
+    {
+      complexType: {
+        name: $input["xs:complexType"].__attributes.name,
+        scope: $input["xs:complexType"].__metadata.__scope,
+        schemaType: $input["xs:complexType"].__metadata.__schemaType
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

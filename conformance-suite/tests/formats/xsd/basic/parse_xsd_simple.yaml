@@ -1,0 +1,31 @@
+name: "parse_xsd_simple"
+category: "formats/xsd/basic"
+description: "Simple XSD parsing test without metadata - verifies format integration"
+tags: ["xsd", "basic", "parsing"]
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="person" type="xs:string"/>
+    </xs:schema>
+
+transformation: |
+  %utlx 1.0
+  input xsd
+  output json
+  ---
+  $input
+
+expected:
+  format: json
+  data: |
+    {
+      "@xmlns:xs": "http://www.w3.org/2001/XMLSchema",
+      "xs:element": {
+        "@name": "person",
+        "@type": "xs:string",
+        "@xmlns:xs": "http://www.w3.org/2001/XMLSchema"
+      }
+    }

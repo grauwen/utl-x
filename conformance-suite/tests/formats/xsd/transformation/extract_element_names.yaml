@@ -1,0 +1,55 @@
+name: "extract_element_names"
+category: "formats/xsd/transformation"
+description: "Extract all element names from XSD schema"
+tags: ["xsd", "transformation", "extraction"]
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="customer" type="CustomerType"/>
+      <xs:element name="order" type="OrderType"/>
+      <xs:element name="product" type="xs:string"/>
+
+      <xs:complexType name="CustomerType">
+        <xs:sequence>
+          <xs:element name="id" type="xs:string"/>
+          <xs:element name="name" type="xs:string"/>
+          <xs:element name="email" type="xs:string"/>
+        </xs:sequence>
+      </xs:complexType>
+
+      <xs:complexType name="OrderType">
+        <xs:sequence>
+          <xs:element name="orderId" type="xs:string"/>
+          <xs:element name="total" type="xs:decimal"/>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:schema>
+
+transformation: |
+  %utlx 1.0
+  input xsd {
+    arrays: ["xs:element", "xs:complexType", "xs:simpleType"]
+  }
+  output json
+  ---
+  {
+    rootElements: map(
+      $input["xs:element"],
+      e => e["@name"]
+    ),
+    complexTypes: map(
+      $input["xs:complexType"],
+      t => t["@name"]
+    )
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "rootElements": ["customer", "order", "product"],
+      "complexTypes": ["CustomerType", "OrderType"]
+    }

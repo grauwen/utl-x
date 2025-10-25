@@ -1,0 +1,50 @@
+name: "jsch_ref_definitions"
+category: "formats/jsch/composition"
+description: "Parse JSON Schema with $ref references to definitions"
+tags: ['jsch', 'json-schema', 'composition']
+
+input:
+  format: jsch
+  data: |
+    {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "definitions": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          }
+        },
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "$ref": "#/definitions/name"
+          },
+          "lastName": {
+            "$ref": "#/definitions/name"
+          }
+        }
+      }
+
+transformation: |
+  %utlx 1.0
+    input jsch
+    output json
+    ---
+    {
+      hasDefinitions: hasKey($input, "definitions"),
+      definitionCount: count(keys($input.definitions)),
+      firstName: {
+        ref: $input.properties.firstName["$ref"],
+        refTarget: "definitions"
+      },
+      lastName: {
+        ref: $input.properties.lastName["$ref"],
+        refTarget: "definitions"
+      }
+    }
+
+expected:
+  format: json
+  data: |
+    {

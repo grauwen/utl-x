@@ -1,0 +1,30 @@
+name: "test_map"
+category: "test"
+description: "Test map function"
+tags: ["test"]
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="customer" type="CustomerType"/>
+      <xs:element name="order" type="OrderType"/>
+    </xs:schema>
+
+transformation: |
+  %utlx 1.0
+  input xsd {
+    arrays: ["xs:element", "xs:complexType"]
+  }
+  output json
+  ---
+  {
+    elements: $input["xs:element"],
+    firstElement: $input["xs:element"][0],
+    firstName: $input["xs:element"][0]["@name"]
+  }
+
+expected:
+  format: json
+  data: "{}"
