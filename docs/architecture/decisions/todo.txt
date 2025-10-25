@@ -19,10 +19,8 @@ conformance-suite input JSCH and XSD examples have no real test output condition
 In summary: __metadata is a pseudo-property that exposes internal parser metadata to transformation scripts, enabling schema introspection, version detection, pattern recognition, and documentation generation that wouldn't be possible with just the data structure alone.
 __metadata will be replaced by ^ (CARET)
 
-Add DEBUGGING cpabilities in the parsers and renders
+Add DEBUGGING cpabilities in the parsers and renders -> Let me remove all the debug statements from the CLI and XSD parser:
 
-In UTLX tests be found
-elementFormDefault: $input.__attributes.elementFormDefault
 
 
 Issues:
