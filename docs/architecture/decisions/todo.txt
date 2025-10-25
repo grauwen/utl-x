@@ -16,6 +16,14 @@ and more. Need to rethink
 ----
 conformance-suite input JSCH and XSD examples have no real test output condition
 
+In summary: __metadata is a pseudo-property that exposes internal parser metadata to transformation scripts, enabling schema introspection, version detection, pattern recognition, and documentation generation that wouldn't be possible with just the data structure alone.
+__metadata will be replaced by ^ (CARET)
+
+
+In UTLX tests be found
+elementFormDefault: $input.__attributes.elementFormDefault
+
+
 Issues:
 
 The test failed as expected - it's trying to access __metadata fields that aren't implemented yet
@@ -311,4 +319,5 @@ This inconsistency suggests that:
 - LLVM Bitcode en MILR (two most used IRs for native)?
 
 DONE: Design time generate an output meta data representation like JSON SCHEMA or XSD based on either an XML input example + UTLX def or XSD (or JSON schema) input +UTLX def 
-==> - modules/analysis (without yaml support)
+==> - modules/analysis (without yaml support
+
