@@ -20,7 +20,7 @@ Issues:
 
 The test failed as expected - it's trying to access __metadata fields that aren't implemented yet
 
-Now I can see the actual structure. The xs:schema wrapper is NOT being removed
+Now I can see the actual structure. The xs:schema wrapper is NOT being removed <= whould that be done or not?
 
 When there's only ONE xs:complexType, it's an object, not an array. XML-to-JSON conversion only creates arrays when there are multiple elements with the same name.
   Since the test transformation uses map(), it fails when given a single object instead of an array.
@@ -43,7 +43,7 @@ see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-run
   - Legacy system integration
   - Security/compliance requirements
 ----
-add functions to abreviate XML tags
+add functions to abreviate XML tags??? if ther would be an abreviate String function, one could do that manually, but maybe a whole documents needs abreviation?
 ----
 All missing lambda functions implemented including conformance-suite tests
 
