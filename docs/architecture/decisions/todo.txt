@@ -14,6 +14,8 @@ Later
   - ASYNCAPI
 and more. Need to rethink
 ----
+The CLI needs to be rebuilt with the updated parser that recognizes XSD and JSCH formats:
+----
 JVM Design, init, runtime: 
 see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-runtime-design.md 
 see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-runtime-validation-first.md
