@@ -6,6 +6,14 @@ Paralellization, see https://github.com/grauwen/utl-x/blob/main/docs/architectur
 ----
 Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architecture/module-system-design.md
 ----
+Later
+  - OPENAPI - OpenAPI 3.x specs (JSON/YAML with schema embedded)
+  - AVRO - Avro schema (if demand exists)
+  - PROTOBUF - Protocol Buffers schema (if demand exists)
+  - RAML
+  - ASYNCAPI
+and more. Need to rethink
+----
 JVM Design, init, runtime: 
 see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-runtime-design.md 
 see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-runtime-validation-first.md
