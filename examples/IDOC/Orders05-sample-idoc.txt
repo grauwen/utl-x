@@ -1,0 +1,322 @@
+ORDERS05 IDOC - Sample Purchase Order
+=====================================
+IDOC Number: 0000000001234567
+Direction: Outbound (SAP -> External System)
+Message Type: ORDERS
+Basic Type: ORDERS05
+Partner: VENDOR001
+Date Created: 2025-10-25
+Time Created: 14:30:00
+
+=====================================
+CONTROL RECORD (EDI_DC40)
+=====================================
+TABNAM: EDI_DC40
+DIRECT: 2 (Outbound)
+IDOCTYP: ORDERS05
+MESTYP: ORDERS
+SNDPOR: SAPCLNT100
+SNDPRT: LS (Logical System)
+SNDPRN: SAPCLNT100
+RCVPOR: VENDORSYS
+RCVPRT: LI (Vendor)
+RCVPRN: VENDOR001
+
+=====================================
+SEGMENT: E1EDK01 (Document Header)
+=====================================
+SEGNAM: E1EDK01
+ACTION: 009 (Creation)
+CURCY: USD
+WKURS: 1.0000
+BELNR: 4500012345 (Purchase Order Number)
+NTGEW: 150.500 (Net Weight)
+GEWEI: KG (Weight Unit)
+BRGEW: 165.750 (Gross Weight)
+VOLUM: 2.500 (Volume)
+VOLEH: M3 (Volume Unit)
+
+=====================================
+SEGMENT: E1EDK14 (Organization Data)
+=====================================
+SEGNAM: E1EDK14
+QUALF: 008 (Purchasing Organization)
+ORGID: 1000
+
+SEGNAM: E1EDK14
+QUALF: 009 (Purchasing Group)
+ORGID: 001
+
+SEGNAM: E1EDK14
+QUALF: 001 (Company Code)
+ORGID: CC01
+
+=====================================
+SEGMENT: E1EDK03 (Document Date)
+=====================================
+SEGNAM: E1EDK03
+IDDAT: 012 (Document Date)
+DATUM: 20251025
+
+SEGNAM: E1EDK03
+IDDAT: 022 (Delivery Date)
+DATUM: 20251115
+
+=====================================
+SEGMENT: E1EDKA1 (Partner Information - Vendor)
+=====================================
+SEGNAM: E1EDKA1
+PARVW: LF (Vendor)
+PARTN: VENDOR001
+NAME1: Acme Industrial Supplies Inc
+NAME2: Manufacturing Division
+STRAS: 123 Industrial Parkway
+ORT01: Chicago
+PSTLZ: 60601
+LAND1: US
+SPRAS: EN
+
+=====================================
+SEGMENT: E1EDKA1 (Partner Information - Ship-to)
+=====================================
+SEGNAM: E1EDKA1
+PARVW: WE (Ship-to Party)
+PARTN: PLANT001
+NAME1: ABC Manufacturing Plant 1
+STRAS: 456 Factory Road
+ORT01: Detroit
+PSTLZ: 48201
+LAND1: US
+SPRAS: EN
+
+=====================================
+SEGMENT: E1EDKA1 (Partner Information - Buyer)
+=====================================
+SEGNAM: E1EDKA1
+PARVW: BU (Buyer)
+PARTN: BUYER123
+NAME1: John Smith
+TELF1: +1-555-0123
+SMTP: john.smith@abcmanufacturing.com
+
+=====================================
+SEGMENT: E1EDKT1 (Header Text)
+=====================================
+SEGNAM: E1EDKT1
+TDID: F01 (Header Note)
+TSSPRAS: EN
+TDLINE: Please deliver materials to receiving dock B
+TDFORMAT: * (Plain text)
+
+SEGNAM: E1EDKT1
+TDID: F01
+TSSPRAS: EN
+TDLINE: Contact warehouse manager upon arrival
+TDFORMAT: *
+
+=====================================
+SEGMENT: E1EDP01 (Item 1 - Line Item Overview)
+=====================================
+SEGNAM: E1EDP01
+POSEX: 00010 (Item Number)
+ACTION: 009 (Creation)
+MENGE: 100.000 (Quantity)
+MENEE: EA (Unit of Measure - Each)
+BMNG2: 100.000 (Quantity in Base UOM)
+PMENE: EA
+VPREI: 125.50 (Price per Unit)
+PEINH: 1 (Price Unit)
+NETWR: 12550.00 (Net Value)
+ANETW: 12550.00 (Net Value)
+CURCY: USD
+MWSKZ: S1 (Tax Code - Standard 7%)
+
+=====================================
+SEGMENT: E1EDP02 (Item 1 - Qualifier)
+=====================================
+SEGNAM: E1EDP02
+QUALF: 001 (Material Number)
+BELNR: 4500012345
+ZEILE: 00010
+
+=====================================
+SEGMENT: E1EDP19 (Item 1 - Object Identification)
+=====================================
+SEGNAM: E1EDP19
+QUALF: 002 (Material Number)
+IDTNR: MAT-12345-A (Material Number)
+KTEXT: Industrial Ball Bearing Type A
+MFRPN: BB-1000-A (Manufacturer Part Number)
+MFRNR: MFR001 (Manufacturer Number)
+
+=====================================
+SEGMENT: E1EDP20 (Item 1 - Material Description)
+=====================================
+SEGNAM: E1EDP20
+WMENG: 100.000
+BMENG: 100.000
+PMENE: EA
+ABFTZ: 0.0
+
+=====================================
+SEGMENT: E1EDPT1 (Item 1 - Item Text)
+=====================================
+SEGNAM: E1EDPT1
+TDID: F01 (Item Note)
+TSSPRAS: EN
+TDLINE: Quality inspection required upon receipt
+TDFORMAT: *
+
+=====================================
+SEGMENT: E1EDP01 (Item 2 - Line Item Overview)
+=====================================
+SEGNAM: E1EDP01
+POSEX: 00020 (Item Number)
+ACTION: 009
+MENGE: 50.000
+MENEE: EA
+BMNG2: 50.000
+PMENE: EA
+VPREI: 89.75
+PEINH: 1
+NETWR: 4487.50
+ANETW: 4487.50
+CURCY: USD
+MWSKZ: S1
+
+=====================================
+SEGMENT: E1EDP02 (Item 2 - Qualifier)
+=====================================
+SEGNAM: E1EDP02
+QUALF: 001
+BELNR: 4500012345
+ZEILE: 00020
+
+=====================================
+SEGMENT: E1EDP19 (Item 2 - Object Identification)
+=====================================
+SEGNAM: E1EDP19
+QUALF: 002
+IDTNR: MAT-67890-B
+KTEXT: Hydraulic Seal Kit Premium
+MFRPN: HSK-2000-B
+MFRNR: MFR002
+
+=====================================
+SEGMENT: E1EDP20 (Item 2 - Material Description)
+=====================================
+SEGNAM: E1EDP20
+WMENG: 50.000
+BMENG: 50.000
+PMENE: EA
+ABFTZ: 0.0
+
+=====================================
+SEGMENT: E1EDP01 (Item 3 - Line Item Overview)
+=====================================
+SEGNAM: E1EDP01
+POSEX: 00030 (Item Number)
+ACTION: 009
+MENGE: 200.000
+MENEE: M (Meter)
+BMNG2: 200.000
+PMENE: M
+VPREI: 15.25
+PEINH: 1
+NETWR: 3050.00
+ANETW: 3050.00
+CURCY: USD
+MWSKZ: S1
+
+=====================================
+SEGMENT: E1EDP02 (Item 3 - Qualifier)
+=====================================
+SEGNAM: E1EDP02
+QUALF: 001
+BELNR: 4500012345
+ZEILE: 00030
+
+=====================================
+SEGMENT: E1EDP19 (Item 3 - Object Identification)
+=====================================
+SEGNAM: E1EDP19
+QUALF: 002
+IDTNR: MAT-11111-C
+KTEXT: Steel Reinforced Cable 10mm
+MFRPN: SRC-10MM-1000
+MFRNR: MFR003
+
+=====================================
+SEGMENT: E1EDP20 (Item 3 - Material Description)
+=====================================
+SEGNAM: E1EDP20
+WMENG: 200.000
+BMENG: 200.000
+PMENE: M
+ABFTZ: 0.0
+
+=====================================
+SEGMENT: E1EDPT1 (Item 3 - Item Text)
+=====================================
+SEGNAM: E1EDPT1
+TDID: F01
+TSSPRAS: EN
+TDLINE: Cut to specified lengths: 10m, 15m, 25m
+TDFORMAT: *
+
+=====================================
+SUMMARY
+=====================================
+Total Order Value: 20,087.50 USD
+Total Items: 3
+Item 1: 100 EA @ 125.50 = 12,550.00 USD
+Item 2: 50 EA @ 89.75 = 4,487.50 USD
+Item 3: 200 M @ 15.25 = 3,050.00 USD
+
+Tax (7%): 1,406.13 USD
+Grand Total: 21,493.63 USD
+
+=====================================
+KEY FIELD DESCRIPTIONS
+=====================================
+QUALF: Qualifier (identifies the type of data)
+IDTNR: Material/Part Number
+KTEXT: Short Text/Description
+MENGE: Quantity
+MENEE: Unit of Measure
+VPREI: Price per Unit
+NETWR: Net Value
+CURCY: Currency
+PARVW: Partner Function
+PARTN: Partner Number
+IDDAT: Date Qualifier
+DATUM: Date (YYYYMMDD format)
+ACTION: Action Code (009 = Create, 004 = Change, 003 = Delete)
+
+=====================================
+NOTES FOR TESTING
+=====================================
+1. This IDOC represents a complete purchase order with 3 line items
+2. All mandatory segments are included
+3. Partner information includes vendor, ship-to, and buyer
+4. Each line item has material details, quantities, and pricing
+5. Text segments provide additional notes and instructions
+6. Currency is USD, but can be changed to EUR, GBP, etc.
+7. Tax code S1 represents standard VAT/Sales Tax
+8. Date format is YYYYMMDD (SAP standard)
+9. Action code 009 indicates this is a new order creation
+
+=====================================
+USAGE IN YOUR APPLICATION
+=====================================
+To test your application:
+1. Parse the control record to identify IDOC type and partners
+2. Process E1EDK01 for header-level data
+3. Extract partner details from E1EDKA1 segments
+4. Process E1EDP01 segments for each line item
+5. Link E1EDP19 segments to get material details
+6. Validate quantities, prices, and calculations
+7. Check date formats and currency handling
+8. Process optional text segments (E1EDKT1, E1EDPT1)
+
+You can modify quantities, prices, materials, and add/remove line items as needed for your test scenarios.
