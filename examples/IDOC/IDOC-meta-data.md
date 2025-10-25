@@ -32,7 +32,7 @@ Legacy XML description format:
 
 Let me create an example XSD schema for the ORDERS05 IDoc:Perfect! I've created the **XSD Schema** for ORDERS05:
 
-View ORDERS05_IDOC_Schema.xsd
+View [ORDERS05_IDOC_Schema.xsd](https://github.com/grauwen/utl-x/blob/main/examples/IDOC/ORDERS05_IDOC_Schema.xsd)
 
 This is the **SAP standard metadata description** that includes:
 
