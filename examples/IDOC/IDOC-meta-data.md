@@ -1,6 +1,6 @@
-Yes! SAP has several standard metadata description formats for IDocs:
+SAP has several standard metadata description formats for IDocs:
 
-## 1. **IDoc Documentation (WE60/WE63)**
+## 1. **IDoc Documentation (TXN: WE60/WE63)**
 The primary SAP standard for IDoc metadata:
 - **Transaction WE60** - IDoc documentation (display)
 - **Transaction WE63** - IDoc type development/documentation
@@ -30,7 +30,7 @@ Legacy XML description format:
 - Provides graphical representation and documentation
 - Used for mapping and transformation
 
-Let me create an example XSD schema for the ORDERS05 IDoc:Perfect! I've created the **XSD Schema** for ORDERS05:
+Example XSD schema for the ORDERS05 IDoc
 
 View [ORDERS05_IDOC_Schema.xsd](https://github.com/grauwen/utl-x/blob/main/examples/IDOC/ORDERS05_IDOC_Schema.xsd)
 
@@ -54,4 +54,4 @@ This is the **SAP standard metadata description** that includes:
 - Transaction **WE60** → Select ORDERS05 → Utilities → XML Schema
 - Or use function module **IDOCTYPE_XMLSCHEMA_GET**
 
-This XSD is production-ready and follows SAP's standard metadata description format!
+This XSD is test-ready and follows SAP's standard metadata description format.
