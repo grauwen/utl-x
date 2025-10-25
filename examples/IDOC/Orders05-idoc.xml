@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ORDERS05>
+  <IDOC BEGIN="1">
+    <EDI_DC40 SEGMENT="1">
+      <TABNAM>EDI_DC40</TABNAM>
+      <MANDT>800</MANDT>
+      <DOCNUM>0000000000001234567</DOCNUM>
+      <DOCREL>750</DOCREL>
+      <STATUS>30</STATUS>
+      <DIRECT>2</DIRECT>
+      <OUTMOD>2</OUTMOD>
+      <IDOCTYP>ORDERS05</IDOCTYP>
+      <MESTYP>ORDERS</MESTYP>
+      <STDMES>ORDERS</STDMES>
+      <SNDPOR>SAPCLNT100</SNDPOR>
+      <SNDPRT>LS</SNDPRT>
+      <SNDPRN>SAPCLNT100</SNDPRN>
+      <RCVPOR>VENDORSYS</RCVPOR>
+      <RCVPRT>LI</RCVPRT>
+      <RCVPRN>VENDOR001</RCVPRN>
+      <CREDAT>20251025</CREDAT>
+      <CRETIM>143000</CRETIM>
+      <SERIAL>20251025143000</SERIAL>
+    </EDI_DC40>
+    <E1EDK01 SEGMENT="1">
+      <ACTION>009</ACTION>
+      <CURCY>USD</CURCY>
+      <WKURS>1.0000</WKURS>
+      <BELNR>4500012345</BELNR>
+      <NTGEW>150.500</NTGEW>
+      <GEWEI>KG</GEWEI>
+      <BRGEW>165.750</BRGEW>
+      <VOLUM>2.500</VOLUM>
+      <VOLEH>M3</VOLEH>
+    </E1EDK01>
+    <E1EDK14 SEGMENT="1">
+      <QUALF>008</QUALF>
+      <ORGID>1000</ORGID>
+    </E1EDK14>
+    <E1EDK14 SEGMENT="1">
+      <QUALF>009</QUALF>
+      <ORGID>001</ORGID>
+    </E1EDK14>
+    <E1EDK14 SEGMENT="1">
+      <QUALF>001</QUALF>
+      <ORGID>CC01</ORGID>
+    </E1EDK14>
+    <E1EDK03 SEGMENT="1">
+      <IDDAT>012</IDDAT>
+      <DATUM>20251025</DATUM>
+    </E1EDK03>
+    <E1EDK03 SEGMENT="1">
+      <IDDAT>022</IDDAT>
+      <DATUM>20251115</DATUM>
+    </E1EDK03>
+    <E1EDKA1 SEGMENT="1">
+      <PARVW>LF</PARVW>
+      <PARTN>VENDOR001</PARTN>
+      <NAME1>Acme Industrial Supplies Inc</NAME1>
+      <NAME2>Manufacturing Division</NAME2>
+      <STRAS>123 Industrial Parkway</STRAS>
+      <ORT01>Chicago</ORT01>
+      <PSTLZ>60601</PSTLZ>
+      <LAND1>US</LAND1>
+      <SPRAS>EN</SPRAS>
+    </E1EDKA1>
+    <E1EDKA1 SEGMENT="1">
+      <PARVW>WE</PARVW>
+      <PARTN>PLANT001</PARTN>
+      <NAME1>ABC Manufacturing Plant 1</NAME1>
+      <STRAS>456 Factory Road</STRAS>
+      <ORT01>Detroit</ORT01>
+      <PSTLZ>48201</PSTLZ>
+      <LAND1>US</LAND1>
+      <SPRAS>EN</SPRAS>
+    </E1EDKA1>
+    <E1EDKA1 SEGMENT="1">
+      <PARVW>BU</PARVW>
+      <PARTN>BUYER123</PARTN>
+      <NAME1>John Smith</NAME1>
+      <TELF1>+1-555-0123</TELF1>
+      <SMTP>john.smith@abcmanufacturing.com</SMTP>
+    </E1EDKA1>
+    <E1EDKT1 SEGMENT="1">
+      <TDID>F01</TDID>
+      <TSSPRAS>EN</TSSPRAS>
+      <TDLINE>Please deliver materials to receiving dock B</TDLINE>
+      <TDFORMAT>*</TDFORMAT>
+    </E1EDKT1>
+    <E1EDKT1 SEGMENT="1">
+      <TDID>F01</TDID>
+      <TSSPRAS>EN</TSSPRAS>
+      <TDLINE>Contact warehouse manager upon arrival</TDLINE>
+      <TDFORMAT>*</TDFORMAT>
+    </E1EDKT1>
+    <E1EDP01 SEGMENT="1">
+      <POSEX>00010</POSEX>
+      <ACTION>009</ACTION>
+      <MENGE>100.000</MENGE>
+      <MENEE>EA</MENEE>
+      <BMNG2>100.000</BMNG2>
+      <PMENE>EA</PMENE>
+      <VPREI>125.50</VPREI>
+      <PEINH>1</PEINH>
+      <NETWR>12550.00</NETWR>
+      <ANETW>12550.00</ANETW>
+      <CURCY>USD</CURCY>
+      <MWSKZ>S1</MWSKZ>
+      <E1EDP02 SEGMENT="1">
+        <QUALF>001</QUALF>
+        <BELNR>4500012345</BELNR>
+        <ZEILE>00010</ZEILE>
+      </E1EDP02>
+      <E1EDP19 SEGMENT="1">
+        <QUALF>002</QUALF>
+        <IDTNR>MAT-12345-A</IDTNR>
+        <KTEXT>Industrial Ball Bearing Type A</KTEXT>
+        <MFRPN>BB-1000-A</MFRPN>
+        <MFRNR>MFR001</MFRNR>
+      </E1EDP19>
+      <E1EDP20 SEGMENT="1">
+        <WMENG>100.000</WMENG>
+        <BMENG>100.000</BMENG>
+        <PMENE>EA</PMENE>
+        <ABFTZ>0.0</ABFTZ>
+      </E1EDP20>
+      <E1EDPT1 SEGMENT="1">
+        <TDID>F01</TDID>
+        <TSSPRAS>EN</TSSPRAS>
+        <TDLINE>Quality inspection required upon receipt</TDLINE>
+        <TDFORMAT>*</TDFORMAT>
+      </E1EDPT1>
+    </E1EDP01>
+    <E1EDP01 SEGMENT="1">
+      <POSEX>00020</POSEX>
+      <ACTION>009</ACTION>
+      <MENGE>50.000</MENGE>
+      <MENEE>EA</MENEE>
+      <BMNG2>50.000</BMNG2>
+      <PMENE>EA</PMENE>
+      <VPREI>89.75</VPREI>
+      <PEINH>1</PEINH>
+      <NETWR>4487.50</NETWR>
+      <ANETW>4487.50</ANETW>
+      <CURCY>USD</CURCY>
+      <MWSKZ>S1</MWSKZ>
+      <E1EDP02 SEGMENT="1">
+        <QUALF>001</QUALF>
+        <BELNR>4500012345</BELNR>
+        <ZEILE>00020</ZEILE>
+      </E1EDP02>
+      <E1EDP19 SEGMENT="1">
+        <QUALF>002</QUALF>
+        <IDTNR>MAT-67890-B</IDTNR>
+        <KTEXT>Hydraulic Seal Kit Premium</KTEXT>
+        <MFRPN>HSK-2000-B</MFRPN>
+        <MFRNR>MFR002</MFRNR>
+      </E1EDP19>
+      <E1EDP20 SEGMENT="1">
+        <WMENG>50.000</WMENG>
+        <BMENG>50.000</BMENG>
+        <PMENE>EA</PMENE>
+        <ABFTZ>0.0</ABFTZ>
+      </E1EDP20>
+    </E1EDP01>
+    <E1EDP01 SEGMENT="1">
+      <POSEX>00030</POSEX>
+      <ACTION>009</ACTION>
+      <MENGE>200.000</MENGE>
+      <MENEE>M</MENEE>
+      <BMNG2>200.000</BMNG2>
+      <PMENE>M</PMENE>
+      <VPREI>15.25</VPREI>
+      <PEINH>1</PEINH>
+      <NETWR>3050.00</NETWR>
+      <ANETW>3050.00</ANETW>
+      <CURCY>USD</CURCY>
+      <MWSKZ>S1</MWSKZ>
+      <E1EDP02 SEGMENT="1">
+        <QUALF>001</QUALF>
+        <BELNR>4500012345</BELNR>
+        <ZEILE>00030</ZEILE>
+      </E1EDP02>
+      <E1EDP19 SEGMENT="1">
+        <QUALF>002</QUALF>
+        <IDTNR>MAT-11111-C</IDTNR>
+        <KTEXT>Steel Reinforced Cable 10mm</KTEXT>
+        <MFRPN>SRC-10MM-1000</MFRPN>
+        <MFRNR>MFR003</MFRNR>
+      </E1EDP19>
+      <E1EDP20 SEGMENT="1">
+        <WMENG>200.000</WMENG>
+        <BMENG>200.000</BMENG>
+        <PMENE>M</PMENE>
+        <ABFTZ>0.0</ABFTZ>
+      </E1EDP20>
+      <E1EDPT1 SEGMENT="1">
+        <TDID>F01</TDID>
+        <TSSPRAS>EN</TSSPRAS>
+        <TDLINE>Cut to specified lengths: 10m, 15m, 25m</TDLINE>
+        <TDFORMAT>*</TDFORMAT>
+      </E1EDPT1>
+    </E1EDP01>
+  </IDOC>
+</ORDERS05>
