@@ -14,7 +14,9 @@ import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.csv.CSVSerializer
 import org.apache.utlx.formats.yaml.YAMLParser
 import org.apache.utlx.formats.xsd.XSDParser
+import org.apache.utlx.formats.xsd.XSDSerializer
 import org.apache.utlx.formats.jsch.JSONSchemaParser
+import org.apache.utlx.formats.jsch.JSONSchemaSerializer
 import org.apache.utlx.formats.yaml.YAMLSerializer
 import org.apache.utlx.stdlib.StandardLibrary
 import org.apache.utlx.cli.capture.TestCaptureService
@@ -312,6 +314,36 @@ object TransformCommand {
                 "json" -> JSONSerializer(pretty).serialize(udm)
                 "csv" -> CSVSerializer().serialize(udm)
                 "yaml", "yml" -> YAMLSerializer().serialize(udm)
+                "xsd" -> {
+                    // XSD output with pattern enforcement and documentation injection
+                    val pattern = (formatSpec.options["pattern"] as? String)?.let {
+                        XSDSerializer.XSDPattern.valueOf(it.uppercase().replace("-", "_"))
+                    }
+                    val version = formatSpec.options["version"] as? String ?: "1.0"
+                    val addDoc = formatSpec.options["addDocumentation"] as? Boolean ?: true
+                    val elemFormDefault = formatSpec.options["elementFormDefault"] as? String ?: "qualified"
+
+                    XSDSerializer(
+                        pattern = pattern,
+                        version = version,
+                        addDocumentation = addDoc,
+                        elementFormDefault = elemFormDefault,
+                        prettyPrint = pretty
+                    ).serialize(udm)
+                }
+                "jsch" -> {
+                    // JSON Schema output with automatic $schema and description injection
+                    val draft = formatSpec.options["draft"] as? String ?: "2020-12"
+                    val addDesc = formatSpec.options["addDescriptions"] as? Boolean ?: true
+                    val strict = formatSpec.options["strict"] as? Boolean ?: true
+
+                    JSONSchemaSerializer(
+                        draft = draft,
+                        addDescriptions = addDesc,
+                        prettyPrint = pretty,
+                        strict = strict
+                    ).serialize(udm)
+                }
                 else -> throw IllegalArgumentException("Unsupported output format: $format")
             }
         } catch (e: Exception) {
