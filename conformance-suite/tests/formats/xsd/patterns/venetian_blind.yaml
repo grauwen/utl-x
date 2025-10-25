@@ -30,12 +30,12 @@ transformation: |
     {
       pattern: "Venetian Blind",
       globalElement: {
-        name: $input["xs:element"].__attributes.name,
+        name: $input["xs:element"].@name,
         scope: $input["xs:element"].^scope,
-        typeRef: $input["xs:element"].__attributes.type
+        typeRef: $input["xs:element"].@type
       },
       globalType: {
-        name: $input["xs:complexType"].__attributes.name,
+        name: $input["xs:complexType"].@name,
         scope: $input["xs:complexType"].^scope
       }
     }
@@ -44,3 +44,14 @@ expected:
   format: json
   data: |
     {
+      "pattern": "Venetian Blind",
+      "globalElement": {
+        "name": "person",
+        "scope": "global",
+        "typeRef": "PersonType"
+      },
+      "globalType": {
+        "name": "PersonType",
+        "scope": "global"
+      }
+    }

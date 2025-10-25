@@ -27,9 +27,9 @@ transformation: |
     ---
     {
       element: {
-        name: $input["xs:element"].__attributes.name,
+        name: $input["xs:element"]["@name"],
         hasAnnotation: hasKey($input["xs:element"], "xs:annotation"),
-        documentation: $input["xs:element"]["xs:annotation"]["xs:documentation"].__text
+        documentation: $input["xs:element"]["xs:annotation"]["xs:documentation"]
       }
     }
 
@@ -37,3 +37,9 @@ expected:
   format: json
   data: |
     {
+      "element": {
+        "name": "productCode",
+        "hasAnnotation": true,
+        "documentation": "Unique identifier for the product in the catalog.\n          Format: PRD-XXXXXX where X is alphanumeric."
+      }
+    }

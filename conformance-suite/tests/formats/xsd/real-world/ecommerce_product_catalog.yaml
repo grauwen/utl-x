@@ -105,15 +105,10 @@ transformation: |
         schemaInfo: {
           targetNamespace: $input.^targetNamespace,
           version: $input.^xsdVersion,
-          elementFormDefault: $input.__attributes.elementFormDefault
+          elementFormDefault: $input.@elementFormDefault
         },
-        rootElement: $input["xs:element"].__attributes.name,
-        productType: {
-          name: $input["xs:complexType"].__attributes.name,
-          fields: keys($input["xs:complexType"]["xs:sequence"]),
-          hasPrice: hasKey($input["xs:complexType"]["xs:sequence"], "xs:element[name=price]"),
-          hasInventory: hasKey($input["xs:complexType"]["xs:sequence"], "xs:element[name=stockQuantity]")
-        }
+        rootElement: $input["xs:element"].@name,
+        hasComplexTypes: hasKey($input, "xs:complexType")
       }
     }
 
@@ -121,3 +116,13 @@ expected:
   format: json
   data: |
     {
+      "catalog": {
+        "schemaInfo": {
+          "targetNamespace": "http://shop.example.com/catalog",
+          "version": "1.0",
+          "elementFormDefault": "qualified"
+        },
+        "rootElement": "productCatalog",
+        "hasComplexTypes": true
+      }
+    }

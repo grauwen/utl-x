@@ -35,7 +35,7 @@ transformation: |
     {
       pattern: "Russian Doll",
       rootElement: {
-        name: $input["xs:element"].__attributes.name,
+        name: $input["xs:element"].@name,
         scope: $input["xs:element"].^scope,
         hasInlineType: hasKey($input["xs:element"], "xs:complexType")
       },
@@ -46,3 +46,11 @@ expected:
   format: json
   data: |
     {
+      "pattern": "Russian Doll",
+      "rootElement": {
+        "name": "order",
+        "scope": "global",
+        "hasInlineType": true
+      },
+      "description": "All types defined inline within the root element"
+    }

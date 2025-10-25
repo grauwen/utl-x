@@ -23,7 +23,7 @@ transformation: |
     ---
     {
       complexType: {
-        name: $input["xs:complexType"].__attributes.name,
+        name: $input["xs:complexType"].@name,
         scope: $input["xs:complexType"].^scope,
         schemaType: $input["xs:complexType"].^schemaType
       }
@@ -33,3 +33,9 @@ expected:
   format: json
   data: |
     {
+      "complexType": {
+        "name": "AddressType",
+        "scope": "global",
+        "schemaType": "xsd-complexType"
+      }
+    }

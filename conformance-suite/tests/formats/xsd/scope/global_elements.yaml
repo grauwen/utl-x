@@ -18,7 +18,7 @@ transformation: |
     ---
     {
       element: {
-        name: $input["xs:element"].__attributes.name,
+        name: $input["xs:element"].@name,
         scope: $input["xs:element"].^scope,
         schemaType: $input["xs:element"].^schemaType
       }
@@ -28,3 +28,9 @@ expected:
   format: json
   data: |
     {
+      "element": {
+        "name": "customer",
+        "scope": "global",
+        "schemaType": "xsd-element"
+      }
+    }

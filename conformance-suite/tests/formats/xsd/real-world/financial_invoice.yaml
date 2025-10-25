@@ -232,7 +232,7 @@ transformation: |
     {
       invoice: {
         schemaNamespace: $input.^targetNamespace,
-        rootElement: $input["xs:element"].__attributes.name,
+        rootElement: $input["xs:element"].@name,
         hasLineItems: hasKey($input, "xs:complexType[name=InvoiceType]"),
         taxCompliant: true
       }
@@ -242,3 +242,10 @@ expected:
   format: json
   data: |
     {
+      "invoice": {
+        "schemaNamespace": "http://finance.example.com/invoice",
+        "rootElement": "invoice",
+        "hasLineItems": false,
+        "taxCompliant": true
+      }
+    }

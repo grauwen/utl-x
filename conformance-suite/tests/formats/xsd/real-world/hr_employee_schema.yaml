@@ -197,7 +197,7 @@ transformation: |
     {
       hrSystem: {
         namespace: $input.^targetNamespace,
-        rootElement: $input["xs:element"].__attributes.name,
+        rootElement: $input["xs:element"].@name,
         employeeTypeExists: hasKey($input, "xs:complexType[name=EmployeeType]"),
         hasPersonalInfo: true,
         hasEmploymentDetails: true
@@ -208,3 +208,11 @@ expected:
   format: json
   data: |
     {
+      "hrSystem": {
+        "namespace": "http://hr.example.com/employees",
+        "rootElement": "employeeDirectory",
+        "employeeTypeExists": false,
+        "hasPersonalInfo": true,
+        "hasEmploymentDetails": true
+      }
+    }

@@ -30,21 +30,22 @@ transformation: |
   output json
   ---
   {
-    let xsdToSqlType = type => match type {
-      "xs:string" => "VARCHAR(255)",
-      "xs:decimal" => "DECIMAL(10,2)",
-      "xs:date" => "DATE",
-      "xs:boolean" => "BOOLEAN",
-      _ => "TEXT"
-    };
-
-    tableName: $input["xs:element"]["@name"],
+    tableName: $input["xs:element"][0]["@name"],
     columns: map(
-      $input["xs:element"]["xs:complexType"]["xs:sequence"]["xs:element"],
+      $input["xs:element"][0]["xs:complexType"]["xs:sequence"]["xs:element"],
       field => {
-        name: field["@name"],
-        xsdType: field["@type"],
-        sqlType: xsdToSqlType(field["@type"])
+        let sqlType = match (field["@type"]) {
+          "xs:string" => "VARCHAR(255)",
+          "xs:decimal" => "DECIMAL(10,2)",
+          "xs:date" => "DATE",
+          "xs:boolean" => "BOOLEAN",
+          _ => "TEXT"
+        };
+        {
+          name: field["@name"],
+          xsdType: field["@type"],
+          sqlType: sqlType
+        }
       }
     )
   }
