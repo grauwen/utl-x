@@ -1,0 +1,51 @@
+{
+  "appointmentId": "550e8400-e29b-41d4-a716-446655440004",
+  "appointmentNumber": "APT-2024-789456",
+  "patient": {
+    "patientId": "MRN-2024-789456",
+    "firstName": "Robert",
+    "lastName": "Anderson",
+    "dateOfBirth": "1979-01-15",
+    "phone": "+15550178",
+    "email": "robert.anderson@example.com"
+  },
+  "provider": {
+    "providerId": "PROV-12345",
+    "name": "Dr. Elizabeth Martinez, MD",
+    "specialty": "Internal Medicine",
+    "npi": "1234567890"
+  },
+  "facility": {
+    "facilityId": "FAC-001",
+    "name": "Boston General Hospital",
+    "address": "100 Medical Center Drive, Boston, MA 02101",
+    "phone": "+16175550100"
+  },
+  "appointmentType": "annual-physical",
+  "appointmentDateTime": "2024-11-15T10:00:00Z",
+  "duration": 60,
+  "status": "confirmed",
+  "visitReason": "Annual physical examination and health screening",
+  "notes": "Patient requests blood pressure check and cholesterol screening. Follow-up on diabetes management.",
+  "insurance": {
+    "insuranceCompany": "Blue Cross Blue Shield",
+    "policyNumber": "BCBS-789456123",
+    "groupNumber": "GRP-ABC-456",
+    "copay": 25.00
+  },
+  "reminders": [
+    {
+      "method": "email",
+      "sentAt": "2024-11-08T09:00:00Z",
+      "status": "delivered"
+    },
+    {
+      "method": "sms",
+      "sentAt": "2024-11-14T09:00:00Z",
+      "status": "sent"
+    }
+  ],
+  "createdAt": "2024-10-15T14:30:00Z",
+  "updatedAt": "2024-10-27T12:00:00Z",
+  "createdBy": "reception-staff-001"
+}

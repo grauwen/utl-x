@@ -1,0 +1,70 @@
+{
+  "orderId": "ORD-2024-10-27-ABC123",
+  "orderNumber": "24102700123",
+  "customerId": "CUST-2024-001234",
+  "orderDate": "2024-10-27T12:00:00Z",
+  "status": "shipped",
+  "lineItems": [
+    {
+      "lineNumber": 1,
+      "sku": "PROD-ELECT-5678",
+      "productName": "UltraSound Pro Wireless Headphones",
+      "quantity": 2,
+      "unitPrice": 249.99,
+      "discount": 25.00,
+      "tax": 42.50,
+      "lineTotal": 517.48
+    },
+    {
+      "lineNumber": 2,
+      "sku": "PROD-ACCESS-9012",
+      "productName": "Premium USB-C Charging Cable 2m",
+      "quantity": 3,
+      "unitPrice": 19.99,
+      "discount": 0,
+      "tax": 5.10,
+      "lineTotal": 65.07
+    }
+  ],
+  "totals": {
+    "subtotal": 559.96,
+    "discount": 25.00,
+    "shipping": 15.00,
+    "tax": 47.60,
+    "total": 597.56,
+    "currency": "USD"
+  },
+  "shippingAddress": {
+    "recipientName": "Sarah Johnson",
+    "street": "123 Main Street, Apt 4B",
+    "city": "San Francisco",
+    "state": "CA",
+    "postalCode": "94102",
+    "country": "US",
+    "phone": "+15550123"
+  },
+  "billingAddress": {
+    "recipientName": "Sarah Johnson",
+    "street": "123 Main Street, Apt 4B",
+    "city": "San Francisco",
+    "state": "CA",
+    "postalCode": "94102",
+    "country": "US",
+    "phone": "+15550123"
+  },
+  "fulfillment": {
+    "method": "express",
+    "carrier": "FedEx",
+    "trackingNumber": "FDX-987654321-US",
+    "estimatedDelivery": "2024-10-30"
+  },
+  "payment": {
+    "method": "credit_card",
+    "status": "captured",
+    "transactionId": "TXN-PAY-20241027-55123",
+    "last4Digits": "4242"
+  },
+  "notes": "Please leave package at front door if no one is home",
+  "createdBy": "customer_self_service",
+  "updatedAt": "2024-10-28T08:00:00Z"
+}

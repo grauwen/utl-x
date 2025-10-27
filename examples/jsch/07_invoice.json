@@ -1,0 +1,77 @@
+{
+  "invoiceId": "550e8400-e29b-41d4-a716-446655440001",
+  "invoiceNumber": "INV-2024-001234",
+  "invoiceDate": "2024-10-27",
+  "dueDate": "2024-11-26",
+  "invoiceType": "standard",
+  "status": "sent",
+  "seller": {
+    "id": "SELLER-ABC-123",
+    "name": "ABC Software Solutions Inc.",
+    "taxId": "12-3456789",
+    "address": "100 Tech Plaza, Suite 500, San Jose, CA 95110, USA",
+    "email": "billing@abcsoftware.com",
+    "phone": "+14085550100"
+  },
+  "buyer": {
+    "id": "BUYER-XYZ-456",
+    "name": "XYZ Corporation",
+    "taxId": "98-7654321",
+    "address": "500 Business Park Drive, Austin, TX 78701, USA",
+    "email": "ap@xyzcorp.com",
+    "phone": "+15125550200"
+  },
+  "lineItems": [
+    {
+      "lineNumber": 1,
+      "description": "Enterprise Software License - Annual Subscription (100 users)",
+      "quantity": 100,
+      "unitOfMeasure": "licenses",
+      "unitPrice": 120.00,
+      "discount": 1200.00,
+      "taxRate": 0.0875,
+      "taxAmount": 945.00,
+      "lineTotal": 11745.00,
+      "productCode": "ENT-LICENSE-ANNUAL"
+    },
+    {
+      "lineNumber": 2,
+      "description": "Premium Support Package - Annual",
+      "quantity": 1,
+      "unitOfMeasure": "package",
+      "unitPrice": 5000.00,
+      "discount": 0,
+      "taxRate": 0.0875,
+      "taxAmount": 437.50,
+      "lineTotal": 5437.50,
+      "productCode": "SUPPORT-PREMIUM"
+    }
+  ],
+  "totals": {
+    "subtotal": 23000.00,
+    "totalDiscount": 2000.00,
+    "totalTax": 2012.50,
+    "shippingCost": 0,
+    "total": 25012.50,
+    "currency": "USD"
+  },
+  "paymentTerms": {
+    "terms": "Net 30",
+    "lateFeePercent": 1.5,
+    "discountPercent": 2.0,
+    "discountDays": 10
+  },
+  "payments": [],
+  "amountPaid": 0,
+  "amountDue": 25012.50,
+  "notes": "Thank you for your business. Payment is due within 30 days. 2% discount available if paid within 10 days.",
+  "attachments": [
+    {
+      "filename": "contract_agreement.pdf",
+      "url": "https://storage.abcsoftware.com/invoices/2024-001234/contract.pdf",
+      "mimeType": "application/pdf"
+    }
+  ],
+  "createdAt": "2024-10-27T12:00:00Z",
+  "updatedAt": "2024-10-27T12:00:00Z"
+}

@@ -1,0 +1,56 @@
+{
+  "deviceId": "SENSOR-TEMP-PLANT-A-101",
+  "deviceType": "temperature-sensor",
+  "timestamp": "2024-10-27T12:00:00Z",
+  "location": {
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "facility": "Manufacturing Plant A",
+    "zone": "Production Line 1 - Oven Section"
+  },
+  "measurements": [
+    {
+      "metric": "temperature",
+      "value": 185.7,
+      "unit": "celsius",
+      "quality": "good",
+      "min": 150,
+      "max": 200
+    },
+    {
+      "metric": "humidity",
+      "value": 35.2,
+      "unit": "percent",
+      "quality": "good",
+      "min": 20,
+      "max": 60
+    },
+    {
+      "metric": "pressure",
+      "value": 101.3,
+      "unit": "kPa",
+      "quality": "good"
+    }
+  ],
+  "deviceStatus": {
+    "batteryLevel": 85,
+    "signalStrength": -45,
+    "health": "warning",
+    "lastMaintenance": "2024-09-15T10:00:00Z",
+    "firmwareVersion": "2.4.1"
+  },
+  "alerts": [
+    {
+      "severity": "warning",
+      "code": "TEMP_HIGH",
+      "message": "Temperature approaching upper limit",
+      "threshold": 180
+    }
+  ],
+  "metadata": {
+    "manufacturer": "IndustrialSense Corp",
+    "model": "TempPro-5000",
+    "serialNumber": "TS-5000-2024-789",
+    "installationDate": "2024-01-15"
+  }
+}

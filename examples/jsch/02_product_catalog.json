@@ -1,0 +1,57 @@
+{
+  "sku": "PROD-ELECT-5678",
+  "name": "UltraSound Pro Wireless Headphones",
+  "description": "Premium wireless over-ear headphones with active noise cancellation, 40-hour battery life, and studio-quality sound. Features Bluetooth 5.2, USB-C charging, and premium leather ear cushions.",
+  "category": {
+    "primary": "Electronics",
+    "secondary": "Audio",
+    "tags": ["headphones", "wireless", "noise-cancelling", "bluetooth"]
+  },
+  "brand": "UltraSound",
+  "manufacturer": "TechAudio Manufacturing Ltd",
+  "price": {
+    "amount": 299.99,
+    "currency": "USD",
+    "msrp": 349.99,
+    "salePrice": 249.99,
+    "taxIncluded": false
+  },
+  "inventory": {
+    "quantity": 1250,
+    "reserved": 175,
+    "reorderLevel": 500,
+    "warehouse": "US-WEST-01"
+  },
+  "dimensions": {
+    "weight": 0.285,
+    "length": 20.5,
+    "width": 18.0,
+    "height": 9.5
+  },
+  "images": [
+    {
+      "url": "https://cdn.example.com/products/PROD-ELECT-5678/main.jpg",
+      "altText": "UltraSound Pro Wireless Headphones - Front View",
+      "isPrimary": true
+    },
+    {
+      "url": "https://cdn.example.com/products/PROD-ELECT-5678/side.jpg",
+      "altText": "UltraSound Pro Wireless Headphones - Side View",
+      "isPrimary": false
+    }
+  ],
+  "attributes": {
+    "color": "Matte Black",
+    "connectivity": "Bluetooth 5.2",
+    "battery_life": "40 hours",
+    "noise_cancellation": "Active",
+    "warranty": "2 years"
+  },
+  "status": "active",
+  "ratings": {
+    "average": 4.7,
+    "count": 2847
+  },
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-10-27T12:00:00Z"
+}

@@ -1,0 +1,54 @@
+{
+  "application": {
+    "name": "customer-service",
+    "version": "2.5.1",
+    "environment": "production",
+    "description": "Customer management microservice"
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "ssl": {
+      "enabled": true,
+      "certificatePath": "/etc/ssl/certs/server.crt",
+      "keyPath": "/etc/ssl/private/server.key"
+    },
+    "timeout": 30,
+    "maxConnections": 1000
+  },
+  "database": {
+    "type": "postgresql",
+    "host": "db.example.com",
+    "port": 5432,
+    "name": "customers_db",
+    "username": "app_user",
+    "password": "${DB_PASSWORD}",
+    "ssl": true,
+    "pool": {
+      "min": 5,
+      "max": 20,
+      "idleTimeout": 30000
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "outputs": ["console", "file"]
+  },
+  "cache": {
+    "enabled": true,
+    "ttl": 3600,
+    "maxSize": 512
+  },
+  "monitoring": {
+    "enabled": true,
+    "metricsPort": 9090,
+    "healthCheckPath": "/health"
+  },
+  "features": {
+    "newDashboard": true,
+    "betaFeatures": false,
+    "advancedSearch": true,
+    "exportToExcel": true
+  }
+}

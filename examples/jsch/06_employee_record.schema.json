@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/employee-record.schema.json",
+  "title": "Employee Record",
+  "description": "Employee master data schema for HR systems",
+  "type": "object",
+  "required": ["employeeId", "personalInfo", "employment", "position"],
+  "properties": {
+    "employeeId": {
+      "type": "string",
+      "pattern": "^EMP-[0-9]{4}-[0-9]{3}$"
+    },
+    "personalInfo": {
+      "type": "object",
+      "required": ["firstName", "lastName", "dateOfBirth", "email"],
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "middleName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "lastName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "format": "date"
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["male", "female", "non-binary", "prefer-not-to-say"]
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "pattern": "^\\+?[1-9]\\d{1,14}$"
+        }
+      }
+    },
+    "address": {
+      "type": "object",
+      "required": ["street", "city", "country"],
+      "properties": {
+        "street": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2,3}$"
+        }
+      }
+    },
+    "employment": {
+      "type": "object",
+      "required": ["startDate", "employmentType", "status"],
+      "properties": {
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "employmentType": {
+          "type": "string",
+          "enum": ["full-time", "part-time", "contract", "intern"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "on-leave", "terminated", "retired"]
+        },
+        "probationEndDate": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "position": {
+      "type": "object",
+      "required": ["title", "department"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "department": {
+          "type": "string",
+          "minLength": 1
+        },
+        "division": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "reportsTo": {
+          "type": "string",
+          "description": "Manager employee ID"
+        }
+      }
+    },
+    "compensation": {
+      "type": "object",
+      "required": ["baseSalary", "currency", "payFrequency"],
+      "properties": {
+        "baseSalary": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "payFrequency": {
+          "type": "string",
+          "enum": ["weekly", "biweekly", "monthly", "annual"]
+        },
+        "bonus": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "commission": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+    "benefits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "enrolled"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["health-insurance", "dental-insurance", "vision-insurance", "life-insurance", "retirement-401k", "pto", "stock-options"]
+          },
+          "enrolled": {
+            "type": "boolean"
+          },
+          "provider": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "emergencyContact": {
+      "type": "object",
+      "required": ["name", "relationship", "phone"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "relationship": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        }
+      }
+    },
+    "performanceRating": {
+      "type": "string",
+      "enum": ["exceeds", "meets", "needs-improvement", "unsatisfactory"]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/ecommerce-order.schema.json",
+  "title": "E-commerce Order",
+  "description": "Complete e-commerce order with line items and fulfillment",
+  "type": "object",
+  "required": ["orderId", "customerId", "orderDate", "status", "lineItems", "totals"],
+  "properties": {
+    "orderId": {
+      "type": "string",
+      "pattern": "^ORD-[0-9]{4}-[0-9]{2}-[0-9]{2}-[A-Z0-9]{6}$"
+    },
+    "orderNumber": {
+      "type": "string",
+      "description": "Human-readable order number"
+    },
+    "customerId": {
+      "type": "string"
+    },
+    "orderDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "refunded"]
+    },
+    "lineItems": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["lineNumber", "sku", "productName", "quantity", "unitPrice"],
+        "properties": {
+          "lineNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sku": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discount": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "tax": {
+            "type": "number",
+            "minimum": 0
+          },
+          "lineTotal": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "required": ["subtotal", "tax", "total", "currency"],
+      "properties": {
+        "subtotal": {
+          "type": "number",
+          "minimum": 0
+        },
+        "discount": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "shipping": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "tax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "total": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        }
+      }
+    },
+    "shippingAddress": {
+      "$ref": "#/$defs/address"
+    },
+    "billingAddress": {
+      "$ref": "#/$defs/address"
+    },
+    "fulfillment": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["standard", "express", "overnight", "pickup"]
+        },
+        "carrier": {
+          "type": "string"
+        },
+        "trackingNumber": {
+          "type": "string"
+        },
+        "estimatedDelivery": {
+          "type": "string",
+          "format": "date"
+        },
+        "actualDelivery": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "payment": {
+      "type": "object",
+      "required": ["method", "status"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["credit_card", "debit_card", "paypal", "bank_transfer", "cash_on_delivery"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "authorized", "captured", "failed", "refunded"]
+        },
+        "transactionId": {
+          "type": "string"
+        },
+        "last4Digits": {
+          "type": "string",
+          "pattern": "^[0-9]{4}$"
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "createdBy": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "address": {
+      "type": "object",
+      "required": ["recipientName", "street", "city", "country"],
+      "properties": {
+        "recipientName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "street": {
+          "type": "string",
+          "minLength": 1
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2,3}$"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

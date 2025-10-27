@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/webhook-event.schema.json",
+  "title": "Webhook Event",
+  "description": "Generic webhook event schema for third-party integrations",
+  "type": "object",
+  "required": ["webhookId", "event", "timestamp", "source"],
+  "properties": {
+    "webhookId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event": {
+      "type": "string",
+      "pattern": "^[a-z0-9._-]+$",
+      "description": "Event type identifier (e.g., 'customer.created', 'order.shipped')"
+    },
+    "eventVersion": {
+      "type": "string",
+      "pattern": "^v[0-9]+$",
+      "default": "v1"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "required": ["system", "environment"],
+      "properties": {
+        "system": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production"]
+        },
+        "region": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["user", "system", "api-client", "service"]
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "description": "Event payload - structure varies by event type"
+    },
+    "previousData": {
+      "type": "object",
+      "description": "Previous state for update events"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "correlationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "retryCount": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "isTest": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "nextRetry": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["sha256", "sha512"]
+        },
+        "value": {
+          "type": "string"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

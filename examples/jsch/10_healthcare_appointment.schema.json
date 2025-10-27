@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/healthcare-appointment.schema.json",
+  "title": "Healthcare Appointment",
+  "description": "Medical appointment scheduling schema for healthcare systems",
+  "type": "object",
+  "required": ["appointmentId", "patient", "provider", "appointmentDateTime", "status"],
+  "properties": {
+    "appointmentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appointmentNumber": {
+      "type": "string",
+      "pattern": "^APT-[0-9]{4}-[0-9]{6}$"
+    },
+    "patient": {
+      "type": "object",
+      "required": ["patientId", "firstName", "lastName", "dateOfBirth"],
+      "properties": {
+        "patientId": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lastName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "format": "date"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "required": ["providerId", "name", "specialty"],
+      "properties": {
+        "providerId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "specialty": {
+          "type": "string",
+          "examples": ["Internal Medicine", "Cardiology", "Pediatrics", "Dermatology"]
+        },
+        "npi": {
+          "type": "string",
+          "pattern": "^[0-9]{10}$",
+          "description": "National Provider Identifier"
+        }
+      }
+    },
+    "facility": {
+      "type": "object",
+      "properties": {
+        "facilityId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    },
+    "appointmentType": {
+      "type": "string",
+      "enum": ["new-patient", "follow-up", "annual-physical", "procedure", "consultation", "telemedicine"]
+    },
+    "appointmentDateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duration": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 480,
+      "description": "Duration in minutes"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["scheduled", "confirmed", "checked-in", "in-progress", "completed", "cancelled", "no-show"]
+    },
+    "visitReason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "insurance": {
+      "type": "object",
+      "properties": {
+        "insuranceCompany": {
+          "type": "string"
+        },
+        "policyNumber": {
+          "type": "string"
+        },
+        "groupNumber": {
+          "type": "string"
+        },
+        "copay": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "reminders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": ["email", "sms", "phone"]
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["sent", "delivered", "failed"]
+          }
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "createdBy": {
+      "type": "string"
+    }
+  }
+}

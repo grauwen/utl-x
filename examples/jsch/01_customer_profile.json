@@ -1,0 +1,32 @@
+{
+  "customerId": "CUST-2024-001234",
+  "customerType": "individual",
+  "firstName": "Sarah",
+  "lastName": "Johnson",
+  "email": "sarah.johnson@example.com",
+  "phone": "+15550123",
+  "address": {
+    "street": "123 Main Street, Apt 4B",
+    "city": "San Francisco",
+    "state": "CA",
+    "postalCode": "94102",
+    "country": "US"
+  },
+  "loyaltyTier": "gold",
+  "lifetimeValue": 15750.50,
+  "accountStatus": "active",
+  "preferences": {
+    "emailMarketing": true,
+    "smsMarketing": false,
+    "language": "en-US",
+    "currency": "USD"
+  },
+  "tags": ["vip", "frequent-buyer", "email-subscribed"],
+  "metadata": {
+    "acquisition_channel": "organic_search",
+    "preferred_contact_time": "evening",
+    "notes": "Prefers contactless delivery"
+  },
+  "createdAt": "2023-01-01T00:00:00Z",
+  "updatedAt": "2024-10-27T12:00:00Z"
+}

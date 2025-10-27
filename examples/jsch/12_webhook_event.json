@@ -1,0 +1,53 @@
+{
+  "webhookId": "550e8400-e29b-41d4-a716-446655440005",
+  "event": "customer.loyalty.upgraded",
+  "eventVersion": "v1",
+  "timestamp": "2024-10-27T12:00:00Z",
+  "source": {
+    "system": "customer-service",
+    "environment": "production",
+    "region": "us-west-2",
+    "version": "2.5.1"
+  },
+  "actor": {
+    "id": "system",
+    "type": "system",
+    "name": "Loyalty Tier Calculator"
+  },
+  "data": {
+    "customerId": "CUST-2024-001234",
+    "email": "sarah.johnson@example.com",
+    "previousTier": "silver",
+    "newTier": "gold",
+    "lifetimeValue": 15750.50,
+    "qualificationDate": "2024-10-27",
+    "benefits": [
+      "Priority customer support",
+      "Free express shipping",
+      "Early access to sales",
+      "Birthday bonus rewards"
+    ]
+  },
+  "previousData": {
+    "tier": "silver",
+    "lifetimeValue": 9500.00
+  },
+  "metadata": {
+    "correlationId": "550e8400-e29b-41d4-a716-446655440006",
+    "requestId": "550e8400-e29b-41d4-a716-446655440007",
+    "retryCount": 0,
+    "isTest": false
+  },
+  "delivery": {
+    "attempt": 1,
+    "maxAttempts": 3
+  },
+  "signature": {
+    "algorithm": "sha256",
+    "value": "a3f5c8b2e1d9f7a4c6b8e2d1f9a7c5b3e8d6f4a2c9b7e5d3f1a8c6b4e2d9f7a5",
+    "headers": {
+      "X-Webhook-Signature": "sha256=a3f5c8b2e1d9f7a4c6b8e2d1f9a7c5b3e8d6f4a2c9b7e5d3f1a8c6b4e2d9f7a5",
+      "X-Webhook-Timestamp": "2024-10-27T12:00:00Z"
+    }
+  }
+}

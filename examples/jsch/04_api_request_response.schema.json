@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/api-request-response.schema.json",
+  "title": "REST API Request/Response",
+  "description": "Generic REST API request and response envelope schema",
+  "type": "object",
+  "required": ["apiVersion", "method", "resource"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "pattern": "^v[0-9]+$",
+      "description": "API version",
+      "examples": ["v1", "v2"]
+    },
+    "method": {
+      "type": "string",
+      "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      "description": "HTTP method"
+    },
+    "resource": {
+      "type": "string",
+      "pattern": "^/[a-z0-9/_-]*$",
+      "description": "Resource path"
+    },
+    "request": {
+      "type": "object",
+      "properties": {
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "queryParams": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              {"type": "string"},
+              {"type": "array", "items": {"type": "string"}}
+            ]
+          }
+        },
+        "pathParams": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "body": {
+          "description": "Request body (any valid JSON)"
+        }
+      }
+    },
+    "response": {
+      "type": "object",
+      "required": ["statusCode"],
+      "properties": {
+        "statusCode": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "body": {
+          "description": "Response body (any valid JSON)"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "clientIp": {
+          "type": "string",
+          "oneOf": [
+            {"format": "ipv4"},
+            {"format": "ipv6"}
+          ]
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "responseTime": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Response time in milliseconds"
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "pagination": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "totalItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalPages": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hasNext": {
+          "type": "boolean"
+        },
+        "hasPrevious": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/invoice.schema.json",
+  "title": "Invoice",
+  "description": "Business invoice schema for accounting and billing systems",
+  "type": "object",
+  "required": ["invoiceId", "invoiceNumber", "invoiceDate", "dueDate", "seller", "buyer", "lineItems", "totals"],
+  "properties": {
+    "invoiceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "invoiceNumber": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,4}-[0-9]{4}-[0-9]{4,6}$"
+    },
+    "invoiceDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "dueDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "invoiceType": {
+      "type": "string",
+      "enum": ["standard", "credit-note", "debit-note", "proforma", "recurring"],
+      "default": "standard"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "sent", "viewed", "partial-payment", "paid", "overdue", "cancelled", "void"],
+      "default": "draft"
+    },
+    "seller": {
+      "$ref": "#/$defs/party"
+    },
+    "buyer": {
+      "$ref": "#/$defs/party"
+    },
+    "lineItems": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["lineNumber", "description", "quantity", "unitPrice"],
+        "properties": {
+          "lineNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "unitOfMeasure": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discount": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "taxRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "taxAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "lineTotal": {
+            "type": "number",
+            "minimum": 0
+          },
+          "productCode": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "required": ["subtotal", "total", "currency"],
+      "properties": {
+        "subtotal": {
+          "type": "number",
+          "minimum": 0
+        },
+        "totalDiscount": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "totalTax": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "shippingCost": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "total": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        }
+      }
+    },
+    "paymentTerms": {
+      "type": "object",
+      "properties": {
+        "terms": {
+          "type": "string",
+          "examples": ["Net 30", "Net 60", "Due on Receipt"]
+        },
+        "lateFeePercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "discountPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "discountDays": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "payments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["paymentId", "paymentDate", "amount"],
+        "properties": {
+          "paymentId": {
+            "type": "string"
+          },
+          "paymentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "method": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "amountPaid": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0
+    },
+    "amountDue": {
+      "type": "number",
+      "minimum": 0
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["filename", "url"],
+        "properties": {
+          "filename": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "mimeType": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "party": {
+      "type": "object",
+      "required": ["name", "address", "email"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "taxId": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

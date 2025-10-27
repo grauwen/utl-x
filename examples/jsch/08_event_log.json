@@ -1,0 +1,40 @@
+{
+  "eventId": "550e8400-e29b-41d4-a716-446655440002",
+  "timestamp": "2024-10-27T12:00:00.123Z",
+  "eventType": "user-action",
+  "severity": "info",
+  "source": {
+    "application": "customer-service",
+    "component": "authentication",
+    "version": "2.5.1",
+    "hostname": "app-server-01",
+    "environment": "production"
+  },
+  "actor": {
+    "userId": "USER-789456",
+    "username": "sarah.johnson",
+    "email": "sarah.johnson@example.com",
+    "ipAddress": "192.168.1.100",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  },
+  "action": {
+    "name": "user-login",
+    "category": "authentication",
+    "resource": "/api/auth/login",
+    "result": "success"
+  },
+  "message": "User successfully authenticated via OAuth2",
+  "details": {
+    "authProvider": "google",
+    "mfaEnabled": true,
+    "loginMethod": "oauth2",
+    "sessionId": "sess-abc123def456"
+  },
+  "metrics": {
+    "duration": 245.6,
+    "memoryUsage": 52428800,
+    "cpuUsage": 12.5
+  },
+  "tags": ["authentication", "oauth2", "success"],
+  "correlationId": "550e8400-e29b-41d4-a716-446655440003"
+}

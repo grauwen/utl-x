@@ -1,0 +1,102 @@
+{
+  "listingId": "MLS-12345678",
+  "property": {
+    "address": {
+      "street": "456 Maple Avenue",
+      "city": "San Francisco",
+      "state": "CA",
+      "postalCode": "94110",
+      "country": "US"
+    },
+    "propertyType": "single-family",
+    "bedrooms": 4,
+    "bathrooms": 3.5,
+    "squareFeet": 2850,
+    "lotSize": 0.18,
+    "yearBuilt": 1925,
+    "stories": 2,
+    "garage": {
+      "spaces": 2,
+      "type": "attached"
+    }
+  },
+  "price": {
+    "amount": 1895000,
+    "currency": "USD",
+    "pricePerSquareFoot": 665.08
+  },
+  "listingAgent": {
+    "agentId": "AGENT-789",
+    "name": "Maria Rodriguez",
+    "licenseNumber": "CA-DRE-01234567",
+    "phone": "+14155550199",
+    "email": "maria.rodriguez@realestate.example.com",
+    "brokerage": "Premier Real Estate Group"
+  },
+  "status": "active",
+  "listingDate": "2024-10-01",
+  "features": {
+    "interior": [
+      "Hardwood floors throughout",
+      "Gourmet kitchen with granite countertops",
+      "Stainless steel appliances",
+      "Master suite with walk-in closet",
+      "Updated bathrooms",
+      "Crown molding"
+    ],
+    "exterior": [
+      "Spacious deck",
+      "Landscaped yard",
+      "Fenced backyard",
+      "Patio area"
+    ],
+    "amenities": [
+      "Central heating and cooling",
+      "Double-pane windows",
+      "Smart home features",
+      "Security system"
+    ]
+  },
+  "description": "Stunning Victorian home in the heart of San Francisco! This beautifully renovated 4-bedroom, 3.5-bath residence combines historic charm with modern amenities. Features include original hardwood floors, updated gourmet kitchen, spacious master suite, and a private backyard oasis. Walking distance to parks, shops, and public transportation. Don't miss this rare opportunity!",
+  "images": [
+    {
+      "url": "https://images.example.com/listings/12345678/exterior.jpg",
+      "caption": "Front exterior view",
+      "isPrimary": true
+    },
+    {
+      "url": "https://images.example.com/listings/12345678/kitchen.jpg",
+      "caption": "Gourmet kitchen",
+      "isPrimary": false
+    },
+    {
+      "url": "https://images.example.com/listings/12345678/master.jpg",
+      "caption": "Master bedroom suite",
+      "isPrimary": false
+    }
+  ],
+  "virtualTourUrl": "https://tours.example.com/12345678",
+  "hoa": {
+    "fee": 0,
+    "frequency": "monthly",
+    "includes": []
+  },
+  "taxes": {
+    "annualAmount": 18950,
+    "year": 2024
+  },
+  "openHouses": [
+    {
+      "startDateTime": "2024-11-02T14:00:00Z",
+      "endDateTime": "2024-11-02T16:00:00Z"
+    },
+    {
+      "startDateTime": "2024-11-03T13:00:00Z",
+      "endDateTime": "2024-11-03T15:00:00Z"
+    }
+  ],
+  "daysOnMarket": 27,
+  "viewCount": 1247,
+  "createdAt": "2024-10-01T09:00:00Z",
+  "updatedAt": "2024-10-27T12:00:00Z"
+}

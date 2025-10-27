@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/event-log.schema.json",
+  "title": "Event Log Entry",
+  "description": "Application event logging schema for audit trails and monitoring",
+  "type": "object",
+  "required": ["eventId", "timestamp", "eventType", "source"],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "eventType": {
+      "type": "string",
+      "enum": ["user-action", "system-event", "security-event", "error", "warning", "info", "debug"]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "error", "warning", "info", "debug"],
+      "default": "info"
+    },
+    "source": {
+      "type": "object",
+      "required": ["application", "component"],
+      "properties": {
+        "application": {
+          "type": "string",
+          "minLength": 1
+        },
+        "component": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production"]
+        }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "ipAddress": {
+          "type": "string",
+          "oneOf": [
+            {"format": "ipv4"},
+            {"format": "ipv6"}
+          ]
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "examples": ["authentication", "authorization", "data-access", "data-modification", "system-config"]
+        },
+        "resource": {
+          "type": "string"
+        },
+        "result": {
+          "type": "string",
+          "enum": ["success", "failure", "partial"]
+        }
+      }
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 5000
+    },
+    "details": {
+      "type": "object",
+      "description": "Additional event-specific details"
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "stackTrace": {
+          "type": "string"
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "duration": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Duration in milliseconds"
+        },
+        "memoryUsage": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Memory usage in bytes"
+        },
+        "cpuUsage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "CPU usage percentage"
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "correlationId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "For correlating related events"
+    },
+    "parentEventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "For event chaining"
+    }
+  }
+}

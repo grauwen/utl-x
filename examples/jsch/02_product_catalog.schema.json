@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/product-catalog.schema.json",
+  "title": "Product Catalog Entry",
+  "description": "Product catalog schema for e-commerce platforms",
+  "type": "object",
+  "required": ["sku", "name", "price", "status"],
+  "properties": {
+    "sku": {
+      "type": "string",
+      "description": "Stock Keeping Unit - unique product identifier",
+      "pattern": "^[A-Z0-9-]{8,20}$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Product display name",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "description": "Full product description",
+      "maxLength": 5000
+    },
+    "category": {
+      "type": "object",
+      "required": ["primary"],
+      "properties": {
+        "primary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "secondary": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "brand": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "manufacturer": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "price": {
+      "type": "object",
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true,
+          "multipleOf": 0.01
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "msrp": {
+          "type": "number",
+          "minimum": 0
+        },
+        "salePrice": {
+          "type": "number",
+          "minimum": 0
+        },
+        "taxIncluded": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "required": ["quantity"],
+      "properties": {
+        "quantity": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reserved": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "reorderLevel": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warehouse": {
+          "type": "string"
+        }
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "properties": {
+        "weight": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Weight in kilograms"
+        },
+        "length": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Length in centimeters"
+        },
+        "width": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Width in centimeters"
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Height in centimeters"
+        }
+      }
+    },
+    "images": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["url", "altText"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "altText": {
+            "type": "string",
+            "minLength": 1
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "attributes": {
+      "type": "object",
+      "description": "Product-specific attributes",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "inactive", "discontinued", "coming-soon"],
+      "default": "active"
+    },
+    "ratings": {
+      "type": "object",
+      "properties": {
+        "average": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

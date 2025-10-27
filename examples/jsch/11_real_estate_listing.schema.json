@@ -1,0 +1,264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/real-estate-listing.schema.json",
+  "title": "Real Estate Listing",
+  "description": "Real estate property listing schema for MLS and real estate platforms",
+  "type": "object",
+  "required": ["listingId", "property", "price", "status"],
+  "properties": {
+    "listingId": {
+      "type": "string",
+      "pattern": "^MLS-[0-9]{8}$"
+    },
+    "property": {
+      "type": "object",
+      "required": ["address", "propertyType"],
+      "properties": {
+        "address": {
+          "type": "object",
+          "required": ["street", "city", "state", "postalCode", "country"],
+          "properties": {
+            "street": {
+              "type": "string",
+              "minLength": 1
+            },
+            "unit": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string",
+              "minLength": 1
+            },
+            "state": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 2
+            },
+            "postalCode": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string",
+              "pattern": "^[A-Z]{2,3}$"
+            }
+          }
+        },
+        "propertyType": {
+          "type": "string",
+          "enum": ["single-family", "condo", "townhouse", "multi-family", "land", "commercial"]
+        },
+        "bedrooms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bathrooms": {
+          "type": "number",
+          "minimum": 0,
+          "multipleOf": 0.5
+        },
+        "squareFeet": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lotSize": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Lot size in acres"
+        },
+        "yearBuilt": {
+          "type": "integer",
+          "minimum": 1800,
+          "maximum": 2100
+        },
+        "stories": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "garage": {
+          "type": "object",
+          "properties": {
+            "spaces": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["attached", "detached", "carport", "none"]
+            }
+          }
+        }
+      }
+    },
+    "price": {
+      "type": "object",
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "pricePerSquareFoot": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "listingAgent": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "licenseNumber": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "brokerage": {
+          "type": "string"
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "pending", "sold", "withdrawn", "expired"]
+    },
+    "listingDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "interior": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["hardwood floors", "granite countertops", "stainless steel appliances"]]
+        },
+        "exterior": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["patio", "deck", "fenced yard"]]
+        },
+        "amenities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["pool", "gym", "clubhouse"]]
+        }
+      }
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 5000
+    },
+    "images": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "caption": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "virtualTourUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "hoa": {
+      "type": "object",
+      "properties": {
+        "fee": {
+          "type": "number",
+          "minimum": 0
+        },
+        "frequency": {
+          "type": "string",
+          "enum": ["monthly", "quarterly", "annually"]
+        },
+        "includes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "taxes": {
+      "type": "object",
+      "properties": {
+        "annualAmount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2000
+        }
+      }
+    },
+    "openHouses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "startDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDateTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "daysOnMarket": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "viewCount": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

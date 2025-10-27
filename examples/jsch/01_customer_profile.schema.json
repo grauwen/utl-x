@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/customer-profile.schema.json",
+  "title": "Customer Profile",
+  "description": "Customer profile schema for CRM and e-commerce systems",
+  "type": "object",
+  "required": ["customerId", "email", "customerType", "createdAt"],
+  "properties": {
+    "customerId": {
+      "type": "string",
+      "description": "Unique customer identifier",
+      "pattern": "^CUST-[0-9]{4}-[0-9]{6}$",
+      "examples": ["CUST-2024-123456"]
+    },
+    "customerType": {
+      "type": "string",
+      "description": "Type of customer account",
+      "enum": ["individual", "business", "government", "non-profit"]
+    },
+    "firstName": {
+      "type": "string",
+      "description": "First name (for individual customers)",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "lastName": {
+      "type": "string",
+      "description": "Last name (for individual customers)",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "companyName": {
+      "type": "string",
+      "description": "Company name (for business customers)",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "email": {
+      "type": "string",
+      "description": "Primary email address",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Primary phone number",
+      "pattern": "^\\+?[1-9]\\d{1,14}$"
+    },
+    "address": {
+      "type": "object",
+      "description": "Primary mailing address",
+      "required": ["street", "city", "country"],
+      "properties": {
+        "street": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "state": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "postalCode": {
+          "type": "string",
+          "pattern": "^[A-Z0-9\\s-]{3,10}$"
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2,3}$",
+          "description": "ISO 3166-1 alpha-2 or alpha-3 country code"
+        }
+      }
+    },
+    "loyaltyTier": {
+      "type": "string",
+      "description": "Customer loyalty tier",
+      "enum": ["bronze", "silver", "gold", "platinum"],
+      "default": "bronze"
+    },
+    "lifetimeValue": {
+      "type": "number",
+      "description": "Total lifetime customer value in USD",
+      "minimum": 0,
+      "multipleOf": 0.01
+    },
+    "accountStatus": {
+      "type": "string",
+      "description": "Account status",
+      "enum": ["active", "inactive", "suspended", "closed"],
+      "default": "active"
+    },
+    "preferences": {
+      "type": "object",
+      "description": "Customer preferences",
+      "properties": {
+        "emailMarketing": {
+          "type": "boolean",
+          "default": false
+        },
+        "smsMarketing": {
+          "type": "boolean",
+          "default": false
+        },
+        "language": {
+          "type": "string",
+          "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+          "default": "en-US"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "default": "USD"
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "description": "Customer tags for segmentation",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50
+      },
+      "uniqueItems": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional custom metadata",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Account creation timestamp",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Last update timestamp",
+      "format": "date-time"
+    }
+  },
+  "if": {
+    "properties": {
+      "customerType": {
+        "const": "individual"
+      }
+    }
+  },
+  "then": {
+    "required": ["firstName", "lastName"]
+  },
+  "else": {
+    "if": {
+      "properties": {
+        "customerType": {
+          "enum": ["business", "government", "non-profit"]
+        }
+      }
+    },
+    "then": {
+      "required": ["companyName"]
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "apiVersion": "v1",
+  "method": "GET",
+  "resource": "/api/customers",
+  "request": {
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "Accept": "application/json",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    },
+    "queryParams": {
+      "status": "active",
+      "loyaltyTier": ["gold", "platinum"],
+      "page": "1",
+      "pageSize": "20"
+    }
+  },
+  "response": {
+    "statusCode": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "X-Request-Id": "550e8400-e29b-41d4-a716-446655440000",
+      "X-Rate-Limit-Remaining": "99"
+    },
+    "body": {
+      "data": [
+        {
+          "customerId": "CUST-2024-001234",
+          "name": "Sarah Johnson",
+          "email": "sarah.johnson@example.com",
+          "loyaltyTier": "gold"
+        },
+        {
+          "customerId": "CUST-2024-001235",
+          "name": "John Doe",
+          "email": "john.doe@example.com",
+          "loyaltyTier": "platinum"
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "requestId": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2024-10-27T12:00:00Z",
+    "clientIp": "192.168.1.100",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "responseTime": 45.3
+  },
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "totalItems": 150,
+    "totalPages": 8,
+    "hasNext": true,
+    "hasPrevious": false
+  }
+}

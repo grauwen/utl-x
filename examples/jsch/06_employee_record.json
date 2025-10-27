@@ -1,0 +1,76 @@
+{
+  "employeeId": "EMP-2024-789",
+  "personalInfo": {
+    "firstName": "Michael",
+    "middleName": "James",
+    "lastName": "Chen",
+    "dateOfBirth": "1994-01-15",
+    "gender": "male",
+    "email": "michael.chen@example.com",
+    "phone": "+15550199"
+  },
+  "address": {
+    "street": "456 Oak Avenue, Unit 12",
+    "city": "Seattle",
+    "state": "WA",
+    "postalCode": "98101",
+    "country": "US"
+  },
+  "employment": {
+    "startDate": "2023-01-15",
+    "employmentType": "full-time",
+    "status": "active"
+  },
+  "position": {
+    "title": "Senior Software Engineer",
+    "department": "Engineering",
+    "division": "Product Development",
+    "location": "Seattle HQ",
+    "reportsTo": "EMP-2020-345"
+  },
+  "compensation": {
+    "baseSalary": 145000.00,
+    "currency": "USD",
+    "payFrequency": "biweekly",
+    "bonus": 20000.00,
+    "commission": 0
+  },
+  "benefits": [
+    {
+      "type": "health-insurance",
+      "enrolled": true,
+      "provider": "Blue Cross Blue Shield"
+    },
+    {
+      "type": "dental-insurance",
+      "enrolled": true,
+      "provider": "Delta Dental"
+    },
+    {
+      "type": "retirement-401k",
+      "enrolled": true,
+      "provider": "Fidelity"
+    },
+    {
+      "type": "stock-options",
+      "enrolled": true
+    }
+  ],
+  "skills": [
+    "Java",
+    "Kotlin",
+    "Python",
+    "AWS",
+    "Kubernetes",
+    "Microservices"
+  ],
+  "emergencyContact": {
+    "name": "Lisa Chen",
+    "relationship": "Spouse",
+    "phone": "+15550200",
+    "email": "lisa.chen@example.com"
+  },
+  "performanceRating": "exceeds",
+  "createdAt": "2023-01-01T00:00:00Z",
+  "updatedAt": "2024-10-27T12:00:00Z"
+}
