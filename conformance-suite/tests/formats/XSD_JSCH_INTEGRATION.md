@@ -270,7 +270,7 @@ EOF
 
 ### Short Term (Weeks)
 
-1. **Implement metadata access** - Support `$input.__metadata` in interpreter
+1. **Implement metadata access** - Support `$input.^` in interpreter
 2. **Add missing stdlib functions**:
    - `hasKey(obj, key)` - May already exist as `has()` or similar
    - `keys(obj)` - Get object property names
