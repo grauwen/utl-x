@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Product xmlns="http://example.com/schemas/product"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://example.com/schemas/product 04_product_catalog.xsd">
+
+  <ProductID>PRD-123456</ProductID>
+  <SKU>LAPTOP-XPS15-512GB</SKU>
+  <Name>Dell XPS 15 Laptop - 15.6" 4K OLED, Intel i7, 16GB RAM, 512GB SSD</Name>
+  <Description>Premium ultraportable laptop featuring stunning 4K OLED display, 11th Gen Intel Core i7 processor, 16GB DDR4 RAM, and ultra-fast 512GB NVMe SSD. Perfect for professionals and content creators.</Description>
+
+  <Category>
+    <CategoryID>CAT-001</CategoryID>
+    <CategoryName>Laptops</CategoryName>
+    <CategoryPath>Electronics > Computers > Laptops</CategoryPath>
+  </Category>
+
+  <Brand>Dell</Brand>
+
+  <Pricing>
+    <Currency>USD</Currency>
+    <BasePrice>1899.99</BasePrice>
+    <SalePrice>1699.99</SalePrice>
+    <MSRP>2199.99</MSRP>
+    <CostPrice>1350.00</CostPrice>
+    <TaxRate>8.75</TaxRate>
+    <SaleStartDate>2024-10-20</SaleStartDate>
+    <SaleEndDate>2024-11-30</SaleEndDate>
+  </Pricing>
+
+  <Inventory>
+    <Warehouse>
+      <WarehouseID>WH-001</WarehouseID>
+      <WarehouseName>West Coast Distribution Center</WarehouseName>
+      <Available>45</Available>
+      <Reserved>12</Reserved>
+    </Warehouse>
+    <Warehouse>
+      <WarehouseID>WH-002</WarehouseID>
+      <WarehouseName>East Coast Distribution Center</WarehouseName>
+      <Available>38</Available>
+      <Reserved>8</Reserved>
+    </Warehouse>
+    <TotalAvailable>83</TotalAvailable>
+    <TotalReserved>20</TotalReserved>
+    <ReorderPoint>25</ReorderPoint>
+    <ReorderQuantity>50</ReorderQuantity>
+  </Inventory>
+
+  <Dimensions>
+    <Length>13.57</Length>
+    <Width>9.06</Width>
+    <Height>0.71</Height>
+    <Unit>in</Unit>
+  </Dimensions>
+
+  <Weight>
+    <Value>4.5</Value>
+    <Unit>lb</Unit>
+  </Weight>
+
+  <Images>
+    <Image>
+      <URL>https://cdn.example.com/products/laptop-xps15-front.jpg</URL>
+      <Alt>Dell XPS 15 Laptop - Front View</Alt>
+      <IsPrimary>true</IsPrimary>
+      <SortOrder>1</SortOrder>
+    </Image>
+    <Image>
+      <URL>https://cdn.example.com/products/laptop-xps15-side.jpg</URL>
+      <Alt>Dell XPS 15 Laptop - Side Profile</Alt>
+      <IsPrimary>false</IsPrimary>
+      <SortOrder>2</SortOrder>
+    </Image>
+    <Image>
+      <URL>https://cdn.example.com/products/laptop-xps15-open.jpg</URL>
+      <Alt>Dell XPS 15 Laptop - Display Open</Alt>
+      <IsPrimary>false</IsPrimary>
+      <SortOrder>3</SortOrder>
+    </Image>
+  </Images>
+
+  <Attributes>
+    <Attribute>
+      <Name>Processor</Name>
+      <Value>Intel Core i7-11800H (11th Gen)</Value>
+    </Attribute>
+    <Attribute>
+      <Name>RAM</Name>
+      <Value>16GB DDR4</Value>
+    </Attribute>
+    <Attribute>
+      <Name>Storage</Name>
+      <Value>512GB NVMe SSD</Value>
+    </Attribute>
+    <Attribute>
+      <Name>Display</Name>
+      <Value>15.6" 4K OLED (3840x2160)</Value>
+    </Attribute>
+    <Attribute>
+      <Name>Graphics</Name>
+      <Value>NVIDIA GeForce GTX 1650 Ti 4GB</Value>
+    </Attribute>
+    <Attribute>
+      <Name>Operating System</Name>
+      <Value>Windows 11 Pro</Value>
+    </Attribute>
+    <Attribute>
+      <Name>Battery Life</Name>
+      <Value>Up to 8 hours</Value>
+    </Attribute>
+    <Attribute>
+      <Name>Color</Name>
+      <Value>Platinum Silver</Value>
+    </Attribute>
+  </Attributes>
+
+  <RelatedProducts>
+    <RelatedProduct>
+      <ProductID>PRD-123457</ProductID>
+      <RelationType>accessory</RelationType>
+    </RelatedProduct>
+    <RelatedProduct>
+      <ProductID>PRD-123460</ProductID>
+      <RelationType>bundle</RelationType>
+    </RelatedProduct>
+    <RelatedProduct>
+      <ProductID>PRD-123500</ProductID>
+      <RelationType>alternative</RelationType>
+    </RelatedProduct>
+  </RelatedProducts>
+
+  <Status>active</Status>
+
+  <Metadata>
+    <CreatedAt>2024-09-15T10:00:00Z</CreatedAt>
+    <UpdatedAt>2024-10-27T14:30:00Z</UpdatedAt>
+    <CreatedBy>product-manager-001</CreatedBy>
+    <UpdatedBy>product-manager-003</UpdatedBy>
+  </Metadata>
+
+</Product>

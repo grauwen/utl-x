@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:crm="http://example.com/schemas/customer"
+           targetNamespace="http://example.com/schemas/customer"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Customer Record Schema for CRM and customer management systems.
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Element -->
+  <xs:element name="Customer" type="crm:CustomerType"/>
+
+  <!-- Main Customer Type -->
+  <xs:complexType name="CustomerType">
+    <xs:sequence>
+      <xs:element name="CustomerID" type="crm:CustomerIDType"/>
+      <xs:element name="CustomerType" type="crm:CustomerTypeEnum"/>
+      <xs:element name="PersonalInfo" type="crm:PersonalInfoType" minOccurs="0"/>
+      <xs:element name="CompanyInfo" type="crm:CompanyInfoType" minOccurs="0"/>
+      <xs:element name="ContactInfo" type="crm:ContactInfoType"/>
+      <xs:element name="Addresses" type="crm:AddressesType"/>
+      <xs:element name="LoyaltyInfo" type="crm:LoyaltyInfoType" minOccurs="0"/>
+      <xs:element name="Preferences" type="crm:PreferencesType" minOccurs="0"/>
+      <xs:element name="AccountStatus" type="crm:AccountStatusType"/>
+      <xs:element name="Metadata" type="crm:MetadataType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Personal Information (for individual customers) -->
+  <xs:complexType name="PersonalInfoType">
+    <xs:sequence>
+      <xs:element name="FirstName" type="xs:string"/>
+      <xs:element name="MiddleName" type="xs:string" minOccurs="0"/>
+      <xs:element name="LastName" type="xs:string"/>
+      <xs:element name="DateOfBirth" type="xs:date" minOccurs="0"/>
+      <xs:element name="Gender" type="crm:GenderType" minOccurs="0"/>
+      <xs:element name="Title" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Company Information (for business customers) -->
+  <xs:complexType name="CompanyInfoType">
+    <xs:sequence>
+      <xs:element name="CompanyName" type="xs:string"/>
+      <xs:element name="TaxID" type="xs:string"/>
+      <xs:element name="Industry" type="xs:string" minOccurs="0"/>
+      <xs:element name="NumberOfEmployees" type="xs:positiveInteger" minOccurs="0"/>
+      <xs:element name="AnnualRevenue" type="xs:decimal" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Contact Information -->
+  <xs:complexType name="ContactInfoType">
+    <xs:sequence>
+      <xs:element name="PrimaryEmail" type="crm:EmailType"/>
+      <xs:element name="SecondaryEmail" type="crm:EmailType" minOccurs="0"/>
+      <xs:element name="PrimaryPhone" type="crm:PhoneType"/>
+      <xs:element name="MobilePhone" type="crm:PhoneType" minOccurs="0"/>
+      <xs:element name="WorkPhone" type="crm:PhoneType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Addresses -->
+  <xs:complexType name="AddressesType">
+    <xs:sequence>
+      <xs:element name="Address" type="crm:AddressType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="AddressType" type="crm:AddressTypeEnum"/>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="Unit" type="xs:string" minOccurs="0"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="PostalCode" type="xs:string"/>
+      <xs:element name="Country" type="crm:CountryCodeType"/>
+      <xs:element name="IsPrimary" type="xs:boolean" default="false"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Loyalty Information -->
+  <xs:complexType name="LoyaltyInfoType">
+    <xs:sequence>
+      <xs:element name="LoyaltyNumber" type="xs:string"/>
+      <xs:element name="LoyaltyTier" type="crm:LoyaltyTierType"/>
+      <xs:element name="PointsBalance" type="xs:nonNegativeInteger"/>
+      <xs:element name="LifetimeValue" type="xs:decimal"/>
+      <xs:element name="MemberSince" type="xs:date"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Customer Preferences -->
+  <xs:complexType name="PreferencesType">
+    <xs:sequence>
+      <xs:element name="CommunicationChannel" type="crm:CommunicationChannelType" maxOccurs="unbounded"/>
+      <xs:element name="Language" type="xs:string"/>
+      <xs:element name="Currency" type="crm:CurrencyCodeType"/>
+      <xs:element name="OptInNewsletter" type="xs:boolean"/>
+      <xs:element name="OptInSMS" type="xs:boolean"/>
+      <xs:element name="OptInPhone" type="xs:boolean"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Account Status -->
+  <xs:complexType name="AccountStatusType">
+    <xs:sequence>
+      <xs:element name="Status" type="crm:StatusEnum"/>
+      <xs:element name="CreditLimit" type="xs:decimal" minOccurs="0"/>
+      <xs:element name="CurrentBalance" type="xs:decimal" minOccurs="0"/>
+      <xs:element name="PaymentTerms" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Metadata -->
+  <xs:complexType name="MetadataType">
+    <xs:sequence>
+      <xs:element name="CreatedAt" type="xs:dateTime"/>
+      <xs:element name="CreatedBy" type="xs:string"/>
+      <xs:element name="UpdatedAt" type="xs:dateTime"/>
+      <xs:element name="UpdatedBy" type="xs:string"/>
+      <xs:element name="Source" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types and Enumerations -->
+
+  <xs:simpleType name="CustomerIDType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="CUST-[0-9]{4}-[0-9]{6}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CustomerTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="individual"/>
+      <xs:enumeration value="business"/>
+      <xs:enumeration value="government"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="GenderType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="male"/>
+      <xs:enumeration value="female"/>
+      <xs:enumeration value="other"/>
+      <xs:enumeration value="prefer-not-to-say"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="AddressTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="home"/>
+      <xs:enumeration value="work"/>
+      <xs:enumeration value="billing"/>
+      <xs:enumeration value="shipping"/>
+      <xs:enumeration value="other"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="LoyaltyTierType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="bronze"/>
+      <xs:enumeration value="silver"/>
+      <xs:enumeration value="gold"/>
+      <xs:enumeration value="platinum"/>
+      <xs:enumeration value="diamond"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CommunicationChannelType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="email"/>
+      <xs:enumeration value="sms"/>
+      <xs:enumeration value="phone"/>
+      <xs:enumeration value="mail"/>
+      <xs:enumeration value="mobile-app"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="StatusEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="active"/>
+      <xs:enumeration value="inactive"/>
+      <xs:enumeration value="suspended"/>
+      <xs:enumeration value="closed"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmailType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@]+@[^\.]+\..+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PhoneType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\+[0-9]{1,15}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CountryCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CurrencyCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:cfg="http://example.com/schemas/configuration"
+           targetNamespace="http://example.com/schemas/configuration"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Application Configuration Schema for system configuration management.
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:element name="Configuration" type="cfg:ConfigurationType"/>
+
+  <xs:complexType name="ConfigurationType">
+    <xs:sequence>
+      <xs:element name="Environment" type="cfg:EnvironmentType"/>
+      <xs:element name="Database" type="cfg:DatabaseType"/>
+      <xs:element name="Server" type="cfg:ServerType"/>
+      <xs:element name="Logging" type="cfg:LoggingType"/>
+      <xs:element name="Cache" type="cfg:CacheType" minOccurs="0"/>
+      <xs:element name="Security" type="cfg:SecurityType"/>
+      <xs:element name="FeatureFlags" type="cfg:FeatureFlagsType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="DatabaseType">
+    <xs:sequence>
+      <xs:element name="Host" type="xs:string"/>
+      <xs:element name="Port" type="cfg:PortType"/>
+      <xs:element name="DatabaseName" type="xs:string"/>
+      <xs:element name="Username" type="xs:string"/>
+      <xs:element name="Password" type="xs:string"/>
+      <xs:element name="Type" type="cfg:DatabaseTypeEnum"/>
+      <xs:element name="PoolSize" type="xs:positiveInteger"/>
+      <xs:element name="SSL" type="xs:boolean" default="true"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ServerType">
+    <xs:sequence>
+      <xs:element name="Host" type="xs:string"/>
+      <xs:element name="Port" type="cfg:PortType"/>
+      <xs:element name="ContextPath" type="xs:string" minOccurs="0"/>
+      <xs:element name="MaxThreads" type="xs:positiveInteger"/>
+      <xs:element name="CORS" type="cfg:CORSType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CORSType">
+    <xs:sequence>
+      <xs:element name="AllowedOrigins" type="cfg:StringListType"/>
+      <xs:element name="AllowedMethods" type="cfg:StringListType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="StringListType">
+    <xs:sequence>
+      <xs:element name="Value" type="xs:string" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="LoggingType">
+    <xs:sequence>
+      <xs:element name="Level" type="cfg:LogLevelType"/>
+      <xs:element name="OutputFile" type="xs:string" minOccurs="0"/>
+      <xs:element name="MaxFileSize" type="xs:string" minOccurs="0"/>
+      <xs:element name="Console" type="xs:boolean" default="true"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CacheType">
+    <xs:sequence>
+      <xs:element name="Provider" type="cfg:CacheProviderType"/>
+      <xs:element name="TTL" type="xs:positiveInteger"/><!-- Time to live in seconds -->
+      <xs:element name="MaxSize" type="xs:positiveInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SecurityType">
+    <xs:sequence>
+      <xs:element name="JWTSecret" type="xs:string"/>
+      <xs:element name="JWTExpirationHours" type="xs:positiveInteger"/>
+      <xs:element name="EnableHTTPS" type="xs:boolean"/>
+      <xs:element name="AllowedHosts" type="cfg:StringListType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="FeatureFlagsType">
+    <xs:sequence>
+      <xs:element name="Feature" type="cfg:FeatureFlagType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="FeatureFlagType">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="Enabled" type="xs:boolean"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="EnvironmentType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="development"/>
+      <xs:enumeration value="staging"/>
+      <xs:enumeration value="production"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DatabaseTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="postgresql"/>
+      <xs:enumeration value="mysql"/>
+      <xs:enumeration value="mongodb"/>
+      <xs:enumeration value="redis"/>
+      <xs:enumeration value="oracle"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="LogLevelType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="debug"/>
+      <xs:enumeration value="info"/>
+      <xs:enumeration value="warn"/>
+      <xs:enumeration value="error"/>
+      <xs:enumeration value="fatal"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CacheProviderType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="memory"/>
+      <xs:enumeration value="redis"/>
+      <xs:enumeration value="memcached"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PortType">
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="1"/>
+      <xs:maxInclusive value="65535"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

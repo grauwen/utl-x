@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="http://example.com/schemas/invoice"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://example.com/schemas/invoice 03_invoice.xsd">
+
+  <InvoiceHeader>
+    <InvoiceNumber>INV-2024-123456</InvoiceNumber>
+    <InvoiceDate>2024-10-27</InvoiceDate>
+    <DueDate>2024-11-26</DueDate>
+    <PurchaseOrderNumber>PO-2024-789456</PurchaseOrderNumber>
+    <Currency>USD</Currency>
+    <Status>sent</Status>
+  </InvoiceHeader>
+
+  <Seller>
+    <PartyID>SELLER-001</PartyID>
+    <Name>Acme Corporation</Name>
+    <TaxID>12-3456789</TaxID>
+    <Address>
+      <Street>123 Business Drive</Street>
+      <City>New York</City>
+      <State>NY</State>
+      <PostalCode>10001</PostalCode>
+      <Country>US</Country>
+    </Address>
+    <Email>billing@acmecorp.example.com</Email>
+    <Phone>+12125551234</Phone>
+  </Seller>
+
+  <Buyer>
+    <PartyID>BUYER-456</PartyID>
+    <Name>Tech Solutions Inc.</Name>
+    <TaxID>98-7654321</TaxID>
+    <Address>
+      <Street>456 Technology Plaza</Street>
+      <City>San Francisco</City>
+      <State>CA</State>
+      <PostalCode>94102</PostalCode>
+      <Country>US</Country>
+    </Address>
+    <Email>accounts-payable@techsolutions.example.com</Email>
+    <Phone>+14155559876</Phone>
+  </Buyer>
+
+  <LineItems>
+    <LineItem>
+      <LineNumber>1</LineNumber>
+      <Description>Professional Services - Software Development (80 hours)</Description>
+      <Quantity>80</Quantity>
+      <UnitPrice>150.00</UnitPrice>
+      <Subtotal>12000.00</Subtotal>
+      <TaxRate>8.75</TaxRate>
+      <TaxAmount>1050.00</TaxAmount>
+      <LineTotal>13050.00</LineTotal>
+    </LineItem>
+    <LineItem>
+      <LineNumber>2</LineNumber>
+      <Description>Annual Software License - Enterprise Plan</Description>
+      <Quantity>1</Quantity>
+      <UnitPrice>5000.00</UnitPrice>
+      <Subtotal>5000.00</Subtotal>
+      <TaxRate>8.75</TaxRate>
+      <TaxAmount>437.50</TaxAmount>
+      <LineTotal>5437.50</LineTotal>
+    </LineItem>
+    <LineItem>
+      <LineNumber>3</LineNumber>
+      <Description>Cloud Hosting Services - October 2024</Description>
+      <Quantity>1</Quantity>
+      <UnitPrice>500.00</UnitPrice>
+      <Subtotal>500.00</Subtotal>
+      <TaxRate>8.75</TaxRate>
+      <TaxAmount>43.75</TaxAmount>
+      <LineTotal>543.75</LineTotal>
+    </LineItem>
+  </LineItems>
+
+  <Summary>
+    <Subtotal>17500.00</Subtotal>
+    <TotalTax>1531.25</TotalTax>
+    <ShippingCost>0.00</ShippingCost>
+    <Discount>0.00</Discount>
+    <TotalAmount>19031.25</TotalAmount>
+    <AmountPaid>0.00</AmountPaid>
+    <AmountDue>19031.25</AmountDue>
+  </Summary>
+
+  <PaymentInfo>
+    <PaymentTerms>Net 30</PaymentTerms>
+    <PaymentMethod>wire-transfer</PaymentMethod>
+    <BankAccount>
+      <BankName>First National Bank</BankName>
+      <AccountNumber>1234567890</AccountNumber>
+      <RoutingNumber>021000021</RoutingNumber>
+      <SWIFT>FNBAUS33</SWIFT>
+    </BankAccount>
+  </PaymentInfo>
+
+  <Notes>Thank you for your business. Payment is due within 30 days. Please reference invoice number on payment.</Notes>
+
+  <Attachments>
+    <Attachment>
+      <FileName>service-agreement.pdf</FileName>
+      <MimeType>application/pdf</MimeType>
+      <Size>245678</Size>
+      <URL>https://storage.example.com/attachments/service-agreement.pdf</URL>
+    </Attachment>
+  </Attachments>
+
+</Invoice>

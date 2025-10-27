@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BankTransaction xmlns="http://example.com/schemas/bank-transaction"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://example.com/schemas/bank-transaction 09_bank_transaction.xsd">
+
+  <TransactionID>TXN-20241027-A1B2C3D4</TransactionID>
+  <TransactionType>payment</TransactionType>
+  <TransactionDate>2024-10-27T14:35:22Z</TransactionDate>
+  <Amount>145.75</Amount>
+  <Currency>USD</Currency>
+
+  <FromAccount>
+    <AccountNumber>****5678</AccountNumber>
+    <AccountHolderName>Jennifer Martinez</AccountHolderName>
+    <BankName>First National Bank</BankName>
+    <RoutingNumber>021000021</RoutingNumber>
+  </FromAccount>
+
+  <ToAccount>
+    <AccountNumber>MERCHANT-ACC-123</AccountNumber>
+    <AccountHolderName>Coffee House Downtown</AccountHolderName>
+    <BankName>Merchant Services Bank</BankName>
+  </ToAccount>
+
+  <Status>completed</Status>
+  <Channel>pos</Channel>
+  <Description>Debit card purchase at Coffee House Downtown</Description>
+
+  <Merchant>
+    <MerchantName>Coffee House Downtown</MerchantName>
+    <MerchantID>MERCH-789456</MerchantID>
+    <MCC>5814</MCC><!-- Fast Food Restaurants -->
+    <Address>
+      <City>San Francisco</City>
+      <State>CA</State>
+      <Country>US</Country>
+    </Address>
+  </Merchant>
+
+  <Location>
+    <Latitude>37.7749</Latitude>
+    <Longitude>-122.4194</Longitude>
+  </Location>
+
+</BankTransaction>

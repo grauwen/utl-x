@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:hl7="http://example.com/schemas/healthcare-patient"
+           targetNamespace="http://example.com/schemas/healthcare-patient"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Healthcare Patient Record Schema (HIPAA compliant).
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Element -->
+  <xs:element name="PatientRecord" type="hl7:PatientRecordType"/>
+
+  <!-- Main Patient Record Type -->
+  <xs:complexType name="PatientRecordType">
+    <xs:sequence>
+      <xs:element name="MedicalRecordNumber" type="hl7:MRNType"/>
+      <xs:element name="Demographics" type="hl7:DemographicsType"/>
+      <xs:element name="Insurance" type="hl7:InsuranceType" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="Allergies" type="hl7:AllergiesType" minOccurs="0"/>
+      <xs:element name="Conditions" type="hl7:ConditionsType" minOccurs="0"/>
+      <xs:element name="Medications" type="hl7:MedicationsType" minOccurs="0"/>
+      <xs:element name="Immunizations" type="hl7:ImmunizationsType" minOccurs="0"/>
+      <xs:element name="VitalSigns" type="hl7:VitalSignsType" minOccurs="0"/>
+      <xs:element name="EmergencyContact" type="hl7:EmergencyContactType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Demographics -->
+  <xs:complexType name="DemographicsType">
+    <xs:sequence>
+      <xs:element name="FirstName" type="xs:string"/>
+      <xs:element name="MiddleName" type="xs:string" minOccurs="0"/>
+      <xs:element name="LastName" type="xs:string"/>
+      <xs:element name="DateOfBirth" type="xs:date"/>
+      <xs:element name="Gender" type="hl7:GenderType"/>
+      <xs:element name="SSN" type="hl7:SSNType" minOccurs="0"/>
+      <xs:element name="Address" type="hl7:AddressType"/>
+      <xs:element name="Phone" type="hl7:PhoneType"/>
+      <xs:element name="Email" type="hl7:EmailType" minOccurs="0"/>
+      <xs:element name="PreferredLanguage" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Address -->
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="PostalCode" type="xs:string"/>
+      <xs:element name="Country" type="hl7:CountryCodeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Insurance -->
+  <xs:complexType name="InsuranceType">
+    <xs:sequence>
+      <xs:element name="InsuranceName" type="xs:string"/>
+      <xs:element name="PolicyNumber" type="xs:string"/>
+      <xs:element name="GroupNumber" type="xs:string" minOccurs="0"/>
+      <xs:element name="EffectiveDate" type="xs:date"/>
+      <xs:element name="ExpirationDate" type="xs:date" minOccurs="0"/>
+      <xs:element name="IsPrimary" type="xs:boolean"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Allergies -->
+  <xs:complexType name="AllergiesType">
+    <xs:sequence>
+      <xs:element name="Allergy" type="hl7:AllergyType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AllergyType">
+    <xs:sequence>
+      <xs:element name="Allergen" type="xs:string"/>
+      <xs:element name="Reaction" type="xs:string"/>
+      <xs:element name="Severity" type="hl7:SeverityType"/>
+      <xs:element name="OnsetDate" type="xs:date" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Conditions -->
+  <xs:complexType name="ConditionsType">
+    <xs:sequence>
+      <xs:element name="Condition" type="hl7:ConditionType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ConditionType">
+    <xs:sequence>
+      <xs:element name="ConditionName" type="xs:string"/>
+      <xs:element name="ICD10Code" type="xs:string"/>
+      <xs:element name="DiagnosisDate" type="xs:date"/>
+      <xs:element name="Status" type="hl7:ConditionStatusType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Medications -->
+  <xs:complexType name="MedicationsType">
+    <xs:sequence>
+      <xs:element name="Medication" type="hl7:MedicationType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="MedicationType">
+    <xs:sequence>
+      <xs:element name="MedicationName" type="xs:string"/>
+      <xs:element name="Dosage" type="xs:string"/>
+      <xs:element name="Frequency" type="xs:string"/>
+      <xs:element name="StartDate" type="xs:date"/>
+      <xs:element name="EndDate" type="xs:date" minOccurs="0"/>
+      <xs:element name="Prescriber" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Immunizations -->
+  <xs:complexType name="ImmunizationsType">
+    <xs:sequence>
+      <xs:element name="Immunization" type="hl7:ImmunizationType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ImmunizationType">
+    <xs:sequence>
+      <xs:element name="VaccineName" type="xs:string"/>
+      <xs:element name="CVXCode" type="xs:string" minOccurs="0"/>
+      <xs:element name="DateAdministered" type="xs:date"/>
+      <xs:element name="LotNumber" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Vital Signs -->
+  <xs:complexType name="VitalSignsType">
+    <xs:sequence>
+      <xs:element name="RecordedDate" type="xs:dateTime"/>
+      <xs:element name="Height" type="hl7:HeightType" minOccurs="0"/>
+      <xs:element name="Weight" type="hl7:WeightType" minOccurs="0"/>
+      <xs:element name="BloodPressure" type="hl7:BloodPressureType" minOccurs="0"/>
+      <xs:element name="HeartRate" type="xs:positiveInteger" minOccurs="0"/>
+      <xs:element name="Temperature" type="hl7:TemperatureType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="HeightType">
+    <xs:sequence>
+      <xs:element name="Value" type="xs:decimal"/>
+      <xs:element name="Unit" type="hl7:HeightUnitType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="WeightType">
+    <xs:sequence>
+      <xs:element name="Value" type="xs:decimal"/>
+      <xs:element name="Unit" type="hl7:WeightUnitType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BloodPressureType">
+    <xs:sequence>
+      <xs:element name="Systolic" type="xs:positiveInteger"/>
+      <xs:element name="Diastolic" type="xs:positiveInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="TemperatureType">
+    <xs:sequence>
+      <xs:element name="Value" type="xs:decimal"/>
+      <xs:element name="Unit" type="hl7:TemperatureUnitType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Emergency Contact -->
+  <xs:complexType name="EmergencyContactType">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="Relationship" type="xs:string"/>
+      <xs:element name="Phone" type="hl7:PhoneType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="MRNType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="MRN-[0-9]{8}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="GenderType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="male"/>
+      <xs:enumeration value="female"/>
+      <xs:enumeration value="other"/>
+      <xs:enumeration value="unknown"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SeverityType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="mild"/>
+      <xs:enumeration value="moderate"/>
+      <xs:enumeration value="severe"/>
+      <xs:enumeration value="life-threatening"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ConditionStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="active"/>
+      <xs:enumeration value="resolved"/>
+      <xs:enumeration value="chronic"/>
+      <xs:enumeration value="remission"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="HeightUnitType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="cm"/>
+      <xs:enumeration value="in"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="WeightUnitType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="kg"/>
+      <xs:enumeration value="lb"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="TemperatureUnitType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="F"/>
+      <xs:enumeration value="C"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SSNType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]{3}-[0-9]{2}-[0-9]{4}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CountryCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmailType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@]+@[^\.]+\..+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PhoneType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\+[0-9]{1,15}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

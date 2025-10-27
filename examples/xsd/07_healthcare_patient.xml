@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PatientRecord xmlns="http://example.com/schemas/healthcare-patient"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://example.com/schemas/healthcare-patient 07_healthcare_patient.xsd">
+
+  <MedicalRecordNumber>MRN-12345678</MedicalRecordNumber>
+
+  <Demographics>
+    <FirstName>Patricia</FirstName>
+    <MiddleName>Ann</MiddleName>
+    <LastName>Anderson</LastName>
+    <DateOfBirth>1975-04-12</DateOfBirth>
+    <Gender>female</Gender>
+    <SSN>987-65-4321</SSN>
+    <Address>
+      <Street>456 Health Avenue</Street>
+      <City>Seattle</City>
+      <State>WA</State>
+      <PostalCode>98101</PostalCode>
+      <Country>US</Country>
+    </Address>
+    <Phone>+12065551234</Phone>
+    <Email>patricia.anderson@example.com</Email>
+    <PreferredLanguage>English</PreferredLanguage>
+  </Demographics>
+
+  <Insurance>
+    <InsuranceName>Blue Cross Blue Shield</InsuranceName>
+    <PolicyNumber>BCBS-123456789</PolicyNumber>
+    <GroupNumber>GRP-ABC-456</GroupNumber>
+    <EffectiveDate>2024-01-01</EffectiveDate>
+    <IsPrimary>true</IsPrimary>
+  </Insurance>
+
+  <Allergies>
+    <Allergy>
+      <Allergen>Penicillin</Allergen>
+      <Reaction>Severe rash, difficulty breathing</Reaction>
+      <Severity>severe</Severity>
+      <OnsetDate>1998-06-15</OnsetDate>
+    </Allergy>
+    <Allergy>
+      <Allergen>Peanuts</Allergen>
+      <Reaction>Hives, swelling</Reaction>
+      <Severity>moderate</Severity>
+      <OnsetDate>1980-03-22</OnsetDate>
+    </Allergy>
+  </Allergies>
+
+  <Conditions>
+    <Condition>
+      <ConditionName>Type 2 Diabetes Mellitus</ConditionName>
+      <ICD10Code>E11.9</ICD10Code>
+      <DiagnosisDate>2015-08-20</DiagnosisDate>
+      <Status>active</Status>
+    </Condition>
+    <Condition>
+      <ConditionName>Hypertension</ConditionName>
+      <ICD10Code>I10</ICD10Code>
+      <DiagnosisDate>2012-03-10</DiagnosisDate>
+      <Status>active</Status>
+    </Condition>
+  </Conditions>
+
+  <Medications>
+    <Medication>
+      <MedicationName>Metformin</MedicationName>
+      <Dosage>1000mg</Dosage>
+      <Frequency>Twice daily with meals</Frequency>
+      <StartDate>2015-08-25</StartDate>
+      <Prescriber>Dr. James Wilson, MD</Prescriber>
+    </Medication>
+    <Medication>
+      <MedicationName>Lisinopril</MedicationName>
+      <Dosage>10mg</Dosage>
+      <Frequency>Once daily in the morning</Frequency>
+      <StartDate>2012-03-15</StartDate>
+      <Prescriber>Dr. James Wilson, MD</Prescriber>
+    </Medication>
+  </Medications>
+
+  <Immunizations>
+    <Immunization>
+      <VaccineName>Influenza Vaccine</VaccineName>
+      <CVXCode>141</CVXCode>
+      <DateAdministered>2024-09-15</DateAdministered>
+      <LotNumber>FLU2024-789</LotNumber>
+    </Immunization>
+    <Immunization>
+      <VaccineName>COVID-19 Vaccine (Pfizer)</VaccineName>
+      <CVXCode>208</CVXCode>
+      <DateAdministered>2024-04-10</DateAdministered>
+      <LotNumber>PF-COVID-456</LotNumber>
+    </Immunization>
+  </Immunizations>
+
+  <VitalSigns>
+    <RecordedDate>2024-10-27T10:30:00Z</RecordedDate>
+    <Height>
+      <Value>165</Value>
+      <Unit>cm</Unit>
+    </Height>
+    <Weight>
+      <Value>72.5</Value>
+      <Unit>kg</Unit>
+    </Weight>
+    <BloodPressure>
+      <Systolic>128</Systolic>
+      <Diastolic>82</Diastolic>
+    </BloodPressure>
+    <HeartRate>72</HeartRate>
+    <Temperature>
+      <Value>98.6</Value>
+      <Unit>F</Unit>
+    </Temperature>
+  </VitalSigns>
+
+  <EmergencyContact>
+    <Name>Thomas Anderson</Name>
+    <Relationship>Spouse</Relationship>
+    <Phone>+12065555678</Phone>
+  </EmergencyContact>
+
+</PatientRecord>

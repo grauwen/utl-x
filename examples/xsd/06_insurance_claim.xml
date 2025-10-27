@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<InsuranceClaim xmlns="http://example.com/schemas/insurance-claim"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://example.com/schemas/insurance-claim 06_insurance_claim.xsd">
+
+  <ClaimNumber>CLM-2024-12345678</ClaimNumber>
+  <PolicyNumber>AUTO-789456123</PolicyNumber>
+  <ClaimType>auto</ClaimType>
+  <DateOfLoss>2024-10-15</DateOfLoss>
+  <ReportedDate>2024-10-16</ReportedDate>
+  <ClaimStatus>under-review</ClaimStatus>
+
+  <PolicyHolder>
+    <FirstName>David</FirstName>
+    <LastName>Martinez</LastName>
+    <DateOfBirth>1980-08-22</DateOfBirth>
+    <Phone>+14085551234</Phone>
+    <Email>david.martinez@example.com</Email>
+    <Address>
+      <Street>123 Maple Drive</Street>
+      <City>San Jose</City>
+      <State>CA</State>
+      <PostalCode>95110</PostalCode>
+      <Country>US</Country>
+    </Address>
+  </PolicyHolder>
+
+  <Claimant>
+    <FirstName>David</FirstName>
+    <LastName>Martinez</LastName>
+    <DateOfBirth>1980-08-22</DateOfBirth>
+    <Phone>+14085551234</Phone>
+    <Email>david.martinez@example.com</Email>
+    <Address>
+      <Street>123 Maple Drive</Street>
+      <City>San Jose</City>
+      <State>CA</State>
+      <PostalCode>95110</PostalCode>
+      <Country>US</Country>
+    </Address>
+  </Claimant>
+
+  <IncidentDetails>
+    <Location>Intersection of Main St and 1st Ave, San Jose, CA</Location>
+    <Description>Vehicle was struck on driver's side by another vehicle that ran a red light. Airbags deployed. Both vehicles sustained significant damage.</Description>
+    <PoliceReportNumber>SJPD-2024-789456</PoliceReportNumber>
+    <Witnesses>
+      <Witness>
+        <Name>Emily Chen</Name>
+        <Phone>+14085555678</Phone>
+        <Statement>I was waiting at the intersection and saw the blue sedan run the red light and hit the claimant's vehicle on the driver's side.</Statement>
+      </Witness>
+    </Witnesses>
+  </IncidentDetails>
+
+  <DamageAssessment>
+    <DamageType>collision</DamageType>
+    <Severity>major</Severity>
+    <EstimatedRepairCost>15750.00</EstimatedRepairCost>
+    <Notes>Driver's side door, front fender, and frame damage. Airbag replacement required. Vehicle may be totaled based on age and value.</Notes>
+  </DamageAssessment>
+
+  <ClaimAmount>
+    <RequestedAmount>18500.00</RequestedAmount>
+    <ApprovedAmount>17250.00</ApprovedAmount>
+    <Currency>USD</Currency>
+    <Deductible>500.00</Deductible>
+  </ClaimAmount>
+
+  <Adjuster>
+    <AdjusterID>ADJ-123</AdjusterID>
+    <Name>Robert Johnson</Name>
+    <Phone>+18005551234</Phone>
+    <Email>robert.johnson@insuranceco.example.com</Email>
+    <AssignedDate>2024-10-17</AssignedDate>
+  </Adjuster>
+
+  <Documents>
+    <Document>
+      <DocumentType>photo</DocumentType>
+      <FileName>damage-front-left.jpg</FileName>
+      <UploadDate>2024-10-16</UploadDate>
+    </Document>
+    <Document>
+      <DocumentType>photo</DocumentType>
+      <FileName>damage-drivers-side.jpg</FileName>
+      <UploadDate>2024-10-16</UploadDate>
+    </Document>
+    <Document>
+      <DocumentType>police-report</DocumentType>
+      <FileName>police-report-SJPD-2024-789456.pdf</FileName>
+      <UploadDate>2024-10-18</UploadDate>
+    </Document>
+    <Document>
+      <DocumentType>estimate</DocumentType>
+      <FileName>repair-estimate-AutoBody-Shop.pdf</FileName>
+      <UploadDate>2024-10-20</UploadDate>
+    </Document>
+  </Documents>
+
+</InsuranceClaim>

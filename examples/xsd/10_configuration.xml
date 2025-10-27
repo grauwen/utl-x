@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration xmlns="http://example.com/schemas/configuration"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://example.com/schemas/configuration 10_configuration.xsd">
+
+  <Environment>production</Environment>
+
+  <Database>
+    <Host>db.production.example.com</Host>
+    <Port>5432</Port>
+    <DatabaseName>app_production</DatabaseName>
+    <Username>app_user</Username>
+    <Password>******************</Password>
+    <Type>postgresql</Type>
+    <PoolSize>20</PoolSize>
+    <SSL>true</SSL>
+  </Database>
+
+  <Server>
+    <Host>0.0.0.0</Host>
+    <Port>8080</Port>
+    <ContextPath>/api/v1</ContextPath>
+    <MaxThreads>200</MaxThreads>
+    <CORS>
+      <AllowedOrigins>
+        <Value>https://www.example.com</Value>
+        <Value>https://app.example.com</Value>
+      </AllowedOrigins>
+      <AllowedMethods>
+        <Value>GET</Value>
+        <Value>POST</Value>
+        <Value>PUT</Value>
+        <Value>DELETE</Value>
+        <Value>OPTIONS</Value>
+      </AllowedMethods>
+    </CORS>
+  </Server>
+
+  <Logging>
+    <Level>info</Level>
+    <OutputFile>/var/log/app/application.log</OutputFile>
+    <MaxFileSize>100MB</MaxFileSize>
+    <Console>true</Console>
+  </Logging>
+
+  <Cache>
+    <Provider>redis</Provider>
+    <TTL>3600</TTL><!-- 1 hour -->
+    <MaxSize>10000</MaxSize>
+  </Cache>
+
+  <Security>
+    <JWTSecret>******************</JWTSecret>
+    <JWTExpirationHours>24</JWTExpirationHours>
+    <EnableHTTPS>true</EnableHTTPS>
+    <AllowedHosts>
+      <Value>example.com</Value>
+      <Value>*.example.com</Value>
+    </AllowedHosts>
+  </Security>
+
+  <FeatureFlags>
+    <Feature>
+      <Name>new-dashboard</Name>
+      <Enabled>true</Enabled>
+    </Feature>
+    <Feature>
+      <Name>beta-analytics</Name>
+      <Enabled>false</Enabled>
+    </Feature>
+    <Feature>
+      <Name>advanced-reporting</Name>
+      <Enabled>true</Enabled>
+    </Feature>
+  </FeatureFlags>
+
+</Configuration>

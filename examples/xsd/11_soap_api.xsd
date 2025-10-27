@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:soap="http://example.com/schemas/soap-api"
+           targetNamespace="http://example.com/schemas/soap-api"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      SOAP API Schema for web service communication.
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Get Customer Request -->
+  <xs:element name="GetCustomerRequest">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="CustomerID" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Get Customer Response -->
+  <xs:element name="GetCustomerResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Customer" type="soap:CustomerType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Create Order Request -->
+  <xs:element name="CreateOrderRequest">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Order" type="soap:OrderType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Create Order Response -->
+  <xs:element name="CreateOrderResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="OrderID" type="xs:string"/>
+        <xs:element name="Status" type="soap:OrderStatusType"/>
+        <xs:element name="Message" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Fault -->
+  <xs:element name="ServiceFault">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="FaultCode" type="xs:string"/>
+        <xs:element name="FaultMessage" type="xs:string"/>
+        <xs:element name="Details" type="xs:string" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Customer Type -->
+  <xs:complexType name="CustomerType">
+    <xs:sequence>
+      <xs:element name="CustomerID" type="xs:string"/>
+      <xs:element name="FirstName" type="xs:string"/>
+      <xs:element name="LastName" type="xs:string"/>
+      <xs:element name="Email" type="soap:EmailType"/>
+      <xs:element name="Phone" type="soap:PhoneType"/>
+      <xs:element name="Address" type="soap:AddressType"/>
+      <xs:element name="Status" type="soap:CustomerStatusType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Address Type -->
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="PostalCode" type="xs:string"/>
+      <xs:element name="Country" type="soap:CountryCodeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Order Type -->
+  <xs:complexType name="OrderType">
+    <xs:sequence>
+      <xs:element name="CustomerID" type="xs:string"/>
+      <xs:element name="OrderDate" type="xs:date"/>
+      <xs:element name="Items" type="soap:OrderItemsType"/>
+      <xs:element name="ShippingAddress" type="soap:AddressType"/>
+      <xs:element name="Total" type="soap:MoneyType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="OrderItemsType">
+    <xs:sequence>
+      <xs:element name="Item" type="soap:OrderItemType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="OrderItemType">
+    <xs:sequence>
+      <xs:element name="ProductID" type="xs:string"/>
+      <xs:element name="ProductName" type="xs:string"/>
+      <xs:element name="Quantity" type="xs:positiveInteger"/>
+      <xs:element name="UnitPrice" type="soap:MoneyType"/>
+      <xs:element name="Total" type="soap:MoneyType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="CustomerStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="active"/>
+      <xs:enumeration value="inactive"/>
+      <xs:enumeration value="suspended"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="OrderStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="success"/>
+      <xs:enumeration value="pending"/>
+      <xs:enumeration value="failed"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmailType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@]+@[^\.]+\..+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PhoneType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\+[0-9]{1,15}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CountryCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

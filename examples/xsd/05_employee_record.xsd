@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:hr="http://example.com/schemas/employee"
+           targetNamespace="http://example.com/schemas/employee"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Employee Record Schema for HR and payroll systems.
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Element -->
+  <xs:element name="Employee" type="hr:EmployeeType"/>
+
+  <!-- Main Employee Type -->
+  <xs:complexType name="EmployeeType">
+    <xs:sequence>
+      <xs:element name="EmployeeID" type="hr:EmployeeIDType"/>
+      <xs:element name="PersonalInfo" type="hr:PersonalInfoType"/>
+      <xs:element name="Employment" type="hr:EmploymentType"/>
+      <xs:element name="Position" type="hr:PositionType"/>
+      <xs:element name="Compensation" type="hr:CompensationType"/>
+      <xs:element name="Benefits" type="hr:BenefitsType" minOccurs="0"/>
+      <xs:element name="EmergencyContacts" type="hr:EmergencyContactsType" minOccurs="0"/>
+      <xs:element name="Metadata" type="hr:MetadataType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Personal Information -->
+  <xs:complexType name="PersonalInfoType">
+    <xs:sequence>
+      <xs:element name="FirstName" type="xs:string"/>
+      <xs:element name="MiddleName" type="xs:string" minOccurs="0"/>
+      <xs:element name="LastName" type="xs:string"/>
+      <xs:element name="DateOfBirth" type="xs:date"/>
+      <xs:element name="SSN" type="hr:SSNType"/>
+      <xs:element name="Gender" type="hr:GenderType" minOccurs="0"/>
+      <xs:element name="Address" type="hr:AddressType"/>
+      <xs:element name="Phone" type="hr:PhoneType"/>
+      <xs:element name="Email" type="hr:EmailType"/>
+      <xs:element name="MaritalStatus" type="hr:MaritalStatusType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Address -->
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="Unit" type="xs:string" minOccurs="0"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="PostalCode" type="xs:string"/>
+      <xs:element name="Country" type="hr:CountryCodeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Employment Information -->
+  <xs:complexType name="EmploymentType">
+    <xs:sequence>
+      <xs:element name="HireDate" type="xs:date"/>
+      <xs:element name="EmploymentStatus" type="hr:EmploymentStatusType"/>
+      <xs:element name="EmploymentType" type="hr:EmploymentTypeEnum"/>
+      <xs:element name="Department" type="xs:string"/>
+      <xs:element name="Location" type="xs:string"/>
+      <xs:element name="Manager" type="hr:ManagerType" minOccurs="0"/>
+      <xs:element name="TerminationDate" type="xs:date" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ManagerType">
+    <xs:sequence>
+      <xs:element name="EmployeeID" type="hr:EmployeeIDType"/>
+      <xs:element name="Name" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Position Information -->
+  <xs:complexType name="PositionType">
+    <xs:sequence>
+      <xs:element name="JobTitle" type="xs:string"/>
+      <xs:element name="JobCode" type="xs:string"/>
+      <xs:element name="JobLevel" type="xs:string"/>
+      <xs:element name="Division" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Compensation -->
+  <xs:complexType name="CompensationType">
+    <xs:sequence>
+      <xs:element name="Salary" type="hr:MoneyType"/>
+      <xs:element name="Currency" type="hr:CurrencyCodeType"/>
+      <xs:element name="PayFrequency" type="hr:PayFrequencyType"/>
+      <xs:element name="BonusEligible" type="xs:boolean"/>
+      <xs:element name="AnnualBonus" type="hr:MoneyType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Benefits -->
+  <xs:complexType name="BenefitsType">
+    <xs:sequence>
+      <xs:element name="Benefit" type="hr:BenefitType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BenefitType">
+    <xs:sequence>
+      <xs:element name="BenefitName" type="xs:string"/>
+      <xs:element name="BenefitType" type="hr:BenefitTypeEnum"/>
+      <xs:element name="EnrollmentDate" type="xs:date"/>
+      <xs:element name="Premium" type="hr:MoneyType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Emergency Contacts -->
+  <xs:complexType name="EmergencyContactsType">
+    <xs:sequence>
+      <xs:element name="EmergencyContact" type="hr:EmergencyContactType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="EmergencyContactType">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="Relationship" type="xs:string"/>
+      <xs:element name="Phone" type="hr:PhoneType"/>
+      <xs:element name="Email" type="hr:EmailType" minOccurs="0"/>
+      <xs:element name="IsPrimary" type="xs:boolean" default="false"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Metadata -->
+  <xs:complexType name="MetadataType">
+    <xs:sequence>
+      <xs:element name="CreatedAt" type="xs:dateTime"/>
+      <xs:element name="UpdatedAt" type="xs:dateTime"/>
+      <xs:element name="CreatedBy" type="xs:string"/>
+      <xs:element name="UpdatedBy" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="EmployeeIDType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="EMP-[0-9]{6}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SSNType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]{3}-[0-9]{2}-[0-9]{4}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="GenderType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="male"/>
+      <xs:enumeration value="female"/>
+      <xs:enumeration value="other"/>
+      <xs:enumeration value="prefer-not-to-say"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MaritalStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="single"/>
+      <xs:enumeration value="married"/>
+      <xs:enumeration value="divorced"/>
+      <xs:enumeration value="widowed"/>
+      <xs:enumeration value="separated"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmploymentStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="active"/>
+      <xs:enumeration value="on-leave"/>
+      <xs:enumeration value="suspended"/>
+      <xs:enumeration value="terminated"/>
+      <xs:enumeration value="retired"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmploymentTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="full-time"/>
+      <xs:enumeration value="part-time"/>
+      <xs:enumeration value="contractor"/>
+      <xs:enumeration value="temporary"/>
+      <xs:enumeration value="intern"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PayFrequencyType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="weekly"/>
+      <xs:enumeration value="bi-weekly"/>
+      <xs:enumeration value="semi-monthly"/>
+      <xs:enumeration value="monthly"/>
+      <xs:enumeration value="annually"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="BenefitTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="health-insurance"/>
+      <xs:enumeration value="dental-insurance"/>
+      <xs:enumeration value="vision-insurance"/>
+      <xs:enumeration value="life-insurance"/>
+      <xs:enumeration value="401k"/>
+      <xs:enumeration value="stock-options"/>
+      <xs:enumeration value="pto"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CurrencyCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CountryCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmailType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@]+@[^\.]+\..+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PhoneType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\+[0-9]{1,15}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:re="http://example.com/schemas/real-estate"
+           targetNamespace="http://example.com/schemas/real-estate"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Real Estate Listing Schema for MLS and real estate platforms.
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:element name="PropertyListing" type="re:PropertyListingType"/>
+
+  <xs:complexType name="PropertyListingType">
+    <xs:sequence>
+      <xs:element name="ListingID" type="re:ListingIDType"/>
+      <xs:element name="PropertyType" type="re:PropertyTypeEnum"/>
+      <xs:element name="Address" type="re:AddressType"/>
+      <xs:element name="Price" type="re:PriceType"/>
+      <xs:element name="PropertyDetails" type="re:PropertyDetailsType"/>
+      <xs:element name="Features" type="re:FeaturesType"/>
+      <xs:element name="ListingAgent" type="re:AgentType"/>
+      <xs:element name="Status" type="re:ListingStatusType"/>
+      <xs:element name="Photos" type="re:PhotosType" minOccurs="0"/>
+      <xs:element name="OpenHouses" type="re:OpenHousesType" minOccurs="0"/>
+      <xs:element name="Metadata" type="re:MetadataType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="Unit" type="xs:string" minOccurs="0"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="PostalCode" type="xs:string"/>
+      <xs:element name="Country" type="re:CountryCodeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PriceType">
+    <xs:sequence>
+      <xs:element name="Amount" type="re:MoneyType"/>
+      <xs:element name="Currency" type="re:CurrencyCodeType"/>
+      <xs:element name="PricePerSquareFoot" type="re:MoneyType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PropertyDetailsType">
+    <xs:sequence>
+      <xs:element name="Bedrooms" type="xs:nonNegativeInteger"/>
+      <xs:element name="Bathrooms" type="xs:decimal"/>
+      <xs:element name="SquareFeet" type="xs:positiveInteger"/>
+      <xs:element name="LotSize" type="xs:decimal" minOccurs="0"/><!-- in acres -->
+      <xs:element name="YearBuilt" type="xs:gYear"/>
+      <xs:element name="Stories" type="xs:positiveInteger" minOccurs="0"/>
+      <xs:element name="Garage" type="re:GarageType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="GarageType">
+    <xs:sequence>
+      <xs:element name="Spaces" type="xs:nonNegativeInteger"/>
+      <xs:element name="Type" type="re:GarageTypeEnum"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="FeaturesType">
+    <xs:sequence>
+      <xs:element name="Feature" type="xs:string" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AgentType">
+    <xs:sequence>
+      <xs:element name="AgentID" type="xs:string"/>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="LicenseNumber" type="xs:string"/>
+      <xs:element name="Phone" type="re:PhoneType"/>
+      <xs:element name="Email" type="re:EmailType"/>
+      <xs:element name="Brokerage" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PhotosType">
+    <xs:sequence>
+      <xs:element name="Photo" type="re:PhotoType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PhotoType">
+    <xs:sequence>
+      <xs:element name="URL" type="xs:anyURI"/>
+      <xs:element name="Caption" type="xs:string"/>
+      <xs:element name="IsPrimary" type="xs:boolean" default="false"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="OpenHousesType">
+    <xs:sequence>
+      <xs:element name="OpenHouse" type="re:OpenHouseType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="OpenHouseType">
+    <xs:sequence>
+      <xs:element name="StartDateTime" type="xs:dateTime"/>
+      <xs:element name="EndDateTime" type="xs:dateTime"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="MetadataType">
+    <xs:sequence>
+      <xs:element name="ListingDate" type="xs:date"/>
+      <xs:element name="DaysOnMarket" type="xs:nonNegativeInteger"/>
+      <xs:element name="ViewCount" type="xs:nonNegativeInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="ListingIDType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="MLS-[0-9]{8}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PropertyTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="single-family"/>
+      <xs:enumeration value="condo"/>
+      <xs:enumeration value="townhouse"/>
+      <xs:enumeration value="multi-family"/>
+      <xs:enumeration value="land"/>
+      <xs:enumeration value="commercial"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="GarageTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="attached"/>
+      <xs:enumeration value="detached"/>
+      <xs:enumeration value="carport"/>
+      <xs:enumeration value="none"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ListingStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="active"/>
+      <xs:enumeration value="pending"/>
+      <xs:enumeration value="sold"/>
+      <xs:enumeration value="withdrawn"/>
+      <xs:enumeration value="expired"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minExclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CurrencyCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CountryCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmailType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@]+@[^\.]+\..+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PhoneType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\+[0-9]{1,15}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:api="http://example.com/schemas/soap-api">
+  <soap:Header/>
+  <soap:Body>
+    <api:CreateOrderRequest>
+      <api:Order>
+        <api:CustomerID>CUST-2024-123456</api:CustomerID>
+        <api:OrderDate>2024-10-27</api:OrderDate>
+        <api:Items>
+          <api:Item>
+            <api:ProductID>PRD-001</api:ProductID>
+            <api:ProductName>Wireless Mouse</api:ProductName>
+            <api:Quantity>2</api:Quantity>
+            <api:UnitPrice>29.99</api:UnitPrice>
+            <api:Total>59.98</api:Total>
+          </api:Item>
+          <api:Item>
+            <api:ProductID>PRD-002</api:ProductID>
+            <api:ProductName>USB Keyboard</api:ProductName>
+            <api:Quantity>1</api:Quantity>
+            <api:UnitPrice>49.99</api:UnitPrice>
+            <api:Total>49.99</api:Total>
+          </api:Item>
+        </api:Items>
+        <api:ShippingAddress>
+          <api:Street>123 Main Street</api:Street>
+          <api:City>Boston</api:City>
+          <api:State>MA</api:State>
+          <api:PostalCode>02101</api:PostalCode>
+          <api:Country>US</api:Country>
+        </api:ShippingAddress>
+        <api:Total>109.97</api:Total>
+      </api:Order>
+    </api:CreateOrderRequest>
+  </soap:Body>
+</soap:Envelope>

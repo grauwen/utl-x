@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:ship="http://example.com/schemas/shipping-manifest"
+           targetNamespace="http://example.com/schemas/shipping-manifest"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Shipping Manifest Schema for logistics and freight management systems.
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:element name="ShippingManifest" type="ship:ShippingManifestType"/>
+
+  <xs:complexType name="ShippingManifestType">
+    <xs:sequence>
+      <xs:element name="ManifestNumber" type="ship:ManifestNumberType"/>
+      <xs:element name="ShipmentDate" type="xs:date"/>
+      <xs:element name="EstimatedDeliveryDate" type="xs:date"/>
+      <xs:element name="Shipper" type="ship:PartyType"/>
+      <xs:element name="Consignee" type="ship:PartyType"/>
+      <xs:element name="Carrier" type="ship:CarrierType"/>
+      <xs:element name="Packages" type="ship:PackagesType"/>
+      <xs:element name="ShippingCost" type="ship:ShippingCostType"/>
+      <xs:element name="CustomsInfo" type="ship:CustomsInfoType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PartyType">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="ContactName" type="xs:string" minOccurs="0"/>
+      <xs:element name="Phone" type="ship:PhoneType"/>
+      <xs:element name="Email" type="ship:EmailType" minOccurs="0"/>
+      <xs:element name="Address" type="ship:AddressType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="PostalCode" type="xs:string"/>
+      <xs:element name="Country" type="ship:CountryCodeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CarrierType">
+    <xs:sequence>
+      <xs:element name="CarrierName" type="xs:string"/>
+      <xs:element name="ServiceLevel" type="ship:ServiceLevelType"/>
+      <xs:element name="TrackingNumber" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PackagesType">
+    <xs:sequence>
+      <xs:element name="Package" type="ship:PackageType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PackageType">
+    <xs:sequence>
+      <xs:element name="PackageNumber" type="xs:positiveInteger"/>
+      <xs:element name="Description" type="xs:string"/>
+      <xs:element name="Quantity" type="xs:positiveInteger"/>
+      <xs:element name="Weight" type="ship:WeightType"/>
+      <xs:element name="Dimensions" type="ship:DimensionsType" minOccurs="0"/>
+      <xs:element name="DeclaredValue" type="ship:MoneyType" minOccurs="0"/>
+      <xs:element name="HazardousMaterial" type="xs:boolean" default="false"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="WeightType">
+    <xs:sequence>
+      <xs:element name="Value" type="xs:decimal"/>
+      <xs:element name="Unit" type="ship:WeightUnitType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="DimensionsType">
+    <xs:sequence>
+      <xs:element name="Length" type="xs:decimal"/>
+      <xs:element name="Width" type="xs:decimal"/>
+      <xs:element name="Height" type="xs:decimal"/>
+      <xs:element name="Unit" type="ship:DimensionUnitType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ShippingCostType">
+    <xs:sequence>
+      <xs:element name="BaseRate" type="ship:MoneyType"/>
+      <xs:element name="FuelSurcharge" type="ship:MoneyType" minOccurs="0"/>
+      <xs:element name="Insurance" type="ship:MoneyType" minOccurs="0"/>
+      <xs:element name="TotalCost" type="ship:MoneyType"/>
+      <xs:element name="Currency" type="ship:CurrencyCodeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CustomsInfoType">
+    <xs:sequence>
+      <xs:element name="CustomsValue" type="ship:MoneyType"/>
+      <xs:element name="DutiesAndTaxes" type="ship:MoneyType" minOccurs="0"/>
+      <xs:element name="HarmonizedCode" type="xs:string" minOccurs="0"/>
+      <xs:element name="CountryOfOrigin" type="ship:CountryCodeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="ManifestNumberType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="SHIP-[0-9]{4}-[0-9]{8}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ServiceLevelType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="standard"/>
+      <xs:enumeration value="express"/>
+      <xs:enumeration value="overnight"/>
+      <xs:enumeration value="international"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="WeightUnitType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="lb"/>
+      <xs:enumeration value="kg"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DimensionUnitType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="in"/>
+      <xs:enumeration value="cm"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CurrencyCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CountryCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmailType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@]+@[^\.]+\..+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PhoneType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\+[0-9]{1,15}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

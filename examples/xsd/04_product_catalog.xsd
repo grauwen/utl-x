@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:prd="http://example.com/schemas/product"
+           targetNamespace="http://example.com/schemas/product"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Product Catalog Schema for e-commerce and inventory management systems.
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Element -->
+  <xs:element name="Product" type="prd:ProductType"/>
+
+  <!-- Main Product Type -->
+  <xs:complexType name="ProductType">
+    <xs:sequence>
+      <xs:element name="ProductID" type="prd:ProductIDType"/>
+      <xs:element name="SKU" type="xs:string"/>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="Description" type="xs:string"/>
+      <xs:element name="Category" type="prd:CategoryType"/>
+      <xs:element name="Brand" type="xs:string" minOccurs="0"/>
+      <xs:element name="Pricing" type="prd:PricingType"/>
+      <xs:element name="Inventory" type="prd:InventoryType"/>
+      <xs:element name="Dimensions" type="prd:DimensionsType" minOccurs="0"/>
+      <xs:element name="Weight" type="prd:WeightType" minOccurs="0"/>
+      <xs:element name="Images" type="prd:ImagesType" minOccurs="0"/>
+      <xs:element name="Attributes" type="prd:AttributesType" minOccurs="0"/>
+      <xs:element name="RelatedProducts" type="prd:RelatedProductsType" minOccurs="0"/>
+      <xs:element name="Status" type="prd:ProductStatusType"/>
+      <xs:element name="Metadata" type="prd:MetadataType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Category -->
+  <xs:complexType name="CategoryType">
+    <xs:sequence>
+      <xs:element name="CategoryID" type="xs:string"/>
+      <xs:element name="CategoryName" type="xs:string"/>
+      <xs:element name="CategoryPath" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Pricing -->
+  <xs:complexType name="PricingType">
+    <xs:sequence>
+      <xs:element name="Currency" type="prd:CurrencyCodeType"/>
+      <xs:element name="BasePrice" type="prd:MoneyType"/>
+      <xs:element name="SalePrice" type="prd:MoneyType" minOccurs="0"/>
+      <xs:element name="MSRP" type="prd:MoneyType" minOccurs="0"/>
+      <xs:element name="CostPrice" type="prd:MoneyType" minOccurs="0"/>
+      <xs:element name="TaxRate" type="prd:PercentType" minOccurs="0"/>
+      <xs:element name="SaleStartDate" type="xs:date" minOccurs="0"/>
+      <xs:element name="SaleEndDate" type="xs:date" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Inventory -->
+  <xs:complexType name="InventoryType">
+    <xs:sequence>
+      <xs:element name="Warehouse" type="prd:WarehouseInventoryType" maxOccurs="unbounded"/>
+      <xs:element name="TotalAvailable" type="xs:nonNegativeInteger"/>
+      <xs:element name="TotalReserved" type="xs:nonNegativeInteger"/>
+      <xs:element name="ReorderPoint" type="xs:positiveInteger"/>
+      <xs:element name="ReorderQuantity" type="xs:positiveInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="WarehouseInventoryType">
+    <xs:sequence>
+      <xs:element name="WarehouseID" type="xs:string"/>
+      <xs:element name="WarehouseName" type="xs:string"/>
+      <xs:element name="Available" type="xs:nonNegativeInteger"/>
+      <xs:element name="Reserved" type="xs:nonNegativeInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Dimensions -->
+  <xs:complexType name="DimensionsType">
+    <xs:sequence>
+      <xs:element name="Length" type="prd:MeasurementType"/>
+      <xs:element name="Width" type="prd:MeasurementType"/>
+      <xs:element name="Height" type="prd:MeasurementType"/>
+      <xs:element name="Unit" type="prd:DimensionUnitType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="WeightType">
+    <xs:sequence>
+      <xs:element name="Value" type="prd:MeasurementType"/>
+      <xs:element name="Unit" type="prd:WeightUnitType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Images -->
+  <xs:complexType name="ImagesType">
+    <xs:sequence>
+      <xs:element name="Image" type="prd:ImageType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ImageType">
+    <xs:sequence>
+      <xs:element name="URL" type="xs:anyURI"/>
+      <xs:element name="Alt" type="xs:string"/>
+      <xs:element name="IsPrimary" type="xs:boolean" default="false"/>
+      <xs:element name="SortOrder" type="xs:positiveInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Attributes -->
+  <xs:complexType name="AttributesType">
+    <xs:sequence>
+      <xs:element name="Attribute" type="prd:AttributeType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AttributeType">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="Value" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Related Products -->
+  <xs:complexType name="RelatedProductsType">
+    <xs:sequence>
+      <xs:element name="RelatedProduct" type="prd:RelatedProductType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="RelatedProductType">
+    <xs:sequence>
+      <xs:element name="ProductID" type="xs:string"/>
+      <xs:element name="RelationType" type="prd:RelationTypeEnum"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Metadata -->
+  <xs:complexType name="MetadataType">
+    <xs:sequence>
+      <xs:element name="CreatedAt" type="xs:dateTime"/>
+      <xs:element name="UpdatedAt" type="xs:dateTime"/>
+      <xs:element name="CreatedBy" type="xs:string"/>
+      <xs:element name="UpdatedBy" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="ProductIDType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="PRD-[0-9]{6}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ProductStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="active"/>
+      <xs:enumeration value="inactive"/>
+      <xs:enumeration value="discontinued"/>
+      <xs:enumeration value="out-of-stock"/>
+      <xs:enumeration value="coming-soon"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DimensionUnitType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="in"/><!-- Inches -->
+      <xs:enumeration value="cm"/><!-- Centimeters -->
+      <xs:enumeration value="m"/><!-- Meters -->
+      <xs:enumeration value="ft"/><!-- Feet -->
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="WeightUnitType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="oz"/><!-- Ounces -->
+      <xs:enumeration value="lb"/><!-- Pounds -->
+      <xs:enumeration value="g"/><!-- Grams -->
+      <xs:enumeration value="kg"/><!-- Kilograms -->
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="RelationTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="cross-sell"/>
+      <xs:enumeration value="up-sell"/>
+      <xs:enumeration value="alternative"/>
+      <xs:enumeration value="accessory"/>
+      <xs:enumeration value="bundle"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PercentType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="4"/>
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MeasurementType">
+    <xs:restriction base="xs:decimal">
+      <xs:minExclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CurrencyCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

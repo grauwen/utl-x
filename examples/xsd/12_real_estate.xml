@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PropertyListing xmlns="http://example.com/schemas/real-estate"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://example.com/schemas/real-estate 12_real_estate.xsd">
+
+  <ListingID>MLS-12345678</ListingID>
+  <PropertyType>single-family</PropertyType>
+
+  <Address>
+    <Street>456 Maple Avenue</Street>
+    <City>San Francisco</City>
+    <State>CA</State>
+    <PostalCode>94110</PostalCode>
+    <Country>US</Country>
+  </Address>
+
+  <Price>
+    <Amount>1895000.00</Amount>
+    <Currency>USD</Currency>
+    <PricePerSquareFoot>665.08</PricePerSquareFoot>
+  </Price>
+
+  <PropertyDetails>
+    <Bedrooms>4</Bedrooms>
+    <Bathrooms>3.5</Bathrooms>
+    <SquareFeet>2850</SquareFeet>
+    <LotSize>0.18</LotSize>
+    <YearBuilt>1925</YearBuilt>
+    <Stories>2</Stories>
+    <Garage>
+      <Spaces>2</Spaces>
+      <Type>attached</Type>
+    </Garage>
+  </PropertyDetails>
+
+  <Features>
+    <Feature>Hardwood floors throughout</Feature>
+    <Feature>Gourmet kitchen with granite countertops</Feature>
+    <Feature>Stainless steel appliances</Feature>
+    <Feature>Master suite with walk-in closet</Feature>
+    <Feature>Updated bathrooms</Feature>
+    <Feature>Crown molding</Feature>
+    <Feature>Spacious deck</Feature>
+    <Feature>Landscaped yard</Feature>
+    <Feature>Fenced backyard</Feature>
+    <Feature>Central heating and cooling</Feature>
+    <Feature>Double-pane windows</Feature>
+    <Feature>Smart home features</Feature>
+    <Feature>Security system</Feature>
+  </Features>
+
+  <ListingAgent>
+    <AgentID>AGENT-789</AgentID>
+    <Name>Maria Rodriguez</Name>
+    <LicenseNumber>CA-DRE-01234567</LicenseNumber>
+    <Phone>+14155550199</Phone>
+    <Email>maria.rodriguez@realestate.example.com</Email>
+    <Brokerage>Premier Real Estate Group</Brokerage>
+  </ListingAgent>
+
+  <Status>active</Status>
+
+  <Photos>
+    <Photo>
+      <URL>https://images.example.com/listings/12345678/exterior.jpg</URL>
+      <Caption>Front exterior view</Caption>
+      <IsPrimary>true</IsPrimary>
+    </Photo>
+    <Photo>
+      <URL>https://images.example.com/listings/12345678/kitchen.jpg</URL>
+      <Caption>Gourmet kitchen</Caption>
+      <IsPrimary>false</IsPrimary>
+    </Photo>
+    <Photo>
+      <URL>https://images.example.com/listings/12345678/master.jpg</URL>
+      <Caption>Master bedroom suite</Caption>
+      <IsPrimary>false</IsPrimary>
+    </Photo>
+  </Photos>
+
+  <OpenHouses>
+    <OpenHouse>
+      <StartDateTime>2024-11-02T14:00:00Z</StartDateTime>
+      <EndDateTime>2024-11-02T16:00:00Z</EndDateTime>
+    </OpenHouse>
+    <OpenHouse>
+      <StartDateTime>2024-11-03T13:00:00Z</StartDateTime>
+      <EndDateTime>2024-11-03T15:00:00Z</EndDateTime>
+    </OpenHouse>
+  </OpenHouses>
+
+  <Metadata>
+    <ListingDate>2024-10-01</ListingDate>
+    <DaysOnMarket>27</DaysOnMarket>
+    <ViewCount>1247</ViewCount>
+  </Metadata>
+
+</PropertyListing>

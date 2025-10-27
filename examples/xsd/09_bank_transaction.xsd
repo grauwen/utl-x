@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:bank="http://example.com/schemas/bank-transaction"
+           targetNamespace="http://example.com/schemas/bank-transaction"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Bank Transaction Schema for banking and financial systems.
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:element name="BankTransaction" type="bank:BankTransactionType"/>
+
+  <xs:complexType name="BankTransactionType">
+    <xs:sequence>
+      <xs:element name="TransactionID" type="bank:TransactionIDType"/>
+      <xs:element name="TransactionType" type="bank:TransactionTypeEnum"/>
+      <xs:element name="TransactionDate" type="xs:dateTime"/>
+      <xs:element name="Amount" type="bank:MoneyType"/>
+      <xs:element name="Currency" type="bank:CurrencyCodeType"/>
+      <xs:element name="FromAccount" type="bank:AccountType"/>
+      <xs:element name="ToAccount" type="bank:AccountType" minOccurs="0"/>
+      <xs:element name="Status" type="bank:TransactionStatusType"/>
+      <xs:element name="Channel" type="bank:ChannelType"/>
+      <xs:element name="Description" type="xs:string" minOccurs="0"/>
+      <xs:element name="Merchant" type="bank:MerchantType" minOccurs="0"/>
+      <xs:element name="Location" type="bank:LocationType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AccountType">
+    <xs:sequence>
+      <xs:element name="AccountNumber" type="xs:string"/>
+      <xs:element name="AccountHolderName" type="xs:string"/>
+      <xs:element name="BankName" type="xs:string"/>
+      <xs:element name="RoutingNumber" type="xs:string" minOccurs="0"/>
+      <xs:element name="IBAN" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="MerchantType">
+    <xs:sequence>
+      <xs:element name="MerchantName" type="xs:string"/>
+      <xs:element name="MerchantID" type="xs:string"/>
+      <xs:element name="MCC" type="xs:string"/><!-- Merchant Category Code -->
+      <xs:element name="Address" type="bank:AddressType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string" minOccurs="0"/>
+      <xs:element name="Country" type="bank:CountryCodeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="LocationType">
+    <xs:sequence>
+      <xs:element name="Latitude" type="xs:decimal"/>
+      <xs:element name="Longitude" type="xs:decimal"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="TransactionIDType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="TXN-[0-9]{8}-[A-Z0-9]{8}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="TransactionTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="debit"/>
+      <xs:enumeration value="credit"/>
+      <xs:enumeration value="transfer"/>
+      <xs:enumeration value="payment"/>
+      <xs:enumeration value="withdrawal"/>
+      <xs:enumeration value="deposit"/>
+      <xs:enumeration value="refund"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="TransactionStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="pending"/>
+      <xs:enumeration value="completed"/>
+      <xs:enumeration value="failed"/>
+      <xs:enumeration value="cancelled"/>
+      <xs:enumeration value="reversed"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ChannelType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="atm"/>
+      <xs:enumeration value="online-banking"/>
+      <xs:enumeration value="mobile-app"/>
+      <xs:enumeration value="branch"/>
+      <xs:enumeration value="pos"/><!-- Point of Sale -->
+      <xs:enumeration value="wire-transfer"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minExclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CurrencyCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CountryCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

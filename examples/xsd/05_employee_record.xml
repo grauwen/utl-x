@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Employee xmlns="http://example.com/schemas/employee"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://example.com/schemas/employee 05_employee_record.xsd">
+
+  <EmployeeID>EMP-123456</EmployeeID>
+
+  <PersonalInfo>
+    <FirstName>Michael</FirstName>
+    <MiddleName>James</MiddleName>
+    <LastName>Thompson</LastName>
+    <DateOfBirth>1985-06-15</DateOfBirth>
+    <SSN>123-45-6789</SSN>
+    <Gender>male</Gender>
+    <Address>
+      <Street>789 Elm Street</Street>
+      <Unit>Unit 204</Unit>
+      <City>Boston</City>
+      <State>MA</State>
+      <PostalCode>02101</PostalCode>
+      <Country>US</Country>
+    </Address>
+    <Phone>+16175551234</Phone>
+    <Email>michael.thompson@techcorp.example.com</Email>
+    <MaritalStatus>married</MaritalStatus>
+  </PersonalInfo>
+
+  <Employment>
+    <HireDate>2018-03-15</HireDate>
+    <EmploymentStatus>active</EmploymentStatus>
+    <EmploymentType>full-time</EmploymentType>
+    <Department>Engineering</Department>
+    <Location>Boston Office</Location>
+    <Manager>
+      <EmployeeID>EMP-987654</EmployeeID>
+      <Name>Sarah Johnson</Name>
+    </Manager>
+  </Employment>
+
+  <Position>
+    <JobTitle>Senior Software Engineer</JobTitle>
+    <JobCode>ENG-SSE-002</JobCode>
+    <JobLevel>L5</JobLevel>
+    <Division>Platform Engineering</Division>
+  </Position>
+
+  <Compensation>
+    <Salary>145000.00</Salary>
+    <Currency>USD</Currency>
+    <PayFrequency>bi-weekly</PayFrequency>
+    <BonusEligible>true</BonusEligible>
+    <AnnualBonus>25000.00</AnnualBonus>
+  </Compensation>
+
+  <Benefits>
+    <Benefit>
+      <BenefitName>Premium Health Insurance</BenefitName>
+      <BenefitType>health-insurance</BenefitType>
+      <EnrollmentDate>2018-04-01</EnrollmentDate>
+      <Premium>450.00</Premium>
+    </Benefit>
+    <Benefit>
+      <BenefitName>Dental Coverage</BenefitName>
+      <BenefitType>dental-insurance</BenefitType>
+      <EnrollmentDate>2018-04-01</EnrollmentDate>
+      <Premium>75.00</Premium>
+    </Benefit>
+    <Benefit>
+      <BenefitName>Vision Coverage</BenefitName>
+      <BenefitType>vision-insurance</BenefitType>
+      <EnrollmentDate>2018-04-01</EnrollmentDate>
+      <Premium>25.00</Premium>
+    </Benefit>
+    <Benefit>
+      <BenefitName>401(k) Retirement Plan</BenefitName>
+      <BenefitType>401k</BenefitType>
+      <EnrollmentDate>2018-04-01</EnrollmentDate>
+    </Benefit>
+  </Benefits>
+
+  <EmergencyContacts>
+    <EmergencyContact>
+      <Name>Jennifer Thompson</Name>
+      <Relationship>Spouse</Relationship>
+      <Phone>+16175555678</Phone>
+      <Email>jennifer.thompson@example.com</Email>
+      <IsPrimary>true</IsPrimary>
+    </EmergencyContact>
+    <EmergencyContact>
+      <Name>Robert Thompson</Name>
+      <Relationship>Father</Relationship>
+      <Phone>+16175559999</Phone>
+      <IsPrimary>false</IsPrimary>
+    </EmergencyContact>
+  </EmergencyContacts>
+
+  <Metadata>
+    <CreatedAt>2018-03-01T10:00:00Z</CreatedAt>
+    <UpdatedAt>2024-10-27T15:00:00Z</UpdatedAt>
+    <CreatedBy>hr-admin-001</CreatedBy>
+    <UpdatedBy>hr-admin-005</UpdatedBy>
+  </Metadata>
+
+</Employee>

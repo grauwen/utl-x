@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:inv="http://example.com/schemas/invoice"
+           targetNamespace="http://example.com/schemas/invoice"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Invoice Schema for accounting and billing systems.
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Element -->
+  <xs:element name="Invoice" type="inv:InvoiceType"/>
+
+  <!-- Main Invoice Type -->
+  <xs:complexType name="InvoiceType">
+    <xs:sequence>
+      <xs:element name="InvoiceHeader" type="inv:InvoiceHeaderType"/>
+      <xs:element name="Seller" type="inv:PartyType"/>
+      <xs:element name="Buyer" type="inv:PartyType"/>
+      <xs:element name="LineItems" type="inv:LineItemsType"/>
+      <xs:element name="Summary" type="inv:InvoiceSummaryType"/>
+      <xs:element name="PaymentInfo" type="inv:PaymentInfoType"/>
+      <xs:element name="Notes" type="xs:string" minOccurs="0"/>
+      <xs:element name="Attachments" type="inv:AttachmentsType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Invoice Header -->
+  <xs:complexType name="InvoiceHeaderType">
+    <xs:sequence>
+      <xs:element name="InvoiceNumber" type="inv:InvoiceNumberType"/>
+      <xs:element name="InvoiceDate" type="xs:date"/>
+      <xs:element name="DueDate" type="xs:date"/>
+      <xs:element name="PurchaseOrderNumber" type="xs:string" minOccurs="0"/>
+      <xs:element name="Currency" type="inv:CurrencyCodeType"/>
+      <xs:element name="Status" type="inv:InvoiceStatusType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Party Type (Seller/Buyer) -->
+  <xs:complexType name="PartyType">
+    <xs:sequence>
+      <xs:element name="PartyID" type="xs:string"/>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="TaxID" type="xs:string" minOccurs="0"/>
+      <xs:element name="Address" type="inv:AddressType"/>
+      <xs:element name="Email" type="inv:EmailType"/>
+      <xs:element name="Phone" type="inv:PhoneType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Address -->
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="PostalCode" type="xs:string"/>
+      <xs:element name="Country" type="inv:CountryCodeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Line Items -->
+  <xs:complexType name="LineItemsType">
+    <xs:sequence>
+      <xs:element name="LineItem" type="inv:LineItemType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="LineItemType">
+    <xs:sequence>
+      <xs:element name="LineNumber" type="xs:positiveInteger"/>
+      <xs:element name="Description" type="xs:string"/>
+      <xs:element name="Quantity" type="xs:decimal"/>
+      <xs:element name="UnitPrice" type="inv:MoneyType"/>
+      <xs:element name="Subtotal" type="inv:MoneyType"/>
+      <xs:element name="TaxRate" type="inv:PercentType"/>
+      <xs:element name="TaxAmount" type="inv:MoneyType"/>
+      <xs:element name="LineTotal" type="inv:MoneyType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Invoice Summary -->
+  <xs:complexType name="InvoiceSummaryType">
+    <xs:sequence>
+      <xs:element name="Subtotal" type="inv:MoneyType"/>
+      <xs:element name="TotalTax" type="inv:MoneyType"/>
+      <xs:element name="ShippingCost" type="inv:MoneyType" minOccurs="0"/>
+      <xs:element name="Discount" type="inv:MoneyType" minOccurs="0"/>
+      <xs:element name="TotalAmount" type="inv:MoneyType"/>
+      <xs:element name="AmountPaid" type="inv:MoneyType"/>
+      <xs:element name="AmountDue" type="inv:MoneyType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Payment Information -->
+  <xs:complexType name="PaymentInfoType">
+    <xs:sequence>
+      <xs:element name="PaymentTerms" type="xs:string"/>
+      <xs:element name="PaymentMethod" type="inv:PaymentMethodType" minOccurs="0"/>
+      <xs:element name="BankAccount" type="inv:BankAccountType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BankAccountType">
+    <xs:sequence>
+      <xs:element name="BankName" type="xs:string"/>
+      <xs:element name="AccountNumber" type="xs:string"/>
+      <xs:element name="RoutingNumber" type="xs:string"/>
+      <xs:element name="IBAN" type="xs:string" minOccurs="0"/>
+      <xs:element name="SWIFT" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Attachments -->
+  <xs:complexType name="AttachmentsType">
+    <xs:sequence>
+      <xs:element name="Attachment" type="inv:AttachmentType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AttachmentType">
+    <xs:sequence>
+      <xs:element name="FileName" type="xs:string"/>
+      <xs:element name="MimeType" type="xs:string"/>
+      <xs:element name="Size" type="xs:positiveInteger"/>
+      <xs:element name="URL" type="xs:anyURI" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="InvoiceNumberType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="INV-[0-9]{4}-[0-9]{6}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="InvoiceStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="draft"/>
+      <xs:enumeration value="sent"/>
+      <xs:enumeration value="viewed"/>
+      <xs:enumeration value="partially-paid"/>
+      <xs:enumeration value="paid"/>
+      <xs:enumeration value="overdue"/>
+      <xs:enumeration value="cancelled"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PaymentMethodType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="credit-card"/>
+      <xs:enumeration value="wire-transfer"/>
+      <xs:enumeration value="check"/>
+      <xs:enumeration value="cash"/>
+      <xs:enumeration value="ach"/>
+      <xs:enumeration value="paypal"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PercentType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="4"/>
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CurrencyCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CountryCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmailType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@]+@[^\.]+\..+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PhoneType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\+[0-9]{1,15}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

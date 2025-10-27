@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:ins="http://example.com/schemas/insurance-claim"
+           targetNamespace="http://example.com/schemas/insurance-claim"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Insurance Claim Schema for insurance claim processing systems.
+      Version: 1.0
+      Last Updated: 2024-10-27
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Element -->
+  <xs:element name="InsuranceClaim" type="ins:InsuranceClaimType"/>
+
+  <!-- Main Insurance Claim Type -->
+  <xs:complexType name="InsuranceClaimType">
+    <xs:sequence>
+      <xs:element name="ClaimNumber" type="ins:ClaimNumberType"/>
+      <xs:element name="PolicyNumber" type="xs:string"/>
+      <xs:element name="ClaimType" type="ins:ClaimTypeEnum"/>
+      <xs:element name="DateOfLoss" type="xs:date"/>
+      <xs:element name="ReportedDate" type="xs:date"/>
+      <xs:element name="ClaimStatus" type="ins:ClaimStatusType"/>
+      <xs:element name="PolicyHolder" type="ins:PersonType"/>
+      <xs:element name="Claimant" type="ins:PersonType"/>
+      <xs:element name="IncidentDetails" type="ins:IncidentDetailsType"/>
+      <xs:element name="DamageAssessment" type="ins:DamageAssessmentType" minOccurs="0"/>
+      <xs:element name="ClaimAmount" type="ins:ClaimAmountType"/>
+      <xs:element name="Adjuster" type="ins:AdjusterType" minOccurs="0"/>
+      <xs:element name="Documents" type="ins:DocumentsType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Person Type -->
+  <xs:complexType name="PersonType">
+    <xs:sequence>
+      <xs:element name="FirstName" type="xs:string"/>
+      <xs:element name="LastName" type="xs:string"/>
+      <xs:element name="DateOfBirth" type="xs:date" minOccurs="0"/>
+      <xs:element name="Phone" type="ins:PhoneType"/>
+      <xs:element name="Email" type="ins:EmailType" minOccurs="0"/>
+      <xs:element name="Address" type="ins:AddressType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Address -->
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="PostalCode" type="xs:string"/>
+      <xs:element name="Country" type="ins:CountryCodeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Incident Details -->
+  <xs:complexType name="IncidentDetailsType">
+    <xs:sequence>
+      <xs:element name="Location" type="xs:string"/>
+      <xs:element name="Description" type="xs:string"/>
+      <xs:element name="PoliceReportNumber" type="xs:string" minOccurs="0"/>
+      <xs:element name="Witnesses" type="ins:WitnessesType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="WitnessesType">
+    <xs:sequence>
+      <xs:element name="Witness" type="ins:WitnessType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="WitnessType">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="Phone" type="ins:PhoneType"/>
+      <xs:element name="Statement" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Damage Assessment -->
+  <xs:complexType name="DamageAssessmentType">
+    <xs:sequence>
+      <xs:element name="DamageType" type="ins:DamageTypeEnum"/>
+      <xs:element name="Severity" type="ins:SeverityType"/>
+      <xs:element name="EstimatedRepairCost" type="ins:MoneyType"/>
+      <xs:element name="Notes" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Claim Amount -->
+  <xs:complexType name="ClaimAmountType">
+    <xs:sequence>
+      <xs:element name="RequestedAmount" type="ins:MoneyType"/>
+      <xs:element name="ApprovedAmount" type="ins:MoneyType" minOccurs="0"/>
+      <xs:element name="PaidAmount" type="ins:MoneyType" minOccurs="0"/>
+      <xs:element name="Currency" type="ins:CurrencyCodeType"/>
+      <xs:element name="Deductible" type="ins:MoneyType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Adjuster -->
+  <xs:complexType name="AdjusterType">
+    <xs:sequence>
+      <xs:element name="AdjusterID" type="xs:string"/>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="Phone" type="ins:PhoneType"/>
+      <xs:element name="Email" type="ins:EmailType"/>
+      <xs:element name="AssignedDate" type="xs:date"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Documents -->
+  <xs:complexType name="DocumentsType">
+    <xs:sequence>
+      <xs:element name="Document" type="ins:DocumentType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="DocumentType">
+    <xs:sequence>
+      <xs:element name="DocumentType" type="ins:DocumentTypeEnum"/>
+      <xs:element name="FileName" type="xs:string"/>
+      <xs:element name="UploadDate" type="xs:date"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="ClaimNumberType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="CLM-[0-9]{4}-[0-9]{8}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ClaimTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="auto"/>
+      <xs:enumeration value="home"/>
+      <xs:enumeration value="health"/>
+      <xs:enumeration value="life"/>
+      <xs:enumeration value="property"/>
+      <xs:enumeration value="liability"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ClaimStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="submitted"/>
+      <xs:enumeration value="under-review"/>
+      <xs:enumeration value="approved"/>
+      <xs:enumeration value="denied"/>
+      <xs:enumeration value="paid"/>
+      <xs:enumeration value="closed"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DamageTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="collision"/>
+      <xs:enumeration value="fire"/>
+      <xs:enumeration value="water"/>
+      <xs:enumeration value="theft"/>
+      <xs:enumeration value="vandalism"/>
+      <xs:enumeration value="natural-disaster"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SeverityType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="minor"/>
+      <xs:enumeration value="moderate"/>
+      <xs:enumeration value="major"/>
+      <xs:enumeration value="total-loss"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DocumentTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="photo"/>
+      <xs:enumeration value="police-report"/>
+      <xs:enumeration value="estimate"/>
+      <xs:enumeration value="receipt"/>
+      <xs:enumeration value="medical-record"/>
+      <xs:enumeration value="other"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CurrencyCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CountryCodeType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmailType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@]+@[^\.]+\..+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PhoneType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\+[0-9]{1,15}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

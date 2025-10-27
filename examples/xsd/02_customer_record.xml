@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Customer xmlns="http://example.com/schemas/customer"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://example.com/schemas/customer 02_customer_record.xsd">
+
+  <CustomerID>CUST-2024-123456</CustomerID>
+  <CustomerType>individual</CustomerType>
+
+  <PersonalInfo>
+    <FirstName>Emma</FirstName>
+    <MiddleName>Marie</MiddleName>
+    <LastName>Wilson</LastName>
+    <DateOfBirth>1985-03-15</DateOfBirth>
+    <Gender>female</Gender>
+    <Title>Ms.</Title>
+  </PersonalInfo>
+
+  <ContactInfo>
+    <PrimaryEmail>emma.wilson@example.com</PrimaryEmail>
+    <SecondaryEmail>e.wilson@personal.example.com</SecondaryEmail>
+    <PrimaryPhone>+14155551234</PrimaryPhone>
+    <MobilePhone>+14155555678</MobilePhone>
+  </ContactInfo>
+
+  <Addresses>
+    <Address>
+      <AddressType>home</AddressType>
+      <Street>456 Oak Street</Street>
+      <Unit>Apt 3B</Unit>
+      <City>San Francisco</City>
+      <State>CA</State>
+      <PostalCode>94102</PostalCode>
+      <Country>US</Country>
+      <IsPrimary>true</IsPrimary>
+    </Address>
+    <Address>
+      <AddressType>work</AddressType>
+      <Street>100 Market Street</Street>
+      <City>San Francisco</City>
+      <State>CA</State>
+      <PostalCode>94105</PostalCode>
+      <Country>US</Country>
+      <IsPrimary>false</IsPrimary>
+    </Address>
+  </Addresses>
+
+  <LoyaltyInfo>
+    <LoyaltyNumber>LOY-2024-123456</LoyaltyNumber>
+    <LoyaltyTier>gold</LoyaltyTier>
+    <PointsBalance>15750</PointsBalance>
+    <LifetimeValue>25890.50</LifetimeValue>
+    <MemberSince>2020-01-15</MemberSince>
+  </LoyaltyInfo>
+
+  <Preferences>
+    <CommunicationChannel>email</CommunicationChannel>
+    <CommunicationChannel>sms</CommunicationChannel>
+    <CommunicationChannel>mobile-app</CommunicationChannel>
+    <Language>en-US</Language>
+    <Currency>USD</Currency>
+    <OptInNewsletter>true</OptInNewsletter>
+    <OptInSMS>true</OptInSMS>
+    <OptInPhone>false</OptInPhone>
+  </Preferences>
+
+  <AccountStatus>
+    <Status>active</Status>
+    <CreditLimit>10000.00</CreditLimit>
+    <CurrentBalance>0.00</CurrentBalance>
+    <PaymentTerms>Net 30</PaymentTerms>
+  </AccountStatus>
+
+  <Metadata>
+    <CreatedAt>2020-01-15T10:30:00Z</CreatedAt>
+    <CreatedBy>system-import</CreatedBy>
+    <UpdatedAt>2024-10-27T14:30:00Z</UpdatedAt>
+    <UpdatedBy>crm-user-007</UpdatedBy>
+    <Source>web-registration</Source>
+  </Metadata>
+
+</Customer>

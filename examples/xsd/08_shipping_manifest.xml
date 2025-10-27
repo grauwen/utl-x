@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ShippingManifest xmlns="http://example.com/schemas/shipping-manifest"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://example.com/schemas/shipping-manifest 08_shipping_manifest.xsd">
+
+  <ManifestNumber>SHIP-2024-12345678</ManifestNumber>
+  <ShipmentDate>2024-10-27</ShipmentDate>
+  <EstimatedDeliveryDate>2024-10-30</EstimatedDeliveryDate>
+
+  <Shipper>
+    <Name>TechParts Warehouse</Name>
+    <ContactName>John Smith</ContactName>
+    <Phone>+19495551234</Phone>
+    <Email>shipping@techparts.example.com</Email>
+    <Address>
+      <Street>5000 Industrial Parkway</Street>
+      <City>Irvine</City>
+      <State>CA</State>
+      <PostalCode>92618</PostalCode>
+      <Country>US</Country>
+    </Address>
+  </Shipper>
+
+  <Consignee>
+    <Name>Electronics Retail Corp</Name>
+    <ContactName>Maria Garcia</ContactName>
+    <Phone>+14165551234</Phone>
+    <Email>receiving@electronicsretail.example.com</Email>
+    <Address>
+      <Street>100 Commerce Drive</Street>
+      <City>Toronto</City>
+      <State>ON</State>
+      <PostalCode>M5H 2N2</PostalCode>
+      <Country>CA</Country>
+    </Address>
+  </Consignee>
+
+  <Carrier>
+    <CarrierName>FedEx</CarrierName>
+    <ServiceLevel>express</ServiceLevel>
+    <TrackingNumber>1234567890123456</TrackingNumber>
+  </Carrier>
+
+  <Packages>
+    <Package>
+      <PackageNumber>1</PackageNumber>
+      <Description>Laptop Computers - Dell XPS 15 (Qty: 10)</Description>
+      <Quantity>10</Quantity>
+      <Weight>
+        <Value>75.5</Value>
+        <Unit>lb</Unit>
+      </Weight>
+      <Dimensions>
+        <Length>24</Length>
+        <Width>18</Width>
+        <Height>12</Height>
+        <Unit>in</Unit>
+      </Dimensions>
+      <DeclaredValue>18999.90</DeclaredValue>
+      <HazardousMaterial>false</HazardousMaterial>
+    </Package>
+    <Package>
+      <PackageNumber>2</PackageNumber>
+      <Description>Laptop Accessories - Chargers and Bags (Qty: 10)</Description>
+      <Quantity>10</Quantity>
+      <Weight>
+        <Value>15.2</Value>
+        <Unit>lb</Unit>
+      </Weight>
+      <Dimensions>
+        <Length>18</Length>
+        <Width>12</Width>
+        <Height>8</Height>
+        <Unit>in</Unit>
+      </Dimensions>
+      <DeclaredValue>750.00</DeclaredValue>
+      <HazardousMaterial>false</HazardousMaterial>
+    </Package>
+  </Packages>
+
+  <ShippingCost>
+    <BaseRate>285.00</BaseRate>
+    <FuelSurcharge>42.75</FuelSurcharge>
+    <Insurance>197.50</Insurance>
+    <TotalCost>525.25</TotalCost>
+    <Currency>USD</Currency>
+  </ShippingCost>
+
+  <CustomsInfo>
+    <CustomsValue>19749.90</CustomsValue>
+    <DutiesAndTaxes>1974.99</DutiesAndTaxes>
+    <HarmonizedCode>8471.30.01</HarmonizedCode>
+    <CountryOfOrigin>US</CountryOfOrigin>
+  </CustomsInfo>
+
+</ShippingManifest>

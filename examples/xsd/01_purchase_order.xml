@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PurchaseOrder xmlns="http://example.com/schemas/purchase-order"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://example.com/schemas/purchase-order 01_purchase_order.xsd">
+
+  <OrderInfo>
+    <PONumber>PO-2024-789456</PONumber>
+    <OrderDate>2024-10-27</OrderDate>
+    <RequestedDeliveryDate>2024-11-15</RequestedDeliveryDate>
+    <Priority>high</Priority>
+    <Status>submitted</Status>
+    <Currency>USD</Currency>
+  </OrderInfo>
+
+  <Vendor>
+    <PartyID>VENDOR-12345</PartyID>
+    <Name>Industrial Supplies Inc.</Name>
+    <TaxID>12-3456789</TaxID>
+    <ContactPerson>John Smith</ContactPerson>
+    <Email>john.smith@industrialsupplies.example.com</Email>
+    <Phone>+15551234567</Phone>
+    <Address>
+      <Street>500 Manufacturing Drive</Street>
+      <City>Chicago</City>
+      <State>IL</State>
+      <PostalCode>60601</PostalCode>
+      <Country>US</Country>
+    </Address>
+  </Vendor>
+
+  <Buyer>
+    <PartyID>BUYER-67890</PartyID>
+    <Name>Tech Solutions Corp</Name>
+    <TaxID>98-7654321</TaxID>
+    <ContactPerson>Sarah Johnson</ContactPerson>
+    <Email>sarah.johnson@techsolutions.example.com</Email>
+    <Phone>+14155559876</Phone>
+    <Address>
+      <Street>1000 Technology Plaza</Street>
+      <City>San Francisco</City>
+      <State>CA</State>
+      <PostalCode>94102</PostalCode>
+      <Country>US</Country>
+    </Address>
+  </Buyer>
+
+  <ShippingAddress>
+    <Street>1000 Technology Plaza, Building B</Street>
+    <City>San Francisco</City>
+    <State>CA</State>
+    <PostalCode>94102</PostalCode>
+    <Country>US</Country>
+  </ShippingAddress>
+
+  <BillingAddress>
+    <Street>1000 Technology Plaza, Accounting Dept</Street>
+    <City>San Francisco</City>
+    <State>CA</State>
+    <PostalCode>94102</PostalCode>
+    <Country>US</Country>
+  </BillingAddress>
+
+  <LineItems>
+    <LineItem>
+      <LineNumber>1</LineNumber>
+      <ProductID>WIDGET-001</ProductID>
+      <Description>Industrial Widget Type A - Heavy Duty</Description>
+      <Quantity>100</Quantity>
+      <UnitOfMeasure>PCS</UnitOfMeasure>
+      <UnitPrice>45.50</UnitPrice>
+      <LineTotal>4550.00</LineTotal>
+      <RequestedDeliveryDate>2024-11-10</RequestedDeliveryDate>
+    </LineItem>
+    <LineItem>
+      <LineNumber>2</LineNumber>
+      <ProductID>GADGET-002</ProductID>
+      <Description>Precision Gadget - Model X200</Description>
+      <Quantity>50</Quantity>
+      <UnitOfMeasure>PCS</UnitOfMeasure>
+      <UnitPrice>125.00</UnitPrice>
+      <LineTotal>6250.00</LineTotal>
+      <RequestedDeliveryDate>2024-11-15</RequestedDeliveryDate>
+    </LineItem>
+    <LineItem>
+      <LineNumber>3</LineNumber>
+      <ProductID>SUPPLY-003</ProductID>
+      <Description>Industrial Lubricant - 5 Gallon Container</Description>
+      <Quantity>20</Quantity>
+      <UnitOfMeasure>GAL</UnitOfMeasure>
+      <UnitPrice>85.00</UnitPrice>
+      <LineTotal>1700.00</LineTotal>
+    </LineItem>
+  </LineItems>
+
+  <PaymentTerms>
+    <PaymentMethod>wire-transfer</PaymentMethod>
+    <PaymentDueDays>30</PaymentDueDays>
+    <DiscountPercent>2.00</DiscountPercent>
+    <DiscountDays>10</DiscountDays>
+  </PaymentTerms>
+
+  <Notes>Rush order for Q4 production. Please confirm delivery dates within 48 hours.</Notes>
+
+</PurchaseOrder>
