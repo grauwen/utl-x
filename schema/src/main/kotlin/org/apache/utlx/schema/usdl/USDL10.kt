@@ -8,14 +8,15 @@ package org.apache.utlx.schema.usdl
  *
  * Tier 1 (Core): Universal directives required for all schema languages
  * Tier 2 (Common): Recommended directives supported by 80%+ schema languages
- *                  Now includes messaging & event-driven API directives for AsyncAPI, OpenAPI webhooks
+ *                  Now includes REST API and messaging/event-driven API directives
  * Tier 3 (Format-Specific): Specialized directives for specific formats
  * Tier 4 (Reserved): Future USDL versions, advanced features
  *
  * USDL 1.0 Extended Support:
  * - Data schema formats: XSD, JSON Schema, Avro, Protobuf, Parquet, SQL DDL
- * - API specifications: OpenAPI, AsyncAPI (messaging/event-driven)
- * - Messaging protocols: Kafka, AMQP, MQTT, WebSocket, gRPC
+ * - REST API specifications: OpenAPI, RAML, API Blueprint
+ * - Event-driven/messaging APIs: AsyncAPI, gRPC, GraphQL subscriptions
+ * - Messaging protocols: Kafka, AMQP, MQTT, WebSocket
  */
 object USDL10 {
 
@@ -43,7 +44,10 @@ object USDL10 {
         CHANNEL_DEFINITION,     // Within channel/topic definitions (messaging)
         OPERATION_DEFINITION,   // Within operation definitions (messaging/API)
         SERVER_DEFINITION,      // Within server/endpoint definitions (messaging/API)
-        MESSAGE_DEFINITION      // Within message definitions (messaging)
+        MESSAGE_DEFINITION,     // Within message definitions (messaging)
+        PATH_DEFINITION,        // Within API path definitions (REST APIs)
+        PARAMETER_DEFINITION,   // Within parameter definitions (REST APIs)
+        RESPONSE_DEFINITION     // Within response definitions (REST APIs)
     }
 
     /**
@@ -427,6 +431,131 @@ object USDL10 {
             valueType = "Any",
             description = "Example value or data for types, fields, or standalone examples",
             supportedFormats = setOf("jsch", "openapi", "asyncapi", "raml", "avro")
+        ),
+
+        // ===== REST API DIRECTIVES =====
+        // Root-level REST API directives
+        Directive(
+            name = "%paths",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.TOP_LEVEL),
+            valueType = "Object",
+            description = "API path definitions for REST APIs (OpenAPI, RAML, API Blueprint)",
+            supportedFormats = setOf("openapi", "raml", "apiblueprint")
+        ),
+        Directive(
+            name = "%tags",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.TOP_LEVEL, Scope.OPERATION_DEFINITION),
+            valueType = "Array",
+            description = "Tags for grouping operations or organizing API documentation",
+            supportedFormats = setOf("openapi", "asyncapi", "raml")
+        ),
+
+        // Path-level directives
+        Directive(
+            name = "%path",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.PATH_DEFINITION),
+            valueType = "String",
+            description = "API path string (e.g., '/users/{id}')",
+            supportedFormats = setOf("openapi", "raml", "apiblueprint", "graphql")
+        ),
+        Directive(
+            name = "%method",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.OPERATION_DEFINITION, Scope.PATH_DEFINITION),
+            valueType = "String",
+            description = "HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD, TRACE)",
+            supportedFormats = setOf("openapi", "raml", "apiblueprint")
+        ),
+
+        // Operation-level directives
+        Directive(
+            name = "%operationId",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.OPERATION_DEFINITION),
+            valueType = "String",
+            description = "Unique operation identifier for code generation and references",
+            supportedFormats = setOf("openapi", "raml", "asyncapi")
+        ),
+        Directive(
+            name = "%summary",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.OPERATION_DEFINITION, Scope.PATH_DEFINITION),
+            valueType = "String",
+            description = "Short operation summary (one-line description)",
+            supportedFormats = setOf("openapi", "raml", "asyncapi")
+        ),
+
+        // Request/Response directives
+        Directive(
+            name = "%requestBody",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.OPERATION_DEFINITION),
+            valueType = "Object or String",
+            description = "Request body schema or type reference",
+            supportedFormats = setOf("openapi", "raml", "apiblueprint")
+        ),
+        Directive(
+            name = "%responses",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.OPERATION_DEFINITION),
+            valueType = "Object",
+            description = "Response definitions keyed by status code",
+            supportedFormats = setOf("openapi", "raml", "apiblueprint")
+        ),
+        Directive(
+            name = "%statusCode",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.RESPONSE_DEFINITION),
+            valueType = "Integer or String",
+            description = "HTTP status code (200, 404, 500, 'default', etc.)",
+            supportedFormats = setOf("openapi", "raml", "apiblueprint")
+        ),
+        Directive(
+            name = "%schema",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.RESPONSE_DEFINITION, Scope.PARAMETER_DEFINITION),
+            valueType = "Object or String",
+            description = "Schema definition or type reference for response/parameter",
+            supportedFormats = setOf("openapi", "raml", "jsch")
+        ),
+
+        // Parameter directives
+        Directive(
+            name = "%parameters",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.OPERATION_DEFINITION, Scope.PATH_DEFINITION),
+            valueType = "Array",
+            description = "Parameter definitions for query, path, header, or cookie parameters",
+            supportedFormats = setOf("openapi", "raml", "apiblueprint", "graphql")
+        ),
+        Directive(
+            name = "%in",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.PARAMETER_DEFINITION),
+            valueType = "String",
+            description = "Parameter location: 'query', 'path', 'header', 'cookie'",
+            supportedFormats = setOf("openapi", "raml")
+        ),
+
+        // Security directives
+        Directive(
+            name = "%security",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.TOP_LEVEL, Scope.OPERATION_DEFINITION),
+            valueType = "Array or Object",
+            description = "Security requirements (API keys, OAuth, JWT, etc.)",
+            supportedFormats = setOf("openapi", "asyncapi", "raml", "graphql")
+        ),
+        Directive(
+            name = "%securitySchemes",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.TOP_LEVEL),
+            valueType = "Object",
+            description = "Security scheme definitions (apiKey, http, oauth2, openIdConnect)",
+            supportedFormats = setOf("openapi", "asyncapi", "raml")
         )
     )
 
@@ -900,13 +1029,7 @@ object USDL10 {
             valueType = "String",
             description = "Internal comment (not included in output)"
         ),
-        Directive(
-            name = "%tags",
-            tier = Tier.RESERVED,
-            scopes = setOf(Scope.TYPE_DEFINITION, Scope.FIELD_DEFINITION),
-            valueType = "Array",
-            description = "Tags for categorization"
-        ),
+        // Note: %tags moved from Reserved to Tier 2 Common for REST/messaging API support
 
         // Advanced References
         Directive(

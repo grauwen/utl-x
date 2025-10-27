@@ -1,6 +1,6 @@
 # Universal Schema DSL (USDL)
 
-**Version:** 1.0 Extended (Messaging Support)
+**Version:** 1.0 Extended (REST & Messaging API Support)
 **Status:** Draft
 **Last Updated:** 2025-10-27
 
@@ -38,26 +38,37 @@ UTL-X's core philosophy is **format abstraction**. Just as the Universal Data Mo
 ✅ **Future-proof**: Comprehensive directive catalog supports 15+ schema languages
 ✅ **Stable**: USDL 1.0 directive namespace is frozen - no breaking changes
 
-### USDL 1.0 Extended - Messaging Support
+### USDL 1.0 Extended - API Support
 
-**New in v1.0 Extended:** USDL now includes 16 messaging directives as **Tier 2 Common** to support event-driven architectures and messaging APIs. These cross-format directives enable:
+**New in v1.0 Extended:** USDL now includes API directives as **Tier 2 Common** to support both REST and event-driven architectures:
 
+**REST API Directives (14 directives):**
+- **OpenAPI** specifications (3.x)
+- **RAML** RESTful API Modeling Language
+- **API Blueprint** Markdown-based API documentation
+- **GraphQL** queries and mutations
+- HTTP operations, paths, parameters, request/response bodies, security
+
+**Messaging/Event-Driven API Directives (16 directives):**
 - **AsyncAPI** specifications (2.x and 3.0)
 - **OpenAPI** webhook/callback definitions
 - **gRPC** service definitions and streaming
 - **GraphQL** subscription operations
 - **Event-driven patterns** using Kafka, AMQP, MQTT, WebSocket
 
-The directives are recognized and validated in USDL 1.0, though full AsyncAPI serializer implementation is planned for a future release. This approach allows transformation logic to be written now and remain compatible when serializers are added.
+The directives are recognized and validated in USDL 1.0, though full OpenAPI and AsyncAPI serializer implementations are planned for a future release. This approach allows transformation logic to be written now and remain compatible when serializers are added.
 
 ### Supported Schema Languages (Current + Future)
 
 **Tier 1 (Implemented):** XSD, JSON Schema
-**Tier 2 (Planned):** Protobuf, SQL DDL, Apache Avro, GraphQL, OData, AsyncAPI
-**Tier 3 (Future):** OpenAPI, Apache Thrift, Parquet
+**Tier 2 (Planned):** Protobuf, SQL DDL, Apache Avro, GraphQL, OData, OpenAPI, RAML, AsyncAPI
+**Tier 3 (Future):** Apache Thrift, Parquet, API Blueprint
 **Tier 4 (Specialized):** Cap'n Proto, FlatBuffers, ASN.1
 
-**Note:** USDL 1.0 now includes messaging directives for event-driven APIs (AsyncAPI, OpenAPI webhooks, gRPC, GraphQL subscriptions).
+**Note:** USDL 1.0 now includes:
+- **REST API directives** for OpenAPI, RAML, API Blueprint, GraphQL (queries/mutations)
+- **Messaging directives** for AsyncAPI, OpenAPI webhooks, gRPC, GraphQL subscriptions
+- Cross-format support for event-driven architectures (Kafka, AMQP, MQTT, WebSocket)
 
 ---
 
@@ -113,7 +124,7 @@ output xsd %usdl 1.0
 
 ## Complete Directive Catalog
 
-USDL 1.0 defines **95+ directives** organized into **4 tiers** (including messaging support added in v1.0 extended):
+USDL 1.0 defines **110+ directives** organized into **4 tiers** (including REST API and messaging support added in v1.0 extended):
 
 ### Tier 1: Core (Required)
 
@@ -194,6 +205,33 @@ USDL 1.0 defines **95+ directives** organized into **4 tiers** (including messag
 - **OpenAPI** - Webhook callbacks support
 - **gRPC** - Service definitions and streaming
 - **GraphQL** - Subscription operations
+
+#### REST API Directives
+
+**USDL 1.0 Extended:** Support for REST API specifications (OpenAPI, RAML, API Blueprint).
+
+| Directive | Scope | Type | Description |
+|-----------|-------|------|-------------|
+| `%paths` | Top-level | Object | API path definitions for REST APIs |
+| `%tags` | Top-level, Operation | Array | Tags for grouping operations (moved from Reserved to Common) |
+| `%path` | Path | String | API path string (e.g., '/users/{id}') |
+| `%method` | Operation, Path | String | HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD, TRACE) |
+| `%operationId` | Operation | String | Unique operation identifier for code generation |
+| `%summary` | Operation, Path | String | Short operation summary (one-line description) |
+| `%requestBody` | Operation | Object/String | Request body schema or type reference |
+| `%responses` | Operation | Object | Response definitions keyed by status code |
+| `%statusCode` | Response | Integer/String | HTTP status code (200, 404, 500, 'default') |
+| `%schema` | Response, Parameter | Object/String | Schema definition or type reference |
+| `%parameters` | Operation, Path | Array | Parameter definitions (query, path, header, cookie) |
+| `%in` | Parameter | String | Parameter location: 'query', 'path', 'header', 'cookie' |
+| `%security` | Top-level, Operation | Array/Object | Security requirements (API keys, OAuth, JWT) |
+| `%securitySchemes` | Top-level | Object | Security scheme definitions (apiKey, http, oauth2, openIdConnect) |
+
+**Supported Formats:**
+- **OpenAPI** - Full REST API specification support (3.x)
+- **RAML** - RESTful API Modeling Language
+- **API Blueprint** - Markdown-based API documentation
+- **GraphQL** - Query and mutation operations
 
 ---
 
@@ -995,6 +1033,310 @@ components:
 
 ---
 
+### Example 6: OpenAPI REST API
+
+```utlx
+%utlx 1.0
+output openapi %usdl 1.0
+---
+{
+  %namespace: "https://api.example.com/v1",
+  %version: "1.0.0",
+
+  %servers: [
+    {
+      %host: "api.example.com",
+      %description: "Production API server"
+    }
+  ],
+
+  %paths: {
+    "/orders": {
+      get: {
+        %operationId: "listOrders",
+        %summary: "List all orders",
+        %tags: ["Orders"],
+        %parameters: [
+          {
+            %name: "status",
+            %in: "query",
+            %schema: {%kind: "primitive", %baseType: "string"},
+            %description: "Filter by order status"
+          },
+          {
+            %name: "limit",
+            %in: "query",
+            %schema: {%kind: "primitive", %baseType: "integer"},
+            %description: "Maximum number of results"
+          }
+        ],
+        %responses: {
+          "200": {
+            %description: "Successful response",
+            %schema: {
+              %kind: "structure",
+              %fields: [
+                {%name: "orders", %type: "Order", %array: true}
+              ]
+            }
+          },
+          "400": {
+            %description: "Bad request",
+            %schema: "Error"
+          }
+        },
+        %security: [{"apiKey": []}]
+      },
+      post: {
+        %operationId: "createOrder",
+        %summary: "Create a new order",
+        %tags: ["Orders"],
+        %requestBody: {
+          %required: true,
+          %contentType: "application/json",
+          %schema: "Order"
+        },
+        %responses: {
+          "201": {
+            %description: "Order created",
+            %schema: "Order"
+          },
+          "400": {
+            %description: "Invalid input",
+            %schema: "Error"
+          }
+        },
+        %security: [{"apiKey": []}]
+      }
+    },
+    "/orders/{orderId}": {
+      get: {
+        %operationId: "getOrder",
+        %summary: "Get order by ID",
+        %tags: ["Orders"],
+        %parameters: [
+          {
+            %name: "orderId",
+            %in: "path",
+            %required: true,
+            %schema: {%kind: "primitive", %baseType: "string"},
+            %description: "Order identifier"
+          }
+        ],
+        %responses: {
+          "200": {
+            %description: "Order found",
+            %schema: "Order"
+          },
+          "404": {
+            %description: "Order not found",
+            %schema: "Error"
+          }
+        }
+      }
+    }
+  },
+
+  %securitySchemes: {
+    apiKey: {
+      type: "apiKey",
+      %in: "header",
+      %name: "X-API-Key"
+    }
+  },
+
+  %types: {
+    Order: {
+      %kind: "structure",
+      %documentation: "Order information",
+      %fields: [
+        {%name: "orderId", %type: "string", %required: true},
+        {%name: "customerId", %type: "string", %required: true},
+        {%name: "status", %type: "string", %required: true},
+        {%name: "total", %type: "number", %required: true},
+        {%name: "items", %type: "OrderItem", %array: true}
+      ]
+    },
+    OrderItem: {
+      %kind: "structure",
+      %fields: [
+        {%name: "sku", %type: "string", %required: true},
+        {%name: "quantity", %type: "integer", %required: true},
+        {%name: "price", %type: "number", %required: true}
+      ]
+    },
+    Error: {
+      %kind: "structure",
+      %fields: [
+        {%name: "code", %type: "string", %required: true},
+        {%name: "message", %type: "string", %required: true}
+      ]
+    }
+  }
+}
+```
+
+**Output OpenAPI 3.0:**
+```yaml
+openapi: 3.0.0
+info:
+  title: Orders API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com
+    description: Production API server
+
+paths:
+  /orders:
+    get:
+      operationId: listOrders
+      summary: List all orders
+      tags:
+        - Orders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by order status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          description: Maximum number of results
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - apiKey: []
+
+    post:
+      operationId: createOrder
+      summary: Create a new order
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - apiKey: []
+
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      summary: Get order by ID
+      tags:
+        - Orders
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Order identifier
+      responses:
+        '200':
+          description: Order found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Order:
+      type: object
+      description: Order information
+      properties:
+        orderId:
+          type: string
+        customerId:
+          type: string
+        status:
+          type: string
+        total:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+      required:
+        - orderId
+        - customerId
+        - status
+        - total
+
+    OrderItem:
+      type: object
+      properties:
+        sku:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+      required:
+        - sku
+        - quantity
+        - price
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+```
+
+---
+
 ## Validation Rules
 
 ### Unknown Directives (Typos)
@@ -1076,24 +1418,26 @@ Expected structure:
 
 1. **XSD (XML Schema Definition)** - Full support (Tier 1+2)
 2. **JSON Schema** - Full support (Tier 1+2)
-3. **AsyncAPI** - Directive support (Tier 1+2), serializer planned (Event-Driven/Messaging)
+3. **OpenAPI** - Directive support (Tier 1+2), serializer planned (REST API)
+4. **AsyncAPI** - Directive support (Tier 1+2), serializer planned (Event-Driven/Messaging)
+5. **RAML** - Directive support (Tier 1+2), serializer planned (REST API)
 
 ### Planned (Future Releases)
 
-4. **Protobuf** - Tier 1+2+3 (Binary Serialization)
-5. **SQL DDL** - Tier 1+2+3 (Database)
-6. **Apache Avro** - Tier 1+2+3 (Big Data)
-7. **GraphQL** - Tier 1+2+3 (GraphQL)
-8. **OData** - Tier 1+2+3 (REST/OData)
-9. **OpenAPI** - Tier 1+2+3 (REST API, includes webhook support)
-10. **Apache Thrift** - Tier 1+2+3 (Binary Serialization)
-11. **Parquet** - Tier 1+2+3 (Big Data)
+6. **Protobuf** - Tier 1+2+3 (Binary Serialization)
+7. **SQL DDL** - Tier 1+2+3 (Database)
+8. **Apache Avro** - Tier 1+2+3 (Big Data)
+9. **GraphQL** - Tier 1+2+3 (GraphQL schema definitions)
+10. **OData** - Tier 1+2+3 (REST/OData)
+11. **API Blueprint** - Tier 1+2 (REST API documentation)
+12. **Apache Thrift** - Tier 1+2+3 (Binary Serialization)
+13. **Parquet** - Tier 1+2+3 (Big Data)
 
 ### Specialized (Low Priority)
 
-12. **Cap'n Proto** - High-performance RPC
-13. **FlatBuffers** - Game development
-14. **ASN.1** - Telecommunications
+14. **Cap'n Proto** - High-performance RPC
+15. **FlatBuffers** - Game development
+16. **ASN.1** - Telecommunications
 
 ---
 
