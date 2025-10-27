@@ -46,7 +46,7 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 | # | Document | Category |
 |---|----------|----------|
 | 7 | [IMPACT_REPORT.md](../conformance-suite/tests/formats/IMPACT_REPORT.md) | Conformance Suite |
-| 8 | [XSD_JSCH_INTEGRATION.md](../conformance-suite/tests/formats/XSD_JSCH_INTEGRATION.md) | Conformance Suite |
+| 8 | [XSD_JSCH_INTEGRATION.md](../conformance-suite/tests/jsch/XSD_JSCH_INTEGRATION.md) | Conformance Suite |
 | 9 | [TRANSFORMATION_TESTS_FINDINGS.md](../conformance-suite/tests/formats/TRANSFORMATION_TESTS_FINDINGS.md) | Conformance Suite |
 | 10 | [TEST_SUMMARY.md](../conformance-suite/tests/formats/TEST_SUMMARY.md) | Conformance Suite |
 | 11 | [FINAL_SUMMARY.md](../conformance-suite/tests/formats/FINAL_SUMMARY.md) | Conformance Suite |
