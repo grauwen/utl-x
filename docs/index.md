@@ -25,10 +25,10 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 1 | [session-2025-10-27-json-schema-usdl-serializer.md](development/session-2025-10-27-json-schema-usdl-serializer.md) | Development Sessions |
-| 2 | [session-2025-10-27-complete-usdl-implementation.md](development/session-2025-10-27-complete-usdl-implementation.md) | Development Sessions |
-| 3 | [session-2025-10-27-xsd-usdl-serializer.md](development/session-2025-10-27-xsd-usdl-serializer.md) | Development Sessions |
-| 4 | [session-2025-10-27-usdl-implementation.md](development/session-2025-10-27-usdl-implementation.md) | Development Sessions |
+| 1 | [session-2025-10-27-json-schema-usdl-serializer.md](usdl/session-2025-10-27-json-schema-usdl-serializer.md) | Development Sessions |
+| 2 | [session-2025-10-27-complete-usdl-implementation.md](usdl/session-2025-10-27-complete-usdl-implementation.md) | Development Sessions |
+| 3 | [session-2025-10-27-xsd-usdl-serializer.md](usdl/session-2025-10-27-xsd-usdl-serializer.md) | Development Sessions |
+| 4 | [session-2025-10-27-usdl-implementation.md](usdl/session-2025-10-27-usdl-implementation.md) | Development Sessions |
 
 ---
 
