@@ -4,7 +4,7 @@
 **Author:** UTL-X Project Team
 **Date:** 2025-10-27
 **Status:** Draft
-**Related:** [RAML Integration Study](raml-integration-study.md), [JSON Schema Integration](json-schema-integration.md), [USDL 1.0 Specification](../language-guide/universal-schema-dsl.md)
+**Related:** [RAML Integration Study](../raml/raml-integration-study.md), [JSON Schema Integration](json-schema-integration.md), [USDL 1.0 Specification](../language-guide/universal-schema-dsl.md)
 
 ---
 
