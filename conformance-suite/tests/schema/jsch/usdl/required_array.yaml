@@ -1,0 +1,51 @@
+# Test: Required fields in USDL to JSON Schema
+# Verifies %required: true fields appear in required array
+
+description: "Verify required fields appear in required array"
+
+transform: |
+  %utlx 1.0
+  input json
+  output jsch %usdl 1.0
+  ---
+  {
+    %types: {
+      Test: {
+        %kind: "structure",
+        %fields: [
+          {
+            %name: "requiredField",
+            %type: "string",
+            %required: true
+          },
+          {
+            %name: "anotherRequired",
+            %type: "integer",
+            %required: true
+          }
+        ]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+      "Test": {
+        "type": "object",
+        "properties": {
+          "requiredField": {
+            "type": "string"
+          },
+          "anotherRequired": {
+            "type": "integer"
+          }
+        },
+        "required": ["requiredField", "anotherRequired"]
+      }
+    }
+  }

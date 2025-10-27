@@ -1,0 +1,32 @@
+# Test: USDL enumeration to JSON Schema
+# Verifies %kind: "enumeration" generates enum property
+
+description: "Generate JSON Schema enum from USDL enumeration"
+
+transform: |
+  %utlx 1.0
+  input json
+  output jsch %usdl 1.0
+  ---
+  {
+    %types: {
+      Status: {
+        %kind: "enumeration",
+        %values: ["pending", "approved", "rejected"]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+      "Status": {
+        "type": "string",
+        "enum": ["pending", "approved", "rejected"]
+      }
+    }
+  }

@@ -1,0 +1,32 @@
+# Test: USDL mode detection for JSON Schema
+# Verifies %types directive triggers USDL mode, not low-level JSON Schema mode
+
+description: "Verify %types directive activates USDL mode"
+
+transform: |
+  %utlx 1.0
+  input json
+  output jsch %usdl 1.0
+  ---
+  {
+    %types: {
+      Test: {
+        %kind: "structure",
+        %fields: []
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+      "Test": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  }

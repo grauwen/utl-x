@@ -56,27 +56,209 @@ class JSONSchemaSerializer(
     }
 
     /**
+     * Serialization modes
+     */
+    private enum class SerializationMode {
+        LOW_LEVEL,      // User provides JSON Schema structure
+        UNIVERSAL_DSL   // User provides Universal Schema DSL
+    }
+
+    /**
      * Serialize UDM to JSON Schema via Writer
      */
     fun serialize(udm: UDM, writer: Writer) {
-        // Step 1: Validate UDM represents valid JSON Schema structure
+        // Step 1: Detect mode and transform if needed
+        val mode = detectMode(udm)
+        val schemaStructure = when (mode) {
+            SerializationMode.UNIVERSAL_DSL -> transformUniversalDSL(udm as UDM.Object)
+            SerializationMode.LOW_LEVEL -> udm
+        }
+
+        // Step 2: Validate UDM represents valid JSON Schema structure
         if (strict) {
-            validateJSONSchemaStructure(udm)
+            validateJSONSchemaStructure(schemaStructure)
         }
 
-        // Step 2: Inject descriptions if requested
+        // Step 3: Inject descriptions if requested
         val enhanced = if (addDescriptions) {
-            injectDescriptions(udm)
+            injectDescriptions(schemaStructure)
         } else {
-            udm
+            schemaStructure
         }
 
-        // Step 3: Add $schema if not present
+        // Step 4: Add $schema if not present
         val final = ensureSchemaDeclaration(enhanced)
 
-        // Step 4: Serialize using JSON serializer
+        // Step 5: Serialize using JSON serializer
         val jsonSerializer = JSONSerializer(prettyPrint)
         writer.write(jsonSerializer.serialize(final))
+    }
+
+    /**
+     * Detect serialization mode based on UDM structure
+     */
+    private fun detectMode(udm: UDM): SerializationMode {
+        return when (udm) {
+            is UDM.Object -> {
+                when {
+                    // Low-level: Has JSON Schema keywords
+                    udm.properties.containsKey("type") -> SerializationMode.LOW_LEVEL
+                    udm.properties.containsKey("properties") -> SerializationMode.LOW_LEVEL
+                    udm.properties.containsKey("\$schema") -> SerializationMode.LOW_LEVEL
+
+                    // USDL mode: Has %types directive
+                    udm.properties.containsKey("%types") -> SerializationMode.UNIVERSAL_DSL
+
+                    // Default: Low-level
+                    else -> SerializationMode.LOW_LEVEL
+                }
+            }
+            else -> SerializationMode.LOW_LEVEL
+        }
+    }
+
+    /**
+     * Transform USDL (Universal Schema Definition Language) to JSON Schema UDM structure
+     *
+     * Supports USDL 1.0 Tier 1 and Tier 2 directives for JSON Schema generation.
+     *
+     * Required USDL directives:
+     * - %types: Object mapping type names to type definitions
+     * - %kind: "structure" for objects, "enumeration" for enums
+     * - %fields: Array of field definitions (for structures)
+     * - %name: Field name
+     * - %type: Field type
+     *
+     * Optional USDL directives:
+     * - %title: Schema title
+     * - %documentation: Type-level description
+     * - %description: Field-level description
+     * - %required: Boolean indicating if field is required
+     * - %default: Default value
+     */
+    private fun transformUniversalDSL(schema: UDM.Object): UDM {
+        // Extract metadata using USDL % directives
+        val title = (schema.properties["%title"] as? UDM.Scalar)?.value as? String
+        val description = (schema.properties["%documentation"] as? UDM.Scalar)?.value as? String
+
+        // Extract types using %types directive
+        val types = schema.properties["%types"] as? UDM.Object
+            ?: throw IllegalArgumentException("USDL schema requires '%types' directive")
+
+        // Build JSON Schema definitions
+        val definitions = mutableMapOf<String, UDM>()
+
+        types.properties.forEach { (typeName, typeDef) ->
+            if (typeDef !is UDM.Object) return@forEach
+
+            // Check %kind directive
+            val kind = (typeDef.properties["%kind"] as? UDM.Scalar)?.value as? String
+
+            when (kind) {
+                "structure" -> {
+                    // Extract %fields directive
+                    val fields = typeDef.properties["%fields"] as? UDM.Array ?: return@forEach
+
+                    // Extract %documentation directive
+                    val typeDoc = (typeDef.properties["%documentation"] as? UDM.Scalar)?.value as? String
+
+                    // Build properties object and required array
+                    val properties = mutableMapOf<String, UDM>()
+                    val requiredFields = mutableListOf<String>()
+
+                    fields.elements.forEach { fieldUdm ->
+                        if (fieldUdm !is UDM.Object) return@forEach
+
+                        // Extract field directives
+                        val name = (fieldUdm.properties["%name"] as? UDM.Scalar)?.value as? String ?: return@forEach
+                        val type = (fieldUdm.properties["%type"] as? UDM.Scalar)?.value as? String ?: return@forEach
+                        val required = (fieldUdm.properties["%required"] as? UDM.Scalar)?.value as? Boolean ?: false
+                        val fieldDesc = (fieldUdm.properties["%description"] as? UDM.Scalar)?.value as? String
+
+                        // Map USDL types to JSON Schema types
+                        val jsonSchemaType = mapUSDLTypeToJSONSchema(type)
+
+                        val fieldProps = mutableMapOf<String, UDM>("type" to UDM.Scalar(jsonSchemaType))
+                        if (fieldDesc != null) {
+                            fieldProps["_description"] = UDM.Scalar(fieldDesc)
+                        }
+
+                        properties[name] = UDM.Object(properties = fieldProps)
+
+                        if (required) {
+                            requiredFields.add(name)
+                        }
+                    }
+
+                    // Build type definition
+                    val typeDefProps = mutableMapOf<String, UDM>(
+                        "type" to UDM.Scalar("object"),
+                        "properties" to UDM.Object(properties = properties)
+                    )
+
+                    if (requiredFields.isNotEmpty()) {
+                        typeDefProps["required"] = UDM.Array(requiredFields.map { UDM.Scalar(it) })
+                    }
+
+                    if (typeDoc != null) {
+                        typeDefProps["_description"] = UDM.Scalar(typeDoc)
+                    }
+
+                    definitions[typeName] = UDM.Object(properties = typeDefProps)
+                }
+
+                "enumeration" -> {
+                    // Extract %values directive
+                    val values = typeDef.properties["%values"] as? UDM.Array
+                    val typeDoc = (typeDef.properties["%documentation"] as? UDM.Scalar)?.value as? String
+
+                    val enumProps = mutableMapOf<String, UDM>("type" to UDM.Scalar("string"))
+
+                    if (values != null) {
+                        enumProps["enum"] = values
+                    }
+
+                    if (typeDoc != null) {
+                        enumProps["_description"] = UDM.Scalar(typeDoc)
+                    }
+
+                    definitions[typeName] = UDM.Object(properties = enumProps)
+                }
+            }
+        }
+
+        // Build root schema
+        val rootProps = mutableMapOf<String, UDM>()
+
+        if (title != null) {
+            rootProps["title"] = UDM.Scalar(title)
+        }
+
+        if (description != null) {
+            rootProps["_description"] = UDM.Scalar(description)
+        }
+
+        if (definitions.isNotEmpty()) {
+            rootProps["\$defs"] = UDM.Object(properties = definitions)
+        }
+
+        return UDM.Object(properties = rootProps)
+    }
+
+    /**
+     * Map USDL type to JSON Schema type
+     */
+    private fun mapUSDLTypeToJSONSchema(usdlType: String): String {
+        return when (usdlType) {
+            "string" -> "string"
+            "number" -> "number"
+            "integer" -> "integer"
+            "boolean" -> "boolean"
+            "array" -> "array"
+            "object" -> "object"
+            "null" -> "null"
+            else -> "string" // Default to string for unknown types
+        }
     }
 
     /**

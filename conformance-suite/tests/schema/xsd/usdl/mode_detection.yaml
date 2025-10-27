@@ -1,0 +1,29 @@
+# Test: USDL mode detection
+# Verifies %types directive triggers USDL mode, not low-level XSD mode
+
+description: "Verify %types directive activates USDL mode"
+
+transform: |
+  %utlx 1.0
+  input json
+  output xsd %usdl 1.0
+  ---
+  {
+    %types: {
+      Test: {
+        %kind: "structure",
+        %fields: []
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  <?xml version="1.0" encoding="UTF-8"?>
+  <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:complexType name="Test">
+      <xs:sequence/>
+    </xs:complexType>
+  </xs:schema>

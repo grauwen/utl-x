@@ -1,0 +1,51 @@
+# Test: Basic USDL to JSON Schema transformation
+# Verifies basic %types, %kind, and %fields directives
+
+description: "Generate JSON Schema from basic USDL structure"
+
+transform: |
+  %utlx 1.0
+  input json
+  output jsch %usdl 1.0
+  ---
+  {
+    %types: {
+      Customer: {
+        %kind: "structure",
+        %fields: [
+          {
+            %name: "id",
+            %type: "string",
+            %required: true
+          },
+          {
+            %name: "email",
+            %type: "string",
+            %required: false
+          }
+        ]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": ["id"]
+      }
+    }
+  }

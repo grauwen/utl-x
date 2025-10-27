@@ -1,0 +1,43 @@
+# Test: Basic USDL to XSD transformation
+# Verifies basic %types, %kind, and %fields directives
+
+description: "Generate XSD from basic USDL structure"
+
+transform: |
+  %utlx 1.0
+  input json
+  output xsd %usdl 1.0
+  ---
+  {
+    %types: {
+      Customer: {
+        %kind: "structure",
+        %fields: [
+          {
+            %name: "id",
+            %type: "string",
+            %required: true
+          },
+          {
+            %name: "email",
+            %type: "string",
+            %required: false
+          }
+        ]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  <?xml version="1.0" encoding="UTF-8"?>
+  <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:complexType name="Customer">
+      <xs:sequence>
+        <xs:element name="id" type="xs:string"/>
+        <xs:element name="email" type="xs:string" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:schema>

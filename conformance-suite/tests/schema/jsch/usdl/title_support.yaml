@@ -1,0 +1,45 @@
+# Test: USDL to JSON Schema with title
+# Verifies %title directive generates title property
+
+description: "Generate JSON Schema with title from USDL"
+
+transform: |
+  %utlx 1.0
+  input json
+  output jsch %usdl 1.0
+  ---
+  {
+    %title: "Customer Schema",
+    %types: {
+      Person: {
+        %kind: "structure",
+        %fields: [
+          {
+            %name: "name",
+            %type: "string",
+            %required: true
+          }
+        ]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Customer Schema",
+    "$defs": {
+      "Person": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["name"]
+      }
+    }
+  }

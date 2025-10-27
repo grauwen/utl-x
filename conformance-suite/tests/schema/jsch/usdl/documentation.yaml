@@ -1,0 +1,47 @@
+# Test: USDL to JSON Schema with documentation
+# Verifies %documentation and %description directives generate description properties
+
+description: "Generate JSON Schema with documentation from USDL"
+
+transform: |
+  %utlx 1.0
+  input json
+  output jsch %usdl 1.0
+  ---
+  {
+    %types: {
+      Order: {
+        %kind: "structure",
+        %documentation: "Customer order information",
+        %fields: [
+          {
+            %name: "orderId",
+            %type: "string",
+            %required: true,
+            %description: "Unique order identifier"
+          }
+        ]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+      "Order": {
+        "type": "object",
+        "description": "Customer order information",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "description": "Unique order identifier"
+          }
+        },
+        "required": ["orderId"]
+      }
+    }
+  }

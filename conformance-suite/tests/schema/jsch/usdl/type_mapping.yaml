@@ -1,0 +1,67 @@
+# Test: USDL type mapping to JSON Schema types
+# Verifies all USDL primitive types map correctly
+
+description: "Verify USDL types map to JSON Schema types"
+
+transform: |
+  %utlx 1.0
+  input json
+  output jsch %usdl 1.0
+  ---
+  {
+    %types: {
+      AllTypes: {
+        %kind: "structure",
+        %fields: [
+          {
+            %name: "stringField",
+            %type: "string",
+            %required: true
+          },
+          {
+            %name: "numberField",
+            %type: "number",
+            %required: true
+          },
+          {
+            %name: "integerField",
+            %type: "integer",
+            %required: true
+          },
+          {
+            %name: "booleanField",
+            %type: "boolean",
+            %required: true
+          }
+        ]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+      "AllTypes": {
+        "type": "object",
+        "properties": {
+          "stringField": {
+            "type": "string"
+          },
+          "numberField": {
+            "type": "number"
+          },
+          "integerField": {
+            "type": "integer"
+          },
+          "booleanField": {
+            "type": "boolean"
+          }
+        },
+        "required": ["stringField", "numberField", "integerField", "booleanField"]
+      }
+    }
+  }

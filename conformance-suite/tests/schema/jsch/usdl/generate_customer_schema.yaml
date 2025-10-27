@@ -1,0 +1,94 @@
+# Test: Generate Customer JSON Schema from USDL
+# This test verifies USDL → JSON Schema transformation using % directive syntax
+
+description: "Generate JSON Schema from USDL definition"
+
+transform: |
+  %utlx 1.0
+  input json
+  output jsch %usdl 1.0
+  ---
+  {
+    %title: "Customer Schema",
+    %documentation: "Schema for customer information",
+
+    %types: {
+      Customer: {
+        %kind: "structure",
+        %documentation: "Customer entity",
+
+        %fields: [
+          {
+            %name: "customerId",
+            %type: "string",
+            %required: true,
+            %description: "Unique customer identifier"
+          },
+          {
+            %name: "name",
+            %type: "string",
+            %required: true,
+            %description: "Customer name"
+          },
+          {
+            %name: "email",
+            %type: "string",
+            %required: false,
+            %description: "Customer email address"
+          },
+          {
+            %name: "loyaltyPoints",
+            %type: "integer",
+            %required: false,
+            %description: "Customer loyalty points"
+          }
+        ]
+      },
+
+      Status: {
+        %kind: "enumeration",
+        %documentation: "Customer status",
+        %values: ["active", "inactive", "suspended"]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Customer Schema",
+    "description": "Schema for customer information",
+    "$defs": {
+      "Customer": {
+        "type": "object",
+        "description": "Customer entity",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "description": "Unique customer identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Customer name"
+          },
+          "email": {
+            "type": "string",
+            "description": "Customer email address"
+          },
+          "loyaltyPoints": {
+            "type": "integer",
+            "description": "Customer loyalty points"
+          }
+        },
+        "required": ["customerId", "name"]
+      },
+      "Status": {
+        "type": "string",
+        "description": "Customer status",
+        "enum": ["active", "inactive", "suspended"]
+      }
+    }
+  }

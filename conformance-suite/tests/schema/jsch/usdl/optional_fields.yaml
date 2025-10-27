@@ -1,0 +1,42 @@
+# Test: Optional fields in USDL to JSON Schema
+# Verifies %required: false fields not in required array
+
+description: "Verify optional fields are not in required array"
+
+transform: |
+  %utlx 1.0
+  input json
+  output jsch %usdl 1.0
+  ---
+  {
+    %types: {
+      Test: {
+        %kind: "structure",
+        %fields: [
+          {
+            %name: "optionalField",
+            %type: "string",
+            %required: false
+          }
+        ]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+      "Test": {
+        "type": "object",
+        "properties": {
+          "optionalField": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }

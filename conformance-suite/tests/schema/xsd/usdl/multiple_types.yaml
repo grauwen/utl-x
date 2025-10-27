@@ -1,0 +1,52 @@
+# Test: USDL to XSD with multiple types
+# Verifies multiple type definitions in %types object
+
+description: "Generate XSD with multiple complex types from USDL"
+
+transform: |
+  %utlx 1.0
+  input json
+  output xsd %usdl 1.0
+  ---
+  {
+    %types: {
+      Customer: {
+        %kind: "structure",
+        %fields: [
+          {
+            %name: "id",
+            %type: "string",
+            %required: true
+          }
+        ]
+      },
+      Order: {
+        %kind: "structure",
+        %fields: [
+          {
+            %name: "orderId",
+            %type: "string",
+            %required: true
+          }
+        ]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  <?xml version="1.0" encoding="UTF-8"?>
+  <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:complexType name="Customer">
+      <xs:sequence>
+        <xs:element name="id" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Order">
+      <xs:sequence>
+        <xs:element name="orderId" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:schema>

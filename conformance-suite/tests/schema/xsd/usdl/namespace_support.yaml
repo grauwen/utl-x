@@ -1,0 +1,38 @@
+# Test: USDL to XSD with namespace
+# Verifies %namespace directive generates targetNamespace
+
+description: "Generate XSD with target namespace from USDL"
+
+transform: |
+  %utlx 1.0
+  input json
+  output xsd %usdl 1.0
+  ---
+  {
+    %namespace: "http://example.com/customer",
+    %types: {
+      Person: {
+        %kind: "structure",
+        %fields: [
+          {
+            %name: "name",
+            %type: "string",
+            %required: true
+          }
+        ]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  <?xml version="1.0" encoding="UTF-8"?>
+  <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/customer">
+    <xs:complexType name="Person">
+      <xs:sequence>
+        <xs:element name="name" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:schema>

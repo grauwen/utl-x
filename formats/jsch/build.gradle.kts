@@ -13,6 +13,9 @@ dependencies {
     // JSON format dependency (JSON Schema parser builds on JSON parser)
     implementation(project(":formats:json"))
 
+    // Schema module dependency (for USDL directive validation)
+    implementation(project(":schema"))
+
     // Kotlin standard library
     implementation(kotlin("stdlib"))
 
