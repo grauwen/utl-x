@@ -9,6 +9,8 @@ Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architectu
 hese XSDParserTest failures appear to be pre-existing issues with the parser (not the serializer I 
 ----
   Likely cause: type may be a reserved keyword or conflicts with the type system. ?
+So the parser has a bug where it's rejecting type as a parameter name when it shouldn't. Should I investigate why the parser is rejecting it?
+
 ---
 Later
   - OPENAPI - OpenAPI 3.x specs (JSON/YAML with schema embedded)
