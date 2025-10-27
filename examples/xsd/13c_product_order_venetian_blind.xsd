@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:po="http://example.com/schemas/product-order"
+           targetNamespace="http://example.com/schemas/product-order"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Product Order Schema - Venetian Blind Pattern
+
+      VENETIAN BLIND PATTERN:
+      - Complex types are defined globally (reusable)
+      - Elements are defined locally (within types)
+      - RECOMMENDED PATTERN - Best balance of reusability and maintainability
+      - Most commonly used in enterprise applications
+
+      Characteristics:
+      - Only root element is global
+      - All complex types are global (named types)
+      - Elements are local to their containing types
+      - Excellent type reusability
+      - Easy to maintain and extend
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Element -->
+  <xs:element name="ProductOrder" type="po:ProductOrderType"/>
+
+  <!-- Complex Types (Global) -->
+
+  <xs:complexType name="ProductOrderType">
+    <xs:sequence>
+      <xs:element name="OrderID" type="xs:string"/>
+      <xs:element name="OrderDate" type="xs:date"/>
+      <xs:element name="Customer" type="po:CustomerType"/>
+      <xs:element name="Items" type="po:ItemsType"/>
+      <xs:element name="Total" type="po:MoneyType"/>
+      <xs:element name="Status" type="po:OrderStatusType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CustomerType">
+    <xs:sequence>
+      <xs:element name="CustomerID" type="xs:string"/>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="Email" type="xs:string"/>
+      <xs:element name="Address" type="po:AddressType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="ZipCode" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ItemsType">
+    <xs:sequence>
+      <xs:element name="Item" type="po:ItemType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ItemType">
+    <xs:sequence>
+      <xs:element name="ProductID" type="xs:string"/>
+      <xs:element name="ProductName" type="xs:string"/>
+      <xs:element name="Quantity" type="xs:positiveInteger"/>
+      <xs:element name="Price" type="po:MoneyType"/>
+      <xs:element name="Subtotal" type="po:MoneyType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types (Global) -->
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="OrderStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="pending"/>
+      <xs:enumeration value="processing"/>
+      <xs:enumeration value="shipped"/>
+      <xs:enumeration value="delivered"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

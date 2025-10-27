@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<InsurancePolicy xmlns="http://example.com/schemas/insurance-policy"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- This XML validates against ALL FOUR schema design patterns:
+       - 15a_insurance_policy_russian_doll.xsd
+       - 15b_insurance_policy_salami_slice.xsd
+       - 15c_insurance_policy_venetian_blind.xsd
+       - 15d_insurance_policy_garden_of_eden.xsd
+  -->
+
+  <PolicyNumber>AUTO-2024-789456</PolicyNumber>
+  <PolicyType>auto</PolicyType>
+  <EffectiveDate>2024-01-01</EffectiveDate>
+  <ExpirationDate>2025-01-01</ExpirationDate>
+
+  <PolicyHolder>
+    <Name>David Martinez</Name>
+    <DateOfBirth>1985-06-15</DateOfBirth>
+    <LicenseNumber>D1234567</LicenseNumber>
+    <Address>
+      <Street>789 Oak Avenue</Street>
+      <City>Los Angeles</City>
+      <State>CA</State>
+      <ZipCode>90001</ZipCode>
+    </Address>
+  </PolicyHolder>
+
+  <Coverage>
+    <CoverageItem>
+      <CoverageType>Bodily Injury Liability</CoverageType>
+      <CoverageLimit>100000.00</CoverageLimit>
+      <Deductible>0.00</Deductible>
+    </CoverageItem>
+    <CoverageItem>
+      <CoverageType>Property Damage Liability</CoverageType>
+      <CoverageLimit>50000.00</CoverageLimit>
+      <Deductible>0.00</Deductible>
+    </CoverageItem>
+    <CoverageItem>
+      <CoverageType>Collision</CoverageType>
+      <CoverageLimit>25000.00</CoverageLimit>
+      <Deductible>500.00</Deductible>
+    </CoverageItem>
+    <CoverageItem>
+      <CoverageType>Comprehensive</CoverageType>
+      <CoverageLimit>25000.00</CoverageLimit>
+      <Deductible>250.00</Deductible>
+    </CoverageItem>
+  </Coverage>
+
+  <Premium>
+    <AnnualPremium>1800.00</AnnualPremium>
+    <PaymentFrequency>monthly</PaymentFrequency>
+    <NextPaymentDate>2024-11-01</NextPaymentDate>
+  </Premium>
+
+  <Status>active</Status>
+
+</InsurancePolicy>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmployeeProfile xmlns="http://example.com/schemas/employee-profile"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- This XML validates against ALL FOUR schema design patterns:
+       - 14a_employee_profile_russian_doll.xsd
+       - 14b_employee_profile_salami_slice.xsd
+       - 14c_employee_profile_venetian_blind.xsd
+       - 14d_employee_profile_garden_of_eden.xsd
+  -->
+
+  <EmployeeID>EMP-789456</EmployeeID>
+
+  <PersonalInfo>
+    <FirstName>Sarah</FirstName>
+    <LastName>Johnson</LastName>
+    <DateOfBirth>1988-05-15</DateOfBirth>
+    <Email>sarah.johnson@techcorp.example.com</Email>
+    <Phone>+14155551234</Phone>
+  </PersonalInfo>
+
+  <Employment>
+    <Department>Engineering</Department>
+    <JobTitle>Senior Software Engineer</JobTitle>
+    <HireDate>2019-03-15</HireDate>
+    <EmploymentType>full-time</EmploymentType>
+    <Manager>
+      <EmployeeID>EMP-123456</EmployeeID>
+      <Name>Michael Thompson</Name>
+    </Manager>
+  </Employment>
+
+  <Compensation>
+    <Salary>135000.00</Salary>
+    <Currency>USD</Currency>
+    <BonusEligible>true</BonusEligible>
+  </Compensation>
+
+  <Skills>
+    <Skill>
+      <SkillName>Java</SkillName>
+      <Level>expert</Level>
+      <YearsExperience>10</YearsExperience>
+    </Skill>
+    <Skill>
+      <SkillName>Python</SkillName>
+      <Level>advanced</Level>
+      <YearsExperience>7</YearsExperience>
+    </Skill>
+    <Skill>
+      <SkillName>Kubernetes</SkillName>
+      <Level>intermediate</Level>
+      <YearsExperience>3</YearsExperience>
+    </Skill>
+    <Skill>
+      <SkillName>System Design</SkillName>
+      <Level>expert</Level>
+      <YearsExperience>8</YearsExperience>
+    </Skill>
+  </Skills>
+
+</EmployeeProfile>

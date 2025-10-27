@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:emp="http://example.com/schemas/employee-profile"
+           targetNamespace="http://example.com/schemas/employee-profile"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Employee Profile Schema - Venetian Blind Pattern (RECOMMENDED)
+
+      Complex types are global (reusable), elements are local.
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Element -->
+  <xs:element name="EmployeeProfile" type="emp:EmployeeProfileType"/>
+
+  <!-- Complex Types (Global) -->
+
+  <xs:complexType name="EmployeeProfileType">
+    <xs:sequence>
+      <xs:element name="EmployeeID" type="xs:string"/>
+      <xs:element name="PersonalInfo" type="emp:PersonalInfoType"/>
+      <xs:element name="Employment" type="emp:EmploymentType"/>
+      <xs:element name="Compensation" type="emp:CompensationType"/>
+      <xs:element name="Skills" type="emp:SkillsType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PersonalInfoType">
+    <xs:sequence>
+      <xs:element name="FirstName" type="xs:string"/>
+      <xs:element name="LastName" type="xs:string"/>
+      <xs:element name="DateOfBirth" type="xs:date"/>
+      <xs:element name="Email" type="xs:string"/>
+      <xs:element name="Phone" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="EmploymentType">
+    <xs:sequence>
+      <xs:element name="Department" type="xs:string"/>
+      <xs:element name="JobTitle" type="xs:string"/>
+      <xs:element name="HireDate" type="xs:date"/>
+      <xs:element name="EmploymentType" type="emp:EmploymentTypeEnum"/>
+      <xs:element name="Manager" type="emp:ManagerType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ManagerType">
+    <xs:sequence>
+      <xs:element name="EmployeeID" type="xs:string"/>
+      <xs:element name="Name" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CompensationType">
+    <xs:sequence>
+      <xs:element name="Salary" type="emp:MoneyType"/>
+      <xs:element name="Currency" type="xs:string"/>
+      <xs:element name="BonusEligible" type="xs:boolean"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SkillsType">
+    <xs:sequence>
+      <xs:element name="Skill" type="emp:SkillType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SkillType">
+    <xs:sequence>
+      <xs:element name="SkillName" type="xs:string"/>
+      <xs:element name="Level" type="emp:SkillLevelType"/>
+      <xs:element name="YearsExperience" type="xs:positiveInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types (Global) -->
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmploymentTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="full-time"/>
+      <xs:enumeration value="part-time"/>
+      <xs:enumeration value="contractor"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SkillLevelType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="beginner"/>
+      <xs:enumeration value="intermediate"/>
+      <xs:enumeration value="advanced"/>
+      <xs:enumeration value="expert"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

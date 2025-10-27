@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:po="http://example.com/schemas/product-order"
+           targetNamespace="http://example.com/schemas/product-order"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Product Order Schema - Russian Doll Pattern
+
+      RUSSIAN DOLL PATTERN:
+      - All elements and types are defined inline within the root element
+      - Maximum nesting, minimum reusability
+      - Simple to understand for small schemas
+      - Difficult to maintain for large schemas
+
+      Characteristics:
+      - Only root element is global
+      - All other elements are local (nested)
+      - All types are anonymous (inline definitions)
+      - No type reusability
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Element with all nested definitions -->
+  <xs:element name="ProductOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="OrderID" type="xs:string"/>
+        <xs:element name="OrderDate" type="xs:date"/>
+        <xs:element name="Customer">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="CustomerID" type="xs:string"/>
+              <xs:element name="Name" type="xs:string"/>
+              <xs:element name="Email" type="xs:string"/>
+              <xs:element name="Address">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="Street" type="xs:string"/>
+                    <xs:element name="City" type="xs:string"/>
+                    <xs:element name="State" type="xs:string"/>
+                    <xs:element name="ZipCode" type="xs:string"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Items">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Item" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="ProductID" type="xs:string"/>
+                    <xs:element name="ProductName" type="xs:string"/>
+                    <xs:element name="Quantity" type="xs:positiveInteger"/>
+                    <xs:element name="Price">
+                      <xs:simpleType>
+                        <xs:restriction base="xs:decimal">
+                          <xs:fractionDigits value="2"/>
+                          <xs:minInclusive value="0"/>
+                        </xs:restriction>
+                      </xs:simpleType>
+                    </xs:element>
+                    <xs:element name="Subtotal">
+                      <xs:simpleType>
+                        <xs:restriction base="xs:decimal">
+                          <xs:fractionDigits value="2"/>
+                          <xs:minInclusive value="0"/>
+                        </xs:restriction>
+                      </xs:simpleType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Total">
+          <xs:simpleType>
+            <xs:restriction base="xs:decimal">
+              <xs:fractionDigits value="2"/>
+              <xs:minInclusive value="0"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+        <xs:element name="Status">
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="pending"/>
+              <xs:enumeration value="processing"/>
+              <xs:enumeration value="shipped"/>
+              <xs:enumeration value="delivered"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

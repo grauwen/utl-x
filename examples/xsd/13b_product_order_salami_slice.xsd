@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:po="http://example.com/schemas/product-order"
+           targetNamespace="http://example.com/schemas/product-order"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Product Order Schema - Salami Slice Pattern
+
+      SALAMI SLICE PATTERN:
+      - All elements are defined globally at the schema level
+      - All types are anonymous (inline)
+      - Maximum granularity, elements can be used independently
+      - Good for data binding and partial document validation
+
+      Characteristics:
+      - All elements are global
+      - Types are defined inline (anonymous)
+      - Elements can be referenced from anywhere
+      - Good for schema composition
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Global Elements -->
+
+  <xs:element name="ProductOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="po:OrderID"/>
+        <xs:element ref="po:OrderDate"/>
+        <xs:element ref="po:Customer"/>
+        <xs:element ref="po:Items"/>
+        <xs:element ref="po:Total"/>
+        <xs:element ref="po:Status"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="OrderID" type="xs:string"/>
+
+  <xs:element name="OrderDate" type="xs:date"/>
+
+  <xs:element name="Customer">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="po:CustomerID"/>
+        <xs:element ref="po:Name"/>
+        <xs:element ref="po:Email"/>
+        <xs:element ref="po:Address"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="CustomerID" type="xs:string"/>
+
+  <xs:element name="Name" type="xs:string"/>
+
+  <xs:element name="Email" type="xs:string"/>
+
+  <xs:element name="Address">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="po:Street"/>
+        <xs:element ref="po:City"/>
+        <xs:element ref="po:State"/>
+        <xs:element ref="po:ZipCode"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Street" type="xs:string"/>
+
+  <xs:element name="City" type="xs:string"/>
+
+  <xs:element name="State" type="xs:string"/>
+
+  <xs:element name="ZipCode" type="xs:string"/>
+
+  <xs:element name="Items">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="po:Item" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Item">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="po:ProductID"/>
+        <xs:element ref="po:ProductName"/>
+        <xs:element ref="po:Quantity"/>
+        <xs:element ref="po:Price"/>
+        <xs:element ref="po:Subtotal"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ProductID" type="xs:string"/>
+
+  <xs:element name="ProductName" type="xs:string"/>
+
+  <xs:element name="Quantity" type="xs:positiveInteger"/>
+
+  <xs:element name="Price">
+    <xs:simpleType>
+      <xs:restriction base="xs:decimal">
+        <xs:fractionDigits value="2"/>
+        <xs:minInclusive value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Subtotal">
+    <xs:simpleType>
+      <xs:restriction base="xs:decimal">
+        <xs:fractionDigits value="2"/>
+        <xs:minInclusive value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Total">
+    <xs:simpleType>
+      <xs:restriction base="xs:decimal">
+        <xs:fractionDigits value="2"/>
+        <xs:minInclusive value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Status">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:enumeration value="pending"/>
+        <xs:enumeration value="processing"/>
+        <xs:enumeration value="shipped"/>
+        <xs:enumeration value="delivered"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+</xs:schema>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ProductOrder xmlns="http://example.com/schemas/product-order"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- This XML validates against ALL FOUR schema design patterns:
+       - 13a_product_order_russian_doll.xsd
+       - 13b_product_order_salami_slice.xsd
+       - 13c_product_order_venetian_blind.xsd
+       - 13d_product_order_garden_of_eden.xsd
+  -->
+
+  <OrderID>ORD-2024-789456</OrderID>
+  <OrderDate>2024-10-27</OrderDate>
+
+  <Customer>
+    <CustomerID>CUST-123456</CustomerID>
+    <Name>John Smith</Name>
+    <Email>john.smith@example.com</Email>
+    <Address>
+      <Street>123 Main Street</Street>
+      <City>Boston</City>
+      <State>MA</State>
+      <ZipCode>02101</ZipCode>
+    </Address>
+  </Customer>
+
+  <Items>
+    <Item>
+      <ProductID>PROD-001</ProductID>
+      <ProductName>Wireless Mouse</ProductName>
+      <Quantity>2</Quantity>
+      <Price>29.99</Price>
+      <Subtotal>59.98</Subtotal>
+    </Item>
+    <Item>
+      <ProductID>PROD-002</ProductID>
+      <ProductName>USB Keyboard</ProductName>
+      <Quantity>1</Quantity>
+      <Price>49.99</Price>
+      <Subtotal>49.99</Subtotal>
+    </Item>
+    <Item>
+      <ProductID>PROD-003</ProductID>
+      <ProductName>HDMI Cable</ProductName>
+      <Quantity>3</Quantity>
+      <Price>12.50</Price>
+      <Subtotal>37.50</Subtotal>
+    </Item>
+  </Items>
+
+  <Total>147.47</Total>
+  <Status>processing</Status>
+
+</ProductOrder>

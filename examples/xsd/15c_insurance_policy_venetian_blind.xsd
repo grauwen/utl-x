@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:ins="http://example.com/schemas/insurance-policy"
+           targetNamespace="http://example.com/schemas/insurance-policy"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Insurance Policy Schema - Venetian Blind Pattern (RECOMMENDED)
+
+      Complex types are global (reusable), elements are local.
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Element -->
+  <xs:element name="InsurancePolicy" type="ins:InsurancePolicyType"/>
+
+  <!-- Complex Types (Global) -->
+
+  <xs:complexType name="InsurancePolicyType">
+    <xs:sequence>
+      <xs:element name="PolicyNumber" type="xs:string"/>
+      <xs:element name="PolicyType" type="ins:PolicyTypeEnum"/>
+      <xs:element name="EffectiveDate" type="xs:date"/>
+      <xs:element name="ExpirationDate" type="xs:date"/>
+      <xs:element name="PolicyHolder" type="ins:PolicyHolderType"/>
+      <xs:element name="Coverage" type="ins:CoverageType"/>
+      <xs:element name="Premium" type="ins:PremiumType"/>
+      <xs:element name="Status" type="ins:PolicyStatusType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PolicyHolderType">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="DateOfBirth" type="xs:date"/>
+      <xs:element name="LicenseNumber" type="xs:string"/>
+      <xs:element name="Address" type="ins:AddressType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="ZipCode" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CoverageType">
+    <xs:sequence>
+      <xs:element name="CoverageItem" type="ins:CoverageItemType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CoverageItemType">
+    <xs:sequence>
+      <xs:element name="CoverageType" type="xs:string"/>
+      <xs:element name="CoverageLimit" type="ins:MoneyType"/>
+      <xs:element name="Deductible" type="ins:MoneyType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PremiumType">
+    <xs:sequence>
+      <xs:element name="AnnualPremium" type="ins:MoneyType"/>
+      <xs:element name="PaymentFrequency" type="ins:PaymentFrequencyType"/>
+      <xs:element name="NextPaymentDate" type="xs:date"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Simple Types (Global) -->
+
+  <xs:simpleType name="MoneyType">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PolicyTypeEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="auto"/>
+      <xs:enumeration value="home"/>
+      <xs:enumeration value="life"/>
+      <xs:enumeration value="health"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PaymentFrequencyType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="monthly"/>
+      <xs:enumeration value="quarterly"/>
+      <xs:enumeration value="annually"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PolicyStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="active"/>
+      <xs:enumeration value="expired"/>
+      <xs:enumeration value="cancelled"/>
+      <xs:enumeration value="pending"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>
