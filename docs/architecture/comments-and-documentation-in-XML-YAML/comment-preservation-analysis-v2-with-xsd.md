@@ -1,6 +1,6 @@
 # Comment and Documentation Preservation in UTL-X (v2 - with XSD Support)
 
-**Author:** Analysis by Claude Code
+**Author:** Analysis by team UTLX
 **Date:** 2025-10-25
 **Status:** Proposal / Research Document
 **Version:** 2.0 - Enhanced with XSD Documentation Analysis
