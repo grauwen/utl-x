@@ -280,3 +280,19 @@ expected:
   format: json
   data: |
     {
+      "payment": {
+        "schemaVersion": null,
+        "title": "Payment Transaction",
+        "hasDefinitions": true,
+        "requiredFields": 7,
+        "paymentMethods": [
+          "credit_card",
+          "debit_card",
+          "bank_transfer",
+          "paypal",
+          "apple_pay",
+          "google_pay",
+          "cryptocurrency"
+        ]
+      }
+    }

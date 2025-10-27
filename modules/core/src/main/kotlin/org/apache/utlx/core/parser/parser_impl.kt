@@ -230,6 +230,69 @@ class Parser(private val tokens: List<Token>) {
     }
     
     private fun parseExpression(): Expression {
+        return parseLambdaOrExpression()
+    }
+
+    /**
+     * Parse lambda expression or fall back to regular expression
+     * Handles both single-parameter (x => body) and multi-parameter ((x, y) => body) lambdas
+     */
+    private fun parseLambdaOrExpression(): Expression {
+        val checkpoint = current
+
+        // Try to parse multi-parameter lambda: (param1, param2) => body
+        if (check(TokenType.LPAREN)) {
+            advance() // consume LPAREN
+            val parameters = mutableListOf<Parameter>()
+
+            if (!check(TokenType.RPAREN)) {
+                do {
+                    if (check(TokenType.IDENTIFIER)) {
+                        val paramName = advance().lexeme
+
+                        // Parse optional type annotation: paramName: Type
+                        val paramType = if (match(TokenType.COLON)) {
+                            parseTypeAnnotation()
+                        } else {
+                            null
+                        }
+
+                        parameters.add(Parameter(paramName, paramType, Location.from(previous())))
+                    } else {
+                        // Not a parameter list, backtrack
+                        current = checkpoint
+                        return parsePipe()
+                    }
+                } while (match(TokenType.COMMA))
+            }
+
+            if (match(TokenType.RPAREN) && match(TokenType.ARROW)) {
+                // This is a multi-parameter lambda: (param1, param2) => body
+                val body = parseLambdaOrExpression() // Allow nested lambdas
+                return Expression.Lambda(parameters, body, null, Location.from(tokens[checkpoint]))
+            } else {
+                // Not a lambda, backtrack and parse as normal expression
+                current = checkpoint
+                return parsePipe()
+            }
+        }
+
+        // Try to parse single-parameter lambda: param => body
+        if (check(TokenType.IDENTIFIER)) {
+            val paramName = advance().lexeme
+
+            if (match(TokenType.ARROW)) {
+                // This is a single-parameter lambda: param => body
+                val parameter = Parameter(paramName, null, Location.from(tokens[checkpoint]))
+                val body = parseLambdaOrExpression() // Allow nested lambdas
+                return Expression.Lambda(listOf(parameter), body, null, Location.from(tokens[checkpoint]))
+            } else {
+                // Not a lambda, backtrack and parse as normal expression
+                current = checkpoint
+                return parsePipe()
+            }
+        }
+
         return parsePipe()
     }
     
@@ -835,10 +898,19 @@ class Parser(private val tokens: List<Token>) {
     private fun parseMatchExpression(): Expression {
         val startToken = previous() // MATCH
 
-        // Parse match value: match (expression) { ... }
-        consume(TokenType.LPAREN, "Expected '(' after 'match'")
-        val value = parseExpression()
-        consume(TokenType.RPAREN, "Expected ')' after match value")
+        // Parse match value: match (expression) { ... } or match identifier { ... }
+        val value = if (match(TokenType.LPAREN)) {
+            // Parenthesized expression: match (expr) { ... }
+            val expr = parseExpression()
+            consume(TokenType.RPAREN, "Expected ')' after match value")
+            expr
+        } else if (check(TokenType.IDENTIFIER)) {
+            // Simple identifier: match x { ... }
+            val identifier = advance()
+            Expression.Identifier(identifier.lexeme, Location.from(identifier))
+        } else {
+            throw ParseException("Expected '(' or identifier after 'match'", Location.from(previous()))
+        }
 
         // Parse match cases: { pattern [if guard] => expression, ... }
         consume(TokenType.LBRACE, "Expected '{' before match cases")

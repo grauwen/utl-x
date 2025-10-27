@@ -3,43 +3,47 @@
 
 description: "Generate JSON Schema with title from USDL"
 
-transform: |
+transformation: |
   %utlx 1.0
   input json
-  output jsch %usdl 1.0
+  output jsch
   ---
   {
-    %title: "Customer Schema",
-    %types: {
+    "%title": "Customer Schema",
+    "%types": {
       Person: {
-        %kind: "structure",
-        %fields: [
+        "%kind": "structure",
+        "%fields": [
           {
-            %name: "name",
-            %type: "string",
-            %required: true
+            "%name": "name",
+            "%type": "string",
+            "%required": true
           }
         ]
       }
     }
   }
 
-input: |
-  {}
+input:
+  format: json
+  data: |
+      {}
 
-expected: |
-  {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "Customer Schema",
-    "$defs": {
-      "Person": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
+expected:
+  format: json
+  data: |
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Customer Schema",
+        "$defs": {
+          "Person": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": ["name"]
           }
-        },
-        "required": ["name"]
+        }
       }
-    }
-  }

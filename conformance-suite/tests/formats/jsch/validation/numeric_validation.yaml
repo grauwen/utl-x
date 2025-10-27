@@ -47,3 +47,15 @@ expected:
   format: json
   data: |
     {
+      "ageField": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 150
+      },
+      "priceField": {
+        "type": "number",
+        "minimum": 0,
+        "exclusiveMinimum": true,
+        "multipleOf": 0.01
+      }
+    }

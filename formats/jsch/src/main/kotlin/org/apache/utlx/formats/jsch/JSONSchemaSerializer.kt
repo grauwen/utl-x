@@ -267,7 +267,7 @@ class JSONSchemaSerializer(
     private fun validateJSONSchemaStructure(udm: UDM) {
         when (udm) {
             is UDM.Object -> {
-                // JSON Schema must have a type or be a boolean schema
+                // JSON Schema must have at least one schema keyword
                 val hasType = udm.properties.containsKey("type")
                 val hasProperties = udm.properties.containsKey("properties")
                 val hasItems = udm.properties.containsKey("items")
@@ -275,12 +275,17 @@ class JSONSchemaSerializer(
                 val hasAnyOf = udm.properties.containsKey("anyOf")
                 val hasOneOf = udm.properties.containsKey("oneOf")
                 val hasAllOf = udm.properties.containsKey("allOf")
+                val hasDefs = udm.properties.containsKey("\$defs")
+                val hasSchema = udm.properties.containsKey("\$schema")
+                val hasTitle = udm.properties.containsKey("title")
+                val hasDescription = udm.properties.containsKey("description") || udm.properties.containsKey("_description")
 
                 if (!hasType && !hasProperties && !hasItems && !hasRef &&
-                    !hasAnyOf && !hasOneOf && !hasAllOf) {
+                    !hasAnyOf && !hasOneOf && !hasAllOf && !hasDefs && !hasSchema &&
+                    !hasTitle && !hasDescription) {
                     throw IllegalArgumentException(
                         "UDM does not represent valid JSON Schema. " +
-                        "Expected at least 'type', 'properties', 'items', '\$ref', or composition keywords. " +
+                        "Expected at least one JSON Schema keyword. " +
                         "Got properties: ${udm.properties.keys}"
                     )
                 }

@@ -213,6 +213,13 @@ class XSDSerializer(
                 }
 
                 val typeProps = mutableMapOf<String, UDM>()
+
+                // Add documentation first (xs:annotation must come before xs:sequence in XSD)
+                if (doc != null) {
+                    typeProps["_documentation"] = UDM.Scalar(doc)
+                }
+
+                // Then add sequence
                 typeProps["xs:sequence"] = UDM.Object(
                     properties = if (elements.isEmpty()) emptyMap() else mapOf(
                         "xs:element" to if (elements.size == 1) elements[0] else UDM.Array(elements)
@@ -220,10 +227,6 @@ class XSDSerializer(
                     attributes = emptyMap(),
                     name = "xs:sequence"
                 )
-
-                if (doc != null) {
-                    typeProps["_documentation"] = UDM.Scalar(doc)
-                }
 
                 xsdComplexTypes.add(UDM.Object(
                     properties = typeProps,
@@ -303,12 +306,8 @@ class XSDSerializer(
                 val documentation = udm.properties["_documentation"] as? UDM.Scalar
 
                 val enhancedProperties = if (documentation != null) {
-                    // Remove _documentation and add xs:annotation
-                    val newProps = udm.properties.toMutableMap()
-                    newProps.remove("_documentation")
-
-                    // Add xs:annotation with xs:documentation
-                    newProps["xs:annotation"] = UDM.Object(
+                    // Create annotation element
+                    val annotation = UDM.Object(
                         properties = mapOf(
                             "xs:documentation" to documentation
                         ),
@@ -316,7 +315,15 @@ class XSDSerializer(
                         name = "xs:annotation"
                     )
 
-                    newProps
+                    // Build new properties with annotation first, then other properties (except _documentation)
+                    linkedMapOf<String, UDM>().apply {
+                        put("xs:annotation", annotation)
+                        udm.properties.forEach { (key, value) ->
+                            if (key != "_documentation") {
+                                put(key, value)
+                            }
+                        }
+                    }
                 } else {
                     udm.properties
                 }

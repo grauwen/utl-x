@@ -338,3 +338,27 @@ expected:
   format: json
   data: |
     {
+      "order": {
+        "schemaVersion": null,
+        "title": "Customer Order",
+        "hasDefs": true,
+        "orderStatuses": [
+          "pending",
+          "confirmed",
+          "processing",
+          "shipped",
+          "delivered",
+          "cancelled",
+          "refunded",
+          "on_hold"
+        ],
+        "requiredFields": [
+          "orderId",
+          "customerId",
+          "items",
+          "totals",
+          "orderDate",
+          "status"
+        ]
+      }
+    }

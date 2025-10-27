@@ -48,3 +48,14 @@ expected:
   format: json
   data: |
     {
+      "hasDefinitions": true,
+      "definitionCount": 1,
+      "firstName": {
+        "ref": "#/definitions/name",
+        "refTarget": "definitions"
+      },
+      "lastName": {
+        "ref": "#/definitions/name",
+        "refTarget": "definitions"
+      }
+    }

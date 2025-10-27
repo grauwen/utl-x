@@ -37,3 +37,8 @@ expected:
   format: json
   data: |
     {
+      "schemaType": "jsch-schema",
+      "version": null,
+      "title": "User Schema",
+      "hasProperties": true
+    }

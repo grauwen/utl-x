@@ -3,30 +3,34 @@
 
 description: "Verify %types directive activates USDL mode"
 
-transform: |
+transformation: |
   %utlx 1.0
   input json
-  output jsch %usdl 1.0
+  output jsch
   ---
   {
-    %types: {
+    "%types": {
       Test: {
-        %kind: "structure",
-        %fields: []
+        "%kind": "structure",
+        "%fields": []
       }
     }
   }
 
-input: |
-  {}
+input:
+  format: json
+  data: |
+      {}
 
-expected: |
-  {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$defs": {
-      "Test": {
-        "type": "object",
-        "properties": {}
+expected:
+  format: json
+  data: |
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": {
+          "Test": {
+            "type": "object",
+            "properties": {}
+          }
+        }
       }
-    }
-  }

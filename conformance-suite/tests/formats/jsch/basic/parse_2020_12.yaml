@@ -46,3 +46,8 @@ expected:
   format: json
   data: |
     {
+      "schemaType": "jsch-schema",
+      "version": null,
+      "hasDefs": true,
+      "defCount": 2
+    }

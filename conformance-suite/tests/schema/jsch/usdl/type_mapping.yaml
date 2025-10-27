@@ -3,65 +3,69 @@
 
 description: "Verify USDL types map to JSON Schema types"
 
-transform: |
+transformation: |
   %utlx 1.0
   input json
-  output jsch %usdl 1.0
+  output jsch
   ---
   {
-    %types: {
+    "%types": {
       AllTypes: {
-        %kind: "structure",
-        %fields: [
+        "%kind": "structure",
+        "%fields": [
           {
-            %name: "stringField",
-            %type: "string",
-            %required: true
+            "%name": "stringField",
+            "%type": "string",
+            "%required": true
           },
           {
-            %name: "numberField",
-            %type: "number",
-            %required: true
+            "%name": "numberField",
+            "%type": "number",
+            "%required": true
           },
           {
-            %name: "integerField",
-            %type: "integer",
-            %required: true
+            "%name": "integerField",
+            "%type": "integer",
+            "%required": true
           },
           {
-            %name: "booleanField",
-            %type: "boolean",
-            %required: true
+            "%name": "booleanField",
+            "%type": "boolean",
+            "%required": true
           }
         ]
       }
     }
   }
 
-input: |
-  {}
+input:
+  format: json
+  data: |
+      {}
 
-expected: |
-  {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$defs": {
-      "AllTypes": {
-        "type": "object",
-        "properties": {
-          "stringField": {
-            "type": "string"
-          },
-          "numberField": {
-            "type": "number"
-          },
-          "integerField": {
-            "type": "integer"
-          },
-          "booleanField": {
-            "type": "boolean"
+expected:
+  format: json
+  data: |
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": {
+          "AllTypes": {
+            "type": "object",
+            "properties": {
+              "stringField": {
+                "type": "string"
+              },
+              "numberField": {
+                "type": "number"
+              },
+              "integerField": {
+                "type": "integer"
+              },
+              "booleanField": {
+                "type": "boolean"
+              }
+            },
+            "required": ["stringField", "numberField", "integerField", "booleanField"]
           }
-        },
-        "required": ["stringField", "numberField", "integerField", "booleanField"]
+        }
       }
-    }
-  }

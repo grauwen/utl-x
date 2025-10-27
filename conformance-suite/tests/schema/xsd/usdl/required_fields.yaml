@@ -1,37 +1,41 @@
 # Test: Required fields in USDL to XSD
-# Verifies %required: true generates no minOccurs attribute (default is 1)
+# Verifies "%required": true generates no minOccurs attribute (default is 1)
 
 description: "Verify required fields have no minOccurs attribute in XSD"
 
-transform: |
+transformation: |
   %utlx 1.0
   input json
-  output xsd %usdl 1.0
+  output xsd
   ---
   {
-    %types: {
+    "%types": {
       Test: {
-        %kind: "structure",
-        %fields: [
+        "%kind": "structure",
+        "%fields": [
           {
-            %name: "requiredField",
-            %type: "string",
-            %required: true
+            "%name": "requiredField",
+            "%type": "string",
+            "%required": true
           }
         ]
       }
     }
   }
 
-input: |
-  {}
+input:
+  format: json
+  data: |
+      {}
 
-expected: |
-  <?xml version="1.0" encoding="UTF-8"?>
-  <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xs:complexType name="Test">
-      <xs:sequence>
-        <xs:element name="requiredField" type="xs:string"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:schema>
+expected:
+  format: xml
+  data: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+        <xs:complexType name="Test">
+          <xs:sequence>
+            <xs:element name="requiredField" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:schema>

@@ -3,44 +3,48 @@
 
 description: "Generate XSD with documentation from USDL"
 
-transform: |
+transformation: |
   %utlx 1.0
   input json
-  output xsd %usdl 1.0
+  output xsd
   ---
   {
-    %types: {
+    "%types": {
       Order: {
-        %kind: "structure",
-        %documentation: "Customer order information",
-        %fields: [
+        "%kind": "structure",
+        "%documentation": "Customer order information",
+        "%fields": [
           {
-            %name: "orderId",
-            %type: "string",
-            %required: true,
-            %description: "Unique order identifier"
+            "%name": "orderId",
+            "%type": "string",
+            "%required": true,
+            "%description": "Unique order identifier"
           }
         ]
       }
     }
   }
 
-input: |
-  {}
+input:
+  format: json
+  data: |
+      {}
 
-expected: |
-  <?xml version="1.0" encoding="UTF-8"?>
-  <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xs:complexType name="Order">
-      <xs:annotation>
-        <xs:documentation>Customer order information</xs:documentation>
-      </xs:annotation>
-      <xs:sequence>
-        <xs:element name="orderId" type="xs:string">
+expected:
+  format: xml
+  data: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+        <xs:complexType name="Order">
           <xs:annotation>
-            <xs:documentation>Unique order identifier</xs:documentation>
+            <xs:documentation>Customer order information</xs:documentation>
           </xs:annotation>
-        </xs:element>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:schema>
+          <xs:sequence>
+            <xs:element name="orderId" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Unique order identifier</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:schema>
