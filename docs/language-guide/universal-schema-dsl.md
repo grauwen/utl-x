@@ -1,6 +1,6 @@
 # Universal Schema DSL (USDL)
 
-**Version:** 1.0
+**Version:** 1.0 Extended (Messaging Support)
 **Status:** Draft
 **Last Updated:** 2025-10-27
 
@@ -38,12 +38,26 @@ UTL-X's core philosophy is **format abstraction**. Just as the Universal Data Mo
 ✅ **Future-proof**: Comprehensive directive catalog supports 15+ schema languages
 ✅ **Stable**: USDL 1.0 directive namespace is frozen - no breaking changes
 
+### USDL 1.0 Extended - Messaging Support
+
+**New in v1.0 Extended:** USDL now includes 16 messaging directives as **Tier 2 Common** to support event-driven architectures and messaging APIs. These cross-format directives enable:
+
+- **AsyncAPI** specifications (2.x and 3.0)
+- **OpenAPI** webhook/callback definitions
+- **gRPC** service definitions and streaming
+- **GraphQL** subscription operations
+- **Event-driven patterns** using Kafka, AMQP, MQTT, WebSocket
+
+The directives are recognized and validated in USDL 1.0, though full AsyncAPI serializer implementation is planned for a future release. This approach allows transformation logic to be written now and remain compatible when serializers are added.
+
 ### Supported Schema Languages (Current + Future)
 
 **Tier 1 (Implemented):** XSD, JSON Schema
-**Tier 2 (Planned):** Protobuf, SQL DDL, Apache Avro, GraphQL, OData
-**Tier 3 (Future):** OpenAPI, AsyncAPI, Apache Thrift, Parquet
+**Tier 2 (Planned):** Protobuf, SQL DDL, Apache Avro, GraphQL, OData, AsyncAPI
+**Tier 3 (Future):** OpenAPI, Apache Thrift, Parquet
 **Tier 4 (Specialized):** Cap'n Proto, FlatBuffers, ASN.1
+
+**Note:** USDL 1.0 now includes messaging directives for event-driven APIs (AsyncAPI, OpenAPI webhooks, gRPC, GraphQL subscriptions).
 
 ---
 
@@ -99,7 +113,7 @@ output xsd %usdl 1.0
 
 ## Complete Directive Catalog
 
-USDL 1.0 defines **80+ directives** organized into **4 tiers**:
+USDL 1.0 defines **95+ directives** organized into **4 tiers** (including messaging support added in v1.0 extended):
 
 ### Tier 1: Core (Required)
 
@@ -150,6 +164,36 @@ USDL 1.0 defines **80+ directives** organized into **4 tiers**:
 | `%enum` | Array | Any | Allowed values |
 | `%format` | String | String | Format hint: "email", "uri", "date", "date-time", "uuid", etc. |
 | `%multipleOf` | Number | Numeric | Value must be multiple of this |
+
+#### Messaging & Event-Driven APIs
+
+**USDL 1.0 Extended:** Support for AsyncAPI, OpenAPI webhooks, gRPC, and GraphQL subscriptions.
+
+| Directive | Scope | Type | Description |
+|-----------|-------|------|-------------|
+| `%servers` | Top-level | Object | Server/endpoint definitions for messaging or API specs |
+| `%channels` | Top-level | Object | Channel/topic definitions (Kafka, AMQP, MQTT, WebSocket) |
+| `%operations` | Top-level | Object | API operations (publish/subscribe, send/receive, RPC methods) |
+| `%messages` | Top-level | Object | Message definitions for event-driven APIs |
+| `%host` | Server | String | Server host (hostname:port) |
+| `%protocol` | Server, Channel | String | Communication protocol (kafka, amqp, mqtt, websocket, http, grpc) |
+| `%address` | Channel | String | Channel address/topic name (AsyncAPI 3.0) |
+| `%subscribe` | Channel | Object | Subscribe operation definition (AsyncAPI 2.x) |
+| `%publish` | Channel | Object | Publish operation definition (AsyncAPI 2.x) |
+| `%bindings` | Channel, Operation, Message | Object | Protocol-specific bindings (Kafka, AMQP, MQTT configurations) |
+| `%contentType` | Message | String | Message content type (application/json, avro/binary, text/plain) |
+| `%headers` | Message | Object/String | Message headers schema or type reference |
+| `%payload` | Message | Object/String | Message payload schema or type reference |
+| `%action` | Operation | String | Operation action type (send, receive, publish, subscribe) |
+| `%channel` | Operation | String | Channel reference for this operation |
+| `%message` | Operation | String/Array | Message type reference(s) for this operation |
+| `%example` | Type, Field, Top-level | Any | Example value or data (moved from Reserved to Common) |
+
+**Supported Formats:**
+- **AsyncAPI** - Full messaging specification support
+- **OpenAPI** - Webhook callbacks support
+- **gRPC** - Service definitions and streaming
+- **GraphQL** - Subscription operations
 
 ---
 
@@ -377,6 +421,8 @@ USDL 1.0 defines **80+ directives** organized into **4 tiers**:
 | `%choice` | ASN.1 choice type |
 | `%alignment` | Memory alignment (FlatBuffers) |
 | `%generic` | Generic type parameter |
+
+**Note:** `%example` was moved from Reserved to Tier 2 Common in USDL 1.0 to support messaging specifications.
 
 ---
 
@@ -767,6 +813,188 @@ CREATE TABLE customers (
 
 ---
 
+### Example 5: AsyncAPI Event-Driven API
+
+```utlx
+%utlx 1.0
+output asyncapi %usdl 1.0
+---
+{
+  %namespace: "urn:com:example:orders",
+  %version: "1.0.0",
+
+  %servers: {
+    production: {
+      %host: "kafka.example.com:9092",
+      %protocol: "kafka",
+      %description: "Production Kafka cluster"
+    }
+  },
+
+  %channels: {
+    orderEvents: {
+      %address: "orders.events",
+      %description: "Order lifecycle events",
+      %subscribe: {
+        %message: "OrderCreated"
+      },
+      %bindings: {
+        kafka: {
+          topic: "orders.events",
+          partitions: 3,
+          replicas: 2
+        }
+      }
+    }
+  },
+
+  %messages: {
+    OrderCreated: {
+      %contentType: "application/json",
+      %description: "Published when a new order is created",
+      %headers: {
+        %kind: "structure",
+        %fields: [
+          {%name: "correlationId", %type: "string", %required: true},
+          {%name: "timestamp", %type: "datetime", %required: true}
+        ]
+      },
+      %payload: "Order",
+      %example: {
+        headers: {
+          correlationId: "abc-123",
+          timestamp: "2025-10-27T10:00:00Z"
+        },
+        payload: {
+          orderId: "ORD-001",
+          customerId: "CUST-456",
+          total: 299.99
+        }
+      }
+    }
+  },
+
+  %types: {
+    Order: {
+      %kind: "structure",
+      %documentation: "Order payload structure",
+      %fields: [
+        {%name: "orderId", %type: "string", %required: true},
+        {%name: "customerId", %type: "string", %required: true},
+        {%name: "total", %type: "number", %required: true},
+        {%name: "items", %type: "OrderItem", %array: true}
+      ]
+    },
+    OrderItem: {
+      %kind: "structure",
+      %fields: [
+        {%name: "sku", %type: "string", %required: true},
+        {%name: "quantity", %type: "integer", %required: true},
+        {%name: "price", %type: "number", %required: true}
+      ]
+    }
+  }
+}
+```
+
+**Output AsyncAPI 3.0:**
+```yaml
+asyncapi: 3.0.0
+info:
+  title: Orders API
+  version: 1.0.0
+
+servers:
+  production:
+    host: kafka.example.com:9092
+    protocol: kafka
+    description: Production Kafka cluster
+
+channels:
+  orderEvents:
+    address: orders.events
+    description: Order lifecycle events
+    messages:
+      OrderCreated:
+        $ref: '#/components/messages/OrderCreated'
+    bindings:
+      kafka:
+        topic: orders.events
+        partitions: 3
+        replicas: 2
+
+operations:
+  subscribeOrderEvents:
+    action: subscribe
+    channel:
+      $ref: '#/channels/orderEvents'
+    messages:
+      - $ref: '#/components/messages/OrderCreated'
+
+components:
+  messages:
+    OrderCreated:
+      contentType: application/json
+      description: Published when a new order is created
+      headers:
+        type: object
+        properties:
+          correlationId:
+            type: string
+          timestamp:
+            type: string
+            format: date-time
+        required:
+          - correlationId
+          - timestamp
+      payload:
+        $ref: '#/components/schemas/Order'
+      examples:
+        - headers:
+            correlationId: abc-123
+            timestamp: '2025-10-27T10:00:00Z'
+          payload:
+            orderId: ORD-001
+            customerId: CUST-456
+            total: 299.99
+
+  schemas:
+    Order:
+      type: object
+      description: Order payload structure
+      properties:
+        orderId:
+          type: string
+        customerId:
+          type: string
+        total:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+      required:
+        - orderId
+        - customerId
+        - total
+
+    OrderItem:
+      type: object
+      properties:
+        sku:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+      required:
+        - sku
+        - quantity
+        - price
+```
+
+---
+
 ## Validation Rules
 
 ### Unknown Directives (Typos)
@@ -848,16 +1076,16 @@ Expected structure:
 
 1. **XSD (XML Schema Definition)** - Full support (Tier 1+2)
 2. **JSON Schema** - Full support (Tier 1+2)
+3. **AsyncAPI** - Directive support (Tier 1+2), serializer planned (Event-Driven/Messaging)
 
 ### Planned (Future Releases)
 
-3. **Protobuf** - Tier 1+2+3 (Binary Serialization)
-4. **SQL DDL** - Tier 1+2+3 (Database)
-5. **Apache Avro** - Tier 1+2+3 (Big Data)
-6. **GraphQL** - Tier 1+2+3 (GraphQL)
-7. **OData** - Tier 1+2+3 (REST/OData)
-8. **OpenAPI** - Tier 1+2+3 (OpenAPI)
-9. **AsyncAPI** - Tier 1+2+3 (AsyncAPI)
+4. **Protobuf** - Tier 1+2+3 (Binary Serialization)
+5. **SQL DDL** - Tier 1+2+3 (Database)
+6. **Apache Avro** - Tier 1+2+3 (Big Data)
+7. **GraphQL** - Tier 1+2+3 (GraphQL)
+8. **OData** - Tier 1+2+3 (REST/OData)
+9. **OpenAPI** - Tier 1+2+3 (REST API, includes webhook support)
 10. **Apache Thrift** - Tier 1+2+3 (Binary Serialization)
 11. **Parquet** - Tier 1+2+3 (Big Data)
 
