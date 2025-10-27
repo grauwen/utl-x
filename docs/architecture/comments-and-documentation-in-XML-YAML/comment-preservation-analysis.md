@@ -1,6 +1,6 @@
 # Comment and Documentation Preservation in UTL-X
 
-**Author:** Analysis by Claude Code
+**Author:** Analysis by team UTLX
 **Date:** 2025-10-25
 **Status:** Proposal / Research Document
 **Related:** UDM Architecture, Format Handlers (XML, YAML, JSON, CSV)
