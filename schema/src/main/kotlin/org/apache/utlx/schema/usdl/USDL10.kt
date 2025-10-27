@@ -8,8 +8,14 @@ package org.apache.utlx.schema.usdl
  *
  * Tier 1 (Core): Universal directives required for all schema languages
  * Tier 2 (Common): Recommended directives supported by 80%+ schema languages
+ *                  Now includes messaging & event-driven API directives for AsyncAPI, OpenAPI webhooks
  * Tier 3 (Format-Specific): Specialized directives for specific formats
  * Tier 4 (Reserved): Future USDL versions, advanced features
+ *
+ * USDL 1.0 Extended Support:
+ * - Data schema formats: XSD, JSON Schema, Avro, Protobuf, Parquet, SQL DDL
+ * - API specifications: OpenAPI, AsyncAPI (messaging/event-driven)
+ * - Messaging protocols: Kafka, AMQP, MQTT, WebSocket, gRPC
  */
 object USDL10 {
 
@@ -29,11 +35,15 @@ object USDL10 {
      * Directive applicability scope
      */
     enum class Scope {
-        TOP_LEVEL,         // Root schema level
-        TYPE_DEFINITION,   // Within type definitions
-        FIELD_DEFINITION,  // Within field definitions
-        CONSTRAINT,        // Within constraints object
-        ENUMERATION        // Within enumeration values
+        TOP_LEVEL,              // Root schema level
+        TYPE_DEFINITION,        // Within type definitions
+        FIELD_DEFINITION,       // Within field definitions
+        CONSTRAINT,             // Within constraints object
+        ENUMERATION,            // Within enumeration values
+        CHANNEL_DEFINITION,     // Within channel/topic definitions (messaging)
+        OPERATION_DEFINITION,   // Within operation definitions (messaging/API)
+        SERVER_DEFINITION,      // Within server/endpoint definitions (messaging/API)
+        MESSAGE_DEFINITION      // Within message definitions (messaging)
     }
 
     /**
@@ -265,6 +275,158 @@ object USDL10 {
             scopes = setOf(Scope.CONSTRAINT),
             valueType = "Number",
             description = "Value must be a multiple of this number"
+        ),
+
+        // ===== MESSAGING & EVENT-DRIVEN API DIRECTIVES =====
+        // These directives support AsyncAPI, OpenAPI webhooks, and future messaging formats
+        // Cross-format Tier 2 directives for event-driven architectures
+
+        // Root-level messaging directives
+        Directive(
+            name = "%servers",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.TOP_LEVEL),
+            valueType = "Object",
+            description = "Server/endpoint definitions for messaging or API specs",
+            supportedFormats = setOf("asyncapi", "openapi", "grpc")
+        ),
+        Directive(
+            name = "%channels",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.TOP_LEVEL),
+            valueType = "Object",
+            description = "Channel/topic definitions for messaging APIs (Kafka, AMQP, MQTT, WebSocket)",
+            supportedFormats = setOf("asyncapi", "grpc")
+        ),
+        Directive(
+            name = "%operations",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.TOP_LEVEL),
+            valueType = "Object",
+            description = "API operations (publish/subscribe, send/receive, RPC methods)",
+            supportedFormats = setOf("asyncapi", "grpc", "graphql")
+        ),
+        Directive(
+            name = "%messages",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.TOP_LEVEL),
+            valueType = "Object",
+            description = "Message definitions for event-driven APIs",
+            supportedFormats = setOf("asyncapi", "grpc")
+        ),
+
+        // Server-level directives
+        Directive(
+            name = "%host",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.SERVER_DEFINITION),
+            valueType = "String",
+            description = "Server host (hostname:port)",
+            supportedFormats = setOf("asyncapi", "openapi", "grpc")
+        ),
+        Directive(
+            name = "%protocol",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.SERVER_DEFINITION, Scope.CHANNEL_DEFINITION),
+            valueType = "String",
+            description = "Communication protocol (kafka, amqp, mqtt, websocket, http, grpc)",
+            supportedFormats = setOf("asyncapi", "grpc")
+        ),
+
+        // Channel-level directives
+        Directive(
+            name = "%address",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.CHANNEL_DEFINITION),
+            valueType = "String",
+            description = "Channel address/topic name (AsyncAPI 3.0)",
+            supportedFormats = setOf("asyncapi")
+        ),
+        Directive(
+            name = "%subscribe",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.CHANNEL_DEFINITION),
+            valueType = "Object",
+            description = "Subscribe operation definition (AsyncAPI 2.x)",
+            supportedFormats = setOf("asyncapi")
+        ),
+        Directive(
+            name = "%publish",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.CHANNEL_DEFINITION),
+            valueType = "Object",
+            description = "Publish operation definition (AsyncAPI 2.x)",
+            supportedFormats = setOf("asyncapi")
+        ),
+        Directive(
+            name = "%bindings",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.CHANNEL_DEFINITION, Scope.OPERATION_DEFINITION, Scope.MESSAGE_DEFINITION),
+            valueType = "Object",
+            description = "Protocol-specific bindings (Kafka, AMQP, MQTT configurations)",
+            supportedFormats = setOf("asyncapi")
+        ),
+
+        // Message-level directives
+        Directive(
+            name = "%contentType",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.MESSAGE_DEFINITION),
+            valueType = "String",
+            description = "Message content type (application/json, avro/binary, text/plain)",
+            supportedFormats = setOf("asyncapi", "openapi")
+        ),
+        Directive(
+            name = "%headers",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.MESSAGE_DEFINITION),
+            valueType = "Object or String",
+            description = "Message headers schema or type reference",
+            supportedFormats = setOf("asyncapi", "openapi")
+        ),
+        Directive(
+            name = "%payload",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.MESSAGE_DEFINITION),
+            valueType = "Object or String",
+            description = "Message payload schema or type reference",
+            supportedFormats = setOf("asyncapi", "openapi")
+        ),
+
+        // Operation-level directives (AsyncAPI 3.0 style)
+        Directive(
+            name = "%action",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.OPERATION_DEFINITION),
+            valueType = "String",
+            description = "Operation action type (send, receive, publish, subscribe)",
+            supportedFormats = setOf("asyncapi")
+        ),
+        Directive(
+            name = "%channel",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.OPERATION_DEFINITION),
+            valueType = "String",
+            description = "Channel reference for this operation",
+            supportedFormats = setOf("asyncapi")
+        ),
+        Directive(
+            name = "%message",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.OPERATION_DEFINITION),
+            valueType = "String or Array",
+            description = "Message type reference(s) for this operation",
+            supportedFormats = setOf("asyncapi")
+        ),
+
+        // Example directive (moved from Reserved to Common for better support)
+        Directive(
+            name = "%example",
+            tier = Tier.COMMON,
+            scopes = setOf(Scope.TYPE_DEFINITION, Scope.FIELD_DEFINITION, Scope.TOP_LEVEL),
+            valueType = "Any",
+            description = "Example value or data for types, fields, or standalone examples",
+            supportedFormats = setOf("jsch", "openapi", "asyncapi", "raml", "avro")
         )
     )
 
