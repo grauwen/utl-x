@@ -1,8 +1,8 @@
 # UTL-X Documentation Index
 
 > **Last Updated:** 2025-10-27
-> **Total Documents:** 209 listed (199 current + 10 deleted)
-> **Project Total:** 205 current MD files (6 not yet indexed)
+> **Total Documents:** 209 listed (202 current + 7 deleted)
+> **Project Total:** 205 current MD files (3 not yet indexed)
 
 This index lists all markdown documentation in the UTL-X project, organized chronologically with the newest documents first. Files marked ❌ DELETED were removed from the project but kept for historical tracking.
 
@@ -155,9 +155,9 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 | 72 | [xml_encoding_bom_functions.md](../stdlib/xml_encoding_bom_functions.md) | Standard Library |
 | 73 | [conformance-suite README.md](../conformance-suite/README.md) | Conformance Suite |
 | 74 | [conformance-suite-design.md](architecture/conformance-suite-design.md) | Architecture |
-| 75 | [YAML_SUPPORT_ADDED.md](../YAML_SUPPORT_ADDED.md) | Root Docs ❌ DELETED|
-| 76 | [CLI_BINARY.md](../CLI_BINARY.md) | Root Docs ❌ DELETED|
-| 77 | [STDLIB_INTEGRATION.md](../STDLIB_INTEGRATION.md) | Root Docs ❌ DELETED|
+| 75 | [YAML_SUPPORT_ADDED.md](miscellaneous/YAML_SUPPORT_ADDED.md) | Miscellaneous |
+| 76 | [CLI_BINARY.md](miscellaneous/CLI_BINARY.md) | Miscellaneous |
+| 77 | [STDLIB_INTEGRATION.md](stdlib/STDLIB_INTEGRATION.md) | Standard Library Docs |
 
 ---
 
@@ -194,7 +194,7 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 95 | [CLAUDE.md](../CLAUDE.md) | **Project Instructions** |
+| 95 | [CLAUDE.md](ai/CLAUDE.md) | **Project Instructions** |
 | 96 | [stlib_implementation_guide_oct15_afternoon.md](../stdlib/stlib_implementation_guide_oct15_afternoon.md) | Standard Library |
 | 97 | [utlx_cap_analysis_oct15_afternoon.md](../stdlib/docs/utlx_cap_analysis_oct15_afternoon.md) | Standard Library |
 | 98 | [stlib_GAP_analysis_oct15th.md](../stdlib/docs/stlib_GAP_analysis_oct15th.md) | Standard Library |
@@ -421,7 +421,7 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 - [functions.md](language-guide/functions.md) - Function usage
 
 ### 🏗️ Architecture
-- [CLAUDE.md](../CLAUDE.md) - **Main project instructions**
+- [CLAUDE.md](ai/CLAUDE.md) - **Main project instructions**
 - [conformance-suite-design.md](architecture/conformance-suite-design.md) - Test architecture
 - [universal-data-model.md](architecture/universal-data-model.md) - UDM design
 - [compiler-pipeline.md](architecture/compiler-pipeline.md) - Compilation
