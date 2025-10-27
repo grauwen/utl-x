@@ -1,128 +1,445 @@
-# Universal Schema DSL
+# Universal Schema DSL (USDL)
 
 **Version:** 1.0
 **Status:** Draft
-**Last Updated:** 2025-10-26
-
-## Overview
-
-The **Universal Schema DSL** is a format-agnostic schema definition language that enables schema transformations across multiple schema formats (XSD, JSON Schema, Protobuf, Avro, etc.) using a single transformation definition.
-
-### Philosophy
-
-UTL-X's core philosophy is **format abstraction**. Just as the Universal Data Model (UDM) abstracts XML, JSON, CSV, and other data formats, the Universal Schema DSL abstracts **schema formats**.
-
-### Key Benefits
-
-✅ **Write once, output anywhere**: Same transformation works for `output xsd` or `output jsch`
-✅ **Schema-to-schema transformations**: Natural JSCH ↔ XSD, XSD ↔ Protobuf, etc.
-✅ **Format-agnostic**: No need to learn XSD XML structure or JSON Schema syntax
-✅ **Enterprise-friendly**: Model schemas in CSV, output to production formats
-✅ **Future-proof**: Easily add new schema formats (GraphQL, Avro, Thrift)
+**Last Updated:** 2025-10-27
 
 ---
 
-## Core Structure
+## Table of Contents
 
-```kotlin
+1. [Overview](#overview)
+2. [USDL Directive Syntax](#usdl-directive-syntax)
+3. [Complete Directive Catalog](#complete-directive-catalog)
+4. [Format Coverage Matrix](#format-coverage-matrix)
+5. [Core Type Definitions](#core-type-definitions)
+6. [Complete Examples](#complete-examples)
+7. [Validation Rules](#validation-rules)
+8. [Supported Schema Languages](#supported-schema-languages)
+
+---
+
+## Overview
+
+### What is USDL?
+
+**USDL (Universal Schema Definition Language)** is a format-agnostic schema definition language that enables schema transformations across multiple schema formats using a single transformation definition.
+
+### Philosophy
+
+UTL-X's core philosophy is **format abstraction**. Just as the Universal Data Model (UDM) abstracts XML, JSON, CSV, and other data formats, USDL abstracts **schema formats**.
+
+### Key Benefits
+
+✅ **Write once, output anywhere**: Same transformation works for `output xsd %usdl 1.0` or `output jsch %usdl 1.0`
+✅ **Schema-to-schema transformations**: Natural JSCH ↔ XSD, XSD ↔ Protobuf, etc.
+✅ **Format-agnostic**: No need to learn XSD XML structure or JSON Schema syntax
+✅ **Enterprise-friendly**: Model schemas in CSV, output to production formats
+✅ **Future-proof**: Comprehensive directive catalog supports 15+ schema languages
+✅ **Stable**: USDL 1.0 directive namespace is frozen - no breaking changes
+
+### Supported Schema Languages (Current + Future)
+
+**Tier 1 (Implemented):** XSD, JSON Schema
+**Tier 2 (Planned):** Protobuf, SQL DDL, Apache Avro, GraphQL, OData
+**Tier 3 (Future):** OpenAPI, AsyncAPI, Apache Thrift, Parquet
+**Tier 4 (Specialized):** Cap'n Proto, FlatBuffers, ASN.1
+
+---
+
+## USDL Directive Syntax
+
+### Explicit Directive Markers
+
+All USDL keywords use the `%` prefix to distinguish them from user data:
+
+```utlx
+%utlx 1.0
+output xsd %usdl 1.0
+---
+{
+  %namespace: "http://example.com",  // ← USDL directive
+  %types: {
+    Customer: {                       // ← User type name
+      %kind: "structure",             // ← USDL directive
+      %fields: [...]
+    }
+  }
+}
+```
+
+**Why `%` prefix?**
+- **Clear semantics**: `%xxx` = USDL keyword, not user data
+- **No collisions**: User can have type named "namespace", "types", "kind"
+- **Validation**: Parser can detect typos (`%namepsace` → error)
+- **Consistency**: Matches `%utlx 1.0` and `%usdl 1.0` convention
+- **Tooling**: IDEs can autocomplete `%` directives
+
+### Core Structure
+
+```utlx
 {
   // Schema metadata
-  namespace: String?,           // XSD targetNamespace / base URI
-  id: String?,                  // JSON Schema $id / unique identifier
-  version: String?,             // Schema version
-  elementFormDefault: String?,  // XSD-specific: "qualified" | "unqualified"
+  %namespace: String?,
+  %version: String?,
 
-  // Type definitions (format-agnostic)
-  types: {
-    TypeName: TypeDefinition
+  // Type definitions (required)
+  %types: {
+    TypeName: {
+      %kind: "structure" | "enumeration" | "primitive" | "array" | "union" | ...,
+      %documentation: String?,
+      %fields: [...],
+      ...
+    }
   }
 }
 ```
 
 ---
 
-## Type Definitions
+## Complete Directive Catalog
 
-### Structure Type (Object/ComplexType)
+USDL 1.0 defines **80+ directives** organized into **4 tiers**:
 
-Represents an object (JSON Schema) or complex type (XSD).
+### Tier 1: Core (Required)
 
-```kotlin
+**All serializers MUST support these directives.**
+
+| Directive | Type | Description |
+|-----------|------|-------------|
+| `%namespace` | String | Schema namespace/ID (XSD targetNamespace, JSON Schema $id base) |
+| `%version` | String | Schema version |
+| `%types` | Object | Type definitions (REQUIRED) |
+| `%kind` | String | Type kind: "structure", "enumeration", "primitive", "array", "union", "interface" |
+| `%name` | String | Field/element name |
+| `%type` | String | Data type (primitive or type reference) |
+| `%description` | String | Field-level documentation |
+| `%documentation` | String | Type-level documentation (alias for %description) |
+
+---
+
+### Tier 2: Common (Recommended)
+
+**Most serializers SHOULD support these directives.**
+
+#### Data Modeling
+
+| Directive | Type | Description |
+|-----------|------|-------------|
+| `%fields` | Array | Field definitions for structures |
+| `%values` | Array | Enumeration values |
+| `%itemType` | String | Array element type |
+| `%baseType` | String | Base type for primitives |
+| `%default` | Any | Default value |
+| `%required` | Boolean | Is field required? (default: false) |
+| `%array` | Boolean | Is field an array? (default: false) |
+| `%nullable` | Boolean | Explicitly nullable |
+
+#### Constraints
+
+| Directive | Type | Applies To | Description |
+|-----------|------|------------|-------------|
+| `%constraints` | Object | Fields | Constraint object containing below directives |
+| `%minLength` | Integer | String | Minimum string length |
+| `%maxLength` | Integer | String | Maximum string length |
+| `%pattern` | String | String | Regex pattern validation |
+| `%minimum` | Number | Numeric | Minimum value (inclusive) |
+| `%maximum` | Number | Numeric | Maximum value (inclusive) |
+| `%exclusiveMinimum` | Number | Numeric | Minimum value (exclusive) |
+| `%exclusiveMaximum` | Number | Numeric | Maximum value (exclusive) |
+| `%enum` | Array | Any | Allowed values |
+| `%format` | String | String | Format hint: "email", "uri", "date", "date-time", "uuid", etc. |
+| `%multipleOf` | Number | Numeric | Value must be multiple of this |
+
+---
+
+### Tier 3: Format-Specific (Optional)
+
+**Serializers MAY support these based on target format capabilities.**
+
+#### Binary Serialization (Protobuf, Thrift, Cap'n Proto)
+
+| Directive | Type | Format | Description |
+|-----------|------|--------|-------------|
+| `%fieldNumber` | Integer | Protobuf | Field number (required in Protobuf) |
+| `%fieldId` | Integer | Thrift | Field identifier |
+| `%ordinal` | Integer | Cap'n Proto | Field ordinal |
+| `%precision` | String | Protobuf, Thrift | Integer precision: "int32", "int64", "uint32", "uint64" |
+| `%packed` | Boolean | Protobuf | Use packed encoding for repeated fields |
+| `%reserved` | Array | Protobuf | Reserved field numbers or names |
+| `%oneof` | Object | Protobuf | Discriminated union group |
+| `%map` | Object | Protobuf | Map type (key and value types) |
+
+**Example:**
+```utlx
+%fields: [
+  {
+    %name: "id",
+    %type: "integer",
+    %precision: "int64",
+    %fieldNumber: 1
+  },
+  {
+    %name: "tags",
+    %type: "string",
+    %array: true,
+    %packed: true,
+    %fieldNumber: 2
+  }
+]
+```
+
+#### Big Data (Avro, Parquet)
+
+| Directive | Type | Format | Description |
+|-----------|------|--------|-------------|
+| `%logicalType` | String | Avro | Logical type: "date", "time-millis", "timestamp-millis", "decimal", "uuid" |
+| `%aliases` | Array | Avro | Alternative names for schema evolution |
+| `%scale` | Integer | Avro (decimal) | Decimal scale |
+| `%size` | Integer | Avro (fixed) | Fixed binary size |
+| `%repetition` | String | Parquet | Repetition level: "required", "optional", "repeated" |
+| `%encoding` | String | Parquet | Column encoding: "PLAIN", "RLE", etc. |
+| `%compression` | String | Parquet | Compression codec: "SNAPPY", "GZIP", etc. |
+
+**Example:**
+```utlx
+%fields: [
+  {
+    %name: "createdAt",
+    %type: "integer",
+    %logicalType: "timestamp-millis",
+    %default: 0
+  },
+  {
+    %name: "price",
+    %type: "number",
+    %logicalType: "decimal",
+    %precision: 10,
+    %scale: 2
+  }
+]
+```
+
+#### Database (SQL DDL)
+
+| Directive | Type | Description |
+|-----------|------|-------------|
+| `%key` | Boolean | Primary key field |
+| `%autoIncrement` | Boolean | Auto-increment field |
+| `%unique` | Boolean | Unique constraint |
+| `%index` | Boolean/String | Create index on field |
+| `%foreignKey` | Object | Foreign key reference |
+| `%references` | String | Referenced table.column (format: "table.column") |
+| `%onDelete` | String | Foreign key on delete: "CASCADE", "SET NULL", "RESTRICT" |
+| `%onUpdate` | String | Foreign key on update: "CASCADE", "SET NULL", "RESTRICT" |
+| `%check` | String | Check constraint expression |
+| `%table` | String | Database table name |
+
+**Example:**
+```utlx
+%types: {
+  Customer: {
+    %kind: "structure",
+    %table: "customers",
+    %fields: [
+      {
+        %name: "id",
+        %type: "integer",
+        %key: true,
+        %autoIncrement: true
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %unique: true,
+        %constraints: {%maxLength: 255}
+      },
+      {
+        %name: "countryId",
+        %type: "integer",
+        %foreignKey: {
+          %references: "countries.id",
+          %onDelete: "CASCADE"
+        }
+      }
+    ]
+  }
+}
+```
+
+#### REST/OData
+
+| Directive | Type | Description |
+|-----------|------|-------------|
+| `%entityType` | Boolean | OData EntityType (vs ComplexType) |
+| `%navigation` | Object | Navigation property (relationship) |
+| `%target` | String | Navigation target entity type |
+| `%cardinality` | String | Navigation cardinality: "one", "many" |
+| `%referentialConstraint` | Object | Foreign key for navigation |
+
+**Example:**
+```utlx
+%types: {
+  Customer: {
+    %kind: "structure",
+    %entityType: true,
+    %fields: [
+      {%name: "customerId", %type: "string", %key: true},
+      {
+        %name: "orders",
+        %navigation: {
+          %target: "Order",
+          %cardinality: "many"
+        }
+      }
+    ]
+  }
+}
+```
+
+#### GraphQL
+
+| Directive | Type | Description |
+|-----------|------|-------------|
+| `%implements` | Array | Implemented interfaces (GraphQL) |
+| `%resolver` | String | Resolver function name (future) |
+
+**Example:**
+```utlx
+%types: {
+  Node: {
+    %kind: "interface",
+    %fields: [
+      {%name: "id", %type: "string", %required: true}
+    ]
+  },
+  Customer: {
+    %kind: "structure",
+    %implements: ["Node"],
+    %fields: [
+      {%name: "id", %type: "string", %required: true},
+      {%name: "email", %type: "string"}
+    ]
+  }
+}
+```
+
+#### OpenAPI/Swagger
+
+| Directive | Type | Description |
+|-----------|------|-------------|
+| `%readOnly` | Boolean | Read-only property |
+| `%writeOnly` | Boolean | Write-only property |
+| `%discriminator` | Object | Polymorphism discriminator |
+| `%propertyName` | String | Discriminator property name |
+| `%mapping` | Object | Discriminator value → schema mapping |
+| `%externalDocs` | Object | External documentation |
+| `%url` | String | External documentation URL |
+| `%examples` | Array | Example values |
+| `%xml` | Object | XML serialization hints |
+
+---
+
+### Tier 4: Reserved (Future)
+
+**These directives are RESERVED for future USDL versions.**
+
+#### Schema Composition (JSON Schema 2019-09+, GraphQL)
+
+| Directive | Description |
+|-----------|-------------|
+| `%allOf` | All schemas must match (intersection) |
+| `%anyOf` | Any schema must match (union) |
+| `%oneOf` | Exactly one schema must match (exclusive union) |
+| `%not` | Must not match schema (negation) |
+| `%if` | Conditional schema (if condition) |
+| `%then` | Schema if condition is true |
+| `%else` | Schema if condition is false |
+
+#### Metadata & Documentation
+
+| Directive | Description |
+|-----------|-------------|
+| `%deprecated` | Deprecation information |
+| `%reason` | Deprecation reason |
+| `%replacedBy` | Replacement field/type |
+| `%title` | Human-readable title |
+| `%comment` | Internal comment (not exposed in output) |
+| `%tags` | Categorization tags |
+
+#### Advanced
+
+| Directive | Description |
+|-----------|-------------|
+| `%ref` | Schema reference (URI or local) |
+| `%extends` | Schema extension/inheritance |
+| `%typedef` | Type alias |
+| `%choice` | ASN.1 choice type |
+| `%alignment` | Memory alignment (FlatBuffers) |
+| `%generic` | Generic type parameter |
+
+---
+
+## Format Coverage Matrix
+
+| Directive | XSD | JSON Schema | Protobuf | SQL | Avro | GraphQL | OData |
+|-----------|-----|-------------|----------|-----|------|---------|-------|
+| **Core** | | | | | | | |
+| %namespace | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| %types | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| %kind | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| %name | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| %type | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| %description | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ |
+| **Common** | | | | | | | |
+| %fields | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| %required | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| %array | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ |
+| %constraints | ✅ | ✅ | ❌ | ✅ | ⚠️ | ❌ | ⚠️ |
+| **Format-Specific** | | | | | | | |
+| %fieldNumber | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| %key | ⚠️ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ |
+| %logicalType | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| %navigation | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
+| %implements | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+
+**Legend:**
+- ✅ Fully supported
+- ⚠️ Partially supported
+- ❌ Not supported (directive ignored with warning)
+
+---
+
+## Core Type Definitions
+
+### Structure Type
+
+Represents an object/record with named fields.
+
+```utlx
 {
-  kind: "structure",
-  documentation: String?,       // Human-readable description
-
-  fields: [
+  %kind: "structure",
+  %documentation: String?,
+  %fields: [
     {
-      name: String,             // Field/element name
-      type: String,             // Primitive or type reference
-      required: Boolean?,       // Is this field required? (default: false)
-      description: String?,     // Field-level documentation
-      array: Boolean?,          // Is this field an array? (default: false)
-      default: Any?,            // Default value
-
-      // Universal constraints
-      constraints: {
-        // String constraints
-        minLength: Integer?,
-        maxLength: Integer?,
-        pattern: String?,       // Regex pattern
-
-        // Numeric constraints
-        minimum: Number?,
-        maximum: Number?,
-        exclusiveMinimum: Number?,
-        exclusiveMaximum: Number?,
-
-        // General constraints
-        enum: [Any]?,           // Allowed values
-        format: String?         // email, uri, date, date-time, etc.
-      }?
+      %name: String,
+      %type: String,
+      %required: Boolean?,
+      %description: String?,
+      %array: Boolean?,
+      %default: Any?,
+      %constraints: Object?
     }
   ]
 }
 ```
 
-**Example:**
-```kotlin
-{
-  types: {
-    Customer: {
-      kind: "structure",
-      documentation: "Customer information",
-      fields: [
-        {
-          name: "customerId",
-          type: "string",
-          required: true,
-          description: "Unique customer identifier",
-          constraints: {
-            pattern: "[A-Z]{3}-[0-9]{6}"
-          }
-        },
-        {
-          name: "email",
-          type: "string",
-          required: true,
-          description: "Contact email address",
-          constraints: {
-            format: "email"
-          }
-        },
-        {
-          name: "age",
-          type: "integer",
-          required: false,
-          constraints: {
-            minimum: 0,
-            maximum: 150
-          }
-        }
-      ]
-    }
-  }
-}
-```
+**Maps to:**
+- XSD: `xs:complexType`
+- JSON Schema: `"type": "object"`
+- Protobuf: `message`
+- SQL: `CREATE TABLE`
+- Avro: `"type": "record"`
 
 ---
 
@@ -130,359 +447,170 @@ Represents an object (JSON Schema) or complex type (XSD).
 
 Represents a set of allowed values.
 
-```kotlin
+```utlx
 {
-  kind: "enumeration",
-  documentation: String?,
-  baseType: String?,            // Base type (default: "string")
-
-  values: [
-    String |                    // Simple value
-    {
-      value: String,            // Enumeration value
-      description: String?      // Value documentation
-    }
+  %kind: "enumeration",
+  %documentation: String?,
+  %baseType: String?,  // Default: "string"
+  %values: [
+    String |  // Simple value
+    {%value: String, %description: String?}  // With documentation
   ]
 }
 ```
 
-**Example:**
-```kotlin
-{
-  types: {
-    OrderStatus: {
-      kind: "enumeration",
-      documentation: "Possible order statuses",
-      values: [
-        {value: "pending", description: "Order received, not yet processed"},
-        {value: "processing", description: "Order is being prepared"},
-        {value: "shipped", description: "Order has been shipped"},
-        {value: "delivered", description: "Order delivered to customer"},
-        {value: "cancelled", description: "Order was cancelled"}
-      ]
-    }
-  }
-}
-```
-
----
-
-### Array Type
-
-Represents an array/sequence of items.
-
-```kotlin
-{
-  kind: "array",
-  documentation: String?,
-  itemType: String,             // Type of array elements
-
-  constraints: {
-    minItems: Integer?,
-    maxItems: Integer?,
-    uniqueItems: Boolean?
-  }?
-}
-```
-
-**Example:**
-```kotlin
-{
-  types: {
-    EmailList: {
-      kind: "array",
-      documentation: "List of email addresses",
-      itemType: "string",
-      constraints: {
-        minItems: 1,
-        uniqueItems: true
-      }
-    }
-  }
-}
-```
-
----
-
-### Union Type (OneOf/Choice)
-
-Represents a choice between multiple types.
-
-```kotlin
-{
-  kind: "union",
-  documentation: String?,
-  options: [String]             // List of type names
-}
-```
-
-**Example:**
-```kotlin
-{
-  types: {
-    PaymentMethod: {
-      kind: "union",
-      documentation: "Payment can be credit card or bank transfer",
-      options: ["CreditCardPayment", "BankTransferPayment"]
-    }
-  }
-}
-```
+**Maps to:**
+- XSD: `xs:simpleType` with `xs:restriction` and `xs:enumeration`
+- JSON Schema: `"enum": [...]`
+- Protobuf: `enum`
+- SQL: `ENUM` or `CHECK` constraint
+- Avro: `"type": "enum"`
 
 ---
 
 ### Primitive Type
 
-For creating constrained primitives (simpleType in XSD).
+Represents a constrained primitive type.
 
-```kotlin
+```utlx
 {
-  kind: "primitive",
-  baseType: String,             // string, integer, number, boolean, date, etc.
-  documentation: String?,
+  %kind: "primitive",
+  %baseType: String,  // "string", "integer", "number", etc.
+  %documentation: String?,
+  %constraints: Object?
+}
+```
 
-  constraints: {
-    // (same as field constraints)
+**Use for:** Creating reusable constrained types (e.g., EmailAddress, PositiveInteger)
+
+---
+
+### Array Type
+
+Represents an array/list of items.
+
+```utlx
+{
+  %kind: "array",
+  %documentation: String?,
+  %itemType: String,
+  %constraints: {
+    %minItems: Integer?,
+    %maxItems: Integer?,
+    %uniqueItems: Boolean?
   }?
 }
 ```
 
-**Example:**
-```kotlin
+**Maps to:**
+- XSD: `xs:complexType` with `xs:sequence` and `maxOccurs="unbounded"`
+- JSON Schema: `"type": "array"`
+- Protobuf: `repeated`
+- Avro: `"type": "array"`
+
+---
+
+### Union Type
+
+Represents a choice between multiple types (oneOf).
+
+```utlx
 {
-  types: {
-    EmailAddress: {
-      kind: "primitive",
-      baseType: "string",
-      documentation: "Valid email address",
-      constraints: {
-        format: "email",
-        pattern: "[^@]+@[^@]+"
-      }
-    }
-  }
+  %kind: "union",
+  %documentation: String?,
+  %options: [String]  // List of type names
 }
 ```
+
+**Maps to:**
+- XSD: `xs:choice`
+- JSON Schema: `"oneOf": [...]`
+- Protobuf: `oneof`
+- Avro: `["null", "string"]` union syntax
+
+---
+
+### Interface Type (GraphQL)
+
+```utlx
+{
+  %kind: "interface",
+  %documentation: String?,
+  %fields: [...]
+}
+```
+
+**Maps to:**
+- GraphQL: `interface`
+- Avro: Protocol interface (future)
 
 ---
 
 ## Primitive Types
 
-The following primitive types are supported universally:
+Universal type names that map to format-specific types:
 
-| Universal Type | XSD Type | JSON Schema Type | Notes |
-|----------------|----------|------------------|-------|
-| `string` | `xs:string` | `"type": "string"` | Text |
-| `integer` | `xs:integer` | `"type": "integer"` | Whole numbers |
-| `number` | `xs:decimal` | `"type": "number"` | Decimal numbers |
-| `boolean` | `xs:boolean` | `"type": "boolean"` | true/false |
-| `date` | `xs:date` | `"type": "string", "format": "date"` | Date only |
-| `datetime` | `xs:dateTime` | `"type": "string", "format": "date-time"` | Date and time |
-| `time` | `xs:time` | `"type": "string", "format": "time"` | Time only |
-| `binary` | `xs:base64Binary` | `"type": "string", "contentEncoding": "base64"` | Binary data |
-| `uri` | `xs:anyURI` | `"type": "string", "format": "uri"` | URI/URL |
-
----
-
-## Mapping to XSD
-
-### Structure → ComplexType
-
-**Universal DSL:**
-```kotlin
-{
-  types: {
-    Customer: {
-      kind: "structure",
-      documentation: "Customer data",
-      fields: [
-        {name: "id", type: "string", required: true},
-        {name: "email", type: "string", required: false}
-      ]
-    }
-  }
-}
-```
-
-**Generated XSD (Venetian Blind pattern):**
-```xml
-<xs:complexType name="Customer">
-  <xs:annotation>
-    <xs:documentation>Customer data</xs:documentation>
-  </xs:annotation>
-  <xs:sequence>
-    <xs:element name="id" type="xs:string"/>
-    <xs:element name="email" type="xs:string" minOccurs="0"/>
-  </xs:sequence>
-</xs:complexType>
-```
-
-### Enumeration → SimpleType with Restriction
-
-**Universal DSL:**
-```kotlin
-{
-  types: {
-    Status: {
-      kind: "enumeration",
-      values: ["active", "inactive", "suspended"]
-    }
-  }
-}
-```
-
-**Generated XSD:**
-```xml
-<xs:simpleType name="Status">
-  <xs:restriction base="xs:string">
-    <xs:enumeration value="active"/>
-    <xs:enumeration value="inactive"/>
-    <xs:enumeration value="suspended"/>
-  </xs:restriction>
-</xs:simpleType>
-```
-
-### Constraints → XSD Facets
-
-| Universal Constraint | XSD Facet |
-|----------------------|-----------|
-| `minLength` | `<xs:minLength>` |
-| `maxLength` | `<xs:maxLength>` |
-| `pattern` | `<xs:pattern>` |
-| `minimum` | `<xs:minInclusive>` |
-| `maximum` | `<xs:maxInclusive>` |
-| `enum` | `<xs:enumeration>` (multiple) |
+| Universal | XSD | JSON Schema | Protobuf | SQL | Avro |
+|-----------|-----|-------------|----------|-----|------|
+| `string` | `xs:string` | `"type": "string"` | `string` | `VARCHAR` | `"type": "string"` |
+| `integer` | `xs:integer` | `"type": "integer"` | `int32/int64` | `INTEGER` | `"type": "int/long"` |
+| `number` | `xs:decimal` | `"type": "number"` | `double` | `DECIMAL` | `"type": "double"` |
+| `boolean` | `xs:boolean` | `"type": "boolean"` | `bool` | `BOOLEAN` | `"type": "boolean"` |
+| `date` | `xs:date` | `"format": "date"` | - | `DATE` | `{"type": "int", "logicalType": "date"}` |
+| `datetime` | `xs:dateTime` | `"format": "date-time"` | - | `TIMESTAMP` | `{"type": "long", "logicalType": "timestamp-millis"}` |
+| `time` | `xs:time` | `"format": "time"` | - | `TIME` | `{"type": "int", "logicalType": "time-millis"}` |
+| `binary` | `xs:base64Binary` | `"contentEncoding": "base64"` | `bytes` | `BLOB` | `"type": "bytes"` |
+| `uri` | `xs:anyURI` | `"format": "uri"` | `string` | `VARCHAR` | `"type": "string"` |
 
 ---
 
-## Mapping to JSON Schema
+## Complete Examples
 
-### Structure → Object
+### Example 1: CSV to XSD (USDL)
 
-**Universal DSL:**
-```kotlin
-{
-  types: {
-    Customer: {
-      kind: "structure",
-      documentation: "Customer data",
-      fields: [
-        {name: "id", type: "string", required: true},
-        {name: "email", type: "string", required: false}
-      ]
-    }
-  }
-}
-```
-
-**Generated JSON Schema (2020-12):**
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$defs": {
-    "Customer": {
-      "type": "object",
-      "description": "Customer data",
-      "properties": {
-        "id": {"type": "string"},
-        "email": {"type": "string"}
-      },
-      "required": ["id"]
-    }
-  }
-}
-```
-
-### Enumeration → Enum
-
-**Universal DSL:**
-```kotlin
-{
-  types: {
-    Status: {
-      kind: "enumeration",
-      values: ["active", "inactive"]
-    }
-  }
-}
-```
-
-**Generated JSON Schema:**
-```json
-{
-  "$defs": {
-    "Status": {
-      "enum": ["active", "inactive"]
-    }
-  }
-}
-```
-
-### Constraints → JSON Schema Keywords
-
-| Universal Constraint | JSON Schema Keyword |
-|----------------------|---------------------|
-| `minLength` | `"minLength"` |
-| `maxLength` | `"maxLength"` |
-| `pattern` | `"pattern"` |
-| `minimum` | `"minimum"` |
-| `maximum` | `"maximum"` |
-| `enum` | `"enum"` |
-| `format` | `"format"` |
-
----
-
-## Complete Example: CSV to Multiple Schemas
-
-### Input CSV (Schema Metadata):
+**Input CSV:**
 ```csv
-fieldName,type,required,minOccurs,maxOccurs,documentation
-customerId,string,true,1,1,Unique customer identifier
-email,string,true,1,1,Contact email address
-age,integer,false,0,1,Customer age (optional)
-status,string,true,1,1,Account status (active/inactive/suspended)
+fieldName,dataType,required,documentation
+customerId,string,true,Unique customer identifier
+email,string,true,Contact email address
+age,integer,false,Customer age
 ```
 
-### Transformation (Universal DSL):
+**Transformation:**
 ```utlx
 %utlx 1.0
 input csv
-output xsd  // ← Change to 'jsch' and it works!
+output xsd %usdl 1.0
 ---
 {
-  namespace: "http://example.com/customer",
-  version: "1.0",
+  %namespace: "http://example.com/customer",
+  %version: "1.0",
 
-  types: {
+  %types: {
     Customer: {
-      kind: "structure",
-      documentation: "Customer information from CRM system",
+      %kind: "structure",
+      %documentation: "Customer information",
 
-      fields: map($input, field => {
-        name: field.fieldName,
-        type: field.type,
-        required: field.required == true,
-        description: field.documentation,
-
-        constraints: if (field.fieldName == "status") {
-          enum: ["active", "inactive", "suspended"]
-        } else null
+      %fields: map($input, f => {
+        %name: f.fieldName,
+        %type: f.dataType,
+        %required: f.required == true,
+        %description: f.documentation
       })
     }
   }
 }
 ```
 
-### Output as XSD:
+**Output XSD:**
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="http://example.com/customer"
-           version="1.0"
-           elementFormDefault="qualified">
+           version="1.0">
   <xs:complexType name="Customer">
     <xs:annotation>
-      <xs:documentation>Customer information from CRM system</xs:documentation>
+      <xs:documentation>Customer information</xs:documentation>
     </xs:annotation>
     <xs:sequence>
       <xs:element name="customerId" type="xs:string">
@@ -492,24 +620,23 @@ output xsd  // ← Change to 'jsch' and it works!
         <xs:annotation><xs:documentation>Contact email address</xs:documentation></xs:annotation>
       </xs:element>
       <xs:element name="age" type="xs:integer" minOccurs="0">
-        <xs:annotation><xs:documentation>Customer age (optional)</xs:documentation></xs:annotation>
-      </xs:element>
-      <xs:element name="status" minOccurs="1">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:enumeration value="active"/>
-            <xs:enumeration value="inactive"/>
-            <xs:enumeration value="suspended"/>
-          </xs:restriction>
-        </xs:simpleType>
-        <xs:annotation><xs:documentation>Account status (active/inactive/suspended)</xs:documentation></xs:annotation>
+        <xs:annotation><xs:documentation>Customer age</xs:documentation></xs:annotation>
       </xs:element>
     </xs:sequence>
   </xs:complexType>
 </xs:schema>
 ```
 
-### Output as JSON Schema (change line 3 to `output jsch`):
+---
+
+### Example 2: Same USDL, JSON Schema Output
+
+**Change line 3 only:**
+```utlx
+output jsch %usdl 1.0  // ← Changed from 'xsd'
+```
+
+**Output JSON Schema:**
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -518,7 +645,7 @@ output xsd  // ← Change to 'jsch' and it works!
   "$defs": {
     "Customer": {
       "type": "object",
-      "description": "Customer information from CRM system",
+      "description": "Customer information",
       "properties": {
         "customerId": {
           "type": "string",
@@ -530,275 +657,260 @@ output xsd  // ← Change to 'jsch' and it works!
         },
         "age": {
           "type": "integer",
-          "description": "Customer age (optional)"
-        },
-        "status": {
-          "type": "string",
-          "enum": ["active", "inactive", "suspended"],
-          "description": "Account status (active/inactive/suspended)"
+          "description": "Customer age"
         }
       },
-      "required": ["customerId", "email", "status"]
+      "required": ["customerId", "email"]
     }
   }
 }
 ```
 
-**Same transformation, different output format!**
-
 ---
 
-## Schema-to-Schema Transformations
-
-### JSON Schema → XSD
-
-**Input** (JSON Schema):
-```json
-{
-  "type": "object",
-  "title": "Customer",
-  "properties": {
-    "customerId": {"type": "string"},
-    "email": {"type": "string", "format": "email"}
-  },
-  "required": ["customerId"]
-}
-```
-
-**Transformation:**
-```utlx
-%utlx 1.0
-input jsch
-output xsd {pattern: "venetian-blind"}
----
-{
-  namespace: "http://soap.example.com/customer",
-
-  types: {
-    [$input.title ?? "Root"]: {
-      kind: "structure",
-      documentation: $input.description,
-
-      fields: map(entries($input.properties), ([name, prop]) => {
-        name: name,
-        type: prop.type,
-        required: contains($input.required ?? [], name),
-        description: prop.description,
-        constraints: {
-          ...if (prop.format != null) {format: prop.format},
-          ...if (prop.pattern != null) {pattern: prop.pattern},
-          ...if (prop.minimum != null) {minimum: prop.minimum},
-          ...if (prop.maximum != null) {maximum: prop.maximum}
-        }
-      })
-    }
-  }
-}
-```
-
-**Output** (XSD):
-```xml
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           targetNamespace="http://soap.example.com/customer">
-  <xs:complexType name="Customer">
-    <xs:sequence>
-      <xs:element name="customerId" type="xs:string"/>
-      <xs:element name="email" minOccurs="0">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[^@]+@[^@]+"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-    </xs:sequence>
-  </xs:complexType>
-</xs:schema>
-```
-
----
-
-## XSD Pattern Enforcement
-
-When `output xsd {pattern: "..."}` is specified, the serializer enforces structural rules:
-
-### Venetian Blind (Recommended)
-- Global types (`xs:complexType`, `xs:simpleType`)
-- Local elements (within types)
-- Best for: Reusability, large schemas
-
-### Russian Doll
-- Single global element
-- All types inline (nested)
-- Best for: Small, encapsulated schemas
-
-### Salami Slice
-- All elements global
-- Minimal types
-- Best for: Flexible composition
-
-### Garden of Eden
-- All elements AND types global
-- Best for: Maximum reusability
-
-The Universal DSL is **pattern-agnostic**. The serializer structures the output based on the `pattern` option.
-
----
-
-## Helper Functions (Stdlib)
-
-### `SimpleSchema(config)`
-
-For simple CSV → Schema cases:
+### Example 3: Protobuf with Field Numbers
 
 ```utlx
 %utlx 1.0
-input csv
-output xsd
----
-SimpleSchema({
-  namespace: "http://example.com",
-  root: "customer",
-  fields: $input
-})
-```
-
-Expands to full Universal DSL with single structure type.
-
-### `MapFromJsonSchema(config)`
-
-Convert JSON Schema to Universal DSL:
-
-```utlx
-%utlx 1.0
-input jsch
-output xsd
----
-MapFromJsonSchema({
-  namespace: "http://example.com",
-  schema: $input
-})
-```
-
-### `MapFromXSD(config)`
-
-Convert XSD (via metadata) to Universal DSL:
-
-```utlx
-%utlx 1.0
-input xsd
-output jsch
----
-MapFromXSD({
-  id: "https://example.com/schema",
-  schema: $input
-})
-```
-
----
-
-## Hybrid Mode
-
-Serializers support two modes:
-
-### Low-Level Mode (Pass-Through)
-
-User manually constructs format-specific structure:
-
-```utlx
-output xsd
+output proto %usdl 1.0
 ---
 {
-  "xs:schema": {
-    "xs:element": { ... }  // Manual XSD XML construction
-  }
-}
-```
-
-**Use when**: Need full control, edge cases, XSD features not in Universal DSL
-
-### High-Level Mode (Universal DSL)
-
-User provides format-agnostic schema definition:
-
-```utlx
-output xsd
----
-{
-  types: {
+  %types: {
     Customer: {
-      kind: "structure",
-      fields: [ ... ]
+      %kind: "structure",
+      %fields: [
+        {
+          %name: "customerId",
+          %type: "string",
+          %fieldNumber: 1
+        },
+        {
+          %name: "email",
+          %type: "string",
+          %fieldNumber: 2
+        },
+        {
+          %name: "tags",
+          %type: "string",
+          %array: true,
+          %packed: true,
+          %fieldNumber: 3
+        }
+      ]
     }
   }
 }
 ```
 
-**Use when**: Standard schemas, format abstraction, schema-to-schema
+**Output Protobuf:**
+```protobuf
+syntax = "proto3";
 
-**Auto-detection**: Serializer detects presence of `types` (high-level) vs `xs:schema` (low-level)
-
----
-
-## Future Extensions
-
-### Additional Schema Formats
-
-- **Protobuf**: `output proto`
-- **Avro**: `output avro`
-- **GraphQL Schema**: `output graphql`
-- **Thrift**: `output thrift`
-
-All would consume the same Universal DSL!
-
-### Additional Type Kinds
-
-- `kind: "map"` - Key-value pairs
-- `kind: "tuple"` - Fixed-length heterogeneous arrays
-- `kind: "reference"` - External schema references
-
-### Additional Constraints
-
-- `multipleOf` - Numeric multiples
-- `dependencies` - Conditional requirements
-- `allOf`, `anyOf` - Schema composition
+message Customer {
+  string customer_id = 1;
+  string email = 2;
+  repeated string tags = 3 [packed=true];
+}
+```
 
 ---
 
-## Best Practices
+### Example 4: SQL DDL with Constraints
 
-1. **Use Universal DSL for standard schemas**
-   - Enables format flexibility
-   - Easier to understand than format-specific syntax
+```utlx
+%utlx 1.0
+output sql %usdl 1.0
+---
+{
+  %types: {
+    Customer: {
+      %kind: "structure",
+      %table: "customers",
+      %fields: [
+        {
+          %name: "id",
+          %type: "integer",
+          %key: true,
+          %autoIncrement: true
+        },
+        {
+          %name: "email",
+          %type: "string",
+          %required: true,
+          %unique: true,
+          %constraints: {%maxLength: 255}
+        },
+        {
+          %name: "countryId",
+          %type: "integer",
+          %required: true,
+          %foreignKey: {
+            %references: "countries.id",
+            %onDelete: "CASCADE"
+          }
+        }
+      ]
+    }
+  }
+}
+```
 
-2. **Use low-level mode for edge cases**
-   - Full control when needed
-   - Access to format-specific features
+**Output SQL:**
+```sql
+CREATE TABLE customers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  country_id INTEGER NOT NULL,
+  FOREIGN KEY (country_id) REFERENCES countries(id) ON DELETE CASCADE
+);
+```
 
-3. **Model in CSV for enterprise**
-   - Non-technical stakeholders can maintain
-   - Version control friendly
-   - Transform to production schemas (XSD/JSCH)
+---
 
-4. **Leverage helper functions**
-   - `SimpleSchema()` for basic cases
-   - `MapFromJsonSchema()` / `MapFromXSD()` for conversions
+## Validation Rules
 
-5. **Document with `documentation` and `description`**
-   - Becomes `xs:annotation` in XSD
-   - Becomes `description` in JSON Schema
-   - Living documentation
+### Unknown Directives (Typos)
+
+**Error** if directive is not in USDL 1.0 catalog:
+
+```utlx
+{
+  %namepsace: "http://example.com"  // ❌ Typo!
+}
+```
+
+**Error message:**
+```
+Error: Unknown USDL directive '%namepsace' at line 3
+Did you mean '%namespace'?
+
+Valid USDL 1.0 directives: %namespace, %version, %types, ...
+```
+
+### Unsupported Directives (Graceful Degradation)
+
+**Warning** if directive is valid but not supported by target format:
+
+```utlx
+%utlx 1.0
+output xsd %usdl 1.0
+---
+{
+  %types: {
+    Customer: {
+      %fields: [
+        {
+          %name: "id",
+          %type: "string",
+          %fieldNumber: 1  // ⚠️ XSD doesn't support this
+        }
+      ]
+    }
+  }
+}
+```
+
+**Warning message:**
+```
+Warning: Directive %fieldNumber is not supported by XSD output format (ignored)
+  at line 11, column 11
+
+Output generated successfully.
+```
+
+### Required Directives
+
+**Error** if required directive is missing:
+
+```utlx
+{
+  %namespace: "http://example.com",
+  // Missing %types!
+}
+```
+
+**Error message:**
+```
+Error: USDL 1.0 requires %types property
+Expected structure:
+  {
+    %types: {
+      TypeName: {%kind: "structure", ...}
+    }
+  }
+```
+
+---
+
+## Supported Schema Languages
+
+### Current (USDL 1.0)
+
+1. **XSD (XML Schema Definition)** - Full support (Tier 1+2)
+2. **JSON Schema** - Full support (Tier 1+2)
+
+### Planned (Future Releases)
+
+3. **Protobuf** - Tier 1+2+3 (Binary Serialization)
+4. **SQL DDL** - Tier 1+2+3 (Database)
+5. **Apache Avro** - Tier 1+2+3 (Big Data)
+6. **GraphQL** - Tier 1+2+3 (GraphQL)
+7. **OData** - Tier 1+2+3 (REST/OData)
+8. **OpenAPI** - Tier 1+2+3 (OpenAPI)
+9. **AsyncAPI** - Tier 1+2+3 (AsyncAPI)
+10. **Apache Thrift** - Tier 1+2+3 (Binary Serialization)
+11. **Parquet** - Tier 1+2+3 (Big Data)
+
+### Specialized (Low Priority)
+
+12. **Cap'n Proto** - High-performance RPC
+13. **FlatBuffers** - Game development
+14. **ASN.1** - Telecommunications
+
+---
+
+## Versioning Guarantee
+
+**USDL 1.0 directive namespace is STABLE and FROZEN.**
+
+- New directives only in USDL 2.0 (if ever needed)
+- Serializers can add support for existing directives without version bump
+- Transformations written today work with future serializers
+- No migration required when new serializers are added
+
+**Example forward compatibility:**
+```utlx
+// Written in 2025 with USDL 1.0
+%utlx 1.0
+output proto %usdl 1.0  // ProtoSerializer doesn't exist yet
+---
+{
+  %types: {
+    Customer: {
+      %fields: [
+        {%name: "id", %fieldNumber: 1}  // ← Already valid USDL 1.0
+      ]
+    }
+  }
+}
+
+// Still works in 2026 when ProtoSerializer is added
+// No changes needed!
+```
 
 ---
 
 ## References
 
-- **UTL-X Language Guide**: Core language features
-- **UDM Specification**: Universal Data Model
-- **XSD 1.1 Specification**: W3C XML Schema
-- **JSON Schema 2020-12**: JSON Schema specification
-- **XSD Design Patterns**: Venetian Blind, Russian Doll, Salami Slice, Garden of Eden
+- [USDL Syntax Rationale](../design/usdl-syntax-rationale.md) - Design decisions
+- [UTL-X Language Guide](./quick-reference.md) - Core language
+- [UDM Specification](../architecture/udm-specification.md) - Universal Data Model
+- [XSD W3C Specification](https://www.w3.org/TR/xmlschema11-1/)
+- [JSON Schema 2020-12](https://json-schema.org/draft/2020-12/schema)
+- [Protocol Buffers Language Guide](https://protobuf.dev/programming-guides/proto3/)
+- [Apache Avro Specification](https://avro.apache.org/docs/current/spec.html)
 
 ---
 
-**Version History:**
-- **1.0** (2025-10-26): Initial specification
+**Status:** Ready for implementation
+**Next Steps:** Implement parser validation, update serializers for % directive syntax
