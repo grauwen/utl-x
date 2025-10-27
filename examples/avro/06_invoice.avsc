@@ -1,0 +1,195 @@
+{
+  "type": "record",
+  "name": "Invoice",
+  "namespace": "com.example.accounting",
+  "doc": "Invoice record for accounting and billing system",
+  "fields": [
+    {
+      "name": "invoiceId",
+      "type": "string",
+      "doc": "Unique invoice identifier"
+    },
+    {
+      "name": "invoiceNumber",
+      "type": "string",
+      "doc": "Human-readable invoice number"
+    },
+    {
+      "name": "invoiceDate",
+      "type": {
+        "type": "int",
+        "logicalType": "date"
+      },
+      "doc": "Invoice issue date"
+    },
+    {
+      "name": "dueDate",
+      "type": {
+        "type": "int",
+        "logicalType": "date"
+      },
+      "doc": "Payment due date"
+    },
+    {
+      "name": "invoiceType",
+      "type": {
+        "type": "enum",
+        "name": "InvoiceType",
+        "symbols": ["STANDARD", "CREDIT_NOTE", "DEBIT_NOTE", "PROFORMA", "RECURRING"]
+      },
+      "doc": "Type of invoice"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "InvoiceStatus",
+        "symbols": ["DRAFT", "SENT", "VIEWED", "PARTIAL_PAYMENT", "PAID", "OVERDUE", "CANCELLED", "VOID"]
+      },
+      "doc": "Current invoice status"
+    },
+    {
+      "name": "seller",
+      "type": {
+        "type": "record",
+        "name": "Party",
+        "fields": [
+          {"name": "id", "type": "string"},
+          {"name": "name", "type": "string"},
+          {"name": "taxId", "type": ["null", "string"], "default": null},
+          {"name": "address", "type": "string"},
+          {"name": "email", "type": "string"},
+          {"name": "phone", "type": ["null", "string"], "default": null}
+        ]
+      },
+      "doc": "Seller (vendor) information"
+    },
+    {
+      "name": "buyer",
+      "type": "Party",
+      "doc": "Buyer (customer) information"
+    },
+    {
+      "name": "lineItems",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "InvoiceLineItem",
+          "fields": [
+            {"name": "lineNumber", "type": "int"},
+            {"name": "description", "type": "string"},
+            {"name": "quantity", "type": "double"},
+            {"name": "unitOfMeasure", "type": "string"},
+            {"name": "unitPrice", "type": "double"},
+            {"name": "discount", "type": "double", "default": 0.0},
+            {"name": "taxRate", "type": "double", "doc": "Tax rate as decimal (e.g., 0.08 for 8%)"},
+            {"name": "taxAmount", "type": "double"},
+            {"name": "lineTotal", "type": "double"},
+            {"name": "productCode", "type": ["null", "string"], "default": null}
+          ]
+        }
+      },
+      "doc": "Invoice line items"
+    },
+    {
+      "name": "totals",
+      "type": {
+        "type": "record",
+        "name": "InvoiceTotals",
+        "fields": [
+          {"name": "subtotal", "type": "double"},
+          {"name": "totalDiscount", "type": "double"},
+          {"name": "totalTax", "type": "double"},
+          {"name": "shippingCost", "type": "double", "default": 0.0},
+          {"name": "total", "type": "double"},
+          {"name": "currency", "type": "string"}
+        ]
+      },
+      "doc": "Invoice totals"
+    },
+    {
+      "name": "paymentTerms",
+      "type": {
+        "type": "record",
+        "name": "PaymentTerms",
+        "fields": [
+          {"name": "terms", "type": "string", "doc": "e.g., 'Net 30', 'Due on Receipt'"},
+          {"name": "lateFeePercent", "type": "double", "default": 0.0},
+          {"name": "discountPercent", "type": "double", "default": 0.0},
+          {"name": "discountDays", "type": "int", "default": 0}
+        ]
+      },
+      "doc": "Payment terms and conditions"
+    },
+    {
+      "name": "payments",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Payment",
+          "fields": [
+            {"name": "paymentId", "type": "string"},
+            {"name": "paymentDate", "type": {"type": "int", "logicalType": "date"}},
+            {"name": "amount", "type": "double"},
+            {"name": "method", "type": "string"},
+            {"name": "reference", "type": ["null", "string"], "default": null}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Payments received against this invoice"
+    },
+    {
+      "name": "amountPaid",
+      "type": "double",
+      "default": 0.0,
+      "doc": "Total amount paid"
+    },
+    {
+      "name": "amountDue",
+      "type": "double",
+      "doc": "Remaining amount due"
+    },
+    {
+      "name": "notes",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Additional notes or comments"
+    },
+    {
+      "name": "attachments",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Attachment",
+          "fields": [
+            {"name": "filename", "type": "string"},
+            {"name": "url", "type": "string"},
+            {"name": "mimeType", "type": "string"}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Invoice attachments (contracts, receipts, etc.)"
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Invoice creation timestamp"
+    },
+    {
+      "name": "updatedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last update timestamp"
+    }
+  ]
+}

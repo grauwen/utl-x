@@ -1,0 +1,236 @@
+{
+  "type": "record",
+  "name": "InsuranceClaim",
+  "namespace": "com.example.insurance",
+  "doc": "Insurance claim record for property, auto, health, or life insurance",
+  "fields": [
+    {
+      "name": "claimId",
+      "type": "string",
+      "doc": "Unique claim identifier"
+    },
+    {
+      "name": "claimNumber",
+      "type": "string",
+      "doc": "Human-readable claim number"
+    },
+    {
+      "name": "policyNumber",
+      "type": "string",
+      "doc": "Associated insurance policy number"
+    },
+    {
+      "name": "claimType",
+      "type": {
+        "type": "enum",
+        "name": "ClaimType",
+        "symbols": ["AUTO", "HOME", "HEALTH", "LIFE", "DENTAL", "VISION", "DISABILITY", "WORKERS_COMP"]
+      },
+      "doc": "Type of insurance claim"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "ClaimStatus",
+        "symbols": ["SUBMITTED", "UNDER_REVIEW", "PENDING_INFO", "APPROVED", "PARTIALLY_APPROVED", "DENIED", "CLOSED", "APPEALED"]
+      },
+      "doc": "Current claim status"
+    },
+    {
+      "name": "policyholder",
+      "type": {
+        "type": "record",
+        "name": "Policyholder",
+        "fields": [
+          {"name": "policyholderIdId", "type": "string"},
+          {"name": "firstName", "type": "string"},
+          {"name": "lastName", "type": "string"},
+          {"name": "dateOfBirth", "type": {"type": "int", "logicalType": "date"}},
+          {"name": "email", "type": "string"},
+          {"name": "phone", "type": "string"}
+        ]
+      },
+      "doc": "Policyholder information"
+    },
+    {
+      "name": "claimant",
+      "type": ["null", {
+        "type": "record",
+        "name": "Claimant",
+        "fields": [
+          {"name": "firstName", "type": "string"},
+          {"name": "lastName", "type": "string"},
+          {"name": "relationship", "type": "string", "doc": "Relationship to policyholder"},
+          {"name": "email", "type": ["null", "string"], "default": null},
+          {"name": "phone", "type": ["null", "string"], "default": null}
+        ]
+      }],
+      "default": null,
+      "doc": "Claimant if different from policyholder"
+    },
+    {
+      "name": "incidentDate",
+      "type": {
+        "type": "int",
+        "logicalType": "date"
+      },
+      "doc": "Date of incident/loss"
+    },
+    {
+      "name": "reportedDate",
+      "type": {
+        "type": "int",
+        "logicalType": "date"
+      },
+      "doc": "Date claim was reported"
+    },
+    {
+      "name": "incidentDescription",
+      "type": "string",
+      "doc": "Detailed description of incident"
+    },
+    {
+      "name": "incidentLocation",
+      "type": {
+        "type": "record",
+        "name": "Location",
+        "fields": [
+          {"name": "address", "type": "string"},
+          {"name": "city", "type": "string"},
+          {"name": "state", "type": "string"},
+          {"name": "postalCode", "type": "string"},
+          {"name": "country", "type": "string"}
+        ]
+      },
+      "doc": "Location where incident occurred"
+    },
+    {
+      "name": "damageAssessment",
+      "type": {
+        "type": "record",
+        "name": "DamageAssessment",
+        "fields": [
+          {"name": "severity", "type": {"type": "enum", "name": "Severity", "symbols": ["MINOR", "MODERATE", "MAJOR", "TOTAL_LOSS"]}},
+          {"name": "estimatedCost", "type": "double"},
+          {"name": "assessor", "type": ["null", "string"], "default": null},
+          {"name": "assessmentDate", "type": ["null", {"type": "int", "logicalType": "date"}], "default": null},
+          {"name": "notes", "type": ["null", "string"], "default": null}
+        ]
+      },
+      "doc": "Damage assessment details"
+    },
+    {
+      "name": "claimedAmount",
+      "type": {
+        "type": "record",
+        "name": "Amount",
+        "fields": [
+          {"name": "value", "type": "double"},
+          {"name": "currency", "type": "string"}
+        ]
+      },
+      "doc": "Amount claimed by policyholder"
+    },
+    {
+      "name": "approvedAmount",
+      "type": ["null", "Amount"],
+      "default": null,
+      "doc": "Amount approved by insurer"
+    },
+    {
+      "name": "paidAmount",
+      "type": ["null", "Amount"],
+      "default": null,
+      "doc": "Amount paid to date"
+    },
+    {
+      "name": "deductible",
+      "type": "double",
+      "doc": "Policy deductible amount"
+    },
+    {
+      "name": "documents",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Document",
+          "fields": [
+            {"name": "documentId", "type": "string"},
+            {"name": "type", "type": {"type": "enum", "name": "DocumentType", "symbols": ["POLICE_REPORT", "MEDICAL_RECORD", "PHOTO", "RECEIPT", "ESTIMATE", "WITNESS_STATEMENT", "OTHER"]}},
+            {"name": "filename", "type": "string"},
+            {"name": "url", "type": "string"},
+            {"name": "uploadedAt", "type": {"type": "long", "logicalType": "timestamp-millis"}}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Supporting documents"
+    },
+    {
+      "name": "adjuster",
+      "type": ["null", {
+        "type": "record",
+        "name": "Adjuster",
+        "fields": [
+          {"name": "adjusterId", "type": "string"},
+          {"name": "name", "type": "string"},
+          {"name": "email", "type": "string"},
+          {"name": "phone", "type": "string"},
+          {"name": "assignedDate", "type": {"type": "int", "logicalType": "date"}}
+        ]
+      }],
+      "default": null,
+      "doc": "Assigned claims adjuster"
+    },
+    {
+      "name": "denialReason",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Reason for denial (if applicable)"
+    },
+    {
+      "name": "notes",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Note",
+          "fields": [
+            {"name": "author", "type": "string"},
+            {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+            {"name": "content", "type": "string"}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Claim notes and communication log"
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Claim creation timestamp"
+    },
+    {
+      "name": "updatedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last update timestamp"
+    },
+    {
+      "name": "closedAt",
+      "type": ["null", {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }],
+      "default": null,
+      "doc": "Claim closure timestamp"
+    }
+  ]
+}

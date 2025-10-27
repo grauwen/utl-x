@@ -1,0 +1,168 @@
+{
+  "type": "record",
+  "name": "PaymentTransaction",
+  "namespace": "com.example.payments",
+  "doc": "Financial payment transaction record for payment processing system",
+  "fields": [
+    {
+      "name": "transactionId",
+      "type": "string",
+      "doc": "Unique transaction identifier (UUID)"
+    },
+    {
+      "name": "merchantId",
+      "type": "string",
+      "doc": "Merchant identifier"
+    },
+    {
+      "name": "customerId",
+      "type": "string",
+      "doc": "Customer identifier"
+    },
+    {
+      "name": "transactionType",
+      "type": {
+        "type": "enum",
+        "name": "TransactionType",
+        "symbols": ["PURCHASE", "REFUND", "AUTHORIZATION", "CAPTURE", "VOID", "CHARGEBACK"]
+      },
+      "doc": "Type of transaction"
+    },
+    {
+      "name": "amount",
+      "type": {
+        "type": "record",
+        "name": "Amount",
+        "fields": [
+          {"name": "value", "type": "double"},
+          {"name": "currency", "type": "string"}
+        ]
+      },
+      "doc": "Transaction amount"
+    },
+    {
+      "name": "paymentMethod",
+      "type": {
+        "type": "record",
+        "name": "PaymentMethod",
+        "fields": [
+          {
+            "name": "type",
+            "type": {"type": "enum", "name": "PaymentMethodType", "symbols": ["CARD", "BANK_ACCOUNT", "DIGITAL_WALLET", "CASH"]}
+          },
+          {"name": "cardBrand", "type": ["null", {"type": "enum", "name": "CardBrand", "symbols": ["VISA", "MASTERCARD", "AMEX", "DISCOVER"]}], "default": null},
+          {"name": "last4Digits", "type": ["null", "string"], "default": null},
+          {"name": "expiryMonth", "type": ["null", "int"], "default": null},
+          {"name": "expiryYear", "type": ["null", "int"], "default": null},
+          {"name": "cardholderName", "type": ["null", "string"], "default": null}
+        ]
+      },
+      "doc": "Payment method details"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "TransactionStatus",
+        "symbols": ["PENDING", "AUTHORIZED", "CAPTURED", "SETTLED", "FAILED", "DECLINED", "CANCELLED", "REFUNDED"]
+      },
+      "doc": "Current transaction status"
+    },
+    {
+      "name": "statusReason",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Reason for current status (e.g., decline reason)"
+    },
+    {
+      "name": "processorResponse",
+      "type": {
+        "type": "record",
+        "name": "ProcessorResponse",
+        "fields": [
+          {"name": "code", "type": "string"},
+          {"name": "message", "type": "string"},
+          {"name": "authorizationCode", "type": ["null", "string"], "default": null},
+          {"name": "avsResult", "type": ["null", "string"], "default": null},
+          {"name": "cvvResult", "type": ["null", "string"], "default": null}
+        ]
+      },
+      "doc": "Payment processor response details"
+    },
+    {
+      "name": "billingAddress",
+      "type": {
+        "type": "record",
+        "name": "BillingAddress",
+        "fields": [
+          {"name": "street", "type": "string"},
+          {"name": "city", "type": "string"},
+          {"name": "state", "type": "string"},
+          {"name": "postalCode", "type": "string"},
+          {"name": "country", "type": "string"}
+        ]
+      },
+      "doc": "Billing address"
+    },
+    {
+      "name": "riskAssessment",
+      "type": {
+        "type": "record",
+        "name": "RiskAssessment",
+        "fields": [
+          {"name": "score", "type": "int", "doc": "Risk score 0-100"},
+          {"name": "level", "type": {"type": "enum", "name": "RiskLevel", "symbols": ["LOW", "MEDIUM", "HIGH"]}},
+          {"name": "rules", "type": {"type": "array", "items": "string"}, "default": []}
+        ]
+      },
+      "doc": "Fraud risk assessment"
+    },
+    {
+      "name": "fees",
+      "type": {
+        "type": "record",
+        "name": "Fees",
+        "fields": [
+          {"name": "processingFee", "type": "double"},
+          {"name": "networkFee", "type": "double"},
+          {"name": "totalFee", "type": "double"}
+        ]
+      },
+      "doc": "Transaction fees"
+    },
+    {
+      "name": "metadata",
+      "type": {
+        "type": "map",
+        "values": "string"
+      },
+      "default": {},
+      "doc": "Additional transaction metadata"
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Transaction creation timestamp"
+    },
+    {
+      "name": "updatedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last update timestamp"
+    },
+    {
+      "name": "settledAt",
+      "type": ["null", {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }],
+      "default": null,
+      "doc": "Settlement timestamp"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "claimId": "CLM-2024-AUTO-789456",
+  "claimNumber": "AUTO-2024-789456",
+  "policyNumber": "POL-AUTO-123456-2024",
+  "claimType": "AUTO",
+  "status": "APPROVED",
+  "policyholder": {
+    "policyholderIdId": "PH-456789",
+    "firstName": "Jennifer",
+    "lastName": "Williams",
+    "dateOfBirth": 7305,
+    "email": "jennifer.williams@example.com",
+    "phone": "+1-555-0156"
+  },
+  "claimant": null,
+  "incidentDate": 19655,
+  "reportedDate": 19656,
+  "incidentDescription": "Rear-end collision at intersection of Main St and Oak Ave. Stopped at red light when struck from behind by another vehicle. Significant damage to rear bumper, trunk, and taillights. No injuries reported.",
+  "incidentLocation": {
+    "address": "Intersection of Main St and Oak Ave",
+    "city": "Portland",
+    "state": "OR",
+    "postalCode": "97201",
+    "country": "USA"
+  },
+  "damageAssessment": {
+    "severity": "MODERATE",
+    "estimatedCost": 4850.00,
+    "assessor": "Bob Martinez",
+    "assessmentDate": 19657,
+    "notes": "Rear bumper, trunk lid, and both tail light assemblies require replacement. Minor frame straightening needed. Paint and blending required for rear quarter panels."
+  },
+  "claimedAmount": {
+    "value": 5200.00,
+    "currency": "USD"
+  },
+  "approvedAmount": {
+    "value": 4350.00,
+    "currency": "USD"
+  },
+  "paidAmount": {
+    "value": 4350.00,
+    "currency": "USD"
+  },
+  "deductible": 500.00,
+  "documents": [
+    {
+      "documentId": "DOC-001",
+      "type": "POLICE_REPORT",
+      "filename": "police_report_20241022.pdf",
+      "url": "https://claims.example.com/documents/CLM-2024-AUTO-789456/DOC-001.pdf",
+      "uploadedAt": 1730073600000
+    },
+    {
+      "documentId": "DOC-002",
+      "type": "PHOTO",
+      "filename": "damage_rear_view.jpg",
+      "url": "https://claims.example.com/documents/CLM-2024-AUTO-789456/DOC-002.jpg",
+      "uploadedAt": 1730073700000
+    },
+    {
+      "documentId": "DOC-003",
+      "type": "PHOTO",
+      "filename": "damage_trunk.jpg",
+      "url": "https://claims.example.com/documents/CLM-2024-AUTO-789456/DOC-003.jpg",
+      "uploadedAt": 1730073800000
+    },
+    {
+      "documentId": "DOC-004",
+      "type": "ESTIMATE",
+      "filename": "repair_estimate_certified_auto.pdf",
+      "url": "https://claims.example.com/documents/CLM-2024-AUTO-789456/DOC-004.pdf",
+      "uploadedAt": 1730160000000
+    }
+  ],
+  "adjuster": {
+    "adjusterId": "ADJ-123",
+    "name": "Bob Martinez",
+    "email": "bob.martinez@insurance.example.com",
+    "phone": "+1-555-0999",
+    "assignedDate": 19656
+  },
+  "denialReason": null,
+  "notes": [
+    {
+      "author": "System",
+      "timestamp": 1730073600000,
+      "content": "Claim submitted via mobile app"
+    },
+    {
+      "author": "Bob Martinez",
+      "timestamp": 1730160000000,
+      "content": "Assigned to claim. Will schedule inspection within 24 hours."
+    },
+    {
+      "author": "Bob Martinez",
+      "timestamp": 1730246400000,
+      "content": "Inspection completed. Damage assessed at $4,850. Approved $4,350 after deductible."
+    },
+    {
+      "author": "System",
+      "timestamp": 1730332800000,
+      "content": "Payment of $4,350.00 issued to policyholder via direct deposit"
+    }
+  ],
+  "createdAt": 1730073600000,
+  "updatedAt": 1730332800000,
+  "closedAt": null
+}

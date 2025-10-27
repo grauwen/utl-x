@@ -1,0 +1,150 @@
+{
+  "patientId": "MRN-2024-789456",
+  "personalInfo": {
+    "firstName": "Robert",
+    "middleName": "James",
+    "lastName": "Anderson",
+    "dateOfBirth": 5479,
+    "gender": "MALE",
+    "ssn": null,
+    "email": "robert.anderson@example.com",
+    "phone": "+1-555-0178"
+  },
+  "address": {
+    "street": "789 Elm Street, Apt 3C",
+    "city": "Boston",
+    "state": "MA",
+    "postalCode": "02101",
+    "country": "USA"
+  },
+  "insurance": [
+    {
+      "priority": "PRIMARY",
+      "insuranceCompany": "Blue Cross Blue Shield",
+      "policyNumber": "BCBS-789456123",
+      "groupNumber": "GRP-ABC-456",
+      "subscriberId": "SUB-789456",
+      "effectiveDate": 19358,
+      "expirationDate": null
+    }
+  ],
+  "emergencyContact": {
+    "name": "Mary Anderson",
+    "relationship": "Spouse",
+    "phone": "+1-555-0179",
+    "email": "mary.anderson@example.com"
+  },
+  "primaryCareProvider": {
+    "providerId": "PROV-12345",
+    "name": "Dr. Elizabeth Martinez, MD",
+    "specialty": "Internal Medicine",
+    "phone": "+1-617-555-0100",
+    "facility": "Boston General Hospital"
+  },
+  "allergies": [
+    {
+      "allergen": "Penicillin",
+      "reaction": "Hives, difficulty breathing",
+      "severity": "SEVERE",
+      "onsetDate": 12784
+    },
+    {
+      "allergen": "Peanuts",
+      "reaction": "Anaphylaxis",
+      "severity": "LIFE_THREATENING",
+      "onsetDate": 3653
+    }
+  ],
+  "conditions": [
+    {
+      "icd10Code": "E11.9",
+      "description": "Type 2 Diabetes Mellitus without complications",
+      "status": "CHRONIC",
+      "diagnosedDate": 17167,
+      "resolvedDate": null
+    },
+    {
+      "icd10Code": "I10",
+      "description": "Essential (primary) hypertension",
+      "status": "UNDER_TREATMENT",
+      "diagnosedDate": 16436,
+      "resolvedDate": null
+    }
+  ],
+  "medications": [
+    {
+      "name": "Metformin",
+      "genericName": "Metformin Hydrochloride",
+      "dosage": "500mg",
+      "frequency": "Twice daily",
+      "route": "Oral",
+      "prescribedDate": 17167,
+      "prescribedBy": "Dr. Elizabeth Martinez",
+      "isActive": true
+    },
+    {
+      "name": "Lisinopril",
+      "genericName": "Lisinopril",
+      "dosage": "10mg",
+      "frequency": "Once daily",
+      "route": "Oral",
+      "prescribedDate": 16436,
+      "prescribedBy": "Dr. Elizabeth Martinez",
+      "isActive": true
+    },
+    {
+      "name": "Atorvastatin",
+      "genericName": "Atorvastatin Calcium",
+      "dosage": "20mg",
+      "frequency": "Once daily at bedtime",
+      "route": "Oral",
+      "prescribedDate": 18262,
+      "prescribedBy": "Dr. Elizabeth Martinez",
+      "isActive": true
+    }
+  ],
+  "immunizations": [
+    {
+      "vaccineName": "Influenza, seasonal, injectable",
+      "cvxCode": "141",
+      "administeredDate": 19632,
+      "lotNumber": "FLU2024-LOT-456",
+      "administeredBy": "Nurse Jane Smith, RN"
+    },
+    {
+      "vaccineName": "COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose",
+      "cvxCode": "208",
+      "administeredDate": 19540,
+      "lotNumber": "COVID-2024-789",
+      "administeredBy": "Nurse Jane Smith, RN"
+    },
+    {
+      "vaccineName": "Zoster vaccine live",
+      "cvxCode": "121",
+      "administeredDate": 18992,
+      "lotNumber": "ZOST-2023-123",
+      "administeredBy": "Pharmacist Tom Wilson, RPh"
+    }
+  ],
+  "vitals": {
+    "height": 177.8,
+    "weight": 89.5,
+    "bloodPressureSystolic": 128,
+    "bloodPressureDiastolic": 82,
+    "heartRate": 72,
+    "temperature": 36.8,
+    "respiratoryRate": 16,
+    "recordedAt": 1730073600000
+  },
+  "bloodType": "A_POSITIVE",
+  "smokingStatus": "FORMER",
+  "advanceDirectives": {
+    "hasDNR": false,
+    "hasLivingWill": true,
+    "hasPowerOfAttorney": true,
+    "lastReviewedDate": 19358
+  },
+  "isActive": true,
+  "createdAt": 1420070400000,
+  "updatedAt": 1730073600000
+}

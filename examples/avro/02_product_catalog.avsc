@@ -1,0 +1,137 @@
+{
+  "type": "record",
+  "name": "Product",
+  "namespace": "com.example.ecommerce",
+  "doc": "Product catalog entry for e-commerce platform",
+  "fields": [
+    {
+      "name": "sku",
+      "type": "string",
+      "doc": "Stock Keeping Unit (unique product identifier)"
+    },
+    {
+      "name": "productName",
+      "type": "string",
+      "doc": "Product display name"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "doc": "Full product description"
+    },
+    {
+      "name": "category",
+      "type": {
+        "type": "record",
+        "name": "Category",
+        "fields": [
+          {"name": "primary", "type": "string"},
+          {"name": "secondary", "type": ["null", "string"], "default": null},
+          {"name": "tags", "type": {"type": "array", "items": "string"}}
+        ]
+      },
+      "doc": "Product categorization"
+    },
+    {
+      "name": "brand",
+      "type": "string",
+      "doc": "Brand name"
+    },
+    {
+      "name": "manufacturer",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Manufacturer name"
+    },
+    {
+      "name": "price",
+      "type": {
+        "type": "record",
+        "name": "Price",
+        "fields": [
+          {"name": "amount", "type": "double"},
+          {"name": "currency", "type": "string"},
+          {"name": "msrp", "type": ["null", "double"], "default": null},
+          {"name": "salePrice", "type": ["null", "double"], "default": null},
+          {"name": "effectiveDate", "type": {"type": "long", "logicalType": "timestamp-millis"}}
+        ]
+      },
+      "doc": "Pricing information"
+    },
+    {
+      "name": "inventory",
+      "type": {
+        "type": "record",
+        "name": "Inventory",
+        "fields": [
+          {"name": "quantityAvailable", "type": "int"},
+          {"name": "quantityReserved", "type": "int"},
+          {"name": "reorderLevel", "type": "int"},
+          {"name": "warehouse", "type": "string"}
+        ]
+      },
+      "doc": "Inventory status"
+    },
+    {
+      "name": "dimensions",
+      "type": {
+        "type": "record",
+        "name": "Dimensions",
+        "fields": [
+          {"name": "weight", "type": "double", "doc": "Weight in kg"},
+          {"name": "length", "type": "double", "doc": "Length in cm"},
+          {"name": "width", "type": "double", "doc": "Width in cm"},
+          {"name": "height", "type": "double", "doc": "Height in cm"}
+        ]
+      },
+      "doc": "Physical dimensions"
+    },
+    {
+      "name": "images",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Image",
+          "fields": [
+            {"name": "url", "type": "string"},
+            {"name": "altText", "type": "string"},
+            {"name": "isPrimary", "type": "boolean"}
+          ]
+        }
+      },
+      "doc": "Product images"
+    },
+    {
+      "name": "attributes",
+      "type": {
+        "type": "map",
+        "values": "string"
+      },
+      "default": {},
+      "doc": "Product-specific attributes (color, size, material, etc.)"
+    },
+    {
+      "name": "isActive",
+      "type": "boolean",
+      "default": true,
+      "doc": "Whether product is available for sale"
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Product creation timestamp"
+    },
+    {
+      "name": "updatedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last update timestamp"
+    }
+  ]
+}

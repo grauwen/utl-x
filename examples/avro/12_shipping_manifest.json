@@ -1,0 +1,181 @@
+{
+  "manifestId": "MANIFEST-2024-10-789456",
+  "manifestNumber": "MAN-US-2024-789456",
+  "manifestType": "GROUND_TRANSPORT",
+  "status": "IN_TRANSIT",
+  "shipper": {
+    "name": "TechGadgets Warehouse",
+    "companyId": "COMP-789456",
+    "address": "500 Industrial Parkway",
+    "city": "Los Angeles",
+    "state": "CA",
+    "postalCode": "90001",
+    "country": "USA",
+    "contactName": "Maria Rodriguez",
+    "phone": "+1-310-555-0100",
+    "email": "shipping@techgadgets.example.com"
+  },
+  "consignee": {
+    "name": "Electronics Retail Corp",
+    "companyId": "COMP-456123",
+    "address": "1200 Commerce Street",
+    "city": "Dallas",
+    "state": "TX",
+    "postalCode": "75201",
+    "country": "USA",
+    "contactName": "James Wilson",
+    "phone": "+1-214-555-0200",
+    "email": "receiving@electronicsretail.example.com"
+  },
+  "carrier": {
+    "carrierId": "CARRIER-FDX",
+    "name": "FedEx Freight",
+    "scac": "FXFE",
+    "iata": null,
+    "service": "FedEx Freight Priority"
+  },
+  "origin": {
+    "facilityName": "TechGadgets Distribution Center",
+    "address": "500 Industrial Parkway",
+    "city": "Los Angeles",
+    "state": "CA",
+    "postalCode": "90001",
+    "country": "USA",
+    "portCode": null
+  },
+  "destination": {
+    "facilityName": "Electronics Retail Dallas Distribution Center",
+    "address": "1200 Commerce Street",
+    "city": "Dallas",
+    "state": "TX",
+    "postalCode": "75201",
+    "country": "USA",
+    "portCode": null
+  },
+  "shipmentDate": 1730073600000,
+  "estimatedDelivery": 1730419200000,
+  "actualDelivery": null,
+  "packages": [
+    {
+      "packageId": "PKG-001",
+      "trackingNumber": "FDX-789456123-001",
+      "type": "PALLET",
+      "quantity": 50,
+      "weight": 487.5,
+      "dimensions": {
+        "length": 120.0,
+        "width": 100.0,
+        "height": 150.0
+      },
+      "description": "UltraSound Pro Wireless Headphones - 50 units",
+      "value": 14999.50,
+      "currency": "USD"
+    },
+    {
+      "packageId": "PKG-002",
+      "trackingNumber": "FDX-789456123-002",
+      "type": "PALLET",
+      "quantity": 100,
+      "weight": 125.0,
+      "dimensions": {
+        "length": 120.0,
+        "width": 100.0,
+        "height": 80.0
+      },
+      "description": "Premium USB-C Charging Cables - 100 units",
+      "value": 1999.00,
+      "currency": "USD"
+    },
+    {
+      "packageId": "PKG-003",
+      "trackingNumber": "FDX-789456123-003",
+      "type": "BOX",
+      "quantity": 25,
+      "weight": 47.5,
+      "dimensions": {
+        "length": 60.0,
+        "width": 50.0,
+        "height": 40.0
+      },
+      "description": "Wireless Charging Pads - 25 units",
+      "value": 1249.75,
+      "currency": "USD"
+    }
+  ],
+  "totals": {
+    "totalPackages": 3,
+    "totalWeight": 660.0,
+    "totalVolume": 3.12,
+    "totalValue": 18248.25,
+    "currency": "USD"
+  },
+  "charges": {
+    "baseCharge": 875.00,
+    "fuelSurcharge": 131.25,
+    "insurance": 91.24,
+    "handling": 50.00,
+    "customs": 0.0,
+    "otherCharges": 25.00,
+    "totalCharge": 1172.49,
+    "currency": "USD"
+  },
+  "customsInfo": null,
+  "specialInstructions": [
+    "Handle with care - electronic equipment",
+    "Keep dry - moisture sensitive",
+    "Deliver to receiving dock B",
+    "Call consignee 24 hours before delivery"
+  ],
+  "hazmat": [],
+  "documents": [
+    {
+      "type": "BOL",
+      "number": "BOL-2024-789456",
+      "url": "https://docs.techgadgets.example.com/bol/BOL-2024-789456.pdf"
+    },
+    {
+      "type": "COMMERCIAL_INVOICE",
+      "number": "INV-2024-123456",
+      "url": "https://docs.techgadgets.example.com/invoices/INV-2024-123456.pdf"
+    },
+    {
+      "type": "PACKING_LIST",
+      "number": "PL-2024-789456",
+      "url": "https://docs.techgadgets.example.com/packing/PL-2024-789456.pdf"
+    }
+  ],
+  "events": [
+    {
+      "timestamp": 1730073600000,
+      "status": "PICKUP_SCHEDULED",
+      "location": "Los Angeles, CA",
+      "description": "Shipment scheduled for pickup"
+    },
+    {
+      "timestamp": 1730095200000,
+      "status": "PICKED_UP",
+      "location": "Los Angeles, CA - TechGadgets Distribution Center",
+      "description": "Package picked up by FedEx Freight"
+    },
+    {
+      "timestamp": 1730116800000,
+      "status": "IN_TRANSIT",
+      "location": "Los Angeles, CA - FedEx Freight Hub",
+      "description": "Departed FedEx facility"
+    },
+    {
+      "timestamp": 1730203200000,
+      "status": "IN_TRANSIT",
+      "location": "Phoenix, AZ - FedEx Sorting Facility",
+      "description": "Arrived at sort facility"
+    },
+    {
+      "timestamp": 1730246400000,
+      "status": "IN_TRANSIT",
+      "location": "El Paso, TX - FedEx Transfer Hub",
+      "description": "In transit to Dallas"
+    }
+  ],
+  "createdAt": 1730073600000,
+  "updatedAt": 1730246400000
+}

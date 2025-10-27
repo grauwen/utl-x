@@ -1,0 +1,44 @@
+{
+  "movementId": "MOV-2024-10-27-789456",
+  "movementType": "RECEIPT",
+  "product": {
+    "sku": "PROD-ELECT-2024-5678",
+    "name": "UltraSound Pro Wireless Headphones",
+    "upc": "012345678901",
+    "category": "Electronics"
+  },
+  "quantity": 500.0,
+  "unitOfMeasure": "EA",
+  "fromLocation": null,
+  "toLocation": {
+    "warehouse": "US-WEST-01",
+    "zone": "A",
+    "aisle": "12",
+    "bin": "B-05"
+  },
+  "lotNumber": "LOT-2024-10-001",
+  "serialNumbers": [],
+  "expirationDate": null,
+  "reason": {
+    "code": "PO_RECEIPT",
+    "description": "Purchase order receipt from supplier"
+  },
+  "referenceDocument": {
+    "type": "PURCHASE_ORDER",
+    "number": "PO-2024-456789"
+  },
+  "cost": {
+    "unitCost": 125.00,
+    "totalCost": 62500.00,
+    "currency": "USD"
+  },
+  "performedBy": {
+    "userId": "USER-WH-123",
+    "userName": "John Smith",
+    "role": "Warehouse Operator"
+  },
+  "deviceId": "SCANNER-WH01-05",
+  "notes": "Inspected and verified. All units in good condition.",
+  "transactionTime": 1730073600000,
+  "createdAt": 1730073600000
+}

@@ -1,0 +1,171 @@
+{
+  "type": "record",
+  "name": "InventoryMovement",
+  "namespace": "com.example.warehouse",
+  "doc": "Warehouse inventory movement record for tracking stock changes",
+  "fields": [
+    {
+      "name": "movementId",
+      "type": "string",
+      "doc": "Unique movement transaction identifier"
+    },
+    {
+      "name": "movementType",
+      "type": {
+        "type": "enum",
+        "name": "MovementType",
+        "symbols": ["RECEIPT", "ISSUE", "TRANSFER", "ADJUSTMENT", "RETURN", "DAMAGE", "CYCLE_COUNT"]
+      },
+      "doc": "Type of inventory movement"
+    },
+    {
+      "name": "product",
+      "type": {
+        "type": "record",
+        "name": "Product",
+        "fields": [
+          {"name": "sku", "type": "string"},
+          {"name": "name", "type": "string"},
+          {"name": "upc", "type": ["null", "string"], "default": null},
+          {"name": "category", "type": "string"}
+        ]
+      },
+      "doc": "Product information"
+    },
+    {
+      "name": "quantity",
+      "type": "double",
+      "doc": "Quantity moved (positive for receipt, negative for issue)"
+    },
+    {
+      "name": "unitOfMeasure",
+      "type": "string",
+      "doc": "Unit of measure (EA, BOX, PALLET, KG, etc.)"
+    },
+    {
+      "name": "fromLocation",
+      "type": ["null", {
+        "type": "record",
+        "name": "Location",
+        "fields": [
+          {"name": "warehouse", "type": "string"},
+          {"name": "zone", "type": ["null", "string"], "default": null},
+          {"name": "aisle", "type": ["null", "string"], "default": null},
+          {"name": "bin", "type": ["null", "string"], "default": null}
+        ]
+      }],
+      "default": null,
+      "doc": "Source location (null for receipts)"
+    },
+    {
+      "name": "toLocation",
+      "type": ["null", "Location"],
+      "default": null,
+      "doc": "Destination location (null for issues)"
+    },
+    {
+      "name": "lotNumber",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Lot or batch number"
+    },
+    {
+      "name": "serialNumbers",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "Serial numbers for serialized items"
+    },
+    {
+      "name": "expirationDate",
+      "type": ["null", {
+        "type": "int",
+        "logicalType": "date"
+      }],
+      "default": null,
+      "doc": "Product expiration date (for perishables)"
+    },
+    {
+      "name": "reason",
+      "type": {
+        "type": "record",
+        "name": "Reason",
+        "fields": [
+          {"name": "code", "type": "string"},
+          {"name": "description", "type": "string"}
+        ]
+      },
+      "doc": "Reason for movement"
+    },
+    {
+      "name": "referenceDocument",
+      "type": ["null", {
+        "type": "record",
+        "name": "ReferenceDocument",
+        "fields": [
+          {"name": "type", "type": {"type": "enum", "name": "DocumentType", "symbols": ["PURCHASE_ORDER", "SALES_ORDER", "TRANSFER_ORDER", "RETURN_ORDER", "WORK_ORDER"]}},
+          {"name": "number", "type": "string"}
+        ]
+      }],
+      "default": null,
+      "doc": "Reference to originating document"
+    },
+    {
+      "name": "cost",
+      "type": ["null", {
+        "type": "record",
+        "name": "Cost",
+        "fields": [
+          {"name": "unitCost", "type": "double"},
+          {"name": "totalCost", "type": "double"},
+          {"name": "currency", "type": "string"}
+        ]
+      }],
+      "default": null,
+      "doc": "Cost information"
+    },
+    {
+      "name": "performedBy",
+      "type": {
+        "type": "record",
+        "name": "User",
+        "fields": [
+          {"name": "userId", "type": "string"},
+          {"name": "userName", "type": "string"},
+          {"name": "role", "type": "string"}
+        ]
+      },
+      "doc": "User who performed the movement"
+    },
+    {
+      "name": "deviceId",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Device/scanner ID used for transaction"
+    },
+    {
+      "name": "notes",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Additional notes"
+    },
+    {
+      "name": "transactionTime",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Movement transaction timestamp"
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Record creation timestamp"
+    }
+  ]
+}

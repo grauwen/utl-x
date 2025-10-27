@@ -1,0 +1,281 @@
+{
+  "type": "record",
+  "name": "ShippingManifest",
+  "namespace": "com.example.logistics",
+  "doc": "Shipping manifest for logistics and freight transportation",
+  "fields": [
+    {
+      "name": "manifestId",
+      "type": "string",
+      "doc": "Unique manifest identifier"
+    },
+    {
+      "name": "manifestNumber",
+      "type": "string",
+      "doc": "Human-readable manifest number"
+    },
+    {
+      "name": "manifestType",
+      "type": {
+        "type": "enum",
+        "name": "ManifestType",
+        "symbols": ["AIR_FREIGHT", "OCEAN_FREIGHT", "GROUND_TRANSPORT", "RAIL", "INTERMODAL", "PARCEL"]
+      },
+      "doc": "Type of shipping manifest"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "ManifestStatus",
+        "symbols": ["DRAFT", "CONFIRMED", "IN_TRANSIT", "DELIVERED", "EXCEPTION", "CANCELLED"]
+      },
+      "doc": "Current manifest status"
+    },
+    {
+      "name": "shipper",
+      "type": {
+        "type": "record",
+        "name": "Party",
+        "fields": [
+          {"name": "name", "type": "string"},
+          {"name": "companyId", "type": ["null", "string"], "default": null},
+          {"name": "address", "type": "string"},
+          {"name": "city", "type": "string"},
+          {"name": "state", "type": "string"},
+          {"name": "postalCode", "type": "string"},
+          {"name": "country", "type": "string"},
+          {"name": "contactName", "type": "string"},
+          {"name": "phone", "type": "string"},
+          {"name": "email", "type": "string"}
+        ]
+      },
+      "doc": "Shipper information"
+    },
+    {
+      "name": "consignee",
+      "type": "Party",
+      "doc": "Consignee (receiver) information"
+    },
+    {
+      "name": "carrier",
+      "type": {
+        "type": "record",
+        "name": "Carrier",
+        "fields": [
+          {"name": "carrierId", "type": "string"},
+          {"name": "name", "type": "string"},
+          {"name": "scac", "type": ["null", "string"], "default": null, "doc": "Standard Carrier Alpha Code"},
+          {"name": "iata", "type": ["null", "string"], "default": null, "doc": "IATA airline code"},
+          {"name": "service", "type": "string", "doc": "Service level (Standard, Express, etc.)"}
+        ]
+      },
+      "doc": "Carrier information"
+    },
+    {
+      "name": "origin",
+      "type": {
+        "type": "record",
+        "name": "Location",
+        "fields": [
+          {"name": "facilityName", "type": ["null", "string"], "default": null},
+          {"name": "address", "type": "string"},
+          {"name": "city", "type": "string"},
+          {"name": "state", "type": "string"},
+          {"name": "postalCode", "type": "string"},
+          {"name": "country", "type": "string"},
+          {"name": "portCode", "type": ["null", "string"], "default": null, "doc": "UN/LOCODE"}
+        ]
+      },
+      "doc": "Origin location"
+    },
+    {
+      "name": "destination",
+      "type": "Location",
+      "doc": "Destination location"
+    },
+    {
+      "name": "shipmentDate",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Shipment departure date/time"
+    },
+    {
+      "name": "estimatedDelivery",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Estimated delivery date/time"
+    },
+    {
+      "name": "actualDelivery",
+      "type": ["null", {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }],
+      "default": null,
+      "doc": "Actual delivery date/time"
+    },
+    {
+      "name": "packages",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Package",
+          "fields": [
+            {"name": "packageId", "type": "string"},
+            {"name": "trackingNumber", "type": "string"},
+            {"name": "type", "type": {"type": "enum", "name": "PackageType", "symbols": ["BOX", "ENVELOPE", "PALLET", "CRATE", "DRUM", "TUBE", "OTHER"]}},
+            {"name": "quantity", "type": "int"},
+            {"name": "weight", "type": "double", "doc": "Weight in kg"},
+            {"name": "dimensions", "type": {
+              "type": "record",
+              "name": "Dimensions",
+              "fields": [
+                {"name": "length", "type": "double", "doc": "Length in cm"},
+                {"name": "width", "type": "double", "doc": "Width in cm"},
+                {"name": "height", "type": "double", "doc": "Height in cm"}
+              ]
+            }},
+            {"name": "description", "type": "string"},
+            {"name": "value", "type": ["null", "double"], "default": null},
+            {"name": "currency", "type": ["null", "string"], "default": null}
+          ]
+        }
+      },
+      "doc": "Packages in manifest"
+    },
+    {
+      "name": "totals",
+      "type": {
+        "type": "record",
+        "name": "Totals",
+        "fields": [
+          {"name": "totalPackages", "type": "int"},
+          {"name": "totalWeight", "type": "double", "doc": "Total weight in kg"},
+          {"name": "totalVolume", "type": "double", "doc": "Total volume in cubic meters"},
+          {"name": "totalValue", "type": ["null", "double"], "default": null},
+          {"name": "currency", "type": ["null", "string"], "default": null}
+        ]
+      },
+      "doc": "Shipment totals"
+    },
+    {
+      "name": "charges",
+      "type": {
+        "type": "record",
+        "name": "Charges",
+        "fields": [
+          {"name": "baseCharge", "type": "double"},
+          {"name": "fuelSurcharge", "type": "double"},
+          {"name": "insurance", "type": "double"},
+          {"name": "handling", "type": "double"},
+          {"name": "customs", "type": "double"},
+          {"name": "otherCharges", "type": "double"},
+          {"name": "totalCharge", "type": "double"},
+          {"name": "currency", "type": "string"}
+        ]
+      },
+      "doc": "Shipping charges"
+    },
+    {
+      "name": "customsInfo",
+      "type": ["null", {
+        "type": "record",
+        "name": "CustomsInfo",
+        "fields": [
+          {"name": "customsValue", "type": "double"},
+          {"name": "currency", "type": "string"},
+          {"name": "incoterms", "type": "string", "doc": "e.g., FOB, CIF, DDP"},
+          {"name": "hsCode", "type": ["null", "string"], "default": null, "doc": "Harmonized System code"},
+          {"name": "countryOfOrigin", "type": "string"},
+          {"name": "exportLicenseRequired", "type": "boolean"}
+        ]
+      }],
+      "default": null,
+      "doc": "Customs information for international shipments"
+    },
+    {
+      "name": "specialInstructions",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "Special handling instructions"
+    },
+    {
+      "name": "hazmat",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "HazmatInfo",
+          "fields": [
+            {"name": "unNumber", "type": "string", "doc": "UN identification number"},
+            {"name": "properShippingName", "type": "string"},
+            {"name": "hazardClass", "type": "string"},
+            {"name": "packingGroup", "type": ["null", "string"], "default": null}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Hazardous materials information"
+    },
+    {
+      "name": "documents",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Document",
+          "fields": [
+            {"name": "type", "type": {"type": "enum", "name": "DocumentType", "symbols": ["BOL", "COMMERCIAL_INVOICE", "PACKING_LIST", "CERTIFICATE_OF_ORIGIN", "EXPORT_LICENSE", "CUSTOMS_DECLARATION", "OTHER"]}},
+            {"name": "number", "type": "string"},
+            {"name": "url", "type": ["null", "string"], "default": null}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Shipping documents"
+    },
+    {
+      "name": "events",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "TrackingEvent",
+          "fields": [
+            {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+            {"name": "status", "type": "string"},
+            {"name": "location", "type": "string"},
+            {"name": "description", "type": "string"}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Tracking events"
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Manifest creation timestamp"
+    },
+    {
+      "name": "updatedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last update timestamp"
+    }
+  ]
+}

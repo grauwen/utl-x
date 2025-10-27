@@ -1,0 +1,251 @@
+{
+  "type": "record",
+  "name": "PatientRecord",
+  "namespace": "com.example.healthcare",
+  "doc": "Healthcare patient record (HIPAA-compliant, PHI protected)",
+  "fields": [
+    {
+      "name": "patientId",
+      "type": "string",
+      "doc": "Unique patient identifier (MRN - Medical Record Number)"
+    },
+    {
+      "name": "personalInfo",
+      "type": {
+        "type": "record",
+        "name": "PersonalInfo",
+        "fields": [
+          {"name": "firstName", "type": "string"},
+          {"name": "middleName", "type": ["null", "string"], "default": null},
+          {"name": "lastName", "type": "string"},
+          {"name": "dateOfBirth", "type": {"type": "int", "logicalType": "date"}},
+          {"name": "gender", "type": {"type": "enum", "name": "Gender", "symbols": ["MALE", "FEMALE", "OTHER", "UNKNOWN"]}},
+          {"name": "ssn", "type": ["null", "string"], "default": null, "doc": "Encrypted"},
+          {"name": "email", "type": ["null", "string"], "default": null},
+          {"name": "phone", "type": "string"}
+        ]
+      },
+      "doc": "Personal information (PHI)"
+    },
+    {
+      "name": "address",
+      "type": {
+        "type": "record",
+        "name": "Address",
+        "fields": [
+          {"name": "street", "type": "string"},
+          {"name": "city", "type": "string"},
+          {"name": "state", "type": "string"},
+          {"name": "postalCode", "type": "string"},
+          {"name": "country", "type": "string"}
+        ]
+      },
+      "doc": "Current address"
+    },
+    {
+      "name": "insurance",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Insurance",
+          "fields": [
+            {"name": "priority", "type": {"type": "enum", "name": "Priority", "symbols": ["PRIMARY", "SECONDARY", "TERTIARY"]}},
+            {"name": "insuranceCompany", "type": "string"},
+            {"name": "policyNumber", "type": "string"},
+            {"name": "groupNumber", "type": ["null", "string"], "default": null},
+            {"name": "subscriberId", "type": "string"},
+            {"name": "effectiveDate", "type": {"type": "int", "logicalType": "date"}},
+            {"name": "expirationDate", "type": ["null", {"type": "int", "logicalType": "date"}], "default": null}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Insurance coverage"
+    },
+    {
+      "name": "emergencyContact",
+      "type": {
+        "type": "record",
+        "name": "EmergencyContact",
+        "fields": [
+          {"name": "name", "type": "string"},
+          {"name": "relationship", "type": "string"},
+          {"name": "phone", "type": "string"},
+          {"name": "email", "type": ["null", "string"], "default": null}
+        ]
+      },
+      "doc": "Emergency contact"
+    },
+    {
+      "name": "primaryCareProvider",
+      "type": ["null", {
+        "type": "record",
+        "name": "Provider",
+        "fields": [
+          {"name": "providerId", "type": "string"},
+          {"name": "name", "type": "string"},
+          {"name": "specialty", "type": "string"},
+          {"name": "phone", "type": "string"},
+          {"name": "facility", "type": "string"}
+        ]
+      }],
+      "default": null,
+      "doc": "Primary care provider"
+    },
+    {
+      "name": "allergies",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Allergy",
+          "fields": [
+            {"name": "allergen", "type": "string"},
+            {"name": "reaction", "type": "string"},
+            {"name": "severity", "type": {"type": "enum", "name": "Severity", "symbols": ["MILD", "MODERATE", "SEVERE", "LIFE_THREATENING"]}},
+            {"name": "onsetDate", "type": ["null", {"type": "int", "logicalType": "date"}], "default": null}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Known allergies"
+    },
+    {
+      "name": "conditions",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Condition",
+          "fields": [
+            {"name": "icd10Code", "type": "string"},
+            {"name": "description", "type": "string"},
+            {"name": "status", "type": {"type": "enum", "name": "ConditionStatus", "symbols": ["ACTIVE", "RESOLVED", "CHRONIC", "UNDER_TREATMENT"]}},
+            {"name": "diagnosedDate", "type": {"type": "int", "logicalType": "date"}},
+            {"name": "resolvedDate", "type": ["null", {"type": "int", "logicalType": "date"}], "default": null}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Medical conditions"
+    },
+    {
+      "name": "medications",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Medication",
+          "fields": [
+            {"name": "name", "type": "string"},
+            {"name": "genericName", "type": ["null", "string"], "default": null},
+            {"name": "dosage", "type": "string"},
+            {"name": "frequency", "type": "string"},
+            {"name": "route", "type": "string", "doc": "Oral, IV, Topical, etc."},
+            {"name": "prescribedDate", "type": {"type": "int", "logicalType": "date"}},
+            {"name": "prescribedBy", "type": "string"},
+            {"name": "isActive", "type": "boolean"}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Current and past medications"
+    },
+    {
+      "name": "immunizations",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Immunization",
+          "fields": [
+            {"name": "vaccineName", "type": "string"},
+            {"name": "cvxCode", "type": ["null", "string"], "default": null, "doc": "CDC vaccine code"},
+            {"name": "administeredDate", "type": {"type": "int", "logicalType": "date"}},
+            {"name": "lotNumber", "type": ["null", "string"], "default": null},
+            {"name": "administeredBy", "type": "string"}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Immunization history"
+    },
+    {
+      "name": "vitals",
+      "type": ["null", {
+        "type": "record",
+        "name": "Vitals",
+        "fields": [
+          {"name": "height", "type": "double", "doc": "Height in cm"},
+          {"name": "weight", "type": "double", "doc": "Weight in kg"},
+          {"name": "bloodPressureSystolic", "type": "int"},
+          {"name": "bloodPressureDiastolic", "type": "int"},
+          {"name": "heartRate", "type": "int", "doc": "BPM"},
+          {"name": "temperature", "type": "double", "doc": "Celsius"},
+          {"name": "respiratoryRate", "type": "int", "doc": "Breaths per minute"},
+          {"name": "recordedAt", "type": {"type": "long", "logicalType": "timestamp-millis"}}
+        ]
+      }],
+      "default": null,
+      "doc": "Most recent vital signs"
+    },
+    {
+      "name": "bloodType",
+      "type": ["null", {
+        "type": "enum",
+        "name": "BloodType",
+        "symbols": ["A_POSITIVE", "A_NEGATIVE", "B_POSITIVE", "B_NEGATIVE", "AB_POSITIVE", "AB_NEGATIVE", "O_POSITIVE", "O_NEGATIVE", "UNKNOWN"]
+      }],
+      "default": null,
+      "doc": "Blood type"
+    },
+    {
+      "name": "smokingStatus",
+      "type": {
+        "type": "enum",
+        "name": "SmokingStatus",
+        "symbols": ["NEVER", "FORMER", "CURRENT", "UNKNOWN"]
+      },
+      "default": "UNKNOWN",
+      "doc": "Smoking status"
+    },
+    {
+      "name": "advanceDirectives",
+      "type": ["null", {
+        "type": "record",
+        "name": "AdvanceDirectives",
+        "fields": [
+          {"name": "hasDNR", "type": "boolean"},
+          {"name": "hasLivingWill", "type": "boolean"},
+          {"name": "hasPowerOfAttorney", "type": "boolean"},
+          {"name": "lastReviewedDate", "type": ["null", {"type": "int", "logicalType": "date"}], "default": null}
+        ]
+      }],
+      "default": null,
+      "doc": "Advance directives"
+    },
+    {
+      "name": "isActive",
+      "type": "boolean",
+      "default": true,
+      "doc": "Whether patient record is active"
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Record creation timestamp"
+    },
+    {
+      "name": "updatedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last update timestamp"
+    }
+  ]
+}

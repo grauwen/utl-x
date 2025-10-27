@@ -1,0 +1,180 @@
+{
+  "type": "record",
+  "name": "BankTransaction",
+  "namespace": "com.example.banking",
+  "doc": "Bank account transaction record for financial institutions",
+  "fields": [
+    {
+      "name": "transactionId",
+      "type": "string",
+      "doc": "Unique transaction identifier"
+    },
+    {
+      "name": "accountNumber",
+      "type": "string",
+      "doc": "Account number (encrypted/masked)"
+    },
+    {
+      "name": "transactionType",
+      "type": {
+        "type": "enum",
+        "name": "TransactionType",
+        "symbols": ["DEPOSIT", "WITHDRAWAL", "TRANSFER", "PAYMENT", "FEE", "INTEREST", "DIVIDEND", "REFUND", "REVERSAL"]
+      },
+      "doc": "Type of transaction"
+    },
+    {
+      "name": "channel",
+      "type": {
+        "type": "enum",
+        "name": "Channel",
+        "symbols": ["ATM", "BRANCH", "ONLINE", "MOBILE_APP", "PHONE", "WIRE", "ACH", "CHECK"]
+      },
+      "doc": "Transaction channel"
+    },
+    {
+      "name": "amount",
+      "type": {
+        "type": "record",
+        "name": "Amount",
+        "fields": [
+          {"name": "value", "type": "double"},
+          {"name": "currency", "type": "string"}
+        ]
+      },
+      "doc": "Transaction amount"
+    },
+    {
+      "name": "balanceAfter",
+      "type": "double",
+      "doc": "Account balance after transaction"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "doc": "Transaction description"
+    },
+    {
+      "name": "counterparty",
+      "type": ["null", {
+        "type": "record",
+        "name": "Counterparty",
+        "fields": [
+          {"name": "accountNumber", "type": ["null", "string"], "default": null},
+          {"name": "routingNumber", "type": ["null", "string"], "default": null},
+          {"name": "name", "type": "string"},
+          {"name": "bank", "type": ["null", "string"], "default": null}
+        ]
+      }],
+      "default": null,
+      "doc": "Counterparty information (for transfers/payments)"
+    },
+    {
+      "name": "location",
+      "type": ["null", {
+        "type": "record",
+        "name": "Location",
+        "fields": [
+          {"name": "type", "type": "string", "doc": "ATM, Branch, Merchant"},
+          {"name": "id", "type": ["null", "string"], "default": null},
+          {"name": "name", "type": ["null", "string"], "default": null},
+          {"name": "address", "type": ["null", "string"], "default": null},
+          {"name": "city", "type": ["null", "string"], "default": null},
+          {"name": "country", "type": ["null", "string"], "default": null}
+        ]
+      }],
+      "default": null,
+      "doc": "Transaction location"
+    },
+    {
+      "name": "merchantInfo",
+      "type": ["null", {
+        "type": "record",
+        "name": "MerchantInfo",
+        "fields": [
+          {"name": "merchantId", "type": "string"},
+          {"name": "merchantName", "type": "string"},
+          {"name": "category", "type": "string", "doc": "MCC - Merchant Category Code"},
+          {"name": "categoryDescription", "type": "string"}
+        ]
+      }],
+      "default": null,
+      "doc": "Merchant information (for card transactions)"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "TransactionStatus",
+        "symbols": ["PENDING", "POSTED", "CLEARED", "REVERSED", "DECLINED", "CANCELLED"]
+      },
+      "doc": "Transaction status"
+    },
+    {
+      "name": "authorizationCode",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Authorization code (for card transactions)"
+    },
+    {
+      "name": "checkNumber",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Check number (for check transactions)"
+    },
+    {
+      "name": "referenceNumber",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "External reference number"
+    },
+    {
+      "name": "tags",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "Transaction tags/categories for personal finance management"
+    },
+    {
+      "name": "isDisputed",
+      "type": "boolean",
+      "default": false,
+      "doc": "Whether transaction is disputed"
+    },
+    {
+      "name": "transactionDate",
+      "type": {
+        "type": "int",
+        "logicalType": "date"
+      },
+      "doc": "Transaction date"
+    },
+    {
+      "name": "postingDate",
+      "type": ["null", {
+        "type": "int",
+        "logicalType": "date"
+      }],
+      "default": null,
+      "doc": "Posting date (when transaction cleared)"
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Record creation timestamp"
+    },
+    {
+      "name": "updatedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last update timestamp"
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "employeeId": "EMP-2024-789",
+  "personalInfo": {
+    "firstName": "Michael",
+    "middleName": "James",
+    "lastName": "Chen",
+    "dateOfBirth": 8766,
+    "gender": "MALE",
+    "ssn": null,
+    "email": "michael.chen@example.com",
+    "phone": "+1-555-0199"
+  },
+  "address": {
+    "street": "456 Oak Avenue, Unit 12",
+    "city": "Seattle",
+    "state": "WA",
+    "postalCode": "98101",
+    "country": "USA"
+  },
+  "employment": {
+    "startDate": 19358,
+    "endDate": null,
+    "employmentType": "FULL_TIME",
+    "status": "ACTIVE",
+    "probationEndDate": null
+  },
+  "position": {
+    "title": "Senior Software Engineer",
+    "department": "Engineering",
+    "division": "Product Development",
+    "location": "Seattle HQ",
+    "reportsTo": "EMP-2020-345"
+  },
+  "compensation": {
+    "baseSalary": 145000.00,
+    "currency": "USD",
+    "payFrequency": "BIWEEKLY",
+    "bonus": 20000.00,
+    "commission": 0.0,
+    "effectiveDate": 19723
+  },
+  "benefits": [
+    {
+      "type": "HEALTH_INSURANCE",
+      "enrolled": true,
+      "startDate": 19358,
+      "provider": "Blue Cross Blue Shield"
+    },
+    {
+      "type": "DENTAL_INSURANCE",
+      "enrolled": true,
+      "startDate": 19358,
+      "provider": "Delta Dental"
+    },
+    {
+      "type": "RETIREMENT_401K",
+      "enrolled": true,
+      "startDate": 19358,
+      "provider": "Fidelity"
+    },
+    {
+      "type": "STOCK_OPTIONS",
+      "enrolled": true,
+      "startDate": 19358,
+      "provider": null
+    }
+  ],
+  "skills": [
+    "Java",
+    "Kotlin",
+    "Python",
+    "AWS",
+    "Kubernetes",
+    "Microservices",
+    "System Design",
+    "CI/CD"
+  ],
+  "emergencyContact": {
+    "name": "Lisa Chen",
+    "relationship": "Spouse",
+    "phone": "+1-555-0200",
+    "email": "lisa.chen@example.com"
+  },
+  "performanceRating": "EXCEEDS",
+  "createdAt": 1673568000000,
+  "updatedAt": 1730073600000
+}

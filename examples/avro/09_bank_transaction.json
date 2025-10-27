@@ -1,0 +1,37 @@
+{
+  "transactionId": "TXN-BANK-20241027-123456789",
+  "accountNumber": "****5678",
+  "transactionType": "PAYMENT",
+  "channel": "MOBILE_APP",
+  "amount": {
+    "value": -89.47,
+    "currency": "USD"
+  },
+  "balanceAfter": 3456.78,
+  "description": "WHOLE FOODS MARKET #456",
+  "counterparty": null,
+  "location": {
+    "type": "Merchant",
+    "id": "MER-WFM-456",
+    "name": "Whole Foods Market",
+    "address": "789 Market Street",
+    "city": "San Francisco",
+    "country": "USA"
+  },
+  "merchantInfo": {
+    "merchantId": "WFM-789456123",
+    "merchantName": "WHOLE FOODS MARKET",
+    "category": "5411",
+    "categoryDescription": "Grocery Stores, Supermarkets"
+  },
+  "status": "POSTED",
+  "authorizationCode": "AUTH-987654",
+  "checkNumber": null,
+  "referenceNumber": "REF-20241027-ABC",
+  "tags": ["groceries", "food", "household"],
+  "isDisputed": false,
+  "transactionDate": 19660,
+  "postingDate": 19661,
+  "createdAt": 1730073600000,
+  "updatedAt": 1730160000000
+}

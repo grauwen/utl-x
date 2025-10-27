@@ -1,0 +1,147 @@
+{
+  "type": "record",
+  "name": "Order",
+  "namespace": "com.example.orders",
+  "doc": "E-commerce order with line items and fulfillment details",
+  "fields": [
+    {
+      "name": "orderId",
+      "type": "string",
+      "doc": "Unique order identifier"
+    },
+    {
+      "name": "orderNumber",
+      "type": "string",
+      "doc": "Human-readable order number"
+    },
+    {
+      "name": "customerId",
+      "type": "string",
+      "doc": "Reference to customer record"
+    },
+    {
+      "name": "orderDate",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Order placement timestamp"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "OrderStatus",
+        "symbols": ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]
+      },
+      "doc": "Current order status"
+    },
+    {
+      "name": "lineItems",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "LineItem",
+          "fields": [
+            {"name": "lineNumber", "type": "int"},
+            {"name": "sku", "type": "string"},
+            {"name": "productName", "type": "string"},
+            {"name": "quantity", "type": "int"},
+            {"name": "unitPrice", "type": "double"},
+            {"name": "discount", "type": "double", "default": 0.0},
+            {"name": "tax", "type": "double"},
+            {"name": "lineTotal", "type": "double"}
+          ]
+        }
+      },
+      "doc": "Order line items"
+    },
+    {
+      "name": "pricing",
+      "type": {
+        "type": "record",
+        "name": "Pricing",
+        "fields": [
+          {"name": "subtotal", "type": "double"},
+          {"name": "discount", "type": "double"},
+          {"name": "shipping", "type": "double"},
+          {"name": "tax", "type": "double"},
+          {"name": "total", "type": "double"},
+          {"name": "currency", "type": "string"}
+        ]
+      },
+      "doc": "Order pricing summary"
+    },
+    {
+      "name": "shippingAddress",
+      "type": {
+        "type": "record",
+        "name": "ShippingAddress",
+        "fields": [
+          {"name": "recipientName", "type": "string"},
+          {"name": "street", "type": "string"},
+          {"name": "city", "type": "string"},
+          {"name": "state", "type": "string"},
+          {"name": "postalCode", "type": "string"},
+          {"name": "country", "type": "string"},
+          {"name": "phone", "type": "string"}
+        ]
+      },
+      "doc": "Shipping address"
+    },
+    {
+      "name": "billingAddress",
+      "type": "ShippingAddress",
+      "doc": "Billing address"
+    },
+    {
+      "name": "fulfillment",
+      "type": {
+        "type": "record",
+        "name": "Fulfillment",
+        "fields": [
+          {"name": "method", "type": {"type": "enum", "name": "ShippingMethod", "symbols": ["STANDARD", "EXPRESS", "OVERNIGHT", "PICKUP"]}},
+          {"name": "carrier", "type": ["null", "string"], "default": null},
+          {"name": "trackingNumber", "type": ["null", "string"], "default": null},
+          {"name": "estimatedDelivery", "type": ["null", {"type": "int", "logicalType": "date"}], "default": null},
+          {"name": "actualDelivery", "type": ["null", {"type": "long", "logicalType": "timestamp-millis"}], "default": null}
+        ]
+      },
+      "doc": "Fulfillment details"
+    },
+    {
+      "name": "payment",
+      "type": {
+        "type": "record",
+        "name": "Payment",
+        "fields": [
+          {"name": "method", "type": {"type": "enum", "name": "PaymentMethod", "symbols": ["CREDIT_CARD", "DEBIT_CARD", "PAYPAL", "BANK_TRANSFER", "CASH_ON_DELIVERY"]}},
+          {"name": "status", "type": {"type": "enum", "name": "PaymentStatus", "symbols": ["PENDING", "AUTHORIZED", "CAPTURED", "FAILED", "REFUNDED"]}},
+          {"name": "transactionId", "type": ["null", "string"], "default": null},
+          {"name": "last4Digits", "type": ["null", "string"], "default": null}
+        ]
+      },
+      "doc": "Payment information"
+    },
+    {
+      "name": "notes",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Customer order notes"
+    },
+    {
+      "name": "createdBy",
+      "type": "string",
+      "doc": "User who created the order"
+    },
+    {
+      "name": "updatedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last update timestamp"
+    }
+  ]
+}

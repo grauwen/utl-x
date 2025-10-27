@@ -1,0 +1,128 @@
+{
+  "type": "record",
+  "name": "SensorReading",
+  "namespace": "com.example.iot",
+  "doc": "IoT sensor reading from manufacturing equipment or environmental sensors",
+  "fields": [
+    {
+      "name": "readingId",
+      "type": "string",
+      "doc": "Unique reading identifier (UUID)"
+    },
+    {
+      "name": "deviceId",
+      "type": "string",
+      "doc": "IoT device/sensor identifier"
+    },
+    {
+      "name": "deviceInfo",
+      "type": {
+        "type": "record",
+        "name": "DeviceInfo",
+        "fields": [
+          {"name": "manufacturer", "type": "string"},
+          {"name": "model", "type": "string"},
+          {"name": "firmwareVersion", "type": "string"},
+          {"name": "location", "type": "string"}
+        ]
+      },
+      "doc": "Device metadata"
+    },
+    {
+      "name": "sensorType",
+      "type": {
+        "type": "enum",
+        "name": "SensorType",
+        "symbols": ["TEMPERATURE", "HUMIDITY", "PRESSURE", "VIBRATION", "CURRENT", "VOLTAGE", "FLOW", "LEVEL", "PROXIMITY", "MOTION"]
+      },
+      "doc": "Type of sensor"
+    },
+    {
+      "name": "measurements",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Measurement",
+          "fields": [
+            {"name": "metric", "type": "string"},
+            {"name": "value", "type": "double"},
+            {"name": "unit", "type": "string"},
+            {"name": "precision", "type": "int", "doc": "Decimal places"},
+            {"name": "quality", "type": {"type": "enum", "name": "Quality", "symbols": ["GOOD", "UNCERTAIN", "BAD"]}, "default": "GOOD"}
+          ]
+        }
+      },
+      "doc": "Sensor measurements"
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Reading timestamp (sensor time)"
+    },
+    {
+      "name": "receivedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Server receive timestamp"
+    },
+    {
+      "name": "geolocation",
+      "type": ["null", {
+        "type": "record",
+        "name": "Geolocation",
+        "fields": [
+          {"name": "latitude", "type": "double"},
+          {"name": "longitude", "type": "double"},
+          {"name": "altitude", "type": ["null", "double"], "default": null}
+        ]
+      }],
+      "default": null,
+      "doc": "GPS coordinates (for mobile devices)"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "record",
+        "name": "DeviceStatus",
+        "fields": [
+          {"name": "batteryLevel", "type": ["null", "int"], "default": null, "doc": "Battery percentage 0-100"},
+          {"name": "signalStrength", "type": ["null", "int"], "default": null, "doc": "Signal strength in dBm"},
+          {"name": "health", "type": {"type": "enum", "name": "Health", "symbols": ["HEALTHY", "WARNING", "CRITICAL", "OFFLINE"]}}
+        ]
+      },
+      "doc": "Device status information"
+    },
+    {
+      "name": "alerts",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Alert",
+          "fields": [
+            {"name": "severity", "type": {"type": "enum", "name": "Severity", "symbols": ["INFO", "WARNING", "ERROR", "CRITICAL"]}},
+            {"name": "code", "type": "string"},
+            {"name": "message", "type": "string"}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Alerts triggered by this reading"
+    },
+    {
+      "name": "metadata",
+      "type": {
+        "type": "map",
+        "values": "string"
+      },
+      "default": {},
+      "doc": "Additional metadata"
+    }
+  ]
+}

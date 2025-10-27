@@ -1,0 +1,159 @@
+{
+  "type": "record",
+  "name": "Employee",
+  "namespace": "com.example.hr",
+  "doc": "Employee master data record for HR system",
+  "fields": [
+    {
+      "name": "employeeId",
+      "type": "string",
+      "doc": "Unique employee identifier"
+    },
+    {
+      "name": "personalInfo",
+      "type": {
+        "type": "record",
+        "name": "PersonalInfo",
+        "fields": [
+          {"name": "firstName", "type": "string"},
+          {"name": "middleName", "type": ["null", "string"], "default": null},
+          {"name": "lastName", "type": "string"},
+          {"name": "dateOfBirth", "type": {"type": "int", "logicalType": "date"}},
+          {"name": "gender", "type": ["null", {"type": "enum", "name": "Gender", "symbols": ["MALE", "FEMALE", "NON_BINARY", "PREFER_NOT_TO_SAY"]}], "default": null},
+          {"name": "ssn", "type": ["null", "string"], "default": null, "doc": "Encrypted SSN"},
+          {"name": "email", "type": "string"},
+          {"name": "phone", "type": "string"}
+        ]
+      },
+      "doc": "Personal information"
+    },
+    {
+      "name": "address",
+      "type": {
+        "type": "record",
+        "name": "Address",
+        "fields": [
+          {"name": "street", "type": "string"},
+          {"name": "city", "type": "string"},
+          {"name": "state", "type": "string"},
+          {"name": "postalCode", "type": "string"},
+          {"name": "country", "type": "string"}
+        ]
+      },
+      "doc": "Current address"
+    },
+    {
+      "name": "employment",
+      "type": {
+        "type": "record",
+        "name": "Employment",
+        "fields": [
+          {"name": "startDate", "type": {"type": "int", "logicalType": "date"}},
+          {"name": "endDate", "type": ["null", {"type": "int", "logicalType": "date"}], "default": null},
+          {"name": "employmentType", "type": {"type": "enum", "name": "EmploymentType", "symbols": ["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]}},
+          {"name": "status", "type": {"type": "enum", "name": "EmploymentStatus", "symbols": ["ACTIVE", "ON_LEAVE", "TERMINATED", "RETIRED"]}},
+          {"name": "probationEndDate", "type": ["null", {"type": "int", "logicalType": "date"}], "default": null}
+        ]
+      },
+      "doc": "Employment details"
+    },
+    {
+      "name": "position",
+      "type": {
+        "type": "record",
+        "name": "Position",
+        "fields": [
+          {"name": "title", "type": "string"},
+          {"name": "department", "type": "string"},
+          {"name": "division", "type": ["null", "string"], "default": null},
+          {"name": "location", "type": "string"},
+          {"name": "reportsTo", "type": ["null", "string"], "default": null, "doc": "Manager employee ID"}
+        ]
+      },
+      "doc": "Current position"
+    },
+    {
+      "name": "compensation",
+      "type": {
+        "type": "record",
+        "name": "Compensation",
+        "fields": [
+          {"name": "baseSalary", "type": "double"},
+          {"name": "currency", "type": "string"},
+          {"name": "payFrequency", "type": {"type": "enum", "name": "PayFrequency", "symbols": ["WEEKLY", "BIWEEKLY", "MONTHLY", "ANNUAL"]}},
+          {"name": "bonus", "type": "double", "default": 0.0},
+          {"name": "commission", "type": "double", "default": 0.0},
+          {"name": "effectiveDate", "type": {"type": "int", "logicalType": "date"}}
+        ]
+      },
+      "doc": "Compensation details"
+    },
+    {
+      "name": "benefits",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Benefit",
+          "fields": [
+            {"name": "type", "type": {"type": "enum", "name": "BenefitType", "symbols": ["HEALTH_INSURANCE", "DENTAL_INSURANCE", "VISION_INSURANCE", "LIFE_INSURANCE", "RETIREMENT_401K", "PTO", "STOCK_OPTIONS"]}},
+            {"name": "enrolled", "type": "boolean"},
+            {"name": "startDate", "type": {"type": "int", "logicalType": "date"}},
+            {"name": "provider", "type": ["null", "string"], "default": null}
+          ]
+        }
+      },
+      "default": [],
+      "doc": "Employee benefits enrollment"
+    },
+    {
+      "name": "skills",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "Employee skills and competencies"
+    },
+    {
+      "name": "emergencyContact",
+      "type": {
+        "type": "record",
+        "name": "EmergencyContact",
+        "fields": [
+          {"name": "name", "type": "string"},
+          {"name": "relationship", "type": "string"},
+          {"name": "phone", "type": "string"},
+          {"name": "email", "type": ["null", "string"], "default": null}
+        ]
+      },
+      "doc": "Emergency contact information"
+    },
+    {
+      "name": "performanceRating",
+      "type": ["null", {
+        "type": "enum",
+        "name": "PerformanceRating",
+        "symbols": ["EXCEEDS", "MEETS", "NEEDS_IMPROVEMENT", "UNSATISFACTORY"]
+      }],
+      "default": null,
+      "doc": "Latest performance rating"
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Record creation timestamp"
+    },
+    {
+      "name": "updatedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last update timestamp"
+    }
+  ]
+}

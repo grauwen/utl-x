@@ -1,0 +1,89 @@
+{
+  "invoiceId": "INV-2024-10-001234",
+  "invoiceNumber": "2024-001234",
+  "invoiceDate": 19660,
+  "dueDate": 19690,
+  "invoiceType": "STANDARD",
+  "status": "SENT",
+  "seller": {
+    "id": "SELLER-ABC-123",
+    "name": "ABC Software Solutions Inc.",
+    "taxId": "12-3456789",
+    "address": "100 Tech Plaza, Suite 500, San Jose, CA 95110, USA",
+    "email": "billing@abcsoftware.com",
+    "phone": "+1-408-555-0100"
+  },
+  "buyer": {
+    "id": "BUYER-XYZ-456",
+    "name": "XYZ Corporation",
+    "taxId": "98-7654321",
+    "address": "500 Business Park Drive, Austin, TX 78701, USA",
+    "email": "ap@xyzcorp.com",
+    "phone": "+1-512-555-0200"
+  },
+  "lineItems": [
+    {
+      "lineNumber": 1,
+      "description": "Enterprise Software License - Annual Subscription (100 users)",
+      "quantity": 100.0,
+      "unitOfMeasure": "licenses",
+      "unitPrice": 120.00,
+      "discount": 1200.00,
+      "taxRate": 0.0875,
+      "taxAmount": 945.00,
+      "lineTotal": 11745.00,
+      "productCode": "ENT-LICENSE-ANNUAL"
+    },
+    {
+      "lineNumber": 2,
+      "description": "Premium Support Package - Annual",
+      "quantity": 1.0,
+      "unitOfMeasure": "package",
+      "unitPrice": 5000.00,
+      "discount": 0.0,
+      "taxRate": 0.0875,
+      "taxAmount": 437.50,
+      "lineTotal": 5437.50,
+      "productCode": "SUPPORT-PREMIUM"
+    },
+    {
+      "lineNumber": 3,
+      "description": "Professional Services - Implementation (40 hours)",
+      "quantity": 40.0,
+      "unitOfMeasure": "hours",
+      "unitPrice": 200.00,
+      "discount": 800.00,
+      "taxRate": 0.0875,
+      "taxAmount": 630.00,
+      "lineTotal": 7830.00,
+      "productCode": "PROF-SERVICES"
+    }
+  ],
+  "totals": {
+    "subtotal": 23000.00,
+    "totalDiscount": 2000.00,
+    "totalTax": 2012.50,
+    "shippingCost": 0.0,
+    "total": 25012.50,
+    "currency": "USD"
+  },
+  "paymentTerms": {
+    "terms": "Net 30",
+    "lateFeePercent": 1.5,
+    "discountPercent": 2.0,
+    "discountDays": 10
+  },
+  "payments": [],
+  "amountPaid": 0.0,
+  "amountDue": 25012.50,
+  "notes": "Thank you for your business. Payment is due within 30 days. 2% discount available if paid within 10 days.",
+  "attachments": [
+    {
+      "filename": "contract_agreement.pdf",
+      "url": "https://storage.abcsoftware.com/invoices/2024-001234/contract.pdf",
+      "mimeType": "application/pdf"
+    }
+  ],
+  "createdAt": 1730073600000,
+  "updatedAt": 1730073600000
+}

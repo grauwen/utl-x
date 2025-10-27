@@ -1,0 +1,55 @@
+{
+  "readingId": "550e8400-e29b-41d4-a716-446655440000",
+  "deviceId": "SENSOR-TEMP-PLANT-A-101",
+  "deviceInfo": {
+    "manufacturer": "IndustrialSense Corp",
+    "model": "TempPro-5000",
+    "firmwareVersion": "2.4.1",
+    "location": "Manufacturing Plant A - Production Line 1 - Oven Section"
+  },
+  "sensorType": "TEMPERATURE",
+  "measurements": [
+    {
+      "metric": "temperature",
+      "value": 185.7,
+      "unit": "celsius",
+      "precision": 1,
+      "quality": "GOOD"
+    },
+    {
+      "metric": "humidity",
+      "value": 35.2,
+      "unit": "percent",
+      "precision": 1,
+      "quality": "GOOD"
+    },
+    {
+      "metric": "pressure",
+      "value": 101.3,
+      "unit": "kPa",
+      "precision": 1,
+      "quality": "GOOD"
+    }
+  ],
+  "timestamp": 1730073600000,
+  "receivedAt": 1730073601250,
+  "geolocation": null,
+  "status": {
+    "batteryLevel": null,
+    "signalStrength": -45,
+    "health": "WARNING"
+  },
+  "alerts": [
+    {
+      "severity": "WARNING",
+      "code": "TEMP_HIGH",
+      "message": "Temperature exceeds normal operating range (180°C). Current: 185.7°C"
+    }
+  ],
+  "metadata": {
+    "production_batch": "BATCH-2024-10-27-001",
+    "machine_id": "OVEN-A1",
+    "operator_id": "OP-789",
+    "shift": "morning"
+  }
+}
