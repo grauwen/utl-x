@@ -13,6 +13,9 @@ dependencies {
     // XML format dependency (XSD parser builds on XML parser)
     implementation(project(":formats:xml"))
 
+    // Schema module dependency (for USDL directive validation)
+    implementation(project(":schema"))
+
     // Kotlin standard library
     implementation(kotlin("stdlib"))
 

@@ -40,13 +40,13 @@ data class Header(
      * Backward compatibility: Get primary input format
      */
     val inputFormat: FormatSpec
-        get() = inputs.firstOrNull()?.second ?: FormatSpec(FormatType.AUTO, emptyMap(), location)
+        get() = inputs.firstOrNull()?.second ?: FormatSpec(FormatType.AUTO, null, emptyMap(), location)
 
     /**
      * Backward compatibility: Get primary output format
      */
     val outputFormat: FormatSpec
-        get() = outputs.firstOrNull()?.second ?: FormatSpec(FormatType.JSON, emptyMap(), location)
+        get() = outputs.firstOrNull()?.second ?: FormatSpec(FormatType.JSON, null, emptyMap(), location)
 
     /**
      * Check if header has multiple inputs
@@ -66,9 +66,18 @@ data class Header(
  */
 data class FormatSpec(
     val type: FormatType,
+    val dialect: Dialect? = null,
     val options: Map<String, Any> = emptyMap(),
     override val location: Location
 ) : Node()
+
+/**
+ * Dialect specification (e.g., %usdl 1.0)
+ */
+data class Dialect(
+    val name: String,
+    val version: String
+)
 
 enum class FormatType {
     AUTO, XML, JSON, CSV, YAML, CUSTOM,

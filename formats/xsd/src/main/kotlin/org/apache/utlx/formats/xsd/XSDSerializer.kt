@@ -126,8 +126,8 @@ class XSDSerializer(
                     udm.properties.containsKey("xs:schema") -> SerializationMode.LOW_LEVEL
                     udm.properties.keys.any { it.startsWith("xs:") } -> SerializationMode.LOW_LEVEL
 
-                    // High-level: Has Universal Schema DSL
-                    udm.properties.containsKey("types") -> SerializationMode.UNIVERSAL_DSL
+                    // USDL mode: Has %types directive
+                    udm.properties.containsKey("%types") -> SerializationMode.UNIVERSAL_DSL
 
                     // Default: Low-level
                     else -> SerializationMode.LOW_LEVEL
@@ -138,27 +138,40 @@ class XSDSerializer(
     }
 
     /**
-     * Transform Universal Schema DSL to XSD UDM structure
+     * Transform USDL (Universal Schema Definition Language) to XSD UDM structure
      *
-     * This is a simplified implementation supporting basic structure types.
-     * Full implementation will be added in subsequent iterations.
+     * Supports USDL 1.0 Tier 1 and Tier 2 directives for XSD generation.
+     *
+     * Required USDL directives:
+     * - %types: Object mapping type names to type definitions
+     * - %kind: "structure" for complex types
+     * - %fields: Array of field definitions
+     * - %name: Field name
+     * - %type: Field type
+     *
+     * Optional USDL directives:
+     * - %namespace: Target namespace URI
+     * - %elementFormDefault: "qualified" or "unqualified"
+     * - %documentation: Type-level documentation
+     * - %description: Field-level documentation
+     * - %required: Boolean indicating if field is required
      */
     private fun transformUniversalDSL(schema: UDM.Object): UDM {
-        // Extract metadata
-        val namespace = (schema.properties["namespace"] as? UDM.Scalar)?.value as? String
-        val elemFormDefault = (schema.properties["elementFormDefault"] as? UDM.Scalar)?.value as? String ?: this.elementFormDefault
+        // Extract metadata using USDL % directives
+        val namespace = (schema.properties["%namespace"] as? UDM.Scalar)?.value as? String
+        val elemFormDefault = (schema.properties["%elementFormDefault"] as? UDM.Scalar)?.value as? String ?: this.elementFormDefault
 
-        // Extract types
-        val types = schema.properties["types"] as? UDM.Object
-            ?: throw IllegalArgumentException("Universal Schema DSL requires 'types' property")
+        // Extract types using %types directive
+        val types = schema.properties["%types"] as? UDM.Object
+            ?: throw IllegalArgumentException("USDL schema requires '%types' directive")
 
-        // Build XSD schema attributes
+        // Build XSD schema attributes (no @ prefix - that's syntax only, not UDM)
         val schemaAttrs = mutableMapOf<String, String>()
-        schemaAttrs["@xmlns:xs"] = "http://www.w3.org/2001/XMLSchema"
+        schemaAttrs["xmlns:xs"] = "http://www.w3.org/2001/XMLSchema"
         if (namespace != null) {
-            schemaAttrs["@targetNamespace"] = namespace
+            schemaAttrs["targetNamespace"] = namespace
         }
-        schemaAttrs["@elementFormDefault"] = elemFormDefault
+        schemaAttrs["elementFormDefault"] = elemFormDefault
 
         // Generate XSD complex types (simplified - only structures for now)
         val xsdComplexTypes = mutableListOf<UDM>()
@@ -166,22 +179,27 @@ class XSDSerializer(
         types.properties.forEach { (typeName, typeDef) ->
             if (typeDef !is UDM.Object) return@forEach
 
-            val kind = (typeDef.properties["kind"] as? UDM.Scalar)?.value as? String
+            // Check %kind directive
+            val kind = (typeDef.properties["%kind"] as? UDM.Scalar)?.value as? String
             if (kind == "structure") {
-                val fields = typeDef.properties["fields"] as? UDM.Array ?: return@forEach
-                val doc = (typeDef.properties["documentation"] as? UDM.Scalar)?.value as? String
+                // Extract %fields directive
+                val fields = typeDef.properties["%fields"] as? UDM.Array ?: return@forEach
+
+                // Extract %documentation directive
+                val doc = (typeDef.properties["%documentation"] as? UDM.Scalar)?.value as? String
 
                 // Generate xs:element for each field
                 val elements = fields.elements.mapNotNull { fieldUdm ->
                     if (fieldUdm !is UDM.Object) return@mapNotNull null
 
-                    val name = (fieldUdm.properties["name"] as? UDM.Scalar)?.value as? String ?: return@mapNotNull null
-                    val type = (fieldUdm.properties["type"] as? UDM.Scalar)?.value as? String ?: return@mapNotNull null
-                    val required = (fieldUdm.properties["required"] as? UDM.Scalar)?.value as? Boolean ?: false
-                    val description = (fieldUdm.properties["description"] as? UDM.Scalar)?.value as? String
+                    // Extract field directives: %name, %type, %required, %description
+                    val name = (fieldUdm.properties["%name"] as? UDM.Scalar)?.value as? String ?: return@mapNotNull null
+                    val type = (fieldUdm.properties["%type"] as? UDM.Scalar)?.value as? String ?: return@mapNotNull null
+                    val required = (fieldUdm.properties["%required"] as? UDM.Scalar)?.value as? Boolean ?: false
+                    val description = (fieldUdm.properties["%description"] as? UDM.Scalar)?.value as? String
 
-                    val elemAttrs = mutableMapOf("@name" to name, "@type" to "xs:$type")
-                    if (!required) elemAttrs["@minOccurs"] = "0"
+                    val elemAttrs = mutableMapOf("name" to name, "type" to "xs:$type")
+                    if (!required) elemAttrs["minOccurs"] = "0"
 
                     val elemProps = if (description != null) {
                         mapOf("_documentation" to UDM.Scalar(description))
@@ -209,7 +227,7 @@ class XSDSerializer(
 
                 xsdComplexTypes.add(UDM.Object(
                     properties = typeProps,
-                    attributes = mapOf("@name" to typeName),
+                    attributes = mapOf("name" to typeName),
                     name = "xs:complexType"
                 ))
             }
@@ -254,8 +272,7 @@ class XSDSerializer(
                 }
 
                 // Check if it has xmlns:xs attribute (direct schema)
-                if (udm.attributes.containsKey("@xmlns:xs") ||
-                    udm.attributes.containsKey("xmlns:xs")) {
+                if (udm.attributes.containsKey("xmlns:xs")) {
                     return // Valid: direct xs:schema object
                 }
 
@@ -477,8 +494,8 @@ class XSDSerializer(
 
                 // Add vc:minVersion attribute for XSD 1.1
                 val enhancedAttrs = schema.attributes.toMutableMap()
-                enhancedAttrs["@xmlns:vc"] = "http://www.w3.org/2007/XMLSchema-versioning"
-                enhancedAttrs["@vc:minVersion"] = "1.1"
+                enhancedAttrs["xmlns:vc"] = "http://www.w3.org/2007/XMLSchema-versioning"
+                enhancedAttrs["vc:minVersion"] = "1.1"
 
                 val enhancedSchema = UDM.Object(
                     properties = schema.properties,

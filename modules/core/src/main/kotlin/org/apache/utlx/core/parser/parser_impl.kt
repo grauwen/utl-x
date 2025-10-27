@@ -157,7 +157,7 @@ class Parser(private val tokens: List<Token>) {
     
     private fun parseFormatSpec(): FormatSpec {
         val startToken = peek()
-        
+
         val formatType = when {
             match(TokenType.AUTO) -> FormatType.AUTO
             match(TokenType.XML) -> FormatType.XML
@@ -171,15 +171,25 @@ class Parser(private val tokens: List<Token>) {
                 FormatType.AUTO
             }
         }
-        
+
+        // Optional dialect: %usdl 1.0
+        val dialect = if (match(TokenType.PERCENT)) {
+            val dialectName = consume(TokenType.IDENTIFIER, "Expected dialect name after %").lexeme
+            val versionToken = consume(TokenType.NUMBER, "Expected version number after dialect name")
+            val version = versionToken.literal.toString()
+            Dialect(dialectName, version)
+        } else {
+            null
+        }
+
         // Optional format options: { key: value, ... }
         val options = if (check(TokenType.LBRACE)) {
             parseFormatOptions()
         } else {
             emptyMap()
         }
-        
-        return FormatSpec(formatType, options, Location.from(startToken))
+
+        return FormatSpec(formatType, dialect, options, Location.from(startToken))
     }
     
     private fun parseFormatOptions(): Map<String, Any> {
@@ -625,14 +635,20 @@ class Parser(private val tokens: List<Token>) {
                         continue
                     }
 
-                    // Check for attribute syntax (@key or "@key")
+                    // Check for attribute syntax (@key or "@key") or directive syntax (%key)
                     var isAttribute = match(TokenType.AT)
+                    var isDirective = false
                     var key: String
 
-                    if (check(TokenType.IDENTIFIER)) {
+                    if (match(TokenType.PERCENT)) {
+                        // USDL directive: %namespace, %types, %kind, etc.
+                        isDirective = true
+                        val directiveName = consume(TokenType.IDENTIFIER, "Expected directive name after %").lexeme
+                        key = "%" + directiveName
+                    } else if (check(TokenType.IDENTIFIER)) {
                         key = advance().lexeme
                     } else if (check(TokenType.STRING)) {
-                        // Handle quoted property names like "@id" or "name"
+                        // Handle quoted property names like "@id", "%namespace", or "name"
                         key = advance().lexeme
                         // Remove quotes
                         if (key.startsWith("\"") && key.endsWith("\"")) {
@@ -642,6 +658,11 @@ class Parser(private val tokens: List<Token>) {
                         if (key.startsWith("@")) {
                             isAttribute = true
                             key = key.substring(1)  // Remove @ prefix
+                        }
+                        // Check if it's a directive (starts with %)
+                        if (key.startsWith("%")) {
+                            isDirective = true
+                            // Keep the % prefix for directives
                         }
                     } else if (peek().isKeyword()) {
                         // Allow keywords as property names in object literals

@@ -1,0 +1,83 @@
+# Test: Generate Customer XSD from USDL
+# This test verifies USDL → XSD transformation using % directive syntax
+
+description: "Generate XSD schema from USDL definition"
+
+transform: |
+  %utlx 1.0
+  input json
+  output xsd %usdl 1.0
+  ---
+  {
+    %namespace: "http://example.com/customer",
+    %elementFormDefault: "qualified",
+
+    %types: {
+      Customer: {
+        %kind: "structure",
+        %documentation: "Customer information",
+
+        %fields: [
+          {
+            %name: "customerId",
+            %type: "string",
+            %required: true,
+            %description: "Unique customer identifier"
+          },
+          {
+            %name: "name",
+            %type: "string",
+            %required: true,
+            %description: "Customer name"
+          },
+          {
+            %name: "email",
+            %type: "string",
+            %required: false,
+            %description: "Customer email address"
+          },
+          {
+            %name: "loyaltyPoints",
+            %type: "integer",
+            %required: false,
+            %description: "Customer loyalty points"
+          }
+        ]
+      }
+    }
+  }
+
+input: |
+  {}
+
+expected: |
+  <?xml version="1.0" encoding="UTF-8"?>
+  <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/customer" elementFormDefault="qualified">
+    <xs:complexType name="Customer">
+      <xs:annotation>
+        <xs:documentation>Customer information</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+        <xs:element name="customerId" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Unique customer identifier</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="name" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Customer name</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="email" type="xs:string" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>Customer email address</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="loyaltyPoints" type="xs:integer" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>Customer loyalty points</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:schema>

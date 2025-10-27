@@ -13,19 +13,19 @@ class LexerTest {
     @Test
     fun `tokenize simple expression`() {
         val source = """
-            input.Customer.Name
+            data.Customer.Name
         """.trimIndent()
-        
+
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
-        
+
         assertEquals(TokenType.IDENTIFIER, tokens[0].type)
-        assertEquals("input", tokens[0].lexeme)
-        
+        assertEquals("data", tokens[0].lexeme)
+
         assertEquals(TokenType.DOT, tokens[1].type)
         assertEquals(TokenType.IDENTIFIER, tokens[2].type)
         assertEquals("Customer", tokens[2].lexeme)
-        
+
         assertEquals(TokenType.DOT, tokens[3].type)
         assertEquals(TokenType.IDENTIFIER, tokens[4].type)
         assertEquals("Name", tokens[4].lexeme)

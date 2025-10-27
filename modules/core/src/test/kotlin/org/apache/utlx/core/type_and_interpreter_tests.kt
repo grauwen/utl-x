@@ -336,6 +336,7 @@ class InterpreterTest {
             Expression.Identifier("obj", Location(1, 1)),
             "name",
             false,
+            false,
             Location(1, 1)
         )
         
@@ -356,6 +357,7 @@ class InterpreterTest {
         val expr = Expression.MemberAccess(
             Expression.Identifier("data", Location(1, 1)),
             "name",
+            false,
             false,
             Location(1, 1)
         )

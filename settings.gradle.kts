@@ -49,6 +49,9 @@ include("formats:jsch")
 include("stdlib")
 include("stdlib-security")
 
+// Schema utilities (USDL implementation)
+include("schema")
+
 // Development tools
 //include("tools:vscode-extension")
 //include("tools:intellij-plugin")
