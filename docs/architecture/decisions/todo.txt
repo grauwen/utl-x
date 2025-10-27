@@ -6,6 +6,8 @@ Paralellization, see https://github.com/grauwen/utl-x/blob/main/docs/architectur
 ----
 Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architecture/module-system-design.md
 ----
+hese XSDParserTest failures appear to be pre-existing issues with the parser (not the serializer I 
+----
 Later
   - OPENAPI - OpenAPI 3.x specs (JSON/YAML with schema embedded)
   - AVRO - Avro schema (if demand exists)
