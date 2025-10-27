@@ -1,8 +1,8 @@
 # UTL-X Documentation Index
 
 > **Last Updated:** 2025-10-27
-> **Total Documents:** 209 listed (173 current + 36 deleted)
-> **Project Total:** 205 current MD files (32 not yet indexed)
+> **Total Documents:** 209 listed (177 current + 32 deleted)
+> **Project Total:** 205 current MD files (28 not yet indexed)
 
 This index lists all markdown documentation in the UTL-X project, organized chronologically with the newest documents first. Files marked ❌ DELETED were removed from the project but kept for historical tracking.
 
@@ -56,9 +56,9 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 | 15 | [JSON-no-comments_JSON-Schema-does-allow-documentation.md](architecture/comments-and-documentation-in-XML-YAML/JSON-no-comments_JSON-Schema-does-allow-documentation.md) | Architecture |
 | 16 | [IDOC-meta-data.md](../examples/IDOC/IDOC-meta-data.md) | Examples |
 | 17 | [utlx-xml-documentation-functions-proposal.md](architecture/comments-and-documentation-in-XML-YAML/utlx-xml-documentation-functions-proposal.md) | Architecture |
-| 18 | [comment-preservation-analysis-v2-with-xsd.md](proposals/comment-preservation-analysis-v2-with-xsd.md) | Proposals ❌ DELETED|
-| 19 | [comment-preservation-analysis.md](proposals/comment-preservation-analysis.md) | Proposals ❌ DELETED|
-| 20 | [xml-documentation-analysis.md](architecture/decisions/xml-documentation-analysis.md) | Architecture Decisions ❌ DELETED|
+| 18 | [comment-preservation-analysis-v2-with-xsd.md](architecture/comments-and-documentation-in-XML-YAML/comment-preservation-analysis-v2-with-xsd.md) | Architecture |
+| 19 | [comment-preservation-analysis.md](architecture/comments-and-documentation-in-XML-YAML/comment-preservation-analysis.md) | Architecture |
+| 20 | [xml-documentation-analysis.md](architecture/comments-and-documentation-in-XML-YAML/xml-documentation-analysis.md) | Architecture |
 | 21 | [object-lambda README.md](../conformance-suite/tests/stdlib/object-lambda/README.md) | Conformance Suite |
 | 22 | [lambda-functions-implementation.md](lambda-functions-implementation.md) | Root Docs |
 | 23 | [yaml-dynamic-keys-implementation-status.md](yaml-dynamic-keys-implementation-status.md) | Root Docs |
