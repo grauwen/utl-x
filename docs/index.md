@@ -1,8 +1,8 @@
 # UTL-X Documentation Index
 
 > **Last Updated:** 2025-10-27
-> **Total Documents:** 209 listed (177 current + 32 deleted)
-> **Project Total:** 205 current MD files (28 not yet indexed)
+> **Total Documents:** 209 listed (199 current + 10 deleted)
+> **Project Total:** 205 current MD files (6 not yet indexed)
 
 This index lists all markdown documentation in the UTL-X project, organized chronologically with the newest documents first. Files marked ❌ DELETED were removed from the project but kept for historical tracking.
 
@@ -173,8 +173,8 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 | 81 | [yaml-maps-json-schema-summary.md](../stdlib/yaml-maps-json-schema-summary.md) | Standard Library |
 | 82 | [format_functions_summary.md](../stdlib/format_functions_summary.md) | Standard Library |
 | 83 | [csv_parseCsv_clarification.md](../stdlib/csv_parseCsv_clarification.md) | Standard Library |
-| 84 | [csv_integration_notes.md](../stdlib/csv_integration_notes.md) | Standard Library ❌ DELETED|
-| 85 | [csv_functions_guide.md](../stdlib/csv_functions_guide.md) | Standard Library ❌ DELETED|
+| 84 | [csv_integration_notes.md](../stdlib/docs/csv_integration_notes.md) | Standard Library |
+| 85 | [csv_functions_guide.md](../stdlib/docs/csv_functions_guide.md) | Standard Library |
 
 ### Stdlib - XML & Serialization
 
@@ -196,35 +196,35 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 |---|----------|----------|
 | 95 | [CLAUDE.md](../CLAUDE.md) | **Project Instructions** |
 | 96 | [stlib_implementation_guide_oct15_afternoon.md](../stdlib/stlib_implementation_guide_oct15_afternoon.md) | Standard Library |
-| 97 | [utlx_cap_analysis_oct15_afternoon.md](../stdlib/utlx_cap_analysis_oct15_afternoon.md) | Standard Library ❌ DELETED|
-| 98 | [stlib_GAP_analysis_oct15th.md](../stdlib/stlib_GAP_analysis_oct15th.md) | Standard Library ❌ DELETED|
-| 99 | [serialization_usage_guide.md](../stdlib/serialization_usage_guide.md) | Standard Library ❌ DELETED|
-| 100 | [serialization_integration_guide.md](../stdlib/serialization_integration_guide.md) | Standard Library ❌ DELETED|
-| 101 | [c14n_integration_guide.md](../stdlib/c14n_integration_guide.md) | Standard Library ❌ DELETED|
-| 102 | [stlib_complete_reference_after_insert_c14n.md](../stdlib/stlib_complete_reference_after_insert_c14n.md) | Standard Library ❌ DELETED|
-| 103 | [stlib_complete_refernce.md](../stdlib/stlib_complete_refernce.md) | Standard Library ❌ DELETED|
-| 104 | [dw_modules_added_summery.md](../stdlib/dw_modules_added_summery.md) | Standard Library ❌ DELETED|
-| 105 | [url_functions_integration_guide.md](../stdlib/url_functions_integration_guide.md) | Standard Library ❌ DELETED|
-| 106 | [utility_modules_complete_guide.md](../stdlib/utility_modules_complete_guide.md) | Standard Library ❌ DELETED|
-| 107 | [stlib_gaps_analysis_type_cenversions.md](../stdlib/stlib_gaps_analysis_type_cenversions.md) | Standard Library ❌ DELETED|
-| 108 | [stlib_complete_gaps_integration_plan.md](../stdlib/stlib_complete_gaps_integration_plan.md) | Standard Library ❌ DELETED|
-| 109 | [stlib_gaps_analysis.md](../stdlib/stlib_gaps_analysis.md) | Standard Library ❌ DELETED|
-| 110 | [unzip_integration_guide.md](../stdlib/unzip_integration_guide.md) | Standard Library ❌ DELETED|
+| 97 | [utlx_cap_analysis_oct15_afternoon.md](../stdlib/docs/utlx_cap_analysis_oct15_afternoon.md) | Standard Library |
+| 98 | [stlib_GAP_analysis_oct15th.md](../stdlib/docs/stlib_GAP_analysis_oct15th.md) | Standard Library |
+| 99 | [serialization_usage_guide.md](../stdlib/docs/serialization_usage_guide.md) | Standard Library |
+| 100 | [serialization_integration_guide.md](../stdlib/docs/serialization_integration_guide.md) | Standard Library |
+| 101 | [c14n_integration_guide.md](../stdlib/docs/c14n_integration_guide.md) | Standard Library |
+| 102 | [stlib_complete_reference_after_insert_c14n.md](../stdlib/docs/stlib_complete_reference_after_insert_c14n.md) | Standard Library |
+| 103 | [stlib_complete_refernce.md](../stdlib/docs/stlib_complete_refernce.md) | Standard Library |
+| 104 | [dw_modules_added_summery.md](../stdlib/docs/dw_modules_added_summery.md) | Standard Library |
+| 105 | [url_functions_integration_guide.md](../stdlib/docs/url_functions_integration_guide.md) | Standard Library |
+| 106 | [utility_modules_complete_guide.md](../stdlib/docs/utility_modules_complete_guide.md) | Standard Library |
+| 107 | [stlib_gaps_analysis_type_cenversions.md](../stdlib/docs/stlib_gaps_analysis_type_cenversions.md) | Standard Library |
+| 108 | [stlib_complete_gaps_integration_plan.md](../stdlib/docs/stlib_complete_gaps_integration_plan.md) | Standard Library |
+| 109 | [stlib_gaps_analysis.md](../stdlib/docs/stlib_gaps_analysis.md) | Standard Library |
+| 110 | [unzip_integration_guide.md](../stdlib/docs/unzip_integration_guide.md) | Standard Library |
 
 ### Stdlib - Completion & Summaries
 
 | # | Document | Category |
 |---|----------|----------|
-| 111 | [stlib_updated_summery.md](../stdlib/stlib_updated_summery.md) | Standard Library ❌ DELETED|
-| 112 | [dataweave_vs_utilx_comparison.md](../stdlib/dataweave_vs_utilx_comparison.md) | Standard Library ❌ DELETED|
+| 111 | [stlib_updated_summery.md](../stdlib/docs/stlib_updated_summery.md) | Standard Library |
+| 112 | [dataweave_vs_utilx_comparison.md](../stdlib/docs/dataweave_vs_utilx_comparison.md) | Standard Library |
 | 113 | [stlib_completion_roadmap.md](../stdlib/stlib_completion_roadmap.md) | Standard Library |
 | 114 | [stlib_todo.md](../stdlib/stlib_todo.md) | Standard Library |
-| 115 | [stlib_final_with_xml.md](../stdlib/stlib_final_with_xml.md) | Standard Library ❌ DELETED|
-| 116 | [stlib_final_enterprise.md](../stdlib/stlib_final_enterprise.md) | Standard Library ❌ DELETED|
-| 117 | [stdlib_final_summery.md](../stdlib/stdlib_final_summery.md) | Standard Library ❌ DELETED|
+| 115 | [stlib_final_with_xml.md](../stdlib/docs/stlib_final_with_xml.md) | Standard Library |
+| 116 | [stlib_final_enterprise.md](../stdlib/docs/stlib_final_enterprise.md) | Standard Library |
+| 117 | [stdlib_final_summery.md](../stdlib/docs/stdlib_final_summery.md) | Standard Library |
 | 118 | [stlib_completeness_report.md](../stdlib/stlib_completeness_report.md) | Standard Library ❌ DELETED|
 | 119 | [stdlib_integration_guide.md](../stdlib/stdlib_integration_guide.md) | Standard Library ❌ DELETED|
-| 120 | [stlib_readme.md](../stdlib/stlib_readme.md) | Standard Library ❌ DELETED|
+| 120 | [stlib_readme.md](../stdlib/docs/stlib_readme.md) | Standard Library |
 | 121 | [stlib_reame.md](../stdlib/stlib_reame.md) | Standard Library ❌ DELETED|
 
 ---
