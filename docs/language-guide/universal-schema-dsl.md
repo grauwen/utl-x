@@ -221,7 +221,7 @@ USDL 1.0 defines **110+ directives** organized into **4 tiers** (including REST 
 | `%requestBody` | Operation | Object/String | Request body schema or type reference |
 | `%responses` | Operation | Object | Response definitions keyed by status code |
 | `%statusCode` | Response | Integer/String | HTTP status code (200, 404, 500, 'default') |
-| `%schema` | Response, Parameter | Object/String | Schema definition or type reference |
+| `%apiSchema` | Response, Parameter | Object/String | API schema definition or type reference (not XSD/JSON Schema formats) |
 | `%parameters` | Operation, Path | Array | Parameter definitions (query, path, header, cookie) |
 | `%in` | Parameter | String | Parameter location: 'query', 'path', 'header', 'cookie' |
 | `%security` | Top-level, Operation | Array/Object | Security requirements (API keys, OAuth, JWT) |
@@ -1060,20 +1060,20 @@ output openapi %usdl 1.0
           {
             %name: "status",
             %in: "query",
-            %schema: {%kind: "primitive", %baseType: "string"},
+            %apiSchema: {%kind: "primitive", %baseType: "string"},
             %description: "Filter by order status"
           },
           {
             %name: "limit",
             %in: "query",
-            %schema: {%kind: "primitive", %baseType: "integer"},
+            %apiSchema: {%kind: "primitive", %baseType: "integer"},
             %description: "Maximum number of results"
           }
         ],
         %responses: {
           "200": {
             %description: "Successful response",
-            %schema: {
+            %apiSchema: {
               %kind: "structure",
               %fields: [
                 {%name: "orders", %type: "Order", %array: true}
@@ -1082,7 +1082,7 @@ output openapi %usdl 1.0
           },
           "400": {
             %description: "Bad request",
-            %schema: "Error"
+            %apiSchema: "Error"
           }
         },
         %security: [{"apiKey": []}]
@@ -1094,16 +1094,16 @@ output openapi %usdl 1.0
         %requestBody: {
           %required: true,
           %contentType: "application/json",
-          %schema: "Order"
+          %apiSchema: "Order"
         },
         %responses: {
           "201": {
             %description: "Order created",
-            %schema: "Order"
+            %apiSchema: "Order"
           },
           "400": {
             %description: "Invalid input",
-            %schema: "Error"
+            %apiSchema: "Error"
           }
         },
         %security: [{"apiKey": []}]
@@ -1119,18 +1119,18 @@ output openapi %usdl 1.0
             %name: "orderId",
             %in: "path",
             %required: true,
-            %schema: {%kind: "primitive", %baseType: "string"},
+            %apiSchema: {%kind: "primitive", %baseType: "string"},
             %description: "Order identifier"
           }
         ],
         %responses: {
           "200": {
             %description: "Order found",
-            %schema: "Order"
+            %apiSchema: "Order"
           },
           "404": {
             %description: "Order not found",
-            %schema: "Error"
+            %apiSchema: "Error"
           }
         }
       }

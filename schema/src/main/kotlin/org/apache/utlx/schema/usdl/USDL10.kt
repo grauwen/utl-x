@@ -514,12 +514,12 @@ object USDL10 {
             supportedFormats = setOf("openapi", "raml", "apiblueprint")
         ),
         Directive(
-            name = "%schema",
+            name = "%apiSchema",
             tier = Tier.COMMON,
             scopes = setOf(Scope.RESPONSE_DEFINITION, Scope.PARAMETER_DEFINITION),
             valueType = "Object or String",
-            description = "Schema definition or type reference for response/parameter",
-            supportedFormats = setOf("openapi", "raml", "jsch")
+            description = "Schema definition or type reference for API response/parameter (not to be confused with XSD/JSON Schema formats)",
+            supportedFormats = setOf("openapi", "raml", "apiblueprint")
         ),
 
         // Parameter directives
@@ -693,7 +693,31 @@ object USDL10 {
             tier = Tier.FORMAT_SPECIFIC,
             scopes = setOf(Scope.TYPE_DEFINITION),
             valueType = "String",
-            description = "Database table name",
+            description = "Database table name (if different from type name)",
+            supportedFormats = setOf("sql", "avro", "parquet")
+        ),
+        Directive(
+            name = "%dbSchema",
+            tier = Tier.FORMAT_SPECIFIC,
+            scopes = setOf(Scope.TYPE_DEFINITION),
+            valueType = "String",
+            description = "Database schema/namespace name (e.g., 'public', 'dbo', 'myapp_schema')",
+            supportedFormats = setOf("sql", "avro", "parquet")
+        ),
+        Directive(
+            name = "%dbColumn",
+            tier = Tier.FORMAT_SPECIFIC,
+            scopes = setOf(Scope.FIELD_DEFINITION),
+            valueType = "String",
+            description = "Database column name (if different from field name) - use to avoid CSV column confusion",
+            supportedFormats = setOf("sql", "avro", "parquet")
+        ),
+        Directive(
+            name = "%primaryKey",
+            tier = Tier.FORMAT_SPECIFIC,
+            scopes = setOf(Scope.FIELD_DEFINITION, Scope.TYPE_DEFINITION),
+            valueType = "Boolean or Array",
+            description = "Primary key field (or composite key array at type level)",
             supportedFormats = setOf("sql")
         ),
         Directive(
@@ -701,7 +725,7 @@ object USDL10 {
             tier = Tier.FORMAT_SPECIFIC,
             scopes = setOf(Scope.FIELD_DEFINITION),
             valueType = "Boolean",
-            description = "Is this field a primary key?",
+            description = "Is this field a primary key? (deprecated, use %primaryKey)",
             supportedFormats = setOf("sql", "odata", "graphql")
         ),
         Directive(
@@ -732,8 +756,8 @@ object USDL10 {
             name = "%foreignKey",
             tier = Tier.FORMAT_SPECIFIC,
             scopes = setOf(Scope.FIELD_DEFINITION),
-            valueType = "String",
-            description = "Foreign key reference to another table/type",
+            valueType = "Object or String",
+            description = "Foreign key reference: {%table, %column, %onDelete, %onUpdate} or simple table reference",
             supportedFormats = setOf("sql")
         ),
         Directive(
@@ -766,6 +790,48 @@ object USDL10 {
             scopes = setOf(Scope.FIELD_DEFINITION, Scope.TYPE_DEFINITION),
             valueType = "String",
             description = "CHECK constraint expression",
+            supportedFormats = setOf("sql")
+        ),
+
+        // SQL-specific advanced directives
+        Directive(
+            name = "%sqlType",
+            tier = Tier.FORMAT_SPECIFIC,
+            scopes = setOf(Scope.FIELD_DEFINITION),
+            valueType = "String",
+            description = "Override SQL data type (e.g., 'VARCHAR(100)', 'JSONB', 'UUID')",
+            supportedFormats = setOf("sql")
+        ),
+        Directive(
+            name = "%sqlDialect",
+            tier = Tier.FORMAT_SPECIFIC,
+            scopes = setOf(Scope.TOP_LEVEL),
+            valueType = "String",
+            description = "Target SQL dialect (postgresql, mysql, oracle, sqlserver, sqlite)",
+            supportedFormats = setOf("sql")
+        ),
+        Directive(
+            name = "%engine",
+            tier = Tier.FORMAT_SPECIFIC,
+            scopes = setOf(Scope.TYPE_DEFINITION),
+            valueType = "String",
+            description = "Storage engine for MySQL (InnoDB, MyISAM)",
+            supportedFormats = setOf("sql")
+        ),
+        Directive(
+            name = "%charset",
+            tier = Tier.FORMAT_SPECIFIC,
+            scopes = setOf(Scope.TYPE_DEFINITION),
+            valueType = "String",
+            description = "Character set for MySQL (utf8mb4, latin1)",
+            supportedFormats = setOf("sql")
+        ),
+        Directive(
+            name = "%collation",
+            tier = Tier.FORMAT_SPECIFIC,
+            scopes = setOf(Scope.TYPE_DEFINITION),
+            valueType = "String",
+            description = "Collation for MySQL/PostgreSQL (utf8mb4_unicode_ci, en_US.UTF-8)",
             supportedFormats = setOf("sql")
         ),
 
