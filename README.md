@@ -359,6 +359,7 @@ function calculateTax(amount: Number, rate: Number): Number {
 | **Message Transformation** | Transform messages between different systems |
 | **Configuration Management** | Convert between config formats (XML ↔ JSON ↔ YAML) |
 | **Report Generation** | Transform data into report formats |
+| **Meta Data transformation** | Transform meta data, supported XSD & JSON schema (JSCH) |
 
 ## Comparison
 
@@ -483,12 +484,22 @@ See our [Roadmap](docs/community/roadmap.md) for planned features.
 
 ### Stability
 
-- ✅ Core language: **Stable**
-- ✅ XML/JSON support: **Stable**
+- ✅ Core UTLX 1.0 - Uniform Transformation Language Extended: **Stable**
+- ✅ UDM - Universal Data Model: **Stable**
+- ✅ USDL 1.0 - Uniform Schema Definition Language: **Stable**
+- ✅ XML support: **Stable**
+- ✅ JSON support: **Stable**
 - ✅ CSV support: **Stable**
-- 🚧 YAML support: **In Development** (v1.1)
-- 🚧 JavaScript runtime: **In Development** (v1.3)
-- 🚧 Native runtime: **In Development** (v1.4)
+- ✅ YAML support: **Stable**
+- ✅ XSD support: **Stable**
+- ✅ JSCH (JSON schema) support: **Stable**
+- ✅ utlx CLI **Stable**
+- 🚧 JVM runtime (2 variants): **In Development** 
+- 🚧 JavaScript runtime: **In Development** 
+- 🚧 Native runtime: **In Development** 
+- 🚧 WASM runtime: **In Development** 
+- 🚧 VS-code plugin: **In Development** 
+
 
 ## License
 
@@ -525,6 +536,7 @@ UTL-X draws inspiration from:
 - **DataWeave** - Format abstraction and functional programming approach
 - **Haskell** - Type system and functional purity
 - **XPath/JSONata** - Path expression syntax
+- **jq** - Command line (CLI) JSON processor
 
 Special thanks to the open-source community for inspiration and support.
 
@@ -537,10 +549,10 @@ If you find UTL-X useful, please consider starring the repository! ⭐
 - ⭐ **Star the repository** on GitHub
 - 📢 **Share** UTL-X with your network
 - 📝 **Write** blog posts or tutorials
-- 💰 **Sponsor** development: [sponsor@utlx.dev](mailto:sponsor@utlx.dev)
+- 💰 **Sponsor** development: [sponsor@utl-x.dev](mailto:sponsor@utl-x.dev)
 
 ---
 
 **Made with ❤️ by the UTL-X community**
 
-[Website](https://utlx.dev) • [Documentation](https://utlx.dev/docs) • [GitHub](https://github.com/grauwen/utl-x) • [Discord](https://discord.gg/utlx)
+[Website](https://utl-x.dev) • [Documentation](https://utl-x.dev/docs) • [GitHub](https://github.com/grauwen/utl-x) • [Discord](https://discord.gg/utlx)

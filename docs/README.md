@@ -38,7 +38,8 @@ Working with different data formats:
 - **[JSON](formats/json.md)** - JSON input and output
 - **[CSV](formats/csv.md)** - CSV input and output
 - **[YAML](formats/yaml.md)** - YAML input and output
-- **[Custom Formats](formats/custom-formats.md)** - Extend UTL-X with custom parsers
+
+Also Meta Data formats are supported!
 
 ### 💡 Examples
 
