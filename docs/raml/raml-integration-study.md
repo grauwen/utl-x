@@ -4,7 +4,7 @@
 **Author:** UTL-X Project Team
 **Date:** 2025-10-27
 **Status:** Draft
-**Related:** [OpenAPI Integration Study](openapi-integration-study.md), [JSON Schema Study](../formats/json-schema-integration.md), [USDL 1.0 Specification](../language-guide/universal-schema-dsl.md)
+**Related:** [OpenAPI Integration Study](../openapi/openapi-integration-study.md), [JSON Schema Study](../formats/json-schema-integration.md), [USDL 1.0 Specification](../language-guide/universal-schema-dsl.md)
 
 ---
 
