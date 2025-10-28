@@ -1,0 +1,46 @@
+name: "csv_output_regionalformat_european"
+category: "tutorial-examples"
+description: "CSV output with European regional number formatting using regionalFormat option"
+tags: ["csv", "json", "regional", "numbers", "european", "tutorial", "output", "regionalFormat"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output csv {
+    delimiter: ";",
+    headers: true,
+    regionalFormat: "european",
+    decimals: 2,
+    useThousands: true
+  }
+  ---
+  [
+    { product: "Laptop", price: 1234.56, quantity: 5 },
+    { product: "Monitor", price: 567.89, quantity: 10 }
+  ]
+
+expected:
+  format: csv
+  data: |
+    product;price;quantity
+    Laptop;1.234,56;5,00
+    Monitor;567,89;10,00
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Tutorial"
+  source: "interactive-session-2025-10-28"
+  complexity: "intermediate"
+  notes:
+    - "Demonstrates CSV output with declarative regionalFormat option"
+    - "European format uses period for thousands separator and comma for decimal"
+    - "Semicolon delimiter is used to avoid conflict with comma decimal separator"
+    - "Used in Germany, Netherlands, Spain, Italy, and most of Europe"

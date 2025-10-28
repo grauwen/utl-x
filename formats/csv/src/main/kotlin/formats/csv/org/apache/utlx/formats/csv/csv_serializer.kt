@@ -2,37 +2,60 @@ package org.apache.utlx.formats.csv
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.core.interpreter.RuntimeValue
+import org.apache.utlx.stdlib.regional.RegionalNumberFunctions
 import java.io.Writer
 import java.io.StringWriter
 
 /**
+ * Regional number format for CSV output
+ */
+enum class RegionalFormat {
+    NONE,      // No regional formatting (standard period decimal)
+    USA,       // USA/UK/Asia: comma thousands, period decimal (1,234.56)
+    EUROPEAN,  // European: period thousands, comma decimal (1.234,56)
+    FRENCH,    // French: space thousands, comma decimal (1 234,56)
+    SWISS      // Swiss: apostrophe thousands, period decimal (1'234.56)
+}
+
+/**
  * CSV Serializer - Converts UDM or RuntimeValue to CSV
- * 
+ *
  * Expected input structure (with headers):
  * UDM.Array([
  *   UDM.Object({"Name": "Alice", "Age": 30}),
  *   UDM.Object({"Name": "Bob", "Age": 25})
  * ])
- * 
+ *
  * Output:
  * Name,Age
  * Alice,30
  * Bob,25
- * 
+ *
  * Without headers:
  * UDM.Array([
  *   UDM.Array([Scalar("Alice"), Scalar(30)]),
  *   UDM.Array([Scalar("Bob"), Scalar(25)])
  * ])
- * 
+ *
  * Output:
  * Alice,30
  * Bob,25
+ *
+ * Regional Number Formatting:
+ * When regionalFormat is specified, all numeric values are automatically
+ * formatted according to regional conventions:
+ * - USA: renderUSNumber() - 1,234.56
+ * - EUROPEAN: renderEUNumber() - 1.234,56
+ * - FRENCH: renderFrenchNumber() - 1 234,56
+ * - SWISS: renderSwissNumber() - 1'234.56
  */
 class CSVSerializer(
     private val dialect: CSVDialect = CSVDialect.DEFAULT,
     private val includeHeaders: Boolean = true,
-    private val includeBOM: Boolean = false
+    private val includeBOM: Boolean = false,
+    private val regionalFormat: RegionalFormat = RegionalFormat.NONE,
+    private val decimals: Int = 2,
+    private val useThousands: Boolean = true
 ) {
     /**
      * Serialize UDM to CSV string
@@ -279,13 +302,7 @@ class CSVSerializer(
                 when (val v = udm.value) {
                     null -> ""
                     is Boolean -> v.toString()
-                    is Number -> {
-                        if (v is Double && v % 1.0 == 0.0) {
-                            v.toLong().toString()
-                        } else {
-                            v.toString()
-                        }
-                    }
+                    is Number -> formatNumber(v.toDouble())
                     else -> v.toString()
                 }
             }
@@ -293,18 +310,56 @@ class CSVSerializer(
             else -> udm.toString()
         }
     }
+
+    /**
+     * Format a number according to the configured regional format
+     */
+    private fun formatNumber(value: Double): String {
+        if (regionalFormat == RegionalFormat.NONE) {
+            // No regional formatting - standard output
+            return if (value % 1.0 == 0.0) {
+                value.toLong().toString()
+            } else {
+                value.toString()
+            }
+        }
+
+        // Apply regional formatting
+        val result = when (regionalFormat) {
+            RegionalFormat.USA -> {
+                RegionalNumberFunctions.renderUSNumber(
+                    listOf(UDM.Scalar(value), UDM.Scalar(decimals.toDouble()), UDM.Scalar(useThousands))
+                )
+            }
+            RegionalFormat.EUROPEAN -> {
+                RegionalNumberFunctions.renderEUNumber(
+                    listOf(UDM.Scalar(value), UDM.Scalar(decimals.toDouble()), UDM.Scalar(useThousands))
+                )
+            }
+            RegionalFormat.FRENCH -> {
+                RegionalNumberFunctions.renderFrenchNumber(
+                    listOf(UDM.Scalar(value), UDM.Scalar(decimals.toDouble()), UDM.Scalar(useThousands))
+                )
+            }
+            RegionalFormat.SWISS -> {
+                RegionalNumberFunctions.renderSwissNumber(
+                    listOf(UDM.Scalar(value), UDM.Scalar(decimals.toDouble()), UDM.Scalar(useThousands))
+                )
+            }
+            RegionalFormat.NONE -> UDM.Scalar(value.toString())
+        }
+
+        return when (result) {
+            is UDM.Scalar -> result.value?.toString() ?: value.toString()
+            else -> value.toString()
+        }
+    }
     
     private fun extractRuntimeValue(value: RuntimeValue?): String {
         return when (value) {
             null -> ""
             is RuntimeValue.StringValue -> value.value
-            is RuntimeValue.NumberValue -> {
-                if (value.value % 1.0 == 0.0) {
-                    value.value.toLong().toString()
-                } else {
-                    value.value.toString()
-                }
-            }
+            is RuntimeValue.NumberValue -> formatNumber(value.value)
             is RuntimeValue.BooleanValue -> value.value.toString()
             is RuntimeValue.NullValue -> ""
             is RuntimeValue.UDMValue -> extractValue(value.udm)
@@ -320,42 +375,127 @@ object CSVFormat {
     /**
      * Serialize to CSV with headers
      */
-    fun stringify(udm: UDM, dialect: CSVDialect = CSVDialect.DEFAULT): String {
-        return CSVSerializer(dialect, includeHeaders = true).serialize(udm)
+    fun stringify(
+        udm: UDM,
+        dialect: CSVDialect = CSVDialect.DEFAULT,
+        regionalFormat: RegionalFormat = RegionalFormat.NONE,
+        decimals: Int = 2,
+        useThousands: Boolean = true
+    ): String {
+        return CSVSerializer(
+            dialect = dialect,
+            includeHeaders = true,
+            regionalFormat = regionalFormat,
+            decimals = decimals,
+            useThousands = useThousands
+        ).serialize(udm)
     }
-    
-    fun stringify(value: RuntimeValue, dialect: CSVDialect = CSVDialect.DEFAULT): String {
-        return CSVSerializer(dialect, includeHeaders = true).serialize(value)
+
+    fun stringify(
+        value: RuntimeValue,
+        dialect: CSVDialect = CSVDialect.DEFAULT,
+        regionalFormat: RegionalFormat = RegionalFormat.NONE,
+        decimals: Int = 2,
+        useThousands: Boolean = true
+    ): String {
+        return CSVSerializer(
+            dialect = dialect,
+            includeHeaders = true,
+            regionalFormat = regionalFormat,
+            decimals = decimals,
+            useThousands = useThousands
+        ).serialize(value)
     }
-    
+
     /**
      * Serialize to CSV without headers
      */
-    fun stringifyWithoutHeaders(udm: UDM, dialect: CSVDialect = CSVDialect.DEFAULT): String {
-        return CSVSerializer(dialect, includeHeaders = false).serialize(udm)
+    fun stringifyWithoutHeaders(
+        udm: UDM,
+        dialect: CSVDialect = CSVDialect.DEFAULT,
+        regionalFormat: RegionalFormat = RegionalFormat.NONE,
+        decimals: Int = 2,
+        useThousands: Boolean = true
+    ): String {
+        return CSVSerializer(
+            dialect = dialect,
+            includeHeaders = false,
+            regionalFormat = regionalFormat,
+            decimals = decimals,
+            useThousands = useThousands
+        ).serialize(udm)
     }
-    
-    fun stringifyWithoutHeaders(value: RuntimeValue, dialect: CSVDialect = CSVDialect.DEFAULT): String {
-        return CSVSerializer(dialect, includeHeaders = false).serialize(value)
+
+    fun stringifyWithoutHeaders(
+        value: RuntimeValue,
+        dialect: CSVDialect = CSVDialect.DEFAULT,
+        regionalFormat: RegionalFormat = RegionalFormat.NONE,
+        decimals: Int = 2,
+        useThousands: Boolean = true
+    ): String {
+        return CSVSerializer(
+            dialect = dialect,
+            includeHeaders = false,
+            regionalFormat = regionalFormat,
+            decimals = decimals,
+            useThousands = useThousands
+        ).serialize(value)
     }
-    
+
     /**
      * Serialize to TSV (tab-separated values)
      */
-    fun stringifyTSV(udm: UDM): String {
-        return CSVSerializer(CSVDialect.TSV, includeHeaders = true).serialize(udm)
+    fun stringifyTSV(
+        udm: UDM,
+        regionalFormat: RegionalFormat = RegionalFormat.NONE,
+        decimals: Int = 2,
+        useThousands: Boolean = true
+    ): String {
+        return CSVSerializer(
+            dialect = CSVDialect.TSV,
+            includeHeaders = true,
+            regionalFormat = regionalFormat,
+            decimals = decimals,
+            useThousands = useThousands
+        ).serialize(udm)
     }
 
     /**
      * Serialize to CSV with BOM (for Excel UTF-8 compatibility)
      * BOM (Byte Order Mark) helps Excel recognize UTF-8 encoded CSV files
      */
-    fun stringifyWithBOM(udm: UDM, dialect: CSVDialect = CSVDialect.DEFAULT): String {
-        return CSVSerializer(dialect, includeHeaders = true, includeBOM = true).serialize(udm)
+    fun stringifyWithBOM(
+        udm: UDM,
+        dialect: CSVDialect = CSVDialect.DEFAULT,
+        regionalFormat: RegionalFormat = RegionalFormat.NONE,
+        decimals: Int = 2,
+        useThousands: Boolean = true
+    ): String {
+        return CSVSerializer(
+            dialect = dialect,
+            includeHeaders = true,
+            includeBOM = true,
+            regionalFormat = regionalFormat,
+            decimals = decimals,
+            useThousands = useThousands
+        ).serialize(udm)
     }
 
-    fun stringifyWithBOM(value: RuntimeValue, dialect: CSVDialect = CSVDialect.DEFAULT): String {
-        return CSVSerializer(dialect, includeHeaders = true, includeBOM = true).serialize(value)
+    fun stringifyWithBOM(
+        value: RuntimeValue,
+        dialect: CSVDialect = CSVDialect.DEFAULT,
+        regionalFormat: RegionalFormat = RegionalFormat.NONE,
+        decimals: Int = 2,
+        useThousands: Boolean = true
+    ): String {
+        return CSVSerializer(
+            dialect = dialect,
+            includeHeaders = true,
+            includeBOM = true,
+            regionalFormat = regionalFormat,
+            decimals = decimals,
+            useThousands = useThousands
+        ).serialize(value)
     }
 
     /**

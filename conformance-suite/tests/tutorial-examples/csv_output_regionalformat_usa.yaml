@@ -1,0 +1,46 @@
+name: "csv_output_regionalformat_usa"
+category: "tutorial-examples"
+description: "CSV output with USA regional number formatting using regionalFormat option"
+tags: ["csv", "json", "regional", "numbers", "usa", "tutorial", "output", "regionalFormat"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output csv {
+    delimiter: ",",
+    headers: true,
+    regionalFormat: "usa",
+    decimals: 2,
+    useThousands: true
+  }
+  ---
+  [
+    { product: "Laptop", price: 1234.56, quantity: 5 },
+    { product: "Monitor", price: 567.89, quantity: 10 }
+  ]
+
+expected:
+  format: csv
+  data: |
+    product,price,quantity
+    Laptop,"1,234.56",5.00
+    Monitor,567.89,10.00
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Tutorial"
+  source: "interactive-session-2025-10-28"
+  complexity: "intermediate"
+  notes:
+    - "Demonstrates CSV output with declarative regionalFormat option"
+    - "USA format uses comma for thousands separator and period for decimal"
+    - "Numbers are automatically formatted according to regional conventions"
+    - "Thousands separators require quoting when delimiter is comma"

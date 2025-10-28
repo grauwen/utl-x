@@ -13,6 +13,7 @@ import org.apache.utlx.formats.json.JSONSerializer
 import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.csv.CSVSerializer
 import org.apache.utlx.formats.csv.CSVDialect
+import org.apache.utlx.formats.csv.RegionalFormat
 import org.apache.utlx.formats.yaml.YAMLParser
 import org.apache.utlx.formats.xsd.XSDParser
 import org.apache.utlx.formats.xsd.XSDSerializer
@@ -324,8 +325,32 @@ object TransformCommand {
                     val headers = (formatSpec.options["headers"] as? Boolean) ?: true
                     val bom = (formatSpec.options["bom"] as? Boolean) ?: false
 
+                    // Extract regional formatting options
+                    val regionalFormatStr = formatSpec.options["regionalFormat"] as? String
+                    val regionalFormat = when (regionalFormatStr?.lowercase()) {
+                        "usa", "us" -> RegionalFormat.USA
+                        "european", "eu", "europe" -> RegionalFormat.EUROPEAN
+                        "french", "fr" -> RegionalFormat.FRENCH
+                        "swiss", "ch" -> RegionalFormat.SWISS
+                        null, "none", "" -> RegionalFormat.NONE
+                        else -> {
+                            System.err.println("Warning: Unknown regionalFormat '$regionalFormatStr', using NONE")
+                            RegionalFormat.NONE
+                        }
+                    }
+
+                    val decimals = (formatSpec.options["decimals"] as? Number)?.toInt() ?: 2
+                    val useThousands = (formatSpec.options["useThousands"] as? Boolean) ?: true
+
                     val dialect = CSVDialect(delimiter = delimiter)
-                    CSVSerializer(dialect, includeHeaders = headers, includeBOM = bom).serialize(udm)
+                    CSVSerializer(
+                        dialect = dialect,
+                        includeHeaders = headers,
+                        includeBOM = bom,
+                        regionalFormat = regionalFormat,
+                        decimals = decimals,
+                        useThousands = useThousands
+                    ).serialize(udm)
                 }
                 "yaml", "yml" -> YAMLSerializer().serialize(udm)
                 "xsd" -> {
