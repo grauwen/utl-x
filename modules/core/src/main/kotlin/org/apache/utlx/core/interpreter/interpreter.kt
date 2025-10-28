@@ -706,14 +706,13 @@ class Interpreter {
     
     private fun evaluateUnaryOp(expr: Expression.UnaryOp, env: Environment): RuntimeValue {
         val operand = evaluate(expr.operand, env)
-        
+
         return when (expr.operator) {
             UnaryOperator.MINUS -> {
-                val value = (operand as? RuntimeValue.NumberValue)?.value
-                    ?: throw RuntimeError("Unary minus requires number", expr.location)
+                val value = extractNumber(operand, "Unary minus requires number", expr.location)
                 RuntimeValue.NumberValue(-value)
             }
-            
+
             UnaryOperator.NOT -> {
                 RuntimeValue.BooleanValue(!operand.isTruthy())
             }

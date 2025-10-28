@@ -1,0 +1,48 @@
+name: "unary_minus_in_lambdas"
+category: "core/operators"
+description: "Test unary minus operator works in lambda contexts including property access"
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    directMinus: -42,
+    minusInIf: if (true) -5 else 5,
+    minusInMap: map([1, 2, 3], n => -n),
+    minusInFilter: filter([-5, 10, -3, 8], n => -n > 0),
+    minusInReduce: reduce([1, 2, 3], (acc, n) => acc + (-n), 0),
+    minusInSortBy: sortBy([{v: 30}, {v: 10}, {v: 20}], x => -x.v),
+    minusProperty: map([{a: 5}, {a: 10}], x => -x.a),
+    minusNestedProperty: map([{obj: {val: 10}}], x => -x.obj.val),
+    minusInArithmetic: map([5, 10], n => -n * 2),
+    minusWithParens: -(-5),
+    minusInComparison: filter([{v: 10}, {v: -20}], x => -x.v < 0)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "directMinus": -42,
+      "minusInIf": -5,
+      "minusInMap": [-1, -2, -3],
+      "minusInFilter": [-5, -3],
+      "minusInReduce": -6,
+      "minusInSortBy": [
+        {"v": 30},
+        {"v": 20},
+        {"v": 10}
+      ],
+      "minusProperty": [-5, -10],
+      "minusNestedProperty": [-10],
+      "minusInArithmetic": [-10, -20],
+      "minusWithParens": 5,
+      "minusInComparison": [{"v": 10}]
+    }
