@@ -1,0 +1,63 @@
+name: "jsch_round_trip_inverse"
+category: "formats/jsch/basic"
+description: "Inverse round-trip test: JSON Schema -> USDL -> JSON Schema preserves structure"
+tags: ['jsch', 'schema', 'round-trip', 'inverse']
+
+input:
+  format: json
+  data: |
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "Person",
+      "type": "object",
+      "description": "A person record",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Person's full name"
+        },
+        "age": {
+          "type": "integer",
+          "description": "Person's age in years"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address"
+        }
+      },
+      "required": ["name", "email"]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let inputSchema = renderJson($input)
+  let usdlSchema = parseJSONSchema(inputSchema)
+  let backToJsonSchema = renderJSONSchema(usdlSchema)
+  let parsed = parseJson(backToJsonSchema)
+  {
+    hasSchema: hasKey(parsed, "$schema"),
+    hasDefs: hasKey(parsed, "$defs"),
+    typeName: keys(parsed["$defs"])[0],
+    hasProperties: hasKey(parsed["$defs"]["Person"], "properties"),
+    propertyCount: count(keys(parsed["$defs"]["Person"]["properties"])),
+    hasRequired: hasKey(parsed["$defs"]["Person"], "required"),
+    requiredCount: count(parsed["$defs"]["Person"]["required"]),
+    hasDescriptions: hasKey(parsed["$defs"]["Person"]["properties"]["name"], "description")
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasSchema": true,
+      "hasDefs": true,
+      "typeName": "Person",
+      "hasProperties": true,
+      "propertyCount": 3,
+      "hasRequired": true,
+      "requiredCount": 2,
+      "hasDescriptions": true
+    }

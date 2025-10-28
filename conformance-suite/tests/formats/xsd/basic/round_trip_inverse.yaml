@@ -1,0 +1,44 @@
+name: "xsd_round_trip_inverse"
+category: "formats/xsd/basic"
+description: "Inverse round-trip test: XSD -> USDL -> XSD preserves structure"
+tags: ['xsd', 'schema', 'round-trip', 'inverse']
+
+input:
+  format: json
+  data: |
+    {
+      "xsdSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"\n           targetNamespace=\"http://example.com/roundtrip\"\n           elementFormDefault=\"qualified\">\n  <xs:complexType name=\"Person\">\n    <xs:annotation>\n      <xs:documentation>A person record</xs:documentation>\n    </xs:annotation>\n    <xs:sequence>\n      <xs:element name=\"name\" type=\"xs:string\">\n        <xs:annotation>\n          <xs:documentation>Person's full name</xs:documentation>\n        </xs:annotation>\n      </xs:element>\n      <xs:element name=\"age\" type=\"xs:int\" minOccurs=\"0\">\n        <xs:annotation>\n          <xs:documentation>Person's age in years</xs:documentation>\n        </xs:annotation>\n      </xs:element>\n    </xs:sequence>\n  </xs:complexType>\n</xs:schema>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let inputSchema = $input.xsdSchema
+  let usdlSchema = parseXSDSchema(inputSchema)
+  let backToXsd = renderXSDSchema(usdlSchema)
+  {
+    hasXmlDeclaration: contains(backToXsd, "<?xml"),
+    hasTargetNamespace: contains(backToXsd, "targetNamespace=\"http://example.com/roundtrip\""),
+    hasComplexType: contains(backToXsd, "<xs:complexType name=\"Person\""),
+    hasSequence: contains(backToXsd, "<xs:sequence>"),
+    hasNameElement: contains(backToXsd, "<xs:element name=\"name\""),
+    hasAgeElement: contains(backToXsd, "<xs:element name=\"age\""),
+    hasDocumentation: contains(backToXsd, "<xs:documentation>A person record</xs:documentation>"),
+    hasMinOccurs: contains(backToXsd, "minOccurs=\"0\"")
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasXmlDeclaration": true,
+      "hasTargetNamespace": true,
+      "hasComplexType": true,
+      "hasSequence": true,
+      "hasNameElement": true,
+      "hasAgeElement": true,
+      "hasDocumentation": true,
+      "hasMinOccurs": true
+    }

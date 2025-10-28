@@ -413,7 +413,7 @@ class JSONSchemaParser(private val source: Reader) {
         }
 
         if (description != null) {
-            fieldProps["%documentation"] = UDM.Scalar(description)
+            fieldProps["%description"] = UDM.Scalar(description)
         }
 
         return UDM.Object(properties = fieldProps)

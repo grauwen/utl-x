@@ -1,0 +1,66 @@
+name: "avro_round_trip_inverse"
+category: "formats/avro/basic"
+description: "Inverse round-trip test: Avro Schema -> USDL -> Avro Schema preserves structure"
+tags: ['avro', 'schema', 'round-trip', 'inverse']
+
+input:
+  format: json
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "namespace": "com.example.roundtrip",
+      "doc": "A person record",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "doc": "Person's full name"
+        },
+        {
+          "name": "age",
+          "type": "int",
+          "doc": "Person's age in years"
+        }
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let inputSchema = renderJson($input)
+  let usdlSchema = parseAvroSchema(inputSchema)
+  let backToAvro = renderAvroSchema(usdlSchema)
+  let parsed = parseJson(backToAvro)
+  {
+    hasType: hasKey(parsed, "type"),
+    recordType: parsed["type"],
+    hasName: hasKey(parsed, "name"),
+    recordName: parsed["name"],
+    hasNamespace: hasKey(parsed, "namespace"),
+    namespace: parsed["namespace"],
+    hasDoc: hasKey(parsed, "doc"),
+    hasFields: hasKey(parsed, "fields"),
+    fieldCount: count(parsed["fields"]),
+    firstFieldName: parsed["fields"][0]["name"],
+    secondFieldType: parsed["fields"][1]["type"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasType": true,
+      "recordType": "record",
+      "hasName": true,
+      "recordName": "Person",
+      "hasNamespace": true,
+      "namespace": "com.example.roundtrip",
+      "hasDoc": true,
+      "hasFields": true,
+      "fieldCount": 2,
+      "firstFieldName": "name",
+      "secondFieldType": "int"
+    }
