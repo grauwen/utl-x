@@ -354,7 +354,7 @@ webhooks:                          # Webhooks (3.1 only)
 | XML | ✅ | ✅ | XSD ✅ | ❌ | 0 MB | Stable |
 | JSON | ✅ | ✅ | JSON Schema ✅ | ❌ | 0 MB | Stable |
 | YAML | ✅ | ✅ | ❌ | ❌ | 0 MB | Stable |
-| Avro | ❌ | ❌ | Schema ⏳ | ❌ | ~2 MB | Planned |
+| Avro | ✅ | ✅ | Schema ⏳ | ❌ | ~2 MB | Stable |
 | Protobuf | ❌ | ❌ | Schema ⏳ | ❌ | ~2.5 MB | Study Phase |
 | Parquet | ❌ | ❌ | Schema ⏳ | ❌ | ~23 MB | Study Phase |
 | RAML | ❌ | ❌ | Types ⏳ | ⏳ | 0 MB | Study Phase |
