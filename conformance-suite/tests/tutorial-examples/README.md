@@ -60,6 +60,93 @@ input csv {
 }
 ```
 
+### json_to_csv_with_headers.yaml
+
+**Pattern**: JSON to CSV conversion with headers enabled
+
+**What it demonstrates**:
+- CSV output with headers (default behavior)
+- Headers automatically extracted from JSON object keys
+- Comma delimiter (default)
+- Numeric values preserved without unnecessary quoting
+
+**Real-world use case**: Exporting JSON data for spreadsheet applications or legacy systems that require CSV
+
+**Key concepts**:
+```utlx
+output csv {
+  headers: true,
+  delimiter: ","
+}
+```
+
+### json_to_csv_no_headers.yaml
+
+**Pattern**: JSON to CSV conversion with headers disabled
+
+**What it demonstrates**:
+- CSV output without header row
+- Only data rows in output
+- Useful for appending to existing CSV files
+- Field order consistency maintained
+
+**Real-world use case**: Appending data to an existing CSV file where headers are already present
+
+### json_to_csv_semicolon_delimiter.yaml
+
+**Pattern**: JSON to CSV with semicolon delimiter (European format)
+
+**What it demonstrates**:
+- Custom delimiter specification
+- Semicolon delimiter for European CSV format
+- Headers included with custom delimiter
+- Same transformation logic, different output format
+
+**Real-world use case**: Creating CSV files for European systems where comma is used as decimal separator
+
+### json_to_csv_pipe_delimiter.yaml
+
+**Pattern**: JSON to CSV with pipe delimiter
+
+**What it demonstrates**:
+- Pipe delimiter for alternative CSV format
+- Useful when data may contain commas and semicolons
+- Common in system logs and technical exports
+- Less ambiguous than comma or semicolon
+
+**Real-world use case**: System integration where pipe-delimited format is standard
+
+### json_to_csv_semicolon_no_headers.yaml
+
+**Pattern**: Combined options - semicolon delimiter with no headers
+
+**What it demonstrates**:
+- Multiple output options combined
+- Delimiter and headers options are independent
+- European format data-only export
+- Option composition
+
+**Real-world use case**: Appending to European-format CSV files
+
+### json_to_csv_with_special_chars.yaml
+
+**Pattern**: CSV escaping with special characters
+
+**What it demonstrates**:
+- Proper RFC 4180 CSV field escaping
+- Fields with commas are automatically quoted
+- Internal quotes are doubled
+- Handles apostrophes and special characters correctly
+- Standards compliance
+
+**Real-world use case**: Exporting data with complex text content (names with commas, descriptions with quotes)
+
+**Key escaping rules**:
+- Fields containing delimiter → quoted
+- Fields containing quotes → quoted, internal quotes doubled
+- Fields with newlines → quoted
+- RFC 4180 standard compliance
+
 ## Adding New Tutorial Examples
 
 When adding examples from tutorials or interactive sessions:

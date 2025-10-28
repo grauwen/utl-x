@@ -1,0 +1,59 @@
+name: "json_to_csv_no_headers"
+category: "tutorial-examples"
+description: "JSON to CSV conversion with headers disabled"
+tags: ["json", "csv", "output-options", "no-headers", "tutorial"]
+
+input:
+  format: json
+  data: |
+    [
+      {
+        "id": 1,
+        "name": "Alice Johnson",
+        "department": "Engineering",
+        "salary": 75000
+      },
+      {
+        "id": 2,
+        "name": "Bob Smith",
+        "department": "Marketing",
+        "salary": 68000
+      },
+      {
+        "id": 3,
+        "name": "Carol White",
+        "department": "Sales",
+        "salary": 52000
+      }
+    ]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output csv {
+    headers: false,
+    delimiter: ","
+  }
+  ---
+  $input
+
+expected:
+  format: csv
+  data: |
+    1,Alice Johnson,Engineering,75000
+    2,Bob Smith,Marketing,68000
+    3,Carol White,Sales,52000
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Tutorial"
+  source: "csv-output-options-test-2025-10-28"
+  complexity: "basic"
+  notes:
+    - "Demonstrates JSON to CSV with headers disabled"
+    - "Only data rows are output"
+    - "Useful when appending to existing CSV or when headers are managed separately"
+    - "Field order is consistent across rows"

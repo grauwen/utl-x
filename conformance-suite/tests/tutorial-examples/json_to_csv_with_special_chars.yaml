@@ -1,0 +1,61 @@
+name: "json_to_csv_with_special_chars"
+category: "tutorial-examples"
+description: "JSON to CSV with fields containing commas, quotes, and newlines (proper escaping)"
+tags: ["json", "csv", "output-options", "escaping", "special-chars", "tutorial"]
+
+input:
+  format: json
+  data: |
+    [
+      {
+        "id": 1,
+        "name": "Johnson, Alice M.",
+        "title": "Senior Engineer",
+        "notes": "Specializes in \"backend\" systems"
+      },
+      {
+        "id": 2,
+        "name": "Smith, Bob R.",
+        "title": "Marketing Director",
+        "notes": "Handles international campaigns"
+      },
+      {
+        "id": 3,
+        "name": "O'Brien, Carol",
+        "title": "Sales Manager",
+        "notes": "Top performer in Q3, Q4"
+      }
+    ]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output csv {
+    headers: true,
+    delimiter: ","
+  }
+  ---
+  $input
+
+expected:
+  format: csv
+  data: |
+    id,name,title,notes
+    1,"Johnson, Alice M.",Senior Engineer,"Specializes in ""backend"" systems"
+    2,"Smith, Bob R.",Marketing Director,Handles international campaigns
+    3,"O'Brien, Carol",Sales Manager,"Top performer in Q3, Q4"
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Tutorial"
+  source: "csv-output-options-test-2025-10-28"
+  complexity: "intermediate"
+  notes:
+    - "Demonstrates proper CSV field escaping"
+    - "Fields with commas are quoted"
+    - "Internal quotes are doubled (RFC 4180)"
+    - "Apostrophes in names handled correctly"
+    - "Shows CSV standard compliance"

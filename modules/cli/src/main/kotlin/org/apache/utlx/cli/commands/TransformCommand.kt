@@ -318,7 +318,15 @@ object TransformCommand {
                     XMLSerializer(prettyPrint = pretty, outputEncoding = encoding).serialize(udm)
                 }
                 "json" -> JSONSerializer(pretty).serialize(udm)
-                "csv" -> CSVSerializer().serialize(udm)
+                "csv" -> {
+                    // Extract CSV output options
+                    val delimiter = (formatSpec.options["delimiter"] as? String)?.firstOrNull() ?: ','
+                    val headers = (formatSpec.options["headers"] as? Boolean) ?: true
+                    val bom = (formatSpec.options["bom"] as? Boolean) ?: false
+
+                    val dialect = CSVDialect(delimiter = delimiter)
+                    CSVSerializer(dialect, includeHeaders = headers, includeBOM = bom).serialize(udm)
+                }
                 "yaml", "yml" -> YAMLSerializer().serialize(udm)
                 "xsd" -> {
                     // XSD output with pattern enforcement and documentation injection
