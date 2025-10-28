@@ -141,10 +141,10 @@ utlx transform order-to-invoice.utlx order.xml
 Just change the input format:
 ```utlx
 %utlx 1.0
-input json    # Changed from xml to json
+input json    // Changed from xml to json
 output json
 ---
-# Same transformation code works!
+// Same transformation code works!
 ```
 
 **That's the power of format-agnostic transformation.**
@@ -294,9 +294,9 @@ utlx transform hello.utlx $input.json -o output.json
 
 ### Format Agnostic
 ```utlx
-# Same transformation works with XML, JSON, CSV, YAML
+// Same transformation works with XML, JSON, CSV, YAML
 %utlx 1.0
-input auto      # Auto-detect format
+input auto      // Auto-detect format
 output json
 ---
 {
