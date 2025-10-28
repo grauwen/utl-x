@@ -86,16 +86,16 @@ input xml
 output json
 ---
 {
-    orderId: input.Order.@id,
-    customer: input.Order.Customer,
-    items: input.Order.Items.Item |> map(item => {
+    orderId: $input.Order.@id,
+    customer: $input.Order.Customer,
+    items: $input.Order.Items.Item |> map(item => {
         sku: item.@sku,
         price: parseNumber(item.@price),
         quantity: parseNumber(item.@quantity),
         subtotal: parseNumber(item.@price) * parseNumber(item.@quantity)
     }),
-    total: sum(input.Order.Items.Item.(
-        parseNumber(@price) * parseNumber(@quantity)
+    total: sum($input.Order.Items.Item |> map(item =>
+        parseNumber(item.@price) * parseNumber(item.@quantity)
     ))
 }
 ```
@@ -103,7 +103,7 @@ output json
 ### 3. Transform
 
 ```bash
-utlx transform input.xml transform.utlx -o output.json
+utlx transform transform.utlx input.xml -o output.json
 ```
 
 ### 4. Result
@@ -116,18 +116,18 @@ utlx transform input.xml transform.utlx -o output.json
   "items": [
     {
       "sku": "WIDGET-01",
-      "price": 50.0,
+      "price": 50,
       "quantity": 2,
-      "subtotal": 100.0
+      "subtotal": 100
     },
     {
       "sku": "GADGET-02",
-      "price": 75.0,
+      "price": 75,
       "quantity": 1,
-      "subtotal": 75.0
+      "subtotal": 75
     }
   ],
-  "total": 175.0
+  "total": 175
 }
 ```
 
@@ -135,32 +135,37 @@ utlx transform input.xml transform.utlx -o output.json
 
 ### XML → JSON
 ```bash
-utlx transform data.xml transform.utlx -o result.json
+utlx transform transform.utlx data.xml -o result.json
 ```
 
 ### JSON → CSV
 ```bash
-utlx transform data.json transform.utlx -f csv -o result.csv
+utlx transform transform.utlx data.json --output-format csv -o result.csv
 ```
 
 ### Pipe from stdin
 ```bash
-cat input.xml | utlx transform - transform.utlx
+cat input.xml | utlx transform transform.utlx
 ```
 
 ### Watch mode (auto-reload)
 ```bash
-utlx transform input.xml transform.utlx -w -o output.json
+# Note: Watch mode not yet implemented
+utlx transform transform.utlx input.xml -o output.json
 ```
 
 ### Validate syntax
 ```bash
-utlx validate transform.utlx
+# Note: Validate command not yet implemented
+# Use transform with --verbose for syntax checking
+utlx transform transform.utlx --verbose
 ```
 
 ### Benchmark performance
 ```bash
-utlx transform input.xml transform.utlx -b
+# Note: Benchmark mode not yet implemented
+# Use time command for basic benchmarking
+time utlx transform transform.utlx input.xml -o output.json
 ```
 
 ## Performance
