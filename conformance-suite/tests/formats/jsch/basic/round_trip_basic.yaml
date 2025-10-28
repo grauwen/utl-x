@@ -1,0 +1,50 @@
+name: "jsch_round_trip_basic"
+category: "formats/jsch/basic"
+description: "Round-trip test: USDL -> JSON Schema -> USDL preserves structure"
+tags: ['jsch', 'schema', 'round-trip', 'usdl']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Person": {
+          "%kind": "structure",
+          "%documentation": "A person record",
+          "%fields": [
+            {
+              "%name": "name",
+              "%type": "string",
+              "%required": true
+            },
+            {
+              "%name": "age",
+              "%type": "integer",
+              "%required": false
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let jsonSchema = renderJSONSchema($input)
+  let backToUsdl = parseJSONSchema(jsonSchema)
+  {
+    hasTypes: hasKey(backToUsdl, "%types"),
+    typeName: keys(backToUsdl["%types"])[0],
+    fieldCount: count(backToUsdl["%types"]["Person"]["%fields"])
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasTypes": true,
+      "typeName": "Person",
+      "fieldCount": 2
+    }

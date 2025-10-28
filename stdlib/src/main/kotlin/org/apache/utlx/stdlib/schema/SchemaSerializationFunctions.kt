@@ -18,10 +18,10 @@ import org.apache.utlx.formats.avro.AvroSchemaSerializer
  * **Tier 2: Schema Serialization**
  * - parseAvroSchema() - Avro schema JSON → USDL
  * - renderAvroSchema() - USDL → Avro schema JSON
- * - parseXSDSchema() - XSD → USDL (future)
- * - renderXSDSchema() - USDL → XSD (future)
- * - parseJSONSchema() - JSON Schema → USDL (future)
- * - renderJSONSchema() - USDL → JSON Schema (future)
+ * - parseXSDSchema() - XSD → USDL
+ * - renderXSDSchema() - USDL → XSD
+ * - parseJSONSchema() - JSON Schema → USDL
+ * - renderJSONSchema() - USDL → JSON Schema
  *
  * **Comparison with Data Functions:**
  * - Data: parseJson(jsonData) - deserializes JSON DATA
@@ -282,53 +282,123 @@ object SchemaSerializationFunctions {
     }
 
     @UTLXFunction(
-        description = "Parse a JSON Schema string into USDL format (not yet implemented)",
+        description = "Parse a JSON Schema string into USDL format",
         minArgs = 1,
         maxArgs = 1,
         category = "Schema",
         parameters = [
             "jsonSchemaString: JSON Schema string"
         ],
-        returns = "USDL schema object",
-        example = "parseJSONSchema(jschString)",
-        tags = ["schema", "json-schema", "usdl", "future"],
+        returns = "USDL schema object with %types, %namespace, etc.",
+        example = "parseJSONSchema(\"{\\\"type\\\": \\\"object\\\", \\\"properties\\\": {...}}\")",
+        tags = ["schema", "json-schema", "usdl"],
         since = "1.0"
     )
     /**
      * Parse a JSON Schema string into USDL format
      *
-     * **Status:** Not yet implemented - planned for future release
+     * Converts JSON Schema (draft-07, 2019-09, 2020-12) to Universal Schema Definition Language (USDL).
+     *
+     * Example:
+     * ```utlx
+     * let jsonSchema = '{"$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object", ...}'
+     * let usdlSchema = parseJSONSchema(jsonSchema)
+     * # usdlSchema now has %types, %title, %documentation, etc.
+     * ```
      */
     fun parseJSONSchema(args: List<UDM>): UDM {
-        throw FunctionArgumentException(
-            "parseJSONSchema is not yet implemented. " +
-            "Hint: Use 'input jsch' / 'output json' at the I/O boundary for now."
-        )
+        requireArgs(args, 1, "parseJSONSchema")
+        val jsonSchemaString = args[0].asString()
+
+        if (jsonSchemaString.isBlank()) {
+            throw FunctionArgumentException(
+                "parseJSONSchema cannot parse empty or blank JSON Schema string. " +
+                "Hint: Provide a valid JSON Schema like '{\"type\": \"object\", \"properties\": {...}}'."
+            )
+        }
+
+        return try {
+            val parser = org.apache.utlx.formats.jsch.JSONSchemaParser(jsonSchemaString)
+            val jsonSchemaUdm = parser.parse()
+            // Convert JSON Schema structure to USDL format
+            parser.toUSDL(jsonSchemaUdm)
+        } catch (e: Exception) {
+            throw FunctionArgumentException(
+                "parseJSONSchema failed to parse JSON Schema: ${e.message}. " +
+                "Hint: Ensure the string is a valid JSON Schema (draft-07, 2019-09, or 2020-12). " +
+                "Check for required fields like 'type', 'properties', or '\$schema'."
+            )
+        }
     }
 
     @UTLXFunction(
-        description = "Render a USDL schema object as a JSON Schema string (not yet implemented)",
+        description = "Render a USDL schema object as a JSON Schema string",
         minArgs = 1,
-        maxArgs = 1,
+        maxArgs = 2,
         category = "Schema",
         parameters = [
-            "usdlSchema: USDL schema object"
+            "usdlSchema: USDL schema object with %types directive",
+            "prettyPrint: Optional boolean for formatted output (default: true)"
         ],
         returns = "JSON Schema string",
-        example = "renderJSONSchema(usdlSchema)",
-        tags = ["schema", "json-schema", "usdl", "future"],
+        example = "renderJSONSchema(usdlSchema, pretty?)",
+        tags = ["schema", "json-schema", "usdl"],
         since = "1.0"
     )
     /**
      * Render a USDL schema object as a JSON Schema string
      *
-     * **Status:** Not yet implemented - planned for future release
+     * Converts Universal Schema Definition Language (USDL) to JSON Schema (2020-12).
+     *
+     * Example:
+     * ```utlx
+     * let usdlSchema = {
+     *   "%types": {
+     *     "User": {
+     *       "%kind": "structure",
+     *       "%fields": [...]
+     *     }
+     *   }
+     * }
+     * let jsonSchema = renderJSONSchema(usdlSchema)
+     * # jsonSchema is now JSON Schema format string
+     * ```
      */
     fun renderJSONSchema(args: List<UDM>): UDM {
-        throw FunctionArgumentException(
-            "renderJSONSchema is not yet implemented. " +
-            "Hint: Use 'input json' / 'output jsch' at the I/O boundary for now."
-        )
+        requireArgs(args, 1..2, "renderJSONSchema")
+        val usdlSchema = args[0]
+        val prettyPrint = if (args.size > 1) args[1].asBoolean() else true
+
+        // Validate that it's a USDL schema
+        if (usdlSchema !is UDM.Object) {
+            throw FunctionArgumentException(
+                "renderJSONSchema expects a USDL schema object, got ${getTypeDescription(usdlSchema)}. " +
+                "Hint: USDL schemas must be objects with '%types' directive."
+            )
+        }
+
+        if (!usdlSchema.properties.containsKey("%types")) {
+            throw FunctionArgumentException(
+                "renderJSONSchema expects a USDL schema with '%types' directive. " +
+                "Hint: USDL schemas must have a '%types' object containing type definitions."
+            )
+        }
+
+        return try {
+            val serializer = org.apache.utlx.formats.jsch.JSONSchemaSerializer(
+                draft = "2020-12",
+                addDescriptions = true,
+                prettyPrint = prettyPrint,
+                strict = true
+            )
+            val jsonSchemaString = serializer.serialize(usdlSchema)
+            UDM.Scalar(jsonSchemaString)
+        } catch (e: Exception) {
+            throw FunctionArgumentException(
+                "renderJSONSchema failed to serialize USDL to JSON Schema: ${e.message}. " +
+                "Hint: Ensure the USDL schema is valid with proper %kind, %fields, %type directives."
+            )
+        }
     }
 
     // ============================================
