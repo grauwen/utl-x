@@ -12,6 +12,7 @@ import org.apache.utlx.formats.json.JSONParser
 import org.apache.utlx.formats.json.JSONSerializer
 import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.csv.CSVSerializer
+import org.apache.utlx.formats.csv.CSVDialect
 import org.apache.utlx.formats.yaml.YAMLParser
 import org.apache.utlx.formats.xsd.XSDParser
 import org.apache.utlx.formats.xsd.XSDSerializer
@@ -278,7 +279,12 @@ object TransformCommand {
                     JSONParser(data).parse()
                 }
                 "csv" -> {
-                    CSVParser(data).parse()
+                    // Extract CSV options
+                    val delimiter = (options["delimiter"] as? String)?.firstOrNull() ?: ','
+                    val headers = (options["headers"] as? Boolean) ?: true
+
+                    val dialect = CSVDialect(delimiter = delimiter)
+                    CSVParser(data, dialect).parse(hasHeaders = headers)
                 }
                 "yaml", "yml" -> {
                     YAMLParser().parse(data)

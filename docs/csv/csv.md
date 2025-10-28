@@ -24,10 +24,12 @@ input csv {
 output json
 ---
 {
-  orders: $input.rows 
+  orders: $input
     |> groupBy(row => row.order_id)
-    |> entries()
-    |> map(([orderId, rows]) => {
+    |> map(group => {
+         let orderId = group.key,
+         let rows = group.value,
+
          orderId: orderId,
          customer: {
            name: first(rows).customer_name,
@@ -38,7 +40,7 @@ output json
            quantity: parseNumber(row.quantity),
            price: parseNumber(row.price)
          }),
-         total: sum(rows.(parseNumber(quantity) * parseNumber(price)))
+         total: sum(rows |> map(row => parseNumber(row.quantity) * parseNumber(row.price)))
        })
 }
 ```
