@@ -19,13 +19,15 @@ import java.io.StringWriter
  * - Pattern validation
  * - Namespace management
  * - XSD 1.0 and 1.1 support
+ * - Pattern preservation (Russian Doll inline types)
  */
 class XSDSerializer(
     private val pattern: XSDPattern? = null,
     private val version: String = "1.0",
     private val addDocumentation: Boolean = true,
     private val elementFormDefault: String = "qualified",
-    private val prettyPrint: Boolean = true
+    private val prettyPrint: Boolean = true,
+    private val preservePattern: Boolean = true
 ) {
 
     /**
@@ -138,6 +140,116 @@ class XSDSerializer(
     }
 
     /**
+     * Partition types into inline vs global based on %xsdInline metadata
+     *
+     * Returns Pair(inlineTypes, globalTypes) where:
+     * - inlineTypes: Map of typeName -> (typeDef, elementName)
+     * - globalTypes: Map of typeName -> typeDef
+     */
+    private fun partitionTypes(types: UDM.Object): Pair<Map<String, Pair<UDM.Object, String>>, Map<String, UDM.Object>> {
+        val inlineTypes = mutableMapOf<String, Pair<UDM.Object, String>>()
+        val globalTypes = mutableMapOf<String, UDM.Object>()
+
+        types.properties.forEach { (typeName, typeDef) ->
+            if (typeDef !is UDM.Object) return@forEach
+
+            // Check for %xsdInline directive
+            val isInline = (typeDef.properties["%xsdInline"] as? UDM.Scalar)?.value as? Boolean ?: false
+
+            if (isInline && preservePattern) {
+                // Extract %xsdElement directive (parent element name)
+                val elementName = (typeDef.properties["%xsdElement"] as? UDM.Scalar)?.value as? String
+                    ?: typeName.removeSuffix("_InlineType")
+
+                inlineTypes[typeName] = Pair(typeDef, elementName)
+            } else {
+                // Global type (Venetian Blind style)
+                globalTypes[typeName] = typeDef
+            }
+        }
+
+        return Pair(inlineTypes, globalTypes)
+    }
+
+    /**
+     * Generate xs:element with inline xs:complexType (Russian Doll style)
+     *
+     * Example output:
+     * <xs:element name="order">
+     *   <xs:complexType>
+     *     <xs:sequence>
+     *       <xs:element name="orderId" type="xs:string"/>
+     *     </xs:sequence>
+     *   </xs:complexType>
+     * </xs:element>
+     */
+    private fun generateInlineElement(
+        elementName: String,
+        typeDef: UDM.Object
+    ): UDM {
+        // Extract %fields directive
+        val fields = typeDef.properties["%fields"] as? UDM.Array ?: return UDM.Object(
+            properties = emptyMap(),
+            attributes = mapOf("name" to elementName, "type" to "xs:string"),
+            name = "xs:element"
+        )
+
+        // Extract %documentation directive
+        val doc = (typeDef.properties["%documentation"] as? UDM.Scalar)?.value as? String
+
+        // Generate xs:element for each field (same as global type generation)
+        val elements = fields.elements.mapNotNull { fieldUdm ->
+            if (fieldUdm !is UDM.Object) return@mapNotNull null
+
+            val name = (fieldUdm.properties["%name"] as? UDM.Scalar)?.value as? String ?: return@mapNotNull null
+            val type = (fieldUdm.properties["%type"] as? UDM.Scalar)?.value as? String ?: return@mapNotNull null
+            val required = (fieldUdm.properties["%required"] as? UDM.Scalar)?.value as? Boolean ?: false
+            val description = (fieldUdm.properties["%description"] as? UDM.Scalar)?.value as? String
+
+            val elemAttrs = mutableMapOf("name" to name, "type" to "xs:$type")
+            if (!required) elemAttrs["minOccurs"] = "0"
+
+            val elemProps = if (description != null) {
+                mapOf("_documentation" to UDM.Scalar(description))
+            } else emptyMap()
+
+            UDM.Object(
+                properties = elemProps,
+                attributes = elemAttrs,
+                name = "xs:element"
+            )
+        }
+
+        // Build inline xs:complexType
+        val complexTypeProps = mutableMapOf<String, UDM>()
+
+        if (doc != null) {
+            complexTypeProps["_documentation"] = UDM.Scalar(doc)
+        }
+
+        complexTypeProps["xs:sequence"] = UDM.Object(
+            properties = if (elements.isEmpty()) emptyMap() else mapOf(
+                "xs:element" to if (elements.size == 1) elements[0] else UDM.Array(elements)
+            ),
+            attributes = emptyMap(),
+            name = "xs:sequence"
+        )
+
+        val inlineComplexType = UDM.Object(
+            properties = complexTypeProps,
+            attributes = emptyMap(),  // No @name attribute for inline types
+            name = "xs:complexType"
+        )
+
+        // Build xs:element with nested xs:complexType
+        return UDM.Object(
+            properties = mapOf("xs:complexType" to inlineComplexType),
+            attributes = mapOf("name" to elementName),
+            name = "xs:element"
+        )
+    }
+
+    /**
      * Transform USDL (Universal Schema Definition Language) to XSD UDM structure
      *
      * Supports USDL 1.0 Tier 1 and Tier 2 directives for XSD generation.
@@ -155,6 +267,11 @@ class XSDSerializer(
      * - %documentation: Type-level documentation
      * - %description: Field-level documentation
      * - %required: Boolean indicating if field is required
+     *
+     * XSD Pattern Preservation (Tier 3):
+     * - %xsdInline: Boolean marking inline/anonymous types
+     * - %xsdElement: Parent element name for inline types
+     * - %xsdPattern: Original XSD pattern ("russian-doll", etc.)
      */
     private fun transformUniversalDSL(schema: UDM.Object): UDM {
         // Extract metadata using USDL % directives
@@ -173,10 +290,22 @@ class XSDSerializer(
         }
         schemaAttrs["elementFormDefault"] = elemFormDefault
 
-        // Generate XSD complex types (simplified - only structures for now)
-        val xsdComplexTypes = mutableListOf<UDM>()
+        // Partition types into inline (Russian Doll) vs global (Venetian Blind)
+        val (inlineTypes, globalTypes) = partitionTypes(types)
 
-        types.properties.forEach { (typeName, typeDef) ->
+        // Generate inline xs:element nodes (Russian Doll pattern)
+        val xsdElements = mutableListOf<UDM>()
+        inlineTypes.forEach { (_, typeInfo) ->
+            val (typeDef, elementName) = typeInfo
+            val kind = (typeDef.properties["%kind"] as? UDM.Scalar)?.value as? String
+            if (kind == "structure") {
+                xsdElements.add(generateInlineElement(elementName, typeDef))
+            }
+        }
+
+        // Generate global xs:complexType nodes (Venetian Blind pattern)
+        val xsdComplexTypes = mutableListOf<UDM>()
+        globalTypes.forEach { (typeName, typeDef) ->
             if (typeDef !is UDM.Object) return@forEach
 
             // Check %kind directive
@@ -236,17 +365,25 @@ class XSDSerializer(
             }
         }
 
-        // Build schema properties
-        val schemaProps = if (xsdComplexTypes.isEmpty()) {
-            emptyMap()
-        } else {
-            mapOf(
-                "xs:complexType" to if (xsdComplexTypes.size == 1) {
-                    xsdComplexTypes[0]
-                } else {
-                    UDM.Array(xsdComplexTypes)
-                }
-            )
+        // Build schema properties (combine inline elements and global types)
+        val schemaProps = mutableMapOf<String, UDM>()
+
+        // Add inline elements first (Russian Doll pattern)
+        if (xsdElements.isNotEmpty()) {
+            schemaProps["xs:element"] = if (xsdElements.size == 1) {
+                xsdElements[0]
+            } else {
+                UDM.Array(xsdElements)
+            }
+        }
+
+        // Add global complex types (Venetian Blind pattern)
+        if (xsdComplexTypes.isNotEmpty()) {
+            schemaProps["xs:complexType"] = if (xsdComplexTypes.size == 1) {
+                xsdComplexTypes[0]
+            } else {
+                UDM.Array(xsdComplexTypes)
+            }
         }
 
         // Create schema UDM

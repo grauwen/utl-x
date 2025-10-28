@@ -1,0 +1,46 @@
+name: "xsd_russian_doll_convert_to_venetian_blind"
+category: "formats/xsd/patterns"
+description: "Test pattern conversion: XSD (Russian Doll) -> USDL -> XSD (Venetian Blind) with preservePattern=false"
+tags: ['xsd', 'patterns', 'conversion', 'russian-doll', 'venetian-blind']
+
+input:
+  format: json
+  data: |
+    {
+      "xsdSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"order\">\n    <xs:complexType>\n      <xs:sequence>\n        <xs:element name=\"orderId\" type=\"xs:string\"/>\n        <xs:element name=\"totalAmount\" type=\"xs:decimal\"/>\n      </xs:sequence>\n    </xs:complexType>\n  </xs:element>\n</xs:schema>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let inputSchema = $input.xsdSchema
+  let usdlSchema = parseXSDSchema(inputSchema)
+  let backToXsd = renderXSDSchema(usdlSchema, true, false)
+  {
+    comment: "Russian Doll converts to Venetian Blind when preservePattern=false",
+    inputPattern: "Russian Doll (inline/anonymous types)",
+    outputPattern: "Venetian Blind (global types, local elements)",
+    usdlHasInlineMetadata: hasKey(usdlSchema["%types"]["order_InlineType"], "%xsdInline"),
+    outputHasGlobalType: contains(backToXsd, "<xs:complexType name=\"order_InlineType\""),
+    outputHasSequence: contains(backToXsd, "<xs:sequence>"),
+    outputHasOrderIdElement: contains(backToXsd, "<xs:element name=\"orderId\" type=\"xs:string\""),
+    outputNoInlineComplexType: !contains(backToXsd, "<xs:element name=\"order\">") || !contains(backToXsd, "<xs:element name=\"order\">\n    <xs:complexType>"),
+    conversionSuccessful: true
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "comment": "Russian Doll converts to Venetian Blind when preservePattern=false",
+      "inputPattern": "Russian Doll (inline/anonymous types)",
+      "outputPattern": "Venetian Blind (global types, local elements)",
+      "usdlHasInlineMetadata": true,
+      "outputHasGlobalType": true,
+      "outputHasSequence": true,
+      "outputHasOrderIdElement": true,
+      "outputNoInlineComplexType": true,
+      "conversionSuccessful": true
+    }

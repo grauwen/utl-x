@@ -1,7 +1,7 @@
 name: "xsd_pattern_preservation_russian_doll"
 category: "formats/xsd/patterns"
-description: "Test pattern preservation: Russian Doll -> USDL -> XSD changes to Venetian Blind"
-tags: ['xsd', 'patterns', 'round-trip', 'transformation']
+description: "Test pattern preservation: Russian Doll -> USDL -> XSD preserves Russian Doll pattern"
+tags: ['xsd', 'patterns', 'round-trip', 'preservation']
 
 input:
   format: json
@@ -19,24 +19,28 @@ transformation: |
   let usdlSchema = parseXSDSchema(inputSchema)
   let backToXsd = renderXSDSchema(usdlSchema)
   {
-    comment: "Russian Doll has inline types, USDL cannot represent them, output is empty",
+    comment: "Russian Doll pattern is now preserved through USDL with synthetic type names",
     inputPattern: "Russian Doll (inline/anonymous types)",
     usdlHasTypes: hasKey(usdlSchema, "%types"),
     usdlTypesEmpty: count(keys(usdlSchema["%types"])) == 0,
-    outputPattern: "Empty schema (no types extracted)",
+    usdlHasInlineTypes: count(keys(usdlSchema["%types"])) > 0,
+    outputPattern: "Russian Doll (preserved)",
     outputIsEmpty: contains(backToXsd, "elementFormDefault=\"qualified\"/>"),
-    limitation: "USDL requires named types, cannot preserve inline types"
+    outputHasInlineElements: contains(backToXsd, "<xs:element name=\"order\">") && contains(backToXsd, "<xs:complexType>"),
+    capability: "USDL now supports inline types via synthetic names and metadata"
   }
 
 expected:
   format: json
   data: |
     {
-      "comment": "Russian Doll has inline types, USDL cannot represent them, output is empty",
+      "comment": "Russian Doll pattern is now preserved through USDL with synthetic type names",
       "inputPattern": "Russian Doll (inline/anonymous types)",
       "usdlHasTypes": true,
-      "usdlTypesEmpty": true,
-      "outputPattern": "Empty schema (no types extracted)",
-      "outputIsEmpty": true,
-      "limitation": "USDL requires named types, cannot preserve inline types"
+      "usdlTypesEmpty": false,
+      "usdlHasInlineTypes": true,
+      "outputPattern": "Russian Doll (preserved)",
+      "outputIsEmpty": false,
+      "outputHasInlineElements": true,
+      "capability": "USDL now supports inline types via synthetic names and metadata"
     }

@@ -302,6 +302,56 @@ USDL 1.0 defines **110+ directives** organized into **4 tiers** (including REST 
 ]
 ```
 
+#### XML Schema (XSD)
+
+**Pattern Preservation Directives** - Enable round-trip preservation of XSD design patterns.
+
+| Directive | Type | Description |
+|-----------|------|-------------|
+| `%xsdInline` | Boolean | True if type was inline/anonymous in XSD (Russian Doll pattern) |
+| `%xsdElement` | String | Parent element name for inline types |
+| `%xsdPattern` | String | Original XSD pattern: "russian-doll", "venetian-blind", "salami-slice", "garden-of-eden" |
+
+**Purpose**: These directives enable preservation of XSD design patterns through USDL round-trips. Without them, all inline (anonymous) types from Russian Doll pattern are lost, as USDL requires named types.
+
+**Behavior**:
+- **Parser**: When encountering inline `<xs:complexType>` within `<xs:element>`, generates synthetic type name and adds metadata
+- **Serializer**: When `preservePattern: true`, checks metadata and inlines types back into elements
+
+**Example** (Russian Doll → USDL → Russian Doll):
+```utlx
+{
+  "%types": {
+    "order_InlineType": {
+      "%kind": "structure",
+      "%xsdInline": true,
+      "%xsdElement": "order",
+      "%xsdPattern": "russian-doll",
+      "%fields": [
+        {
+          "%name": "orderId",
+          "%type": "string",
+          "%required": true
+        }
+      ]
+    }
+  }
+}
+```
+
+This USDL will serialize back to:
+```xml
+<xs:element name="order">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="orderId" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+```
+
+**Synthetic Naming Convention**: `"ElementName_InlineType"` for anonymous types (e.g., "order_InlineType", "customer_InlineType")
+
 #### Database (SQL DDL)
 
 | Directive | Type | Description |

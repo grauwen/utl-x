@@ -212,14 +212,15 @@ object SchemaSerializationFunctions {
     @UTLXFunction(
         description = "Render a USDL schema object as an XSD schema XML string",
         minArgs = 1,
-        maxArgs = 2,
+        maxArgs = 3,
         category = "Schema",
         parameters = [
             "usdlSchema: USDL schema object with %types directive",
-            "prettyPrint: Optional boolean for formatted output (default: true)"
+            "prettyPrint: Optional boolean for formatted output (default: true)",
+            "preservePattern: Optional boolean to preserve Russian Doll pattern (default: true)"
         ],
         returns = "XSD schema XML string",
-        example = "renderXSDSchema(usdlSchema, pretty?)",
+        example = "renderXSDSchema(usdlSchema, pretty?, preservePattern?)",
         tags = ["schema", "xsd", "usdl"],
         since = "1.0"
     )
@@ -227,6 +228,10 @@ object SchemaSerializationFunctions {
      * Render a USDL schema object as an XSD schema XML string
      *
      * Converts Universal Schema Definition Language (USDL) to XML Schema Definition (XSD).
+     *
+     * **Pattern Preservation:**
+     * - If `preservePattern = true` (default), inline types with %xsdInline metadata are rendered as Russian Doll pattern
+     * - If `preservePattern = false`, all types are rendered as Venetian Blind pattern (global types)
      *
      * Example:
      * ```utlx
@@ -242,11 +247,18 @@ object SchemaSerializationFunctions {
      * let xsdSchema = renderXSDSchema(usdlSchema)
      * # xsdSchema is now XSD XML format
      * ```
+     *
+     * Example with pattern conversion:
+     * ```utlx
+     * # Force conversion to Venetian Blind (global types)
+     * let xsdSchema = renderXSDSchema(usdlSchema, true, false)
+     * ```
      */
     fun renderXSDSchema(args: List<UDM>): UDM {
-        requireArgs(args, 1..2, "renderXSDSchema")
+        requireArgs(args, 1..3, "renderXSDSchema")
         val usdlSchema = args[0]
         val prettyPrint = if (args.size > 1) args[1].asBoolean() else true
+        val preservePattern = if (args.size > 2) args[2].asBoolean() else true
 
         // Validate that it's a USDL schema
         if (usdlSchema !is UDM.Object) {
@@ -269,7 +281,8 @@ object SchemaSerializationFunctions {
                 version = "1.0",
                 addDocumentation = true,
                 elementFormDefault = "qualified",
-                prettyPrint = prettyPrint
+                prettyPrint = prettyPrint,
+                preservePattern = preservePattern
             )
             val xsdSchemaString = serializer.serialize(usdlSchema)
             UDM.Scalar(xsdSchemaString)

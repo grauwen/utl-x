@@ -1,0 +1,52 @@
+name: "xsd_russian_doll_round_trip"
+category: "formats/xsd/patterns"
+description: "Test Russian Doll pattern preservation: XSD (Russian Doll) -> USDL -> XSD (Russian Doll)"
+tags: ['xsd', 'patterns', 'round-trip', 'russian-doll', 'preservation']
+
+input:
+  format: json
+  data: |
+    {
+      "xsdSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"order\">\n    <xs:complexType>\n      <xs:sequence>\n        <xs:element name=\"orderId\" type=\"xs:string\"/>\n        <xs:element name=\"customer\">\n          <xs:complexType>\n            <xs:sequence>\n              <xs:element name=\"name\" type=\"xs:string\"/>\n              <xs:element name=\"email\" type=\"xs:string\" minOccurs=\"0\"/>\n            </xs:sequence>\n          </xs:complexType>\n        </xs:element>\n      </xs:sequence>\n    </xs:complexType>\n  </xs:element>\n</xs:schema>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let inputSchema = $input.xsdSchema
+  let usdlSchema = parseXSDSchema(inputSchema)
+  let backToXsd = renderXSDSchema(usdlSchema, true, true)
+  {
+    comment: "Russian Doll pattern is preserved through USDL round-trip with preservePattern=true",
+    inputPattern: "Russian Doll (inline/anonymous types)",
+    outputPattern: "Russian Doll (inline/anonymous types)",
+    usdlHasInlineMetadata: hasKey(usdlSchema["%types"]["order_InlineType"], "%xsdInline"),
+    usdlInlineValue: usdlSchema["%types"]["order_InlineType"]["%xsdInline"],
+    usdlElementName: usdlSchema["%types"]["order_InlineType"]["%xsdElement"],
+    usdlPattern: usdlSchema["%xsdPattern"],
+    outputHasGlobalElement: contains(backToXsd, "<xs:element name=\"order\">"),
+    outputHasInlineComplexType: contains(backToXsd, "<xs:element name=\"order\">") && contains(backToXsd, "<xs:complexType>") && !contains(backToXsd, "<xs:complexType name=\""),
+    outputHasNestedCustomer: contains(backToXsd, "<xs:element name=\"customer\">") && contains(backToXsd, "<xs:complexType>"),
+    outputNoGlobalTypes: !contains(backToXsd, "<xs:complexType name=\"order"),
+    patternPreserved: true
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "comment": "Russian Doll pattern is preserved through USDL round-trip with preservePattern=true",
+      "inputPattern": "Russian Doll (inline/anonymous types)",
+      "outputPattern": "Russian Doll (inline/anonymous types)",
+      "usdlHasInlineMetadata": true,
+      "usdlInlineValue": true,
+      "usdlElementName": "order",
+      "usdlPattern": "russian-doll",
+      "outputHasGlobalElement": true,
+      "outputHasInlineComplexType": true,
+      "outputHasNestedCustomer": true,
+      "outputNoGlobalTypes": true,
+      "patternPreserved": true
+    }

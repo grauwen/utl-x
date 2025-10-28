@@ -279,11 +279,12 @@ class XSDParser(
         // Extract types from schema
         val complexTypes = extractComplexTypes(xsdSchema)
         val simpleTypes = extractSimpleTypes(xsdSchema)
+        val inlineTypes = extractInlineTypes(xsdSchema)
 
         // Build %types object
         val typesMap = mutableMapOf<String, UDM>()
 
-        // Add complex types
+        // Add named complex types (Venetian Blind, Salami Slice, Garden of Eden patterns)
         complexTypes.forEach { (name, type) ->
             typesMap[name] = complexTypeToUSDL(type)
         }
@@ -291,6 +292,15 @@ class XSDParser(
         // Add simple types (enumerations, restrictions)
         simpleTypes.forEach { (name, type) ->
             typesMap[name] = simpleTypeToUSDL(type)
+        }
+
+        // Add inline types with metadata (Russian Doll pattern)
+        inlineTypes.forEach { (syntheticName, typeInfo) ->
+            val (complexType, elementName) = typeInfo
+            val usdlType = complexTypeToUSDL(complexType)
+
+            // Add XSD-specific metadata directives
+            typesMap[syntheticName] = addInlineMetadata(usdlType, elementName)
         }
 
         // Build top-level USDL object
@@ -303,7 +313,55 @@ class XSDParser(
             topLevelProps["%namespace"] = UDM.Scalar(namespace)
         }
 
+        // Add pattern detection metadata if inline types exist
+        if (inlineTypes.isNotEmpty()) {
+            topLevelProps["%xsdPattern"] = UDM.Scalar("russian-doll")
+        }
+
         return UDM.Object(properties = topLevelProps)
+    }
+
+    /**
+     * Add XSD-specific inline type metadata to a USDL type definition
+     *
+     * Adds three directives:
+     * - %xsdInline: true (marks this as an inline/anonymous type)
+     * - %xsdElement: parent element name
+     * - %xsdPattern: "russian-doll" (pattern indicator)
+     *
+     * Example:
+     * Input USDL type:
+     *   {
+     *     "%kind": "structure",
+     *     "%fields": [...]
+     *   }
+     *
+     * Output with metadata:
+     *   {
+     *     "%kind": "structure",
+     *     "%xsdInline": true,
+     *     "%xsdElement": "order",
+     *     "%xsdPattern": "russian-doll",
+     *     "%fields": [...]
+     *   }
+     */
+    private fun addInlineMetadata(usdlType: UDM, elementName: String): UDM {
+        if (usdlType !is UDM.Object) {
+            return usdlType
+        }
+
+        // Add XSD-specific metadata directives
+        val enhancedProps = usdlType.properties.toMutableMap()
+        enhancedProps["%xsdInline"] = UDM.Scalar(true)
+        enhancedProps["%xsdElement"] = UDM.Scalar(elementName)
+        enhancedProps["%xsdPattern"] = UDM.Scalar("russian-doll")
+
+        return UDM.Object(
+            properties = enhancedProps,
+            attributes = usdlType.attributes,
+            name = usdlType.name,
+            metadata = usdlType.metadata
+        )
     }
 
     /**
@@ -356,6 +414,74 @@ class XSDParser(
         }
 
         return result
+    }
+
+    /**
+     * Extract inline/anonymous complexTypes from xs:element definitions (Russian Doll pattern)
+     *
+     * Returns map of syntheticName -> (complexType, parentElementName)
+     *
+     * Example:
+     * Input:
+     *   <xs:element name="order">
+     *     <xs:complexType>  <!-- anonymous inline type -->
+     *       <xs:sequence>
+     *         <xs:element name="orderId" type="xs:string"/>
+     *       </xs:sequence>
+     *     </xs:complexType>
+     *   </xs:element>
+     *
+     * Output:
+     *   {"order_InlineType" -> (complexType UDM.Object, "order")}
+     */
+    private fun extractInlineTypes(schema: UDM.Object): Map<String, Pair<UDM.Object, String>> {
+        val result = mutableMapOf<String, Pair<UDM.Object, String>>()
+
+        // Recursively search for all xs:element nodes with inline types
+        extractInlineTypesRecursive(schema, result)
+
+        return result
+    }
+
+    /**
+     * Recursive helper to find inline complexTypes at any nesting level
+     */
+    private fun extractInlineTypesRecursive(
+        udm: UDM,
+        result: MutableMap<String, Pair<UDM.Object, String>>
+    ) {
+        when (udm) {
+            is UDM.Object -> {
+                // Check if this is an xs:element node
+                val elementName = udm.name?.substringAfter(":")
+                if (elementName == "element") {
+                    // Only process if no @type attribute (indicates inline type)
+                    if (!udm.attributes.containsKey("type")) {
+                        // Look for nested xs:complexType
+                        val complexType = udm.properties["xs:complexType"] as? UDM.Object
+                        if (complexType != null) {
+                            // Found inline type - generate synthetic name
+                            val name = udm.attributes["name"] ?: "UnnamedElement"
+                            val syntheticName = "${name}_InlineType"
+
+                            result[syntheticName] = Pair(complexType, name)
+                        }
+                    }
+                }
+
+                // Recursively search all properties
+                udm.properties.values.forEach { value ->
+                    extractInlineTypesRecursive(value, result)
+                }
+            }
+            is UDM.Array -> {
+                // Search all array elements
+                udm.elements.forEach { element ->
+                    extractInlineTypesRecursive(element, result)
+                }
+            }
+            else -> { /* Scalar or other type - no nested elements */ }
+        }
     }
 
     /**
@@ -480,15 +606,34 @@ class XSDParser(
 
     /**
      * Convert xs:element to USDL field
+     *
+     * Handles three cases:
+     * 1. Element with @type attribute → use named type
+     * 2. Element with inline xs:complexType → generate synthetic name reference
+     * 3. Element with no type → default to "string"
      */
     private fun elementToUSDLField(element: UDM.Object): UDM {
         val name = element.attributes["name"] ?: "unnamed"
-        val type = element.attributes["type"] ?: "xs:string"
+        val typeAttr = element.attributes["type"]
         val minOccurs = element.attributes["minOccurs"] ?: "1"
         val doc = extractDocumentation(element)
 
-        // Convert XSD type to USDL type
-        val usdlType = xsdTypeToUSDL(type)
+        // Determine the type
+        val usdlType = if (typeAttr != null) {
+            // Case 1: Element has @type attribute - use it (Venetian Blind, Salami Slice)
+            xsdTypeToUSDL(typeAttr)
+        } else {
+            // Case 2: No @type - check for inline complexType (Russian Doll)
+            val inlineComplexType = element.properties["xs:complexType"]
+            if (inlineComplexType is UDM.Object) {
+                // Inline type found - reference the synthetic name that will be in %types
+                // (The extractInlineTypes() method generates these synthetic names)
+                "${name}_InlineType"
+            } else {
+                // Case 3: No type specified - default to string
+                "string"
+            }
+        }
 
         // Build USDL field
         val fieldProps = mutableMapOf<String, UDM>(
