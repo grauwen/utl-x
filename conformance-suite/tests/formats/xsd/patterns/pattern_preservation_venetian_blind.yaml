@@ -1,0 +1,44 @@
+name: "xsd_pattern_preservation_venetian_blind"
+category: "formats/xsd/patterns"
+description: "Test pattern preservation: Venetian Blind -> USDL -> XSD preserves pattern"
+tags: ['xsd', 'patterns', 'round-trip', 'preservation']
+
+input:
+  format: json
+  data: |
+    {
+      "xsdSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"http://example.com/test\" elementFormDefault=\"qualified\">\n  <xs:complexType name=\"PersonType\">\n    <xs:sequence>\n      <xs:element name=\"firstName\" type=\"xs:string\"/>\n      <xs:element name=\"lastName\" type=\"xs:string\"/>\n    </xs:sequence>\n  </xs:complexType>\n</xs:schema>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let inputSchema = $input.xsdSchema
+  let usdlSchema = parseXSDSchema(inputSchema)
+  let backToXsd = renderXSDSchema(usdlSchema)
+  {
+    comment: "Venetian Blind pattern is preserved through USDL round-trip",
+    inputPattern: "Venetian Blind (global types)",
+    outputPattern: "Venetian Blind (global types)",
+    inputHasGlobalType: contains(inputSchema, "<xs:complexType name=\"PersonType\""),
+    outputHasGlobalType: contains(backToXsd, "<xs:complexType name=\"PersonType\""),
+    inputNoInlineTypes: !contains(inputSchema, "<xs:element name=\"firstName\">\n    <xs:complexType>"),
+    outputNoInlineTypes: !contains(backToXsd, "<xs:element name=\"firstName\">\n    <xs:complexType>"),
+    patternPreserved: true
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "comment": "Venetian Blind pattern is preserved through USDL round-trip",
+      "inputPattern": "Venetian Blind (global types)",
+      "outputPattern": "Venetian Blind (global types)",
+      "inputHasGlobalType": true,
+      "outputHasGlobalType": true,
+      "inputNoInlineTypes": true,
+      "outputNoInlineTypes": true,
+      "patternPreserved": true
+    }

@@ -1,0 +1,42 @@
+name: "xsd_pattern_preservation_russian_doll"
+category: "formats/xsd/patterns"
+description: "Test pattern preservation: Russian Doll -> USDL -> XSD changes to Venetian Blind"
+tags: ['xsd', 'patterns', 'round-trip', 'transformation']
+
+input:
+  format: json
+  data: |
+    {
+      "xsdSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"order\">\n    <xs:complexType>\n      <xs:sequence>\n        <xs:element name=\"orderId\" type=\"xs:string\"/>\n        <xs:element name=\"customer\">\n          <xs:complexType>\n            <xs:sequence>\n              <xs:element name=\"name\" type=\"xs:string\"/>\n            </xs:sequence>\n          </xs:complexType>\n        </xs:element>\n      </xs:sequence>\n    </xs:complexType>\n  </xs:element>\n</xs:schema>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let inputSchema = $input.xsdSchema
+  let usdlSchema = parseXSDSchema(inputSchema)
+  let backToXsd = renderXSDSchema(usdlSchema)
+  {
+    comment: "Russian Doll has inline types, USDL cannot represent them, output is empty",
+    inputPattern: "Russian Doll (inline/anonymous types)",
+    usdlHasTypes: hasKey(usdlSchema, "%types"),
+    usdlTypesEmpty: count(keys(usdlSchema["%types"])) == 0,
+    outputPattern: "Empty schema (no types extracted)",
+    outputIsEmpty: contains(backToXsd, "elementFormDefault=\"qualified\"/>"),
+    limitation: "USDL requires named types, cannot preserve inline types"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "comment": "Russian Doll has inline types, USDL cannot represent them, output is empty",
+      "inputPattern": "Russian Doll (inline/anonymous types)",
+      "usdlHasTypes": true,
+      "usdlTypesEmpty": true,
+      "outputPattern": "Empty schema (no types extracted)",
+      "outputIsEmpty": true,
+      "limitation": "USDL requires named types, cannot preserve inline types"
+    }
