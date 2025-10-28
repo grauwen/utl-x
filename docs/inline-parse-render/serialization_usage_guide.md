@@ -18,7 +18,7 @@ output json
 
 {
   // Parse the embedded SOAP request
-  let soapEnvelope = parseXml(input.request.soapPayload),
+  let soapEnvelope = parseXml($input.request.soapPayload),
   
   processedRequest: {
     requestId: $input.request.id,
@@ -58,11 +58,11 @@ output json
 ---
 
 {
-  reportId: input.Report.@id,
-  reportDate: input.Report.@date,
-  
+  reportId: $input.Report.@id,
+  reportDate: $input.Report.@date,
+
   // Parse CSV from CDATA section
-  let csvData = parseCsv(input.Report.Data, delimiter="|", headers=true),
+  let csvData = parseCsv($input.Report.Data, delimiter="|", headers=true),
   
   customers: csvData |> map(row => {
     id: row.CUSTOMER_ID,
@@ -73,7 +73,7 @@ output json
   
   summary: {
     totalCustomers: count(csvData),
-    totalBalance: sum(csvData.(parseNumber(BALANCE)))
+    totalBalance: sum(csvData |> map(row => parseNumber(row.BALANCE)))
   }
 }
 ```
@@ -89,18 +89,18 @@ output json
 ---
 
 {
-  messageId: input.metadata.messageId,
-  
+  messageId: $input.metadata.messageId,
+
   // Parse nested JSON metadata
-  let metadata = parseJson(input.metadata.details),
+  let metadata = parseJson($input.metadata.details),
   
   routing: {
     source: metadata.source,
     destination: metadata.destination,
     priority: metadata.priority
   },
-  
-  payload: input.payload,
+
+  payload: $input.payload,
   
   // Add enriched metadata as JSON string
   enrichedMetadata: renderJson({
@@ -123,7 +123,7 @@ output json
 ---
 
 {
-  requests: input.batch |> map(request => {
+  requests: $input.batch |> map(request => {
     requestId: request.id,
     
     // Auto-detect and parse the payload format
@@ -153,13 +153,13 @@ output json
 
 {
   // Extract from XML source
-  let xmlSource = parseXml(input.sources.legacySystem),
-  
+  let xmlSource = parseXml($input.sources.legacySystem),
+
   // Extract from CSV source
-  let csvSource = parseCsv(input.sources.flatFile, delimiter="\t"),
-  
+  let csvSource = parseCsv($input.sources.flatFile, delimiter="\t"),
+
   // Extract from YAML config
-  let yamlConfig = parseYaml(input.sources.configuration),
+  let yamlConfig = parseYaml($input.sources.configuration),
   
   consolidatedData: {
     customers: xmlSource.Customers.Customer |> map(c => {
@@ -208,15 +208,15 @@ output json
         @version: "1.0",
         Operation: "GetCustomer",
         Parameters: {
-          CustomerId: input.customerId
+          CustomerId: $input.customerId
         }
       }
     }),
-    
+
     // Parse XML response
-    response: match input.serviceA.response {
-      when isString => parseXml(input.serviceA.response),
-      _ => input.serviceA.response
+    response: match $input.serviceA.response {
+      when isString => parseXml($input.serviceA.response),
+      _ => $input.serviceA.response
     }
   },
   
@@ -225,22 +225,22 @@ output json
     request: renderJson({
       operation: "getCustomer",
       params: {
-        customerId: input.customerId
+        customerId: $input.customerId
       }
     }),
-    
+
     // Parse JSON response
-    response: parseJson(input.serviceB.response)
+    response: parseJson($input.serviceB.response)
   },
   
   // Service C uses YAML
   serviceC: {
     request: renderYaml({
       operation: "get_customer",
-      customer_id: input.customerId
+      customer_id: $input.customerId
     }),
-    
-    response: parseYaml(input.serviceC.response)
+
+    response: parseYaml($input.serviceC.response)
   }
 }
 ```
@@ -257,17 +257,17 @@ output json
 
 {
   // Original YAML config
-  yamlConfig: input,
-  
+  yamlConfig: $input,
+
   // Convert to JSON for JavaScript consumers
-  jsonConfig: renderJson(input, pretty=true),
-  
+  jsonConfig: renderJson($input, pretty=true),
+
   // Convert to XML for legacy systems
   xmlConfig: renderXml({
     Configuration: {
-      Database: input.database,
-      Server: input.server,
-      Logging: input.logging
+      Database: $input.database,
+      Server: $input.server,
+      Logging: $input.logging
     }
   }, pretty=true, declaration=true),
   
@@ -275,15 +275,15 @@ output json
   csvReport: renderCsv([
     {
       Setting: "Database Host",
-      Value: input.database.host
+      Value: $input.database.host
     },
     {
       Setting: "Database Port",
-      Value: input.database.port
+      Value: $input.database.port
     },
     {
       Setting: "Server Port",
-      Value: input.server.port
+      Value: $input.server.port
     }
   ])
 }
@@ -300,7 +300,7 @@ output json
 ---
 
 {
-  validations: input.sources |> map(source => {
+  validations: $input.sources |> map(source => {
     sourceId: source.id,
     
     // Try to parse and validate
@@ -329,11 +329,11 @@ output json
   }),
   
   summary: {
-    total: count(input.sources),
-    valid: count(input.sources |> filter(s => 
+    total: count($input.sources),
+    valid: count($input.sources |> filter(s =>
       try { parse(s.data, s.format); true } catch { false }
     )),
-    invalid: count(input.sources) - count(input.sources |> filter(s => 
+    invalid: count($input.sources) - count($input.sources |> filter(s =>
       try { parse(s.data, s.format); true } catch { false }
     ))
   }
@@ -436,17 +436,17 @@ render(obj: Any, format: String, pretty: Boolean = false): String
 ```utlx
 // Graceful error handling
 let parsed = try {
-  parseJson(input.potentiallyInvalidJson)
+  parseJson($input.potentiallyInvalidJson)
 } catch (e) {
   { error: true, message: e.message }
 }
 
 // Format-specific validation
-if (isString(input.data) && startsWith(input.data, "{")) {
-  let json = parseJson(input.data)
+if (isString($input.data) && startsWith($input.data, "{")) {
+  let json = parseJson($input.data)
   // Process JSON
-} else if (isString(input.data) && startsWith(input.data, "<")) {
-  let xml = parseXml(input.data)
+} else if (isString($input.data) && startsWith($input.data, "<")) {
+  let xml = parseXml($input.data)
   // Process XML
 }
 ```
@@ -477,9 +477,9 @@ output json
 
 // Stage 1: Parse all nested formats
 let stage1 = {
-  xmlData: parseXml(input.xmlString),
-  jsonData: parseJson(input.jsonString),
-  csvData: parseCsv(input.csvString)
+  xmlData: parseXml($input.xmlString),
+  jsonData: parseJson($input.jsonString),
+  csvData: parseCsv($input.csvString)
 },
 
 // Stage 2: Transform (format-agnostic)
@@ -517,6 +517,6 @@ Future enhancement for proprietary formats:
 registerFormatParser("protobuf", ProtobufParser())
 
 // Use in UTL-X
-parse(input.data, "protobuf")
+parse($input.data, "protobuf")
 render(output, "protobuf")
 ```
