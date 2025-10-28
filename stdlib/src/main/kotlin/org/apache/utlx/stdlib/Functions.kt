@@ -24,6 +24,7 @@ import org.apache.utlx.stdlib.json.*
 import org.apache.utlx.stdlib.jws.*
 import org.apache.utlx.stdlib.csv.*
 import org.apache.utlx.stdlib.yaml.*
+import org.apache.utlx.stdlib.regional.*
 
 
 
@@ -165,13 +166,16 @@ object StandardLibrary {
 
        //geo
        registerGeospatialFunctions()
-       
+
+       // Regional number parsing
+       registerRegionalFunctions()
+
       //AdvancedRegex
        registerAdvancedRegexFunctions()
-       
+
        // CSV functions
        registerCSVFunctions()
-       
+
        // YAML functions
        registerYAMLFunctions()
 
@@ -235,10 +239,17 @@ object StandardLibrary {
         
         // Validation
         register("isValidCoordinates", GeospatialFunctions::isValidCoordinates)
-        // register("is-valid-coordinates", GeospatialFunctions::isValidCoordinates) 
+        // register("is-valid-coordinates", GeospatialFunctions::isValidCoordinates)
         register("validCoords", GeospatialFunctions::isValidCoordinates) // Short alias
     }
-     
+
+    private fun registerRegionalFunctions() {
+        // Regional number parsing functions
+        register("parseUSNumber", RegionalNumberFunctions::parseUSNumber)
+        register("parseEUNumber", RegionalNumberFunctions::parseEUNumber)
+        register("parseSwissNumber", RegionalNumberFunctions::parseSwissNumber)
+    }
+
     private fun registerCoreFunctions() {
         // CoreFunctions already use List<UDM> signature, so these work directly
         register("if", CoreFunctions::ifThenElse)

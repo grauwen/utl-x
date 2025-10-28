@@ -1,0 +1,92 @@
+name: "csv_regional_swiss_input"
+category: "tutorial-examples"
+description: "CSV input with Swiss regional format - semicolon delimiter with period decimal and apostrophe thousands separator"
+tags: ["csv", "json", "regional", "numbers", "swiss", "switzerland", "tutorial", "delimiter"]
+
+input:
+  format: csv
+  data: |
+    product;quantity;unit_price;total
+    Widget A;100;1'234.56;123'456.00
+    Gadget B;50;2'500.00;125'000.00
+    Tool C;25;999.99;24'999.75
+
+transformation: |
+  %utlx 1.0
+  input csv {
+    headers: true,
+    delimiter: ";"
+  }
+  output json
+  ---
+  {
+    region: "Switzerland",
+    format: {
+      delimiter: "semicolon",
+      decimal: "period",
+      thousands: "apostrophe"
+    },
+    items: $input |> map(row => {
+      product: row.product,
+      quantity: parseNumber(row.quantity),
+      unitPrice: parseNumber(replace(row.unit_price, "'", "")),
+      total: parseNumber(replace(row.total, "'", ""))
+    }),
+    summary: {
+      totalRevenue: sum($input |> map(row =>
+        parseNumber(replace(row.total, "'", ""))
+      ))
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "region": "Switzerland",
+      "format": {
+        "delimiter": "semicolon",
+        "decimal": "period",
+        "thousands": "apostrophe"
+      },
+      "items": [
+        {
+          "product": "Widget A",
+          "quantity": 100,
+          "unitPrice": 1234.56,
+          "total": 123456
+        },
+        {
+          "product": "Gadget B",
+          "quantity": 50,
+          "unitPrice": 2500,
+          "total": 125000
+        },
+        {
+          "product": "Tool C",
+          "quantity": 25,
+          "unitPrice": 999.99,
+          "total": 24999.75
+        }
+      ],
+      "summary": {
+        "totalRevenue": 273455.75
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Tutorial"
+  source: "interactive-session-2025-10-28"
+  complexity: "intermediate"
+  notes:
+    - "Demonstrates Swiss regional number format"
+    - "Semicolon delimiter with period decimal separator"
+    - "Apostrophe used as thousands separator (e.g., 1'234.56)"
+    - "Unique to Switzerland and Liechtenstein"
+    - "Uses parseSwissNumber() for clean conversion of Swiss format numbers"
+    - "parseSwissNumber() handles: remove apostrophes, parse with period decimal"
+    - "Switzerland also uses comma decimals in some contexts"

@@ -1,0 +1,90 @@
+name: "csv_regional_usa_input"
+category: "tutorial-examples"
+description: "CSV input with USA/UK/Asia regional format - comma delimiter with period decimal and comma thousands separator"
+tags: ["csv", "json", "regional", "numbers", "usa", "tutorial", "delimiter"]
+
+input:
+  format: csv
+  data: |
+    product,quantity,unit_price,total
+    Widget A,100,"1,234.56","123,456.00"
+    Gadget B,50,"2,500.00","125,000.00"
+    Tool C,25,"999.99","24,999.75"
+
+transformation: |
+  %utlx 1.0
+  input csv {
+    headers: true,
+    delimiter: ","
+  }
+  output json
+  ---
+  {
+    region: "USA/UK/Asia",
+    format: {
+      delimiter: "comma",
+      decimal: "period",
+      thousands: "comma"
+    },
+    items: $input |> map(row => {
+      product: row.product,
+      quantity: parseNumber(row.quantity),
+      unitPrice: parseNumber(row.unit_price),
+      total: parseNumber(row.total)
+    }),
+    summary: {
+      totalRevenue: sum($input |> map(row => parseNumber(row.total)))
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "region": "USA/UK/Asia",
+      "format": {
+        "delimiter": "comma",
+        "decimal": "period",
+        "thousands": "comma"
+      },
+      "items": [
+        {
+          "product": "Widget A",
+          "quantity": 100,
+          "unitPrice": 1234.56,
+          "total": 123456
+        },
+        {
+          "product": "Gadget B",
+          "quantity": 50,
+          "unitPrice": 2500,
+          "total": 125000
+        },
+        {
+          "product": "Tool C",
+          "quantity": 25,
+          "unitPrice": 999.99,
+          "total": 24999.75
+        }
+      ],
+      "summary": {
+        "totalRevenue": 273455.75
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Tutorial"
+  source: "interactive-session-2025-10-28"
+  complexity: "intermediate"
+  notes:
+    - "Demonstrates USA/UK/Asia regional number format"
+    - "Comma delimiter with period decimal separator"
+    - "Thousands separator is comma (requires quoting in CSV)"
+    - "Numbers with commas must be quoted in comma-delimited CSV"
+    - "Standard parseNumber() works because parseNumber() auto-strips comma thousands"
+    - "Alternatively, use parseUSNumber() for explicit USA format parsing"
+    - "Common format in USA, UK, India, most of Asia"

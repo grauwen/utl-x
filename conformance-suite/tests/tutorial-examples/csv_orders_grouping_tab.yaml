@@ -1,0 +1,100 @@
+name: "csv_orders_grouping_tab"
+category: "tutorial-examples"
+description: "CSV to JSON with tab delimiter (TSV) - Group flat order rows into hierarchical order structure"
+tags: ["csv", "tsv", "json", "groupBy", "aggregation", "tutorial", "delimiter", "tab"]
+
+input:
+  format: csv
+  data: |
+    order_id	customer_name	email	item_sku	quantity	price
+    ORD-001	Alice Johnson	alice@example.com	WIDGET-A	2	29.99
+    ORD-001	Alice Johnson	alice@example.com	GADGET-B	1	149.99
+    ORD-002	Bob Smith	bob@example.com	TOOL-C	3	15.50
+
+transformation: |
+  %utlx 1.0
+  input csv {
+    headers: true,
+    delimiter: "\t"
+  }
+  output json
+  ---
+  {
+    orders: $input
+      |> groupBy(row => row.order_id)
+      |> map(group => {
+           let orderId = group.key,
+           let rows = group.value,
+
+           orderId: orderId,
+           customer: {
+             name: first(rows).customer_name,
+             email: first(rows).email
+           },
+           items: rows |> map(row => {
+             sku: row.item_sku,
+             quantity: parseNumber(row.quantity),
+             price: parseNumber(row.price)
+           }),
+           total: sum(rows |> map(row => parseNumber(row.quantity) * parseNumber(row.price)))
+         })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "orders": [
+        {
+          "orderId": "ORD-001",
+          "customer": {
+            "name": "Alice Johnson",
+            "email": "alice@example.com"
+          },
+          "items": [
+            {
+              "sku": "WIDGET-A",
+              "quantity": 2,
+              "price": 29.99
+            },
+            {
+              "sku": "GADGET-B",
+              "quantity": 1,
+              "price": 149.99
+            }
+          ],
+          "total": 209.97
+        },
+        {
+          "orderId": "ORD-002",
+          "customer": {
+            "name": "Bob Smith",
+            "email": "bob@example.com"
+          },
+          "items": [
+            {
+              "sku": "TOOL-C",
+              "quantity": 3,
+              "price": 15.5
+            }
+          ],
+          "total": 46.5
+        }
+      ]
+    }
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Tutorial"
+  source: "interactive-session-2025-10-28"
+  complexity: "intermediate"
+  notes:
+    - "Demonstrates tab delimiter CSV parsing (TSV format)"
+    - "Same transformation logic as other delimiter versions"
+    - "TSV (Tab-Separated Values) common in data science and databases"
+    - "Tab delimiter avoids most escaping issues"
+    - "Standard export format for many database tools"
+    - "Excel and spreadsheet applications support TSV"

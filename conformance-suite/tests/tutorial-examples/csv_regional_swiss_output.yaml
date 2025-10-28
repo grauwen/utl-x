@@ -1,0 +1,54 @@
+name: "csv_regional_swiss_output"
+category: "tutorial-examples"
+description: "CSV output with Swiss regional format - semicolon delimiter with formatted numbers"
+tags: ["csv", "json", "regional", "numbers", "swiss", "switzerland", "tutorial", "output"]
+
+input:
+  format: json
+  data: |
+    {
+      "items": [
+        {"product": "Widget A", "quantity": 100, "unitPrice": 1234.56, "total": 123456.00},
+        {"product": "Gadget B", "quantity": 50, "unitPrice": 2500.00, "total": 125000.00},
+        {"product": "Tool C", "quantity": 25, "unitPrice": 999.99, "total": 24999.75}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output csv {
+    headers: true,
+    delimiter: ";"
+  }
+  ---
+  $input.items |> map(item => {
+    product: item.product,
+    quantity: item.quantity,
+    unit_price: item.unitPrice,
+    total: item.total
+  })
+
+expected:
+  format: csv
+  data: |
+    product;quantity;unit_price;total
+    Widget A;100;1234.56;123456
+    Gadget B;50;2500;125000
+    Tool C;25;999.99;24999.75
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Tutorial"
+  source: "interactive-session-2025-10-28"
+  complexity: "intermediate"
+  notes:
+    - "Demonstrates CSV output with Swiss format"
+    - "Semicolon delimiter common in Swiss data exports"
+    - "Numbers output with period decimal (standard interchange format)"
+    - "Note: For true Swiss format display, would need apostrophe thousands separators"
+    - "Current output uses standard numeric format for data interchange"
+    - "Switzerland uses both period and comma decimals depending on context"

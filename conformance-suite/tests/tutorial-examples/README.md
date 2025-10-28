@@ -60,6 +60,52 @@ input csv {
 }
 ```
 
+### csv_orders_grouping_pipe.yaml
+
+**Pattern**: Same transformation with pipe-delimited CSV
+
+**What it demonstrates**:
+- CSV parsing with pipe delimiter
+- Pipe delimiter useful for log files and system exports
+- Less likely to conflict with data content
+- Common in Unix/Linux system tools
+
+**Real-world use case**: Processing system logs or exports where pipe delimiter is standard (avoids conflicts with commas in data)
+
+**Key difference**:
+```utlx
+input csv {
+  headers: true,
+  delimiter: "|"  # Pipe delimiter
+}
+```
+
+### csv_orders_grouping_tab.yaml
+
+**Pattern**: Same transformation with tab-delimited CSV (TSV format)
+
+**What it demonstrates**:
+- CSV parsing with tab delimiter (TSV - Tab-Separated Values)
+- Tab delimiter standard in data science and databases
+- Avoids most escaping issues
+- Excel and spreadsheet application compatibility
+
+**Real-world use case**: Processing database exports or data science datasets that use TSV format
+
+**Key difference**:
+```utlx
+input csv {
+  headers: true,
+  delimiter: "\t"  # Tab delimiter
+}
+```
+
+**Note**: TSV is particularly useful because:
+- Tab rarely appears in normal data
+- No complex escaping rules needed
+- Standard export format for PostgreSQL, MySQL, and other databases
+- Native support in Excel, Google Sheets, and data analysis tools
+
 ### json_to_csv_with_headers.yaml
 
 **Pattern**: JSON to CSV conversion with headers enabled
@@ -146,6 +192,125 @@ output csv {
 - Fields containing quotes → quoted, internal quotes doubled
 - Fields with newlines → quoted
 - RFC 4180 standard compliance
+
+## Regional Number Format Tests
+
+These tests demonstrate handling of regional number formatting conventions where decimal and thousands separators vary by locale.
+
+### csv_regional_usa_input.yaml
+
+**Pattern**: Parse CSV with USA/UK/Asia regional number format
+
+**What it demonstrates**:
+- Comma thousands separator, period decimal separator
+- Parsing numbers like "1,234.56" and "123,456.00"
+- Using standard `parseNumber()` which auto-strips comma thousands
+- Alternatively, explicit `parseUSNumber()` for clarity
+- JSON output with standard numeric representation
+
+**Real-world use case**: Processing financial data from USA, UK, India, or Asian sources
+
+**Regional format**:
+- **Delimiter**: Comma (`,`)
+- **Decimal separator**: Period (`.`)
+- **Thousands separator**: Comma (`,`) - requires quoting in CSV
+- **Example**: 1,234.56 represents one thousand two hundred thirty-four point five six
+
+### csv_regional_europe_input.yaml
+
+**Pattern**: Parse CSV with European/Latin American regional number format
+
+**What it demonstrates**:
+- Period thousands separator, comma decimal separator
+- Parsing numbers like "1.234,56" and "123.456,00"
+- Using `parseEUNumber()` for clean European format conversion
+- Semicolon CSV delimiter avoids conflict with comma decimals
+- JSON output with standard numeric representation
+
+**Real-world use case**: Processing financial data from Germany, France, Spain, Italy, Brazil, Argentina
+
+**Regional format**:
+- **Delimiter**: Semicolon (`;`)
+- **Decimal separator**: Comma (`,`)
+- **Thousands separator**: Period (`.`)
+- **Example**: 1.234,56 represents one thousand two hundred thirty-four comma five six
+
+**Key function**: `parseEUNumber(value)` - Removes period thousands, converts comma to period decimal
+
+### csv_regional_swiss_input.yaml
+
+**Pattern**: Parse CSV with Swiss regional number format
+
+**What it demonstrates**:
+- Apostrophe thousands separator, period decimal separator
+- Parsing numbers like "1'234.56" and "123'456.00"
+- Using `parseSwissNumber()` for Swiss format conversion
+- Semicolon CSV delimiter with period decimals
+- JSON output with standard numeric representation
+
+**Real-world use case**: Processing financial data from Switzerland and Liechtenstein
+
+**Regional format**:
+- **Delimiter**: Semicolon (`;`)
+- **Decimal separator**: Period (`.`)
+- **Thousands separator**: Apostrophe (`'`)
+- **Example**: 1'234.56 represents one thousand two hundred thirty-four point five six
+
+**Key function**: `parseSwissNumber(value)` - Removes apostrophe thousands separators
+
+### csv_regional_usa_output.yaml
+
+**Pattern**: Output CSV with USA/UK/Asia delimiter format
+
+**What it demonstrates**:
+- Comma delimiter with standard numeric output
+- Numbers output without thousands separators
+- Period decimal separator (standard interchange format)
+- Headers included
+
+**Real-world use case**: Creating CSV files for USA, UK, Asian systems
+
+### csv_regional_europe_output.yaml
+
+**Pattern**: Output CSV with European delimiter format
+
+**What it demonstrates**:
+- Semicolon delimiter for European compatibility
+- Numbers output with period decimal (interchange format)
+- Note: For true European display format, comma decimals would be needed
+- Current output uses standard numeric format for data compatibility
+
+**Real-world use case**: Creating CSV files for European systems (Germany, France, Spain, Italy)
+
+### csv_regional_swiss_output.yaml
+
+**Pattern**: Output CSV with Swiss delimiter format
+
+**What it demonstrates**:
+- Semicolon delimiter common in Swiss exports
+- Numbers output with period decimal (standard format)
+- Note: For true Swiss display format, apostrophe thousands would be needed
+- Current output uses standard numeric format for data interchange
+
+**Real-world use case**: Creating CSV files for Swiss systems
+
+## Regional Number Parsing Functions
+
+UTL-X provides three specialized functions for parsing regional number formats:
+
+- **`parseUSNumber(value)`** - Parse USA/UK/Asia format (comma thousands, period decimal)
+  - Example: `parseUSNumber("1,234.56")` → `1234.56`
+  - Regions: USA, UK, India, most of Asia
+
+- **`parseEUNumber(value)`** - Parse European/Latin American format (period thousands, comma decimal)
+  - Example: `parseEUNumber("1.234,56")` → `1234.56`
+  - Regions: Germany, France, Spain, Italy, Brazil, Argentina
+
+- **`parseSwissNumber(value)`** - Parse Swiss format (apostrophe thousands, period decimal)
+  - Example: `parseSwissNumber("1'234.56")` → `1234.56`
+  - Regions: Switzerland, Liechtenstein
+
+All functions convert to standard numeric representation (period decimal) for internal UDM storage and output.
 
 ## Adding New Tutorial Examples
 
