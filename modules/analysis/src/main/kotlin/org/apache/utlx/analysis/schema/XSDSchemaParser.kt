@@ -67,7 +67,7 @@ class XSDSchemaParser : InputSchemaParser {
      * Parse an XSD element
      */
     private fun parseElement(element: Element, schemaRoot: Element): TypeDefinition {
-        val name = element.getAttribute("name")
+        // Note: element name is not used in type inference, only type information
         val type = element.getAttribute("type")
         
         return when {
@@ -175,7 +175,7 @@ class XSDSchemaParser : InputSchemaParser {
     /**
      * Parse simple type definition
      */
-    private fun parseSimpleType(simpleType: Element, schemaRoot: Element): TypeDefinition {
+    private fun parseSimpleType(simpleType: Element, @Suppress("UNUSED_PARAMETER") schemaRoot: Element): TypeDefinition {
         // Look for restriction
         val restrictions = simpleType.getElementsByTagNameNS(XS_NAMESPACE, "restriction")
         if (restrictions.length > 0) {

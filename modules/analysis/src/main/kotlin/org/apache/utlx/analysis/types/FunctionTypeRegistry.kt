@@ -51,7 +51,7 @@ object FunctionTypeRegistry {
                 ParameterSignature("array", TypePattern.Array()),
                 ParameterSignature("mapper", TypePattern.Function())
             ),
-            returnType = ReturnTypeLogic.ArrayTransform { arrayType, _ ->
+            returnType = ReturnTypeLogic.ArrayTransform { _, _ ->
                 // Map preserves array but element type becomes Any (would need lambda analysis)
                 TypeDefinition.Array(TypeDefinition.Any)
             }

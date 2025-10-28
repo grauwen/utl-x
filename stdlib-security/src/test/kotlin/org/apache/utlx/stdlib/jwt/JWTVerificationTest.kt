@@ -130,7 +130,7 @@ class JWTVerificationTest {
         
         // Verify the token can be parsed back
         val verifyResult = JWTVerification.verifyJWT(listOf(UDM.Scalar(token), UDM.Scalar(secret)))
-        assertTrue((verifyResult as UDM.Object).properties["verified"] as UDM.Scalar).value as Boolean)
+        assertTrue(((verifyResult as UDM.Object).properties["verified"] as UDM.Scalar).value as Boolean)
     }
 
     @Test
@@ -259,14 +259,15 @@ class JWTVerificationTest {
 
     @Test
     fun `validateJWTStructure should handle invalid base64 encoding`() {
-        val invalidToken = "invalid.base64.encoding"
-        
+        // Use a string that is definitely not valid Base64URL (contains invalid characters like !@#)
+        val invalidToken = "!!!invalid@@@.###base64%%%.&&&encoding***"
+
         val result = JWTVerification.validateJWTStructure(listOf(UDM.Scalar(invalidToken)))
-        
+
         assertTrue(result is UDM.Object)
         val resultObj = result as UDM.Object
         assertFalse((resultObj.properties["valid"] as UDM.Scalar).value as Boolean)
-        assertTrue((resultObj.properties["error"] as UDM.Scalar).value as String).startsWith("Failed to parse JWT:")
+        assertTrue(((resultObj.properties["error"] as UDM.Scalar).value as String).startsWith("Failed to parse JWT:"))
     }
 
     @Test
@@ -346,8 +347,8 @@ class JWTVerificationTest {
         
         // Validate structure
         val structureResult = JWTVerification.validateJWTStructure(listOf(UDM.Scalar(token)))
-        assertTrue((structureResult as UDM.Object).properties["valid"] as UDM.Scalar).value as Boolean)
-        
+        assertTrue(((structureResult as UDM.Object).properties["valid"] as UDM.Scalar).value as Boolean)
+
         // Verify token
         val verifyResult = JWTVerification.verifyJWT(listOf(UDM.Scalar(token), UDM.Scalar(secret)))
         val resultObj = verifyResult as UDM.Object

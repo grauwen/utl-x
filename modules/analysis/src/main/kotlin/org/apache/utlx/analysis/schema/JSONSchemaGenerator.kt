@@ -62,9 +62,9 @@ class JSONSchemaGenerator : OutputSchemaGenerator {
     }
     
     private fun addScalarType(
-        builder: JsonObjectBuilder, 
-        scalar: TypeDefinition.Scalar, 
-        options: GeneratorOptions
+        builder: JsonObjectBuilder,
+        scalar: TypeDefinition.Scalar,
+        @Suppress("UNUSED_PARAMETER") options: GeneratorOptions
     ) {
         builder.put("type", scalar.kind.toJsonType())
         
@@ -168,16 +168,6 @@ class JSONSchemaGenerator : OutputSchemaGenerator {
             }
         })
     }
-    
-    /**
-     * Convert ScalarKind to JSON Schema type string
-     */
-    private fun ScalarKind.toJsonType(): String = when (this) {
-        ScalarKind.STRING -> "string"
-        ScalarKind.INTEGER -> "integer"
-        ScalarKind.NUMBER -> "number"
-        ScalarKind.BOOLEAN -> "boolean"
-        ScalarKind.NULL -> "null"
-        ScalarKind.DATE, ScalarKind.DATETIME, ScalarKind.BINARY -> "string"
-    }
+
+    // Note: ScalarKind.toJsonType() is already defined as a member function in TypeDefinition.kt
 }

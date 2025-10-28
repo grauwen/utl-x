@@ -184,12 +184,9 @@ class AdvancedTypeInference : TypeInferenceContext {
         if (signature != null) {
             return evaluateReturnType(signature.returnType, call.arguments)
         }
-        
-        // Fallback to legacy function analysis for unregistered functions
-        return when (functionName) {
-            // Legacy fallbacks (most should be covered by registry now)
-            else -> TypeDefinition.Any
-        }
+
+        // Fallback for unregistered functions (most functions should be covered by registry now)
+        return TypeDefinition.Any
     }
     
     /**

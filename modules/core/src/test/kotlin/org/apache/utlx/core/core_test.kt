@@ -254,9 +254,9 @@ class UDMTest {
         val num = UDM.Scalar.number(42)
         val bool = UDM.Scalar.boolean(true)
         val nul = UDM.Scalar.nullValue()
-        
+
         assertEquals("hello", str.asString())
-        assertEquals(42, num.asNumber())
+        assertEquals(42.0, num.asNumber())  // UDM stores all numbers as Double
         assertEquals(true, bool.asBoolean())
         assertTrue(nul.isNull())
     }

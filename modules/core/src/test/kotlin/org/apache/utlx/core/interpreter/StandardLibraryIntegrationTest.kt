@@ -3,6 +3,7 @@ package org.apache.utlx.core.interpreter
 import org.apache.utlx.core.udm.UDM
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class StandardLibraryIntegrationTest {
@@ -14,12 +15,12 @@ class StandardLibraryIntegrationTest {
         
         // Register all functions
         stdLib.registerAll(env)
-        
+
         // Verify some key functions are registered by checking environment
-        assertTrue(env.get("upper") != null, "upper function should be registered")
-        assertTrue(env.get("lower") != null, "lower function should be registered")
-        assertTrue(env.get("sum") != null, "sum function should be registered")
-        assertTrue(env.get("abs") != null, "abs function should be registered")
+        assertNotNull(env.get("upper"), "upper function should be registered")
+        assertNotNull(env.get("lower"), "lower function should be registered")
+        assertNotNull(env.get("sum"), "sum function should be registered")
+        assertNotNull(env.get("abs"), "abs function should be registered")
     }
     
     @Test
@@ -27,9 +28,8 @@ class StandardLibraryIntegrationTest {
         val stdLib = StandardLibraryImpl()
         val env = Environment()
         stdLib.registerAll(env)
-        
+
         // Test upper function
-        val upperFunc = env.get("upper") as RuntimeValue.FunctionValue
         val upperResult = StandardLibraryImpl.nativeFunctions["upper"]!!(
             listOf(RuntimeValue.StringValue("hello"))
         )

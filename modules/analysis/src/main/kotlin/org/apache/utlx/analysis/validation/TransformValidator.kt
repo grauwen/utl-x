@@ -128,7 +128,7 @@ class TransformValidator {
         actual: TypeDefinition.Array,
         expected: TypeDefinition.Array,
         errors: MutableList<String>,
-        warnings: MutableList<String>
+        @Suppress("UNUSED_PARAMETER") warnings: MutableList<String>
     ) {
         // Check element type compatibility
         if (!actual.elementType.isCompatibleWith(expected.elementType)) {

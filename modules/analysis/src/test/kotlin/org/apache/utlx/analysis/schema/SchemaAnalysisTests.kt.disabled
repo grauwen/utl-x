@@ -9,7 +9,7 @@ import org.apache.utlx.analysis.types.*
 import org.apache.utlx.core.ast.*
 import org.apache.utlx.core.parser.Parser
 
-class XSDSchemaParserTest : DescribeSpec({
+class XSDSchemaParserKotestTest : DescribeSpec({
     
     val parser = XSDSchemaParser()
     
@@ -171,7 +171,7 @@ class XSDSchemaParserTest : DescribeSpec({
     }
 })
 
-class JSONSchemaGeneratorTest : DescribeSpec({
+class JSONSchemaGeneratorKotestTest : DescribeSpec({
     
     val generator = JSONSchemaGenerator()
     
@@ -179,13 +179,12 @@ class JSONSchemaGeneratorTest : DescribeSpec({
         
         it("should generate schema for simple scalar types") {
             val type = TypeDefinition.Scalar(ScalarKind.STRING)
-            
+
             val schema = generator.generate(
                 type,
-                SchemaFormat.JSON_SCHEMA,
                 GeneratorOptions(pretty = false)
             )
-            
+
             schema.contains("\"type\":\"string\"").shouldBe(true)
         }
         
@@ -201,7 +200,6 @@ class JSONSchemaGeneratorTest : DescribeSpec({
             
             val schema = generator.generate(
                 type,
-                SchemaFormat.JSON_SCHEMA,
                 GeneratorOptions(pretty = true)
             )
             
@@ -221,7 +219,6 @@ class JSONSchemaGeneratorTest : DescribeSpec({
             
             val schema = generator.generate(
                 type,
-                SchemaFormat.JSON_SCHEMA,
                 GeneratorOptions(pretty = false)
             )
             
@@ -243,7 +240,6 @@ class JSONSchemaGeneratorTest : DescribeSpec({
             
             val schema = generator.generate(
                 type,
-                SchemaFormat.JSON_SCHEMA,
                 GeneratorOptions(pretty = false)
             )
             
@@ -278,7 +274,6 @@ class JSONSchemaGeneratorTest : DescribeSpec({
             
             val schema = generator.generate(
                 type,
-                SchemaFormat.JSON_SCHEMA,
                 GeneratorOptions(pretty = true)
             )
             
@@ -293,7 +288,6 @@ class JSONSchemaGeneratorTest : DescribeSpec({
             
             val schema = generator.generate(
                 type,
-                SchemaFormat.JSON_SCHEMA,
                 GeneratorOptions(pretty = false)
             )
             
