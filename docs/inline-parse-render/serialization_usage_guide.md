@@ -21,8 +21,8 @@ output json
   let soapEnvelope = parseXml(input.request.soapPayload),
   
   processedRequest: {
-    requestId: input.request.id,
-    timestamp: input.request.timestamp,
+    requestId: $input.request.id,
+    timestamp: $input.request.timestamp,
     
     // Extract SOAP data
     customerId: soapEnvelope.Envelope.Body.GetCustomer.customerId,
