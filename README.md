@@ -63,14 +63,14 @@ output json
     
     summary: {
       itemCount: count($input.Order.Items.Item),
-      subtotal: sum($input.Order.Items.Item.(
-        parseNumber($quantity) * parseNumber($price)
+      subtotal: sum($input.Order.Items.Item |> map(item =>
+        parseNumber(item.@quantity) * parseNumber(item.@price)
       )),
-      tax: sum($input.Order.Items.Item.(
-        parseNumber($quantity) * parseNumber($price)
+      tax: sum($input.Order.Items.Item |> map(item =>
+        parseNumber(item.@quantity) * parseNumber(item.@price)
       )) * 0.08,
-      grandTotal: sum($input.Order.Items.Item.(
-        parseNumber($quantity) * parseNumber($price)
+      grandTotal: sum($input.Order.Items.Item |> map(item =>
+        parseNumber(item.@quantity) * parseNumber(item.@price)
       )) * 1.08
     }
   }
@@ -161,14 +161,12 @@ output json
 {
   byCategory: $input.products
     |> groupBy(product => product.category)
-    |> entries()
-    |> map(([category, products]) => {
-         category: category,
-         count: count(products),
-         avgPrice: avg(products.*.price),
-         totalValue: sum(products.*.price)
+    |> map(group => {
+         category: group.key,
+         count: count(group.value),
+         avgPrice: avg(group.value |> map(p => p.price)),
+         totalValue: sum(group.value |> map(p => p.price))
        })
-    |> sortBy(item => -item.totalValue)
 }
 ```
 
@@ -181,8 +179,7 @@ output json
 ---
 {
   premiumCustomers: $input.customers
-    |> filter(c => c.totalSpent > 10000 && c.active == true)
-    |> sortBy(c => -c.totalSpent)
+    |> filter(c => c.totalSpent > 500 && c.active == true)
     |> take(10)
     |> map(c => {
          name: c.name,
@@ -307,7 +304,7 @@ output json
 
 ### Functional Programming
 ```utlx
-input.items
+$input.items
   |> filter(item => item.price > 100)
   |> map(item => {
        name: item.name,
@@ -440,9 +437,9 @@ input.customer?.address?.city ?? "Unknown"
   
   // Calculations
   tax: total * 0.08,
-  
+
   // Aggregations
-  orderTotal: sum(items.(quantity * price))
+  orderTotal: sum(items |> map(item => item.quantity * item.price))
 }
 ```
 
