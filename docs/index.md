@@ -1,8 +1,8 @@
 # UTL-X Documentation Index
 
-> **Last Updated:** 2025-10-27
-> **Total Documents:** 209 listed (202 current + 7 deleted)
-> **Project Total:** 205 current MD files (3 not yet indexed)
+> **Last Updated:** 2025-10-28
+> **Total Documents:** 219 listed (214 current + 5 deleted)
+> **Project Total:** 214 current MD files
 
 This index lists all markdown documentation in the UTL-X project, organized chronologically with the newest documents first. Files marked ❌ DELETED were removed from the project but kept for historical tracking.
 
@@ -10,25 +10,60 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 ## Quick Navigation
 
-- [Latest Updates](#october-27-2025---usdl-implementation-4-docs)
-- [USDL Documentation](#october-26-2025---usdl-design-2-docs)
+- [Latest Updates](#october-28-2025---examples--documentation-reorganization-17-docs)
+- [USDL Documentation](#october-27-2025---integration-studies--usdl-15-docs)
 - [Conformance Suite](#october-25-2025---conformance--architecture-22-docs)
 - [Language Guide](#language-guides)
-- [Standard Library](#october-15-17-2025---standard-library-36-docs)
+- [Standard Library](#october-15-17-2025---standard-library-34-docs)
 - [Getting Started](#getting-started-guides)
 - [Architecture](#architecture-documentation)
 - [Project Meta](#project-metadata-8-docs)
 
 ---
 
-## October 27, 2025 - USDL Implementation (4 docs)
+## October 28, 2025 - Examples & Documentation Reorganization (17 docs)
 
 | # | Document | Category |
 |---|----------|----------|
-| 1 | [session-2025-10-27-json-schema-usdl-serializer.md](usdl/session-2025-10-27-json-schema-usdl-serializer.md) | Development Sessions |
-| 2 | [session-2025-10-27-complete-usdl-implementation.md](usdl/session-2025-10-27-complete-usdl-implementation.md) | Development Sessions |
-| 3 | [session-2025-10-27-xsd-usdl-serializer.md](usdl/session-2025-10-27-xsd-usdl-serializer.md) | Development Sessions |
-| 4 | [session-2025-10-27-usdl-implementation.md](usdl/session-2025-10-27-usdl-implementation.md) | Development Sessions |
+| 1 | [index-by-topic.md](index-by-topic.md) | Documentation Index |
+| 2 | [XSD DESIGN_PATTERNS.md](../examples/xsd/DESIGN_PATTERNS.md) | Examples |
+| 3 | [XSD README.md](../examples/xsd/README.md) | Examples |
+| 4 | [JSON Schema README.md](../examples/jsch/README.md) | Examples |
+| 5 | [Avro README.md](../examples/avro/README.md) | Examples |
+| 6 | [sap-idoc-integration-study.md](idoc/sap-idoc-integration-study.md) | Integration Studies |
+| 7 | [calendar_support_analysis.md](miscellaneous/calendar_support_analysis.md) | Miscellaneous |
+| 8 | [currency_support_analysis.md](miscellaneous/currency_support_analysis.md) | Miscellaneous |
+| 9 | [error_improvements_session_summary.md](miscellaneous/error_improvements_session_summary.md) | Miscellaneous |
+| 10 | [error_message_improvements.md](miscellaneous/error_message_improvements.md) | Miscellaneous |
+| 11 | [usdl_naming_analysis.md](usdl/usdl_naming_analysis.md) | USDL |
+| 12 | [raml-fragments-integration-study.md](raml/raml-fragments-integration-study.md) | Integration Studies |
+| 13 | [sql-ddl-integration-study.md](sql/sql-ddl-integration-study.md) | Integration Studies |
+| 14 | [asyncapi-integration-study.md](asyncapi/asyncapi-integration-study.md) | Integration Studies |
+| 15 | [openapi-integration-study.md](openapi/openapi-integration-study.md) | Integration Studies |
+| 16 | [raml-integration-study.md](raml/raml-integration-study.md) | Integration Studies |
+| 17 | [protobuf-integration-study.md](protobuf/protobuf-integration-study.md) | Integration Studies |
+
+---
+
+## October 27, 2025 - Integration Studies & USDL (15 docs)
+
+| # | Document | Category |
+|---|----------|----------|
+| 18 | [parquet-integration-study.md](parquet/parquet-integration-study.md) | Integration Studies |
+| 19 | [avro-integration-study.md](avro/avro-integration-study.md) | Integration Studies |
+| 20 | [session-2025-10-27-json-schema-usdl-serializer.md](usdl/session-2025-10-27-json-schema-usdl-serializer.md) | Development Sessions |
+| 21 | [session-2025-10-27-complete-usdl-implementation.md](usdl/session-2025-10-27-complete-usdl-implementation.md) | Development Sessions |
+| 22 | [session-2025-10-27-xsd-usdl-serializer.md](usdl/session-2025-10-27-xsd-usdl-serializer.md) | Development Sessions |
+| 23 | [session-2025-10-27-usdl-implementation.md](usdl/session-2025-10-27-usdl-implementation.md) | Development Sessions |
+| 24 | [yaml-dynamic-keys-findings.md](yaml/yaml-dynamic-keys-findings.md) | YAML |
+| 25 | [yaml-dynamic-keys-implementation-status.md](yaml/yaml-dynamic-keys-implementation-status.md) | YAML |
+| 26 | [yaml-dynamic-keys-output.md](yaml/yaml-dynamic-keys-output.md) | YAML |
+| 27 | [yaml-dynamic-keys-summary.md](yaml/yaml-dynamic-keys-summary.md) | YAML |
+| 28 | [yaml-dynamic-keys-support.md](yaml/yaml-dynamic-keys-support.md) | YAML |
+| 29 | [analysis_module_readme.md](analysis/analysis_module_readme.md) | Analysis |
+| 30 | [analysis_module_testkit_readme.md](analysis/analysis_module_testkit_readme.md) | Analysis |
+| 31 | [complete_implementation_status.md](analysis/complete_implementation_status.md) | Analysis |
+| 32 | [feature_summary_roadmap.md](analysis/feature_summary_roadmap.md) | Analysis |
 
 ---
 
@@ -36,8 +71,8 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 5 | [usdl-syntax-rationale.md](design/usdl-syntax-rationale.md) | Design Decisions |
-| 6 | [universal-schema-dsl.md](language-guide/universal-schema-dsl.md) | Language Guide |
+| 33 | [usdl-syntax-rationale.md](design/usdl-syntax-rationale.md) | Design Decisions |
+| 34 | [universal-schema-dsl.md](language-guide/universal-schema-dsl.md) | Language Guide |
 
 ---
 
@@ -45,28 +80,28 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 7 | [IMPACT_REPORT.md](../conformance-suite/tests/formats/IMPACT_REPORT.md) | Conformance Suite |
-| 8 | [XSD_JSCH_INTEGRATION.md](../conformance-suite/tests/jsch/XSD_JSCH_INTEGRATION.md) | Conformance Suite |
-| 9 | [TRANSFORMATION_TESTS_FINDINGS.md](../conformance-suite/tests/formats/TRANSFORMATION_TESTS_FINDINGS.md) | Conformance Suite |
-| 10 | [TEST_SUMMARY.md](../conformance-suite/tests/formats/TEST_SUMMARY.md) | Conformance Suite |
-| 11 | [FINAL_SUMMARY.md](../conformance-suite/tests/formats/FINAL_SUMMARY.md) | Conformance Suite |
-| 12 | [ARRAY_HINTS_IMPLEMENTATION.md](../conformance-suite/tests/formats/ARRAY_HINTS_IMPLEMENTATION.md) | Conformance Suite |
-| 13 | [xsd-jsch-design-decisions.md](proposals/xsd-jsch-design-decisions.md) | Proposals |
-| 14 | [xsd-jsch-format-support.md](proposals/xsd-jsch-format-support.md) | Proposals |
-| 15 | [JSON-no-comments_JSON-Schema-does-allow-documentation.md](architecture/comments-and-documentation-in-XML-YAML/JSON-no-comments_JSON-Schema-does-allow-documentation.md) | Architecture |
-| 16 | [IDOC-meta-data.md](../examples/IDOC/IDOC-meta-data.md) | Examples |
-| 17 | [utlx-xml-documentation-functions-proposal.md](architecture/comments-and-documentation-in-XML-YAML/utlx-xml-documentation-functions-proposal.md) | Architecture |
-| 18 | [comment-preservation-analysis-v2-with-xsd.md](architecture/comments-and-documentation-in-XML-YAML/comment-preservation-analysis-v2-with-xsd.md) | Architecture |
-| 19 | [comment-preservation-analysis.md](architecture/comments-and-documentation-in-XML-YAML/comment-preservation-analysis.md) | Architecture |
-| 20 | [xml-documentation-analysis.md](architecture/comments-and-documentation-in-XML-YAML/xml-documentation-analysis.md) | Architecture |
-| 21 | [object-lambda README.md](../conformance-suite/tests/stdlib/object-lambda/README.md) | Conformance Suite |
-| 22 | [lambda-functions-implementation.md](lambda-functions-implementation.md) | Root Docs |
-| 23 | [yaml-dynamic-keys-implementation-status.md](yaml-dynamic-keys-implementation-status.md) | Root Docs |
-| 24 | [yaml-dynamic-keys-summary.md](yaml-dynamic-keys-summary.md) | Root Docs |
-| 25 | [yaml-dynamic-keys-output.md](yaml-dynamic-keys-output.md) | Root Docs |
-| 26 | [yaml-dynamic-keys-support.md](yaml-dynamic-keys-support.md) | Root Docs |
-| 27 | [yaml-dynamic-keys-findings.md](yaml-dynamic-keys-findings.md) | Root Docs |
-| 28 | [placeholder-matching.md](../conformance-suite/docs/placeholder-matching.md) | Conformance Suite |
+| 35 | [IMPACT_REPORT.md](miscellaneous/IMPACT_REPORT.md) | Conformance Suite |
+| 36 | [XSD_JSCH_INTEGRATION.md](jsch/XSD_JSCH_INTEGRATION.md) | Conformance Suite |
+| 37 | [TRANSFORMATION_TESTS_FINDINGS.md](miscellaneous/TRANSFORMATION_TESTS_FINDINGS.md) | Conformance Suite |
+| 38 | [TEST_SUMMARY.md](miscellaneous/TEST_SUMMARY.md) | Conformance Suite |
+| 39 | [FINAL_SUMMARY.md](miscellaneous/FINAL_SUMMARY.md) | Conformance Suite |
+| 40 | [ARRAY_HINTS_IMPLEMENTATION.md](miscellaneous/ARRAY_HINTS_IMPLEMENTATION.md) | Conformance Suite |
+| 41 | [xsd-jsch-design-decisions.md](proposals/xsd-jsch-design-decisions.md) | Proposals |
+| 42 | [xsd-jsch-format-support.md](proposals/xsd-jsch-format-support.md) | Proposals |
+| 43 | [JSON-no-comments_JSON-Schema-does-allow-documentation.md](architecture/comments-and-documentation-in-XML-YAML/JSON-no-comments_JSON-Schema-does-allow-documentation.md) | Architecture |
+| 44 | [IDOC-meta-data.md](idoc/IDOC-meta-data.md) | Examples |
+| 45 | [utlx-xml-documentation-functions-proposal.md](architecture/comments-and-documentation-in-XML-YAML/utlx-xml-documentation-functions-proposal.md) | Architecture |
+| 46 | [comment-preservation-analysis-v2-with-xsd.md](architecture/comments-and-documentation-in-XML-YAML/comment-preservation-analysis-v2-with-xsd.md) | Architecture |
+| 47 | [comment-preservation-analysis.md](architecture/comments-and-documentation-in-XML-YAML/comment-preservation-analysis.md) | Architecture |
+| 48 | [xml-documentation-analysis.md](architecture/comments-and-documentation-in-XML-YAML/xml-documentation-analysis.md) | Architecture |
+| 49 | [object-lambda README.md](../conformance-suite/tests/stdlib/object-lambda/README.md) | Conformance Suite |
+| 50 | [lambda-functions-implementation.md](miscellaneous/lambda-functions-implementation.md) | Root Docs |
+| 51 | [placeholder-matching.md](../conformance-suite/docs/placeholder-matching.md) | Conformance Suite |
+| 52 | [real_world_integration_example.md](analysis/real_world_integration_example.md) | Analysis |
+| 53 | [schema_analysis_architecture.md](analysis/schema_analysis_architecture.md) | Analysis |
+| 54 | [schema_workflow_example.md](analysis/schema_workflow_example.md) | Analysis |
+| 55 | [testkit_complete_summery.md](analysis/testkit_complete_summery.md) | Analysis |
+| 56 | [updated_project_structure.md](analysis/updated_project_structure.md) | Analysis |
 
 ---
 
@@ -74,16 +109,16 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 29 | [xml-array-handling.md](formats/xml-array-handling.md) | Formats |
-| 30 | [xml-encoding README.md](../conformance-suite/tests/examples/xml-encoding/README.md) | Conformance Suite |
-| 31 | [conformance-suite-outstanding-issues.md](../conformance-suite-outstanding-issues.md) | Root Docs |
-| 32 | [dollar-sign-input-prefix-migration.md](proposals/dollar-sign-input-prefix-migration.md) | Proposals |
-| 33 | [at-vs-dollar-quick-reference.md](proposals/at-vs-dollar-quick-reference.md) | Proposals |
-| 34 | [proposals README.md](proposals/README.md) | Proposals |
-| 35 | [MIGRATION-ISSUE-TEMPLATE.md](proposals/MIGRATION-ISSUE-TEMPLATE.md) | Proposals |
-| 36 | [reach-audiance.md](architecture/decisions/reach-audiance.md) | Architecture Decisions |
-| 37 | [vs-jq.md](comparison/vs-jq.md) | Comparisons |
-| 38 | [three-phase-runtime-validation-first.md](architecture/three-phase-runtime-validation-first.md) | Architecture |
+| 57 | [xml-array-handling.md](xml/xml-array-handling.md) | Formats |
+| 58 | [xml-encoding README.md](../conformance-suite/tests/examples/xml-encoding/README.md) | Conformance Suite |
+| 59 | [conformance-suite-outstanding-issues.md](../conformance-suite-outstanding-issues.md) | Root Docs |
+| 60 | [dollar-sign-input-prefix-migration.md](proposals/dollar-sign-input-prefix-migration.md) | Proposals |
+| 61 | [at-vs-dollar-quick-reference.md](proposals/at-vs-dollar-quick-reference.md) | Proposals |
+| 62 | [proposals README.md](proposals/README.md) | Proposals |
+| 63 | [MIGRATION-ISSUE-TEMPLATE.md](proposals/MIGRATION-ISSUE-TEMPLATE.md) | Proposals |
+| 64 | [reach-audiance.md](architecture/decisions/reach-audiance.md) | Architecture Decisions |
+| 65 | [vs-jq.md](comparison/vs-jq.md) | Comparisons |
+| 66 | [three-phase-runtime-validation-first.md](architecture/three-phase-runtime-validation-first.md) | Architecture |
 
 ---
 
@@ -91,14 +126,14 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 39 | [three-phase-runtime-design.md](architecture/three-phase-runtime-design.md) | Architecture |
-| 40 | [parallelization-analysis.md](architecture/parallelization-analysis.md) | Architecture |
-| 41 | [module-system-design.md](architecture/module-system-design.md) | Architecture |
-| 42 | [spread-operator-explained.md](architecture/spread-operator-explained.md) | Architecture |
-| 43 | [grammar-implementation-status.md](analysis/grammar-implementation-status.md) | Analysis |
-| 44 | [Debugging-Guide.md](Debugging-Guide.md) | Root Docs |
-| 45 | [xsd-complex-simple-type.md](architecture/decisions/xsd-complex-simple-type.md) | Architecture Decisions |
-| 46 | [uniform-file-paths.md](architecture/decisions/uniform-file-paths.md) | Architecture Decisions |
+| 67 | [three-phase-runtime-design.md](architecture/three-phase-runtime-design.md) | Architecture |
+| 68 | [parallelization-analysis.md](architecture/parallelization-analysis.md) | Architecture |
+| 69 | [module-system-design.md](architecture/module-system-design.md) | Architecture |
+| 70 | [spread-operator-explained.md](spread/spread-operator-explained.md) | Architecture |
+| 71 | [grammar-implementation-status.md](grammar/grammar-implementation-status.md) | Analysis |
+| 72 | [Debugging-Guide.md](debug/Debugging-Guide.md) | Root Docs |
+| 73 | [xsd-complex-simple-type.md](xsd/xsd-complex-simple-type.md) | Architecture Decisions |
+| 74 | [uniform-file-paths.md](architecture/decisions/uniform-file-paths.md) | Architecture Decisions |
 
 ---
 
@@ -106,18 +141,18 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 47 | [multi-input README.md](../conformance-suite/tests/multi-input/README.md) | Conformance Suite |
-| 48 | [quick-reference-multi-input.md](language-guide/quick-reference-multi-input.md) | Language Guide |
-| 49 | [multiple-inputs-outputs.md](language-guide/multiple-inputs-outputs.md) | Language Guide |
-| 50 | [language-guide README.md](language-guide/README.md) | Language Guide |
-| 51 | [RELEASE-NOTES-MULTI-INPUT.md](RELEASE-NOTES-MULTI-INPUT.md) | Root Docs |
-| 52 | [output-encoding-configuration.md](output-encoding-configuration.md) | Root Docs |
-| 53 | [README_BOM_Support.md](../conformance-suite/tests/stdlib/serialization/README_BOM_Support.md) | Conformance Suite |
-| 54 | [README_BOM.md](../conformance-suite/tests/stdlib/serialization/README_BOM.md) | Conformance Suite |
-| 55 | [BOM-json.md](architecture/decisions/BOM-json.md) | Architecture Decisions |
-| 56 | [date-time-localization.md](architecture/decisions/date-time-localization.md) | Architecture Decisions |
-| 57 | [xsd-discussions-style.md](architecture/decisions/xsd-discussions-style.md) | Architecture Decisions |
-| 58 | [utlx-datetime-localization.md](architecture/decisions/utlx-datetime-localization.md) | Architecture Decisions |
+| 75 | [multi-input README.md](../conformance-suite/tests/multi-input/README.md) | Conformance Suite |
+| 76 | [quick-reference-multi-input.md](language-guide/quick-reference-multi-input.md) | Language Guide |
+| 77 | [multiple-inputs-outputs.md](language-guide/multiple-inputs-outputs.md) | Language Guide |
+| 78 | [language-guide README.md](language-guide/README.md) | Language Guide |
+| 79 | [RELEASE-NOTES-MULTI-INPUT.md](miscellaneous/RELEASE-NOTES-MULTI-INPUT.md) | Root Docs |
+| 80 | [output-encoding-configuration.md](miscellaneous/output-encoding-configuration.md) | Root Docs |
+| 81 | [README_BOM_Support.md](../conformance-suite/tests/stdlib/serialization/README_BOM_Support.md) | Conformance Suite |
+| 82 | [README_BOM.md](../conformance-suite/tests/stdlib/serialization/README_BOM.md) | Conformance Suite |
+| 83 | [BOM-json.md](json/BOM-json.md) | Architecture Decisions |
+| 84 | [date-time-localization.md](date-time/date-time-localization.md) | Architecture Decisions |
+| 85 | [xsd-discussions-style.md](xsd/xsd-discussions-style.md) | Architecture Decisions |
+| 86 | [utlx-datetime-localization.md](date-time/utlx-datetime-localization.md) | Architecture Decisions |
 
 ---
 
@@ -125,8 +160,8 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 59 | [date-time-enhancement-plan.md](date-time-enhancement-plan.md) | Root Docs |
-| 60 | [grammar-analysis.md](analysis/grammar-analysis.md) | Analysis |
+| 87 | [date-time-enhancement-plan.md](date-time/date-time-enhancement-plan.md) | Root Docs |
+| 88 | [grammar-analysis.md](grammar/grammar-analysis.md) | Analysis |
 
 ---
 
@@ -134,13 +169,13 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 61 | [Next-steps.md](architecture/decisions/Next-steps.md) | Architecture Decisions |
-| 62 | [README-TEST-CAPTURE.md](../scripts/README-TEST-CAPTURE.md) | Scripts |
-| 63 | [test-capture-system.md](test-capture-system.md) | Root Docs |
-| 64 | [auto-captured README.md](../conformance-suite/tests/auto-captured/README.md) | Conformance Suite |
-| 65 | [CLI-FUNCTIONS-COMMAND.md](CLI-FUNCTIONS-COMMAND.md) | Root Docs |
-| 66 | [ANNOTATION-TOOLING.md](ANNOTATION-TOOLING.md) | Root Docs |
-| 67 | [function-reference.md](functions/function-reference.md) | Functions |
+| 89 | [Next-steps.md](architecture/decisions/Next-steps.md) | Architecture Decisions |
+| 90 | [README-TEST-CAPTURE.md](../scripts/README-TEST-CAPTURE.md) | Scripts |
+| 91 | [test-capture-system.md](comformance-suite/test-capture-system.md) | Root Docs |
+| 92 | [auto-captured README.md](../conformance-suite/tests/auto-captured/README.md) | Conformance Suite |
+| 93 | [CLI-FUNCTIONS-COMMAND.md](cli/CLI-FUNCTIONS-COMMAND.md) | Root Docs |
+| 94 | [ANNOTATION-TOOLING.md](scripts/ANNOTATION-TOOLING.md) | Root Docs |
+| 95 | [function-reference.md](functions/function-reference.md) | Functions |
 
 ---
 
@@ -148,153 +183,141 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 68 | [cli-cheatsheet.md](functions/cli-cheatsheet.md) | Functions |
-| 69 | [Enhanced-Function-Annotations-v2.md](Enhanced-Function-Annotations-v2.md) | Root Docs |
-| 70 | [Enhanced-Function-Annotations-v1-OBSOLETE.md](Enhanced-Function-Annotations-v1-OBSOLETE.md) | Root Docs |
-| 71 | [examples README.md](../conformance-suite/tests/examples/README.md) | Conformance Suite |
-| 72 | [xml_encoding_bom_functions.md](../stdlib/xml_encoding_bom_functions.md) | Standard Library |
-| 73 | [conformance-suite README.md](../conformance-suite/README.md) | Conformance Suite |
-| 74 | [conformance-suite-design.md](architecture/conformance-suite-design.md) | Architecture |
-| 75 | [YAML_SUPPORT_ADDED.md](miscellaneous/YAML_SUPPORT_ADDED.md) | Miscellaneous |
-| 76 | [CLI_BINARY.md](miscellaneous/CLI_BINARY.md) | Miscellaneous |
-| 77 | [STDLIB_INTEGRATION.md](stdlib/STDLIB_INTEGRATION.md) | Standard Library Docs |
+| 96 | [cli-cheatsheet.md](functions/cli-cheatsheet.md) | Functions |
+| 97 | [Enhanced-Function-Annotations-v2.md](miscellaneous/Enhanced-Function-Annotations-v2.md) | Root Docs |
+| 98 | [Enhanced-Function-Annotations-v1-OBSOLETE.md](miscellaneous/Enhanced-Function-Annotations-v1-OBSOLETE.md) | Root Docs |
+| 99 | [examples README.md](../conformance-suite/tests/examples/README.md) | Conformance Suite |
+| 100 | [xml_encoding_bom_functions.md](xml/xml_encoding_bom_functions.md) | Standard Library |
+| 101 | [conformance-suite README.md](comformance-suite/README.md) | Conformance Suite |
+| 102 | [conformance-suite-design.md](comformance-suite/conformance-suite-design.md) | Architecture |
+| 103 | [YAML_SUPPORT_ADDED.md](miscellaneous/YAML_SUPPORT_ADDED.md) | Miscellaneous |
+| 104 | [CLI_BINARY.md](miscellaneous/CLI_BINARY.md) | Miscellaneous |
+| 105 | [STDLIB_INTEGRATION.md](stdlib/STDLIB_INTEGRATION.md) | Standard Library Docs |
 
 ---
 
-## October 15-17, 2025 - Standard Library (36 docs)
+## October 15-17, 2025 - Standard Library (34 docs)
 
 ### Stdlib - YAML & CSV Functions
 
 | # | Document | Category |
 |---|----------|----------|
-| 78 | [all-stlib-functions-outlined.md](../stdlib/all-stlib-functions-outlined.md) | Standard Library ❌ DELETED|
-| 79 | [yaml_functions_guide.md](../stdlib/yaml_functions_guide.md) | Standard Library |
-| 80 | [yaml_functions_analysis.md](../stdlib/yaml_functions_analysis.md) | Standard Library |
-| 81 | [yaml-maps-json-schema-summary.md](../stdlib/yaml-maps-json-schema-summary.md) | Standard Library |
-| 82 | [format_functions_summary.md](../stdlib/format_functions_summary.md) | Standard Library |
-| 83 | [csv_parseCsv_clarification.md](../stdlib/csv_parseCsv_clarification.md) | Standard Library |
-| 84 | [csv_integration_notes.md](../stdlib/docs/csv_integration_notes.md) | Standard Library |
-| 85 | [csv_functions_guide.md](../stdlib/docs/csv_functions_guide.md) | Standard Library |
+| 106 | [yaml_functions_guide.md](stdlib/yaml_functions_guide.md) | Standard Library |
+| 107 | [yaml_functions_analysis.md](stdlib/yaml_functions_analysis.md) | Standard Library |
+| 108 | [yaml-maps-json-schema-summary.md](stdlib/yaml-maps-json-schema-summary.md) | Standard Library |
+| 109 | [format_functions_summary.md](stdlib/format_functions_summary.md) | Standard Library |
+| 110 | [csv_parseCsv_clarification.md](csv/csv_parseCsv_clarification.md) | Standard Library |
+| 111 | [csv_integration_notes.md](csv/csv_integration_notes.md) | Standard Library |
+| 112 | [csv_functions_guide.md](csv/csv_functions_guide.md) | Standard Library |
 
 ### Stdlib - XML & Serialization
 
 | # | Document | Category |
 |---|----------|----------|
-| 86 | [prettyprint_recommendation.md](../stdlib/prettyprint_recommendation.md) | Standard Library |
-| 87 | [prettyprint_integration.md](../stdlib/prettyprint_integration.md) | Standard Library |
-| 88 | [xml_serialization_guide.md](../stdlib/xml_serialization_guide.md) | Standard Library |
-| 89 | [xml_options_integration_summary.md](../stdlib/xml_options_integration_summary.md) | Standard Library |
-| 90 | [jws_jwt_jcs_integration.md](../stdlib/jws_jwt_jcs_integration.md) | Standard Library |
-| 91 | [jws_analysis.md](../stdlib/jws_analysis.md) | Standard Library |
-| 92 | [structure.md](../stdlib-security/structure.md) | Standard Library |
-| 93 | [jcs_integration_guide.md](../stdlib/jcs_integration_guide.md) | Standard Library |
-| 94 | [jcs_integration_checklist.md](../stdlib/jcs_integration_checklist.md) | Standard Library |
+| 113 | [prettyprint_recommendation.md](prettyprint/prettyprint_recommendation.md) | Standard Library |
+| 114 | [prettyprint_integration.md](prettyprint/prettyprint_integration.md) | Standard Library |
+| 115 | [xml_serialization_guide.md](inline-parse-render/xml_serialization_guide.md) | Standard Library |
+| 116 | [xml_options_integration_summary.md](stdlib/xml_options_integration_summary.md) | Standard Library |
+| 117 | [jws_jwt_jcs_integration.md](jws/jws_jwt_jcs_integration.md) | Standard Library |
+| 118 | [jws_analysis.md](jws/jws_analysis.md) | Standard Library |
+| 119 | [jcs_integration_guide.md](canonicalization-json/jcs_integration_guide.md) | Standard Library |
+| 120 | [jcs_integration_checklist.md](canonicalization-json/jcs_integration_checklist.md) | Standard Library |
 
 ### Stdlib - Gap Analysis & Planning
 
 | # | Document | Category |
 |---|----------|----------|
-| 95 | [CLAUDE.md](ai/CLAUDE.md) | **Project Instructions** |
-| 96 | [stlib_implementation_guide_oct15_afternoon.md](../stdlib/stlib_implementation_guide_oct15_afternoon.md) | Standard Library |
-| 97 | [utlx_cap_analysis_oct15_afternoon.md](../stdlib/docs/utlx_cap_analysis_oct15_afternoon.md) | Standard Library |
-| 98 | [stlib_GAP_analysis_oct15th.md](../stdlib/docs/stlib_GAP_analysis_oct15th.md) | Standard Library |
-| 99 | [serialization_usage_guide.md](../stdlib/docs/serialization_usage_guide.md) | Standard Library |
-| 100 | [serialization_integration_guide.md](../stdlib/docs/serialization_integration_guide.md) | Standard Library |
-| 101 | [c14n_integration_guide.md](../stdlib/docs/c14n_integration_guide.md) | Standard Library |
-| 102 | [stlib_complete_reference_after_insert_c14n.md](../stdlib/docs/stlib_complete_reference_after_insert_c14n.md) | Standard Library |
-| 103 | [stlib_complete_refernce.md](../stdlib/docs/stlib_complete_refernce.md) | Standard Library |
-| 104 | [dw_modules_added_summery.md](../stdlib/docs/dw_modules_added_summery.md) | Standard Library |
-| 105 | [url_functions_integration_guide.md](../stdlib/docs/url_functions_integration_guide.md) | Standard Library |
-| 106 | [utility_modules_complete_guide.md](../stdlib/docs/utility_modules_complete_guide.md) | Standard Library |
-| 107 | [stlib_gaps_analysis_type_cenversions.md](../stdlib/docs/stlib_gaps_analysis_type_cenversions.md) | Standard Library |
-| 108 | [stlib_complete_gaps_integration_plan.md](../stdlib/docs/stlib_complete_gaps_integration_plan.md) | Standard Library |
-| 109 | [stlib_gaps_analysis.md](../stdlib/docs/stlib_gaps_analysis.md) | Standard Library |
-| 110 | [unzip_integration_guide.md](../stdlib/docs/unzip_integration_guide.md) | Standard Library |
+| 121 | [CLAUDE.md](ai/CLAUDE.md) | **Project Instructions** |
+| 122 | [stlib_implementation_guide_oct15_afternoon.md](stdlib/stlib_implementation_guide_oct15_afternoon.md) | Standard Library |
+| 123 | [utlx_cap_analysis_oct15_afternoon.md](stdlib/utlx_cap_analysis_oct15_afternoon.md) | Standard Library |
+| 124 | [stlib_GAP_analysis_oct15th.md](stdlib/stlib_GAP_analysis_oct15th.md) | Standard Library |
+| 125 | [serialization_usage_guide.md](inline-parse-render/serialization_usage_guide.md) | Standard Library |
+| 126 | [serialization_integration_guide.md](inline-parse-render/serialization_integration_guide.md) | Standard Library |
+| 127 | [c14n_integration_guide.md](canonicalization-xml/c14n_integration_guide.md) | Standard Library |
+| 128 | [stlib_complete_reference_after_insert_c14n.md](stdlib/stlib_complete_reference_after_insert_c14n.md) | Standard Library |
+| 129 | [stlib_complete_refernce.md](stdlib/stlib_complete_refernce.md) | Standard Library |
+| 130 | [dw_modules_added_summery.md](stdlib/dw_modules_added_summery.md) | Standard Library |
+| 131 | [url_functions_integration_guide.md](url/url_functions_integration_guide.md) | Standard Library |
+| 132 | [utility_modules_complete_guide.md](stdlib/utility_modules_complete_guide.md) | Standard Library |
+| 133 | [stlib_gaps_analysis_type_cenversions.md](stdlib/stlib_gaps_analysis_type_cenversions.md) | Standard Library |
+| 134 | [stlib_complete_gaps_integration_plan.md](stdlib/stlib_complete_gaps_integration_plan.md) | Standard Library |
+| 135 | [stlib_gaps_analysis.md](stdlib/stlib_gaps_analysis.md) | Standard Library |
+| 136 | [unzip_integration_guide.md](array/unzip_integration_guide.md) | Standard Library |
 
 ### Stdlib - Completion & Summaries
 
 | # | Document | Category |
 |---|----------|----------|
-| 111 | [stlib_updated_summery.md](../stdlib/docs/stlib_updated_summery.md) | Standard Library |
-| 112 | [dataweave_vs_utilx_comparison.md](../stdlib/docs/dataweave_vs_utilx_comparison.md) | Standard Library |
-| 113 | [stlib_completion_roadmap.md](../stdlib/stlib_completion_roadmap.md) | Standard Library |
-| 114 | [stlib_todo.md](../stdlib/stlib_todo.md) | Standard Library |
-| 115 | [stlib_final_with_xml.md](../stdlib/docs/stlib_final_with_xml.md) | Standard Library |
-| 116 | [stlib_final_enterprise.md](../stdlib/docs/stlib_final_enterprise.md) | Standard Library |
-| 117 | [stdlib_final_summery.md](../stdlib/docs/stdlib_final_summery.md) | Standard Library |
-| 118 | [stlib_completeness_report.md](../stdlib/stlib_completeness_report.md) | Standard Library ❌ DELETED|
-| 119 | [stdlib_integration_guide.md](../stdlib/stdlib_integration_guide.md) | Standard Library ❌ DELETED|
-| 120 | [stlib_readme.md](../stdlib/docs/stlib_readme.md) | Standard Library |
-| 121 | [stlib_reame.md](../stdlib/stlib_reame.md) | Standard Library ❌ DELETED|
+| 137 | [stlib_updated_summery.md](stdlib/stlib_updated_summery.md) | Standard Library |
+| 138 | [dataweave_vs_utilx_comparison.md](stdlib/dataweave_vs_utilx_comparison.md) | Standard Library |
+| 139 | [stlib_completion_roadmap.md](stdlib/stlib_completion_roadmap.md) | Standard Library |
+| 140 | [stlib_final_with_xml.md](stdlib/stlib_final_with_xml.md) | Standard Library |
+| 141 | [stlib_final_enterprise.md](stdlib/stlib_final_enterprise.md) | Standard Library |
+| 142 | [stdlib_final_summery.md](stdlib/stdlib_final_summery.md) | Standard Library |
+| 143 | [stlibcompare_BW_xpath.md](stdlib/stlibcompare_BW_xpath.md) | Standard Library |
+| 144 | [stlib_readme.md](stdlib/stlib_readme.md) | Standard Library |
+| 145 | [stdlib_integration_guide_next_steps.md](stdlib/stdlib_integration_guide_next_steps.md) | Standard Library |
 
 ---
 
-## October 14, 2025 - Modules & UDM (35 docs)
+## October 14, 2025 - Modules & UDM (24 docs)
 
 ### UDM Documentation
 
 | # | Document | Category |
 |---|----------|----------|
-| 122 | [udm_complete_guide.md](udm/udm_complete_guide.md) | UDM |
-| 123 | [udm_advanced_guide.md](udm/udm_advanced_guide.md) | UDM |
-| 124 | [udm_visual_examples.md](udm/udm_visual_examples.md) | UDM |
-| 125 | [udm_documentation_index.md](udm/udm_documentation_index.md) | UDM |
-
-### Analysis Module
-
-| # | Document | Category |
-|---|----------|----------|
-| 126 | [testkit_complete_summery.md](../modules/analysis/testkit_complete_summery.md) | Modules |
-| 127 | [analysis_module_testkit_readme.md](../modules/analysis/analysis_module_testkit_readme.md) | Modules |
-| 128 | [complete_implementation_status.md](../modules/analysis/complete_implementation_status.md) | Modules |
-| 129 | [feature_summary_roadmap.md](../modules/analysis/feature_summary_roadmap.md) | Modules |
-| 130 | [real_world_integration_example.md](../modules/analysis/real_world_integration_example.md) | Modules |
-| 131 | [updated_project_structure.md](../modules/analysis/updated_project_structure.md) | Modules |
-| 132 | [analysis_module_readme.md](../modules/analysis/analysis_module_readme.md) | Modules |
-| 133 | [schema_workflow_example.md](../modules/analysis/schema_workflow_example.md) | Modules |
-| 134 | [schema_analysis_architecture.md](../modules/analysis/schema_analysis_architecture.md) | Modules |
+| 146 | [udm_complete_guide.md](udm/udm_complete_guide.md) | UDM |
+| 147 | [udm_advanced_guide.md](udm/udm_advanced_guide.md) | UDM |
+| 148 | [udm_visual_examples.md](udm/udm_visual_examples.md) | UDM |
+| 149 | [udm_documentation_index.md](udm/udm_documentation_index.md) | UDM |
+| 150 | [universal-data-model.md](udm/universal-data-model.md) | UDM |
 
 ### Format Documentation
 
 | # | Document | Category |
 |---|----------|----------|
-| 135 | [yaml_quick_reference.md](../formats/yaml/yaml_quick_reference.md) | Formats |
-| 136 | [yaml_readme.md](../formats/yaml/yaml_readme.md) | Formats |
-| 137 | [NOTICE.md](../NOTICE.md) | Root Docs |
+| 151 | [yaml_quick_reference.md](yaml/yaml_quick_reference.md) | Formats |
+| 152 | [yaml_readme.md](yaml/yaml_readme.md) | Formats |
+| 153 | [yaml.md](yaml/yaml.md) | Formats |
+| 154 | [NOTICE.md](../NOTICE.md) | Root Docs |
 
 ### CLI & Architecture
 
 | # | Document | Category |
 |---|----------|----------|
-| 138 | [clickt_migration_guide.md](architecture/decisions/clickt_migration_guide.md) | Architecture Decisions |
-| 139 | [cli_clickt_vs_manual.md](architecture/decisions/cli_clickt_vs_manual.md) | Architecture Decisions |
-| 140 | [example_transforms.md](examples/example_transforms.md) | Examples |
-| 141 | [cli implementation_guide.md](../modules/cli/implementation_guide.md) | Modules |
-| 142 | [cli_implementation_summery.md](../modules/cli/cli_implementation_summery.md) | Modules |
-| 143 | [cli_quickstart.md](../modules/cli/cli_quickstart.md) | Modules |
-| 144 | [cli_readme.md](../modules/cli/cli_readme.md) | Modules |
-| 145 | [csv_readme.md](../formats/csv/csv_readme.md) | Formats |
-| 146 | [xml_readme.md](../formats/xml/xml_readme.md) | Formats |
-| 147 | [json quick_reference.md](../formats/json/quick_reference.md) | Formats |
-| 148 | [json_readme.md](../formats/json/json_readme.md) | Formats |
-| 149 | [quickstart_guide.md](../quickstart_guide.md) | Root Docs |
-| 150 | [core_readme.md](../modules/core/core_readme.md) | Modules |
+| 155 | [clickt_migration_guide.md](cli/clickt_migration_guide.md) | Architecture Decisions |
+| 156 | [cli_clickt_vs_manual.md](cli/cli_clickt_vs_manual.md) | Architecture Decisions |
+| 157 | [cli-technology-choice.md](cli/cli-technology-choice.md) | Architecture Decisions |
+| 158 | [example_transforms.md](examples/example_transforms.md) | Examples |
+| 159 | [implementation_guide.md](cli/implementation_guide.md) | Modules |
+| 160 | [cli_implementation_summery.md](cli/cli_implementation_summery.md) | Modules |
+| 161 | [cli_quickstart.md](cli/cli_quickstart.md) | Modules |
+| 162 | [cli_readme.md](cli/cli_readme.md) | Modules |
+| 163 | [csv_readme.md](csv/csv_readme.md) | Formats |
+| 164 | [csv.md](csv/csv.md) | Formats |
+| 165 | [xml_readme.md](xml/xml_readme.md) | Formats |
+| 166 | [xml.md](xml/xml.md) | Formats |
+| 167 | [json quick_reference.md](json/quick_reference.md) | Formats |
+| 168 | [json_readme.md](json/json_readme.md) | Formats |
+| 169 | [json.md](json/json.md) | Formats |
+| 170 | [quickstart_guide.md](../quickstart_guide.md) | Root Docs |
+| 171 | [core_readme.md](core/core_readme.md) | Modules |
 
 ---
 
-## October 13, 2025 - Initial Setup (11 docs)
+## October 13, 2025 - Initial Setup (9 docs)
 
 | # | Document | Category |
 |---|----------|----------|
-| 151 | [cli-technology-choice.md](architecture/decisions/cli-technology-choice.md) | Architecture Decisions |
-| 152 | [0001-cli-technology-choice.md](architecture/decisions/0001-cli-technology-choice.md) | Architecture Decisions ❌ DELETED|
-| 153 | [project-directory-structure.md](architecture/decisions/project-directory-structure.md) | Architecture Decisions |
-| 154 | [utl-x 0001-cli-technology-choice.md](../utl-x/docs/architecture/decisions/0001-cli-technology-choice.md) | Archive ❌ DELETED|
-| 155 | [QUICKSTART.md](../QUICKSTART.md) | Root Docs |
-| 156 | [native-binary-quickstart.md](getting-started/native-binary-quickstart.md) | Getting Started |
-| 157 | [README-NATIVE.md](../README-NATIVE.md) | Root Docs |
-| 158 | [multiple-inputs.md](examples/multiple-inputs.md) | Examples |
-| 159 | [DOCUMENTATION_COMPLETE.md](../DOCUMENTATION_COMPLETE.md) | Root Docs |
+| 172 | [project-directory-structure.md](architecture/decisions/project-directory-structure.md) | Architecture Decisions |
+| 173 | [0001-cli-technology-choice.md](architecture/decisions/0001-cli-technology-choice.md) | Architecture Decisions ❌ DELETED|
+| 174 | [utl-x 0001-cli-technology-choice.md](../utl-x/docs/architecture/decisions/0001-cli-technology-choice.md) | Archive ❌ DELETED|
+| 175 | [QUICKSTART.md](../QUICKSTART.md) | Root Docs |
+| 176 | [native-binary-quickstart.md](getting-started/native-binary-quickstart.md) | Getting Started |
+| 177 | [README-NATIVE.md](../README-NATIVE.md) | Root Docs |
+| 178 | [multiple-inputs.md](examples/multiple-inputs.md) | Examples |
+| 179 | [DOCUMENTATION_COMPLETE.md](../DOCUMENTATION_COMPLETE.md) | Root Docs |
+| 180 | [custom-format.md](formats/custom-format.md) | Formats |
 
 ---
 
@@ -302,107 +325,103 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 | # | Document | Category |
 |---|----------|----------|
-| 160 | [PULL_REQUEST_TEMPLATE.md](../.github/PULL_REQUEST_TEMPLATE.md) | GitHub |
-| 161 | [feature_request.md](../.github/ISSUE_TEMPLATE/feature_request.md) | GitHub |
-| 162 | [bug_report.md](../.github/ISSUE_TEMPLATE/bug_report.md) | GitHub |
-| 163 | [CONTRIBUTORS.md](../CONTRIBUTORS.md) | Root Docs |
-| 164 | [real-world-use-cases.md](examples/real-world-use-cases.md) | Examples |
-| 165 | [complex-transformations.md](examples/complex-transformations.md) | Examples |
-| 166 | [performance.md](architecture/performance.md) | Architecture |
-| 167 | [runtime.md](architecture/runtime.md) | Architecture |
-| 168 | [universal-data-model.md](architecture/universal-data-model.md) | Architecture |
+| 181 | [PULL_REQUEST_TEMPLATE.md](../.github/PULL_REQUEST_TEMPLATE.md) | GitHub |
+| 182 | [feature_request.md](../.github/ISSUE_TEMPLATE/feature_request.md) | GitHub |
+| 183 | [bug_report.md](../.github/ISSUE_TEMPLATE/bug_report.md) | GitHub |
+| 184 | [CONTRIBUTORS.md](../CONTRIBUTORS.md) | Root Docs |
+| 185 | [real-world-use-cases.md](examples/real-world-use-cases.md) | Examples |
+| 186 | [complex-transformations.md](examples/complex-transformations.md) | Examples |
+| 187 | [performance.md](architecture/performance.md) | Architecture |
+| 188 | [runtime.md](architecture/runtime.md) | Architecture |
+| 189 | [universal-data-model.md](architecture/universal-data-model.md) | Architecture |
 
 ---
 
-## October 9-10, 2025 - Core Documentation (19 docs)
+## October 9-10, 2025 - Core Documentation (18 docs)
 
 | # | Document | Category |
 |---|----------|----------|
-| 169 | [compiler-pipeline.md](architecture/compiler-pipeline.md) | Architecture |
-| 170 | [overview.md](architecture/overview.md) | Architecture |
-| 171 | [grammar.md](reference/grammar.md) | Reference |
-| 172 | [api-reference.md](reference/api-reference.md) | Reference |
-| 173 | [stdlib-reference.md](reference/stdlib-reference.md) | Reference |
-| 174 | [custom-format.md](formats/custom-format.md) | Formats |
-| 175 | [csv-transformation.md](examples/csv-transformation.md) | Examples |
-| 176 | [cli-reference.md](reference/cli-reference.md) | Reference |
-| 177 | [migration-guides.md](comparison/migration-guides.md) | Comparisons |
-| 178 | [vs-jsonata.md](comparison/vs-jsonata.md) | Comparisons |
-| 179 | [yaml.md](formats/yaml.md) | Formats |
-| 180 | [csv.md](formats/csv.md) | Formats |
-| 181 | [json.md](formats/json.md) | Formats |
-| 182 | [xml.md](formats/xml.md) | Formats |
-| 183 | [operators.md](language-guide/operators.md) | Language Guide |
-| 184 | [control-flow.md](language-guide/control-flow.md) | Language Guide |
-| 185 | [ontrol-flow.md](language-guide/ontrol-flow.md) | Language Guide (typo) ❌ DELETED|
-| 186 | [templates.md](language-guide/templates.md) | Language Guide |
-| 187 | [functions.md](language-guide/functions.md) | Language Guide |
+| 190 | [compiler-pipeline.md](architecture/compiler-pipeline.md) | Architecture |
+| 191 | [overview.md](architecture/overview.md) | Architecture |
+| 192 | [grammar.md](reference/grammar.md) | Reference |
+| 193 | [api-reference.md](reference/api-reference.md) | Reference |
+| 194 | [stdlib-reference.md](reference/stdlib-reference.md) | Reference |
+| 195 | [csv-transformation.md](examples/csv-transformation.md) | Examples |
+| 196 | [cli-reference.md](reference/cli-reference.md) | Reference |
+| 197 | [migration-guides.md](comparison/migration-guides.md) | Comparisons |
+| 198 | [vs-jsonata.md](comparison/vs-jsonata.md) | Comparisons |
+| 199 | [operators.md](language-guide/operators.md) | Language Guide |
+| 200 | [control-flow.md](language-guide/control-flow.md) | Language Guide |
+| 201 | [templates.md](language-guide/templates.md) | Language Guide |
+| 202 | [functions.md](language-guide/functions.md) | Language Guide |
+| 203 | [selectors.md](language-guide/selectors.md) | Language Guide |
+| 204 | [syntax.md](language-guide/syntax.md) | Language Guide |
+| 205 | [overview.md](language-guide/overview.md) | Language Guide |
+| 206 | [basic-concepts.md](getting-started/basic-concepts.md) | Getting Started |
+| 207 | [your-first-transformation.md](getting-started/your-first-transformation.md) | Getting Started |
 
 ---
 
-## October 8-9, 2025 - Initial Documentation (20 docs)
+## October 8-9, 2025 - Initial Documentation (13 docs)
 
 | # | Document | Category |
 |---|----------|----------|
-| 188 | [vs-xslt.md](comparison/vs-xslt.md) | Comparisons |
-| 189 | [vs-dataweave.md](comparison/vs-dataweave.md) | Comparisons |
-| 190 | [support.md](community/support.md) | Community |
-| 191 | [changelog.md](community/changelog.md) | Community |
-| 192 | [cookbook.md](examples/cookbook.md) | Examples |
-| 193 | [json-to-xml.md](examples/json-to-xml.md) | Examples |
-| 194 | [selectors.md](language-guide/selectors.md) | Language Guide |
-| 195 | [syntax.md](language-guide/syntax.md) | Language Guide |
-| 196 | [roadmap.md](community/roadmap.md) | Community |
-| 197 | [faq.md](community/faq.md) | Community |
-| 198 | [overview.md](language-guide/overview.md) | Language Guide |
-| 199 | [basic-concepts.md](getting-started/basic-concepts.md) | Getting Started |
-| 200 | [your-first-transformation.md](getting-started/your-first-transformation.md) | Getting Started |
-| 201 | [xml-to-json.md](examples/xml-to-json.md) | Examples |
-| 202 | [quick-reference.md](getting-started/quick-reference.md) | Getting Started |
-| 203 | [language-spec.md](reference/language-spec.md) | Reference |
-| 204 | [installation.md](getting-started/installation.md) | Getting Started |
-| 205 | [docs README.md](README.md) | Documentation |
+| 208 | [vs-xslt.md](comparison/vs-xslt.md) | Comparisons |
+| 209 | [vs-dataweave.md](comparison/vs-dataweave.md) | Comparisons |
+| 210 | [support.md](community/support.md) | Community |
+| 211 | [changelog.md](community/changelog.md) | Community |
+| 212 | [cookbook.md](examples/cookbook.md) | Examples |
+| 213 | [json-to-xml.md](examples/json-to-xml.md) | Examples |
+| 214 | [roadmap.md](community/roadmap.md) | Community |
+| 215 | [faq.md](community/faq.md) | Community |
+| 216 | [xml-to-json.md](examples/xml-to-json.md) | Examples |
+| 217 | [quick-reference.md](getting-started/quick-reference.md) | Getting Started |
+| 218 | [language-spec.md](reference/language-spec.md) | Reference |
+| 219 | [installation.md](getting-started/installation.md) | Getting Started |
+| 220 | [docs README.md](README.md) | Documentation |
 
 ---
 
-## Project Metadata (8 docs)
+## Project Metadata (4 docs)
 
 | # | Document | Category |
 |---|----------|----------|
-| 206 | [CLA.md](../CLA.md) | Legal |
-| 207 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Contributing |
-| 208 | [LICENSE.md](../LICENSE.md) | Legal |
-| 209 | [README.md](../README.md) | **Project Root** |
+| 221 | [CLA.md](../CLA.md) | Legal |
+| 222 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Contributing |
+| 223 | [LICENSE.md](../LICENSE.md) | Legal |
+| 224 | [README.md](../README.md) | **Project Root** |
 
 ---
 
 ## Statistics
 
-- **Total Documents:** 213 markdown files
-- **Date Range:** October 8 - October 27, 2025 (19 days)
-- **Most Active Day:** October 25 (22 documents)
+- **Total Documents:** 224 markdown files (219 current + 5 deleted)
+- **Date Range:** October 8 - October 28, 2025 (20 days)
+- **Most Active Period:** October 27-28 (32 documents - integration studies & examples)
 - **Largest Category:** Standard Library (40+ docs)
 
 ### Documents by Category
 
 | Category | Count |
 |----------|-------|
-| Standard Library | 46 |
-| Architecture & Decisions | 28 |
+| Standard Library | 40 |
+| Architecture & Decisions | 25 |
+| Integration Studies | 10 |
 | Conformance Suite | 18 |
-| Language Guide | 17 |
-| Examples | 13 |
-| Proposals | 10 |
+| Language Guide | 11 |
+| Examples | 17 |
+| Proposals | 6 |
 | Modules (CLI, Core, Analysis) | 15 |
-| Formats (XML, JSON, YAML, CSV) | 13 |
+| Formats (XML, JSON, YAML, CSV) | 15 |
 | Getting Started | 7 |
 | Development Sessions | 4 |
-| Reference | 8 |
+| USDL | 6 |
+| Reference | 5 |
 | Comparisons | 5 |
 | Community | 4 |
-| Functions | 3 |
-| Root Documentation | 20 |
-| Other | 2 |
+| Functions | 2 |
+| Miscellaneous | 10 |
+| Root Documentation | 15 |
 
 ---
 
@@ -422,25 +441,27 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 ### 🏗️ Architecture
 - [CLAUDE.md](ai/CLAUDE.md) - **Main project instructions**
-- [conformance-suite-design.md](architecture/conformance-suite-design.md) - Test architecture
-- [universal-data-model.md](architecture/universal-data-model.md) - UDM design
+- [conformance-suite-design.md](comformance-suite/conformance-suite-design.md) - Test architecture
+- [universal-data-model.md](udm/universal-data-model.md) - UDM design
 - [compiler-pipeline.md](architecture/compiler-pipeline.md) - Compilation
 
 ### 📖 Standard Library
-- [all-stlib-functions-outlined.md](../stdlib/all-stlib-functions-outlined.md) - Complete function list
-- [yaml_functions_guide.md](../stdlib/yaml_functions_guide.md) - YAML functions
-- [csv_functions_guide.md](../stdlib/csv_functions_guide.md) - CSV functions
-- [xml_serialization_guide.md](../stdlib/xml_serialization_guide.md) - XML functions
+- [yaml_functions_guide.md](stdlib/yaml_functions_guide.md) - YAML functions
+- [csv_functions_guide.md](csv/csv_functions_guide.md) - CSV functions
+- [xml_serialization_guide.md](inline-parse-render/xml_serialization_guide.md) - XML functions
+- [STDLIB_INTEGRATION.md](stdlib/STDLIB_INTEGRATION.md) - Integration overview
 
 ### 🧪 Testing
-- [README.md](../conformance-suite/README.md) - Conformance suite
-- [test-capture-system.md](test-capture-system.md) - Auto-capture system
+- [README.md](comformance-suite/README.md) - Conformance suite
+- [test-capture-system.md](comformance-suite/test-capture-system.md) - Auto-capture system
 - [README-TEST-CAPTURE.md](../scripts/README-TEST-CAPTURE.md) - Test capture scripts
 
 ### 🎯 Latest Features
-- [session-2025-10-27-complete-usdl-implementation.md](development/session-2025-10-27-complete-usdl-implementation.md) - USDL implementation
+- [session-2025-10-27-complete-usdl-implementation.md](usdl/session-2025-10-27-complete-usdl-implementation.md) - USDL implementation
 - [xsd-jsch-format-support.md](proposals/xsd-jsch-format-support.md) - XSD/JSON Schema support
-- [RELEASE-NOTES-MULTI-INPUT.md](RELEASE-NOTES-MULTI-INPUT.md) - Multi-input feature
+- [RELEASE-NOTES-MULTI-INPUT.md](miscellaneous/RELEASE-NOTES-MULTI-INPUT.md) - Multi-input feature
+- [XSD README.md](../examples/xsd/README.md) - XSD examples
+- [Avro README.md](../examples/avro/README.md) - Avro examples
 
 ---
 
@@ -456,10 +477,10 @@ This index lists all markdown documentation in the UTL-X project, organized chro
 
 ---
 
-*This index is automatically maintainable. To add new documents, insert them in chronological order with proper links.*
+*This index is maintained chronologically with newest documents first. To add new documents, insert them at the top with proper updated paths.*
 
 **Legend:**
 - Documents in **bold** are critical project files
-- Documents marked (typo) contain filename errors
-- Documents marked ❌ DELETED were removed from the project but kept in index for visibility
-- Archive documents are kept for historical reference
+- Documents marked ❌ DELETED were removed from the project but kept in index for historical tracking
+- Many documents have been reorganized into topical subdirectories under /docs (see index-by-topic.md for hierarchical view)
+- Typo files (ontrol-flow.md, stlib_reame.md) have been removed from this index
