@@ -1,0 +1,43 @@
+name: "xsd_detect_garden_of_eden"
+category: "formats/xsd/patterns"
+description: "Pattern Detection: Garden of Eden - All elements and types global"
+tags: ['xsd', 'patterns', 'detection', 'garden-of-eden']
+
+input:
+  format: json
+  data: |
+    {
+      "xsdSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"firstName\" type=\"xs:string\"/>\n  <xs:element name=\"lastName\" type=\"xs:string\"/>\n  <xs:complexType name=\"PersonType\">\n    <xs:sequence>\n      <xs:element ref=\"firstName\"/>\n      <xs:element ref=\"lastName\"/>\n    </xs:sequence>\n  </xs:complexType>\n  <xs:element name=\"person\" type=\"PersonType\"/>\n</xs:schema>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let schema = parseXSDSchema($input.xsdSchema)
+  let stats = schema["%xsdPatternStats"]
+  {
+    patternName: "Garden of Eden",
+    detectedPattern: schema["%xsdPattern"],
+    globalElements: stats["globalElements"],
+    globalTypes: stats["globalTypes"],
+    inlineTypes: stats["inlineTypes"],
+    characteristics: "All elements and types global - maximum reusability",
+    bestFor: "Schema composition, maximum flexibility, namespace sharing",
+    detected: schema["%xsdPattern"] == "garden-of-eden"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "patternName": "Garden of Eden",
+      "detectedPattern": "garden-of-eden",
+      "globalElements": 3,
+      "globalTypes": 1,
+      "inlineTypes": 0,
+      "characteristics": "All elements and types global - maximum reusability",
+      "bestFor": "Schema composition, maximum flexibility, namespace sharing",
+      "detected": true
+    }

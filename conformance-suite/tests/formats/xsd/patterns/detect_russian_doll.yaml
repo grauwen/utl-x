@@ -1,0 +1,43 @@
+name: "xsd_detect_russian_doll"
+category: "formats/xsd/patterns"
+description: "Pattern Detection: Russian Doll - Single global element with inline types"
+tags: ['xsd', 'patterns', 'detection', 'russian-doll']
+
+input:
+  format: json
+  data: |
+    {
+      "xsdSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"order\">\n    <xs:complexType>\n      <xs:sequence>\n        <xs:element name=\"orderId\" type=\"xs:string\"/>\n        <xs:element name=\"customer\">\n          <xs:complexType>\n            <xs:sequence>\n              <xs:element name=\"name\" type=\"xs:string\"/>\n            </xs:sequence>\n          </xs:complexType>\n        </xs:element>\n      </xs:sequence>\n    </xs:complexType>\n  </xs:element>\n</xs:schema>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let schema = parseXSDSchema($input.xsdSchema)
+  let stats = schema["%xsdPatternStats"]
+  {
+    patternName: "Russian Doll",
+    detectedPattern: schema["%xsdPattern"],
+    globalElements: stats["globalElements"],
+    globalTypes: stats["globalTypes"],
+    inlineTypes: stats["inlineTypes"],
+    characteristics: "Single global element with all types defined inline",
+    bestFor: "Small schemas, self-contained structures",
+    detected: schema["%xsdPattern"] == "russian-doll"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "patternName": "Russian Doll",
+      "detectedPattern": "russian-doll",
+      "globalElements": 1,
+      "globalTypes": 0,
+      "inlineTypes": 2,
+      "characteristics": "Single global element with all types defined inline",
+      "bestFor": "Small schemas, self-contained structures",
+      "detected": true
+    }

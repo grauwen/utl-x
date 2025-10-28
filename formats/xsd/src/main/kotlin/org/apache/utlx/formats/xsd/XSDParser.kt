@@ -280,6 +280,14 @@ class XSDParser(
         val complexTypes = extractComplexTypes(xsdSchema)
         val simpleTypes = extractSimpleTypes(xsdSchema)
         val inlineTypes = extractInlineTypes(xsdSchema)
+        val globalElements = extractGlobalElements(xsdSchema)
+
+        // Detect XSD design pattern
+        val detectedPattern = detectXSDPattern(
+            globalElementCount = globalElements.size,
+            globalTypeCount = complexTypes.size + simpleTypes.size,
+            inlineTypeCount = inlineTypes.size
+        )
 
         // Build %types object
         val typesMap = mutableMapOf<String, UDM>()
@@ -313,12 +321,76 @@ class XSDParser(
             topLevelProps["%namespace"] = UDM.Scalar(namespace)
         }
 
-        // Add pattern detection metadata if inline types exist
-        if (inlineTypes.isNotEmpty()) {
-            topLevelProps["%xsdPattern"] = UDM.Scalar("russian-doll")
-        }
+        // Add detected pattern metadata
+        topLevelProps["%xsdPattern"] = UDM.Scalar(detectedPattern)
+
+        // Add pattern statistics for visualization
+        topLevelProps["%xsdPatternStats"] = UDM.Object(properties = mapOf(
+            "globalElements" to UDM.Scalar(globalElements.size),
+            "globalTypes" to UDM.Scalar(complexTypes.size + simpleTypes.size),
+            "inlineTypes" to UDM.Scalar(inlineTypes.size),
+            "detectedPattern" to UDM.Scalar(detectedPattern)
+        ))
 
         return UDM.Object(properties = topLevelProps)
+    }
+
+    /**
+     * Detect XSD design pattern based on schema structure
+     *
+     * Pattern detection rules (order matters - checked from most specific to least):
+     * - Garden of Eden: Both global elements AND global types (most specific)
+     * - Salami Slice: Multiple global elements, no global types (element reuse)
+     * - Russian Doll: Single global element with inline types
+     * - Venetian Blind: Global types, any elements (type reuse - default/fallback)
+     */
+    private fun detectXSDPattern(
+        globalElementCount: Int,
+        globalTypeCount: Int,
+        inlineTypeCount: Int
+    ): String {
+        return when {
+            // Garden of Eden: Both global elements and global types (most specific pattern)
+            globalElementCount >= 1 && globalTypeCount >= 1 && inlineTypeCount == 0 -> "garden-of-eden"
+
+            // Salami Slice: Multiple global elements, no global types (prioritize over Russian Doll)
+            globalElementCount >= 2 && globalTypeCount == 0 -> "salami-slice"
+
+            // Russian Doll: Single global element with inline types
+            globalElementCount == 1 && inlineTypeCount > 0 && globalTypeCount == 0 -> "russian-doll"
+
+            // Venetian Blind: Has global types (most common pattern - default)
+            globalTypeCount >= 1 && inlineTypeCount == 0 -> "venetian-blind"
+
+            // Default/Mixed (doesn't fit standard patterns)
+            else -> "mixed"
+        }
+    }
+
+    /**
+     * Extract global xs:element declarations from schema
+     */
+    private fun extractGlobalElements(schema: UDM.Object): Map<String, UDM.Object> {
+        val result = mutableMapOf<String, UDM.Object>()
+
+        val elementValue = schema.properties["xs:element"]
+        when (elementValue) {
+            is UDM.Object -> {
+                val name = elementValue.attributes["name"] ?: "UnnamedElement"
+                result[name] = elementValue
+            }
+            is UDM.Array -> {
+                elementValue.elements.forEach { element ->
+                    if (element is UDM.Object) {
+                        val name = element.attributes["name"] ?: "UnnamedElement"
+                        result[name] = element
+                    }
+                }
+            }
+            else -> { /* No global elements found */ }
+        }
+
+        return result
     }
 
     /**

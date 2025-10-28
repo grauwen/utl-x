@@ -1,0 +1,43 @@
+name: "xsd_detect_salami_slice"
+category: "formats/xsd/patterns"
+description: "Pattern Detection: Salami Slice - All elements global, minimal types"
+tags: ['xsd', 'patterns', 'detection', 'salami-slice']
+
+input:
+  format: json
+  data: |
+    {
+      "xsdSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"firstName\" type=\"xs:string\"/>\n  <xs:element name=\"lastName\" type=\"xs:string\"/>\n  <xs:element name=\"street\" type=\"xs:string\"/>\n  <xs:element name=\"city\" type=\"xs:string\"/>\n  <xs:element name=\"person\">\n    <xs:complexType>\n      <xs:sequence>\n        <xs:element ref=\"firstName\"/>\n        <xs:element ref=\"lastName\"/>\n      </xs:sequence>\n    </xs:complexType>\n  </xs:element>\n</xs:schema>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let schema = parseXSDSchema($input.xsdSchema)
+  let stats = schema["%xsdPatternStats"]
+  {
+    patternName: "Salami Slice",
+    detectedPattern: schema["%xsdPattern"],
+    globalElements: stats["globalElements"],
+    globalTypes: stats["globalTypes"],
+    inlineTypes: stats["inlineTypes"],
+    characteristics: "All elements global, minimal types, flexible composition",
+    bestFor: "Maximum element reusability, flexible schemas",
+    detected: schema["%xsdPattern"] == "salami-slice"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "patternName": "Salami Slice",
+      "detectedPattern": "salami-slice",
+      "globalElements": 5,
+      "globalTypes": 0,
+      "inlineTypes": 1,
+      "characteristics": "All elements global, minimal types, flexible composition",
+      "bestFor": "Maximum element reusability, flexible schemas",
+      "detected": true
+    }

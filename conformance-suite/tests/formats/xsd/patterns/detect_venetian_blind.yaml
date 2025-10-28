@@ -1,0 +1,43 @@
+name: "xsd_detect_venetian_blind"
+category: "formats/xsd/patterns"
+description: "Pattern Detection: Venetian Blind - Global types, local elements"
+tags: ['xsd', 'patterns', 'detection', 'venetian-blind']
+
+input:
+  format: json
+  data: |
+    {
+      "xsdSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"http://example.com/vb\" elementFormDefault=\"qualified\">\n  <xs:complexType name=\"PersonType\">\n    <xs:sequence>\n      <xs:element name=\"firstName\" type=\"xs:string\"/>\n      <xs:element name=\"lastName\" type=\"xs:string\"/>\n    </xs:sequence>\n  </xs:complexType>\n  <xs:complexType name=\"AddressType\">\n    <xs:sequence>\n      <xs:element name=\"street\" type=\"xs:string\"/>\n      <xs:element name=\"city\" type=\"xs:string\"/>\n    </xs:sequence>\n  </xs:complexType>\n</xs:schema>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let schema = parseXSDSchema($input.xsdSchema)
+  let stats = schema["%xsdPatternStats"]
+  {
+    patternName: "Venetian Blind",
+    detectedPattern: schema["%xsdPattern"],
+    globalElements: stats["globalElements"],
+    globalTypes: stats["globalTypes"],
+    inlineTypes: stats["inlineTypes"],
+    characteristics: "Global types, local elements - most common pattern",
+    bestFor: "Type reusability, large schemas, industry standard",
+    detected: schema["%xsdPattern"] == "venetian-blind"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "patternName": "Venetian Blind",
+      "detectedPattern": "venetian-blind",
+      "globalElements": 0,
+      "globalTypes": 2,
+      "inlineTypes": 0,
+      "characteristics": "Global types, local elements - most common pattern",
+      "bestFor": "Type reusability, large schemas, industry standard",
+      "detected": true
+    }
