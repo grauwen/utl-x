@@ -12,7 +12,10 @@ version = "0.9.0-beta"
 dependencies {
     // Core module dependency
     implementation(project(":modules:core"))
-    
+
+    // Format module dependencies (for schema serialization functions)
+    implementation(project(":formats:avro"))
+
     // Kotlin standard library
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))

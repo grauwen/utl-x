@@ -1,0 +1,118 @@
+name: "avro_nested_type_references"
+category: "formats/avro/complex-types"
+description: "Schema with nested custom type references (record and enum)"
+tags: ['avro', 'schema', 'nested-types', 'type-references']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example.nested",
+      "%types": {
+        "Address": {
+          "%kind": "structure",
+          "%documentation": "Postal address",
+          "%fields": [
+            {
+              "%name": "street",
+              "%type": "string",
+              "%required": true
+            },
+            {
+              "%name": "city",
+              "%type": "string",
+              "%required": true
+            },
+            {
+              "%name": "zipCode",
+              "%type": "string",
+              "%required": true
+            }
+          ]
+        },
+        "ContactType": {
+          "%kind": "enumeration",
+          "%values": ["EMAIL", "PHONE", "SMS"]
+        },
+        "Person": {
+          "%kind": "structure",
+          "%documentation": "Person with nested address and contact type",
+          "%fields": [
+            {
+              "%name": "name",
+              "%type": "string",
+              "%required": true
+            },
+            {
+              "%name": "homeAddress",
+              "%type": "Address"
+            },
+            {
+              "%name": "workAddress",
+              "%type": "Address"
+            },
+            {
+              "%name": "preferredContact",
+              "%type": "ContactType"
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: json
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "namespace": "com.example.nested",
+      "doc": "Person with nested address and contact type",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "homeAddress",
+          "type": {
+            "type": "record",
+            "name": "Address",
+            "doc": "Postal address",
+            "fields": [
+              {
+                "name": "street",
+                "type": "string"
+              },
+              {
+                "name": "city",
+                "type": "string"
+              },
+              {
+                "name": "zipCode",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        {
+          "name": "workAddress",
+          "type": "com.example.nested.Address"
+        },
+        {
+          "name": "preferredContact",
+          "type": {
+            "type": "enum",
+            "name": "ContactType",
+            "symbols": ["EMAIL", "PHONE", "SMS"]
+          }
+        }
+      ]
+    }

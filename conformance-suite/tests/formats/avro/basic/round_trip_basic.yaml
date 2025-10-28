@@ -34,9 +34,8 @@ transformation: |
   input json
   output json
   ---
-  # Convert to Avro and back to verify round-trip
-  let avroSchema = toAvroSchema($input)
-  let backToUsdl = toUSDL(avroSchema)
+  let avroSchema = renderAvroSchema($input)
+  let backToUsdl = parseAvroSchema(avroSchema)
   {
     hasTypes: hasKey(backToUsdl, "%types"),
     hasNamespace: hasKey(backToUsdl, "%namespace"),

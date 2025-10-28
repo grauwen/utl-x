@@ -62,13 +62,12 @@ transformation: |
   input json
   output json
   ---
-  # Extract schema metadata
   {
     namespace: $input["%namespace"],
     typeCount: count(keys($input["%types"])),
     orderFields: count($input["%types"]["Order"]["%fields"]),
     hasEnums: hasKey($input["%types"], "OrderStatus"),
-    hasLogicalTypes: any(
+    hasLogicalTypes: some(
       $input["%types"]["Order"]["%fields"],
       field => hasKey(field, "%logicalType")
     )

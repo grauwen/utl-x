@@ -1,0 +1,75 @@
+name: "avro_fixed_in_record"
+category: "formats/avro/complex-types"
+description: "Record with fixed type field reference"
+tags: ['avro', 'schema', 'fixed', 'nested']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example.security",
+      "%types": {
+        "MD5": {
+          "%kind": "fixed",
+          "%size": 16,
+          "%documentation": "MD5 hash value"
+        },
+        "FileInfo": {
+          "%kind": "structure",
+          "%documentation": "File metadata with hash",
+          "%fields": [
+            {
+              "%name": "filename",
+              "%type": "string",
+              "%required": true
+            },
+            {
+              "%name": "checksum",
+              "%type": "MD5",
+              "%required": true
+            },
+            {
+              "%name": "size",
+              "%type": "long",
+              "%required": true
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: json
+  data: |
+    {
+      "type": "record",
+      "name": "FileInfo",
+      "namespace": "com.example.security",
+      "doc": "File metadata with hash",
+      "fields": [
+        {
+          "name": "filename",
+          "type": "string"
+        },
+        {
+          "name": "checksum",
+          "type": {
+            "type": "fixed",
+            "name": "MD5",
+            "size": 16,
+            "doc": "MD5 hash value"
+          }
+        },
+        {
+          "name": "size",
+          "type": "long"
+        }
+      ]
+    }

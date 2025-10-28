@@ -1,0 +1,38 @@
+name: "avro_fixed_type"
+category: "formats/avro/complex-types"
+description: "Fixed type (fixed-length byte arrays) for hashes and binary data"
+tags: ['avro', 'schema', 'fixed', 'binary']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example.security",
+      "%types": {
+        "MD5": {
+          "%kind": "fixed",
+          "%size": 16,
+          "%documentation": "MD5 hash value",
+          "%aliases": ["Hash"]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: json
+  data: |
+    {
+      "type": "fixed",
+      "name": "MD5",
+      "namespace": "com.example.security",
+      "size": 16,
+      "doc": "MD5 hash value",
+      "aliases": ["Hash"]
+    }

@@ -25,6 +25,7 @@ import org.apache.utlx.stdlib.jws.*
 import org.apache.utlx.stdlib.csv.*
 import org.apache.utlx.stdlib.yaml.*
 import org.apache.utlx.stdlib.regional.*
+import org.apache.utlx.stdlib.schema.*
 
 
 
@@ -943,7 +944,15 @@ object StandardLibrary {
         // Aliases for compatibility with Tibco BW\
         register("tibco_parse", SerializationFunctions::parse)
         register("tibco_render", SerializationFunctions::render)
-        
+
+        // Schema Serialization functions (Tier 2)
+        register("parseAvroSchema", SchemaSerializationFunctions::parseAvroSchema)
+        register("renderAvroSchema", SchemaSerializationFunctions::renderAvroSchema)
+        register("parseXSDSchema", SchemaSerializationFunctions::parseXSDSchema)
+        register("renderXSDSchema", SchemaSerializationFunctions::renderXSDSchema)
+        register("parseJSONSchema", SchemaSerializationFunctions::parseJSONSchema)
+        register("renderJSONSchema", SchemaSerializationFunctions::renderJSONSchema)
+
         // Pretty-Print functions
         register("prettyPrintJSON", PrettyPrintFunctions::prettyPrintJSON)
         register("udmToJSON", PrettyPrintFunctions::udmToJSON)

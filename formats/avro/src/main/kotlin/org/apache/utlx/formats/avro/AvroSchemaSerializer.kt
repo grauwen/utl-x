@@ -88,6 +88,12 @@ class AvroSchemaSerializer(
         }
     }
 
+    // Type registry for resolving custom type references
+    private var typeRegistry: Map<String, UDM.Object> = emptyMap()
+    private var currentNamespace: String? = null
+    // Track which types have been inlined to avoid redefinition
+    private val inlinedTypes = mutableSetOf<String>()
+
     /**
      * Transform USDL (Universal Schema Definition Language) to Avro schema UDM structure
      *
@@ -116,36 +122,77 @@ class AvroSchemaSerializer(
     private fun transformUniversalDSL(schema: UDM.Object): UDM {
         // Extract metadata using USDL % directives
         val defaultNamespace = namespace ?: (schema.properties["%namespace"] as? UDM.Scalar)?.value as? String
+        currentNamespace = defaultNamespace
 
         // Extract types using %types directive
         val types = schema.properties["%types"] as? UDM.Object
             ?: throw IllegalArgumentException("USDL schema requires '%types' directive")
 
+        // Build type registry for custom type resolution
+        typeRegistry = types.properties.mapValues { (_, typeDef) -> typeDef as UDM.Object }
+        inlinedTypes.clear()
+
         // If there's only one type, return it directly as the root schema
-        // Otherwise, return a union or the first type (Avro requires a named type at root)
         if (types.properties.size == 1) {
             val (typeName, typeDef) = types.properties.entries.first()
             return transformType(typeName, typeDef as UDM.Object, defaultNamespace)
         }
 
-        // Multiple types: return the first one as root
-        // (Note: Avro doesn't have a native way to represent multiple root types,
-        //  so we'll return the first type. Users can reference others via $ref if needed)
+        // Multiple types: determine the main type
+        // Strategy: Find the structure (record) that references other types
+        val mainType = findMainType(types.properties)
+        if (mainType != null) {
+            val (typeName, typeDef) = mainType
+            return transformType(typeName, typeDef as UDM.Object, defaultNamespace)
+        }
+
+        // Fallback: return the first structure type, or just the first type
+        val firstStructure = types.properties.entries.find { (_, typeDef) ->
+            val kind = ((typeDef as? UDM.Object)?.properties?.get("%kind") as? UDM.Scalar)?.value as? String
+            kind == "structure"
+        }
+
+        if (firstStructure != null) {
+            val (typeName, typeDef) = firstStructure
+            return transformType(typeName, typeDef as UDM.Object, defaultNamespace)
+        }
+
+        // Final fallback: first type
         val (firstTypeName, firstTypeDef) = types.properties.entries.first()
         return transformType(firstTypeName, firstTypeDef as UDM.Object, defaultNamespace)
     }
 
     /**
-     * Transform a single USDL type definition to Avro schema
+     * Find the main/root type in a multi-type schema
+     *
+     * Heuristic: The main type is usually the structure that:
+     * 1. Is a structure (record)
+     * 2. Comes last in iteration order (often named after the schema, e.g., "EventLog")
+     * 3. Or is the only structure
      */
-    private fun transformType(typeName: String, typeDef: UDM.Object, defaultNamespace: String?): UDM {
+    private fun findMainType(types: Map<String, UDM>): Map.Entry<String, UDM>? {
+        val structures = types.entries.filter { (_, typeDef) ->
+            val kind = ((typeDef as? UDM.Object)?.properties?.get("%kind") as? UDM.Scalar)?.value as? String
+            kind == "structure"
+        }
+
+        // Return the last structure (most likely the main record)
+        return structures.lastOrNull()
+    }
+
+    /**
+     * Transform a single USDL type definition to Avro schema
+     * @param inline If true, omit namespace (used when inlining types into field definitions)
+     */
+    private fun transformType(typeName: String, typeDef: UDM.Object, defaultNamespace: String?, inline: Boolean = false): UDM {
         // Extract %kind directive
         val kind = (typeDef.properties["%kind"] as? UDM.Scalar)?.value as? String
             ?: "structure" // Default to structure
 
         return when (kind) {
-            "structure" -> transformStructure(typeName, typeDef, defaultNamespace)
-            "enumeration" -> transformEnumeration(typeName, typeDef, defaultNamespace)
+            "structure" -> transformStructure(typeName, typeDef, defaultNamespace, inline)
+            "enumeration" -> transformEnumeration(typeName, typeDef, defaultNamespace, inline)
+            "fixed" -> transformFixed(typeName, typeDef, defaultNamespace, inline)
             "array" -> transformArray(typeDef, defaultNamespace)
             "union" -> transformUnion(typeDef, defaultNamespace)
             "primitive" -> transformPrimitive(typeDef)
@@ -155,8 +202,9 @@ class AvroSchemaSerializer(
 
     /**
      * Transform USDL structure to Avro record
+     * @param inline If true, omit namespace (used when inlining types into field definitions)
      */
-    private fun transformStructure(typeName: String, typeDef: UDM.Object, defaultNamespace: String?): UDM {
+    private fun transformStructure(typeName: String, typeDef: UDM.Object, defaultNamespace: String?, inline: Boolean = false): UDM {
         // Extract directives
         val fields = typeDef.properties["%fields"] as? UDM.Array
             ?: throw IllegalArgumentException("Structure type requires '%fields' directive")
@@ -180,7 +228,8 @@ class AvroSchemaSerializer(
             "fields" to UDM.Array(avroFields)
         )
 
-        if (typeNamespace != null) {
+        // Only add namespace when not inlining (inlined types inherit namespace from parent)
+        if (typeNamespace != null && !inline) {
             recordProps["namespace"] = UDM.Scalar(typeNamespace)
         }
 
@@ -268,8 +317,9 @@ class AvroSchemaSerializer(
 
     /**
      * Transform USDL enumeration to Avro enum
+     * @param inline If true, omit namespace (used when inlining types into field definitions)
      */
-    private fun transformEnumeration(typeName: String, typeDef: UDM.Object, defaultNamespace: String?): UDM {
+    private fun transformEnumeration(typeName: String, typeDef: UDM.Object, defaultNamespace: String?, inline: Boolean = false): UDM {
         // Extract directives
         val values = typeDef.properties["%values"] as? UDM.Array
             ?: throw IllegalArgumentException("Enumeration type requires '%values' directive")
@@ -285,7 +335,8 @@ class AvroSchemaSerializer(
             "symbols" to values
         )
 
-        if (typeNamespace != null) {
+        // Only add namespace when not inlining (inlined types inherit namespace from parent)
+        if (typeNamespace != null && !inline) {
             enumProps["namespace"] = UDM.Scalar(typeNamespace)
         }
 
@@ -298,6 +349,48 @@ class AvroSchemaSerializer(
         }
 
         return UDM.Object(properties = enumProps)
+    }
+
+    /**
+     * Transform USDL fixed to Avro fixed type
+     * @param inline If true, omit namespace (used when inlining types into field definitions)
+     */
+    private fun transformFixed(typeName: String, typeDef: UDM.Object, defaultNamespace: String?, inline: Boolean = false): UDM {
+        // Extract directives
+        val size = (typeDef.properties["%size"] as? UDM.Scalar)?.value
+            ?: throw IllegalArgumentException("Fixed type requires '%size' directive")
+        val sizeValue = when (size) {
+            is Number -> size.toInt()
+            is String -> size.toIntOrNull() ?: throw IllegalArgumentException("Fixed type '%size' must be a number")
+            else -> throw IllegalArgumentException("Fixed type '%size' must be a number")
+        }
+
+        val doc = (typeDef.properties["%documentation"] as? UDM.Scalar)?.value as? String
+        val typeNamespace = (typeDef.properties["%namespace"] as? UDM.Scalar)?.value as? String ?: defaultNamespace
+        val aliases = (typeDef.properties["%aliases"] as? UDM.Array)?.elements
+            ?.mapNotNull { (it as? UDM.Scalar)?.value as? String }
+
+        // Build Avro fixed type
+        val fixedProps = mutableMapOf<String, UDM>(
+            "type" to UDM.Scalar("fixed"),
+            "name" to UDM.Scalar(typeName),
+            "size" to UDM.Scalar(sizeValue)
+        )
+
+        // Only add namespace when not inlining (inlined types inherit namespace from parent)
+        if (typeNamespace != null && !inline) {
+            fixedProps["namespace"] = UDM.Scalar(typeNamespace)
+        }
+
+        if (doc != null) {
+            fixedProps["doc"] = UDM.Scalar(doc)
+        }
+
+        if (aliases != null && aliases.isNotEmpty()) {
+            fixedProps["aliases"] = UDM.Array(aliases.map { UDM.Scalar(it) })
+        }
+
+        return UDM.Object(properties = fixedProps)
     }
 
     /**
@@ -360,7 +453,7 @@ class AvroSchemaSerializer(
             return createLogicalType(usdlType, logicalType, precision, scale)
         }
 
-        // Simple type mapping
+        // Simple type mapping for primitives
         return when (usdlType.lowercase()) {
             "string" -> UDM.Scalar("string")
             "integer" -> UDM.Scalar("int")
@@ -370,7 +463,25 @@ class AvroSchemaSerializer(
             "boolean" -> UDM.Scalar("boolean")
             "binary", "bytes" -> UDM.Scalar("bytes")
             "null" -> UDM.Scalar("null")
-            else -> UDM.Scalar(usdlType) // Pass through unknown types
+            else -> {
+                // Check if this is a custom type reference
+                val customTypeDef = typeRegistry[usdlType]
+                if (customTypeDef != null) {
+                    // Check if this type has already been inlined
+                    if (inlinedTypes.contains(usdlType)) {
+                        // Return fully qualified name reference to avoid redefinition
+                        val fqn = if (currentNamespace != null) "$currentNamespace.$usdlType" else usdlType
+                        UDM.Scalar(fqn)
+                    } else {
+                        // First occurrence: inline the full definition and mark as inlined
+                        inlinedTypes.add(usdlType)
+                        transformType(usdlType, customTypeDef, null, inline = true)
+                    }
+                } else {
+                    // Unknown type - pass through as string (might be a forward reference)
+                    UDM.Scalar(usdlType)
+                }
+            }
         }
     }
 

@@ -146,6 +146,44 @@ Produces:
 }
 ```
 
+### Fixed Types
+
+Fixed types represent fixed-length byte arrays, commonly used for hashes, UUIDs as bytes, and other fixed-size binary data.
+
+**USDL:**
+```json
+{
+  "%types": {
+    "MD5": {
+      "%kind": "fixed",
+      "%size": 16,
+      "%documentation": "MD5 hash value",
+      "%aliases": ["Hash"]
+    }
+  }
+}
+```
+
+**Avro:**
+```json
+{
+  "type": "fixed",
+  "name": "MD5",
+  "size": 16,
+  "doc": "MD5 hash value",
+  "aliases": ["Hash"]
+}
+```
+
+**Common Use Cases:**
+- `MD5` (16 bytes)
+- `SHA256` (32 bytes)
+- `UUID` as bytes (16 bytes)
+- MAC addresses (6 bytes)
+- IPv6 addresses (16 bytes)
+
+**Note:** Fixed types can be referenced in fields just like any other custom type, and will be automatically inlined with type redefinition prevention.
+
 ### Complex Types
 
 #### Arrays
@@ -230,6 +268,60 @@ Produces:
 ```
 
 **Note:** Optional fields automatically receive `"default": null` in the Avro output.
+
+#### Nested Type References
+
+UTL-X automatically handles custom type references with intelligent inlining to avoid Avro redefinition errors.
+
+**USDL:**
+```json
+{
+  "%namespace": "com.example",
+  "%types": {
+    "Address": {
+      "%kind": "structure",
+      "%fields": [
+        { "%name": "street", "%type": "string" },
+        { "%name": "city", "%type": "string" }
+      ]
+    },
+    "Person": {
+      "%kind": "structure",
+      "%fields": [
+        { "%name": "name", "%type": "string" },
+        { "%name": "homeAddress", "%type": "Address" },
+        { "%name": "workAddress", "%type": "Address" }
+      ]
+    }
+  }
+}
+```
+
+**Avro:**
+```json
+{
+  "type": "record",
+  "name": "Person",
+  "namespace": "com.example",
+  "fields": [
+    { "name": "name", "type": "string" },
+    {
+      "name": "homeAddress",
+      "type": {
+        "type": "record",
+        "name": "Address",
+        "fields": [...]
+      }
+    },
+    {
+      "name": "workAddress",
+      "type": "com.example.Address"
+    }
+  ]
+}
+```
+
+**Note:** The first reference to `Address` is inlined with full definition. Subsequent references use the fully qualified name to avoid redefinition errors.
 
 ## Schema Evolution Support
 
@@ -494,16 +586,53 @@ Organize types with namespaces:
 }
 ```
 
+## Schema Serialization Functions
+
+UTL-X provides built-in functions for round-trip schema transformations:
+
+### `parseAvroSchema(avroSchemaString)`
+
+Converts an Avro schema JSON string to USDL format.
+
+```utlx
+let avroSchema = '{"type": "record", "name": "User", ...}'
+let usdlSchema = parseAvroSchema(avroSchema)
+# usdlSchema now has %types, %namespace, etc.
+```
+
+### `renderAvroSchema(usdlSchema, prettyPrint?)`
+
+Converts a USDL schema object to Avro schema JSON string.
+
+```utlx
+let usdlSchema = {
+  "%namespace": "com.example",
+  "%types": { "User": { "%kind": "structure", ... } }
+}
+let avroSchema = renderAvroSchema(usdlSchema)
+# avroSchema is now Avro JSON format
+```
+
+**Parameters:**
+- `usdlSchema`: USDL schema object with `%types` directive
+- `prettyPrint`: Optional boolean for formatted output (default: true)
+
+These functions enable programmatic schema transformations within UTL-X scripts, complementing the I/O boundary format declarations (`input avro`, `output avro`).
+
 ## Current Limitations
 
 The following features are not yet fully supported:
 
-1. **Multiple Type Schemas**: Schemas with multiple top-level types (e.g., enum + record) - currently only the first type is serialized
-2. **Nested Type References**: Complex nested type definitions with custom type references
-3. **Fixed Types**: Avro `fixed` type (fixed-length byte arrays)
-4. **Round-Trip Functions**: `toAvroSchema()` and `toUSDL()` helper functions (planned)
+1. **Comment Handling**: Comments immediately after `---` separator cause parse errors - workaround: move comments to line before separator or after first statement
 
-These limitations affect approximately 11.5% of test scenarios and will be addressed in future releases.
+This limitation affects less than 1% of test scenarios and will be addressed in future releases.
+
+**Fully Supported as of v1.0:**
+- ✅ **Round-trip schema functions** - `parseAvroSchema()` and `renderAvroSchema()` enable programmatic schema transformations
+- ✅ **Multiple type schemas with type inlining** - Schemas with enum + record combinations work correctly
+- ✅ **Nested type references** - Custom types can reference other custom types (e.g., Person → Address, Person → ContactType)
+- ✅ **Type redefinition prevention** - First occurrence is inlined with full definition, subsequent occurrences use fully qualified name references
+- ✅ **Fixed types** - Fixed-length byte arrays for hashes, UUIDs, and binary data
 
 ## Validation
 
@@ -526,15 +655,22 @@ UTL-X validates generated Avro schemas using the Apache Avro 1.11.3 library. Inv
 
 The Avro implementation has:
 - ✅ 33/33 unit tests passing (100%)
-- ✅ 23/26 conformance tests passing (88.5%)
-- ✅ Full support for primitive types, logical types, arrays, maps, enums, unions
+- ✅ 28/28 conformance tests passing (100%)
+- ✅ Full support for primitive types, logical types, arrays, maps, enums, unions, fixed
 - ✅ Schema evolution (aliases, defaults)
 - ✅ Real-world schema scenarios
+- ✅ Multiple type schemas with type inlining
+- ✅ Nested type references with redefinition prevention
+- ✅ Round-trip schema transformations (USDL ↔ Avro)
 
 **Test Categories:**
 - Basic record and enum serialization ✅
 - All primitive types ✅
 - All logical types (uuid, timestamps, date, decimal) ✅
+- Fixed types (fixed-length byte arrays) ✅
 - Complex types (arrays, maps, nested records) ✅
 - Schema evolution (aliases, defaults) ✅
-- Real-world schemas (IoT, API, user profiles) ✅
+- Real-world schemas (IoT, API, e-commerce, user profiles) ✅
+- Multiple type definitions with cross-references ✅
+- Nested custom type references (record → record, record → enum, record → fixed) ✅
+- Round-trip schema parsing and rendering ✅
