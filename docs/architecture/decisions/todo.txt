@@ -10,6 +10,16 @@ hese XSDParserTest failures appear to be pre-existing issues with the parser (no
 ----
   Likely cause: type may be a reserved keyword or conflicts with the type system. ?
 So the parser has a bug where it's rejecting type as a parameter name when it shouldn't. Should I investigate why the parser is rejecting it?
+----
+ Bug #1: sortBy broken for values >= 1000
+  - sortBy([{v: 999}, {v: 500}], x => x.v) ✅ Works
+  - sortBy([{v: 1000}, {v: 500}], x => x.v) ❌ Broken
+  - Impact: Cannot sort objects by numeric properties with values >= 1000
+
+  Bug #2: Unary minus not supported in lambdas
+  - sortBy(item => -item.value) causes "Unary minus requires number" error
+  - Workaround: Use sortBy(item => item.value) |> reverse()
+
 
 ---
 Later
