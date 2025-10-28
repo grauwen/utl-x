@@ -366,19 +366,38 @@ object ArrayFunctions {
                 "sortBy requires a lambda as second argument, but got ${getTypeDescription(args[1])}. " +
                 "Hint: Use x => key expression to extract sort key from each element."
             )
-        
-        val sorted = array.elements.sortedBy { element ->
-            val key = lambda.apply(listOf(element))
-            when (key) {
-                is UDM.Scalar -> when (val v = key.value) {
-                    is Number -> v.toString()
-                    is String -> v
-                    else -> v.toString()
+
+        val sorted = array.elements.sortedWith { a, b ->
+            val keyA = lambda.apply(listOf(a))
+            val keyB = lambda.apply(listOf(b))
+
+            // Extract comparable values
+            val valueA = when (keyA) {
+                is UDM.Scalar -> keyA.value
+                else -> keyA.toString()
+            }
+            val valueB = when (keyB) {
+                is UDM.Scalar -> keyB.value
+                else -> keyB.toString()
+            }
+
+            // Compare based on type
+            when {
+                valueA is Number && valueB is Number -> {
+                    valueA.toDouble().compareTo(valueB.toDouble())
                 }
-                else -> key.toString()
+                valueA is String && valueB is String -> {
+                    valueA.compareTo(valueB)
+                }
+                valueA is Boolean && valueB is Boolean -> {
+                    valueA.compareTo(valueB)
+                }
+                else -> {
+                    valueA.toString().compareTo(valueB.toString())
+                }
             }
         }
-        
+
         return UDM.Array(sorted)
     }
     

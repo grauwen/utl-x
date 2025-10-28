@@ -1,0 +1,55 @@
+name: "sortBy_numeric_values"
+category: "stdlib/array"
+description: "Test sortBy with various numeric values including large numbers >= 1000"
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    smallNumbers: sortBy([5, 2, 8, 1, 9, 3], n => n),
+    largeNumbers: sortBy([10000, 5000, 25000, 1500], n => n),
+    boundary999: sortBy([{v: 999}, {v: 500}], x => x.v),
+    boundary1000: sortBy([{v: 1000}, {v: 500}], x => x.v),
+    boundary1001: sortBy([{v: 1001}, {v: 500}], x => x.v),
+    realWorldExample: sortBy([{v: 1575}, {v: 700}], x => x.v),
+    mixedRange: sortBy([{v: 25}, {v: 1575}, {v: 300}, {v: 700}], x => x.v),
+    decimals: sortBy([5.5, 2.2, 8.8, 1.1], n => n),
+    negatives: sortBy([-5, 10, -20, 3, 0], n => n),
+    objects: sortBy([
+      {name: "Charlie", age: 30},
+      {name: "Alice", age: 25},
+      {name: "Bob", age: 35}
+    ], p => p.age)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "smallNumbers": [1, 2, 3, 5, 8, 9],
+      "largeNumbers": [1500, 5000, 10000, 25000],
+      "boundary999": [{"v": 500}, {"v": 999}],
+      "boundary1000": [{"v": 500}, {"v": 1000}],
+      "boundary1001": [{"v": 500}, {"v": 1001}],
+      "realWorldExample": [{"v": 700}, {"v": 1575}],
+      "mixedRange": [
+        {"v": 25},
+        {"v": 300},
+        {"v": 700},
+        {"v": 1575}
+      ],
+      "decimals": [1.1, 2.2, 5.5, 8.8],
+      "negatives": [-20, -5, 0, 3, 10],
+      "objects": [
+        {"name": "Alice", "age": 25},
+        {"name": "Charlie", "age": 30},
+        {"name": "Bob", "age": 35}
+      ]
+    }

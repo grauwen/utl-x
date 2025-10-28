@@ -167,6 +167,8 @@ output json
          avgPrice: avg(group.value |> map(p => p.price)),
          totalValue: sum(group.value |> map(p => p.price))
        })
+    |> sortBy(item => item.totalValue)
+    |> reverse()
 }
 ```
 
@@ -179,7 +181,9 @@ output json
 ---
 {
   premiumCustomers: $input.customers
-    |> filter(c => c.totalSpent > 500 && c.active == true)
+    |> filter(c => c.totalSpent > 10000 && c.active == true)
+    |> sortBy(c => c.totalSpent)
+    |> reverse()
     |> take(10)
     |> map(c => {
          name: c.name,
