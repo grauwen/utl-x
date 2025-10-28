@@ -1,0 +1,53 @@
+name: "xsd_round_trip_basic"
+category: "formats/xsd/basic"
+description: "Round-trip test: USDL -> XSD -> USDL preserves structure"
+tags: ['xsd', 'schema', 'round-trip', 'usdl']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "http://example.com/roundtrip",
+      "%types": {
+        "Person": {
+          "%kind": "structure",
+          "%documentation": "A person record",
+          "%fields": [
+            {
+              "%name": "name",
+              "%type": "string",
+              "%required": true
+            },
+            {
+              "%name": "age",
+              "%type": "integer",
+              "%required": false
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let xsdSchema = renderXSDSchema($input)
+  let backToUsdl = parseXSDSchema(xsdSchema)
+  {
+    hasTypes: hasKey(backToUsdl, "%types"),
+    hasNamespace: hasKey(backToUsdl, "%namespace"),
+    typeName: keys(backToUsdl["%types"])[0],
+    fieldCount: count(backToUsdl["%types"]["Person"]["%fields"])
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasTypes": true,
+      "hasNamespace": true,
+      "typeName": "Person",
+      "fieldCount": 2
+    }

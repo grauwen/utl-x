@@ -15,6 +15,7 @@ dependencies {
 
     // Format module dependencies (for schema serialization functions)
     implementation(project(":formats:avro"))
+    implementation(project(":formats:xsd"))
 
     // Kotlin standard library
     implementation(kotlin("stdlib"))

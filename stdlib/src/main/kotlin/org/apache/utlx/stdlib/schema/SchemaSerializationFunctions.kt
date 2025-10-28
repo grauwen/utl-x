@@ -160,53 +160,125 @@ object SchemaSerializationFunctions {
     // ============================================
 
     @UTLXFunction(
-        description = "Parse an XSD schema string into USDL format (not yet implemented)",
+        description = "Parse an XSD schema XML string into USDL format",
         minArgs = 1,
         maxArgs = 1,
         category = "Schema",
         parameters = [
             "xsdSchemaString: XSD schema XML string"
         ],
-        returns = "USDL schema object",
-        example = "parseXSDSchema(xsdString)",
-        tags = ["schema", "xsd", "usdl", "future"],
+        returns = "USDL schema object with %types, %namespace, etc.",
+        example = "parseXSDSchema(\"<xs:schema>...</xs:schema>\")",
+        tags = ["schema", "xsd", "usdl"],
         since = "1.0"
     )
     /**
-     * Parse an XSD schema string into USDL format
+     * Parse an XSD schema XML string into USDL format
      *
-     * **Status:** Not yet implemented - planned for future release
+     * Converts XML Schema Definition (XSD) to Universal Schema Definition Language (USDL).
+     *
+     * Example:
+     * ```utlx
+     * let xsdSchema = '<xs:schema>...</xs:schema>'
+     * let usdlSchema = parseXSDSchema(xsdSchema)
+     * # usdlSchema now has %types, %namespace, etc.
+     * ```
      */
     fun parseXSDSchema(args: List<UDM>): UDM {
-        throw FunctionArgumentException(
-            "parseXSDSchema is not yet implemented. " +
-            "Hint: Use 'input xsd' / 'output json' at the I/O boundary for now."
-        )
+        requireArgs(args, 1, "parseXSDSchema")
+        val xsdSchemaString = args[0].asString()
+
+        if (xsdSchemaString.isBlank()) {
+            throw FunctionArgumentException(
+                "parseXSDSchema cannot parse empty or blank XSD schema string. " +
+                "Hint: Provide a valid XSD schema XML like '<xs:schema>...</xs:schema>'."
+            )
+        }
+
+        return try {
+            val parser = org.apache.utlx.formats.xsd.XSDParser(xsdSchemaString)
+            val xsdSchemaUdm = parser.parse()
+            // Convert XSD structure to USDL format
+            parser.toUSDL(xsdSchemaUdm)
+        } catch (e: Exception) {
+            throw FunctionArgumentException(
+                "parseXSDSchema failed to parse XSD schema: ${e.message}. " +
+                "Hint: Ensure the string is a valid XSD schema (XML format). " +
+                "Check for required elements like xs:schema, xs:complexType, xs:element."
+            )
+        }
     }
 
     @UTLXFunction(
-        description = "Render a USDL schema object as an XSD schema string (not yet implemented)",
+        description = "Render a USDL schema object as an XSD schema XML string",
         minArgs = 1,
-        maxArgs = 1,
+        maxArgs = 2,
         category = "Schema",
         parameters = [
-            "usdlSchema: USDL schema object"
+            "usdlSchema: USDL schema object with %types directive",
+            "prettyPrint: Optional boolean for formatted output (default: true)"
         ],
         returns = "XSD schema XML string",
-        example = "renderXSDSchema(usdlSchema)",
-        tags = ["schema", "xsd", "usdl", "future"],
+        example = "renderXSDSchema(usdlSchema, pretty?)",
+        tags = ["schema", "xsd", "usdl"],
         since = "1.0"
     )
     /**
-     * Render a USDL schema object as an XSD schema string
+     * Render a USDL schema object as an XSD schema XML string
      *
-     * **Status:** Not yet implemented - planned for future release
+     * Converts Universal Schema Definition Language (USDL) to XML Schema Definition (XSD).
+     *
+     * Example:
+     * ```utlx
+     * let usdlSchema = {
+     *   "%namespace": "http://example.com/schema",
+     *   "%types": {
+     *     "Person": {
+     *       "%kind": "structure",
+     *       "%fields": [...]
+     *     }
+     *   }
+     * }
+     * let xsdSchema = renderXSDSchema(usdlSchema)
+     * # xsdSchema is now XSD XML format
+     * ```
      */
     fun renderXSDSchema(args: List<UDM>): UDM {
-        throw FunctionArgumentException(
-            "renderXSDSchema is not yet implemented. " +
-            "Hint: Use 'input json' / 'output xsd' at the I/O boundary for now."
-        )
+        requireArgs(args, 1..2, "renderXSDSchema")
+        val usdlSchema = args[0]
+        val prettyPrint = if (args.size > 1) args[1].asBoolean() else true
+
+        // Validate that it's a USDL schema
+        if (usdlSchema !is UDM.Object) {
+            throw FunctionArgumentException(
+                "renderXSDSchema expects a USDL schema object, got ${getTypeDescription(usdlSchema)}. " +
+                "Hint: USDL schemas must be objects with '%types' directive."
+            )
+        }
+
+        if (!usdlSchema.properties.containsKey("%types")) {
+            throw FunctionArgumentException(
+                "renderXSDSchema expects a USDL schema with '%types' directive. " +
+                "Hint: USDL schemas must have a '%types' object containing type definitions."
+            )
+        }
+
+        return try {
+            val serializer = org.apache.utlx.formats.xsd.XSDSerializer(
+                pattern = null,  // Auto-detect pattern
+                version = "1.0",
+                addDocumentation = true,
+                elementFormDefault = "qualified",
+                prettyPrint = prettyPrint
+            )
+            val xsdSchemaString = serializer.serialize(usdlSchema)
+            UDM.Scalar(xsdSchemaString)
+        } catch (e: Exception) {
+            throw FunctionArgumentException(
+                "renderXSDSchema failed to serialize USDL to XSD schema: ${e.message}. " +
+                "Hint: Ensure the USDL schema is valid with proper %kind, %fields, %type directives."
+            )
+        }
     }
 
     @UTLXFunction(
