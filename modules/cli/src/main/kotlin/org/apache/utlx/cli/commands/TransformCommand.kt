@@ -20,6 +20,8 @@ import org.apache.utlx.formats.xsd.XSDSerializer
 import org.apache.utlx.formats.jsch.JSONSchemaParser
 import org.apache.utlx.formats.jsch.JSONSchemaSerializer
 import org.apache.utlx.formats.yaml.YAMLSerializer
+import org.apache.utlx.formats.avro.AvroSchemaParser
+import org.apache.utlx.formats.avro.AvroSchemaSerializer
 import org.apache.utlx.stdlib.StandardLibrary
 import org.apache.utlx.cli.capture.TestCaptureService
 import org.apache.utlx.core.debug.DebugConfig
@@ -302,6 +304,9 @@ object TransformCommand {
                 "jsch" -> {
                     JSONSchemaParser(data).parse()
                 }
+                "avro" -> {
+                    AvroSchemaParser().parse(data)
+                }
                 else -> throw IllegalArgumentException("Unsupported input format: $format")
             }
         } catch (e: Exception) {
@@ -383,6 +388,17 @@ object TransformCommand {
                         strict = strict
                     ).serialize(udm)
                 }
+                "avro" -> {
+                    // Avro schema output with optional validation
+                    val namespace = formatSpec.options["namespace"] as? String
+                    val validate = formatSpec.options["validate"] as? Boolean ?: true
+
+                    AvroSchemaSerializer(
+                        namespace = namespace,
+                        prettyPrint = pretty,
+                        validate = validate
+                    ).serialize(udm)
+                }
                 else -> throw IllegalArgumentException("Unsupported output format: $format")
             }
         } catch (e: Exception) {
@@ -394,10 +410,11 @@ object TransformCommand {
     private fun detectFormat(data: String, extension: String?): String {
         // Try extension first
         extension?.lowercase()?.let {
-            if (it in listOf("xml", "json", "csv", "yaml", "yml", "xsd", "jsch")) {
+            if (it in listOf("xml", "json", "csv", "yaml", "yml", "xsd", "jsch", "avro", "avsc")) {
                 return when (it) {
                     "yml" -> "yaml"
                     "jsch" -> "jsch"  // JSON Schema files
+                    "avsc" -> "avro"  // Avro schema files (.avsc extension)
                     else -> it
                 }
             }

@@ -1,0 +1,86 @@
+name: "avro_order_system"
+category: "formats/avro/real-world"
+description: "E-commerce order schema with decimal prices and nested structures"
+tags: ['avro', 'schema', 'real-world', 'ecommerce']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example.orders",
+      "%types": {
+        "OrderStatus": {
+          "%kind": "enumeration",
+          "%values": ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"]
+        },
+        "Order": {
+          "%kind": "structure",
+          "%documentation": "Customer order record",
+          "%fields": [
+            {
+              "%name": "orderId",
+              "%type": "string",
+              "%logicalType": "uuid"
+            },
+            {
+              "%name": "customerId",
+              "%type": "string"
+            },
+            {
+              "%name": "status",
+              "%type": "OrderStatus"
+            },
+            {
+              "%name": "totalAmount",
+              "%type": "binary",
+              "%logicalType": "decimal",
+              "%precision": 10,
+              "%scale": 2
+            },
+            {
+              "%name": "items",
+              "%type": "string",
+              "%array": true
+            },
+            {
+              "%name": "orderDate",
+              "%type": "integer",
+              "%logicalType": "date"
+            },
+            {
+              "%name": "notes",
+              "%type": "string",
+              "%required": false
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  # Extract schema metadata
+  {
+    namespace: $input["%namespace"],
+    typeCount: count(keys($input["%types"])),
+    orderFields: count($input["%types"]["Order"]["%fields"]),
+    hasEnums: hasKey($input["%types"], "OrderStatus"),
+    hasLogicalTypes: any(
+      $input["%types"]["Order"]["%fields"],
+      field => hasKey(field, "%logicalType")
+    )
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "namespace": "com.example.orders",
+      "typeCount": 2,
+      "orderFields": 7,
+      "hasEnums": true,
+      "hasLogicalTypes": true
+    }

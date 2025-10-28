@@ -1,0 +1,50 @@
+name: "avro_array_of_records"
+category: "formats/avro/complex-types"
+description: "Parse Avro schema with array of record types"
+tags: ['avro', 'schema', 'array', 'nested']
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Team",
+      "fields": [
+        {
+          "name": "members",
+          "type": {
+            "type": "array",
+            "items": {
+              "type": "record",
+              "name": "Member",
+              "fields": [
+                {"name": "name", "type": "string"},
+                {"name": "role", "type": "string"}
+              ]
+            }
+          }
+        }
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    hasArrayField: $input.fields[0].type.type == "array",
+    itemsAreRecords: $input.fields[0].type.items.type == "record",
+    memberRecordName: $input.fields[0].type.items.name,
+    memberFieldCount: count($input.fields[0].type.items.fields)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasArrayField": true,
+      "itemsAreRecords": true,
+      "memberRecordName": "Member",
+      "memberFieldCount": 2
+    }

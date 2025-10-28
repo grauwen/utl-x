@@ -1,0 +1,99 @@
+name: "avro_event_log"
+category: "formats/avro/real-world"
+description: "Event logging schema with timestamps and enums"
+tags: ['avro', 'schema', 'real-world', 'events']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example.events",
+      "%types": {
+        "EventLevel": {
+          "%kind": "enumeration",
+          "%values": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        },
+        "EventLog": {
+          "%kind": "structure",
+          "%documentation": "System event log entry",
+          "%fields": [
+            {
+              "%name": "eventId",
+              "%type": "string",
+              "%logicalType": "uuid"
+            },
+            {
+              "%name": "timestamp",
+              "%type": "integer",
+              "%logicalType": "timestamp-millis"
+            },
+            {
+              "%name": "level",
+              "%type": "EventLevel"
+            },
+            {
+              "%name": "message",
+              "%type": "string"
+            },
+            {
+              "%name": "context",
+              "%type": "string",
+              "%map": true
+            },
+            {
+              "%name": "stackTrace",
+              "%type": "string",
+              "%required": false
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "EventLog",
+      "namespace": "com.example.events",
+      "doc": "System event log entry",
+      "fields": [
+        {
+          "name": "eventId",
+          "type": {"type": "string", "logicalType": "uuid"}
+        },
+        {
+          "name": "timestamp",
+          "type": {"type": "long", "logicalType": "timestamp-millis"}
+        },
+        {
+          "name": "level",
+          "type": {
+            "type": "enum",
+            "name": "EventLevel",
+            "symbols": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+          }
+        },
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "context",
+          "type": {"type": "map", "values": "string"}
+        },
+        {
+          "name": "stackTrace",
+          "type": ["null", "string"],
+          "default": null
+        }
+      ]
+    }

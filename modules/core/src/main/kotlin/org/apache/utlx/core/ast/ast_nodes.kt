@@ -82,7 +82,8 @@ data class Dialect(
 enum class FormatType {
     AUTO, XML, JSON, CSV, YAML, CUSTOM,
     XSD,   // XML Schema Definition (W3C XSD 1.0/1.1)
-    JSCH   // JSON Schema (draft-07, 2020-12)
+    JSCH,  // JSON Schema (draft-07, 2020-12)
+    AVRO   // Apache Avro Schema (1.11.x)
 }
 
 /**

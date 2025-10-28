@@ -1,0 +1,103 @@
+name: "avro_user_profile"
+category: "formats/avro/real-world"
+description: "Complete user profile schema with multiple field types"
+tags: ['avro', 'schema', 'real-world', 'user']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example.users",
+      "%types": {
+        "UserProfile": {
+          "%kind": "structure",
+          "%documentation": "User profile information",
+          "%fields": [
+            {
+              "%name": "userId",
+              "%type": "string",
+              "%logicalType": "uuid"
+            },
+            {
+              "%name": "username",
+              "%type": "string",
+              "%required": true
+            },
+            {
+              "%name": "email",
+              "%type": "string",
+              "%required": false,
+              "%default": null
+            },
+            {
+              "%name": "age",
+              "%type": "integer",
+              "%required": true
+            },
+            {
+              "%name": "tags",
+              "%type": "string",
+              "%array": true
+            },
+            {
+              "%name": "preferences",
+              "%type": "string",
+              "%map": true
+            },
+            {
+              "%name": "createdAt",
+              "%type": "integer",
+              "%logicalType": "timestamp-millis"
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "UserProfile",
+      "namespace": "com.example.users",
+      "doc": "User profile information",
+      "fields": [
+        {
+          "name": "userId",
+          "type": {"type": "string", "logicalType": "uuid"}
+        },
+        {
+          "name": "username",
+          "type": "string"
+        },
+        {
+          "name": "email",
+          "type": ["null", "string"],
+          "default": null
+        },
+        {
+          "name": "age",
+          "type": "int"
+        },
+        {
+          "name": "tags",
+          "type": {"type": "array", "items": "string"}
+        },
+        {
+          "name": "preferences",
+          "type": {"type": "map", "values": "string"}
+        },
+        {
+          "name": "createdAt",
+          "type": {"type": "long", "logicalType": "timestamp-millis"}
+        }
+      ]
+    }

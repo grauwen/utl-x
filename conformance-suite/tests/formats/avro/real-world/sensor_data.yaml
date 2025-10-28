@@ -1,0 +1,91 @@
+name: "avro_sensor_data"
+category: "formats/avro/real-world"
+description: "IoT sensor data schema with high-precision timestamps"
+tags: ['avro', 'schema', 'real-world', 'iot', 'sensor']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example.iot",
+      "%types": {
+        "SensorData": {
+          "%kind": "structure",
+          "%documentation": "IoT sensor measurement record",
+          "%fields": [
+            {
+              "%name": "sensorId",
+              "%type": "string",
+              "%logicalType": "uuid"
+            },
+            {
+              "%name": "timestamp",
+              "%type": "integer",
+              "%logicalType": "timestamp-micros"
+            },
+            {
+              "%name": "temperature",
+              "%type": "double"
+            },
+            {
+              "%name": "humidity",
+              "%type": "double"
+            },
+            {
+              "%name": "location",
+              "%type": "string",
+              "%required": false
+            },
+            {
+              "%name": "tags",
+              "%type": "string",
+              "%array": true
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "SensorData",
+      "namespace": "com.example.iot",
+      "doc": "IoT sensor measurement record",
+      "fields": [
+        {
+          "name": "sensorId",
+          "type": {"type": "string", "logicalType": "uuid"}
+        },
+        {
+          "name": "timestamp",
+          "type": {"type": "long", "logicalType": "timestamp-micros"}
+        },
+        {
+          "name": "temperature",
+          "type": "double"
+        },
+        {
+          "name": "humidity",
+          "type": "double"
+        },
+        {
+          "name": "location",
+          "type": ["null", "string"],
+          "default": null
+        },
+        {
+          "name": "tags",
+          "type": {"type": "array", "items": "string"}
+        }
+      ]
+    }

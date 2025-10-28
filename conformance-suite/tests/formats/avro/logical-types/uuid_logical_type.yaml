@@ -1,0 +1,46 @@
+name: "avro_uuid_logical_type"
+category: "formats/avro/logical-types"
+description: "Serialize USDL field with uuid logical type to Avro"
+tags: ['avro', 'schema', 'logical-type', 'uuid']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Entity": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "id",
+              "%type": "string",
+              "%logicalType": "uuid"
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Entity",
+      "fields": [
+        {
+          "name": "id",
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          }
+        }
+      ]
+    }

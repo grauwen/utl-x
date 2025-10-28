@@ -1,0 +1,46 @@
+name: "avro_map_type"
+category: "formats/avro/complex-types"
+description: "Serialize USDL map field to Avro map type"
+tags: ['avro', 'schema', 'map', 'complex-type']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Person": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "metadata",
+              "%type": "string",
+              "%map": true
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "fields": [
+        {
+          "name": "metadata",
+          "type": {
+            "type": "map",
+            "values": "string"
+          }
+        }
+      ]
+    }

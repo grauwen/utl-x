@@ -18,6 +18,7 @@ dependencies {
     implementation(project(":formats:yaml"))
     implementation(project(":formats:xsd"))
     implementation(project(":formats:jsch"))
+    implementation(project(":formats:avro"))
     implementation(project(":stdlib"))
     // implementation(project(":stdlib-security"))  // Temporarily disabled
     

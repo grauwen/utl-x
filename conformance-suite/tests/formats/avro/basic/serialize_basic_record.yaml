@@ -1,0 +1,48 @@
+name: "avro_serialize_basic_record"
+category: "formats/avro/basic"
+description: "Serialize USDL structure to Avro record schema"
+tags: ['avro', 'schema', 'serialization', 'usdl']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example",
+      "%types": {
+        "Person": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "name",
+              "%type": "string",
+              "%required": true
+            },
+            {
+              "%name": "age",
+              "%type": "integer",
+              "%required": true
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "namespace": "com.example",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "age", "type": "int"}
+      ]
+    }

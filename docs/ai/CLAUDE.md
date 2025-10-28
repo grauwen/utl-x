@@ -228,6 +228,8 @@ output json     // Output as JSON
 }
 ```
 
+**Important:** In single-input mode, the input data is accessed via `$input` (with dollar sign prefix). In multi-input mode, named inputs are accessed via `$inputName` syntax (e.g., `$input1`, `$orders`, `$customers`). See section 3.2.7 for multi-input details.
+
 **If input is XML:**
 ```xml
 <person><name>World</name></person>
@@ -248,12 +250,12 @@ output json     // Output as JSON
 **Universal Path Syntax:**
 ```utlx
 // Works for XML, JSON, CSV
-input.Order.Customer.Name          // Simple path
-input.Order.Items[*]               // Array/element iteration
-input.Order.Items[0]               // Index access
-input.Order.@id                    // Attribute (XML) / Property (JSON)
-input..ProductCode                 // Recursive descent
-input.Order[Total > 1000]          // Predicate filtering
+$input.Order.Customer.Name          // Simple path
+$input.Order.Items[*]               // Array/element iteration
+$input.Order.Items[0]               // Index access
+$input.Order.@id                    // Attribute (XML) / Property (JSON)
+$input..ProductCode                 // Recursive descent
+$input.Order[Total > 1000]          // Predicate filtering
 ```
 
 **Translation to native format:**
@@ -483,7 +485,7 @@ utlx transform script.utlx \
 
 **Key Features:**
 - ✅ Comma-separated input declarations with colon
-- ✅ Named inputs accessible via `@inputName`
+- ✅ Named inputs accessible via `$inputName` (e.g., `$input1`, `$orders`, `$customers`)
 - ✅ Per-input format options
 - ✅ Backward compatible with single input
 - ✅ Encoding detection per input

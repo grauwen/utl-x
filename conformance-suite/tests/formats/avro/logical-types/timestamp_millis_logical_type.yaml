@@ -1,0 +1,46 @@
+name: "avro_timestamp_millis_logical_type"
+category: "formats/avro/logical-types"
+description: "Serialize USDL field with timestamp-millis logical type to Avro"
+tags: ['avro', 'schema', 'logical-type', 'timestamp']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Event": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "createdAt",
+              "%type": "integer",
+              "%logicalType": "timestamp-millis"
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Event",
+      "fields": [
+        {
+          "name": "createdAt",
+          "type": {
+            "type": "long",
+            "logicalType": "timestamp-millis"
+          }
+        }
+      ]
+    }

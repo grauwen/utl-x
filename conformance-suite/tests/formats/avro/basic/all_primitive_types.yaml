@@ -1,0 +1,50 @@
+name: "avro_all_primitive_types"
+category: "formats/avro/basic"
+description: "Serialize USDL with all Avro primitive types"
+tags: ['avro', 'schema', 'primitives', 'types']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "AllTypes": {
+          "%kind": "structure",
+          "%fields": [
+            {"%name": "nullField", "%type": "null"},
+            {"%name": "boolField", "%type": "boolean"},
+            {"%name": "intField", "%type": "integer"},
+            {"%name": "longField", "%type": "long"},
+            {"%name": "floatField", "%type": "number"},
+            {"%name": "doubleField", "%type": "double"},
+            {"%name": "bytesField", "%type": "binary"},
+            {"%name": "stringField", "%type": "string"}
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "AllTypes",
+      "fields": [
+        {"name": "nullField", "type": "null"},
+        {"name": "boolField", "type": "boolean"},
+        {"name": "intField", "type": "int"},
+        {"name": "longField", "type": "long"},
+        {"name": "floatField", "type": "float"},
+        {"name": "doubleField", "type": "double"},
+        {"name": "bytesField", "type": "bytes"},
+        {"name": "stringField", "type": "string"}
+      ]
+    }

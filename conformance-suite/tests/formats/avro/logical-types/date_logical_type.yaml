@@ -1,0 +1,46 @@
+name: "avro_date_logical_type"
+category: "formats/avro/logical-types"
+description: "Serialize USDL field with date logical type to Avro"
+tags: ['avro', 'schema', 'logical-type', 'date']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Booking": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "checkInDate",
+              "%type": "integer",
+              "%logicalType": "date"
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Booking",
+      "fields": [
+        {
+          "name": "checkInDate",
+          "type": {
+            "type": "int",
+            "logicalType": "date"
+          }
+        }
+      ]
+    }

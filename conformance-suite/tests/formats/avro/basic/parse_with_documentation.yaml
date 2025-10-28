@@ -1,0 +1,51 @@
+name: "avro_parse_with_documentation"
+category: "formats/avro/basic"
+description: "Parse Avro schema with documentation fields"
+tags: ['avro', 'schema', 'parsing', 'documentation']
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Product",
+      "namespace": "com.example",
+      "doc": "Product catalog entry",
+      "fields": [
+        {
+          "name": "sku",
+          "type": "string",
+          "doc": "Stock keeping unit identifier"
+        },
+        {
+          "name": "price",
+          "type": "double",
+          "doc": "Product price in USD"
+        }
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    hasRecordDoc: hasKey($input, "doc"),
+    recordDoc: $input.doc,
+    firstFieldHasDoc: hasKey($input.fields[0], "doc"),
+    fieldDocs: map($input.fields, field => field.doc)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasRecordDoc": true,
+      "recordDoc": "Product catalog entry",
+      "firstFieldHasDoc": true,
+      "fieldDocs": [
+        "Stock keeping unit identifier",
+        "Product price in USD"
+      ]
+    }

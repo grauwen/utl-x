@@ -1,0 +1,50 @@
+name: "avro_map_of_complex_types"
+category: "formats/avro/complex-types"
+description: "Parse Avro schema with map of record types"
+tags: ['avro', 'schema', 'map', 'complex', 'nested']
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Configuration",
+      "fields": [
+        {
+          "name": "settings",
+          "type": {
+            "type": "map",
+            "values": {
+              "type": "record",
+              "name": "Setting",
+              "fields": [
+                {"name": "value", "type": "string"},
+                {"name": "enabled", "type": "boolean"}
+              ]
+            }
+          }
+        }
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    hasMapField: $input.fields[0].type.type == "map",
+    valuesAreRecords: $input.fields[0].type.values.type == "record",
+    settingRecordName: $input.fields[0].type.values.name,
+    settingFieldCount: count($input.fields[0].type.values.fields)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasMapField": true,
+      "valuesAreRecords": true,
+      "settingRecordName": "Setting",
+      "settingFieldCount": 2
+    }

@@ -1,0 +1,86 @@
+name: "avro_api_schema"
+category: "formats/avro/real-world"
+description: "REST API request/response schema with nested types"
+tags: ['avro', 'schema', 'real-world', 'api']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example.api",
+      "%types": {
+        "ApiStatus": {
+          "%kind": "enumeration",
+          "%values": ["SUCCESS", "ERROR", "PENDING"]
+        },
+        "ApiResponse": {
+          "%kind": "structure",
+          "%documentation": "Standard API response envelope",
+          "%fields": [
+            {
+              "%name": "requestId",
+              "%type": "string",
+              "%logicalType": "uuid"
+            },
+            {
+              "%name": "timestamp",
+              "%type": "integer",
+              "%logicalType": "timestamp-millis"
+            },
+            {
+              "%name": "status",
+              "%type": "ApiStatus"
+            },
+            {
+              "%name": "data",
+              "%type": "string",
+              "%map": true
+            },
+            {
+              "%name": "errors",
+              "%type": "string",
+              "%array": true,
+              "%required": false
+            },
+            {
+              "%name": "metadata",
+              "%type": "string",
+              "%map": true,
+              "%required": false
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    namespace: $input["%namespace"],
+    hasEnum: hasKey($input["%types"], "ApiStatus"),
+    hasResponse: hasKey($input["%types"], "ApiResponse"),
+    responseFieldCount: count($input["%types"]["ApiResponse"]["%fields"]),
+    hasUuidFields: some(
+      $input["%types"]["ApiResponse"]["%fields"],
+      f => f["%logicalType"] == "uuid"
+    ),
+    hasOptionalFields: some(
+      $input["%types"]["ApiResponse"]["%fields"],
+      f => f["%required"] == false
+    )
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "namespace": "com.example.api",
+      "hasEnum": true,
+      "hasResponse": true,
+      "responseFieldCount": 6,
+      "hasUuidFields": true,
+      "hasOptionalFields": true
+    }

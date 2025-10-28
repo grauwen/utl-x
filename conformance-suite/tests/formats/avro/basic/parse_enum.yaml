@@ -1,0 +1,38 @@
+name: "avro_parse_enum"
+category: "formats/avro/basic"
+description: "Parse Avro enum schema"
+tags: ['avro', 'schema', 'parsing', 'enum']
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "enum",
+      "name": "Status",
+      "namespace": "com.example",
+      "symbols": ["ACTIVE", "INACTIVE", "PENDING"]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    schemaType: $input.type,
+    enumName: $input.name,
+    namespace: $input.namespace,
+    symbolCount: count($input.symbols),
+    symbols: $input.symbols
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "schemaType": "enum",
+      "enumName": "Status",
+      "namespace": "com.example",
+      "symbolCount": 3,
+      "symbols": ["ACTIVE", "INACTIVE", "PENDING"]
+    }

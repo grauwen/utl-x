@@ -43,6 +43,7 @@ include("formats:csv")
 include("formats:yaml")
 include("formats:xsd")
 include("formats:jsch")
+include("formats:avro")
 //include("formats:plugin")
 
 // Standard library

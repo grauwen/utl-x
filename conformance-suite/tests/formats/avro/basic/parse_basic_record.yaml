@@ -1,0 +1,47 @@
+name: "avro_parse_basic_record"
+category: "formats/avro/basic"
+description: "Parse basic Avro record schema with primitive fields"
+tags: ['avro', 'schema', 'parsing', 'record']
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "namespace": "com.example",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "age", "type": "int"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    schemaType: $input.type,
+    recordName: $input.name,
+    namespace: $input.namespace,
+    fieldCount: count($input.fields),
+    fields: map($input.fields, field => {
+      name: field.name,
+      type: field.type
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "schemaType": "record",
+      "recordName": "Person",
+      "namespace": "com.example",
+      "fieldCount": 2,
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "age", "type": "int"}
+      ]
+    }

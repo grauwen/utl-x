@@ -1,0 +1,55 @@
+name: "avro_round_trip_basic"
+category: "formats/avro/basic"
+description: "Round-trip test: USDL -> Avro -> USDL preserves structure"
+tags: ['avro', 'schema', 'round-trip', 'usdl']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example.roundtrip",
+      "%types": {
+        "Person": {
+          "%kind": "structure",
+          "%documentation": "A person record",
+          "%fields": [
+            {
+              "%name": "name",
+              "%type": "string",
+              "%required": true
+            },
+            {
+              "%name": "email",
+              "%type": "string",
+              "%required": false,
+              "%default": null
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  # Convert to Avro and back to verify round-trip
+  let avroSchema = toAvroSchema($input)
+  let backToUsdl = toUSDL(avroSchema)
+  {
+    hasTypes: hasKey(backToUsdl, "%types"),
+    hasNamespace: hasKey(backToUsdl, "%namespace"),
+    typeName: keys(backToUsdl["%types"])[0],
+    fieldCount: count(backToUsdl["%types"]["Person"]["%fields"])
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasTypes": true,
+      "hasNamespace": true,
+      "typeName": "Person",
+      "fieldCount": 2
+    }

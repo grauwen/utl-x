@@ -1,0 +1,50 @@
+name: "avro_decimal_logical_type"
+category: "formats/avro/logical-types"
+description: "Serialize USDL field with decimal logical type (precision and scale)"
+tags: ['avro', 'schema', 'logical-type', 'decimal']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Product": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "price",
+              "%type": "binary",
+              "%logicalType": "decimal",
+              "%precision": 10,
+              "%scale": 2
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Product",
+      "fields": [
+        {
+          "name": "price",
+          "type": {
+            "type": "bytes",
+            "logicalType": "decimal",
+            "precision": 10,
+            "scale": 2
+          }
+        }
+      ]
+    }

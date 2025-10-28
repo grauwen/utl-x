@@ -1,0 +1,44 @@
+name: "avro_field_aliases"
+category: "formats/avro/schema-evolution"
+description: "Serialize USDL field with aliases for schema evolution"
+tags: ['avro', 'schema', 'aliases', 'field', 'evolution']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Person": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "fullName",
+              "%type": "string",
+              "%aliases": ["name", "userName"]
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "fields": [
+        {
+          "name": "fullName",
+          "type": "string",
+          "aliases": ["name", "userName"]
+        }
+      ]
+    }

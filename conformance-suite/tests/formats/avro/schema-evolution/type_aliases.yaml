@@ -1,0 +1,41 @@
+name: "avro_type_aliases"
+category: "formats/avro/schema-evolution"
+description: "Serialize USDL type with aliases for schema evolution"
+tags: ['avro', 'schema', 'aliases', 'evolution']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Person": {
+          "%kind": "structure",
+          "%aliases": ["OldPerson", "LegacyPerson"],
+          "%fields": [
+            {
+              "%name": "name",
+              "%type": "string"
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "aliases": ["OldPerson", "LegacyPerson"],
+      "fields": [
+        {"name": "name", "type": "string"}
+      ]
+    }

@@ -1,0 +1,46 @@
+name: "avro_timestamp_micros_logical_type"
+category: "formats/avro/logical-types"
+description: "Serialize USDL field with timestamp-micros logical type to Avro"
+tags: ['avro', 'schema', 'logical-type', 'timestamp']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Measurement": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "recordedAt",
+              "%type": "integer",
+              "%logicalType": "timestamp-micros"
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Measurement",
+      "fields": [
+        {
+          "name": "recordedAt",
+          "type": {
+            "type": "long",
+            "logicalType": "timestamp-micros"
+          }
+        }
+      ]
+    }

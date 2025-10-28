@@ -1,0 +1,51 @@
+name: "avro_nested_record"
+category: "formats/avro/complex-types"
+description: "Parse Avro schema with nested record types"
+tags: ['avro', 'schema', 'nested', 'record']
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "namespace": "com.example",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {
+          "name": "address",
+          "type": {
+            "type": "record",
+            "name": "Address",
+            "fields": [
+              {"name": "street", "type": "string"},
+              {"name": "city", "type": "string"}
+            ]
+          }
+        }
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    recordName: $input.name,
+    fieldCount: count($input.fields),
+    hasNestedRecord: $input.fields[1].type.type == "record",
+    nestedRecordName: $input.fields[1].type.name,
+    nestedFieldCount: count($input.fields[1].type.fields)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "recordName": "Person",
+      "fieldCount": 2,
+      "hasNestedRecord": true,
+      "nestedRecordName": "Address",
+      "nestedFieldCount": 2
+    }

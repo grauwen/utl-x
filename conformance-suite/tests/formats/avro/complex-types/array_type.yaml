@@ -1,0 +1,46 @@
+name: "avro_array_type"
+category: "formats/avro/complex-types"
+description: "Serialize USDL array field to Avro array type"
+tags: ['avro', 'schema', 'array', 'complex-type']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Person": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "tags",
+              "%type": "string",
+              "%array": true
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "fields": [
+        {
+          "name": "tags",
+          "type": {
+            "type": "array",
+            "items": "string"
+          }
+        }
+      ]
+    }

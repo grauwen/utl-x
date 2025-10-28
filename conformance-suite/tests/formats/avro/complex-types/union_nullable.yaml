@@ -1,0 +1,45 @@
+name: "avro_union_nullable"
+category: "formats/avro/complex-types"
+description: "Serialize USDL optional field to Avro union with null"
+tags: ['avro', 'schema', 'union', 'nullable', 'complex-type']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Person": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "email",
+              "%type": "string",
+              "%required": false,
+              "%default": null
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "fields": [
+        {
+          "name": "email",
+          "type": ["null", "string"],
+          "default": null
+        }
+      ]
+    }

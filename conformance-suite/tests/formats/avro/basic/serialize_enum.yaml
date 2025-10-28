@@ -1,0 +1,34 @@
+name: "avro_serialize_enum"
+category: "formats/avro/basic"
+description: "Serialize USDL enumeration to Avro enum schema"
+tags: ['avro', 'schema', 'serialization', 'enum', 'usdl']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example",
+      "%types": {
+        "Status": {
+          "%kind": "enumeration",
+          "%values": ["ACTIVE", "INACTIVE", "PENDING"]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "enum",
+      "name": "Status",
+      "namespace": "com.example",
+      "symbols": ["ACTIVE", "INACTIVE", "PENDING"]
+    }

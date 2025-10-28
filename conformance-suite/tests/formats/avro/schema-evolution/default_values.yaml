@@ -1,0 +1,64 @@
+name: "avro_default_values"
+category: "formats/avro/schema-evolution"
+description: "Serialize USDL fields with default values for schema evolution"
+tags: ['avro', 'schema', 'default', 'evolution']
+
+input:
+  format: json
+  data: |
+    {
+      "%types": {
+        "Person": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "name",
+              "%type": "string",
+              "%default": "Unknown"
+            },
+            {
+              "%name": "age",
+              "%type": "integer",
+              "%default": 0
+            },
+            {
+              "%name": "active",
+              "%type": "boolean",
+              "%default": true
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output avro
+  ---
+  $input
+
+expected:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "default": "Unknown"
+        },
+        {
+          "name": "age",
+          "type": "int",
+          "default": 0
+        },
+        {
+          "name": "active",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    }
