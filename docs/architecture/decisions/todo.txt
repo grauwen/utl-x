@@ -20,6 +20,8 @@ Later
   - ASYNCAPI
 and more. Need to rethink
 ----
+ I found a bug! sortBy fails for objects with numeric values >= 1000. For now, let me just remove the sorting from the aggregate example since it's broken:
+----
 conformance-suite input JSCH and XSD examples have no real test output condition
 
 In summary: __metadata is a pseudo-property that exposes internal parser metadata to transformation scripts, enabling schema introspection, version detection, pattern recognition, and documentation generation that wouldn't be possible with just the data structure alone.
