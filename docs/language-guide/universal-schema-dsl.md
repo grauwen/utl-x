@@ -304,15 +304,22 @@ USDL 1.0 defines **110+ directives** organized into **4 tiers** (including REST 
 
 #### XML Schema (XSD)
 
-**Pattern Preservation Directives** - Enable round-trip preservation of XSD design patterns.
+**Pattern Preservation Directives** - Enable round-trip preservation and detection of XSD design patterns.
 
 | Directive | Type | Description |
 |-----------|------|-------------|
 | `%xsdInline` | Boolean | True if type was inline/anonymous in XSD (Russian Doll pattern) |
 | `%xsdElement` | String | Parent element name for inline types |
-| `%xsdPattern` | String | Original XSD pattern: "russian-doll", "venetian-blind", "salami-slice", "garden-of-eden" |
+| `%xsdPattern` | String | Detected XSD pattern: "russian-doll", "venetian-blind", "salami-slice", "garden-of-eden", "mixed" |
+| `%xsdPatternStats` | Object | Statistics object with pattern detection metadata |
 
-**Purpose**: These directives enable preservation of XSD design patterns through USDL round-trips. Without them, all inline (anonymous) types from Russian Doll pattern are lost, as USDL requires named types.
+**Pattern Detection**: The `%xsdPatternStats` object contains:
+- `globalElements` (Number) - Count of global xs:element declarations
+- `globalTypes` (Number) - Count of global xs:complexType + xs:simpleType declarations
+- `inlineTypes` (Number) - Count of anonymous/inline complexTypes
+- `detectedPattern` (String) - Same as `%xsdPattern` for convenience
+
+**Purpose**: These directives enable both preservation of XSD design patterns through USDL round-trips AND automatic pattern detection. Without them, all inline (anonymous) types from Russian Doll pattern are lost, as USDL requires named types.
 
 **Behavior**:
 - **Parser**: When encountering inline `<xs:complexType>` within `<xs:element>`, generates synthetic type name and adds metadata
@@ -351,6 +358,39 @@ This USDL will serialize back to:
 ```
 
 **Synthetic Naming Convention**: `"ElementName_InlineType"` for anonymous types (e.g., "order_InlineType", "customer_InlineType")
+
+**Pattern Detection Example**:
+```utlx
+%utlx 1.0
+input json
+output json
+---
+let schema = parseXSDSchema($input.xsdSchema)
+let stats = schema["%xsdPatternStats"]
+let pattern = schema["%xsdPattern"]
+{
+  detectedPattern: pattern,
+  globalElements: stats["globalElements"],
+  globalTypes: stats["globalTypes"],
+  inlineTypes: stats["inlineTypes"],
+  description: if (pattern == "russian-doll") "Single global element with inline types"
+    else if (pattern == "venetian-blind") "Global types, local elements (industry standard)"
+    else if (pattern == "salami-slice") "All elements global, minimal types"
+    else if (pattern == "garden-of-eden") "All elements and types global"
+    else "Mixed or unknown pattern"
+}
+```
+
+**Output for Russian Doll Schema**:
+```json
+{
+  "detectedPattern": "russian-doll",
+  "globalElements": 1,
+  "globalTypes": 0,
+  "inlineTypes": 2,
+  "description": "Single global element with inline types"
+}
+```
 
 #### Database (SQL DDL)
 
