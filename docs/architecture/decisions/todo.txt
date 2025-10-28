@@ -11,16 +11,9 @@ hese XSDParserTest failures appear to be pre-existing issues with the parser (no
   Likely cause: type may be a reserved keyword or conflicts with the type system. ?
 So the parser has a bug where it's rejecting type as a parameter name when it shouldn't. Should I investigate why the parser is rejecting it?
 ----
- Bug #1: sortBy broken for values >= 1000
-  - sortBy([{v: 999}, {v: 500}], x => x.v) ✅ Works
-  - sortBy([{v: 1000}, {v: 500}], x => x.v) ❌ Broken
-  - Impact: Cannot sort objects by numeric properties with values >= 1000
-
-  Bug #2: Unary minus not supported in lambdas
-  - sortBy(item => -item.value) causes "Unary minus requires number" error
-  - Workaround: Use sortBy(item => item.value) |> reverse()
-
-
+The parsed UDM can be:
+ * 1. Serialized back to Avro schema (round-trip)
+ * 2. Transformed to other schema formats (XSD, JSON Schema)
 ---
 Later
   - OPENAPI - OpenAPI 3.x specs (JSON/YAML with schema embedded)
@@ -30,15 +23,11 @@ Later
   - ASYNCAPI
 and more. Need to rethink
 ----
- I found a bug! sortBy fails for objects with numeric values >= 1000. For now, let me just remove the sorting from the aggregate example since it's broken:
-----
 conformance-suite input JSCH and XSD examples have no real test output condition
 
-In summary: __metadata is a pseudo-property that exposes internal parser metadata to transformation scripts, enabling schema introspection, version detection, pattern recognition, and documentation generation that wouldn't be possible with just the data structure alone.
-__metadata will be replaced by ^ (CARET)
-
+----
 Add DEBUGGING cpabilities in the parsers and renders -> Let me remove all the debug statements from the CLI and XSD parser:
-
+----
 
 
 Issues:
