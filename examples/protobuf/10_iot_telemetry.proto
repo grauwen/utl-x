@@ -1,0 +1,452 @@
+// IoT Device Management & Telemetry
+// Real-world use case: Smart devices, sensor networks, industrial IoT, home automation
+
+syntax = "proto3";
+
+package iot;
+
+message Device {
+  string device_id = 1;
+  string device_name = 2;
+  DeviceType type = 3;
+  DeviceStatus status = 4;
+  string manufacturer = 5;
+  string model = 6;
+  string firmware_version = 7;
+  string hardware_version = 8;
+  string serial_number = 9;
+  Location location = 10;
+  Connectivity connectivity = 11;
+  PowerInfo power = 12;
+  repeated Capability capabilities = 13;
+  Configuration configuration = 14;
+  int64 registered_at = 15;
+  int64 last_seen = 16;
+  string owner_id = 17;
+  map<string, string> tags = 18;
+}
+
+enum DeviceType {
+  DEVICE_TYPE_UNSPECIFIED = 0;
+  SENSOR = 1;
+  ACTUATOR = 2;
+  GATEWAY = 3;
+  CAMERA = 4;
+  THERMOSTAT = 5;
+  SMART_LOCK = 6;
+  SMART_LIGHT = 7;
+  SMART_PLUG = 8;
+  WEARABLE = 9;
+  INDUSTRIAL_EQUIPMENT = 10;
+  VEHICLE = 11;
+}
+
+enum DeviceStatus {
+  DEVICE_STATUS_UNSPECIFIED = 0;
+  ONLINE = 1;
+  OFFLINE = 2;
+  SLEEPING = 3;
+  MAINTENANCE = 4;
+  ERROR = 5;
+  INACTIVE = 6;
+}
+
+message Location {
+  string name = 1;
+  string zone = 2;                // Room, floor, area
+  string building = 3;
+  GeoCoordinates coordinates = 4;
+  double altitude = 5;
+  string timezone = 6;
+}
+
+message GeoCoordinates {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message Connectivity {
+  NetworkType network_type = 1;
+  string ip_address = 2;
+  string mac_address = 3;
+  int32 signal_strength = 4;      // RSSI in dBm
+  int32 signal_quality = 5;       // 0-100%
+  string gateway_id = 6;
+  int64 last_connected = 7;
+  int64 uptime_seconds = 8;
+}
+
+enum NetworkType {
+  NETWORK_TYPE_UNSPECIFIED = 0;
+  WIFI = 1;
+  ETHERNET = 2;
+  CELLULAR_4G = 3;
+  CELLULAR_5G = 4;
+  BLUETOOTH = 5;
+  ZIGBEE = 6;
+  Z_WAVE = 7;
+  LORA = 8;
+  NB_IOT = 9;
+}
+
+message PowerInfo {
+  PowerSource source = 1;
+  int32 battery_level = 2;        // 0-100%
+  bool charging = 3;
+  double voltage = 4;
+  double current = 5;
+  double power_consumption = 6;   // Watts
+}
+
+enum PowerSource {
+  POWER_SOURCE_UNSPECIFIED = 0;
+  AC = 1;
+  BATTERY = 2;
+  SOLAR = 3;
+  USB = 4;
+  POE = 5;                        // Power over Ethernet
+}
+
+message Capability {
+  string capability_id = 1;
+  string name = 2;
+  CapabilityType type = 3;
+  DataType data_type = 4;
+  string unit = 5;
+  double min_value = 6;
+  double max_value = 7;
+  bool readable = 8;
+  bool writable = 9;
+}
+
+enum CapabilityType {
+  CAPABILITY_TYPE_UNSPECIFIED = 0;
+  TEMPERATURE = 1;
+  HUMIDITY = 2;
+  PRESSURE = 3;
+  MOTION = 4;
+  LIGHT_LEVEL = 5;
+  SOUND_LEVEL = 6;
+  AIR_QUALITY = 7;
+  DISTANCE = 8;
+  VIBRATION = 9;
+  SWITCH = 10;
+  DIMMER = 11;
+  COLOR = 12;
+  LOCK_STATE = 13;
+}
+
+enum DataType {
+  DATA_TYPE_UNSPECIFIED = 0;
+  BOOLEAN = 1;
+  INTEGER = 2;
+  FLOAT = 3;
+  STRING = 4;
+  JSON = 5;
+}
+
+message Configuration {
+  int32 reporting_interval = 1;   // Seconds
+  int32 sampling_rate = 2;        // Hz
+  repeated Threshold thresholds = 3;
+  map<string, string> settings = 4;
+  int64 last_updated = 5;
+}
+
+message Threshold {
+  string parameter = 1;
+  double min_value = 2;
+  double max_value = 3;
+  AlertSeverity severity = 4;
+}
+
+enum AlertSeverity {
+  ALERT_SEVERITY_UNSPECIFIED = 0;
+  INFO = 1;
+  WARNING = 2;
+  CRITICAL = 3;
+}
+
+message TelemetryData {
+  string device_id = 1;
+  int64 timestamp = 2;
+  int64 received_at = 3;
+  repeated Measurement measurements = 4;
+  map<string, string> metadata = 5;
+}
+
+message Measurement {
+  string sensor_id = 1;
+  string name = 2;
+  oneof value {
+    bool bool_value = 3;
+    int64 int_value = 4;
+    double float_value = 5;
+    string string_value = 6;
+  }
+  string unit = 7;
+  MeasurementQuality quality = 8;
+}
+
+enum MeasurementQuality {
+  MEASUREMENT_QUALITY_UNSPECIFIED = 0;
+  GOOD = 1;
+  UNCERTAIN = 2;
+  BAD = 3;
+}
+
+message SensorReading {
+  string reading_id = 1;
+  string device_id = 2;
+  string sensor_type = 3;
+  int64 timestamp = 4;
+  Temperature temperature = 5;
+  Humidity humidity = 6;
+  Pressure pressure = 7;
+  Motion motion = 8;
+  Light light = 9;
+  AirQuality air_quality = 10;
+  GeoCoordinates gps = 11;
+  Acceleration acceleration = 12;
+}
+
+message Temperature {
+  double value = 1;
+  TemperatureUnit unit = 2;
+}
+
+enum TemperatureUnit {
+  TEMPERATURE_UNIT_UNSPECIFIED = 0;
+  CELSIUS = 1;
+  FAHRENHEIT = 2;
+  KELVIN = 3;
+}
+
+message Humidity {
+  double relative_humidity = 1;   // 0-100%
+  double absolute_humidity = 2;   // g/m³
+}
+
+message Pressure {
+  double value = 1;
+  PressureUnit unit = 2;
+}
+
+enum PressureUnit {
+  PRESSURE_UNIT_UNSPECIFIED = 0;
+  PASCAL = 1;
+  KILOPASCAL = 2;
+  BAR = 3;
+  MILLIBAR = 4;
+  PSI = 5;
+}
+
+message Motion {
+  bool detected = 1;
+  int64 last_motion = 2;
+  int32 confidence = 3;           // 0-100%
+}
+
+message Light {
+  double lux = 1;
+  bool daylight = 2;
+}
+
+message AirQuality {
+  int32 aqi = 1;                  // Air Quality Index 0-500
+  double pm2_5 = 2;               // µg/m³
+  double pm10 = 3;
+  double co2 = 4;                 // ppm
+  double co = 5;                  // ppm
+  double no2 = 6;                 // ppb
+  double voc = 7;                 // ppb (Volatile Organic Compounds)
+}
+
+message Acceleration {
+  double x = 1;                   // m/s²
+  double y = 2;
+  double z = 3;
+}
+
+message Command {
+  string command_id = 1;
+  string device_id = 2;
+  CommandType type = 3;
+  CommandStatus status = 4;
+  map<string, string> parameters = 5;
+  int64 issued_at = 6;
+  int64 executed_at = 7;
+  string issued_by = 8;
+  string response = 9;
+  string error_message = 10;
+}
+
+enum CommandType {
+  COMMAND_TYPE_UNSPECIFIED = 0;
+  REBOOT = 1;
+  RESET = 2;
+  UPDATE_FIRMWARE = 3;
+  UPDATE_CONFIG = 4;
+  CALIBRATE = 5;
+  SET_VALUE = 6;
+  GET_VALUE = 7;
+  START_STREAM = 8;
+  STOP_STREAM = 9;
+}
+
+enum CommandStatus {
+  COMMAND_STATUS_UNSPECIFIED = 0;
+  PENDING = 1;
+  SENT = 2;
+  ACKNOWLEDGED = 3;
+  EXECUTING = 4;
+  COMPLETED = 5;
+  FAILED = 6;
+  TIMEOUT = 7;
+}
+
+message Alert {
+  string alert_id = 1;
+  string device_id = 2;
+  AlertType type = 3;
+  AlertSeverity severity = 4;
+  string message = 5;
+  int64 triggered_at = 6;
+  int64 acknowledged_at = 7;
+  string acknowledged_by = 8;
+  bool resolved = 9;
+  int64 resolved_at = 10;
+  map<string, string> context = 11;
+}
+
+enum AlertType {
+  ALERT_TYPE_UNSPECIFIED = 0;
+  THRESHOLD_EXCEEDED = 1;
+  DEVICE_OFFLINE = 2;
+  LOW_BATTERY = 3;
+  SENSOR_FAILURE = 4;
+  CONNECTIVITY_ISSUE = 5;
+  TAMPER_DETECTED = 6;
+  FIRMWARE_ERROR = 7;
+  ANOMALY_DETECTED = 8;
+}
+
+message DeviceGroup {
+  string group_id = 1;
+  string name = 2;
+  string description = 3;
+  repeated string device_ids = 4;
+  GroupType type = 5;
+  map<string, string> properties = 6;
+  int64 created_at = 7;
+}
+
+enum GroupType {
+  GROUP_TYPE_UNSPECIFIED = 0;
+  LOCATION = 1;
+  FUNCTION = 2;
+  DEPLOYMENT = 3;
+  CUSTOM = 4;
+}
+
+message Automation {
+  string automation_id = 1;
+  string name = 2;
+  bool enabled = 3;
+  Trigger trigger = 4;
+  repeated Condition conditions = 5;
+  repeated Action actions = 6;
+  int64 last_triggered = 7;
+  int32 trigger_count = 8;
+}
+
+message Trigger {
+  TriggerType type = 1;
+  string device_id = 2;
+  string parameter = 3;
+  string cron_expression = 4;     // For scheduled triggers
+}
+
+enum TriggerType {
+  TRIGGER_TYPE_UNSPECIFIED = 0;
+  DEVICE_STATE_CHANGE = 1;
+  THRESHOLD = 2;
+  SCHEDULE = 3;
+  MANUAL = 4;
+}
+
+message Condition {
+  string device_id = 1;
+  string parameter = 2;
+  ComparisonOperator operator = 3;
+  string value = 4;
+}
+
+enum ComparisonOperator {
+  COMPARISON_OPERATOR_UNSPECIFIED = 0;
+  EQUALS = 1;
+  NOT_EQUALS = 2;
+  GREATER_THAN = 3;
+  LESS_THAN = 4;
+  GREATER_THAN_OR_EQUAL = 5;
+  LESS_THAN_OR_EQUAL = 6;
+}
+
+message Action {
+  ActionType type = 1;
+  string device_id = 2;
+  string command = 3;
+  map<string, string> parameters = 4;
+  int32 delay_seconds = 5;
+}
+
+enum ActionType {
+  ACTION_TYPE_UNSPECIFIED = 0;
+  SET_DEVICE_STATE = 1;
+  SEND_COMMAND = 2;
+  SEND_NOTIFICATION = 3;
+  TRIGGER_WEBHOOK = 4;
+  LOG_EVENT = 5;
+}
+
+message Firmware {
+  string firmware_id = 1;
+  string version = 2;
+  string model = 3;
+  int64 release_date = 4;
+  string download_url = 5;
+  string checksum = 6;
+  int64 file_size = 7;
+  string release_notes = 8;
+  bool mandatory = 9;
+}
+
+message DeviceHealth {
+  string device_id = 1;
+  HealthStatus status = 2;
+  int32 health_score = 3;         // 0-100
+  repeated HealthMetric metrics = 4;
+  int64 last_check = 5;
+}
+
+enum HealthStatus {
+  HEALTH_STATUS_UNSPECIFIED = 0;
+  HEALTHY = 1;
+  DEGRADED = 2;
+  UNHEALTHY = 3;
+  CRITICAL = 4;
+}
+
+message HealthMetric {
+  string name = 1;
+  double value = 2;
+  string unit = 3;
+  MetricStatus status = 4;
+}
+
+enum MetricStatus {
+  METRIC_STATUS_UNSPECIFIED = 0;
+  NORMAL = 1;
+  WARNING = 2;
+  CRITICAL = 3;
+}

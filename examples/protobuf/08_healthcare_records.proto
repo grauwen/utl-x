@@ -1,0 +1,429 @@
+// Healthcare Records Management
+// Real-world use case: EHR/EMR systems, patient records, medical appointments, HIPAA compliance
+
+syntax = "proto3";
+
+package healthcare;
+
+message PatientRecord {
+  string patient_id = 1;
+  string medical_record_number = 2;
+  Demographics demographics = 3;
+  InsuranceInfo insurance = 4;
+  MedicalHistory medical_history = 5;
+  repeated Appointment appointments = 6;
+  repeated Prescription prescriptions = 7;
+  repeated LabResult lab_results = 8;
+  repeated Vitals vitals = 9;
+  repeated Diagnosis diagnoses = 10;
+  repeated Procedure procedures = 11;
+  Allergies allergies = 12;
+  EmergencyContact emergency_contact = 13;
+  PatientStatus status = 14;
+  int64 registration_date = 15;
+  map<string, string> custom_fields = 16;
+}
+
+message Demographics {
+  string first_name = 1;
+  string last_name = 2;
+  string middle_name = 3;
+  string date_of_birth = 4;      // ISO 8601 date
+  Gender gender = 5;
+  string ssn = 6;                 // Encrypted
+  Address address = 7;
+  repeated ContactInfo contacts = 8;
+  string preferred_language = 9;
+  MaritalStatus marital_status = 10;
+  string race = 11;
+  string ethnicity = 12;
+}
+
+enum Gender {
+  GENDER_UNSPECIFIED = 0;
+  MALE = 1;
+  FEMALE = 2;
+  OTHER = 3;
+}
+
+enum MaritalStatus {
+  MARITAL_STATUS_UNSPECIFIED = 0;
+  SINGLE = 1;
+  MARRIED = 2;
+  DIVORCED = 3;
+  WIDOWED = 4;
+  SEPARATED = 5;
+}
+
+message Address {
+  string street1 = 1;
+  string street2 = 2;
+  string city = 3;
+  string state = 4;
+  string postal_code = 5;
+  string country = 6;
+}
+
+message ContactInfo {
+  ContactType type = 1;
+  string value = 2;
+  bool is_primary = 3;
+}
+
+enum ContactType {
+  CONTACT_TYPE_UNSPECIFIED = 0;
+  PHONE = 1;
+  MOBILE = 2;
+  EMAIL = 3;
+  FAX = 4;
+}
+
+message InsuranceInfo {
+  string insurance_id = 1;
+  string provider = 2;
+  string plan_name = 3;
+  string policy_number = 4;
+  string group_number = 5;
+  InsuranceType type = 6;
+  string subscriber_name = 7;
+  string subscriber_id = 8;
+  Relationship subscriber_relationship = 9;
+  int64 effective_date = 10;
+  int64 expiration_date = 11;
+  double copay = 12;
+  double deductible = 13;
+  double out_of_pocket_max = 14;
+}
+
+enum InsuranceType {
+  INSURANCE_TYPE_UNSPECIFIED = 0;
+  PRIMARY = 1;
+  SECONDARY = 2;
+  TERTIARY = 3;
+}
+
+enum Relationship {
+  RELATIONSHIP_UNSPECIFIED = 0;
+  SELF = 1;
+  SPOUSE = 2;
+  CHILD = 3;
+  PARENT = 4;
+  OTHER_DEPENDENT = 5;
+}
+
+message MedicalHistory {
+  repeated Condition conditions = 1;
+  repeated Surgery surgeries = 2;
+  repeated Hospitalization hospitalizations = 3;
+  FamilyHistory family_history = 4;
+  SocialHistory social_history = 5;
+}
+
+message Condition {
+  string condition_id = 1;
+  string icd_10_code = 2;
+  string name = 3;
+  ConditionStatus status = 4;
+  int64 onset_date = 5;
+  int64 resolution_date = 6;
+  Severity severity = 7;
+  string notes = 8;
+}
+
+enum ConditionStatus {
+  CONDITION_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  RESOLVED = 2;
+  IN_REMISSION = 3;
+  CHRONIC = 4;
+}
+
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  MILD = 1;
+  MODERATE = 2;
+  SEVERE = 3;
+  LIFE_THREATENING = 4;
+}
+
+message Surgery {
+  string surgery_id = 1;
+  string procedure_code = 2;
+  string procedure_name = 3;
+  int64 date = 4;
+  string surgeon = 5;
+  string facility = 6;
+  string notes = 7;
+}
+
+message Hospitalization {
+  string admission_id = 1;
+  int64 admission_date = 2;
+  int64 discharge_date = 3;
+  string facility = 4;
+  string reason = 5;
+  string discharge_disposition = 6;
+}
+
+message FamilyHistory {
+  repeated FamilyCondition conditions = 1;
+}
+
+message FamilyCondition {
+  Relationship relationship = 1;
+  string condition = 2;
+  int32 age_of_onset = 3;
+}
+
+message SocialHistory {
+  SmokingStatus smoking = 1;
+  AlcoholUse alcohol = 2;
+  DrugUse drugs = 3;
+  string occupation = 4;
+  ExerciseFrequency exercise = 5;
+}
+
+enum SmokingStatus {
+  SMOKING_STATUS_UNSPECIFIED = 0;
+  NEVER_SMOKED = 1;
+  FORMER_SMOKER = 2;
+  CURRENT_SMOKER = 3;
+}
+
+enum AlcoholUse {
+  ALCOHOL_USE_UNSPECIFIED = 0;
+  NONE = 1;
+  OCCASIONAL = 2;
+  MODERATE = 3;
+  HEAVY = 4;
+}
+
+enum DrugUse {
+  DRUG_USE_UNSPECIFIED = 0;
+  NONE = 1;
+  PAST = 2;
+  CURRENT = 3;
+}
+
+enum ExerciseFrequency {
+  EXERCISE_FREQUENCY_UNSPECIFIED = 0;
+  SEDENTARY = 1;
+  LIGHT = 2;
+  MODERATE = 3;
+  ACTIVE = 4;
+}
+
+message Appointment {
+  string appointment_id = 1;
+  int64 scheduled_time = 2;
+  int32 duration_minutes = 3;
+  AppointmentType type = 4;
+  AppointmentStatus status = 5;
+  Provider provider = 6;
+  string facility = 7;
+  string room = 8;
+  string reason = 9;
+  string notes = 10;
+  int64 check_in_time = 11;
+  int64 check_out_time = 12;
+}
+
+enum AppointmentType {
+  APPOINTMENT_TYPE_UNSPECIFIED = 0;
+  ROUTINE = 1;
+  URGENT = 2;
+  FOLLOW_UP = 3;
+  CONSULTATION = 4;
+  PROCEDURE = 5;
+  TELEMEDICINE = 6;
+}
+
+enum AppointmentStatus {
+  APPOINTMENT_STATUS_UNSPECIFIED = 0;
+  SCHEDULED = 1;
+  CONFIRMED = 2;
+  CHECKED_IN = 3;
+  IN_PROGRESS = 4;
+  COMPLETED = 5;
+  CANCELLED = 6;
+  NO_SHOW = 7;
+}
+
+message Provider {
+  string provider_id = 1;
+  string name = 2;
+  string specialty = 3;
+  string npi = 4;                 // National Provider Identifier
+  repeated ContactInfo contacts = 5;
+}
+
+message Prescription {
+  string prescription_id = 1;
+  Medication medication = 2;
+  Dosage dosage = 3;
+  int32 quantity = 4;
+  int32 refills = 5;
+  int64 prescribed_date = 6;
+  int64 start_date = 7;
+  int64 end_date = 8;
+  string prescriber_id = 9;
+  string pharmacy = 10;
+  PrescriptionStatus status = 11;
+  string instructions = 12;
+}
+
+message Medication {
+  string medication_id = 1;
+  string name = 2;
+  string generic_name = 3;
+  string ndc_code = 4;            // National Drug Code
+  string form = 5;                // Tablet, capsule, liquid, etc.
+  string strength = 6;
+}
+
+message Dosage {
+  double amount = 1;
+  string unit = 2;                // mg, ml, etc.
+  string frequency = 3;           // Once daily, twice daily, etc.
+  string route = 4;               // Oral, IV, topical, etc.
+}
+
+enum PrescriptionStatus {
+  PRESCRIPTION_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  FILLED = 2;
+  EXPIRED = 3;
+  CANCELLED = 4;
+  ON_HOLD = 5;
+}
+
+message LabResult {
+  string result_id = 1;
+  string order_id = 2;
+  LabTest test = 3;
+  double value = 4;
+  string unit = 5;
+  string reference_range = 6;
+  ResultStatus status = 7;
+  int64 collection_date = 8;
+  int64 result_date = 9;
+  string ordering_provider = 10;
+  string lab_facility = 11;
+  string notes = 12;
+}
+
+message LabTest {
+  string test_id = 1;
+  string loinc_code = 2;          // Logical Observation Identifiers Names and Codes
+  string name = 3;
+  string category = 4;            // Chemistry, hematology, etc.
+}
+
+enum ResultStatus {
+  RESULT_STATUS_UNSPECIFIED = 0;
+  NORMAL = 1;
+  ABNORMAL_LOW = 2;
+  ABNORMAL_HIGH = 3;
+  CRITICAL = 4;
+  PENDING = 5;
+}
+
+message Vitals {
+  string vitals_id = 1;
+  int64 recorded_at = 2;
+  double temperature = 3;
+  string temperature_unit = 4;    // C, F
+  BloodPressure blood_pressure = 5;
+  int32 heart_rate = 6;
+  int32 respiratory_rate = 7;
+  double oxygen_saturation = 8;
+  double height = 9;
+  string height_unit = 10;        // cm, in
+  double weight = 11;
+  string weight_unit = 12;        // kg, lb
+  double bmi = 13;
+  string recorded_by = 14;
+}
+
+message BloodPressure {
+  int32 systolic = 1;
+  int32 diastolic = 2;
+}
+
+message Diagnosis {
+  string diagnosis_id = 1;
+  string icd_10_code = 2;
+  string description = 3;
+  DiagnosisType type = 4;
+  int64 diagnosed_date = 5;
+  string provider_id = 6;
+  string notes = 7;
+}
+
+enum DiagnosisType {
+  DIAGNOSIS_TYPE_UNSPECIFIED = 0;
+  PRIMARY = 1;
+  SECONDARY = 2;
+  DIFFERENTIAL = 3;
+  RULED_OUT = 4;
+}
+
+message Procedure {
+  string procedure_id = 1;
+  string cpt_code = 2;            // Current Procedural Terminology
+  string description = 3;
+  int64 date = 4;
+  string provider_id = 5;
+  string facility = 6;
+  ProcedureStatus status = 7;
+  string notes = 8;
+  repeated string complications = 9;
+}
+
+enum ProcedureStatus {
+  PROCEDURE_STATUS_UNSPECIFIED = 0;
+  SCHEDULED = 1;
+  IN_PROGRESS = 2;
+  COMPLETED = 3;
+  CANCELLED = 4;
+}
+
+message Allergies {
+  repeated Allergy allergies = 1;
+  bool no_known_allergies = 2;
+}
+
+message Allergy {
+  string allergy_id = 1;
+  AllergyType type = 2;
+  string allergen = 3;
+  Severity severity = 4;
+  repeated string reactions = 5;
+  int64 onset_date = 6;
+  string notes = 7;
+}
+
+enum AllergyType {
+  ALLERGY_TYPE_UNSPECIFIED = 0;
+  MEDICATION = 1;
+  FOOD = 2;
+  ENVIRONMENTAL = 3;
+  INSECT = 4;
+  LATEX = 5;
+}
+
+message EmergencyContact {
+  string name = 1;
+  Relationship relationship = 2;
+  string phone = 3;
+  string alternate_phone = 4;
+  Address address = 5;
+}
+
+enum PatientStatus {
+  PATIENT_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  INACTIVE = 2;
+  DECEASED = 3;
+  TRANSFERRED = 4;
+}

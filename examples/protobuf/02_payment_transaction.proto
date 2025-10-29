@@ -1,0 +1,100 @@
+// Payment Transaction Processing
+// Real-world use case: Payment gateway processing, fraud detection, reconciliation
+
+syntax = "proto3";
+
+package payments;
+
+message PaymentTransaction {
+  string transaction_id = 1;
+  string merchant_id = 2;
+  string customer_id = 3;
+  TransactionType type = 4;
+  TransactionStatus status = 5;
+  Money amount = 6;
+  PaymentMethod payment_method = 7;
+  Card card_details = 8;
+  RiskAssessment risk = 9;
+  int64 initiated_at = 10;
+  int64 completed_at = 11;
+  string reference_id = 12;      // Order ID or invoice number
+  string gateway_response = 13;
+  repeated string error_codes = 14;
+}
+
+enum TransactionType {
+  TRANSACTION_TYPE_UNSPECIFIED = 0;
+  PURCHASE = 1;
+  REFUND = 2;
+  AUTHORIZATION = 3;
+  CAPTURE = 4;
+  VOID = 5;
+  CHARGEBACK = 6;
+}
+
+enum TransactionStatus {
+  TRANSACTION_STATUS_UNSPECIFIED = 0;
+  INITIATED = 1;
+  PROCESSING = 2;
+  SUCCESS = 3;
+  FAILED = 4;
+  DECLINED = 5;
+  PENDING_REVIEW = 6;
+  REVERSED = 7;
+}
+
+message Money {
+  string currency = 1;     // ISO 4217 code
+  int64 amount_cents = 2;  // Amount in smallest currency unit
+  double amount_decimal = 3;
+}
+
+message PaymentMethod {
+  PaymentType type = 1;
+  string provider = 2;
+  string account_id = 3;   // Last 4 digits or masked account
+}
+
+enum PaymentType {
+  PAYMENT_TYPE_UNSPECIFIED = 0;
+  CARD = 1;
+  BANK_ACCOUNT = 2;
+  DIGITAL_WALLET = 3;
+  CRYPTOCURRENCY = 4;
+  BUY_NOW_PAY_LATER = 5;
+}
+
+message Card {
+  string masked_number = 1;     // e.g., "**** **** **** 1234"
+  string card_brand = 2;        // Visa, Mastercard, Amex
+  int32 exp_month = 3;
+  int32 exp_year = 4;
+  string cardholder_name = 5;
+  string issuing_bank = 6;
+  string country = 7;           // Card issuing country
+}
+
+message RiskAssessment {
+  RiskLevel level = 1;
+  int32 score = 2;              // 0-100
+  repeated string flags = 3;     // fraud indicators
+  string decision = 4;           // approve, review, decline
+  GeoLocation location = 5;
+}
+
+enum RiskLevel {
+  RISK_LEVEL_UNSPECIFIED = 0;
+  LOW = 1;
+  MEDIUM = 2;
+  HIGH = 3;
+  CRITICAL = 4;
+}
+
+message GeoLocation {
+  string ip_address = 1;
+  string country = 2;
+  string region = 3;
+  string city = 4;
+  double latitude = 5;
+  double longitude = 6;
+}

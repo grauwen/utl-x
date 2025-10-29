@@ -1,0 +1,452 @@
+// Employee & HR Management
+// Real-world use case: HRIS systems, payroll processing, benefits administration
+
+syntax = "proto3";
+
+package hr;
+
+message Employee {
+  string employee_id = 1;
+  string employee_number = 2;
+  PersonalInfo personal_info = 3;
+  Employment employment = 4;
+  Compensation compensation = 5;
+  repeated Position position_history = 6;
+  Benefits benefits = 7;
+  TimeOff time_off = 8;
+  Performance performance = 9;
+  EmergencyContact emergency_contact = 10;
+  EmployeeStatus status = 11;
+  int64 hire_date = 12;
+  int64 termination_date = 13;
+  map<string, string> custom_fields = 14;
+}
+
+message PersonalInfo {
+  string first_name = 1;
+  string last_name = 2;
+  string middle_name = 3;
+  string preferred_name = 4;
+  string date_of_birth = 5;      // ISO 8601 date
+  Gender gender = 6;
+  MaritalStatus marital_status = 7;
+  string ssn = 8;                 // Encrypted/masked
+  string national_id = 9;
+  Address home_address = 10;
+  repeated ContactInfo contacts = 11;
+}
+
+enum Gender {
+  GENDER_UNSPECIFIED = 0;
+  MALE = 1;
+  FEMALE = 2;
+  NON_BINARY = 3;
+  PREFER_NOT_TO_SAY = 4;
+}
+
+enum MaritalStatus {
+  MARITAL_STATUS_UNSPECIFIED = 0;
+  SINGLE = 1;
+  MARRIED = 2;
+  DIVORCED = 3;
+  WIDOWED = 4;
+  DOMESTIC_PARTNERSHIP = 5;
+}
+
+message Address {
+  string street1 = 1;
+  string street2 = 2;
+  string city = 3;
+  string state = 4;
+  string postal_code = 5;
+  string country = 6;
+}
+
+message ContactInfo {
+  ContactType type = 1;
+  string value = 2;
+  bool is_primary = 3;
+}
+
+enum ContactType {
+  CONTACT_TYPE_UNSPECIFIED = 0;
+  EMAIL = 1;
+  PHONE = 2;
+  MOBILE = 3;
+  FAX = 4;
+}
+
+message Employment {
+  string department_id = 1;
+  string department_name = 2;
+  string position_title = 3;
+  string job_code = 4;
+  EmploymentType type = 5;
+  EmploymentStatus status = 6;
+  string manager_id = 7;
+  string location = 8;
+  string cost_center = 9;
+  WorkSchedule schedule = 10;
+  bool is_remote = 11;
+}
+
+enum EmploymentType {
+  EMPLOYMENT_TYPE_UNSPECIFIED = 0;
+  FULL_TIME = 1;
+  PART_TIME = 2;
+  CONTRACT = 3;
+  TEMPORARY = 4;
+  INTERN = 5;
+  SEASONAL = 6;
+}
+
+enum EmploymentStatus {
+  EMPLOYMENT_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  ON_LEAVE = 2;
+  SUSPENDED = 3;
+  TERMINATED = 4;
+  RETIRED = 5;
+}
+
+message WorkSchedule {
+  double hours_per_week = 1;
+  repeated WorkDay work_days = 2;
+  bool flexible = 3;
+}
+
+message WorkDay {
+  DayOfWeek day = 1;
+  string start_time = 2;        // HH:MM format
+  string end_time = 3;
+}
+
+enum DayOfWeek {
+  DAY_OF_WEEK_UNSPECIFIED = 0;
+  MONDAY = 1;
+  TUESDAY = 2;
+  WEDNESDAY = 3;
+  THURSDAY = 4;
+  FRIDAY = 5;
+  SATURDAY = 6;
+  SUNDAY = 7;
+}
+
+message Compensation {
+  Salary salary = 1;
+  PayFrequency pay_frequency = 2;
+  PaymentMethod payment_method = 3;
+  repeated Bonus bonuses = 4;
+  repeated Commission commissions = 5;
+  repeated Deduction deductions = 6;
+  TaxInfo tax_info = 7;
+}
+
+message Salary {
+  double amount = 1;
+  string currency = 2;
+  SalaryType type = 3;
+  int64 effective_date = 4;
+}
+
+enum SalaryType {
+  SALARY_TYPE_UNSPECIFIED = 0;
+  ANNUAL = 1;
+  HOURLY = 2;
+  DAILY = 3;
+  CONTRACT = 4;
+}
+
+enum PayFrequency {
+  PAY_FREQUENCY_UNSPECIFIED = 0;
+  WEEKLY = 1;
+  BI_WEEKLY = 2;
+  SEMI_MONTHLY = 3;
+  MONTHLY = 4;
+}
+
+enum PaymentMethod {
+  PAYMENT_METHOD_UNSPECIFIED = 0;
+  DIRECT_DEPOSIT = 1;
+  CHECK = 2;
+  CASH = 3;
+  WIRE_TRANSFER = 4;
+}
+
+message Bonus {
+  BonusType type = 1;
+  double amount = 2;
+  string currency = 3;
+  int64 payment_date = 4;
+  string reason = 5;
+}
+
+enum BonusType {
+  BONUS_TYPE_UNSPECIFIED = 0;
+  PERFORMANCE = 1;
+  SIGNING = 2;
+  RETENTION = 3;
+  REFERRAL = 4;
+  ANNUAL = 5;
+}
+
+message Commission {
+  double rate = 1;
+  double amount = 2;
+  string currency = 3;
+  int64 period_start = 4;
+  int64 period_end = 5;
+}
+
+message Deduction {
+  DeductionType type = 1;
+  double amount = 2;
+  string currency = 3;
+  bool pre_tax = 4;
+}
+
+enum DeductionType {
+  DEDUCTION_TYPE_UNSPECIFIED = 0;
+  HEALTH_INSURANCE = 1;
+  DENTAL_INSURANCE = 2;
+  VISION_INSURANCE = 3;
+  RETIREMENT_401K = 4;
+  LIFE_INSURANCE = 5;
+  GARNISHMENT = 6;
+  UNION_DUES = 7;
+}
+
+message TaxInfo {
+  string tax_id = 1;              // SSN or EIN
+  FilingStatus filing_status = 2;
+  int32 allowances = 3;
+  double additional_withholding = 4;
+  bool tax_exempt = 5;
+}
+
+enum FilingStatus {
+  FILING_STATUS_UNSPECIFIED = 0;
+  SINGLE = 1;
+  MARRIED_FILING_JOINTLY = 2;
+  MARRIED_FILING_SEPARATELY = 3;
+  HEAD_OF_HOUSEHOLD = 4;
+}
+
+message Position {
+  string position_id = 1;
+  string title = 2;
+  string department = 3;
+  int64 start_date = 4;
+  int64 end_date = 5;
+  PositionChangeReason reason = 6;
+  Salary salary = 7;
+}
+
+enum PositionChangeReason {
+  POSITION_CHANGE_REASON_UNSPECIFIED = 0;
+  PROMOTION = 1;
+  TRANSFER = 2;
+  DEMOTION = 3;
+  RESTRUCTURE = 4;
+  SALARY_ADJUSTMENT = 5;
+}
+
+message Benefits {
+  HealthInsurance health = 1;
+  DentalInsurance dental = 2;
+  VisionInsurance vision = 3;
+  RetirementPlan retirement = 4;
+  LifeInsurance life = 5;
+  repeated AdditionalBenefit additional = 6;
+  int64 enrollment_date = 7;
+}
+
+message HealthInsurance {
+  string plan_id = 1;
+  string plan_name = 2;
+  PlanType type = 3;
+  double employee_contribution = 4;
+  double employer_contribution = 5;
+  repeated Dependent dependents = 6;
+}
+
+enum PlanType {
+  PLAN_TYPE_UNSPECIFIED = 0;
+  HMO = 1;
+  PPO = 2;
+  EPO = 3;
+  POS = 4;
+  HDHP = 5;
+}
+
+message DentalInsurance {
+  string plan_id = 1;
+  string plan_name = 2;
+  double employee_contribution = 3;
+  double employer_contribution = 4;
+}
+
+message VisionInsurance {
+  string plan_id = 1;
+  string plan_name = 2;
+  double employee_contribution = 3;
+  double employer_contribution = 4;
+}
+
+message RetirementPlan {
+  RetirementType type = 1;
+  double employee_contribution_percent = 2;
+  double employer_match_percent = 3;
+  double vested_percent = 4;
+}
+
+enum RetirementType {
+  RETIREMENT_TYPE_UNSPECIFIED = 0;
+  PLAN_401K = 1;
+  PLAN_403B = 2;
+  PLAN_457 = 3;
+  PENSION = 4;
+  ROTH_401K = 5;
+}
+
+message LifeInsurance {
+  double coverage_amount = 1;
+  string currency = 2;
+  bool employer_paid = 3;
+}
+
+message AdditionalBenefit {
+  string benefit_name = 1;
+  string description = 2;
+  double value = 3;
+  string currency = 4;
+}
+
+message Dependent {
+  string name = 1;
+  string date_of_birth = 2;
+  Relationship relationship = 3;
+}
+
+enum Relationship {
+  RELATIONSHIP_UNSPECIFIED = 0;
+  SPOUSE = 1;
+  CHILD = 2;
+  DOMESTIC_PARTNER = 3;
+  PARENT = 4;
+}
+
+message TimeOff {
+  TimeOffBalance vacation = 1;
+  TimeOffBalance sick = 2;
+  TimeOffBalance personal = 3;
+  repeated TimeOffRequest requests = 4;
+}
+
+message TimeOffBalance {
+  double accrued = 1;
+  double used = 2;
+  double available = 3;
+  double carry_over = 4;
+}
+
+message TimeOffRequest {
+  string request_id = 1;
+  TimeOffType type = 2;
+  int64 start_date = 3;
+  int64 end_date = 4;
+  double days = 5;
+  RequestStatus status = 6;
+  string approver_id = 7;
+  string notes = 8;
+}
+
+enum TimeOffType {
+  TIME_OFF_TYPE_UNSPECIFIED = 0;
+  VACATION = 1;
+  SICK = 2;
+  PERSONAL = 3;
+  BEREAVEMENT = 4;
+  JURY_DUTY = 5;
+  MILITARY = 6;
+  MATERNITY = 7;
+  PATERNITY = 8;
+  UNPAID = 9;
+}
+
+enum RequestStatus {
+  REQUEST_STATUS_UNSPECIFIED = 0;
+  PENDING = 1;
+  APPROVED = 2;
+  DENIED = 3;
+  CANCELLED = 4;
+}
+
+message Performance {
+  repeated PerformanceReview reviews = 1;
+  repeated Goal goals = 2;
+  repeated Training training = 3;
+}
+
+message PerformanceReview {
+  string review_id = 1;
+  int64 review_date = 2;
+  ReviewPeriod period = 3;
+  double overall_rating = 4;      // 1-5 scale
+  repeated RatingCategory categories = 5;
+  string reviewer_id = 6;
+  string comments = 7;
+}
+
+message ReviewPeriod {
+  int64 start_date = 1;
+  int64 end_date = 2;
+}
+
+message RatingCategory {
+  string category_name = 1;
+  double rating = 2;
+  string comments = 3;
+}
+
+message Goal {
+  string goal_id = 1;
+  string title = 2;
+  string description = 3;
+  int64 target_date = 4;
+  GoalStatus status = 5;
+  double progress_percent = 6;
+}
+
+enum GoalStatus {
+  GOAL_STATUS_UNSPECIFIED = 0;
+  NOT_STARTED = 1;
+  IN_PROGRESS = 2;
+  COMPLETED = 3;
+  CANCELLED = 4;
+}
+
+message Training {
+  string training_id = 1;
+  string course_name = 2;
+  string provider = 3;
+  int64 completion_date = 4;
+  bool certified = 5;
+  int64 expiration_date = 6;
+}
+
+message EmergencyContact {
+  string name = 1;
+  Relationship relationship = 2;
+  string phone = 3;
+  string alternate_phone = 4;
+  Address address = 5;
+}
+
+enum EmployeeStatus {
+  EMPLOYEE_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  ON_LEAVE = 2;
+  TERMINATED = 3;
+  RETIRED = 4;
+}

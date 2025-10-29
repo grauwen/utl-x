@@ -1,0 +1,154 @@
+// Customer Profile Management
+// Real-world use case: CRM systems, customer 360 view, personalization
+
+syntax = "proto3";
+
+package crm;
+
+message CustomerProfile {
+  string customer_id = 1;
+  PersonalInfo personal_info = 2;
+  repeated ContactInfo contacts = 3;
+  repeated Address addresses = 4;
+  CustomerSegment segment = 5;
+  Preferences preferences = 6;
+  LoyaltyInfo loyalty = 7;
+  CustomerMetrics metrics = 8;
+  Consent consent = 9;
+  int64 created_at = 10;
+  int64 last_updated = 11;
+  AccountStatus status = 12;
+  map<string, string> custom_attributes = 13;
+}
+
+message PersonalInfo {
+  string first_name = 1;
+  string last_name = 2;
+  string middle_name = 3;
+  string title = 4;           // Mr., Mrs., Dr., etc.
+  string date_of_birth = 5;   // ISO 8601 date
+  Gender gender = 6;
+  string nationality = 7;
+  string language = 8;        // Preferred language (ISO 639-1)
+  string timezone = 9;        // IANA timezone
+}
+
+enum Gender {
+  GENDER_UNSPECIFIED = 0;
+  MALE = 1;
+  FEMALE = 2;
+  NON_BINARY = 3;
+  PREFER_NOT_TO_SAY = 4;
+}
+
+message ContactInfo {
+  ContactType type = 1;
+  string value = 2;
+  bool is_primary = 3;
+  bool is_verified = 4;
+  int64 verified_at = 5;
+}
+
+enum ContactType {
+  CONTACT_TYPE_UNSPECIFIED = 0;
+  EMAIL = 1;
+  PHONE = 2;
+  MOBILE = 3;
+  FAX = 4;
+  WHATSAPP = 5;
+}
+
+message Address {
+  AddressType type = 1;
+  string street1 = 2;
+  string street2 = 3;
+  string city = 4;
+  string state = 5;
+  string postal_code = 6;
+  string country = 7;
+  bool is_default = 8;
+  GeoCoordinates coordinates = 9;
+}
+
+enum AddressType {
+  ADDRESS_TYPE_UNSPECIFIED = 0;
+  HOME = 1;
+  WORK = 2;
+  BILLING = 3;
+  SHIPPING = 4;
+}
+
+message GeoCoordinates {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message CustomerSegment {
+  string segment_id = 1;
+  string segment_name = 2;
+  Tier tier = 3;
+  repeated string tags = 4;
+}
+
+enum Tier {
+  TIER_UNSPECIFIED = 0;
+  BRONZE = 1;
+  SILVER = 2;
+  GOLD = 3;
+  PLATINUM = 4;
+  VIP = 5;
+}
+
+message Preferences {
+  CommunicationPreferences communication = 1;
+  repeated string interests = 2;
+  repeated string categories = 3;
+  map<string, bool> features = 4;
+}
+
+message CommunicationPreferences {
+  bool email_marketing = 1;
+  bool sms_marketing = 2;
+  bool push_notifications = 3;
+  bool phone_calls = 4;
+  int32 preferred_contact_hour_start = 5;  // 24-hour format
+  int32 preferred_contact_hour_end = 6;
+}
+
+message LoyaltyInfo {
+  string program_id = 1;
+  int64 points_balance = 2;
+  Tier tier = 3;
+  int64 member_since = 4;
+  int64 points_earned_lifetime = 5;
+  int64 points_redeemed_lifetime = 6;
+}
+
+message CustomerMetrics {
+  int32 total_orders = 1;
+  double lifetime_value = 2;
+  double average_order_value = 3;
+  int64 last_purchase_date = 4;
+  int32 days_since_last_purchase = 5;
+  double total_spent = 6;
+  int32 returns_count = 7;
+  double satisfaction_score = 8;  // 0-10
+}
+
+message Consent {
+  bool terms_accepted = 1;
+  bool privacy_policy_accepted = 2;
+  bool marketing_consent = 3;
+  bool data_sharing_consent = 4;
+  int64 consent_date = 5;
+  string consent_version = 6;
+}
+
+enum AccountStatus {
+  ACCOUNT_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  INACTIVE = 2;
+  SUSPENDED = 3;
+  CLOSED = 4;
+  PENDING_VERIFICATION = 5;
+}

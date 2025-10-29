@@ -1,0 +1,524 @@
+// Financial Services & Banking
+// Real-world use case: Banking systems, account management, transactions, loans, investments
+
+syntax = "proto3";
+
+package finance;
+
+message Account {
+  string account_id = 1;
+  string account_number = 2;
+  AccountType type = 3;
+  AccountStatus status = 4;
+  string customer_id = 5;
+  Balance balance = 6;
+  string currency = 7;
+  int64 opened_date = 8;
+  int64 closed_date = 9;
+  InterestInfo interest = 10;
+  repeated AccountHolder holders = 11;
+  string branch_id = 12;
+  string routing_number = 13;
+  bool overdraft_protection = 14;
+  map<string, string> custom_fields = 15;
+}
+
+enum AccountType {
+  ACCOUNT_TYPE_UNSPECIFIED = 0;
+  CHECKING = 1;
+  SAVINGS = 2;
+  MONEY_MARKET = 3;
+  CERTIFICATE_OF_DEPOSIT = 4;
+  INDIVIDUAL_RETIREMENT = 5;
+  INVESTMENT = 6;
+  BUSINESS = 7;
+}
+
+enum AccountStatus {
+  ACCOUNT_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  FROZEN = 2;
+  CLOSED = 3;
+  PENDING_APPROVAL = 4;
+  DORMANT = 5;
+}
+
+message Balance {
+  double current_balance = 1;
+  double available_balance = 2;
+  double pending_balance = 3;
+  double hold_amount = 4;
+  int64 as_of_date = 5;
+}
+
+message InterestInfo {
+  double annual_percentage_rate = 1;
+  double annual_percentage_yield = 2;
+  InterestCompounding compounding = 3;
+  int64 last_interest_date = 4;
+  double interest_earned_ytd = 5;
+}
+
+enum InterestCompounding {
+  INTEREST_COMPOUNDING_UNSPECIFIED = 0;
+  DAILY = 1;
+  MONTHLY = 2;
+  QUARTERLY = 3;
+  ANNUALLY = 4;
+}
+
+message AccountHolder {
+  string customer_id = 1;
+  string name = 2;
+  HolderType type = 3;
+  double ownership_percent = 4;
+}
+
+enum HolderType {
+  HOLDER_TYPE_UNSPECIFIED = 0;
+  PRIMARY = 1;
+  JOINT = 2;
+  BENEFICIARY = 3;
+  AUTHORIZED_SIGNER = 4;
+}
+
+message Transaction {
+  string transaction_id = 1;
+  string account_id = 2;
+  TransactionType type = 3;
+  TransactionStatus status = 4;
+  Money amount = 5;
+  int64 transaction_date = 6;
+  int64 post_date = 7;
+  string description = 8;
+  string merchant = 9;
+  MerchantCategory merchant_category = 10;
+  Location location = 11;
+  string reference_id = 12;
+  bool pending = 13;
+  Balance running_balance = 14;
+  repeated string tags = 15;
+}
+
+enum TransactionType {
+  TRANSACTION_TYPE_UNSPECIFIED = 0;
+  DEBIT = 1;
+  CREDIT = 2;
+  TRANSFER = 3;
+  ATM_WITHDRAWAL = 4;
+  ATM_DEPOSIT = 5;
+  CHECK = 6;
+  FEE = 7;
+  INTEREST = 8;
+  DIVIDEND = 9;
+  ADJUSTMENT = 10;
+  WIRE_TRANSFER = 11;
+  ACH = 12;
+  CARD_PURCHASE = 13;
+  CARD_REFUND = 14;
+}
+
+enum TransactionStatus {
+  TRANSACTION_STATUS_UNSPECIFIED = 0;
+  PENDING = 1;
+  POSTED = 2;
+  CLEARED = 3;
+  FAILED = 4;
+  REVERSED = 5;
+  CANCELLED = 6;
+}
+
+message Money {
+  string currency = 1;
+  double amount = 2;
+}
+
+message MerchantCategory {
+  string mcc_code = 1;            // Merchant Category Code
+  string category_name = 2;
+  string subcategory = 3;
+}
+
+message Location {
+  string city = 1;
+  string state = 2;
+  string country = 3;
+  GeoCoordinates coordinates = 4;
+}
+
+message GeoCoordinates {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message Card {
+  string card_id = 1;
+  string card_number = 2;         // Masked (e.g., **** **** **** 1234)
+  CardType type = 3;
+  CardStatus status = 4;
+  string cardholder_name = 5;
+  int32 expiration_month = 6;
+  int32 expiration_year = 7;
+  string cvv = 8;                 // Encrypted/never stored
+  CardNetwork network = 9;
+  bool contactless_enabled = 10;
+  CardLimits limits = 11;
+  string pin = 12;                // Hashed
+  Address billing_address = 13;
+  int64 issued_date = 14;
+  int64 activated_date = 15;
+}
+
+enum CardType {
+  CARD_TYPE_UNSPECIFIED = 0;
+  DEBIT = 1;
+  CREDIT = 2;
+  PREPAID = 3;
+  GIFT = 4;
+  ATM = 5;
+}
+
+enum CardStatus {
+  CARD_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  INACTIVE = 2;
+  BLOCKED = 3;
+  LOST = 4;
+  STOLEN = 5;
+  EXPIRED = 6;
+}
+
+enum CardNetwork {
+  CARD_NETWORK_UNSPECIFIED = 0;
+  VISA = 1;
+  MASTERCARD = 2;
+  AMERICAN_EXPRESS = 3;
+  DISCOVER = 4;
+  DINERS_CLUB = 5;
+  JCB = 6;
+}
+
+message CardLimits {
+  double daily_withdrawal = 1;
+  double daily_purchase = 2;
+  double monthly_limit = 3;
+  double per_transaction = 4;
+}
+
+message Address {
+  string street1 = 1;
+  string street2 = 2;
+  string city = 3;
+  string state = 4;
+  string postal_code = 5;
+  string country = 6;
+}
+
+message Loan {
+  string loan_id = 1;
+  string account_id = 2;
+  LoanType type = 3;
+  LoanStatus status = 4;
+  Money principal = 5;
+  Money outstanding_balance = 6;
+  double interest_rate = 7;
+  int32 term_months = 8;
+  Money monthly_payment = 9;
+  int64 origination_date = 10;
+  int64 maturity_date = 11;
+  int64 first_payment_date = 12;
+  int64 last_payment_date = 13;
+  PaymentSchedule payment_schedule = 14;
+  repeated Payment payments = 15;
+  Collateral collateral = 16;
+  repeated string borrower_ids = 17;
+}
+
+enum LoanType {
+  LOAN_TYPE_UNSPECIFIED = 0;
+  PERSONAL = 1;
+  AUTO = 2;
+  MORTGAGE = 3;
+  HOME_EQUITY = 4;
+  STUDENT = 5;
+  BUSINESS = 6;
+  CREDIT_LINE = 7;
+}
+
+enum LoanStatus {
+  LOAN_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  PAID_OFF = 2;
+  DEFAULT = 3;
+  DELINQUENT = 4;
+  IN_FORBEARANCE = 5;
+  CHARGED_OFF = 6;
+}
+
+message PaymentSchedule {
+  PaymentFrequency frequency = 1;
+  int32 day_of_month = 2;
+  int32 remaining_payments = 3;
+}
+
+enum PaymentFrequency {
+  PAYMENT_FREQUENCY_UNSPECIFIED = 0;
+  WEEKLY = 1;
+  BI_WEEKLY = 2;
+  MONTHLY = 3;
+  QUARTERLY = 4;
+}
+
+message Payment {
+  string payment_id = 1;
+  int64 payment_date = 2;
+  int64 due_date = 3;
+  Money amount = 4;
+  Money principal_amount = 5;
+  Money interest_amount = 6;
+  Money escrow_amount = 7;
+  Money late_fee = 8;
+  PaymentStatus status = 9;
+  PaymentMethod method = 10;
+}
+
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  SCHEDULED = 1;
+  PENDING = 2;
+  PROCESSED = 3;
+  LATE = 4;
+  MISSED = 5;
+  RETURNED = 6;
+}
+
+enum PaymentMethod {
+  PAYMENT_METHOD_UNSPECIFIED = 0;
+  ACH = 1;
+  WIRE = 2;
+  CHECK = 3;
+  DEBIT_CARD = 4;
+  CASH = 5;
+  AUTOMATIC_DEBIT = 6;
+}
+
+message Collateral {
+  CollateralType type = 1;
+  string description = 2;
+  Money appraised_value = 3;
+  int64 appraisal_date = 4;
+  string vin = 5;               // For vehicles
+  PropertyInfo property = 6;     // For real estate
+}
+
+enum CollateralType {
+  COLLATERAL_TYPE_UNSPECIFIED = 0;
+  VEHICLE = 1;
+  REAL_ESTATE = 2;
+  SECURITIES = 3;
+  EQUIPMENT = 4;
+  INVENTORY = 5;
+}
+
+message PropertyInfo {
+  Address address = 1;
+  double square_feet = 2;
+  int32 year_built = 3;
+  string property_type = 4;      // Single family, condo, etc.
+}
+
+message Investment {
+  string investment_id = 1;
+  string account_id = 2;
+  InvestmentType type = 3;
+  string symbol = 4;             // Ticker symbol
+  string name = 5;
+  double quantity = 6;
+  Money purchase_price = 7;
+  Money current_price = 8;
+  Money market_value = 9;
+  Money unrealized_gain_loss = 10;
+  double cost_basis = 11;
+  int64 purchase_date = 12;
+  double annual_dividend_rate = 13;
+  AssetClass asset_class = 14;
+  Sector sector = 15;
+}
+
+enum InvestmentType {
+  INVESTMENT_TYPE_UNSPECIFIED = 0;
+  STOCK = 1;
+  BOND = 2;
+  MUTUAL_FUND = 3;
+  ETF = 4;
+  OPTION = 5;
+  COMMODITY = 6;
+  CRYPTOCURRENCY = 7;
+  REAL_ESTATE_INVESTMENT_TRUST = 8;
+}
+
+enum AssetClass {
+  ASSET_CLASS_UNSPECIFIED = 0;
+  EQUITY = 1;
+  FIXED_INCOME = 2;
+  CASH_EQUIVALENT = 3;
+  ALTERNATIVE = 4;
+  REAL_ESTATE = 5;
+}
+
+enum Sector {
+  SECTOR_UNSPECIFIED = 0;
+  TECHNOLOGY = 1;
+  HEALTHCARE = 2;
+  FINANCIAL = 3;
+  CONSUMER_DISCRETIONARY = 4;
+  CONSUMER_STAPLES = 5;
+  ENERGY = 6;
+  UTILITIES = 7;
+  INDUSTRIALS = 8;
+  MATERIALS = 9;
+  REAL_ESTATE = 10;
+  COMMUNICATION_SERVICES = 11;
+}
+
+message Customer {
+  string customer_id = 1;
+  CustomerType type = 2;
+  PersonalInfo personal_info = 3;
+  BusinessInfo business_info = 4;
+  repeated Account accounts = 5;
+  repeated Card cards = 6;
+  repeated Loan loans = 7;
+  CreditScore credit_score = 8;
+  RiskProfile risk_profile = 9;
+  KYCInfo kyc = 10;
+  CustomerStatus status = 11;
+  int64 customer_since = 12;
+}
+
+enum CustomerType {
+  CUSTOMER_TYPE_UNSPECIFIED = 0;
+  INDIVIDUAL = 1;
+  BUSINESS = 2;
+  TRUST = 3;
+  NON_PROFIT = 4;
+}
+
+message PersonalInfo {
+  string first_name = 1;
+  string last_name = 2;
+  string date_of_birth = 3;
+  string ssn = 4;                // Encrypted
+  Address address = 5;
+  repeated ContactInfo contacts = 6;
+  string citizenship = 7;
+  string occupation = 8;
+}
+
+message BusinessInfo {
+  string business_name = 1;
+  string legal_name = 2;
+  string ein = 3;               // Employer Identification Number
+  string duns = 4;              // D-U-N-S Number
+  BusinessType type = 5;
+  int64 established_date = 6;
+  Address address = 7;
+  double annual_revenue = 8;
+  int32 employee_count = 9;
+}
+
+enum BusinessType {
+  BUSINESS_TYPE_UNSPECIFIED = 0;
+  SOLE_PROPRIETORSHIP = 1;
+  PARTNERSHIP = 2;
+  LLC = 3;
+  CORPORATION = 4;
+  S_CORPORATION = 5;
+  NON_PROFIT = 6;
+}
+
+message ContactInfo {
+  ContactType type = 1;
+  string value = 2;
+  bool is_primary = 3;
+}
+
+enum ContactType {
+  CONTACT_TYPE_UNSPECIFIED = 0;
+  PHONE = 1;
+  MOBILE = 2;
+  EMAIL = 3;
+  FAX = 4;
+}
+
+message CreditScore {
+  int32 score = 1;
+  CreditBureau bureau = 2;
+  int64 as_of_date = 3;
+  CreditRating rating = 4;
+}
+
+enum CreditBureau {
+  CREDIT_BUREAU_UNSPECIFIED = 0;
+  EQUIFAX = 1;
+  EXPERIAN = 2;
+  TRANSUNION = 3;
+}
+
+enum CreditRating {
+  CREDIT_RATING_UNSPECIFIED = 0;
+  EXCELLENT = 1;
+  GOOD = 2;
+  FAIR = 3;
+  POOR = 4;
+}
+
+message RiskProfile {
+  RiskLevel level = 1;
+  int32 score = 2;              // 0-100
+  repeated string risk_factors = 3;
+  int64 last_assessment = 4;
+}
+
+enum RiskLevel {
+  RISK_LEVEL_UNSPECIFIED = 0;
+  LOW = 1;
+  MEDIUM = 2;
+  HIGH = 3;
+  VERY_HIGH = 4;
+}
+
+message KYCInfo {
+  bool kyc_completed = 1;
+  int64 kyc_date = 2;
+  string kyc_level = 3;
+  bool identity_verified = 4;
+  bool address_verified = 5;
+  repeated Document documents = 6;
+}
+
+message Document {
+  DocumentType type = 1;
+  string document_id = 2;
+  int64 upload_date = 3;
+  int64 expiration_date = 4;
+  bool verified = 5;
+}
+
+enum DocumentType {
+  DOCUMENT_TYPE_UNSPECIFIED = 0;
+  DRIVERS_LICENSE = 1;
+  PASSPORT = 2;
+  NATIONAL_ID = 3;
+  UTILITY_BILL = 4;
+  BANK_STATEMENT = 5;
+  TAX_RETURN = 6;
+}
+
+enum CustomerStatus {
+  CUSTOMER_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  INACTIVE = 2;
+  SUSPENDED = 3;
+  CLOSED = 4;
+}

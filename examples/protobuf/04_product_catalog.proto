@@ -1,0 +1,161 @@
+// Product Catalog Management
+// Real-world use case: E-commerce platforms, inventory systems, PIM (Product Information Management)
+
+syntax = "proto3";
+
+package catalog;
+
+message Product {
+  string product_id = 1;
+  string sku = 2;
+  string name = 3;
+  string description = 4;
+  string brand = 5;
+  Category category = 6;
+  repeated ProductVariant variants = 7;
+  Pricing pricing = 8;
+  Inventory inventory = 9;
+  repeated Media media = 10;
+  Dimensions dimensions = 11;
+  repeated string tags = 12;
+  SEO seo = 13;
+  ProductStatus status = 14;
+  int64 created_at = 15;
+  int64 updated_at = 16;
+  map<string, string> custom_fields = 17;
+}
+
+message Category {
+  string category_id = 1;
+  string name = 2;
+  string parent_category_id = 3;
+  repeated string path = 4;      // Full category path
+  int32 sort_order = 5;
+}
+
+message ProductVariant {
+  string variant_id = 1;
+  string sku = 2;
+  repeated AttributeValue attributes = 3;  // size, color, material, etc.
+  Pricing pricing = 4;
+  Inventory inventory = 5;
+  string barcode = 6;
+  string upc = 7;
+  string ean = 8;
+  repeated Media media = 9;
+}
+
+message AttributeValue {
+  string attribute_name = 1;
+  string value = 2;
+  string display_name = 3;
+}
+
+message Pricing {
+  Money base_price = 1;
+  Money sale_price = 2;
+  Money cost_price = 3;
+  double margin_percent = 4;
+  TaxInfo tax = 5;
+  repeated PriceTier tiers = 6;   // Volume pricing
+  int64 sale_start_date = 7;
+  int64 sale_end_date = 8;
+}
+
+message Money {
+  string currency = 1;
+  double amount = 2;
+}
+
+message TaxInfo {
+  string tax_code = 1;
+  double tax_rate = 2;
+  bool taxable = 3;
+}
+
+message PriceTier {
+  int32 min_quantity = 1;
+  Money unit_price = 2;
+}
+
+message Inventory {
+  int32 quantity_on_hand = 1;
+  int32 quantity_available = 2;
+  int32 quantity_reserved = 3;
+  int32 reorder_point = 4;
+  int32 reorder_quantity = 5;
+  repeated WarehouseStock warehouse_stock = 6;
+  StockStatus status = 7;
+}
+
+message WarehouseStock {
+  string warehouse_id = 1;
+  string location = 2;
+  int32 quantity = 3;
+}
+
+enum StockStatus {
+  STOCK_STATUS_UNSPECIFIED = 0;
+  IN_STOCK = 1;
+  LOW_STOCK = 2;
+  OUT_OF_STOCK = 3;
+  BACKORDER = 4;
+  DISCONTINUED = 5;
+}
+
+message Media {
+  MediaType type = 1;
+  string url = 2;
+  string alt_text = 3;
+  int32 sort_order = 4;
+  bool is_primary = 5;
+  ImageDimensions dimensions = 6;
+}
+
+enum MediaType {
+  MEDIA_TYPE_UNSPECIFIED = 0;
+  IMAGE = 1;
+  VIDEO = 2;
+  DOCUMENT = 3;
+  THREE_D_MODEL = 4;
+}
+
+message ImageDimensions {
+  int32 width = 1;
+  int32 height = 2;
+}
+
+message Dimensions {
+  Weight weight = 1;
+  Size size = 2;
+  string unit_system = 3;  // metric, imperial
+}
+
+message Weight {
+  double value = 1;
+  string unit = 2;  // kg, lb, oz
+}
+
+message Size {
+  double length = 1;
+  double width = 2;
+  double height = 3;
+  string unit = 4;  // cm, in, m
+}
+
+message SEO {
+  string meta_title = 1;
+  string meta_description = 2;
+  repeated string keywords = 3;
+  string url_slug = 4;
+  string canonical_url = 5;
+}
+
+enum ProductStatus {
+  PRODUCT_STATUS_UNSPECIFIED = 0;
+  DRAFT = 1;
+  ACTIVE = 2;
+  INACTIVE = 3;
+  ARCHIVED = 4;
+  OUT_OF_SEASON = 5;
+}

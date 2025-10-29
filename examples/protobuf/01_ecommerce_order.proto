@@ -1,0 +1,87 @@
+// E-commerce Order Management
+// Real-world use case: Processing customer orders in an online store
+
+syntax = "proto3";
+
+package ecommerce;
+
+message Order {
+  string order_id = 1;
+  string customer_id = 2;
+  OrderStatus status = 3;
+  repeated OrderItem items = 4;
+  Address shipping_address = 5;
+  Address billing_address = 6;
+  PaymentInfo payment = 7;
+  Pricing pricing = 8;
+  int64 created_at = 9;      // Unix timestamp
+  int64 updated_at = 10;     // Unix timestamp
+  string currency = 11;       // ISO 4217 currency code (e.g., "USD", "EUR")
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  PENDING = 1;
+  CONFIRMED = 2;
+  PROCESSING = 3;
+  SHIPPED = 4;
+  DELIVERED = 5;
+  CANCELLED = 6;
+  REFUNDED = 7;
+}
+
+message OrderItem {
+  string product_id = 1;
+  string sku = 2;
+  string name = 3;
+  int32 quantity = 4;
+  double unit_price = 5;
+  double discount = 6;
+  double tax = 7;
+  double total = 8;
+  map<string, string> attributes = 9;  // e.g., size, color
+}
+
+message Address {
+  string recipient_name = 1;
+  string street1 = 2;
+  string street2 = 3;
+  string city = 4;
+  string state = 5;
+  string postal_code = 6;
+  string country = 7;
+  string phone = 8;
+}
+
+message PaymentInfo {
+  PaymentMethod method = 1;
+  string transaction_id = 2;
+  PaymentStatus status = 3;
+  int64 processed_at = 4;
+}
+
+enum PaymentMethod {
+  PAYMENT_METHOD_UNSPECIFIED = 0;
+  CREDIT_CARD = 1;
+  DEBIT_CARD = 2;
+  PAYPAL = 3;
+  BANK_TRANSFER = 4;
+  CASH_ON_DELIVERY = 5;
+}
+
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PENDING_PAYMENT = 1;
+  AUTHORIZED = 2;
+  CAPTURED = 3;
+  FAILED = 4;
+  REFUNDED = 5;
+}
+
+message Pricing {
+  double subtotal = 1;
+  double tax = 2;
+  double shipping = 3;
+  double discount = 4;
+  double total = 5;
+}

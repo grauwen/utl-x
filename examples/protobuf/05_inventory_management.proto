@@ -1,0 +1,213 @@
+// Inventory & Warehouse Management
+// Real-world use case: Supply chain, warehouse operations, stock tracking
+
+syntax = "proto3";
+
+package inventory;
+
+message InventoryTransaction {
+  string transaction_id = 1;
+  TransactionType type = 2;
+  string product_id = 3;
+  string sku = 4;
+  string warehouse_id = 5;
+  string location = 6;
+  int32 quantity = 7;
+  string reason_code = 8;
+  string reference_id = 9;      // PO number, order ID, etc.
+  Employee performed_by = 10;
+  int64 transaction_date = 11;
+  StockLevel before_levels = 12;
+  StockLevel after_levels = 13;
+  map<string, string> metadata = 14;
+}
+
+enum TransactionType {
+  TRANSACTION_TYPE_UNSPECIFIED = 0;
+  RECEIPT = 1;               // Receiving stock
+  SHIPMENT = 2;              // Shipping out
+  ADJUSTMENT = 3;            // Manual adjustment
+  TRANSFER = 4;              // Between locations
+  CYCLE_COUNT = 5;           // Physical count
+  RETURN = 6;                // Customer return
+  DAMAGE = 7;                // Damaged goods
+  EXPIRY = 8;                // Expired items
+  RESERVATION = 9;           // Reserved for order
+  RELEASE = 10;              // Released reservation
+}
+
+message StockLevel {
+  int32 on_hand = 1;
+  int32 available = 2;
+  int32 reserved = 3;
+  int32 in_transit = 4;
+  int32 damaged = 5;
+  int32 expired = 6;
+}
+
+message Employee {
+  string employee_id = 1;
+  string name = 2;
+  string department = 3;
+}
+
+message Warehouse {
+  string warehouse_id = 1;
+  string name = 2;
+  WarehouseType type = 3;
+  Address address = 4;
+  Contact contact = 5;
+  Capacity capacity = 6;
+  repeated Zone zones = 7;
+  OperatingHours operating_hours = 8;
+  bool is_active = 9;
+}
+
+enum WarehouseType {
+  WAREHOUSE_TYPE_UNSPECIFIED = 0;
+  DISTRIBUTION_CENTER = 1;
+  FULFILLMENT_CENTER = 2;
+  RETAIL_STORE = 3;
+  MANUFACTURING = 4;
+  COLD_STORAGE = 5;
+  BONDED_WAREHOUSE = 6;
+}
+
+message Address {
+  string street1 = 1;
+  string street2 = 2;
+  string city = 3;
+  string state = 4;
+  string postal_code = 5;
+  string country = 6;
+  GeoLocation coordinates = 7;
+}
+
+message GeoLocation {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message Contact {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+}
+
+message Capacity {
+  int32 total_sqft = 1;
+  int32 usable_sqft = 2;
+  int32 pallet_positions = 3;
+  int32 used_positions = 4;
+  double utilization_percent = 5;
+}
+
+message Zone {
+  string zone_id = 1;
+  string name = 2;
+  ZoneType type = 3;
+  TemperatureControl temperature = 4;
+  repeated Location locations = 5;
+}
+
+enum ZoneType {
+  ZONE_TYPE_UNSPECIFIED = 0;
+  RECEIVING = 1;
+  STORAGE = 2;
+  PICKING = 3;
+  PACKING = 4;
+  SHIPPING = 5;
+  RETURNS = 6;
+  QUARANTINE = 7;
+}
+
+message TemperatureControl {
+  double min_temp = 1;
+  double max_temp = 2;
+  string unit = 3;  // celsius, fahrenheit
+  bool climate_controlled = 4;
+}
+
+message Location {
+  string location_id = 1;
+  string aisle = 2;
+  string rack = 3;
+  string shelf = 4;
+  string bin = 5;
+  LocationType type = 6;
+  Dimensions dimensions = 7;
+}
+
+enum LocationType {
+  LOCATION_TYPE_UNSPECIFIED = 0;
+  FLOOR = 1;
+  RACK = 2;
+  SHELF = 3;
+  BIN = 4;
+  PALLET = 5;
+}
+
+message Dimensions {
+  double length = 1;
+  double width = 2;
+  double height = 3;
+  string unit = 4;
+}
+
+message OperatingHours {
+  repeated DaySchedule schedule = 1;
+  repeated Holiday holidays = 2;
+}
+
+message DaySchedule {
+  DayOfWeek day = 1;
+  string open_time = 2;   // HH:MM format
+  string close_time = 3;
+  bool is_closed = 4;
+}
+
+enum DayOfWeek {
+  DAY_OF_WEEK_UNSPECIFIED = 0;
+  MONDAY = 1;
+  TUESDAY = 2;
+  WEDNESDAY = 3;
+  THURSDAY = 4;
+  FRIDAY = 5;
+  SATURDAY = 6;
+  SUNDAY = 7;
+}
+
+message Holiday {
+  string name = 1;
+  string date = 2;  // ISO 8601 date
+  bool warehouse_closed = 3;
+}
+
+message StockAlert {
+  string alert_id = 1;
+  AlertType type = 2;
+  AlertSeverity severity = 3;
+  string product_id = 4;
+  string warehouse_id = 5;
+  string message = 6;
+  int64 triggered_at = 7;
+  bool acknowledged = 8;
+  string acknowledged_by = 9;
+}
+
+enum AlertType {
+  ALERT_TYPE_UNSPECIFIED = 0;
+  LOW_STOCK = 1;
+  OUT_OF_STOCK = 2;
+  OVERSTOCK = 3;
+  EXPIRY_WARNING = 4;
+  DAMAGED_GOODS = 5;
+  DISCREPANCY = 6;
+}
+
+enum AlertSeverity {
+  ALERT_SEVERITY_UNSPECIFIED = 0;
+  INFO = 1;
+  WARNING = 2;
+  CRITICAL = 3;
+}

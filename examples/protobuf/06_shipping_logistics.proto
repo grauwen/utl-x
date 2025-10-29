@@ -1,0 +1,254 @@
+// Shipping & Logistics Management
+// Real-world use case: Package tracking, carrier management, delivery optimization
+
+syntax = "proto3";
+
+package logistics;
+
+message Shipment {
+  string shipment_id = 1;
+  string tracking_number = 2;
+  ShipmentStatus status = 3;
+  Carrier carrier = 4;
+  ServiceLevel service_level = 5;
+  Package package = 6;
+  Address origin = 7;
+  Address destination = 8;
+  ShipmentDates dates = 9;
+  repeated TrackingEvent events = 10;
+  ShipmentCost cost = 11;
+  repeated Document documents = 12;
+  CustomsInfo customs = 13;
+  string reference_id = 14;      // Order or invoice reference
+}
+
+enum ShipmentStatus {
+  SHIPMENT_STATUS_UNSPECIFIED = 0;
+  LABEL_CREATED = 1;
+  PICKED_UP = 2;
+  IN_TRANSIT = 3;
+  OUT_FOR_DELIVERY = 4;
+  DELIVERED = 5;
+  FAILED_DELIVERY = 6;
+  RETURNED_TO_SENDER = 7;
+  EXCEPTION = 8;
+}
+
+message Carrier {
+  string carrier_id = 1;
+  string name = 2;              // FedEx, UPS, DHL, USPS
+  string account_number = 3;
+  CarrierType type = 4;
+  Contact contact = 5;
+}
+
+enum CarrierType {
+  CARRIER_TYPE_UNSPECIFIED = 0;
+  NATIONAL_POSTAL = 1;
+  COURIER = 2;
+  FREIGHT = 3;
+  REGIONAL = 4;
+  LAST_MILE = 5;
+}
+
+message ServiceLevel {
+  string service_code = 1;
+  string service_name = 2;      // Ground, Express, Overnight, etc.
+  int32 estimated_days = 3;
+  bool signature_required = 4;
+  bool insurance_included = 5;
+  bool tracking_included = 6;
+}
+
+message Package {
+  PackageType type = 1;
+  Dimensions dimensions = 2;
+  Weight weight = 3;
+  repeated PackageItem items = 4;
+  string packaging = 5;          // Box, envelope, pallet
+  bool fragile = 6;
+  bool hazardous = 7;
+  HazmatInfo hazmat = 8;
+}
+
+enum PackageType {
+  PACKAGE_TYPE_UNSPECIFIED = 0;
+  PARCEL = 1;
+  ENVELOPE = 2;
+  PALLET = 3;
+  CRATE = 4;
+  TUBE = 5;
+}
+
+message Dimensions {
+  double length = 1;
+  double width = 2;
+  double height = 3;
+  string unit = 4;              // cm, in
+  double volume = 5;
+}
+
+message Weight {
+  double value = 1;
+  string unit = 2;              // kg, lb
+}
+
+message PackageItem {
+  string sku = 1;
+  string description = 2;
+  int32 quantity = 3;
+  double unit_value = 4;
+  string currency = 5;
+  string country_of_origin = 6;
+  string hs_code = 7;           // Harmonized System code
+}
+
+message Address {
+  string company = 1;
+  string contact_name = 2;
+  string street1 = 3;
+  string street2 = 4;
+  string city = 5;
+  string state = 6;
+  string postal_code = 7;
+  string country = 8;
+  string phone = 9;
+  string email = 10;
+  AddressType type = 11;
+  GeoCoordinates coordinates = 12;
+  bool residential = 13;
+}
+
+enum AddressType {
+  ADDRESS_TYPE_UNSPECIFIED = 0;
+  RESIDENTIAL = 1;
+  COMMERCIAL = 2;
+  PO_BOX = 3;
+  MILITARY = 4;
+}
+
+message GeoCoordinates {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message ShipmentDates {
+  int64 created_at = 1;
+  int64 shipped_at = 2;
+  int64 estimated_delivery = 3;
+  int64 actual_delivery = 4;
+  int64 deadline = 5;
+  TimeWindow delivery_window = 6;
+}
+
+message TimeWindow {
+  string start_time = 1;        // HH:MM format
+  string end_time = 2;
+}
+
+message TrackingEvent {
+  string event_id = 1;
+  EventType type = 2;
+  EventStatus status = 3;
+  int64 timestamp = 4;
+  Location location = 5;
+  string description = 6;
+  string notes = 7;
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  PICKUP_SCHEDULED = 1;
+  PICKED_UP = 2;
+  DEPARTED_FACILITY = 3;
+  ARRIVED_FACILITY = 4;
+  IN_TRANSIT = 5;
+  OUT_FOR_DELIVERY = 6;
+  DELIVERY_ATTEMPTED = 7;
+  DELIVERED = 8;
+  EXCEPTION = 9;
+  CUSTOMS_CLEARANCE = 10;
+}
+
+enum EventStatus {
+  EVENT_STATUS_UNSPECIFIED = 0;
+  SUCCESS = 1;
+  FAILED = 2;
+  PENDING = 3;
+}
+
+message Location {
+  string facility_id = 1;
+  string facility_name = 2;
+  string city = 3;
+  string state = 4;
+  string country = 5;
+  GeoCoordinates coordinates = 6;
+}
+
+message ShipmentCost {
+  Money base_rate = 1;
+  Money fuel_surcharge = 2;
+  Money insurance = 3;
+  Money duties = 4;
+  Money taxes = 5;
+  Money additional_fees = 6;
+  Money total = 7;
+  string currency = 8;
+}
+
+message Money {
+  string currency = 1;
+  double amount = 2;
+}
+
+message Document {
+  DocumentType type = 1;
+  string url = 2;
+  string format = 3;           // PDF, PNG, ZPL
+  int64 created_at = 4;
+}
+
+enum DocumentType {
+  DOCUMENT_TYPE_UNSPECIFIED = 0;
+  SHIPPING_LABEL = 1;
+  COMMERCIAL_INVOICE = 2;
+  PACKING_LIST = 3;
+  BILL_OF_LADING = 4;
+  CUSTOMS_FORM = 5;
+  RETURN_LABEL = 6;
+}
+
+message CustomsInfo {
+  string customs_declaration_number = 1;
+  ContentType content_type = 2;
+  string incoterms = 3;        // FOB, CIF, DDP, etc.
+  bool duties_paid = 4;
+  repeated CustomsItem items = 5;
+  double total_value = 6;
+  string currency = 7;
+}
+
+enum ContentType {
+  CONTENT_TYPE_UNSPECIFIED = 0;
+  MERCHANDISE = 1;
+  DOCUMENTS = 2;
+  SAMPLE = 3;
+  GIFT = 4;
+  RETURN = 5;
+}
+
+message CustomsItem {
+  string description = 1;
+  string hs_code = 2;
+  int32 quantity = 3;
+  double unit_value = 4;
+  string country_of_origin = 5;
+  double weight = 6;
+}
+
+message Contact {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+}

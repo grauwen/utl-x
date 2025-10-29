@@ -1,0 +1,605 @@
+// Booking & Reservation Management
+// Real-world use case: Hotel reservations, flight bookings, event tickets, restaurant reservations
+
+syntax = "proto3";
+
+package booking;
+
+message Reservation {
+  string reservation_id = 1;
+  string confirmation_number = 2;
+  ReservationType type = 3;
+  ReservationStatus status = 4;
+  string customer_id = 5;
+  Guest primary_guest = 6;
+  repeated Guest additional_guests = 7;
+  ReservationDates dates = 8;
+  Payment payment = 9;
+  Pricing pricing = 10;
+  CancellationPolicy cancellation_policy = 11;
+  SpecialRequests special_requests = 12;
+  int64 created_at = 13;
+  int64 modified_at = 14;
+  string source = 15;             // Web, mobile app, phone, agent
+  map<string, string> metadata = 16;
+}
+
+enum ReservationType {
+  RESERVATION_TYPE_UNSPECIFIED = 0;
+  HOTEL = 1;
+  FLIGHT = 2;
+  CAR_RENTAL = 3;
+  RESTAURANT = 4;
+  EVENT = 5;
+  TOUR = 6;
+  ACTIVITY = 7;
+}
+
+enum ReservationStatus {
+  RESERVATION_STATUS_UNSPECIFIED = 0;
+  PENDING = 1;
+  CONFIRMED = 2;
+  CHECKED_IN = 3;
+  CHECKED_OUT = 4;
+  CANCELLED = 5;
+  NO_SHOW = 6;
+  WAITLISTED = 7;
+}
+
+message Guest {
+  string guest_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string title = 4;              // Mr., Mrs., Dr.
+  string email = 5;
+  string phone = 6;
+  string date_of_birth = 7;
+  Address address = 8;
+  string nationality = 9;
+  string passport_number = 10;
+  LoyaltyInfo loyalty = 11;
+  GuestPreferences preferences = 12;
+}
+
+message Address {
+  string street1 = 1;
+  string street2 = 2;
+  string city = 3;
+  string state = 4;
+  string postal_code = 5;
+  string country = 6;
+}
+
+message LoyaltyInfo {
+  string program_id = 1;
+  string member_number = 2;
+  LoyaltyTier tier = 3;
+  int64 points_balance = 4;
+}
+
+enum LoyaltyTier {
+  LOYALTY_TIER_UNSPECIFIED = 0;
+  BASIC = 1;
+  SILVER = 2;
+  GOLD = 3;
+  PLATINUM = 4;
+  DIAMOND = 5;
+}
+
+message GuestPreferences {
+  RoomPreferences room = 1;
+  MealPreferences meal = 2;
+  repeated string special_needs = 3;
+  bool marketing_opt_in = 4;
+}
+
+message RoomPreferences {
+  BedType bed_type = 1;
+  string floor_preference = 2;   // High, low, middle
+  bool smoking = 3;
+  repeated string amenities = 4;
+}
+
+enum BedType {
+  BED_TYPE_UNSPECIFIED = 0;
+  SINGLE = 1;
+  DOUBLE = 2;
+  QUEEN = 3;
+  KING = 4;
+  TWIN = 5;
+}
+
+message MealPreferences {
+  repeated string dietary_restrictions = 1;
+  repeated string allergies = 2;
+  string seating_preference = 3;
+}
+
+message ReservationDates {
+  int64 check_in = 1;
+  int64 check_out = 2;
+  int32 nights = 3;
+  TimeWindow check_in_window = 4;
+  TimeWindow check_out_window = 5;
+}
+
+message TimeWindow {
+  string start_time = 1;         // HH:MM format
+  string end_time = 2;
+}
+
+message Payment {
+  PaymentMethod method = 1;
+  PaymentStatus status = 2;
+  string transaction_id = 3;
+  Card card = 4;
+  BillingAddress billing = 5;
+  int64 authorized_at = 6;
+  int64 charged_at = 7;
+}
+
+enum PaymentMethod {
+  PAYMENT_METHOD_UNSPECIFIED = 0;
+  CREDIT_CARD = 1;
+  DEBIT_CARD = 2;
+  PAYPAL = 3;
+  BANK_TRANSFER = 4;
+  CASH = 5;
+  POINTS = 6;
+  GIFT_CARD = 7;
+}
+
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PENDING = 1;
+  AUTHORIZED = 2;
+  CAPTURED = 3;
+  REFUNDED = 4;
+  FAILED = 5;
+}
+
+message Card {
+  string masked_number = 1;
+  string card_type = 2;          // Visa, Mastercard, Amex
+  int32 exp_month = 3;
+  int32 exp_year = 4;
+  string cardholder_name = 5;
+}
+
+message BillingAddress {
+  string street1 = 1;
+  string street2 = 2;
+  string city = 3;
+  string state = 4;
+  string postal_code = 5;
+  string country = 6;
+}
+
+message Pricing {
+  Money base_rate = 1;
+  repeated Fee fees = 2;
+  repeated Tax taxes = 3;
+  repeated Discount discounts = 4;
+  Money deposit = 5;
+  Money total = 6;
+  string currency = 7;
+}
+
+message Money {
+  string currency = 1;
+  double amount = 2;
+}
+
+message Fee {
+  FeeType type = 1;
+  string description = 2;
+  Money amount = 3;
+  bool mandatory = 4;
+}
+
+enum FeeType {
+  FEE_TYPE_UNSPECIFIED = 0;
+  SERVICE_FEE = 1;
+  CLEANING_FEE = 2;
+  RESORT_FEE = 3;
+  BOOKING_FEE = 4;
+  PROCESSING_FEE = 5;
+  PARKING_FEE = 6;
+}
+
+message Tax {
+  TaxType type = 1;
+  double rate = 2;
+  Money amount = 3;
+}
+
+enum TaxType {
+  TAX_TYPE_UNSPECIFIED = 0;
+  SALES_TAX = 1;
+  VAT = 2;
+  HOTEL_TAX = 3;
+  CITY_TAX = 4;
+  TOURIST_TAX = 5;
+}
+
+message Discount {
+  DiscountType type = 1;
+  string code = 2;
+  double rate = 3;
+  Money amount = 4;
+  string description = 5;
+}
+
+enum DiscountType {
+  DISCOUNT_TYPE_UNSPECIFIED = 0;
+  PROMOTIONAL = 1;
+  LOYALTY = 2;
+  EARLY_BIRD = 3;
+  LAST_MINUTE = 4;
+  GROUP = 5;
+  CORPORATE = 6;
+}
+
+message CancellationPolicy {
+  PolicyType type = 1;
+  int64 free_cancellation_until = 2;
+  repeated CancellationPenalty penalties = 3;
+  bool refundable = 4;
+}
+
+enum PolicyType {
+  POLICY_TYPE_UNSPECIFIED = 0;
+  FLEXIBLE = 1;
+  MODERATE = 2;
+  STRICT = 3;
+  NON_REFUNDABLE = 4;
+}
+
+message CancellationPenalty {
+  int32 days_before = 1;
+  double penalty_percent = 2;
+  Money penalty_amount = 3;
+}
+
+message SpecialRequests {
+  repeated string requests = 1;
+  string accessibility_needs = 2;
+  bool early_check_in = 3;
+  bool late_check_out = 4;
+  string notes = 5;
+}
+
+message HotelReservation {
+  Reservation base = 1;
+  Property property = 2;
+  Room room = 3;
+  repeated RoomService room_services = 4;
+  CheckInInfo check_in = 5;
+  CheckOutInfo check_out = 6;
+}
+
+message Property {
+  string property_id = 1;
+  string name = 2;
+  PropertyType type = 3;
+  StarRating rating = 4;
+  Address address = 5;
+  repeated ContactInfo contacts = 6;
+  repeated string amenities = 7;
+  CheckInPolicy check_in_policy = 8;
+}
+
+enum PropertyType {
+  PROPERTY_TYPE_UNSPECIFIED = 0;
+  HOTEL = 1;
+  RESORT = 2;
+  MOTEL = 3;
+  BED_AND_BREAKFAST = 4;
+  HOSTEL = 5;
+  VACATION_RENTAL = 6;
+  APARTMENT = 7;
+}
+
+enum StarRating {
+  STAR_RATING_UNSPECIFIED = 0;
+  ONE_STAR = 1;
+  TWO_STAR = 2;
+  THREE_STAR = 3;
+  FOUR_STAR = 4;
+  FIVE_STAR = 5;
+}
+
+message ContactInfo {
+  ContactType type = 1;
+  string value = 2;
+}
+
+enum ContactType {
+  CONTACT_TYPE_UNSPECIFIED = 0;
+  PHONE = 1;
+  EMAIL = 2;
+  FAX = 3;
+  WEBSITE = 4;
+}
+
+message CheckInPolicy {
+  string check_in_time = 1;
+  string check_out_time = 2;
+  int32 minimum_age = 3;
+  repeated string required_documents = 4;
+}
+
+message Room {
+  string room_id = 1;
+  string room_number = 2;
+  RoomType type = 3;
+  int32 max_occupancy = 4;
+  int32 beds = 5;
+  BedType bed_type = 6;
+  double size_sqm = 7;
+  string view = 8;
+  repeated string amenities = 9;
+}
+
+enum RoomType {
+  ROOM_TYPE_UNSPECIFIED = 0;
+  STANDARD = 1;
+  DELUXE = 2;
+  SUITE = 3;
+  EXECUTIVE = 4;
+  PRESIDENTIAL = 5;
+}
+
+message RoomService {
+  string service_id = 1;
+  ServiceType type = 2;
+  int64 requested_at = 3;
+  int64 completed_at = 4;
+  ServiceStatus status = 5;
+  Money charge = 6;
+  string notes = 7;
+}
+
+enum ServiceType {
+  SERVICE_TYPE_UNSPECIFIED = 0;
+  ROOM_CLEANING = 1;
+  LAUNDRY = 2;
+  DINING = 3;
+  MINIBAR = 4;
+  SPA = 5;
+  CONCIERGE = 6;
+}
+
+enum ServiceStatus {
+  SERVICE_STATUS_UNSPECIFIED = 0;
+  REQUESTED = 1;
+  SCHEDULED = 2;
+  IN_PROGRESS = 3;
+  COMPLETED = 4;
+  CANCELLED = 5;
+}
+
+message CheckInInfo {
+  int64 actual_time = 1;
+  string checked_in_by = 2;
+  repeated KeyCard key_cards = 3;
+  bool deposit_collected = 4;
+  Money deposit_amount = 5;
+}
+
+message KeyCard {
+  string card_number = 1;
+  int64 issued_at = 2;
+  int64 expires_at = 3;
+}
+
+message CheckOutInfo {
+  int64 actual_time = 1;
+  string checked_out_by = 2;
+  Money final_bill = 3;
+  bool deposit_returned = 4;
+  repeated Charge incidental_charges = 5;
+}
+
+message Charge {
+  string description = 1;
+  int64 date = 2;
+  Money amount = 3;
+}
+
+message FlightReservation {
+  Reservation base = 1;
+  repeated FlightSegment segments = 2;
+  string pnr = 3;                // Passenger Name Record
+  repeated Passenger passengers = 4;
+  Baggage baggage = 5;
+  repeated Seat seats = 6;
+}
+
+message FlightSegment {
+  string segment_id = 1;
+  Airline airline = 2;
+  string flight_number = 3;
+  Airport origin = 4;
+  Airport destination = 5;
+  int64 departure_time = 6;
+  int64 arrival_time = 7;
+  int32 duration_minutes = 8;
+  Aircraft aircraft = 9;
+  CabinClass cabin_class = 10;
+  FlightStatus status = 11;
+}
+
+message Airline {
+  string airline_code = 1;       // IATA code
+  string name = 2;
+}
+
+message Airport {
+  string airport_code = 1;       // IATA code
+  string name = 2;
+  string city = 3;
+  string country = 4;
+  string terminal = 5;
+  string gate = 6;
+}
+
+message Aircraft {
+  string aircraft_type = 1;
+  string registration = 2;
+}
+
+enum CabinClass {
+  CABIN_CLASS_UNSPECIFIED = 0;
+  ECONOMY = 1;
+  PREMIUM_ECONOMY = 2;
+  BUSINESS = 3;
+  FIRST_CLASS = 4;
+}
+
+enum FlightStatus {
+  FLIGHT_STATUS_UNSPECIFIED = 0;
+  SCHEDULED = 1;
+  DELAYED = 2;
+  BOARDING = 3;
+  DEPARTED = 4;
+  IN_FLIGHT = 5;
+  LANDED = 6;
+  CANCELLED = 7;
+}
+
+message Passenger {
+  Guest guest = 1;
+  PassengerType type = 2;
+  string ticket_number = 3;
+  FrequentFlyer frequent_flyer = 4;
+  repeated TravelDocument documents = 5;
+}
+
+enum PassengerType {
+  PASSENGER_TYPE_UNSPECIFIED = 0;
+  ADULT = 1;
+  CHILD = 2;
+  INFANT = 3;
+  SENIOR = 4;
+}
+
+message FrequentFlyer {
+  string program = 1;
+  string number = 2;
+  string tier = 3;
+}
+
+message TravelDocument {
+  DocumentType type = 1;
+  string number = 2;
+  string issuing_country = 3;
+  int64 expiration_date = 4;
+}
+
+enum DocumentType {
+  DOCUMENT_TYPE_UNSPECIFIED = 0;
+  PASSPORT = 1;
+  NATIONAL_ID = 2;
+  DRIVERS_LICENSE = 3;
+  VISA = 4;
+}
+
+message Baggage {
+  repeated BaggageItem checked = 1;
+  repeated BaggageItem carry_on = 2;
+  Money excess_fee = 3;
+}
+
+message BaggageItem {
+  string tag_number = 1;
+  double weight_kg = 2;
+  bool special_handling = 3;
+  string description = 4;
+}
+
+message Seat {
+  string segment_id = 1;
+  string seat_number = 2;
+  SeatType type = 3;
+  Money fee = 4;
+}
+
+enum SeatType {
+  SEAT_TYPE_UNSPECIFIED = 0;
+  STANDARD = 1;
+  EXTRA_LEGROOM = 2;
+  WINDOW = 3;
+  AISLE = 4;
+  MIDDLE = 5;
+  EXIT_ROW = 6;
+}
+
+message RestaurantReservation {
+  Reservation base = 1;
+  Restaurant restaurant = 2;
+  Table table = 3;
+  int32 party_size = 4;
+  int64 reservation_time = 5;
+  int32 duration_minutes = 6;
+  Occasion occasion = 7;
+}
+
+message Restaurant {
+  string restaurant_id = 1;
+  string name = 2;
+  CuisineType cuisine = 3;
+  Address address = 4;
+  repeated ContactInfo contacts = 5;
+  PriceRange price_range = 6;
+}
+
+enum CuisineType {
+  CUISINE_TYPE_UNSPECIFIED = 0;
+  ITALIAN = 1;
+  FRENCH = 2;
+  CHINESE = 3;
+  JAPANESE = 4;
+  INDIAN = 5;
+  MEXICAN = 6;
+  AMERICAN = 7;
+  MEDITERRANEAN = 8;
+}
+
+enum PriceRange {
+  PRICE_RANGE_UNSPECIFIED = 0;
+  BUDGET = 1;
+  MODERATE = 2;
+  UPSCALE = 3;
+  FINE_DINING = 4;
+}
+
+message Table {
+  string table_number = 1;
+  TableLocation location = 2;
+  int32 capacity = 3;
+}
+
+enum TableLocation {
+  TABLE_LOCATION_UNSPECIFIED = 0;
+  INDOOR = 1;
+  OUTDOOR = 2;
+  PATIO = 3;
+  BAR = 4;
+  PRIVATE_ROOM = 5;
+}
+
+message Occasion {
+  OccasionType type = 1;
+  string notes = 2;
+}
+
+enum OccasionType {
+  OCCASION_TYPE_UNSPECIFIED = 0;
+  BIRTHDAY = 1;
+  ANNIVERSARY = 2;
+  BUSINESS = 3;
+  DATE = 4;
+  CELEBRATION = 5;
+  CASUAL = 6;
+}

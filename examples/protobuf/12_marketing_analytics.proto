@@ -1,0 +1,637 @@
+// Marketing & Analytics Platform
+// Real-world use case: Digital marketing campaigns, user analytics, conversion tracking, attribution
+
+syntax = "proto3";
+
+package marketing;
+
+message Campaign {
+  string campaign_id = 1;
+  string name = 2;
+  CampaignType type = 3;
+  CampaignStatus status = 4;
+  CampaignObjective objective = 5;
+  Budget budget = 6;
+  CampaignDates dates = 7;
+  Targeting targeting = 8;
+  repeated CreativeAsset creatives = 9;
+  repeated Channel channels = 10;
+  Performance performance = 11;
+  Attribution attribution = 12;
+  string created_by = 13;
+  int64 created_at = 14;
+  int64 updated_at = 15;
+  map<string, string> tags = 16;
+}
+
+enum CampaignType {
+  CAMPAIGN_TYPE_UNSPECIFIED = 0;
+  EMAIL = 1;
+  SOCIAL_MEDIA = 2;
+  SEARCH = 3;
+  DISPLAY = 4;
+  VIDEO = 5;
+  INFLUENCER = 6;
+  AFFILIATE = 7;
+  CONTENT = 8;
+  REFERRAL = 9;
+}
+
+enum CampaignStatus {
+  CAMPAIGN_STATUS_UNSPECIFIED = 0;
+  DRAFT = 1;
+  SCHEDULED = 2;
+  ACTIVE = 3;
+  PAUSED = 4;
+  COMPLETED = 5;
+  CANCELLED = 6;
+}
+
+enum CampaignObjective {
+  CAMPAIGN_OBJECTIVE_UNSPECIFIED = 0;
+  AWARENESS = 1;
+  CONSIDERATION = 2;
+  CONVERSION = 3;
+  RETENTION = 4;
+  ENGAGEMENT = 5;
+}
+
+message Budget {
+  Money total_budget = 1;
+  Money spent = 2;
+  Money remaining = 3;
+  BudgetType type = 4;
+  Money daily_limit = 5;
+  string currency = 6;
+}
+
+enum BudgetType {
+  BUDGET_TYPE_UNSPECIFIED = 0;
+  TOTAL = 1;
+  DAILY = 2;
+  MONTHLY = 3;
+  UNLIMITED = 4;
+}
+
+message Money {
+  string currency = 1;
+  double amount = 2;
+}
+
+message CampaignDates {
+  int64 start_date = 1;
+  int64 end_date = 2;
+  bool always_on = 3;
+  repeated Schedule schedules = 4;
+}
+
+message Schedule {
+  DayOfWeek day = 1;
+  string start_time = 2;         // HH:MM format
+  string end_time = 3;
+}
+
+enum DayOfWeek {
+  DAY_OF_WEEK_UNSPECIFIED = 0;
+  MONDAY = 1;
+  TUESDAY = 2;
+  WEDNESDAY = 3;
+  THURSDAY = 4;
+  FRIDAY = 5;
+  SATURDAY = 6;
+  SUNDAY = 7;
+}
+
+message Targeting {
+  Demographics demographics = 1;
+  Geographic geographic = 2;
+  Behavioral behavioral = 3;
+  Contextual contextual = 4;
+  repeated string audience_segments = 5;
+  repeated string excluded_segments = 6;
+}
+
+message Demographics {
+  AgeRange age_range = 1;
+  repeated Gender genders = 2;
+  repeated string languages = 3;
+  repeated EducationLevel education = 4;
+  repeated IncomeRange income = 5;
+  repeated MaritalStatus marital_status = 6;
+}
+
+message AgeRange {
+  int32 min_age = 1;
+  int32 max_age = 2;
+}
+
+enum Gender {
+  GENDER_UNSPECIFIED = 0;
+  MALE = 1;
+  FEMALE = 2;
+  NON_BINARY = 3;
+  ALL = 4;
+}
+
+enum EducationLevel {
+  EDUCATION_LEVEL_UNSPECIFIED = 0;
+  HIGH_SCHOOL = 1;
+  SOME_COLLEGE = 2;
+  BACHELORS = 3;
+  MASTERS = 4;
+  DOCTORATE = 5;
+}
+
+enum IncomeRange {
+  INCOME_RANGE_UNSPECIFIED = 0;
+  UNDER_25K = 1;
+  RANGE_25K_50K = 2;
+  RANGE_50K_75K = 3;
+  RANGE_75K_100K = 4;
+  OVER_100K = 5;
+}
+
+enum MaritalStatus {
+  MARITAL_STATUS_UNSPECIFIED = 0;
+  SINGLE = 1;
+  MARRIED = 2;
+  DIVORCED = 3;
+  WIDOWED = 4;
+}
+
+message Geographic {
+  repeated string countries = 1;
+  repeated string regions = 2;
+  repeated string cities = 3;
+  repeated string postal_codes = 4;
+  double radius_km = 5;
+  GeoCoordinates center = 6;
+}
+
+message GeoCoordinates {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message Behavioral {
+  repeated string interests = 1;
+  repeated string behaviors = 2;
+  PurchaseIntent purchase_intent = 3;
+  DeviceUsage device_usage = 4;
+  repeated string visited_websites = 5;
+}
+
+enum PurchaseIntent {
+  PURCHASE_INTENT_UNSPECIFIED = 0;
+  LOW = 1;
+  MEDIUM = 2;
+  HIGH = 3;
+}
+
+message DeviceUsage {
+  repeated DeviceType devices = 1;
+  repeated OperatingSystem operating_systems = 2;
+  repeated Browser browsers = 3;
+}
+
+enum DeviceType {
+  DEVICE_TYPE_UNSPECIFIED = 0;
+  DESKTOP = 1;
+  MOBILE = 2;
+  TABLET = 3;
+  TV = 4;
+}
+
+enum OperatingSystem {
+  OPERATING_SYSTEM_UNSPECIFIED = 0;
+  WINDOWS = 1;
+  MACOS = 2;
+  LINUX = 3;
+  IOS = 4;
+  ANDROID = 5;
+}
+
+enum Browser {
+  BROWSER_UNSPECIFIED = 0;
+  CHROME = 1;
+  FIREFOX = 2;
+  SAFARI = 3;
+  EDGE = 4;
+  OPERA = 5;
+}
+
+message Contextual {
+  repeated string keywords = 1;
+  repeated string topics = 2;
+  repeated string categories = 3;
+  repeated string placements = 4;
+}
+
+message CreativeAsset {
+  string asset_id = 1;
+  string name = 2;
+  AssetType type = 3;
+  AssetFormat format = 4;
+  string url = 5;
+  Dimensions dimensions = 6;
+  int64 file_size = 7;
+  string headline = 8;
+  string description = 9;
+  string call_to_action = 10;
+  string landing_url = 11;
+  repeated string tracking_urls = 12;
+}
+
+enum AssetType {
+  ASSET_TYPE_UNSPECIFIED = 0;
+  IMAGE = 1;
+  VIDEO = 2;
+  HTML5 = 3;
+  TEXT = 4;
+  CAROUSEL = 5;
+  COLLECTION = 6;
+}
+
+enum AssetFormat {
+  ASSET_FORMAT_UNSPECIFIED = 0;
+  JPG = 1;
+  PNG = 2;
+  GIF = 3;
+  MP4 = 4;
+  MOV = 5;
+  HTML = 6;
+}
+
+message Dimensions {
+  int32 width = 1;
+  int32 height = 2;
+}
+
+message Channel {
+  ChannelType type = 1;
+  string platform = 2;
+  string account_id = 3;
+  ChannelConfig config = 4;
+  ChannelPerformance performance = 5;
+}
+
+enum ChannelType {
+  CHANNEL_TYPE_UNSPECIFIED = 0;
+  FACEBOOK = 1;
+  INSTAGRAM = 2;
+  TWITTER = 3;
+  LINKEDIN = 4;
+  GOOGLE_ADS = 5;
+  YOUTUBE = 6;
+  TIKTOK = 7;
+  EMAIL = 8;
+  SMS = 9;
+  PUSH_NOTIFICATION = 10;
+}
+
+message ChannelConfig {
+  BidStrategy bid_strategy = 1;
+  Money max_bid = 2;
+  PlacementOptions placements = 3;
+  FrequencyCap frequency_cap = 4;
+}
+
+enum BidStrategy {
+  BID_STRATEGY_UNSPECIFIED = 0;
+  MANUAL_CPC = 1;
+  MAXIMIZE_CLICKS = 2;
+  MAXIMIZE_CONVERSIONS = 3;
+  TARGET_CPA = 4;
+  TARGET_ROAS = 5;
+}
+
+message PlacementOptions {
+  repeated string allowed = 1;
+  repeated string excluded = 2;
+  bool automatic = 3;
+}
+
+message FrequencyCap {
+  int32 impressions = 1;
+  TimePeriod period = 2;
+}
+
+enum TimePeriod {
+  TIME_PERIOD_UNSPECIFIED = 0;
+  HOUR = 1;
+  DAY = 2;
+  WEEK = 3;
+  MONTH = 4;
+}
+
+message ChannelPerformance {
+  int64 impressions = 1;
+  int64 clicks = 2;
+  int64 conversions = 3;
+  Money spend = 4;
+  double ctr = 5;                // Click-through rate
+  double cpc = 6;                // Cost per click
+  double cpa = 7;                // Cost per acquisition
+  double roas = 8;               // Return on ad spend
+}
+
+message Performance {
+  Metrics metrics = 1;
+  repeated DailyMetrics daily = 2;
+  Engagement engagement = 3;
+  Conversion conversion = 4;
+  Revenue revenue = 5;
+  int64 last_updated = 6;
+}
+
+message Metrics {
+  int64 impressions = 1;
+  int64 clicks = 2;
+  int64 unique_clicks = 3;
+  int64 conversions = 4;
+  int64 installs = 5;
+  int64 reach = 6;
+  int64 frequency = 7;
+}
+
+message DailyMetrics {
+  string date = 1;               // YYYY-MM-DD
+  int64 impressions = 2;
+  int64 clicks = 3;
+  int64 conversions = 4;
+  Money spend = 5;
+  Money revenue = 6;
+}
+
+message Engagement {
+  int64 likes = 1;
+  int64 shares = 2;
+  int64 comments = 3;
+  int64 saves = 4;
+  int64 video_views = 5;
+  double video_completion_rate = 6;
+  double engagement_rate = 7;
+}
+
+message Conversion {
+  int64 total_conversions = 1;
+  repeated ConversionAction actions = 2;
+  double conversion_rate = 3;
+  int32 time_to_conversion_hours = 4;
+}
+
+message ConversionAction {
+  ActionType type = 1;
+  int64 count = 2;
+  Money value = 3;
+}
+
+enum ActionType {
+  ACTION_TYPE_UNSPECIFIED = 0;
+  PURCHASE = 1;
+  ADD_TO_CART = 2;
+  SIGN_UP = 3;
+  LEAD = 4;
+  DOWNLOAD = 5;
+  FORM_SUBMIT = 6;
+  PHONE_CALL = 7;
+  APPOINTMENT = 8;
+}
+
+message Revenue {
+  Money total_revenue = 1;
+  Money average_order_value = 2;
+  double return_on_investment = 3;
+  double return_on_ad_spend = 4;
+  int32 customer_lifetime_value = 5;
+}
+
+message Attribution {
+  AttributionModel model = 1;
+  repeated TouchPoint touch_points = 2;
+  double conversion_credit = 3;
+}
+
+enum AttributionModel {
+  ATTRIBUTION_MODEL_UNSPECIFIED = 0;
+  FIRST_TOUCH = 1;
+  LAST_TOUCH = 2;
+  LINEAR = 3;
+  TIME_DECAY = 4;
+  POSITION_BASED = 5;
+  DATA_DRIVEN = 6;
+}
+
+message TouchPoint {
+  int32 position = 1;
+  ChannelType channel = 2;
+  int64 timestamp = 3;
+  double credit_assigned = 4;
+}
+
+message UserEvent {
+  string event_id = 1;
+  string user_id = 2;
+  string session_id = 3;
+  EventType type = 4;
+  int64 timestamp = 5;
+  EventProperties properties = 6;
+  UserInfo user = 7;
+  DeviceInfo device = 8;
+  LocationInfo location = 9;
+  ReferralInfo referral = 10;
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  PAGE_VIEW = 1;
+  BUTTON_CLICK = 2;
+  FORM_START = 3;
+  FORM_SUBMIT = 4;
+  PRODUCT_VIEW = 5;
+  ADD_TO_CART = 6;
+  REMOVE_FROM_CART = 7;
+  CHECKOUT_START = 8;
+  PURCHASE = 9;
+  SEARCH = 10;
+  VIDEO_START = 11;
+  VIDEO_COMPLETE = 12;
+  SIGN_UP = 13;
+  LOGIN = 14;
+  LOGOUT = 15;
+}
+
+message EventProperties {
+  string page_url = 1;
+  string page_title = 2;
+  string referrer = 3;
+  map<string, string> custom_properties = 4;
+  repeated string categories = 5;
+  repeated string tags = 6;
+}
+
+message UserInfo {
+  string user_id = 1;
+  string email = 2;
+  UserType type = 3;
+  int64 first_seen = 4;
+  int64 last_seen = 5;
+  int32 total_sessions = 6;
+  int32 total_events = 7;
+}
+
+enum UserType {
+  USER_TYPE_UNSPECIFIED = 0;
+  NEW = 1;
+  RETURNING = 2;
+  LOYAL = 3;
+  AT_RISK = 4;
+}
+
+message DeviceInfo {
+  DeviceType type = 1;
+  string brand = 2;
+  string model = 3;
+  OperatingSystem os = 4;
+  string os_version = 5;
+  Browser browser = 6;
+  string browser_version = 7;
+  string screen_resolution = 8;
+  string language = 9;
+  string user_agent = 10;
+}
+
+message LocationInfo {
+  string ip_address = 1;
+  string country = 2;
+  string region = 3;
+  string city = 4;
+  string postal_code = 5;
+  GeoCoordinates coordinates = 6;
+  string timezone = 7;
+}
+
+message ReferralInfo {
+  string source = 1;
+  string medium = 2;
+  string campaign = 3;
+  string term = 4;
+  string content = 5;
+  string referrer_url = 6;
+}
+
+message Funnel {
+  string funnel_id = 1;
+  string name = 2;
+  repeated FunnelStep steps = 3;
+  FunnelMetrics metrics = 4;
+  int64 date_range_start = 5;
+  int64 date_range_end = 6;
+}
+
+message FunnelStep {
+  int32 step_number = 1;
+  string name = 2;
+  EventType event_type = 3;
+  int64 users = 4;
+  int64 events = 5;
+  double conversion_rate = 6;
+  double drop_off_rate = 7;
+  int32 avg_time_to_next_step_seconds = 8;
+}
+
+message FunnelMetrics {
+  int64 total_users = 1;
+  int64 completed = 2;
+  double completion_rate = 3;
+  int32 average_time_to_complete_seconds = 4;
+  repeated string bottleneck_steps = 5;
+}
+
+message Segment {
+  string segment_id = 1;
+  string name = 2;
+  string description = 3;
+  SegmentType type = 4;
+  repeated SegmentRule rules = 5;
+  int64 user_count = 6;
+  int64 created_at = 7;
+  int64 updated_at = 8;
+}
+
+enum SegmentType {
+  SEGMENT_TYPE_UNSPECIFIED = 0;
+  STATIC = 1;
+  DYNAMIC = 2;
+  PREDICTIVE = 3;
+}
+
+message SegmentRule {
+  string property = 1;
+  Operator operator = 2;
+  string value = 3;
+  LogicalOperator logical = 4;
+}
+
+enum Operator {
+  OPERATOR_UNSPECIFIED = 0;
+  EQUALS = 1;
+  NOT_EQUALS = 2;
+  GREATER_THAN = 3;
+  LESS_THAN = 4;
+  CONTAINS = 5;
+  NOT_CONTAINS = 6;
+  IN = 7;
+  NOT_IN = 8;
+}
+
+enum LogicalOperator {
+  LOGICAL_OPERATOR_UNSPECIFIED = 0;
+  AND = 1;
+  OR = 2;
+}
+
+message ABTest {
+  string test_id = 1;
+  string name = 2;
+  TestStatus status = 3;
+  repeated Variant variants = 4;
+  int64 start_date = 5;
+  int64 end_date = 6;
+  int32 sample_size = 7;
+  double confidence_level = 8;
+  TestResults results = 9;
+}
+
+enum TestStatus {
+  TEST_STATUS_UNSPECIFIED = 0;
+  DRAFT = 1;
+  RUNNING = 2;
+  PAUSED = 3;
+  COMPLETED = 4;
+}
+
+message Variant {
+  string variant_id = 1;
+  string name = 2;
+  int32 traffic_allocation = 3;  // Percentage
+  string description = 4;
+  map<string, string> changes = 5;
+}
+
+message TestResults {
+  string winner_variant_id = 1;
+  double statistical_significance = 2;
+  repeated VariantMetrics variant_metrics = 3;
+  string conclusion = 4;
+}
+
+message VariantMetrics {
+  string variant_id = 1;
+  int64 impressions = 2;
+  int64 conversions = 3;
+  double conversion_rate = 4;
+  double confidence_interval_low = 5;
+  double confidence_interval_high = 6;
+  double lift = 7;               // Percentage improvement
+}
