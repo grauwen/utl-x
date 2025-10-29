@@ -206,14 +206,37 @@ object AdvancedCryptoFunctions {
      */
     private fun hmac(data: UDM, key: UDM, algorithm: String): UDM {
         val message = when (data) {
-            is UDM.Scalar -> data.value?.toString() ?: ""
+            is UDM.Scalar -> {
+                if (data.value == null) return UDM.Scalar.nullValue()
+                data.value.toString()
+            }
             is UDM.Binary -> String(data.data, Charsets.UTF_8)
             else -> return UDM.Scalar.nullValue()
         }
-        
+
         val secretKey = when (key) {
-            is UDM.Scalar -> key.value?.toString() ?: ""
-            is UDM.Binary -> String(key.data, Charsets.UTF_8)
+            is UDM.Scalar -> {
+                val keyStr = key.value?.toString() ?: return UDM.Scalar.nullValue()
+                // Empty keys are not cryptographically valid
+                if (keyStr.isEmpty()) {
+                    throw FunctionArgumentException(
+                        "HMAC key cannot be empty. " +
+                        "Hint: Ensure you provide a valid secret key for cryptographic operations."
+                    )
+                }
+                keyStr
+            }
+            is UDM.Binary -> {
+                val keyData = key.data
+                // Empty keys are not cryptographically valid
+                if (keyData.isEmpty()) {
+                    throw FunctionArgumentException(
+                        "HMAC key cannot be empty. " +
+                        "Hint: Ensure you provide a valid secret key for cryptographic operations."
+                    )
+                }
+                String(keyData, Charsets.UTF_8)
+            }
             else -> return UDM.Scalar.nullValue()
         }
         
@@ -268,14 +291,37 @@ object AdvancedCryptoFunctions {
         val key = args[1]
         val algorithm = if (args.size > 2) args[2] else UDM.Scalar("HmacSHA256")
         val message = when (data) {
-            is UDM.Scalar -> data.value?.toString() ?: ""
+            is UDM.Scalar -> {
+                if (data.value == null) return UDM.Scalar.nullValue()
+                data.value.toString()
+            }
             is UDM.Binary -> String(data.data, Charsets.UTF_8)
             else -> return UDM.Scalar.nullValue()
         }
-        
+
         val secretKey = when (key) {
-            is UDM.Scalar -> key.value?.toString() ?: ""
-            is UDM.Binary -> String(key.data, Charsets.UTF_8)
+            is UDM.Scalar -> {
+                val keyStr = key.value?.toString() ?: return UDM.Scalar.nullValue()
+                // Empty keys are not cryptographically valid
+                if (keyStr.isEmpty()) {
+                    throw FunctionArgumentException(
+                        "HMAC key cannot be empty. " +
+                        "Hint: Ensure you provide a valid secret key for cryptographic operations."
+                    )
+                }
+                keyStr
+            }
+            is UDM.Binary -> {
+                val keyData = key.data
+                // Empty keys are not cryptographically valid
+                if (keyData.isEmpty()) {
+                    throw FunctionArgumentException(
+                        "HMAC key cannot be empty. " +
+                        "Hint: Ensure you provide a valid secret key for cryptographic operations."
+                    )
+                }
+                String(keyData, Charsets.UTF_8)
+            }
             else -> return UDM.Scalar.nullValue()
         }
         
@@ -392,18 +438,29 @@ object AdvancedCryptoFunctions {
             else -> return UDM.Scalar.nullValue()
         }
         
-        val inputBytes = when {
-            mode == Cipher.ENCRYPT_MODE -> when (data) {
-                is UDM.Scalar -> (data.value?.toString() ?: "").toByteArray(Charsets.UTF_8)
-                is UDM.Binary -> data.data
+        val inputBytes = try {
+            when {
+                mode == Cipher.ENCRYPT_MODE -> when (data) {
+                    is UDM.Scalar -> {
+                        if (data.value == null) return UDM.Scalar.nullValue()
+                        data.value.toString().toByteArray(Charsets.UTF_8)
+                    }
+                    is UDM.Binary -> data.data
+                    else -> return UDM.Scalar.nullValue()
+                }
+                mode == Cipher.DECRYPT_MODE -> when (data) {
+                    is UDM.Scalar -> {
+                        if (data.value == null) return UDM.Scalar.nullValue()
+                        Base64.getDecoder().decode(data.value.toString())
+                    }
+                    is UDM.Binary -> data.data
+                    else -> return UDM.Scalar.nullValue()
+                }
                 else -> return UDM.Scalar.nullValue()
             }
-            mode == Cipher.DECRYPT_MODE -> when (data) {
-                is UDM.Scalar -> Base64.getDecoder().decode(data.value?.toString() ?: "")
-                is UDM.Binary -> data.data
-                else -> return UDM.Scalar.nullValue()
-            }
-            else -> return UDM.Scalar.nullValue()
+        } catch (e: IllegalArgumentException) {
+            // Invalid base64 or other input format issues
+            return UDM.Scalar.nullValue()
         }
         
         return try {
@@ -475,7 +532,10 @@ object AdvancedCryptoFunctions {
         }
         
         val inputBytes = when (data) {
-            is UDM.Scalar -> (data.value?.toString() ?: "").toByteArray(Charsets.UTF_8)
+            is UDM.Scalar -> {
+                if (data.value == null) return UDM.Scalar.nullValue()
+                data.value.toString().toByteArray(Charsets.UTF_8)
+            }
             is UDM.Binary -> data.data
             else -> return UDM.Scalar.nullValue()
         }
@@ -543,12 +603,20 @@ object AdvancedCryptoFunctions {
             else -> return UDM.Scalar.nullValue()
         }
         
-        val inputBytes = when (data) {
-            is UDM.Scalar -> Base64.getDecoder().decode(data.value?.toString() ?: "")
-            is UDM.Binary -> data.data
-            else -> return UDM.Scalar.nullValue()
+        val inputBytes = try {
+            when (data) {
+                is UDM.Scalar -> {
+                    if (data.value == null) return UDM.Scalar.nullValue()
+                    Base64.getDecoder().decode(data.value.toString())
+                }
+                is UDM.Binary -> data.data
+                else -> return UDM.Scalar.nullValue()
+            }
+        } catch (e: IllegalArgumentException) {
+            // Invalid base64
+            return UDM.Scalar.nullValue()
         }
-        
+
         return try {
             val secretKey: SecretKey = SecretKeySpec(keyBytes, "AES")
             val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
@@ -714,7 +782,10 @@ object AdvancedCryptoFunctions {
      */
     private fun hash(input: UDM, algorithm: String): UDM {
         val text = when (input) {
-            is UDM.Scalar -> input.value?.toString() ?: ""
+            is UDM.Scalar -> {
+                if (input.value == null) return UDM.Scalar.nullValue()
+                input.value.toString()
+            }
             is UDM.Binary -> String(input.data, Charsets.UTF_8)
             else -> return UDM.Scalar.nullValue()
         }
@@ -766,13 +837,19 @@ object AdvancedCryptoFunctions {
      * ```
      */
     fun generateIV(args: List<UDM>): UDM {
-        val size = if (args.isNotEmpty()) args[0] else UDM.Scalar(16.0)
-        val byteSize = (size as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 16
-        
+        val byteSize = if (args.isNotEmpty()) {
+            when (val size = args[0]) {
+                is UDM.Scalar -> size.value?.toString()?.toDoubleOrNull()?.toInt() ?: 16
+                else -> 16
+            }
+        } else {
+            16
+        }
+
         val random = java.security.SecureRandom()
         val iv = ByteArray(byteSize)
         random.nextBytes(iv)
-        
+
         return UDM.Scalar(Base64.getEncoder().encodeToString(iv))
     }
     
@@ -803,13 +880,19 @@ object AdvancedCryptoFunctions {
      * ```
      */
     fun generateKey(args: List<UDM>): UDM {
-        val size = if (args.isNotEmpty()) args[0] else UDM.Scalar(32.0)
-        val byteSize = (size as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 32
-        
+        val byteSize = if (args.isNotEmpty()) {
+            when (val size = args[0]) {
+                is UDM.Scalar -> size.value?.toString()?.toDoubleOrNull()?.toInt() ?: 32
+                else -> 32
+            }
+        } else {
+            32
+        }
+
         val random = java.security.SecureRandom()
         val key = ByteArray(byteSize)
         random.nextBytes(key)
-        
+
         return UDM.Scalar(Base64.getEncoder().encodeToString(key))
     }
 

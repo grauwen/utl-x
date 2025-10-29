@@ -339,8 +339,8 @@ class CSVSerializer(
                 formatNumberBasic(value, decimals, useThousands, ',', '.')
             }
             RegionalFormat.FRENCH -> {
-                // Basic French format: 1 234,56
-                formatNumberBasic(value, decimals, useThousands, ',', ' ')
+                // Basic French format: 1 234,56 (with U+202F narrow no-break space)
+                formatNumberBasic(value, decimals, useThousands, ',', '\u202F')
             }
             RegionalFormat.SWISS -> {
                 // Basic Swiss format: 1'234.56

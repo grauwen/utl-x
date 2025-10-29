@@ -492,14 +492,11 @@ class AdvancedCryptoFunctionsTest {
 
     @Test
     fun testHmacEmptyKey() {
-        val result = AdvancedCryptoFunctions.hmacSHA256(
-            listOf(UDM.Scalar(testMessage), UDM.Scalar(""))
-        )
-        
-        assertTrue(result is UDM.Scalar)
-        val hash = result.value as String
-        assertTrue(hash.isNotEmpty())
-        assertEquals(64, hash.length)
+        assertThrows<FunctionArgumentException> {
+            AdvancedCryptoFunctions.hmacSHA256(
+                listOf(UDM.Scalar(testMessage), UDM.Scalar(""))
+            )
+        }
     }
 
     @Test
