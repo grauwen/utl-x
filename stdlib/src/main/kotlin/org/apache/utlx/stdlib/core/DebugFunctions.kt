@@ -780,13 +780,13 @@ object DebugFunctions {
         val message = if (args.size > 1) args[1] else UDM.Scalar("Assertion failed")
         val isTrue = (condition as? UDM.Scalar)?.value as? Boolean ?: false
         val msg = (message as? UDM.Scalar)?.value?.toString() ?: "Assertion failed"
-        
+
         if (!isTrue) {
             logInternal(LogLevel.ERROR, "ASSERTION FAILED: $msg", null)
             // In production, this might throw an exception
         }
-        
-        return condition
+
+        return UDM.Scalar(isTrue)
     }
     
     @UTLXFunction(

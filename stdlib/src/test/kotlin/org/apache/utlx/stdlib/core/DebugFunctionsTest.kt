@@ -14,7 +14,7 @@ class DebugFunctionsTest {
     fun setUp() {
         // Reset debug state before each test
         DebugFunctions.clearLogs(listOf())
-        DebugFunctions.setLogLevel(listOf(UDM.Scalar("INFO")))
+        DebugFunctions.setLogLevel(listOf(UDM.Scalar("TRACE"))) // Set to TRACE to capture all logs including DEBUG
         DebugFunctions.setConsoleLogging(listOf(UDM.Scalar(false))) // Disable console during tests
     }
 
@@ -201,13 +201,13 @@ class DebugFunctionsTest {
     @Test
     fun testLogType() {
         val data = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2)))
-        val result = DebugFunctions.logType(listOf(data, UDM.Scalar("Array type:")))
-        
+        val result = DebugFunctions.logType(listOf(data, UDM.Scalar("Array type")))
+
         assertEquals(data, result)
-        
+
         val logs = DebugFunctions.getLogs(listOf()) as UDM.Array
         assertEquals(1, logs.elements.size)
-        
+
         val logEntry = logs.elements[0] as UDM.Object
         val message = (logEntry.properties["message"] as UDM.Scalar).value as String
         assertTrue(message.contains("Array type: Array"))
@@ -238,10 +238,10 @@ class DebugFunctionsTest {
     @Test
     fun testLogSize() {
         val array = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3)))
-        val result = DebugFunctions.logSize(listOf(array, UDM.Scalar("Array size:")))
-        
+        val result = DebugFunctions.logSize(listOf(array, UDM.Scalar("Array size")))
+
         assertEquals(array, result)
-        
+
         val logs = DebugFunctions.getLogs(listOf()) as UDM.Array
         val logEntry = logs.elements[0] as UDM.Object
         val message = (logEntry.properties["message"] as UDM.Scalar).value as String

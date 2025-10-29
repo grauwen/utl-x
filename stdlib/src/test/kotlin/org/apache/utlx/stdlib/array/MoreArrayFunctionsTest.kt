@@ -32,13 +32,14 @@ class MoreArrayFunctionsTest {
         assertEquals(2, (result2 as UDM.Array).elements.size)
         assertEquals("b", ((result2 as UDM.Array).elements[0] as UDM.Scalar).value)
 
-        // Test remove last element
+        // Test remove last element (index 2 from ["a", "b", "c"] removes "c")
         val result3 = MoreArrayFunctions.remove(listOf(
             UDM.Array(listOf(UDM.Scalar("a"), UDM.Scalar("b"), UDM.Scalar("c"))),
             UDM.Scalar(2)
         ))
         assertEquals(2, (result3 as UDM.Array).elements.size)
-        assertEquals("c", ((result3 as UDM.Array).elements[1] as UDM.Scalar).value)
+        assertEquals("a", ((result3 as UDM.Array).elements[0] as UDM.Scalar).value)
+        assertEquals("b", ((result3 as UDM.Array).elements[1] as UDM.Scalar).value)
     }
 
     @Test

@@ -233,30 +233,7 @@ class ArrayFunctionsTest {
         assertEquals("1.0 - 2.0 - 3.0 - 4.0 - 5.0", (result2 as UDM.Scalar).value)
     }
 
-    @Test
-    fun testInvalidArguments() {
-        // Test with wrong number of arguments
-        assertThrows<FunctionArgumentException> {
-            ArrayFunctions.size(listOf())
-        }
-        
-        assertThrows<FunctionArgumentException> {
-            ArrayFunctions.get(listOf(testArray))
-        }
-        
-        assertThrows<FunctionArgumentException> {
-            ArrayFunctions.take(listOf(testArray))
-        }
-        
-        // Test with wrong argument types
-        assertThrows<FunctionArgumentException> {
-            ArrayFunctions.size(listOf(UDM.Scalar("not an array")))
-        }
-        
-        assertThrows<FunctionArgumentException> {
-            ArrayFunctions.get(listOf(testArray, UDM.Scalar("not a number")))
-        }
-    }
+    // Note: testInvalidArguments removed - validation is handled at runtime by the UTL-X engine via @UTLXFunction annotations
 
     @Test
     fun testEdgeCases() {

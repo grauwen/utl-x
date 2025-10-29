@@ -25,12 +25,14 @@ class CriticalArrayFunctionsTest {
 
         assertTrue(result is UDM.Array)
         val filtered = (result as UDM.Array).elements
-        assertEquals(5, filtered.size)
+        // compact removes null and "" only, keeps 0, false, and all other values
+        assertEquals(6, filtered.size)
         assertEquals(1.0, (filtered[0] as UDM.Scalar).value)
         assertEquals(2.0, (filtered[1] as UDM.Scalar).value)
         assertEquals(3.0, (filtered[2] as UDM.Scalar).value)
         assertEquals(false, (filtered[3] as UDM.Scalar).value)
         assertEquals(0.0, (filtered[4] as UDM.Scalar).value)
+        assertEquals(4.0, (filtered[5] as UDM.Scalar).value)
     }
 
     @Test
