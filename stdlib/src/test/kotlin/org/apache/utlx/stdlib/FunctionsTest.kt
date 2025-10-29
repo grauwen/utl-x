@@ -396,13 +396,15 @@ class FunctionsTest {
     @Test
     fun testFunctionCountIsReasonable() {
         val count = StandardLibrary.getFunctionCount()
-        
+
         // Based on the comprehensive function registry, we should have well over 150 functions
         assertTrue(count >= 150, "Expected at least 150 functions, got $count")
-        
-        // But not an unreasonably high number (sanity check)
-        assertTrue(count <= 500, "Expected at most 500 functions, got $count")
-        
+
+        // Updated upper bound to reflect current stdlib size (664 functions as of 2025-10-29)
+        // Allows for growth while still catching unreasonable explosion
+        assertTrue(count >= 600, "Expected at least 600 functions, got $count")
+        assertTrue(count <= 800, "Expected at most 800 functions, got $count")
+
         println("Total registered functions: $count")
     }
 }

@@ -132,10 +132,10 @@ class StringFunctionsTest {
     fun testLength() {
         val result = StringFunctions.length(listOf(UDM.Scalar("hello world")))
         assertTrue(result is UDM.Scalar)
-        assertEquals(11, (result as UDM.Scalar).value)
-        
+        assertEquals(11.0, (result as UDM.Scalar).value)
+
         val emptyResult = StringFunctions.length(listOf(UDM.Scalar("")))
-        assertEquals(0, (emptyResult as UDM.Scalar).value)
+        assertEquals(0.0, (emptyResult as UDM.Scalar).value)
     }
 
     @Test

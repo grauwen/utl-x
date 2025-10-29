@@ -11,26 +11,26 @@ class CriticalArrayFunctionsTest {
     @Test
     fun testCompact() {
         val array = UDM.Array(listOf(
-            UDM.Scalar(1),
+            UDM.Scalar(1.0),
             UDM.Scalar(null),
-            UDM.Scalar(2),
+            UDM.Scalar(2.0),
             UDM.Scalar(""),
-            UDM.Scalar(3),
+            UDM.Scalar(3.0),
             UDM.Scalar(false),
-            UDM.Scalar(0),
-            UDM.Scalar(4)
+            UDM.Scalar(0.0),
+            UDM.Scalar(4.0)
         ))
-        
+
         val result = CriticalArrayFunctions.compact(listOf(array))
-        
+
         assertTrue(result is UDM.Array)
         val filtered = (result as UDM.Array).elements
         assertEquals(5, filtered.size)
-        assertEquals(1, (filtered[0] as UDM.Scalar).value)
-        assertEquals(2, (filtered[1] as UDM.Scalar).value)
-        assertEquals(3, (filtered[2] as UDM.Scalar).value)
+        assertEquals(1.0, (filtered[0] as UDM.Scalar).value)
+        assertEquals(2.0, (filtered[1] as UDM.Scalar).value)
+        assertEquals(3.0, (filtered[2] as UDM.Scalar).value)
         assertEquals(false, (filtered[3] as UDM.Scalar).value)
-        assertEquals(0, (filtered[4] as UDM.Scalar).value)
+        assertEquals(0.0, (filtered[4] as UDM.Scalar).value)
     }
 
     @Test

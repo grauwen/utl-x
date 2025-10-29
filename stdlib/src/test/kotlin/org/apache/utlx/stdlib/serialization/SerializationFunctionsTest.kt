@@ -24,24 +24,24 @@ class SerializationFunctionsTest {
     @Test
     fun `test parseJson - simple object`() {
         val jsonStr = UDM.Scalar("""{"name":"John","age":30}""")
-        
+
         val result = SerializationFunctions.parseJson(listOf(jsonStr))
         val obj = result as UDM.Object
-        
+
         assertEquals("John", (obj.properties["name"] as UDM.Scalar).value)
-        assertEquals(30, (obj.properties["age"] as UDM.Scalar).value)
+        assertEquals(30.0, (obj.properties["age"] as UDM.Scalar).value)
     }
     
     @Test
     fun `test parseJson - array`() {
         val jsonStr = UDM.Scalar("""[1,2,3,4,5]""")
-        
+
         val result = SerializationFunctions.parseJson(listOf(jsonStr))
         val array = result as UDM.Array
-        
+
         assertEquals(5, array.elements.size)
-        assertEquals(1, (array.elements[0] as UDM.Scalar).value)
-        assertEquals(5, (array.elements[4] as UDM.Scalar).value)
+        assertEquals(1.0, (array.elements[0] as UDM.Scalar).value)
+        assertEquals(5.0, (array.elements[4] as UDM.Scalar).value)
     }
     
     @Test
@@ -245,9 +245,9 @@ class SerializationFunctionsTest {
         
         val result = SerializationFunctions.parseYaml(listOf(yamlStr))
         val obj = result as UDM.Object
-        
+
         assertEquals("John", (obj.properties["name"] as UDM.Scalar).value)
-        assertEquals(30, (obj.properties["age"] as UDM.Scalar).value)
+        assertEquals(30.0, (obj.properties["age"] as UDM.Scalar).value)
     }
     
     @Test

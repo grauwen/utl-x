@@ -287,6 +287,27 @@ object MoreDateFunctions {
     
     private fun extractDateTime(udm: UDM): JavaInstant = when (udm) {
         is UDM.DateTime -> udm.instant
+        is UDM.Date -> udm.date.atStartOfDay(java.time.ZoneOffset.UTC).toInstant()
+        is UDM.Scalar -> {
+            val value = udm.value
+            if (value is String) {
+                // Auto-parse ISO 8601 strings for convenience
+                try {
+                    val kotlinInstant = kotlinx.datetime.Instant.parse(value)
+                    JavaInstant.ofEpochSecond(kotlinInstant.epochSeconds, kotlinInstant.nanosecondsOfSecond.toLong())
+                } catch (e: Exception) {
+                    throw FunctionArgumentException(
+                        "Expected datetime value, but got string '$value'. " +
+                        "Hint: Use parseDate() to parse non-ISO date strings, or use ISO 8601 format (e.g., '2025-10-15T14:30:00Z')."
+                    )
+                }
+            } else {
+                throw FunctionArgumentException(
+                    "Expected datetime value, but got ${getTypeDescription(udm)}. " +
+                    "Hint: Use parseDate() or now() to create datetime values."
+                )
+            }
+        }
         else -> throw FunctionArgumentException(
             "Expected datetime value, but got ${getTypeDescription(udm)}. " +
             "Hint: Use parseDate() or now() to create datetime values."

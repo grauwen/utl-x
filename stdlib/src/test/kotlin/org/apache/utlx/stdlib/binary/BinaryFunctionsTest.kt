@@ -115,8 +115,8 @@ class BinaryFunctionsTest {
         val bytes = result as UDM.Array
         
         assertEquals(2, bytes.elements.size, "Should have 2 bytes")
-        assertEquals(72, (bytes.elements[0] as UDM.Scalar).value)   // 'H'
-        assertEquals(105, (bytes.elements[1] as UDM.Scalar).value)  // 'i'
+        assertEquals(72.0, (bytes.elements[0] as UDM.Scalar).value)   // 'H'
+        assertEquals(105.0, (bytes.elements[1] as UDM.Scalar).value)  // 'i'
     }
     
     @Test
@@ -165,22 +165,22 @@ class BinaryFunctionsTest {
     fun `test binaryLength - simple text`() {
         val text = UDM.Scalar("Hello")
         val binary = BinaryFunctions.toBinary(listOf(text))
-        
+
         val result = BinaryFunctions.binaryLength(listOf(binary))
-        val length = (result as UDM.Scalar).value as Int
-        
-        assertEquals(5, length, "Hello has 5 bytes")
+        val length = (result as UDM.Scalar).value
+
+        assertEquals(5.0, length, "Hello has 5 bytes")
     }
     
     @Test
     fun `test binaryLength - empty`() {
         val text = UDM.Scalar("")
         val binary = BinaryFunctions.toBinary(listOf(text))
-        
+
         val result = BinaryFunctions.binaryLength(listOf(binary))
-        val length = (result as UDM.Scalar).value as Int
-        
-        assertEquals(0, length)
+        val length = (result as UDM.Scalar).value
+
+        assertEquals(0.0, length)
     }
     
     @Test
@@ -276,9 +276,9 @@ class BinaryFunctionsTest {
         val offset = UDM.Scalar(0)
         
         val result = BinaryFunctions.readInt16(listOf(binary, offset))
-        val value = (result as UDM.Scalar).value as Int
-        
-        assertTrue(value == 1 || value == 256, "Should read int16 correctly (endianness-dependent)")
+        val value = (result as UDM.Scalar).value
+
+        assertTrue(value == 1.0 || value == 256.0, "Should read int16 correctly (endianness-dependent)")
     }
     
     @Test
@@ -301,23 +301,23 @@ class BinaryFunctionsTest {
         val text = UDM.Scalar("H")
         val binary = BinaryFunctions.toBinary(listOf(text))
         val offset = UDM.Scalar(0)
-        
+
         val result = BinaryFunctions.readByte(listOf(binary, offset))
-        val byte = (result as UDM.Scalar).value as Int
-        
-        assertEquals(72, byte, "'H' is ASCII 72")
+        val byte = (result as UDM.Scalar).value
+
+        assertEquals(72.0, byte, "'H' is ASCII 72")
     }
     
     @Test
     fun `test readByte - multiple positions`() {
         val text = UDM.Scalar("Hello")
         val binary = BinaryFunctions.toBinary(listOf(text))
-        
+
         val byte0 = BinaryFunctions.readByte(listOf(binary, UDM.Scalar(0)))
         val byte1 = BinaryFunctions.readByte(listOf(binary, UDM.Scalar(1)))
-        
-        assertEquals(72, (byte0 as UDM.Scalar).value as Int, "'H'")
-        assertEquals(101, (byte1 as UDM.Scalar).value as Int, "'e'")
+
+        assertEquals(72.0, (byte0 as UDM.Scalar).value, "'H'")
+        assertEquals(101.0, (byte1 as UDM.Scalar).value, "'e'")
     }
 
     // ==================== Bitwise Operations Tests ====================
@@ -326,88 +326,88 @@ class BinaryFunctionsTest {
     fun `test bitwiseAnd - basic AND operation`() {
         val a = UDM.Scalar(0b1100)  // 12
         val b = UDM.Scalar(0b1010)  // 10
-        
+
         val result = BinaryFunctions.bitwiseAnd(listOf(a, b))
-        val value = (result as UDM.Scalar).value as Int
-        
-        assertEquals(0b1000, value, "1100 AND 1010 = 1000 (8)")
+        val value = (result as UDM.Scalar).value
+
+        assertEquals(8.0, value, "1100 AND 1010 = 1000 (8)")
     }
-    
+
     @Test
     fun `test bitwiseOr - basic OR operation`() {
         val a = UDM.Scalar(0b1100)  // 12
         val b = UDM.Scalar(0b1010)  // 10
-        
+
         val result = BinaryFunctions.bitwiseOr(listOf(a, b))
-        val value = (result as UDM.Scalar).value as Int
-        
-        assertEquals(0b1110, value, "1100 OR 1010 = 1110 (14)")
+        val value = (result as UDM.Scalar).value
+
+        assertEquals(14.0, value, "1100 OR 1010 = 1110 (14)")
     }
-    
+
     @Test
     fun `test bitwiseXor - basic XOR operation`() {
         val a = UDM.Scalar(0b1100)  // 12
         val b = UDM.Scalar(0b1010)  // 10
-        
+
         val result = BinaryFunctions.bitwiseXor(listOf(a, b))
-        val value = (result as UDM.Scalar).value as Int
-        
-        assertEquals(0b0110, value, "1100 XOR 1010 = 0110 (6)")
+        val value = (result as UDM.Scalar).value
+
+        assertEquals(6.0, value, "1100 XOR 1010 = 0110 (6)")
     }
-    
+
     @Test
     fun `test bitwiseNot - basic NOT operation`() {
         val a = UDM.Scalar(0b00001111)  // 15
-        
+
         val result = BinaryFunctions.bitwiseNot(listOf(a))
-        val value = (result as UDM.Scalar).value as Int
-        
+        val value = (result as UDM.Scalar).value
+
         // NOT inverts all bits (result depends on integer size)
-        assertNotEquals(15, value, "NOT should invert bits")
+        assertNotEquals(15.0, value, "NOT should invert bits")
     }
     
     @Test
     fun `test shiftLeft - left shift`() {
         val value = UDM.Scalar(0b0001)  // 1
         val positions = UDM.Scalar(3)
-        
+
         val result = BinaryFunctions.shiftLeft(listOf(value, positions))
-        val shifted = (result as UDM.Scalar).value as Int
-        
-        assertEquals(0b1000, shifted, "1 << 3 = 8")
+        val shifted = (result as UDM.Scalar).value
+
+        assertEquals(8.0, shifted, "1 << 3 = 8")
     }
-    
+
     @Test
     fun `test shiftLeft - multiply by 2`() {
         val value = UDM.Scalar(5)
         val positions = UDM.Scalar(1)
-        
+
         val result = BinaryFunctions.shiftLeft(listOf(value, positions))
-        val shifted = (result as UDM.Scalar).value as Int
-        
-        assertEquals(10, shifted, "Left shift by 1 doubles the value")
+        val shifted = (result as UDM.Scalar).value
+
+        assertEquals(10.0, shifted, "Left shift by 1 doubles the value")
     }
-    
+
     @Test
     fun `test shiftRight - right shift`() {
         val value = UDM.Scalar(0b1000)  // 8
         val positions = UDM.Scalar(3)
-        
+
         val result = BinaryFunctions.shiftRight(listOf(value, positions))
-        val shifted = (result as UDM.Scalar).value as Int
-        
-        assertEquals(0b0001, shifted, "8 >> 3 = 1")
+        val shifted = (result as UDM.Scalar).value
+
+        assertEquals(1.0, shifted, "8 >> 3 = 1")
     }
-    
+
     @Test
     fun `test shiftRight - divide by 2`() {
         val value = UDM.Scalar(10)
         val positions = UDM.Scalar(1)
-        
+
         val result = BinaryFunctions.shiftRight(listOf(value, positions))
-        val shifted = (result as UDM.Scalar).value as Int
-        
-        assertEquals(5, shifted, "Right shift by 1 halves the value")
+        val shifted = (result as UDM.Scalar).value
+
+        assertEquals(5.0, shifted, "Right shift by 1 halves the value")
     }
 
     // ==================== Real-World Scenarios ====================
@@ -424,8 +424,8 @@ class BinaryFunctionsTest {
         
         val binary = BinaryFunctions.fromBytes(listOf(pngSignature))
         val firstByte = BinaryFunctions.readByte(listOf(binary, UDM.Scalar(0)))
-        
-        assertEquals(0x89, (firstByte as UDM.Scalar).value as Int, "PNG signature starts with 0x89")
+
+        assertEquals(137.0, (firstByte as UDM.Scalar).value, "PNG signature starts with 0x89")
     }
     
     @Test
@@ -463,13 +463,13 @@ class BinaryFunctionsTest {
         val length = BinaryFunctions.binaryLength(listOf(payload))
         
         val lengthBytes = BinaryFunctions.fromBytes(listOf(UDM.Array(listOf(
-            UDM.Scalar(((length as UDM.Scalar).value as Int) and 0xFF)
+            UDM.Scalar(((length as UDM.Scalar).value as Double).toInt() and 0xFF)
         ))))
-        
+
         val message = BinaryFunctions.binaryConcat(listOf(header, lengthBytes, payload))
         val messageLength = BinaryFunctions.binaryLength(listOf(message))
-        
-        assertEquals(8, (messageLength as UDM.Scalar).value as Int, "2 header + 1 length + 5 payload")
+
+        assertEquals(8.0, (messageLength as UDM.Scalar).value, "2 header + 1 length + 5 payload")
     }
     
     @Test
@@ -490,8 +490,8 @@ class BinaryFunctionsTest {
             userPerms,
             UDM.Scalar(WRITE)
         ))
-        
-        assertEquals(WRITE, (hasWrite as UDM.Scalar).value as Int, "Should have write permission")
+
+        assertEquals(WRITE.toDouble(), (hasWrite as UDM.Scalar).value, "Should have write permission")
     }
 
     // ==================== Edge Cases ====================
@@ -500,8 +500,8 @@ class BinaryFunctionsTest {
     fun `test edge case - empty binary`() {
         val empty = BinaryFunctions.toBinary(listOf(UDM.Scalar("")))
         val length = BinaryFunctions.binaryLength(listOf(empty))
-        
-        assertEquals(0, (length as UDM.Scalar).value as Int)
+
+        assertEquals(0.0, (length as UDM.Scalar).value)
     }
     
     @Test
@@ -546,32 +546,32 @@ class BinaryFunctionsTest {
         val largeText = "x".repeat(10000)
         val binary = BinaryFunctions.toBinary(listOf(UDM.Scalar(largeText)))
         val length = BinaryFunctions.binaryLength(listOf(binary))
-        
-        assertEquals(10000, (length as UDM.Scalar).value as Int)
+
+        assertEquals(10000.0, (length as UDM.Scalar).value)
     }
-    
+
     @Test
     fun `test edge case - bitwise with zero`() {
         val value = UDM.Scalar(42)
         val zero = UDM.Scalar(0)
-        
+
         val andResult = BinaryFunctions.bitwiseAnd(listOf(value, zero))
-        assertEquals(0, (andResult as UDM.Scalar).value as Int, "Any value AND 0 = 0")
-        
+        assertEquals(0.0, (andResult as UDM.Scalar).value, "Any value AND 0 = 0")
+
         val orResult = BinaryFunctions.bitwiseOr(listOf(value, zero))
-        assertEquals(42, (orResult as UDM.Scalar).value as Int, "Any value OR 0 = value")
+        assertEquals(42.0, (orResult as UDM.Scalar).value, "Any value OR 0 = value")
     }
-    
+
     @Test
     fun `test edge case - shift by zero`() {
         val value = UDM.Scalar(42)
         val zero = UDM.Scalar(0)
-        
+
         val leftShift = BinaryFunctions.shiftLeft(listOf(value, zero))
-        assertEquals(42, (leftShift as UDM.Scalar).value as Int, "Shift by 0 does nothing")
-        
+        assertEquals(42.0, (leftShift as UDM.Scalar).value, "Shift by 0 does nothing")
+
         val rightShift = BinaryFunctions.shiftRight(listOf(value, zero))
-        assertEquals(42, (rightShift as UDM.Scalar).value as Int, "Shift by 0 does nothing")
+        assertEquals(42.0, (rightShift as UDM.Scalar).value, "Shift by 0 does nothing")
     }
 
     // ==================== Error Handling Tests ====================
@@ -627,9 +627,9 @@ class BinaryFunctionsTest {
         val startTime = System.currentTimeMillis()
         val result = BinaryFunctions.binaryConcat(parts)
         val endTime = System.currentTimeMillis()
-        
+
         val length = BinaryFunctions.binaryLength(listOf(result))
-        assertTrue((length as UDM.Scalar).value as Int > 600, "Should concat all chunks")
+        assertTrue((length as UDM.Scalar).value as Double > 600.0, "Should concat all chunks")
         
         val duration = endTime - startTime
         assertTrue(duration < 1000, "Should complete within 1 second")

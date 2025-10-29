@@ -12,14 +12,14 @@ class AggregationsTest {
     @Test
     fun testSum() {
         val array = UDM.Array(listOf(
-            UDM.Scalar(1),
-            UDM.Scalar(2),
-            UDM.Scalar(3),
-            UDM.Scalar(4)
+            UDM.Scalar(1.0),
+            UDM.Scalar(2.0),
+            UDM.Scalar(3.0),
+            UDM.Scalar(4.0)
         ))
-        
+
         val result = Aggregations.sum(listOf(array))
-        
+
         assertTrue(result is UDM.Scalar)
         assertEquals(10.0, (result as UDM.Scalar).value)
     }
@@ -31,23 +31,23 @@ class AggregationsTest {
             UDM.Scalar(2.3),
             UDM.Scalar(3.2)
         ))
-        
+
         val result = Aggregations.sum(listOf(array))
-        
+
         assertEquals(7.0, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testSumWithNegativeNumbers() {
         val array = UDM.Array(listOf(
-            UDM.Scalar(-1),
-            UDM.Scalar(2),
-            UDM.Scalar(-3),
-            UDM.Scalar(4)
+            UDM.Scalar(-1.0),
+            UDM.Scalar(2.0),
+            UDM.Scalar(-3.0),
+            UDM.Scalar(4.0)
         ))
-        
+
         val result = Aggregations.sum(listOf(array))
-        
+
         assertEquals(2.0, (result as UDM.Scalar).value)
     }
 
@@ -76,14 +76,14 @@ class AggregationsTest {
     @Test
     fun testAvg() {
         val array = UDM.Array(listOf(
-            UDM.Scalar(1),
-            UDM.Scalar(2),
-            UDM.Scalar(3),
-            UDM.Scalar(4)
+            UDM.Scalar(1.0),
+            UDM.Scalar(2.0),
+            UDM.Scalar(3.0),
+            UDM.Scalar(4.0)
         ))
-        
+
         val result = Aggregations.avg(listOf(array))
-        
+
         assertTrue(result is UDM.Scalar)
         assertEquals(2.5, (result as UDM.Scalar).value)
     }
@@ -95,43 +95,43 @@ class AggregationsTest {
             UDM.Scalar(3.0),
             UDM.Scalar(5.0)
         ))
-        
+
         val result = Aggregations.avg(listOf(array))
-        
+
         assertEquals(3.0, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testAvgEmptyArray() {
         val array = UDM.Array(emptyList())
-        
+
         val result = Aggregations.avg(listOf(array))
-        
+
         assertTrue(result is UDM.Scalar)
         assertEquals(null, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testAvgSingleElement() {
-        val array = UDM.Array(listOf(UDM.Scalar(42)))
-        
+        val array = UDM.Array(listOf(UDM.Scalar(42.0)))
+
         val result = Aggregations.avg(listOf(array))
-        
+
         assertEquals(42.0, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testMin() {
         val array = UDM.Array(listOf(
-            UDM.Scalar(3),
-            UDM.Scalar(1),
-            UDM.Scalar(4),
-            UDM.Scalar(1),
-            UDM.Scalar(5)
+            UDM.Scalar(3.0),
+            UDM.Scalar(1.0),
+            UDM.Scalar(4.0),
+            UDM.Scalar(1.0),
+            UDM.Scalar(5.0)
         ))
-        
+
         val result = Aggregations.min(listOf(array))
-        
+
         assertTrue(result is UDM.Scalar)
         assertEquals(1.0, (result as UDM.Scalar).value)
     }
@@ -144,57 +144,57 @@ class AggregationsTest {
             UDM.Scalar(4.8),
             UDM.Scalar(2.1)
         ))
-        
+
         val result = Aggregations.min(listOf(array))
-        
+
         assertEquals(1.2, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testMinWithNegativeNumbers() {
         val array = UDM.Array(listOf(
-            UDM.Scalar(-3),
-            UDM.Scalar(1),
-            UDM.Scalar(-5),
-            UDM.Scalar(2)
+            UDM.Scalar(-3.0),
+            UDM.Scalar(1.0),
+            UDM.Scalar(-5.0),
+            UDM.Scalar(2.0)
         ))
-        
+
         val result = Aggregations.min(listOf(array))
-        
+
         assertEquals(-5.0, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testMinEmptyArray() {
         val array = UDM.Array(emptyList())
-        
+
         val result = Aggregations.min(listOf(array))
-        
+
         assertTrue(result is UDM.Scalar)
         assertEquals(null, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testMinSingleElement() {
-        val array = UDM.Array(listOf(UDM.Scalar(42)))
-        
+        val array = UDM.Array(listOf(UDM.Scalar(42.0)))
+
         val result = Aggregations.min(listOf(array))
-        
+
         assertEquals(42.0, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testMax() {
         val array = UDM.Array(listOf(
-            UDM.Scalar(3),
-            UDM.Scalar(1),
-            UDM.Scalar(4),
-            UDM.Scalar(1),
-            UDM.Scalar(5)
+            UDM.Scalar(3.0),
+            UDM.Scalar(1.0),
+            UDM.Scalar(4.0),
+            UDM.Scalar(1.0),
+            UDM.Scalar(5.0)
         ))
-        
+
         val result = Aggregations.max(listOf(array))
-        
+
         assertTrue(result is UDM.Scalar)
         assertEquals(5.0, (result as UDM.Scalar).value)
     }
@@ -216,47 +216,47 @@ class AggregationsTest {
     @Test
     fun testMaxWithNegativeNumbers() {
         val array = UDM.Array(listOf(
-            UDM.Scalar(-3),
-            UDM.Scalar(-1),
-            UDM.Scalar(-5),
-            UDM.Scalar(-2)
+            UDM.Scalar(-3.0),
+            UDM.Scalar(-1.0),
+            UDM.Scalar(-5.0),
+            UDM.Scalar(-2.0)
         ))
-        
+
         val result = Aggregations.max(listOf(array))
-        
+
         assertEquals(-1.0, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testMaxEmptyArray() {
         val array = UDM.Array(emptyList())
-        
+
         val result = Aggregations.max(listOf(array))
-        
+
         assertTrue(result is UDM.Scalar)
         assertEquals(null, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testMaxSingleElement() {
-        val array = UDM.Array(listOf(UDM.Scalar(42)))
-        
+        val array = UDM.Array(listOf(UDM.Scalar(42.0)))
+
         val result = Aggregations.max(listOf(array))
-        
+
         assertEquals(42.0, (result as UDM.Scalar).value)
     }
 
     @Test
     fun testCount() {
         val array = UDM.Array(listOf(
-            UDM.Scalar(1),
-            UDM.Scalar(2),
-            UDM.Scalar(3),
-            UDM.Scalar(4)
+            UDM.Scalar(1.0),
+            UDM.Scalar(2.0),
+            UDM.Scalar(3.0),
+            UDM.Scalar(4.0)
         ))
-        
+
         val result = Aggregations.count(listOf(array))
-        
+
         assertTrue(result is UDM.Scalar)
         assertEquals(4.0, (result as UDM.Scalar).value)
     }

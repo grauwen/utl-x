@@ -120,7 +120,7 @@ class XmlUtilityFunctionsTest {
             ))
         ))
         val result = XmlUtilityFunctions.childCount(listOf(element))
-        assertEquals(3, (result as UDM.Scalar).value)
+        assertEquals(3.0, (result as UDM.Scalar).value)
     }
 
     @Test
@@ -129,7 +129,7 @@ class XmlUtilityFunctionsTest {
             "__nodeName" to UDM.Scalar("root")
         ))
         val result = XmlUtilityFunctions.childCount(listOf(element))
-        assertEquals(0, (result as UDM.Scalar).value)
+        assertEquals(0.0, (result as UDM.Scalar).value)
     }
 
     @Test

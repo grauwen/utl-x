@@ -172,7 +172,7 @@ class CompressionFunctionsTest {
         
         assertTrue(extracted is UDM.Object)
         val extractedFiles = (extracted as UDM.Object).properties
-        
+
         assertEquals(3, extractedFiles.size)
         assertTrue(extractedFiles.containsKey("test1.txt"))
         assertTrue(extractedFiles.containsKey("test2.txt"))
@@ -218,7 +218,7 @@ class CompressionFunctionsTest {
         
         assertTrue(entries is UDM.Array)
         val entryNames = (entries as UDM.Array).elements.map { (it as UDM.Scalar).value as String }
-        
+
         assertEquals(3, entryNames.size)
         assertTrue(entryNames.contains("file1.txt"))
         assertTrue(entryNames.contains("file2.txt"))
@@ -302,10 +302,10 @@ Main-Class: com.example.Main
         
         val jarData = UDM.Binary(output.toByteArray())
         val entries = CompressionFunctions.listJarEntries(listOf(jarData))
-        
+
         assertTrue(entries is UDM.Array)
         val entryNames = (entries as UDM.Array).elements.map { (it as UDM.Scalar).value as String }
-        
+
         assertEquals(3, entryNames.size)
         assertTrue(entryNames.contains("META-INF/MANIFEST.MF"))
         assertTrue(entryNames.contains("com/example/Main.class"))

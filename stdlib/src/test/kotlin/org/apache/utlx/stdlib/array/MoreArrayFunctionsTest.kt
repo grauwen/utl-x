@@ -15,10 +15,10 @@ class MoreArrayFunctionsTest {
     fun testRemove() {
         // Test basic removal
         val result1 = MoreArrayFunctions.remove(listOf(
-            UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3), UDM.Scalar(4))),
+            UDM.Array(listOf(UDM.Scalar(1.0), UDM.Scalar(2.0), UDM.Scalar(3.0), UDM.Scalar(4.0))),
             UDM.Scalar(2)
         ))
-        val expected1 = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(4)))
+        val expected1 = UDM.Array(listOf(UDM.Scalar(1.0), UDM.Scalar(2.0), UDM.Scalar(4.0)))
         assertEquals(expected1.elements.size, (result1 as UDM.Array).elements.size)
         assertEquals(1.0, ((result1 as UDM.Array).elements[0] as UDM.Scalar).value)
         assertEquals(2.0, ((result1 as UDM.Array).elements[1] as UDM.Scalar).value)
@@ -74,9 +74,9 @@ class MoreArrayFunctionsTest {
     fun testInsertBefore() {
         // Test basic insertion
         val result1 = MoreArrayFunctions.insertBefore(listOf(
-            UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(4))),
+            UDM.Array(listOf(UDM.Scalar(1.0), UDM.Scalar(2.0), UDM.Scalar(4.0))),
             UDM.Scalar(2),
-            UDM.Scalar(3)
+            UDM.Scalar(3.0)
         ))
         val expected = listOf(1.0, 2.0, 3.0, 4.0)
         assertEquals(4, (result1 as UDM.Array).elements.size)
@@ -108,9 +108,9 @@ class MoreArrayFunctionsTest {
     fun testInsertAfter() {
         // Test basic insertion
         val result1 = MoreArrayFunctions.insertAfter(listOf(
-            UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(4))),
+            UDM.Array(listOf(UDM.Scalar(1.0), UDM.Scalar(2.0), UDM.Scalar(4.0))),
             UDM.Scalar(1),
-            UDM.Scalar(3)
+            UDM.Scalar(3.0)
         ))
         val expected = listOf(1.0, 2.0, 3.0, 4.0)
         assertEquals(4, (result1 as UDM.Array).elements.size)
@@ -228,7 +228,7 @@ class MoreArrayFunctionsTest {
     fun testSlice() {
         // Test basic slice
         val result1 = MoreArrayFunctions.slice(listOf(
-            UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3), UDM.Scalar(4), UDM.Scalar(5))),
+            UDM.Array(listOf(UDM.Scalar(1.0), UDM.Scalar(2.0), UDM.Scalar(3.0), UDM.Scalar(4.0), UDM.Scalar(5.0))),
             UDM.Scalar(1),
             UDM.Scalar(4)
         ))
@@ -239,7 +239,7 @@ class MoreArrayFunctionsTest {
 
         // Test slice without end (goes to end of array)
         val result2 = MoreArrayFunctions.slice(listOf(
-            UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3))),
+            UDM.Array(listOf(UDM.Scalar(1.0), UDM.Scalar(2.0), UDM.Scalar(3.0))),
             UDM.Scalar(1)
         ))
         assertEquals(2, (result2 as UDM.Array).elements.size)
@@ -248,7 +248,7 @@ class MoreArrayFunctionsTest {
 
         // Test slice from beginning
         val result3 = MoreArrayFunctions.slice(listOf(
-            UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3))),
+            UDM.Array(listOf(UDM.Scalar(1.0), UDM.Scalar(2.0), UDM.Scalar(3.0))),
             UDM.Scalar(0),
             UDM.Scalar(2)
         ))
@@ -258,7 +258,7 @@ class MoreArrayFunctionsTest {
 
         // Test empty slice
         val result4 = MoreArrayFunctions.slice(listOf(
-            UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3))),
+            UDM.Array(listOf(UDM.Scalar(1.0), UDM.Scalar(2.0), UDM.Scalar(3.0))),
             UDM.Scalar(1),
             UDM.Scalar(1)
         ))
@@ -299,9 +299,9 @@ class MoreArrayFunctionsTest {
     fun testConcat() {
         // Test basic concatenation
         val result1 = MoreArrayFunctions.concat(listOf(
-            UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2))),
-            UDM.Array(listOf(UDM.Scalar(3), UDM.Scalar(4))),
-            UDM.Array(listOf(UDM.Scalar(5)))
+            UDM.Array(listOf(UDM.Scalar(1.0), UDM.Scalar(2.0))),
+            UDM.Array(listOf(UDM.Scalar(3.0), UDM.Scalar(4.0))),
+            UDM.Array(listOf(UDM.Scalar(5.0)))
         ))
         assertEquals(5, (result1 as UDM.Array).elements.size)
         assertEquals(1.0, ((result1 as UDM.Array).elements[0] as UDM.Scalar).value)
@@ -312,9 +312,9 @@ class MoreArrayFunctionsTest {
 
         // Test with empty arrays
         val result2 = MoreArrayFunctions.concat(listOf(
-            UDM.Array(listOf(UDM.Scalar(1))),
+            UDM.Array(listOf(UDM.Scalar(1.0))),
             UDM.Array(emptyList()),
-            UDM.Array(listOf(UDM.Scalar(2)))
+            UDM.Array(listOf(UDM.Scalar(2.0)))
         ))
         assertEquals(2, (result2 as UDM.Array).elements.size)
         assertEquals(1.0, ((result2 as UDM.Array).elements[0] as UDM.Scalar).value)
