@@ -369,7 +369,7 @@ class CSVSerializer(
             val isNegative = value < 0
             val absValue = abs(value)
             val intPart = absValue.toLong()
-            val decimalPart = ((absValue - intPart) * 10.0.pow(decimals.toDouble())).toLong()
+            val decimalPart = kotlin.math.round((absValue - intPart) * 10.0.pow(decimals.toDouble())).toLong()
 
             if (isNegative) append('-')
 

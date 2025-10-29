@@ -22,7 +22,7 @@ object Aggregations {
             )
         
         val total = array.elements.sumOf { element ->
-            element.asNumber()
+            element.asNumberStrict()
         }
         
         return UDM.Scalar(total)
@@ -45,7 +45,7 @@ object Aggregations {
         }
         
         val total = array.elements.sumOf { element ->
-            element.asNumber()
+            element.asNumberStrict()
         }
         
         return UDM.Scalar(total / array.elements.size)
@@ -66,18 +66,24 @@ object Aggregations {
             )
         }
 
-        // If single argument that's an array, find min of array elements
-        if (args.size == 1 && args[0] is UDM.Array) {
+        // If single argument, it must be an array
+        if (args.size == 1) {
+            if (args[0] !is UDM.Array) {
+                throw FunctionArgumentException(
+                    "min with single argument requires an array, but got ${getTypeDescription(args[0])}. " +
+                    "Hint: Use min([1,2,3]) with an array, or min(1, 2, 3) with multiple arguments."
+                )
+            }
             val array = args[0] as UDM.Array
             if (array.elements.isEmpty()) {
                 return UDM.Scalar(null)
             }
-            val minValue = array.elements.minOf { it.asNumber() }
+            val minValue = array.elements.minOf { it.asNumberStrict() }
             return UDM.Scalar(minValue)
         }
 
         // Otherwise treat all arguments as numbers to compare
-        val minValue = args.minOf { it.asNumber() }
+        val minValue = args.minOf { it.asNumberStrict() }
         return UDM.Scalar(minValue)
     }
 
@@ -96,18 +102,24 @@ object Aggregations {
             )
         }
 
-        // If single argument that's an array, find max of array elements
-        if (args.size == 1 && args[0] is UDM.Array) {
+        // If single argument, it must be an array
+        if (args.size == 1) {
+            if (args[0] !is UDM.Array) {
+                throw FunctionArgumentException(
+                    "max with single argument requires an array, but got ${getTypeDescription(args[0])}. " +
+                    "Hint: Use max([1,2,3]) with an array, or max(1, 2, 3) with multiple arguments."
+                )
+            }
             val array = args[0] as UDM.Array
             if (array.elements.isEmpty()) {
                 return UDM.Scalar(null)
             }
-            val maxValue = array.elements.maxOf { it.asNumber() }
+            val maxValue = array.elements.maxOf { it.asNumberStrict() }
             return UDM.Scalar(maxValue)
         }
 
         // Otherwise treat all arguments as numbers to compare
-        val maxValue = args.maxOf { it.asNumber() }
+        val maxValue = args.maxOf { it.asNumberStrict() }
         return UDM.Scalar(maxValue)
     }
     
@@ -143,19 +155,26 @@ object Aggregations {
             )
     }
 
-    private fun UDM.asNumber(): Double {
+    private fun UDM.asNumberStrict(): Double {
         return when (this) {
             is UDM.Scalar -> {
-                val v = value
-                when (v) {
+                when (val v = value) {
+                    null -> throw FunctionArgumentException(
+                        "Cannot use null value in numeric aggregation. " +
+                        "Hint: Remove null values from the array or use a default value."
+                    )
                     is Number -> v.toDouble()
+                    is Boolean -> throw FunctionArgumentException(
+                        "Cannot use boolean value in numeric aggregation. " +
+                        "Hint: Convert boolean to number (e.g., true -> 1, false -> 0) before aggregation."
+                    )
                     is String -> v.toDoubleOrNull()
                         ?: throw FunctionArgumentException(
                             "Cannot convert '$v' to number. " +
                             "Hint: Ensure the string contains a valid numeric value."
                         )
                     else -> throw FunctionArgumentException(
-                        "Expected number value, but got ${getTypeDescription(this)}. " +
+                        "Expected number value, but got ${v.javaClass.simpleName}. " +
                         "Hint: Use toNumber() to convert values to numbers."
                     )
                 }
