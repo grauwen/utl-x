@@ -229,7 +229,7 @@ brew tap grauwen/utlx
 brew install utlx
 
 # Or universal installer
-curl -fsSL https://utlx.dev/install.sh | bash
+curl -fsSL https://utl-x.dev/install.sh | bash
 ```
 
 ### Windows
@@ -459,7 +459,7 @@ input.customer?.address?.city ?? "Unknown"
 - 🐛 **[Issue Tracker](https://github.com/grauwen/utl-x/issues)** - Report bugs, request features
 - 💼 **[Stack Overflow](https://stackoverflow.com/questions/tagged/utl-x)** - Tag: `utl-x`
 - 💭 **[Discord Server](https://discord.gg/utlx)** - Real-time community chat
-- 📧 **Email**: [support@utlx.dev](mailto:support@utlx.dev)
+- 📧 **Email**: [support@utl-x.dev](mailto:support@utl-x.dev)
 
 ## Contributing
 
