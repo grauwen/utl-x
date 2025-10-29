@@ -58,27 +58,56 @@ object EnhancedObjectFunctions {
      */
     fun divideBy(args: List<UDM>): UDM {
         if (args.size < 2) {
-            throw IllegalArgumentException("divideBy() requires 2 arguments: object, chunkSize")
+            throw IllegalArgumentException("divideBy() requires 2 arguments: array/object, property/chunkSize")
         }
-        
-        val obj = args[0]
-        if (obj !is UDM.Object) {
-            throw IllegalArgumentException("divideBy() first argument must be an object")
+
+        val first = args[0]
+        val second = args[1]
+
+        return when (first) {
+            // Array grouping by property: divideBy(array_of_objects, "property_name")
+            is UDM.Array -> {
+                if (second !is UDM.Scalar) {
+                    throw IllegalArgumentException("divideBy() with array requires property name as second argument")
+                }
+                val propertyName = second.value?.toString() ?: ""
+
+                // Group array elements by the specified property value
+                val grouped = mutableMapOf<String, MutableList<UDM>>()
+                first.elements.forEach { element ->
+                    if (element is UDM.Object) {
+                        val keyValue = element.properties[propertyName]
+                        val groupKey = keyValue?.let {
+                            when (it) {
+                                is UDM.Scalar -> it.value?.toString() ?: "null"
+                                else -> it.toString()
+                            }
+                        } ?: "null"
+                        grouped.getOrPut(groupKey) { mutableListOf() }.add(element)
+                    }
+                }
+
+                // Convert to UDM.Object with UDM.Array values
+                UDM.Object(grouped.mapValues { UDM.Array(it.value) }.toMutableMap())
+            }
+            // Object chunking: divideBy(object, chunk_size)
+            is UDM.Object -> {
+                val n = second.asNumber().toInt()
+                if (n <= 0) {
+                    throw IllegalArgumentException("divideBy() chunk size must be positive, got: $n")
+                }
+
+                val entries = first.properties.entries.toList()
+                val chunks = entries.chunked(n)
+
+                val result = chunks.map { chunk ->
+                    UDM.Object(chunk.associate { it.key to it.value }.toMutableMap())
+                }
+
+                UDM.Array(result)
+            }
+            else -> throw IllegalArgumentException("divideBy() first argument must be an array or object")
         }
-        
-        val n = args[1].asNumber().toInt()
-        if (n <= 0) {
-            throw IllegalArgumentException("divideBy() chunk size must be positive, got: $n")
-        }
-        
-        val entries = obj.properties.entries.toList()
-        val chunks = entries.chunked(n)
-        
-        val result = chunks.map { chunk ->
-            UDM.Object(chunk.associate { it.key to it.value }.toMutableMap())
-        }
-        
-        return UDM.Array(result)
     }
     
     @UTLXFunction(

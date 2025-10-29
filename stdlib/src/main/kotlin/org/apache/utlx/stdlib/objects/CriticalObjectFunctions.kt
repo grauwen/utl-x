@@ -349,13 +349,19 @@ Safer alternative to direct navigation when path might not exist""",
         }
         
         var current = args[0]
-        val path = args[1]
-        
-        if (path !is UDM.Array) {
-            throw IllegalArgumentException("getPath expects array as path")
+        val pathArg = args[1]
+
+        // Support both string paths ("a.b.c") and array paths (["a", "b", "c"])
+        val pathElements = when (pathArg) {
+            is UDM.Scalar -> {
+                val pathStr = pathArg.value?.toString() ?: ""
+                pathStr.split(".").map { UDM.Scalar(it) }
+            }
+            is UDM.Array -> pathArg.elements
+            else -> throw IllegalArgumentException("getPath expects string or array as path")
         }
-        
-        for (segment in path.elements) {
+
+        for (segment in pathElements) {
             current = when (current) {
                 is UDM.Object -> {
                     if (segment !is UDM.Scalar) {
@@ -417,20 +423,26 @@ Safer alternative to direct navigation when path might not exist""",
         if (obj !is UDM.Object) {
             throw IllegalArgumentException("setPath expects object as first argument")
         }
-        
-        val path = args[1]
-        if (path !is UDM.Array) {
-            throw IllegalArgumentException("setPath expects array as path")
+
+        val pathArg = args[1]
+        // Support both string paths ("a.b.c") and array paths (["a", "b", "c"])
+        val pathElements = when (pathArg) {
+            is UDM.Scalar -> {
+                val pathStr = pathArg.value?.toString() ?: ""
+                pathStr.split(".").map { UDM.Scalar(it) }
+            }
+            is UDM.Array -> pathArg.elements
+            else -> throw IllegalArgumentException("setPath expects string or array as path")
         }
-        
+
         val value = args[2]
-        
-        if (path.elements.isEmpty()) {
+
+        if (pathElements.isEmpty()) {
             return value
         }
-        
+
         // Clone the object to avoid mutation
-        return setPathRecursive(deepCloneRecursive(obj), path.elements, value)
+        return setPathRecursive(deepCloneRecursive(obj), pathElements, value)
     }
     
     /**
