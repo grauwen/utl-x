@@ -19,6 +19,7 @@ dependencies {
     implementation(project(":formats:xsd"))
     implementation(project(":formats:jsch"))
     implementation(project(":formats:avro"))
+    implementation(project(":formats:protobuf"))
     implementation(project(":stdlib"))
     // implementation(project(":stdlib-security"))  // Temporarily disabled
     

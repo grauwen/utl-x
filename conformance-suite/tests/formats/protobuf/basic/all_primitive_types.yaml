@@ -1,0 +1,57 @@
+name: "protobuf_all_primitive_types"
+category: "formats/protobuf/basic"
+description: "Test all proto3 primitive types: int32, int64, uint32, uint64, float, double, bool, string, bytes"
+tags: ['protobuf', 'proto3', 'types', 'primitives']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package types;
+
+    message AllTypes {
+      int32 id32 = 1;
+      int64 id64 = 2;
+      uint32 count32 = 3;
+      uint64 count64 = 4;
+      sint32 signed32 = 5;
+      sint64 signed64 = 6;
+      fixed32 fixed_32 = 7;
+      fixed64 fixed_64 = 8;
+      sfixed32 sfixed_32 = 9;
+      sfixed64 sfixed_64 = 10;
+      float price = 11;
+      double latitude = 12;
+      bool active = 13;
+      string name = 14;
+      bytes data = 15;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  {
+    fieldCount: count($input["%types"]["AllTypes"]["%fields"]),
+    integerTypes: count(filter($input["%types"]["AllTypes"]["%fields"], f => f["%type"] == "integer")),
+    floatType: count(filter($input["%types"]["AllTypes"]["%fields"], f => f["%type"] == "float")),
+    numberType: count(filter($input["%types"]["AllTypes"]["%fields"], f => f["%type"] == "number")),
+    stringType: count(filter($input["%types"]["AllTypes"]["%fields"], f => f["%type"] == "string")),
+    boolType: count(filter($input["%types"]["AllTypes"]["%fields"], f => f["%type"] == "boolean")),
+    bytesType: count(filter($input["%types"]["AllTypes"]["%fields"], f => f["%type"] == "bytes"))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "fieldCount": 15,
+      "integerTypes": 10,
+      "floatType": 1,
+      "numberType": 1,
+      "stringType": 1,
+      "boolType": 1,
+      "bytesType": 1
+    }

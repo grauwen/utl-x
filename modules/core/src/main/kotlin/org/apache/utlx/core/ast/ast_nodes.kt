@@ -83,7 +83,8 @@ enum class FormatType {
     AUTO, XML, JSON, CSV, YAML, CUSTOM,
     XSD,   // XML Schema Definition (W3C XSD 1.0/1.1)
     JSCH,  // JSON Schema (draft-07, 2020-12)
-    AVRO   // Apache Avro Schema (1.11.x)
+    AVRO,  // Apache Avro Schema (1.11.x)
+    PROTO  // Protocol Buffers Schema (Proto3)
 }
 
 /**

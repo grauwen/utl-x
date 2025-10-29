@@ -6,6 +6,8 @@ import org.apache.utlx.stdlib.FunctionArgumentException
 import org.apache.utlx.stdlib.annotations.UTLXFunction
 import org.apache.utlx.formats.avro.AvroSchemaParser
 import org.apache.utlx.formats.avro.AvroSchemaSerializer
+import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
+import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
 
 /**
  * Schema Serialization Functions for UTL-X Standard Library
@@ -22,6 +24,8 @@ import org.apache.utlx.formats.avro.AvroSchemaSerializer
  * - renderXSDSchema() - USDL → XSD
  * - parseJSONSchema() - JSON Schema → USDL
  * - renderJSONSchema() - USDL → JSON Schema
+ * - parseProtobufSchema() - Protocol Buffers (.proto) → USDL
+ * - renderProtobufSchema() - USDL → Protocol Buffers (.proto)
  *
  * **Comparison with Data Functions:**
  * - Data: parseJson(jsonData) - deserializes JSON DATA
@@ -410,6 +414,158 @@ object SchemaSerializationFunctions {
             throw FunctionArgumentException(
                 "renderJSONSchema failed to serialize USDL to JSON Schema: ${e.message}. " +
                 "Hint: Ensure the USDL schema is valid with proper %kind, %fields, %type directives."
+            )
+        }
+    }
+
+    // ============================================
+    // Protocol Buffers Schema Functions
+    // ============================================
+
+    @UTLXFunction(
+        description = "Parse a Protocol Buffers (.proto) schema string into USDL format",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Schema",
+        parameters = [
+            "protoSchemaString: Protocol Buffers schema (.proto) string"
+        ],
+        returns = "USDL schema object with %types, %namespace, etc.",
+        example = "parseProtobufSchema(\"syntax = \\\"proto3\\\"; message User { string name = 1; }\")",
+        tags = ["schema", "protobuf", "proto3", "usdl"],
+        since = "1.0"
+    )
+    /**
+     * Parse a Protocol Buffers (.proto) schema string into USDL format
+     *
+     * Converts Protocol Buffers schema (proto3) to Universal Schema Definition Language (USDL).
+     *
+     * **Proto3 Only**: Only proto3 syntax is supported (not proto2).
+     *
+     * **Multi-Type Support**: A single .proto file can contain multiple message types and enums.
+     * All types are extracted and placed in the USDL %types directive.
+     *
+     * Example:
+     * ```utlx
+     * let protoSchema = "syntax = \"proto3\";\n" +
+     *                   "package example;\n" +
+     *                   "message User { string name = 1; int32 age = 2; }"
+     * let usdlSchema = parseProtobufSchema(protoSchema)
+     * # usdlSchema now has %types with User message
+     * ```
+     *
+     * **Field Numbers**: Protobuf field numbers (1-536,870,911, excluding 19000-19999)
+     * are preserved in USDL %field_number metadata.
+     *
+     * **Enum Requirements**: Proto3 requires first enum value to have ordinal 0.
+     */
+    fun parseProtobufSchema(args: List<UDM>): UDM {
+        requireArgs(args, 1, "parseProtobufSchema")
+        val protoSchemaString = args[0].asString()
+
+        if (protoSchemaString.isBlank()) {
+            throw FunctionArgumentException(
+                "parseProtobufSchema cannot parse empty or blank Protocol Buffers schema string. " +
+                "Hint: Provide a valid .proto file content with 'syntax = \"proto3\";' declaration."
+            )
+        }
+
+        // Check for proto3 syntax (required)
+        if (!protoSchemaString.contains("syntax") || !protoSchemaString.contains("proto3")) {
+            throw FunctionArgumentException(
+                "parseProtobufSchema requires proto3 syntax. Got schema without 'syntax = \"proto3\";' declaration. " +
+                "Hint: Proto2 is not supported. Add 'syntax = \"proto3\";' at the top of your .proto file."
+            )
+        }
+
+        return try {
+            val parser = ProtobufSchemaParser()
+            parser.parse(protoSchemaString)
+        } catch (e: Exception) {
+            throw FunctionArgumentException(
+                "parseProtobufSchema failed to parse Protocol Buffers schema: ${e.message}. " +
+                "Hint: Ensure the .proto file has valid proto3 syntax. " +
+                "Check for required 'syntax = \"proto3\";' declaration, proper message/enum definitions, " +
+                "valid field numbers (1-536,870,911, excluding 19000-19999), and that first enum value has ordinal 0."
+            )
+        }
+    }
+
+    @UTLXFunction(
+        description = "Render a USDL schema object as a Protocol Buffers (.proto) schema string",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Schema",
+        parameters = [
+            "usdlSchema: USDL schema object with %types directive"
+        ],
+        returns = "Protocol Buffers (.proto) schema string (proto3)",
+        example = "renderProtobufSchema(usdlSchema)",
+        tags = ["schema", "protobuf", "proto3", "usdl"],
+        since = "1.0"
+    )
+    /**
+     * Render a USDL schema object as a Protocol Buffers (.proto) schema string
+     *
+     * Converts Universal Schema Definition Language (USDL) to Protocol Buffers schema (proto3).
+     *
+     * **Proto3 Only**: Output is always proto3 syntax (not proto2).
+     *
+     * **Multi-Type Support**: USDL %types with multiple message/enum definitions
+     * are all written to a single .proto file.
+     *
+     * Example:
+     * ```utlx
+     * let usdlSchema = {
+     *   "%namespace": "example",
+     *   "%types": {
+     *     "User": {
+     *       "%kind": "structure",
+     *       "%fields": [
+     *         { "%name": "name", "%type": "string", "%field_number": 1 },
+     *         { "%name": "age", "%type": "int32", "%field_number": 2 }
+     *       ]
+     *     }
+     *   }
+     * }
+     * let protoSchema = renderProtobufSchema(usdlSchema)
+     * # protoSchema is now proto3 format string
+     * ```
+     *
+     * **Field Numbers**: USDL %field_number metadata must be provided for all fields.
+     * Valid range: 1-536,870,911, excluding 19000-19999.
+     *
+     * **Enum Requirements**: For enums, first value must have ordinal 0 (proto3 requirement).
+     */
+    fun renderProtobufSchema(args: List<UDM>): UDM {
+        requireArgs(args, 1, "renderProtobufSchema")
+        val usdlSchema = args[0]
+
+        // Validate that it's a USDL schema
+        if (usdlSchema !is UDM.Object) {
+            throw FunctionArgumentException(
+                "renderProtobufSchema expects a USDL schema object, got ${getTypeDescription(usdlSchema)}. " +
+                "Hint: USDL schemas must be objects with '%types' directive."
+            )
+        }
+
+        if (!usdlSchema.properties.containsKey("%types")) {
+            throw FunctionArgumentException(
+                "renderProtobufSchema expects a USDL schema with '%types' directive. " +
+                "Hint: USDL schemas must have a '%types' object containing type definitions."
+            )
+        }
+
+        return try {
+            val serializer = ProtobufSchemaSerializer()
+            val protoSchemaString = serializer.serialize(usdlSchema)
+            UDM.Scalar(protoSchemaString)
+        } catch (e: Exception) {
+            throw FunctionArgumentException(
+                "renderProtobufSchema failed to serialize USDL to Protocol Buffers schema: ${e.message}. " +
+                "Hint: Ensure the USDL schema is valid with proper %kind, %fields, %type directives. " +
+                "For proto3: all fields must have %field_number (1-536,870,911 excluding 19000-19999), " +
+                "enums must have first value with ordinal 0, and %kind must be 'structure' or 'enum'."
             )
         }
     }

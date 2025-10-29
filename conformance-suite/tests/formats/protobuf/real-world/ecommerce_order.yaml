@@ -1,0 +1,80 @@
+name: "protobuf_ecommerce_order"
+category: "formats/protobuf/real-world"
+description: "Real-world e-commerce order schema with multiple message types and enums"
+tags: ['protobuf', 'proto3', 'ecommerce', 'order', 'real-world']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package ecommerce;
+
+    enum OrderStatus {
+      ORDER_STATUS_UNSPECIFIED = 0;
+      PENDING = 1;
+      CONFIRMED = 2;
+      SHIPPED = 3;
+      DELIVERED = 4;
+      CANCELLED = 5;
+    }
+
+    message Address {
+      string street = 1;
+      string city = 2;
+      string state = 3;
+      string postal_code = 4;
+      string country = 5;
+    }
+
+    message OrderItem {
+      string product_id = 1;
+      string product_name = 2;
+      int32 quantity = 3;
+      double unit_price = 4;
+      double total_price = 5;
+    }
+
+    message Order {
+      string order_id = 1;
+      string customer_id = 2;
+      OrderStatus status = 3;
+      repeated OrderItem items = 4;
+      Address shipping_address = 5;
+      double subtotal = 6;
+      double tax = 7;
+      double shipping_cost = 8;
+      double total = 9;
+      int64 created_at = 10;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let types = $input["%types"]
+  {
+    typeCount: count(keys(types)),
+    types: keys(types),
+    hasEnum: hasKey(types, "OrderStatus"),
+    enumValueCount: count(types["OrderStatus"]["%values"]),
+    orderFieldCount: count(types["Order"]["%fields"]),
+    hasRepeatedItems: types["Order"]["%fields"][3]["%array"],
+    addressFieldCount: count(types["Address"]["%fields"]),
+    orderItemFieldCount: count(types["OrderItem"]["%fields"])
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "typeCount": 4,
+      "types": ["OrderStatus", "Address", "OrderItem", "Order"],
+      "hasEnum": true,
+      "enumValueCount": 6,
+      "orderFieldCount": 10,
+      "hasRepeatedItems": true,
+      "addressFieldCount": 5,
+      "orderItemFieldCount": 5
+    }

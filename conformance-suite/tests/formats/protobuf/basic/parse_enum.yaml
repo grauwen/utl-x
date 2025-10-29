@@ -1,0 +1,47 @@
+name: "protobuf_parse_enum"
+category: "formats/protobuf/basic"
+description: "Parse a proto3 enum with proper ordinal 0 requirement"
+tags: ['protobuf', 'proto3', 'schema', 'enum', 'ordinal']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package orders;
+
+    enum OrderStatus {
+      ORDER_STATUS_UNSPECIFIED = 0;
+      PENDING = 1;
+      PROCESSING = 2;
+      SHIPPED = 3;
+      DELIVERED = 4;
+      CANCELLED = 5;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let statusEnum = $input["%types"]["OrderStatus"]
+  {
+    kind: statusEnum["%kind"],
+    valueCount: count(statusEnum["%values"]),
+    firstValue: statusEnum["%values"][0]["%value"],
+    firstOrdinal: statusEnum["%values"][0]["%ordinal"],
+    lastValue: statusEnum["%values"][5]["%value"],
+    lastOrdinal: statusEnum["%values"][5]["%ordinal"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "kind": "enumeration",
+      "valueCount": 6,
+      "firstValue": "ORDER_STATUS_UNSPECIFIED",
+      "firstOrdinal": 0,
+      "lastValue": "CANCELLED",
+      "lastOrdinal": 5
+    }

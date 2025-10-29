@@ -1,0 +1,45 @@
+name: "protobuf_reserved_fields"
+category: "formats/protobuf/complex-types"
+description: "Test reserved field numbers and names for schema evolution"
+tags: ['protobuf', 'proto3', 'reserved', 'evolution']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package versioning;
+
+    message LegacyUser {
+      reserved 2, 15, 9 to 11;
+      reserved "old_field", "deprecated_field";
+
+      string name = 1;
+      string email = 3;
+      int32 age = 12;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let userType = $input["%types"]["LegacyUser"]
+  let hasReservedNumbers = hasKey(userType, "%reserved")
+  let hasReservedNames = hasKey(userType, "%reservedNames")
+  {
+    hasReserved: hasReservedNumbers || hasReservedNames,
+    reservedNumbers: if (hasReservedNumbers) count(userType["%reserved"]) else 0,
+    reservedNames: if (hasReservedNames) count(userType["%reservedNames"]) else 0,
+    fieldCount: count(userType["%fields"])
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasReserved": true,
+      "reservedNumbers": 3,
+      "reservedNames": 2,
+      "fieldCount": 3
+    }

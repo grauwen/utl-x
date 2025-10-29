@@ -1,0 +1,51 @@
+name: "protobuf_parse_basic_message"
+category: "formats/protobuf/basic"
+description: "Parse a basic proto3 message with primitive types"
+tags: ['protobuf', 'proto3', 'schema', 'parse', 'message']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package example;
+
+    message Product {
+      string name = 1;
+      double price = 2;
+      int32 quantity = 3;
+      bool available = 4;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  {
+    namespace: $input["%namespace"],
+    messageCount: count(keys($input["%types"])),
+    messageName: keys($input["%types"])[0],
+    fieldCount: count($input["%types"]["Product"]["%fields"]),
+    fields: map($input["%types"]["Product"]["%fields"], f => {
+      name: f["%name"],
+      type: f["%type"],
+      number: f["%fieldNumber"]
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "namespace": "example",
+      "messageCount": 1,
+      "messageName": "Product",
+      "fieldCount": 4,
+      "fields": [
+        {"name": "name", "type": "string", "number": 1},
+        {"name": "price", "type": "number", "number": 2},
+        {"name": "quantity", "type": "integer", "number": 3},
+        {"name": "available", "type": "boolean", "number": 4}
+      ]
+    }

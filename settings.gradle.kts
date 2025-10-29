@@ -44,6 +44,7 @@ include("formats:yaml")
 include("formats:xsd")
 include("formats:jsch")
 include("formats:avro")
+include("formats:protobuf")
 //include("formats:plugin")
 
 // Standard library

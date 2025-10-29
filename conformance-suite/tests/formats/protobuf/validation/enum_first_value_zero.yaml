@@ -1,0 +1,41 @@
+name: "protobuf_enum_first_value_zero"
+category: "formats/protobuf/validation"
+description: "Validate that proto3 enums correctly enforce first value = 0 requirement"
+tags: ['protobuf', 'proto3', 'validation', 'enum', 'ordinal']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package validation;
+
+    enum Priority {
+      PRIORITY_UNSPECIFIED = 0;
+      LOW = 1;
+      MEDIUM = 2;
+      HIGH = 3;
+      CRITICAL = 4;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let priority = $input["%types"]["Priority"]
+  let values = priority["%values"]
+  {
+    firstValueName: values[0]["%value"],
+    firstValueOrdinal: values[0]["%ordinal"],
+    isValidProto3: values[0]["%ordinal"] == 0
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "firstValueName": "PRIORITY_UNSPECIFIED",
+      "firstValueOrdinal": 0,
+      "isValidProto3": true
+    }

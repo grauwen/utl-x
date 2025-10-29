@@ -358,7 +358,7 @@ function calculateTax(amount: Number, rate: Number): Number {
 | **Message Transformation** | Transform messages between different systems |
 | **Configuration Management** | Convert between config formats (XML ↔ JSON ↔ YAML) |
 | **Report Generation** | Transform data into report formats |
-| **Meta Data transformation** | Transform meta data, supported XSD & JSON schema (JSCH) |
+| **Schema transformation** | Transform schemas between XSD, JSON Schema, Avro, Protobuf |
 
 ## Comparison
 
@@ -492,6 +492,8 @@ See our [Roadmap](docs/community/roadmap.md) for planned features.
 - ✅ YAML support: **Stable**
 - ✅ XSD support: **Stable**
 - ✅ JSCH (JSON schema) support: **Stable**
+- ✅ Avro schema support: **Stable**
+- ✅ Protobuf schema (proto3) support: **Stable**
 - ✅ utlx CLI **Stable**
 - 🚧 JVM runtime (2 variants): **In Development** 
 - 🚧 JavaScript runtime: **In Development** 

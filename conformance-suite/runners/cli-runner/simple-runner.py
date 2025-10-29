@@ -711,8 +711,8 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
             raw_data = input_spec['data']
 
             # Handle input data based on format
-            if isinstance(raw_data, str) and input_format in ['xml', 'csv', 'yaml', 'yml', 'avro']:
-                # For text-based formats (XML, CSV, YAML, Avro), use string as-is
+            if isinstance(raw_data, str) and input_format in ['xml', 'csv', 'yaml', 'yml', 'avro', 'proto']:
+                # For text-based formats (XML, CSV, YAML, Avro, Proto), use string as-is
                 named_inputs[input_name] = raw_data
             elif isinstance(raw_data, str) and input_format == 'json':
                 # For JSON format with string data, check if it's already valid JSON (multiline from YAML |)
@@ -734,8 +734,8 @@ def run_single_test(test_case: Dict[str, Any], utlx_cli: Path, test_name: str) -
         raw_data = test_case['input']['data']
 
         # Handle input data based on format
-        if isinstance(raw_data, str) and input_format in ['xml', 'csv', 'yaml', 'yml', 'xsd', 'jsch', 'avro']:
-            # For text-based formats (XML, CSV, YAML, XSD, JSON Schema, Avro), use string as-is
+        if isinstance(raw_data, str) and input_format in ['xml', 'csv', 'yaml', 'yml', 'xsd', 'jsch', 'avro', 'proto']:
+            # For text-based formats (XML, CSV, YAML, XSD, JSON Schema, Avro, Proto), use string as-is
             input_data = raw_data
         elif isinstance(raw_data, str) and input_format == 'json':
             # For JSON format with string data, check if it's already valid JSON (multiline from YAML |)

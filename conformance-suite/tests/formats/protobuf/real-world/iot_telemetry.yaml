@@ -1,0 +1,64 @@
+name: "protobuf_iot_telemetry"
+category: "formats/protobuf/real-world"
+description: "Real-world IoT device telemetry with time-series data"
+tags: ['protobuf', 'proto3', 'iot', 'telemetry', 'timeseries']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package iot;
+
+    enum SensorType {
+      SENSOR_TYPE_UNSPECIFIED = 0;
+      TEMPERATURE = 1;
+      HUMIDITY = 2;
+      PRESSURE = 3;
+      LIGHT = 4;
+      MOTION = 5;
+    }
+
+    message SensorReading {
+      SensorType sensor_type = 1;
+      double value = 2;
+      string unit = 3;
+      int64 timestamp = 4;
+    }
+
+    message DeviceTelemetry {
+      string device_id = 1;
+      string location = 2;
+      repeated SensorReading readings = 3;
+      double battery_level = 4;
+      int32 signal_strength = 5;
+      map<string, string> device_metadata = 6;
+      int64 reported_at = 7;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let types = $input["%types"]
+  {
+    hasEnum: hasKey(types, "SensorType"),
+    sensorTypeCount: count(types["SensorType"]["%values"]),
+    telemetryFields: count(types["DeviceTelemetry"]["%fields"]),
+    readingFields: count(types["SensorReading"]["%fields"]),
+    hasRepeatedReadings: types["DeviceTelemetry"]["%fields"][2]["%array"],
+    hasMetadataMap: types["DeviceTelemetry"]["%fields"][5]["%map"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasEnum": true,
+      "sensorTypeCount": 6,
+      "telemetryFields": 7,
+      "readingFields": 4,
+      "hasRepeatedReadings": true,
+      "hasMetadataMap": true
+    }

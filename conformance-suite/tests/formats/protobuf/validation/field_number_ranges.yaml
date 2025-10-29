@@ -1,0 +1,46 @@
+name: "protobuf_field_number_ranges"
+category: "formats/protobuf/validation"
+description: "Validate field numbers are in valid range (1-536870911, excluding 19000-19999)"
+tags: ['protobuf', 'proto3', 'validation', 'field-numbers']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package validation;
+
+    message ValidFieldNumbers {
+      string field_1 = 1;
+      string field_15 = 15;
+      string field_18999 = 18999;
+      string field_20000 = 20000;
+      string field_max = 536870911;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let fields = $input["%types"]["ValidFieldNumbers"]["%fields"]
+  {
+    fieldCount: count(fields),
+    minFieldNumber: fields[0]["%fieldNumber"],
+    maxFieldNumber: fields[4]["%fieldNumber"],
+    allFieldNumbersValid: all(map(fields, f =>
+      f["%fieldNumber"] >= 1 &&
+      f["%fieldNumber"] <= 536870911 &&
+      (f["%fieldNumber"] < 19000 || f["%fieldNumber"] > 19999)
+    ))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "fieldCount": 5,
+      "minFieldNumber": 1,
+      "maxFieldNumber": 536870911,
+      "allFieldNumbersValid": true
+    }

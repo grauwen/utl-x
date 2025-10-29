@@ -189,14 +189,18 @@ If you need to work with Protobuf binary data (`.pb` files):
 
 ### When will this be implemented?
 
-**Status:** Documented and ready for implementation
+**Status:** ✅ **IMPLEMENTED** (v1.0 - 2025-10-29)
 
-**Priority:** Medium-High (after Avro, before or alongside Parquet)
+**Implementation Complete:**
+- ✅ Proto3 schema parsing (`.proto` → USDL)
+- ✅ Proto3 schema generation (USDL → `.proto`)
+- ✅ All primitive types, messages, enums, maps, repeated, oneof, reserved
+- ✅ Stdlib functions: `parseProtobufSchema()`, `renderProtobufSchema()`
+- ✅ CLI integration with format auto-detection
+- ✅ 16 conformance tests (100% passing)
+- ✅ Comprehensive documentation
 
-**Estimated Timeline:**
-1. **Avro** (12-16 days) - Higher priority (full support)
-2. **Protobuf** (11-14 days) - This study
-3. **Parquet** (24-30 days) - Analytics use case
+**See:** [Protocol Buffers Schema Support Guide](/docs/formats/protobuf-schema-support.md)
 
 ---
 
@@ -206,6 +210,7 @@ If you need to work with Protobuf binary data (`.pb` files):
 |---------|------|--------|---------|
 | V1 | 2025-10-27 | UTL-X Team | Original study - full Protobuf support proposed |
 | V2 | 2025-10-29 | UTL-X Team | **Revised** - Schema-only support, architectural mismatch identified |
+| V2.1 | 2025-10-29 | UTL-X Team | **Implementation Complete** - Proto3 schema support now live in v1.0 |
 
 ---
 

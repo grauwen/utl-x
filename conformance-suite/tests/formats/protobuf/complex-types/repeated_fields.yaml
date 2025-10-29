@@ -1,0 +1,43 @@
+name: "protobuf_repeated_fields"
+category: "formats/protobuf/complex-types"
+description: "Test repeated fields (arrays) in proto3"
+tags: ['protobuf', 'proto3', 'repeated', 'array']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package collections;
+
+    message ShoppingCart {
+      string user_id = 1;
+      repeated string item_ids = 2;
+      repeated double prices = 3;
+      repeated int32 quantities = 4;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let fields = $input["%types"]["ShoppingCart"]["%fields"]
+  {
+    totalFields: count(fields),
+    repeatedFields: count(filter(fields, f => hasKey(f, "%array") && f["%array"] == true)),
+    itemIdsIsArray: fields[1]["%array"],
+    pricesIsArray: fields[2]["%array"],
+    quantitiesIsArray: fields[3]["%array"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "totalFields": 4,
+      "repeatedFields": 3,
+      "itemIdsIsArray": true,
+      "pricesIsArray": true,
+      "quantitiesIsArray": true
+    }

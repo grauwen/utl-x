@@ -1,0 +1,36 @@
+name: "protobuf_package_namespace"
+category: "formats/protobuf/validation"
+description: "Validate package declaration is correctly parsed as namespace"
+tags: ['protobuf', 'proto3', 'validation', 'namespace', 'package']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package com.company.product.v1;
+
+    message Config {
+      string key = 1;
+      string value = 2;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  {
+    hasNamespace: hasKey($input, "%namespace"),
+    namespace: $input["%namespace"],
+    namespaceIsValid: $input["%namespace"] == "com.company.product.v1"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasNamespace": true,
+      "namespace": "com.company.product.v1",
+      "namespaceIsValid": true
+    }

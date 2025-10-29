@@ -1,0 +1,46 @@
+name: "protobuf_oneof_fields"
+category: "formats/protobuf/complex-types"
+description: "Test oneof fields (union types) in proto3"
+tags: ['protobuf', 'proto3', 'oneof', 'union']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package payment;
+
+    message Payment {
+      string transaction_id = 1;
+      oneof payment_method {
+        string credit_card = 2;
+        string paypal_email = 3;
+        string bank_account = 4;
+      }
+      double amount = 5;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let fields = $input["%types"]["Payment"]["%fields"]
+  {
+    totalFields: count(fields),
+    oneofFields: count(filter(fields, f => hasKey(f, "%oneof"))),
+    creditCardOneof: fields[1]["%oneof"],
+    paypalOneof: fields[2]["%oneof"],
+    bankAccountOneof: fields[3]["%oneof"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "totalFields": 5,
+      "oneofFields": 3,
+      "creditCardOneof": "payment_method",
+      "paypalOneof": "payment_method",
+      "bankAccountOneof": "payment_method"
+    }

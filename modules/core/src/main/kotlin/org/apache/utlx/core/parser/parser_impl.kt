@@ -167,8 +167,9 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.XSD) -> FormatType.XSD
             match(TokenType.JSCH) -> FormatType.JSCH
             match(TokenType.AVRO) -> FormatType.AVRO
+            match(TokenType.PROTO) -> FormatType.PROTO
             else -> {
-                error("Expected format type (auto, xml, json, csv, yaml, xsd, jsch, avro)")
+                error("Expected format type (auto, xml, json, csv, yaml, xsd, jsch, avro, proto)")
                 FormatType.AUTO
             }
         }

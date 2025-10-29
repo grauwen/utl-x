@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":formats:avro"))
     implementation(project(":formats:xsd"))
     implementation(project(":formats:jsch"))
+    implementation(project(":formats:protobuf"))
 
     // Kotlin standard library
     implementation(kotlin("stdlib"))

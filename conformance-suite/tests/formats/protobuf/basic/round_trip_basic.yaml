@@ -1,0 +1,64 @@
+name: "protobuf_round_trip_basic"
+category: "formats/protobuf/basic"
+description: "Round-trip test: USDL -> Proto3 -> USDL preserves structure"
+tags: ['protobuf', 'proto3', 'schema', 'round-trip', 'usdl']
+
+input:
+  format: json
+  data: |
+    {
+      "%namespace": "com.example",
+      "%types": {
+        "User": {
+          "%kind": "structure",
+          "%fields": [
+            {
+              "%name": "id",
+              "%type": "integer",
+              "%size": 64,
+              "%fieldNumber": 1
+            },
+            {
+              "%name": "name",
+              "%type": "string",
+              "%fieldNumber": 2
+            },
+            {
+              "%name": "active",
+              "%type": "boolean",
+              "%fieldNumber": 3
+            }
+          ]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let protoSchema = renderProtobufSchema($input)
+  let backToUsdl = parseProtobufSchema(protoSchema)
+  {
+    hasTypes: hasKey(backToUsdl, "%types"),
+    hasNamespace: hasKey(backToUsdl, "%namespace"),
+    namespace: backToUsdl["%namespace"],
+    typeName: keys(backToUsdl["%types"])[0],
+    fieldCount: count(backToUsdl["%types"]["User"]["%fields"]),
+    firstFieldName: backToUsdl["%types"]["User"]["%fields"][0]["%name"],
+    firstFieldNumber: backToUsdl["%types"]["User"]["%fields"][0]["%fieldNumber"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasTypes": true,
+      "hasNamespace": true,
+      "namespace": "com.example",
+      "typeName": "User",
+      "fieldCount": 3,
+      "firstFieldName": "id",
+      "firstFieldNumber": 1
+    }

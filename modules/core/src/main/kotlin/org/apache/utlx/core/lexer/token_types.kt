@@ -42,7 +42,8 @@ enum class TokenType {
     XSD,             // xsd (XML Schema Definition)
     JSCH,            // jsch (JSON Schema)
     AVRO,            // avro (Apache Avro Schema)
-    
+    PROTO,           // proto (Protocol Buffers Schema)
+
     // Operators
     PLUS,            // +
     MINUS,           // -
@@ -128,7 +129,7 @@ data class Token(
         TokenType.TRY, TokenType.CATCH,
         TokenType.MAP, TokenType.FILTER, TokenType.REDUCE, TokenType.APPLY,
         TokenType.IMPORT, TokenType.AS, TokenType.AUTO,
-        TokenType.XML, TokenType.JSON, TokenType.CSV, TokenType.YAML, TokenType.XSD, TokenType.JSCH, TokenType.AVRO
+        TokenType.XML, TokenType.JSON, TokenType.CSV, TokenType.YAML, TokenType.XSD, TokenType.JSCH, TokenType.AVRO, TokenType.PROTO
     )
     
     fun isOperator(): Boolean = type in setOf(
@@ -177,7 +178,8 @@ object Keywords {
         "yaml" to TokenType.YAML,
         "xsd" to TokenType.XSD,
         "jsch" to TokenType.JSCH,
-        "avro" to TokenType.AVRO
+        "avro" to TokenType.AVRO,
+        "proto" to TokenType.PROTO
     )
     
     fun get(identifier: String): TokenType? = keywords[identifier]

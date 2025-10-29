@@ -1,0 +1,63 @@
+name: "protobuf_multi_type_schema"
+category: "formats/protobuf/validation"
+description: "Validate that multiple types (messages and enums) are correctly parsed from single .proto file"
+tags: ['protobuf', 'proto3', 'validation', 'multi-type']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package validation;
+
+    enum Status {
+      STATUS_UNSPECIFIED = 0;
+      ACTIVE = 1;
+      INACTIVE = 2;
+    }
+
+    enum Role {
+      ROLE_UNSPECIFIED = 0;
+      USER = 1;
+      ADMIN = 2;
+      SUPERADMIN = 3;
+    }
+
+    message Person {
+      string name = 1;
+      Status status = 2;
+    }
+
+    message Account {
+      string id = 1;
+      Role role = 2;
+      Person owner = 3;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let types = $input["%types"]
+  let typeNames = keys(types)
+  {
+    totalTypes: count(typeNames),
+    enumCount: count(filter(typeNames, name => types[name]["%kind"] == "enumeration")),
+    messageCount: count(filter(typeNames, name => types[name]["%kind"] == "structure")),
+    types: typeNames,
+    statusIsEnum: types["Status"]["%kind"] == "enumeration",
+    personIsMessage: types["Person"]["%kind"] == "structure"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "totalTypes": 4,
+      "enumCount": 2,
+      "messageCount": 2,
+      "types": ["Status", "Role", "Person", "Account"],
+      "statusIsEnum": true,
+      "personIsMessage": true
+    }

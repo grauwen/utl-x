@@ -952,6 +952,8 @@ object StandardLibrary {
         register("renderXSDSchema", SchemaSerializationFunctions::renderXSDSchema)
         register("parseJSONSchema", SchemaSerializationFunctions::parseJSONSchema)
         register("renderJSONSchema", SchemaSerializationFunctions::renderJSONSchema)
+        register("parseProtobufSchema", SchemaSerializationFunctions::parseProtobufSchema)
+        register("renderProtobufSchema", SchemaSerializationFunctions::renderProtobufSchema)
 
         // Pretty-Print functions
         register("prettyPrintJSON", PrettyPrintFunctions::prettyPrintJSON)

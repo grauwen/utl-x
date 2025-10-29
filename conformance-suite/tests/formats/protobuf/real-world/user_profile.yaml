@@ -1,0 +1,59 @@
+name: "protobuf_user_profile"
+category: "formats/protobuf/real-world"
+description: "Real-world user profile with complex nested structures and maps"
+tags: ['protobuf', 'proto3', 'user', 'profile', 'social-media']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package social;
+
+    message SocialLink {
+      string platform = 1;
+      string url = 2;
+      bool verified = 3;
+    }
+
+    message UserProfile {
+      string user_id = 1;
+      string username = 2;
+      string email = 3;
+      string full_name = 4;
+      string bio = 5;
+      string avatar_url = 6;
+      repeated string interests = 7;
+      repeated SocialLink social_links = 8;
+      map<string, string> metadata = 9;
+      int64 created_at = 10;
+      int64 updated_at = 11;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let profile = $input["%types"]["UserProfile"]
+  let fields = profile["%fields"]
+  {
+    messageCount: count(keys($input["%types"])),
+    profileFieldCount: count(fields),
+    repeatedStringFields: count(filter(fields, f => f["%type"] == "string" && hasKey(f, "%array") && f["%array"])),
+    repeatedMessageFields: count(filter(fields, f => f["%type"] == "SocialLink" && hasKey(f, "%array") && f["%array"])),
+    mapFields: count(filter(fields, f => hasKey(f, "%map") && f["%map"])),
+    timestampFields: count(filter(fields, f => f["%type"] == "integer" && f["%size"] == 64))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "messageCount": 2,
+      "profileFieldCount": 11,
+      "repeatedStringFields": 1,
+      "repeatedMessageFields": 1,
+      "mapFields": 1,
+      "timestampFields": 2
+    }

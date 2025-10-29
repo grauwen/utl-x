@@ -22,6 +22,8 @@ import org.apache.utlx.formats.jsch.JSONSchemaSerializer
 import org.apache.utlx.formats.yaml.YAMLSerializer
 import org.apache.utlx.formats.avro.AvroSchemaParser
 import org.apache.utlx.formats.avro.AvroSchemaSerializer
+import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
+import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
 import org.apache.utlx.stdlib.StandardLibrary
 import org.apache.utlx.cli.capture.TestCaptureService
 import org.apache.utlx.core.debug.DebugConfig
@@ -307,6 +309,9 @@ object TransformCommand {
                 "avro" -> {
                     AvroSchemaParser().parse(data)
                 }
+                "proto" -> {
+                    ProtobufSchemaParser().parse(data)
+                }
                 else -> throw IllegalArgumentException("Unsupported input format: $format")
             }
         } catch (e: Exception) {
@@ -399,6 +404,10 @@ object TransformCommand {
                         validate = validate
                     ).serialize(udm)
                 }
+                "proto" -> {
+                    // Protocol Buffers schema output (proto3)
+                    ProtobufSchemaSerializer().serialize(udm)
+                }
                 else -> throw IllegalArgumentException("Unsupported output format: $format")
             }
         } catch (e: Exception) {
@@ -410,11 +419,12 @@ object TransformCommand {
     private fun detectFormat(data: String, extension: String?): String {
         // Try extension first
         extension?.lowercase()?.let {
-            if (it in listOf("xml", "json", "csv", "yaml", "yml", "xsd", "jsch", "avro", "avsc")) {
+            if (it in listOf("xml", "json", "csv", "yaml", "yml", "xsd", "jsch", "avro", "avsc", "proto")) {
                 return when (it) {
                     "yml" -> "yaml"
                     "jsch" -> "jsch"  // JSON Schema files
                     "avsc" -> "avro"  // Avro schema files (.avsc extension)
+                    "proto" -> "proto"  // Protocol Buffers schema files
                     else -> it
                 }
             }

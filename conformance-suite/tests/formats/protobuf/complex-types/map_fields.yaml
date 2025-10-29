@@ -1,0 +1,43 @@
+name: "protobuf_map_fields"
+category: "formats/protobuf/complex-types"
+description: "Test map<K,V> fields in proto3"
+tags: ['protobuf', 'proto3', 'map', 'dictionary']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package config;
+
+    message Configuration {
+      string name = 1;
+      map<string, string> settings = 2;
+      map<string, int32> counters = 3;
+      map<int32, string> lookup = 4;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let fields = $input["%types"]["Configuration"]["%fields"]
+  {
+    fieldCount: count(fields),
+    mapFieldCount: count(filter(fields, f => hasKey(f, "%map") && f["%map"] == true)),
+    settingsIsMap: hasKey(fields[1], "%map") && fields[1]["%map"],
+    settingsKeyType: fields[1]["%keyType"],
+    settingsValueType: fields[1]["%itemType"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "fieldCount": 4,
+      "mapFieldCount": 3,
+      "settingsIsMap": true,
+      "settingsKeyType": "string",
+      "settingsValueType": "string"
+    }

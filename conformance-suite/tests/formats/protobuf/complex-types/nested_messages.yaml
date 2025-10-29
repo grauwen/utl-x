@@ -1,0 +1,52 @@
+name: "protobuf_nested_messages"
+category: "formats/protobuf/complex-types"
+description: "Test nested message types referencing other messages"
+tags: ['protobuf', 'proto3', 'nested', 'reference']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package company;
+
+    message Address {
+      string street = 1;
+      string city = 2;
+      string country = 3;
+    }
+
+    message Employee {
+      string name = 1;
+      int32 employee_id = 2;
+      Address home_address = 3;
+      Address work_address = 4;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let types = $input["%types"]
+  let employeeFields = types["Employee"]["%fields"]
+  {
+    typeCount: count(keys(types)),
+    types: keys(types),
+    addressFieldCount: count(types["Address"]["%fields"]),
+    employeeFieldCount: count(employeeFields),
+    homeAddressType: employeeFields[2]["%type"],
+    workAddressType: employeeFields[3]["%type"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "typeCount": 2,
+      "types": ["Address", "Employee"],
+      "addressFieldCount": 3,
+      "employeeFieldCount": 4,
+      "homeAddressType": "Address",
+      "workAddressType": "Address"
+    }
