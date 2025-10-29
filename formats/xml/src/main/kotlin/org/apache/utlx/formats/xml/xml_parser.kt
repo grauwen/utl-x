@@ -185,7 +185,9 @@ class XMLParser(
         val content = textContent.toString().trim()
 
         // Check if element has real attributes (not just inherited xmlns declarations)
-        val hasRealAttributes = attributes.isNotEmpty()
+        val hasRealAttributes = attributes.any { (key, _) ->
+            !key.startsWith("xmlns") && key != "xmlns"
+        }
 
         return when {
             children.isEmpty() && content.isEmpty() -> {
@@ -195,14 +197,8 @@ class XMLParser(
             children.isEmpty() && content.isNotEmpty() -> {
                 // Leaf element with text only
                 val textValue = tryParseNumber(content) ?: UDM.Scalar.string(content)
-                // If there are REAL attributes (not just inherited xmlns), wrap as object with _text property
-                // Otherwise, return the text value directly for easier access
-                if (hasRealAttributes) {
-                    UDM.Object(mapOf("_text" to textValue), mergedAttributes, name)
-                } else {
-                    // No real attributes - return text directly, but wrap in an object to preserve element name
-                    UDM.Object(mapOf("_text" to textValue), mergedAttributes, name)
-                }
+                // Always wrap text as object with _text property for consistent structure
+                UDM.Object(mapOf("_text" to textValue), mergedAttributes, name)
             }
             else -> {
                 // Element with children

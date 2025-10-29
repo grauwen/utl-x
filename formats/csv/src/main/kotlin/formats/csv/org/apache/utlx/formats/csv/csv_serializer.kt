@@ -2,9 +2,10 @@ package org.apache.utlx.formats.csv
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.core.interpreter.RuntimeValue
-import org.apache.utlx.stdlib.regional.RegionalNumberFunctions
 import java.io.Writer
 import java.io.StringWriter
+import kotlin.math.abs
+import kotlin.math.pow
 
 /**
  * Regional number format for CSV output
@@ -325,26 +326,25 @@ class CSVSerializer(
         }
 
         // Apply regional formatting
+        // Note: Regional formatting requires stdlib dependency which creates circular dependency
+        // For now, we use basic formatting for all regional formats
+        // TODO: Move regional formatting to stdlib layer or extract to shared module
         val result = when (regionalFormat) {
             RegionalFormat.USA -> {
-                RegionalNumberFunctions.renderUSNumber(
-                    listOf(UDM.Scalar(value), UDM.Scalar(decimals.toDouble()), UDM.Scalar(useThousands))
-                )
+                // Basic US format: 1,234.56
+                formatNumberBasic(value, decimals, useThousands, '.', ',')
             }
             RegionalFormat.EUROPEAN -> {
-                RegionalNumberFunctions.renderEUNumber(
-                    listOf(UDM.Scalar(value), UDM.Scalar(decimals.toDouble()), UDM.Scalar(useThousands))
-                )
+                // Basic European format: 1.234,56
+                formatNumberBasic(value, decimals, useThousands, ',', '.')
             }
             RegionalFormat.FRENCH -> {
-                RegionalNumberFunctions.renderFrenchNumber(
-                    listOf(UDM.Scalar(value), UDM.Scalar(decimals.toDouble()), UDM.Scalar(useThousands))
-                )
+                // Basic French format: 1 234,56
+                formatNumberBasic(value, decimals, useThousands, ',', ' ')
             }
             RegionalFormat.SWISS -> {
-                RegionalNumberFunctions.renderSwissNumber(
-                    listOf(UDM.Scalar(value), UDM.Scalar(decimals.toDouble()), UDM.Scalar(useThousands))
-                )
+                // Basic Swiss format: 1'234.56
+                formatNumberBasic(value, decimals, useThousands, '.', '\'')
             }
             RegionalFormat.NONE -> UDM.Scalar(value.toString())
         }
@@ -355,6 +355,42 @@ class CSVSerializer(
         }
     }
     
+    /**
+     * Basic number formatting without stdlib dependency
+     */
+    private fun formatNumberBasic(
+        value: Double,
+        decimals: Int,
+        useThousands: Boolean,
+        decimalSeparator: Char,
+        thousandsSeparator: Char
+    ): UDM.Scalar {
+        val formatted = buildString {
+            val isNegative = value < 0
+            val absValue = abs(value)
+            val intPart = absValue.toLong()
+            val decimalPart = ((absValue - intPart) * 10.0.pow(decimals.toDouble())).toLong()
+
+            if (isNegative) append('-')
+
+            val intStr = intPart.toString()
+            if (useThousands && intStr.length > 3) {
+                intStr.reversed().chunked(3).reversed().forEachIndexed { index, chunk ->
+                    if (index > 0) append(thousandsSeparator)
+                    append(chunk.reversed())
+                }
+            } else {
+                append(intStr)
+            }
+
+            if (decimals > 0) {
+                append(decimalSeparator)
+                append(decimalPart.toString().padStart(decimals, '0'))
+            }
+        }
+        return UDM.Scalar(formatted)
+    }
+
     private fun extractRuntimeValue(value: RuntimeValue?): String {
         return when (value) {
             null -> ""

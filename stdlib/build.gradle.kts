@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":formats:protobuf"))
     implementation(project(":formats:xml"))
     implementation(project(":formats:yaml"))
+    implementation(project(":formats:csv"))
 
     // Kotlin standard library
     implementation(kotlin("stdlib"))

@@ -95,11 +95,11 @@ class AdvancedRegexFunctionsTest {
         // Test XSLT analyze-string compatibility
         val text = UDM.Scalar("The cat sat on the mat")
         val pattern = UDM.Scalar("\\b(\\w)at\\b")
-        
+
         val result = AdvancedRegexFunctions.analyzeString(listOf(text, pattern))
         val matches = result as UDM.Array
-        
-        assertEquals(2, matches.elements.size, "Should find 'cat' and 'mat'")
+
+        assertEquals(3, matches.elements.size, "Should find 'cat', 'sat', and 'mat'")
     }
 
     // ==================== regexGroups Tests ====================

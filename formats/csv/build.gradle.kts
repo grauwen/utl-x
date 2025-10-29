@@ -10,9 +10,6 @@ dependencies {
     // Core module dependency
     implementation(project(":modules:core"))
 
-    // Stdlib module dependency (for regional number functions)
-    implementation(project(":stdlib"))
-
     // Kotlin standard library
     implementation(kotlin("stdlib"))
 

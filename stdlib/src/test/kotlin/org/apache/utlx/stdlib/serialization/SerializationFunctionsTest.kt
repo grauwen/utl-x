@@ -149,24 +149,42 @@ class SerializationFunctionsTest {
     @Test
     fun `test parseXml - simple element`() {
         val xmlStr = UDM.Scalar("""<person><name>John</name><age>30</age></person>""")
-        
+
         val result = SerializationFunctions.parseXml(listOf(xmlStr))
-        val obj = result as UDM.Object
-        
-        assertNotNull(obj.properties["name"])
-        assertNotNull(obj.properties["age"])
+        val wrapper = result as UDM.Object
+
+        // XML parser wraps root in an object with root element name as key
+        assertNotNull(wrapper.properties["person"], "Should have 'person' as root element")
+        val person = wrapper.properties["person"] as UDM.Object
+
+        // Child text elements should be directly accessible as scalar properties
+        val nameValue = person.properties["name"]
+        val ageValue = person.properties["age"]
+        assertNotNull(nameValue, "name property should exist, got keys: ${person.properties.keys}, values: ${person.properties.values.map{it::class.simpleName}}")
+        assertNotNull(ageValue, "age property should exist")
+
+        // Values should be scalars (text content)
+        assertTrue(person.properties["name"] is UDM.Scalar, "name should be a Scalar")
+        assertTrue(person.properties["age"] is UDM.Scalar, "age should be a Scalar")
+
+        assertEquals("John", (person.properties["name"] as UDM.Scalar).value)
+        assertEquals(30.0, (person.properties["age"] as UDM.Scalar).value)
     }
     
     @Test
     fun `test parseXml - with attributes`() {
         val xmlStr = UDM.Scalar("""<user id="123" type="admin"><name>Alice</name></user>""")
-        
+
         val result = SerializationFunctions.parseXml(listOf(xmlStr))
-        val obj = result as UDM.Object
-        
-        // Attributes should be accessible
-        assertTrue(obj.attributes.containsKey("id") || obj.properties.containsKey("@id"))
-        assertTrue(obj.attributes.containsKey("type") || obj.properties.containsKey("@type"))
+        val wrapper = result as UDM.Object
+
+        val user = wrapper.properties["user"] as UDM.Object
+
+        // Attributes should be in the attributes map (accessed via @ in language syntax)
+        assertTrue(user.attributes.containsKey("id"), "id attribute should exist")
+        assertTrue(user.attributes.containsKey("type"), "type attribute should exist")
+        assertEquals("123", user.attributes["id"])
+        assertEquals("admin", user.attributes["type"])
     }
     
     @Test
@@ -181,11 +199,12 @@ class SerializationFunctionsTest {
                 </department>
             </company>
         """.trimIndent())
-        
+
         val result = SerializationFunctions.parseXml(listOf(xmlStr))
-        val obj = result as UDM.Object
-        
-        assertNotNull(obj.properties["department"])
+        val wrapper = result as UDM.Object
+
+        val company = wrapper.properties["company"] as UDM.Object
+        assertNotNull(company.properties["department"], "department should exist")
     }
     
     @Test
@@ -247,7 +266,7 @@ class SerializationFunctionsTest {
         val obj = result as UDM.Object
 
         assertEquals("John", (obj.properties["name"] as UDM.Scalar).value)
-        assertEquals(30.0, (obj.properties["age"] as UDM.Scalar).value)
+        assertEquals(30, (obj.properties["age"] as UDM.Scalar).value)
     }
     
     @Test
@@ -335,7 +354,7 @@ class SerializationFunctionsTest {
         
         val firstRow = array.elements[0] as UDM.Object
         assertEquals("John", (firstRow.properties["name"] as UDM.Scalar).value)
-        assertEquals("30", (firstRow.properties["age"] as UDM.Scalar).value)
+        assertEquals(30.0, (firstRow.properties["age"] as UDM.Scalar).value)
     }
     
     @Test

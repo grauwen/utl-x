@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import org.apache.utlx.formats.xml.XMLParser
 import org.apache.utlx.formats.yaml.YAMLParser
+import org.apache.utlx.formats.csv.CSVParser
+import org.apache.utlx.formats.csv.CSVDialect
 
 /**
  * Serialization Functions for UTL-X Standard Library
@@ -196,12 +198,47 @@ object SerializationFunctions {
 
         return try {
             val parser = XMLParser(xmlString)
-            parser.parse()
+            val parsed = parser.parse()
+            // Unwrap leaf text elements for simpler access
+            unwrapXmlLeafElements(parsed)
         } catch (e: Exception) {
             throw FunctionArgumentException(
                 "parseXml failed to parse XML string: ${e.message}. " +
                 "Hint: Ensure the string is well-formed XML. Check for matching tags and proper escaping."
             )
+        }
+    }
+
+    /**
+     * Recursively unwrap leaf text elements in XML structures.
+     * Converts objects with only "_text" property and no real attributes to scalars.
+     * This makes accessing simple text values more convenient: obj.name instead of obj.name._text
+     */
+    private fun unwrapXmlLeafElements(udm: UDM): UDM {
+        return when (udm) {
+            is UDM.Object -> {
+                // Check if this is a leaf text element (only _text property, no real attributes)
+                val hasOnlyTextProperty = udm.properties.size == 1 && udm.properties.containsKey("_text")
+                val hasNoRealAttributes = udm.attributes.all { (key, _) ->
+                    key.startsWith("xmlns") || key == "xmlns"
+                }
+
+                if (hasOnlyTextProperty && hasNoRealAttributes) {
+                    // Return the text value directly (already a Scalar)
+                    udm.properties["_text"]!!
+                } else {
+                    // Recursively unwrap properties
+                    val unwrappedProperties = udm.properties.mapValues { (_, value) ->
+                        unwrapXmlLeafElements(value)
+                    }
+                    UDM.Object(unwrappedProperties, udm.attributes, udm.name, udm.metadata)
+                }
+            }
+            is UDM.Array -> {
+                // Recursively unwrap array elements
+                UDM.Array(udm.elements.map { unwrapXmlLeafElements(it) })
+            }
+            else -> udm // Scalars, Binary, DateTime, etc. pass through unchanged
         }
     }
     
@@ -329,18 +366,42 @@ object SerializationFunctions {
     fun parseCsv(args: List<UDM>): UDM {
         requireArgs(args, 1..2, "parseCsv")
         val csvString = args[0].asString()
-        val hasHeaders = if (args.size > 1) args[1].asBoolean() else true
-        
+
+        // Parse options if provided
+        var hasHeaders = true
+        var delimiter = ','
+
+        if (args.size > 1) {
+            val options = args[1] as? UDM.Object
+            if (options != null) {
+                // Check for headers option
+                val headersOption = options.properties["headers"]
+                if (headersOption is UDM.Scalar) {
+                    hasHeaders = headersOption.asBoolean()
+                }
+
+                // Check for delimiter option
+                val delimiterOption = options.properties["delimiter"]
+                if (delimiterOption is UDM.Scalar) {
+                    val delimiterStr = delimiterOption.asString()
+                    if (delimiterStr.isNotEmpty()) {
+                        delimiter = delimiterStr[0]
+                    }
+                }
+            }
+        }
+
         if (csvString.isBlank()) {
             throw FunctionArgumentException(
                 "parseCsv cannot parse empty or blank CSV string. " +
                 "Hint: Provide a valid CSV string like 'name,age\\nJohn,30'."
             )
         }
-        
+
         return try {
-            // Simple CSV parsing - in real implementation would use CSVParser
-            UDM.Array(listOf(UDM.Scalar(csvString))) // Placeholder implementation
+            val dialect = CSVDialect(delimiter = delimiter)
+            val parser = CSVParser(csvString, dialect)
+            parser.parse(hasHeaders)
         } catch (e: Exception) {
             throw FunctionArgumentException(
                 "parseCsv failed to parse CSV string: ${e.message}. " +

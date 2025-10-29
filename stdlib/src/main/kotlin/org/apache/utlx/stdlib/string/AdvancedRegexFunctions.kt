@@ -206,26 +206,33 @@ object AdvancedRegexFunctions {
         if (args.size < 2) {
             throw IllegalArgumentException("regexNamedGroups() requires 2 arguments: text, pattern")
         }
-        
+
         val text = args[0].asString()
         val pattern = args[1].asString()
-        
+
         try {
             val regex = Regex(pattern)
             val match = regex.find(text)
-            
+
             return if (match != null) {
                 val groups = mutableMapOf<String, UDM>()
-                
-                // Extract named groups - in Kotlin, named groups are accessed differently
-                // We'll extract all groups by index and try to map them
-                for (i in 1 until match.groups.size) {
-                    val group = match.groups[i]
-                    if (group != null) {
-                        groups["group_$i"] = UDM.Scalar(group.value)
+
+                // Extract named groups by parsing the pattern for group names
+                // Pattern: (?<name>...)
+                val namedGroupPattern = Regex("\\(\\?<([^>]+)>")
+                val groupNames = namedGroupPattern.findAll(pattern)
+                    .map { it.groupValues[1] }
+                    .toList()
+
+                // Map group names to their values
+                for ((index, groupName) in groupNames.withIndex()) {
+                    val groupIndex = index + 1  // Group 0 is full match
+                    val groupValue = match.groups[groupIndex]
+                    if (groupValue != null) {
+                        groups[groupName] = UDM.Scalar(groupValue.value)
                     }
                 }
-                
+
                 UDM.Object(groups)
             } else {
                 UDM.Object(mutableMapOf())
@@ -347,43 +354,41 @@ object AdvancedRegexFunctions {
         if (args.size < 2) {
             throw IllegalArgumentException("splitWithMatches() requires 2 arguments: text, pattern")
         }
-        
+
         val text = args[0].asString()
         val pattern = args[1].asString()
-        
+
         try {
             val regex = Regex(pattern)
+            val matches = regex.findAll(text).toList()
+
+            if (matches.isEmpty()) {
+                // No matches - return original text as single element array
+                return UDM.Array(listOf(UDM.Scalar(text)))
+            }
+
             val result = mutableListOf<UDM>()
             var lastEnd = 0
-            
-            regex.findAll(text).forEach { match ->
+
+            matches.forEach { match ->
                 // Add non-matching part before this match
                 if (match.range.first > lastEnd) {
                     val nonMatch = text.substring(lastEnd, match.range.first)
-                    result.add(UDM.Object(mutableMapOf(
-                        "text" to UDM.Scalar(nonMatch),
-                        "isMatch" to UDM.Scalar(false)
-                    )))
+                    result.add(UDM.Scalar(nonMatch))
                 }
-                
+
                 // Add matching part
-                result.add(UDM.Object(mutableMapOf(
-                    "text" to UDM.Scalar(match.value),
-                    "isMatch" to UDM.Scalar(true)
-                )))
-                
+                result.add(UDM.Scalar(match.value))
+
                 lastEnd = match.range.last + 1
             }
-            
+
             // Add remaining non-matching part
             if (lastEnd < text.length) {
                 val nonMatch = text.substring(lastEnd)
-                result.add(UDM.Object(mutableMapOf(
-                    "text" to UDM.Scalar(nonMatch),
-                    "isMatch" to UDM.Scalar(false)
-                )))
+                result.add(UDM.Scalar(nonMatch))
             }
-            
+
             return UDM.Array(result)
         } catch (e: Exception) {
             throw IllegalArgumentException("Invalid regex pattern: $pattern", e)
@@ -430,24 +435,15 @@ object AdvancedRegexFunctions {
         if (args.size < 2) {
             throw IllegalArgumentException("matchesWhole() requires 2 arguments: text, pattern")
         }
-        
+
         val text = args[0].asString()
         val pattern = args[1].asString()
-        
+
         try {
             val regex = Regex(pattern)
-            val match = regex.matchEntire(text)
-            
-            return if (match != null) {
-                UDM.Object(mutableMapOf(
-                    "match" to UDM.Scalar(match.value),
-                    "groups" to UDM.Array(
-                        match.groupValues.drop(1).map { UDM.Scalar(it) }
-                    )
-                ))
-            } else {
-                UDM.Scalar(null)
-            }
+            val matches = regex.matchEntire(text) != null
+
+            return UDM.Scalar(matches)
         } catch (e: Exception) {
             throw IllegalArgumentException("Invalid regex pattern: $pattern", e)
         }
