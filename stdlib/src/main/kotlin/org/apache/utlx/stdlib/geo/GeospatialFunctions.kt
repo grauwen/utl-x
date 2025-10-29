@@ -86,37 +86,69 @@ object GeospatialFunctions {
      * ```
      */
     fun distance(args: List<UDM>): UDM {
-        if (args.size < 4) {
-            throw IllegalArgumentException("distance() requires at least 4 arguments: lat1, lon1, lat2, lon2")
+        // Support both array-based and flat argument styles
+        val (lat1Val, lon1Val, lat2Val, lon2Val, unit) = when {
+            // Array style: distance([lat1, lon1], [lat2, lon2]) or distance([lat1, lon1], [lat2, lon2], unit)
+            args.size >= 2 && args[0] is UDM.Array && args[1] is UDM.Array -> {
+                val coord1 = args[0] as UDM.Array
+                val coord2 = args[1] as UDM.Array
+                if (coord1.elements.size != 2 || coord2.elements.size != 2) {
+                    throw IllegalArgumentException("Coordinate arrays must contain exactly 2 elements [lat, lon]")
+                }
+                val unitVal = if (args.size > 2) args[2].asString().lowercase() else "km"
+                Tuple5(
+                    coord1.elements[0].asNumber(),
+                    coord1.elements[1].asNumber(),
+                    coord2.elements[0].asNumber(),
+                    coord2.elements[1].asNumber(),
+                    unitVal
+                )
+            }
+            // Flat style: distance(lat1, lon1, lat2, lon2) or distance(lat1, lon1, lat2, lon2, unit)
+            args.size >= 4 -> {
+                val unitVal = if (args.size > 4) args[4].asString().lowercase() else "km"
+                Tuple5(
+                    args[0].asNumber(),
+                    args[1].asNumber(),
+                    args[2].asNumber(),
+                    args[3].asNumber(),
+                    unitVal
+                )
+            }
+            else -> throw IllegalArgumentException("distance() requires either 2 coordinate arrays [lat,lon] or 4 individual coordinates (lat1, lon1, lat2, lon2)")
         }
-        
-        val lat1 = Math.toRadians(args[0].asNumber())
-        val lon1 = Math.toRadians(args[1].asNumber())
-        val lat2 = Math.toRadians(args[2].asNumber())
-        val lon2 = Math.toRadians(args[3].asNumber())
-        val unit = if (args.size > 4) args[4].asString().toLowerCase() else "km"
-        
+
+        val lat1 = Math.toRadians(lat1Val)
+        val lon1 = Math.toRadians(lon1Val)
+        val lat2 = Math.toRadians(lat2Val)
+        val lon2 = Math.toRadians(lon2Val)
+
         // Validate coordinates
-        validateCoordinates(args[0].asNumber(), args[1].asNumber())
-        validateCoordinates(args[2].asNumber(), args[3].asNumber())
-        
+        validateCoordinates(lat1Val, lon1Val)
+        validateCoordinates(lat2Val, lon2Val)
+
         // Haversine formula
         val dLat = lat2 - lat1
         val dLon = lon2 - lon1
-        
+
         val a = sin(dLat / 2).pow(2) + cos(lat1) * cos(lat2) * sin(dLon / 2).pow(2)
         val c = 2 * asin(sqrt(a))
-        
+
         val radius = when (unit) {
             "mi", "miles" -> EARTH_RADIUS_MI
             "m", "meters" -> EARTH_RADIUS_M
             "nm", "nautical" -> EARTH_RADIUS_NM
             else -> EARTH_RADIUS_KM
         }
-        
+
         val distance = radius * c
         return UDM.Scalar(distance)
     }
+
+    // Helper data classes for coordinate tuples
+    private data class Tuple4<A, B, C, D>(val v1: A, val v2: B, val v3: C, val v4: D)
+    private data class Tuple5<A, B, C, D, E>(val v1: A, val v2: B, val v3: C, val v4: D, val v5: E)
+    private data class Tuple6<A, B, C, D, E, F>(val v1: A, val v2: B, val v3: C, val v4: D, val v5: E, val v6: F)
     
     @UTLXFunction(
         description = "Calculates the initial bearing (forward azimuth) from point1 to point2.",
@@ -160,17 +192,41 @@ object GeospatialFunctions {
      * ```
      */
     fun bearing(args: List<UDM>): UDM {
-        if (args.size < 4) {
-            throw IllegalArgumentException("bearing() requires 4 arguments: lat1, lon1, lat2, lon2")
+        // Support both array-based and flat argument styles
+        val (lat1Val, lon1Val, lat2Val, lon2Val) = when {
+            // Array style: bearing([lat1, lon1], [lat2, lon2])
+            args.size >= 2 && args[0] is UDM.Array && args[1] is UDM.Array -> {
+                val coord1 = args[0] as UDM.Array
+                val coord2 = args[1] as UDM.Array
+                if (coord1.elements.size != 2 || coord2.elements.size != 2) {
+                    throw IllegalArgumentException("Coordinate arrays must contain exactly 2 elements [lat, lon]")
+                }
+                Tuple4(
+                    coord1.elements[0].asNumber(),
+                    coord1.elements[1].asNumber(),
+                    coord2.elements[0].asNumber(),
+                    coord2.elements[1].asNumber()
+                )
+            }
+            // Flat style: bearing(lat1, lon1, lat2, lon2)
+            args.size >= 4 -> {
+                Tuple4(
+                    args[0].asNumber(),
+                    args[1].asNumber(),
+                    args[2].asNumber(),
+                    args[3].asNumber()
+                )
+            }
+            else -> throw IllegalArgumentException("bearing() requires either 2 coordinate arrays [lat,lon] or 4 individual coordinates (lat1, lon1, lat2, lon2)")
         }
-        
-        val lat1 = Math.toRadians(args[0].asNumber())
-        val lon1 = Math.toRadians(args[1].asNumber())
-        val lat2 = Math.toRadians(args[2].asNumber())
-        val lon2 = Math.toRadians(args[3].asNumber())
-        
-        validateCoordinates(args[0].asNumber(), args[1].asNumber())
-        validateCoordinates(args[2].asNumber(), args[3].asNumber())
+
+        val lat1 = Math.toRadians(lat1Val)
+        val lon1 = Math.toRadians(lon1Val)
+        val lat2 = Math.toRadians(lat2Val)
+        val lon2 = Math.toRadians(lon2Val)
+
+        validateCoordinates(lat1Val, lon1Val)
+        validateCoordinates(lat2Val, lon2Val)
         
         val dLon = lon2 - lon1
         val y = sin(dLon) * cos(lat2)
@@ -234,23 +290,51 @@ object GeospatialFunctions {
      * ```
      */
     fun isPointInCircle(args: List<UDM>): UDM {
-        if (args.size < 5) {
-            throw IllegalArgumentException("isPointInCircle() requires at least 5 arguments: pointLat, pointLon, centerLat, centerLon, radius")
+        // Support both array-based and flat argument styles
+        val (pointLat, pointLon, centerLat, centerLon, radius, unit) = when {
+            // Array style: isPointInCircle([lat, lon], [centerLat, centerLon], radius) or with unit
+            args.size >= 3 && args[0] is UDM.Array && args[1] is UDM.Array -> {
+                val point = args[0] as UDM.Array
+                val center = args[1] as UDM.Array
+                if (point.elements.size != 2 || center.elements.size != 2) {
+                    throw IllegalArgumentException("Coordinate arrays must contain exactly 2 elements [lat, lon]")
+                }
+                val radiusVal = args[2].asNumber()
+                val unitVal = if (args.size > 3) args[3].asString() else "km"
+                Tuple6(
+                    point.elements[0].asNumber(),
+                    point.elements[1].asNumber(),
+                    center.elements[0].asNumber(),
+                    center.elements[1].asNumber(),
+                    radiusVal,
+                    unitVal
+                )
+            }
+            // Flat style: isPointInCircle(pointLat, pointLon, centerLat, centerLon, radius) or with unit
+            args.size >= 5 -> {
+                val unitVal = if (args.size > 5) args[5].asString() else "km"
+                Tuple6(
+                    args[0].asNumber(),
+                    args[1].asNumber(),
+                    args[2].asNumber(),
+                    args[3].asNumber(),
+                    args[4].asNumber(),
+                    unitVal
+                )
+            }
+            else -> throw IllegalArgumentException("isPointInCircle() requires either 3 arguments (point_array, center_array, radius) or 5 arguments (pointLat, pointLon, centerLat, centerLon, radius)")
         }
-        
-        val pointLat = args[0].asNumber()
-        val pointLon = args[1].asNumber()
-        val centerLat = args[2].asNumber()
-        val centerLon = args[3].asNumber()
-        val radius = args[4].asNumber()
-        val unit = if (args.size > 5) args[5].asString() else "km"
-        
+
+        if (radius < 0) {
+            throw IllegalArgumentException("Radius must be non-negative, got: $radius")
+        }
+
         val dist = distance(listOf(
             UDM.Scalar(pointLat), UDM.Scalar(pointLon),
             UDM.Scalar(centerLat), UDM.Scalar(centerLon),
             UDM.Scalar(unit)
         )).asNumber()
-        
+
         return UDM.Scalar(dist <= radius)
     }
     
@@ -299,13 +383,27 @@ object GeospatialFunctions {
      * ```
      */
     fun isPointInPolygon(args: List<UDM>): UDM {
-        if (args.size < 3) {
-            throw IllegalArgumentException("isPointInPolygon() requires 3 arguments: pointLat, pointLon, polygon")
+        // Support both array-based and flat argument styles
+        val (pointLat, pointLon, polygonArg) = when {
+            // Array style: isPointInPolygon([lat, lon], polygon)
+            args.size >= 2 && args[0] is UDM.Array && (args[0] as UDM.Array).elements.size == 2 -> {
+                val point = args[0] as UDM.Array
+                Triple(
+                    point.elements[0].asNumber(),
+                    point.elements[1].asNumber(),
+                    args[1]
+                )
+            }
+            // Flat style: isPointInPolygon(lat, lon, polygon)
+            args.size >= 3 -> {
+                Triple(
+                    args[0].asNumber(),
+                    args[1].asNumber(),
+                    args[2]
+                )
+            }
+            else -> throw IllegalArgumentException("isPointInPolygon() requires either 2 arguments (point_array, polygon) or 3 arguments (pointLat, pointLon, polygon)")
         }
-        
-        val pointLat = args[0].asNumber()
-        val pointLon = args[1].asNumber()
-        val polygonArg = args[2]
         
         if (polygonArg !is UDM.Array) {
             throw IllegalArgumentException("Polygon must be an array of coordinate pairs")
@@ -384,17 +482,41 @@ object GeospatialFunctions {
      * ```
      */
     fun midpoint(args: List<UDM>): UDM {
-        if (args.size < 4) {
-            throw IllegalArgumentException("midpoint() requires 4 arguments: lat1, lon1, lat2, lon2")
+        // Support both array-based and flat argument styles
+        val (lat1Val, lon1Val, lat2Val, lon2Val) = when {
+            // Array style: midpoint([lat1, lon1], [lat2, lon2])
+            args.size >= 2 && args[0] is UDM.Array && args[1] is UDM.Array -> {
+                val coord1 = args[0] as UDM.Array
+                val coord2 = args[1] as UDM.Array
+                if (coord1.elements.size != 2 || coord2.elements.size != 2) {
+                    throw IllegalArgumentException("Coordinate arrays must contain exactly 2 elements [lat, lon]")
+                }
+                Tuple4(
+                    coord1.elements[0].asNumber(),
+                    coord1.elements[1].asNumber(),
+                    coord2.elements[0].asNumber(),
+                    coord2.elements[1].asNumber()
+                )
+            }
+            // Flat style: midpoint(lat1, lon1, lat2, lon2)
+            args.size >= 4 -> {
+                Tuple4(
+                    args[0].asNumber(),
+                    args[1].asNumber(),
+                    args[2].asNumber(),
+                    args[3].asNumber()
+                )
+            }
+            else -> throw IllegalArgumentException("midpoint() requires either 2 coordinate arrays [lat,lon] or 4 individual coordinates (lat1, lon1, lat2, lon2)")
         }
-        
-        val lat1 = Math.toRadians(args[0].asNumber())
-        val lon1 = Math.toRadians(args[1].asNumber())
-        val lat2 = Math.toRadians(args[2].asNumber())
-        val lon2 = Math.toRadians(args[3].asNumber())
-        
-        validateCoordinates(args[0].asNumber(), args[1].asNumber())
-        validateCoordinates(args[2].asNumber(), args[3].asNumber())
+
+        val lat1 = Math.toRadians(lat1Val)
+        val lon1 = Math.toRadians(lon1Val)
+        val lat2 = Math.toRadians(lat2Val)
+        val lon2 = Math.toRadians(lon2Val)
+
+        validateCoordinates(lat1Val, lon1Val)
+        validateCoordinates(lat2Val, lon2Val)
         
         val dLon = lon2 - lon1
         
@@ -406,10 +528,10 @@ object GeospatialFunctions {
             sqrt((cos(lat1) + bx).pow(2) + by.pow(2))
         )
         val lon3 = lon1 + atan2(by, cos(lat1) + bx)
-        
-        return UDM.Object(mutableMapOf(
-            "lat" to UDM.Scalar(Math.toDegrees(lat3)),
-            "lon" to UDM.Scalar(Math.toDegrees(lon3))
+
+        return UDM.Array(listOf(
+            UDM.Scalar(Math.toDegrees(lat3)),
+            UDM.Scalar(Math.toDegrees(lon3))
         ))
     }
     
@@ -453,17 +575,47 @@ object GeospatialFunctions {
      * ```
      */
     fun destinationPoint(args: List<UDM>): UDM {
-        if (args.size < 4) {
-            throw IllegalArgumentException("destinationPoint() requires at least 4 arguments: lat, lon, bearing, distance")
+        // Support both array-based and flat argument styles
+        val (latVal, lonVal, distance, bearingDeg, unit) = when {
+            // Array style: destinationPoint([lat, lon], distance, bearing) or with unit
+            args.size >= 3 && args[0] is UDM.Array -> {
+                val point = args[0] as UDM.Array
+                if (point.elements.size != 2) {
+                    throw IllegalArgumentException("Coordinate array must contain exactly 2 elements [lat, lon]")
+                }
+                val distVal = args[1].asNumber()
+                val bearingVal = args[2].asNumber()
+                val unitVal = if (args.size > 3) args[3].asString().lowercase() else "km"
+                Tuple5(
+                    point.elements[0].asNumber(),
+                    point.elements[1].asNumber(),
+                    distVal,
+                    bearingVal,
+                    unitVal
+                )
+            }
+            // Flat style: destinationPoint(lat, lon, distance, bearing) or with unit
+            args.size >= 4 -> {
+                val unitVal = if (args.size > 4) args[4].asString().lowercase() else "km"
+                Tuple5(
+                    args[0].asNumber(),
+                    args[1].asNumber(),
+                    args[2].asNumber(),
+                    args[3].asNumber(),
+                    unitVal
+                )
+            }
+            else -> throw IllegalArgumentException("destinationPoint() requires either 3 arguments (point_array, distance, bearing) or 4 arguments (lat, lon, distance, bearing)")
         }
-        
-        val lat = Math.toRadians(args[0].asNumber())
-        val lon = Math.toRadians(args[1].asNumber())
-        val bearingDeg = args[2].asNumber()
-        val distance = args[3].asNumber()
-        val unit = if (args.size > 4) args[4].asString().toLowerCase() else "km"
-        
-        validateCoordinates(args[0].asNumber(), args[1].asNumber())
+
+        if (bearingDeg < 0 || bearingDeg > 360) {
+            throw IllegalArgumentException("Bearing must be between 0 and 360 degrees, got: $bearingDeg")
+        }
+
+        val lat = Math.toRadians(latVal)
+        val lon = Math.toRadians(lonVal)
+
+        validateCoordinates(latVal, lonVal)
         
         val radius = when (unit) {
             "mi", "miles" -> EARTH_RADIUS_MI
@@ -485,9 +637,9 @@ object GeospatialFunctions {
             cos(angularDistance) - sin(lat) * sin(lat2)
         )
         
-        return UDM.Object(mutableMapOf(
-            "lat" to UDM.Scalar(Math.toDegrees(lat2)),
-            "lon" to UDM.Scalar(Math.toDegrees(lon2))
+        return UDM.Array(listOf(
+            UDM.Scalar(Math.toDegrees(lat2)),
+            UDM.Scalar(Math.toDegrees(lon2))
         ))
     }
     
@@ -542,15 +694,26 @@ object GeospatialFunctions {
         var maxLon = -Double.MAX_VALUE
         
         coords.elements.forEach { coord ->
-            if (coord !is UDM.Object) {
-                throw IllegalArgumentException("Each coordinate must be an object with lat and lon")
+            val (lat, lon) = when (coord) {
+                is UDM.Array -> {
+                    if (coord.elements.size != 2) {
+                        throw IllegalArgumentException("Each coordinate array must contain exactly 2 elements [lat, lon]")
+                    }
+                    Pair(
+                        coord.elements[0].asNumber(),
+                        coord.elements[1].asNumber()
+                    )
+                }
+                is UDM.Object -> {
+                    val latVal = coord.properties["lat"]?.asNumber()
+                        ?: throw IllegalArgumentException("Missing lat property in coordinate object")
+                    val lonVal = coord.properties["lon"]?.asNumber()
+                        ?: throw IllegalArgumentException("Missing lon property in coordinate object")
+                    Pair(latVal, lonVal)
+                }
+                else -> throw IllegalArgumentException("Each coordinate must be either an array [lat, lon] or an object {lat, lon}")
             }
-            
-            val lat = coord.properties["lat"]?.asNumber() 
-                ?: throw IllegalArgumentException("Missing lat property")
-            val lon = coord.properties["lon"]?.asNumber() 
-                ?: throw IllegalArgumentException("Missing lon property")
-            
+
             minLat = minOf(minLat, lat)
             maxLat = maxOf(maxLat, lat)
             minLon = minOf(minLon, lon)
@@ -613,13 +776,29 @@ object GeospatialFunctions {
      * ```
      */
     fun isValidCoordinates(args: List<UDM>): UDM {
-        if (args.size < 2) {
-            throw IllegalArgumentException("isValidCoordinates() requires 2 arguments: lat, lon")
+        // Support both array-based and flat argument styles
+        val (lat, lon) = when {
+            // Array style: isValidCoordinates([lat, lon])
+            args.size >= 1 && args[0] is UDM.Array -> {
+                val coord = args[0] as UDM.Array
+                if (coord.elements.size != 2) {
+                    throw IllegalArgumentException("Coordinate array must contain exactly 2 elements [lat, lon]")
+                }
+                Pair(
+                    coord.elements[0].asNumber(),
+                    coord.elements[1].asNumber()
+                )
+            }
+            // Flat style: isValidCoordinates(lat, lon)
+            args.size >= 2 -> {
+                Pair(
+                    args[0].asNumber(),
+                    args[1].asNumber()
+                )
+            }
+            else -> throw IllegalArgumentException("isValidCoordinates() requires either 1 coordinate array [lat,lon] or 2 individual coordinates (lat, lon)")
         }
-        
-        val lat = args[0].asNumber()
-        val lon = args[1].asNumber()
-        
+
         val valid = lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
         return UDM.Scalar(valid)
     }
