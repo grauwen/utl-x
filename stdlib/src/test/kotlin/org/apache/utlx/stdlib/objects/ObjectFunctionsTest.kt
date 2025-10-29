@@ -490,11 +490,14 @@ class ObjectFunctionsTest {
             "c" to UDM.Scalar(3)
         ))
         // Predicate: value > 2
-        // This would need function support - simplified test
-        
-        val result = EnhancedObjectFunctions.someEntry(listOf(obj, UDM.Scalar(">2")))
-        // Verify it returns a boolean
+        val predicate = UDM.Lambda { args ->
+            val value = (args[1] as UDM.Scalar).value as Number
+            UDM.Scalar(value.toDouble() > 2.0)
+        }
+
+        val result = EnhancedObjectFunctions.someEntry(listOf(obj, predicate))
         assertTrue(result is UDM.Scalar)
+        assertEquals(true, (result as UDM.Scalar).value) // c=3 is > 2
     }
     
     @Test
@@ -505,9 +508,14 @@ class ObjectFunctionsTest {
             "c" to UDM.Scalar(15)
         ))
         // Predicate: value > 0
-        
-        val result = EnhancedObjectFunctions.everyEntry(listOf(obj, UDM.Scalar(">0")))
+        val predicate = UDM.Lambda { args ->
+            val value = (args[1] as UDM.Scalar).value as Number
+            UDM.Scalar(value.toDouble() > 0.0)
+        }
+
+        val result = EnhancedObjectFunctions.everyEntry(listOf(obj, predicate))
         assertTrue(result is UDM.Scalar)
+        assertEquals(true, (result as UDM.Scalar).value) // All values > 0
     }
     
     @Test
@@ -518,12 +526,19 @@ class ObjectFunctionsTest {
             "c" to UDM.Scalar(3)
         ))
         // Function: multiply by 2
-        
-        val result = EnhancedObjectFunctions.mapValues(listOf(obj, UDM.Scalar("*2")))
+        val mapper = UDM.Lambda { args ->
+            val value = (args[0] as UDM.Scalar).value as Number
+            UDM.Scalar(value.toDouble() * 2)
+        }
+
+        val result = EnhancedObjectFunctions.mapValues(listOf(obj, mapper))
         val mapped = result as UDM.Object
-        
+
         assertEquals(3, mapped.properties.size)
         assertTrue(mapped.properties.containsKey("a"))
+        assertEquals(2, (mapped.properties["a"] as UDM.Scalar).value) // 1 * 2 = 2
+        assertEquals(4, (mapped.properties["b"] as UDM.Scalar).value) // 2 * 2 = 4
+        assertEquals(6, (mapped.properties["c"] as UDM.Scalar).value) // 3 * 2 = 6
     }
     
     @Test
@@ -532,12 +547,24 @@ class ObjectFunctionsTest {
             "first_name" to UDM.Scalar("John"),
             "last_name" to UDM.Scalar("Doe")
         ))
-        // Function: convert to camelCase
-        
-        val result = EnhancedObjectFunctions.mapKeys(listOf(obj, UDM.Scalar("camelCase")))
+        // Function: convert snake_case to camelCase
+        val mapper = UDM.Lambda { args ->
+            val key = (args[0] as UDM.Scalar).value.toString()
+            // Convert snake_case to camelCase
+            val camelCase = key.split("_").mapIndexed { index, part ->
+                if (index == 0) part else part.replaceFirstChar { it.uppercase() }
+            }.joinToString("")
+            UDM.Scalar(camelCase)
+        }
+
+        val result = EnhancedObjectFunctions.mapKeys(listOf(obj, mapper))
         val mapped = result as UDM.Object
-        
+
         assertEquals(2, mapped.properties.size)
+        assertTrue(mapped.properties.containsKey("firstName"))
+        assertTrue(mapped.properties.containsKey("lastName"))
+        assertEquals("John", (mapped.properties["firstName"] as UDM.Scalar).value)
+        assertEquals("Doe", (mapped.properties["lastName"] as UDM.Scalar).value)
     }
     
     @Test
@@ -549,11 +576,16 @@ class ObjectFunctionsTest {
             "d" to UDM.Scalar(4)
         ))
         // Predicate: value > 2
-        
-        val result = EnhancedObjectFunctions.countEntries(listOf(obj, UDM.Scalar(">2")))
+        val predicate = UDM.Lambda { args ->
+            val value = (args[1] as UDM.Scalar).value as Number
+            UDM.Scalar(value.toDouble() > 2.0)
+        }
+
+        val result = EnhancedObjectFunctions.countEntries(listOf(obj, predicate))
         val count = (result as UDM.Scalar).value as Int
-        
-        assertTrue(count >= 0 && count <= 4)
+
+        // Values 3 and 4 are > 2, so count should be 2
+        assertEquals(2, count)
     }
 
     // ==================== Real-World Scenarios ====================

@@ -317,19 +317,22 @@ deepMerge({a: {b: 1}}, {a: {c: 2}}) => {a: {b: 1, c: 2}}  // Merges!""",
     @UTLXFunction(
         description = "Get nested value using path",
         minArgs = 2,
-        maxArgs = 2,
+        maxArgs = 3,
         category = "Other",
         parameters = [
-            "array: Input array to process",
-        "path: Path value"
+            "object: Input object to process",
+            "path: Path value",
+            "defaultValue: Optional default value to return if path doesn't exist"
         ],
-        returns = "null if path doesn't exist",
+        returns = "Value at path, or null/defaultValue if path doesn't exist",
         example = "getPath({a: {b: {c: 1}}}, [\"a\", \"b\", \"c\"]) => 1",
         additionalExamples = [
-            "getPath({users: [{name: \"Alice\"}]}, [\"users\", 0, \"name\"]) => \"Alice\""
+            "getPath({users: [{name: \"Alice\"}]}, [\"users\", 0, \"name\"]) => \"Alice\"",
+            "getPath({a: 1}, \"b.c\", \"default\") => \"default\""
         ],
-        notes = """Returns null if path doesn't exist
-Safer alternative to direct navigation when path might not exist""",
+        notes = """Returns null if path doesn't exist (unless defaultValue provided)
+Safer alternative to direct navigation when path might not exist
+Optional third parameter provides default value when path not found""",
         tags = ["null-handling", "other"],
         since = "1.0"
     )
@@ -344,12 +347,13 @@ Safer alternative to direct navigation when path might not exist""",
      * Safer alternative to direct navigation when path might not exist
      */
     fun getPath(args: List<UDM>): UDM {
-        if (args.size != 2) {
-            throw IllegalArgumentException("getPath expects 2 arguments (object, path), got ${args.size}")
+        if (args.size < 2 || args.size > 3) {
+            throw IllegalArgumentException("getPath expects 2-3 arguments (object, path, [defaultValue]), got ${args.size}")
         }
-        
+
         var current = args[0]
         val pathArg = args[1]
+        val defaultValue = if (args.size == 3) args[2] else UDM.Scalar(null)
 
         // Support both string paths ("a.b.c") and array paths (["a", "b", "c"])
         val pathElements = when (pathArg) {
@@ -365,25 +369,25 @@ Safer alternative to direct navigation when path might not exist""",
             current = when (current) {
                 is UDM.Object -> {
                     if (segment !is UDM.Scalar) {
-                        return UDM.Scalar(null)
+                        return defaultValue
                     }
                     val key = segment.value.toString()
-                    current.properties[key] ?: return UDM.Scalar(null)
+                    current.properties[key] ?: return defaultValue
                 }
                 is UDM.Array -> {
                     if (segment !is UDM.Scalar || segment.value !is Number) {
-                        return UDM.Scalar(null)
+                        return defaultValue
                     }
                     val index = (segment.value as Number).toInt()
                     if (index < 0 || index >= current.elements.size) {
-                        return UDM.Scalar(null)
+                        return defaultValue
                     }
                     current.elements[index]
                 }
-                else -> return UDM.Scalar(null)
+                else -> return defaultValue
             }
         }
-        
+
         return current
     }
     

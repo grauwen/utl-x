@@ -87,15 +87,14 @@ class EnhancedObjectFunctionsTest {
             "b" to UDM.Scalar(15),
             "c" to UDM.Scalar(3)
         ))
-        
-        // Test basic functionality (currently returns false due to placeholder implementation)
+
+        // Test basic functionality - predicate returns true for all entries
         val dummyPredicate = UDM.Lambda { _ -> UDM.Scalar(true) }
         val result = EnhancedObjectFunctions.someEntry(listOf(obj, dummyPredicate))
-        
+
         assertTrue(result is UDM.Scalar)
-        // Note: Due to placeholder implementation, this will be false
-        // In real implementation, would test actual predicate logic
-        assertEquals(false, (result as UDM.Scalar).value)
+        // Since predicate returns true for all entries, someEntry should return true
+        assertEquals(true, (result as UDM.Scalar).value)
     }
 
     @Test
@@ -126,15 +125,20 @@ class EnhancedObjectFunctionsTest {
             "a" to UDM.Scalar(1),
             "b" to UDM.Scalar(2)
         ))
-        
-        // Test basic functionality (currently returns original object due to placeholder)
-        val dummyMapper = UDM.Lambda { _ -> UDM.Scalar(true) }
+
+        // Mapper that returns object with key and value properties (keeps entries unchanged)
+        val dummyMapper = UDM.Lambda { args ->
+            UDM.Object(mutableMapOf(
+                "key" to args[0],
+                "value" to args[1]
+            ))
+        }
         val result = EnhancedObjectFunctions.mapEntries(listOf(obj, dummyMapper))
-        
+
         assertTrue(result is UDM.Object)
         val resultObj = result as UDM.Object
-        
-        // In placeholder implementation, should return original object
+
+        // Mapper keeps entries unchanged, so original keys and values remain
         assertEquals(2, resultObj.properties.size)
         assertTrue(resultObj.properties.containsKey("a"))
         assertTrue(resultObj.properties.containsKey("b"))
@@ -178,20 +182,21 @@ class EnhancedObjectFunctionsTest {
             "b" to UDM.Scalar(2),
             "c" to UDM.Scalar(3)
         ))
-        
+
+        // Lambda that always returns true
         val dummyReducer = UDM.Lambda { _ -> UDM.Scalar(true) }
         val initialValue = UDM.Scalar(0)
-        
-        // Test basic functionality (currently returns initial value due to placeholder)
-        val result = EnhancedObjectFunctions.reduceEntries(listOf(obj, dummyReducer, initialValue))
-        
-        // In placeholder implementation, should return initial value unchanged
-        assertEquals(0, (result as UDM.Scalar).value)
 
-        // Test with different initial value
+        // The reducer will be called for each entry and returns true
+        val result = EnhancedObjectFunctions.reduceEntries(listOf(obj, dummyReducer, initialValue))
+
+        // After processing entries with dummy reducer that returns true, result should be true
+        assertEquals(true, (result as UDM.Scalar).value)
+
+        // Test with different initial value - reducer still returns true
         val initialString = UDM.Scalar("start")
         val result2 = EnhancedObjectFunctions.reduceEntries(listOf(obj, dummyReducer, initialString))
-        assertEquals("start", (result2 as UDM.Scalar).value)
+        assertEquals(true, (result2 as UDM.Scalar).value)
     }
 
     @Test
@@ -222,19 +227,19 @@ class EnhancedObjectFunctionsTest {
             "firstName" to UDM.Scalar("Alice"),
             "lastName" to UDM.Scalar("Smith")
         ))
-        
+
+        // Mapper that transforms all keys to "mapped"
         val dummyMapper = UDM.Lambda { _ -> UDM.Scalar("mapped") }
         val result = EnhancedObjectFunctions.mapKeys(listOf(obj, dummyMapper))
-        
+
         assertTrue(result is UDM.Object)
         val resultObj = result as UDM.Object
-        
-        // In placeholder implementation, should return original keys
-        assertEquals(2, resultObj.properties.size)
-        assertTrue(resultObj.properties.containsKey("firstName"))
-        assertTrue(resultObj.properties.containsKey("lastName"))
-        assertEquals("Alice", (resultObj.properties["firstName"] as UDM.Scalar).value)
-        assertEquals("Smith", (resultObj.properties["lastName"] as UDM.Scalar).value)
+
+        // Since all keys become "mapped", duplicate keys collapse into 1 property
+        // The last entry wins (lastName's value "Smith")
+        assertEquals(1, resultObj.properties.size)
+        assertTrue(resultObj.properties.containsKey("mapped"))
+        assertEquals("Smith", (resultObj.properties["mapped"] as UDM.Scalar).value)
     }
 
     @Test
@@ -244,18 +249,19 @@ class EnhancedObjectFunctionsTest {
             "b" to UDM.Scalar(2),
             "c" to UDM.Scalar(3)
         ))
-        
+
+        // Mapper that transforms all values to "mapped"
         val dummyMapper = UDM.Lambda { _ -> UDM.Scalar("mapped") }
         val result = EnhancedObjectFunctions.mapValues(listOf(obj, dummyMapper))
-        
+
         assertTrue(result is UDM.Object)
         val resultObj = result as UDM.Object
-        
-        // In placeholder implementation, should return original values
+
+        // All values should be transformed to "mapped"
         assertEquals(3, resultObj.properties.size)
-        assertEquals(1, (resultObj.properties["a"] as UDM.Scalar).value)
-        assertEquals(2, (resultObj.properties["b"] as UDM.Scalar).value)
-        assertEquals(3, (resultObj.properties["c"] as UDM.Scalar).value)
+        assertEquals("mapped", (resultObj.properties["a"] as UDM.Scalar).value)
+        assertEquals("mapped", (resultObj.properties["b"] as UDM.Scalar).value)
+        assertEquals("mapped", (resultObj.properties["c"] as UDM.Scalar).value)
     }
 
     @Test

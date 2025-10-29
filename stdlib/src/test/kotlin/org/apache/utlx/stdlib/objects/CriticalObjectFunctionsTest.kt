@@ -443,12 +443,14 @@ class CriticalObjectFunctionsTest {
 
     @Test
     fun testGetPathInvalidArgs() {
+        // Test with wrong number of arguments (too few)
         assertThrows<IllegalArgumentException> {
             CriticalObjectFunctions.getPath(listOf(UDM.Object(mapOf())))
         }
-        
+
+        // Test with wrong number of arguments (too many)
         assertThrows<IllegalArgumentException> {
-            CriticalObjectFunctions.getPath(listOf(UDM.Object(mapOf()), UDM.Scalar("not array")))
+            CriticalObjectFunctions.getPath(listOf(UDM.Object(mapOf()), UDM.Scalar("path"), UDM.Scalar("default"), UDM.Scalar("extra")))
         }
     }
 
@@ -515,16 +517,19 @@ class CriticalObjectFunctionsTest {
 
     @Test
     fun testSetPathInvalidArgs() {
+        // Test with wrong number of arguments
         assertThrows<IllegalArgumentException> {
             CriticalObjectFunctions.setPath(listOf(UDM.Object(mapOf()), UDM.Array(listOf())))
         }
-        
+
+        // Test with non-object as first argument
         assertThrows<IllegalArgumentException> {
             CriticalObjectFunctions.setPath(listOf(UDM.Scalar("not object"), UDM.Array(listOf()), UDM.Scalar(1)))
         }
-        
+
+        // Test with invalid path type (not string or array) - e.g., Binary
         assertThrows<IllegalArgumentException> {
-            CriticalObjectFunctions.setPath(listOf(UDM.Object(mapOf()), UDM.Scalar("not array"), UDM.Scalar(1)))
+            CriticalObjectFunctions.setPath(listOf(UDM.Object(mapOf()), UDM.Binary(byteArrayOf(1, 2, 3)), UDM.Scalar(1)))
         }
     }
 
