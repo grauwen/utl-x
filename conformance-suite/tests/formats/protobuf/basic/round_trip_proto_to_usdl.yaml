@@ -1,0 +1,52 @@
+name: "protobuf_round_trip_proto_to_usdl"
+category: "formats/protobuf/basic"
+description: "Round-trip test: Proto3 -> USDL -> Proto3 preserves structure"
+tags: ['protobuf', 'proto3', 'schema', 'round-trip', 'reverse']
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+
+    package com.example;
+
+    message User {
+      int64 id = 1;
+      string name = 2;
+      bool active = 3;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  let protoGenerated = renderProtobufSchema($input)
+  {
+    originalHasNamespace: hasKey($input, "%namespace"),
+    originalNamespace: $input["%namespace"],
+    originalTypeName: keys($input["%types"])[0],
+    originalFieldCount: count($input["%types"]["User"]["%fields"]),
+    regeneratedProtoContainsPackage: contains(protoGenerated, "package com.example"),
+    regeneratedProtoContainsMessage: contains(protoGenerated, "message User"),
+    regeneratedProtoContainsInt64: contains(protoGenerated, "int64 id = 1"),
+    regeneratedProtoContainsString: contains(protoGenerated, "string name = 2"),
+    regeneratedProtoContainsBool: contains(protoGenerated, "bool active = 3"),
+    roundTripSuccessful: true
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "originalHasNamespace": true,
+      "originalNamespace": "com.example",
+      "originalTypeName": "User",
+      "originalFieldCount": 3,
+      "regeneratedProtoContainsPackage": true,
+      "regeneratedProtoContainsMessage": true,
+      "regeneratedProtoContainsInt64": true,
+      "regeneratedProtoContainsString": true,
+      "regeneratedProtoContainsBool": true,
+      "roundTripSuccessful": true
+    }
