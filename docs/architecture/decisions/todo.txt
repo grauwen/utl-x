@@ -11,15 +11,13 @@ hese XSDParserTest failures appear to be pre-existing issues with the parser (no
   Likely cause: type may be a reserved keyword or conflicts with the type system. ?
 So the parser has a bug where it's rejecting type as a parameter name when it shouldn't. Should I investigate why the parser is rejecting it?
 ----
-The parsed UDM can be:
- * 1. Serialized back to Avro schema (round-trip)
- * 2. Transformed to other schema formats (XSD, JSON Schema)
+IDE integration (LSP for validation)                                                                                                                                                
+CI/CD pipelines (fail on errors, warn on lint issues)                                                                                                                               Pre-commit hooks                                                                                                                                                                    Build-time validation   
 ---
 Later
   - OPENAPI - OpenAPI 3.x specs (JSON/YAML with schema embedded)
-  - AVRO - Avro schema (if demand exists)
-  - PROTOBUF - Protocol Buffers schema (if demand exists)
   - RAML
+  - RAML fragment
   - ASYNCAPI
 and more. Need to rethink
 ----
