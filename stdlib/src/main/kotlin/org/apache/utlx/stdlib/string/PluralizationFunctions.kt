@@ -90,7 +90,8 @@ object PluralizationFunctions {
         "fish", "sheep", "moose", "deer", "news", "music", "furniture",
         "luggage", "baggage", "homework", "software", "hardware", "advice",
         "knowledge", "research", "evidence", "progress", "traffic", "weather",
-        "work", "data", "staff", "police", "cattle", "clothing", "jewelry"
+        "work", "data", "staff", "police", "cattle", "clothing", "jewelry",
+        "water" // Added water as uncountable
     )
     
     // ============================================
@@ -140,12 +141,15 @@ object PluralizationFunctions {
         val word = args[0]
         val count = if (args.size > 1) args[1] else UDM.Scalar.nullValue()
         
-        val singular = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
+        val singular = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase()
             ?: return UDM.Scalar.nullValue()
-        
+
         // Check if count is provided and equals 1
-        if (count is UDM.Scalar && count.value == 1.0) {
-            return word // Return singular form
+        if (count is UDM.Scalar) {
+            val countValue = count.value
+            if (countValue == 1 || countValue == 1.0) {
+                return word // Return singular form
+            }
         }
         
         // Handle empty string
@@ -163,10 +167,12 @@ object PluralizationFunctions {
         
         // Apply regular pluralization rules
         val plural = when {
-            // Words ending in s, x, z, ch, sh: add "es"
-            singular.endsWith("s") || 
-            singular.endsWith("x") || 
-            singular.endsWith("z") ||
+            // Words ending in z: double z and add "es"
+            singular.endsWith("z") -> singular + "zes"
+
+            // Words ending in s, x, ch, sh: add "es"
+            singular.endsWith("s") ||
+            singular.endsWith("x") ||
             singular.endsWith("ch") ||
             singular.endsWith("sh") -> singular + "es"
             
@@ -344,12 +350,12 @@ object PluralizationFunctions {
         if (args.size < 2) {
             throw FunctionArgumentException("pluralizeWithCount expects 2 arguments")
         }
-        
+
         val word = args[0]
         val count = args[1]
         val num = (count as? UDM.Scalar)?.value ?: return word
-        
-        return if (num == 1.0) {
+
+        return if (num == 1 || num == 1.0) {
             word
         } else {
             pluralize(listOf(word, count))
@@ -388,26 +394,26 @@ object PluralizationFunctions {
         if (args.isEmpty()) {
             throw FunctionArgumentException("isPlural expects 1 argument")
         }
-        
+
         val word = args[0]
-        val text = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
+        val text = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase()
             ?: return UDM.Scalar(false)
-        
+
+        // Check if it's an uncountable noun (ambiguous) - check this FIRST
+        if (uncountableNouns.contains(text)) {
+            return UDM.Scalar(false)
+        }
+
         // Check if it's an irregular plural
         if (irregularSingulars.containsKey(text)) {
             return UDM.Scalar(true)
         }
-        
-        // Check if it's an uncountable noun (ambiguous)
-        if (uncountableNouns.contains(text)) {
-            return UDM.Scalar(false)
-        }
-        
+
         // Check common plural patterns
-        val seemsPlural = text.endsWith("s") || 
+        val seemsPlural = text.endsWith("s") ||
                          text.endsWith("es") ||
                          text.endsWith("ies")
-        
+
         return UDM.Scalar(seemsPlural)
     }
     
@@ -444,26 +450,31 @@ object PluralizationFunctions {
         if (args.isEmpty()) {
             throw FunctionArgumentException("isSingular expects 1 argument")
         }
-        
+
         val word = args[0]
-        val text = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase() 
+        val text = (word as? UDM.Scalar)?.value?.toString()?.trim()?.lowercase()
             ?: return UDM.Scalar(false)
-        
-        // Check if it's an irregular singular
-        if (irregularPlurals.containsKey(text)) {
-            return UDM.Scalar(true)
-        }
-        
-        // Check if it's an uncountable noun (ambiguous)
+
+        // Check if it's an uncountable noun (ambiguous) - check this FIRST
         if (uncountableNouns.contains(text)) {
             return UDM.Scalar(false)
         }
-        
+
+        // Check if it's an irregular singular (key in irregularPlurals map)
+        if (irregularPlurals.containsKey(text)) {
+            return UDM.Scalar(true)
+        }
+
+        // Check if it's an irregular plural (value in irregularPlurals map, i.e., key in irregularSingulars)
+        if (irregularSingulars.containsKey(text)) {
+            return UDM.Scalar(false)
+        }
+
         // Check if it doesn't match common plural patterns
-        val notPlural = !text.endsWith("s") && 
+        val notPlural = !text.endsWith("s") &&
                        !text.endsWith("es") &&
                        !text.endsWith("ies")
-        
+
         return UDM.Scalar(notPlural)
     }
     
@@ -501,18 +512,18 @@ object PluralizationFunctions {
         if (args.size < 2) {
             throw FunctionArgumentException("formatPlural expects 2 arguments")
         }
-        
+
         val count = args[0]
         val word = args[1]
         val num = (count as? UDM.Scalar)?.value ?: return UDM.Scalar.nullValue()
         val text = (word as? UDM.Scalar)?.value?.toString() ?: return UDM.Scalar.nullValue()
-        
-        val pluralForm = if (num == 1.0) {
+
+        val pluralForm = if (num == 1 || num == 1.0) {
             text
         } else {
             (pluralize(listOf(word, count)) as? UDM.Scalar)?.value?.toString() ?: text
         }
-        
+
         val numInt = when (num) {
             is Number -> num.toInt()
             else -> 0
@@ -533,22 +544,29 @@ object PluralizationFunctions {
     
     /**
      * Matches the case of the result to the original word
-     * 
+     *
      * Examples:
      * - "Cat" -> "Cats" (capitalize first)
      * - "CAT" -> "CATS" (all uppercase)
      * - "cat" -> "cats" (all lowercase)
      */
     private fun matchCase(original: String, result: String, originalCase: String): String {
+        // Check if original has any letters
+        val letters = originalCase.filter { it.isLetter() }
+        if (letters.isEmpty()) {
+            // No letters, keep lowercase
+            return result
+        }
+
         return when {
-            // All uppercase
-            originalCase.all { it.isUpperCase() || !it.isLetter() } -> 
+            // All uppercase letters AND more than one letter
+            letters.length > 1 && letters.all { it.isUpperCase() } ->
                 result.uppercase()
-            
+
             // First letter uppercase
-            originalCase.firstOrNull()?.isUpperCase() == true -> 
+            letters.firstOrNull()?.isUpperCase() == true ->
                 result.replaceFirstChar { it.uppercase() }
-            
+
             // Default: lowercase
             else -> result
         }

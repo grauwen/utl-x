@@ -122,13 +122,15 @@ class RuntimeFunctionsTest {
     @Test
     fun testPlatform() {
         val result = RuntimeFunctions.platform(listOf())
-        
+
         assertTrue(result is UDM.Scalar)
         val platform = (result as UDM.Scalar).value as String
         assertTrue(platform.isNotEmpty())
         // Should be one of the common platforms
-        val validPlatforms = setOf("windows", "linux", "macos", "unix", "other")
-        assertTrue(validPlatforms.any { platform.toLowerCase().contains(it) })
+        val platformLower = platform.lowercase()
+        val validPlatforms = setOf("windows", "linux", "mac", "unix", "sunos", "freebsd")
+        assertTrue(validPlatforms.any { platformLower.contains(it) },
+            "Platform '$platform' should contain one of: $validPlatforms")
     }
 
     @Test

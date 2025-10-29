@@ -26,8 +26,38 @@ import org.apache.utlx.core.udm.UDM
 import java.lang.management.ManagementFactory
 import java.util.Properties
 import org.apache.utlx.stdlib.annotations.UTLXFunction
+import org.apache.utlx.stdlib.FunctionArgumentException
 
 object RuntimeFunctions {
+
+    private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
+        if (args.size != expected) {
+            throw FunctionArgumentException(
+                "$functionName expects $expected argument(s), got ${args.size}"
+            )
+        }
+    }
+
+    private fun requireArgs(args: List<UDM>, range: IntRange, functionName: String) {
+        if (args.size !in range) {
+            throw FunctionArgumentException(
+                "$functionName expects ${range.first}..${range.last} arguments, got ${args.size}"
+            )
+        }
+    }
+
+    private fun requireStringArg(udm: UDM, functionName: String): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> value
+                    null -> throw FunctionArgumentException("$functionName requires a non-null string argument")
+                    else -> throw FunctionArgumentException("$functionName requires a string argument, got ${value::class.simpleName}")
+                }
+            }
+            else -> throw FunctionArgumentException("$functionName requires a string argument, got ${udm::class.simpleName}")
+        }
+    }
     
     // Version information (should be read from build.gradle.kts or MANIFEST.MF)
     private const val UTLX_VERSION = "1.0.0"
@@ -60,11 +90,10 @@ env("API_KEY")""",
      *   env("API_KEY")
      */
     fun env(args: List<UDM>): UDM {
-        require(args.isNotEmpty()) { "env requires 1 argument: key" }
-        
-        val key = args[0].asString()
+        requireArgs(args, 1, "env")
+        val key = requireStringArg(args[0], "env")
         val value = System.getenv(key)
-        
+
         return if (value != null) {
             UDM.fromNative(value)
         } else {
@@ -101,12 +130,11 @@ envOrDefault("TIMEOUT", "30")""",
      *   envOrDefault("TIMEOUT", "30")
      */
     fun envOrDefault(args: List<UDM>): UDM {
-        require(args.size >= 2) { "envOrDefault requires 2 arguments: key, default" }
-        
-        val key = args[0].asString()
-        val default = args[1].asString()
+        requireArgs(args, 2, "envOrDefault")
+        val key = requireStringArg(args[0], "envOrDefault")
+        val default = requireStringArg(args[1], "envOrDefault")
         val value = System.getenv(key) ?: default
-        
+
         return UDM.fromNative(value)
     }
     
@@ -136,6 +164,7 @@ envAll()
      *   // Returns: {PATH: "...", HOME: "...", ...}
      */
     fun envAll(args: List<UDM>): UDM {
+        requireArgs(args, 0, "envAll")
         val allEnv = System.getenv()
         return UDM.fromNative(allEnv)
     }
@@ -166,11 +195,10 @@ hasEnv("API_KEY")""",
      *   hasEnv("API_KEY")
      */
     fun hasEnv(args: List<UDM>): UDM {
-        require(args.isNotEmpty()) { "hasEnv requires 1 argument: key" }
-        
-        val key = args[0].asString()
+        requireArgs(args, 1, "hasEnv")
+        val key = requireStringArg(args[0], "hasEnv")
         val exists = System.getenv(key) != null
-        
+
         return UDM.fromNative(exists)
     }
     
@@ -202,11 +230,10 @@ systemProperty("user.home")""",
      *   systemProperty("user.home")
      */
     fun systemProperty(args: List<UDM>): UDM {
-        require(args.isNotEmpty()) { "systemProperty requires 1 argument: key" }
-        
-        val key = args[0].asString()
+        requireArgs(args, 1, "systemProperty")
+        val key = requireStringArg(args[0], "systemProperty")
         val value = System.getProperty(key)
-        
+
         return if (value != null) {
             UDM.fromNative(value)
         } else {
@@ -241,8 +268,8 @@ systemPropertyOrDefault("java.io.tmpdir", "/tmp")""",
      *   systemPropertyOrDefault("java.io.tmpdir", "/tmp")
      */
     fun systemPropertyOrDefault(args: List<UDM>): UDM {
-        require(args.size >= 2) { "systemPropertyOrDefault requires 2 arguments: key, default" }
-        
+        requireArgs(args, 2, "systemPropertyOrDefault")
+
         val key = args[0].asString()
         val default = args[1].asString()
         val value = System.getProperty(key) ?: default
@@ -299,6 +326,7 @@ version()  // Returns: "1.0.0"""",
      *   version()  // Returns: "1.0.0"
      */
     fun version(args: List<UDM>): UDM {
+        requireArgs(args, 0, "version")
         return UDM.fromNative(UTLX_VERSION)
     }
     
@@ -323,6 +351,7 @@ platform()  // Returns: "Linux", "Mac OS X", "Windows 10"""",
      *   platform()  // Returns: "Linux", "Mac OS X", "Windows 10"
      */
     fun platform(args: List<UDM>): UDM {
+        requireArgs(args, 0, "platform")
         val osName = System.getProperty("os.name")
         return UDM.fromNative(osName)
     }
@@ -423,6 +452,7 @@ availableProcessors()  // Returns: 8""",
      *   availableProcessors()  // Returns: 8
      */
     fun availableProcessors(args: List<UDM>): UDM {
+        requireArgs(args, 0, "availableProcessors")
         val processors = Runtime.getRuntime().availableProcessors()
         return UDM.fromNative(processors)
     }
@@ -460,6 +490,7 @@ memoryInfo()
      *   // }
      */
     fun memoryInfo(args: List<UDM>): UDM {
+        requireArgs(args, 0, "memoryInfo")
         val runtime = Runtime.getRuntime()
         val maxMemory = runtime.maxMemory()
         val totalMemory = runtime.totalMemory()
@@ -651,6 +682,7 @@ runtimeInfo()
      *   // }
      */
     fun runtimeInfo(args: List<UDM>): UDM {
+        requireArgs(args, 0, "runtimeInfo")
         val runtime = Runtime.getRuntime()
         val runtimeMXBean = ManagementFactory.getRuntimeMXBean()
         
@@ -677,14 +709,14 @@ runtimeInfo()
             
             // Directories
             "currentDir" to System.getProperty("user.dir"),
-            "userHome" to System.getProperty("user.home"),
+            "homeDir" to System.getProperty("user.home"),
             "tempDir" to System.getProperty("java.io.tmpdir"),
             
             // User info
             "userName" to System.getProperty("user.name"),
             
             // Runtime info
-            "uptimeMs" to runtimeMXBean.uptime,
+            "uptime" to runtimeMXBean.uptime,
             "startTime" to runtimeMXBean.startTime,
             "pid" to runtimeMXBean.name.split("@").firstOrNull()?.toLongOrNull()
         )
