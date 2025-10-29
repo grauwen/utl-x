@@ -18,6 +18,8 @@ dependencies {
     implementation(project(":formats:xsd"))
     implementation(project(":formats:jsch"))
     implementation(project(":formats:protobuf"))
+    implementation(project(":formats:xml"))
+    implementation(project(":formats:yaml"))
 
     // Kotlin standard library
     implementation(kotlin("stdlib"))

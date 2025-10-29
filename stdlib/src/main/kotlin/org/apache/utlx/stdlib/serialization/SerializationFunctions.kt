@@ -6,6 +6,8 @@ import org.apache.utlx.stdlib.FunctionArgumentException
 import org.apache.utlx.stdlib.annotations.UTLXFunction
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
+import org.apache.utlx.formats.xml.XMLParser
+import org.apache.utlx.formats.yaml.YAMLParser
 
 /**
  * Serialization Functions for UTL-X Standard Library
@@ -184,17 +186,17 @@ object SerializationFunctions {
     fun parseXml(args: List<UDM>): UDM {
         requireArgs(args, 1, "parseXml")
         val xmlString = args[0].asString()
-        
+
         if (xmlString.isBlank()) {
             throw FunctionArgumentException(
                 "parseXml cannot parse empty or blank XML string. " +
                 "Hint: Provide a valid XML string like '<root><item>value</item></root>'."
             )
         }
-        
+
         return try {
-            // Simple XML parsing - in real implementation would use XMLParser
-            UDM.Scalar(xmlString) // Placeholder implementation
+            val parser = XMLParser(xmlString)
+            parser.parse()
         } catch (e: Exception) {
             throw FunctionArgumentException(
                 "parseXml failed to parse XML string: ${e.message}. " +
@@ -256,17 +258,17 @@ object SerializationFunctions {
     fun parseYaml(args: List<UDM>): UDM {
         requireArgs(args, 1, "parseYaml")
         val yamlString = args[0].asString()
-        
+
         if (yamlString.isBlank()) {
             throw FunctionArgumentException(
                 "parseYaml cannot parse empty or blank YAML string. " +
                 "Hint: Provide a valid YAML string like 'name: John\\nage: 30'."
             )
         }
-        
+
         return try {
-            // Simple YAML parsing - in real implementation would use YAMLParser
-            UDM.Scalar(yamlString) // Placeholder implementation
+            val parser = YAMLParser()
+            parser.parse(yamlString)
         } catch (e: Exception) {
             throw FunctionArgumentException(
                 "parseYaml failed to parse YAML string: ${e.message}. " +
