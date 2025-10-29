@@ -625,11 +625,12 @@ object BinaryFunctions {
         if (args.size != 2) {
             throw IllegalArgumentException("readByte expects 2 arguments (binary, offset), got ${args.size}")
         }
-        
+
         val bytes = extractBytes(args[0])
         val offset = extractOffset(args[1])
-        
-        return UDM.Scalar(bytes[offset].toInt().toDouble())
+
+        // Convert to unsigned byte (0-255)
+        return UDM.Scalar(bytes[offset].toInt().and(0xFF).toDouble())
     }
     
     // ==================== BINARY WRITING ====================
@@ -873,20 +874,30 @@ object BinaryFunctions {
         if (args.size < 2) {
             throw FunctionArgumentException(
                 "bitwiseAnd expects 2 arguments, got ${args.size}. " +
-                "Hint: Provide two binary values to perform bitwise AND operation."
+                "Hint: Provide two binary values or numbers to perform bitwise AND operation."
             )
         }
-        val binary1 = args[0]
-        val binary2 = args[1]
-        val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
-        val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
-        
-        val minLen = minOf(bytes1.size, bytes2.size)
-        val result = ByteArray(minLen) { i ->
-            (bytes1[i].toInt() and bytes2[i].toInt()).toByte()
+        val arg1 = args[0]
+        val arg2 = args[1]
+
+        // Support both numeric and binary operations
+        return when {
+            arg1 is UDM.Scalar && arg2 is UDM.Scalar -> {
+                val num1 = (arg1.value as? Number)?.toLong() ?: return UDM.Scalar(null)
+                val num2 = (arg2.value as? Number)?.toLong() ?: return UDM.Scalar(null)
+                UDM.Scalar((num1 and num2).toDouble())
+            }
+            arg1 is UDM.Binary && arg2 is UDM.Binary -> {
+                val bytes1 = arg1.data
+                val bytes2 = arg2.data
+                val minLen = minOf(bytes1.size, bytes2.size)
+                val result = ByteArray(minLen) { i ->
+                    (bytes1[i].toInt() and bytes2[i].toInt()).toByte()
+                }
+                UDM.Binary(result)
+            }
+            else -> UDM.Scalar(null)
         }
-        
-        return UDM.Binary(result)
     }
     
     @UTLXFunction(
@@ -920,20 +931,30 @@ object BinaryFunctions {
         if (args.size < 2) {
             throw FunctionArgumentException(
                 "bitwiseOr expects 2 arguments, got ${args.size}. " +
-                "Hint: Provide two binary values to perform bitwise OR operation."
+                "Hint: Provide two binary values or numbers to perform bitwise OR operation."
             )
         }
-        val binary1 = args[0]
-        val binary2 = args[1]
-        val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
-        val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
-        
-        val minLen = minOf(bytes1.size, bytes2.size)
-        val result = ByteArray(minLen) { i ->
-            (bytes1[i].toInt() or bytes2[i].toInt()).toByte()
+        val arg1 = args[0]
+        val arg2 = args[1]
+
+        // Support both numeric and binary operations
+        return when {
+            arg1 is UDM.Scalar && arg2 is UDM.Scalar -> {
+                val num1 = (arg1.value as? Number)?.toLong() ?: return UDM.Scalar(null)
+                val num2 = (arg2.value as? Number)?.toLong() ?: return UDM.Scalar(null)
+                UDM.Scalar((num1 or num2).toDouble())
+            }
+            arg1 is UDM.Binary && arg2 is UDM.Binary -> {
+                val bytes1 = arg1.data
+                val bytes2 = arg2.data
+                val minLen = minOf(bytes1.size, bytes2.size)
+                val result = ByteArray(minLen) { i ->
+                    (bytes1[i].toInt() or bytes2[i].toInt()).toByte()
+                }
+                UDM.Binary(result)
+            }
+            else -> UDM.Scalar(null)
         }
-        
-        return UDM.Binary(result)
     }
     
     @UTLXFunction(
@@ -967,20 +988,30 @@ object BinaryFunctions {
         if (args.size < 2) {
             throw FunctionArgumentException(
                 "bitwiseXor expects 2 arguments, got ${args.size}. " +
-                "Hint: Provide two binary values to perform bitwise XOR operation."
+                "Hint: Provide two binary values or numbers to perform bitwise XOR operation."
             )
         }
-        val binary1 = args[0]
-        val binary2 = args[1]
-        val bytes1 = (binary1 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
-        val bytes2 = (binary2 as? UDM.Binary)?.data ?: return UDM.Scalar(null)
-        
-        val minLen = minOf(bytes1.size, bytes2.size)
-        val result = ByteArray(minLen) { i ->
-            (bytes1[i].toInt() xor bytes2[i].toInt()).toByte()
+        val arg1 = args[0]
+        val arg2 = args[1]
+
+        // Support both numeric and binary operations
+        return when {
+            arg1 is UDM.Scalar && arg2 is UDM.Scalar -> {
+                val num1 = (arg1.value as? Number)?.toLong() ?: return UDM.Scalar(null)
+                val num2 = (arg2.value as? Number)?.toLong() ?: return UDM.Scalar(null)
+                UDM.Scalar((num1 xor num2).toDouble())
+            }
+            arg1 is UDM.Binary && arg2 is UDM.Binary -> {
+                val bytes1 = arg1.data
+                val bytes2 = arg2.data
+                val minLen = minOf(bytes1.size, bytes2.size)
+                val result = ByteArray(minLen) { i ->
+                    (bytes1[i].toInt() xor bytes2[i].toInt()).toByte()
+                }
+                UDM.Binary(result)
+            }
+            else -> UDM.Scalar(null)
         }
-        
-        return UDM.Binary(result)
     }
     
     @UTLXFunction(
@@ -1057,19 +1088,28 @@ object BinaryFunctions {
         if (args.size < 2) {
             throw FunctionArgumentException(
                 "shiftLeft expects 2 arguments, got ${args.size}. " +
-                "Hint: Provide binary value and number of positions to shift left."
+                "Hint: Provide value and number of positions to shift left."
             )
         }
-        val binary = args[0]
-        val positions = args[1]
-        val bytes = (binary as? UDM.Binary)?.data ?: return UDM.Scalar(null)
-        val shift = (positions as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 0
-        
-        val result = ByteArray(bytes.size) { i ->
-            (bytes[i].toInt() shl shift).toByte()
+        val arg1 = args[0]
+        val arg2 = args[1]
+        val shift = (arg2 as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 0
+
+        // Support both numeric and binary operations
+        return when (arg1) {
+            is UDM.Scalar -> {
+                val num = (arg1.value as? Number)?.toLong() ?: return UDM.Scalar(null)
+                UDM.Scalar((num shl shift).toDouble())
+            }
+            is UDM.Binary -> {
+                val bytes = arg1.data
+                val result = ByteArray(bytes.size) { i ->
+                    (bytes[i].toInt() shl shift).toByte()
+                }
+                UDM.Binary(result)
+            }
+            else -> UDM.Scalar(null)
         }
-        
-        return UDM.Binary(result)
     }
     
     @UTLXFunction(
@@ -1103,19 +1143,28 @@ object BinaryFunctions {
         if (args.size < 2) {
             throw FunctionArgumentException(
                 "shiftRight expects 2 arguments, got ${args.size}. " +
-                "Hint: Provide binary value and number of positions to shift right."
+                "Hint: Provide value and number of positions to shift right."
             )
         }
-        val binary = args[0]
-        val positions = args[1]
-        val bytes = (binary as? UDM.Binary)?.data ?: return UDM.Scalar(null)
-        val shift = (positions as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 0
-        
-        val result = ByteArray(bytes.size) { i ->
-            (bytes[i].toInt() shr shift).toByte()
+        val arg1 = args[0]
+        val arg2 = args[1]
+        val shift = (arg2 as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 0
+
+        // Support both numeric and binary operations
+        return when (arg1) {
+            is UDM.Scalar -> {
+                val num = (arg1.value as? Number)?.toLong() ?: return UDM.Scalar(null)
+                UDM.Scalar((num shr shift).toDouble())
+            }
+            is UDM.Binary -> {
+                val bytes = arg1.data
+                val result = ByteArray(bytes.size) { i ->
+                    (bytes[i].toInt() shr shift).toByte()
+                }
+                UDM.Binary(result)
+            }
+            else -> UDM.Scalar(null)
         }
-        
-        return UDM.Binary(result)
     }
 
     // ============================================
