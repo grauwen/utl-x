@@ -164,9 +164,24 @@ object DateFunctions {
 
     fun formatDate(args: List<UDM>): UDM {
         requireArgs(args, 1..3, "formatDate")
-        val dateValue = args[0]
+        val dateValueRaw = args[0]
         val pattern = if (args.size > 1) args[1].asString() else "ISO"
         val locale = if (args.size > 2) args[2].asString() else "en-US"
+
+        // Auto-parse ISO 8601 strings
+        val dateValue = if (dateValueRaw is UDM.Scalar && dateValueRaw.value is String) {
+            try {
+                val instant = extractDateTime(dateValueRaw)
+                UDM.DateTime(instant)
+            } catch (e: Exception) {
+                throw FunctionArgumentException(
+                    "formatDate requires a Date, DateTime, LocalDateTime, or Time value, but got string '${dateValueRaw.value}'. " +
+                    "Hint: Use parseDate() to parse non-ISO date strings, or use ISO 8601 format (e.g., '2025-10-15T14:30:00Z')."
+                )
+            }
+        } else {
+            dateValueRaw
+        }
 
         val cldrProvider = JvmCldrProvider()
 
@@ -243,22 +258,37 @@ object DateFunctions {
         val dateUdm = args[0]
         val days = args[1].asNumber().toLong()
 
-        return when (dateUdm) {
+        // Handle ISO 8601 strings by parsing first
+        val parsedDate = if (dateUdm is UDM.Scalar && dateUdm.value is String) {
+            try {
+                val instant = extractDateTime(dateUdm)
+                UDM.DateTime(instant)
+            } catch (e: Exception) {
+                throw FunctionArgumentException(
+                    "addDays requires a Date or DateTime value, but got string '${dateUdm.value}'. " +
+                    "Hint: Use parseDate() to parse non-ISO date strings, or use ISO 8601 format (e.g., '2025-10-15T14:30:00Z')."
+                )
+            }
+        } else {
+            dateUdm
+        }
+
+        return when (parsedDate) {
             is UDM.Date -> {
-                val result = dateUdm.date.plusDays(days)
+                val result = parsedDate.date.plusDays(days)
                 UDM.Date(result)
             }
             is UDM.DateTime -> {
-                val kotlinxDate = toKotlinxInstant(dateUdm.instant)
+                val kotlinxDate = toKotlinxInstant(parsedDate.instant)
                 val result = kotlinxDate.plus(days.toInt(), DateTimeUnit.DAY, TimeZone.UTC)
                 UDM.DateTime(toJavaInstant(result))
             }
             is UDM.LocalDateTime -> {
-                val result = dateUdm.dateTime.plusDays(days)
+                val result = parsedDate.dateTime.plusDays(days)
                 UDM.LocalDateTime(result)
             }
             else -> throw FunctionArgumentException(
-                "addDays requires a Date or DateTime value, but got ${dateUdm.javaClass.simpleName}. " +
+                "addDays requires a Date or DateTime value, but got ${parsedDate.javaClass.simpleName}. " +
                 "Hint: Use parseDate() or currentDate() to create a date value."
             )
         }
@@ -320,6 +350,25 @@ object DateFunctions {
                     // Convert LocalDateTime to Instant assuming UTC
                     val zonedDateTime = date.dateTime.atZone(java.time.ZoneId.of("UTC"))
                     toKotlinxInstant(zonedDateTime.toInstant())
+                }
+                is UDM.Scalar -> {
+                    // Auto-parse ISO 8601 strings
+                    val value = date.value
+                    if (value is String) {
+                        try {
+                            kotlinx.datetime.Instant.parse(value)
+                        } catch (e: Exception) {
+                            throw FunctionArgumentException(
+                                "diffDays requires Date, DateTime, or LocalDateTime values, but got string '$value'. " +
+                                "Hint: Use parseDate() to parse non-ISO date strings, or use ISO 8601 format (e.g., '2025-10-15T14:30:00Z')."
+                            )
+                        }
+                    } else {
+                        throw FunctionArgumentException(
+                            "diffDays requires Date, DateTime, or LocalDateTime values, but got ${getTypeDescription(date)}. " +
+                            "Hint: Use parseDate() to create date values."
+                        )
+                    }
                 }
                 else -> throw FunctionArgumentException(
                     "diffDays requires Date, DateTime, or LocalDateTime values, but got ${getTypeDescription(date)}. " +

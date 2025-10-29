@@ -14,12 +14,13 @@ object TimezoneFunctions {
     
     @UTLXFunction(
         description = "Convert datetime between timezones",
-        minArgs = 1,
-        maxArgs = 1,
+        minArgs = 3,
+        maxArgs = 3,
         category = "Date",
         parameters = [
-            "fromTz: Fromtz value",
-        "toTz: Totz value"
+            "date: Date or DateTime value",
+            "fromTz: Source timezone ID",
+            "toTz: Target timezone ID"
         ],
         returns = "Result of the operation",
         example = "convertTimezone(now(), \"UTC\", \"America/New_York\")",

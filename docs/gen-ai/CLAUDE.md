@@ -1234,6 +1234,37 @@ make clean
 ./gradlew :modules:core:test --tests "org.apache.utlx.core.TypeSystemTest.testBasicTypes"
 ```
 
+### Running the Conformance Suite
+The conformance suite tests end-to-end transformation functionality across all supported formats.
+
+**IMPORTANT**: The conformance suite must be run from the `conformance-suite` directory.
+
+```bash
+# From project root, navigate to conformance-suite
+cd conformance-suite
+
+# Run all conformance tests (429 tests)
+python3 runners/cli-runner/simple-runner.py
+
+# Show only failures (useful for debugging)
+python3 runners/cli-runner/simple-runner.py --show-failures
+
+# Run specific category
+python3 runners/cli-runner/simple-runner.py examples/basic
+python3 runners/cli-runner/simple-runner.py stdlib/array
+
+# Alternative: Use shell scripts
+./runners/cli-runner/run-all.sh
+./runners/cli-runner/run-category.sh examples/basic
+```
+
+**Expected Results**: 429/429 tests passing (100% pass rate)
+
+**Note**: Always verify conformance suite passes after making changes to:
+- Core language features (parser, interpreter)
+- Standard library functions
+- Format parsers/serializers (XML, JSON, CSV, YAML)
+
 ### Code Quality
 ```bash
 # Format code (if ktlint is configured)

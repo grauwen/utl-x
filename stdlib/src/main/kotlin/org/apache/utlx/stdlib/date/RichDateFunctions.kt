@@ -813,8 +813,12 @@ object RichDateFunctions {
     @UTLXFunction(
         description = "Calculate age in years from birthdate",
         minArgs = 1,
-        maxArgs = 1,
+        maxArgs = 2,
         category = "Date",
+        parameters = [
+            "birthDate: Birth date",
+            "currentDate: Optional current date (defaults to now())"
+        ],
         returns = "Result of the operation",
         example = "age(birthDate) => 30",
         tags = ["date"],
@@ -823,25 +827,30 @@ object RichDateFunctions {
     /**
      * Calculate age in years from birthdate
      * Usage: age(birthDate) => 30
+     * Usage: age(birthDate, currentDate) => 30
      */
     fun age(args: List<UDM>): UDM {
-        requireArgs(args, 1, "age")
+        requireArgs(args, 1..2, "age")
         val birthDate = extractDateTime(args[0])
-        
-        val now = Clock.System.now()
+
+        val now = if (args.size > 1) {
+            toKotlinxInstant(extractDateTime(args[1]))
+        } else {
+            Clock.System.now()
+        }
         val kotlinxBirthDate = toKotlinxInstant(birthDate)
         val birthLocalDate = kotlinxBirthDate.toLocalDateTime(TimeZone.UTC).date
         val nowLocalDate = now.toLocalDateTime(TimeZone.UTC).date
-        
+
         var age = nowLocalDate.year - birthLocalDate.year
-        
+
         // Adjust if birthday hasn't occurred this year
         if (nowLocalDate.monthNumber < birthLocalDate.monthNumber ||
-            (nowLocalDate.monthNumber == birthLocalDate.monthNumber && 
+            (nowLocalDate.monthNumber == birthLocalDate.monthNumber &&
              nowLocalDate.dayOfMonth < birthLocalDate.dayOfMonth)) {
             age--
         }
-        
+
         return UDM.Scalar(age.toDouble())
     }
     
@@ -854,6 +863,15 @@ object RichDateFunctions {
         if (args.size != expected) {
             throw FunctionArgumentException(
                 "$functionName expects $expected argument(s), got ${args.size}. " +
+                "Hint: Check the function signature and provide the correct number of arguments."
+            )
+        }
+    }
+
+    private fun requireArgs(args: List<UDM>, range: IntRange, functionName: String) {
+        if (args.size !in range) {
+            throw FunctionArgumentException(
+                "$functionName expects ${range.first}..${range.last} arguments, got ${args.size}. " +
                 "Hint: Check the function signature and provide the correct number of arguments."
             )
         }

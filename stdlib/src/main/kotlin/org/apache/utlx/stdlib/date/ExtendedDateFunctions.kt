@@ -189,28 +189,26 @@ object ExtendedDateFunctions {
     }
     
     @UTLXFunction(
-        description = "Validate date string against pattern",
+        description = "Validate date string (ISO 8601 format)",
         minArgs = 1,
         maxArgs = 1,
         category = "Date",
         parameters = [
-            "pattern: Pattern value",
-        "dateStr: Datestr value"
+            "dateStr: Date string to validate"
         ],
-        returns = "Result of the operation",
-        example = "validate-date(\"yyyy-MM-dd\", \"2025-10-14\") => true",
+        returns = "Boolean indicating if the string is a valid ISO 8601 date",
+        example = "validate-date(\"2025-10-14T00:00:00Z\") => true",
         tags = ["date"],
         since = "1.0"
     )
     /**
-     * Validate date string against pattern
-     * Usage: validate-date("yyyy-MM-dd", "2025-10-14") => true
+     * Validate date string (ISO 8601 format)
+     * Usage: validate-date("2025-10-14T00:00:00Z") => true
      */
     fun validateDate(args: List<UDM>): UDM {
-        requireArgs(args, 2, "validate-date")
-        val pattern = args[0].asString()
-        val dateStr = args[1].asString()
-        
+        requireArgs(args, 1, "validate-date")
+        val dateStr = args[0].asString()
+
         return try {
             // Attempt to parse - if successful, it's valid
             Instant.parse(dateStr)
