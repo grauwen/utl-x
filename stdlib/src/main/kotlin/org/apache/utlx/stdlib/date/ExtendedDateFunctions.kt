@@ -202,16 +202,70 @@ object ExtendedDateFunctions {
         since = "1.0"
     )
     /**
-     * Validate date string (ISO 8601 format)
-     * Usage: validate-date("2025-10-14T00:00:00Z") => true
+     * Validate date string against a pattern or ISO 8601 format
+     * Usage: validate-date("yyyy-MM-dd", "2025-10-14T00:00:00Z") => true
+     * Usage: validate-date("ISO8601", "2025-10-14T00:00:00Z") => true
      */
     fun validateDate(args: List<UDM>): UDM {
-        requireArgs(args, 1, "validate-date")
-        val dateStr = args[0].asString()
+        if (args.size != 2) {
+            throw FunctionArgumentException(
+                "validate-date expects 2 arguments, got ${args.size}. " +
+                "Hint: Use validate-date(pattern, date)"
+            )
+        }
+
+        // Validate that first argument is a string pattern
+        val patternArg = args[0]
+        if (patternArg !is UDM.Scalar || patternArg.value !is String) {
+            throw FunctionArgumentException(
+                "validate-date expects pattern to be a string, got ${getTypeDescription(patternArg)}. " +
+                "Hint: Use a date pattern like 'yyyy-MM-dd' or 'ISO8601'"
+            )
+        }
+
+        // Validate that second argument is a string date
+        val dateArg = args[1]
+        if (dateArg !is UDM.Scalar) {
+            throw FunctionArgumentException(
+                "validate-date expects date to be a string, got ${getTypeDescription(dateArg)}. " +
+                "Hint: Provide the date as a string"
+            )
+        }
+
+        // Handle null date value - return false instead of throwing exception
+        if (dateArg.value == null) {
+            return UDM.Scalar(false)
+        }
+
+        if (dateArg.value !is String) {
+            throw FunctionArgumentException(
+                "validate-date expects date to be a string, got ${getTypeDescription(dateArg)}. " +
+                "Hint: Provide the date as a string"
+            )
+        }
+
+        val pattern = patternArg.value as String
+        val dateStr = dateArg.value as String
 
         return try {
-            // Attempt to parse - if successful, it's valid
-            Instant.parse(dateStr)
+            // Special handling for ISO8601 pattern
+            if (pattern.equals("ISO8601", ignoreCase = true)) {
+                Instant.parse(dateStr)
+                return UDM.Scalar(true)
+            }
+
+            // Parse the date string to extract date part
+            val datePart = when {
+                dateStr.contains('T') -> {
+                    // ISO format with time - extract just the date part for pattern matching
+                    dateStr.substringBefore('T')
+                }
+                else -> dateStr
+            }
+
+            // Try to parse with the given pattern
+            val formatter = java.time.format.DateTimeFormatter.ofPattern(pattern)
+            java.time.LocalDate.parse(datePart, formatter)
             UDM.Scalar(true)
         } catch (e: Exception) {
             UDM.Scalar(false)
