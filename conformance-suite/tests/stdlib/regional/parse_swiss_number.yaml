@@ -1,0 +1,51 @@
+name: "parse_swiss_number"
+category: "stdlib/regional"
+description: "Test parseSwissNumber function - parse Swiss format numbers"
+tags: ["stdlib", "regional", "numbers", "parsing", "swiss"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    basic: parseSwissNumber("1'234.56"),
+    no_thousands: parseSwissNumber("1234.56"),
+    large: parseSwissNumber("1'234'567.89"),
+    negative: parseSwissNumber("-1'234.56"),
+    zero: parseSwissNumber("0.00"),
+    integer: parseSwissNumber("1'234"),
+    small: parseSwissNumber("0.99"),
+    no_decimal: parseSwissNumber("5000")
+  }
+
+expected:
+  format: json
+  data:
+    basic: 1234.56
+    no_thousands: 1234.56
+    large: 1234567.89
+    negative: -1234.56
+    zero: 0
+    integer: 1234
+    small: 0.99
+    no_decimal: 5000
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "regional-number-expansion-2025-10-29"
+  complexity: "basic"
+  notes:
+    - "Tests parseSwissNumber with various formatted strings"
+    - "Swiss format: apostrophe thousands separator, period decimal separator"
+    - "Parses to standard numeric representation"
+    - "Used in Switzerland"

@@ -1,0 +1,43 @@
+name: "csv_render_consistency"
+category: "stdlib/regional"
+description: "Verify CSV regionalFormat output matches stdlib render functions"
+tags: ["stdlib", "regional", "numbers", "csv", "consistency"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    usa_render: renderUSNumber(1234.56, 2, true),
+    european_render: renderEUNumber(1234.56, 2, true),
+    french_render: renderFrenchNumber(1234.56, 2, true),
+    swiss_render: renderSwissNumber(1234.56, 2, true)
+  }
+
+expected:
+  format: json
+  data:
+    usa_render: "1,234.56"
+    european_render: "1.234,56"
+    french_render: "1 234,56"
+    swiss_render: "1'234.56"
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "regional-number-expansion-2025-10-29"
+  complexity: "intermediate"
+  notes:
+    - "Ensures render functions produce same output as CSV regionalFormat"
+    - "Critical for consistency between CSV serializer and stdlib functions"
+    - "Both use same formatting rules for each regional format"
+    - "French format must use narrow no-break space (U+202F)"

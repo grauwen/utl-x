@@ -1,0 +1,54 @@
+name: "render_french_number"
+category: "stdlib/regional"
+description: "Test renderFrenchNumber function - French format (narrow no-break space thousands, comma decimal)"
+tags: ["stdlib", "regional", "numbers", "formatting", "french"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    basic: renderFrenchNumber(1234.56),
+    no_decimals: renderFrenchNumber(1234.56, 0),
+    three_decimals: renderFrenchNumber(1234.567, 3),
+    no_thousands: renderFrenchNumber(1234.56, 2, false),
+    negative: renderFrenchNumber(-1234.56),
+    zero: renderFrenchNumber(0),
+    large: renderFrenchNumber(1234567.89),
+    small: renderFrenchNumber(0.99, 2),
+    integer: renderFrenchNumber(1234, 2)
+  }
+
+expected:
+  format: json
+  data:
+    basic: "1 234,56"
+    no_decimals: "1 235"
+    three_decimals: "1 234,567"
+    no_thousands: "1234,56"
+    negative: "-1 234,56"
+    zero: "0,00"
+    large: "1 234 567,89"
+    small: "0,99"
+    integer: "1 234,00"
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "regional-number-expansion-2025-10-29"
+  complexity: "basic"
+  notes:
+    - "Tests renderFrenchNumber with various inputs and parameters"
+    - "French format: narrow no-break space (U+202F) thousands separator, comma decimal separator"
+    - "Default: 2 decimals, thousands separators enabled"
+    - "Used in France, Belgium, Quebec, and French-speaking regions"
+    - "Important: Space should be U+202F (narrow no-break space) from Java Locale.FRANCE"

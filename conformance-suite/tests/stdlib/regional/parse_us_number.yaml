@@ -1,0 +1,50 @@
+name: "parse_us_number"
+category: "stdlib/regional"
+description: "Test parseUSNumber function - parse USA/UK/Asia format numbers"
+tags: ["stdlib", "regional", "numbers", "parsing", "usa"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    basic: parseUSNumber("1,234.56"),
+    no_thousands: parseUSNumber("1234.56"),
+    large: parseUSNumber("1,234,567.89"),
+    negative: parseUSNumber("-1,234.56"),
+    zero: parseUSNumber("0.00"),
+    integer: parseUSNumber("1,234"),
+    small: parseUSNumber("0.99"),
+    no_decimal: parseUSNumber("5000")
+  }
+
+expected:
+  format: json
+  data:
+    basic: 1234.56
+    no_thousands: 1234.56
+    large: 1234567.89
+    negative: -1234.56
+    zero: 0
+    integer: 1234
+    small: 0.99
+    no_decimal: 5000
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "regional-number-expansion-2025-10-29"
+  complexity: "basic"
+  notes:
+    - "Tests parseUSNumber with various formatted strings"
+    - "USA format: comma thousands separator, period decimal separator"
+    - "Parses to standard numeric representation"

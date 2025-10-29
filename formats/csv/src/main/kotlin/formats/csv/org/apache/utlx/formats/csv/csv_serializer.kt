@@ -4,8 +4,6 @@ import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.core.interpreter.RuntimeValue
 import java.io.Writer
 import java.io.StringWriter
-import kotlin.math.abs
-import kotlin.math.pow
 
 /**
  * Regional number format for CSV output
@@ -314,6 +312,7 @@ class CSVSerializer(
 
     /**
      * Format a number according to the configured regional format
+     * Uses Java's DecimalFormat with locale-specific symbols (same approach as stdlib)
      */
     private fun formatNumber(value: Double): String {
         if (regionalFormat == RegionalFormat.NONE) {
@@ -325,70 +324,108 @@ class CSVSerializer(
             }
         }
 
-        // Apply regional formatting
-        // Note: Regional formatting requires stdlib dependency which creates circular dependency
-        // For now, we use basic formatting for all regional formats
-        // TODO: Move regional formatting to stdlib layer or extract to shared module
-        val result = when (regionalFormat) {
-            RegionalFormat.USA -> {
-                // Basic US format: 1,234.56
-                formatNumberBasic(value, decimals, useThousands, '.', ',')
-            }
-            RegionalFormat.EUROPEAN -> {
-                // Basic European format: 1.234,56
-                formatNumberBasic(value, decimals, useThousands, ',', '.')
-            }
-            RegionalFormat.FRENCH -> {
-                // Basic French format: 1 234,56 (with U+202F narrow no-break space)
-                formatNumberBasic(value, decimals, useThousands, ',', '\u202F')
-            }
-            RegionalFormat.SWISS -> {
-                // Basic Swiss format: 1'234.56
-                formatNumberBasic(value, decimals, useThousands, '.', '\'')
-            }
-            RegionalFormat.NONE -> UDM.Scalar(value.toString())
-        }
-
-        return when (result) {
-            is UDM.Scalar -> result.value?.toString() ?: value.toString()
-            else -> value.toString()
+        // Apply regional formatting using Java's DecimalFormat (same as stdlib)
+        return when (regionalFormat) {
+            RegionalFormat.USA -> formatUSNumber(value, decimals, useThousands)
+            RegionalFormat.EUROPEAN -> formatEUNumber(value, decimals, useThousands)
+            RegionalFormat.FRENCH -> formatFrenchNumber(value, decimals, useThousands)
+            RegionalFormat.SWISS -> formatSwissNumber(value, decimals, useThousands)
+            RegionalFormat.NONE -> value.toString()
         }
     }
-    
+
     /**
-     * Basic number formatting without stdlib dependency
+     * Format number in USA/UK/Asia style: comma thousands, period decimal
+     * Example: 1234.56 -> "1,234.56"
+     * (Same implementation as stdlib RegionalNumberFunctions.formatUSNumber)
      */
-    private fun formatNumberBasic(
-        value: Double,
-        decimals: Int,
-        useThousands: Boolean,
-        decimalSeparator: Char,
-        thousandsSeparator: Char
-    ): UDM.Scalar {
-        val formatted = buildString {
-            val isNegative = value < 0
-            val absValue = abs(value)
-            val intPart = absValue.toLong()
-            val decimalPart = kotlin.math.round((absValue - intPart) * 10.0.pow(decimals.toDouble())).toLong()
-
-            if (isNegative) append('-')
-
-            val intStr = intPart.toString()
-            if (useThousands && intStr.length > 3) {
-                intStr.reversed().chunked(3).reversed().forEachIndexed { index, chunk ->
-                    if (index > 0) append(thousandsSeparator)
-                    append(chunk.reversed())
-                }
-            } else {
-                append(intStr)
-            }
-
-            if (decimals > 0) {
-                append(decimalSeparator)
-                append(decimalPart.toString().padStart(decimals, '0'))
-            }
+    private fun formatUSNumber(value: Double, decimals: Int, useThousands: Boolean): String {
+        val decimalFormat = if (decimals > 0) {
+            "0.${"0".repeat(decimals)}"
+        } else {
+            "0"
         }
-        return UDM.Scalar(formatted)
+
+        val pattern = if (useThousands) {
+            "#,##$decimalFormat"
+        } else {
+            "#$decimalFormat"
+        }
+
+        val formatter = java.text.DecimalFormat(pattern, java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US))
+        return formatter.format(value)
+    }
+
+    /**
+     * Format number in European style: period thousands, comma decimal
+     * Example: 1234.56 -> "1.234,56"
+     * (Same implementation as stdlib RegionalNumberFunctions.formatEUNumber)
+     */
+    private fun formatEUNumber(value: Double, decimals: Int, useThousands: Boolean): String {
+        val decimalFormat = if (decimals > 0) {
+            "0.${"0".repeat(decimals)}"
+        } else {
+            "0"
+        }
+
+        val pattern = if (useThousands) {
+            "#,##$decimalFormat"
+        } else {
+            "#$decimalFormat"
+        }
+
+        // Use German locale which has period as thousands separator and comma as decimal
+        val symbols = java.text.DecimalFormatSymbols.getInstance(java.util.Locale.GERMANY)
+        val formatter = java.text.DecimalFormat(pattern, symbols)
+        return formatter.format(value)
+    }
+
+    /**
+     * Format number in Swiss style: apostrophe thousands, period decimal
+     * Example: 1234.56 -> "1'234.56"
+     * (Same implementation as stdlib RegionalNumberFunctions.formatSwissNumber)
+     */
+    private fun formatSwissNumber(value: Double, decimals: Int, useThousands: Boolean): String {
+        val decimalFormat = if (decimals > 0) {
+            "0.${"0".repeat(decimals)}"
+        } else {
+            "0"
+        }
+
+        val pattern = if (useThousands) {
+            "#,##$decimalFormat"
+        } else {
+            "#$decimalFormat"
+        }
+
+        // Use US locale as base and then replace comma with apostrophe
+        val formatter = java.text.DecimalFormat(pattern, java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US))
+        val usFormatted = formatter.format(value)
+        return usFormatted.replace(',', '\'')
+    }
+
+    /**
+     * Format number in French style: space thousands, comma decimal
+     * Example: 1234.56 -> "1 234,56" (with U+202F narrow no-break space)
+     * (Same implementation as stdlib RegionalNumberFunctions.formatFrenchNumber)
+     */
+    private fun formatFrenchNumber(value: Double, decimals: Int, useThousands: Boolean): String {
+        val decimalFormat = if (decimals > 0) {
+            "0.${"0".repeat(decimals)}"
+        } else {
+            "0"
+        }
+
+        val pattern = if (useThousands) {
+            "#,##$decimalFormat"
+        } else {
+            "#$decimalFormat"
+        }
+
+        // Use French locale which has space as thousands separator and comma as decimal
+        val symbols = java.text.DecimalFormatSymbols.getInstance(java.util.Locale.FRANCE)
+        val formatter = java.text.DecimalFormat(pattern, symbols)
+        return formatter.format(value)
     }
 
     private fun extractRuntimeValue(value: RuntimeValue?): String {

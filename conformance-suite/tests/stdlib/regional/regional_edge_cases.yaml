@@ -1,0 +1,60 @@
+name: "regional_edge_cases"
+category: "stdlib/regional"
+description: "Test regional number formatting edge cases - large numbers, rounding, precision"
+tags: ["stdlib", "regional", "numbers", "edge-cases"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    very_large_us: renderUSNumber(999999999.99, 2, true),
+    very_large_eu: renderEUNumber(999999999.99, 2, true),
+    very_small_us: renderUSNumber(0.001, 3, true),
+    very_small_eu: renderEUNumber(0.001, 3, true),
+    rounding_up_us: renderUSNumber(1234.565, 2, true),
+    rounding_up_eu: renderEUNumber(1234.565, 2, true),
+    rounding_down_us: renderUSNumber(1234.564, 2, true),
+    rounding_down_eu: renderEUNumber(1234.564, 2, true),
+    high_precision_us: renderUSNumber(1234.123456789, 6, true),
+    high_precision_eu: renderEUNumber(1234.123456789, 6, true),
+    million_us: renderUSNumber(1000000, 0, true),
+    million_eu: renderEUNumber(1000000, 0, true)
+  }
+
+expected:
+  format: json
+  data:
+    very_large_us: "999,999,999.99"
+    very_large_eu: "999.999.999,99"
+    very_small_us: "0.001"
+    very_small_eu: "0,001"
+    rounding_up_us: "1,234.57"
+    rounding_up_eu: "1.234,57"
+    rounding_down_us: "1,234.56"
+    rounding_down_eu: "1.234,56"
+    high_precision_us: "1,234.123457"
+    high_precision_eu: "1.234,123457"
+    million_us: "1,000,000"
+    million_eu: "1.000.000"
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "regional-number-expansion-2025-10-29"
+  complexity: "advanced"
+  notes:
+    - "Tests edge cases for regional number formatting"
+    - "Verifies proper rounding behavior (round half up)"
+    - "Tests very large and very small numbers"
+    - "Tests high precision (6 decimals)"
+    - "Ensures consistent behavior across formats"

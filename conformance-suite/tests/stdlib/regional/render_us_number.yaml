@@ -1,0 +1,52 @@
+name: "render_us_number"
+category: "stdlib/regional"
+description: "Test renderUSNumber function - USA/UK/Asia format (comma thousands, period decimal)"
+tags: ["stdlib", "regional", "numbers", "formatting", "usa"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    basic: renderUSNumber(1234.56),
+    no_decimals: renderUSNumber(1234.56, 0),
+    three_decimals: renderUSNumber(1234.567, 3),
+    no_thousands: renderUSNumber(1234.56, 2, false),
+    negative: renderUSNumber(-1234.56),
+    zero: renderUSNumber(0),
+    large: renderUSNumber(1234567.89),
+    small: renderUSNumber(0.99, 2),
+    integer: renderUSNumber(1234, 2)
+  }
+
+expected:
+  format: json
+  data:
+    basic: "1,234.56"
+    no_decimals: "1,235"
+    three_decimals: "1,234.567"
+    no_thousands: "1234.56"
+    negative: "-1,234.56"
+    zero: "0.00"
+    large: "1,234,567.89"
+    small: "0.99"
+    integer: "1,234.00"
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "regional-number-expansion-2025-10-29"
+  complexity: "basic"
+  notes:
+    - "Tests renderUSNumber with various inputs and parameters"
+    - "USA format: comma thousands separator, period decimal separator"
+    - "Default: 2 decimals, thousands separators enabled"

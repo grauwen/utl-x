@@ -1,0 +1,53 @@
+name: "render_eu_number"
+category: "stdlib/regional"
+description: "Test renderEUNumber function - European format (period thousands, comma decimal)"
+tags: ["stdlib", "regional", "numbers", "formatting", "european"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    basic: renderEUNumber(1234.56),
+    no_decimals: renderEUNumber(1234.56, 0),
+    three_decimals: renderEUNumber(1234.567, 3),
+    no_thousands: renderEUNumber(1234.56, 2, false),
+    negative: renderEUNumber(-1234.56),
+    zero: renderEUNumber(0),
+    large: renderEUNumber(1234567.89),
+    small: renderEUNumber(0.99, 2),
+    integer: renderEUNumber(1234, 2)
+  }
+
+expected:
+  format: json
+  data:
+    basic: "1.234,56"
+    no_decimals: "1.235"
+    three_decimals: "1.234,567"
+    no_thousands: "1234,56"
+    negative: "-1.234,56"
+    zero: "0,00"
+    large: "1.234.567,89"
+    small: "0,99"
+    integer: "1.234,00"
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "regional-number-expansion-2025-10-29"
+  complexity: "basic"
+  notes:
+    - "Tests renderEUNumber with various inputs and parameters"
+    - "European format: period thousands separator, comma decimal separator"
+    - "Default: 2 decimals, thousands separators enabled"
+    - "Used in Germany, Spain, Italy, and most of Europe"

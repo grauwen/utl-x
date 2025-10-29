@@ -1,0 +1,51 @@
+name: "parse_eu_number"
+category: "stdlib/regional"
+description: "Test parseEUNumber function - parse European format numbers"
+tags: ["stdlib", "regional", "numbers", "parsing", "european"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    basic: parseEUNumber("1.234,56"),
+    no_thousands: parseEUNumber("1234,56"),
+    large: parseEUNumber("1.234.567,89"),
+    negative: parseEUNumber("-1.234,56"),
+    zero: parseEUNumber("0,00"),
+    integer: parseEUNumber("1.234"),
+    small: parseEUNumber("0,99"),
+    no_decimal: parseEUNumber("5000")
+  }
+
+expected:
+  format: json
+  data:
+    basic: 1234.56
+    no_thousands: 1234.56
+    large: 1234567.89
+    negative: -1234.56
+    zero: 0
+    integer: 1234
+    small: 0.99
+    no_decimal: 5000
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "regional-number-expansion-2025-10-29"
+  complexity: "basic"
+  notes:
+    - "Tests parseEUNumber with various formatted strings"
+    - "European format: period thousands separator, comma decimal separator"
+    - "Parses to standard numeric representation"
+    - "Used in Germany, Spain, Italy, and most of Europe"
