@@ -82,7 +82,7 @@ object Main {
             |Commands:
             |  transform (t)  Transform data using a UTL-X script
             |  repl      (r)  Start interactive REPL session
-            |  schema    (s)  Generate and validate schemas (design-time analysis)
+            |  // schema    (s)  Generate and validate schemas (design-time analysis)  // Temporarily disabled - requires analysis module
             |  capture        Manage test capture settings (enable/disable/status)
             |  validate  (v)  Validate a UTL-X script without executing
             |  compile   (c)  Compile a UTL-X script to bytecode
@@ -96,7 +96,7 @@ object Main {
             |  utlx repl
             |  utlx transform script.utlx input.xml -o output.json
             |  utlx capture status
-            |  utlx schema generate --input-schema order.xsd --transform script.utlx --output-format json-schema
+            |  // utlx schema generate --input-schema order.xsd --transform script.utlx --output-format json-schema  // Temporarily disabled
             |  utlx validate script.utlx
             |  utlx transform --input-format xml --output-format json script.utlx < input.xml
             |  utlx transform data.yaml script.utlx --output-format json
