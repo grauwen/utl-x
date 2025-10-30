@@ -189,42 +189,34 @@ object ExtendedDateFunctions {
     }
     
     @UTLXFunction(
-        description = "Validate date string (ISO 8601 format)",
+        description = "Validate date string (ISO 8601 format or custom pattern)",
         minArgs = 1,
-        maxArgs = 1,
+        maxArgs = 2,
         category = "Date",
         parameters = [
-            "dateStr: Date string to validate"
+            "dateStr: Date string to validate",
+            "pattern: Optional date pattern (defaults to 'ISO8601')"
         ],
-        returns = "Boolean indicating if the string is a valid ISO 8601 date",
+        returns = "Boolean indicating if the string is a valid date",
         example = "validate-date(\"2025-10-14T00:00:00Z\") => true",
         tags = ["date"],
         since = "1.0"
     )
     /**
      * Validate date string against a pattern or ISO 8601 format
-     * Usage: validate-date("yyyy-MM-dd", "2025-10-14T00:00:00Z") => true
-     * Usage: validate-date("ISO8601", "2025-10-14T00:00:00Z") => true
+     * Usage: validate-date("2025-10-14T00:00:00Z") => true (uses ISO8601 default)
+     * Usage: validate-date("2025-10-14", "yyyy-MM-dd") => true
      */
     fun validateDate(args: List<UDM>): UDM {
-        if (args.size != 2) {
+        if (args.isEmpty() || args.size > 2) {
             throw FunctionArgumentException(
-                "validate-date expects 2 arguments, got ${args.size}. " +
-                "Hint: Use validate-date(pattern, date)"
+                "validate-date expects 1-2 arguments, got ${args.size}. " +
+                "Hint: Use validate-date(date) or validate-date(date, pattern)"
             )
         }
 
-        // Validate that first argument is a string pattern
-        val patternArg = args[0]
-        if (patternArg !is UDM.Scalar || patternArg.value !is String) {
-            throw FunctionArgumentException(
-                "validate-date expects pattern to be a string, got ${getTypeDescription(patternArg)}. " +
-                "Hint: Use a date pattern like 'yyyy-MM-dd' or 'ISO8601'"
-            )
-        }
-
-        // Validate that second argument is a string date
-        val dateArg = args[1]
+        // First argument is the date string
+        val dateArg = args[0]
         if (dateArg !is UDM.Scalar) {
             throw FunctionArgumentException(
                 "validate-date expects date to be a string, got ${getTypeDescription(dateArg)}. " +
@@ -244,7 +236,20 @@ object ExtendedDateFunctions {
             )
         }
 
-        val pattern = patternArg.value as String
+        // Second argument is the optional pattern (defaults to "ISO8601")
+        val pattern = if (args.size == 2) {
+            val patternArg = args[1]
+            if (patternArg !is UDM.Scalar || patternArg.value !is String) {
+                throw FunctionArgumentException(
+                    "validate-date expects pattern to be a string, got ${getTypeDescription(patternArg)}. " +
+                    "Hint: Use a date pattern like 'yyyy-MM-dd' or 'ISO8601'"
+                )
+            }
+            patternArg.value as String
+        } else {
+            "ISO8601"
+        }
+
         val dateStr = dateArg.value as String
 
         return try {

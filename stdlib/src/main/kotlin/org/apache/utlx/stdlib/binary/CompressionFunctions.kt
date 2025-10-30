@@ -694,32 +694,34 @@ readJarEntry(jarData, "com/example/Main.class")""",
      */
     fun readJarEntry(args: List<UDM>): UDM {
         require(args.size >= 2) { "readJarEntry requires 2 arguments: jarData, entryName" }
-        
+
         val jarData = (args[0] as UDM.Binary).data
         val entryName = args[1].asString()
-        
+
         return try {
             val input = ByteArrayInputStream(jarData)
-            
-            JarInputStream(input).use { jarStream ->
-                var entry: JarEntry? = jarStream.nextJarEntry
+
+            // Use ZipInputStream to read JAR entries (JAR is a ZIP file)
+            // This allows us to read all entries including META-INF/MANIFEST.MF as regular entries
+            ZipInputStream(input).use { zipStream ->
+                var entry = zipStream.nextEntry
                 while (entry != null) {
                     if (entry.name == entryName && !entry.isDirectory) {
                         val output = ByteArrayOutputStream()
                         val buffer = ByteArray(8192)
                         var bytesRead: Int
-                        
-                        while (jarStream.read(buffer).also { bytesRead = it } != -1) {
+
+                        while (zipStream.read(buffer).also { bytesRead = it } != -1) {
                             output.write(buffer, 0, bytesRead)
                         }
-                        
+
                         return UDM.fromNative(output.toByteArray())
                     }
-                    jarStream.closeEntry()
-                    entry = jarStream.nextJarEntry
+                    zipStream.closeEntry()
+                    entry = zipStream.nextEntry
                 }
             }
-            
+
             UDM.Scalar(null)  // Entry not found
         } catch (e: IOException) {
             throw CompressionException("Failed to read JAR entry: ${e.message}", e)
@@ -752,22 +754,24 @@ listJarEntries(jarData)""",
      */
     fun listJarEntries(args: List<UDM>): UDM {
         require(args.isNotEmpty()) { "listJarEntries requires 1 argument: jarData" }
-        
+
         val jarData = (args[0] as UDM.Binary).data
-        
+
         return try {
             val input = ByteArrayInputStream(jarData)
             val entries = mutableListOf<String>()
-            
-            JarInputStream(input).use { jarStream ->
-                var entry: JarEntry? = jarStream.nextJarEntry
+
+            // Use ZipInputStream to list JAR entries (JAR is a ZIP file)
+            // This allows us to see all entries including META-INF/MANIFEST.MF
+            ZipInputStream(input).use { zipStream ->
+                var entry = zipStream.nextEntry
                 while (entry != null) {
                     entries.add(entry.name)
-                    jarStream.closeEntry()
-                    entry = jarStream.nextJarEntry
+                    zipStream.closeEntry()
+                    entry = zipStream.nextEntry
                 }
             }
-            
+
             UDM.fromNative(entries)
         } catch (e: IOException) {
             throw CompressionException("Failed to list JAR entries: ${e.message}", e)

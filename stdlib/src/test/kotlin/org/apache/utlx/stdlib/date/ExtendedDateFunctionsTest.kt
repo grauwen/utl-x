@@ -238,9 +238,9 @@ class ExtendedDateFunctionsTest {
     @Test
     fun testValidateDateValidISO() {
         val result = ExtendedDateFunctions.validateDate(
-            listOf(UDM.Scalar("yyyy-MM-dd"), UDM.Scalar("2025-10-17T12:00:00Z"))
+            listOf(UDM.Scalar("2025-10-17T12:00:00Z"), UDM.Scalar("yyyy-MM-dd"))
         )
-        
+
         assertTrue(result is UDM.Scalar)
         assertTrue(result.value as Boolean)
     }
@@ -248,9 +248,9 @@ class ExtendedDateFunctionsTest {
     @Test
     fun testValidateDateValidSimple() {
         val result = ExtendedDateFunctions.validateDate(
-            listOf(UDM.Scalar("yyyy-MM-dd"), UDM.Scalar("2025-10-17T00:00:00Z"))
+            listOf(UDM.Scalar("2025-10-17T00:00:00Z"), UDM.Scalar("yyyy-MM-dd"))
         )
-        
+
         assertTrue(result is UDM.Scalar)
         assertTrue(result.value as Boolean)
     }
@@ -258,9 +258,9 @@ class ExtendedDateFunctionsTest {
     @Test
     fun testValidateDateInvalidFormat() {
         val result = ExtendedDateFunctions.validateDate(
-            listOf(UDM.Scalar("yyyy-MM-dd"), UDM.Scalar("2025-13-45"))
+            listOf(UDM.Scalar("2025-13-45"), UDM.Scalar("yyyy-MM-dd"))
         )
-        
+
         assertTrue(result is UDM.Scalar)
         assertFalse(result.value as Boolean)
     }
@@ -268,9 +268,9 @@ class ExtendedDateFunctionsTest {
     @Test
     fun testValidateDateInvalidString() {
         val result = ExtendedDateFunctions.validateDate(
-            listOf(UDM.Scalar("yyyy-MM-dd"), UDM.Scalar("not a date"))
+            listOf(UDM.Scalar("not a date"), UDM.Scalar("yyyy-MM-dd"))
         )
-        
+
         assertTrue(result is UDM.Scalar)
         assertFalse(result.value as Boolean)
     }
@@ -278,9 +278,9 @@ class ExtendedDateFunctionsTest {
     @Test
     fun testValidateDateEmptyString() {
         val result = ExtendedDateFunctions.validateDate(
-            listOf(UDM.Scalar("yyyy-MM-dd"), UDM.Scalar(""))
+            listOf(UDM.Scalar(""), UDM.Scalar("yyyy-MM-dd"))
         )
-        
+
         assertTrue(result is UDM.Scalar)
         assertFalse(result.value as Boolean)
     }
@@ -288,9 +288,9 @@ class ExtendedDateFunctionsTest {
     @Test
     fun testValidateDateNullValue() {
         val result = ExtendedDateFunctions.validateDate(
-            listOf(UDM.Scalar("yyyy-MM-dd"), UDM.Scalar.nullValue())
+            listOf(UDM.Scalar.nullValue())
         )
-        
+
         assertTrue(result is UDM.Scalar)
         assertFalse(result.value as Boolean)
     }
@@ -384,7 +384,7 @@ class ExtendedDateFunctionsTest {
     @Test
     fun testValidateDateInvalidArgCount() {
         assertThrows<FunctionArgumentException> {
-            ExtendedDateFunctions.validateDate(listOf(UDM.Scalar("pattern")))
+            ExtendedDateFunctions.validateDate(listOf())
         }
     }
 
@@ -392,7 +392,7 @@ class ExtendedDateFunctionsTest {
     fun testValidateDateTooManyArgs() {
         assertThrows<FunctionArgumentException> {
             ExtendedDateFunctions.validateDate(
-                listOf(UDM.Scalar("pattern"), UDM.Scalar("date"), UDM.Scalar("extra"))
+                listOf(UDM.Scalar("date"), UDM.Scalar("pattern"), UDM.Scalar("extra"))
             )
         }
     }
@@ -400,14 +400,14 @@ class ExtendedDateFunctionsTest {
     @Test
     fun testValidateDateInvalidPatternType() {
         assertThrows<FunctionArgumentException> {
-            ExtendedDateFunctions.validateDate(listOf(baseDate, UDM.Scalar("2025-10-17")))
+            ExtendedDateFunctions.validateDate(listOf(UDM.Scalar("2025-10-17"), baseDate))
         }
     }
 
     @Test
     fun testValidateDateInvalidDateType() {
         assertThrows<FunctionArgumentException> {
-            ExtendedDateFunctions.validateDate(listOf(UDM.Scalar("pattern"), baseDate))
+            ExtendedDateFunctions.validateDate(listOf(baseDate))
         }
     }
 
@@ -467,9 +467,9 @@ class ExtendedDateFunctionsTest {
     @Test
     fun testValidateDateWithComplexISO() {
         val result = ExtendedDateFunctions.validateDate(
-            listOf(UDM.Scalar("ISO8601"), UDM.Scalar("2025-10-17T14:30:45.123456789Z"))
+            listOf(UDM.Scalar("2025-10-17T14:30:45.123456789Z"), UDM.Scalar("ISO8601"))
         )
-        
+
         assertTrue(result is UDM.Scalar)
         assertTrue(result.value as Boolean)
     }

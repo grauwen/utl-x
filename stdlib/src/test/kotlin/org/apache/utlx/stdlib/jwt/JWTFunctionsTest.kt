@@ -39,7 +39,7 @@ class JWTFunctionsTest {
         val payload = decoded.properties["payload"] as UDM.Object
         assertEquals("1234567890", (payload.properties["sub"] as UDM.Scalar).value)
         assertEquals("John Doe", (payload.properties["name"] as UDM.Scalar).value)
-        assertEquals(1516239022.0, (payload.properties["iat"] as UDM.Scalar).value)
+        assertEquals(1516239022L, (payload.properties["iat"] as UDM.Scalar).value)
         
         // Check signature
         assertEquals("SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c", 
@@ -55,7 +55,7 @@ class JWTFunctionsTest {
         
         assertEquals("1234567890", (claims.properties["sub"] as UDM.Scalar).value)
         assertEquals("John Doe", (claims.properties["name"] as UDM.Scalar).value)
-        assertEquals(1516239022.0, (claims.properties["iat"] as UDM.Scalar).value)
+        assertEquals(1516239022L, (claims.properties["iat"] as UDM.Scalar).value)
     }
 
     @Test
