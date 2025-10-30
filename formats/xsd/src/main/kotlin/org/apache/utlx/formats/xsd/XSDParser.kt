@@ -166,9 +166,9 @@ class XSDParser(
         }
 
         val newMetadata = schema.metadata + mapOf(
-            "schemaType" to "xsd-schema",
-            "xsdVersion" to xsdVersion,
-            "targetNamespace" to targetNamespace
+            "__schemaType" to "xsd-schema",
+            "__xsdVersion" to xsdVersion,
+            "__targetNamespace" to targetNamespace
         )
         return UDM.Object(
             properties = enhancedProperties,
@@ -229,8 +229,8 @@ class XSDParser(
                 // Add metadata
                 val newMetadata = udm.metadata.toMutableMap()
                 if (schemaType != null) {
-                    newMetadata["schemaType"] = schemaType
-                    newMetadata["scope"] = scope
+                    newMetadata["__schemaType"] = schemaType
+                    newMetadata["__scope"] = scope
                 }
 
                 UDM.Object(
@@ -256,7 +256,7 @@ class XSDParser(
         // If this looks like an XSD element but wasn't caught earlier
         val elementName = udm.name?.substringAfter(":") ?: ""
         if (elementName in XSD_ELEMENTS) {
-            metadata["schemaType"] = "xsd-$elementName"
+            metadata["__schemaType"] = "xsd-$elementName"
         }
 
         return metadata
