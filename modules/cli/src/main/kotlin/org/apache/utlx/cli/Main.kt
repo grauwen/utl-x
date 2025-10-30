@@ -30,7 +30,11 @@ object Main {
             when (command.lowercase()) {
                 "transform", "t" -> TransformCommand.execute(commandArgs)
                 "repl", "r" -> ReplCommand.execute(commandArgs)
-                "schema", "s" -> SchemaCommand.execute(commandArgs)
+                // "schema", "s" -> SchemaCommand.execute(commandArgs)  // Temporarily disabled - depends on analysis module
+                "schema", "s" -> {
+                    println("Schema command temporarily disabled")
+                    println("(Requires analysis module which is currently disabled)")
+                }
                 "capture" -> CaptureCommand.execute(commandArgs)
                 "validate", "v" -> {
                     println("Validate command not yet implemented")

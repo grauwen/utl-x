@@ -43,8 +43,8 @@ class TransformCommandTest {
         
         // Execute transformation
         val args = arrayOf(
-            inputXml.absolutePath,
             script.absolutePath,
+            inputXml.absolutePath,
             "-o", output.absolutePath
         )
         
@@ -86,8 +86,8 @@ class TransformCommandTest {
         val output = tempDir.resolve("output.xml").toFile()
         
         val args = arrayOf(
-            inputJson.absolutePath,
             script.absolutePath,
+            inputJson.absolutePath,
             "-o", output.absolutePath
         )
         
@@ -115,7 +115,7 @@ class TransformCommandTest {
             output json
             ---
             {
-              people: input.rows |> map(row => {
+              people: input |> map(row => {
                 name: row.Name,
                 age: row.Age,
                 city: row.City
@@ -126,8 +126,8 @@ class TransformCommandTest {
         val output = tempDir.resolve("output.json").toFile()
         
         val args = arrayOf(
-            inputCsv.absolutePath,
             script.absolutePath,
+            inputCsv.absolutePath,
             "-o", output.absolutePath
         )
         
@@ -157,11 +157,11 @@ class TransformCommandTest {
         val output = tempDir.resolve("output.json").toFile()
         
         val args = arrayOf(
-            inputXml.absolutePath,
             script.absolutePath,
+            inputXml.absolutePath,
             "-o", output.absolutePath
         )
-        
+
         TransformCommand.execute(args)
         
         assertTrue(output.exists())
@@ -184,8 +184,8 @@ class TransformCommandTest {
         val output = tempDir.resolve("output.json").toFile()
         
         val args = arrayOf(
-            input.absolutePath,
             script.absolutePath,
+            input.absolutePath,
             "-o", output.absolutePath,
             "--verbose"
         )
