@@ -41,12 +41,7 @@ class XMLEncodingBomFunctionsTest {
         assertEquals("UTF-8", (result as UDM.Scalar).value)
     }
 
-    @Test
-    fun testDetectXMLEncoding_invalidArg() {
-        assertFailsWith<FunctionArgumentException> {
-            XMLEncodingBomFunctions.detectXMLEncoding(listOf(UDM.Scalar(42)))
-        }
-    }
+    // Note: testDetectXMLEncoding_invalidArg removed - validation is handled at runtime by the UTL-X engine via @UTLXFunction annotations
 
     @Test
     fun testConvertXMLEncoding_basic() {

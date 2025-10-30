@@ -703,10 +703,16 @@ Result: "https://example.com:8080/api/users?id=123&type=admin"""",
         if (url !is UDM.Scalar || url.value !is String) {
             return UDM.Scalar(false)
         }
-        
+
+        val urlString = url.value as String
+        if (urlString.isEmpty()) {
+            return UDM.Scalar(false)
+        }
+
         return try {
-            URI(url.value as String)
-            UDM.Scalar(true)
+            val uri = URI(urlString)
+            // URI must have a scheme to be a valid URL
+            UDM.Scalar(uri.scheme != null)
         } catch (e: Exception) {
             UDM.Scalar(false)
         }

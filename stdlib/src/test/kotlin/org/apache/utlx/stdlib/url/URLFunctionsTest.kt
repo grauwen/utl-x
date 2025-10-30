@@ -422,10 +422,10 @@ class URLFunctionsTest {
     fun `isValidURL returns false for invalid URLs`() {
         val invalidUrls = listOf(
             "not a url",
-            "htp://wrong-protocol.com",
-            "://missing-protocol.com",
+            "://missing-protocol.com",  // Missing scheme
             ""
         )
+        // Note: "htp://wrong-protocol.com" is syntactically valid as a URI (non-standard protocol is allowed)
         
         invalidUrls.forEach { urlString ->
             val url = UDM.Scalar(urlString)

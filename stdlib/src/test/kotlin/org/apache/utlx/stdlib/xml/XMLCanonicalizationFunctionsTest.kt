@@ -331,15 +331,17 @@ class XMLCanonicalizationFunctionsTest {
 
     @Test
     fun testC14nEqualsWithAlgorithm() {
+        // These XMLs are NOT canonically equal because namespace prefixes differ in attributes
+        // Even with exc-c14n, prefixes used in attributes are preserved
         val xml1 = """<root xmlns:ns="http://example.com" ns:attr="value"/>"""
         val xml2 = """<root xmlns:prefix="http://example.com" prefix:attr="value"/>"""
-        
+
         val result = XMLCanonicalizationFunctions.c14nEquals(
             listOf(UDM.Scalar(xml1), UDM.Scalar(xml2), UDM.Scalar("exc-c14n"))
         )
-        
+
         assertTrue(result is UDM.Scalar)
-        assertTrue(result.value as Boolean)
+        assertFalse(result.value as Boolean)  // Different prefixes mean different canonical forms
     }
 
     @Test
