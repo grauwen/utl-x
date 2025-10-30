@@ -247,6 +247,48 @@ utlx --version
 # UTL-X version 0.9.0 (beta)
 ```
 
+### Building from Source
+
+**Prerequisites:**
+- JDK 17 or later
+- Gradle 8.x (included via wrapper)
+
+**Build Steps:**
+
+1. Clone the repository:
+```bash
+git clone https://github.com/grauwen/utl-x.git
+cd utl-x
+```
+
+2. Build the CLI:
+```bash
+# macOS / Linux
+./gradlew :modules:cli:jar
+
+# Windows
+gradlew.bat :modules:cli:jar
+```
+
+3. Run using the wrapper scripts:
+
+**macOS / Linux:**
+```bash
+./utlx transform script.utlx input.xml
+```
+
+**Windows (Command Prompt):**
+```cmd
+utlx.bat transform script.utlx input.xml
+```
+
+**Windows (PowerShell):**
+```powershell
+.\utlx.ps1 transform script.utlx input.xml
+```
+
+The wrapper scripts automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar`.
+
 ## Quick Start
 
 ### 1. Create Your First Transformation
