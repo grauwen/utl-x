@@ -32,9 +32,10 @@ object ExtendedStringFunctions {
         requireArgs(args, 2, "substring-before")
         val str = args[0].asString()
         val delimiter = args[1].asString()
-        
+
         val index = str.indexOf(delimiter)
-        val result = if (index >= 0) str.substring(0, index) else ""
+        // If delimiter not found, return original string (consistent with Kotlin stdlib behavior)
+        val result = if (index >= 0) str.substring(0, index) else str
         return UDM.Scalar(result)
     }
     
@@ -149,7 +150,12 @@ object ExtendedStringFunctions {
         val str = args[0].asString()
         val length = args[1].asNumber().toInt()
         val padChar = args[2].asString().firstOrNull() ?: ' '
-        
+
+        // If length is negative or less than string length, return original string
+        if (length <= 0 || length <= str.length) {
+            return UDM.Scalar(str)
+        }
+
         val result = str.padStart(length, padChar)
         return UDM.Scalar(result)
     }
@@ -178,7 +184,12 @@ object ExtendedStringFunctions {
         val str = args[0].asString()
         val length = args[1].asNumber().toInt()
         val padChar = args[2].asString().firstOrNull() ?: ' '
-        
+
+        // If length is negative or less than string length, return original string
+        if (length <= 0 || length <= str.length) {
+            return UDM.Scalar(str)
+        }
+
         val result = str.padEnd(length, padChar)
         return UDM.Scalar(result)
     }
@@ -230,6 +241,12 @@ object ExtendedStringFunctions {
         requireArgs(args, 2, "repeat")
         val str = args[0].asString()
         val times = args[1].asNumber().toInt()
+
+        // Handle negative count - return empty string
+        if (times < 0) {
+            return UDM.Scalar("")
+        }
+
         return UDM.Scalar(str.repeat(times))
     }
 

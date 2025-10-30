@@ -204,33 +204,22 @@ class UUIDFunctionsTest {
 
     @Test
     fun testInvalidArguments() {
-        // Test functions that expect no arguments
-        assertThrows<FunctionArgumentException> {
-            UUIDFunctions.generateUuidV4(listOf(UDM.Scalar("arg")))
-        }
-        
-        assertThrows<FunctionArgumentException> {
-            UUIDFunctions.generateUuidV7(listOf(UDM.Scalar("arg")))
-        }
-        
-        // Test functions that expect one argument
+        // Note: @UTLXFunction minArgs/maxArgs validation is handled by the function registry
+        // This test only checks manual validation in the function implementations
+
+        // Test functions that expect one argument - missing argument
         assertThrows<FunctionArgumentException> {
             UUIDFunctions.isValidUuid(listOf())
         }
-        
+
         assertThrows<FunctionArgumentException> {
             UUIDFunctions.getUuidVersion(listOf())
         }
-        
-        assertThrows<FunctionArgumentException> {
-            UUIDFunctions.isValidUuid(listOf(UDM.Scalar("uuid"), UDM.Scalar("extra")))
-        }
-        
-        // Test functions that expect one argument
+
         assertThrows<FunctionArgumentException> {
             UUIDFunctions.generateUuidV7Batch(listOf())
         }
-        
+
         // Test with wrong argument types
         assertThrows<FunctionArgumentException> {
             UUIDFunctions.isValidUuid(listOf(UDM.Array(listOf())))

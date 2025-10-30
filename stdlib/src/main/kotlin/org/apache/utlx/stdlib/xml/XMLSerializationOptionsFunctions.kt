@@ -296,17 +296,19 @@ object XMLSerializationOptionsFunctions {
     }
 
     private fun addNamespaceDeclarationsInternal(xml: String, namespaces: Map<String, String>): String {
-        val rootElementPattern = Regex("<([^\\s/>]+)(\\s[^>]*)?>")
+        // Match opening tag or self-closing tag (but not comments, processing instructions, etc.)
+        val rootElementPattern = Regex("<([a-zA-Z][^\\s/>]*)(\\s[^>]*)?(/>|>)")
         val match = rootElementPattern.find(xml)
-        
+
         return if (match != null) {
             val element = match.groupValues[1]
             val existingAttrs = match.groupValues[2]
+            val closingPart = match.groupValues[3] // Either "/>" or ">"
             val declarations = namespaces.map { (prefix, uri) ->
                 "xmlns:$prefix=\"$uri\""
             }.joinToString(" ")
-            
-            val newOpeningTag = "<$element$existingAttrs $declarations>"
+
+            val newOpeningTag = "<$element$existingAttrs $declarations$closingPart"
             xml.replaceFirst(match.value, newOpeningTag)
         } else {
             xml

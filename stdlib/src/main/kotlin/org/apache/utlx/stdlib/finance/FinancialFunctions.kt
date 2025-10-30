@@ -120,19 +120,69 @@ object FinancialFunctions {
         if (args.isEmpty()) {
             throw IllegalArgumentException("parseCurrency() requires at least 1 argument: currencyString")
         }
-        
-        val currencyStr = args[0].asString()
+
+        var currencyStr = args[0].asString().trim()
         val localeTag = if (args.size > 1) args[1].asString() else "en_US"
-        
+
+        // Handle accounting notation: (amount) = negative amount
+        val isNegative = currencyStr.startsWith("(") && currencyStr.endsWith(")")
+        if (isNegative) {
+            currencyStr = currencyStr.substring(1, currencyStr.length - 1).trim()
+        }
+
+        // Try parsing with the specified locale first
+        val locale = Locale.forLanguageTag(localeTag.replace("_", "-"))
+        var result: Double? = null
+
         try {
-            val locale = Locale.forLanguageTag(localeTag.replace("_", "-"))
             val format = NumberFormat.getCurrencyInstance(locale)
             val number = format.parse(currencyStr)
-            
-            return UDM.Scalar(number.toDouble())
+            result = number.toDouble()
         } catch (e: Exception) {
-            throw IllegalArgumentException("Cannot parse currency string: $currencyStr", e)
+            // If specified locale fails, try common locales for EUR, GBP, etc.
+            val commonLocales = listOf(
+                Locale.US,           // $
+                Locale.UK,           // £
+                Locale.GERMANY,      // €
+                Locale.FRANCE,       // €
+                Locale.JAPAN,        // ¥
+                Locale("en", "GB")   // £
+            )
+
+            for (tryLocale in commonLocales) {
+                try {
+                    val format = NumberFormat.getCurrencyInstance(tryLocale)
+                    val number = format.parse(currencyStr)
+                    result = number.toDouble()
+                    break
+                } catch (ignored: Exception) {
+                    // Try next locale
+                }
+            }
+
+            // Last resort: strip common currency symbols and parse as number
+            if (result == null) {
+                try {
+                    val stripped = currencyStr
+                        .replace("$", "")
+                        .replace("€", "")
+                        .replace("£", "")
+                        .replace("¥", "")
+                        .replace("¤", "")  // Generic currency symbol
+                        .replace(",", "")  // Remove thousand separators
+                        .trim()
+                    result = stripped.toDouble()
+                } catch (ignored: Exception) {
+                    // Give up
+                }
+            }
         }
+
+        if (result == null) {
+            throw IllegalArgumentException("Cannot parse currency string: ${args[0].asString()}")
+        }
+
+        return UDM.Scalar(if (isNegative) -result else result)
     }
     
     // ============================================
@@ -208,12 +258,13 @@ object FinancialFunctions {
     )
     /**
      * Rounds up to the nearest cent (2 decimal places).
-     * 
+     *
      * Common in pricing to avoid fractions of a cent.
-     * 
+     * Uses HALF_UP rounding (standard commercial rounding).
+     *
      * @param args [0] amount (Number)
      * @return amount rounded to 2 decimals
-     * 
+     *
      * Example:
      * ```
      * roundToCents(1.234) → 1.23
@@ -222,7 +273,15 @@ object FinancialFunctions {
      * ```
      */
     fun roundToCents(args: List<UDM>): UDM {
-        return roundToDecimalPlaces(listOf(args[0], UDM.Scalar(2)))
+        if (args.isEmpty()) {
+            throw IllegalArgumentException("roundToCents() requires 1 argument: amount")
+        }
+
+        val number = args[0].asNumber()
+        val bd = BigDecimal.valueOf(number)
+        val rounded = bd.setScale(2, RoundingMode.HALF_UP)
+
+        return UDM.Scalar(rounded.toDouble())
     }
     
     // ============================================

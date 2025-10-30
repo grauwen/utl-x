@@ -416,12 +416,13 @@ class FinancialFunctionsTest {
     
     @Test
     fun `test isValidCurrency - invalid codes`() {
-        val invalidCodes = listOf("XXX", "ABC", "US", "EURO", "")
-        
+        // Note: XXX is actually a valid ISO 4217 code (means "no currency")
+        val invalidCodes = listOf("ABC", "US", "EURO", "", "ZZZ", "123")
+
         invalidCodes.forEach { code ->
             val result = FinancialFunctions.isValidCurrency(listOf(UDM.Scalar(code)))
             val isValid = (result as UDM.Scalar).value as Boolean
-            
+
             assertFalse(isValid, "$code should be invalid currency code")
         }
     }

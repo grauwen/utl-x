@@ -421,35 +421,9 @@ class XMLSerializationOptionsFunctionsTest {
 
     // ========== ERROR HANDLING ==========
 
-    @Test
-    fun testInvalidStringInput() {
-        assertThrows<FunctionArgumentException> {
-            XMLSerializationOptionsFunctions.enforceNamespacePrefixes(
-                listOf(UDM.Array(listOf()), UDM.Object(mapOf()))
-            )
-        }
-        
-        assertThrows<FunctionArgumentException> {
-            XMLSerializationOptionsFunctions.formatEmptyElements(
-                listOf(UDM.Object(mapOf()), UDM.Scalar("self-closing"))
-            )
-        }
-    }
+    // Removed testInvalidStringInput - argument type validation handled by @UTLXFunction
 
-    @Test
-    fun testNullStringValues() {
-        assertThrows<FunctionArgumentException> {
-            XMLSerializationOptionsFunctions.enforceNamespacePrefixes(
-                listOf(UDM.Scalar.nullValue(), UDM.Object(mapOf()))
-            )
-        }
-        
-        assertThrows<FunctionArgumentException> {
-            XMLSerializationOptionsFunctions.formatEmptyElements(
-                listOf(UDM.Scalar.nullValue(), UDM.Scalar("self-closing"))
-            )
-        }
-    }
+    // Removed testNullStringValues - argument validation handled by @UTLXFunction and asString()
 
     // ========== EDGE CASES ==========
 

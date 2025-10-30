@@ -301,15 +301,28 @@ object JWSBasicFunctions {
     fun getJWSInfo(args: List<UDM>): UDM {
         requireArgs(args, 1, "getJWSInfo")
         val token = args[0].asString()
-        
+
         val parts = token.trim().split(".")
         if (parts.size != 3) {
             throw FunctionArgumentException("Invalid JWS format")
         }
-        
-        val header = getJWSHeader(args)
-        val payload = getJWSPayload(args)
-        
+
+        // Try to decode header and payload, but don't fail if they can't be decoded
+        var header: UDM = UDM.Scalar(null)
+        var payload: UDM = UDM.Scalar(null)
+
+        try {
+            header = getJWSHeader(args)
+        } catch (e: Exception) {
+            // Ignore - header may not be valid base64url
+        }
+
+        try {
+            payload = getJWSPayload(args)
+        } catch (e: Exception) {
+            // Ignore - payload may not be valid base64url
+        }
+
         val algorithm = when (header) {
             is UDM.Object -> header.properties["alg"]
             else -> null
@@ -322,7 +335,7 @@ object JWSBasicFunctions {
             is UDM.Object -> header.properties["kid"]
             else -> null
         }
-        
+
         val headerClaims = when (header) {
             is UDM.Object -> header.properties.size
             else -> 0
@@ -331,7 +344,7 @@ object JWSBasicFunctions {
             is UDM.Object -> payload.properties.size
             else -> 0
         }
-        
+
         return UDM.Object(mapOf(
             "algorithm" to (algorithm ?: UDM.Scalar(null)),
             "tokenType" to (tokenType ?: UDM.Scalar(null)),
@@ -431,21 +444,88 @@ object JWSBasicFunctions {
         if (content.isEmpty()) {
             return UDM.Object(emptyMap())
         }
-        
+
         val properties = mutableMapOf<String, UDM>()
-        // Simplified parsing - would need full implementation for production
-        // For now, return empty object to allow compilation
+
+        // Simple state machine for parsing JSON objects
+        var i = 0
+        while (i < content.length) {
+            // Skip whitespace
+            while (i < content.length && content[i].isWhitespace()) i++
+            if (i >= content.length) break
+
+            // Parse key
+            if (content[i] != '"') break
+            i++ // skip opening quote
+            val keyStart = i
+            while (i < content.length && content[i] != '"') i++
+            val key = content.substring(keyStart, i)
+            i++ // skip closing quote
+
+            // Skip whitespace and colon
+            while (i < content.length && (content[i].isWhitespace() || content[i] == ':')) i++
+
+            // Parse value
+            val valueStart = i
+            var depth = 0
+            var inString = false
+            while (i < content.length) {
+                when {
+                    content[i] == '"' && (i == 0 || content[i-1] != '\\') -> inString = !inString
+                    !inString && content[i] == '{' -> depth++
+                    !inString && content[i] == '}' -> depth--
+                    !inString && content[i] == '[' -> depth++
+                    !inString && content[i] == ']' -> depth--
+                    !inString && content[i] == ',' && depth == 0 -> break
+                }
+                i++
+            }
+            val valueStr = content.substring(valueStart, i).trim()
+            properties[key] = parseJSONToUDM(valueStr)
+
+            // Skip comma
+            while (i < content.length && (content[i].isWhitespace() || content[i] == ',')) i++
+        }
+
         return UDM.Object(properties)
     }
-    
+
     private fun parseJSONArray(json: String): UDM {
         val content = json.substring(1, json.length - 1).trim()
         if (content.isEmpty()) {
             return UDM.Array(emptyList())
         }
-        
-        // Simplified parsing - would need full implementation for production
-        return UDM.Array(emptyList())
+
+        val elements = mutableListOf<UDM>()
+        var i = 0
+        while (i < content.length) {
+            // Skip whitespace
+            while (i < content.length && content[i].isWhitespace()) i++
+            if (i >= content.length) break
+
+            // Parse element
+            val elemStart = i
+            var depth = 0
+            var inString = false
+            while (i < content.length) {
+                when {
+                    content[i] == '"' && (i == 0 || content[i-1] != '\\') -> inString = !inString
+                    !inString && content[i] == '{' -> depth++
+                    !inString && content[i] == '}' -> depth--
+                    !inString && content[i] == '[' -> depth++
+                    !inString && content[i] == ']' -> depth--
+                    !inString && content[i] == ',' && depth == 0 -> break
+                }
+                i++
+            }
+            val elemStr = content.substring(elemStart, i).trim()
+            elements.add(parseJSONToUDM(elemStr))
+
+            // Skip comma
+            while (i < content.length && (content[i].isWhitespace() || content[i] == ',')) i++
+        }
+
+        return UDM.Array(elements)
     }
 
 

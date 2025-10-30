@@ -116,9 +116,10 @@ class StatisticalFunctionsTest {
             UDM.Scalar(7),
             UDM.Scalar(9)
         ))))
-        
+
         val stdDevValue = (result as UDM.Scalar).value as Double
-        assertTrue(stdDevValue > 1.9 && stdDevValue < 2.1) // Approximately 2.0
+        // mean=5, variance=32/7≈4.571, stdDev=sqrt(4.571)≈2.138
+        assertTrue(stdDevValue > 2.1 && stdDevValue < 2.2) // Approximately 2.138
     }
 
     @Test
@@ -158,9 +159,10 @@ class StatisticalFunctionsTest {
             UDM.Scalar(7),
             UDM.Scalar(9)
         ))))
-        
+
         val varianceValue = (result as UDM.Scalar).value as Double
-        assertTrue(varianceValue > 3.5 && varianceValue < 4.5) // Approximately 4.0
+        // mean=5, sum of squares=32, variance=32/(8-1)=32/7≈4.571
+        assertTrue(varianceValue > 4.5 && varianceValue < 4.7) // Approximately 4.571
     }
 
     @Test
@@ -437,17 +439,20 @@ class StatisticalFunctionsTest {
         // Test with larger dataset
         val elements = (1..100).map { UDM.Scalar(it) }
         val data = UDM.Array(elements)
-        
+
         val medianResult = StatisticalFunctions.median(listOf(data))
         assertEquals(50.5, (medianResult as UDM.Scalar).value) // (50 + 51) / 2
-        
+
+        // Percentile uses linear interpolation: rank = p/100 * (n-1)
+        // For 25%: rank = 0.25 * 99 = 24.75 -> numbers[24] + 0.75 * (numbers[25] - numbers[24]) = 25 + 0.75 = 25.75
         val percentile25 = StatisticalFunctions.percentile(listOf(data, UDM.Scalar(25)))
-        assertEquals(25.25, (percentile25 as UDM.Scalar).value)
-        
+        assertEquals(25.75, (percentile25 as UDM.Scalar).value)
+
+        // For 75%: rank = 0.75 * 99 = 74.25 -> numbers[74] + 0.25 * (numbers[75] - numbers[74]) = 75 + 0.25 = 75.25
         val percentile75 = StatisticalFunctions.percentile(listOf(data, UDM.Scalar(75)))
         assertEquals(75.25, (percentile75 as UDM.Scalar).value)
-        
+
         val iqrResult = StatisticalFunctions.iqr(listOf(data))
-        assertEquals(50.0, (iqrResult as UDM.Scalar).value) // 75.25 - 25.25
+        assertEquals(49.5, (iqrResult as UDM.Scalar).value) // 75.25 - 25.75 = 49.5
     }
 }

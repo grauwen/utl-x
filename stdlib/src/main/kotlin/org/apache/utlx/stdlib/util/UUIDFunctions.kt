@@ -32,6 +32,7 @@
 package org.apache.utlx.stdlib.util
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.FunctionArgumentException
 import java.nio.ByteBuffer
 import java.security.SecureRandom
 import java.time.Instant
@@ -44,14 +45,12 @@ object UUIDFunctions {
     
     @UTLXFunction(
         description = "Generate UUID v4 (random)",
-        minArgs = 1,
-        maxArgs = 1,
+        minArgs = 0,
+        maxArgs = 0,
         category = "Utility",
-        parameters = [
-            "array: Input array to process"
-        ],
+        parameters = [],
         returns = "Result of the operation",
-        example = "generateUuidV4(...) => result",
+        example = "generateUuidV4() => result",
         notes = """Standard random UUID using cryptographically strong random number generator
 Example:
 generateUuidV4()
@@ -79,14 +78,14 @@ Note: This is the same as the existing CoreFunctions::generateUuid""",
     
     @UTLXFunction(
         description = "Generate UUID v7 (time-ordered)",
-        minArgs = 1,
+        minArgs = 0,
         maxArgs = 1,
         category = "Utility",
         parameters = [
-            "array: Input array to process"
+            "timestamp: Optional timestamp in milliseconds (default: current time)"
         ],
         returns = "Result of the operation",
-        example = "generateUuidV7(...) => result",
+        example = "generateUuidV7() => result",
         notes = """RFC 9562 compliant UUID with millisecond-precision timestamp prefix
 Format: tttttttt-tttt-7xxx-yxxx-xxxxxxxxxxxx
 - t: 48-bit timestamp (milliseconds since Unix epoch)
@@ -161,22 +160,26 @@ generateUuidV7Batch(100)
      *   // Returns: ["01890a5d-...", "01890a5d-...", ...]
      */
     fun generateUuidV7Batch(args: List<UDM>): UDM {
-        require(args.isNotEmpty()) { "generateUuidV7Batch requires count argument" }
-        
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("generateUuidV7Batch requires count argument")
+        }
+
         val count = (args[0] as? UDM.Scalar)?.value?.toString()?.toIntOrNull() ?: 1
-        require(count > 0) { "Count must be positive" }
-        
+        if (count <= 0) {
+            throw FunctionArgumentException("Count must be positive, got: $count")
+        }
+
         val baseTimestamp = Instant.now().toEpochMilli()
         val uuids = mutableListOf<String>()
-        
-        // Generate with monotonic counter to ensure uniqueness
+
+        // Generate with incrementing timestamp to ensure chronological order
+        // Increment by 1ms per UUID to guarantee sortability
         for (i in 0 until count) {
-            // Add microsecond-level offset for ordering
-            val timestamp = baseTimestamp + (i / 1000)
-            val uuid = createUuidV7(timestamp, counter = i % 1000)
+            val timestamp = baseTimestamp + i
+            val uuid = createUuidV7(timestamp, counter = 0)
             uuids.add(uuid)
         }
-        
+
         return UDM.fromNative(uuids)
     }
     
@@ -207,11 +210,13 @@ extractTimestampFromUuidV7("01890a5d-ac96-7000-8000-123456789abc")
      *   // Returns: 1672531200000
      */
     fun extractTimestampFromUuidV7(args: List<UDM>): UDM {
-        require(args.isNotEmpty()) { "extractTimestampFromUuidV7 requires uuid argument" }
-        
-        val uuidString = args[0].asString()
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("extractTimestampFromUuidV7 requires uuid argument")
+        }
+
+        val uuidString = args[0].asStringValue()
         val timestamp = extractTimestamp(uuidString)
-        
+
         return UDM.fromNative(timestamp)
     }
     
@@ -242,11 +247,13 @@ isUuidV7("550e8400-e29b-41d4-a716-446655440000")  // false (v4)""",
      *   isUuidV7("550e8400-e29b-41d4-a716-446655440000")  // false (v4)
      */
     fun isUuidV7(args: List<UDM>): UDM {
-        require(args.isNotEmpty()) { "isUuidV7 requires uuid argument" }
-        
-        val uuidString = args[0].asString()
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("isUuidV7 requires uuid argument")
+        }
+
+        val uuidString = args[0].asStringValue()
         val isV7 = isVersionSeven(uuidString)
-        
+
         return UDM.fromNative(isV7)
     }
     
@@ -277,11 +284,13 @@ getUuidVersion("550e8400-e29b-41d4-a716-446655440000")  // 4""",
      *   getUuidVersion("550e8400-e29b-41d4-a716-446655440000")  // 4
      */
     fun getUuidVersion(args: List<UDM>): UDM {
-        require(args.isNotEmpty()) { "getUuidVersion requires uuid argument" }
-        
-        val uuidString = args[0].asString()
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("getUuidVersion requires uuid argument")
+        }
+
+        val uuidString = args[0].asStringValue()
         val version = extractVersion(uuidString)
-        
+
         return UDM.fromNative(version)
     }
     
@@ -312,16 +321,18 @@ isValidUuid("not-a-uuid")  // false""",
      *   isValidUuid("not-a-uuid")  // false
      */
     fun isValidUuid(args: List<UDM>): UDM {
-        require(args.isNotEmpty()) { "isValidUuid requires uuid argument" }
-        
-        val uuidString = args[0].asString()
+        if (args.isEmpty()) {
+            throw FunctionArgumentException("isValidUuid requires uuid argument")
+        }
+
+        val uuidString = args[0].asStringValue()
         val isValid = try {
             UUID.fromString(uuidString)
             true
         } catch (e: IllegalArgumentException) {
             false
         }
-        
+
         return UDM.fromNative(isValid)
     }
     
@@ -396,23 +407,31 @@ isValidUuid("not-a-uuid")  // false""",
      * Extract timestamp from UUID v7
      */
     private fun extractTimestamp(uuidString: String): Long {
-        val uuid = UUID.fromString(uuidString)
-        
-        // Get most significant bits (contains timestamp)
-        val msb = uuid.mostSignificantBits
-        
-        // Extract 48-bit timestamp from most significant 48 bits
-        val timestamp = msb ushr 16
-        
-        return timestamp
+        try {
+            val uuid = UUID.fromString(uuidString)
+
+            // Get most significant bits (contains timestamp)
+            val msb = uuid.mostSignificantBits
+
+            // Extract 48-bit timestamp from most significant 48 bits
+            val timestamp = msb ushr 16
+
+            return timestamp
+        } catch (e: IllegalArgumentException) {
+            throw FunctionArgumentException("Invalid UUID string: $uuidString")
+        }
     }
-    
+
     /**
      * Extract version number from UUID
      */
     private fun extractVersion(uuidString: String): Int {
-        val uuid = UUID.fromString(uuidString)
-        return uuid.version()
+        try {
+            val uuid = UUID.fromString(uuidString)
+            return uuid.version()
+        } catch (e: IllegalArgumentException) {
+            throw FunctionArgumentException("Invalid UUID string: $uuidString")
+        }
     }
     
     /**
@@ -436,6 +455,22 @@ isValidUuid("not-a-uuid")  // false""",
         buffer.putLong(uuid.mostSignificantBits)
         buffer.putLong(uuid.leastSignificantBits)
         return buffer.array()
+    }
+
+    /**
+     * Helper function to extract string from UDM with null validation
+     */
+    private fun UDM.asStringValue(): String {
+        return when (this) {
+            is UDM.Scalar -> {
+                val v = value
+                if (v == null) {
+                    throw FunctionArgumentException("Expected string value, but got null")
+                }
+                v.toString()
+            }
+            else -> throw FunctionArgumentException("Expected string value, but got ${this.javaClass.simpleName}")
+        }
     }
 }
 

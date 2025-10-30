@@ -260,12 +260,19 @@ in replaceChars. If replaceChars is shorter, characters are deleted.""",
     fun fromCharCode(args: List<UDM>): UDM {
         requireArgs(args, 1, "fromCharCode")
         val code = args[0].asNumber().toInt()
-        
+
         if (code < 0 || code > 0x10FFFF) {
             throw FunctionArgumentException("Invalid character code: $code")
         }
-        
-        return UDM.Scalar(Char(code).toString())
+
+        // For codes > 0xFFFF, use String constructor with code point
+        val result = if (code <= 0xFFFF) {
+            Char(code).toString()
+        } else {
+            String(intArrayOf(code), 0, 1)
+        }
+
+        return UDM.Scalar(result)
     }
     
     @UTLXFunction(

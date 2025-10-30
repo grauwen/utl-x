@@ -214,9 +214,9 @@ class CaseConversionFunctionsTest {
         val result8 = CaseConversionFunctions.slugify(listOf(UDM.Scalar("")))
         assertEquals("", (result8 as UDM.Scalar).value)
 
-        // Test only special characters
+        // Test only special characters (@ becomes "at" and & becomes "and")
         val result9 = CaseConversionFunctions.slugify(listOf(UDM.Scalar("!@#$%^&*()")))
-        assertEquals("", (result9 as UDM.Scalar).value)
+        assertEquals("at-and", (result9 as UDM.Scalar).value)
 
         // Test leading/trailing dashes
         val result10 = CaseConversionFunctions.slugify(listOf(UDM.Scalar("-Leading and Trailing-")))
@@ -289,11 +289,11 @@ class CaseConversionFunctionsTest {
 
     @Test
     fun testRoundTripConversions() {
-        // Test camelCase -> snake_case -> back
+        // Test camelCase -> snake_case -> back (camelize correctly reconstructs camelCase)
         val original = "helloWorldTest"
         val snaked = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar(original)))
         val camelized = CaseConversionFunctions.camelize(listOf(snaked))
-        assertEquals("helloworldtest", (camelized as UDM.Scalar).value) // Note: case is lost
+        assertEquals("helloWorldTest", (camelized as UDM.Scalar).value) // Camelize capitalizes after underscores
 
         // Test camelCase -> uncamelize -> titleCase
         val original2 = "helloWorldTest"

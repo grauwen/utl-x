@@ -306,18 +306,29 @@ Commonly needed for API field transformations""",
         
         val input = str.value as String
         val max = (maxLength.value as Number).toInt()
-        
+
+        // Handle zero max length
+        if (max == 0) {
+            return UDM.Scalar("")
+        }
+
+        // Handle negative max length - return ellipsis
+        if (max < 0) {
+            return UDM.Scalar(ellipsis)
+        }
+
         if (input.length <= max) {
             return UDM.Scalar(input)
         }
-        
+
         val truncateAt = max - ellipsis.length
-        if (truncateAt < 0) {
+        if (truncateAt <= 0) {
             return UDM.Scalar(ellipsis.take(max))
         }
-        
-        val result = input.take(truncateAt) + ellipsis
-        
+
+        // Trim trailing whitespace from truncated part before adding ellipsis
+        val result = input.take(truncateAt).trimEnd() + ellipsis
+
         return UDM.Scalar(result)
     }
     
