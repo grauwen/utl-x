@@ -11,6 +11,8 @@ hese XSDParserTest failures appear to be pre-existing issues with the parser (no
 analysis part
 e.g. modules/analysis/src/test/kotlin/org/apache/utlx/analysis/validation/TransformValidatorTest.kt
 @Disabled("TODO: TypeContext API needs implementation for advanced type inference features")
+
+Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that describes it
 ----
   Likely cause: type may be a reserved keyword or conflicts with the type system. ?
 So the parser has a bug where it's rejecting type as a parameter name when it shouldn't. Should I investigate why the parser is rejecting it?
