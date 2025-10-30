@@ -449,7 +449,12 @@ object CoercionFunctions {
     private fun coerceToString(value: UDM): UDM {
         return when (value) {
             is UDM.Scalar -> UDM.Scalar(value.value?.toString() ?: "")
-            is UDM.Array -> UDM.Scalar(value.elements.joinToString(", "))
+            is UDM.Array -> UDM.Scalar(value.elements.joinToString(", ") { element ->
+                when (element) {
+                    is UDM.Scalar -> element.value?.toString() ?: ""
+                    else -> element.toString()
+                }
+            })
             is UDM.Object -> UDM.Scalar(value.properties.toString())
             is UDM.DateTime -> UDM.Scalar(value.instant.toString())
             is UDM.Date -> UDM.Scalar(value.toISOString())
@@ -529,9 +534,25 @@ object CoercionFunctions {
         if (args.size != 2) {
             throw IllegalArgumentException("tryCoerce expects 2 arguments, got ${args.size}")
         }
-        
+
+        val value = args[0]
+        val targetType = args[1]
+
+        if (targetType !is UDM.Scalar || targetType.value !is String) {
+            return UDM.Scalar(null)
+        }
+
+        val type = targetType.value as String
+
         return try {
-            coerce(args)
+            when (type.lowercase()) {
+                "number" -> coerceToNumber(value)
+                "string" -> coerceToString(value)
+                "boolean" -> coerceToBoolean(value)
+                "array" -> coerceToArray(value)
+                "object" -> coerceToObject(value)
+                else -> UDM.Scalar(null)
+            }
         } catch (e: Exception) {
             UDM.Scalar(null)
         }
@@ -563,10 +584,40 @@ object CoercionFunctions {
         if (args.size != 2) {
             throw IllegalArgumentException("canCoerce expects 2 arguments, got ${args.size}")
         }
-        
+
+        val value = args[0]
+        val targetType = args[1]
+
+        if (targetType !is UDM.Scalar || targetType.value !is String) {
+            return UDM.Scalar(false)
+        }
+
+        val type = targetType.value as String
+
         return try {
-            coerce(args)
-            UDM.Scalar(true)
+            when (type.lowercase()) {
+                "number" -> {
+                    coerceToNumber(value)
+                    UDM.Scalar(true)
+                }
+                "string" -> {
+                    coerceToString(value)
+                    UDM.Scalar(true)
+                }
+                "boolean" -> {
+                    coerceToBoolean(value)
+                    UDM.Scalar(true)
+                }
+                "array" -> {
+                    coerceToArray(value)
+                    UDM.Scalar(true)
+                }
+                "object" -> {
+                    coerceToObject(value)
+                    UDM.Scalar(true)
+                }
+                else -> UDM.Scalar(false)
+            }
         } catch (e: Exception) {
             UDM.Scalar(false)
         }
@@ -598,23 +649,35 @@ object CoercionFunctions {
         if (args.size !in 2..3) {
             throw IllegalArgumentException("coerceAll expects 2-3 arguments, got ${args.size}")
         }
-        
+
         val array = args[0]
         val targetType = args[1]
-        val defaultValue = if (args.size == 3) args[2] else null
-        
+
         if (array !is UDM.Array) {
             throw IllegalArgumentException("First argument must be array")
         }
-        
+
+        if (targetType !is UDM.Scalar || targetType.value !is String) {
+            throw IllegalArgumentException("Target type must be string")
+        }
+
+        val type = targetType.value as String
+
         val coerced = array.elements.mapNotNull { element ->
             try {
-                coerce(listOf(element, targetType, defaultValue ?: element))
+                when (type.lowercase()) {
+                    "number" -> coerceToNumber(element)
+                    "string" -> coerceToString(element)
+                    "boolean" -> coerceToBoolean(element)
+                    "array" -> coerceToArray(element)
+                    "object" -> coerceToObject(element)
+                    else -> null
+                }
             } catch (e: Exception) {
                 null
             }
         }
-        
+
         return UDM.Array(coerced)
     }
     

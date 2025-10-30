@@ -129,26 +129,24 @@ class DataWeaveAliasesTest {
         assertTrue(entriesResult is UDM.Array)
         val entries = (entriesResult as UDM.Array).elements
         assertEquals(2, entries.size)
-        
-        // Each entry should be an object with "key" and "value" properties
+
+        // Each entry should be an array with [key, value]
         entries.forEach { entry ->
-            assertTrue(entry is UDM.Object)
-            val entryObj = entry as UDM.Object
-            assertTrue(entryObj.properties.containsKey("key"))
-            assertTrue(entryObj.properties.containsKey("value"))
+            assertTrue(entry is UDM.Array)
+            val entryArray = entry as UDM.Array
+            assertEquals(2, entryArray.elements.size)
         }
     }
 
     @Test
     fun testDaysBetween() {
-        val date1 = UDM.Scalar("2023-01-01")
-        val date2 = UDM.Scalar("2023-01-10")
-        
+        val date1 = UDM.Date.parse("2023-01-01")
+        val date2 = UDM.Date.parse("2023-01-10")
+
         val result = DataWeaveAliases.daysBetween(date1, date2)
-        
+
         assertTrue(result is UDM.Scalar)
-        // The exact result depends on the DateFunctions.diffDays implementation
-        // We're mainly testing that the alias works without throwing an exception
+        assertEquals(9.0, (result as UDM.Scalar).value) // 10 days - 1 day = 9 days difference
     }
 
     // ==================== MIGRATION GUIDE TESTS ====================

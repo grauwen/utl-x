@@ -86,7 +86,7 @@ class UtilityFunctionsTest {
         val result = TreeFunctions.treeFlatten(listOf(tree))
         assertTrue(result is UDM.Array)
         val resultArray = result as UDM.Array
-        assertEquals(3, resultArray.elements.size) // 3 leaf values: 1, 2, 3, 4 (but nested objects count as containers)
+        assertEquals(4, resultArray.elements.size) // 4 leaf values: 1, 2, 3, 4 (nested objects are flattened)
         
         // Test with array
         val arrayTree = UDM.Array(listOf(
@@ -97,7 +97,7 @@ class UtilityFunctionsTest {
         
         val result2 = TreeFunctions.treeFlatten(listOf(arrayTree))
         val resultArray2 = result2 as UDM.Array
-        assertEquals(3, resultArray2.elements.size) // 1, 2, 3, 4 as leaves
+        assertEquals(4, resultArray2.elements.size) // 4 leaf values: 1, 2, 3, 4
     }
 
     @Test

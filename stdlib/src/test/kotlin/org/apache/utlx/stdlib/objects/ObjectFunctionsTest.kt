@@ -536,9 +536,9 @@ class ObjectFunctionsTest {
 
         assertEquals(3, mapped.properties.size)
         assertTrue(mapped.properties.containsKey("a"))
-        assertEquals(2, (mapped.properties["a"] as UDM.Scalar).value) // 1 * 2 = 2
-        assertEquals(4, (mapped.properties["b"] as UDM.Scalar).value) // 2 * 2 = 4
-        assertEquals(6, (mapped.properties["c"] as UDM.Scalar).value) // 3 * 2 = 6
+        assertEquals(2.0, (mapped.properties["a"] as UDM.Scalar).value) // 1 * 2 = 2.0
+        assertEquals(4.0, (mapped.properties["b"] as UDM.Scalar).value) // 2 * 2 = 4.0
+        assertEquals(6.0, (mapped.properties["c"] as UDM.Scalar).value) // 3 * 2 = 6.0
     }
     
     @Test

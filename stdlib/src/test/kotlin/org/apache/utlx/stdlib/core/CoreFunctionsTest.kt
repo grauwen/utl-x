@@ -253,13 +253,13 @@ class CoreFunctionsTest {
     fun testBooleanConversions() {
         // Test ifThenElse with various boolean conversions
         
-        // String "false" should be true (non-empty string)
+        // String "false" is falsy (only "true"/"yes"/"1" are truthy for strings)
         val stringFalseResult = CoreFunctions.ifThenElse(listOf(
             UDM.Scalar("false"),
             UDM.Scalar("truthy"),
             UDM.Scalar("falsy")
         ))
-        assertEquals("truthy", (stringFalseResult as UDM.Scalar).value)
+        assertEquals("falsy", (stringFalseResult as UDM.Scalar).value)
         
         // Empty string should be false
         val emptyStringResult = CoreFunctions.ifThenElse(listOf(
