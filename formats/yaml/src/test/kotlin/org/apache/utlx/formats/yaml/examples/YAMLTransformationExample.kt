@@ -53,11 +53,11 @@ fun simpleYAMLExample() {
     println()
     
     // Access values
-    val obj = udm as UDMObject
-    println("Name: ${(obj.properties["name"] as UDMString).value}")
-    println("Age: ${(obj.properties["age"] as UDMNumber).longValue}")
-    println("Email: ${(obj.properties["email"] as UDMString).value}")
-    println("Active: ${(obj.properties["active"] as UDMBoolean).value}")
+    val obj = udm as UDM.Object
+    println("Name: ${(obj.properties["name"] as UDM.Scalar).value}")
+    println("Age: ${(obj.properties["age"] as UDM.Scalar).value}")
+    println("Email: ${(obj.properties["email"] as UDM.Scalar).value}")
+    println("Active: ${(obj.properties["active"] as UDM.Scalar).value}")
     println()
 }
 
@@ -90,27 +90,27 @@ fun complexYAMLExample() {
     println()
     
     val udm = YAMLParser.parseYAML(yaml)
-    val company = (udm as UDMObject).properties["company"] as UDMObject
+    val company = (udm as UDM.Object).properties["company"] as UDM.Object
     
-    println("Company Name: ${(company.properties["name"] as UDMString).value}")
-    println("Founded: ${(company.properties["founded"] as UDMNumber).longValue}")
+    println("Company Name: ${(company.properties["name"] as UDM.Scalar).value}")
+    println("Founded: ${(company.properties["founded"] as UDM.Scalar).value}")
     
-    val locations = company.properties["locations"] as UDMArray
+    val locations = company.properties["locations"] as UDM.Array
     println("\nLocations:")
     locations.elements.forEach { loc ->
-        val location = loc as UDMObject
-        println("  - ${(location.properties["city"] as UDMString).value}, " +
-                "${(location.properties["country"] as UDMString).value}: " +
-                "${(location.properties["employees"] as UDMNumber).longValue} employees")
+        val location = loc as UDM.Object
+        println("  - ${(location.properties["city"] as UDM.Scalar).value}, " +
+                "${(location.properties["country"] as UDM.Scalar).value}: " +
+                "${(location.properties["employees"] as UDM.Scalar).value} employees")
     }
     
-    val products = company.properties["products"] as UDMArray
+    val products = company.properties["products"] as UDM.Array
     println("\nProducts:")
     products.elements.forEach { prod ->
-        val product = prod as UDMObject
-        val name = (product.properties["name"] as UDMString).value
-        val price = (product.properties["price"] as UDMNumber).value
-        val inStock = (product.properties["inStock"] as UDMBoolean).value
+        val product = prod as UDM.Object
+        val name = (product.properties["name"] as UDM.Scalar).value
+        val price = (product.properties["price"] as UDM.Scalar).value
+        val inStock = (product.properties["inStock"] as UDM.Scalar).value as Boolean
         println("  - $name: $$price (${if (inStock) "In Stock" else "Out of Stock"})")
     }
     println()
@@ -121,27 +121,27 @@ fun serializationExample() {
     println("-".repeat(60))
     
     // Create UDM structure
-    val udm = UDMObject(mapOf(
-        "order" to UDMObject(mapOf(
-            "id" to UDMString("ORD-12345"),
-            "date" to UDMString("2025-10-14"),
-            "customer" to UDMObject(mapOf(
-                "name" to UDMString("Jane Smith"),
-                "email" to UDMString("jane@example.com")
+    val udm = UDM.Object(mapOf(
+        "order" to UDM.Object(mapOf(
+            "id" to UDM.Scalar("ORD-12345"),
+            "date" to UDM.Scalar("2025-10-14"),
+            "customer" to UDM.Object(mapOf(
+                "name" to UDM.Scalar("Jane Smith"),
+                "email" to UDM.Scalar("jane@example.com")
             )),
-            "items" to UDMArray(listOf(
-                UDMObject(mapOf(
-                    "product" to UDMString("Widget"),
-                    "quantity" to UDMNumber(2.0, 2),
-                    "price" to UDMNumber(19.99, 19)
+            "items" to UDM.Array(listOf(
+                UDM.Object(mapOf(
+                    "product" to UDM.Scalar("Widget"),
+                    "quantity" to UDM.Scalar(2.0),
+                    "price" to UDM.Scalar(19.99)
                 )),
-                UDMObject(mapOf(
-                    "product" to UDMString("Gadget"),
-                    "quantity" to UDMNumber(1.0, 1),
-                    "price" to UDMNumber(49.99, 49)
+                UDM.Object(mapOf(
+                    "product" to UDM.Scalar("Gadget"),
+                    "quantity" to UDM.Scalar(1.0),
+                    "price" to UDM.Scalar(49.99)
                 ))
             )),
-            "total" to UDMNumber(89.97, 89)
+            "total" to UDM.Scalar(89.97)
         ))
     ))
     
@@ -215,12 +215,12 @@ fun multiDocumentExample() {
     val options = YAMLParser.ParseOptions(multiDocument = true)
     val udm = YAMLParser().parse(multiDoc, options)
     
-    val documents = udm as UDMArray
+    val documents = udm as UDM.Array
     println("Parsed ${documents.elements.size} documents:")
     documents.elements.forEachIndexed { index, doc ->
-        val obj = doc as UDMObject
-        val title = (obj.properties["title"] as UDMString).value
-        val content = (obj.properties["content"] as UDMString).value
+        val obj = doc as UDM.Object
+        val title = (obj.properties["title"] as UDM.Scalar).value
+        val content = (obj.properties["content"] as UDM.Scalar).value
         println("  ${index + 1}. $title: $content")
     }
     println()

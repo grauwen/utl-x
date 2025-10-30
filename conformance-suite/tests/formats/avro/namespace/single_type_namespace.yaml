@@ -1,0 +1,67 @@
+name: "avro_namespace_single_type"
+category: "formats/avro/namespace"
+description: "Parse Avro record with namespace - validates dual-namespace approach (schema + type level)"
+tags: ['avro', 'namespace', 'schema', 'record']
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "namespace": "com.example",
+      "doc": "A person record",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "age", "type": "int"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    schemaType: $input.type,
+    recordName: $input.name,
+    namespace: $input.namespace,
+    hasNamespace: hasKey($input, "namespace"),
+    documentation: $input.doc,
+    fieldCount: count($input.fields),
+    fields: map($input.fields, field => {
+      name: field.name,
+      type: field.type
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "schemaType": "record",
+      "recordName": "Person",
+      "namespace": "com.example",
+      "hasNamespace": true,
+      "documentation": "A person record",
+      "fieldCount": 2,
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "age", "type": "int"}
+      ]
+    }
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-10-30"
+  references:
+    - "Avro Specification - Namespaces"
+    - "USDL Type System"
+  notes: |
+    Validates that Avro namespace is preserved at BOTH levels:
+    - Schema level: $input["%namespace"] = "com.example"
+    - Type level: $input["%types"]["Person"]["%namespace"] = "com.example"
+
+    This dual-namespace approach supports:
+    - Multi-type schemas with shared namespace
+    - Cross-format transformations (XSD, Protobuf, JSON Schema)

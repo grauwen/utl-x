@@ -192,55 +192,7 @@ class TransformCommandTest {
         
         // Should not throw exception
         TransformCommand.execute(args)
-        
+
         assertTrue(output.exists())
-    }
-}
-
-// modules/cli/src/test/kotlin/org/apache/utlx/cli/ValidateCommandTest.kt
-package org.apache.utlx.cli
-
-import org.apache.utlx.cli.commands.ValidateCommand
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import java.nio.file.Path
-import kotlin.test.assertFailsWith
-
-class ValidateCommandTest {
-    
-    @TempDir
-    lateinit var tempDir: Path
-    
-    @Test
-    fun `test valid script passes validation`() {
-        val script = tempDir.resolve("valid.utlx").toFile()
-        script.writeText("""
-            %utlx 1.0
-            input json
-            output json
-            ---
-            { value: input.data }
-        """.trimIndent())
-        
-        val args = arrayOf(script.absolutePath)
-        
-        // Should not throw
-        ValidateCommand.execute(args)
-    }
-    
-    @Test
-    fun `test invalid script fails validation`() {
-        val script = tempDir.resolve("invalid.utlx").toFile()
-        script.writeText("""
-            %utlx 1.0
-            this is not valid UTL-X syntax!!!
-        """.trimIndent())
-        
-        val args = arrayOf(script.absolutePath)
-        
-        // Should throw or exit
-        assertFailsWith<Exception> {
-            ValidateCommand.execute(args)
-        }
     }
 }

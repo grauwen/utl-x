@@ -1,0 +1,70 @@
+name: "avro_versioned_namespace"
+category: "formats/avro/namespace"
+description: "Parse Avro schema with versioned namespace - validates API evolution patterns"
+tags: ['avro', 'namespace', 'versioning', 'api']
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "CustomerV2",
+      "namespace": "com.example.api.v2",
+      "doc": "Customer schema version 2",
+      "fields": [
+        {"name": "customerId", "type": "string"},
+        {"name": "email", "type": "string"},
+        {"name": "registrationDate", "type": "long"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    schemaType: $input.type,
+    recordName: $input.name,
+    namespace: $input.namespace,
+    isVersioned: contains($input.namespace, ".v2"),
+    documentation: $input.doc,
+    fieldCount: count($input.fields),
+    fields: map($input.fields, field => field.name)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "schemaType": "record",
+      "recordName": "CustomerV2",
+      "namespace": "com.example.api.v2",
+      "isVersioned": true,
+      "documentation": "Customer schema version 2",
+      "fieldCount": 3,
+      "fields": ["customerId", "email", "registrationDate"]
+    }
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-10-30"
+  references:
+    - "API Versioning Best Practices"
+    - "Avro Schema Evolution"
+  notes: |
+    Validates namespace handling for versioned schemas in API evolution scenarios.
+
+    Real-world use cases:
+    1. API versioning: /api/v1, /api/v2, /api/v3
+    2. Schema evolution: backward/forward compatibility
+    3. Microservices: different service versions coexisting
+    4. Blue-green deployments: multiple versions running simultaneously
+
+    Cross-format namespace mapping:
+    - Avro:        namespace="com.example.api.v2"
+    - XSD:         targetNamespace="http://example.com/api/v2"
+    - Protobuf:    package com.example.api.v2
+    - JSON Schema: $id="https://example.com/schemas/v2/customer"
+
+    All map to USDL: %namespace="com.example.api.v2"

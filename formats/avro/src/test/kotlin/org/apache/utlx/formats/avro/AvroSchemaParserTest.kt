@@ -556,4 +556,173 @@ class AvroSchemaParserTest {
         val timestampField = fields.elements[1] as UDM.Object
         assertEquals("timestamp-millis", (timestampField.properties["%logicalType"] as? UDM.Scalar)?.value)
     }
+
+    @Test
+    fun `dual namespace - record has namespace at both schema and type level`() {
+        // Given: Avro record with namespace
+        val avroSchemaJson = """
+            {
+              "type": "record",
+              "name": "Person",
+              "namespace": "com.example",
+              "doc": "A person record",
+              "fields": [
+                {"name": "name", "type": "string"},
+                {"name": "age", "type": "int"}
+              ]
+            }
+        """.trimIndent()
+
+        val parser = AvroSchemaParser()
+        val avroUdm = parser.parse(avroSchemaJson)
+
+        // When: Convert to USDL
+        val usdl = parser.toUSDL(avroUdm)
+
+        // Then: Should have namespace at BOTH schema and type level
+        assertTrue(usdl is UDM.Object)
+        val obj = usdl as UDM.Object
+
+        // Check schema-level namespace
+        val schemaNamespace = obj.properties["%namespace"] as? UDM.Scalar
+        assertNotNull(schemaNamespace, "Schema-level namespace should exist")
+        assertEquals("com.example", schemaNamespace!!.value)
+
+        // Check type-level namespace
+        val types = obj.properties["%types"] as? UDM.Object
+        assertNotNull(types)
+        val personType = types!!.properties["Person"] as? UDM.Object
+        assertNotNull(personType)
+        val typeNamespace = personType!!.properties["%namespace"] as? UDM.Scalar
+        assertNotNull(typeNamespace, "Type-level namespace should exist")
+        assertEquals("com.example", typeNamespace!!.value)
+    }
+
+    @Test
+    fun `dual namespace - enum has namespace at both schema and type level`() {
+        // Given: Avro enum with namespace
+        val avroSchemaJson = """
+            {
+              "type": "enum",
+              "name": "Status",
+              "namespace": "com.example.enums",
+              "doc": "Order status enumeration",
+              "symbols": ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"]
+            }
+        """.trimIndent()
+
+        val parser = AvroSchemaParser()
+        val avroUdm = parser.parse(avroSchemaJson)
+
+        // When: Convert to USDL
+        val usdl = parser.toUSDL(avroUdm)
+
+        // Then: Should have namespace at BOTH schema and type level (consistent with records)
+        assertTrue(usdl is UDM.Object)
+        val obj = usdl as UDM.Object
+
+        // Check schema-level namespace
+        val schemaNamespace = obj.properties["%namespace"] as? UDM.Scalar
+        assertNotNull(schemaNamespace, "Schema-level namespace should exist for enums")
+        assertEquals("com.example.enums", schemaNamespace!!.value)
+
+        // Check type-level namespace
+        val types = obj.properties["%types"] as? UDM.Object
+        assertNotNull(types)
+        val statusType = types!!.properties["Status"] as? UDM.Object
+        assertNotNull(statusType)
+        val typeNamespace = statusType!!.properties["%namespace"] as? UDM.Scalar
+        assertNotNull(typeNamespace, "Type-level namespace should exist for enums")
+        assertEquals("com.example.enums", typeNamespace!!.value)
+
+        // Verify it's an enumeration
+        assertEquals("enumeration", (statusType.properties["%kind"] as? UDM.Scalar)?.value)
+    }
+
+    @Test
+    fun `no namespace pollution - type without namespace has no namespace fields`() {
+        // Given: Avro record WITHOUT namespace
+        val avroSchemaJson = """
+            {
+              "type": "record",
+              "name": "SimpleRecord",
+              "fields": [
+                {"name": "id", "type": "int"},
+                {"name": "value", "type": "string"}
+              ]
+            }
+        """.trimIndent()
+
+        val parser = AvroSchemaParser()
+        val avroUdm = parser.parse(avroSchemaJson)
+
+        // When: Convert to USDL
+        val usdl = parser.toUSDL(avroUdm)
+
+        // Then: Should NOT have namespace fields
+        assertTrue(usdl is UDM.Object)
+        val obj = usdl as UDM.Object
+
+        // Schema-level namespace should NOT exist
+        assertFalse(obj.properties.containsKey("%namespace"), "Schema should not have namespace field")
+
+        // Type-level namespace should NOT exist
+        val types = obj.properties["%types"] as? UDM.Object
+        assertNotNull(types)
+        val simpleType = types!!.properties["SimpleRecord"] as? UDM.Object
+        assertNotNull(simpleType)
+        assertFalse(simpleType!!.properties.containsKey("%namespace"), "Type should not have namespace field")
+
+        // But should still have proper structure
+        assertEquals("structure", (simpleType.properties["%kind"] as? UDM.Scalar)?.value)
+        val fields = simpleType.properties["%fields"] as? UDM.Array
+        assertNotNull(fields)
+        assertEquals(2, fields!!.elements.size)
+    }
+
+    @Test
+    fun `versioned namespace - supports API evolution patterns`() {
+        // Given: Avro record with versioned namespace
+        val avroSchemaJson = """
+            {
+              "type": "record",
+              "name": "CustomerV2",
+              "namespace": "com.example.api.v2",
+              "doc": "Customer schema version 2",
+              "fields": [
+                {"name": "customerId", "type": "string"},
+                {"name": "email", "type": "string"},
+                {"name": "registrationDate", "type": "long"}
+              ]
+            }
+        """.trimIndent()
+
+        val parser = AvroSchemaParser()
+        val avroUdm = parser.parse(avroSchemaJson)
+
+        // When: Convert to USDL
+        val usdl = parser.toUSDL(avroUdm)
+
+        // Then: Versioned namespace should be preserved
+        assertTrue(usdl is UDM.Object)
+        val obj = usdl as UDM.Object
+
+        // Check versioned namespace at schema level
+        val schemaNamespace = obj.properties["%namespace"] as? UDM.Scalar
+        assertNotNull(schemaNamespace)
+        assertEquals("com.example.api.v2", schemaNamespace!!.value)
+        assertTrue(schemaNamespace.value.toString().contains(".v2"), "Namespace should contain version")
+
+        // Check versioned namespace at type level
+        val types = obj.properties["%types"] as? UDM.Object
+        assertNotNull(types)
+        val customerType = types!!.properties["CustomerV2"] as? UDM.Object
+        assertNotNull(customerType)
+        val typeNamespace = customerType!!.properties["%namespace"] as? UDM.Scalar
+        assertNotNull(typeNamespace)
+        assertEquals("com.example.api.v2", typeNamespace!!.value)
+
+        // Verify documentation is preserved
+        assertEquals("Customer schema version 2", (customerType.properties["%documentation"] as? UDM.Scalar)?.value)
+    }
 }

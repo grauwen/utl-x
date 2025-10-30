@@ -1,0 +1,60 @@
+name: "avro_no_namespace"
+category: "formats/avro/namespace"
+description: "Parse Avro record without namespace - validates no namespace pollution"
+tags: ['avro', 'namespace', 'edge-case']
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "SimpleRecord",
+      "fields": [
+        {"name": "id", "type": "int"},
+        {"name": "value", "type": "string"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    schemaType: $input.type,
+    recordName: $input.name,
+    hasNamespace: hasKey($input, "namespace"),
+    fieldCount: count($input.fields),
+    fields: map($input.fields, field => {
+      name: field.name,
+      type: field.type
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "schemaType": "record",
+      "recordName": "SimpleRecord",
+      "hasNamespace": false,
+      "fieldCount": 2,
+      "fields": [
+        {"name": "id", "type": "int"},
+        {"name": "value", "type": "string"}
+      ]
+    }
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-10-30"
+  references:
+    - "Avro Specification"
+  notes: |
+    Validates that types without namespace don't create spurious namespace fields.
+    Ensures clean USDL output when namespace is not specified.
+
+    Real-world use cases:
+    - Simple internal schemas
+    - Prototypes and experiments
+    - Tools that don't require formal namespacing

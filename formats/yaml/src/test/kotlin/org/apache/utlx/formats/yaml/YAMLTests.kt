@@ -18,38 +18,38 @@ class YAMLParserTest : DescribeSpec({
             val yaml = "value: null"
             val result = YAMLParser.parseYAML(yaml)
             
-            result.shouldBeInstanceOf<UDMObject>()
-            (result as UDMObject).properties["value"].shouldBe(UDMNull)
+            result.shouldBeInstanceOf<UDM.Object>()
+            (result as UDM.Object).properties["value"].shouldBe(UDM.Scalar.nullValue())
         }
         
         it("should parse string values") {
             val yaml = "name: John Doe"
             val result = YAMLParser.parseYAML(yaml)
             
-            result.shouldBeInstanceOf<UDMObject>()
-            val obj = result as UDMObject
-            obj.properties["name"].shouldBeInstanceOf<UDMString>()
-            (obj.properties["name"] as UDMString).value.shouldBe("John Doe")
+            result.shouldBeInstanceOf<UDM.Object>()
+            val obj = result as UDM.Object
+            obj.properties["name"].shouldBeInstanceOf<UDM.Scalar>()
+            (obj.properties["name"] as UDM.Scalar).value.shouldBe("John Doe")
         }
         
         it("should parse integer numbers") {
             val yaml = "age: 42"
             val result = YAMLParser.parseYAML(yaml)
             
-            result.shouldBeInstanceOf<UDMObject>()
-            val obj = result as UDMObject
-            obj.properties["age"].shouldBeInstanceOf<UDMNumber>()
-            (obj.properties["age"] as UDMNumber).longValue.shouldBe(42L)
+            result.shouldBeInstanceOf<UDM.Object>()
+            val obj = result as UDM.Object
+            obj.properties["age"].shouldBeInstanceOf<UDM.Scalar>()
+            (obj.properties["age"] as UDM.Scalar).value.shouldBe(42L)
         }
         
         it("should parse floating point numbers") {
             val yaml = "price: 19.99"
             val result = YAMLParser.parseYAML(yaml)
             
-            result.shouldBeInstanceOf<UDMObject>()
-            val obj = result as UDMObject
-            obj.properties["price"].shouldBeInstanceOf<UDMNumber>()
-            (obj.properties["price"] as UDMNumber).value.shouldBe(19.99)
+            result.shouldBeInstanceOf<UDM.Object>()
+            val obj = result as UDM.Object
+            obj.properties["price"].shouldBeInstanceOf<UDM.Scalar>()
+            (obj.properties["price"] as UDM.Scalar).value.shouldBe(19.99)
         }
         
         it("should parse boolean values") {
@@ -59,10 +59,10 @@ class YAMLParserTest : DescribeSpec({
             """.trimIndent()
             val result = YAMLParser.parseYAML(yaml)
             
-            result.shouldBeInstanceOf<UDMObject>()
-            val obj = result as UDMObject
-            (obj.properties["active"] as UDMBoolean).value.shouldBe(true)
-            (obj.properties["disabled"] as UDMBoolean).value.shouldBe(false)
+            result.shouldBeInstanceOf<UDM.Object>()
+            val obj = result as UDM.Object
+            (obj.properties["active"] as UDM.Scalar).value.shouldBe(true)
+            (obj.properties["disabled"] as UDM.Scalar).value.shouldBe(false)
         }
     }
     
@@ -77,16 +77,16 @@ class YAMLParserTest : DescribeSpec({
             """.trimIndent()
             val result = YAMLParser.parseYAML(yaml)
             
-            result.shouldBeInstanceOf<UDMObject>()
-            val obj = result as UDMObject
+            result.shouldBeInstanceOf<UDM.Object>()
+            val obj = result as UDM.Object
             val items = obj.properties["items"]
-            items.shouldBeInstanceOf<UDMArray>()
+            items.shouldBeInstanceOf<UDM.Array>()
             
-            val array = items as UDMArray
+            val array = items as UDM.Array
             array.elements.size.shouldBe(3)
-            (array.elements[0] as UDMString).value.shouldBe("apple")
-            (array.elements[1] as UDMString).value.shouldBe("banana")
-            (array.elements[2] as UDMString).value.shouldBe("cherry")
+            (array.elements[0] as UDM.Scalar).value.shouldBe("apple")
+            (array.elements[1] as UDM.Scalar).value.shouldBe("banana")
+            (array.elements[2] as UDM.Scalar).value.shouldBe("cherry")
         }
         
         it("should parse nested objects") {
@@ -100,16 +100,16 @@ class YAMLParserTest : DescribeSpec({
             """.trimIndent()
             val result = YAMLParser.parseYAML(yaml)
             
-            result.shouldBeInstanceOf<UDMObject>()
-            val obj = result as UDMObject
-            val person = obj.properties["person"] as UDMObject
+            result.shouldBeInstanceOf<UDM.Object>()
+            val obj = result as UDM.Object
+            val person = obj.properties["person"] as UDM.Object
             
-            (person.properties["name"] as UDMString).value.shouldBe("John")
-            (person.properties["age"] as UDMNumber).longValue.shouldBe(30L)
+            (person.properties["name"] as UDM.Scalar).value.shouldBe("John")
+            (person.properties["age"] as UDM.Scalar).value.shouldBe(30L)
             
-            val address = person.properties["address"] as UDMObject
-            (address.properties["street"] as UDMString).value.shouldBe("123 Main St")
-            (address.properties["city"] as UDMString).value.shouldBe("Springfield")
+            val address = person.properties["address"] as UDM.Object
+            (address.properties["street"] as UDM.Scalar).value.shouldBe("123 Main St")
+            (address.properties["city"] as UDM.Scalar).value.shouldBe("Springfield")
         }
         
         it("should parse array of objects") {
@@ -122,14 +122,14 @@ class YAMLParserTest : DescribeSpec({
             """.trimIndent()
             val result = YAMLParser.parseYAML(yaml)
             
-            result.shouldBeInstanceOf<UDMObject>()
-            val obj = result as UDMObject
-            val users = obj.properties["users"] as UDMArray
+            result.shouldBeInstanceOf<UDM.Object>()
+            val obj = result as UDM.Object
+            val users = obj.properties["users"] as UDM.Array
             
             users.elements.size.shouldBe(2)
-            val user1 = users.elements[0] as UDMObject
-            (user1.properties["name"] as UDMString).value.shouldBe("Alice")
-            (user1.properties["age"] as UDMNumber).longValue.shouldBe(25L)
+            val user1 = users.elements[0] as UDM.Object
+            (user1.properties["name"] as UDM.Scalar).value.shouldBe("Alice")
+            (user1.properties["age"] as UDM.Scalar).value.shouldBe(25L)
         }
     }
     
@@ -148,12 +148,12 @@ class YAMLParserTest : DescribeSpec({
             val options = YAMLParser.ParseOptions(multiDocument = true)
             val result = YAMLParser().parse(yaml, options)
             
-            result.shouldBeInstanceOf<UDMArray>()
-            val array = result as UDMArray
+            result.shouldBeInstanceOf<UDM.Array>()
+            val array = result as UDM.Array
             array.elements.size.shouldBe(2)
             
-            val doc1 = array.elements[0] as UDMObject
-            (doc1.properties["name"] as UDMString).value.shouldBe("Document 1")
+            val doc1 = array.elements[0] as UDM.Object
+            (doc1.properties["name"] as UDM.Scalar).value.shouldBe("Document 1")
         }
     }
     
@@ -190,7 +190,7 @@ class YAMLSerializerTest : DescribeSpec({
     describe("YAMLSerializer - Basic Types") {
         
         it("should serialize string values") {
-            val udm = UDMObject(mapOf("name" to UDMString("John Doe")))
+            val udm = UDM.Object(mapOf("name" to UDM.Scalar("John Doe")))
             val yaml = YAMLSerializer.toYAML(udm)
             
             yaml.shouldNotBe("")
@@ -199,9 +199,9 @@ class YAMLSerializerTest : DescribeSpec({
         }
         
         it("should serialize numbers") {
-            val udm = UDMObject(mapOf(
-                "age" to UDMNumber(42.0, 42),
-                "price" to UDMNumber(19.99, 19)
+            val udm = UDM.Object(mapOf(
+                "age" to UDM.Scalar(42.0),
+                "price" to UDM.Scalar(19.99)
             ))
             val yaml = YAMLSerializer.toYAML(udm)
             
@@ -212,9 +212,9 @@ class YAMLSerializerTest : DescribeSpec({
         }
         
         it("should serialize boolean values") {
-            val udm = UDMObject(mapOf(
-                "active" to UDMBoolean(true),
-                "disabled" to UDMBoolean(false)
+            val udm = UDM.Object(mapOf(
+                "active" to UDM.Scalar(true),
+                "disabled" to UDM.Scalar(false)
             ))
             val yaml = YAMLSerializer.toYAML(udm)
             
@@ -223,7 +223,7 @@ class YAMLSerializerTest : DescribeSpec({
         }
         
         it("should serialize null values") {
-            val udm = UDMObject(mapOf("value" to UDMNull))
+            val udm = UDM.Object(mapOf("value" to UDM.Scalar.nullValue()))
             val yaml = YAMLSerializer.toYAML(udm)
             
             yaml.contains("value:").shouldBe(true)
@@ -233,11 +233,11 @@ class YAMLSerializerTest : DescribeSpec({
     describe("YAMLSerializer - Collections") {
         
         it("should serialize arrays") {
-            val udm = UDMObject(mapOf(
-                "items" to UDMArray(listOf(
-                    UDMString("apple"),
-                    UDMString("banana"),
-                    UDMString("cherry")
+            val udm = UDM.Object(mapOf(
+                "items" to UDM.Array(listOf(
+                    UDM.Scalar("apple"),
+                    UDM.Scalar("banana"),
+                    UDM.Scalar("cherry")
                 ))
             ))
             val yaml = YAMLSerializer.toYAML(udm)
@@ -249,12 +249,12 @@ class YAMLSerializerTest : DescribeSpec({
         }
         
         it("should serialize nested objects") {
-            val udm = UDMObject(mapOf(
-                "person" to UDMObject(mapOf(
-                    "name" to UDMString("John"),
-                    "address" to UDMObject(mapOf(
-                        "street" to UDMString("123 Main St"),
-                        "city" to UDMString("Springfield")
+            val udm = UDM.Object(mapOf(
+                "person" to UDM.Object(mapOf(
+                    "name" to UDM.Scalar("John"),
+                    "address" to UDM.Object(mapOf(
+                        "street" to UDM.Scalar("123 Main St"),
+                        "city" to UDM.Scalar("Springfield")
                     ))
                 ))
             ))
@@ -270,24 +270,24 @@ class YAMLSerializerTest : DescribeSpec({
     describe("YAMLSerializer - Formatting Options") {
         
         it("should serialize in compact flow style") {
-            val udm = UDMObject(mapOf(
-                "items" to UDMArray(listOf(
-                    UDMString("a"),
-                    UDMString("b"),
-                    UDMString("c")
+            val udm = UDM.Object(mapOf(
+                "items" to UDM.Array(listOf(
+                    UDM.Scalar("a"),
+                    UDM.Scalar("b"),
+                    UDM.Scalar("c")
                 ))
             ))
             
             val yaml = YAMLSerializer.toCompactYAML(udm)
-            
+
             // Flow style should be more compact
-            yaml.length shouldBe lessThan(YAMLSerializer.toYAML(udm).length)
+            (yaml.length < YAMLSerializer.toYAML(udm).length).shouldBe(true)
         }
         
         it("should respect custom indentation") {
-            val udm = UDMObject(mapOf(
-                "level1" to UDMObject(mapOf(
-                    "level2" to UDMString("value")
+            val udm = UDM.Object(mapOf(
+                "level1" to UDM.Object(mapOf(
+                    "level2" to UDM.Scalar("value")
                 ))
             ))
             
@@ -302,8 +302,8 @@ class YAMLSerializerTest : DescribeSpec({
         
         it("should serialize multiple documents") {
             val docs = listOf(
-                UDMObject(mapOf("name" to UDMString("Doc1"))),
-                UDMObject(mapOf("name" to UDMString("Doc2")))
+                UDM.Object(mapOf("name" to UDM.Scalar("Doc1"))),
+                UDM.Object(mapOf("name" to UDM.Scalar("Doc2")))
             )
             
             val yaml = YAMLSerializer().serializeMultiDocument(docs)
@@ -317,13 +317,13 @@ class YAMLSerializerTest : DescribeSpec({
     describe("YAMLSerializer - Round-trip") {
         
         it("should round-trip basic structures") {
-            val original = UDMObject(mapOf(
-                "name" to UDMString("Test"),
-                "value" to UDMNumber(42.0, 42),
-                "active" to UDMBoolean(true),
-                "items" to UDMArray(listOf(
-                    UDMString("a"),
-                    UDMString("b")
+            val original = UDM.Object(mapOf(
+                "name" to UDM.Scalar("Test"),
+                "value" to UDM.Scalar(42.0),
+                "active" to UDM.Scalar(true),
+                "items" to UDM.Array(listOf(
+                    UDM.Scalar("a"),
+                    UDM.Scalar("b")
                 ))
             ))
             
@@ -331,11 +331,11 @@ class YAMLSerializerTest : DescribeSpec({
             val parsed = YAMLParser.parseYAML(yaml)
             
             // Verify structure
-            parsed.shouldBeInstanceOf<UDMObject>()
-            val obj = parsed as UDMObject
-            (obj.properties["name"] as UDMString).value.shouldBe("Test")
-            (obj.properties["value"] as UDMNumber).longValue.shouldBe(42L)
-            (obj.properties["active"] as UDMBoolean).value.shouldBe(true)
+            parsed.shouldBeInstanceOf<UDM.Object>()
+            val obj = parsed as UDM.Object
+            (obj.properties["name"] as UDM.Scalar).value.shouldBe("Test")
+            (obj.properties["value"] as UDM.Scalar).value.shouldBe(42L)
+            (obj.properties["active"] as UDM.Scalar).value.shouldBe(true)
         }
     }
 })

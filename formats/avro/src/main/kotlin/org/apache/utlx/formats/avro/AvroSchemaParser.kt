@@ -114,6 +114,11 @@ class AvroSchemaParser {
             typeDefProps["%aliases"] = UDM.Array(aliases.map { UDM.Scalar(it) })
         }
 
+        // Add namespace to type definition if present (type-specific namespace)
+        if (namespace != null) {
+            typeDefProps["%namespace"] = UDM.Scalar(namespace)
+        }
+
         // Build top-level USDL object with %types
         val topLevelProps = mutableMapOf<String, UDM>(
             "%types" to UDM.Object(properties = mapOf(
@@ -121,7 +126,8 @@ class AvroSchemaParser {
             ))
         )
 
-        // Add top-level namespace if present (for schema-level namespace)
+        // Add top-level namespace if present (schema-level default namespace)
+        // This supports multi-type schemas and cross-format transformations
         if (namespace != null) {
             topLevelProps["%namespace"] = UDM.Scalar(namespace)
         }
@@ -287,11 +293,20 @@ class AvroSchemaParser {
             typeDefProps["%aliases"] = UDM.Array(aliases.map { UDM.Scalar(it) })
         }
 
-        return UDM.Object(properties = mapOf(
+        // Build top-level USDL object with %types
+        val topLevelProps = mutableMapOf<String, UDM>(
             "%types" to UDM.Object(properties = mapOf(
                 name to UDM.Object(properties = typeDefProps)
             ))
-        ))
+        )
+
+        // Add top-level namespace if present (schema-level default namespace)
+        // This supports multi-type schemas and cross-format transformations
+        if (namespace != null) {
+            topLevelProps["%namespace"] = UDM.Scalar(namespace)
+        }
+
+        return UDM.Object(properties = topLevelProps)
     }
 
     /**

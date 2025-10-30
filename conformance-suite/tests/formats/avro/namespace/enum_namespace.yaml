@@ -1,0 +1,57 @@
+name: "avro_namespace_enum"
+category: "formats/avro/namespace"
+description: "Parse Avro enum with namespace - validates enum namespace consistency with records"
+tags: ['avro', 'namespace', 'enum']
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "enum",
+      "name": "Status",
+      "namespace": "com.example.enums",
+      "doc": "Order status enumeration",
+      "symbols": ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    schemaType: $input.type,
+    enumName: $input.name,
+    namespace: $input.namespace,
+    hasNamespace: hasKey($input, "namespace"),
+    documentation: $input.doc,
+    symbols: $input.symbols,
+    symbolCount: count($input.symbols)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "schemaType": "enum",
+      "enumName": "Status",
+      "namespace": "com.example.enums",
+      "hasNamespace": true,
+      "documentation": "Order status enumeration",
+      "symbols": ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"],
+      "symbolCount": 4
+    }
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-10-30"
+  references:
+    - "Avro Specification - Enum Types"
+  notes: |
+    Validates that enum namespace handling is consistent with record namespace handling.
+    Both should have dual-namespace approach (schema + type level).
+
+    Real-world use case:
+    - Status enums: OrderStatus, PaymentStatus
+    - Category enums: ProductCategory, CustomerType
+    - All types in same domain namespace: com.example.enums
