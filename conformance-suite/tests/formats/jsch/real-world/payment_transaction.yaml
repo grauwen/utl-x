@@ -281,7 +281,7 @@ expected:
   data: |
     {
       "payment": {
-        "schemaVersion": null,
+        "schemaVersion": "draft-07",
         "title": "Payment Transaction",
         "hasDefinitions": true,
         "requiredFields": 7,

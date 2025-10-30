@@ -65,10 +65,13 @@ sealed class UDM {
     ) : UDM() {
         fun get(key: String): UDM? = properties[key]
         fun getAttribute(key: String): String? = attributes[key]
-        fun getMetadata(key: String): String? = metadata[key]
+        fun getMetadata(key: String): String? {
+            // Try key as-is first, then try with __ prefix for internal metadata keys
+            return metadata[key] ?: metadata["__$key"]
+        }
         fun hasProperty(key: String): Boolean = properties.containsKey(key)
         fun hasAttribute(key: String): Boolean = attributes.containsKey(key)
-        fun hasMetadata(key: String): Boolean = metadata.containsKey(key)
+        fun hasMetadata(key: String): Boolean = metadata.containsKey(key) || metadata.containsKey("__$key")
         fun keys(): Set<String> = properties.keys
         fun attributeKeys(): Set<String> = attributes.keys
         fun metadataKeys(): Set<String> = metadata.keys

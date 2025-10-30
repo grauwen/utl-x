@@ -192,7 +192,7 @@ expected:
   data: |
     {
       "api": {
-        "schemaVersion": null,
+        "schemaVersion": "draft-07",
         "title": "User Profile",
         "description": "User profile data for social media platform API",
         "requiredFields": [

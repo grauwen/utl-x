@@ -1,0 +1,128 @@
+name: "url_encode_component"
+category: "stdlib/encoding"
+description: "Test URL component encoding (RFC 3986) - spaces as %20 for URI paths"
+tags: ["encoding", "url", "uri", "component", "rfc3986"]
+
+input:
+  format: json
+  data: "hello world"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  urlEncodeComponent($input)
+
+expected:
+  format: json
+  data: "hello%20world"
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "path_with_slashes"
+    input:
+      format: json
+      data: "path/to/file name.txt"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlEncodeComponent($input)
+    expected:
+      format: json
+      data: "path%2Fto%2Ffile%20name.txt"
+
+  - name: "special_characters"
+    input:
+      format: json
+      data: "hello world & test=value"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlEncodeComponent($input)
+    expected:
+      format: json
+      data: "hello%20world%20%26%20test%3Dvalue"
+
+  - name: "decode_percent20"
+    input:
+      format: json
+      data: "hello%20world"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlDecodeComponent($input)
+    expected:
+      format: json
+      data: "hello world"
+
+  - name: "decode_preserves_plus"
+    input:
+      format: json
+      data: "hello+world"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlDecodeComponent($input)
+    expected:
+      format: json
+      data: "hello+world"
+
+  - name: "decode_special_chars"
+    input:
+      format: json
+      data: "hello%20world%20%26%20test%3Dvalue"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlDecodeComponent($input)
+    expected:
+      format: json
+      data: "hello world & test=value"
+
+  - name: "roundtrip"
+    input:
+      format: json
+      data: "Hello World! /path/to/resource"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlDecodeComponent(urlEncodeComponent($input))
+    expected:
+      format: json
+      data: "Hello World! /path/to/resource"
+
+  - name: "unicode_characters"
+    input:
+      format: json
+      data: "Hello 世界"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlDecodeComponent(urlEncodeComponent($input))
+    expected:
+      format: json
+      data: "Hello 世界"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-01-30"
+  references: ["UTL-X Stdlib Reference - Encoding Functions", "RFC 3986"]
+  notes: "Tests RFC 3986 percent-encoding for URI components (spaces as %20, not +)"

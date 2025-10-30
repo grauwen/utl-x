@@ -38,7 +38,7 @@ expected:
   data: |
     {
       "schemaType": "jsch-schema",
-      "version": null,
+      "version": "draft-07",
       "title": "User Schema",
       "hasProperties": true
     }

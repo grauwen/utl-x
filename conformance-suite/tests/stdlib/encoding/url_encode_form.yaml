@@ -1,0 +1,86 @@
+name: "url_encode_form"
+category: "stdlib/encoding"
+description: "Test URL form encoding (application/x-www-form-urlencoded) - spaces as +"
+tags: ["encoding", "url", "form", "query-string"]
+
+input:
+  format: json
+  data: "hello world"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  urlEncode($input)
+
+expected:
+  format: json
+  data: "hello+world"
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+variants:
+  - name: "special_characters"
+    input:
+      format: json
+      data: "hello world & test=value"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlEncode($input)
+    expected:
+      format: json
+      data: "hello+world+%26+test%3Dvalue"
+
+  - name: "decode_plus"
+    input:
+      format: json
+      data: "hello+world"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlDecode($input)
+    expected:
+      format: json
+      data: "hello world"
+
+  - name: "decode_special_chars"
+    input:
+      format: json
+      data: "hello+world+%26+test%3Dvalue"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlDecode($input)
+    expected:
+      format: json
+      data: "hello world & test=value"
+
+  - name: "roundtrip"
+    input:
+      format: json
+      data: "Hello World! & Special=Chars"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      urlDecode(urlEncode($input))
+    expected:
+      format: json
+      data: "Hello World! & Special=Chars"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-01-30"
+  references: ["UTL-X Stdlib Reference - Encoding Functions"]
+  notes: "Tests application/x-www-form-urlencoded format (spaces as +)"

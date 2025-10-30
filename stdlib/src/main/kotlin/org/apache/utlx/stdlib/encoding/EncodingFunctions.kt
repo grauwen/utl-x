@@ -102,8 +102,8 @@ object EncodingFunctions {
     fun urlEncode(args: List<UDM>): UDM {
         requireArgs(args, 1, "url-encode")
         val str = args[0].asString()
-        // Use RFC 3986 percent-encoding (spaces as %20, not +)
-        val encoded = URLEncoder.encode(str, "UTF-8").replace("+", "%20")
+        // Use application/x-www-form-urlencoded format (spaces as +)
+        val encoded = URLEncoder.encode(str, "UTF-8")
         return UDM.Scalar(encoded)
     }
     
@@ -130,7 +130,59 @@ object EncodingFunctions {
         val decoded = URLDecoder.decode(str, "UTF-8")
         return UDM.Scalar(decoded)
     }
-    
+
+    @UTLXFunction(
+        description = "URL encode component (RFC 3986) - encodes spaces as %20 for URI paths",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "text: Text to encode"
+        ],
+        returns = "URI component encoded string",
+        example = "url-encode-component(\"hello world!\")",
+        tags = ["encoding", "url", "uri"],
+        since = "1.0"
+    )
+    /**
+     * URL encode component (RFC 3986)
+     * Encodes spaces as %20, suitable for URI paths and components
+     * Usage: url-encode-component("hello world!")
+     */
+    fun urlEncodeComponent(args: List<UDM>): UDM {
+        requireArgs(args, 1, "url-encode-component")
+        val str = args[0].asString()
+        // Use RFC 3986 percent-encoding (spaces as %20, not +)
+        val encoded = URLEncoder.encode(str, "UTF-8").replace("+", "%20")
+        return UDM.Scalar(encoded)
+    }
+
+    @UTLXFunction(
+        description = "URL decode component (RFC 3986) - decodes %20 as spaces",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "text: Encoded text to decode"
+        ],
+        returns = "Decoded string",
+        example = "url-decode-component(\"hello%20world%21\")",
+        tags = ["encoding", "url", "uri"],
+        since = "1.0"
+    )
+    /**
+     * URL decode component (RFC 3986)
+     * Decodes %20 as spaces (does not decode + as space)
+     * Usage: url-decode-component("hello%20world%21")
+     */
+    fun urlDecodeComponent(args: List<UDM>): UDM {
+        requireArgs(args, 1, "url-decode-component")
+        val str = args[0].asString()
+        // Decode %XX sequences but don't treat + as space
+        val decoded = URLDecoder.decode(str.replace("+", "%2B"), "UTF-8")
+        return UDM.Scalar(decoded)
+    }
+
     @UTLXFunction(
         description = "Hex encode",
         minArgs = 1,

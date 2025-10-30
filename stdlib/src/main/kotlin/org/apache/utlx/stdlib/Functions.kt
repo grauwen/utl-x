@@ -599,6 +599,8 @@ object StandardLibrary {
         register("base64Decode", EncodingFunctions::base64Decode)
         register("urlEncode", EncodingFunctions::urlEncode)
         register("urlDecode", EncodingFunctions::urlDecode)
+        register("urlEncodeComponent", EncodingFunctions::urlEncodeComponent)
+        register("urlDecodeComponent", EncodingFunctions::urlDecodeComponent)
         register("hexEncode", EncodingFunctions::hexEncode)
         register("hexDecode", EncodingFunctions::hexDecode)
        // basic crypto

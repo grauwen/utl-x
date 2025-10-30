@@ -339,7 +339,7 @@ expected:
   data: |
     {
       "order": {
-        "schemaVersion": null,
+        "schemaVersion": "2020-12",
         "title": "Customer Order",
         "hasDefs": true,
         "orderStatuses": [

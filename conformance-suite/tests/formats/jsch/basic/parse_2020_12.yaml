@@ -47,7 +47,7 @@ expected:
   data: |
     {
       "schemaType": "jsch-schema",
-      "version": null,
+      "version": "2020-12",
       "hasDefs": true,
       "defCount": 2
     }

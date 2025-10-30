@@ -1,7 +1,7 @@
 name: "url_basic"
 category: "stdlib/encoding"
-description: "Test URL encoding and decoding functions"
-tags: ["encoding", "url", "percent"]
+description: "Test URL encoding and decoding functions (form encoding - spaces as +)"
+tags: ["encoding", "url", "form"]
 
 input:
   format: json
@@ -16,7 +16,7 @@ transformation: |
 
 expected:
   format: json
-  data: "hello%20world%20%26%20test"
+  data: "hello+world+%26+test"
 
 performance_limits:
   max_duration_ms: 100
@@ -26,7 +26,7 @@ variants:
   - name: "decode"
     input:
       format: json
-      data: "hello%20world%20%26%20test"
+      data: "hello+world+%26+test"
     transformation: |
       %utlx 1.0
       input json

@@ -101,8 +101,8 @@ class JSONSchemaParserTest {
 
         val schema = udm as UDM.Object
 
-        // Should default to draft-07
-        schema.metadata["__version"] shouldBe "draft-07"
+        // Should return "undefined" when no $schema field present
+        schema.metadata["__version"] shouldBe "undefined"
     }
 
     @Test

@@ -115,14 +115,17 @@ class JSONSchemaParser(private val source: Reader) {
             }
         }
 
+        // Build metadata map with schemaType and version
+        val fullMetadata = schema.metadata + mapOf(
+            "__schemaType" to "jsch-schema",
+            "__version" to version
+        )
+
         return UDM.Object(
             properties = enhancedProperties,
             attributes = schema.attributes,
             name = schema.name,
-            metadata = schema.metadata + mapOf(
-                "__schemaType" to "jsch-schema",
-                "__version" to version
-            )
+            metadata = fullMetadata
         )
     }
 
@@ -136,8 +139,8 @@ class JSONSchemaParser(private val source: Reader) {
             schemaUri.contains("draft-04") -> "draft-04"
             schemaUri.contains("draft-07") -> "draft-07"
             schemaUri.contains("2020-12") -> "2020-12"
-            // Default to draft-07 if no $schema field
-            else -> "draft-07"
+            // Return "undefined" if no $schema field present
+            else -> "undefined"
         }
     }
 

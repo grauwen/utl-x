@@ -35,6 +35,38 @@ class EncodingFunctionsTest {
     }
 
     @Test
+    fun testUrlEncodeComponent() {
+        val input = "Hello World"
+        val result = EncodingFunctions.urlEncodeComponent(listOf(UDM.Scalar(input)))
+        assertEquals("Hello%20World", (result as UDM.Scalar).value)
+
+        // Test special characters
+        val input2 = "path/to/file name.txt"
+        val result2 = EncodingFunctions.urlEncodeComponent(listOf(UDM.Scalar(input2)))
+        assertEquals("path%2Fto%2Ffile+name.txt".replace("+", "%20"), (result2 as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testUrlDecodeComponent() {
+        val input = "Hello%20World"
+        val result = EncodingFunctions.urlDecodeComponent(listOf(UDM.Scalar(input)))
+        assertEquals("Hello World", (result as UDM.Scalar).value)
+
+        // Test that + is NOT decoded as space in component mode
+        val input2 = "Hello+World"
+        val result2 = EncodingFunctions.urlDecodeComponent(listOf(UDM.Scalar(input2)))
+        assertEquals("Hello+World", (result2 as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testUrlRoundTripComponent() {
+        val input = "Hello World! /path/to/resource"
+        val encoded = EncodingFunctions.urlEncodeComponent(listOf(UDM.Scalar(input)))
+        val decoded = EncodingFunctions.urlDecodeComponent(listOf(encoded))
+        assertEquals(input, (decoded as UDM.Scalar).value)
+    }
+
+    @Test
     fun testHexEncode() {
         val input = "Hello"
         val result = EncodingFunctions.hexEncode(listOf(UDM.Scalar(input)))

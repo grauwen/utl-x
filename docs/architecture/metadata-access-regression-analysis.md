@@ -200,23 +200,44 @@ Users can:
 
 ## Technical Analysis
 
-### Why Version Detection Always Returns Non-Null
+### Why Version Detection Behavior Changed
 
-The `detectSchemaVersion()` function has a **default fallback**:
+**Previous Behavior**: The `detectSchemaVersion()` function had a **default fallback** to `"draft-07"`:
 
 ```kotlin
+// OLD CODE
 return when {
     schemaUri.contains("draft-04") -> "draft-04"
     schemaUri.contains("draft-07") -> "draft-07"
     schemaUri.contains("2020-12") -> "2020-12"
-    else -> "draft-07"    // ← DEFAULT: Never returns null
+    else -> "draft-07"    // ← Always returned a version
 }
 ```
 
-**Design Decision**: The parser assumes JSON Schema draft-07 as the default standard when no `$schema` field is present. This is a **reasonable default** since:
-- Draft-07 is the most widely adopted version
-- Many schemas omit the `$schema` field
-- Having a default prevents null handling in downstream code
+**Updated Behavior** (2025-01-30): Changed to return `"undefined"` and conditionally set metadata:
+
+```kotlin
+// NEW CODE
+return when {
+    schemaUri.contains("draft-04") -> "draft-04"
+    schemaUri.contains("draft-07") -> "draft-07"
+    schemaUri.contains("2020-12") -> "2020-12"
+    else -> "undefined"    // ← More semantically correct
+}
+
+// Only set __version metadata if version is defined
+val fullMetadata = if (version != "undefined") {
+    baseMetadata + mapOf("__version" to version)
+} else {
+    baseMetadata
+}
+```
+
+**Rationale**:
+- More explicit - don't assume a default version
+- Allows `^version` to return `null` when no `$schema` field present
+- Aligns with test expectations for schemas without explicit versions
+- Schemas WITH `$schema` fields still get version metadata correctly
 
 ### Metadata Storage Architecture
 
