@@ -151,6 +151,8 @@ enum class ScalarKind {
     NULL,       // Null value
     DATE,       // Date only (YYYY-MM-DD)
     DATETIME,   // Date and time with timezone
+    TIME,       // Time only (HH:MM:SS)
+    DURATION,   // Time duration (e.g., PT1H30M)
     BINARY;     // Binary data
     
     /**
@@ -161,7 +163,7 @@ enum class ScalarKind {
     /**
      * Check if this kind is temporal
      */
-    fun isTemporal(): Boolean = this == DATE || this == DATETIME
+    fun isTemporal(): Boolean = this == DATE || this == DATETIME || this == TIME || this == DURATION
     
     /**
      * Get compatible JSON type
@@ -172,7 +174,7 @@ enum class ScalarKind {
         NUMBER -> "number"
         BOOLEAN -> "boolean"
         NULL -> "null"
-        DATE, DATETIME, BINARY -> "string"
+        DATE, DATETIME, TIME, DURATION, BINARY -> "string"
     }
 }
 

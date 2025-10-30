@@ -25,11 +25,11 @@ class SchemaGeneratorTest {
         
         // Parse XSD -> TypeDefinition
         val parser = XSDSchemaParser()
-        val type = parser.parse(xsd, SchemaFormat.XSD)
+        val type = parser.parse(xsd)
         
         // Generate JSON Schema
         val generator = JSONSchemaGenerator()
-        val jsonSchema = generator.generate(type, SchemaFormat.JSON_SCHEMA)
+        val jsonSchema = generator.generate(type, GeneratorOptions())
         
         assertNotNull(jsonSchema)
         assertTrue(jsonSchema.contains("object"))
@@ -51,11 +51,11 @@ class SchemaGeneratorTest {
         
         // Parse JSON Schema -> TypeDefinition
         val parser = JSONSchemaParser()
-        val type = parser.parse(jsonSchema, SchemaFormat.JSON_SCHEMA)
+        val type = parser.parse(jsonSchema)
         
         // Regenerate JSON Schema
         val generator = JSONSchemaGenerator()
-        val regenerated = generator.generate(type, SchemaFormat.JSON_SCHEMA)
+        val regenerated = generator.generate(type, GeneratorOptions())
         
         assertNotNull(regenerated)
         assertTrue(regenerated.contains("name"))
@@ -79,10 +79,10 @@ class SchemaGeneratorTest {
         """.trimIndent()
         
         val parser = XSDSchemaParser()
-        val type = parser.parse(xsd, SchemaFormat.XSD)
+        val type = parser.parse(xsd)
         
         val generator = JSONSchemaGenerator()
-        val jsonSchema = generator.generate(type, SchemaFormat.JSON_SCHEMA)
+        val jsonSchema = generator.generate(type, GeneratorOptions())
         
         assertTrue(jsonSchema.contains("minLength"))
         assertTrue(jsonSchema.contains("maxLength"))
@@ -112,10 +112,10 @@ class SchemaGeneratorTest {
         """.trimIndent()
         
         val parser = XSDSchemaParser()
-        val type = parser.parse(xsd, SchemaFormat.XSD)
+        val type = parser.parse(xsd)
         
         val generator = JSONSchemaGenerator()
-        val jsonSchema = generator.generate(type, SchemaFormat.JSON_SCHEMA)
+        val jsonSchema = generator.generate(type, GeneratorOptions())
         
         assertTrue(jsonSchema.contains("address"))
         assertTrue(jsonSchema.contains("street"))
@@ -137,10 +137,10 @@ class SchemaGeneratorTest {
         """.trimIndent()
         
         val parser = XSDSchemaParser()
-        val type = parser.parse(xsd, SchemaFormat.XSD)
+        val type = parser.parse(xsd)
         
         val generator = JSONSchemaGenerator()
-        val jsonSchema = generator.generate(type, SchemaFormat.JSON_SCHEMA)
+        val jsonSchema = generator.generate(type, GeneratorOptions())
         
         assertTrue(jsonSchema.contains("array") || jsonSchema.contains("items"))
     }
@@ -159,7 +159,7 @@ class SchemaGeneratorTest {
         """.trimIndent()
         
         val parser = JSONSchemaParser()
-        val type = parser.parse(jsonSchema, SchemaFormat.JSON_SCHEMA)
+        val type = parser.parse(jsonSchema)
         
         assertTrue(type is TypeDefinition.Object)
         val obj = type as TypeDefinition.Object
@@ -174,7 +174,6 @@ class SchemaGeneratorTest {
         val generator = JSONSchemaGenerator()
         val schema = generator.generate(
             type,
-            SchemaFormat.JSON_SCHEMA,
             GeneratorOptions(
                 pretty = true,
                 includeComments = true,
@@ -193,7 +192,7 @@ class SchemaGeneratorTest {
                 "id" to PropertyType(
                     TypeDefinition.Scalar(
                         ScalarKind.STRING,
-                        listOf(Constraint.Pattern("^[A-Z]{3}-[0-9]{4}$"))
+                        listOf(Pattern("^[A-Z]{3}-[0-9]{4}$"))
                     )
                 ),
                 "items" to PropertyType(
