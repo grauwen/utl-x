@@ -54,6 +54,7 @@ cd utl-x
 
 #### 3. Build the Project
 
+**macOS / Linux:**
 ```bash
 # Build using Gradle wrapper (includes all dependencies)
 ./gradlew build
@@ -65,6 +66,16 @@ cd utl-x
 # - Create distribution packages
 ```
 
+**Windows (Command Prompt):**
+```cmd
+gradlew.bat build
+```
+
+**Windows (PowerShell):**
+```powershell
+.\gradlew.bat build
+```
+
 Build output location:
 ```
 utl-x/
@@ -74,21 +85,42 @@ utl-x/
         └── utlx-0.1.0.zip
 ```
 
-#### 4. Install CLI Tool (Optional)
+#### 4. Build the CLI
 
+**macOS / Linux:**
 ```bash
-# Create symlink for easy access
-sudo ln -s $(pwd)/build/install/utlx/bin/utlx /usr/local/bin/utlx
+# Build the CLI JAR
+./gradlew :modules:cli:jar
 
-# Verify installation
-utlx --version
+# The wrapper script 'utlx' is ready to use
+./utlx --version
+```
+
+**Windows (Command Prompt):**
+```cmd
+REM Build the CLI JAR
+gradlew.bat :modules:cli:jar
+
+REM Use the wrapper script 'utlx.bat'
+utlx.bat --version
+```
+
+**Windows (PowerShell):**
+```powershell
+# Build the CLI JAR
+.\gradlew.bat :modules:cli:jar
+
+# Use the wrapper script 'utlx.ps1'
+.\utlx.ps1 --version
 ```
 
 **Output:**
 ```
-UTL-X version 0.1.0-SNAPSHOT
-Build: 2026-01-15
+UTL-X CLI v1.0.0-SNAPSHOT
+Universal Transformation Language Extended
 ```
+
+The wrapper scripts (`utlx`, `utlx.bat`, `utlx.ps1`) automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar`.
 
 ---
 
@@ -151,23 +183,62 @@ Kotlin: 1.9.21
 
 Create a test file:
 
+**macOS / Linux:**
 ```bash
-# Create test input
-echo '<root><message>Hello UTL-X!</message></root>' > test-$input.xml
+# Create test input file
+echo '<root><message>Hello UTL-X!</message></root>' > test-input.xml
 
-# Create test transformation
+# Create test transformation script
 cat > test-transform.utlx << 'EOF'
 %utlx 1.0
 input xml
 output json
 ---
 {
-  greeting: $input.root.message
+  greeting: input.root.message
 }
 EOF
 
-# Run transformation
-utlx transform test-$input.xml test-transform.utlx
+# Run transformation (script first, then input file)
+./utlx transform test-transform.utlx test-input.xml
+```
+
+**Windows (Command Prompt):**
+```cmd
+REM Create test input file
+echo ^<root^>^<message^>Hello UTL-X!^</message^>^</root^> > test-input.xml
+
+REM Create test transformation script (use a text editor or PowerShell for multi-line)
+echo %utlx 1.0 > test-transform.utlx
+echo input xml >> test-transform.utlx
+echo output json >> test-transform.utlx
+echo --- >> test-transform.utlx
+echo { >> test-transform.utlx
+echo   greeting: input.root.message >> test-transform.utlx
+echo } >> test-transform.utlx
+
+REM Run transformation (script first, then input file)
+utlx.bat transform test-transform.utlx test-input.xml
+```
+
+**Windows (PowerShell):**
+```powershell
+# Create test input file
+'<root><message>Hello UTL-X!</message></root>' | Out-File -Encoding UTF8 test-input.xml
+
+# Create test transformation script
+@'
+%utlx 1.0
+input xml
+output json
+---
+{
+  greeting: input.root.message
+}
+'@ | Out-File -Encoding UTF8 test-transform.utlx
+
+# Run transformation (script first, then input file)
+.\utlx.ps1 transform test-transform.utlx test-input.xml
 ```
 
 **Expected output:**
@@ -176,6 +247,11 @@ utlx transform test-$input.xml test-transform.utlx
   "greeting": "Hello UTL-X!"
 }
 ```
+
+**Important Notes:**
+- ⚠️ **Argument order**: Always use `utlx transform <script> <input> [options]` (script first, then input)
+- ⚠️ **Variable vs filename**: In the transformation script, `input` (or `$input`) refers to the parsed input data, not the filename
+- ⚠️ **Platform-specific**: Use the appropriate wrapper script (`./utlx`, `utlx.bat`, or `.\utlx.ps1`) for your platform
 
 ✅ **If you see the JSON output above, installation successful!**
 
@@ -243,8 +319,15 @@ Java: Configure Java Runtime → Select JDK 17
 #### 4. Build Project
 
 Open integrated terminal:
+
+**macOS / Linux:**
 ```bash
 ./gradlew build
+```
+
+**Windows:**
+```cmd
+gradlew.bat build
 ```
 
 ---
@@ -332,6 +415,7 @@ logging:
 
 ### From Source
 
+**macOS / Linux:**
 ```bash
 # Navigate to UTL-X directory
 cd utl-x
@@ -341,6 +425,18 @@ git pull origin main
 
 # Rebuild
 ./gradlew clean build
+```
+
+**Windows:**
+```cmd
+REM Navigate to UTL-X directory
+cd utl-x
+
+REM Pull latest changes
+git pull origin main
+
+REM Rebuild
+gradlew.bat clean build
 ```
 
 ### Using Package Manager (Future)
@@ -420,17 +516,20 @@ source ~/.bashrc  # or source ~/.zshrc
 
 ### Issue: Build fails with "permission denied"
 
-**Solution:** Make gradlew executable.
+**Solution (macOS / Linux):** Make gradlew executable.
 
 ```bash
 chmod +x gradlew
 ./gradlew build
 ```
 
+**Note:** This issue typically only occurs on macOS/Linux. Windows users should use `gradlew.bat` which doesn't require execute permissions.
+
 ### Issue: "OutOfMemoryError" during build
 
 **Solution:** Increase Gradle memory.
 
+**macOS / Linux:**
 ```bash
 # Create or edit gradle.properties
 echo "org.gradle.jvmargs=-Xmx2g" >> gradle.properties
@@ -439,17 +538,39 @@ echo "org.gradle.jvmargs=-Xmx2g" >> gradle.properties
 ./gradlew clean build
 ```
 
+**Windows:**
+```cmd
+REM Create or edit gradle.properties
+echo org.gradle.jvmargs=-Xmx2g >> gradle.properties
+
+REM Rebuild
+gradlew.bat clean build
+```
+
 ### Issue: Tests fail during build
 
 **Solution:** Skip tests temporarily (not recommended for development).
 
+**macOS / Linux:**
 ```bash
 ./gradlew build -x test
 ```
 
+**Windows:**
+```cmd
+gradlew.bat build -x test
+```
+
 To investigate test failures:
+
+**macOS / Linux:**
 ```bash
 ./gradlew test --info
+```
+
+**Windows:**
+```cmd
+gradlew.bat test --info
 ```
 
 ---
