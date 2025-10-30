@@ -30,18 +30,11 @@ conformance-suite input JSCH and XSD examples have no real test output condition
 ----
 Add DEBUGGING cpabilities in the parsers and renders -> Let me remove all the debug statements from the CLI and XSD parser:
 ----
-
-
-Issues:
-
-The test failed as expected - it's trying to access __metadata fields that aren't implemented yet
-
-Now I can see the actual structure. The xs:schema wrapper is NOT being removed <= whould that be done or not?
-
-When there's only ONE xs:complexType, it's an object, not an array. XML-to-JSON conversion only creates arrays when there are multiple elements with the same name.
-  Since the test transformation uses map(), it fails when given a single object instead of an array.
-
-
+.
+----
+  - JSON/CSV/XML parsers: Create new parser instance per parse (single-use) <= maybe later fix this?
+  - YAML parser: Reusable instance with parse(reader, options) method
+  - Options can vary per call, so Yaml instance must be created per-parse with appropriate LoaderOptions
 ----
 create output format examples for XSD and JSCH
 ----
