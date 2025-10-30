@@ -3,6 +3,7 @@ package org.apache.utlx.formats.yaml
 
 import org.apache.utlx.core.udm.*
 import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.LoaderOptions
 import java.io.InputStream
 import java.io.Reader
 import java.io.StringReader
@@ -15,7 +16,7 @@ import java.util.*
 
 /**
  * YAML Parser for UTL-X
- * 
+ *
  * Parses YAML documents into the Universal Data Model (UDM).
  * Supports:
  * - Basic types (strings, numbers, booleans, null)
@@ -24,12 +25,20 @@ import java.util.*
  * - Multi-document YAML files
  * - Anchors and aliases
  * - Custom tags
- * 
+ *
  * @author UTL-X Contributors
  */
 class YAMLParser {
-    
-    private val yaml = Yaml()
+
+    /**
+     * Create a Yaml instance with appropriate loader options
+     */
+    private fun createYaml(options: ParseOptions): Yaml {
+        val loaderOptions = LoaderOptions().apply {
+            isAllowDuplicateKeys = options.allowDuplicateKeys
+        }
+        return Yaml(loaderOptions)
+    }
     
     /**
      * Parse options for YAML parsing
@@ -76,6 +85,7 @@ class YAMLParser {
             if (options.multiDocument) {
                 parseMultiDocument(reader, options)
             } else {
+                val yaml = createYaml(options)
                 val yamlObject = yaml.load<Any?>(reader)
                 convertToUDM(yamlObject, options)
             }
@@ -89,11 +99,12 @@ class YAMLParser {
      */
     private fun parseMultiDocument(reader: Reader, options: ParseOptions): UDM {
         val documents = mutableListOf<UDM>()
-        
+        val yaml = createYaml(options)
+
         for (document in yaml.loadAll(reader)) {
             documents.add(convertToUDM(document, options))
         }
-        
+
         return if (documents.size == 1) {
             documents[0]
         } else {
