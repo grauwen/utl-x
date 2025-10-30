@@ -9,6 +9,7 @@ Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architectu
 hese XSDParserTest failures appear to be pre-existing issues with the parser (not the serializer I 
 ----
 analysis part
+e.g. modules/analysis/src/test/kotlin/org/apache/utlx/analysis/validation/TransformValidatorTest.kt
 @Disabled("TODO: TypeContext API needs implementation for advanced type inference features")
 ----
   Likely cause: type may be a reserved keyword or conflicts with the type system. ?
