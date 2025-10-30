@@ -102,7 +102,7 @@ object EncodingFunctions {
     fun urlEncode(args: List<UDM>): UDM {
         requireArgs(args, 1, "url-encode")
         val str = args[0].asString()
-        val encoded = URLEncoder.encode(str, "UTF-8").replace("+", "%20")
+        val encoded = URLEncoder.encode(str, "UTF-8")
         return UDM.Scalar(encoded)
     }
     
