@@ -218,7 +218,8 @@ class YAMLSerializer {
                 udm,
                 SerializeOptions(
                     pretty = false,
-                    defaultFlowStyle = DumperOptions.FlowStyle.FLOW
+                    defaultFlowStyle = DumperOptions.FlowStyle.FLOW,
+                    explicitStart = false  // Disable --- marker for more compact output
                 )
             )
         }
