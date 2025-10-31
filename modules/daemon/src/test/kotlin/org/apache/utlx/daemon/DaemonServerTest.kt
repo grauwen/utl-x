@@ -218,9 +218,10 @@ class DaemonServerTest {
     fun `test not-yet-implemented methods return internal error`() {
         val daemon = UTLXDaemon(TransportType.STDIO)
 
+        // Test hover (Phase 2, not yet implemented)
         val request = JsonRpcRequest(
             id = RequestId.NumberId(1),
-            method = "textDocument/completion"
+            method = "textDocument/hover"
         )
 
         val response = invokeHandleRequest(daemon, request)

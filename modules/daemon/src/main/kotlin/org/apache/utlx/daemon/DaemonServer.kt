@@ -6,6 +6,7 @@ import org.apache.utlx.daemon.state.StateManager
 import org.apache.utlx.daemon.transport.SocketTransport
 import org.apache.utlx.daemon.transport.StdioTransport
 import org.apache.utlx.daemon.transport.Transport
+import org.apache.utlx.daemon.completion.*
 import org.slf4j.LoggerFactory
 
 /**
@@ -26,6 +27,7 @@ class UTLXDaemon(
 
     private val logger = LoggerFactory.getLogger(UTLXDaemon::class.java)
     private val stateManager = StateManager()
+    private val completionService = CompletionService(stateManager)
 
     private var transport: Transport? = null
     private var initialized = false
@@ -84,8 +86,8 @@ class UTLXDaemon(
                 "textDocument/didChange" -> handleDidChange(request)
                 "textDocument/didClose" -> handleDidClose(request)
 
-                // Language features (placeholders for Phase 2)
-                "textDocument/completion" -> notImplemented(request, "Completion not yet implemented (Phase 2)")
+                // Language features
+                "textDocument/completion" -> handleCompletion(request)
                 "textDocument/hover" -> notImplemented(request, "Hover not yet implemented (Phase 2)")
 
                 // UTL-X custom methods (placeholders for Phase 2/3)
@@ -214,6 +216,83 @@ class UTLXDaemon(
         stateManager.updateDocument(uri, text, version)
 
         return JsonRpcResponse.success(request.id, null)
+    }
+
+    /**
+     * Handle textDocument/completion request
+     */
+    private fun handleCompletion(request: JsonRpcRequest): JsonRpcResponse {
+        @Suppress("UNCHECKED_CAST")
+        val params = request.params as? Map<*, *>
+            ?: return JsonRpcResponse.invalidParams(request.id, "Missing params")
+
+        try {
+            // Parse LSP completion params
+            @Suppress("UNCHECKED_CAST")
+            val textDocument = params["textDocument"] as? Map<*, *>
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing textDocument")
+
+            val uri = textDocument["uri"] as? String
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing uri")
+
+            @Suppress("UNCHECKED_CAST")
+            val positionMap = params["position"] as? Map<*, *>
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing position")
+
+            val line = (positionMap["line"] as? Number)?.toInt()
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing line")
+            val character = (positionMap["character"] as? Number)?.toInt()
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing character")
+
+            // Parse context (optional)
+            @Suppress("UNCHECKED_CAST")
+            val contextMap = params["context"] as? Map<*, *>
+            val context = if (contextMap != null) {
+                val triggerKind = (contextMap["triggerKind"] as? Number)?.toInt() ?: 1
+                val triggerChar = contextMap["triggerCharacter"] as? String
+                CompletionContext(
+                    triggerKind = CompletionTriggerKind.values().firstOrNull { it.value == triggerKind }
+                        ?: CompletionTriggerKind.INVOKED,
+                    triggerCharacter = triggerChar
+                )
+            } else null
+
+            // Create completion params
+            val completionParams = CompletionParams(
+                textDocument = TextDocumentIdentifier(uri),
+                position = Position(line, character),
+                context = context
+            )
+
+            // Get completions
+            val completionList = completionService.getCompletions(completionParams)
+
+            // Convert to LSP format
+            val result = mapOf(
+                "isIncomplete" to completionList.isIncomplete,
+                "items" to completionList.items.map { item ->
+                    mapOf(
+                        "label" to item.label,
+                        "kind" to item.kind.value,
+                        "detail" to item.detail,
+                        "documentation" to item.documentation,
+                        "insertText" to item.insertText,
+                        "sortText" to item.sortText,
+                        "filterText" to item.filterText
+                    )
+                }
+            )
+
+            logger.debug("Returning ${completionList.items.size} completion items")
+
+            return JsonRpcResponse.success(request.id, result)
+        } catch (e: Exception) {
+            logger.error("Error handling completion request", e)
+            return JsonRpcResponse.internalError(
+                request.id,
+                "Error processing completion: ${e.message}"
+            )
+        }
     }
 
     /**
