@@ -90,7 +90,23 @@ sealed class TypeDefinition {
     object Any : TypeDefinition() {
         override fun toString(): String = "Any"
     }
-    
+
+    /**
+     * Unknown type - represents a value whose type is not yet determined
+     * Can be assigned to anything and accepts anything
+     */
+    object Unknown : TypeDefinition() {
+        override fun toString(): String = "Unknown"
+    }
+
+    /**
+     * Never type - represents an impossible or error type
+     * Cannot be assigned to anything (except Never)
+     */
+    object Never : TypeDefinition() {
+        override fun toString(): String = "Never"
+    }
+
     /**
      * Check if this type is compatible with another type
      */

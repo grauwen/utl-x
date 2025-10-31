@@ -205,18 +205,20 @@ class XSDGeneratorTest {
                     sb.append("      <xs:restriction base=\"${scalarToXSDType(type.kind)}\">\n")
                     
                     for (constraint in type.constraints) {
-                        when (constraint) {
-                            is Constraint.MinLength -> {
+                        when (constraint.kind) {
+                            ConstraintKind.MIN_LENGTH -> {
                                 sb.append("        <xs:minLength value=\"${constraint.value}\"/>\n")
                             }
-                            is Constraint.MaxLength -> {
+                            ConstraintKind.MAX_LENGTH -> {
                                 sb.append("        <xs:maxLength value=\"${constraint.value}\"/>\n")
                             }
-                            is Constraint.Pattern -> {
-                                sb.append("        <xs:pattern value=\"${constraint.regex}\"/>\n")
+                            ConstraintKind.PATTERN -> {
+                                sb.append("        <xs:pattern value=\"${constraint.value}\"/>\n")
                             }
-                            is Constraint.Enum -> {
-                                for (value in constraint.values) {
+                            ConstraintKind.ENUM -> {
+                                @Suppress("UNCHECKED_CAST")
+                                val values = constraint.value as List<String>
+                                for (value in values) {
                                     sb.append("        <xs:enumeration value=\"$value\"/>\n")
                                 }
                             }

@@ -3,19 +3,26 @@ package org.apache.utlx.analysis.types
 
 /**
  * Type context for tracking variable bindings and scopes
- * 
+ *
  * Manages:
  * - Variable type bindings
  * - Nested scopes (for let expressions, functions, etc.)
  * - Scope snapshots and restoration
+ * - Input type for path resolution
+ * - Function registry for type checking
  */
-class TypeContext {
-    
+class TypeContext(
+    /**
+     * The input type for this transformation context
+     */
+    val inputType: TypeDefinition? = null
+) {
+
     /**
      * Stack of scopes, with the current scope at the end
      */
     private val scopes = mutableListOf<Scope>()
-    
+
     init {
         // Initialize with global scope
         scopes.add(Scope("global"))
@@ -141,7 +148,167 @@ class TypeContext {
             }
         }
     }
-    
+
+    /**
+     * Get the type at a specific path in the input or a type
+     * Supports navigating through objects, arrays, and wildcards
+     */
+    fun getPathType(path: List<String>, rootType: TypeDefinition? = inputType): TypeDefinition {
+        if (rootType == null) {
+            return TypeDefinition.Never
+        }
+
+        var currentType: TypeDefinition = rootType
+
+        for (segment in path) {
+            currentType = when {
+                segment == "*" -> {
+                    // Wildcard access on arrays
+                    when (currentType) {
+                        is TypeDefinition.Array -> currentType.elementType
+                        else -> TypeDefinition.Never
+                    }
+                }
+                segment.toIntOrNull() != null -> {
+                    // Numeric index on arrays
+                    when (currentType) {
+                        is TypeDefinition.Array -> currentType.elementType
+                        else -> TypeDefinition.Never
+                    }
+                }
+                else -> {
+                    // Property access on objects
+                    when (currentType) {
+                        is TypeDefinition.Object -> {
+                            currentType.properties[segment]?.type ?: TypeDefinition.Never
+                        }
+                        else -> TypeDefinition.Never
+                    }
+                }
+            }
+
+            // If we hit Never, stop early
+            if (currentType is TypeDefinition.Never) {
+                return currentType
+            }
+        }
+
+        return currentType
+    }
+
+    /**
+     * Look up a function by name
+     */
+    fun lookupFunction(name: String): FunctionSignature? {
+        return FunctionTypeRegistry.getFunctionSignature(name)
+    }
+
+    /**
+     * Infer the result type of a binary operation
+     */
+    fun inferBinaryOpType(operator: String, left: TypeDefinition, right: TypeDefinition): TypeDefinition {
+        return when (operator) {
+            // Arithmetic operators
+            "+", "-", "*", "/", "%" -> inferArithmeticType(left, right)
+
+            // Comparison operators always return boolean
+            ">", "<", ">=", "<=", "==", "!=" -> TypeDefinition.Scalar(ScalarKind.BOOLEAN)
+
+            // Logical operators
+            "&&", "||" -> {
+                if (left is TypeDefinition.Scalar && left.kind == ScalarKind.BOOLEAN &&
+                    right is TypeDefinition.Scalar && right.kind == ScalarKind.BOOLEAN) {
+                    TypeDefinition.Scalar(ScalarKind.BOOLEAN)
+                } else {
+                    TypeDefinition.Never
+                }
+            }
+
+            // Concatenation
+            "++" -> {
+                when {
+                    left is TypeDefinition.Scalar && left.kind == ScalarKind.STRING &&
+                    right is TypeDefinition.Scalar && right.kind == ScalarKind.STRING -> {
+                        TypeDefinition.Scalar(ScalarKind.STRING)
+                    }
+                    left is TypeDefinition.Array && right is TypeDefinition.Array -> {
+                        // Array concatenation - union of element types
+                        TypeDefinition.Array(TypeCompatibility.union(left.elementType, right.elementType))
+                    }
+                    else -> TypeDefinition.Never
+                }
+            }
+
+            else -> TypeDefinition.Unknown
+        }
+    }
+
+    /**
+     * Infer the result type of a unary operation
+     */
+    fun inferUnaryOpType(operator: String, operand: TypeDefinition): TypeDefinition {
+        return when (operator) {
+            "!" -> {
+                // Logical negation
+                if (operand is TypeDefinition.Scalar && operand.kind == ScalarKind.BOOLEAN) {
+                    TypeDefinition.Scalar(ScalarKind.BOOLEAN)
+                } else {
+                    TypeDefinition.Never
+                }
+            }
+            "-" -> {
+                // Numeric negation
+                when (operand) {
+                    is TypeDefinition.Scalar -> {
+                        when (operand.kind) {
+                            ScalarKind.INTEGER, ScalarKind.NUMBER -> operand
+                            else -> TypeDefinition.Never
+                        }
+                    }
+                    else -> TypeDefinition.Never
+                }
+            }
+            "+" -> {
+                // Unary plus
+                when (operand) {
+                    is TypeDefinition.Scalar -> {
+                        when (operand.kind) {
+                            ScalarKind.INTEGER, ScalarKind.NUMBER -> operand
+                            else -> TypeDefinition.Never
+                        }
+                    }
+                    else -> TypeDefinition.Never
+                }
+            }
+            else -> TypeDefinition.Unknown
+        }
+    }
+
+    /**
+     * Infer the result type of arithmetic operations
+     */
+    private fun inferArithmeticType(left: TypeDefinition, right: TypeDefinition): TypeDefinition {
+        if (left !is TypeDefinition.Scalar || right !is TypeDefinition.Scalar) {
+            return TypeDefinition.Never
+        }
+
+        val leftKind = left.kind
+        val rightKind = right.kind
+
+        // Integer + Integer = Integer
+        if (leftKind == ScalarKind.INTEGER && rightKind == ScalarKind.INTEGER) {
+            return TypeDefinition.Scalar(ScalarKind.INTEGER)
+        }
+
+        // Integer + Number = Number or Number + Integer = Number or Number + Number = Number
+        if ((leftKind == ScalarKind.INTEGER || leftKind == ScalarKind.NUMBER) &&
+            (rightKind == ScalarKind.INTEGER || rightKind == ScalarKind.NUMBER)) {
+            return TypeDefinition.Scalar(ScalarKind.NUMBER)
+        }
+
+        return TypeDefinition.Never
+    }
+
     override fun toString(): String {
         return "TypeContext(scopes=${scopes.size}, bindings=${allBindings().size})"
     }

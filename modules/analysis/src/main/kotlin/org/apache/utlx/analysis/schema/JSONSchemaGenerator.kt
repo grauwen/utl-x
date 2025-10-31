@@ -58,6 +58,20 @@ class JSONSchemaGenerator : OutputSchemaGenerator {
                     builder.put("description", "Any type (inferred from transformation)")
                 }
             }
+            is TypeDefinition.Unknown -> {
+                // Unknown type - don't add type constraint
+                if (options.includeComments) {
+                    builder.put("description", "Unknown type (not yet determined)")
+                }
+            }
+            is TypeDefinition.Never -> {
+                // Never type - represents an impossible type
+                if (options.includeComments) {
+                    builder.put("description", "Never type (impossible/error)")
+                }
+                // Use JSON Schema "not" with empty object to represent Never
+                builder.put("not", buildJsonObject {})
+            }
         }
     }
     

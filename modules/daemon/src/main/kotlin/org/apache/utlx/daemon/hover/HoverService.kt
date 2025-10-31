@@ -253,6 +253,12 @@ class HoverService(
                 is TypeDefinition.Any -> {
                     appendLine("*Any type (no constraints)*")
                 }
+                is TypeDefinition.Unknown -> {
+                    appendLine("*Unknown type (not yet determined)*")
+                }
+                is TypeDefinition.Never -> {
+                    appendLine("*Never type (impossible/error)*")
+                }
             }
         }
     }
@@ -278,6 +284,8 @@ class HoverService(
             is TypeDefinition.Object -> "Object"
             is TypeDefinition.Union -> type.types.joinToString(" | ") { formatTypeDetail(it) }
             is TypeDefinition.Any -> "Any"
+            is TypeDefinition.Unknown -> "Unknown"
+            is TypeDefinition.Never -> "Never"
         }
     }
 

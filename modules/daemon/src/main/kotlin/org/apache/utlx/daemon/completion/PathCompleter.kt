@@ -245,6 +245,8 @@ class PathCompleter(
             is TypeDefinition.Object -> "Object"
             is TypeDefinition.Union -> type.types.joinToString(" | ") { formatTypeDetail(it) }
             is TypeDefinition.Any -> "Any"
+            is TypeDefinition.Unknown -> "Unknown"
+            is TypeDefinition.Never -> "Never"
         }
     }
 
