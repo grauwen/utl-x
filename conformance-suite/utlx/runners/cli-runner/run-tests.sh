@@ -7,11 +7,12 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SUITE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-UTLX_CLI="$SUITE_ROOT/../utlx"
-TEST_ROOT="$SUITE_ROOT/tests"
-DATA_ROOT="$SUITE_ROOT/data"
-REPORTS_ROOT="$SUITE_ROOT/reports"
+SUITE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"              # conformance-suite/utlx
+CONFORMANCE_ROOT="$(cd "$SUITE_ROOT/.." && pwd)"           # conformance-suite
+UTLX_CLI="$CONFORMANCE_ROOT/../utlx"                        # project-root/utlx
+TEST_ROOT="$SUITE_ROOT/tests"                               # conformance-suite/utlx/tests
+DATA_ROOT="$CONFORMANCE_ROOT/data"                          # conformance-suite/data
+REPORTS_ROOT="$CONFORMANCE_ROOT/reports"                    # conformance-suite/reports
 
 # Colors for output
 RED='\033[0;31m'

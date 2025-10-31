@@ -1235,35 +1235,71 @@ make clean
 ```
 
 ### Running the Conformance Suite
-The conformance suite tests end-to-end transformation functionality across all supported formats.
+The conformance suite tests end-to-end functionality. It is organized into two separate suites:
+
+1. **UTL-X Transformation Suite** (`conformance-suite/utlx/`) - Tests transformation correctness
+2. **LSP Daemon Suite** (`conformance-suite/lsp/`) - Tests Language Server Protocol compliance
 
 **IMPORTANT**: The conformance suite must be run from the `conformance-suite` directory.
+
+#### UTL-X Transformation Tests
 
 ```bash
 # From project root, navigate to conformance-suite
 cd conformance-suite
 
-# Run all conformance tests (429 tests)
-python3 runners/cli-runner/simple-runner.py
+# Run all UTL-X transformation tests (456 tests)
+python3 utlx/runners/cli-runner/simple-runner.py
 
 # Show only failures (useful for debugging)
-python3 runners/cli-runner/simple-runner.py --show-failures
+python3 utlx/runners/cli-runner/simple-runner.py --show-failures
 
 # Run specific category
-python3 runners/cli-runner/simple-runner.py examples/basic
-python3 runners/cli-runner/simple-runner.py stdlib/array
+python3 utlx/runners/cli-runner/simple-runner.py core
+python3 utlx/runners/cli-runner/simple-runner.py stdlib/array
+python3 utlx/runners/cli-runner/simple-runner.py formats/xml
 
 # Alternative: Use shell scripts
-./runners/cli-runner/run-all.sh
-./runners/cli-runner/run-category.sh examples/basic
+./utlx/runners/cli-runner/run-all.sh
+./utlx/runners/cli-runner/run-category.sh stdlib/array
 ```
 
-**Expected Results**: 429/429 tests passing (100% pass rate)
+**Expected Results**: 456/456 tests passing (100% pass rate)
+
+**Test Count by Major Category**:
+- Stdlib: 222 tests
+- Formats: 88 tests
+- Auto-captured: ~100 tests
+- Multi-input: ~20 tests
+- Tutorial examples: 20 tests
+- Core: 10 tests
+- Plus: datacontract, edge-cases, schema, schema-generation, language, etc.
+
+**Test Coverage by Category**:
+- `core/` - Core language features (literals, variables, operators)
+- `stdlib/` - Standard library functions (array, string, date, math, etc.)
+- `formats/` - Format parsers (XML, JSON, CSV, YAML, Protobuf, Avro, etc.)
+- `tutorial-examples/` - Tutorial and documentation examples
+- `edge-cases/` - Edge cases and error handling
+- `multi-input/` - Multiple input transformations
+- `schema/` - Schema validation tests
+
+#### LSP Daemon Tests (Future)
+
+```bash
+# Run LSP protocol conformance tests
+python3 lsp/runners/kotlin-runner/run-lsp-tests.sh
+
+# Run specific LSP feature tests
+python3 lsp/runners/kotlin-runner/run-lsp-tests.sh features/completion
+python3 lsp/runners/kotlin-runner/run-lsp-tests.sh protocol/initialization
+```
 
 **Note**: Always verify conformance suite passes after making changes to:
 - Core language features (parser, interpreter)
 - Standard library functions
 - Format parsers/serializers (XML, JSON, CSV, YAML)
+- LSP daemon functionality (completion, hover, diagnostics)
 
 ### Code Quality
 ```bash
@@ -1291,13 +1327,19 @@ utl-x/
 ├── modules/
 │   ├── core/           # Core language implementation (parser, lexer, interpreter, UDM)
 │   ├── cli/            # Command-line interface
-│   └── analysis/       # Type inference, schema validation
+│   ├── analysis/       # Type inference, schema validation
+│   └── daemon/         # LSP daemon for IDE integration (Phase 2 complete)
 ├── formats/
 │   ├── xml/            # XML parser and serializer
 │   ├── json/           # JSON parser and serializer
 │   ├── csv/            # CSV parser and serializer
-│   └── yaml/           # YAML parser and serializer (in development)
+│   ├── yaml/           # YAML parser and serializer
+│   ├── avro/           # Apache Avro parser and serializer
+│   └── protobuf/       # Protocol Buffers parser and serializer
 ├── stdlib/             # Standard library functions (string, date, math, etc.)
+├── conformance-suite/  # Conformance testing
+│   ├── utlx/           # UTL-X transformation tests
+│   └── lsp/            # LSP daemon protocol tests (planned)
 └── tools/              # Development tools and plugins
 ```
 
@@ -1323,6 +1365,17 @@ utl-x/
    - Rich function library organized by category
    - Functions for strings, arrays, dates, math, etc.
    - All functions work on UDM types
+
+5. **LSP Daemon** (`modules/daemon/src/main/kotlin/`) **[Phase 2 Complete]**
+   - Language Server Protocol implementation for IDE integration
+   - JSON-RPC 2.0 protocol with STDIO/Socket transports
+   - Features:
+     - **Completion**: Type-aware autocomplete for property access paths
+     - **Hover**: Rich type information with markdown formatting
+     - **Diagnostics**: Real-time path validation and error reporting
+   - Document synchronization (open/change/close)
+   - StateManager for caching type environments and documents
+   - Test Coverage: 84/84 tests passing (100%)
 
 ## Testing Approach
 

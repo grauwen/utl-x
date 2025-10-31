@@ -1,0 +1,98 @@
+name: "workflow_edit_complete_hover"
+description: "Complete workflow: open → edit → complete → hover"
+category: "workflows"
+tags: ["workflow", "completion", "hover", "edit"]
+
+documents:
+  test_doc:
+    uri: "file:///workflow.utlx"
+    languageId: "utlx"
+    version: 1
+    text: |
+      input: { user: { name: string, email: string } }
+      output: input.
+
+sequence:
+  # Initialize
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp"
+      capabilities: {}
+
+  # Open document
+  - type: notification
+    method: "textDocument/didOpen"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+        languageId: "{{documents.test_doc.languageId}}"
+        version: "{{documents.test_doc.version}}"
+        text: "{{documents.test_doc.text}}"
+
+  # Complete at "input."
+  - type: request
+    method: "textDocument/completion"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+      position:
+        line: 1
+        character: 14
+      context:
+        triggerKind: 2
+        triggerCharacter: "."
+    expect:
+      result:
+        items:
+          - label: "user"
+            kind: 10
+
+  # Edit document to "input.user."
+  - type: notification
+    method: "textDocument/didChange"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+        version: 2
+      contentChanges:
+        - text: |
+            input: { user: { name: string, email: string } }
+            output: input.user.
+
+  # Complete at "input.user."
+  - type: request
+    method: "textDocument/completion"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+      position:
+        line: 1
+        character: 19
+      context:
+        triggerKind: 2
+        triggerCharacter: "."
+    expect:
+      result:
+        items:
+          - label: "name"
+            kind: 10
+          - label: "email"
+            kind: 10
+
+  # Hover over "input.user"
+  - type: request
+    method: "textDocument/hover"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+      position:
+        line: 1
+        character: 14
+    expect:
+      result:
+        contents:
+          kind: "markdown"
+          value:
+            contains: ["input.user", "name", "email"]

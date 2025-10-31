@@ -1061,8 +1061,9 @@ def main():
 
     # Find paths
     script_dir = Path(__file__).parent
-    suite_root = script_dir.parent.parent
-    results_file = suite_root / RESULTS_FILE
+    suite_root = script_dir.parent.parent  # conformance-suite/utlx
+    conformance_root = suite_root.parent   # conformance-suite
+    results_file = conformance_root / RESULTS_FILE
 
     # Handle --show-failures flag
     if args.show_failures:
@@ -1077,7 +1078,7 @@ def main():
             if args.utlx_cli:
                 utlx_cli = Path(args.utlx_cli)
             else:
-                utlx_cli = suite_root.parent / 'utlx'
+                utlx_cli = conformance_root.parent / 'utlx'
 
             if not utlx_cli.exists():
                 print(f"Error: UTL-X CLI not found at {utlx_cli}")
@@ -1189,7 +1190,7 @@ def main():
     if args.utlx_cli:
         utlx_cli = Path(args.utlx_cli)
     else:
-        utlx_cli = suite_root.parent / 'utlx'
+        utlx_cli = conformance_root.parent / 'utlx'
 
     if not utlx_cli.exists():
         print(f"Error: UTL-X CLI not found at {utlx_cli}")

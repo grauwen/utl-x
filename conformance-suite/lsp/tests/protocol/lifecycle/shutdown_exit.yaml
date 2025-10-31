@@ -1,0 +1,33 @@
+name: "shutdown_exit"
+description: "Proper server shutdown and exit sequence"
+category: "protocol/lifecycle"
+tags: ["lsp", "lifecycle", "required", "core"]
+
+sequence:
+  # Step 1: Initialize server
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp/test"
+      capabilities: {}
+    expect:
+      result:
+        capabilities: {}  # Any capabilities object is valid
+
+  # Step 2: Confirm initialization
+  - type: notification
+    method: "initialized"
+    params: {}
+
+  # Step 3: Request shutdown
+  - type: request
+    method: "shutdown"
+    params: null
+    expect:
+      result: null
+
+  # Step 4: Exit notification
+  - type: notification
+    method: "exit"
+    params: null

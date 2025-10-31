@@ -1,0 +1,25 @@
+name: "initialize_basic"
+description: "Basic server initialization with minimal capabilities"
+category: "protocol/initialization"
+tags: ["lsp", "initialization", "required", "core"]
+
+sequence:
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp/test"
+      capabilities: {}
+
+    expect:
+      result:
+        capabilities:
+          textDocumentSync:
+            openClose: true
+            change: 1
+          completionProvider:
+            triggerCharacters: [".", "$"]
+          hoverProvider: true
+        serverInfo:
+          name: "UTL-X Language Server"
+          version: "1.0.0-SNAPSHOT"

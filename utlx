@@ -1,14 +1,13 @@
 #!/bin/bash
-
 # UTL-X CLI wrapper script
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
 
-if [ ! -f "$JAR_PATH" ]; then
-    echo "Error: UTL-X CLI JAR not found at $JAR_PATH"
-    echo "Please run './gradlew :modules:cli:jar' first"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLI_JAR="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
+
+if [[ ! -f "$CLI_JAR" ]]; then
+    echo "Error: CLI JAR not found at $CLI_JAR" >&2
+    echo "Build it first: ./gradlew :modules:cli:jar" >&2
     exit 1
 fi
 
-# Run the JAR with all arguments passed through
-exec java -jar "$JAR_PATH" "$@"
+exec java -jar "$CLI_JAR" "$@"

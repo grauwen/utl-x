@@ -1,0 +1,59 @@
+name: "path_completion_basic"
+description: "Basic path completion for object properties"
+category: "features/completion"
+tags: ["completion", "path", "object"]
+
+documents:
+  test_doc:
+    uri: "file:///test.utlx"
+    languageId: "utlx"
+    version: 1
+    text: |
+      input: { name: string, age: number, address: { city: string, zip: string } }
+      output: input.
+
+sequence:
+  # Initialize
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp"
+      capabilities: {}
+    expect:
+      result:
+        capabilities:
+          completionProvider: {}
+
+  # Open document
+  - type: notification
+    method: "textDocument/didOpen"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+        languageId: "{{documents.test_doc.languageId}}"
+        version: "{{documents.test_doc.version}}"
+        text: "{{documents.test_doc.text}}"
+
+  # Request completion at "input."
+  - type: request
+    method: "textDocument/completion"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+      position:
+        line: 1
+        character: 14
+      context:
+        triggerKind: 2  # TriggerCharacter
+        triggerCharacter: "."
+    expect:
+      result:
+        isIncomplete: false
+        items:
+          - label: "name"
+            kind: 10  # Property
+          - label: "age"
+            kind: 10  # Property
+          - label: "address"
+            kind: 10  # Property

@@ -1,0 +1,45 @@
+name: "diagnostics_undefined_property"
+description: "Diagnostics published for undefined property access"
+category: "features/diagnostics"
+tags: ["diagnostics", "error", "property"]
+
+documents:
+  invalid_doc:
+    uri: "file:///invalid.utlx"
+    languageId: "utlx"
+    version: 1
+    text: |
+      input: { name: string, age: number }
+      output: input.unknown_field
+
+sequence:
+  # Initialize
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp"
+      capabilities: {}
+
+  # Open document - expect diagnostics notification
+  - type: notification
+    method: "textDocument/didOpen"
+    params:
+      textDocument:
+        uri: "{{documents.invalid_doc.uri}}"
+        languageId: "{{documents.invalid_doc.languageId}}"
+        version: "{{documents.invalid_doc.version}}"
+        text: "{{documents.invalid_doc.text}}"
+
+    # Expect server to send diagnostics notification
+    expect_notification:
+      method: "textDocument/publishDiagnostics"
+      params:
+        uri: "{{documents.invalid_doc.uri}}"
+        diagnostics:
+          - severity: 1  # Error
+            message:
+              contains: ["unknown_field", "not found", "undefined"]
+            range:
+              start:
+                line: 1
