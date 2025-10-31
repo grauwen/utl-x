@@ -229,13 +229,37 @@ class Interpreter {
                         // Attributes must be strings - extract string value
                         val attrValue = when (value) {
                             is RuntimeValue.StringValue -> value.value
-                            is RuntimeValue.NumberValue -> value.value.toString()
+                            is RuntimeValue.NumberValue -> {
+                                // Format integers without decimal point, floats with decimal
+                                val d = value.value
+                                if (d == d.toLong().toDouble()) {
+                                    d.toLong().toString()  // Integer: "42"
+                                } else {
+                                    d.toString()            // Float: "3.14"
+                                }
+                            }
                             is RuntimeValue.BooleanValue -> value.value.toString()
                             is RuntimeValue.NullValue -> ""
                             is RuntimeValue.UDMValue -> {
                                 // Extract scalar value from UDM
                                 when (val udm = value.udm) {
-                                    is UDM.Scalar -> udm.asString() ?: ""
+                                    is UDM.Scalar -> {
+                                        // Handle different scalar types based on actual type, not coercion
+                                        when (val scalarValue = udm.value) {
+                                            is Boolean -> scalarValue.toString()  // "true" or "false"
+                                            is Number -> {
+                                                // Format integers without decimal point
+                                                val d = scalarValue.toDouble()
+                                                if (d == d.toLong().toDouble()) {
+                                                    d.toLong().toString()
+                                                } else {
+                                                    d.toString()
+                                                }
+                                            }
+                                            null -> ""
+                                            else -> scalarValue.toString()  // String or other
+                                        }
+                                    }
                                     else -> udm.toString()
                                 }
                             }
