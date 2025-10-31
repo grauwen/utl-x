@@ -163,14 +163,14 @@ class TypeInferenceTest {
             TypeDefinition.Scalar(ScalarKind.NULL)
         ))
         
-        assertTrue(nullableType.isNullable())
+        assertTrue(nullableType.isNullable)
     }
     
     @Test
     fun `should detect non-nullable types`() {
         val nonNullableType = TypeDefinition.Scalar(ScalarKind.STRING)
         
-        assertFalse(nonNullableType.isNullable())
+        assertFalse(nonNullableType.isNullable)
     }
     
     @Test
@@ -180,7 +180,7 @@ class TypeInferenceTest {
             TypeDefinition.Scalar(ScalarKind.NULL)
         ))
         
-        val nonNullable = nullableType.nonNullable()
+        val nonNullable = nullableType.nonNullable
         
         assertTrue(nonNullable is TypeDefinition.Scalar)
         assertEquals(ScalarKind.STRING, (nonNullable as TypeDefinition.Scalar).kind)
@@ -191,7 +191,7 @@ class TypeInferenceTest {
         val type = TypeDefinition.Scalar(ScalarKind.STRING)
         val nullable = type.nullable()
         
-        assertTrue(nullable.isNullable())
+        assertTrue(nullable.isNullable)
     }
     
     @Test
@@ -204,7 +204,7 @@ class TypeInferenceTest {
         val stillNullable = nullableType.nullable()
         
         // Should still be the same type
-        assertTrue(stillNullable.isNullable())
+        assertTrue(stillNullable.isNullable)
     }
     
     @Test
@@ -214,9 +214,9 @@ class TypeInferenceTest {
             nullable = true
         )
         
-        val effectiveType = prop.effectiveType()
-        
-        assertTrue(effectiveType.isNullable())
+        val effectiveType = prop.effectiveType
+
+        assertTrue(effectiveType.isNullable)
     }
     
     @Test
@@ -226,9 +226,9 @@ class TypeInferenceTest {
             nullable = false
         )
         
-        val effectiveType = prop.effectiveType()
-        
-        assertFalse(effectiveType.isNullable())
+        val effectiveType = prop.effectiveType
+
+        assertFalse(effectiveType.isNullable)
     }
     
     @Test

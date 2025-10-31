@@ -1,7 +1,8 @@
 // modules/analysis/src/test/kotlin/org/apache/utlx/analysis/validation/TransformValidatorTest.kt
-import org.junit.jupiter.api.Disabledpackage org.apache.utlx.analysis.validation
+package org.apache.utlx.analysis.validation
 
 import org.apache.utlx.analysis.types.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.BeforeEach
 import kotlin.test.assertTrue

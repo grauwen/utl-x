@@ -334,6 +334,28 @@ fun TypeDefinition.asArray(minItems: Int? = null, maxItems: Int? = null): TypeDe
     return TypeDefinition.Array(this, minItems, maxItems)
 }
 
+// Check if a type is nullable (i.e., is a Union containing NULL)
+val TypeDefinition.isNullable: Boolean
+    get() = this is TypeDefinition.Union &&
+            this.types.any { it is TypeDefinition.Scalar && it.kind == ScalarKind.NULL }
+
+// Get non-nullable version of a type (removes NULL from Union if present)
+val TypeDefinition.nonNullable: TypeDefinition
+    get() = when {
+        !this.isNullable -> this
+        this is TypeDefinition.Union -> {
+            val nonNullTypes = this.types.filter {
+                !(it is TypeDefinition.Scalar && it.kind == ScalarKind.NULL)
+            }
+            when (nonNullTypes.size) {
+                0 -> TypeDefinition.Never
+                1 -> nonNullTypes[0]
+                else -> TypeDefinition.Union(nonNullTypes)
+            }
+        }
+        else -> this
+    }
+
 // Common type aliases
 object CommonTypes {
     val STRING = TypeBuilder.string()

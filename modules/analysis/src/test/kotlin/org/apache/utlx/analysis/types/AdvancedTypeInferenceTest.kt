@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Disabled
 import kotlin.test.assertTrue
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 
 @Disabled("TODO: TypeContext API needs implementation for advanced type inference features")
 class AdvancedTypeInferenceTest {
@@ -196,7 +197,7 @@ class AdvancedTypeInferenceTest {
         val defaultType = TypeDefinition.Scalar(ScalarKind.STRING)
         
         // Result should be non-nullable string
-        val nonNullable = nullableType.nonNullable()
+        val nonNullable = nullableType.nonNullable
         assertTrue(nonNullable is TypeDefinition.Scalar)
     }
     
