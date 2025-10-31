@@ -26,7 +26,7 @@ data class CapturedTest(
  */
 data class CaptureConfig(
     val enabled: Boolean = false,  // DISABLED by default for production
-    val captureLocation: String = "conformance-suite/tests/auto-captured/",
+    val captureLocation: String = "conformance-suite/utlx/tests/auto-captured/",
     val deduplicate: Boolean = true,
     val captureFailures: Boolean = true,
     val maxTestsPerFunction: Int = 50,

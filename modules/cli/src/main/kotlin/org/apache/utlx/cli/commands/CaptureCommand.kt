@@ -140,7 +140,7 @@ object CaptureCommand {
             enabled: $enabled
 
             # Where to save captured tests
-            capture_location: "conformance-suite/tests/auto-captured/"
+            capture_location: "conformance-suite/utlx/tests/auto-captured/"
 
             # Prevent duplicate test captures
             deduplicate: true
