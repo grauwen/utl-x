@@ -7,6 +7,8 @@ import org.apache.utlx.daemon.transport.SocketTransport
 import org.apache.utlx.daemon.transport.StdioTransport
 import org.apache.utlx.daemon.transport.Transport
 import org.apache.utlx.daemon.completion.*
+import org.apache.utlx.daemon.hover.*
+import org.apache.utlx.daemon.diagnostics.*
 import org.slf4j.LoggerFactory
 
 /**
@@ -28,6 +30,8 @@ class UTLXDaemon(
     private val logger = LoggerFactory.getLogger(UTLXDaemon::class.java)
     private val stateManager = StateManager()
     private val completionService = CompletionService(stateManager)
+    private val hoverService = HoverService(stateManager)
+    private val diagnosticsPublisher = DiagnosticsPublisher(stateManager)
 
     private var transport: Transport? = null
     private var initialized = false
@@ -49,6 +53,9 @@ class UTLXDaemon(
                 SocketTransport(port)
             }
         }
+
+        // Set transport for diagnostics publisher
+        diagnosticsPublisher.setTransport(transport!!)
 
         // Start transport with message handler
         transport!!.start { request -> handleRequest(request) }
@@ -88,7 +95,7 @@ class UTLXDaemon(
 
                 // Language features
                 "textDocument/completion" -> handleCompletion(request)
-                "textDocument/hover" -> notImplemented(request, "Hover not yet implemented (Phase 2)")
+                "textDocument/hover" -> handleHover(request)
 
                 // UTL-X custom methods (placeholders for Phase 2/3)
                 "utlx/complete" -> notImplemented(request, "Path completion not yet implemented (Phase 2)")
@@ -117,11 +124,11 @@ class UTLXDaemon(
                     "openClose" to true,
                     "change" to 1  // Full sync
                 ),
-                // Placeholders for Phase 2
+                // Phase 2 features
                 "completionProvider" to mapOf(
                     "triggerCharacters" to listOf(".", "$")
                 ),
-                "hoverProvider" to false  // TODO: Phase 2
+                "hoverProvider" to true  // Implemented in Phase 2
             ),
             "serverInfo" to mapOf(
                 "name" to "UTL-X Language Server",
@@ -181,6 +188,9 @@ class UTLXDaemon(
         logger.info("Document opened: $uri")
         stateManager.openDocument(uri, text, version, languageId)
 
+        // Publish diagnostics for the newly opened document
+        diagnosticsPublisher.publishDiagnostics(uri)
+
         return JsonRpcResponse.success(request.id, null)
     }
 
@@ -214,6 +224,9 @@ class UTLXDaemon(
 
         logger.debug("Document changed: $uri (version $version)")
         stateManager.updateDocument(uri, text, version)
+
+        // Publish diagnostics for the updated document
+        diagnosticsPublisher.publishDiagnostics(uri)
 
         return JsonRpcResponse.success(request.id, null)
     }
@@ -296,6 +309,80 @@ class UTLXDaemon(
     }
 
     /**
+     * Handle textDocument/hover request
+     */
+    private fun handleHover(request: JsonRpcRequest): JsonRpcResponse {
+        @Suppress("UNCHECKED_CAST")
+        val params = request.params as? Map<*, *>
+            ?: return JsonRpcResponse.invalidParams(request.id, "Missing params")
+
+        try {
+            // Parse LSP hover params
+            @Suppress("UNCHECKED_CAST")
+            val textDocument = params["textDocument"] as? Map<*, *>
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing textDocument")
+
+            val uri = textDocument["uri"] as? String
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing uri")
+
+            @Suppress("UNCHECKED_CAST")
+            val positionMap = params["position"] as? Map<*, *>
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing position")
+
+            val line = (positionMap["line"] as? Number)?.toInt()
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing line")
+            val character = (positionMap["character"] as? Number)?.toInt()
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing character")
+
+            // Create hover params
+            val hoverParams = HoverParams(
+                textDocument = TextDocumentIdentifier(uri),
+                position = Position(line, character)
+            )
+
+            // Get hover information
+            val hover = hoverService.getHover(hoverParams)
+
+            // If no hover information available, return null result
+            if (hover == null) {
+                return JsonRpcResponse.success(request.id, null)
+            }
+
+            // Convert to LSP format
+            val result = mutableMapOf<String, Any>(
+                "contents" to mapOf(
+                    "kind" to hover.contents.kind.value,
+                    "value" to hover.contents.value
+                )
+            )
+
+            // Add range if available
+            hover.range?.let { range ->
+                result["range"] = mapOf(
+                    "start" to mapOf(
+                        "line" to range.start.line,
+                        "character" to range.start.character
+                    ),
+                    "end" to mapOf(
+                        "line" to range.end.line,
+                        "character" to range.end.character
+                    )
+                )
+            }
+
+            logger.debug("Returning hover information for $uri")
+
+            return JsonRpcResponse.success(request.id, result)
+        } catch (e: Exception) {
+            logger.error("Error handling hover request", e)
+            return JsonRpcResponse.internalError(
+                request.id,
+                "Error processing hover: ${e.message}"
+            )
+        }
+    }
+
+    /**
      * Handle textDocument/didClose notification
      */
     private fun handleDidClose(request: JsonRpcRequest): JsonRpcResponse {
@@ -312,6 +399,9 @@ class UTLXDaemon(
 
         logger.info("Document closed: $uri")
         stateManager.closeDocument(uri)
+
+        // Clear diagnostics for closed document
+        diagnosticsPublisher.clearDiagnostics(uri)
 
         return JsonRpcResponse.success(request.id, null)
     }
