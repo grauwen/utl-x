@@ -33,7 +33,7 @@ include("modules:core")
 //include("modules:javascript")
 //include("modules:native")
 include("modules:cli")
-//include("modules:analysis")  // Temporarily disabled - test compilation errors
+include("modules:analysis")
 
 
 // Format parsers/serializers

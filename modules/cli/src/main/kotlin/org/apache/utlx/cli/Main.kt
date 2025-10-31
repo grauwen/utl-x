@@ -30,11 +30,7 @@ object Main {
             when (command.lowercase()) {
                 "transform", "t" -> TransformCommand.execute(commandArgs)
                 "repl", "r" -> ReplCommand.execute(commandArgs)
-                // "schema", "s" -> SchemaCommand.execute(commandArgs)  // Temporarily disabled - depends on analysis module
-                "schema", "s" -> {
-                    println("Schema command temporarily disabled")
-                    println("(Requires analysis module which is currently disabled)")
-                }
+                "design", "d" -> DesignCommand.execute(commandArgs)
                 "capture" -> CaptureCommand.execute(commandArgs)
                 "validate", "v" -> {
                     println("Validate command not yet implemented")
@@ -74,10 +70,6 @@ object Main {
     }
     
     private fun printUsage() {
-        // Note: schema command temporarily removed from help (requires analysis module which is disabled)
-        // Commented out lines:
-        //   |  schema    (s)  Generate and validate schemas (design-time analysis)
-        //   |  utlx schema generate --input-schema order.xsd --transform script.utlx --output-format json-schema
         println("""
             |UTL-X CLI v$VERSION - Universal Transformation Language Extended
             |
@@ -86,6 +78,7 @@ object Main {
             |Commands:
             |  transform (t)  Transform data using a UTL-X script
             |  repl      (r)  Start interactive REPL session
+            |  design    (d)  Design-time analysis (typecheck, generate schemas, IDE support)
             |  capture        Manage test capture settings (enable/disable/status)
             |  validate  (v)  Validate a UTL-X script without executing
             |  compile   (c)  Compile a UTL-X script to bytecode
@@ -98,6 +91,8 @@ object Main {
             |Examples:
             |  utlx repl
             |  utlx transform script.utlx input.xml -o output.json
+            |  utlx design generate-schema --input-schema order.xsd --transform script.utlx --output-format json-schema
+            |  utlx design typecheck --input-schema order.xsd --transform script.utlx --expected-output invoice-schema.json
             |  utlx capture status
             |  utlx validate script.utlx
             |  utlx transform --input-format xml --output-format json script.utlx < input.xml

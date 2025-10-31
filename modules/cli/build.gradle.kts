@@ -11,7 +11,7 @@ version = "1.0.0-SNAPSHOT"
 dependencies {
     // Internal dependencies
     implementation(project(":modules:core"))
-    // implementation(project(":modules:analysis"))  // Temporarily disabled - test compilation errors
+    implementation(project(":modules:analysis"))
     implementation(project(":formats:xml"))
     implementation(project(":formats:json"))
     implementation(project(":formats:csv"))
