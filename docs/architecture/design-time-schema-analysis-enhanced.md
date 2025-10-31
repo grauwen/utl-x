@@ -108,6 +108,104 @@ sum(input.Order.Items.Item |> map(item => parseNumber(item.@price)))
 
 # Part II: Daemon Mode & IDE Integration
 
+## Key Concepts: Architecture vs Protocol vs Transport
+
+Before diving into the daemon implementation, it's crucial to understand three distinct concepts:
+
+### Daemon Mode (Architectural Pattern)
+
+**What it is:**
+- A **long-running background process** that stays alive between requests
+- Maintains **stateful cache** (parsed ASTs, type environments, schema registries)
+- Handles **multiple requests** without restarting
+- Provides **fast response times** through in-memory caching
+
+**What it is NOT:**
+- Not a protocol (that's LSP)
+- Not a transport mechanism (that's STDIO/Socket)
+- Not specific to IDEs (can serve any client)
+
+**Benefits:**
+- ~100x faster responses (no cold start)
+- Incremental updates (only reparse changed files)
+- Shared state across editor windows/projects
+
+### LSP Protocol (Communication Standard)
+
+**What it is:**
+- **Language Server Protocol** - industry standard for IDE/editor integration
+- Uses **JSON-RPC 2.0** message format
+- Defines **standardized methods**: `textDocument/completion`, `textDocument/hover`, etc.
+- Specification maintained by Microsoft (used by VSCode, IntelliJ, Vim, Emacs, etc.)
+
+**What it is NOT:**
+- Not an architecture (daemon is the architecture)
+- Not tied to a specific transport (can use STDIO or Socket)
+- Not UTL-X specific (universal protocol)
+
+**Benefits:**
+- Editor plugins work across all LSP-compliant editors
+- Well-defined request/response patterns
+- Rich ecosystem of libraries and tooling
+
+### Transport Mechanism (Physical Layer)
+
+**What it is:**
+- The **physical channel** for sending LSP messages
+- Two primary options:
+  - **STDIO**: JSON-RPC over stdin/stdout (standard for IDE plugins)
+  - **Socket**: JSON-RPC over TCP/IP (for remote access, multiple clients)
+
+**What it is NOT:**
+- Not a protocol (LSP is the protocol)
+- Not the architecture (daemon is the architecture)
+
+**Benefits:**
+- STDIO: No network configuration, works in sandboxed environments
+- Socket: Remote access, multiple simultaneous clients, debugging tools
+
+### How They Work Together
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Daemon (Architecture)                                      │
+│  ├─ Long-running process                                    │
+│  ├─ Stateful cache                                          │
+│  └─ Serves multiple requests                                │
+│                                                              │
+│       Uses ↓                                                 │
+│                                                              │
+│  LSP Protocol (Communication)                               │
+│  ├─ JSON-RPC 2.0 message format                             │
+│  ├─ Standardized methods (completion, hover, diagnostics)   │
+│  └─ Request/Response patterns                               │
+│                                                              │
+│       Over ↓                                                 │
+│                                                              │
+│  Transport (Physical Layer)                                 │
+│  ├─ STDIO (stdin/stdout) ← Default for IDE integration      │
+│  └─ Socket (TCP port) ← For remote access                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### CLI Examples
+
+```bash
+# Start daemon with LSP protocol over STDIO (default)
+utlx design daemon
+utlx design daemon --stdio
+
+# Start daemon with LSP protocol over TCP socket
+utlx design daemon --socket 7777
+
+# Both use identical LSP/JSON-RPC 2.0 protocol
+# Only difference is the transport mechanism
+```
+
+**Key Takeaway:** The UTL-X daemon is **always** an LSP server using JSON-RPC 2.0. The choice is only between transport mechanisms (STDIO vs Socket), not between protocols.
+
+---
+
 ## Daemon Mode Architecture
 
 ### Overview
@@ -164,9 +262,23 @@ Running UTL-X as a **daemon service** enables:
 
 ### Daemon Lifecycle
 
+The daemon is a **long-running LSP server** that communicates via **JSON-RPC 2.0** over configurable transports.
+
+**Key Design Points:**
+- Always uses LSP/JSON-RPC 2.0 protocol (no "simple" or custom protocols)
+- Transport is configurable: STDIO (default) or Socket
+- Maintains persistent state across requests
+- Handles standard LSP methods + UTL-X extensions
+
 ```kotlin
 // modules/daemon/src/main/kotlin/org/apache/utlx/daemon/DaemonServer.kt
 
+/**
+ * UTL-X Daemon: Long-running LSP server for design-time analysis
+ *
+ * Protocol: LSP/JSON-RPC 2.0 (always)
+ * Transport: Configurable (STDIO or Socket)
+ */
 class UTLXDaemon(
     private val port: Int = 7777,
     private val transport: Transport = Transport.STDIO
@@ -175,28 +287,44 @@ class UTLXDaemon(
     private val analysisEngine = AnalysisEngine()
 
     fun start() {
+        // Start LSP server on configured transport
         when (transport) {
-            Transport.STDIO -> startStdioServer()
-            Transport.SOCKET -> startSocketServer(port)
+            Transport.STDIO -> startStdioServer()   // JSON-RPC over stdin/stdout
+            Transport.SOCKET -> startSocketServer(port)  // JSON-RPC over TCP
         }
     }
 
+    /**
+     * Handle incoming LSP/JSON-RPC requests
+     * All messages use JSON-RPC 2.0 format regardless of transport
+     */
     private fun handleRequest(request: JsonRpcRequest): JsonRpcResponse {
         return when (request.method) {
+            // Standard LSP methods
             "initialize" -> handleInitialize(request)
             "textDocument/didOpen" -> handleDidOpen(request)
             "textDocument/didChange" -> handleDidChange(request)
             "textDocument/completion" -> handleCompletion(request)
             "textDocument/hover" -> handleHover(request)
+
+            // UTL-X extensions (custom methods, still JSON-RPC)
             "utlx/complete" -> handlePathCompletion(request)
             "utlx/graph" -> handleGraphQuery(request)
             "utlx/visualize" -> handleVisualize(request)
+
             else -> JsonRpcResponse.methodNotFound(request.id)
         }
     }
 }
 
-enum class Transport { STDIO, SOCKET }
+/**
+ * Transport mechanism for LSP communication
+ * Both transports use identical JSON-RPC 2.0 protocol
+ */
+enum class Transport {
+    STDIO,   // Standard streams (for IDE plugins)
+    SOCKET   // TCP socket (for remote access, debugging)
+}
 ```
 
 ### State Management
