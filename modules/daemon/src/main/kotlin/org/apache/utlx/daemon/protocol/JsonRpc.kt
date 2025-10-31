@@ -43,15 +43,18 @@ data class JsonRpcResponse(
 ) {
     init {
         require(jsonrpc == "2.0") { "JSON-RPC version must be '2.0'" }
-        require((result == null) != (error == null)) {
+        require((result != null && error == null) || (result == null && error != null)) {
             "Response must have either result or error, but not both"
         }
     }
 
     companion object {
-        fun success(id: RequestId?, result: Any? = null) = JsonRpcResponse(
+        // Use a sentinel object for null results to distinguish from "no result provided"
+        private val NULL_RESULT = object {}
+
+        fun success(id: RequestId?, result: Any? = NULL_RESULT) = JsonRpcResponse(
             id = id,
-            result = result
+            result = if (result === NULL_RESULT) mapOf<String, Any>() else result
         )
 
         fun error(id: RequestId?, error: JsonRpcError) = JsonRpcResponse(
