@@ -368,11 +368,28 @@ object DesignCommand {
     }
 
     /**
-     * Start daemon mode for IDE integration (LSP-style service)
+     * Start daemon mode for IDE integration
+     *
+     * Runs a long-running LSP server using JSON-RPC 2.0 protocol.
+     * Transport options: STDIO (default, for IDEs) or Socket (for remote access).
      */
     private fun executeDaemon(args: Array<String>) {
         println("Daemon mode not yet implemented")
-        println("Coming soon: LSP-style service for IDE integration with autocomplete and type checking")
+        println()
+        println("The daemon will run as a long-running LSP server using JSON-RPC 2.0 protocol.")
+        println()
+        println("Planned transport mechanisms:")
+        println("  --stdio   : JSON-RPC over standard streams (default, for IDE integration)")
+        println("  --socket  : JSON-RPC over TCP socket (for remote access)")
+        println()
+        println("Key concepts:")
+        println("  • Daemon = Long-running background process with state cache")
+        println("  • LSP = Language Server Protocol (JSON-RPC 2.0)")
+        println("  • STDIO/Socket = Transport mechanism (how messages are sent)")
+        println()
+        println("All communication uses the same LSP/JSON-RPC 2.0 protocol.")
+        println("Only the transport layer differs (STDIO vs Socket).")
+        println()
         println("See: docs/architecture/design-time-schema-analysis-enhanced.md")
     }
 
