@@ -224,7 +224,10 @@ output json
 
 ## Installation
 
-### macOS / Linux
+You need to follow the installation manual and build the project yourself for now.
+
+
+### macOS / Linux (featured, soon)
 ```bash
 # Homebrew
 brew tap grauwen/utlx
@@ -234,7 +237,7 @@ brew install utlx
 curl -fsSL https://utl-x.dev/install.sh | bash
 ```
 
-### Windows
+### Windows (featured, soon)
 ```powershell
 # Chocolatey
 choco install utlx
