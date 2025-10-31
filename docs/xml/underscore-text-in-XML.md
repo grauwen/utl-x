@@ -1,5 +1,12 @@
 # Understanding `_text` in XML Parsing
 
+## Behavior in UTLX: XML -> JSON
+
+- Internal representation: XML parser creates _text property internally to store text content
+- Automatic unwrapping: When you access an element, the interpreter automatically unwraps it 
+- User-facing API: You should just use $input.Order.Customer, NOT $input.Order.Customer._text
+
+
 ## Overview
 
 `_text` is a special property name used by XML parsing libraries to store the text content of XML elements when converting XML to object/JSON format.
