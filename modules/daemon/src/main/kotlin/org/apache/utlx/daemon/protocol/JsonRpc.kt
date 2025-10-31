@@ -2,6 +2,7 @@
 package org.apache.utlx.daemon.protocol
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -43,18 +44,18 @@ data class JsonRpcResponse(
 ) {
     init {
         require(jsonrpc == "2.0") { "JSON-RPC version must be '2.0'" }
-        require((result != null && error == null) || (result == null && error != null)) {
-            "Response must have either result or error, but not both"
+        // In JSON-RPC 2.0, a response must have EITHER result OR error (not both, not neither)
+        // Note: result can be null (the value null), but the field must be present
+        require(error == null || result == null) {
+            "Response must not have both result and error"
         }
     }
 
     companion object {
-        // Use a sentinel object for null results to distinguish from "no result provided"
-        private val NULL_RESULT = object {}
-
-        fun success(id: RequestId?, result: Any? = NULL_RESULT) = JsonRpcResponse(
+        fun success(id: RequestId?, result: Any? = null) = JsonRpcResponse(
             id = id,
-            result = if (result === NULL_RESULT) mapOf<String, Any>() else result
+            result = result,
+            error = null
         )
 
         fun error(id: RequestId?, error: JsonRpcError) = JsonRpcResponse(
@@ -131,8 +132,15 @@ enum class ErrorCode(val code: Int) {
  * Request ID can be string, number, or null
  */
 sealed class RequestId {
-    data class StringId(val value: String) : RequestId()
-    data class NumberId(val value: Long) : RequestId()
+    data class StringId(val value: String) : RequestId() {
+        @JsonValue
+        fun toJson() = value
+    }
+
+    data class NumberId(val value: Long) : RequestId() {
+        @JsonValue
+        fun toJson() = value
+    }
 
     companion object {
         fun from(value: Any?): RequestId? = when (value) {
@@ -152,7 +160,9 @@ sealed class RequestId {
 /**
  * JSON-RPC Message Parser
  */
-class JsonRpcParser(private val mapper: ObjectMapper = jacksonObjectMapper()) {
+class JsonRpcParser(private val mapper: ObjectMapper = jacksonObjectMapper().apply {
+    setSerializationInclusion(JsonInclude.Include.NON_NULL)
+}) {
 
     /**
      * Parse a JSON-RPC message (request or response)

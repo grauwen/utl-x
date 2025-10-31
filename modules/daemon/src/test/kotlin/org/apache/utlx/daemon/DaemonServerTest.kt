@@ -97,8 +97,9 @@ class DaemonServerTest {
 
         val response = invokeHandleRequest(daemon, request)
 
-        assertNotNull(response.result)
+        // Shutdown returns null result (success with no data)
         assertNull(response.error)
+        assertEquals(RequestId.NumberId(2), response.id)
     }
 
     @Test
