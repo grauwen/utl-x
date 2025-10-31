@@ -570,7 +570,7 @@ We chose AGPL-3.0 to ensure UTL-X remains truly open source:
 - Protects against vendor lock-in
 - Keeps innovation open and collaborative
 
-**Need different licensing?** Contact [licensing@utlx.dev](mailto:licensing@utlx.dev)
+**Need different licensing?** Contact [licensing@glomidco.com](mailto:licensing@glomidco.com)
 
 ## Project Leadership
 
