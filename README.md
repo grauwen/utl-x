@@ -597,7 +597,7 @@ If you find UTL-X useful, please consider starring the repository! ⭐
 - ⭐ **Star the repository** on GitHub
 - 📢 **Share** UTL-X with your network
 - 📝 **Write** blog posts or tutorials
-- 💰 **Sponsor** development: [sponsor@utl-x.dev](mailto:sponsor@glomidco.com)
+- 💰 **Sponsor** development: [sponsor@glomidco.com](mailto:sponsor@glomidco.com)
 
 ---
 
