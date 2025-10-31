@@ -84,20 +84,20 @@ class JSONSchemaParser : InputSchemaParser {
         val constraints = mutableListOf<Constraint>()
         
         schema["minLength"]?.jsonPrimitive?.intOrNull?.let {
-            constraints.add(Constraint(ConstraintKind.MIN_LENGTH, it))
+            constraints.add(Constraint.MinLength(it))
         }
-        
+
         schema["maxLength"]?.jsonPrimitive?.intOrNull?.let {
-            constraints.add(Constraint(ConstraintKind.MAX_LENGTH, it))
+            constraints.add(Constraint.MaxLength(it))
         }
-        
+
         schema["pattern"]?.jsonPrimitive?.contentOrNull?.let {
-            constraints.add(Constraint(ConstraintKind.PATTERN, it))
+            constraints.add(Constraint.Pattern(it))
         }
-        
+
         schema["enum"]?.jsonArray?.let { enumArray ->
             val enumValues = enumArray.map { it.jsonPrimitive.content }
-            constraints.add(Constraint(ConstraintKind.ENUM, enumValues))
+            constraints.add(Constraint.Enum(enumValues))
         }
         
         // Check format for special string types
@@ -113,29 +113,29 @@ class JSONSchemaParser : InputSchemaParser {
     
     private fun parseNumberSchema(schema: JsonObject): TypeDefinition.Scalar {
         val constraints = mutableListOf<Constraint>()
-        
+
         schema["minimum"]?.jsonPrimitive?.doubleOrNull?.let {
-            constraints.add(Constraint(ConstraintKind.MINIMUM, it))
+            constraints.add(Constraint.Minimum(it))
         }
-        
+
         schema["maximum"]?.jsonPrimitive?.doubleOrNull?.let {
-            constraints.add(Constraint(ConstraintKind.MAXIMUM, it))
+            constraints.add(Constraint.Maximum(it))
         }
-        
+
         return TypeDefinition.Scalar(ScalarKind.NUMBER, constraints)
     }
-    
+
     private fun parseIntegerSchema(schema: JsonObject): TypeDefinition.Scalar {
         val constraints = mutableListOf<Constraint>()
-        
+
         schema["minimum"]?.jsonPrimitive?.intOrNull?.let {
-            constraints.add(Constraint(ConstraintKind.MINIMUM, it.toDouble()))
+            constraints.add(Constraint.Minimum(it.toDouble()))
         }
-        
+
         schema["maximum"]?.jsonPrimitive?.intOrNull?.let {
-            constraints.add(Constraint(ConstraintKind.MAXIMUM, it.toDouble()))
+            constraints.add(Constraint.Maximum(it.toDouble()))
         }
-        
+
         return TypeDefinition.Scalar(ScalarKind.INTEGER, constraints)
     }
     
@@ -207,8 +207,8 @@ class JSONSchemaParser : InputSchemaParser {
         }
         
         return TypeDefinition.Scalar(
-            scalarKind, 
-            listOf(Constraint(ConstraintKind.ENUM, enumValues))
+            scalarKind,
+            listOf(Constraint.Enum(enumValues))
         )
     }
     

@@ -192,7 +192,7 @@ class SchemaGeneratorTest {
                 "id" to PropertyType(
                     TypeDefinition.Scalar(
                         ScalarKind.STRING,
-                        listOf(Constraint(ConstraintKind.PATTERN, "^[A-Z]{3}-[0-9]{4}$"))
+                        listOf(Constraint.Pattern("^[A-Z]{3}-[0-9]{4}$"))
                     )
                 ),
                 "items" to PropertyType(

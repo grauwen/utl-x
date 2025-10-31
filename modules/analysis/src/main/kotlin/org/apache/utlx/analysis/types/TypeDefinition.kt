@@ -197,33 +197,71 @@ enum class ScalarKind {
 /**
  * Constraint on a scalar type
  */
-data class Constraint(
-    val kind: ConstraintKind,
-    val value: Any
-) {
-    override fun toString(): String = "$kind($value)"
-}
+sealed class Constraint {
+    /**
+     * Minimum string length constraint
+     */
+    data class MinLength(val value: Int) : Constraint() {
+        override fun toString(): String = "MinLength($value)"
+    }
 
-/**
- * Types of constraints
- */
-enum class ConstraintKind {
-    MIN_LENGTH,     // Minimum string length
-    MAX_LENGTH,     // Maximum string length
-    PATTERN,        // Regular expression pattern
-    MINIMUM,        // Minimum numeric value (inclusive)
-    MAXIMUM,        // Maximum numeric value (inclusive)
-    ENUM;           // Enumeration of allowed values
-    
+    /**
+     * Maximum string length constraint
+     */
+    data class MaxLength(val value: Int) : Constraint() {
+        override fun toString(): String = "MaxLength($value)"
+    }
+
+    /**
+     * Regular expression pattern constraint
+     */
+    data class Pattern(val regex: String) : Constraint() {
+        override fun toString(): String = "Pattern($regex)"
+    }
+
+    /**
+     * Minimum numeric value constraint (inclusive)
+     */
+    data class Minimum(val value: Double) : Constraint() {
+        override fun toString(): String = "Minimum($value)"
+    }
+
+    /**
+     * Maximum numeric value constraint (inclusive)
+     */
+    data class Maximum(val value: Double) : Constraint() {
+        override fun toString(): String = "Maximum($value)"
+    }
+
+    /**
+     * Enumeration of allowed values
+     */
+    data class Enum(val values: List<Any>) : Constraint() {
+        override fun toString(): String = "Enum($values)"
+    }
+
+    /**
+     * Custom constraint with name and parameters
+     */
+    data class Custom(val name: String, val params: Map<String, Any> = emptyMap()) : Constraint() {
+        override fun toString(): String = "Custom($name, $params)"
+    }
+
     /**
      * Check if this constraint applies to strings
      */
-    fun isStringConstraint(): Boolean = this in setOf(MIN_LENGTH, MAX_LENGTH, PATTERN, ENUM)
-    
+    fun isStringConstraint(): Boolean = when (this) {
+        is MinLength, is MaxLength, is Pattern, is Enum -> true
+        else -> false
+    }
+
     /**
      * Check if this constraint applies to numbers
      */
-    fun isNumericConstraint(): Boolean = this in setOf(MINIMUM, MAXIMUM, ENUM)
+    fun isNumericConstraint(): Boolean = when (this) {
+        is Minimum, is Maximum, is Enum -> true
+        else -> false
+    }
 }
 
 /**
@@ -240,32 +278,32 @@ class TypeBuilder {
             enum: List<String>? = null
         ): TypeDefinition.Scalar {
             val constraints = mutableListOf<Constraint>()
-            minLength?.let { constraints.add(Constraint(ConstraintKind.MIN_LENGTH, it)) }
-            maxLength?.let { constraints.add(Constraint(ConstraintKind.MAX_LENGTH, it)) }
-            pattern?.let { constraints.add(Constraint(ConstraintKind.PATTERN, it)) }
-            enum?.let { constraints.add(Constraint(ConstraintKind.ENUM, it)) }
+            minLength?.let { constraints.add(Constraint.MinLength(it)) }
+            maxLength?.let { constraints.add(Constraint.MaxLength(it)) }
+            pattern?.let { constraints.add(Constraint.Pattern(it)) }
+            enum?.let { constraints.add(Constraint.Enum(it)) }
             return TypeDefinition.Scalar(ScalarKind.STRING, constraints)
         }
-        
+
         fun integer(
             min: Int? = null,
             max: Int? = null,
             enum: List<Int>? = null
         ): TypeDefinition.Scalar {
             val constraints = mutableListOf<Constraint>()
-            min?.let { constraints.add(Constraint(ConstraintKind.MINIMUM, it.toDouble())) }
-            max?.let { constraints.add(Constraint(ConstraintKind.MAXIMUM, it.toDouble())) }
-            enum?.let { constraints.add(Constraint(ConstraintKind.ENUM, it.map { it.toString() })) }
+            min?.let { constraints.add(Constraint.Minimum(it.toDouble())) }
+            max?.let { constraints.add(Constraint.Maximum(it.toDouble())) }
+            enum?.let { constraints.add(Constraint.Enum(it.map { it.toString() })) }
             return TypeDefinition.Scalar(ScalarKind.INTEGER, constraints)
         }
-        
+
         fun number(
             min: Double? = null,
             max: Double? = null
         ): TypeDefinition.Scalar {
             val constraints = mutableListOf<Constraint>()
-            min?.let { constraints.add(Constraint(ConstraintKind.MINIMUM, it)) }
-            max?.let { constraints.add(Constraint(ConstraintKind.MAXIMUM, it)) }
+            min?.let { constraints.add(Constraint.Minimum(it)) }
+            max?.let { constraints.add(Constraint.Maximum(it)) }
             return TypeDefinition.Scalar(ScalarKind.NUMBER, constraints)
         }
         

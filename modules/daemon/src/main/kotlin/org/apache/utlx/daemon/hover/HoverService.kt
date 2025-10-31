@@ -208,7 +208,16 @@ class HoverService(
                         appendLine()
                         appendLine("**Constraints**:")
                         type.constraints.forEach { constraint ->
-                            appendLine("- ${constraint.kind}: `${constraint.value}`")
+                            val constraintStr = when (constraint) {
+                                is Constraint.MinLength -> "MinLength: `${constraint.value}`"
+                                is Constraint.MaxLength -> "MaxLength: `${constraint.value}`"
+                                is Constraint.Pattern -> "Pattern: `${constraint.regex}`"
+                                is Constraint.Minimum -> "Minimum: `${constraint.value}`"
+                                is Constraint.Maximum -> "Maximum: `${constraint.value}`"
+                                is Constraint.Enum -> "Enum: `${constraint.values.joinToString(", ")}`"
+                                is Constraint.Custom -> "${constraint.name}: `${constraint.params}`"
+                            }
+                            appendLine("- $constraintStr")
                         }
                     }
                 }

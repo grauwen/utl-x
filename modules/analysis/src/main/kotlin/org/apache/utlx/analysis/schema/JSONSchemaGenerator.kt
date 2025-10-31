@@ -91,15 +91,18 @@ class JSONSchemaGenerator : OutputSchemaGenerator {
         
         // Add constraints
         scalar.constraints.forEach { constraint ->
-            when (constraint.kind) {
-                ConstraintKind.MIN_LENGTH -> builder.put("minLength", (constraint.value as Int))
-                ConstraintKind.MAX_LENGTH -> builder.put("maxLength", (constraint.value as Int))
-                ConstraintKind.PATTERN -> builder.put("pattern", (constraint.value as String))
-                ConstraintKind.MINIMUM -> builder.put("minimum", (constraint.value as Double))
-                ConstraintKind.MAXIMUM -> builder.put("maximum", (constraint.value as Double))
-                ConstraintKind.ENUM -> {
-                    val enumValues = constraint.value as List<*>
-                    builder.put("enum", JsonArray(enumValues.map { JsonPrimitive(it.toString()) }))
+            when (constraint) {
+                is Constraint.MinLength -> builder.put("minLength", constraint.value)
+                is Constraint.MaxLength -> builder.put("maxLength", constraint.value)
+                is Constraint.Pattern -> builder.put("pattern", constraint.regex)
+                is Constraint.Minimum -> builder.put("minimum", constraint.value)
+                is Constraint.Maximum -> builder.put("maximum", constraint.value)
+                is Constraint.Enum -> {
+                    builder.put("enum", JsonArray(constraint.values.map { JsonPrimitive(it.toString()) }))
+                }
+                is Constraint.Custom -> {
+                    // Custom constraints can be added as extensions
+                    builder.put(constraint.name, JsonPrimitive(constraint.params.toString()))
                 }
             }
         }

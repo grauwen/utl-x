@@ -69,46 +69,46 @@ class XSDGeneratorTest {
     fun `should generate XSD with minLength constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint(ConstraintKind.MIN_LENGTH, 3))
+            listOf(Constraint.MinLength(3))
         )
-        
+
         val xsd = generateMockXSD(type, "username")
-        
+
         assertTrue(xsd.contains("minLength"))
         assertTrue(xsd.contains("value=\"3\""))
     }
-    
+
     @Test
     fun `should generate XSD with maxLength constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint(ConstraintKind.MAX_LENGTH, 50))
+            listOf(Constraint.MaxLength(50))
         )
-        
+
         val xsd = generateMockXSD(type, "description")
-        
+
         assertTrue(xsd.contains("maxLength"))
         assertTrue(xsd.contains("value=\"50\""))
     }
-    
+
     @Test
     fun `should generate XSD with pattern constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint(ConstraintKind.PATTERN, "[0-9]{5}"))
+            listOf(Constraint.Pattern("[0-9]{5}"))
         )
-        
+
         val xsd = generateMockXSD(type, "zipCode")
-        
+
         assertTrue(xsd.contains("pattern"))
         assertTrue(xsd.contains("[0-9]{5}"))
     }
-    
+
     @Test
     fun `should generate XSD with enumeration`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint(ConstraintKind.ENUM, listOf("red", "green", "blue")))
+            listOf(Constraint.Enum(listOf("red", "green", "blue")))
         )
         
         val xsd = generateMockXSD(type, "color")
@@ -205,24 +205,24 @@ class XSDGeneratorTest {
                     sb.append("      <xs:restriction base=\"${scalarToXSDType(type.kind)}\">\n")
                     
                     for (constraint in type.constraints) {
-                        when (constraint.kind) {
-                            ConstraintKind.MIN_LENGTH -> {
+                        when (constraint) {
+                            is Constraint.MinLength -> {
                                 sb.append("        <xs:minLength value=\"${constraint.value}\"/>\n")
                             }
-                            ConstraintKind.MAX_LENGTH -> {
+                            is Constraint.MaxLength -> {
                                 sb.append("        <xs:maxLength value=\"${constraint.value}\"/>\n")
                             }
-                            ConstraintKind.PATTERN -> {
-                                sb.append("        <xs:pattern value=\"${constraint.value}\"/>\n")
+                            is Constraint.Pattern -> {
+                                sb.append("        <xs:pattern value=\"${constraint.regex}\"/>\n")
                             }
-                            ConstraintKind.ENUM -> {
-                                @Suppress("UNCHECKED_CAST")
-                                val values = constraint.value as List<String>
-                                for (value in values) {
+                            is Constraint.Enum -> {
+                                for (value in constraint.values) {
                                     sb.append("        <xs:enumeration value=\"$value\"/>\n")
                                 }
                             }
-                            else -> {}
+                            is Constraint.Minimum, is Constraint.Maximum, is Constraint.Custom -> {
+                                // Not handled in this mock generator
+                            }
                         }
                     }
                     

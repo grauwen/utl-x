@@ -201,17 +201,17 @@ class XSDSchemaParser : InputSchemaParser {
                     
                     when (facet.localName) {
                         "minLength" -> value.toIntOrNull()?.let {
-                            constraints.add(Constraint(ConstraintKind.MIN_LENGTH, it))
+                            constraints.add(Constraint.MinLength(it))
                         }
                         "maxLength" -> value.toIntOrNull()?.let {
-                            constraints.add(Constraint(ConstraintKind.MAX_LENGTH, it))
+                            constraints.add(Constraint.MaxLength(it))
                         }
-                        "pattern" -> constraints.add(Constraint(ConstraintKind.PATTERN, value))
+                        "pattern" -> constraints.add(Constraint.Pattern(value))
                         "minInclusive" -> value.toDoubleOrNull()?.let {
-                            constraints.add(Constraint(ConstraintKind.MINIMUM, it))
+                            constraints.add(Constraint.Minimum(it))
                         }
                         "maxInclusive" -> value.toDoubleOrNull()?.let {
-                            constraints.add(Constraint(ConstraintKind.MAXIMUM, it))
+                            constraints.add(Constraint.Maximum(it))
                         }
                         "enumeration" -> {
                             // Handle enumeration - collect all values
@@ -224,7 +224,7 @@ class XSDSchemaParser : InputSchemaParser {
                                 }
                             }
                             if (enumValues.isNotEmpty()) {
-                                constraints.add(Constraint(ConstraintKind.ENUM, enumValues))
+                                constraints.add(Constraint.Enum(enumValues))
                             }
                         }
                     }

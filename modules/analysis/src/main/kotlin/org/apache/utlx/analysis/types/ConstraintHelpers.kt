@@ -2,34 +2,11 @@
 package org.apache.utlx.analysis.types
 
 /**
- * Helper objects for creating constraints more easily in tests
+ * Helper file for constraint-related extension properties
+ *
+ * Note: Constraint factory objects are no longer needed since Constraint is now
+ * a sealed class hierarchy. Use Constraint.MinLength(value), Constraint.Pattern(regex), etc.
  */
-
-object MinLength {
-    operator fun invoke(value: Int): Constraint = Constraint(ConstraintKind.MIN_LENGTH, value)
-}
-
-object MaxLength {
-    operator fun invoke(value: Int): Constraint = Constraint(ConstraintKind.MAX_LENGTH, value)
-}
-
-object Pattern {
-    operator fun invoke(regex: String): Constraint = Constraint(ConstraintKind.PATTERN, regex)
-    val regex: String get() = throw UnsupportedOperationException("Use Pattern(regex) to create")
-}
-
-object Minimum {
-    operator fun invoke(value: Number): Constraint = Constraint(ConstraintKind.MINIMUM, value.toDouble())
-}
-
-object Maximum {
-    operator fun invoke(value: Number): Constraint = Constraint(ConstraintKind.MAXIMUM, value.toDouble())
-}
-
-object Enum {
-    operator fun invoke(values: List<Any>): Constraint = Constraint(ConstraintKind.ENUM, values)
-    val values: List<Any> get() = throw UnsupportedOperationException("Use Enum(values) to create")
-}
 
 /**
  * Extension property to check if a PropertyType is nullable

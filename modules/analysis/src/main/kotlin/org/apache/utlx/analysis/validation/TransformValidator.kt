@@ -170,24 +170,27 @@ class TransformValidator {
         
         // Check constraints
         expected.constraints.forEach { expectedConstraint ->
-            val actualConstraint = actual.constraints.find { it.kind == expectedConstraint.kind }
-            
+            val actualConstraint = actual.constraints.find { it::class == expectedConstraint::class }
+
             if (actualConstraint == null) {
-                warnings.add("Missing constraint: ${expectedConstraint.kind}")
+                warnings.add("Missing constraint: ${expectedConstraint::class.simpleName}")
             } else {
                 // Could add more detailed constraint validation here
-                when (expectedConstraint.kind) {
-                    org.apache.utlx.analysis.types.ConstraintKind.MIN_LENGTH,
-                    org.apache.utlx.analysis.types.ConstraintKind.MAX_LENGTH,
-                    org.apache.utlx.analysis.types.ConstraintKind.MINIMUM,
-                    org.apache.utlx.analysis.types.ConstraintKind.MAXIMUM -> {
+                when (expectedConstraint) {
+                    is org.apache.utlx.analysis.types.Constraint.MinLength,
+                    is org.apache.utlx.analysis.types.Constraint.MaxLength,
+                    is org.apache.utlx.analysis.types.Constraint.Minimum,
+                    is org.apache.utlx.analysis.types.Constraint.Maximum -> {
                         // Could check if actual constraint is more/less restrictive
                     }
-                    org.apache.utlx.analysis.types.ConstraintKind.PATTERN -> {
+                    is org.apache.utlx.analysis.types.Constraint.Pattern -> {
                         // Could validate pattern compatibility
                     }
-                    org.apache.utlx.analysis.types.ConstraintKind.ENUM -> {
+                    is org.apache.utlx.analysis.types.Constraint.Enum -> {
                         // Could check if actual enum is subset of expected
+                    }
+                    is org.apache.utlx.analysis.types.Constraint.Custom -> {
+                        // Could validate custom constraint parameters
                     }
                 }
             }
