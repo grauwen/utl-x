@@ -14,6 +14,13 @@ e.g. modules/analysis/src/test/kotlin/org/apache/utlx/analysis/validation/Transf
 
 Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that describes it
 ----
+ Key Finding: Scientific Notation is Consistent
+
+  - Very small floats: 0.0001 → "1.0E-4" ⚠️ (scientific notation)
+  - Large numbers: 1.23e10 → "12300000000" (expanded)
+  - This is Kotlin's default Double.toString() behavior
+  - Consistent between attributes and element content
+----
   Likely cause: type may be a reserved keyword or conflicts with the type system. ?
 So the parser has a bug where it's rejecting type as a parameter name when it shouldn't. Should I investigate why the parser is rejecting it?
 ----
