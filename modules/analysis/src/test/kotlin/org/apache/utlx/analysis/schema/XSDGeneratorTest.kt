@@ -1,7 +1,8 @@
 // modules/analysis/src/test/kotlin/org/apache/utlx/analysis/schema/XSDGeneratorTest.kt
-import org.junit.jupiter.api.Disabledpackage org.apache.utlx.analysis.schema
+package org.apache.utlx.analysis.schema
 
 import org.apache.utlx.analysis.types.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
@@ -68,7 +69,7 @@ class XSDGeneratorTest {
     fun `should generate XSD with minLength constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint.MinLength(3))
+            listOf(Constraint(ConstraintKind.MIN_LENGTH, 3))
         )
         
         val xsd = generateMockXSD(type, "username")
@@ -81,7 +82,7 @@ class XSDGeneratorTest {
     fun `should generate XSD with maxLength constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint.MaxLength(50))
+            listOf(Constraint(ConstraintKind.MAX_LENGTH, 50))
         )
         
         val xsd = generateMockXSD(type, "description")
@@ -94,7 +95,7 @@ class XSDGeneratorTest {
     fun `should generate XSD with pattern constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint.Pattern("[0-9]{5}"))
+            listOf(Constraint(ConstraintKind.PATTERN, "[0-9]{5}"))
         )
         
         val xsd = generateMockXSD(type, "zipCode")
@@ -107,7 +108,7 @@ class XSDGeneratorTest {
     fun `should generate XSD with enumeration`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint.Enum(listOf("red", "green", "blue")))
+            listOf(Constraint(ConstraintKind.ENUM, listOf("red", "green", "blue")))
         )
         
         val xsd = generateMockXSD(type, "color")
