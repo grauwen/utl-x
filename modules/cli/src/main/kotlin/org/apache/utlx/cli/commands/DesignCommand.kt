@@ -7,6 +7,8 @@ import org.apache.utlx.analysis.validation.TransformValidator
 import org.apache.utlx.core.parser.Parser
 import org.apache.utlx.core.parser.ParseResult
 import org.apache.utlx.core.lexer.Lexer
+import org.apache.utlx.daemon.UTLXDaemon
+import org.apache.utlx.daemon.TransportType
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -374,23 +376,124 @@ object DesignCommand {
      * Transport options: STDIO (default, for IDEs) or Socket (for remote access).
      */
     private fun executeDaemon(args: Array<String>) {
-        println("Daemon mode not yet implemented")
-        println()
-        println("The daemon will run as a long-running LSP server using JSON-RPC 2.0 protocol.")
-        println()
-        println("Planned transport mechanisms:")
-        println("  --stdio   : JSON-RPC over standard streams (default, for IDE integration)")
-        println("  --socket  : JSON-RPC over TCP socket (for remote access)")
-        println()
-        println("Key concepts:")
-        println("  • Daemon = Long-running background process with state cache")
-        println("  • LSP = Language Server Protocol (JSON-RPC 2.0)")
-        println("  • STDIO/Socket = Transport mechanism (how messages are sent)")
-        println()
-        println("All communication uses the same LSP/JSON-RPC 2.0 protocol.")
-        println("Only the transport layer differs (STDIO vs Socket).")
-        println()
-        println("See: docs/architecture/design-time-schema-analysis-enhanced.md")
+        var transportType = TransportType.STDIO
+        var port = 7777
+        var verbose = false
+
+        var i = 0
+        while (i < args.size) {
+            when (args[i]) {
+                "--stdio" -> {
+                    transportType = TransportType.STDIO
+                }
+                "--socket" -> {
+                    transportType = TransportType.SOCKET
+                    // Check if next arg is a port number
+                    if (i + 1 < args.size && args[i + 1].toIntOrNull() != null) {
+                        port = args[++i].toInt()
+                    }
+                }
+                "--port" -> {
+                    if (i + 1 >= args.size) throw IllegalArgumentException("--port requires a port number")
+                    port = args[++i].toIntOrNull()
+                        ?: throw IllegalArgumentException("Invalid port number: ${args[i]}")
+                    transportType = TransportType.SOCKET
+                }
+                "--verbose", "-v" -> {
+                    verbose = true
+                }
+                "--help", "-h" -> {
+                    printDaemonUsage()
+                    return
+                }
+                else -> {
+                    throw IllegalArgumentException("Unknown daemon argument: ${args[i]}")
+                }
+            }
+            i++
+        }
+
+        if (verbose) {
+            println("Starting UTL-X Daemon (Language Server)")
+            println("  Protocol: LSP (JSON-RPC 2.0)")
+            println("  Transport: ${transportType.name}")
+            if (transportType == TransportType.SOCKET) {
+                println("  Port: $port")
+            }
+            println()
+            println("The daemon provides:")
+            println("  • Design-time type inference")
+            println("  • Path autocomplete")
+            println("  • Schema validation")
+            println("  • Real-time error checking")
+            println()
+            if (transportType == TransportType.STDIO) {
+                println("Ready to accept LSP messages on stdin...")
+            } else {
+                println("Listening for LSP clients on port $port...")
+            }
+            println()
+        }
+
+        // Start daemon - this blocks until shutdown
+        val daemon = UTLXDaemon(transportType, port)
+
+        // Register shutdown hook
+        Runtime.getRuntime().addShutdownHook(Thread {
+            if (verbose) {
+                System.err.println("Shutting down daemon...")
+            }
+            daemon.stop()
+        })
+
+        try {
+            daemon.start()
+        } catch (e: Exception) {
+            System.err.println("Daemon error: ${e.message}")
+            if (verbose || System.getProperty("utlx.debug") == "true") {
+                e.printStackTrace()
+            }
+            exitProcess(1)
+        }
+    }
+
+    private fun printDaemonUsage() {
+        println("""
+            |UTL-X Daemon Mode (LSP Server)
+            |
+            |Usage: utlx design daemon [options]
+            |
+            |The daemon runs as a long-running Language Server Protocol (LSP) server
+            |for IDE integration. It provides real-time autocomplete, type checking,
+            |and schema validation.
+            |
+            |Options:
+            |  --stdio           Use standard I/O transport (default, for IDE plugins)
+            |  --socket [PORT]   Use TCP socket transport (for remote access)
+            |  --port PORT       Specify port for socket transport (default: 7777)
+            |  --verbose, -v     Enable verbose logging
+            |  --help, -h        Show this help message
+            |
+            |Examples:
+            |  # Start daemon for IDE integration (STDIO)
+            |  utlx design daemon --stdio
+            |
+            |  # Start daemon on TCP socket for remote access
+            |  utlx design daemon --socket 7777
+            |
+            |  # Start with verbose logging
+            |  utlx design daemon --stdio --verbose
+            |
+            |Architecture:
+            |  • Daemon = Long-running background process with state cache
+            |  • LSP = Language Server Protocol (JSON-RPC 2.0)
+            |  • STDIO/Socket = Transport mechanism (physical channel)
+            |
+            |All communication uses the same LSP/JSON-RPC 2.0 protocol.
+            |Only the transport layer differs.
+            |
+            |See: docs/architecture/design-time-schema-analysis-enhanced.md
+        """.trimMargin())
     }
 
     /**

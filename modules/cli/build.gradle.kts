@@ -12,6 +12,7 @@ dependencies {
     // Internal dependencies
     implementation(project(":modules:core"))
     implementation(project(":modules:analysis"))
+    implementation(project(":modules:daemon"))
     implementation(project(":formats:xml"))
     implementation(project(":formats:json"))
     implementation(project(":formats:csv"))
