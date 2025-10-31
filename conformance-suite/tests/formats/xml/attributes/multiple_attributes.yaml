@@ -1,0 +1,37 @@
+name: "multiple_attributes"
+category: "formats/xml/attributes"
+description: "Test multiple XML attributes on same element using @attribute syntax"
+tags: ["xml", "attributes", "@attribute", "output"]
+
+input:
+  format: json
+  data: {"id": "123", "date": "2025-10-31", "status": "pending"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    Order: {
+      @id: $input.id,
+      @date: $input.date,
+      @status: $input.status
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Order id="123" date="2025-10-31" status="pending"/>
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-10-31"
+  references:
+    - "CONFORMANCE_ISSUES.md - Issue 1: XML Attribute Syntax"

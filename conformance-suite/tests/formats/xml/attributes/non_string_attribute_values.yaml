@@ -1,0 +1,37 @@
+name: "non_string_attribute_values"
+category: "formats/xml/attributes"
+description: "Test XML attributes with numeric and boolean values"
+tags: ["xml", "attributes", "@attribute", "numeric", "boolean", "type-conversion"]
+
+input:
+  format: json
+  data: {"quantity": 42, "price": 29.99, "inStock": true}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    Product: {
+      @quantity: $input.quantity,
+      @price: $input.price,
+      @inStock: $input.inStock
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Product quantity="42" price="29.99" inStock="true"/>
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-10-31"
+  references:
+    - "CONFORMANCE_ISSUES.md - Issue 1: XML Attribute Syntax"

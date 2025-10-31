@@ -407,3 +407,271 @@ class XMLIntegrationTest {
         assertNotNull(result.get("emphasis"))
     }
 }
+
+/**
+ * Tests for XML @attribute syntax in UTL-X transformations
+ *
+ * These tests verify that the parser accepts @attribute notation for:
+ * 1. Writing XML attributes in output (@id:, @name:, etc.)
+ * 2. Reading XML attributes from input ($input.Order.@id)
+ *
+ * IMPORTANT: These tests currently FAIL due to parser bug documented in CONFORMANCE_ISSUES.md
+ * Parser rejects @attribute syntax with error: "Object key must be a string"
+ *
+ * Once the parser is fixed to accept @ prefix in object keys, these tests should pass.
+ */
+class XMLAttributeSyntaxTest {
+
+    // Helper to parse and execute a UTL-X transformation
+    private fun executeTransformation(transformation: String, input: UDM): UDM {
+        val tokens = org.apache.utlx.core.lexer.Lexer(transformation).tokenize()
+        val parseResult = org.apache.utlx.core.parser.Parser(tokens).parse()
+
+        if (parseResult is org.apache.utlx.core.parser.ParseResult.Failure) {
+            val errors = parseResult.errors.joinToString("\n") { "  - $it" }
+            throw RuntimeException("Parse failed:\n$errors")
+        }
+
+        val program = (parseResult as org.apache.utlx.core.parser.ParseResult.Success).program
+        val runtimeValue = org.apache.utlx.core.interpreter.Interpreter().execute(program, input)
+        return runtimeValue.toUDM()
+    }
+
+    @Test
+    fun `parse and accept @attribute syntax for single attribute output`() {
+        val transformation = """
+            %utlx 1.0
+            input json
+            output xml
+            ---
+            {
+              Order: {
+                @id: "ORD-123",
+                Customer: "Alice"
+              }
+            }
+        """.trimIndent()
+
+        val input = org.apache.utlx.formats.json.JSON.parse("""{"customer": "Alice"}""")
+        val result = executeTransformation(transformation, input)
+        val xml = XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(result)
+
+        assertTrue(xml.contains("<Order id=\"ORD-123\">"))
+        assertTrue(xml.contains("<Customer>Alice</Customer>"))
+    }
+
+    @Test
+    fun `parse and accept @attribute syntax for multiple attributes`() {
+        val transformation = """
+            %utlx 1.0
+            input json
+            output xml
+            ---
+            {
+              Order: {
+                @id: "123",
+                @date: "2025-10-31",
+                @status: "pending"
+              }
+            }
+        """.trimIndent()
+
+        val input = org.apache.utlx.formats.json.JSON.parse("""{}""")
+        val result = executeTransformation(transformation, input)
+        val xml = XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(result)
+
+        assertTrue(xml.contains("id=\"123\""))
+        assertTrue(xml.contains("date=\"2025-10-31\""))
+        assertTrue(xml.contains("status=\"pending\""))
+    }
+
+    @Test
+    fun `parse and accept @attribute syntax combined with _text content`() {
+        val transformation = """
+            %utlx 1.0
+            input json
+            output xml
+            ---
+            {
+              Customer: {
+                @email: "alice@example.com",
+                _text: "Alice Johnson"
+              }
+            }
+        """.trimIndent()
+
+        val input = org.apache.utlx.formats.json.JSON.parse("""{}""")
+        val result = executeTransformation(transformation, input)
+        val xml = XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(result)
+
+        assertTrue(xml.contains("<Customer email=\"alice@example.com\">Alice Johnson</Customer>"))
+    }
+
+    @Test
+    fun `parse and accept @attribute syntax with nested elements`() {
+        val transformation = """
+            %utlx 1.0
+            input json
+            output xml
+            ---
+            {
+              Order: {
+                @id: "ORD-456",
+                Customer: {
+                  Name: "Bob"
+                },
+                Total: 299.99
+              }
+            }
+        """.trimIndent()
+
+        val input = org.apache.utlx.formats.json.JSON.parse("""{}""")
+        val result = executeTransformation(transformation, input)
+        val xml = XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(result)
+
+        assertTrue(xml.contains("<Order id=\"ORD-456\">"))
+        assertTrue(xml.contains("<Customer>"))
+        assertTrue(xml.contains("<Name>Bob</Name>"))
+        assertTrue(xml.contains("<Total>299.99</Total>"))
+    }
+
+    @Test
+    fun `parse and accept @attribute syntax with expression values`() {
+        val transformation = """
+            %utlx 1.0
+            input json
+            output xml
+            ---
+            {
+              Invoice: {
+                @number: "INV-" + ${"$"}input.year + "-" + ${"$"}input.id,
+                Status: "generated"
+              }
+            }
+        """.trimIndent()
+
+        val input = org.apache.utlx.formats.json.JSON.parse("""{"year": "2025", "id": "123"}""")
+        val result = executeTransformation(transformation, input)
+        val xml = XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(result)
+
+        assertTrue(xml.contains("<Invoice number=\"INV-2025-123\">"))
+        assertTrue(xml.contains("<Status>generated</Status>"))
+    }
+
+    @Test
+    fun `read XML attributes from input using @attribute syntax`() {
+        val transformation = """
+            %utlx 1.0
+            input xml
+            output json
+            ---
+            {
+              orderId: ${"$"}input.Order.@id,
+              orderDate: ${"$"}input.Order.@date,
+              customer: ${"$"}input.Order.Customer
+            }
+        """.trimIndent()
+
+        val inputXml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <Order id="ORD-789" date="2025-10-31">
+              <Customer>Charlie</Customer>
+            </Order>
+        """.trimIndent()
+
+        val input = XML.parse(inputXml)
+        val result = executeTransformation(transformation, input)
+        val json = org.apache.utlx.formats.json.JSON.stringify(result)
+
+        assertTrue(json.contains("\"orderId\""))
+        assertTrue(json.contains("\"ORD-789\""))
+        assertTrue(json.contains("\"orderDate\""))
+        assertTrue(json.contains("\"2025-10-31\""))
+        assertTrue(json.contains("\"customer\""))
+        assertTrue(json.contains("\"Charlie\""))
+    }
+
+    @Test
+    fun `transform XML to XML preserving and modifying attributes`() {
+        val transformation = """
+            %utlx 1.0
+            input xml
+            output xml
+            ---
+            {
+              Invoice: {
+                @number: "INV-" + ${"$"}input.Order.@id,
+                @invoiceType: ${"$"}input.Order.@type,
+                CustomerName: ${"$"}input.Order.Customer,
+                Amount: ${"$"}input.Order.Total
+              }
+            }
+        """.trimIndent()
+
+        val inputXml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <Order id="ORD-999" type="standard">
+              <Customer>Dave</Customer>
+              <Total>499.99</Total>
+            </Order>
+        """.trimIndent()
+
+        val input = XML.parse(inputXml)
+        val result = executeTransformation(transformation, input)
+        val xml = XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(result)
+
+        assertTrue(xml.contains("<Invoice"))
+        assertTrue(xml.contains("number=\"INV-ORD-999\""))
+        assertTrue(xml.contains("invoiceType=\"standard\""))
+        assertTrue(xml.contains("<CustomerName>Dave</CustomerName>"))
+        assertTrue(xml.contains("<Amount>499.99</Amount>"))
+    }
+
+    @Test
+    fun `handle attribute values with special characters requiring escaping`() {
+        val transformation = """
+            %utlx 1.0
+            input json
+            output xml
+            ---
+            {
+              Company: {
+                @name: ${"$"}input.title,
+                @note: ${"$"}input.note
+              }
+            }
+        """.trimIndent()
+
+        val input = org.apache.utlx.formats.json.JSON.parse("""{"title": "Smith & Co", "note": "A < B"}""")
+        val result = executeTransformation(transformation, input)
+        val xml = XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(result)
+
+        assertTrue(xml.contains("name=\"Smith &amp; Co\""))
+        assertTrue(xml.contains("note=\"A &lt; B\""))
+    }
+
+    @Test
+    fun `handle numeric and boolean attribute values`() {
+        val transformation = """
+            %utlx 1.0
+            input json
+            output xml
+            ---
+            {
+              Product: {
+                @quantity: ${"$"}input.quantity,
+                @price: ${"$"}input.price,
+                @inStock: ${"$"}input.inStock
+              }
+            }
+        """.trimIndent()
+
+        val input = org.apache.utlx.formats.json.JSON.parse("""{"quantity": 42, "price": 29.99, "inStock": true}""")
+        val result = executeTransformation(transformation, input)
+        val xml = XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(result)
+
+        assertTrue(xml.contains("quantity=\"42\""))
+        assertTrue(xml.contains("price=\"29.99\""))
+        assertTrue(xml.contains("inStock=\"true\""))
+    }
+}
