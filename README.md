@@ -224,7 +224,7 @@ output json
 
 ## Installation
 
-You need to follow the installation manual and build the project yourself for now.
+You need to follow the installation manual and build the project yourself for now. See section Building from Source.
 
 
 ### macOS / Linux (featured, soon)
@@ -243,8 +243,8 @@ curl -fsSL https://utl-x.dev/install.sh | bash
 choco install utlx
 ```
 
-### Manual Download
-Download from [GitHub Releases](https://github.com/grauwen/utl-x/releases)
+### Manual Download (featured, soon)
+Download from [GitHub Releases](https://github.com/grauwen/utl-x/releases) 
 
 ### Verify Installation
 ```bash
