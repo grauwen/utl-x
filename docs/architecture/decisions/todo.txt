@@ -6,39 +6,31 @@ Paralellization, see https://github.com/grauwen/utl-x/blob/main/docs/architectur
 ----
 Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architecture/module-system-design.md
 ----
-hese XSDParserTest failures appear to be pre-existing issues with the parser (not the serializer I 
-----
 analysis part
-e.g. modules/analysis/src/test/kotlin/org/apache/utlx/analysis/validation/TransformValidatorTest.kt
-@Disabled("TODO: TypeContext API needs implementation for advanced type inference features")
 
 Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that describes it
 ----
-  Likely cause: type may be a reserved keyword or conflicts with the type system. ?
-So the parser has a bug where it's rejecting type as a parameter name when it shouldn't. Should I investigate why the parser is rejecting it?
+
 ----
 IDE integration (LSP for validation)                                                                                                                                                
 CI/CD pipelines (fail on errors, warn on lint issues)                                                                                                                               Pre-commit hooks                                                                                                                                                                    Build-time validation   
 ---
-Later
+Current Tier 1 Hierachical Data: json, csv,xml,yam
+Current Tier 2 Hierachical Meta Data: xsd, jsch, avro, proto
+Later Tier 3 Hierachical API Contract => EC-API-Design Functional API contract definitions might be a good starting point 
   - OPENAPI - OpenAPI 3.x specs (JSON/YAML with schema embedded)
-  - RAML
-  - RAML fragment
-  - ASYNCAPI
-and more. Need to rethink
+  - RAML <= advised is not to.
+  - RAML fragment <= advise is not to. Use RAML 0.8 and JSON Schema instead.
+  - ASYNCAPI <= USDL supports the messaging capabilities.
 ----
-conformance-suite input JSCH and XSD examples have no real test output condition
-
+Some conformance-suite input JSCH and XSD examples have no real test output condition
+create output format examples for XSD and JSCH
 ----
 Add DEBUGGING cpabilities in the parsers and renders -> Let me remove all the debug statements from the CLI and XSD parser:
-----
-.
 ----
   - JSON/CSV/XML parsers: Create new parser instance per parse (single-use) <= maybe later fix this?
   - YAML parser: Reusable instance with parse(reader, options) method
   - Options can vary per call, so Yaml instance must be created per-parse with appropriate LoaderOptions
-----
-create output format examples for XSD and JSCH
 ----
 JVM Design, init, runtime: 
 see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-runtime-design.md 
@@ -56,71 +48,58 @@ see https://github.com/grauwen/utl-x/blob/main/docs/architecture/three-phase-run
 ----
 add functions to abreviate XML tags??? if ther would be an abreviate String function, one could do that manually, but maybe a whole documents needs abreviation?
 ----
+let bindings closure => , COMMA or ; SEMICOLON
+
 All missing lambda functions implemented including conformance-suite tests
 
-
-  2. Fix syntax issues in tests 02-07 (count(), match, entries structure, let bindings)
-  3. Achieve 9/9 passing tests for complete DataContract dynamic key support
-
-  1. Fix remaining syntax issues in tests 02-07 (count(), match, entries, let bindings)
-  2. Run full conformance suite - target: 9/9 DataContract tests passing
-  3. Consider implementing additional higher-order functions (groupBy, indexBy, etc.)
 ----
 YAML MAP constructions see https://github.com/grauwen/utl-x/blob/main/stdlib/yaml-maps-json-schema-summary.md
 
- 1. Verify existing stdlib - Check if keys(), values(), hasKey() already exist
-  2. Implement missing functions - Add the essential object manipulation functions
-  3. Create comprehensive test suite - DataContract-style YAML with dynamic keys
-  4. Document patterns - Best practices for handling dynamic keys in UTL-X
-  5. Add examples - Real-world DataContract transformation examples
-
  see the issue! The parser is complaining about comments inside object literals. UTL-X doesn't support # comments inside object literals - comments must be on their own lines. Let me check a
   working test to see the proper syntax:
-
-COMMENTS in YAML, Comments (documentation in XML), Need design document
-
-docs/yaml-dynamic-keys-findings.md
+----
+COMMENTS in YAML (snake parser filters them out), Comments (documentation in XML), Need design document
+----
+/docs/yaml/yaml-dynamic-keys-findings.md
 
 UTL-X has 3 primary patterns for creating dynamic keys in output:                                                                                                                   
 1. fromEntries() - Build object from [key, value] pairs array                                                                                                                   
 2. mapEntries() - Transform existing object while changing keys/values                                                                                                          
  3. Direct object construction - Compute keys dynamically in literal                                                                                                             
-Plan: Create Comprehensive Documentation 
-
 ----
-Dependency graph construction from AST?
+DONE Dependency graph construction from AST?
 ----
-The parser needs to allow keywords to be used as property names in object literals
+DONE The parser needs to allow keywords to be used as property names in object literals
 ----
 The @ symbol is reserved for XML attribute access, not for referencing inputs.??
 @ prefix is ONLY for XML attributes, not for input references
    - @input.field → WRONG
-    - input.field → CORRECT
+    - $input.field → CORRECT
     - element.@attribute → CORRECT
 ----
 Dropdown <list> when an argument is given in an UTLX. (more LSP like capability), sort of API?
 ----
  The parseCurrency() function has issues with some locale-specific formats (e.g., German Euro parsing), but US format works perfectly. This is a minor edge case that doesn't affect the overall
   excellence of the currency support.
+Fixed with seperete currency parsers (swiss, france, eu, us)
 ----
-
 .gitnore exclude the build jars going into the GIT repo. utlx is a script calling the jar which is not checkin. Keep till a release version?
 JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
 -----
 CLI: Documentation: https://utlx-lang.org/docs -> URL is not registered. Change to ....
 -----
-(dynamic date calculations giving different results). This is a pre-existing test issue ->  boolean comparison bug in the interpreter.
+DONE (dynamic date calculations giving different results). This is a pre-existing test issue ->  boolean comparison bug in the interpreter.
 ----
 utlx transform --input input1=file1.xml --input input2=file2.json script.utlx
 ----
-See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/xsd-discussions-style.md ; the generation of an XSD for the output has to be in a default style and potentially might need configuration to choose the XSD style. 
+DONE See https://github.com/grauwen/utl-x/blob/main/docs/architecture/decisions/xsd-discussions-style.md ; the generation of an XSD for the output has to be in a default style and potentially might need configuration to choose the XSD style. 
 In the analysis mode there should be more complex logic for nested XSD's and potentially a test for:  --Element Declaration [Local|Global] --Type Declaration [Local|Global]
 ```
 utlx schema -h 
  Output: json-schema (xsd, csv-schema, yaml-schema planned) TODO
 ```
 ----
-This is a serialization bug in the XML formatter. The array serializer is wrapping each array element in its own parent tag instead of putting all children under a single parent.
+DONE This is a serialization bug in the XML formatter. The array serializer is wrapping each array element in its own parent tag instead of putting all children under a single parent.
 ----
 KEEP Workaround -> DONE
 XML 2 JSON cardinality ISSUE
@@ -138,17 +117,17 @@ No problem! The XML serializer handles both arrays and single objects correctly,
 ----
   ### Next Steps for Deployment
        302 +  1. ✅ Conformance testing complete
-       303 +  2. Consider performance benchmarking
+       303 +  2. Consider performance benchmarking <== TODO
        304 +  3. Consider integration testing with real-world data
        305 +  4. Review security implications
        306 +  5. Prepare release documentation
-       307 +  
 ----
 
 stlib has IO -> how to handle uniform path over unix and windows?
 writeFile function does not exist. Maybe needed for dynamic lookups?
+Decided no I/O in transform. Lookup can be provided in additional Input
 ----
-Fix FunctionRegistryGenerator compilation errors
+DONE  FunctionRegistryGenerator compilation errors
 
 Add stub exportRegistry() method to StandardLibrary/Functions.kt
 Implement registry generation from @UTLXFunction annotations
@@ -189,7 +168,7 @@ CLEANUP-LATER All Functions have duplicated Helper functions. Need some code imp
 Based on IANA Time Zone Database (tzdata)
 
 ### Available Calendars
-- `gregory` - Gregorian (default)
+- `gregory` - Gregorian (default) <= only one supported. The others will make the implementation too big
 - `buddhist` - Buddhist calendar
 - `chinese` - Chinese calendar
 - `hebrew` - Hebrew calendar
