@@ -1,6 +1,11 @@
 // modules/daemon/src/main/kotlin/org/apache/utlx/daemon/diagnostics/DiagnosticsPublisher.kt
 package org.apache.utlx.daemon.diagnostics
 
+import org.apache.utlx.core.lexer.Lexer
+import org.apache.utlx.core.parser.Parser
+import org.apache.utlx.core.parser.ParseResult
+import org.apache.utlx.daemon.completion.Position
+import org.apache.utlx.daemon.hover.Range
 import org.apache.utlx.daemon.protocol.JsonRpcRequest
 import org.apache.utlx.daemon.state.StateManager
 import org.apache.utlx.daemon.transport.Transport
@@ -47,15 +52,20 @@ class DiagnosticsPublisher(
             return
         }
 
-        // Get type environment
-        val typeEnv = stateManager.getTypeEnvironment(uri)
+        // Collect diagnostics from multiple sources
+        val diagnostics = mutableListOf<Diagnostic>()
 
-        // Analyze document (or return empty diagnostics if no type environment)
-        val diagnostics = if (typeEnv != null) {
-            analyzer.analyze(text, typeEnv)
-        } else {
-            // No type environment yet - no diagnostics
-            emptyList()
+        // 1. Parser-based diagnostics (syntax and structure errors)
+        val parserDiagnostics = getParserDiagnostics(text)
+        diagnostics.addAll(parserDiagnostics)
+
+        // 2. Path-based diagnostics (semantic validation - only if no parse errors)
+        if (parserDiagnostics.isEmpty()) {
+            val typeEnv = stateManager.getTypeEnvironment(uri)
+            if (typeEnv != null) {
+                val pathDiagnostics = analyzer.analyze(text, typeEnv)
+                diagnostics.addAll(pathDiagnostics)
+            }
         }
 
         logger.debug("Found ${diagnostics.size} diagnostic(s) for $uri")
@@ -68,6 +78,46 @@ class DiagnosticsPublisher(
 
         // Send as notification
         sendDiagnosticsNotification(currentTransport, params)
+    }
+
+    /**
+     * Get parser-based diagnostics (syntax and structure errors)
+     */
+    private fun getParserDiagnostics(text: String): List<Diagnostic> {
+        return try {
+            val lexer = Lexer(text)
+            val tokens = lexer.tokenize()
+            val parser = Parser(tokens)
+            val parseResult = parser.parse()
+
+            when (parseResult) {
+                is ParseResult.Success -> emptyList()
+                is ParseResult.Failure -> {
+                    parseResult.errors.map { parseError ->
+                        // Convert ParseError to LSP Diagnostic
+                        Diagnostic(
+                            range = Range(
+                                start = Position(
+                                    line = maxOf(0, parseError.location.line - 1), // 0-based
+                                    character = maxOf(0, parseError.location.column - 1) // 0-based
+                                ),
+                                end = Position(
+                                    line = maxOf(0, parseError.location.line - 1),
+                                    character = maxOf(0, parseError.location.column + 10) // Highlight ~10 chars
+                                )
+                            ),
+                            severity = DiagnosticSeverity.ERROR,
+                            code = "UTLX_${parseError.section.name}",
+                            source = "utlx-${parseError.section.displayName().lowercase()}",
+                            message = parseError.message
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("Error parsing document for diagnostics", e)
+            emptyList()
+        }
     }
 
     /**

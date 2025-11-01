@@ -1,0 +1,48 @@
+name: "parse_error_content"
+description: "Parser diagnostics for content errors (missing comma)"
+category: "features/diagnostics"
+tags: ["diagnostics", "parser", "content"]
+
+documents:
+  content_error:
+    uri: "file:///content_error.utlx"
+    languageId: "utlx"
+    version: 1
+    text: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      {
+        name: $input.customerName,
+        email: $input.email
+        missing_comma: true
+      }
+
+sequence:
+  # Initialize
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp"
+      capabilities: {}
+
+  # Open document with content error - expect parser diagnostics
+  - type: notification
+    method: "textDocument/didOpen"
+    params:
+      textDocument:
+        uri: "{{documents.content_error.uri}}"
+        languageId: "{{documents.content_error.languageId}}"
+        version: "{{documents.content_error.version}}"
+        text: "{{documents.content_error.text}}"
+
+    # Expect server to send parser diagnostics notification
+    expect_notification:
+      method: "textDocument/publishDiagnostics"
+      params:
+        uri: "file:///content_error.utlx"
+        diagnostics:
+          - severity: 1  # ERROR
+            source: "utlx-transformation"
