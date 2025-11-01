@@ -32,10 +32,8 @@ object Main {
                 "repl", "r" -> ReplCommand.execute(commandArgs)
                 "design", "d" -> DesignCommand.execute(commandArgs)
                 "capture" -> CaptureCommand.execute(commandArgs)
-                "validate", "v" -> {
-                    println("Validate command not yet implemented")
-                    println("Coming soon: Validate UTL-X scripts")
-                }
+                "validate", "v" -> ValidateCommand.execute(commandArgs)
+                "lint", "l" -> LintCommand.execute(commandArgs)
                 "compile", "c" -> {
                     println("Compile command not yet implemented")
                     println("Coming soon: Compile UTL-X scripts to bytecode")
@@ -80,7 +78,8 @@ object Main {
             |  repl      (r)  Start interactive REPL session
             |  design    (d)  Design-time analysis (typecheck, generate schemas, IDE support)
             |  capture        Manage test capture settings (enable/disable/status)
-            |  validate  (v)  Validate a UTL-X script without executing
+            |  validate  (v)  Validate a UTL-X script for correctness (Levels 1-3)
+            |  lint      (l)  Check for style issues and best practices (Level 4)
             |  compile   (c)  Compile a UTL-X script to bytecode
             |  format    (f)  Format/pretty-print a UTL-X script
             |  migrate   (m)  Migrate XSLT/DataWeave to UTL-X
