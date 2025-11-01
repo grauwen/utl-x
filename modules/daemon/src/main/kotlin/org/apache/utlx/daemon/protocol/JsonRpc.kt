@@ -192,7 +192,7 @@ class JsonRpcParser(private val mapper: ObjectMapper = jacksonObjectMapper().app
         val id = node.get("id")?.let { RequestId.from(parseId(it)) }
         val method = node.get("method")?.asText()
             ?: throw JsonRpcParseException("Missing 'method' field")
-        val params = node.get("params")
+        val params = node.get("params")?.let { convertJsonNodeToNative(it) }
 
         return JsonRpcMessage.Request(
             JsonRpcRequest(
@@ -203,9 +203,31 @@ class JsonRpcParser(private val mapper: ObjectMapper = jacksonObjectMapper().app
         )
     }
 
+    /**
+     * Convert JsonNode to native Kotlin types (Map, List, primitives)
+     */
+    private fun convertJsonNodeToNative(node: JsonNode): Any? {
+        return when {
+            node.isNull -> null
+            node.isBoolean -> node.asBoolean()
+            node.isTextual -> node.asText()
+            node.isIntegralNumber -> node.asLong()
+            node.isFloatingPointNumber -> node.asDouble()
+            node.isArray -> {
+                node.elements().asSequence().map { convertJsonNodeToNative(it) }.toList()
+            }
+            node.isObject -> {
+                node.fields().asSequence().associate { (key, value) ->
+                    key to convertJsonNodeToNative(value)
+                }
+            }
+            else -> node.toString()
+        }
+    }
+
     private fun parseResponse(node: JsonNode): JsonRpcMessage.Response {
         val id = node.get("id")?.let { RequestId.from(parseId(it)) }
-        val result = node.get("result")
+        val result = node.get("result")?.let { convertJsonNodeToNative(it) }
         val error = node.get("error")?.let { parseError(it) }
 
         return JsonRpcMessage.Response(
@@ -229,7 +251,7 @@ class JsonRpcParser(private val mapper: ObjectMapper = jacksonObjectMapper().app
             ?: throw JsonRpcParseException("Missing 'code' in error object")
         val message = node.get("message")?.asText()
             ?: throw JsonRpcParseException("Missing 'message' in error object")
-        val data = node.get("data")
+        val data = node.get("data")?.let { convertJsonNodeToNative(it) }
 
         return JsonRpcError(code, message, data)
     }

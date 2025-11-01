@@ -453,8 +453,8 @@ class HoverServiceTest {
         val emailType = TypeDefinition.Scalar(
             kind = ScalarKind.STRING,
             constraints = listOf(
-                Constraint(ConstraintKind.PATTERN, "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"),
-                Constraint(ConstraintKind.MAX_LENGTH, 255)
+                Constraint.Pattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"),
+                Constraint.MaxLength(255)
             )
         )
 
@@ -489,7 +489,7 @@ class HoverServiceTest {
 
         assertNotNull(result)
         assertTrue(result!!.contents.value.contains("Constraints"))
-        assertTrue(result.contents.value.contains("PATTERN"))
-        assertTrue(result.contents.value.contains("MAX_LENGTH"))
+        assertTrue(result.contents.value.contains("Pattern"))
+        assertTrue(result.contents.value.contains("MaxLength"))
     }
 }
