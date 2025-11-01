@@ -500,9 +500,197 @@ object DesignCommand {
      * Generate graph representation and visualization
      */
     private fun executeGraph(args: Array<String>) {
-        println("Graph generation not yet implemented")
-        println("Coming soon: Generate UDM graph with nodes, edges, and visualization (DOT/Mermaid/D3)")
-        println("See: docs/architecture/design-time-schema-analysis-enhanced.md")
+        var transformFile: String? = null
+        var outputFile: String? = null
+        var layout = "TB"
+        var verbose = false
+        var format = "dot"  // dot, svg, png (requires graphviz installed)
+
+        var i = 0
+        while (i < args.size) {
+            when (args[i]) {
+                "--transform", "-t" -> {
+                    if (i + 1 >= args.size) throw IllegalArgumentException("--transform requires a file path")
+                    transformFile = args[++i]
+                }
+                "--output", "-o" -> {
+                    if (i + 1 >= args.size) throw IllegalArgumentException("--output requires a file path")
+                    outputFile = args[++i]
+                }
+                "--layout", "-l" -> {
+                    if (i + 1 >= args.size) throw IllegalArgumentException("--layout requires a layout type")
+                    layout = args[++i]
+                    if (layout !in listOf("TB", "LR", "BT", "RL")) {
+                        throw IllegalArgumentException("Invalid layout: $layout. Use TB, LR, BT, or RL")
+                    }
+                }
+                "--format", "-f" -> {
+                    if (i + 1 >= args.size) throw IllegalArgumentException("--format requires a format type")
+                    format = args[++i]
+                }
+                "--verbose", "-v" -> verbose = true
+                "--help", "-h" -> {
+                    printGraphUsage()
+                    return
+                }
+                else -> {
+                    if (transformFile == null) {
+                        transformFile = args[i]
+                    } else {
+                        throw IllegalArgumentException("Unknown argument: ${args[i]}")
+                    }
+                }
+            }
+            i++
+        }
+
+        if (transformFile == null) {
+            throw IllegalArgumentException("Transform file is required")
+        }
+
+        if (verbose) {
+            println("Generating AST visualization...")
+            println("  Transform: $transformFile")
+            println("  Layout: $layout")
+            println("  Format: $format")
+            outputFile?.let { println("  Output: $it") }
+        }
+
+        // Parse transformation to get AST
+        val transformContent = File(transformFile).readText()
+        val lexer = Lexer(transformContent)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens)
+        val parseResult = parser.parse()
+
+        val program = when (parseResult) {
+            is ParseResult.Success -> parseResult.program
+            is ParseResult.Failure -> {
+                System.err.println("Failed to parse transformation:")
+                parseResult.errors.forEach { error ->
+                    System.err.println("  ${error.location.line}:${error.location.column} - ${error.message}")
+                }
+                exitProcess(1)
+            }
+        }
+
+        // Generate DOT graph
+        val visualizer = org.apache.utlx.analysis.visualization.GraphvizASTVisualizer()
+        val options = org.apache.utlx.analysis.visualization.VisualizationOptions(layout = layout)
+        val dotGraph = visualizer.visualize(program, options)
+
+        // Handle output
+        when (format.lowercase()) {
+            "dot" -> {
+                // Output DOT file directly
+                if (outputFile != null) {
+                    File(outputFile).writeText(dotGraph)
+                    if (verbose) {
+                        println("✓ DOT graph saved to: $outputFile")
+                        println()
+                        println("To render to SVG, run:")
+                        println("  dot -Tsvg $outputFile -o ${outputFile.replace(".dot", ".svg")}")
+                    }
+                } else {
+                    println(dotGraph)
+                }
+            }
+            "svg", "png", "pdf" -> {
+                // Try to run graphviz to generate output format
+                val tempDotFile = kotlin.io.path.createTempFile("utlx-ast", ".dot").toFile()
+                try {
+                    tempDotFile.writeText(dotGraph)
+
+                    val actualOutputFile = outputFile ?: "ast.$format"
+                    val cmd = listOf("dot", "-T$format", tempDotFile.absolutePath, "-o", actualOutputFile)
+
+                    if (verbose) {
+                        println("Running: ${cmd.joinToString(" ")}")
+                    }
+
+                    val process = ProcessBuilder(cmd)
+                        .redirectErrorStream(true)
+                        .start()
+
+                    val exitCode = process.waitFor()
+
+                    if (exitCode == 0) {
+                        if (verbose) {
+                            println("✓ $format visualization saved to: $actualOutputFile")
+                        }
+                    } else {
+                        System.err.println("Error running Graphviz dot command (exit code: $exitCode)")
+                        System.err.println("Make sure Graphviz is installed: https://graphviz.org/download/")
+                        System.err.println()
+                        System.err.println("Falling back to DOT output:")
+                        println(dotGraph)
+                        if (verbose) {
+                            println()
+                            println("You can manually convert to $format with:")
+                            println("  dot -T$format <input.dot> -o <output.$format>")
+                        }
+                    }
+                } finally {
+                    tempDotFile.delete()
+                }
+            }
+            else -> {
+                throw IllegalArgumentException("Unsupported format: $format. Use dot, svg, png, or pdf")
+            }
+        }
+    }
+
+    private fun printGraphUsage() {
+        println("""
+            |UTL-X AST Visualization
+            |
+            |Usage: utlx design graph [options] <transform-file>
+            |
+            |Generate a visual representation of the transformation's Abstract Syntax Tree (AST)
+            |in Graphviz DOT format. This is useful for understanding transformation structure,
+            |debugging complex logic, and creating documentation.
+            |
+            |Options:
+            |  --transform, -t FILE   Transformation file to visualize (can also be positional)
+            |  --output, -o FILE      Output file path (stdout if not specified)
+            |  --layout, -l LAYOUT    Graph layout direction: TB, LR, BT, RL (default: TB)
+            |                           TB = Top to Bottom
+            |                           LR = Left to Right
+            |                           BT = Bottom to Top
+            |                           RL = Right to Left
+            |  --format, -f FORMAT    Output format: dot, svg, png, pdf (default: dot)
+            |                           svg/png/pdf require Graphviz installed
+            |  --verbose, -v          Enable verbose output
+            |  --help, -h             Show this help message
+            |
+            |Examples:
+            |  # Generate DOT file
+            |  utlx design graph transform.utlx -o ast.dot
+            |
+            |  # Generate SVG directly (requires Graphviz)
+            |  utlx design graph transform.utlx -f svg -o ast.svg
+            |
+            |  # Left-to-right layout
+            |  utlx design graph transform.utlx -l LR -o ast.dot
+            |
+            |  # Output DOT to stdout
+            |  utlx design graph transform.utlx
+            |
+            |  # Generate PNG (requires Graphviz)
+            |  utlx design graph transform.utlx -f png -o ast.png
+            |
+            |Manual Rendering:
+            |  If you have Graphviz installed, you can convert DOT files manually:
+            |    dot -Tsvg ast.dot -o ast.svg
+            |    dot -Tpng ast.dot -o ast.png
+            |    dot -Tpdf ast.dot -o ast.pdf
+            |
+            |Install Graphviz:
+            |  macOS:   brew install graphviz
+            |  Ubuntu:  sudo apt-get install graphviz
+            |  Windows: choco install graphviz
+            |  Web:     https://graphviz.org/download/
+        """.trimMargin())
     }
 
     private fun parseSchemaFormat(format: String): SchemaFormat {
