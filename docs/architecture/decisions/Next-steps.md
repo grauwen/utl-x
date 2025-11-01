@@ -1,6 +1,47 @@
 See [Grammar](https://github.com/grauwen/utl-x/blob/main/docs/reference/grammar.md)
 ----
 
+# Recent Improvements (2025-11-01)
+
+## ✅ Parser & Error Reporting Enhancements
+
+### Two-Pass Parsing with Section Tracking
+- **Status**: ✅ COMPLETED
+- **What**: Parser now separates header from content parsing with clear boundaries
+- **Why**: Prevents header parsing from "bleeding" into content, provides accurate line numbers
+- **Impact**: Better error messages with correct locations
+- **Files Modified**:
+  - `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt` - Added `ScriptSection` enum, two-pass parsing
+  - `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/ValidateCommand.kt` - Section-grouped error display
+
+### Section-Aware Error Categorization
+- **Status**: ✅ COMPLETED
+- **What**: Parse errors are now categorized as Header, Separator, or Transformation errors
+- **Why**: Users can quickly identify where the problem is (header syntax vs content syntax)
+- **Impact**: Clearer error messages: "Header Errors" vs "Transformation Errors"
+- **Diagnostic Codes**: `UTLX_HEADER`, `UTLX_SEPARATOR`, `UTLX_CONTENT`
+
+### LSP Integration of Parser Diagnostics
+- **Status**: ✅ COMPLETED
+- **What**: Language Server Protocol daemon now uses full parser for real-time diagnostics
+- **Why**: IDE users get same quality error reporting as CLI users
+- **Impact**: Live syntax checking in IDEs with accurate line numbers and section information
+- **Files Modified**:
+  - `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/diagnostics/DiagnosticsPublisher.kt` - Added parser invocation
+
+### Improved Validation & Lint Commands
+- **Status**: ✅ COMPLETED
+- **What**: `utlx validate` and `utlx lint` now provide section-aware error reporting
+- **Why**: Better developer experience with categorized, contextual error messages
+- **Impact**: Errors grouped by section with helpful hints
+
+### Test Coverage
+- **Runtime Conformance**: ✅ 465/465 tests passing (100%)
+- **LSP Conformance**: ✅ 8/8 tests passing (100%)
+- **New LSP Tests Added**: Parser diagnostic tests for header and content errors
+
+----
+
 Grammar Implementation Gap Analysis Complete
 
 A comprehensive analysis comparing [docs/reference/grammar.md](https://github.com/grauwen/utl-x/blob/main/docs/reference/grammar.md) (the original grammar specification) with the current implementation.
@@ -447,11 +488,14 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
 
   High Priority (Blocking Tests)
 
-  1. ✅ Attribute syntax - DONE (just implemented)
-  2. ❌ Function definitions (function keyword) - Blocks 6 tests
-  3. ❌ Match expressions - Core functional feature
-  4. ❌ Try-catch - Error handling essential
-  5. ❌ Ternary operator - Common pattern
+  1. ✅ Attribute syntax - DONE (implemented)
+  2. ✅ Two-pass parsing with section tracking - DONE (Header/Separator/Content)
+  3. ✅ Parser diagnostics integration in LSP - DONE (real-time IDE error reporting)
+  4. ✅ Improved validation/lint commands - DONE (section-aware error categorization)
+  5. ❌ Function definitions (function keyword) - Blocks 6 tests
+  6. ❌ Match expressions - Core functional feature
+  7. ❌ Try-catch - Error handling essential
+  8. ❌ Ternary operator - Common pattern
 
   Medium Priority (Nice to Have)
 
