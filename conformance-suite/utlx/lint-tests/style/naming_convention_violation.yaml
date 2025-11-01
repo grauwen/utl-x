@@ -1,0 +1,28 @@
+name: "naming_convention_pascalcase"
+category: "style"
+description: "Test detection of PascalCase variable name (should be camelCase)"
+tags: ["lint", "style", "naming-convention"]
+
+script: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let MyPascalCaseName = "John Doe"
+  {
+    name: MyPascalCaseName
+  }
+
+lint_expected:
+  should_pass: true  # Lint never fails
+  exit_code: 0
+  errors: []
+
+  warnings:
+    - category: "naming-convention"
+      message_pattern: ".*(naming|convention|camelCase).*"
+      severity: "warning"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-11-01"

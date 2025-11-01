@@ -1,0 +1,31 @@
+name: "missing_comma_in_object"
+category: "level1-syntax"
+description: "Test detection of missing comma between object properties"
+tags: ["syntax", "parse-error", "object", "comma"]
+
+script: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    name: input.customerName
+    email: input.emailAddress
+  }
+
+validation_expected:
+  should_pass: false
+  exit_code: 1
+
+  errors:
+    - level: "syntax"
+      type: "parse_error"
+      message_pattern: ".*(expected|missing).*comma.*"
+      severity: "error"
+
+  warnings: []
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-11-01"
+  references: ["validation-and-analysis-study.md#level-1-syntax"]

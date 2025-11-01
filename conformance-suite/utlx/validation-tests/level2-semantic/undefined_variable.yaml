@@ -1,0 +1,31 @@
+name: "undefined_variable_reference"
+category: "level2-semantic"
+description: "Test detection of undefined variable reference"
+tags: ["semantic", "undefined-variable", "scope"]
+
+script: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    name: input.customerName,
+    total: undefinedVariable + 10
+  }
+
+validation_expected:
+  should_pass: false
+  exit_code: 1
+
+  errors:
+    - level: "semantic"
+      type: "undefined_variable"
+      message_pattern: ".*(undefined|not defined|unknown).*variable.*"
+      severity: "error"
+
+  warnings: []
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-11-01"
+  references: ["validation-and-analysis-study.md#level-2-semantic"]

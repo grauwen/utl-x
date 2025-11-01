@@ -1,0 +1,30 @@
+name: "simple_unused_let_binding"
+category: "unused-variables"
+description: "Test detection of simple unused let binding"
+tags: ["lint", "unused", "let-binding"]
+
+script: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let unusedVariable = 42
+  let result = {
+    name: input.customerName
+  }
+  $result
+
+lint_expected:
+  should_pass: true  # Lint never fails
+  exit_code: 0
+  errors: []
+
+  warnings:
+    - category: "unused-variable"
+      message_pattern: ".*unused.*variable.*"
+      severity: "warning"
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-11-01"
+  references: ["validation-and-analysis-study.md#level-4-lint"]

@@ -1,0 +1,25 @@
+name: "simple_valid_transformation"
+category: "valid"
+description: "Test that a simple valid script passes all validation levels"
+tags: ["valid", "pass", "syntax", "semantic"]
+
+script: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    name: input.customerName,
+    email: input.emailAddress,
+    total: input.orderTotal
+  }
+
+validation_expected:
+  should_pass: true
+  exit_code: 0
+  errors: []
+  warnings: []
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-11-01"
