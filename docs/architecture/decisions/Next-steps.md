@@ -40,6 +40,21 @@ See [Grammar](https://github.com/grauwen/utl-x/blob/main/docs/reference/grammar.
 - **LSP Conformance**: ✅ 8/8 tests passing (100%)
 - **New LSP Tests Added**: Parser diagnostic tests for header and content errors
 
+## ✅ Documentation Accuracy Improvements
+
+### Corrected Implementation Status (2025-11-01)
+- **What**: Updated Next-steps.md to correctly reflect implemented features
+- **Corrections Made**:
+  - ✅ Try-catch error handling - WAS incorrectly listed as "NOT implemented", IS fully implemented
+  - ✅ Ternary operator (? :) - WAS incorrectly listed as "NOT implemented", IS fully implemented
+  - ✅ TRY/CATCH keywords - WAS listed as "missing", ARE implemented in lexer
+  - ✅ QUESTION/COLON tokens - WAS listed as "missing for ternary", ARE implemented
+- **Evidence**:
+  - Parser: `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt:693-1129` (try-catch), `:450-459` (ternary)
+  - Lexer: `modules/core/src/main/kotlin/org/apache/utlx/core/lexer/token_types.kt` (TRY, CATCH, QUESTION, COLON tokens)
+  - Tests: `examples/basic/try_catch_basic.yaml`, `examples/intermediate/try_catch_with_error_variable.yaml`, `examples/intermediate/ternary_operator.yaml`
+- **Impact**: Operator precedence coverage: 92% → 100% (13/13), Documentation now accurate
+
 ----
 
 Grammar Implementation Gap Analysis Complete
@@ -65,8 +80,8 @@ A comprehensive analysis comparing [docs/reference/grammar.md](https://github.co
   - ✅ Exponentiation (**) - FULLY IMPLEMENTED with tests
   - ✅ Nullish coalescing (??) - FULLY IMPLEMENTED with tests
   - ✅ Spread operator (...) - FULLY IMPLEMENTED with tests (objects & arrays)
-  - ❌ Try-catch error handling - NOT implemented
-  - ❌ Ternary operator (? :) - NOT implemented (use if-else instead)
+  - ✅ Try-catch error handling - FULLY IMPLEMENTED with tests (basic and with error variable)
+  - ✅ Ternary operator (? :) - FULLY IMPLEMENTED with comprehensive tests
 
   🚧 PARTIALLY IMPLEMENTED
 
@@ -107,15 +122,15 @@ Implementation Coverage: ~40-50% of grammar specification
 	- Parser only supports let name = (params) => expr
 	- AST node exists but unused: Statement.FunctionDef
 2. Match expressions - AST exists but parser missing
-3. Try-catch - Keywords and parser missing 
-4. Ternary operator (? :) - Token types missing
+3. ✅ Try-catch - DONE (fully implemented with TRY/CATCH tokens, parser support, and tests)
+4. ✅ Ternary operator (? :) - DONE (fully implemented with comprehensive tests)
 
-#Missing Operators: 
- - Exponentiation (**)
- - Safe navigation (?.)
- - Nullish coalescing (??)
- - Spread operator (...)
- 
+#✅ Previously Missing Operators (NOW IMPLEMENTED):
+ - ✅ Exponentiation (**) - FULLY IMPLEMENTED with tests
+ - ✅ Safe navigation (?.) - FULLY IMPLEMENTED with tests
+ - ✅ Nullish coalescing (??) - FULLY IMPLEMENTED with tests
+ - ✅ Spread operator (...) - FULLY IMPLEMENTED with tests
+
  ## Missing Features:
  - Template definitions and apply()
  - Type annotation enforcement (AST exists, not validated)
@@ -151,9 +166,9 @@ Implementation Coverage: ~40-50% of grammar specification
 
 ##Option 2: Complete Core Features
 - Add match expressions
-- Add try-catch
-- Add ternary operator
-- Brings implementation to ~60% coverage
+- ✅ try-catch - DONE
+- ✅ ternary operator - DONE
+- Brings implementation to ~60% coverage (now higher with try-catch and ternary completed)
 
 ##Option 3: Full Grammar Implementation 
 - Systematically implement all missing features
@@ -184,7 +199,7 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
 
   ❌ Missing Token Types
 
-  - Ternary operator: ? and : separately for ? : construct (grammar line 97)
+  - None! All required token types are now implemented
 
   ✅ Recently Implemented Token Types
 
@@ -192,11 +207,12 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
   - ✅ Safe navigation: ?. (grammar line 55) - IMPLEMENTED
   - ✅ Nullish coalescing: ?? (grammar line 55) - IMPLEMENTED
   - ✅ Spread operator: ... (grammar line 150) - IMPLEMENTED
+  - ✅ Ternary operator: QUESTION (?) and COLON (:) tokens - IMPLEMENTED for ? : construct
 
   ❌ Missing Keywords
 
-  - try (grammar line 34)
-  - catch (grammar line 34)
+  - ✅ try (grammar line 34) - IMPLEMENTED
+  - ✅ catch (grammar line 34) - IMPLEMENTED
   - return (grammar line 35)
   - export (grammar line 35)
   - typeof (grammar line 35)
@@ -253,9 +269,10 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
 
   Expression Types
 
-  1. Ternary Operator (grammar line 97)
+  1. ✅ Ternary Operator (grammar line 97) - IMPLEMENTED
   ternary-expression ::= logical-or-expression ['?' expression ':' expression]
-    - Status: ❌ Not implemented
+    - Status: ✅ FULLY IMPLEMENTED with comprehensive tests
+    - Tests: `examples/intermediate/ternary_operator.yaml`
     - Impact: High - common pattern in many languages
   2. Match Expressions (grammar lines 103-107)
   match-expression ::= 'match' expression '{' match-arm-list '}'
@@ -265,9 +282,10 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
     - Status: ❌ Parser does not handle match keyword
     - AST Node: ✅ Expression.Match exists but unused
     - Impact: High - pattern matching is a core functional programming feature
-  3. Try-Catch Expressions (grammar line 154)
+  3. ✅ Try-Catch Expressions (grammar line 154) - IMPLEMENTED
   try-catch-expression ::= 'try' block 'catch' ['(' identifier ')'] block
-    - Status: ❌ Not implemented (keywords missing)
+    - Status: ✅ FULLY IMPLEMENTED with TRY/CATCH keywords, parser support, and tests
+    - Tests: `examples/basic/try_catch_basic.yaml`, `examples/intermediate/try_catch_with_error_variable.yaml`
     - Impact: High - error handling is critical
   4. Blocks with Statements (grammar lines 156-157)
   block ::= '{' {statement} expression '}'
@@ -463,11 +481,11 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
   8. Logical AND (&&) ✅
   9. Logical OR (||) ✅
   10. Nullish Coalescing (??) ✅
-  11. Ternary (? :) ❌
+  11. Ternary (? :) ✅
   12. Pipe (|>) ✅
   13. Assignment (=) ✅
 
-  Implementation Coverage: 12/13 (92%)
+  Implementation Coverage: 13/13 (100%)
 
   ---
   6. SUMMARY TABLE
@@ -498,8 +516,8 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
   4. ✅ Improved validation/lint commands - DONE (section-aware error categorization)
   5. ❌ Function definitions (function keyword) - Blocks 6 tests
   6. ❌ Match expressions - Core functional feature
-  7. ❌ Try-catch - Error handling essential
-  8. ❌ Ternary operator - Common pattern
+  7. ✅ Try-catch - DONE (fully implemented with tests)
+  8. ✅ Ternary operator - DONE (fully implemented with comprehensive tests)
 
   Medium Priority (Nice to Have)
 
@@ -513,9 +531,11 @@ The grammar specification in docs/reference/grammar.md defines a comprehensive l
   13. ❌ Typeof operator - getType() function exists
   14. ❌ Import/Export - Modularity feature
 
-  ✅ COMPLETED - Operators Previously Listed as Not Implemented
+  ✅ COMPLETED - Features Previously Listed as Not Implemented
 
   - ✅ Safe navigation (?.) - FULLY IMPLEMENTED
   - ✅ Exponentiation (**) - FULLY IMPLEMENTED
   - ✅ Nullish coalescing (??) - FULLY IMPLEMENTED
   - ✅ Spread operator (...) - FULLY IMPLEMENTED
+  - ✅ Try-catch error handling - FULLY IMPLEMENTED (basic and with error variable)
+  - ✅ Ternary operator (? :) - FULLY IMPLEMENTED with comprehensive tests
