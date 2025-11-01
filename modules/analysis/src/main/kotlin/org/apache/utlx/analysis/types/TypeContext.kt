@@ -241,8 +241,13 @@ class TypeContext(
             // Concatenation
             "++" -> {
                 when {
-                    left is TypeDefinition.Scalar && left.kind == ScalarKind.STRING &&
+                    // String concatenation with automatic conversion
+                    left is TypeDefinition.Scalar && left.kind == ScalarKind.STRING -> {
+                        // String ++ anything converts the right side to string
+                        TypeDefinition.Scalar(ScalarKind.STRING)
+                    }
                     right is TypeDefinition.Scalar && right.kind == ScalarKind.STRING -> {
+                        // Anything ++ String converts the left side to string
                         TypeDefinition.Scalar(ScalarKind.STRING)
                     }
                     left is TypeDefinition.Array && right is TypeDefinition.Array -> {

@@ -2,7 +2,6 @@
 package org.apache.utlx.analysis.schema
 
 import org.apache.utlx.analysis.types.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
@@ -10,7 +9,6 @@ import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
-@Disabled("TODO: Requires constraint API rewrite")
 class XSDSchemaParserTest {
     
     private val parser = XSDSchemaParser()

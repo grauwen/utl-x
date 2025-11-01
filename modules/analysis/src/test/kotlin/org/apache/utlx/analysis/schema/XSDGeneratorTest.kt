@@ -2,12 +2,10 @@
 package org.apache.utlx.analysis.schema
 
 import org.apache.utlx.analysis.types.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 
-@Disabled("TODO: Requires constraint API rewrite")
 class XSDGeneratorTest {
     
     @Test

@@ -30,16 +30,19 @@ class XSDSchemaParser : InputSchemaParser {
      */
     override fun parse(schema: String, format: SchemaFormat): TypeDefinition {
         if (format != SchemaFormat.XSD) {
-            throw IllegalArgumentException("XSDSchemaParser only handles XSD format")
+            throw SchemaParseException("XSDSchemaParser only handles XSD format, got $format")
         }
-        
+
         return try {
             val factory = DocumentBuilderFactory.newInstance()
             factory.isNamespaceAware = true
             val builder = factory.newDocumentBuilder()
             val document = builder.parse(schema.byteInputStream())
-            
+
             parseXSDDocument(document)
+        } catch (e: SchemaParseException) {
+            // Re-throw SchemaParseException as-is
+            throw e
         } catch (e: Exception) {
             throw SchemaParseException("Failed to parse XSD: ${e.message}", e)
         }
@@ -93,7 +96,7 @@ class XSDSchemaParser : InputSchemaParser {
      */
     private fun parseBuiltInType(typeName: String): TypeDefinition {
         val localName = typeName.substringAfter(":")
-        
+
         return when (localName) {
             "string" -> TypeDefinition.Scalar(ScalarKind.STRING)
             "int", "integer", "long", "short" -> TypeDefinition.Scalar(ScalarKind.INTEGER)
@@ -101,6 +104,10 @@ class XSDSchemaParser : InputSchemaParser {
             "boolean" -> TypeDefinition.Scalar(ScalarKind.BOOLEAN)
             "date" -> TypeDefinition.Scalar(ScalarKind.DATE)
             "dateTime" -> TypeDefinition.Scalar(ScalarKind.DATETIME)
+            "anyURI" -> TypeDefinition.Scalar(
+                ScalarKind.STRING,
+                listOf(Constraint.Custom("format", mapOf("value" to "uri")))
+            )
             else -> TypeDefinition.Any
         }
     }
@@ -131,18 +138,28 @@ class XSDSchemaParser : InputSchemaParser {
         val sequences = complexType.getElementsByTagNameNS(XS_NAMESPACE, "sequence")
         if (sequences.length > 0) {
             val sequence = sequences.item(0) as Element
-            
+
             // Parse elements in sequence
             val elements = sequence.getElementsByTagNameNS(XS_NAMESPACE, "element")
             for (i in 0 until elements.length) {
                 val elem = elements.item(i) as Element
                 val name = elem.getAttribute("name")
                 val minOccurs = elem.getAttribute("minOccurs").takeIf { it.isNotEmpty() }?.toIntOrNull() ?: 1
-                
+                val maxOccurs = elem.getAttribute("maxOccurs").takeIf { it.isNotEmpty() }
+
                 if (name.isNotEmpty()) {
                     val elemType = parseElement(elem, schemaRoot)
-                    properties[name] = PropertyType(elemType, nullable = minOccurs == 0)
-                    
+
+                    // Check if this should be an array (maxOccurs > 1 or unbounded)
+                    val actualType = if (maxOccurs == "unbounded" ||
+                                          (maxOccurs != null && maxOccurs.toIntOrNull()?.let { it > 1 } == true)) {
+                        TypeDefinition.Array(elemType)
+                    } else {
+                        elemType
+                    }
+
+                    properties[name] = PropertyType(actualType, nullable = minOccurs == 0)
+
                     if (minOccurs > 0) {
                         required.add(name)
                     }
@@ -175,7 +192,25 @@ class XSDSchemaParser : InputSchemaParser {
     /**
      * Parse simple type definition
      */
-    private fun parseSimpleType(simpleType: Element, @Suppress("UNUSED_PARAMETER") schemaRoot: Element): TypeDefinition {
+    private fun parseSimpleType(simpleType: Element, schemaRoot: Element): TypeDefinition {
+        // Look for union
+        val unions = simpleType.getElementsByTagNameNS(XS_NAMESPACE, "union")
+        if (unions.length > 0) {
+            val union = unions.item(0) as Element
+            val memberTypes = union.getAttribute("memberTypes")
+
+            if (memberTypes.isNotEmpty()) {
+                val types = memberTypes.split(" ").map { typeName ->
+                    if (typeName.startsWith("xs:") || typeName.startsWith("xsd:")) {
+                        parseBuiltInType(typeName)
+                    } else {
+                        findTypeDefinition(typeName, schemaRoot) ?: TypeDefinition.Any
+                    }
+                }
+                return TypeDefinition.Union(types)
+            }
+        }
+
         // Look for restriction
         val restrictions = simpleType.getElementsByTagNameNS(XS_NAMESPACE, "restriction")
         if (restrictions.length > 0) {

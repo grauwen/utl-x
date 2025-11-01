@@ -2,7 +2,6 @@
 package org.apache.utlx.analysis.validation
 
 import org.apache.utlx.analysis.types.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
@@ -117,13 +116,20 @@ class SchemaDiffer {
         changes: MutableList<SchemaChange>,
         breaking: MutableList<Boolean>
     ) {
+        // Check if scalar kind changed (e.g., STRING -> INTEGER)
+        if (oldScalar.kind != newScalar.kind) {
+            changes.add(SchemaChange.PropertyTypeChanged(path, oldScalar, newScalar))
+            breaking.add(true)
+            return // No need to check constraints if the base type changed
+        }
+
         // Check for removed constraints (relaxation - not breaking)
         for (oldConstraint in oldScalar.constraints) {
             if (!newScalar.constraints.contains(oldConstraint)) {
                 changes.add(SchemaChange.ConstraintRemoved(path, oldConstraint))
             }
         }
-        
+
         // Check for added constraints (restriction - breaking)
         for (newConstraint in newScalar.constraints) {
             if (!oldScalar.constraints.contains(newConstraint)) {
@@ -134,9 +140,8 @@ class SchemaDiffer {
     }
 }
 
-@Disabled("TODO: Requires constraint API implementation")
 class SchemaDifferTest {
-    
+
     private val differ = SchemaDiffer()
     
     @Test

@@ -173,11 +173,11 @@ class JSONSchemaGenerator : OutputSchemaGenerator {
     }
     
     private fun addUnionType(
-        builder: JsonObjectBuilder, 
-        union: TypeDefinition.Union, 
+        builder: JsonObjectBuilder,
+        union: TypeDefinition.Union,
         options: GeneratorOptions
     ) {
-        builder.put("oneOf", buildJsonArray {
+        builder.put("anyOf", buildJsonArray {
             union.types.forEach { type ->
                 add(buildJsonObject {
                     addTypeDefinition(this, type, options)
