@@ -941,7 +941,14 @@ object FunctionTypeRegistry {
     }
     
     private fun register(name: String, signature: FunctionSignature) {
-        functionSignatures[name] = signature
+        // Create a new signature with the name set
+        val namedSignature = FunctionSignature(
+            name = name,
+            parameters = signature.parameters,
+            returnType = signature.returnTypeLogic,
+            description = signature.description
+        )
+        functionSignatures[name] = namedSignature
     }
     
     private fun integrateCompleteFunctions() {

@@ -96,7 +96,7 @@ object TypeChecker {
                 }
                 is Constraint.Enum -> {
                     if (!constraint.values.contains(value)) {
-                        errors.add("Value $value is not in allowed enumeration: ${constraint.values}")
+                        errors.add("Value must be one of: ${constraint.values}")
                     }
                 }
                 is Constraint.Custom -> {
