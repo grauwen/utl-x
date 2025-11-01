@@ -53,6 +53,20 @@ class TypeContext(
     fun contains(name: String): Boolean {
         return lookup(name) != null
     }
+
+    /**
+     * Define a variable in the current scope (alias for bind)
+     */
+    fun defineVariable(name: String, type: TypeDefinition) {
+        bind(name, type)
+    }
+
+    /**
+     * Look up a variable's type (alias for lookup)
+     */
+    fun lookupVariable(name: String): TypeDefinition? {
+        return lookup(name)
+    }
     
     /**
      * Push a new scope onto the stack

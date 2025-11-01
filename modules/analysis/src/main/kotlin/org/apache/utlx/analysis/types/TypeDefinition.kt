@@ -112,10 +112,32 @@ sealed class TypeDefinition {
      */
     fun isCompatibleWith(other: TypeDefinition): Boolean {
         return when {
+            // Any type accepts all types
             this is Any || other is Any -> true
-            this::class != other::class -> false
-            this is Scalar && other is Scalar -> this.kind == other.kind
+
+            // Source is union - all members must be compatible with target
+            this is Union -> this.types.all { it.isCompatibleWith(other) }
+
+            // Target is union - source must be compatible with at least one member
+            other is Union -> other.types.any { this.isCompatibleWith(it) }
+
+            // Scalar type compatibility
+            this is Scalar && other is Scalar -> {
+                when {
+                    // Exact match
+                    this.kind == other.kind -> true
+                    // INTEGER can convert to NUMBER
+                    this.kind == ScalarKind.INTEGER && other.kind == ScalarKind.NUMBER -> true
+                    // Everything can convert to STRING
+                    other.kind == ScalarKind.STRING -> true
+                    else -> false
+                }
+            }
+
+            // Array type compatibility
             this is Array && other is Array -> this.elementType.isCompatibleWith(other.elementType)
+
+            // Object type compatibility (structural)
             this is Object && other is Object -> {
                 // Check all required fields in 'other' exist in 'this'
                 other.required.all { field ->
@@ -123,10 +145,7 @@ sealed class TypeDefinition {
                     this.properties[field]!!.type.isCompatibleWith(other.properties[field]!!.type)
                 }
             }
-            this is Union && other is Union -> {
-                // Simplified - real implementation would be more sophisticated
-                this.types.size == other.types.size
-            }
+
             else -> false
         }
     }
@@ -142,15 +161,21 @@ data class PropertyType(
     val defaultValue: Any? = null
 ) {
     fun isNullable(): Boolean = nullable
-    
+
+    /**
+     * Get the effective type including nullability
+     */
+    val effectiveType: TypeDefinition
+        get() = if (nullable) type.nullable() else type
+
     fun withDescription(desc: String): PropertyType {
         return copy(description = desc)
     }
-    
+
     fun withDefault(value: Any): PropertyType {
         return copy(defaultValue = value)
     }
-    
+
     fun makeNullable(): PropertyType {
         return copy(nullable = true)
     }

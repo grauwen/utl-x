@@ -958,12 +958,157 @@ object FunctionTypeRegistry {
 
 /**
  * Function signature for type inference
+ *
+ * Note: Constructor uses `returnType` parameter but internally stores as `returnTypeLogic`.
+ * The public `returnType` property returns a resolved TypeDefinition for test compatibility.
  */
-data class FunctionSignature(
+class FunctionSignature(
+    val name: String? = null,
     val parameters: List<ParameterSignature>,
-    val returnType: ReturnTypeLogic,
+    returnType: ReturnTypeLogic,
     val description: String? = null
-)
+) {
+    /**
+     * Internal storage of return type logic
+     */
+    internal val returnTypeLogic: ReturnTypeLogic = returnType
+
+    /**
+     * Get the resolved return type as TypeDefinition
+     * For compatibility with tests that expect a TypeDefinition directly
+     */
+    val returnType: TypeDefinition
+        get() = when (returnTypeLogic) {
+            is ReturnTypeLogic.Fixed -> returnTypeLogic.type
+            else -> TypeDefinition.Any
+        }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is FunctionSignature) return false
+        if (name != other.name) return false
+        if (parameters != other.parameters) return false
+        if (returnTypeLogic != other.returnTypeLogic) return false
+        if (description != other.description) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = name?.hashCode() ?: 0
+        result = 31 * result + parameters.hashCode()
+        result = 31 * result + returnTypeLogic.hashCode()
+        result = 31 * result + (description?.hashCode() ?: 0)
+        return result
+    }
+
+    override fun toString(): String {
+        return "FunctionSignature(name=$name, parameters=$parameters, returnType=$returnTypeLogic, description=$description)"
+    }
+
+    /**
+     * Check if the provided argument types match this function's parameters
+     * Returns a validation result with errors and the inferred return type
+     */
+    fun checkArguments(argumentTypes: List<TypeDefinition>): ArgumentCheckResult {
+        val errors = mutableListOf<String>()
+
+        // Check argument count
+        val requiredParams = parameters.filter { !it.optional && !it.variadic }
+        val minArgs = requiredParams.size
+        val maxArgs = if (parameters.any { it.variadic }) Int.MAX_VALUE else parameters.size
+
+        if (argumentTypes.size < minArgs) {
+            errors.add("Too few arguments: expected at least $minArgs, got ${argumentTypes.size}")
+            return ArgumentCheckResult(errors, TypeDefinition.Never)
+        }
+
+        if (argumentTypes.size > maxArgs) {
+            errors.add("Too many arguments: expected at most $maxArgs, got ${argumentTypes.size}")
+            return ArgumentCheckResult(errors, TypeDefinition.Never)
+        }
+
+        // Check each argument type matches its parameter pattern
+        argumentTypes.forEachIndexed { index, argType ->
+            val param = if (index < parameters.size) parameters[index]
+                       else parameters.lastOrNull()?.takeIf { it.variadic }
+
+            if (param != null) {
+                if (!matchesPattern(argType, param.type)) {
+                    errors.add("Argument ${index + 1} (${param.name}): type mismatch - expected ${formatPattern(param.type)}, got ${formatType(argType)}")
+                }
+            }
+        }
+
+        // Determine return type
+        val inferredReturnType = when (returnTypeLogic) {
+            is ReturnTypeLogic.Fixed -> returnTypeLogic.type
+            is ReturnTypeLogic.PreserveFirstArgument -> argumentTypes.firstOrNull() ?: TypeDefinition.Any
+            is ReturnTypeLogic.ArrayElementType -> {
+                val firstArg = argumentTypes.firstOrNull()
+                if (firstArg is TypeDefinition.Array) firstArg.elementType else TypeDefinition.Any
+            }
+            is ReturnTypeLogic.ArrayFlatten -> {
+                val firstArg = argumentTypes.firstOrNull()
+                if (firstArg is TypeDefinition.Array && firstArg.elementType is TypeDefinition.Array) {
+                    (firstArg.elementType as TypeDefinition.Array).elementType
+                } else {
+                    firstArg ?: TypeDefinition.Any
+                }
+            }
+            is ReturnTypeLogic.ThirdArgumentOrAny -> {
+                argumentTypes.getOrNull(2) ?: TypeDefinition.Any
+            }
+            is ReturnTypeLogic.ArrayTransform -> TypeDefinition.Any // Simplified for now
+            is ReturnTypeLogic.Custom -> TypeDefinition.Any // Would need expression context
+        }
+
+        return ArgumentCheckResult(errors, inferredReturnType)
+    }
+
+    private fun matchesPattern(type: TypeDefinition, pattern: TypePattern): Boolean {
+        return when (pattern) {
+            is TypePattern.Any -> true
+            is TypePattern.Scalar -> {
+                type is TypeDefinition.Scalar && (pattern.kind == null || type.kind == pattern.kind)
+            }
+            is TypePattern.Array -> {
+                type is TypeDefinition.Array && (pattern.elementType == null || matchesPattern(type.elementType, pattern.elementType))
+            }
+            is TypePattern.Object -> type is TypeDefinition.Object
+            is TypePattern.Function -> true // Lambda/function types not fully implemented
+            is TypePattern.Union -> pattern.types.any { matchesPattern(type, it) }
+        }
+    }
+
+    private fun formatPattern(pattern: TypePattern): String = when (pattern) {
+        is TypePattern.Any -> "Any"
+        is TypePattern.Scalar -> pattern.kind?.name ?: "Scalar"
+        is TypePattern.Array -> "Array<${pattern.elementType?.let { formatPattern(it) } ?: "Any"}>"
+        is TypePattern.Object -> "Object"
+        is TypePattern.Function -> "Function"
+        is TypePattern.Union -> pattern.types.joinToString(" | ") { formatPattern(it) }
+    }
+
+    private fun formatType(type: TypeDefinition): String = when (type) {
+        is TypeDefinition.Scalar -> type.kind.name
+        is TypeDefinition.Array -> "Array<${formatType(type.elementType)}>"
+        is TypeDefinition.Object -> "Object"
+        is TypeDefinition.Union -> type.types.joinToString(" | ") { formatType(it) }
+        is TypeDefinition.Any -> "Any"
+        is TypeDefinition.Unknown -> "Unknown"
+        is TypeDefinition.Never -> "Never"
+    }
+}
+
+/**
+ * Result of argument type checking
+ */
+data class ArgumentCheckResult(
+    val errors: List<String>,
+    val returnType: TypeDefinition
+) {
+    fun isValid(): Boolean = errors.isEmpty()
+}
 
 /**
  * Parameter signature

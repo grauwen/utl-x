@@ -182,7 +182,7 @@ class AdvancedTypeInference : TypeInferenceContext {
         // Look up function signature in registry
         val signature = FunctionTypeRegistry.getFunctionSignature(functionName)
         if (signature != null) {
-            return evaluateReturnType(signature.returnType, call.arguments)
+            return evaluateReturnType(signature.returnTypeLogic, call.arguments)
         }
 
         // Fallback for unregistered functions (most functions should be covered by registry now)
