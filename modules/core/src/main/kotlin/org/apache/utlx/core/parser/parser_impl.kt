@@ -33,6 +33,7 @@ private val logger = KotlinLogging.logger {}
 class Parser(private val tokens: List<Token>) {
     private var current = 0
     private val errors = mutableListOf<ParseError>()
+    private var currentSection = ScriptSection.HEADER  // Track which section we're parsing
     
     /**
      * Parse the token stream into an AST
@@ -51,18 +52,42 @@ class Parser(private val tokens: List<Token>) {
             }
         } catch (e: ParseException) {
             logger.error(e) { "Parse exception: ${e.message}" }
-            ParseResult.Failure(errors + ParseError(e.message ?: "Parse error", e.location))
+            // If we already have errors (from error() calls), don't duplicate
+            // Otherwise, add the exception as an error
+            if (errors.isEmpty()) {
+                ParseResult.Failure(listOf(ParseError(e.message ?: "Parse error", e.location, currentSection)))
+            } else {
+                ParseResult.Failure(errors)
+            }
         }
     }
     
     private fun parseProgram(): Program {
         val startToken = peek()
-        val header = parseHeader()
 
-        // Expect --- separator
-        if (!match(TokenType.TRIPLE_DASH)) {
-            error("Expected '---' separator after header")
+        // PASS 1: Find the separator to establish boundaries
+        val separatorIndex = findSeparatorIndex()
+
+        if (separatorIndex == -1) {
+            // No separator found - this is a header error
+            currentSection = ScriptSection.SEPARATOR
+            error("Expected '---' separator after header (not found in script)")
         }
+
+        // PASS 2: Parse header section (tokens before separator)
+        currentSection = ScriptSection.HEADER
+        val savedPosition = current
+        val header = parseHeaderWithBoundary(separatorIndex)
+
+        // Move to separator and consume it
+        current = separatorIndex
+        currentSection = ScriptSection.SEPARATOR
+        if (!match(TokenType.TRIPLE_DASH)) {
+            error("Internal error: separator not at expected position")
+        }
+
+        // PASS 3: Parse content section (tokens after separator)
+        currentSection = ScriptSection.CONTENT
 
         // Parse body: can be multiple let bindings/function definitions followed by a final expression
         val allExpressions = mutableListOf<Expression>()
@@ -90,7 +115,102 @@ class Parser(private val tokens: List<Token>) {
 
         return Program(header, body, Location.from(startToken))
     }
-    
+
+    /**
+     * Find the index of the TRIPLE_DASH separator token
+     * Returns -1 if not found
+     */
+    private fun findSeparatorIndex(): Int {
+        for (i in tokens.indices) {
+            if (tokens[i].type == TokenType.TRIPLE_DASH) {
+                return i
+            }
+        }
+        return -1
+    }
+
+    /**
+     * Parse header section with clear boundary at separator
+     * Will not consume tokens beyond separatorIndex
+     */
+    private fun parseHeaderWithBoundary(separatorIndex: Int): Header {
+        val startToken = peek()
+
+        // Validate we don't go past separator
+        fun checkBoundary() {
+            if (current >= separatorIndex) {
+                error("Header parsing went past separator - malformed header")
+            }
+        }
+
+        // %utlx 1.0
+        checkBoundary()
+        if (!match(TokenType.PERCENT_DIRECTIVE)) {
+            error("Expected UTL-X directive (e.g., %utlx 1.0)")
+        }
+        val version = previous().lexeme.substringAfter(' ').trim()
+
+        // Parse inputs
+        checkBoundary()
+        if (!match(TokenType.INPUT)) {
+            error("Expected 'input' declaration")
+        }
+        val inputs = parseInputsOrOutputsWithBoundary(isInput = true, separatorIndex)
+
+        // Parse outputs
+        checkBoundary()
+        if (!match(TokenType.OUTPUT)) {
+            error("Expected 'output' declaration")
+        }
+        val outputs = parseInputsOrOutputsWithBoundary(isInput = false, separatorIndex)
+
+        return Header(version, inputs, outputs, Location.from(startToken))
+    }
+
+    /**
+     * Parse inputs/outputs with boundary checking
+     */
+    private fun parseInputsOrOutputsWithBoundary(isInput: Boolean, separatorIndex: Int): List<Pair<String, FormatSpec>> {
+        val defaultName = if (isInput) "input" else "output"
+
+        // Don't go past separator
+        if (current >= separatorIndex) {
+            return listOf(defaultName to FormatSpec(FormatType.JSON, null, emptyMap(), Location.from(peek())))
+        }
+
+        // Check if there's a colon (multiple named inputs/outputs)
+        if (match(TokenType.COLON)) {
+            val result = mutableListOf<Pair<String, FormatSpec>>()
+
+            do {
+                // Stop if we hit the separator
+                if (current >= separatorIndex || check(TokenType.TRIPLE_DASH)) {
+                    break
+                }
+
+                // Also stop if we hit the next keyword
+                if (check(TokenType.OUTPUT) || check(TokenType.INPUT)) {
+                    break
+                }
+
+                val name = consume(TokenType.IDENTIFIER, "Expected input/output name").lexeme
+                val formatSpec = parseFormatSpec()
+                result.add(name to formatSpec)
+
+            } while (match(TokenType.COMMA) && current < separatorIndex)
+
+            if (result.isEmpty()) {
+                error("Expected at least one input/output declaration after colon")
+            }
+
+            return result
+        } else {
+            // Single unnamed input/output: just the format
+            val formatSpec = parseFormatSpec()
+            return listOf(defaultName to formatSpec)
+        }
+    }
+
     private fun parseHeader(): Header {
         val startToken = peek()
 
@@ -1193,7 +1313,7 @@ class Parser(private val tokens: List<Token>) {
     }
     
     private fun error(message: String): Nothing {
-        errors.add(ParseError(message, Location.from(peek())))
+        errors.add(ParseError(message, Location.from(peek()), currentSection))
         throw ParseException(message, Location.from(peek()))
     }
 }
@@ -1207,9 +1327,28 @@ sealed class ParseResult {
 }
 
 /**
- * Parse error with location
+ * Section of the UTL-X script
  */
-data class ParseError(val message: String, val location: Location)
+enum class ScriptSection {
+    HEADER,      // Lines before ---
+    SEPARATOR,   // The --- line itself
+    CONTENT;     // Lines after ---
+
+    fun displayName(): String = when (this) {
+        HEADER -> "Header"
+        SEPARATOR -> "Separator"
+        CONTENT -> "Transformation"
+    }
+}
+
+/**
+ * Parse error with location and section context
+ */
+data class ParseError(
+    val message: String,
+    val location: Location,
+    val section: ScriptSection = ScriptSection.CONTENT  // Default for backward compatibility
+)
 
 /**
  * Exception thrown during parsing

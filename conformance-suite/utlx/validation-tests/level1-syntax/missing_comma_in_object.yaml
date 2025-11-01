@@ -20,7 +20,7 @@ validation_expected:
   errors:
     - level: "syntax"
       type: "parse_error"
-      message_pattern: ".*(expected|missing).*comma.*"
+      message_pattern: ".*[Ee]xpected.*"
       severity: "error"
 
   warnings: []

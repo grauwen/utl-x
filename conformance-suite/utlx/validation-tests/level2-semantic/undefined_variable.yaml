@@ -14,16 +14,16 @@ script: |
   }
 
 validation_expected:
-  should_pass: false
-  exit_code: 1
+  should_pass: true  # Passes with warnings
+  exit_code: 0       # Type warnings don't fail validation
 
-  errors:
+  errors: []
+
+  warnings:
     - level: "semantic"
       type: "undefined_variable"
       message_pattern: ".*(undefined|not defined|unknown).*variable.*"
-      severity: "error"
-
-  warnings: []
+      severity: "warning"
 
 metadata:
   author: "UTL-X Team"

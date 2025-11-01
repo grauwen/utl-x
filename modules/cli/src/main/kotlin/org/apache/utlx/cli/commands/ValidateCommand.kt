@@ -88,14 +88,45 @@ object ValidateCommand {
             }
             is ParseResult.Failure -> {
                 hasErrors = true
-                printErrors("Syntax Errors", parseResult.errors.map { error ->
-                    ValidationError(
-                        level = ErrorLevel.ERROR,
-                        message = error.message,
-                        location = error.location,
-                        code = "PARSE_ERROR"
-                    )
-                }, options.format)
+
+                // Group errors by section
+                val headerErrors = parseResult.errors.filter {
+                    it.section == org.apache.utlx.core.parser.ScriptSection.HEADER ||
+                    it.section == org.apache.utlx.core.parser.ScriptSection.SEPARATOR
+                }
+                val contentErrors = parseResult.errors.filter {
+                    it.section == org.apache.utlx.core.parser.ScriptSection.CONTENT
+                }
+
+                // Print header errors first (if any)
+                if (headerErrors.isNotEmpty()) {
+                    printErrors("Header Errors", headerErrors.map { error ->
+                        ValidationError(
+                            level = ErrorLevel.ERROR,
+                            message = error.message,
+                            location = error.location,
+                            code = "HEADER_ERROR"
+                        )
+                    }, options.format, scriptContent)
+
+                    if (options.verbose) {
+                        println("  💡 Fix header issues first - they may prevent content parsing")
+                        println()
+                    }
+                }
+
+                // Print content errors (if any)
+                if (contentErrors.isNotEmpty()) {
+                    printErrors("Transformation Errors", contentErrors.map { error ->
+                        ValidationError(
+                            level = ErrorLevel.ERROR,
+                            message = error.message,
+                            location = error.location,
+                            code = "PARSE_ERROR"
+                        )
+                    }, options.format, scriptContent)
+                }
+
                 exitProcess(1)
             }
         }
@@ -129,7 +160,7 @@ object ValidateCommand {
                                 location = error.location,
                                 code = "TYPE_ERROR"
                             )
-                        }, options.format)
+                        }, options.format, scriptContent)
                     } else {
                         // Print as warnings
                         printErrors("Type Warnings", typeCheckResult.errors.map { error ->
@@ -139,7 +170,7 @@ object ValidateCommand {
                                 location = error.location,
                                 code = "TYPE_WARNING"
                             )
-                        }, options.format)
+                        }, options.format, scriptContent)
 
                         if (options.verbose) {
                             println()
@@ -191,7 +222,7 @@ object ValidateCommand {
                             location = program.location,
                             code = "SCHEMA_ERROR"
                         )
-                    ), options.format)
+                    ), options.format, scriptContent)
                 }
             } catch (e: Exception) {
                 hasErrors = true
@@ -401,7 +432,8 @@ object ValidateCommand {
     private fun printErrors(
         category: String,
         errors: List<ValidationError>,
-        format: ValidationFormat
+        format: ValidationFormat,
+        scriptContent: String? = null
     ) {
         if (errors.isEmpty()) return
 
@@ -416,6 +448,16 @@ object ValidateCommand {
                         ErrorLevel.INFO -> "ℹ"
                     }
                     println("  $symbol ${error.location.line}:${error.location.column} - ${error.message}")
+
+                    // Show code context if available
+                    if (scriptContent != null) {
+                        val context = extractCodeContext(scriptContent, error.location.line, error.location.column)
+                        if (context.isNotEmpty()) {
+                            context.forEach { line ->
+                                println("    $line")
+                            }
+                        }
+                    }
                 }
                 println()
             }
@@ -439,6 +481,50 @@ object ValidateCommand {
                 }
             }
         }
+    }
+
+    /**
+     * Extract code context around an error location for display
+     */
+    private fun extractCodeContext(
+        scriptContent: String,
+        errorLine: Int,
+        errorColumn: Int,
+        contextLines: Int = 2
+    ): List<String> {
+        val lines = scriptContent.lines()
+        if (errorLine < 1 || errorLine > lines.size) {
+            return emptyList()
+        }
+
+        val result = mutableListOf<String>()
+
+        // Add separator
+        result.add("|")
+
+        // Calculate range of lines to show
+        val startLine = maxOf(1, errorLine - contextLines)
+        val endLine = minOf(lines.size, errorLine + contextLines)
+
+        // Show context lines with line numbers
+        for (lineNum in startLine..endLine) {
+            val lineContent = lines[lineNum - 1]
+            val lineNumStr = lineNum.toString().padStart(3, ' ')
+
+            if (lineNum == errorLine) {
+                // Show the error line
+                result.add("$lineNumStr | $lineContent")
+
+                // Add error indicator (^) pointing to the column
+                val padding = " ".repeat(lineNumStr.length + 3 + maxOf(0, errorColumn - 1))
+                result.add("$padding^")
+            } else {
+                // Show context line
+                result.add("$lineNumStr | $lineContent")
+            }
+        }
+
+        return result
     }
 
     /**

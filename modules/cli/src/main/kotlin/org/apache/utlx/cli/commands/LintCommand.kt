@@ -122,7 +122,7 @@ object LintCommand {
             }
             exitProcess(0)
         } else {
-            printWarnings(warnings, options.format)
+            printWarnings(warnings, options.format, scriptContent)
 
             // Auto-fix if requested
             if (options.fix) {
@@ -327,7 +327,7 @@ object LintCommand {
         """.trimMargin())
     }
 
-    private fun printWarnings(warnings: List<LintWarning>, format: LintFormat) {
+    private fun printWarnings(warnings: List<LintWarning>, format: LintFormat, scriptContent: String? = null) {
         when (format) {
             LintFormat.HUMAN -> {
                 println()
@@ -335,6 +335,17 @@ object LintCommand {
                 warnings.forEach { warning ->
                     val fixable = if (warning.fixable) " [fixable]" else ""
                     println("  ⚠ ${warning.location.line}:${warning.location.column} - ${warning.message}$fixable")
+
+                    // Show code context if available
+                    if (scriptContent != null) {
+                        val context = extractCodeContext(scriptContent, warning.location.line, warning.location.column)
+                        if (context.isNotEmpty()) {
+                            context.forEach { line ->
+                                println("    $line")
+                            }
+                        }
+                    }
+
                     if (warning.suggestion != null) {
                         println("    💡 Suggestion: ${warning.suggestion}")
                     }
@@ -364,6 +375,50 @@ object LintCommand {
                 }
             }
         }
+    }
+
+    /**
+     * Extract code context around a warning location for display
+     */
+    private fun extractCodeContext(
+        scriptContent: String,
+        warningLine: Int,
+        warningColumn: Int,
+        contextLines: Int = 2
+    ): List<String> {
+        val lines = scriptContent.lines()
+        if (warningLine < 1 || warningLine > lines.size) {
+            return emptyList()
+        }
+
+        val result = mutableListOf<String>()
+
+        // Add separator
+        result.add("|")
+
+        // Calculate range of lines to show
+        val startLine = maxOf(1, warningLine - contextLines)
+        val endLine = minOf(lines.size, warningLine + contextLines)
+
+        // Show context lines with line numbers
+        for (lineNum in startLine..endLine) {
+            val lineContent = lines[lineNum - 1]
+            val lineNumStr = lineNum.toString().padStart(3, ' ')
+
+            if (lineNum == warningLine) {
+                // Show the warning line
+                result.add("$lineNumStr | $lineContent")
+
+                // Add warning indicator (^) pointing to the column
+                val padding = " ".repeat(lineNumStr.length + 3 + maxOf(0, warningColumn - 1))
+                result.add("$padding^")
+            } else {
+                // Show context line
+                result.add("$lineNumStr | $lineContent")
+            }
+        }
+
+        return result
     }
 
     private fun autoFix(source: String, fixableWarnings: List<LintWarning>): String {
