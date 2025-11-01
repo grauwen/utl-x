@@ -117,7 +117,15 @@ class HoverService(
             return null
         }
 
-        val path = line.substring(start, end)
+        var path = line.substring(start, end)
+
+        // Strip trailing dots (incomplete paths like "input.user.")
+        // We want to show hover for the complete part before the dot
+        path = path.trimEnd('.')
+
+        if (path.isEmpty()) {
+            return null
+        }
 
         // Validate that it looks like a path
         if (!isValidPath(path)) {

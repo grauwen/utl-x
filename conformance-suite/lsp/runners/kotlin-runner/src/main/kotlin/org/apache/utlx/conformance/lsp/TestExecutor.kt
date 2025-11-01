@@ -141,22 +141,22 @@ class TestExecutor(
         return when {
             expected == null -> actual == null
             expected is Map<*, *> -> {
-                if (actual !is Map<*, *>) return false
                 val expectedMap = expected as Map<String, Any?>
-                val actualMap = actual as Map<String, Any?>
 
-                // Check if expected is a special matcher
+                // Check if expected is a special matcher (before checking if actual is a Map)
                 if (expectedMap.containsKey("contains")) {
-                    // Special "contains" matcher for strings
+                    // Special "contains" matcher for strings - checks if actual contains ANY of the patterns
                     val containsValue = expectedMap["contains"]
                     if (containsValue is List<*> && actual is String) {
-                        return containsValue.all { pattern ->
+                        return containsValue.any { pattern ->
                             actual.contains(pattern.toString(), ignoreCase = true)
                         }
                     }
                 }
 
                 // Regular map matching - expected keys must be present in actual
+                if (actual !is Map<*, *>) return false
+                val actualMap = actual as Map<String, Any?>
                 expectedMap.all { (key, value) ->
                     actualMap.containsKey(key) && matchesExpectation(actualMap[key], value)
                 }

@@ -3,6 +3,7 @@ package org.apache.utlx.daemon.state
 
 import org.apache.utlx.analysis.types.TypeContext
 import org.apache.utlx.core.ast.Program
+import org.apache.utlx.daemon.analysis.DocumentAnalyzer
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 class StateManager {
 
     private val logger = LoggerFactory.getLogger(StateManager::class.java)
+    private val analyzer = DocumentAnalyzer()
 
     // Document state indexed by URI
     private val documents = ConcurrentHashMap<String, DocumentState>()
@@ -45,6 +47,9 @@ class StateManager {
         )
 
         documents[uri] = doc
+
+        // Automatically analyze document and create type environment
+        inferTypeEnvironment(uri, text)
     }
 
     /**
@@ -67,8 +72,8 @@ class StateManager {
 
         documents[uri] = updated
 
-        // Invalidate type environment
-        typeEnvironments.remove(uri)
+        // Re-infer type environment from updated content
+        inferTypeEnvironment(uri, text)
     }
 
     /**
@@ -130,6 +135,31 @@ class StateManager {
      */
     fun getTypeEnvironment(uri: String): TypeContext? {
         return typeEnvironments[uri]
+    }
+
+    /**
+     * Infer type environment from document content
+     *
+     * Analyzes the document text and extracts type information
+     * from input declarations. Automatically caches the result.
+     * If no type can be inferred, clears any existing type environment.
+     */
+    private fun inferTypeEnvironment(uri: String, text: String) {
+        try {
+            val typeContext = analyzer.analyzeDocument(text)
+            if (typeContext != null) {
+                setTypeEnvironment(uri, typeContext)
+                logger.debug("Inferred type environment for: $uri")
+            } else {
+                // Clear old type environment if we can't infer a new one
+                typeEnvironments.remove(uri)
+                logger.debug("Could not infer type environment for: $uri (cleared)")
+            }
+        } catch (e: Exception) {
+            logger.error("Error inferring type environment for: $uri", e)
+            // Clear type environment on error
+            typeEnvironments.remove(uri)
+        }
     }
 
     /**

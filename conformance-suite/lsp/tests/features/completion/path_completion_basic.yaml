@@ -51,9 +51,9 @@ sequence:
       result:
         isIncomplete: false
         items:
-          - label: "name"
-            kind: 10  # Property
+          - label: "address"
+            kind: 7  # Object (since address is an object type)
           - label: "age"
             kind: 10  # Property
-          - label: "address"
+          - label: "name"
             kind: 10  # Property

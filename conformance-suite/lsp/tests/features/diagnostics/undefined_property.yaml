@@ -35,11 +35,10 @@ sequence:
     expect_notification:
       method: "textDocument/publishDiagnostics"
       params:
-        uri: "{{documents.invalid_doc.uri}}"
+        uri: "file:///invalid.utlx"
         diagnostics:
           - severity: 1  # Error
-            message:
-              contains: ["unknown_field", "not found", "undefined"]
+            message: "Cannot resolve path 'input.unknown_field'"
             range:
               start:
                 line: 1

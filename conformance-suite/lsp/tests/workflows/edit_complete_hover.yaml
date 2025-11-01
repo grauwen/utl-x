@@ -47,7 +47,7 @@ sequence:
       result:
         items:
           - label: "user"
-            kind: 10
+            kind: 7  # Object (user is an object type)
 
   # Edit document to "input.user."
   - type: notification
