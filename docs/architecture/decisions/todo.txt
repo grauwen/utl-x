@@ -6,7 +6,12 @@ Paralellization, see https://github.com/grauwen/utl-x/blob/main/docs/architectur
 ----
 Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architecture/module-system-design.md
 ----
-hese XSDParserTest failures appear to be pre-existing issues with the parser (not the serializer I 
+ | Suite                | Short Name               | Full Name                             |
+  |----------------------|--------------------------|---------------------------------------|
+  | Main transform tests | "runtime conformance"    | "Runtime/Transform Conformance Suite" |
+  | Validation tests     | "validation conformance" | "Validation Conformance Suite"        |
+  | Lint tests           | "lint conformance"       | "Lint Conformance Suite"              |
+  | LSP tests            | "LSP conformance"        | "LSP Conformance Suite"               |
 ----
 analysis part
 e.g. modules/analysis/src/test/kotlin/org/apache/utlx/analysis/validation/TransformValidatorTest.kt
