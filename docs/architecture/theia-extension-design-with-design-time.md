@@ -55,59 +55,119 @@ This design is enhanced with **Design-Time Mode** where:
 
 ## Design-Time vs Runtime Distinction
 
-### Fundamental Difference
+### CRITICAL: Tier-1 vs Tier-2 Formats
+
+**Design-Time Mode ONLY applies to Tier-1 data format transformations:**
+- **Tier-1 Formats** (instance data): XML, JSON, YAML, CSV
+- **Tier-2 Formats** (metadata/schemas): XSD, JSON Schema, Avro Schema (.avsc), Protobuf (.proto)
+
+**The mode depends on what the UTLX declares as `input`/`output`:**
+
+| UTLX Declaration | Transformation Type | Mode |
+|------------------|---------------------|------|
+| `input xml`<br>`output json` | Data-to-data transformation | Design-Time or Runtime |
+| `input xsd`<br>`output jsch` | Schema-to-schema transformation | Runtime only (metadata IS the data) |
+
+### Three Distinct Scenarios
+
+#### Scenario 1: DESIGN-TIME Mode (Type-Checking for Tier-1)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ DESIGN-TIME: Schema/Metadata Analysis                          │
+│ DESIGN-TIME: Schema/Metadata Analysis for Data Transformations │
 │                                                                 │
-│  Input Schema (XSD)    →    UTL-X Transform    →    Output     │
-│                                                      Schema     │
-│  <xs:element           →    %utlx 1.0          →    {          │
-│    name="Order"        →    input xml          →      "$schema"│
-│    type="OrderType"/>  →    output json        →      "props": │
-│                        →    ---                →        {       │
-│  <xs:complexType       →    {                  →          "id": │
-│    name="OrderType">   →      id: $input      →          {...} │
-│    <xs:attribute       →           .Order     →        }       │
-│      name="id"         →           .@id,      →    }           │
-│      type="xs:string"  →      ...             →                │
-│    />                  →    }                  →                │
-│  </xs:complexType>     →                       →                │
+│  UTLX Declaration:  input xml / output json                    │
 │                                                                 │
-│  Type Check: $input.Order.@id returns String ✓                │
-└─────────────────────────────────────────────────────────────────┘
+│  Left Panel:           Middle Panel:        Right Panel:       │
+│  XSD (for validation)  UTL-X Transform     JSON Schema         │
+│                        (type-checked)       (inferred)         │
+│  <xs:element           %utlx 1.0            {                  │
+│    name="Order"        input xml  ←tier-1   "$schema": "..."  │
+│    type="OrderType"/>  output json←tier-1   "properties": {   │
+│                        ---                    "id": {         │
+│  <xs:complexType       {                       "type":        │
+│    name="OrderType">     id: $input            "string"      │
+│    <xs:attribute           .Order.@id,       }               │
+│      name="id"           ...                 }                │
+│      type="xs:string"  }                   }                  │
+│    />                                                         │
+│  </xs:complexType>                                            │
+│                                                               │
+│  Purpose: Type-check the transformation against schemas       │
+│  XSD is METADATA about the XML data, not the data itself     │
+│  Type Check: $input.Order.@id returns String ✓               │
+└───────────────────────────────────────────────────────────────┘
+```
 
+#### Scenario 2: RUNTIME Mode (Data Transformation)
+
+```
 ┌─────────────────────────────────────────────────────────────────┐
 │ RUNTIME: Instance Data Execution                               │
 │                                                                 │
-│  Input Data (XML)      →    UTL-X Transform    →    Output     │
-│                                                      Data       │
-│  <Order id="ORD-001">  →    %utlx 1.0          →    {          │
-│    <Customer>          →    input xml          →      "id":    │
-│      <Name>John</Name> →    output json        →      "ORD-001"│
-│    </Customer>         →    ---                →      ...      │
-│    <Items>             →    {                  →    }          │
-│      <Item price="10"  →      id: $input      →                │
-│            qty="2"/>   →           .Order     →                │
-│    </Items>            →           .@id,      →                │
-│  </Order>              →      ...             →                │
-│                        →    }                  →                │
+│  UTLX Declaration:  input xml / output json                    │
 │                                                                 │
-│  Execute: Transform actual data values                         │
-└─────────────────────────────────────────────────────────────────┘
+│  Left Panel:           Middle Panel:        Right Panel:       │
+│  XML Data (instance)   UTL-X Transform     JSON Data (result)  │
+│                                                                 │
+│  <Order id="ORD-001">  %utlx 1.0            {                  │
+│    <Customer>          input xml  ←tier-1     "id":           │
+│      <Name>John</Name> output json←tier-1     "ORD-001",      │
+│    </Customer>         ---                    "customer":     │
+│    <Items>             {                      "John",         │
+│      <Item price="10"    id: $input          ...              │
+│            qty="2"/>         .Order.@id,   }                  │
+│    </Items>              ...                                  │
+│  </Order>              }                                       │
+│                                                                │
+│  Purpose: Execute transformation on actual data               │
+│  Execute: Transform actual data values                        │
+└───────────────────────────────────────────────────────────────┘
 ```
 
-### When to Use Each Mode
+#### Scenario 3: METADATA-TO-METADATA Transformation (Always Runtime!)
 
-| Use Design-Time When... | Use Runtime When... |
-|-------------------------|---------------------|
-| Building a new transformation | Testing with real data |
-| Validating API contracts | Debugging transformation logic |
-| Generating documentation | Performance testing |
-| No test data available yet | Verifying edge cases |
-| Early in development cycle | Late in development/production |
-| Schema-driven development | Instance-driven development |
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ METADATA TRANSFORMATION: Schema Engineering (NOT Design-Time!) │
+│                                                                 │
+│  UTLX Declaration:  input xsd / output jsch                    │
+│                                                                 │
+│  Left Panel:           Middle Panel:        Right Panel:       │
+│  XSD File (the DATA)   UTL-X Transform     JSON Schema (OUTPUT)│
+│                                                                 │
+│  <?xml version="1.0">  %utlx 1.0            {                  │
+│  <xs:schema>           input xsd  ←tier-2   "$schema": "..."  │
+│    <xs:element         output jsch←tier-2   "type": "object"  │
+│      name="Order"      ---                  "properties": {   │
+│      type="string"/>   {                      "Order": {      │
+│  </xs:schema>            type: "object",       "type":        │
+│                          properties:           "string"       │
+│                            $input            }                │
+│                            .schema           }                 │
+│                            .elements       }                   │
+│                            |> map(...)                        │
+│                        }                                       │
+│                                                                │
+│  Purpose: Convert one schema format to another                │
+│  This is RUNTIME mode - the schema IS the data being          │
+│  transformed, not metadata for validation!                    │
+│  No "meta-meta-data" exists for type checking                 │
+└───────────────────────────────────────────────────────────────┘
+```
+
+### When to Use Each Mode/Scenario
+
+| Use Design-Time When... | Use Runtime When... | Use Metadata-to-Metadata When... |
+|-------------------------|---------------------|----------------------------------|
+| **UTLX**: `input xml/json/yaml/csv`<br>`output json/xml/yaml/csv` | **UTLX**: `input xml/json/yaml/csv`<br>`output json/xml/yaml/csv` | **UTLX**: `input xsd/jsch/avsc/proto`<br>`output jsch/xsd/avsc/proto` |
+| Building a new transformation | Testing with real data | Converting schema formats |
+| Validating API contracts | Debugging transformation logic | Generating schemas from schemas |
+| Generating documentation | Performance testing | Schema engineering tasks |
+| No test data available yet | Verifying edge cases | Building schema converters |
+| Early in development cycle | Late in development/production | Schema migration projects |
+| Schema-driven development | Instance-driven development | Schema evolution/versioning |
+| **Requires**: Tier-1 formats only | **Allows**: Any format (tier-1 or tier-2) | **Requires**: Tier-2 formats as data |
 
 ---
 
@@ -180,14 +240,23 @@ This design is enhanced with **Design-Time Mode** where:
 
 Analyze transformations using **schema metadata** instead of instance data.
 
-### Left Panel: Input Schema
+**IMPORTANT CONSTRAINT**: Design-time mode only works when the UTLX transformation declares **tier-1 formats**:
+- ✅ `input xml` / `output json` - Design-time supported
+- ✅ `input json` / `output xml` - Design-time supported
+- ✅ `input yaml` / `output json` - Design-time supported
+- ✅ `input csv` / `output json` - Design-time supported
+- ❌ `input xsd` / `output jsch` - NOT design-time (this is metadata-to-metadata, see separate section)
+- ❌ `input avsc` / `output proto` - NOT design-time (this is metadata-to-metadata)
 
-**Displays:**
-- XSD (XML Schema Definition)
-- JSON Schema
-- YAML Schema
-- Proto definitions
-- Other schema formats
+### Left Panel: Input Schema (Metadata for Validation)
+
+**Displays schemas that describe the structure of tier-1 input data:**
+- XSD (XML Schema Definition) - describes XML structure
+- JSON Schema - describes JSON structure
+- YAML Schema - describes YAML structure
+- CSV Schema - describes CSV structure
+
+**These schemas are METADATA about the data, not the data itself being transformed.**
 
 **UI Components:**
 ```typescript
@@ -481,6 +550,144 @@ interface OutputDataPanel {
 
 ---
 
+## Metadata-to-Metadata Transformations
+
+### Important Distinction
+
+**Metadata-to-metadata transformations are NOT design-time mode.** They are **runtime transformations** where the schema itself is the data being transformed.
+
+### When UTLX Declares Tier-2 Formats
+
+When your UTLX file declares tier-2 formats as input/output:
+
+```utlx
+%utlx 1.0
+input xsd        ← Tier-2 format (schema)
+output jsch      ← Tier-2 format (schema)
+---
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": $input.schema.elements |> map((elem) => {
+    (elem.name): {
+      "type": mapXsdTypeToJsonType(elem.type)
+    }
+  })
+}
+```
+
+### How Theia Extension Handles This
+
+**This is treated as Runtime Mode:**
+
+| Panel | Content | Purpose |
+|-------|---------|---------|
+| **Left** | XSD file (the input DATA) | The schema being transformed |
+| **Middle** | UTLX transformation with tier-2 formats | Works with schema constructs (elements, types) |
+| **Right** | JSON Schema file (the OUTPUT) | The resulting schema |
+
+**Key Difference from Design-Time:**
+- **Design-Time**: Left panel = metadata FOR validation, Middle = `input xml`, Right = inferred schema
+- **Metadata-to-Metadata**: Left panel = actual data (happens to be a schema), Middle = `input xsd`, Right = transformed output
+
+### Common Metadata-to-Metadata Use Cases
+
+1. **Schema Format Conversion**
+   - XSD → JSON Schema
+   - JSON Schema → Avro Schema
+   - Protobuf → JSON Schema
+
+2. **Schema Simplification**
+   - Remove optional fields
+   - Flatten nested structures
+   - Extract subset of schema
+
+3. **Schema Generation**
+   - Generate TypeScript interfaces from JSON Schema
+   - Generate OpenAPI specs from XSD
+   - Create GraphQL schemas from JSON Schema
+
+### Example: XSD to JSON Schema Conversion
+
+**Left Panel (order.xsd):**
+```xml
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Order">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Customer" type="xs:string"/>
+        <xs:element name="Total" type="xs:decimal"/>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+```
+
+**Middle Panel (transform.utlx):**
+```utlx
+%utlx 1.0
+input xsd
+output jsch
+---
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Order ID from @id attribute"
+    },
+    "Customer": {
+      "type": "string"
+    },
+    "Total": {
+      "type": "number"
+    }
+  },
+  "required": ["id", "Customer", "Total"]
+}
+```
+
+**Right Panel (order.schema.json):**
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Order ID from @id attribute"
+    },
+    "Customer": {
+      "type": "string"
+    },
+    "Total": {
+      "type": "number"
+    }
+  },
+  "required": ["id", "Customer", "Total"]
+}
+```
+
+### Why No Design-Time Mode?
+
+**There's no "meta-meta-data"** to validate against. You would need:
+- XSD for XSD (Schema of a schema definition)
+- JSON Schema for JSON Schema (Schema of a schema definition)
+
+While these technically exist, they're not practical for validation in this context. The transformation operates on the schema structure itself.
+
+### UI Mode Indication
+
+When the user opens a UTLX file with tier-2 formats:
+- Mode selector should be **disabled** or show "Runtime (Schema Transformation)"
+- Left/Right panels labeled clearly: "Input Schema (Data)" / "Output Schema (Result)"
+- No type-checking features (since we're in runtime mode)
+
+---
+
 ## Mode Switching & UI
 
 ### Mode Selector
@@ -538,13 +745,21 @@ class ModeManager {
 }
 ```
 
-### Panel Content Based on Mode
+### Panel Content Based on Mode and UTLX Format
 
-| Panel | Design-Time Mode | Runtime Mode |
-|-------|------------------|--------------|
-| **Left** | Input Schema (XSD, JSON Schema) | Input Data (XML, JSON) |
-| **Middle** | UTL-X with type checking | UTL-X with execution |
-| **Right** | Output Schema (inferred) | Output Data (transformed) |
+| UTLX Declaration | Panel | Design-Time Mode | Runtime Mode |
+|------------------|-------|------------------|--------------|
+| `input xml`<br>`output json` | **Left** | XSD Schema (metadata for validation) | XML Data (instance) |
+| (tier-1 formats) | **Middle** | UTL-X with type checking | UTL-X with execution |
+|  | **Right** | JSON Schema (inferred structure) | JSON Data (transformed result) |
+| | | | |
+| `input xsd`<br>`output jsch` | **Left** | N/A (no design-time mode) | XSD File (the data being transformed) |
+| (tier-2 formats) | **Middle** | N/A | UTL-X transforming schema constructs |
+|  | **Right** | N/A | JSON Schema (output schema) |
+
+**Key Distinction:**
+- **Tier-1 formats**: Two modes available (design-time for validation, runtime for execution)
+- **Tier-2 formats**: Only runtime mode (schema IS the data, not metadata for validation)
 
 ### Toolbar Actions
 
@@ -816,6 +1031,47 @@ Scenario: Developer wants runtime testing with schema validation
    - Schema conformance status
 ```
 
+### Example 4: Metadata-to-Metadata Transformation (Schema Engineering)
+
+```
+Scenario: Organization is migrating from SOAP/XML to REST/JSON APIs
+          and needs to convert all XSD schemas to JSON Schema.
+
+1. Developer creates UTLX transformation for schema conversion:
+
+   %utlx 1.0
+   input xsd        ← Tier-2 format (schema IS the data)
+   output jsch      ← Tier-2 format (schema IS the output)
+   ---
+   {
+     "$schema": "http://json-schema.org/draft-07/schema#",
+     "type": "object",
+     "properties": $input.schema.elements |> map((elem) => {
+       (elem.name): {
+         "type": mapXsdTypeToJsonType(elem.type),
+         "description": elem.annotation.documentation
+       }
+     }),
+     "required": $input.schema.elements
+                 |> filter(elem => elem.minOccurs >= 1)
+                 |> map(elem => elem.name)
+   }
+
+2. Opens Theia extension (automatically detects tier-2 formats)
+3. Mode selector is DISABLED (only Runtime mode available)
+4. Left panel: Loads customer.xsd (the input DATA being transformed)
+5. Middle panel: The UTLX transformation above
+6. Right panel: Shows resulting customer.schema.json
+7. Developer clicks "Execute" (Runtime mode - transforming schema)
+8. Verifies JSON Schema is correct
+9. Repeats for all 50 XSD files in the project
+
+Key Difference from Design-Time:
+- This is NOT type-checking a data transformation
+- This IS executing a transformation where schemas are the data
+- No "design-time mode" available (no meta-meta-data exists)
+```
+
 ---
 
 ## Implementation Phases
@@ -1007,13 +1263,41 @@ TheiaExtension
 This enhanced Theia extension design provides:
 
 1. **Design-Time Mode**: Schema-based type checking and validation
-2. **Runtime Mode**: Instance data transformation and testing
-3. **Seamless switching**: Easy toggle between modes
-4. **LSP integration**: Mode-aware language server protocol
-5. **Developer productivity**: Autocomplete, type hints, error detection
-6. **API contract validation**: Generate and verify schemas
+   - **Applies to**: Tier-1 data format transformations (`input xml/json/yaml/csv`)
+   - **Purpose**: Validate transformation logic against schemas before execution
+   - **Benefit**: Catch type errors early, generate output schemas, enable autocomplete
 
-The design supports both **schema-first** and **test-first** development workflows, giving developers flexibility in how they build and validate UTL-X transformations.
+2. **Runtime Mode**: Instance data transformation and testing
+   - **Applies to**: All transformations (tier-1 and tier-2)
+   - **Purpose**: Execute transformations on actual data
+   - **Benefit**: Test with real data, debug, performance profiling
+
+3. **Metadata-to-Metadata Transformations**: Schema engineering (Runtime mode only)
+   - **Applies to**: Tier-2 format transformations (`input xsd/jsch/avsc/proto`)
+   - **Purpose**: Convert between schema formats, generate schemas
+   - **Constraint**: No design-time mode available (schema IS the data, not metadata)
+
+4. **Seamless mode switching**: Easy toggle between design-time and runtime (for tier-1)
+
+5. **LSP integration**: Mode-aware language server protocol with format detection
+
+6. **Developer productivity**: Autocomplete, type hints, error detection tailored to mode
+
+7. **API contract validation**: Generate and verify schemas in design-time mode
+
+### Key Scope Clarifications
+
+**What Design-Time Mode Is:**
+- Type-checking tier-1 data transformations using tier-1 schemas as metadata
+- Validating that `input xml` transformations are type-safe given an XSD
+- Inferring output structure without executing the transformation
+
+**What Design-Time Mode Is NOT:**
+- NOT for tier-2 metadata-to-metadata transformations (`input xsd`)
+- NOT a replacement for runtime testing (both modes are essential)
+- NOT applicable when schemas don't exist or aren't available
+
+The design supports both **schema-first** and **test-first** development workflows for tier-1 transformations, plus **schema engineering** workflows for tier-2 transformations, giving developers maximum flexibility in how they build and validate UTL-X transformations.
 
 ---
 
