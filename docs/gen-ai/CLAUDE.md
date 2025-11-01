@@ -1384,6 +1384,94 @@ utl-x/
 - Test data typically embedded in test files
 - Mock objects created with MockK library
 
+## Conformance Test Suites
+
+UTL-X maintains four comprehensive conformance test suites to ensure correctness, quality, and standards compliance. For detailed information, see [conformance-suite/CONFORMANCE-SUITES.md](../../conformance-suite/CONFORMANCE-SUITES.md).
+
+### Quick Reference
+
+| Suite | Purpose | Test Count | Runners | Status |
+|-------|---------|------------|---------|--------|
+| **Runtime/Transform** | Language runtime, transformations, stdlib | 465 tests | Python (CLI), Kotlin | ✅ 100% |
+| **Validation** | `utlx validate` command (3 levels) | TBD | Python | 🚧 In Development |
+| **Lint** | `utlx lint` command (code quality) | TBD | Python | 🚧 In Development |
+| **LSP** | Language Server Protocol daemon | TBD | Kotlin | ✅ Active |
+
+### 1. Runtime/Transform Conformance (Primary)
+
+The main conformance suite testing language runtime and transformations.
+
+**Location**: `conformance-suite/utlx/tests/`
+
+**Run with Python CLI runner** (primary):
+```bash
+cd conformance-suite/utlx
+python3 runners/cli-runner/simple-runner.py
+```
+
+**Run with Kotlin runner** (secondary):
+```bash
+cd conformance-suite/utlx
+./runners/kotlin-runner/run-tests.sh
+```
+
+**Categories**: core, formats (Avro, JSON Schema, Protobuf, XML, XSD, CSV, YAML), stdlib (635 functions), integration, multi-input, schema-generation, edge-cases, performance
+
+**Current Results**: 465/465 tests passing (100% success rate)
+
+### 2. Validation Conformance
+
+Tests the `utlx validate` command across three validation levels.
+
+**Location**: `conformance-suite/utlx/validation-tests/`
+
+**Run**:
+```bash
+cd conformance-suite/utlx
+python3 runners/validation-runner.py validation-tests
+```
+
+**Levels**:
+- Level 1: Syntactic validation (parse errors, missing separator, malformed headers)
+- Level 2: Semantic validation (type errors, undefined variables)
+- Level 3: Schema validation (input schema compliance)
+
+### 3. Lint Conformance
+
+Tests the `utlx lint` command for code quality and best practices.
+
+**Location**: `conformance-suite/utlx/lint-tests/`
+
+**Run**:
+```bash
+cd conformance-suite/utlx
+python3 runners/lint-runner.py lint-tests
+```
+
+**Categories**: style, complexity, dead-code, unused-variables, clean
+
+### 4. LSP Conformance
+
+Tests the Language Server Protocol daemon for IDE integration.
+
+**Location**: `conformance-suite/lsp/`
+
+**Run**:
+```bash
+cd conformance-suite/lsp
+./runners/kotlin-runner/run-lsp-tests.sh
+```
+
+**Features tested**: Protocol compliance (JSON-RPC 2.0), initialization & lifecycle, document sync, completion, hover, diagnostics, workflows
+
+### Naming Convention
+
+- **"conformance"** (without qualifier) = Runtime/Transform Conformance Suite (465 tests)
+- **"validation conformance"** = Validation Conformance Suite
+- **"lint conformance"** = Lint Conformance Suite
+- **"LSP conformance"** = LSP Conformance Suite
+- **"full conformance"** = All four suites combined
+
 ## Known Issues
 
 1. **YAML Module Build Error**: The `formats/yaml/build.gradle.kts` has a repository configuration that conflicts with the centralized repository management in `settings.gradle.kts` (line 11: `mavenCentral()`). This needs to be removed.
