@@ -55,8 +55,16 @@ class DiagnosticsPublisher(
         // Collect diagnostics from multiple sources
         val diagnostics = mutableListOf<Diagnostic>()
 
+        // Check if this is a schema-only document (for LSP type checking)
+        val isSchemaOnly = text.trim().startsWith("input:") && !text.contains("%utlx")
+
         // 1. Parser-based diagnostics (syntax and structure errors)
-        val parserDiagnostics = getParserDiagnostics(text)
+        // Skip parser diagnostics for schema-only documents
+        val parserDiagnostics = if (!isSchemaOnly) {
+            getParserDiagnostics(text)
+        } else {
+            emptyList()
+        }
         diagnostics.addAll(parserDiagnostics)
 
         // 2. Path-based diagnostics (semantic validation - only if no parse errors)
