@@ -3,12 +3,20 @@ package org.apache.utlx.daemon
 
 import org.apache.utlx.daemon.protocol.*
 import org.apache.utlx.daemon.state.StateManager
+import org.apache.utlx.daemon.state.SchemaFormat
+import org.apache.utlx.daemon.state.DocumentMode
 import org.apache.utlx.daemon.transport.SocketTransport
 import org.apache.utlx.daemon.transport.StdioTransport
 import org.apache.utlx.daemon.transport.Transport
 import org.apache.utlx.daemon.completion.*
 import org.apache.utlx.daemon.hover.*
 import org.apache.utlx.daemon.diagnostics.*
+import org.apache.utlx.daemon.schema.SchemaTypeContextFactory
+import org.apache.utlx.daemon.schema.OutputSchemaInferenceService
+import org.apache.utlx.daemon.schema.InferenceResult
+import org.apache.utlx.analysis.schema.XSDSchemaParser
+import org.apache.utlx.analysis.schema.JSONSchemaParser
+import org.apache.utlx.analysis.schema.SchemaFormat as AnalysisSchemaFormat
 import org.slf4j.LoggerFactory
 
 /**
@@ -32,6 +40,8 @@ class UTLXDaemon(
     private val completionService = CompletionService(stateManager)
     private val hoverService = HoverService(stateManager)
     private val diagnosticsPublisher = DiagnosticsPublisher(stateManager)
+    private val schemaTypeContextFactory = SchemaTypeContextFactory()
+    private val outputSchemaService = OutputSchemaInferenceService(stateManager)
 
     private var transport: Transport? = null
     private var initialized = false
@@ -97,10 +107,15 @@ class UTLXDaemon(
                 "textDocument/completion" -> handleCompletion(request)
                 "textDocument/hover" -> handleHover(request)
 
-                // UTL-X custom methods (placeholders for Phase 2/3)
-                "utlx/complete" -> notImplemented(request, "Path completion not yet implemented (Phase 2)")
-                "utlx/graph" -> notImplemented(request, "Graph API not yet implemented (Phase 3)")
-                "utlx/visualize" -> notImplemented(request, "Visualization not yet implemented (Phase 3)")
+                // UTL-X custom methods - Schema loading and mode switching
+                "utlx/loadSchema" -> handleLoadSchema(request)
+                "utlx/setMode" -> handleSetMode(request)
+                "utlx/inferOutputSchema" -> handleInferOutputSchema(request)
+
+                // UTL-X custom methods (future features)
+                "utlx/complete" -> notImplemented(request, "Path completion not yet implemented")
+                "utlx/graph" -> notImplemented(request, "Graph API not yet implemented")
+                "utlx/visualize" -> notImplemented(request, "Visualization not yet implemented")
 
                 else -> JsonRpcResponse.methodNotFound(request.id, request.method)
             }
@@ -404,6 +419,247 @@ class UTLXDaemon(
         diagnosticsPublisher.clearDiagnostics(uri)
 
         return JsonRpcResponse.success(request.id, null)
+    }
+
+    /**
+     * Handle utlx/loadSchema request
+     *
+     * Load an external schema (XSD or JSON Schema) for design-time type checking.
+     *
+     * Request params:
+     * {
+     *   "uri": "file:///path/to/document.utlx",  // Document URI to associate schema with
+     *   "schemaContent": "<?xml version=\"1.0\"?>...",  // Schema content as string
+     *   "format": "xsd" | "jsonschema"  // Schema format
+     * }
+     *
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Schema loaded successfully",
+     *   "typeCount": 15  // Number of types parsed
+     * }
+     */
+    private fun handleLoadSchema(request: JsonRpcRequest): JsonRpcResponse {
+        @Suppress("UNCHECKED_CAST")
+        val params = request.params as? Map<*, *>
+            ?: return JsonRpcResponse.invalidParams(request.id, "Missing params")
+
+        try {
+            // Parse parameters
+            val uri = params["uri"] as? String
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing 'uri' parameter")
+
+            val schemaContent = params["schemaContent"] as? String
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing 'schemaContent' parameter")
+
+            val formatStr = params["format"] as? String
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing 'format' parameter")
+
+            logger.info("Loading schema for $uri (format: $formatStr)")
+
+            // Parse format
+            val analysisFormat = when (formatStr.lowercase()) {
+                "xsd" -> AnalysisSchemaFormat.XSD
+                "jsonschema", "json-schema", "json_schema" -> AnalysisSchemaFormat.JSON_SCHEMA
+                else -> return JsonRpcResponse.invalidParams(
+                    request.id,
+                    "Invalid format '$formatStr'. Must be 'xsd' or 'jsonschema'"
+                )
+            }
+
+            val daemonFormat = when (formatStr.lowercase()) {
+                "xsd" -> SchemaFormat.XSD
+                "jsonschema", "json-schema", "json_schema" -> SchemaFormat.JSON_SCHEMA
+                else -> SchemaFormat.UNKNOWN
+            }
+
+            // Parse schema using appropriate parser
+            val typeDef = when (analysisFormat) {
+                AnalysisSchemaFormat.XSD -> {
+                    val parser = XSDSchemaParser()
+                    parser.parse(schemaContent, analysisFormat)
+                }
+                AnalysisSchemaFormat.JSON_SCHEMA -> {
+                    val parser = JSONSchemaParser()
+                    parser.parse(schemaContent, analysisFormat)
+                }
+                else -> return JsonRpcResponse.error(
+                    request.id,
+                    ErrorCode.INVALID_PARAMS,
+                    "Unsupported schema format: $formatStr"
+                )
+            }
+
+            // Convert TypeDefinition to TypeContext
+            val typeContext = schemaTypeContextFactory.createFromSchema(typeDef)
+
+            // Register schema in state manager
+            stateManager.registerSchema(uri, schemaContent, daemonFormat)
+
+            // Set type environment for this document
+            stateManager.setTypeEnvironment(uri, typeContext)
+
+            logger.info("Schema loaded successfully for $uri")
+
+            // Re-publish diagnostics with new type environment
+            diagnosticsPublisher.publishDiagnostics(uri)
+
+            // Return success response
+            val result = mapOf(
+                "success" to true,
+                "message" to "Schema loaded successfully",
+                "format" to formatStr,
+                "typeInfo" to typeDef::class.simpleName
+            )
+
+            return JsonRpcResponse.success(request.id, result)
+
+        } catch (e: Exception) {
+            logger.error("Error loading schema", e)
+            return JsonRpcResponse.internalError(
+                request.id,
+                "Failed to load schema: ${e.message}"
+            )
+        }
+    }
+
+    /**
+     * Handle utlx/setMode request
+     *
+     * Switch between design-time and runtime modes for a document.
+     *
+     * Request params:
+     * {
+     *   "uri": "file:///path/to/document.utlx",  // Document URI
+     *   "mode": "design-time" | "runtime"  // Mode to set
+     * }
+     *
+     * Response:
+     * {
+     *   "success": true,
+     *   "mode": "design-time",
+     *   "message": "Mode switched to design-time"
+     * }
+     */
+    private fun handleSetMode(request: JsonRpcRequest): JsonRpcResponse {
+        @Suppress("UNCHECKED_CAST")
+        val params = request.params as? Map<*, *>
+            ?: return JsonRpcResponse.invalidParams(request.id, "Missing params")
+
+        try {
+            // Parse parameters
+            val uri = params["uri"] as? String
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing 'uri' parameter")
+
+            val modeStr = params["mode"] as? String
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing 'mode' parameter")
+
+            logger.info("Setting mode for $uri: $modeStr")
+
+            // Parse mode
+            val mode = when (modeStr.lowercase()) {
+                "design-time", "design_time", "designtime" -> DocumentMode.DESIGN_TIME
+                "runtime", "run-time", "run_time" -> DocumentMode.RUNTIME
+                else -> return JsonRpcResponse.invalidParams(
+                    request.id,
+                    "Invalid mode '$modeStr'. Must be 'design-time' or 'runtime'"
+                )
+            }
+
+            // Set mode in state manager
+            stateManager.setDocumentMode(uri, mode)
+
+            logger.info("Mode set successfully for $uri: $mode")
+
+            // Re-publish diagnostics with mode awareness
+            diagnosticsPublisher.publishDiagnostics(uri)
+
+            // Return success response
+            val result = mapOf(
+                "success" to true,
+                "mode" to modeStr,
+                "message" to "Mode switched to ${mode.name.lowercase().replace("_", "-")}"
+            )
+
+            return JsonRpcResponse.success(request.id, result)
+
+        } catch (e: Exception) {
+            logger.error("Error setting mode", e)
+            return JsonRpcResponse.internalError(
+                request.id,
+                "Failed to set mode: ${e.message}"
+            )
+        }
+    }
+
+    /**
+     * Handle utlx/inferOutputSchema request
+     *
+     * Generate JSON Schema for the output of a UTL-X transformation.
+     * This is used in design-time mode to understand the structure of
+     * transformed data without executing the transformation.
+     *
+     * Request params:
+     * {
+     *   "uri": "file:///path/to/document.utlx",  // Document URI
+     *   "pretty": true,  // Optional: pretty-print schema (default: true)
+     *   "includeComments": true  // Optional: include comments (default: true)
+     * }
+     *
+     * Response:
+     * {
+     *   "success": true,
+     *   "schema": "{\"$schema\": \"https://json-schema.org/...\", ...}"
+     * }
+     */
+    private fun handleInferOutputSchema(request: JsonRpcRequest): JsonRpcResponse {
+        @Suppress("UNCHECKED_CAST")
+        val params = request.params as? Map<*, *>
+            ?: return JsonRpcResponse.invalidParams(request.id, "Missing params")
+
+        try {
+            // Parse parameters
+            val uri = params["uri"] as? String
+                ?: return JsonRpcResponse.invalidParams(request.id, "Missing 'uri' parameter")
+
+            val pretty = params["pretty"] as? Boolean ?: true
+            val includeComments = params["includeComments"] as? Boolean ?: true
+
+            logger.info("Inferring output schema for $uri")
+
+            // Use service to infer schema with validation
+            val result = outputSchemaService.inferOutputSchemaWithValidation(uri, pretty, includeComments)
+
+            return when (result) {
+                is InferenceResult.Success -> {
+                    logger.info("Successfully inferred output schema for $uri")
+
+                    val response = mapOf(
+                        "success" to true,
+                        "schema" to result.schema
+                    )
+
+                    JsonRpcResponse.success(request.id, response)
+                }
+                is InferenceResult.Failure -> {
+                    logger.warn("Failed to infer output schema for $uri: ${result.error}")
+
+                    JsonRpcResponse.error(
+                        request.id,
+                        ErrorCode.INTERNAL_ERROR,
+                        result.error
+                    )
+                }
+            }
+
+        } catch (e: Exception) {
+            logger.error("Error inferring output schema", e)
+            return JsonRpcResponse.internalError(
+                request.id,
+                "Failed to infer output schema: ${e.message}"
+            )
+        }
     }
 
     /**

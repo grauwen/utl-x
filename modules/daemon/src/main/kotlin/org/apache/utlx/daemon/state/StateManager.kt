@@ -8,6 +8,37 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 /**
+ * Document mode enumeration
+ *
+ * Determines how the LSP daemon processes a document:
+ * - DESIGN_TIME: Schema-based type checking (no execution)
+ * - RUNTIME: Instance data transformation and execution
+ */
+enum class DocumentMode {
+    /**
+     * Design-Time Mode: Type-checking with schemas
+     *
+     * In this mode:
+     * - External schemas (XSD, JSON Schema) are loaded
+     * - Path expressions are validated against schema types
+     * - Output schema can be inferred
+     * - No actual data transformation occurs
+     */
+    DESIGN_TIME,
+
+    /**
+     * Runtime Mode: Data transformation and execution
+     *
+     * In this mode:
+     * - Instance data (XML, JSON, etc.) is processed
+     * - Transformations are executed
+     * - Parser diagnostics are enabled
+     * - Performance can be measured
+     */
+    RUNTIME
+}
+
+/**
  * State Manager for LSP Daemon
  *
  * Manages:
@@ -15,6 +46,7 @@ import java.util.concurrent.ConcurrentHashMap
  * - AST cache (parsed programs)
  * - Type environments (per document)
  * - Schema cache (loaded schemas)
+ * - Document modes (design-time vs runtime)
  *
  * Thread-safe for concurrent access from multiple LSP handlers.
  */
@@ -31,6 +63,9 @@ class StateManager {
 
     // Schema cache indexed by schema URI
     private val schemas = ConcurrentHashMap<String, SchemaInfo>()
+
+    // Document modes indexed by URI (default: RUNTIME)
+    private val documentModes = ConcurrentHashMap<String, DocumentMode>()
 
     /**
      * Open or update a document
@@ -178,12 +213,34 @@ class StateManager {
     }
 
     /**
+     * Set document mode (design-time vs runtime)
+     *
+     * @param uri Document URI
+     * @param mode DocumentMode (DESIGN_TIME or RUNTIME)
+     */
+    fun setDocumentMode(uri: String, mode: DocumentMode) {
+        logger.info("Setting mode for $uri: $mode")
+        documentModes[uri] = mode
+    }
+
+    /**
+     * Get document mode
+     *
+     * @param uri Document URI
+     * @return DocumentMode (defaults to RUNTIME if not set)
+     */
+    fun getDocumentMode(uri: String): DocumentMode {
+        return documentModes[uri] ?: DocumentMode.RUNTIME
+    }
+
+    /**
      * Clear all state (for testing)
      */
     fun clear() {
         documents.clear()
         typeEnvironments.clear()
         schemas.clear()
+        documentModes.clear()
     }
 
     /**
@@ -194,7 +251,9 @@ class StateManager {
             openDocuments = documents.size,
             cachedTypeEnvironments = typeEnvironments.size,
             cachedSchemas = schemas.size,
-            cachedAsts = documents.values.count { it.ast != null }
+            cachedAsts = documents.values.count { it.ast != null },
+            designTimeDocs = documentModes.values.count { it == DocumentMode.DESIGN_TIME },
+            runtimeDocs = documentModes.size - documentModes.values.count { it == DocumentMode.DESIGN_TIME }
         )
     }
 }
@@ -236,5 +295,7 @@ data class StateStatistics(
     val openDocuments: Int,
     val cachedTypeEnvironments: Int,
     val cachedSchemas: Int,
-    val cachedAsts: Int
+    val cachedAsts: Int,
+    val designTimeDocs: Int,
+    val runtimeDocs: Int
 )

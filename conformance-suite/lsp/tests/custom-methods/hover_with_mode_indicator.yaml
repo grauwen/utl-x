@@ -1,0 +1,84 @@
+name: "hover_with_mode_indicator"
+description: "Hover shows mode indicator in design-time mode"
+category: "custom-methods"
+tags: ["hover", "mode", "design-time"]
+
+documents:
+  test_doc:
+    uri: "file:///test.utlx"
+    languageId: "utlx"
+    version: 1
+    text: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      $input.name
+
+sequence:
+  # Initialize
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp"
+      capabilities: {}
+    expect:
+      result:
+        capabilities:
+          hoverProvider: true
+
+  # Open document
+  - type: notification
+    method: "textDocument/didOpen"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+        languageId: "{{documents.test_doc.languageId}}"
+        version: "{{documents.test_doc.version}}"
+        text: "{{documents.test_doc.text}}"
+
+  # Set to design-time mode
+  - type: request
+    method: "utlx/setMode"
+    params:
+      uri: "{{documents.test_doc.uri}}"
+      mode: "design-time"
+    expect:
+      result:
+        success: true
+
+  # Load a simple JSON schema for input
+  - type: request
+    method: "utlx/loadSchema"
+    params:
+      uri: "{{documents.test_doc.uri}}"
+      schemaContent: |
+        {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "age": { "type": "number" }
+          }
+        }
+      format: "json-schema"
+    expect:
+      result:
+        success: true
+
+  # Hover over "$input.name" and verify mode indicator
+  - type: request
+    method: "textDocument/hover"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+      position:
+        line: 4
+        character: 7
+    expect:
+      result:
+        contents:
+          kind: "markdown"
+          value:
+            contains: ["Design-Time", "$input.name"]

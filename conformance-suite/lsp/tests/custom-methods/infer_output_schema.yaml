@@ -1,0 +1,64 @@
+name: "infer_output_schema"
+description: "Infer output schema from transformation"
+category: "custom-methods"
+tags: ["schema", "inference", "design-time"]
+
+documents:
+  test_doc:
+    uri: "file:///test.utlx"
+    languageId: "utlx"
+    version: 1
+    text: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      {
+        userName: $input.name,
+        userAge: $input.age
+      }
+
+sequence:
+  # Initialize
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp"
+      capabilities: {}
+    expect:
+      result:
+        capabilities: {}
+
+  # Open document
+  - type: notification
+    method: "textDocument/didOpen"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+        languageId: "{{documents.test_doc.languageId}}"
+        version: "{{documents.test_doc.version}}"
+        text: "{{documents.test_doc.text}}"
+
+  # Set to design-time mode
+  - type: request
+    method: "utlx/setMode"
+    params:
+      uri: "{{documents.test_doc.uri}}"
+      mode: "design-time"
+    expect:
+      result:
+        success: true
+
+  # Infer output schema
+  - type: request
+    method: "utlx/inferOutputSchema"
+    params:
+      uri: "{{documents.test_doc.uri}}"
+      pretty: true
+      includeComments: true
+    expect:
+      result:
+        success: true
+        schema:
+          contains: ["userName", "userAge"]

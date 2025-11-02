@@ -3,6 +3,7 @@ package org.apache.utlx.daemon.completion
 
 import org.apache.utlx.analysis.types.TypeContext
 import org.apache.utlx.daemon.state.StateManager
+import org.apache.utlx.daemon.state.DocumentMode
 import org.slf4j.LoggerFactory
 
 /**
@@ -26,7 +27,9 @@ class CompletionService(
         val uri = params.textDocument.uri
         val position = params.position
 
-        logger.debug("Completion request for $uri at ${position.line}:${position.character}")
+        // Get document mode
+        val mode = stateManager.getDocumentMode(uri)
+        logger.debug("Completion request for $uri at ${position.line}:${position.character} (mode: ${mode.name})")
 
         // Get document text
         val text = stateManager.getDocumentText(uri)

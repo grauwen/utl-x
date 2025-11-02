@@ -4,6 +4,7 @@ package org.apache.utlx.daemon.hover
 import org.apache.utlx.analysis.types.*
 import org.apache.utlx.daemon.completion.Position
 import org.apache.utlx.daemon.state.StateManager
+import org.apache.utlx.daemon.state.DocumentMode
 import org.slf4j.LoggerFactory
 
 /**
@@ -26,7 +27,9 @@ class HoverService(
         val uri = params.textDocument.uri
         val position = params.position
 
-        logger.debug("Hover request for $uri at ${position.line}:${position.character}")
+        // Get document mode
+        val mode = stateManager.getDocumentMode(uri)
+        logger.debug("Hover request for $uri at ${position.line}:${position.character} (mode: ${mode.name})")
 
         // Get document text
         val text = stateManager.getDocumentText(uri)
@@ -61,7 +64,7 @@ class HoverService(
         logger.debug("Found type: ${type::class.simpleName}")
 
         // Format hover content
-        val content = formatHoverContent(pathInfo.path, type)
+        val content = formatHoverContent(pathInfo.path, type, mode)
 
         return Hover(
             contents = MarkupContent(
@@ -201,8 +204,14 @@ class HoverService(
     /**
      * Format hover content as markdown
      */
-    private fun formatHoverContent(path: String, type: TypeDefinition): String {
+    private fun formatHoverContent(path: String, type: TypeDefinition, mode: DocumentMode): String {
         return buildString {
+            // Add mode indicator
+            val modeIcon = if (mode == DocumentMode.DESIGN_TIME) "\uD83D\uDD27" else "\u25B6\uFE0F"  // 🔧 or ▶️
+            val modeLabel = if (mode == DocumentMode.DESIGN_TIME) "Design-Time" else "Runtime"
+            appendLine("$modeIcon **Mode**: *$modeLabel*")
+            appendLine()
+
             appendLine("**Path**: `$path`")
             appendLine()
             appendLine("**Type**: `${formatTypeDetail(type)}`")

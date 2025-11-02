@@ -8,6 +8,7 @@ import org.apache.utlx.daemon.completion.Position
 import org.apache.utlx.daemon.hover.Range
 import org.apache.utlx.daemon.protocol.JsonRpcRequest
 import org.apache.utlx.daemon.state.StateManager
+import org.apache.utlx.daemon.state.DocumentMode
 import org.apache.utlx.daemon.transport.Transport
 import org.slf4j.LoggerFactory
 
@@ -55,24 +56,35 @@ class DiagnosticsPublisher(
         // Collect diagnostics from multiple sources
         val diagnostics = mutableListOf<Diagnostic>()
 
-        // Check if this is a schema-only document (for LSP type checking)
-        val isSchemaOnly = text.trim().startsWith("input:") && !text.contains("%utlx")
+        // Get document mode (design-time vs runtime)
+        val mode = stateManager.getDocumentMode(uri)
+        val isDesignTime = mode == DocumentMode.DESIGN_TIME
+
+        logger.debug("Publishing diagnostics for $uri in ${mode.name} mode")
 
         // 1. Parser-based diagnostics (syntax and structure errors)
-        // Skip parser diagnostics for schema-only documents
-        val parserDiagnostics = if (!isSchemaOnly) {
-            getParserDiagnostics(text)
+        // In design-time mode, skip parser diagnostics (schema validation only)
+        // In runtime mode, include full parser diagnostics
+        val parserDiagnostics = if (!isDesignTime) {
+            getParserDiagnostics(text, uri)
         } else {
+            // Even in design-time mode, parse and cache AST for schema inference
+            // but don't report parser errors as diagnostics
+            getParserDiagnostics(text, uri)
             emptyList()
         }
         diagnostics.addAll(parserDiagnostics)
 
         // 2. Path-based diagnostics (semantic validation - only if no parse errors)
+        // Works in both modes: validates paths against type environment
         if (parserDiagnostics.isEmpty()) {
             val typeEnv = stateManager.getTypeEnvironment(uri)
             if (typeEnv != null) {
                 val pathDiagnostics = analyzer.analyze(text, typeEnv)
                 diagnostics.addAll(pathDiagnostics)
+            } else if (isDesignTime) {
+                // In design-time mode, warn if no type environment (schema not loaded)
+                logger.warn("Design-time mode active for $uri but no type environment. Load schema via utlx/loadSchema")
             }
         }
 
@@ -90,8 +102,10 @@ class DiagnosticsPublisher(
 
     /**
      * Get parser-based diagnostics (syntax and structure errors)
+     *
+     * Also caches the AST for successful parses (needed for output schema inference)
      */
-    private fun getParserDiagnostics(text: String): List<Diagnostic> {
+    private fun getParserDiagnostics(text: String, uri: String): List<Diagnostic> {
         return try {
             val lexer = Lexer(text)
             val tokens = lexer.tokenize()
@@ -99,7 +113,12 @@ class DiagnosticsPublisher(
             val parseResult = parser.parse()
 
             when (parseResult) {
-                is ParseResult.Success -> emptyList()
+                is ParseResult.Success -> {
+                    // Cache the AST for output schema inference
+                    stateManager.setAst(uri, parseResult.program)
+                    logger.debug("Cached AST for $uri")
+                    emptyList()
+                }
                 is ParseResult.Failure -> {
                     parseResult.errors.map { parseError ->
                         // Convert ParseError to LSP Diagnostic
