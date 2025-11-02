@@ -13,7 +13,9 @@ Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architectu
   | Lint tests           | "lint conformance"       | "Lint Conformance Suite"              |
   | LSP tests            | "LSP conformance"        | "LSP Conformance Suite"               |
 ----
-Proposed Solution: treeWalk or mapTree
+Add mapTree to stdlib/src/main/kotlin/org/apache/utlx/stdlib/objects/EnhancedObjectFunctions.kt
+
+Proposed Solution: treeWalk or mapTree (better) 
 
   // Signature
   fun treeWalk(data: UDM, transform: (value: UDM, path: String) -> UDM): UDM
