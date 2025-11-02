@@ -714,10 +714,15 @@ class Parser(private val tokens: List<Token>) {
                         key = advance().lexeme
                     } else if (check(TokenType.STRING)) {
                         // Handle quoted property names like "@id", "%namespace", or "name"
-                        key = advance().lexeme
-                        // Remove quotes
-                        if (key.startsWith("\"") && key.endsWith("\"")) {
-                            key = key.substring(1, key.length - 1)
+                        val token = advance()
+                        // Use the literal value (which has escape sequences interpreted) instead of lexeme
+                        key = (token.literal as? String) ?: token.lexeme.let { lex ->
+                            // Fallback: manually remove quotes if literal is not available
+                            if (lex.startsWith("\"") && lex.endsWith("\"")) {
+                                lex.substring(1, lex.length - 1)
+                            } else {
+                                lex
+                            }
                         }
                         // Check if it's an attribute (starts with @)
                         if (key.startsWith("@")) {
