@@ -16,7 +16,7 @@ object ConformanceGenerator {
      */
     fun generateYaml(test: CapturedTest, knownIssue: KnownIssue? = null): String {
         val primaryFunction = TestCategorizer.getPrimaryFunction(test.transformation)
-        val testName = generateTestName(primaryFunction, test.id)
+        val testName = generateTestName(primaryFunction, test.id, test.timestamp)
 
         val yaml = StringBuilder()
 
@@ -92,7 +92,7 @@ object ConformanceGenerator {
     fun saveTest(test: CapturedTest, config: CaptureConfig, knownIssue: KnownIssue? = null): File {
         val category = test.category ?: "uncategorized"
         val primaryFunction = TestCategorizer.getPrimaryFunction(test.transformation)
-        val testName = generateTestName(primaryFunction, test.id)
+        val testName = generateTestName(primaryFunction, test.id, test.timestamp)
 
         // Create directory structure
         val categoryPath = File(config.captureLocation, category.replace("/", File.separator))
@@ -109,11 +109,14 @@ object ConformanceGenerator {
     }
 
     /**
-     * Generate test name from function and ID
+     * Generate test name with timestamp and ID
+     * Format: auto_<timestamp>_<uid>
+     * Example: auto_2025-11-02-21-45-30_16e0f6d6
      */
-    private fun generateTestName(primaryFunction: String?, testId: String): String {
-        val functionPart = primaryFunction ?: "transform"
-        return "${functionPart}_auto_$testId"
+    private fun generateTestName(@Suppress("UNUSED_PARAMETER") primaryFunction: String?, testId: String, timestamp: java.time.Instant): String {
+        val localDateTime = java.time.LocalDateTime.ofInstant(timestamp, java.time.ZoneId.systemDefault())
+        val formattedTime = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
+        return "auto_${formattedTime}_$testId"
     }
 
     /**
