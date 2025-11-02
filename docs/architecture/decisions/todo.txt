@@ -13,6 +13,28 @@ Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architectu
   | Lint tests           | "lint conformance"       | "Lint Conformance Suite"              |
   | LSP tests            | "LSP conformance"        | "LSP Conformance Suite"               |
 ----
+Proposed Solution: treeWalk or mapTree
+
+  // Signature
+  fun treeWalk(data: UDM, transform: (value: UDM, path: String) -> UDM): UDM
+
+  // Usage in UTLX
+  let cleaned = treeWalk($input, (value, path) ->
+    if (typeOf(value) == "string")
+      value replace("\n", "") replace("\t", "")
+    else
+      value
+  )
+
+  Benefits
+
+  1. More elegant - Direct tree manipulation without serialization round-trips
+  2. Type-safe - Preserves structure (objects stay objects, arrays stay arrays)
+  3. Flexible - Can transform based on path, value type, or content
+  4. Common pattern - Similar to _.mapValues (Lodash), jq walk, JSONPath, etc.
+
+---
+
 analysis part
 e.g. modules/analysis/src/test/kotlin/org/apache/utlx/analysis/validation/TransformValidatorTest.kt
 @Disabled("TODO: TypeContext API needs implementation for advanced type inference features")
