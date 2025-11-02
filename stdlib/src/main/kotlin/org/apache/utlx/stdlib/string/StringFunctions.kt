@@ -221,35 +221,86 @@ object StringFunctions {
     }
     
     @UTLXFunction(
-        description = "Replace occurrences in string",
-        minArgs = 1,
-        maxArgs = 1,
+        description = "Replace occurrences in string. Supports single replacement or multiple replacements via object/array.",
+        minArgs = 2,
+        maxArgs = 3,
         category = "String",
         parameters = [
-            "str: Str value",
-        "search: Search value",
-        "replacement: Replacement value"
+            "str: String value",
+            "search: Search value (string) OR replacements map (object)",
+            "replacement: Replacement value (string, optional if using replacements map)"
         ],
-        returns = "Result of the operation",
-        example = "replace(\"hello world\", \"world\", \"there\") => \"hello there\"",
+        returns = "String with replacements applied",
+        example = "replace(\"hello world\", \"world\", \"there\") => \"hello there\"\nreplace(\"a\\nb\\tc\", {\"\\n\": \"\", \"\\t\": \" \"}) => \"a b c\"",
         tags = ["string"],
-        since = "1.0"
+        since = "1.0",
+        notes = "Mode 1 (single): replace(str, search, replacement)\nMode 2 (multiple): replace(str, {search1: repl1, search2: repl2, ...})\nMode 3 (multiple): replace(str, [[search1, repl1], [search2, repl2], ...])"
     )
     /**
      * Replace occurrences in string
-     * Usage: replace("hello world", "world", "there") => "hello there"
+     *
+     * Supports three modes:
+     * 1. Single replacement: replace("hello world", "world", "there") => "hello there"
+     * 2. Multiple via object: replace("a\nb\tc", {"\n": "", "\t": " "}) => "a b c"
+     * 3. Multiple via array: replace("a\nb\tc", [["\n", ""], ["\t", " "]]) => "a b c"
      */
     fun replace(args: List<UDM>): UDM {
-        requireArgs(args, 3, "replace")
+        if (args.isEmpty()) {
+            throw IllegalArgumentException("replace() requires at least 2 arguments")
+        }
+
         val str = args[0].asString()
-        val pattern = args[1].asString()
-        val replacement = args[2].asString()
-        // Try as regex first, fallback to literal if regex is invalid
-        return try {
-            UDM.Scalar(str.replace(Regex(pattern), replacement))
-        } catch (e: Exception) {
-            // If regex is invalid, do literal replacement
-            UDM.Scalar(str.replace(pattern, replacement))
+
+        // Mode detection based on argument count and type
+        return when {
+            // Mode 1: replace(str, search, replacement) - single replacement
+            args.size == 3 -> {
+                val pattern = args[1].asString()
+                val replacement = args[2].asString()
+                // Try as regex first, fallback to literal if regex is invalid
+                try {
+                    UDM.Scalar(str.replace(Regex(pattern), replacement))
+                } catch (e: Exception) {
+                    // If regex is invalid, do literal replacement
+                    UDM.Scalar(str.replace(pattern, replacement))
+                }
+            }
+
+            // Mode 2: replace(str, {search1: repl1, search2: repl2}) - multiple via object
+            args.size == 2 && args[1] is UDM.Object -> {
+                val replacements = args[1] as UDM.Object
+                var result = str
+
+                // Apply each replacement in order
+                replacements.properties.forEach { (search, replacement) ->
+                    val replacementStr = replacement.asString()
+                    result = result.replace(search, replacementStr)
+                }
+
+                UDM.Scalar(result)
+            }
+
+            // Mode 3: replace(str, [[search1, repl1], [search2, repl2]]) - multiple via array
+            args.size == 2 && args[1] is UDM.Array -> {
+                val replacements = args[1] as UDM.Array
+                var result = str
+
+                // Each element should be a 2-element array [search, replacement]
+                replacements.elements.forEach { pair ->
+                    if (pair !is UDM.Array || pair.elements.size != 2) {
+                        throw IllegalArgumentException("replace() with array mode requires each element to be [search, replacement] pair")
+                    }
+                    val search = pair.elements[0].asString()
+                    val replacement = pair.elements[1].asString()
+                    result = result.replace(search, replacement)
+                }
+
+                UDM.Scalar(result)
+            }
+
+            else -> {
+                throw IllegalArgumentException("replace() invalid arguments. Use: replace(str, search, replacement) OR replace(str, {search: replacement, ...}) OR replace(str, [[search, replacement], ...])")
+            }
         }
     }
     

@@ -92,10 +92,120 @@ class StringFunctionsTest {
         val result = StringFunctions.replace(listOf(UDM.Scalar("hello world"), UDM.Scalar("world"), UDM.Scalar("universe")))
         assertTrue(result is UDM.Scalar)
         assertEquals("hello universe", (result as UDM.Scalar).value)
-        
+
         // Test multiple occurrences
         val multiResult = StringFunctions.replace(listOf(UDM.Scalar("test test test"), UDM.Scalar("test"), UDM.Scalar("example")))
         assertEquals("example example example", (multiResult as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testReplaceMultipleViaObject() {
+        // Mode 2: replace(str, {search1: repl1, search2: repl2, ...})
+        val replacements = UDM.Object(mutableMapOf(
+            "\n" to UDM.Scalar(""),
+            "\t" to UDM.Scalar(" "),
+            "\r" to UDM.Scalar("")
+        ))
+
+        val input = "Hello\n\tWorld\r\n"
+        val result = StringFunctions.replace(listOf(UDM.Scalar(input), replacements))
+
+        assertTrue(result is UDM.Scalar)
+        assertEquals("Hello World", (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testReplaceMultipleViaObjectComplex() {
+        // Test multiple string replacements in order
+        val replacements = UDM.Object(mutableMapOf(
+            "foo" to UDM.Scalar("bar"),
+            "baz" to UDM.Scalar("qux"),
+            " " to UDM.Scalar("_")
+        ))
+
+        val input = "foo baz test"
+        val result = StringFunctions.replace(listOf(UDM.Scalar(input), replacements))
+
+        assertTrue(result is UDM.Scalar)
+        assertEquals("bar_qux_test", (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testReplaceMultipleViaArray() {
+        // Mode 3: replace(str, [[search1, repl1], [search2, repl2], ...])
+        val replacements = UDM.Array(mutableListOf(
+            UDM.Array(mutableListOf(UDM.Scalar("\n"), UDM.Scalar(""))),
+            UDM.Array(mutableListOf(UDM.Scalar("\t"), UDM.Scalar(" "))),
+            UDM.Array(mutableListOf(UDM.Scalar("\r"), UDM.Scalar("")))
+        ))
+
+        val input = "Hello\n\tWorld\r\n"
+        val result = StringFunctions.replace(listOf(UDM.Scalar(input), replacements))
+
+        assertTrue(result is UDM.Scalar)
+        assertEquals("Hello World", (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testReplaceMultipleViaArrayComplex() {
+        // Test ordered replacements via array
+        val replacements = UDM.Array(mutableListOf(
+            UDM.Array(mutableListOf(UDM.Scalar("hello"), UDM.Scalar("HELLO"))),
+            UDM.Array(mutableListOf(UDM.Scalar("world"), UDM.Scalar("WORLD")))
+        ))
+
+        val input = "hello world"
+        val result = StringFunctions.replace(listOf(UDM.Scalar(input), replacements))
+
+        assertTrue(result is UDM.Scalar)
+        assertEquals("HELLO WORLD", (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testReplaceBackwardCompatibility() {
+        // Ensure Mode 1 (3 arguments) still works as before
+        val result = StringFunctions.replace(listOf(
+            UDM.Scalar("test string"),
+            UDM.Scalar("string"),
+            UDM.Scalar("text")
+        ))
+
+        assertTrue(result is UDM.Scalar)
+        assertEquals("test text", (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testReplaceInvalidArguments() {
+        // Test with wrong number of arguments
+        assertThrows<IllegalArgumentException> {
+            StringFunctions.replace(listOf())
+        }
+
+        // Test with invalid array format (not pairs)
+        val invalidArray = UDM.Array(mutableListOf(
+            UDM.Array(mutableListOf(UDM.Scalar("only_one")))  // Should be [search, replacement]
+        ))
+
+        assertThrows<IllegalArgumentException> {
+            StringFunctions.replace(listOf(UDM.Scalar("test"), invalidArray))
+        }
+    }
+
+    @Test
+    fun testReplaceEmptyReplacements() {
+        // Test with empty object (no replacements)
+        val emptyObj = UDM.Object(mutableMapOf())
+        val result = StringFunctions.replace(listOf(UDM.Scalar("test"), emptyObj))
+
+        assertTrue(result is UDM.Scalar)
+        assertEquals("test", (result as UDM.Scalar).value)
+
+        // Test with empty array (no replacements)
+        val emptyArray = UDM.Array(mutableListOf())
+        val result2 = StringFunctions.replace(listOf(UDM.Scalar("test"), emptyArray))
+
+        assertTrue(result2 is UDM.Scalar)
+        assertEquals("test", (result2 as UDM.Scalar).value)
     }
 
     @Test
