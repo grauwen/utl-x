@@ -22,7 +22,7 @@
   - Real-world examples
 
 ### ✅ Documentation
-- **File:** `stdlib/docs/jcs_integration_guide.md`
+- **File:** `/docs/jcs/jcs_integration_guide.md`
 - **Contents:**
   - Quick start guide
   - API reference
@@ -32,7 +32,7 @@
 
 ---
 
-**See also:** [JCS Integration Guide](docs/jcs_integration_guide.md)
+**See also:** [JCS Integration Guide](docs/jcs/jcs_integration_guide.md)
 
 ## Usage Examples
 
