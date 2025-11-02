@@ -49,7 +49,8 @@ object TransformCommand {
         val pretty: Boolean = true,
         val captureEnabled: Boolean? = null,  // null = use config, true = force enable, false = force disable
         val debugLevel: DebugConfig.LogLevel? = null,  // Global debug level
-        val debugComponents: Set<DebugConfig.Component> = emptySet()  // Component-specific debug
+        val debugComponents: Set<DebugConfig.Component> = emptySet(),  // Component-specific debug
+        val strictTypes: Boolean = false  // Enforce type checking (fail on type errors)
     ) {
         // Backward compatibility properties
         val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
@@ -85,7 +86,7 @@ object TransformCommand {
         try {
             // Read and compile the UTL-X script
             val scriptContent = options.scriptFile.readText()
-            val program = compileScript(scriptContent, options.verbose)
+            val program = compileScript(scriptContent, options)
 
             // Read and parse all input data files
             val namedInputsUDM = if (options.namedInputs.isNotEmpty()) {
@@ -214,41 +215,54 @@ object TransformCommand {
         }
     }
     
-    private fun compileScript(script: String, verbose: Boolean): org.apache.utlx.core.ast.Program {
+    private fun compileScript(script: String, options: TransformOptions): org.apache.utlx.core.ast.Program {
         try {
-            if (verbose) println("Lexing...")
+            if (options.verbose) println("Lexing...")
             val lexer = Lexer(script)
             val tokens = lexer.tokenize()
-            
-            if (verbose) println("Parsing...")
+
+            if (options.verbose) println("Parsing...")
             val parser = Parser(tokens)
             val parseResult = parser.parse()
-            
+
             when (parseResult) {
                 is org.apache.utlx.core.parser.ParseResult.Success -> {
-                    if (verbose) println("✓ Parsing successful")
+                    if (options.verbose) println("✓ Parsing successful")
 
                     // Type checking
-                    if (verbose) println("Type checking...")
+                    if (options.verbose) println("Type checking...")
                     val stdlib = org.apache.utlx.core.types.StandardLibrary()
                     val typeChecker = TypeChecker(stdlib)
                     val typeCheckResult = typeChecker.check(parseResult.program)
 
                     when (typeCheckResult) {
                         is org.apache.utlx.core.types.TypeCheckResult.Success -> {
-                            if (verbose) println("✓ Type checking successful (inferred type: ${typeCheckResult.type})")
+                            if (options.verbose) println("✓ Type checking successful (inferred type: ${typeCheckResult.type})")
                             return parseResult.program
                         }
                         is org.apache.utlx.core.types.TypeCheckResult.Failure -> {
-                            // For now, print type errors as warnings but don't fail
-                            // Type checking is opt-in via type annotations
-                            if (verbose) {
-                                System.err.println("Type warnings:")
+                            if (options.strictTypes) {
+                                // Strict mode: type errors cause failure
+                                System.err.println("Type errors:")
                                 typeCheckResult.errors.forEach { error ->
                                     System.err.println("  ${error.message} at ${error.location}")
+                                    if (error.expected != null && error.actual != null) {
+                                        System.err.println("    Expected: ${error.expected}")
+                                        System.err.println("    Actual: ${error.actual}")
+                                    }
                                 }
+                                exitProcess(1)
+                            } else {
+                                // Default: print type errors as warnings (verbose mode only)
+                                // Type checking is opt-in via type annotations
+                                if (options.verbose) {
+                                    System.err.println("Type warnings:")
+                                    typeCheckResult.errors.forEach { error ->
+                                        System.err.println("  ${error.message} at ${error.location}")
+                                    }
+                                }
+                                return parseResult.program
                             }
-                            return parseResult.program
                         }
                     }
                 }
@@ -262,7 +276,7 @@ object TransformCommand {
             }
         } catch (e: Exception) {
             System.err.println("Error compiling script: ${e.message}")
-            if (verbose) {
+            if (options.verbose) {
                 e.printStackTrace()
             }
             exitProcess(1)
@@ -464,6 +478,7 @@ object TransformCommand {
         var captureEnabled: Boolean? = null
         var debugLevel: DebugConfig.LogLevel? = null
         val debugComponents = mutableSetOf<DebugConfig.Component>()
+        var strictTypes = false
 
         var i = 0
         while (i < args.size) {
@@ -499,6 +514,9 @@ object TransformCommand {
                 }
                 "--no-pretty" -> {
                     pretty = false
+                }
+                "--strict-types" -> {
+                    strictTypes = true
                 }
                 "--capture" -> {
                     captureEnabled = true
@@ -578,7 +596,8 @@ object TransformCommand {
             pretty = pretty,
             captureEnabled = captureEnabled,
             debugLevel = debugLevel,
-            debugComponents = debugComponents
+            debugComponents = debugComponents,
+            strictTypes = strictTypes
         )
     }
     
@@ -604,6 +623,7 @@ object TransformCommand {
             |  --output-format FORMAT      Force output format (xml, json, csv, yaml)
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing
+            |  --strict-types              Enforce type checking (fail on type errors)
             |  --capture                   Force enable test capture (overrides config)
             |  --no-capture                Force disable test capture (overrides config)
             |  -h, --help                  Show this help message

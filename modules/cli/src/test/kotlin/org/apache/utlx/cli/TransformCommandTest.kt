@@ -171,7 +171,7 @@ class TransformCommandTest {
     fun `test verbose mode`() {
         val input = tempDir.resolve("input.json").toFile()
         input.writeText("{\"test\": true}")
-        
+
         val script = tempDir.resolve("script.utlx").toFile()
         script.writeText("""
             %utlx 1.0
@@ -180,19 +180,56 @@ class TransformCommandTest {
             ---
             { result: input.test }
         """.trimIndent())
-        
+
         val output = tempDir.resolve("output.json").toFile()
-        
+
         val args = arrayOf(
             script.absolutePath,
             input.absolutePath,
             "-o", output.absolutePath,
             "--verbose"
         )
-        
+
         // Should not throw exception
         TransformCommand.execute(args)
 
         assertTrue(output.exists())
     }
+
+    @Test
+    fun `test type checking default mode - type error produces warning but succeeds`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("{\"value\": 42}")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            (let x: Number = "this is a string" in { result: x })
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            script.absolutePath,
+            input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        // Should succeed - default mode shows warnings but doesn't fail
+        TransformCommand.execute(args)
+
+        assertTrue(output.exists(), "Output should be created even with type errors in default mode")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("this is a string"), "Should execute despite type mismatch")
+    }
+
+    // NOTE: Cannot test --strict-types in unit tests because TransformCommand.execute()
+    // uses exitProcess() which terminates the JVM and kills the test runner.
+    // The functionality has been manually verified with the following test cases:
+    //   1. --strict-types with type error: exits with code 1, shows detailed error messages
+    //   2. --strict-types with valid types: succeeds normally, exit code 0
+    //   3. default mode with type error: succeeds with warnings (verbose mode only), exit code 0
 }
