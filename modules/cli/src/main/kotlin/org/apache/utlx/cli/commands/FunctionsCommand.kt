@@ -4,9 +4,9 @@ package org.apache.utlx.cli.commands
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import org.apache.utlx.cli.CommandResult
 import org.apache.utlx.stdlib.FunctionRegistry
 import org.apache.utlx.stdlib.FunctionInfo
-import kotlin.system.exitProcess
 
 /**
  * Functions command - list and explore standard library functions
@@ -28,10 +28,20 @@ object FunctionsCommand {
         YAML            // YAML format
     }
 
-    fun execute(args: Array<String>) {
+    fun execute(args: Array<String>): CommandResult {
         try {
             // Parse arguments
-            val (command, options) = parseArgs(args)
+            val (command, options) = try {
+                parseArgs(args)
+            } catch (e: IllegalStateException) {
+                if (e.message == "HELP_REQUESTED") {
+                    return CommandResult.Success
+                }
+                return CommandResult.Failure(e.message ?: "Unknown error", 1)
+            } catch (e: IllegalArgumentException) {
+                return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
+            }
+
             val format = options["format"] as? OutputFormat ?: OutputFormat.TEXT
 
             // Load bundled registry
@@ -40,22 +50,45 @@ object FunctionsCommand {
             // Execute command
             when (command) {
                 "list", "" -> listFunctions(registry, format, options)
-                "search" -> searchFunctions(registry, options["query"] as? String ?: "", format)
-                "info" -> showInfo(registry, options["name"] as? String ?: "", format)
+                "search" -> {
+                    val query = options["query"] as? String ?: ""
+                    if (query.isBlank()) {
+                        System.err.println("Error: search requires a query")
+                        println("Usage: utlx functions search <query>")
+                        return CommandResult.Failure("Search requires a query", 1)
+                    }
+                    searchFunctions(registry, query, format)
+                }
+                "info" -> {
+                    val name = options["name"] as? String ?: ""
+                    if (name.isBlank()) {
+                        System.err.println("Error: info requires a function name")
+                        println("Usage: utlx functions info <function-name>")
+                        return CommandResult.Failure("Info requires a function name", 1)
+                    }
+                    val func = registry.functions.find { it.name.equals(name, ignoreCase = true) }
+                    if (func == null) {
+                        System.err.println("Function '$name' not found")
+                        return CommandResult.Failure("Function not found: $name", 1)
+                    }
+                    showInfo(registry, name, format)
+                }
                 "stats" -> showStats(registry, format)
                 "categories" -> listCategories(registry, format)
                 else -> {
                     System.err.println("Unknown subcommand: $command")
                     printUsage()
-                    exitProcess(1)
+                    return CommandResult.Failure("Unknown subcommand: $command", 1)
                 }
             }
+
+            return CommandResult.Success
         } catch (e: Exception) {
             System.err.println("Error: ${e.message}")
             if (System.getProperty("utlx.debug") == "true") {
                 e.printStackTrace()
             }
-            exitProcess(1)
+            return CommandResult.Failure(e.message ?: "Unknown error", 1)
         }
     }
 
@@ -88,7 +121,7 @@ object FunctionsCommand {
                         "detailed" -> options["detailed"] = true
                         "help" -> {
                             printUsage()
-                            exitProcess(0)
+                            throw IllegalStateException("HELP_REQUESTED")
                         }
                     }
                 }
@@ -136,12 +169,6 @@ object FunctionsCommand {
     }
 
     private fun searchFunctions(registry: FunctionRegistry, query: String, format: OutputFormat) {
-        if (query.isBlank()) {
-            System.err.println("Error: search requires a query")
-            println("Usage: utlx functions search <query>")
-            exitProcess(1)
-        }
-
         val results = registry.functions.filter { func ->
             func.name.contains(query, ignoreCase = true) ||
             func.description.contains(query, ignoreCase = true) ||
@@ -167,17 +194,8 @@ object FunctionsCommand {
     }
 
     private fun showInfo(registry: FunctionRegistry, name: String, format: OutputFormat) {
-        if (name.isBlank()) {
-            System.err.println("Error: info requires a function name")
-            println("Usage: utlx functions info <function-name>")
-            exitProcess(1)
-        }
-
         val func = registry.functions.find { it.name.equals(name, ignoreCase = true) }
-        if (func == null) {
-            System.err.println("Function '$name' not found")
-            exitProcess(1)
-        }
+            ?: error("Function not found")  // Should never happen - validated in execute()
 
         when (format) {
             OutputFormat.JSON -> printJson(func, prettyPrint = true)

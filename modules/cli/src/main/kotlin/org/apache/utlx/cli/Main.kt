@@ -22,12 +22,12 @@ object Main {
             printUsage()
             exitProcess(0)
         }
-        
+
         try {
             val command = args[0]
             val commandArgs = args.drop(1).toTypedArray()
-            
-            when (command.lowercase()) {
+
+            val result = when (command.lowercase()) {
                 "transform", "t" -> TransformCommand.execute(commandArgs)
                 "repl", "r" -> ReplCommand.execute(commandArgs)
                 "design", "d" -> DesignCommand.execute(commandArgs)
@@ -37,25 +37,41 @@ object Main {
                 "compile", "c" -> {
                     println("Compile command not yet implemented")
                     println("Coming soon: Compile UTL-X scripts to bytecode")
+                    CommandResult.Success
                 }
                 "format", "f" -> {
                     println("Format command not yet implemented")
                     println("Coming soon: Format/pretty-print UTL-X scripts")
+                    CommandResult.Success
                 }
                 "migrate", "m" -> {
                     println("Migrate command not yet implemented")
                     println("Coming soon: Migrate XSLT/DataWeave to UTL-X")
+                    CommandResult.Success
                 }
                 "functions", "fn" -> FunctionsCommand.execute(commandArgs)
                 "version", "--version", "-v" -> {
                     println("UTL-X CLI v$VERSION")
                     println("Universal Transformation Language Extended")
+                    CommandResult.Success
                 }
-                "help", "--help", "-h" -> printUsage()
+                "help", "--help", "-h" -> {
+                    printUsage()
+                    CommandResult.Success
+                }
                 else -> {
                     System.err.println("Unknown command: $command")
                     printUsage()
-                    exitProcess(1)
+                    CommandResult.Failure("Unknown command: $command", 1)
+                }
+            }
+
+            // Handle command result - only Main.kt controls process exit
+            when (result) {
+                is CommandResult.Success -> exitProcess(0)
+                is CommandResult.Failure -> {
+                    // Error message already printed by command
+                    exitProcess(result.exitCode)
                 }
             }
         } catch (e: Exception) {

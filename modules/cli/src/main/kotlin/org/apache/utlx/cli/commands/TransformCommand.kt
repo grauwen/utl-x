@@ -26,9 +26,9 @@ import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
 import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
 import org.apache.utlx.stdlib.StandardLibrary
 import org.apache.utlx.cli.capture.TestCaptureService
+import org.apache.utlx.cli.CommandResult
 import org.apache.utlx.core.debug.DebugConfig
 import java.io.File
-import kotlin.system.exitProcess
 
 /**
  * Transform command - converts data between formats using UTL-X scripts
@@ -59,8 +59,19 @@ object TransformCommand {
         val hasMultipleOutputs: Boolean get() = namedOutputs.size > 1
     }
     
-    fun execute(args: Array<String>) {
-        val options = parseOptions(args)
+    fun execute(args: Array<String>): CommandResult {
+        val options = try {
+            parseOptions(args)
+        } catch (e: IllegalStateException) {
+            // Special case: --help was requested
+            if (e.message == "HELP_REQUESTED") {
+                return CommandResult.Success
+            }
+            return CommandResult.Failure(e.message ?: "Unknown error", 1)
+        } catch (e: IllegalArgumentException) {
+            // Argument parsing errors (already printed to stderr)
+            return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
+        }
 
         // Apply debug settings from CLI flags
         options.debugLevel?.let { level ->
@@ -173,6 +184,8 @@ object TransformCommand {
                 )
             }
 
+            return CommandResult.Success
+
         } catch (e: Exception) {
             // Capture failed execution
             captureError = e.message ?: "Unknown error"
@@ -210,8 +223,8 @@ object TransformCommand {
                 }
             }
 
-            // Re-throw the original error
-            throw e
+            // Return failure with error message
+            return CommandResult.Failure(e.message ?: "Transformation failed", 1)
         }
     }
     
@@ -251,7 +264,7 @@ object TransformCommand {
                                         System.err.println("    Actual: ${error.actual}")
                                     }
                                 }
-                                exitProcess(1)
+                                throw IllegalStateException("Type checking failed")
                             } else {
                                 // Default: print type errors as warnings (verbose mode only)
                                 // Type checking is opt-in via type annotations
@@ -271,7 +284,7 @@ object TransformCommand {
                     parseResult.errors.forEach { error ->
                         System.err.println("  ${error.message} at ${error.location}")
                     }
-                    exitProcess(1)
+                    throw IllegalStateException("Parsing failed")
                 }
             }
         } catch (e: Exception) {
@@ -279,7 +292,7 @@ object TransformCommand {
             if (options.verbose) {
                 e.printStackTrace()
             }
-            exitProcess(1)
+            throw IllegalStateException("Compilation failed: ${e.message}", e)
         }
     }
     
@@ -465,7 +478,7 @@ object TransformCommand {
     private fun parseOptions(args: Array<String>): TransformOptions {
         if (args.isEmpty()) {
             printUsage()
-            exitProcess(1)
+            throw IllegalArgumentException("No arguments provided")
         }
 
         val namedInputs = mutableMapOf<String, File>()
@@ -547,7 +560,8 @@ object TransformCommand {
                 }
                 "-h", "--help" -> {
                     printUsage()
-                    exitProcess(0)
+                    // Special case: help is a successful operation
+                    throw IllegalStateException("HELP_REQUESTED")
                 }
                 else -> {
                     if (!args[i].startsWith("-")) {
@@ -560,7 +574,7 @@ object TransformCommand {
                     } else {
                         System.err.println("Unknown option: ${args[i]}")
                         printUsage()
-                        exitProcess(1)
+                        throw IllegalArgumentException("Unknown option: ${args[i]}")
                     }
                 }
             }
@@ -570,19 +584,19 @@ object TransformCommand {
         if (scriptFile == null) {
             System.err.println("Error: Script file is required")
             printUsage()
-            exitProcess(1)
+            throw IllegalArgumentException("Script file is required")
         }
 
         if (!scriptFile.exists()) {
             System.err.println("Error: Script file not found: ${scriptFile.absolutePath}")
-            exitProcess(1)
+            throw IllegalArgumentException("Script file not found: ${scriptFile.absolutePath}")
         }
 
         // Validate all input files exist
         namedInputs.forEach { (name, file) ->
             if (!file.exists()) {
                 System.err.println("Error: Input file not found: ${file.absolutePath} (input: $name)")
-                exitProcess(1)
+                throw IllegalArgumentException("Input file not found: ${file.absolutePath}")
             }
         }
 

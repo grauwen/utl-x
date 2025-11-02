@@ -9,8 +9,8 @@ import org.apache.utlx.core.types.TypeCheckResult
 import org.apache.utlx.core.types.StandardLibrary
 import org.apache.utlx.analysis.schema.*
 import org.apache.utlx.analysis.types.TypeDefinition
+import org.apache.utlx.cli.CommandResult
 import java.io.File
-import kotlin.system.exitProcess
 
 /**
  * Validate command - validates UTL-X scripts for correctness (Levels 1-3)
@@ -43,8 +43,19 @@ object ValidateCommand {
         COMPACT     // Compact single-line format
     }
 
-    fun execute(args: Array<String>) {
-        val options = parseOptions(args)
+    fun execute(args: Array<String>): CommandResult {
+        val options = try {
+            parseOptions(args)
+        } catch (e: IllegalStateException) {
+            // Special case: --help was requested
+            if (e.message == "HELP_REQUESTED") {
+                return CommandResult.Success
+            }
+            return CommandResult.Failure(e.message ?: "Unknown error", 1)
+        } catch (e: IllegalArgumentException) {
+            // Argument parsing errors (already printed to stderr)
+            return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
+        }
 
         if (options.verbose) {
             println("UTL-X Validate")
@@ -64,7 +75,7 @@ object ValidateCommand {
             options.scriptFile.readText()
         } catch (e: Exception) {
             System.err.println("✗ Error reading script file: ${e.message}")
-            exitProcess(1)
+            throw IllegalStateException("Error reading script file: ${e.message}", e)
         }
 
         val lexer = Lexer(scriptContent)
@@ -72,7 +83,7 @@ object ValidateCommand {
             lexer.tokenize()
         } catch (e: Exception) {
             System.err.println("✗ Lexer error: ${e.message}")
-            exitProcess(1)
+            throw IllegalStateException("Lexer error: ${e.message}", e)
         }
 
         val parser = Parser(tokens)
@@ -127,7 +138,21 @@ object ValidateCommand {
                     }, options.format, scriptContent)
                 }
 
-                exitProcess(1)
+                // Parse errors prevent further validation - return early
+                return when (options.format) {
+                    ValidationFormat.HUMAN -> {
+                        println("✗ Validation failed")
+                        CommandResult.Failure("Validation failed", 1)
+                    }
+                    ValidationFormat.JSON -> {
+                        println("""{"status":"failure"}""")
+                        CommandResult.Failure("Validation failed", 1)
+                    }
+                    ValidationFormat.COMPACT -> {
+                        println("FAIL")
+                        CommandResult.Failure("Validation failed", 1)
+                    }
+                }
             }
         }
 
@@ -238,27 +263,27 @@ object ValidateCommand {
         }
 
         // Final result
-        if (!hasErrors) {
+        return if (!hasErrors) {
             when (options.format) {
                 ValidationFormat.HUMAN -> println("✓ Validation passed")
                 ValidationFormat.JSON -> println("""{"status":"success","errors":[],"warnings":[]}""")
                 ValidationFormat.COMPACT -> println("PASS")
             }
-            exitProcess(0)
+            CommandResult.Success
         } else {
             when (options.format) {
                 ValidationFormat.HUMAN -> println("✗ Validation failed")
                 ValidationFormat.JSON -> println("""{"status":"failure"}""")
                 ValidationFormat.COMPACT -> println("FAIL")
             }
-            exitProcess(1)
+            CommandResult.Failure("Validation failed", 1)
         }
     }
 
     private fun parseOptions(args: Array<String>): ValidateOptions {
         if (args.isEmpty()) {
             printUsage()
-            exitProcess(1)
+            throw IllegalArgumentException("No arguments provided")
         }
 
         var scriptFile: File? = null
@@ -275,7 +300,7 @@ object ValidateCommand {
                     if (i + 1 >= args.size) {
                         System.err.println("Error: --schema requires a file path")
                         printUsage()
-                        exitProcess(1)
+                        throw IllegalArgumentException("--schema requires a file path")
                     }
                     schemaFile = File(args[++i])
                 }
@@ -289,7 +314,7 @@ object ValidateCommand {
                     if (i + 1 >= args.size) {
                         System.err.println("Error: --format requires a format (human, json, compact)")
                         printUsage()
-                        exitProcess(1)
+                        throw IllegalArgumentException("--format requires a format (human, json, compact)")
                     }
                     format = when (args[++i].lowercase()) {
                         "human" -> ValidationFormat.HUMAN
@@ -297,7 +322,7 @@ object ValidateCommand {
                         "compact" -> ValidationFormat.COMPACT
                         else -> {
                             System.err.println("Error: Invalid format. Use: human, json, compact")
-                            exitProcess(1)
+                            throw IllegalArgumentException("Invalid format. Use: human, json, compact")
                         }
                     }
                 }
@@ -306,7 +331,7 @@ object ValidateCommand {
                 }
                 "-h", "--help" -> {
                     printUsage()
-                    exitProcess(0)
+                    throw IllegalStateException("HELP_REQUESTED")
                 }
                 else -> {
                     if (!args[i].startsWith("-")) {
@@ -315,12 +340,12 @@ object ValidateCommand {
                         } else {
                             System.err.println("Error: Unknown argument: ${args[i]}")
                             printUsage()
-                            exitProcess(1)
+                            throw IllegalArgumentException("Unknown argument: ${args[i]}")
                         }
                     } else {
                         System.err.println("Error: Unknown option: ${args[i]}")
                         printUsage()
-                        exitProcess(1)
+                        throw IllegalArgumentException("Unknown option: ${args[i]}")
                     }
                 }
             }
@@ -330,17 +355,17 @@ object ValidateCommand {
         if (scriptFile == null) {
             System.err.println("Error: Script file is required")
             printUsage()
-            exitProcess(1)
+            throw IllegalArgumentException("Script file is required")
         }
 
         if (!scriptFile.exists()) {
             System.err.println("Error: Script file not found: ${scriptFile.absolutePath}")
-            exitProcess(1)
+            throw IllegalArgumentException("Script file not found: ${scriptFile.absolutePath}")
         }
 
         if (schemaFile != null && !schemaFile.exists()) {
             System.err.println("Error: Schema file not found: ${schemaFile.absolutePath}")
-            exitProcess(1)
+            throw IllegalArgumentException("Schema file not found: ${schemaFile.absolutePath}")
         }
 
         return ValidateOptions(

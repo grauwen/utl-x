@@ -5,8 +5,8 @@ import org.apache.utlx.core.lexer.Lexer
 import org.apache.utlx.core.parser.Parser
 import org.apache.utlx.core.parser.ParseResult
 import org.apache.utlx.core.ast.*
+import org.apache.utlx.cli.CommandResult
 import java.io.File
-import kotlin.system.exitProcess
 
 /**
  * Lint command - checks for style issues and best practices (Level 4)
@@ -47,8 +47,19 @@ object LintCommand {
         COMPACT     // Compact single-line format
     }
 
-    fun execute(args: Array<String>) {
-        val options = parseOptions(args)
+    fun execute(args: Array<String>): CommandResult {
+        val options = try {
+            parseOptions(args)
+        } catch (e: IllegalStateException) {
+            // Special case: --help was requested
+            if (e.message == "HELP_REQUESTED") {
+                return CommandResult.Success
+            }
+            return CommandResult.Failure(e.message ?: "Unknown error", 1)
+        } catch (e: IllegalArgumentException) {
+            // Argument parsing errors (already printed to stderr)
+            return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
+        }
 
         if (options.verbose) {
             println("UTL-X Lint")
@@ -65,7 +76,7 @@ object LintCommand {
             options.scriptFile.readText()
         } catch (e: Exception) {
             System.err.println("✗ Error reading script file: ${e.message}")
-            exitProcess(1)
+            return CommandResult.Failure("Error reading script file", 1)
         }
 
         val lexer = Lexer(scriptContent)
@@ -75,7 +86,7 @@ object LintCommand {
             System.err.println("⚠️  Cannot lint: Lexer error")
             System.err.println("   ${e.message}")
             System.err.println("   Run 'utlx validate' to check for syntax errors first.")
-            exitProcess(1)
+            return CommandResult.Failure("Cannot lint: Lexer error", 1)
         }
 
         val parser = Parser(tokens)
@@ -90,7 +101,7 @@ object LintCommand {
                 }
                 System.err.println()
                 System.err.println("   Run 'utlx validate' to fix syntax errors first.")
-                exitProcess(1)
+                return CommandResult.Failure("Cannot lint: File has syntax errors", 1)
             }
         }
 
@@ -120,7 +131,7 @@ object LintCommand {
                 LintFormat.JSON -> println("""{"status":"clean","warnings":[]}""")
                 LintFormat.COMPACT -> println("CLEAN")
             }
-            exitProcess(0)
+            return CommandResult.Success
         } else {
             printWarnings(warnings, options.format, scriptContent)
 
@@ -156,14 +167,14 @@ object LintCommand {
             }
 
             // Lint never fails (exit 0 even with warnings)
-            exitProcess(0)
+            return CommandResult.Success
         }
     }
 
     private fun parseOptions(args: Array<String>): LintOptions {
         if (args.isEmpty()) {
             printUsage()
-            exitProcess(1)
+            throw IllegalArgumentException("Argument error")
         }
 
         var scriptFile: File? = null
@@ -186,7 +197,7 @@ object LintCommand {
                     if (i + 1 >= args.size) {
                         System.err.println("Error: --rules requires a file path")
                         printUsage()
-                        exitProcess(1)
+                        throw IllegalArgumentException("Argument error")
                     }
                     rulesFile = File(args[++i])
                 }
@@ -197,7 +208,7 @@ object LintCommand {
                     if (i + 1 >= args.size) {
                         System.err.println("Error: --format requires a format (human, json, compact)")
                         printUsage()
-                        exitProcess(1)
+                        throw IllegalArgumentException("Argument error")
                     }
                     format = when (args[++i].lowercase()) {
                         "human" -> LintFormat.HUMAN
@@ -205,7 +216,7 @@ object LintCommand {
                         "compact" -> LintFormat.COMPACT
                         else -> {
                             System.err.println("Error: Invalid format. Use: human, json, compact")
-                            exitProcess(1)
+                            throw IllegalArgumentException("Argument error")
                         }
                     }
                 }
@@ -215,7 +226,7 @@ object LintCommand {
                 "--no-style" -> noStyle = true
                 "-h", "--help" -> {
                     printUsage()
-                    exitProcess(0)
+                    throw IllegalStateException("HELP_REQUESTED")
                 }
                 else -> {
                     if (!args[i].startsWith("-")) {
@@ -224,12 +235,12 @@ object LintCommand {
                         } else {
                             System.err.println("Error: Unknown argument: ${args[i]}")
                             printUsage()
-                            exitProcess(1)
+                            throw IllegalArgumentException("Argument error")
                         }
                     } else {
                         System.err.println("Error: Unknown option: ${args[i]}")
                         printUsage()
-                        exitProcess(1)
+                        throw IllegalArgumentException("Argument error")
                     }
                 }
             }
@@ -239,17 +250,17 @@ object LintCommand {
         if (scriptFile == null) {
             System.err.println("Error: Script file is required")
             printUsage()
-            exitProcess(1)
+            throw IllegalArgumentException("Argument error")
         }
 
         if (!scriptFile.exists()) {
             System.err.println("Error: Script file not found: ${scriptFile.absolutePath}")
-            exitProcess(1)
+            throw IllegalArgumentException("Argument error")
         }
 
         if (rulesFile != null && !rulesFile.exists()) {
             System.err.println("Error: Rules file not found: ${rulesFile.absolutePath}")
-            exitProcess(1)
+            throw IllegalArgumentException("Argument error")
         }
 
         return LintOptions(

@@ -219,17 +219,109 @@ class TransformCommandTest {
         )
 
         // Should succeed - default mode shows warnings but doesn't fail
-        TransformCommand.execute(args)
+        val result = TransformCommand.execute(args)
 
+        assertTrue(result is CommandResult.Success, "Should succeed in default mode")
         assertTrue(output.exists(), "Output should be created even with type errors in default mode")
         val outputContent = output.readText()
         assertTrue(outputContent.contains("this is a string"), "Should execute despite type mismatch")
     }
 
-    // NOTE: Cannot test --strict-types in unit tests because TransformCommand.execute()
-    // uses exitProcess() which terminates the JVM and kills the test runner.
-    // The functionality has been manually verified with the following test cases:
-    //   1. --strict-types with type error: exits with code 1, shows detailed error messages
-    //   2. --strict-types with valid types: succeeds normally, exit code 0
-    //   3. default mode with type error: succeeds with warnings (verbose mode only), exit code 0
+    @Test
+    fun `test strict-types mode - type error causes failure`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("{\"value\": 42}")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            (let x: Number = "this is a string" in { result: x })
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            script.absolutePath,
+            input.absolutePath,
+            "-o", output.absolutePath,
+            "--strict-types"
+        )
+
+        // Should fail - strict mode rejects type errors
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Failure, "Should fail with type errors in strict mode")
+        assertEquals(1, (result as CommandResult.Failure).exitCode, "Exit code should be 1")
+        assertTrue(result.message.contains("Type checking failed"), "Error message should mention type checking")
+        assertTrue(!output.exists(), "Output should not be created when type checking fails")
+    }
+
+    @Test
+    fun `test strict-types mode - valid types succeed`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("{\"value\": 42}")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            (let x: Number = 123 in { result: x })
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            script.absolutePath,
+            input.absolutePath,
+            "-o", output.absolutePath,
+            "--strict-types"
+        )
+
+        // Should succeed - types are valid
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Should succeed with valid types in strict mode")
+        assertTrue(output.exists(), "Output should be created")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("123"), "Should contain the correct value")
+    }
+
+    @Test
+    fun `test strict-types with multiple type errors`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("{\"value\": 42}")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            {
+              error1: (let x: Number = "string" in x),
+              error2: (let y: String = 123 in y),
+              error3: (let z: Boolean = null in z)
+            }
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            script.absolutePath,
+            input.absolutePath,
+            "-o", output.absolutePath,
+            "--strict-types"
+        )
+
+        // Should fail with multiple errors
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Failure, "Should fail with multiple type errors")
+        assertTrue(!output.exists(), "Output should not be created")
+    }
 }

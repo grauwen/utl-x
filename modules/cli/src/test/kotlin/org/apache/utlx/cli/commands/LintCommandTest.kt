@@ -1,9 +1,11 @@
 // modules/cli/src/test/kotlin/org/apache/utlx/cli/commands/LintCommandTest.kt
 package org.apache.utlx.cli.commands
 
+import org.apache.utlx.cli.CommandResult
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class LintCommandTest {
@@ -125,11 +127,9 @@ class LintCommandTest {
         val args = arrayOf(script.absolutePath)
 
         // Lint should detect it can't lint (syntax error)
-        try {
-            LintCommand.execute(args)
-        } catch (e: SystemExitException) {
-            assertTrue(e.exitCode == 1, "Syntax errors should prevent linting")
-        }
+        val result = LintCommand.execute(args)
+        assertTrue(result is CommandResult.Failure, "Syntax errors should prevent linting")
+        assertEquals(1, (result as CommandResult.Failure).exitCode, "Exit code should be 1")
     }
 
     @Test

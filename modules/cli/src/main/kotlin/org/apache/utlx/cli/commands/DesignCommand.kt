@@ -4,13 +4,13 @@ package org.apache.utlx.cli.commands
 import org.apache.utlx.analysis.schema.*
 import org.apache.utlx.analysis.types.TypeDefinition
 import org.apache.utlx.analysis.validation.TransformValidator
+import org.apache.utlx.cli.CommandResult
 import org.apache.utlx.core.parser.Parser
 import org.apache.utlx.core.parser.ParseResult
 import org.apache.utlx.core.lexer.Lexer
 import org.apache.utlx.daemon.UTLXDaemon
 import org.apache.utlx.daemon.TransportType
 import java.io.File
-import kotlin.system.exitProcess
 
 /**
  * Design-time analysis commands for UTL-X CLI
@@ -20,27 +20,30 @@ import kotlin.system.exitProcess
  */
 object DesignCommand {
 
-    fun execute(args: Array<String>) {
+    fun execute(args: Array<String>): CommandResult {
         if (args.isEmpty()) {
             printUsage()
-            exitProcess(1)
+            return CommandResult.Failure("Subcommand required", 1)
         }
 
         val subcommand = args[0]
         val subArgs = args.drop(1).toTypedArray()
 
-        try {
+        return try {
             when (subcommand.lowercase()) {
                 "generate-schema", "gen" -> executeGenerateSchema(subArgs)
                 "typecheck", "check" -> executeTypecheck(subArgs)
                 "infer", "inf" -> executeInfer(subArgs)
                 "daemon", "d" -> executeDaemon(subArgs)
                 "graph", "g" -> executeGraph(subArgs)
-                "help", "--help", "-h" -> printUsage()
+                "help", "--help", "-h" -> {
+                    printUsage()
+                    CommandResult.Success
+                }
                 else -> {
                     System.err.println("Unknown design subcommand: $subcommand")
                     printUsage()
-                    exitProcess(1)
+                    CommandResult.Failure("Unknown subcommand: $subcommand", 1)
                 }
             }
         } catch (e: Exception) {
@@ -48,14 +51,14 @@ object DesignCommand {
             if (System.getProperty("utlx.debug") == "true") {
                 e.printStackTrace()
             }
-            exitProcess(1)
+            CommandResult.Failure(e.message ?: "Unknown error", 1)
         }
     }
 
     /**
      * Generate output schema from input schema and transformation (design-time analysis)
      */
-    private fun executeGenerateSchema(args: Array<String>) {
+    private fun executeGenerateSchema(args: Array<String>): CommandResult {
         var inputSchemaFile: String? = null
         var transformFile: String? = null
         var outputFormat = "json-schema"
@@ -125,7 +128,7 @@ object DesignCommand {
                 parseResult.errors.forEach { error ->
                     System.err.println("  ${error.location.line}:${error.location.column} - ${error.message}")
                 }
-                exitProcess(1)
+                return CommandResult.Failure("Operation failed", 1)
             }
         }
 
@@ -175,12 +178,14 @@ object DesignCommand {
         } else {
             println(outputSchema)
         }
+
+        return CommandResult.Success
     }
 
     /**
      * Typecheck transformation against input and expected output schemas
      */
-    private fun executeTypecheck(args: Array<String>) {
+    private fun executeTypecheck(args: Array<String>): CommandResult {
         var inputSchemaFile: String? = null
         var transformFile: String? = null
         var expectedOutputFile: String? = null
@@ -244,7 +249,7 @@ object DesignCommand {
                 parseResult.errors.forEach { error ->
                     System.err.println("  ${error.location.line}:${error.location.column} - ${error.message}")
                 }
-                exitProcess(1)
+                return CommandResult.Failure("Operation failed", 1)
             }
         }
 
@@ -268,6 +273,7 @@ object DesignCommand {
                 println("\nWarnings:")
                 result.warnings.forEach { println("  ⚠ $it") }
             }
+            return CommandResult.Success
         } else {
             println("✗ Typecheck failed")
             println("\nErrors:")
@@ -277,14 +283,14 @@ object DesignCommand {
                 println("\nWarnings:")
                 result.warnings.forEach { println("  ⚠ $it") }
             }
-            exitProcess(1)
+            return CommandResult.Failure("Operation failed", 1)
         }
     }
 
     /**
      * Infer schema from transformation without input schema
      */
-    private fun executeInfer(args: Array<String>) {
+    private fun executeInfer(args: Array<String>): CommandResult {
         var transformFile: String? = null
         var outputFormat = "json-schema"
         var outputFile: String? = null
@@ -344,7 +350,7 @@ object DesignCommand {
                 parseResult.errors.forEach { error ->
                     System.err.println("  ${error.location.line}:${error.location.column} - ${error.message}")
                 }
-                exitProcess(1)
+                return CommandResult.Failure("Operation failed", 1)
             }
         }
 
@@ -367,6 +373,8 @@ object DesignCommand {
         } else {
             println(outputSchema)
         }
+
+        return CommandResult.Success
     }
 
     /**
@@ -375,7 +383,7 @@ object DesignCommand {
      * Runs a long-running LSP server using JSON-RPC 2.0 protocol.
      * Transport options: STDIO (default, for IDEs) or Socket (for remote access).
      */
-    private fun executeDaemon(args: Array<String>) {
+    private fun executeDaemon(args: Array<String>): CommandResult {
         var transportType = TransportType.STDIO
         var port = 7777
         var verbose = false
@@ -404,7 +412,7 @@ object DesignCommand {
                 }
                 "--help", "-h" -> {
                     printDaemonUsage()
-                    return
+                    return CommandResult.Success
                 }
                 else -> {
                     throw IllegalArgumentException("Unknown daemon argument: ${args[i]}")
@@ -448,12 +456,13 @@ object DesignCommand {
 
         try {
             daemon.start()
+            return CommandResult.Success
         } catch (e: Exception) {
             System.err.println("Daemon error: ${e.message}")
             if (verbose || System.getProperty("utlx.debug") == "true") {
                 e.printStackTrace()
             }
-            exitProcess(1)
+            return CommandResult.Failure("Operation failed", 1)
         }
     }
 
@@ -499,7 +508,7 @@ object DesignCommand {
     /**
      * Generate graph representation and visualization
      */
-    private fun executeGraph(args: Array<String>) {
+    private fun executeGraph(args: Array<String>): CommandResult {
         var transformFile: String? = null
         var outputFile: String? = null
         var layout = "TB"
@@ -531,7 +540,7 @@ object DesignCommand {
                 "--verbose", "-v" -> verbose = true
                 "--help", "-h" -> {
                     printGraphUsage()
-                    return
+                    return CommandResult.Success
                 }
                 else -> {
                     if (transformFile == null) {
@@ -570,7 +579,7 @@ object DesignCommand {
                 parseResult.errors.forEach { error ->
                     System.err.println("  ${error.location.line}:${error.location.column} - ${error.message}")
                 }
-                exitProcess(1)
+                return CommandResult.Failure("Operation failed", 1)
             }
         }
 
@@ -638,6 +647,8 @@ object DesignCommand {
                 throw IllegalArgumentException("Unsupported format: $format. Use dot, svg, png, or pdf")
             }
         }
+
+        return CommandResult.Success
     }
 
     private fun printGraphUsage() {

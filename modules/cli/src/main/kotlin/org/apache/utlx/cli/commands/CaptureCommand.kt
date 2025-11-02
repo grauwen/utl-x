@@ -1,9 +1,9 @@
 // modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/CaptureCommand.kt
 package org.apache.utlx.cli.commands
 
+import org.apache.utlx.cli.CommandResult
 import org.apache.utlx.cli.capture.CaptureConfig
 import java.io.File
-import kotlin.system.exitProcess
 
 /**
  * Capture command - manage test capture settings
@@ -15,10 +15,10 @@ import kotlin.system.exitProcess
  */
 object CaptureCommand {
 
-    fun execute(args: Array<String>) {
+    fun execute(args: Array<String>): CommandResult {
         if (args.isEmpty()) {
             printUsage()
-            exitProcess(1)
+            return CommandResult.Failure("Subcommand required", 1)
         }
 
         val subcommand = args[0].lowercase()
@@ -31,9 +31,11 @@ object CaptureCommand {
             else -> {
                 System.err.println("Unknown capture subcommand: $subcommand")
                 printUsage()
-                exitProcess(1)
+                return CommandResult.Failure("Unknown subcommand: $subcommand", 1)
             }
         }
+
+        return CommandResult.Success
     }
 
     private fun showStatus() {
