@@ -12,7 +12,6 @@
   - Helper utilities
 
 ### ✅ Tests
-- **File:** `stdlib/src/test/kotlin/org/apache/utlx/stdlib/json/JSONCanonicalizationTest.kt`
 - **Status:** Comprehensive test suite
 - **Coverage:**
   - RFC 8785 test vectors
