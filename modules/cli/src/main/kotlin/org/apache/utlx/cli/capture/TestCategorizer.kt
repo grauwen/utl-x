@@ -99,24 +99,34 @@ object TestCategorizer {
 
     /**
      * Determine test category based on transformation content
+     * Primary: format-based categorization (input/output formats)
+     * Fallback: function-based categorization
      */
     fun categorize(transformation: String, inputFormat: String, outputFormat: String): String {
-        val functions = extractFunctions(transformation)
-
-        // If we found recognized functions, use the category of the first one
-        if (functions.isNotEmpty()) {
-            val primaryFunction = functions.first()
-            return functionCategories[primaryFunction] ?: "uncategorized"
-        }
-
-        // Fallback: categorize by format transformation
-        return when {
+        // Primary: categorize by format transformation
+        val formatCategory = when {
             inputFormat == "xml" && outputFormat == "json" -> "xml-to-json"
             inputFormat == "json" && outputFormat == "xml" -> "json-to-xml"
             inputFormat == "csv" && outputFormat == "json" -> "csv-to-json"
-            inputFormat == outputFormat -> "$inputFormat-transform"
-            else -> "uncategorized"
+            inputFormat == "json" && outputFormat == "csv" -> "json-to-csv"
+            inputFormat == "xml" && outputFormat == "csv" -> "xml-to-csv"
+            inputFormat == outputFormat -> inputFormat  // e.g. "json", "xml", "csv"
+            else -> null
         }
+
+        if (formatCategory != null) {
+            return formatCategory
+        }
+
+        // Fallback: categorize by function (strip "stdlib/" prefix - it's redundant)
+        val functions = extractFunctions(transformation)
+        if (functions.isNotEmpty()) {
+            val primaryFunction = functions.first()
+            val category = functionCategories[primaryFunction]
+            return category?.removePrefix("stdlib/") ?: "uncategorized"
+        }
+
+        return "uncategorized"
     }
 
     /**
