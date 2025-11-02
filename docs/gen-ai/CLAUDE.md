@@ -1495,16 +1495,44 @@ cd conformance-suite/lsp
 
 ## Language Syntax (UTL-X)
 
+### Comments
+
+**IMPORTANT**: UTL-X uses C-style comments, NOT hash (#) comments:
+
+```utlx
+// Single-line comment (CORRECT)
+
+/* Multi-line comment
+   spanning multiple lines
+   (CORRECT) */
+
+# This is NOT a valid comment (WRONG - will cause parse errors)
+```
+
+**Common Error**: Do not use `#` for comments in the transformation body. The `#` symbol is only used in the header directives (`%utlx 1.0`).
+
 Basic transformation structure:
 ```utlx
 %utlx 1.0
-input json    # or xml, csv, yaml, auto
-output json   # target format
+input json    // or xml, csv, yaml, auto
+output json   // target format
 ---
 {
   // Transformation logic using functional operators
   result: $input.data |> map(item => transform(item))
 }
+```
+
+### Object Literals in Function Arguments
+
+When passing object literals as function arguments, wrap them in parentheses:
+
+```utlx
+// CORRECT - object literal wrapped in parentheses
+replace(value, ({"\n": "", "\t": ""}))
+
+// WRONG - parser will treat { as code block
+replace(value, {"\n": "", "\t": ""})
 ```
 
 Key operators:
