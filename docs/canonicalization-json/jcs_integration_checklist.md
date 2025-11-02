@@ -22,7 +22,7 @@
   - Real-world examples
 
 ### ✅ Documentation
-- **File:** `/docs/jcs/jcs_integration_guide.md`
+- **File:** `/docs/canonicalization-json/jcs_integration_guide.md`
 - **Contents:**
   - Quick start guide
   - API reference
@@ -32,7 +32,7 @@
 
 ---
 
-**See also:** [JCS Integration Guide](docs/jcs/jcs_integration_guide.md)
+**See also:** [JCS Integration Guide](jcs_integration_guide.md)
 
 ## Usage Examples
 
