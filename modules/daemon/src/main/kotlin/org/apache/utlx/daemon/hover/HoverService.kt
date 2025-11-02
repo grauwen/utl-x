@@ -160,8 +160,10 @@ class HoverService(
     private fun resolvePath(path: String, typeContext: TypeContext): TypeDefinition? {
         val parts = path.split(".")
 
-        // Start with the first part (usually "input")
-        var currentType = typeContext.lookup(parts[0]) ?: return null
+        // Start with the first part (usually "input" or "$input")
+        // Strip "$" prefix if present
+        val firstPart = parts[0].removePrefix("$")
+        var currentType = typeContext.lookup(firstPart) ?: return null
 
         // Traverse the rest of the path
         for (i in 1 until parts.size) {

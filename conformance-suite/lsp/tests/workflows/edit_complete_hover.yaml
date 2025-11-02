@@ -76,9 +76,9 @@ sequence:
     expect:
       result:
         items:
-          - label: "name"
-            kind: 10
           - label: "email"
+            kind: 10
+          - label: "name"
             kind: 10
 
   # Hover over "input.user"

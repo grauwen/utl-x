@@ -80,5 +80,6 @@ sequence:
       result:
         contents:
           kind: "markdown"
+          # value is a markdown string, not an object
           value:
             contains: ["Design-Time", "$input.name"]

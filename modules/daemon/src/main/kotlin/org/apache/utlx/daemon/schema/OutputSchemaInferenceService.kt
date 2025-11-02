@@ -51,19 +51,19 @@ class OutputSchemaInferenceService(
             return null
         }
 
-        // 2. Get input type environment
+        // 2. Get input type environment (optional)
         val typeEnv = stateManager.getTypeEnvironment(uri)
-        if (typeEnv == null) {
-            logger.warn("No type environment for $uri. Load schema via utlx/loadSchema first.")
-            return null
-        }
 
         try {
             // 3. Use AdvancedTypeInference to infer output type
             val typeInference = AdvancedTypeInference()
 
-            // Extract input type from TypeContext
-            val inputType = typeEnv.inputType ?: TypeDefinition.Any
+            // Extract input type from TypeContext, or use Any if no schema loaded
+            val inputType = typeEnv?.inputType ?: TypeDefinition.Any
+
+            if (typeEnv == null) {
+                logger.debug("No type environment for $uri - using Any for input type")
+            }
 
             val outputType = typeInference.inferOutputType(ast, inputType)
 
@@ -116,13 +116,8 @@ class OutputSchemaInferenceService(
             )
         }
 
-        // Check if type environment exists
-        val typeEnv = stateManager.getTypeEnvironment(uri)
-        if (typeEnv == null) {
-            return InferenceResult.Failure(
-                "No type environment for document. Load a schema using utlx/loadSchema first."
-            )
-        }
+        // Type environment is optional - if not present, will use TypeDefinition.Any for input
+        // This allows output schema inference without requiring an input schema to be loaded first
 
         // Perform inference
         val schema = inferOutputSchema(uri, pretty, includeComments)

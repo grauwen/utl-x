@@ -314,16 +314,18 @@ class ResponseValidator:
             return len(errors) == 0, errors
 
         if isinstance(expected, dict):
-            if not isinstance(actual, dict):
-                errors.append(f"{path}: expected object, got {type(actual).__name__}")
-                return False, errors
-
-            # Check for 'contains' special key
+            # Check for 'contains' special key FIRST (before type checking)
+            # This allows 'contains' to work with strings or other types
             if 'contains' in expected:
                 success, errs = ResponseValidator._validate_contains(actual, expected['contains'], path)
                 errors.extend(errs)
                 # Don't check other keys if contains is present
                 return success, errors
+
+            # Now check if actual is dict for other validations
+            if not isinstance(actual, dict):
+                errors.append(f"{path}: expected object, got {type(actual).__name__}")
+                return False, errors
 
             # Validate each expected key
             for key, expected_value in expected.items():
