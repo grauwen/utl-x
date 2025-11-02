@@ -4,6 +4,14 @@
 **Last Updated:** 2025-10-29
 **Document Purpose:** Complete API reference for UTL-X Theia Extension developers
 
+**Related Documents:**
+- [theia-extension-design-with-design-time.md](theia-extension-design-with-design-time.md) - Design-time & runtime architecture (v2.0)
+- [theia-implementation-roadmap.md](theia-implementation-roadmap.md) - Implementation status and phases
+- [theia-extension-implementation-guide.md](theia-extension-implementation-guide.md) - Step-by-step implementation guide
+- [theia-io-explained.md](theia-io-explained.md) - I/O communication details
+
+**Note:** This document describes the API for runtime mode. For design-time mode features (schema-based type checking), see theia-extension-design-with-design-time.md.
+
 ---
 
 ## Table of Contents
