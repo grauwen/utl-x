@@ -656,4 +656,98 @@ object EnhancedObjectFunctions {
 
         return UDM.Object(result)
     }
+
+    @UTLXFunction(
+        description = "Recursively transforms all values in a nested structure (objects and arrays) by applying a transformer function.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Object",
+        parameters = [
+            "data: Input data structure (object, array, or scalar)",
+            "transformer: Function to apply to each value (value, path) => transformed_value"
+        ],
+        returns = "Transformed structure with same shape as input",
+        example = "mapTree({a: {b: \"hello\"}}, (v, p) => if (typeOf(v) == \"string\") upper(v) else v) => {a: {b: \"HELLO\"}}",
+        notes = "The transformer receives:\n- value: current value being visited\n- path: JSON path to the value (e.g., \"$.a.b\")\n\nThe function visits all nodes depth-first and:\n- Recursively processes objects and arrays\n- Applies transformer to all values including intermediate objects/arrays\n- Preserves structure (objects stay objects, arrays stay arrays)\n\nUseful for:\n- Deep string transformations (trimming, case changes)\n- Removing/replacing values throughout a tree\n- Type coercion in nested structures\n- Sanitizing/normalizing data",
+        tags = ["object", "tree", "recursive", "transform"],
+        since = "1.0"
+    )
+    /**
+     * Recursively transforms all values in a nested structure by applying a transformer function.
+     *
+     * The transformer function receives two arguments:
+     * - value: the current value being visited
+     * - path: JSON path to the value (e.g., "$.a.b")
+     *
+     * The function visits all nodes in the tree depth-first and applies the transformer
+     * to each value. Objects and arrays are recursively processed, and the transformer
+     * is applied to all values including intermediate objects and arrays.
+     *
+     * @param args [0] data structure to transform (UDM)
+     *             [1] transformer lambda: (value, path) => transformed_value
+     * @return transformed structure with same shape as input
+     *
+     * Examples:
+     * ```
+     * // Remove whitespace from all strings
+     * mapTree(
+     *   {user: {name: " Alice ", email: " alice@example.com "}},
+     *   (v, p) => if (typeOf(v) == "string") trim(v) else v
+     * )
+     * → {user: {name: "Alice", email: "alice@example.com"}}
+     *
+     * // Convert all strings to uppercase
+     * mapTree(
+     *   {a: "hello", b: {c: "world"}},
+     *   (v, p) => if (typeOf(v) == "string") upper(v) else v
+     * )
+     * → {a: "HELLO", b: {c: "WORLD"}}
+     *
+     * // Remove newlines and tabs from all strings
+     * mapTree(
+     *   input,
+     *   (v, p) => if (typeOf(v) == "string") v replace("\n", "") replace("\t", "") else v
+     * )
+     * ```
+     */
+    fun mapTree(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw IllegalArgumentException("mapTree() requires 2 arguments: data, transformer")
+        }
+
+        val data = args[0]
+        val transformer = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("mapTree() second argument must be a lambda function. Got: ${args[1]::class.simpleName}")
+
+        /**
+         * Recursively transform a value and its children
+         */
+        fun transformRecursive(value: UDM, path: String): UDM {
+            // First, recursively transform children if this is a container type
+            val transformedChildren = when (value) {
+                is UDM.Object -> {
+                    val newProps = mutableMapOf<String, UDM>()
+                    value.properties.forEach { (key, childValue) ->
+                        val childPath = "$path.$key"
+                        newProps[key] = transformRecursive(childValue, childPath)
+                    }
+                    UDM.Object(newProps)
+                }
+                is UDM.Array -> {
+                    val newElements = value.elements.mapIndexed { index, childValue ->
+                        val childPath = "$path[$index]"
+                        transformRecursive(childValue, childPath)
+                    }
+                    UDM.Array(newElements.toMutableList())
+                }
+                else -> value // Scalar values are not containers
+            }
+
+            // Then apply the transformer to this node (with its children already transformed)
+            val pathUDM = UDM.Scalar(path)
+            return transformer.apply(listOf(transformedChildren, pathUDM))
+        }
+
+        return transformRecursive(data, "$")
+    }
 }

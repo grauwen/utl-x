@@ -1129,6 +1129,7 @@ object StandardLibrary {
         register("countEntries", EnhancedObjectFunctions::countEntries)
         register("mapKeys", EnhancedObjectFunctions::mapKeys)
         register("mapValues", EnhancedObjectFunctions::mapValues)
+        register("mapTree", EnhancedObjectFunctions::mapTree)
     }
     
     /**

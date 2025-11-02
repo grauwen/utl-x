@@ -417,4 +417,155 @@ class EnhancedObjectFunctionsTest {
         }
         else -> throw IllegalArgumentException("Expected number value")
     }
+
+    @Test
+    fun testMapTreeWithStrings() {
+        // Test transforming all strings to uppercase
+        val input = UDM.Object(mutableMapOf(
+            "name" to UDM.Scalar("hello"),
+            "nested" to UDM.Object(mutableMapOf(
+                "title" to UDM.Scalar("world")
+            ))
+        ))
+
+        val transformer = UDM.Lambda { args ->
+            val value = args[0]
+            if (value is UDM.Scalar && value.value is String) {
+                UDM.Scalar((value.value as String).uppercase())
+            } else {
+                value
+            }
+        }
+
+        val result = EnhancedObjectFunctions.mapTree(listOf(input, transformer))
+        assertTrue(result is UDM.Object)
+
+        val obj = result as UDM.Object
+        assertEquals("HELLO", (obj.properties["name"] as UDM.Scalar).value)
+        val nested = obj.properties["nested"] as UDM.Object
+        assertEquals("WORLD", (nested.properties["title"] as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testMapTreeWithArrays() {
+        // Test transforming numbers in arrays
+        val input = UDM.Object(mutableMapOf(
+            "data" to UDM.Array(mutableListOf(
+                UDM.Scalar(1),
+                UDM.Scalar(2),
+                UDM.Array(mutableListOf(
+                    UDM.Scalar(3),
+                    UDM.Scalar(4)
+                ))
+            ))
+        ))
+
+        val transformer = UDM.Lambda { args ->
+            val value = args[0]
+            if (value is UDM.Scalar && value.value is Number) {
+                UDM.Scalar((value.value as Number).toDouble() * 2)
+            } else {
+                value
+            }
+        }
+
+        val result = EnhancedObjectFunctions.mapTree(listOf(input, transformer))
+        assertTrue(result is UDM.Object)
+
+        val obj = result as UDM.Object
+        val arr = obj.properties["data"] as UDM.Array
+        assertEquals(2.0, (arr.elements[0] as UDM.Scalar).value)
+        assertEquals(4.0, (arr.elements[1] as UDM.Scalar).value)
+
+        val nested = arr.elements[2] as UDM.Array
+        assertEquals(6.0, (nested.elements[0] as UDM.Scalar).value)
+        assertEquals(8.0, (nested.elements[1] as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testMapTreeWithPath() {
+        // Test that transformer receives path parameter
+        var capturedPaths = mutableListOf<String>()
+
+        val input = UDM.Object(mutableMapOf(
+            "a" to UDM.Scalar(1),
+            "b" to UDM.Object(mutableMapOf(
+                "c" to UDM.Scalar(2)
+            ))
+        ))
+
+        val transformer = UDM.Lambda { args ->
+            val value = args[0]
+            val path = (args[1] as UDM.Scalar).value as String
+            capturedPaths.add(path)
+            value
+        }
+
+        EnhancedObjectFunctions.mapTree(listOf(input, transformer))
+
+        // Verify paths were captured (order is depth-first)
+        assertTrue(capturedPaths.contains("$"))
+        assertTrue(capturedPaths.contains("$.a"))
+        assertTrue(capturedPaths.contains("$.b"))
+        assertTrue(capturedPaths.contains("$.b.c"))
+    }
+
+    @Test
+    fun testMapTreePreservesStructure() {
+        // Test that mapTree preserves object/array structure
+        val input = UDM.Object(mutableMapOf(
+            "obj" to UDM.Object(mutableMapOf(
+                "key" to UDM.Scalar("value")
+            )),
+            "arr" to UDM.Array(mutableListOf(
+                UDM.Scalar(1),
+                UDM.Scalar(2)
+            ))
+        ))
+
+        // Identity transformer
+        val transformer = UDM.Lambda { args -> args[0] }
+
+        val result = EnhancedObjectFunctions.mapTree(listOf(input, transformer))
+        assertTrue(result is UDM.Object)
+
+        val obj = result as UDM.Object
+        assertTrue(obj.properties["obj"] is UDM.Object)
+        assertTrue(obj.properties["arr"] is UDM.Array)
+    }
+
+    @Test
+    fun testMapTreeWithScalar() {
+        // Test mapTree with scalar input
+        val input = UDM.Scalar("test")
+
+        val transformer = UDM.Lambda { args ->
+            val value = args[0]
+            if (value is UDM.Scalar && value.value is String) {
+                UDM.Scalar((value.value as String).uppercase())
+            } else {
+                value
+            }
+        }
+
+        val result = EnhancedObjectFunctions.mapTree(listOf(input, transformer))
+        assertTrue(result is UDM.Scalar)
+        assertEquals("TEST", (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testMapTreeInvalidArguments() {
+        // Test with wrong number of arguments
+        assertThrows<IllegalArgumentException> {
+            EnhancedObjectFunctions.mapTree(listOf(UDM.Scalar(1)))
+        }
+
+        // Test with non-lambda second argument
+        assertThrows<IllegalArgumentException> {
+            EnhancedObjectFunctions.mapTree(listOf(
+                UDM.Scalar(1),
+                UDM.Scalar("not a lambda")
+            ))
+        }
+    }
 }
