@@ -16,8 +16,11 @@
 ### Key Findings
 
 ✅ **USDL Ready:** All Avro-specific directives already defined in USDL 1.0 
+
 ✅ **Strong Alignment:** Avro's record-based schema model maps cleanly to USDL's structure types
+
 ✅ **Proven Pattern:** Can follow XSD/JSON Schema serializer architecture
+
 ✅ **High Value:** Unlocks Big Data/streaming use cases for UTL-X users
 
 ---
