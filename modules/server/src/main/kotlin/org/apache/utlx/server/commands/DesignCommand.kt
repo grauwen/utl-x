@@ -1,10 +1,10 @@
-// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/DesignCommand.kt
-package org.apache.utlx.cli.commands
+// modules/server/src/main/kotlin/org/apache/utlx/server/commands/DesignCommand.kt
+package org.apache.utlx.server.commands
 
 import org.apache.utlx.analysis.schema.*
 import org.apache.utlx.analysis.types.TypeDefinition
 import org.apache.utlx.analysis.validation.TransformValidator
-import org.apache.utlx.cli.CommandResult
+import org.apache.utlx.server.CommandResult
 import org.apache.utlx.core.parser.Parser
 import org.apache.utlx.core.parser.ParseResult
 import org.apache.utlx.core.lexer.Lexer
@@ -13,7 +13,7 @@ import org.apache.utlx.daemon.TransportType
 import java.io.File
 
 /**
- * Design-time analysis commands for UTL-X CLI
+ * Design-time analysis commands for UTL-X daemon server
  *
  * Implements the design-time analysis capabilities described in design-time-schema-analysis.md
  * This includes type inference, schema generation, and transformation validation at design-time.

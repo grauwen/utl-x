@@ -27,10 +27,7 @@ object Main {
                 "start" -> StartCommand.execute(commandArgs)
                 "stop" -> StopCommand.execute(commandArgs)
                 "status" -> StatusCommand.execute(commandArgs)
-                "design", "d" -> {
-                    println("Design command will be moved from CLI in the next phase")
-                    CommandResult.Success
-                }
+                "design", "d" -> DesignCommand.execute(commandArgs)
                 "version", "--version", "-v" -> {
                     println("UTL-X Daemon v$VERSION")
                     println("Universal Transformation Language Extended")

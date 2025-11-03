@@ -12,7 +12,7 @@ dependencies {
     // Internal dependencies
     implementation(project(":modules:core"))
     implementation(project(":modules:analysis"))
-    implementation(project(":modules:daemon"))
+    // Daemon removed - design-time features now in utlxd server
     implementation(project(":formats:xml"))
     implementation(project(":formats:json"))
     implementation(project(":formats:csv"))
