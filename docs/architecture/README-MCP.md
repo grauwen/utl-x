@@ -70,6 +70,17 @@ The MCP-assisted generation system enables users to create UTL-X transformations
 
 **Use this** to configure LLM behavior and responses.
 
+### 6. Schema-to-Schema Analysis (NEW)
+🔍 **[mcp-schema-to-schema-analysis.md](./mcp-schema-to-schema-analysis.md)**
+- Coverage analysis (input → output schema compatibility)
+- Gap identification (missing required fields)
+- Transformation variant generation (speed vs. memory vs. readability)
+- 2 additional MCP tools (Tool 7 & 8)
+- Daemon API extensions
+- UI integration for analysis workflow
+
+**Use this** for advanced schema-driven transformation generation.
+
 ## Quick Start
 
 ### For Decision Makers
@@ -162,6 +173,8 @@ The MCP-assisted generation system enables users to create UTL-X transformations
 | `infer_output_schema` | Output schema inference | `/api/infer-schema` |
 | `execute_transformation` | Test transformations | `/api/execute` |
 | `get_examples` | Find similar tests | Local conformance index |
+| **`analyze_schema_compatibility`** | **Schema coverage analysis** | **`/api/analyze-compatibility`** |
+| **`generate_transformation_variants`** | **Generate optimized variants** | **`/api/generate-variants`** |
 
 ## Implementation Phases
 
@@ -322,9 +335,16 @@ For questions or feedback on this architecture:
 - **v0.1.0** (2025-11-02): Initial architecture documentation
   - Core architecture document
   - Implementation checklist
-  - Tools reference
+  - Tools reference (6 tools)
   - Project structure
   - Prompt templates
+
+- **v0.2.0** (2025-11-03): Schema-to-schema analysis extension
+  - Added schema compatibility analysis
+  - Added transformation variant generation
+  - 2 additional MCP tools (Tool 7 & 8)
+  - Daemon API extensions for coverage analysis
+  - UI integration for gap resolution workflow
 
 ---
 
