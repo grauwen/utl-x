@@ -81,6 +81,17 @@ The MCP-assisted generation system enables users to create UTL-X transformations
 
 **Use this** for advanced schema-driven transformation generation.
 
+### 7. Agentic AI Integration (NEW)
+🤖 **[mcp-agentic-ai-integration.md](./mcp-agentic-ai-integration.md)**
+- **Strategic assessment**: Can MCP-UTLX be packaged as reusable agent?
+- **Gap analysis**: What's missing for enterprise agent adoption
+- **Required enhancements**: REST/gRPC APIs, multi-tenancy, security, observability
+- **Integration patterns**: API Gateway, Event-Driven, Orchestration, Service Mesh
+- **Deployment architectures**: Kubernetes, multi-region
+- **Roadmap**: 4-6 weeks to agent-ready status
+
+**Use this** to evaluate MCP-UTLX as an enterprise agentic AI asset.
+
 ## Quick Start
 
 ### For Decision Makers
