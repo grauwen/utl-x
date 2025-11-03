@@ -13,27 +13,8 @@ Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architectu
   | Lint tests           | "lint conformance"       | "Lint Conformance Suite"              |
   | LSP tests            | "LSP conformance"        | "LSP Conformance Suite"               |
 ----
-Add mapTree to stdlib/src/main/kotlin/org/apache/utlx/stdlib/objects/EnhancedObjectFunctions.kt
-
-Proposed Solution: treeWalk or mapTree (better) 
-
-  // Signature
-  fun treeWalk(data: UDM, transform: (value: UDM, path: String) -> UDM): UDM
-
-  // Usage in UTLX
-  let cleaned = treeWalk($input, (value, path) ->
-    if (typeOf(value) == "string")
-      value replace("\n", "") replace("\t", "")
-    else
-      value
-  )
-
-  Benefits
-
-  1. More elegant - Direct tree manipulation without serialization round-trips
-  2. Type-safe - Preserves structure (objects stay objects, arrays stay arrays)
-  3. Flexible - Can transform based on path, value type, or content
-  4. Common pattern - Similar to _.mapValues (Lodash), jq walk, JSONPath, etc.
+ TODO: Add CallLogging plugin once Ktor dependency is correct
+---
 
 ---
 
