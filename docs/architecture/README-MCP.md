@@ -134,6 +134,18 @@ The MCP-assisted generation system enables users to create UTL-X transformations
 
 **Use this** to understand daemon communication architecture and required REST API implementation.
 
+### 12. Daemon REST API Implementation Guide (NEW)
+⚙️ **[daemon-rest-api-implementation-guide.md](./daemon-rest-api-implementation-guide.md)**
+- **What to Build**: Comprehensive task breakdown (dependencies, server, endpoints, CLI args)
+- **REST vs gRPC**: Technology choice analysis (REST wins for MCP compatibility, DX, speed)
+- **Testing Strategy**: 4-level approach (unit, integration, manual, MCP integration)
+- **Dual Server Mode**: LSP and REST API run concurrently in single daemon process
+- **Implementation Order**: Daemon → MCP → Theia (bottom-up, 12 weeks total)
+- **Design Impact**: Minimal changes to UTL-X core (additive only, backward compatible)
+- **Complete Code Examples**: Ktor server, DTOs, tests, curl commands
+
+**Use this** as the implementation blueprint for adding REST API to the daemon.
+
 ## Quick Start
 
 ### For Decision Makers
