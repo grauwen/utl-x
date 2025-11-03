@@ -40,6 +40,11 @@ dependencies {
     implementation("io.ktor:ktor-serialization-jackson:2.3.7")
     implementation("io.ktor:ktor-server-cors:2.3.7")
     implementation("io.ktor:ktor-server-call-logging:2.3.7")
+    // Note: SSE is included in ktor-server-core
+
+    // Configuration management
+    implementation("com.sksamuel.hoplite:hoplite-core:2.7.5")
+    implementation("com.sksamuel.hoplite:hoplite-yaml:2.7.5")
 
     // Jackson for JSON
     implementation("com.fasterxml.jackson.core:jackson-core:2.16.1")
