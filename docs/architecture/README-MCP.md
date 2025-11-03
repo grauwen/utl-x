@@ -146,6 +146,19 @@ The MCP-assisted generation system enables users to create UTL-X transformations
 
 **Use this** as the implementation blueprint for adding REST API to the daemon.
 
+### 13. CLI/Daemon Split Architecture (NEW)
+🔀 **[cli-daemon-split-architecture.md](./cli-daemon-split-architecture.md)**
+- **Architectural Split**: Separate `utlx` (CLI) and `utlxd` (daemon server) executables
+- **Problem Analysis**: CLI bloat, slow startup, large footprint, mixed concerns
+- **Proposed Architecture**: New `modules/server/` with daemon + REST API
+- **Gradle Organization**: Multi-module build with shared core modules
+- **Benefits**: 15MB CLI (vs 50MB), <100ms startup (vs 1.5s), deployment flexibility
+- **Implementation Plan**: 4 phases over 2 weeks with detailed tasks
+- **Migration Guide**: For users, CI/CD pipelines, Theia IDE, MCP server
+- **Testing Strategy**: Unit, integration, performance, end-to-end tests
+
+**Use this** to understand the architectural split and implementation roadmap.
+
 ## Quick Start
 
 ### For Decision Makers
@@ -392,6 +405,7 @@ For questions or feedback on this architecture:
 
 - `/docs/architecture/theia-extension-design-with-design-time.md` - Existing Theia IDE architecture
 - `/docs/architecture/theia-monaco-lsp-mcp-integration.md` - Monaco Editor, LSP, and MCP integration guide
+- `/docs/architecture/cli-daemon-split-architecture.md` - CLI/Daemon architectural split guide
 - `/docs/gen-ai/CLAUDE.md` - Project overview for Claude Code
 - `/modules/daemon/README.md` - Daemon API documentation (if exists)
 - `/stdlib/README.md` - Standard library documentation (if exists)
@@ -418,6 +432,14 @@ For questions or feedback on this architecture:
   - Standalone usage documentation (MCP without LLM)
   - Theia Monaco LSP MCP integration guide
   - VS Code plugin compatibility documentation
+
+- **v0.4.0** (2025-11-03): CLI/Daemon architectural split
+  - CLI/Daemon split architecture guide
+  - Problem analysis: bloat, slow startup, large footprint
+  - New `modules/server/` with daemon + REST API
+  - Benefits: 15MB CLI, <100ms startup, deployment flexibility
+  - Implementation plan: 4 phases over 2 weeks
+  - Migration guide for users, CI/CD, IDE integration
 
 ---
 
