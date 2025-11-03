@@ -35,6 +35,7 @@ include("modules:core")
 include("modules:cli")
 include("modules:analysis")
 include("modules:daemon")
+include("modules:server")
 
 
 // Format parsers/serializers
