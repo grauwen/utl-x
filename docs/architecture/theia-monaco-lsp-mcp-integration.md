@@ -101,10 +101,13 @@ Generated UTLX code
 │  (LSP Server)     │      │                  │
 │                   │      │  ┌─────────────┐ │
 │  • Autocomplete   │      │  │ LLM Client  │ │
-│  • Validation     │←─────┼──│ (calls tools│ │
-│  • Hover info     │      │  │  via daemon)│ │
-│  • Diagnostics    │      │  └─────────────┘ │
+│  • Validation     │◄─────┼──┤(calls tools)│ │
+│  • Hover info     │ REST │  └─────────────┘ │
+│  • Diagnostics    │ API  │                  │
 └───────────────────┘      └──────────────────┘
+
+NOTE: MCP Server → Daemon uses REST API (NOT LSP!)
+See: lsp-communication-patterns-clarification.md
 ```
 
 **Key Insight**: LSP and MCP are **independent** - they both connect to the daemon but for different purposes.

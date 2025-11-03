@@ -123,6 +123,17 @@ The MCP-assisted generation system enables users to create UTL-X transformations
 
 **Use this** to understand Theia IDE integration architecture and avoid common pitfalls.
 
+### 11. LSP Communication Patterns Clarification (NEW)
+🔌 **[lsp-communication-patterns-clarification.md](./lsp-communication-patterns-clarification.md)**
+- **Critical Clarification**: MCP does NOT communicate with LSP - uses separate REST API
+- **Daemon Sessions**: ONE LSP session (Theia) + N REST sessions (MCP, tools)
+- **Current State**: LSP already works (STDIO/Socket), REST API needs to be added
+- **Required Changes**: Add HTTP/REST API server to daemon (2-3 days work)
+- **Implementation Guide**: Ktor-based REST API with validation, execution, schema endpoints
+- **Architecture Decision**: Run both LSP and REST API servers in single daemon process
+
+**Use this** to understand daemon communication architecture and required REST API implementation.
+
 ## Quick Start
 
 ### For Decision Makers
