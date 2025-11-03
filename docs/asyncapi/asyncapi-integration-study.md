@@ -2,6 +2,8 @@
 
 ## Executive Summary
 
+****NOT IMPLEMENTED**** 
+
 **Format:** AsyncAPI (Asynchronous API Specification)
 **Primary Use Case:** Event-driven/message-based API specifications (Kafka, RabbitMQ, MQTT, WebSocket)
 **Output Format:** JSON or YAML (JSON-compatible subset only)
