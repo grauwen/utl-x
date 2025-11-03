@@ -1,0 +1,38 @@
+name: Validate Syntax
+description: Test syntax validation via MCP endpoint
+tags:
+  - endpoints
+  - validate
+  - syntax
+
+sequence:
+  - description: "Valid script should pass syntax validation"
+    method: POST
+    endpoint: /mcp/validate
+    headers:
+      Content-Type: application/json
+    body:
+      script: "%utlx 1.0\ninput json\noutput json\n---\ninput"
+      level: "syntax"
+    expect:
+      status: 200
+      body:
+        valid: true
+        errors: []
+        warnings: []
+
+  - description: "Invalid script should fail syntax validation"
+    method: POST
+    endpoint: /mcp/validate
+    headers:
+      Content-Type: application/json
+    body:
+      script: "%utlx 1.0\ninput json\noutput json\n---\n{invalid syntax"
+      level: "syntax"
+    expect:
+      status: 200
+      body:
+        valid: false
+        errors:
+          - message: "{{STRING}}"
+            line: "{{NUMBER}}"

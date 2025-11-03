@@ -1,0 +1,38 @@
+name: Validate Then Transform
+description: Test workflow of validating a script before transforming data
+tags:
+  - workflows
+  - validate
+  - transform
+  - multi-step
+
+sequence:
+  - description: "Step 1: Validate the script"
+    method: POST
+    endpoint: /mcp/validate
+    headers:
+      Content-Type: application/json
+    body:
+      script: "%utlx 1.0\ninput json\noutput json\n---\n{ name: input.name, age: input.age + 1 }"
+      level: "syntax"
+    expect:
+      status: 200
+      body:
+        valid: true
+
+  - description: "Step 2: Transform data using the validated script"
+    method: POST
+    endpoint: /mcp/transform
+    headers:
+      Content-Type: application/json
+    body:
+      script: "%utlx 1.0\ninput json\noutput json\n---\n{ name: input.name, age: input.age + 1 }"
+      input:
+        name: "Alice"
+        age: 25
+    expect:
+      status: 200
+      body:
+        output:
+          name: "Alice"
+          age: 26

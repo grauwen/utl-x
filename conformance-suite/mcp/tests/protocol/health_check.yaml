@@ -1,0 +1,16 @@
+name: Health Check
+description: Verify the daemon /health endpoint returns 200 OK
+tags:
+  - protocol
+  - health
+  - basic
+
+sequence:
+  - description: "GET /health should return 200 OK"
+    method: GET
+    endpoint: /health
+    expect:
+      status: 200
+      body:
+        status: ok
+        timestamp: "{{TIMESTAMP}}"

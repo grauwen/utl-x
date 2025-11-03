@@ -1,0 +1,48 @@
+name: Invalid Script Handling
+description: Test proper error handling for invalid scripts
+tags:
+  - edge-cases
+  - errors
+  - validation
+
+sequence:
+  - description: "Missing script parameter should return error"
+    method: POST
+    endpoint: /mcp/transform
+    headers:
+      Content-Type: application/json
+    body:
+      input:
+        name: "John"
+    expect:
+      status: 400
+      body:
+        error: "{{STRING}}"
+
+  - description: "Empty script should return error"
+    method: POST
+    endpoint: /mcp/transform
+    headers:
+      Content-Type: application/json
+    body:
+      script: ""
+      input:
+        name: "John"
+    expect:
+      status: 400
+      body:
+        error: "{{STRING}}"
+
+  - description: "Malformed script header should return error"
+    method: POST
+    endpoint: /mcp/transform
+    headers:
+      Content-Type: application/json
+    body:
+      script: "invalid header\n---\ninput"
+      input:
+        name: "John"
+    expect:
+      status: 400
+      body:
+        error: "{{STRING}}"

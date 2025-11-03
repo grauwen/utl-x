@@ -1,0 +1,24 @@
+name: Transform Basic
+description: Test basic transformation via MCP endpoint
+tags:
+  - endpoints
+  - transform
+  - basic
+
+sequence:
+  - description: "Simple identity transformation"
+    method: POST
+    endpoint: /mcp/transform
+    headers:
+      Content-Type: application/json
+    body:
+      script: "%utlx 1.0\ninput json\noutput json\n---\ninput"
+      input:
+        name: "John"
+        age: 30
+    expect:
+      status: 200
+      body:
+        output:
+          name: "John"
+          age: 30

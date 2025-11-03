@@ -1,0 +1,19 @@
+name: MCP Status Endpoint
+description: Verify the /mcp/status endpoint returns server status
+tags:
+  - endpoints
+  - status
+  - basic
+
+sequence:
+  - description: "GET /mcp/status should return server status information"
+    method: GET
+    endpoint: /mcp/status
+    expect:
+      status: 200
+      body:
+        protocolVersion: "{{STRING}}"
+        serverInfo:
+          name: "{{STRING}}"
+          version: "{{STRING}}"
+        capabilities: "{{ANY}}"

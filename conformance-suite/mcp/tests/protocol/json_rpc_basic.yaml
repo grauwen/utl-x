@@ -1,0 +1,25 @@
+name: JSON-RPC Basic
+description: Verify basic JSON-RPC 2.0 request/response protocol
+tags:
+  - protocol
+  - json-rpc
+  - basic
+
+sequence:
+  - description: "Valid JSON-RPC request should return proper response"
+    method: POST
+    endpoint: /mcp
+    headers:
+      Content-Type: application/json
+    body:
+      jsonrpc: "2.0"
+      id: 1
+      method: tools/list
+      params: {}
+    expect:
+      status: 200
+      body:
+        jsonrpc: "2.0"
+        id: 1
+        result:
+          tools: "{{ANY}}"
