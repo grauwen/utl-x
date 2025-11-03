@@ -92,6 +92,37 @@ The MCP-assisted generation system enables users to create UTL-X transformations
 
 **Use this** to evaluate MCP-UTLX as an enterprise agentic AI asset.
 
+### 8. Implementation Order (NEW)
+📅 **[mcp-implementation-order.md](./mcp-implementation-order.md)**
+- **Critical decision**: MCP Server first vs. Theia IDE first?
+- **Recommended approach**: Backend-first (MCP → LLM → Theia)
+- **Risk analysis**: Why MCP-first reduces technical risk
+- **Testing strategy**: How to validate MCP without Theia
+- **Timeline**: Week-by-week breakdown
+
+**Use this** to plan development sequence.
+
+### 9. Standalone Usage (NEW)
+🔧 **[mcp-standalone-usage.md](./mcp-standalone-usage.md)**
+- **Can MCP work without LLM?** YES! 7 of 8 tools work standalone
+- **Standalone capabilities**: Schema analysis, validation, execution, testing
+- **Practical use cases**: CI/CD, documentation, testing frameworks
+- **Incremental adoption**: Use immediately, add LLM later
+- **Value without AI**: Comprehensive UTL-X toolkit
+
+**Use this** to understand MCP's value independent of LLM.
+
+### 10. Theia Monaco LSP MCP Integration (NEW)
+🎨 **[theia-monaco-lsp-mcp-integration.md](./theia-monaco-lsp-mcp-integration.md)**
+- **LSP vs MCP**: Separate, parallel systems with different responsibilities
+- **Monaco Editor Integration**: Direct LSP connection to daemon (NOT through MCP)
+- **VS Code Plugin Compatibility**: Theia supports most VS Code extensions
+- **Architecture Principles**: Why LSP should NOT route through MCP
+- **Implementation Details**: WebSocket LSP setup, MCP client setup, AI Assistant panel
+- **XML/XSD Extensions**: Reusing existing VS Code extensions in Theia
+
+**Use this** to understand Theia IDE integration architecture and avoid common pitfalls.
+
 ## Quick Start
 
 ### For Decision Makers
@@ -337,6 +368,7 @@ For questions or feedback on this architecture:
 ## Related Documentation
 
 - `/docs/architecture/theia-extension-design-with-design-time.md` - Existing Theia IDE architecture
+- `/docs/architecture/theia-monaco-lsp-mcp-integration.md` - Monaco Editor, LSP, and MCP integration guide
 - `/docs/gen-ai/CLAUDE.md` - Project overview for Claude Code
 - `/modules/daemon/README.md` - Daemon API documentation (if exists)
 - `/stdlib/README.md` - Standard library documentation (if exists)
@@ -356,6 +388,13 @@ For questions or feedback on this architecture:
   - 2 additional MCP tools (Tool 7 & 8)
   - Daemon API extensions for coverage analysis
   - UI integration for gap resolution workflow
+
+- **v0.3.0** (2025-11-03): Enterprise readiness and integration architecture
+  - Agentic AI integration assessment (enterprise agent readiness)
+  - Implementation order guidance (backend-first approach)
+  - Standalone usage documentation (MCP without LLM)
+  - Theia Monaco LSP MCP integration guide
+  - VS Code plugin compatibility documentation
 
 ---
 
