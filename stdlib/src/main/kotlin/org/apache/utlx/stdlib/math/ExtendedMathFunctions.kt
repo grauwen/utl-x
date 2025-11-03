@@ -4,6 +4,8 @@ package org.apache.utlx.stdlib.math
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
 import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
@@ -35,7 +37,7 @@ object ExtendedMathFunctions {
         val pattern = args[1].asString()
         
         return try {
-            val formatter = DecimalFormat(pattern)
+            val formatter = DecimalFormat(pattern, DecimalFormatSymbols(Locale.US))
             UDM.Scalar(formatter.format(number))
         } catch (e: Exception) {
             throw FunctionArgumentException(
