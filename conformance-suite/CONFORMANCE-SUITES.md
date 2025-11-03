@@ -258,8 +258,10 @@ cd conformance-suite/lsp
 
 ### Daemon Being Tested
 ```bash
-utlx design daemon [--socket <port>] [--verbose]
+utlxd design daemon [--stdio|--socket <port>] [--verbose]
 ```
+
+**Note**: The LSP daemon is now part of the `utlxd` server executable (not `utlx` CLI).
 
 ---
 
