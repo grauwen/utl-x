@@ -9,7 +9,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFORMANCE_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 PROJECT_ROOT="$(cd "$CONFORMANCE_ROOT/.." && pwd)"
-UTLX_DAEMON="$PROJECT_ROOT/utlx"
+UTLXD="$PROJECT_ROOT/modules/server/scripts/utlxd"
 TESTS_PATH="$CONFORMANCE_ROOT/lsp/tests"
 
 # Colors
@@ -29,7 +29,7 @@ OPTIONS:
     -h, --help          Show this help message
     -b, --build         Force rebuild of test runner
     -v, --verbose       Verbose output
-    --daemon PATH       Path to UTL-X daemon binary (default: $UTLX_DAEMON)
+    --daemon PATH       Path to UTL-X daemon binary (default: $UTLXD)
 
 CATEGORY:
     protocol/initialization, protocol/lifecycle, document-sync,
@@ -76,7 +76,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --daemon)
-            UTLX_DAEMON="$2"
+            UTLXD="$2"
             shift 2
             ;;
         -*)
@@ -100,9 +100,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Check if daemon exists
-if [[ ! -x "$UTLX_DAEMON" ]]; then
-    log "ERROR" "UTL-X daemon not found at: $UTLX_DAEMON"
-    log "INFO" "Build the daemon first: cd $PROJECT_ROOT && ./gradlew :modules:daemon:build"
+if [[ ! -x "$UTLXD" ]]; then
+    log "ERROR" "UTL-X daemon not found at: $UTLXD"
+    log "INFO" "Build the daemon first: cd $PROJECT_ROOT && ./gradlew :modules:server:jar :modules:server:createScripts"
     exit 1
 fi
 
@@ -122,7 +122,7 @@ fi
 
 # Run tests
 log "INFO" "Starting LSP Conformance Suite"
-log "INFO" "Daemon: $UTLX_DAEMON"
+log "INFO" "Daemon: $UTLXD"
 log "INFO" "Tests: $TESTS_PATH"
 
 if [[ -n "$CATEGORY" ]]; then
@@ -136,11 +136,11 @@ fi
 echo ""
 
 # Run the test runner
-export UTLX_DAEMON
+export UTLXD
 cd "$SCRIPT_DIR"
 
 # Build command with only non-empty optional arguments
-JAVA_ARGS=("$UTLX_DAEMON" "$TESTS_PATH")
+JAVA_ARGS=("$UTLXD" "$TESTS_PATH")
 [[ -n "$CATEGORY" ]] && JAVA_ARGS+=("$CATEGORY")
 [[ -n "$TEST_NAME" ]] && JAVA_ARGS+=("$TEST_NAME")
 

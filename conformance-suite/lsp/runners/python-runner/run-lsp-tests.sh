@@ -12,11 +12,11 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Check if CLI JAR exists (daemon is invoked via 'design daemon' subcommand)
-CLI_JAR="$SCRIPT_DIR/../../../../modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
-if [ ! -f "$CLI_JAR" ]; then
-    echo "Error: CLI JAR not found: $CLI_JAR"
-    echo "Run: ./gradlew :modules:cli:jar"
+# Check if server JAR exists (daemon is now in the server module)
+SERVER_JAR="$SCRIPT_DIR/../../../../modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar"
+if [ ! -f "$SERVER_JAR" ]; then
+    echo "Error: Server JAR not found: $SERVER_JAR"
+    echo "Run: ./gradlew :modules:server:jar"
     exit 1
 fi
 

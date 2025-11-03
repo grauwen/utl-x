@@ -389,8 +389,8 @@ class ResponseValidator:
 class LSPDaemonManager:
     """Manages UTL-X LSP daemon process lifecycle"""
 
-    def __init__(self, cli_jar: str, port: int = 7778, verbose: bool = False):
-        self.cli_jar = cli_jar
+    def __init__(self, server_jar: str, port: int = 7778, verbose: bool = False):
+        self.server_jar = server_jar
         self.port = port
         self.verbose = verbose
         self.process: Optional[subprocess.Popen] = None
@@ -398,9 +398,9 @@ class LSPDaemonManager:
 
     def start(self) -> JsonRpcClient:
         """Start daemon process and return JSON-RPC client"""
-        # UTL-X daemon is invoked via: java -jar cli.jar design daemon --stdio (or --socket PORT)
+        # UTL-X daemon is now in server module: java -jar utlxd.jar design daemon --stdio
         cmd = [
-            'java', '-jar', self.cli_jar,
+            'java', '-jar', self.server_jar,
             'design', 'daemon',
             '--stdio'
         ]
@@ -458,9 +458,9 @@ class LSPDaemonManager:
 class TestExecutor:
     """Executes a single LSP test case"""
 
-    def __init__(self, test_file: Path, cli_jar: str, verbose: bool = False):
+    def __init__(self, test_file: Path, server_jar: str, verbose: bool = False):
         self.test_file = test_file
-        self.cli_jar = cli_jar
+        self.server_jar = server_jar
         self.verbose = verbose
         self.test_data: Optional[Dict[str, Any]] = None
         self.template_engine: Optional[TemplateEngine] = None
@@ -497,7 +497,7 @@ class TestExecutor:
 
         # Start daemon
         try:
-            self.daemon = LSPDaemonManager(self.cli_jar, verbose=self.verbose)
+            self.daemon = LSPDaemonManager(self.server_jar, verbose=self.verbose)
             self.client = self.daemon.start()
         except Exception as e:
             print_error(f"Failed to start daemon: {e}")
@@ -659,8 +659,8 @@ def main():
                        help='Test name pattern to filter')
     parser.add_argument('-v', '--verbose', action='store_true',
                        help='Verbose output (show JSON-RPC messages)')
-    parser.add_argument('--cli-jar', default='../../../../modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar',
-                       help='Path to CLI JAR (daemon invoked via design daemon subcommand)')
+    parser.add_argument('--server-jar', default='../../../../modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar',
+                       help='Path to server JAR (daemon is now in server module)')
 
     args = parser.parse_args()
 
@@ -672,19 +672,19 @@ def main():
     else:
         test_dir = Path(args.test_dir)
 
-    # If cli_jar is relative, resolve from script dir
-    if not Path(args.cli_jar).is_absolute():
-        cli_jar = (script_dir / args.cli_jar).resolve()
+    # If server_jar is relative, resolve from script dir
+    if not Path(args.server_jar).is_absolute():
+        server_jar = (script_dir / args.server_jar).resolve()
     else:
-        cli_jar = Path(args.cli_jar)
+        server_jar = Path(args.server_jar)
 
     if not test_dir.exists():
         print_error(f"Test directory not found: {test_dir}")
         return 1
 
-    if not cli_jar.exists():
-        print_error(f"CLI JAR not found: {cli_jar}")
-        print_info("Run: ./gradlew :modules:cli:jar")
+    if not server_jar.exists():
+        print_error(f"Server JAR not found: {server_jar}")
+        print_info("Run: ./gradlew :modules:server:jar")
         return 1
 
     # Discover tests
@@ -702,7 +702,7 @@ def main():
     failed = 0
 
     for test_file in tests:
-        executor = TestExecutor(test_file, str(cli_jar), verbose=args.verbose)
+        executor = TestExecutor(test_file, str(server_jar), verbose=args.verbose)
 
         if not executor.load_test():
             failed += 1
