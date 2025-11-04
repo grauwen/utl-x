@@ -1,6 +1,5 @@
-# Working with YAML (v1.1+)
+# Working with YAML
 
-YAML support is planned for version 1.1.
 
 ## Basic YAML Transformation
 
@@ -43,9 +42,9 @@ output json
 Same as JSON:
 
 ```utlx
-input.order.customer.name
-input.order.items[0].sku
-input.order.items.*.price
+$input.order.customer.name
+$input.order.items[0].sku
+$input.order.items.*.price
 ```
 
 ### YAML to JSON/XML
