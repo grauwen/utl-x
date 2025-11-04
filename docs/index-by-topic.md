@@ -67,7 +67,7 @@ Complete language reference and syntax documentation.
 
 ---
 
-## 🏗️ Architecture
+# 🏗️ Architecture
 
 System architecture, design decisions, and technical analysis.
 
