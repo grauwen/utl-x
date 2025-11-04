@@ -469,4 +469,4 @@ DataWeave Advantages:
 | XML | ███░░░░░░░ 30% | ██████████ 100% | +70% | ✅ UTL-X Better |
 | Logic | ████░░░░░░ 40% | ██████████ 100% | +60% | ✅ UTL-X Better |
 
-**Overall: UTL-X provides 138% of DataWeave's stdlib functionality** ✅
+**Overall: UTL-X provides 138% of DataWeave's stdlib 	functionality** ✅
