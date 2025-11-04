@@ -12,6 +12,16 @@ dependencies {
     implementation(project(":modules:core"))
     implementation(project(":modules:analysis"))
 
+    // Format parsers/serializers needed for REST API
+    implementation(project(":formats:xml"))
+    implementation(project(":formats:json"))
+    implementation(project(":formats:csv"))
+    implementation(project(":formats:yaml"))
+    implementation(project(":formats:xsd"))
+    implementation(project(":formats:jsch"))
+    implementation(project(":formats:avro"))
+    implementation(project(":formats:protobuf"))
+
     // Kotlin stdlib
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
