@@ -37,12 +37,13 @@ So the parser has a bug where it's rejecting type as a parameter name when it sh
 IDE integration (LSP for validation)                                                                                                                                                
 CI/CD pipelines (fail on errors, warn on lint issues)                                                                                                                               Pre-commit hooks                                                                                                                                                                    Build-time validation   
 ---
-Later
+Current Tier 1 Hierachical Data: json, csv,xml,yam
+Current Tier 2 Hierachical Meta Data: xsd, jsch, avro, proto
+Later Tier 3 Hierachical API Contract => EC-API-Design Functional API contract definitions might be a good starting point 
   - OPENAPI - OpenAPI 3.x specs (JSON/YAML with schema embedded)
-  - RAML
-  - RAML fragment
-  - ASYNCAPI
-and more. Need to rethink
+  - RAML <= advised is not to.
+  - RAML fragment <= advise is not to. Use RAML 0.8 and JSON Schema instead.
+  - ASYNCAPI <= USDL supports the messaging capabilities.
 ----
 conformance-suite input JSCH and XSD examples have no real test output condition
 
