@@ -30,6 +30,8 @@ output json
 
 ### Generating an Avro Schema from USDL
 
+USDL 1.0 is an schema language within UTLX. The USDL language is used to create schena's independent of technology.
+
 ```utlx
 %utlx 1.0
 input json
