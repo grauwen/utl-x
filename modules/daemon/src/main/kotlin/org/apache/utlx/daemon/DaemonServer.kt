@@ -14,6 +14,7 @@ import org.apache.utlx.daemon.diagnostics.*
 import org.apache.utlx.daemon.schema.SchemaTypeContextFactory
 import org.apache.utlx.daemon.schema.OutputSchemaInferenceService
 import org.apache.utlx.daemon.schema.InferenceResult
+import org.apache.utlx.daemon.rest.RestApiServer
 import org.apache.utlx.analysis.schema.XSDSchemaParser
 import org.apache.utlx.analysis.schema.JSONSchemaParser
 import org.apache.utlx.analysis.schema.SchemaFormat as AnalysisSchemaFormat
@@ -26,13 +27,17 @@ import org.slf4j.LoggerFactory
  * - Daemon = Long-running background process (architectural pattern)
  * - LSP = Language Server Protocol using JSON-RPC 2.0 (communication protocol)
  * - STDIO/Socket = Transport mechanism (physical layer)
+ * - REST API = HTTP/JSON API for MCP integration
  *
- * The daemon always uses LSP/JSON-RPC 2.0 protocol.
- * Only the transport differs (STDIO vs Socket).
+ * The daemon supports dual-mode operation:
+ * - LSP server via STDIO or Socket transport
+ * - REST API server for HTTP-based access (optional)
  */
 class UTLXDaemon(
     private val transportType: TransportType = TransportType.STDIO,
-    private val port: Int = 7777
+    private val port: Int = 7777,
+    private val enableRestApi: Boolean = false,
+    private val restApiPort: Int = 7779
 ) {
 
     private val logger = LoggerFactory.getLogger(UTLXDaemon::class.java)
@@ -44,13 +49,21 @@ class UTLXDaemon(
     private val outputSchemaService = OutputSchemaInferenceService(stateManager)
 
     private var transport: Transport? = null
+    private var restApiServer: RestApiServer? = null
     private var initialized = false
 
     /**
      * Start the daemon server
      */
     fun start() {
-        logger.info("Starting UTL-X Daemon (transport: $transportType)")
+        logger.info("Starting UTL-X Daemon (transport: $transportType, REST API: $enableRestApi)")
+
+        // Start REST API server if enabled
+        if (enableRestApi) {
+            logger.info("Starting REST API server on port $restApiPort")
+            restApiServer = RestApiServer(port = restApiPort)
+            restApiServer!!.start()
+        }
 
         // Create transport based on type
         transport = when (transportType) {
@@ -79,6 +92,7 @@ class UTLXDaemon(
     fun stop() {
         logger.info("Stopping UTL-X Daemon...")
         transport?.stop()
+        restApiServer?.stop()
         initialized = false
     }
 
