@@ -10,8 +10,8 @@ This index lists all markdown documentation in the UTL-X project, organized by t
 
 ## Quick Navigation
 
-- [🚀 Getting Started](##getting-started)
-- [📚 Language Guide](##language-guide)
+- [🚀 Getting Started](#getting-started)
+- [📚 Language Guide](#language-guide)
 - [🏗️ Architecture](#architecture)
 - [📖 Standard Library](#standard-library)
 - [🎯 USDL (Schema Definition)](#usdl-universal-schema-definition-language)
@@ -47,7 +47,7 @@ Essential documentation for new users.
 
 ---
 
-## 📚 Language Guide
+# 📚 Language Guide
 
 Complete language reference and syntax documentation.
 
