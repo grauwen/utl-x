@@ -398,11 +398,10 @@ class LSPDaemonManager:
 
     def start(self) -> JsonRpcClient:
         """Start daemon process and return JSON-RPC client"""
-        # UTL-X daemon is now in server module: java -jar utlxd.jar design daemon --stdio
+        # UTL-X daemon start command: java -jar utlxd.jar start --lsp --lsp-transport stdio
         cmd = [
             'java', '-jar', self.server_jar,
-            'design', 'daemon',
-            '--stdio'
+            'start', '--lsp', '--lsp-transport', 'stdio'
         ]
 
         if self.verbose:
