@@ -10,6 +10,7 @@ import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/p
 import { InputPanelWidget } from './input-panel/input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
+import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { UTLXWorkbenchWidget } from './workbench/utlx-workbench-widget';
 import { UTLXFrontendContribution } from './utlx-frontend-contribution';
 
@@ -37,6 +38,12 @@ export default new ContainerModule(bind => {
     bind(WidgetFactory).toDynamicValue(ctx => ({
         id: ModeSelectorWidget.ID,
         createWidget: () => ctx.container.get<ModeSelectorWidget>(ModeSelectorWidget)
+    })).inSingletonScope();
+
+    bind(UTLXEditorWidget).toSelf().inSingletonScope();
+    bind(WidgetFactory).toDynamicValue(ctx => ({
+        id: UTLXEditorWidget.ID,
+        createWidget: () => ctx.container.get<UTLXEditorWidget>(UTLXEditorWidget)
     })).inSingletonScope();
 
     bind(UTLXWorkbenchWidget).toSelf();

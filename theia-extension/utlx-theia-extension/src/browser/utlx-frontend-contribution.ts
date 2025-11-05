@@ -155,43 +155,20 @@ export class UTLXFrontendContribution implements
 
     private async openWorkbench(): Promise<void> {
         try {
-            // Get or create workbench widget
+            // Get or create workbench widget (contains all 3 panes internally)
             const workbench = await this.widgetManager.getOrCreateWidget<UTLXWorkbenchWidget>(
                 UTLXWorkbenchWidget.ID
             );
 
-            // Get or create panel widgets
-            const modeSelector = await this.widgetManager.getOrCreateWidget<ModeSelectorWidget>(
-                ModeSelectorWidget.ID
-            );
-            const inputPanel = await this.widgetManager.getOrCreateWidget<InputPanelWidget>(
-                InputPanelWidget.ID
-            );
-            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
-                OutputPanelWidget.ID
-            );
-
-            // Add widgets to shell in specific areas
+            // Add workbench to main area (it will render Input | Editor | Output internally)
             if (!workbench.isAttached) {
                 this.shell.addWidget(workbench, { area: 'main' });
-            }
-
-            if (!modeSelector.isAttached) {
-                this.shell.addWidget(modeSelector, { area: 'top', rank: 100 });
-            }
-
-            if (!inputPanel.isAttached) {
-                this.shell.addWidget(inputPanel, { area: 'left', rank: 100 });
-            }
-
-            if (!outputPanel.isAttached) {
-                this.shell.addWidget(outputPanel, { area: 'right', rank: 100 });
             }
 
             // Activate workbench
             this.shell.activateWidget(workbench.id);
 
-            console.log('UTL-X workbench opened');
+            console.log('UTL-X workbench opened with 3-pane layout (Input | Editor | Output)');
         } catch (error) {
             console.error('Failed to open UTL-X workbench:', error);
             this.messageService.error(`Failed to open workbench: ${error}`);
