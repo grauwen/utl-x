@@ -15,6 +15,7 @@ import { MessageService, Command, CommandRegistry } from '@theia/core';
 import { InputPanelWidget } from '../input-panel/input-panel-widget';
 import { OutputPanelWidget } from '../output-panel/output-panel-widget';
 import { ModeSelectorWidget } from '../mode-selector/mode-selector-widget';
+import { UTLXEditorWidget } from '../editor/utlx-editor-widget';
 import {
     UTLXService, UTLX_SERVICE_SYMBOL,
     UTLXMode,
@@ -43,6 +44,9 @@ export class UTLXWorkbenchWidget extends ReactWidget {
 
     @inject(InputPanelWidget)
     protected readonly inputPanel!: InputPanelWidget;
+
+    @inject(UTLXEditorWidget)
+    protected readonly editorWidget!: UTLXEditorWidget;
 
     @inject(OutputPanelWidget)
     protected readonly outputPanel!: OutputPanelWidget;
@@ -76,6 +80,11 @@ export class UTLXWorkbenchWidget extends ReactWidget {
         this.modeSelector.onModeChange((mode) => {
             this.handleModeChange(mode);
         });
+
+        // Listen for editor content changes
+        this.editorWidget.node.addEventListener('utlx-content-changed', ((event: CustomEvent) => {
+            this.currentEditorContent = event.detail.content;
+        }) as EventListener);
     }
 
 
@@ -130,15 +139,37 @@ export class UTLXWorkbenchWidget extends ReactWidget {
                 </div>
 
                 <div className='utlx-workbench-body'>
-                    <div className='utlx-status-bar'>
-                        <span className='utlx-status-mode'>
-                            Mode: <strong>{mode === UTLXMode.DESIGN_TIME ? 'Design-Time' : 'Runtime'}</strong>
-                        </span>
-                        <span className='utlx-status-info'>
-                            {mode === UTLXMode.DESIGN_TIME
-                                ? 'Left: Schema | Middle: UTL-X | Right: Inferred Schema'
-                                : 'Left: Input Data | Middle: UTL-X | Right: Output Data'}
-                        </span>
+                    <div className='utlx-workbench-panes'>
+                        <div className='utlx-workbench-pane left'>
+                            <div
+                                ref={container => {
+                                    if (container && !container.hasChildNodes()) {
+                                        container.appendChild(this.inputPanel.node);
+                                    }
+                                }}
+                                style={{ flex: 1, overflow: 'hidden' }}
+                            />
+                        </div>
+                        <div className='utlx-workbench-pane middle'>
+                            <div
+                                ref={container => {
+                                    if (container && !container.hasChildNodes()) {
+                                        container.appendChild(this.editorWidget.node);
+                                    }
+                                }}
+                                style={{ flex: 1, overflow: 'hidden' }}
+                            />
+                        </div>
+                        <div className='utlx-workbench-pane right'>
+                            <div
+                                ref={container => {
+                                    if (container && !container.hasChildNodes()) {
+                                        container.appendChild(this.outputPanel.node);
+                                    }
+                                }}
+                                style={{ flex: 1, overflow: 'hidden' }}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

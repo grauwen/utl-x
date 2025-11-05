@@ -381,3 +381,107 @@
     color: var(--theia-descriptionForeground);
     font-size: 11px;
 }
+
+/* ===== UTLX Editor Widget ===== */
+.utlx-editor-widget {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.utlx-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background: var(--theia-editor-background);
+}
+
+.utlx-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--theia-sideBar-background);
+    border-bottom: 1px solid var(--theia-panel-border);
+    min-height: 40px;
+}
+
+.utlx-editor-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--theia-foreground);
+}
+
+.utlx-editor-title .codicon {
+    font-size: 16px;
+}
+
+.utlx-editor-toolbar {
+    display: flex;
+    gap: 6px;
+}
+
+.utlx-editor-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.utlx-editor-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 12px;
+    background: var(--theia-statusBar-background);
+    border-top: 1px solid var(--theia-panel-border);
+    min-height: 24px;
+}
+
+.utlx-editor-info {
+    font-size: 11px;
+    color: var(--theia-statusBar-foreground);
+}
+
+/* ===== 3-Pane Workbench Layout ===== */
+.utlx-workbench-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.utlx-workbench-panes {
+    display: flex;
+    flex: 1;
+    gap: 0;
+}
+
+.utlx-workbench-pane {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--theia-panel-border);
+}
+
+.utlx-workbench-pane:last-child {
+    border-right: none;
+}
+
+.utlx-workbench-pane.left {
+    flex: 0 0 30%;
+    min-width: 300px;
+}
+
+.utlx-workbench-pane.middle {
+    flex: 1 1 40%;
+    min-width: 400px;
+}
+
+.utlx-workbench-pane.right {
+    flex: 0 0 30%;
+    min-width: 300px;
+}

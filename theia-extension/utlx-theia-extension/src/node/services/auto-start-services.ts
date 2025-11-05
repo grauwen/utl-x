@@ -140,7 +140,9 @@ async function startUTLXD(config: ServiceConfig): Promise<void> {
         '-jar',
         config.utlxdJarPath,
         'start',
-        '--daemon-lsp',
+        '--lsp',
+        '--transport', 'socket',
+        '--lsp-port', '7777',
         '--daemon-rest',
         '--daemon-rest-port', config.utlxdRestPort.toString()
     ], {
