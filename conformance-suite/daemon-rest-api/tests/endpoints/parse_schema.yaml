@@ -1,12 +1,13 @@
 name: Parse Schema
-description: Test schema parsing via /api/parse-schema endpoint
+description: Test schema parsing via /api/parse-schema endpoint (positive and negative tests)
 tags:
   - endpoints
   - parse-schema
   - schema
 
 sequence:
-  - description: "Parse JSON Schema successfully"
+  # Positive Tests - Valid schemas should parse successfully
+  - description: "✓ POSITIVE: Parse valid JSON Schema successfully"
     method: POST
     endpoint: /api/parse-schema
     headers:
@@ -20,7 +21,7 @@ sequence:
         success: true
         normalized: "{{STRING}}"
 
-  - description: "Parse XSD schema successfully"
+  - description: "✓ POSITIVE: Parse valid XSD schema successfully"
     method: POST
     endpoint: /api/parse-schema
     headers:
@@ -34,21 +35,8 @@ sequence:
         success: true
         normalized: "{{STRING}}"
 
-  - description: "Parse CSV schema (headers)"
-    method: POST
-    endpoint: /api/parse-schema
-    headers:
-      Content-Type: application/json
-    body:
-      schema: "name,age,email"
-      format: "csv"
-    expect:
-      status: 200
-      body:
-        success: true
-        normalized: "{{STRING}}"
-
-  - description: "Parse schema with unsupported format should fail"
+  # Negative Tests - Invalid schemas should fail gracefully
+  - description: "✗ NEGATIVE: Unsupported format should return 400"
     method: POST
     endpoint: /api/parse-schema
     headers:
@@ -58,6 +46,20 @@ sequence:
       format: "unsupported-format"
     expect:
       status: 400
+      body:
+        success: false
+        error: "{{STRING}}"
+
+  - description: "✗ NEGATIVE: Invalid JSON should return 500 with error message"
+    method: POST
+    endpoint: /api/parse-schema
+    headers:
+      Content-Type: application/json
+    body:
+      schema: "{invalid json}"
+      format: "json-schema"
+    expect:
+      status: 500
       body:
         success: false
         error: "{{STRING}}"

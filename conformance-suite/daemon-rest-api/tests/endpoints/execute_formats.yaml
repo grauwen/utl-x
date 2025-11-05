@@ -15,7 +15,7 @@ sequence:
     headers:
       Content-Type: application/json
     body:
-      utlx: "output: { person: { name: $input.person.name } }"
+      utlx: "%utlx 1.0\ninput xml\noutput xml\n---\n{ person: { name: $input.person.name } }"
       input: "<person><name>Alice</name></person>"
       inputFormat: "xml"
       outputFormat: "xml"
@@ -32,7 +32,7 @@ sequence:
     headers:
       Content-Type: application/json
     body:
-      utlx: "$input"
+      utlx: "%utlx 1.0\ninput csv\noutput json\n---\n$input"
       input: "name,age\nJohn,30\nJane,25"
       inputFormat: "csv"
       outputFormat: "json"
@@ -49,7 +49,7 @@ sequence:
     headers:
       Content-Type: application/json
     body:
-      utlx: "output: { person: $input }"
+      utlx: "%utlx 1.0\ninput yaml\noutput yaml\n---\n{ person: $input }"
       input: "name: Bob\nage: 35"
       inputFormat: "yaml"
       outputFormat: "yaml"
@@ -66,7 +66,7 @@ sequence:
     headers:
       Content-Type: application/json
     body:
-      utlx: "$input"
+      utlx: "%utlx 1.0\ninput json\noutput xml\n---\n$input"
       input: "{\"person\":{\"name\":\"Charlie\",\"age\":40}}"
       inputFormat: "json"
       outputFormat: "xml"

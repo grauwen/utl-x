@@ -445,10 +445,6 @@ class DaemonRestApiTestRunner:
 
         # Find all YAML files recursively
         for yaml_file in test_path.rglob("*.yaml"):
-            # Skip experimental tests (endpoints not fully implemented yet)
-            if 'experimental' in yaml_file.parts:
-                continue
-
             # Apply filters
             if category_filter:
                 category_parts = category_filter.split('/')

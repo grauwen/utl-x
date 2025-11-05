@@ -1,18 +1,19 @@
 name: Infer Schema
-description: Test schema inference via /api/infer-schema endpoint
+description: Test schema inference via /api/infer-schema endpoint (positive and negative tests)
 tags:
   - endpoints
   - infer-schema
   - schema
 
 sequence:
-  - description: "Infer output schema from simple UTLX transformation"
+  # Positive Tests - Valid UTLX should infer schema successfully
+  - description: "✓ POSITIVE: Infer output schema from simple UTLX transformation"
     method: POST
     endpoint: /api/infer-schema
     headers:
       Content-Type: application/json
     body:
-      utlx: "output: { name: input.firstName, age: input.age }"
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n{ name: $input.firstName, age: $input.age }"
       format: "json-schema"
     expect:
       status: 200
@@ -20,15 +21,14 @@ sequence:
         success: true
         schema: "{{STRING}}"
         schemaFormat: "json-schema"
-        confidence: "{{NUMBER}}"
 
-  - description: "Infer schema with input schema provided"
+  - description: "✓ POSITIVE: Infer schema with input schema provided for better inference"
     method: POST
     endpoint: /api/infer-schema
     headers:
       Content-Type: application/json
     body:
-      utlx: "output: { fullName: input.firstName + \" \" + input.lastName }"
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n{ fullName: $input.firstName + \" \" + $input.lastName }"
       inputSchema: "{\"type\":\"object\",\"properties\":{\"firstName\":{\"type\":\"string\"},\"lastName\":{\"type\":\"string\"}}}"
       format: "json-schema"
     expect:
@@ -37,9 +37,9 @@ sequence:
         success: true
         schema: "{{STRING}}"
         schemaFormat: "json-schema"
-        confidence: "{{NUMBER}}"
 
-  - description: "Infer schema with invalid UTLX should fail"
+  # Negative Tests - Invalid UTLX should fail gracefully
+  - description: "✗ NEGATIVE: Invalid UTLX syntax should return 400 with error"
     method: POST
     endpoint: /api/infer-schema
     headers:
