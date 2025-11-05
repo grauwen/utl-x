@@ -79,14 +79,14 @@ object Main {
             |  utlxd <command> --help
             |
             |Examples:
-            |  # Start daemon with both LSP and REST API
-            |  utlxd start --lsp --rest-api --port 7778
+            |  # Start with both LSP and API - all defaults (socket transport, default ports)
+            |  utlxd start --lsp [--lsp-transport socket|stdio] [--lsp-port 7777] --api [--api-transport socket|stdio] [--api-port 7778]
             |
-            |  # Start daemon with LSP only (STDIO transport)
-            |  utlxd start --lsp --transport stdio
+            |  # Start with LSP only (STDIO transport)
+            |  utlxd start --lsp --lsp-transport stdio
             |
-            |  # Start daemon with REST API only
-            |  utlxd start --rest-api --port 7778
+            |  # Start with API only (default socket transport and port)
+            |  utlxd start --api [--api-transport socket|stdio] [--api-port 7778]
             |
             |  # Check daemon status
             |  utlxd status

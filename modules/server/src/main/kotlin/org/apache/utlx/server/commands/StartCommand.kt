@@ -50,6 +50,18 @@ object StartCommand {
                 cliOverrides = buildConfigOverrides(options)
             )
 
+            // Validate transport configuration: only one service can use stdio
+            val lspUsesStdio = config.server.lsp.enabled &&
+                              (options["lsp"] as? Boolean != false) &&
+                              config.server.lsp.transport == "stdio"
+            val apiUsesStdio = false // REST API typically doesn't use stdio, but check for future
+
+            if (lspUsesStdio && apiUsesStdio) {
+                System.err.println("Error: Only one service can use stdio transport at a time")
+                System.err.println("Please configure either LSP or REST API to use socket transport")
+                return CommandResult.Failure("Conflicting stdio transport configuration", 1)
+            }
+
             // Start services based on configuration
             val jobs = mutableListOf<Job>()
 
@@ -385,7 +397,12 @@ object StartCommand {
                 "--lsp" -> options["lsp"] = true
                 "--no-lsp" -> options["lsp"] = false
                 "--no-rest-api" -> options["rest-api"] = false
+                "--api-port" -> {
+                    i++
+                    options["server.restApi.port"] = args[i].toInt()
+                }
                 "--port" -> {
+                    // Deprecated: kept for backward compatibility, use --api-port instead
                     i++
                     options["server.restApi.port"] = args[i].toInt()
                 }
@@ -393,7 +410,7 @@ object StartCommand {
                     i++
                     options["server.lsp.socketPort"] = args[i].toInt()
                 }
-                "--transport" -> {
+                "--lsp-transport" -> {
                     i++
                     options["server.lsp.transport"] = args[i]
                 }
@@ -446,9 +463,9 @@ object StartCommand {
             |  --no-rest-api           Disable MCP REST API server
             |  --lsp                   Enable LSP server (default: true)
             |  --no-lsp                Disable LSP server
-            |  --port PORT             MCP REST API port (default: 7778)
+            |  --api-port PORT         MCP REST API port (default: 7778)
             |  --lsp-port PORT         LSP socket port (default: 7777)
-            |  --transport TYPE        LSP transport: stdio|socket (default: stdio)
+            |  --lsp-transport TYPE    LSP transport: stdio|socket (required if --lsp is enabled)
             |  --host HOST             MCP REST API host (default: 0.0.0.0)
             |  --daemon-rest           Enable daemon's internal REST API (for direct daemon access)
             |  --daemon-rest-port PORT Daemon REST API port (default: 7779)
@@ -456,18 +473,23 @@ object StartCommand {
             |  --config PATH           Configuration file path
             |  --help, -h              Show this help message
             |
-            |Examples:
-            |  # Start with both MCP REST API and LSP (stdio)
-            |  utlxd start --rest-api --lsp
+            |Important Notes:
+            |  - Only ONE service can use stdio transport at a time (stdio is not multiplexable)
+            |  - If LSP uses stdio, REST API must use socket (HTTP), and vice versa
+            |  - --port is deprecated, use --api-port instead
             |
-            |  # Start with MCP REST API, LSP, and daemon REST API
-            |  utlxd start --rest-api --lsp --daemon-rest
+            |Examples:
+            |  # Start with both MCP REST API and LSP (socket on default port 7777)
+            |  utlxd start --rest-api --lsp --lsp-transport socket
+            |
+            |  # Start with MCP REST API, LSP (stdio), and daemon REST API
+            |  utlxd start --rest-api --lsp --lsp-transport stdio --daemon-rest
             |
             |  # Start MCP REST API only on custom port
-            |  utlxd start --rest-api --port 8080 --no-lsp
+            |  utlxd start --rest-api --api-port 8080 --no-lsp
             |
             |  # Start LSP only with socket transport and daemon REST API
-            |  utlxd start --lsp --transport socket --lsp-port 7777 --no-rest-api --daemon-rest
+            |  utlxd start --lsp --lsp-transport socket --lsp-port 7777 --no-rest-api --daemon-rest
             |
             |  # Use custom configuration file
             |  utlxd start --config /etc/utlx/production.yaml
