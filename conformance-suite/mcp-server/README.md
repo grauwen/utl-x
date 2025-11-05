@@ -58,9 +58,10 @@ mcp-server/
 │   │   ├── infer_output_schema/
 │   │   ├── execute_transformation/
 │   │   └── get_examples/
-│   ├── transport/                   # Transport layer tests
 │   ├── integration/                 # End-to-end scenarios
-│   └── edge-cases/                  # Error handling
+│   ├── edge-cases/                  # Error handling
+│   └── manual/                      # Manual tests (excluded from automated runs)
+│       └── transport-http/          # HTTP transport tests (requires HTTP mode)
 ├── runners/
 │   └── python-runner/
 │       ├── mcp-server-runner.py     # Python test runner
@@ -126,6 +127,12 @@ npm run build
 cd ../conformance-suite/mcp-server
 python3 runners/python-runner/mcp-server-runner.py tests/
 ```
+
+### Manual Tests (HTTP Transport)
+
+HTTP transport tests are excluded from automated runs because they require the MCP server to run in HTTP mode (instead of stdio). These tests are located in `tests/manual/transport-http/`.
+
+To run HTTP transport tests manually, see: [tests/manual/transport-http/README.md](tests/manual/transport-http/README.md)
 
 ## Test File Format
 

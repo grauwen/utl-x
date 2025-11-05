@@ -300,6 +300,10 @@ class McpServerTestRunner:
         tests = []
 
         for yaml_file in test_root.rglob("*.yaml"):
+            # Skip manual tests directory (requires different transport mode)
+            if 'manual' in yaml_file.parts:
+                continue
+
             # Apply category filter
             if category_filter:
                 rel_path = yaml_file.relative_to(test_root)
