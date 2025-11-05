@@ -1,0 +1,168 @@
+name: Execute All Formats
+description: Test /api/execute with all supported input/output formats
+tags:
+  - endpoints
+  - execute
+  - formats
+  - comprehensive
+
+sequence:
+  - description: "JSON to JSON"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n$input"
+      input: "{\"name\":\"Test\"}"
+      inputFormat: "json"
+      outputFormat: "json"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{JSON}}"
+
+  - description: "JSON to XML"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput xml\n---\n$input"
+      input: "{\"name\":\"Test\"}"
+      inputFormat: "json"
+      outputFormat: "xml"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{STRING}}"
+
+  - description: "JSON to YAML"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput yaml\n---\n$input"
+      input: "{\"name\":\"Test\"}"
+      inputFormat: "json"
+      outputFormat: "yaml"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{STRING}}"
+
+  - description: "JSON to CSV"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput csv\n---\n$input"
+      input: "[{\"name\":\"Alice\",\"age\":30}]"
+      inputFormat: "json"
+      outputFormat: "csv"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{STRING}}"
+
+  - description: "XML to JSON"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput xml\noutput json\n---\n$input"
+      input: "<person><name>Test</name></person>"
+      inputFormat: "xml"
+      outputFormat: "json"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{JSON}}"
+
+  - description: "XML to XML"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput xml\noutput xml\n---\n$input"
+      input: "<person><name>Test</name></person>"
+      inputFormat: "xml"
+      outputFormat: "xml"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{STRING}}"
+
+  - description: "YAML to JSON"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput yaml\noutput json\n---\n$input"
+      input: "name: Test\nage: 30"
+      inputFormat: "yaml"
+      outputFormat: "json"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{JSON}}"
+
+  - description: "YAML to YAML"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput yaml\noutput yaml\n---\n$input"
+      input: "name: Test\nage: 30"
+      inputFormat: "yaml"
+      outputFormat: "yaml"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{STRING}}"
+
+  - description: "CSV to JSON"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput csv\noutput json\n---\n$input"
+      input: "name,age\nAlice,30\nBob,25"
+      inputFormat: "csv"
+      outputFormat: "json"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{JSON}}"
+
+  - description: "CSV to CSV"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput csv\noutput csv\n---\n$input"
+      input: "name,age\nAlice,30"
+      inputFormat: "csv"
+      outputFormat: "csv"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{STRING}}"

@@ -9,30 +9,30 @@ tags:
 sequence:
   - description: "Step 1: Validate the script"
     method: POST
-    endpoint: /mcp/validate
+    endpoint: /api/validate
     headers:
       Content-Type: application/json
     body:
-      script: "%utlx 1.0\ninput json\noutput json\n---\n{ name: input.name, age: input.age + 1 }"
-      level: "syntax"
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n{ name: $input.name, age: $input.age + 1 }"
     expect:
       status: 200
       body:
         valid: true
+        diagnostics: []
 
   - description: "Step 2: Transform data using the validated script"
     method: POST
-    endpoint: /mcp/transform
+    endpoint: /api/execute
     headers:
       Content-Type: application/json
     body:
-      script: "%utlx 1.0\ninput json\noutput json\n---\n{ name: input.name, age: input.age + 1 }"
-      input:
-        name: "Alice"
-        age: 25
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n{ name: $input.name, age: $input.age + 1 }"
+      input: "{\"name\":\"Alice\",\"age\":25}"
+      inputFormat: "json"
+      outputFormat: "json"
     expect:
       status: 200
       body:
-        output:
-          name: "Alice"
-          age: 26
+        success: true
+        output: "{{JSON}}"
+        executionTimeMs: "{{NUMBER}}"

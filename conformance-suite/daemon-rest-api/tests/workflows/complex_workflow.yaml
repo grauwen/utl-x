@@ -1,0 +1,61 @@
+name: Complex Multi-Step Workflow
+description: Test complex workflow with validation, transformation, and error recovery
+tags:
+  - workflows
+  - multi-step
+  - complex
+
+sequence:
+  - description: "Step 1: Validate a complex transformation"
+    method: POST
+    endpoint: /api/validate
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n{ users: $input.users, total: 2 }"
+    expect:
+      status: 200
+      body:
+        valid: "{{ANY}}"
+        diagnostics: "{{ANY}}"
+
+  - description: "Step 2: Execute the validated transformation"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n{ users: $input.users, total: 2 }"
+      input: "{\"users\":[{\"name\":\"Alice\"},{\"name\":\"Bob\"}]}"
+      inputFormat: "json"
+      outputFormat: "json"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{JSON}}"
+
+  - description: "Step 3: Validate an invalid transformation to test error handling"
+    method: POST
+    endpoint: /api/validate
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n{{{ invalid"
+    expect:
+      status: 200
+      body:
+        valid: false
+        diagnostics:
+          - severity: "error"
+            message: "{{STRING}}"
+
+  - description: "Step 4: Verify health check still works"
+    method: GET
+    endpoint: /api/health
+    expect:
+      status: 200
+      body:
+        status: "ok"
+        version: "{{STRING}}"
+        uptime: "{{NUMBER}}"

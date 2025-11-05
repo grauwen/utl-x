@@ -17,9 +17,9 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Check Python dependencies
-if ! python3 -c "import yaml" 2>/dev/null; then
+if ! python3 -c "import yaml; import requests" 2>/dev/null; then
     echo -e "${YELLOW}Installing Python dependencies...${NC}"
-    pip3 install -r "$SCRIPT_DIR/requirements.txt"
+    pip3 install -r "$SCRIPT_DIR/requirements.txt" --quiet
 fi
 
 # Build daemon JAR if needed

@@ -1,0 +1,63 @@
+name: Parse Schema
+description: Test schema parsing via /api/parse-schema endpoint
+tags:
+  - endpoints
+  - parse-schema
+  - schema
+
+sequence:
+  - description: "Parse JSON Schema successfully"
+    method: POST
+    endpoint: /api/parse-schema
+    headers:
+      Content-Type: application/json
+    body:
+      schema: "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"age\":{\"type\":\"number\"}},\"required\":[\"name\"]}"
+      format: "json-schema"
+    expect:
+      status: 200
+      body:
+        success: true
+        normalized: "{{STRING}}"
+
+  - description: "Parse XSD schema successfully"
+    method: POST
+    endpoint: /api/parse-schema
+    headers:
+      Content-Type: application/json
+    body:
+      schema: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:element name=\"person\"><xs:complexType><xs:sequence><xs:element name=\"name\" type=\"xs:string\"/><xs:element name=\"age\" type=\"xs:int\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+      format: "xsd"
+    expect:
+      status: 200
+      body:
+        success: true
+        normalized: "{{STRING}}"
+
+  - description: "Parse CSV schema (headers)"
+    method: POST
+    endpoint: /api/parse-schema
+    headers:
+      Content-Type: application/json
+    body:
+      schema: "name,age,email"
+      format: "csv"
+    expect:
+      status: 200
+      body:
+        success: true
+        normalized: "{{STRING}}"
+
+  - description: "Parse schema with unsupported format should fail"
+    method: POST
+    endpoint: /api/parse-schema
+    headers:
+      Content-Type: application/json
+    body:
+      schema: "some schema content"
+      format: "unsupported-format"
+    expect:
+      status: 400
+      body:
+        success: false
+        error: "{{STRING}}"

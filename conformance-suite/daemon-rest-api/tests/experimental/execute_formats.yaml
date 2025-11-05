@@ -1,0 +1,78 @@
+name: Execute Different Formats
+description: Test /api/execute with various input/output formats (XML, CSV, YAML)
+tags:
+  - endpoints
+  - execute
+  - formats
+  - xml
+  - csv
+  - yaml
+
+sequence:
+  - description: "Execute with XML input and output"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "output: { person: { name: $input.person.name } }"
+      input: "<person><name>Alice</name></person>"
+      inputFormat: "xml"
+      outputFormat: "xml"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{STRING}}"
+        executionTimeMs: "{{NUMBER}}"
+
+  - description: "Execute with CSV input and JSON output"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "$input"
+      input: "name,age\nJohn,30\nJane,25"
+      inputFormat: "csv"
+      outputFormat: "json"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{JSON}}"
+        executionTimeMs: "{{NUMBER}}"
+
+  - description: "Execute with YAML input and output"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "output: { person: $input }"
+      input: "name: Bob\nage: 35"
+      inputFormat: "yaml"
+      outputFormat: "yaml"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{STRING}}"
+        executionTimeMs: "{{NUMBER}}"
+
+  - description: "Execute JSON to XML conversion"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "$input"
+      input: "{\"person\":{\"name\":\"Charlie\",\"age\":40}}"
+      inputFormat: "json"
+      outputFormat: "xml"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{STRING}}"
+        executionTimeMs: "{{NUMBER}}"

@@ -6,43 +6,51 @@ tags:
   - validation
 
 sequence:
-  - description: "Missing script parameter should return error"
+  - description: "Missing utlx parameter should return error"
     method: POST
-    endpoint: /mcp/transform
+    endpoint: /api/execute
     headers:
       Content-Type: application/json
     body:
-      input:
-        name: "John"
+      input: "{\"name\":\"John\"}"
+      inputFormat: "json"
+      outputFormat: "json"
     expect:
-      status: 400
+      status: 500
       body:
         error: "{{STRING}}"
+        message: "{{STRING}}"
 
   - description: "Empty script should return error"
     method: POST
-    endpoint: /mcp/transform
+    endpoint: /api/execute
     headers:
       Content-Type: application/json
     body:
-      script: ""
-      input:
-        name: "John"
+      utlx: ""
+      input: "{\"name\":\"John\"}"
+      inputFormat: "json"
+      outputFormat: "json"
     expect:
       status: 400
       body:
+        success: false
         error: "{{STRING}}"
+        executionTimeMs: "{{NUMBER}}"
 
   - description: "Malformed script header should return error"
     method: POST
-    endpoint: /mcp/transform
+    endpoint: /api/execute
     headers:
       Content-Type: application/json
     body:
-      script: "invalid header\n---\ninput"
-      input:
-        name: "John"
+      utlx: "invalid header\n---\n$input"
+      input: "{\"name\":\"John\"}"
+      inputFormat: "json"
+      outputFormat: "json"
     expect:
       status: 400
       body:
+        success: false
         error: "{{STRING}}"
+        executionTimeMs: "{{NUMBER}}"

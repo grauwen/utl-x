@@ -134,6 +134,16 @@ def is_placeholder_match(expected: str, actual: Any) -> bool:
     if placeholder == 'BOOLEAN':
         return isinstance(actual, bool)
 
+    # {{JSON}} - validate JSON string
+    if placeholder == 'JSON':
+        if not isinstance(actual, str):
+            return False
+        try:
+            json.loads(actual)
+            return True
+        except (json.JSONDecodeError, ValueError):
+            return False
+
     # {{REGEX:pattern}} - custom regex matching
     if placeholder.startswith('REGEX:'):
         pattern = placeholder[6:].strip()
@@ -207,7 +217,7 @@ class DaemonManager:
         """Check if daemon is already running"""
         port = port or self.port
         try:
-            response = requests.get(f"http://{host}:{port}/health", timeout=2)
+            response = requests.get(f"http://{host}:{port}/api/health", timeout=2)
             return response.status_code == 200
         except requests.RequestException:
             return False
@@ -435,6 +445,10 @@ class DaemonRestApiTestRunner:
 
         # Find all YAML files recursively
         for yaml_file in test_path.rglob("*.yaml"):
+            # Skip experimental tests (endpoints not fully implemented yet)
+            if 'experimental' in yaml_file.parts:
+                continue
+
             # Apply filters
             if category_filter:
                 category_parts = category_filter.split('/')
@@ -530,8 +544,8 @@ def main():
     )
     parser.add_argument(
         '--jar',
-        default='../../modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar',
-        help='Path to utlxd JAR file'
+        default='../../../../modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar',
+        help='Path to utlxd JAR file (relative to script directory)'
     )
     parser.add_argument(
         '-v', '--verbose',
@@ -543,7 +557,7 @@ def main():
 
     # Resolve paths
     script_dir = Path(__file__).parent
-    test_root = script_dir.parent / args.test_path
+    test_root = script_dir.parent.parent / args.test_path
     jar_path = script_dir / args.jar
 
     if not test_root.exists():

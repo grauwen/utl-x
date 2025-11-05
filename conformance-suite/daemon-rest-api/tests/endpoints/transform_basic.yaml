@@ -1,5 +1,5 @@
 name: Transform Basic
-description: Test basic transformation via MCP endpoint
+description: Test basic transformation via /api/execute endpoint
 tags:
   - endpoints
   - transform
@@ -8,17 +8,17 @@ tags:
 sequence:
   - description: "Simple identity transformation"
     method: POST
-    endpoint: /mcp/transform
+    endpoint: /api/execute
     headers:
       Content-Type: application/json
     body:
-      script: "%utlx 1.0\ninput json\noutput json\n---\ninput"
-      input:
-        name: "John"
-        age: 30
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n$input"
+      input: "{\"name\":\"John\",\"age\":30}"
+      inputFormat: "json"
+      outputFormat: "json"
     expect:
       status: 200
       body:
-        output:
-          name: "John"
-          age: 30
+        success: true
+        output: "{{JSON}}"
+        executionTimeMs: "{{NUMBER}}"

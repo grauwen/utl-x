@@ -1,0 +1,54 @@
+name: Infer Schema
+description: Test schema inference via /api/infer-schema endpoint
+tags:
+  - endpoints
+  - infer-schema
+  - schema
+
+sequence:
+  - description: "Infer output schema from simple UTLX transformation"
+    method: POST
+    endpoint: /api/infer-schema
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "output: { name: input.firstName, age: input.age }"
+      format: "json-schema"
+    expect:
+      status: 200
+      body:
+        success: true
+        schema: "{{STRING}}"
+        schemaFormat: "json-schema"
+        confidence: "{{NUMBER}}"
+
+  - description: "Infer schema with input schema provided"
+    method: POST
+    endpoint: /api/infer-schema
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "output: { fullName: input.firstName + \" \" + input.lastName }"
+      inputSchema: "{\"type\":\"object\",\"properties\":{\"firstName\":{\"type\":\"string\"},\"lastName\":{\"type\":\"string\"}}}"
+      format: "json-schema"
+    expect:
+      status: 200
+      body:
+        success: true
+        schema: "{{STRING}}"
+        schemaFormat: "json-schema"
+        confidence: "{{NUMBER}}"
+
+  - description: "Infer schema with invalid UTLX should fail"
+    method: POST
+    endpoint: /api/infer-schema
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "invalid @#$ syntax"
+      format: "json-schema"
+    expect:
+      status: 400
+      body:
+        success: false
+        error: "{{STRING}}"
