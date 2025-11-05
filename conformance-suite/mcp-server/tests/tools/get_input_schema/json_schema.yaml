@@ -1,0 +1,25 @@
+name: get_input_schema_json_schema
+description: Test get_input_schema with JSON Schema input
+tags:
+  - tools
+  - get_input_schema
+  - json-schema
+
+sequence:
+  - description: "Parse a simple JSON Schema"
+    request:
+      jsonrpc: "2.0"
+      id: 50
+      method: "tools/call"
+      params:
+        name: "get_input_schema"
+        arguments:
+          schema: '{"type": "object", "properties": {"name": {"type": "string"}, "age": {"type": "number"}}, "required": ["name"]}'
+          format: "json-schema"
+    expect:
+      jsonrpc: "2.0"
+      id: 50
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

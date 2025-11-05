@@ -1,0 +1,25 @@
+name: missing_required_parameter
+description: Test error handling when required parameter is missing
+tags:
+  - edge-cases
+  - errors
+  - validation
+
+sequence:
+  - description: "Call validate_utlx without required 'utlx' parameter"
+    request:
+      jsonrpc: "2.0"
+      id: 101
+      method: "tools/call"
+      params:
+        name: "validate_utlx"
+        arguments:
+          strict: false
+    expect:
+      jsonrpc: "2.0"
+      id: 101
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+        isError: true

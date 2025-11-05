@@ -1,0 +1,27 @@
+name: validate_utlx_valid_code
+description: Test validate_utlx tool with valid UTLX code
+tags:
+  - tools
+  - validate_utlx
+  - basic
+
+sequence:
+  - description: "Validate simple valid UTLX code"
+    request:
+      jsonrpc: "2.0"
+      id: 10
+      method: "tools/call"
+      params:
+        name: "validate_utlx"
+        arguments:
+          utlx: "output: input"
+          strict: false
+    expect:
+      jsonrpc: "2.0"
+      id: 10
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+        # Parsed JSON should contain:
+        # {"valid": true, "message": "...", "diagnostics": []}

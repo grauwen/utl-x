@@ -1,0 +1,27 @@
+name: validate_utlx_syntax_errors
+description: Test validate_utlx tool with syntax errors
+tags:
+  - tools
+  - validate_utlx
+  - errors
+
+sequence:
+  - description: "Validate UTLX code with syntax error"
+    request:
+      jsonrpc: "2.0"
+      id: 11
+      method: "tools/call"
+      params:
+        name: "validate_utlx"
+        arguments:
+          utlx: "output: { invalid syntax here"
+          strict: false
+    expect:
+      jsonrpc: "2.0"
+      id: 11
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+        # Parsed JSON should contain:
+        # {"valid": false, "diagnostics": [...], "errorSummary": "..."}

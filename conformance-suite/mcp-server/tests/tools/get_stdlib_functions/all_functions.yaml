@@ -1,0 +1,25 @@
+name: get_stdlib_functions_all
+description: Test get_stdlib_functions tool retrieves all functions
+tags:
+  - tools
+  - get_stdlib_functions
+  - basic
+
+sequence:
+  - description: "Get all stdlib functions without filter"
+    request:
+      jsonrpc: "2.0"
+      id: 30
+      method: "tools/call"
+      params:
+        name: "get_stdlib_functions"
+        arguments: {}
+    expect:
+      jsonrpc: "2.0"
+      id: 30
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+        # Parsed JSON should contain:
+        # {"success": true, "functions": [...], "count": <number>}
