@@ -55,6 +55,7 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("io.ktor:ktor-server-tests:2.3.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:2.3.7")
+    testImplementation("io.ktor:ktor-client-cio:2.3.7") // HTTP client engine for integration tests
 }
 
 tasks.test {
