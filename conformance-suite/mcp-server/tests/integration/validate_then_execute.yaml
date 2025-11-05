@@ -1,0 +1,45 @@
+name: validate_then_execute
+description: Integration test - validate UTLX code then execute transformation
+tags:
+  - integration
+  - workflow
+  - validate
+  - execute
+
+sequence:
+  - description: "Step 1: Validate UTLX code"
+    request:
+      jsonrpc: "2.0"
+      id: 91
+      method: "tools/call"
+      params:
+        name: "validate_utlx"
+        arguments:
+          code: "output: { fullName: input.firstName + ' ' + input.lastName, age: input.age + 1 }"
+    expect:
+      jsonrpc: "2.0"
+      id: 91
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Step 2: Execute the validated transformation"
+    request:
+      jsonrpc: "2.0"
+      id: 92
+      method: "tools/call"
+      params:
+        name: "execute_transformation"
+        arguments:
+          utlx: "output: { fullName: input.firstName + ' ' + input.lastName, age: input.age + 1 }"
+          input: "{\"firstName\": \"John\", \"lastName\": \"Doe\", \"age\": 30}"
+          inputFormat: "json"
+          outputFormat: "json"
+    expect:
+      jsonrpc: "2.0"
+      id: 92
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

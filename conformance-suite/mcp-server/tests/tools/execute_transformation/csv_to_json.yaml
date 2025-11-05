@@ -1,0 +1,28 @@
+name: execute_transformation_csv_to_json
+description: Test execute_transformation tool with CSV input, JSON output
+tags:
+  - tools
+  - execute_transformation
+  - csv
+  - format
+
+sequence:
+  - description: "Execute CSV to JSON transformation"
+    request:
+      jsonrpc: "2.0"
+      id: 22
+      method: "tools/call"
+      params:
+        name: "execute_transformation"
+        arguments:
+          utlx: "output: { name: input.name, age: input.age }"
+          input: "name,age\nJohn Doe,30\n"
+          inputFormat: "csv"
+          outputFormat: "json"
+    expect:
+      jsonrpc: "2.0"
+      id: 22
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

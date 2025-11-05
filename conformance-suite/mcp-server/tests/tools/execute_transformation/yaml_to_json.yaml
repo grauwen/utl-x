@@ -1,0 +1,28 @@
+name: execute_transformation_yaml_to_json
+description: Test execute_transformation tool with YAML input, JSON output
+tags:
+  - tools
+  - execute_transformation
+  - yaml
+  - format
+
+sequence:
+  - description: "Execute YAML to JSON transformation"
+    request:
+      jsonrpc: "2.0"
+      id: 23
+      method: "tools/call"
+      params:
+        name: "execute_transformation"
+        arguments:
+          utlx: "output: { fullName: input.firstName + \" \" + input.lastName, age: input.age }"
+          input: "firstName: John\nlastName: Doe\nage: 30\n"
+          inputFormat: "yaml"
+          outputFormat: "json"
+    expect:
+      jsonrpc: "2.0"
+      id: 23
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

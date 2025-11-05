@@ -1,0 +1,59 @@
+name: get_stdlib_functions_search_query
+description: Test get_stdlib_functions with search query parameter
+tags:
+  - tools
+  - get_stdlib_functions
+  - search
+  - stdlib
+
+sequence:
+  - description: "Search stdlib functions with query 'string'"
+    request:
+      jsonrpc: "2.0"
+      id: 71
+      method: "tools/call"
+      params:
+        name: "get_stdlib_functions"
+        arguments:
+          query: "string"
+    expect:
+      jsonrpc: "2.0"
+      id: 71
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Search stdlib functions with query 'array'"
+    request:
+      jsonrpc: "2.0"
+      id: 72
+      method: "tools/call"
+      params:
+        name: "get_stdlib_functions"
+        arguments:
+          query: "array"
+    expect:
+      jsonrpc: "2.0"
+      id: 72
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Search stdlib functions with query 'date time'"
+    request:
+      jsonrpc: "2.0"
+      id: 73
+      method: "tools/call"
+      params:
+        name: "get_stdlib_functions"
+        arguments:
+          query: "date time"
+    expect:
+      jsonrpc: "2.0"
+      id: 73
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

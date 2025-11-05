@@ -1,0 +1,84 @@
+name: schema_aware_transformation
+description: Integration test - parse schema, execute transformation, infer output schema
+tags:
+  - integration
+  - workflow
+  - schema
+  - transformation
+
+sequence:
+  - description: "Step 1: Parse input schema (JSON Schema)"
+    request:
+      jsonrpc: "2.0"
+      id: 93
+      method: "tools/call"
+      params:
+        name: "get_input_schema"
+        arguments:
+          schema: |
+            {
+              "type": "object",
+              "properties": {
+                "firstName": { "type": "string" },
+                "lastName": { "type": "string" },
+                "age": { "type": "number" }
+              },
+              "required": ["firstName", "lastName"]
+            }
+          format: "jsonschema"
+    expect:
+      jsonrpc: "2.0"
+      id: 93
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Step 2: Execute transformation with schema-validated input"
+    request:
+      jsonrpc: "2.0"
+      id: 94
+      method: "tools/call"
+      params:
+        name: "execute_transformation"
+        arguments:
+          utlx: "output: { fullName: input.firstName + ' ' + input.lastName, birthYear: 2024 - input.age }"
+          input: "{\"firstName\": \"Jane\", \"lastName\": \"Smith\", \"age\": 28}"
+          inputFormat: "json"
+          outputFormat: "json"
+    expect:
+      jsonrpc: "2.0"
+      id: 94
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Step 3: Infer output schema from transformation"
+    request:
+      jsonrpc: "2.0"
+      id: 95
+      method: "tools/call"
+      params:
+        name: "infer_output_schema"
+        arguments:
+          utlxCode: "output: { fullName: input.firstName + ' ' + input.lastName, birthYear: 2024 - input.age }"
+          inputSchema: |
+            {
+              "type": "object",
+              "properties": {
+                "firstName": { "type": "string" },
+                "lastName": { "type": "string" },
+                "age": { "type": "number" }
+              },
+              "required": ["firstName", "lastName"]
+            }
+          inputFormat: "jsonschema"
+          outputFormat: "jsonschema"
+    expect:
+      jsonrpc: "2.0"
+      id: 95
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

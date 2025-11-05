@@ -1,0 +1,63 @@
+name: get_stdlib_functions_category_and_query
+description: Test get_stdlib_functions with both category and query filters
+tags:
+  - tools
+  - get_stdlib_functions
+  - search
+  - filter
+  - stdlib
+
+sequence:
+  - description: "Search string functions with query filter"
+    request:
+      jsonrpc: "2.0"
+      id: 74
+      method: "tools/call"
+      params:
+        name: "get_stdlib_functions"
+        arguments:
+          category: "string"
+          query: "uppercase"
+    expect:
+      jsonrpc: "2.0"
+      id: 74
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Search array functions with query filter"
+    request:
+      jsonrpc: "2.0"
+      id: 75
+      method: "tools/call"
+      params:
+        name: "get_stdlib_functions"
+        arguments:
+          category: "array"
+          query: "map filter"
+    expect:
+      jsonrpc: "2.0"
+      id: 75
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Search math functions with query filter"
+    request:
+      jsonrpc: "2.0"
+      id: 76
+      method: "tools/call"
+      params:
+        name: "get_stdlib_functions"
+        arguments:
+          category: "math"
+          query: "round floor ceiling"
+    expect:
+      jsonrpc: "2.0"
+      id: 76
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

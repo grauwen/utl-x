@@ -1,0 +1,29 @@
+name: execute_transformation_error_handling
+description: Test execute_transformation error handling with invalid input
+tags:
+  - tools
+  - execute_transformation
+  - errors
+  - edge-cases
+
+sequence:
+  - description: "Execute with invalid JSON input"
+    request:
+      jsonrpc: "2.0"
+      id: 24
+      method: "tools/call"
+      params:
+        name: "execute_transformation"
+        arguments:
+          utlx: "output: input.name"
+          input: "{invalid json"
+          inputFormat: "json"
+          outputFormat: "json"
+    expect:
+      jsonrpc: "2.0"
+      id: 24
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+        isError: true

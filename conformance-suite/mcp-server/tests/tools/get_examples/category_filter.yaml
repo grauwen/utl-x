@@ -1,0 +1,27 @@
+name: get_examples_category_filter
+description: Test get_examples with category filter
+tags:
+  - tools
+  - get_examples
+  - search
+  - filter
+
+sequence:
+  - description: "Search examples with category filter"
+    request:
+      jsonrpc: "2.0"
+      id: 61
+      method: "tools/call"
+      params:
+        name: "get_examples"
+        arguments:
+          query: "string manipulation"
+          category: "transformation"
+          limit: 5
+    expect:
+      jsonrpc: "2.0"
+      id: 61
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

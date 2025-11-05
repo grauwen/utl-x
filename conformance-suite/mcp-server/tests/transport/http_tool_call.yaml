@@ -1,0 +1,30 @@
+name: http_tool_call
+description: Test tools/call method over HTTP transport
+tags:
+  - transport
+  - http
+  - tools
+  - execute_transformation
+
+transport: http
+
+sequence:
+  - description: "Execute transformation over HTTP"
+    request:
+      jsonrpc: "2.0"
+      id: 83
+      method: "tools/call"
+      params:
+        name: "execute_transformation"
+        arguments:
+          utlx: "output: { greeting: 'Hello ' + input.name }"
+          input: "{\"name\": \"World\"}"
+          inputFormat: "json"
+          outputFormat: "json"
+    expect:
+      jsonrpc: "2.0"
+      id: 83
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

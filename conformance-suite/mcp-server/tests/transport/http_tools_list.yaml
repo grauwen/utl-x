@@ -1,0 +1,40 @@
+name: http_tools_list
+description: Test tools/list method over HTTP transport
+tags:
+  - transport
+  - http
+  - protocol
+  - tools
+
+transport: http
+
+sequence:
+  - description: "List tools over HTTP"
+    request:
+      jsonrpc: "2.0"
+      id: 82
+      method: "tools/list"
+      params: {}
+    expect:
+      jsonrpc: "2.0"
+      id: 82
+      result:
+        tools:
+          - name: "get_input_schema"
+            description: "{{STRING}}"
+            inputSchema: "{{JSON}}"
+          - name: "get_stdlib_functions"
+            description: "{{STRING}}"
+            inputSchema: "{{JSON}}"
+          - name: "validate_utlx"
+            description: "{{STRING}}"
+            inputSchema: "{{JSON}}"
+          - name: "infer_output_schema"
+            description: "{{STRING}}"
+            inputSchema: "{{JSON}}"
+          - name: "execute_transformation"
+            description: "{{STRING}}"
+            inputSchema: "{{JSON}}"
+          - name: "get_examples"
+            description: "{{STRING}}"
+            inputSchema: "{{JSON}}"

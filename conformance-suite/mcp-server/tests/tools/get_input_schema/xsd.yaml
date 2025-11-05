@@ -1,0 +1,37 @@
+name: get_input_schema_xsd
+description: Test get_input_schema with XSD schema input
+tags:
+  - tools
+  - get_input_schema
+  - xsd
+  - schema
+
+sequence:
+  - description: "Parse a simple XSD schema"
+    request:
+      jsonrpc: "2.0"
+      id: 51
+      method: "tools/call"
+      params:
+        name: "get_input_schema"
+        arguments:
+          schema: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:element name="person">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="name" type="xs:string"/>
+                    <xs:element name="age" type="xs:int"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:schema>
+          format: "xsd"
+    expect:
+      jsonrpc: "2.0"
+      id: 51
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
