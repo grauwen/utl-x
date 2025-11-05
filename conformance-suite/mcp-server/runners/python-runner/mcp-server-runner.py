@@ -458,8 +458,8 @@ def main():
     )
     parser.add_argument(
         '--server-dir',
-        default='../../mcp-server',
-        help='Path to MCP server directory (default: ../../mcp-server)'
+        default='../../../../mcp-server',
+        help='Path to MCP server directory (default: ../../../../mcp-server)'
     )
     parser.add_argument(
         '-v', '--verbose',
