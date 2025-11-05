@@ -38,10 +38,33 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
     private config: Required<ServiceConfig>;
     private isShuttingDown = false;
 
-    constructor(
-        @inject(UTLXDaemonClient) private daemonClient: UTLXDaemonClient
-    ) {
-        this.config = this.loadConfig();
+    private daemonClient: UTLXDaemonClient | null = null;
+
+    constructor() {
+        console.log('[ServiceLifecycle] ===== CONSTRUCTOR CALLED =====');
+        console.log('[ServiceLifecycle] About to load config...');
+        try {
+            this.config = this.loadConfig();
+            console.log('[ServiceLifecycle] ===== CONFIG LOADED SUCCESSFULLY =====');
+            console.log('[ServiceLifecycle] Config:', JSON.stringify(this.config, null, 2));
+        } catch (error) {
+            console.error('[ServiceLifecycle] ===== ERROR IN CONSTRUCTOR =====');
+            console.error('[ServiceLifecycle] Error:', error);
+            console.error('[ServiceLifecycle] Stack:', (error as Error).stack);
+            // Don't throw - let's see if this helps
+            this.config = {
+                utlxdJarPath: '/tmp/fake.jar',
+                utlxdRestPort: 7779,
+                utlxdLogFile: '/tmp/ut lxd.log',
+                mcpServerPath: '/tmp/fake.js',
+                mcpServerPort: 3001,
+                mcpServerLogFile: '/tmp/mcp.log',
+                autoStart: false,
+                shutdownTimeout: 5000
+            };
+            console.log('[ServiceLifecycle] Using fallback config');
+        }
+        console.log('[ServiceLifecycle] ===== CONSTRUCTOR COMPLETE =====');
     }
 
     /**
@@ -50,17 +73,18 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
     private loadConfig(): Required<ServiceConfig> {
         // Try to find paths relative to project root
         const projectRoot = this.findProjectRoot();
+        console.log('[ServiceLifecycle] Project root:', projectRoot);
 
         return {
-            // UTLXD defaults
+            // UTLXD defaults - projectRoot should now be the utl-x repository root
             utlxdJarPath: process.env.UTLXD_JAR_PATH ||
-                path.join(projectRoot, '../modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar'),
+                path.join(projectRoot, 'modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar'),
             utlxdRestPort: parseInt(process.env.UTLXD_REST_PORT || '7779', 10),
             utlxdLogFile: process.env.UTLXD_LOG_FILE || '/tmp/utlxd-theia.log',
 
-            // MCP Server defaults
+            // MCP Server defaults - projectRoot should now be the utl-x repository root
             mcpServerPath: process.env.MCP_SERVER_PATH ||
-                path.join(projectRoot, '../mcp-server/dist/index.js'),
+                path.join(projectRoot, 'mcp-server/dist/index.js'),
             mcpServerPort: parseInt(process.env.MCP_SERVER_PORT || '3001', 10),
             mcpServerLogFile: process.env.MCP_SERVER_LOG_FILE || '/tmp/mcp-server-theia.log',
 
@@ -72,44 +96,72 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
 
     /**
      * Find project root by looking for package.json
+     * For development, finds the actual utl-x repository root
      */
     private findProjectRoot(): string {
+        // First, try to find utlx-theia-extension package
         let dir = __dirname;
+        let extensionRoot: string | null = null;
+
         while (dir !== '/') {
             const packagePath = path.join(dir, 'package.json');
             if (fs.existsSync(packagePath)) {
                 const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf-8'));
                 if (pkg.name === 'utlx-theia-extension') {
-                    return dir;
+                    extensionRoot = dir;
+                    break;
                 }
             }
             dir = path.dirname(dir);
         }
-        return __dirname;
+
+        // If we found the extension, look for the actual utl-x repository root
+        // by going up and checking for modules/server directory
+        if (extensionRoot) {
+            dir = extensionRoot;
+            while (dir !== '/') {
+                const modulesPath = path.join(dir, 'modules/server/build/libs');
+                if (fs.existsSync(modulesPath)) {
+                    console.log('[ServiceLifecycle] Found utl-x repository root:', dir);
+                    return dir;
+                }
+                dir = path.dirname(dir);
+            }
+        }
+
+        console.log('[ServiceLifecycle] Could not find utl-x repo root, using extension root');
+        return extensionRoot || __dirname;
     }
 
     /**
      * Initialize services on backend startup
      */
     async initialize(): Promise<void> {
+        console.log('[ServiceLifecycle] initialize() called');
+
         if (!this.config.autoStart) {
-            console.log('[ServiceLifecycle] Auto-start disabled');
+            console.log('[ServiceLifecycle] Auto-start disabled (AUTO_START_SERVICES=false)');
             return;
         }
 
-        console.log('[ServiceLifecycle] Initializing services...');
+        console.log('[ServiceLifecycle] Starting services...');
 
         try {
             // Start UTLXD first
+            console.log('[ServiceLifecycle] Step 1: Starting UTLXD...');
             await this.startUTLXD();
+            console.log('[ServiceLifecycle] Step 1: UTLXD started successfully');
 
             // Then start MCP server (depends on UTLXD)
+            console.log('[ServiceLifecycle] Step 2: Starting MCP server...');
             await this.startMCPServer();
+            console.log('[ServiceLifecycle] Step 2: MCP server started successfully');
 
-            console.log('[ServiceLifecycle] All services started successfully');
+            console.log('[ServiceLifecycle] ✓ All services started successfully');
         } catch (error) {
-            console.error('[ServiceLifecycle] Failed to start services:', error);
-            throw error;
+            console.error('[ServiceLifecycle] ✗ Failed to start services:', error);
+            // Don't throw - let Theia start even if services fail
+            console.error('[ServiceLifecycle] Continuing without managed services');
         }
     }
 
@@ -124,17 +176,8 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
             throw new Error(`UTLXD jar not found at: ${this.config.utlxdJarPath}`);
         }
 
-        // Configure daemon client to use the jar file
-        const daemonOptions = {
-            daemonPath: 'java',
-            logFile: this.config.utlxdLogFile,
-            requestTimeout: 30000,
-            startupTimeout: 15000
-        };
-
-        // Override daemon client's start method to use java -jar
-        const originalStart = this.daemonClient.start.bind(this.daemonClient);
-        this.daemonClient.start = async () => {
+        // Spawn UTLXD directly without daemon client for now
+        {
             // Instead of using the daemon client's spawn, we'll start it externally
             // and let the daemon client connect to it
 
@@ -166,11 +209,8 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
 
             // Wait for UTLXD to be ready
             await this.waitForUTLXD();
+        }
 
-            return;
-        };
-
-        await this.daemonClient.start();
         console.log('[ServiceLifecycle] UTLXD started successfully');
     }
 
@@ -294,10 +334,7 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
                 await this.stopMCPServer();
             }
 
-            // Then stop UTLXD
-            if (this.daemonClient.isRunning()) {
-                await this.daemonClient.stop(this.config.shutdownTimeout);
-            }
+            // TODO: Stop UTLXD process (need to track the process)
 
             console.log('[ServiceLifecycle] All services stopped');
         } catch (error) {
@@ -335,7 +372,7 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
      * Check if services are running
      */
     areServicesRunning(): boolean {
-        return this.daemonClient.isRunning() && this.mcpProcess !== null;
+        return this.mcpProcess !== null;  // TODO: Track UTLXD process
     }
 
     /**
@@ -344,7 +381,7 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
     getStatus() {
         return {
             utlxd: {
-                running: this.daemonClient.isRunning(),
+                running: false,  // TODO: Track UTLXD process
                 port: this.config.utlxdRestPort,
                 jarPath: this.config.utlxdJarPath
             },

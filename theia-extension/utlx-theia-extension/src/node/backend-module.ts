@@ -13,16 +13,23 @@ import { UTLXServiceImpl } from './services/utlx-service-impl';
 import { UTLXDaemonClient } from './daemon/utlx-daemon-client';
 import { ServiceLifecycleManager } from './services/service-lifecycle-manager';
 
+// Import the service starter
+import './services/auto-start-services';
+
 export default new ContainerModule(bind => {
+    console.log('[Backend Module] Loading UTL-X backend module...');
+
     // Bind daemon client as singleton
     bind(UTLXDaemonClient).toSelf().inSingletonScope();
+    console.log('[Backend Module] Daemon client bound');
 
-    // Bind service lifecycle manager
-    bind(ServiceLifecycleManager).toSelf().inSingletonScope();
-    bind(BackendApplicationContribution).toService(ServiceLifecycleManager);
+    // Bind service lifecycle manager directly as BackendApplicationContribution
+    bind(BackendApplicationContribution).to(ServiceLifecycleManager).inSingletonScope();
+    console.log('[Backend Module] Service lifecycle manager bound as BackendApplicationContribution');
 
     // Bind service implementation
     bind(UTLX_SERVICE_SYMBOL).to(UTLXServiceImpl).inSingletonScope();
+    console.log('[Backend Module] Service implementation bound');
 
     // Create RPC connection handler for frontend-backend communication
     bind(ConnectionHandler).toDynamicValue(ctx =>
@@ -30,6 +37,7 @@ export default new ContainerModule(bind => {
             return ctx.container.get<UTLXService>(UTLX_SERVICE_SYMBOL);
         })
     ).inSingletonScope();
+    console.log('[Backend Module] RPC connection handler bound');
 
-    console.log('UTL-X backend module loaded with service lifecycle management');
+    console.log('[Backend Module] ✓ UTL-X backend module loaded with service lifecycle management');
 });
