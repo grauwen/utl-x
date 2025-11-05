@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# UTL-X Daemon Wrapper Script
+#
+# Improved wrapper with better defaults and clearer parameter naming.
+#
+# Usage: ./utlxd [command] [options]
+#
+# Recommended usage patterns:
+#
+#   # LSP on socket (port 7777), Daemon REST API (port 7779)
+#   ./utlxd start --lsp --lsp-port 7777 --daemon-rest --daemon-rest-port 7779
+#
+#   # LSP on socket (port 7777), Daemon REST API (port 7779) - SHORT FORM
+#   ./utlxd start --lsp --lsp-port 7777 --daemon-rest --daemon-rest-port 7779
+#
+#   # LSP on stdio, Daemon REST API (port 7779)
+#   ./utlxd start --lsp --transport stdio --daemon-rest --daemon-rest-port 7779
+#
+#   # Show help
+#   ./utlxd -h
+#   ./utlxd start --help
+#
+
+# Find project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$SCRIPT_DIR"
+
+# Path to UTLXD JAR
+UTLXD_JAR="$PROJECT_ROOT/modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar"
+
+# Check if JAR exists
+if [ ! -f "$UTLXD_JAR" ]; then
+    echo "ERROR: UTLXD JAR not found at: $UTLXD_JAR"
+    echo "Please build the project first: ./gradlew build"
+    exit 1
+fi
+
+# Execute UTLXD with all provided arguments
+exec java -jar "$UTLXD_JAR" "$@"
