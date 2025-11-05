@@ -1,6 +1,6 @@
 # UTL-X Conformance Test Suites
 
-UTL-X maintains five distinct conformance test suites to ensure correctness, quality, and standards compliance across different aspects of the language implementation.
+UTL-X maintains six distinct conformance test suites to ensure correctness, quality, and standards compliance across different aspects of the language implementation.
 
 ## Overview
 
@@ -10,7 +10,71 @@ UTL-X maintains five distinct conformance test suites to ensure correctness, qua
 | **Validation Conformance** | `utlx validate` command (3 levels) | TBD | Python | 🚧 In Development |
 | **Lint Conformance** | `utlx lint` command (code quality) | TBD | Python | 🚧 In Development |
 | **LSP Conformance** | Language Server Protocol daemon | TBD | Kotlin | ✅ Active |
-| **Daemon REST API Conformance** | Daemon HTTP REST API endpoints | 9 tests | Python | ✅ Active |
+| **Daemon REST API Conformance** | Daemon HTTP REST API endpoints (port 7779) | 9 tests | Python | ✅ Active |
+| **MCP Server Conformance** | Model Context Protocol JSON-RPC 2.0 (port 3000) | TBD | Python/TypeScript | 🚧 Planned |
+
+## Architecture Overview
+
+Understanding the relationship between the daemon REST API and MCP Server:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      LLM Clients                        │
+│            (Claude Desktop, GPT-4, etc.)                │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     │ MCP Protocol (JSON-RPC 2.0)
+                     │ stdio or HTTP (port 3000)
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│                   MCP Server                            │
+│              (TypeScript/Node.js)                       │
+│                                                         │
+│  • 6 MCP Tools:                                        │
+│    - get_input_schema                                  │
+│    - get_stdlib_functions                              │
+│    - validate_utlx                                     │
+│    - infer_output_schema                               │
+│    - execute_transformation                            │
+│    - get_examples (TF-IDF search)                      │
+│                                                         │
+│  ✅ Tested by: MCP Server Conformance Suite           │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     │ HTTP/REST (port 7779)
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│              Daemon REST API                            │
+│                 (UTLXD - Kotlin)                        │
+│                                                         │
+│  • 5 REST Endpoints:                                   │
+│    - GET  /api/health                                  │
+│    - POST /api/validate                                │
+│    - POST /api/execute                                 │
+│    - POST /api/infer-schema                            │
+│    - POST /api/parse-schema                            │
+│                                                         │
+│  ✅ Tested by: Daemon REST API Conformance Suite      │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     │ In-process calls
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│                UTL-X Core Runtime                       │
+│                  (Kotlin)                               │
+│                                                         │
+│  • Lexer, Parser, Type Checker                         │
+│  • Interpreter, Standard Library                       │
+│  • Format parsers (JSON, XML, CSV, YAML, etc.)         │
+│                                                         │
+│  ✅ Tested by: Runtime/Transform Conformance Suite    │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Key Points**:
+- **Daemon REST API** (port 7779): Low-level HTTP endpoints for validation, execution, and schema operations
+- **MCP Server** (port 3000): High-level JSON-RPC 2.0 protocol adapter for LLM integration
+- **Runtime**: Core transformation engine used by both
 
 ---
 
@@ -353,6 +417,139 @@ java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start --daemon-rest
 
 ---
 
+## 6. MCP Server Conformance Suite
+
+**Tests the Model Context Protocol (MCP) JSON-RPC 2.0 server implementation.**
+
+### Location
+```
+conformance-suite/mcp-server/  (planned)
+```
+
+### What It Tests
+- MCP protocol compliance (JSON-RPC 2.0)
+- Server initialization and capabilities exchange
+- Tool invocation for all 6 MCP tools:
+  1. **get_input_schema**: Parse XSD, JSON Schema, CSV headers
+  2. **get_stdlib_functions**: Retrieve stdlib function registry with filtering
+  3. **validate_utlx**: Validate UTLX code for syntax and type errors
+  4. **infer_output_schema**: Infer output schema from transformation code
+  5. **execute_transformation**: Execute transformations with multiple format support
+  6. **get_examples**: TF-IDF similarity search over conformance suite
+- Transport modes (stdio and HTTP)
+- Error handling and JSON-RPC error codes
+- Tool parameter validation
+- Response format correctness
+- Integration with daemon REST API backend
+
+**Note**: This suite tests the *MCP Server* (port 3000), which is the JSON-RPC 2.0 protocol adapter for LLM integration. It uses the daemon REST API (port 7779) as its backend. This is distinct from the Daemon REST API Conformance Suite which tests the backend directly.
+
+### Test Structure (Planned)
+```
+mcp-server/
+├── tests/
+│   ├── protocol/                    # MCP protocol compliance
+│   │   ├── initialize.yaml          # Server initialization
+│   │   ├── capabilities.yaml        # Capabilities exchange
+│   │   ├── json_rpc_format.yaml     # JSON-RPC 2.0 format
+│   │   └── error_codes.yaml         # Error code handling
+│   ├── tools/                       # Tool invocation tests
+│   │   ├── get_input_schema/
+│   │   │   ├── json_schema.yaml
+│   │   │   ├── xsd.yaml
+│   │   │   └── csv_headers.yaml
+│   │   ├── get_stdlib_functions/
+│   │   │   ├── all_functions.yaml
+│   │   │   ├── filter_by_category.yaml
+│   │   │   └── search_by_query.yaml
+│   │   ├── validate_utlx/
+│   │   │   ├── valid_code.yaml
+│   │   │   ├── syntax_errors.yaml
+│   │   │   └── type_errors.yaml
+│   │   ├── infer_output_schema/
+│   │   │   ├── simple_transform.yaml
+│   │   │   └── with_input_schema.yaml
+│   │   ├── execute_transformation/
+│   │   │   ├── json_to_json.yaml
+│   │   │   ├── xml_to_json.yaml
+│   │   │   ├── csv_to_json.yaml
+│   │   │   └── error_handling.yaml
+│   │   └── get_examples/
+│   │       ├── search_basic.yaml
+│   │       ├── search_with_filters.yaml
+│   │       └── tfidf_ranking.yaml
+│   ├── transport/                   # Transport layer tests
+│   │   ├── stdio.yaml               # Standard I/O transport
+│   │   └── http.yaml                # HTTP transport
+│   ├── integration/                 # End-to-end scenarios
+│   │   ├── validate_then_execute.yaml
+│   │   └── schema_aware_transform.yaml
+│   └── edge-cases/                  # Error handling
+│       ├── invalid_parameters.yaml
+│       ├── malformed_requests.yaml
+│       └── daemon_unavailable.yaml
+├── runners/
+│   ├── python-runner/               # Python test runner (stdio)
+│   │   ├── mcp-server-runner.py
+│   │   └── run-mcp-server-tests.sh
+│   └── typescript-runner/           # TypeScript test runner (HTTP)
+│       └── run-mcp-server-tests.ts
+├── fixtures/
+│   ├── schemas/                     # Sample XSD, JSON Schema files
+│   ├── utlx-code/                   # Sample UTLX transformations
+│   └── inputs/                      # Sample input data
+└── lib/                             # Shared utilities
+```
+
+### Runner (Planned)
+
+#### Python MCP Server Runner
+```bash
+cd conformance-suite/mcp-server
+./runners/python-runner/run-mcp-server-tests.sh
+
+# Run specific tool tests
+./runners/python-runner/run-mcp-server-tests.sh tests/tools/execute_transformation
+
+# Run with verbose output
+./runners/python-runner/run-mcp-server-tests.sh -v
+
+# Test specific transport
+./runners/python-runner/run-mcp-server-tests.sh --transport stdio
+./runners/python-runner/run-mcp-server-tests.sh --transport http
+```
+
+### MCP Server Being Tested
+```bash
+# Start MCP Server with stdio transport (default)
+cd mcp-server
+npm start
+
+# Start MCP Server with HTTP transport
+UTLX_MCP_TRANSPORT=http UTLX_MCP_PORT=3000 npm start
+
+# Ensure daemon REST API is running (backend dependency)
+java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start --daemon-rest --daemon-rest-port 7779
+```
+
+### Features (Planned)
+- **Auto server management**: Runner automatically starts/stops MCP server
+- **Dual transport testing**: Tests both stdio and HTTP modes
+- **JSON-RPC validation**: Validates JSON-RPC 2.0 protocol compliance
+- **Tool coverage**: Tests all 6 MCP tools comprehensively
+- **Backend integration**: Validates correct usage of daemon REST API
+- **TF-IDF validation**: Tests example search ranking quality
+- **Colored output**: Green ✓ for pass, Red ✗ for fail
+- **Port 3000**: Tests MCP Server (distinct from daemon REST API on port 7779)
+
+### Test Dependencies
+The MCP Server conformance suite requires:
+1. **MCP Server**: Built TypeScript/Node.js server (`mcp-server/dist/`)
+2. **Daemon REST API**: Running UTLXD with `--daemon-rest --daemon-rest-port 7779`
+3. **Conformance Suite Tests**: Available for TF-IDF search (`conformance-suite/utlx/tests/`)
+
+---
+
 ## Test File Format
 
 All conformance tests use a standardized YAML format:
@@ -417,10 +614,15 @@ cd ../lsp
 ./runners/kotlin-runner/run-lsp-tests.sh
 # Expected: All LSP features working
 
-# 5. Daemon REST API Conformance
+# 5. Daemon REST API Conformance (formerly "MCP Conformance")
 cd ../daemon-rest-api
 ./runners/python-runner/run-daemon-rest-api-tests.sh
 # Expected: All daemon REST API endpoints working
+
+# 6. MCP Server Conformance (planned)
+cd ../mcp-server
+./runners/python-runner/run-mcp-server-tests.sh
+# Expected: All MCP tools and protocol features working
 ```
 
 ---
@@ -473,6 +675,22 @@ jobs:
         run: |
           cd conformance-suite/daemon-rest-api
           ./runners/python-runner/run-daemon-rest-api-tests.sh
+
+  mcp-server-conformance:
+    runs-on: ubuntu-latest
+    needs: daemon-rest-api-conformance  # MCP Server depends on daemon
+    steps:
+      - name: Build UTLXD
+        run: ./gradlew :modules:server:jar
+      - name: Build MCP Server
+        run: |
+          cd mcp-server
+          npm install --legacy-peer-deps
+          npm run build
+      - name: Run MCP Server Conformance
+        run: |
+          cd conformance-suite/mcp-server
+          ./runners/python-runner/run-mcp-server-tests.sh
 ```
 
 ---
@@ -488,9 +706,14 @@ When referring to conformance suites in documentation, issues, or discussions:
 | Lint testing | "lint conformance" |
 | LSP testing | "LSP conformance" |
 | Daemon REST API testing | "daemon REST API conformance" or "daemon conformance" |
+| MCP Server testing | "MCP Server conformance" or "MCP conformance" |
 | All suites | "full conformance" or "all conformance suites" |
 
 **Default**: When someone says "conformance" without a qualifier, they typically mean the **Runtime/Transform Conformance Suite** (the 465-test main suite).
+
+**Important**: When referring to "MCP conformance," always clarify whether you mean:
+- **MCP Server conformance**: Tests the MCP Server (JSON-RPC 2.0 protocol adapter, port 3000)
+- **Daemon REST API conformance**: Tests the daemon's REST API (backend endpoints, port 7779) - formerly called "MCP conformance"
 
 ---
 
@@ -502,6 +725,7 @@ See individual suite README files for contribution guidelines:
 - Lint: `conformance-suite/utlx/lint-tests/README.md`
 - LSP: `conformance-suite/lsp/README.md`
 - Daemon REST API: `conformance-suite/daemon-rest-api/README.md`
+- MCP Server: `conformance-suite/mcp-server/README.md` (planned)
 
 ---
 
@@ -509,12 +733,33 @@ See individual suite README files for contribution guidelines:
 
 The conformance suite structure evolved to support different testing needs:
 
-1. **Runtime Conformance** (original): Started as the primary test suite for language features
-2. **LSP Conformance** (added): Separated IDE/tooling tests from runtime tests
-3. **Validation Conformance** (added): Dedicated tests for the `validate` command
-4. **Lint Conformance** (added): Dedicated tests for code quality tooling
-5. **Daemon REST API Conformance** (added): Tests for the daemon's HTTP REST API endpoints (port 7779)
+1. **Runtime Conformance** (2023): Started as the primary test suite for language features
+2. **LSP Conformance** (2024): Separated IDE/tooling tests from runtime tests
+3. **Validation Conformance** (2024): Dedicated tests for the `validate` command
+4. **Lint Conformance** (2024): Dedicated tests for code quality tooling
+5. **Daemon REST API Conformance** (2024): Tests for the daemon's HTTP REST API endpoints (port 7779)
+6. **MCP Server Conformance** (2025 - planned): Tests for Model Context Protocol JSON-RPC 2.0 server
 
 This separation ensures each component can be tested independently while maintaining comprehensive coverage.
 
-**Note on Naming**: This suite was originally named "MCP Conformance" but was renamed to "Daemon REST API Conformance" to clarify that it tests the daemon's REST API (port 7779), not the MCP Server itself (which implements the Model Context Protocol JSON-RPC 2.0 on port 3000). A separate MCP Server conformance suite will be created to test the actual MCP protocol implementation.
+### Renaming: "MCP Conformance" → "Daemon REST API Conformance"
+
+**Background**: In November 2024, during the implementation of Phase 2 (MCP Server Foundation), we discovered a naming ambiguity in the conformance suites. The suite located at `conformance-suite/mcp/` was originally created to test the daemon's REST API endpoints, but its name "MCP Conformance" incorrectly suggested it tested the Model Context Protocol itself.
+
+**The Problem**:
+- The suite tested daemon REST API endpoints (`/api/validate`, `/api/execute`, etc.) on port 7779
+- The suite did NOT test the MCP Server (JSON-RPC 2.0 protocol) on port 3000
+- This naming caused confusion about what was actually being tested
+
+**The Solution** (November 2025):
+- Renamed directory: `conformance-suite/mcp/` → `conformance-suite/daemon-rest-api/`
+- Renamed runners: `mcp-runner.py` → `daemon-rest-api-runner.py`
+- Updated port: 7778 → 7779 (standardized daemon REST API port)
+- Updated daemon flags: `--rest-api --port` → `--daemon-rest --daemon-rest-port`
+- Updated all documentation to clarify the distinction
+
+**Going Forward**:
+- **Daemon REST API Conformance**: Tests the backend HTTP REST API (port 7779)
+- **MCP Server Conformance** (new): Will test the MCP Server JSON-RPC 2.0 protocol (port 3000)
+
+This clarifies the architecture where the MCP Server (frontend) uses the daemon REST API (backend) to provide LLM integration capabilities.
