@@ -26,18 +26,24 @@ import org.slf4j.LoggerFactory
  * Architecture:
  * - Daemon = Long-running background process (architectural pattern)
  * - LSP = Language Server Protocol using JSON-RPC 2.0 (communication protocol)
+ * - REST API = HTTP/JSON API for MCP integration (always uses HTTP server on socket)
  * - STDIO/Socket = Transport mechanism (physical layer)
- * - REST API = HTTP/JSON API for MCP integration
  *
  * The daemon supports dual-mode operation:
  * - LSP server via STDIO or Socket transport
- * - REST API server for HTTP-based access (optional)
+ * - REST API server via HTTP socket only (port 7779)
+ *
+ * Transport configuration:
+ * - When LSP uses stdio: daemon transport = STDIO, handles LSP JSON-RPC methods
+ * - When LSP uses socket: daemon transport = SOCKET (for LSP)
+ * - REST API always uses separate HTTP server on socket (port 7779)
  */
 class UTLXDaemon(
     private val transportType: TransportType = TransportType.STDIO,
     private val port: Int = 7777,
     private val enableRestApi: Boolean = false,
-    private val restApiPort: Int = 7779
+    private val restApiPort: Int = 7779,
+    private val enableLsp: Boolean = true
 ) {
 
     private val logger = LoggerFactory.getLogger(UTLXDaemon::class.java)
@@ -56,16 +62,19 @@ class UTLXDaemon(
      * Start the daemon server
      */
     fun start() {
-        logger.info("Starting UTL-X Daemon (transport: $transportType, REST API: $enableRestApi)")
+        logger.info("Starting UTL-X Daemon")
+        logger.info("  LSP enabled: $enableLsp")
+        logger.info("  REST API enabled: $enableRestApi")
+        logger.info("  Daemon transport: $transportType")
 
-        // Start REST API server if enabled
+        // Start REST API HTTP server if enabled (always uses socket)
         if (enableRestApi) {
-            logger.info("Starting REST API server on port $restApiPort")
+            logger.info("Starting REST API HTTP server on port $restApiPort")
             restApiServer = RestApiServer(port = restApiPort)
             restApiServer!!.start()
         }
 
-        // Create transport based on type
+        // Create transport based on type (for LSP)
         transport = when (transportType) {
             TransportType.STDIO -> {
                 logger.info("Using STDIO transport (standard streams)")
@@ -77,8 +86,10 @@ class UTLXDaemon(
             }
         }
 
-        // Set transport for diagnostics publisher
-        diagnosticsPublisher.setTransport(transport!!)
+        // Set transport for diagnostics publisher (only needed for LSP)
+        if (enableLsp) {
+            diagnosticsPublisher.setTransport(transport!!)
+        }
 
         // Start transport with message handler
         transport!!.start { request -> handleRequest(request) }

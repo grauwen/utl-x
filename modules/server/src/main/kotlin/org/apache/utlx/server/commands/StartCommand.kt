@@ -62,42 +62,56 @@ object StartCommand {
                 return CommandResult.Failure("Conflicting stdio transport configuration", 1)
             }
 
-            // Start services based on configuration
-            val jobs = mutableListOf<Job>()
-
-            // Start API server if enabled (port 7779 - used by MCP Server)
+            // Determine which services to enable
             val apiEnabled = options["api"] as? Boolean ?: false
-            if (apiEnabled) {
-                val apiPort = options["api-port"] as? Int ?: 7779
-                val apiHost = options["api-host"] as? String ?: "0.0.0.0"
-                val apiTransport = options["api-transport"] as? String ?: "socket"
-
-                logger.info("Starting API server on port $apiPort with $apiTransport transport")
-                jobs.add(startApiServer(apiPort, apiHost, apiTransport))
-            }
-
-            // Start LSP server if enabled
             val lspEnabled = options["lsp"] as? Boolean ?: false
-            if (lspEnabled) {
-                logger.info("Starting LSP server with ${config.server.lsp.transport} transport")
-                jobs.add(startLspServer(config))
-            }
 
-            if (jobs.isEmpty()) {
+            if (!apiEnabled && !lspEnabled) {
                 System.err.println("Error: No services enabled. Use --api or --lsp")
                 return CommandResult.Failure("No services enabled", 1)
             }
 
+            // Extract transport configuration to this scope so we can use it for logging
+            // Determine LSP transport configuration
+            val lspTransportString = if (lspEnabled) {
+                options["server.lsp.transport"] as? String ?: config.server.lsp.transport
+            } else {
+                "socket"
+            }
+
+            val lspTransport = if (lspTransportString == "stdio") {
+                TransportType.STDIO
+            } else {
+                TransportType.SOCKET
+            }
+
+            val lspPort = if (lspEnabled && lspTransport == TransportType.SOCKET) {
+                options["server.lsp.socketPort"] as? Int ?: config.server.lsp.socketPort
+            } else {
+                0
+            }
+
+            // REST API always uses socket transport (port 7779)
+            val apiPort = if (apiEnabled) {
+                options["api-port"] as? Int ?: 7779
+            } else {
+                0
+            }
+
+            // Create a SINGLE UTLXDaemon instance with both LSP and/or API enabled
+            val jobs = mutableListOf<Job>()
+            jobs.add(startDaemon(config, options, lspEnabled, apiEnabled, lspTransport, lspPort, apiPort))
+
             println("UTL-X Daemon started successfully!")
             if (apiEnabled) {
-                val apiPort = options["api-port"] as? Int ?: 7779
                 val apiHost = options["api-host"] as? String ?: "0.0.0.0"
                 println("API: http://$apiHost:$apiPort")
             }
             if (lspEnabled) {
-                println("LSP: ${config.server.lsp.transport} transport")
-                if (config.server.lsp.transport == "socket") {
-                    println("LSP Port: ${config.server.lsp.socketPort}")
+                if (lspTransport == TransportType.SOCKET) {
+                    println("LSP: socket transport (port $lspPort)")
+                } else {
+                    println("LSP: JSON-RPC 2.0 over stdio (stdin/stdout)")
                 }
             }
             println("Press Ctrl+C to stop")
@@ -355,58 +369,70 @@ object StartCommand {
     }
 
     /**
-     * Start standalone API server (port 7779 - used by MCP Server)
-     * REST API with socket transport = HTTP on port
-     * REST API with stdio transport = HTTP over stdin/stdout
+     * Start a single UTLXDaemon instance with LSP and/or API enabled
+     *
+     * Architecture:
+     * - ONE UTLXDaemon instance can run both LSP and REST API simultaneously
+     * - LSP transport: STDIO or Socket on port 7777 (for IDE integration)
+     * - REST API: Socket on port 7779 only (for MCP Server and other clients)
+     * - Both services share the same daemon instance and state manager
      */
-    private fun startApiServer(port: Int, host: String, transport: String): Job {
+    private fun startDaemon(
+        config: DaemonConfig,
+        options: Map<String, Any>,
+        lspEnabled: Boolean,
+        apiEnabled: Boolean,
+        lspTransport: TransportType,
+        lspPort: Int,
+        apiPort: Int
+    ): Job {
         return GlobalScope.launch(Dispatchers.IO) {
             try {
-                val transportType = if (transport == "stdio") {
-                    TransportType.STDIO
-                } else {
-                    TransportType.SOCKET
+                // Transport configuration
+                // REST API always uses socket transport (port 7779)
+                // LSP can use either stdio or socket (port 7777)
+                val daemonTransport: TransportType
+                val daemonPort: Int
+
+                when {
+                    lspTransport == TransportType.STDIO -> {
+                        // LSP uses stdio
+                        daemonTransport = TransportType.STDIO
+                        daemonPort = 0
+                    }
+                    lspEnabled -> {
+                        // LSP uses socket
+                        daemonTransport = lspTransport
+                        daemonPort = lspPort
+                    }
+                    else -> {
+                        // API-only mode (API always uses socket)
+                        daemonTransport = TransportType.SOCKET
+                        daemonPort = 0  // No LSP port needed
+                    }
                 }
 
-                // REST API runs on the specified port (or stdio)
-                // No separate LSP transport needed for API-only server
+                logger.info("Starting UTL-X Daemon:")
+                if (lspEnabled) {
+                    logger.info("  LSP: $lspTransport transport" +
+                        if (lspTransport == TransportType.SOCKET) " (port $lspPort)" else " (JSON-RPC 2.0 over stdin/stdout)")
+                }
+                if (apiEnabled) {
+                    logger.info("  REST API: HTTP server on port $apiPort")
+                }
+
+                // Create single daemon instance with both services
                 val daemon = UTLXDaemon(
-                    transportType = transportType,
-                    port = port,
-                    enableRestApi = true,
-                    restApiPort = port
+                    transportType = daemonTransport,
+                    port = daemonPort,
+                    enableRestApi = apiEnabled,
+                    restApiPort = apiPort,
+                    enableLsp = lspEnabled
                 )
 
                 daemon.start()
             } catch (e: Exception) {
-                logger.error("API server failed", e)
-                throw e
-            }
-        }
-    }
-
-    /**
-     * Start LSP server (port 7777 - used by Theia extension)
-     */
-    private fun startLspServer(config: DaemonConfig): Job {
-        return GlobalScope.launch(Dispatchers.IO) {
-            try {
-                val transport = if (config.server.lsp.transport == "stdio") {
-                    TransportType.STDIO
-                } else {
-                    TransportType.SOCKET
-                }
-
-                val daemon = UTLXDaemon(
-                    transportType = transport,
-                    port = config.server.lsp.socketPort,
-                    enableRestApi = false,
-                    restApiPort = 0
-                )
-
-                daemon.start()
-            } catch (e: Exception) {
-                logger.error("LSP server failed", e)
+                logger.error("Daemon failed", e)
                 throw e
             }
         }
@@ -426,10 +452,6 @@ object StartCommand {
                 "--api-port" -> {
                     i++
                     options["api-port"] = args[i].toInt()
-                }
-                "--api-transport" -> {
-                    i++
-                    options["api-transport"] = args[i]
                 }
 
                 // LSP parameters
@@ -484,39 +506,58 @@ object StartCommand {
             |Usage: utlxd start [options]
             |
             |Options:
-            |  --api                   Enable API server (used by MCP Server)
-            |  --api-port PORT         API port (default: 7779)
-            |  --api-transport TYPE    API transport: stdio|socket (default: socket)
-            |  --host HOST             API host (default: 0.0.0.0)
+            |  --api                   Enable REST API server (HTTP endpoints for MCP Server)
+            |  --api-port PORT         REST API port (default: 7779)
+            |  --host HOST             REST API host (default: 0.0.0.0)
             |
-            |  --lsp                   Enable LSP server (used by IDE/Theia)
-            |  --lsp-port PORT         LSP socket port (default: 7777)
+            |  --lsp                   Enable LSP server (Language Server for IDE/Theia)
+            |  --lsp-port PORT         LSP socket port (default: 7777, ignored if --lsp-transport stdio)
             |  --lsp-transport TYPE    LSP transport: stdio|socket (default: socket)
             |
             |  --log-level LEVEL       Logging level: DEBUG|INFO|WARN|ERROR (default: INFO)
             |  --config PATH           Configuration file path
             |  --help, -h              Show this help message
             |
-            |Important Notes:
-            |  - Only ONE service can use stdio transport at a time (stdio is not multiplexable)
-            |  - If LSP uses stdio, API must use socket, and vice versa
+            |Transport Details:
+            |  LSP Transport:
+            |    - socket: LSP JSON-RPC over TCP socket on port 7777 (default)
+            |    - stdio:  LSP JSON-RPC over standard input/output (for IDE plugins)
+            |
+            |  REST API Transport:
+            |    - socket: HTTP server on TCP port 7779 (default, fully implemented)
+            |    - stdio:  JSON-RPC 2.0 over stdin/stdout (EXPERIMENTAL - basic infrastructure implemented,
+            |                                                JSON-RPC method handlers need to be added to UTLXDaemon)
+            |
+            |  Note: When using stdio, only ONE service can use stdio at a time.
+            |        The other service must use socket transport.
+            |        Currently recommended: Use socket transport for REST API.
             |
             |Examples:
             |  # Start with both LSP and API - all defaults (socket transport, default ports)
-            |  utlxd start --lsp [--lsp-transport socket|stdio] [--lsp-port 7777] --api [--api-transport socket|stdio] [--api-port 7779]
+            |  utlxd start --lsp --api
             |
-            |  # Start with LSP only (STDIO transport)
+            |  # Start with LSP on socket, API on socket (explicit)
+            |  utlxd start --lsp --lsp-transport socket --lsp-port 7777 --api --api-port 7779
+            |
+            |  # Start with LSP on stdio, API on socket
+            |  utlxd start --lsp --lsp-transport stdio --api --api-port 7779
+            |
+            |  # Start with LSP only (STDIO transport, for IDE plugins)
             |  utlxd start --lsp --lsp-transport stdio
             |
-            |  # Start with API only (default socket transport and port)
-            |  utlxd start --api [--api-transport socket|stdio] [--api-port 7779]
+            |  # Start with API only (socket transport on port 7779, for MCP Server)
+            |  utlxd start --api
             |
             |  # Use custom configuration file
             |  utlxd start --config /etc/utlx/production.yaml
             |
             |Architecture:
-            |  - API (port 7779): REST API used by MCP Server for transformations
-            |  - LSP (port 7777): Language Server Protocol for IDE integration (Theia)
+            |  - UTLXDaemon: Single daemon instance that can host both LSP and REST API
+            |  - LSP Server: JSON-RPC 2.0 protocol for IDE integration (Theia, VS Code, etc.)
+            |    * Supports stdio (standard streams) or socket (TCP port 7777)
+            |  - REST API: HTTP/JSON endpoints for MCP Server integration
+            |    * Currently only supports socket (TCP port 7779)
+            |  - Both services share the same transformation engine and state manager
             |
             |Configuration Precedence:
             |  1. Command-line arguments (highest)

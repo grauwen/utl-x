@@ -68,7 +68,7 @@ object Main {
             |Usage: utlxd <command> [options]
             |
             |Commands:
-            |  start     Start the UTL-X daemon (LSP + REST API)
+            |  start     Start the UTL-X daemon (LSP and/or REST API)
             |  stop      Stop a running daemon
             |  status    Check daemon status
             |  design    Design-time analysis tools (graph, analyze, etc.)
@@ -79,20 +79,31 @@ object Main {
             |  utlxd <command> --help
             |
             |Examples:
-            |  # Start with both LSP and API - all defaults (socket transport, default ports)
-            |  utlxd start --lsp [--lsp-transport socket|stdio] [--lsp-port 7777] --api [--api-transport socket|stdio] [--api-port 7779]
+            |  # Start with both LSP and API (default: socket transport on default ports)
+            |  utlxd start --lsp --api
             |
-            |  # Start with LSP only (STDIO transport)
+            |  # Start with LSP on socket, API on socket (explicit ports)
+            |  utlxd start --lsp --lsp-port 7777 --api --api-port 7779
+            |
+            |  # Start with LSP on stdio (for IDE plugins), API on socket
+            |  utlxd start --lsp --lsp-transport stdio --api
+            |
+            |  # Start with LSP only (stdio transport, for IDE integration)
             |  utlxd start --lsp --lsp-transport stdio
             |
-            |  # Start with API only (default socket transport and port)
-            |  utlxd start --api [--api-transport socket|stdio] [--api-port 7779]
+            |  # Start with API only (socket on port 7779, for MCP Server)
+            |  utlxd start --api
             |
             |  # Check daemon status
             |  utlxd status
             |
             |  # Stop running daemon
             |  utlxd stop
+            |
+            |Architecture:
+            |  - LSP Server: JSON-RPC 2.0 for IDE integration (socket on port 7777 or stdio)
+            |  - REST API: HTTP endpoints for MCP Server (socket on port 7779 only)
+            |  - Single daemon instance can host both services simultaneously
         """.trimMargin())
     }
 }

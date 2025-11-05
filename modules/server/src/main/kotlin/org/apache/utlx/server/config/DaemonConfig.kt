@@ -111,7 +111,7 @@ data class CorsConfig(
 
 data class LspConfig(
     val enabled: Boolean = true,
-    val transport: String = "stdio",  // stdio | socket
+    val transport: String = "socket",  // stdio | socket
     val socketPort: Int = 7777
 )
 
