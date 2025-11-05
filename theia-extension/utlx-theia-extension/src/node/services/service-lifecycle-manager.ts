@@ -34,6 +34,7 @@ export interface ServiceConfig {
 @injectable()
 export class ServiceLifecycleManager implements BackendApplicationContribution {
 
+    private utlxdProcess: ChildProcess | null = null;
     private mcpProcess: ChildProcess | null = null;
     private config: Required<ServiceConfig>;
     private isShuttingDown = false;
@@ -183,28 +184,32 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
 
             console.log(`[ServiceLifecycle] Spawning: java -jar ${this.config.utlxdJarPath}`);
 
-            const utlxdProcess = spawn('java', [
+            this.utlxdProcess = spawn('java', [
                 '-jar',
                 this.config.utlxdJarPath,
                 'start',
-                '--daemon-lsp',
-                '--daemon-rest',
-                '--daemon-rest-port', this.config.utlxdRestPort.toString()
+                '--lsp',
+                '--api',
+                '--api-port', this.config.utlxdRestPort.toString()
             ], {
                 stdio: ['ignore', 'pipe', 'pipe'],
                 detached: false
             });
 
-            utlxdProcess.stdout?.on('data', (data) => {
+            this.utlxdProcess.stdout?.on('data', (data) => {
                 console.log('[UTLXD]:', data.toString().trim());
             });
 
-            utlxdProcess.stderr?.on('data', (data) => {
+            this.utlxdProcess.stderr?.on('data', (data) => {
                 console.error('[UTLXD Error]:', data.toString().trim());
             });
 
-            utlxdProcess.on('exit', (code, signal) => {
+            this.utlxdProcess.on('exit', (code, signal) => {
                 console.log(`[UTLXD] Process exited: code=${code}, signal=${signal}`);
+                if (!this.isShuttingDown && code !== 0) {
+                    console.error('[UTLXD] Unexpected exit');
+                }
+                this.utlxdProcess = null;
             });
 
             // Wait for UTLXD to be ready
@@ -329,12 +334,19 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
         console.log('[ServiceLifecycle] Stopping services...');
 
         try {
-            // Stop MCP server first
+            // Stop MCP server first (depends on UTLXD)
             if (this.mcpProcess) {
+                console.log('[ServiceLifecycle] Stopping MCP server...');
                 await this.stopMCPServer();
+                console.log('[ServiceLifecycle] MCP server stopped');
             }
 
-            // TODO: Stop UTLXD process (need to track the process)
+            // Then stop UTLXD
+            if (this.utlxdProcess) {
+                console.log('[ServiceLifecycle] Stopping UTLXD...');
+                await this.stopUTLXD();
+                console.log('[ServiceLifecycle] UTLXD stopped');
+            }
 
             console.log('[ServiceLifecycle] All services stopped');
         } catch (error) {
@@ -369,10 +381,36 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
     }
 
     /**
+     * Stop UTLXD daemon
+     */
+    private async stopUTLXD(): Promise<void> {
+        if (!this.utlxdProcess) {
+            return;
+        }
+
+        return new Promise((resolve) => {
+            const timeout = setTimeout(() => {
+                console.warn('[UTLXD] Did not stop gracefully, forcing kill');
+                this.utlxdProcess?.kill('SIGKILL');
+                resolve();
+            }, this.config.shutdownTimeout);
+
+            this.utlxdProcess!.once('exit', () => {
+                clearTimeout(timeout);
+                this.utlxdProcess = null;
+                resolve();
+            });
+
+            // Try graceful shutdown
+            this.utlxdProcess!.kill('SIGTERM');
+        });
+    }
+
+    /**
      * Check if services are running
      */
     areServicesRunning(): boolean {
-        return this.mcpProcess !== null;  // TODO: Track UTLXD process
+        return this.utlxdProcess !== null && this.mcpProcess !== null;
     }
 
     /**
@@ -381,7 +419,7 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
     getStatus() {
         return {
             utlxd: {
-                running: false,  // TODO: Track UTLXD process
+                running: this.utlxdProcess !== null,
                 port: this.config.utlxdRestPort,
                 jarPath: this.config.utlxdJarPath
             },
