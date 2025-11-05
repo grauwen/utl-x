@@ -2,17 +2,24 @@
  * Backend Module
  *
  * Registers backend services and bindings for the UTL-X Theia extension.
+ * Now includes automatic service lifecycle management for UTLXD and MCP server.
  */
 
 import { ContainerModule } from 'inversify';
 import { ConnectionHandler, RpcConnectionHandler } from '@theia/core';
+import { BackendApplicationContribution } from '@theia/core/lib/node';
 import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { UTLXServiceImpl } from './services/utlx-service-impl';
 import { UTLXDaemonClient } from './daemon/utlx-daemon-client';
+import { ServiceLifecycleManager } from './services/service-lifecycle-manager';
 
 export default new ContainerModule(bind => {
     // Bind daemon client as singleton
     bind(UTLXDaemonClient).toSelf().inSingletonScope();
+
+    // Bind service lifecycle manager
+    bind(ServiceLifecycleManager).toSelf().inSingletonScope();
+    bind(BackendApplicationContribution).toService(ServiceLifecycleManager);
 
     // Bind service implementation
     bind(UTLX_SERVICE_SYMBOL).to(UTLXServiceImpl).inSingletonScope();
@@ -24,5 +31,5 @@ export default new ContainerModule(bind => {
         })
     ).inSingletonScope();
 
-    console.log('UTL-X backend module loaded');
+    console.log('UTL-X backend module loaded with service lifecycle management');
 });
