@@ -1,0 +1,383 @@
+/**
+ * UTL-X Theia Extension Styles
+ */
+
+/* Workbench Container */
+.utlx-workbench-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--theia-editor-background);
+    color: var(--theia-editor-foreground);
+}
+
+.utlx-workbench-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: var(--theia-titleBar-activeBackground);
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.utlx-workbench-title h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.utlx-workbench-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.utlx-action-button {
+    padding: 6px 12px;
+    border: 1px solid var(--theia-button-border);
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.utlx-action-button:hover:not(:disabled) {
+    background: var(--theia-button-hoverBackground);
+}
+
+.utlx-action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.utlx-action-button.utlx-primary {
+    background: var(--theia-button-prominentBackground);
+    color: var(--theia-button-prominentForeground);
+}
+
+.utlx-action-button.utlx-primary:hover:not(:disabled) {
+    background: var(--theia-button-prominentHoverBackground);
+}
+
+.utlx-workbench-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.utlx-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 10px;
+    background: var(--theia-statusBar-background);
+    color: var(--theia-statusBar-foreground);
+    font-size: 12px;
+    border-top: 1px solid var(--theia-panel-border);
+}
+
+/* Mode Selector */
+.utlx-mode-selector-container {
+    padding: 10px 15px;
+    background: var(--theia-sideBar-background);
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.utlx-mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.utlx-mode-label {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.utlx-mode-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.utlx-mode-button {
+    padding: 6px 12px;
+    border: 1px solid var(--theia-button-border);
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.utlx-mode-button.active {
+    background: var(--theia-button-prominentBackground);
+    color: var(--theia-button-prominentForeground);
+    font-weight: 600;
+}
+
+.utlx-mode-description {
+    font-size: 12px;
+    color: var(--theia-descriptionForeground);
+    margin-bottom: 8px;
+}
+
+.utlx-mode-options {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.utlx-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.utlx-mode-info-box {
+    font-size: 11px;
+    padding: 8px;
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 3px;
+}
+
+.utlx-mode-info-box strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.utlx-mode-info-box ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.utlx-mode-info-box li {
+    margin: 2px 0;
+}
+
+/* Input/Output Panels */
+.utlx-input-panel-container,
+.utlx-output-panel-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--theia-editor-background);
+}
+
+.utlx-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--theia-titleBar-activeBackground);
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.utlx-panel-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.utlx-panel-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.utlx-panel-actions button {
+    padding: 4px 8px;
+    border: 1px solid var(--theia-button-border);
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.utlx-panel-actions button:hover:not(:disabled) {
+    background: var(--theia-button-hoverBackground);
+}
+
+.utlx-panel-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.utlx-panel-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    background: var(--theia-sideBar-background);
+    border-bottom: 1px solid var(--theia-panel-border);
+    font-size: 12px;
+}
+
+.utlx-panel-toolbar label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.utlx-panel-toolbar select {
+    padding: 2px 5px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    border-radius: 2px;
+    font-size: 11px;
+}
+
+.utlx-file-name {
+    font-size: 11px;
+    color: var(--theia-descriptionForeground);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+}
+
+.utlx-panel-content {
+    flex: 1;
+    padding: 10px;
+    overflow: auto;
+}
+
+.utlx-input-editor {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    padding: 10px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 12px;
+    resize: none;
+    border-radius: 3px;
+}
+
+.utlx-output-display {
+    width: 100%;
+    padding: 10px;
+    margin: 0;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.utlx-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--theia-descriptionForeground);
+    font-size: 13px;
+    text-align: center;
+}
+
+.utlx-error-display {
+    padding: 10px;
+    background: var(--theia-inputValidation-errorBackground);
+    border: 1px solid var(--theia-inputValidation-errorBorder);
+    border-radius: 3px;
+}
+
+.utlx-error-header {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.utlx-error-message {
+    margin: 0;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 11px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.utlx-diagnostics {
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 3px;
+}
+
+.utlx-diagnostics-header {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.utlx-diagnostics-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.utlx-diagnostics-list li {
+    padding: 5px;
+    margin: 3px 0;
+    font-size: 11px;
+    border-left: 3px solid;
+}
+
+.utlx-diagnostics-list li.diagnostic-1 {
+    border-left-color: var(--theia-editorError-foreground);
+    background: var(--theia-inputValidation-errorBackground);
+}
+
+.utlx-diagnostics-list li.diagnostic-2 {
+    border-left-color: var(--theia-editorWarning-foreground);
+    background: var(--theia-inputValidation-warningBackground);
+}
+
+.utlx-diagnostics-list li.diagnostic-3,
+.utlx-diagnostics-list li.diagnostic-4 {
+    border-left-color: var(--theia-editorInfo-foreground);
+    background: var(--theia-inputValidation-infoBackground);
+}
+
+.diagnostic-location {
+    font-weight: 600;
+    margin-right: 5px;
+}
+
+.diagnostic-message {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+}
+
+.utlx-panel-footer {
+    padding: 4px 10px;
+    background: var(--theia-statusBar-background);
+    color: var(--theia-statusBar-foreground);
+    font-size: 11px;
+    border-top: 1px solid var(--theia-panel-border);
+}
+
+.utlx-status {
+    color: var(--theia-descriptionForeground);
+}
+
+.utlx-format-badge {
+    padding: 2px 6px;
+    background: var(--theia-badge-background);
+    color: var(--theia-badge-foreground);
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.utlx-execution-time {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
