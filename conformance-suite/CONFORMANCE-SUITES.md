@@ -10,7 +10,7 @@ UTL-X maintains five distinct conformance test suites to ensure correctness, qua
 | **Validation Conformance** | `utlx validate` command (3 levels) | TBD | Python | 🚧 In Development |
 | **Lint Conformance** | `utlx lint` command (code quality) | TBD | Python | 🚧 In Development |
 | **LSP Conformance** | Language Server Protocol daemon | TBD | Kotlin | ✅ Active |
-| **MCP Conformance** | Model Context Protocol REST API | 9 tests | Python | ✅ Active |
+| **Daemon REST API Conformance** | Daemon HTTP REST API endpoints | 9 tests | Python | ✅ Active |
 
 ---
 
@@ -266,49 +266,50 @@ utlxd design daemon [--stdio|--socket <port>] [--verbose]
 
 ---
 
-## 5. MCP Conformance Suite
+## 5. Daemon REST API Conformance Suite
 
-**Tests the Model Context Protocol (MCP) REST API implementation in UTLXD.**
+**Tests the HTTP REST API implementation in UTLXD (the UTL-X daemon server).**
 
 ### Location
 ```
-conformance-suite/mcp/
+conformance-suite/daemon-rest-api/
 ```
 
 ### What It Tests
-- MCP protocol compliance (JSON-RPC 2.0 over HTTP/REST)
-- REST API endpoints:
-  - Health checks (`/health`)
-  - MCP tools listing (`/mcp/tools`)
-  - Status information (`/mcp/status`)
-  - Transform operations (`/mcp/transform`)
-  - Validation operations (`/mcp/validate`)
+- HTTP REST API endpoints on port 7779:
+  - Health checks (`/api/health`)
+  - Validation operations (`/api/validate`)
+  - Transformation execution (`/api/execute`)
+  - Schema inference (`/api/infer-schema`)
+  - Schema parsing (`/api/parse-schema`)
 - Error handling and edge cases
 - Multi-step workflows (validate then transform)
 - HTTP protocol correctness
+- JSON request/response format validation
+
+**Note**: This suite tests the *daemon REST API*, which is the backend service used by the MCP Server and other clients. For testing the MCP Server itself (Model Context Protocol JSON-RPC 2.0), see the separate MCP Server conformance suite.
 
 ### Test Structure
 ```
-mcp/
+daemon-rest-api/
 ├── tests/
-│   ├── protocol/           # MCP protocol compliance
+│   ├── protocol/           # Protocol compliance
 │   │   ├── health_check.yaml
-│   │   ├── tools_list.yaml
 │   │   ├── json_rpc_basic.yaml
 │   │   └── json_rpc_errors.yaml
 │   ├── endpoints/          # REST API endpoints
 │   │   ├── status.yaml
 │   │   ├── transform_basic.yaml
 │   │   └── validate_syntax.yaml
-│   ├── sessions/           # Session management
+│   ├── sessions/           # Session management (TBD)
 │   ├── edge-cases/         # Error handling
 │   │   └── invalid_script.yaml
 │   └── workflows/          # Multi-step scenarios
 │       └── validate_then_transform.yaml
 ├── runners/
 │   └── python-runner/      # Python test runner
-│       ├── mcp-runner.py
-│       ├── run-mcp-tests.sh
+│       ├── daemon-rest-api-runner.py
+│       ├── run-daemon-rest-api-tests.sh
 │       └── requirements.txt
 ├── fixtures/
 │   ├── scripts/            # Sample UTL-X scripts
@@ -318,36 +319,37 @@ mcp/
 
 ### Runner
 
-#### Python MCP Runner
+#### Python Daemon REST API Runner
 ```bash
-cd conformance-suite/mcp
-./runners/python-runner/run-mcp-tests.sh
+cd conformance-suite/daemon-rest-api
+./runners/python-runner/run-daemon-rest-api-tests.sh
 
 # Run specific category
-./runners/python-runner/run-mcp-tests.sh tests/protocol
+./runners/python-runner/run-daemon-rest-api-tests.sh tests/protocol
 
 # Run with verbose output
-./runners/python-runner/run-mcp-tests.sh -v
+./runners/python-runner/run-daemon-rest-api-tests.sh -v
 
 # Filter by tag
-./runners/python-runner/run-mcp-tests.sh -t basic
+./runners/python-runner/run-daemon-rest-api-tests.sh -t basic
 ```
 
 ### Daemon Being Tested
 ```bash
-# Start UTLXD with REST API
-utlxd start --rest-api --no-lsp --port 7778
+# Start UTLXD with daemon REST API on port 7779
+utlxd start --daemon-rest --daemon-rest-port 7779
 
 # Or using Java directly
-java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start --rest-api --no-lsp --port 7778
+java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start --daemon-rest --daemon-rest-port 7779
 ```
 
 ### Features
-- **Auto daemon management**: Runner automatically starts/stops UTLXD
+- **Auto daemon management**: Runner automatically starts/stops UTLXD with daemon REST API
 - **Placeholder support**: Dynamic value matching (timestamps, UUIDs, regex)
 - **Deep comparison**: Recursive object/array validation
 - **HTTP/REST testing**: Full request/response cycle validation
 - **Colored output**: Green ✓ for pass, Red ✗ for fail
+- **Port 7779**: Tests daemon REST API endpoints (distinct from MCP Server on port 3000)
 
 ---
 
@@ -415,10 +417,10 @@ cd ../lsp
 ./runners/kotlin-runner/run-lsp-tests.sh
 # Expected: All LSP features working
 
-# 5. MCP Conformance
-cd ../mcp
-./runners/python-runner/run-mcp-tests.sh
-# Expected: All MCP endpoints working
+# 5. Daemon REST API Conformance
+cd ../daemon-rest-api
+./runners/python-runner/run-daemon-rest-api-tests.sh
+# Expected: All daemon REST API endpoints working
 ```
 
 ---
@@ -462,15 +464,15 @@ jobs:
           cd conformance-suite/lsp
           ./runners/kotlin-runner/run-lsp-tests.sh
 
-  mcp-conformance:
+  daemon-rest-api-conformance:
     runs-on: ubuntu-latest
     steps:
       - name: Build UTLXD
         run: ./gradlew :modules:server:jar
-      - name: Run MCP Conformance
+      - name: Run Daemon REST API Conformance
         run: |
-          cd conformance-suite/mcp
-          ./runners/python-runner/run-mcp-tests.sh
+          cd conformance-suite/daemon-rest-api
+          ./runners/python-runner/run-daemon-rest-api-tests.sh
 ```
 
 ---
@@ -485,7 +487,7 @@ When referring to conformance suites in documentation, issues, or discussions:
 | Validation testing | "validation conformance" |
 | Lint testing | "lint conformance" |
 | LSP testing | "LSP conformance" |
-| MCP testing | "MCP conformance" |
+| Daemon REST API testing | "daemon REST API conformance" or "daemon conformance" |
 | All suites | "full conformance" or "all conformance suites" |
 
 **Default**: When someone says "conformance" without a qualifier, they typically mean the **Runtime/Transform Conformance Suite** (the 465-test main suite).
@@ -499,7 +501,7 @@ See individual suite README files for contribution guidelines:
 - Validation: `conformance-suite/utlx/validation-tests/README.md`
 - Lint: `conformance-suite/utlx/lint-tests/README.md`
 - LSP: `conformance-suite/lsp/README.md`
-- MCP: `conformance-suite/mcp/README.md`
+- Daemon REST API: `conformance-suite/daemon-rest-api/README.md`
 
 ---
 
@@ -511,6 +513,8 @@ The conformance suite structure evolved to support different testing needs:
 2. **LSP Conformance** (added): Separated IDE/tooling tests from runtime tests
 3. **Validation Conformance** (added): Dedicated tests for the `validate` command
 4. **Lint Conformance** (added): Dedicated tests for code quality tooling
-5. **MCP Conformance** (added): Tests for Anthropic's Model Context Protocol integration via REST API
+5. **Daemon REST API Conformance** (added): Tests for the daemon's HTTP REST API endpoints (port 7779)
 
 This separation ensures each component can be tested independently while maintaining comprehensive coverage.
+
+**Note on Naming**: This suite was originally named "MCP Conformance" but was renamed to "Daemon REST API Conformance" to clarify that it tests the daemon's REST API (port 7779), not the MCP Server itself (which implements the Model Context Protocol JSON-RPC 2.0 on port 3000). A separate MCP Server conformance suite will be created to test the actual MCP protocol implementation.

@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """
-MCP Conformance Test Runner for UTL-X Daemon
+Daemon REST API Conformance Test Runner for UTL-X
 
-This runner executes MCP (Model Context Protocol) REST API tests against the
-UTL-X daemon server (utlxd), validating:
+This runner executes REST API tests against the UTL-X daemon server (utlxd),
+validating the daemon's HTTP REST API endpoints (port 7779):
 - Health and status endpoints
-- MCP tool endpoints (transform, validate, schema generation)
-- JSON-RPC 2.0 protocol compliance
-- Session management
+- Transformation execution (/api/execute)
+- Validation (/api/validate)
+- Schema inference (/api/infer-schema)
+- Schema parsing (/api/parse-schema)
 - Error handling and edge cases
 
 Test Format: YAML files with HTTP request/response sequences
 Protocol: HTTP/REST with JSON payloads
+
+Note: This tests the daemon REST API (port 7779), not the MCP Server (port 3000).
 """
 
 import argparse
@@ -220,11 +223,11 @@ class DaemonManager:
             print_error(f"Daemon JAR not found: {self.jar_path}")
             return False
 
-        print_info(f"Starting daemon on port {self.port}...")
+        print_info(f"Starting daemon with REST API on port {self.port}...")
         cmd = [
             "java", "-jar", self.jar_path,
-            "start", "--rest-api", "--no-lsp",
-            "--port", str(self.port)
+            "start", "--daemon-rest",
+            "--daemon-rest-port", str(self.port)
         ]
 
         log_file = open("/tmp/utlxd_conformance.log", "w")
@@ -259,16 +262,16 @@ class DaemonManager:
         else:
             # Try to stop any running daemon on the port
             subprocess.run(
-                ["pkill", "-f", f"utlxd.*--port {self.port}"],
+                ["pkill", "-f", f"utlxd.*--daemon-rest-port {self.port}"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
 
 
-# ==================== MCP Test Runner ====================
+# ==================== Daemon REST API Test Runner ====================
 
-class McpTestRunner:
-    """Main test runner for MCP conformance tests"""
+class DaemonRestApiTestRunner:
+    """Main test runner for daemon REST API conformance tests"""
 
     def __init__(self, base_url: str, verbose: bool = False):
         self.base_url = base_url.rstrip('/')
@@ -486,7 +489,7 @@ class McpTestRunner:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="MCP Conformance Test Runner for UTL-X",
+        description="Daemon REST API Conformance Test Runner for UTL-X",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
@@ -517,8 +520,8 @@ def main():
     parser.add_argument(
         '--port',
         type=int,
-        default=7778,
-        help='Daemon port (default: 7778)'
+        default=7779,
+        help='Daemon REST API port (default: 7779)'
     )
     parser.add_argument(
         '--no-auto-start',
@@ -562,7 +565,7 @@ def main():
 
     try:
         # Create runner
-        runner = McpTestRunner(base_url, args.verbose)
+        runner = DaemonRestApiTestRunner(base_url, args.verbose)
 
         # Discover tests
         tests = runner.discover_tests(

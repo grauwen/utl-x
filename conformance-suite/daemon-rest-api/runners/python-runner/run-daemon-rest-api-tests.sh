@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# MCP Conformance Test Runner Wrapper
+# Daemon REST API Conformance Test Runner Wrapper
 #
 # This script wraps the Python test runner with daemon lifecycle management.
 #
@@ -32,11 +32,11 @@ if [ ! -f "$JAR_PATH" ]; then
 fi
 
 # Run tests
-echo -e "${GREEN}Running MCP conformance tests...${NC}"
-python3 "$SCRIPT_DIR/mcp-runner.py" "$@"
+echo -e "${GREEN}Running Daemon REST API conformance tests...${NC}"
+python3 "$SCRIPT_DIR/daemon-rest-api-runner.py" "$@"
 exit_code=$?
 
-# Cleanup any lingering daemon processes
-pkill -f "utlxd.*--port 7778" 2>/dev/null || true
+# Cleanup any lingering daemon processes on port 7779
+pkill -f "utlxd.*--daemon-rest-port 7779" 2>/dev/null || true
 
 exit $exit_code
