@@ -236,8 +236,8 @@ class DaemonManager:
         print_info(f"Starting daemon with REST API on port {self.port}...")
         cmd = [
             "java", "-jar", self.jar_path,
-            "start", "--daemon-rest",
-            "--daemon-rest-port", str(self.port)
+            "start", "--api",
+            "--api-port", str(self.port)
         ]
 
         log_file = open("/tmp/utlxd_conformance.log", "w")
@@ -272,7 +272,7 @@ class DaemonManager:
         else:
             # Try to stop any running daemon on the port
             subprocess.run(
-                ["pkill", "-f", f"utlxd.*--daemon-rest-port {self.port}"],
+                ["pkill", "-f", f"utlxd.*--api-port {self.port}"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )

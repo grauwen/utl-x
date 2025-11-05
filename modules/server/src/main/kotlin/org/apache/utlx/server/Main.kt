@@ -80,13 +80,13 @@ object Main {
             |
             |Examples:
             |  # Start with both LSP and API - all defaults (socket transport, default ports)
-            |  utlxd start --lsp [--lsp-transport socket|stdio] [--lsp-port 7777] --api [--api-transport socket|stdio] [--api-port 7778]
+            |  utlxd start --lsp [--lsp-transport socket|stdio] [--lsp-port 7777] --api [--api-transport socket|stdio] [--api-port 7779]
             |
             |  # Start with LSP only (STDIO transport)
             |  utlxd start --lsp --lsp-transport stdio
             |
             |  # Start with API only (default socket transport and port)
-            |  utlxd start --api [--api-transport socket|stdio] [--api-port 7778]
+            |  utlxd start --api [--api-transport socket|stdio] [--api-port 7779]
             |
             |  # Check daemon status
             |  utlxd status

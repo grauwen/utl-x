@@ -65,38 +65,39 @@ object StartCommand {
             // Start services based on configuration
             val jobs = mutableListOf<Job>()
 
-            // Start REST API server if enabled
-            if (config.server.restApi.enabled && (options["rest-api"] as? Boolean != false)) {
-                logger.info("Starting REST API server on port ${config.server.restApi.port}")
-                jobs.add(startRestApiServer(config))
+            // Start API server if enabled (port 7779 - used by MCP Server)
+            val apiEnabled = options["api"] as? Boolean ?: false
+            if (apiEnabled) {
+                val apiPort = options["api-port"] as? Int ?: 7779
+                val apiHost = options["api-host"] as? String ?: "0.0.0.0"
+                val apiTransport = options["api-transport"] as? String ?: "socket"
+
+                logger.info("Starting API server on port $apiPort with $apiTransport transport")
+                jobs.add(startApiServer(apiPort, apiHost, apiTransport))
             }
 
             // Start LSP server if enabled
-            if (config.server.lsp.enabled && (options["lsp"] as? Boolean != false)) {
+            val lspEnabled = options["lsp"] as? Boolean ?: false
+            if (lspEnabled) {
                 logger.info("Starting LSP server with ${config.server.lsp.transport} transport")
-
-                // Check if daemon REST API should be enabled
-                val daemonRestEnabled = options["daemon-rest"] as? Boolean ?: false
-                val daemonRestPort = options["daemon-rest-port"] as? Int ?: 7779
-
-                jobs.add(startLspServer(config, daemonRestEnabled, daemonRestPort))
+                jobs.add(startLspServer(config))
             }
 
             if (jobs.isEmpty()) {
-                System.err.println("Error: No services enabled. Use --rest-api or --lsp")
+                System.err.println("Error: No services enabled. Use --api or --lsp")
                 return CommandResult.Failure("No services enabled", 1)
             }
 
             println("UTL-X Daemon started successfully!")
-            if (config.server.restApi.enabled) {
-                println("MCP REST API: http://${config.server.restApi.host}:${config.server.restApi.port}")
+            if (apiEnabled) {
+                val apiPort = options["api-port"] as? Int ?: 7779
+                val apiHost = options["api-host"] as? String ?: "0.0.0.0"
+                println("API: http://$apiHost:$apiPort")
             }
-            if (config.server.lsp.enabled) {
+            if (lspEnabled) {
                 println("LSP: ${config.server.lsp.transport} transport")
-                val daemonRestEnabled = options["daemon-rest"] as? Boolean ?: false
-                if (daemonRestEnabled) {
-                    val daemonRestPort = options["daemon-rest-port"] as? Int ?: 7779
-                    println("Daemon REST API: http://0.0.0.0:$daemonRestPort")
+                if (config.server.lsp.transport == "socket") {
+                    println("LSP Port: ${config.server.lsp.socketPort}")
                 }
             }
             println("Press Ctrl+C to stop")
@@ -354,13 +355,36 @@ object StartCommand {
     }
 
     /**
-     * Start LSP server (delegates to daemon module)
+     * Start standalone API server (port 7779 - used by MCP Server)
      */
-    private fun startLspServer(
-        config: DaemonConfig,
-        daemonRestEnabled: Boolean = false,
-        daemonRestPort: Int = 7779
-    ): Job {
+    private fun startApiServer(port: Int, host: String, transport: String): Job {
+        return GlobalScope.launch(Dispatchers.IO) {
+            try {
+                val transportType = if (transport == "stdio") {
+                    TransportType.STDIO
+                } else {
+                    TransportType.SOCKET
+                }
+
+                val daemon = UTLXDaemon(
+                    transportType = transportType,
+                    port = port,
+                    enableRestApi = true,
+                    restApiPort = port
+                )
+
+                daemon.start()
+            } catch (e: Exception) {
+                logger.error("API server failed", e)
+                throw e
+            }
+        }
+    }
+
+    /**
+     * Start LSP server (port 7777 - used by Theia extension)
+     */
+    private fun startLspServer(config: DaemonConfig): Job {
         return GlobalScope.launch(Dispatchers.IO) {
             try {
                 val transport = if (config.server.lsp.transport == "stdio") {
@@ -372,8 +396,8 @@ object StartCommand {
                 val daemon = UTLXDaemon(
                     transportType = transport,
                     port = config.server.lsp.socketPort,
-                    enableRestApi = daemonRestEnabled,
-                    restApiPort = daemonRestPort
+                    enableRestApi = false,
+                    restApiPort = 0
                 )
 
                 daemon.start()
@@ -393,19 +417,19 @@ object StartCommand {
 
         while (i < args.size) {
             when (args[i]) {
-                "--rest-api" -> options["rest-api"] = true
-                "--lsp" -> options["lsp"] = true
-                "--no-lsp" -> options["lsp"] = false
-                "--no-rest-api" -> options["rest-api"] = false
+                // API parameters (port 7779 - used by MCP Server)
+                "--api" -> options["api"] = true
                 "--api-port" -> {
                     i++
-                    options["server.restApi.port"] = args[i].toInt()
+                    options["api-port"] = args[i].toInt()
                 }
-                "--port" -> {
-                    // Deprecated: kept for backward compatibility, use --api-port instead
+                "--api-transport" -> {
                     i++
-                    options["server.restApi.port"] = args[i].toInt()
+                    options["api-transport"] = args[i]
                 }
+
+                // LSP parameters
+                "--lsp" -> options["lsp"] = true
                 "--lsp-port" -> {
                     i++
                     options["server.lsp.socketPort"] = args[i].toInt()
@@ -414,9 +438,11 @@ object StartCommand {
                     i++
                     options["server.lsp.transport"] = args[i]
                 }
+
+                // Other options
                 "--host" -> {
                     i++
-                    options["server.restApi.host"] = args[i]
+                    options["api-host"] = args[i]
                 }
                 "--log-level" -> {
                     i++
@@ -425,11 +451,6 @@ object StartCommand {
                 "--config" -> {
                     i++
                     options["config"] = args[i]
-                }
-                "--daemon-rest" -> options["daemon-rest"] = true
-                "--daemon-rest-port" -> {
-                    i++
-                    options["daemon-rest-port"] = args[i].toInt()
                 }
                 "--help", "-h" -> {
                     printHelp()
@@ -459,45 +480,39 @@ object StartCommand {
             |Usage: utlxd start [options]
             |
             |Options:
-            |  --rest-api              Enable MCP REST API server (default: true)
-            |  --no-rest-api           Disable MCP REST API server
-            |  --lsp                   Enable LSP server (default: true)
-            |  --no-lsp                Disable LSP server
-            |  --api-port PORT         MCP REST API port (default: 7778)
+            |  --api                   Enable API server (used by MCP Server)
+            |  --api-port PORT         API port (default: 7779)
+            |  --api-transport TYPE    API transport: stdio|socket (default: socket)
+            |  --host HOST             API host (default: 0.0.0.0)
+            |
+            |  --lsp                   Enable LSP server (used by IDE/Theia)
             |  --lsp-port PORT         LSP socket port (default: 7777)
-            |  --lsp-transport TYPE    LSP transport: stdio|socket (required if --lsp is enabled)
-            |  --host HOST             MCP REST API host (default: 0.0.0.0)
-            |  --daemon-rest           Enable daemon's internal REST API (for direct daemon access)
-            |  --daemon-rest-port PORT Daemon REST API port (default: 7779)
+            |  --lsp-transport TYPE    LSP transport: stdio|socket (default: socket)
+            |
             |  --log-level LEVEL       Logging level: DEBUG|INFO|WARN|ERROR (default: INFO)
             |  --config PATH           Configuration file path
             |  --help, -h              Show this help message
             |
             |Important Notes:
             |  - Only ONE service can use stdio transport at a time (stdio is not multiplexable)
-            |  - If LSP uses stdio, REST API must use socket (HTTP), and vice versa
-            |  - --port is deprecated, use --api-port instead
+            |  - If LSP uses stdio, API must use socket, and vice versa
             |
             |Examples:
-            |  # Start with both MCP REST API and LSP (socket on default port 7777)
-            |  utlxd start --rest-api --lsp --lsp-transport socket
+            |  # Start with both LSP and API - all defaults (socket transport, default ports)
+            |  utlxd start --lsp [--lsp-transport socket|stdio] [--lsp-port 7777] --api [--api-transport socket|stdio] [--api-port 7779]
             |
-            |  # Start with MCP REST API, LSP (stdio), and daemon REST API
-            |  utlxd start --rest-api --lsp --lsp-transport stdio --daemon-rest
+            |  # Start with LSP only (STDIO transport)
+            |  utlxd start --lsp --lsp-transport stdio
             |
-            |  # Start MCP REST API only on custom port
-            |  utlxd start --rest-api --api-port 8080 --no-lsp
-            |
-            |  # Start LSP only with socket transport and daemon REST API
-            |  utlxd start --lsp --lsp-transport socket --lsp-port 7777 --no-rest-api --daemon-rest
+            |  # Start with API only (default socket transport and port)
+            |  utlxd start --api [--api-transport socket|stdio] [--api-port 7779]
             |
             |  # Use custom configuration file
             |  utlxd start --config /etc/utlx/production.yaml
             |
-            |Note:
-            |  - MCP REST API (port 7778): High-level API for MCP server integration
-            |  - Daemon REST API (port 7779): Low-level API for direct daemon access
-            |  - LSP: Language Server Protocol for IDE integration
+            |Architecture:
+            |  - API (port 7779): REST API used by MCP Server for transformations
+            |  - LSP (port 7777): Language Server Protocol for IDE integration (Theia)
             |
             |Configuration Precedence:
             |  1. Command-line arguments (highest)
