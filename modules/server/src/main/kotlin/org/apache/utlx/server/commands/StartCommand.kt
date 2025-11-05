@@ -356,6 +356,8 @@ object StartCommand {
 
     /**
      * Start standalone API server (port 7779 - used by MCP Server)
+     * REST API with socket transport = HTTP on port
+     * REST API with stdio transport = HTTP over stdin/stdout
      */
     private fun startApiServer(port: Int, host: String, transport: String): Job {
         return GlobalScope.launch(Dispatchers.IO) {
@@ -366,6 +368,8 @@ object StartCommand {
                     TransportType.SOCKET
                 }
 
+                // REST API runs on the specified port (or stdio)
+                // No separate LSP transport needed for API-only server
                 val daemon = UTLXDaemon(
                     transportType = transportType,
                     port = port,
