@@ -6,9 +6,8 @@
  */
 
 import * as React from '@theia/core/shared/react';
-import { injectable, inject, postConstruct } from '@theia/core/shared/inversify';
-import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
-import { Message } from '@theia/core/shared/@phosphor/messaging';
+import { injectable, inject, postConstruct, optional } from '@theia/core/shared/inversify';
+import { ReactWidget, Message } from '@theia/core/lib/browser';
 import { MonacoEditorProvider } from '@theia/monaco/lib/browser/monaco-editor-provider';
 import { MonacoEditor } from '@theia/monaco/lib/browser/monaco-editor';
 import URI from '@theia/core/lib/common/uri';
@@ -21,8 +20,8 @@ export class UTLXEditorWidget extends ReactWidget {
     static readonly ID = UTLX_EDITOR_WIDGET_ID;
     static readonly LABEL = 'UTLX Editor';
 
-    @inject(MonacoEditorProvider)
-    protected readonly editorProvider: MonacoEditorProvider;
+    @inject(MonacoEditorProvider) @optional()
+    protected readonly editorProvider?: MonacoEditorProvider;
 
     protected editor: MonacoEditor | undefined;
     protected editorContainer: HTMLDivElement | undefined;
@@ -54,7 +53,7 @@ export class UTLXEditorWidget extends ReactWidget {
         this.createEditor();
     }
 
-    protected onResize(msg: Message): void {
+    protected onResize(msg: any): void {
         super.onResize(msg);
         if (this.editor) {
             this.editor.refresh();
@@ -70,7 +69,7 @@ export class UTLXEditorWidget extends ReactWidget {
      * Create Monaco editor instance
      */
     protected async createEditor(): Promise<void> {
-        if (this.editorContainer) {
+        if (this.editorContainer && this.editorProvider) {
             // Create a virtual file URI for the UTLX content
             const uri = new URI('inmemory://utlx-editor/transformation.utlx');
 
