@@ -9,11 +9,11 @@
 import * as React from 'react';
 import { injectable, inject, postConstruct } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
-import { Message } from '@phosphor/messaging';
 import { MessageService } from '@theia/core';
 import { FileDialogService } from '@theia/filesystem/lib/browser';
 import {
     UTLXService,
+    UTLX_SERVICE_SYMBOL,
     UTLXMode,
     InputDocument,
     SchemaDocument,
@@ -35,7 +35,7 @@ export class InputPanelWidget extends ReactWidget {
     static readonly ID = INPUT_PANEL_ID;
     static readonly LABEL = 'Input';
 
-    @inject(UTLXService)
+    @inject(UTLX_SERVICE_SYMBOL)
     protected readonly utlxService!: UTLXService;
 
     @inject(MessageService)
@@ -70,10 +70,6 @@ export class InputPanelWidget extends ReactWidget {
         });
     }
 
-    protected onActivateRequest(msg: Message): void {
-        super.onActivateRequest(msg);
-        this.update();
-    }
 
     protected render(): React.ReactNode {
         const { mode, content, format, fileName, loading } = this.state;
@@ -105,7 +101,7 @@ export class InputPanelWidget extends ReactWidget {
                         Format:
                         <select
                             value={format}
-                            onChange={(e) => this.handleFormatChange(e.target.value as any)}
+                            onChange={(e) => this.handleFormatChange((e.target as HTMLSelectElement).value as any)}
                             disabled={loading}
                         >
                             {mode === UTLXMode.DESIGN_TIME ? (
@@ -138,7 +134,7 @@ export class InputPanelWidget extends ReactWidget {
                     <textarea
                         className='utlx-input-editor'
                         value={content}
-                        onChange={(e) => this.handleContentChange(e.target.value)}
+                        onChange={(e) => this.handleContentChange((e.target as HTMLTextAreaElement).value)}
                         placeholder={this.getPlaceholder()}
                         disabled={loading}
                         spellCheck={false}

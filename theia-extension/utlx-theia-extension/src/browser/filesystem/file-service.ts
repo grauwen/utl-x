@@ -96,10 +96,8 @@ export class UTLXFileService {
      */
     async writeFile(uri: URI, content: string): Promise<void> {
         try {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(content);
-
-            await this.fileService.write(uri, data);
+            // In Theia 1.64.0, write() expects string directly
+            await this.fileService.write(uri, content);
         } catch (error) {
             this.messageService.error(`Failed to write file ${uri.path.base}: ${error}`);
             throw error;
@@ -156,15 +154,19 @@ export class UTLXFileService {
      */
     async openMultipleFiles(props?: Partial<OpenFileDialogProps>): Promise<FileContent[]> {
         try {
-            const uris = await this.fileDialog.showOpenDialog({
+            const result = await this.fileDialog.showOpenDialog({
                 title: 'Open Files',
                 canSelectMany: true,
                 ...props
             });
 
-            if (!uris || uris.length === 0) {
+            // Handle result which can be URI | undefined
+            if (!result) {
                 return [];
             }
+
+            // Convert single URI to array for consistent handling
+            const uris = Array.isArray(result) ? result : [result];
 
             const files: FileContent[] = [];
             for (const uri of uris) {

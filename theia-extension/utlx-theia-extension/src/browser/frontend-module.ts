@@ -6,7 +6,7 @@
 
 import { ContainerModule } from 'inversify';
 import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory } from '@theia/core/lib/browser';
-import { UTLXService, UTLX_SERVICE_PATH } from '../common/protocol';
+import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { InputPanelWidget } from './input-panel/input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
@@ -15,7 +15,7 @@ import { UTLXFrontendContribution } from './utlx-frontend-contribution';
 
 export default new ContainerModule(bind => {
     // Bind service proxy for RPC communication with backend
-    bind(UTLXService).toDynamicValue(ctx => {
+    bind(UTLX_SERVICE_SYMBOL).toDynamicValue(ctx => {
         const connection = ctx.container.get(WebSocketConnectionProvider);
         return connection.createProxy<UTLXService>(UTLX_SERVICE_PATH);
     }).inSingletonScope();

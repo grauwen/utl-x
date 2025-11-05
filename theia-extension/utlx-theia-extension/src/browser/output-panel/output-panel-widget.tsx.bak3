@@ -64,6 +64,10 @@ export class OutputPanelWidget extends ReactWidget {
         });
     }
 
+    protected onActivateRequest(msg: Message): void {
+        super.onActivateRequest(msg);
+        this.update();
+    }
 
     protected render(): React.ReactNode {
         const { mode, content, format, executionTime, error, diagnostics, viewMode } = this.state;

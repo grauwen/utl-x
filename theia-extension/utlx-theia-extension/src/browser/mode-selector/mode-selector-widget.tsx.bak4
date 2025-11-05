@@ -66,6 +66,10 @@ export class ModeSelectorWidget extends ReactWidget {
         }
     }
 
+    protected onActivateRequest(msg: Message): void {
+        super.onActivateRequest(msg);
+        this.update();
+    }
 
     protected render(): React.ReactNode {
         const { currentMode, autoInferSchema, enableTypeChecking } = this.state;

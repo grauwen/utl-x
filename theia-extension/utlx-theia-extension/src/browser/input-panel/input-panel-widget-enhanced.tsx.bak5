@@ -130,7 +130,7 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
                     <textarea
                         className='utlx-input-editor'
                         value={content}
-                        onChange={(e) => this.handleContentChange((e.target as HTMLTextAreaElement).value)}
+                        onChange={(e) => this.handleContentChange((e.target as HTMLSelectElement).value)}
                         placeholder={this.getPlaceholder()}
                         disabled={loading}
                         spellCheck={false}

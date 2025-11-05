@@ -6,7 +6,7 @@
 
 import * as React from 'react';
 import { injectable, inject, postConstruct } from 'inversify';
-import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
+import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget/widgets/react-widget';
 import { MessageService } from '@theia/core';
 import {
     UTLXService, UTLX_SERVICE_SYMBOL,
@@ -66,6 +66,10 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
         });
     }
 
+    protected onActivateRequest(msg: Message): void {
+        super.onActivateRequest(msg);
+        this.update();
+    }
 
     protected render(): React.ReactNode {
         const { mode, content, format, fileName, loading } = this.state;
@@ -97,7 +101,7 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
                         Format:
                         <select
                             value={format}
-                            onChange={(e) => this.handleFormatChange((e.target as HTMLSelectElement).value as any)}
+                            onChange={(e) => this.handleFormatChange(e.target.value as any)}
                             disabled={loading}
                         >
                             {mode === UTLXMode.DESIGN_TIME ? (
@@ -130,7 +134,7 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
                     <textarea
                         className='utlx-input-editor'
                         value={content}
-                        onChange={(e) => this.handleContentChange((e.target as HTMLTextAreaElement).value)}
+                        onChange={(e) => this.handleContentChange(e.target.value)}
                         placeholder={this.getPlaceholder()}
                         disabled={loading}
                         spellCheck={false}

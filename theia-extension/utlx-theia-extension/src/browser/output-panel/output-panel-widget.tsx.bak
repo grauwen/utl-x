@@ -64,6 +64,10 @@ export class OutputPanelWidget extends ReactWidget {
         });
     }
 
+    protected onActivateRequest(msg: Message): void {
+        super.onActivateRequest(msg);
+        this.update();
+    }
 
     protected render(): React.ReactNode {
         const { mode, content, format, executionTime, error, diagnostics, viewMode } = this.state;
@@ -102,7 +106,7 @@ export class OutputPanelWidget extends ReactWidget {
                         View:
                         <select
                             value={viewMode}
-                            onChange={(e) => this.handleViewModeChange((e.target as HTMLSelectElement).value as 'pretty' | 'raw')}
+                            onChange={(e) => this.handleViewModeChange(e.target.value as 'pretty' | 'raw')}
                         >
                             <option value='pretty'>Pretty</option>
                             <option value='raw'>Raw</option>

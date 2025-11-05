@@ -9,26 +9,25 @@ import {
     WebSocketConnectionProvider,
     FrontendApplicationContribution,
     WidgetFactory,
-    CommandContribution,
-    MenuContribution,
     KeybindingContribution
 } from '@theia/core/lib/browser';
+import {
+    CommandContribution,
+    MenuContribution
+} from '@theia/core/lib/common';
 import { LanguageGrammarDefinitionContribution } from '@theia/monaco/lib/browser/textmate';
-import { LanguageClientContribution } from '@theia/languages/lib/browser';
 
-import { UTLXService, UTLX_SERVICE_PATH } from '../common/protocol';
+import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { InputPanelWidgetEnhanced } from './input-panel/input-panel-widget-enhanced';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
 import { UTLXWorkbenchWidget } from './workbench/utlx-workbench-widget';
 import { UTLXFrontendContribution } from './utlx-frontend-contribution';
-import { UTLXLanguageContribution } from './language/utlx-language-contribution';
-import { UTLXLanguageClientContribution } from './language/utlx-language-client-contribution';
 import { UTLXFileService } from './filesystem/file-service';
 
 export default new ContainerModule(bind => {
     // Bind service proxy for RPC communication with backend
-    bind(UTLXService).toDynamicValue(ctx => {
+    bind(UTLX_SERVICE_SYMBOL).toDynamicValue(ctx => {
         const connection = ctx.container.get(WebSocketConnectionProvider);
         return connection.createProxy<UTLXService>(UTLX_SERVICE_PATH);
     }).inSingletonScope();
@@ -60,13 +59,6 @@ export default new ContainerModule(bind => {
         id: UTLXWorkbenchWidget.ID,
         createWidget: () => ctx.container.get<UTLXWorkbenchWidget>(UTLXWorkbenchWidget)
     })).inSingletonScope();
-
-    // Bind language contributions
-    bind(UTLXLanguageContribution).toSelf().inSingletonScope();
-    bind(LanguageGrammarDefinitionContribution).toService(UTLXLanguageContribution);
-
-    bind(UTLXLanguageClientContribution).toSelf().inSingletonScope();
-    bind(LanguageClientContribution).toService(UTLXLanguageClientContribution);
 
     // Bind frontend contribution (commands, menus, keybindings)
     bind(UTLXFrontendContribution).toSelf().inSingletonScope();

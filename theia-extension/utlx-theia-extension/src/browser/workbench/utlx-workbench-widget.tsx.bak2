@@ -10,7 +10,7 @@
 
 import * as React from 'react';
 import { injectable, inject, postConstruct } from 'inversify';
-import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
+import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget/widgets/react-widget';
 import { MessageService, Command, CommandRegistry } from '@theia/core';
 import { InputPanelWidget } from '../input-panel/input-panel-widget';
 import { OutputPanelWidget } from '../output-panel/output-panel-widget';
@@ -78,6 +78,10 @@ export class UTLXWorkbenchWidget extends ReactWidget {
         });
     }
 
+    protected onActivateRequest(msg: Message): void {
+        super.onActivateRequest(msg);
+        this.update();
+    }
 
     protected render(): React.ReactNode {
         const { executing, validating, inferring } = this.state;

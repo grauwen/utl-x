@@ -66,6 +66,10 @@ export class ModeSelectorWidget extends ReactWidget {
         }
     }
 
+    protected onActivateRequest(msg: Message): void {
+        super.onActivateRequest(msg);
+        this.update();
+    }
 
     protected render(): React.ReactNode {
         const { currentMode, autoInferSchema, enableTypeChecking } = this.state;
@@ -102,7 +106,7 @@ export class ModeSelectorWidget extends ReactWidget {
                             <input
                                 type='checkbox'
                                 checked={autoInferSchema}
-                                onChange={(e) => this.handleAutoInferSchemaChange((e.target as HTMLInputElement).checked)}
+                                onChange={(e) => this.handleAutoInferSchemaChange(e.target.checked)}
                             />
                             Auto-infer schema on change
                         </label>
@@ -110,7 +114,7 @@ export class ModeSelectorWidget extends ReactWidget {
                             <input
                                 type='checkbox'
                                 checked={enableTypeChecking}
-                                onChange={(e) => this.handleTypeCheckingChange((e.target as HTMLInputElement).checked)}
+                                onChange={(e) => this.handleTypeCheckingChange(e.target.checked)}
                             />
                             Enable type checking
                         </label>

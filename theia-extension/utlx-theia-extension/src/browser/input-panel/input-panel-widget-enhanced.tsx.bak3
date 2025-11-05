@@ -66,6 +66,10 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
         });
     }
 
+    protected onActivateRequest(msg: Message): void {
+        super.onActivateRequest(msg);
+        this.update();
+    }
 
     protected render(): React.ReactNode {
         const { mode, content, format, fileName, loading } = this.state;
@@ -130,7 +134,7 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
                     <textarea
                         className='utlx-input-editor'
                         value={content}
-                        onChange={(e) => this.handleContentChange((e.target as HTMLTextAreaElement).value)}
+                        onChange={(e) => this.handleContentChange((e.target as HTMLSelectElement).value)}
                         placeholder={this.getPlaceholder()}
                         disabled={loading}
                         spellCheck={false}

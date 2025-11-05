@@ -9,15 +9,17 @@ import { injectable, inject } from 'inversify';
 import {
     FrontendApplicationContribution,
     FrontendApplication,
+    ApplicationShell,
+    WidgetManager
+} from '@theia/core/lib/browser';
+import {
     Command,
     CommandContribution,
     CommandRegistry,
     MenuContribution,
-    MenuModelRegistry,
-    KeybindingContribution,
-    KeybindingRegistry
-} from '@theia/core/lib/browser';
-import { ApplicationShell, WidgetManager } from '@theia/core/lib/browser';
+    MenuModelRegistry
+} from '@theia/core/lib/common';
+import { KeybindingContribution, KeybindingRegistry } from '@theia/core/lib/browser';
 import { MessageService } from '@theia/core';
 import { UTLXCommands } from '../common/protocol';
 import { UTLXWorkbenchWidget } from './workbench/utlx-workbench-widget';

@@ -1,15 +1,19 @@
 /**
- * Enhanced Input Panel Widget
+ * Input Panel Widget
  *
- * Updated version with file system integration
+ * Left panel for loading:
+ * - Runtime Mode: Input data (XML, JSON, CSV, YAML)
+ * - Design-Time Mode: Input schema (XSD, JSON Schema)
  */
 
 import * as React from 'react';
 import { injectable, inject, postConstruct } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MessageService } from '@theia/core';
+import { FileDialogService } from '@theia/filesystem/lib/browser';
 import {
-    UTLXService, UTLX_SERVICE_SYMBOL,
+    UTLXService,
+    UTLX_SERVICE_SYMBOL,
     UTLXMode,
     InputDocument,
     SchemaDocument,
@@ -17,7 +21,6 @@ import {
     SchemaFormat,
     INPUT_PANEL_ID
 } from '../../common/protocol';
-import { UTLXFileService } from '../filesystem/file-service';
 
 export interface InputPanelState {
     mode: UTLXMode;
@@ -28,7 +31,7 @@ export interface InputPanelState {
 }
 
 @injectable()
-export class InputPanelWidgetEnhanced extends ReactWidget {
+export class InputPanelWidget extends ReactWidget {
     static readonly ID = INPUT_PANEL_ID;
     static readonly LABEL = 'Input';
 
@@ -38,8 +41,8 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
     @inject(MessageService)
     protected readonly messageService!: MessageService;
 
-    @inject(UTLXFileService)
-    protected readonly fileService!: UTLXFileService;
+    @inject(FileDialogService)
+    protected readonly fileDialog!: FileDialogService;
 
     private state: InputPanelState = {
         mode: UTLXMode.RUNTIME,
@@ -51,8 +54,8 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
 
     constructor() {
         super();
-        this.id = InputPanelWidgetEnhanced.ID;
-        this.title.label = InputPanelWidgetEnhanced.LABEL;
+        this.id = InputPanelWidget.ID;
+        this.title.label = InputPanelWidget.LABEL;
         this.title.caption = 'Input Data/Schema';
         this.title.closable = false;
         this.addClass('utlx-input-panel');
@@ -61,11 +64,16 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
     @postConstruct()
     protected init(): void {
         this.update();
+        // Subscribe to mode changes
         this.utlxService.getMode().then(config => {
             this.setState({ mode: config.mode });
         });
     }
 
+    protected onActivateRequest(msg: Message): void {
+        super.onActivateRequest(msg);
+        this.update();
+    }
 
     protected render(): React.ReactNode {
         const { mode, content, format, fileName, loading } = this.state;
@@ -130,7 +138,7 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
                     <textarea
                         className='utlx-input-editor'
                         value={content}
-                        onChange={(e) => this.handleContentChange((e.target as HTMLTextAreaElement).value)}
+                        onChange={(e) => this.handleContentChange((e.target as HTMLSelectElement).value)}
                         placeholder={this.getPlaceholder()}
                         disabled={loading}
                         spellCheck={false}
@@ -178,22 +186,23 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
         try {
             this.setState({ loading: true });
 
-            const fileContent = await this.fileService.openFile({
+            const uri = await this.fileDialog.showOpenDialog({
                 title: 'Load Input File',
                 canSelectMany: false
             });
 
-            if (fileContent) {
-                const detectedFormat = this.fileService.detectFormat(fileContent.uri);
+            if (uri) {
+                // TODO: Read file content using filesystem service
+                const fileName = uri.path.base;
+                const content = ''; // TODO: Load actual content
 
                 this.setState({
-                    content: fileContent.content,
-                    fileName: fileContent.name,
-                    format: detectedFormat as any,
+                    content,
+                    fileName,
                     loading: false
                 });
 
-                this.messageService.info(`Loaded: ${fileContent.name} (${detectedFormat})`);
+                this.messageService.info(`Loaded: ${fileName}`);
             } else {
                 this.setState({ loading: false });
             }
@@ -223,6 +232,9 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
         this.update();
     }
 
+    /**
+     * Get current input document (for runtime mode)
+     */
     getInputDocument(): InputDocument | null {
         if (this.state.mode !== UTLXMode.RUNTIME || !this.state.content) {
             return null;
@@ -236,6 +248,9 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
         };
     }
 
+    /**
+     * Get current schema document (for design-time mode)
+     */
     getSchemaDocument(): SchemaDocument | null {
         if (this.state.mode !== UTLXMode.DESIGN_TIME || !this.state.content) {
             return null;
@@ -247,6 +262,9 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
         };
     }
 
+    /**
+     * Set mode from external source
+     */
     setMode(mode: UTLXMode): void {
         if (mode !== this.state.mode) {
             this.setState({
@@ -258,6 +276,9 @@ export class InputPanelWidgetEnhanced extends ReactWidget {
         }
     }
 
+    /**
+     * Load content programmatically
+     */
     loadContent(content: string, format: DataFormat | SchemaFormat, fileName?: string): void {
         this.setState({
             content,

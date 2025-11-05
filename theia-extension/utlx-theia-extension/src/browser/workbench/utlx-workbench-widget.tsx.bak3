@@ -78,6 +78,10 @@ export class UTLXWorkbenchWidget extends ReactWidget {
         });
     }
 
+    protected onActivateRequest(msg: Message): void {
+        super.onActivateRequest(msg);
+        this.update();
+    }
 
     protected render(): React.ReactNode {
         const { executing, validating, inferring } = this.state;
