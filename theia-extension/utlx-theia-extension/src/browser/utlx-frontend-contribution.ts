@@ -22,10 +22,11 @@ import {
 import { KeybindingContribution, KeybindingRegistry } from '@theia/core/lib/browser';
 import { MessageService } from '@theia/core';
 import { UTLXCommands } from '../common/protocol';
-import { UTLXWorkbenchWidget } from './workbench/utlx-workbench-widget';
+import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { InputPanelWidget } from './input-panel/input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
+import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 
 @injectable()
 export class UTLXFrontendContribution implements
@@ -46,20 +47,15 @@ export class UTLXFrontendContribution implements
     async onStart(app: FrontendApplication): Promise<void> {
         console.log('UTL-X extension starting...');
 
-        // Auto-open workbench on startup
-        this.openWorkbench();
+        // Open health monitor in bottom panel (shows UTLXD and MCP ping status)
+        await this.openHealthMonitor();
+
+        // Open 3-column layout: Input | Editor | Output
+        await this.open3ColumnLayout();
     }
 
     registerCommands(commands: CommandRegistry): void {
-        // Open Workbench command
-        commands.registerCommand({
-            id: 'utlx.openWorkbench',
-            label: 'UTL-X: Open Workbench'
-        }, {
-            execute: () => this.openWorkbench()
-        });
-
-        // Execute Transformation command (registered in workbench widget)
+        // Execute Transformation command
         commands.registerCommand({
             id: UTLXCommands.EXECUTE_TRANSFORMATION,
             label: 'UTL-X: Execute Transformation'
@@ -109,12 +105,6 @@ export class UTLXFrontendContribution implements
     registerMenus(menus: MenuModelRegistry): void {
         // Add UTL-X menu
         menus.registerMenuAction(['1_utlx'], {
-            commandId: 'utlx.openWorkbench',
-            label: 'Open UTL-X Workbench',
-            order: '0'
-        });
-
-        menus.registerMenuAction(['1_utlx'], {
             commandId: UTLXCommands.TOGGLE_MODE,
             label: 'Toggle Mode',
             order: '1'
@@ -153,25 +143,69 @@ export class UTLXFrontendContribution implements
         });
     }
 
-    private async openWorkbench(): Promise<void> {
+    private async open3ColumnLayout(): Promise<void> {
         try {
-            // Get or create workbench widget (contains all 3 panes internally)
-            const workbench = await this.widgetManager.getOrCreateWidget<UTLXWorkbenchWidget>(
-                UTLXWorkbenchWidget.ID
+            // Create all widgets
+            const inputPanel = await this.widgetManager.getOrCreateWidget<InputPanelWidget>(
+                InputPanelWidget.ID
+            );
+            const editorWidget = await this.widgetManager.getOrCreateWidget<UTLXEditorWidget>(
+                UTLXEditorWidget.ID
+            );
+            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
+                OutputPanelWidget.ID
             );
 
-            // Add workbench to main area (it will render Input | Editor | Output internally)
-            if (!workbench.isAttached) {
-                this.shell.addWidget(workbench, { area: 'main' });
+            // Add widgets to shell in 3-column layout
+            // Left column: Input panel
+            if (!inputPanel.isAttached) {
+                this.shell.addWidget(inputPanel, { area: 'left', rank: 100 });
             }
 
-            // Activate workbench
-            this.shell.activateWidget(workbench.id);
+            // Center column: Editor
+            if (!editorWidget.isAttached) {
+                this.shell.addWidget(editorWidget, { area: 'main', rank: 100 });
+            }
 
-            console.log('UTL-X workbench opened with 3-pane layout (Input | Editor | Output)');
+            // Right column: Output panel
+            if (!outputPanel.isAttached) {
+                this.shell.addWidget(outputPanel, { area: 'right', rank: 100 });
+            }
+
+            // Activate all widgets to make them visible
+            this.shell.activateWidget(inputPanel.id);
+            this.shell.activateWidget(editorWidget.id);
+            this.shell.activateWidget(outputPanel.id);
+
+            // Expand the side panels to show the widgets
+            this.shell.leftPanelHandler.expand();
+            this.shell.rightPanelHandler.expand();
+
+            console.log('UTL-X 3-column layout opened: Input | Editor | Output');
         } catch (error) {
-            console.error('Failed to open UTL-X workbench:', error);
-            this.messageService.error(`Failed to open workbench: ${error}`);
+            console.error('Failed to open 3-column layout:', error);
+            this.messageService.error(`Failed to open layout: ${error}`);
+        }
+    }
+
+    private async openHealthMonitor(): Promise<void> {
+        try {
+            // Get or create health monitor widget
+            const healthMonitor = await this.widgetManager.getOrCreateWidget<HealthMonitorWidget>(
+                HealthMonitorWidget.ID
+            );
+
+            // Add to bottom panel
+            if (!healthMonitor.isAttached) {
+                this.shell.addWidget(healthMonitor, { area: 'bottom', rank: 100 });
+            }
+
+            // Activate health monitor
+            this.shell.activateWidget(healthMonitor.id);
+
+            console.log('UTL-X health monitor opened in bottom panel');
+        } catch (error) {
+            console.error('Failed to open health monitor:', error);
         }
     }
 }

@@ -11,7 +11,7 @@ import { InputPanelWidget } from './input-panel/input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
-import { UTLXWorkbenchWidget } from './workbench/utlx-workbench-widget';
+import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { UTLXFrontendContribution } from './utlx-frontend-contribution';
 
 export default new ContainerModule(bind => {
@@ -46,10 +46,10 @@ export default new ContainerModule(bind => {
         createWidget: () => ctx.container.get<UTLXEditorWidget>(UTLXEditorWidget)
     })).inSingletonScope();
 
-    bind(UTLXWorkbenchWidget).toSelf();
+    bind(HealthMonitorWidget).toSelf();
     bind(WidgetFactory).toDynamicValue(ctx => ({
-        id: UTLXWorkbenchWidget.ID,
-        createWidget: () => ctx.container.get<UTLXWorkbenchWidget>(UTLXWorkbenchWidget)
+        id: HealthMonitorWidget.ID,
+        createWidget: () => ctx.container.get<HealthMonitorWidget>(HealthMonitorWidget)
     })).inSingletonScope();
 
     // Bind frontend contribution

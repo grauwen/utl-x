@@ -27,8 +27,8 @@
   "scripts": {
     "prepare": "theia build --mode development",
     "build": "theia build --mode production",
-    "start": "theia start --hostname=0.0.0.0 --port=3000",
-    "start:debug": "theia start --hostname=0.0.0.0 --port=3000 --loglevel=debug",
+    "start": "theia start --hostname=0.0.0.0 --port=4000",
+    "start:debug": "theia start --hostname=0.0.0.0 --port=4000 --loglevel=debug",
     "watch": "theia build --watch --mode development",
     "clean": "rimraf .theia lib node_modules",
     "rebuild": "yarn clean && yarn install && yarn build"
@@ -40,7 +40,10 @@
         "applicationName": "UTL-X IDE",
         "preferences": {
           "files.enableTrash": false,
-          "workspace.supportMultiRootWorkspace": true
+          "workspace.supportMultiRootWorkspace": true,
+          "terminal.integrated.shell.linux": "/bin/bash",
+          "workbench.startupEditor": "none",
+          "explorer.autoReveal": false
         }
       }
     },

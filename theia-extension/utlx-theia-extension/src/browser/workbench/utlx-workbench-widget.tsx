@@ -12,6 +12,7 @@ import * as React from 'react';
 import { injectable, inject, postConstruct } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MessageService, Command, CommandRegistry } from '@theia/core';
+import { WidgetManager } from '@theia/core/lib/browser';
 import { InputPanelWidget } from '../input-panel/input-panel-widget';
 import { OutputPanelWidget } from '../output-panel/output-panel-widget';
 import { ModeSelectorWidget } from '../mode-selector/mode-selector-widget';
@@ -42,17 +43,13 @@ export class UTLXWorkbenchWidget extends ReactWidget {
     @inject(CommandRegistry)
     protected readonly commandRegistry!: CommandRegistry;
 
-    @inject(InputPanelWidget)
-    protected readonly inputPanel!: InputPanelWidget;
+    @inject(WidgetManager)
+    protected readonly widgetManager!: WidgetManager;
 
-    @inject(UTLXEditorWidget)
-    protected readonly editorWidget!: UTLXEditorWidget;
-
-    @inject(OutputPanelWidget)
-    protected readonly outputPanel!: OutputPanelWidget;
-
-    @inject(ModeSelectorWidget)
-    protected readonly modeSelector!: ModeSelectorWidget;
+    protected inputPanel?: InputPanelWidget;
+    protected editorWidget?: UTLXEditorWidget;
+    protected outputPanel?: OutputPanelWidget;
+    protected modeSelector?: ModeSelectorWidget;
 
     private state: WorkbenchState = {
         executing: false,
@@ -76,6 +73,17 @@ export class UTLXWorkbenchWidget extends ReactWidget {
         this.update();
         this.registerCommands();
 
+        // Load widgets asynchronously after construction
+        this.loadWidgets();
+    }
+
+    private async loadWidgets(): Promise<void> {
+        // Get widget instances via WidgetManager
+        this.inputPanel = await this.widgetManager.getOrCreateWidget(InputPanelWidget.ID);
+        this.editorWidget = await this.widgetManager.getOrCreateWidget(UTLXEditorWidget.ID);
+        this.outputPanel = await this.widgetManager.getOrCreateWidget(OutputPanelWidget.ID);
+        this.modeSelector = await this.widgetManager.getOrCreateWidget(ModeSelectorWidget.ID);
+
         // Subscribe to mode changes
         this.modeSelector.onModeChange((mode) => {
             this.handleModeChange(mode);
@@ -85,10 +93,17 @@ export class UTLXWorkbenchWidget extends ReactWidget {
         this.editorWidget.node.addEventListener('utlx-content-changed', ((event: CustomEvent) => {
             this.currentEditorContent = event.detail.content;
         }) as EventListener);
+
+        // Trigger re-render now that widgets are loaded
+        this.update();
     }
 
 
     protected render(): React.ReactNode {
+        if (!this.inputPanel || !this.editorWidget || !this.outputPanel || !this.modeSelector) {
+            return <div>Loading...</div>;
+        }
+
         const { executing, validating, inferring } = this.state;
         const mode = this.modeSelector.getCurrentMode();
 
@@ -144,7 +159,7 @@ export class UTLXWorkbenchWidget extends ReactWidget {
                             <div
                                 ref={container => {
                                     if (container && !container.hasChildNodes()) {
-                                        container.appendChild(this.inputPanel.node);
+                                        container.appendChild(this.inputPanel!.node);
                                     }
                                 }}
                                 style={{ flex: 1, overflow: 'hidden' }}
@@ -154,7 +169,7 @@ export class UTLXWorkbenchWidget extends ReactWidget {
                             <div
                                 ref={container => {
                                     if (container && !container.hasChildNodes()) {
-                                        container.appendChild(this.editorWidget.node);
+                                        container.appendChild(this.editorWidget!.node);
                                     }
                                 }}
                                 style={{ flex: 1, overflow: 'hidden' }}
@@ -164,7 +179,7 @@ export class UTLXWorkbenchWidget extends ReactWidget {
                             <div
                                 ref={container => {
                                     if (container && !container.hasChildNodes()) {
-                                        container.appendChild(this.outputPanel.node);
+                                        container.appendChild(this.outputPanel!.node);
                                     }
                                 }}
                                 style={{ flex: 1, overflow: 'hidden' }}
@@ -219,6 +234,8 @@ export class UTLXWorkbenchWidget extends ReactWidget {
     }
 
     private async handleExecute(): Promise<void> {
+        if (!this.modeSelector || !this.inputPanel || !this.outputPanel) return;
+
         if (this.state.executing) {
             return;
         }
@@ -264,6 +281,8 @@ export class UTLXWorkbenchWidget extends ReactWidget {
     }
 
     private async handleInferSchema(): Promise<void> {
+        if (!this.modeSelector || !this.inputPanel || !this.outputPanel) return;
+
         if (this.state.inferring) {
             return;
         }
@@ -340,17 +359,23 @@ export class UTLXWorkbenchWidget extends ReactWidget {
     }
 
     private async handleToggleMode(): Promise<void> {
+        if (!this.modeSelector) return;
+
         const currentMode = this.modeSelector.getCurrentMode();
         const newMode = currentMode === UTLXMode.DESIGN_TIME ? UTLXMode.RUNTIME : UTLXMode.DESIGN_TIME;
         await this.modeSelector.setMode(newMode);
     }
 
     private handleClear(): void {
+        if (!this.outputPanel) return;
+
         this.outputPanel.clear();
         this.messageService.info('Panels cleared');
     }
 
     private handleModeChange(mode: UTLXMode): void {
+        if (!this.inputPanel || !this.outputPanel) return;
+
         // Notify panels of mode change
         this.inputPanel.setMode(mode);
         this.outputPanel.setMode(mode);
