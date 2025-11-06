@@ -125,6 +125,7 @@ class UTLXDaemon(
                 "initialized" -> handleInitialized(request)
                 "shutdown" -> handleShutdown(request)
                 "exit" -> handleExit(request)
+                "ping" -> handlePing(request)
 
                 // Document synchronization
                 "textDocument/didOpen" -> handleDidOpen(request)
@@ -207,6 +208,19 @@ class UTLXDaemon(
         // Exit is a notification, but we stop the daemon
         stop()
         return JsonRpcResponse.success(request.id, null)
+    }
+
+    /**
+     * Handle ping request - simple liveness check
+     */
+    private fun handlePing(request: JsonRpcRequest): JsonRpcResponse {
+        logger.debug("Ping request received")
+        val result = mapOf(
+            "status" to "ok",
+            "service" to "utlx-lsp-server",
+            "timestamp" to System.currentTimeMillis()
+        )
+        return JsonRpcResponse.success(request.id, result)
     }
 
     /**
