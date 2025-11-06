@@ -1,0 +1,64 @@
+
+Header of UTLX transform is for this version  of IDE fixed 
+%UTLX 1.0
+inputs; [linked to the type selected in the input pane format][for each vertical TAB an input definition]
+output  [Linked to the type selected in the output pane format] 
+——————————————
+Runtime MODE (one tab- instance)
+
+INPUT Pane (left Pane)
+
+Instance: Format  (dropdown) -> linked to the Header of UTLX Input  (minimal 1)
+- csv
+- Json
+- xml
+- yaml
+- xsd  
+- jsch 
+- avro 
+- proto 
+
+[ could be repeated for each additional input in vertical TAB -> linked to the Header of UTLX Input2…InputN ]
+
+Vertical there should be a +  so an input can be addd. Each input has one horizontal tab (trivial)  in design mode
+
+Each input  should allow a field to change the input name which is also the name used in the UTLX definition
+
+When there are multiple vertical tabs, a cross in front shpould allow to delete an vertical tab, when cross is punched a popup should ask " Are you sure to delete input <name of input>
+
+OUTPUT  Pane (right  Pane)
+
+Instance  Format  (dropdown) -> linked to the output in the header of UTLX 
+- csv
+- Json
+- xml
+- yaml
+- xsd %USDL 1.0
+- jsch %USDL 1.0
+- avro %USDL 1.0
+- proto %USDL 1.0
+——————————————
+
+Design Tome MODE (two tab instance)
+
+INPUT Pane (left Pane)
+
+TAB Instance:; Format   ( -> )  TAB Schema Format: (these are linked)
+- Json.         -> jsch | avro (drop down list) - jsch default
+- xml.           -> xsd
+- yaml          -> jsch | avro (drop down list) - jsch default
+- csv           -> tsch (not yet implemented) => put that text within schema as //tsch not implemented yet
+- xsd            -> Schema [should be made BLUR)
+- jsch          -> Schema [should be made BLUR)
+- avro         -> Schema [should be made BLUR)
+- proto        -> Schema [should be made BLUR)
+
+Vertical there should be a +  so an input can be addd. Each input has two horizontal tabs in design mode
+
+Why having tier2 (xsd,jsch,avro,proto) still as possible input? Because the output could have an instance document with an schema attached, or it is one of the multiple inputs (there might be reasons why)
+
+The above Instance and Schema should be linked. If the instance is changing the schema  format should change
+
+-----
+
+
