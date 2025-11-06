@@ -57,7 +57,7 @@ fi
 # Start daemon if not already running
 if ! lsof -i:7779 >/dev/null 2>&1; then
     echo -e "${YELLOW}Starting daemon REST API on port 7779...${NC}"
-    java -jar "$DAEMON_JAR" start --daemon-rest --daemon-rest-port 7779 > /tmp/utlxd-mcp-test.log 2>&1 &
+    java -jar "$DAEMON_JAR" start --api --api-port 7779 > /tmp/utlxd-mcp-test.log 2>&1 &
     DAEMON_PID=$!
 
     # Wait for daemon to be ready
@@ -84,7 +84,7 @@ exit_code=$?
 # Cleanup: Stop daemon if we started it
 if [ "$DAEMON_STARTED" -eq 1 ]; then
     echo -e "${YELLOW}Stopping daemon...${NC}"
-    pkill -f "utlxd.*--daemon-rest-port 7779" 2>/dev/null || true
+    pkill -f "utlxd.*--api-port 7779" 2>/dev/null || true
 fi
 
 exit $exit_code
