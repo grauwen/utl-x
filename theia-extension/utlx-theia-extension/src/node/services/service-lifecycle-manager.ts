@@ -79,7 +79,7 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
         return {
             // UTLXD defaults - projectRoot should now be the utl-x repository root
             utlxdJarPath: process.env.UTLXD_JAR_PATH ||
-                path.join(projectRoot, 'modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar'),
+                path.join(projectRoot, 'modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar'),
             utlxdRestPort: parseInt(process.env.UTLXD_REST_PORT || '7779', 10),
             utlxdLogFile: process.env.UTLXD_LOG_FILE || '/tmp/utlxd-theia.log',
 
@@ -117,11 +117,11 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
         }
 
         // If we found the extension, look for the actual utl-x repository root
-        // by going up and checking for modules/server directory
+        // by going up and checking for modules/daemon directory
         if (extensionRoot) {
             dir = extensionRoot;
             while (dir !== '/') {
-                const modulesPath = path.join(dir, 'modules/server/build/libs');
+                const modulesPath = path.join(dir, 'modules/daemon/build/libs');
                 if (fs.existsSync(modulesPath)) {
                     console.log('[ServiceLifecycle] Found utl-x repository root:', dir);
                     return dir;
@@ -171,6 +171,19 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
      */
     private async startUTLXD(): Promise<void> {
         console.log('[ServiceLifecycle] Starting UTLXD daemon...');
+
+        // Check if UTLXD is already running
+        try {
+            const response = await fetch(`http://localhost:${this.config.utlxdRestPort}/api/health`);
+            if (response.ok) {
+                console.log('[ServiceLifecycle] UTLXD already running on port', this.config.utlxdRestPort);
+                console.log('[ServiceLifecycle] Skipping UTLXD start');
+                return;
+            }
+        } catch (error) {
+            // Not running, continue with startup
+            console.log('[ServiceLifecycle] UTLXD not running, will start it');
+        }
 
         // Check if jar exists
         if (!fs.existsSync(this.config.utlxdJarPath)) {
@@ -243,6 +256,28 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
      */
     private async startMCPServer(): Promise<void> {
         console.log('[ServiceLifecycle] Starting MCP server...');
+
+        // Check if MCP server is already running
+        try {
+            const response = await fetch(`http://localhost:${this.config.mcpServerPort}/message`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'ping',
+                    params: {}
+                })
+            });
+            if (response.ok) {
+                console.log('[ServiceLifecycle] MCP server already running on port', this.config.mcpServerPort);
+                console.log('[ServiceLifecycle] Skipping MCP server start');
+                return;
+            }
+        } catch (error) {
+            // Not running, continue with startup
+            console.log('[ServiceLifecycle] MCP server not running, will start it');
+        }
 
         // Check if MCP server exists
         if (!fs.existsSync(this.config.mcpServerPath)) {
@@ -335,20 +370,26 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
 
         try {
             // Stop MCP server first (depends on UTLXD)
+            // Only stop if we started it (have a process handle)
             if (this.mcpProcess) {
-                console.log('[ServiceLifecycle] Stopping MCP server...');
+                console.log('[ServiceLifecycle] Stopping MCP server (managed by lifecycle)...');
                 await this.stopMCPServer();
                 console.log('[ServiceLifecycle] MCP server stopped');
+            } else {
+                console.log('[ServiceLifecycle] MCP server not managed by lifecycle, skipping stop');
             }
 
             // Then stop UTLXD
+            // Only stop if we started it (have a process handle)
             if (this.utlxdProcess) {
-                console.log('[ServiceLifecycle] Stopping UTLXD...');
+                console.log('[ServiceLifecycle] Stopping UTLXD (managed by lifecycle)...');
                 await this.stopUTLXD();
                 console.log('[ServiceLifecycle] UTLXD stopped');
+            } else {
+                console.log('[ServiceLifecycle] UTLXD not managed by lifecycle, skipping stop');
             }
 
-            console.log('[ServiceLifecycle] All services stopped');
+            console.log('[ServiceLifecycle] All managed services stopped');
         } catch (error) {
             console.error('[ServiceLifecycle] Error stopping services:', error);
         }
@@ -362,7 +403,7 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
             return;
         }
 
-        return new Promise((resolve) => {
+        return new Promise(async (resolve) => {
             const timeout = setTimeout(() => {
                 console.warn('[MCP Server] Did not stop gracefully, forcing kill');
                 this.mcpProcess?.kill('SIGKILL');
@@ -375,8 +416,26 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
                 resolve();
             });
 
-            // Try graceful shutdown
-            this.mcpProcess!.kill('SIGTERM');
+            // Try graceful shutdown via MCP shutdown endpoint first
+            try {
+                console.log('[ServiceLifecycle] Sending shutdown request to MCP server...');
+                const response = await fetch(`http://localhost:${this.config.mcpServerPort}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 999,
+                        method: 'shutdown',
+                        params: {}
+                    })
+                });
+                if (response.ok) {
+                    console.log('[ServiceLifecycle] MCP shutdown request sent successfully');
+                }
+            } catch (error) {
+                console.warn('[ServiceLifecycle] MCP shutdown endpoint failed, using SIGTERM:', error);
+                this.mcpProcess!.kill('SIGTERM');
+            }
         });
     }
 
@@ -388,7 +447,7 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
             return;
         }
 
-        return new Promise((resolve) => {
+        return new Promise(async (resolve) => {
             const timeout = setTimeout(() => {
                 console.warn('[UTLXD] Did not stop gracefully, forcing kill');
                 this.utlxdProcess?.kill('SIGKILL');
@@ -401,8 +460,20 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
                 resolve();
             });
 
-            // Try graceful shutdown
-            this.utlxdProcess!.kill('SIGTERM');
+            // Try graceful shutdown via REST API shutdown endpoint first
+            try {
+                console.log('[ServiceLifecycle] Sending shutdown request to UTLXD REST API...');
+                const response = await fetch(`http://localhost:${this.config.utlxdRestPort}/api/shutdown`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (response.ok) {
+                    console.log('[ServiceLifecycle] UTLXD shutdown request sent successfully');
+                }
+            } catch (error) {
+                console.warn('[ServiceLifecycle] UTLXD shutdown endpoint failed, using SIGTERM:', error);
+                this.utlxdProcess!.kill('SIGTERM');
+            }
         });
     }
 
