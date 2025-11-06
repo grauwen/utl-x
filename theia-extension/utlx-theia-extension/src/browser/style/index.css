@@ -467,6 +467,24 @@
     flex: 1;
     overflow: hidden;
     position: relative;
+    min-height: 0; /* Important: allows flex child to shrink below content size */
+    transition: background-color 0.2s;
+}
+
+.utlx-editor-content.utlx-drag-over {
+    background-color: var(--theia-list-hoverBackground);
+    border: 2px dashed var(--theia-focusBorder);
+}
+
+/* Monaco editor within the container */
+.utlx-editor-content .monaco-editor {
+    height: 100%;
+    width: 100%;
+}
+
+.utlx-editor-content .monaco-editor .overflow-guard {
+    height: 100%;
+    width: 100%;
 }
 
 .utlx-editor-footer {

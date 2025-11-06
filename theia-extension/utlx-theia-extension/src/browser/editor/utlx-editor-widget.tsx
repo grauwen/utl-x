@@ -12,6 +12,7 @@ import { MonacoEditorProvider } from '@theia/monaco/lib/browser/monaco-editor-pr
 import { MonacoEditor } from '@theia/monaco/lib/browser/monaco-editor';
 import URI from '@theia/core/lib/common/uri';
 import { DisposableCollection } from '@theia/core/lib/common/disposable';
+import * as monaco from '@theia/monaco-editor-core';
 
 export const UTLX_EDITOR_WIDGET_ID = 'utlx-editor';
 
@@ -23,7 +24,7 @@ export class UTLXEditorWidget extends ReactWidget {
     @inject(MonacoEditorProvider) @optional()
     protected readonly editorProvider?: MonacoEditorProvider;
 
-    protected editor: MonacoEditor | undefined;
+    protected editor: monaco.editor.IStandaloneCodeEditor | undefined;
     protected editorContainer: HTMLDivElement | undefined;
     protected toDispose = new DisposableCollection();
 
@@ -50,13 +51,20 @@ export class UTLXEditorWidget extends ReactWidget {
 
     protected onAfterAttach(msg: Message): void {
         super.onAfterAttach(msg);
-        this.createEditor();
+        // createEditor will be called by the ref callback after container is ready
+        // Add slight delay to ensure React has rendered
+        setTimeout(() => {
+            if (!this.editor && this.editorContainer) {
+                this.createEditor();
+            }
+        }, 50);
     }
 
     protected onResize(msg: any): void {
         super.onResize(msg);
         if (this.editor) {
-            this.editor.refresh();
+            // Force layout recalculation
+            this.editor.layout();
         }
     }
 
@@ -69,15 +77,32 @@ export class UTLXEditorWidget extends ReactWidget {
      * Create Monaco editor instance
      */
     protected async createEditor(): Promise<void> {
-        if (this.editorContainer && this.editorProvider) {
-            // Create a virtual file URI for the UTLX content
-            const uri = new URI('inmemory://utlx-editor/transformation.utlx');
+        console.log('[UTLXEditor] createEditor() called', {
+            hasContainer: !!this.editorContainer,
+            hasEditor: !!this.editor
+        });
 
-            // Create Monaco editor with UTLX language support
-            this.editor = await this.editorProvider.get(uri);
+        if (this.editor) {
+            console.log('[UTLXEditor] Editor already created, skipping');
+            return;
+        }
 
-            // Configure editor options
-            this.editor.getControl().updateOptions({
+        if (!this.editorContainer) {
+            console.warn('[UTLXEditor] No editor container, waiting for ref callback');
+            return;
+        }
+
+        try {
+            // Create Monaco model with UTLX content
+            const model = monaco.editor.createModel(
+                this.getDefaultContent(),
+                'plaintext', // Language ID - we can register 'utlx' later
+                monaco.Uri.parse('inmemory://utlx-editor/transformation.utlx')
+            );
+
+            // Create standalone Monaco editor
+            this.editor = monaco.editor.create(this.editorContainer, {
+                model: model,
                 lineNumbers: 'on',
                 minimap: { enabled: true },
                 scrollBeyondLastLine: false,
@@ -91,25 +116,28 @@ export class UTLXEditorWidget extends ReactWidget {
                 theme: 'vs-dark'
             });
 
-            // Set initial content
-            this.setContent(this.getDefaultContent());
+            console.log('[UTLXEditor] Monaco editor created successfully');
 
-            // Attach editor to container
-            const editorNode = this.editor.getControl().getDomNode();
-            if (editorNode) {
-                this.editorContainer.appendChild(editorNode);
-                this.editor.refresh();
-            }
+            // Force layout after DOM attachment
+            setTimeout(() => {
+                if (this.editor) {
+                    this.editor.layout();
+                    console.log('[UTLXEditor] Editor layout refreshed');
+                }
+            }, 100);
 
             // Listen for content changes
             this.toDispose.push(
-                this.editor.getControl().onDidChangeModelContent(() => {
+                this.editor.onDidChangeModelContent(() => {
                     this.onContentChanged();
                 })
             );
 
             // Focus editor
             this.editor.focus();
+            console.log('[UTLXEditor] Editor initialized and focused');
+        } catch (error) {
+            console.error('[UTLXEditor] Failed to create editor:', error);
         }
     }
 
@@ -132,10 +160,10 @@ export class UTLXEditorWidget extends ReactWidget {
 input json
 output json
 ---
-# Welcome to UTLX!
-#
-# This is a sample transformation.
-# Edit the code below and press Execute to run.
+// Welcome to UTLX!
+//
+// This is a sample transformation.
+// Edit the code below and press Execute to run.
 
 output: {
   message: "Hello from UTLX!",
@@ -149,7 +177,8 @@ output: {
      */
     public getContent(): string {
         if (this.editor) {
-            return this.editor.getControl().getValue();
+            const model = this.editor.getModel();
+            return model ? model.getValue() : '';
         }
         return '';
     }
@@ -159,7 +188,10 @@ output: {
      */
     public setContent(content: string): void {
         if (this.editor) {
-            this.editor.getControl().setValue(content);
+            const model = this.editor.getModel();
+            if (model) {
+                model.setValue(content);
+            }
         }
     }
 
@@ -180,6 +212,48 @@ output: {
             bubbles: true,
             detail: { content: this.getContent() }
         }));
+    }
+
+    /**
+     * Setup drag and drop for UTLX files
+     */
+    protected setupDragAndDrop(container: HTMLDivElement): void {
+        // Prevent default drag behavior
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            container.classList.add('utlx-drag-over');
+        });
+
+        container.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            container.classList.remove('utlx-drag-over');
+        });
+
+        // Handle drop
+        container.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            container.classList.remove('utlx-drag-over');
+
+            const files = e.dataTransfer?.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                // Accept .utlx files or any text file
+                if (file.name.endsWith('.utlx') || file.type.startsWith('text/')) {
+                    try {
+                        const content = await file.text();
+                        this.loadFile(content);
+                        console.log(`[UTLXEditor] Loaded file: ${file.name}`);
+                    } catch (error) {
+                        console.error('[UTLXEditor] Failed to read dropped file:', error);
+                    }
+                } else {
+                    console.warn('[UTLXEditor] Dropped file is not a UTLX or text file');
+                }
+            }
+        });
     }
 
     /**
@@ -236,6 +310,7 @@ output: {
                     ref={container => {
                         if (container && !this.editorContainer) {
                             this.editorContainer = container;
+                            this.setupDragAndDrop(container);
                             this.createEditor();
                         }
                     }}

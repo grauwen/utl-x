@@ -145,13 +145,16 @@ export class InputPanelWidget extends ReactWidget {
                     >
                         Instance
                     </button>
-                    <button
-                        className={`utlx-tab ${activeTab === 'schema' ? 'active' : ''}`}
-                        onClick={() => this.handleTabSwitch('schema')}
-                        disabled={loading}
-                    >
-                        Schema
-                    </button>
+                    {/* Only show Schema tab in Design-Time mode */}
+                    {mode === UTLXMode.DESIGN_TIME && (
+                        <button
+                            className={`utlx-tab ${activeTab === 'schema' ? 'active' : ''}`}
+                            onClick={() => this.handleTabSwitch('schema')}
+                            disabled={loading}
+                        >
+                            Schema
+                        </button>
+                    )}
                 </div>
 
                 <div className='utlx-panel-toolbar'>
