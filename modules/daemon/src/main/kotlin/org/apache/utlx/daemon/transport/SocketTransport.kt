@@ -43,53 +43,70 @@ class SocketTransport(private val port: Int) : Transport {
             serverSocket = ServerSocket(port)
             logger.info("Socket transport listening on port $port")
 
-            // Accept one client connection (for now, single client mode)
-            logger.info("Waiting for client connection...")
-            clientSocket = serverSocket!!.accept()
-            logger.info("Client connected from: ${clientSocket!!.remoteSocketAddress}")
-
-            reader = BufferedReader(InputStreamReader(clientSocket!!.getInputStream(), Charsets.UTF_8))
-            writer = PrintWriter(OutputStreamWriter(clientSocket!!.getOutputStream(), Charsets.UTF_8), true)
-
-            // Message loop
+            // Keep accepting new connections until stop() is called
             while (running.get()) {
-                val message = readMessage() ?: break
-
-                logger.debug("Received message: {}", message.take(200))
+                logger.info("Waiting for client connection...")
 
                 try {
-                    val jsonRpcMessage = parser.parseMessage(message)
+                    clientSocket = serverSocket!!.accept()
+                    logger.info("Client connected from: ${clientSocket!!.remoteSocketAddress}")
 
-                    when (jsonRpcMessage) {
-                        is JsonRpcMessage.Request -> {
-                            val request = jsonRpcMessage.request
+                    reader = BufferedReader(InputStreamReader(clientSocket!!.getInputStream(), Charsets.UTF_8))
+                    writer = PrintWriter(OutputStreamWriter(clientSocket!!.getOutputStream(), Charsets.UTF_8), true)
 
-                            val response = try {
-                                messageHandler(request)
-                            } catch (e: Exception) {
-                                logger.error("Error handling request: ${request.method}", e)
-                                JsonRpcResponse.internalError(
-                                    request.id,
-                                    "Internal error: ${e.message}"
-                                )
+                    // Message loop for this client
+                    while (running.get()) {
+                        val message = readMessage() ?: break  // Break on client disconnect
+
+                        logger.debug("Received message: {}", message.take(200))
+
+                        try {
+                            val jsonRpcMessage = parser.parseMessage(message)
+
+                            when (jsonRpcMessage) {
+                                is JsonRpcMessage.Request -> {
+                                    val request = jsonRpcMessage.request
+
+                                    val response = try {
+                                        messageHandler(request)
+                                    } catch (e: Exception) {
+                                        logger.error("Error handling request: ${request.method}", e)
+                                        JsonRpcResponse.internalError(
+                                            request.id,
+                                            "Internal error: ${e.message}"
+                                        )
+                                    }
+
+                                    if (!request.isNotification) {
+                                        sendResponse(response)
+                                    }
+                                }
+
+                                is JsonRpcMessage.Response -> {
+                                    logger.warn("Received response in server mode (unexpected)")
+                                }
                             }
-
-                            if (!request.isNotification) {
-                                sendResponse(response)
-                            }
-                        }
-
-                        is JsonRpcMessage.Response -> {
-                            logger.warn("Received response in server mode (unexpected)")
+                        } catch (e: JsonRpcParseException) {
+                            logger.error("Failed to parse JSON-RPC message", e)
+                            sendResponse(JsonRpcResponse.parseError(e.message ?: "Parse error"))
                         }
                     }
-                } catch (e: JsonRpcParseException) {
-                    logger.error("Failed to parse JSON-RPC message", e)
-                    sendResponse(JsonRpcResponse.parseError(e.message ?: "Parse error"))
+
+                    // Client disconnected, clean up this connection
+                    logger.info("Client disconnected from: ${clientSocket!!.remoteSocketAddress}")
+                    cleanupClient()
+
+                } catch (e: Exception) {
+                    if (running.get()) {
+                        logger.error("Error handling client connection", e)
+                        cleanupClient()
+                    }
                 }
             }
         } catch (e: Exception) {
-            logger.error("Socket transport error", e)
+            if (running.get()) {
+                logger.error("Socket transport error", e)
+            }
         } finally {
             cleanup()
         }
@@ -175,18 +192,33 @@ class SocketTransport(private val port: Int) : Transport {
         }
     }
 
-    private fun cleanup() {
+    /**
+     * Clean up current client connection (but keep server socket open)
+     */
+    private fun cleanupClient() {
         try {
             writer?.close()
             reader?.close()
             clientSocket?.close()
-            serverSocket?.close()
         } catch (e: Exception) {
-            logger.error("Error during cleanup", e)
+            logger.debug("Error during client cleanup", e)
         } finally {
             writer = null
             reader = null
             clientSocket = null
+        }
+    }
+
+    /**
+     * Clean up everything and stop the server
+     */
+    private fun cleanup() {
+        try {
+            cleanupClient()
+            serverSocket?.close()
+        } catch (e: Exception) {
+            logger.error("Error during cleanup", e)
+        } finally {
             serverSocket = null
             running.set(false)
             logger.info("Socket transport stopped")
