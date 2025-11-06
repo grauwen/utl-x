@@ -2,8 +2,15 @@
   "name": "@apache/utlx",
   "version": "1.0.0",
   "description": "Universal Transformation Language Extended",
+  "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "workspaces": [
+    "mcp-server",
+    "theia-extension/browser-app",
+    "theia-extension/utlx-theia-extension",
+    "conformance-suite/theia-extension"
+  ],
   "scripts": {
     "build": "tsc && webpack",
     "test": "jest",
