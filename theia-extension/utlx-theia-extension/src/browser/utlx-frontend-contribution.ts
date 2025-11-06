@@ -10,7 +10,9 @@ import {
     FrontendApplicationContribution,
     FrontendApplication,
     ApplicationShell,
-    WidgetManager
+    WidgetManager,
+    StatusBar,
+    StatusBarAlignment
 } from '@theia/core/lib/browser';
 import {
     Command,
@@ -27,6 +29,7 @@ import { InputPanelWidget } from './input-panel/input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
+import { TestWidget } from './test-widget';
 
 @injectable()
 export class UTLXFrontendContribution implements
@@ -44,14 +47,49 @@ export class UTLXFrontendContribution implements
     @inject(MessageService)
     protected readonly messageService!: MessageService;
 
-    async onStart(app: FrontendApplication): Promise<void> {
-        console.log('UTL-X extension starting...');
+    @inject(StatusBar)
+    protected readonly statusBar!: StatusBar;
 
-        // Open health monitor in bottom panel (shows UTLXD and MCP ping status)
-        await this.openHealthMonitor();
+    private utlxdStatusId = 'utlxd-status';
+    private mcpStatusId = 'mcp-status';
+
+    async onStart(app: FrontendApplication): Promise<void> {
+        console.log('[UTLXFrontendContribution] ===== onStart() called =====');
+        console.log('[UTLXFrontendContribution] Application:', app);
+        console.log('[UTLXFrontendContribution] Shell:', this.shell);
+        console.log('[UTLXFrontendContribution] WidgetManager:', this.widgetManager);
+
+        // Add health status to status bar
+        await this.initializeHealthStatus();
 
         // Open 3-column layout: Input | Editor | Output
         await this.open3ColumnLayout();
+
+        console.log('[UTLXFrontendContribution] ===== onStart() completed =====');
+    }
+
+    private async openTestWidget(): Promise<void> {
+        console.log('[UTLXFrontendContribution] openTestWidget() called');
+        try {
+            console.log('[UTLXFrontendContribution] Getting or creating TestWidget...');
+            const testWidget = await this.widgetManager.getOrCreateWidget<TestWidget>(TestWidget.ID);
+            console.log('[UTLXFrontendContribution] TestWidget retrieved:', testWidget);
+
+            if (!testWidget.isAttached) {
+                console.log('[UTLXFrontendContribution] TestWidget not attached, adding to shell...');
+                this.shell.addWidget(testWidget, { area: 'main', rank: 100 });
+                console.log('[UTLXFrontendContribution] TestWidget added to shell');
+            } else {
+                console.log('[UTLXFrontendContribution] TestWidget already attached');
+            }
+
+            console.log('[UTLXFrontendContribution] Activating TestWidget...');
+            this.shell.activateWidget(testWidget.id);
+            console.log('[UTLXFrontendContribution] ✓ Test widget opened successfully');
+        } catch (error) {
+            console.error('[UTLXFrontendContribution] ✗ Failed to open test widget:', error);
+            this.messageService.error(`Failed to open test widget: ${error}`);
+        }
     }
 
     registerCommands(commands: CommandRegistry): void {
@@ -185,6 +223,89 @@ export class UTLXFrontendContribution implements
         } catch (error) {
             console.error('Failed to open 3-column layout:', error);
             this.messageService.error(`Failed to open layout: ${error}`);
+        }
+    }
+
+    private async initializeHealthStatus(): Promise<void> {
+        console.log('[UTLXFrontendContribution] Initializing health status in status bar...');
+
+        // Add UTLXD status
+        this.statusBar.setElement(this.utlxdStatusId, {
+            text: '$(pulse) UTLXD: checking...',
+            alignment: StatusBarAlignment.RIGHT,
+            priority: 100,
+            tooltip: 'UTLXD LSP Server Status'
+        });
+
+        // Add MCP status
+        this.statusBar.setElement(this.mcpStatusId, {
+            text: '$(pulse) MCP: checking...',
+            alignment: StatusBarAlignment.RIGHT,
+            priority: 99,
+            tooltip: 'MCP Server Status'
+        });
+
+        // Start monitoring
+        this.startHealthMonitoring();
+    }
+
+    private startHealthMonitoring(): void {
+        // Initial check
+        this.checkHealth();
+
+        // Check every 2 seconds
+        setInterval(() => {
+            this.checkHealth();
+        }, 2000);
+    }
+
+    private async checkHealth(): Promise<void> {
+        // Check UTLXD
+        try {
+            const utlxdResponse = await fetch('http://localhost:7779/api/health');
+            if (utlxdResponse.ok) {
+                this.statusBar.setElement(this.utlxdStatusId, {
+                    text: '$(check) UTLXD',
+                    alignment: StatusBarAlignment.RIGHT,
+                    priority: 100,
+                    tooltip: 'UTLXD LSP Server: Online',
+                    color: '#50fa7b'
+                });
+            } else {
+                throw new Error('Not OK');
+            }
+        } catch (error) {
+            this.statusBar.setElement(this.utlxdStatusId, {
+                text: '$(x) UTLXD',
+                alignment: StatusBarAlignment.RIGHT,
+                priority: 100,
+                tooltip: 'UTLXD LSP Server: Offline',
+                color: '#ff5555'
+            });
+        }
+
+        // Check MCP
+        try {
+            const mcpResponse = await fetch('http://localhost:3001/health');
+            if (mcpResponse.ok) {
+                this.statusBar.setElement(this.mcpStatusId, {
+                    text: '$(check) MCP',
+                    alignment: StatusBarAlignment.RIGHT,
+                    priority: 99,
+                    tooltip: 'MCP Server: Online',
+                    color: '#50fa7b'
+                });
+            } else {
+                throw new Error('Not OK');
+            }
+        } catch (error) {
+            this.statusBar.setElement(this.mcpStatusId, {
+                text: '$(x) MCP',
+                alignment: StatusBarAlignment.RIGHT,
+                priority: 99,
+                tooltip: 'MCP Server: Offline',
+                color: '#ff5555'
+            });
         }
     }
 

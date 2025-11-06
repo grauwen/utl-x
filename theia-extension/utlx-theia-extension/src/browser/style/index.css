@@ -485,3 +485,63 @@
     flex: 0 0 30%;
     min-width: 300px;
 }
+
+/* ===== Health Monitor Widget ===== */
+.utlx-health-monitor {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--theia-editor-background);
+}
+
+.utlx-health-monitor-container {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    background: var(--theia-statusBar-background);
+    border-top: 1px solid var(--theia-panel-border);
+}
+
+.health-status-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+}
+
+.health-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.health-separator {
+    color: var(--theia-panel-border);
+    font-weight: 300;
+}
+
+.health-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.health-icon {
+    font-size: 12px;
+}
+
+.health-name {
+    font-weight: 500;
+    color: var(--theia-statusBar-foreground);
+}
+
+.health-time {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.health-error {
+    color: var(--theia-editorError-foreground);
+    font-size: 11px;
+}

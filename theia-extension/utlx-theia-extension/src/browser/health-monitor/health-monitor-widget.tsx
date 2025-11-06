@@ -45,26 +45,32 @@ export class HealthMonitorWidget extends ReactWidget {
     private pingInterval?: NodeJS.Timeout;
 
     constructor() {
+        console.log('[HealthMonitorWidget] Constructor called');
         super();
         this.id = HealthMonitorWidget.ID;
         this.title.label = HealthMonitorWidget.LABEL;
         this.title.caption = 'Server Health Status';
         this.title.closable = false;
         this.addClass('utlx-health-monitor');
+        console.log('[HealthMonitorWidget] Constructor completed, id:', this.id);
     }
 
     @postConstruct()
     protected init(): void {
+        console.log('[HealthMonitorWidget] init() called');
         this.update();
         this.startHealthMonitoring();
+        console.log('[HealthMonitorWidget] init() completed');
     }
 
     dispose(): void {
+        console.log('[HealthMonitorWidget] dispose() called');
         this.stopHealthMonitoring();
         super.dispose();
     }
 
     protected render(): React.ReactNode {
+        console.log('[HealthMonitorWidget] render() called');
         const { utlxd, mcp } = this.state;
 
         return (
@@ -101,6 +107,7 @@ export class HealthMonitorWidget extends ReactWidget {
     }
 
     private startHealthMonitoring(): void {
+        console.log('[HealthMonitorWidget] Starting health monitoring...');
         // Initial ping
         this.pingServers();
 
@@ -108,9 +115,11 @@ export class HealthMonitorWidget extends ReactWidget {
         this.pingInterval = setInterval(() => {
             this.pingServers();
         }, 2000);
+        console.log('[HealthMonitorWidget] Health monitoring started');
     }
 
     private stopHealthMonitoring(): void {
+        console.log('[HealthMonitorWidget] Stopping health monitoring...');
         if (this.pingInterval) {
             clearInterval(this.pingInterval);
             this.pingInterval = undefined;
@@ -118,6 +127,7 @@ export class HealthMonitorWidget extends ReactWidget {
     }
 
     private async pingServers(): Promise<void> {
+        console.log('[HealthMonitorWidget] Pinging servers...');
         // Ping UTLXD LSP (socket-based ping)
         this.pingUTLXD();
 
@@ -129,8 +139,8 @@ export class HealthMonitorWidget extends ReactWidget {
         const startTime = Date.now();
 
         try {
-            // Use WebSocket to ping LSP server on port 7777
-            const response = await fetch('http://localhost:7779/health');
+            // Ping UTLXD API health endpoint
+            const response = await fetch('http://localhost:7779/api/health');
 
             if (response.ok) {
                 const responseTime = Date.now() - startTime;

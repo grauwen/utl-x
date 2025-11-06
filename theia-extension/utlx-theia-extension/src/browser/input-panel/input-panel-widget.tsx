@@ -7,7 +7,7 @@
  */
 
 import * as React from 'react';
-import { injectable, inject, postConstruct } from 'inversify';
+import { injectable, inject, postConstruct, optional } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MessageService } from '@theia/core';
 import { FileDialogService } from '@theia/filesystem/lib/browser';
@@ -41,8 +41,8 @@ export class InputPanelWidget extends ReactWidget {
     @inject(MessageService)
     protected readonly messageService!: MessageService;
 
-    @inject(FileDialogService)
-    protected readonly fileDialog!: FileDialogService;
+    @inject(FileDialogService) @optional()
+    protected readonly fileDialog?: FileDialogService;
 
     private state: InputPanelState = {
         mode: UTLXMode.RUNTIME,
@@ -179,6 +179,11 @@ export class InputPanelWidget extends ReactWidget {
     }
 
     private async handleLoadFile(): Promise<void> {
+        if (!this.fileDialog) {
+            this.messageService.warn('File dialog service not available');
+            return;
+        }
+
         try {
             this.setState({ loading: true });
 
