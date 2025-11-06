@@ -24,9 +24,13 @@ import {
 
 export interface InputPanelState {
     mode: UTLXMode;
-    content: string;
-    format: DataFormat | SchemaFormat;
-    fileName: string;
+    activeTab: 'instance' | 'schema';
+    instanceContent: string;
+    schemaContent: string;
+    instanceFormat: DataFormat;
+    schemaFormat: SchemaFormat;
+    instanceFileName: string;
+    schemaFileName: string;
     loading: boolean;
 }
 
@@ -46,9 +50,13 @@ export class InputPanelWidget extends ReactWidget {
 
     private state: InputPanelState = {
         mode: UTLXMode.RUNTIME,
-        content: '',
-        format: 'json',
-        fileName: '',
+        activeTab: 'instance',
+        instanceContent: '',
+        schemaContent: '',
+        instanceFormat: 'json',
+        schemaFormat: 'xsd',
+        instanceFileName: '',
+        schemaFileName: '',
         loading: false
     };
 
@@ -66,18 +74,45 @@ export class InputPanelWidget extends ReactWidget {
         this.update();
         // Subscribe to mode changes
         this.utlxService.getMode().then(config => {
-            this.setState({ mode: config.mode });
+            this.setState({
+                mode: config.mode,
+                activeTab: config.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+            });
         });
+
+        // Listen for mode changes from toolbar
+        window.addEventListener('utlx-mode-changed', ((event: CustomEvent) => {
+            const newMode = event.detail.mode;
+            this.setState({
+                mode: newMode,
+                activeTab: newMode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+            });
+        }) as EventListener);
     }
 
 
     protected render(): React.ReactNode {
-        const { mode, content, format, fileName, loading } = this.state;
+        const {
+            mode,
+            activeTab,
+            instanceContent,
+            schemaContent,
+            instanceFormat,
+            schemaFormat,
+            instanceFileName,
+            schemaFileName,
+            loading
+        } = this.state;
+
+        // Get current content, format, and fileName based on active tab
+        const currentContent = activeTab === 'instance' ? instanceContent : schemaContent;
+        const currentFormat = activeTab === 'instance' ? instanceFormat : schemaFormat;
+        const currentFileName = activeTab === 'instance' ? instanceFileName : schemaFileName;
 
         return (
             <div className='utlx-input-panel-container'>
                 <div className='utlx-panel-header'>
-                    <h3>{mode === UTLXMode.DESIGN_TIME ? 'Input Schema' : 'Input Data'}</h3>
+                    <h3>Input</h3>
                     <div className='utlx-panel-actions'>
                         <button
                             onClick={() => this.handleLoadFile()}
@@ -88,7 +123,7 @@ export class InputPanelWidget extends ReactWidget {
                         </button>
                         <button
                             onClick={() => this.handleClear()}
-                            disabled={loading || !content}
+                            disabled={loading || !currentContent}
                             title='Clear input'
                         >
                             🗑️ Clear
@@ -96,15 +131,33 @@ export class InputPanelWidget extends ReactWidget {
                     </div>
                 </div>
 
+                {/* Tab Navigation */}
+                <div className='utlx-tab-container'>
+                    <button
+                        className={`utlx-tab ${activeTab === 'instance' ? 'active' : ''}`}
+                        onClick={() => this.handleTabSwitch('instance')}
+                        disabled={loading}
+                    >
+                        Instance
+                    </button>
+                    <button
+                        className={`utlx-tab ${activeTab === 'schema' ? 'active' : ''}`}
+                        onClick={() => this.handleTabSwitch('schema')}
+                        disabled={loading}
+                    >
+                        Schema
+                    </button>
+                </div>
+
                 <div className='utlx-panel-toolbar'>
                     <label>
                         Format:
                         <select
-                            value={format}
+                            value={currentFormat}
                             onChange={(e) => this.handleFormatChange((e.target as HTMLSelectElement).value as any)}
                             disabled={loading}
                         >
-                            {mode === UTLXMode.DESIGN_TIME ? (
+                            {activeTab === 'schema' ? (
                                 <>
                                     <option value='xsd'>XSD</option>
                                     <option value='json-schema'>JSON Schema</option>
@@ -123,9 +176,9 @@ export class InputPanelWidget extends ReactWidget {
                         </select>
                     </label>
 
-                    {fileName && (
-                        <span className='utlx-file-name' title={fileName}>
-                            📄 {fileName}
+                    {currentFileName && (
+                        <span className='utlx-file-name' title={currentFileName}>
+                            📄 {currentFileName}
                         </span>
                     )}
                 </div>
@@ -133,7 +186,7 @@ export class InputPanelWidget extends ReactWidget {
                 <div className='utlx-panel-content'>
                     <textarea
                         className='utlx-input-editor'
-                        value={content}
+                        value={currentContent}
                         onChange={(e) => this.handleContentChange((e.target as HTMLTextAreaElement).value)}
                         placeholder={this.getPlaceholder()}
                         disabled={loading}
@@ -143,7 +196,7 @@ export class InputPanelWidget extends ReactWidget {
 
                 <div className='utlx-panel-footer'>
                     <span className='utlx-status'>
-                        {loading ? '⏳ Loading...' : content ? `${content.length} characters` : 'No input loaded'}
+                        {loading ? '⏳ Loading...' : currentContent ? `${currentContent.length} characters` : 'No input loaded'}
                     </span>
                 </div>
             </div>
@@ -151,10 +204,10 @@ export class InputPanelWidget extends ReactWidget {
     }
 
     private getPlaceholder(): string {
-        const { mode, format } = this.state;
+        const { activeTab, instanceFormat, schemaFormat } = this.state;
 
-        if (mode === UTLXMode.DESIGN_TIME) {
-            switch (format) {
+        if (activeTab === 'schema') {
+            switch (schemaFormat) {
                 case 'xsd':
                     return '<?xml version="1.0"?>\n<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">\n  <!-- Define your XML schema here -->\n</xs:schema>';
                 case 'json-schema':
@@ -163,7 +216,7 @@ export class InputPanelWidget extends ReactWidget {
                     return 'Paste or load your schema here...';
             }
         } else {
-            switch (format) {
+            switch (instanceFormat) {
                 case 'xml':
                     return '<root>\n  <element>data</element>\n</root>';
                 case 'json':
@@ -197,11 +250,19 @@ export class InputPanelWidget extends ReactWidget {
                 const fileName = uri.path.base;
                 const content = ''; // TODO: Load actual content
 
-                this.setState({
-                    content,
-                    fileName,
-                    loading: false
-                });
+                if (this.state.activeTab === 'instance') {
+                    this.setState({
+                        instanceContent: content,
+                        instanceFileName: fileName,
+                        loading: false
+                    });
+                } else {
+                    this.setState({
+                        schemaContent: content,
+                        schemaFileName: fileName,
+                        loading: false
+                    });
+                }
 
                 this.messageService.info(`Loaded: ${fileName}`);
             } else {
@@ -213,19 +274,38 @@ export class InputPanelWidget extends ReactWidget {
         }
     }
 
+    private handleTabSwitch(tab: 'instance' | 'schema'): void {
+        this.setState({ activeTab: tab });
+    }
+
     private handleContentChange(content: string): void {
-        this.setState({ content });
+        if (this.state.activeTab === 'instance') {
+            this.setState({ instanceContent: content });
+        } else {
+            this.setState({ schemaContent: content });
+        }
     }
 
     private handleFormatChange(format: DataFormat | SchemaFormat): void {
-        this.setState({ format });
+        if (this.state.activeTab === 'instance') {
+            this.setState({ instanceFormat: format as DataFormat });
+        } else {
+            this.setState({ schemaFormat: format as SchemaFormat });
+        }
     }
 
     private handleClear(): void {
-        this.setState({
-            content: '',
-            fileName: ''
-        });
+        if (this.state.activeTab === 'instance') {
+            this.setState({
+                instanceContent: '',
+                instanceFileName: ''
+            });
+        } else {
+            this.setState({
+                schemaContent: '',
+                schemaFileName: ''
+            });
+        }
     }
 
     private setState(partial: Partial<InputPanelState>): void {
@@ -237,15 +317,15 @@ export class InputPanelWidget extends ReactWidget {
      * Get current input document (for runtime mode)
      */
     getInputDocument(): InputDocument | null {
-        if (this.state.mode !== UTLXMode.RUNTIME || !this.state.content) {
+        if (!this.state.instanceContent) {
             return null;
         }
 
         return {
             id: 'input1',
-            name: this.state.fileName || 'input',
-            content: this.state.content,
-            format: this.state.format as DataFormat
+            name: this.state.instanceFileName || 'input',
+            content: this.state.instanceContent,
+            format: this.state.instanceFormat
         };
     }
 
@@ -253,13 +333,13 @@ export class InputPanelWidget extends ReactWidget {
      * Get current schema document (for design-time mode)
      */
     getSchemaDocument(): SchemaDocument | null {
-        if (this.state.mode !== UTLXMode.DESIGN_TIME || !this.state.content) {
+        if (!this.state.schemaContent) {
             return null;
         }
 
         return {
-            format: this.state.format as SchemaFormat,
-            content: this.state.content
+            format: this.state.schemaFormat,
+            content: this.state.schemaContent
         };
     }
 
@@ -267,24 +347,31 @@ export class InputPanelWidget extends ReactWidget {
      * Set mode from external source
      */
     setMode(mode: UTLXMode): void {
-        if (mode !== this.state.mode) {
-            this.setState({
-                mode,
-                content: '',
-                fileName: '',
-                format: mode === UTLXMode.DESIGN_TIME ? 'xsd' : 'json'
-            });
-        }
+        this.setState({
+            mode,
+            activeTab: mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+        });
     }
 
     /**
      * Load content programmatically
      */
     loadContent(content: string, format: DataFormat | SchemaFormat, fileName?: string): void {
-        this.setState({
-            content,
-            format,
-            fileName: fileName || ''
-        });
+        // Determine if this is instance or schema data based on format
+        const isSchemaFormat = ['xsd', 'json-schema', 'avro-schema', 'protobuf'].includes(format);
+
+        if (isSchemaFormat) {
+            this.setState({
+                schemaContent: content,
+                schemaFormat: format as SchemaFormat,
+                schemaFileName: fileName || ''
+            });
+        } else {
+            this.setState({
+                instanceContent: content,
+                instanceFormat: format as DataFormat,
+                instanceFileName: fileName || ''
+            });
+        }
     }
 }

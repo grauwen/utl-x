@@ -62,6 +62,9 @@ export class UTLXFrontendContribution implements
         // Add health status to status bar
         await this.initializeHealthStatus();
 
+        // Open toolbar at top
+        await this.openToolbar();
+
         // Open 3-column layout: Input | Editor | Output
         await this.open3ColumnLayout();
 
@@ -223,6 +226,23 @@ export class UTLXFrontendContribution implements
         } catch (error) {
             console.error('Failed to open 3-column layout:', error);
             this.messageService.error(`Failed to open layout: ${error}`);
+        }
+    }
+
+    private async openToolbar(): Promise<void> {
+        try {
+            const toolbar = await this.widgetManager.getOrCreateWidget('utlx-toolbar');
+
+            if (!toolbar.isAttached) {
+                this.shell.addWidget(toolbar, { area: 'top', rank: 100 });
+            }
+
+            this.shell.activateWidget(toolbar.id);
+
+            console.log('UTL-X toolbar opened');
+        } catch (error) {
+            console.error('Failed to open toolbar:', error);
+            this.messageService.error(`Failed to open toolbar: ${error}`);
         }
     }
 

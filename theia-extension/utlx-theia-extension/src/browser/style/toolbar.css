@@ -1,0 +1,344 @@
+/**
+ * UTLX Toolbar Styles
+ */
+
+.utlx-toolbar {
+    width: 100%;
+    height: 45px;
+    background: var(--theia-toolbar-background, #2d2d30);
+    border-bottom: 1px solid var(--theia-panel-border, #3c3c3c);
+}
+
+.utlx-toolbar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 16px;
+    gap: 20px;
+}
+
+/* Left Section */
+.utlx-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.utlx-mode-indicator {
+    display: flex;
+    align-items: center;
+}
+
+.utlx-mode-badge {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.utlx-mode-badge.runtime {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.utlx-mode-badge.design-time {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+}
+
+/* Toggle Switch */
+.utlx-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 160px;
+    height: 32px;
+}
+
+.utlx-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.utlx-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #667eea;
+    transition: 0.4s;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.utlx-toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 72px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .utlx-toggle-slider {
+    background-color: #f5576c;
+}
+
+input:checked + .utlx-toggle-slider::before {
+    transform: translateX(80px);
+}
+
+.utlx-toggle-label-left,
+.utlx-toggle-label-right {
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    z-index: 1;
+    transition: opacity 0.3s;
+}
+
+input:checked + .utlx-toggle-slider .utlx-toggle-label-left {
+    opacity: 0.5;
+}
+
+input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
+    opacity: 0.5;
+}
+
+/* Center Section */
+.utlx-toolbar-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.utlx-mode-description {
+    font-size: 12px;
+    color: var(--theia-foreground, #cccccc);
+    opacity: 0.8;
+}
+
+/* Right Section */
+.utlx-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.utlx-toolbar-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--theia-button-background, #0e639c);
+    color: var(--theia-button-foreground, #ffffff);
+}
+
+.utlx-toolbar-button:hover {
+    background: var(--theia-button-hoverBackground, #1177bb);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.utlx-toolbar-button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.utlx-toolbar-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.utlx-mcp-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.utlx-mcp-button:hover {
+    background: linear-gradient(135deg, #7b8ef0 0%, #8b5bb2 100%);
+}
+
+/* MCP Dialog */
+.utlx-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.utlx-dialog {
+    background: var(--theia-editor-background, #1e1e1e);
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+    border-radius: 8px;
+    width: 600px;
+    max-width: 90vw;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.utlx-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--theia-panel-border, #3c3c3c);
+}
+
+.utlx-dialog-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--theia-foreground, #cccccc);
+}
+
+.utlx-dialog-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--theia-foreground, #cccccc);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.utlx-dialog-close:hover {
+    background: var(--theia-toolbar-hoverBackground, #3c3c3c);
+}
+
+.utlx-dialog-body {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.utlx-dialog-body p {
+    margin: 0 0 12px 0;
+    color: var(--theia-foreground, #cccccc);
+    font-size: 14px;
+}
+
+.utlx-mcp-prompt-input {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid var(--theia-input-border, #3c3c3c);
+    border-radius: 4px;
+    background: var(--theia-input-background, #2d2d30);
+    color: var(--theia-input-foreground, #cccccc);
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+
+.utlx-mcp-prompt-input:focus {
+    outline: none;
+    border-color: var(--theia-focusBorder, #007acc);
+}
+
+.utlx-mcp-prompt-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.utlx-dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--theia-panel-border, #3c3c3c);
+}
+
+.utlx-dialog-button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.utlx-dialog-button-secondary {
+    background: var(--theia-button-secondaryBackground, #3c3c3c);
+    color: var(--theia-button-secondaryForeground, #cccccc);
+}
+
+.utlx-dialog-button-secondary:hover {
+    background: var(--theia-button-secondaryHoverBackground, #4c4c4c);
+}
+
+.utlx-dialog-button-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.utlx-dialog-button-primary:hover {
+    background: linear-gradient(135deg, #7b8ef0 0%, #8b5bb2 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.utlx-dialog-button-primary:disabled,
+.utlx-dialog-button-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}

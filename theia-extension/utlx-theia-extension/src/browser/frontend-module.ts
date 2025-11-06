@@ -13,6 +13,7 @@ import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
+import { UTLXToolbarWidget } from './toolbar/utlx-toolbar-widget';
 import { UTLXFrontendContribution } from './utlx-frontend-contribution';
 import { TestWidget } from './test-widget';
 
@@ -137,6 +138,24 @@ export default new ContainerModule(bind => {
             }
         })).inSingletonScope();
         console.log('[UTLX Frontend Module] ✓ TestWidget bound');
+
+        console.log('[UTLX Frontend Module] Binding UTLXToolbarWidget...');
+        bind(UTLXToolbarWidget).toSelf();
+        bind(WidgetFactory).toDynamicValue(ctx => ({
+            id: UTLXToolbarWidget.ID,
+            createWidget: () => {
+                console.log('[UTLX Frontend Module] Creating UTLXToolbarWidget instance...');
+                try {
+                    const widget = ctx.container.get<UTLXToolbarWidget>(UTLXToolbarWidget);
+                    console.log('[UTLX Frontend Module] ✓ UTLXToolbarWidget created successfully');
+                    return widget;
+                } catch (error) {
+                    console.error('[UTLX Frontend Module] ✗ Failed to create UTLXToolbarWidget:', error);
+                    throw error;
+                }
+            }
+        })).inSingletonScope();
+        console.log('[UTLX Frontend Module] ✓ UTLXToolbarWidget bound');
 
         // Bind frontend contribution
         console.log('[UTLX Frontend Module] Binding frontend contribution...');

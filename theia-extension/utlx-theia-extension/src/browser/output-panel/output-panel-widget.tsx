@@ -21,11 +21,17 @@ import {
 
 export interface OutputPanelState {
     mode: UTLXMode;
-    content: string;
-    format?: string;
-    executionTime?: number;
-    error?: string;
-    diagnostics?: Diagnostic[];
+    activeTab: 'instance' | 'schema';
+    instanceContent: string;
+    schemaContent: string;
+    instanceFormat?: string;
+    schemaFormat?: string;
+    instanceExecutionTime?: number;
+    schemaExecutionTime?: number;
+    instanceError?: string;
+    schemaError?: string;
+    instanceDiagnostics?: Diagnostic[];
+    schemaDiagnostics?: Diagnostic[];
     viewMode: 'pretty' | 'raw';
 }
 
@@ -42,7 +48,9 @@ export class OutputPanelWidget extends ReactWidget {
 
     private state: OutputPanelState = {
         mode: UTLXMode.RUNTIME,
-        content: '',
+        activeTab: 'instance',
+        instanceContent: '',
+        schemaContent: '',
         viewMode: 'pretty'
     };
 
@@ -60,41 +68,90 @@ export class OutputPanelWidget extends ReactWidget {
         this.update();
         // Subscribe to mode changes
         this.utlxService.getMode().then(config => {
-            this.setState({ mode: config.mode });
+            this.setState({
+                mode: config.mode,
+                activeTab: config.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+            });
         });
+
+        // Listen for mode changes from toolbar
+        window.addEventListener('utlx-mode-changed', ((event: CustomEvent) => {
+            const newMode = event.detail.mode;
+            this.setState({
+                mode: newMode,
+                activeTab: newMode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+            });
+        }) as EventListener);
     }
 
 
     protected render(): React.ReactNode {
-        const { mode, content, format, executionTime, error, diagnostics, viewMode } = this.state;
+        const {
+            mode,
+            activeTab,
+            instanceContent,
+            schemaContent,
+            instanceFormat,
+            schemaFormat,
+            instanceExecutionTime,
+            schemaExecutionTime,
+            instanceError,
+            schemaError,
+            instanceDiagnostics,
+            schemaDiagnostics,
+            viewMode
+        } = this.state;
+
+        // Get current content, format, etc. based on active tab
+        const currentContent = activeTab === 'instance' ? instanceContent : schemaContent;
+        const currentFormat = activeTab === 'instance' ? instanceFormat : schemaFormat;
+        const currentExecutionTime = activeTab === 'instance' ? instanceExecutionTime : schemaExecutionTime;
+        const currentError = activeTab === 'instance' ? instanceError : schemaError;
+        const currentDiagnostics = activeTab === 'instance' ? instanceDiagnostics : schemaDiagnostics;
 
         return (
             <div className='utlx-output-panel-container'>
                 <div className='utlx-panel-header'>
-                    <h3>{mode === UTLXMode.DESIGN_TIME ? 'Output Schema' : 'Output Data'}</h3>
+                    <h3>Output</h3>
                     <div className='utlx-panel-actions'>
                         <button
                             onClick={() => this.handleCopy()}
-                            disabled={!content}
+                            disabled={!currentContent}
                             title='Copy to clipboard'
                         >
                             📋 Copy
                         </button>
                         <button
                             onClick={() => this.handleSave()}
-                            disabled={!content}
+                            disabled={!currentContent}
                             title='Save to file'
                         >
                             💾 Save
                         </button>
                         <button
                             onClick={() => this.handleClear()}
-                            disabled={!content && !error}
+                            disabled={!currentContent && !currentError}
                             title='Clear output'
                         >
                             🗑️ Clear
                         </button>
                     </div>
+                </div>
+
+                {/* Tab Navigation */}
+                <div className='utlx-tab-container'>
+                    <button
+                        className={`utlx-tab ${activeTab === 'instance' ? 'active' : ''}`}
+                        onClick={() => this.handleTabSwitch('instance')}
+                    >
+                        Instance
+                    </button>
+                    <button
+                        className={`utlx-tab ${activeTab === 'schema' ? 'active' : ''}`}
+                        onClick={() => this.handleTabSwitch('schema')}
+                    >
+                        Schema
+                    </button>
                 </div>
 
                 <div className='utlx-panel-toolbar'>
@@ -109,44 +166,44 @@ export class OutputPanelWidget extends ReactWidget {
                         </select>
                     </label>
 
-                    {format && (
+                    {currentFormat && (
                         <span className='utlx-format-badge'>
-                            {format.toUpperCase()}
+                            {currentFormat.toUpperCase()}
                         </span>
                     )}
 
-                    {executionTime !== undefined && (
+                    {currentExecutionTime !== undefined && (
                         <span className='utlx-execution-time'>
-                            ⏱️ {executionTime}ms
+                            ⏱️ {currentExecutionTime}ms
                         </span>
                     )}
                 </div>
 
                 <div className='utlx-panel-content'>
-                    {error ? (
+                    {currentError ? (
                         <div className='utlx-error-display'>
                             <div className='utlx-error-header'>❌ Error</div>
-                            <pre className='utlx-error-message'>{error}</pre>
+                            <pre className='utlx-error-message'>{currentError}</pre>
                         </div>
-                    ) : content ? (
+                    ) : currentContent ? (
                         <pre className='utlx-output-display'>
-                            {viewMode === 'pretty' ? this.formatContent(content, format) : content}
+                            {viewMode === 'pretty' ? this.formatContent(currentContent, currentFormat) : currentContent}
                         </pre>
                     ) : (
                         <div className='utlx-placeholder'>
-                            {mode === UTLXMode.DESIGN_TIME
+                            {activeTab === 'schema'
                                 ? '💡 Click "Infer Schema" to generate output schema'
                                 : '▶️ Click "Execute" to see transformation output'}
                         </div>
                     )}
 
-                    {diagnostics && diagnostics.length > 0 && (
+                    {currentDiagnostics && currentDiagnostics.length > 0 && (
                         <div className='utlx-diagnostics'>
                             <div className='utlx-diagnostics-header'>
-                                ⚠️ Diagnostics ({diagnostics.length})
+                                ⚠️ Diagnostics ({currentDiagnostics.length})
                             </div>
                             <ul className='utlx-diagnostics-list'>
-                                {diagnostics.map((diagnostic, index) => (
+                                {currentDiagnostics.map((diagnostic, index) => (
                                     <li key={index} className={`diagnostic-${diagnostic.severity}`}>
                                         <span className='diagnostic-location'>
                                             Line {diagnostic.range.start.line + 1}, Col {diagnostic.range.start.column + 1}:
@@ -161,9 +218,9 @@ export class OutputPanelWidget extends ReactWidget {
 
                 <div className='utlx-panel-footer'>
                     <span className='utlx-status'>
-                        {content
-                            ? `${content.length} characters`
-                            : error
+                        {currentContent
+                            ? `${currentContent.length} characters`
+                            : currentError
                             ? 'Error occurred'
                             : 'No output'}
                     </span>
@@ -202,9 +259,16 @@ export class OutputPanelWidget extends ReactWidget {
         }
     }
 
+    private handleTabSwitch(tab: 'instance' | 'schema'): void {
+        this.setState({ activeTab: tab });
+    }
+
     private async handleCopy(): Promise<void> {
         try {
-            await navigator.clipboard.writeText(this.state.content);
+            const content = this.state.activeTab === 'instance'
+                ? this.state.instanceContent
+                : this.state.schemaContent;
+            await navigator.clipboard.writeText(content);
             this.messageService.info('Output copied to clipboard');
         } catch (error) {
             this.messageService.error(`Failed to copy: ${error}`);
@@ -217,13 +281,23 @@ export class OutputPanelWidget extends ReactWidget {
     }
 
     private handleClear(): void {
-        this.setState({
-            content: '',
-            format: undefined,
-            executionTime: undefined,
-            error: undefined,
-            diagnostics: undefined
-        });
+        if (this.state.activeTab === 'instance') {
+            this.setState({
+                instanceContent: '',
+                instanceFormat: undefined,
+                instanceExecutionTime: undefined,
+                instanceError: undefined,
+                instanceDiagnostics: undefined
+            });
+        } else {
+            this.setState({
+                schemaContent: '',
+                schemaFormat: undefined,
+                schemaExecutionTime: undefined,
+                schemaError: undefined,
+                schemaDiagnostics: undefined
+            });
+        }
     }
 
     private handleViewModeChange(viewMode: 'pretty' | 'raw'): void {
@@ -236,43 +310,43 @@ export class OutputPanelWidget extends ReactWidget {
     }
 
     /**
-     * Display execution result (runtime mode)
+     * Display execution result (runtime mode - instance output)
      */
     displayExecutionResult(result: ExecutionResult): void {
         if (result.success && result.output) {
             this.setState({
-                content: result.output,
-                format: result.format,
-                executionTime: result.executionTimeMs,
-                error: undefined,
-                diagnostics: result.diagnostics
+                instanceContent: result.output,
+                instanceFormat: result.format,
+                instanceExecutionTime: result.executionTimeMs,
+                instanceError: undefined,
+                instanceDiagnostics: result.diagnostics
             });
         } else {
             this.setState({
-                content: '',
-                error: result.error || 'Unknown error occurred',
-                diagnostics: result.diagnostics,
-                executionTime: result.executionTimeMs
+                instanceContent: '',
+                instanceError: result.error || 'Unknown error occurred',
+                instanceDiagnostics: result.diagnostics,
+                instanceExecutionTime: result.executionTimeMs
             });
         }
     }
 
     /**
-     * Display schema inference result (design-time mode)
+     * Display schema inference result (design-time mode - schema output)
      */
     displaySchemaResult(result: SchemaInferenceResult): void {
         if (result.success && result.schema) {
             this.setState({
-                content: result.schema,
-                format: result.schemaFormat,
-                error: undefined,
-                diagnostics: result.typeErrors
+                schemaContent: result.schema,
+                schemaFormat: result.schemaFormat,
+                schemaError: undefined,
+                schemaDiagnostics: result.typeErrors
             });
         } else {
             this.setState({
-                content: '',
-                error: 'Failed to infer schema',
-                diagnostics: result.typeErrors
+                schemaContent: '',
+                schemaError: 'Failed to infer schema',
+                schemaDiagnostics: result.typeErrors
             });
         }
     }
@@ -281,25 +355,29 @@ export class OutputPanelWidget extends ReactWidget {
      * Display error message
      */
     displayError(error: string): void {
-        this.setState({
-            content: '',
-            error,
-            diagnostics: undefined
-        });
+        if (this.state.activeTab === 'instance') {
+            this.setState({
+                instanceContent: '',
+                instanceError: error,
+                instanceDiagnostics: undefined
+            });
+        } else {
+            this.setState({
+                schemaContent: '',
+                schemaError: error,
+                schemaDiagnostics: undefined
+            });
+        }
     }
 
     /**
      * Set mode from external source
      */
     setMode(mode: UTLXMode): void {
-        if (mode !== this.state.mode) {
-            this.setState({
-                mode,
-                content: '',
-                error: undefined,
-                diagnostics: undefined
-            });
-        }
+        this.setState({
+            mode,
+            activeTab: mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+        });
     }
 
     /**
