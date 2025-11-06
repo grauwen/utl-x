@@ -258,6 +258,9 @@ async function startHttpServer(
  * Main entry point
  */
 async function main(): Promise<void> {
+  // Set process title for easy identification
+  process.title = `utlx-mcp-server (${TRANSPORT})`;
+
   // Create logger
   const logger = createServerLogger();
 

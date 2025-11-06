@@ -67,6 +67,9 @@ export class JsonRpcHandler {
         case 'shutdown':
           return this.handleShutdown(request);
 
+        case 'ping':
+          return this.handlePing(request);
+
         default:
           return this.errorResponse(
             request.id,
@@ -211,6 +214,23 @@ export class JsonRpcHandler {
       id: request.id,
       result: {
         status: 'shutting_down'
+      },
+    };
+  }
+
+  /**
+   * Handle ping request
+   */
+  private handlePing(request: JsonRpcRequest): JsonRpcResponse {
+    this.logger.debug('Ping request received');
+
+    return {
+      jsonrpc: '2.0',
+      id: request.id,
+      result: {
+        status: 'ok',
+        service: 'utlx-mcp-server',
+        timestamp: new Date().toISOString()
       },
     };
   }
