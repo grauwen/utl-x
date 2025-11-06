@@ -1,7 +1,7 @@
 // modules/server/src/main/kotlin/org/apache/utlx/server/commands/StopCommand.kt
-package org.apache.utlx.server.commands
+package org.apache.utlx.daemon.commands
 
-import org.apache.utlx.server.CommandResult
+import org.apache.utlx.daemon.CommandResult
 
 /**
  * Stop running UTL-X daemon

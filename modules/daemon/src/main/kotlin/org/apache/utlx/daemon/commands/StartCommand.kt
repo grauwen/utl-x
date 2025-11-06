@@ -1,5 +1,5 @@
 // modules/server/src/main/kotlin/org/apache/utlx/server/commands/StartCommand.kt
-package org.apache.utlx.server.commands
+package org.apache.utlx.daemon.commands
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -17,10 +17,10 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.*
 import org.apache.utlx.daemon.UTLXDaemon
 import org.apache.utlx.daemon.TransportType
-import org.apache.utlx.server.CommandResult
-import org.apache.utlx.server.config.DaemonConfig
-import org.apache.utlx.server.mcp.*
-import org.apache.utlx.server.session.SessionManager
+import org.apache.utlx.daemon.CommandResult
+import org.apache.utlx.daemon.config.DaemonConfig
+import org.apache.utlx.daemon.mcp.*
+import org.apache.utlx.daemon.session.SessionManager
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.time.Instant

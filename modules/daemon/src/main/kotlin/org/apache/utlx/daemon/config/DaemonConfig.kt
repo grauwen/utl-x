@@ -1,5 +1,5 @@
 // modules/server/src/main/kotlin/org/apache/utlx/server/config/DaemonConfig.kt
-package org.apache.utlx.server.config
+package org.apache.utlx.daemon.config
 
 import com.sksamuel.hoplite.ConfigLoader
 import com.sksamuel.hoplite.PropertySource

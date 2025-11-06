@@ -1,5 +1,5 @@
 // modules/server/src/main/kotlin/org/apache/utlx/server/mcp/McpService.kt
-package org.apache.utlx.server.mcp
+package org.apache.utlx.daemon.mcp
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

@@ -1,5 +1,5 @@
 // modules/server/src/main/kotlin/org/apache/utlx/server/mcp/McpModels.kt
-package org.apache.utlx.server.mcp
+package org.apache.utlx.daemon.mcp
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty

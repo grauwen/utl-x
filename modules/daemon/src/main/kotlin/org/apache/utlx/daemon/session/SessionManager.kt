@@ -1,5 +1,5 @@
 // modules/server/src/main/kotlin/org/apache/utlx/server/session/SessionManager.kt
-package org.apache.utlx.server.session
+package org.apache.utlx.daemon.session
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

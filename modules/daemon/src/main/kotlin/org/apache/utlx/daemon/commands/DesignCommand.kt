@@ -1,10 +1,10 @@
 // modules/server/src/main/kotlin/org/apache/utlx/server/commands/DesignCommand.kt
-package org.apache.utlx.server.commands
+package org.apache.utlx.daemon.commands
 
 import org.apache.utlx.analysis.schema.*
 import org.apache.utlx.analysis.types.TypeDefinition
 import org.apache.utlx.analysis.validation.TransformValidator
-import org.apache.utlx.server.CommandResult
+import org.apache.utlx.daemon.CommandResult
 import org.apache.utlx.core.parser.Parser
 import org.apache.utlx.core.parser.ParseResult
 import org.apache.utlx.core.lexer.Lexer

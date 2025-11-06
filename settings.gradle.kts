@@ -34,8 +34,7 @@ include("modules:core")
 //include("modules:native")
 include("modules:cli")
 include("modules:analysis")
-include("modules:daemon")
-include("modules:server")
+include("modules:daemon")  // UTLXD - unified daemon with LSP + REST API + CLI
 
 
 // Format parsers/serializers

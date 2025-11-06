@@ -26,13 +26,13 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$SCRIPT_DIR"
 
-# Path to UTLXD JAR
-UTLXD_JAR="$PROJECT_ROOT/modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar"
+# Path to UTLXD JAR (now in daemon module)
+UTLXD_JAR="$PROJECT_ROOT/modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar"
 
 # Check if JAR exists
 if [ ! -f "$UTLXD_JAR" ]; then
     echo "ERROR: UTLXD JAR not found at: $UTLXD_JAR"
-    echo "Please build the project first: ./gradlew build"
+    echo "Please build the project first: ./gradlew :modules:daemon:build"
     exit 1
 fi
 

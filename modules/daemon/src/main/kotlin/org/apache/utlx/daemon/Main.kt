@@ -1,7 +1,7 @@
 // modules/server/src/main/kotlin/org/apache/utlx/server/Main.kt
-package org.apache.utlx.server
+package org.apache.utlx.daemon
 
-import org.apache.utlx.server.commands.*
+import org.apache.utlx.daemon.commands.*
 import kotlin.system.exitProcess
 
 /**
