@@ -24,6 +24,7 @@ import subprocess
 import sys
 import time
 import yaml
+import requests
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -276,18 +277,68 @@ class McpServerManager:
             return None
 
 
+# ==================== HTTP Client Manager ====================
+
+class McpHttpClient:
+    """Manages HTTP transport communication with MCP server"""
+
+    def __init__(self, http_url: str, verbose: bool = False):
+        self.http_url = http_url.rstrip('/')
+        self.verbose = verbose
+
+    def check_server(self) -> bool:
+        """Check if HTTP server is available"""
+        try:
+            response = requests.get(f"{self.http_url}/health", timeout=5)
+            return response.status_code == 200
+        except Exception:
+            return False
+
+    def send_request(self, request: Dict) -> Optional[Dict]:
+        """Send JSON-RPC request via HTTP POST"""
+        try:
+            # Send request
+            if self.verbose:
+                print_dim(f"→ POST {self.http_url}/message")
+                print_dim(f"  {json.dumps(request)}")
+
+            response = requests.post(
+                f"{self.http_url}/message",
+                json=request,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+
+            if response.status_code != 200:
+                print_error(f"HTTP error: {response.status_code}")
+                return None
+
+            response_data = response.json()
+
+            if self.verbose:
+                print_dim(f"← {json.dumps(response_data)}")
+
+            return response_data
+
+        except Exception as e:
+            print_error(f"Error communicating with MCP server via HTTP: {e}")
+            return None
+
+
 # ==================== MCP Server Test Runner ====================
 
 class McpServerTestRunner:
     """Main test runner for MCP Server conformance tests"""
 
-    def __init__(self, server_dir: str, verbose: bool = False):
+    def __init__(self, server_dir: str, verbose: bool = False, http_url: Optional[str] = None):
         self.server_dir = server_dir
         self.verbose = verbose
+        self.http_url = http_url
         self.total_tests = 0
         self.passed_tests = 0
         self.failed_tests = 0
         self.server_manager: Optional[McpServerManager] = None
+        self.http_client: Optional[McpHttpClient] = None
 
     def discover_tests(
         self,
@@ -300,7 +351,7 @@ class McpServerTestRunner:
         tests = []
 
         for yaml_file in test_root.rglob("*.yaml"):
-            # Skip manual tests directory (requires different transport mode)
+            # Skip manual transport-specific tests - they're for documentation only
             if 'manual' in yaml_file.parts:
                 continue
 
@@ -360,8 +411,11 @@ class McpServerTestRunner:
                 if self.verbose:
                     print_info(f"  {step_desc}")
 
-                # Send request
-                response = self.server_manager.send_request(request)
+                # Send request using appropriate client
+                if self.http_client:
+                    response = self.http_client.send_request(request)
+                else:
+                    response = self.server_manager.send_request(request)
 
                 if response is None:
                     print_error(f"  {step_desc}: No response")
@@ -398,10 +452,26 @@ class McpServerTestRunner:
 
         print_header(f"Running {len(test_files)} test(s)")
 
-        # Start MCP server
-        self.server_manager = McpServerManager(self.server_dir, self.verbose)
-        if not self.server_manager.start():
-            return 1
+        # Setup client based on transport mode
+        if self.http_url:
+            # HTTP mode - connect to running server
+            print_info(f"Using HTTP transport: {self.http_url}")
+            self.http_client = McpHttpClient(self.http_url, self.verbose)
+
+            # Check if server is available
+            if not self.http_client.check_server():
+                print_error(f"MCP server not available at {self.http_url}")
+                print_info("Please start the MCP server in HTTP mode first:")
+                print_info(f"  UTLX_MCP_TRANSPORT=http UTLX_MCP_PORT=3001 node dist/index.js")
+                return 1
+
+            print_success("Connected to MCP server via HTTP")
+        else:
+            # Stdio mode - start server
+            print_info("Using stdio transport")
+            self.server_manager = McpServerManager(self.server_dir, self.verbose)
+            if not self.server_manager.start():
+                return 1
 
         try:
             for test_file in test_files:
@@ -470,6 +540,10 @@ def main():
         action='store_true',
         help='Verbose output'
     )
+    parser.add_argument(
+        '--http',
+        help='Use HTTP transport with the specified URL (e.g., http://localhost:3001)'
+    )
 
     args = parser.parse_args()
 
@@ -488,7 +562,7 @@ def main():
 
     try:
         # Create runner
-        runner = McpServerTestRunner(str(server_dir), args.verbose)
+        runner = McpServerTestRunner(str(server_dir), args.verbose, args.http)
 
         # Discover tests
         tests = runner.discover_tests(

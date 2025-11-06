@@ -14,7 +14,8 @@ import { UTLXDaemonClient } from './daemon/utlx-daemon-client';
 import { ServiceLifecycleManager } from './services/service-lifecycle-manager';
 
 // Import the service starter
-import './services/auto-start-services';
+// DISABLED: Start UTLXD and MCP manually instead
+// import './services/auto-start-services';
 
 export default new ContainerModule(bind => {
     console.log('[Backend Module] Loading UTL-X backend module...');

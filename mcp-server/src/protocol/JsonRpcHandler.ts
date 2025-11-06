@@ -20,10 +20,12 @@ export class JsonRpcHandler {
   private logger: Logger;
   private daemonClient: DaemonClient;
   private toolsMap: Map<string, Tool>;
+  private shutdownCallback?: () => void;
 
-  constructor(daemonClient: DaemonClient, logger: Logger) {
+  constructor(daemonClient: DaemonClient, logger: Logger, shutdownCallback?: () => void) {
     this.logger = logger;
     this.daemonClient = daemonClient;
+    this.shutdownCallback = shutdownCallback;
 
     // Build tools map for quick lookup
     this.toolsMap = new Map();
@@ -61,6 +63,9 @@ export class JsonRpcHandler {
 
         case 'tools/call':
           return this.handleToolsCall(request);
+
+        case 'shutdown':
+          return this.handleShutdown(request);
 
         default:
           return this.errorResponse(
@@ -186,6 +191,28 @@ export class JsonRpcHandler {
         error instanceof Error ? error.message : 'Tool execution failed'
       );
     }
+  }
+
+  /**
+   * Handle shutdown request
+   */
+  private handleShutdown(request: JsonRpcRequest): JsonRpcResponse {
+    this.logger.info('Shutdown requested');
+
+    // Schedule shutdown after sending response
+    if (this.shutdownCallback) {
+      setTimeout(() => {
+        this.shutdownCallback!();
+      }, 100);
+    }
+
+    return {
+      jsonrpc: '2.0',
+      id: request.id,
+      result: {
+        status: 'shutting_down'
+      },
+    };
   }
 
   /**

@@ -48,6 +48,23 @@ function createServerLogger(): Logger {
 }
 
 /**
+ * Shutdown handler for graceful shutdown
+ */
+function createShutdownHandler(logger: Logger, serverRef?: { close: (callback: () => void) => void }): () => void {
+  return () => {
+    logger.info('Shutting down MCP server...');
+    if (serverRef) {
+      serverRef.close(() => {
+        logger.info('Server closed');
+        process.exit(0);
+      });
+    } else {
+      process.exit(0);
+    }
+  };
+}
+
+/**
  * Start server with stdio transport
  */
 async function startStdioServer(
@@ -124,13 +141,13 @@ async function startStdioServer(
 async function startHttpServer(
   handler: JsonRpcHandler,
   logger: Logger
-): Promise<void> {
+): Promise<http.Server> {
   logger.info('Starting MCP server with HTTP transport', { port: HTTP_PORT });
 
   const server = http.createServer(async (req, res) => {
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     // Handle preflight
@@ -140,10 +157,29 @@ async function startHttpServer(
       return;
     }
 
-    // Only accept POST requests
+    // Health check endpoint
+    if (req.method === 'GET' && req.url === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'ok',
+        service: 'utlx-mcp-server',
+        transport: 'http',
+        port: HTTP_PORT
+      }));
+      return;
+    }
+
+    // Only accept POST requests for JSON-RPC
     if (req.method !== 'POST') {
       res.writeHead(405, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Method not allowed' }));
+      return;
+    }
+
+    // Route check - accept both root and /message paths
+    if (req.url !== '/' && req.url !== '/message') {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Not found' }));
       return;
     }
 
@@ -214,6 +250,8 @@ async function startHttpServer(
       process.exit(0);
     });
   });
+
+  return server;
 }
 
 /**
@@ -253,14 +291,20 @@ async function main(): Promise<void> {
       });
     }
 
-    // Create JSON-RPC handler
-    const handler = new JsonRpcHandler(daemonClient, logger);
+    // Create server reference for shutdown callback
+    const serverRef: { httpServer?: http.Server } = {};
+
+    // Create shutdown handler
+    const shutdownHandler = createShutdownHandler(logger, serverRef.httpServer);
+
+    // Create JSON-RPC handler with shutdown callback
+    const handler = new JsonRpcHandler(daemonClient, logger, shutdownHandler);
 
     // Start server with appropriate transport
     if (TRANSPORT === 'stdio') {
       await startStdioServer(handler, logger);
     } else if (TRANSPORT === 'http') {
-      await startHttpServer(handler, logger);
+      serverRef.httpServer = await startHttpServer(handler, logger);
     } else {
       logger.error('Invalid transport specified', { transport: TRANSPORT });
       process.exit(1);

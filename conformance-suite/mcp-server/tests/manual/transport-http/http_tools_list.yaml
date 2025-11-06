@@ -22,19 +22,35 @@ sequence:
         tools:
           - name: "get_input_schema"
             description: "{{STRING}}"
-            inputSchema: "{{JSON}}"
+            inputSchema:
+              type: "object"
+              properties: "{{ANY}}"
           - name: "get_stdlib_functions"
             description: "{{STRING}}"
-            inputSchema: "{{JSON}}"
+            inputSchema:
+              type: "object"
+              properties: "{{ANY}}"
           - name: "validate_utlx"
             description: "{{STRING}}"
-            inputSchema: "{{JSON}}"
+            inputSchema:
+              type: "object"
+              properties: "{{ANY}}"
+              required: ["utlx"]
           - name: "infer_output_schema"
             description: "{{STRING}}"
-            inputSchema: "{{JSON}}"
+            inputSchema:
+              type: "object"
+              properties: "{{ANY}}"
+              required: ["utlx"]
           - name: "execute_transformation"
             description: "{{STRING}}"
-            inputSchema: "{{JSON}}"
+            inputSchema:
+              type: "object"
+              properties: "{{ANY}}"
+              required: ["utlx", "input"]
           - name: "get_examples"
             description: "{{STRING}}"
-            inputSchema: "{{JSON}}"
+            inputSchema:
+              type: "object"
+              properties: "{{ANY}}"
+              required: ["query"]
