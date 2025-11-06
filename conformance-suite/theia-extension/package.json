@@ -1,0 +1,26 @@
+{
+  "name": "theia-extension-conformance-suite",
+  "version": "1.0.0",
+  "description": "Playwright-based end-to-end conformance tests for UTL-X Theia extension",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui"
+  },
+  "keywords": [
+    "utlx",
+    "theia",
+    "playwright",
+    "e2e",
+    "conformance"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@theia/playwright": "^1.66.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
