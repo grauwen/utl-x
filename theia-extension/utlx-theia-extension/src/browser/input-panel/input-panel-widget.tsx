@@ -39,8 +39,8 @@ export class InputPanelWidget extends ReactWidget {
     static readonly ID = INPUT_PANEL_ID;
     static readonly LABEL = 'Input';
 
-    @inject(UTLX_SERVICE_SYMBOL)
-    protected readonly utlxService!: UTLXService;
+    @inject(UTLX_SERVICE_SYMBOL) @optional()
+    protected readonly utlxService?: UTLXService;
 
     @inject(MessageService)
     protected readonly messageService!: MessageService;
@@ -72,13 +72,18 @@ export class InputPanelWidget extends ReactWidget {
     @postConstruct()
     protected init(): void {
         this.update();
-        // Subscribe to mode changes
-        this.utlxService.getMode().then(config => {
-            this.setState({
-                mode: config.mode,
-                activeTab: config.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+
+        // Try to load initial mode from service if available
+        if (this.utlxService) {
+            this.utlxService.getMode().then(config => {
+                this.setState({
+                    mode: config.mode,
+                    activeTab: config.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+                });
+            }).catch(error => {
+                console.error('[InputPanel] Failed to load initial mode:', error);
             });
-        });
+        }
 
         // Listen for mode changes from toolbar
         window.addEventListener('utlx-mode-changed', ((event: CustomEvent) => {

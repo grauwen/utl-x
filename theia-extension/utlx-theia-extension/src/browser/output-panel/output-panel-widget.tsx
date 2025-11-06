@@ -7,7 +7,7 @@
  */
 
 import * as React from 'react';
-import { injectable, inject, postConstruct } from 'inversify';
+import { injectable, inject, postConstruct, optional } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MessageService } from '@theia/core';
 import {
@@ -40,8 +40,8 @@ export class OutputPanelWidget extends ReactWidget {
     static readonly ID = OUTPUT_PANEL_ID;
     static readonly LABEL = 'Output';
 
-    @inject(UTLX_SERVICE_SYMBOL)
-    protected readonly utlxService!: UTLXService;
+    @inject(UTLX_SERVICE_SYMBOL) @optional()
+    protected readonly utlxService?: UTLXService;
 
     @inject(MessageService)
     protected readonly messageService!: MessageService;
@@ -66,13 +66,18 @@ export class OutputPanelWidget extends ReactWidget {
     @postConstruct()
     protected init(): void {
         this.update();
-        // Subscribe to mode changes
-        this.utlxService.getMode().then(config => {
-            this.setState({
-                mode: config.mode,
-                activeTab: config.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+
+        // Try to load initial mode from service if available
+        if (this.utlxService) {
+            this.utlxService.getMode().then(config => {
+                this.setState({
+                    mode: config.mode,
+                    activeTab: config.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+                });
+            }).catch(error => {
+                console.error('[OutputPanel] Failed to load initial mode:', error);
             });
-        });
+        }
 
         // Listen for mode changes from toolbar
         window.addEventListener('utlx-mode-changed', ((event: CustomEvent) => {
