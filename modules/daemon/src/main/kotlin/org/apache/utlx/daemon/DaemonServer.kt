@@ -70,7 +70,10 @@ class UTLXDaemon(
         // Start REST API HTTP server if enabled (always uses socket)
         if (enableRestApi) {
             logger.info("Starting REST API HTTP server on port $restApiPort")
-            restApiServer = RestApiServer(port = restApiPort)
+            restApiServer = RestApiServer(
+                port = restApiPort,
+                shutdownCallback = { stop() }
+            )
             restApiServer!!.start()
         }
 

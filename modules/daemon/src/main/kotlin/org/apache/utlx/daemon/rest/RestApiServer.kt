@@ -55,12 +55,16 @@ import java.util.UUID
  */
 class RestApiServer(
     private val port: Int = 7779,
-    private val host: String = "0.0.0.0"
+    private val host: String = "0.0.0.0",
+    private val shutdownCallback: (() -> Unit)? = null
 ) {
     private val logger = LoggerFactory.getLogger(RestApiServer::class.java)
     private var server: NettyApplicationEngine? = null
     private val startTime = Instant.now().toEpochMilli()
     private val scope = CoroutineScope(Dispatchers.Default)
+
+    @Volatile
+    private var shutdownRequested = false
 
     // Services for handling REST API requests
     private val stateManager = StateManager()
@@ -425,6 +429,46 @@ class RestApiServer(
                                 success = false,
                                 error = "Schema parsing failed: ${e.message}"
                             )
+                        )
+                    }
+                }
+
+                // Shutdown endpoint
+                post("/api/shutdown") {
+                    try {
+                        if (shutdownRequested) {
+                            call.respond(
+                                HttpStatusCode.OK,
+                                mapOf(
+                                    "status" to "shutdown_already_requested",
+                                    "message" to "Shutdown is already in progress"
+                                )
+                            )
+                            return@post
+                        }
+
+                        shutdownRequested = true
+                        logger.info("Shutdown requested via REST API")
+
+                        call.respond(
+                            HttpStatusCode.OK,
+                            mapOf(
+                                "status" to "shutting_down",
+                                "message" to "UTLXD daemon is shutting down gracefully"
+                            )
+                        )
+
+                        // Schedule shutdown after response is sent
+                        scope.launch {
+                            kotlinx.coroutines.delay(500) // Give time for response to be sent
+                            logger.info("Invoking shutdown callback...")
+                            shutdownCallback?.invoke()
+                        }
+                    } catch (e: Exception) {
+                        logger.error("Shutdown error", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            mapOf("error" to e.message)
                         )
                     }
                 }
