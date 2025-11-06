@@ -43,15 +43,15 @@ Design Tome MODE (two tab instance)
 
 INPUT Pane (left Pane)
 
-TAB Instance:; Format   ( -> )  TAB Schema Format: (these are linked)
-- Json.         -> jsch | avro (drop down list) - jsch default
-- xml.           -> xsd
-- yaml          -> jsch | avro (drop down list) - jsch default
-- csv           -> tsch (not yet implemented) => put that text within schema as //tsch not implemented yet
-- xsd            -> Schema [should be made BLUR)
-- jsch          -> Schema [should be made BLUR)
-- avro         -> Schema [should be made BLUR)
-- proto        -> Schema [should be made BLUR)
+TAB Instance:; Format   ( ->  == linked  between tabs formats)  TAB Schema Format: (these are linked)
+- Json.                       -> jsch | avro (drop down list) - jsch default
+- xml.                        -> xsd
+- yaml                        -> jsch | avro (drop down list) - jsch default
+- csv                         -> tsch (not yet implemented) => put that text within schema as //tsch not implemented yet
+- xsd                         -> Schema [should be made BLUR)
+- jsch                        -> Schema [should be made BLUR)
+- avro                        -> Schema [should be made BLUR)
+- proto                       -> Schema [should be made BLUR)
 
 Vertical there should be a +  so an input can be addd. Each input has two horizontal tabs in design mode
 
