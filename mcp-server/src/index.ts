@@ -259,7 +259,8 @@ async function startHttpServer(
  */
 async function main(): Promise<void> {
   // Set process title for easy identification
-  process.title = `utlx-mcp-server (${TRANSPORT})`;
+  const transportSuffix = TRANSPORT === 'stdio' ? 'stdio' : `http-${HTTP_PORT}`;
+  process.title = `utlx-mcp-${transportSuffix}`;
 
   // Create logger
   const logger = createServerLogger();
