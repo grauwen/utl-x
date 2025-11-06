@@ -141,10 +141,10 @@ async function startUTLXD(config: ServiceConfig): Promise<void> {
         config.utlxdJarPath,
         'start',
         '--lsp',
-        '--transport', 'socket',
+        '--lsp-transport', 'socket',
         '--lsp-port', '7777',
-        '--daemon-rest',
-        '--daemon-rest-port', config.utlxdRestPort.toString()
+        '--api',
+        '--api-port', config.utlxdRestPort.toString()
     ], {
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: false
