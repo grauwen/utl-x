@@ -44,16 +44,23 @@ Design Tome MODE (two tab instance)
 INPUT Pane (left Pane)
 
 TAB Instance:; Format   ( ->  == linked  between tabs formats)  TAB Schema Format: (these are linked)
-- Json.                       -> jsch | avro (drop down list) - jsch default
-- xml.                        -> xsd
-- yaml                        -> jsch | avro (drop down list) - jsch default
-- csv                         -> tsch (not yet implemented) => put that text within schema as //tsch not implemented yet
+- json      selected          -> set to jsch 
+- xml       selected          -> set to xsd
+- yaml      selected          -> set to jsch 
+- csv                         -> Schema [should be made BLUR)  => put that text within schema as //tsch not implemented yet
 - xsd                         -> Schema [should be made BLUR)
 - jsch                        -> Schema [should be made BLUR)
 - avro                        -> Schema [should be made BLUR)
 - proto                       -> Schema [should be made BLUR)
 
-Vertical there should be a +  so an input can be addd. Each input has two horizontal tabs in design mode
+
+reversed (when user explicetly sets the Format of the Schema)
+TAB Instance:; Format   ( <- == linked  between tabs formats)  TAB Schema Format: (these are linked)
+- set to json                  <- jsch selected
+- set to xml                   <- xsd selected
+
+
+Vertical TAB for INPUT Pane there should be a +  so an input can be addd. Each input has two horizontal tabs in design mode. 
 
 Why having tier2 (xsd,jsch,avro,proto) still as possible input? Because the output could have an instance document with an schema attached, or it is one of the multiple inputs (there might be reasons why)
 
