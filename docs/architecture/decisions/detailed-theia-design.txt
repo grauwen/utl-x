@@ -22,6 +22,11 @@ Instance: Format  (dropdown) -> linked to the Header of UTLX Input  (minimal 1)
 
 Vertical there should be a +  so an input can be addd. Each input has one horizontal tab (trivial)  in design mode
 
+he vertical tabs should be on the left side of the content area, and the horizontal Instance/Schema tabs 
+  should remain fixed at the top. The vertical tabs select which input to display, and the Instance/Schema tabs stay in place showing the selected input's
+  data.
+
+
 Each input  should allow a field to change the input name which is also the name used in the UTLX definition
 
 When there are multiple vertical tabs, a cross in front shpould allow to delete an vertical tab, when cross is punched a popup should ask " Are you sure to delete input <name of input>
