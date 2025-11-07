@@ -48,7 +48,7 @@ export interface MultiInputPanelState {
 export class MultiInputPanelWidget extends ReactWidget {
     static readonly ID = INPUT_PANEL_ID;
     static readonly LABEL = 'Input';
-    static readonly BUILD_VERSION = '2025-11-08T00:00:00Z'; // Build version for deployment verification
+    static readonly BUILD_VERSION = '2025-11-08T06:00:00Z'; // Build version for deployment verification
 
     @inject(UTLX_SERVICE_SYMBOL) @optional()
     protected readonly utlxService?: UTLXService;

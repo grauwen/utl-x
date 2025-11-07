@@ -611,24 +611,25 @@
     overflow: hidden;
 }
 
-/* Vertical Tabs (Left Side) */
+/* Vertical Tabs (Left Side) - Rotated Text */
 .utlx-vertical-tabs {
     display: flex;
     flex-direction: column;
-    width: 120px;
-    min-width: 120px;
+    width: 20px;
+    min-width: 20px;
     background: var(--theia-sideBar-background);
     border-right: 1px solid var(--theia-panel-border);
-    padding: 8px 4px;
+    padding: 8px 2px;
     gap: 4px;
     overflow-y: auto;
 }
 
 .utlx-vertical-tab {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    padding: 8px 10px;
+    justify-content: center;
+    padding: 8px 0px;
     background: var(--theia-button-background);
     border: 1px solid var(--theia-button-border);
     border-radius: 3px;
@@ -636,7 +637,8 @@
     transition: all 0.2s;
     font-size: 12px;
     color: var(--theia-foreground);
-    min-height: 36px;
+    min-height: 80px;
+    width: 100%;
 }
 
 .utlx-vertical-tab:hover {
@@ -644,29 +646,36 @@
 }
 
 .utlx-vertical-tab.active {
-    background: var(--theia-button-prominentBackground);
-    color: var(--theia-button-prominentForeground);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
     font-weight: 600;
     border-color: var(--theia-focusBorder);
 }
 
 .utlx-vertical-tab-name {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    letter-spacing: 0.5px;
 }
 
 .utlx-vertical-tab-delete {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     border: none;
     background: transparent;
     color: var(--theia-foreground);
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     padding: 0;
+    margin-top: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -681,7 +690,7 @@
 }
 
 .utlx-vertical-tab-add {
-    padding: 8px;
+    padding: 8px 4px;
     background: var(--theia-button-prominentBackground);
     color: var(--theia-button-prominentForeground);
     border: none;
@@ -690,7 +699,8 @@
     font-size: 18px;
     font-weight: 600;
     transition: all 0.2s;
-    min-height: 36px;
+    min-height: 32px;
+    width: 100%;
 }
 
 .utlx-vertical-tab-add:hover {
