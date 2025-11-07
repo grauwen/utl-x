@@ -9,6 +9,7 @@ import { ContainerModule } from 'inversify';
 import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory } from '@theia/core/lib/browser';
 import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { InputPanelWidget } from './input-panel/input-panel-widget';
+import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
@@ -31,23 +32,23 @@ export default new ContainerModule(bind => {
         console.log('[UTLX Frontend Module] ✓ UTLX service proxy bound');
 
         // Bind widgets
-        console.log('[UTLX Frontend Module] Binding InputPanelWidget...');
-        bind(InputPanelWidget).toSelf();
+        console.log('[UTLX Frontend Module] Binding MultiInputPanelWidget...');
+        bind(MultiInputPanelWidget).toSelf();
         bind(WidgetFactory).toDynamicValue(ctx => ({
-            id: InputPanelWidget.ID,
+            id: MultiInputPanelWidget.ID,
             createWidget: () => {
-                console.log('[UTLX Frontend Module] Creating InputPanelWidget instance...');
+                console.log('[UTLX Frontend Module] Creating MultiInputPanelWidget instance...');
                 try {
-                    const widget = ctx.container.get<InputPanelWidget>(InputPanelWidget);
-                    console.log('[UTLX Frontend Module] ✓ InputPanelWidget created successfully');
+                    const widget = ctx.container.get<MultiInputPanelWidget>(MultiInputPanelWidget);
+                    console.log('[UTLX Frontend Module] ✓ MultiInputPanelWidget created successfully');
                     return widget;
                 } catch (error) {
-                    console.error('[UTLX Frontend Module] ✗ Failed to create InputPanelWidget:', error);
+                    console.error('[UTLX Frontend Module] ✗ Failed to create MultiInputPanelWidget:', error);
                     throw error;
                 }
             }
         })).inSingletonScope();
-        console.log('[UTLX Frontend Module] ✓ InputPanelWidget bound');
+        console.log('[UTLX Frontend Module] ✓ MultiInputPanelWidget bound');
 
         console.log('[UTLX Frontend Module] Binding OutputPanelWidget...');
         bind(OutputPanelWidget).toSelf();

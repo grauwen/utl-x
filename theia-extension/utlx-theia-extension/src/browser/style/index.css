@@ -600,3 +600,159 @@
     color: var(--theia-editorError-foreground);
     font-size: 11px;
 }
+
+/* ===== Multi-Input Panel Widget ===== */
+.utlx-multi-input-panel-container {
+    display: flex;
+    flex-direction: row;  /* Explicitly horizontal layout */
+    height: 100%;
+    width: 100%;
+    background: var(--theia-editor-background);
+    overflow: hidden;
+}
+
+/* Vertical Tabs (Left Side) */
+.utlx-vertical-tabs {
+    display: flex;
+    flex-direction: column;
+    width: 120px;
+    min-width: 120px;
+    background: var(--theia-sideBar-background);
+    border-right: 1px solid var(--theia-panel-border);
+    padding: 8px 4px;
+    gap: 4px;
+    overflow-y: auto;
+}
+
+.utlx-vertical-tab {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: var(--theia-button-background);
+    border: 1px solid var(--theia-button-border);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+    color: var(--theia-foreground);
+    min-height: 36px;
+}
+
+.utlx-vertical-tab:hover {
+    background: var(--theia-button-hoverBackground);
+}
+
+.utlx-vertical-tab.active {
+    background: var(--theia-button-prominentBackground);
+    color: var(--theia-button-prominentForeground);
+    font-weight: 600;
+    border-color: var(--theia-focusBorder);
+}
+
+.utlx-vertical-tab-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.utlx-vertical-tab-delete {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    color: var(--theia-foreground);
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    opacity: 0.7;
+}
+
+.utlx-vertical-tab-delete:hover {
+    opacity: 1;
+    background: var(--theia-inputValidation-errorBackground);
+    color: var(--theia-editorError-foreground);
+}
+
+.utlx-vertical-tab-add {
+    padding: 8px;
+    background: var(--theia-button-prominentBackground);
+    color: var(--theia-button-prominentForeground);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    transition: all 0.2s;
+    min-height: 36px;
+}
+
+.utlx-vertical-tab-add:hover {
+    background: var(--theia-button-prominentHoverBackground);
+}
+
+/* Input Content Area (Right Side) */
+.utlx-input-content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.utlx-input-name-editor {
+    padding: 4px 8px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 600;
+    max-width: 200px;
+}
+
+.utlx-input-name-editor:focus {
+    outline: 1px solid var(--theia-focusBorder);
+}
+
+/* Horizontal Tabs for Design Time Mode */
+.utlx-horizontal-tabs {
+    display: flex;
+    background: var(--theia-sideBar-background);
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.utlx-horizontal-tab {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--theia-foreground);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.utlx-horizontal-tab:hover:not(:disabled) {
+    background: var(--theia-toolbar-hoverBackground);
+}
+
+.utlx-horizontal-tab.active {
+    border-bottom-color: var(--theia-focusBorder);
+    color: var(--theia-focusBorder);
+    font-weight: 600;
+}
+
+.utlx-horizontal-tab:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background: var(--theia-sideBar-background);
+    filter: blur(0.5px);
+}

@@ -54,9 +54,10 @@
   },
   "scripts": {
     "prepare": "yarn run clean && yarn run build",
-    "clean": "rimraf lib",
-    "build": "tsc",
-    "watch": "tsc -w",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "build": "npx tsc && mkdir -p lib/browser && cp -r src/browser/style lib/browser/",
+    "rebuild": "yarn clean && yarn build",
+    "watch": "npx tsc -w",
     "lint": "eslint src --ext .ts,.tsx",
     "format": "prettier --write \"src/**/*.{ts,tsx}\""
   },

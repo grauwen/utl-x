@@ -25,7 +25,7 @@ import { KeybindingContribution, KeybindingRegistry } from '@theia/core/lib/brow
 import { MessageService } from '@theia/core';
 import { UTLXCommands } from '../common/protocol';
 import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
-import { InputPanelWidget } from './input-panel/input-panel-widget';
+import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
@@ -187,8 +187,8 @@ export class UTLXFrontendContribution implements
     private async open3ColumnLayout(): Promise<void> {
         try {
             // Create all widgets
-            const inputPanel = await this.widgetManager.getOrCreateWidget<InputPanelWidget>(
-                InputPanelWidget.ID
+            const inputPanel = await this.widgetManager.getOrCreateWidget<MultiInputPanelWidget>(
+                MultiInputPanelWidget.ID
             );
             const editorWidget = await this.widgetManager.getOrCreateWidget<UTLXEditorWidget>(
                 UTLXEditorWidget.ID

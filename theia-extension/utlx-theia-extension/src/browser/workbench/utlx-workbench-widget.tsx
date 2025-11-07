@@ -13,7 +13,7 @@ import { injectable, inject, postConstruct } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MessageService, Command, CommandRegistry } from '@theia/core';
 import { WidgetManager } from '@theia/core/lib/browser';
-import { InputPanelWidget } from '../input-panel/input-panel-widget';
+import { MultiInputPanelWidget } from '../input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from '../output-panel/output-panel-widget';
 import { ModeSelectorWidget } from '../mode-selector/mode-selector-widget';
 import { UTLXEditorWidget } from '../editor/utlx-editor-widget';
@@ -46,7 +46,7 @@ export class UTLXWorkbenchWidget extends ReactWidget {
     @inject(WidgetManager)
     protected readonly widgetManager!: WidgetManager;
 
-    protected inputPanel?: InputPanelWidget;
+    protected inputPanel?: MultiInputPanelWidget;
     protected editorWidget?: UTLXEditorWidget;
     protected outputPanel?: OutputPanelWidget;
     protected modeSelector?: ModeSelectorWidget;
@@ -79,7 +79,7 @@ export class UTLXWorkbenchWidget extends ReactWidget {
 
     private async loadWidgets(): Promise<void> {
         // Get widget instances via WidgetManager
-        this.inputPanel = await this.widgetManager.getOrCreateWidget(InputPanelWidget.ID);
+        this.inputPanel = await this.widgetManager.getOrCreateWidget(MultiInputPanelWidget.ID);
         this.editorWidget = await this.widgetManager.getOrCreateWidget(UTLXEditorWidget.ID);
         this.outputPanel = await this.widgetManager.getOrCreateWidget(OutputPanelWidget.ID);
         this.modeSelector = await this.widgetManager.getOrCreateWidget(ModeSelectorWidget.ID);
@@ -246,8 +246,8 @@ export class UTLXWorkbenchWidget extends ReactWidget {
             return;
         }
 
-        const input = this.inputPanel.getInputDocument();
-        if (!input) {
+        const inputs = this.inputPanel.getInputDocuments();
+        if (inputs.length === 0) {
             this.messageService.warn('Please load input data first');
             return;
         }
@@ -262,7 +262,7 @@ export class UTLXWorkbenchWidget extends ReactWidget {
 
             const result = await this.utlxService.execute(
                 this.currentEditorContent,
-                [input]
+                inputs
             );
 
             this.outputPanel.displayExecutionResult(result);

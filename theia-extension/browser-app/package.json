@@ -30,8 +30,10 @@
     "start": "theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace",
     "start:debug": "theia start --hostname=0.0.0.0 --port=4000 --loglevel=debug ~/data/utlx-workspace",
     "watch": "theia build --watch --mode development",
-    "clean": "rimraf .theia lib node_modules",
-    "rebuild": "yarn clean && yarn install && yarn build"
+    "clean": "rm -rf .theia lib node_modules",
+    "clean:extension": "cd ../utlx-theia-extension && yarn clean",
+    "rebuild:extension": "cd ../utlx-theia-extension && yarn rebuild",
+    "rebuild": "yarn clean:extension && yarn rebuild:extension && yarn clean && yarn install && yarn build"
   },
   "theia": {
     "target": "browser",
