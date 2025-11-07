@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BailCommercial xmlns="http://www.france.fr/bail/v1">
+    <RéférenceBail>BAIL-FR-2025-123456</RéférenceBail>
+    <DateSignature>2025-01-15</DateSignature>
+    <TypeBail>BAIL_COMMERCIAL_3_6_9</TypeBail>
+
+    <Bailleur>
+        <DénominationSociale>Société Immobilière Haussmann SAS</DénominationSociale>
+        <SIRET>123 456 789 00012</SIRET>
+        <AdresseSiège>
+            <Rue>Avenue des Champs-Élysées</Rue>
+            <Numéro>123</Numéro>
+            <CodePostal>75008</CodePostal>
+            <Ville>Paris</Ville>
+            <Pays>France</Pays>
+        </AdresseSiège>
+        <Représentant>
+            <Nom>François Dubois</Nom>
+            <Qualité>Président</Qualité>
+        </Représentant>
+    </Bailleur>
+
+    <Preneur>
+        <DénominationSociale>Café &amp; Brasserie Parisienne SARL</DénominationSociale>
+        <SIRET>987 654 321 00098</SIRET>
+        <AdresseSiège>
+            <Rue>Rue de Rivoli</Rue>
+            <Numéro>456</Numéro>
+            <CodePostal>75001</CodePostal>
+            <Ville>Paris</Ville>
+            <Pays>France</Pays>
+        </AdresseSiège>
+    </Preneur>
+
+    <LocalCommercial>
+        <Adresse>
+            <Rue>Boulevard Saint-Germain</Rue>
+            <Numéro>789</Numéro>
+            <CodePostal>75006</CodePostal>
+            <Ville>Paris</Ville>
+            <Arrondissement>6ème</Arrondissement>
+        </Adresse>
+        <SurfaceTotale>
+            <MètresCarrés>245</MètresCarrés>
+        </SurfaceTotale>
+        <Destination>RESTAURANT_BRASSERIE</Destination>
+    </LocalCommercial>
+
+    <DuréeBail>
+        <DateDébut>2025-02-01</DateDébut>
+        <DateFin>2034-01-31</DateFin>
+        <DuréeAnnées>9</DuréeAnnées>
+    </DuréeBail>
+
+    <Loyer>
+        <LoyerAnnuelHorsTaxes>125'000.00</LoyerAnnuelHorsTaxes>
+        <LoyerTrimestriel>31'250.00</LoyerTrimestriel>
+        <Devise>EUR</Devise>
+        <SymboleDevise>€</SymboleDevise>
+        <IndexationLoyer>ILC</IndexationLoyer>
+    </Loyer>
+
+    <ChargesLocatives>
+        <TaxeFoncière>INCLUSE</TaxeFoncière>
+        <ChargesCopropriété>12'500.00</ChargesCopropriété>
+        <Périodicité>ANNUELLE</Périodicité>
+    </ChargesLocatives>
+
+    <DépôtGarantie>
+        <Montant>93'750.00</Montant>
+        <Description>Équivalent à 3 trimestres de loyer</Description>
+    </DépôtGarantie>
+
+    <ClauseRésolutoire>
+        <Applicable>true</Applicable>
+        <Description>En cas de non-paiement du loyer à l'échéance, et un mois après un commandement de payer resté infructueux, le bail sera résilié de plein droit.</Description>
+    </ClauseRésolutoire>
+
+    <CaractèresSpéciauxFrançais>
+        <VoyellesAccentuées>à â é è ê ë ï î ô ù û ç œ</VoyellesAccentuées>
+        <Exemples>
+            <Villes>Paris, Marseille, Lyon, Côte d'Azur, Île-de-France</Villes>
+            <Mots>bâtiment, société, activité, numéro, échéance</Mots>
+        </Exemples>
+    </CaractèresSpéciauxFrançais>
+</BailCommercial>

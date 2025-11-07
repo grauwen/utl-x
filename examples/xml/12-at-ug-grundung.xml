@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Firmenbucheintr agung xmlns="http://www.justiz.gv.at/firmenbuch/v1"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <EintragungsArt>NEUEINTRAGUNG</EintragungsArt>
+    <Firmenbuchnummer>FN 456789 p</Firmenbuchnummer>
+    <Gericht>Handelsgericht Wien</Gericht>
+    <EintragungsDatum>2025-01-16</EintragungsDatum>
+    <RegisterBlatt>HRB_WIEN</RegisterBlatt>
+
+    <Gesellschaft>
+        <Firmenwortlaut>Müller &amp; Schröder Handels GmbH</Firmenwortlaut>
+        <Kurzbezeichnung>M&amp;S Handel GmbH</Kurzbezeichnung>
+        <Rechtsform>GESELLSCHAFT_MIT_BESCHRÄNKTER_HAFTUNG</Rechtsform>
+        <Unternehmensgegenstand>Handel mit technischen Geräten und elektronischen Bauteilen; Import und Export; Beratungstätigkeit im Bereich Elektronik</Unternehmensgegenstand>
+        <Gründungsdatum>2025-01-10</Gründungsdatum>
+    </Gesellschaft>
+
+    <Sitz>
+        <Straße>Kärntner Straße</Straße>
+        <Hausnummer>123</Hausnummer>
+        <Stiege>2</Stiege>
+        <Tür>15</Tür>
+        <Postleitzahl>1010</Postleitzahl>
+        <Ort>Wien</Ort>
+        <Bundesland>Wien</Bundesland>
+        <Land>Österreich</Land>
+    </Sitz>
+
+    <Stammkapital>
+        <Betrag>35'000.00</Betrag>
+        <Währung>EUR</Währung>
+        <Einzahlung>
+            <Bareinlage>35'000.00</Bareinlage>
+            <Sacheinlage>0.00</Sacheinlage>
+        </Einzahlung>
+        <EingezahltBetrag>35'000.00</EingezahltBetrag>
+        <Status>VOLLSTÄNDIG_EINGEZAHLT</Status>
+    </Stammkapital>
+
+    <Gesellschafter>
+        <Gesellschafter1>
+            <Typ>NATÜRLICHE_PERSON</Typ>
+            <Vorname>Hans</Vorname>
+            <Nachname>Müller</Nachname>
+            <Geburtsdatum>1975-03-15</Geburtsdatum>
+            <Staatsangehörigkeit>Österreich</Staatsangehörigkeit>
+            <Adresse>
+                <Straße>Mariahilfer Straße</Straße>
+                <Hausnummer>456</Hausnummer>
+                <Postleitzahl>1070</Postleitzahl>
+                <Ort>Wien</Ort>
+                <Land>Österreich</Land>
+            </Adresse>
+            <GeschäftsAnteil>
+                <Betrag>20'000.00</Betrag>
+                <Prozentsatz>57.14</Prozentsatz>
+            </GeschäftsAnteil>
+        </Gesellschafter1>
+
+        <Gesellschafter2>
+            <Typ>NATÜRLICHE_PERSON</Typ>
+            <Vorname>Karin</Vorname>
+            <Nachname>Schröder</Nachname>
+            <Geburtsdatum>1980-08-22</Geburtsdatum>
+            <Staatsangehörigkeit>Österreich</Staatsangehörigkeit>
+            <Adresse>
+                <Straße>Wollzeile</Straße>
+                <Hausnummer>78</Hausnummer>
+                <Postleitzahl>1010</Postleitzahl>
+                <Ort>Wien</Ort>
+                <Land>Österreich</Land>
+            </Adresse>
+            <GeschäftsAnteil>
+                <Betrag>15'000.00</Betrag>
+                <Prozentsatz>42.86</Prozentsatz>
+            </GeschäftsAnteil>
+        </Gesellschafter2>
+    </Gesellschafter>
+
+    <Geschäftsführer>
+        <Geschäftsführer1>
+            <Vorname>Hans</Vorname>
+            <Nachname>Müller</Nachname>
+            <Geburtsdatum>1975-03-15</Geburtsdatum>
+            <Adresse>
+                <Straße>Mariahilfer Straße</Straße>
+                <Hausnummer>456</Hausnummer>
+                <Postleitzahl>1070</Postleitzahl>
+                <Ort>Wien</Ort>
+                <Land>Österreich</Land>
+            </Adresse>
+            <Bestellungsdatum>2025-01-10</Bestellungsdatum>
+            <Vertretung>EINZELVERTRETUNGSBEFUGNIS</Vertretung>
+        </Geschäftsführer1>
+
+        <Geschäftsführer2>
+            <Vorname>Karin</Vorname>
+            <Nachname>Schröder</Nachname>
+            <Geburtsdatum>1980-08-22</Geburtsdatum>
+            <Adresse>
+                <Straße>Wollzeile</Straße>
+                <Hausnummer>78</Hausnummer>
+                <Postleitzahl>1010</Postleitzahl>
+                <Ort>Wien</Ort>
+                <Land>Österreich</Land>
+            </Adresse>
+            <Bestellungsdatum>2025-01-10</Bestellungsdatum>
+            <Vertretung>EINZELVERTRETUNGSBEFUGNIS</Vertretung>
+        </Geschäftsführer2>
+    </Geschäftsführer>
+
+    <Vertretungsregelung>
+        <Regel>Jeder Geschäftsführer vertritt die Gesellschaft selbständig.</Regel>
+        <Prokura>KEINE</Prokura>
+    </Vertretungsregelung>
+
+    <Gesellschaftsvertrag>
+        <Errichtungsdatum>2025-01-10</Errichtungsdatum>
+        <Notar>
+            <Name>Dr. Wolfgang Berger</Name>
+            <Kanzlei>Notariat Dr. Berger</Kanzlei>
+            <Adresse>
+                <Straße>Graben</Straße>
+                <Hausnummer>21</Hausnummer>
+                <Postleitzahl>1010</Postleitzahl>
+                <Ort>Wien</Ort>
+                <Land>Österreich</Land>
+            </Adresse>
+            <Geschäftszahl>GZ 123/2025</Geschäftszahl>
+        </Notar>
+        <Urkundenrolle>URNr 456/2025</Urkundenrolle>
+    </Gesellschaftsvertrag>
+
+    <Steuernummer>
+        <FinanzamtsNummer>12-345/6789</FinanzamtsNummer>
+        <UIDNummer>ATU12345678</UIDNummer>
+        <DVRNummer>0123456</DVRNummer>
+        <EORINummer>ATEOS1000012345</EORINummer>
+    </Steuernummer>
+
+    <Sozialversicherung>
+        <SVNummer>1234 010125</SVNummer>
+        <Dienstgeberkontonummer>12345-67</Dienstgeberkontonummer>
+    </Sozialversicherung>
+
+    <BankVerbindung>
+        <Kontoinhaber>Müller &amp; Schröder Handels GmbH</Kontoinhaber>
+        <IBAN>AT61 1904 3002 3457 3201</IBAN>
+        <BIC>BKAUATWW</BIC>
+        <Bankname>UniCredit Bank Austria AG</Bankname>
+        <Kontoart>GESCHÄFTSKONTO</Kontoart>
+    </BankVerbindung>
+
+    <Zweigniederlassungen>
+        <AnzahlInländisch>0</AnzahlInländisch>
+        <AnzahlAusländisch>0</AnzahlAusländisch>
+    </Zweigniederlassungen>
+
+    <Publikationen>
+        <Bekanntmachungsorgan>Amtsblatt zur Wiener Zeitung</Bekanntmachungsorgan>
+        <Veröffentlichungsdatum>2025-01-20</Veröffentlichungsdatum>
+        <EdiktsdateiNummer>ED-2025-123456</EdiktsdateiNummer>
+    </Publikationen>
+
+    <Geschäftsjahr>
+        <Beginn>01.01</Beginn>
+        <Ende>31.12</Ende>
+        <AbweichungKalenderjahr>false</AbweichungKalenderjahr>
+    </Geschäftsjahr>
+
+    <Rechnungslegung>
+        <RechnungslegungsStandard>UGB</RechnungslegungsStandard>
+        <Größenklasse>KLEIN</Größenklasse>
+        <PrüfungsPflicht>false</PrüfungsPflicht>
+        <Offenlegungspflicht>true</Offenlegungspflicht>
+    </Rechnungslegung>
+
+    <Bemerkungen>
+        <Bemerkung>Gründung erfolgte gemäß GmbH-Gesetz (GmbHG).</Bemerkung>
+        <Bemerkung>Die Gesellschaft ist ordnungsgemäß beim Firmenbuch eingetragen.</Bemerkung>
+        <Bemerkung>Alle Angaben entsprechen dem Gesellschaftsvertrag vom 10.01.2025.</Bemerkung>
+    </Bemerkungen>
+
+    <Gebühren>
+        <Eintragungsgebühr>182.00</Eintragungsgebühr>
+        <Veröffentlichungsgebühr>23.50</Veröffentlichungsgebühr>
+        <Notariatskosten>1'850.00</Notariatskosten>
+        <Gesamtkosten>2'055.50</Gesamtkosten>
+        <Währung>EUR</Währung>
+    </Gebühren>
+
+    <Rechtsgrundlagen>
+        <Gesetz>GmbH-Gesetz (GmbHG)</Gesetz>
+        <Gesetz>Unternehmensgesetzbuch (UGB)</Gesetz>
+        <Gesetz>Firmenbuchgesetz (FBG)</Gesetz>
+    </Rechtsgrundlagen>
+
+    <Unterschriften>
+        <Geschäftsführer>
+            <Name>Hans Müller</Name>
+            <Datum>2025-01-10</Datum>
+            <Unterschrift>HM_20250110</Unterschrift>
+        </Geschäftsführer>
+        <Geschäftsführer>
+            <Name>Karin Schröder</Name>
+            <Datum>2025-01-10</Datum>
+            <Unterschrift>KS_20250110</Unterschrift>
+        </Geschäftsführer>
+        <Notar>
+            <Name>Dr. Wolfgang Berger</Name>
+            <Datum>2025-01-10</Datum>
+            <Amtssiegel>NOTARIAT_SIEGEL</Amtssiegel>
+        </Notar>
+    </Unterschriften>
+
+    <ÖsterreichischeSpezialZeichen>
+        <Umlaute>ä ö ü Ä Ö Ü ß</Umlaute>
+        <Beispiele>Österreich, Kärnten, Gröbming, Größe, Straße, München (Bayern)</Beispiele>
+        <Währung>€ EUR Euro Cent</Währung>
+    </ÖsterreichischeSpezialZeichen>
+</Firmenbucheintragung>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Lohnabrechnung xmlns="http://www.lohnabrechnung.de/v1">
+    <Abrechnungszeitraum>
+        <Monat>Dezember</Monat>
+        <Jahr>2024</Jahr>
+    </Abrechnungszeitraum>
+
+    <Arbeitgeber>
+        <Firmenname>Müller &amp; Schmidt GmbH &amp; Co. KG</Firmenname>
+        <Steuernummer>12/345/67890</Steuernummer>
+        <Betriebsnummer>12345678</Betriebsnummer>
+        <Adresse>
+            <Straße>Hauptstraße</Straße>
+            <Hausnummer>145</Hausnummer>
+            <PLZ>80331</PLZ>
+            <Ort>München</Ort>
+            <Bundesland>Bayern</Bundesland>
+        </Adresse>
+    </Arbeitgeber>
+
+    <Arbeitnehmer>
+        <Personalnummer>AN-2024-1234</Personalnummer>
+        <Name>
+            <Vorname>Thomas</Vorname>
+            <Nachname>Schröder</Nachname>
+        </Name>
+        <Geburtsdatum>1985-04-15</Geburtsdatum>
+        <Steuerklasse>III</Steuerklasse>
+        <Sozialversicherungsnummer>12 150485 S 123</Sozialversicherungsnummer>
+        <Krankenvers icherung>AOK Bayern</Krankenkasse>
+    </Arbeitnehmer>
+
+    <Bezüge>
+        <Bruttogehalt>5'450.00</Bruttogehalt>
+        <Überstundenzuschlag>325.00</Überstundenzuschlag>
+        <Weihnachtsgeld>0.00</Weihnachtsgeld>
+        <GesamtBrutto>5'775.00</GesamtBrutto>
+    </Bezüge>
+
+    <Abzüge>
+        <Lohnsteuer>897.50</Lohnsteuer>
+        <Kirchensteuer>71.80</Kirchensteuer>
+        <Solidaritätszuschlag>0.00</Solidaritätszuschlag>
+        <Rentenversicherung>577.50</Rentenversicherung>
+        <Arbeitslosenversicherung>77.00</Arbeitslosenversicherung>
+        <Krankenversicherung>519.75</Krankenversicherung>
+        <Pflegeversicherung>110.33</Pflegeversicherung>
+        <GesamtAbzüge>2'253.88</GesamtAbzüge>
+    </Abzüge>
+
+    <Nettoauszahlung>3'521.12</Nettoauszahlung>
+
+    <BankVerbindung>
+        <IBAN>DE89 3704 0044 0532 0130 00</IBAN>
+        <BIC>COBADEFFXXX</BIC>
+        <Bank>Commerzbank AG</Bank>
+    </BankVerbindung>
+
+    <DeutscheUmlaute>
+        <Buchstaben>ä ö ü ß Ä Ö Ü</Buchstaben>
+        <Wörter>Gehalt, Überstunden, Solidaritätszuschlag, Pflegeversicherung, Straße</Wörter>
+    </DeutscheUmlaute>
+</Lohnabrechnung>

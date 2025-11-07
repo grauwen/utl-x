@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<HealthcareClaim xmlns="http://www.healthcare.gov/claims/v1"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <ClaimHeader>
+        <ClaimID>CLM-2025-US-HC-789456</ClaimID>
+        <ClaimType>MEDICAL_SERVICES</ClaimType>
+        <SubmissionDate>2025-01-16T10:30:00-05:00</SubmissionDate>
+        <ClaimStatus>PENDING_REVIEW</ClaimStatus>
+    </ClaimHeader>
+
+    <Provider>
+        <ProviderID>NPI-1234567890</ProviderID>
+        <ProviderName>Metropolitan Health Associates</ProviderName>
+        <TaxID>12-3456789</TaxID>
+        <Address>
+            <Street>2500 Medical Center Drive</Street>
+            <Suite>Suite 400</Suite>
+            <City>Boston</City>
+            <State>MA</State>
+            <ZipCode>02215</ZipCode>
+            <Country>USA</Country>
+        </Address>
+        <Contact>
+            <Phone>+1-617-555-0123</Phone>
+            <Fax>+1-617-555-0124</Fax>
+            <Email>billing@metrohealthassoc.com</Email>
+        </Contact>
+    </Provider>
+
+    <Patient>
+        <MemberID>MEM-987654321</MemberID>
+        <LastName>Johnson</LastName>
+        <FirstName>Emily</FirstName>
+        <MiddleInitial>R</MiddleInitial>
+        <DateOfBirth>1985-06-15</DateOfBirth>
+        <Gender>F</Gender>
+        <SSN>***-**-6789</SSN>
+        <Address>
+            <Street>145 Beacon Street</Street>
+            <Apartment>Apt 3B</Apartment>
+            <City>Boston</City>
+            <State>MA</State>
+            <ZipCode>02116</ZipCode>
+            <Country>USA</Country>
+        </Address>
+    </Patient>
+
+    <Insurance>
+        <Payer>
+            <PayerID>PAY-BCBS-MA-001</PayerID>
+            <PayerName>Blue Cross Blue Shield of Massachusetts</PayerName>
+            <PolicyNumber>BCBS-MA-987654321</PolicyNumber>
+            <GroupNumber>GRP-ABC-12345</GroupNumber>
+        </Payer>
+        <CoverageType>PPO</CoverageType>
+        <EffectiveDate>2024-01-01</EffectiveDate>
+        <TerminationDate>2025-12-31</TerminationDate>
+    </Insurance>
+
+    <ServiceDetails>
+        <DateOfService>2025-01-10</DateOfService>
+        <PlaceOfService>
+            <Code>11</Code>
+            <Description>Office</Description>
+        </PlaceOfService>
+        <Diagnosis>
+            <PrimaryDiagnosis>
+                <Code>J06.9</Code>
+                <CodeType>ICD-10</CodeType>
+                <Description>Acute upper respiratory infection, unspecified</Description>
+            </PrimaryDiagnosis>
+            <SecondaryDiagnosis>
+                <Code>R05.9</Code>
+                <CodeType>ICD-10</CodeType>
+                <Description>Cough, unspecified</Description>
+            </SecondaryDiagnosis>
+        </Diagnosis>
+    </ServiceDetails>
+
+    <LineItems>
+        <LineItem>
+            <LineNumber>1</LineNumber>
+            <ProcedureCode>
+                <Code>99214</Code>
+                <CodeType>CPT</CodeType>
+                <Description>Office visit, established patient, moderate complexity</Description>
+                <Modifier>25</Modifier>
+            </ProcedureCode>
+            <ServiceDate>2025-01-10</ServiceDate>
+            <Units>1</Units>
+            <ChargedAmount currency="USD">285.00</ChargedAmount>
+            <AllowedAmount currency="USD">195.00</AllowedAmount>
+            <Copay currency="USD">35.00</Copay>
+            <Deductible currency="USD">0.00</Deductible>
+            <CoinsuranceRate>20.00</CoinsuranceRate>
+            <CoinsuranceAmount currency="USD">32.00</CoinsuranceAmount>
+            <PaidAmount currency="USD">128.00</PaidAmount>
+            <PatientResponsibility currency="USD">67.00</PatientResponsibility>
+        </LineItem>
+
+        <LineItem>
+            <LineNumber>2</LineNumber>
+            <ProcedureCode>
+                <Code>87804</Code>
+                <CodeType>CPT</CodeType>
+                <Description>Influenza virus detection, rapid test</Description>
+            </ProcedureCode>
+            <ServiceDate>2025-01-10</ServiceDate>
+            <Units>1</Units>
+            <ChargedAmount currency="USD">75.00</ChargedAmount>
+            <AllowedAmount currency="USD">45.00</AllowedAmount>
+            <Copay currency="USD">0.00</Copay>
+            <Deductible currency="USD">0.00</Deductible>
+            <CoinsuranceRate>20.00</CoinsuranceRate>
+            <CoinsuranceAmount currency="USD">9.00</CoinsuranceAmount>
+            <PaidAmount currency="USD">36.00</PaidAmount>
+            <PatientResponsibility currency="USD">9.00</PatientResponsibility>
+        </LineItem>
+
+        <LineItem>
+            <LineNumber>3</LineNumber>
+            <ProcedureCode>
+                <Code>94640</Code>
+                <CodeType>CPT</CodeType>
+                <Description>Nebulizer treatment for airway obstruction</Description>
+            </ProcedureCode>
+            <ServiceDate>2025-01-10</ServiceDate>
+            <Units>1</Units>
+            <ChargedAmount currency="USD">65.00</ChargedAmount>
+            <AllowedAmount currency="USD">42.00</AllowedAmount>
+            <Copay currency="USD">0.00</Copay>
+            <Deductible currency="USD">0.00</Deductible>
+            <CoinsuranceRate>20.00</CoinsuranceRate>
+            <CoinsuranceAmount currency="USD">8.40</CoinsuranceAmount>
+            <PaidAmount currency="USD">33.60</PaidAmount>
+            <PatientResponsibility currency="USD">8.40</PatientResponsibility>
+        </LineItem>
+    </LineItems>
+
+    <ClaimTotals>
+        <TotalCharged currency="USD">425.00</TotalCharged>
+        <TotalAllowed currency="USD">282.00</TotalAllowed>
+        <TotalCopay currency="USD">35.00</TotalCopay>
+        <TotalDeductible currency="USD">0.00</TotalDeductible>
+        <TotalCoinsurance currency="USD">49.40</TotalCoinsurance>
+        <TotalPaid currency="USD">197.60</TotalPaid>
+        <TotalPatientResponsibility currency="USD">84.40</TotalPatientResponsibility>
+    </ClaimTotals>
+
+    <PaymentInformation>
+        <CheckNumber>CHK-2025-012345</CheckNumber>
+        <PaymentDate>2025-01-25</PaymentDate>
+        <PaymentMethod>ELECTRONIC_FUNDS_TRANSFER</PaymentMethod>
+        <RemittanceAdvice>ERA-2025-789456</RemittanceAdvice>
+    </PaymentInformation>
+
+    <Notes>
+        <Note type="CLINICAL">Patient presented with symptoms of upper respiratory infection. Rapid flu test performed - negative. Nebulizer treatment administered with improvement in breathing.</Note>
+        <Note type="BILLING">Claim processed according to PPO network rates. Patient responsible for copay and 20% coinsurance.</Note>
+    </Notes>
+</HealthcareClaim>

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VATReturn xmlns="http://www.revenue.ie/vat/v1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <ReturnDetails>
+        <ReturnNumber>IE-2025-VAT-789456</ReturnNumber>
+        <TaxPeriod>
+            <PeriodType>BI_MONTHLY</PeriodType>
+            <Year>2024</Year>
+            <Period>NOV_DEC</Period>
+        </TaxPeriod>
+        <SubmissionDate>2025-01-15T11:45:00Z</SubmissionDate>
+        <ReturnStatus>SUBMITTED</ReturnStatus>
+        <ROS_Acknowledgement>ROS-2025-ACK-123456789</ROS_Acknowledgement>
+    </ReturnDetails>
+
+    <Trader>
+        <VATNumber>IE6388047V</VATNumber>
+        <TaxReferenceNumber>1234567T</TaxReferenceNumber>
+        <RegisteredName>O'Brien &amp; Mc Carthy Trading Ltd</RegisteredName>
+        <TradingName>O'Brien's Electronics</TradingName>
+        <CompanyNumber>123456</CompanyNumber>
+        <RegisteredOffice>
+            <Street>O'Connell Street</Street>
+            <Number>123</Number>
+            <City>Dublin 1</City>
+            <County>County Dublin</County>
+            <Eircode>D01 F5P2</Eircode>
+            <Country>Ireland</Country>
+        </RegisteredOffice>
+        <TradingAddress>
+            <Street>Grafton Street</Street>
+            <Number>456</Number>
+            <City>Dublin 2</City>
+            <County>County Dublin</County>
+            <Eircode>D02 DF98</Eircode>
+            <Country>Ireland</Country>
+        </TradingAddress>
+        <Contact>
+            <Telephone>+353 1 123 4567</Telephone>
+            <Mobile>+353 87 123 4567</Mobile>
+            <Email>accounts@obrienselectronics.ie</Email>
+        </Contact>
+        <NACE_Code>47.41</NACE_Code>
+        <BusinessActivity>Retail sale of computers, peripheral units and software in specialised stores</BusinessActivity>
+    </Trader>
+
+    <Agent>
+        <VATNumber>IE9876543L</VATNumber>
+        <FirmName>Byrne &amp; Associates Chartered Accountants</FirmName>
+        <CharteredStatus>true</CharteredStatus>
+        <ContactPerson>
+            <Name>Ms. Sinéad Byrne</Name>
+            <Email>sinead@byrneaccountants.ie</Email>
+            <Telephone>+353 1 987 6543</Telephone>
+        </ContactPerson>
+        <AuthorisationNumber>AUTH-2024-12345</AuthorisationNumber>
+    </Agent>
+
+    <Sales>
+        <T1_VATableSalesGoods>
+            <Amount currency="EUR">285'450.00</Amount>
+            <VATRate>23.0</VATRate>
+            <VATAmount>65'653.50</VATAmount>
+        </T1_VATableSalesGoods>
+        <T2_VATableSalesServices>
+            <Amount currency="EUR">124'680.00</Amount>
+            <VATRate>23.0</VATRate>
+            <VATAmount>28'676.40</VATAmount>
+        </T2_VATableSalesServices>
+        <T3_IntracommunitySupplies>
+            <Amount currency="EUR">89'750.00</Amount>
+            <VATRate>0.0</VATRate>
+            <VATAmount>0.00</VATAmount>
+        </T3_IntracommunitySupplies>
+        <T4_ZeroRatedSupplies>
+            <Amount currency="EUR">45'680.00</Amount>
+            <VATRate>0.0</VATRate>
+            <VATAmount>0.00</VATAmount>
+            <Details>Exports to non-EU countries</Details>
+        </T4_ZeroRatedSupplies>
+        <Total SalesExcludingVAT>545'560.00</TotalSalesExcludingVAT>
+        <TotalVATOnSales>94'329.90</TotalVATOnSales>
+    </Sales>
+
+    <Purchases>
+        <E1_PurchasesGoods>
+            <Amount currency="EUR">167'850.00</Amount>
+            <VATAmount>38'605.50</VATAmount>
+            <DeductibleVAT>38'605.50</DeductibleVAT>
+        </E1_PurchasesGoods>
+        <E2_IntracommunityAcquisitions>
+            <Amount currency="EUR">56'780.00</Amount>
+            <VATAmount>13'059.40</VATAmount>
+            <ReverseCharge>true</ReverseCharge>
+            <VATPayable_T4>13'059.40</VATPayable_T4>
+            <DeductibleVAT_E2>13'059.40</DeductibleVAT_E2>
+        </E2_IntracommunityAcquisitions>
+        <E3_Imports>
+            <Amount currency="EUR">28'950.00</Amount>
+            <VATPaidAtCustoms>6'658.50</VATPaidAtCustoms>
+            <CustomsC79Reference>C79-2024-12-456789</CustomsC79Reference>
+            <DeductibleVAT>6'658.50</DeductibleVAT>
+        </E3_Imports>
+        <TotalPurchases>253'580.00</TotalPurchases>
+        <TotalDeductibleVAT>58'323.40</TotalDeductibleVAT>
+    </Purchases>
+
+    <VATCalculation>
+        <T1_VATOnSales>94'329.90</T1_VATOnSales>
+        <T2_VATOnIntraAcquisitions>13'059.40</T2_VATOnIntraAcquisitions>
+        <TotalVATPayable>107'389.30</TotalVATPayable>
+        <E1_TotalDeductibleVAT>58'323.40</E1_TotalDeductibleVAT>
+        <NetVATDue>49'065.90</NetVATDue>
+        <VATToPay>49'065.90</VATToPay>
+        <VATToReclaim>0.00</VATToReclaim>
+        <PriorPeriodAdjustment>0.00</PriorPeriodAdjustment>
+        <FinalAmount>49'065.90</FinalAmount>
+    </VATCalculation>
+
+    <IntracommunityTransactions>
+        <VIES_Statement>
+            <Acquisitions>
+                <Supplier>
+                    <VATNumber>DE123456789</VATNumber>
+                    <Country>DE</Country>
+                    <Amount>28'750.00</Amount>
+                </Supplier>
+                <Supplier>
+                    <VATNumber>NL123456789B01</VATNumber>
+                    <Country>NL</Country>
+                    <Amount>18'030.00</Amount>
+                </Supplier>
+                <Supplier>
+                    <VATNumber>FR12345678901</VATNumber>
+                    <Country>FR</Country>
+                    <Amount>10'000.00</Amount>
+                </Supplier>
+            </Acquisitions>
+            <Supplies>
+                <Customer>
+                    <VATNumber>GB123456789</VATNumber>
+                    <Country>GB</Country>
+                    <Amount>35'680.00</Amount>
+                </Customer>
+                <Customer>
+                    <VATNumber>NL987654321B01</VATNumber>
+                    <Country>NL</Country>
+                    <Amount>29'570.00</Amount>
+                </Customer>
+                <Customer>
+                    <VATNumber>DE987654321</VATNumber>
+                    <Country>DE</Country>
+                    <Amount>24'500.00</Amount>
+                </Customer>
+            </Supplies>
+        </VIES_Statement>
+    </IntracommunityTransactions>
+
+    <Payment>
+        <DueDate>2025-02-19</DueDate>
+        <PaymentMethod>ELECTRONIC_FUNDS_TRANSFER</PaymentMethod>
+        <Payee>Office of the Revenue Commissioners</Payee>
+        <BankDetails>
+            <AccountName>Revenue Commissioners - VAT</AccountName>
+            <IBAN>IE12 AIBK 9311 5212 3456 78</IBAN>
+            <BIC>AIBKIE2D</BIC>
+            <Bank>Allied Irish Banks</Bank>
+            <SortCode>93-11-52</SortCode>
+        </BankDetails>
+        <PaymentReference>VAT-1234567T-2024-NOVDEC</PaymentReference>
+        <AmountDue currency="EUR">49'065.90</AmountDue>
+    </Payment>
+
+    <Declaration>
+        <DeclarationText>I declare that this return, including any supplementary pages, is correct and complete to the best of my knowledge and belief, and that the amounts shown represent my true liability to VAT for the period concerned.</DeclarationText>
+        <DeclarantName>Pádraig O'Brien</DeclarantName>
+        <DeclarantCapacity>MANAGING_DIRECTOR</DeclarantCapacity>
+        <Date>2025-01-15</Date>
+        <DigitalSignature>POB_2025_01_15_11_45_00</DigitalSignature>
+    </Declaration>
+
+    <Accountant>
+        <CertificationText>I certify that I have prepared this VAT return on behalf of the taxable person named above, based on information supplied to me, and that to the best of my knowledge and belief, the return is correct.</CertificationText>
+        <AccountantName>Sinéad Byrne</AccountantName>
+        <Qualification>ACA</Qualification>
+        <Date>2025-01-15</Date>
+        <DigitalSignature>SB_2025_01_15_11_40_00</DigitalSignature>
+    </Accountant>
+
+    <SupplementaryInformation>
+        <Note>Return submitted via Revenue Online Service (ROS)</Note>
+        <Note>All figures are in Euro (€)</Note>
+        <Note>Bi-monthly VAT return period applies</Note>
+        <Note>Business is registered for Intrastat reporting</Note>
+    </SupplementaryInformation>
+
+    <IrishSpecialCharacters>
+        <Fada>á é í ó ú Á É Í Ó Ú</Fada>
+        <Names>O'Brien, McCarthy, O'Connell, Séamus, Sinéad, Pádraig, Máire</Names>
+        <Places>Dublin, Cork, Galway, Limerick, Dún Laoghaire, Baile Átha Cliath</Places>
+        <Words>Éire, Taoiseach, Dáil, Seanad</Words>
+        <Currency>€ EUR Euro Cent</Currency>
+    </IrishSpecialCharacters>
+</VATReturn>

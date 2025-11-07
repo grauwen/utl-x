@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Krankenkassenabrechnung xmlns="http://www.kvg.admin.ch/abrechnung/v1"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Abrechnungsdaten>
+        <AbrechnungsNummer>CH-2025-KK-456789</AbrechnungsNummer>
+        <Periode>2024-12</Periode>
+        <Erstellungsdatum>2025-01-15</Erstellungsdatum>
+        <Fälligkeitsdatum>2025-02-15</Fälligkeitsdatum>
+    </Abrechnungsdaten>
+
+    <Versicherter>
+        <Versichertennummer>756.1234.5678.90</Versichertennummer>
+        <Name>Müller</Name>
+        <Vorname>Hans-Peter</Vorname>
+        <Geburtsdatum>1975-08-15</Geburtsdatum>
+        <Geschlecht>M</Geschlecht>
+        <Adresse>
+            <Strasse>Bahnhofstrasse</Strasse>
+            <Hausnummer>123</Hausnummer>
+            <PLZ>8001</PLZ>
+            <Ort>Zürich</Ort>
+            <Kanton>ZH</Kanton>
+        </Adresse>
+    </Versicherert>
+
+    <Krankenkasse>
+        <Name>Helsana Versicherungen AG</Name>
+        <UID>CHE-123.456.789</UID>
+        <Policennummer>KK-2024-987654</Policennummer>
+        <Versicherungsmodell>HAUSARZTMODELL</Versicherungsmodell>
+        <Franchise>CHF 2'500.00</Franchise>
+        <Selbstbehalt>10%</Selbstbehalt>
+        <SelbstbehaltMaximum>CHF 700.00</SelbstbehaltMaximum>
+    </Krankenkasse>
+
+    <Leistungen>
+        <Leistung>
+            <Datum>2024-12-05</Datum>
+            <Leistungserbringer>Dr. med. Sophie Berger</Leistungserbringer>
+            <GLN>7601001234567</GLN>
+            <Tarifziffer>00.0010</Tarifziffer>
+            <Bezeichnung>Konsultation, erste 5 Min.</Bezeichnung>
+            <Kosten>CHF 89.50</Kosten>
+            <VergütungKK>CHF 71.60</VergütungKK>
+            <Selbstbehalt>CHF 8.95</Selbstbehalt>
+            <PatientenAnteil>CHF 17.90</PatientenAnteil>
+        </Leistung>
+        <Leistung>
+            <Datum>2024-12-10</Datum>
+            <Leistungserbringer>Apotheke Zürich Hauptbahnhof</Leistungserbringer>
+            <GLN>7601002345678</GLN>
+            <Artikel>Medikament XYZ</Artikel>
+            <Kosten>CHF 156.80</Kosten>
+            <VergütungKK>CHF 141.12</VergütungKK>
+            <Selbstbehalt>CHF 15.68</Selbstbehalt>
+            <PatientenAnteil>CHF 15.68</PatientenAnteil>
+        </Leistung>
+    </Leistungen>
+
+    <Zusammenfassung>
+        <GesamtkostenBrutto>CHF 246.30</GesamtkostenBrutto>
+        <VergütungKrankenkasse>CHF 212.72</VergütungKrankenkasse>
+        <Selbstbehalt10Prozent>CHF 24.63</Selbstbehalt10Prozent>
+        <PatientenAnteilTotal>CHF 33.58</PatientenAnteilTotal>
+        <Währung>CHF</Währung>
+    </Zusammenfassung>
+
+    <SchweizerspezifischeTekens>
+        <Umlaute>ä ö ü Ä Ö Ü</Umlaute>
+        <Apostrophformat>1'234'567.89</Apostrophformat>
+        <Währung>CHF Fr. Franken Rappen</Währung>
+    </SchweizerspezifischeTekens>
+</Krankenkassenabrechnung>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Form1099MISC xmlns="http://www.irs.gov/forms/1099/v1">
+    <TaxYear>2024</TaxYear>
+    <FormType>1099-MISC</FormType>
+    <CorrectedReturn>false</CorrectedReturn>
+
+    <Payer>
+        <Name>Tech Solutions Corporation</Name>
+        <EIN>12-3456789</EIN>
+        <Address>
+            <Street>1000 Technology Drive</Street>
+            <City>San Francisco</City>
+            <State>CA</State>
+            <ZipCode>94105</ZipCode>
+        </Address>
+        <Phone>+1-415-555-0100</Phone>
+    </Payer>
+
+    <Recipient>
+        <Name>John Michael Smith</Name>
+        <SSN>***-**-4567</SSN>
+        <Address>
+            <Street>456 Market Street</Street>
+            <Apartment>Apt 12B</Apartment>
+            <City>San Francisco</City>
+            <State>CA</State>
+            <ZipCode>94102</ZipCode>
+        </Address>
+    </Recipient>
+
+    <PaymentDetails>
+        <Box1_Rents>0.00</Box1_Rents>
+        <Box2_Royalties>0.00</Box2_Royalties>
+        <Box3_OtherIncome>0.00</Box3_OtherIncome>
+        <Box4_FederalIncomeTaxWithheld>0.00</Box4_FederalIncomeTaxWithheld>
+        <Box5_FishingBoatProceeds>0.00</Box5_FishingBoatProceeds>
+        <Box6_MedicalHealthPayments>0.00</Box6_MedicalHealthPayments>
+        <Box7_NonemployeeCompensation currency="USD">85,450.00</Box7_NonemployeeCompensation>
+        <Box8_SubstitutePayments>0.00</Box8_SubstitutePayments>
+        <Box9_PayerMadeDirectSales>false</Box9_PayerMadeDirectSales>
+        <Box10_CropInsuranceProceeds>0.00</Box10_CropInsuranceProceeds>
+    </PaymentDetails>
+
+    <StateTaxInformation>
+        <State>CA</State>
+        <StateIDNumber>12-3456789</StateIDNumber>
+        <StateIncome currency="USD">85,450.00</StateIncome>
+        <StateTaxWithheld currency="USD">0.00</StateTaxWithheld>
+    </StateTaxInformation>
+
+    <IRSFilingDate>2025-01-31</IRSFilingDate>
+    <RecipientCopyMailedDate>2025-01-31</RecipientCopyMailedDate>
+</Form1099MISC>

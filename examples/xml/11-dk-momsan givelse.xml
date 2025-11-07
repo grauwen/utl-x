@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MomsAngivelse xmlns="http://www.skat.dk/moms/v1"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <AngivelseOplysninger>
+        <AngivelseNummer>DK-2025-MOMS-Q4-123456</AngivelseNummer>
+        <PeriodeType>KVARTAL</PeriodeType>
+        <År>2024</År>
+        <Kvartal>4</Kvartal>
+        <Indsendt>2025-01-20T15:45:00+01:00</Indsendt>
+        <Status>GODKENDT</Status>
+    </AngivelseOplysninger>
+
+    <Virksomhed>
+        <CVRNummer>12345678</CVRNummer>
+        <Virksomhedsnavn>Østergaard &amp; Sønner ApS</Virksomhedsnavn>
+        <Selskabsform>ANPARTSSELSKAB</Selskabsform>
+        <Adresse>
+            <Vejnavn>Strøget</Vejnavn>
+            <Husnummer>125</Husnummer>
+            <Postnummer>1000</Postnummer>
+            <By>København K</By>
+            <Land>Danmark</Land>
+        </Adresse>
+        <Kontakt>
+            <Telefon>+45 33 12 34 56</Telefon>
+            <Email>regnskab@oestergaard.dk</Email>
+        </Kontakt>
+        <MomsRegistreringsdato>2010-01-15</MomsRegistreringsdato>
+        <Branchekode>46.43.10</Branchekode>
+        <Branchebeskrivelse>Engroshandel med elektrisk husholdningsudstyr</Branchebeskrivelse>
+    </Virksomhed>
+
+    <Ansvarlig>
+        <CPRNummer>010185-1234</CPRNummer>
+        <Navn>Lars Østergaard</Navn>
+        <Stilling>DIREKTØR</Stilling>
+        <Email>lars@oestergaard.dk</Email>
+        <Telefon>+45 40 12 34 56</Telefon>
+    </Ansvarlig>
+
+    <UdgåendeMoms>
+        <SalgiDanmark>
+            <Sats25Procent>
+                <Omsætning>2'450'000.00</Omsætning>
+                <MomsSats>25.0</MomsSats>
+                <Momsbeløb>612'500.00</Momsbeløb>
+            </Sats25Procent>
+        </SalgiDanmark>
+        <EU_Salg>
+            <VarerTilAndreEULande>
+                <Omsætning>875'000.00</Omsætning>
+                <Momsbeløb>0.00</Momsbeløb>
+                <Bemærkning>Momsfri levering til registrerede virksomheder i andre EU-lande</Bemærkning>
+            </VarerTilAndreEULande>
+        </EU_Salg>
+        <EksportUdenforEU>
+            <Omsætning>456'000.00</Omsætning>
+            <Momsbeløb>0.00</Momsbeløb>
+        </EksportUdenforEU>
+        <TotalUdgåendeMoms>612'500.00</TotalUdgåendeMoms>
+    </UdgåendeMoms>
+
+    <IndgåendeMoms>
+        <KøbiDanmark>
+            <Varer>
+                <Købspris>1'234'000.00</Købspris>
+                <FradragsberettigetMoms>308'500.00</FradragsberettigetMoms>
+                <MomsSats>25.0</MomsSats>
+            </Varer>
+            <Ydelser>
+                <Købspris>156'000.00</Købspris>
+                <FradragsberettigetMoms>39'000.00</FradragsberettigetMoms>
+                <MomsSats>25.0</MomsSats>
+            </Ydelser>
+        </KøbiDanmark>
+        <EU_Køb>
+            <VarerFraAndreEULande>
+                <Købspris>345'000.00</Købspris>
+                <Momspligtig>345'000.00</Momspligtig>
+                <Momsbeløb>86'250.00</Momsbeløb>
+                <FradragsberettigetMoms>86'250.00</FradragsberettigetMoms>
+                <Bemærkning>Erhvervelser fra andre EU-lande - moms opgøres og fratrækkes</Bemærkning>
+            </VarerFraAndreEULande>
+        </EU_Køb>
+        <ImportUdenforEU>
+            <Told>
+                <Varens Værdi>234'000.00</VarensVærdi>
+                <ToldOgAfgifter>28'080.00</ToldOgAfgifter>
+                <ImportmomsAfregnet>58'500.00</ImportmomsAfregnet>
+                <FradragsberettigetMoms>58'500.00</FradragsberettigetMoms>
+            </Told>
+        </ImportUdenforEU>
+        <TotalIndgåendeMoms>492'250.00</TotalIndgåendeMoms>
+    </IndgåendeMoms>
+
+    <MomsBeregning>
+        <UdgåendeMomsTil>612'500.00</UdgåendeMomsTil>
+        <IndgåendeMomsFra>492'250.00</IndgåendeMomsFra>
+        <MomsTilbetaling>120'250.00</MomsTilbetaling>
+        <MomsTilgodehavende>0.00</MomsTilgodehavende>
+        <OverførtFraForrigeAngivelse>0.00</OverførtFraForrigeAngivelse>
+        <SamletTilbetaling>120'250.00</SamletTilbetaling>
+    </MomsBeregning>
+
+    <SalgsListe>
+        <LeveringTilAndreEULande>
+            <Kunde>
+                <MomsNummer>DE123456789</MomsNummer>
+                <Land>Tyskland</Land>
+                <Beløb>345'000.00</Beløb>
+            </Kunde>
+            <Kunde>
+                <MomsNummer>SE987654321012</MomsNummer>
+                <Land>Sverige</Land>
+                <Beløb>285'000.00</Beløb>
+            </Kunde>
+            <Kunde>
+                <MomsNummer>NL123456789B01</MomsNummer>
+                <Land>Holland</Land>
+                <Beløb>245'000.00</Beløb>
+            </Kunde>
+        </LeveringTilAndreEULande>
+        <TotalLeveringerEU>875'000.00</TotalLeveringerEU>
+    </SalgsListe>
+
+    <Betaling>
+        <BetalingsFrist>2025-02-01</BetalingsFrist>
+        <Betalingsmetode>PBS_AUTOMATISK_TRÆK</Betalingsmetode>
+        <BankKonto>
+            <Registreringsnummer>1234</Registreringsnummer>
+            <Kontonummer>56789012</Kontonummer>
+            <IBAN>DK5012345678901234</IBAN>
+            <SWIFT>DABADKKK</SWIFT>
+            <Bank>Danske Bank A/S</Bank>
+        </BankKonto>
+        <TræksDato>2025-02-01</TræksDato>
+        <BeløbAtBetale>120'250.00</BeløbAtBetale>
+        <Valuta>DKK</Valuta>
+    </Betaling>
+
+    <SupplerendeOplysninger>
+        <Revisor>
+            <Navn>Mette Nørgaard</Navn>
+            <Firma>BDO Danmark</Firma>
+            <CVR>20222221</CVR>
+            <Autorisationsnummer>12345</Autorisationsnummer>
+            <Email>mette.noergaard@bdo.dk</Email>
+            <Telefon>+45 39 15 52 00</Telefon>
+        </Revisor>
+        <Bemærkninger>
+            <Bemærkning>Momsangivelsen er udarbejdet i overensstemmelse med Momslov en (Lovbekendtgørelse nr. 1021 af 26. september 2019).</Bemærkning>
+            <Bemærkning>Virksomheden er kvartalsafregner og anvender fakturaprincippet.</Bemærkning>
+        </Bemærkninger>
+    </SupplerendeOplysninger>
+
+    <Underskrift>
+        <Dato>2025-01-20</Dato>
+        <Sted>København</Sted>
+        <Navn>Lars Østergaard</Navn>
+        <Stilling>Direktør</Stilling>
+        <DigitalSignatur>
+            <SignaturType>NemID_ERHVERV</SignaturType>
+            <SignaturVærdi>abc123def456ghi789jkl012mno345pqr678stu901</SignaturVærdi>
+            <Tidsstempel>2025-01-20T15:45:30+01:00</Tidsstempel>
+        </DigitalSignatur>
+    </Underskrift>
+
+    <DanskeSpecialTegn>
+        <Bogstaver>æ ø å Æ Ø Å</Bogstaver>
+        <Eksempler>København, Århus (Aarhus), Ålborg, Esbjerg, Odense, Roskilde</Eksempler>
+        <Ord>kæde, møbel, brød, grøntsager, øl, årstal, påske, høst</Ord>
+        <Valuta>kr. DKK kroner øre</Valuta>
+    </DanskeSpecialTegn>
+</MomsAngivelse>

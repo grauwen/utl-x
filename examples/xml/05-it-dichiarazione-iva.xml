@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DichiarazioneIVA xmlns="http://www.agenziaentrate.gov.it/iva/v1"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <IntestazioneDichiarazione>
+        <AnnoImposta>2024</AnnoImposta>
+        <Periodo>4T</Periodo>
+        <TipoDichiarazione>TRIMESTRALE</TipoDichiarazione>
+        <DataPresentazione>2025-01-28</DataPresentazione>
+        <ProtocolloTelematico>IT2025012845678901234</ProtocolloTelematico>
+    </IntestazioneDichiarazione>
+
+    <SoggettoObbligato>
+        <DatiAnagrafici>
+            <PartitaIVA>IT12345678901</PartitaIVA>
+            <CodiceFiscale>RSSMRA80A01H501Z</CodiceFiscale>
+            <Denominazione>Rossi &amp; Bianchi S.r.l.</Denominazione>
+            <NaturaGiuridica>SOCIETÀ_A_RESPONSABILITÀ_LIMITATA</NaturaGiuridica>
+        </DatiAnagrafici>
+        <SedeLegale>
+            <Indirizzo>Via Giuseppe Verdi</Indirizzo>
+            <NumeroCivico>42</NumeroCivico>
+            <CAP>20121</CAP>
+            <Comune>Milano</Comune>
+            <Provincia>MI</Provincia>
+            <Regione>Lombardia</Regione>
+            <Nazione>Italia</Nazione>
+        </SedeLegale>
+        <Contatti>
+            <Telefono>+39 02 1234 5678</Telefono>
+            <Email>amministrazione@rossibianchi.it</Email>
+            <PEC>rossibianchi@pec.it</PEC>
+        </Contatti>
+        <RegimeContabile>ORDINARIO</RegimeContabile>
+        <AttivitàPrevalente>
+            <CodiceATECO>47.91.10</CodiceATECO>
+            <Descrizione>Commercio al dettaglio per corrispondenza e tramite Internet</Descrizione>
+        </AttivitàPrevalente>
+    </SoggettoObbligato>
+
+    <LegaleRappresentante>
+        <CodiceFiscale>RSSMRA80A01H501Z</CodiceFiscale>
+        <Cognome>Rossi</Cognome>
+        <Nome>Mario</Nome>
+        <DataNascita>1980-01-01</DataNascita>
+        <ComuneNascita>Roma</ComuneNascita>
+        <ProvinciaNascita>RM</ProvinciaNascita>
+        <Qualifica>AMMINISTRATORE_UNICO</Qualifica>
+    </LegaleRappresentante>
+
+    <OperazioniAttive>
+        <OperazioniImponibili>
+            <AliquotaOrdinaria22>
+                <BaseImponibile>125450.00</BaseImponibile>
+                <AliquotaIVA>22.0</AliquotaIVA>
+                <ImpostaLorda>27599.00</ImpostaLorda>
+            </AliquotaOrdinaria22>
+            <AliquotaRidotta10>
+                <BaseImponibile>34750.00</BaseImponibile>
+                <AliquotaIVA>10.0</AliquotaIVA>
+                <ImpostaLorda>3475.00</ImpostaLorda>
+            </AliquotaRidotta10>
+            <AliquotaRidotta4>
+                <BaseImponibile>8950.00</BaseImponibile>
+                <AliquotaIVA>4.0</AliquotaIVA>
+                <ImpostaLorda>358.00</ImpostaLorda>
+            </AliquotaRidotta4>
+        </OperazioniImponibili>
+        <OperazioniNonImponibili>
+            <Esportazioni>15600.00</Esportazioni>
+            <OperazioniIntracomunitarie>28450.00</OperazioniIntracomunitarie>
+        </OperazioniNonImponibili>
+        <OperazioniEsenti>
+            <BaseImponibile>5780.00</BaseImponibile>
+            <Articolo>Art. 10, comma 1, n. 18 - Servizi educativi</Articolo>
+        </OperazioniEsenti>
+        <TotaleOperazioniAttive>
+            <ImponibileTotale>169150.00</ImponibileTotale>
+            <NonImponibileTotale>44050.00</NonImponibileTotale>
+            <EsenteTotale>5780.00</EsenteTotale>
+            <VolumeAffariTotale>218980.00</VolumeAffariTotale>
+            <IVATotaleAttiva>31432.00</IVATotaleAttiva>
+        </TotaleOperazioniAttive>
+    </OperazioniAttive>
+
+    <OperazioniPassive>
+        <AcquistiInterni>
+            <AliquotaOrdinaria22>
+                <BaseImponibile>67850.00</BaseImponibile>
+                <AliquotaIVA>22.0</AliquotaIVA>
+                <IVADetraibile>14927.00</IVADetraibile>
+            </AliquotaOrdinaria22>
+            <AliquotaRidotta10>
+                <BaseImponibile>12340.00</BaseImponibile>
+                <AliquotaIVA>10.0</AliquotaIVA>
+                <IVADetraibile>1234.00</IVADetraibile>
+            </AliquotaRidotta10>
+            <AliquotaRidotta4>
+                <BaseImponibile>3450.00</BaseImponibile>
+                <AliquotaIVA>4.0</AliquotaIVA>
+                <IVADetraibile>138.00</IVADetraibile>
+            </AliquotaRidotta4>
+        </AcquistiInterni>
+        <AcquistiIntracomunitari>
+            <BaseImponibile>18750.00</BaseImponibile>
+            <AliquotaIVA>22.0</AliquotaIVA>
+            <IVADetraibile>4125.00</IVADetraibile>
+        </AcquistiIntracomunitari>
+        <Importazioni>
+            <BaseImponibile>9870.00</BaseImponibile>
+            <IVAPagataDoganale>2171.40</IVAPagataDoganale>
+            <IVADetraibile>2171.40</IVADetraibile>
+        </Importazioni>
+        <TotaleOperazioniPassive>
+            <BaseImponibileTotale>112260.00</BaseImponibileTotale>
+            <IVATotalePassiva>22595.40</IVATotalePassiva>
+        </TotaleOperazioniPassive>
+    </OperazioniPassive>
+
+    <RiepilogoLiquidazione>
+        <IVAEsigibile>31432.00</IVAEsigibile>
+        <IVADetratta>22595.40</IVADetratta>
+        <IVADovuta>8836.60</IVADovuta>
+        <CreditoPeriodoPrecedente>2145.30</CreditoPeriodoPrecedente>
+        <VersamentoAcconto>0.00</VersamentoAcconto>
+        <IVADaVersare>6691.30</IVADaVersare>
+        <CreditoRiportare>0.00</CreditoRiportare>
+    </RiepilogoLiquidazione>
+
+    <DettaglioFattureEmesse>
+        <Fattura>
+            <NumeroFattura>2024/4T/0001</NumeroFattura>
+            <DataEmissione>2024-10-05</DataEmissione>
+            <Cliente>
+                <PartitaIVA>IT98765432109</PartitaIVA>
+                <RagioneSociale>Bianchi &amp; Figli S.p.A.</RagioneSociale>
+            </Cliente>
+            <Imponibile>12500.00</Imponibile>
+            <AliquotaIVA>22.0</AliquotaIVA>
+            <IVA>2750.00</IVA>
+            <Totale>15250.00</Totale>
+        </Fattura>
+        <Fattura>
+            <NumeroFattura>2024/4T/0002</NumeroFattura>
+            <DataEmissione>2024-10-12</DataEmissione>
+            <Cliente>
+                <PartitaIVA>IT11223344556</PartitaIVA>
+                <RagioneSociale>Verdi S.r.l.</RagioneSociale>
+            </Cliente>
+            <Imponibile>8750.00</Imponibile>
+            <AliquotaIVA>22.0</AliquotaIVA>
+            <IVA>1925.00</IVA>
+            <Totale>10675.00</Totale>
+        </Fattura>
+        <Fattura>
+            <NumeroFattura>2024/4T/0003</NumeroFattura>
+            <DataEmissione>2024-10-18</DataEmissione>
+            <TipoDocumento>FATTURA_INTRACOMUNITARIA</TipoDocumento>
+            <Cliente>
+                <PartitaIVAComunitaria>FR12345678901</PartitaIVAComunitaria>
+                <RagioneSociale>Société Française SARL</RagioneSociale>
+                <Paese>Francia</Paese>
+            </Cliente>
+            <Imponibile>15600.00</Imponibile>
+            <AliquotaIVA>0.0</AliquotaIVA>
+            <IVA>0.00</IVA>
+            <Totale>15600.00</Totale>
+            <ArticoloRiferimento>Art. 41 DL 331/93</ArticoloRiferimento>
+        </Fattura>
+    </DettaglioFattureEmesse>
+
+    <DettaglioFattureRicevute>
+        <Fattura>
+            <NumeroFattura>FOR-2024-1234</NumeroFattura>
+            <DataRicezione>2024-10-08</DataRicezione>
+            <Fornitore>
+                <PartitaIVA>IT55667788990</PartitaIVA>
+                <RagioneSociale>Ferrari Forniture S.r.l.</RagioneSociale>
+            </Fornitore>
+            <Imponibile>5600.00</Imponibile>
+            <AliquotaIVA>22.0</AliquotaIVA>
+            <IVA>1232.00</IVA>
+            <Totale>6832.00</Totale>
+        </Fattura>
+        <Fattura>
+            <NumeroFattura>INV-2024-DE-5678</NumeroFattura>
+            <DataRicezione>2024-11-15</DataRicezione>
+            <TipoDocumento>FATTURA_ACQUISTO_INTRACOMUNITARIO</TipoDocumento>
+            <Fornitore>
+                <PartitaIVAComunitaria>DE123456789</PartitaIVAComunitaria>
+                <RagioneSociale>Deutsche Firma GmbH</RagioneSociale>
+                <Paese>Germania</Paese>
+            </Fornitore>
+            <Imponibile>8750.00</Imponibile>
+            <AliquotaIVA>22.0</AliquotaIVA>
+            <IVA>1925.00</IVA>
+            <Totale>10675.00</Totale>
+            <ArticoloRiferimento>Art. 38 DL 331/93</ArticoloRiferimento>
+            <IntegrazioneIVA>true</IntegrazioneIVA>
+        </Fattura>
+    </DettaglioFattureRicevute>
+
+    <ModelliF24Versati>
+        <ModelloF24>
+            <DataVersamento>2024-11-16</DataVersamento>
+            <CodiceTributo>6099</CodiceTributo>
+            <DescrizioneTributo>IVA - Liquidazione trimestrale</DescrizioneTributo>
+            <AnnoDiRiferimento>2024</AnnoDiRiferimento>
+            <ImportoVersato>0.00</ImportoVersato>
+            <CIRTelematico>CIR-2024-11-16-123456789</CIRTelematico>
+        </ModelloF24>
+    </ModelliF24Versati>
+
+    <DichiarazioneIntrastat>
+        <Cessioni>
+            <TotaleCessioni>28450.00</TotaleCessioni>
+            <NumeroPaesiDestinazione>3</NumeroPaesiDestinazione>
+            <PrincipaliPaesi>
+                <Paese>
+                    <CodiceISO>FR</CodiceISO>
+                    <Nome>Francia</Nome>
+                    <Valore>15600.00</Valore>
+                </Paese>
+                <Paese>
+                    <CodiceISO>DE</CodiceISO>
+                    <Nome>Germania</Nome>
+                    <Valore>9850.00</Valore>
+                </Paese>
+                <Paese>
+                    <CodiceISO>ES</CodiceISO>
+                    <Nome>Spagna</Nome>
+                    <Valore>3000.00</Valore>
+                </Paese>
+            </PrincipaliPaesi>
+        </Cessioni>
+        <Acquisti>
+            <TotaleAcquisti>18750.00</TotaleAcquisti>
+            <NumeroPaesiOrigine>2</NumeroPaesiOrigine>
+            <PrincipaliPaesi>
+                <Paese>
+                    <CodiceISO>DE</CodiceISO>
+                    <Nome>Germania</Nome>
+                    <Valore>12500.00</Valore>
+                </Paese>
+                <Paese>
+                    <CodiceISO>NL</CodiceISO>
+                    <Nome>Paesi Bassi</Nome>
+                    <Valore>6250.00</Valore>
+                </Paese>
+            </PrincipaliPaesi>
+        </Acquisti>
+    </DichiarazioneIntrastat>
+
+    <Note>
+        <Nota>Dichiarazione presentata in conformità al D.P.R. 633/1972 e successive modifiche</Nota>
+        <Nota>L'IVA relativa agli acquisti intracomunitari è stata regolarmente integrata</Nota>
+        <Nota>Le fatture elettroniche sono state trasmesse al Sistema di Interscambio (SDI)</Nota>
+    </Note>
+
+    <Intermediario>
+        <CodiceFiscale>VRDLCA75D15F205W</CodiceFiscale>
+        <Cognome>Verdi</Cognome>
+        <Nome>Luca</Nome>
+        <NumeroIscrizioneAlbo>MI-123456</NumeroIscrizioneAlbo>
+        <Albo>ORDINE_DOTTORI_COMMERCIALISTI</Albo>
+        <DataConferimentoIncarico>2024-01-15</DataConferimentoIncarico>
+        <Contatti>
+            <Email>luca.verdi@commercialisti.it</Email>
+            <PEC>luca.verdi@pec.commercialisti.it</PEC>
+            <Telefono>+39 02 9876 5432</Telefono>
+        </Contatti>
+    </Intermediario>
+
+    <FirmaDigitale>
+        <DataFirma>2025-01-28T15:45:00+01:00</DataFirma>
+        <TipoFirma>CAdES</TipoFirma>
+        <Firmatario>VRDLCA75D15F205W</Firmatario>
+        <HashDocumento>a3f5d8c9b7e4f6d2c1a9b8e7f6a5d4c3b2a1e0f9</HashDocumento>
+    </FirmaDigitale>
+
+    <CaratteriSpecialiItaliani>
+        <VocaliAccentate>à è é ì ò ù</VocaliAccentate>
+        <Esempi>città, perché, così, più, però, qualità, società, università</Esempi>
+        <Simboli>€ ° № § ©</Simboli>
+    </CaratteriSpecialiItaliani>
+</DichiarazioneIVA>
