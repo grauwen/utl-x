@@ -43,15 +43,18 @@ Design Tome MODE (two tab instance)
 
 INPUT Pane (left Pane)
 
-TAB Instance:; Format   ( ->  == linked  between tabs formats)  TAB Schema Format: (these are linked)
-- json      selected          -> set to jsch 
-- xml       selected          -> set to xsd
-- yaml      selected          -> set to jsch 
-- csv                         -> Schema [should be made BLUR)  => put that text within schema as //tsch not implemented yet
-- xsd                         -> Schema [should be made BLUR)
-- jsch                        -> Schema [should be made BLUR)
-- avro                        -> Schema [should be made BLUR)
-- proto                       -> Schema [should be made BLUR)
+There should be a Field where NAME is shown and name could be changed. Default is "input" for the first input, which is reflected in UTLX as: input
+
+TAB Instance:; Format   |     ->  == linked  between tabs formats)  TAB Schema Format: (these are linked)                   | UTLX (open in Monaco editor) Chenge to:
+------------------------------------------------------------------------------------------------------------------------------------------------------
+- json      selected    |     -> set to jsch                                                                                | input json OR WHEN MUTIPLE inputs: name json
+- xml       selected    |     -> set to xsd                                                                                 | input xml
+- yaml      selected    |     -> set to jsch                                                                                | input yaml
+- csv                   |     -> Schema [should be made BLUR)  => put that text within schema as //tsch not implemented yet | input csv
+- xsd                   |      -> Schema [should be made BLUR)                                                              | input xsd
+- jsch                  |      -> Schema [should be made BLUR)                                                              | input jsch
+- avro                  |      -> Schema [should be made BLUR)                                                              | input avro
+- proto                 |      -> Schema [should be made BLUR)                                                              | input proto
 
 
 reversed (when user explicetly sets the Format of the Schema)
