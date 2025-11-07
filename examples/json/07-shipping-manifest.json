@@ -1,0 +1,83 @@
+{
+  "manifestId": "SHIP-2025-WH01-00234",
+  "manifestDate": "2025-01-16",
+  "carrier": {
+    "carrierId": "CAR-FDX",
+    "name": "FedEx",
+    "serviceType": "GROUND",
+    "trackingNumber": "793847293847",
+    "estimatedDelivery": "2025-01-20"
+  },
+  "origin": {
+    "warehouseId": "WH-CENTRAL-01",
+    "name": "Central Distribution Center",
+    "address": {
+      "street": "555 Distribution Way",
+      "city": "Chicago",
+      "state": "IL",
+      "zipCode": "60601",
+      "country": "USA"
+    },
+    "contactPhone": "+1-312-555-0100"
+  },
+  "destination": {
+    "customerId": "CUST-7788",
+    "companyName": "RetailMart Store #145",
+    "address": {
+      "street": "2000 Shopping Plaza",
+      "city": "Denver",
+      "state": "CO",
+      "zipCode": "80202",
+      "country": "USA"
+    },
+    "contactPerson": "James Wilson",
+    "contactPhone": "+1-303-555-0145"
+  },
+  "packages": [
+    {
+      "packageId": "PKG-001",
+      "weight": 45.5,
+      "weightUnit": "LBS",
+      "dimensions": {
+        "length": 24,
+        "width": 18,
+        "height": 12,
+        "unit": "INCHES"
+      },
+      "contents": [
+        {
+          "sku": "ELEC-TV-55",
+          "description": "55-inch Smart TV",
+          "quantity": 1,
+          "value": 599.99
+        }
+      ]
+    },
+    {
+      "packageId": "PKG-002",
+      "weight": 15.2,
+      "weightUnit": "LBS",
+      "dimensions": {
+        "length": 18,
+        "width": 12,
+        "height": 8,
+        "unit": "INCHES"
+      },
+      "contents": [
+        {
+          "sku": "ELEC-SOUND-BAR",
+          "description": "Wireless Soundbar",
+          "quantity": 2,
+          "value": 149.99
+        }
+      ]
+    }
+  ],
+  "totalWeight": 60.7,
+  "totalValue": 899.97,
+  "shippingCost": 45.00,
+  "insurance": 10.00,
+  "signatureRequired": true,
+  "specialInstructions": "Fragile - Handle with care. Deliver to receiving dock at rear of building.",
+  "hazardousMaterials": false
+}

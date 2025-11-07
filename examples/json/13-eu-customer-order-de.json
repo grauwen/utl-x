@@ -1,0 +1,141 @@
+{
+  "bestellnummer": "DE-2025-BNR-789456",
+  "bestelldatum": "2025-01-16T14:30:00+01:00",
+  "status": "VERSENDET",
+  "kunde": {
+    "kundenId": "DE-KUND-5521",
+    "firmenname": "Schmidt Maschinenbau GmbH",
+    "ansprechpartner": "Herr Thomas Müller",
+    "email": "t.mueller@schmidt-maschinen.de",
+    "telefon": "+49 89 1234567",
+    "ustIdNr": "DE123456789",
+    "rechnungsadresse": {
+      "strasse": "Industriestraße 45",
+      "plz": "80335",
+      "stadt": "München",
+      "bundesland": "Bayern",
+      "land": "Deutschland"
+    },
+    "lieferadresse": {
+      "strasse": "Werkstraße 12",
+      "plz": "85748",
+      "stadt": "Garching bei München",
+      "bundesland": "Bayern",
+      "land": "Deutschland"
+    }
+  },
+  "artikel": [
+    {
+      "position": 1,
+      "artikelnummer": "IND-MOTOR-15KW",
+      "bezeichnung": "Drehstrommotor 15kW, 1500 U/min",
+      "hersteller": "Siemens AG",
+      "menge": 3,
+      "einheit": "Stück",
+      "einzelpreis": 1250.00,
+      "zwischensumme": 3750.00,
+      "mehrwertsteuersatz": 19.0,
+      "mehrwertsteuer": 712.50,
+      "gesamtpreis": 4462.50,
+      "lieferzeit": "2 Wochen",
+      "garantie": "24 Monate"
+    },
+    {
+      "position": 2,
+      "artikelnummer": "FREQ-UMRICHTER-22KW",
+      "bezeichnung": "Frequenzumrichter 22kW mit Netzfilter",
+      "hersteller": "ABB Deutschland",
+      "menge": 3,
+      "einheit": "Stück",
+      "einzelpreis": 2180.00,
+      "zwischensumme": 6540.00,
+      "mehrwertsteuersatz": 19.0,
+      "mehrwertsteuer": 1242.60,
+      "gesamtpreis": 7782.60,
+      "lieferzeit": "3 Wochen",
+      "garantie": "36 Monate"
+    },
+    {
+      "position": 3,
+      "artikelnummer": "SENSOR-TEMP-PT100",
+      "bezeichnung": "Temperatursensor PT100, -50°C bis +200°C",
+      "hersteller": "ifm electronic gmbh",
+      "menge": 12,
+      "einheit": "Stück",
+      "einzelpreis": 89.50,
+      "zwischensumme": 1074.00,
+      "mehrwertsteuersatz": 19.0,
+      "mehrwertsteuer": 204.06,
+      "gesamtpreis": 1278.06,
+      "lieferzeit": "Ab Lager",
+      "garantie": "24 Monate"
+    },
+    {
+      "position": 4,
+      "artikelnummer": "KABEL-NYY-5X10",
+      "bezeichnung": "Energiekabel NYY-J 5x10mm², 100m Ring",
+      "hersteller": "Lapp Kabel",
+      "menge": 2,
+      "einheit": "Ring",
+      "einzelpreis": 456.80,
+      "zwischensumme": 913.60,
+      "mehrwertsteuersatz": 19.0,
+      "mehrwertsteuer": 173.58,
+      "gesamtpreis": 1087.18,
+      "lieferzeit": "1 Woche",
+      "garantie": "12 Monate"
+    }
+  ],
+  "kostenzusammenfassung": {
+    "nettobetrag": 12277.60,
+    "mehrwertsteuer19": 2332.74,
+    "bruttobetrag": 14610.34,
+    "versandkosten": 89.00,
+    "versandMwSt": 16.91,
+    "gesamtbetrag": 14716.25,
+    "währung": "EUR"
+  },
+  "zahlungsbedingungen": {
+    "zahlungsart": "ÜBERWEISUNG",
+    "zahlungsziel": "30 Tage netto",
+    "skonto": {
+      "prozent": 2.0,
+      "frist": "10 Tage",
+      "betrag": 245.55
+    },
+    "bankverbindung": {
+      "kontoinhaber": "Industriebedarf Europa GmbH",
+      "iban": "DE89370400440532013000",
+      "bic": "COBADEFFXXX",
+      "bankname": "Commerzbank AG"
+    }
+  },
+  "versanddetails": {
+    "versandart": "Spedition",
+    "spediteur": "DHL Freight",
+    "sendungsnummer": "JD014600006777123456",
+    "voraussichtlicheLieferung": "2025-01-25",
+    "incoterms": "DAP"
+  },
+  "bemerkungen": "Lieferung an Warenannahme, Anlieferung nur Mo-Fr 08:00-16:00 Uhr. Avisierung 24h vorher erforderlich.",
+  "verkäufer": {
+    "mitarbeiterId": "DE-VK-442",
+    "name": "Frau Andrea Weber",
+    "email": "a.weber@industriebedarf-europa.de",
+    "telefon": "+49 69 9876543"
+  },
+  "dokumente": [
+    {
+      "typ": "RECHNUNG",
+      "nummer": "RE-2025-789456",
+      "datum": "2025-01-16",
+      "dateiname": "Rechnung_RE-2025-789456.pdf"
+    },
+    {
+      "typ": "LIEFERSCHEIN",
+      "nummer": "LS-2025-456123",
+      "datum": "2025-01-17",
+      "dateiname": "Lieferschein_LS-2025-456123.pdf"
+    }
+  ]
+}

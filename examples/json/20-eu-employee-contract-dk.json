@@ -1,0 +1,277 @@
+{
+  "kontraktId": "DK-2025-ANS-123456",
+  "kontraktType": "FAST_ANSÆTTELSE",
+  "udarbejdelsesDato": "2025-01-16",
+  "arbejdsgiver": {
+    "virksomhedsNavn": "Copenhagen Technology Solutions ApS",
+    "cvr": "12345678",
+    "adresse": {
+      "vejnavn": "Ørestads Boulevard",
+      "husnummer": "108",
+      "postnummer": "2300",
+      "by": "København S",
+      "region": "Hovedstaden",
+      "land": "Danmark"
+    },
+    "kontaktperson": {
+      "navn": "Mette Hansen",
+      "stilling": "HR-chef",
+      "email": "m.hansen@cph-tech.dk",
+      "telefon": "+45 33 12 34 56"
+    }
+  },
+  "medarbejder": {
+    "cprNummer": "010185-1234",
+    "fornavn": "Lars",
+    "efternavn": "Nielsen",
+    "fuldeNavn": "Lars Nielsen",
+    "fødselsdato": "1985-01-01",
+    "nationalitet": "Dansk",
+    "adresse": {
+      "vejnavn": "Amagerbrogade",
+      "husnummer": "234",
+      "etage": "3. th",
+      "postnummer": "2300",
+      "by": "København S",
+      "land": "Danmark"
+    },
+    "kontakt": {
+      "email": "lars.nielsen@email.dk",
+      "mobiltelefon": "+45 20 12 34 56"
+    },
+    "bankoplysninger": {
+      "registreringsnummer": "1234",
+      "kontonummer": "12345678901",
+      "bankNavn": "Danske Bank"
+    }
+  },
+  "stillingsoplysninger": {
+    "stillingsbetegnelse": "Senior Software Udvikler",
+    "afdelingNavn": "Produkt Udvikling",
+    "arbejdssted": {
+      "hovedarbejdssted": "København S - hovedkontor",
+      "adresse": "Ørestads Boulevard 108, 2300 København S"
+    },
+    "referenceGruppe": "IT-udvikling",
+    "nærmesteLeder": {
+      "navn": "Peter Jørgensen",
+      "stilling": "Udviklingschef",
+      "email": "p.joergensen@cph-tech.dk"
+    }
+  },
+  "ansættelsesforhold": {
+    "ansættelsesDato": "2025-02-01",
+    "prøvetid": {
+      "varighed": 3,
+      "enhed": "MÅNEDER",
+      "udløbsdato": "2025-05-01",
+      "opsigelseVarsel": "14 dage til udgangen af en måned"
+    },
+    "ansættelsesform": "FAST_FULDTID",
+    "overenskomst": {
+      "navn": "IT-overenskomsten",
+      "parter": ["Dansk Industri", "PROSA"],
+      "ikrafttrædelse": "2023-03-01"
+    }
+  },
+  "arbejdstid": {
+    "ugentligTimer": 37.0,
+    "arbejdstidsnorm": "FULD_TID",
+    "flekstidsordning": true,
+    "kernetid": {
+      "start": "09:00",
+      "slut": "15:00",
+      "gælderDage": ["mandag", "tirsdag", "onsdag", "torsdag", "fredag"]
+    },
+    "glidetimerOrdning": {
+      "tilladt": true,
+      "maksAfspadsering": 37.0,
+      "maksMinus": 10.0
+    }
+  },
+  "løn": {
+    "grundløn": {
+      "månedsløn": 48000.00,
+      "årligBruttoløn": 576000.00,
+      "valuta": "DKK"
+    },
+    "tillæg": {
+      "pensionsbidrag": {
+        "arbejdsgiverAndel": 8.0,
+        "medarbejderAndel": 4.0,
+        "totalProcent": 12.0,
+        "månedligBeløbArbejdsgiver": 3840.00,
+        "månedligBeløbMedarbejder": 1920.00
+      },
+      "fritvalgKonto": {
+        "procent": 2.5,
+        "årligBeløb": 14400.00,
+        "beskrivelse": "Frit valg-konto til ekstra ferie, pension eller udbetaling"
+      }
+    },
+    "lønudbetaling": {
+      "frekvens": "MÅNEDLIG",
+      "udbetalingsDag": "Sidste bankdag i måneden",
+      "forskudsbetaling": "Muligt efter aftale"
+    },
+    "regulering": {
+      "årligLønregulering": true,
+      "reguleringsDato": "1. april hvert år",
+      "grundlag": "Individuel vurdering baseret på præstation"
+    }
+  },
+  "ferie": {
+    "feriedage": {
+      "årligFerie": 25,
+      "ferieår": "1. januar - 31. december",
+      "optjeningsperiode": "Kalenderåret"
+    },
+    "ferietillæg": {
+      "procent": 1.0,
+      "beskrivelse": "Ferietillæg ifølge IT-overenskomsten"
+    },
+    "særligeFeriedage": {
+      "feriedageTilPersonligDisposition": 5,
+      "beskrivelse": "Ekstra fridage ud over lovpligtig ferie"
+    }
+  },
+  "pensionsordning": {
+    "pensionsselskab": "PensionDanmark",
+    "policenummer": "PD-123456789",
+    "dækninger": {
+      "alderspension": true,
+      "invalidepension": true,
+      "gruppelivsforsikring": true,
+      "kritiskSygdom": true,
+      "sundhedsforsikring": false
+    },
+    "dækningsbeløb": {
+      "gruppelivDæksum": 2000000.00,
+      "kritiskSygdomDæksum": 500000.00
+    }
+  },
+  "sygdom": {
+    "sygedagpenge": {
+      "arbejdsgiverBetaler": "Fuld løn under sygdom",
+      "periode": "De første 120 dage",
+      "refusionFraKommune": "Efter 30 dage"
+    },
+    "dokumentation": {
+      "lægeerklæringEfter": 5,
+      "enhed": "DAGE"
+    }
+  },
+  "opsigelse": {
+    "opsigelsesFrist": {
+      "underPrøvetid": "14 dage til udgangen af en måned",
+      "efterPrøvetid": [
+        {
+          "ansættelsesÅr": "0-2 år",
+          "varsel": "1 måned til udgangen af en måned"
+        },
+        {
+          "ansættelsesÅr": "3-5 år",
+          "varsel": "3 måneder til udgangen af en måned"
+        },
+        {
+          "ansættelsesÅr": "6-8 år",
+          "varsel": "4 måneder til udgangen af en måned"
+        },
+        {
+          "ansættelsesÅr": "9+ år",
+          "varsel": "5 måneder til udgangen af en måned"
+        }
+      ]
+    },
+    "fratrædelsesgodtgørelse": {
+      "gælderEfter": "12 måneders ansættelse",
+      "beløb": "1-3 måneders løn afhængig af anciennitet",
+      "betingelser": "Ved opsigelse fra arbejdsgivers side uden grov misligholdelse"
+    }
+  },
+  "særligeForhold": {
+    "konkurrenceklausul": {
+      "gælder": true,
+      "varighed": 6,
+      "enhed": "MÅNEDER",
+      "geografiskOmråde": "Danmark og Norden",
+      "kompensation": "50% af seneste månedsløn",
+      "beskrivelse": "Medarbejder må ikke arbejde for konkurrerende virksomheder eller starte konkurrerende virksomhed"
+    },
+    "tavshedspligt": {
+      "gælder": true,
+      "varighed": "Ubegrænset efter fratræden",
+      "omfang": "Forretningshemmeligheder, kundeoplysninger, tekniske løsninger"
+    },
+    "intellektuelleRettigheder": {
+      "ophavsret": "Tilfalder arbejdsgiver",
+      "patenter": "Tilfalder arbejdsgiver",
+      "beskrivelse": "Alt arbejde udført i ansættelsen tilhører virksomheden"
+    }
+  },
+  "goder": {
+    "firmaBil": false,
+    "telefon": {
+      "gælder": true,
+      "type": "Arbejdstelefon med privat brug",
+      "værdi": 500.00,
+      "beskatning": "Inkluderet i løn"
+    },
+    "computer": {
+      "gælder": true,
+      "type": "MacBook Pro med privat brug tilladt"
+    },
+    "kantineordning": {
+      "gælder": true,
+      "pris": "Medarbejderbetaling DKK 30 pr. frokost"
+    },
+    "sundhedsordning": {
+      "gælder": true,
+      "indhold": "Sundhedsforsikring Danmark - behandlingsgaranti, fysioterapi, psykolog"
+    },
+    "motionsordning": {
+      "gælder": true,
+      "årligTilskud": 3000.00,
+      "beskrivelse": "Tilskud til fitness, svømning eller lignende aktiviteter"
+    }
+  },
+  "arbejdsmiljø": {
+    "arbejdspladsvurdering": "Udføres årligt",
+    "sikkerhedsrepræsentant": "Kontaktinfo på opslagstavle",
+    "trivselsundersøgelse": "Udføres hvert andet år"
+  },
+  "kompetenceudvikling": {
+    "årligKompetencesamtale": true,
+    "kurserOgUddannelse": "Efter aftale med leder",
+    "konferencer": "2 internationale konferencer årligt efter aftale"
+  },
+  "underskrifter": {
+    "arbejdsgiver": {
+      "navn": "Mette Hansen",
+      "stilling": "HR-chef",
+      "dato": "2025-01-16",
+      "underskrift": true
+    },
+    "medarbejder": {
+      "navn": "Lars Nielsen",
+      "dato": null,
+      "underskrift": false,
+      "bemærkning": "Kontrakten underskrives senest 5 dage før tiltrædelse"
+    }
+  },
+  "bilag": [
+    {
+      "type": "STILLINGSBESKRIVELSE",
+      "titel": "Detaljeret stillingsbeskrivelse - Senior Software Udvikler"
+    },
+    {
+      "type": "IT_POLITIK",
+      "titel": "Virksomhedens IT-sikkerhedspolitik"
+    },
+    {
+      "type": "MEDARBEJDERHÅNDBOG",
+      "titel": "Medarbejderhåndbog 2025"
+    }
+  ],
+  "bemærkninger": "Denne ansættelseskontrakt erstatter alle tidligere aftaler, mundtlige eller skriftlige. Ændringer skal ske skriftligt og underskrives af begge parter."
+}

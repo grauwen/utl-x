@@ -1,0 +1,145 @@
+{
+  "numeroFacture": "FR-2025-FAC-234567",
+  "dateFacture": "2025-01-16",
+  "dateEcheance": "2025-02-15",
+  "statut": "EN_ATTENTE",
+  "fournisseur": {
+    "raisonSociale": "Solutions Informatiques Lyon SARL",
+    "siret": "12345678901234",
+    "numeroTVA": "FR12345678901",
+    "adresse": {
+      "rue": "125 Avenue des Frères Lumière",
+      "codePostal": "69008",
+      "ville": "Lyon",
+      "region": "Auvergne-Rhône-Alpes",
+      "pays": "France"
+    },
+    "contact": {
+      "nom": "M. Pierre Dubois",
+      "email": "p.dubois@solutions-info-lyon.fr",
+      "telephone": "+33 4 78 12 34 56"
+    },
+    "coordonneesBancaires": {
+      "titulaire": "Solutions Informatiques Lyon SARL",
+      "iban": "FR7612345678901234567890123",
+      "bic": "BNPAFRPPXXX",
+      "banque": "BNP Paribas"
+    }
+  },
+  "client": {
+    "raisonSociale": "Groupe Industriel Marseille SA",
+    "siret": "98765432109876",
+    "numeroTVA": "FR98765432109",
+    "adresse": {
+      "rue": "45 Boulevard de la Liberté",
+      "codePostal": "13001",
+      "ville": "Marseille",
+      "region": "Provence-Alpes-Côte d'Azur",
+      "pays": "France"
+    },
+    "contact": {
+      "nom": "Mme Sophie Martin",
+      "email": "s.martin@groupe-industriel-marseille.fr",
+      "telephone": "+33 4 91 23 45 67"
+    }
+  },
+  "lignesFacture": [
+    {
+      "numero": 1,
+      "reference": "SRV-CONS-DEV",
+      "description": "Prestations de développement logiciel - Application de gestion de production",
+      "quantite": 120,
+      "unite": "heures",
+      "prixUnitaireHT": 85.00,
+      "montantHT": 10200.00,
+      "tauxTVA": 20.0,
+      "montantTVA": 2040.00,
+      "montantTTC": 12240.00,
+      "periode": "Décembre 2024"
+    },
+    {
+      "numero": 2,
+      "reference": "LIC-ERP-PREMIUM",
+      "description": "Licences ERP Premium - 25 utilisateurs (abonnement annuel)",
+      "quantite": 25,
+      "unite": "licences",
+      "prixUnitaireHT": 180.00,
+      "montantHT": 4500.00,
+      "tauxTVA": 20.0,
+      "montantTVA": 900.00,
+      "montantTTC": 5400.00,
+      "periode": "2025"
+    },
+    {
+      "numero": 3,
+      "reference": "MAINT-SITE",
+      "description": "Maintenance préventive et corrective site web corporate",
+      "quantite": 1,
+      "unite": "forfait",
+      "prixUnitaireHT": 1200.00,
+      "montantHT": 1200.00,
+      "tauxTVA": 20.0,
+      "montantTVA": 240.00,
+      "montantTTC": 1440.00,
+      "periode": "Janvier 2025"
+    },
+    {
+      "numero": 4,
+      "reference": "FORM-USERS",
+      "description": "Formation utilisateurs - ERP (2 sessions de 8 personnes)",
+      "quantite": 2,
+      "unite": "sessions",
+      "prixUnitaireHT": 950.00,
+      "montantHT": 1900.00,
+      "tauxTVA": 20.0,
+      "montantTVA": 380.00,
+      "montantTTC": 2280.00,
+      "periode": "Janvier 2025"
+    }
+  ],
+  "totaux": {
+    "totalHT": 17800.00,
+    "totalTVA20": 3560.00,
+    "totalTTC": 21360.00,
+    "acompteVerse": 5000.00,
+    "resteAPayer": 16360.00,
+    "devise": "EUR"
+  },
+  "conditionsPaiement": {
+    "modalite": "Virement bancaire",
+    "delai": "30 jours fin de mois",
+    "dateReglement": "2025-02-28",
+    "penalitesRetard": {
+      "taux": 10.0,
+      "description": "En cas de retard de paiement, application d'une pénalité de 10% par an"
+    },
+    "indemniteRecouvrement": {
+      "montant": 40.00,
+      "description": "Indemnité forfaitaire pour frais de recouvrement"
+    }
+  },
+  "mentionsLegales": {
+    "escompte": "Aucun escompte pour paiement anticipé",
+    "reglement": "Tout règlement par chèque doit être accompagné d'un RIB",
+    "competenceJuridique": "Tribunal de Commerce de Lyon",
+    "tvaIntracommunautaire": "TVA non applicable - article 283-2 du CGI pour les prestations intracommunautaires"
+  },
+  "references": {
+    "bonCommande": "BC-2024-9876",
+    "dateCommande": "2024-12-15",
+    "contratCadre": "CONT-GIM-2024-001",
+    "projetId": "PROJ-ERP-GIM-2024"
+  },
+  "documentJoint": [
+    {
+      "type": "DEVIS",
+      "numero": "DEV-2024-8765",
+      "nom": "Devis_DEV-2024-8765.pdf"
+    },
+    {
+      "type": "RAPPORT_HEURES",
+      "nom": "Relevé_heures_Decembre_2024.xlsx"
+    }
+  ],
+  "notes": "Facture établie conformément au devis DEV-2024-8765 accepté le 15/12/2024. Les prestations ont été réalisées selon le planning convenu. Merci de bien vouloir procéder au règlement dans les délais impartis."
+}

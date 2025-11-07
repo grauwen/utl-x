@@ -1,0 +1,314 @@
+{
+  "leaseAgreementId": "IE-2025-LEASE-COM-789456",
+  "leaseType": "COMMERCIAL_PROPERTY",
+  "agreementDate": "2025-01-16",
+  "governingLaw": "Laws of Ireland",
+  "jurisdiction": "Courts of the Republic of Ireland",
+  "landlord": {
+    "entityType": "LIMITED_COMPANY",
+    "companyName": "Dublin Property Holdings Ltd",
+    "registrationNumber": "IE123456",
+    "vatNumber": "IE1234567T",
+    "registeredAddress": {
+      "buildingName": "Docklands Business Centre",
+      "street": "North Wall Quay",
+      "postalCode": "D01 H104",
+      "city": "Dublin",
+      "county": "Dublin",
+      "country": "Ireland"
+    },
+    "contactPerson": {
+      "name": "Mr. Patrick O'Brien",
+      "position": "Property Manager",
+      "email": "p.obrien@dublinpropertyholdings.ie",
+      "phone": "+353 1 234 5678",
+      "mobile": "+353 87 123 4567"
+    },
+    "solicitor": {
+      "firmName": "O'Connor & Associates Solicitors",
+      "contactName": "Ms. Siobhan Murphy",
+      "address": "45 St. Stephen's Green, Dublin 2",
+      "phone": "+353 1 678 9012",
+      "email": "s.murphy@oconnorsolicitors.ie"
+    }
+  },
+  "tenant": {
+    "entityType": "LIMITED_COMPANY",
+    "companyName": "Technology Solutions Ireland Ltd",
+    "registrationNumber": "IE654321",
+    "vatNumber": "IE6543217W",
+    "registeredAddress": {
+      "buildingName": "Innovation House",
+      "street": "Pearse Street",
+      "postalCode": "D02 YX88",
+      "city": "Dublin",
+      "county": "Dublin",
+      "country": "Ireland"
+    },
+    "directors": [
+      {
+        "name": "Ms. Sarah Collins",
+        "position": "Managing Director"
+      },
+      {
+        "name": "Mr. David Walsh",
+        "position": "Operations Director"
+      }
+    ],
+    "contactPerson": {
+      "name": "Ms. Sarah Collins",
+      "position": "Managing Director",
+      "email": "s.collins@techsolutions.ie",
+      "phone": "+353 1 987 6543",
+      "mobile": "+353 86 765 4321"
+    },
+    "solicitor": {
+      "firmName": "McCarthy Legal Services",
+      "contactName": "Mr. John Brennan",
+      "address": "12 Fitzwilliam Square, Dublin 2",
+      "phone": "+353 1 456 7890",
+      "email": "j.brennan@mccarthylegal.ie"
+    }
+  },
+  "premises": {
+    "propertyType": "OFFICE_SPACE",
+    "address": {
+      "buildingName": "Docklands Tower",
+      "floorNumber": "5th Floor",
+      "street": "Mayor Street Lower",
+      "postalCode": "D01 K5C7",
+      "city": "Dublin",
+      "county": "Dublin",
+      "country": "Ireland",
+      "eircode": "D01 K5C7"
+    },
+    "description": "Modern office space comprising approximately 450 square metres (4,844 sq ft) of open plan office accommodation with boardroom, meeting rooms, kitchen facilities and storage",
+    "floorArea": {
+      "squareMetres": 450.00,
+      "squareFeet": 4844.00
+    },
+    "includedFacilities": [
+      "24/7 building access",
+      "Secure car parking (8 spaces)",
+      "High-speed fibre broadband infrastructure",
+      "Air conditioning",
+      "Double glazed windows",
+      "Lift access",
+      "Disabled access and facilities",
+      "Fire alarm and suppression systems",
+      "Building security and CCTV"
+    ],
+    "permitedUse": "General office use for technology and software development business (Class 2 Use under Planning Regulations)",
+    "propertyRegisterNumber": "DUB123456F"
+  },
+  "leaseTerm": {
+    "commencementDate": "2025-02-01",
+    "duration": 5,
+    "durationUnit": "YEARS",
+    "expiryDate": "2030-01-31",
+    "breakClause": {
+      "applicable": true,
+      "breakDate": "2028-01-31",
+      "noticeRequired": 6,
+      "noticeUnit": "MONTHS",
+      "conditions": "Tenant may terminate lease at third anniversary with 6 months written notice and payment of all outstanding rent"
+    }
+  },
+  "rent": {
+    "annualRent": 135000.00,
+    "quarterlyRent": 33750.00,
+    "pricePerSquareMetre": 300.00,
+    "pricePerSquareFoot": 27.87,
+    "currency": "EUR",
+    "paymentFrequency": "QUARTERLY_IN_ADVANCE",
+    "paymentDueDates": ["1st February", "1st May", "1st August", "1st November"],
+    "paymentMethod": "ELECTRONIC_BANK_TRANSFER",
+    "landlordBankDetails": {
+      "accountName": "Dublin Property Holdings Ltd",
+      "iban": "IE29AIBK93115212345678",
+      "bic": "AIBKIE2D",
+      "bankName": "AIB Bank",
+      "reference": "LEASE-DT5-TechSol"
+    },
+    "vatApplicable": false,
+    "vatExemption": "Exempt under Section 4(3)(c) VAT Consolidation Act 2010 - Option to tax not exercised"
+  },
+  "rentReview": {
+    "applicable": true,
+    "reviewFrequency": "ANNUAL",
+    "reviewDate": "1st February each year",
+    "reviewMethod": "OPEN_MARKET_RENT",
+    "minimumIncrease": 0.00,
+    "maximumIncrease": 2.00,
+    "maximumIncreaseUnit": "PERCENT",
+    "reviewMechanism": "Upward only rent review to open market rent, capped at 2% per annum in accordance with Residential Tenancies Act provisions (where applicable) and market conditions"
+  },
+  "deposit": {
+    "depositAmount": 33750.00,
+    "depositType": "RENT_DEPOSIT",
+    "currency": "EUR",
+    "payableDate": "2025-01-25",
+    "heldBy": "LANDLORD",
+    "interestBearing": false,
+    "returnConditions": "Deposit to be returned within 30 days of lease termination subject to no arrears and property returned in good condition"
+  },
+  "serviceCharge": {
+    "applicable": true,
+    "estimatedAnnualCharge": 18000.00,
+    "chargePerSquareMetre": 40.00,
+    "currency": "EUR",
+    "paymentFrequency": "QUARTERLY",
+    "coveredServices": [
+      "Building insurance",
+      "Common area maintenance and cleaning",
+      "Lift maintenance and service",
+      "Building management and security",
+      "Waste collection and recycling",
+      "Landscaping and external maintenance",
+      "Water charges for common areas",
+      "Emergency lighting and fire systems maintenance"
+    ],
+    "reconciliation": "Annual reconciliation with adjustment payment or refund due within 60 days of year end"
+  },
+  "rates": {
+    "commercialRates": {
+      "applicable": true,
+      "responsibility": "TENANT",
+      "estimatedAnnualAmount": 22500.00,
+      "valuationOfficeReference": "DUB-VO-123456"
+    }
+  },
+  "insurance": {
+    "buildingInsurance": {
+      "responsibility": "LANDLORD",
+      "coverage": "Full reinstatement value",
+      "tenantContribution": "Included in service charge"
+    },
+    "contentsInsurance": {
+      "responsibility": "TENANT",
+      "minimumCoverage": 100000.00,
+      "requirements": "Tenant must maintain comprehensive contents and business interruption insurance"
+    },
+    "publicLiabilityInsurance": {
+      "responsibility": "TENANT",
+      "minimumCoverage": 6500000.00,
+      "requirements": "Tenant must maintain public liability insurance and provide evidence annually"
+    }
+  },
+  "repairs": {
+    "tenantResponsibility": [
+      "Internal decorating and maintenance",
+      "All installations and equipment within the premises",
+      "Plate glass and internal partitions",
+      "Floor coverings and suspended ceilings",
+      "Electrical and mechanical installations serving premises only"
+    ],
+    "landlordResponsibility": [
+      "Structural repairs to building",
+      "External walls, roof and foundations",
+      "Common parts and shared facilities",
+      "Main building systems (unless damage caused by tenant)"
+    ],
+    "decoratingSchedule": {
+      "internal": "Last three months of every third year of lease term",
+      "standard": "Professional standard in neutral colors approved by landlord"
+    }
+  },
+  "alterations": {
+    "nonStructuralAlterations": "Permitted with landlord's prior written consent (not to be unreasonably withheld)",
+    "structuralAlterations": "Not permitted without landlord's express written consent",
+    "signage": "External signage permitted subject to planning permission and landlord approval",
+    "reinstatement": "Tenant may be required to reinstate premises at end of lease"
+  },
+  "assignment": {
+    "assignmentAllowed": true,
+    "landlordConsentRequired": true,
+    "conditions": [
+      "Assignee must be of substantial financial standing",
+      "Current tenant to act as guarantor",
+      "Payment of landlord's legal costs",
+      "Minimum 2 years from commencement before assignment permitted"
+    ]
+  },
+  "subletting": {
+    "sublettingAllowed": false,
+    "conditions": "Not permitted without landlord's prior written consent (which may be withheld at landlord's absolute discretion)"
+  },
+  "guarantor": {
+    "required": false
+  },
+  "specialConditions": [
+    "Landlord to complete Cat A fit-out including raised floors, suspended ceilings, and perimeter trunking prior to commencement",
+    "Tenant entitled to 3 months rent-free period at commencement for fit-out works",
+    "Tenant responsible for obtaining all necessary planning permissions and licenses",
+    "Tenant must comply with all Health and Safety legislation and provide annual certification",
+    "Landlord reserves right to develop adjacent properties",
+    "Tenant entitled to use of building amenities including gym and canteen"
+  ],
+  "notices": {
+    "landlordNoticeAddress": {
+      "companyName": "Dublin Property Holdings Ltd",
+      "buildingName": "Docklands Business Centre",
+      "street": "North Wall Quay",
+      "city": "Dublin",
+      "postalCode": "D01 H104",
+      "country": "Ireland",
+      "email": "legal@dublinpropertyholdings.ie"
+    },
+    "tenantNoticeAddress": {
+      "companyName": "Technology Solutions Ireland Ltd",
+      "attention": "Managing Director",
+      "street": "As registered office",
+      "email": "legal@techsolutions.ie"
+    }
+  },
+  "execution": {
+    "landlordSignature": {
+      "signedBy": "Patrick O'Brien",
+      "capacity": "Authorised Signatory",
+      "date": "2025-01-16",
+      "witnessed": true,
+      "witnessName": "Mary Fitzgerald"
+    },
+    "tenantSignature": {
+      "signedBy": "Sarah Collins",
+      "capacity": "Director",
+      "date": "2025-01-16",
+      "witnessed": true,
+      "witnessName": "David Walsh"
+    },
+    "companySeal": {
+      "landlordSealAffixed": true,
+      "tenantSealAffixed": true
+    }
+  },
+  "stampDuty": {
+    "applicable": true,
+    "responsibility": "TENANT",
+    "estimatedAmount": 6750.00,
+    "paymentDeadline": "2025-02-15",
+    "calculation": "Based on annual rent €135,000 × 5 years × 1% rate"
+  },
+  "annexes": [
+    {
+      "annexNumber": 1,
+      "description": "Site plan and floor plan",
+      "pages": 3
+    },
+    {
+      "annexNumber": 2,
+      "description": "Permitted use and planning permissions",
+      "pages": 2
+    },
+    {
+      "annexNumber": 3,
+      "description": "Service charge budget breakdown",
+      "pages": 4
+    },
+    {
+      "annexNumber": 4,
+      "description": "Landlord's fixtures and fittings schedule",
+      "pages": 2
+    }
+  ]
+}

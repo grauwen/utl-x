@@ -1,0 +1,56 @@
+{
+  "ticketId": "TICK-2025-05432",
+  "createdAt": "2025-01-15T09:15:30Z",
+  "updatedAt": "2025-01-16T16:45:12Z",
+  "priority": "HIGH",
+  "status": "IN_PROGRESS",
+  "category": "TECHNICAL_ISSUE",
+  "customer": {
+    "customerId": "CUST-9912",
+    "name": "Jennifer Martinez",
+    "email": "j.martinez@business.com",
+    "phone": "+1-415-555-0177",
+    "accountTier": "ENTERPRISE"
+  },
+  "subject": "Application crashes when generating monthly reports",
+  "description": "When attempting to generate monthly sales reports for December 2024, the application freezes and crashes. This is affecting our end-of-year closing process.",
+  "affectedProduct": {
+    "productId": "PROD-BIZ-ANALYTICS",
+    "productName": "Business Analytics Suite",
+    "version": "5.2.1"
+  },
+  "assignedTo": {
+    "agentId": "AGT-334",
+    "name": "David Thompson",
+    "team": "Enterprise Support",
+    "email": "d.thompson@support.com"
+  },
+  "activities": [
+    {
+      "timestamp": "2025-01-15T09:15:30Z",
+      "type": "CREATED",
+      "author": "System",
+      "note": "Ticket automatically created from customer portal"
+    },
+    {
+      "timestamp": "2025-01-15T10:30:00Z",
+      "type": "ASSIGNED",
+      "author": "System",
+      "note": "Assigned to David Thompson - Enterprise Support"
+    },
+    {
+      "timestamp": "2025-01-15T14:22:00Z",
+      "type": "COMMENT",
+      "author": "David Thompson",
+      "note": "Reproduced the issue. Appears to be related to date range calculations. Escalating to development team."
+    },
+    {
+      "timestamp": "2025-01-16T16:45:12Z",
+      "type": "UPDATE",
+      "author": "David Thompson",
+      "note": "Development team has identified the bug. Fix scheduled for release 5.2.2 tomorrow. Providing workaround to customer."
+    }
+  ],
+  "estimatedResolution": "2025-01-17T18:00:00Z",
+  "tags": ["reporting", "crash", "year-end", "urgent"]
+}

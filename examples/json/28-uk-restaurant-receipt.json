@@ -1,0 +1,331 @@
+{
+  "receiptId": "UK-2025-RCP-GBR-789456",
+  "receiptType": "RESTAURANT_DINING",
+  "transactionDate": "2025-01-16T20:45:32Z",
+  "restaurant": {
+    "name": "The Queen's Arms Restaurant & Pub",
+    "tradingAs": "O'Sullivan's Fine Dining",
+    "companyNumber": "SC234567",
+    "vatNumber": "GB987654321",
+    "address": {
+      "buildingName": "Historic Market Building",
+      "street": "High Street",
+      "town": "Edinburgh",
+      "postcode": "EH1 1SR",
+      "country": "Scotland, UK"
+    },
+    "contact": {
+      "telephone": "+44 131 225 1234",
+      "email": "info@queensarms-edinburgh.co.uk",
+      "website": "www.queensarms-edinburgh.co.uk"
+    },
+    "managedBy": "Mr. Seán O'Sullivan",
+    "establishedYear": 1987
+  },
+  "server": {
+    "serverId": "SRV-045",
+    "name": "Aoife Ní Mhaoláin",
+    "position": "Senior Waitress"
+  },
+  "table": {
+    "tableNumber": 12,
+    "section": "Upper Gallery",
+    "numberOfGuests": 4,
+    "seatedAt": "2025-01-16T19:15:00Z"
+  },
+  "orderItems": [
+    {
+      "itemNumber": 1,
+      "category": "STARTERS",
+      "name": "Smoked Scottish Salmon",
+      "description": "Loch Duart smoked salmon, crème fraîche, capers & rocket",
+      "specialRequest": "Extra lemon wedges",
+      "quantity": 2,
+      "unitPrice": 12.95,
+      "subtotal": 25.90,
+      "allergens": ["Fish", "Dairy"],
+      "dietaryInfo": ["Gluten Free Available"]
+    },
+    {
+      "itemNumber": 2,
+      "category": "STARTERS",
+      "name": "Cullen Skink",
+      "description": "Traditional Scottish smoked haddock soup with potatoes & cream",
+      "quantity": 1,
+      "unitPrice": 8.50,
+      "subtotal": 8.50,
+      "allergens": ["Fish", "Dairy", "Gluten"],
+      "dietaryInfo": []
+    },
+    {
+      "itemNumber": 3,
+      "category": "STARTERS",
+      "name": "Haggis, Neeps & Tatties",
+      "description": "Traditional haggis with mashed swede & potatoes, whisky cream sauce",
+      "quantity": 1,
+      "unitPrice": 9.95,
+      "subtotal": 9.95,
+      "allergens": ["Gluten", "Dairy"],
+      "dietaryInfo": []
+    },
+    {
+      "itemNumber": 4,
+      "category": "MAINS",
+      "name": "Grilled Aberdeen Angus Sirloin Steak",
+      "description": "10oz dry-aged Scottish beef, triple-cooked chips, grilled tomato & mushroom",
+      "cookingPreference": "Medium-rare",
+      "sauceChoice": "Peppercorn sauce",
+      "quantity": 2,
+      "unitPrice": 32.50,
+      "subtotal": 65.00,
+      "allergens": ["Dairy", "Gluten"],
+      "dietaryInfo": []
+    },
+    {
+      "itemNumber": 5,
+      "category": "MAINS",
+      "name": "Pan-Seared Sea Bass",
+      "description": "Line-caught sea bass fillet, crushed new potatoes, samphire & lemon butter",
+      "specialRequest": "No butter - dairy allergy",
+      "quantity": 1,
+      "unitPrice": 24.95,
+      "subtotal": 24.95,
+      "allergens": ["Fish"],
+      "dietaryInfo": ["Dairy Free"]
+    },
+    {
+      "itemNumber": 6,
+      "category": "MAINS",
+      "name": "Wild Mushroom Risotto (V)",
+      "description": "Arborio rice, mixed wild mushrooms, truffle oil, parmesan & rocket",
+      "quantity": 1,
+      "unitPrice": 18.50,
+      "subtotal": 18.50,
+      "allergens": ["Dairy", "Gluten"],
+      "dietaryInfo": ["Vegetarian"]
+    },
+    {
+      "itemNumber": 7,
+      "category": "SIDES",
+      "name": "Seasonal Vegetables",
+      "quantity": 2,
+      "unitPrice": 4.50,
+      "subtotal": 9.00,
+      "allergens": [],
+      "dietaryInfo": ["Vegan", "Gluten Free"]
+    },
+    {
+      "itemNumber": 8,
+      "category": "SIDES",
+      "name": "Onion Rings",
+      "quantity": 1,
+      "unitPrice": 4.95,
+      "subtotal": 4.95,
+      "allergens": ["Gluten", "Eggs"],
+      "dietaryInfo": ["Vegetarian"]
+    },
+    {
+      "itemNumber": 9,
+      "category": "DESSERTS",
+      "name": "Sticky Toffee Pudding",
+      "description": "Warm date & toffee sponge, vanilla ice cream, toffee sauce",
+      "quantity": 2,
+      "unitPrice": 7.95,
+      "subtotal": 15.90,
+      "allergens": ["Gluten", "Dairy", "Eggs"],
+      "dietaryInfo": []
+    },
+    {
+      "itemNumber": 10,
+      "category": "DESSERTS",
+      "name": "Cranachan",
+      "description": "Traditional Scottish dessert - whisky, cream, honey, oats & raspberries",
+      "quantity": 1,
+      "unitPrice": 8.50,
+      "subtotal": 8.50,
+      "allergens": ["Dairy", "Gluten"],
+      "dietaryInfo": ["Contains Alcohol"]
+    },
+    {
+      "itemNumber": 11,
+      "category": "DESSERTS",
+      "name": "Cheese Board",
+      "description": "Selection of Scottish & Irish farmhouse cheeses, oatcakes, chutney & grapes",
+      "quantity": 1,
+      "unitPrice": 12.95,
+      "subtotal": 12.95,
+      "allergens": ["Dairy", "Gluten"],
+      "dietaryInfo": ["Vegetarian"]
+    }
+  ],
+  "beverages": [
+    {
+      "itemNumber": 12,
+      "category": "APERITIFS",
+      "name": "Hendrick's Gin & Tonic",
+      "description": "With cucumber & juniper berries",
+      "quantity": 2,
+      "unitPrice": 8.95,
+      "subtotal": 17.90,
+      "volume": "50ml spirit",
+      "abv": "41.4%"
+    },
+    {
+      "itemNumber": 13,
+      "category": "WINE",
+      "name": "Chablis Premier Cru 2021",
+      "description": "Domaine François Raveneau, Burgundy",
+      "quantity": 1,
+      "unitType": "BOTTLE",
+      "unitPrice": 54.95,
+      "subtotal": 54.95,
+      "volume": "750ml",
+      "abv": "12.5%",
+      "country": "France"
+    },
+    {
+      "itemNumber": 14,
+      "category": "WINE",
+      "name": "Rioja Reserva 2019",
+      "description": "Marqués de Murrieta, Spain",
+      "quantity": 1,
+      "unitType": "BOTTLE",
+      "unitPrice": 42.00,
+      "subtotal": 42.00,
+      "volume": "750ml",
+      "abv": "14.0%",
+      "country": "España"
+    },
+    {
+      "itemNumber": 15,
+      "category": "SOFT_DRINKS",
+      "name": "Still Mineral Water",
+      "description": "Highland Spring - Scottish natural water",
+      "quantity": 2,
+      "unitType": "BOTTLE",
+      "unitPrice": 3.95,
+      "subtotal": 7.90,
+      "volume": "750ml"
+    },
+    {
+      "itemNumber": 16,
+      "category": "DIGESTIFS",
+      "name": "Glenlivet 18 Year Old Single Malt",
+      "description": "Speyside whisky",
+      "quantity": 2,
+      "unitPrice": 12.50,
+      "subtotal": 25.00,
+      "volume": "35ml",
+      "abv": "43%"
+    },
+    {
+      "itemNumber": 17,
+      "category": "HOT_BEVERAGES",
+      "name": "Espresso",
+      "quantity": 3,
+      "unitPrice": 2.95,
+      "subtotal": 8.85
+    },
+    {
+      "itemNumber": 18,
+      "category": "HOT_BEVERAGES",
+      "name": "Irish Coffee",
+      "description": "With Jameson Irish Whiskey & cream",
+      "quantity": 1,
+      "unitPrice": 7.95,
+      "subtotal": 7.95,
+      "abv": "Approx. 8%"
+    }
+  ],
+  "financialSummary": {
+    "foodSubtotal": 204.10,
+    "beveragesSubtotal": 164.55,
+    "subtotalBeforeDiscounts": 368.65,
+    "discounts": [],
+    "netTotal": 368.65,
+    "serviceCharge": {
+      "description": "Optional service charge (12.5%)",
+      "percentage": 12.5,
+      "amount": 46.08,
+      "optional": true,
+      "note": "All tips go directly to our staff"
+    },
+    "subtotalIncService": 414.73,
+    "vat": {
+      "standardRate": {
+        "description": "VAT @ 20% on food & non-alcoholic beverages",
+        "rate": 20.0,
+        "netAmount": 215.05,
+        "vatAmount": 43.01
+      },
+      "alcoholRate": {
+        "description": "VAT @ 20% on alcoholic beverages",
+        "rate": 20.0,
+        "netAmount": 153.60,
+        "vatAmount": 30.72
+      },
+      "totalVAT": 73.73
+    },
+    "totalDue": 488.46,
+    "currency": "GBP",
+    "currencySymbol": "£",
+    "amountInWords": "Four hundred eighty-eight pounds and forty-six pence"
+  },
+  "payment": {
+    "paymentMethod": "CREDIT_CARD",
+    "cardType": "Visa",
+    "cardLastFourDigits": "4532",
+    "authCode": "AUTH-789456",
+    "transactionId": "TXN-UK-2025-0116-204532",
+    "merchantId": "MERCH-UK-789012",
+    "terminalId": "TERM-02",
+    "paymentProcessedAt": "2025-01-16T20:45:32Z",
+    "amountPaid": 488.46,
+    "tipAmount": 46.08,
+    "tipMethod": "ADDED_TO_CARD",
+    "cardholderName": "MR J SMITH",
+    "approvalStatus": "APPROVED"
+  },
+  "customerFeedback": {
+    "feedbackUrl": "www.queensarms-edinburgh.co.uk/feedback",
+    "qrCode": "QR_FEEDBACK_789456",
+    "incentive": "Complete our survey to enter our monthly prize draw - Win dinner for two (value £150)"
+  },
+  "legalNotices": [
+    "Prices include VAT at the current rate",
+    "Service charge is optional and entirely at your discretion",
+    "All tips and service charges are distributed fairly among our team",
+    "We cannot guarantee that any dish is completely free from allergens",
+    "Please inform staff of any allergies or dietary requirements",
+    "Government guidance: Adults need around 2000 kcal per day"
+  ],
+  "specialCharactersTest": {
+    "currencies": ["£", "€", "$", "¥", "₹", "₽"],
+    "names": ["Seán O'Sullivan", "Aoife Ní Mhaoláin", "François", "José", "Müller"],
+    "accents": ["café", "naïve", "résumé", "déjà vu", "piñata", "jalapeño"],
+    "symbols": ["™", "®", "©", "°", "±", "×", "÷", "≤", "≥"],
+    "quotes": ["'single'", "\"double\"", ""fancy"", "'curly'"],
+    "dashes": ["em—dash", "en–dash", "hy-phen"],
+    "fractions": ["½", "⅓", "¼", "¾", "⅛"],
+    "measurements": ["°C", "℉", "№", "℃"]
+  },
+  "receiptFooter": {
+    "thankYouMessage": "Thank you for dining with us! We hope to welcome you back soon.",
+    "socialMedia": {
+      "facebook": "@QueensArmsEdinburgh",
+      "instagram": "@queensarms_edin",
+      "twitter": "@QueensArmsEdin"
+    },
+    "tripAdvisor": "★★★★½ (4.5/5) - 2,847 reviews",
+    "awards": [
+      "Scottish Restaurant Awards 2024 - Best Traditional Dining",
+      "AA Rosette Award",
+      "Visit Scotland - Taste Our Best"
+    ]
+  },
+  "reprintInfo": {
+    "originalPrintTime": "2025-01-16T20:45:35Z",
+    "isReprint": false,
+    "printedBy": "TERM-02"
+  }
+}

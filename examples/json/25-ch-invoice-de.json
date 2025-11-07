@@ -1,0 +1,248 @@
+{
+  "rechnungsNummer": "CH-2025-RE-456789",
+  "rechnungsDatum": "2025-01-16",
+  "zahlungsziel": "2025-02-15",
+  "zahlungskonditionen": "30 Tage netto",
+  "status": "OFFEN",
+  "rechnungssteller": {
+    "firma": "Präzisions Mechanik Zürich AG",
+    "uid": "CHE-123.456.789",
+    "handelsregisterNummer": "CH-020.3.123.456-7",
+    "adresse": {
+      "strasse": "Seestrasse",
+      "hausnummer": "145",
+      "plz": "8002",
+      "ort": "Zürich",
+      "kanton": "Zürich",
+      "land": "Schweiz"
+    },
+    "kontakt": {
+      "person": "Herr Hans Müller",
+      "telefon": "+41 44 123 45 67",
+      "email": "h.mueller@praezisions-mechanik-zh.ch"
+    },
+    "bankverbindung": {
+      "bank": "UBS Switzerland AG",
+      "iban": "CH93 0076 2011 6238 5295 7",
+      "swift": "UBSWCHZH80A",
+      "clearing": "762",
+      "qrIban": "CH44 3199 9123 0008 8901 2",
+      "qrReferenz": "RF18 5390 0754 7034 2"
+    }
+  },
+  "rechnungsempfänger": {
+    "firma": "Maschinenbau Süd-Deutschland GmbH",
+    "ustIdNr": "DE987654321",
+    "adresse": {
+      "strasse": "Industriestraße",
+      "hausnummer": "89",
+      "plz": "78467",
+      "ort": "Konstanz",
+      "bundesland": "Baden-Württemberg",
+      "land": "Deutschland"
+    },
+    "kontakt": {
+      "person": "Frau Sabine Schäfer",
+      "telefon": "+49 7531 98 76 54",
+      "email": "s.schaefer@maschinenbau-sued.de"
+    }
+  },
+  "positionen": [
+    {
+      "position": 1,
+      "artikelNummer": "PM-CNC-4567",
+      "beschreibung": "CNC-gefräste Präzisionsteile aus Edelstahl 316L, Toleranz ±0'005 mm",
+      "menge": 250,
+      "einheit": "Stk.",
+      "einzelpreis": 145.50,
+      "rabatt": {
+        "prozent": 5.0,
+        "betrag": 1'818.75
+      },
+      "nettopreis": 34'556.25,
+      "mwstSatz": 8.1,
+      "mwstBetrag": 2'799.06,
+      "bruttopreis": 37'355.31
+    },
+    {
+      "position": 2,
+      "artikelNummer": "PM-WELLE-2890",
+      "beschreibung": "Spindelwellen, geschliffen & gehärtet, Oberflächengüte Ra ≤ 0'4 µm",
+      "menge": 50,
+      "einheit": "Stk.",
+      "einzelpreis": 892.80,
+      "rabatt": {
+        "prozent": 0.0,
+        "betrag": 0.00
+      },
+      "nettopreis": 44'640.00,
+      "mwstSatz": 8.1,
+      "mwstBetrag": 3'615.84,
+      "bruttopreis": 48'255.84
+    },
+    {
+      "position": 3,
+      "artikelNummer": "PM-LAGER-9012",
+      "beschreibung": "Präzisions-Kugellager Ø 45 mm × 100 mm, Genauigkeitsklasse P4",
+      "menge": 120,
+      "einheit": "Stk.",
+      "einzelpreis": 234.90,
+      "rabatt": {
+        "prozent": 10.0,
+        "betrag": 2'818.80
+      },
+      "nettopreis": 25'369.20,
+      "mwstSatz": 8.1,
+      "mwstBetrag": 2'054.91,
+      "bruttopreis": 27'424.11
+    },
+    {
+      "position": 4,
+      "artikelNummer": "SERV-MONT",
+      "beschreibung": "Montage- & Inbetriebnahme-Service vor Ort (2 Techniker × 8 Std.)",
+      "menge": 16,
+      "einheit": "Std.",
+      "einzelpreis": 175.00,
+      "rabatt": {
+        "prozent": 0.0,
+        "betrag": 0.00
+      },
+      "nettopreis": 2'800.00,
+      "mwstSatz": 8.1,
+      "mwstBetrag": 226.80,
+      "bruttopreis": 3'026.80
+    }
+  ],
+  "zusammenfassung": {
+    "zwischensumme": 107'365.45,
+    "rabattGesamt": 4'637.55,
+    "nettoGesamt": 107'365.45,
+    "mwst": [
+      {
+        "satz": 8.1,
+        "bemessungsgrundlage": 107'365.45,
+        "betrag": 8'696.61
+      }
+    ],
+    "mwstGesamt": 8'696.61,
+    "bruttoGesamt": 116'062.06,
+    "währung": "CHF",
+    "währungsSymbol": "CHF",
+    "rundungsdifferenz": 0.00
+  },
+  "zahlungsbedingungen": {
+    "zahlungsart": "ÜBERWEISUNG",
+    "skonto": {
+      "verfügbar": true,
+      "prozent": 2.0,
+      "frist": 10,
+      "fristEinheit": "TAGE",
+      "betragBeiSkonto": 113'740.82,
+      "ersparnis": 2'321.24
+    },
+    "mahngebuehren": {
+      "ersteMahnung": 25.00,
+      "zweiteMahnung": 50.00,
+      "dritteMahnung": 100.00,
+      "verzugszins": 5.0,
+      "verzugszinsBerechnung": "Ab Fälligkeit gemäss Art. 104 OR"
+    }
+  },
+  "lieferung": {
+    "lieferscheinNummer": "LS-2025-012345",
+    "lieferdatum": "2025-01-14",
+    "lieferadresse": {
+      "firma": "Maschinenbau Süd-Deutschland GmbH",
+      "strasse": "Werkstrasse 12",
+      "plz": "78464",
+      "ort": "Konstanz",
+      "land": "Deutschland"
+    },
+    "versandart": "SPEDITION",
+    "versandkosten": {
+      "inklusive": true,
+      "betrag": 0.00,
+      "beschreibung": "Franco Domizil"
+    },
+    "incoterms": "DAP",
+    "gewicht": {
+      "brutto": 458.5,
+      "netto": 425.0,
+      "einheit": "kg"
+    }
+  },
+  "mehrwertsteuer": {
+    "mwstPflichtig": true,
+    "mwstSaetze": [
+      {
+        "bezeichnung": "Normalsatz",
+        "prozentsatz": 8.1,
+        "gueltigAb": "2024-01-01",
+        "bemerkung": "Schweizer MwSt-Normalsatz seit 2024"
+      }
+    ],
+    "mwstNummer": "CHE-123.456.789 MWST",
+    "hinweis": "Mehrwertsteuer gemäss Art. 25 MWSTG"
+  },
+  "bemerkungen": [
+    "Zahlbar innert 30 Tagen ab Rechnungsdatum ohne Abzug.",
+    "Bei Zahlung innert 10 Tagen gewähren wir 2% Skonto.",
+    "Lieferung erfolgte termingerecht gemäss Auftrag vom 15.12.2024.",
+    "Alle Teile wurden gemäss Zeichnungen & Spezifikationen gefertigt.",
+    "Qualitätsprüfzeugnisse 3.1 gemäss EN 10204 liegen bei.",
+    "Bei Fragen wenden Sie sich bitte an unsere Auftragsabwicklung."
+  ],
+  "rechtshinweise": {
+    "zahlungsverzug": "Bei Zahlungsverzug behalten wir uns vor, Verzugszinsen von 5% p.a. zu berechnen sowie Mahngebühren in Rechnung zu stellen.",
+    "eigentumsvorbehalt": "Die gelieferte Ware bleibt bis zur vollständigen Bezahlung Eigentum der Präzisions Mechanik Zürich AG.",
+    "gerichtsstand": "Ausschliesslicher Gerichtsstand ist Zürich.",
+    "anwendbaresRecht": "Es gilt Schweizerisches Recht unter Ausschluss des UN-Kaufrechts (CISG)."
+  },
+  "qrRechnung": {
+    "qrType": "SPC",
+    "version": "0200",
+    "codingType": 1,
+    "qrIban": "CH44 3199 9123 0008 8901 2",
+    "creditor": {
+      "name": "Präzisions Mechanik Zürich AG",
+      "addressLine1": "Seestrasse 145",
+      "addressLine2": "8002 Zürich",
+      "country": "CH"
+    },
+    "amount": 116'062.06,
+    "currency": "CHF",
+    "debtor": {
+      "name": "Maschinenbau Süd-Deutschland GmbH",
+      "addressLine1": "Industriestraße 89",
+      "addressLine2": "78467 Konstanz",
+      "country": "DE"
+    },
+    "referenceType": "SCOR",
+    "reference": "RF18 5390 0754 7034 2",
+    "additionalInfo": "Rechnung CH-2025-RE-456789 vom 16.01.2025",
+    "alternativeSchemes": ["Name AV1: UV;UltraPay005;12345", "Name AV2: XY;XYService;54321"]
+  },
+  "anlagen": [
+    {
+      "typ": "LIEFERSCHEIN",
+      "nummer": "LS-2025-012345",
+      "dateiname": "Lieferschein_LS-2025-012345.pdf"
+    },
+    {
+      "typ": "PRUEFZEUGNISSE",
+      "beschreibung": "Qualitätsprüfzeugnisse 3.1 gemäss EN 10204",
+      "dateiname": "Pruefzeugnisse_Auftrag_456789.pdf"
+    },
+    {
+      "typ": "TECHNISCHE_ZEICHNUNGEN",
+      "beschreibung": "Fertigungszeichnungen & Massprotokolle",
+      "dateiname": "Zeichnungen_456789.zip"
+    }
+  ],
+  "unterschrift": {
+    "ort": "Zürich",
+    "datum": "2025-01-16",
+    "person": "Hans Müller",
+    "funktion": "Leiter Auftragsabwicklung"
+  }
+}

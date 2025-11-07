@@ -1,0 +1,365 @@
+{
+  "faturaNo": "TR-2025-FAT-İST-456789",
+  "faturaTürü": "SATIŞ_FATURASI",
+  "faturaTarihi": "2025-01-16",
+  "seri": "İST",
+  "sıraNo": "456789",
+  "düzenlemeTarihi": "2025-01-16T14:30:00+03:00",
+  "satıcı": {
+    "ünvan": "Öztürk Makina Sanayi ve Ticaret Anonim Şirketi",
+    "kısaÜnvan": "Öztürk Makina A.Ş.",
+    "vergiDairesi": "Kadıköy Vergi Dairesi Müdürlüğü",
+    "vergiNumarası": "1234567890",
+    "mersisNo": "0123456789012345",
+    "sicilNo": "123456",
+    "adres": {
+      "açıkAdres": "Şair Nedim Caddesi, Göztepe Mahallesi",
+      "binaNo": "156",
+      "daireNo": "3-5",
+      "postaKodu": "34730",
+      "ilçe": "Kadıköy",
+      "il": "İstanbul",
+      "ülke": "Türkiye"
+    },
+    "iletişim": {
+      "yetkili": "Mehmet Öztürk",
+      "ünvan": "Genel Müdür",
+      "telefon": "+90 216 345 67 89",
+      "cep": "+90 532 123 45 67",
+      "eposta": "m.ozturk@ozturkmakina.com.tr",
+      "web": "www.ozturkmakina.com.tr"
+    },
+    "bankaBilgileri": {
+      "bankaAdı": "Türkiye İş Bankası A.Ş.",
+      "şubeKodu": "1234",
+      "şubeAdı": "Kadıköy Şubesi",
+      "hesapNo": "TR98 0006 4000 0011 2345 6789 01",
+      "iban": "TR98 0006 4000 0011 2345 6789 01",
+      "swift": "ISBKTRISXXX"
+    }
+  },
+  "alıcı": {
+    "ünvan": "Çelik İnşaat Mühendislik Limited Şirketi",
+    "kısaÜnvan": "Çelik İnşaat Ltd. Şti.",
+    "vergiDairesi": "Beyoğlu Vergi Dairesi",
+    "vergiNumarası": "9876543210",
+    "adres": {
+      "açıkAdres": "Şişhane Mahallesi, Büyükparmakkapı Sokağı",
+      "binaNo": "45",
+      "kat": "4",
+      "daireNo": "12",
+      "postaKodu": "34421",
+      "ilçe": "Beyoğlu",
+      "il": "İstanbul",
+      "ülke": "Türkiye"
+    },
+    "iletişim": {
+      "yetkili": "Ayşe Yılmaz",
+      "ünvan": "Satın Alma Müdürü",
+      "telefon": "+90 212 234 56 78",
+      "cep": "+90 543 987 65 43",
+      "eposta": "a.yilmaz@celikinsaat.com.tr"
+    }
+  },
+  "teslimatAdresi": {
+    "açıklama": "Şantiye - Maslak Proje",
+    "açıkAdres": "Büyükdere Caddesi, Maslak Mahallesi",
+    "binaNo": "234",
+    "postaKodu": "34398",
+    "ilçe": "Sarıyer",
+    "il": "İstanbul",
+    "yetkili": "Hüseyin Çağlar",
+    "telefon": "+90 535 456 78 90",
+    "teslimatTalimatı": "Şantiye sahasına teslimat. Hafta içi 08:00-17:00 arası. Vinç mevcut."
+  },
+  "kalemler": [
+    {
+      "sıraNo": 1,
+      "stokKodu": "HYD-SİL-200-500",
+      "malHizmetAdı": "Hidrolik Silindir Ø200mm × 500mm, Çalışma Basıncı 350 bar",
+      "açıklama": "Ağır hizmet tipi hidrolik silindir, çift etkili, krom kaplamalı piston kolu",
+      "miktar": 24,
+      "birim": "Adet",
+      "birimFiyat": 8750.00,
+      "iskonto": {
+        "oran": 10.0,
+        "tutar": 21000.00
+      },
+      "matrah": 189000.00,
+      "kdvOranı": 20.0,
+      "kdvTutarı": 37800.00,
+      "toplamTutar": 226800.00,
+      "menşei": "Türkiye",
+      "gtip": "8412.21.80.90.00",
+      "teslimTarihi": "2025-02-15",
+      "garanti": "24 ay"
+    },
+    {
+      "sıraNo": 2,
+      "stokKodu": "VAL-SOL-3/2-G1",
+      "malHizmetAdı": "3/2 Yollu Solenoid Valf G1\" - 24V DC - IP67 - Geri Bildirimli",
+      "açıklama": "Endüstriyel tip solenoid valf, paslanmaz çelik gövde, pozisyon sensörlü",
+      "miktar": 48,
+      "birim": "Adet",
+      "birimFiyat": 1450.00,
+      "iskonto": {
+        "oran": 5.0,
+        "tutar": 3480.00
+      },
+      "matrah": 66120.00,
+      "kdvOranı": 20.0,
+      "kdvTutarı": 13224.00,
+      "toplamTutar": 79344.00,
+      "menşei": "Türkiye",
+      "gtip": "8481.80.81.00.00",
+      "teslimTarihi": "2025-02-10",
+      "garanti": "18 ay"
+    },
+    {
+      "sıraNo": 3,
+      "stokKodu": "POMPA-DEĞŞ-75",
+      "malHizmetAdı": "Değişken Debili Pistonlu Pompa 75 cm³/dev, Maks 280 bar",
+      "açıklama": "Yüksek verimli aksiyel pistonlu pompa, otomatik basınç kompanzasyonlu",
+      "miktar": 8,
+      "birim": "Adet",
+      "birimFiyat": 18500.00,
+      "iskonto": {
+        "oran": 15.0,
+        "tutar": 22200.00
+      },
+      "matrah": 125800.00,
+      "kdvOranı": 20.0,
+      "kdvTutarı": 25160.00,
+      "toplamTutar": 150960.00,
+      "menşei": "Türkiye",
+      "gtip": "8413.60.20.00.00",
+      "teslimTarihi": "2025-02-28",
+      "garanti": "24 ay",
+      "özelNotlar": "CE sertifikalı, ATEX belgeli"
+    },
+    {
+      "sıraNo": 4,
+      "stokKodu": "HORT-HP-3/4-5M",
+      "malHizmetAdı": "Yüksek Basınçlı Hidrolik Hortum 3/4\" - 400 bar - 5 metre",
+      "açıklama": "Çelik örgülü, ısıya dayanıklı kauçuk hortum, BSP bağlantılı",
+      "miktar": 120,
+      "birim": "Adet",
+      "birimFiyat": 385.00,
+      "iskonto": {
+        "oran": 8.0,
+        "tutar": 3696.00
+      },
+      "matrah": 42504.00,
+      "kdvOranı": 20.0,
+      "kdvTutarı": 8500.80,
+      "toplamTutar": 51004.80,
+      "menşei": "Türkiye",
+      "gtip": "4009.42.00.00.00",
+      "teslimTarihi": "2025-02-05",
+      "garanti": "12 ay"
+    },
+    {
+      "sıraNo": 5,
+      "stokKodu": "ÖLÇÜ-BASIN-0-400",
+      "malHizmetAdı": "Dijital Basınç Göstergesi 0-400 bar, Gliserinli, Ø100mm",
+      "açıklama": "Paslanmaz çelik kasalı, titreşime dayanıklı, G1/4\" bağlantılı",
+      "miktar": 36,
+      "birim": "Adet",
+      "birimFiyat": 425.00,
+      "iskonto": {
+        "oran": 0.0,
+        "tutar": 0.00
+      },
+      "matrah": 15300.00,
+      "kdvOranı": 20.0,
+      "kdvTutarı": 3060.00,
+      "toplamTutar": 18360.00,
+      "menşei": "Almanya",
+      "gtip": "9026.20.20.00.00",
+      "teslimTarihi": "2025-02-08",
+      "garanti": "24 ay"
+    },
+    {
+      "sıraNo": 6,
+      "stokKodu": "HİZMET-MONT",
+      "malHizmetAdı": "Montaj ve Devreye Alma Hizmeti",
+      "açıklama": "Uzman teknisyen ekibi ile tam kurulum (3 teknisyen × 5 gün)",
+      "miktar": 1,
+      "birim": "Götürü",
+      "birimFiyat": 45000.00,
+      "iskonto": {
+        "oran": 0.0,
+        "tutar": 0.00
+      },
+      "matrah": 45000.00,
+      "kdvOranı": 20.0,
+      "kdvTutarı": 9000.00,
+      "toplamTutar": 54000.00,
+      "teslimTarihi": "2025-03-05",
+      "özelNotlar": "Konaklama ve ulaşım dahil"
+    }
+  ],
+  "maliBilgiler": {
+    "araToplamMatrah": 483724.00,
+    "toplamİskonto": 50376.00,
+    "genelToplam": 483724.00,
+    "kdvMatrahı": {
+      "oran20": {
+        "matrah": 483724.00,
+        "oran": 20.0,
+        "kdvTutarı": 96744.80
+      }
+    },
+    "toplamKDV": 96744.80,
+    "genelToplam": 580468.80,
+    "parabirimi": "TRY",
+    "parabirimiSembolü": "₺",
+    "yazıyla": "Beşyüzseksenbiндört yüzaltmışsekiz Türk Lirası seksen Kuruş"
+  },
+  "ödemeKoşulları": {
+    "ödemeŞekli": "BANKA_HAVALESİ",
+    "vade": "60 gün",
+    "vadedenİndirim": {
+      "geçerli": true,
+      "oran": 3.0,
+      "gün": 15,
+      "açıklama": "15 gün içinde ödeme yapılması halinde %3 indirim uygulanacaktır",
+      "indirimliTutar": 563054.94
+    },
+    "taksitSeçeneği": {
+      "mevcut": true,
+      "taksitSayısı": 3,
+      "taksitTutarı": 193489.60,
+      "taksitTarihleri": ["2025-02-15", "2025-03-15", "2025-04-15"],
+      "faiz": "Faizsiz"
+    }
+  },
+  "sevkiyat": {
+    "sevkİrsaliyeNo": "İRS-2025-012345",
+    "sevkTarihi": "2025-01-14",
+    "teslimŞekli": "DAP",
+    "taşıyıcı": "Anadolu Nakliyat A.Ş.",
+    "plaka": "34 ABC 123",
+    "şoför": "Ahmet Kılıç",
+    "şoförTelefon": "+90 532 789 01 23",
+    "navlunÜcreti": {
+      "dahil": true,
+      "tutar": 0.00,
+      "açıklama": "Sevkiyat ücretsiz - Alıcı adresine teslim"
+    },
+    "ağırlık": {
+      "brüt": 2850.5,
+      "net": 2650.0,
+      "birim": "kg"
+    },
+    "koliSayısı": 48,
+    "sigorta": {
+      "gerekli": true,
+      "şirket": "Anadolu Sigorta A.Ş.",
+      "poliçeNo": "SIG-2025-456789",
+      "bedel": 600000.00
+    }
+  },
+  "kdvBilgileri": {
+    "kdvKanunu": "3065 Sayılı Katma Değer Vergisi Kanunu",
+    "kdvOranları": [
+      {
+        "açıklama": "Genel KDV Oranı",
+        "oran": 20.0,
+        "yürürlük": "2024-01-01",
+        "yasal": "KDV Kanunu Genel Oranı"
+      }
+    ],
+    "özelDurumlar": {
+      "ihracat": false,
+      "dahildeİşleme": false,
+      "geçiciKabul": false,
+      "istisna": false
+    },
+    "tevkifat": {
+      "uygulanır": false,
+      "oran": 0.0,
+      "tutar": 0.00
+    }
+  },
+  "diğerBilgiler": {
+    "eArsivFatura": true,
+    "eImza": {
+      "imzalayan": "Mehmet Öztürk",
+      "tarih": "2025-01-16T14:35:00+03:00",
+      "algoritma": "RSA-SHA256",
+      "sertifikaNo": "123456789ABCDEF"
+    },
+    "ettn": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+    "gelirİdaresiBaşkanlığı": {
+      "portal": "portal.efatura.gov.tr",
+      "gönderimTarihi": "2025-01-16T14:40:00+03:00",
+      "durum": "ONAYLANDI",
+      "onayTarihi": "2025-01-16T14:41:23+03:00"
+    }
+  },
+  "özelNotlar": [
+    "Bu fatura 213 sayılı Vergi Usul Kanunu hükümlerine göre düzenlenmiştir.",
+    "Malların mülkiyeti bedelin tam olarak ödenmesine kadar satıcıya aittir.",
+    "Cayma ve iade koşulları satış sözleşmesinde belirtilmiştir.",
+    "Fatura tutarı vadesinde ödenmediği takdirde yasal faiz uygulanacaktır.",
+    "Bu belge Gelir İdaresi Başkanlığı sisteminde elektronik olarak kayıtlıdır.",
+    "Teslim edilen malzemeler TSE ve CE standartlarına uygundur."
+  ],
+  "yaşalHükümler": {
+    "uygulanacakHukuk": "Türkiye Cumhuriyeti kanunları",
+    "yetkiliMahkeme": "İstanbul (Çağlayan) Mahkemeleri ve İcra Daireleri",
+    "uyuşmazlıkÇözümü": "Taraflar öncelikle sulh yoluyla çözüm arayacaktır",
+    "mücbirSebepler": "Doğal afet, savaş, yangın vb. mücbir sebepler durumunda taraflar sorumlu tutulamaz"
+  },
+  "türkçeÖzelKarakterler": {
+    "küçükHarfler": ["ç", "ğ", "ı", "ö", "ş", "ü"],
+    "büyükHarfler": ["Ç", "Ğ", "İ", "Ö", "Ş", "Ü"],
+    "örnekKelimeler": [
+      "çalışma", "değişken", "ışık", "öğrenci", "şirket", "ülke",
+      "Çankırı", "Ağrı", "İstanbul", "Öztürk", "Şanlıurfa", "Üsküdar",
+      "müşteri", "güvenlik", "işçi", "gözlük", "düğün", "çözüm",
+      "ağaç", "bağlantı", "sığınak", "öğretmen", "üretim", "göç"
+    ],
+    "şehirler": [
+      "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya",
+      "Gaziantep", "Konya", "Şanlıurfa", "Kayseri", "Eskişehir",
+      "Diyarbakır", "Samsun", "Adapazarı", "Denizli", "Malatya",
+      "Kahramanmaraş", "Erzurum", "Van", "Elazığ", "Sivas"
+    ],
+    "yaygınİsimler": [
+      "Mehmet", "Ahmet", "Mustafa", "Hüseyin", "İbrahim",
+      "Fatma", "Ayşe", "Emine", "Hatice", "Zeynep",
+      "Öztürk", "Yılmaz", "Çelik", "Şahin", "Güneş",
+      "Özkan", "Özdemir", "Çağlar", "Ünlü", "Gümüş"
+    ]
+  },
+  "ekler": [
+    {
+      "tip": "İRSALİYE",
+      "no": "İRS-2025-012345",
+      "dosyaAdı": "Irsaliye_IRS-2025-012345.pdf"
+    },
+    {
+      "tip": "TEKNİK_ÇİZİM",
+      "açıklama": "Hidrolik sistem şemaları ve montaj kılavuzu",
+      "dosyaAdı": "Teknik_Cizimler_456789.zip"
+    },
+    {
+      "tip": "KALİTE_BELGELERİ",
+      "açıklama": "TSE-CE sertifikaları ve test raporları",
+      "dosyaAdı": "Kalite_Belgeleri_456789.pdf"
+    },
+    {
+      "tip": "KULLANIM_KILAVUZU",
+      "açıklama": "Türkçe kullanım ve bakım kılavuzları",
+      "dosyaAdı": "Kullanim_Kilavuzu_TR.pdf"
+    }
+  ],
+  "onay": {
+    "düzenleyen": "Zeynep Karagöz",
+    "ünvan": "Satış Müdürü",
+    "tarih": "2025-01-16",
+    "yer": "İstanbul"
+  }
+}

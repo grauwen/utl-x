@@ -1,0 +1,62 @@
+{
+  "invoiceNumber": "INV-2025-0045",
+  "invoiceDate": "2025-01-16",
+  "dueDate": "2025-02-15",
+  "vendor": {
+    "vendorId": "V-8821",
+    "companyName": "Tech Solutions Inc.",
+    "taxId": "98-7654321",
+    "address": {
+      "street": "789 Innovation Boulevard",
+      "city": "Austin",
+      "state": "TX",
+      "zipCode": "78701",
+      "country": "USA"
+    },
+    "contact": {
+      "name": "Michael Chen",
+      "email": "billing@techsolutions.com",
+      "phone": "+1-512-555-0199"
+    }
+  },
+  "billTo": {
+    "companyName": "Global Enterprises Ltd.",
+    "address": {
+      "street": "1000 Corporate Center",
+      "city": "New York",
+      "state": "NY",
+      "zipCode": "10001",
+      "country": "USA"
+    }
+  },
+  "lineItems": [
+    {
+      "itemNumber": 1,
+      "description": "Cloud Infrastructure Services - January 2025",
+      "quantity": 1,
+      "unitPrice": 5000.00,
+      "amount": 5000.00
+    },
+    {
+      "itemNumber": 2,
+      "description": "Technical Support (100 hours)",
+      "quantity": 100,
+      "unitPrice": 150.00,
+      "amount": 15000.00
+    },
+    {
+      "itemNumber": 3,
+      "description": "Software Licenses (10 users)",
+      "quantity": 10,
+      "unitPrice": 299.00,
+      "amount": 2990.00
+    }
+  ],
+  "subtotal": 22990.00,
+  "taxRate": 0.08,
+  "taxAmount": 1839.20,
+  "total": 24829.20,
+  "currency": "USD",
+  "paymentTerms": "NET_30",
+  "status": "SENT"
+}
