@@ -25,8 +25,29 @@ import {
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
 
-export type InstanceFormat = 'csv' | 'json' | 'xml' | 'yaml';
-export type SchemaFormatType = 'xsd' | 'jsch' | 'avro' | 'proto';
+// Input panel format types (separate from protocol types)
+// Data formats - used for actual data instances
+export type InputDataFormatType = 'csv' | 'json' | 'xml' | 'yaml';
+
+// Schema formats - used for schema definitions
+export type InputSchemaFormatType = 'xsd' | 'jsch' | 'avro' | 'proto';
+
+// All 8 formats (tier1 data + tier2 schema formats)
+export type AllInputFormats = InputDataFormatType | InputSchemaFormatType;
+
+// Runtime mode: All 8 formats allowed
+export type RuntimeInstanceFormat = AllInputFormats;
+
+// Design-Time mode: Instance tab - ALL 8 formats allowed
+// (tier2 formats like xsd/jsch/avro/proto can be inputs for schema-to-schema transformations)
+export type DesignTimeInstanceFormat = AllInputFormats;
+
+// Design-Time mode: Schema tab - linked formats based on instance selection
+export type DesignTimeSchemaFormat = InputSchemaFormatType;
+
+// Combined types for state storage (backward compatibility)
+export type InstanceFormat = AllInputFormats;
+export type SchemaFormatType = InputSchemaFormatType;
 
 export interface InputTab {
     id: string;
@@ -214,23 +235,21 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 disabled={loading}
                             >
                                 {isDesignTime && activeSubTab === 'schema' ? (
+                                    // Design-Time Schema tab: linked formats based on instance
                                     <>
                                         {this.getSchemaFormatOptions(activeInput.instanceFormat)}
                                     </>
                                 ) : (
+                                    // Runtime mode + Design-Time Instance tab: all 8 formats
                                     <>
-                                        <option value='csv'>CSV</option>
-                                        <option value='json'>JSON</option>
-                                        <option value='xml'>XML</option>
-                                        <option value='yaml'>YAML</option>
-                                        {isDesignTime && (
-                                            <>
-                                                <option value='xsd'>XSD</option>
-                                                <option value='jsch'>JSON Schema</option>
-                                                <option value='avro'>Avro</option>
-                                                <option value='proto'>Protobuf</option>
-                                            </>
-                                        )}
+                                        <option value='csv'>csv</option>
+                                        <option value='json'>json</option>
+                                        <option value='xml'>xml</option>
+                                        <option value='yaml'>yaml</option>
+                                        <option value='xsd'>xsd</option>
+                                        <option value='jsch'>jsch</option>
+                                        <option value='avro'>avro</option>
+                                        <option value='proto'>proto</option>
                                     </>
                                 )}
                             </select>
@@ -266,25 +285,24 @@ export class MultiInputPanelWidget extends ReactWidget {
 
     /**
      * Get schema format options based on instance format
-     * According to design doc:
-     * - json → jsch | avro (dropdown, jsch default)
-     * - xml → xsd
-     * - yaml → jsch | avro (dropdown, jsch default)
-     * - csv → tsch (show "//tsch not implemented yet")
-     * - xsd, jsch, avro, proto → BLUR the schema tab
+     * Linking rules:
+     * - json → jsch (always)
+     * - xml → xsd (always)
+     * - yaml → jsch (always)
+     * - csv → tsch (not implemented yet)
+     * - xsd, jsch, avro, proto → BLUR the schema tab (no schema for schema)
      */
     private getSchemaFormatOptions(instanceFormat: InstanceFormat | SchemaFormatType): React.ReactNode[] {
         switch (instanceFormat) {
             case 'json':
             case 'yaml':
                 return [
-                    <option key='jsch' value='jsch'>JSON Schema</option>,
-                    <option key='avro' value='avro'>Avro</option>
+                    <option key='jsch' value='jsch'>jsch</option>
                 ];
             case 'xml':
-                return [<option key='xsd' value='xsd'>XSD</option>];
+                return [<option key='xsd' value='xsd'>xsd</option>];
             case 'csv':
-                return [<option key='tsch' value='tsch'>TSCH (not implemented yet)</option>];
+                return [<option key='tsch' value='tsch'>tsch (not implemented yet)</option>];
             default:
                 return [];
         }
@@ -316,6 +334,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                     return 'Paste or load your schema here...';
             }
         } else {
+            // Instance format placeholders (including schema formats for Runtime mode)
             switch (format) {
                 case 'xml':
                     return '<root>\n  <element>data</element>\n</root>';
@@ -325,6 +344,14 @@ export class MultiInputPanelWidget extends ReactWidget {
                     return 'key: value\nlist:\n  - item1\n  - item2';
                 case 'csv':
                     return 'name,age,email\nJohn,30,john@example.com';
+                case 'xsd':
+                    return '<?xml version="1.0"?>\n<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">\n  <!-- Define your XML schema here -->\n</xs:schema>';
+                case 'jsch':
+                    return '{\n  "$schema": "http://json-schema.org/draft-07/schema#",\n  "type": "object",\n  "properties": {\n    ...\n  }\n}';
+                case 'avro':
+                    return '{\n  "type": "record",\n  "name": "Example",\n  "fields": [\n    ...\n  ]\n}';
+                case 'proto':
+                    return 'syntax = "proto3";\n\nmessage Example {\n  ...\n}';
                 default:
                     return 'Paste or load your input data here...';
             }
