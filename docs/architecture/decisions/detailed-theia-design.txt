@@ -1,3 +1,18 @@
+Found it! The Workbench Widget is NOT being registered in the frontend-module.ts!
+
+  The frontend-module only registers:
+  - MultiInputPanelWidget ✓
+  - OutputPanelWidget (line 53+)
+  - ModeSelectorWidget
+  - UTLXEditorWidget
+  - HealthMonitorWidget
+  - TestWidget
+  - UTLXToolbarWidget
+
+  BUT UTLXWorkbenchWidget is MISSING!
+
+--------------
+
 After a change do:
 
  1. Rebuild TypeScript:
