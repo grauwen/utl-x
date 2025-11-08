@@ -412,6 +412,8 @@ export class MultiInputPanelWidget extends ReactWidget {
     private handleFormatChange(format: InstanceFormat | SchemaFormatType): void {
         const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
 
+        console.log('[MultiInputPanel] Format changed:', { format, isSchema });
+
         this.setState({
             inputs: this.state.inputs.map(input =>
                 input.id === this.state.activeInputId
@@ -426,6 +428,16 @@ export class MultiInputPanelWidget extends ReactWidget {
                     : input
             )
         });
+
+        // Dispatch event to notify editor widget to update headers
+        console.log('[MultiInputPanel] Dispatching utlx-input-format-changed event');
+        window.dispatchEvent(new CustomEvent('utlx-input-format-changed', {
+            detail: {
+                format,
+                isSchema,
+                inputId: this.state.activeInputId
+            }
+        }));
     }
 
     /**

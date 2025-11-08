@@ -29,6 +29,7 @@ export class UTLXEditorWidget extends ReactWidget {
     protected toDispose = new DisposableCollection();
     protected readOnlyDecorations: string[] = [];
     protected headerEndLine: number = 0;
+    protected savedHeaderContent: string[] = [];
 
     constructor() {
         super();
@@ -96,10 +97,10 @@ export class UTLXEditorWidget extends ReactWidget {
 
         try {
             // Create Monaco model with UTLX content
+            // Use a simple URI without scheme to avoid resource provider issues
             const model = monaco.editor.createModel(
                 this.getDefaultContent(),
-                'plaintext', // Language ID - we can register 'utlx' later
-                monaco.Uri.parse('inmemory://utlx-editor/transformation.utlx')
+                'plaintext' // Language ID - we can register 'utlx' later
             );
 
             // Create standalone Monaco editor
@@ -323,10 +324,18 @@ output: {
      * This is called when formats change in the panels
      */
     public updateHeaders(inputLines: string[], outputFormat: string): void {
-        if (!this.editor) return;
+        console.log('[UTLXEditor] updateHeaders() called', { inputLines, outputFormat });
+
+        if (!this.editor) {
+            console.warn('[UTLXEditor] No editor instance');
+            return;
+        }
 
         const model = this.editor.getModel();
-        if (!model) return;
+        if (!model) {
+            console.warn('[UTLXEditor] No model');
+            return;
+        }
 
         // Find current separator
         const separatorLine = this.parseHeaderEndLine();
@@ -355,6 +364,11 @@ output: {
 
         // Apply read-only decorations
         this.applyReadOnlyDecorations();
+
+        // CRITICAL: Save the new header content so enforcement doesn't revert it
+        this.saveHeaderContent();
+
+        console.log('[UTLXEditor] Headers updated successfully');
     }
 
     /**
@@ -396,36 +410,75 @@ output: {
     }
 
     /**
+     * Save current header content for read-only protection
+     */
+    protected saveHeaderContent(): void {
+        if (!this.editor) return;
+        const model = this.editor.getModel();
+        if (!model) return;
+
+        this.savedHeaderContent = [];
+        for (let i = 1; i <= this.headerEndLine + 1; i++) {
+            this.savedHeaderContent.push(model.getLineContent(i));
+        }
+        console.log('[UTLXEditor] Saved header content:', this.savedHeaderContent);
+    }
+
+    /**
      * Enforce read-only behavior on header lines
      */
     protected enforceReadOnlyHeaders(): void {
         if (!this.editor) return;
 
+        let isReverting = false;
+
+        // Save initial headers
+        this.saveHeaderContent();
+
         // Listen for content changes and prevent edits to header lines
         this.toDispose.push(
             this.editor.onDidChangeModelContent((e) => {
-                if (!this.editor) return;
+                if (!this.editor || isReverting) return;
 
                 const model = this.editor.getModel();
                 if (!model) return;
 
                 // Check if any changes were made to header lines
+                let headerChanged = false;
                 for (const change of e.changes) {
                     const startLine = change.range.startLineNumber;
-                    const endLine = change.range.endLineNumber;
 
                     // If change affects header lines (lines 1 through headerEndLine + 1)
                     if (startLine <= this.headerEndLine + 1) {
-                        console.log('[UTLXEditor] Attempted edit to read-only header, reverting');
-
-                        // Revert by re-parsing and re-applying decorations
-                        // The LSP or external source should maintain correct headers
-                        this.applyReadOnlyDecorations();
-
-                        // Note: Full prevention would require more complex undo handling
-                        // For now, we visually indicate read-only status
+                        headerChanged = true;
                         break;
                     }
+                }
+
+                if (headerChanged) {
+                    console.log('[UTLXEditor] Header edit detected - restoring saved content');
+
+                    // Prevent infinite loop
+                    isReverting = true;
+
+                    // Restore headers from saved content
+                    const edits: monaco.editor.IIdentifiedSingleEditOperation[] = [];
+                    for (let i = 0; i < this.savedHeaderContent.length; i++) {
+                        const lineNum = i + 1;
+                        const currentContent = model.getLineContent(lineNum);
+                        if (currentContent !== this.savedHeaderContent[i]) {
+                            edits.push({
+                                range: new monaco.Range(lineNum, 1, lineNum, model.getLineMaxColumn(lineNum)),
+                                text: this.savedHeaderContent[i]
+                            });
+                        }
+                    }
+
+                    if (edits.length > 0) {
+                        model.pushEditOperations([], edits, () => null);
+                    }
+
+                    isReverting = false;
                 }
             })
         );

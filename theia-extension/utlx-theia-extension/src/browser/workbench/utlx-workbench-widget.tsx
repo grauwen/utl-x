@@ -94,6 +94,19 @@ export class UTLXWorkbenchWidget extends ReactWidget {
             this.currentEditorContent = event.detail.content;
         }) as EventListener);
 
+        // Listen for input format changes to update editor headers
+        window.addEventListener('utlx-input-format-changed', (() => {
+            this.updateEditorHeaders();
+        }) as EventListener);
+
+        // Listen for output format changes to update editor headers
+        window.addEventListener('utlx-output-format-changed', (() => {
+            this.updateEditorHeaders();
+        }) as EventListener);
+
+        // Set initial editor headers
+        this.updateEditorHeaders();
+
         // Trigger re-render now that widgets are loaded
         this.update();
     }
@@ -401,5 +414,46 @@ export class UTLXWorkbenchWidget extends ReactWidget {
      */
     getEditorContent(): string {
         return this.currentEditorContent;
+    }
+
+    /**
+     * Update editor headers based on current input/output formats
+     */
+    private updateEditorHeaders(): void {
+        console.log('[Workbench] updateEditorHeaders() called');
+
+        if (!this.inputPanel || !this.outputPanel || !this.editorWidget) {
+            console.warn('[Workbench] Missing widgets:', {
+                hasInputPanel: !!this.inputPanel,
+                hasOutputPanel: !!this.outputPanel,
+                hasEditorWidget: !!this.editorWidget
+            });
+            return;
+        }
+
+        // Get all input documents
+        const inputs = this.inputPanel.getInputDocuments();
+        console.log('[Workbench] Input documents:', inputs);
+
+        // Build input header lines based on number of inputs
+        const inputLines: string[] = [];
+        if (inputs.length === 1) {
+            // Single input: "input json"
+            inputLines.push(`input ${inputs[0].format}`);
+        } else if (inputs.length > 1) {
+            // Multiple inputs: "input json name=input1", "input xml name=input2"
+            inputs.forEach(input => {
+                inputLines.push(`input ${input.format} name=${input.name || 'unnamed'}`);
+            });
+        }
+
+        // Get output format from output panel's current state
+        // For now, default to 'json' - we can enhance this later to track actual output format
+        const outputFormat = 'json';
+
+        console.log('[Workbench] Calling updateHeaders with:', { inputLines, outputFormat });
+
+        // Update editor headers
+        this.editorWidget.updateHeaders(inputLines, outputFormat);
     }
 }
