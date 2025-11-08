@@ -48,7 +48,7 @@ export interface MultiInputPanelState {
 export class MultiInputPanelWidget extends ReactWidget {
     static readonly ID = INPUT_PANEL_ID;
     static readonly LABEL = 'Input';
-    static readonly BUILD_VERSION = '2025-11-08T06:00:00Z'; // Build version for deployment verification
+    static readonly BUILD_VERSION = '2025-11-08T07:00:00Z'; // Build version for deployment verification
 
     @inject(UTLX_SERVICE_SYMBOL) @optional()
     protected readonly utlxService?: UTLXService;
@@ -60,7 +60,7 @@ export class MultiInputPanelWidget extends ReactWidget {
         mode: UTLXMode.RUNTIME,
         inputs: [{
             id: 'input-1',
-            name: 'Input 1',
+            name: 'input',
             instanceContent: '',
             instanceFormat: 'json',
             schemaContent: '',
@@ -334,7 +334,7 @@ export class MultiInputPanelWidget extends ReactWidget {
     private handleAddInput(): void {
         const newInput: InputTab = {
             id: `input-${this.nextInputId}`,
-            name: `Input ${this.nextInputId}`,
+            name: `input${this.nextInputId}`,
             instanceContent: '',
             instanceFormat: 'json',
             schemaContent: '',
