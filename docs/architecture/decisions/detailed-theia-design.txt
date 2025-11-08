@@ -1,5 +1,29 @@
 After a change do:
 
+ 1. Rebuild TypeScript:
+  cd /Users/magr/data/mapping/github-git/utl-x/theia-extension/utlx-theia-extension
+  npx tsc
+  (The --listFiles | grep is just for verification, not needed for the build)
+
+  2. Clean webpack cache:
+  cd ../browser-app
+  rm -rf .theia lib node_modules/.cache
+
+  3. Build the browser app (this already runs webpack internally):
+  npx theia build --mode production
+  (The --log-level verbose --stats verbose flags may not both work, and you don't need them)
+
+  4. Rebuild webpack - SKIP THIS STEP
+
+  5. Kill processes on port 4000:
+  lsof -ti:4000 | xargs kill -9 2>/dev/null
+  sleep 2
+
+  6. Restart server:
+  npx theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace
+
+-----------
+
   1. Rebuild TypeScript: 
 cd /utl-x/theia-extension/utlx-theia-extension
 npx tsc --listFiles | grep -E "(output-panel|editor)"
