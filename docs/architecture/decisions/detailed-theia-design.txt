@@ -4,21 +4,22 @@ After a change do:
 cd /utl-x/theia-extension/utlx-theia-extension
 npx tsc --listFiles | grep -E "(output-panel|editor)"
 
-  2. Build the browser app (this bundles everything): 
+  2. clean webpack cache
 cd /utl-x/theia-extension/browser-app (../browser-app from previous)
-#clean webpack cache
 rm -rf .theia lib node_modules/.cache
-npx theia build --mode production --log-level verbose --stats verbose
-  // 2. Reinstall: cd /path/to/browser-app && rm -rf node_modules/utlx-theia-extension && yarn install --check-files
 
-  3. Rebuild webpack: 
+  3. Build the browser app (this bundles everything): 
+cd /utl-x/theia-extension/browser-app (../browser-app from previous)
+npx theia build --mode production --log-level verbose --stats verbose
+  
+  4. Rebuild webpack: 
 cd /utl-x/theia-extension/browser-app (same dire as previous) 
 npx webpack --config webpack.config.js --mode production --stats detailed
 
-  4. kill all rpocesses still running on port 4000; 
+  5. kill all rpocesses still running on port 4000; 
 lsof -ti:4000 | xargs kill -9 2>/dev/null; 
 
-  5. Restart server:  
+  6. Restart server:  
 cd /utl-x/theia-extension/browser-app (same dire as previous) 
 npx theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace
 
