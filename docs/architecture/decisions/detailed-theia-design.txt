@@ -22,6 +22,22 @@ lsof -ti:4000 | xargs kill -9 2>/dev/null;
 cd /utl-x/theia-extension/browser-app (same dire as previous) 
 npx theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace
 
+-----
+ But more importantly, let's verify your changes were actually compiled. Check if your changes are in the compiled JavaScript:
+
+  cd /Users/magr/data/mapping/github-git/utl-x/theia-extension/utlx-theia-extension
+
+  # Check if the output panel has the format dropdown
+  grep -n "XSD %USDL 1.0" lib/browser/output-panel/output-panel-widget.js
+
+  # Check if the editor has the read-only decorations
+  grep -n "utlx-readonly-line" lib/browser/editor/utlx-editor-widget.js
+
+  # Check if parseHeaderEndLine exists
+  grep -n "parseHeaderEndLine" lib/browser/editor/utlx-editor-widget.js
+
+
+
 yarn start => yarn start has an issue!
 
 ----
