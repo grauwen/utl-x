@@ -1,3 +1,11 @@
+After a change do:
+
+1. Rebuild TypeScript: cd /path/to/utlx-theia-extension && npx tsc
+  2. Reinstall: cd /path/to/browser-app && rm -rf node_modules/utlx-theia-extension && yarn install --check-files
+  3. Rebuild webpack: cd /path/to/browser-app && npx webpack
+  4. Restart server
+
+----
 
 Header of UTLX transform is for this version  of IDE fixed 
 %UTLX 1.0
