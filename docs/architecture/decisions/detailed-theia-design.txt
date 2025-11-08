@@ -3,9 +3,10 @@ After a change do:
 1. Rebuild TypeScript: cd /path/to/utlx-theia-extension && npx tsc
   2. Reinstall: cd /path/to/browser-app && rm -rf node_modules/utlx-theia-extension && yarn install --check-files
   3. Rebuild webpack: cd /path/to/browser-app && npx webpack
-  4. Restart server:  npx theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace
+  4. kill all rpocesses still running on port 4000; lsof -ti:4000 | xargs kill -9 2>/dev/null; 
+  5. Restart server:  npx theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace
 
-cd utl-x/theia-extension/browser-app && yarn start
+cd utl-x/theia-extension/browser-app && yarn start => yarn start has an issue
 
 ----
  The CSS file you need to modify is:
