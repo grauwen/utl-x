@@ -766,3 +766,16 @@
     background: var(--theia-sideBar-background);
     filter: blur(0.5px);
 }
+
+/* Monaco Editor Read-Only Header Lines */
+.utlx-readonly-line {
+    background: rgba(128, 128, 128, 0.1) !important;
+    opacity: 0.8;
+}
+
+.utlx-readonly-line-decoration {
+    opacity: 0.5;
+    width: 3px !important;
+    margin-left: 3px;
+    background: var(--theia-editorGutter-modifiedBackground, #888) !important;
+}

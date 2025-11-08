@@ -27,6 +27,8 @@ export class UTLXEditorWidget extends ReactWidget {
     protected editor: monaco.editor.IStandaloneCodeEditor | undefined;
     protected editorContainer: HTMLDivElement | undefined;
     protected toDispose = new DisposableCollection();
+    protected readOnlyDecorations: string[] = [];
+    protected headerEndLine: number = 0;
 
     constructor() {
         super();
@@ -132,6 +134,14 @@ export class UTLXEditorWidget extends ReactWidget {
                     this.onContentChanged();
                 })
             );
+
+            // Apply read-only decorations to initial content
+            setTimeout(() => {
+                this.applyReadOnlyDecorations();
+            }, 200);
+
+            // Enforce read-only headers
+            this.enforceReadOnlyHeaders();
 
             // Focus editor
             this.editor.focus();
@@ -268,6 +278,157 @@ output: {
      */
     public async saveFile(): Promise<string> {
         return this.getContent();
+    }
+
+    /**
+     * Parse headers and find the separator line
+     * Returns the line number where '---' is found (0-indexed)
+     */
+    protected parseHeaderEndLine(): number {
+        if (!this.editor) return 0;
+
+        const model = this.editor.getModel();
+        if (!model) return 0;
+
+        const lineCount = model.getLineCount();
+        for (let i = 0; i < Math.min(lineCount, 10); i++) {
+            const line = model.getLineContent(i + 1).trim();
+            if (line === '---') {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Generate header content based on input/output formats
+     */
+    protected generateHeader(inputLines: string[], outputFormat: string): string {
+        const header = ['%utlx 1.0'];
+
+        // Add input line(s)
+        header.push(...inputLines);
+
+        // Add output line
+        header.push(`output ${outputFormat}`);
+
+        // Add separator
+        header.push('---');
+
+        return header.join('\n');
+    }
+
+    /**
+     * Update headers with new input/output information
+     * This is called when formats change in the panels
+     */
+    public updateHeaders(inputLines: string[], outputFormat: string): void {
+        if (!this.editor) return;
+
+        const model = this.editor.getModel();
+        if (!model) return;
+
+        // Find current separator
+        const separatorLine = this.parseHeaderEndLine();
+
+        // Generate new header
+        const newHeader = this.generateHeader(inputLines, outputFormat);
+        const newHeaderLines = newHeader.split('\n');
+
+        // Get existing body content (everything after ---)
+        const bodyStartLine = separatorLine + 2; // +1 for 0-index, +1 to skip ---
+        const totalLines = model.getLineCount();
+        const bodyLines: string[] = [];
+
+        for (let i = bodyStartLine; i <= totalLines; i++) {
+            bodyLines.push(model.getLineContent(i));
+        }
+
+        // Combine new header with existing body
+        const newContent = newHeader + '\n' + bodyLines.join('\n');
+
+        // Update model
+        model.setValue(newContent);
+
+        // Update header end line tracking
+        this.headerEndLine = newHeaderLines.length - 1; // -1 because --- is the last header line
+
+        // Apply read-only decorations
+        this.applyReadOnlyDecorations();
+    }
+
+    /**
+     * Apply read-only decorations to header lines
+     */
+    protected applyReadOnlyDecorations(): void {
+        if (!this.editor) return;
+
+        const model = this.editor.getModel();
+        if (!model) return;
+
+        // Parse header to find separator
+        const separatorLine = this.parseHeaderEndLine();
+
+        if (separatorLine === 0) return;
+
+        // Create decorations for all header lines (including separator)
+        const decorations: monaco.editor.IModelDeltaDecoration[] = [];
+
+        for (let i = 1; i <= separatorLine + 1; i++) {
+            decorations.push({
+                range: new monaco.Range(i, 1, i, model.getLineMaxColumn(i)),
+                options: {
+                    className: 'utlx-readonly-line',
+                    isWholeLine: true,
+                    linesDecorationsClassName: 'utlx-readonly-line-decoration'
+                }
+            });
+        }
+
+        // Apply decorations
+        this.readOnlyDecorations = this.editor.deltaDecorations(
+            this.readOnlyDecorations,
+            decorations
+        );
+
+        // Store header end line for read-only enforcement
+        this.headerEndLine = separatorLine;
+    }
+
+    /**
+     * Enforce read-only behavior on header lines
+     */
+    protected enforceReadOnlyHeaders(): void {
+        if (!this.editor) return;
+
+        // Listen for content changes and prevent edits to header lines
+        this.toDispose.push(
+            this.editor.onDidChangeModelContent((e) => {
+                if (!this.editor) return;
+
+                const model = this.editor.getModel();
+                if (!model) return;
+
+                // Check if any changes were made to header lines
+                for (const change of e.changes) {
+                    const startLine = change.range.startLineNumber;
+                    const endLine = change.range.endLineNumber;
+
+                    // If change affects header lines (lines 1 through headerEndLine + 1)
+                    if (startLine <= this.headerEndLine + 1) {
+                        console.log('[UTLXEditor] Attempted edit to read-only header, reverting');
+
+                        // Revert by re-parsing and re-applying decorations
+                        // The LSP or external source should maintain correct headers
+                        this.applyReadOnlyDecorations();
+
+                        // Note: Full prevention would require more complex undo handling
+                        // For now, we visually indicate read-only status
+                        break;
+                    }
+                }
+            })
+        );
     }
 
     protected render(): React.ReactNode {

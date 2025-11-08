@@ -164,6 +164,23 @@ export class OutputPanelWidget extends ReactWidget {
 
                 <div className='utlx-panel-toolbar'>
                     <label>
+                        Format:
+                        <select
+                            value={currentFormat || 'json'}
+                            onChange={(e) => this.handleFormatChange((e.target as HTMLSelectElement).value)}
+                        >
+                            <option value='csv'>CSV</option>
+                            <option value='json'>JSON</option>
+                            <option value='xml'>XML</option>
+                            <option value='yaml'>YAML</option>
+                            <option value='xsd'>XSD %USDL 1.0</option>
+                            <option value='jsch'>JSON Schema %USDL 1.0</option>
+                            <option value='avro'>Avro %USDL 1.0</option>
+                            <option value='proto'>Protobuf %USDL 1.0</option>
+                        </select>
+                    </label>
+
+                    <label>
                         View:
                         <select
                             value={viewMode}
@@ -173,12 +190,6 @@ export class OutputPanelWidget extends ReactWidget {
                             <option value='raw'>Raw</option>
                         </select>
                     </label>
-
-                    {currentFormat && (
-                        <span className='utlx-format-badge'>
-                            {currentFormat.toUpperCase()}
-                        </span>
-                    )}
 
                     {currentExecutionTime !== undefined && (
                         <span className='utlx-execution-time'>
@@ -310,6 +321,23 @@ export class OutputPanelWidget extends ReactWidget {
 
     private handleViewModeChange(viewMode: 'pretty' | 'raw'): void {
         this.setState({ viewMode });
+    }
+
+    private handleFormatChange(format: string): void {
+        // Update format based on active tab
+        if (this.state.activeTab === 'instance') {
+            this.setState({ instanceFormat: format });
+        } else {
+            this.setState({ schemaFormat: format });
+        }
+
+        // Dispatch format change event for editor widget to update headers
+        window.dispatchEvent(new CustomEvent('utlx-output-format-changed', {
+            detail: {
+                format,
+                tab: this.state.activeTab
+            }
+        }));
     }
 
     private setState(partial: Partial<OutputPanelState>): void {
