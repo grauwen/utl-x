@@ -636,7 +636,7 @@
     cursor: pointer;
     transition: all 0.2s;
     font-size: 12px;
-    color: var(--theia-foreground);
+    color: var(--theia-button-foreground); /* changed from --theia-foreground by magr */
     min-height: 80px;
     width: 100%;
 }
