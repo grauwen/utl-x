@@ -30,6 +30,7 @@ import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { TestWidget } from './test-widget';
+import { UTLXEventService } from './events/utlx-event-service';
 
 @injectable()
 export class UTLXFrontendContribution implements
@@ -50,8 +51,13 @@ export class UTLXFrontendContribution implements
     @inject(StatusBar)
     protected readonly statusBar!: StatusBar;
 
+    @inject(UTLXEventService)
+    protected readonly eventService!: UTLXEventService;
+
     private utlxdStatusId = 'utlxd-status';
     private mcpStatusId = 'mcp-status';
+    private inputs: Map<string, { name: string; format: string }> = new Map(); // inputId -> {name, format}
+    private outputFormat: string = 'json';
 
     async onStart(app: FrontendApplication): Promise<void> {
         console.log('[UTLXFrontendContribution] ===== onStart() called =====');
@@ -61,6 +67,9 @@ export class UTLXFrontendContribution implements
 
         // Add health status to status bar
         await this.initializeHealthStatus();
+
+        // Subscribe to format change events for header coordination
+        this.subscribeToFormatChanges();
 
         // Open toolbar at top
         await this.openToolbar();
@@ -347,6 +356,164 @@ export class UTLXFrontendContribution implements
             console.log('UTL-X health monitor opened in bottom panel');
         } catch (error) {
             console.error('Failed to open health monitor:', error);
+        }
+    }
+
+    /**
+     * Subscribe to format change events and coordinate header updates in editor
+     * This is the workbench coordination logic extracted from UTLXWorkbenchWidget
+     */
+    private subscribeToFormatChanges(): void {
+        console.log('[UTLXFrontendContribution] Setting up format change coordination...');
+
+        // Subscribe to input added
+        this.eventService.onInputAdded(event => {
+            console.log('[UTLXFrontendContribution] Input added:', event);
+            this.inputs.set(event.inputId, { name: event.name, format: 'json' });
+            this.updateEditorHeaders();
+        });
+
+        // Subscribe to input deleted
+        this.eventService.onInputDeleted(event => {
+            console.log('[UTLXFrontendContribution] Input deleted:', event);
+            this.inputs.delete(event.inputId);
+            this.updateEditorHeaders();
+        });
+
+        // Subscribe to input name changes
+        this.eventService.onInputNameChanged(event => {
+            console.log('[UTLXFrontendContribution] Input name changed:', event);
+            const input = this.inputs.get(event.inputId);
+            if (input) {
+                input.name = event.newName;
+                this.updateEditorHeaders();
+            }
+        });
+
+        // Subscribe to input format changes
+        this.eventService.onInputFormatChanged(event => {
+            console.log('[UTLXFrontendContribution] Input format changed:', event);
+
+            // Get or create input entry
+            let input = this.inputs.get(event.inputId);
+            if (!input) {
+                // Input not tracked yet, create with default name
+                input = { name: 'input', format: event.format };
+                this.inputs.set(event.inputId, input);
+            } else {
+                input.format = event.format;
+            }
+
+            // Update editor headers
+            this.updateEditorHeaders();
+        });
+
+        // Subscribe to output format changes (instance/runtime mode)
+        this.eventService.onOutputFormatChanged(event => {
+            console.log('[UTLXFrontendContribution] Output format changed:', event);
+
+            // Track output format
+            this.outputFormat = event.format;
+
+            // Update editor headers
+            this.updateEditorHeaders();
+        });
+
+        // Subscribe to output preset mode changes
+        this.eventService.onOutputPresetOn(event => {
+            console.log('[UTLXFrontendContribution] Output preset mode ON:', event);
+            // In preset mode, track the schema format
+            this.outputFormat = event.schemaFormat;
+            this.updateEditorHeaders();
+        });
+
+        this.eventService.onOutputPresetOff(event => {
+            console.log('[UTLXFrontendContribution] Output preset mode OFF');
+            // Reset to default when preset mode is disabled
+            this.outputFormat = 'json';
+            this.updateEditorHeaders();
+        });
+
+        // Subscribe to output schema format changes (preset mode)
+        this.eventService.onOutputSchemaFormatChanged(event => {
+            console.log('[UTLXFrontendContribution] Output schema format changed:', event);
+
+            // Track output schema format in preset mode
+            this.outputFormat = event.format;
+
+            // Update editor headers
+            this.updateEditorHeaders();
+        });
+
+        console.log('[UTLXFrontendContribution] Format change coordination initialized');
+    }
+
+    /**
+     * Update editor headers based on current input/output formats
+     * This builds the header lines and calls the editor's updateHeaders method
+     *
+     * Format rules:
+     * - Single input: "input [optionalname] <format>"
+     * - Multiple inputs: "input: [optionalname1] format1, name2 format2, ..."
+     */
+    private async updateEditorHeaders(): Promise<void> {
+        try {
+            // Get editor widget
+            const editor = await this.widgetManager.getOrCreateWidget<UTLXEditorWidget>(
+                UTLXEditorWidget.ID
+            );
+
+            // Build input lines from tracked inputs
+            const inputLines: string[] = [];
+
+            if (this.inputs.size === 0) {
+                // No inputs tracked yet, use default
+                inputLines.push('input json');
+            } else if (this.inputs.size === 1) {
+                // Single input: "input [optionalname] <format>"
+                const input = Array.from(this.inputs.values())[0];
+                const hasCustomName = input.name && input.name !== 'input' && input.name.trim() !== '';
+
+                if (hasCustomName) {
+                    inputLines.push(`input ${input.name} ${input.format}`);
+                } else {
+                    inputLines.push(`input ${input.format}`);
+                }
+            } else {
+                // Multiple inputs: "input: [optionalname1] format1, name2 format2, ..."
+                const inputParts: string[] = [];
+                let isFirst = true;
+
+                this.inputs.forEach(input => {
+                    const hasCustomName = input.name && input.name !== 'input' && input.name.trim() !== '';
+
+                    if (isFirst) {
+                        // First input: name is optional
+                        if (hasCustomName) {
+                            inputParts.push(`${input.name} ${input.format}`);
+                        } else {
+                            inputParts.push(`${input.format}`);
+                        }
+                        isFirst = false;
+                    } else {
+                        // Subsequent inputs: name is mandatory
+                        inputParts.push(`${input.name} ${input.format}`);
+                    }
+                });
+
+                inputLines.push(`input: ${inputParts.join(', ')}`);
+            }
+
+            // Update editor headers
+            console.log('[UTLXFrontendContribution] Updating editor headers:', {
+                inputLines,
+                outputFormat: this.outputFormat,
+                trackedInputs: Array.from(this.inputs.entries())
+            });
+
+            editor.updateHeaders(inputLines, this.outputFormat);
+        } catch (error) {
+            console.error('[UTLXFrontendContribution] Failed to update editor headers:', error);
         }
     }
 }

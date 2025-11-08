@@ -13,6 +13,7 @@ import { MonacoEditor } from '@theia/monaco/lib/browser/monaco-editor';
 import URI from '@theia/core/lib/common/uri';
 import { DisposableCollection } from '@theia/core/lib/common/disposable';
 import * as monaco from '@theia/monaco-editor-core';
+import { UTLXEventService } from '../events/utlx-event-service';
 
 export const UTLX_EDITOR_WIDGET_ID = 'utlx-editor';
 
@@ -24,12 +25,16 @@ export class UTLXEditorWidget extends ReactWidget {
     @inject(MonacoEditorProvider) @optional()
     protected readonly editorProvider?: MonacoEditorProvider;
 
+    @inject(UTLXEventService)
+    protected readonly eventService!: UTLXEventService;
+
     protected editor: monaco.editor.IStandaloneCodeEditor | undefined;
     protected editorContainer: HTMLDivElement | undefined;
     protected toDispose = new DisposableCollection();
     protected readOnlyDecorations: string[] = [];
     protected headerEndLine: number = 0;
     protected savedHeaderContent: string[] = [];
+    protected isUpdatingHeaders: boolean = false;
 
     constructor() {
         super();
@@ -43,6 +48,84 @@ export class UTLXEditorWidget extends ReactWidget {
     @postConstruct()
     protected init(): void {
         this.update();
+
+        // ===== Mode Events =====
+        this.eventService.onModeChanged(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Mode changed:', event);
+        });
+
+        // ===== Input Management Events =====
+        this.eventService.onInputFormatChanged(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Input format changed:', event);
+            // Header updates handled by UTLXFrontendContribution
+        });
+
+        this.eventService.onInputNameChanged(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Input name changed:', event);
+        });
+
+        this.eventService.onInputAdded(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Input added:', event);
+        });
+
+        this.eventService.onInputDeleted(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Input deleted:', event);
+        });
+
+        this.eventService.onInputInferSchema(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Input infer schema:', event);
+        });
+
+        this.eventService.onInputInstanceContentChanged(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Input instance content changed:', {
+                inputId: event.inputId,
+                contentLength: event.content.length
+            });
+        });
+
+        this.eventService.onInputSchemaContentChanged(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Input schema content changed:', {
+                inputId: event.inputId,
+                contentLength: event.content.length
+            });
+        });
+
+        // ===== Output Events =====
+        this.eventService.onOutputFormatChanged(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Output format changed:', event);
+            // Header updates handled by UTLXFrontendContribution
+        });
+
+        this.eventService.onOutputPresetOn(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Output preset mode ON:', {
+                format: event.schemaFormat,
+                contentLength: event.schemaContent.length
+            });
+        });
+
+        this.eventService.onOutputPresetOff(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Output preset mode OFF');
+        });
+
+        this.eventService.onOutputSchemaFormatChanged(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Output schema format changed:', event);
+        });
+
+        this.eventService.onOutputSchemaContentChanged(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Output schema content changed:', {
+                contentLength: event.content.length
+            });
+        });
+
+        // ===== AI Generation Events =====
+        this.eventService.onUTLXGenerated(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: UTLX generated from prompt:', event.prompt);
+            if (event.utlx) {
+                this.setContent(event.utlx);
+            }
+        });
+
+        console.log('[UTLXEditorWidget] ✓ All event subscriptions initialized');
     }
 
     protected onActivateRequest(msg: Message): void {
@@ -217,12 +300,11 @@ output: {
      * Handler for content changes
      */
     protected onContentChanged(): void {
-        // Notify parent workbench that content has changed
-        // This will be used for validation/execution
-        this.node.dispatchEvent(new CustomEvent('utlx-content-changed', {
-            bubbles: true,
-            detail: { content: this.getContent() }
-        }));
+        const content = this.getContent();
+        console.log('[UTLXEditorWidget] 📤 FIRING: Content changed, length:', content.length);
+
+        // Fire content changed event for validation/execution
+        this.eventService.fireContentChanged({ content });
     }
 
     /**
@@ -337,38 +419,46 @@ output: {
             return;
         }
 
-        // Find current separator
-        const separatorLine = this.parseHeaderEndLine();
+        // Set flag to bypass read-only enforcement during update
+        this.isUpdatingHeaders = true;
 
-        // Generate new header
-        const newHeader = this.generateHeader(inputLines, outputFormat);
-        const newHeaderLines = newHeader.split('\n');
+        try {
+            // Find current separator
+            const separatorLine = this.parseHeaderEndLine();
 
-        // Get existing body content (everything after ---)
-        const bodyStartLine = separatorLine + 2; // +1 for 0-index, +1 to skip ---
-        const totalLines = model.getLineCount();
-        const bodyLines: string[] = [];
+            // Generate new header
+            const newHeader = this.generateHeader(inputLines, outputFormat);
+            const newHeaderLines = newHeader.split('\n');
 
-        for (let i = bodyStartLine; i <= totalLines; i++) {
-            bodyLines.push(model.getLineContent(i));
+            // Get existing body content (everything after ---)
+            const bodyStartLine = separatorLine + 2; // +1 for 0-index, +1 to skip ---
+            const totalLines = model.getLineCount();
+            const bodyLines: string[] = [];
+
+            for (let i = bodyStartLine; i <= totalLines; i++) {
+                bodyLines.push(model.getLineContent(i));
+            }
+
+            // Combine new header with existing body
+            const newContent = newHeader + '\n' + bodyLines.join('\n');
+
+            // Update model
+            model.setValue(newContent);
+
+            // Update header end line tracking
+            this.headerEndLine = newHeaderLines.length - 1; // -1 because --- is the last header line
+
+            // Apply read-only decorations
+            this.applyReadOnlyDecorations();
+
+            // CRITICAL: Save the new header content so enforcement doesn't revert it
+            this.saveHeaderContent();
+
+            console.log('[UTLXEditor] Headers updated successfully');
+        } finally {
+            // Always clear the flag, even if there's an error
+            this.isUpdatingHeaders = false;
         }
-
-        // Combine new header with existing body
-        const newContent = newHeader + '\n' + bodyLines.join('\n');
-
-        // Update model
-        model.setValue(newContent);
-
-        // Update header end line tracking
-        this.headerEndLine = newHeaderLines.length - 1; // -1 because --- is the last header line
-
-        // Apply read-only decorations
-        this.applyReadOnlyDecorations();
-
-        // CRITICAL: Save the new header content so enforcement doesn't revert it
-        this.saveHeaderContent();
-
-        console.log('[UTLXEditor] Headers updated successfully');
     }
 
     /**
@@ -438,7 +528,7 @@ output: {
         // Listen for content changes and prevent edits to header lines
         this.toDispose.push(
             this.editor.onDidChangeModelContent((e) => {
-                if (!this.editor || isReverting) return;
+                if (!this.editor || isReverting || this.isUpdatingHeaders) return;
 
                 const model = this.editor.getModel();
                 if (!model) return;

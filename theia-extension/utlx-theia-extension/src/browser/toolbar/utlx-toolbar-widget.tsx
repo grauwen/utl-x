@@ -11,10 +11,10 @@ import * as React from 'react';
 import { injectable, inject, postConstruct } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MessageService } from '@theia/core';
-import { Emitter } from '@theia/core';
 import {
     UTLXMode
 } from '../../common/protocol';
+import { UTLXEventService } from '../events/utlx-event-service';
 
 export interface ToolbarState {
     currentMode: UTLXMode;
@@ -30,6 +30,9 @@ export class UTLXToolbarWidget extends ReactWidget {
 
     @inject(MessageService)
     protected readonly messageService!: MessageService;
+
+    @inject(UTLXEventService)
+    protected readonly eventService!: UTLXEventService;
 
     private state: ToolbarState = {
         currentMode: UTLXMode.RUNTIME,
@@ -177,8 +180,8 @@ export class UTLXToolbarWidget extends ReactWidget {
         const modeName = newMode === UTLXMode.RUNTIME ? 'Runtime' : 'Design-Time';
         this.messageService.info(`✓ Switched to ${modeName} mode`);
 
-        // Dispatch event for other widgets to update
-        window.dispatchEvent(new CustomEvent('utlx-mode-changed', { detail: { mode: newMode } }));
+        // Fire event for other widgets to update
+        this.eventService.fireModeChanged({ mode: newMode });
     }
 
     private openMCPDialog(): void {
@@ -210,13 +213,11 @@ export class UTLXToolbarWidget extends ReactWidget {
 
             this.messageService.info('✨ UTLX transformation generated! Check the editor.');
 
-            // Dispatch event to update editor with generated UTLX
-            window.dispatchEvent(new CustomEvent('utlx-generated', {
-                detail: {
-                    prompt: mcpPrompt,
-                    // utlx: result.utlx
-                }
-            }));
+            // Fire event to update editor with generated UTLX
+            this.eventService.fireUTLXGenerated({
+                prompt: mcpPrompt,
+                // utlx: result.utlx
+            });
 
             this.closeMCPDialog();
         } catch (error) {

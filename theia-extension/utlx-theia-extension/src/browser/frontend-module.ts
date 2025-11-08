@@ -8,7 +8,6 @@ import './style/index.css';
 import { ContainerModule } from 'inversify';
 import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory } from '@theia/core/lib/browser';
 import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
-import { InputPanelWidget } from './input-panel/input-panel-widget';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
@@ -17,6 +16,7 @@ import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { UTLXToolbarWidget } from './toolbar/utlx-toolbar-widget';
 import { UTLXFrontendContribution } from './utlx-frontend-contribution';
 import { TestWidget } from './test-widget';
+import { UTLXEventService } from './events/utlx-event-service';
 
 export default new ContainerModule(bind => {
     console.log('[UTLX Frontend Module] ===== LOADING STARTED =====');
@@ -30,6 +30,11 @@ export default new ContainerModule(bind => {
             return connection.createProxy<UTLXService>(UTLX_SERVICE_PATH);
         }).inSingletonScope();
         console.log('[UTLX Frontend Module] ✓ UTLX service proxy bound');
+
+        // Bind event service for widget communication
+        console.log('[UTLX Frontend Module] Binding UTLXEventService...');
+        bind(UTLXEventService).toSelf().inSingletonScope();
+        console.log('[UTLX Frontend Module] ✓ UTLXEventService bound');
 
         // Bind widgets
         console.log('[UTLX Frontend Module] Binding MultiInputPanelWidget...');

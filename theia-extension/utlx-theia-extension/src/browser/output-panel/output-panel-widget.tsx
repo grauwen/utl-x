@@ -18,6 +18,7 @@ import {
     Diagnostic,
     OUTPUT_PANEL_ID
 } from '../../common/protocol';
+import { UTLXEventService } from '../events/utlx-event-service';
 
 export interface OutputPanelState {
     mode: UTLXMode;
@@ -45,6 +46,9 @@ export class OutputPanelWidget extends ReactWidget {
 
     @inject(MessageService)
     protected readonly messageService!: MessageService;
+
+    @inject(UTLXEventService)
+    protected readonly eventService!: UTLXEventService;
 
     private state: OutputPanelState = {
         mode: UTLXMode.RUNTIME,
@@ -79,14 +83,14 @@ export class OutputPanelWidget extends ReactWidget {
             });
         }
 
-        // Listen for mode changes from toolbar
-        window.addEventListener('utlx-mode-changed', ((event: CustomEvent) => {
-            const newMode = event.detail.mode;
+        // Subscribe to mode changes
+        this.eventService.onModeChanged(event => {
+            console.log('[OutputPanelWidget] Mode changed to:', event.mode);
             this.setState({
-                mode: newMode,
-                activeTab: newMode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+                mode: event.mode,
+                activeTab: event.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
             });
-        }) as EventListener);
+        });
     }
 
 
@@ -331,13 +335,11 @@ export class OutputPanelWidget extends ReactWidget {
             this.setState({ schemaFormat: format });
         }
 
-        // Dispatch format change event for editor widget to update headers
-        window.dispatchEvent(new CustomEvent('utlx-output-format-changed', {
-            detail: {
-                format,
-                tab: this.state.activeTab
-            }
-        }));
+        // Fire format change event for editor widget to update headers
+        this.eventService.fireOutputFormatChanged({
+            format,
+            tab: this.state.activeTab
+        });
     }
 
     private setState(partial: Partial<OutputPanelState>): void {

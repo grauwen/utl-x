@@ -23,6 +23,7 @@ import {
     SchemaFormat,
     INPUT_PANEL_ID
 } from '../../common/protocol';
+import { UTLXEventService } from '../events/utlx-event-service';
 
 export type InstanceFormat = 'csv' | 'json' | 'xml' | 'yaml';
 export type SchemaFormatType = 'xsd' | 'jsch' | 'avro' | 'proto';
@@ -55,6 +56,9 @@ export class MultiInputPanelWidget extends ReactWidget {
 
     @inject(MessageService)
     protected readonly messageService!: MessageService;
+
+    @inject(UTLXEventService)
+    protected readonly eventService!: UTLXEventService;
 
     private state: MultiInputPanelState = {
         mode: UTLXMode.RUNTIME,
@@ -90,14 +94,14 @@ export class MultiInputPanelWidget extends ReactWidget {
 
         this.update();
 
-        // Listen for mode changes
-        window.addEventListener('utlx-mode-changed', ((event: CustomEvent) => {
-            const newMode = event.detail.mode;
+        // Subscribe to mode changes
+        this.eventService.onModeChanged(event => {
+            console.log('[MultiInputPanelWidget] Mode changed to:', event.mode);
             this.setState({
-                mode: newMode,
-                activeSubTab: newMode === UTLXMode.DESIGN_TIME ? 'instance' : 'instance'
+                mode: event.mode,
+                activeSubTab: event.mode === UTLXMode.DESIGN_TIME ? 'instance' : 'instance'
             });
-        }) as EventListener);
+        });
     }
 
     protected render(): React.ReactNode {
@@ -429,15 +433,13 @@ export class MultiInputPanelWidget extends ReactWidget {
             )
         });
 
-        // Dispatch event to notify editor widget to update headers
-        console.log('[MultiInputPanel] Dispatching utlx-input-format-changed event');
-        window.dispatchEvent(new CustomEvent('utlx-input-format-changed', {
-            detail: {
-                format,
-                isSchema,
-                inputId: this.state.activeInputId
-            }
-        }));
+        // Fire event to notify editor widget to update headers
+        console.log('[MultiInputPanel] Firing input format changed event');
+        this.eventService.fireInputFormatChanged({
+            format,
+            isSchema,
+            inputId: this.state.activeInputId
+        });
     }
 
     /**
