@@ -1,12 +1,26 @@
 After a change do:
 
-  1. Rebuild TypeScript: cd /utl-x/theia-extension/utlx-theia-extensionn && npx tsc
-  2. Reinstall: cd /path/to/browser-app && rm -rf node_modules/utlx-theia-extension && yarn install --check-files
-  3. Rebuild webpack: cd /path/to/browser-app && npx webpack
-  4. kill all rpocesses still running on port 4000; lsof -ti:4000 | xargs kill -9 2>/dev/null; 
-  5. Restart server:  npx theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace
+  1. Rebuild TypeScript: 
+cd /utl-x/theia-extension/utlx-theia-extension
+npx tsc --listFiles | grep -E "(output-panel|editor)"
 
-cd utl-x/theia-extension/browser-app && yarn start => yarn start has an issue
+  2. Build the browser app (this bundles everything): 
+cd /utl-x/theia-extension/browser-app (../browser-app from previous)
+npx theia build --mode production --log-level verbose --stats verbose
+  // 2. Reinstall: cd /path/to/browser-app && rm -rf node_modules/utlx-theia-extension && yarn install --check-files
+
+  3. Rebuild webpack: 
+cd /utl-x/theia-extension/browser-app (same dire as previous) 
+npx webpack --config webpack.config.js --mode production --progress --verbose
+
+  4. kill all rpocesses still running on port 4000; 
+lsof -ti:4000 | xargs kill -9 2>/dev/null; 
+
+  5. Restart server:  
+cd /utl-x/theia-extension/browser-app (same dire as previous) 
+npx theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace
+
+yarn start => yarn start has an issue!
 
 ----
  The CSS file you need to modify is:
