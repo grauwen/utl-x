@@ -535,8 +535,65 @@ export class MultiInputPanelWidget extends ReactWidget {
     }
 
     private async handleLoadFile(): Promise<void> {
-        // TODO: Implement file loading
-        this.messageService.info('File loading not yet implemented');
+        try {
+            // Create file input element
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv,.json,.xml,.yaml,.yml,.xsd,.avsc,.proto,text/*';
+
+            // Handle file selection
+            input.onchange = async (e: Event) => {
+                const target = e.target as HTMLInputElement;
+                const file = target.files?.[0];
+                if (!file) return;
+
+                this.setState({ loading: true });
+
+                try {
+                    // Read file content
+                    const content = await file.text();
+
+                    // Determine if we're loading into instance or schema
+                    const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+
+                    // Update content
+                    this.setState({
+                        inputs: this.state.inputs.map(input =>
+                            input.id === this.state.activeInputId
+                                ? {
+                                    ...input,
+                                    [isSchema ? 'schemaContent' : 'instanceContent']: content
+                                }
+                                : input
+                        ),
+                        loading: false
+                    });
+
+                    this.messageService.info(`Loaded file: ${file.name}`);
+
+                    // Fire content changed event
+                    if (isSchema) {
+                        this.eventService.fireInputSchemaContentChanged({
+                            inputId: this.state.activeInputId,
+                            content
+                        });
+                    } else {
+                        this.eventService.fireInputInstanceContentChanged({
+                            inputId: this.state.activeInputId,
+                            content
+                        });
+                    }
+                } catch (error) {
+                    this.setState({ loading: false });
+                    this.messageService.error(`Failed to load file: ${error}`);
+                }
+            };
+
+            // Trigger file dialog
+            input.click();
+        } catch (error) {
+            this.messageService.error(`Failed to open file dialog: ${error}`);
+        }
     }
 
     private setState(partial: Partial<MultiInputPanelState>): void {
