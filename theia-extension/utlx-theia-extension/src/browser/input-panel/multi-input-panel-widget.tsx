@@ -379,6 +379,19 @@ export class MultiInputPanelWidget extends ReactWidget {
         });
 
         this.messageService.info(`Added ${newInput.name}`);
+
+        // Fire input added event
+        this.eventService.fireInputAdded({
+            inputId: newInput.id,
+            name: newInput.name
+        });
+
+        // Fire format changed event for the new input
+        this.eventService.fireInputFormatChanged({
+            format: newInput.instanceFormat,
+            inputId: newInput.id,
+            isSchema: false
+        });
     }
 
     private handleDeleteInput(inputId: string, event: React.MouseEvent): void {
@@ -408,14 +421,34 @@ export class MultiInputPanelWidget extends ReactWidget {
         });
 
         this.messageService.info(`Deleted ${inputToDelete.name}`);
+
+        // Fire input deleted event
+        this.eventService.fireInputDeleted({
+            inputId: inputToDelete.id,
+            name: inputToDelete.name
+        });
     }
 
     private handleRenameInput(inputId: string, newName: string): void {
+        const oldInput = this.state.inputs.find(i => i.id === inputId);
+        if (!oldInput) return;
+
+        const oldName = oldInput.name;
+
         this.setState({
             inputs: this.state.inputs.map(input =>
                 input.id === inputId ? { ...input, name: newName } : input
             )
         });
+
+        // Fire input name changed event
+        if (oldName !== newName) {
+            this.eventService.fireInputNameChanged({
+                inputId,
+                oldName,
+                newName
+            });
+        }
     }
 
     private handleSubTabSwitch(subTab: 'instance' | 'schema'): void {

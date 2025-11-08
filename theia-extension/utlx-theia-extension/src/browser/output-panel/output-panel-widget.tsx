@@ -173,14 +173,14 @@ export class OutputPanelWidget extends ReactWidget {
                             value={currentFormat || 'json'}
                             onChange={(e) => this.handleFormatChange((e.target as HTMLSelectElement).value)}
                         >
-                            <option value='csv'>CSV</option>
-                            <option value='json'>JSON</option>
-                            <option value='xml'>XML</option>
-                            <option value='yaml'>YAML</option>
-                            <option value='xsd'>XSD %USDL 1.0</option>
-                            <option value='jsch'>JSON Schema %USDL 1.0</option>
-                            <option value='avro'>Avro %USDL 1.0</option>
-                            <option value='proto'>Protobuf %USDL 1.0</option>
+                            <option value='csv'>csv</option>
+                            <option value='json'>json</option>
+                            <option value='xml'>xml</option>
+                            <option value='yaml'>yaml</option>
+                            <option value='xsd'>xsd %USDL 1.0</option>
+                            <option value='jsch'>jsch %USDL 1.0</option>
+                            <option value='avro'>avro %USDL 1.0</option>
+                            <option value='proto'>proto %USDL 1.0</option>
                         </select>
                     </label>
 

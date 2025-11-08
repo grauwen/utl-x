@@ -480,25 +480,12 @@ export class UTLXFrontendContribution implements
                     inputLines.push(`input ${input.format}`);
                 }
             } else {
-                // Multiple inputs: "input: [optionalname1] format1, name2 format2, ..."
+                // Multiple inputs: "input: name1 format1, name2 format2, ..."
+                // ALWAYS show names for multiple inputs
                 const inputParts: string[] = [];
-                let isFirst = true;
 
                 this.inputs.forEach(input => {
-                    const hasCustomName = input.name && input.name !== 'input' && input.name.trim() !== '';
-
-                    if (isFirst) {
-                        // First input: name is optional
-                        if (hasCustomName) {
-                            inputParts.push(`${input.name} ${input.format}`);
-                        } else {
-                            inputParts.push(`${input.format}`);
-                        }
-                        isFirst = false;
-                    } else {
-                        // Subsequent inputs: name is mandatory
-                        inputParts.push(`${input.name} ${input.format}`);
-                    }
+                    inputParts.push(`${input.name} ${input.format}`);
                 });
 
                 inputLines.push(`input: ${inputParts.join(', ')}`);
