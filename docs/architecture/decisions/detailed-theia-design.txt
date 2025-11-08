@@ -6,6 +6,67 @@ After a change do:
   4. Restart server
 
 ----
+ The CSS file you need to modify is:
+
+utl-x/theia-extension/utlx-theia-extension/src/browser/style/index.css
+
+ The CSS is aware of dark and light OS mode! Theia uses CSS variables that automatically change based on the theme. Here's what you need to know:
+
+  Current Vertical Tab Styling (around line 627-643):
+
+  .utlx-vertical-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0px;
+      background: var(--theia-button-background);
+      border: 1px solid var(--theia-button-border);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+      color: var(--theia-foreground);  /* <-- This is the text color */
+      min-height: 80px;
+      width: 100%;
+  }
+
+  The Problem:
+
+  The color: var(--theia-foreground) uses Theia's main foreground color, which in light mode is probably black or very dark. This works fine for most UI
+  elements but may not have enough contrast on your button background.
+
+  Solutions:
+
+  You have several options:
+
+  1. Use a specific foreground color for buttons:
+  color: var(--theia-button-foreground);
+  2. Use the editor foreground (usually has better contrast):
+  color: var(--theia-editor-foreground);
+  3. Use a semi-transparent color that works in both modes:
+  color: rgba(255, 255, 255, 0.8);  /* Light text, works better in dark mode */
+  4. Use different colors for light and dark mode:
+  /* For dark mode (default) */
+  color: var(--theia-foreground);
+
+  /* For light mode - you can use media query or Theia's theme variables */
+  [data-theme='light'] & {
+      color: rgba(0, 0, 0, 0.7);
+  }
+
+  My Recommendation:
+
+  Try changing line ~639 from:
+  color: var(--theia-foreground);
+
+  to:
+  color: var(--theia-button-foreground);
+
+  This should automatically adapt to both light and dark modes correctly, as Theia's button foreground color is designed to contrast with the button
+  background.
+
+-----
 
 Header of UTLX transform is for this version  of IDE fixed 
 %UTLX 1.0
