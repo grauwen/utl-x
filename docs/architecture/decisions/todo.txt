@@ -13,7 +13,14 @@ Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that descri
 
 ----
 IDE integration (LSP for validation)                                                                                                                                                
-CI/CD pipelines (fail on errors, warn on lint issues)                                                                                                                               Pre-commit hooks                                                                                                                                                                    Build-time validation   
+CI/CD pipelines (fail on errors, warn on lint issues)    
+
+Three options (in order of preference):
+  1. Coordination Service ✅ RECOMMENDED - Plain TypeScript class, no widget overhead
+  2. Theia Event Bus ✅ GOOD - Type-safe, follows Theia patterns  <== interesting
+  3. Window Events ⚠️ CURRENT - Works but not type-safe
+
+Pre-commit hooks                                                                                                                                                                    Build-time validation   
 ---
 Current Tier 1 Hierachical Data: json, csv,xml,yam
 Current Tier 2 Hierachical Meta Data: xsd, jsch, avro, proto
