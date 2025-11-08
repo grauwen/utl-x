@@ -80,11 +80,11 @@ yarn install --check-files --network-timeout 100000
 echo "✓ Extension refreshed at $(date '+%H:%M:%S')"
 echo ""
 
-# Step 5: Clean webpack cache
-echo "Step 5/7: Cleaning webpack cache..."
-echo "Removing: .theia lib node_modules/.cache"
-rm -rfv .theia lib node_modules/.cache | head -20
-echo "✓ Cache cleaned at $(date '+%H:%M:%S')"
+# Step 5: Clean webpack cache AND frontend bundle
+echo "Step 5/7: Cleaning webpack cache and frontend bundle..."
+echo "Removing: .theia lib/frontend lib/backend node_modules/.cache"
+rm -rfv .theia lib/frontend lib/backend node_modules/.cache 2>/dev/null | head -20
+echo "✓ Cache and bundle cleaned at $(date '+%H:%M:%S')"
 echo ""
 
 # Step 6: Build browser app
