@@ -6,12 +6,14 @@ npx tsc --listFiles | grep -E "(output-panel|editor)"
 
   2. Build the browser app (this bundles everything): 
 cd /utl-x/theia-extension/browser-app (../browser-app from previous)
+#clean webpack cache
+rm -rf .theia lib node_modules/.cache
 npx theia build --mode production --log-level verbose --stats verbose
   // 2. Reinstall: cd /path/to/browser-app && rm -rf node_modules/utlx-theia-extension && yarn install --check-files
 
   3. Rebuild webpack: 
 cd /utl-x/theia-extension/browser-app (same dire as previous) 
-npx webpack --config webpack.config.js --mode production --progress --verbose
+npx webpack --config webpack.config.js --mode production --stats detailed
 
   4. kill all rpocesses still running on port 4000; 
 lsof -ti:4000 | xargs kill -9 2>/dev/null; 
