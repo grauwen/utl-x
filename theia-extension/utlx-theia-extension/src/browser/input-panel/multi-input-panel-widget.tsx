@@ -556,20 +556,34 @@ export class MultiInputPanelWidget extends ReactWidget {
                     // Determine if we're loading into instance or schema
                     const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
 
-                    // Update content
+                    // Auto-detect format from file extension
+                    const detectedFormat = this.detectFormatFromFilename(file.name);
+
+                    // Update content and optionally format
                     this.setState({
                         inputs: this.state.inputs.map(input =>
                             input.id === this.state.activeInputId
                                 ? {
                                     ...input,
-                                    [isSchema ? 'schemaContent' : 'instanceContent']: content
+                                    [isSchema ? 'schemaContent' : 'instanceContent']: content,
+                                    ...(detectedFormat && !isSchema ? { instanceFormat: detectedFormat } : {}),
+                                    ...(detectedFormat && isSchema ? { schemaFormat: detectedFormat as SchemaFormatType } : {})
                                 }
                                 : input
                         ),
                         loading: false
                     });
 
-                    this.messageService.info(`Loaded file: ${file.name}`);
+                    this.messageService.info(`Loaded file: ${file.name}${detectedFormat ? ` (format: ${detectedFormat})` : ''}`);
+
+                    // Fire format changed event if format was auto-detected
+                    if (detectedFormat && !isSchema) {
+                        this.eventService.fireInputFormatChanged({
+                            format: detectedFormat,
+                            inputId: this.state.activeInputId,
+                            isSchema: false
+                        });
+                    }
 
                     // Fire content changed event
                     if (isSchema) {
@@ -593,6 +607,38 @@ export class MultiInputPanelWidget extends ReactWidget {
             input.click();
         } catch (error) {
             this.messageService.error(`Failed to open file dialog: ${error}`);
+        }
+    }
+
+    /**
+     * Auto-detect format from file extension
+     * Returns null if format cannot be detected
+     */
+    private detectFormatFromFilename(filename: string): InstanceFormat | SchemaFormatType | null {
+        const ext = filename.toLowerCase().split('.').pop();
+
+        switch (ext) {
+            case 'csv':
+                return 'csv';
+            case 'json':
+                return 'json';
+            case 'xml':
+                return 'xml';
+            case 'yaml':
+            case 'yml':
+                return 'yaml';
+            case 'xsd':
+                return 'xsd';
+            case 'avsc':
+            case 'avro':
+                return 'avro';
+            case 'proto':
+                return 'proto';
+            case 'jsonschema':
+            case 'schema':
+                return 'jsch';
+            default:
+                return null; // Unknown extension, don't change format
         }
     }
 
