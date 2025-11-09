@@ -48,6 +48,20 @@ First:
   │ (thin wrapper) │    
   └────────────────┘    
 
+Than:
+
+  ┌─────────────────────────────────────────┐
+  │   Core Transformation Service           │
+  │   (parseInput + execute + serializeOutput)│
+  └─────────────────────────────────────────┘
+                      ▲
+                      │
+                      ┴───────────┐
+                                  │
+                         ┌────────┴─────────┐
+                         │  REST API        │
+                         │  (thin wrapper)  │
+                         └──────────────────┘
 
 
 IDE integration (LSP for validation)                                                                                                                                                
