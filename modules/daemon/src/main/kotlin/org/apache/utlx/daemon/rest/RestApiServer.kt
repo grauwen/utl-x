@@ -95,6 +95,13 @@ class RestApiServer(
                 allowMethod(HttpMethod.Options)
                 allowHeader(HttpHeaders.ContentType)
                 allowHeader(HttpHeaders.Authorization)
+                // Allow custom headers for multipart metadata
+                allowHeader("X-Format")
+                allowHeader("X-Encoding")
+                allowHeader("X-BOM")
+                // Expose headers that might be needed by the client
+                exposeHeader(HttpHeaders.ContentType)
+                exposeHeader(HttpHeaders.ContentLength)
             }
 
             install(StatusPages) {
