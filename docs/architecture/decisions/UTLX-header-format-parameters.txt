@@ -4,12 +4,13 @@ Overview of all poissble UTLX format header parameters
   |--------|----------------------|-------------------------------------------|--------------
   | CSV    | headers, delimiter   | csv {headers: true, delimiter: ";"}       | csv {headers: true, delimiter: ";"} 
   | XML    | encoding, arrays     | xml {encoding: "UTF-8", arrays: ["Item"]} | xml {encoding: "UTF-8"}
-  | XSD    | arrays               | xsd {arrays: ["xs:element"]}              | 
   | JSON   | None                 | json                                      |
   | YAML   | None                 | yaml                                      |
+  | XSD    | arrays               | xsd {arrays: ["xs:element"]}              | 
+  | JSCH   | None                 | jsch                                      |
   | Avro   | None                 | avro                                      |
   | Proto  | None                 | proto                                     |
-  | JSCH   | None                 | jsch                                      |
+
 
 
 # INPUT
