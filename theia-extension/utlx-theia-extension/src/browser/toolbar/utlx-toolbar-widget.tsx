@@ -105,9 +105,9 @@ export class UTLXToolbarWidget extends ReactWidget {
                     <button
                         className='utlx-toolbar-button'
                         onClick={() => this.handleExecute()}
-                        title='Execute transformation'
+                        title={currentMode === UTLXMode.RUNTIME ? 'Execute transformation' : 'Evaluate transformation'}
                     >
-                        ▶️ Execute
+                        {currentMode === UTLXMode.RUNTIME ? '▶️ Execute' : '🔍 Evaluate'}
                     </button>
                 </div>
 
@@ -227,13 +227,13 @@ export class UTLXToolbarWidget extends ReactWidget {
     }
 
     private async handleExecute(): Promise<void> {
-        try {
-            this.messageService.info('▶️ Executing transformation...');
-            // TODO: Trigger execution
-            // await this.utlxService.execute();
-        } catch (error) {
-            this.messageService.error(`Execution failed: ${error}`);
-        }
+        const mode = this.state.currentMode === UTLXMode.RUNTIME ? 'execute' : 'evaluate';
+        const modeLabel = this.state.currentMode === UTLXMode.RUNTIME ? 'Executing' : 'Evaluating';
+
+        this.messageService.info(`${mode === 'execute' ? '▶️' : '🔍'} ${modeLabel} transformation...`);
+
+        // Fire event for frontend contribution to coordinate execution
+        this.eventService.fireExecuteTransformation({ mode });
     }
 
     private setState(partial: Partial<ToolbarState>): void {

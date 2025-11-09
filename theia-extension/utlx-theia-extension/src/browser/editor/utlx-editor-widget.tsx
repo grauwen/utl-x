@@ -259,7 +259,7 @@ output json
 // This is a sample transformation.
 // Edit the code below and press Execute to run.
 
-output: {
+{
   message: "Hello from UTLX!",
   input: $input
 }

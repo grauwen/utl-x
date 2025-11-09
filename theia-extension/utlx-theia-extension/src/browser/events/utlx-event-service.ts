@@ -137,6 +137,13 @@ export interface UTLXGeneratedEvent {
 }
 
 /**
+ * Event fired when Execute/Evaluate button is clicked
+ */
+export interface ExecuteTransformationEvent {
+    mode: 'execute' | 'evaluate';
+}
+
+/**
  * Centralized event service for UTL-X widget communication.
  *
  * This service uses Theia's Emitter/Event pattern to provide
@@ -367,6 +374,28 @@ export class UTLXEventService {
         this.onUTLXGeneratedEmitter.fire(event);
     }
 
+    // ===== Execute/Evaluate Events =====
+
+    private readonly onExecuteTransformationEmitter = new Emitter<ExecuteTransformationEvent>();
+    /**
+     * Event fired when Execute/Evaluate button is clicked
+     */
+    readonly onExecuteTransformation: Event<ExecuteTransformationEvent> = this.onExecuteTransformationEmitter.event;
+
+    /**
+     * Fire an execute transformation event
+     */
+    fireExecuteTransformation(event: ExecuteTransformationEvent): void {
+        console.log('[UTLXEventService] ========================================');
+        console.log('[UTLXEventService] FIRING Execute Transformation Event');
+        console.log('[UTLXEventService] Mode:', event.mode);
+        console.log('[UTLXEventService] Event object:', event);
+        console.log('[UTLXEventService] Emitter:', this.onExecuteTransformationEmitter);
+        console.log('[UTLXEventService] ========================================');
+        this.onExecuteTransformationEmitter.fire(event);
+        console.log('[UTLXEventService] Event fired to all listeners');
+    }
+
     // ===== Lifecycle =====
 
     /**
@@ -388,5 +417,6 @@ export class UTLXEventService {
         this.onOutputSchemaContentChangedEmitter.dispose();
         this.onContentChangedEmitter.dispose();
         this.onUTLXGeneratedEmitter.dispose();
+        this.onExecuteTransformationEmitter.dispose();
     }
 }

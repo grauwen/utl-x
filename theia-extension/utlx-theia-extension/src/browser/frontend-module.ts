@@ -24,8 +24,12 @@ export default new ContainerModule(bind => {
         console.log('[UTLX Frontend Module] Binding UTLX service proxy...');
         bind(UTLX_SERVICE_SYMBOL).toDynamicValue(ctx => {
             console.log('[UTLX Frontend Module] Creating UTLX service proxy...');
+            console.log('[UTLX Frontend Module] Service path:', UTLX_SERVICE_PATH);
             const connection = ctx.container.get(WebSocketConnectionProvider);
-            return connection.createProxy<UTLXService>(UTLX_SERVICE_PATH);
+            console.log('[UTLX Frontend Module] WebSocketConnectionProvider:', connection);
+            const proxy = connection.createProxy<UTLXService>(UTLX_SERVICE_PATH);
+            console.log('[UTLX Frontend Module] Proxy created:', proxy);
+            return proxy;
         }).inSingletonScope();
         console.log('[UTLX Frontend Module] ✓ UTLX service proxy bound');
 

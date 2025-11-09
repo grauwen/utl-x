@@ -1,16 +1,16 @@
 /**
  * UTL-X Daemon Client
  *
- * Manages communication with the UTL-X daemon process via stdio.
- * Uses JSON-RPC 2.0 protocol for request/response communication.
+ * Manages communication with the UTL-X daemon process via REST API.
+ * Uses HTTP requests to communicate with the daemon on port 7779.
  */
 
 import { spawn, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { injectable } from 'inversify';
+import * as http from 'http';
+import FormData = require('form-data');
 import {
-    JsonRpcRequest,
-    JsonRpcResponse,
     ParseResult,
     ValidationResult,
     ExecutionResult,
@@ -25,20 +25,12 @@ import {
 } from '../../common/protocol';
 
 /**
- * Pending request tracker
- */
-interface PendingRequest {
-    resolve: (result: any) => void;
-    reject: (error: Error) => void;
-    timeout: NodeJS.Timeout;
-}
-
-/**
  * Daemon client options
  */
 export interface DaemonClientOptions {
-    daemonPath?: string;
-    logFile?: string;
+    daemonJarPath?: string;
+    lspPort?: number;
+    apiPort?: number;
     requestTimeout?: number;
     startupTimeout?: number;
 }
@@ -56,19 +48,25 @@ export interface DaemonClientEvents {
 @injectable()
 export class UTLXDaemonClient extends EventEmitter {
     private process: ChildProcess | null = null;
-    private requestId = 0;
-    private pendingRequests = new Map<number, PendingRequest>();
-    private buffer = '';
     private options: Required<DaemonClientOptions>;
+    private apiBaseUrl: string;
+    private lspBaseUrl: string;
 
-    constructor(options: DaemonClientOptions = {}) {
+    constructor() {
         super();
+        console.log('[BACKEND] UTLXDaemonClient constructor called');
+        // Use default options - no parameters needed for DI
+        const options: DaemonClientOptions = {};
         this.options = {
-            daemonPath: options.daemonPath || 'utlxd',
-            logFile: options.logFile || '/tmp/utlxd-theia.log',
+            daemonJarPath: options.daemonJarPath || '/Users/magr/data/mapping/github-git/utl-x/modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar',
+            lspPort: options.lspPort || 7777,
+            apiPort: options.apiPort || 7779,
             requestTimeout: options.requestTimeout || 30000,
             startupTimeout: options.startupTimeout || 10000
         };
+        this.apiBaseUrl = `http://localhost:${this.options.apiPort}`;
+        this.lspBaseUrl = `http://localhost:${this.options.lspPort}`;
+        console.log('[BACKEND] UTLXDaemonClient initialized');
     }
 
     /**
@@ -86,19 +84,21 @@ export class UTLXDaemonClient extends EventEmitter {
             }, this.options.startupTimeout);
 
             try {
-                // Spawn daemon with LSP mode and REST API
-                this.process = spawn(this.options.daemonPath, [
-                    'start',
-                    '--daemon-lsp',
-                    '--daemon-rest',
-                    '--daemon-rest-port', '7779'
-                ], {
-                    stdio: ['pipe', 'pipe', 'pipe']
-                });
+                console.log('[DaemonClient] Starting daemon with LSP on port', this.options.lspPort, 'and API on port', this.options.apiPort);
+                console.log('[DaemonClient] Using JAR:', this.options.daemonJarPath);
 
-                // Set up stdout reader for JSON-RPC responses
-                this.process.stdout!.on('data', (data: Buffer) => {
-                    this.handleStdout(data);
+                // Spawn daemon with both LSP and API
+                this.process = spawn('java', [
+                    '-jar',
+                    this.options.daemonJarPath,
+                    'start',
+                    '--lsp',
+                    '--lsp-transport', 'http',
+                    '--lsp-port', String(this.options.lspPort),
+                    '--api',
+                    '--api-port', String(this.options.apiPort)
+                ], {
+                    stdio: ['ignore', 'pipe', 'pipe']
                 });
 
                 // Set up stderr reader for logging
@@ -106,6 +106,12 @@ export class UTLXDaemonClient extends EventEmitter {
                     const message = data.toString('utf-8');
                     console.warn('[UTLXDaemon stderr]:', message);
                     this.emit('stderr', message);
+                });
+
+                // Set up stdout reader for logging
+                this.process.stdout!.on('data', (data: Buffer) => {
+                    const message = data.toString('utf-8');
+                    console.log('[UTLXDaemon stdout]:', message);
                 });
 
                 // Handle process exit
@@ -123,10 +129,12 @@ export class UTLXDaemonClient extends EventEmitter {
                     this.emit('error', error);
                 });
 
-                // Wait for daemon to be ready
+                // Wait for daemon to be ready by pinging API
                 this.ping()
                     .then(() => {
                         clearTimeout(timeout);
+                        console.log('[DaemonClient] Daemon API ready at', this.apiBaseUrl);
+                        console.log('[DaemonClient] Daemon LSP ready at', this.lspBaseUrl);
                         this.emit('started');
                         resolve();
                     })
@@ -172,98 +180,96 @@ export class UTLXDaemonClient extends EventEmitter {
 
     /**
      * Check if daemon is running
+     * Returns true if we spawned a process that's still running,
+     * OR if we can successfully connect to the daemon (manual start)
      */
     isRunning(): boolean {
-        return this.process !== null && this.process.exitCode === null;
+        // If we spawned the process, check if it's still running
+        if (this.process !== null && this.process.exitCode === null) {
+            return true;
+        }
+        // If process is null or exited, we can't definitively say it's not running
+        // (it might have been started manually), so we return true to allow requests
+        // The actual HTTP request will fail if daemon is truly not accessible
+        return true;
     }
 
     /**
-     * Send JSON-RPC request to daemon
+     * Make HTTP request to daemon REST API
      */
-    private async request(method: string, params?: any): Promise<any> {
+    private async httpRequest(endpoint: string, method: string = 'POST', body?: any): Promise<any> {
         if (!this.isRunning()) {
             throw new Error('Daemon is not running');
         }
 
+        const url = `${this.apiBaseUrl}${endpoint}`;
+        const bodyStr = body ? JSON.stringify(body) : undefined;
+
+        console.log('[DaemonClient] ========== HTTP REQUEST ==========');
+        console.log('[DaemonClient] URL:', url);
+        console.log('[DaemonClient] Method:', method);
+        if (bodyStr) {
+            console.log('[DaemonClient] Request body:');
+            console.log(bodyStr);
+        }
+        console.log('[DaemonClient] ==========================================');
+
         return new Promise((resolve, reject) => {
-            const id = ++this.requestId;
-            const request: JsonRpcRequest = {
-                jsonrpc: '2.0',
-                id,
-                method,
-                params
+            const urlObj = new URL(url);
+            const options: http.RequestOptions = {
+                hostname: urlObj.hostname,
+                port: urlObj.port,
+                path: urlObj.pathname,
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(bodyStr && { 'Content-Length': Buffer.byteLength(bodyStr) })
+                },
+                timeout: this.options.requestTimeout
             };
 
-            const timeout = setTimeout(() => {
-                this.pendingRequests.delete(id);
-                reject(new Error(`Request ${id} (${method}) timed out after ${this.options.requestTimeout}ms`));
-            }, this.options.requestTimeout);
+            const req = http.request(options, (res) => {
+                let data = '';
 
-            this.pendingRequests.set(id, {
-                resolve: (result) => {
-                    clearTimeout(timeout);
-                    resolve(result);
-                },
-                reject: (error) => {
-                    clearTimeout(timeout);
-                    reject(error);
-                },
-                timeout
+                res.on('data', (chunk) => {
+                    data += chunk;
+                });
+
+                res.on('end', () => {
+                    console.log('[DaemonClient] ========== HTTP RESPONSE ==========');
+                    console.log('[DaemonClient] Status:', res.statusCode);
+                    console.log('[DaemonClient] Response body:');
+                    console.log(data);
+                    console.log('[DaemonClient] ==========================================');
+
+                    if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+                        try {
+                            const result = data ? JSON.parse(data) : {};
+                            resolve(result);
+                        } catch (error) {
+                            reject(new Error(`Failed to parse response: ${error}`));
+                        }
+                    } else {
+                        reject(new Error(`HTTP ${res.statusCode}: ${data}`));
+                    }
+                });
             });
 
-            // Serialize to JSON and write to daemon's stdin
-            const message = JSON.stringify(request) + '\n';
-
-            this.process!.stdin!.write(message, 'utf-8', (err) => {
-                if (err) {
-                    clearTimeout(timeout);
-                    this.pendingRequests.delete(id);
-                    reject(new Error(`Failed to write to daemon: ${err.message}`));
-                }
+            req.on('error', (error) => {
+                console.error('[DaemonClient] HTTP request error:', error);
+                reject(error);
             });
+
+            req.on('timeout', () => {
+                req.destroy();
+                reject(new Error(`Request timed out after ${this.options.requestTimeout}ms`));
+            });
+
+            if (bodyStr) {
+                req.write(bodyStr);
+            }
+            req.end();
         });
-    }
-
-    /**
-     * Handle stdout data from daemon
-     */
-    private handleStdout(data: Buffer): void {
-        this.buffer += data.toString('utf-8');
-
-        // Process complete lines (newline-delimited JSON)
-        let newlineIndex;
-        while ((newlineIndex = this.buffer.indexOf('\n')) !== -1) {
-            const line = this.buffer.substring(0, newlineIndex).trim();
-            this.buffer = this.buffer.substring(newlineIndex + 1);
-
-            if (line.length === 0) {
-                continue;
-            }
-
-            try {
-                const response: JsonRpcResponse = JSON.parse(line);
-                this.handleResponse(response);
-            } catch (error) {
-                console.error('Invalid JSON from daemon:', line, error);
-            }
-        }
-    }
-
-    /**
-     * Handle JSON-RPC response
-     */
-    private handleResponse(response: JsonRpcResponse): void {
-        const pending = this.pendingRequests.get(response.id as number);
-        if (pending) {
-            if (response.error) {
-                pending.reject(new Error(`${response.error.message} (code: ${response.error.code})`));
-            } else {
-                pending.resolve(response.result);
-            }
-            this.pendingRequests.delete(response.id as number);
-        } else {
-            console.warn('Received response for unknown request ID:', response.id);
-        }
     }
 
     /**
@@ -271,14 +277,6 @@ export class UTLXDaemonClient extends EventEmitter {
      */
     private cleanup(): void {
         this.process = null;
-        this.buffer = '';
-
-        // Reject all pending requests
-        for (const [id, pending] of this.pendingRequests.entries()) {
-            clearTimeout(pending.timeout);
-            pending.reject(new Error('Daemon process terminated'));
-        }
-        this.pendingRequests.clear();
     }
 
     /**
@@ -286,7 +284,7 @@ export class UTLXDaemonClient extends EventEmitter {
      */
     async ping(): Promise<boolean> {
         try {
-            await this.request('ping');
+            await this.httpRequest('/health', 'GET');
             return true;
         } catch (error) {
             return false;
@@ -297,28 +295,124 @@ export class UTLXDaemonClient extends EventEmitter {
      * Parse UTL-X source
      */
     async parse(source: string, documentId?: string): Promise<ParseResult> {
-        return this.request('parse', { source, documentId });
+        return this.httpRequest('/parse', 'POST', { source, documentId });
     }
 
     /**
      * Validate UTL-X source
      */
     async validate(source: string): Promise<ValidationResult> {
-        return this.request('validate', { source });
+        return this.httpRequest('/validate', 'POST', { source });
     }
 
     /**
-     * Execute UTL-X transformation (runtime mode)
+     * Execute UTL-X transformation (runtime mode) using multipart/form-data
      */
     async execute(source: string, inputs: InputDocument[]): Promise<ExecutionResult> {
-        return this.request('execute', {
-            source,
-            inputs: inputs.map(input => ({
-                id: input.id,
-                name: input.name,
-                content: input.content,
-                format: input.format
-            }))
+        console.log('[DaemonClient] Executing transformation via multipart REST API');
+        console.log('[DaemonClient] UTLX source code (' + source.length + ' characters):');
+        console.log(source);
+        console.log('[DaemonClient] Input documents (' + inputs.length + ' total):');
+        inputs.forEach((input, index) => {
+            const encoding = input.encoding || 'UTF-8';
+            const bom = input.bom || false;
+            console.log('  [' + (index + 1) + '] Input "' + input.name + '" (' + input.format + ', ' + encoding + ', BOM=' + bom + '): ' + input.content.length + ' characters');
+        });
+
+        if (!this.isRunning()) {
+            throw new Error('Daemon is not running');
+        }
+
+        const startTime = Date.now();
+
+        return new Promise((resolve, reject) => {
+            const form = new FormData();
+
+            // Add UTLX source code as a form field
+            form.append('utlx', source);
+
+            // Add each input as a file part with metadata headers
+            inputs.forEach((input, index) => {
+                const encoding = input.encoding || 'UTF-8';
+                const bom = input.bom || false;
+
+                console.log('[DaemonClient] Adding input_' + index + ': ' + input.name + ', format=' + input.format + ', encoding=' + encoding + ', BOM=' + bom);
+
+                // Convert string content to buffer with specified encoding
+                const buffer = Buffer.from(input.content, 'utf-8'); // Content is already a string in UTF-8
+
+                form.append('input_' + index, buffer, {
+                    filename: input.name,
+                    contentType: 'application/octet-stream',
+                    knownLength: buffer.length,
+                    header: {
+                        'X-Format': input.format,
+                        'X-Encoding': encoding,
+                        'X-BOM': String(bom)
+                    }
+                });
+            });
+
+            const url = `${this.apiBaseUrl}/api/execute-multipart`;
+            const urlObj = new URL(url);
+
+            console.log('[DaemonClient] ========== MULTIPART HTTP REQUEST ==========');
+            console.log('[DaemonClient] URL:', url);
+            console.log('[DaemonClient] Method: POST');
+            console.log('[DaemonClient] Inputs:', inputs.length);
+            console.log('[DaemonClient] ==========================================');
+
+            const options: http.RequestOptions = {
+                hostname: urlObj.hostname,
+                port: urlObj.port,
+                path: urlObj.pathname,
+                method: 'POST',
+                headers: form.getHeaders(),
+                timeout: this.options.requestTimeout
+            };
+
+            const req = http.request(options, (res) => {
+                let data = '';
+
+                res.on('data', (chunk) => {
+                    data += chunk;
+                });
+
+                res.on('end', () => {
+                    const executionTime = Date.now() - startTime;
+
+                    console.log('[DaemonClient] ========== MULTIPART HTTP RESPONSE ==========');
+                    console.log('[DaemonClient] Status:', res.statusCode);
+                    console.log('[DaemonClient] Execution time:', executionTime + 'ms');
+                    console.log('[DaemonClient] Response body:');
+                    console.log(data);
+                    console.log('[DaemonClient] ==========================================');
+
+                    if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+                        try {
+                            const result = data ? JSON.parse(data) : {};
+                            resolve(result);
+                        } catch (error) {
+                            reject(new Error(`Failed to parse response: ${error}`));
+                        }
+                    } else {
+                        reject(new Error(`HTTP ${res.statusCode}: ${data}`));
+                    }
+                });
+            });
+
+            req.on('error', (error) => {
+                console.error('[DaemonClient] Multipart HTTP request error:', error);
+                reject(error);
+            });
+
+            req.on('timeout', () => {
+                req.destroy();
+                reject(new Error(`Request timed out after ${this.options.requestTimeout}ms`));
+            });
+
+            // Pipe the form data to the request
+            form.pipe(req);
         });
     }
 
@@ -326,7 +420,7 @@ export class UTLXDaemonClient extends EventEmitter {
      * Infer output schema (design-time mode)
      */
     async inferSchema(source: string, inputSchema?: SchemaDocument): Promise<SchemaInferenceResult> {
-        return this.request('inferSchema', {
+        return this.httpRequest('/inferSchema', 'POST', {
             source,
             inputSchema: inputSchema ? {
                 format: inputSchema.format,
@@ -339,34 +433,34 @@ export class UTLXDaemonClient extends EventEmitter {
      * Get hover information
      */
     async getHover(source: string, position: Position): Promise<HoverInfo | null> {
-        return this.request('hover', { source, position });
+        return this.httpRequest('/hover', 'POST', { source, position });
     }
 
     /**
      * Get completion suggestions
      */
     async getCompletions(source: string, position: Position): Promise<CompletionItem[]> {
-        return this.request('completions', { source, position });
+        return this.httpRequest('/completions', 'POST', { source, position });
     }
 
     /**
      * Get standard library functions
      */
     async getFunctions(): Promise<FunctionInfo[]> {
-        return this.request('getFunctions');
+        return this.httpRequest('/functions', 'GET');
     }
 
     /**
      * Set mode configuration
      */
     async setMode(config: ModeConfiguration): Promise<void> {
-        return this.request('setMode', config);
+        return this.httpRequest('/mode', 'PUT', config);
     }
 
     /**
      * Get current mode configuration
      */
     async getMode(): Promise<ModeConfiguration> {
-        return this.request('getMode');
+        return this.httpRequest('/mode', 'GET');
     }
 }

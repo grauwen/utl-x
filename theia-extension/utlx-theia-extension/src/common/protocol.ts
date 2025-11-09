@@ -75,6 +75,8 @@ export interface InputDocument {
     content: string;
     format: DataFormat;
     uri?: string;
+    encoding?: string;  // Character encoding: UTF-8, UTF-16LE, UTF-16BE, ISO-8859-1, etc.
+    bom?: boolean;      // Whether the input has a Byte Order Mark
 }
 
 /**

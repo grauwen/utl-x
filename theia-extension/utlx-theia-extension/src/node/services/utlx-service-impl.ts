@@ -5,7 +5,7 @@
  * Manages the daemon client and provides a clean API for the frontend.
  */
 
-import { injectable, inject, postConstruct } from 'inversify';
+import { injectable, inject, postConstruct, named } from 'inversify';
 import {
     UTLXService,
     ParseResult,
@@ -34,29 +34,8 @@ export class UTLXServiceImpl implements UTLXService {
         enableTypeChecking: true
     };
 
-    @postConstruct()
-    protected async init(): Promise<void> {
-        try {
-            console.log('Starting UTL-X daemon...');
-            await this.daemonClient.start();
-            console.log('UTL-X daemon started successfully');
-
-            // Set up event handlers
-            this.daemonClient.on('stopped', (code, signal) => {
-                console.warn(`Daemon stopped unexpectedly: code=${code}, signal=${signal}`);
-                // TODO: Notify frontend about daemon restart
-            });
-
-            this.daemonClient.on('error', (error) => {
-                console.error('Daemon error:', error);
-                // TODO: Notify frontend about daemon errors
-            });
-
-        } catch (error) {
-            console.error('Failed to start UTL-X daemon:', error);
-            throw error;
-        }
-    }
+    // NOTE: @postConstruct removed because it's async and breaks RPC synchronous instantiation
+    // The daemon is managed by ServiceLifecycleManager, no init needed here
 
     /**
      * Parse UTL-X source code
@@ -86,7 +65,15 @@ export class UTLXServiceImpl implements UTLXService {
      * Execute transformation (runtime mode)
      */
     async execute(source: string, inputs: InputDocument[]): Promise<ExecutionResult> {
+        console.log('[BACKEND] ========================================');
+        console.log('[BACKEND] UTLXServiceImpl.execute() CALLED');
+        console.log('[BACKEND] Current mode:', this.currentMode.mode);
+        console.log('[BACKEND] Source length:', source.length);
+        console.log('[BACKEND] Input count:', inputs.length);
+        console.log('[BACKEND] ========================================');
+
         if (this.currentMode.mode !== UTLXMode.RUNTIME) {
+            console.warn('[BACKEND] Execution blocked - not in RUNTIME mode');
             return {
                 success: false,
                 error: 'Execute is only available in Runtime mode. Switch to Runtime mode to execute transformations.'
@@ -94,9 +81,15 @@ export class UTLXServiceImpl implements UTLXService {
         }
 
         try {
-            return await this.daemonClient.execute(source, inputs);
+            console.log('[BACKEND] Calling daemonClient.execute()...');
+
+            const result = await this.daemonClient.execute(source, inputs);
+
+            console.log('[BACKEND] Daemon client returned:', result.success ? 'SUCCESS' : 'FAILURE');
+
+            return result;
         } catch (error) {
-            console.error('Execution error:', error);
+            console.error('[BACKEND] Execution error:', error);
             return {
                 success: false,
                 error: error instanceof Error ? error.message : String(error)

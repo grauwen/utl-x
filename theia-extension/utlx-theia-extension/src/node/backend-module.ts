@@ -33,11 +33,22 @@ export default new ContainerModule(bind => {
     console.log('[Backend Module] Service implementation bound');
 
     // Create RPC connection handler for frontend-backend communication
-    bind(ConnectionHandler).toDynamicValue(ctx =>
-        new RpcConnectionHandler(UTLX_SERVICE_PATH, () => {
-            return ctx.container.get<UTLXService>(UTLX_SERVICE_SYMBOL);
-        })
-    ).inSingletonScope();
+    bind(ConnectionHandler).toDynamicValue(ctx => {
+        console.log('[Backend Module] Creating RPC connection handler...');
+        const handler = new RpcConnectionHandler(UTLX_SERVICE_PATH, () => {
+            console.log('[Backend Module] RPC factory function called - creating service instance...');
+            try {
+                const service = ctx.container.get<UTLXService>(UTLX_SERVICE_SYMBOL);
+                console.log('[Backend Module] Service instance created successfully:', !!service);
+                return service;
+            } catch (error) {
+                console.error('[Backend Module] FAILED to create service instance:', error);
+                throw error;
+            }
+        });
+        console.log('[Backend Module] RPC connection handler created');
+        return handler;
+    }).inSingletonScope();
     console.log('[Backend Module] RPC connection handler bound');
 
     console.log('[Backend Module] ✓ UTL-X backend module loaded with service lifecycle management');

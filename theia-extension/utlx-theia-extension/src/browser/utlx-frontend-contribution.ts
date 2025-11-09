@@ -23,7 +23,7 @@ import {
 } from '@theia/core/lib/common';
 import { KeybindingContribution, KeybindingRegistry } from '@theia/core/lib/browser';
 import { MessageService } from '@theia/core';
-import { UTLXCommands } from '../common/protocol';
+import { UTLXCommands, UTLXService, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
@@ -52,6 +52,9 @@ export class UTLXFrontendContribution implements
     @inject(UTLXEventService)
     protected readonly eventService!: UTLXEventService;
 
+    @inject(UTLX_SERVICE_SYMBOL)
+    protected readonly utlxService!: UTLXService;
+
     private utlxdStatusId = 'utlxd-status';
     private mcpStatusId = 'mcp-status';
     private inputs: Map<string, { name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string }> = new Map(); // inputId -> {name, format, csvHeaders, csvDelimiter}
@@ -68,6 +71,9 @@ export class UTLXFrontendContribution implements
 
         // Subscribe to format change events for header coordination
         this.subscribeToFormatChanges();
+
+        // Subscribe to execute/evaluate events
+        this.subscribeToExecuteEvents();
 
         // Open toolbar at top
         await this.openToolbar();
@@ -537,5 +543,181 @@ export class UTLXFrontendContribution implements
             return '\\t';
         }
         return delimiter;
+    }
+
+    /**
+     * Subscribe to execute/evaluate events and coordinate transformation execution
+     */
+    private subscribeToExecuteEvents(): void {
+        console.log('[UTLXFrontendContribution] ========================================');
+        console.log('[UTLXFrontendContribution] SUBSCRIBING to execute/evaluate events');
+        console.log('[UTLXFrontendContribution] Event service:', this.eventService);
+        console.log('[UTLXFrontendContribution] ========================================');
+
+        this.eventService.onExecuteTransformation(async event => {
+            console.log('[UTLXFrontendContribution] ****************************************');
+            console.log('[UTLXFrontendContribution] EXECUTE EVENT HANDLER CALLED');
+            console.log('[UTLXFrontendContribution] Event mode:', event.mode);
+            console.log('[UTLXFrontendContribution] Event object:', event);
+            console.log('[UTLXFrontendContribution] ****************************************');
+
+            try {
+                console.log('[Execute] Step 1: Getting widgets...');
+                // 1. Get all necessary widgets
+                const editor = await this.widgetManager.getOrCreateWidget<UTLXEditorWidget>(
+                    UTLXEditorWidget.ID
+                );
+                console.log('[Execute] Editor widget:', editor ? 'OK' : 'NULL');
+
+                const inputPanel = await this.widgetManager.getOrCreateWidget<MultiInputPanelWidget>(
+                    MultiInputPanelWidget.ID
+                );
+                console.log('[Execute] Input panel widget:', inputPanel ? 'OK' : 'NULL');
+
+                const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
+                    OutputPanelWidget.ID
+                );
+                console.log('[Execute] Output panel widget:', outputPanel ? 'OK' : 'NULL');
+
+                // 2. Collect UTLX code
+                const utlxCode = editor.getContent();
+                console.log('[Execute] Sending UTLX code (' + utlxCode.length + ' characters):');
+                console.log(utlxCode);
+
+                // 3. Collect input documents
+                const inputs = inputPanel.getInputDocuments();
+                console.log('[Execute] Sending ' + inputs.length + ' input(s):');
+                inputs.forEach(input => {
+                    const encoding = input.encoding || 'UTF-8';
+                    const bom = input.bom || false;
+                    console.log('  - Input "' + input.name + '" (' + input.format + ', ' + encoding + ', BOM=' + bom + '): ' + input.content.length + ' characters');
+
+                    // Show first 200 characters of content for verification
+                    const preview = input.content.length > 200
+                        ? input.content.substring(0, 200) + '...'
+                        : input.content;
+                    console.log('    Preview: ' + preview);
+                });
+
+                // 3a. Validate inputs - check if we have any inputs at all
+                if (inputs.length === 0) {
+                    const message = 'No input data provided. Please add content to at least one input tab before executing.';
+                    console.warn('[Execute] Validation failed: No inputs provided');
+                    this.messageService.warn(message);
+                    return; // Stop execution
+                }
+
+                // 3b. Validate inputs - check for empty content (shouldn't happen due to filter, but safety check)
+                const emptyInputs = inputs.filter(input => !input.content || input.content.trim().length === 0);
+                if (emptyInputs.length > 0) {
+                    const inputNames = emptyInputs.map(input => `"${input.name}"`).join(', ');
+                    const message = emptyInputs.length === 1
+                        ? `Input ${inputNames} is empty. Please provide content before executing.`
+                        : `Inputs ${inputNames} are empty. Please provide content before executing.`;
+
+                    console.warn('[Execute] Validation failed: Empty inputs detected:', inputNames);
+                    this.messageService.warn(message);
+                    return; // Stop execution
+                }
+
+                // 4. Execute transformation via service
+                console.log('[Execute] Calling utlxService.execute()...');
+                console.log('[Execute] Service object:', this.utlxService);
+
+                let result;
+                let executionTime;
+
+                try {
+                    const startTime = Date.now();
+                    console.log('[Execute] Awaiting service call...');
+                    console.log('[Execute] Service type:', typeof this.utlxService);
+                    console.log('[Execute] Service execute type:', typeof this.utlxService.execute);
+
+                    // Test RPC connection first with getMode (simpler than ping)
+                    console.log('[Execute] Testing RPC connection with getMode...');
+                    try {
+                        const getModePromise = this.utlxService.getMode();
+                        console.log('[Execute] GetMode promise created:', getModePromise);
+                        const modeResult = await Promise.race([
+                            getModePromise,
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('GetMode timeout')), 5000))
+                        ]);
+                        console.log('[Execute] GetMode result:', modeResult);
+                    } catch (modeError) {
+                        console.error('[Execute] GET_MODE FAILED:', modeError);
+                        console.error('[Execute] Service path:', '/services/utlx');
+                        console.error('[Execute] This means the backend service is not reachable via RPC');
+                        throw new Error('RPC connection failed: ' + (modeError instanceof Error ? modeError.message : String(modeError)));
+                    }
+
+                    // Add timeout to detect hanging calls
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('Service call timeout after 30 seconds')), 30000);
+                    });
+
+                    console.log('[Execute] Calling this.utlxService.execute with', inputs.length, 'inputs');
+                    const executePromise = this.utlxService.execute(utlxCode, inputs);
+                    console.log('[Execute] Execute promise created:', executePromise);
+
+                    result = await Promise.race([
+                        executePromise,
+                        timeoutPromise
+                    ]) as any;
+
+                    executionTime = Date.now() - startTime;
+                    console.log('[Execute] Service call completed in ' + executionTime + 'ms');
+                } catch (serviceError) {
+                    console.error('[Execute] Service call threw exception:', serviceError);
+                    console.error('[Execute] Exception details:', serviceError instanceof Error ? serviceError.stack : serviceError);
+                    console.error('[Execute] Error type:', typeof serviceError);
+                    throw serviceError;
+                }
+
+                // 5. Log raw response
+                console.log('[Execute] ========================================');
+                console.log('[Execute] Raw response received (' + executionTime + 'ms):');
+                console.log(JSON.stringify(result, null, 2));
+                console.log('[Execute] ========================================');
+
+                // 6. Display results in output panel
+                console.log('[Execute] Step 6: Displaying result in output panel...');
+                outputPanel.displayExecutionResult(result);
+                console.log('[Execute] Result displayed in output panel');
+
+                // 7. Show success/error message
+                console.log('[Execute] Step 7: Showing user message...');
+                if (result.success) {
+                    this.messageService.info(`✓ Transformation ${event.mode === 'execute' ? 'executed' : 'evaluated'} successfully (${result.executionTimeMs || executionTime}ms)`);
+                    console.log('[Execute] Success message shown');
+                } else {
+                    this.messageService.error(`✗ Transformation failed: ${result.error || 'Unknown error'}`);
+                    console.log('[Execute] Error message shown');
+                }
+
+                console.log('[Execute] ****************************************');
+                console.log('[Execute] EXECUTION COMPLETED SUCCESSFULLY');
+                console.log('[Execute] ****************************************');
+
+            } catch (error) {
+                console.error('[Execute] !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+                console.error('[Execute] ERROR DURING EXECUTION COORDINATION');
+                console.error('[Execute] Error:', error);
+                console.error('[Execute] Error message:', error instanceof Error ? error.message : String(error));
+                console.error('[Execute] Error stack:', error instanceof Error ? error.stack : 'N/A');
+                console.error('[Execute] !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+
+                this.messageService.error(`Execution error: ${error instanceof Error ? error.message : String(error)}`);
+
+                // Display error in output panel
+                const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
+                    OutputPanelWidget.ID
+                );
+                outputPanel.displayError(error instanceof Error ? error.message : String(error));
+            }
+        });
+
+        console.log('[UTLXFrontendContribution] ========================================');
+        console.log('[UTLXFrontendContribution] Execute/evaluate event coordination initialized');
+        console.log('[UTLXFrontendContribution] ========================================');
     }
 }

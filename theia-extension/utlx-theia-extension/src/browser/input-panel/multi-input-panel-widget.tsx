@@ -59,6 +59,9 @@ export interface InputTab {
     // CSV-specific parameters
     csvHeaders?: boolean;      // Default true
     csvDelimiter?: string;     // Default ","
+    // Encoding parameters
+    encoding?: string;         // Character encoding (UTF-8, UTF-16LE, UTF-16BE, ISO-8859-1, Windows-1252)
+    bom?: boolean;             // Byte Order Mark (default false)
 }
 
 export interface MultiInputPanelState {
@@ -283,6 +286,38 @@ export class MultiInputPanelWidget extends ReactWidget {
                                         <option value=';'>Semicolon (;)</option>
                                         <option value='\t'>Tab (\t)</option>
                                         <option value='|'>Pipe (|)</option>
+                                    </select>
+                                </label>
+                            </>
+                        )}
+
+                        {/* Encoding parameters - shown for all formats in instance tab */}
+                        {activeSubTab === 'instance' && (
+                            <>
+                                <label>
+                                    Encoding:
+                                    <select
+                                        value={activeInput.encoding || 'UTF-8'}
+                                        onChange={(e) => this.handleEncodingChange(e.target.value)}
+                                        disabled={loading}
+                                    >
+                                        <option value='UTF-8'>UTF-8</option>
+                                        <option value='UTF-16LE'>UTF-16LE</option>
+                                        <option value='UTF-16BE'>UTF-16BE</option>
+                                        <option value='ISO-8859-1'>ISO-8859-1</option>
+                                        <option value='Windows-1252'>Windows-1252</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    BOM:
+                                    <select
+                                        value={activeInput.bom ? 'true' : 'false'}
+                                        onChange={(e) => this.handleBomChange(e.target.value === 'true')}
+                                        disabled={loading || !this.isBomSupported(activeInput.encoding)}
+                                        title={!this.isBomSupported(activeInput.encoding) ? 'BOM not applicable for this encoding' : 'Byte Order Mark'}
+                                    >
+                                        <option value='false'>No</option>
+                                        <option value='true'>Yes</option>
                                     </select>
                                 </label>
                             </>
@@ -603,6 +638,40 @@ export class MultiInputPanelWidget extends ReactWidget {
         });
     }
 
+    private handleEncodingChange(encoding: string): void {
+        this.setState({
+            inputs: this.state.inputs.map(input =>
+                input.id === this.state.activeInputId
+                    ? {
+                        ...input,
+                        encoding: encoding,
+                        // Reset BOM if changing to encoding that doesn't support it
+                        bom: this.isBomSupported(encoding) ? input.bom : false
+                    }
+                    : input
+            )
+        });
+    }
+
+    private handleBomChange(hasBom: boolean): void {
+        this.setState({
+            inputs: this.state.inputs.map(input =>
+                input.id === this.state.activeInputId
+                    ? {
+                        ...input,
+                        bom: hasBom
+                    }
+                    : input
+            )
+        });
+    }
+
+    private isBomSupported(encoding?: string): boolean {
+        if (!encoding) return false;
+        // BOM is only meaningful for UTF-8 and UTF-16 variants
+        return ['UTF-8', 'UTF-16LE', 'UTF-16BE'].includes(encoding);
+    }
+
     private handleClear(): void {
         const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
 
@@ -733,15 +802,18 @@ export class MultiInputPanelWidget extends ReactWidget {
 
     /**
      * Get all input documents (for runtime mode)
+     * PUBLIC: Called by frontend contribution for execution
      */
-    getInputDocuments(): InputDocument[] {
+    public getInputDocuments(): InputDocument[] {
         return this.state.inputs
             .filter(input => input.instanceContent)
             .map(input => ({
                 id: input.id,
                 name: input.name,
                 content: input.instanceContent,
-                format: this.mapInstanceFormatToDataFormat(input.instanceFormat)
+                format: this.mapInstanceFormatToDataFormat(input.instanceFormat),
+                encoding: input.encoding || 'UTF-8',
+                bom: input.bom || false
             }));
     }
 

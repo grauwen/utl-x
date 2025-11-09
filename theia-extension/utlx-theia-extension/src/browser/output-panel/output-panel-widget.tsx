@@ -416,8 +416,9 @@ export class OutputPanelWidget extends ReactWidget {
 
     /**
      * Display execution result (runtime mode - instance output)
+     * PUBLIC: Called by frontend contribution after execution
      */
-    displayExecutionResult(result: ExecutionResult): void {
+    public displayExecutionResult(result: ExecutionResult): void {
         if (result.success && result.output) {
             this.setState({
                 instanceContent: result.output,
@@ -458,8 +459,9 @@ export class OutputPanelWidget extends ReactWidget {
 
     /**
      * Display error message
+     * PUBLIC: Called by frontend contribution on errors
      */
-    displayError(error: string): void {
+    public displayError(error: string): void {
         if (this.state.activeTab === 'instance') {
             this.setState({
                 instanceContent: '',
