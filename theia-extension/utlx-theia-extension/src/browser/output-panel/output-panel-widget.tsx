@@ -158,8 +158,10 @@ export class OutputPanelWidget extends ReactWidget {
                     {/* Only show Schema tab in Design-Time mode */}
                     {mode === UTLXMode.DESIGN_TIME && (
                         <button
-                            className={`utlx-tab ${activeTab === 'schema' ? 'active' : ''}`}
-                            onClick={() => this.handleTabSwitch('schema')}
+                            className={`utlx-tab ${activeTab === 'schema' ? 'active' : ''} ${this.isSchemaTabDisabled() ? 'disabled' : ''}`}
+                            onClick={() => !this.isSchemaTabDisabled() && this.handleTabSwitch('schema')}
+                            disabled={this.isSchemaTabDisabled()}
+                            title={this.isSchemaTabDisabled() ? 'Schema not available for schema formats' : 'View output schema'}
                         >
                             Schema
                         </button>
@@ -215,7 +217,7 @@ export class OutputPanelWidget extends ReactWidget {
                     ) : (
                         <div className='utlx-placeholder'>
                             {activeTab === 'schema'
-                                ? '💡 Click "Infer Schema" to generate output schema'
+                                ? this.getSchemaPlaceholder()
                                 : '▶️ Click "Execute" to see transformation output'}
                         </div>
                     )}
@@ -331,6 +333,19 @@ export class OutputPanelWidget extends ReactWidget {
         // Update format based on active tab
         if (this.state.activeTab === 'instance') {
             this.setState({ instanceFormat: format });
+
+            // In Design-Time mode, auto-link schema format based on instance format
+            if (this.state.mode === UTLXMode.DESIGN_TIME) {
+                const linkedSchemaFormat = this.getLinkedSchemaFormat(format);
+                if (linkedSchemaFormat) {
+                    this.setState({ schemaFormat: linkedSchemaFormat });
+
+                    // Fire schema format changed event
+                    this.eventService.fireOutputSchemaFormatChanged({
+                        format: linkedSchemaFormat
+                    });
+                }
+            }
         } else {
             this.setState({ schemaFormat: format });
         }
@@ -340,6 +355,58 @@ export class OutputPanelWidget extends ReactWidget {
             format,
             tab: this.state.activeTab
         });
+    }
+
+    /**
+     * Get linked schema format for a given instance format
+     * Returns null for schema formats (which can't have schemas)
+     */
+    private getLinkedSchemaFormat(instanceFormat: string): string | null {
+        switch (instanceFormat) {
+            case 'json':
+            case 'yaml':
+                return 'jsch';
+            case 'xml':
+                return 'xsd';
+            case 'csv':
+                return null; // tsch not implemented yet
+            case 'xsd':
+            case 'jsch':
+            case 'avro':
+            case 'proto':
+                return null; // Schema formats can't have schemas
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Check if schema tab should be disabled
+     * Schema tab is disabled when instance format is a schema format
+     */
+    private isSchemaTabDisabled(): boolean {
+        const { instanceFormat } = this.state;
+        if (!instanceFormat) return false;
+
+        // Disable schema tab for schema formats (can't have schema of schema)
+        return ['xsd', 'jsch', 'avro', 'proto'].includes(instanceFormat);
+    }
+
+    /**
+     * Get placeholder text for schema tab based on instance format
+     */
+    private getSchemaPlaceholder(): string {
+        const { instanceFormat } = this.state;
+
+        if (instanceFormat === 'csv') {
+            return '// tsch not implemented yet';
+        }
+
+        if (this.isSchemaTabDisabled()) {
+            return '❌ Schema not available for schema formats';
+        }
+
+        return '💡 Click "Infer Schema" to generate output schema';
     }
 
     private setState(partial: Partial<OutputPanelState>): void {
