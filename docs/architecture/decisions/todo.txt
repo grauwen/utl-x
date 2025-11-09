@@ -10,7 +10,13 @@ analysis part
 
 Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that describes it
 ----
+API
 
+Multipart/form-data (like file upload)
+    - Each input as a separate part with its own encoding
+    - Handles binary data natively
+    - Standard HTTP, widely supported
+    - Better for mixed content types
 ----
 IDE integration (LSP for validation)                                                                                                                                                
 CI/CD pipelines (fail on errors, warn on lint issues)    
