@@ -56,6 +56,16 @@ csv_seriaalizer
 
 regionalformat: swiss | european | french | usa
 
+csv_serializer.kt
+
+enum class RegionalFormat {
+    NONE,      // No regional formatting (standard period decimal)
+    USA,       // USA/UK/Asia: comma thousands, period decimal (1,234.56)
+    EUROPEAN,  // European: period thousands, comma decimal (1.234,56)
+    FRENCH,    // French: space thousands, comma decimal (1 234,56)
+    SWISS      // Swiss: apostrophe thousands, period decimal (1'234.56)
+}
+
 CSV_OUT_PARAMS
 
 # OUTPUT
