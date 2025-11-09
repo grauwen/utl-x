@@ -1,4 +1,57 @@
-Found it! The Workbench Widget is NOT being registered in the frontend-module.ts!
+
+  | Layer             | Location             | Files                 |
+  |-------------------|----------------------|-----------------------|
+  | Frontend Widgets  | /src/browser/        | *-widget.tsx          |
+  | Frontend Events   | /src/browser/events/ | utlx-event-service.ts |
+  | Frontend Module   | /src/browser/        | frontend-module.ts    |
+  | Protocol (Shared) | /src/common/         | protocol.ts           |
+  | Backend Module    | /src/node/           | backend-module.ts     |
+  | Backend Service   | /src/node/services/  | utlx-service-impl.ts  |
+  | Daemon Client     | /src/node/daemon/    | utlx-daemon-client.ts |
+
+  ┌────────────────────────────────────────────────────┐
+  │              UTLXToolbarWidget (top)               │
+  ├──────────────┬─────────────────┬───────────────────┤
+  │ Multi        │                 │                   │
+  │ Input        │  UTLXEditor     │  OutputPanel      │
+  │ Panel        │  Widget         │  Widget           │
+  │ Widget       │  (Monaco)       │                   │
+  │ (left)       │  (main)         │  (right)          │
+  └──────────────┴─────────────────┴───────────────────┘
+
+1. MultiInputPanelWidget
+
+  - ID: utlx-multi-input-panel
+  - Location: Left panel
+  - File: src/browser/input-panel/multi-input-panel-widget.tsx
+  - Purpose: Manage multiple inputs with format selection (csv/json/xml/yaml/xsd/jsch/avro/proto)
+  - Features: Vertical tabs, add/delete inputs, file loading, schema linking
+
+  2. UTLXEditorWidget
+
+  - ID: utlx-editor
+  - Location: Center/Main area
+  - File: src/browser/editor/utlx-editor-widget.tsx
+  - Purpose: Monaco-based UTLX code editor with LSP support
+  - Features: Read-only headers, dynamic header updates, file operations, drag-and-drop
+
+  3. OutputPanelWidget
+
+  - ID: utlx-output-panel
+  - Location: Right panel
+  - File: src/browser/output-panel/output-panel-widget.tsx
+  - Purpose: Display transformation results and schemas
+  - Features: Instance/Schema tabs, format selection, pretty/raw view, copy/save/clear
+
+  4. UTLXToolbarWidget
+
+  - ID: utlx-toolbar
+  - Location: Top area
+  - File: src/browser/toolbar/utlx-toolbar-widget.tsx
+  - Purpose: Mode switching and AI assistance controls
+  - Features: Runtime/Design-Time toggle, mode indicator, AI Assist button, Execute button
+
+
 
   The frontend-module only registers:
   - MultiInputPanelWidget ✓
@@ -9,7 +62,7 @@ Found it! The Workbench Widget is NOT being registered in the frontend-module.ts
   - TestWidget
   - UTLXToolbarWidget
 
-  BUT UTLXWorkbenchWidget is MISSING!
+
 
 --------------
 
@@ -219,5 +272,18 @@ Why having tier2 (xsd,jsch,avro,proto) still as possible input? Because the outp
 The above Instance and Schema should be linked. If the instance is changing the schema  format should change
 
 -----
+
+OUTPUT PANE
+
+TAB Instance:; Format   |     ->  == linked  between tabs formats)  TAB Schema Format: (these are linked)                   | UTLX (open in Monaco editor) Chenge to:
+------------------------------------------------------------------------------------------------------------------------------------------------------
+- json      selected    |     -> set to jsch                                                                                | input json OR WHEN MUTIPLE inputs: name json
+- xml       selected    |     -> set to xsd                                                                                 | input xml
+- yaml      selected    |     -> set to jsch                                                                                | input yaml
+- csv                   |     -> Schema [should be made BLUR)  => put that text within schema as //tsch not implemented yet | input csv
+- xsd %USDL 1.0         |      -> Schema [should be made BLUR)                                                              | input xsd %USDL 1.0 
+- jsch %USDL 1.0        |      -> Schema [should be made BLUR)                                                              | input jsch %USDL 1.0 
+- avro %USDL 1.0        |      -> Schema [should be made BLUR)                                                              | input avro %USDL 1.0 
+- proto %USDL 1.0       |      -> Schema [should be made BLUR)                                                              | input proto %USDL 1.0 
 
 
