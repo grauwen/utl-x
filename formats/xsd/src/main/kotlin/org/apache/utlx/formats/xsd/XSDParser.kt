@@ -165,10 +165,23 @@ class XSDParser(
             tagWithScope(value, isTopLevel = true)
         }
 
+        // Count global declarations for pattern detection
+        val globalElementCount = countGlobalDeclarations(enhancedProperties, "xsd-element")
+        val globalTypeCount = countGlobalDeclarations(enhancedProperties, "xsd-complexType") +
+                             countGlobalDeclarations(enhancedProperties, "xsd-simpleType")
+        val inlineTypeCount = countInlineTypes(enhancedProperties)
+
+        // Detect XSD design pattern
+        val detectedPattern = detectXSDPattern(globalElementCount, globalTypeCount, inlineTypeCount)
+
         val newMetadata = schema.metadata + mapOf(
             "__schemaType" to "xsd-schema",
             "__xsdVersion" to xsdVersion,
-            "__targetNamespace" to targetNamespace
+            "__targetNamespace" to targetNamespace,
+            "__xsdPattern" to detectedPattern,
+            "__xsdGlobalElements" to globalElementCount.toString(),
+            "__xsdGlobalTypes" to globalTypeCount.toString(),
+            "__xsdInlineTypes" to inlineTypeCount.toString()
         )
         return UDM.Object(
             properties = enhancedProperties,
@@ -231,6 +244,12 @@ class XSDParser(
                 if (schemaType != null) {
                     newMetadata["__schemaType"] = schemaType
                     newMetadata["__scope"] = scope
+
+                    // Add specific declaration type metadata
+                    when (schemaType) {
+                        "xsd-element" -> newMetadata["__xsdElementDeclaration"] = scope
+                        "xsd-complexType", "xsd-simpleType" -> newMetadata["__xsdTypeDeclaration"] = scope
+                    }
                 }
 
                 UDM.Object(
@@ -362,8 +381,56 @@ class XSDParser(
             // Venetian Blind: Has global types (most common pattern - default)
             globalTypeCount >= 1 && inlineTypeCount == 0 -> "venetian-blind"
 
-            // Default/Mixed (doesn't fit standard patterns)
-            else -> "mixed"
+            // Default/Undetectable (doesn't fit standard patterns)
+            else -> "undetectable"
+        }
+    }
+
+    /**
+     * Count global declarations of a specific schema type
+     */
+    private fun countGlobalDeclarations(properties: Map<String, UDM>, schemaType: String): Int {
+        return properties.values.sumOf { value ->
+            when (value) {
+                is UDM.Object -> {
+                    if (value.metadata["__schemaType"] == schemaType &&
+                        value.metadata["__scope"] == "global") 1 else 0
+                }
+                is UDM.Array -> {
+                    value.elements.count { element ->
+                        element is UDM.Object &&
+                        element.metadata["__schemaType"] == schemaType &&
+                        element.metadata["__scope"] == "global"
+                    }
+                }
+                else -> 0
+            }
+        }
+    }
+
+    /**
+     * Count inline/anonymous type declarations (complexType without @name attribute)
+     */
+    private fun countInlineTypes(properties: Map<String, UDM>): Int {
+        return properties.values.sumOf { value ->
+            countInlineTypesRecursive(value)
+        }
+    }
+
+    private fun countInlineTypesRecursive(udm: UDM): Int {
+        return when (udm) {
+            is UDM.Object -> {
+                val isInlineType = udm.metadata["__schemaType"] == "xsd-complexType" &&
+                                   udm.attributes["name"] == null &&
+                                   udm.metadata["__scope"] == "local"
+                val count = if (isInlineType) 1 else 0
+                // Recursively count in nested structures
+                count + udm.properties.values.sumOf { countInlineTypesRecursive(it) }
+            }
+            is UDM.Array -> {
+                udm.elements.sumOf { countInlineTypesRecursive(it) }
+            }
+            else -> 0
         }
     }
 
