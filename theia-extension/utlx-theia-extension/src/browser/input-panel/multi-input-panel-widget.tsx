@@ -695,11 +695,11 @@ export class MultiInputPanelWidget extends ReactWidget {
     private mapSchemaFormatToProtocol(format: SchemaFormatType): SchemaFormat {
         const formatMap: { [key: string]: SchemaFormat } = {
             'xsd': 'xsd',
-            'jsch': 'json-schema',
-            'avro': 'avro-schema',
-            'proto': 'protobuf'
+            'jsch': 'jsch',
+            'avro': 'avro',
+            'proto': 'proto'
         };
-        return formatMap[format] || 'json-schema';
+        return formatMap[format] || 'jsch';
     }
 
     /**

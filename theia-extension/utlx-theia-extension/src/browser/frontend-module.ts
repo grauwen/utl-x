@@ -10,12 +10,10 @@ import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFac
 import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
-import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { UTLXToolbarWidget } from './toolbar/utlx-toolbar-widget';
 import { UTLXFrontendContribution } from './utlx-frontend-contribution';
-import { TestWidget } from './test-widget';
 import { UTLXEventService } from './events/utlx-event-service';
 
 export default new ContainerModule(bind => {
@@ -73,24 +71,6 @@ export default new ContainerModule(bind => {
         })).inSingletonScope();
         console.log('[UTLX Frontend Module] ✓ OutputPanelWidget bound');
 
-        console.log('[UTLX Frontend Module] Binding ModeSelectorWidget...');
-        bind(ModeSelectorWidget).toSelf();
-        bind(WidgetFactory).toDynamicValue(ctx => ({
-            id: ModeSelectorWidget.ID,
-            createWidget: () => {
-                console.log('[UTLX Frontend Module] Creating ModeSelectorWidget instance...');
-                try {
-                    const widget = ctx.container.get<ModeSelectorWidget>(ModeSelectorWidget);
-                    console.log('[UTLX Frontend Module] ✓ ModeSelectorWidget created successfully');
-                    return widget;
-                } catch (error) {
-                    console.error('[UTLX Frontend Module] ✗ Failed to create ModeSelectorWidget:', error);
-                    throw error;
-                }
-            }
-        })).inSingletonScope();
-        console.log('[UTLX Frontend Module] ✓ ModeSelectorWidget bound');
-
         console.log('[UTLX Frontend Module] Binding UTLXEditorWidget...');
         bind(UTLXEditorWidget).toSelf().inSingletonScope();
         bind(WidgetFactory).toDynamicValue(ctx => ({
@@ -126,24 +106,6 @@ export default new ContainerModule(bind => {
             }
         })).inSingletonScope();
         console.log('[UTLX Frontend Module] ✓ HealthMonitorWidget bound');
-
-        console.log('[UTLX Frontend Module] Binding TestWidget...');
-        bind(TestWidget).toSelf();
-        bind(WidgetFactory).toDynamicValue(ctx => ({
-            id: TestWidget.ID,
-            createWidget: () => {
-                console.log('[UTLX Frontend Module] Creating TestWidget instance...');
-                try {
-                    const widget = ctx.container.get<TestWidget>(TestWidget);
-                    console.log('[UTLX Frontend Module] ✓ TestWidget created successfully');
-                    return widget;
-                } catch (error) {
-                    console.error('[UTLX Frontend Module] ✗ Failed to create TestWidget:', error);
-                    throw error;
-                }
-            }
-        })).inSingletonScope();
-        console.log('[UTLX Frontend Module] ✓ TestWidget bound');
 
         console.log('[UTLX Frontend Module] Binding UTLXToolbarWidget...');
         bind(UTLXToolbarWidget).toSelf();

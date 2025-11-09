@@ -141,9 +141,9 @@ export class UTLXFileService {
             case '.xsd':
                 return 'xsd';
             case '.avsc':
-                return 'avro-schema';
+                return 'avro';
             case '.proto':
-                return 'protobuf';
+                return 'proto';
             default:
                 return 'auto';
         }

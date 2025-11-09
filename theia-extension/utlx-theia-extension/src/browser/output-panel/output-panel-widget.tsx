@@ -260,7 +260,7 @@ export class OutputPanelWidget extends ReactWidget {
         try {
             switch (format.toLowerCase()) {
                 case 'json':
-                case 'json-schema':
+                case 'jsch':
                     return JSON.stringify(JSON.parse(content), null, 2);
                 case 'xml':
                 case 'xsd':

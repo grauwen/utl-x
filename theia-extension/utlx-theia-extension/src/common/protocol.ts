@@ -25,7 +25,7 @@ export enum UTLXMode {
  * Format types
  */
 export type DataFormat = 'xml' | 'json' | 'yaml' | 'csv' | 'auto';
-export type SchemaFormat = 'xsd' | 'json-schema' | 'avro-schema' | 'protobuf';
+export type SchemaFormat = 'xsd' | 'jsch' | 'avro' | 'proto';
 export type Tier1Format = 'xml' | 'json' | 'yaml' | 'csv';
 export type Tier2Format = 'xsd' | 'jsch' | 'avsc' | 'proto';
 
@@ -327,7 +327,6 @@ export interface MCPToolResponse {
 export const INPUT_PANEL_ID = 'utlx-input-panel';
 export const OUTPUT_PANEL_ID = 'utlx-output-panel';
 export const EDITOR_ID = 'utlx-editor';
-export const MODE_SELECTOR_ID = 'utlx-mode-selector';
 
 /**
  * Command IDs

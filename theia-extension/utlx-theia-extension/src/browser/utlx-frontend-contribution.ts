@@ -27,9 +27,7 @@ import { UTLXCommands } from '../common/protocol';
 import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
-import { ModeSelectorWidget } from './mode-selector/mode-selector-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
-import { TestWidget } from './test-widget';
 import { UTLXEventService } from './events/utlx-event-service';
 
 @injectable()
@@ -78,30 +76,6 @@ export class UTLXFrontendContribution implements
         await this.open3ColumnLayout();
 
         console.log('[UTLXFrontendContribution] ===== onStart() completed =====');
-    }
-
-    private async openTestWidget(): Promise<void> {
-        console.log('[UTLXFrontendContribution] openTestWidget() called');
-        try {
-            console.log('[UTLXFrontendContribution] Getting or creating TestWidget...');
-            const testWidget = await this.widgetManager.getOrCreateWidget<TestWidget>(TestWidget.ID);
-            console.log('[UTLXFrontendContribution] TestWidget retrieved:', testWidget);
-
-            if (!testWidget.isAttached) {
-                console.log('[UTLXFrontendContribution] TestWidget not attached, adding to shell...');
-                this.shell.addWidget(testWidget, { area: 'main', rank: 100 });
-                console.log('[UTLXFrontendContribution] TestWidget added to shell');
-            } else {
-                console.log('[UTLXFrontendContribution] TestWidget already attached');
-            }
-
-            console.log('[UTLXFrontendContribution] Activating TestWidget...');
-            this.shell.activateWidget(testWidget.id);
-            console.log('[UTLXFrontendContribution] ✓ Test widget opened successfully');
-        } catch (error) {
-            console.error('[UTLXFrontendContribution] ✗ Failed to open test widget:', error);
-            this.messageService.error(`Failed to open test widget: ${error}`);
-        }
     }
 
     registerCommands(commands: CommandRegistry): void {
