@@ -13,7 +13,7 @@ enum class XSDPattern {
     SALAMI_SLICE,      // Element=global, Type=local
     VENETIAN_BLIND,    // Element=local, Type=global (RECOMMENDED)
     GARDEN_OF_EDEN,    // Element=global, Type=global
-    MIXED              // No clear pattern
+    UNDETECTABLE       // No clear pattern // should we have this option?
 }
 
 /**
@@ -40,4 +40,7 @@ object XSDMetadata {
     const val SCOPE = "__scope"                   // "global" or "local"
     const val XSD_VERSION = "__xsdVersion"        // "1.0" or "1.1"
     const val TARGET_NAMESPACE = "__targetNamespace"  // Target namespace URI
+    const val XSD_PATTERN = "__xsdPattern"                    // detected XSDPattern
+    const val XSD_ELEMENT_DECLARATION = "__xsdElementDeclaration"  // global | local
+    const val XSD_TYPE_DECLARATION = "__xsdTypeDeclaration"        // global | local
 }
