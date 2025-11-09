@@ -1,44 +1,25 @@
 // modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt
 package org.apache.utlx.cli.commands
 
-import org.apache.utlx.core.lexer.Lexer
-import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.types.TypeChecker
-import org.apache.utlx.core.interpreter.Interpreter
-import org.apache.utlx.core.udm.UDM
-import org.apache.utlx.formats.xml.XMLParser
-import org.apache.utlx.formats.xml.XMLSerializer
-import org.apache.utlx.formats.json.JSONParser
-import org.apache.utlx.formats.json.JSONSerializer
-import org.apache.utlx.formats.csv.CSVParser
-import org.apache.utlx.formats.csv.CSVSerializer
-import org.apache.utlx.formats.csv.CSVDialect
-import org.apache.utlx.formats.csv.RegionalFormat
-import org.apache.utlx.formats.yaml.YAMLParser
-import org.apache.utlx.formats.xsd.XSDParser
-import org.apache.utlx.formats.xsd.XSDSerializer
-import org.apache.utlx.formats.jsch.JSONSchemaParser
-import org.apache.utlx.formats.jsch.JSONSchemaSerializer
-import org.apache.utlx.formats.yaml.YAMLSerializer
-import org.apache.utlx.formats.avro.AvroSchemaParser
-import org.apache.utlx.formats.avro.AvroSchemaSerializer
-import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
-import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
-import org.apache.utlx.stdlib.StandardLibrary
+import org.apache.utlx.cli.service.TransformationService
 import org.apache.utlx.cli.capture.TestCaptureService
 import org.apache.utlx.core.debug.DebugConfig
 import java.io.File
 import kotlin.system.exitProcess
 
 /**
- * Transform command - converts data between formats using UTL-X scripts
- * 
+ * Transform command - CLI wrapper for TransformationService
+ * Handles file I/O and delegates transformation logic to TransformationService
+ *
  * Usage:
  *   utlx transform <input-file> <script-file> [options]
  *   utlx transform <script-file> [options]  # reads from stdin
  */
 object TransformCommand {
-    
+
+    // Create service instance
+    private val transformationService = TransformationService()
+
     data class TransformOptions(
         val namedInputs: Map<String, File> = emptyMap(),        // Named inputs: input1=file1.xml, input2=file2.json
         val namedOutputs: Map<String, File> = emptyMap(),       // Named outputs: summary=out.json, details=out.xml
@@ -49,7 +30,8 @@ object TransformCommand {
         val pretty: Boolean = true,
         val captureEnabled: Boolean? = null,  // null = use config, true = force enable, false = force disable
         val debugLevel: DebugConfig.LogLevel? = null,  // Global debug level
-        val debugComponents: Set<DebugConfig.Component> = emptySet()  // Component-specific debug
+        val debugComponents: Set<DebugConfig.Component> = emptySet(),  // Component-specific debug
+        val strictTypes: Boolean = false  // Enforce type checking (fail on type errors)
     ) {
         // Backward compatibility properties
         val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
@@ -83,63 +65,57 @@ object TransformCommand {
         var captureOutputData = ""
 
         try {
-            // Read and compile the UTL-X script
+            // Step 1: Read script file
             val scriptContent = options.scriptFile.readText()
-            val program = compileScript(scriptContent, options.verbose)
 
-            // Read and parse all input data files
-            val namedInputsUDM = if (options.namedInputs.isNotEmpty()) {
+            // Step 2: Read input files and create InputData map
+            val inputs = if (options.namedInputs.isNotEmpty()) {
                 // Named inputs from --input flags
                 options.namedInputs.mapValues { (name, file) ->
                     val inputData = file.readText()
-                    val inputFormat = options.inputFormat ?: detectFormat(inputData, file.extension)
+                    // Only use detectFormat if user explicitly didn't specify format
+                    // Otherwise let TransformationService auto-detect from header
+                    val inputFormat = options.inputFormat
 
-                    // Get format options from script header for this specific input
-                    val inputSpec = program.header.inputs.find { it.first == name }?.second
-                    val inputOptions = inputSpec?.options ?: emptyMap()
-
-                    if (options.verbose) {
-                        println("Input '$name' format: $inputFormat (from ${file.name})")
+                    if (options.verbose && inputFormat != null) {
+                        println("Input '$name' format: $inputFormat (from CLI option)")
                     }
 
-                    parseInput(inputData, inputFormat, inputOptions)
+                    TransformationService.InputData(
+                        content = inputData,
+                        format = inputFormat  // null = auto-detect from header in TransformationService
+                    )
                 }
             } else {
                 // No named inputs - read from stdin (backward compat)
                 val inputData = readStdin()
-
-                // Priority: 1) CLI option, 2) script header, 3) auto-detect
-                val scriptFormat = program.header.inputFormat.type.name.lowercase()
                 val inputFormat = options.inputFormat
-                    ?: if (scriptFormat != "auto") scriptFormat else detectFormat(inputData, null)
 
-                if (options.verbose) {
-                    println("Input format: $inputFormat (from stdin)")
+                if (options.verbose && inputFormat != null) {
+                    println("Input format: $inputFormat (from CLI option)")
                 }
 
-                val inputOptions = program.header.inputFormat.options
-                val inputUDM = parseInput(inputData, inputFormat, inputOptions)
-                mapOf("input" to inputUDM)
+                mapOf("input" to TransformationService.InputData(
+                    content = inputData,
+                    format = inputFormat  // null = auto-detect from header in TransformationService
+                ))
             }
 
-            // Execute transformation using core Interpreter with dynamic stdlib loading
-            val interpreter = Interpreter()
+            // Step 3: Call TransformationService
+            val serviceOptions = TransformationService.TransformOptions(
+                verbose = options.verbose,
+                pretty = options.pretty,
+                strictTypes = options.strictTypes,
+                overrideOutputFormat = options.outputFormat
+            )
 
-            val result = interpreter.execute(program, namedInputsUDM)
-            val outputUDM = result.toUDM()
-
-            // Detect or use specified output format
-            // Priority: 1) CLI option, 2) script header, 3) default json
-            val outputFormat = options.outputFormat ?: program.header.outputFormat.type.name.lowercase()
+            val (outputData, outputFormat) = transformationService.transform(scriptContent, inputs, serviceOptions)
+            captureOutputData = outputData
+            captureSuccess = true
 
             if (options.verbose) {
                 println("Output format: $outputFormat")
             }
-
-            // Serialize output
-            val outputData = serializeOutput(outputUDM, outputFormat, program.header.outputFormat, options.pretty)
-            captureOutputData = outputData
-            captureSuccess = true
 
             // Write output
             val outputFilePath = options.outputFile
@@ -152,15 +128,15 @@ object TransformCommand {
                 println(outputData)
             }
 
-            // Capture successful execution (for single input only)
+            // Step 4: Capture successful execution (for single input only)
             val durationMs = System.currentTimeMillis() - startTime
             if (!options.hasMultipleInputs) {
-                val primaryInput = namedInputsUDM.values.firstOrNull()
-                val captureInputFormat = options.inputFormat ?: detectFormat("", options.inputFile?.extension)
+                val primaryInputData = inputs.values.firstOrNull()
+                val captureInputFormat = primaryInputData?.format ?: "json"
 
                 TestCaptureService.captureExecution(
                     transformation = scriptContent,
-                    inputData = options.inputFile?.readText() ?: "",
+                    inputData = primaryInputData?.content ?: "",
                     inputFormat = captureInputFormat,
                     outputData = outputData,
                     outputFormat = outputFormat,
@@ -214,208 +190,6 @@ object TransformCommand {
         }
     }
     
-    private fun compileScript(script: String, verbose: Boolean): org.apache.utlx.core.ast.Program {
-        try {
-            if (verbose) println("Lexing...")
-            val lexer = Lexer(script)
-            val tokens = lexer.tokenize()
-            
-            if (verbose) println("Parsing...")
-            val parser = Parser(tokens)
-            val parseResult = parser.parse()
-            
-            when (parseResult) {
-                is org.apache.utlx.core.parser.ParseResult.Success -> {
-                    if (verbose) println("✓ Parsing successful")
-
-                    // Type checking
-                    if (verbose) println("Type checking...")
-                    val stdlib = org.apache.utlx.core.types.StandardLibrary()
-                    val typeChecker = TypeChecker(stdlib)
-                    val typeCheckResult = typeChecker.check(parseResult.program)
-
-                    when (typeCheckResult) {
-                        is org.apache.utlx.core.types.TypeCheckResult.Success -> {
-                            if (verbose) println("✓ Type checking successful (inferred type: ${typeCheckResult.type})")
-                            return parseResult.program
-                        }
-                        is org.apache.utlx.core.types.TypeCheckResult.Failure -> {
-                            // For now, print type errors as warnings but don't fail
-                            // Type checking is opt-in via type annotations
-                            if (verbose) {
-                                System.err.println("Type warnings:")
-                                typeCheckResult.errors.forEach { error ->
-                                    System.err.println("  ${error.message} at ${error.location}")
-                                }
-                            }
-                            return parseResult.program
-                        }
-                    }
-                }
-                is org.apache.utlx.core.parser.ParseResult.Failure -> {
-                    System.err.println("Parse errors:")
-                    parseResult.errors.forEach { error ->
-                        System.err.println("  ${error.message} at ${error.location}")
-                    }
-                    exitProcess(1)
-                }
-            }
-        } catch (e: Exception) {
-            System.err.println("Error compiling script: ${e.message}")
-            if (verbose) {
-                e.printStackTrace()
-            }
-            exitProcess(1)
-        }
-    }
-    
-    private fun parseInput(data: String, format: String, options: Map<String, Any> = emptyMap()): UDM {
-        return try {
-            when (format.lowercase()) {
-                "xml" -> {
-                    // Extract array hints from options (elements that should always be arrays)
-                    val arrayHints = (options["arrays"] as? List<*>)
-                        ?.mapNotNull { it as? String }
-                        ?.toSet()
-                        ?: emptySet()
-                    XMLParser(data, arrayHints).parse()
-                }
-                "json" -> {
-                    JSONParser(data).parse()
-                }
-                "csv" -> {
-                    // Extract CSV options
-                    val delimiter = (options["delimiter"] as? String)?.firstOrNull() ?: ','
-                    val headers = (options["headers"] as? Boolean) ?: true
-
-                    val dialect = CSVDialect(delimiter = delimiter)
-                    CSVParser(data, dialect).parse(hasHeaders = headers)
-                }
-                "yaml", "yml" -> {
-                    YAMLParser().parse(data)
-                }
-                "xsd" -> {
-                    // Extract array hints from options (same as XML)
-                    val arrayHints = (options["arrays"] as? List<*>)
-                        ?.mapNotNull { it as? String }
-                        ?.toSet()
-                        ?: emptySet()
-                    val result = XSDParser(data, arrayHints).parse()
-                    result
-                }
-                "jsch" -> {
-                    JSONSchemaParser(data).parse()
-                }
-                "avro" -> {
-                    AvroSchemaParser().parse(data)
-                }
-                "proto" -> {
-                    ProtobufSchemaParser().parse(data)
-                }
-                else -> throw IllegalArgumentException("Unsupported input format: $format")
-            }
-        } catch (e: Exception) {
-            System.err.println("Error parsing input: ${e.message}")
-            throw e
-        }
-    }
-    
-    private fun serializeOutput(udm: UDM, format: String, formatSpec: org.apache.utlx.core.ast.FormatSpec, pretty: Boolean): String {
-        return try {
-            when (format.lowercase()) {
-                "xml" -> {
-                    // Get encoding option from FormatSpec
-                    val encoding = formatSpec.options["encoding"] as? String
-                    XMLSerializer(prettyPrint = pretty, outputEncoding = encoding).serialize(udm)
-                }
-                "json" -> JSONSerializer(pretty).serialize(udm)
-                "csv" -> {
-                    // Extract CSV output options
-                    val delimiter = (formatSpec.options["delimiter"] as? String)?.firstOrNull() ?: ','
-                    val headers = (formatSpec.options["headers"] as? Boolean) ?: true
-                    val bom = (formatSpec.options["bom"] as? Boolean) ?: false
-
-                    // Extract regional formatting options
-                    val regionalFormatStr = formatSpec.options["regionalFormat"] as? String
-                    val regionalFormat = when (regionalFormatStr?.lowercase()) {
-                        "usa", "us" -> RegionalFormat.USA
-                        "european", "eu", "europe" -> RegionalFormat.EUROPEAN
-                        "french", "fr" -> RegionalFormat.FRENCH
-                        "swiss", "ch" -> RegionalFormat.SWISS
-                        null, "none", "" -> RegionalFormat.NONE
-                        else -> {
-                            System.err.println("Warning: Unknown regionalFormat '$regionalFormatStr', using NONE")
-                            RegionalFormat.NONE
-                        }
-                    }
-
-                    val decimals = (formatSpec.options["decimals"] as? Number)?.toInt() ?: 2
-                    val useThousands = (formatSpec.options["useThousands"] as? Boolean) ?: true
-
-                    val dialect = CSVDialect(delimiter = delimiter)
-                    CSVSerializer(
-                        dialect = dialect,
-                        includeHeaders = headers,
-                        includeBOM = bom,
-                        regionalFormat = regionalFormat,
-                        decimals = decimals,
-                        useThousands = useThousands
-                    ).serialize(udm)
-                }
-                "yaml", "yml" -> YAMLSerializer().serialize(udm)
-                "xsd" -> {
-                    // XSD output with pattern enforcement and documentation injection
-                    val pattern = (formatSpec.options["pattern"] as? String)?.let {
-                        XSDSerializer.XSDPattern.valueOf(it.uppercase().replace("-", "_"))
-                    }
-                    val version = formatSpec.options["version"] as? String ?: "1.0"
-                    val addDoc = formatSpec.options["addDocumentation"] as? Boolean ?: true
-                    val elemFormDefault = formatSpec.options["elementFormDefault"] as? String ?: "qualified"
-
-                    XSDSerializer(
-                        pattern = pattern,
-                        version = version,
-                        addDocumentation = addDoc,
-                        elementFormDefault = elemFormDefault,
-                        prettyPrint = pretty
-                    ).serialize(udm)
-                }
-                "jsch" -> {
-                    // JSON Schema output with automatic $schema and description injection
-                    val draft = formatSpec.options["draft"] as? String ?: "2020-12"
-                    val addDesc = formatSpec.options["addDescriptions"] as? Boolean ?: true
-                    val strict = formatSpec.options["strict"] as? Boolean ?: true
-
-                    JSONSchemaSerializer(
-                        draft = draft,
-                        addDescriptions = addDesc,
-                        prettyPrint = pretty,
-                        strict = strict
-                    ).serialize(udm)
-                }
-                "avro" -> {
-                    // Avro schema output with optional validation
-                    val namespace = formatSpec.options["namespace"] as? String
-                    val validate = formatSpec.options["validate"] as? Boolean ?: true
-
-                    AvroSchemaSerializer(
-                        namespace = namespace,
-                        prettyPrint = pretty,
-                        validate = validate
-                    ).serialize(udm)
-                }
-                "proto" -> {
-                    // Protocol Buffers schema output (proto3)
-                    ProtobufSchemaSerializer().serialize(udm)
-                }
-                else -> throw IllegalArgumentException("Unsupported output format: $format")
-            }
-        } catch (e: Exception) {
-            System.err.println("Error serializing output: ${e.message}")
-            throw e
-        }
-    }
-    
     private fun detectFormat(data: String, extension: String?): String {
         // Try extension first
         extension?.lowercase()?.let {
@@ -464,6 +238,7 @@ object TransformCommand {
         var captureEnabled: Boolean? = null
         var debugLevel: DebugConfig.LogLevel? = null
         val debugComponents = mutableSetOf<DebugConfig.Component>()
+        var strictTypes = false
 
         var i = 0
         while (i < args.size) {
@@ -499,6 +274,9 @@ object TransformCommand {
                 }
                 "--no-pretty" -> {
                     pretty = false
+                }
+                "--strict-types" -> {
+                    strictTypes = true
                 }
                 "--capture" -> {
                     captureEnabled = true
@@ -578,7 +356,8 @@ object TransformCommand {
             pretty = pretty,
             captureEnabled = captureEnabled,
             debugLevel = debugLevel,
-            debugComponents = debugComponents
+            debugComponents = debugComponents,
+            strictTypes = strictTypes
         )
     }
     
@@ -604,6 +383,7 @@ object TransformCommand {
             |  --output-format FORMAT      Force output format (xml, json, csv, yaml)
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing
+            |  --strict-types              Enforce type checking (fail on type errors)
             |  --capture                   Force enable test capture (overrides config)
             |  --no-capture                Force disable test capture (overrides config)
             |  -h, --help                  Show this help message
