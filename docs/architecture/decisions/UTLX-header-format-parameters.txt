@@ -1,1 +1,37 @@
 Overview of all poissble UTLX format header parameters
+
+| Format | Parameters Available | Example                                   |
+  |--------|----------------------|-------------------------------------------|
+  | CSV    | headers, delimiter   | csv {headers: true, delimiter: ";"}       |
+  | XML    | encoding, arrays     | xml {encoding: "UTF-8", arrays: ["Item"]} |
+  | XSD    | arrays               | xsd {arrays: ["xs:element"]}              |
+  | JSON   | None                 | json                                      |
+  | YAML   | None                 | yaml                                      |
+  | Avro   | None                 | avro                                      |
+  | Proto  | None                 | proto                                     |
+  | JSCH   | None                 | jsch                                      |
+
+
+# INPUT
+
+## XSD
+
+See https://github.com/grauwen/utl-x/blob/development/conformance-suite/utlx/tests/formats/xsd/transformation/extract_element_names.yaml
+
+  input xsd {
+    arrays: ["xs:element", "xs:complexType", "xs:simpleType"]
+  }
+
+## CSV
+
+# OUTPUT
+## XML
+
+### XML encoding 
+
+output xml {encoding: "UTF-8"}
+
+output xml {encoding: "UTF-16"}
+
+- **Scope Tests (2)**: `global_elements.yaml`, `global_types.yaml`
+- **Pattern Tests (2)**: `venetian_blind.yaml`, `russian_doll.yaml`
