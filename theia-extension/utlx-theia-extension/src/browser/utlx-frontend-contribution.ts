@@ -54,7 +54,7 @@ export class UTLXFrontendContribution implements
 
     private utlxdStatusId = 'utlxd-status';
     private mcpStatusId = 'mcp-status';
-    private inputs: Map<string, { name: string; format: string }> = new Map(); // inputId -> {name, format}
+    private inputs: Map<string, { name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string }> = new Map(); // inputId -> {name, format, csvHeaders, csvDelimiter}
     private outputFormat: string = 'json';
 
     async onStart(app: FrontendApplication): Promise<void> {
@@ -372,10 +372,17 @@ export class UTLXFrontendContribution implements
             let input = this.inputs.get(event.inputId);
             if (!input) {
                 // Input not tracked yet, create with default name
-                input = { name: 'input', format: event.format };
+                input = {
+                    name: 'input',
+                    format: event.format,
+                    csvHeaders: event.csvHeaders,
+                    csvDelimiter: event.csvDelimiter
+                };
                 this.inputs.set(event.inputId, input);
             } else {
                 input.format = event.format;
+                input.csvHeaders = event.csvHeaders;
+                input.csvDelimiter = event.csvDelimiter;
             }
 
             // Update editor headers
@@ -427,8 +434,9 @@ export class UTLXFrontendContribution implements
      * This builds the header lines and calls the editor's updateHeaders method
      *
      * Format rules:
-     * - Single input: "input [optionalname] <format>"
-     * - Multiple inputs: "input: [optionalname1] format1, name2 format2, ..."
+     * - Single input: "input [optionalname] <format> [params]"
+     * - Multiple inputs: "input: [optionalname1] format1 [params1], name2 format2 [params2], ..."
+     * - CSV parameters: "{headers: true|false, delimiter: ","}"
      */
     private async updateEditorHeaders(): Promise<void> {
         try {
@@ -444,22 +452,42 @@ export class UTLXFrontendContribution implements
                 // No inputs tracked yet, use default
                 inputLines.push('input json');
             } else if (this.inputs.size === 1) {
-                // Single input: "input [optionalname] <format>"
+                // Single input: "input [optionalname] <format> [params]"
                 const input = Array.from(this.inputs.values())[0];
                 const hasCustomName = input.name && input.name !== 'input' && input.name.trim() !== '';
 
+                let inputLine = 'input';
                 if (hasCustomName) {
-                    inputLines.push(`input ${input.name} ${input.format}`);
-                } else {
-                    inputLines.push(`input ${input.format}`);
+                    inputLine += ` ${input.name}`;
                 }
+                inputLine += ` ${input.format}`;
+
+                // Add CSV parameters if format is CSV
+                if (input.format === 'csv') {
+                    const csvParams = this.buildCsvParams(input);
+                    if (csvParams) {
+                        inputLine += ` ${csvParams}`;
+                    }
+                }
+
+                inputLines.push(inputLine);
             } else {
-                // Multiple inputs: "input: name1 format1, name2 format2, ..."
+                // Multiple inputs: "input: name1 format1 [params1], name2 format2 [params2], ..."
                 // ALWAYS show names for multiple inputs
                 const inputParts: string[] = [];
 
                 this.inputs.forEach(input => {
-                    inputParts.push(`${input.name} ${input.format}`);
+                    let inputPart = `${input.name} ${input.format}`;
+
+                    // Add CSV parameters if format is CSV
+                    if (input.format === 'csv') {
+                        const csvParams = this.buildCsvParams(input);
+                        if (csvParams) {
+                            inputPart += ` ${csvParams}`;
+                        }
+                    }
+
+                    inputParts.push(inputPart);
                 });
 
                 inputLines.push(`input: ${inputParts.join(', ')}`);
@@ -476,5 +504,38 @@ export class UTLXFrontendContribution implements
         } catch (error) {
             console.error('[UTLXFrontendContribution] Failed to update editor headers:', error);
         }
+    }
+
+    /**
+     * Build CSV parameter string for UTLX header
+     * Format: {headers: true|false, delimiter: ","}
+     * Returns null if both parameters are at default values
+     */
+    private buildCsvParams(input: { csvHeaders?: boolean; csvDelimiter?: string }): string | null {
+        const hasHeaders = input.csvHeaders ?? true; // Default true
+        const delimiter = input.csvDelimiter ?? ','; // Default comma
+
+        // Don't show parameters if both are defaults
+        if (hasHeaders === true && delimiter === ',') {
+            return null;
+        }
+
+        // Include both parameters for clarity when at least one is non-default
+        const params: string[] = [];
+        params.push(`headers: ${hasHeaders}`);
+        params.push(`delimiter: "${this.escapeDelimiter(delimiter)}"`);
+
+        return `{${params.join(', ')}}`;
+    }
+
+    /**
+     * Escape delimiter for UTLX syntax
+     * Tab needs to be represented as \t
+     */
+    private escapeDelimiter(delimiter: string): string {
+        if (delimiter === '\t') {
+            return '\\t';
+        }
+        return delimiter;
     }
 }

@@ -56,6 +56,9 @@ export interface InputTab {
     instanceFormat: InstanceFormat;
     schemaContent: string;
     schemaFormat: SchemaFormatType;
+    // CSV-specific parameters
+    csvHeaders?: boolean;      // Default true
+    csvDelimiter?: string;     // Default ","
 }
 
 export interface MultiInputPanelState {
@@ -225,7 +228,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                         </div>
                     )}
 
-                    {/* Format Selector */}
+                    {/* Format Selector and CSV parameters */}
                     <div className='utlx-panel-toolbar'>
                         <label>
                             Format:
@@ -254,6 +257,36 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 )}
                             </select>
                         </label>
+
+                        {/* CSV-specific parameters - shown inline to the right of format */}
+                        {currentFormat === 'csv' && activeSubTab === 'instance' && (
+                            <>
+                                <label>
+                                    Headers:
+                                    <select
+                                        value={activeInput.csvHeaders === false ? 'false' : 'true'}
+                                        onChange={(e) => this.handleCsvHeadersChange(e.target.value === 'true')}
+                                        disabled={loading}
+                                    >
+                                        <option value='true'>Yes</option>
+                                        <option value='false'>No</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    Delimiter:
+                                    <select
+                                        value={activeInput.csvDelimiter || ','}
+                                        onChange={(e) => this.handleCsvDelimiterChange(e.target.value)}
+                                        disabled={loading}
+                                    >
+                                        <option value=','>Comma (,)</option>
+                                        <option value=';'>Semicolon (;)</option>
+                                        <option value='\t'>Tab (\t)</option>
+                                        <option value='|'>Pipe (|)</option>
+                                    </select>
+                                </label>
+                            </>
+                        )}
                     </div>
 
                     {/* Content Editor */}
@@ -475,6 +508,7 @@ export class MultiInputPanelWidget extends ReactWidget {
 
     private handleFormatChange(format: InstanceFormat | SchemaFormatType): void {
         const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+        const activeInput = this.state.inputs.find(input => input.id === this.state.activeInputId);
 
         console.log('[MultiInputPanel] Format changed:', { format, isSchema });
 
@@ -498,7 +532,9 @@ export class MultiInputPanelWidget extends ReactWidget {
         this.eventService.fireInputFormatChanged({
             format,
             isSchema,
-            inputId: this.state.activeInputId
+            inputId: this.state.activeInputId,
+            csvHeaders: activeInput?.csvHeaders,
+            csvDelimiter: activeInput?.csvDelimiter
         });
     }
 
@@ -517,6 +553,54 @@ export class MultiInputPanelWidget extends ReactWidget {
             default:
                 return 'jsch';
         }
+    }
+
+    private handleCsvHeadersChange(hasHeaders: boolean): void {
+        const activeInput = this.state.inputs.find(input => input.id === this.state.activeInputId);
+
+        this.setState({
+            inputs: this.state.inputs.map(input =>
+                input.id === this.state.activeInputId
+                    ? {
+                        ...input,
+                        csvHeaders: hasHeaders
+                    }
+                    : input
+            )
+        });
+
+        // Fire event to notify about CSV parameter change
+        this.eventService.fireInputFormatChanged({
+            format: 'csv',
+            isSchema: false,
+            inputId: this.state.activeInputId,
+            csvHeaders: hasHeaders,
+            csvDelimiter: activeInput?.csvDelimiter
+        });
+    }
+
+    private handleCsvDelimiterChange(delimiter: string): void {
+        const activeInput = this.state.inputs.find(input => input.id === this.state.activeInputId);
+
+        this.setState({
+            inputs: this.state.inputs.map(input =>
+                input.id === this.state.activeInputId
+                    ? {
+                        ...input,
+                        csvDelimiter: delimiter
+                    }
+                    : input
+            )
+        });
+
+        // Fire event to notify about CSV parameter change
+        this.eventService.fireInputFormatChanged({
+            format: 'csv',
+            isSchema: false,
+            inputId: this.state.activeInputId,
+            csvHeaders: activeInput?.csvHeaders,
+            csvDelimiter: delimiter
+        });
     }
 
     private handleClear(): void {

@@ -27,6 +27,9 @@ export interface InputFormatChangedEvent {
     format: string;
     inputId: string;
     isSchema: boolean;
+    // CSV-specific parameters
+    csvHeaders?: boolean;
+    csvDelimiter?: string;
 }
 
 /**
