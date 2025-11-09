@@ -49,6 +49,8 @@ csv_seriaalizer
     useThousands: true
   }
 
+regionalformat: swiss | european | french | usa
+
 CSV_OUT_PARAMS
 
 # OUTPUT
