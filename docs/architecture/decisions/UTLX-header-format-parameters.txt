@@ -1,10 +1,10 @@
 Overview of all poissble UTLX format header parameters
 
-| Format | Parameters Available | Example                                   |
-  |--------|----------------------|-------------------------------------------|
-  | CSV    | headers, delimiter   | csv {headers: true, delimiter: ";"}       |
-  | XML    | encoding, arrays     | xml {encoding: "UTF-8", arrays: ["Item"]} |
-  | XSD    | arrays               | xsd {arrays: ["xs:element"]}              |
+  | Format | Parameters Available | Example      INPUT                        |   OUTPUT
+  |--------|----------------------|-------------------------------------------|--------------
+  | CSV    | headers, delimiter   | csv {headers: true, delimiter: ";"}       | csv {headers: true, delimiter: ";"} 
+  | XML    | encoding, arrays     | xml {encoding: "UTF-8", arrays: ["Item"]} | xml {encoding: "UTF-8"}
+  | XSD    | arrays               | xsd {arrays: ["xs:element"]}              | 
   | JSON   | None                 | json                                      |
   | YAML   | None                 | yaml                                      |
   | Avro   | None                 | avro                                      |
