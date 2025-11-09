@@ -33,30 +33,30 @@ class XSDSerializer(
     /**
      * XSD Design Patterns
      */
-    enum class XSDPattern {
+    enum class XSDPattern(val value: String) {
         /**
          * Russian Doll: Single global element with all types defined inline
          * Best for: Small schemas, encapsulated structures
          */
-        RUSSIAN_DOLL,
+        RUSSIAN_DOLL("russian-doll"),
 
         /**
          * Salami Slice: All elements global, minimal types
          * Best for: Flexible composition, element reuse
          */
-        SALAMI_SLICE,
+        SALAMI_SLICE("salami-slice"),
 
         /**
          * Venetian Blind: Global types, local elements
          * Best for: Type reuse, large schemas (most common pattern)
          */
-        VENETIAN_BLIND,
+        VENETIAN_BLIND("venetian-blind"),
 
         /**
          * Garden of Eden: All elements and types global
          * Best for: Maximum reusability, schema composition
          */
-        GARDEN_OF_EDEN
+        GARDEN_OF_EDEN("garden-of-eden")
     }
 
     /**
