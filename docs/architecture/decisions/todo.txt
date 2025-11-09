@@ -18,6 +18,25 @@ Multipart/form-data (like file upload)
     - Standard HTTP, widely supported
     - Better for mixed content types
 ----
+ The correct architecture should be:
+
+  ┌─────────────────────────────────────────┐
+  │   Core Transformation Service           │
+  │   (parseInput + execute + serializeOutput)│
+  └─────────────────────────────────────────┘
+                      ▲
+                      │
+          ┌───────────┴───────────┐
+          │                       │
+  ┌───────┴────────┐    ┌────────┴─────────┐
+  │ CLI Command    │    │  REST API        │
+  │ (thin wrapper) │    │  (thin wrapper)  │
+  └────────────────┘    └──────────────────┘
+
+
+
+
+
 IDE integration (LSP for validation)                                                                                                                                                
 CI/CD pipelines (fail on errors, warn on lint issues)    
 
