@@ -54,6 +54,18 @@ data class ExecutionResponse(
     val executionTimeMs: Long
 )
 
+// Multipart execution (for /api/execute-multipart endpoint)
+/**
+ * Metadata for a single multipart input.
+ * The actual binary content is in the multipart file part.
+ */
+data class MultipartInputMetadata(
+    val name: String,
+    val format: String, // json, xml, csv, yaml, etc.
+    val encoding: String = "UTF-8", // UTF-8, UTF-16LE, UTF-16BE, ISO-8859-1, etc.
+    val hasBOM: Boolean = false // Whether input has Byte Order Mark
+)
+
 // Schema inference endpoint
 @Serializable
 data class InferSchemaRequest(

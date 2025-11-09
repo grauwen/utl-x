@@ -233,4 +233,169 @@ class RestApiServerTest {
             server?.stop()
         }
     }
+
+    // ========== Multipart Execution Tests ==========
+
+    @Test
+    fun `test MultipartInputMetadata DTO with default values`() {
+        val metadata = MultipartInputMetadata(
+            name = "customers",
+            format = "json"
+        )
+
+        assertEquals("customers", metadata.name)
+        assertEquals("json", metadata.format)
+        assertEquals("UTF-8", metadata.encoding)
+        assertFalse(metadata.hasBOM)
+    }
+
+    @Test
+    fun `test MultipartInputMetadata DTO with UTF-8 and BOM`() {
+        val metadata = MultipartInputMetadata(
+            name = "input1",
+            format = "xml",
+            encoding = "UTF-8",
+            hasBOM = true
+        )
+
+        assertEquals("input1", metadata.name)
+        assertEquals("xml", metadata.format)
+        assertEquals("UTF-8", metadata.encoding)
+        assertTrue(metadata.hasBOM)
+    }
+
+    @Test
+    fun `test MultipartInputMetadata DTO with UTF-16LE`() {
+        val metadata = MultipartInputMetadata(
+            name = "data",
+            format = "csv",
+            encoding = "UTF-16LE",
+            hasBOM = false
+        )
+
+        assertEquals("data", metadata.name)
+        assertEquals("csv", metadata.format)
+        assertEquals("UTF-16LE", metadata.encoding)
+        assertFalse(metadata.hasBOM)
+    }
+
+    @Test
+    fun `test MultipartInputMetadata DTO with UTF-16BE and BOM`() {
+        val metadata = MultipartInputMetadata(
+            name = "records",
+            format = "yaml",
+            encoding = "UTF-16BE",
+            hasBOM = true
+        )
+
+        assertEquals("records", metadata.name)
+        assertEquals("yaml", metadata.format)
+        assertEquals("UTF-16BE", metadata.encoding)
+        assertTrue(metadata.hasBOM)
+    }
+
+    @Test
+    fun `test MultipartInputMetadata DTO with ISO-8859-1`() {
+        val metadata = MultipartInputMetadata(
+            name = "legacy_data",
+            format = "json",
+            encoding = "ISO-8859-1",
+            hasBOM = false
+        )
+
+        assertEquals("legacy_data", metadata.name)
+        assertEquals("json", metadata.format)
+        assertEquals("ISO-8859-1", metadata.encoding)
+        assertFalse(metadata.hasBOM)
+    }
+
+    @Test
+    fun `test MultipartInputMetadata DTO with Windows-1252`() {
+        val metadata = MultipartInputMetadata(
+            name = "windows_file",
+            format = "csv",
+            encoding = "Windows-1252",
+            hasBOM = false
+        )
+
+        assertEquals("windows_file", metadata.name)
+        assertEquals("csv", metadata.format)
+        assertEquals("Windows-1252", metadata.encoding)
+        assertFalse(metadata.hasBOM)
+    }
+
+    @Test
+    fun `test MultipartInputMetadata with XSD schema format`() {
+        val metadata = MultipartInputMetadata(
+            name = "schema",
+            format = "xsd",
+            encoding = "UTF-8",
+            hasBOM = false
+        )
+
+        assertEquals("schema", metadata.name)
+        assertEquals("xsd", metadata.format)
+        assertEquals("UTF-8", metadata.encoding)
+        assertFalse(metadata.hasBOM)
+    }
+
+    @Test
+    fun `test MultipartInputMetadata with JSON Schema format`() {
+        val metadata = MultipartInputMetadata(
+            name = "json_schema",
+            format = "jsch",
+            encoding = "UTF-8",
+            hasBOM = false
+        )
+
+        assertEquals("json_schema", metadata.name)
+        assertEquals("jsch", metadata.format)
+        assertEquals("UTF-8", metadata.encoding)
+        assertFalse(metadata.hasBOM)
+    }
+
+    @Test
+    fun `test MultipartInputMetadata with Avro schema format`() {
+        val metadata = MultipartInputMetadata(
+            name = "avro_schema",
+            format = "avro",
+            encoding = "UTF-8",
+            hasBOM = false
+        )
+
+        assertEquals("avro_schema", metadata.name)
+        assertEquals("avro", metadata.format)
+        assertEquals("UTF-8", metadata.encoding)
+        assertFalse(metadata.hasBOM)
+    }
+
+    @Test
+    fun `test MultipartInputMetadata with Protobuf schema format`() {
+        val metadata = MultipartInputMetadata(
+            name = "proto_schema",
+            format = "proto",
+            encoding = "UTF-8",
+            hasBOM = false
+        )
+
+        assertEquals("proto_schema", metadata.name)
+        assertEquals("proto", metadata.format)
+        assertEquals("UTF-8", metadata.encoding)
+        assertFalse(metadata.hasBOM)
+    }
+
+    @Test
+    fun `test multiple MultipartInputMetadata instances with different encodings`() {
+        val inputs = listOf(
+            MultipartInputMetadata("file1", "json", "UTF-8", false),
+            MultipartInputMetadata("file2", "xml", "UTF-16LE", true),
+            MultipartInputMetadata("file3", "csv", "ISO-8859-1", false)
+        )
+
+        assertEquals(3, inputs.size)
+        assertEquals("UTF-8", inputs[0].encoding)
+        assertEquals("UTF-16LE", inputs[1].encoding)
+        assertTrue(inputs[1].hasBOM)
+        assertEquals("ISO-8859-1", inputs[2].encoding)
+    }
 }

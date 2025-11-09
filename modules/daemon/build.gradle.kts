@@ -52,6 +52,7 @@ dependencies {
     implementation("io.ktor:ktor-server-cors:2.3.7")
     implementation("io.ktor:ktor-server-call-logging:2.3.7")
     implementation("io.ktor:ktor-server-status-pages:2.3.7")
+    // Note: Multipart is part of ktor-server-core, no separate artifact needed
 
     // Configuration management
     implementation("com.sksamuel.hoplite:hoplite-core:2.7.5")

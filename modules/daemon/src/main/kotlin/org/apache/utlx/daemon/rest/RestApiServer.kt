@@ -2,6 +2,7 @@
 package org.apache.utlx.daemon.rest
 
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -275,6 +276,131 @@ class RestApiServer(
                     }
                 }
 
+                // Multipart execution endpoint (for Theia extension with encoding support)
+                post("/api/execute-multipart") {
+                    logger.debug("Multipart execution request received")
+                    val startExec = System.currentTimeMillis()
+
+                    try {
+                        var utlxSource: String? = null
+                        val inputs = mutableListOf<Triple<ByteArray, String, MultipartInputMetadata>>()
+
+                        // Process multipart data
+                        val multipart = call.receiveMultipart()
+                        multipart.forEachPart { part ->
+                            when (part) {
+                                is PartData.FormItem -> {
+                                    // Extract UTLX source code from form field
+                                    if (part.name == "utlx") {
+                                        utlxSource = part.value
+                                        logger.debug("Received UTLX source: ${utlxSource?.length} characters")
+                                    }
+                                }
+                                is PartData.FileItem -> {
+                                    // Extract input file with metadata from headers
+                                    val inputName = part.name ?: "input"
+                                    val format = part.headers["X-Format"] ?: "json"
+                                    val encoding = part.headers["X-Encoding"] ?: "UTF-8"
+                                    val hasBOM = part.headers["X-BOM"]?.toBoolean() ?: false
+
+                                    val bytes = part.streamProvider().readBytes()
+                                    val metadata = MultipartInputMetadata(inputName, format, encoding, hasBOM)
+
+                                    inputs.add(Triple(bytes, format, metadata))
+                                    logger.debug("Received input '$inputName': ${bytes.size} bytes, format=$format, encoding=$encoding, BOM=$hasBOM")
+                                }
+                                else -> part.dispose()
+                            }
+                        }
+
+                        // Validate we have UTLX source
+                        if (utlxSource == null) {
+                            call.respond(
+                                HttpStatusCode.BadRequest,
+                                ExecutionResponse(
+                                    success = false,
+                                    error = "Missing 'utlx' field in multipart request",
+                                    executionTimeMs = System.currentTimeMillis() - startExec
+                                )
+                            )
+                            return@post
+                        }
+
+                        // Validate we have at least one input
+                        if (inputs.isEmpty()) {
+                            call.respond(
+                                HttpStatusCode.BadRequest,
+                                ExecutionResponse(
+                                    success = false,
+                                    error = "No input files provided in multipart request",
+                                    executionTimeMs = System.currentTimeMillis() - startExec
+                                )
+                            )
+                            return@post
+                        }
+
+                        // 1. Compile the UTLX script
+                        val lexer = Lexer(utlxSource!!)
+                        val tokens = lexer.tokenize()
+                        val parser = Parser(tokens)
+                        val parseResult = parser.parse()
+
+                        val program = when (parseResult) {
+                            is ParseResult.Success -> parseResult.program
+                            is ParseResult.Failure -> {
+                                val errors = parseResult.errors.joinToString("\n") { error ->
+                                    "  ${error.message} at ${error.location}"
+                                }
+                                call.respond(
+                                    HttpStatusCode.BadRequest,
+                                    ExecutionResponse(
+                                        success = false,
+                                        error = "Parse errors:\n$errors",
+                                        executionTimeMs = System.currentTimeMillis() - startExec
+                                    )
+                                )
+                                return@post
+                            }
+                        }
+
+                        // 2. Parse all inputs with proper encoding
+                        val inputUDMs = mutableMapOf<String, org.apache.utlx.core.udm.UDM>()
+                        for ((bytes, format, metadata) in inputs) {
+                            val udm = parseInputBytes(bytes, format, metadata.encoding, metadata.hasBOM)
+                            // For now, use first input as "input", could support multiple named inputs
+                            if (inputUDMs.isEmpty()) {
+                                inputUDMs["input"] = udm
+                            }
+                        }
+
+                        // 3. Execute transformation
+                        val interpreter = Interpreter()
+                        val result = interpreter.execute(program, inputUDMs)
+                        val outputUDM = result.toUDM()
+
+                        // 4. Serialize output (default to JSON for now)
+                        val outputData = serializeOutput(outputUDM, "json", pretty = true)
+
+                        call.respond(
+                            ExecutionResponse(
+                                success = true,
+                                output = outputData,
+                                executionTimeMs = System.currentTimeMillis() - startExec
+                            )
+                        )
+                    } catch (e: Exception) {
+                        logger.error("Multipart execution error", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            ExecutionResponse(
+                                success = false,
+                                error = "Execution failed: ${e.message}",
+                                executionTimeMs = System.currentTimeMillis() - startExec
+                            )
+                        )
+                    }
+                }
+
                 // Schema inference endpoint
                 post("/api/infer-schema") {
                     val request = call.receive<InferSchemaRequest>()
@@ -516,6 +642,48 @@ class RestApiServer(
             }
             else -> throw IllegalArgumentException("Unsupported input format: $format. Supported formats: xml, json, csv, yaml, xsd, jsch, avro, proto")
         }
+    }
+
+    /**
+     * Parse input data from bytes with specific encoding and BOM handling
+     */
+    private fun parseInputBytes(
+        bytes: ByteArray,
+        format: String,
+        encoding: String,
+        hasBOM: Boolean
+    ): org.apache.utlx.core.udm.UDM {
+        // Handle BOM (Byte Order Mark) if present
+        val processedBytes = if (hasBOM) {
+            when (encoding.uppercase()) {
+                "UTF-8" -> {
+                    // UTF-8 BOM is EF BB BF
+                    if (bytes.size >= 3 && bytes[0] == 0xEF.toByte() && bytes[1] == 0xBB.toByte() && bytes[2] == 0xBF.toByte()) {
+                        bytes.copyOfRange(3, bytes.size)
+                    } else bytes
+                }
+                "UTF-16LE" -> {
+                    // UTF-16LE BOM is FF FE
+                    if (bytes.size >= 2 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xFE.toByte()) {
+                        bytes.copyOfRange(2, bytes.size)
+                    } else bytes
+                }
+                "UTF-16BE" -> {
+                    // UTF-16BE BOM is FE FF
+                    if (bytes.size >= 2 && bytes[0] == 0xFE.toByte() && bytes[1] == 0xFF.toByte()) {
+                        bytes.copyOfRange(2, bytes.size)
+                    } else bytes
+                }
+                else -> bytes
+            }
+        } else bytes
+
+        // Decode bytes with specified encoding
+        val charset = java.nio.charset.Charset.forName(encoding)
+        val data = String(processedBytes, charset)
+
+        // Use existing parseInput method
+        return parseInput(data, format)
     }
 
     /**
