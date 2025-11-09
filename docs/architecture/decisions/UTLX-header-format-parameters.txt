@@ -25,6 +25,11 @@ See https://github.com/grauwen/utl-x/blob/development/conformance-suite/utlx/tes
 
 ## CSV
 
+ input csv {
+    headers: true,
+    delimiter: ";"
+  }
+
 CSVDialect  | delimieter | quote  | Description
 ------------|------------|--------|-------------
 DEFAULT     | ,          | "      | RFC 4180 CSV
