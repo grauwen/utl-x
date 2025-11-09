@@ -8,8 +8,8 @@ script: |
   input json
   output json
   ---
-  let customerName = input.name
-  let customerEmail = input.email
+  let customerName = $input.name;
+  let customerEmail = $input.email;
   {
     name: customerName,
     email: customerEmail,
