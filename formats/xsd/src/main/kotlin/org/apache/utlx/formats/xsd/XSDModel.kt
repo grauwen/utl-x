@@ -8,12 +8,12 @@ package org.apache.utlx.formats.xsd
 /**
  * XSD Design Pattern (Russian Doll, Salami Slice, Venetian Blind, Garden of Eden)
  */
-enum class XSDPattern {
-    RUSSIAN_DOLL,      // Element=local, Type=local
-    SALAMI_SLICE,      // Element=global, Type=local
-    VENETIAN_BLIND,    // Element=local, Type=global (RECOMMENDED)
-    GARDEN_OF_EDEN,    // Element=global, Type=global
-    UNDETECTABLE       // No clear pattern // should we have this option?
+enum class XSDPattern(val value: String) {
+    RUSSIAN_DOLL("russian-doll"),           // Element=local, Type=local
+    SALAMI_SLICE("salami-slice"),           // Element=global, Type=local
+    VENETIAN_BLIND("venetian-blind"),       // Element=local, Type=global (RECOMMENDED)
+    GARDEN_OF_EDEN("garden-of-eden"),       // Element=global, Type=global
+    UNDETECTABLE("undetectable")            // No clear pattern
 }
 
 /**
@@ -40,10 +40,10 @@ object XSDMetadata {
     const val SCOPE = "__scope"                   // "global" or "local"
     const val XSD_VERSION = "__xsdVersion"        // "1.0" or "1.1"
     const val TARGET_NAMESPACE = "__targetNamespace"  // Target namespace URI
-    const val XSD_PATTERN = "__xsdPattern"        // Detected XSD design pattern -> XSDPattern (RUSSIAN_DOLL, VENETIAN_BLIND, etc.)
-    const val XSD_ELEMENT_DECLARATION = "__xsdElementDeclaration"  // global | local
-    const val XSD_TYPE_DECLARATION = "__xsdTypeDeclaration"        // global | local
-    const val XSD_GLOBAL_ELEMENTS = "__xsdGlobalElements"   // Count of global element declarations
-    const val XSD_GLOBAL_TYPES = "__xsdGlobalTypes"         // Count of global type declarations (complexType + simpleType)
-    const val XSD_INLINE_TYPES = "__xsdInlineTypes"         // Count of inline/anonymous type declarations
+    const val XSD_PATTERN = "__xsdPattern"        // Detected XSD design pattern (russian-doll, venetian-blind, salami-slice, garden-of-eden, undetectable)
+    const val XSD_ELEMENT_DECLARATION = "__xsdElementDeclaration"  // "global" | "local"
+    const val XSD_TYPE_DECLARATION = "__xsdTypeDeclaration"        // "global" | "local"
+    const val XSD_GLOBAL_ELEMENTS = "__xsdGlobalElements"   // Count of global element declarations (as string)
+    const val XSD_GLOBAL_TYPES = "__xsdGlobalTypes"         // Count of global type declarations (as string) - complexType + simpleType
+    const val XSD_INLINE_TYPES = "__xsdInlineTypes"         // Count of inline/anonymous type declarations (as string)
 }
