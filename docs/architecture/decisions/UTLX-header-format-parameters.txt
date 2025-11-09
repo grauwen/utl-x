@@ -25,6 +25,32 @@ See https://github.com/grauwen/utl-x/blob/development/conformance-suite/utlx/tes
 
 ## CSV
 
+CSVDialect  | delimieter | quote  | Description
+------------|------------|--------|-------------
+DEFAULT     | ,          | "      | RFC 4180 CSV
+TSV         | \t         | "      | Tab-separated values
+SEMICOLON   | ;          | "      | Semicolon-delimited (common in European locales
+PIPE        | |          | "      |
+EXCEL       | ,          | "      | linTerminator = "\r\n"
+
+csv_seriaalizer
+    private val dialect: CSVDialect = CSVDialect.DEFAULT,
+    private val includeHeaders: Boolean = true,
+    private val includeBOM: Boolean = false,
+    private val regionalFormat: RegionalFormat = RegionalFormat.NONE,
+    private val decimals: Int = 2,
+    private val useThousands: Boolean = true
+
+  output csv {
+    delimiter: ";",
+    headers: true,
+    regionalFormat: "european",
+    decimals: 2,
+    useThousands: true
+  }
+
+CSV_OUT_PARAMS
+
 # OUTPUT
 ## XML
 
