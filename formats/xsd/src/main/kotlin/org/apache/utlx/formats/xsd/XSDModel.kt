@@ -40,7 +40,10 @@ object XSDMetadata {
     const val SCOPE = "__scope"                   // "global" or "local"
     const val XSD_VERSION = "__xsdVersion"        // "1.0" or "1.1"
     const val TARGET_NAMESPACE = "__targetNamespace"  // Target namespace URI
-    const val XSD_PATTERN = "__xsdPattern"                    // detected XSDPattern
+    const val XSD_PATTERN = "__xsdPattern"        // Detected XSD design pattern -> XSDPattern (RUSSIAN_DOLL, VENETIAN_BLIND, etc.)
     const val XSD_ELEMENT_DECLARATION = "__xsdElementDeclaration"  // global | local
     const val XSD_TYPE_DECLARATION = "__xsdTypeDeclaration"        // global | local
+    const val XSD_GLOBAL_ELEMENTS = "__xsdGlobalElements"   // Count of global element declarations
+    const val XSD_GLOBAL_TYPES = "__xsdGlobalTypes"         // Count of global type declarations (complexType + simpleType)
+    const val XSD_INLINE_TYPES = "__xsdInlineTypes"         // Count of inline/anonymous type declarations
 }
