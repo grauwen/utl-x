@@ -89,7 +89,7 @@ object LintCommand {
             return CommandResult.Failure("Cannot lint: Lexer error", 1)
         }
 
-        val parser = Parser(tokens)
+        val parser = Parser(tokens, scriptContent)
         val parseResult = parser.parse()
 
         val program = when (parseResult) {

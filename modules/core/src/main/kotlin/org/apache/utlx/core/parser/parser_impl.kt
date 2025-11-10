@@ -9,7 +9,7 @@ private val logger = KotlinLogging.logger {}
 
 /**
  * Recursive descent parser for UTL-X
- * 
+ *
  * Grammar (simplified):
  * program     -> header TRIPLE_DASH expression
  * header      -> PERCENT_DIRECTIVE version input output
@@ -30,7 +30,10 @@ private val logger = KotlinLogging.logger {}
  *              | LBRACE properties RBRACE
  *              | LBRACKET elements RBRACKET
  */
-class Parser(private val tokens: List<Token>) {
+class Parser(
+    private val tokens: List<Token>,
+    private val source: String = ""  // Optional source for error enhancement
+) {
     private var current = 0
     private val errors = mutableListOf<ParseError>()
     private var currentSection = ScriptSection.HEADER  // Track which section we're parsing
@@ -52,10 +55,14 @@ class Parser(private val tokens: List<Token>) {
             }
         } catch (e: ParseException) {
             logger.error(e) { "Parse exception: ${e.message}" }
+
+            // Enhance error message with contextual help
+            val enhancedError = ParseErrorEnhancer.enhance(e, source, tokens, current)
+
             // If we already have errors (from error() calls), don't duplicate
             // Otherwise, add the exception as an error
             if (errors.isEmpty()) {
-                ParseResult.Failure(listOf(ParseError(e.message ?: "Parse error", e.location, currentSection)))
+                ParseResult.Failure(listOf(ParseError(enhancedError.message ?: "Parse error", enhancedError.location, currentSection)))
             } else {
                 ParseResult.Failure(errors)
             }

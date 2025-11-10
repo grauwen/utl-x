@@ -86,7 +86,7 @@ object ValidateCommand {
             throw IllegalStateException("Lexer error: ${e.message}", e)
         }
 
-        val parser = Parser(tokens)
+        val parser = Parser(tokens, scriptContent)
         val parseResult = parser.parse()
 
         val program = when (parseResult) {

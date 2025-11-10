@@ -191,7 +191,7 @@ class RestApiServer(
                         // Lex and parse the UTLX code
                         val lexer = Lexer(request.utlx)
                         val tokens = lexer.tokenize()
-                        val parser = Parser(tokens)
+                        val parser = Parser(tokens, request.utlx)
                         val parseResult = parser.parse()
 
                         val diagnostics = mutableListOf<Diagnostic>()
@@ -459,7 +459,7 @@ class RestApiServer(
                         // 1. Parse the UTLX script
                         val lexer = Lexer(request.utlx)
                         val tokens = lexer.tokenize()
-                        val parser = Parser(tokens)
+                        val parser = Parser(tokens, request.utlx)
                         val parseResult = parser.parse()
 
                         val program = when (parseResult) {

@@ -114,7 +114,7 @@ object ReplCommand {
         // We'll wrap it in a minimal program structure
         val wrappedInput = "%utlx 1.0\ninput json\noutput json\n---\n$input"
         val tokens = Lexer(wrappedInput).tokenize()
-        val parseResult = Parser(tokens).parse()
+        val parseResult = Parser(tokens, wrappedInput).parse()
 
         if (parseResult is ParseResult.Failure) {
             throw RuntimeError("Parse error: ${parseResult.errors.joinToString("; ")}")

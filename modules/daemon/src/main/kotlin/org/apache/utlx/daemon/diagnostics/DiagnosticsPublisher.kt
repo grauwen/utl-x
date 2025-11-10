@@ -109,7 +109,7 @@ class DiagnosticsPublisher(
         return try {
             val lexer = Lexer(text)
             val tokens = lexer.tokenize()
-            val parser = Parser(tokens)
+            val parser = Parser(tokens, text)
             val parseResult = parser.parse()
 
             when (parseResult) {

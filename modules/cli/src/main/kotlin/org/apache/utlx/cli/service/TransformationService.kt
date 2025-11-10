@@ -118,7 +118,7 @@ class TransformationService {
         val tokens = lexer.tokenize()
 
         if (options.verbose) println("[TransformationService] Parsing...")
-        val parser = Parser(tokens)
+        val parser = Parser(tokens, source)
         val parseResult = parser.parse()
 
         val program = when (parseResult) {

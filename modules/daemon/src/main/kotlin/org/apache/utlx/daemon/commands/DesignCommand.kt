@@ -118,7 +118,7 @@ object DesignCommand {
         val transformContent = File(transformFile).readText()
         val lexer = Lexer(transformContent)
         val tokens = lexer.tokenize()
-        val parser = Parser(tokens)
+        val parser = Parser(tokens, transformContent)
         val parseResult = parser.parse()
 
         val program = when (parseResult) {
@@ -239,7 +239,7 @@ object DesignCommand {
         val transformContent = File(transformFile).readText()
         val lexer = Lexer(transformContent)
         val tokens = lexer.tokenize()
-        val parser = Parser(tokens)
+        val parser = Parser(tokens, transformContent)
         val parseResult = parser.parse()
 
         val program = when (parseResult) {
@@ -340,7 +340,7 @@ object DesignCommand {
         val transformContent = File(transformFile).readText()
         val lexer = Lexer(transformContent)
         val tokens = lexer.tokenize()
-        val parser = Parser(tokens)
+        val parser = Parser(tokens, transformContent)
         val parseResult = parser.parse()
 
         val program = when (parseResult) {
@@ -569,7 +569,7 @@ object DesignCommand {
         val transformContent = File(transformFile).readText()
         val lexer = Lexer(transformContent)
         val tokens = lexer.tokenize()
-        val parser = Parser(tokens)
+        val parser = Parser(tokens, transformContent)
         val parseResult = parser.parse()
 
         val program = when (parseResult) {

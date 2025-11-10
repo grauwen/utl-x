@@ -170,7 +170,7 @@ class McpService(
                 val tokens = lexer.tokenize()
 
                 // Parse the tokens
-                val parser = Parser(tokens)
+                val parser = Parser(tokens, request.script)
                 val parseResult = parser.parse()
 
                 when (parseResult) {
@@ -283,7 +283,7 @@ class McpService(
         val tokens = lexer.tokenize()
 
         // Parse the tokens
-        val parser = Parser(tokens)
+        val parser = Parser(tokens, scriptText)
         val parseResult = parser.parse()
 
         val program = when (parseResult) {
