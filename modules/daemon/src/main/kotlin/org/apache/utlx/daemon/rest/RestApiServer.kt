@@ -8,7 +8,7 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -20,6 +20,7 @@ import kotlinx.serialization.json.Json
 import org.apache.utlx.analysis.schema.XSDSchemaParser
 import org.apache.utlx.analysis.schema.JSONSchemaParser
 import org.apache.utlx.analysis.schema.SchemaFormat as AnalysisSchemaFormat
+import org.apache.utlx.cli.service.TransformationService
 import org.apache.utlx.core.lexer.Lexer
 import org.apache.utlx.core.parser.Parser
 import org.apache.utlx.core.parser.ParseResult
@@ -69,6 +70,7 @@ class RestApiServer(
 
     // Services for handling REST API requests
     private val stateManager = StateManager()
+    private val transformationService = TransformationService()
     private val outputSchemaService = OutputSchemaInferenceService(stateManager)
 
     /**
@@ -88,23 +90,74 @@ class RestApiServer(
 
             install(CORS) {
                 anyHost()
+
+                // Allow common HTTP methods
                 allowMethod(HttpMethod.Get)
                 allowMethod(HttpMethod.Post)
                 allowMethod(HttpMethod.Put)
                 allowMethod(HttpMethod.Delete)
                 allowMethod(HttpMethod.Options)
+                allowMethod(HttpMethod.Patch)
+                allowMethod(HttpMethod.Head)
+
+                // Allow common headers
                 allowHeader(HttpHeaders.ContentType)
                 allowHeader(HttpHeaders.Authorization)
+                allowHeader(HttpHeaders.Accept)
+                allowHeader(HttpHeaders.Origin)
+                allowHeader(HttpHeaders.AccessControlRequestMethod)
+                allowHeader(HttpHeaders.AccessControlRequestHeaders)
+
                 // Allow custom headers for multipart metadata
                 allowHeader("X-Format")
                 allowHeader("X-Encoding")
                 allowHeader("X-BOM")
+
                 // Expose headers that might be needed by the client
                 exposeHeader(HttpHeaders.ContentType)
                 exposeHeader(HttpHeaders.ContentLength)
+
+                // Allow credentials
+                allowCredentials = false
+
+                // Allow any headers
+                allowNonSimpleContentTypes = true
             }
 
             install(StatusPages) {
+                // Handle Ktor's BadRequestException (includes JSON parsing errors)
+                exception<io.ktor.server.plugins.BadRequestException> { call, cause ->
+                    logger.debug("Bad request", cause)
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            error = "invalid_request",
+                            message = cause.message ?: "Invalid request"
+                        )
+                    )
+                }
+                // Handle JSON parsing errors
+                exception<kotlinx.serialization.SerializationException> { call, cause ->
+                    logger.debug("JSON parsing error", cause)
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            error = "invalid_json",
+                            message = "Invalid JSON: ${cause.message}"
+                        )
+                    )
+                }
+                exception<com.fasterxml.jackson.core.JsonParseException> { call, cause ->
+                    logger.debug("JSON parsing error", cause)
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            error = "invalid_json",
+                            message = "Invalid JSON: ${cause.message}"
+                        )
+                    )
+                }
+                // Handle all other exceptions
                 exception<Throwable> { call, cause ->
                     logger.error("Unhandled exception", cause)
                     call.respond(
@@ -228,45 +281,43 @@ class RestApiServer(
                     val startExec = System.currentTimeMillis()
 
                     try {
-                        // 1. Compile the UTLX script
-                        val lexer = Lexer(request.utlx)
-                        val tokens = lexer.tokenize()
-                        val parser = Parser(tokens)
-                        val parseResult = parser.parse()
+                        // Build complete UTLX document from API request
+                        // The API contract allows clients to send just the transformation expression,
+                        // with input/output formats specified separately in the request
+                        val completeUtlx = buildUtlxDocument(
+                            transformation = request.utlx,
+                            inputFormat = request.inputFormat,
+                            outputFormat = request.outputFormat
+                        )
 
-                        val program = when (parseResult) {
-                            is ParseResult.Success -> parseResult.program
-                            is ParseResult.Failure -> {
-                                val errors = parseResult.errors.joinToString("\n") { error ->
-                                    "  ${error.message} at ${error.location}"
-                                }
-                                call.respond(
-                                    HttpStatusCode.BadRequest,
-                                    ExecutionResponse(
-                                        success = false,
-                                        error = "Parse errors:\n$errors",
-                                        executionTimeMs = System.currentTimeMillis() - startExec
-                                    )
-                                )
-                                return@post
-                            }
-                        }
-
-                        // 2. Parse input data
-                        val inputUDM = parseInput(request.input, request.inputFormat)
-
-                        // 3. Execute transformation
-                        val interpreter = Interpreter()
-                        val result = interpreter.execute(program, mapOf("input" to inputUDM))
-                        val outputUDM = result.toUDM()
-
-                        // 4. Serialize output
-                        val outputData = serializeOutput(outputUDM, request.outputFormat, pretty = true)
+                        // Use TransformationService for transformation
+                        val (outputData, outputFormat) = transformationService.transform(
+                            utlxSource = completeUtlx,
+                            inputs = mapOf("input" to TransformationService.InputData(
+                                content = request.input,
+                                format = request.inputFormat
+                            )),
+                            options = TransformationService.TransformOptions(
+                                verbose = false,
+                                pretty = true
+                            )
+                        )
 
                         call.respond(
                             ExecutionResponse(
                                 success = true,
                                 output = outputData,
+                                executionTimeMs = System.currentTimeMillis() - startExec
+                            )
+                        )
+                    } catch (e: IllegalStateException) {
+                        // Parse or compile errors - return as BadRequest
+                        logger.debug("Parse/compile error", e)
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ExecutionResponse(
+                                success = false,
+                                error = e.message ?: "Transformation failed",
                                 executionTimeMs = System.currentTimeMillis() - startExec
                             )
                         )
@@ -346,52 +397,41 @@ class RestApiServer(
                             return@post
                         }
 
-                        // 1. Compile the UTLX script
-                        val lexer = Lexer(utlxSource!!)
-                        val tokens = lexer.tokenize()
-                        val parser = Parser(tokens)
-                        val parseResult = parser.parse()
+                        // Prepare inputs for TransformationService
+                        val serviceInputs = inputs.mapIndexed { index, (bytes, format, metadata) ->
+                            val inputName = if (index == 0) "input" else "input$index"
+                            val content = String(bytes, charset(metadata.encoding))
+                            inputName to TransformationService.InputData(
+                                content = content,
+                                format = format
+                            )
+                        }.toMap()
 
-                        val program = when (parseResult) {
-                            is ParseResult.Success -> parseResult.program
-                            is ParseResult.Failure -> {
-                                val errors = parseResult.errors.joinToString("\n") { error ->
-                                    "  ${error.message} at ${error.location}"
-                                }
-                                call.respond(
-                                    HttpStatusCode.BadRequest,
-                                    ExecutionResponse(
-                                        success = false,
-                                        error = "Parse errors:\n$errors",
-                                        executionTimeMs = System.currentTimeMillis() - startExec
-                                    )
-                                )
-                                return@post
-                            }
-                        }
-
-                        // 2. Parse all inputs with proper encoding
-                        val inputUDMs = mutableMapOf<String, org.apache.utlx.core.udm.UDM>()
-                        for ((bytes, format, metadata) in inputs) {
-                            val udm = parseInputBytes(bytes, format, metadata.encoding, metadata.hasBOM)
-                            // For now, use first input as "input", could support multiple named inputs
-                            if (inputUDMs.isEmpty()) {
-                                inputUDMs["input"] = udm
-                            }
-                        }
-
-                        // 3. Execute transformation
-                        val interpreter = Interpreter()
-                        val result = interpreter.execute(program, inputUDMs)
-                        val outputUDM = result.toUDM()
-
-                        // 4. Serialize output (default to JSON for now)
-                        val outputData = serializeOutput(outputUDM, "json", pretty = true)
+                        // Use TransformationService for transformation
+                        val (outputData, outputFormat) = transformationService.transform(
+                            utlxSource = utlxSource!!,
+                            inputs = serviceInputs,
+                            options = TransformationService.TransformOptions(
+                                verbose = false,
+                                pretty = true
+                            )
+                        )
 
                         call.respond(
                             ExecutionResponse(
                                 success = true,
                                 output = outputData,
+                                executionTimeMs = System.currentTimeMillis() - startExec
+                            )
+                        )
+                    } catch (e: IllegalStateException) {
+                        // Parse or compile errors - return as BadRequest
+                        logger.debug("Parse/compile error in multipart", e)
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ExecutionResponse(
+                                success = false,
+                                error = e.message ?: "Transformation failed",
                                 executionTimeMs = System.currentTimeMillis() - startExec
                             )
                         )
@@ -809,5 +849,36 @@ class RestApiServer(
             is org.apache.utlx.analysis.types.TypeDefinition.Unknown -> "unknown"
             is org.apache.utlx.analysis.types.TypeDefinition.Never -> "never"
         }
+    }
+
+    /**
+     * Build a complete UTLX document from API request components.
+     * The REST API allows clients to send just the transformation expression,
+     * with input/output formats specified separately. This helper builds the
+     * complete UTLX document with proper headers.
+     */
+    private fun buildUtlxDocument(
+        transformation: String,
+        inputFormat: String,
+        outputFormat: String
+    ): String {
+        // If transformation already has a header, return as-is
+        if (transformation.trimStart().startsWith("%utlx")) {
+            return transformation
+        }
+
+        // Strip legacy "output:" prefix if present (UTLX 0.x syntax)
+        val cleanTransformation = transformation.trimStart()
+            .removePrefix("output:")
+            .trimStart()
+
+        // Build complete UTLX document with header
+        return """
+            %utlx 1.0
+            input $inputFormat
+            output $outputFormat
+            ---
+            $cleanTransformation
+        """.trimIndent()
     }
 }

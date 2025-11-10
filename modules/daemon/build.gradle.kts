@@ -11,6 +11,7 @@ version = "1.0.0-SNAPSHOT"
 dependencies {
     // Internal dependencies
     implementation(project(":modules:core"))
+    implementation(project(":modules:cli"))  // For TransformationService
     implementation(project(":modules:analysis"))
 
     // Format parsers/serializers needed for REST API

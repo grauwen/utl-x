@@ -105,7 +105,13 @@ class RestApiIntegrationTest {
     @Test
     fun `test validate endpoint with valid UTLX`() = runBlocking {
         val request = ValidationRequest(
-            utlx = "output: input.name",
+            utlx = """
+                %utlx 1.0
+                input json
+                output json
+                ---
+                ${'$'}input.name
+            """.trimIndent(),
             strict = false
         )
 
@@ -286,7 +292,13 @@ Jane,25"""
     @Test
     fun `test infer-schema endpoint with simple UTLX`() = runBlocking {
         val request = InferSchemaRequest(
-            utlx = """output: { name: input.firstName, age: input.age }""",
+            utlx = """
+                %utlx 1.0
+                input json
+                output json
+                ---
+                { name: ${'$'}input.firstName, age: ${'$'}input.age }
+            """.trimIndent(),
             format = "json-schema"
         )
 
@@ -315,7 +327,13 @@ Jane,25"""
         """.trimIndent()
 
         val request = InferSchemaRequest(
-            utlx = """output: { fullName: input.firstName + " " + input.lastName }""",
+            utlx = """
+                %utlx 1.0
+                input json
+                output json
+                ---
+                { fullName: ${'$'}input.firstName + " " + ${'$'}input.lastName }
+            """.trimIndent(),
             inputSchema = inputSchema,
             format = "json-schema"
         )
@@ -451,12 +469,18 @@ Jane,25"""
 
     @Test
     fun `test CORS headers are present`() = runBlocking {
-        val response = client.options("http://127.0.0.1:$port/api/health")
+        // Make a request with Origin header to trigger CORS
+        val response = client.get("http://127.0.0.1:$port/api/health") {
+            header("Origin", "http://localhost:3000")
+        }
 
-        // Server should handle OPTIONS request
-        assertTrue(response.status == HttpStatusCode.OK ||
-                   response.status == HttpStatusCode.NoContent ||
-                   response.status == HttpStatusCode.NotFound)
+        // Check for CORS headers
+        val corsHeader = response.headers["Access-Control-Allow-Origin"]
+
+        // CORS headers should be present when Origin header is sent
+        assertNotNull(corsHeader, "Access-Control-Allow-Origin header should be present")
+        assertTrue(corsHeader == "*" || corsHeader == "http://localhost:3000",
+            "CORS should allow the origin (got: $corsHeader)")
     }
 
     @Test
@@ -480,8 +504,11 @@ Jane,25"""
             setBody(malformedJson)
         }
 
+        // Debug output
+        println("Malformed JSON test: status=${response.status}, body=${response.bodyAsText()}")
+
         // Should return 400 Bad Request for malformed JSON
-        assertTrue(response.status.value in 400..499, "Should return client error for malformed JSON")
+        assertTrue(response.status.value in 400..499, "Should return client error for malformed JSON (got ${response.status})")
     }
 
     @Test

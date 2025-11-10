@@ -127,11 +127,12 @@ class TransformationService {
                 parseResult.program
             }
             is ParseResult.Failure -> {
-                System.err.println("Parse errors:")
-                parseResult.errors.forEach { error ->
-                    System.err.println("  ${error.message} at ${error.location}")
+                val errorMessages = parseResult.errors.joinToString("\n") { error ->
+                    "  ${error.message} at ${error.location}"
                 }
-                throw IllegalStateException("Parsing failed")
+                System.err.println("Parse errors:")
+                System.err.println(errorMessages)
+                throw IllegalStateException("Parse errors:\n$errorMessages")
             }
         }
 
