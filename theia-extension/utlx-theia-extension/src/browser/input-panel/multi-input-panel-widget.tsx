@@ -825,7 +825,11 @@ export class MultiInputPanelWidget extends ReactWidget {
             'csv': 'csv',
             'json': 'json',
             'xml': 'xml',
-            'yaml': 'yaml'
+            'yaml': 'yaml',
+            'xsd': 'xsd',
+            'jsch': 'jsch',
+            'avro': 'avro',
+            'proto': 'proto'
         };
         return formatMap[format] || 'json';
     }
