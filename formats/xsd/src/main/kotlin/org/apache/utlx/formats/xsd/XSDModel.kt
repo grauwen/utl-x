@@ -6,13 +6,31 @@ package org.apache.utlx.formats.xsd
  */
 
 /**
- * XSD Design Pattern (Russian Doll, Salami Slice, Venetian Blind, Garden of Eden)
+ * XSD Design Pattern (7 recognized patterns)
+ *
+ * Main 4 patterns:
+ * - Russian Doll: Local elements, local types (simple, isolated)
+ * - Salami Slice: Global elements, local types (modular enterprise)
+ * - Venetian Blind: Local elements, global types (RECOMMENDED - balanced reuse)
+ * - Garden of Eden: Global elements, global types (frameworks, standards)
+ *
+ * Extended 3 patterns:
+ * - Bologna Sandwich: Mix of global/local elements with global types (controlled hybrid)
+ * - Chameleon Schema: Single-root with global types and inline types (shared components)
+ * - Swiss Army Knife: Global elements and types but small (monolithic systems)
  */
 enum class XSDPattern(val value: String) {
-    RUSSIAN_DOLL("russian-doll"),           // Element=local, Type=local
-    SALAMI_SLICE("salami-slice"),           // Element=global, Type=local
-    VENETIAN_BLIND("venetian-blind"),       // Element=local, Type=global (RECOMMENDED)
-    GARDEN_OF_EDEN("garden-of-eden"),       // Element=global, Type=global
+    // Main 4 patterns
+    RUSSIAN_DOLL("russian-doll"),           // Element=local (1), Type=local (inline only)
+    SALAMI_SLICE("salami-slice"),           // Element=global (≥2), Type=local (inline only)
+    VENETIAN_BLIND("venetian-blind"),       // Element=local (≤1), Type=global (RECOMMENDED)
+    GARDEN_OF_EDEN("garden-of-eden"),       // Element=global (≥2), Type=global (large schema)
+
+    // Extended patterns
+    BOLOGNA_SANDWICH("bologna-sandwich"),   // Element=global (≥2), Type=global+inline (hybrid)
+    CHAMELEON_SCHEMA("chameleon-schema"),   // Element=local (≤1), Type=global+inline (variable scope)
+    SWISS_ARMY_KNIFE("swiss-army-knife"),   // Element=global (≥2), Type=global (small ≤5 schema)
+
     UNDETECTABLE("undetectable")            // No clear pattern
 }
 
@@ -40,7 +58,7 @@ object XSDMetadata {
     const val SCOPE = "__scope"                   // "global" or "local"
     const val XSD_VERSION = "__xsdVersion"        // "1.0" or "1.1"
     const val TARGET_NAMESPACE = "__targetNamespace"  // Target namespace URI
-    const val XSD_PATTERN = "__xsdPattern"        // Detected XSD design pattern (russian-doll, venetian-blind, salami-slice, garden-of-eden, undetectable)
+    const val XSD_PATTERN = "__xsdPattern"        // Detected XSD design pattern (russian-doll, salami-slice, venetian-blind, garden-of-eden, bologna-sandwich, chameleon-schema, swiss-army-knife, undetectable)
     const val XSD_ELEMENT_DECLARATION = "__xsdElementDeclaration"  // "global" | "local"
     const val XSD_TYPE_DECLARATION = "__xsdTypeDeclaration"        // "global" | "local"
     const val XSD_GLOBAL_ELEMENTS = "__xsdGlobalElements"   // Count of global element declarations (as string)
