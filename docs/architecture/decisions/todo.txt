@@ -9,7 +9,26 @@ Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architectu
 analysis part
 
 Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that describes it
+---
+ i would suggest not to work is to allow spaces in the
+  input names (this should be checked and enforced by the MultipleInputWidget - not that 
+
+
+
 ----
+Improve Parser Error Messages 
+
+  Enhance the parser itself to detect common mistakes and provide better error messages. For example, when parsing object literal properties:
+
+  // If we see IDENTIFIER followed by MINUS, suggest quoting
+  if (check(TokenType.IDENTIFIER) && peek(1).type == TokenType.MINUS) {
+      error("Property names with hyphens must be quoted. Did you mean \"${current.lexeme}-...\"?")
+  }
+
+  This would give: Property names with hyphens must be quoted. Did you mean "order-ide"?
+
+
+---
 API
 
 Multipart/form-data (like file upload)
