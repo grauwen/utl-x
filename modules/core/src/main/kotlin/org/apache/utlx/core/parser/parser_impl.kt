@@ -188,12 +188,17 @@ class Parser(private val tokens: List<Token>) {
                     break
                 }
 
-                // Also stop if we hit the next keyword
-                if (check(TokenType.OUTPUT) || check(TokenType.INPUT)) {
-                    break
+                // Parse name - can be IDENTIFIER or keywords used as names (input, output)
+                val name = when {
+                    check(TokenType.IDENTIFIER) -> advance().lexeme
+                    check(TokenType.INPUT) -> advance().lexeme
+                    check(TokenType.OUTPUT) -> advance().lexeme
+                    else -> {
+                        error("Expected input/output name")
+                        ""
+                    }
                 }
 
-                val name = consume(TokenType.IDENTIFIER, "Expected input/output name").lexeme
                 val formatSpec = parseFormatSpec()
                 result.add(name to formatSpec)
 
@@ -205,10 +210,55 @@ class Parser(private val tokens: List<Token>) {
 
             return result
         } else {
-            // Single unnamed input/output: just the format
+            // Single input/output: optionally named
+            // Syntax: "input [name] format" or just "input format"
+
+            // Check if there's an optional name before the format
+            // Name can be IDENTIFIER or keywords (input, output) when used as names
+            val name = when {
+                check(TokenType.IDENTIFIER) -> {
+                    // Has a custom name: "input myname json"
+                    advance().lexeme
+                }
+                // Allow "input" keyword as a name for outputs, "output" keyword as a name for inputs
+                // BUT only if followed by a format keyword (not starting a new declaration)
+                check(TokenType.INPUT) && !isInput && isFollowedByFormat() -> {
+                    // "output input json" - using "input" as output name
+                    advance().lexeme
+                }
+                check(TokenType.OUTPUT) && isInput && isFollowedByFormat() -> {
+                    // "input output json" - using "output" as input name
+                    advance().lexeme
+                }
+                else -> {
+                    // No name, use default: "input json" or "output json"
+                    defaultName
+                }
+            }
+
             val formatSpec = parseFormatSpec()
-            return listOf(defaultName to formatSpec)
+            return listOf(name to formatSpec)
         }
+    }
+
+    /**
+     * Check if current position is followed by a format keyword
+     * Used to disambiguate "input output json" (output is name) from "output json" (output is keyword)
+     */
+    private fun isFollowedByFormat(): Boolean {
+        if (current + 1 >= tokens.size) return false
+        val nextToken = tokens[current + 1]
+        return nextToken.type in listOf(
+            TokenType.XML,
+            TokenType.JSON,
+            TokenType.CSV,
+            TokenType.YAML,
+            TokenType.AUTO,
+            TokenType.XSD,
+            TokenType.JSCH,
+            TokenType.AVRO,
+            TokenType.PROTO
+        )
     }
 
     private fun parseHeader(): Header {
@@ -251,12 +301,33 @@ class Parser(private val tokens: List<Token>) {
             // Parse comma-separated list: input1 xml, input2 json, input3 csv
             do {
                 // Stop if we hit the output/--- separator
-                if (check(TokenType.OUTPUT) || check(TokenType.TRIPLE_DASH) || isAtEnd()) {
+                if (check(TokenType.TRIPLE_DASH) || isAtEnd()) {
                     break
                 }
 
-                // Parse: name format {options}
-                val name = consume(TokenType.IDENTIFIER, "Expected input/output name").lexeme
+                // For "output" keyword, only stop if this is an input declaration
+                // (allows "output" to be used as an input name)
+                if (check(TokenType.OUTPUT) && isInput) {
+                    break
+                }
+
+                // For "input" keyword, only stop if this is an output declaration
+                // (allows "input" to be used as an output name)
+                if (check(TokenType.INPUT) && !isInput) {
+                    break
+                }
+
+                // Parse name - can be IDENTIFIER or keywords used as names (input, output)
+                val name = when {
+                    check(TokenType.IDENTIFIER) -> advance().lexeme
+                    check(TokenType.INPUT) -> advance().lexeme
+                    check(TokenType.OUTPUT) -> advance().lexeme
+                    else -> {
+                        error("Expected input/output name")
+                        ""
+                    }
+                }
+
                 val formatSpec = parseFormatSpec()
                 result.add(name to formatSpec)
 
@@ -269,12 +340,37 @@ class Parser(private val tokens: List<Token>) {
 
             return result
         } else {
-            // Single input/output (backward compatible): "xml" → [("input", spec)]
+            // Single input/output: optionally named
+            // Syntax: "input [name] format" or just "input format"
+
+            // Check if there's an optional name before the format
+            // Name can be IDENTIFIER or keywords (input, output) when used as names
+            val name = when {
+                check(TokenType.IDENTIFIER) -> {
+                    // Has a custom name: "input myname json"
+                    advance().lexeme
+                }
+                // Allow "input" keyword as a name for outputs, "output" keyword as a name for inputs
+                // BUT only if followed by a format keyword (not starting a new declaration)
+                check(TokenType.INPUT) && !isInput && isFollowedByFormat() -> {
+                    // "output input json" - using "input" as output name
+                    advance().lexeme
+                }
+                check(TokenType.OUTPUT) && isInput && isFollowedByFormat() -> {
+                    // "input output json" - using "output" as input name
+                    advance().lexeme
+                }
+                else -> {
+                    // No name, use default: "input json" or "output json"
+                    defaultName
+                }
+            }
+
             val formatSpec = parseFormatSpec()
-            return listOf(defaultName to formatSpec)
+            return listOf(name to formatSpec)
         }
     }
-    
+
     private fun parseFormatSpec(): FormatSpec {
         val startToken = peek()
 

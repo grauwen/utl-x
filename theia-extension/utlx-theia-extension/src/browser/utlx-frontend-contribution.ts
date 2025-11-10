@@ -521,10 +521,8 @@ export class UTLXFrontendContribution implements
 
                 inputLines.push(inputLine);
             } else {
-                // Multiple inputs: "input: name1 format1 [params1], name2 format2 [params2], ..."
-                // ALWAYS show names for multiple inputs (including default "input" name)
-                // Preserve the order of inputs as they appear in vertical tabs
-                const inputParts: string[] = [];
+                // Multiple inputs: colon syntax (single line)
+                // input: name1 format1, name2 format2, name3 format3
 
                 // Find if one is named "input" and reorder to put it first
                 const inputIndex = allInputs.findIndex(input => input.name === 'input');
@@ -534,20 +532,22 @@ export class UTLXFrontendContribution implements
                     ? [allInputs[inputIndex], ...allInputs.slice(0, inputIndex), ...allInputs.slice(inputIndex + 1)]
                     : allInputs;
 
-                orderedInputs.forEach(input => {
-                    let inputPart = `${input.name} ${input.format}`;
+                // Build colon syntax: input: name1 format1, name2 format2
+                const inputParts = orderedInputs.map(input => {
+                    let part = `${input.name} ${input.format}`;
 
                     // Add CSV parameters if format is CSV
                     if (input.format === 'csv') {
                         const csvParams = this.buildCsvParams(input);
                         if (csvParams) {
-                            inputPart += ` ${csvParams}`;
+                            part += ` ${csvParams}`;
                         }
                     }
 
-                    inputParts.push(inputPart);
+                    return part;
                 });
 
+                // Join with comma and space
                 inputLines.push(`input: ${inputParts.join(', ')}`);
             }
 

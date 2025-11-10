@@ -1,11 +1,7 @@
 # Multi-input join example
 
 %utlx 1.0
-input {
-  orders: json,
-  customers: json,
-  products: json
-}
+input: orders json, customers json, products json
 output json
 ---
 

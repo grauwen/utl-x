@@ -1,0 +1,51 @@
+name: "multi_input_syntax_colon"
+category: "multi-input"
+description: "Test colon syntax for multiple inputs: input: name1 format1, name2 format2"
+tags: ["multi-input", "syntax", "colon"]
+
+inputs:
+  customer:
+    format: json
+    data: |
+      {
+        "name": "John Doe",
+        "email": "john@example.com"
+      }
+
+  order:
+    format: json
+    data: |
+      {
+        "id": "ORD-123",
+        "total": 299.99
+      }
+
+transformation: |
+  %utlx 1.0
+  input: customer json, order json
+  output json
+  ---
+  {
+    customerName: $customer.name,
+    orderId: $order.id,
+    orderTotal: $order.total
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "customerName": "John Doe",
+      "orderId": "ORD-123",
+      "orderTotal": 299.99
+    }
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-11-10"
+  notes:
+    - "Tests colon syntax: input: name1 format1, name2 format2"
