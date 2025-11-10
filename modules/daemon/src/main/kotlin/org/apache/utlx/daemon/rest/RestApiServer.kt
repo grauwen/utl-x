@@ -356,7 +356,8 @@ class RestApiServer(
                                 }
                                 is PartData.FileItem -> {
                                     // Extract input file with metadata from headers
-                                    val inputName = part.name ?: "input"
+                                    // Use originalFileName (user-provided name) if available, otherwise fall back to form field name
+                                    val inputName = part.originalFileName ?: part.name ?: "input"
                                     val format = part.headers["X-Format"] ?: "json"
                                     val encoding = part.headers["X-Encoding"] ?: "UTF-8"
                                     val hasBOM = part.headers["X-BOM"]?.toBoolean() ?: false
@@ -398,8 +399,9 @@ class RestApiServer(
                         }
 
                         // Prepare inputs for TransformationService
-                        val serviceInputs = inputs.mapIndexed { index, (bytes, format, metadata) ->
-                            val inputName = if (index == 0) "input" else "input$index"
+                        val serviceInputs = inputs.map { (bytes, format, metadata) ->
+                            // Use the actual input name from metadata (user-provided name from frontend)
+                            val inputName = metadata.name
                             val content = String(bytes, charset(metadata.encoding))
                             inputName to TransformationService.InputData(
                                 content = content,
