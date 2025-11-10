@@ -24,7 +24,7 @@ export enum UTLXMode {
 /**
  * Format types
  */
-export type DataFormat = 'xml' | 'json' | 'yaml' | 'csv' | 'auto';
+export type DataFormat = 'xml' | 'json' | 'yaml' | 'csv' | 'xsd' | 'jsch' | 'avro' | 'proto' | 'auto';
 export type SchemaFormat = 'xsd' | 'jsch' | 'avro' | 'proto';
 export type Tier1Format = 'xml' | 'json' | 'yaml' | 'csv';
 export type Tier2Format = 'xsd' | 'jsch' | 'avsc' | 'proto';
