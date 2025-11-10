@@ -1,0 +1,174 @@
+name: Execute with Multiple Named Inputs
+description: Test /api/execute-multipart with multiple inputs using custom names
+tags:
+  - endpoints
+  - execute
+  - multipart
+  - multiple-inputs
+
+sequence:
+  - description: "Execute with two named JSON inputs (customer and order)"
+    method: POST
+    endpoint: /api/execute-multipart
+    headers:
+      Content-Type: multipart/form-data
+    multipart:
+      - name: utlx
+        type: text
+        content: |
+          %utlx 1.0
+          input json
+          input json
+          output json
+          ---
+          {
+            customerName: $customer.name,
+            orderNumber: $order.id,
+            orderTotal: $order.total
+          }
+      - name: customer
+        type: file
+        filename: customer
+        content: |
+          {
+            "name": "John Doe",
+            "email": "john@example.com"
+          }
+        headers:
+          X-Format: json
+          X-Encoding: UTF-8
+          X-BOM: false
+      - name: order
+        type: file
+        filename: order
+        content: |
+          {
+            "id": "ORD-12345",
+            "total": 299.99,
+            "items": 3
+          }
+        headers:
+          X-Format: json
+          X-Encoding: UTF-8
+          X-BOM: false
+    expect:
+      status: 200
+      body_contains:
+        - '"customerName": "John Doe"'
+        - '"orderNumber": "ORD-12345"'
+        - '"orderTotal": 299.99'
+
+  - description: "Execute with three named inputs (product, supplier, warehouse)"
+    method: POST
+    endpoint: /api/execute-multipart
+    headers:
+      Content-Type: multipart/form-data
+    multipart:
+      - name: utlx
+        type: text
+        content: |
+          %utlx 1.0
+          input json
+          input json
+          input json
+          output json
+          ---
+          {
+            productCode: $product.code,
+            productName: $product.name,
+            supplierName: $supplier.company,
+            warehouseLocation: $warehouse.city
+          }
+      - name: product
+        type: file
+        filename: product
+        content: |
+          {
+            "code": "PROD-001",
+            "name": "Widget A",
+            "price": 19.99
+          }
+        headers:
+          X-Format: json
+          X-Encoding: UTF-8
+          X-BOM: false
+      - name: supplier
+        type: file
+        filename: supplier
+        content: |
+          {
+            "company": "Acme Corp",
+            "contact": "Jane Smith"
+          }
+        headers:
+          X-Format: json
+          X-Encoding: UTF-8
+          X-BOM: false
+      - name: warehouse
+        type: file
+        filename: warehouse
+        content: |
+          {
+            "city": "Chicago",
+            "capacity": 10000
+          }
+        headers:
+          X-Format: json
+          X-Encoding: UTF-8
+          X-BOM: false
+    expect:
+      status: 200
+      body_contains:
+        - '"productCode": "PROD-001"'
+        - '"productName": "Widget A"'
+        - '"supplierName": "Acme Corp"'
+        - '"warehouseLocation": "Chicago"'
+
+  - description: "Execute with mixed formats (XML customer, JSON order)"
+    method: POST
+    endpoint: /api/execute-multipart
+    headers:
+      Content-Type: multipart/form-data
+    multipart:
+      - name: utlx
+        type: text
+        content: |
+          %utlx 1.0
+          input xml
+          input json
+          output json
+          ---
+          {
+            customerName: $customer.customer.name,
+            orderNumber: $order.orderId
+          }
+      - name: customer
+        type: file
+        filename: customer
+        content: |
+          <?xml version="1.0"?>
+          <customer>
+            <name>Alice Brown</name>
+            <id>CUST-789</id>
+          </customer>
+        headers:
+          X-Format: xml
+          X-Encoding: UTF-8
+          X-BOM: false
+      - name: order
+        type: file
+        filename: order
+        content: |
+          {
+            "orderId": "ORD-999",
+            "amount": 450.00
+          }
+        headers:
+          X-Format: json
+          X-Encoding: UTF-8
+          X-BOM: false
+    expect:
+      status: 200
+      body_contains:
+        - '"customerName": "Alice Brown"'
+        - '"orderNumber": "ORD-999"'

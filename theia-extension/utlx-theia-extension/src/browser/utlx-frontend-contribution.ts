@@ -211,10 +211,41 @@ export class UTLXFrontendContribution implements
             this.shell.leftPanelHandler.expand();
             this.shell.rightPanelHandler.expand();
 
+            // Initialize inputs from the input panel's current state
+            await this.initializeInputsFromPanel(inputPanel);
+
             console.log('UTL-X 3-column layout opened: Input | Editor | Output');
         } catch (error) {
             console.error('Failed to open 3-column layout:', error);
             this.messageService.error(`Failed to open layout: ${error}`);
+        }
+    }
+
+    /**
+     * Initialize the inputs Map from the MultiInputPanelWidget's current state
+     * This is needed because the panel may already have inputs when it's created
+     */
+    private async initializeInputsFromPanel(inputPanel: MultiInputPanelWidget): Promise<void> {
+        try {
+            // Access the panel's state to get current inputs
+            const panelState = (inputPanel as any).state;
+            if (panelState && panelState.inputs) {
+                console.log('[UTLXFrontendContribution] Initializing inputs from panel:', panelState.inputs);
+
+                panelState.inputs.forEach((input: any) => {
+                    this.inputs.set(input.id, {
+                        name: input.name,
+                        format: input.instanceFormat,
+                        csvHeaders: input.csvHeaders,
+                        csvDelimiter: input.csvDelimiter
+                    });
+                });
+
+                // Update editor headers with initial state
+                await this.updateEditorHeaders();
+            }
+        } catch (error) {
+            console.error('[UTLXFrontendContribution] Failed to initialize inputs from panel:', error);
         }
     }
 
@@ -451,15 +482,27 @@ export class UTLXFrontendContribution implements
                 UTLXEditorWidget.ID
             );
 
-            // Build input lines from tracked inputs
+            // Get input panel widget
+            const inputPanel = await this.widgetManager.getOrCreateWidget<MultiInputPanelWidget>(
+                MultiInputPanelWidget.ID
+            );
+
+            // Get ALL inputs directly from the panel (always current, no stale state)
+            const allInputs = inputPanel.getAllInputTabs();
+
+            // Build input lines from ALL inputs
             const inputLines: string[] = [];
 
-            if (this.inputs.size === 0) {
-                // No inputs tracked yet, use default
+            // DEBUG: Log the current state of inputs
+            console.log('[UTLXFrontendContribution] updateEditorHeaders - allInputs.length:', allInputs.length);
+            console.log('[UTLXFrontendContribution] updateEditorHeaders - allInputs:', allInputs);
+
+            if (allInputs.length === 0) {
+                // No inputs, use default
                 inputLines.push('input json');
-            } else if (this.inputs.size === 1) {
+            } else if (allInputs.length === 1) {
                 // Single input: "input [optionalname] <format> [params]"
-                const input = Array.from(this.inputs.values())[0];
+                const input = allInputs[0];
                 const hasCustomName = input.name && input.name !== 'input' && input.name.trim() !== '';
 
                 let inputLine = 'input';
@@ -479,10 +522,19 @@ export class UTLXFrontendContribution implements
                 inputLines.push(inputLine);
             } else {
                 // Multiple inputs: "input: name1 format1 [params1], name2 format2 [params2], ..."
-                // ALWAYS show names for multiple inputs
+                // ALWAYS show names for multiple inputs (including default "input" name)
+                // Preserve the order of inputs as they appear in vertical tabs
                 const inputParts: string[] = [];
 
-                this.inputs.forEach(input => {
+                // Find if one is named "input" and reorder to put it first
+                const inputIndex = allInputs.findIndex(input => input.name === 'input');
+
+                // Reorder: if "input" exists, move it to front, keep rest in original order
+                const orderedInputs = inputIndex >= 0
+                    ? [allInputs[inputIndex], ...allInputs.slice(0, inputIndex), ...allInputs.slice(inputIndex + 1)]
+                    : allInputs;
+
+                orderedInputs.forEach(input => {
                     let inputPart = `${input.name} ${input.format}`;
 
                     // Add CSV parameters if format is CSV
@@ -502,8 +554,7 @@ export class UTLXFrontendContribution implements
             // Update editor headers
             console.log('[UTLXFrontendContribution] Updating editor headers:', {
                 inputLines,
-                outputFormat: this.outputFormat,
-                trackedInputs: Array.from(this.inputs.entries())
+                outputFormat: this.outputFormat
             });
 
             editor.updateHeaders(inputLines, this.outputFormat);

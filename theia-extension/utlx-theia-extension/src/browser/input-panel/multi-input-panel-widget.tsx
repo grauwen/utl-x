@@ -818,6 +818,20 @@ export class MultiInputPanelWidget extends ReactWidget {
     }
 
     /**
+     * Get all input tabs (for header generation)
+     * PUBLIC: Called by frontend contribution for UTLX header generation
+     */
+    public getAllInputTabs(): Array<{id: string; name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string}> {
+        return this.state.inputs.map(input => ({
+            id: input.id,
+            name: input.name,
+            format: input.instanceFormat,
+            csvHeaders: input.csvHeaders,
+            csvDelimiter: input.csvDelimiter
+        }));
+    }
+
+    /**
      * Map custom instance format to protocol DataFormat
      */
     private mapInstanceFormatToDataFormat(format: InstanceFormat | SchemaFormatType): DataFormat {
