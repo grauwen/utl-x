@@ -1,7 +1,7 @@
-name: "xsd_detect_garden_of_eden"
+name: "xsd_detect_swiss_army_knife"
 category: "formats/xsd/patterns"
-description: "Pattern Detection: Garden of Eden - All elements and types global"
-tags: ['xsd', 'patterns', 'detection', 'garden-of-eden']
+description: "Pattern Detection: Swiss Army Knife - Global elements and types but small schema"
+tags: ['xsd', 'patterns', 'detection', 'swiss-army-knife']
 
 input:
   format: json
@@ -18,26 +18,26 @@ transformation: |
   let schema = parseXSDSchema($input.xsdSchema)
   let stats = schema["%xsdPatternStats"]
   {
-    patternName: "Garden of Eden",
+    patternName: "Swiss Army Knife",
     detectedPattern: schema["%xsdPattern"],
     globalElements: stats["globalElements"],
     globalTypes: stats["globalTypes"],
     inlineTypes: stats["inlineTypes"],
-    characteristics: "All elements and types global - maximum reusability",
-    bestFor: "Schema composition, maximum flexibility, namespace sharing",
-    detected: schema["%xsdPattern"] == "garden-of-eden"
+    characteristics: "Global elements and types but small schema - monolithic systems",
+    bestFor: "Small self-contained schemas, embedded systems",
+    detected: schema["%xsdPattern"] == "swiss-army-knife"
   }
 
 expected:
   format: json
   data: |
     {
-      "patternName": "Garden of Eden",
-      "detectedPattern": "garden-of-eden",
+      "patternName": "Swiss Army Knife",
+      "detectedPattern": "swiss-army-knife",
       "globalElements": 3,
       "globalTypes": 1,
       "inlineTypes": 0,
-      "characteristics": "All elements and types global - maximum reusability",
-      "bestFor": "Schema composition, maximum flexibility, namespace sharing",
+      "characteristics": "Global elements and types but small schema - monolithic systems",
+      "bestFor": "Small self-contained schemas, embedded systems",
       "detected": true
     }
