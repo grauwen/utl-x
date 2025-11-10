@@ -80,6 +80,18 @@ Russian Doll is less reusable and harder to transform into other patterns withou
 | Venetian Blind   | Local               | Global           | High        | Medium         | Medium     | Modular schema design        |
 | Garden of Eden   | Global              | Global           | Very High   | Low            | High       | Enterprise-wide schemas      |
 
+## 📊 Extended Pattern Comparison
+
+| Style                | Elements       | Types  | Scope    | Reuse    | Common Use                 |
+| -------------------- | -------------- | ------ | -------- | -------- | -------------------------- |
+| *Russian Doll*       | Local          | Local  | Minimal  | None     | Simple, isolated schemas   |
+| *Venetian Blind*     | Global         | Local  | Medium   | Moderate | Mid-sized projects         |
+| *Garden of Eden*     | Global         | Global | High     | High     | Frameworks, standards      |
+| *Salami Slice*       | Global         | Global | High     | High     | Modular enterprise schemas |
+| *Bologna Sandwich*   | Local + Global | Global | Balanced | High     | Controlled hybrid reuse    |
+| *Chameleon Schema*   | Mixed          | Global | Variable | High     | Shared components          |
+| *Swiss Army Knife*   | Global         | Global | Low      | Low      | Small, monolithic systems  |
+
 
 ---
 Here are the 4 most commonly used XSD design patterns:
