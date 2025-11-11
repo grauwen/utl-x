@@ -5,17 +5,17 @@ output json
 {
   "databaseReport": {
     "totalTables": count($metrics),
-    "totalSizeGB": sum(map($metrics, fn(m) => m.SizeGB)),
-    "totalRows": sum(map($metrics, fn(m) => m.RowCount)),
+    "totalSizeGB": sum(map($metrics, m => m.SizeGB)),
+    "totalRows": sum(map($metrics, m => m.RowCount)),
     "byDatabase": {
-      "ProductionDB": filter($metrics, fn(m) => m.DatabaseName == "ProductionDB"),
-      "AnalyticsDB": filter($metrics, fn(m) => m.DatabaseName == "AnalyticsDB"),
-      "TestDB": filter($metrics, fn(m) => m.DatabaseName == "TestDB"),
-      "StagingDB": filter($metrics, fn(m) => m.DatabaseName == "StagingDB")
+      "ProductionDB": filter($metrics, m => m.DatabaseName == "ProductionDB"),
+      "AnalyticsDB": filter($metrics, m => m.DatabaseName == "AnalyticsDB"),
+      "TestDB": filter($metrics, m => m.DatabaseName == "TestDB"),
+      "StagingDB": filter($metrics, m => m.DatabaseName == "StagingDB")
     },
-    "highFragmentation": filter($metrics, fn(m) => m.FragmentationPct > 20)
+    "highFragmentation": filter($metrics, m => m.FragmentationPct > 20)
   },
-  "tables": map($metrics, fn(m) => {
+  "tables": map($metrics, m => {
     "database": m.DatabaseName,
     "table": m.TableName,
     "rows": m.RowCount,
