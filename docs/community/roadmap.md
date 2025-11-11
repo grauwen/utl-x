@@ -2,7 +2,7 @@
 
 This roadmap outlines the planned development of UTL-X from alpha to stable release.
 
-**Last Updated:** January 2026  
+**Last Updated:** November 2025
 **Current Version:** 0.1.0-SNAPSHOT (Alpha)
 
 ---
