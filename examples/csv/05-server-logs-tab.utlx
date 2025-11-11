@@ -6,17 +6,17 @@ output json
   "logAnalysis": {
     "totalLogs": count($logs),
     "byLevel": {
-      "INFO": count(filter($logs, fn(l) => l.LogLevel == "INFO")),
-      "WARN": count(filter($logs, fn(l) => l.LogLevel == "WARN")),
-      "ERROR": count(filter($logs, fn(l) => l.LogLevel == "ERROR"))
+      "INFO": count(filter($logs, l => l.LogLevel == "INFO")),
+      "WARN": count(filter($logs, l => l.LogLevel == "WARN")),
+      "ERROR": count(filter($logs, l => l.LogLevel == "ERROR"))
     },
     "byServer": {
-      "SRV-01": count(filter($logs, fn(l) => l.ServerID == "SRV-01")),
-      "SRV-02": count(filter($logs, fn(l) => l.ServerID == "SRV-02")),
-      "SRV-03": count(filter($logs, fn(l) => l.ServerID == "SRV-03"))
+      "SRV-01": count(filter($logs, l => l.ServerID == "SRV-01")),
+      "SRV-02": count(filter($logs, l => l.ServerID == "SRV-02")),
+      "SRV-03": count(filter($logs, l => l.ServerID == "SRV-03"))
     },
-    "avgResponseTime": sum(map($logs, fn(l) => l.ResponseTime)) / count($logs),
-    "errors": filter($logs, fn(l) => l.LogLevel == "ERROR")
+    "avgResponseTime": sum(map($logs, l => l.ResponseTime)) / count($logs),
+    "errors": filter($logs, l => l.LogLevel == "ERROR")
   },
   "logs": $logs
 }
