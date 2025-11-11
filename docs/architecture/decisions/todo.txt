@@ -10,8 +10,13 @@ analysis part
 
 Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that describes it
 ---
- i would suggest not to work is to allow spaces in the
-  input names (this should be checked and enforced by the MultipleInputWidget - not that 
+IDE BUG 
+After the last change, parse the past in the UTLX, the renaming of the  input is not working correctly anymore. When name changed it does not update, only when an input is added this change suddenly is triggered
+
+next test name 01-monkey will work
+---
+ i would suggest not to allow spaces in the
+  input names (this should be checked and enforced by the MultipleInputWidget 
 
 
 
