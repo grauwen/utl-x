@@ -38,6 +38,24 @@ export interface OutputPanelState {
     csvHeaders?: boolean;      // Default true
     csvDelimiter?: string;     // Default ","
     csvBom?: boolean;          // Default false
+    /*
+    CSV has multiple parameter options. IDE has not implemented all of them (yet)
+
+    private val dialect: CSVDialect = CSVDialect.DEFAULT,
+    private val includeHeaders: Boolean = true,
+    private val includeBOM: Boolean = false,
+    private val regionalFormat: RegionalFormat = RegionalFormat.NONE,
+    private val decimals: Int = 2,
+    private val useThousands: Boolean = true
+    CSVDialect  | delimieter | quote  | Description
+    ------------|------------|--------|-------------
+    DEFAULT     | ,          | "      | RFC 4180 CSV
+    TSV         | \t         | "      | Tab-separated values
+    SEMICOLON   | ;          | "      | Semicolon-delimited (common in European locales
+    PIPE        | |          | "      |
+    COLON       | :          | "      | rarely used but it is possible in rare occasions
+    EXCEL       | ,          | "      | linTerminator = "\r\n"
+    */
     // XML-specific output parameters
     xmlEncoding?: string;      // Default "UTF-8"
 }
