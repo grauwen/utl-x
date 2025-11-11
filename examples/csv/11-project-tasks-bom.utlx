@@ -5,26 +5,26 @@ output json
 {
   "projectOverview": {
     "totalTasks": count($tasks),
-    "totalHours": sum(map($tasks, fn(t) => t.EstimatedHours)),
+    "totalHours": sum(map($tasks, t => t.EstimatedHours)),
     "byProject": {
-      "Website Redesign": filter($tasks, fn(t) => t.ProjectName == "Website Redesign"),
-      "Mobile App": filter($tasks, fn(t) => t.ProjectName == "Mobile App"),
-      "API Integration": filter($tasks, fn(t) => t.ProjectName == "API Integration"),
-      "Database Migration": filter($tasks, fn(t) => t.ProjectName == "Database Migration"),
-      "Testing": filter($tasks, fn(t) => t.ProjectName == "Testing")
+      "Website Redesign": filter($tasks, t => t.ProjectName == "Website Redesign"),
+      "Mobile App": filter($tasks, t => t.ProjectName == "Mobile App"),
+      "API Integration": filter($tasks, t => t.ProjectName == "API Integration"),
+      "Database Migration": filter($tasks, t => t.ProjectName == "Database Migration"),
+      "Testing": filter($tasks, t => t.ProjectName == "Testing")
     },
     "byStatus": {
-      "Completed": count(filter($tasks, fn(t) => t.Status == "Completed")),
-      "InProgress": count(filter($tasks, fn(t) => t.Status == "InProgress")),
-      "NotStarted": count(filter($tasks, fn(t) => t.Status == "NotStarted"))
+      "Completed": count(filter($tasks, t => t.Status == "Completed")),
+      "InProgress": count(filter($tasks, t => t.Status == "InProgress")),
+      "NotStarted": count(filter($tasks, t => t.Status == "NotStarted"))
     },
     "byPriority": {
-      "High": count(filter($tasks, fn(t) => t.Priority == "High")),
-      "Medium": count(filter($tasks, fn(t) => t.Priority == "Medium")),
-      "Low": count(filter($tasks, fn(t) => t.Priority == "Low"))
+      "High": count(filter($tasks, t => t.Priority == "High")),
+      "Medium": count(filter($tasks, t => t.Priority == "Medium")),
+      "Low": count(filter($tasks, t => t.Priority == "Low"))
     }
   },
-  "tasks": map($tasks, fn(task) => {
+  "tasks": map($tasks, task => {
     "id": task.TaskID,
     "project": task.ProjectName,
     "name": task.TaskName,
