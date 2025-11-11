@@ -5,15 +5,15 @@ output json
 {
   "summary": {
     "totalTransactions": count($transactions),
-    "totalRevenue": sum(map($transactions, fn(t) => t.Quantity * t.UnitPrice)),
+    "totalRevenue": sum(map($transactions, t=> t.Quantity * t.UnitPrice)),
     "paymentMethods": {
-      "CreditCard": count(filter($transactions, fn(t) => t.PaymentMethod == "CreditCard")),
-      "PayPal": count(filter($transactions, fn(t) => t.PaymentMethod == "PayPal")),
-      "Cash": count(filter($transactions, fn(t) => t.PaymentMethod == "Cash")),
-      "BankTransfer": count(filter($transactions, fn(t) => t.PaymentMethod == "BankTransfer"))
+      "CreditCard": count(filter($transactions, t=> t.PaymentMethod == "CreditCard")),
+      "PayPal": count(filter($transactions, t=> t.PaymentMethod == "PayPal")),
+      "Cash": count(filter($transactions, t=> t.PaymentMethod == "Cash")),
+      "BankTransfer": count(filter($transactions, t=> t.PaymentMethod == "BankTransfer"))
     }
   },
-  "transactions": map($transactions, fn(txn) => {
+  "transactions": map($transactions, txn => {
     "id": txn.TransactionID,
     "customer": txn.CustomerID,
     "product": txn.ProductCode,
