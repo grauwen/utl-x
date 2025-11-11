@@ -59,9 +59,9 @@ export interface InputTab {
     // CSV-specific parameters
     csvHeaders?: boolean;      // Default true
     csvDelimiter?: string;     // Default ","
-    // Encoding parameters
-    encoding?: string;         // Character encoding (UTF-8, UTF-16LE, UTF-16BE, ISO-8859-1, Windows-1252)
-    bom?: boolean;             // Byte Order Mark (default false)
+    // Encoding parameters (COMMENTED OUT - encoding/BOM are auto-detected for inputs, not manually set)
+    // encoding?: string;         // Character encoding (UTF-8, UTF-16LE, UTF-16BE, ISO-8859-1, Windows-1252)
+    // bom?: boolean;             // Byte Order Mark (default false)
 }
 
 export interface MultiInputPanelState {
@@ -294,6 +294,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                         {/* Encoding parameters - shown for all formats in instance tab */}
                         {activeSubTab === 'instance' && (
                             <>
+                                {/* ENCODING/BOM CONTROLS REMOVED - These are auto-detected for inputs, not manually set
                                 <label>
                                     Encoding:
                                     <select
@@ -320,6 +321,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                         <option value='true'>Yes</option>
                                     </select>
                                 </label>
+                                */}
                             </>
                         )}
                     </div>
@@ -638,6 +640,9 @@ export class MultiInputPanelWidget extends ReactWidget {
         });
     }
 
+    // ENCODING/BOM HANDLERS COMMENTED OUT - These are for outputs, not inputs (inputs auto-detect encoding/BOM)
+    // Keeping code here in case we want to use it for output panel later
+    /*
     private handleEncodingChange(encoding: string): void {
         this.setState({
             inputs: this.state.inputs.map(input =>
@@ -671,6 +676,7 @@ export class MultiInputPanelWidget extends ReactWidget {
         // BOM is only meaningful for UTF-8 and UTF-16 variants
         return ['UTF-8', 'UTF-16LE', 'UTF-16BE'].includes(encoding);
     }
+    */
 
     private handleClear(): void {
         const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
@@ -803,6 +809,7 @@ export class MultiInputPanelWidget extends ReactWidget {
     /**
      * Get all input documents (for runtime mode)
      * PUBLIC: Called by frontend contribution for execution
+     * Note: encoding and BOM are auto-detected for inputs, so we use defaults here
      */
     public getInputDocuments(): InputDocument[] {
         return this.state.inputs
@@ -812,8 +819,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                 name: input.name,
                 content: input.instanceContent,
                 format: this.mapInstanceFormatToDataFormat(input.instanceFormat),
-                encoding: input.encoding || 'UTF-8',
-                bom: input.bom || false
+                encoding: 'UTF-8',  // Default, will be auto-detected by backend
+                bom: false           // Default, will be auto-detected by backend
             }));
     }
 

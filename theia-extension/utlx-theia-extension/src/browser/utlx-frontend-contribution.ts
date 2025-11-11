@@ -430,8 +430,8 @@ export class UTLXFrontendContribution implements
         this.eventService.onOutputFormatChanged(event => {
             console.log('[UTLXFrontendContribution] Output format changed:', event);
 
-            // Track output format
-            this.outputFormat = event.format;
+            // Build output format spec with options
+            this.outputFormat = this.buildOutputFormatSpec(event.format, event);
 
             // Update editor headers
             this.updateEditorHeaders();
@@ -565,22 +565,28 @@ export class UTLXFrontendContribution implements
 
     /**
      * Build CSV parameter string for UTLX header
-     * Format: {headers: true|false, delimiter: ","}
-     * Returns null if both parameters are at default values
+     * Format: {headers: false} or {delimiter: ";"} or {headers: false, delimiter: ";"}
+     * Only includes non-default values
+     * Returns null if all parameters are at default values
      */
     private buildCsvParams(input: { csvHeaders?: boolean; csvDelimiter?: string }): string | null {
         const hasHeaders = input.csvHeaders ?? true; // Default true
         const delimiter = input.csvDelimiter ?? ','; // Default comma
 
-        // Don't show parameters if both are defaults
-        if (hasHeaders === true && delimiter === ',') {
-            return null;
+        const params: string[] = [];
+
+        // Only include non-default values
+        if (hasHeaders === false) {
+            params.push(`headers: false`);
+        }
+        if (delimiter !== ',') {
+            params.push(`delimiter: "${this.escapeDelimiter(delimiter)}"`);
         }
 
-        // Include both parameters for clarity when at least one is non-default
-        const params: string[] = [];
-        params.push(`headers: ${hasHeaders}`);
-        params.push(`delimiter: "${this.escapeDelimiter(delimiter)}"`);
+        // Return null if no non-default parameters
+        if (params.length === 0) {
+            return null;
+        }
 
         return `{${params.join(', ')}}`;
     }
@@ -594,6 +600,61 @@ export class UTLXFrontendContribution implements
             return '\\t';
         }
         return delimiter;
+    }
+
+    /**
+     * Build output format specification for UTLX header
+     * Format examples:
+     * - csv {headers: false, delimiter: ";"}
+     * - xml {encoding: "UTF-16"}
+     * - json (no options)
+     * Only includes non-default options
+     */
+    private buildOutputFormatSpec(
+        format: string,
+        options: {
+            csvHeaders?: boolean;
+            csvDelimiter?: string;
+            csvBom?: boolean;
+            xmlEncoding?: string;
+        }
+    ): string {
+        const params: string[] = [];
+
+        // CSV options
+        if (format === 'csv') {
+            const hasHeaders = options.csvHeaders ?? true; // Default true
+            const delimiter = options.csvDelimiter ?? ','; // Default comma
+            const hasBom = options.csvBom ?? false; // Default false
+
+            // Only include non-default values
+            if (hasHeaders === false) {
+                params.push(`headers: false`);
+            }
+            if (delimiter !== ',') {
+                params.push(`delimiter: "${this.escapeDelimiter(delimiter)}"`);
+            }
+            if (hasBom === true) {
+                params.push(`bom: true`);
+            }
+        }
+
+        // XML options
+        if (format === 'xml') {
+            const encoding = options.xmlEncoding ?? 'UTF-8'; // Default UTF-8
+
+            // Only include non-default encoding
+            if (encoding !== 'UTF-8') {
+                params.push(`encoding: "${encoding}"`);
+            }
+        }
+
+        // Build format spec
+        if (params.length === 0) {
+            return format; // No options, just the format name
+        } else {
+            return `${format} {${params.join(', ')}}`;
+        }
     }
 
     /**

@@ -34,6 +34,12 @@ export interface OutputPanelState {
     instanceDiagnostics?: Diagnostic[];
     schemaDiagnostics?: Diagnostic[];
     viewMode: 'pretty' | 'raw';
+    // CSV-specific output parameters
+    csvHeaders?: boolean;      // Default true
+    csvDelimiter?: string;     // Default ","
+    csvBom?: boolean;          // Default false
+    // XML-specific output parameters
+    xmlEncoding?: string;      // Default "UTF-8"
 }
 
 @injectable()
@@ -186,6 +192,63 @@ export class OutputPanelWidget extends ReactWidget {
                         </select>
                     </label>
 
+                    {/* CSV-specific parameters */}
+                    {currentFormat === 'csv' && activeTab === 'instance' && (
+                        <>
+                            <label>
+                                Headers:
+                                <select
+                                    value={this.state.csvHeaders === false ? 'false' : 'true'}
+                                    onChange={(e) => this.handleCsvHeadersChange(e.target.value === 'true')}
+                                >
+                                    <option value='true'>Yes</option>
+                                    <option value='false'>No</option>
+                                </select>
+                            </label>
+                            <label>
+                                Delimiter:
+                                <select
+                                    value={this.state.csvDelimiter || ','}
+                                    onChange={(e) => this.handleCsvDelimiterChange(e.target.value)}
+                                >
+                                    <option value=','>Comma (,)</option>
+                                    <option value=';'>Semicolon (;)</option>
+                                    <option value='\t'>Tab (\t)</option>
+                                    <option value='|'>Pipe (|)</option>
+                                </select>
+                            </label>
+                            <label>
+                                BOM:
+                                <select
+                                    value={this.state.csvBom ? 'true' : 'false'}
+                                    onChange={(e) => this.handleCsvBomChange(e.target.value === 'true')}
+                                    title='Byte Order Mark (UTF-8 BOM)'
+                                >
+                                    <option value='false'>No</option>
+                                    <option value='true'>Yes</option>
+                                </select>
+                            </label>
+                        </>
+                    )}
+
+                    {/* XML-specific parameters */}
+                    {currentFormat === 'xml' && activeTab === 'instance' && (
+                        <label>
+                            Encoding:
+                            <select
+                                value={this.state.xmlEncoding || 'UTF-8'}
+                                onChange={(e) => this.handleXmlEncodingChange(e.target.value)}
+                            >
+                                <option value='UTF-8'>UTF-8</option>
+                                <option value='UTF-16'>UTF-16</option>
+                                <option value='UTF-16LE'>UTF-16LE</option>
+                                <option value='UTF-16BE'>UTF-16BE</option>
+                                <option value='ISO-8859-1'>ISO-8859-1</option>
+                                <option value='Windows-1252'>Windows-1252</option>
+                            </select>
+                        </label>
+                    )}
+
                     <label>
                         View:
                         <select
@@ -327,6 +390,52 @@ export class OutputPanelWidget extends ReactWidget {
 
     private handleViewModeChange(viewMode: 'pretty' | 'raw'): void {
         this.setState({ viewMode });
+    }
+
+    private handleCsvHeadersChange(hasHeaders: boolean): void {
+        this.setState({ csvHeaders: hasHeaders });
+        // Fire event to notify editor widget to update output format options
+        this.eventService.fireOutputFormatChanged({
+            format: 'csv',
+            tab: this.state.activeTab,
+            csvHeaders: hasHeaders,
+            csvDelimiter: this.state.csvDelimiter,
+            csvBom: this.state.csvBom
+        });
+    }
+
+    private handleCsvDelimiterChange(delimiter: string): void {
+        this.setState({ csvDelimiter: delimiter });
+        // Fire event to notify editor widget to update output format options
+        this.eventService.fireOutputFormatChanged({
+            format: 'csv',
+            tab: this.state.activeTab,
+            csvHeaders: this.state.csvHeaders,
+            csvDelimiter: delimiter,
+            csvBom: this.state.csvBom
+        });
+    }
+
+    private handleCsvBomChange(hasBom: boolean): void {
+        this.setState({ csvBom: hasBom });
+        // Fire event to notify editor widget to update output format options
+        this.eventService.fireOutputFormatChanged({
+            format: 'csv',
+            tab: this.state.activeTab,
+            csvHeaders: this.state.csvHeaders,
+            csvDelimiter: this.state.csvDelimiter,
+            csvBom: hasBom
+        });
+    }
+
+    private handleXmlEncodingChange(encoding: string): void {
+        this.setState({ xmlEncoding: encoding });
+        // Fire event to notify editor widget to update output format options
+        this.eventService.fireOutputFormatChanged({
+            format: 'xml',
+            tab: this.state.activeTab,
+            xmlEncoding: encoding
+        });
     }
 
     private handleFormatChange(format: string): void {
@@ -492,5 +601,27 @@ export class OutputPanelWidget extends ReactWidget {
      */
     clear(): void {
         this.handleClear();
+    }
+
+    /**
+     * Get output format options for UTLX header generation
+     * PUBLIC: Called by editor widget to build output format spec
+     */
+    public getOutputFormatOptions(): {
+        format: string;
+        csvHeaders?: boolean;
+        csvDelimiter?: string;
+        csvBom?: boolean;
+        xmlEncoding?: string;
+    } {
+        const format = this.state.instanceFormat || 'json';
+
+        return {
+            format,
+            csvHeaders: this.state.csvHeaders,
+            csvDelimiter: this.state.csvDelimiter,
+            csvBom: this.state.csvBom,
+            xmlEncoding: this.state.xmlEncoding
+        };
     }
 }

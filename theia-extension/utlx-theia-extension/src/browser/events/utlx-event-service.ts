@@ -88,6 +88,12 @@ export interface InputSchemaContentChangedEvent {
 export interface OutputFormatChangedEvent {
     format: string;
     tab: 'instance' | 'schema';
+    // CSV-specific options
+    csvHeaders?: boolean;
+    csvDelimiter?: string;
+    csvBom?: boolean;
+    // XML-specific options
+    xmlEncoding?: string;
 }
 
 /**
