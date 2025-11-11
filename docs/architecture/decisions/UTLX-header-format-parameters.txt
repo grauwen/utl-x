@@ -36,6 +36,7 @@ DEFAULT     | ,          | "      | RFC 4180 CSV
 TSV         | \t         | "      | Tab-separated values
 SEMICOLON   | ;          | "      | Semicolon-delimited (common in European locales
 PIPE        | |          | "      |
+COLON       | :          | "      | rarely used but it is possible in rear occasions
 EXCEL       | ,          | "      | linTerminator = "\r\n"
 
 csv_seriaalizer
