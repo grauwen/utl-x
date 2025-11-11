@@ -11,7 +11,7 @@ analysis part
 Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that describes it
 ---
 IDE BUG 
-After the last change, parse the past in the UTLX, the renaming of the  input is not working correctly anymore. When name changed it does not update, only when an input is added this change suddenly is triggered
+After the last change, parse the past in the UTLX, the renaming of the  input is not working correctly anymore, only when there has been a paste of UTLX. When name changed by update of event from UTLX paste action, then the input panel pane name does not update anymore, only when an input is added this change suddenly is triggered
 
 next test name 01-monkey will work
 
