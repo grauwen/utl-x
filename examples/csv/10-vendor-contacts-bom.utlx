@@ -6,21 +6,21 @@ output json
   "vendorDirectory": {
     "totalVendors": count($vendors),
     "byCountry": {
-      "Germany": filter($vendors, fn(v) => v.Country == "Germany"),
-      "France": filter($vendors, fn(v) => v.Country == "France"),
-      "UK": filter($vendors, fn(v) => v.Country == "UK"),
-      "Sweden": filter($vendors, fn(v) => v.Country == "Sweden"),
-      "Spain": filter($vendors, fn(v) => v.Country == "Spain"),
-      "Switzerland": filter($vendors, fn(v) => v.Country == "Switzerland")
+      "Germany": filter($vendors, v=> v.Country == "Germany"),
+      "France": filter($vendors, v=> v.Country == "France"),
+      "UK": filter($vendors, v=> v.Country == "UK"),
+      "Sweden": filter($vendors, v=> v.Country == "Sweden"),
+      "Spain": filter($vendors, v=> v.Country == "Spain"),
+      "Switzerland": filter($vendors, v=> v.Country == "Switzerland")
     },
     "byAccountManager": {
-      "John Davis": count(filter($vendors, fn(v) => v.AccountManager == "John Davis")),
-      "Sarah Miller": count(filter($vendors, fn(v) => v.AccountManager == "Sarah Miller")),
-      "Maria Garcia": count(filter($vendors, fn(v) => v.AccountManager == "Maria Garcia")),
-      "Michael Brown": count(filter($vendors, fn(v) => v.AccountManager == "Michael Brown"))
+      "John Davis": count(filter($vendors, v=> v.AccountManager == "John Davis")),
+      "Sarah Miller": count(filter($vendors, v=> v.AccountManager == "Sarah Miller")),
+      "Maria Garcia": count(filter($vendors, v=> v.AccountManager == "Maria Garcia")),
+      "Michael Brown": count(filter($vendors, v=> v.AccountManager == "Michael Brown"))
     }
   },
-  "vendors": map($vendors, fn(v) => {
+  "vendors": map($vendors, v=> {
     "id": v.VendorID,
     "company": v.CompanyName,
     "contact": {
