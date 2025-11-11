@@ -14,6 +14,9 @@ IDE BUG
 After the last change, parse the past in the UTLX, the renaming of the  input is not working correctly anymore. When name changed it does not update, only when an input is added this change suddenly is triggered
 
 next test name 01-monkey will work
+
+BUG
+If one gives the same name to an input as already existed, than both TABS, existing and renamed have the same name and logic is broken
 ---
  i would suggest not to allow spaces in the
   input names (this should be checked and enforced by the MultipleInputWidget 
