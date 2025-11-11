@@ -5,18 +5,18 @@ output json
 {
   "feedbackAnalysis": {
     "totalReviews": count($feedback),
-    "averageRating": sum(map($feedback, fn(f) => f.Rating)) / count($feedback),
+    "averageRating": sum(map($feedback, f => f.Rating)) / count($feedback),
     "ratingDistribution": {
-      "5-star": count(filter($feedback, fn(f) => f.Rating == 5)),
-      "4-star": count(filter($feedback, fn(f) => f.Rating == 4)),
-      "3-star": count(filter($feedback, fn(f) => f.Rating == 3)),
-      "2-star": count(filter($feedback, fn(f) => f.Rating == 2)),
-      "1-star": count(filter($feedback, fn(f) => f.Rating == 1))
+      "5-star": count(filter($feedback, f => f.Rating == 5)),
+      "4-star": count(filter($feedback, f => f.Rating == 4)),
+      "3-star": count(filter($feedback, f => f.Rating == 3)),
+      "2-star": count(filter($feedback, f => f.Rating == 2)),
+      "1-star": count(filter($feedback, f => f.Rating == 1))
     },
     "topRatedProduct": "PROD-A5",
-    "needsAttention": filter($feedback, fn(f) => f.Rating <= 2)
+    "needsAttention": filter($feedback, f => f.Rating <= 2)
   },
-  "reviews": map($feedback, fn(fb) => {
+  "reviews": map($feedback, fb => {
     "id": fb.FeedbackID,
     "customer": fb.CustomerName,
     "product": fb.ProductID,
