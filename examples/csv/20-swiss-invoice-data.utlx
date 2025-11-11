@@ -2,16 +2,17 @@
 input invoices csv
 output xml
 ---
+// does UTLX support XML in the transformation? Should it?
 <InvoiceReport>
   <Summary>
     <TotalInvoices>{count($invoices)}</TotalInvoices>
-    <TotalSubTotal>{sum(map($invoices, fn(i) => i.SubTotal))}</TotalSubTotal>
-    <TotalVAT>{sum(map($invoices, fn(i) => i.VAT_Amount))}</TotalVAT>
-    <TotalAmount>{sum(map($invoices, fn(i) => i.TotalAmount))}</TotalAmount>
+    <TotalSubTotal>{sum(map($invoices, i => i.SubTotal))}</TotalSubTotal>
+    <TotalVAT>{sum(map($invoices, ) => i.VAT_Amount))}</TotalVAT>
+    <TotalAmount>{sum(map($invoices, i => i.TotalAmount))}</TotalAmount>
     <Currency>CHF</Currency>
   </Summary>
   <Invoices>
-    {map($invoices, fn(inv) =>
+    {map($invoices, inv =>
       <Invoice>
         <Number>{inv.InvoiceNumber}</Number>
         <Client>{inv.ClientName}</Client>
