@@ -5,16 +5,16 @@ output json
 {
   "inventoryReport": {
     "totalProducts": count($inventory),
-    "totalValue": sum(map($inventory, fn(p) => p.QuantityOnHand * p.UnitCost)),
-    "lowStockItems": filter($inventory, fn(p) => p.QuantityOnHand <= p.ReorderLevel),
+    "totalValue": sum(map($inventory, p => p.QuantityOnHand * p.UnitCost)),
+    "lowStockItems": filter($inventory, p => p.QuantityOnHand <= p.ReorderLevel),
     "byCategory": {
-      "Electronics": filter($inventory, fn(p) => p.Category == "Electronics"),
-      "Accessories": filter($inventory, fn(p) => p.Category == "Accessories"),
-      "Furniture": filter($inventory, fn(p) => p.Category == "Furniture"),
-      "Lighting": filter($inventory, fn(p) => p.Category == "Lighting")
+      "Electronics": filter($inventory, p => p.Category == "Electronics"),
+      "Accessories": filter($inventory, p => p.Category == "Accessories"),
+      "Furniture": filter($inventory, p => p.Category == "Furniture"),
+      "Lighting": filter($inventory, p => p.Category == "Lighting")
     }
   },
-  "products": map($inventory, fn(item) => {
+  "products": map($inventory, item => {
     "sku": item.SKU,
     "name": item.ProductName,
     "category": item.Category,
