@@ -20,7 +20,7 @@ output json
       (s.BatteryLevel < 30)
     )
   },
-  "readings": map($sensors, fn(sensor) => {
+  "readings": map($sensors, sensor => {
     "device": sensor.DeviceID,
     "type": sensor.SensorType,
     "location": sensor.Location,
