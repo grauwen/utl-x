@@ -892,4 +892,66 @@ export class MultiInputPanelWidget extends ReactWidget {
             activeSubTab: mode === UTLXMode.DESIGN_TIME ? 'instance' : 'instance'
         });
     }
+
+    /**
+     * Sync input tabs from parsed UTLX headers (for copy/paste support)
+     * This updates the panel to match the inputs defined in the UTLX header
+     */
+    public syncFromHeaders(parsedInputs: Array<{
+        name: string;
+        format: string;
+        csvHeaders?: boolean;
+        csvDelimiter?: string;
+        xmlArrays?: string[];
+    }>): void {
+        console.log('[MultiInputPanelWidget] Syncing from headers:', parsedInputs);
+
+        const currentInputs = this.state.inputs;
+
+        // Build new input tabs based on parsed headers
+        const newInputs: InputTab[] = parsedInputs.map((parsedInput, index) => {
+            // Try to find existing tab with same name
+            const existingInput = currentInputs.find(input => input.name === parsedInput.name);
+
+            if (existingInput) {
+                // Update existing input's format and options
+                return {
+                    ...existingInput,
+                    instanceFormat: parsedInput.format as InstanceFormat,
+                    csvHeaders: parsedInput.csvHeaders,
+                    csvDelimiter: parsedInput.csvDelimiter
+                };
+            } else {
+                // Create new input tab
+                const newId = `input-${Date.now()}-${index}`;
+                // Determine schema format: data formats use 'jsch', schema formats map to themselves
+                const schemaFormat: SchemaFormatType =
+                    (parsedInput.format === 'xsd' || parsedInput.format === 'jsch' ||
+                     parsedInput.format === 'avro' || parsedInput.format === 'proto')
+                    ? parsedInput.format as SchemaFormatType
+                    : 'jsch';
+                return {
+                    id: newId,
+                    name: parsedInput.name,
+                    instanceContent: '',
+                    instanceFormat: parsedInput.format as InstanceFormat,
+                    schemaContent: '',
+                    schemaFormat: schemaFormat,
+                    csvHeaders: parsedInput.csvHeaders,
+                    csvDelimiter: parsedInput.csvDelimiter
+                };
+            }
+        });
+
+        // Keep the first input as active if available
+        const newActiveInputId = newInputs.length > 0 ? newInputs[0].id : '';
+
+        // Update state
+        this.setState({
+            inputs: newInputs,
+            activeInputId: newActiveInputId
+        });
+
+        console.log('[MultiInputPanelWidget] Synced to', newInputs.length, 'input(s)');
+    }
 }

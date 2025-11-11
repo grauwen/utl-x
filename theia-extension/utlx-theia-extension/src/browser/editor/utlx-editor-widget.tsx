@@ -14,6 +14,7 @@ import URI from '@theia/core/lib/common/uri';
 import { DisposableCollection } from '@theia/core/lib/common/disposable';
 import * as monaco from '@theia/monaco-editor-core';
 import { UTLXEventService } from '../events/utlx-event-service';
+import { parseUTLXHeaders } from '../parser/utlx-header-parser';
 
 export const UTLX_EDITOR_WIDGET_ID = 'utlx-editor';
 
@@ -35,6 +36,8 @@ export class UTLXEditorWidget extends ReactWidget {
     protected headerEndLine: number = 0;
     protected savedHeaderContent: string[] = [];
     protected isUpdatingHeaders: boolean = false;
+    protected contentChangeDebounceTimer: number | undefined;
+    protected readonly CONTENT_CHANGE_DEBOUNCE_MS = 500; // 500ms delay
 
     constructor() {
         super();
@@ -305,6 +308,41 @@ output json
 
         // Fire content changed event for validation/execution
         this.eventService.fireContentChanged({ content });
+
+        // Debounced header parsing for panel synchronization
+        if (this.contentChangeDebounceTimer) {
+            clearTimeout(this.contentChangeDebounceTimer);
+        }
+
+        this.contentChangeDebounceTimer = window.setTimeout(() => {
+            this.parseAndUpdatePanels(content);
+        }, this.CONTENT_CHANGE_DEBOUNCE_MS);
+    }
+
+    /**
+     * Parse UTLX headers and fire event to update panels
+     * Called with debounce during typing, immediately on file load
+     */
+    protected parseAndUpdatePanels(content: string): void {
+        console.log('[UTLXEditorWidget] Parsing headers for panel sync');
+
+        const parsed = parseUTLXHeaders(content);
+
+        if (!parsed.valid) {
+            console.log('[UTLXEditorWidget] Invalid headers, not updating panels:', parsed.errors);
+            return;
+        }
+
+        console.log('[UTLXEditorWidget] Valid headers parsed:', {
+            inputs: parsed.inputs.length,
+            outputFormat: parsed.output.format
+        });
+
+        // Fire event to trigger panel updates
+        this.eventService.fireHeadersParsed({
+            inputs: parsed.inputs,
+            output: parsed.output
+        });
     }
 
     /**
@@ -354,6 +392,9 @@ output json
      */
     public async loadFile(content: string): Promise<void> {
         this.setContent(content);
+
+        // Immediately parse headers (bypass debounce for file loads)
+        this.parseAndUpdatePanels(content);
     }
 
     /**

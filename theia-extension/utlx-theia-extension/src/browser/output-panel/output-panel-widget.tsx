@@ -642,4 +642,29 @@ export class OutputPanelWidget extends ReactWidget {
             xmlEncoding: this.state.xmlEncoding
         };
     }
+
+    /**
+     * Sync output format from parsed UTLX headers (for copy/paste support)
+     * This updates the output panel to match the output format defined in the UTLX header
+     */
+    public syncFromHeaders(parsedOutput: {
+        format: string;
+        csvHeaders?: boolean;
+        csvDelimiter?: string;
+        csvBom?: boolean;
+        xmlEncoding?: string;
+    }): void {
+        console.log('[OutputPanelWidget] Syncing from headers:', parsedOutput);
+
+        // Update state with parsed output format and options
+        this.setState({
+            instanceFormat: parsedOutput.format,
+            csvHeaders: parsedOutput.csvHeaders,
+            csvDelimiter: parsedOutput.csvDelimiter,
+            csvBom: parsedOutput.csvBom,
+            xmlEncoding: parsedOutput.xmlEncoding
+        });
+
+        console.log('[OutputPanelWidget] Synced to format:', parsedOutput.format);
+    }
 }

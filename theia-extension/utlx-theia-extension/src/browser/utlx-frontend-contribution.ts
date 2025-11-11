@@ -59,6 +59,7 @@ export class UTLXFrontendContribution implements
     private mcpStatusId = 'mcp-status';
     private inputs: Map<string, { name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string }> = new Map(); // inputId -> {name, format, csvHeaders, csvDelimiter}
     private outputFormat: string = 'json';
+    private isUpdatingFromParsedHeaders: boolean = false; // Flag to prevent circular updates
 
     async onStart(app: FrontendApplication): Promise<void> {
         console.log('[UTLXFrontendContribution] ===== onStart() called =====');
@@ -379,6 +380,7 @@ export class UTLXFrontendContribution implements
 
         // Subscribe to input added
         this.eventService.onInputAdded(event => {
+            if (this.isUpdatingFromParsedHeaders) return;
             console.log('[UTLXFrontendContribution] Input added:', event);
             this.inputs.set(event.inputId, { name: event.name, format: 'json' });
             this.updateEditorHeaders();
@@ -386,6 +388,7 @@ export class UTLXFrontendContribution implements
 
         // Subscribe to input deleted
         this.eventService.onInputDeleted(event => {
+            if (this.isUpdatingFromParsedHeaders) return;
             console.log('[UTLXFrontendContribution] Input deleted:', event);
             this.inputs.delete(event.inputId);
             this.updateEditorHeaders();
@@ -393,6 +396,7 @@ export class UTLXFrontendContribution implements
 
         // Subscribe to input name changes
         this.eventService.onInputNameChanged(event => {
+            if (this.isUpdatingFromParsedHeaders) return;
             console.log('[UTLXFrontendContribution] Input name changed:', event);
             const input = this.inputs.get(event.inputId);
             if (input) {
@@ -403,6 +407,7 @@ export class UTLXFrontendContribution implements
 
         // Subscribe to input format changes
         this.eventService.onInputFormatChanged(event => {
+            if (this.isUpdatingFromParsedHeaders) return;
             console.log('[UTLXFrontendContribution] Input format changed:', event);
 
             // Get or create input entry
@@ -428,6 +433,7 @@ export class UTLXFrontendContribution implements
 
         // Subscribe to output format changes (instance/runtime mode)
         this.eventService.onOutputFormatChanged(event => {
+            if (this.isUpdatingFromParsedHeaders) return;
             console.log('[UTLXFrontendContribution] Output format changed:', event);
 
             // Build output format spec with options
@@ -461,6 +467,12 @@ export class UTLXFrontendContribution implements
 
             // Update editor headers
             this.updateEditorHeaders();
+        });
+
+        // Subscribe to headers parsed from editor (copy/paste sync)
+        this.eventService.onHeadersParsed(event => {
+            console.log('[UTLXFrontendContribution] Headers parsed from editor:', event);
+            this.updatePanelsFromParsedHeaders(event);
         });
 
         console.log('[UTLXFrontendContribution] Format change coordination initialized');
@@ -654,6 +666,48 @@ export class UTLXFrontendContribution implements
             return format; // No options, just the format name
         } else {
             return `${format} {${params.join(', ')}}`;
+        }
+    }
+
+    /**
+     * Update panels based on parsed UTLX headers (for copy/paste sync)
+     * This is the reverse direction: Editor → Panels
+     */
+    private async updatePanelsFromParsedHeaders(event: { inputs: any[]; output: any }): Promise<void> {
+        console.log('[UTLXFrontendContribution] Updating panels from parsed headers');
+
+        // Set flag to prevent circular updates
+        this.isUpdatingFromParsedHeaders = true;
+
+        try {
+            // Get panel widgets
+            const inputPanel = await this.widgetManager.getOrCreateWidget(MultiInputPanelWidget.ID) as MultiInputPanelWidget;
+            const outputPanel = await this.widgetManager.getOrCreateWidget(OutputPanelWidget.ID) as OutputPanelWidget;
+
+            if (!inputPanel || !outputPanel) {
+                console.error('[UTLXFrontendContribution] Could not get panel widgets');
+                return;
+            }
+
+            // Update input panel with parsed inputs
+            if (typeof (inputPanel as any).syncFromHeaders === 'function') {
+                console.log('[UTLXFrontendContribution] Syncing input panel with', event.inputs.length, 'inputs');
+                (inputPanel as any).syncFromHeaders(event.inputs);
+            } else {
+                console.warn('[UTLXFrontendContribution] InputPanel does not have syncFromHeaders method yet');
+            }
+
+            // Update output panel with parsed output
+            if (typeof (outputPanel as any).syncFromHeaders === 'function') {
+                console.log('[UTLXFrontendContribution] Syncing output panel with format:', event.output.format);
+                (outputPanel as any).syncFromHeaders(event.output);
+            } else {
+                console.warn('[UTLXFrontendContribution] OutputPanel does not have syncFromHeaders method yet');
+            }
+
+        } finally {
+            // Always clear flag
+            this.isUpdatingFromParsedHeaders = false;
         }
     }
 
