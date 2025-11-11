@@ -5,15 +5,15 @@ output xml
 <ShippingManifest>
   <Summary>
     <TotalShipments>{count($shipments)}</TotalShipments>
-    <TotalWeight>{sum(map($shipments, fn(s) => s.Weight))}</TotalWeight>
+    <TotalWeight>{sum(map($shipments, s => s.Weight))}</TotalWeight>
     <ByCarrier>
-      <FedEx>{count(filter($shipments, fn(s) => s.Carrier == "FedEx"))}</FedEx>
-      <UPS>{count(filter($shipments, fn(s) => s.Carrier == "UPS"))}</UPS>
-      <USPS>{count(filter($shipments, fn(s) => s.Carrier == "USPS"))}</USPS>
+      <FedEx>{count(filter($shipments, s => s.Carrier == "FedEx"))}</FedEx>
+      <UPS>{count(filter($shipments, s => s.Carrier == "UPS"))}</UPS>
+      <USPS>{count(filter($shipments, s => s.Carrier == "USPS"))}</USPS>
     </ByCarrier>
   </Summary>
   <Shipments>
-    {map($shipments, fn(ship) =>
+    {map($shipments, ship =>
       <Shipment>
         <TrackingNumber>{ship.TrackingNumber}</TrackingNumber>
         <Route>
