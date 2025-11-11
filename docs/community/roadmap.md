@@ -32,56 +32,68 @@ Build the **best open-source, format-agnostic transformation language** that:
 
 ---
 
-## Current Status: v0.1.0 (Alpha)
+## Current Status: (Alpha)
 
-**Released:** January 2026  
+**Released:** Novemeber 2025  
 **Status:** 🚧 Early Development
 
 ### What Works
 
-- ✅ Core language syntax and parser
-- ✅ XML input/output
-- ✅ JSON input/output
+- ✅ Core trasnformation language syntax and parser %UTLX 1.0
+- ✅ XML input/output (Tier 1)
+- ✅ JSON input/output (Tier 1)
+- ✅ CSV Input/Output (Tier 1)
+- ✅ YAML Input/Output (Tier 1)
+- ✅ Core schema language syntax and parser %USDL 1.0
+- ✅ XSD Input/Output (Tier 2)
+- ✅ JSCH (JSON Schema) Input/Output (Tier 2)
+- ✅ AVRO Input/Output (Tier 2)
+- ✅ PROTObuf Input/Output (Tier 2)
 - ✅ Basic selectors and navigation
+- ✅ Multiple inputs
 - ✅ Pipeline operator
 - ✅ Higher-order functions (map, filter, reduce)
-- ✅ User-defined functions
-- ✅ Template matching (basic)
+- ✅ User-defined functions 
+- ✅ Lammbda functions
 - ✅ Type inference
-- ✅ CLI tool (basic)
+- ✅ UTLX CLI tool (basic)
 - ✅ Build system (Gradle)
+- ✅ stdlib with more than 650 functions, unmatched by any other tool or product
 
 ### Known Limitations
 
-- ⚠️ No CSV support yet
-- ⚠️ No YAML support yet
-- ⚠️ Limited standard library
+- ⚠️ UTLX IDE with genAI UTLX support via MCP server component (SOON)
 - ⚠️ No IDE plugins
-- ⚠️ Not optimized for performance
-- ⚠️ Limited error messages
-- ⚠️ No streaming support
+- ⚠️ Template matching (put on hold)
+- ⚠️ Not optimized for performance (mutliple runtime optimized components planned)
+- ⚠️ Limited error messages (WIP)
+- ⚠️ Validate implemented but limted
+- ⚠️ No streaming support yet
 - ⚠️ Alpha stability (expect bugs)
+- ⚠️ TSCH (CSV Meta Data not yet implemented
+- ⚠️ JSON-LD not yet implemented
+- ⚠️ brew & chocolate dsitribution planned but not yet supported
+- ⚠️ VS Code extension not yet available on marketplace
+- ⚠️ IntelliJ plugin not yet available on JetBrains marketplace
+- ⚠️ Several websites with help, tips, tricks not live yet
+- ⚠️ No SaaS version (Theia Cloud) of UTLX IDE yet available
 
 ### Use Cases
 
 **Good for:**
 - ✅ Prototyping transformations
+- ✅ Meta Data to Meta Data mappings
 - ✅ Learning the language
 - ✅ Internal development tools
 - ✅ Experiments and proof-of-concepts
 
-**Not ready for:**
-- ❌ Production systems
-- ❌ Mission-critical applications
-- ❌ High-volume workloads
-- ❌ Customer-facing services
+**Not ready yet for:**
+- ❌ Production systems (2000+ tests passing, non-prod could be tried)
+- ❌ Mission-critical applications (STP processing needs more burn in before advised)
+- ❌ High-volume workloads (work on optimized runtimes ongoing)
+- ❌ Customer-facing services (UTLX IDE is being evaluated)
 
 ---
-
-## Q2 2026: v0.2.0 (Beta)
-
-**Target Release:** April 2026  
-**Status:** 🔜 Next Release
 
 ### Core Features
 
@@ -97,11 +109,7 @@ Build the **best open-source, format-agnostic transformation language** that:
   - Anchors and aliases
   - Multi-document files
 
-#### Language Features
-- 🎯 **Enhanced Template Matching**
-  - Priority rules
-  - Mode support (like XSLT modes)
-  - Named templates
+
 
 - 🎯 **Expanded Standard Library**
   - Date/time functions
@@ -136,9 +144,7 @@ Build the **best open-source, format-agnostic transformation language** that:
 ### Success Criteria
 
 - ✅ CSV and YAML transformations work reliably
-- ✅ VS Code extension available on marketplace
-- ✅ IntelliJ plugin available on JetBrains marketplace
-- ✅ 90% of planned stdlib functions implemented
+- ✅ 100% of planned stdlib functions implemented
 - ✅ Error messages are clear and helpful
 - ✅ 10+ production-ready examples
 - ✅ Performance within 2x of hand-coded transformations
@@ -151,6 +157,12 @@ Build the **best open-source, format-agnostic transformation language** that:
 **Status:** 🔮 Future
 
 ### Core Features
+
+#### Language Features
+- 🎯 **Enhanced Template Matching**
+  - Priority rules
+  - Mode support (like XSLT modes)
+  - Named templates
 
 #### Stability & Quality
 - 🔮 **Comprehensive Testing**
@@ -168,7 +180,7 @@ Build the **best open-source, format-agnostic transformation language** that:
 #### Advanced Features
 - 🔮 **Streaming Support**
   - Process large files without loading into memory
-  - Stream XML/JSON parsing
+  - Stream XML/JSON/CSV/YAML parsing
   - Chunked output
 
 - 🔮 **Error Handling**
@@ -256,7 +268,6 @@ Build the **best open-source, format-agnostic transformation language** that:
   - Properties files
   - TOML (optional)
   - EDI (plugin)
-  - Protocol Buffers (plugin)
 
 - 🎯 **Format Plugins API**
   - Easy custom format development
