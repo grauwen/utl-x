@@ -7,15 +7,15 @@ output json
     "timestamp": "2024-03-15T14:30:00",
     "totalDevices": count($sensors),
     "byLocation": {
-      "Warehouse-A": filter($sensors, fn(s) => s.Location == "Warehouse-A"),
-      "Warehouse-B": filter($sensors, fn(s) => s.Location == "Warehouse-B"),
-      "Factory-Floor": filter($sensors, fn(s) => s.Location == "Factory-Floor"),
-      "Cold-Storage": filter($sensors, fn(s) => s.Location == "Cold-Storage"),
-      "Office-A": filter($sensors, fn(s) => s.Location == "Office-A"),
-      "Office-B": filter($sensors, fn(s) => s.Location == "Office-B")
+      "Warehouse-A": filter($sensors, s => s.Location == "Warehouse-A"),
+      "Warehouse-B": filter($sensors, s => s.Location == "Warehouse-B"),
+      "Factory-Floor": filter($sensors, s => s.Location == "Factory-Floor"),
+      "Cold-Storage": filter($sensors, s => s.Location == "Cold-Storage"),
+      "Office-A": filter($sensors, s => s.Location == "Office-A"),
+      "Office-B": filter($sensors, s => s.Location == "Office-B")
     },
-    "lowBattery": filter($sensors, fn(s) => s.BatteryLevel < 50),
-    "alerts": filter($sensors, fn(s) =>
+    "lowBattery": filter($sensors, s => s.BatteryLevel < 50),
+    "alerts": filter($sensors, s =>
       (s.SensorType == "Temperature" && s.Reading < 0) ||
       (s.BatteryLevel < 30)
     )
