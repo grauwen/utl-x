@@ -1,0 +1,37 @@
+%utlx 1.0
+input traffic csv {headers: false}
+output json
+---
+{
+  "networkAnalysis": {
+    "totalConnections": count($traffic),
+    "totalBytesTransferred": sum(map($traffic, fn(t) => t[8])),
+    "byProtocol": {
+      "TCP": count(filter($traffic, fn(t) => t[4] == "TCP")),
+      "UDP": count(filter($traffic, fn(t) => t[4] == "UDP"))
+    },
+    "byState": {
+      "ESTABLISHED": count(filter($traffic, fn(t) => t[5] == "ESTABLISHED")),
+      "ACTIVE": count(filter($traffic, fn(t) => t[5] == "ACTIVE")),
+      "SYN_SENT": count(filter($traffic, fn(t) => t[5] == "SYN_SENT")),
+      "TIME_WAIT": count(filter($traffic, fn(t) => t[5] == "TIME_WAIT"))
+    },
+    "topPorts": {
+      "443": count(filter($traffic, fn(t) => t[2] == 443)),
+      "80": count(filter($traffic, fn(t) => t[2] == 80)),
+      "53": count(filter($traffic, fn(t) => t[2] == 53)),
+      "22": count(filter($traffic, fn(t) => t[2] == 22)),
+      "3306": count(filter($traffic, fn(t) => t[2] == 3306))
+    }
+  },
+  "connections": map($traffic, fn(conn) => {
+    "source": conn[0],
+    "destination": conn[1],
+    "port": conn[2],
+    "sourcePort": conn[3],
+    "protocol": conn[4],
+    "state": conn[5],
+    "timestamp": conn[6],
+    "bytes": conn[7]
+  })
+}

@@ -1,0 +1,149 @@
+%utlx 1.0
+input rfc csv
+output jsch
+---
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SAP RFC BAPI_SALESORDER_CREATEFROMDAT2",
+  "description": "JSON Schema for SAP Sales Order Creation BAPI",
+  "type": "object",
+  "properties": {
+    "request": {
+      "type": "object",
+      "description": "RFC Function Import Parameters",
+      "properties": merge(
+        {
+          "ORDER_HEADER_IN": {
+            "type": "object",
+            "description": "Sales Order Header Data",
+            "properties": merge(
+              map(
+                filter($rfc, fn(row) => row.StructureName == "BAPISDHD1"),
+                fn(field) => {
+                  field.FieldName: {
+                    "type": if (field.DataType == "Char") then "string"
+                           else if (field.DataType == "Date") then "string"
+                           else if (field.DataType == "Numeric") then "integer"
+                           else if (field.DataType == "Quantity") then "number"
+                           else "string",
+                    "description": field.Description,
+                    ...(if (field.DataType == "Date") then {"format": "date"} else {}),
+                    ...(if (field.Length != "") then {"maxLength": field.Length} else {}),
+                    ...(if (field.DefaultValue != "") then {"default": field.DefaultValue} else {})
+                  }
+                }
+              )
+            ),
+            "required": map(
+              filter(
+                filter($rfc, fn(row) => row.StructureName == "BAPISDHD1"),
+                fn(field) => field.Mandatory == "X"
+              ),
+              fn(field) => field.FieldName
+            )
+          },
+          "ORDER_ITEMS_IN": {
+            "type": "array",
+            "description": "Sales Order Items",
+            "items": {
+              "type": "object",
+              "properties": merge(
+                map(
+                  filter($rfc, fn(row) => row.StructureName == "BAPISDITM"),
+                  fn(field) => {
+                    field.FieldName: {
+                      "type": if (field.DataType == "Char") then "string"
+                             else if (field.DataType == "Quantity") then "number"
+                             else "string",
+                      "description": field.Description,
+                      ...(if (field.Length != "") then {"maxLength": field.Length} else {})
+                    }
+                  }
+                )
+              ),
+              "required": map(
+                filter(
+                  filter($rfc, fn(row) => row.StructureName == "BAPISDITM"),
+                  fn(field) => field.Mandatory == "X"
+                ),
+                fn(field) => field.FieldName
+              )
+            }
+          },
+          "ORDER_PARTNERS": {
+            "type": "array",
+            "description": "Sales Order Partners",
+            "items": {
+              "type": "object",
+              "properties": merge(
+                map(
+                  filter($rfc, fn(row) => row.StructureName == "BAPIPARNR"),
+                  fn(field) => {
+                    field.FieldName: {
+                      "type": "string",
+                      "description": field.Description,
+                      ...(if (field.Length != "") then {"maxLength": field.Length} else {})
+                    }
+                  }
+                )
+              ),
+              "required": map(
+                filter(
+                  filter($rfc, fn(row) => row.StructureName == "BAPIPARNR"),
+                  fn(field) => field.Mandatory == "X"
+                ),
+                fn(field) => field.FieldName
+              )
+            }
+          }
+        },
+        merge(
+          map(
+            filter(
+              filter($rfc, fn(row) => row.RFCName == "BAPI_SALESORDER_CREATEFROMDAT2"),
+              fn(row) => row.ParameterType == "Import" && row.DataType == "Char"
+            ),
+            fn(param) => {
+              param.ParameterName: {
+                "type": "string",
+                "description": param.Description,
+                "maxLength": param.Length
+              }
+            }
+          )
+        )
+      )
+    },
+    "response": {
+      "type": "object",
+      "description": "RFC Function Export Parameters",
+      "properties": {
+        "SALESDOCUMENT": {
+          "type": "string",
+          "description": "Created Sales Document Number",
+          "maxLength": 10
+        },
+        "RETURN": {
+          "type": "array",
+          "description": "Return Messages",
+          "items": {
+            "type": "object",
+            "properties": merge(
+              map(
+                filter($rfc, fn(row) => row.StructureName == "BAPIRET2"),
+                fn(field) => {
+                  field.FieldName: {
+                    "type": if (field.DataType == "Numeric") then "integer" else "string",
+                    "description": field.Description,
+                    ...(if (field.Length != "") then {"maxLength": field.Length} else {})
+                  }
+                }
+              )
+            )
+          }
+        }
+      }
+    }
+  },
+  "required": ["request"]
+}

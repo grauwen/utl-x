@@ -1,0 +1,26 @@
+%utlx 1.0
+input inventory csv
+output json
+---
+{
+  "inventoryReport": {
+    "totalProducts": count($inventory),
+    "totalValue": sum(map($inventory, fn(p) => p.QuantityOnHand * p.UnitCost)),
+    "lowStockItems": filter($inventory, fn(p) => p.QuantityOnHand <= p.ReorderLevel),
+    "byCategory": {
+      "Electronics": filter($inventory, fn(p) => p.Category == "Electronics"),
+      "Accessories": filter($inventory, fn(p) => p.Category == "Accessories"),
+      "Furniture": filter($inventory, fn(p) => p.Category == "Furniture"),
+      "Lighting": filter($inventory, fn(p) => p.Category == "Lighting")
+    }
+  },
+  "products": map($inventory, fn(item) => {
+    "sku": item.SKU,
+    "name": item.ProductName,
+    "category": item.Category,
+    "stock": item.QuantityOnHand,
+    "needsReorder": item.QuantityOnHand <= item.ReorderLevel,
+    "profitMargin": item.ListPrice - item.UnitCost,
+    "supplier": item.SupplierID
+  })
+}

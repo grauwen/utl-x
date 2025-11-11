@@ -1,0 +1,57 @@
+ServiceName,Operation,MessageType,ElementName,DataType,MinOccurs,MaxOccurs,Nillable,Pattern,MinLength,MaxLength,Description
+InventoryService,GetProductInventory,Request,ProductID,string,1,1,false,^PROD-[A-Z0-9]{6}$,,,Unique product identifier
+InventoryService,GetProductInventory,Request,WarehouseCode,string,0,1,false,^WH-[0-9]{3}$,5,10,Optional warehouse filter
+InventoryService,GetProductInventory,Request,IncludeReserved,boolean,0,1,false,,,,,Include reserved quantities
+InventoryService,GetProductInventory,Response,ProductID,string,1,1,false,,,,,Product identifier
+InventoryService,GetProductInventory,Response,ProductName,string,1,1,false,,1,200,Product display name
+InventoryService,GetProductInventory,Response,QuantityAvailable,int,1,1,false,,,,Available quantity
+InventoryService,GetProductInventory,Response,QuantityReserved,int,1,1,false,,,,Reserved quantity
+InventoryService,GetProductInventory,Response,UnitOfMeasure,string,1,1,false,,2,10,Unit of measure
+InventoryService,GetProductInventory,Response,LastUpdated,dateTime,1,1,false,,,,Last inventory update timestamp
+InventoryService,GetProductInventory,Response,WarehouseLocations,WarehouseLocation,0,unbounded,false,,,,List of warehouse locations
+InventoryService,GetProductInventory,Fault,FaultCode,string,1,1,false,,,,Error code
+InventoryService,GetProductInventory,Fault,FaultString,string,1,1,false,,,,Error message
+InventoryService,UpdateInventory,Request,ProductID,string,1,1,false,^PROD-[A-Z0-9]{6}$,,,Product to update
+InventoryService,UpdateInventory,Request,WarehouseCode,string,1,1,false,^WH-[0-9]{3}$,,,Target warehouse
+InventoryService,UpdateInventory,Request,AdjustmentType,string,1,1,false,,,,Type: ADD|SUBTRACT|SET
+InventoryService,UpdateInventory,Request,Quantity,int,1,1,false,,,,Adjustment quantity
+InventoryService,UpdateInventory,Request,ReasonCode,string,1,1,false,,2,20,Reason for adjustment
+InventoryService,UpdateInventory,Request,Comments,string,0,1,true,,0,500,Optional comments
+InventoryService,UpdateInventory,Response,TransactionID,string,1,1,false,,,,,Unique transaction identifier
+InventoryService,UpdateInventory,Response,Status,string,1,1,false,,,,SUCCESS|FAILED
+InventoryService,UpdateInventory,Response,NewQuantity,int,1,1,false,,,,Quantity after adjustment
+InventoryService,UpdateInventory,Response,Timestamp,dateTime,1,1,false,,,,Transaction timestamp
+InventoryService,CheckAvailability,Request,ProductIDs,string,1,unbounded,false,,,,,List of product IDs to check
+InventoryService,CheckAvailability,Request,RequiredQuantity,int,1,1,false,,,,Required quantity per product
+InventoryService,CheckAvailability,Request,DeliveryDate,date,0,1,false,,,,Target delivery date
+InventoryService,CheckAvailability,Response,AvailabilityResults,AvailabilityResult,1,unbounded,false,,,,Results per product
+OrderService,CreateOrder,Request,CustomerID,string,1,1,false,^CUST-[0-9]{5}$,,,Customer identifier
+OrderService,CreateOrder,Request,OrderDate,date,1,1,false,,,,Order date
+OrderService,CreateOrder,Request,ShippingAddress,Address,1,1,false,,,,Shipping address details
+OrderService,CreateOrder,Request,BillingAddress,Address,0,1,false,,,,Optional billing address
+OrderService,CreateOrder,Request,OrderItems,OrderItem,1,unbounded,false,,,,List of order items
+OrderService,CreateOrder,Request,PaymentMethod,string,1,1,false,,,,Payment method code
+OrderService,CreateOrder,Response,OrderID,string,1,1,false,,,,,Generated order identifier
+OrderService,CreateOrder,Response,OrderNumber,string,1,1,false,,,,,Human-readable order number
+OrderService,CreateOrder,Response,TotalAmount,decimal,1,1,false,,,,Order total amount
+OrderService,CreateOrder,Response,EstimatedDelivery,date,1,1,false,,,,Estimated delivery date
+OrderService,CreateOrder,Response,Status,string,1,1,false,,,,Order status
+WarehouseLocation,WarehouseCode,string,1,1,false,,,,Code identifying warehouse
+WarehouseLocation,WarehouseName,string,1,1,false,,,,Warehouse name
+WarehouseLocation,Quantity,int,1,1,false,,,,Quantity at location
+WarehouseLocation,Aisle,string,0,1,false,,,,Storage aisle
+WarehouseLocation,Bin,string,0,1,false,,,,Storage bin
+AvailabilityResult,ProductID,string,1,1,false,,,,Product identifier
+AvailabilityResult,IsAvailable,boolean,1,1,false,,,,Availability flag
+AvailabilityResult,AvailableQuantity,int,1,1,false,,,,Available quantity
+AvailabilityResult,NextRestockDate,date,0,1,true,,,,Next restock date if unavailable
+Address,Street1,string,1,1,false,,1,100,Street address line 1
+Address,Street2,string,0,1,true,,0,100,Street address line 2
+Address,City,string,1,1,false,,1,50,City name
+Address,State,string,1,1,false,,2,50,State or province
+Address,PostalCode,string,1,1,false,,3,20,Postal/ZIP code
+Address,Country,string,1,1,false,^[A-Z]{2}$,2,2,ISO country code
+OrderItem,ProductID,string,1,1,false,,,,Product identifier
+OrderItem,Quantity,int,1,1,false,,,,Quantity ordered
+OrderItem,UnitPrice,decimal,1,1,false,,,,Price per unit
+OrderItem,DiscountPercent,decimal,0,1,false,,,,Discount percentage

@@ -1,0 +1,76 @@
+ElementPath,ElementName,DataType,Required,MinOccurs,MaxOccurs,Pattern,MinValue,MaxValue,Description
+Invoice,Invoice,complex,true,1,1,,,,,Root element for B2B invoice
+Invoice/Header,InvoiceHeader,complex,true,1,1,,,,,Invoice header information
+Invoice/Header,InvoiceNumber,string,true,1,1,^INV-[0-9]{8}$,,,Unique invoice number
+Invoice/Header,InvoiceDate,date,true,1,1,,,,, Invoice creation date ISO 8601
+Invoice/Header,DueDate,date,true,1,1,,,,,Payment due date
+Invoice/Header,InvoiceType,string,true,1,1,^(Standard|Credit|Debit|Proforma)$,,,Invoice type classification
+Invoice/Header,Currency,string,true,1,1,^[A-Z]{3}$,,,ISO 4217 currency code
+Invoice/Header,PaymentTerms,string,true,1,1,,,,,"Payment terms (Net30, Net60, etc)"
+Invoice/Header,PurchaseOrderNumber,string,false,0,1,^PO-[0-9]{8}$,,,Reference to purchase order
+Invoice/Header,ContractNumber,string,false,0,1,,,,, Reference to master contract
+Invoice/Supplier,SupplierInfo,complex,true,1,1,,,,,Supplier/seller information
+Invoice/Supplier,SupplierID,string,true,1,1,^SUP-[0-9]{6}$,,,Unique supplier identifier
+Invoice/Supplier,SupplierName,string,true,1,1,,,,100,Legal company name
+Invoice/Supplier,TaxID,string,true,1,1,,,,20,Tax identification number
+Invoice/Supplier,VATNumber,string,false,0,1,,,,20,VAT registration number
+Invoice/Supplier,Contact,complex,true,1,1,,,,,Supplier contact details
+Invoice/Supplier/Contact,ContactPerson,string,true,1,1,,,,100,Contact person name
+Invoice/Supplier/Contact,Email,string,true,1,1,^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$,,,Email address
+Invoice/Supplier/Contact,Phone,string,true,1,1,^\+?[0-9\-\s()]{10,20}$,,,Phone number
+Invoice/Supplier,Address,complex,true,1,1,,,,,Supplier address
+Invoice/Supplier/Address,Street,string,true,1,1,,,,100,Street address
+Invoice/Supplier/Address,City,string,true,1,1,,,,50,City name
+Invoice/Supplier/Address,PostalCode,string,true,1,1,,,,20,Postal/ZIP code
+Invoice/Supplier/Address,Country,string,true,1,1,^[A-Z]{2}$,,,ISO country code
+Invoice/Customer,CustomerInfo,complex,true,1,1,,,,,Customer/buyer information
+Invoice/Customer,CustomerID,string,true,1,1,^CUST-[0-9]{6}$,,,Unique customer identifier
+Invoice/Customer,CustomerName,string,true,1,1,,,,100,Legal company name
+Invoice/Customer,TaxID,string,false,0,1,,,,20,Tax identification number
+Invoice/Customer,VATNumber,string,false,0,1,,,,20,VAT registration number
+Invoice/Customer,Address,complex,true,1,1,,,,,Customer billing address
+Invoice/Customer/Address,Street,string,true,1,1,,,,100,Street address
+Invoice/Customer/Address,City,string,true,1,1,,,,50,City name
+Invoice/Customer/Address,PostalCode,string,true,1,1,,,,20,Postal/ZIP code
+Invoice/Customer/Address,Country,string,true,1,1,^[A-Z]{2}$,,,ISO country code
+Invoice/LineItems,LineItems,complex,true,1,1,,,,,Invoice line items
+Invoice/LineItems,LineItem,complex,true,1,unbounded,,,,,Individual line item
+Invoice/LineItems/LineItem,LineNumber,integer,true,1,1,,1,9999,Sequential line number
+Invoice/LineItems/LineItem,ProductCode,string,true,1,1,,,,50,Product or service code
+Invoice/LineItems/LineItem,Description,string,true,1,1,,,,500,Product/service description
+Invoice/LineItems/LineItem,Quantity,decimal,true,1,1,,0,,Quantity
+Invoice/LineItems/LineItem,UnitOfMeasure,string,true,1,1,,,,10,"Unit (EA, HR, KG, etc)"
+Invoice/LineItems/LineItem,UnitPrice,decimal,true,1,1,,0,,Price per unit
+Invoice/LineItems/LineItem,DiscountPercent,decimal,false,0,1,,0,100,Discount percentage
+Invoice/LineItems/LineItem,DiscountAmount,decimal,false,0,1,,0,,Discount amount
+Invoice/LineItems/LineItem,NetAmount,decimal,true,1,1,,0,,Net line amount
+Invoice/LineItems/LineItem,TaxRate,decimal,true,1,1,,0,100,Tax rate percentage
+Invoice/LineItems/LineItem,TaxAmount,decimal,true,1,1,,0,,Tax amount
+Invoice/LineItems/LineItem,GrossAmount,decimal,true,1,1,,0,,Gross line amount
+Invoice/LineItems/LineItem,AccountingCode,string,false,0,1,,,,20,GL account code
+Invoice/LineItems/LineItem,CostCenter,string,false,0,1,,,,20,Cost center code
+Invoice/Totals,InvoiceTotals,complex,true,1,1,,,,,Invoice totals
+Invoice/Totals,SubTotal,decimal,true,1,1,,0,,Subtotal before tax
+Invoice/Totals,TotalDiscount,decimal,false,0,1,,0,,Total discount amount
+Invoice/Totals,TotalTax,decimal,true,1,1,,0,,Total tax amount
+Invoice/Totals,TotalAmount,decimal,true,1,1,,0,,Total invoice amount
+Invoice/Totals,AmountDue,decimal,true,1,1,,0,,Amount due for payment
+Invoice/Totals,TaxBreakdown,complex,false,0,1,,,,,Tax breakdown by rate
+Invoice/Totals/TaxBreakdown,TaxDetail,complex,false,0,unbounded,,,,,Tax detail entry
+Invoice/Totals/TaxBreakdown/TaxDetail,TaxRate,decimal,true,1,1,,0,100,Tax rate
+Invoice/Totals/TaxBreakdown/TaxDetail,TaxableAmount,decimal,true,1,1,,0,,Amount subject to tax
+Invoice/Totals/TaxBreakdown/TaxDetail,TaxAmount,decimal,true,1,1,,0,,Tax amount at this rate
+Invoice/Payment,PaymentInstructions,complex,false,0,1,,,,,Payment instructions
+Invoice/Payment,PaymentMethod,string,false,0,1,^(BankTransfer|Check|CreditCard|DirectDebit)$,,,Preferred payment method
+Invoice/Payment,BankAccount,complex,false,0,1,,,,,Bank account details
+Invoice/Payment/BankAccount,BankName,string,true,1,1,,,,100,Bank name
+Invoice/Payment/BankAccount,AccountNumber,string,true,1,1,,,,50,Account number
+Invoice/Payment/BankAccount,IBAN,string,false,0,1,^[A-Z]{2}[0-9]{2}[A-Z0-9]+$,,,International bank account number
+Invoice/Payment/BankAccount,SWIFT,string,false,0,1,^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$,,,SWIFT/BIC code
+Invoice/Notes,Notes,string,false,0,1,,,,2000,Additional notes or comments
+Invoice/Attachments,Attachments,complex,false,0,1,,,,,Supporting documents
+Invoice/Attachments,Attachment,complex,false,0,unbounded,,,,,Attachment reference
+Invoice/Attachments/Attachment,FileName,string,true,1,1,,,,255,Attachment filename
+Invoice/Attachments/Attachment,FileType,string,true,1,1,,,,20,File MIME type
+Invoice/Attachments/Attachment,FileSize,integer,true,1,1,,0,,File size in bytes
+Invoice/Attachments/Attachment,Description,string,false,0,1,,,,200,Attachment description

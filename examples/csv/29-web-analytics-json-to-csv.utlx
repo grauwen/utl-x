@@ -1,0 +1,28 @@
+%utlx 1.0
+input analytics json
+output csv
+---
+map($analytics.analyticsReport.metrics, fn(day) => {
+  "Date": day.date,
+  "Sessions": day.traffic.sessions,
+  "Users": day.traffic.users,
+  "NewUsers": day.traffic.newUsers,
+  "Pageviews": day.traffic.pageviews,
+  "AvgSessionDuration": day.traffic.avgSessionDuration,
+  "BounceRate": day.traffic.bounceRate,
+  "Traffic_Organic": day.acquisition.organic,
+  "Traffic_Direct": day.acquisition.direct,
+  "Traffic_Social": day.acquisition.social,
+  "Traffic_Referral": day.acquisition.referral,
+  "Traffic_Paid": day.acquisition.paid,
+  "GoalsCompleted": day.conversions.goals,
+  "GoalValue": day.conversions.goalValue,
+  "Transactions": day.conversions.transactions,
+  "Revenue": day.conversions.revenue,
+  "ConversionRate": (day.conversions.transactions / day.traffic.sessions) * 100,
+  "AvgOrderValue": day.conversions.revenue / day.conversions.transactions,
+  "Device_Desktop": day.devices.desktop,
+  "Device_Mobile": day.devices.mobile,
+  "Device_Tablet": day.devices.tablet,
+  "MobilePercentage": (day.devices.mobile / day.traffic.sessions) * 100
+})

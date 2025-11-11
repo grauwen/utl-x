@@ -1,0 +1,84 @@
+%utlx 1.0
+input metadata csv
+output jsch
+---
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Customer API Schema",
+  "description": "REST API schema for customer management system",
+  "type": "object",
+  "properties": merge(
+    map(
+      filter($metadata, fn(row) => row.EntityName == "Customer"),
+      fn(field) => {
+        field.FieldName: {
+          "type": field.FieldType,
+          "description": field.Description,
+          ...(if (field.MinLength != "") then {"minLength": field.MinLength} else {}),
+          ...(if (field.MaxLength != "") then {"maxLength": field.MaxLength} else {}),
+          ...(if (field.Pattern != "") then {"pattern": field.Pattern} else {}),
+          ...(if (field.Example != "") then {"examples": [field.Example]} else {})
+        }
+      }
+    ),
+    {
+      "address": {
+        "type": "object",
+        "properties": merge(
+          map(
+            filter($metadata, fn(row) => row.EntityName == "Address"),
+            fn(field) => {
+              field.FieldName: {
+                "type": field.FieldType,
+                "description": field.Description,
+                ...(if (field.MinLength != "") then {"minLength": field.MinLength} else {}),
+                ...(if (field.MaxLength != "") then {"maxLength": field.MaxLength} else {}),
+                ...(if (field.Pattern != "") then {"pattern": field.Pattern} else {}),
+                ...(if (field.Example != "") then {"examples": [field.Example]} else {})
+              }
+            }
+          )
+        ),
+        "required": map(
+          filter(
+            filter($metadata, fn(row) => row.EntityName == "Address"),
+            fn(field) => field.Required == "true"
+          ),
+          fn(field) => field.FieldName
+        )
+      },
+      "preferences": {
+        "type": "object",
+        "properties": merge(
+          map(
+            filter($metadata, fn(row) => row.EntityName == "Preferences"),
+            fn(field) => {
+              field.FieldName: {
+                "type": field.FieldType,
+                "description": field.Description,
+                ...(if (field.MinLength != "") then {"minLength": field.MinLength} else {}),
+                ...(if (field.MaxLength != "") then {"maxLength": field.MaxLength} else {}),
+                ...(if (field.Pattern != "") then {"pattern": field.Pattern} else {}),
+                ...(if (field.Example != "") then {"examples": [field.Example]} else {})
+              }
+            }
+          )
+        ),
+        "required": map(
+          filter(
+            filter($metadata, fn(row) => row.EntityName == "Preferences"),
+            fn(field) => field.Required == "true"
+          ),
+          fn(field) => field.FieldName
+        )
+      }
+    }
+  ),
+  "required": map(
+    filter(
+      filter($metadata, fn(row) => row.EntityName == "Customer"),
+      fn(field) => field.Required == "true"
+    ),
+    fn(field) => field.FieldName
+  )
+}

@@ -1,0 +1,131 @@
+%utlx 1.0
+input edi csv
+output xsd
+---
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://example.com/edi/x12/850"
+           xmlns:tns="http://example.com/edi/x12/850"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>EDI X12 850 Purchase Order Transaction Set</xs:documentation>
+  </xs:annotation>
+
+  <xs:element name="PurchaseOrder850" type="tns:PurchaseOrder850Type"/>
+
+  <xs:complexType name="PurchaseOrder850Type">
+    <xs:sequence>
+      <xs:element name="TransactionSetHeader" type="tns:ST_Type"/>
+      <xs:element name="BeginningSegment" type="tns:BEG_Type"/>
+      <xs:element name="Reference" type="tns:REF_Type" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="DateTime" type="tns:DTM_Type" minOccurs="0" maxOccurs="10"/>
+      <xs:element name="NameLoop" type="tns:N1_Loop_Type" minOccurs="0" maxOccurs="200"/>
+      <xs:element name="LineItem" type="tns:PO1_Loop_Type" maxOccurs="unbounded"/>
+      <xs:element name="TransactionTotals" type="tns:CTT_Type"/>
+      <xs:element name="TransactionSetTrailer" type="tns:SE_Type"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  {map(filter($edi, fn(row) => row.SegmentID == "ST"), fn(elem) =>
+    if (elem.ElementPosition == "01") then
+      <xs:complexType name="ST_Type">
+        <xs:sequence>
+          {map(filter($edi, fn(row) => row.SegmentID == "ST"), fn(field) =>
+            <xs:element name={field.ElementName}>
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:minLength value={field.MinLength}/>
+                  <xs:maxLength value={field.MaxLength}/>
+                  {if (field.CodeList != "") then
+                    map(split(field.CodeList, "|"), fn(code) =>
+                      <xs:enumeration value={code}/>
+                    )
+                  else <xs:annotation><xs:documentation>No enumeration</xs:documentation></xs:annotation>}
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+          )}
+        </xs:sequence>
+      </xs:complexType>
+    else <xs:annotation><xs:documentation>Already defined</xs:documentation></xs:annotation>
+  )}
+
+  <xs:complexType name="BEG_Type">
+    <xs:sequence>
+      {map(filter($edi, fn(row) => row.SegmentID == "BEG"), fn(field) =>
+        <xs:element name={field.ElementName} minOccurs={if (field.Required == "M") then "1" else "0"}>
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:minLength value={field.MinLength}/>
+              <xs:maxLength value={field.MaxLength}/>
+              {if (field.CodeList != "") then
+                map(split(field.CodeList, "|"), fn(code) =>
+                  <xs:enumeration value={code}/>
+                )
+              else <xs:annotation><xs:documentation>{field.Description}</xs:documentation></xs:annotation>}
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+      )}
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="REF_Type">
+    <xs:sequence>
+      {map(filter($edi, fn(row) => row.SegmentID == "REF"), fn(field) =>
+        <xs:element name={field.ElementName} minOccurs={if (field.Required == "M") then "1" else "0"}>
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:maxLength value={field.MaxLength}/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+      )}
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="N1_Loop_Type">
+    <xs:sequence>
+      <xs:element name="Name" type="tns:N1_Type"/>
+      <xs:element name="Address" type="tns:N3_Type" minOccurs="0" maxOccurs="2"/>
+      <xs:element name="GeographicLocation" type="tns:N4_Type" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PO1_Loop_Type">
+    <xs:sequence>
+      <xs:element name="BaselineItemData" type="tns:PO1_Type"/>
+      <xs:element name="ProductDescription" type="tns:PID_Type" minOccurs="0" maxOccurs="200"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PO1_Type">
+    <xs:sequence>
+      {map(filter($edi, fn(row) => row.SegmentID == "PO1"), fn(field) =>
+        <xs:element name={field.ElementName} minOccurs={if (field.Required == "M") then "1" else "0"}>
+          <xs:annotation>
+            <xs:documentation>{field.Description}</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:maxLength value={field.MaxLength}/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+      )}
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="EDI_Date">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{8}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EDI_Time">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{4}|\d{6}|\d{8}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

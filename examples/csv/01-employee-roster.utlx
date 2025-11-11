@@ -1,0 +1,22 @@
+%utlx 1.0
+input employees csv
+output json
+---
+{
+  "company": "TechCorp",
+  "totalEmployees": count($employees),
+  "departments": {
+    "Engineering": count(filter($employees, fn(e) => e.Department == "Engineering")),
+    "Marketing": count(filter($employees, fn(e) => e.Department == "Marketing")),
+    "Sales": count(filter($employees, fn(e) => e.Department == "Sales")),
+    "HR": count(filter($employees, fn(e) => e.Department == "HR")),
+    "Finance": count(filter($employees, fn(e) => e.Department == "Finance"))
+  },
+  "employees": map($employees, fn(emp) => {
+    "id": emp.EmployeeID,
+    "fullName": emp.FirstName + " " + emp.LastName,
+    "department": emp.Department,
+    "annualSalary": emp.Salary,
+    "tenure": "hired " + emp.HireDate
+  })
+}

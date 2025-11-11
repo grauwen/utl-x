@@ -1,0 +1,23 @@
+%utlx 1.0
+input catalog xml {arrays: ["Category", "Product"]}
+output csv
+---
+flatten(map($catalog.ProductCatalog.Category, fn(category) =>
+  map(category.Product, fn(product) => {
+    "SKU": product.SKU,
+    "ProductName": product.Name,
+    "Category": category.@name,
+    "Manufacturer": product.Manufacturer,
+    "Cost": product.Pricing.Cost.#text,
+    "MSRP": product.Pricing.MSRP.#text,
+    "WholesalePrice": product.Pricing.WholesalePrice.#text,
+    "DiscountPercent": product.Pricing.DiscountPercent,
+    "FinalPrice": product.Pricing.WholesalePrice.#text * (1 - (product.Pricing.DiscountPercent / 100)),
+    "ProfitMargin": product.Pricing.WholesalePrice.#text - product.Pricing.Cost.#text,
+    "InStock": product.Inventory.InStock,
+    "Reserved": product.Inventory.Reserved,
+    "Available": product.Inventory.Available,
+    "Weight_kg": product.Specifications.Weight.#text,
+    "Dimensions": product.Specifications.Dimensions
+  })
+))

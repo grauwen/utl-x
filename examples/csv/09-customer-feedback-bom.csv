@@ -1,0 +1,9 @@
+﻿FeedbackID,CustomerName,ProductID,Rating,Comment,SubmittedDate
+FB-001,Emily Parker,PROD-A5,5,"Excellent product, exceeded expectations!",2024-03-01
+FB-002,Michael Chen,PROD-B2,4,"Good quality but shipping took too long",2024-03-02
+FB-003,Sarah Williams,PROD-C7,3,"Average product, works as described",2024-03-02
+FB-004,James Brown,PROD-A5,5,"Best purchase I've made this year!",2024-03-03
+FB-005,Lisa Anderson,PROD-D1,2,"Not as advertised, disappointed",2024-03-04
+FB-006,Robert Taylor,PROD-B2,4,"Very satisfied with the purchase",2024-03-05
+FB-007,Jennifer Martinez,PROD-E3,5,"Perfect! Exactly what I needed",2024-03-05
+FB-008,David Johnson,PROD-A5,4,"Great product, minor packaging issues",2024-03-06

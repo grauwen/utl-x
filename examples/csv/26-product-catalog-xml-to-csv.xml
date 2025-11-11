@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ProductCatalog xmlns="http://example.com/catalog" version="2024.1">
+  <Category name="Electronics">
+    <Product>
+      <SKU>ELEC-001</SKU>
+      <Name>Professional Laptop 15"</Name>
+      <Manufacturer>TechCorp</Manufacturer>
+      <Pricing>
+        <Cost currency="USD">899.00</Cost>
+        <MSRP currency="USD">1499.99</MSRP>
+        <WholesalePrice currency="USD">1199.99</WholesalePrice>
+        <DiscountPercent>10</DiscountPercent>
+      </Pricing>
+      <Inventory>
+        <InStock>245</InStock>
+        <Reserved>23</Reserved>
+        <Available>222</Available>
+      </Inventory>
+      <Specifications>
+        <Weight unit="kg">1.8</Weight>
+        <Dimensions>35x24x2 cm</Dimensions>
+      </Specifications>
+    </Product>
+    <Product>
+      <SKU>ELEC-002</SKU>
+      <Name>Wireless Mouse Pro</Name>
+      <Manufacturer>PeriphTech</Manufacturer>
+      <Pricing>
+        <Cost currency="USD">15.50</Cost>
+        <MSRP currency="USD">49.99</MSRP>
+        <WholesalePrice currency="USD">39.99</WholesalePrice>
+        <DiscountPercent>15</DiscountPercent>
+      </Pricing>
+      <Inventory>
+        <InStock>892</InStock>
+        <Reserved>45</Reserved>
+        <Available>847</Available>
+      </Inventory>
+      <Specifications>
+        <Weight unit="kg">0.12</Weight>
+        <Dimensions>12x7x4 cm</Dimensions>
+      </Specifications>
+    </Product>
+  </Category>
+  <Category name="Accessories">
+    <Product>
+      <SKU>ACC-001</SKU>
+      <Name>USB-C Hub 7-in-1</Name>
+      <Manufacturer>ConnectPro</Manufacturer>
+      <Pricing>
+        <Cost currency="USD">22.00</Cost>
+        <MSRP currency="USD">79.99</MSRP>
+        <WholesalePrice currency="USD">64.99</WholesalePrice>
+        <DiscountPercent>20</DiscountPercent>
+      </Pricing>
+      <Inventory>
+        <InStock>456</InStock>
+        <Reserved>67</Reserved>
+        <Available>389</Available>
+      </Inventory>
+      <Specifications>
+        <Weight unit="kg">0.15</Weight>
+        <Dimensions>10x5x2 cm</Dimensions>
+      </Specifications>
+    </Product>
+    <Product>
+      <SKU>ACC-002</SKU>
+      <Name>Laptop Stand Ergonomic</Name>
+      <Manufacturer>ErgoDev</Manufacturer>
+      <Pricing>
+        <Cost currency="USD">18.75</Cost>
+        <MSRP currency="USD">59.99</MSRP>
+        <WholesalePrice currency="USD">47.99</WholesalePrice>
+        <DiscountPercent>0</DiscountPercent>
+      </Pricing>
+      <Inventory>
+        <InStock>178</InStock>
+        <Reserved>12</Reserved>
+        <Available>166</Available>
+      </Inventory>
+      <Specifications>
+        <Weight unit="kg">0.85</Weight>
+        <Dimensions>28x20x8 cm</Dimensions>
+      </Specifications>
+    </Product>
+  </Category>
+</ProductCatalog>

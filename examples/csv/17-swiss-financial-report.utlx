@@ -1,0 +1,22 @@
+%utlx 1.0
+input accounts csv
+output csv
+---
+{
+  "summary": [
+    {
+      "TotalAccounts": count($accounts),
+      "TotalBalance": sum(map($accounts, fn(a) => a.Balance)),
+      "AverageBalance": sum(map($accounts, fn(a) => a.Balance)) / count($accounts),
+      "HighestBalance": "CH-1003"
+    }
+  ],
+  "accounts": map($accounts, fn(acc) => {
+    "AccountNumber": acc.AccountNumber,
+    "AccountName": acc.AccountName,
+    "Balance": acc.Balance,
+    "InterestRate": acc.InterestRate,
+    "AnnualInterest": acc.Balance * (acc.InterestRate / 100),
+    "LastTransaction": acc.LastTransaction
+  })
+}

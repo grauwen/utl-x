@@ -1,0 +1,42 @@
+SegmentID,ElementPosition,ElementName,DataType,MinLength,MaxLength,Required,Description,CodeList
+ST,01,TransactionSetIdentifierCode,AN,3,3,M,Transaction Set Identifier Code (850 for Purchase Order),850
+ST,02,TransactionSetControlNumber,AN,4,9,M,Uniquely identifies transaction set within functional group,
+BEG,01,TransactionSetPurposeCode,ID,2,2,M,Purpose of transaction (00=Original),00|01|04|05
+BEG,02,PurchaseOrderTypeCode,ID,2,2,M,Type of purchase order (NE=New Order|CH=Change),NE|CH|RL|SA
+BEG,03,PurchaseOrderNumber,AN,1,22,M,Identifying number for Purchase Order,
+BEG,04,ReleaseNumber,AN,1,30,O,Release number if applicable,
+BEG,05,Date,DT,8,8,M,Purchase Order date in CCYYMMDD format,
+REF,01,ReferenceIdentificationQualifier,ID,2,3,M,Code qualifying reference identification,DP|IA|PD|VN
+REF,02,ReferenceIdentification,AN,1,30,M,Reference information,
+REF,03,Description,AN,1,80,O,Free-form description,
+DTM,01,DateTimeQualifier,ID,3,3,M,Code specifying type of date,002|010|063|064
+DTM,02,Date,DT,8,8,M,Date in CCYYMMDD format,
+DTM,03,Time,TM,4,8,O,Time in HHMM or HHMMSS format,
+N1,01,EntityIdentifierCode,ID,2,3,M,Code identifying party (BY=Buyer|SE=Seller|ST=Ship To),BY|SE|ST|VN|SU
+N1,02,Name,AN,1,60,M,Free-form name,
+N1,03,IdentificationCodeQualifier,ID,1,2,O,Code designating system/method,01|92
+N1,04,IdentificationCode,AN,2,80,O,Code identifying party,
+N3,01,AddressInformation1,AN,1,55,M,Address line 1,
+N3,02,AddressInformation2,AN,1,55,O,Address line 2,
+N4,01,CityName,AN,2,30,M,Free-form city name,
+N4,02,StateOrProvinceCode,ID,2,2,O,US state or Canadian province code,
+N4,03,PostalCode,ID,3,15,O,Postal code,
+N4,04,CountryCode,ID,2,3,O,ISO country code,
+PO1,01,AssignedIdentification,AN,1,20,M,Line item number,
+PO1,02,QuantityOrdered,R,1,15,M,Quantity ordered,
+PO1,03,UnitOrBasisForMeasurementCode,ID,2,2,M,Unit of measure (EA=Each|CA=Case|BX=Box),EA|CA|BX|LB|KG|PR
+PO1,04,UnitPrice,R,1,17,M,Price per unit,
+PO1,05,BasisOfUnitPriceCode,ID,2,2,O,Code identifying pricing basis,
+PO1,06,ProductServiceIDQualifier,ID,2,2,M,Code identifying product/service ID type,BP|UP|UK|EN|SK
+PO1,07,ProductServiceID,AN,1,48,M,Identifying number for product/service,
+PO1,08,ProductServiceIDQualifier2,ID,2,2,O,Additional product ID qualifier,
+PO1,09,ProductServiceID2,AN,1,48,O,Additional product identification,
+PID,01,ItemDescriptionType,ID,1,1,M,Code indicating description type (F=Free-form),F|S|X
+PID,02,ProductProcessCharacteristicCode,ID,2,3,O,Code identifying characteristic,
+PID,03,AgencyQualifierCode,ID,2,2,O,Code identifying agency,
+PID,04,ProductDescriptionCode,AN,1,12,O,Code from industry code list,
+PID,05,Description,AN,1,80,M,Free-form product description,
+CTT,01,NumberOfLineItems,N0,1,6,M,Total number of line items in transaction,
+CTT,02,HashTotal,R,1,10,O,Sum of values in specified data element,
+SE,01,NumberOfIncludedSegments,N0,1,10,M,Total segments in transaction set,
+SE,02,TransactionSetControlNumber,AN,4,9,M,Must match ST02,

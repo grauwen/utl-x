@@ -1,0 +1,40 @@
+%utlx 1.0
+input leads csv
+output json
+---
+{
+  "salesPipeline": {
+    "totalLeads": count($leads),
+    "averageScore": sum(map($leads, fn(l) => l.Score)) / count($leads),
+    "hotLeads": filter($leads, fn(l) => l.Score >= 80),
+    "coldLeads": filter($leads, fn(l) => l.Score < 60),
+    "byIndustry": {
+      "Manufacturing": count(filter($leads, fn(l) => l.Industry == "Manufacturing")),
+      "Technology": count(filter($leads, fn(l) => l.Industry == "Technology")),
+      "Retail": count(filter($leads, fn(l) => l.Industry == "Retail")),
+      "Finance": count(filter($leads, fn(l) => l.Industry == "Finance")),
+      "Healthcare": count(filter($leads, fn(l) => l.Industry == "Healthcare")),
+      "Education": count(filter($leads, fn(l) => l.Industry == "Education")),
+      "Logistics": count(filter($leads, fn(l) => l.Industry == "Logistics"))
+    },
+    "bySource": {
+      "Website": count(filter($leads, fn(l) => l.LeadSource == "Website")),
+      "Referral": count(filter($leads, fn(l) => l.LeadSource == "Referral")),
+      "TradeShow": count(filter($leads, fn(l) => l.LeadSource == "TradeShow")),
+      "LinkedIn": count(filter($leads, fn(l) => l.LeadSource == "LinkedIn")),
+      "ColdCall": count(filter($leads, fn(l) => l.LeadSource == "ColdCall"))
+    }
+  },
+  "leads": map($leads, fn(lead) => {
+    "id": lead.LeadID,
+    "company": lead.CompanyName,
+    "contact": lead.ContactName,
+    "email": lead.Email,
+    "phone": lead.Phone,
+    "industry": lead.Industry,
+    "source": lead.LeadSource,
+    "score": lead.Score,
+    "priority": if (lead.Score >= 80) then "High" else if (lead.Score >= 60) then "Medium" else "Low",
+    "lastContact": lead.LastContact
+  })
+}

@@ -1,0 +1,9 @@
+EmployeeID,FirstName,LastName,Department,Salary,HireDate
+E001,John,Smith,Engineering,95000,2020-03-15
+E002,Sarah,Johnson,Marketing,78000,2019-07-22
+E003,Michael,Williams,Engineering,102000,2018-11-30
+E004,Emily,Brown,Sales,67000,2021-01-10
+E005,David,Jones,HR,71000,2020-09-05
+E006,Jessica,Garcia,Engineering,88000,2021-06-18
+E007,Christopher,Martinez,Finance,92000,2019-04-12
+E008,Amanda,Rodriguez,Sales,73000,2020-12-03

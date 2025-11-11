@@ -1,0 +1,269 @@
+%utlx 1.0
+input invoice csv
+output xsd
+---
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://example.com/b2b/invoice"
+           xmlns:tns="http://example.com/b2b/invoice"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>B2B Electronic Invoice Format - Standard Business Invoice Schema</xs:documentation>
+  </xs:annotation>
+
+  <xs:element name="Invoice" type="tns:InvoiceType"/>
+
+  <xs:complexType name="InvoiceType">
+    <xs:sequence>
+      <xs:element name="InvoiceHeader" type="tns:InvoiceHeaderType"/>
+      <xs:element name="SupplierInfo" type="tns:PartyInfoType"/>
+      <xs:element name="CustomerInfo" type="tns:PartyInfoType"/>
+      <xs:element name="LineItems" type="tns:LineItemsType"/>
+      <xs:element name="InvoiceTotals" type="tns:InvoiceTotalsType"/>
+      <xs:element name="PaymentInstructions" type="tns:PaymentInstructionsType" minOccurs="0"/>
+      <xs:element name="Notes" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Additional notes or comments</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Attachments" type="tns:AttachmentsType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="InvoiceHeaderType">
+    <xs:sequence>
+      {map(
+        filter($invoice, fn(row) => row.ElementPath == "Invoice/Header" && row.ElementName != "InvoiceHeader"),
+        fn(field) =>
+          <xs:element name={field.ElementName}
+                     type={if (field.DataType == "string") then "xs:string"
+                           else if (field.DataType == "date") then "xs:date"
+                           else "xs:string"}
+                     minOccurs={if (field.Required == "true") then "1" else "0"}>
+            <xs:annotation>
+              <xs:documentation>{field.Description}</xs:documentation>
+            </xs:annotation>
+            {if (field.Pattern != "") then
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:pattern value={field.Pattern}/>
+                </xs:restriction>
+              </xs:simpleType>
+            else <xs:annotation><xs:documentation>No pattern restriction</xs:documentation></xs:annotation>}
+          </xs:element>
+      )}
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PartyInfoType">
+    <xs:sequence>
+      <xs:element name="PartyID" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Unique party identifier</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="PartyName" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Legal company name</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="TaxID" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Tax identification number</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="VATNumber" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>VAT registration number</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Contact" type="tns:ContactType"/>
+      <xs:element name="Address" type="tns:AddressType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ContactType">
+    <xs:sequence>
+      <xs:element name="ContactPerson" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Contact person name</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Email">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{{2,}}"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="Phone">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="\+?[0-9\-\s()]{{10,20}}"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Street" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Street address</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="City" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>City name</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="PostalCode" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Postal/ZIP code</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Country">
+        <xs:annotation>
+          <xs:documentation>ISO country code</xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{{2}}"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="LineItemsType">
+    <xs:sequence>
+      <xs:element name="LineItem" type="tns:LineItemType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="LineItemType">
+    <xs:sequence>
+      {map(
+        filter($invoice, fn(row) => row.ElementPath == "Invoice/LineItems/LineItem"),
+        fn(field) =>
+          <xs:element name={field.ElementName}
+                     type={if (field.DataType == "string") then "xs:string"
+                           else if (field.DataType == "integer") then "xs:integer"
+                           else if (field.DataType == "decimal") then "xs:decimal"
+                           else "xs:string"}
+                     minOccurs={if (field.Required == "true") then "1" else "0"}>
+            <xs:annotation>
+              <xs:documentation>{field.Description}</xs:documentation>
+            </xs:annotation>
+            {if (field.MinValue != "" || field.MaxValue != "") then
+              <xs:simpleType>
+                <xs:restriction base={if (field.DataType == "integer") then "xs:integer" else if (field.DataType == "decimal") then "xs:decimal" else "xs:string"}>
+                  {if (field.MinValue != "") then <xs:minInclusive value={field.MinValue}/> else <xs:annotation><xs:documentation>No min</xs:documentation></xs:annotation>}
+                  {if (field.MaxValue != "") then <xs:maxInclusive value={field.MaxValue}/> else <xs:annotation><xs:documentation>No max</xs:documentation></xs:annotation>}
+                </xs:restriction>
+              </xs:simpleType>
+            else <xs:annotation><xs:documentation>No value restrictions</xs:documentation></xs:annotation>}
+          </xs:element>
+      )}
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="InvoiceTotalsType">
+    <xs:sequence>
+      <xs:element name="SubTotal" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>Subtotal before tax</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="TotalDiscount" type="xs:decimal" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Total discount amount</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="TotalTax" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>Total tax amount</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="TotalAmount" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>Total invoice amount</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="AmountDue" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>Amount due for payment</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="TaxBreakdown" type="tns:TaxBreakdownType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="TaxBreakdownType">
+    <xs:sequence>
+      <xs:element name="TaxDetail" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="TaxRate" type="xs:decimal"/>
+            <xs:element name="TaxableAmount" type="xs:decimal"/>
+            <xs:element name="TaxAmount" type="xs:decimal"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PaymentInstructionsType">
+    <xs:sequence>
+      <xs:element name="PaymentMethod" minOccurs="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="BankTransfer"/>
+            <xs:enumeration value="Check"/>
+            <xs:enumeration value="CreditCard"/>
+            <xs:enumeration value="DirectDebit"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="BankAccount" type="tns:BankAccountType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BankAccountType">
+    <xs:sequence>
+      <xs:element name="BankName" type="xs:string"/>
+      <xs:element name="AccountNumber" type="xs:string"/>
+      <xs:element name="IBAN" minOccurs="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{{2}}[0-9]{{2}}[A-Z0-9]+"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="SWIFT" minOccurs="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{{6}}[A-Z0-9]{{2}}([A-Z0-9]{{3}})?"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AttachmentsType">
+    <xs:sequence>
+      <xs:element name="Attachment" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="FileName" type="xs:string"/>
+            <xs:element name="FileType" type="xs:string"/>
+            <xs:element name="FileSize" type="xs:integer"/>
+            <xs:element name="Description" type="xs:string" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

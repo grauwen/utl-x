@@ -1,0 +1,25 @@
+%utlx 1.0
+input metrics csv {delimiter: "|"}
+output json
+---
+{
+  "databaseReport": {
+    "totalTables": count($metrics),
+    "totalSizeGB": sum(map($metrics, fn(m) => m.SizeGB)),
+    "totalRows": sum(map($metrics, fn(m) => m.RowCount)),
+    "byDatabase": {
+      "ProductionDB": filter($metrics, fn(m) => m.DatabaseName == "ProductionDB"),
+      "AnalyticsDB": filter($metrics, fn(m) => m.DatabaseName == "AnalyticsDB"),
+      "TestDB": filter($metrics, fn(m) => m.DatabaseName == "TestDB"),
+      "StagingDB": filter($metrics, fn(m) => m.DatabaseName == "StagingDB")
+    },
+    "highFragmentation": filter($metrics, fn(m) => m.FragmentationPct > 20)
+  },
+  "tables": map($metrics, fn(m) => {
+    "database": m.DatabaseName,
+    "table": m.TableName,
+    "rows": m.RowCount,
+    "sizeGB": m.SizeGB,
+    "needsOptimization": m.FragmentationPct > 15
+  })
+}

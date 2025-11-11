@@ -1,0 +1,11 @@
+﻿TaskID,ProjectName,TaskName,AssignedTo,Priority,Status,DueDate,EstimatedHours
+TSK-001,Website Redesign,Create wireframes,Alice Johnson,High,InProgress,2024-04-15,16
+TSK-002,Website Redesign,Design homepage mockup,Bob Smith,High,NotStarted,2024-04-18,24
+TSK-003,Website Redesign,Implement responsive layout,Charlie Davis,Medium,NotStarted,2024-04-25,40
+TSK-004,Mobile App,Setup development environment,Diana Martinez,High,Completed,2024-03-20,8
+TSK-005,Mobile App,Implement user authentication,Diana Martinez,High,InProgress,2024-04-10,32
+TSK-006,API Integration,Design API endpoints,Eve Wilson,Medium,Completed,2024-03-28,16
+TSK-007,API Integration,Write API documentation,Frank Brown,Low,InProgress,2024-04-12,12
+TSK-008,Database Migration,Schema design,George Taylor,High,Completed,2024-03-25,20
+TSK-009,Database Migration,Data migration scripts,Helen Garcia,High,InProgress,2024-04-08,24
+TSK-010,Testing,Write unit tests,Ivan Anderson,Medium,NotStarted,2024-04-20,28

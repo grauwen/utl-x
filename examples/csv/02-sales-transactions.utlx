@@ -1,0 +1,24 @@
+%utlx 1.0
+input transactions csv
+output json
+---
+{
+  "summary": {
+    "totalTransactions": count($transactions),
+    "totalRevenue": sum(map($transactions, fn(t) => t.Quantity * t.UnitPrice)),
+    "paymentMethods": {
+      "CreditCard": count(filter($transactions, fn(t) => t.PaymentMethod == "CreditCard")),
+      "PayPal": count(filter($transactions, fn(t) => t.PaymentMethod == "PayPal")),
+      "Cash": count(filter($transactions, fn(t) => t.PaymentMethod == "Cash")),
+      "BankTransfer": count(filter($transactions, fn(t) => t.PaymentMethod == "BankTransfer"))
+    }
+  },
+  "transactions": map($transactions, fn(txn) => {
+    "id": txn.TransactionID,
+    "customer": txn.CustomerID,
+    "product": txn.ProductCode,
+    "totalAmount": txn.Quantity * txn.UnitPrice,
+    "date": txn.TransactionDate,
+    "payment": txn.PaymentMethod
+  })
+}

@@ -1,0 +1,47 @@
+TableName,ColumnName,DataType,Nullable,DefaultValue,MaxLength,Precision,Scale,IsPrimaryKey,IsForeignKey,ForeignTable,Description
+orders,order_id,integer,false,,,,,,true,false,,Unique order identifier
+orders,customer_id,integer,false,,,,,,false,true,customers,Reference to customer
+orders,order_date,timestamp,false,CURRENT_TIMESTAMP,,,,,false,false,,Date and time of order placement
+orders,order_status,varchar,false,pending,20,,,false,false,,Order status: pending/processing/shipped/delivered/cancelled
+orders,total_amount,decimal,false,0.00,,10,2,false,false,,Total order amount in USD
+orders,shipping_address_id,integer,true,,,,,,false,true,addresses,Reference to shipping address
+orders,billing_address_id,integer,true,,,,,,false,true,addresses,Reference to billing address
+orders,payment_method,varchar,false,,30,,,false,false,,Payment method used
+orders,tracking_number,varchar,true,,50,,,false,false,,Shipment tracking number
+orders,created_at,timestamp,false,CURRENT_TIMESTAMP,,,,,false,false,,Record creation timestamp
+orders,updated_at,timestamp,false,CURRENT_TIMESTAMP,,,,,false,false,,Record last update timestamp
+order_items,item_id,integer,false,,,,,,true,false,,Unique line item identifier
+order_items,order_id,integer,false,,,,,,false,true,orders,Reference to parent order
+order_items,product_id,integer,false,,,,,,false,true,products,Reference to product
+order_items,quantity,integer,false,1,,,,,false,false,,Quantity ordered
+order_items,unit_price,decimal,false,0.00,,10,2,false,false,,Price per unit at time of order
+order_items,discount_percent,decimal,true,0.00,,5,2,false,false,,Discount percentage applied
+order_items,tax_rate,decimal,false,0.00,,5,2,false,false,,Tax rate percentage
+order_items,line_total,decimal,false,0.00,,10,2,false,false,,Total line amount including tax
+customers,customer_id,integer,false,,,,,,true,false,,Unique customer identifier
+customers,email,varchar,false,,100,,,false,false,,Customer email address (unique)
+customers,first_name,varchar,false,,50,,,false,false,,Customer first name
+customers,last_name,varchar,false,,50,,,false,false,,Customer last name
+customers,phone,varchar,true,,20,,,false,false,,Contact phone number
+customers,account_status,varchar,false,active,20,,,false,false,,Account status: active/inactive/suspended
+customers,created_at,timestamp,false,CURRENT_TIMESTAMP,,,,,false,false,,Account creation timestamp
+customers,last_login,timestamp,true,,,,,,false,false,,Last login timestamp
+products,product_id,integer,false,,,,,,true,false,,Unique product identifier
+products,sku,varchar,false,,50,,,false,false,,Stock keeping unit (unique)
+products,product_name,varchar,false,,200,,,false,false,,Product display name
+products,description,text,true,,,,,,false,false,,Product detailed description
+products,category,varchar,false,,50,,,false,false,,Product category
+products,price,decimal,false,0.00,,10,2,false,false,,Current selling price
+products,cost,decimal,false,0.00,,10,2,false,false,,Product cost (for margin calculation)
+products,stock_quantity,integer,false,0,,,,,false,false,,Current inventory quantity
+products,reorder_level,integer,false,10,,,,,false,false,,Minimum stock level before reorder
+products,is_active,boolean,false,true,,,,,false,false,,Product active/inactive flag
+addresses,address_id,integer,false,,,,,,true,false,,Unique address identifier
+addresses,customer_id,integer,false,,,,,,false,true,customers,Reference to customer
+addresses,address_type,varchar,false,,20,,,false,false,,Type: shipping/billing/both
+addresses,street_line1,varchar,false,,100,,,false,false,,Primary street address
+addresses,street_line2,varchar,true,,100,,,false,false,,Secondary street address
+addresses,city,varchar,false,,50,,,false,false,,City name
+addresses,state,varchar,false,,50,,,false,false,,State or province
+addresses,postal_code,varchar,false,,20,,,false,false,,ZIP or postal code
+addresses,country,varchar,false,USA,3,,,false,false,,ISO country code

@@ -1,0 +1,21 @@
+%utlx 1.0
+input readings csv {headers: false}
+output json
+---
+{
+  "sensorData": {
+    "totalReadings": count($readings),
+    "alerts": count(filter($readings, fn(r) => r[4] == "Alert")),
+    "warnings": count(filter($readings, fn(r) => r[4] == "Warning")),
+    "normal": count(filter($readings, fn(r) => r[4] == "Normal")),
+    "avgTemperature": sum(map($readings, fn(r) => r[2])) / count($readings),
+    "avgHumidity": sum(map($readings, fn(r) => r[3])) / count($readings)
+  },
+  "readings": map($readings, fn(reading) => {
+    "sensorID": reading[0],
+    "timestamp": reading[1],
+    "temperature": reading[2],
+    "humidity": reading[3],
+    "status": reading[4]
+  })
+}

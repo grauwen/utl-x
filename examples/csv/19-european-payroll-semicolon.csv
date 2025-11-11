@@ -1,0 +1,7 @@
+EmployeeID;Name;Department;GrossSalary;TaxRate;NetSalary;Currency
+EMP-2001;Hans Müller;Engineering;"8.500,00";22,5;"6.587,50";EUR
+EMP-2002;Marie Dubois;Marketing;"6.750,00";20,0;"5.400,00";EUR
+EMP-2003;Giovanni Rossi;Sales;"7.200,00";21,5;"5.652,00";EUR
+EMP-2004;Anna Schmidt;HR;"5.850,00";18,5;"4.767,75";EUR
+EMP-2005;Jean Martin;Finance;"9.100,00";24,0;"6.916,00";EUR
+EMP-2006;Lukas Weber;IT;"7.850,00";22,0;"6.123,00";EUR

@@ -1,0 +1,9 @@
+TrackingNumber;Origin;Destination;Weight;ShipDate;EstDelivery;Carrier;Status
+TRK-AA-10001;New York;Los Angeles;5.2;2024-03-10;2024-03-13;FedEx;InTransit
+TRK-AA-10002;Chicago;Miami;12.8;2024-03-10;2024-03-14;UPS;InTransit
+TRK-AA-10003;Seattle;Boston;3.5;2024-03-11;2024-03-15;USPS;Processing
+TRK-AA-10004;Dallas;Denver;8.9;2024-03-11;2024-03-13;FedEx;InTransit
+TRK-AA-10005;Atlanta;Phoenix;15.3;2024-03-12;2024-03-16;UPS;Processing
+TRK-AA-10006;Philadelphia;San Diego;6.7;2024-03-12;2024-03-16;FedEx;Delivered
+TRK-AA-10007;Houston;Portland;22.1;2024-03-13;2024-03-17;UPS;InTransit
+TRK-AA-10008;Detroit;Las Vegas;4.4;2024-03-13;2024-03-15;USPS;Processing

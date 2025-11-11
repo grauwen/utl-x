@@ -1,0 +1,27 @@
+%utlx 1.0
+input invoices csv
+output xml
+---
+<InvoiceReport>
+  <Summary>
+    <TotalInvoices>{count($invoices)}</TotalInvoices>
+    <TotalSubTotal>{sum(map($invoices, fn(i) => i.SubTotal))}</TotalSubTotal>
+    <TotalVAT>{sum(map($invoices, fn(i) => i.VAT_Amount))}</TotalVAT>
+    <TotalAmount>{sum(map($invoices, fn(i) => i.TotalAmount))}</TotalAmount>
+    <Currency>CHF</Currency>
+  </Summary>
+  <Invoices>
+    {map($invoices, fn(inv) =>
+      <Invoice>
+        <Number>{inv.InvoiceNumber}</Number>
+        <Client>{inv.ClientName}</Client>
+        <Date>{inv.InvoiceDate}</Date>
+        <Amounts>
+          <SubTotal>{inv.SubTotal}</SubTotal>
+          <VAT rate="{inv.VAT_Rate}">{inv.VAT_Amount}</VAT>
+          <Total>{inv.TotalAmount}</Total>
+        </Amounts>
+      </Invoice>
+    )}
+  </Invoices>
+</InvoiceReport>

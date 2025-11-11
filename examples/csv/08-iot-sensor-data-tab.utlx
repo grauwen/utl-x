@@ -1,0 +1,30 @@
+%utlx 1.0
+input sensors csv {delimiter: "\t"}
+output json
+---
+{
+  "telemetryReport": {
+    "timestamp": "2024-03-15T14:30:00",
+    "totalDevices": count($sensors),
+    "byLocation": {
+      "Warehouse-A": filter($sensors, fn(s) => s.Location == "Warehouse-A"),
+      "Warehouse-B": filter($sensors, fn(s) => s.Location == "Warehouse-B"),
+      "Factory-Floor": filter($sensors, fn(s) => s.Location == "Factory-Floor"),
+      "Cold-Storage": filter($sensors, fn(s) => s.Location == "Cold-Storage"),
+      "Office-A": filter($sensors, fn(s) => s.Location == "Office-A"),
+      "Office-B": filter($sensors, fn(s) => s.Location == "Office-B")
+    },
+    "lowBattery": filter($sensors, fn(s) => s.BatteryLevel < 50),
+    "alerts": filter($sensors, fn(s) =>
+      (s.SensorType == "Temperature" && s.Reading < 0) ||
+      (s.BatteryLevel < 30)
+    )
+  },
+  "readings": map($sensors, fn(sensor) => {
+    "device": sensor.DeviceID,
+    "type": sensor.SensorType,
+    "location": sensor.Location,
+    "value": sensor.Reading + " " + sensor.Unit,
+    "battery": sensor.BatteryLevel + "%"
+  })
+}

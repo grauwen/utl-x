@@ -1,0 +1,31 @@
+%utlx 1.0
+input budget csv
+output json
+---
+{
+  "budgetAnalysis": {
+    "quarter": "Q1-2024",
+    "totalBudget": sum(map($budget, fn(b) => b.BudgetAllocated)),
+    "totalSpending": sum(map($budget, fn(b) => b.ActualSpending)),
+    "totalVariance": sum(map($budget, fn(b) => b.Variance)),
+    "overBudget": filter($budget, fn(b) => b.Variance < 0),
+    "underBudget": filter($budget, fn(b) => b.Variance > 0),
+    "byDepartment": {
+      "Marketing": filter($budget, fn(b) => b.Department == "Marketing"),
+      "Engineering": filter($budget, fn(b) => b.Department == "Engineering"),
+      "Sales": filter($budget, fn(b) => b.Department == "Sales"),
+      "Operations": filter($budget, fn(b) => b.Department == "Operations"),
+      "HR": filter($budget, fn(b) => b.Department == "HR"),
+      "Finance": filter($budget, fn(b) => b.Department == "Finance")
+    }
+  },
+  "departments": map($budget, fn(dept) => {
+    "department": dept.Department,
+    "budgetAllocated": dept.BudgetAllocated,
+    "actualSpending": dept.ActualSpending,
+    "variance": dept.Variance,
+    "variancePct": dept.VariancePct,
+    "status": if (dept.Variance < 0) then "Over Budget" else "Under Budget",
+    "quarter": dept.Quarter
+  })
+}

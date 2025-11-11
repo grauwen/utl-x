@@ -1,0 +1,7 @@
+InvoiceNumber,ClientName,InvoiceDate,SubTotal,VAT_Rate,VAT_Amount,TotalAmount
+INV-CH-5001,Zürich Trading AG,2024-03-01,"12'450.00",7.7,"958.65","13'408.65"
+INV-CH-5002,Geneva Finance SA,2024-03-02,"8'750.50",7.7,"673.79","9'424.29"
+INV-CH-5003,Basel Logistics GmbH,2024-03-03,"25'600.00",7.7,"1'971.20","27'571.20"
+INV-CH-5004,Bern Services Ltd,2024-03-04,"6'890.75",7.7,"530.59","7'421.34"
+INV-CH-5005,Lausanne Tech SA,2024-03-05,"34'250.00",7.7,"2'637.25","36'887.25"
+INV-CH-5006,Lucerne Industries,2024-03-06,"15'430.50",7.7,"1'188.15","16'618.65"

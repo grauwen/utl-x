@@ -1,0 +1,114 @@
+{
+  "customers": [
+    {
+      "customerId": "CUST-10001",
+      "personalInfo": {
+        "firstName": "Sarah",
+        "lastName": "Thompson",
+        "email": "sarah.thompson@example.com",
+        "phone": "+1-555-0101"
+      },
+      "address": {
+        "street": "123 Main Street",
+        "city": "New York",
+        "state": "NY",
+        "zipCode": "10001",
+        "country": "USA"
+      },
+      "account": {
+        "status": "Active",
+        "tier": "Premium",
+        "since": "2022-03-15",
+        "lifetimeValue": 45780.50
+      },
+      "preferences": {
+        "newsletter": true,
+        "smsAlerts": false,
+        "language": "en"
+      }
+    },
+    {
+      "customerId": "CUST-10002",
+      "personalInfo": {
+        "firstName": "Michael",
+        "lastName": "Chen",
+        "email": "m.chen@example.com",
+        "phone": "+1-555-0102"
+      },
+      "address": {
+        "street": "456 Oak Avenue",
+        "city": "San Francisco",
+        "state": "CA",
+        "zipCode": "94102",
+        "country": "USA"
+      },
+      "account": {
+        "status": "Active",
+        "tier": "Gold",
+        "since": "2021-07-22",
+        "lifetimeValue": 78920.75
+      },
+      "preferences": {
+        "newsletter": true,
+        "smsAlerts": true,
+        "language": "en"
+      }
+    },
+    {
+      "customerId": "CUST-10003",
+      "personalInfo": {
+        "firstName": "Emma",
+        "lastName": "Rodriguez",
+        "email": "emma.r@example.com",
+        "phone": "+1-555-0103"
+      },
+      "address": {
+        "street": "789 Pine Road",
+        "city": "Austin",
+        "state": "TX",
+        "zipCode": "78701",
+        "country": "USA"
+      },
+      "account": {
+        "status": "Active",
+        "tier": "Standard",
+        "since": "2023-01-10",
+        "lifetimeValue": 12450.25
+      },
+      "preferences": {
+        "newsletter": false,
+        "smsAlerts": false,
+        "language": "en"
+      }
+    },
+    {
+      "customerId": "CUST-10004",
+      "personalInfo": {
+        "firstName": "James",
+        "lastName": "Wilson",
+        "email": "j.wilson@example.com",
+        "phone": "+1-555-0104"
+      },
+      "address": {
+        "street": "321 Elm Street",
+        "city": "Chicago",
+        "state": "IL",
+        "zipCode": "60601",
+        "country": "USA"
+      },
+      "account": {
+        "status": "Inactive",
+        "tier": "Standard",
+        "since": "2020-11-05",
+        "lifetimeValue": 8920.00
+      },
+      "preferences": {
+        "newsletter": false,
+        "smsAlerts": false,
+        "language": "en"
+      }
+    }
+  ],
+  "exportDate": "2024-03-15",
+  "totalRecords": 4
+}

@@ -1,0 +1,169 @@
+{
+  "meta": {
+    "apiVersion": "v2.1",
+    "timestamp": "2024-03-15T14:30:00Z",
+    "totalResults": 6,
+    "page": 1,
+    "perPage": 10
+  },
+  "data": {
+    "repositories": [
+      {
+        "id": "repo-001",
+        "name": "awesome-api",
+        "fullName": "techcorp/awesome-api",
+        "description": "RESTful API framework for modern applications",
+        "owner": {
+          "username": "techcorp",
+          "type": "Organization"
+        },
+        "stats": {
+          "stars": 2847,
+          "forks": 456,
+          "watchers": 189,
+          "openIssues": 23,
+          "contributors": 45
+        },
+        "timestamps": {
+          "created": "2022-01-15T10:30:00Z",
+          "updated": "2024-03-14T18:22:00Z",
+          "lastPush": "2024-03-14T18:22:00Z"
+        },
+        "language": "TypeScript",
+        "license": "MIT",
+        "isPrivate": false,
+        "isArchived": false
+      },
+      {
+        "id": "repo-002",
+        "name": "data-processor",
+        "fullName": "techcorp/data-processor",
+        "description": "High-performance data transformation engine",
+        "owner": {
+          "username": "techcorp",
+          "type": "Organization"
+        },
+        "stats": {
+          "stars": 1523,
+          "forks": 234,
+          "watchers": 98,
+          "openIssues": 12,
+          "contributors": 28
+        },
+        "timestamps": {
+          "created": "2021-08-22T14:15:00Z",
+          "updated": "2024-03-13T09:45:00Z",
+          "lastPush": "2024-03-13T09:45:00Z"
+        },
+        "language": "Python",
+        "license": "Apache-2.0",
+        "isPrivate": false,
+        "isArchived": false
+      },
+      {
+        "id": "repo-003",
+        "name": "mobile-ui-kit",
+        "fullName": "devteam/mobile-ui-kit",
+        "description": "Beautiful UI components for mobile apps",
+        "owner": {
+          "username": "devteam",
+          "type": "Organization"
+        },
+        "stats": {
+          "stars": 5892,
+          "forks": 892,
+          "watchers": 345,
+          "openIssues": 67,
+          "contributors": 89
+        },
+        "timestamps": {
+          "created": "2020-05-10T08:00:00Z",
+          "updated": "2024-03-15T12:10:00Z",
+          "lastPush": "2024-03-15T12:10:00Z"
+        },
+        "language": "Swift",
+        "license": "MIT",
+        "isPrivate": false,
+        "isArchived": false
+      },
+      {
+        "id": "repo-004",
+        "name": "cloud-deployer",
+        "fullName": "techcorp/cloud-deployer",
+        "description": "Automated cloud infrastructure deployment tool",
+        "owner": {
+          "username": "techcorp",
+          "type": "Organization"
+        },
+        "stats": {
+          "stars": 3401,
+          "forks": 567,
+          "watchers": 234,
+          "openIssues": 34,
+          "contributors": 52
+        },
+        "timestamps": {
+          "created": "2021-11-03T16:20:00Z",
+          "updated": "2024-03-14T20:33:00Z",
+          "lastPush": "2024-03-14T20:33:00Z"
+        },
+        "language": "Go",
+        "license": "Apache-2.0",
+        "isPrivate": false,
+        "isArchived": false
+      },
+      {
+        "id": "repo-005",
+        "name": "legacy-system",
+        "fullName": "oldproject/legacy-system",
+        "description": "Archived legacy codebase",
+        "owner": {
+          "username": "oldproject",
+          "type": "Organization"
+        },
+        "stats": {
+          "stars": 234,
+          "forks": 45,
+          "watchers": 12,
+          "openIssues": 0,
+          "contributors": 8
+        },
+        "timestamps": {
+          "created": "2018-03-20T11:00:00Z",
+          "updated": "2022-06-15T14:00:00Z",
+          "lastPush": "2022-06-15T14:00:00Z"
+        },
+        "language": "Java",
+        "license": "GPL-3.0",
+        "isPrivate": false,
+        "isArchived": true
+      },
+      {
+        "id": "repo-006",
+        "name": "analytics-dashboard",
+        "fullName": "devteam/analytics-dashboard",
+        "description": "Real-time analytics and monitoring dashboard",
+        "owner": {
+          "username": "devteam",
+          "type": "Organization"
+        },
+        "stats": {
+          "stars": 4123,
+          "forks": 678,
+          "watchers": 289,
+          "openIssues": 45,
+          "contributors": 67
+        },
+        "timestamps": {
+          "created": "2021-02-28T09:30:00Z",
+          "updated": "2024-03-15T11:22:00Z",
+          "lastPush": "2024-03-15T11:22:00Z"
+        },
+        "language": "JavaScript",
+        "license": "MIT",
+        "isPrivate": false,
+        "isArchived": false
+      }
+    ]
+  }
+}

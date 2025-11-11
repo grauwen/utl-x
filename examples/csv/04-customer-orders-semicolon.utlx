@@ -1,0 +1,23 @@
+%utlx 1.0
+input orders csv {delimiter: ";"}
+output json
+---
+{
+  "orderSummary": {
+    "totalOrders": count($orders),
+    "totalRevenue": sum(map($orders, fn(o) => o.OrderTotal)),
+    "byCountry": {
+      "Germany": filter($orders, fn(o) => o.Country == "Germany"),
+      "France": filter($orders, fn(o) => o.Country == "France"),
+      "Italy": filter($orders, fn(o) => o.Country == "Italy"),
+      "Austria": filter($orders, fn(o) => o.Country == "Austria"),
+      "Switzerland": filter($orders, fn(o) => o.Country == "Switzerland")
+    },
+    "byStatus": {
+      "Shipped": count(filter($orders, fn(o) => o.Status == "Shipped")),
+      "Processing": count(filter($orders, fn(o) => o.Status == "Processing")),
+      "Delivered": count(filter($orders, fn(o) => o.Status == "Delivered"))
+    }
+  },
+  "orders": $orders
+}

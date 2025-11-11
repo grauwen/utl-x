@@ -1,0 +1,30 @@
+%utlx 1.0
+input orders xml {arrays: ["Order", "Item"]}
+output csv {delimiter: ";"}
+---
+flatten(map($orders.OrderHistory.Order, fn(order) =>
+  map(order.Items.Item, fn(item) => {
+    "OrderID": order.OrderID,
+    "OrderDate": order.OrderDate,
+    "CustomerID": order.Customer.CustomerID,
+    "CompanyName": order.Customer.CompanyName,
+    "Country": order.Customer.BillingAddress.Country,
+    "State": order.Customer.BillingAddress.State,
+    "City": order.Customer.BillingAddress.City,
+    "LineNumber": item.LineNumber,
+    "ProductCode": item.ProductCode,
+    "Description": item.Description,
+    "Quantity": item.Quantity,
+    "UnitPrice": item.UnitPrice,
+    "DiscountPercent": item.Discount,
+    "SubTotal": item.Quantity * item.UnitPrice,
+    "DiscountAmount": (item.Quantity * item.UnitPrice) * (item.Discount / 100),
+    "NetAmount": (item.Quantity * item.UnitPrice) * (1 - (item.Discount / 100)),
+    "TaxRate": item.TaxRate,
+    "TaxAmount": ((item.Quantity * item.UnitPrice) * (1 - (item.Discount / 100))) * (item.TaxRate / 100),
+    "TotalAmount": ((item.Quantity * item.UnitPrice) * (1 - (item.Discount / 100))) * (1 + (item.TaxRate / 100)),
+    "PaymentMethod": order.Payment.Method,
+    "PaymentStatus": order.Payment.Status,
+    "TransactionID": order.Payment.TransactionID
+  })
+))

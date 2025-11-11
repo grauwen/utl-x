@@ -1,0 +1,19 @@
+%utlx 1.0
+input crm json
+output csv
+---
+map($crm.customers, fn(customer) => {
+  "CustomerID": customer.customerId,
+  "FirstName": customer.personalInfo.firstName,
+  "LastName": customer.personalInfo.lastName,
+  "Email": customer.personalInfo.email,
+  "Phone": customer.personalInfo.phone,
+  "FullAddress": customer.address.street + ", " + customer.address.city + ", " + customer.address.state + " " + customer.address.zipCode,
+  "Country": customer.address.country,
+  "AccountStatus": customer.account.status,
+  "Tier": customer.account.tier,
+  "MemberSince": customer.account.since,
+  "LifetimeValue": customer.account.lifetimeValue,
+  "Newsletter": if (customer.preferences.newsletter) then "Yes" else "No",
+  "SMSAlerts": if (customer.preferences.smsAlerts) then "Yes" else "No"
+})

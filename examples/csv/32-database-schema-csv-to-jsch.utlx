@@ -1,0 +1,74 @@
+%utlx 1.0
+input schema csv
+output jsch
+---
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "E-Commerce Database Schema",
+  "description": "JSON Schema representation of e-commerce database tables",
+  "type": "object",
+  "definitions": merge(
+    map(
+      ["orders", "order_items", "customers", "products", "addresses"],
+      fn(tableName) => {
+        tableName: {
+          "type": "object",
+          "description": "Table: " + tableName,
+          "properties": merge(
+            map(
+              filter($schema, fn(row) => row.TableName == tableName),
+              fn(col) => {
+                col.ColumnName: {
+                  "type": if (col.DataType == "integer") then "integer"
+                         else if (col.DataType == "decimal") then "number"
+                         else if (col.DataType == "boolean") then "boolean"
+                         else if (col.DataType == "timestamp") then "string"
+                         else if (col.DataType == "text") then "string"
+                         else "string",
+                  "description": col.Description,
+                  ...(if (col.DataType == "timestamp") then {"format": "date-time"} else {}),
+                  ...(if (col.MaxLength != "") then {"maxLength": col.MaxLength} else {}),
+                  ...(if (col.IsPrimaryKey == "true") then {"primaryKey": true} else {}),
+                  ...(if (col.IsForeignKey == "true") then {
+                    "foreignKey": {
+                      "table": col.ForeignTable,
+                      "column": "id"
+                    }
+                  } else {}),
+                  ...(if (col.DefaultValue != "") then {"default": col.DefaultValue} else {})
+                }
+              }
+            )
+          ),
+          "required": map(
+            filter(
+              filter($schema, fn(row) => row.TableName == tableName),
+              fn(col) => col.Nullable == "false"
+            ),
+            fn(col) => col.ColumnName
+          )
+        }
+      }
+    )
+  ),
+  "properties": {
+    "database": {
+      "type": "string",
+      "const": "ecommerce_db"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "tables": {
+      "type": "object",
+      "properties": {
+        "orders": {"$ref": "#/definitions/orders"},
+        "order_items": {"$ref": "#/definitions/order_items"},
+        "customers": {"$ref": "#/definitions/customers"},
+        "products": {"$ref": "#/definitions/products"},
+        "addresses": {"$ref": "#/definitions/addresses"}
+      }
+    }
+  }
+}
