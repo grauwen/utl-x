@@ -177,6 +177,28 @@ class TransformationService {
     private fun parseInput(data: String, format: String, options: Map<String, Any> = emptyMap()): UDM {
         return try {
             when (format.lowercase()) {
+                "auto" -> {
+                    // Auto-detect format from input data
+                    val trimmed = data.trim()
+                    val detectedFormat = when {
+                        trimmed.startsWith("<") -> "xml"
+                        trimmed.startsWith("{") || trimmed.startsWith("[") -> "json"
+                        trimmed.startsWith("---") || trimmed.contains(":\n") || trimmed.contains(": ") -> "yaml"
+                        // Detect CSV: look for comma-separated values with consistent column counts
+                        trimmed.contains(",") && trimmed.lines().size > 1 -> {
+                            val lines = trimmed.lines().filter { it.isNotBlank() }
+                            val firstLineCommas = lines.firstOrNull()?.count { it == ',' } ?: 0
+                            // If multiple lines have similar comma counts, likely CSV
+                            if (firstLineCommas > 0 && lines.take(3).all { it.count { c -> c == ',' } == firstLineCommas }) {
+                                "csv"
+                            } else {
+                                "json" // Default to JSON
+                            }
+                        }
+                        else -> "json" // Default to JSON
+                    }
+                    parseInput(data, detectedFormat, options)
+                }
                 "xml" -> {
                     val arrayHints = (options["arrays"] as? List<*>)
                         ?.mapNotNull { it as? String }

@@ -198,45 +198,61 @@ class Parser(
         val savedPosition = current
         val nameParts = mutableListOf(baseName)
 
-        // Try to consume MINUS + token combinations
-        while (check(TokenType.MINUS)) {
-            val minusPos = current
-            advance() // consume MINUS
+        // Try to consume hyphens and following tokens
+        // Note: Lexer may tokenize "-2" as a negative NUMBER
+        while (true) {
+            val currentToken = peek()
 
-            // Get the next token (could be IDENTIFIER or keyword)
-            if (isAtEnd()) {
-                // Restore position and return null
-                current = savedPosition
-                return null
-            }
+            // Case 1: Negative NUMBER like "-2" in "$input2-2"
+            if (currentToken.type == TokenType.NUMBER && currentToken.lexeme.startsWith("-")) {
+                // Extract the numeric part (without -)
+                val numLexeme = advance().lexeme
+                nameParts.add(numLexeme.substring(1))
 
-            val nextToken = peek()
-            val nextLexeme = nextToken.lexeme
+                val candidateName = nameParts.joinToString("-")
+                if (declaredInputs.contains(candidateName)) {
+                    return candidateName
+                }
+                // Continue trying longer names
 
-            nameParts.add(nextLexeme)
-            val candidateName = nameParts.joinToString("-")
+            // Case 2: Regular MINUS token
+            } else if (check(TokenType.MINUS)) {
+                advance() // consume MINUS
 
-            // Check if this candidate exists in declared inputs
-            if (declaredInputs.contains(candidateName)) {
-                // Found it! Consume the token and return the full name
+                if (isAtEnd()) {
+                    current = savedPosition
+                    return null
+                }
+
+                val nextToken = peek()
+                val nextLexeme = nextToken.lexeme
+
+                nameParts.add(nextLexeme)
+                val candidateName = nameParts.joinToString("-")
+
+                // Check if this candidate exists in declared inputs
+                if (declaredInputs.contains(candidateName)) {
+                    advance()
+                    return candidateName
+                }
+
+                // Not found yet, but might be a longer name, so continue
+                // However, if the next token is something that can't be part of a name, stop
+                if (nextToken.type in listOf(
+                    TokenType.LPAREN, TokenType.RPAREN, TokenType.LBRACE, TokenType.RBRACE,
+                    TokenType.LBRACKET, TokenType.RBRACKET, TokenType.COMMA, TokenType.SEMICOLON,
+                    TokenType.DOT, TokenType.COLON
+                )) {
+                    current = savedPosition
+                    return null
+                }
+
+                // Consume the next token and continue
                 advance()
-                return candidateName
+            } else {
+                // No more hyphens
+                break
             }
-
-            // Not found yet, but might be a longer name, so continue
-            // However, if the next token is something that can't be part of a name, stop
-            if (nextToken.type in listOf(
-                TokenType.LPAREN, TokenType.RPAREN, TokenType.LBRACE, TokenType.RBRACE,
-                TokenType.LBRACKET, TokenType.RBRACKET, TokenType.COMMA, TokenType.SEMICOLON,
-                TokenType.DOT, TokenType.COLON
-            )) {
-                // Can't be part of name, restore and return null
-                current = savedPosition
-                return null
-            }
-
-            // Consume the next token and continue
-            advance()
         }
 
         // Reached end of potential hyphenated name
@@ -254,44 +270,59 @@ class Parser(
     /**
      * Parse a name in the HEADER section that may contain hyphens
      * Only called when parsing header (before ---), where we have clear boundaries
-     * Examples: "my-input", "order-id", "customer-data"
-     * Reads IDENTIFIER [-IDENTIFIER]* until we hit a format keyword, comma, or separator
+     * Examples: "my-input", "order-id", "customer-data", "input2-2"
+     *
+     * Simple approach: collect all tokens until we hit a format keyword, comma, or separator,
+     * then concatenate their lexemes to form the name
      */
     private fun parseHeaderNameWithHyphens(separatorIndex: Int): String {
-        val nameParts = mutableListOf<String>()
+        val nameTokens = mutableListOf<String>()
 
-        // First token must be an IDENTIFIER or keyword (input/output)
-        if (!check(TokenType.IDENTIFIER) && !check(TokenType.INPUT) && !check(TokenType.OUTPUT)) {
-            error("Expected name")
-            return ""
-        }
+        // Collect tokens until we hit a format keyword (not followed by hyphen), comma, or separator
+        while (current < separatorIndex) {
+            val currentToken = peek()
 
-        nameParts.add(advance().lexeme)
-
-        // Continue reading if we see MINUS followed by IDENTIFIER or keyword (but not if we hit boundary)
-        while (check(TokenType.MINUS) && current + 1 < separatorIndex) {
-            val nextToken = tokens[current + 1]
-
-            // Next token can be IDENTIFIER or any keyword EXCEPT format keywords
-            // Format keywords: XML, JSON, CSV, YAML, AUTO, XSD, JSCH, AVRO, PROTO
-            val isFormatKeyword = nextToken.type in listOf(
+            // Check if this is a format keyword
+            val isFormatKeyword = currentToken.type in listOf(
                 TokenType.XML, TokenType.JSON, TokenType.CSV, TokenType.YAML,
                 TokenType.AUTO, TokenType.XSD, TokenType.JSCH, TokenType.AVRO, TokenType.PROTO
             )
 
-            if (!isFormatKeyword && nextToken.type != TokenType.COMMA && nextToken.type != TokenType.TRIPLE_DASH) {
-                // Can be part of the name (IDENTIFIER or other keyword like INPUT, OUTPUT, etc.)
-                advance() // consume MINUS
-                nameParts.add(advance().lexeme) // consume next token
-            } else {
-                // Hit a format keyword, comma, or separator - stop here
+            // If it's a format keyword, check if it's followed by a hyphen
+            // If yes, it's part of the name (e.g., "input-auto-data")
+            // If no, it's the actual format
+            if (isFormatKeyword) {
+                val nextTokenIndex = current + 1
+                val isFollowedByHyphen = nextTokenIndex < separatorIndex && (
+                    tokens[nextTokenIndex].type == TokenType.MINUS ||
+                    (tokens[nextTokenIndex].type == TokenType.NUMBER && tokens[nextTokenIndex].lexeme.startsWith("-"))
+                )
+
+                if (!isFollowedByHyphen) {
+                    // This is the format, stop here
+                    break
+                }
+                // Otherwise, it's part of the name, continue collecting
+            }
+
+            // Stop at delimiters
+            if (currentToken.type == TokenType.COMMA || currentToken.type == TokenType.TRIPLE_DASH) {
                 break
             }
+
+            // Collect the token's lexeme
+            nameTokens.add(advance().lexeme)
         }
 
-        val fullName = nameParts.joinToString("-")
+        if (nameTokens.isEmpty()) {
+            error("Expected input/output name")
+            return ""
+        }
 
-        // Validate: no spaces in name (shouldn't happen with token-based parsing, but check anyway)
+        // Concatenate all lexemes to form the name
+        val fullName = nameTokens.joinToString("")
+
+        // Validate: no spaces in name
         if (fullName.contains(' ')) {
             error("Input/output names cannot contain spaces: '$fullName'")
         }
@@ -879,11 +910,19 @@ class Parser(
                 val name = if (lexeme.startsWith('$')) {
                     val baseName = lexeme.substring(1)
 
-                    // Check if this might be a hyphenated input name (e.g., $my-input)
-                    // Look ahead for MINUS followed by more tokens, and check if the full name exists
-                    if (currentSection == ScriptSection.CONTENT && check(TokenType.MINUS)) {
-                        val fullName = tryParseHyphenatedInputReference(baseName)
-                        fullName ?: baseName  // Use full name if found, otherwise just base
+                    // Check if this might be a hyphenated input name (e.g., $my-input, $input2-2)
+                    // Look ahead for MINUS or negative NUMBER, and check if the full name exists
+                    if (currentSection == ScriptSection.CONTENT) {
+                        val nextToken = peek()
+                        val mightBeHyphenated = check(TokenType.MINUS) ||
+                            (nextToken.type == TokenType.NUMBER && nextToken.lexeme.startsWith("-"))
+
+                        if (mightBeHyphenated) {
+                            val fullName = tryParseHyphenatedInputReference(baseName)
+                            fullName ?: baseName  // Use full name if found, otherwise just base
+                        } else {
+                            baseName
+                        }
                     } else {
                         baseName
                     }
