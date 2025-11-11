@@ -14,6 +14,7 @@ output json
       "Switzerland": filter($orders, o => o.Country == "Switzerland")
     },
     "byStatus": {
+// TODO stdlib function count does not exist, what should be placed here? Should there be a synoniem being made 
       "Shipped": count(filter($orders, o => o.Status == "Shipped")),
       "Processing": count(filter($orders, o => o.Status == "Processing")),
       "Delivered": count(filter($orders, o => o.Status == "Delivered"))
