@@ -4,19 +4,19 @@
 input: orders json, customers json, products json
 output json
 ---
-
+// Needs validation if correct
 // Create efficient lookup maps
-let customerMap = input.customers.customers 
+let customerMap = $customers.customers 
   |> map(c => [c.id, c])
   |> reduce((acc, [id, c]) => {...acc, [id]: c}, {}),
 
-let productMap = input.products.products
+let productMap = $products.products
   |> map(p => [p.id, p])
   |> reduce((acc, [id, p]) => {...acc, [id]: p}, {})
 
 // Join orders with customers and products
 {
-  results: input.orders.orders |> map(order => {
+  results: $orders.orders |> map(order => {
     let customer = customerMap[order.customerId] ?? {
       name: "Unknown Customer",
       tier: "Standard"
