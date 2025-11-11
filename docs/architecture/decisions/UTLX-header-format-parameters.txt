@@ -11,7 +11,7 @@ Overview of all poissble UTLX format header parameters
   | Avro   | None                 | avro                                      |
   | Proto  | None                 | proto                                     |
 
-
+ arrays for xml/xsd - those are for parsing inputs (to hint which elements should be treated as arrays)
 
 # INPUT
 
