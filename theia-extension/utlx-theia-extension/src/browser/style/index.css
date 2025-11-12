@@ -601,6 +601,27 @@
     font-size: 11px;
 }
 
+/* UDM Validation Indicator (matches health monitor styling) */
+.utlx-udm-indicator {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: default;
+}
+
+.utlx-udm-clickable {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+
+.utlx-udm-clickable:hover {
+    opacity: 0.8;
+}
+
 /* ===== Multi-Input Panel Widget ===== */
 .utlx-multi-input-panel-container {
     display: flex;

@@ -200,8 +200,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                             {/* UDM Parse Status Indicator */}
                             {activeInput.udmValidating && (
                                 <span
-                                    className='utlx-status-indicator'
-                                    style={{ color: '#6272a4', marginLeft: '8px', cursor: 'default' }}
+                                    className='utlx-udm-indicator'
+                                    style={{ color: '#6272a4' }}
                                     title='Validating UDM...'
                                 >
                                     ⟳ UDM
@@ -209,15 +209,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                             )}
                             {!activeInput.udmValidating && activeInput.udmParsed === true && (
                                 <button
-                                    className='utlx-status-indicator'
-                                    style={{
-                                        color: '#50fa7b',
-                                        marginLeft: '8px',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        padding: '2px 4px'
-                                    }}
+                                    className='utlx-udm-indicator utlx-udm-clickable'
+                                    style={{ color: '#50fa7b' }}
                                     title={`UDM parsed successfully - Click to re-validate`}
                                     onClick={() => this.validateInput(activeInputId)}
                                 >
@@ -226,15 +219,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                             )}
                             {!activeInput.udmValidating && activeInput.udmParsed === false && (
                                 <button
-                                    className='utlx-status-indicator'
-                                    style={{
-                                        color: '#ff5555',
-                                        marginLeft: '8px',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        padding: '2px 4px'
-                                    }}
+                                    className='utlx-udm-indicator utlx-udm-clickable'
+                                    style={{ color: '#ff5555' }}
                                     title={`UDM parse error: ${activeInput.udmError || 'Unknown error'} - Click to retry`}
                                     onClick={() => this.validateInput(activeInputId)}
                                 >
