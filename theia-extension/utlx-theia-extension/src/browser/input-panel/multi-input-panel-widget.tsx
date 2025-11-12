@@ -66,6 +66,7 @@ export interface InputTab {
     udmParsed?: boolean;       // true = success (green check), false = error (red X), undefined = not checked yet
     udmValidating?: boolean;   // true = currently validating (pulse icon)
     udmError?: string;         // Error message for tooltip
+    udmLanguage?: string;      // The parsed UDM representation of the input data (from /api/udm/export)
 }
 
 export interface MultiInputPanelState {
@@ -741,15 +742,28 @@ export class MultiInputPanelWidget extends ReactWidget {
             console.log('[MultiInputPanel] Validation result:', {
                 success: result.success,
                 error: result.error,
-                hasDiagnostics: !!result.diagnostics
+                hasDiagnostics: !!result.diagnostics,
+                hasUdmLanguage: !!result.udmLanguage,
+                udmLanguageLength: result.udmLanguage?.length
             });
 
             this.updateInputValidation(
                 inputId,
                 result.success,
                 false,
-                result.error
+                result.error,
+                result.udmLanguage
             );
+
+            // Fire event if UDM was successfully parsed
+            if (result.success && result.udmLanguage && input) {
+                console.log('[MultiInputPanel] Firing UDM updated event');
+                this.eventService.fireInputUdmUpdated({
+                    inputId: input.id,
+                    inputName: input.name,
+                    udmLanguage: result.udmLanguage
+                });
+            }
 
             console.log('[MultiInputPanel] Validation state updated');
             console.log('[MultiInputPanel] ========================================');
@@ -773,19 +787,22 @@ export class MultiInputPanelWidget extends ReactWidget {
         inputId: string,
         udmParsed?: boolean,
         udmValidating?: boolean,
-        udmError?: string
+        udmError?: string,
+        udmLanguage?: string
     ): void {
         console.log('[MultiInputPanel] updateInputValidation() called:', {
             inputId,
             udmParsed,
             udmValidating,
-            udmError
+            udmError,
+            hasUdmLanguage: !!udmLanguage,
+            udmLanguageLength: udmLanguage?.length
         });
 
         this.setState({
             inputs: this.state.inputs.map(input =>
                 input.id === inputId
-                    ? { ...input, udmParsed, udmValidating, udmError }
+                    ? { ...input, udmParsed, udmValidating, udmError, udmLanguage }
                     : input
             )
         });

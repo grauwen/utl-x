@@ -136,6 +136,7 @@ export interface ValidateUdmResult {
     success: boolean;
     error?: string;
     diagnostics?: Diagnostic[];
+    udmLanguage?: string;  // The parsed UDM representation (when success=true)
 }
 
 /**

@@ -83,6 +83,15 @@ export interface InputSchemaContentChangedEvent {
 }
 
 /**
+ * Event fired when an input's UDM representation is updated
+ */
+export interface InputUdmUpdatedEvent {
+    inputId: string;
+    inputName: string;
+    udmLanguage: string;
+}
+
+/**
  * Event fired when the output format changes
  */
 export interface OutputFormatChangedEvent {
@@ -265,6 +274,24 @@ export class UTLXEventService {
     fireInputInferSchema(event: InputInferSchemaEvent): void {
         console.log('[UTLXEventService] Input infer schema:', event);
         this.onInputInferSchemaEmitter.fire(event);
+    }
+
+    private readonly onInputUdmUpdatedEmitter = new Emitter<InputUdmUpdatedEvent>();
+    /**
+     * Event fired when an input's UDM representation is updated
+     */
+    readonly onInputUdmUpdated: Event<InputUdmUpdatedEvent> = this.onInputUdmUpdatedEmitter.event;
+
+    /**
+     * Fire an input UDM updated event
+     */
+    fireInputUdmUpdated(event: InputUdmUpdatedEvent): void {
+        console.log('[UTLXEventService] Input UDM updated:', {
+            inputId: event.inputId,
+            inputName: event.inputName,
+            udmLanguageLength: event.udmLanguage.length
+        });
+        this.onInputUdmUpdatedEmitter.fire(event);
     }
 
     private readonly onInputInstanceContentChangedEmitter = new Emitter<InputInstanceContentChangedEvent>();

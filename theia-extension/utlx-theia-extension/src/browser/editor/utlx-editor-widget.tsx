@@ -38,6 +38,8 @@ export class UTLXEditorWidget extends ReactWidget {
     protected isUpdatingHeaders: boolean = false;
     protected contentChangeDebounceTimer: number | undefined;
     protected readonly CONTENT_CHANGE_DEBOUNCE_MS = 500; // 500ms delay
+    protected inputNamesFromHeaders: string[] = []; // Input names from UTLX headers
+    protected inputUdmMap: Map<string, string> = new Map(); // inputName -> UDM language
 
     constructor() {
         super();
@@ -73,6 +75,16 @@ export class UTLXEditorWidget extends ReactWidget {
 
         this.eventService.onInputDeleted(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Input deleted:', event);
+        });
+
+        this.eventService.onInputUdmUpdated(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Input UDM updated:', {
+                inputId: event.inputId,
+                inputName: event.inputName,
+                udmLanguageLength: event.udmLanguage.length
+            });
+            // Store UDM for autocomplete
+            this.inputUdmMap.set(event.inputName, event.udmLanguage);
         });
 
         this.eventService.onInputInferSchema(event => {
@@ -207,6 +219,9 @@ export class UTLXEditorWidget extends ReactWidget {
 
             console.log('[UTLXEditor] Monaco editor created successfully');
 
+            // Register completion provider for $ input references
+            this.registerCompletionProvider();
+
             // Force layout after DOM attachment
             setTimeout(() => {
                 if (this.editor) {
@@ -236,6 +251,75 @@ export class UTLXEditorWidget extends ReactWidget {
         } catch (error) {
             console.error('[UTLXEditor] Failed to create editor:', error);
         }
+    }
+
+    /**
+     * Register Monaco completion provider for $ input references
+     */
+    protected registerCompletionProvider(): void {
+        const completionProvider: monaco.languages.CompletionItemProvider = {
+            triggerCharacters: ['$'],
+            provideCompletionItems: (model, position) => {
+                console.log('[UTLXEditor] ===========================================');
+                console.log('[UTLXEditor] Completion provider triggered');
+                console.log('[UTLXEditor] Position:', { line: position.lineNumber, column: position.column });
+
+                const lineContent = model.getLineContent(position.lineNumber);
+                console.log('[UTLXEditor] Line content:', lineContent);
+
+                // Check if there's a $ before the current position
+                const textBeforeCursor = lineContent.substring(0, position.column - 1);
+                const lastDollarIndex = textBeforeCursor.lastIndexOf('$');
+
+                console.log('[UTLXEditor] Text before cursor:', textBeforeCursor);
+                console.log('[UTLXEditor] Last $ index:', lastDollarIndex);
+
+                // If no $ found, don't provide suggestions
+                if (lastDollarIndex === -1) {
+                    console.log('[UTLXEditor] No $ found, returning empty suggestions');
+                    console.log('[UTLXEditor] ===========================================');
+                    return { suggestions: [] };
+                }
+
+                // Get the text after $ up to cursor
+                const textAfterDollar = textBeforeCursor.substring(lastDollarIndex + 1);
+                console.log('[UTLXEditor] Text after $:', textAfterDollar);
+
+                console.log('[UTLXEditor] Available inputs from headers:', this.inputNamesFromHeaders);
+                console.log('[UTLXEditor] Available UDM map keys:', Array.from(this.inputUdmMap.keys()));
+
+                // Calculate the range to replace (from $ to cursor)
+                const replaceStartColumn = lastDollarIndex + 2; // +1 for 0-index, +1 to skip $
+                const replaceEndColumn = position.column;
+
+                const suggestions: monaco.languages.CompletionItem[] = this.inputNamesFromHeaders.map(inputName => ({
+                    label: inputName,
+                    kind: monaco.languages.CompletionItemKind.Variable,
+                    insertText: inputName,
+                    detail: 'Input reference',
+                    documentation: this.inputUdmMap.has(inputName)
+                        ? `UDM:\n\`\`\`\n${this.inputUdmMap.get(inputName)}\n\`\`\``
+                        : 'Input from UTLX header',
+                    range: {
+                        startLineNumber: position.lineNumber,
+                        startColumn: replaceStartColumn,
+                        endLineNumber: position.lineNumber,
+                        endColumn: replaceEndColumn
+                    }
+                }));
+
+                console.log('[UTLXEditor] Returning', suggestions.length, 'suggestions');
+                console.log('[UTLXEditor] ===========================================');
+
+                return { suggestions };
+            }
+        };
+
+        // Register for plaintext language
+        const disposable = monaco.languages.registerCompletionItemProvider('plaintext', completionProvider);
+        this.toDispose.push(disposable);
+
+        console.log('[UTLXEditor] Completion provider registered');
     }
 
     /**
@@ -337,6 +421,10 @@ output json
             inputs: parsed.inputs.length,
             outputFormat: parsed.output.format
         });
+
+        // Extract input names for autocomplete
+        this.inputNamesFromHeaders = parsed.inputs.map(input => input.name);
+        console.log('[UTLXEditor] Input names extracted from parsed headers:', this.inputNamesFromHeaders);
 
         // Fire event to trigger panel updates
         this.eventService.fireHeadersParsed({
@@ -443,6 +531,25 @@ output json
     }
 
     /**
+     * Extract input names from input header lines for autocomplete
+     */
+    protected extractInputNamesFromLines(inputLines: string[]): string[] {
+        const inputNames: string[] = [];
+
+        for (const line of inputLines) {
+            // Parse lines like "input json" or "input employees json"
+            // Format: input [name] format [options...]
+            const match = line.match(/^input\s+(?:(\w+)\s+)?(\w+)/);
+            if (match) {
+                const inputName = match[1] || 'input'; // Default to 'input' if no name specified
+                inputNames.push(inputName);
+            }
+        }
+
+        return inputNames;
+    }
+
+    /**
      * Update headers with new input/output information
      * This is called when formats change in the panels
      */
@@ -494,6 +601,10 @@ output json
 
             // CRITICAL: Save the new header content so enforcement doesn't revert it
             this.saveHeaderContent();
+
+            // Extract input names for autocomplete
+            this.inputNamesFromHeaders = this.extractInputNamesFromLines(inputLines);
+            console.log('[UTLXEditor] Input names extracted for autocomplete:', this.inputNamesFromHeaders);
 
             console.log('[UTLXEditor] Headers updated successfully');
         } finally {

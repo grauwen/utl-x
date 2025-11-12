@@ -445,7 +445,7 @@ export class UTLXDaemonClient extends EventEmitter {
 
         try {
             // Use /api/udm/export to validate - it converts source data to UDM
-            // If conversion succeeds, the data is valid
+            // If conversion succeeds, the data is valid and we get the UDM representation
             const response = await this.httpRequest('/api/udm/export', 'POST', {
                 content: request.content,
                 format: request.format,
@@ -454,9 +454,16 @@ export class UTLXDaemonClient extends EventEmitter {
                 prettyPrint: false
             });
 
+            console.log('[DaemonClient] UDM export successful, response:', {
+                success: response.success,
+                hasUdmLanguage: !!response.udmLanguage,
+                udmLanguageLength: response.udmLanguage?.length
+            });
+
             // If we get here, the export succeeded (data is valid)
             return {
-                success: true
+                success: true,
+                udmLanguage: response.udmLanguage
             };
         } catch (error) {
             // Export failed - data cannot be parsed
