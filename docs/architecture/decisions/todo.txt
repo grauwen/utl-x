@@ -10,6 +10,9 @@ analysis part
 
 Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that describes it
 ---
+       // Note: XSD namespace option is available in FormatOptions but not yet
+       343 +                  // passed to XSDSerializer - may need enhancement in the future
+---
 the existing LSP is designed for UTLX transformation language (.utlx files).
 
   Answer: No, we don't need a separate LSP server!
