@@ -79,7 +79,7 @@ export class OutputPanelWidget extends ReactWidget {
         activeTab: 'instance',
         instanceContent: '',
         schemaContent: '',
-        viewMode: 'pretty'
+        viewMode: 'raw' // Default to raw view to show output as-is from UTLXD
     };
 
     constructor() {
@@ -347,21 +347,85 @@ export class OutputPanelWidget extends ReactWidget {
                     return JSON.stringify(JSON.parse(content), null, 2);
                 case 'xml':
                 case 'xsd':
-                    // Basic XML formatting (just add newlines)
-                    return content
-                        .replace(/></g, '>\n<')
-                        .split('\n')
-                        .map((line, index) => {
-                            const indent = '  '.repeat(Math.max(0, (line.match(/</g) || []).length - (line.match(/\//g) || []).length));
-                            return indent + line.trim();
-                        })
-                        .join('\n');
+                    return this.formatXml(content);
                 default:
                     return content;
             }
         } catch {
             // If formatting fails, return original content
             return content;
+        }
+    }
+
+    /**
+     * Format XML with proper indentation
+     * This is a simple formatter - for production use, consider using a library like vkbeautify
+     */
+    private formatXml(xml: string): string {
+        try {
+            let formatted = '';
+            let indent = 0;
+            const tab = '  '; // 2 spaces
+
+            // Remove existing formatting (collapse whitespace between tags)
+            xml = xml.replace(/>\s*</g, '><').trim();
+
+            // Split by tags
+            const tokens = xml.split(/(<[^>]+>)/g).filter(token => token.trim().length > 0);
+
+            for (let i = 0; i < tokens.length; i++) {
+                const token = tokens[i];
+
+                // Skip empty tokens
+                if (!token.trim()) continue;
+
+                if (token.startsWith('<!--')) {
+                    // Comment
+                    formatted += tab.repeat(indent) + token + '\n';
+                } else if (token.startsWith('<?')) {
+                    // Processing instruction (like <?xml version="1.0"?>)
+                    formatted += tab.repeat(indent) + token + '\n';
+                } else if (token.startsWith('</')) {
+                    // Closing tag
+                    indent = Math.max(0, indent - 1);
+                    formatted += tab.repeat(indent) + token + '\n';
+                } else if (token.startsWith('<')) {
+                    // Opening tag or self-closing tag
+                    const isSelfClosing = token.endsWith('/>');
+                    const isOpeningTag = !isSelfClosing;
+
+                    formatted += tab.repeat(indent) + token;
+
+                    // Check if next token is text content (not a tag)
+                    const nextToken = tokens[i + 1];
+                    if (nextToken && !nextToken.startsWith('<')) {
+                        // Text content follows - don't add newline yet
+                        // The text will be added in the next iteration
+                    } else {
+                        formatted += '\n';
+                    }
+
+                    if (isOpeningTag) {
+                        indent++;
+                    }
+                } else {
+                    // Text content
+                    formatted += token.trim();
+
+                    // Check if next token is closing tag
+                    const nextToken = tokens[i + 1];
+                    if (nextToken && nextToken.startsWith('</')) {
+                        // Closing tag follows - it will handle the newline and indent
+                    } else {
+                        formatted += '\n';
+                    }
+                }
+            }
+
+            return formatted.trim();
+        } catch (error) {
+            console.error('[OutputPanel] XML formatting failed:', error);
+            return xml; // Return original if formatting fails
         }
     }
 
@@ -549,7 +613,8 @@ export class OutputPanelWidget extends ReactWidget {
         if (result.success && result.output) {
             this.setState({
                 instanceContent: result.output,
-                instanceFormat: result.format,
+                // Preserve existing format if result doesn't provide one
+                instanceFormat: result.format || this.state.instanceFormat || 'json',
                 instanceExecutionTime: result.executionTimeMs,
                 instanceError: undefined,
                 instanceDiagnostics: result.diagnostics
@@ -560,6 +625,8 @@ export class OutputPanelWidget extends ReactWidget {
                 instanceError: result.error || 'Unknown error occurred',
                 instanceDiagnostics: result.diagnostics,
                 instanceExecutionTime: result.executionTimeMs
+                // Note: We intentionally don't clear instanceFormat on error
+                // This preserves the format dropdown selection
             });
         }
     }
