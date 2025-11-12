@@ -135,13 +135,15 @@ Successfully generates human-readable `.udm` files:
 
 ---
 
-## ⏳ Planned (Phase 3)
+## ✅ Completed (Phase 3)
 
 ### 1. CLI Commands
 
 **Command**: `utlx udm`
 
-**Subcommands**:
+**Status**: ✅ Complete and Compiled
+
+**Subcommands Implemented**:
 ```bash
 utlx udm export <input-file> <output.udm>   # Parse input, export to UDM Language
 utlx udm import <input.udm>                  # Load UDM from .udm file
@@ -149,11 +151,22 @@ utlx udm validate <file.udm>                 # Validate syntax
 utlx udm format <file.udm>                   # Pretty-print/reformat
 ```
 
-**Files to Create**:
-- `/modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/UDMCommand.kt`
-- Update `/modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt`
+**Files Created**:
+- ✅ `/modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/UDMCommand.kt` (760+ lines)
+- ✅ Updated `/modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt`
 
-**Estimated Effort**: 1-2 days
+**Features**:
+- **export**: Export parsed data to .udm format (with optional transformation)
+- **import**: Load and validate .udm files with optional structure display
+- **validate**: Validate .udm file syntax
+- **format**: Pretty-print or compact .udm files (in-place or to new file)
+- Comprehensive help for each subcommand
+- Verbose mode support
+- Error handling with clear messages
+
+**Compilation Status**: ✅ Successfully compiled with no errors
+
+## ⏳ Planned (Phase 4)
 
 ### 2. LSP Integration
 
@@ -513,9 +526,15 @@ Generate documentation with exact UDM structures:
 - [x] `parse(serialize(udm)) == udm` for all types
 - [x] Error messages with line numbers
 
-### Phase 3 ⏳ PLANNED
+### Phase 3 ✅ COMPLETE
 
-- [ ] CLI commands working
+- [x] CLI commands working
+- [x] All subcommands implemented (export, import, validate, format)
+- [x] Integrated into main CLI
+- [x] Help documentation for all commands
+
+### Phase 4 ⏳ PLANNED
+
 - [ ] LSP integration complete
 - [ ] Tooling available (viewer, diff, IDE extension)
 
@@ -523,9 +542,9 @@ Generate documentation with exact UDM structures:
 
 ## Conclusion
 
-**Phase 1 & 2 are complete!**
+**Phases 1, 2, & 3 are complete!**
 
-The UDM Language implementation is fully functional with both serialization and parsing. You can now:
+The UDM Language implementation is fully functional with serialization, parsing, and CLI tooling. You can now:
 
 ✅ Serialize any UDM structure to `.udm` format
 ✅ Parse `.udm` files back to UDM objects
@@ -534,10 +553,11 @@ The UDM Language implementation is fully functional with both serialization and 
 ✅ Perfect round-trip: `parse(serialize(udm))` produces equivalent UDM
 ✅ Use for debugging, documentation, and caching (full round-trip)
 ✅ Cache parsed inputs for 10x performance improvement
+✅ **CLI commands for all operations** (`utlx udm export/import/validate/format`)
 
-**Status**: Production-ready for core functionality
+**Status**: Production-ready for all core functionality
 
-**Next**: CLI commands and LSP integration (Phase 3)
+**Next**: LSP integration and visual tooling (Phase 4 - optional)
 
 ---
 

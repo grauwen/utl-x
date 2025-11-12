@@ -52,6 +52,7 @@ object Main {
                 "capture" -> CaptureCommand.execute(commandArgs)
                 "validate", "v" -> ValidateCommand.execute(commandArgs)
                 "lint", "l" -> LintCommand.execute(commandArgs)
+                "udm" -> UDMCommand.execute(commandArgs)
                 "compile", "c" -> {
                     println("Compile command not yet implemented")
                     println("Coming soon: Compile UTL-X scripts to bytecode")
@@ -114,6 +115,7 @@ object Main {
             |  capture        Manage test capture settings (enable/disable/status)
             |  validate  (v)  Validate a UTL-X script for correctness (Levels 1-3)
             |  lint      (l)  Check for style issues and best practices (Level 4)
+            |  udm            Work with UDM Language files (export, import, validate, format)
             |  compile   (c)  Compile a UTL-X script to bytecode
             |  format    (f)  Format/pretty-print a UTL-X script
             |  migrate   (m)  Migrate XSLT/DataWeave to UTL-X
@@ -128,6 +130,8 @@ object Main {
             |  utlx design typecheck --input-schema order.xsd --transform script.utlx --expected-output invoice-schema.json
             |  utlx capture status
             |  utlx validate script.utlx
+            |  utlx udm export data.json data.udm
+            |  utlx udm validate data.udm
             |  utlx transform --input-format xml --output-format json script.utlx < input.xml
             |  utlx transform data.yaml script.utlx --output-format json
             |
