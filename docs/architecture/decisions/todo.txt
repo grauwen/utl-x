@@ -44,6 +44,29 @@ the existing LSP is designed for UTLX transformation language (.utlx files).
 
   So Phase 4 would be extending the existing utlxd LSP, not creating a second LSP server. This is the standard LSP design pattern used by language servers like typescript-language-server (handles both .ts and .tsx) or
   vscode-json-languageserver (handles JSON and JSON with Comments).
+
+
+Current implementation:
+  - If user edits .utlx file → triggers completion → 500ms processing time
+  - During that 500ms, hovering over .udm file → queued, waits
+
+  With parallel handling:
+  - .utlx completion → 500ms (Thread 1)
+  - .udm hover → 50ms (Thread 2) → returns immediately
+
+  Recommendation:
+
+  For Phase 4, you have two options:
+
+  Option A: Keep current architecture (simpler)
+  - .udm and .utlx requests processed sequentially
+  - Pro: No changes needed, works today
+  - Con: Slower UX if both file types open
+
+  Option B: Add parallel request handling (better UX)
+  - Modify SocketTransport to use thread pool
+  - Pro: Better performance, responsive UI
+  - Con: Need to test thread-safety, ensure writer synchronization
 ---
 I
 ---
