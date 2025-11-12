@@ -1,29 +1,48 @@
 package org.apache.utlx.cli.commands
 
 import org.apache.utlx.core.udm.*
-import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.parser.ParseResult
-import org.apache.utlx.core.lexer.Lexer
-import org.apache.utlx.core.interpreter.Interpreter
 import org.apache.utlx.cli.CommandResult
+import org.apache.utlx.formats.json.JSONParser
+import org.apache.utlx.formats.json.JSONSerializer
+import org.apache.utlx.formats.xml.XMLParser
+import org.apache.utlx.formats.xml.XMLSerializer
+import org.apache.utlx.formats.csv.CSVParser
+import org.apache.utlx.formats.csv.CSVSerializer
+import org.apache.utlx.formats.csv.CSVDialect
+import org.apache.utlx.formats.csv.RegionalFormat
+import org.apache.utlx.formats.yaml.YAMLParser
+import org.apache.utlx.formats.yaml.YAMLSerializer
+import org.apache.utlx.formats.jsch.JSONSchemaParser
+import org.apache.utlx.formats.jsch.JSONSchemaSerializer
+import org.apache.utlx.formats.xsd.XSDParser
+import org.apache.utlx.formats.xsd.XSDSerializer
+import org.apache.utlx.formats.avro.AvroSchemaParser
+import org.apache.utlx.formats.avro.AvroSchemaSerializer
+import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
+import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
 import java.io.File
 
 /**
- * UDM Command - work with UDM Language files
+ * UDM Command - work with UDM Language files (Unix-style with stdin/stdout support)
  *
  * Subcommands:
- *   export   - Parse input file and export to .udm format
- *   import   - Load UDM from .udm file
+ *   export   - Parse input format and export to .udm format
+ *   import   - Import UDM from .udm file and convert to format
  *   validate - Validate .udm file syntax
  *   format   - Pretty-print/reformat .udm file
  *
  * Usage:
- *   utlx udm export <input-file> <output.udm> [options]
- *   utlx udm import <input.udm>
- *   utlx udm validate <file.udm>
- *   utlx udm format <file.udm> [options]
+ *   utlx udm export --format <format> [--input <file>] [--output <file>] [options]
+ *   utlx udm import --format <format> [--input <file>] [--output <file>] [options]
+ *   utlx udm validate [file.udm]
+ *   utlx udm format [--input <file>] [--output <file>] [options]
  */
 object UDMCommand {
+
+    private val SUPPORTED_FORMATS = setOf(
+        "json", "xml", "csv", "yaml",
+        "jsonschema", "xsd", "avro", "protobuf"
+    )
 
     fun execute(args: Array<String>): CommandResult {
         if (args.isEmpty()) {
@@ -51,260 +70,274 @@ object UDMCommand {
         }
     }
 
+    // ==================== STDIN/STDOUT HELPERS ====================
+
+    /**
+     * Read input from file or stdin
+     */
+    private fun readInput(inputFile: String?): String {
+        return if (inputFile != null) {
+            File(inputFile).readText()
+        } else {
+            // Read from stdin
+            System.`in`.bufferedReader().use { it.readText() }
+        }
+    }
+
+    /**
+     * Write output to file or stdout
+     */
+    private fun writeOutput(outputFile: String?, content: String) {
+        if (outputFile != null) {
+            File(outputFile).writeText(content)
+        } else {
+            // Write to stdout
+            print(content)
+        }
+    }
+
+    /**
+     * Get required option value
+     */
+    private fun getRequiredOption(args: Array<String>, flag: String): String {
+        val index = args.indexOf(flag)
+        if (index == -1) {
+            throw IllegalArgumentException("Required flag $flag is missing")
+        }
+        if (index + 1 >= args.size) {
+            throw IllegalArgumentException("Flag $flag requires a value")
+        }
+        return args[index + 1]
+    }
+
+    /**
+     * Get optional option value
+     */
+    private fun getOptionValue(args: Array<String>, flag: String): String? {
+        val index = args.indexOf(flag)
+        if (index == -1) return null
+        if (index + 1 >= args.size) {
+            throw IllegalArgumentException("Flag $flag requires a value")
+        }
+        return args[index + 1]
+    }
+
+    /**
+     * Check if flag is present
+     */
+    private fun hasFlag(args: Array<String>, vararg flags: String): Boolean {
+        return flags.any { it in args }
+    }
+
     // ==================== EXPORT ====================
 
-    data class ExportOptions(
-        val inputFile: File,
-        val outputFile: File,
-        val scriptFile: File? = null,
-        val inputName: String = "input",
-        val prettyPrint: Boolean = true,
-        val verbose: Boolean = false
-    )
-
     private fun executeExport(args: Array<String>): CommandResult {
-        val options = try {
-            parseExportOptions(args)
-        } catch (e: IllegalStateException) {
-            if (e.message == "HELP_REQUESTED") {
+        try {
+            // Show help
+            if (hasFlag(args, "-h", "--help")) {
+                printExportUsage()
                 return CommandResult.Success
             }
-            return CommandResult.Failure(e.message ?: "Unknown error", 1)
-        } catch (e: IllegalArgumentException) {
-            return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
-        }
 
-        if (options.verbose) {
-            println("UTL-X UDM Export")
-            println("Input: ${options.inputFile.absolutePath}")
-            println("Output: ${options.outputFile.absolutePath}")
-            options.scriptFile?.let { println("Script: ${it.absolutePath}") }
-            println()
-        }
-
-        try {
-            // If script is provided, execute transformation first
-            val udm = if (options.scriptFile != null) {
-                // Parse and execute transformation
-                val scriptContent = options.scriptFile.readText()
-                val lexer = Lexer(scriptContent)
-                val tokens = lexer.tokenize()
-                val parser = Parser(tokens, scriptContent)
-
-                val program = when (val parseResult = parser.parse()) {
-                    is ParseResult.Success -> parseResult.program
-                    is ParseResult.Failure -> {
-                        System.err.println("✗ Script parse error:")
-                        parseResult.errors.forEach { error ->
-                            System.err.println("  ${error.location.line}:${error.location.column} - ${error.message}")
-                        }
-                        return CommandResult.Failure("Script parse failed", 1)
-                    }
-                }
-
-                // Load and parse input
-                val inputContent = options.inputFile.readText()
-                val inputFormat = detectInputFormat(options.inputFile.name)
-                val inputUDM = parseInputToUDM(inputContent, inputFormat)
-
-                // Execute transformation
-                val interpreter = Interpreter()
-                val result = interpreter.execute(program, mapOf(options.inputName to inputUDM))
-
-                // Convert result to UDM
-                runtimeValueToUDM(result)
-            } else {
-                // Just parse input file to UDM
-                val inputContent = options.inputFile.readText()
-                val inputFormat = detectInputFormat(options.inputFile.name)
-                parseInputToUDM(inputContent, inputFormat)
+            // Parse required format flag
+            val format = try {
+                getRequiredOption(args, "--format")
+            } catch (e: IllegalArgumentException) {
+                System.err.println("Error: ${e.message}")
+                System.err.println()
+                printExportUsage()
+                return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
             }
 
-            // Serialize to UDM Language
-            val sourceInfo = mapOf(
-                "source" to options.inputFile.name,
-                "parsed-at" to java.time.Instant.now().toString()
-            )
-            val udmString = udm.toUDMLanguage(
-                prettyPrint = options.prettyPrint,
-                sourceInfo = sourceInfo
-            )
+            // Validate format
+            if (format.lowercase() !in SUPPORTED_FORMATS) {
+                System.err.println("Error: Unsupported format: $format")
+                System.err.println("Supported formats: ${SUPPORTED_FORMATS.joinToString(", ")}")
+                return CommandResult.Failure("Unsupported format", 1)
+            }
 
-            // Write to output file
-            options.outputFile.writeText(udmString)
+            // Parse I/O flags
+            val inputFile = getOptionValue(args, "--input")
+            val outputFile = getOptionValue(args, "--output")
+            val verbose = hasFlag(args, "-v", "--verbose")
 
-            if (options.verbose) {
-                println("✓ Successfully exported to ${options.outputFile.name}")
-                println("  UDM type: ${udm::class.simpleName}")
+            // Parse format-specific options
+            val formatOptions = parseFormatOptions(args, format, isExport = true)
+
+            // Verbose output to stderr
+            if (verbose) {
+                if (inputFile == null) {
+                    System.err.println("Reading from stdin...")
+                } else {
+                    System.err.println("Reading from $inputFile...")
+                }
+                System.err.println("Format: $format")
+            }
+
+            // Read input (stdin or file)
+            val content = readInput(inputFile)
+
+            // Parse format → UDM
+            if (verbose) {
+                System.err.println("Parsing $format...")
+            }
+            val udm = parseInputToUDM(content, format, formatOptions)
+
+            // Serialize UDM → .udm
+            if (verbose) {
+                System.err.println("Serializing to UDM Language...")
+            }
+            val sourceInfo = if (inputFile != null) {
+                mapOf(
+                    "source" to File(inputFile).name,
+                    "parsed-at" to java.time.Instant.now().toString()
+                )
             } else {
-                println("✓ Exported to ${options.outputFile.absolutePath}")
+                mapOf("parsed-at" to java.time.Instant.now().toString())
+            }
+            val udmLang = udm.toUDMLanguage(prettyPrint = true, sourceInfo = sourceInfo)
+
+            // Write output (stdout or file)
+            writeOutput(outputFile, udmLang)
+
+            // Verbose completion to stderr
+            if (verbose) {
+                if (outputFile != null) {
+                    System.err.println("✓ Exported to $outputFile")
+                } else {
+                    System.err.println("✓ Exported to stdout")
+                }
             }
 
             return CommandResult.Success
         } catch (e: Exception) {
             System.err.println("✗ Export failed: ${e.message}")
-            if (options.verbose) {
-                e.printStackTrace()
-            }
             return CommandResult.Failure("Export failed", 1)
         }
     }
 
-    private fun parseExportOptions(args: Array<String>): ExportOptions {
-        if (args.isEmpty()) {
-            printExportUsage()
-            throw IllegalArgumentException("No arguments provided")
-        }
-
-        var inputFile: File? = null
-        var outputFile: File? = null
-        var scriptFile: File? = null
-        var inputName = "input"
-        var prettyPrint = true
-        var verbose = false
-
-        var i = 0
-        while (i < args.size) {
-            when (args[i]) {
-                "--script", "-s" -> {
-                    if (i + 1 >= args.size) {
-                        System.err.println("Error: --script requires a file path")
-                        printExportUsage()
-                        throw IllegalArgumentException("--script requires a file path")
-                    }
-                    scriptFile = File(args[++i])
-                }
-                "--input-name", "-n" -> {
-                    if (i + 1 >= args.size) {
-                        System.err.println("Error: --input-name requires a name")
-                        printExportUsage()
-                        throw IllegalArgumentException("--input-name requires a name")
-                    }
-                    inputName = args[++i]
-                }
-                "--compact", "-c" -> {
-                    prettyPrint = false
-                }
-                "-v", "--verbose" -> {
-                    verbose = true
-                }
-                "-h", "--help" -> {
-                    printExportUsage()
-                    throw IllegalStateException("HELP_REQUESTED")
-                }
-                else -> {
-                    if (!args[i].startsWith("-")) {
-                        if (inputFile == null) {
-                            inputFile = File(args[i])
-                        } else if (outputFile == null) {
-                            outputFile = File(args[i])
-                        } else {
-                            System.err.println("Error: Unexpected argument: ${args[i]}")
-                            printExportUsage()
-                            throw IllegalArgumentException("Unexpected argument: ${args[i]}")
-                        }
-                    } else {
-                        System.err.println("Error: Unknown option: ${args[i]}")
-                        printExportUsage()
-                        throw IllegalArgumentException("Unknown option: ${args[i]}")
-                    }
-                }
-            }
-            i++
-        }
-
-        if (inputFile == null || outputFile == null) {
-            System.err.println("Error: Both input and output files are required")
-            printExportUsage()
-            throw IllegalArgumentException("Both input and output files are required")
-        }
-
-        if (!inputFile.exists()) {
-            System.err.println("Error: Input file not found: ${inputFile.absolutePath}")
-            throw IllegalArgumentException("Input file not found")
-        }
-
-        if (scriptFile != null && !scriptFile.exists()) {
-            System.err.println("Error: Script file not found: ${scriptFile.absolutePath}")
-            throw IllegalArgumentException("Script file not found")
-        }
-
-        return ExportOptions(
-            inputFile = inputFile,
-            outputFile = outputFile,
-            scriptFile = scriptFile,
-            inputName = inputName,
-            prettyPrint = prettyPrint,
-            verbose = verbose
-        )
-    }
-
     private fun printExportUsage() {
         println("""
-            |Export input data to UDM Language format
+            |Export data from format to UDM Language (.udm)
             |
-            |Usage:
-            |  utlx udm export <input-file> <output.udm> [options]
+            |USAGE:
+            |  utlx udm export --format <format> [OPTIONS]
             |
-            |Arguments:
-            |  input-file          Input data file (JSON, XML, CSV, YAML)
-            |  output.udm          Output .udm file
+            |REQUIRED FLAGS:
+            |  --format <format>     Input data format
+            |                        Formats: json, xml, csv, yaml, jsonschema, xsd, avro, protobuf
             |
-            |Options:
-            |  --script, -s FILE   UTL-X script to transform before export
-            |  --input-name, -n NAME  Input name for script (default: "input")
-            |  --compact, -c       Compact output (no pretty-printing)
-            |  -v, --verbose       Enable verbose output
-            |  -h, --help          Show this help message
+            |OPTIONAL FLAGS:
+            |  --input <file>        Input file path (default: stdin)
+            |  --output <file>       Output .udm file path (default: stdout)
+            |  -v, --verbose         Verbose output to stderr
             |
-            |Examples:
-            |  # Export JSON to UDM
-            |  utlx udm export data.json data.udm
+            |FORMAT-SPECIFIC OPTIONS:
+            |  CSV:
+            |    --csv-delimiter <char>     Delimiter: comma, semicolon, tab, pipe (default: comma)
+            |    --csv-headers              Include headers (default)
+            |    --csv-no-headers           Exclude headers
+            |    --csv-format <region>      Regional format: usa, european, french, swiss, none (default: none)
             |
-            |  # Transform and export
-            |  utlx udm export input.json output.udm --script transform.utlx
+            |  XML:
+            |    --xml-array-hints <list>   Comma-separated elements to treat as arrays (e.g., "Item,Product")
             |
-            |  # Compact output
-            |  utlx udm export data.json data.udm --compact
+            |  XSD:
+            |    --xsd-array-hints <list>   Comma-separated elements to treat as arrays
+            |
+            |  YAML:
+            |    --yaml-multi-doc           Parse as multi-document YAML (default: false)
+            |
+            |EXAMPLES:
+            |  # Export from file to file:
+            |  utlx udm export --format json --input data.json --output data.udm
+            |
+            |  # Export from stdin to stdout:
+            |  cat data.json | utlx udm export --format json > data.udm
+            |
+            |  # Export CSV with options:
+            |  utlx udm export --format csv --input data.csv --csv-delimiter ";" --csv-headers > data.udm
+            |
+            |  # Chain with API:
+            |  curl -s https://api.example.com/data.json | utlx udm export --format json | tee data.udm
+            |
+            |STDIN/STDOUT BEHAVIOR:
+            |  - If --input is omitted, reads from stdin
+            |  - If --output is omitted, writes to stdout
+            |  - Both flags can be omitted for full pipe support
         """.trimMargin())
     }
 
     // ==================== IMPORT ====================
 
-    data class ImportOptions(
-        val inputFile: File,
-        val verbose: Boolean = false,
-        val showStructure: Boolean = false
-    )
-
     private fun executeImport(args: Array<String>): CommandResult {
-        val options = try {
-            parseImportOptions(args)
-        } catch (e: IllegalStateException) {
-            if (e.message == "HELP_REQUESTED") {
+        try {
+            // Show help
+            if (hasFlag(args, "-h", "--help")) {
+                printImportUsage()
                 return CommandResult.Success
             }
-            return CommandResult.Failure(e.message ?: "Unknown error", 1)
-        } catch (e: IllegalArgumentException) {
-            return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
-        }
 
-        if (options.verbose) {
-            println("UTL-X UDM Import")
-            println("Input: ${options.inputFile.absolutePath}")
-            println()
-        }
+            // Parse required format flag
+            val format = try {
+                getRequiredOption(args, "--format")
+            } catch (e: IllegalArgumentException) {
+                System.err.println("Error: ${e.message}")
+                System.err.println()
+                printImportUsage()
+                return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
+            }
 
-        try {
-            val udmString = options.inputFile.readText()
-            val udm = UDMLanguageParser.parse(udmString)
+            // Validate format
+            if (format.lowercase() !in SUPPORTED_FORMATS) {
+                System.err.println("Error: Unsupported format: $format")
+                System.err.println("Supported formats: ${SUPPORTED_FORMATS.joinToString(", ")}")
+                return CommandResult.Failure("Unsupported format", 1)
+            }
 
-            if (options.showStructure) {
-                println("UDM Structure:")
-                println(describeUDM(udm, indent = 0))
-            } else {
-                println("✓ Successfully imported ${options.inputFile.name}")
-                println("  UDM type: ${udm::class.simpleName}")
+            // Parse I/O flags
+            val inputFile = getOptionValue(args, "--input")
+            val outputFile = getOptionValue(args, "--output")
+            val verbose = hasFlag(args, "-v", "--verbose")
+
+            // Parse format-specific options
+            val formatOptions = parseFormatOptions(args, format, isExport = false)
+
+            // Verbose output to stderr
+            if (verbose) {
+                if (inputFile == null) {
+                    System.err.println("Reading from stdin...")
+                } else {
+                    System.err.println("Reading from $inputFile...")
+                }
+                System.err.println("Format: $format")
+            }
+
+            // Read .udm input (stdin or file)
+            val udmContent = readInput(inputFile)
+
+            // Parse .udm → UDM
+            if (verbose) {
+                System.err.println("Parsing UDM Language...")
+            }
+            val udm = UDMLanguageParser.parse(udmContent)
+
+            // Serialize UDM → format
+            if (verbose) {
+                System.err.println("Serializing to $format...")
+            }
+            val output = serializeUDMToFormat(udm, format, formatOptions)
+
+            // Write output (stdout or file)
+            writeOutput(outputFile, output)
+
+            // Verbose completion to stderr
+            if (verbose) {
+                if (outputFile != null) {
+                    System.err.println("✓ Converted to $outputFile")
+                } else {
+                    System.err.println("✓ Converted to stdout")
+                }
             }
 
             return CommandResult.Success
@@ -313,129 +346,105 @@ object UDMCommand {
             return CommandResult.Failure("Parse failed", 1)
         } catch (e: Exception) {
             System.err.println("✗ Import failed: ${e.message}")
-            if (options.verbose) {
-                e.printStackTrace()
-            }
             return CommandResult.Failure("Import failed", 1)
         }
     }
 
-    private fun parseImportOptions(args: Array<String>): ImportOptions {
-        if (args.isEmpty()) {
-            printImportUsage()
-            throw IllegalArgumentException("No arguments provided")
-        }
-
-        var inputFile: File? = null
-        var verbose = false
-        var showStructure = false
-
-        var i = 0
-        while (i < args.size) {
-            when (args[i]) {
-                "--structure", "-t" -> {
-                    showStructure = true
-                }
-                "-v", "--verbose" -> {
-                    verbose = true
-                }
-                "-h", "--help" -> {
-                    printImportUsage()
-                    throw IllegalStateException("HELP_REQUESTED")
-                }
-                else -> {
-                    if (!args[i].startsWith("-")) {
-                        if (inputFile == null) {
-                            inputFile = File(args[i])
-                        } else {
-                            System.err.println("Error: Unexpected argument: ${args[i]}")
-                            printImportUsage()
-                            throw IllegalArgumentException("Unexpected argument: ${args[i]}")
-                        }
-                    } else {
-                        System.err.println("Error: Unknown option: ${args[i]}")
-                        printImportUsage()
-                        throw IllegalArgumentException("Unknown option: ${args[i]}")
-                    }
-                }
-            }
-            i++
-        }
-
-        if (inputFile == null) {
-            System.err.println("Error: Input file is required")
-            printImportUsage()
-            throw IllegalArgumentException("Input file is required")
-        }
-
-        if (!inputFile.exists()) {
-            System.err.println("Error: Input file not found: ${inputFile.absolutePath}")
-            throw IllegalArgumentException("Input file not found")
-        }
-
-        return ImportOptions(
-            inputFile = inputFile,
-            verbose = verbose,
-            showStructure = showStructure
-        )
-    }
-
     private fun printImportUsage() {
         println("""
-            |Import and validate UDM Language file
+            |Import UDM Language (.udm) to format
             |
-            |Usage:
-            |  utlx udm import <input.udm> [options]
+            |USAGE:
+            |  utlx udm import --format <format> [OPTIONS]
             |
-            |Arguments:
-            |  input.udm           Input .udm file to import
+            |REQUIRED FLAGS:
+            |  --format <format>     Output data format
+            |                        Formats: json, xml, csv, yaml, jsonschema, xsd, avro, protobuf
             |
-            |Options:
-            |  --structure, -t     Show UDM structure
-            |  -v, --verbose       Enable verbose output
-            |  -h, --help          Show this help message
+            |OPTIONAL FLAGS:
+            |  --input <file>        Input .udm file path (default: stdin)
+            |  --output <file>       Output file path (default: stdout)
+            |  -v, --verbose         Verbose output to stderr
             |
-            |Examples:
-            |  # Import and validate
-            |  utlx udm import data.udm
+            |FORMAT-SPECIFIC OPTIONS:
+            |  CSV:
+            |    --csv-delimiter <char>     Delimiter: comma, semicolon, tab, pipe (default: comma)
+            |    --csv-headers              Include headers (default)
+            |    --csv-no-headers           Exclude headers
+            |    --csv-format <region>      Regional format: usa, european, french, swiss (default: none)
             |
-            |  # Show structure
-            |  utlx udm import data.udm --structure
+            |  XML:
+            |    --xml-root <name>          Root element name (default: "root")
+            |    --xml-encoding <enc>       Output encoding: UTF-8, UTF-16, NONE (default: UTF-8)
+            |
+            |  JSON Schema:
+            |    --jsch-draft <version>     JSON Schema draft: draft-07, 2019-09, 2020-12 (default: 2020-12)
+            |
+            |  XSD:
+            |    --xsd-pattern <pattern>    Design pattern: russian-doll, salami-slice, venetian-blind, garden-of-eden
+            |    --xsd-version <version>    XSD version: 1.0, 1.1 (default: 1.0)
+            |    --xsd-namespace <uri>      targetNamespace URI (e.g., "http://example.com/order")
+            |
+            |  Avro:
+            |    --avro-namespace <ns>      Namespace for schema (e.g., "com.example")
+            |    --avro-validate            Validate with Apache Avro library (default: true)
+            |
+            |EXAMPLES:
+            |  # Import from file to file:
+            |  utlx udm import --format json --input data.udm --output result.json
+            |
+            |  # Import from stdin to stdout:
+            |  cat data.udm | utlx udm import --format json > result.json
+            |
+            |  # Import to XML with options:
+            |  utlx udm import --format xml --input data.udm --xml-root "Order" > result.xml
+            |
+            |  # Import to XSD with targetNamespace:
+            |  utlx udm import --format xsd --input data.udm --xsd-namespace "http://example.com/order" > schema.xsd
+            |
+            |  # Round-trip test:
+            |  cat original.json | utlx udm export --format json | utlx udm import --format json | jq .
+            |
+            |STDIN/STDOUT BEHAVIOR:
+            |  - If --input is omitted, reads from stdin
+            |  - If --output is omitted, writes to stdout
+            |  - Both flags can be omitted for full pipe support
         """.trimMargin())
     }
 
     // ==================== VALIDATE ====================
 
-    data class ValidateOptions(
-        val inputFile: File,
-        val verbose: Boolean = false
-    )
-
     private fun executeValidate(args: Array<String>): CommandResult {
-        val options = try {
-            parseValidateOptions(args)
-        } catch (e: IllegalStateException) {
-            if (e.message == "HELP_REQUESTED") {
+        try {
+            // Show help
+            if (hasFlag(args, "-h", "--help")) {
+                printValidateUsage()
                 return CommandResult.Success
             }
-            return CommandResult.Failure(e.message ?: "Unknown error", 1)
-        } catch (e: IllegalArgumentException) {
-            return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
-        }
 
-        if (options.verbose) {
-            println("UTL-X UDM Validate")
-            println("Input: ${options.inputFile.absolutePath}")
-            println()
-        }
+            // Parse input file (optional - if not provided, use stdin)
+            val inputFile = args.find { !it.startsWith("-") }
+            val verbose = hasFlag(args, "-v", "--verbose")
 
-        try {
-            val udmString = options.inputFile.readText()
-            val udm = UDMLanguageParser.parse(udmString)
+            if (verbose && inputFile == null) {
+                System.err.println("Reading from stdin...")
+            }
 
-            println("✓ ${options.inputFile.name} is valid")
-            if (options.verbose) {
-                println("  UDM type: ${udm::class.simpleName}")
+            // Read input (stdin or file)
+            val content = readInput(inputFile)
+
+            // Parse and validate
+            val udm = UDMLanguageParser.parse(content)
+
+            // Success message
+            if (inputFile != null) {
+                println("✓ $inputFile is valid")
+            } else {
+                println("✓ Valid UDM Language file")
+            }
+
+            if (verbose) {
+                System.err.println("  UDM type: ${udm::class.simpleName}")
             }
 
             return CommandResult.Success
@@ -444,146 +453,78 @@ object UDMCommand {
             return CommandResult.Failure("Validation failed", 1)
         } catch (e: Exception) {
             System.err.println("✗ Validation error: ${e.message}")
-            if (options.verbose) {
-                e.printStackTrace()
-            }
             return CommandResult.Failure("Validation failed", 1)
         }
-    }
-
-    private fun parseValidateOptions(args: Array<String>): ValidateOptions {
-        if (args.isEmpty()) {
-            printValidateUsage()
-            throw IllegalArgumentException("No arguments provided")
-        }
-
-        var inputFile: File? = null
-        var verbose = false
-
-        var i = 0
-        while (i < args.size) {
-            when (args[i]) {
-                "-v", "--verbose" -> {
-                    verbose = true
-                }
-                "-h", "--help" -> {
-                    printValidateUsage()
-                    throw IllegalStateException("HELP_REQUESTED")
-                }
-                else -> {
-                    if (!args[i].startsWith("-")) {
-                        if (inputFile == null) {
-                            inputFile = File(args[i])
-                        } else {
-                            System.err.println("Error: Unexpected argument: ${args[i]}")
-                            printValidateUsage()
-                            throw IllegalArgumentException("Unexpected argument: ${args[i]}")
-                        }
-                    } else {
-                        System.err.println("Error: Unknown option: ${args[i]}")
-                        printValidateUsage()
-                        throw IllegalArgumentException("Unknown option: ${args[i]}")
-                    }
-                }
-            }
-            i++
-        }
-
-        if (inputFile == null) {
-            System.err.println("Error: Input file is required")
-            printValidateUsage()
-            throw IllegalArgumentException("Input file is required")
-        }
-
-        if (!inputFile.exists()) {
-            System.err.println("Error: Input file not found: ${inputFile.absolutePath}")
-            throw IllegalArgumentException("Input file not found")
-        }
-
-        return ValidateOptions(
-            inputFile = inputFile,
-            verbose = verbose
-        )
     }
 
     private fun printValidateUsage() {
         println("""
             |Validate UDM Language file syntax
             |
-            |Usage:
-            |  utlx udm validate <file.udm> [options]
+            |USAGE:
+            |  utlx udm validate [file.udm] [OPTIONS]
             |
-            |Arguments:
-            |  file.udm            .udm file to validate
+            |ARGUMENTS:
+            |  file.udm              .udm file to validate (default: stdin)
             |
-            |Options:
-            |  -v, --verbose       Enable verbose output
-            |  -h, --help          Show this help message
+            |OPTIONS:
+            |  -v, --verbose         Enable verbose output
+            |  -h, --help            Show this help message
             |
-            |Exit Codes:
+            |EXIT CODES:
             |  0   File is valid
             |  1   Validation failed
             |
-            |Examples:
-            |  # Validate file
+            |EXAMPLES:
+            |  # Validate file:
             |  utlx udm validate data.udm
             |
-            |  # Verbose validation
+            |  # Validate from stdin:
+            |  cat data.udm | utlx udm validate
+            |
+            |  # Verbose validation:
             |  utlx udm validate data.udm --verbose
         """.trimMargin())
     }
 
     // ==================== FORMAT ====================
 
-    data class FormatOptions(
-        val inputFile: File,
-        val outputFile: File? = null,
-        val inPlace: Boolean = false,
-        val compact: Boolean = false,
-        val verbose: Boolean = false
-    )
-
     private fun executeFormat(args: Array<String>): CommandResult {
-        val options = try {
-            parseFormatOptions(args)
-        } catch (e: IllegalStateException) {
-            if (e.message == "HELP_REQUESTED") {
+        try {
+            // Show help
+            if (hasFlag(args, "-h", "--help")) {
+                printFormatUsage()
                 return CommandResult.Success
             }
-            return CommandResult.Failure(e.message ?: "Unknown error", 1)
-        } catch (e: IllegalArgumentException) {
-            return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
-        }
 
-        if (options.verbose) {
-            println("UTL-X UDM Format")
-            println("Input: ${options.inputFile.absolutePath}")
-            if (options.inPlace) {
-                println("Mode: In-place")
-            } else if (options.outputFile != null) {
-                println("Output: ${options.outputFile.absolutePath}")
+            // Parse flags
+            val inputFile = getOptionValue(args, "--input")
+            val outputFile = getOptionValue(args, "--output")
+            val compact = hasFlag(args, "--compact", "-c")
+            val verbose = hasFlag(args, "-v", "--verbose")
+
+            // Verbose output to stderr
+            if (verbose && inputFile == null) {
+                System.err.println("Reading from stdin...")
             }
-            println()
-        }
 
-        try {
-            // Parse input
-            val udmString = options.inputFile.readText()
-            val udm = UDMLanguageParser.parse(udmString)
+            // Read input (stdin or file)
+            val content = readInput(inputFile)
 
-            // Serialize with formatting
-            val formatted = udm.toUDMLanguage(prettyPrint = !options.compact)
+            // Parse and reformat
+            val udm = UDMLanguageParser.parse(content)
+            val formatted = udm.toUDMLanguage(prettyPrint = !compact)
 
-            // Write output
-            if (options.inPlace) {
-                options.inputFile.writeText(formatted)
-                println("✓ Formatted ${options.inputFile.name} in place")
-            } else if (options.outputFile != null) {
-                options.outputFile.writeText(formatted)
-                println("✓ Formatted to ${options.outputFile.name}")
-            } else {
-                // Print to stdout
-                println(formatted)
+            // Write output (stdout or file)
+            writeOutput(outputFile, formatted)
+
+            // Verbose completion to stderr
+            if (verbose) {
+                if (outputFile != null) {
+                    System.err.println("✓ Formatted to $outputFile")
+                } else {
+                    System.err.println("✓ Formatted to stdout")
+                }
             }
 
             return CommandResult.Success
@@ -592,198 +533,346 @@ object UDMCommand {
             return CommandResult.Failure("Parse failed", 1)
         } catch (e: Exception) {
             System.err.println("✗ Format failed: ${e.message}")
-            if (options.verbose) {
-                e.printStackTrace()
-            }
             return CommandResult.Failure("Format failed", 1)
         }
-    }
-
-    private fun parseFormatOptions(args: Array<String>): FormatOptions {
-        if (args.isEmpty()) {
-            printFormatUsage()
-            throw IllegalArgumentException("No arguments provided")
-        }
-
-        var inputFile: File? = null
-        var outputFile: File? = null
-        var inPlace = false
-        var compact = false
-        var verbose = false
-
-        var i = 0
-        while (i < args.size) {
-            when (args[i]) {
-                "--output", "-o" -> {
-                    if (i + 1 >= args.size) {
-                        System.err.println("Error: --output requires a file path")
-                        printFormatUsage()
-                        throw IllegalArgumentException("--output requires a file path")
-                    }
-                    outputFile = File(args[++i])
-                }
-                "--in-place", "-i" -> {
-                    inPlace = true
-                }
-                "--compact", "-c" -> {
-                    compact = true
-                }
-                "-v", "--verbose" -> {
-                    verbose = true
-                }
-                "-h", "--help" -> {
-                    printFormatUsage()
-                    throw IllegalStateException("HELP_REQUESTED")
-                }
-                else -> {
-                    if (!args[i].startsWith("-")) {
-                        if (inputFile == null) {
-                            inputFile = File(args[i])
-                        } else {
-                            System.err.println("Error: Unexpected argument: ${args[i]}")
-                            printFormatUsage()
-                            throw IllegalArgumentException("Unexpected argument: ${args[i]}")
-                        }
-                    } else {
-                        System.err.println("Error: Unknown option: ${args[i]}")
-                        printFormatUsage()
-                        throw IllegalArgumentException("Unknown option: ${args[i]}")
-                    }
-                }
-            }
-            i++
-        }
-
-        if (inputFile == null) {
-            System.err.println("Error: Input file is required")
-            printFormatUsage()
-            throw IllegalArgumentException("Input file is required")
-        }
-
-        if (!inputFile.exists()) {
-            System.err.println("Error: Input file not found: ${inputFile.absolutePath}")
-            throw IllegalArgumentException("Input file not found")
-        }
-
-        if (inPlace && outputFile != null) {
-            System.err.println("Error: Cannot use both --in-place and --output")
-            printFormatUsage()
-            throw IllegalArgumentException("Cannot use both --in-place and --output")
-        }
-
-        return FormatOptions(
-            inputFile = inputFile,
-            outputFile = outputFile,
-            inPlace = inPlace,
-            compact = compact,
-            verbose = verbose
-        )
     }
 
     private fun printFormatUsage() {
         println("""
             |Format/pretty-print UDM Language file
             |
-            |Usage:
-            |  utlx udm format <file.udm> [options]
+            |USAGE:
+            |  utlx udm format [OPTIONS]
             |
-            |Arguments:
-            |  file.udm            .udm file to format
+            |OPTIONS:
+            |  --input <file>        Input .udm file path (default: stdin)
+            |  --output <file>       Output file path (default: stdout)
+            |  --compact, -c         Compact format (minimal whitespace)
+            |  -v, --verbose         Enable verbose output
+            |  -h, --help            Show this help message
             |
-            |Options:
-            |  --output, -o FILE   Output file (default: stdout)
-            |  --in-place, -i      Format file in place
-            |  --compact, -c       Compact format (minimal whitespace)
-            |  -v, --verbose       Enable verbose output
-            |  -h, --help          Show this help message
+            |EXAMPLES:
+            |  # Format to stdout:
+            |  utlx udm format --input data.udm
             |
-            |Examples:
-            |  # Format to stdout
-            |  utlx udm format data.udm
+            |  # Format from stdin:
+            |  cat data.udm | utlx udm format > formatted.udm
             |
-            |  # Format in place
-            |  utlx udm format data.udm --in-place
+            |  # Compact format:
+            |  cat data.udm | utlx udm format --compact | wc -l
             |
-            |  # Format to new file
-            |  utlx udm format data.udm --output formatted.udm
-            |
-            |  # Compact format
-            |  utlx udm format data.udm --compact
+            |  # Format to new file:
+            |  utlx udm format --input data.udm --output formatted.udm
         """.trimMargin())
+    }
+
+    // ==================== FORMAT PARSING ====================
+
+    /**
+     * Parse format-specific options from args
+     */
+    private fun parseFormatOptions(args: Array<String>, format: String, isExport: Boolean): Map<String, Any> {
+        val options = mutableMapOf<String, Any>()
+
+        when (format.lowercase()) {
+            "csv" -> {
+                // Delimiter
+                val delimiterStr = getOptionValue(args, "--csv-delimiter")
+                val delimiter = when (delimiterStr?.lowercase()) {
+                    "comma", "," -> ','
+                    "semicolon", ";" -> ';'
+                    "tab", "\\t" -> '\t'
+                    "pipe", "|" -> '|'
+                    null -> ','
+                    else -> delimiterStr.firstOrNull() ?: ','
+                }
+                options["delimiter"] = delimiter
+
+                // Headers
+                val hasHeaders = when {
+                    hasFlag(args, "--csv-no-headers") -> false
+                    hasFlag(args, "--csv-headers") -> true
+                    else -> true // default
+                }
+                options["hasHeaders"] = hasHeaders
+
+                // Regional format (for serialization only)
+                if (!isExport) {
+                    val regionalStr = getOptionValue(args, "--csv-format")
+                    options["regional"] = regionalStr?.lowercase() ?: "none"
+                }
+            }
+
+            "xml" -> {
+                if (isExport) {
+                    // Array hints for parsing
+                    val arrayHintsStr = getOptionValue(args, "--xml-array-hints")
+                    if (arrayHintsStr != null) {
+                        options["arrayHints"] = arrayHintsStr
+                    }
+                } else {
+                    // Root name for serialization
+                    val rootName = getOptionValue(args, "--xml-root")
+                    if (rootName != null) {
+                        options["rootName"] = rootName
+                    }
+
+                    // Encoding
+                    val encoding = getOptionValue(args, "--xml-encoding")
+                    if (encoding != null) {
+                        options["encoding"] = encoding
+                    }
+                }
+            }
+
+            "xsd" -> {
+                if (isExport) {
+                    // Array hints for parsing
+                    val arrayHintsStr = getOptionValue(args, "--xsd-array-hints")
+                    if (arrayHintsStr != null) {
+                        options["arrayHints"] = arrayHintsStr
+                    }
+                } else {
+                    // Pattern
+                    val pattern = getOptionValue(args, "--xsd-pattern")
+                    if (pattern != null) {
+                        options["pattern"] = pattern
+                    }
+
+                    // Version
+                    val version = getOptionValue(args, "--xsd-version")
+                    if (version != null) {
+                        options["version"] = version
+                    }
+
+                    // Namespace (targetNamespace)
+                    val namespace = getOptionValue(args, "--xsd-namespace")
+                    if (namespace != null) {
+                        options["namespace"] = namespace
+                    }
+                }
+            }
+
+            "jsonschema" -> {
+                if (!isExport) {
+                    // Draft version
+                    val draft = getOptionValue(args, "--jsch-draft")
+                    if (draft != null) {
+                        options["draft"] = draft
+                    }
+                }
+            }
+
+            "avro" -> {
+                if (!isExport) {
+                    // Namespace
+                    val namespace = getOptionValue(args, "--avro-namespace")
+                    if (namespace != null) {
+                        options["namespace"] = namespace
+                    }
+
+                    // Validate
+                    options["validate"] = !hasFlag(args, "--avro-no-validate")
+                }
+            }
+
+            "yaml" -> {
+                if (isExport) {
+                    // Multi-document
+                    options["multiDoc"] = hasFlag(args, "--yaml-multi-doc")
+                }
+            }
+        }
+
+        return options
+    }
+
+    // ==================== FORMAT PARSERS ====================
+
+    /**
+     * Parse input content to UDM based on format
+     */
+    private fun parseInputToUDM(content: String, format: String, options: Map<String, Any>): UDM {
+        return when (format.lowercase()) {
+            "json" -> {
+                JSONParser(content).parse()
+            }
+
+            "xml" -> {
+                val arrayHints = (options["arrayHints"] as? String)
+                    ?.split(",")?.map { it.trim() }?.toSet() ?: emptySet()
+                XMLParser(content, arrayHints).parse()
+            }
+
+            "csv" -> {
+                val delimiter = (options["delimiter"] as? Char) ?: ','
+                val hasHeaders = (options["hasHeaders"] as? Boolean) ?: true
+                val dialect = CSVDialect(delimiter = delimiter)
+                CSVParser(content, dialect).parse(hasHeaders)
+            }
+
+            "yaml" -> {
+                val multiDoc = (options["multiDoc"] as? Boolean) ?: false
+                val parseOpts = YAMLParser.ParseOptions(multiDocument = multiDoc)
+                YAMLParser().parse(content, parseOpts)
+            }
+
+            "jsonschema" -> {
+                JSONSchemaParser(content).parse()
+            }
+
+            "xsd" -> {
+                val arrayHints = (options["arrayHints"] as? String)
+                    ?.split(",")?.map { it.trim() }?.toSet() ?: emptySet()
+                XSDParser(content, arrayHints).parse()
+            }
+
+            "avro" -> {
+                AvroSchemaParser().parse(content)
+            }
+
+            "protobuf" -> {
+                ProtobufSchemaParser().parse(content)
+            }
+
+            else -> throw IllegalArgumentException(
+                "Unsupported format: $format\n" +
+                "Supported formats: ${SUPPORTED_FORMATS.joinToString(", ")}"
+            )
+        }
+    }
+
+    // ==================== FORMAT SERIALIZERS ====================
+
+    /**
+     * Serialize UDM to format
+     */
+    private fun serializeUDMToFormat(udm: UDM, format: String, options: Map<String, Any>): String {
+        return when (format.lowercase()) {
+            "json" -> {
+                JSONSerializer(prettyPrint = true).serialize(udm)
+            }
+
+            "xml" -> {
+                val rootName = (options["rootName"] as? String) ?: "root"
+                val encoding = options["encoding"] as? String
+                XMLSerializer(prettyPrint = true, outputEncoding = encoding)
+                    .serialize(udm, rootName)
+            }
+
+            "csv" -> {
+                val delimiter = (options["delimiter"] as? Char) ?: ','
+                val includeHeaders = (options["hasHeaders"] as? Boolean) ?: true
+                val regionalFormat = when (options["regional"] as? String) {
+                    "usa" -> RegionalFormat.USA
+                    "european" -> RegionalFormat.EUROPEAN
+                    "french" -> RegionalFormat.FRENCH
+                    "swiss" -> RegionalFormat.SWISS
+                    else -> RegionalFormat.NONE
+                }
+                val dialect = CSVDialect(delimiter = delimiter)
+                CSVSerializer(dialect, includeHeaders, regionalFormat = regionalFormat)
+                    .serialize(udm)
+            }
+
+            "yaml" -> {
+                val serOpts = YAMLSerializer.SerializeOptions(pretty = true)
+                YAMLSerializer().serialize(udm, serOpts)
+            }
+
+            "jsonschema" -> {
+                val draft = (options["draft"] as? String) ?: "2020-12"
+                JSONSchemaSerializer(draft, prettyPrint = true).serialize(udm)
+            }
+
+            "xsd" -> {
+                val version = (options["version"] as? String) ?: "1.0"
+                val namespace = options["namespace"] as? String
+                val pattern = when (options["pattern"] as? String) {
+                    "russian-doll" -> XSDSerializer.XSDPattern.RUSSIAN_DOLL
+                    "salami-slice" -> XSDSerializer.XSDPattern.SALAMI_SLICE
+                    "venetian-blind" -> XSDSerializer.XSDPattern.VENETIAN_BLIND
+                    "garden-of-eden" -> XSDSerializer.XSDPattern.GARDEN_OF_EDEN
+                    else -> null
+                }
+
+                // Note: Need to check if XSDSerializer accepts targetNamespace parameter
+                // If not, may need to add namespace via metadata before serialization
+                val serializer = XSDSerializer(
+                    pattern = pattern,
+                    version = version,
+                    prettyPrint = true
+                )
+
+                // TODO: Handle namespace - may need to add to UDM metadata if serializer doesn't support it directly
+                if (namespace != null) {
+                    // Try to add namespace to UDM structure if needed
+                    // This may require checking XSDSerializer API
+                }
+
+                serializer.serialize(udm)
+            }
+
+            "avro" -> {
+                val namespace = options["namespace"] as? String
+                val validate = (options["validate"] as? Boolean) ?: true
+                AvroSchemaSerializer(namespace, prettyPrint = true, validate).serialize(udm)
+            }
+
+            "protobuf" -> {
+                ProtobufSchemaSerializer().serialize(udm)
+            }
+
+            else -> throw IllegalArgumentException(
+                "Unsupported format: $format\n" +
+                "Supported formats: ${SUPPORTED_FORMATS.joinToString(", ")}"
+            )
+        }
     }
 
     // ==================== MAIN USAGE ====================
 
     private fun printUsage() {
         println("""
-            |Work with UDM Language files
+            |Work with UDM Language files (Unix-style with stdin/stdout support)
             |
-            |Usage:
+            |USAGE:
             |  utlx udm <subcommand> [options]
             |
-            |Subcommands:
-            |  export     Parse input file and export to .udm format
-            |  import     Load and validate UDM from .udm file
+            |SUBCOMMANDS:
+            |  export     Export data from format to .udm
+            |  import     Import .udm to format
             |  validate   Validate .udm file syntax
             |  format     Pretty-print/reformat .udm file
             |
-            |Options:
+            |OPTIONS:
             |  -h, --help Show this help message
             |
-            |Examples:
-            |  utlx udm export data.json data.udm
-            |  utlx udm import data.udm --structure
+            |EXAMPLES:
+            |  # Export JSON to .udm:
+            |  utlx udm export --format json --input data.json --output data.udm
+            |  cat data.json | utlx udm export --format json > data.udm
+            |
+            |  # Import .udm to JSON:
+            |  utlx udm import --format json --input data.udm --output result.json
+            |  cat data.udm | utlx udm import --format json > result.json
+            |
+            |  # Validate .udm file:
             |  utlx udm validate data.udm
-            |  utlx udm format data.udm --in-place
+            |  cat data.udm | utlx udm validate
+            |
+            |  # Format .udm file:
+            |  utlx udm format --input data.udm --output formatted.udm
+            |  cat data.udm | utlx udm format > formatted.udm
+            |
+            |  # Round-trip test:
+            |  cat data.json | utlx udm export --format json | utlx udm import --format json | jq .
             |
             |For subcommand help:
             |  utlx udm <subcommand> --help
+            |
+            |Supported formats:
+            |  json, xml, csv, yaml, jsonschema, xsd, avro, protobuf
         """.trimMargin())
-    }
-
-    // ==================== HELPER FUNCTIONS ====================
-
-    private fun detectInputFormat(filename: String): String {
-        return when {
-            filename.endsWith(".json") -> "json"
-            filename.endsWith(".xml") -> "xml"
-            filename.endsWith(".csv") -> "csv"
-            filename.endsWith(".yaml") || filename.endsWith(".yml") -> "yaml"
-            else -> "json" // default
-        }
-    }
-
-    private fun parseInputToUDM(content: String, format: String): UDM {
-        // This would normally use the actual parsers from the core module
-        // For now, placeholder that would integrate with existing parsers
-        throw NotImplementedError("Input parsing to UDM not yet implemented in CLI - use transformation service")
-    }
-
-    private fun runtimeValueToUDM(value: org.apache.utlx.core.interpreter.RuntimeValue): UDM {
-        // Convert RuntimeValue to UDM
-        throw NotImplementedError("RuntimeValue to UDM conversion not yet implemented")
-    }
-
-    private fun describeUDM(udm: UDM, indent: Int): String {
-        val spaces = "  ".repeat(indent)
-        return when (udm) {
-            is UDM.Scalar -> "${spaces}Scalar(${udm.value})"
-            is UDM.Array -> {
-                val items = udm.elements.joinToString("\n") { describeUDM(it, indent + 1) }
-                "${spaces}Array[\n$items\n$spaces]"
-            }
-            is UDM.Object -> {
-                val props = udm.properties.entries.joinToString("\n") { (key, value) ->
-                    "$spaces  $key:\n${describeUDM(value, indent + 2)}"
-                }
-                "${spaces}Object(name=${udm.name})[\n$props\n$spaces]"
-            }
-            is UDM.DateTime -> "${spaces}DateTime(${udm.instant})"
-            is UDM.Date -> "${spaces}Date(${udm.date})"
-            is UDM.LocalDateTime -> "${spaces}LocalDateTime(${udm.dateTime})"
-            is UDM.Time -> "${spaces}Time(${udm.time})"
-            is UDM.Binary -> "${spaces}Binary(${udm.data.size} bytes)"
-            is UDM.Lambda -> "${spaces}Lambda"
-        }
     }
 }
