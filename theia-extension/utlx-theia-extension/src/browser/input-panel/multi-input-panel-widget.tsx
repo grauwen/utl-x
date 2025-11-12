@@ -502,9 +502,28 @@ export class MultiInputPanelWidget extends ReactWidget {
     private handleRenameInput(inputId: string, newName: string): void {
         const oldInput = this.state.inputs.find(i => i.id === inputId);
         if (!oldInput) return;
-        // TODO if there are multiple inputs defined and one is renamed to an existing name in one of the other inputs (vertical TABS)
-        // check somehow the other inputs don't have the newName aleady
+
         const oldName = oldInput.name;
+
+        // Prevent empty names
+        if (!newName || newName.trim() === '') {
+            this.messageService.warn('Input name cannot be empty');
+            // Revert to old name by forcing a re-render
+            this.update();
+            return;
+        }
+
+        // Check if another input already has this name (case-insensitive check)
+        const duplicateInput = this.state.inputs.find(
+            input => input.id !== inputId && input.name.toLowerCase() === newName.toLowerCase()
+        );
+
+        if (duplicateInput) {
+            this.messageService.warn(`Input name "${newName}" is already in use. Please choose a different name.`);
+            // Revert to old name by forcing a re-render
+            this.update();
+            return;
+        }
 
         this.setState({
             inputs: this.state.inputs.map(input =>
