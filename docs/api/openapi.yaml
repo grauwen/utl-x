@@ -1,0 +1,792 @@
+openapi: 3.0.3
+info:
+  title: UTL-X Daemon REST API
+  description: |
+    HTTP/REST API for UTL-X Daemon providing transformation execution, validation,
+    schema inference, and UDM (Universal Data Model) operations.
+
+    The daemon exposes both an LSP server (for IDE integration) and this REST API
+    (for programmatic access, CI/CD, and MCP server integration).
+  version: 1.0.0
+  contact:
+    name: UTL-X Project
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: http://localhost:7779
+    description: Local daemon instance (default port)
+
+tags:
+  - name: Health
+    description: Server health and status
+  - name: Transformation
+    description: UTLX transformation execution
+  - name: Validation
+    description: UTLX code validation
+  - name: Schema
+    description: Schema inference and parsing
+  - name: UDM
+    description: Universal Data Model operations
+  - name: Admin
+    description: Administrative operations
+
+paths:
+  /api/ping:
+    get:
+      tags:
+        - Health
+      summary: Ping - simple liveness check
+      description: |
+        Quick liveness check endpoint with minimal overhead.
+        Returns immediately with status, service name, and timestamp.
+        Useful for monitoring and connectivity testing.
+      operationId: ping
+      responses:
+        '200':
+          description: Server is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PingResponse'
+
+  /api/health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns server health status, version, and uptime
+      operationId: getHealth
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/validate:
+    post:
+      tags:
+        - Validation
+      summary: Validate UTLX code
+      description: |
+        Validates UTLX transformation code for syntax and type errors.
+        Returns diagnostics with error locations.
+      operationId: validateUtlx
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationRequest'
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/execute:
+    post:
+      tags:
+        - Transformation
+      summary: Execute UTLX transformation
+      description: |
+        Executes a UTLX transformation with a single input.
+        Supports all 8 data formats (json, xml, csv, yaml, jsonschema, xsd, avro, protobuf).
+      operationId: executeTransformation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionRequest'
+      responses:
+        '200':
+          description: Transformation executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '400':
+          description: Invalid request or transformation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+
+  /api/execute-multipart:
+    post:
+      tags:
+        - Transformation
+      summary: Execute UTLX transformation with multiple inputs
+      description: |
+        Executes a UTLX transformation with multiple named inputs.
+        Supports encoding specification and BOM handling per input.
+        Useful for transformations with multiple data sources.
+      operationId: executeTransformationMultipart
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - utlx
+              properties:
+                utlx:
+                  type: string
+                  description: UTLX transformation source code
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Input data files with metadata in headers (X-Format, X-Encoding, X-BOM)
+      responses:
+        '200':
+          description: Transformation executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '400':
+          description: Invalid request or transformation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+
+  /api/infer-schema:
+    post:
+      tags:
+        - Schema
+      summary: Infer output schema from UTLX transformation
+      description: |
+        Analyzes a UTLX transformation and infers the output schema.
+        Can optionally use an input schema to improve inference accuracy.
+      operationId: inferSchema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InferSchemaRequest'
+      responses:
+        '200':
+          description: Schema inferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InferSchemaResponse'
+        '400':
+          description: Invalid request or parse error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InferSchemaResponse'
+        '500':
+          description: Schema inference failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InferSchemaResponse'
+
+  /api/parse-schema:
+    post:
+      tags:
+        - Schema
+      summary: Parse and normalize schema
+      description: |
+        Parses a schema (XSD or JSON Schema) and returns a normalized representation.
+        Useful for schema validation and conversion.
+      operationId: parseSchema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParseSchemaRequest'
+      responses:
+        '200':
+          description: Schema parsed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseSchemaResponse'
+        '400':
+          description: Unsupported format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseSchemaResponse'
+        '500':
+          description: Schema parsing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseSchemaResponse'
+
+  /api/udm/export:
+    post:
+      tags:
+        - UDM
+      summary: Export data to UDM Language format
+      description: |
+        Parses input data in any supported format (json, xml, csv, yaml, jsonschema, xsd, avro, protobuf)
+        and exports it to UDM Language (.udm) format with full metadata preservation.
+
+        The .udm format is a human-readable representation of the Universal Data Model
+        that preserves all type information, metadata, and structure for perfect round-trip capability.
+      operationId: exportToUdm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UDMExportRequest'
+      responses:
+        '200':
+          description: Export successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UDMExportResponse'
+        '400':
+          description: Invalid request or unsupported format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UDMExportResponse'
+        '500':
+          description: Export failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UDMExportResponse'
+
+  /api/udm/import:
+    post:
+      tags:
+        - UDM
+      summary: Import UDM Language to data format
+      description: |
+        Parses UDM Language (.udm) format and converts it to any supported output format
+        (json, xml, csv, yaml, jsonschema, xsd, avro, protobuf).
+
+        Preserves all metadata and type information during conversion.
+      operationId: importFromUdm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UDMImportRequest'
+      responses:
+        '200':
+          description: Import successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UDMImportResponse'
+        '400':
+          description: Invalid request or unsupported format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UDMImportResponse'
+        '500':
+          description: Import failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UDMImportResponse'
+
+  /api/udm/validate:
+    post:
+      tags:
+        - UDM
+      summary: Validate UDM Language syntax
+      description: |
+        Validates UDM Language (.udm) file syntax.
+        Returns validation errors with line/column information if syntax is invalid.
+      operationId: validateUdm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UDMValidateRequest'
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UDMValidateResponse'
+        '500':
+          description: Validation failed unexpectedly
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UDMValidateResponse'
+
+  /api/shutdown:
+    post:
+      tags:
+        - Admin
+      summary: Shutdown daemon gracefully
+      description: |
+        Initiates graceful shutdown of the daemon.
+        Completes in-flight requests before stopping.
+      operationId: shutdown
+      responses:
+        '200':
+          description: Shutdown initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: shutting_down
+                  message:
+                    type: string
+                    example: UTLXD daemon is shutting down gracefully
+        '500':
+          description: Shutdown error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+components:
+  schemas:
+    PingResponse:
+      type: object
+      required:
+        - status
+        - service
+        - timestamp
+      properties:
+        status:
+          type: string
+          example: ok
+          description: Server status (always "ok" if responding)
+        service:
+          type: string
+          example: utlx-rest-server
+          description: Service name
+        timestamp:
+          type: integer
+          format: int64
+          example: 1699876543210
+          description: Current server timestamp in milliseconds
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - version
+        - uptime
+      properties:
+        status:
+          type: string
+          example: ok
+          description: Server status
+        version:
+          type: string
+          example: 1.0.0-SNAPSHOT
+          description: Server version
+        uptime:
+          type: integer
+          format: int64
+          example: 123456
+          description: Server uptime in milliseconds
+
+    ValidationRequest:
+      type: object
+      required:
+        - utlx
+      properties:
+        utlx:
+          type: string
+          description: UTLX transformation source code
+        strict:
+          type: boolean
+          default: false
+          description: Treat type warnings as errors
+
+    ValidationResponse:
+      type: object
+      required:
+        - valid
+        - diagnostics
+      properties:
+        valid:
+          type: boolean
+          description: Whether the code is valid
+        diagnostics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Diagnostic'
+
+    Diagnostic:
+      type: object
+      required:
+        - severity
+        - message
+      properties:
+        severity:
+          type: string
+          enum: [error, warning, info]
+          description: Diagnostic severity
+        message:
+          type: string
+          description: Diagnostic message
+        line:
+          type: integer
+          description: Line number (1-indexed)
+        column:
+          type: integer
+          description: Column number (1-indexed)
+        source:
+          type: string
+          description: Diagnostic source (parser, type-checker, etc.)
+
+    ExecutionRequest:
+      type: object
+      required:
+        - utlx
+        - input
+      properties:
+        utlx:
+          type: string
+          description: UTLX transformation source code
+        input:
+          type: string
+          description: Input data
+        inputFormat:
+          type: string
+          default: json
+          enum: [json, xml, csv, yaml, jsonschema, xsd, avro, protobuf]
+          description: Input data format
+        outputFormat:
+          type: string
+          default: json
+          enum: [json, xml, csv, yaml, jsonschema, xsd, avro, protobuf]
+          description: Output data format
+
+    ExecutionResponse:
+      type: object
+      required:
+        - success
+        - executionTimeMs
+      properties:
+        success:
+          type: boolean
+          description: Whether execution succeeded
+        output:
+          type: string
+          description: Transformation output (if successful)
+        error:
+          type: string
+          description: Error message (if failed)
+        executionTimeMs:
+          type: integer
+          format: int64
+          description: Execution time in milliseconds
+
+    InferSchemaRequest:
+      type: object
+      required:
+        - utlx
+      properties:
+        utlx:
+          type: string
+          description: UTLX transformation source code
+        inputSchema:
+          type: string
+          description: Optional input schema (XSD or JSON Schema)
+        format:
+          type: string
+          default: json-schema
+          enum: [json-schema, xsd]
+          description: Schema format
+
+    InferSchemaResponse:
+      type: object
+      required:
+        - success
+        - schemaFormat
+      properties:
+        success:
+          type: boolean
+          description: Whether inference succeeded
+        schema:
+          type: string
+          description: Inferred schema (if successful)
+        schemaFormat:
+          type: string
+          enum: [json-schema, xsd]
+          description: Schema format
+        confidence:
+          type: number
+          format: double
+          default: 1.0
+          description: Inference confidence (0.0-1.0)
+        error:
+          type: string
+          description: Error message (if failed)
+
+    ParseSchemaRequest:
+      type: object
+      required:
+        - schema
+        - format
+      properties:
+        schema:
+          type: string
+          description: Schema content
+        format:
+          type: string
+          enum: [xsd, json-schema, jsonschema]
+          description: Schema format
+
+    ParseSchemaResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Whether parsing succeeded
+        normalized:
+          type: string
+          description: Normalized schema representation (if successful)
+        error:
+          type: string
+          description: Error message (if failed)
+
+    UDMExportRequest:
+      type: object
+      required:
+        - content
+        - format
+      properties:
+        content:
+          type: string
+          description: Input data content
+        format:
+          type: string
+          enum: [json, xml, csv, yaml, jsonschema, xsd, avro, protobuf]
+          description: Input data format
+        prettyPrint:
+          type: boolean
+          default: true
+          description: Pretty-print output
+        # CSV options
+        delimiter:
+          type: string
+          description: CSV delimiter character (default ',')
+        hasHeaders:
+          type: boolean
+          description: CSV has headers (default true)
+        regional:
+          type: string
+          enum: [usa, european, french, swiss]
+          description: CSV regional format
+        # XML options
+        arrayHints:
+          type: string
+          description: Comma-separated XML array element names
+        rootName:
+          type: string
+          description: XML root element name
+        encoding:
+          type: string
+          description: XML output encoding
+        # YAML options
+        multiDoc:
+          type: boolean
+          description: YAML multi-document
+        # JSON Schema options
+        draft:
+          type: string
+          description: JSON Schema draft version (e.g., "2020-12")
+        # XSD options
+        version:
+          type: string
+          description: XSD version (1.0, 1.1)
+        namespace:
+          type: string
+          description: XSD/Avro target namespace
+        pattern:
+          type: string
+          enum: [russian-doll, salami-slice, venetian-blind, garden-of-eden]
+          description: XSD design pattern
+        # Avro options
+        validate:
+          type: boolean
+          description: Avro validate schema
+        # Source metadata
+        sourceFile:
+          type: string
+          description: Source file name (for metadata)
+
+    UDMExportResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Whether export succeeded
+        udmLanguage:
+          type: string
+          description: UDM Language output (if successful)
+        sourceFormat:
+          type: string
+          description: Original source format
+        parsedAt:
+          type: string
+          format: date-time
+          description: Timestamp when parsed
+        error:
+          type: string
+          description: Error message (if failed)
+
+    UDMImportRequest:
+      type: object
+      required:
+        - udmLanguage
+        - targetFormat
+      properties:
+        udmLanguage:
+          type: string
+          description: UDM Language content
+        targetFormat:
+          type: string
+          enum: [json, xml, csv, yaml, jsonschema, xsd, avro, protobuf]
+          description: Target output format
+        prettyPrint:
+          type: boolean
+          default: true
+          description: Pretty-print output
+        # Same format options as UDMExportRequest
+        delimiter:
+          type: string
+        hasHeaders:
+          type: boolean
+        regional:
+          type: string
+          enum: [usa, european, french, swiss]
+        arrayHints:
+          type: string
+        rootName:
+          type: string
+        encoding:
+          type: string
+        multiDoc:
+          type: boolean
+        draft:
+          type: string
+        version:
+          type: string
+        namespace:
+          type: string
+        pattern:
+          type: string
+          enum: [russian-doll, salami-slice, venetian-blind, garden-of-eden]
+        validate:
+          type: boolean
+
+    UDMImportResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Whether import succeeded
+        output:
+          type: string
+          description: Output in target format (if successful)
+        targetFormat:
+          type: string
+          description: Target format
+        sourceInfo:
+          type: object
+          additionalProperties:
+            type: string
+          description: Source metadata from UDM file
+        error:
+          type: string
+          description: Error message (if failed)
+
+    UDMValidateRequest:
+      type: object
+      required:
+        - udmLanguage
+      properties:
+        udmLanguage:
+          type: string
+          description: UDM Language content to validate
+
+    UDMValidateResponse:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether syntax is valid
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation error messages
+        udmVersion:
+          type: string
+          description: UDM version from file header
+        sourceInfo:
+          type: object
+          additionalProperties:
+            type: string
+          description: Source metadata from file header
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        timestamp:
+          type: integer
+          format: int64
+          description: Error timestamp in milliseconds

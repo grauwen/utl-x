@@ -173,6 +173,17 @@ class RestApiServer(
             }
 
             routing {
+                // Ping endpoint - simple liveness check
+                get("/api/ping") {
+                    call.respond(
+                        mapOf(
+                            "status" to "ok",
+                            "service" to "utlx-rest-server",
+                            "timestamp" to System.currentTimeMillis()
+                        )
+                    )
+                }
+
                 // Health check endpoint
                 get("/api/health") {
                     call.respond(
