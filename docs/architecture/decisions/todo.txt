@@ -23,7 +23,8 @@ If one gives the same name to an input as already existed, than both TABS, exist
 
 private handleRenameInput(inputId: string, newName: string): void {
 
-
+BUG
+When the UTLX defines XML as output and the execution is run, the format is rest to JSON in the output panel (which is wrong)
 
 ---
  i would suggest not to allow spaces in the
