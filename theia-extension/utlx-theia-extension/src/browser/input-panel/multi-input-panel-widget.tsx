@@ -915,7 +915,13 @@ export class MultiInputPanelWidget extends ReactWidget {
 
     /**
      * Sync input tabs from parsed UTLX headers (for copy/paste support)
-     * This updates the panel to match the inputs defined in the UTLX header
+     *
+     * This completely syncs the panel to match the UTLX header structure:
+     * - UTLX defines the order and structure (source of truth)
+     * - Content is preserved where names match
+     * - Tabs are reordered to match UTLX order
+     * - Extra tabs not in UTLX are removed
+     * - Missing tabs in UTLX are created empty
      */
     public syncFromHeaders(parsedInputs: Array<{
         name: string;
@@ -925,6 +931,7 @@ export class MultiInputPanelWidget extends ReactWidget {
         xmlArrays?: string[];
     }>): void {
         console.log('[MultiInputPanelWidget] Syncing from headers:', parsedInputs);
+        console.log('[MultiInputPanelWidget] Current inputs before sync:', this.state.inputs.map(i => ({name: i.name, format: i.instanceFormat})));
 
         const currentInputs = this.state.inputs;
 
@@ -948,22 +955,32 @@ export class MultiInputPanelWidget extends ReactWidget {
         }
 
         // Build new input tabs based on parsed headers
+        // The order comes from parsedInputs (UTLX is source of truth)
         const newInputs: InputTab[] = parsedInputs.map((parsedInput, index) => {
-            // Try to find existing tab with same name to preserve content
-            const existingInput = currentInputs.find(input => input.name === parsedInput.name);
+            // Try to find existing tab with matching name to preserve content
+            let existingInput = currentInputs.find(input => input.name === parsedInput.name);
+
+            // Special case: single input on both sides with different names
+            // Treat them as the same input (user renamed or pasted different UTLX)
+            if (!existingInput && parsedInputs.length === 1 && currentInputs.length === 1) {
+                existingInput = currentInputs[0];
+                console.log(`[MultiInputPanelWidget] Single input case: renaming "${existingInput.name}" to "${parsedInput.name}"`);
+            }
 
             if (existingInput) {
-                // Update existing input's format and options, but preserve content
+                // Found matching name - reuse it and update format/options
+                console.log(`[MultiInputPanelWidget] Reusing existing input "${parsedInput.name}" (preserving content)`);
                 return {
                     ...existingInput,
+                    name: parsedInput.name, // Update to new name from UTLX
                     instanceFormat: parsedInput.format as InstanceFormat,
                     csvHeaders: parsedInput.csvHeaders,
                     csvDelimiter: parsedInput.csvDelimiter
                 };
             } else {
-                // Create new input tab
+                // No matching name - create new empty input
+                console.log(`[MultiInputPanelWidget] Creating new input "${parsedInput.name}"`);
                 const newId = `input-${Date.now()}-${index}`;
-                // Determine schema format: data formats use 'jsch', schema formats map to themselves
                 const schemaFormat: SchemaFormatType =
                     (parsedInput.format === 'xsd' || parsedInput.format === 'jsch' ||
                      parsedInput.format === 'avro' || parsedInput.format === 'proto')
@@ -982,12 +999,14 @@ export class MultiInputPanelWidget extends ReactWidget {
             }
         });
 
-        // Keep the first input as active if available, or try to preserve active input by name
+        // Determine which input should be active
+        // Priority: 1) Previously active input if it still exists (by name)
+        //          2) First input
         let newActiveInputId = '';
         if (newInputs.length > 0) {
-            // Try to keep the same active input if it exists in new inputs
             const currentActive = currentInputs.find(input => input.id === this.state.activeInputId);
             if (currentActive) {
+                // Find the new input with the same name as the previously active one
                 const matchingNew = newInputs.find(input => input.name === currentActive.name);
                 newActiveInputId = matchingNew ? matchingNew.id : newInputs[0].id;
             } else {
@@ -995,12 +1014,12 @@ export class MultiInputPanelWidget extends ReactWidget {
             }
         }
 
-        // Update state - this completely replaces the old inputs array
+        // Update state - this completely replaces the inputs array
         this.setState({
             inputs: newInputs,
             activeInputId: newActiveInputId
         });
 
-        console.log('[MultiInputPanelWidget] Synced to', newInputs.length, 'input(s)');
+        console.log('[MultiInputPanelWidget] Sync complete:', newInputs.map(i => ({name: i.name, format: i.instanceFormat})));
     }
 }

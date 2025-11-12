@@ -574,6 +574,19 @@ output json
                 const model = this.editor.getModel();
                 if (!model) return;
 
+                // Check if this is a full content replacement (paste)
+                // If there's a single change that spans multiple lines including the body, it's likely a paste
+                const isMajorChange = e.changes.length === 1 &&
+                    e.changes[0].range.endLineNumber - e.changes[0].range.startLineNumber > 3;
+
+                if (isMajorChange) {
+                    // Major change detected (likely paste) - update saved headers instead of reverting
+                    console.log('[UTLXEditor] Major content change detected (paste) - updating saved headers');
+                    this.saveHeaderContent();
+                    this.onContentChanged(); // Trigger parsing
+                    return;
+                }
+
                 // Check if any changes were made to header lines
                 let headerChanged = false;
                 for (const change of e.changes) {
