@@ -928,13 +928,32 @@ export class MultiInputPanelWidget extends ReactWidget {
 
         const currentInputs = this.state.inputs;
 
+        // Validate for duplicate names in parsed inputs
+        const nameSet = new Set<string>();
+        const duplicates = new Set<string>();
+        parsedInputs.forEach(input => {
+            const lowerName = input.name.toLowerCase();
+            if (nameSet.has(lowerName)) {
+                duplicates.add(input.name);
+            } else {
+                nameSet.add(lowerName);
+            }
+        });
+
+        if (duplicates.size > 0) {
+            const duplicateList = Array.from(duplicates).join(', ');
+            this.messageService.warn(`Duplicate input names detected in UTLX header: ${duplicateList}. Please ensure all input names are unique.`);
+            console.warn('[MultiInputPanelWidget] Duplicate input names in parsed headers:', duplicates);
+            // Continue anyway, but user has been warned
+        }
+
         // Build new input tabs based on parsed headers
         const newInputs: InputTab[] = parsedInputs.map((parsedInput, index) => {
-            // Try to find existing tab with same name
+            // Try to find existing tab with same name to preserve content
             const existingInput = currentInputs.find(input => input.name === parsedInput.name);
 
             if (existingInput) {
-                // Update existing input's format and options
+                // Update existing input's format and options, but preserve content
                 return {
                     ...existingInput,
                     instanceFormat: parsedInput.format as InstanceFormat,
@@ -963,10 +982,20 @@ export class MultiInputPanelWidget extends ReactWidget {
             }
         });
 
-        // Keep the first input as active if available
-        const newActiveInputId = newInputs.length > 0 ? newInputs[0].id : '';
+        // Keep the first input as active if available, or try to preserve active input by name
+        let newActiveInputId = '';
+        if (newInputs.length > 0) {
+            // Try to keep the same active input if it exists in new inputs
+            const currentActive = currentInputs.find(input => input.id === this.state.activeInputId);
+            if (currentActive) {
+                const matchingNew = newInputs.find(input => input.name === currentActive.name);
+                newActiveInputId = matchingNew ? matchingNew.id : newInputs[0].id;
+            } else {
+                newActiveInputId = newInputs[0].id;
+            }
+        }
 
-        // Update state
+        // Update state - this completely replaces the old inputs array
         this.setState({
             inputs: newInputs,
             activeInputId: newActiveInputId

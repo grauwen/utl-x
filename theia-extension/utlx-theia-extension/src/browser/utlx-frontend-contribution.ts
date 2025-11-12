@@ -693,6 +693,20 @@ export class UTLXFrontendContribution implements
             if (typeof (inputPanel as any).syncFromHeaders === 'function') {
                 console.log('[UTLXFrontendContribution] Syncing input panel with', event.inputs.length, 'inputs');
                 (inputPanel as any).syncFromHeaders(event.inputs);
+
+                // CRITICAL: After syncing, rebuild the inputs Map to match the panel's new state
+                // This prevents stale input IDs from interfering with subsequent operations
+                this.inputs.clear();
+                const allInputs = inputPanel.getAllInputTabs();
+                allInputs.forEach(input => {
+                    this.inputs.set(input.id, {
+                        name: input.name,
+                        format: input.format,
+                        csvHeaders: input.csvHeaders,
+                        csvDelimiter: input.csvDelimiter
+                    });
+                });
+                console.log('[UTLXFrontendContribution] Rebuilt inputs Map with', this.inputs.size, 'entries');
             } else {
                 console.warn('[UTLXFrontendContribution] InputPanel does not have syncFromHeaders method yet');
             }
@@ -704,6 +718,9 @@ export class UTLXFrontendContribution implements
             } else {
                 console.warn('[UTLXFrontendContribution] OutputPanel does not have syncFromHeaders method yet');
             }
+
+            // Update output format tracking
+            this.outputFormat = event.output.format || 'json';
 
         } finally {
             // Always clear flag
