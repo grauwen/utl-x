@@ -120,6 +120,25 @@ export interface ExecutionResult {
 }
 
 /**
+ * UDM validation request
+ */
+export interface ValidateUdmRequest {
+    content: string;
+    format: DataFormat;
+    csvHeaders?: boolean;
+    csvDelimiter?: string;
+}
+
+/**
+ * UDM validation result
+ */
+export interface ValidateUdmResult {
+    success: boolean;
+    error?: string;
+    diagnostics?: Diagnostic[];
+}
+
+/**
  * Schema inference result (design-time mode)
  */
 export interface SchemaInferenceResult {
@@ -239,6 +258,12 @@ export interface UTLXService {
      * Infer output schema (design-time mode)
      */
     inferSchema(source: string, inputSchema?: SchemaDocument): Promise<SchemaInferenceResult>;
+
+    /**
+     * Validate if input data can be parsed to UDM
+     * Uses /api/udm/validate endpoint
+     */
+    validateUdm(request: ValidateUdmRequest): Promise<ValidateUdmResult>;
 
     /**
      * Get hover information at position

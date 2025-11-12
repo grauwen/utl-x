@@ -19,7 +19,9 @@ import {
     CompletionItem,
     FunctionInfo,
     ModeConfiguration,
-    UTLXMode
+    UTLXMode,
+    ValidateUdmRequest,
+    ValidateUdmResult
 } from '../../common/protocol';
 import { UTLXDaemonClient } from '../daemon/utlx-daemon-client';
 
@@ -124,6 +126,38 @@ export class UTLXServiceImpl implements UTLXService {
                     message: error instanceof Error ? error.message : String(error),
                     range: { start: { line: 0, column: 0 }, end: { line: 0, column: 0 } }
                 }]
+            };
+        }
+    }
+
+    /**
+     * Validate if input data can be parsed to UDM
+     */
+    async validateUdm(request: ValidateUdmRequest): Promise<ValidateUdmResult> {
+        console.log('[BACKEND] ========================================');
+        console.log('[BACKEND] validateUdm() called');
+        console.log('[BACKEND] Request:', {
+            format: request.format,
+            contentLength: request.content.length,
+            csvHeaders: request.csvHeaders,
+            csvDelimiter: request.csvDelimiter
+        });
+        try {
+            const result = await this.daemonClient.validateUdm(request);
+            console.log('[BACKEND] Daemon client returned:', {
+                success: result.success,
+                error: result.error,
+                hasDiagnostics: !!result.diagnostics
+            });
+            console.log('[BACKEND] ========================================');
+            return result;
+        } catch (error) {
+            console.error('[BACKEND] UDM validation error:', error);
+            console.error('[BACKEND] Error stack:', error instanceof Error ? error.stack : 'N/A');
+            console.log('[BACKEND] ========================================');
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : String(error)
             };
         }
     }

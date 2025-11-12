@@ -64,6 +64,8 @@ export interface InputTab {
     // bom?: boolean;             // Byte Order Mark (default false)
     // UDM parse status
     udmParsed?: boolean;       // true = success (green check), false = error (red X), undefined = not checked yet
+    udmValidating?: boolean;   // true = currently validating (pulse icon)
+    udmError?: string;         // Error message for tooltip
 }
 
 export interface MultiInputPanelState {
@@ -196,15 +198,48 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 placeholder='Input name'
                             />
                             {/* UDM Parse Status Indicator */}
-                            {activeInput.udmParsed === true && (
-                                <span className='utlx-status-indicator' style={{ color: '#50fa7b', marginLeft: '8px' }} title='UDM parsed successfully'>
-                                    ✓ UDM
+                            {activeInput.udmValidating && (
+                                <span
+                                    className='utlx-status-indicator'
+                                    style={{ color: '#6272a4', marginLeft: '8px', cursor: 'default' }}
+                                    title='Validating UDM...'
+                                >
+                                    ⟳ UDM
                                 </span>
                             )}
-                            {activeInput.udmParsed === false && (
-                                <span className='utlx-status-indicator' style={{ color: '#ff5555', marginLeft: '8px' }} title='UDM parse error'>
+                            {!activeInput.udmValidating && activeInput.udmParsed === true && (
+                                <button
+                                    className='utlx-status-indicator'
+                                    style={{
+                                        color: '#50fa7b',
+                                        marginLeft: '8px',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        padding: '2px 4px'
+                                    }}
+                                    title={`UDM parsed successfully - Click to re-validate`}
+                                    onClick={() => this.validateInput(activeInputId)}
+                                >
+                                    ✓ UDM
+                                </button>
+                            )}
+                            {!activeInput.udmValidating && activeInput.udmParsed === false && (
+                                <button
+                                    className='utlx-status-indicator'
+                                    style={{
+                                        color: '#ff5555',
+                                        marginLeft: '8px',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        padding: '2px 4px'
+                                    }}
+                                    title={`UDM parse error: ${activeInput.udmError || 'Unknown error'} - Click to retry`}
+                                    onClick={() => this.validateInput(activeInputId)}
+                                >
                                     ✗ UDM
-                                </span>
+                                </button>
                             )}
                         </div>
                         <div className='utlx-panel-actions'>
@@ -225,24 +260,34 @@ export class MultiInputPanelWidget extends ReactWidget {
                         </div>
                     </div>
 
-                    {/* Design Time Mode: Instance/Schema Horizontal Tabs - Below header */}
-                    {isDesignTime && (
-                        <div className='utlx-horizontal-tabs'>
-                            <button
-                                className={`utlx-horizontal-tab ${activeSubTab === 'instance' ? 'active' : ''}`}
-                                onClick={() => this.handleSubTabSwitch('instance')}
-                            >
-                                Instance
-                            </button>
-                            <button
-                                className={`utlx-horizontal-tab ${activeSubTab === 'schema' ? 'active' : ''}`}
-                                onClick={() => this.handleSubTabSwitch('schema')}
-                                disabled={this.isSchemaTabDisabled(activeInput.instanceFormat)}
-                            >
-                                Schema
-                            </button>
-                        </div>
-                    )}
+                    {/* Instance/Schema Horizontal Tabs - Below header */}
+                    <div className='utlx-horizontal-tabs'>
+                        {isDesignTime ? (
+                            <>
+                                {/* Design-Time: Show both Instance and Schema tabs */}
+                                <button
+                                    className={`utlx-horizontal-tab ${activeSubTab === 'instance' ? 'active' : ''}`}
+                                    onClick={() => this.handleSubTabSwitch('instance')}
+                                >
+                                    Instance
+                                </button>
+                                <button
+                                    className={`utlx-horizontal-tab ${activeSubTab === 'schema' ? 'active' : ''}`}
+                                    onClick={() => this.handleSubTabSwitch('schema')}
+                                    disabled={this.isSchemaTabDisabled(activeInput.instanceFormat)}
+                                >
+                                    Schema
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                {/* Runtime: Show only Instance label (non-clickable) */}
+                                <div className='utlx-horizontal-tab active'>
+                                    Instance
+                                </div>
+                            </>
+                        )}
+                    </div>
 
                     {/* Format Selector and CSV parameters */}
                     <div className='utlx-panel-toolbar'>
@@ -345,6 +390,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                             className='utlx-input-editor'
                             value={currentContent}
                             onChange={(e) => this.handleContentChange(e.target.value)}
+                            onPaste={(e) => this.handlePaste(e)}
                             placeholder={this.getPlaceholder(activeInput, activeSubTab)}
                             disabled={loading}
                             spellCheck={false}
@@ -576,6 +622,23 @@ export class MultiInputPanelWidget extends ReactWidget {
         });
     }
 
+    private handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>): void {
+        console.log('[MultiInputPanel] Paste detected');
+
+        // Only validate instance content, not schema content
+        const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+        if (isSchema) {
+            console.log('[MultiInputPanel] Paste in schema tab - skipping UDM validation');
+            return;
+        }
+
+        // Wait a bit for the paste to complete and state to update
+        setTimeout(() => {
+            console.log('[MultiInputPanel] Triggering UDM validation after paste');
+            this.validateInput(this.state.activeInputId);
+        }, 100);
+    }
+
     private handleFormatChange(format: InstanceFormat | SchemaFormatType): void {
         const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
         const activeInput = this.state.inputs.find(input => input.id === this.state.activeInputId);
@@ -606,6 +669,15 @@ export class MultiInputPanelWidget extends ReactWidget {
             csvHeaders: activeInput?.csvHeaders,
             csvDelimiter: activeInput?.csvDelimiter
         });
+
+        // Trigger UDM validation after format change (only for instance format, not schema)
+        if (!isSchema && activeInput?.instanceContent.trim()) {
+            console.log('[MultiInputPanel] Format changed - triggering UDM validation');
+            // Use setTimeout to ensure state has been updated
+            setTimeout(() => {
+                this.validateInput(this.state.activeInputId);
+            }, 100);
+        }
     }
 
     /**
@@ -623,6 +695,114 @@ export class MultiInputPanelWidget extends ReactWidget {
             default:
                 return 'jsch';
         }
+    }
+
+    /**
+     * Validate input content against UDM parser
+     */
+    private async validateInput(inputId: string): Promise<void> {
+        console.log('[MultiInputPanel] ========================================');
+        console.log('[MultiInputPanel] validateInput() CALLED');
+        console.log('[MultiInputPanel] Input ID:', inputId);
+
+        const input = this.state.inputs.find(i => i.id === inputId);
+
+        if (!input) {
+            console.warn('[MultiInputPanel] Input not found:', inputId);
+            return;
+        }
+
+        console.log('[MultiInputPanel] Input found:', {
+            name: input.name,
+            format: input.instanceFormat,
+            contentLength: input.instanceContent.length,
+            hasContent: !!input.instanceContent.trim()
+        });
+
+        if (!input.instanceContent.trim()) {
+            console.log('[MultiInputPanel] Empty content - clearing validation status');
+            this.updateInputValidation(inputId, undefined, false);
+            return;
+        }
+
+        if (!this.utlxService) {
+            console.error('[MultiInputPanel] UTLXService not available for validation!');
+            this.updateInputValidation(inputId, false, false, 'UTLXService not available');
+            return;
+        }
+
+        console.log('[MultiInputPanel] Setting validating state...');
+        this.updateInputValidation(inputId, undefined, true);
+
+        try {
+            const request = {
+                content: input.instanceContent,
+                format: input.instanceFormat,
+                // Provide default values for CSV parameters if not set
+                csvHeaders: input.csvHeaders !== undefined ? input.csvHeaders : true,
+                csvDelimiter: input.csvDelimiter || ','
+            };
+
+            console.log('[MultiInputPanel] Calling utlxService.validateUdm() with:', {
+                format: request.format,
+                contentLength: request.content.length,
+                csvHeaders: request.csvHeaders,
+                csvDelimiter: request.csvDelimiter
+            });
+
+            const result = await this.utlxService.validateUdm(request);
+
+            console.log('[MultiInputPanel] Validation result:', {
+                success: result.success,
+                error: result.error,
+                hasDiagnostics: !!result.diagnostics
+            });
+
+            this.updateInputValidation(
+                inputId,
+                result.success,
+                false,
+                result.error
+            );
+
+            console.log('[MultiInputPanel] Validation state updated');
+            console.log('[MultiInputPanel] ========================================');
+        } catch (error) {
+            console.error('[MultiInputPanel] Validation exception:', error);
+            console.error('[MultiInputPanel] Error stack:', error instanceof Error ? error.stack : 'N/A');
+            this.updateInputValidation(
+                inputId,
+                false,
+                false,
+                String(error)
+            );
+            console.log('[MultiInputPanel] ========================================');
+        }
+    }
+
+    /**
+     * Update input validation state
+     */
+    private updateInputValidation(
+        inputId: string,
+        udmParsed?: boolean,
+        udmValidating?: boolean,
+        udmError?: string
+    ): void {
+        console.log('[MultiInputPanel] updateInputValidation() called:', {
+            inputId,
+            udmParsed,
+            udmValidating,
+            udmError
+        });
+
+        this.setState({
+            inputs: this.state.inputs.map(input =>
+                input.id === inputId
+                    ? { ...input, udmParsed, udmValidating, udmError }
+                    : input
+            )
+        });
     }
 
     private handleCsvHeadersChange(hasHeaders: boolean): void {

@@ -21,7 +21,9 @@ import {
     HoverInfo,
     CompletionItem,
     FunctionInfo,
-    ModeConfiguration
+    ModeConfiguration,
+    ValidateUdmRequest,
+    ValidateUdmResult
 } from '../../common/protocol';
 
 /**
@@ -427,6 +429,45 @@ export class UTLXDaemonClient extends EventEmitter {
                 content: inputSchema.content
             } : undefined
         });
+    }
+
+    /**
+     * Validate if input data can be parsed to UDM
+     * Uses /api/udm/export endpoint (which validates by converting to UDM)
+     */
+    async validateUdm(request: ValidateUdmRequest): Promise<ValidateUdmResult> {
+        console.log('[DaemonClient] Validating UDM:', {
+            format: request.format,
+            contentLength: request.content.length,
+            csvHeaders: request.csvHeaders,
+            csvDelimiter: request.csvDelimiter
+        });
+
+        try {
+            // Use /api/udm/export to validate - it converts source data to UDM
+            // If conversion succeeds, the data is valid
+            const response = await this.httpRequest('/api/udm/export', 'POST', {
+                content: request.content,
+                format: request.format,
+                hasHeaders: request.csvHeaders,    // Note: Kotlin uses 'hasHeaders'
+                delimiter: request.csvDelimiter,   // Note: Kotlin uses 'delimiter'
+                prettyPrint: false
+            });
+
+            // If we get here, the export succeeded (data is valid)
+            return {
+                success: true
+            };
+        } catch (error) {
+            // Export failed - data cannot be parsed
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.log('[DaemonClient] UDM validation failed:', errorMessage);
+
+            return {
+                success: false,
+                error: errorMessage
+            };
+        }
     }
 
     /**
