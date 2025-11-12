@@ -502,7 +502,8 @@ export class MultiInputPanelWidget extends ReactWidget {
     private handleRenameInput(inputId: string, newName: string): void {
         const oldInput = this.state.inputs.find(i => i.id === inputId);
         if (!oldInput) return;
-
+        // TODO if there are multiple inputs defined and one is renamed to an existing name in one of the other inputs (vertical TABS)
+        // check somehow the other inputs don't have the newName aleady
         const oldName = oldInput.name;
 
         this.setState({

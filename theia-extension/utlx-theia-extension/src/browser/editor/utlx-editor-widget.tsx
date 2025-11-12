@@ -196,7 +196,7 @@ export class UTLXEditorWidget extends ReactWidget {
                 minimap: { enabled: true },
                 scrollBeyondLastLine: false,
                 wordWrap: 'on',
-                fontSize: 14,
+                fontSize: 12,
                 folding: true,
                 renderWhitespace: 'selection',
                 automaticLayout: true,
