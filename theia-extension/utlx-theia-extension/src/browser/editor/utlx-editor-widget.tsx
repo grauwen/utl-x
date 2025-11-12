@@ -258,7 +258,7 @@ export class UTLXEditorWidget extends ReactWidget {
      */
     protected registerCompletionProvider(): void {
         const completionProvider: monaco.languages.CompletionItemProvider = {
-            triggerCharacters: ['$'],
+            triggerCharacters: ['$', '.'],
             provideCompletionItems: (model, position) => {
                 console.log('[UTLXEditor] ===========================================');
                 console.log('[UTLXEditor] Completion provider triggered');
@@ -267,51 +267,31 @@ export class UTLXEditorWidget extends ReactWidget {
                 const lineContent = model.getLineContent(position.lineNumber);
                 console.log('[UTLXEditor] Line content:', lineContent);
 
-                // Check if there's a $ before the current position
                 const textBeforeCursor = lineContent.substring(0, position.column - 1);
+                console.log('[UTLXEditor] Text before cursor:', textBeforeCursor);
+
+                // Check if we're completing after a dot (field navigation)
+                const lastDotIndex = textBeforeCursor.lastIndexOf('.');
                 const lastDollarIndex = textBeforeCursor.lastIndexOf('$');
 
-                console.log('[UTLXEditor] Text before cursor:', textBeforeCursor);
                 console.log('[UTLXEditor] Last $ index:', lastDollarIndex);
+                console.log('[UTLXEditor] Last . index:', lastDotIndex);
 
-                // If no $ found, don't provide suggestions
-                if (lastDollarIndex === -1) {
-                    console.log('[UTLXEditor] No $ found, returning empty suggestions');
-                    console.log('[UTLXEditor] ===========================================');
-                    return { suggestions: [] };
+                // Case 1: Dot notation - $input.field.subfield
+                if (lastDotIndex > lastDollarIndex && lastDollarIndex !== -1) {
+                    console.log('[UTLXEditor] DOT NOTATION detected');
+                    return this.provideFieldCompletions(textBeforeCursor, lastDollarIndex, lastDotIndex, position);
                 }
 
-                // Get the text after $ up to cursor
-                const textAfterDollar = textBeforeCursor.substring(lastDollarIndex + 1);
-                console.log('[UTLXEditor] Text after $:', textAfterDollar);
+                // Case 2: Input name completion - $input
+                if (lastDollarIndex !== -1) {
+                    console.log('[UTLXEditor] INPUT NAME completion');
+                    return this.provideInputNameCompletions(textBeforeCursor, lastDollarIndex, position);
+                }
 
-                console.log('[UTLXEditor] Available inputs from headers:', this.inputNamesFromHeaders);
-                console.log('[UTLXEditor] Available UDM map keys:', Array.from(this.inputUdmMap.keys()));
-
-                // Calculate the range to replace (from $ to cursor)
-                const replaceStartColumn = lastDollarIndex + 2; // +1 for 0-index, +1 to skip $
-                const replaceEndColumn = position.column;
-
-                const suggestions: monaco.languages.CompletionItem[] = this.inputNamesFromHeaders.map(inputName => ({
-                    label: inputName,
-                    kind: monaco.languages.CompletionItemKind.Variable,
-                    insertText: inputName,
-                    detail: 'Input reference',
-                    documentation: this.inputUdmMap.has(inputName)
-                        ? `UDM:\n\`\`\`\n${this.inputUdmMap.get(inputName)}\n\`\`\``
-                        : 'Input from UTLX header',
-                    range: {
-                        startLineNumber: position.lineNumber,
-                        startColumn: replaceStartColumn,
-                        endLineNumber: position.lineNumber,
-                        endColumn: replaceEndColumn
-                    }
-                }));
-
-                console.log('[UTLXEditor] Returning', suggestions.length, 'suggestions');
+                console.log('[UTLXEditor] No $ found, returning empty suggestions');
                 console.log('[UTLXEditor] ===========================================');
-
-                return { suggestions };
+                return { suggestions: [] };
             }
         };
 
@@ -320,6 +300,262 @@ export class UTLXEditorWidget extends ReactWidget {
         this.toDispose.push(disposable);
 
         console.log('[UTLXEditor] Completion provider registered');
+    }
+
+    /**
+     * Provide input name completions for $
+     */
+    protected provideInputNameCompletions(
+        textBeforeCursor: string,
+        dollarIndex: number,
+        position: monaco.Position
+    ): monaco.languages.CompletionList {
+        const textAfterDollar = textBeforeCursor.substring(dollarIndex + 1);
+        console.log('[UTLXEditor] Text after $:', textAfterDollar);
+
+        console.log('[UTLXEditor] Available inputs from headers:', this.inputNamesFromHeaders);
+
+        const replaceStartColumn = dollarIndex + 2; // +1 for 0-index, +1 to skip $
+        const replaceEndColumn = position.column;
+
+        const suggestions: monaco.languages.CompletionItem[] = this.inputNamesFromHeaders.map(inputName => ({
+            label: inputName,
+            kind: monaco.languages.CompletionItemKind.Variable,
+            insertText: inputName,
+            detail: 'Input reference',
+            documentation: this.inputUdmMap.has(inputName)
+                ? `UDM:\n\`\`\`\n${this.inputUdmMap.get(inputName)}\n\`\`\``
+                : 'Input from UTLX header',
+            range: {
+                startLineNumber: position.lineNumber,
+                startColumn: replaceStartColumn,
+                endLineNumber: position.lineNumber,
+                endColumn: replaceEndColumn
+            }
+        }));
+
+        console.log('[UTLXEditor] Returning', suggestions.length, 'input name suggestions');
+        console.log('[UTLXEditor] ===========================================');
+
+        return { suggestions };
+    }
+
+    /**
+     * Provide field completions for dot notation ($input.field)
+     */
+    protected provideFieldCompletions(
+        textBeforeCursor: string,
+        dollarIndex: number,
+        dotIndex: number,
+        position: monaco.Position
+    ): monaco.languages.CompletionList {
+        // Extract the full path: $inputName.field.subfield
+        const fullPath = textBeforeCursor.substring(dollarIndex + 1, dotIndex);
+        const pathParts = fullPath.split('.');
+
+        const inputName = pathParts[0];
+        const fieldPath = pathParts.slice(1); // Fields navigated so far
+
+        console.log('[UTLXEditor] Input name:', inputName);
+        console.log('[UTLXEditor] Field path:', fieldPath);
+
+        // Get UDM for this input
+        const udm = this.inputUdmMap.get(inputName);
+        if (!udm) {
+            console.log('[UTLXEditor] No UDM found for input:', inputName);
+            console.log('[UTLXEditor] ===========================================');
+            return { suggestions: [] };
+        }
+
+        console.log('[UTLXEditor] UDM found, parsing structure...');
+
+        // Parse UDM and navigate to current position
+        const fields = this.getFieldsAtPath(udm, fieldPath);
+
+        console.log('[UTLXEditor] Fields at current path:', fields);
+
+        const replaceStartColumn = dotIndex + 2; // +1 for 0-index, +1 to skip .
+        const replaceEndColumn = position.column;
+
+        const suggestions: monaco.languages.CompletionItem[] = fields.map(field => ({
+            label: field.name,
+            kind: field.type === 'object' ? monaco.languages.CompletionItemKind.Class :
+                  field.type === 'array' ? monaco.languages.CompletionItemKind.Value :
+                  monaco.languages.CompletionItemKind.Field,
+            insertText: field.name,
+            detail: field.type,
+            documentation: field.description || `Field of type ${field.type}`,
+            range: {
+                startLineNumber: position.lineNumber,
+                startColumn: replaceStartColumn,
+                endLineNumber: position.lineNumber,
+                endColumn: replaceEndColumn
+            }
+        }));
+
+        console.log('[UTLXEditor] Returning', suggestions.length, 'field suggestions');
+        console.log('[UTLXEditor] ===========================================');
+
+        return { suggestions };
+    }
+
+    /**
+     * Parse UDM structure and get fields at a specific path
+     */
+    protected getFieldsAtPath(udm: string, path: string[]): Array<{name: string, type: string, description?: string}> {
+        console.log('[UTLXEditor] Parsing UDM for path:', path);
+        console.log('[UTLXEditor] UDM content (first 500 chars):', udm.substring(0, 500));
+
+        try {
+            // Parse UDM language format
+            const fields = this.parseUdmFields(udm, path);
+            console.log('[UTLXEditor] Parsed fields:', fields);
+            return fields;
+        } catch (error) {
+            console.error('[UTLXEditor] Failed to parse UDM:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Parse UDM language and extract fields
+     * Handles both formats:
+     * 1. Full: @Object(...) { properties: { field1: value } }
+     * 2. Shorthand: [{field1: value, field2: value}] or {field1: value}
+     */
+    protected parseUdmFields(udm: string, path: string[]): Array<{name: string, type: string, description?: string}> {
+        let currentUdm = udm.trim();
+
+        // Skip metadata lines (@udm-version, @parsed-at, etc.)
+        currentUdm = currentUdm.replace(/@udm-version:[^\n]*\n/g, '');
+        currentUdm = currentUdm.replace(/@parsed-at:[^\n]*\n/g, '');
+        currentUdm = currentUdm.replace(/@source:[^\n]*\n/g, '');
+        currentUdm = currentUdm.trim();
+
+        console.log('[UTLXEditor] After removing metadata:', currentUdm.substring(0, 300));
+
+        // Check if it's an array at root level
+        if (currentUdm.startsWith('[')) {
+            console.log('[UTLXEditor] Root is an ARRAY');
+
+            // Extract the first element to get field structure
+            const firstElementMatch = currentUdm.match(/\[\s*\{([^}]+)\}/);
+            if (firstElementMatch) {
+                currentUdm = `{${firstElementMatch[1]}}`;
+                console.log('[UTLXEditor] Using first array element:', currentUdm.substring(0, 200));
+            } else {
+                console.log('[UTLXEditor] Could not extract first array element');
+                return [];
+            }
+        }
+
+        // Navigate through the path
+        for (const fieldName of path) {
+            console.log('[UTLXEditor] Navigating to field:', fieldName);
+
+            // Try shorthand format first: {fieldName: value, ...}
+            const shorthandPattern = new RegExp(`${fieldName}:\\s*([^,}]+|\\{[^}]+\\})`, 's');
+            const shorthandMatch = currentUdm.match(shorthandPattern);
+
+            if (shorthandMatch) {
+                currentUdm = shorthandMatch[1].trim();
+                console.log('[UTLXEditor] Found field (shorthand):', currentUdm.substring(0, 100));
+                continue;
+            }
+
+            // Try full format: properties: { fieldName: value }
+            const propertiesMatch = currentUdm.match(/properties:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/);
+            if (propertiesMatch) {
+                const propertiesContent = propertiesMatch[1];
+                const fieldPattern = new RegExp(`${fieldName}:\\s*(@Object[^{]*\\{[^}]*(?:\\{[^}]*\\}[^}]*)*\\}|[^,]+)`, 's');
+                const fieldMatch = propertiesContent.match(fieldPattern);
+
+                if (fieldMatch) {
+                    currentUdm = fieldMatch[1];
+                    console.log('[UTLXEditor] Found field (full format):', currentUdm.substring(0, 100));
+                    continue;
+                }
+            }
+
+            console.log('[UTLXEditor] Field not found:', fieldName);
+            return [];
+        }
+
+        // Extract fields at current level
+        console.log('[UTLXEditor] Extracting fields from:', currentUdm.substring(0, 300));
+
+        // Try shorthand format: {field1: value, field2: value}
+        if (currentUdm.startsWith('{') || currentUdm.includes(':')) {
+            const fields: Array<{name: string, type: string, description?: string}> = [];
+
+            // Extract all field: value pairs
+            const fieldPattern = /(\w+):\s*("(?:[^"\\]|\\.)*"|\{[^}]*\}|[^,}\n]+)/g;
+            let match;
+
+            while ((match = fieldPattern.exec(currentUdm)) !== null) {
+                const fieldName = match[1];
+                const fieldValue = match[2].trim();
+
+                let type = this.inferUdmType(fieldValue);
+
+                fields.push({
+                    name: fieldName,
+                    type: type,
+                    description: `${fieldName}: ${type}`
+                });
+            }
+
+            console.log('[UTLXEditor] Extracted fields (shorthand):', fields.length);
+            return fields;
+        }
+
+        // Try full format: properties: { ... }
+        const propertiesMatch = currentUdm.match(/properties:\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/);
+        if (propertiesMatch) {
+            const fields: Array<{name: string, type: string, description?: string}> = [];
+            const propertiesContent = propertiesMatch[1];
+            const fieldPattern = /(\w+):\s*(@\w+(?:\([^)]*\))?(?:\s*\{[^}]*\})?|"[^"]*"|[^,]+)/g;
+
+            let match;
+            while ((match = fieldPattern.exec(propertiesContent)) !== null) {
+                const fieldName = match[1];
+                const fieldValue = match[2].trim();
+                let type = this.inferUdmType(fieldValue);
+
+                fields.push({
+                    name: fieldName,
+                    type: type,
+                    description: `${fieldName}: ${type}`
+                });
+            }
+
+            console.log('[UTLXEditor] Extracted fields (full format):', fields.length);
+            return fields;
+        }
+
+        console.log('[UTLXEditor] No fields found');
+        return [];
+    }
+
+    /**
+     * Infer type from UDM value
+     */
+    protected inferUdmType(value: string): string {
+        value = value.trim();
+
+        if (value.startsWith('@Object')) return 'object';
+        if (value.startsWith('@Array')) return 'array';
+        if (value.startsWith('@DateTime')) return 'datetime';
+        if (value.startsWith('@Date')) return 'date';
+        if (value.startsWith('@Binary')) return 'binary';
+        if (value.startsWith('"')) return 'string';
+        if (value === 'true' || value === 'false') return 'boolean';
+        if (value === 'null') return 'null';
+        if (/^-?\d+(\.\d+)?$/.test(value)) return 'number';
+        if (value.startsWith('{')) return 'object';
+        if (value.startsWith('[')) return 'array';
+
+        return 'unknown';
     }
 
     /**
