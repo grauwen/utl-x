@@ -10,22 +10,42 @@ analysis part
 
 Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that describes it
 ---
+the existing LSP is designed for UTLX transformation language (.utlx files).
 
+  Answer: No, we don't need a separate LSP server!
+
+  The LSP (Language Server Protocol) is designed to support multiple languages in a single server. The standard approach is to have one LSP server that handles multiple file types by registering different language handlers.
+
+  So for Phase 4, we would:
+
+  1. Extend the existing utlxd LSP to also handle .udm files
+  2. Register .udm as a second language alongside .utlx
+  3. Add .udm syntax highlighting, validation, etc. as additional capabilities
+
+  Architecture:
+  utlxd (LSP Server)
+  ├── UTLX Language Handler (.utlx files)
+  │   ├── Syntax highlighting
+  │   ├── Type checking
+  │   ├── Code completion
+  │   └── Error diagnostics
+  │
+  └── UDM Language Handler (.udm files)  ← NEW
+      ├── Syntax highlighting
+      ├── Parse validation
+      ├── Hover info
+      └── Error diagnostics
+
+  Implementation approach:
+  - Add a new language ID: "udm" (alongside existing "utlx")
+  - Register .udm file extension
+  - Add UDM-specific syntax rules and validation
+  - Share the same LSP server process
+
+  So Phase 4 would be extending the existing utlxd LSP, not creating a second LSP server. This is the standard LSP design pattern used by language servers like typescript-language-server (handles both .ts and .tsx) or
+  vscode-json-languageserver (handles JSON and JSON with Comments).
 ---
-IDE BUG 
-After the last change, parse the past in the UTLX, the renaming of the  input is not working correctly anymore, only when there has been a paste of UTLX. When name changed by update of event from UTLX paste action, then the input panel pane name does not update anymore, only when an input is added this change suddenly is triggered
-Pasting works once right and after hat the headers don't work correct anymore
-
-next test name 01-monkey will work
-
-BUG
-If one gives the same name to an input as already existed, than both TABS, existing and renamed have the same name and logic is broken
-
-private handleRenameInput(inputId: string, newName: string): void {
-
-BUG
-When the UTLX defines XML as output and the execution is run, the format is rest to JSON in the output panel (which is wrong)
-
+I
 ---
  i would suggest not to allow spaces in the
   input names (this should be checked and enforced by the MultipleInputWidget 
