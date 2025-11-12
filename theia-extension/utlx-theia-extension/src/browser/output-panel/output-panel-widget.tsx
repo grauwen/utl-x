@@ -359,70 +359,83 @@ export class OutputPanelWidget extends ReactWidget {
 
     /**
      * Format XML with proper indentation
-     * This is a simple formatter - for production use, consider using a library like vkbeautify
+     * This is a robust formatter that handles text content, attributes, comments, and processing instructions
      */
     private formatXml(xml: string): string {
         try {
-            let formatted = '';
+            const lines: string[] = [];
             let indent = 0;
             const tab = '  '; // 2 spaces
 
-            // Remove existing formatting (collapse whitespace between tags)
-            xml = xml.replace(/>\s*</g, '><').trim();
+            // Normalize: remove extra whitespace between tags, but preserve text content
+            xml = xml.trim();
 
-            // Split by tags
-            const tokens = xml.split(/(<[^>]+>)/g).filter(token => token.trim().length > 0);
+            // Split by tags while preserving them in the result
+            const regex = /(<\?[^?]*\?>|<!--[\s\S]*?-->|<[^>]+>)/g;
+            const parts = xml.split(regex).filter(part => part.length > 0);
 
-            for (let i = 0; i < tokens.length; i++) {
-                const token = tokens[i];
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i].trim();
 
-                // Skip empty tokens
-                if (!token.trim()) continue;
+                if (!part) continue; // Skip empty parts
 
-                if (token.startsWith('<!--')) {
+                if (part.startsWith('<?')) {
+                    // Processing instruction (e.g., <?xml version="1.0"?>)
+                    lines.push(tab.repeat(indent) + part);
+                } else if (part.startsWith('<!--')) {
                     // Comment
-                    formatted += tab.repeat(indent) + token + '\n';
-                } else if (token.startsWith('<?')) {
-                    // Processing instruction (like <?xml version="1.0"?>)
-                    formatted += tab.repeat(indent) + token + '\n';
-                } else if (token.startsWith('</')) {
+                    lines.push(tab.repeat(indent) + part);
+                } else if (part.startsWith('</')) {
                     // Closing tag
                     indent = Math.max(0, indent - 1);
-                    formatted += tab.repeat(indent) + token + '\n';
-                } else if (token.startsWith('<')) {
-                    // Opening tag or self-closing tag
-                    const isSelfClosing = token.endsWith('/>');
-                    const isOpeningTag = !isSelfClosing;
+                    lines.push(tab.repeat(indent) + part);
+                } else if (part.startsWith('<')) {
+                    // Opening or self-closing tag
+                    const isSelfClosing = part.endsWith('/>');
 
-                    formatted += tab.repeat(indent) + token;
+                    // Check if there's text content and a closing tag following this opening tag
+                    // Pattern: <tag>text</tag>
+                    let hasSimpleTextContent = false;
+                    let textContent = '';
+                    let closingTag = '';
 
-                    // Check if next token is text content (not a tag)
-                    const nextToken = tokens[i + 1];
-                    if (nextToken && !nextToken.startsWith('<')) {
-                        // Text content follows - don't add newline yet
-                        // The text will be added in the next iteration
-                    } else {
-                        formatted += '\n';
+                    if (!isSelfClosing && i + 2 < parts.length) {
+                        const nextPart = parts[i + 1].trim();
+                        const followingPart = parts[i + 2].trim();
+
+                        // Check if next is text and following is closing tag
+                        if (nextPart && !nextPart.startsWith('<') &&
+                            followingPart && followingPart.startsWith('</')) {
+                            hasSimpleTextContent = true;
+                            textContent = nextPart;
+                            closingTag = followingPart;
+                        }
                     }
 
-                    if (isOpeningTag) {
-                        indent++;
+                    if (hasSimpleTextContent) {
+                        // Tag with simple text content: <tag>text</tag>
+                        // Put everything on one line
+                        lines.push(tab.repeat(indent) + part + textContent + closingTag);
+                        // Skip the text content and closing tag in next iterations
+                        i += 2;
+                    } else {
+                        // Tag without immediate text content (has nested elements)
+                        lines.push(tab.repeat(indent) + part);
+
+                        // Increase indent for opening tags (not self-closing)
+                        if (!isSelfClosing) {
+                            indent++;
+                        }
                     }
                 } else {
-                    // Text content
-                    formatted += token.trim();
-
-                    // Check if next token is closing tag
-                    const nextToken = tokens[i + 1];
-                    if (nextToken && nextToken.startsWith('</')) {
-                        // Closing tag follows - it will handle the newline and indent
-                    } else {
-                        formatted += '\n';
+                    // Pure text content (should have been handled above, but just in case)
+                    if (part.length > 0) {
+                        lines.push(tab.repeat(indent) + part);
                     }
                 }
             }
 
-            return formatted.trim();
+            return lines.join('\n');
         } catch (error) {
             console.error('[OutputPanel] XML formatting failed:', error);
             return xml; // Return original if formatting fails
