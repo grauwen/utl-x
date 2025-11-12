@@ -193,7 +193,7 @@ export class UTLXEditorWidget extends ReactWidget {
             this.editor = monaco.editor.create(this.editorContainer, {
                 model: model,
                 lineNumbers: 'on',
-                minimap: { enabled: true },
+                minimap: { enabled: false }, // Disabled to save space - UTLX files are typically short
                 scrollBeyondLastLine: false,
                 wordWrap: 'on',
                 fontSize: 12,
