@@ -1,5 +1,9 @@
 grammar UDMLang;
 
+@header {
+package org.apache.utlx.core.udm.parser;
+}
+
 // Parser Rules
 
 udmFile
