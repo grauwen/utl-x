@@ -62,6 +62,8 @@ export interface InputTab {
     // Encoding parameters (COMMENTED OUT - encoding/BOM are auto-detected for inputs, not manually set)
     // encoding?: string;         // Character encoding (UTF-8, UTF-16LE, UTF-16BE, ISO-8859-1, Windows-1252)
     // bom?: boolean;             // Byte Order Mark (default false)
+    // UDM parse status
+    udmParsed?: boolean;       // true = success (green check), false = error (red X), undefined = not checked yet
 }
 
 export interface MultiInputPanelState {
@@ -193,6 +195,17 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 onChange={(e) => this.handleRenameInput(activeInputId, e.target.value)}
                                 placeholder='Input name'
                             />
+                            {/* UDM Parse Status Indicator */}
+                            {activeInput.udmParsed === true && (
+                                <span className='utlx-status-indicator' style={{ color: '#50fa7b', marginLeft: '8px' }} title='UDM parsed successfully'>
+                                    ✓ UDM
+                                </span>
+                            )}
+                            {activeInput.udmParsed === false && (
+                                <span className='utlx-status-indicator' style={{ color: '#ff5555', marginLeft: '8px' }} title='UDM parse error'>
+                                    ✗ UDM
+                                </span>
+                            )}
                         </div>
                         <div className='utlx-panel-actions'>
                             <button
