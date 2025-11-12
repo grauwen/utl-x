@@ -318,26 +318,85 @@ export class UTLXEditorWidget extends ReactWidget {
         const replaceStartColumn = dollarIndex + 2; // +1 for 0-index, +1 to skip $
         const replaceEndColumn = position.column;
 
-        const suggestions: monaco.languages.CompletionItem[] = this.inputNamesFromHeaders.map(inputName => ({
-            label: inputName,
-            kind: monaco.languages.CompletionItemKind.Variable,
-            insertText: inputName,
-            detail: 'Input reference',
-            documentation: this.inputUdmMap.has(inputName)
-                ? `UDM:\n\`\`\`\n${this.inputUdmMap.get(inputName)}\n\`\`\``
-                : 'Input from UTLX header',
-            range: {
-                startLineNumber: position.lineNumber,
-                startColumn: replaceStartColumn,
-                endLineNumber: position.lineNumber,
-                endColumn: replaceEndColumn
+        const suggestions: monaco.languages.CompletionItem[] = [];
+
+        // For each input, check if it's an array and provide appropriate suggestions
+        this.inputNamesFromHeaders.forEach(inputName => {
+            const udm = this.inputUdmMap.get(inputName);
+            const isArray = udm ? this.isUdmArray(udm) : false;
+
+            if (isArray) {
+                // For array inputs, provide multiple options:
+
+                // 1. Plain input name (for passing whole array to functions like map, filter, etc.)
+                suggestions.push({
+                    label: inputName,
+                    kind: monaco.languages.CompletionItemKind.Variable,
+                    insertText: inputName,
+                    detail: 'Array (entire collection)',
+                    documentation: `Use for passing the entire array to functions like map, filter, count, etc.\n\n**Examples:**\n\`\`\`\nmap($${inputName}, e => e.field)\nfilter($${inputName}, e => e.field > 100)\ncount($${inputName})\n\`\`\``,
+                    sortText: '1_' + inputName, // Sort first
+                    range: {
+                        startLineNumber: position.lineNumber,
+                        startColumn: replaceStartColumn,
+                        endLineNumber: position.lineNumber,
+                        endColumn: replaceEndColumn
+                    }
+                });
+
+                // 2. Array indexing with [0] (for accessing specific element)
+                suggestions.push({
+                    label: inputName + '[0]',
+                    kind: monaco.languages.CompletionItemKind.Variable,
+                    insertText: inputName + '[0]',
+                    detail: 'First element',
+                    documentation: `Direct access to the first element of the array.\n\n**Example:**\n\`\`\`\n$${inputName}[0].Department\n$${inputName}[0].FirstName\n\`\`\`\n\nFor processing all elements, use map() instead.`,
+                    sortText: '2_' + inputName,
+                    range: {
+                        startLineNumber: position.lineNumber,
+                        startColumn: replaceStartColumn,
+                        endLineNumber: position.lineNumber,
+                        endColumn: replaceEndColumn
+                    }
+                });
+
+            } else {
+                // For non-array inputs (objects), just provide the input name
+                suggestions.push({
+                    label: inputName,
+                    kind: monaco.languages.CompletionItemKind.Variable,
+                    insertText: inputName,
+                    detail: 'Input reference',
+                    documentation: this.inputUdmMap.has(inputName)
+                        ? `UDM:\n\`\`\`\n${this.inputUdmMap.get(inputName)}\n\`\`\``
+                        : 'Input from UTLX header',
+                    sortText: '1_' + inputName,
+                    range: {
+                        startLineNumber: position.lineNumber,
+                        startColumn: replaceStartColumn,
+                        endLineNumber: position.lineNumber,
+                        endColumn: replaceEndColumn
+                    }
+                });
             }
-        }));
+        });
 
         console.log('[UTLXEditor] Returning', suggestions.length, 'input name suggestions');
         console.log('[UTLXEditor] ===========================================');
 
         return { suggestions };
+    }
+
+    /**
+     * Check if UDM is an array at root level
+     */
+    protected isUdmArray(udm: string): boolean {
+        const trimmed = udm.trim()
+            .replace(/@udm-version:[^\n]*\n/g, '')
+            .replace(/@parsed-at:[^\n]*\n/g, '')
+            .replace(/@source:[^\n]*\n/g, '')
+            .trim();
+        return trimmed.startsWith('[');
     }
 
     /**
@@ -349,15 +408,30 @@ export class UTLXEditorWidget extends ReactWidget {
         dotIndex: number,
         position: monaco.Position
     ): monaco.languages.CompletionList {
-        // Extract the full path: $inputName.field.subfield
+        // Extract the full path: $inputName.field.subfield or $inputName[index].field
         const fullPath = textBeforeCursor.substring(dollarIndex + 1, dotIndex);
-        const pathParts = fullPath.split('.');
 
-        const inputName = pathParts[0];
-        const fieldPath = pathParts.slice(1); // Fields navigated so far
+        // Check if path contains array indexing (e.g., "input2[0]")
+        const arrayIndexMatch = fullPath.match(/^([^\[]+)(\[\d+\])/);
+
+        let inputName: string;
+        let fieldPath: string[];
+
+        if (arrayIndexMatch) {
+            // Path like: input2[0] or input2[0].customer
+            inputName = arrayIndexMatch[1];
+            const afterIndex = fullPath.substring(arrayIndexMatch[0].length);
+            fieldPath = afterIndex ? afterIndex.split('.').filter(p => p.length > 0) : [];
+        } else {
+            // Path like: input2 or input2.customer
+            const pathParts = fullPath.split('.');
+            inputName = pathParts[0];
+            fieldPath = pathParts.slice(1);
+        }
 
         console.log('[UTLXEditor] Input name:', inputName);
         console.log('[UTLXEditor] Field path:', fieldPath);
+        console.log('[UTLXEditor] Has array index:', !!arrayIndexMatch);
 
         // Get UDM for this input
         const udm = this.inputUdmMap.get(inputName);
@@ -368,6 +442,36 @@ export class UTLXEditorWidget extends ReactWidget {
         }
 
         console.log('[UTLXEditor] UDM found, parsing structure...');
+
+        // Check if UDM is an array at root and user hasn't used array indexing yet
+        const trimmedUdm = udm.trim().replace(/@udm-version:[^\n]*\n/g, '').replace(/@parsed-at:[^\n]*\n/g, '').trim();
+        const isRootArray = trimmedUdm.startsWith('[');
+
+        if (isRootArray && !arrayIndexMatch && fieldPath.length === 0) {
+            // User typed $input2. but input2 is an array - suggest array indexing
+            console.log('[UTLXEditor] Root is array and no index provided - suggesting array indexing');
+
+            const replaceStartColumn = dotIndex + 2;
+            const replaceEndColumn = position.column;
+
+            const suggestions: monaco.languages.CompletionItem[] = [{
+                label: '[index]',
+                kind: monaco.languages.CompletionItemKind.Snippet,
+                insertText: '[0].',
+                detail: 'Array indexing required',
+                documentation: 'This input is an array. Use array indexing syntax like $' + inputName + '[0].field to access fields.\n\nExamples:\n- $' + inputName + '[0].field - First element\n- $' + inputName + '[i].field - Loop variable',
+                range: {
+                    startLineNumber: position.lineNumber,
+                    startColumn: dotIndex + 1, // Replace the dot
+                    endLineNumber: position.lineNumber,
+                    endColumn: replaceEndColumn
+                }
+            }];
+
+            console.log('[UTLXEditor] Returning array indexing suggestion');
+            console.log('[UTLXEditor] ===========================================');
+            return { suggestions };
+        }
 
         // Parse UDM and navigate to current position
         const fields = this.getFieldsAtPath(udm, fieldPath);
