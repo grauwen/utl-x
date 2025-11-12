@@ -265,7 +265,12 @@ object UDMLanguageParser {
                     expect(TokenType.LEFT_BRACE)
 
                     while (peek().type != TokenType.RIGHT_BRACE) {
-                        val key = expect(TokenType.IDENTIFIER).value
+                        // Accept both IDENTIFIER and STRING as property keys
+                        val key = if (peek().type == TokenType.STRING) {
+                            advance().value
+                        } else {
+                            expect(TokenType.IDENTIFIER).value
+                        }
                         expect(TokenType.COLON)
                         val value = when (peek().type) {
                             TokenType.STRING -> advance().value
@@ -287,7 +292,12 @@ object UDMLanguageParser {
                     expect(TokenType.LEFT_BRACE)
 
                     while (peek().type != TokenType.RIGHT_BRACE) {
-                        val key = expect(TokenType.IDENTIFIER).value
+                        // Accept both IDENTIFIER and STRING as property keys
+                        val key = if (peek().type == TokenType.STRING) {
+                            advance().value
+                        } else {
+                            expect(TokenType.IDENTIFIER).value
+                        }
                         expect(TokenType.COLON)
                         properties[key] = parseValue()
                         if (peek().type == TokenType.COMMA) advance()
@@ -301,7 +311,12 @@ object UDMLanguageParser {
             } else {
                 // Parse simple object
                 while (peek().type != TokenType.RIGHT_BRACE) {
-                    val key = expect(TokenType.IDENTIFIER).value
+                    // Accept both IDENTIFIER and STRING as property keys
+                    val key = if (peek().type == TokenType.STRING) {
+                        advance().value
+                    } else {
+                        expect(TokenType.IDENTIFIER).value
+                    }
                     expect(TokenType.COLON)
                     properties[key] = parseValue()
                     if (peek().type == TokenType.COMMA) advance()

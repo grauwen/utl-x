@@ -2,24 +2,7 @@ package org.apache.utlx.cli.commands
 
 import org.apache.utlx.core.udm.*
 import org.apache.utlx.cli.CommandResult
-import org.apache.utlx.formats.json.JSONParser
-import org.apache.utlx.formats.json.JSONSerializer
-import org.apache.utlx.formats.xml.XMLParser
-import org.apache.utlx.formats.xml.XMLSerializer
-import org.apache.utlx.formats.csv.CSVParser
-import org.apache.utlx.formats.csv.CSVSerializer
-import org.apache.utlx.formats.csv.CSVDialect
-import org.apache.utlx.formats.csv.RegionalFormat
-import org.apache.utlx.formats.yaml.YAMLParser
-import org.apache.utlx.formats.yaml.YAMLSerializer
-import org.apache.utlx.formats.jsch.JSONSchemaParser
-import org.apache.utlx.formats.jsch.JSONSchemaSerializer
-import org.apache.utlx.formats.xsd.XSDParser
-import org.apache.utlx.formats.xsd.XSDSerializer
-import org.apache.utlx.formats.avro.AvroSchemaParser
-import org.apache.utlx.formats.avro.AvroSchemaSerializer
-import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
-import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
+import org.apache.utlx.cli.service.UDMService
 import java.io.File
 
 /**
@@ -39,10 +22,8 @@ import java.io.File
  */
 object UDMCommand {
 
-    private val SUPPORTED_FORMATS = setOf(
-        "json", "xml", "csv", "yaml",
-        "jsonschema", "xsd", "avro", "protobuf"
-    )
+    private val SUPPORTED_FORMATS = UDMService.SUPPORTED_FORMATS
+    private val udmService = UDMService()
 
     fun execute(args: Array<String>): CommandResult {
         if (args.isEmpty()) {
@@ -177,28 +158,31 @@ object UDMCommand {
             // Read input (stdin or file)
             val content = readInput(inputFile)
 
-            // Parse format → UDM
+            // Parse format → UDM → .udm using UDMService
             if (verbose) {
-                System.err.println("Parsing $format...")
+                System.err.println("Parsing $format and exporting to UDM Language...")
             }
-            val udm = parseInputToUDM(content, format, formatOptions)
 
-            // Serialize UDM → .udm
-            if (verbose) {
-                System.err.println("Serializing to UDM Language...")
-            }
+            // Build source info
             val sourceInfo = if (inputFile != null) {
-                mapOf(
-                    "source" to File(inputFile).name,
-                    "parsed-at" to java.time.Instant.now().toString()
-                )
+                mapOf("source" to File(inputFile).name)
             } else {
-                mapOf("parsed-at" to java.time.Instant.now().toString())
+                emptyMap()
             }
-            val udmLang = udm.toUDMLanguage(prettyPrint = true, sourceInfo = sourceInfo)
+
+            // Convert formatOptions map to UDMService.FormatOptions
+            val options = buildFormatOptions(formatOptions)
+
+            // Call UDMService
+            val result = udmService.export(
+                content = content,
+                format = format,
+                options = options,
+                sourceInfo = sourceInfo
+            )
 
             // Write output (stdout or file)
-            writeOutput(outputFile, udmLang)
+            writeOutput(outputFile, result.udmLanguage)
 
             // Verbose completion to stderr
             if (verbose) {
@@ -316,20 +300,23 @@ object UDMCommand {
             // Read .udm input (stdin or file)
             val udmContent = readInput(inputFile)
 
-            // Parse .udm → UDM
+            // Parse .udm → UDM → format using UDMService
             if (verbose) {
-                System.err.println("Parsing UDM Language...")
+                System.err.println("Importing from UDM Language to $format...")
             }
-            val udm = UDMLanguageParser.parse(udmContent)
 
-            // Serialize UDM → format
-            if (verbose) {
-                System.err.println("Serializing to $format...")
-            }
-            val output = serializeUDMToFormat(udm, format, formatOptions)
+            // Convert formatOptions map to UDMService.FormatOptions
+            val options = buildFormatOptions(formatOptions)
+
+            // Call UDMService
+            val result = udmService.import(
+                udmLanguage = udmContent,
+                targetFormat = format,
+                options = options
+            )
 
             // Write output (stdout or file)
-            writeOutput(outputFile, output)
+            writeOutput(outputFile, result.output)
 
             // Verbose completion to stderr
             if (verbose) {
@@ -687,147 +674,27 @@ object UDMCommand {
         return options
     }
 
-    // ==================== FORMAT PARSERS ====================
+    // ==================== FORMAT OPTIONS CONVERSION ====================
 
     /**
-     * Parse input content to UDM based on format
+     * Convert Map<String, Any> options to UDMService.FormatOptions
      */
-    private fun parseInputToUDM(content: String, format: String, options: Map<String, Any>): UDM {
-        return when (format.lowercase()) {
-            "json" -> {
-                JSONParser(content).parse()
-            }
-
-            "xml" -> {
-                val arrayHints = (options["arrayHints"] as? String)
-                    ?.split(",")?.map { it.trim() }?.toSet() ?: emptySet()
-                XMLParser(content, arrayHints).parse()
-            }
-
-            "csv" -> {
-                val delimiter = (options["delimiter"] as? Char) ?: ','
-                val hasHeaders = (options["hasHeaders"] as? Boolean) ?: true
-                val dialect = CSVDialect(delimiter = delimiter)
-                CSVParser(content, dialect).parse(hasHeaders)
-            }
-
-            "yaml" -> {
-                val multiDoc = (options["multiDoc"] as? Boolean) ?: false
-                val parseOpts = YAMLParser.ParseOptions(multiDocument = multiDoc)
-                YAMLParser().parse(content, parseOpts)
-            }
-
-            "jsonschema" -> {
-                JSONSchemaParser(content).parse()
-            }
-
-            "xsd" -> {
-                val arrayHints = (options["arrayHints"] as? String)
-                    ?.split(",")?.map { it.trim() }?.toSet() ?: emptySet()
-                XSDParser(content, arrayHints).parse()
-            }
-
-            "avro" -> {
-                AvroSchemaParser().parse(content)
-            }
-
-            "protobuf" -> {
-                ProtobufSchemaParser().parse(content)
-            }
-
-            else -> throw IllegalArgumentException(
-                "Unsupported format: $format\n" +
-                "Supported formats: ${SUPPORTED_FORMATS.joinToString(", ")}"
-            )
-        }
-    }
-
-    // ==================== FORMAT SERIALIZERS ====================
-
-    /**
-     * Serialize UDM to format
-     */
-    private fun serializeUDMToFormat(udm: UDM, format: String, options: Map<String, Any>): String {
-        return when (format.lowercase()) {
-            "json" -> {
-                JSONSerializer(prettyPrint = true).serialize(udm)
-            }
-
-            "xml" -> {
-                val rootName = (options["rootName"] as? String) ?: "root"
-                val encoding = options["encoding"] as? String
-                XMLSerializer(prettyPrint = true, outputEncoding = encoding)
-                    .serialize(udm, rootName)
-            }
-
-            "csv" -> {
-                val delimiter = (options["delimiter"] as? Char) ?: ','
-                val includeHeaders = (options["hasHeaders"] as? Boolean) ?: true
-                val regionalFormat = when (options["regional"] as? String) {
-                    "usa" -> RegionalFormat.USA
-                    "european" -> RegionalFormat.EUROPEAN
-                    "french" -> RegionalFormat.FRENCH
-                    "swiss" -> RegionalFormat.SWISS
-                    else -> RegionalFormat.NONE
-                }
-                val dialect = CSVDialect(delimiter = delimiter)
-                CSVSerializer(dialect, includeHeaders, regionalFormat = regionalFormat)
-                    .serialize(udm)
-            }
-
-            "yaml" -> {
-                val serOpts = YAMLSerializer.SerializeOptions(pretty = true)
-                YAMLSerializer().serialize(udm, serOpts)
-            }
-
-            "jsonschema" -> {
-                val draft = (options["draft"] as? String) ?: "2020-12"
-                JSONSchemaSerializer(draft, prettyPrint = true).serialize(udm)
-            }
-
-            "xsd" -> {
-                val version = (options["version"] as? String) ?: "1.0"
-                val namespace = options["namespace"] as? String
-                val pattern = when (options["pattern"] as? String) {
-                    "russian-doll" -> XSDSerializer.XSDPattern.RUSSIAN_DOLL
-                    "salami-slice" -> XSDSerializer.XSDPattern.SALAMI_SLICE
-                    "venetian-blind" -> XSDSerializer.XSDPattern.VENETIAN_BLIND
-                    "garden-of-eden" -> XSDSerializer.XSDPattern.GARDEN_OF_EDEN
-                    else -> null
-                }
-
-                // Note: Need to check if XSDSerializer accepts targetNamespace parameter
-                // If not, may need to add namespace via metadata before serialization
-                val serializer = XSDSerializer(
-                    pattern = pattern,
-                    version = version,
-                    prettyPrint = true
-                )
-
-                // TODO: Handle namespace - may need to add to UDM metadata if serializer doesn't support it directly
-                if (namespace != null) {
-                    // Try to add namespace to UDM structure if needed
-                    // This may require checking XSDSerializer API
-                }
-
-                serializer.serialize(udm)
-            }
-
-            "avro" -> {
-                val namespace = options["namespace"] as? String
-                val validate = (options["validate"] as? Boolean) ?: true
-                AvroSchemaSerializer(namespace, prettyPrint = true, validate).serialize(udm)
-            }
-
-            "protobuf" -> {
-                ProtobufSchemaSerializer().serialize(udm)
-            }
-
-            else -> throw IllegalArgumentException(
-                "Unsupported format: $format\n" +
-                "Supported formats: ${SUPPORTED_FORMATS.joinToString(", ")}"
-            )
-        }
+    private fun buildFormatOptions(options: Map<String, Any>): UDMService.FormatOptions {
+        return UDMService.FormatOptions(
+            prettyPrint = true,
+            delimiter = (options["delimiter"] as? Char),
+            hasHeaders = (options["hasHeaders"] as? Boolean),
+            regional = (options["regional"] as? String),
+            arrayHints = (options["arrayHints"] as? String),
+            rootName = (options["rootName"] as? String),
+            encoding = (options["encoding"] as? String),
+            multiDoc = (options["multiDoc"] as? Boolean),
+            draft = (options["draft"] as? String),
+            version = (options["version"] as? String),
+            namespace = (options["namespace"] as? String),
+            pattern = (options["pattern"] as? String),
+            validate = (options["validate"] as? Boolean)
+        )
     }
 
     // ==================== MAIN USAGE ====================

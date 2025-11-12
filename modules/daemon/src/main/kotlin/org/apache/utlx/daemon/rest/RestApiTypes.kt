@@ -97,6 +97,82 @@ data class ParseSchemaResponse(
     val error: String? = null
 )
 
+// UDM export endpoint (Format → UDM → .udm)
+@Serializable
+data class UDMExportRequest(
+    val content: String,
+    val format: String, // json, xml, csv, yaml, jsonschema, xsd, avro, protobuf
+    val prettyPrint: Boolean = true,
+    // Format-specific options
+    val delimiter: String? = null,        // CSV: delimiter character (default: ',')
+    val hasHeaders: Boolean? = null,      // CSV: has headers (default: true)
+    val regional: String? = null,         // CSV: regional format (usa, european, french, swiss)
+    val arrayHints: String? = null,       // XML/XSD: comma-separated array element names
+    val rootName: String? = null,         // XML: root element name
+    val encoding: String? = null,         // XML: output encoding
+    val multiDoc: Boolean? = null,        // YAML: multi-document
+    val draft: String? = null,            // JSON Schema: draft version
+    val version: String? = null,          // XSD: version (1.0, 1.1)
+    val namespace: String? = null,        // XSD/Avro: target namespace
+    val pattern: String? = null,          // XSD: pattern (russian-doll, salami-slice, etc.)
+    val validate: Boolean? = null,        // Avro: validate schema
+    // Source metadata
+    val sourceFile: String? = null
+)
+
+@Serializable
+data class UDMExportResponse(
+    val success: Boolean,
+    val udmLanguage: String? = null,
+    val sourceFormat: String? = null,
+    val parsedAt: String? = null,
+    val error: String? = null
+)
+
+// UDM import endpoint (.udm → UDM → Format)
+@Serializable
+data class UDMImportRequest(
+    val udmLanguage: String,
+    val targetFormat: String, // json, xml, csv, yaml, jsonschema, xsd, avro, protobuf
+    val prettyPrint: Boolean = true,
+    // Format-specific options (same as export)
+    val delimiter: String? = null,
+    val hasHeaders: Boolean? = null,
+    val regional: String? = null,
+    val arrayHints: String? = null,
+    val rootName: String? = null,
+    val encoding: String? = null,
+    val multiDoc: Boolean? = null,
+    val draft: String? = null,
+    val version: String? = null,
+    val namespace: String? = null,
+    val pattern: String? = null,
+    val validate: Boolean? = null
+)
+
+@Serializable
+data class UDMImportResponse(
+    val success: Boolean,
+    val output: String? = null,
+    val targetFormat: String? = null,
+    val sourceInfo: Map<String, String>? = null,
+    val error: String? = null
+)
+
+// UDM validate endpoint
+@Serializable
+data class UDMValidateRequest(
+    val udmLanguage: String
+)
+
+@Serializable
+data class UDMValidateResponse(
+    val valid: Boolean,
+    val errors: List<String> = emptyList(),
+    val udmVersion: String? = null,
+    val sourceInfo: Map<String, String>? = null
+)
+
 // Error response
 @Serializable
 data class ErrorResponse(

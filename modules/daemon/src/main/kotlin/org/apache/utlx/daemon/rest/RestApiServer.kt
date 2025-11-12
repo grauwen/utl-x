@@ -21,6 +21,7 @@ import org.apache.utlx.analysis.schema.XSDSchemaParser
 import org.apache.utlx.analysis.schema.JSONSchemaParser
 import org.apache.utlx.analysis.schema.SchemaFormat as AnalysisSchemaFormat
 import org.apache.utlx.cli.service.TransformationService
+import org.apache.utlx.cli.service.UDMService
 import org.apache.utlx.core.lexer.Lexer
 import org.apache.utlx.core.parser.Parser
 import org.apache.utlx.core.parser.ParseResult
@@ -71,6 +72,7 @@ class RestApiServer(
     // Services for handling REST API requests
     private val stateManager = StateManager()
     private val transformationService = TransformationService()
+    private val udmService = UDMService()
     private val outputSchemaService = OutputSchemaInferenceService(stateManager)
 
     /**
@@ -603,6 +605,158 @@ class RestApiServer(
                             ParseSchemaResponse(
                                 success = false,
                                 error = "Schema parsing failed: ${e.message}"
+                            )
+                        )
+                    }
+                }
+
+                // UDM export endpoint: Format → UDM → .udm
+                post("/api/udm/export") {
+                    val request = call.receive<UDMExportRequest>()
+                    logger.debug("UDM export request: format=${request.format}")
+
+                    try {
+                        // Build format options from request
+                        val options = UDMService.FormatOptions(
+                            prettyPrint = request.prettyPrint,
+                            delimiter = request.delimiter?.firstOrNull(),
+                            hasHeaders = request.hasHeaders,
+                            regional = request.regional,
+                            arrayHints = request.arrayHints,
+                            rootName = request.rootName,
+                            encoding = request.encoding,
+                            multiDoc = request.multiDoc,
+                            draft = request.draft,
+                            version = request.version,
+                            namespace = request.namespace,
+                            pattern = request.pattern,
+                            validate = request.validate
+                        )
+
+                        // Build source info
+                        val sourceInfo = buildMap<String, String> {
+                            request.sourceFile?.let { put("source", it) }
+                        }
+
+                        // Call UDMService
+                        val result = udmService.export(
+                            content = request.content,
+                            format = request.format,
+                            options = options,
+                            sourceInfo = sourceInfo
+                        )
+
+                        call.respond(
+                            UDMExportResponse(
+                                success = true,
+                                udmLanguage = result.udmLanguage,
+                                sourceFormat = result.sourceFormat,
+                                parsedAt = result.parsedAt
+                            )
+                        )
+                    } catch (e: IllegalArgumentException) {
+                        logger.debug("Invalid UDM export request", e)
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            UDMExportResponse(
+                                success = false,
+                                error = e.message ?: "Invalid request"
+                            )
+                        )
+                    } catch (e: Exception) {
+                        logger.error("UDM export error", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            UDMExportResponse(
+                                success = false,
+                                error = "Export failed: ${e.message}"
+                            )
+                        )
+                    }
+                }
+
+                // UDM import endpoint: .udm → UDM → Format
+                post("/api/udm/import") {
+                    val request = call.receive<UDMImportRequest>()
+                    logger.debug("UDM import request: targetFormat=${request.targetFormat}")
+
+                    try {
+                        // Build format options from request
+                        val options = UDMService.FormatOptions(
+                            prettyPrint = request.prettyPrint,
+                            delimiter = request.delimiter?.firstOrNull(),
+                            hasHeaders = request.hasHeaders,
+                            regional = request.regional,
+                            arrayHints = request.arrayHints,
+                            rootName = request.rootName,
+                            encoding = request.encoding,
+                            multiDoc = request.multiDoc,
+                            draft = request.draft,
+                            version = request.version,
+                            namespace = request.namespace,
+                            pattern = request.pattern,
+                            validate = request.validate
+                        )
+
+                        // Call UDMService
+                        val result = udmService.import(
+                            udmLanguage = request.udmLanguage,
+                            targetFormat = request.targetFormat,
+                            options = options
+                        )
+
+                        call.respond(
+                            UDMImportResponse(
+                                success = true,
+                                output = result.output,
+                                targetFormat = result.targetFormat,
+                                sourceInfo = result.sourceInfo
+                            )
+                        )
+                    } catch (e: IllegalArgumentException) {
+                        logger.debug("Invalid UDM import request", e)
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            UDMImportResponse(
+                                success = false,
+                                error = e.message ?: "Invalid request"
+                            )
+                        )
+                    } catch (e: Exception) {
+                        logger.error("UDM import error", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            UDMImportResponse(
+                                success = false,
+                                error = "Import failed: ${e.message}"
+                            )
+                        )
+                    }
+                }
+
+                // UDM validate endpoint: Check .udm syntax
+                post("/api/udm/validate") {
+                    val request = call.receive<UDMValidateRequest>()
+                    logger.debug("UDM validate request")
+
+                    try {
+                        val result = udmService.validate(request.udmLanguage)
+
+                        call.respond(
+                            UDMValidateResponse(
+                                valid = result.valid,
+                                errors = result.errors,
+                                udmVersion = result.udmVersion,
+                                sourceInfo = result.sourceInfo
+                            )
+                        )
+                    } catch (e: Exception) {
+                        logger.error("UDM validate error", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            UDMValidateResponse(
+                                valid = false,
+                                errors = listOf("Validation failed: ${e.message}")
                             )
                         )
                     }
