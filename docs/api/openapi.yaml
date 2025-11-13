@@ -66,6 +66,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
+  /api/functions:
+    get:
+      tags:
+        - Admin
+      summary: Get standard library functions
+      description: |
+        Returns the complete UTL-X standard library function registry.
+        Includes all functions with their signatures, parameters, examples,
+        and categorization. Useful for IDE autocomplete, documentation,
+        and function discovery tools.
+      operationId: getFunctions
+      responses:
+        '200':
+          description: Function registry retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FunctionRegistry'
+        '500':
+          description: Failed to retrieve function registry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /api/validate:
     post:
       tags:
@@ -773,6 +798,145 @@ components:
           additionalProperties:
             type: string
           description: Source metadata from file header
+
+    FunctionRegistry:
+      type: object
+      required:
+        - version
+        - generatedAt
+        - totalFunctions
+        - functions
+        - categories
+      properties:
+        version:
+          type: string
+          example: "1.0.0"
+          description: Registry version
+        generatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when registry was generated
+        totalFunctions:
+          type: integer
+          example: 636
+          description: Total number of functions in the registry
+        functions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FunctionInfo'
+          description: List of all functions (flat)
+        categories:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/FunctionInfo'
+          description: Functions grouped by category
+
+    FunctionInfo:
+      type: object
+      required:
+        - name
+        - category
+        - description
+        - signature
+      properties:
+        name:
+          type: string
+          example: "map"
+          description: Function name
+        category:
+          type: string
+          example: "Array"
+          description: Function category (Array, String, Math, etc.)
+        description:
+          type: string
+          description: Human-readable description of what the function does
+        signature:
+          type: string
+          example: "map(array, lambda) => Array"
+          description: Function signature
+        minArgs:
+          type: integer
+          description: Minimum number of arguments
+        maxArgs:
+          type: integer
+          description: Maximum number of arguments
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterInfo'
+          description: Function parameters
+        returns:
+          $ref: '#/components/schemas/ReturnInfo'
+          description: Return value information
+        examples:
+          type: array
+          items:
+            type: string
+          description: Usage examples
+        notes:
+          type: string
+          description: Additional notes about behavior
+        tags:
+          type: array
+          items:
+            type: string
+          description: Additional tags for classification
+        seeAlso:
+          type: array
+          items:
+            type: string
+          description: Related function names
+        since:
+          type: string
+          example: "1.0"
+          description: Version when function was introduced
+        deprecated:
+          type: boolean
+          default: false
+          description: Whether function is deprecated
+        deprecationMessage:
+          type: string
+          description: Deprecation message if deprecated
+        isAlias:
+          type: boolean
+          default: false
+          description: Whether this is an alias to another function
+        aliasOf:
+          type: string
+          description: Name of canonical function if this is an alias
+
+    ParameterInfo:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          example: "array"
+          description: Parameter name
+        type:
+          type: string
+          example: "Array"
+          description: Parameter type
+        description:
+          type: string
+          description: Parameter description
+
+    ReturnInfo:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          example: "Array"
+          description: Return type
+        description:
+          type: string
+          description: Description of what is returned
 
     ErrorResponse:
       type: object

@@ -398,4 +398,136 @@ class RestApiServerTest {
         assertTrue(inputs[1].hasBOM)
         assertEquals("ISO-8859-1", inputs[2].encoding)
     }
+
+    // ========== Function Registry Tests ==========
+
+    @Test
+    fun `test StandardLibrary exportRegistry returns valid registry`() {
+        val registry = org.apache.utlx.stdlib.StandardLibrary.exportRegistry()
+
+        assertNotNull(registry)
+        assertNotNull(registry.version)
+        assertNotNull(registry.generatedAt)
+        assertTrue(registry.totalFunctions > 0, "Registry should contain functions")
+        assertFalse(registry.functions.isEmpty(), "Functions list should not be empty")
+        assertFalse(registry.categories.isEmpty(), "Categories map should not be empty")
+    }
+
+    @Test
+    fun `test function registry has expected categories`() {
+        val registry = org.apache.utlx.stdlib.StandardLibrary.exportRegistry()
+
+        // Check for common expected categories
+        val categoryKeys = registry.categories.keys
+        assertTrue(categoryKeys.contains("Array"), "Should have Array category")
+        assertTrue(categoryKeys.contains("String"), "Should have String category")
+        assertTrue(categoryKeys.contains("Math"), "Should have Math category")
+        assertTrue(categoryKeys.contains("Date"), "Should have Date category")
+    }
+
+    @Test
+    fun `test function registry functions have required fields`() {
+        val registry = org.apache.utlx.stdlib.StandardLibrary.exportRegistry()
+
+        // Test first function has all required fields
+        val firstFunction = registry.functions.firstOrNull()
+        assertNotNull(firstFunction)
+
+        firstFunction?.let { fn ->
+            assertNotNull(fn.name, "Function should have name")
+            assertNotNull(fn.category, "Function should have category")
+            assertNotNull(fn.description, "Function should have description")
+            assertNotNull(fn.signature, "Function should have signature")
+        }
+    }
+
+    @Test
+    fun `test function registry categories match function list`() {
+        val registry = org.apache.utlx.stdlib.StandardLibrary.exportRegistry()
+
+        // Count functions in categories
+        val functionsInCategories = registry.categories.values.sumOf { it.size }
+
+        // Should match total functions in flat list
+        assertEquals(registry.functions.size, functionsInCategories,
+            "Functions in categories should match total functions")
+    }
+
+    @Test
+    fun `test function registry has map function in Array category`() {
+        val registry = org.apache.utlx.stdlib.StandardLibrary.exportRegistry()
+
+        val arrayFunctions = registry.categories["Array"]
+        assertNotNull(arrayFunctions, "Array category should exist")
+
+        val mapFunction = arrayFunctions?.find { it.name == "map" }
+        assertNotNull(mapFunction, "map function should exist in Array category")
+
+        mapFunction?.let { fn ->
+            assertEquals("Array", fn.category)
+            assertTrue(fn.description.isNotEmpty())
+            assertTrue(fn.signature.contains("map"))
+        }
+    }
+
+    @Test
+    fun `test function info has parameters and returns`() {
+        val registry = org.apache.utlx.stdlib.StandardLibrary.exportRegistry()
+
+        // Find a function with parameters (like map)
+        val mapFunction = registry.functions.find { it.name == "map" }
+        assertNotNull(mapFunction)
+
+        mapFunction?.let { fn ->
+            // map should have parameters
+            assertTrue(fn.parameters.isNotEmpty(), "map should have parameters")
+
+            // Check parameter structure
+            fn.parameters.forEach { param ->
+                assertNotNull(param.name, "Parameter should have name")
+                assertNotNull(param.type, "Parameter should have type")
+            }
+
+            // Check returns structure if present
+            fn.returns?.let { ret ->
+                assertNotNull(ret.type, "Return should have type")
+            }
+        }
+    }
+
+    @Test
+    fun `test function registry JSON serialization with Jackson`() {
+        val registry = org.apache.utlx.stdlib.StandardLibrary.exportRegistry()
+
+        // Use Jackson to serialize (same as endpoint)
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val json = jacksonMapper.writeValueAsString(registry)
+
+        assertNotNull(json)
+        assertTrue(json.contains("\"version\""))
+        assertTrue(json.contains("\"totalFunctions\""))
+        assertTrue(json.contains("\"functions\""))
+        assertTrue(json.contains("\"categories\""))
+    }
+
+    @Test
+    fun `test function registry round-trip serialization`() {
+        val registry = org.apache.utlx.stdlib.StandardLibrary.exportRegistry()
+
+        // Serialize to JSON
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val json = jacksonMapper.writeValueAsString(registry)
+
+        // Deserialize back
+        val deserialized = jacksonMapper.readValue(json, org.apache.utlx.stdlib.FunctionRegistry::class.java)
+
+        assertEquals(registry.version, deserialized.version)
+        assertEquals(registry.totalFunctions, deserialized.totalFunctions)
+        assertEquals(registry.functions.size, deserialized.functions.size)
+        assertEquals(registry.categories.size, deserialized.categories.size)
+    }
 }

@@ -48,7 +48,10 @@ import org.apache.utlx.formats.avro.AvroSchemaParser
 import org.apache.utlx.formats.avro.AvroSchemaSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
 import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
+import org.apache.utlx.stdlib.StandardLibrary
 import org.slf4j.LoggerFactory
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.time.Instant
 import java.util.UUID
 
@@ -193,6 +196,29 @@ class RestApiServer(
                             uptime = System.currentTimeMillis() - startTime
                         )
                     )
+                }
+
+                // Functions endpoint - return standard library function registry
+                get("/api/functions") {
+                    logger.debug("Functions registry requested")
+                    try {
+                        val registry = StandardLibrary.exportRegistry()
+
+                        // Use Jackson to serialize (FunctionRegistry uses Jackson annotations)
+                        val jacksonMapper = ObjectMapper().registerModule(KotlinModule())
+                        val json = jacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(registry)
+
+                        call.respondText(json, ContentType.Application.Json, HttpStatusCode.OK)
+                    } catch (e: Exception) {
+                        logger.error("Failed to export function registry", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            mapOf(
+                                "error" to "Failed to retrieve function registry",
+                                "message" to (e.message ?: "Unknown error")
+                            )
+                        )
+                    }
                 }
 
                 // Validation endpoint

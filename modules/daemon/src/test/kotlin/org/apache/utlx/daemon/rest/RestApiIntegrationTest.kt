@@ -529,4 +529,149 @@ Jane,25"""
         assertTrue(response.executionTimeMs >= 0, "Execution time should be non-negative")
         assertTrue(response.executionTimeMs < 10000, "Execution time should be reasonable (< 10s)")
     }
+
+    // ========== Functions Endpoint Tests ==========
+
+    @Test
+    fun `test functions endpoint returns 200 OK`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/functions")
+
+        assertEquals(HttpStatusCode.OK, response.status, "Functions endpoint should return OK")
+    }
+
+    @Test
+    fun `test functions endpoint returns valid JSON`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/functions")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(ContentType.Application.Json, response.contentType()?.withoutParameters())
+
+        val body = response.bodyAsText()
+        assertNotNull(body)
+        assertTrue(body.isNotEmpty())
+    }
+
+    @Test
+    fun `test functions endpoint returns function registry structure`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/functions")
+        val body = response.bodyAsText()
+
+        // Check for expected JSON structure
+        assertTrue(body.contains("\"version\""), "Should contain version field")
+        assertTrue(body.contains("\"generated\""), "Should contain generated field")
+        assertTrue(body.contains("\"totalFunctions\""), "Should contain totalFunctions field")
+        assertTrue(body.contains("\"functions\""), "Should contain functions array")
+        assertTrue(body.contains("\"categories\""), "Should contain categories object")
+    }
+
+    @Test
+    fun `test functions endpoint returns non-empty function list`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/functions")
+        val body = response.bodyAsText()
+
+        // Parse JSON manually to check totalFunctions
+        val totalFunctionsRegex = """"totalFunctions"\s*:\s*(\d+)""".toRegex()
+        val match = totalFunctionsRegex.find(body)
+        assertNotNull(match, "Should find totalFunctions field")
+
+        val totalFunctions = match!!.groupValues[1].toInt()
+        assertTrue(totalFunctions > 0, "Should have at least one function (found $totalFunctions)")
+    }
+
+    @Test
+    fun `test functions endpoint returns expected categories`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/functions")
+        val body = response.bodyAsText()
+
+        // Check for common expected categories
+        assertTrue(body.contains("\"Array\""), "Should have Array category")
+        assertTrue(body.contains("\"String\""), "Should have String category")
+        assertTrue(body.contains("\"Math\""), "Should have Math category")
+        assertTrue(body.contains("\"Date\""), "Should have Date category")
+    }
+
+    @Test
+    fun `test functions endpoint returns function with required fields`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/functions")
+        val body = response.bodyAsText()
+
+        // Check that functions have required fields
+        assertTrue(body.contains("\"name\""), "Functions should have name field")
+        assertTrue(body.contains("\"category\""), "Functions should have category field")
+        assertTrue(body.contains("\"description\""), "Functions should have description field")
+        assertTrue(body.contains("\"signature\""), "Functions should have signature field")
+    }
+
+    @Test
+    fun `test functions endpoint returns map function in Array category`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/functions")
+        val body = response.bodyAsText()
+
+        // Check for map function in Array category
+        assertTrue(body.contains("\"name\" : \"map\"") || body.contains("\"name\":\"map\""),
+            "Should contain map function")
+    }
+
+    @Test
+    fun `test functions endpoint response can be parsed as JSON`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/functions")
+        val body = response.bodyAsText()
+
+        // Try to parse with Jackson (same as server uses)
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        // Should not throw exception
+        assertDoesNotThrow {
+            val registry = jacksonMapper.readValue(body, org.apache.utlx.stdlib.FunctionRegistry::class.java)
+            assertNotNull(registry)
+            assertTrue(registry.totalFunctions > 0)
+            assertTrue(registry.functions.isNotEmpty())
+            assertTrue(registry.categories.isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `test functions endpoint returns consistent function count`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/functions")
+        val body = response.bodyAsText()
+
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val registry = jacksonMapper.readValue(body, org.apache.utlx.stdlib.FunctionRegistry::class.java)
+
+        // totalFunctions should match actual function list size
+        assertEquals(registry.functions.size, registry.totalFunctions,
+            "totalFunctions should match actual function count")
+
+        // Functions in categories should match flat list
+        val functionsInCategories = registry.categories.values.sumOf { it.size }
+        assertEquals(registry.functions.size, functionsInCategories,
+            "Functions in categories should match flat list")
+    }
+
+    @Test
+    fun `test functions endpoint multiple requests return same data`() = runBlocking {
+        // Make two requests
+        val response1 = client.get("http://127.0.0.1:$port/api/functions")
+        val body1 = response1.bodyAsText()
+
+        val response2 = client.get("http://127.0.0.1:$port/api/functions")
+        val body2 = response2.bodyAsText()
+
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val registry1 = jacksonMapper.readValue(body1, org.apache.utlx.stdlib.FunctionRegistry::class.java)
+        val registry2 = jacksonMapper.readValue(body2, org.apache.utlx.stdlib.FunctionRegistry::class.java)
+
+        // Should return same totalFunctions
+        assertEquals(registry1.totalFunctions, registry2.totalFunctions,
+            "Multiple requests should return consistent data")
+        assertEquals(registry1.functions.size, registry2.functions.size,
+            "Function count should be consistent")
+        assertEquals(registry1.categories.size, registry2.categories.size,
+            "Category count should be consistent")
+    }
 }
