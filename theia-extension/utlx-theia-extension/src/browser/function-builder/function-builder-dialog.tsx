@@ -14,6 +14,8 @@
 
 import * as React from 'react';
 import { FunctionInfo } from '../../common/protocol';
+import { parseUdmToTree, UdmInputTree } from './udm-parser';
+import { FieldTree } from './field-tree';
 
 /**
  * Insertion context from cursor analysis
@@ -88,6 +90,13 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         // Sort categories alphabetically
         return new Map([...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0])));
     }, [functions, searchQuery]);
+
+    // Parse UDM into field trees
+    const fieldTrees = React.useMemo(() => {
+        return availableInputs.map(inputName =>
+            parseUdmToTree(inputName, udmMap.get(inputName))
+        );
+    }, [availableInputs, udmMap]);
 
     // Auto-expand categories when searching
     React.useEffect(() => {
@@ -212,33 +221,13 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         </div>
                     </div>
 
-                    {/* Right Pane: UDM Fields - Placeholder for now */}
+                    {/* Right Pane: UDM Fields */}
                     <div className='right-pane'>
                         <h3>Available Inputs</h3>
-                        <div className='field-tree'>
-                            {availableInputs.length === 0 ? (
-                                <div className='empty-state'>
-                                    No inputs defined in UTLX headers.
-                                </div>
-                            ) : (
-                                availableInputs.map(inputName => (
-                                    <div key={inputName} className='input-node'>
-                                        <div className='input-header'>
-                                            <span className='codicon codicon-symbol-variable'></span>
-                                            <span className='input-name'>${inputName}</span>
-                                            <button
-                                                className='insert-btn'
-                                                title={`Insert $${inputName}`}
-                                                onClick={() => onInsert(`$${inputName}`)}
-                                            >
-                                                <span className='codicon codicon-insert'></span>
-                                            </button>
-                                        </div>
-                                        {/* TODO: Parse and display UDM fields */}
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                        <FieldTree
+                            fieldTrees={fieldTrees}
+                            onInsertField={handleInsertField}
+                        />
                     </div>
                 </div>
 
