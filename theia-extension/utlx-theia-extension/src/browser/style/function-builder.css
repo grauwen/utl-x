@@ -1,0 +1,491 @@
+/**
+ * Function Builder Dialog Styles
+ *
+ * Styles for the Function Builder popup dialog, including:
+ * - Dialog overlay and container
+ * - Two-pane layout (functions and fields)
+ * - Collapsible tree components
+ * - Search and filtering
+ * - Help modal
+ */
+
+/* ===== Dialog Overlay ===== */
+
+.utlx-function-builder-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80vw;
+    max-width: 1200px;
+    height: 80vh;
+    max-height: 800px;
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    z-index: 10001;
+    animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* ===== Dialog Header ===== */
+
+.utlx-function-builder-dialog .dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--theia-panel-border);
+    background: var(--theia-toolbar-background, var(--theia-editor-background));
+}
+
+.utlx-function-builder-dialog .title-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.utlx-function-builder-dialog .title-section .codicon {
+    font-size: 20px;
+    color: var(--theia-icon-foreground);
+}
+
+.utlx-function-builder-dialog .dialog-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--theia-foreground);
+}
+
+.utlx-function-builder-dialog .search-box {
+    flex: 1;
+    padding: 6px 12px;
+    border: 1px solid var(--theia-input-border);
+    border-radius: 4px;
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    font-size: 13px;
+}
+
+.utlx-function-builder-dialog .search-box:focus {
+    outline: none;
+    border-color: var(--theia-focusBorder);
+}
+
+.utlx-function-builder-dialog .close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--theia-icon-foreground);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.utlx-function-builder-dialog .close-btn:hover {
+    background: var(--theia-toolbar-hoverBackground);
+    border-radius: 4px;
+}
+
+.utlx-function-builder-dialog .close-btn .codicon {
+    font-size: 16px;
+}
+
+/* ===== Dialog Body (Two-Pane Layout) ===== */
+
+.utlx-function-builder-dialog .dialog-body {
+    flex: 1;
+    display: flex;
+    gap: 0;
+    overflow: hidden;
+}
+
+.utlx-function-builder-dialog .left-pane,
+.utlx-function-builder-dialog .right-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.utlx-function-builder-dialog .left-pane {
+    border-right: 1px solid var(--theia-panel-border);
+}
+
+.utlx-function-builder-dialog .left-pane h3,
+.utlx-function-builder-dialog .right-pane h3 {
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--theia-descriptionForeground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+/* ===== Function Tree ===== */
+
+.function-tree,
+.field-tree {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.function-tree::-webkit-scrollbar,
+.field-tree::-webkit-scrollbar {
+    width: 8px;
+}
+
+.function-tree::-webkit-scrollbar-thumb,
+.field-tree::-webkit-scrollbar-thumb {
+    background: var(--theia-scrollbarSlider-background);
+    border-radius: 4px;
+}
+
+.function-tree::-webkit-scrollbar-thumb:hover,
+.field-tree::-webkit-scrollbar-thumb:hover {
+    background: var(--theia-scrollbarSlider-hoverBackground);
+}
+
+/* Category Node */
+
+.function-tree .category {
+    margin-bottom: 8px;
+}
+
+.function-tree .category-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    user-select: none;
+}
+
+.function-tree .category-header:hover {
+    background: var(--theia-list-hoverBackground);
+}
+
+.function-tree .category-header .codicon {
+    font-size: 12px;
+    color: var(--theia-icon-foreground);
+}
+
+.function-tree .category-name {
+    font-weight: 600;
+    color: var(--theia-foreground);
+    font-size: 13px;
+}
+
+.function-tree .function-count {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    margin-left: auto;
+}
+
+/* Function Items */
+
+.function-tree .category-functions {
+    padding-left: 20px;
+    margin-top: 4px;
+}
+
+.function-tree .function-item {
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.function-tree .function-item:hover {
+    background: var(--theia-list-hoverBackground);
+}
+
+.function-tree .function-item.selected {
+    background: var(--theia-list-activeSelectionBackground);
+    border-color: var(--theia-list-activeSelectionBackground);
+}
+
+.function-tree .function-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.function-tree .function-name {
+    font-weight: 600;
+    color: var(--theia-textLink-foreground);
+    font-size: 13px;
+}
+
+.function-tree .function-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.function-tree .help-btn,
+.function-tree .insert-btn,
+.field-tree .insert-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--theia-icon-foreground);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.function-tree .help-btn:hover,
+.function-tree .insert-btn:hover,
+.field-tree .insert-btn:hover {
+    background: var(--theia-toolbar-hoverBackground);
+}
+
+.function-tree .function-signature {
+    font-family: var(--monaco-monospace-font);
+    font-size: 11px;
+    color: var(--theia-descriptionForeground);
+    margin-bottom: 4px;
+}
+
+.function-tree .function-description {
+    font-size: 12px;
+    color: var(--theia-descriptionForeground);
+    line-height: 1.4;
+}
+
+/* ===== Field Tree ===== */
+
+.field-tree .input-node {
+    margin-bottom: 8px;
+}
+
+.field-tree .input-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    user-select: none;
+}
+
+.field-tree .input-header:hover {
+    background: var(--theia-list-hoverBackground);
+}
+
+.field-tree .input-header .codicon {
+    font-size: 14px;
+    color: var(--theia-symbolIcon-variableForeground);
+}
+
+.field-tree .input-name {
+    font-weight: 600;
+    color: var(--theia-foreground);
+    font-size: 13px;
+    flex: 1;
+}
+
+/* Empty State */
+
+.empty-state {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--theia-descriptionForeground);
+    font-size: 13px;
+}
+
+/* ===== Dialog Footer ===== */
+
+.utlx-function-builder-dialog .dialog-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--theia-panel-border);
+    background: var(--theia-toolbar-background, var(--theia-editor-background));
+}
+
+.utlx-function-builder-dialog .context-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--theia-descriptionForeground);
+}
+
+.utlx-function-builder-dialog .context-info .codicon {
+    font-size: 14px;
+}
+
+.utlx-function-builder-dialog .context-info strong {
+    color: var(--theia-foreground);
+    font-weight: 600;
+}
+
+/* ===== Help Modal ===== */
+
+.help-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.help-modal {
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.2s ease-out;
+}
+
+.help-modal .help-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.help-modal .help-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--theia-foreground);
+}
+
+.help-modal .help-header button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--theia-icon-foreground);
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.help-modal .help-header button:hover {
+    background: var(--theia-toolbar-hoverBackground);
+    border-radius: 4px;
+}
+
+.help-modal .help-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.help-modal .help-body section {
+    margin-bottom: 24px;
+}
+
+.help-modal .help-body section:last-child {
+    margin-bottom: 0;
+}
+
+.help-modal .help-body h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--theia-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.help-modal .help-body code {
+    background: var(--theia-editorWidget-background);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--monaco-monospace-font);
+    font-size: 12px;
+    color: var(--theia-textPreformat-foreground);
+}
+
+.help-modal .help-body pre {
+    background: var(--theia-editorWidget-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    padding: 12px;
+    overflow-x: auto;
+}
+
+.help-modal .help-body pre code {
+    background: none;
+    padding: 0;
+}
+
+.help-modal .help-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.help-modal .help-body table th {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid var(--theia-panel-border);
+    font-weight: 600;
+    color: var(--theia-foreground);
+}
+
+.help-modal .help-body table td {
+    padding: 8px;
+    border-bottom: 1px solid var(--theia-panel-border);
+    color: var(--theia-foreground);
+}
+
+.help-modal .help-body .example {
+    margin-bottom: 16px;
+}
+
+.help-modal .help-body .example button {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.help-modal .help-body .example button:hover {
+    background: var(--theia-button-hoverBackground);
+}

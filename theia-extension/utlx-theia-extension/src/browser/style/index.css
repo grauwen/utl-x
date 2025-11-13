@@ -3,6 +3,7 @@
  */
 
 @import './toolbar.css';
+@import './function-builder.css';
 
 /* Workbench Container */
 .utlx-workbench-container {

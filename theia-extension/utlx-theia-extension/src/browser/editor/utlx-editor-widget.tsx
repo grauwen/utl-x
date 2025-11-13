@@ -15,6 +15,10 @@ import { DisposableCollection } from '@theia/core/lib/common/disposable';
 import * as monaco from '@theia/monaco-editor-core';
 import { UTLXEventService } from '../events/utlx-event-service';
 import { parseUTLXHeaders } from '../parser/utlx-header-parser';
+import { FunctionBuilderDialog } from '../function-builder/function-builder-dialog';
+import { UTLXService } from '../../common/protocol';
+import { UTLX_SERVICE_SYMBOL } from '../../common/protocol';
+import { FunctionInfo } from '../../common/protocol';
 
 export const UTLX_EDITOR_WIDGET_ID = 'utlx-editor';
 
@@ -29,6 +33,9 @@ export class UTLXEditorWidget extends ReactWidget {
     @inject(UTLXEventService)
     protected readonly eventService!: UTLXEventService;
 
+    @inject(UTLX_SERVICE_SYMBOL)
+    protected readonly utlxService!: UTLXService;
+
     protected editor: monaco.editor.IStandaloneCodeEditor | undefined;
     protected editorContainer: HTMLDivElement | undefined;
     protected toDispose = new DisposableCollection();
@@ -40,6 +47,10 @@ export class UTLXEditorWidget extends ReactWidget {
     protected readonly CONTENT_CHANGE_DEBOUNCE_MS = 500; // 500ms delay
     protected inputNamesFromHeaders: string[] = []; // Input names from UTLX headers
     protected inputUdmMap: Map<string, string> = new Map(); // inputName -> UDM language
+
+    // Function Builder state
+    protected showFunctionBuilderDialog: boolean = false;
+    protected functionBuilderFunctions: FunctionInfo[] = [];
 
     constructor() {
         super();
@@ -1079,6 +1090,130 @@ output json
         );
     }
 
+    /**
+     * Open the Function Builder dialog
+     */
+    protected async openFunctionBuilder(): Promise<void> {
+        console.log('[UTLXEditor] Opening Function Builder');
+
+        try {
+            // Fetch stdlib functions from daemon
+            this.functionBuilderFunctions = await this.utlxService.getFunctions();
+            console.log('[UTLXEditor] Loaded', this.functionBuilderFunctions.length, 'stdlib functions');
+
+            // Open dialog
+            this.showFunctionBuilderDialog = true;
+            this.update();
+        } catch (error) {
+            console.error('[UTLXEditor] Failed to load functions:', error);
+            // TODO: Show error notification to user
+        }
+    }
+
+    /**
+     * Handle code insertion from Function Builder
+     */
+    protected handleInsertFromBuilder(code: string): void {
+        console.log('[UTLXEditor] Inserting code from Function Builder:', code);
+
+        if (!this.editor) {
+            console.error('[UTLXEditor] No editor available for insertion');
+            return;
+        }
+
+        const position = this.editor.getPosition();
+        if (!position) {
+            console.error('[UTLXEditor] No cursor position available');
+            return;
+        }
+
+        // Insert the code at cursor position
+        const range = new monaco.Range(
+            position.lineNumber,
+            position.column,
+            position.lineNumber,
+            position.column
+        );
+
+        this.editor.executeEdits('function-builder', [{
+            range: range,
+            text: code,
+            forceMoveMarkers: true
+        }]);
+
+        // Find cursor placeholder (|) and position cursor there
+        const placeholderMatch = code.match(/\|/);
+        if (placeholderMatch) {
+            const lines = code.substring(0, placeholderMatch.index).split('\n');
+            const lastLine = lines[lines.length - 1];
+            const newPosition = new monaco.Position(
+                position.lineNumber + lines.length - 1,
+                lines.length === 1 ? position.column + lastLine.length : lastLine.length + 1
+            );
+
+            this.editor.setPosition(newPosition);
+
+            // Remove the | placeholder
+            const placeholderRange = new monaco.Range(
+                newPosition.lineNumber,
+                newPosition.column,
+                newPosition.lineNumber,
+                newPosition.column + 1
+            );
+            this.editor.executeEdits('function-builder-cleanup', [{
+                range: placeholderRange,
+                text: '',
+                forceMoveMarkers: true
+            }]);
+        }
+
+        // Focus back on the editor
+        this.editor.focus();
+    }
+
+    /**
+     * Analyze cursor context for smart insertion
+     */
+    protected analyzeCursorContext(): any | null {
+        if (!this.editor) return null;
+
+        const position = this.editor.getPosition();
+        if (!position) return null;
+
+        const model = this.editor.getModel();
+        if (!model) return null;
+
+        const line = model.getLineContent(position.lineNumber);
+        const textBefore = line.substring(0, position.column - 1).trim();
+
+        // Simple context analysis (will be enhanced later)
+        // Pattern 1: Lambda body - "=> |"
+        const lambdaMatch = textBefore.match(/(\w+)\s*=>\s*(?:[\w.$[\]]+\s*)?$/);
+        if (lambdaMatch) {
+            return { type: 'lambda-body', lambdaParam: lambdaMatch[1] };
+        }
+
+        // Pattern 2: Function arguments - "functionName(... |"
+        const functionMatch = textBefore.match(/(\w+)\([^)]*$/);
+        if (functionMatch) {
+            return { type: 'function-args', functionName: functionMatch[1] };
+        }
+
+        // Pattern 3: Object field value - "fieldName: |"
+        const fieldMatch = textBefore.match(/(\w+):\s*$/);
+        if (fieldMatch) {
+            return { type: 'object-field-value', fieldName: fieldMatch[1] };
+        }
+
+        // Pattern 4: Array element - "[ |"
+        if (/\[\s*(?:.*,\s*)?$/.test(textBefore)) {
+            return { type: 'array-element' };
+        }
+
+        // Default: Top-level expression
+        return { type: 'top-level' };
+    }
+
     protected render(): React.ReactNode {
         return (
             <div className='utlx-editor-container'>
@@ -1088,6 +1223,14 @@ output json
                         <span>UTLX Transformation</span>
                     </div>
                     <div className='utlx-editor-toolbar'>
+                        <button
+                            className='theia-button secondary'
+                            title='Function Builder - Browse and insert stdlib functions'
+                            onClick={() => this.openFunctionBuilder()}
+                        >
+                            <span className='codicon codicon-symbol-method'></span>
+                            Function Builder
+                        </button>
                         <button
                             className='theia-button secondary'
                             title='Load UTLX File'
@@ -1129,6 +1272,21 @@ output json
                         UTLX Editor | Connected to LSP on localhost:7777
                     </span>
                 </div>
+
+                {/* Function Builder Dialog */}
+                {this.showFunctionBuilderDialog && (
+                    <FunctionBuilderDialog
+                        functions={this.functionBuilderFunctions}
+                        availableInputs={this.inputNamesFromHeaders}
+                        udmMap={this.inputUdmMap}
+                        cursorContext={this.analyzeCursorContext()}
+                        onInsert={(code) => this.handleInsertFromBuilder(code)}
+                        onClose={() => {
+                            this.showFunctionBuilderDialog = false;
+                            this.update();
+                        }}
+                    />
+                )}
             </div>
         );
     }
