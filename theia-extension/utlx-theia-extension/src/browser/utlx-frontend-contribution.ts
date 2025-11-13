@@ -212,6 +212,25 @@ export class UTLXFrontendContribution implements
             this.shell.leftPanelHandler.expand();
             this.shell.rightPanelHandler.expand();
 
+            // Set initial panel sizes for 2:3:2 ratio
+            // Wait a bit for the layout to settle, then set sizes
+            setTimeout(() => {
+                const totalWidth = window.innerWidth;
+                const leftWidth = Math.floor(totalWidth * (2 / 7));
+                const rightWidth = Math.floor(totalWidth * (2 / 7));
+
+                // Set panel sizes (in pixels)
+                this.shell.leftPanelHandler.resize(leftWidth);
+                this.shell.rightPanelHandler.resize(rightWidth);
+
+                console.log('[UTLXFrontendContribution] Set initial panel sizes:', {
+                    totalWidth,
+                    leftWidth,
+                    rightWidth,
+                    ratio: '2:3:2'
+                });
+            }, 100);
+
             // Initialize inputs from the input panel's current state
             await this.initializeInputsFromPanel(inputPanel);
 

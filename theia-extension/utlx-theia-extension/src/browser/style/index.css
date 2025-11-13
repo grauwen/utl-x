@@ -528,18 +528,18 @@
 }
 
 .utlx-workbench-pane.left {
-    flex: 0 0 30%;
-    min-width: 300px;
+    flex: 2 1 0%;  /* 2/7 of total width - allows resize */
+    min-width: 250px;
 }
 
 .utlx-workbench-pane.middle {
-    flex: 1 1 40%;
-    min-width: 400px;
+    flex: 3 1 0%;  /* 3/7 of total width - allows resize */
+    min-width: 350px;
 }
 
 .utlx-workbench-pane.right {
-    flex: 0 0 30%;
-    min-width: 300px;
+    flex: 2 1 0%;  /* 2/7 of total width - allows resize */
+    min-width: 250px;
 }
 
 /* ===== Health Monitor Widget ===== */
