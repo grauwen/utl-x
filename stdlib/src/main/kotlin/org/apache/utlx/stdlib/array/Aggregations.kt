@@ -3,16 +3,20 @@ package org.apache.utlx.stdlib.array
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 /**
  * Array aggregation functions for UTL-X
  */
 object Aggregations {
-    
-    /**
-     * Sum of array elements
-     * Usage: sum([1, 2, 3, 4]) => 10
-     */
+
+    @UTLXFunction(
+        description = "Calculate the sum of all numeric elements in an array",
+        category = "Array",
+        parameters = ["array: Array<Number>"],
+        returns = "Number - The sum of all elements",
+        example = "sum([1, 2, 3, 4]) => 10"
+    )
     fun sum(args: List<UDM>): UDM {
         requireArgs(args, 1, "sum")
         val array = args[0].asArray()
@@ -27,11 +31,14 @@ object Aggregations {
         
         return UDM.Scalar(total)
     }
-    
-    /**
-     * Average of array elements
-     * Usage: avg([1, 2, 3, 4]) => 2.5
-     */
+
+    @UTLXFunction(
+        description = "Calculate the average (mean) of all numeric elements in an array",
+        category = "Array",
+        parameters = ["array: Array<Number>"],
+        returns = "Number - The average of all elements, or null if array is empty",
+        example = "avg([1, 2, 3, 4]) => 2.5"
+    )
     fun avg(args: List<UDM>): UDM {
         requireArgs(args, 1, "avg")
         val array = args[0].asArray()
@@ -50,14 +57,14 @@ object Aggregations {
         
         return UDM.Scalar(total / array.elements.size)
     }
-    
-    /**
-     * Minimum value - supports both array and variadic arguments
-     * Usage:
-     *   min([3, 1, 4, 1, 5]) => 1
-     *   min(3, 1) => 1
-     *   min(5, 2, 8, 1) => 1
-     */
+
+    @UTLXFunction(
+        description = "Find the minimum value from an array or multiple arguments",
+        category = "Array",
+        parameters = ["values: Array<Number> | Number..."],
+        returns = "Number - The minimum value, or null if array is empty",
+        example = "min([3, 1, 4, 1, 5]) => 1\nmin(3, 1, 4) => 1"
+    )
     fun min(args: List<UDM>): UDM {
         if (args.isEmpty()) {
             throw FunctionArgumentException(
@@ -87,13 +94,13 @@ object Aggregations {
         return UDM.Scalar(minValue)
     }
 
-    /**
-     * Maximum value - supports both array and variadic arguments
-     * Usage:
-     *   max([3, 1, 4, 1, 5]) => 5
-     *   max(3, 1) => 3
-     *   max(5, 2, 8, 1) => 8
-     */
+    @UTLXFunction(
+        description = "Find the maximum value from an array or multiple arguments",
+        category = "Array",
+        parameters = ["values: Array<Number> | Number..."],
+        returns = "Number - The maximum value, or null if array is empty",
+        example = "max([3, 1, 4, 1, 5]) => 5\nmax(3, 1, 8) => 8"
+    )
     fun max(args: List<UDM>): UDM {
         if (args.isEmpty()) {
             throw FunctionArgumentException(
@@ -122,11 +129,14 @@ object Aggregations {
         val maxValue = args.maxOf { it.asNumberStrict() }
         return UDM.Scalar(maxValue)
     }
-    
-    /**
-     * Count of array elements
-     * Usage: count([1, 2, 3, 4]) => 4
-     */
+
+    @UTLXFunction(
+        description = "Count the number of elements in an array",
+        category = "Array",
+        parameters = ["array: Array"],
+        returns = "Number - The count of elements in the array",
+        example = "count([1, 2, 3, 4]) => 4\ncount([\"a\", \"b\", \"c\"]) => 3"
+    )
     fun count(args: List<UDM>): UDM {
         requireArgs(args, 1, "count")
         val array = args[0].asArray()
