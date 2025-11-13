@@ -384,9 +384,19 @@
 /* ===== Dialog Footer ===== */
 
 .utlx-function-builder-dialog .dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     padding: 12px 20px;
     border-top: 1px solid var(--theia-panel-border);
     background: var(--theia-toolbar-background, var(--theia-editor-background));
+}
+
+.utlx-function-builder-dialog .footer-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
 }
 
 .utlx-function-builder-dialog .context-info {
@@ -404,6 +414,53 @@
 .utlx-function-builder-dialog .context-info strong {
     color: var(--theia-foreground);
     font-weight: 600;
+}
+
+.utlx-function-builder-dialog .footer-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.utlx-function-builder-dialog .footer-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--theia-button-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.1s ease;
+    white-space: nowrap;
+}
+
+.utlx-function-builder-dialog .footer-btn .codicon {
+    font-size: 14px;
+}
+
+.utlx-function-builder-dialog .footer-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.utlx-function-builder-dialog .apply-btn {
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+}
+
+.utlx-function-builder-dialog .apply-btn:hover:not(:disabled) {
+    background: var(--theia-button-hoverBackground);
+}
+
+.utlx-function-builder-dialog .close-btn-footer {
+    background: var(--theia-button-secondaryBackground);
+    color: var(--theia-button-secondaryForeground);
+}
+
+.utlx-function-builder-dialog .close-btn-footer:hover {
+    background: var(--theia-button-secondaryHoverBackground);
 }
 
 /* ===== Help Modal ===== */
@@ -553,4 +610,244 @@
 
 .help-modal .help-body .example button:hover {
     background: var(--theia-button-hoverBackground);
+}
+
+/* ===== Horizontal Split Layout (Left Pane) ===== */
+
+.utlx-function-builder-dialog .left-pane {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.utlx-function-builder-dialog .function-list-pane {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.utlx-function-builder-dialog .function-list-pane .function-tree {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.utlx-function-builder-dialog .split-divider {
+    height: 6px;
+    background: var(--theia-panel-border);
+    cursor: row-resize;
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s ease;
+}
+
+.utlx-function-builder-dialog .split-divider:hover {
+    background: var(--theia-focusBorder);
+}
+
+.utlx-function-builder-dialog .split-handle {
+    width: 40px;
+    height: 3px;
+    background: var(--theia-descriptionForeground);
+    border-radius: 2px;
+    opacity: 0.5;
+    transition: opacity 0.1s ease;
+}
+
+.utlx-function-builder-dialog .split-divider:hover .split-handle {
+    opacity: 1;
+}
+
+.utlx-function-builder-dialog .function-details-pane {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-top: 1px solid var(--theia-panel-border);
+}
+
+.utlx-function-builder-dialog .function-details-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.utlx-function-builder-dialog .empty-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
+    color: var(--theia-descriptionForeground);
+    font-size: 13px;
+}
+
+.utlx-function-builder-dialog .empty-details .codicon {
+    font-size: 32px;
+    opacity: 0.5;
+}
+
+/* ===== Compact Function Items ===== */
+
+.function-tree .function-item-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    margin-bottom: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.1s ease;
+}
+
+.function-tree .function-item-compact:hover {
+    background: var(--theia-list-hoverBackground);
+}
+
+.function-tree .function-item-compact.selected {
+    background: var(--theia-list-activeSelectionBackground);
+    border-color: var(--theia-focusBorder);
+}
+
+.function-tree .function-item-compact .codicon {
+    font-size: 14px;
+    color: var(--theia-symbolIcon-methodForeground);
+    flex-shrink: 0;
+}
+
+.function-tree .function-item-compact .function-name {
+    font-size: 13px;
+    font-family: var(--monaco-monospace-font);
+    color: var(--theia-textLink-foreground);
+}
+
+/* ===== Function Details Panel ===== */
+
+.utlx-function-builder-dialog .details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.utlx-function-builder-dialog .details-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.utlx-function-builder-dialog .details-title .codicon {
+    font-size: 18px;
+    color: var(--theia-symbolIcon-methodForeground);
+}
+
+.utlx-function-builder-dialog .details-title .function-name {
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--monaco-monospace-font);
+    color: var(--theia-foreground);
+}
+
+.utlx-function-builder-dialog .details-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.utlx-function-builder-dialog .details-actions button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--theia-button-secondaryBackground);
+    color: var(--theia-button-secondaryForeground);
+    border: 1px solid var(--theia-button-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.1s ease;
+}
+
+.utlx-function-builder-dialog .details-actions button:hover {
+    background: var(--theia-button-secondaryHoverBackground);
+}
+
+.utlx-function-builder-dialog .details-actions .insert-btn {
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+}
+
+.utlx-function-builder-dialog .details-actions .insert-btn:hover {
+    background: var(--theia-button-hoverBackground);
+}
+
+.utlx-function-builder-dialog .details-signature,
+.utlx-function-builder-dialog .details-description,
+.utlx-function-builder-dialog .details-parameters,
+.utlx-function-builder-dialog .details-returns {
+    margin-bottom: 16px;
+}
+
+.utlx-function-builder-dialog .details-signature code,
+.utlx-function-builder-dialog .details-parameters code,
+.utlx-function-builder-dialog .return-type {
+    font-family: var(--monaco-monospace-font);
+    background: var(--theia-editorWidget-background);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: var(--theia-textPreformat-foreground);
+}
+
+.utlx-function-builder-dialog .details-signature code {
+    display: block;
+    margin-top: 4px;
+    padding: 8px;
+}
+
+.utlx-function-builder-dialog .details-description p {
+    margin: 4px 0 0 0;
+    line-height: 1.5;
+    color: var(--theia-foreground);
+}
+
+.utlx-function-builder-dialog .details-parameters ul {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 0 0;
+}
+
+.utlx-function-builder-dialog .details-parameters li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.utlx-function-builder-dialog .details-parameters li:last-child {
+    border-bottom: none;
+}
+
+.utlx-function-builder-dialog .param-type {
+    margin-left: 8px;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.utlx-function-builder-dialog .param-optional {
+    margin-left: 8px;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    font-style: italic;
+}
+
+.utlx-function-builder-dialog .param-desc {
+    display: block;
+    margin-top: 4px;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    line-height: 1.4;
 }

@@ -46,6 +46,8 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     const [expandedCategories, setExpandedCategories] = React.useState<Set<string>>(new Set());
     const [selectedFunction, setSelectedFunction] = React.useState<FunctionInfo | null>(null);
     const [showHelp, setShowHelp] = React.useState(false);
+    const [splitPosition, setSplitPosition] = React.useState(66.67); // Start at 2/3 down
+    const [isDraggingSplit, setIsDraggingSplit] = React.useState(false);
 
     // Group functions by category
     const functionsByCategory = React.useMemo(() => {
@@ -85,9 +87,18 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
 
     // Parse UDM into field trees
     const fieldTrees = React.useMemo(() => {
-        return availableInputs.map(inputName =>
-            parseUdmToTree(inputName, udmMap.get(inputName))
-        );
+        console.log('[FunctionBuilder] Parsing field trees:', {
+            availableInputsCount: availableInputs.length,
+            availableInputs: availableInputs,
+            udmMapSize: udmMap.size,
+            udmMapKeys: Array.from(udmMap.keys())
+        });
+
+        return availableInputs.map(inputName => {
+            const udm = udmMap.get(inputName);
+            console.log('[FunctionBuilder] Parsing tree for', inputName, '- UDM length:', udm?.length || 0);
+            return parseUdmToTree(inputName, udm);
+        });
     }, [availableInputs, udmMap]);
 
     // Auto-expand categories when searching
@@ -137,6 +148,39 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         onInsert(code);
     };
 
+    // Handle split pane dragging
+    const handleSplitMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsDraggingSplit(true);
+    };
+
+    React.useEffect(() => {
+        if (!isDraggingSplit) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const leftPane = document.querySelector('.left-pane') as HTMLElement;
+            if (!leftPane) return;
+
+            const rect = leftPane.getBoundingClientRect();
+            const newPosition = ((e.clientY - rect.top) / rect.height) * 100;
+
+            // Constrain between 20% and 80%
+            setSplitPosition(Math.min(Math.max(newPosition, 20), 80));
+        };
+
+        const handleMouseUp = () => {
+            setIsDraggingSplit(false);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDraggingSplit]);
+
     return (
         <div className='utlx-dialog-overlay' onClick={onClose}>
             <div className='utlx-function-builder-dialog' onClick={e => e.stopPropagation()}>
@@ -161,69 +205,122 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
 
                 {/* Body: Two-pane layout */}
                 <div className='dialog-body'>
-                    {/* Left Pane: Functions */}
+                    {/* Left Pane: Functions with horizontal split */}
                     <div className='left-pane'>
-                        <h3>Standard Library Functions</h3>
-                        <div className='function-tree'>
-                            {functionsByCategory.size === 0 ? (
-                                <div className='empty-state'>
-                                    No functions found matching "{searchQuery}"
+                        {/* Top Part: Function Tree (compact) */}
+                        <div className='function-list-pane' style={{ height: `${splitPosition}%` }}>
+                            <h3>Standard Library Functions</h3>
+                            <div className='function-tree'>
+                                {functionsByCategory.size === 0 ? (
+                                    <div className='empty-state'>
+                                        No functions found matching "{searchQuery}"
+                                    </div>
+                                ) : (
+                                    Array.from(functionsByCategory.entries()).map(([category, categoryFunctions]) => (
+                                        <div key={category} className='category'>
+                                            <div
+                                                className='category-header'
+                                                onClick={() => toggleCategory(category)}
+                                            >
+                                                <span className={`codicon codicon-chevron-${expandedCategories.has(category) ? 'down' : 'right'}`}></span>
+                                                <span className='category-name'>{category}</span>
+                                                <span className='function-count'>({categoryFunctions.length})</span>
+                                            </div>
+
+                                            {expandedCategories.has(category) && (
+                                                <div className='category-functions'>
+                                                    {categoryFunctions.map(fn => (
+                                                        <div
+                                                            key={fn.name}
+                                                            className={`function-item-compact ${selectedFunction?.name === fn.name ? 'selected' : ''}`}
+                                                            onClick={() => setSelectedFunction(fn)}
+                                                            title={fn.signature}
+                                                        >
+                                                            <span className='codicon codicon-symbol-method'></span>
+                                                            <span className='function-name'>{fn.name}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Split Divider */}
+                        <div
+                            className='split-divider'
+                            onMouseDown={handleSplitMouseDown}
+                            style={{ cursor: isDraggingSplit ? 'row-resize' : 'row-resize' }}
+                        >
+                            <div className='split-handle'></div>
+                        </div>
+
+                        {/* Bottom Part: Function Details */}
+                        <div className='function-details-pane' style={{ height: `${100 - splitPosition}%` }}>
+                            <h3>Function Details</h3>
+                            {selectedFunction ? (
+                                <div className='function-details-content'>
+                                    <div className='details-header'>
+                                        <div className='details-title'>
+                                            <span className='codicon codicon-symbol-method'></span>
+                                            <span className='function-name'>{selectedFunction.name}</span>
+                                        </div>
+                                        <div className='details-actions'>
+                                            <button
+                                                className='help-btn'
+                                                title='Show full help and examples'
+                                                onClick={() => setShowHelp(true)}
+                                            >
+                                                <span className='codicon codicon-question'></span>
+                                                Help
+                                            </button>
+                                            <button
+                                                className='insert-btn'
+                                                title='Insert into editor'
+                                                onClick={handleInsertFunction}
+                                            >
+                                                <span className='codicon codicon-insert'></span>
+                                                Insert
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className='details-signature'>
+                                        <strong>Signature:</strong>
+                                        <code>{selectedFunction.signature}</code>
+                                    </div>
+                                    <div className='details-description'>
+                                        <strong>Description:</strong>
+                                        <p>{selectedFunction.description}</p>
+                                    </div>
+                                    {selectedFunction.parameters && selectedFunction.parameters.length > 0 && (
+                                        <div className='details-parameters'>
+                                            <strong>Parameters:</strong>
+                                            <ul>
+                                                {selectedFunction.parameters.map(param => (
+                                                    <li key={param.name}>
+                                                        <code>{param.name}</code>
+                                                        <span className='param-type'>{param.type}</span>
+                                                        {param.optional && <span className='param-optional'>(optional)</span>}
+                                                        {param.description && <span className='param-desc'>- {param.description}</span>}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                    {selectedFunction.returnType && (
+                                        <div className='details-returns'>
+                                            <strong>Returns:</strong>
+                                            <span className='return-type'>{selectedFunction.returnType}</span>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
-                                Array.from(functionsByCategory.entries()).map(([category, categoryFunctions]) => (
-                                    <div key={category} className='category'>
-                                        <div
-                                            className='category-header'
-                                            onClick={() => toggleCategory(category)}
-                                        >
-                                            <span className={`codicon codicon-chevron-${expandedCategories.has(category) ? 'down' : 'right'}`}></span>
-                                            <span className='category-name'>{category}</span>
-                                            <span className='function-count'>({categoryFunctions.length})</span>
-                                        </div>
-
-                                        {expandedCategories.has(category) && (
-                                            <div className='category-functions'>
-                                                {categoryFunctions.map(fn => (
-                                                    <div
-                                                        key={fn.name}
-                                                        className={`function-item ${selectedFunction?.name === fn.name ? 'selected' : ''}`}
-                                                        onClick={() => setSelectedFunction(fn)}
-                                                    >
-                                                        <div className='function-header'>
-                                                            <span className='function-name'>{fn.name}</span>
-                                                            <div className='function-actions'>
-                                                                <button
-                                                                    className='help-btn'
-                                                                    title='Show help and examples'
-                                                                    onClick={e => {
-                                                                        e.stopPropagation();
-                                                                        setSelectedFunction(fn);
-                                                                        setShowHelp(true);
-                                                                    }}
-                                                                >
-                                                                    <span className='codicon codicon-question'></span>
-                                                                </button>
-                                                                <button
-                                                                    className='insert-btn'
-                                                                    title='Insert into editor'
-                                                                    onClick={e => {
-                                                                        e.stopPropagation();
-                                                                        setSelectedFunction(fn);
-                                                                        handleInsertFunction();
-                                                                    }}
-                                                                >
-                                                                    <span className='codicon codicon-insert'></span>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <div className='function-signature'>{fn.signature}</div>
-                                                        <div className='function-description'>{fn.description}</div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
+                                <div className='empty-details'>
+                                    <span className='codicon codicon-info'></span>
+                                    <p>Select a function to view details</p>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -238,21 +335,47 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                     </div>
                 </div>
 
-                {/* Footer: Context info */}
+                {/* Footer: Context info and action buttons */}
                 <div className='dialog-footer'>
-                    {cursorContext && (
-                        <span className='context-info'>
-                            <span className='codicon codicon-info'></span>
-                            Context: <strong>{cursorContext.type}</strong>
-                            {selectedFunction && ` | Will insert: ${generateInsertionPreview(selectedFunction, cursorContext, availableInputs)}`}
-                        </span>
-                    )}
-                    {!cursorContext && (
-                        <span className='context-info'>
-                            <span className='codicon codicon-info'></span>
-                            Select a function to insert
-                        </span>
-                    )}
+                    <div className='footer-left'>
+                        {cursorContext && (
+                            <span className='context-info'>
+                                <span className='codicon codicon-info'></span>
+                                Context: <strong>{cursorContext.type}</strong>
+                                {selectedFunction && ` | Will insert: ${generateInsertionPreview(selectedFunction, cursorContext, availableInputs)}`}
+                            </span>
+                        )}
+                        {!cursorContext && (
+                            <span className='context-info'>
+                                <span className='codicon codicon-info'></span>
+                                {selectedFunction ? 'Select a location in the editor or use Apply to insert at cursor' : 'Select a function to insert'}
+                            </span>
+                        )}
+                    </div>
+                    <div className='footer-actions'>
+                        <button
+                            className='footer-btn apply-btn'
+                            onClick={() => {
+                                if (selectedFunction) {
+                                    handleInsertFunction();
+                                    onClose();
+                                }
+                            }}
+                            disabled={!selectedFunction}
+                            title={selectedFunction ? 'Insert function into editor and close' : 'Select a function first'}
+                        >
+                            <span className='codicon codicon-check'></span>
+                            Apply
+                        </button>
+                        <button
+                            className='footer-btn close-btn-footer'
+                            onClick={onClose}
+                            title='Close without inserting'
+                        >
+                            <span className='codicon codicon-close'></span>
+                            Close
+                        </button>
+                    </div>
                 </div>
 
                 {/* Help Modal - Placeholder */}

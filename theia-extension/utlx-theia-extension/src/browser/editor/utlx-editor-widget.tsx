@@ -1115,16 +1115,40 @@ output json
         console.log('[UTLXEditor] Opening Function Builder');
 
         try {
-            // Parse headers to ensure inputNamesFromHeaders is up to date
+            // Parse headers DIRECTLY to ensure inputNamesFromHeaders is up to date
             const content = this.getContent();
-            this.parseAndUpdatePanels(content);
+            const parsed = parseUTLXHeaders(content);
+
+            if (parsed.valid) {
+                // Update inputNamesFromHeaders immediately
+                this.inputNamesFromHeaders = parsed.inputs.map(input => input.name);
+                console.log('[UTLXEditor] Parsed input names:', this.inputNamesFromHeaders);
+
+                // Also fire the event for panel synchronization
+                this.eventService.fireHeadersParsed({
+                    inputs: parsed.inputs,
+                    output: parsed.output
+                });
+            } else {
+                console.warn('[UTLXEditor] Headers invalid, cannot determine inputs');
+            }
 
             // Request current UDM from all inputs (will trigger UDM events if data exists)
             this.eventService.fireRequestCurrentUdm();
 
+            // Small delay to let UDM events propagate
+            await new Promise(resolve => setTimeout(resolve, 100));
+
             // Fetch stdlib functions from daemon
             this.functionBuilderFunctions = await this.utlxService.getFunctions();
             console.log('[UTLXEditor] Loaded', this.functionBuilderFunctions.length, 'stdlib functions');
+
+            // Log what we're passing to Function Builder
+            console.log('[UTLXEditor] Opening Function Builder with:', {
+                inputNamesFromHeaders: this.inputNamesFromHeaders,
+                inputUdmMapSize: this.inputUdmMap.size,
+                inputUdmMapKeys: Array.from(this.inputUdmMap.keys())
+            });
 
             // Open dialog
             this.showFunctionBuilderDialog = true;
