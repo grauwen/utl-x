@@ -13,6 +13,21 @@ Schema INFERENCE/EXTRACTION: Analyzing XML data to generate a schema that descri
        // Note: XSD namespace option is available in FormatOptions but not yet
        343 +                  // passed to XSDSerializer - may need enhancement in the future
 ---
+ 5. Recommendation:
+
+  DON'T add constants - they would:
+  - Create two ways to do the same thing (confusing)
+  - Be inconsistent with industry standards
+  - Add maintenance burden
+  - Not provide any functionality that's missing
+
+  DO consider (lower priority):
+  - Better documentation of escape sequences
+  - IDE support for escape sequence autocomplete
+  - Potentially add multi-line string literals (using triple quotes """)
+  - Potentially add character code functions (fromCharCode(), charCodeAt()) if requested
+
+----
 the existing LSP is designed for UTLX transformation language (.utlx files).
 
   Answer: No, we don't need a separate LSP server!
