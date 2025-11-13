@@ -32,6 +32,17 @@ export interface FunctionBuilderDialogProps {
 }
 
 /**
+ * Helper function to calculate match score (lower is better)
+ */
+function getBestMatchScore(name: string, query: string): number {
+    const nameLower = name.toLowerCase();
+    if (nameLower === query) return 0;           // Exact match
+    if (nameLower.startsWith(query)) return 1;   // Prefix match
+    if (nameLower.includes(query)) return 2;     // Contains match
+    return 3;                                     // Description/category match
+}
+
+/**
  * Function Builder Dialog Component
  */
 export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
@@ -73,12 +84,60 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                     category.toLowerCase().includes(query)
                 );
 
-                if (matchingFns.length > 0) {
-                    filtered.set(category, matchingFns);
+                // Sort matching functions by relevance:
+                // 1. Exact name match
+                // 2. Name starts with query
+                // 3. Name contains query
+                // 4. Description/category contains query
+                const sortedMatches = matchingFns.sort((a, b) => {
+                    const aName = a.name.toLowerCase();
+                    const bName = b.name.toLowerCase();
+
+                    // Exact match first
+                    const aExact = aName === query;
+                    const bExact = bName === query;
+                    if (aExact && !bExact) return -1;
+                    if (!aExact && bExact) return 1;
+
+                    // Prefix match second
+                    const aStarts = aName.startsWith(query);
+                    const bStarts = bName.startsWith(query);
+                    if (aStarts && !bStarts) return -1;
+                    if (!aStarts && bStarts) return 1;
+
+                    // Name contains query third
+                    const aNameMatch = aName.includes(query);
+                    const bNameMatch = bName.includes(query);
+                    if (aNameMatch && !bNameMatch) return -1;
+                    if (!aNameMatch && bNameMatch) return 1;
+
+                    // Alphabetical as fallback
+                    return aName.localeCompare(bName);
+                });
+
+                if (sortedMatches.length > 0) {
+                    filtered.set(category, sortedMatches);
                 }
             }
 
-            return filtered;
+            // Sort categories by relevance (best match in category)
+            const sortedCategories = Array.from(filtered.entries()).sort((a, b) => {
+                const [catA, fnsA] = a;
+                const [catB, fnsB] = b;
+
+                // Get best match score for each category
+                const scoreA = getBestMatchScore(fnsA[0].name, query);
+                const scoreB = getBestMatchScore(fnsB[0].name, query);
+
+                if (scoreA !== scoreB) {
+                    return scoreA - scoreB; // Lower score = better match
+                }
+
+                // Fallback to alphabetical
+                return catA.localeCompare(catB);
+            });
+
+            return new Map(sortedCategories);
         }
 
         // Sort categories alphabetically
