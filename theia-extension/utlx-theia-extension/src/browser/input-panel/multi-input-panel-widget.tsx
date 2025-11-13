@@ -134,6 +134,22 @@ export class MultiInputPanelWidget extends ReactWidget {
                 activeSubTab: event.mode === UTLXMode.DESIGN_TIME ? 'instance' : 'instance'
             });
         });
+
+        // Subscribe to UDM requests (e.g., when Function Builder opens)
+        this.eventService.onRequestCurrentUdm(() => {
+            console.log('[MultiInputPanelWidget] Received request for current UDM');
+            // Re-fire UDM events for all inputs that have UDM data
+            this.state.inputs.forEach(input => {
+                if (input.udmLanguage && input.udmParsed === true) {
+                    console.log('[MultiInputPanelWidget] Re-firing UDM for input:', input.name);
+                    this.eventService.fireInputUdmUpdated({
+                        inputId: input.id,
+                        inputName: input.name,
+                        udmLanguage: input.udmLanguage
+                    });
+                }
+            });
+        });
     }
 
     protected render(): React.ReactNode {

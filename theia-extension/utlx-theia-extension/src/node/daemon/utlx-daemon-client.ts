@@ -495,7 +495,9 @@ export class UTLXDaemonClient extends EventEmitter {
      * Get standard library functions
      */
     async getFunctions(): Promise<FunctionInfo[]> {
-        return this.httpRequest('/functions', 'GET');
+        const response = await this.httpRequest('/api/functions', 'GET');
+        // The response is FunctionRegistry with {functions: FunctionInfo[], ...}
+        return response.functions || [];
     }
 
     /**

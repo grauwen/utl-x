@@ -294,6 +294,21 @@ export class UTLXEventService {
         this.onInputUdmUpdatedEmitter.fire(event);
     }
 
+    private readonly onRequestCurrentUdmEmitter = new Emitter<void>();
+    /**
+     * Event fired when requesting current UDM from all inputs
+     * (e.g., when Function Builder opens)
+     */
+    readonly onRequestCurrentUdm: Event<void> = this.onRequestCurrentUdmEmitter.event;
+
+    /**
+     * Fire a request current UDM event
+     */
+    fireRequestCurrentUdm(): void {
+        console.log('[UTLXEventService] Request current UDM from all inputs');
+        this.onRequestCurrentUdmEmitter.fire();
+    }
+
     private readonly onInputInstanceContentChangedEmitter = new Emitter<InputInstanceContentChangedEvent>();
     /**
      * Event fired when input instance content changes

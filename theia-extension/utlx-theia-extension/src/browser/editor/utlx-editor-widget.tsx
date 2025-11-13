@@ -19,6 +19,7 @@ import { FunctionBuilderDialog } from '../function-builder/function-builder-dial
 import { UTLXService } from '../../common/protocol';
 import { UTLX_SERVICE_SYMBOL } from '../../common/protocol';
 import { FunctionInfo } from '../../common/protocol';
+import { analyzeInsertionContext, InsertionContext } from '../function-builder/context-analyzer';
 
 export const UTLX_EDITOR_WIDGET_ID = 'utlx-editor';
 
@@ -96,6 +97,12 @@ export class UTLXEditorWidget extends ReactWidget {
             });
             // Store UDM for autocomplete
             this.inputUdmMap.set(event.inputName, event.udmLanguage);
+
+            // Re-render if Function Builder is open to update field tree
+            if (this.showFunctionBuilderDialog) {
+                console.log('[UTLXEditorWidget] Function Builder is open, re-rendering with updated UDM');
+                this.update();
+            }
         });
 
         this.eventService.onInputInferSchema(event => {
@@ -205,12 +212,23 @@ export class UTLXEditorWidget extends ReactWidget {
         }
 
         try {
-            // Create Monaco model with UTLX content
-            // Use a simple URI without scheme to avoid resource provider issues
-            const model = monaco.editor.createModel(
-                this.getDefaultContent(),
-                'plaintext' // Language ID - we can register 'utlx' later
-            );
+            // Create or get Monaco model with UTLX content
+            // Use a consistent URI for this editor instance
+            const uri = monaco.Uri.parse('inmemory://utlx-editor/transformation.utlx');
+
+            // Check if model already exists (to avoid "model already exists" error)
+            let model = monaco.editor.getModel(uri);
+            if (!model) {
+                model = monaco.editor.createModel(
+                    this.getDefaultContent(),
+                    'plaintext', // Language ID - we can register 'utlx' later
+                    uri
+                );
+                console.log('[UTLXEditor] Created new Monaco model');
+            } else {
+                console.log('[UTLXEditor] Reusing existing Monaco model');
+                model.setValue(this.getDefaultContent());
+            }
 
             // Create standalone Monaco editor
             this.editor = monaco.editor.create(this.editorContainer, {
@@ -1097,6 +1115,13 @@ output json
         console.log('[UTLXEditor] Opening Function Builder');
 
         try {
+            // Parse headers to ensure inputNamesFromHeaders is up to date
+            const content = this.getContent();
+            this.parseAndUpdatePanels(content);
+
+            // Request current UDM from all inputs (will trigger UDM events if data exists)
+            this.eventService.fireRequestCurrentUdm();
+
             // Fetch stdlib functions from daemon
             this.functionBuilderFunctions = await this.utlxService.getFunctions();
             console.log('[UTLXEditor] Loaded', this.functionBuilderFunctions.length, 'stdlib functions');
@@ -1172,9 +1197,9 @@ output json
     }
 
     /**
-     * Analyze cursor context for smart insertion
+     * Analyze cursor context for smart insertion using full context analyzer
      */
-    protected analyzeCursorContext(): any | null {
+    protected analyzeCursorContext(): InsertionContext | null {
         if (!this.editor) return null;
 
         const position = this.editor.getPosition();
@@ -1183,35 +1208,8 @@ output json
         const model = this.editor.getModel();
         if (!model) return null;
 
-        const line = model.getLineContent(position.lineNumber);
-        const textBefore = line.substring(0, position.column - 1).trim();
-
-        // Simple context analysis (will be enhanced later)
-        // Pattern 1: Lambda body - "=> |"
-        const lambdaMatch = textBefore.match(/(\w+)\s*=>\s*(?:[\w.$[\]]+\s*)?$/);
-        if (lambdaMatch) {
-            return { type: 'lambda-body', lambdaParam: lambdaMatch[1] };
-        }
-
-        // Pattern 2: Function arguments - "functionName(... |"
-        const functionMatch = textBefore.match(/(\w+)\([^)]*$/);
-        if (functionMatch) {
-            return { type: 'function-args', functionName: functionMatch[1] };
-        }
-
-        // Pattern 3: Object field value - "fieldName: |"
-        const fieldMatch = textBefore.match(/(\w+):\s*$/);
-        if (fieldMatch) {
-            return { type: 'object-field-value', fieldName: fieldMatch[1] };
-        }
-
-        // Pattern 4: Array element - "[ |"
-        if (/\[\s*(?:.*,\s*)?$/.test(textBefore)) {
-            return { type: 'array-element' };
-        }
-
-        // Default: Top-level expression
-        return { type: 'top-level' };
+        // Use the full context analyzer from context-analyzer.ts
+        return analyzeInsertionContext(model, position);
     }
 
     protected render(): React.ReactNode {

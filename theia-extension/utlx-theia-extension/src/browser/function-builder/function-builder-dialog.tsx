@@ -16,16 +16,8 @@ import * as React from 'react';
 import { FunctionInfo } from '../../common/protocol';
 import { parseUdmToTree, UdmInputTree } from './udm-parser';
 import { FieldTree } from './field-tree';
-
-/**
- * Insertion context from cursor analysis
- */
-export interface InsertionContext {
-    type: 'lambda-body' | 'function-args' | 'object-field-value' | 'array-element' | 'top-level';
-    lambdaParam?: string;  // e.g., "e" from "map($input, e => |)"
-    functionName?: string;  // e.g., "filter" from "filter(|)"
-    fieldName?: string;     // e.g., "result" from "result: |"
-}
+import { InsertionContext, getContextDescription } from './context-analyzer';
+import { generateFunctionInsertion, generateInsertionPreview } from './insertion-generator';
 
 /**
  * Props for the Function Builder Dialog
@@ -119,14 +111,29 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     const handleInsertFunction = () => {
         if (!selectedFunction) return;
 
-        // For now, insert a simple template
-        // TODO: Use insertion-generator for smart context-aware insertion
-        const code = generateSimpleTemplate(selectedFunction, availableInputs);
-        onInsert(code);
+        // Use smart context-aware insertion
+        if (cursorContext) {
+            const code = generateFunctionInsertion(selectedFunction, cursorContext, availableInputs);
+            onInsert(code);
+        } else {
+            // Fallback: use top-level context
+            const fallbackContext: InsertionContext = {
+                type: 'top-level',
+                lineNumber: 0,
+                column: 0,
+                lineContent: '',
+                textBeforeCursor: '',
+                textAfterCursor: ''
+            };
+            const code = generateFunctionInsertion(selectedFunction, fallbackContext, availableInputs);
+            onInsert(code);
+        }
     };
 
     const handleInsertField = (inputName: string, fieldPath: string) => {
-        const code = `$${inputName}.${fieldPath}`;
+        // Don't add a dot if fieldPath starts with [ (for arrays)
+        const separator = fieldPath.startsWith('[') ? '' : '.';
+        const code = fieldPath ? `$${inputName}${separator}${fieldPath}` : `$${inputName}`;
         onInsert(code);
     };
 
@@ -318,36 +325,3 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     );
 };
 
-/**
- * Generate a simple function template (will be replaced by smart insertion generator)
- */
-function generateSimpleTemplate(fn: FunctionInfo, inputs: string[]): string {
-    const input = inputs[0] || 'input';
-    const category = fn.category?.toLowerCase() || '';
-
-    // Array functions need lambda
-    if (category.includes('array') && fn.name.match(/^(map|filter|flatMap)$/)) {
-        return `${fn.name}($${input}, e => e.|)`;
-    }
-
-    // Aggregation functions
-    if (category.includes('aggregation') || fn.name.match(/^(count|sum|avg|min|max)$/)) {
-        return `${fn.name}($${input})`;
-    }
-
-    // String functions
-    if (category.includes('string')) {
-        return `${fn.name}(|)`;
-    }
-
-    // Default: function with placeholder
-    return `${fn.name}(|)`;
-}
-
-/**
- * Generate insertion preview text
- */
-function generateInsertionPreview(fn: FunctionInfo, context: InsertionContext, inputs: string[]): string {
-    const template = generateSimpleTemplate(fn, inputs);
-    return template.replace(/\|/g, '...');
-}
