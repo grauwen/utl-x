@@ -79,6 +79,11 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     // State to track whether Expression Editor has content (for Apply button)
     const [hasEditorContent, setHasEditorContent] = React.useState(false);
 
+    // State for draggable dialog
+    const [dialogPosition, setDialogPosition] = React.useState({ x: 0, y: 0 });
+    const [isDraggingDialog, setIsDraggingDialog] = React.useState(false);
+    const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
+
     // Create Monaco editor for Expression Editor
     React.useEffect(() => {
         if (!expressionEditorContainerRef.current || expressionEditorRef.current) {
@@ -501,11 +506,64 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         };
     }, [isDraggingRightSplit]);
 
+    // Handle dialog dragging
+    const handleDialogMouseDown = (e: React.MouseEvent) => {
+        // Only start dragging if clicking on the header (not on inputs or buttons)
+        const target = e.target as HTMLElement;
+        if (
+            target.tagName === 'INPUT' ||
+            target.tagName === 'BUTTON' ||
+            target.closest('button') ||
+            target.closest('input')
+        ) {
+            return;
+        }
+
+        setIsDraggingDialog(true);
+        setDragStart({
+            x: e.clientX - dialogPosition.x,
+            y: e.clientY - dialogPosition.y
+        });
+    };
+
+    React.useEffect(() => {
+        if (!isDraggingDialog) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            setDialogPosition({
+                x: e.clientX - dragStart.x,
+                y: e.clientY - dragStart.y
+            });
+        };
+
+        const handleMouseUp = () => {
+            setIsDraggingDialog(false);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDraggingDialog, dragStart]);
+
     return (
-        <div className='utlx-dialog-overlay' onClick={onClose}>
-            <div className='utlx-function-builder-dialog' onClick={e => e.stopPropagation()}>
+        <div className='utlx-dialog-overlay'>
+            <div
+                className='utlx-function-builder-dialog'
+                style={{
+                    transform: `translate(calc(-50% + ${dialogPosition.x}px), calc(-50% + ${dialogPosition.y}px))`,
+                    cursor: isDraggingDialog ? 'grabbing' : 'default'
+                }}
+            >
                 {/* Header */}
-                <div className='dialog-header'>
+                <div
+                    className='dialog-header'
+                    onMouseDown={handleDialogMouseDown}
+                    style={{ cursor: isDraggingDialog ? 'grabbing' : 'grab' }}
+                >
                     <div className='title-section'>
                         <span className='codicon codicon-symbol-method'></span>
                         <h2>Function Builder</h2>

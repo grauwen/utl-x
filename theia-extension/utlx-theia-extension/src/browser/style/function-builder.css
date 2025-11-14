@@ -11,6 +11,16 @@
 
 /* ===== Dialog Overlay ===== */
 
+.utlx-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    pointer-events: none; /* Allow clicks to pass through to elements underneath */
+}
+
 .utlx-function-builder-dialog {
     position: fixed;
     top: 50%;
@@ -28,6 +38,7 @@
     flex-direction: column;
     z-index: 10001;
     animation: slideIn 0.2s ease-out;
+    pointer-events: auto; /* Dialog itself receives clicks */
 }
 
 @keyframes slideIn {
@@ -97,6 +108,12 @@
     padding: 16px 20px;
     border-bottom: 1px solid var(--theia-panel-border);
     background: var(--theia-toolbar-background, var(--theia-editor-background));
+    cursor: grab;
+    user-select: none; /* Prevent text selection while dragging */
+}
+
+.utlx-function-builder-dialog .dialog-header:active {
+    cursor: grabbing;
 }
 
 .utlx-function-builder-dialog .title-section {
@@ -125,6 +142,7 @@
     background: var(--theia-input-background);
     color: var(--theia-input-foreground);
     font-size: 13px;
+    cursor: text; /* Override grab cursor for input */
 }
 
 .utlx-function-builder-dialog .search-box:focus {
@@ -135,7 +153,7 @@
 .utlx-function-builder-dialog .close-btn {
     background: none;
     border: none;
-    cursor: pointer;
+    cursor: pointer !important; /* Override grab cursor for button */
     padding: 4px;
     color: var(--theia-icon-foreground);
     display: flex;
