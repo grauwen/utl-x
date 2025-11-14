@@ -775,7 +775,8 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                         onClick={() => {
                                             const editor = expressionEditorRef.current;
                                             if (editor) {
-                                                editor.trigger('toolbar', 'undo', {});
+                                                editor.focus();
+                                                editor.trigger('toolbar', 'undo', null);
                                             }
                                         }}
                                         title='Undo (Ctrl+Z / Cmd+Z)'
@@ -787,7 +788,8 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                         onClick={() => {
                                             const editor = expressionEditorRef.current;
                                             if (editor) {
-                                                editor.trigger('toolbar', 'redo', {});
+                                                editor.focus();
+                                                editor.trigger('toolbar', 'redo', null);
                                             }
                                         }}
                                         title='Redo (Ctrl+Y / Cmd+Shift+Z)'
@@ -797,10 +799,27 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                     <div className='toolbar-separator'></div>
                                     <button
                                         className='toolbar-btn'
-                                        onClick={() => {
+                                        onClick={async () => {
                                             const editor = expressionEditorRef.current;
                                             if (editor) {
-                                                editor.trigger('toolbar', 'editor.action.clipboardCutAction', {});
+                                                editor.focus();
+                                                const selection = editor.getSelection();
+                                                if (selection && !selection.isEmpty()) {
+                                                    const selectedText = editor.getModel()?.getValueInRange(selection);
+                                                    if (selectedText) {
+                                                        try {
+                                                            await navigator.clipboard.writeText(selectedText);
+                                                            // Delete the selected text
+                                                            editor.executeEdits('toolbar-cut', [{
+                                                                range: selection,
+                                                                text: '',
+                                                                forceMoveMarkers: true
+                                                            }]);
+                                                        } catch (err) {
+                                                            console.error('Failed to cut:', err);
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }}
                                         title='Cut (Ctrl+X / Cmd+X)'
@@ -809,10 +828,33 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                     </button>
                                     <button
                                         className='toolbar-btn'
-                                        onClick={() => {
+                                        onClick={async () => {
                                             const editor = expressionEditorRef.current;
                                             if (editor) {
-                                                editor.trigger('toolbar', 'editor.action.clipboardCopyAction', {});
+                                                editor.focus();
+                                                const selection = editor.getSelection();
+                                                if (selection && !selection.isEmpty()) {
+                                                    const selectedText = editor.getModel()?.getValueInRange(selection);
+                                                    if (selectedText) {
+                                                        try {
+                                                            await navigator.clipboard.writeText(selectedText);
+                                                            console.log('[Toolbar] Copied to clipboard:', selectedText);
+                                                        } catch (err) {
+                                                            console.error('Failed to copy:', err);
+                                                        }
+                                                    }
+                                                } else {
+                                                    // No selection - copy entire content
+                                                    const content = editor.getModel()?.getValue();
+                                                    if (content) {
+                                                        try {
+                                                            await navigator.clipboard.writeText(content);
+                                                            console.log('[Toolbar] Copied all content to clipboard');
+                                                        } catch (err) {
+                                                            console.error('Failed to copy:', err);
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }}
                                         title='Copy (Ctrl+C / Cmd+C)'
@@ -821,10 +863,31 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                     </button>
                                     <button
                                         className='toolbar-btn'
-                                        onClick={() => {
+                                        onClick={async () => {
                                             const editor = expressionEditorRef.current;
                                             if (editor) {
-                                                editor.trigger('toolbar', 'editor.action.clipboardPasteAction', {});
+                                                editor.focus();
+                                                try {
+                                                    const text = await navigator.clipboard.readText();
+                                                    if (text) {
+                                                        const position = editor.getPosition();
+                                                        if (position) {
+                                                            editor.executeEdits('toolbar-paste', [{
+                                                                range: new monaco.Range(
+                                                                    position.lineNumber,
+                                                                    position.column,
+                                                                    position.lineNumber,
+                                                                    position.column
+                                                                ),
+                                                                text: text,
+                                                                forceMoveMarkers: true
+                                                            }]);
+                                                            console.log('[Toolbar] Pasted from clipboard');
+                                                        }
+                                                    }
+                                                } catch (err) {
+                                                    console.error('Failed to paste:', err);
+                                                }
                                             }
                                         }}
                                         title='Paste (Ctrl+V / Cmd+V)'
