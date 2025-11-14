@@ -83,31 +83,122 @@ function getCursorValue(
     }
 
     // No selection - try to extract expression at cursor
-    // Pattern for UTLX expressions: $input[0].field.subfield
+    // Pattern for UTLX expressions: $input[0].field.subfield or parseDate($input[0].HireDate)
     const lineContent = model.getLineContent(position.lineNumber);
     const column = position.column - 1; // 0-indexed
 
     // Find the start of the expression by going backwards
+    // Need to handle balanced parentheses and brackets
     let start = column;
+    let backParenDepth = 0;
+    let backBracketDepth = 0;
+
     while (start > 0) {
         const char = lineContent[start - 1];
-        // Valid characters in UTLX expressions: alphanumeric, $, _, [, ], .
-        // Stop at everything else (whitespace, operators, delimiters)
-        if (!/[\w$.\[\]]/.test(char)) {
+
+        // Track parentheses (going backwards)
+        if (char === ')') {
+            backParenDepth++;
+            start--;
+            continue;
+        }
+        if (char === '(') {
+            backParenDepth--;
+            start--;
+            // If we've found the matching opening paren, continue to get function name
+            if (backParenDepth < 0) {
+                // Reset depth and continue backwards to capture function name
+                backParenDepth = 0;
+                // Continue scanning to get the function name before the paren
+                continue;
+            }
+            continue;
+        }
+
+        // Track brackets (going backwards)
+        if (char === ']') {
+            backBracketDepth++;
+            start--;
+            continue;
+        }
+        if (char === '[') {
+            backBracketDepth--;
+            start--;
+            if (backBracketDepth < 0) {
+                // Reset depth and continue to capture identifier before bracket
+                backBracketDepth = 0;
+                continue;
+            }
+            continue;
+        }
+
+        // If inside parentheses or brackets, continue
+        if (backParenDepth > 0 || backBracketDepth > 0) {
+            start--;
+            continue;
+        }
+
+        // Outside parentheses/brackets: only allow identifier chars
+        if (!/[\w$.]/.test(char)) {
             break;
         }
+
         start--;
     }
 
     // Find the end of the expression by going forwards
+    // Need to handle balanced parentheses for function calls
     let end = column;
+    let parenDepth = 0;
+    let bracketDepth = 0;
+
     while (end < lineContent.length) {
         const char = lineContent[end];
-        // Valid characters in UTLX expressions: alphanumeric, $, _, [, ], .
-        // Stop at everything else (whitespace, operators, delimiters)
-        if (!/[\w$.\[\]]/.test(char)) {
+
+        // Track parentheses depth
+        if (char === '(') {
+            parenDepth++;
+            end++;
+            continue;
+        }
+        if (char === ')') {
+            parenDepth--;
+            end++;
+            // If we've closed all parentheses, we might be done
+            if (parenDepth < 0) {
+                end--; // Don't include the extra closing paren
+                break;
+            }
+            continue;
+        }
+
+        // Track bracket depth
+        if (char === '[') {
+            bracketDepth++;
+            end++;
+            continue;
+        }
+        if (char === ']') {
+            bracketDepth--;
+            end++;
+            if (bracketDepth < 0) {
+                end--;
+                break;
+            }
+            continue;
+        }
+
+        // If inside parentheses or brackets, continue (allow any character)
+        if (parenDepth > 0 || bracketDepth > 0) {
+            end++;
+            continue;
+        }
+
+        // Outside parentheses/brackets: only allow identifier chars
+        if (!/[\w$.]/.test(char)) {
             break;
         }
+
         end++;
     }
 

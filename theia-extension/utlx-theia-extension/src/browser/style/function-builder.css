@@ -958,6 +958,18 @@
     overflow: hidden;
 }
 
+/* Monaco Editor Line Numbers - More grey */
+.utlx-function-builder-dialog .monaco-editor .line-numbers {
+    color: #606060 !important;
+    opacity: 0.5;
+}
+
+/* Alternative selector for Monaco line numbers */
+.utlx-function-builder-dialog .monaco-editor .margin-view-overlays .line-numbers {
+    color: #606060 !important;
+    opacity: 0.5;
+}
+
 .utlx-function-builder-dialog .monaco-header {
     display: flex;
     align-items: center;
