@@ -20,7 +20,7 @@ export const OperatorsTree: React.FC<OperatorsTreeProps> = ({
     onSelectOperator
 }) => {
     const [expandedCategories, setExpandedCategories] = React.useState<Set<string>>(
-        new Set(['Arithmetic', 'Comparison', 'Logical', 'Special']) // All expanded by default
+        new Set() // Start collapsed - user can expand categories as needed
     );
 
     const operatorsByCategory = React.useMemo(() => getOperatorsByCategory(), []);
