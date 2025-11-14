@@ -8,72 +8,7 @@ import org.apache.utlx.stdlib.annotations.UTLXFunction
  * Critical missing string case conversion functions
  */
 object CaseConversionFunctions {
-    
-    @UTLXFunction(
-        description = "Convert string to camelCase",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "String",
-        parameters = [
-            "str: Str value"
-        ],
-        returns = "Result of the operation",
-        example = "camelize(\"hello-world\") => \"helloWorld\"",
-        additionalExamples = [
-            "camelize(\"hello_world\") => \"helloWorld\"",
-            "camelize(\"hello world\") => \"helloWorld\""
-        ],
-        notes = """This is the INVERSE of kebabCase/snakeCase
-Commonly needed for API field transformations""",
-        tags = ["string"],
-        since = "1.0"
-    )
-    /**
-     * Convert string to camelCase
-     * 
-     * Usage: camelize("hello-world") => "helloWorld"
-     * Usage: camelize("hello_world") => "helloWorld"
-     * Usage: camelize("hello world") => "helloWorld"
-     * 
-     * This is the INVERSE of kebabCase/snakeCase
-     * Commonly needed for API field transformations
-     */
-    fun camelize(args: List<UDM>): UDM {
-        if (args.size != 1) {
-            throw IllegalArgumentException("camelize expects 1 argument, got ${args.size}")
-        }
-        
-        val str = args[0]
-        if (str !is UDM.Scalar || str.value !is String) {
-            throw IllegalArgumentException("camelize expects a string argument")
-        }
-        
-        val input = str.value as String
-        
-        // Handle empty string
-        if (input.isEmpty()) {
-            return UDM.Scalar("")
-        }
-        
-        // Split by common delimiters: space, dash, underscore
-        val words = input.split(Regex("[\\s_-]+"))
-            .filter { it.isNotEmpty() }
-        
-        if (words.isEmpty()) {
-            return UDM.Scalar("")
-        }
-        
-        // First word lowercase, rest capitalized
-        val result = buildString {
-            append(words[0].lowercase())
-            words.drop(1).forEach { word ->
-                append(word.replaceFirstChar { it.uppercase() })
-            }
-        }
-        
-        return UDM.Scalar(result)
-    }
-    
+
     @UTLXFunction(
         description = "Convert string to snake_case",
         minArgs = 1,
