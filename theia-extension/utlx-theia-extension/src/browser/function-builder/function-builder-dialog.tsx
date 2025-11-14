@@ -798,8 +798,8 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         {/* Tab Content: Operators */}
                         {activeTab === 'operators' && (
                             <>
-                                {/* Operators Tree */}
-                                <div className='operators-list-pane' style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                {/* Top Part: Operators Tree */}
+                                <div className='operators-list-pane' style={{ height: `${splitPosition}%` }}>
                                     <OperatorsTree
                                         onInsertOperator={handleInsertOperator}
                                         selectedOperator={selectedOperator}
@@ -807,10 +807,19 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                     />
                                 </div>
 
-                                {/* Operator Details Pane */}
-                                {selectedOperator && (
-                                    <div className='operator-details-pane' style={{ marginTop: '8px', padding: '16px', borderTop: '1px solid var(--theia-panel-border)' }}>
-                                        <h3>Operator Details</h3>
+                                {/* Split Divider */}
+                                <div
+                                    className='split-divider'
+                                    onMouseDown={handleSplitMouseDown}
+                                    style={{ cursor: isDraggingSplit ? 'row-resize' : 'row-resize' }}
+                                >
+                                    <div className='split-handle'></div>
+                                </div>
+
+                                {/* Bottom Part: Operator Details */}
+                                <div className='operator-details-pane' style={{ height: `${100 - splitPosition}%` }}>
+                                    <h3>Operator Details</h3>
+                                    {selectedOperator ? (
                                         <div className='operator-details-content'>
                                             <div className='details-header'>
                                                 <div className='details-title'>
@@ -853,8 +862,13 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div className='empty-details'>
+                                            <span className='codicon codicon-info'></span>
+                                            <p>Select an operator to view details</p>
+                                        </div>
+                                    )}
+                                </div>
                             </>
                         )}
                     </div>
