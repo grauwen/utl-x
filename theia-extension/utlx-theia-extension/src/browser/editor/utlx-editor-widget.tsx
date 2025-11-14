@@ -224,10 +224,10 @@ export class UTLXEditorWidget extends ReactWidget {
             if (!model) {
                 model = monaco.editor.createModel(
                     this.getDefaultContent(),
-                    'plaintext', // Language ID - we can register 'utlx' later
+                    'utlx', // UTL-X language ID - registered via UTLXLanguageGrammarContribution
                     uri
                 );
-                console.log('[UTLXEditor] Created new Monaco model');
+                console.log('[UTLXEditor] Created new Monaco model with UTL-X language');
             } else {
                 console.log('[UTLXEditor] Reusing existing Monaco model');
                 model.setValue(this.getDefaultContent());
@@ -333,8 +333,8 @@ export class UTLXEditorWidget extends ReactWidget {
             }
         };
 
-        // Register for plaintext language
-        const disposable = monaco.languages.registerCompletionItemProvider('plaintext', completionProvider);
+        // Register for utlx language
+        const disposable = monaco.languages.registerCompletionItemProvider('utlx', completionProvider);
         this.toDispose.push(disposable);
 
         console.log('[UTLXEditor] Completion provider registered');

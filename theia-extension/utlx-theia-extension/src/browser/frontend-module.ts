@@ -7,6 +7,7 @@
 import './style/index.css';
 import { ContainerModule } from 'inversify';
 import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory } from '@theia/core/lib/browser';
+import { LanguageGrammarDefinitionContribution } from '@theia/monaco/lib/browser/textmate';
 import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
@@ -15,6 +16,7 @@ import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { UTLXToolbarWidget } from './toolbar/utlx-toolbar-widget';
 import { UTLXFrontendContribution } from './utlx-frontend-contribution';
 import { UTLXEventService } from './events/utlx-event-service';
+import { UTLXLanguageGrammarContribution } from './language/utlx-language';
 
 export default new ContainerModule(bind => {
     console.log('[UTLX Frontend Module] ===== LOADING STARTED =====');
@@ -133,6 +135,11 @@ export default new ContainerModule(bind => {
         console.log('[UTLX Frontend Module] Binding frontend contribution...');
         bind(FrontendApplicationContribution).to(UTLXFrontendContribution).inSingletonScope();
         console.log('[UTLX Frontend Module] ✓ Frontend contribution bound');
+
+        // Bind language grammar contribution for Monaco syntax highlighting
+        console.log('[UTLX Frontend Module] Binding language grammar contribution...');
+        bind(LanguageGrammarDefinitionContribution).to(UTLXLanguageGrammarContribution).inSingletonScope();
+        console.log('[UTLX Frontend Module] ✓ Language grammar contribution bound');
 
         console.log('[UTLX Frontend Module] ===== ALL BINDINGS SUCCESSFUL =====');
     } catch (error) {
