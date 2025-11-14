@@ -19,6 +19,9 @@ import { parseUdmToTree, UdmInputTree } from './udm-parser';
 import { FieldTree } from './field-tree';
 import { InsertionContext, CursorValue, getContextDescription, analyzeInsertionContext } from './context-analyzer';
 import { generateFunctionInsertion, generateInsertionPreview } from './insertion-generator';
+import { OperatorsTree } from './operators-tree';
+import { OperatorInfo } from './operators-data';
+import { generateOperatorInsertion, generateOperatorInsertionPreview } from './operator-insertion-generator';
 
 /**
  * Props for the Function Builder Dialog
@@ -59,12 +62,13 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     const [searchQuery, setSearchQuery] = React.useState('');
     const [expandedCategories, setExpandedCategories] = React.useState<Set<string>>(new Set());
     const [selectedFunction, setSelectedFunction] = React.useState<FunctionInfo | null>(null);
+    const [selectedOperator, setSelectedOperator] = React.useState<OperatorInfo | null>(null);
     const [showHelp, setShowHelp] = React.useState(false);
     const [splitPosition, setSplitPosition] = React.useState(66.67); // Start at 2/3 down
     const [isDraggingSplit, setIsDraggingSplit] = React.useState(false);
 
     // New state for tabs and Monaco editor in right pane
-    const [activeTab, setActiveTab] = React.useState<'functions' | 'inputs'>('functions');
+    const [activeTab, setActiveTab] = React.useState<'functions' | 'inputs' | 'operators'>('functions');
     const [rightSplitPosition, setRightSplitPosition] = React.useState(66); // 66% editor, 34% problems
     const [isDraggingRightSplit, setIsDraggingRightSplit] = React.useState(false);
 
@@ -354,6 +358,28 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         }, 0);
     };
 
+    const handleInsertOperator = (operator: OperatorInfo) => {
+        // Analyze context from Expression Editor
+        const expressionContext = analyzeExpressionEditorContext();
+
+        console.log('[FunctionBuilder] Inserting operator:', operator.symbol, 'with context:', expressionContext);
+
+        // Use smart context-aware insertion
+        const code = generateOperatorInsertion(operator, expressionContext);
+
+        // Insert into Monaco editor, passing context for range replacement
+        insertIntoMonaco(code, expressionContext);
+
+        // Restore focus to Expression Editor
+        setTimeout(() => {
+            const editor = expressionEditorRef.current;
+            if (editor) {
+                editor.focus();
+                console.log('[FunctionBuilder] Restored focus to Expression Editor');
+            }
+        }, 0);
+    };
+
     const handleInsertField = (inputName: string, fieldPath: string) => {
         // Don't add a dot if fieldPath starts with [ (for arrays)
         const separator = fieldPath.startsWith('[') ? '' : '.';
@@ -601,6 +627,13 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                 <span className='codicon codicon-symbol-variable'></span>
                                 Available Inputs
                             </button>
+                            <button
+                                className={`tab-button ${activeTab === 'operators' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('operators')}
+                            >
+                                <span className='codicon codicon-symbol-operator'></span>
+                                Operators
+                            </button>
                         </div>
 
                         {/* Tab Content: Standard Library Functions */}
@@ -760,6 +793,69 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                     udmMap={udmMap}
                                 />
                             </div>
+                        )}
+
+                        {/* Tab Content: Operators */}
+                        {activeTab === 'operators' && (
+                            <>
+                                {/* Operators Tree */}
+                                <div className='operators-list-pane' style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                    <OperatorsTree
+                                        onInsertOperator={handleInsertOperator}
+                                        selectedOperator={selectedOperator}
+                                        onSelectOperator={setSelectedOperator}
+                                    />
+                                </div>
+
+                                {/* Operator Details Pane */}
+                                {selectedOperator && (
+                                    <div className='operator-details-pane' style={{ marginTop: '8px', padding: '16px', borderTop: '1px solid var(--theia-panel-border)' }}>
+                                        <h3>Operator Details</h3>
+                                        <div className='operator-details-content'>
+                                            <div className='details-header'>
+                                                <div className='details-title'>
+                                                    <span className='operator-symbol-large'>{selectedOperator.symbol}</span>
+                                                    <span className='operator-name-large'>{selectedOperator.name}</span>
+                                                </div>
+                                                <div className='details-actions'>
+                                                    <button
+                                                        className='insert-btn'
+                                                        title='Insert operator'
+                                                        onClick={() => handleInsertOperator(selectedOperator)}
+                                                    >
+                                                        <span className='codicon codicon-insert'></span>
+                                                        Insert
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className='details-description'>
+                                                <strong>Description:</strong>
+                                                <p>{selectedOperator.description}</p>
+                                            </div>
+                                            <div className='details-syntax'>
+                                                <strong>Syntax:</strong>
+                                                <code>{selectedOperator.syntax}</code>
+                                            </div>
+                                            <div className='details-precedence'>
+                                                <strong>Precedence:</strong>
+                                                <span> {selectedOperator.precedence} ({selectedOperator.associativity} associativity)</span>
+                                            </div>
+                                            {selectedOperator.examples && selectedOperator.examples.length > 0 && (
+                                                <div className='details-examples'>
+                                                    <strong>Examples:</strong>
+                                                    <ul>
+                                                        {selectedOperator.examples.map((example, idx) => (
+                                                            <li key={idx}>
+                                                                <code>{example}</code>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
 
