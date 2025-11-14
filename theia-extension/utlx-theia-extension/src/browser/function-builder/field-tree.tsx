@@ -37,11 +37,9 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
             console.log('[extractSampleValues] Found', objects.length, 'objects in array');
 
             for (const obj of objects) {
-                const value = extractValueFromObject(obj, pathParts);
-                if (value !== null) {
-                    console.log('[extractSampleValues] Extracted value:', value);
-                    values.push(value);
-                }
+                const objValues = extractAllValuesFromObject(obj, pathParts);
+                console.log('[extractSampleValues] Extracted', objValues.length, 'values from object:', objValues);
+                values.push(...objValues);
             }
         } else {
             // Single object: {field: value}
@@ -54,10 +52,8 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
             }
 
             const objectContent = udmLanguage.substring(startIdx + 1, endIdx);
-            const value = extractValueFromObject(objectContent, pathParts);
-            if (value !== null) {
-                values.push(value);
-            }
+            const objValues = extractAllValuesFromObject(objectContent, pathParts);
+            values.push(...objValues);
         }
 
         // Return unique values (max 10)
@@ -109,38 +105,58 @@ function extractObjectsFromArray(arrayContent: string): string[] {
 }
 
 /**
- * Extract value for a field path from object content
+ * Extract ALL values for a field path from object content
+ * Returns all values from the field, handling nested arrays
  */
-function extractValueFromObject(objectContent: string, pathParts: string[]): string | null {
-    let currentContent = objectContent;
+function extractAllValuesFromObject(objectContent: string, pathParts: string[]): string[] {
+    return extractValuesRecursive(objectContent, pathParts, 0);
+}
 
-    for (const part of pathParts) {
-        // Match field: value pattern
-        const pattern = new RegExp(`${part}:\\s*(@\\w+\\([^)]*\\)|@\\w+|\\{[^}]*\\}|\\[[^\\]]*\\]|"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|[^,}\\n]+)`);
-        const match = currentContent.match(pattern);
-
-        if (!match) return null;
-
-        const value = match[1].trim();
-
-        // If nested object, continue traversing
-        if (value.startsWith('{')) {
-            currentContent = value.substring(1, value.length - 1);
-        } else if (value.startsWith('[')) {
-            // Array - extract first element for simplicity
-            const arrayMatch = value.match(/\[\s*\{([^}]+)\}/);
-            if (arrayMatch) {
-                currentContent = arrayMatch[1];
-            } else {
-                return value; // Simple array like [1,2,3]
-            }
-        } else {
-            // Leaf value
-            return value.replace(/^["']|["']$/g, ''); // Remove quotes
-        }
+/**
+ * Recursive helper to extract values, handling nested arrays
+ * Returns array of all found values
+ */
+function extractValuesRecursive(currentContent: string, pathParts: string[], partIndex: number): string[] {
+    if (partIndex >= pathParts.length) {
+        return [];
     }
 
-    return null;
+    const part = pathParts[partIndex];
+    const isLastPart = partIndex === pathParts.length - 1;
+
+    // Match field: value pattern
+    const pattern = new RegExp(`${part}:\\s*(@\\w+\\([^)]*\\)|@\\w+|\\{[^}]*\\}|\\[[^\\]]*\\]|"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|[^,}\\n]+)`);
+    const match = currentContent.match(pattern);
+
+    if (!match) return [];
+
+    const value = match[1].trim();
+
+    // If this is the last part of the path, return the value
+    if (isLastPart) {
+        // Remove quotes from leaf values
+        const cleanValue = value.replace(/^["']|["']$/g, '');
+        return [cleanValue];
+    }
+
+    // If nested object, continue traversing
+    if (value.startsWith('{')) {
+        const nestedContent = value.substring(1, value.length - 1);
+        return extractValuesRecursive(nestedContent, pathParts, partIndex + 1);
+    } else if (value.startsWith('[')) {
+        // Nested array - extract from ALL array elements
+        const arrayElements = extractObjectsFromArray(value.substring(1, value.lastIndexOf(']')));
+        const allValues: string[] = [];
+
+        for (const elementContent of arrayElements) {
+            const elementValues = extractValuesRecursive(elementContent, pathParts, partIndex + 1);
+            allValues.push(...elementValues);
+        }
+
+        return allValues;
+    }
+
+    return [];
 }
 
 /**
