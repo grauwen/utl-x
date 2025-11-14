@@ -272,10 +272,16 @@ export class UTLXEditorWidget extends ReactWidget {
             // Apply read-only decorations to initial content
             setTimeout(() => {
                 this.applyReadOnlyDecorations();
+
+                // Set cursor to first line of body (after --- separator)
+                this.setInitialCursorPosition();
             }, 200);
 
             // Enforce read-only headers
             this.enforceReadOnlyHeaders();
+
+            // Prevent cursor from entering header area
+            this.enforceCursorInBody();
 
             // Focus editor
             this.editor.focus();
@@ -1112,6 +1118,78 @@ output json
     }
 
     /**
+     * Set initial cursor position to first line of body (after --- separator)
+     */
+    protected setInitialCursorPosition(): void {
+        if (!this.editor) return;
+
+        const model = this.editor.getModel();
+        if (!model) return;
+
+        // Find the separator line
+        const separatorLine = this.parseHeaderEndLine();
+
+        // Position cursor at first line after separator (body start)
+        // This is separatorLine + 2 (because separatorLine is 0-indexed and we want the line after ---)
+        const bodyStartLine = separatorLine + 2;
+
+        // Find the first non-empty line in the body or use body start
+        let targetLine = bodyStartLine;
+        const lineCount = model.getLineCount();
+
+        for (let i = bodyStartLine; i <= lineCount; i++) {
+            const lineContent = model.getLineContent(i).trim();
+            // Skip empty lines and comments
+            if (lineContent && !lineContent.startsWith('//')) {
+                targetLine = i;
+                break;
+            }
+        }
+
+        // Set cursor to column 1 of target line
+        const position = new monaco.Position(targetLine, 1);
+        this.editor.setPosition(position);
+        this.editor.revealPositionInCenter(position);
+
+        console.log('[UTLXEditor] Initial cursor position set to line', targetLine);
+    }
+
+    /**
+     * Prevent cursor from entering header area - push it back to body
+     * BUT allow selections that include headers (for copy/paste)
+     */
+    protected enforceCursorInBody(): void {
+        if (!this.editor) return;
+
+        // Listen for cursor position changes
+        this.toDispose.push(
+            this.editor.onDidChangeCursorPosition((e) => {
+                if (!this.editor) return;
+
+                const position = e.position;
+                const selection = this.editor.getSelection();
+
+                // Don't enforce if user is making a selection (allow selecting headers for copy)
+                if (selection && !selection.isEmpty()) {
+                    return;
+                }
+
+                // Only enforce if cursor is in header area AND there's no selection
+                // If cursor is in header area (lines 1 through headerEndLine + 1)
+                if (position.lineNumber <= this.headerEndLine + 1) {
+                    console.log('[UTLXEditor] Cursor in header area (no selection), moving to body');
+
+                    // Move cursor to first line of body
+                    const bodyStartLine = this.headerEndLine + 2;
+                    const newPosition = new monaco.Position(bodyStartLine, 1);
+
+                    this.editor.setPosition(newPosition);
+                }
+            })
+        );
+    }
+
+    /**
      * Open the Function Builder dialog
      */
     protected async openFunctionBuilder(): Promise<void> {
@@ -1226,6 +1304,16 @@ output json
                 text: '',
                 forceMoveMarkers: true
             }]);
+        }
+
+        // Force the editor to refresh its view and layout
+        this.editor.layout();
+        this.editor.updateOptions({});
+
+        // Scroll to reveal the inserted code
+        const currentPosition = this.editor.getPosition();
+        if (currentPosition) {
+            this.editor.revealPositionInCenter(currentPosition);
         }
 
         // Focus back on the editor
