@@ -64,6 +64,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     const [selectedFunction, setSelectedFunction] = React.useState<FunctionInfo | null>(null);
     const [selectedOperator, setSelectedOperator] = React.useState<OperatorInfo | null>(null);
     const [showHelp, setShowHelp] = React.useState(false);
+    const [showOperatorHelp, setShowOperatorHelp] = React.useState(false);
     const [splitPosition, setSplitPosition] = React.useState(66.67); // Start at 2/3 down
     const [isDraggingSplit, setIsDraggingSplit] = React.useState(false);
 
@@ -828,6 +829,14 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                                 </div>
                                                 <div className='details-actions'>
                                                     <button
+                                                        className='help-btn'
+                                                        title='Show full help and examples'
+                                                        onClick={() => setShowOperatorHelp(true)}
+                                                    >
+                                                        <span className='codicon codicon-question'></span>
+                                                        Help
+                                                    </button>
+                                                    <button
                                                         className='insert-btn'
                                                         title='Insert operator'
                                                         onClick={() => handleInsertOperator(selectedOperator)}
@@ -1137,6 +1146,53 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                                 <button onClick={() => { onInsert(example); setShowHelp(false); }}>
                                                     Try This Example
                                                 </button>
+                                            </div>
+                                        ))}
+                                    </section>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Operator Help Modal */}
+                {showOperatorHelp && selectedOperator && (
+                    <div className='help-modal-overlay' onClick={() => setShowOperatorHelp(false)}>
+                        <div className='help-modal' onClick={e => e.stopPropagation()}>
+                            <div className='help-header'>
+                                <h2>{selectedOperator.symbol} - {selectedOperator.name}</h2>
+                                <button onClick={() => setShowOperatorHelp(false)}>
+                                    <span className='codicon codicon-close'></span>
+                                </button>
+                            </div>
+                            <div className='help-body'>
+                                <section>
+                                    <h3>Symbol</h3>
+                                    <code style={{ fontSize: '18px', fontWeight: 'bold' }}>{selectedOperator.symbol}</code>
+                                </section>
+                                <section>
+                                    <h3>Description</h3>
+                                    <p>{selectedOperator.description}</p>
+                                </section>
+                                <section>
+                                    <h3>Syntax</h3>
+                                    <code>{selectedOperator.syntax}</code>
+                                </section>
+                                <section>
+                                    <h3>Category</h3>
+                                    <p>{selectedOperator.category}</p>
+                                </section>
+                                <section>
+                                    <h3>Precedence & Associativity</h3>
+                                    <p>Precedence: <strong>{selectedOperator.precedence}</strong> (lower numbers = higher precedence)</p>
+                                    <p>Associativity: <strong>{selectedOperator.associativity}</strong></p>
+                                </section>
+                                {selectedOperator.examples && selectedOperator.examples.length > 0 && (
+                                    <section>
+                                        <h3>Examples</h3>
+                                        {selectedOperator.examples.map((example, idx) => (
+                                            <div key={idx} className='example'>
+                                                <pre><code>{example}</code></pre>
                                             </div>
                                         ))}
                                     </section>
