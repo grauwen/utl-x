@@ -19,10 +19,16 @@ export interface FieldTreeProps {
 /**
  * FieldTree Component
  *
- * Displays all inputs with their fields in a tree structure
+ * Displays all inputs with their fields in a tree structure with horizontal split
  */
 export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField }) => {
     const [expandedInputs, setExpandedInputs] = React.useState<Set<string>>(new Set());
+    const [selectedField, setSelectedField] = React.useState<{ inputName: string; fieldPath: string } | null>(null);
+
+    // Split pane state (default to 66% for field tree, 34% for sample data)
+    const [splitPosition, setSplitPosition] = React.useState(66);
+    const [isDragging, setIsDragging] = React.useState(false);
+    const containerRef = React.useRef<HTMLDivElement>(null);
 
     const toggleInput = (inputName: string) => {
         const newExpanded = new Set(expandedInputs);
@@ -41,6 +47,40 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField 
         }
     }, [fieldTrees]);
 
+    // Handle split divider dragging
+    const handleMouseDown = () => {
+        setIsDragging(true);
+    };
+
+    React.useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isDragging || !containerRef.current) return;
+
+            const container = containerRef.current;
+            const rect = container.getBoundingClientRect();
+            const offsetY = e.clientY - rect.top;
+            const percentage = (offsetY / rect.height) * 100;
+
+            // Constrain between 30% and 85%
+            const clampedPercentage = Math.max(30, Math.min(85, percentage));
+            setSplitPosition(clampedPercentage);
+        };
+
+        const handleMouseUp = () => {
+            setIsDragging(false);
+        };
+
+        if (isDragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging]);
+
     if (fieldTrees.length === 0) {
         return (
             <div className='empty-state'>
@@ -52,16 +92,52 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField 
     }
 
     return (
-        <div className='field-tree'>
-            {fieldTrees.map(tree => (
-                <InputNode
-                    key={tree.inputName}
-                    tree={tree}
-                    isExpanded={expandedInputs.has(tree.inputName)}
-                    onToggle={() => toggleInput(tree.inputName)}
-                    onInsertField={onInsertField}
-                />
-            ))}
+        <div className='field-tree-container' ref={containerRef} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            {/* Field Tree Pane */}
+            <div className='field-tree-pane' style={{ flex: `${splitPosition} 1 0%`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div className='field-tree' style={{ flex: 1, overflowY: 'auto' }}>
+                    {fieldTrees.map(tree => (
+                        <InputNode
+                            key={tree.inputName}
+                            tree={tree}
+                            isExpanded={expandedInputs.has(tree.inputName)}
+                            onToggle={() => toggleInput(tree.inputName)}
+                            onInsertField={onInsertField}
+                            onFieldSelect={setSelectedField}
+                        />
+                    ))}
+                </div>
+            </div>
+
+            {/* Split Divider */}
+            <div
+                className='split-divider'
+                onMouseDown={handleMouseDown}
+                style={{ cursor: isDragging ? 'row-resize' : 'row-resize' }}
+            >
+                <div className='split-handle'></div>
+            </div>
+
+            {/* Sample Data Pane */}
+            <div className='sample-data-pane' style={{ flex: `${100 - splitPosition} 1 0%`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div className='sample-data-content' style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+                    {selectedField ? (
+                        <div>
+                            <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600 }}>
+                                Sample Data: ${selectedField.inputName}.{selectedField.fieldPath}
+                            </h4>
+                            <div style={{ fontSize: '12px', color: 'var(--theia-descriptionForeground)' }}>
+                                <em>Sample data viewer coming soon...</em>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className='empty-details'>
+                            <span className='codicon codicon-info' style={{ fontSize: '32px', opacity: 0.5 }}></span>
+                            <span>Click on a field to see sample data</span>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };
@@ -74,6 +150,7 @@ interface InputNodeProps {
     isExpanded: boolean;
     onToggle: () => void;
     onInsertField: (inputName: string, fieldPath: string) => void;
+    onFieldSelect: (field: { inputName: string; fieldPath: string } | null) => void;
 }
 
 /**
@@ -81,7 +158,7 @@ interface InputNodeProps {
  *
  * Represents a single input (root level)
  */
-const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onInsertField }) => {
+const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onInsertField, onFieldSelect }) => {
     const typeLabel = tree.isArray ? 'Array' : 'Object';
     const icon = tree.isArray ? 'codicon-symbol-array' : 'codicon-symbol-variable';
 
@@ -115,6 +192,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                             inputName={tree.inputName}
                             inputIsArray={tree.isArray}
                             onInsert={onInsertField}
+                            onSelect={onFieldSelect}
                             level={1}
                         />
                     ))}
@@ -139,6 +217,7 @@ interface FieldNodeProps {
     inputName: string;
     inputIsArray: boolean;
     onInsert: (inputName: string, fieldPath: string) => void;
+    onSelect: (field: { inputName: string; fieldPath: string } | null) => void;
     level: number;
 }
 
@@ -153,6 +232,7 @@ const FieldNode: React.FC<FieldNodeProps> = ({
     inputName,
     inputIsArray,
     onInsert,
+    onSelect,
     level
 }) => {
     const [expanded, setExpanded] = React.useState(false);
@@ -173,11 +253,11 @@ const FieldNode: React.FC<FieldNodeProps> = ({
 
     return (
         <div className='field-node' style={{ paddingLeft: `${level * 12}px` }}>
-            <div className='field-header'>
+            <div className='field-header' onClick={() => onSelect({ inputName, fieldPath: path })}>
                 {hasChildren ? (
                     <span
                         className={`codicon codicon-chevron-${expanded ? 'down' : 'right'}`}
-                        onClick={() => setExpanded(!expanded)}
+                        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
                         style={{ cursor: 'pointer' }}
                     />
                 ) : (
@@ -189,7 +269,7 @@ const FieldNode: React.FC<FieldNodeProps> = ({
                 <button
                     className='insert-btn'
                     title={`Insert $${inputName}.${path}`}
-                    onClick={() => onInsert(inputName, buildInsertPath())}
+                    onClick={(e) => { e.stopPropagation(); onInsert(inputName, buildInsertPath()); }}
                 >
                     <span className='codicon codicon-insert'></span>
                 </button>
@@ -205,6 +285,7 @@ const FieldNode: React.FC<FieldNodeProps> = ({
                             inputName={inputName}
                             inputIsArray={inputIsArray}
                             onInsert={onInsert}
+                            onSelect={onSelect}
                             level={level + 1}
                         />
                     ))}
