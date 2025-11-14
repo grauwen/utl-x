@@ -9,6 +9,34 @@ import * as React from 'react';
 import { UdmInputTree, UdmField, getTypeDisplayName, getTypeIcon } from './udm-parser';
 
 /**
+ * Format a value for use in UTLX expressions
+ * Adds quotes around strings, leaves numbers/booleans/null unquoted
+ */
+function formatValueForUTLX(value: string): string {
+    const trimmed = value.trim();
+
+    // Check if it's a number (integer or decimal)
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+        return trimmed;
+    }
+
+    // Check if it's a boolean
+    if (trimmed === 'true' || trimmed === 'false') {
+        return trimmed;
+    }
+
+    // Check if it's null
+    if (trimmed === 'null') {
+        return trimmed;
+    }
+
+    // It's a string - add double quotes and escape any internal double quotes
+    // Also escape backslashes
+    const escaped = trimmed.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `"${escaped}"`;
+}
+
+/**
  * Extract sample values for a field from UDM language string
  */
 function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArray: boolean): string[] {
@@ -165,6 +193,7 @@ function extractValuesRecursive(currentContent: string, pathParts: string[], par
 export interface FieldTreeProps {
     fieldTrees: UdmInputTree[];
     onInsertField: (inputName: string, fieldPath: string) => void;
+    onInsertValue?: (value: string) => void; // Optional callback to insert raw values into editor
     udmMap: Map<string, string>; // inputName -> UDM language string
 }
 
@@ -173,7 +202,7 @@ export interface FieldTreeProps {
  *
  * Displays all inputs with their fields in a tree structure with horizontal split
  */
-export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField, udmMap }) => {
+export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField, onInsertValue, udmMap }) => {
     const [expandedInputs, setExpandedInputs] = React.useState<Set<string>>(new Set());
     const [selectedField, setSelectedField] = React.useState<{ inputName: string; fieldPath: string } | null>(null);
 
@@ -308,14 +337,11 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                         {sampleValues.length} unique {sampleValues.length === 1 ? 'value' : 'values'}:
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                        {sampleValues.map((value, index) => (
+                                        {sampleValues.map((value, index) => {
+                                            const quotedValue = formatValueForUTLX(value);
+                                            return (
                                             <div
                                                 key={index}
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(value);
-                                                    console.log('[FieldTree] Copied value to clipboard:', value);
-                                                }}
-                                                title={`Click to copy: ${value}`}
                                                 style={{
                                                     padding: '6px 8px',
                                                     background: 'var(--theia-editor-background)',
@@ -325,29 +351,65 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                                     fontFamily: 'var(--monaco-monospace-font)',
                                                     color: 'var(--theia-foreground)',
                                                     wordBreak: 'break-all',
-                                                    cursor: 'pointer',
-                                                    transition: 'background 0.1s ease',
-                                                    position: 'relative'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.background = 'var(--theia-list-hoverBackground)';
-                                                    e.currentTarget.style.borderColor = 'var(--theia-focusBorder)';
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.background = 'var(--theia-editor-background)';
-                                                    e.currentTarget.style.borderColor = 'var(--theia-panel-border)';
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px'
                                                 }}
                                             >
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span style={{ flex: 1 }}>{value}</span>
-                                                    <span className='codicon codicon-copy' style={{
-                                                        fontSize: '12px',
-                                                        opacity: 0.6,
-                                                        flexShrink: 0
-                                                    }}></span>
-                                                </span>
+                                                <span style={{ flex: 1 }}>{value}</span>
+                                                <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                                                    {onInsertValue && (
+                                                        <button
+                                                            className='insert-btn'
+                                                            title={`Insert ${quotedValue} into editor`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onInsertValue(quotedValue);
+                                                                console.log('[FieldTree] Inserted quoted value:', quotedValue);
+                                                            }}
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                cursor: 'pointer',
+                                                                padding: '2px 4px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                color: 'var(--theia-foreground)',
+                                                                opacity: 0.7
+                                                            }}
+                                                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+                                                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; }}
+                                                        >
+                                                            <span className='codicon codicon-insert' style={{ fontSize: '12px' }}></span>
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        className='copy-btn'
+                                                        title={`Copy ${quotedValue} to clipboard`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigator.clipboard.writeText(quotedValue);
+                                                            console.log('[FieldTree] Copied quoted value to clipboard:', quotedValue);
+                                                        }}
+                                                        style={{
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            padding: '2px 4px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            color: 'var(--theia-foreground)',
+                                                            opacity: 0.7
+                                                        }}
+                                                        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+                                                        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; }}
+                                                    >
+                                                        <span className='codicon codicon-copy' style={{ fontSize: '12px' }}></span>
+                                                    </button>
+                                                </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             ) : (

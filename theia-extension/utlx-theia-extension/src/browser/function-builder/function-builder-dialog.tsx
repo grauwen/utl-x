@@ -468,6 +468,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                 <FieldTree
                                     fieldTrees={fieldTrees}
                                     onInsertField={handleInsertField}
+                                    onInsertValue={insertIntoMonaco}
                                     udmMap={udmMap}
                                 />
                             </div>
