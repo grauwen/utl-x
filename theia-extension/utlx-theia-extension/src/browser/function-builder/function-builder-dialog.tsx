@@ -62,6 +62,12 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     const [splitPosition, setSplitPosition] = React.useState(66.67); // Start at 2/3 down
     const [isDraggingSplit, setIsDraggingSplit] = React.useState(false);
 
+    // New state for tabs and Monaco editor in right pane
+    const [activeTab, setActiveTab] = React.useState<'functions' | 'inputs'>('functions');
+    const [editorContent, setEditorContent] = React.useState('');
+    const [rightSplitPosition, setRightSplitPosition] = React.useState(66); // 66% editor, 34% problems
+    const [isDraggingRightSplit, setIsDraggingRightSplit] = React.useState(false);
+
     // Group functions by category
     const functionsByCategory = React.useMemo(() => {
         const grouped = new Map<string, FunctionInfo[]>();
@@ -185,9 +191,9 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         if (!selectedFunction) return;
 
         // Use smart context-aware insertion
+        let code: string;
         if (cursorContext) {
-            const code = generateFunctionInsertion(selectedFunction, cursorContext, availableInputs);
-            onInsert(code);
+            code = generateFunctionInsertion(selectedFunction, cursorContext, availableInputs);
         } else {
             // Fallback: use top-level context
             const fallbackContext: InsertionContext = {
@@ -198,19 +204,34 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                 textBeforeCursor: '',
                 textAfterCursor: ''
             };
-            const code = generateFunctionInsertion(selectedFunction, fallbackContext, availableInputs);
-            onInsert(code);
+            code = generateFunctionInsertion(selectedFunction, fallbackContext, availableInputs);
         }
+
+        // Insert into Monaco editor in right pane
+        insertIntoMonaco(code);
     };
 
     const handleInsertField = (inputName: string, fieldPath: string) => {
         // Don't add a dot if fieldPath starts with [ (for arrays)
         const separator = fieldPath.startsWith('[') ? '' : '.';
         const code = fieldPath ? `$${inputName}${separator}${fieldPath}` : `$${inputName}`;
-        onInsert(code);
+
+        // Insert into Monaco editor in right pane
+        insertIntoMonaco(code);
     };
 
-    // Handle split pane dragging
+    const insertIntoMonaco = (code: string) => {
+        // Append code to editor content
+        // If editor has content, add on new line; otherwise just set it
+        setEditorContent(prev => {
+            if (prev.trim()) {
+                return prev + '\n' + code;
+            }
+            return code;
+        });
+    };
+
+    // Handle left split pane dragging (Standard Library Functions)
     const handleSplitMouseDown = (e: React.MouseEvent) => {
         e.preventDefault();
         setIsDraggingSplit(true);
@@ -243,6 +264,39 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         };
     }, [isDraggingSplit]);
 
+    // Handle right split pane dragging (Monaco editor / Problems)
+    const handleRightSplitMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsDraggingRightSplit(true);
+    };
+
+    React.useEffect(() => {
+        if (!isDraggingRightSplit) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const rightPane = document.querySelector('.right-pane') as HTMLElement;
+            if (!rightPane) return;
+
+            const rect = rightPane.getBoundingClientRect();
+            const newPosition = ((e.clientY - rect.top) / rect.height) * 100;
+
+            // Constrain between 30% and 85%
+            setRightSplitPosition(Math.min(Math.max(newPosition, 30), 85));
+        };
+
+        const handleMouseUp = () => {
+            setIsDraggingRightSplit(false);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDraggingRightSplit]);
+
     return (
         <div className='utlx-dialog-overlay' onClick={onClose}>
             <div className='utlx-function-builder-dialog' onClick={e => e.stopPropagation()}>
@@ -267,12 +321,32 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
 
                 {/* Body: Two-pane layout */}
                 <div className='dialog-body'>
-                    {/* Left Pane: Functions with horizontal split */}
+                    {/* Left Pane: Tabbed interface for Functions and Inputs */}
                     <div className='left-pane'>
-                        {/* Top Part: Function Tree (compact) */}
-                        <div className='function-list-pane' style={{ height: `${splitPosition}%` }}>
-                            <h3>Standard Library Functions</h3>
-                            <div className='function-tree'>
+                        {/* Tabs Header */}
+                        <div className='tab-header'>
+                            <button
+                                className={`tab-button ${activeTab === 'functions' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('functions')}
+                            >
+                                <span className='codicon codicon-symbol-method'></span>
+                                Standard Library
+                            </button>
+                            <button
+                                className={`tab-button ${activeTab === 'inputs' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('inputs')}
+                            >
+                                <span className='codicon codicon-symbol-variable'></span>
+                                Available Inputs
+                            </button>
+                        </div>
+
+                        {/* Tab Content: Standard Library Functions */}
+                        {activeTab === 'functions' && (
+                            <>
+                                {/* Top Part: Function Tree (compact) */}
+                                <div className='function-list-pane' style={{ height: `${splitPosition}%` }}>
+                                    <div className='function-tree'>
                                 {functionsByCategory.size === 0 ? (
                                     <div className='empty-state'>
                                         No functions found matching "{searchQuery}"
@@ -385,16 +459,70 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                 </div>
                             )}
                         </div>
+                            </>
+                        )}
+
+                        {/* Tab Content: Available Inputs */}
+                        {activeTab === 'inputs' && (
+                            <div className='inputs-tab-content' style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                <FieldTree
+                                    fieldTrees={fieldTrees}
+                                    onInsertField={handleInsertField}
+                                    udmMap={udmMap}
+                                />
+                            </div>
+                        )}
                     </div>
 
-                    {/* Right Pane: UDM Fields */}
+                    {/* Right Pane: Monaco Editor + Problems */}
                     <div className='right-pane'>
-                        <h3>Available Inputs</h3>
-                        <FieldTree
-                            fieldTrees={fieldTrees}
-                            onInsertField={handleInsertField}
-                            udmMap={udmMap}
-                        />
+                        {/* Top Part: UTLX Monaco Editor */}
+                        <div className='monaco-editor-pane' style={{ height: `${rightSplitPosition}%` }}>
+                            <div className='monaco-header'>
+                                <h3>UTLX Expression Editor</h3>
+                                <button
+                                    className='apply-to-main-btn'
+                                    onClick={() => {
+                                        if (editorContent.trim()) {
+                                            onInsert(editorContent);
+                                            onClose();
+                                        }
+                                    }}
+                                    disabled={!editorContent.trim()}
+                                    title='Apply to main editor and close'
+                                >
+                                    <span className='codicon codicon-check'></span>
+                                    Apply to Main Editor
+                                </button>
+                            </div>
+                            <textarea
+                                className='monaco-placeholder'
+                                value={editorContent}
+                                onChange={(e) => setEditorContent(e.target.value)}
+                                placeholder='Build your UTLX expression here...\n\nInsert functions and fields from the left pane.'
+                                spellCheck={false}
+                            />
+                        </div>
+
+                        {/* Split Divider */}
+                        <div
+                            className='split-divider'
+                            onMouseDown={handleRightSplitMouseDown}
+                        >
+                            <div className='split-handle'></div>
+                        </div>
+
+                        {/* Bottom Part: Problems / Suggestions */}
+                        <div className='problems-pane' style={{ height: `${100 - rightSplitPosition}%` }}>
+                            <h3>Problems & Suggestions</h3>
+                            <div className='problems-content'>
+                                <div className='empty-problems'>
+                                    <span className='codicon codicon-info'></span>
+                                    <p>Expressions will be validated here</p>
+                                    <small>Problems, suggestions, and evaluation results will appear as you type</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
