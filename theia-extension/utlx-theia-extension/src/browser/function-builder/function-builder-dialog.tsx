@@ -72,7 +72,21 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     const functionsByCategory = React.useMemo(() => {
         const grouped = new Map<string, FunctionInfo[]>();
 
+        // Deduplicate functions based on name + signature
+        const seenFunctions = new Set<string>();
+        const uniqueFunctions: FunctionInfo[] = [];
+
         for (const fn of functions) {
+            const functionKey = `${fn.name}::${fn.signature}`;
+            if (!seenFunctions.has(functionKey)) {
+                seenFunctions.add(functionKey);
+                uniqueFunctions.push(fn);
+            } else {
+                console.warn('[FunctionBuilder] Duplicate function detected:', fn.name, fn.signature);
+            }
+        }
+
+        for (const fn of uniqueFunctions) {
             const category = fn.category || 'Other';
             if (!grouped.has(category)) {
                 grouped.set(category, []);
@@ -365,10 +379,10 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
 
                                             {expandedCategories.has(category) && (
                                                 <div className='category-functions'>
-                                                    {categoryFunctions.map(fn => (
+                                                    {categoryFunctions.map((fn, index) => (
                                                         <div
-                                                            key={fn.name}
-                                                            className={`function-item-compact ${selectedFunction?.name === fn.name ? 'selected' : ''}`}
+                                                            key={`${fn.name}-${index}`}
+                                                            className={`function-item-compact ${selectedFunction?.name === fn.name && selectedFunction?.signature === fn.signature ? 'selected' : ''}`}
                                                             onClick={() => setSelectedFunction(fn)}
                                                             title={fn.signature}
                                                         >
