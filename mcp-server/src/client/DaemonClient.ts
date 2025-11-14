@@ -14,6 +14,7 @@ import {
   ParseSchemaRequest,
   ParseSchemaResponse,
   HealthResponse,
+  FunctionRegistry,
 } from '../types/daemon';
 
 export interface DaemonClientConfig {
@@ -112,6 +113,16 @@ export class DaemonClient {
   async parseSchema(request: ParseSchemaRequest): Promise<ParseSchemaResponse> {
     return this.withRetry(async () => {
       const response = await this.client.post<ParseSchemaResponse>('/api/parse-schema', request);
+      return response.data;
+    });
+  }
+
+  /**
+   * Get standard library functions
+   */
+  async getFunctions(): Promise<FunctionRegistry> {
+    return this.withRetry(async () => {
+      const response = await this.client.get<FunctionRegistry>('/api/functions');
       return response.data;
     });
   }

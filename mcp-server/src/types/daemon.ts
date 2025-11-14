@@ -83,3 +83,45 @@ export interface HealthResponse {
   version: string;
   uptime: number;
 }
+
+/**
+ * Function registry types
+ */
+export interface ParameterInfo {
+  name: string;
+  type: string;
+  description?: string;
+}
+
+export interface ReturnInfo {
+  type: string;
+  description?: string;
+}
+
+export interface FunctionInfo {
+  name: string;
+  category: string;
+  description: string;
+  signature: string;
+  minArgs?: number;
+  maxArgs?: number;
+  parameters?: ParameterInfo[];
+  returns?: ReturnInfo;
+  examples?: string[];
+  notes?: string;
+  tags?: string[];
+  seeAlso?: string[];
+  since?: string;
+  deprecated?: boolean;
+  deprecationMessage?: string;
+  isAlias?: boolean;
+  aliasOf?: string;
+}
+
+export interface FunctionRegistry {
+  version: string;
+  generatedAt: string;
+  totalFunctions: number;
+  functions: FunctionInfo[];
+  categories: Record<string, FunctionInfo[]>;
+}

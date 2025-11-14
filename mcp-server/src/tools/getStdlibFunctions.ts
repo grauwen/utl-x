@@ -6,10 +6,9 @@
 
 import { Tool, ToolInvocationResponse } from '../types/mcp';
 import { DaemonClient } from '../client/DaemonClient';
+import { FunctionInfo } from '../types/daemon';
 import { Logger } from 'winston';
 import { z } from 'zod';
-import * as fs from 'fs';
-import * as path from 'path';
 
 export const getStdlibFunctionsTool: Tool = {
   name: 'get_stdlib_functions',
@@ -35,56 +34,36 @@ const GetStdlibFunctionsArgsSchema = z.object({
   query: z.string().optional(),
 });
 
-interface StdlibFunction {
-  name: string;
-  category: string;
-  signature: string;
-  description: string;
-  parameters: Array<{
-    name: string;
-    type: string;
-    description: string;
-  }>;
-  returnType: string;
-  examples: string[];
-}
-
 // In-memory cache for stdlib functions
-let stdlibCache: StdlibFunction[] | null = null;
+let stdlibCache: FunctionInfo[] | null = null;
 
 /**
- * Load stdlib functions from local registry or daemon
+ * Load stdlib functions from daemon REST API
  */
 async function loadStdlibFunctions(
-  _daemonClient: DaemonClient,
+  daemonClient: DaemonClient,
   logger: Logger
-): Promise<StdlibFunction[]> {
+): Promise<FunctionInfo[]> {
   if (stdlibCache) {
     return stdlibCache;
   }
 
   try {
-    // TODO: Once daemon implements /api/stdlib endpoint, call it here
-    // For now, load from local registry file
+    // Call daemon /api/functions endpoint
+    logger.info('Fetching stdlib functions from daemon REST API');
+    const registry = await daemonClient.getFunctions();
 
-    const registryPath = path.join(__dirname, '../../data/stdlib-registry.json');
+    stdlibCache = registry.functions;
+    logger.info('Loaded stdlib functions from daemon', {
+      count: registry.totalFunctions,
+      version: registry.version,
+    });
 
-    if (fs.existsSync(registryPath)) {
-      const content = fs.readFileSync(registryPath, 'utf-8');
-      stdlibCache = JSON.parse(content) as StdlibFunction[];
-      logger.info('Loaded stdlib functions from local registry', {
-        count: stdlibCache.length,
-      });
-      return stdlibCache;
-    } else {
-      // Return minimal hardcoded registry as fallback
-      logger.warn('Stdlib registry file not found, using hardcoded fallback');
-      stdlibCache = getHardcodedStdlib();
-      return stdlibCache;
-    }
+    return stdlibCache;
   } catch (error) {
-    logger.error('Error loading stdlib functions', { error });
-    // Return hardcoded fallback
+    logger.error('Error loading stdlib functions from daemon', { error });
+    // Return hardcoded fallback if daemon is unavailable
+    logger.warn('Using hardcoded stdlib fallback due to daemon error');
     stdlibCache = getHardcodedStdlib();
     return stdlibCache;
   }
@@ -93,7 +72,7 @@ async function loadStdlibFunctions(
 /**
  * Hardcoded minimal stdlib for fallback
  */
-function getHardcodedStdlib(): StdlibFunction[] {
+function getHardcodedStdlib(): FunctionInfo[] {
   return [
     {
       name: 'length',
@@ -103,7 +82,7 @@ function getHardcodedStdlib(): StdlibFunction[] {
       parameters: [
         { name: 'str', type: 'String', description: 'The input string' },
       ],
-      returnType: 'Number',
+      returns: { type: 'Number' },
       examples: ['length("hello") => 5', 'length(input.name) => 10'],
     },
     {
@@ -114,7 +93,7 @@ function getHardcodedStdlib(): StdlibFunction[] {
       parameters: [
         { name: 'str', type: 'String', description: 'The input string' },
       ],
-      returnType: 'String',
+      returns: { type: 'String' },
       examples: ['upper("hello") => "HELLO"', 'upper(input.name) => "JOHN DOE"'],
     },
     {
@@ -125,7 +104,7 @@ function getHardcodedStdlib(): StdlibFunction[] {
       parameters: [
         { name: 'str', type: 'String', description: 'The input string' },
       ],
-      returnType: 'String',
+      returns: { type: 'String' },
       examples: ['lower("HELLO") => "hello"', 'lower(input.name) => "john doe"'],
     },
     {
@@ -136,7 +115,7 @@ function getHardcodedStdlib(): StdlibFunction[] {
       parameters: [
         { name: 'strs', type: 'String[]', description: 'Variable number of strings to concatenate' },
       ],
-      returnType: 'String',
+      returns: { type: 'String' },
       examples: ['concat("hello", " ", "world") => "hello world"'],
     },
     {
@@ -147,7 +126,7 @@ function getHardcodedStdlib(): StdlibFunction[] {
       parameters: [
         { name: 'arr', type: 'Array', description: 'The input array' },
       ],
-      returnType: 'Number',
+      returns: { type: 'Number' },
       examples: ['size([1, 2, 3]) => 3', 'size(input.items) => 10'],
     },
     {
@@ -159,7 +138,7 @@ function getHardcodedStdlib(): StdlibFunction[] {
         { name: 'arr', type: 'Array', description: 'The input array' },
         { name: 'fn', type: 'Function', description: 'The transformation function' },
       ],
-      returnType: 'Array',
+      returns: { type: 'Array' },
       examples: ['map([1, 2, 3], x => x * 2) => [2, 4, 6]'],
     },
     {
@@ -171,7 +150,7 @@ function getHardcodedStdlib(): StdlibFunction[] {
         { name: 'arr', type: 'Array', description: 'The input array' },
         { name: 'predicate', type: 'Function', description: 'The filter predicate' },
       ],
-      returnType: 'Array',
+      returns: { type: 'Array' },
       examples: ['filter([1, 2, 3, 4], x => x > 2) => [3, 4]'],
     },
     {
@@ -182,7 +161,7 @@ function getHardcodedStdlib(): StdlibFunction[] {
       parameters: [
         { name: 'obj', type: 'Object', description: 'The input object' },
       ],
-      returnType: 'Array<String>',
+      returns: { type: 'Array<String>' },
       examples: ['keys({a: 1, b: 2}) => ["a", "b"]'],
     },
     {
@@ -193,7 +172,7 @@ function getHardcodedStdlib(): StdlibFunction[] {
       parameters: [
         { name: 'obj', type: 'Object', description: 'The input object' },
       ],
-      returnType: 'Array',
+      returns: { type: 'Array' },
       examples: ['values({a: 1, b: 2}) => [1, 2]'],
     },
   ];
@@ -201,7 +180,7 @@ function getHardcodedStdlib(): StdlibFunction[] {
 
 export async function handleGetStdlibFunctions(
   args: Record<string, unknown>,
-  _daemonClient: DaemonClient,
+  daemonClient: DaemonClient,
   logger: Logger
 ): Promise<ToolInvocationResponse> {
   try {
@@ -211,7 +190,7 @@ export async function handleGetStdlibFunctions(
     logger.info('Retrieving stdlib functions', { category, query });
 
     // Load stdlib functions
-    let functions = await loadStdlibFunctions(_daemonClient, logger);
+    let functions = await loadStdlibFunctions(daemonClient, logger);
 
     // Filter by category if specified
     if (category) {
