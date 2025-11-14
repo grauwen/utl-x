@@ -420,6 +420,32 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                                 <span className='codicon codicon-insert'></span>
                                                 Insert
                                             </button>
+                                            <button
+                                                className='copy-btn'
+                                                title='Copy to clipboard'
+                                                onClick={() => {
+                                                    if (!selectedFunction) return;
+                                                    let code: string;
+                                                    if (cursorContext) {
+                                                        code = generateFunctionInsertion(selectedFunction, cursorContext, availableInputs);
+                                                    } else {
+                                                        const fallbackContext: InsertionContext = {
+                                                            type: 'top-level',
+                                                            lineNumber: 0,
+                                                            column: 0,
+                                                            lineContent: '',
+                                                            textBeforeCursor: '',
+                                                            textAfterCursor: ''
+                                                        };
+                                                        code = generateFunctionInsertion(selectedFunction, fallbackContext, availableInputs);
+                                                    }
+                                                    navigator.clipboard.writeText(code);
+                                                    console.log('[FunctionBuilder] Copied function to clipboard:', code);
+                                                }}
+                                            >
+                                                <span className='codicon codicon-copy'></span>
+                                                Copy
+                                            </button>
                                         </div>
                                     </div>
                                     <div className='details-signature'>

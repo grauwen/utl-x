@@ -485,6 +485,17 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                         >
                             <span className='codicon codicon-insert'></span>
                         </button>
+                        <button
+                            className='copy-btn'
+                            title={`Copy $${tree.inputName} to clipboard`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(`$${tree.inputName}`);
+                                console.log('[FieldTree] Copied input reference to clipboard:', `$${tree.inputName}`);
+                            }}
+                        >
+                            <span className='codicon codicon-copy'></span>
+                        </button>
                     </div>
 
                     {/* Array access: $input[] */}
@@ -503,6 +514,17 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                             }}
                         >
                             <span className='codicon codicon-insert'></span>
+                        </button>
+                        <button
+                            className='copy-btn'
+                            title={`Copy $${tree.inputName}[0] to clipboard`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(`$${tree.inputName}[0]`);
+                                console.log('[FieldTree] Copied array access to clipboard:', `$${tree.inputName}[0]`);
+                            }}
+                        >
+                            <span className='codicon codicon-copy'></span>
                         </button>
                     </div>
                 </>
@@ -523,6 +545,17 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                         }}
                     >
                         <span className='codicon codicon-insert'></span>
+                    </button>
+                    <button
+                        className='copy-btn'
+                        title={`Copy $${tree.inputName} to clipboard`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(`$${tree.inputName}`);
+                            console.log('[FieldTree] Copied input reference to clipboard:', `$${tree.inputName}`);
+                        }}
+                    >
+                        <span className='codicon codicon-copy'></span>
                     </button>
                 </div>
             )}
@@ -614,9 +647,25 @@ const FieldNode: React.FC<FieldNodeProps> = ({
                 <button
                     className='insert-btn'
                     title={`Insert $${inputName}.${path}`}
-                    onClick={(e) => { e.stopPropagation(); onInsert(inputName, buildInsertPath()); }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onInsert(inputName, buildInsertPath());
+                    }}
                 >
                     <span className='codicon codicon-insert'></span>
+                </button>
+                <button
+                    className='copy-btn'
+                    title={`Copy $${inputName}.${path} to clipboard`}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        const separator = buildInsertPath().startsWith('[') ? '' : '.';
+                        const fullPath = `$${inputName}${separator}${buildInsertPath()}`;
+                        navigator.clipboard.writeText(fullPath);
+                        console.log('[FieldTree] Copied field reference to clipboard:', fullPath);
+                    }}
+                >
+                    <span className='codicon codicon-copy'></span>
                 </button>
             </div>
 

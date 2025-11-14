@@ -322,7 +322,9 @@
 
 .function-tree .help-btn,
 .function-tree .insert-btn,
-.field-tree .insert-btn {
+.function-tree .copy-btn,
+.field-tree .insert-btn,
+.field-tree .copy-btn {
     background: none;
     border: none;
     cursor: pointer;
@@ -336,7 +338,9 @@
 
 .function-tree .help-btn:hover,
 .function-tree .insert-btn:hover,
-.field-tree .insert-btn:hover {
+.function-tree .copy-btn:hover,
+.field-tree .insert-btn:hover,
+.field-tree .copy-btn:hover {
     background: var(--theia-toolbar-hoverBackground);
 }
 
@@ -869,12 +873,14 @@
     background: var(--theia-button-secondaryHoverBackground);
 }
 
-.utlx-function-builder-dialog .details-actions .insert-btn {
+.utlx-function-builder-dialog .details-actions .insert-btn,
+.utlx-function-builder-dialog .details-actions .copy-btn {
     background: var(--theia-button-background);
     color: var(--theia-button-foreground);
 }
 
-.utlx-function-builder-dialog .details-actions .insert-btn:hover {
+.utlx-function-builder-dialog .details-actions .insert-btn:hover,
+.utlx-function-builder-dialog .details-actions .copy-btn:hover {
     background: var(--theia-button-hoverBackground);
 }
 
