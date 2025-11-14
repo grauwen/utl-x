@@ -719,12 +719,12 @@ export class UTLXEditorWidget extends ReactWidget {
 input json
 output json
 ---
+{
 // Welcome to UTLX!
 //
 // This is a sample transformation.
 // Edit the code below and press Execute to run.
 
-{
   message: "Hello from UTLX!",
   input: $input
 }
@@ -1332,8 +1332,11 @@ output json
         const model = this.editor.getModel();
         if (!model) return null;
 
+        // Get current selection (if any)
+        const selection = this.editor.getSelection();
+
         // Use the full context analyzer from context-analyzer.ts
-        return analyzeInsertionContext(model, position);
+        return analyzeInsertionContext(model, position, selection ?? undefined);
     }
 
     protected render(): React.ReactNode {

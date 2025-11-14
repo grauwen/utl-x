@@ -24,6 +24,16 @@ export type ContextType =
     | 'comment-context';   // Inside comment (no insertion)
 
 /**
+ * Information about value at cursor position
+ */
+export interface CursorValue {
+    hasValue: boolean;          // True if cursor is on/in an expression
+    expression?: string;        // The expression at cursor (e.g., "$input[0].HireDate")
+    range?: monaco.Range;       // Range covering the expression
+    isSelection?: boolean;      // True if user has text selected
+}
+
+/**
  * Context information for smart insertion
  */
 export interface InsertionContext {
@@ -39,6 +49,9 @@ export interface InsertionContext {
     // Object context info
     fieldName?: string;         // e.g., "result" from "result: |"
 
+    // Cursor value info (NEW)
+    cursorValue?: CursorValue;  // Expression at cursor position
+
     // Position info
     lineNumber: number;
     column: number;
@@ -50,19 +63,108 @@ export interface InsertionContext {
 }
 
 /**
+ * Extract the value/expression at the cursor position
+ * This handles selections, field references, and word boundaries
+ */
+function getCursorValue(
+    model: monaco.editor.ITextModel,
+    position: monaco.Position,
+    selection?: monaco.Selection
+): CursorValue {
+    // Check if user has selected text
+    if (selection && !selection.isEmpty()) {
+        const selectedText = model.getValueInRange(selection);
+        return {
+            hasValue: true,
+            expression: selectedText.trim(),
+            range: selection,
+            isSelection: true
+        };
+    }
+
+    // No selection - try to extract expression at cursor
+    // Pattern for UTLX expressions: $input[0].field.subfield
+    const lineContent = model.getLineContent(position.lineNumber);
+    const column = position.column - 1; // 0-indexed
+
+    // Find the start of the expression by going backwards
+    let start = column;
+    while (start > 0) {
+        const char = lineContent[start - 1];
+        // Valid characters in UTLX expressions: alphanumeric, $, _, [, ], .
+        // Stop at everything else (whitespace, operators, delimiters)
+        if (!/[\w$.\[\]]/.test(char)) {
+            break;
+        }
+        start--;
+    }
+
+    // Find the end of the expression by going forwards
+    let end = column;
+    while (end < lineContent.length) {
+        const char = lineContent[end];
+        // Valid characters in UTLX expressions: alphanumeric, $, _, [, ], .
+        // Stop at everything else (whitespace, operators, delimiters)
+        if (!/[\w$.\[\]]/.test(char)) {
+            break;
+        }
+        end++;
+    }
+
+    const expression = lineContent.substring(start, end).trim();
+
+    console.log('[CursorValue] Extracted expression:', {
+        lineContent,
+        cursorColumn: position.column,
+        start,
+        end,
+        expression,
+        hasValue: expression.length > 0
+    });
+
+    // Check if we extracted something meaningful
+    if (expression && expression.length > 0) {
+        const range = new monaco.Range(
+            position.lineNumber,
+            start + 1, // Monaco uses 1-indexed columns
+            position.lineNumber,
+            end + 1
+        );
+
+        return {
+            hasValue: true,
+            expression,
+            range,
+            isSelection: false
+        };
+    }
+
+    // No value at cursor
+    return {
+        hasValue: false,
+        isSelection: false
+    };
+}
+
+/**
  * Analyze cursor context in the editor
  */
 export function analyzeInsertionContext(
     model: monaco.editor.ITextModel,
-    position: monaco.Position
+    position: monaco.Position,
+    selection?: monaco.Selection
 ): InsertionContext {
     const lineContent = model.getLineContent(position.lineNumber);
     const textBeforeCursor = lineContent.substring(0, position.column - 1);
     const textAfterCursor = lineContent.substring(position.column - 1);
 
+    // Extract cursor value (what's at the cursor position)
+    const cursorValue = getCursorValue(model, position, selection);
+
     // Base context
     const context: InsertionContext = {
         type: 'top-level',
+        cursorValue,  // Include cursor value in context
         lineNumber: position.lineNumber,
         column: position.column,
         lineContent,

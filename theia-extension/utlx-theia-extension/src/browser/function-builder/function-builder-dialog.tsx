@@ -13,10 +13,11 @@
  */
 
 import * as React from 'react';
+import * as monaco from '@theia/monaco-editor-core';
 import { FunctionInfo } from '../../common/protocol';
 import { parseUdmToTree, UdmInputTree } from './udm-parser';
 import { FieldTree } from './field-tree';
-import { InsertionContext, getContextDescription } from './context-analyzer';
+import { InsertionContext, CursorValue, getContextDescription, analyzeInsertionContext } from './context-analyzer';
 import { generateFunctionInsertion, generateInsertionPreview } from './insertion-generator';
 
 /**
@@ -64,9 +65,72 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
 
     // New state for tabs and Monaco editor in right pane
     const [activeTab, setActiveTab] = React.useState<'functions' | 'inputs'>('functions');
-    const [editorContent, setEditorContent] = React.useState('');
     const [rightSplitPosition, setRightSplitPosition] = React.useState(66); // 66% editor, 34% problems
     const [isDraggingRightSplit, setIsDraggingRightSplit] = React.useState(false);
+
+    // Refs for Expression Editor (Monaco)
+    const expressionEditorContainerRef = React.useRef<HTMLDivElement>(null);
+    const expressionEditorRef = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+
+    // State to preserve cursor position when focus is lost
+    const [savedCursorPosition, setSavedCursorPosition] = React.useState<monaco.Position | null>(null);
+    const [savedSelection, setSavedSelection] = React.useState<monaco.Selection | null>(null);
+
+    // State to track whether Expression Editor has content (for Apply button)
+    const [hasEditorContent, setHasEditorContent] = React.useState(false);
+
+    // Create Monaco editor for Expression Editor
+    React.useEffect(() => {
+        if (!expressionEditorContainerRef.current || expressionEditorRef.current) {
+            return;
+        }
+
+        console.log('[FunctionBuilder] Creating Expression Editor (Monaco)');
+
+        // Create Monaco editor
+        const editor = monaco.editor.create(expressionEditorContainerRef.current, {
+            value: '',
+            language: 'plaintext', // TODO: Use 'utlx' when available
+            theme: 'vs-dark',
+            minimap: { enabled: false },
+            lineNumbers: 'on',
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            fontSize: 13,
+            automaticLayout: true,
+            tabSize: 2,
+            insertSpaces: true,
+            folding: false,
+            renderWhitespace: 'selection'
+        });
+
+        expressionEditorRef.current = editor;
+
+        // Save cursor position when editor loses focus
+        editor.onDidBlurEditorText(() => {
+            const position = editor.getPosition();
+            const selection = editor.getSelection();
+            if (position) {
+                setSavedCursorPosition(position);
+                setSavedSelection(selection);
+                console.log('[FunctionBuilder] Saved cursor position:', position, selection);
+            }
+        });
+
+        // Track content changes for Apply button state
+        editor.onDidChangeModelContent(() => {
+            const content = editor.getModel()?.getValue() || '';
+            setHasEditorContent(content.trim().length > 0);
+        });
+
+        // Cleanup on unmount
+        return () => {
+            if (expressionEditorRef.current) {
+                expressionEditorRef.current.dispose();
+                expressionEditorRef.current = null;
+            }
+        };
+    }, []);
 
     // Group functions by category
     const functionsByCategory = React.useMemo(() => {
@@ -201,16 +265,14 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         setExpandedCategories(newExpanded);
     };
 
-    const handleInsertFunction = () => {
-        if (!selectedFunction) return;
-
-        // Use smart context-aware insertion
-        let code: string;
-        if (cursorContext) {
-            code = generateFunctionInsertion(selectedFunction, cursorContext, availableInputs);
-        } else {
-            // Fallback: use top-level context
-            const fallbackContext: InsertionContext = {
+    /**
+     * Analyze cursor position in Expression Editor (Monaco)
+     * Uses the full context analyzer from context-analyzer.ts
+     */
+    const analyzeExpressionEditorContext = (): InsertionContext => {
+        const editor = expressionEditorRef.current;
+        if (!editor) {
+            return {
                 type: 'top-level',
                 lineNumber: 0,
                 column: 0,
@@ -218,11 +280,73 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                 textBeforeCursor: '',
                 textAfterCursor: ''
             };
-            code = generateFunctionInsertion(selectedFunction, fallbackContext, availableInputs);
         }
 
-        // Insert into Monaco editor in right pane
-        insertIntoMonaco(code);
+        const model = editor.getModel();
+        if (!model) {
+            return {
+                type: 'top-level',
+                lineNumber: 0,
+                column: 0,
+                lineContent: '',
+                textBeforeCursor: '',
+                textAfterCursor: ''
+            };
+        }
+
+        // Use saved cursor position if editor doesn't have focus
+        // Otherwise use current position
+        const hasFocus = editor.hasTextFocus();
+        const position = hasFocus
+            ? editor.getPosition()
+            : savedCursorPosition;
+        const selection = hasFocus
+            ? editor.getSelection()
+            : savedSelection;
+
+        if (!position) {
+            return {
+                type: 'top-level',
+                lineNumber: 0,
+                column: 0,
+                lineContent: '',
+                textBeforeCursor: '',
+                textAfterCursor: ''
+            };
+        }
+
+        console.log('[FunctionBuilder] Analyzing Expression Editor:', {
+            hasFocus,
+            position,
+            usingSaved: !hasFocus
+        });
+
+        // Use the same context analyzer as main editor
+        return analyzeInsertionContext(model, position, selection ?? undefined);
+    };
+
+    const handleInsertFunction = () => {
+        if (!selectedFunction) return;
+
+        // Analyze context from Expression Editor
+        const expressionContext = analyzeExpressionEditorContext();
+
+        console.log('[FunctionBuilder] Using Expression Editor context:', expressionContext);
+
+        // Use smart context-aware insertion
+        const code = generateFunctionInsertion(selectedFunction, expressionContext, availableInputs);
+
+        // Insert into Monaco editor, passing context for range replacement
+        insertIntoMonaco(code, expressionContext);
+
+        // Restore focus to Expression Editor
+        setTimeout(() => {
+            const editor = expressionEditorRef.current;
+            if (editor) {
+                editor.focus();
+                console.log('[FunctionBuilder] Restored focus to Expression Editor');
+            }
+        }, 0);
     };
 
     const handleInsertField = (inputName: string, fieldPath: string) => {
@@ -234,15 +358,81 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         insertIntoMonaco(code);
     };
 
-    const insertIntoMonaco = (code: string) => {
-        // Append code to editor content
-        // If editor has content, add on new line; otherwise just set it
-        setEditorContent(prev => {
-            if (prev.trim()) {
-                return prev + '\n' + code;
-            }
-            return code;
-        });
+    const insertIntoMonaco = (code: string, context?: InsertionContext) => {
+        const editor = expressionEditorRef.current;
+        if (!editor) {
+            console.error('[FunctionBuilder] No Expression Editor available');
+            return;
+        }
+
+        const model = editor.getModel();
+        if (!model) {
+            console.error('[FunctionBuilder] No model available');
+            return;
+        }
+
+        const position = editor.getPosition();
+        if (!position) {
+            console.error('[FunctionBuilder] No cursor position');
+            return;
+        }
+
+        // Determine the range to replace
+        let range: monaco.Range;
+
+        // If context has a cursor value with a range, replace that range
+        if (context?.cursorValue?.range) {
+            range = context.cursorValue.range;
+            console.log('[FunctionBuilder] Replacing expression range:', range);
+        } else {
+            // Otherwise, insert at cursor position (zero-width range)
+            range = new monaco.Range(
+                position.lineNumber,
+                position.column,
+                position.lineNumber,
+                position.column
+            );
+            console.log('[FunctionBuilder] Inserting at cursor position:', position);
+        }
+
+        editor.executeEdits('function-builder', [{
+            range: range,
+            text: code,
+            forceMoveMarkers: true
+        }]);
+
+        // Find cursor placeholder (|) and position cursor there
+        const placeholderMatch = code.match(/\|/);
+        if (placeholderMatch) {
+            const lines = code.substring(0, placeholderMatch.index).split('\n');
+            const lastLine = lines[lines.length - 1];
+
+            // Calculate new position from the start of the range
+            const startLine = range.startLineNumber;
+            const startColumn = range.startColumn;
+
+            const newPosition = new monaco.Position(
+                startLine + lines.length - 1,
+                lines.length === 1 ? startColumn + lastLine.length : lastLine.length + 1
+            );
+
+            editor.setPosition(newPosition);
+
+            // Remove the | placeholder
+            const placeholderRange = new monaco.Range(
+                newPosition.lineNumber,
+                newPosition.column,
+                newPosition.lineNumber,
+                newPosition.column + 1
+            );
+            editor.executeEdits('function-builder-cleanup', [{
+                range: placeholderRange,
+                text: '',
+                forceMoveMarkers: true
+            }]);
+        }
+
+        editor.focus();
     };
 
     // Handle left split pane dragging (Standard Library Functions)
@@ -524,24 +714,24 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                 <button
                                     className='apply-to-main-btn'
                                     onClick={() => {
-                                        if (editorContent.trim()) {
-                                            onInsert(editorContent);
+                                        const editor = expressionEditorRef.current;
+                                        const content = editor?.getModel()?.getValue() || '';
+                                        if (content.trim()) {
+                                            onInsert(content);
                                             onClose();
                                         }
                                     }}
-                                    disabled={!editorContent.trim()}
+                                    disabled={!hasEditorContent}
                                     title='Apply to main editor and close'
                                 >
                                     <span className='codicon codicon-check'></span>
                                     Apply to Main Editor
                                 </button>
                             </div>
-                            <textarea
-                                className='monaco-placeholder'
-                                value={editorContent}
-                                onChange={(e) => setEditorContent(e.target.value)}
-                                placeholder='Build your UTLX expression here...\n\nInsert functions and fields from the left pane.'
-                                spellCheck={false}
+                            <div
+                                ref={expressionEditorContainerRef}
+                                className='monaco-editor-container'
+                                style={{ height: '100%', width: '100%', flex: 1 }}
                             />
                         </div>
 

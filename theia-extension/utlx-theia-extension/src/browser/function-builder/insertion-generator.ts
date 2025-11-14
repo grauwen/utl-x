@@ -11,6 +11,7 @@
 
 import { FunctionInfo } from '../../common/protocol';
 import { InsertionContext } from './context-analyzer';
+import { extractParameterNames } from './type-inference';
 
 /**
  * Generate smart code insertion for a stdlib function
@@ -56,8 +57,8 @@ export function generateFunctionInsertion(
 
         case 'top-level':
         default:
-            // Top-level: full function template
-            return generateDefaultTemplate(fn, primaryInput);
+            // Top-level: full function template with smart parameters
+            return generateDefaultTemplate(fn, primaryInput, context);
     }
 }
 
@@ -189,7 +190,7 @@ function generateObjectFieldExpression(
     }
 
     // Default: full template
-    return generateDefaultTemplate(fn, primaryInput);
+    return generateDefaultTemplate(fn, primaryInput, context);
 }
 
 /**
@@ -214,57 +215,106 @@ function generateArrayElementExpression(
     }
 
     // Default
-    return generateDefaultTemplate(fn, primaryInput);
+    return generateDefaultTemplate(fn, primaryInput, context);
 }
 
 /**
  * Generate default function template (top-level)
  */
-function generateDefaultTemplate(fn: FunctionInfo, primaryInput: string): string {
+/**
+ * Generate smart parameter list based on cursor value and function parameters
+ *
+ * If cursor has a value: Wrap it as the first parameter
+ * If cursor is empty: Use parameter names from function signature
+ *
+ * Examples:
+ * - cursor on "$input[0].HireDate", func "parseDate(dateStr, format?)"
+ *   → "parseDate($input[0].HireDate)"
+ * - cursor empty, func "parseDate(dateStr, format?)"
+ *   → "parseDate(dateStr)"
+ */
+function generateSmartParameters(
+    fn: FunctionInfo,
+    context: InsertionContext
+): string {
+    const cursorValue = context.cursorValue;
+
+    // Extract parameter names from function
+    const paramNames = fn.parameters && fn.parameters.length > 0
+        ? fn.parameters.map(p => p.name)
+        : extractParameterNames(fn.signature);
+
+    console.log('[InsertionGenerator] Smart params for', fn.name);
+    console.log('[InsertionGenerator] - paramNames:', paramNames);
+    console.log('[InsertionGenerator] - cursorValue:', cursorValue);
+    console.log('[InsertionGenerator] - context type:', context.type);
+    console.log('[InsertionGenerator] - full context:', context);
+
+    // Case 1: Cursor has a value - wrap it WITHOUT any additional parameters
+    // User can add additional params manually if needed
+    if (cursorValue && cursorValue.hasValue && cursorValue.expression) {
+        console.log('[InsertionGenerator] ✅ Wrapping cursor value:', cursorValue.expression);
+        return cursorValue.expression;
+    }
+
+    // Case 2: No cursor value - use ALL parameter names (including optional)
+    console.log('[InsertionGenerator] ❌ No cursor value - using parameter names');
+
+    if (paramNames.length === 0) {
+        // No parameters - just cursor placeholder
+        console.log('[InsertionGenerator] No parameter names, returning |');
+        return '|';
+    }
+
+    console.log('[InsertionGenerator] All params:', paramNames);
+
+    if (paramNames.length === 1) {
+        // Single parameter - put cursor after parameter name
+        return paramNames[0] + '|';
+    }
+
+    // Multiple parameters - show all (including optional) with cursor on first
+    return paramNames.map((name, index) =>
+        index === 0 ? name + '|' : name
+    ).join(', ');
+}
+
+function generateDefaultTemplate(fn: FunctionInfo, primaryInput: string, context: InsertionContext): string {
     const category = fn.category?.toLowerCase() || '';
 
-    // Array functions need lambda
+    // Array functions need lambda (don't use smart params for these)
     if (category.includes('array') && fn.name.match(/^(map|filter|flatMap)$/)) {
         return `${fn.name}($${primaryInput}, e => e.|)`;
     }
 
-    // Aggregation functions take array directly
+    // Aggregation functions take array directly (don't use smart params)
     if (category.includes('aggregation') || fn.name.match(/^(count|sum|avg|min|max|length)$/)) {
         return `${fn.name}($${primaryInput})`;
     }
 
-    // groupBy needs lambda with key selector
+    // groupBy needs lambda with key selector (don't use smart params)
     if (fn.name === 'groupBy') {
         return `${fn.name}($${primaryInput}, e => e.|)`;
     }
 
-    // sortBy needs lambda with field selector
+    // sortBy needs lambda with field selector (don't use smart params)
     if (fn.name === 'sortBy') {
         return `${fn.name}($${primaryInput}, e => e.|)`;
     }
 
-    // String functions on field
-    if (category.includes('string')) {
-        return `${fn.name}($${primaryInput}[0].field|)`;
-    }
-
-    // Date/time functions
-    if (category.includes('date') || category.includes('time')) {
-        return `${fn.name}(|)`;
-    }
-
-    // Math functions
-    if (category.includes('math') || category.includes('number')) {
-        return `${fn.name}(|)`;
-    }
-
-    // Conditional
+    // Conditional (don't use smart params)
     if (fn.name === 'if') {
         return `if(condition|, trueValue, falseValue)`;
     }
 
-    // Default: function with placeholder
-    return `${fn.name}(|)`;
+    // For all other functions: Use smart parameter generation
+    // This handles:
+    // - String functions: toUpperCase(str) or toUpperCase($input[0].field)
+    // - Date/time functions: parseDate(dateStr) or parseDate($input[0].HireDate)
+    // - Math functions: round(num, precision) or round($input[0].price, 2)
+    // - Custom functions with parameters
+    const smartParams = generateSmartParameters(fn, context);
+    return `${fn.name}(${smartParams})`;
 }
 
 /**
