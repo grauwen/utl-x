@@ -26,6 +26,7 @@ export interface FunctionBuilderDialogProps {
     functions: FunctionInfo[];
     availableInputs: string[];
     udmMap: Map<string, string>;
+    inputFormatsMap: Map<string, string>; // inputName -> format (json, csv, xml, etc.)
     cursorContext: InsertionContext | null;
     onInsert: (code: string) => void;
     onClose: () => void;
@@ -49,6 +50,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     functions,
     availableInputs,
     udmMap,
+    inputFormatsMap,
     cursorContext,
     onInsert,
     onClose
@@ -155,10 +157,11 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
 
         return availableInputs.map(inputName => {
             const udm = udmMap.get(inputName);
-            console.log('[FunctionBuilder] Parsing tree for', inputName, '- UDM length:', udm?.length || 0);
-            return parseUdmToTree(inputName, udm);
+            const format = inputFormatsMap.get(inputName) || 'json'; // Default to json if not found
+            console.log('[FunctionBuilder] Parsing tree for', inputName, '- Format:', format, '- UDM length:', udm?.length || 0);
+            return parseUdmToTree(inputName, format, udm);
         });
-    }, [availableInputs, udmMap]);
+    }, [availableInputs, udmMap, inputFormatsMap]);
 
     // Auto-expand categories when searching
     React.useEffect(() => {

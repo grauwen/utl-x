@@ -305,6 +305,7 @@
     color: var(--theia-foreground);
     font-size: 13px;
     flex: 1;
+    margin-right: 8px;
 }
 
 /* Field Nodes */
@@ -358,6 +359,19 @@
     font-size: 11px;
     color: var(--theia-descriptionForeground);
     font-family: var(--monaco-monospace-font);
+    margin-left: 4px;
+}
+
+.field-tree .input-format-badge,
+.field-tree .input-array-badge {
+    font-size: 10px;
+    color: var(--theia-badge-foreground);
+    background: var(--theia-badge-background);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: var(--monaco-monospace-font);
+    font-weight: 600;
+    letter-spacing: 0.3px;
     margin-left: 4px;
 }
 

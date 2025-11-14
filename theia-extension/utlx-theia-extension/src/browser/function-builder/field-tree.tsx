@@ -91,10 +91,8 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                 <span className={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`}></span>
                 <span className={`codicon ${icon}`}></span>
                 <span className='input-name'>${tree.inputName}</span>
-                <span className='input-type-badge'>{typeLabel}</span>
-                {tree.isArray && (
-                    <span className='input-hint'>[0]</span>
-                )}
+                <span className='input-format-badge'>{tree.format}</span>
+                <span className='input-array-badge'>{typeLabel}</span>
                 <button
                     className='insert-btn'
                     title={`Insert $${tree.inputName}${tree.isArray ? '[0]' : ''}`}

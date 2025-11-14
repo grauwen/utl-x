@@ -48,6 +48,7 @@ export class UTLXEditorWidget extends ReactWidget {
     protected readonly CONTENT_CHANGE_DEBOUNCE_MS = 500; // 500ms delay
     protected inputNamesFromHeaders: string[] = []; // Input names from UTLX headers
     protected inputUdmMap: Map<string, string> = new Map(); // inputName -> UDM language
+    protected inputFormatsMap: Map<string, string> = new Map(); // inputName -> format (json, csv, xml, etc.)
 
     // Function Builder state
     protected showFunctionBuilderDialog: boolean = false;
@@ -93,10 +94,12 @@ export class UTLXEditorWidget extends ReactWidget {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Input UDM updated:', {
                 inputId: event.inputId,
                 inputName: event.inputName,
-                udmLanguageLength: event.udmLanguage.length
+                udmLanguageLength: event.udmLanguage.length,
+                format: event.format
             });
-            // Store UDM for autocomplete
+            // Store UDM and format for autocomplete and Function Builder
             this.inputUdmMap.set(event.inputName, event.udmLanguage);
+            this.inputFormatsMap.set(event.inputName, event.format);
 
             // Re-render if Function Builder is open to update field tree
             if (this.showFunctionBuilderDialog) {
@@ -1120,9 +1123,17 @@ output json
             const parsed = parseUTLXHeaders(content);
 
             if (parsed.valid) {
-                // Update inputNamesFromHeaders immediately
+                // Update inputNamesFromHeaders and formats immediately
                 this.inputNamesFromHeaders = parsed.inputs.map(input => input.name);
+
+                // Store input formats
+                this.inputFormatsMap.clear();
+                parsed.inputs.forEach(input => {
+                    this.inputFormatsMap.set(input.name, input.format);
+                });
+
                 console.log('[UTLXEditor] Parsed input names:', this.inputNamesFromHeaders);
+                console.log('[UTLXEditor] Parsed input formats:', Array.from(this.inputFormatsMap.entries()));
 
                 // Also fire the event for panel synchronization
                 this.eventService.fireHeadersParsed({
@@ -1301,6 +1312,7 @@ output json
                         functions={this.functionBuilderFunctions}
                         availableInputs={this.inputNamesFromHeaders}
                         udmMap={this.inputUdmMap}
+                        inputFormatsMap={this.inputFormatsMap}
                         cursorContext={this.analyzeCursorContext()}
                         onInsert={(code) => this.handleInsertFromBuilder(code)}
                         onClose={() => {

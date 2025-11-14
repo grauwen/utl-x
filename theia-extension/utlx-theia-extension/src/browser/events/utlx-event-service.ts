@@ -89,6 +89,7 @@ export interface InputUdmUpdatedEvent {
     inputId: string;
     inputName: string;
     udmLanguage: string;
+    format: string; // json, csv, xml, yaml, etc.
 }
 
 /**

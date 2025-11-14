@@ -25,6 +25,7 @@ export interface UdmField {
  */
 export interface UdmInputTree {
     inputName: string;
+    format: string; // json, csv, xml, yaml, xsd, jsch, avro, proto
     isArray: boolean;
     fields: UdmField[];
 }
@@ -32,10 +33,11 @@ export interface UdmInputTree {
 /**
  * Parse UDM language string into a tree structure
  */
-export function parseUdmToTree(inputName: string, udmLanguage: string | undefined): UdmInputTree {
+export function parseUdmToTree(inputName: string, format: string, udmLanguage: string | undefined): UdmInputTree {
     if (!udmLanguage) {
         return {
             inputName,
+            format,
             isArray: false,
             fields: []
         };
@@ -59,6 +61,7 @@ export function parseUdmToTree(inputName: string, udmLanguage: string | undefine
 
         return {
             inputName,
+            format,
             isArray,
             fields
         };
@@ -66,6 +69,7 @@ export function parseUdmToTree(inputName: string, udmLanguage: string | undefine
         console.error('[UdmParser] Failed to parse UDM for', inputName, ':', error);
         return {
             inputName,
+            format,
             isArray: false,
             fields: []
         };

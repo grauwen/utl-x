@@ -145,7 +145,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                     this.eventService.fireInputUdmUpdated({
                         inputId: input.id,
                         inputName: input.name,
-                        udmLanguage: input.udmLanguage
+                        udmLanguage: input.udmLanguage,
+                        format: input.instanceFormat
                     });
                 }
             });
@@ -777,7 +778,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                 this.eventService.fireInputUdmUpdated({
                     inputId: input.id,
                     inputName: input.name,
-                    udmLanguage: result.udmLanguage
+                    udmLanguage: result.udmLanguage,
+                    format: input.instanceFormat
                 });
             }
 
