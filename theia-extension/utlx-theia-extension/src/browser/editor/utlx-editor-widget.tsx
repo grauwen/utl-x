@@ -1126,8 +1126,8 @@ output json
                 // Update inputNamesFromHeaders and formats immediately
                 this.inputNamesFromHeaders = parsed.inputs.map(input => input.name);
 
-                // Store input formats
-                this.inputFormatsMap.clear();
+                // Update input formats from headers (don't clear - merge with existing formats from UDM events)
+                // This way, if headers exist they take precedence, but if not we keep formats from UDM
                 parsed.inputs.forEach(input => {
                     this.inputFormatsMap.set(input.name, input.format);
                 });
@@ -1142,6 +1142,7 @@ output json
                 });
             } else {
                 console.warn('[UTLXEditor] Headers invalid, cannot determine inputs');
+                console.log('[UTLXEditor] Using formats from UDM events:', Array.from(this.inputFormatsMap.entries()));
             }
 
             // Request current UDM from all inputs (will trigger UDM events if data exists)
@@ -1310,7 +1311,7 @@ output json
                 {this.showFunctionBuilderDialog && (
                     <FunctionBuilderDialog
                         functions={this.functionBuilderFunctions}
-                        availableInputs={this.inputNamesFromHeaders}
+                        availableInputs={Array.from(new Set([...this.inputNamesFromHeaders, ...Array.from(this.inputUdmMap.keys())]))}
                         udmMap={this.inputUdmMap}
                         inputFormatsMap={this.inputFormatsMap}
                         cursorContext={this.analyzeCursorContext()}

@@ -13,44 +13,99 @@ import { UdmInputTree, UdmField, getTypeDisplayName, getTypeIcon } from './udm-p
  */
 function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArray: boolean): string[] {
     try {
-        // Parse UDM to extract values
+        console.log('[extractSampleValues] Starting extraction:', { fieldPath, isInputArray, udmLength: udmLanguage.length });
+
         const values: string[] = [];
         const pathParts = fieldPath.split('.');
 
-        // Handle array inputs: [{...}] format
+        // Handle array inputs: [{...}, {...}] format
         if (isInputArray) {
-            // Extract all array elements
-            const arrayMatch = udmLanguage.match(/\[([^\]]+)\]/);
-            if (!arrayMatch) return [];
+            // Find array content between [ and ]
+            const startIdx = udmLanguage.indexOf('[');
+            const endIdx = udmLanguage.lastIndexOf(']');
 
-            const arrayContent = arrayMatch[1];
-            // Split by object boundaries
-            const objects = arrayContent.split(/\},\s*\{/);
+            if (startIdx === -1 || endIdx === -1) {
+                console.log('[extractSampleValues] No array brackets found');
+                return [];
+            }
+
+            const arrayContent = udmLanguage.substring(startIdx + 1, endIdx);
+            console.log('[extractSampleValues] Array content length:', arrayContent.length);
+
+            // Extract objects from array using brace matching
+            const objects = extractObjectsFromArray(arrayContent);
+            console.log('[extractSampleValues] Found', objects.length, 'objects in array');
 
             for (const obj of objects) {
-                const cleanObj = obj.replace(/^\{|\}$/g, '');
-                const value = extractValueFromObject(cleanObj, pathParts);
+                const value = extractValueFromObject(obj, pathParts);
                 if (value !== null) {
+                    console.log('[extractSampleValues] Extracted value:', value);
                     values.push(value);
                 }
             }
         } else {
             // Single object: {field: value}
-            const objectMatch = udmLanguage.match(/\{([^}]+)\}/);
-            if (!objectMatch) return [];
+            const startIdx = udmLanguage.indexOf('{');
+            const endIdx = udmLanguage.lastIndexOf('}');
 
-            const value = extractValueFromObject(objectMatch[1], pathParts);
+            if (startIdx === -1 || endIdx === -1) {
+                console.log('[extractSampleValues] No object braces found');
+                return [];
+            }
+
+            const objectContent = udmLanguage.substring(startIdx + 1, endIdx);
+            const value = extractValueFromObject(objectContent, pathParts);
             if (value !== null) {
                 values.push(value);
             }
         }
 
         // Return unique values (max 10)
-        return Array.from(new Set(values)).slice(0, 10);
+        const uniqueValues = Array.from(new Set(values)).slice(0, 10);
+        console.log('[extractSampleValues] Returning', uniqueValues.length, 'unique values:', uniqueValues);
+        return uniqueValues;
     } catch (error) {
         console.error('[FieldTree] Error extracting sample values:', error);
         return [];
     }
+}
+
+/**
+ * Extract individual objects from array content using brace matching
+ */
+function extractObjectsFromArray(arrayContent: string): string[] {
+    const objects: string[] = [];
+    let braceCount = 0;
+    let currentObject = '';
+    let inObject = false;
+
+    for (let i = 0; i < arrayContent.length; i++) {
+        const char = arrayContent[i];
+
+        if (char === '{') {
+            if (!inObject) {
+                inObject = true;
+                currentObject = '';
+            } else {
+                currentObject += char;
+            }
+            braceCount++;
+        } else if (char === '}') {
+            braceCount--;
+            if (braceCount === 0 && inObject) {
+                // Complete object found
+                objects.push(currentObject);
+                inObject = false;
+                currentObject = '';
+            } else {
+                currentObject += char;
+            }
+        } else if (inObject) {
+            currentObject += char;
+        }
+    }
+
+    return objects;
 }
 
 /**
@@ -186,10 +241,10 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
     }
 
     return (
-        <div className='field-tree-container' ref={containerRef} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div className='field-tree-container' ref={containerRef}>
             {/* Field Tree Pane */}
-            <div className='field-tree-pane' style={{ flex: `${splitPosition} 1 0%`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div className='field-tree' style={{ flex: 1, overflowY: 'auto' }}>
+            <div className='field-tree-pane' style={{ flex: `${splitPosition} 1 0%` }}>
+                <div className='field-tree'>
                     {fieldTrees.map(tree => (
                         <InputNode
                             key={tree.inputName}
@@ -207,14 +262,13 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
             <div
                 className='split-divider'
                 onMouseDown={handleMouseDown}
-                style={{ cursor: isDragging ? 'row-resize' : 'row-resize' }}
             >
                 <div className='split-handle'></div>
             </div>
 
             {/* Sample Data Pane */}
-            <div className='sample-data-pane' style={{ flex: `${100 - splitPosition} 1 0%`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div className='sample-data-content' style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+            <div className='sample-data-pane' style={{ flex: `${100 - splitPosition} 1 0%` }}>
+                <div className='sample-data-content' style={{ padding: '16px' }}>
                     {selectedField ? (
                         <div>
                             <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600, color: 'var(--theia-foreground)' }}>

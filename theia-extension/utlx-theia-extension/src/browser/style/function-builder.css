@@ -140,11 +140,42 @@
 
 /* ===== Function Tree ===== */
 
-.function-tree,
+.function-tree {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+/* Field Tree Container (with split) */
+.field-tree-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.field-tree-pane {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .field-tree {
     flex: 1;
     overflow-y: auto;
     padding: 8px;
+}
+
+.sample-data-pane {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-top: 1px solid var(--theia-panel-border);
+}
+
+.sample-data-content {
+    flex: 1;
+    overflow-y: auto;
 }
 
 .function-tree::-webkit-scrollbar,
