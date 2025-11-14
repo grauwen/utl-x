@@ -311,6 +311,11 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                         {sampleValues.map((value, index) => (
                                             <div
                                                 key={index}
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(value);
+                                                    console.log('[FieldTree] Copied value to clipboard:', value);
+                                                }}
+                                                title={`Click to copy: ${value}`}
                                                 style={{
                                                     padding: '6px 8px',
                                                     background: 'var(--theia-editor-background)',
@@ -319,10 +324,28 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                                     fontSize: '12px',
                                                     fontFamily: 'var(--monaco-monospace-font)',
                                                     color: 'var(--theia-foreground)',
-                                                    wordBreak: 'break-all'
+                                                    wordBreak: 'break-all',
+                                                    cursor: 'pointer',
+                                                    transition: 'background 0.1s ease',
+                                                    position: 'relative'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = 'var(--theia-list-hoverBackground)';
+                                                    e.currentTarget.style.borderColor = 'var(--theia-focusBorder)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = 'var(--theia-editor-background)';
+                                                    e.currentTarget.style.borderColor = 'var(--theia-panel-border)';
                                                 }}
                                             >
-                                                {value}
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ flex: 1 }}>{value}</span>
+                                                    <span className='codicon codicon-copy' style={{
+                                                        fontSize: '12px',
+                                                        opacity: 0.6,
+                                                        flexShrink: 0
+                                                    }}></span>
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
