@@ -403,23 +403,67 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
 
     return (
         <div className='input-node'>
-            <div className='input-header' onClick={onToggle}>
-                <span className={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`}></span>
-                <span className={`codicon ${icon}`}></span>
-                <span className='input-name'>${tree.inputName}</span>
-                <span className='input-format-badge'>{tree.format}</span>
-                <span className='input-array-badge'>{typeLabel}</span>
-                <button
-                    className='insert-btn'
-                    title={`Insert $${tree.inputName}${tree.isArray ? '[0]' : ''}`}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onInsertField(tree.inputName, tree.isArray ? '[0]' : '');
-                    }}
-                >
-                    <span className='codicon codicon-insert'></span>
-                </button>
-            </div>
+            {/* Array inputs: Show both $input (single) and $input[] (array) */}
+            {tree.isArray ? (
+                <>
+                    {/* Single row access: $input */}
+                    <div className='input-header'>
+                        <span className='codicon codicon-chevron-right' style={{ visibility: 'hidden' }}></span>
+                        <span className={`codicon ${icon}`}></span>
+                        <span className='input-name'>${tree.inputName}</span>
+                        <span className='input-format-badge'>{tree.format}</span>
+                        <span className='input-array-badge'>Object</span>
+                        <button
+                            className='insert-btn'
+                            title={`Insert $${tree.inputName} (first row as object)`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onInsertField(tree.inputName, '');
+                            }}
+                        >
+                            <span className='codicon codicon-insert'></span>
+                        </button>
+                    </div>
+
+                    {/* Array access: $input[] */}
+                    <div className='input-header' onClick={onToggle} style={{ cursor: 'pointer' }}>
+                        <span className={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`}></span>
+                        <span className={`codicon ${icon}`}></span>
+                        <span className='input-name'>${tree.inputName}[]</span>
+                        <span className='input-format-badge'>{tree.format}</span>
+                        <span className='input-array-badge'>Array</span>
+                        <button
+                            className='insert-btn'
+                            title={`Insert $${tree.inputName}[0] (array access)`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onInsertField(tree.inputName, '[0]');
+                            }}
+                        >
+                            <span className='codicon codicon-insert'></span>
+                        </button>
+                    </div>
+                </>
+            ) : (
+                /* Object inputs: Show only $input */
+                <div className='input-header' onClick={onToggle}>
+                    <span className={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`}></span>
+                    <span className={`codicon ${icon}`}></span>
+                    <span className='input-name'>${tree.inputName}</span>
+                    <span className='input-format-badge'>{tree.format}</span>
+                    <span className='input-array-badge'>{typeLabel}</span>
+                    <button
+                        className='insert-btn'
+                        title={`Insert $${tree.inputName}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onInsertField(tree.inputName, '');
+                        }}
+                    >
+                        <span className='codicon codicon-insert'></span>
+                    </button>
+                </div>
+            )}
 
             {isExpanded && tree.fields.length > 0 && (
                 <div className='fields'>
