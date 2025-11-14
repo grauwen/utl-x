@@ -74,7 +74,8 @@ class FunctionsTest {
         
         val upperFunction = StandardLibrary.getFunction("upper")
         assertNotNull(upperFunction)
-        assertEquals("upper", upperFunction.name)
+        // "upper" is an alias for "upperCase", so the canonical name is returned
+        assertEquals("upperCase", upperFunction.name)
         
         // Test non-existent function
         val nonExistent = StandardLibrary.getFunction("nonExistentFunction")
@@ -136,9 +137,14 @@ class FunctionsTest {
             "leftTrim", "rightTrim", "translate", "reverse", "isBlank",
             "charAt", "capitalize", "titleCase", "camelize", "pascalCase",
             "kebabCase", "snakeCase", "constantCase", "dotCase", "pathCase",
-            "uncamelize", "slugify", "pluralize", "singularize"
+            "uncamelize", "slugify", "pluralize", "singularize",
+            // Canonical names for renamed functions
+            "upperCase", "lowerCase", "camelCase", "fromCamelCase",
+            // New reverse case conversion functions
+            "fromPascalCase", "fromKebabCase", "fromSnakeCase", "fromConstantCase",
+            "fromTitleCase", "fromDotCase", "fromPathCase", "wordCase"
         )
-        
+
         stringFunctions.forEach { funcName ->
             assertTrue(StandardLibrary.hasFunction(funcName), "Missing string function: $funcName")
         }

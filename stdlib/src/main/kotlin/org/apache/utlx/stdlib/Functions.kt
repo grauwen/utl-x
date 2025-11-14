@@ -306,8 +306,10 @@ object StandardLibrary {
     
     private fun registerStringFunctions() {
         // Basic string operations
-        register("upper", StringFunctions::upper)
-        register("lower", StringFunctions::lower)
+        register("upperCase", StringFunctions::upperCase)
+        registerAlias("upper", "upperCase", "Legacy naming - use upperCase")
+        register("lowerCase", StringFunctions::lowerCase)
+        registerAlias("lower", "lowerCase", "Legacy naming - use lowerCase")
         register("toTitleCase", StringFunctions::toTitleCase)
         register("trim", StringFunctions::trim)
         register("substring", StringFunctions::substring)
@@ -348,8 +350,9 @@ object StandardLibrary {
         register("capitalize", MoreStringFunctions::capitalize)
         // register("titleCase", MoreStringFunctions::titleCase) // DUPLICATE: titleCase already registered in CaseFunctions
 
-        // Case conversion functions
-        register("camelize", CaseFunctions::camelize)
+        // Case conversion functions (to various formats)
+        register("camelCase", CaseFunctions::camelCase)
+        registerAlias("camelize", "camelCase", "Legacy naming - use camelCase")
         register("pascalCase", CaseFunctions::pascalCase)
         register("kebabCase", CaseFunctions::kebabCase)
         register("snakeCase", CaseFunctions::snakeCase)
@@ -357,9 +360,20 @@ object StandardLibrary {
         register("titleCase", CaseFunctions::titleCase)
         register("dotCase", CaseFunctions::dotCase)
         register("pathCase", CaseFunctions::pathCase)
-        
-        // Additional case conversion functions
-        register("uncamelize", CaseConversionFunctions::uncamelize)
+        register("wordCase", CaseConversionFunctions::wordCase)
+
+        // Reverse case conversion functions (from various formats to words)
+        register("fromCamelCase", CaseConversionFunctions::fromCamelCase)
+        registerAlias("uncamelize", "fromCamelCase", "Legacy naming - use fromCamelCase")
+        register("fromPascalCase", CaseConversionFunctions::fromPascalCase)
+        register("fromKebabCase", CaseConversionFunctions::fromKebabCase)
+        register("fromSnakeCase", CaseConversionFunctions::fromSnakeCase)
+        register("fromConstantCase", CaseConversionFunctions::fromConstantCase)
+        register("fromTitleCase", CaseConversionFunctions::fromTitleCase)
+        register("fromDotCase", CaseConversionFunctions::fromDotCase)
+        register("fromPathCase", CaseConversionFunctions::fromPathCase)
+
+        // Utilities
         register("slugify", CaseConversionFunctions::slugify)
 
         // Pluralization functions

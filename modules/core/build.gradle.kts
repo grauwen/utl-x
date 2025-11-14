@@ -56,6 +56,11 @@ tasks.named("compileJava") {
     dependsOn("generateGrammarSource")
 }
 
+// Ensure test Kotlin compilation depends on test ANTLR generation
+tasks.named("compileTestKotlin") {
+    dependsOn("generateTestGrammarSource")
+}
+
 kotlin {
     jvmToolchain(17)
 }
@@ -63,6 +68,11 @@ kotlin {
 java {
     withSourcesJar()
     withJavadocJar()
+}
+
+// Ensure sourcesJar depends on ANTLR generation (must come after java block)
+tasks.named("sourcesJar") {
+    dependsOn("generateGrammarSource")
 }
 
 publishing {

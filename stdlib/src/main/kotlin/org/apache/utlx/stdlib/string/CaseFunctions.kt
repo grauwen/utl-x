@@ -25,44 +25,43 @@ object CaseFunctions {
         maxArgs = 1,
         category = "String",
         parameters = [
-            "str: Str value"
+            "str: String to convert"
         ],
-        returns = "Result of the operation",
-        example = "camelize(...) => result",
+        returns = "Camel-cased string",
+        example = "camelCase(\"hello world\") => \"helloWorld\"",
+        additionalExamples = [
+            "camelCase(\"hello-world\") => \"helloWorld\"",
+            "camelCase(\"hello_world\") => \"helloWorld\"",
+            "camelCase(\"HelloWorld\") => \"helloWorld\""
+        ],
         notes = """Converts first word to lowercase, capitalizes first letter of subsequent words.
-Removes spaces, hyphens, and underscores.
-Examples:
-- "hello world" => "helloWorld"
-- "hello-world" => "helloWorld"
-- "hello_world" => "helloWorld"
-- "HelloWorld" => "helloWorld"
-- "HELLO WORLD" => "helloWorld"""",
+Removes spaces, hyphens, and underscores.""",
         tags = ["string"],
         since = "1.0"
     )
     /**
      * Convert string to camelCase
-     * 
+     *
      * Converts first word to lowercase, capitalizes first letter of subsequent words.
      * Removes spaces, hyphens, and underscores.
-     * 
+     *
      * Examples:
      * - "hello world" => "helloWorld"
      * - "hello-world" => "helloWorld"
      * - "hello_world" => "helloWorld"
      * - "HelloWorld" => "helloWorld"
      * - "HELLO WORLD" => "helloWorld"
-     * 
+     *
      * @param str Input string
-     * @return Camelized string
+     * @return Camel-cased string
      */
-    fun camelize(args: List<UDM>): UDM {
+    fun camelCase(args: List<UDM>): UDM {
         if (args.isEmpty()) {
-            throw FunctionArgumentException("camelize expects 1 argument")
+            throw FunctionArgumentException("camelCase expects 1 argument")
         }
         val str = args[0]
         val value = (str as? UDM.Scalar)?.value as? String
-            ?: throw FunctionArgumentException("camelize() requires a string argument")
+            ?: throw FunctionArgumentException("camelCase() requires a string argument")
         
         if (value.isEmpty()) {
             return UDM.Scalar("")

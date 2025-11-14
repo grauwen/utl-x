@@ -10,24 +10,24 @@ import kotlin.test.assertTrue
 class StringFunctionsTest {
 
     @Test
-    fun testUpper() {
-        val result = StringFunctions.upper(listOf(UDM.Scalar("hello world")))
+    fun testUpperCase() {
+        val result = StringFunctions.upperCase(listOf(UDM.Scalar("hello world")))
         assertTrue(result is UDM.Scalar)
         assertEquals("HELLO WORLD", (result as UDM.Scalar).value)
-        
+
         // Test empty string
-        val emptyResult = StringFunctions.upper(listOf(UDM.Scalar("")))
+        val emptyResult = StringFunctions.upperCase(listOf(UDM.Scalar("")))
         assertEquals("", (emptyResult as UDM.Scalar).value)
     }
 
     @Test
-    fun testLower() {
-        val result = StringFunctions.lower(listOf(UDM.Scalar("HELLO WORLD")))
+    fun testLowerCase() {
+        val result = StringFunctions.lowerCase(listOf(UDM.Scalar("HELLO WORLD")))
         assertTrue(result is UDM.Scalar)
         assertEquals("hello world", (result as UDM.Scalar).value)
-        
+
         // Test mixed case
-        val mixedResult = StringFunctions.lower(listOf(UDM.Scalar("Hello World")))
+        val mixedResult = StringFunctions.lowerCase(listOf(UDM.Scalar("Hello World")))
         assertEquals("hello world", (mixedResult as UDM.Scalar).value)
     }
 
@@ -289,7 +289,7 @@ class StringFunctionsTest {
     @Test
     fun testEdgeCases() {
         // Test empty strings
-        val emptyUpper = StringFunctions.upper(listOf(UDM.Scalar("")))
+        val emptyUpper = StringFunctions.upperCase(listOf(UDM.Scalar("")))
         assertEquals("", (emptyUpper as UDM.Scalar).value)
 
         val emptySplit = StringFunctions.split(listOf(UDM.Scalar(""), UDM.Scalar(",")))
@@ -298,15 +298,15 @@ class StringFunctionsTest {
         assertEquals("", ((emptySplit as UDM.Array).elements[0] as UDM.Scalar).value)
 
         // Test single character operations
-        val singleChar = StringFunctions.upper(listOf(UDM.Scalar("a")))
+        val singleChar = StringFunctions.upperCase(listOf(UDM.Scalar("a")))
         assertEquals("A", (singleChar as UDM.Scalar).value)
 
         // Test Unicode support
-        val unicodeResult = StringFunctions.upper(listOf(UDM.Scalar("café")))
+        val unicodeResult = StringFunctions.upperCase(listOf(UDM.Scalar("café")))
         assertEquals("CAFÉ", (unicodeResult as UDM.Scalar).value)
 
         // Null handling: null values are converted to empty string by asString()
-        val nullResult = StringFunctions.upper(listOf(UDM.Scalar(null)))
+        val nullResult = StringFunctions.upperCase(listOf(UDM.Scalar(null)))
         assertEquals("", (nullResult as UDM.Scalar).value)
     }
 

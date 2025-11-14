@@ -201,12 +201,13 @@ Commonly needed for API field transformations""",
         maxArgs = 1,
         category = "String",
         parameters = [
-            "str: Str value"
+            "str: String in camelCase format"
         ],
-        returns = "Result of the operation",
-        example = "uncamelize(\"helloWorld\") => \"hello world\"",
+        returns = "Space-separated words",
+        example = "fromCamelCase(\"helloWorld\") => \"hello world\"",
         additionalExamples = [
-            "uncamelize(\"firstName\") => \"first name\""
+            "fromCamelCase(\"firstName\") => \"first name\"",
+            "fromCamelCase(\"XMLHttpRequest\") => \"xml http request\""
         ],
         notes = "Useful for converting programmatic names to human-readable text",
         tags = ["string"],
@@ -214,20 +215,20 @@ Commonly needed for API field transformations""",
     )
     /**
      * Convert from camelCase to separate words
-     * 
-     * Usage: uncamelize("helloWorld") => "hello world"
-     * Usage: uncamelize("firstName") => "first name"
-     * 
+     *
+     * Usage: fromCamelCase("helloWorld") => "hello world"
+     * Usage: fromCamelCase("firstName") => "first name"
+     *
      * Useful for converting programmatic names to human-readable text
      */
-    fun uncamelize(args: List<UDM>): UDM {
+    fun fromCamelCase(args: List<UDM>): UDM {
         if (args.size != 1) {
-            throw IllegalArgumentException("uncamelize expects 1 argument, got ${args.size}")
+            throw IllegalArgumentException("fromCamelCase expects 1 argument, got ${args.size}")
         }
-        
+
         val str = args[0]
         if (str !is UDM.Scalar || str.value !is String) {
-            throw IllegalArgumentException("uncamelize expects a string argument")
+            throw IllegalArgumentException("fromCamelCase expects a string argument")
         }
         
         val input = str.value as String
@@ -399,6 +400,282 @@ Commonly needed for API field transformations""",
         result = result.trim('-')
         
         return UDM.Scalar(result)
+    }
+
+    @UTLXFunction(
+        description = "Convert from PascalCase to separate words",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: String in PascalCase format"
+        ],
+        returns = "Space-separated words",
+        example = "fromPascalCase(\"HelloWorld\") => \"hello world\"",
+        additionalExamples = [
+            "fromPascalCase(\"FirstName\") => \"first name\"",
+            "fromPascalCase(\"XMLHttpRequest\") => \"xml http request\""
+        ],
+        notes = "Useful for converting class names to human-readable text",
+        tags = ["string"],
+        since = "1.0"
+    )
+    fun fromPascalCase(args: List<UDM>): UDM {
+        if (args.size != 1) {
+            throw IllegalArgumentException("fromPascalCase expects 1 argument, got ${args.size}")
+        }
+
+        val str = args[0]
+        if (str !is UDM.Scalar || str.value !is String) {
+            throw IllegalArgumentException("fromPascalCase expects a string argument")
+        }
+
+        val input = str.value as String
+
+        if (input.isEmpty()) {
+            return UDM.Scalar("")
+        }
+
+        // Same logic as fromCamelCase
+        val result = buildString {
+            input.forEachIndexed { index, char ->
+                if (char.isUpperCase() && index > 0) {
+                    append(' ')
+                }
+                append(char.lowercase())
+            }
+        }
+
+        return UDM.Scalar(result)
+    }
+
+    @UTLXFunction(
+        description = "Convert from kebab-case to separate words",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: String in kebab-case format"
+        ],
+        returns = "Space-separated words",
+        example = "fromKebabCase(\"hello-world\") => \"hello world\"",
+        additionalExamples = [
+            "fromKebabCase(\"first-name\") => \"first name\"",
+            "fromKebabCase(\"my-cool-app\") => \"my cool app\""
+        ],
+        notes = "Converts kebab-case to space-separated words",
+        tags = ["string"],
+        since = "1.0"
+    )
+    fun fromKebabCase(args: List<UDM>): UDM {
+        if (args.size != 1) {
+            throw IllegalArgumentException("fromKebabCase expects 1 argument, got ${args.size}")
+        }
+
+        val str = args[0]
+        if (str !is UDM.Scalar || str.value !is String) {
+            throw IllegalArgumentException("fromKebabCase expects a string argument")
+        }
+
+        val input = str.value as String
+        return UDM.Scalar(input.replace('-', ' '))
+    }
+
+    @UTLXFunction(
+        description = "Convert from snake_case to separate words",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: String in snake_case format"
+        ],
+        returns = "Space-separated words",
+        example = "fromSnakeCase(\"hello_world\") => \"hello world\"",
+        additionalExamples = [
+            "fromSnakeCase(\"first_name\") => \"first name\"",
+            "fromSnakeCase(\"my_cool_app\") => \"my cool app\""
+        ],
+        notes = "Converts snake_case to space-separated words",
+        tags = ["string"],
+        since = "1.0"
+    )
+    fun fromSnakeCase(args: List<UDM>): UDM {
+        if (args.size != 1) {
+            throw IllegalArgumentException("fromSnakeCase expects 1 argument, got ${args.size}")
+        }
+
+        val str = args[0]
+        if (str !is UDM.Scalar || str.value !is String) {
+            throw IllegalArgumentException("fromSnakeCase expects a string argument")
+        }
+
+        val input = str.value as String
+        return UDM.Scalar(input.replace('_', ' '))
+    }
+
+    @UTLXFunction(
+        description = "Convert from CONSTANT_CASE to separate words",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: String in CONSTANT_CASE format"
+        ],
+        returns = "Space-separated lowercase words",
+        example = "fromConstantCase(\"HELLO_WORLD\") => \"hello world\"",
+        additionalExamples = [
+            "fromConstantCase(\"FIRST_NAME\") => \"first name\"",
+            "fromConstantCase(\"MY_COOL_APP\") => \"my cool app\""
+        ],
+        notes = "Converts CONSTANT_CASE to space-separated lowercase words",
+        tags = ["string"],
+        since = "1.0"
+    )
+    fun fromConstantCase(args: List<UDM>): UDM {
+        if (args.size != 1) {
+            throw IllegalArgumentException("fromConstantCase expects 1 argument, got ${args.size}")
+        }
+
+        val str = args[0]
+        if (str !is UDM.Scalar || str.value !is String) {
+            throw IllegalArgumentException("fromConstantCase expects a string argument")
+        }
+
+        val input = str.value as String
+        return UDM.Scalar(input.replace('_', ' ').lowercase())
+    }
+
+    @UTLXFunction(
+        description = "Convert from Title Case to separate lowercase words",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: String in Title Case format"
+        ],
+        returns = "Space-separated lowercase words",
+        example = "fromTitleCase(\"Hello World\") => \"hello world\"",
+        additionalExamples = [
+            "fromTitleCase(\"First Name\") => \"first name\"",
+            "fromTitleCase(\"My Cool App\") => \"my cool app\""
+        ],
+        notes = "Converts Title Case to space-separated lowercase words",
+        tags = ["string"],
+        since = "1.0"
+    )
+    fun fromTitleCase(args: List<UDM>): UDM {
+        if (args.size != 1) {
+            throw IllegalArgumentException("fromTitleCase expects 1 argument, got ${args.size}")
+        }
+
+        val str = args[0]
+        if (str !is UDM.Scalar || str.value !is String) {
+            throw IllegalArgumentException("fromTitleCase expects a string argument")
+        }
+
+        val input = str.value as String
+        return UDM.Scalar(input.lowercase())
+    }
+
+    @UTLXFunction(
+        description = "Convert from dot.case to separate words",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: String in dot.case format"
+        ],
+        returns = "Space-separated words",
+        example = "fromDotCase(\"hello.world\") => \"hello world\"",
+        additionalExamples = [
+            "fromDotCase(\"first.name\") => \"first name\"",
+            "fromDotCase(\"my.cool.app\") => \"my cool app\""
+        ],
+        notes = "Converts dot.case to space-separated words",
+        tags = ["string"],
+        since = "1.0"
+    )
+    fun fromDotCase(args: List<UDM>): UDM {
+        if (args.size != 1) {
+            throw IllegalArgumentException("fromDotCase expects 1 argument, got ${args.size}")
+        }
+
+        val str = args[0]
+        if (str !is UDM.Scalar || str.value !is String) {
+            throw IllegalArgumentException("fromDotCase expects a string argument")
+        }
+
+        val input = str.value as String
+        return UDM.Scalar(input.replace('.', ' '))
+    }
+
+    @UTLXFunction(
+        description = "Convert from path/case to separate words",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: String in path/case format"
+        ],
+        returns = "Space-separated words",
+        example = "fromPathCase(\"hello/world\") => \"hello world\"",
+        additionalExamples = [
+            "fromPathCase(\"first/name\") => \"first name\"",
+            "fromPathCase(\"my/cool/app\") => \"my cool app\""
+        ],
+        notes = "Converts path/case to space-separated words",
+        tags = ["string"],
+        since = "1.0"
+    )
+    fun fromPathCase(args: List<UDM>): UDM {
+        if (args.size != 1) {
+            throw IllegalArgumentException("fromPathCase expects 1 argument, got ${args.size}")
+        }
+
+        val str = args[0]
+        if (str !is UDM.Scalar || str.value !is String) {
+            throw IllegalArgumentException("fromPathCase expects a string argument")
+        }
+
+        val input = str.value as String
+        return UDM.Scalar(input.replace('/', ' '))
+    }
+
+    @UTLXFunction(
+        description = "Convert string to word case (capitalize first letter, rest lowercase)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "String",
+        parameters = [
+            "str: String to convert"
+        ],
+        returns = "Word-cased string",
+        example = "wordCase(\"HELLO\") => \"Hello\"",
+        additionalExamples = [
+            "wordCase(\"hello\") => \"Hello\"",
+            "wordCase(\"hELLo\") => \"Hello\""
+        ],
+        notes = "Capitalizes first letter of string, lowercases the rest",
+        tags = ["string"],
+        since = "1.0"
+    )
+    fun wordCase(args: List<UDM>): UDM {
+        if (args.size != 1) {
+            throw IllegalArgumentException("wordCase expects 1 argument, got ${args.size}")
+        }
+
+        val str = args[0]
+        if (str !is UDM.Scalar || str.value !is String) {
+            throw IllegalArgumentException("wordCase expects a string argument")
+        }
+
+        val input = str.value as String
+
+        if (input.isEmpty()) {
+            return UDM.Scalar("")
+        }
+
+        return UDM.Scalar(input.lowercase().replaceFirstChar { it.uppercase() })
     }
 }
 

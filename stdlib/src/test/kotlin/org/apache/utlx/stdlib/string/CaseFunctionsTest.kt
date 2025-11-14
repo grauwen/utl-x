@@ -9,43 +9,43 @@ import kotlin.test.assertEquals
 class CaseFunctionsTest {
 
     @Test
-    fun testCamelize() {
+    fun testCamelCase() {
         // Test basic camelization
-        val result1 = CaseFunctions.camelize(listOf(UDM.Scalar("hello world")))
+        val result1 = CaseFunctions.camelCase(listOf(UDM.Scalar("hello world")))
         assertEquals("helloWorld", (result1 as UDM.Scalar).value)
 
-        val result2 = CaseFunctions.camelize(listOf(UDM.Scalar("hello-world")))
+        val result2 = CaseFunctions.camelCase(listOf(UDM.Scalar("hello-world")))
         assertEquals("helloWorld", (result2 as UDM.Scalar).value)
 
-        val result3 = CaseFunctions.camelize(listOf(UDM.Scalar("hello_world")))
+        val result3 = CaseFunctions.camelCase(listOf(UDM.Scalar("hello_world")))
         assertEquals("helloWorld", (result3 as UDM.Scalar).value)
 
         // Test PascalCase to camelCase
-        val result4 = CaseFunctions.camelize(listOf(UDM.Scalar("HelloWorld")))
+        val result4 = CaseFunctions.camelCase(listOf(UDM.Scalar("HelloWorld")))
         assertEquals("helloWorld", (result4 as UDM.Scalar).value)
 
         // Test all uppercase
-        val result5 = CaseFunctions.camelize(listOf(UDM.Scalar("HELLO WORLD")))
+        val result5 = CaseFunctions.camelCase(listOf(UDM.Scalar("HELLO WORLD")))
         assertEquals("helloWorld", (result5 as UDM.Scalar).value)
 
         // Test multiple words
-        val result6 = CaseFunctions.camelize(listOf(UDM.Scalar("first-name-last-name")))
+        val result6 = CaseFunctions.camelCase(listOf(UDM.Scalar("first-name-last-name")))
         assertEquals("firstNameLastName", (result6 as UDM.Scalar).value)
 
         // Test mixed delimiters
-        val result7 = CaseFunctions.camelize(listOf(UDM.Scalar("hello-world_test case")))
+        val result7 = CaseFunctions.camelCase(listOf(UDM.Scalar("hello-world_test case")))
         assertEquals("helloWorldTestCase", (result7 as UDM.Scalar).value)
 
         // Test single word
-        val result8 = CaseFunctions.camelize(listOf(UDM.Scalar("word")))
+        val result8 = CaseFunctions.camelCase(listOf(UDM.Scalar("word")))
         assertEquals("word", (result8 as UDM.Scalar).value)
 
         // Test empty string
-        val result9 = CaseFunctions.camelize(listOf(UDM.Scalar("")))
+        val result9 = CaseFunctions.camelCase(listOf(UDM.Scalar("")))
         assertEquals("", (result9 as UDM.Scalar).value)
 
         // Test already camelCase
-        val result10 = CaseFunctions.camelize(listOf(UDM.Scalar("alreadyCamelCase")))
+        val result10 = CaseFunctions.camelCase(listOf(UDM.Scalar("alreadyCamelCase")))
         assertEquals("alreadyCamelCase", (result10 as UDM.Scalar).value)
     }
 
@@ -295,7 +295,7 @@ class CaseFunctionsTest {
     fun testArgumentValidation() {
         // Test missing arguments
         assertThrows<FunctionArgumentException> {
-            CaseFunctions.camelize(emptyList())
+            CaseFunctions.camelCase(emptyList())
         }
 
         assertThrows<FunctionArgumentException> {
@@ -331,7 +331,7 @@ class CaseFunctionsTest {
     fun testInvalidArgumentTypes() {
         // Test non-string arguments
         assertThrows<FunctionArgumentException> {
-            CaseFunctions.camelize(listOf(UDM.Scalar(123)))
+            CaseFunctions.camelCase(listOf(UDM.Scalar(123)))
         }
 
         assertThrows<FunctionArgumentException> {
@@ -360,7 +360,7 @@ class CaseFunctionsTest {
         // Test complex inputs with mixed formats
         val complexInput = "XMLHttpRequestFactory"
 
-        val camelized = CaseFunctions.camelize(listOf(UDM.Scalar(complexInput)))
+        val camelized = CaseFunctions.camelCase(listOf(UDM.Scalar(complexInput)))
         assertEquals("xmlhttpRequestFactory", (camelized as UDM.Scalar).value)  // Consecutive capitals become lowercase
 
         val snaked = CaseFunctions.snakeCase(listOf(UDM.Scalar(complexInput)))
@@ -384,7 +384,7 @@ class CaseFunctionsTest {
         val original = "hello world test"
 
         // Convert to various formats
-        val camelized = CaseFunctions.camelize(listOf(UDM.Scalar(original)))
+        val camelized = CaseFunctions.camelCase(listOf(UDM.Scalar(original)))
         val pascalized = CaseFunctions.pascalCase(listOf(UDM.Scalar(original)))
         val kebabbed = CaseFunctions.kebabCase(listOf(UDM.Scalar(original)))
         val snaked = CaseFunctions.snakeCase(listOf(UDM.Scalar(original)))
@@ -410,22 +410,22 @@ class CaseFunctionsTest {
     fun testEdgeCases() {
         // Test with special characters
         val special = "hello@world#test"
-        val specialCamel = CaseFunctions.camelize(listOf(UDM.Scalar(special)))
+        val specialCamel = CaseFunctions.camelCase(listOf(UDM.Scalar(special)))
         assertEquals("hello@world#test", (specialCamel as UDM.Scalar).value)
 
         // Test with numbers
         val withNumbers = "test123Example456"
-        val numbersCamel = CaseFunctions.camelize(listOf(UDM.Scalar(withNumbers)))
+        val numbersCamel = CaseFunctions.camelCase(listOf(UDM.Scalar(withNumbers)))
         assertEquals("test123example456", (numbersCamel as UDM.Scalar).value)  // Capital after number becomes lowercase
 
         // Test with only delimiters
         val onlyDelimiters = "---___   "
-        val delimitersCamel = CaseFunctions.camelize(listOf(UDM.Scalar(onlyDelimiters)))
+        val delimitersCamel = CaseFunctions.camelCase(listOf(UDM.Scalar(onlyDelimiters)))
         assertEquals("", (delimitersCamel as UDM.Scalar).value)
 
         // Test single characters
         val singleChar = "a"
-        val singleCamel = CaseFunctions.camelize(listOf(UDM.Scalar(singleChar)))
+        val singleCamel = CaseFunctions.camelCase(listOf(UDM.Scalar(singleChar)))
         assertEquals("a", (singleCamel as UDM.Scalar).value)
 
         val singlePascal = CaseFunctions.pascalCase(listOf(UDM.Scalar(singleChar)))
@@ -433,7 +433,7 @@ class CaseFunctionsTest {
 
         // Test consecutive uppercase letters
         val consecutiveUpper = "XMLParser"
-        val consecutiveCamel = CaseFunctions.camelize(listOf(UDM.Scalar(consecutiveUpper)))
+        val consecutiveCamel = CaseFunctions.camelCase(listOf(UDM.Scalar(consecutiveUpper)))
         assertEquals("xmlparser", (consecutiveCamel as UDM.Scalar).value)  // Consecutive capitals treated as one word
 
         val consecutiveSnake = CaseFunctions.snakeCase(listOf(UDM.Scalar(consecutiveUpper)))
@@ -444,8 +444,8 @@ class CaseFunctionsTest {
     fun testUnicodeSupport() {
         // Test with Unicode characters
         val unicode = "café naïve"
-        
-        val unicodeCamel = CaseFunctions.camelize(listOf(UDM.Scalar(unicode)))
+
+        val unicodeCamel = CaseFunctions.camelCase(listOf(UDM.Scalar(unicode)))
         assertEquals("caféNaïve", (unicodeCamel as UDM.Scalar).value)
 
         val unicodeKebab = CaseFunctions.kebabCase(listOf(UDM.Scalar(unicode)))
@@ -461,20 +461,20 @@ class CaseFunctionsTest {
     @Test
     fun testCommonUseCases() {
         // Test common programming scenarios
-        
+
         // Database column names
         val dbColumn = "user_id"
-        val apiField = CaseFunctions.camelize(listOf(UDM.Scalar(dbColumn)))
+        val apiField = CaseFunctions.camelCase(listOf(UDM.Scalar(dbColumn)))
         assertEquals("userId", (apiField as UDM.Scalar).value)
 
         // CSS class names
         val cssClass = "btn-primary"
-        val jsVariable = CaseFunctions.camelize(listOf(UDM.Scalar(cssClass)))
+        val jsVariable = CaseFunctions.camelCase(listOf(UDM.Scalar(cssClass)))
         assertEquals("btnPrimary", (jsVariable as UDM.Scalar).value)
 
         // Environment variables
         val envVar = "API_BASE_URL"
-        val configKey = CaseFunctions.camelize(listOf(UDM.Scalar(envVar)))
+        val configKey = CaseFunctions.camelCase(listOf(UDM.Scalar(envVar)))
         assertEquals("apiBaseUrl", (configKey as UDM.Scalar).value)
 
         // Class names to constants
