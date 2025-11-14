@@ -9,11 +9,92 @@ import * as React from 'react';
 import { UdmInputTree, UdmField, getTypeDisplayName, getTypeIcon } from './udm-parser';
 
 /**
+ * Extract sample values for a field from UDM language string
+ */
+function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArray: boolean): string[] {
+    try {
+        // Parse UDM to extract values
+        const values: string[] = [];
+        const pathParts = fieldPath.split('.');
+
+        // Handle array inputs: [{...}] format
+        if (isInputArray) {
+            // Extract all array elements
+            const arrayMatch = udmLanguage.match(/\[([^\]]+)\]/);
+            if (!arrayMatch) return [];
+
+            const arrayContent = arrayMatch[1];
+            // Split by object boundaries
+            const objects = arrayContent.split(/\},\s*\{/);
+
+            for (const obj of objects) {
+                const cleanObj = obj.replace(/^\{|\}$/g, '');
+                const value = extractValueFromObject(cleanObj, pathParts);
+                if (value !== null) {
+                    values.push(value);
+                }
+            }
+        } else {
+            // Single object: {field: value}
+            const objectMatch = udmLanguage.match(/\{([^}]+)\}/);
+            if (!objectMatch) return [];
+
+            const value = extractValueFromObject(objectMatch[1], pathParts);
+            if (value !== null) {
+                values.push(value);
+            }
+        }
+
+        // Return unique values (max 10)
+        return Array.from(new Set(values)).slice(0, 10);
+    } catch (error) {
+        console.error('[FieldTree] Error extracting sample values:', error);
+        return [];
+    }
+}
+
+/**
+ * Extract value for a field path from object content
+ */
+function extractValueFromObject(objectContent: string, pathParts: string[]): string | null {
+    let currentContent = objectContent;
+
+    for (const part of pathParts) {
+        // Match field: value pattern
+        const pattern = new RegExp(`${part}:\\s*(@\\w+\\([^)]*\\)|@\\w+|\\{[^}]*\\}|\\[[^\\]]*\\]|"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|[^,}\\n]+)`);
+        const match = currentContent.match(pattern);
+
+        if (!match) return null;
+
+        const value = match[1].trim();
+
+        // If nested object, continue traversing
+        if (value.startsWith('{')) {
+            currentContent = value.substring(1, value.length - 1);
+        } else if (value.startsWith('[')) {
+            // Array - extract first element for simplicity
+            const arrayMatch = value.match(/\[\s*\{([^}]+)\}/);
+            if (arrayMatch) {
+                currentContent = arrayMatch[1];
+            } else {
+                return value; // Simple array like [1,2,3]
+            }
+        } else {
+            // Leaf value
+            return value.replace(/^["']|["']$/g, ''); // Remove quotes
+        }
+    }
+
+    return null;
+}
+
+/**
  * Props for FieldTree component
  */
 export interface FieldTreeProps {
     fieldTrees: UdmInputTree[];
     onInsertField: (inputName: string, fieldPath: string) => void;
+    udmMap: Map<string, string>; // inputName -> UDM language string
 }
 
 /**
@@ -21,9 +102,22 @@ export interface FieldTreeProps {
  *
  * Displays all inputs with their fields in a tree structure with horizontal split
  */
-export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField }) => {
+export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField, udmMap }) => {
     const [expandedInputs, setExpandedInputs] = React.useState<Set<string>>(new Set());
     const [selectedField, setSelectedField] = React.useState<{ inputName: string; fieldPath: string } | null>(null);
+
+    // Extract sample values for selected field
+    const sampleValues = React.useMemo(() => {
+        if (!selectedField) return [];
+
+        const udmLanguage = udmMap.get(selectedField.inputName);
+        if (!udmLanguage) return [];
+
+        const tree = fieldTrees.find(t => t.inputName === selectedField.inputName);
+        if (!tree) return [];
+
+        return extractSampleValues(udmLanguage, selectedField.fieldPath, tree.isArray);
+    }, [selectedField, udmMap, fieldTrees]);
 
     // Split pane state (default to 66% for field tree, 34% for sample data)
     const [splitPosition, setSplitPosition] = React.useState(66);
@@ -123,17 +217,69 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField 
                 <div className='sample-data-content' style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
                     {selectedField ? (
                         <div>
-                            <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600 }}>
-                                Sample Data: ${selectedField.inputName}.{selectedField.fieldPath}
+                            <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600, color: 'var(--theia-foreground)' }}>
+                                Sample Data
                             </h4>
-                            <div style={{ fontSize: '12px', color: 'var(--theia-descriptionForeground)' }}>
-                                <em>Sample data viewer coming soon...</em>
+                            <div style={{
+                                fontSize: '12px',
+                                fontFamily: 'var(--monaco-monospace-font)',
+                                marginBottom: '12px',
+                                color: 'var(--theia-descriptionForeground)'
+                            }}>
+                                ${selectedField.inputName}.{selectedField.fieldPath}
                             </div>
+                            {sampleValues.length > 0 ? (
+                                <div>
+                                    <div style={{
+                                        fontSize: '11px',
+                                        color: 'var(--theia-descriptionForeground)',
+                                        marginBottom: '8px'
+                                    }}>
+                                        {sampleValues.length} unique {sampleValues.length === 1 ? 'value' : 'values'}:
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        {sampleValues.map((value, index) => (
+                                            <div
+                                                key={index}
+                                                style={{
+                                                    padding: '6px 8px',
+                                                    background: 'var(--theia-editor-background)',
+                                                    border: '1px solid var(--theia-panel-border)',
+                                                    borderRadius: '3px',
+                                                    fontSize: '12px',
+                                                    fontFamily: 'var(--monaco-monospace-font)',
+                                                    color: 'var(--theia-foreground)',
+                                                    wordBreak: 'break-all'
+                                                }}
+                                            >
+                                                {value}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{
+                                    fontSize: '12px',
+                                    color: 'var(--theia-descriptionForeground)',
+                                    fontStyle: 'italic'
+                                }}>
+                                    No sample data available for this field
+                                </div>
+                            )}
                         </div>
                     ) : (
-                        <div className='empty-details'>
+                        <div className='empty-details' style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '100%',
+                            gap: '12px'
+                        }}>
                             <span className='codicon codicon-info' style={{ fontSize: '32px', opacity: 0.5 }}></span>
-                            <span>Click on a field to see sample data</span>
+                            <span style={{ fontSize: '13px', color: 'var(--theia-descriptionForeground)' }}>
+                                Click on a field to see sample data
+                            </span>
                         </div>
                     )}
                 </div>
