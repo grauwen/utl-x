@@ -989,6 +989,9 @@ export class MultiInputPanelWidget extends ReactWidget {
                             inputId: this.state.activeInputId,
                             content
                         });
+
+                        // Trigger UDM parsing for instance content
+                        await this.validateInput(this.state.activeInputId);
                     }
                 } catch (error) {
                     this.setState({ loading: false });
