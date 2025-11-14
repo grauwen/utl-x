@@ -272,7 +272,7 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                     {selectedField ? (
                         <div>
                             <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600, color: 'var(--theia-foreground)' }}>
-                                Sample Data
+                                Available Data
                             </h4>
                             <div style={{
                                 fontSize: '12px',
@@ -317,7 +317,7 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                     color: 'var(--theia-descriptionForeground)',
                                     fontStyle: 'italic'
                                 }}>
-                                    No sample data available for this field
+                                    No data available for this field
                                 </div>
                             )}
                         </div>
@@ -332,7 +332,7 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                         }}>
                             <span className='codicon codicon-info' style={{ fontSize: '32px', opacity: 0.5 }}></span>
                             <span style={{ fontSize: '13px', color: 'var(--theia-descriptionForeground)' }}>
-                                Click on a field to see sample data
+                                Click on a field to see available data
                             </span>
                         </div>
                     )}
