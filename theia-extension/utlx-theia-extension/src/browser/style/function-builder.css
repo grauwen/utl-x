@@ -995,6 +995,7 @@
     padding: 12px 16px;
     border-bottom: 1px solid var(--theia-panel-border);
     background: var(--theia-toolbar-background);
+    gap: 12px;
 }
 
 .utlx-function-builder-dialog .monaco-header h3 {
@@ -1004,29 +1005,46 @@
     color: var(--theia-foreground);
 }
 
-.utlx-function-builder-dialog .apply-to-main-btn {
+/* Monaco Editor Toolbar */
+.utlx-function-builder-dialog .monaco-toolbar {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: var(--theia-button-background);
-    color: var(--theia-button-foreground);
-    border: 1px solid var(--theia-button-border);
+    gap: 4px;
+}
+
+.utlx-function-builder-dialog .toolbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: none;
+    border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
+    color: var(--theia-icon-foreground);
     transition: background 0.1s ease;
 }
 
-.utlx-function-builder-dialog .apply-to-main-btn:hover:not(:disabled) {
-    background: var(--theia-button-hoverBackground);
+.utlx-function-builder-dialog .toolbar-btn:hover {
+    background: var(--theia-toolbar-hoverBackground);
 }
 
-.utlx-function-builder-dialog .apply-to-main-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.utlx-function-builder-dialog .toolbar-btn:active {
+    background: var(--theia-toolbar-activeBackground, var(--theia-list-activeSelectionBackground));
 }
+
+.utlx-function-builder-dialog .toolbar-btn .codicon {
+    font-size: 16px;
+}
+
+.utlx-function-builder-dialog .toolbar-separator {
+    width: 1px;
+    height: 20px;
+    background: var(--theia-panel-border);
+    margin: 0 4px;
+}
+
 
 .utlx-function-builder-dialog .monaco-placeholder {
     flex: 1;

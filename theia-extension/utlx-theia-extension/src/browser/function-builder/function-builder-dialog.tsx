@@ -769,22 +769,69 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         <div className='monaco-editor-pane' style={{ height: `${rightSplitPosition}%` }}>
                             <div className='monaco-header'>
                                 <h3>UTLX Expression Editor</h3>
-                                <button
-                                    className='apply-to-main-btn'
-                                    onClick={() => {
-                                        const editor = expressionEditorRef.current;
-                                        const content = editor?.getModel()?.getValue() || '';
-                                        if (content.trim()) {
-                                            onInsert(content);
-                                            onClose();
-                                        }
-                                    }}
-                                    disabled={!hasEditorContent}
-                                    title='Apply to main editor and close'
-                                >
-                                    <span className='codicon codicon-check'></span>
-                                    Apply to Main Editor
-                                </button>
+                                <div className='monaco-toolbar'>
+                                    <button
+                                        className='toolbar-btn'
+                                        onClick={() => {
+                                            const editor = expressionEditorRef.current;
+                                            if (editor) {
+                                                editor.trigger('toolbar', 'undo', {});
+                                            }
+                                        }}
+                                        title='Undo (Ctrl+Z / Cmd+Z)'
+                                    >
+                                        <span className='codicon codicon-discard'></span>
+                                    </button>
+                                    <button
+                                        className='toolbar-btn'
+                                        onClick={() => {
+                                            const editor = expressionEditorRef.current;
+                                            if (editor) {
+                                                editor.trigger('toolbar', 'redo', {});
+                                            }
+                                        }}
+                                        title='Redo (Ctrl+Y / Cmd+Shift+Z)'
+                                    >
+                                        <span className='codicon codicon-redo'></span>
+                                    </button>
+                                    <div className='toolbar-separator'></div>
+                                    <button
+                                        className='toolbar-btn'
+                                        onClick={() => {
+                                            const editor = expressionEditorRef.current;
+                                            if (editor) {
+                                                editor.trigger('toolbar', 'editor.action.clipboardCutAction', {});
+                                            }
+                                        }}
+                                        title='Cut (Ctrl+X / Cmd+X)'
+                                    >
+                                        <span className='codicon codicon-clippy'></span>
+                                    </button>
+                                    <button
+                                        className='toolbar-btn'
+                                        onClick={() => {
+                                            const editor = expressionEditorRef.current;
+                                            if (editor) {
+                                                editor.trigger('toolbar', 'editor.action.clipboardCopyAction', {});
+                                            }
+                                        }}
+                                        title='Copy (Ctrl+C / Cmd+C)'
+                                    >
+                                        <span className='codicon codicon-copy'></span>
+                                    </button>
+                                    <button
+                                        className='toolbar-btn'
+                                        onClick={() => {
+                                            const editor = expressionEditorRef.current;
+                                            if (editor) {
+                                                editor.trigger('toolbar', 'editor.action.clipboardPasteAction', {});
+                                            }
+                                        }}
+                                        title='Paste (Ctrl+V / Cmd+V)'
+                                    >
+                                        <span className='codicon codicon-insert'></span>
+                                    </button>
+                                </div>
                             </div>
                             <div
                                 ref={expressionEditorContainerRef}
@@ -836,16 +883,18 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         <button
                             className='footer-btn apply-btn'
                             onClick={() => {
-                                if (selectedFunction) {
-                                    handleInsertFunction();
+                                const editor = expressionEditorRef.current;
+                                const content = editor?.getModel()?.getValue() || '';
+                                if (content.trim()) {
+                                    onInsert(content);
                                     onClose();
                                 }
                             }}
-                            disabled={!selectedFunction}
-                            title={selectedFunction ? 'Insert function into editor and close' : 'Select a function first'}
+                            disabled={!hasEditorContent}
+                            title='Apply Expression to Main Editor and close'
                         >
                             <span className='codicon codicon-check'></span>
-                            Apply
+                            Apply to Main Editor
                         </button>
                         <button
                             className='footer-btn close-btn-footer'
