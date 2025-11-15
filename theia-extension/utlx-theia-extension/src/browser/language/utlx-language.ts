@@ -57,6 +57,11 @@ export class UTLXLanguageGrammarContribution implements LanguageGrammarDefinitio
                 'for', 'in', 'return', 'true', 'false', 'null'
             ],
 
+            // Data format keywords
+            formats: [
+                'json', 'xml', 'yaml', 'csv', 'avro', 'proto', 'xsd', 'jsch'
+            ],
+
             // Only actual UTLX operators
             operators: [
                 '==', '!=', '<=', '>=', '<', '>',  // Comparison operators
@@ -70,12 +75,29 @@ export class UTLXLanguageGrammarContribution implements LanguageGrammarDefinitio
 
             tokenizer: {
                 root: [
-                    // UTLX headers
-                    [/^%utlx\s+[\d.]+/, 'keyword.utlx-version'],
-                    [/^input\s+\w+/, 'keyword.utlx-input'],
-                    [/^output\s+\w+/, 'keyword.utlx-output'],
-                    [/^---\s*$/, 'keyword.utlx-separator'],
+                    // UTLX separator - transition to code section
+                    [/^---\s*$/, { token: 'keyword.utlx-separator', next: '@code' }],
 
+                    // Everything else in header is blue (keyword color)
+                    // Except format keywords which are purple
+                    [/\b(json|xml|yaml|csv|avro|proto|xsd|jsch)\b/, 'type'],
+
+                    // Version numbers
+                    [/\d+\.\d+/, 'number'],
+
+                    // Strings in options
+                    [/"([^"\\]|\\.)*"/, 'string'],
+                    [/'([^'\\]|\\.)*'/, 'string'],
+
+                    // Everything else (input, output, names, etc.) is keyword color (blue)
+                    [/[a-zA-Z_$%][\w$]*/, 'keyword'],
+
+                    // Whitespace and punctuation
+                    { include: '@whitespace' },
+                    [/[{}()\[\]:,]/, 'delimiter']
+                ],
+
+                code: [
                     // Input references
                     [/\$\w+/, 'variable.input'],
 
