@@ -1409,41 +1409,37 @@ output json
             <div className='utlx-editor-container'>
                 <div className='utlx-editor-header'>
                     <div className='utlx-editor-title'>
-                        <span className='codicon codicon-code'></span>
+                        <span className='codicon codicon-arrow-swap'></span>
                         <span>UTLX Transformation</span>
                     </div>
-                    <div className='utlx-editor-toolbar'>
+                    <div className='utlx-panel-actions'>
                         <button
-                            className='theia-button secondary'
                             title='Function Builder - Browse and insert stdlib functions'
                             onClick={() => this.openFunctionBuilder()}
                         >
-                            <span className='codicon codicon-symbol-method'></span>
-                            Function Builder
+                            <span className='codicon codicon-symbol-method' style={{fontSize: '11px'}}></span>
+                            {' '}Function Builder
                         </button>
                         <button
-                            className='theia-button secondary'
                             title='Load UTLX File'
                             onClick={() => this.handleLoadFile()}
                         >
-                            <span className='codicon codicon-folder-opened'></span>
-                            Load
+                            <span className='codicon codicon-folder-opened' style={{fontSize: '11px'}}></span>
+                            {' '}Load
                         </button>
                         <button
-                            className='theia-button secondary'
                             title='Save UTLX File'
                             onClick={() => this.handleSaveFile()}
                         >
-                            <span className='codicon codicon-save'></span>
-                            Save
+                            <span className='codicon codicon-save' style={{fontSize: '11px'}}></span>
+                            {' '}Save
                         </button>
                         <button
-                            className='theia-button secondary'
                             title='Clear Editor'
                             onClick={() => this.clearContent()}
                         >
-                            <span className='codicon codicon-clear-all'></span>
-                            Clear
+                            <span className='codicon codicon-clear-all' style={{fontSize: '11px'}}></span>
+                            {' '}Clear
                         </button>
                     </div>
                 </div>
