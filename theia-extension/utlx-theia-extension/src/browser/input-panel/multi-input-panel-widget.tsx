@@ -122,6 +122,7 @@ export class MultiInputPanelWidget extends ReactWidget {
     private udmDialogPosition = { x: 0, y: 0 };
     private isDraggingDialog = false;
     private dragOffset = { x: 0, y: 0 };
+    private udmViewMode: 'raw' | 'pretty' = 'pretty';
 
     constructor() {
         super();
@@ -440,7 +441,7 @@ export class MultiInputPanelWidget extends ReactWidget {
 
                 {/* UDM View Dialog */}
                 {udmDialogOpen && activeInput.udmLanguage && (
-                    <div className='utlx-dialog-overlay'>
+                    <div className='utlx-udm-dialog-overlay'>
                         <div
                             className='utlx-udm-dialog'
                             style={{
@@ -462,10 +463,25 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     <span className='codicon codicon-close'></span>
                                 </button>
                             </div>
+                            <div className='utlx-udm-dialog-toolbar'>
+                                <label>
+                                    View:
+                                    <select
+                                        value={this.udmViewMode}
+                                        onChange={(e) => {
+                                            this.udmViewMode = (e.target as HTMLSelectElement).value as 'raw' | 'pretty';
+                                            this.update();
+                                        }}
+                                    >
+                                        <option value='raw'>Raw</option>
+                                        <option value='pretty'>Pretty</option>
+                                    </select>
+                                </label>
+                            </div>
                             <div className='utlx-udm-dialog-content'>
                                 <textarea
                                     className='utlx-udm-viewer'
-                                    value={activeInput.udmLanguage}
+                                    value={this.udmViewMode === 'pretty' ? this.formatUdm(activeInput.udmLanguage) : activeInput.udmLanguage}
                                     readOnly
                                     spellCheck={false}
                                 />
@@ -1006,7 +1022,103 @@ export class MultiInputPanelWidget extends ReactWidget {
 
     private handleViewUdm(): void {
         this.udmDialogPosition = { x: 0, y: 0 }; // Reset position when opening
+        this.udmViewMode = 'pretty'; // Default to pretty view
         this.setState({ udmDialogOpen: true });
+    }
+
+    private formatUdm(content: string): string {
+        if (!content || !content.trim()) {
+            return content;
+        }
+
+        try {
+            return this.prettyPrintUdm(content);
+        } catch (e) {
+            // If pretty printing fails, return original
+            console.error('[MultiInputPanel] UDM pretty print error:', e);
+            return content;
+        }
+    }
+
+    /**
+     * Pretty print UDM format with proper indentation
+     * Based on UDM Language Spec v1.0
+     */
+    private prettyPrintUdm(udm: string): string {
+        const lines: string[] = [];
+        let indent = 0;
+        const tab = '  '; // 2 spaces per indent level
+
+        // Split into tokens while preserving structure
+        let i = 0;
+        let currentLine = '';
+
+        while (i < udm.length) {
+            const char = udm[i];
+
+            // Handle opening braces/brackets
+            if (char === '{' || char === '[') {
+                // Flush current line if it has content
+                if (currentLine.trim()) {
+                    lines.push(tab.repeat(indent) + currentLine.trim());
+                    currentLine = '';
+                }
+                // Add opening brace
+                lines.push(tab.repeat(indent) + char);
+                indent++;
+                i++;
+                // Skip whitespace after opening
+                while (i < udm.length && /\s/.test(udm[i])) i++;
+                continue;
+            }
+
+            // Handle closing braces/brackets
+            if (char === '}' || char === ']') {
+                // Flush current line
+                if (currentLine.trim()) {
+                    lines.push(tab.repeat(indent) + currentLine.trim());
+                    currentLine = '';
+                }
+                indent = Math.max(0, indent - 1);
+                lines.push(tab.repeat(indent) + char);
+                i++;
+                // Handle trailing comma
+                while (i < udm.length && /[\s,]/.test(udm[i])) i++;
+                continue;
+            }
+
+            // Handle commas
+            if (char === ',') {
+                currentLine += char;
+                lines.push(tab.repeat(indent) + currentLine.trim());
+                currentLine = '';
+                i++;
+                // Skip whitespace after comma
+                while (i < udm.length && /\s/.test(udm[i])) i++;
+                continue;
+            }
+
+            // Handle newlines in original
+            if (char === '\n') {
+                if (currentLine.trim()) {
+                    lines.push(tab.repeat(indent) + currentLine.trim());
+                    currentLine = '';
+                }
+                i++;
+                continue;
+            }
+
+            // Regular character
+            currentLine += char;
+            i++;
+        }
+
+        // Flush any remaining content
+        if (currentLine.trim()) {
+            lines.push(tab.repeat(indent) + currentLine.trim());
+        }
+
+        return lines.join('\n');
     }
 
     private handleCloseUdmDialog(): void {
