@@ -16,6 +16,7 @@ import {
   HealthResponse,
   FunctionRegistry,
 } from '../types/daemon';
+import { OperatorRegistry } from '../types/operator';
 
 export interface DaemonClientConfig {
   baseUrl: string;
@@ -123,6 +124,16 @@ export class DaemonClient {
   async getFunctions(): Promise<FunctionRegistry> {
     return this.withRetry(async () => {
       const response = await this.client.get<FunctionRegistry>('/api/functions');
+      return response.data;
+    });
+  }
+
+  /**
+   * Get operator registry
+   */
+  async getOperators(): Promise<OperatorRegistry> {
+    return this.withRetry(async () => {
+      const response = await this.client.get<OperatorRegistry>('/api/operators');
       return response.data;
     });
   }
