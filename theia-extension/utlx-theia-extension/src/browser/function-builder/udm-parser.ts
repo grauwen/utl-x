@@ -107,17 +107,79 @@ function parseObjectUdm(udm: string): UdmField[] {
 }
 
 /**
+ * Extract content between matching braces, handling nested braces properly
+ * @param text The text containing braces
+ * @param startIndex The index of the opening brace
+ * @returns The content between the braces (excluding the braces themselves), or null if no match
+ */
+function extractBracedContent(text: string, startIndex: number): string | null {
+    if (text[startIndex] !== '{') {
+        return null;
+    }
+
+    let braceCount = 0;
+    let inString = false;
+    let escapeNext = false;
+
+    for (let i = startIndex; i < text.length; i++) {
+        const char = text[i];
+
+        if (escapeNext) {
+            escapeNext = false;
+            continue;
+        }
+
+        if (char === '\\') {
+            escapeNext = true;
+            continue;
+        }
+
+        if (char === '"' && !escapeNext) {
+            inString = !inString;
+            continue;
+        }
+
+        if (!inString) {
+            if (char === '{') {
+                braceCount++;
+            } else if (char === '}') {
+                braceCount--;
+                if (braceCount === 0) {
+                    // Found matching closing brace
+                    return text.substring(startIndex + 1, i);
+                }
+            }
+        }
+    }
+
+    return null; // No matching brace found
+}
+
+/**
  * Parse full format: @Object(name: "X") { properties: { field: value } }
  */
 function parseFullFormatObject(udm: string): UdmField[] {
-    // Find the properties section
-    const propertiesMatch = udm.match(/properties:\s*\{([^}]*)\}/);
-    if (!propertiesMatch) {
+    // Find the properties section - need to handle nested braces properly
+    const propertiesIndex = udm.indexOf('properties:');
+    if (propertiesIndex === -1) {
         console.warn('[UdmParser] Could not find properties section in:', udm.substring(0, 100));
         return [];
     }
 
-    const propertiesContent = propertiesMatch[1];
+    // Find the opening brace after 'properties:'
+    const openBraceIndex = udm.indexOf('{', propertiesIndex);
+    if (openBraceIndex === -1) {
+        console.warn('[UdmParser] Could not find opening brace for properties in:', udm.substring(0, 100));
+        return [];
+    }
+
+    // Extract content between matching braces
+    const propertiesContent = extractBracedContent(udm, openBraceIndex);
+    if (!propertiesContent) {
+        console.warn('[UdmParser] Could not extract properties content from:', udm.substring(0, 100));
+        return [];
+    }
+
     return parseFieldsFromContent(propertiesContent);
 }
 
@@ -190,11 +252,39 @@ function parseFieldValue(name: string, value: string): UdmField | null {
 
     // @Object annotation - nested object
     if (value.startsWith('@Object')) {
-        // Try to extract nested properties
-        const nestedMatch = value.match(/@Object[^{]*\{([^}]*)\}/);
-        if (nestedMatch) {
-            const nestedFields = parseFieldsFromContent(nestedMatch[1]);
-            return { name, type: 'object', fields: nestedFields };
+        // Skip the @Object annotation part (name and metadata in parentheses)
+        // First, skip past the annotation parentheses if present
+        let bodySearchStart = '@Object'.length;
+        if (value[bodySearchStart] === '(') {
+            // Find matching closing paren
+            const parenCloseIndex = value.indexOf(')', bodySearchStart);
+            if (parenCloseIndex !== -1) {
+                bodySearchStart = parenCloseIndex + 1;
+            }
+        }
+
+        // Now find the actual object body (the {...} after the annotation)
+        const bodyStartIndex = value.indexOf('{', bodySearchStart);
+        if (bodyStartIndex !== -1) {
+            const objectBody = extractBracedContent(value, bodyStartIndex);
+            if (objectBody) {
+                // Check if this has a properties section
+                if (objectBody.includes('properties:')) {
+                    const propertiesIndex = objectBody.indexOf('properties:');
+                    const propsOpenBrace = objectBody.indexOf('{', propertiesIndex);
+                    if (propsOpenBrace !== -1) {
+                        const propsContent = extractBracedContent(objectBody, propsOpenBrace);
+                        if (propsContent) {
+                            const nestedFields = parseFieldsFromContent(propsContent);
+                            return { name, type: 'object', fields: nestedFields };
+                        }
+                    }
+                } else {
+                    // Simple object without properties section
+                    const nestedFields = parseFieldsFromContent(objectBody);
+                    return { name, type: 'object', fields: nestedFields };
+                }
+            }
         }
         return { name, type: 'object', fields: [] };
     }
