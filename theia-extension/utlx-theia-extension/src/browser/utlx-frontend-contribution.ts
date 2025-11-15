@@ -228,12 +228,12 @@ export class UTLXFrontendContribution implements
                 }, 100);
             });
 
-            // Set initial panel sizes for 2:3:2 ratio
+            // Set initial panel sizes for 1:1:1 ratio (equal thirds)
             // Wait a bit for the layout to settle, then set sizes
             setTimeout(() => {
                 const totalWidth = window.innerWidth;
-                const leftWidth = Math.floor(totalWidth * (2 / 7));
-                const rightWidth = Math.floor(totalWidth * (2 / 7));
+                const leftWidth = Math.floor(totalWidth * (1 / 3));
+                const rightWidth = Math.floor(totalWidth * (1 / 3));
 
                 // Set panel sizes (in pixels)
                 this.shell.leftPanelHandler.resize(leftWidth);
@@ -243,7 +243,7 @@ export class UTLXFrontendContribution implements
                     totalWidth,
                     leftWidth,
                     rightWidth,
-                    ratio: '2:3:2'
+                    ratio: '1:1:1'
                 });
             }, 100);
 

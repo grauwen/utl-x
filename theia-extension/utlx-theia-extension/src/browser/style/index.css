@@ -560,18 +560,18 @@
 }
 
 .utlx-workbench-pane.left {
-    flex: 2 1 0%;  /* 2/7 of total width - allows resize */
-    min-width: 250px;
+    flex: 1 1 33.33%;  /* 1/3 of total width - allows resize */
+    min-width: 300px;
 }
 
 .utlx-workbench-pane.middle {
-    flex: 3 1 0%;  /* 3/7 of total width - allows resize */
-    min-width: 350px;
+    flex: 1 1 33.33%;  /* 1/3 of total width - allows resize */
+    min-width: 300px;
 }
 
 .utlx-workbench-pane.right {
-    flex: 2 1 0%;  /* 2/7 of total width - allows resize */
-    min-width: 250px;
+    flex: 1 1 33.33%;  /* 1/3 of total width - allows resize */
+    min-width: 300px;
 }
 
 /* ===== Health Monitor Widget ===== */
@@ -777,7 +777,11 @@
     border-radius: 3px;
     font-size: 13px;
     font-weight: 600;
-    max-width: 200px;
+    max-width: 150px;
+    min-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .utlx-input-name-editor:focus {
