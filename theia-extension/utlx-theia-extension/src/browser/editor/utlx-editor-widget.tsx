@@ -12,6 +12,8 @@ import { MonacoEditorProvider } from '@theia/monaco/lib/browser/monaco-editor-pr
 import { MonacoEditor } from '@theia/monaco/lib/browser/monaco-editor';
 import URI from '@theia/core/lib/common/uri';
 import { DisposableCollection } from '@theia/core/lib/common/disposable';
+import { FileDialogService, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
+import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import * as monaco from '@theia/monaco-editor-core';
 import { UTLXEventService } from '../events/utlx-event-service';
 import { parseUTLXHeaders } from '../parser/utlx-header-parser';
@@ -36,6 +38,12 @@ export class UTLXEditorWidget extends ReactWidget {
 
     @inject(UTLX_SERVICE_SYMBOL)
     protected readonly utlxService!: UTLXService;
+
+    @inject(FileDialogService)
+    protected readonly fileDialogService!: FileDialogService;
+
+    @inject(FileService)
+    protected readonly fileService!: FileService;
 
     protected editor: monaco.editor.IStandaloneCodeEditor | undefined;
     protected editorContainer: HTMLDivElement | undefined;
@@ -1499,19 +1507,36 @@ output json
     }
 
     /**
-     * Handle save file button click
+     * Handle save file button click - uses native Electron save dialog
      */
     protected async handleSaveFile(): Promise<void> {
-        const content = this.saveFile();
+        const content = await this.saveFile();
 
-        // Create download link
-        const blob = new Blob([await content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'transformation.utlx';
-        a.click();
-        URL.revokeObjectURL(url);
+        console.log('Save button clicked - using Theia FileDialogService');
+
+        try {
+            // Use Theia's FileDialogService which triggers Electron's native save dialog
+            const saveDialogProps: SaveFileDialogProps = {
+                title: 'Save UTLX File',
+                filters: {
+                    'UTLX Files': ['utlx'],
+                    'All Files': ['*']
+                },
+                inputValue: 'transformation.utlx'
+            };
+
+            const targetUri = await this.fileDialogService.showSaveDialog(saveDialogProps);
+
+            if (targetUri) {
+                // Write the file to the selected location
+                await this.fileService.write(targetUri, content);
+                console.log(`UTLX file saved to: ${targetUri.toString()}`);
+            } else {
+                console.log('Save dialog cancelled by user');
+            }
+        } catch (error) {
+            console.error('Error saving UTLX file:', error);
+        }
     }
 
     dispose(): void {
