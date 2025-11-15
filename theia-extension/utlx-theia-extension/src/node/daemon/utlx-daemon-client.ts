@@ -21,6 +21,7 @@ import {
     HoverInfo,
     CompletionItem,
     FunctionInfo,
+    OperatorInfo,
     ModeConfiguration,
     ValidateUdmRequest,
     ValidateUdmResult
@@ -498,6 +499,15 @@ export class UTLXDaemonClient extends EventEmitter {
         const response = await this.httpRequest('/api/functions', 'GET');
         // The response is FunctionRegistry with {functions: FunctionInfo[], ...}
         return response.functions || [];
+    }
+
+    /**
+     * Get operators registry from daemon
+     */
+    async getOperators(): Promise<OperatorInfo[]> {
+        const response = await this.httpRequest('/api/operators', 'GET');
+        // The response is OperatorRegistryData with {operators: OperatorInfo[], ...}
+        return response.operators || [];
     }
 
     /**

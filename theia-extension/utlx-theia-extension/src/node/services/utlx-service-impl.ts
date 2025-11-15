@@ -18,6 +18,7 @@ import {
     HoverInfo,
     CompletionItem,
     FunctionInfo,
+    OperatorInfo,
     ModeConfiguration,
     UTLXMode,
     ValidateUdmRequest,
@@ -194,6 +195,18 @@ export class UTLXServiceImpl implements UTLXService {
             return await this.daemonClient.getFunctions();
         } catch (error) {
             console.error('Get functions error:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Get operators from daemon
+     */
+    async getOperators(): Promise<OperatorInfo[]> {
+        try {
+            return await this.daemonClient.getOperators();
+        } catch (error) {
+            console.error('Get operators error:', error);
             return [];
         }
     }

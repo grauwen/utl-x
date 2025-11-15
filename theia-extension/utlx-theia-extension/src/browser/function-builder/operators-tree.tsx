@@ -6,15 +6,17 @@
  */
 
 import * as React from 'react';
-import { OperatorInfo, getOperatorsByCategory } from './operators-data';
+import { OperatorInfo } from './operators-data';
 
 export interface OperatorsTreeProps {
+    operators: OperatorInfo[];
     onInsertOperator: (operator: OperatorInfo) => void;
     selectedOperator: OperatorInfo | null;
     onSelectOperator: (operator: OperatorInfo | null) => void;
 }
 
 export const OperatorsTree: React.FC<OperatorsTreeProps> = ({
+    operators,
     onInsertOperator,
     selectedOperator,
     onSelectOperator
@@ -23,7 +25,26 @@ export const OperatorsTree: React.FC<OperatorsTreeProps> = ({
         new Set() // Start collapsed - user can expand categories as needed
     );
 
-    const operatorsByCategory = React.useMemo(() => getOperatorsByCategory(), []);
+    const operatorsByCategory = React.useMemo(() => {
+        // Group operators by category
+        const grouped = new Map<string, OperatorInfo[]>();
+        for (const op of operators) {
+            if (!grouped.has(op.category)) {
+                grouped.set(op.category, []);
+            }
+            grouped.get(op.category)!.push(op);
+        }
+
+        // Sort categories in logical order
+        const orderedCategories = ['Arithmetic', 'Comparison', 'Logical', 'Special'];
+        const orderedMap = new Map<string, OperatorInfo[]>();
+        for (const category of orderedCategories) {
+            if (grouped.has(category)) {
+                orderedMap.set(category, grouped.get(category)!);
+            }
+        }
+        return orderedMap;
+    }, [operators]);
 
     const toggleCategory = (category: string) => {
         const newExpanded = new Set(expandedCategories);

@@ -20,7 +20,7 @@ import { FieldTree } from './field-tree';
 import { InsertionContext, CursorValue, getContextDescription, analyzeInsertionContext } from './context-analyzer';
 import { generateFunctionInsertion, generateInsertionPreview } from './insertion-generator';
 import { OperatorsTree } from './operators-tree';
-import { OperatorInfo } from './operators-data';
+import { OperatorInfo, UTLX_OPERATORS } from './operators-data';
 import { generateOperatorInsertion, generateOperatorInsertionPreview } from './operator-insertion-generator';
 
 /**
@@ -28,6 +28,7 @@ import { generateOperatorInsertion, generateOperatorInsertionPreview } from './o
  */
 export interface FunctionBuilderDialogProps {
     functions: FunctionInfo[];
+    operators: OperatorInfo[];
     availableInputs: string[];
     udmMap: Map<string, string>;
     inputFormatsMap: Map<string, string>; // inputName -> format (json, csv, xml, etc.)
@@ -52,6 +53,7 @@ function getBestMatchScore(name: string, query: string): number {
  */
 export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     functions,
+    operators: operatorsProp,
     availableInputs,
     udmMap,
     inputFormatsMap,
@@ -63,6 +65,8 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     const [expandedCategories, setExpandedCategories] = React.useState<Set<string>>(new Set());
     const [selectedFunction, setSelectedFunction] = React.useState<FunctionInfo | null>(null);
     const [selectedOperator, setSelectedOperator] = React.useState<OperatorInfo | null>(null);
+    // Use operators from props, fallback to hardcoded if empty
+    const operators = operatorsProp.length > 0 ? operatorsProp : UTLX_OPERATORS;
     const [showHelp, setShowHelp] = React.useState(false);
     const [showOperatorHelp, setShowOperatorHelp] = React.useState(false);
     const [splitPosition, setSplitPosition] = React.useState(66.67); // Start at 2/3 down
@@ -802,6 +806,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                 {/* Top Part: Operators Tree */}
                                 <div className='operators-list-pane' style={{ height: `${splitPosition}%` }}>
                                     <OperatorsTree
+                                        operators={operators}
                                         onInsertOperator={handleInsertOperator}
                                         selectedOperator={selectedOperator}
                                         onSelectOperator={setSelectedOperator}

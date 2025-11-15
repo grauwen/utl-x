@@ -227,6 +227,22 @@ export interface ParameterInfo {
 }
 
 /**
+ * Operator information
+ */
+export interface OperatorInfo {
+    symbol: string;
+    name: string;
+    category: string;
+    description: string;
+    syntax: string;
+    precedence: number;
+    associativity: 'left' | 'right';
+    examples: string[];
+    tooltip: string;
+    unary?: boolean;
+}
+
+/**
  * Mode configuration
  */
 export interface ModeConfiguration {
@@ -280,6 +296,11 @@ export interface UTLXService {
      * Get available standard library functions
      */
     getFunctions(): Promise<FunctionInfo[]>;
+
+    /**
+     * Get available UTLX operators
+     */
+    getOperators(): Promise<OperatorInfo[]>;
 
     /**
      * Set mode configuration

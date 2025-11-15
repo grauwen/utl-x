@@ -18,7 +18,7 @@ import { parseUTLXHeaders } from '../parser/utlx-header-parser';
 import { FunctionBuilderDialog } from '../function-builder/function-builder-dialog';
 import { UTLXService } from '../../common/protocol';
 import { UTLX_SERVICE_SYMBOL } from '../../common/protocol';
-import { FunctionInfo } from '../../common/protocol';
+import { FunctionInfo, OperatorInfo } from '../../common/protocol';
 import { analyzeInsertionContext, InsertionContext } from '../function-builder/context-analyzer';
 
 export const UTLX_EDITOR_WIDGET_ID = 'utlx-editor';
@@ -53,6 +53,7 @@ export class UTLXEditorWidget extends ReactWidget {
     // Function Builder state
     protected showFunctionBuilderDialog: boolean = false;
     protected functionBuilderFunctions: FunctionInfo[] = [];
+    protected functionBuilderOperators: OperatorInfo[] = [];
 
     constructor() {
         super();
@@ -1234,6 +1235,10 @@ output json
             this.functionBuilderFunctions = await this.utlxService.getFunctions();
             console.log('[UTLXEditor] Loaded', this.functionBuilderFunctions.length, 'stdlib functions');
 
+            // Fetch operators from daemon
+            this.functionBuilderOperators = await this.utlxService.getOperators();
+            console.log('[UTLXEditor] Loaded', this.functionBuilderOperators.length, 'operators');
+
             // Log what we're passing to Function Builder
             console.log('[UTLXEditor] Opening Function Builder with:', {
                 inputNamesFromHeaders: this.inputNamesFromHeaders,
@@ -1462,6 +1467,7 @@ output json
                 {this.showFunctionBuilderDialog && (
                     <FunctionBuilderDialog
                         functions={this.functionBuilderFunctions}
+                        operators={this.functionBuilderOperators}
                         availableInputs={Array.from(new Set([...this.inputNamesFromHeaders, ...Array.from(this.inputUdmMap.keys())]))}
                         udmMap={this.inputUdmMap}
                         inputFormatsMap={this.inputFormatsMap}
