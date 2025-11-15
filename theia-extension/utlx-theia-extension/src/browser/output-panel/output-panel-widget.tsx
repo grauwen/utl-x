@@ -152,21 +152,24 @@ export class OutputPanelWidget extends ReactWidget {
                             disabled={!currentContent}
                             title='Copy to clipboard'
                         >
-                            📋 Copy
+                            <span className='codicon codicon-copy' style={{fontSize: '11px'}}></span>
+                            {' '}Copy
                         </button>
                         <button
                             onClick={() => this.handleSave()}
                             disabled={!currentContent}
                             title='Save to file'
                         >
-                            💾 Save
+                            <span className='codicon codicon-save' style={{fontSize: '11px'}}></span>
+                            {' '}Save
                         </button>
                         <button
                             onClick={() => this.handleClear()}
                             disabled={!currentContent && !currentError}
                             title='Clear output'
                         >
-                            🗑️ Clear
+                            <span className='codicon codicon-clear-all' style={{fontSize: '11px'}}></span>
+                            {' '}Clear
                         </button>
                     </div>
                 </div>

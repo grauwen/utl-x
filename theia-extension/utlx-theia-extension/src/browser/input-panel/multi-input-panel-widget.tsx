@@ -252,14 +252,16 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 disabled={loading}
                                 title='Load from file'
                             >
-                                Load
+                                <span className='codicon codicon-folder-opened' style={{fontSize: '11px'}}></span>
+                                {' '}Load
                             </button>
                             <button
                                 onClick={() => this.handleClear()}
                                 disabled={loading || !currentContent}
                                 title='Clear input'
                             >
-                                Clear
+                                <span className='codicon codicon-clear-all' style={{fontSize: '11px'}}></span>
+                                {' '}Clear
                             </button>
                         </div>
                     </div>
