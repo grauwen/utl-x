@@ -6,6 +6,8 @@ Paralellization, see https://github.com/grauwen/utl-x/blob/main/docs/architectur
 ----
 Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architecture/module-system-design.md
 ----
+So the new Theia/VS Code standard would require creating a VS Code extension that wraps the LSP client. This hasn't been implemented yet.
+----
 So the complete list of UTLX operators is:
 
   Arithmetic: +, -, *, /, %, **Comparison: ==, !=, <, >, <=, >=Logical: &&, ||, !Special: |> (pipe), ?. (safe navigation), ?? (nullish coalescing), @ (attribute access), => (lambda
