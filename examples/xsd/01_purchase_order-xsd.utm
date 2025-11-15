@@ -1,0 +1,1966 @@
+@udm-version: 1.0
+@parsed-at: "2025-11-15T19:41:37.237441+01:00
+[
+  Europe/Amsterdam
+]
+"
+@Object(name: "xs:schema",
+metadata:
+{
+  __schemaType: "xsd-schema",
+  __xsdVersion: "1.0",
+  __targetNamespace: "http://example.com/schemas/purchase-order",
+  __xsdPattern: "garden-of-eden",
+  __xsdGlobalElements: "1",
+  __xsdGlobalTypes: "18",
+  __xsdInlineTypes: "0"
+}
+)
+{
+  attributes:
+  {
+    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+    xmlns:po: "http://example.com/schemas/purchase-order",
+    targetNamespace: "http://example.com/schemas/purchase-order",
+    elementFormDefault: "qualified"
+  }
+  properties:
+  {
+    "xs:annotation": @Object(name: "xs:annotation",
+    metadata:
+    {
+      __schemaType: "xsd-annotation",
+      __scope: "local"
+    }
+    )
+    {
+      attributes:
+      {
+        xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+        xmlns:po: "http://example.com/schemas/purchase-order"
+      }
+      properties:
+      {
+        "xs:documentation": @Object(name: "xs:documentation",
+        metadata:
+        {
+          __schemaType: "xsd-documentation",
+          __scope: "local"
+        }
+        )
+        {
+          attributes:
+          {
+            xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+            xmlns:po: "http://example.com/schemas/purchase-order"
+          }
+          properties:
+          {
+            _text: "Purchase Order Schema for procurement and supply chain management systems.\n      Version: 1.0\n      Last Updated: 2024-10-27"
+          }
+        }
+      }
+    }
+    "xs:element": @Object(name: "xs:element",
+    metadata:
+    {
+      __schemaType: "xsd-element",
+      __scope: "global",
+      __xsdElementDeclaration: "global"
+    }
+    )
+    {
+      attributes:
+      {
+        name: "PurchaseOrder",
+        type: "po:PurchaseOrderType",
+        xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+        xmlns:po: "http://example.com/schemas/purchase-order"
+      }
+      properties:
+      {
+      }
+    }
+    "xs:complexType":
+    [
+      @Object(name: "xs:complexType",
+      metadata:
+      {
+        __schemaType: "xsd-complexType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "PurchaseOrderType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:sequence": @Object(name: "xs:sequence",
+          metadata:
+          {
+            __schemaType: "xsd-sequence",
+            __scope: "local"
+          }
+          )
+          {
+            attributes:
+            {
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:element":
+              [
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "OrderInfo",
+                    type: "po:OrderInfoType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Vendor",
+                    type: "po:PartyType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Buyer",
+                    type: "po:PartyType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "ShippingAddress",
+                    type: "po:AddressType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "BillingAddress",
+                    type: "po:AddressType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "LineItems",
+                    type: "po:LineItemsType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "PaymentTerms",
+                    type: "po:PaymentTermsType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Notes",
+                    type: "xs:string",
+                    minOccurs: "0",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+      @Object(name: "xs:complexType",
+      metadata:
+      {
+        __schemaType: "xsd-complexType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "OrderInfoType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:sequence": @Object(name: "xs:sequence",
+          metadata:
+          {
+            __schemaType: "xsd-sequence",
+            __scope: "local"
+          }
+          )
+          {
+            attributes:
+            {
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:element":
+              [
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "PONumber",
+                    type: "po:PONumberType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "OrderDate",
+                    type: "xs:date",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "RequestedDeliveryDate",
+                    type: "xs:date",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Priority",
+                    type: "po:PriorityType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Status",
+                    type: "po:OrderStatusType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Currency",
+                    type: "po:CurrencyCodeType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+      @Object(name: "xs:complexType",
+      metadata:
+      {
+        __schemaType: "xsd-complexType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "PartyType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:sequence": @Object(name: "xs:sequence",
+          metadata:
+          {
+            __schemaType: "xsd-sequence",
+            __scope: "local"
+          }
+          )
+          {
+            attributes:
+            {
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:element":
+              [
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "PartyID",
+                    type: "xs:string",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Name",
+                    type: "xs:string",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "TaxID",
+                    type: "xs:string",
+                    minOccurs: "0",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "ContactPerson",
+                    type: "xs:string",
+                    minOccurs: "0",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Email",
+                    type: "po:EmailType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Phone",
+                    type: "po:PhoneType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Address",
+                    type: "po:AddressType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+      @Object(name: "xs:complexType",
+      metadata:
+      {
+        __schemaType: "xsd-complexType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "AddressType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:sequence": @Object(name: "xs:sequence",
+          metadata:
+          {
+            __schemaType: "xsd-sequence",
+            __scope: "local"
+          }
+          )
+          {
+            attributes:
+            {
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:element":
+              [
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Street",
+                    type: "xs:string",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "City",
+                    type: "xs:string",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "State",
+                    type: "xs:string",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "PostalCode",
+                    type: "xs:string",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Country",
+                    type: "po:CountryCodeType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+      @Object(name: "xs:complexType",
+      metadata:
+      {
+        __schemaType: "xsd-complexType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "LineItemsType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:sequence": @Object(name: "xs:sequence",
+          metadata:
+          {
+            __schemaType: "xsd-sequence",
+            __scope: "local"
+          }
+          )
+          {
+            attributes:
+            {
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:element": @Object(name: "xs:element",
+              metadata:
+              {
+                __schemaType: "xsd-element",
+                __scope: "local",
+                __xsdElementDeclaration: "local"
+              }
+              )
+              {
+                attributes:
+                {
+                  name: "LineItem",
+                  type: "po:LineItemType",
+                  maxOccurs: "unbounded",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+            }
+          }
+        }
+      }
+      @Object(name: "xs:complexType",
+      metadata:
+      {
+        __schemaType: "xsd-complexType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "LineItemType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:sequence": @Object(name: "xs:sequence",
+          metadata:
+          {
+            __schemaType: "xsd-sequence",
+            __scope: "local"
+          }
+          )
+          {
+            attributes:
+            {
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:element":
+              [
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "LineNumber",
+                    type: "xs:positiveInteger",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "ProductID",
+                    type: "xs:string",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Description",
+                    type: "xs:string",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "Quantity",
+                    type: "xs:positiveInteger",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "UnitOfMeasure",
+                    type: "po:UnitOfMeasureType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "UnitPrice",
+                    type: "po:MoneyType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "LineTotal",
+                    type: "po:MoneyType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "RequestedDeliveryDate",
+                    type: "xs:date",
+                    minOccurs: "0",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+      @Object(name: "xs:complexType",
+      metadata:
+      {
+        __schemaType: "xsd-complexType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "PaymentTermsType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:sequence": @Object(name: "xs:sequence",
+          metadata:
+          {
+            __schemaType: "xsd-sequence",
+            __scope: "local"
+          }
+          )
+          {
+            attributes:
+            {
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:element":
+              [
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "PaymentMethod",
+                    type: "po:PaymentMethodType",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "PaymentDueDays",
+                    type: "xs:positiveInteger",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "DiscountPercent",
+                    type: "po:PercentType",
+                    minOccurs: "0",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:element",
+                metadata:
+                {
+                  __schemaType: "xsd-element",
+                  __scope: "local",
+                  __xsdElementDeclaration: "local"
+                }
+                )
+                {
+                  attributes:
+                  {
+                    name: "DiscountDays",
+                    type: "xs:positiveInteger",
+                    minOccurs: "0",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+    "xs:simpleType":
+    [
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "PONumberType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:string",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:pattern": @Object(name: "xs:pattern")
+              {
+                attributes:
+                {
+                  value: "PO-
+                  [
+                    0-9
+                  ]
+                  {
+                    4
+                  }
+                  -
+                  [
+                    0-9
+                  ]
+                  {
+                    6
+                  }
+                  ",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+            }
+          }
+        }
+      }
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "PriorityType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:string",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:enumeration":
+              [
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "low",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "normal",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "high",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "urgent",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "OrderStatusType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:string",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:enumeration":
+              [
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "draft",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "submitted",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "approved",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "in-production",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "shipped",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "delivered",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "cancelled",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "CurrencyCodeType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:string",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:pattern": @Object(name: "xs:pattern")
+              {
+                attributes:
+                {
+                  value: "
+                  [
+                    A-Z
+                  ]
+                  {
+                    3
+                  }
+                  ",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+            }
+          }
+        }
+      }
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "CountryCodeType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:string",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:pattern": @Object(name: "xs:pattern")
+              {
+                attributes:
+                {
+                  value: "
+                  [
+                    A-Z
+                  ]
+                  {
+                    2,
+                    3
+                  }
+                  ",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+            }
+          }
+        }
+      }
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "EmailType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:string",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:pattern": @Object(name: "xs:pattern")
+              {
+                attributes:
+                {
+                  value: "
+                  [
+                    ^@
+                  ]
+                  +@
+                  [
+                    ^\\.
+                  ]
+                  +\\..+",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+            }
+          }
+        }
+      }
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "PhoneType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:string",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:pattern": @Object(name: "xs:pattern")
+              {
+                attributes:
+                {
+                  value: "\\+
+                  [
+                    0-9
+                  ]
+                  {
+                    1,
+                    15
+                  }
+                  ",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+            }
+          }
+        }
+      }
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "MoneyType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:decimal",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:fractionDigits": @Object(name: "xs:fractionDigits")
+              {
+                attributes:
+                {
+                  value: "2",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+              "xs:minInclusive": @Object(name: "xs:minInclusive")
+              {
+                attributes:
+                {
+                  value: "0",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+            }
+          }
+        }
+      }
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "PercentType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:decimal",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:fractionDigits": @Object(name: "xs:fractionDigits")
+              {
+                attributes:
+                {
+                  value: "2",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+              "xs:minInclusive": @Object(name: "xs:minInclusive")
+              {
+                attributes:
+                {
+                  value: "0",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+              "xs:maxInclusive": @Object(name: "xs:maxInclusive")
+              {
+                attributes:
+                {
+                  value: "100",
+                  xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                  xmlns:po: "http://example.com/schemas/purchase-order"
+                }
+                properties:
+                {
+                }
+              }
+            }
+          }
+        }
+      }
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "UnitOfMeasureType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:string",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:enumeration":
+              [
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "EA",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "PCS",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "BOX",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "KG",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "LB",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "M",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "FT",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "L",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "GAL",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+      @Object(name: "xs:simpleType",
+      metadata:
+      {
+        __schemaType: "xsd-simpleType",
+        __scope: "global",
+        __xsdTypeDeclaration: "global"
+      }
+      )
+      {
+        attributes:
+        {
+          name: "PaymentMethodType",
+          xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+          xmlns:po: "http://example.com/schemas/purchase-order"
+        }
+        properties:
+        {
+          "xs:restriction": @Object(name: "xs:restriction")
+          {
+            attributes:
+            {
+              base: "xs:string",
+              xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+              xmlns:po: "http://example.com/schemas/purchase-order"
+            }
+            properties:
+            {
+              "xs:enumeration":
+              [
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "credit-card",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "wire-transfer",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "check",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "purchase-order",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+                @Object(name: "xs:enumeration")
+                {
+                  attributes:
+                  {
+                    value: "letter-of-credit",
+                    xmlns:xs: "http://www.w3.org/2001/XMLSchema",
+                    xmlns:po: "http://example.com/schemas/purchase-order"
+                  }
+                  properties:
+                  {
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}
