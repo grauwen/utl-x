@@ -5,6 +5,26 @@
 @import './toolbar.css';
 @import './function-builder.css';
 
+/* Keep tab bar visible but remove black background */
+#theia-main-content-panel .lm-TabBar .lm-TabBar-tab {
+    background: transparent !important;
+    border: none !important;
+}
+
+#theia-main-content-panel .lm-TabBar .lm-TabBar-tab.lm-mod-current {
+    background: transparent !important;
+}
+
+/* Hide tab bar border */
+#theia-main-content-panel .lm-TabBar::after {
+    display: none !important;
+}
+
+/* Remove tab close button */
+#theia-main-content-panel .lm-TabBar-tabCloseIcon {
+    display: none !important;
+}
+
 /* Workbench Container */
 .utlx-workbench-container {
     display: flex;
@@ -434,6 +454,18 @@
     height: 100%;
     width: 100%;
     background: var(--theia-editor-background);
+}
+
+/* Widget title - replaces hidden tab title */
+.utlx-widget-title {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--theia-tab-inactiveBackground);
+    color: var(--theia-foreground);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--theia-panel-border);
 }
 
 .utlx-editor-header {

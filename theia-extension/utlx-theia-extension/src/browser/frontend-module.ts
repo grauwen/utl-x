@@ -6,7 +6,7 @@
 
 import './style/index.css';
 import { ContainerModule } from 'inversify';
-import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory } from '@theia/core/lib/browser';
+import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory, OpenHandler } from '@theia/core/lib/browser';
 import { LanguageGrammarDefinitionContribution } from '@theia/monaco/lib/browser/textmate';
 import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
@@ -17,6 +17,7 @@ import { UTLXToolbarWidget } from './toolbar/utlx-toolbar-widget';
 import { UTLXFrontendContribution } from './utlx-frontend-contribution';
 import { UTLXEventService } from './events/utlx-event-service';
 import { UTLXLanguageGrammarContribution } from './language/utlx-language';
+import { UTLXOpenHandler } from './utlx-open-handler';
 
 export default new ContainerModule(bind => {
     console.log('[UTLX Frontend Module] ===== LOADING STARTED =====');
@@ -140,6 +141,12 @@ export default new ContainerModule(bind => {
         console.log('[UTLX Frontend Module] Binding language grammar contribution...');
         bind(LanguageGrammarDefinitionContribution).to(UTLXLanguageGrammarContribution).inSingletonScope();
         console.log('[UTLX Frontend Module] ✓ Language grammar contribution bound');
+
+        // Bind UTLX open handler to prevent .utlx files from opening as tabs
+        console.log('[UTLX Frontend Module] Binding UTLX open handler...');
+        bind(UTLXOpenHandler).toSelf().inSingletonScope();
+        bind(OpenHandler).toService(UTLXOpenHandler);
+        console.log('[UTLX Frontend Module] ✓ UTLX open handler bound');
 
         console.log('[UTLX Frontend Module] ===== ALL BINDINGS SUCCESSFUL =====');
     } catch (error) {
