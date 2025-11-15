@@ -11,8 +11,8 @@ BUG snakeCase and titleCase
 025-11-15T20:44:40.828Z root WARN [FunctionBuilder] Duplicate function detected: snakeCase snakeCase(str: Str value) => Any logger-protocol.ts:118:9
 2025-11-15T20:44:40.828Z root WARN [FunctionBuilder] Duplicate function detected: titleCase titleCase(str: Str value) => Any
 
-
 Both in CasewFunctions (OK) and CaseConversionFunctions (take out)
+Check funcytion.kt and check de Test kt's belonging
 ----
 So the new Theia/VS Code standard would require creating a VS Code extension that wraps the LSP client. This hasn't been implemented yet.
 ----
