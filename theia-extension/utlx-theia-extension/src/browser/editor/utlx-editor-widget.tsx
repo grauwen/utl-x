@@ -61,6 +61,7 @@ export class UTLXEditorWidget extends ReactWidget {
         this.title.label = 'UTLX Transformation';
         this.title.caption = 'UTLX Transformation Editor';
         this.title.closable = false;
+        this.title.iconClass = 'codicon codicon-arrow-swap';
         this.addClass('utlx-editor-widget');
     }
 
@@ -1409,8 +1410,7 @@ output json
             <div className='utlx-editor-container'>
                 <div className='utlx-editor-header'>
                     <div className='utlx-editor-title'>
-                        <span className='codicon codicon-arrow-swap'></span>
-                        <span>UTLX Transformation</span>
+                        <span>UTLX code</span>
                     </div>
                     <div className='utlx-panel-actions'>
                         <button
