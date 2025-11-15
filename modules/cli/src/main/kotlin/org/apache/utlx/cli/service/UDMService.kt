@@ -42,12 +42,13 @@ class UDMService {
     companion object {
         /**
          * Supported formats for export/import
+         * Note: Abbreviated names (jsch, proto) are also accepted as aliases
          */
         val SUPPORTED_FORMATS = listOf(
             // Tier 1
             "json", "xml", "csv", "yaml",
             // Tier 2
-            "jsonschema", "xsd", "avro", "protobuf"
+            "jsch", "xsd", "avro", "proto"
         )
     }
 
@@ -262,7 +263,7 @@ class UDMService {
                 YAMLParser().parse(content, parseOpts)
             }
 
-            "jsonschema" -> {
+            "jsch", "jsonschema", "json-schema" -> {
                 JSONSchemaParser(content).parse()
             }
 
@@ -272,11 +273,11 @@ class UDMService {
                 XSDParser(content, arrayHints).parse()
             }
 
-            "avro" -> {
+            "avro", "avsc" -> {
                 AvroSchemaParser().parse(content)
             }
 
-            "protobuf" -> {
+            "proto", "protobuf" -> {
                 ProtobufSchemaParser().parse(content)
             }
 
@@ -324,7 +325,7 @@ class UDMService {
                 YAMLSerializer().serialize(udm, serOpts)
             }
 
-            "jsonschema" -> {
+            "jsch", "jsonschema", "json-schema" -> {
                 val draft = (options["draft"] as? String) ?: "2020-12"
                 JSONSchemaSerializer(draft, prettyPrint = true).serialize(udm)
             }
@@ -350,13 +351,13 @@ class UDMService {
                 serializer.serialize(udm)
             }
 
-            "avro" -> {
+            "avro", "avsc" -> {
                 val namespace = options["namespace"] as? String
                 val validate = (options["validate"] as? Boolean) ?: true
                 AvroSchemaSerializer(namespace, prettyPrint = true, validate).serialize(udm)
             }
 
-            "protobuf" -> {
+            "proto", "protobuf" -> {
                 ProtobufSchemaSerializer().serialize(udm)
             }
 
