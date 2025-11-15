@@ -38,6 +38,7 @@ function formatValueForUTLX(value: string): string {
 
 /**
  * Extract sample values for a field from UDM language string
+ * Enhanced to show full nested structure when no leaf values exist
  */
 function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArray: boolean): string[] {
     try {
@@ -84,6 +85,14 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
             values.push(...objValues);
         }
 
+        // If no values extracted (e.g., for schemas), extract full structure
+        if (values.length === 0) {
+            console.log('[extractSampleValues] No leaf values found, extracting full structure');
+            const structureValues = extractFullStructure(udmLanguage, fieldPath, isInputArray);
+            console.log('[extractSampleValues] Extracted structure:', structureValues.length, 'items');
+            return structureValues.slice(0, 10);
+        }
+
         // Return unique values (max 10)
         const uniqueValues = Array.from(new Set(values)).slice(0, 10);
         console.log('[extractSampleValues] Returning', uniqueValues.length, 'unique values:', uniqueValues);
@@ -92,6 +101,180 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
         console.error('[FieldTree] Error extracting sample values:', error);
         return [];
     }
+}
+
+/**
+ * Extract full structure when there are no leaf values (e.g., for schemas)
+ * Shows a preview of the nested content
+ */
+function extractFullStructure(udmLanguage: string, fieldPath: string, isInputArray: boolean): string[] {
+    const pathParts = fieldPath.split('.');
+
+    // Navigate to the target location in the UDM
+    let targetContent = udmLanguage;
+
+    // Find the properties section if this is an @Object format
+    const propsMatch = udmLanguage.match(/properties:\s*\{/);
+    if (propsMatch) {
+        const propsStart = udmLanguage.indexOf('{', propsMatch.index!);
+        targetContent = extractBracedContentString(udmLanguage, propsStart);
+    }
+
+    // Navigate through the path
+    for (const part of pathParts) {
+        // Find this field in the current content
+        const fieldPattern = new RegExp(`["']?${part}["']?\\s*:\\s*`);
+        const match = targetContent.match(fieldPattern);
+
+        if (!match) {
+            console.log('[extractFullStructure] Field not found:', part);
+            break;
+        }
+
+        const valueStart = match.index! + match[0].length;
+        const restContent = targetContent.substring(valueStart);
+
+        // Extract the value (could be @Object, {}, [], or primitive)
+        if (restContent.startsWith('@Object')) {
+            // Find the body of the @Object
+            const bodyMatch = restContent.match(/\)\s*\{/);
+            if (bodyMatch) {
+                const bodyStart = restContent.indexOf('{', bodyMatch.index!);
+                targetContent = extractBracedContentString(restContent, bodyStart);
+
+                // Check for properties section
+                const propsMatch2 = targetContent.match(/properties:\s*\{/);
+                if (propsMatch2) {
+                    const propsStart = targetContent.indexOf('{', propsMatch2.index!);
+                    targetContent = extractBracedContentString(targetContent, propsStart);
+                }
+            }
+        } else if (restContent.startsWith('[')) {
+            // Array - extract first element
+            const arrayContent = extractBracketContentString(restContent, 0);
+            targetContent = arrayContent;
+        } else if (restContent.startsWith('{')) {
+            // Object
+            targetContent = extractBracedContentString(restContent, 0);
+        } else {
+            // Primitive value
+            const valueMatch = restContent.match(/^[^,}\]]+/);
+            if (valueMatch) {
+                return [valueMatch[0].trim().replace(/^["']|["']$/g, '')];
+            }
+        }
+    }
+
+    // Now extract all field names and values from targetContent
+    return extractAllFieldsAndValues(targetContent);
+}
+
+/**
+ * Extract all fields and their values from content (for preview)
+ */
+function extractAllFieldsAndValues(content: string): string[] {
+    const results: string[] = [];
+
+    // Match field: value patterns
+    const fieldPattern = /["']?([a-zA-Z0-9_:\-\.]+)["']?\s*:\s*(@\w+[^,}\]]*|{[^}]*}|\[[^\]]*\]|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|[^,}\]]+)/g;
+
+    let match;
+    while ((match = fieldPattern.exec(content)) !== null) {
+        const fieldName = match[1];
+        let value = match[2].trim();
+
+        // Clean up the value for display
+        if (value.startsWith('"') || value.startsWith("'")) {
+            value = value.replace(/^["']|["']$/g, '');
+        } else if (value.startsWith('@Object')) {
+            value = '<object>';
+        } else if (value.startsWith('{')) {
+            value = '<object>';
+        } else if (value.startsWith('[')) {
+            value = '<array>';
+        } else if (value.startsWith('@')) {
+            const typeMatch = value.match(/@(\w+)/);
+            value = typeMatch ? `<${typeMatch[1].toLowerCase()}>` : value;
+        }
+
+        results.push(`${fieldName}: ${value}`);
+    }
+
+    return results;
+}
+
+/**
+ * Helper to extract content between braces (simple version for structure extraction)
+ */
+function extractBracedContentString(text: string, startIndex: number): string {
+    if (text[startIndex] !== '{') return '';
+
+    let braceCount = 0;
+    let inString = false;
+    let stringChar = '';
+
+    for (let i = startIndex; i < text.length; i++) {
+        const char = text[i];
+
+        if (char === '"' || char === "'") {
+            if (!inString) {
+                inString = true;
+                stringChar = char;
+            } else if (char === stringChar && text[i-1] !== '\\') {
+                inString = false;
+            }
+        }
+
+        if (!inString) {
+            if (char === '{') {
+                braceCount++;
+            } else if (char === '}') {
+                braceCount--;
+                if (braceCount === 0) {
+                    return text.substring(startIndex + 1, i);
+                }
+            }
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Helper to extract content between brackets
+ */
+function extractBracketContentString(text: string, startIndex: number): string {
+    if (text[startIndex] !== '[') return '';
+
+    let bracketCount = 0;
+    let inString = false;
+    let stringChar = '';
+
+    for (let i = startIndex; i < text.length; i++) {
+        const char = text[i];
+
+        if (char === '"' || char === "'") {
+            if (!inString) {
+                inString = true;
+                stringChar = char;
+            } else if (char === stringChar && text[i-1] !== '\\') {
+                inString = false;
+            }
+        }
+
+        if (!inString) {
+            if (char === '[') {
+                bracketCount++;
+            } else if (char === ']') {
+                bracketCount--;
+                if (bracketCount === 0) {
+                    return text.substring(startIndex + 1, i);
+                }
+            }
+        }
+    }
+
+    return '';
 }
 
 /**
