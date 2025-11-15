@@ -49,6 +49,7 @@ import org.apache.utlx.formats.avro.AvroSchemaSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
 import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
 import org.apache.utlx.stdlib.StandardLibrary
+import org.apache.utlx.stdlib.OperatorRegistry
 import org.slf4j.LoggerFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -215,6 +216,29 @@ class RestApiServer(
                             HttpStatusCode.InternalServerError,
                             mapOf(
                                 "error" to "Failed to retrieve function registry",
+                                "message" to (e.message ?: "Unknown error")
+                            )
+                        )
+                    }
+                }
+
+                // Operators endpoint - return UTLX operator registry
+                get("/api/operators") {
+                    logger.debug("Operators registry requested")
+                    try {
+                        val registry = OperatorRegistry.exportRegistry()
+
+                        // Use Jackson to serialize (OperatorRegistry uses Jackson annotations)
+                        val jacksonMapper = ObjectMapper().registerModule(KotlinModule())
+                        val json = jacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(registry)
+
+                        call.respondText(json, ContentType.Application.Json, HttpStatusCode.OK)
+                    } catch (e: Exception) {
+                        logger.error("Failed to export operator registry", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            mapOf(
+                                "error" to "Failed to retrieve operator registry",
                                 "message" to (e.message ?: "Unknown error")
                             )
                         )

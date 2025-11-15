@@ -530,4 +530,137 @@ class RestApiServerTest {
         assertEquals(registry.functions.size, deserialized.functions.size)
         assertEquals(registry.categories.size, deserialized.categories.size)
     }
+
+    // ========== Operator Registry Tests ==========
+
+    @Test
+    fun `test OperatorRegistry exportRegistry returns valid registry`() {
+        val registry = org.apache.utlx.stdlib.OperatorRegistry.exportRegistry()
+
+        assertNotNull(registry)
+        assertNotNull(registry.version)
+        assertTrue(registry.count > 0, "Registry should contain operators")
+        assertFalse(registry.operators.isEmpty(), "Operators list should not be empty")
+        assertEquals(registry.operators.size, registry.count, "Count should match operators list size")
+    }
+
+    @Test
+    fun `test operator registry has expected count`() {
+        val registry = org.apache.utlx.stdlib.OperatorRegistry.exportRegistry()
+
+        // We expect 20 operators
+        assertEquals(20, registry.count, "Should have 20 operators")
+        assertEquals(20, registry.operators.size, "Operators list should have 20 items")
+    }
+
+    @Test
+    fun `test operator registry operators have required fields`() {
+        val registry = org.apache.utlx.stdlib.OperatorRegistry.exportRegistry()
+
+        // Test first operator has all required fields
+        val firstOperator = registry.operators.firstOrNull()
+        assertNotNull(firstOperator)
+
+        firstOperator?.let { op ->
+            assertNotNull(op.symbol, "Operator should have symbol")
+            assertNotNull(op.name, "Operator should have name")
+            assertNotNull(op.category, "Operator should have category")
+            assertNotNull(op.description, "Operator should have description")
+            assertNotNull(op.syntax, "Operator should have syntax")
+            assertTrue(op.precedence > 0, "Operator should have positive precedence")
+            assertTrue(op.associativity in listOf("left", "right"), "Operator should have valid associativity")
+            assertNotNull(op.examples, "Operator should have examples")
+            assertNotNull(op.tooltip, "Operator should have tooltip")
+        }
+    }
+
+    @Test
+    fun `test operator registry has expected categories`() {
+        val registry = org.apache.utlx.stdlib.OperatorRegistry.exportRegistry()
+
+        // Group by category to verify all expected categories exist
+        val categories = registry.operators.groupBy { it.category }
+
+        assertTrue(categories.containsKey("Arithmetic"), "Should have Arithmetic category")
+        assertTrue(categories.containsKey("Comparison"), "Should have Comparison category")
+        assertTrue(categories.containsKey("Logical"), "Should have Logical category")
+        assertTrue(categories.containsKey("Special"), "Should have Special category")
+    }
+
+    @Test
+    fun `test operator registry has expected operators`() {
+        val registry = org.apache.utlx.stdlib.OperatorRegistry.exportRegistry()
+
+        val symbols = registry.operators.map { it.symbol }
+
+        // Test some common operators
+        assertTrue(symbols.contains("+"), "Should have + operator")
+        assertTrue(symbols.contains("-"), "Should have - operator")
+        assertTrue(symbols.contains("*"), "Should have * operator")
+        assertTrue(symbols.contains("/"), "Should have / operator")
+        assertTrue(symbols.contains("=="), "Should have == operator")
+        assertTrue(symbols.contains("!="), "Should have != operator")
+        assertTrue(symbols.contains("&&"), "Should have && operator")
+        assertTrue(symbols.contains("||"), "Should have || operator")
+        assertTrue(symbols.contains("|>"), "Should have |> operator")
+    }
+
+    @Test
+    fun `test operator registry JSON serialization with Jackson`() {
+        val registry = org.apache.utlx.stdlib.OperatorRegistry.exportRegistry()
+
+        // Use Jackson to serialize (same as endpoint)
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val json = jacksonMapper.writeValueAsString(registry)
+
+        assertNotNull(json)
+        assertTrue(json.contains("\"version\""))
+        assertTrue(json.contains("\"count\""))
+        assertTrue(json.contains("\"operators\""))
+        assertTrue(json.contains("\"symbol\""))
+        assertTrue(json.contains("\"precedence\""))
+    }
+
+    @Test
+    fun `test operator registry round-trip serialization`() {
+        val registry = org.apache.utlx.stdlib.OperatorRegistry.exportRegistry()
+
+        // Serialize to JSON
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val json = jacksonMapper.writeValueAsString(registry)
+
+        // Deserialize back
+        val deserialized = jacksonMapper.readValue(json, org.apache.utlx.stdlib.OperatorRegistry.OperatorRegistryData::class.java)
+
+        assertEquals(registry.version, deserialized.version)
+        assertEquals(registry.count, deserialized.count)
+        assertEquals(registry.operators.size, deserialized.operators.size)
+    }
+
+    @Test
+    fun `test operator has correct precedence and associativity`() {
+        val registry = org.apache.utlx.stdlib.OperatorRegistry.exportRegistry()
+
+        // Find addition operator
+        val plusOp = registry.operators.find { it.symbol == "+" }
+        assertNotNull(plusOp)
+
+        plusOp?.let { op ->
+            assertEquals(5, op.precedence, "+ should have precedence 5")
+            assertEquals("left", op.associativity, "+ should be left-associative")
+        }
+
+        // Find pipe operator
+        val pipeOp = registry.operators.find { it.symbol == "|>" }
+        assertNotNull(pipeOp)
+
+        pipeOp?.let { op ->
+            assertEquals(12, op.precedence, "|> should have precedence 12")
+            assertEquals("right", op.associativity, "|> should be right-associative")
+        }
+    }
 }
