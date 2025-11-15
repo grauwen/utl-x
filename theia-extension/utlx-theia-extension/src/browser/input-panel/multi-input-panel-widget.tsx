@@ -488,6 +488,13 @@ export class MultiInputPanelWidget extends ReactWidget {
                             </div>
                             <div className='utlx-udm-dialog-footer'>
                                 <button
+                                    onClick={() => this.handleCopyUdmToClipboard()}
+                                    title='Copy UDM to clipboard'
+                                >
+                                    <span className='codicon codicon-copy' style={{fontSize: '11px'}}></span>
+                                    {' '}Copy to Clipboard
+                                </button>
+                                <button
                                     onClick={() => this.handleSaveUdm()}
                                     title='Save UDM to file'
                                 >
@@ -1160,6 +1167,28 @@ export class MultiInputPanelWidget extends ReactWidget {
         document.addEventListener('mouseup', handleMouseUp);
 
         e.preventDefault();
+    }
+
+    private async handleCopyUdmToClipboard(): Promise<void> {
+        const activeInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
+        if (!activeInput || !activeInput.udmLanguage) {
+            this.messageService.error('No UDM data to copy');
+            return;
+        }
+
+        try {
+            // Get the content based on current view mode (raw or pretty)
+            const content = this.udmViewMode === 'pretty'
+                ? this.formatUdm(activeInput.udmLanguage)
+                : activeInput.udmLanguage;
+
+            // Copy to clipboard
+            await navigator.clipboard.writeText(content);
+            this.messageService.info('UDM copied to clipboard');
+        } catch (error) {
+            console.error('[MultiInputPanel] Failed to copy UDM to clipboard:', error);
+            this.messageService.error('Failed to copy UDM to clipboard');
+        }
     }
 
     private async handleSaveUdm(): Promise<void> {
