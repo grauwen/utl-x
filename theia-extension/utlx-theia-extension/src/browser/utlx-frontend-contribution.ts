@@ -209,8 +209,24 @@ export class UTLXFrontendContribution implements
             this.shell.activateWidget(outputPanel.id);
 
             // Expand the side panels to show the widgets
-            this.shell.leftPanelHandler.expand();
-            this.shell.rightPanelHandler.expand();
+            await this.shell.leftPanelHandler.expand();
+            await this.shell.rightPanelHandler.expand();
+
+            // Monitor when active widget changes - restore Input Panel when Explorer closes
+            this.shell.onDidChangeActiveWidget((widget) => {
+                // Only activate Input Panel if it's not visible AND the new active widget is NOT in the left area
+                // This means Explorer was closed and we should show Input Panel
+                setTimeout(() => {
+                    const currentActiveWidget = this.shell.activeWidget;
+                    const isLeftAreaWidget = currentActiveWidget &&
+                        this.shell.getAreaFor(currentActiveWidget) === 'left';
+
+                    // If Input Panel is hidden and no other left area widget is active, restore it
+                    if (inputPanel.isAttached && !inputPanel.isVisible && !isLeftAreaWidget) {
+                        this.shell.activateWidget(inputPanel.id);
+                    }
+                }, 100);
+            });
 
             // Set initial panel sizes for 2:3:2 ratio
             // Wait a bit for the layout to settle, then set sizes
