@@ -10,8 +10,25 @@ So the new Theia/VS Code standard would require creating a VS Code extension tha
 ----
 So the complete list of UTLX operators is:
 
-  Arithmetic: +, -, *, /, %, **Comparison: ==, !=, <, >, <=, >=Logical: &&, ||, !Special: |> (pipe), ?. (safe navigation), ?? (nullish coalescing), @ (attribute access), => (lambda
+  Arithmetic: +, -, *, /, %, **Comparison: ==, !=, <, >, <=, >=Logical: &&, ||, !Special: |> (pipe), ?. (safe navigation), ?? (nullish coalescing), => (lambda
   arrow), ... (spread)
+----
+Architecture:
+
+  ┌─────────────────────────────────────┐
+  │  VS Code Extension (NEW)            │  ← What we need to create
+  │  - Client-side only                 │
+  │  - Connects to UTLXD LSP server     │
+  │  - Loads in Theia/VS Code           │
+  └─────────────┬───────────────────────┘
+                │ LSP Protocol
+                │ (port 7777)
+  ┌─────────────▼───────────────────────┐
+  │  UTLXD Daemon (EXISTS)              │  ← Already implemented
+  │  - LSP Server                       │
+  │  - Runs as background process       │
+  │  - Provides hover, completion, etc. │
+  └─────────────────────────────────────┘
 
 ---
 analysis part
