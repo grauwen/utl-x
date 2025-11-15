@@ -58,6 +58,9 @@ export class UTLXEditorWidget extends ReactWidget {
     protected inputUdmMap: Map<string, string> = new Map(); // inputName -> UDM language
     protected inputFormatsMap: Map<string, string> = new Map(); // inputName -> format (json, csv, xml, etc.)
 
+    // Output format tracking for UDSL indicator
+    protected outputFormat: string = '';
+
     // Function Builder state
     protected showFunctionBuilderDialog: boolean = false;
     protected functionBuilderFunctions: FunctionInfo[] = [];
@@ -140,6 +143,8 @@ export class UTLXEditorWidget extends ReactWidget {
         // ===== Output Events =====
         this.eventService.onOutputFormatChanged(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Output format changed:', event);
+            this.outputFormat = event.format || '';
+            this.update(); // Re-render to show/hide UDSL indicator
             // Header updates handled by UTLXFrontendContribution
         });
 
@@ -1413,6 +1418,14 @@ output json
         return analyzeInsertionContext(model, position, selection ?? undefined);
     }
 
+    /**
+     * Check if current output format is Tier 2 (UDSL-based)
+     */
+    protected isUdslFormat(): boolean {
+        const tier2Formats = ['avro', 'proto', 'xsd', 'jsch'];
+        return tier2Formats.includes(this.outputFormat.toLowerCase());
+    }
+
     protected render(): React.ReactNode {
         return (
             <div className='utlx-editor-container'>
@@ -1421,6 +1434,16 @@ output json
                         <span>UTLX code</span>
                     </div>
                     <div className='utlx-panel-actions'>
+                        {/* UDSL Indicator - only show for Tier 2 output formats */}
+                        {this.isUdslFormat() && (
+                            <span
+                                className='utlx-udm-indicator'
+                                style={{ color: '#50fa7b' }}
+                                title='UDSL format active (Tier 2 output)'
+                            >
+                                ✓ UDSL
+                            </span>
+                        )}
                         <button
                             title='Function Builder - Browse and insert stdlib functions'
                             onClick={() => this.openFunctionBuilder()}
