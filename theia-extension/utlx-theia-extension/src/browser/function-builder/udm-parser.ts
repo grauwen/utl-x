@@ -714,8 +714,10 @@ function parseFieldValue(name: string, value: string): UdmField | null {
             if (elementContent) {
                 console.log('[UdmParser] Extracted @Object element (first 150 chars):', elementContent.substring(0, 150));
                 const field = parseFieldValue('__arrayElement', elementContent);
-                if (field && field.type === 'object' && field.fields) {
-                    return { name, type: 'array', fields: field.fields };
+                if (field && field.type === 'object') {
+                    // Return array with the object as a single child element
+                    // This preserves the object structure so it can be expanded in the tree
+                    return { name, type: 'array', fields: [field] };
                 }
             }
         } else if (firstChar === '{') {
@@ -726,7 +728,8 @@ function parseFieldValue(name: string, value: string): UdmField | null {
             if (elementContent) {
                 console.log('[UdmParser] Extracted plain object element (first 150 chars):', elementContent.substring(0, 150));
                 const elementFields = parseFieldsFromContent(elementContent);
-                return { name, type: 'array', fields: elementFields };
+                // Create an object wrapper for the array element
+                return { name, type: 'array', fields: [{ name: '__element', type: 'object', fields: elementFields }] };
             }
         }
 
