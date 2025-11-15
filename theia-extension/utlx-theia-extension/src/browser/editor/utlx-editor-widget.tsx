@@ -80,6 +80,7 @@ export class UTLXEditorWidget extends ReactWidget {
 
         this.eventService.onInputNameChanged(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Input name changed:', event);
+            this.renameInputReferences(event.oldName, event.newName);
         });
 
         this.eventService.onInputAdded(event => {
@@ -1318,6 +1319,65 @@ output json
 
         // Focus back on the editor
         this.editor.focus();
+    }
+
+    /**
+     * Rename all references to an input variable when the input name changes
+     * E.g., when input name changes from "input" to "input2", all $input references become $input2
+     */
+    protected renameInputReferences(oldName: string, newName: string): void {
+        console.log(`[UTLXEditor] Renaming input references: $${oldName} -> $${newName}`);
+
+        if (!this.editor) {
+            console.error('[UTLXEditor] No editor available for renaming');
+            return;
+        }
+
+        const model = this.editor.getModel();
+        if (!model) {
+            console.error('[UTLXEditor] No model available for renaming');
+            return;
+        }
+
+        // Get the transformation body (after headers)
+        const content = model.getValue();
+        const lines = content.split('\n');
+        const headerEndLine = this.headerEndLine || this.parseHeaderEndLine();
+
+        // Build regex to match $oldName with word boundaries
+        // Matches: $oldName followed by non-word character or end of string
+        // Examples: $input, $input[0], $input.field, $input |>, etc.
+        const searchRegex = new RegExp(`\\$${oldName}(?![a-zA-Z0-9_])`, 'g');
+
+        const edits: monaco.editor.IIdentifiedSingleEditOperation[] = [];
+
+        // Search only in the transformation body (after header separator)
+        for (let lineNumber = headerEndLine + 1; lineNumber <= lines.length; lineNumber++) {
+            const lineContent = lines[lineNumber - 1];
+            let match: RegExpExecArray | null;
+
+            // Find all matches in this line
+            while ((match = searchRegex.exec(lineContent)) !== null) {
+                const startColumn = match.index + 1; // Monaco uses 1-based columns
+                const endColumn = startColumn + match[0].length;
+
+                edits.push({
+                    range: new monaco.Range(lineNumber, startColumn, lineNumber, endColumn),
+                    text: `$${newName}`,
+                    forceMoveMarkers: true
+                });
+
+                console.log(`[UTLXEditor] Found reference at line ${lineNumber}, col ${startColumn}: "${match[0]}"`);
+            }
+        }
+
+        if (edits.length > 0) {
+            console.log(`[UTLXEditor] Replacing ${edits.length} reference(s)`);
+            this.editor.executeEdits('input-rename', edits);
+            console.log('[UTLXEditor] References renamed successfully');
+        } else {
+            console.log('[UTLXEditor] No references found to rename');
+        }
     }
 
     /**
