@@ -833,3 +833,106 @@
     margin-left: 3px;
     background: var(--theia-editorGutter-modifiedBackground, #888) !important;
 }
+
+/* UDM View Dialog - follows same pattern as Function Builder */
+.utlx-udm-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60vw;
+    height: 70vh;
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    z-index: 10001;
+    pointer-events: auto;
+}
+
+.utlx-udm-dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--theia-panel-border);
+    background: var(--theia-titleBar-activeBackground);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.utlx-udm-dialog-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--theia-foreground);
+    pointer-events: none;
+}
+
+.utlx-udm-dialog-close {
+    background: transparent;
+    border: none;
+    color: var(--theia-foreground);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+}
+
+.utlx-udm-dialog-close:hover {
+    background: var(--theia-toolbar-hoverBackground);
+}
+
+.utlx-udm-dialog-content {
+    flex: 1;
+    padding: 16px;
+    overflow: auto;
+}
+
+.utlx-udm-viewer {
+    width: 100%;
+    height: 100%;
+    background: var(--theia-editor-background);
+    color: var(--theia-editor-foreground);
+    border: 1px solid var(--theia-input-border);
+    border-radius: 3px;
+    padding: 8px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+}
+
+.utlx-udm-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+}
+
+.utlx-udm-dialog-footer button {
+    padding: 6px 12px;
+    border: 1px solid var(--theia-button-border);
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.utlx-udm-dialog-footer button:hover {
+    background: var(--theia-button-hoverBackground);
+}

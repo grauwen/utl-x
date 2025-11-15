@@ -14,6 +14,9 @@ import * as React from 'react';
 import { injectable, inject, postConstruct, optional } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MessageService } from '@theia/core';
+import { FileDialogService } from '@theia/filesystem/lib/browser';
+import { FileService } from '@theia/filesystem/lib/browser/file-service';
+import URI from '@theia/core/lib/common/uri';
 import {
     UTLXService, UTLX_SERVICE_SYMBOL,
     UTLXMode,
@@ -75,6 +78,7 @@ export interface MultiInputPanelState {
     activeInputId: string;
     activeSubTab: 'instance' | 'schema'; // For Design Time mode
     loading: boolean;
+    udmDialogOpen?: boolean;
 }
 
 @injectable()
@@ -92,6 +96,12 @@ export class MultiInputPanelWidget extends ReactWidget {
     @inject(UTLXEventService)
     protected readonly eventService!: UTLXEventService;
 
+    @inject(FileDialogService)
+    protected readonly fileDialogService!: FileDialogService;
+
+    @inject(FileService)
+    protected readonly fileService!: FileService;
+
     private state: MultiInputPanelState = {
         mode: UTLXMode.RUNTIME,
         inputs: [{
@@ -104,10 +114,14 @@ export class MultiInputPanelWidget extends ReactWidget {
         }],
         activeInputId: 'input-1',
         activeSubTab: 'instance',
-        loading: false
+        loading: false,
+        udmDialogOpen: false
     };
 
     private nextInputId = 2;
+    private udmDialogPosition = { x: 0, y: 0 };
+    private isDraggingDialog = false;
+    private dragOffset = { x: 0, y: 0 };
 
     constructor() {
         super();
@@ -154,7 +168,7 @@ export class MultiInputPanelWidget extends ReactWidget {
     }
 
     protected render(): React.ReactNode {
-        const { mode, inputs, activeInputId, activeSubTab, loading } = this.state;
+        const { mode, inputs, activeInputId, activeSubTab, loading, udmDialogOpen } = this.state;
         const activeInput = inputs.find(input => input.id === activeInputId);
 
         if (!activeInput) {
@@ -247,6 +261,15 @@ export class MultiInputPanelWidget extends ReactWidget {
                             )}
                         </div>
                         <div className='utlx-panel-actions'>
+                            {activeInput.udmParsed === true && (
+                                <button
+                                    onClick={() => this.handleViewUdm()}
+                                    title='View UDM representation'
+                                >
+                                    <span className='codicon codicon-eye' style={{fontSize: '11px'}}></span>
+                                    {' '}UDM
+                                </button>
+                            )}
                             <button
                                 onClick={() => this.handleLoadFile()}
                                 disabled={loading}
@@ -414,6 +437,58 @@ export class MultiInputPanelWidget extends ReactWidget {
                         </span>
                     </div>
                 </div>
+
+                {/* UDM View Dialog */}
+                {udmDialogOpen && activeInput.udmLanguage && (
+                    <div className='utlx-dialog-overlay'>
+                        <div
+                            className='utlx-udm-dialog'
+                            style={{
+                                transform: `translate(calc(-50% + ${this.udmDialogPosition.x}px), calc(-50% + ${this.udmDialogPosition.y}px))`,
+                                cursor: this.isDraggingDialog ? 'grabbing' : 'default'
+                            }}
+                        >
+                            <div
+                                className='utlx-udm-dialog-header'
+                                onMouseDown={(e) => this.handleDragStart(e)}
+                                style={{ cursor: 'grab' }}
+                            >
+                                <h3>UDM Representation</h3>
+                                <button
+                                    className='utlx-udm-dialog-close'
+                                    onClick={() => this.handleCloseUdmDialog()}
+                                    title='Close'
+                                >
+                                    <span className='codicon codicon-close'></span>
+                                </button>
+                            </div>
+                            <div className='utlx-udm-dialog-content'>
+                                <textarea
+                                    className='utlx-udm-viewer'
+                                    value={activeInput.udmLanguage}
+                                    readOnly
+                                    spellCheck={false}
+                                />
+                            </div>
+                            <div className='utlx-udm-dialog-footer'>
+                                <button
+                                    onClick={() => this.handleSaveUdm()}
+                                    title='Save UDM to file'
+                                >
+                                    <span className='codicon codicon-save' style={{fontSize: '11px'}}></span>
+                                    {' '}Save
+                                </button>
+                                <button
+                                    onClick={() => this.handleCloseUdmDialog()}
+                                    title='Close dialog'
+                                >
+                                    <span className='codicon codicon-close' style={{fontSize: '11px'}}></span>
+                                    {' '}Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -927,6 +1002,88 @@ export class MultiInputPanelWidget extends ReactWidget {
                     : input
             )
         });
+    }
+
+    private handleViewUdm(): void {
+        this.udmDialogPosition = { x: 0, y: 0 }; // Reset position when opening
+        this.setState({ udmDialogOpen: true });
+    }
+
+    private handleCloseUdmDialog(): void {
+        this.isDraggingDialog = false;
+        this.setState({ udmDialogOpen: false });
+    }
+
+    private handleDragStart(e: React.MouseEvent): void {
+        // Don't start drag if clicking on the close button
+        if ((e.target as HTMLElement).closest('.utlx-udm-dialog-close')) {
+            return;
+        }
+
+        this.isDraggingDialog = true;
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startPosX = this.udmDialogPosition.x;
+        const startPosY = this.udmDialogPosition.y;
+
+        // Add document-level mouse move and mouse up handlers
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            if (this.isDraggingDialog) {
+                this.udmDialogPosition = {
+                    x: startPosX + (moveEvent.clientX - startX),
+                    y: startPosY + (moveEvent.clientY - startY)
+                };
+                this.update();
+            }
+        };
+
+        const handleMouseUp = () => {
+            this.isDraggingDialog = false;
+            this.update();
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        e.preventDefault();
+    }
+
+    private async handleSaveUdm(): Promise<void> {
+        const activeInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
+        if (!activeInput || !activeInput.udmLanguage) {
+            this.messageService.error('No UDM data to save');
+            return;
+        }
+
+        try {
+            // Show save dialog
+            const defaultFileName = `${activeInput.name}.udm`;
+            const saveUri = await this.fileDialogService.showSaveDialog({
+                title: 'Save UDM File',
+                saveLabel: 'Save',
+                filters: { 'UDM Files': ['udm'], 'All Files': ['*'] },
+                inputValue: defaultFileName
+            });
+
+            if (!saveUri) {
+                // User cancelled
+                return;
+            }
+
+            // Write file content
+            const content = activeInput.udmLanguage;
+            await this.fileService.write(
+                saveUri,
+                content
+            );
+
+            this.messageService.info(`UDM saved to ${saveUri.path.base}`);
+        } catch (error) {
+            this.messageService.error(`Failed to save UDM file: ${error}`);
+            console.error('[MultiInputPanel] Error saving UDM:', error);
+        }
     }
 
     private async handleLoadFile(): Promise<void> {
