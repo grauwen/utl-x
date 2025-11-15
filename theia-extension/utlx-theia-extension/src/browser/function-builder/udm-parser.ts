@@ -580,7 +580,8 @@ function parseFieldValue(name: string, value: string): UdmField | null {
                 if (propsOpenBrace !== -1) {
                     const propsContent = extractBracedContent(objectBody, propsOpenBrace);
                     console.log('[UdmParser] Extracted properties content (first 200 chars):', propsContent?.substring(0, 200));
-                    if (propsContent) {
+                    if (propsContent !== null && propsContent !== undefined) {
+                        // Empty string is valid - means properties: {}
                         const nestedFields = parseFieldsFromContent(propsContent);
                         console.log('[UdmParser] Nested fields:', nestedFields.length);
                         return { name, type: 'object', fields: nestedFields };
@@ -609,12 +610,98 @@ function parseFieldValue(name: string, value: string): UdmField | null {
 
     // Array literal: [...]
     if (value.startsWith('[')) {
-        // Try to parse array element type
-        const elementMatch = value.match(/\[\s*\{([^}]+)\}/);
-        if (elementMatch) {
-            const elementFields = parseFieldsFromContent(elementMatch[1]);
-            return { name, type: 'array', fields: elementFields };
+        console.log('[UdmParser] Parsing array, value (first 200 chars):', value.substring(0, 200));
+
+        // Find the first element after the opening bracket
+        const openBracketIndex = value.indexOf('[');
+        let firstElementStart = openBracketIndex + 1;
+
+        // Skip whitespace
+        while (firstElementStart < value.length && /\s/.test(value[firstElementStart])) {
+            firstElementStart++;
         }
+
+        if (firstElementStart >= value.length || value[firstElementStart] === ']') {
+            console.log('[UdmParser] Empty array');
+            return { name, type: 'array', fields: [] };
+        }
+
+        // Check what kind of element we have
+        const firstChar = value[firstElementStart];
+        console.log('[UdmParser] Array first element starts with:', firstChar, 'at position:', firstElementStart);
+
+        let elementContent: string | null = null;
+
+        if (firstChar === '@') {
+            // @Object annotation - extract using extractValue logic
+            // Use the same approach as extractValue for @annotations
+            console.log('[UdmParser] Array contains @Object elements');
+            const restOfValue = value.substring(firstElementStart);
+
+            // Find where this @Object ends (including its body)
+            let pos = 0;
+            let braceCount = 0;
+            let parenCount = 0;
+            let inString = false;
+            let stringChar = '';
+            let annotationBodyStarted = false;
+
+            while (pos < restOfValue.length) {
+                const char = restOfValue[pos];
+
+                if (char === '"' || char === "'") {
+                    if (!inString) {
+                        inString = true;
+                        stringChar = char;
+                    } else if (char === stringChar && restOfValue[pos-1] !== '\\') {
+                        inString = false;
+                    }
+                    pos++;
+                    continue;
+                }
+
+                if (!inString) {
+                    if (char === '{') {
+                        braceCount++;
+                        if (parenCount === 0 && !annotationBodyStarted) {
+                            annotationBodyStarted = true;
+                        }
+                    } else if (char === '}') {
+                        braceCount--;
+                        if (annotationBodyStarted && braceCount === 0) {
+                            // Found the end of the @Object body
+                            elementContent = restOfValue.substring(0, pos + 1);
+                            break;
+                        }
+                    } else if (char === '(') {
+                        parenCount++;
+                    } else if (char === ')') {
+                        parenCount--;
+                    }
+                }
+                pos++;
+            }
+
+            if (elementContent) {
+                console.log('[UdmParser] Extracted @Object element (first 150 chars):', elementContent.substring(0, 150));
+                const field = parseFieldValue('__arrayElement', elementContent);
+                if (field && field.type === 'object' && field.fields) {
+                    return { name, type: 'array', fields: field.fields };
+                }
+            }
+        } else if (firstChar === '{') {
+            // Plain object - extract using extractBracedContent
+            console.log('[UdmParser] Array contains plain {} elements');
+            elementContent = extractBracedContent(value, firstElementStart);
+
+            if (elementContent) {
+                console.log('[UdmParser] Extracted plain object element (first 150 chars):', elementContent.substring(0, 150));
+                const elementFields = parseFieldsFromContent(elementContent);
+                return { name, type: 'array', fields: elementFields };
+            }
+        }
+
+        console.warn('[UdmParser] Could not parse array elements');
         return { name, type: 'array', fields: [] };
     }
 
