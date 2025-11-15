@@ -572,7 +572,25 @@ function parseFieldValue(name: string, value: string): UdmField | null {
         console.log('[UdmParser] Extracted object body (first 200 chars):', objectBody?.substring(0, 200));
 
         if (objectBody) {
-            // Check if this has a properties section
+            const allFields: UdmField[] = [];
+
+            // Extract fields from attributes section (if present)
+            if (objectBody.includes('attributes:')) {
+                console.log('[UdmParser] Object has attributes section');
+                const attributesIndex = objectBody.indexOf('attributes:');
+                const attrsOpenBrace = objectBody.indexOf('{', attributesIndex);
+                if (attrsOpenBrace !== -1) {
+                    const attrsContent = extractBracedContent(objectBody, attrsOpenBrace);
+                    console.log('[UdmParser] Extracted attributes content (first 200 chars):', attrsContent?.substring(0, 200));
+                    if (attrsContent !== null && attrsContent !== undefined) {
+                        const attributeFields = parseFieldsFromContent(attrsContent);
+                        console.log('[UdmParser] Attribute fields:', attributeFields.length);
+                        allFields.push(...attributeFields);
+                    }
+                }
+            }
+
+            // Extract fields from properties section (if present)
             if (objectBody.includes('properties:')) {
                 console.log('[UdmParser] Object has properties section');
                 const propertiesIndex = objectBody.indexOf('properties:');
@@ -581,19 +599,30 @@ function parseFieldValue(name: string, value: string): UdmField | null {
                     const propsContent = extractBracedContent(objectBody, propsOpenBrace);
                     console.log('[UdmParser] Extracted properties content (first 200 chars):', propsContent?.substring(0, 200));
                     if (propsContent !== null && propsContent !== undefined) {
-                        // Empty string is valid - means properties: {}
-                        const nestedFields = parseFieldsFromContent(propsContent);
-                        console.log('[UdmParser] Nested fields:', nestedFields.length);
-                        return { name, type: 'object', fields: nestedFields };
+                        const propertyFields = parseFieldsFromContent(propsContent);
+                        console.log('[UdmParser] Property fields:', propertyFields.length);
+                        allFields.push(...propertyFields);
                     }
                 }
-            } else {
-                console.log('[UdmParser] Object has no properties section, using shorthand');
-                // Simple object without properties section
+            }
+
+            // If we found fields from attributes or properties, return them
+            if (allFields.length > 0) {
+                console.log('[UdmParser] Total fields from attributes + properties:', allFields.length);
+                return { name, type: 'object', fields: allFields };
+            }
+
+            // No attributes or properties sections - use shorthand (entire body)
+            if (!objectBody.includes('attributes:') && !objectBody.includes('properties:')) {
+                console.log('[UdmParser] Object has no attributes/properties sections, using shorthand');
                 const nestedFields = parseFieldsFromContent(objectBody);
                 console.log('[UdmParser] Nested fields:', nestedFields.length);
                 return { name, type: 'object', fields: nestedFields };
             }
+
+            // Has attributes/properties but both are empty
+            console.log('[UdmParser] Object has empty attributes/properties');
+            return { name, type: 'object', fields: [] };
         }
 
         console.warn('[UdmParser] Failed to extract object body, returning empty object');
