@@ -572,57 +572,10 @@ function parseFieldValue(name: string, value: string): UdmField | null {
         console.log('[UdmParser] Extracted object body (first 200 chars):', objectBody?.substring(0, 200));
 
         if (objectBody) {
-            const allFields: UdmField[] = [];
-
-            // Extract fields from attributes section (if present)
-            if (objectBody.includes('attributes:')) {
-                console.log('[UdmParser] Object has attributes section');
-                const attributesIndex = objectBody.indexOf('attributes:');
-                const attrsOpenBrace = objectBody.indexOf('{', attributesIndex);
-                if (attrsOpenBrace !== -1) {
-                    const attrsContent = extractBracedContent(objectBody, attrsOpenBrace);
-                    console.log('[UdmParser] Extracted attributes content (first 200 chars):', attrsContent?.substring(0, 200));
-                    if (attrsContent !== null && attrsContent !== undefined) {
-                        const attributeFields = parseFieldsFromContent(attrsContent);
-                        console.log('[UdmParser] Attribute fields:', attributeFields.length);
-                        allFields.push(...attributeFields);
-                    }
-                }
-            }
-
-            // Extract fields from properties section (if present)
-            if (objectBody.includes('properties:')) {
-                console.log('[UdmParser] Object has properties section');
-                const propertiesIndex = objectBody.indexOf('properties:');
-                const propsOpenBrace = objectBody.indexOf('{', propertiesIndex);
-                if (propsOpenBrace !== -1) {
-                    const propsContent = extractBracedContent(objectBody, propsOpenBrace);
-                    console.log('[UdmParser] Extracted properties content (first 200 chars):', propsContent?.substring(0, 200));
-                    if (propsContent !== null && propsContent !== undefined) {
-                        const propertyFields = parseFieldsFromContent(propsContent);
-                        console.log('[UdmParser] Property fields:', propertyFields.length);
-                        allFields.push(...propertyFields);
-                    }
-                }
-            }
-
-            // If we found fields from attributes or properties, return them
-            if (allFields.length > 0) {
-                console.log('[UdmParser] Total fields from attributes + properties:', allFields.length);
-                return { name, type: 'object', fields: allFields };
-            }
-
-            // No attributes or properties sections - use shorthand (entire body)
-            if (!objectBody.includes('attributes:') && !objectBody.includes('properties:')) {
-                console.log('[UdmParser] Object has no attributes/properties sections, using shorthand');
-                const nestedFields = parseFieldsFromContent(objectBody);
-                console.log('[UdmParser] Nested fields:', nestedFields.length);
-                return { name, type: 'object', fields: nestedFields };
-            }
-
-            // Has attributes/properties but both are empty
-            console.log('[UdmParser] Object has empty attributes/properties');
-            return { name, type: 'object', fields: [] };
+            // Parse the entire object body to get all fields (including metadata, attributes, properties as fields)
+            const allFields = parseFieldsFromContent(objectBody);
+            console.log('[UdmParser] Parsed @Object body, found', allFields.length, 'fields');
+            return { name, type: 'object', fields: allFields };
         }
 
         console.warn('[UdmParser] Failed to extract object body, returning empty object');
@@ -631,9 +584,13 @@ function parseFieldValue(name: string, value: string): UdmField | null {
 
     // Object literal: {...}
     if (value.startsWith('{')) {
-        // Parse nested object
-        const nestedContent = value.substring(1, value.lastIndexOf('}'));
-        const nestedFields = parseFieldsFromContent(nestedContent);
+        console.log('[UdmParser] Parsing plain object, value (first 200 chars):', value.substring(0, 200));
+
+        const objectContent = value.substring(1, value.lastIndexOf('}'));
+
+        // Parse all fields (including metadata, attributes, properties as field nodes)
+        const nestedFields = parseFieldsFromContent(objectContent);
+        console.log('[UdmParser] Plain object parsed', nestedFields.length, 'fields');
         return { name, type: 'object', fields: nestedFields };
     }
 
