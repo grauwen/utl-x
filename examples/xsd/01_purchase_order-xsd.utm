@@ -1,9 +1,5 @@
 @udm-version: 1.0
-@parsed-at: "2025-11-15T19:41:37.237441+01:00
-[
-  Europe/Amsterdam
-]
-"
+@parsed-at: "2025-11-15T20:18:02.527232+01:00"
 @Object(name: "xs:schema",
 metadata:
 {
