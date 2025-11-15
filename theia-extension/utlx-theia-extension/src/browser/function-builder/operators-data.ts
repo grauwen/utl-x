@@ -300,21 +300,6 @@ export const UTLX_OPERATORS: OperatorInfo[] = [
         ]
     },
     {
-        symbol: '@',
-        name: 'Attribute Access',
-        category: 'Special',
-        description: 'Accesses UDM metadata attributes attached to values.',
-        syntax: 'value@attribute',
-        precedence: 1,
-        associativity: 'left',
-        tooltip: 'UDM attribute access',
-        examples: [
-            '$input[0].date@parsed-format',
-            '$input@source',
-            'value@type'
-        ]
-    },
-    {
         symbol: '=>',
         name: 'Lambda Arrow',
         category: 'Special',
