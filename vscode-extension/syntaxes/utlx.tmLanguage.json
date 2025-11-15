@@ -1,0 +1,150 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "UTL-X",
+  "patterns": [
+    {
+      "include": "#header"
+    },
+    {
+      "include": "#separator"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#formats"
+    },
+    {
+      "include": "#input-references"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#operators"
+    }
+  ],
+  "repository": {
+    "header": {
+      "patterns": [
+        {
+          "name": "keyword.utlx.version",
+          "match": "^%utlx\\s+[\\d.]+"
+        },
+        {
+          "name": "keyword.utlx.input",
+          "match": "^input:?\\s+"
+        },
+        {
+          "name": "keyword.utlx.output",
+          "match": "^output\\s+"
+        }
+      ]
+    },
+    "separator": {
+      "name": "keyword.utlx.separator",
+      "match": "^---\\s*$"
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.utlx",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.utlx",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.utlx",
+          "match": "\\b(let|def|function|if|then|else|match|try|catch|for|in|return)\\b"
+        },
+        {
+          "name": "constant.language.utlx",
+          "match": "\\b(true|false|null)\\b"
+        }
+      ]
+    },
+    "formats": {
+      "name": "support.type.utlx",
+      "match": "\\b(json|xml|yaml|csv|avro|proto|xsd|jsch)\\b"
+    },
+    "input-references": {
+      "name": "variable.other.utlx",
+      "match": "\\$[a-zA-Z_][a-zA-Z0-9_]*"
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.stdlib.utlx",
+          "match": "\\b[a-z_$][\\w$]*(?=\\s*\\()"
+        },
+        {
+          "name": "entity.name.function.custom.utlx",
+          "match": "\\b[A-Z][\\w$]*(?=\\s*\\()"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.utlx",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.utlx",
+              "match": "\\\\([\"\\\\/bfnrt]|u[0-9a-fA-F]{4})"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.utlx",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.utlx",
+              "match": "\\\\(['\\\\/bfnrt]|u[0-9a-fA-F]{4})"
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.utlx",
+          "match": "\\d*\\.\\d+([eE][\\-+]?\\d+)?"
+        },
+        {
+          "name": "constant.numeric.hex.utlx",
+          "match": "0[xX][0-9a-fA-F]+"
+        },
+        {
+          "name": "constant.numeric.integer.utlx",
+          "match": "\\d+"
+        }
+      ]
+    },
+    "operators": {
+      "name": "keyword.operator.utlx",
+      "match": "(==|!=|<=|>=|<|>|&&|\\|\\||!|\\+|-|\\*|/|%|\\?:)"
+    }
+  },
+  "scopeName": "source.utlx"
+}

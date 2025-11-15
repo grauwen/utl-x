@@ -1,0 +1,95 @@
+{
+  "name": "utlx-language-support",
+  "displayName": "UTL-X Language Support",
+  "description": "Language support for UTL-X transformation language with LSP integration",
+  "version": "1.0.0",
+  "publisher": "utlx",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/utl-x/utl-x.git"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "utlx",
+    "transformation",
+    "data-mapping",
+    "lsp"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:utlx"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "utlx",
+        "aliases": [
+          "UTL-X",
+          "utlx"
+        ],
+        "extensions": [
+          ".utlx",
+          ".UTLX"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "utlx",
+        "scopeName": "source.utlx",
+        "path": "./syntaxes/utlx.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "UTL-X",
+      "properties": {
+        "utlx.lsp.port": {
+          "type": "number",
+          "default": 7777,
+          "description": "Port number for UTLXD LSP server"
+        },
+        "utlx.lsp.host": {
+          "type": "string",
+          "default": "localhost",
+          "description": "Host for UTLXD LSP server"
+        },
+        "utlx.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the UTLX language server"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.75.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+}
