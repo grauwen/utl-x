@@ -1397,6 +1397,34 @@ output json
         } else {
             console.log('[UTLXEditor] No references found to rename');
         }
+
+        // Update internal maps to use new name instead of old name
+        // 1. Update inputNamesFromHeaders array
+        const index = this.inputNamesFromHeaders.indexOf(oldName);
+        if (index !== -1) {
+            this.inputNamesFromHeaders[index] = newName;
+            console.log('[UTLXEditor] Updated inputNamesFromHeaders:', this.inputNamesFromHeaders);
+        }
+
+        // 2. Update inputUdmMap - move entry from old key to new key
+        if (this.inputUdmMap.has(oldName)) {
+            const udmValue = this.inputUdmMap.get(oldName);
+            this.inputUdmMap.delete(oldName);
+            if (udmValue) {
+                this.inputUdmMap.set(newName, udmValue);
+            }
+            console.log('[UTLXEditor] Updated inputUdmMap - removed old key, added new key');
+        }
+
+        // 3. Update inputFormatsMap - move entry from old key to new key
+        if (this.inputFormatsMap.has(oldName)) {
+            const formatValue = this.inputFormatsMap.get(oldName);
+            this.inputFormatsMap.delete(oldName);
+            if (formatValue) {
+                this.inputFormatsMap.set(newName, formatValue);
+            }
+            console.log('[UTLXEditor] Updated inputFormatsMap - removed old key, added new key');
+        }
     }
 
     /**
