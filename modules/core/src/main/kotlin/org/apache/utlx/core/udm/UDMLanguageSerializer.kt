@@ -162,14 +162,30 @@ class UDMLanguageSerializer(
         // Metadata
         if (obj.metadata.isNotEmpty()) {
             val metadataStr = StringBuilder()
-            metadataStr.append("${indent(depth + 1)}metadata: {")
-            obj.metadata.entries.forEachIndexed { index, (key, value) ->
-                metadataStr.append("$key: \"${escapeString(value)}\"")
-                if (index < obj.metadata.size - 1) {
-                    metadataStr.append(", ")
+            metadataStr.append("${indent(depth + 1)}metadata:")
+
+            if (prettyPrint) {
+                metadataStr.append("\n")
+                metadataStr.append("${indent(depth + 1)}{")
+                metadataStr.append("\n")
+                obj.metadata.entries.forEachIndexed { index, (key, value) ->
+                    metadataStr.append("${indent(depth + 2)}$key: \"${escapeString(value)}\"")
+                    if (index < obj.metadata.size - 1) {
+                        metadataStr.append(",")
+                    }
+                    metadataStr.append("\n")
                 }
+                metadataStr.append("${indent(depth + 1)}}")
+            } else {
+                metadataStr.append(" {")
+                obj.metadata.entries.forEachIndexed { index, (key, value) ->
+                    metadataStr.append("$key: \"${escapeString(value)}\"")
+                    if (index < obj.metadata.size - 1) {
+                        metadataStr.append(", ")
+                    }
+                }
+                metadataStr.append("}")
             }
-            metadataStr.append("}")
             entries.add(metadataStr.toString())
         }
 

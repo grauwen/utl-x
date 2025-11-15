@@ -154,7 +154,8 @@ class UDMService {
         val udm = parseInputToUDM(content, format, options.toMap())
 
         // Step 2: Serialize to .udm language
-        val parsedAt = ZonedDateTime.now().toString()
+        // Use ISO_OFFSET_DATE_TIME format to avoid timezone name brackets like [Europe/Amsterdam]
+        val parsedAt = ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         val fullSourceInfo = sourceInfo + mapOf("parsed-at" to parsedAt)
 
         val udmLanguage = udm.toUDMLanguage(
