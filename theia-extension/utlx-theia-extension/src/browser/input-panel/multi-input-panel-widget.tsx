@@ -839,30 +839,71 @@ export class MultiInputPanelWidget extends ReactWidget {
         this.updateInputValidation(inputId, undefined, true);
 
         try {
-            const request = {
+            // Build request - only include CSV parameters for CSV format
+            const request: any = {
                 content: input.instanceContent,
-                format: input.instanceFormat,
-                // Provide default values for CSV parameters if not set
-                csvHeaders: input.csvHeaders !== undefined ? input.csvHeaders : true,
-                csvDelimiter: input.csvDelimiter || ','
+                format: input.instanceFormat
             };
+
+            // Only add CSV parameters if the format is actually CSV
+            if (input.instanceFormat.toLowerCase() === 'csv') {
+                request.csvHeaders = input.csvHeaders !== undefined ? input.csvHeaders : true;
+                request.csvDelimiter = input.csvDelimiter || ',';
+            }
 
             console.log('[MultiInputPanel] Calling utlxService.validateUdm() with:', {
                 format: request.format,
                 contentLength: request.content.length,
                 csvHeaders: request.csvHeaders,
-                csvDelimiter: request.csvDelimiter
+                csvDelimiter: request.csvDelimiter,
+                note: input.instanceFormat.toLowerCase() === 'csv' ? 'CSV parameters included' : 'CSV parameters EXCLUDED'
+            });
+
+            // Log first few lines of content for debugging
+            const firstLines = request.content.split('\n').slice(0, 5);
+            console.log('[MultiInputPanel] Content preview (first 5 lines):');
+            firstLines.forEach((line: string, idx: number) => {
+                console.log(`  Line ${idx + 1}: ${line.substring(0, 100)}`);
             });
 
             const result = await this.utlxService.validateUdm(request);
 
-            console.log('[MultiInputPanel] Validation result:', {
-                success: result.success,
-                error: result.error,
-                hasDiagnostics: !!result.diagnostics,
-                hasUdmLanguage: !!result.udmLanguage,
-                udmLanguageLength: result.udmLanguage?.length
-            });
+            console.log('[MultiInputPanel] ═══════════════════════════════════════');
+            if (result.success) {
+                console.log('[MultiInputPanel] ✅ Validation result: SUCCESS');
+            } else {
+                console.error('[MultiInputPanel] ❌ Validation result: FAILED');
+            }
+            console.log('[MultiInputPanel] Success:', result.success);
+            console.log('[MultiInputPanel] Has Diagnostics:', !!result.diagnostics);
+            console.log('[MultiInputPanel] Has UDM Language:', !!result.udmLanguage);
+            console.log('[MultiInputPanel] UDM Language Length:', result.udmLanguage?.length || 0);
+
+            if (result.error) {
+                console.error('[MultiInputPanel] ❌ ERROR:', result.error);
+                // Try to parse and display error details
+                try {
+                    const errorObj = JSON.parse(result.error.replace('HTTP 500: ', ''));
+                    if (errorObj.error) {
+                        console.error('[MultiInputPanel] Error details:', errorObj.error);
+                    }
+                } catch (e) {
+                    // Not JSON, just show as-is
+                }
+            }
+
+            if (result.udmLanguage) {
+                console.log('[MultiInputPanel] UDM preview (first 500 chars):');
+                console.log(result.udmLanguage.substring(0, 500));
+                console.log('[MultiInputPanel] UDM preview (last 200 chars):');
+                console.log(result.udmLanguage.substring(Math.max(0, result.udmLanguage.length - 200)));
+            } else {
+                console.warn('[MultiInputPanel] ⚠️ NO UDM LANGUAGE in result!');
+                if (!result.success) {
+                    console.warn('[MultiInputPanel] This is expected when validation fails');
+                }
+            }
+            console.log('[MultiInputPanel] ═══════════════════════════════════════');
 
             this.updateInputValidation(
                 inputId,

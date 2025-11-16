@@ -15,7 +15,7 @@
 import * as React from 'react';
 import * as monaco from '@theia/monaco-editor-core';
 import { FunctionInfo } from '../../common/protocol';
-import { parseUdmToTree, UdmInputTree } from './udm-parser';
+import { parseUdmToTree, UdmInputTree } from './udm-parser-new';
 import { FieldTree } from './field-tree';
 import { InsertionContext, CursorValue, getContextDescription, analyzeInsertionContext } from './context-analyzer';
 import { generateFunctionInsertion, generateInsertionPreview } from './insertion-generator';
@@ -246,19 +246,46 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
 
     // Parse UDM into field trees
     const fieldTrees = React.useMemo(() => {
-        console.log('[FunctionBuilder] Parsing field trees:', {
-            availableInputsCount: availableInputs.length,
-            availableInputs: availableInputs,
-            udmMapSize: udmMap.size,
-            udmMapKeys: Array.from(udmMap.keys())
-        });
+        console.log('╔' + '═'.repeat(78) + '╗');
+        console.log('║ [FunctionBuilder] PARSING FIELD TREES');
+        console.log('╠' + '═'.repeat(78) + '╣');
+        console.log('[FunctionBuilder] Available inputs count:', availableInputs.length);
+        console.log('[FunctionBuilder] Available inputs:', availableInputs);
+        console.log('[FunctionBuilder] UDM map size:', udmMap.size);
+        console.log('[FunctionBuilder] UDM map keys:', Array.from(udmMap.keys()));
+        console.log('[FunctionBuilder] Input formats map size:', inputFormatsMap.size);
+        console.log('[FunctionBuilder] Input formats:', Array.from(inputFormatsMap.entries()));
 
-        return availableInputs.map(inputName => {
+        const results = availableInputs.map(inputName => {
             const udm = udmMap.get(inputName);
             const format = inputFormatsMap.get(inputName) || 'json'; // Default to json if not found
-            console.log('[FunctionBuilder] Parsing tree for', inputName, '- Format:', format, '- UDM length:', udm?.length || 0);
-            return parseUdmToTree(inputName, format, udm);
+
+            console.log('');
+            console.log('[FunctionBuilder] ─────────────────────────────────────────');
+            console.log('[FunctionBuilder] Processing input:', inputName);
+            console.log('[FunctionBuilder] Format:', format);
+            console.log('[FunctionBuilder] UDM exists:', udm ? 'YES' : 'NO');
+            console.log('[FunctionBuilder] UDM length:', udm?.length || 0);
+
+            if (udm) {
+                console.log('[FunctionBuilder] UDM preview (first 500 chars):');
+                console.log(udm.substring(0, 500));
+                console.log('[FunctionBuilder] UDM preview (last 200 chars):');
+                console.log(udm.substring(Math.max(0, udm.length - 200)));
+            }
+
+            const tree = parseUdmToTree(inputName, format, udm);
+
+            console.log('[FunctionBuilder] Tree result for', inputName, ':');
+            console.log('[FunctionBuilder]   - isArray:', tree.isArray);
+            console.log('[FunctionBuilder]   - fields count:', tree.fields.length);
+            console.log('[FunctionBuilder]   - fields:', tree.fields.map(f => f.name));
+
+            return tree;
         });
+
+        console.log('╚' + '═'.repeat(78) + '╝');
+        return results;
     }, [availableInputs, udmMap, inputFormatsMap]);
 
     // Auto-expand categories when searching

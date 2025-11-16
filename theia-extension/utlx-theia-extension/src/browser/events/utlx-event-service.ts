@@ -287,11 +287,18 @@ export class UTLXEventService {
      * Fire an input UDM updated event
      */
     fireInputUdmUpdated(event: InputUdmUpdatedEvent): void {
-        console.log('[UTLXEventService] Input UDM updated:', {
-            inputId: event.inputId,
-            inputName: event.inputName,
-            udmLanguageLength: event.udmLanguage.length
-        });
+        console.log('╔' + '═'.repeat(78) + '╗');
+        console.log('║ [UTLXEventService] 🔥 FIRING Input UDM Updated Event');
+        console.log('╠' + '═'.repeat(78) + '╣');
+        console.log('[UTLXEventService] Input ID:', event.inputId);
+        console.log('[UTLXEventService] Input Name:', event.inputName);
+        console.log('[UTLXEventService] Format:', event.format);
+        console.log('[UTLXEventService] UDM Language Length:', event.udmLanguage.length, 'characters');
+        console.log('[UTLXEventService] UDM preview (first 500 chars):');
+        console.log(event.udmLanguage.substring(0, 500));
+        console.log('[UTLXEventService] UDM preview (last 200 chars):');
+        console.log(event.udmLanguage.substring(Math.max(0, event.udmLanguage.length - 200)));
+        console.log('╚' + '═'.repeat(78) + '╝');
         this.onInputUdmUpdatedEmitter.fire(event);
     }
 

@@ -22,6 +22,9 @@ import { UTLXService } from '../../common/protocol';
 import { UTLX_SERVICE_SYMBOL } from '../../common/protocol';
 import { FunctionInfo, OperatorInfo } from '../../common/protocol';
 import { analyzeInsertionContext, InsertionContext } from '../function-builder/context-analyzer';
+import { UDMLanguageParser, UDMParseException } from '../udm/udm-language-parser';
+import { navigate, getAllPaths } from '../udm/udm-navigator';
+import { UDM, UDMObjectHelper, isObject, isArray, isScalar } from '../udm/udm-core';
 
 export const UTLX_EDITOR_WIDGET_ID = 'utlx-editor';
 
@@ -559,20 +562,103 @@ export class UTLXEditorWidget extends ReactWidget {
 
     /**
      * Parse UDM structure and get fields at a specific path
+     *
+     * NEW IMPLEMENTATION: Uses proper UDM parser instead of regex
      */
     protected getFieldsAtPath(udm: string, path: string[]): Array<{name: string, type: string, description?: string}> {
         console.log('[UTLXEditor] Parsing UDM for path:', path);
         console.log('[UTLXEditor] UDM content (first 500 chars):', udm.substring(0, 500));
 
         try {
-            // Parse UDM language format
-            const fields = this.parseUdmFields(udm, path);
-            console.log('[UTLXEditor] Parsed fields:', fields);
+            // Parse UDM using proper parser
+            const parsed = UDMLanguageParser.parse(udm);
+            console.log('[UTLXEditor] Parsed UDM successfully, type:', parsed.type);
+
+            // Navigate to the path (join path segments with dots)
+            const pathString = path.join('.');
+            const targetNode = pathString ? navigate(parsed, pathString) : parsed;
+
+            if (!targetNode) {
+                console.log('[UTLXEditor] Path not found:', pathString);
+                return [];
+            }
+
+            // If target is a string (attribute value), can't get fields from it
+            if (typeof targetNode === 'string') {
+                console.log('[UTLXEditor] Target is attribute value, no fields');
+                return [];
+            }
+
+            // Extract fields from the target node
+            const fields: Array<{name: string, type: string, description?: string}> = [];
+
+            if (isObject(targetNode)) {
+                // Get all property keys
+                const propertyKeys = UDMObjectHelper.keys(targetNode);
+                for (const key of propertyKeys) {
+                    const value = UDMObjectHelper.get(targetNode, key);
+                    if (value) {
+                        fields.push({
+                            name: key,
+                            type: this.getUDMTypeLabel(value),
+                            description: `${key}: ${this.getUDMTypeLabel(value)}`
+                        });
+                    }
+                }
+
+                // Get all attribute keys (with @ prefix)
+                const attrKeys = UDMObjectHelper.attributeKeys(targetNode);
+                for (const key of attrKeys) {
+                    fields.push({
+                        name: `@${key}`,
+                        type: 'attribute',
+                        description: `@${key}: attribute`
+                    });
+                }
+            } else if (isArray(targetNode) && targetNode.elements.length > 0) {
+                // For arrays, return fields of the first element
+                const firstElement = targetNode.elements[0];
+                if (isObject(firstElement)) {
+                    const propertyKeys = UDMObjectHelper.keys(firstElement);
+                    for (const key of propertyKeys) {
+                        const value = UDMObjectHelper.get(firstElement, key);
+                        if (value) {
+                            fields.push({
+                                name: key,
+                                type: this.getUDMTypeLabel(value),
+                                description: `${key}: ${this.getUDMTypeLabel(value)}`
+                            });
+                        }
+                    }
+                }
+            }
+
+            console.log('[UTLXEditor] Extracted', fields.length, 'fields');
             return fields;
+
         } catch (error) {
-            console.error('[UTLXEditor] Failed to parse UDM:', error);
+            if (error instanceof UDMParseException) {
+                console.error('[UTLXEditor] UDM parse error:', error.message);
+            } else {
+                console.error('[UTLXEditor] Failed to parse UDM:', error);
+            }
             return [];
         }
+    }
+
+    /**
+     * Get user-friendly type label for UDM value
+     */
+    protected getUDMTypeLabel(udm: UDM): string {
+        if (isScalar(udm)) {
+            const value = udm.value;
+            if (value === null) return 'null';
+            if (typeof value === 'string') return 'string';
+            if (typeof value === 'number') return 'number';
+            if (typeof value === 'boolean') return 'boolean';
+            return 'scalar';
+        }
+        return udm.type;
     }
 
     /**
