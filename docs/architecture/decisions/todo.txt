@@ -6,6 +6,12 @@ Paralellization, see https://github.com/grauwen/utl-x/blob/main/docs/architectur
 ----
 Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architecture/module-system-design.md
 ----
+BUG
+
+<?xml version="1.0" encoding="UTF-8"?>
+  <!-- Healthcare Insurance Claim Processing System -->
+
+  The backend XML parser is rejecting the XML comment on line 2. Let me check what the backend is doing. First, let me find where the validateUdm call goes:
 
 ----
 So the new Theia/VS Code standard would require creating a VS Code extension that wraps the LSP client. This hasn't been implemented yet.
