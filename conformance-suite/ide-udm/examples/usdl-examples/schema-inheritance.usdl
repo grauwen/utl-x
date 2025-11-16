@@ -1,0 +1,39 @@
+@udm-version: 1.0
+
+{
+  schemas: {
+    BaseEntity: %schema({
+      id: %kind("string", { pattern: "^[A-Z]+-[0-9]+$" }),
+      createdAt: %kind("datetime"),
+      updatedAt: %kind("datetime"),
+      version: %kind("integer", { min: 1 })
+    }),
+
+    Customer: %extends("BaseEntity") %schema({
+      customerId: %kind("string"),
+      name: %kind("string"),
+      email: %kind("email"),
+      tier: %kind("enum", { values: ["bronze", "silver", "gold", "platinum"] })
+    }),
+
+    Order: %extends("BaseEntity") %schema({
+      orderId: %kind("string"),
+      customerId: %kind("string", { reference: "Customer" }),
+      totalAmount: %kind("decimal", { precision: 2 }),
+      status: %kind("enum", { values: ["draft", "submitted", "completed", "cancelled"] })
+    })
+  },
+
+  data: {
+    customer: %instance("Customer") {
+      id: "CUST-001",
+      customerId: "CUST-001",
+      name: "John Doe",
+      email: "john@example.com",
+      tier: "gold",
+      createdAt: @DateTime("2024-01-01T00:00:00Z"),
+      updatedAt: @DateTime("2024-11-16T10:30:00Z"),
+      version: 1
+    }
+  }
+}

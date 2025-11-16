@@ -1,0 +1,112 @@
+@udm-version: 1.0
+@source: "comprehensive-usdl-example"
+
+@Object(
+  name: "ComprehensiveExample",
+  metadata: {
+    version: "2.0",
+    schema: "usdl-features-v2",
+    validation: "strict",
+    documentation: "Comprehensive USDL feature showcase"
+  }
+) {
+  attributes: {
+    xmlns: "http://example.com/usdl",
+    schemaLocation: "http://example.com/usdl/schema.xsd"
+  },
+
+  properties: {
+    // Type annotations
+    typedFields: {
+      stringField: %kind("string", { minLength: 1 }),
+      numberField: %kind("number", { min: 0 }),
+      emailField: %kind("email"),
+      urlField: %kind("url"),
+      dateField: %kind("date"),
+      enumField: %kind("enum", { values: ["option1", "option2", "option3"] })
+    },
+
+    // Collections with transformations
+    collections: {
+      numbers: %kind("array<integer>") [1, 2, 3, 4, 5],
+
+      doubled: %map([1, 2, 3, 4, 5], n => n * 2),
+
+      filtered: %filter([1, 2, 3, 4, 5], n => n > 2),
+
+      sum: %reduce([1, 2, 3, 4, 5], 0, (acc, n) => acc + n)
+    },
+
+    // Nested schemas
+    nestedData: %kind("object") {
+      level1: %kind("object") {
+        level2: %kind("object") {
+          deepValue: %validate("deep", rules: [{ type: "minLength", value: 1 }])
+        }
+      }
+    },
+
+    // Conditional logic
+    conditionals: {
+      status: "active",
+      displayStatus: %if($this.status == "active", "✓ Active", "✗ Inactive"),
+      priority: %switch($this.status, {
+        "active": "high",
+        "pending": "medium",
+        "inactive": "low",
+        default: "unknown"
+      })
+    },
+
+    // References and lookups
+    references: {
+      customerId: "CUST-001",
+      customerName: %lookup("customers", $this.customerId, "name"),
+      customerData: %ref("customers", $this.customerId)
+    },
+
+    // Aggregations
+    aggregations: {
+      orders: [
+        { amount: 100 },
+        { amount: 200 },
+        { amount: 300 }
+      ],
+      totalOrders: %count($this.orders),
+      totalRevenue: %sum($this.orders, o => o.amount),
+      averageOrderValue: %avg($this.orders, o => o.amount),
+      maxOrder: %max($this.orders, o => o.amount),
+      minOrder: %min($this.orders, o => o.amount)
+    },
+
+    // Date/Time operations
+    timestamps: {
+      now: @DateTime("2024-11-16T10:30:00Z"),
+      tomorrow: %addDays(@Date("2024-11-16"), 1),
+      daysSince: %daysBetween(@Date("2024-01-01"), @Date("2024-11-16")),
+      formatted: %formatDate(@Date("2024-11-16"), "YYYY-MM-DD")
+    },
+
+    // String operations
+    strings: {
+      text: "Hello, World!",
+      uppercase: %upper($this.text),
+      lowercase: %lower($this.text),
+      trimmed: %trim("  spaces  "),
+      concatenated: %concat("Hello", " ", "World"),
+      substring: %substr($this.text, 0, 5),
+      split: %split($this.text, ", ")
+    },
+
+    // Math operations
+    math: {
+      value: 10.5,
+      rounded: %round($this.value),
+      ceiling: %ceil($this.value),
+      floor: %floor($this.value),
+      absolute: %abs(-42),
+      power: %pow(2, 8),
+      squareRoot: %sqrt(16)
+    }
+  }
+}

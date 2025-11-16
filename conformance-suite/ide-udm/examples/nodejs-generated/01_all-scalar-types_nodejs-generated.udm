@@ -1,0 +1,16 @@
+@udm-version: 1.0
+@source: "nodejs-generated/01_all-scalar-types_nodejs-generated.udm"
+@parsed-at: "2025-11-16T20:10:01.473Z"
+
+{
+  stringValue: "Hello, World!",
+  intValue: 42,
+  floatValue: 3.14159,
+  booleanTrue: true,
+  booleanFalse: false,
+  nullValue: null,
+  negativeNumber: -273.15,
+  scientificNotation: 6.022e+23,
+  unicodeString: "🚀 Unicode: αβγδ 中文",
+  escapedString: "Line 1\nLine 2\tTabbed\r\n\"Quoted\""
+}

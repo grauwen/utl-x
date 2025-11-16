@@ -1,0 +1,38 @@
+@udm-version: 1.0
+
+@Object(metadata: { schema: "healthcare-claim-v2" }) {
+  properties: {
+    claim: %kind("object", {
+      schema: {
+        claimId: "string",
+        patient: "object",
+        services: "array<object>"
+      }
+    }) {
+      claimId: "CLM-2024-001",
+
+      patient: %kind("object", {
+        required: ["patientId", "name", "dob"]
+      }) {
+        patientId: "PAT-123",
+        name: "John Doe",
+        dob: @Date("1980-05-15"),
+        insurance: %kind("object", { optional: true }) {
+          memberId: "MEM-456",
+          groupNumber: "GRP-789"
+        }
+      },
+
+      services: %kind("array<object>", {
+        minItems: 1,
+        maxItems: 50
+      }) [
+        {
+          serviceDate: @Date("2024-11-10"),
+          procedureCode: %kind("string", { pattern: "^[0-9]{5}$" }) "99213",
+          amount: %kind("decimal", { precision: 2 }) 150.00
+        }
+      ]
+    }
+  }
+}

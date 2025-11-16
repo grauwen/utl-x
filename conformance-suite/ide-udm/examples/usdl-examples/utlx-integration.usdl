@@ -1,0 +1,26 @@
+@udm-version: 1.0
+@source: "integration-example.utlx"
+
+{
+  inputs: {
+    sourceData: %kind("array<object>") [
+      { id: 1, value: 10 },
+      { id: 2, value: 20 },
+      { id: 3, value: 30 }
+    ]
+  },
+
+  output: %transform($inputs.sourceData) {
+    result: %map($inputs.sourceData, item => {
+      id: item.id,
+      doubled: item.value * 2,
+      formatted: "Value: " + item.value
+    }),
+
+    summary: {
+      count: %count($inputs.sourceData),
+      sum: %reduce($inputs.sourceData, 0, (acc, item) => acc + item.value),
+      average: %reduce($inputs.sourceData, 0, (acc, item) => acc + item.value) / %count($inputs.sourceData)
+    }
+  }
+}

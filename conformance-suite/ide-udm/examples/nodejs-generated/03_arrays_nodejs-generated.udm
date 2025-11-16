@@ -1,0 +1,43 @@
+@udm-version: 1.0
+@source: "nodejs-generated/03_arrays_nodejs-generated.udm"
+@parsed-at: "2025-11-16T20:10:01.475Z"
+
+{
+  emptyArray: [],
+  numberArray: [
+    1,
+    2,
+    3
+  ],
+  stringArray: [
+    "apple",
+    "banana",
+    "cherry"
+  ],
+  mixedArray: [
+    "text",
+    42,
+    true,
+    null
+  ],
+  arrayOfObjects: [
+    {
+      id: 1,
+      name: "Item 1"
+    },
+    {
+      id: 2,
+      name: "Item 2"
+    }
+  ],
+  nestedArrays: [
+    [
+      1,
+      2
+    ],
+    [
+      3,
+      4
+    ]
+  ]
+}

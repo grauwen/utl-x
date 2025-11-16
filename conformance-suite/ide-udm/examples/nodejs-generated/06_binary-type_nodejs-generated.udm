@@ -1,0 +1,12 @@
+@udm-version: 1.0
+@source: "nodejs-generated/06_binary-type_nodejs-generated.udm"
+@parsed-at: "2025-11-16T20:10:01.475Z"
+
+{
+  document: {
+    filename: "image.png",
+    mimetype: "image/png",
+    content: @Binary(size: 8),
+    uploadedAt: @DateTime("2024-11-16T10:30:00Z")
+  }
+}
