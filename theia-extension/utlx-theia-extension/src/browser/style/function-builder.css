@@ -464,6 +464,7 @@
     margin-left: 4px;
 }
 
+.field-tree .input-tier-badge,
 .field-tree .input-format-badge,
 .field-tree .input-array-badge {
     font-size: 10px;
@@ -475,6 +476,13 @@
     font-weight: 600;
     letter-spacing: 0.3px;
     margin-left: 4px;
+}
+
+/* Tier badge specific styling */
+.field-tree .input-tier-badge {
+    font-size: 9px;
+    padding: 2px 4px;
+    opacity: 0.85;
 }
 
 .field-tree .empty-fields {

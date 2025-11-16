@@ -113,26 +113,43 @@ function extractFullStructure(udmLanguage: string, fieldPath: string, isInputArr
     // Navigate to the target location in the UDM
     let targetContent = udmLanguage;
 
-    // Find the properties section if this is an @Object format
-    const propsMatch = udmLanguage.match(/properties:\s*\{/);
-    if (propsMatch) {
-        const propsStart = udmLanguage.indexOf('{', propsMatch.index!);
-        targetContent = extractBracedContentString(udmLanguage, propsStart);
+    // For array inputs, start inside the array
+    if (isInputArray) {
+        const arrayContent = extractBracketContentString(udmLanguage, udmLanguage.indexOf('['));
+        if (arrayContent) {
+            targetContent = arrayContent;
+        }
+    } else {
+        // For single object inputs, find the root object body
+        const rootMatch = targetContent.match(/@Object[^{]*\{/);
+        if (rootMatch) {
+            const bodyStart = targetContent.indexOf('{', rootMatch.index!);
+            targetContent = extractBracedContentString(targetContent, bodyStart);
+        }
     }
 
     // Navigate through the path
     for (const part of pathParts) {
+        console.log('[extractFullStructure] Navigating to part:', part);
+
+        // Escape special regex characters in field name
+        const escapedPart = part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
         // Find this field in the current content
-        const fieldPattern = new RegExp(`["']?${part}["']?\\s*:\\s*`);
+        const fieldPattern = new RegExp(`["']?${escapedPart}["']?\\s*:\\s*`);
         const match = targetContent.match(fieldPattern);
 
         if (!match) {
             console.log('[extractFullStructure] Field not found:', part);
-            break;
+            console.log('[extractFullStructure] Current content (first 200 chars):', targetContent.substring(0, 200));
+            // If field not found, return empty instead of showing everything
+            return [];
         }
 
         const valueStart = match.index! + match[0].length;
         const restContent = targetContent.substring(valueStart);
+
+        console.log('[extractFullStructure] Found field, value starts with:', restContent.substring(0, 50));
 
         // Extract the value (could be @Object, {}, [], or primitive)
         if (restContent.startsWith('@Object')) {
@@ -141,21 +158,17 @@ function extractFullStructure(udmLanguage: string, fieldPath: string, isInputArr
             if (bodyMatch) {
                 const bodyStart = restContent.indexOf('{', bodyMatch.index!);
                 targetContent = extractBracedContentString(restContent, bodyStart);
-
-                // Check for properties section
-                const propsMatch2 = targetContent.match(/properties:\s*\{/);
-                if (propsMatch2) {
-                    const propsStart = targetContent.indexOf('{', propsMatch2.index!);
-                    targetContent = extractBracedContentString(targetContent, propsStart);
-                }
+                console.log('[extractFullStructure] Extracted @Object body (first 100 chars):', targetContent.substring(0, 100));
             }
         } else if (restContent.startsWith('[')) {
-            // Array - extract first element
+            // Array - extract content (not just first element, but all array content)
             const arrayContent = extractBracketContentString(restContent, 0);
             targetContent = arrayContent;
+            console.log('[extractFullStructure] Extracted array content (first 100 chars):', targetContent.substring(0, 100));
         } else if (restContent.startsWith('{')) {
             // Object
             targetContent = extractBracedContentString(restContent, 0);
+            console.log('[extractFullStructure] Extracted object content (first 100 chars):', targetContent.substring(0, 100));
         } else {
             // Primitive value
             const valueMatch = restContent.match(/^[^,}\]]+/);
@@ -166,6 +179,7 @@ function extractFullStructure(udmLanguage: string, fieldPath: string, isInputArr
     }
 
     // Now extract all field names and values from targetContent
+    console.log('[extractFullStructure] Final extraction from content (first 200 chars):', targetContent.substring(0, 200));
     return extractAllFieldsAndValues(targetContent);
 }
 
@@ -638,6 +652,24 @@ interface InputNodeProps {
 }
 
 /**
+ * Get format tier (T1 or T2)
+ */
+function getFormatTier(format: string): string {
+    const tier1Formats = ['json', 'xml', 'csv', 'yaml'];
+    const tier2Formats = ['xsd', 'jsch', 'avro', 'proto', 'protobuf', 'jsonschema'];
+
+    const normalizedFormat = format.toLowerCase();
+
+    if (tier1Formats.includes(normalizedFormat)) {
+        return 'T1';
+    } else if (tier2Formats.includes(normalizedFormat)) {
+        return 'T2';
+    }
+
+    return 'T1'; // Default to T1 for unknown formats
+}
+
+/**
  * InputNode Component
  *
  * Represents a single input (root level)
@@ -645,6 +677,7 @@ interface InputNodeProps {
 const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onInsertField, onFieldSelect }) => {
     const typeLabel = tree.isArray ? 'Array' : 'Object';
     const icon = tree.isArray ? 'codicon-symbol-array' : 'codicon-symbol-variable';
+    const tier = getFormatTier(tree.format);
 
     return (
         <div className='input-node'>
@@ -656,6 +689,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                         <span className='codicon codicon-chevron-right' style={{ visibility: 'hidden' }}></span>
                         <span className={`codicon ${icon}`}></span>
                         <span className='input-name'>${tree.inputName}</span>
+                        <span className='input-tier-badge'>{tier}</span>
                         <span className='input-format-badge'>{tree.format}</span>
                         <span className='input-array-badge'>Object</span>
                         <button
@@ -686,6 +720,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                         <span className={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`}></span>
                         <span className={`codicon ${icon}`}></span>
                         <span className='input-name'>${tree.inputName}[]</span>
+                        <span className='input-tier-badge'>{tier}</span>
                         <span className='input-format-badge'>{tree.format}</span>
                         <span className='input-array-badge'>Array</span>
                         <button
@@ -717,6 +752,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                     <span className={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`}></span>
                     <span className={`codicon ${icon}`}></span>
                     <span className='input-name'>${tree.inputName}</span>
+                    <span className='input-tier-badge'>{tier}</span>
                     <span className='input-format-badge'>{tree.format}</span>
                     <span className='input-array-badge'>{typeLabel}</span>
                     <button
