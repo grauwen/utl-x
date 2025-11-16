@@ -12,7 +12,8 @@ BUG
   <!-- Healthcare Insurance Claim Processing System -->
 
   The backend XML parser is rejecting the XML comment on line 2. Let me check what the backend is doing. First, let me find where the validateUdm call goes:
-
+----
+YAML setting for an XML file went green for UDM parsing <== BUG?
 ----
 So the new Theia/VS Code standard would require creating a VS Code extension that wraps the LSP client. This hasn't been implemented yet.
 ----
