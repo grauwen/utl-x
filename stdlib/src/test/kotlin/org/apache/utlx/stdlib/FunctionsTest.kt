@@ -131,17 +131,17 @@ class FunctionsTest {
     @Test
     fun testStringFunctions() {
         val stringFunctions = listOf(
-            "upper", "lower", "trim", "substring", "split", "joinBy", "replace",
+            "trim", "substring", "split", "joinBy", "replace",
             "startsWith", "endsWith", "length", "matches", "replaceRegex",
             "substringBefore", "substringAfter", "pad", "repeat",
             "leftTrim", "rightTrim", "translate", "reverse", "isBlank",
-            "charAt", "capitalize", "titleCase", "camelize", "pascalCase",
+            "charAt", "capitalize", "titleCase", "camelCase", "pascalCase",
             "kebabCase", "snakeCase", "constantCase", "dotCase", "pathCase",
-            "uncamelize", "slugify", "pluralize", "singularize",
+             "slugify", "pluralize", "singularize",
             // Canonical names for renamed functions
-            "upperCase", "lowerCase", "camelCase", "fromCamelCase",
+            "upperCase", "lowerCase", "camelCase",
             // New reverse case conversion functions
-            "fromPascalCase", "fromKebabCase", "fromSnakeCase", "fromConstantCase",
+            "fromPascalCase", "fromKebabCase", "fromSnakeCase", "fromConstantCase", "fromCamelCase",
             "fromTitleCase", "fromDotCase", "fromPathCase", "wordCase"
         )
 

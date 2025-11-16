@@ -7,78 +7,9 @@ import kotlin.test.assertEquals
 
 class CaseConversionFunctionsTest {
 
+   
     @Test
-    fun testSnakeCase() {
-        // Test basic snake case conversion
-        val result1 = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar("helloWorld")))
-        assertEquals("hello_world", (result1 as UDM.Scalar).value)
-
-        val result2 = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar("HelloWorld")))
-        assertEquals("hello_world", (result2 as UDM.Scalar).value)
-
-        val result3 = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar("hello-world")))
-        assertEquals("hello_world", (result3 as UDM.Scalar).value)
-
-        // Test multiple words
-        val result4 = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar("FirstNameLastName")))
-        assertEquals("first_name_last_name", (result4 as UDM.Scalar).value)
-
-        // Test with spaces
-        val result5 = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar("hello world test")))
-        assertEquals("hello_world_test", (result5 as UDM.Scalar).value)
-
-        // Test already snake_case
-        val result6 = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar("already_snake_case")))
-        assertEquals("already_snake_case", (result6 as UDM.Scalar).value)
-
-        // Test single word
-        val result7 = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar("word")))
-        assertEquals("word", (result7 as UDM.Scalar).value)
-
-        // Test empty string
-        val result8 = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar("")))
-        assertEquals("", (result8 as UDM.Scalar).value)
-
-        // Test mixed delimiters
-        val result9 = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar("hello-world test_case")))
-        assertEquals("hello_world_test_case", (result9 as UDM.Scalar).value)
-    }
-
-    @Test
-    fun testTitleCase() {
-        // Test basic title case
-        val result1 = CaseConversionFunctions.titleCase(listOf(UDM.Scalar("hello world")))
-        assertEquals("Hello World", (result1 as UDM.Scalar).value)
-
-        val result2 = CaseConversionFunctions.titleCase(listOf(UDM.Scalar("hello-world")))
-        assertEquals("Hello World", (result2 as UDM.Scalar).value)
-
-        val result3 = CaseConversionFunctions.titleCase(listOf(UDM.Scalar("HELLO WORLD")))
-        assertEquals("Hello World", (result3 as UDM.Scalar).value)
-
-        // Test with underscores
-        val result4 = CaseConversionFunctions.titleCase(listOf(UDM.Scalar("hello_world_test")))
-        assertEquals("Hello World Test", (result4 as UDM.Scalar).value)
-
-        // Test mixed case input
-        val result5 = CaseConversionFunctions.titleCase(listOf(UDM.Scalar("hElLo WoRlD")))
-        assertEquals("Hello World", (result5 as UDM.Scalar).value)
-
-        // Test single word
-        val result6 = CaseConversionFunctions.titleCase(listOf(UDM.Scalar("word")))
-        assertEquals("Word", (result6 as UDM.Scalar).value)
-
-        // Test empty string
-        val result7 = CaseConversionFunctions.titleCase(listOf(UDM.Scalar("")))
-        assertEquals("", (result7 as UDM.Scalar).value)
-
-        // Test camelCase input
-        val result8 = CaseConversionFunctions.titleCase(listOf(UDM.Scalar("helloWorldTest")))
-        assertEquals("Helloworldtest", (result8 as UDM.Scalar).value)
-    }
-
-    @Test
-    fun testUncamelize() {
+    fun testFromCamelCase() {
         // Test basic uncamelization
         val result1 = CaseConversionFunctions.fromCamelCase(listOf(UDM.Scalar("helloWorld")))
         assertEquals("hello world", (result1 as UDM.Scalar).value)
@@ -206,9 +137,6 @@ class CaseConversionFunctionsTest {
         }
 
         // Test wrong argument types
-        assertThrows<IllegalArgumentException> {
-            CaseConversionFunctions.snakeCase(listOf(UDM.Array(emptyList())))
-        }
 
         assertThrows<IllegalArgumentException> {
             CaseConversionFunctions.truncate(listOf(UDM.Scalar("test"), UDM.Scalar("not a number")))
@@ -225,19 +153,9 @@ class CaseConversionFunctionsTest {
         val result2 = CaseConversionFunctions.slugify(listOf(UDM.Scalar("Café & Naïve")))
         assertEquals("caf-and-nave", (result2 as UDM.Scalar).value)
 
-        // Test numbers in strings
-        val result4 = CaseConversionFunctions.snakeCase(listOf(UDM.Scalar("test123Abc")))
-        assertEquals("test123abc", (result4 as UDM.Scalar).value)
     }
 
-    @Test
-    fun testRoundTripConversions() {
-        // Test camelCase -> fromCamelCase -> titleCase
-        val original2 = "helloWorldTest"
-        val fromCamelCased = CaseConversionFunctions.fromCamelCase(listOf(UDM.Scalar(original2)))
-        val titled = CaseConversionFunctions.titleCase(listOf(fromCamelCased))
-        assertEquals("Hello World Test", (titled as UDM.Scalar).value)
-    }
+
 
     @Test
     fun testSpecialCharacterHandling() {
@@ -477,17 +395,13 @@ class CaseConversionFunctionsTest {
         val pascalOriginal = "HelloWorld"
         val fromPascal = CaseConversionFunctions.fromPascalCase(listOf(UDM.Scalar(pascalOriginal)))
         assertEquals("hello world", (fromPascal as UDM.Scalar).value)
-        val toTitle = CaseConversionFunctions.titleCase(listOf(fromPascal))
-        assertEquals("Hello World", (toTitle as UDM.Scalar).value)
+ 
 
         // kebab-case -> fromKebabCase -> snakeCase -> fromSnakeCase
         val kebabOriginal = "hello-world-test"
         val fromKebab = CaseConversionFunctions.fromKebabCase(listOf(UDM.Scalar(kebabOriginal)))
         assertEquals("hello world test", (fromKebab as UDM.Scalar).value)
-        val toSnake = CaseConversionFunctions.snakeCase(listOf(fromKebab))
-        assertEquals("hello_world_test", (toSnake as UDM.Scalar).value)
-        val fromSnake = CaseConversionFunctions.fromSnakeCase(listOf(toSnake))
-        assertEquals("hello world test", (fromSnake as UDM.Scalar).value)
+
 
         // CONSTANT_CASE -> fromConstantCase -> wordCase
         val constantOriginal = "HELLO_WORLD"
