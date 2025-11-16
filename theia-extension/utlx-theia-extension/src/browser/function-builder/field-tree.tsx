@@ -40,6 +40,27 @@ function formatValueForUTLX(value: string): string {
 }
 
 /**
+ * Extract a single value from a UDM node
+ */
+function extractValueFromNode(node: UDM): string | undefined {
+    if (isScalar(node)) {
+        return String(node.value);
+    } else if (isObject(node)) {
+        // Check if it's an XML text element
+        const objNode = node as UDM & { type: 'object' };
+        const propertyKeys = UDMObjectHelper.keys(objNode);
+
+        if (propertyKeys.length === 1 && propertyKeys[0] === '_text') {
+            const textValue = UDMObjectHelper.get(objNode, '_text');
+            if (textValue && isScalar(textValue)) {
+                return String(textValue.value);
+            }
+        }
+    }
+    return undefined;
+}
+
+/**
  * Extract sample values for a field from UDM language string
  * NEW IMPLEMENTATION: Uses UDM parser instead of regex
  */
@@ -51,7 +72,39 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
         const udm = UDMLanguageParser.parse(udmLanguage);
         console.log('[extractSampleValues] Parsed UDM type:', udm.type);
 
-        // Navigate to the field
+        const values: string[] = [];
+
+        // Special handling for array inputs: extract field from ALL array elements
+        if (isInputArray && isArray(udm)) {
+            console.log('[extractSampleValues] Input is array, extracting field from all elements');
+            const arrayNode = udm as UDM & { type: 'array' };
+
+            // Process all elements (or up to 1000 for performance)
+            const elementsToProcess = arrayNode.elements.slice(0, 1000);
+
+            for (const element of elementsToProcess) {
+                // Navigate to the field within this element
+                const fieldNode = navigate(element, fieldPath);
+
+                if (fieldNode && typeof fieldNode !== 'string') {
+                    // Extract value from this element's field
+                    const elementValue = extractValueFromNode(fieldNode);
+                    if (elementValue) {
+                        values.push(elementValue);
+                    }
+                } else if (typeof fieldNode === 'string') {
+                    values.push(fieldNode);
+                }
+            }
+
+            console.log('[extractSampleValues] Extracted', values.length, 'values from', elementsToProcess.length, 'array elements');
+            // Return unique values (up to 100 unique values for display)
+            const uniqueValues = Array.from(new Set(values));
+            console.log('[extractSampleValues] Found', uniqueValues.length, 'unique values');
+            return uniqueValues.slice(0, 100);
+        }
+
+        // Non-array input: navigate normally
         const targetNode = navigate(udm, fieldPath);
 
         if (!targetNode) {
@@ -67,8 +120,6 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
 
         console.log('[extractSampleValues] Found target node, type:', targetNode.type);
 
-        const values: string[] = [];
-
         // Extract values based on node type
         if (isScalar(targetNode)) {
             // Single scalar value
@@ -80,7 +131,7 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
             const arrayNode = targetNode as UDM & { type: 'array' };
             console.log('[extractSampleValues] Array with', arrayNode.elements.length, 'elements');
 
-            for (const element of arrayNode.elements.slice(0, 10)) {
+            for (const element of arrayNode.elements.slice(0, 100)) {
                 if (isScalar(element)) {
                     values.push(String(element.value));
                 } else if (isObject(element)) {
@@ -113,7 +164,7 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
                 }
             } else {
                 // Regular object with child elements - show its properties
-                for (const childName of childNames.slice(0, 10)) {
+                for (const childName of childNames.slice(0, 50)) {
                     const childValue = UDMObjectHelper.get(objNode, childName);
                     if (childValue && isScalar(childValue)) {
                         values.push(`${childName}: ${childValue.value}`);
@@ -129,7 +180,7 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
         }
 
         console.log('[extractSampleValues] Extracted', values.length, 'values:', values);
-        return values.slice(0, 10);
+        return values.slice(0, 100);
     } catch (error) {
         console.error('[extractSampleValues] Error:', error);
         console.error('[extractSampleValues] Stack:', error instanceof Error ? error.stack : 'N/A');
