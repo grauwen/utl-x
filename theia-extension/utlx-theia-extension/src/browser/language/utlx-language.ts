@@ -90,7 +90,8 @@ export class UTLXLanguageGrammarContribution implements LanguageGrammarDefinitio
                     [/'([^'\\]|\\.)*'/, 'string'],
 
                     // Everything else (input, output, names, etc.) is keyword color (blue)
-                    [/[a-zA-Z_$%][\w$]*/, 'keyword'],
+                    // Allow hyphens in identifiers: [\w$-]* instead of [\w$]*
+                    [/[a-zA-Z_$%][\w$-]*/, 'keyword'],
 
                     // Whitespace and punctuation
                     { include: '@whitespace' },
@@ -98,11 +99,11 @@ export class UTLXLanguageGrammarContribution implements LanguageGrammarDefinitio
                 ],
 
                 code: [
-                    // Input references
-                    [/\$\w+/, 'variable.input'],
+                    // Input references - allow hyphens in input names: $input-name
+                    [/\$[\w-]+/, 'variable.input'],
 
-                    // Identifiers and keywords
-                    [/[a-z_$][\w$]*/, {
+                    // Identifiers and keywords - allow hyphens
+                    [/[a-z_$][\w$-]*/, {
                         cases: {
                             '@keywords': 'keyword',
                             '@default': 'identifier'
