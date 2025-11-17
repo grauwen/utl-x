@@ -1,0 +1,34 @@
+Should You Package It with Theia?
+
+  YES! Here are your options:
+
+  Option 1: Bundle in Theia Application (Recommended)
+
+  Modify: /Users/magr/data/mapping/github-git/utl-x/theia-extension/browser-app/package.json
+
+  Add the extension as a dependency:
+  {
+    "dependencies": {
+      "@theia/core": "1.64.0",
+      "@theia/editor": "1.64.0",
+      // ... other deps
+      "utlx-language-support": "file:../../vscode-extension"
+    }
+  }
+
+  Then Theia will automatically load it on startup.
+
+  Option 2: Install Extension in Theia Plugins Directory
+
+  Copy to Theia's extension folder:
+  mkdir -p ~/.theia/extensions
+  cp vscode-extension/utlx-language-support-1.0.0.vsix ~/.theia/extensions/
+
+  Theia will auto-load it from there.
+
+  Option 3: Deploy with Theia Application
+
+  Add to your Theia deployment:
+  # In your deployment script
+  cp utlx-language-support-1.0.0.vsix $THEIA_PLUGINS_DIR/
+
