@@ -857,10 +857,42 @@ output json
     }
 
     /**
-     * Clear editor content
+     * Clear editor content - preserves header, resets transformation code
      */
     public clearContent(): void {
-        this.setContent(this.getDefaultContent());
+        console.log('[UTLXEditorWidget] 🧹 Clear button clicked');
+
+        const currentContent = this.getContent();
+        console.log('[UTLXEditorWidget] Current content length:', currentContent.length);
+
+        // Try to extract header lines manually, even if parser says invalid
+        const lines = currentContent.split('\n');
+        const separatorIndex = lines.findIndex(line => line.trim() === '---');
+
+        console.log('[UTLXEditorWidget] Separator found at line:', separatorIndex);
+
+        if (separatorIndex > 0) {
+            // Extract header lines before separator
+            const headerLines = lines.slice(0, separatorIndex).map(line => line.trim()).filter(line => line);
+            console.log('[UTLXEditorWidget] Extracted header lines:', headerLines);
+
+            // Create default transformation code
+            const defaultCode = `{
+  // Your transformation code here
+}`;
+
+            // Reconstruct content with preserved header
+            const newContent = headerLines.join('\n') + '\n---\n' + defaultCode + '\n';
+            console.log('[UTLXEditorWidget] New content to set:\n', newContent);
+
+            this.setContent(newContent);
+            console.log('[UTLXEditorWidget] ✅ Content cleared with preserved header');
+        } else {
+            // No separator found, fall back to default
+            console.log('[UTLXEditorWidget] ⚠️ No separator found, falling back to default content');
+            this.setContent(this.getDefaultContent());
+            console.log('[UTLXEditorWidget] ✅ Content reset to default');
+        }
     }
 
     /**
