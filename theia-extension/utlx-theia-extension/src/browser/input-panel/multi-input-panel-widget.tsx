@@ -65,7 +65,10 @@ export interface InputTab {
     // Encoding parameters (COMMENTED OUT - encoding/BOM are auto-detected for inputs, not manually set)
     // encoding?: string;         // Character encoding (UTF-8, UTF-16LE, UTF-16BE, ISO-8859-1, Windows-1252)
     // bom?: boolean;             // Byte Order Mark (default false)
-    // UDM parse status
+    // Format detection status (pre-validation)
+    formatDetected?: string | null;     // Detected format (e.g., 'xml', 'json', 'csv')
+    formatMatchStatus?: 'match' | 'mismatch' | 'unknown';  // match = ✓, mismatch = ⚠, unknown = ?
+    // UDM parse status (actual validation)
     udmParsed?: boolean;       // true = success (green check), false = error (red X), undefined = not checked yet
     udmValidating?: boolean;   // true = currently validating (pulse icon)
     udmError?: string;         // Error message for tooltip
@@ -230,6 +233,35 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 onChange={(e) => this.handleRenameInput(activeInputId, e.target.value)}
                                 placeholder='Input name'
                             />
+                            {/* Format Detection Indicator */}
+                            {activeInput.formatMatchStatus === 'match' && (
+                                <span
+                                    className='utlx-format-indicator'
+                                    style={{ color: '#50fa7b', fontSize: '11px', marginRight: '8px' }}
+                                    title={`Format detection: ${activeInput.formatDetected?.toUpperCase()} (matches declared format)`}
+                                >
+                                    ✓ Format
+                                </span>
+                            )}
+                            {activeInput.formatMatchStatus === 'mismatch' && (
+                                <span
+                                    className='utlx-format-indicator'
+                                    style={{ color: '#ff5555', fontSize: '11px', marginRight: '8px' }}
+                                    title={`Format mismatch: Declared ${activeInput.instanceFormat.toUpperCase()}, detected ${activeInput.formatDetected?.toUpperCase() || 'unknown'}`}
+                                >
+                                    ⚠ Format
+                                </span>
+                            )}
+                            {activeInput.formatMatchStatus === 'unknown' && (
+                                <span
+                                    className='utlx-format-indicator'
+                                    style={{ color: '#f1fa8c', fontSize: '11px', marginRight: '8px' }}
+                                    title={`Format could not be auto-detected. Using declared format: ${activeInput.instanceFormat.toUpperCase()}`}
+                                >
+                                    ? Format
+                                </span>
+                            )}
+
                             {/* UDM Parse Status Indicator */}
                             {activeInput.udmValidating && (
                                 <span
@@ -804,6 +836,136 @@ export class MultiInputPanelWidget extends ReactWidget {
     /**
      * Validate input content against UDM parser
      */
+    /**
+     * Detect actual format of content based on content analysis
+     */
+    private detectContentFormat(content: string): string | null {
+        const trimmed = content.trim();
+        if (!trimmed) return null;
+
+        // XSD detection - XML Schema has specific namespace and elements
+        // Must check BEFORE generic XML since XSD is XML
+        const withoutComments = trimmed.replace(/<!--[\s\S]*?-->/g, '').trim();
+        // XSD must have <xs:schema> or <xsd:schema> or <schema> as ROOT element with XMLSchema namespace
+        // Don't confuse with regular XML that just uses xmlns:xsi for validation
+        if (/<xs:schema|<xsd:schema/i.test(trimmed) ||
+            (withoutComments.includes('<schema') &&
+             withoutComments.includes('xmlns') &&
+             trimmed.includes('http://www.w3.org/2001/XMLSchema') &&
+             !trimmed.includes('xmlns:xsi'))) {  // xmlns:xsi is used in regular XML for validation, not schema definition
+            return 'xsd';
+        }
+
+        // XML detection - check for XML patterns
+        // Valid XML can start with:
+        // - <?xml declaration
+        // - <!-- comment -->
+        // - <!DOCTYPE ...>
+        // - <element> (root element)
+        if (trimmed.startsWith('<?xml') ||                    // XML declaration
+            trimmed.startsWith('<!DOCTYPE') ||                // DOCTYPE
+            trimmed.startsWith('<!--') ||                     // Comment first
+            (trimmed.startsWith('<') &&                       // Root element
+             !trimmed.startsWith('<![CDATA[') &&              // Not CDATA
+             trimmed.includes('>') &&                         // Has closing bracket
+             /^<[a-zA-Z]/.test(withoutComments))) {           // Element name starts with letter
+            return 'xml';
+        }
+
+        // JSON Schema detection - check BEFORE generic JSON
+        // JSON Schema has "$schema" property
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                // Check for JSON Schema markers
+                if (parsed && typeof parsed === 'object') {
+                    if (parsed.$schema ||
+                        parsed.type === 'object' && (parsed.properties || parsed.required) ||
+                        parsed.type === 'array' && parsed.items ||
+                        parsed.definitions ||
+                        parsed.$defs) {
+                        return 'jsch';
+                    }
+                }
+                // Regular JSON
+                return 'json';
+            } catch {
+                // Not valid JSON, could be YAML with JSON-like syntax
+            }
+        }
+
+        // Protocol Buffers detection
+        // Proto files have "syntax", "package", "message", "service" keywords
+        if (/^\s*syntax\s*=\s*"proto[23]"/m.test(trimmed) ||
+            (/^\s*package\s+[\w.]+;/m.test(trimmed) && /^\s*message\s+\w+\s*\{/m.test(trimmed)) ||
+            (/^\s*message\s+\w+\s*\{/m.test(trimmed) && /^\s*\w+\s+\w+\s*=\s*\d+;/m.test(trimmed))) {
+            return 'proto';
+        }
+
+        // Avro Schema detection
+        // Avro schemas are JSON with specific structure
+        if (trimmed.startsWith('{')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (parsed && typeof parsed === 'object') {
+                    // Avro has "type" field with values like "record", "enum", "array", "map"
+                    // and "namespace", "name", "fields" for records
+                    if ((parsed.type === 'record' && parsed.fields) ||
+                        (parsed.type === 'enum' && parsed.symbols) ||
+                        (parsed.type && typeof parsed.type === 'string' &&
+                         ['record', 'enum', 'array', 'map', 'fixed'].includes(parsed.type)) ||
+                        parsed.protocol) {  // Avro protocol
+                        return 'avro';
+                    }
+                }
+            } catch {
+                // Not valid JSON
+            }
+        }
+
+        // CSV detection - detect various delimiters (comma, semicolon, tab, pipe)
+        const lines = trimmed.split('\n').filter(l => l.trim());
+        if (lines.length >= 2) {
+            // Common CSV delimiters
+            const delimiters = [',', ';', '\t', '|'];
+
+            for (const delimiter of delimiters) {
+                const escapedDelimiter = delimiter === '|' ? '\\|' : delimiter;
+                const delimiterRegex = new RegExp(escapedDelimiter, 'g');
+
+                const firstLineCount = (lines[0].match(delimiterRegex) || []).length;
+                const secondLineCount = (lines[1].match(delimiterRegex) || []).length;
+
+                // Must have at least one delimiter and consistent count across lines
+                if (firstLineCount > 0 && firstLineCount === secondLineCount) {
+                    // Additional check: CSV typically doesn't have unquoted colons followed by space
+                    // (to distinguish from YAML key: value syntax)
+                    // But allow if the delimiter is NOT comma (semicolon CSV can have colons)
+                    if (delimiter !== ',') {
+                        return 'csv';
+                    }
+
+                    // For comma-delimited, check it's not YAML
+                    const hasYamlPattern = /^\s*[\w-]+:\s+[\w]/m.test(trimmed);
+                    if (!hasYamlPattern) {
+                        return 'csv';
+                    }
+                }
+            }
+        }
+
+        // YAML detection - has key: value patterns (but not JSON)
+        if (!trimmed.startsWith('{') && !trimmed.startsWith('[') && !trimmed.startsWith('<')) {
+            // Check for YAML patterns: "key:" at start of lines or "- item" for lists
+            const yamlPattern = /^\s*[\w-]+:\s*|^\s*-\s+/m;
+            if (yamlPattern.test(trimmed)) {
+                return 'yaml';
+            }
+        }
+
+        return null;
+    }
+
     private async validateInput(inputId: string): Promise<void> {
         console.log('[MultiInputPanel] ========================================');
         console.log('[MultiInputPanel] validateInput() CALLED');
@@ -828,6 +990,47 @@ export class MultiInputPanelWidget extends ReactWidget {
             this.updateInputValidation(inputId, undefined, false);
             return;
         }
+
+        // PRE-VALIDATION: Detect actual content format and warn if mismatch
+        console.log('[MultiInputPanel] ────────────────────────────────────────');
+        console.log('[MultiInputPanel] 🔍 PRE-VALIDATION FORMAT DETECTION');
+        console.log('[MultiInputPanel] (Before sending to UDM parser)');
+        console.log('[MultiInputPanel] ────────────────────────────────────────');
+
+        const detectedFormat = this.detectContentFormat(input.instanceContent);
+        console.log('[MultiInputPanel] Declared format:', input.instanceFormat);
+        console.log('[MultiInputPanel] Detected format:', detectedFormat || 'unknown');
+
+        let formatMatchStatus: 'match' | 'mismatch' | 'unknown';
+
+        if (detectedFormat && detectedFormat !== input.instanceFormat.toLowerCase()) {
+            formatMatchStatus = 'mismatch';
+            console.warn('[MultiInputPanel] ⚠️  FORMAT MISMATCH DETECTED!');
+            console.warn('[MultiInputPanel]   Declared: ' + input.instanceFormat.toUpperCase());
+            console.warn('[MultiInputPanel]   Detected: ' + detectedFormat.toUpperCase());
+            console.warn('[MultiInputPanel]   → Content may be parsed incorrectly!');
+            console.log('[MultiInputPanel] ────────────────────────────────────────');
+
+            // Show warning to user
+            this.messageService.warn(
+                `Format mismatch: Input "${input.name}" is set to ${input.instanceFormat.toUpperCase()} ` +
+                `but content appears to be ${detectedFormat.toUpperCase()}. ` +
+                `This may cause unexpected parsing results.`
+            );
+        } else if (detectedFormat === input.instanceFormat.toLowerCase()) {
+            formatMatchStatus = 'match';
+            console.log('[MultiInputPanel] ✅ Format match confirmed');
+            console.log('[MultiInputPanel]   Declared and detected formats align');
+            console.log('[MultiInputPanel] ────────────────────────────────────────');
+        } else {
+            formatMatchStatus = 'unknown';
+            console.warn('[MultiInputPanel] ⚠️  Could not auto-detect format');
+            console.warn('[MultiInputPanel]   Proceeding with declared format: ' + input.instanceFormat.toUpperCase());
+            console.log('[MultiInputPanel] ────────────────────────────────────────');
+        }
+
+        // Update format detection state
+        this.updateFormatDetection(inputId, detectedFormat, formatMatchStatus);
 
         if (!this.utlxService) {
             console.error('[MultiInputPanel] UTLXService not available for validation!');
@@ -905,34 +1108,22 @@ export class MultiInputPanelWidget extends ReactWidget {
             }
             console.log('[MultiInputPanel] ═══════════════════════════════════════');
 
-            // Verify the UDM is actually parseable before marking as success
-            let actualSuccess = result.success;
-            let actualError = result.error;
-
-            if (result.success && result.udmLanguage) {
-                console.log('[MultiInputPanel] 🔍 Verifying UDM is parseable...');
-                try {
-                    // Try to parse the UDM to ensure it's valid
-                    const { UDMLanguageParser } = await import('../udm/udm-language-parser');
-                    UDMLanguageParser.parse(result.udmLanguage);
-                    console.log('[MultiInputPanel] ✅ UDM is valid and parseable');
-                } catch (parseError) {
-                    console.error('[MultiInputPanel] ❌ UDM is INVALID - parse error:', parseError);
-                    actualSuccess = false;
-                    actualError = parseError instanceof Error ? parseError.message : 'UDM parse error';
-                }
-            }
+            // NOTE: We used to verify the UDM is parseable by the frontend parser here,
+            // but the daemon may generate UDM with metadata/features that the frontend
+            // parser doesn't support yet (e.g., JSCH metadata: __schemaType, __version).
+            // Since the daemon already validated the input, we trust its result.
+            // If the daemon says success=true and returned UDM, it's valid.
 
             this.updateInputValidation(
                 inputId,
-                actualSuccess,
+                result.success,
                 false,
-                actualError,
+                result.error,
                 result.udmLanguage
             );
 
             // Fire event if UDM was successfully parsed AND is valid
-            if (actualSuccess && result.udmLanguage && input) {
+            if (result.success && result.udmLanguage && input) {
                 console.log('[MultiInputPanel] Firing UDM updated event');
                 this.eventService.fireInputUdmUpdated({
                     inputId: input.id,
@@ -960,6 +1151,26 @@ export class MultiInputPanelWidget extends ReactWidget {
     /**
      * Update input validation state
      */
+    private updateFormatDetection(
+        inputId: string,
+        formatDetected: string | null,
+        formatMatchStatus: 'match' | 'mismatch' | 'unknown'
+    ): void {
+        console.log('[MultiInputPanel] updateFormatDetection() called:', {
+            inputId,
+            formatDetected,
+            formatMatchStatus
+        });
+
+        this.setState({
+            inputs: this.state.inputs.map(input =>
+                input.id === inputId
+                    ? { ...input, formatDetected, formatMatchStatus }
+                    : input
+            )
+        });
+    }
+
     private updateInputValidation(
         inputId: string,
         udmParsed?: boolean,
@@ -1311,6 +1522,13 @@ export class MultiInputPanelWidget extends ReactWidget {
                     // Auto-detect format from file extension
                     const detectedFormat = this.detectFormatFromFilename(file.name);
 
+                    console.log('[MultiInputPanel] ════════════════════════════════════════');
+                    console.log('[MultiInputPanel] FILE LOAD - Setting format from extension');
+                    console.log('[MultiInputPanel] File:', file.name);
+                    console.log('[MultiInputPanel] Detected format from extension:', detectedFormat || 'none');
+                    console.log('[MultiInputPanel] Current format in state:', this.state.inputs.find(i => i.id === this.state.activeInputId)?.instanceFormat);
+                    console.log('[MultiInputPanel] ════════════════════════════════════════');
+
                     // Update content and optionally format
                     this.setState({
                         inputs: this.state.inputs.map(input =>
@@ -1349,7 +1567,15 @@ export class MultiInputPanelWidget extends ReactWidget {
                             content
                         });
 
-                        // Trigger UDM parsing for instance content
+                        // Wait for state to update before validation
+                        await new Promise(resolve => setTimeout(resolve, 50));
+
+                        console.log('[MultiInputPanel] ════════════════════════════════════════');
+                        console.log('[MultiInputPanel] FILE LOAD - About to validate');
+                        console.log('[MultiInputPanel] Format in state NOW:', this.state.inputs.find(i => i.id === this.state.activeInputId)?.instanceFormat);
+                        console.log('[MultiInputPanel] ════════════════════════════════════════');
+
+                        // Trigger UDM parsing for instance content (AFTER state update completes)
                         await this.validateInput(this.state.activeInputId);
                     }
                 } catch (error) {
