@@ -49,13 +49,15 @@ const PATTERNS = {
     SEPARATOR: /^---\s*$/,
 
     // input name format OR input name format {options}
-    SINGLE_INPUT: /^input\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(csv|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
+    // Allow hyphens in input names: [a-zA-Z_][a-zA-Z0-9_-]*
+    SINGLE_INPUT: /^input\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
 
     // input: name1 format1, name2 format2, ...
     MULTI_INPUT: /^input:\s*(.+)$/,
 
     // Individual input in multi-input: name format {options}
-    INPUT_PART: /([a-zA-Z_][a-zA-Z0-9_]*)\s+(csv|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/g,
+    // Allow hyphens in input names: [a-zA-Z_][a-zA-Z0-9_-]*
+    INPUT_PART: /([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/g,
 
     // output format OR output format {options}
     OUTPUT: /^output\s+(csv|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,

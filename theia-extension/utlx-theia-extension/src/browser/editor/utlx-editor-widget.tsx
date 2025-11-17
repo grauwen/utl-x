@@ -1449,10 +1449,14 @@ output json
         const lines = content.split('\n');
         const headerEndLine = this.headerEndLine || this.parseHeaderEndLine();
 
+        // Escape special regex characters in the input name (e.g., hyphens, dots, etc.)
+        const escapedOldName = oldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
         // Build regex to match $oldName with word boundaries
-        // Matches: $oldName followed by non-word character or end of string
-        // Examples: $input, $input[0], $input.field, $input |>, etc.
-        const searchRegex = new RegExp(`\\$${oldName}(?![a-zA-Z0-9_])`, 'g');
+        // Matches: $oldName followed by non-word character (or hyphen), or end of string
+        // Examples: $input, $input[0], $input.field, $input |>, $my-input, etc.
+        // Note: Include hyphen in negative lookahead since it's allowed in names
+        const searchRegex = new RegExp(`\\$${escapedOldName}(?![a-zA-Z0-9_-])`, 'g');
 
         const edits: monaco.editor.IIdentifiedSingleEditOperation[] = [];
 
