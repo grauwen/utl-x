@@ -73,7 +73,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     const [isDraggingSplit, setIsDraggingSplit] = React.useState(false);
 
     // New state for tabs and Monaco editor in right pane
-    const [activeTab, setActiveTab] = React.useState<'functions' | 'inputs' | 'operators'>('functions');
+    const [activeTab, setActiveTab] = React.useState<'functions' | 'inputs' | 'operators'>('inputs');
     const [rightSplitPosition, setRightSplitPosition] = React.useState(66); // 66% editor, 34% problems
     const [isDraggingRightSplit, setIsDraggingRightSplit] = React.useState(false);
 
