@@ -4,11 +4,13 @@
  * Parses UDM (Universal Data Model) language format into a tree structure
  * suitable for display in the Function Builder's field tree.
  *
- * This replaces the old regex-based parser with the proper UDM object model.
+ * Uses format-specific strategies to handle format quirks (XML _text, namespaces, etc.)
+ * without coupling formats together.
  */
 
 import { UDMLanguageParser, UDMParseException } from '../udm/udm-language-parser';
 import { UDM, UDMObjectHelper, isObject, isArray, isScalar, isBinary, isLambda } from '../udm/udm-core';
+import { getStrategyForFormat, FormatTreeStrategy } from './strategies';
 
 /**
  * Represents a field in the UDM tree
@@ -96,9 +98,13 @@ export function parseUdmToTree(inputName: string, format: string, udmLanguage: s
             }
         }
 
-        // Convert UDM to field tree
+        // Get format-specific strategy
+        const strategy = getStrategyForFormat(format);
+        console.log('[UdmParser] Using strategy for format:', format);
+
+        // Convert UDM to field tree using strategy
         console.log('[UdmParser] 🔄 Converting UDM to field tree...');
-        const fields = convertUDMToFields(parsed);
+        const fields = convertUDMToFields(parsed, strategy);
 
         console.log('[UdmParser] ✅ Conversion complete');
         console.log('[UdmParser] Extracted', fields.length, 'fields');
@@ -151,14 +157,14 @@ export function parseUdmToTree(inputName: string, format: string, udmLanguage: s
 }
 
 /**
- * Convert UDM object to field tree
+ * Convert UDM object to field tree using format-specific strategy
  */
-function convertUDMToFields(udm: UDM): UdmField[] {
+function convertUDMToFields(udm: UDM, strategy: FormatTreeStrategy): UdmField[] {
     console.log('[convertUDMToFields] Converting UDM type:', udm.type);
 
     if (isObject(udm)) {
         console.log('[convertUDMToFields] Converting OBJECT with', udm.properties.size, 'properties');
-        const result = convertObjectToFields(udm);
+        const result = convertObjectToFields(udm, strategy);
         console.log('[convertUDMToFields] Object conversion returned', result.length, 'fields');
         return result;
     } else if (isArray(udm)) {
@@ -169,7 +175,7 @@ function convertUDMToFields(udm: UDM): UdmField[] {
             console.log('[convertUDMToFields] First element type:', firstElement.type);
             if (isObject(firstElement)) {
                 console.log('[convertUDMToFields] First element is OBJECT, extracting fields');
-                const result = convertObjectToFields(firstElement);
+                const result = convertObjectToFields(firstElement, strategy);
                 console.log('[convertUDMToFields] Array conversion returned', result.length, 'fields');
                 return result;
             } else {
@@ -199,9 +205,9 @@ function convertUDMToFields(udm: UDM): UdmField[] {
 }
 
 /**
- * Convert UDM Object to field array
+ * Convert UDM Object to field array using format-specific strategy
  */
-function convertObjectToFields(obj: UDM & { type: 'object' }): UdmField[] {
+function convertObjectToFields(obj: UDM & { type: 'object' }, strategy: FormatTreeStrategy): UdmField[] {
     console.log('[convertObjectToFields] Converting object');
     console.log('[convertObjectToFields] Properties map size:', obj.properties.size);
     console.log('[convertObjectToFields] Attributes map size:', obj.attributes.size);
@@ -217,7 +223,7 @@ function convertObjectToFields(obj: UDM & { type: 'object' }): UdmField[] {
         const value = UDMObjectHelper.get(obj, key);
         if (value) {
             console.log('[convertObjectToFields]   Value type:', value.type);
-            const field = convertUDMValueToField(key, value);
+            const field = convertUDMValueToField(key, value, strategy);
             fields.push(field);
             console.log('[convertObjectToFields]   Created field:', field.name, 'type:', field.type);
         } else {
@@ -225,22 +231,19 @@ function convertObjectToFields(obj: UDM & { type: 'object' }): UdmField[] {
         }
     }
 
-    // Add meaningful attributes (with @ prefix), excluding XML namespaces
+    // Add attributes using format-specific filtering
     const attrKeys = UDMObjectHelper.attributeKeys(obj);
     console.log('[convertObjectToFields] Attribute keys:', attrKeys);
 
-    // Filter out XML namespace attributes
-    const meaningfulAttrs = attrKeys.filter(key =>
-        key !== 'xmlns' && key !== 'xsi' && !key.startsWith('xmlns:')
-    );
-    console.log('[convertObjectToFields] Meaningful attributes:', meaningfulAttrs);
+    const meaningfulAttrs = strategy.filterAttributes(attrKeys);
+    console.log('[convertObjectToFields] Filtered attributes:', meaningfulAttrs);
 
     for (const key of meaningfulAttrs) {
         const attrValue = UDMObjectHelper.getAttribute(obj, key);
         console.log('[convertObjectToFields] Processing attribute:', key, '=', attrValue);
         fields.push({
             name: `@${key}`,
-            type: 'string',  // XML attributes are always strings
+            type: 'string',
             description: `Attribute: ${attrValue}`
         });
     }
@@ -250,9 +253,9 @@ function convertObjectToFields(obj: UDM & { type: 'object' }): UdmField[] {
 }
 
 /**
- * Convert a UDM value to a field descriptor
+ * Convert a UDM value to a field descriptor using format-specific strategy
  */
-function convertUDMValueToField(name: string, udm: UDM): UdmField {
+function convertUDMValueToField(name: string, udm: UDM, strategy: FormatTreeStrategy): UdmField {
     console.log('[convertUDMValueToField] Converting field:', name, 'type:', udm.type);
 
     if (isScalar(udm)) {
@@ -264,45 +267,29 @@ function convertUDMValueToField(name: string, udm: UDM): UdmField {
             description: `${name}: ${scalarType}`
         };
     } else if (isObject(udm)) {
-        console.log('[convertUDMValueToField]   Nested object, recursing...');
+        console.log('[convertUDMValueToField]   Nested object, checking if should flatten...');
 
-        // Check if this is an XML element with text content (has _text property)
-        const propertyKeys = UDMObjectHelper.keys(udm);
-        const attrKeys = UDMObjectHelper.attributeKeys(udm);
+        // Use strategy to determine if this object should be flattened to a scalar
+        if (strategy.shouldFlattenToScalar(udm)) {
+            console.log('[convertUDMValueToField]   Strategy says FLATTEN to scalar');
 
-        // Filter out XML namespace attributes which are typically not meaningful for data access
-        const meaningfulAttrs = attrKeys.filter(key =>
-            key !== 'xmlns' && key !== 'xsi' && !key.startsWith('xmlns:')
-        );
+            const flattenedType = strategy.getFlattenedType(udm);
+            const flattenedChildren = strategy.getFlattenedChildren(udm);
 
-        // If this element has ONLY _text property (may have attributes), show it as a string with attribute children
-        if (propertyKeys.length === 1 && propertyKeys[0] === '_text') {
-            const textValue = UDMObjectHelper.get(udm, '_text');
-            if (textValue && isScalar(textValue)) {
-                console.log('[convertUDMValueToField]   XML text element with', meaningfulAttrs.length, 'meaningful attributes');
+            console.log('[convertUDMValueToField]   Flattened type:', flattenedType);
+            console.log('[convertUDMValueToField]   Flattened children:', flattenedChildren.length);
 
-                // Build child fields for attributes
-                const attrFields: UdmField[] = [];
-                for (const key of meaningfulAttrs) {
-                    const attrValue = UDMObjectHelper.getAttribute(udm, key);
-                    attrFields.push({
-                        name: `@${key}`,
-                        type: 'string',  // Attributes are always strings in XML
-                        description: `Attribute: ${attrValue}`
-                    });
-                }
-
-                return {
-                    name,
-                    type: getScalarType(textValue.value),
-                    description: `${name}: ${getScalarType(textValue.value)}${meaningfulAttrs.length > 0 ? ' (with attributes)' : ''}`,
-                    fields: attrFields.length > 0 ? attrFields : undefined
-                };
-            }
+            return {
+                name,
+                type: flattenedType,
+                description: `${name}: ${flattenedType}${flattenedChildren.length > 0 ? ' (with attributes)' : ''}`,
+                fields: flattenedChildren.length > 0 ? flattenedChildren : undefined
+            };
         }
 
-        // Regular nested object (has child elements, not just _text)
-        const nestedFields = convertObjectToFields(udm);
+        // Regular nested object - convert recursively
+        console.log('[convertUDMValueToField]   Strategy says keep as OBJECT, recursing...');
+        const nestedFields = convertObjectToFields(udm, strategy);
         console.log('[convertUDMValueToField]   Nested object has', nestedFields.length, 'fields');
         return {
             name,
@@ -319,7 +306,7 @@ function convertUDMValueToField(name: string, udm: UDM): UdmField {
             console.log('[convertUDMValueToField]   First element type:', firstElement.type);
             if (isObject(firstElement)) {
                 console.log('[convertUDMValueToField]   Extracting array element structure...');
-                elementFields = convertObjectToFields(firstElement);
+                elementFields = convertObjectToFields(firstElement, strategy);
             } else if (isScalar(firstElement)) {
                 elementFields = [{
                     name: '[element]',

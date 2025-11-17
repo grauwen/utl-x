@@ -74,6 +74,58 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
 
         const values: string[] = [];
 
+        // Check if path contains [] notation (e.g., "items[].sku")
+        if (fieldPath.includes('[]')) {
+            console.log('[extractSampleValues] Path contains [] notation, extracting from array elements');
+
+            // Split path at [] to get array path and field path within elements
+            const parts = fieldPath.split('[].');
+            const arrayPath = parts[0]; // e.g., "items"
+            const fieldInElement = parts.length > 1 ? parts[1] : ''; // e.g., "sku"
+
+            console.log('[extractSampleValues] Array path:', arrayPath, 'Field in element:', fieldInElement);
+
+            // Navigate to the array field
+            const arrayNode = navigate(udm, arrayPath);
+
+            if (arrayNode && typeof arrayNode !== 'string' && isArray(arrayNode)) {
+                const arrayUdm = arrayNode as UDM & { type: 'array' };
+                console.log('[extractSampleValues] Found array with', arrayUdm.elements.length, 'elements');
+
+                // Process elements (up to 1000 for performance)
+                const elementsToProcess = arrayUdm.elements.slice(0, 1000);
+
+                for (const element of elementsToProcess) {
+                    if (fieldInElement) {
+                        // Navigate to the field within this array element
+                        const fieldNode = navigate(element, fieldInElement);
+                        if (fieldNode && typeof fieldNode !== 'string') {
+                            const elementValue = extractValueFromNode(fieldNode);
+                            if (elementValue) {
+                                values.push(elementValue);
+                            }
+                        } else if (typeof fieldNode === 'string') {
+                            values.push(fieldNode);
+                        }
+                    } else {
+                        // No field path, extract the element itself
+                        const elementValue = extractValueFromNode(element);
+                        if (elementValue) {
+                            values.push(elementValue);
+                        }
+                    }
+                }
+
+                console.log('[extractSampleValues] Extracted', values.length, 'values from array elements');
+                const uniqueValues = Array.from(new Set(values));
+                console.log('[extractSampleValues] Found', uniqueValues.length, 'unique values');
+                return uniqueValues.slice(0, 100);
+            } else {
+                console.warn('[extractSampleValues] Array path did not resolve to an array:', arrayPath);
+                return [];
+            }
+        }
+
         // Special handling for array inputs: extract field from ALL array elements
         if (isInputArray && isArray(udm)) {
             console.log('[extractSampleValues] Input is array, extracting field from all elements');
@@ -81,26 +133,34 @@ function extractSampleValues(udmLanguage: string, fieldPath: string, isInputArra
 
             // Process all elements (or up to 1000 for performance)
             const elementsToProcess = arrayNode.elements.slice(0, 1000);
+            console.log('[extractSampleValues] Processing', elementsToProcess.length, 'array elements');
 
-            for (const element of elementsToProcess) {
+            for (let i = 0; i < elementsToProcess.length; i++) {
+                const element = elementsToProcess[i];
+                console.log(`[extractSampleValues] Element ${i}: type=${element.type}`);
+
                 // Navigate to the field within this element
                 const fieldNode = navigate(element, fieldPath);
+                console.log(`[extractSampleValues] Element ${i}: fieldNode type=${fieldNode ? (typeof fieldNode === 'string' ? 'string' : fieldNode.type) : 'null'}`);
 
                 if (fieldNode && typeof fieldNode !== 'string') {
                     // Extract value from this element's field
                     const elementValue = extractValueFromNode(fieldNode);
+                    console.log(`[extractSampleValues] Element ${i}: extracted value="${elementValue}"`);
                     if (elementValue) {
                         values.push(elementValue);
                     }
                 } else if (typeof fieldNode === 'string') {
+                    console.log(`[extractSampleValues] Element ${i}: string value="${fieldNode}"`);
                     values.push(fieldNode);
                 }
             }
 
             console.log('[extractSampleValues] Extracted', values.length, 'values from', elementsToProcess.length, 'array elements');
+            console.log('[extractSampleValues] All values:', values);
             // Return unique values (up to 100 unique values for display)
             const uniqueValues = Array.from(new Set(values));
-            console.log('[extractSampleValues] Found', uniqueValues.length, 'unique values');
+            console.log('[extractSampleValues] Found', uniqueValues.length, 'unique values:', uniqueValues);
             return uniqueValues.slice(0, 100);
         }
 
@@ -694,18 +754,25 @@ const FieldNode: React.FC<FieldNodeProps> = ({
 
             {hasChildren && expanded && (
                 <div className='nested-fields'>
-                    {field.fields!.map(child => (
-                        <FieldNode
-                            key={child.name}
-                            field={child}
-                            path={`${path}.${child.name}`}
-                            inputName={inputName}
-                            inputIsArray={inputIsArray}
-                            onInsert={onInsert}
-                            onSelect={onSelect}
-                            level={level + 1}
-                        />
-                    ))}
+                    {field.fields!.map(child => {
+                        // If this field is an array, children should be accessed with []
+                        const childPath = field.type === 'array'
+                            ? `${path}[].${child.name}`
+                            : `${path}.${child.name}`;
+
+                        return (
+                            <FieldNode
+                                key={child.name}
+                                field={child}
+                                path={childPath}
+                                inputName={inputName}
+                                inputIsArray={inputIsArray}
+                                onInsert={onInsert}
+                                onSelect={onSelect}
+                                level={level + 1}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </div>
