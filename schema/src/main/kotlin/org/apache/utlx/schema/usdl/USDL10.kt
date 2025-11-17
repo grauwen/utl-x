@@ -60,7 +60,10 @@ object USDL10 {
         val valueType: String,
         val required: Boolean = false,
         val description: String,
-        val supportedFormats: Set<String> = setOf("xsd", "jsch", "proto", "sql", "avro", "graphql", "odata")
+        val supportedFormats: Set<String> = setOf("xsd", "jsch", "proto", "sql", "avro", "graphql", "odata"),
+        val examples: List<String> = emptyList(),
+        val syntax: String = "",
+        val seeAlso: List<String> = emptyList()
     )
 
     /**
@@ -72,14 +75,28 @@ object USDL10 {
             tier = Tier.CORE,
             scopes = setOf(Scope.TOP_LEVEL),
             valueType = "String",
-            description = "Schema namespace or package name"
+            description = "Schema namespace or package name",
+            syntax = "%namespace: \"value\"",
+            examples = listOf(
+                "%namespace: \"http://example.com/customer\"",
+                "%namespace: \"com.example.orders\"",
+                "%namespace: \"urn:schemas:orders:v1\""
+            ),
+            seeAlso = listOf("%version", "%types")
         ),
         Directive(
             name = "%version",
             tier = Tier.CORE,
             scopes = setOf(Scope.TOP_LEVEL),
             valueType = "String",
-            description = "Schema version"
+            description = "Schema version",
+            syntax = "%version: \"value\"",
+            examples = listOf(
+                "%version: \"1.0\"",
+                "%version: \"2.1.3\"",
+                "%version: \"v1.0.0-beta\""
+            ),
+            seeAlso = listOf("%namespace", "%types")
         ),
         Directive(
             name = "%types",
@@ -87,7 +104,13 @@ object USDL10 {
             scopes = setOf(Scope.TOP_LEVEL),
             valueType = "Object",
             required = true,
-            description = "Type definitions (at least one required)"
+            description = "Type definitions (at least one required)",
+            syntax = "%types: { TypeName: { ... } }",
+            examples = listOf(
+                "%types: { Customer: { %kind: \"structure\", %fields: [...] } }",
+                "%types: { Status: { %kind: \"enumeration\", %values: [\"active\", \"inactive\"] } }"
+            ),
+            seeAlso = listOf("%kind", "%fields", "%values")
         ),
         Directive(
             name = "%kind",
@@ -95,7 +118,15 @@ object USDL10 {
             scopes = setOf(Scope.TYPE_DEFINITION),
             valueType = "String",
             required = true,
-            description = "Type kind: structure, enumeration, primitive, array, union, interface"
+            description = "Type kind: structure, enumeration, primitive, array, union, interface",
+            syntax = "%kind: \"structure\" | \"enumeration\" | \"primitive\" | \"array\" | \"union\" | \"interface\"",
+            examples = listOf(
+                "%kind: \"structure\"",
+                "%kind: \"enumeration\"",
+                "%kind: \"array\"",
+                "%kind: \"union\""
+            ),
+            seeAlso = listOf("%types", "%fields", "%values", "%options")
         ),
         Directive(
             name = "%name",
@@ -103,7 +134,14 @@ object USDL10 {
             scopes = setOf(Scope.FIELD_DEFINITION),
             valueType = "String",
             required = true,
-            description = "Field or element name"
+            description = "Field or element name",
+            syntax = "%name: \"fieldName\"",
+            examples = listOf(
+                "%name: \"id\"",
+                "%name: \"email\"",
+                "%name: \"createdAt\""
+            ),
+            seeAlso = listOf("%type", "%required", "%description")
         ),
         Directive(
             name = "%type",
@@ -111,28 +149,57 @@ object USDL10 {
             scopes = setOf(Scope.FIELD_DEFINITION),
             valueType = "String",
             required = true,
-            description = "Field type (primitive or type reference)"
+            description = "Field type (primitive or type reference)",
+            syntax = "%type: \"string\" | \"integer\" | \"number\" | \"boolean\" | \"TypeName\"",
+            examples = listOf(
+                "%type: \"string\"",
+                "%type: \"integer\"",
+                "%type: \"Customer\"",
+                "%type: \"date-time\""
+            ),
+            seeAlso = listOf("%name", "%required", "%array")
         ),
         Directive(
             name = "%description",
             tier = Tier.CORE,
             scopes = setOf(Scope.FIELD_DEFINITION, Scope.ENUMERATION),
             valueType = "String",
-            description = "Field-level or value-level description"
+            description = "Field-level or value-level description",
+            syntax = "%description: \"text\"",
+            examples = listOf(
+                "%description: \"Unique customer identifier\"",
+                "%description: \"Email address for notifications\"",
+                "%description: \"Represents an active user\""
+            ),
+            seeAlso = listOf("%documentation", "%name", "%value")
         ),
         Directive(
             name = "%value",
             tier = Tier.CORE,
             scopes = setOf(Scope.ENUMERATION),
             valueType = "String or Number",
-            description = "Enumeration value (when using object form with description)"
+            description = "Enumeration value (when using object form with description)",
+            syntax = "%value: \"enumValue\" | number",
+            examples = listOf(
+                "%value: \"active\"",
+                "%value: 1",
+                "%value: \"PENDING\""
+            ),
+            seeAlso = listOf("%values", "%description", "%kind")
         ),
         Directive(
             name = "%documentation",
             tier = Tier.CORE,
             scopes = setOf(Scope.TYPE_DEFINITION),
             valueType = "String",
-            description = "Type-level documentation"
+            description = "Type-level documentation",
+            syntax = "%documentation: \"text\"",
+            examples = listOf(
+                "%documentation: \"Customer entity with contact information\"",
+                "%documentation: \"Order status enumeration\"",
+                "%documentation: \"Base class for all entities\""
+            ),
+            seeAlso = listOf("%description", "%types", "%kind")
         )
     )
 

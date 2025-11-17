@@ -29,6 +29,8 @@ tags:
     description: Schema inference and parsing
   - name: UDM
     description: Universal Data Model operations
+  - name: USDL
+    description: Universal Schema Definition Language
   - name: Admin
     description: Administrative operations
 
@@ -86,6 +88,82 @@ paths:
                 $ref: '#/components/schemas/FunctionRegistry'
         '500':
           description: Failed to retrieve function registry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/usdl/directives:
+    get:
+      tags:
+        - USDL
+      summary: Get USDL directive registry
+      description: |
+        Returns the complete USDL (Universal Schema Definition Language) directive registry.
+        Includes all 130 directives organized by:
+        - **Tiers**: core (9), common (51), format_specific (53), reserved (17)
+        - **Scopes**: TOP_LEVEL, TYPE_DEFINITION, FIELD_DEFINITION, etc.
+        - **Formats**: Support metadata for 17 schema formats (xsd, jsch, proto, sql, etc.)
+
+        Each directive includes:
+        - Name, tier, scopes, valueType, description
+        - Supported formats with compatibility percentages
+        - Examples, syntax, tooltip text
+        - Related directives (seeAlso)
+
+        Useful for:
+        - IDE autocomplete and validation
+        - LSP server integration
+        - MCP tools for AI-assisted schema generation
+        - Documentation and directive discovery
+      operationId: getUsdlDirectives
+      responses:
+        '200':
+          description: Directive registry retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectiveRegistry'
+              example:
+                version: "1.0"
+                generatedAt: "2025-11-17T10:30:00Z"
+                totalDirectives: 130
+                directives:
+                  - name: "%namespace"
+                    tier: "core"
+                    scopes: ["TOP_LEVEL"]
+                    valueType: "String"
+                    required: false
+                    description: "Schema namespace or package name"
+                    supportedFormats: ["xsd", "jsch", "proto", "sql", "avro"]
+                    examples:
+                      - "%namespace: \"http://example.com/customer\""
+                      - "%namespace: \"com.example.orders\""
+                    syntax: "%namespace: \"value\""
+                    tooltip: "Schema namespace or package name\n\nScopes: TOP_LEVEL\nType: String"
+                    seeAlso: ["%version", "%types"]
+                tiers:
+                  core: []
+                  common: []
+                  format_specific: []
+                  reserved: []
+                scopes:
+                  TOP_LEVEL: []
+                  TYPE_DEFINITION: []
+                  FIELD_DEFINITION: []
+                formats:
+                  xsd:
+                    name: "XML Schema Definition"
+                    abbreviation: "xsd"
+                    tier1Support: 100
+                    tier2Support: 95
+                    tier3Support: 40
+                    overallSupport: 95
+                    supportedDirectives: ["%namespace", "%version"]
+                    notes: "Best coverage, some XSD-specific directives"
+                    domain: "data-schema"
+        '500':
+          description: Failed to retrieve directive registry
           content:
             application/json:
               schema:
@@ -937,6 +1015,188 @@ components:
         description:
           type: string
           description: Description of what is returned
+
+    DirectiveRegistry:
+      type: object
+      required:
+        - version
+        - generatedAt
+        - totalDirectives
+        - directives
+        - tiers
+        - scopes
+        - formats
+      properties:
+        version:
+          type: string
+          example: "1.0"
+          description: USDL specification version
+        generatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when registry was generated
+        totalDirectives:
+          type: integer
+          example: 130
+          description: Total number of directives (all tiers)
+        directives:
+          type: array
+          items:
+            $ref: '#/components/schemas/DirectiveInfo'
+          description: List of all directives (flat)
+        tiers:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/DirectiveInfo'
+          description: |
+            Directives grouped by tier:
+            - core: Tier 1 (9 directives)
+            - common: Tier 2 (51 directives)
+            - format_specific: Tier 3 (53 directives)
+            - reserved: Tier 4 (17 directives)
+        scopes:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/DirectiveInfo'
+          description: Directives grouped by scope (TOP_LEVEL, TYPE_DEFINITION, FIELD_DEFINITION, etc.)
+        formats:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FormatInfo'
+          description: Format metadata for all 17 supported schema formats
+
+    DirectiveInfo:
+      type: object
+      required:
+        - name
+        - tier
+        - scopes
+        - valueType
+        - required
+        - description
+        - supportedFormats
+        - examples
+        - syntax
+        - tooltip
+        - seeAlso
+      properties:
+        name:
+          type: string
+          example: "%namespace"
+          description: Directive name (with % prefix)
+        tier:
+          type: string
+          enum: [core, common, format_specific, reserved]
+          example: "core"
+          description: Directive tier classification
+        scopes:
+          type: array
+          items:
+            type: string
+          example: ["TOP_LEVEL"]
+          description: Valid scopes where directive can be used
+        valueType:
+          type: string
+          example: "String"
+          description: Expected value type (String, Integer, Boolean, Object, Array, etc.)
+        required:
+          type: boolean
+          example: false
+          description: Whether this directive is required in USDL schemas
+        description:
+          type: string
+          description: Human-readable description of the directive
+        supportedFormats:
+          type: array
+          items:
+            type: string
+          example: ["xsd", "jsch", "proto", "sql"]
+          description: List of format abbreviations that support this directive
+        examples:
+          type: array
+          items:
+            type: string
+          example:
+            - "%namespace: \"http://example.com/customer\""
+            - "%namespace: \"com.example.orders\""
+          description: Usage examples for this directive
+        syntax:
+          type: string
+          example: "%namespace: \"value\""
+          description: Syntax pattern for the directive
+        tooltip:
+          type: string
+          description: Tooltip text for IDE hover (includes description, scopes, type)
+        seeAlso:
+          type: array
+          items:
+            type: string
+          example: ["%version", "%types"]
+          description: Related directive names
+
+    FormatInfo:
+      type: object
+      required:
+        - name
+        - abbreviation
+        - tier1Support
+        - tier2Support
+        - tier3Support
+        - overallSupport
+        - supportedDirectives
+        - notes
+        - domain
+      properties:
+        name:
+          type: string
+          example: "XML Schema Definition"
+          description: Full format name
+        abbreviation:
+          type: string
+          example: "xsd"
+          description: Format abbreviation used in supportedFormats
+        tier1Support:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 100
+          description: Percentage of Tier 1 (core) directives supported
+        tier2Support:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 95
+          description: Percentage of Tier 2 (common) directives supported
+        tier3Support:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 40
+          description: Percentage of Tier 3 (format-specific) directives supported
+        overallSupport:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 95
+          description: Weighted overall compatibility percentage
+        supportedDirectives:
+          type: array
+          items:
+            type: string
+          description: List of directive names supported by this format
+        notes:
+          type: string
+          example: "Best coverage, some XSD-specific directives"
+          description: Additional notes about format support
+        domain:
+          type: string
+          enum: [data-schema, rest-api, messaging, database, entity-model]
+          example: "data-schema"
+          description: Format domain classification
 
     ErrorResponse:
       type: object

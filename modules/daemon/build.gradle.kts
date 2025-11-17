@@ -24,6 +24,9 @@ dependencies {
     implementation(project(":formats:avro"))
     implementation(project(":formats:protobuf"))
 
+    // Schema module for DirectiveRegistry
+    implementation(project(":schema"))
+
     // Standard library
     implementation(project(":stdlib"))
 

@@ -50,6 +50,7 @@ import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
 import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
 import org.apache.utlx.stdlib.StandardLibrary
 import org.apache.utlx.stdlib.OperatorRegistry
+import org.apache.utlx.schema.usdl.DirectiveRegistry
 import org.slf4j.LoggerFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -239,6 +240,29 @@ class RestApiServer(
                             HttpStatusCode.InternalServerError,
                             mapOf(
                                 "error" to "Failed to retrieve operator registry",
+                                "message" to (e.message ?: "Unknown error")
+                            )
+                        )
+                    }
+                }
+
+                // USDL Directives endpoint - return USDL directive registry
+                get("/api/usdl/directives") {
+                    logger.debug("USDL directives registry requested")
+                    try {
+                        val registry = DirectiveRegistry.exportRegistry()
+
+                        // Use Jackson to serialize (DirectiveRegistry uses Jackson annotations)
+                        val jacksonMapper = ObjectMapper().registerModule(KotlinModule())
+                        val json = jacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(registry)
+
+                        call.respondText(json, ContentType.Application.Json, HttpStatusCode.OK)
+                    } catch (e: Exception) {
+                        logger.error("Failed to export directive registry", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            mapOf(
+                                "error" to "Failed to retrieve directive registry",
                                 "message" to (e.message ?: "Unknown error")
                             )
                         )

@@ -674,4 +674,231 @@ Jane,25"""
         assertEquals(registry1.categories.size, registry2.categories.size,
             "Category count should be consistent")
     }
+
+    // ========== USDL Directives Endpoint Tests ==========
+
+    @Test
+    fun `test usdl directives endpoint returns 200 OK`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+
+        assertEquals(HttpStatusCode.OK, response.status, "USDL directives endpoint should return OK")
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns valid JSON`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(ContentType.Application.Json, response.contentType()?.withoutParameters())
+
+        val body = response.bodyAsText()
+        assertNotNull(body)
+        assertTrue(body.isNotEmpty())
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns registry structure`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        // Check for expected JSON structure
+        assertTrue(body.contains("\"version\""), "Should contain version field")
+        assertTrue(body.contains("\"generatedAt\""), "Should contain generatedAt field")
+        assertTrue(body.contains("\"totalDirectives\""), "Should contain totalDirectives field")
+        assertTrue(body.contains("\"directives\""), "Should contain directives array")
+        assertTrue(body.contains("\"tiers\""), "Should contain tiers object")
+        assertTrue(body.contains("\"scopes\""), "Should contain scopes object")
+        assertTrue(body.contains("\"formats\""), "Should contain formats object")
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns 130 directives`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        // Parse JSON manually to check totalDirectives
+        val totalDirectivesRegex = """"totalDirectives"\s*:\s*(\d+)""".toRegex()
+        val match = totalDirectivesRegex.find(body)
+        assertNotNull(match, "Should find totalDirectives field")
+
+        val totalDirectives = match!!.groupValues[1].toInt()
+        assertEquals(130, totalDirectives, "Should have exactly 130 directives")
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns all 4 tiers`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        // Check for all 4 tiers
+        assertTrue(body.contains("\"core\""), "Should have core tier")
+        assertTrue(body.contains("\"common\""), "Should have common tier")
+        assertTrue(body.contains("\"format_specific\""), "Should have format_specific tier")
+        assertTrue(body.contains("\"reserved\""), "Should have reserved tier")
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns tier 1 core directives`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        // Check for tier 1 core directives
+        assertTrue(body.contains("\"%namespace\""), "Should contain %namespace directive")
+        assertTrue(body.contains("\"%version\""), "Should contain %version directive")
+        assertTrue(body.contains("\"%types\""), "Should contain %types directive")
+        assertTrue(body.contains("\"%kind\""), "Should contain %kind directive")
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns format information`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        // Check for format abbreviations
+        assertTrue(body.contains("\"xsd\""), "Should contain xsd format")
+        assertTrue(body.contains("\"jsch\""), "Should contain jsch format")
+        assertTrue(body.contains("\"proto\""), "Should contain proto format")
+        assertTrue(body.contains("\"sql\""), "Should contain sql format")
+        assertTrue(body.contains("\"avro\""), "Should contain avro format")
+        assertTrue(body.contains("\"openapi\""), "Should contain openapi format")
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns directive examples`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        // Check that directives have examples
+        assertTrue(body.contains("\"examples\""), "Directives should have examples field")
+        assertTrue(body.contains("\"syntax\""), "Directives should have syntax field")
+        assertTrue(body.contains("\"tooltip\""), "Directives should have tooltip field")
+    }
+
+    @Test
+    fun `test usdl directives endpoint response can be parsed as JSON`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        // Try to parse with Jackson (same as server uses)
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        // Should not throw exception
+        assertDoesNotThrow {
+            val registry = jacksonMapper.readValue(body, org.apache.utlx.schema.usdl.DirectiveRegistry.DirectiveRegistryData::class.java)
+            assertNotNull(registry)
+            assertEquals(130, registry.totalDirectives)
+            assertEquals(130, registry.directives.size)
+            assertTrue(registry.tiers.isNotEmpty())
+            assertTrue(registry.scopes.isNotEmpty())
+            assertTrue(registry.formats.isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns correct tier counts`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val registry = jacksonMapper.readValue(body, org.apache.utlx.schema.usdl.DirectiveRegistry.DirectiveRegistryData::class.java)
+
+        // Verify tier counts
+        assertEquals(9, registry.tiers["core"]?.size, "Core tier should have 9 directives")
+        assertEquals(51, registry.tiers["common"]?.size, "Common tier should have 51 directives")
+        assertEquals(53, registry.tiers["format_specific"]?.size, "Format-specific tier should have 53 directives")
+        assertEquals(17, registry.tiers["reserved"]?.size, "Reserved tier should have 17 directives")
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns scopes`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val registry = jacksonMapper.readValue(body, org.apache.utlx.schema.usdl.DirectiveRegistry.DirectiveRegistryData::class.java)
+
+        // Verify scopes exist
+        assertTrue(registry.scopes.containsKey("TOP_LEVEL"), "Should have TOP_LEVEL scope")
+        assertTrue(registry.scopes.containsKey("TYPE_DEFINITION"), "Should have TYPE_DEFINITION scope")
+        assertTrue(registry.scopes.containsKey("FIELD_DEFINITION"), "Should have FIELD_DEFINITION scope")
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns format metadata`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val registry = jacksonMapper.readValue(body, org.apache.utlx.schema.usdl.DirectiveRegistry.DirectiveRegistryData::class.java)
+
+        // Verify format metadata
+        val xsdFormat = registry.formats["xsd"]
+        assertNotNull(xsdFormat, "Should have xsd format info")
+        assertEquals("XML Schema Definition", xsdFormat?.name)
+        assertEquals(95, xsdFormat?.overallSupport)
+
+        val jschFormat = registry.formats["jsch"]
+        assertNotNull(jschFormat, "Should have jsch format info")
+        assertEquals("JSON Schema", jschFormat?.name)
+        assertEquals(90, jschFormat?.overallSupport)
+    }
+
+    @Test
+    fun `test usdl directives endpoint multiple requests return same data`() = runBlocking {
+        // Make two requests
+        val response1 = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body1 = response1.bodyAsText()
+
+        val response2 = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body2 = response2.bodyAsText()
+
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val registry1 = jacksonMapper.readValue(body1, org.apache.utlx.schema.usdl.DirectiveRegistry.DirectiveRegistryData::class.java)
+        val registry2 = jacksonMapper.readValue(body2, org.apache.utlx.schema.usdl.DirectiveRegistry.DirectiveRegistryData::class.java)
+
+        // Should return same totalDirectives
+        assertEquals(registry1.totalDirectives, registry2.totalDirectives,
+            "Multiple requests should return consistent data")
+        assertEquals(registry1.directives.size, registry2.directives.size,
+            "Directive count should be consistent")
+        assertEquals(registry1.tiers.size, registry2.tiers.size,
+            "Tier count should be consistent")
+        assertEquals(registry1.formats.size, registry2.formats.size,
+            "Format count should be consistent")
+    }
+
+    @Test
+    fun `test usdl directives endpoint returns directive with all required fields`() = runBlocking {
+        val response = client.get("http://127.0.0.1:$port/api/usdl/directives")
+        val body = response.bodyAsText()
+
+        val jacksonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .registerModule(com.fasterxml.jackson.module.kotlin.KotlinModule())
+
+        val registry = jacksonMapper.readValue(body, org.apache.utlx.schema.usdl.DirectiveRegistry.DirectiveRegistryData::class.java)
+
+        // Get the %namespace directive as an example
+        val namespaceDirective = registry.directives.find { it.name == "%namespace" }
+        assertNotNull(namespaceDirective, "Should find %namespace directive")
+
+        // Verify all required fields are present
+        assertEquals("%namespace", namespaceDirective?.name)
+        assertEquals("core", namespaceDirective?.tier)
+        assertTrue(namespaceDirective?.scopes?.isNotEmpty() == true, "Should have scopes")
+        assertNotNull(namespaceDirective?.valueType, "Should have valueType")
+        assertNotNull(namespaceDirective?.description, "Should have description")
+        assertTrue(namespaceDirective?.supportedFormats?.isNotEmpty() == true, "Should have supported formats")
+        assertTrue(namespaceDirective?.examples?.isNotEmpty() == true, "Should have examples")
+        assertNotNull(namespaceDirective?.syntax, "Should have syntax")
+        assertNotNull(namespaceDirective?.tooltip, "Should have tooltip")
+    }
 }
