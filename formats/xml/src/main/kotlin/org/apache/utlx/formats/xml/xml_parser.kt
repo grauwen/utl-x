@@ -27,17 +27,21 @@ import java.io.StringReader
  *
  * @param arrayHints Set of element names that should always be returned as arrays,
  *                   even if there's only one occurrence. Solves the "single element vs array" problem.
+ * @param inheritNamespaces If true, namespace declarations are inherited to all child elements (causes pollution).
+ *                          If false (default), namespace declarations stay only on declaring elements (clean output).
  */
 class XMLParser(
     private val source: Reader,
-    private val arrayHints: Set<String> = emptySet()
+    private val arrayHints: Set<String> = emptySet(),
+    private val inheritNamespaces: Boolean = false
 ) {
     private var current = 0
     private var line = 1
     private var column = 1
     private val text = source.readText()
 
-    constructor(xml: String, arrayHints: Set<String> = emptySet()) : this(StringReader(xml), arrayHints)
+    constructor(xml: String, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false) :
+        this(StringReader(xml), arrayHints, inheritNamespaces)
     
     /**
      * Parse XML to UDM
@@ -128,15 +132,22 @@ class XMLParser(
             }
         }
 
-        // Merge namespaces into attributes so they're accessible from this element
-        val mergedAttributes = attributes.toMutableMap()
-        mergedAttributes.putAll(namespaces)
+        // Decide whether to inherit namespace declarations
+        // By default (inheritNamespaces=false), keep only declarations from this element (clean output)
+        // If inheritNamespaces=true, merge parent namespaces (causes pollution but preserves full context)
+        val finalAttributes = if (inheritNamespaces) {
+            val merged = attributes.toMutableMap()
+            merged.putAll(namespaces)
+            merged
+        } else {
+            attributes
+        }
 
         // Self-closing tag
         if (peek() == '/') {
             advance() // /
             consume('>', "Expected '>'")
-            return UDM.Object(emptyMap(), mergedAttributes, name)
+            return UDM.Object(emptyMap(), finalAttributes, name)
         }
 
         consume('>', "Expected '>'")
@@ -192,13 +203,13 @@ class XMLParser(
         return when {
             children.isEmpty() && content.isEmpty() -> {
                 // Empty element
-                UDM.Object(emptyMap(), mergedAttributes, name)
+                UDM.Object(emptyMap(), finalAttributes, name)
             }
             children.isEmpty() && content.isNotEmpty() -> {
                 // Leaf element with text only
                 val textValue = tryParseNumber(content) ?: UDM.Scalar.string(content)
                 // Always wrap text as object with _text property for consistent structure
-                UDM.Object(mapOf("_text" to textValue), mergedAttributes, name)
+                UDM.Object(mapOf("_text" to textValue), finalAttributes, name)
             }
             else -> {
                 // Element with children
@@ -224,7 +235,7 @@ class XMLParser(
                     properties["_text"] = UDM.Scalar.string(content)
                 }
 
-                UDM.Object(properties, mergedAttributes, name)
+                UDM.Object(properties, finalAttributes, name)
             }
         }
     }
@@ -420,8 +431,10 @@ object XML {
      * Parse XML string to UDM
      *
      * @param arrayHints Set of element names that should always be returned as arrays
+     * @param inheritNamespaces If true, namespace declarations are inherited (causes pollution).
+     *                          If false (default), only keeps declarations on declaring elements (clean).
      */
-    fun parse(xml: String, arrayHints: Set<String> = emptySet()): UDM {
-        return XMLParser(xml, arrayHints).parse()
+    fun parse(xml: String, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false): UDM {
+        return XMLParser(xml, arrayHints, inheritNamespaces).parse()
     }
 }
