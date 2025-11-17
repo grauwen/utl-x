@@ -905,16 +905,34 @@ export class MultiInputPanelWidget extends ReactWidget {
             }
             console.log('[MultiInputPanel] ═══════════════════════════════════════');
 
+            // Verify the UDM is actually parseable before marking as success
+            let actualSuccess = result.success;
+            let actualError = result.error;
+
+            if (result.success && result.udmLanguage) {
+                console.log('[MultiInputPanel] 🔍 Verifying UDM is parseable...');
+                try {
+                    // Try to parse the UDM to ensure it's valid
+                    const { UDMLanguageParser } = await import('../udm/udm-language-parser');
+                    UDMLanguageParser.parse(result.udmLanguage);
+                    console.log('[MultiInputPanel] ✅ UDM is valid and parseable');
+                } catch (parseError) {
+                    console.error('[MultiInputPanel] ❌ UDM is INVALID - parse error:', parseError);
+                    actualSuccess = false;
+                    actualError = parseError instanceof Error ? parseError.message : 'UDM parse error';
+                }
+            }
+
             this.updateInputValidation(
                 inputId,
-                result.success,
+                actualSuccess,
                 false,
-                result.error,
+                actualError,
                 result.udmLanguage
             );
 
-            // Fire event if UDM was successfully parsed
-            if (result.success && result.udmLanguage && input) {
+            // Fire event if UDM was successfully parsed AND is valid
+            if (actualSuccess && result.udmLanguage && input) {
                 console.log('[MultiInputPanel] Firing UDM updated event');
                 this.eventService.fireInputUdmUpdated({
                     inputId: input.id,
