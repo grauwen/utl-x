@@ -16,6 +16,30 @@ BUG
 YAML setting for an XML file went green for UDM parsing <== BUG?
 ----
 So the new Theia/VS Code standard would require creating a VS Code extension that wraps the LSP client. This hasn't been implemented yet.
+---
+# 1. Install dependencies
+  cd vscode-extension
+  npm install
+
+  # 2. Compile TypeScript
+  npm run compile
+
+  # 3. Package extension (creates .vsix file)
+  npm run package
+
+  # 4. Install in VS Code
+  # Extensions → ... → Install from VSIX → select utlx-language-support-1.0.0.vsix
+
+  # 5. Make sure UTLXD is running with LSP
+  java -jar utlxd.jar start --lsp --lsp-port 7777
+
+  # 6. Open a .utlx file and enjoy full language support!
+
+  The extension is now complete and ready to be built and tested! All the code is in place, and the comprehensive documentation explains every aspect of the
+  architecture and usage.
+
+
+
 ----
 So the complete list of UTLX operators is:
 
