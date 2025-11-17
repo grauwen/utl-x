@@ -38,7 +38,10 @@ So the new Theia/VS Code standard would require creating a VS Code extension tha
   The extension is now complete and ready to be built and tested! All the code is in place, and the comprehensive documentation explains every aspect of the
   architecture and usage.
 
-
+ 1. VS Code → Extensions → ... → Install from VSIX
+  2. Select utlx-language-support-1.0.0.vsix
+  3. Reload VS Code
+  4. Open a .utlx file
 
 ----
 So the complete list of UTLX operators is:
