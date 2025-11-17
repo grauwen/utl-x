@@ -1,0 +1,308 @@
+# Ansible Playbook - Complete Infrastructure Deployment
+# Multi-tier application setup with database, web servers, and load balancer
+---
+- name: Deploy Complete Web Application Infrastructure
+  hosts: all
+  become: true
+  gather_facts: true
+  vars_files:
+    - vars/main.yml
+    - vars/{{ ansible_distribution }}.yml
+    - vault/secrets.yml
+
+  vars:
+    app_name: ecommerce-platform
+    app_version: "2.5.1"
+    environment: production
+    deployment_timestamp: "{{ ansible_date_time.iso8601 }}"
+
+    # Application configuration
+    app_port: 8080
+    app_user: appuser
+    app_group: appgroup
+    app_home: /opt/{{ app_name }}
+
+    # Database configuration
+    db_name: ecommerce_prod
+    db_user: ecommerce_user
+    db_host: localhost
+    db_port: 5432
+
+    # Web server configuration
+    nginx_worker_processes: auto
+    nginx_worker_connections: 1024
+    nginx_client_max_body_size: 50M
+
+    # SSL configuration
+    ssl_certificate_path: /etc/nginx/ssl/cert.pem
+    ssl_certificate_key_path: /etc/nginx/ssl/key.pem
+    ssl_protocols: "TLSv1.2 TLSv1.3"
+
+    # Monitoring configuration
+    enable_monitoring: true
+    prometheus_port: 9090
+    grafana_port: 3000
+
+  pre_tasks:
+    - name: Validate environment
+      assert:
+        that:
+          - ansible_distribution in ['Ubuntu', 'CentOS', 'RedHat']
+          - ansible_distribution_major_version | int >= 20
+        fail_msg: "Unsupported OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Set deployment facts
+      set_fact:
+        deployment_id: "{{ app_name }}-{{ app_version }}-{{ deployment_timestamp | hash('md5') | truncate(8, True, '') }}"
+        backup_dir: "/var/backups/{{ app_name }}/{{ ansible_date_time.date }}"
+
+  tasks:
+    # System preparation
+    - name: Create application user
+      user:
+        name: "{{ app_user }}"
+        group: "{{ app_group }}"
+        shell: /bin/bash
+        home: "{{ app_home }}"
+        createhome: yes
+        system: yes
+        state: present
+      tags: [system, users]
+
+    - name: Install system packages
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+          - git
+          - curl
+          - wget
+          - htop
+          - vim
+          - unzip
+          - build-essential
+          - libssl-dev
+          - libffi-dev
+          - python3-dev
+        state: present
+      tags: [system, packages]
+
+    # Database setup
+    - name: Install PostgreSQL
+      apt:
+        name:
+          - postgresql
+          - postgresql-contrib
+          - python3-psycopg2
+        state: present
+      tags: [database]
+
+    - name: Start PostgreSQL service
+      systemd:
+        name: postgresql
+        state: started
+        enabled: yes
+      tags: [database]
+
+    - name: Create database
+      postgresql_db:
+        name: "{{ db_name }}"
+        encoding: UTF-8
+        lc_collate: en_US.UTF-8
+        lc_ctype: en_US.UTF-8
+        template: template0
+        state: present
+      become_user: postgres
+      tags: [database]
+
+    - name: Create database user
+      postgresql_user:
+        db: "{{ db_name }}"
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "ALL"
+        role_attr_flags: "CREATEDB,NOSUPERUSER"
+        state: present
+      become_user: postgres
+      no_log: true
+      tags: [database]
+
+    # Application deployment
+    - name: Create application directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0755'
+      loop:
+        - "{{ app_home }}"
+        - "{{ app_home }}/releases"
+        - "{{ app_home }}/shared"
+        - "{{ app_home }}/shared/logs"
+        - "{{ app_home }}/shared/uploads"
+        - "{{ app_home }}/shared/config"
+        - "{{ backup_dir }}"
+      tags: [application, directories]
+
+    - name: Download application release
+      get_url:
+        url: "https://releases.example.com/{{ app_name }}/{{ app_version }}/{{ app_name }}.tar.gz"
+        dest: "{{ app_home }}/releases/{{ app_name }}-{{ app_version }}.tar.gz"
+        checksum: "sha256:{{ release_checksum }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0644'
+      tags: [application, deployment]
+
+    - name: Extract application
+      unarchive:
+        src: "{{ app_home }}/releases/{{ app_name }}-{{ app_version }}.tar.gz"
+        dest: "{{ app_home }}/releases/"
+        remote_src: yes
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        creates: "{{ app_home }}/releases/{{ app_version }}"
+      tags: [application, deployment]
+
+    - name: Create application configuration
+      template:
+        src: templates/app_config.yml.j2
+        dest: "{{ app_home }}/shared/config/config.yml"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0600'
+      notify: restart application
+      tags: [application, configuration]
+
+    - name: Create systemd service
+      template:
+        src: templates/systemd_service.j2
+        dest: "/etc/systemd/system/{{ app_name }}.service"
+        mode: '0644'
+      notify: restart application
+      tags: [application, systemd]
+
+    # Nginx setup
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+      tags: [nginx]
+
+    - name: Create Nginx configuration
+      template:
+        src: templates/nginx.conf.j2
+        dest: "/etc/nginx/sites-available/{{ app_name }}"
+        mode: '0644'
+      notify: reload nginx
+      tags: [nginx, configuration]
+
+    - name: Enable Nginx site
+      file:
+        src: "/etc/nginx/sites-available/{{ app_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ app_name }}"
+        state: link
+      notify: reload nginx
+      tags: [nginx]
+
+    # SSL setup
+    - name: Create SSL directory
+      file:
+        path: /etc/nginx/ssl
+        state: directory
+        mode: '0700'
+      tags: [ssl]
+
+    - name: Install SSL certificates
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: '0600'
+      loop:
+        - { src: "files/ssl/cert.pem", dest: "{{ ssl_certificate_path }}" }
+        - { src: "files/ssl/key.pem", dest: "{{ ssl_certificate_key_path }}" }
+      notify: reload nginx
+      no_log: true
+      tags: [ssl]
+
+    # Monitoring setup
+    - name: Install monitoring tools
+      apt:
+        name:
+          - prometheus
+          - prometheus-node-exporter
+          - grafana
+        state: present
+      when: enable_monitoring
+      tags: [monitoring]
+
+    - name: Configure Prometheus
+      template:
+        src: templates/prometheus.yml.j2
+        dest: /etc/prometheus/prometheus.yml
+        mode: '0644'
+      notify: restart prometheus
+      when: enable_monitoring
+      tags: [monitoring, prometheus]
+
+  handlers:
+    - name: restart application
+      systemd:
+        name: "{{ app_name }}"
+        state: restarted
+        daemon_reload: yes
+
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded
+
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+
+    - name: restart prometheus
+      systemd:
+        name: prometheus
+        state: restarted
+
+  post_tasks:
+    - name: Wait for application to be ready
+      uri:
+        url: "http://localhost:{{ app_port }}/health"
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 30
+      delay: 10
+      tags: [verification]
+
+    - name: Run database migrations
+      command: "{{ app_home }}/current/bin/migrate --up"
+      become_user: "{{ app_user }}"
+      environment:
+        DATABASE_URL: "postgresql://{{ db_user }}:{{ db_password }}@{{ db_host }}:{{ db_port }}/{{ db_name }}"
+      tags: [database, migrations]
+
+    - name: Create deployment marker
+      copy:
+        content: |
+          Deployment ID: {{ deployment_id }}
+          Version: {{ app_version }}
+          Timestamp: {{ deployment_timestamp }}
+          Deployed by: {{ ansible_user_id }}
+          Hostname: {{ ansible_hostname }}
+        dest: "{{ app_home }}/DEPLOYMENT_INFO"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0644'
+      tags: [deployment]

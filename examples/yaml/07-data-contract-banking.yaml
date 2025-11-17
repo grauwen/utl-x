@@ -1,0 +1,369 @@
+# Data Contract - Banking Transaction Events
+# Based on datacontract.com specification
+dataContractSpecification: 0.9.3
+id: banking-transactions-v2
+info:
+  title: Banking Transaction Events Stream
+  version: 2.1.0
+  description: |
+    Real-time banking transaction event stream for payment processing.
+    Covers all transaction types including deposits, withdrawals, transfers, and payments.
+    Compliant with PSD2, GDPR, and PCI-DSS requirements.
+  owner: Financial Services Platform Team
+  contact:
+    name: FinTech Data Team
+    email: fintech-data@bank.example.com
+    url: https://dev portal.bank.example.com/contracts/transactions
+  status: active
+  tags:
+    - banking
+    - transactions
+    - payments
+    - pci-dss
+    - psd2
+    - gdpr
+servers:
+  production:
+    type: kafka
+    host: kafka-prod.bank.example.com
+    port: 9093
+    format: avro
+    topic: banking.transactions.v2
+    description: Production Kafka cluster with encryption
+    environment: production
+    security:
+      protocol: SASL_SSL
+      saslMechanism: SCRAM-SHA-512
+      encryption: AES-256
+  dr-site:
+    type: kafka
+    host: kafka-dr.bank.example.com
+    port: 9093
+    format: avro
+    topic: banking.transactions.v2
+    description: Disaster recovery site
+    environment: production-dr
+terms:
+  usage: |
+    HIGHLY CONFIDENTIAL - PCI-DSS Level 1 compliant data
+    Access requires multi-factor authentication and audit logging
+    Data retention: 7 years (regulatory requirement)
+    Cross-border transfer restrictions apply
+  limitations: |
+    Maximum message size: 2MB
+    Rate limit: 50,000 TPS
+    Guaranteed ordering per account_id
+    Replay window: 30 days
+  billing: |
+    Internal use only - no external billing
+    Cost allocation by business unit based on message volume
+  noticePeriod: 90 days
+models:
+  transaction_event:
+    type: object
+    description: Core banking transaction event
+    fields:
+      transaction_id:
+        type: string
+        format: uuid
+        required: true
+        unique: true
+        primaryKey: true
+        description: Unique transaction identifier
+        example: "txn-550e8400-e29b-41d4-a716-446655440000"
+        tags: [business-key]
+        classification: public
+      event_timestamp:
+        type: timestamp
+        required: true
+        description: Event generation timestamp (UTC)
+        format: iso8601
+        precision: millisecond
+        example: "2024-03-15T14:30:45.123Z"
+      transaction_type:
+        type: string
+        required: true
+        description: Type of transaction
+        enum:
+          - deposit
+          - withdrawal
+          - transfer
+          - payment
+          - fee
+          - interest
+          - reversal
+          - chargeback
+        example: "transfer"
+      transaction_status:
+        type: string
+        required: true
+        description: Current transaction status
+        enum:
+          - pending
+          - processing
+          - completed
+          - failed
+          - reversed
+          - disputed
+        example: "completed"
+      account_id:
+        type: string
+        required: true
+        description: Source account identifier
+        pattern: "^ACC-[A-Z]{2}-\\d{12}$"
+        example: "ACC-US-123456789012"
+        tags: [pii, partition-key]
+        classification: confidential
+      customer_id:
+        type: string
+        required: true
+        description: Customer unique identifier
+        pattern: "^CUST-\\d{10}$"
+        example: "CUST-9876543210"
+        tags: [pii]
+        classification: highly-confidential
+      amount:
+        type: decimal
+        required: true
+        description: Transaction amount
+        precision: 19
+        scale: 4
+        minimum: 0.0001
+        maximum: 999999999999.9999
+        example: 15000.50
+        tags: [financial]
+      currency:
+        type: string
+        required: true
+        description: ISO 4217 currency code
+        pattern: "^[A-Z]{3}$"
+        enum:
+          - USD
+          - EUR
+          - GBP
+          - JPY
+          - CHF
+          - CAD
+          - AUD
+        example: "USD"
+      counterparty_account:
+        type: string
+        required: false
+        description: Destination account for transfers/payments
+        pattern: "^ACC-[A-Z]{2}-\\d{12}$"
+        example: "ACC-GB-987654321098"
+        tags: [pii]
+        classification: confidential
+      counterparty_name:
+        type: string
+        required: false
+        maxLength: 200
+        description: Counterparty name
+        example: "John Smith"
+        tags: [pii]
+        classification: confidential
+      counterparty_bank:
+        type: object
+        required: false
+        description: Counterparty bank details
+        fields:
+          swift_code:
+            type: string
+            pattern: "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
+            example: "CHASUS33XXX"
+          bank_name:
+            type: string
+            maxLength: 150
+            example: "Chase Bank"
+          country_code:
+            type: string
+            pattern: "^[A-Z]{2}$"
+            example: "US"
+      payment_method:
+        type: string
+        required: false
+        description: Payment instrument used
+        enum:
+          - wire_transfer
+          - ach
+          - swift
+          - sepa
+          - card_debit
+          - card_credit
+          - check
+          - mobile_payment
+        example: "wire_transfer"
+      card_details:
+        type: object
+        required: false
+        description: Masked card information
+        tags: [pci-dss]
+        classification: restricted
+        fields:
+          last_four_digits:
+            type: string
+            pattern: "^\\d{4}$"
+            example: "4242"
+          card_brand:
+            type: string
+            enum: [visa, mastercard, amex, discover]
+            example: "visa"
+          expiry_month:
+            type: integer
+            minimum: 1
+            maximum: 12
+            example: 12
+          expiry_year:
+            type: integer
+            minimum: 2024
+            maximum: 2099
+            example: 2027
+      reference_number:
+        type: string
+        required: false
+        maxLength: 100
+        description: External reference number
+        example: "INV-2024-12345"
+      description:
+        type: string
+        required: false
+        maxLength: 500
+        description: Transaction description
+        example: "Payment for invoice #12345"
+      fee_amount:
+        type: decimal
+        required: false
+        precision: 10
+        scale: 4
+        description: Transaction fee
+        example: 5.00
+      exchange_rate:
+        type: decimal
+        required: false
+        precision: 15
+        scale: 8
+        description: FX rate for cross-currency transactions
+        example: 1.18450000
+      ip_address:
+        type: string
+        required: false
+        format: ipv4
+        description: Client IP address
+        example: "192.168.1.100"
+        tags: [pii, security]
+        classification: confidential
+      device_fingerprint:
+        type: string
+        required: false
+        description: Device identification hash
+        example: "a1b2c3d4e5f6g7h8i9j0"
+        tags: [security]
+      geo_location:
+        type: object
+        required: false
+        description: Transaction geolocation
+        fields:
+          latitude:
+            type: decimal
+            precision: 10
+            scale: 7
+            example: 40.7580600
+          longitude:
+            type: decimal
+            precision: 10
+            scale: 7
+            example: -73.9855400
+          country:
+            type: string
+            pattern: "^[A-Z]{2}$"
+            example: "US"
+          city:
+            type: string
+            example: "New York"
+      risk_score:
+        type: integer
+        required: false
+        minimum: 0
+        maximum: 1000
+        description: AML/fraud risk score
+        example: 125
+        tags: [risk, aml]
+      compliance_flags:
+        type: array
+        required: false
+        description: Compliance and regulatory flags
+        items:
+          type: string
+          enum:
+            - aml_review_required
+            - high_value_transaction
+            - cross_border
+            - sanctioned_country
+            - politically_exposed_person
+            - suspicious_activity
+        example: ["high_value_transaction", "cross_border"]
+      metadata:
+        type: object
+        required: false
+        description: Additional metadata
+        fields:
+          channel:
+            type: string
+            enum: [web, mobile, atm, branch, api]
+            example: "mobile"
+          user_agent:
+            type: string
+            maxLength: 500
+          session_id:
+            type: string
+            format: uuid
+          idempotency_key:
+            type: string
+            format: uuid
+quality:
+  type: SLI
+  specification:
+    freshness:
+      description: Events published within 1 second of transaction
+      target: 99.99%
+      threshold: 1s
+    completeness:
+      description: All required fields populated
+      target: 100%
+    accuracy:
+      description: Amount matches core banking system
+      target: 100%
+    consistency:
+      description: Event ordering preserved per account_id
+      target: 100%
+    availability:
+      description: Stream availability
+      target: 99.999%
+    latency:
+      description: End-to-end latency
+      p50: 50ms
+      p95: 200ms
+      p99: 500ms
+      p99.9: 1000ms
+examples:
+  - type: wire_transfer
+    description: Domestic wire transfer
+    model: transaction_event
+    data:
+      transaction_id: "txn-550e8400-e29b-41d4-a716-446655440000"
+      event_timestamp: "2024-03-15T14:30:45.123Z"
+      transaction_type: "transfer"
+      transaction_status: "completed"
+      account_id: "ACC-US-123456789012"
+      customer_id: "CUST-9876543210"
+      amount: 15000.50
+      currency: "USD"
+      counterparty_account: "ACC-US-987654321098"
+      counterparty_name: "Jane Doe"
+      payment_method: "wire_transfer"
+      reference_number: "WIR-2024-03-15-001"
+      description: "Business payment"
+      fee_amount: 25.00
+      ip_address: "192.168.1.100"
+      risk_score: 75
+      compliance_flags: ["high_value_transaction"]

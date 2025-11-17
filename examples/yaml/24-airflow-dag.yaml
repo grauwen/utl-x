@@ -1,0 +1,89 @@
+# Apache Airflow DAG - Data Pipeline
+# ETL workflow for e-commerce analytics
+dag:
+  dag_id: ecommerce_analytics_pipeline
+  description: Daily analytics pipeline for e-commerce data
+  schedule_interval: "0 2 * * *"  # 2 AM daily
+  start_date: 2024-01-01
+  catchup: false
+  max_active_runs: 1
+  default_args:
+    owner: data-engineering
+    depends_on_past: false
+    email: [data-eng@example.com]
+    email_on_failure: true
+    email_on_retry: false
+    retries: 3
+    retry_delay:
+      minutes: 5
+    execution_timeout:
+      hours: 2
+
+tasks:
+  extract_orders:
+    task_id: extract_orders
+    type: PythonOperator
+    python_callable: extract_orders_from_db
+    op_kwargs:
+      source_db: postgres://prod-db:5432/ecommerce
+      target_bucket: s3://data-lake/raw/orders/
+      partition_date: "{{ ds }}"
+    pool: database_pool
+    priority_weight: 10
+
+  extract_customers:
+    task_id: extract_customers
+    type: PythonOperator
+    python_callable: extract_customers_from_db
+    op_kwargs:
+      source_db: postgres://prod-db:5432/ecommerce
+      target_bucket: s3://data-lake/raw/customers/
+    pool: database_pool
+
+  transform_orders:
+    task_id: transform_orders
+    type: SparkSubmitOperator
+    application: /opt/airflow/spark_jobs/transform_orders.py
+    conf:
+      spark.executor.memory: 4g
+      spark.executor.cores: 2
+      spark.dynamicAllocation.enabled: true
+    depends_on: [extract_orders, extract_customers]
+
+  load_to_warehouse:
+    task_id: load_to_warehouse
+    type: SnowflakeOperator
+    sql: |
+      COPY INTO analytics.orders
+      FROM @data_lake_stage/transformed/orders/{{ ds }}/
+      FILE_FORMAT = (TYPE = PARQUET)
+      MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+    snowflake_conn_id: snowflake_prod
+    depends_on: [transform_orders]
+
+  quality_checks:
+    task_id: quality_checks
+    type: SQLCheckOperator
+    conn_id: snowflake_prod
+    sql: |
+      SELECT COUNT(*) FROM analytics.orders
+      WHERE order_date = '{{ ds }}'
+      HAVING COUNT(*) > 1000
+    depends_on: [load_to_warehouse]
+
+  send_report:
+    task_id: send_report
+    type: EmailOperator
+    to: [analytics@example.com]
+    subject: "Daily Analytics Pipeline - {{ ds }}"
+    html_content: |
+      <h2>Pipeline Completed Successfully</h2>
+      <p>Date: {{ ds }}</p>
+      <p>Records processed: {{ ti.xcom_pull(task_ids='quality_checks') }}</p>
+    depends_on: [quality_checks]
+
+dependencies:
+  - [extract_orders, extract_customers] >> transform_orders
+  - transform_orders >> load_to_warehouse
+  - load_to_warehouse >> quality_checks
+  - quality_checks >> send_report

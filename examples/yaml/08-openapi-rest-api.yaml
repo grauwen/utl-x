@@ -1,0 +1,371 @@
+# OpenAPI 3.1 Specification - E-commerce REST API
+# Complete API definition with all endpoints, schemas, and security
+openapi: 3.1.0
+info:
+  title: E-commerce Platform API
+  version: 2.5.0
+  description: |
+    Comprehensive REST API for e-commerce operations including
+    product catalog, shopping cart, orders, and customer management.
+  contact:
+    name: API Support Team
+    email: api-support@ecommerce.example.com
+    url: https://developer.ecommerce.example.com
+  license:
+    name: Proprietary
+    url: https://ecommerce.example.com/license
+  termsOfService: https://ecommerce.example.com/terms
+
+servers:
+  - url: https://api.ecommerce.example.com/v2
+    description: Production server
+  - url: https://api-staging.ecommerce.example.com/v2
+    description: Staging server
+  - url: http://localhost:8080/v2
+    description: Local development server
+
+tags:
+  - name: Products
+    description: Product catalog operations
+  - name: Cart
+    description: Shopping cart management
+  - name: Orders
+    description: Order processing
+  - name: Customers
+    description: Customer management
+  - name: Payments
+    description: Payment processing
+
+paths:
+  /products:
+    get:
+      summary: List products
+      description: Retrieve a paginated list of products with filtering and sorting
+      operationId: listProducts
+      tags: [Products]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+            format: double
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+            format: double
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [price_asc, price_desc, name_asc, name_desc, popularity]
+            default: popularity
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      summary: Create product
+      description: Add a new product to the catalog
+      operationId: createProduct
+      tags: [Products]
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /products/{productId}:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^PRD-[0-9]{8}$'
+    get:
+      summary: Get product by ID
+      operationId: getProduct
+      tags: [Products]
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /cart:
+    post:
+      summary: Add item to cart
+      operationId: addToCart
+      tags: [Cart]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId, quantity]
+              properties:
+                productId:
+                  type: string
+                quantity:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+
+  /orders:
+    post:
+      summary: Create order
+      operationId: createOrder
+      tags: [Orders]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+components:
+  schemas:
+    Product:
+      type: object
+      required: [id, name, price, currency]
+      properties:
+        id:
+          type: string
+          example: "PRD-12345678"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: "MacBook Pro 16-inch"
+        description:
+          type: string
+          maxLength: 2000
+        price:
+          type: number
+          format: double
+          minimum: 0
+          example: 2499.99
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: "USD"
+        category:
+          type: string
+          example: "Electronics"
+        stock:
+          type: integer
+          minimum: 0
+          example: 50
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+
+    ProductInput:
+      type: object
+      required: [name, price, currency, category]
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+          format: double
+        currency:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        stock:
+          type: integer
+
+    Cart:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: string
+              quantity:
+                type: integer
+              price:
+                type: number
+        total:
+          type: number
+
+    Order:
+      type: object
+      properties:
+        orderId:
+          type: string
+        customerId:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+        totalAmount:
+          type: number
+        status:
+          type: string
+          enum: [pending, processing, shipped, delivered, cancelled]
+
+    OrderInput:
+      type: object
+      required: [items, shippingAddress, paymentMethod]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+        shippingAddress:
+          type: object
+        paymentMethod:
+          type: object
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+        totalItems:
+          type: integer
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - bearerAuth: []
+  - apiKey: []
