@@ -26,6 +26,7 @@ import {
     ValidateUdmRequest,
     ValidateUdmResult
 } from '../../common/protocol';
+import { DirectiveRegistry, createEmptyDirectiveRegistry } from '../../common/usdl-types';
 
 /**
  * Daemon client options
@@ -508,6 +509,34 @@ export class UTLXDaemonClient extends EventEmitter {
         const response = await this.httpRequest('/api/operators', 'GET');
         // The response is OperatorRegistryData with {operators: OperatorInfo[], ...}
         return response.operators || [];
+    }
+
+    /**
+     * Get USDL directive registry from daemon
+     */
+    async getUsdlDirectives(): Promise<DirectiveRegistry> {
+        const startTime = Date.now();
+        console.log('[UTLXDaemonClient] Fetching USDL directives from /api/usdl/directives');
+
+        try {
+            const response = await this.httpRequest('/api/usdl/directives', 'GET');
+            const elapsed = Date.now() - startTime;
+
+            console.log('[UTLXDaemonClient] USDL directives fetched successfully:', {
+                totalDirectives: response.totalDirectives,
+                version: response.version,
+                tiers: Object.keys(response.tiers).map(tier =>
+                    `${tier}:${response.tiers[tier].length}`),
+                formats: Object.keys(response.formats).length,
+                elapsedMs: elapsed
+            });
+
+            return response;
+        } catch (error) {
+            console.error('[UTLXDaemonClient] Failed to fetch USDL directives:', error);
+            // Return empty registry on error
+            return createEmptyDirectiveRegistry();
+        }
     }
 
     /**

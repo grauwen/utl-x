@@ -21,6 +21,7 @@ import { FunctionBuilderDialog } from '../function-builder/function-builder-dial
 import { UTLXService } from '../../common/protocol';
 import { UTLX_SERVICE_SYMBOL } from '../../common/protocol';
 import { FunctionInfo, OperatorInfo } from '../../common/protocol';
+import { DirectiveRegistry } from '../../common/usdl-types';
 import { analyzeInsertionContext, InsertionContext } from '../function-builder/context-analyzer';
 import { UDMLanguageParser, UDMParseException } from '../udm/udm-language-parser';
 import { navigate, getAllPaths } from '../udm/udm-navigator';
@@ -68,6 +69,7 @@ export class UTLXEditorWidget extends ReactWidget {
     protected showFunctionBuilderDialog: boolean = false;
     protected functionBuilderFunctions: FunctionInfo[] = [];
     protected functionBuilderOperators: OperatorInfo[] = [];
+    protected functionBuilderDirectives: DirectiveRegistry | null = null;
 
     constructor() {
         super();
@@ -1371,11 +1373,19 @@ output json
             this.functionBuilderOperators = await this.utlxService.getOperators();
             console.log('[UTLXEditor] Loaded', this.functionBuilderOperators.length, 'operators');
 
+            // Fetch USDL directives from daemon
+            this.functionBuilderDirectives = await this.utlxService.getUsdlDirectives();
+            console.log('[UTLXEditor] Loaded USDL directives:', {
+                total: this.functionBuilderDirectives?.totalDirectives || 0,
+                tiers: this.functionBuilderDirectives ? Object.keys(this.functionBuilderDirectives.tiers).length : 0
+            });
+
             // Log what we're passing to Function Builder
             console.log('[UTLXEditor] Opening Function Builder with:', {
                 inputNamesFromHeaders: this.inputNamesFromHeaders,
                 inputUdmMapSize: this.inputUdmMap.size,
-                inputUdmMapKeys: Array.from(this.inputUdmMap.keys())
+                inputUdmMapKeys: Array.from(this.inputUdmMap.keys()),
+                outputFormat: this.outputFormat
             });
 
             // Open dialog
@@ -1648,6 +1658,8 @@ output json
                         availableInputs={Array.from(new Set([...this.inputNamesFromHeaders, ...Array.from(this.inputUdmMap.keys())]))}
                         udmMap={this.inputUdmMap}
                         inputFormatsMap={this.inputFormatsMap}
+                        outputFormat={this.outputFormat}
+                        directiveRegistry={this.functionBuilderDirectives}
                         cursorContext={this.analyzeCursorContext()}
                         onInsert={(code) => this.handleInsertFromBuilder(code)}
                         onClose={() => {

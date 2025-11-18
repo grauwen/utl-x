@@ -1351,3 +1351,375 @@
     font-size: 12px;
     opacity: 0.8;
 }
+
+/* ===== USDL Directives Tab ===== */
+
+.utlx-function-builder-dialog .directives-tab-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.utlx-function-builder-dialog .directives-tree {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Search Container */
+.utlx-function-builder-dialog .directives-tree .search-container {
+    position: relative;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--theia-panel-border);
+    background: var(--theia-toolbar-background);
+}
+
+.utlx-function-builder-dialog .directives-tree .search-container .codicon-search {
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--theia-descriptionForeground);
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.utlx-function-builder-dialog .directives-tree .search-input {
+    width: 100%;
+    padding: 8px 32px 8px 32px;
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border);
+    border-radius: 4px;
+    color: var(--theia-input-foreground);
+    font-size: 13px;
+    outline: none;
+}
+
+.utlx-function-builder-dialog .directives-tree .search-input:focus {
+    border-color: var(--theia-focusBorder);
+}
+
+.utlx-function-builder-dialog .directives-tree .clear-button {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--theia-descriptionForeground);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 14px;
+}
+
+.utlx-function-builder-dialog .directives-tree .clear-button:hover {
+    color: var(--theia-foreground);
+}
+
+/* Format Indicator */
+.utlx-function-builder-dialog .directives-tree .format-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--theia-toolbar-background);
+    border-bottom: 1px solid var(--theia-panel-border);
+    font-size: 12px;
+    color: var(--theia-descriptionForeground);
+}
+
+.utlx-function-builder-dialog .directives-tree .format-indicator .codicon {
+    font-size: 14px;
+}
+
+.utlx-function-builder-dialog .directives-tree .format-indicator strong {
+    color: var(--theia-textLink-activeForeground);
+}
+
+.utlx-function-builder-dialog .directives-tree .format-indicator .badge {
+    margin-left: auto;
+    padding: 2px 8px;
+    background: var(--theia-badge-background);
+    color: var(--theia-badge-foreground);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Split Container */
+.utlx-function-builder-dialog .directives-tree .split-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Directives List */
+.utlx-function-builder-dialog .directives-tree .directives-list {
+    overflow-y: auto;
+    padding: 8px;
+}
+
+/* Tier Group */
+.utlx-function-builder-dialog .directives-tree .tier-group {
+    margin-bottom: 4px;
+}
+
+.utlx-function-builder-dialog .directives-tree .tier-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--theia-sideBar-background);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--theia-foreground);
+    transition: background 0.15s ease;
+}
+
+.utlx-function-builder-dialog .directives-tree .tier-header:hover {
+    background: var(--theia-list-hoverBackground);
+}
+
+.utlx-function-builder-dialog .directives-tree .tier-header .codicon {
+    font-size: 14px;
+    color: var(--theia-descriptionForeground);
+}
+
+.utlx-function-builder-dialog .directives-tree .tier-name {
+    flex: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.utlx-function-builder-dialog .directives-tree .tier-count {
+    padding: 2px 6px;
+    background: var(--theia-badge-background);
+    color: var(--theia-badge-foreground);
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+/* Directive List */
+.utlx-function-builder-dialog .directives-tree .directive-list {
+    padding-left: 24px;
+    margin-top: 4px;
+}
+
+.utlx-function-builder-dialog .directives-tree .directive-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--theia-list-foreground);
+    transition: all 0.15s ease;
+}
+
+.utlx-function-builder-dialog .directives-tree .directive-item:hover {
+    background: var(--theia-list-hoverBackground);
+}
+
+.utlx-function-builder-dialog .directives-tree .directive-item.selected {
+    background: var(--theia-list-activeSelectionBackground);
+    color: var(--theia-list-activeSelectionForeground);
+}
+
+.utlx-function-builder-dialog .directives-tree .directive-item .codicon {
+    font-size: 14px;
+    color: var(--theia-symbolIcon-propertyForeground);
+}
+
+.utlx-function-builder-dialog .directives-tree .directive-name {
+    flex: 1;
+    font-family: var(--monaco-monospace-font);
+}
+
+.utlx-function-builder-dialog .directives-tree .required-badge {
+    color: var(--theia-editorError-foreground);
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Split Divider */
+.utlx-function-builder-dialog .directives-tree .split-divider {
+    height: 4px;
+    background: var(--theia-panel-border);
+    cursor: row-resize;
+    position: relative;
+}
+
+.utlx-function-builder-dialog .directives-tree .split-divider:hover {
+    background: var(--theia-focusBorder);
+}
+
+/* Directive Details */
+.utlx-function-builder-dialog .directives-tree .directive-details {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    border-top: 1px solid var(--theia-panel-border);
+}
+
+.utlx-function-builder-dialog .directives-tree .details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--theia-toolbar-background);
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.utlx-function-builder-dialog .directives-tree .details-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--monaco-monospace-font);
+    color: var(--theia-foreground);
+}
+
+.utlx-function-builder-dialog .directives-tree .details-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.utlx-function-builder-dialog .directives-tree .action-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.15s ease;
+}
+
+.utlx-function-builder-dialog .directives-tree .action-button:hover {
+    background: var(--theia-button-hoverBackground);
+}
+
+.utlx-function-builder-dialog .directives-tree .action-button .codicon {
+    font-size: 14px;
+}
+
+/* Details Content */
+.utlx-function-builder-dialog .directives-tree .details-content {
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.utlx-function-builder-dialog .directives-tree .detail-section {
+    margin-bottom: 16px;
+}
+
+.utlx-function-builder-dialog .directives-tree .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--theia-descriptionForeground);
+    margin-bottom: 8px;
+}
+
+.utlx-function-builder-dialog .directives-tree .section-value {
+    font-size: 13px;
+    color: var(--theia-foreground);
+    line-height: 1.5;
+}
+
+.utlx-function-builder-dialog .directives-tree .syntax-code,
+.utlx-function-builder-dialog .directives-tree .example-code {
+    display: block;
+    padding: 8px 12px;
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    font-family: var(--monaco-monospace-font);
+    font-size: 12px;
+    color: var(--theia-foreground);
+    margin-bottom: 8px;
+}
+
+.utlx-function-builder-dialog .directives-tree .type-badge,
+.utlx-function-builder-dialog .directives-tree .scope-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background: var(--theia-badge-background);
+    color: var(--theia-badge-foreground);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+    margin-bottom: 6px;
+}
+
+.utlx-function-builder-dialog .directives-tree .scope-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.utlx-function-builder-dialog .directives-tree .see-also-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.utlx-function-builder-dialog .directives-tree .related-directive {
+    display: inline-block;
+    padding: 4px 8px;
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: var(--monaco-monospace-font);
+    color: var(--theia-textLink-foreground);
+}
+
+/* Empty State */
+.utlx-function-builder-dialog .directives-tree .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    color: var(--theia-descriptionForeground);
+    text-align: center;
+    padding: 32px;
+}
+
+.utlx-function-builder-dialog .directives-tree .empty-state .codicon {
+    font-size: 32px;
+    opacity: 0.5;
+}
+
+.utlx-function-builder-dialog .directives-tree .empty-state div {
+    font-size: 13px;
+}
+
+.utlx-function-builder-dialog .directives-tree .empty-state small {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* 4-Tab Layout Adjustments */
+.utlx-function-builder-dialog .tab-header {
+    /* Allow tabs to wrap if 4 tabs are too wide */
+    flex-wrap: wrap;
+}
+
+.utlx-function-builder-dialog .tab-button {
+    /* Reduce flex when 4 tabs are present */
+    min-width: 120px;
+}

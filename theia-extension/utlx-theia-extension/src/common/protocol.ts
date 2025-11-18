@@ -5,6 +5,8 @@
  * Supports both Design-Time and Runtime modes.
  */
 
+import { DirectiveRegistry } from './usdl-types';
+
 /**
  * Service path for RPC communication
  */
@@ -301,6 +303,11 @@ export interface UTLXService {
      * Get available UTLX operators
      */
     getOperators(): Promise<OperatorInfo[]>;
+
+    /**
+     * Get USDL directive registry
+     */
+    getUsdlDirectives(): Promise<DirectiveRegistry>;
 
     /**
      * Set mode configuration

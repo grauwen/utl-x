@@ -22,6 +22,8 @@ import { generateFunctionInsertion, generateInsertionPreview } from './insertion
 import { OperatorsTree } from './operators-tree';
 import { OperatorInfo, UTLX_OPERATORS } from './operators-data';
 import { generateOperatorInsertion, generateOperatorInsertionPreview } from './operator-insertion-generator';
+import { DirectivesTree } from './directives-tree';
+import { DirectiveRegistry } from '../../common/usdl-types';
 
 /**
  * Props for the Function Builder Dialog
@@ -32,6 +34,8 @@ export interface FunctionBuilderDialogProps {
     availableInputs: string[];
     udmMap: Map<string, string>;
     inputFormatsMap: Map<string, string>; // inputName -> format (json, csv, xml, etc.)
+    outputFormat: string; // NEW: Current output format
+    directiveRegistry: DirectiveRegistry | null; // NEW: USDL directives
     cursorContext: InsertionContext | null;
     onInsert: (code: string) => void;
     onClose: () => void;
@@ -57,6 +61,8 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     availableInputs,
     udmMap,
     inputFormatsMap,
+    outputFormat,
+    directiveRegistry,
     cursorContext,
     onInsert,
     onClose
@@ -73,7 +79,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     const [isDraggingSplit, setIsDraggingSplit] = React.useState(false);
 
     // New state for tabs and Monaco editor in right pane
-    const [activeTab, setActiveTab] = React.useState<'functions' | 'inputs' | 'operators'>('inputs');
+    const [activeTab, setActiveTab] = React.useState<'functions' | 'inputs' | 'operators' | 'directives'>('inputs');
     const [rightSplitPosition, setRightSplitPosition] = React.useState(66); // 66% editor, 34% problems
     const [isDraggingRightSplit, setIsDraggingRightSplit] = React.useState(false);
 
@@ -288,6 +294,15 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         return results;
     }, [availableInputs, udmMap, inputFormatsMap]);
 
+    // Check if output format is USDL (Tier 2+ schema format)
+    const isUsdlFormat = React.useMemo(() => {
+        const tier2Formats = ['avro', 'jsch', 'xsd', 'proto'];
+        const formatLower = outputFormat?.toLowerCase() || '';
+        const result = tier2Formats.includes(formatLower);
+        console.log('[FunctionBuilder] Output format:', outputFormat, '-> isUsdlFormat:', result);
+        return result;
+    }, [outputFormat]);
+
     // Auto-expand categories when searching
     React.useEffect(() => {
         if (searchQuery.trim()) {
@@ -419,6 +434,29 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
 
         // Insert into Monaco editor in right pane
         insertIntoMonaco(code);
+    };
+
+    const handleInsertDirective = (directiveTemplate: string) => {
+        console.log('[FunctionBuilder] Inserting USDL directive:', directiveTemplate);
+        insertIntoMonaco(directiveTemplate);
+
+        // Restore focus to Expression Editor
+        setTimeout(() => {
+            const editor = expressionEditorRef.current;
+            if (editor) {
+                editor.focus();
+                console.log('[FunctionBuilder] Restored focus to Expression Editor after directive insert');
+            }
+        }, 0);
+    };
+
+    const handleCopyDirective = (directiveTemplate: string) => {
+        console.log('[FunctionBuilder] Copying USDL directive:', directiveTemplate);
+        navigator.clipboard.writeText(directiveTemplate).then(() => {
+            console.log('[FunctionBuilder] USDL directive copied to clipboard successfully');
+        }).catch(err => {
+            console.error('[FunctionBuilder] Failed to copy directive to clipboard:', err);
+        });
     };
 
     const insertIntoMonaco = (code: string, context?: InsertionContext) => {
@@ -666,6 +704,15 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                 <span className='codicon codicon-symbol-operator'></span>
                                 Operators
                             </button>
+                            {isUsdlFormat && (
+                                <button
+                                    className={`tab-button ${activeTab === 'directives' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('directives')}
+                                >
+                                    <span className='codicon codicon-file-code'></span>
+                                    USDL Directives
+                                </button>
+                            )}
                         </div>
 
                         {/* Tab Content: Standard Library Functions */}
@@ -911,6 +958,18 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                     )}
                                 </div>
                             </>
+                        )}
+
+                        {/* Tab Content: USDL Directives */}
+                        {activeTab === 'directives' && (
+                            <div className='directives-tab-content' style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                <DirectivesTree
+                                    directiveRegistry={directiveRegistry}
+                                    outputFormat={outputFormat}
+                                    onInsert={handleInsertDirective}
+                                    onCopy={handleCopyDirective}
+                                />
+                            </div>
                         )}
                     </div>
 

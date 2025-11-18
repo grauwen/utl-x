@@ -24,6 +24,7 @@ import {
     ValidateUdmRequest,
     ValidateUdmResult
 } from '../../common/protocol';
+import { DirectiveRegistry, createEmptyDirectiveRegistry } from '../../common/usdl-types';
 import { UTLXDaemonClient } from '../daemon/utlx-daemon-client';
 
 @injectable()
@@ -208,6 +209,27 @@ export class UTLXServiceImpl implements UTLXService {
         } catch (error) {
             console.error('Get operators error:', error);
             return [];
+        }
+    }
+
+    /**
+     * Get USDL directive registry from daemon
+     */
+    async getUsdlDirectives(): Promise<DirectiveRegistry> {
+        console.log('[UTLXService] Getting USDL directives...');
+        try {
+            const registry = await this.daemonClient.getUsdlDirectives();
+            console.log('[UTLXService] USDL directives retrieved:', {
+                total: registry.totalDirectives,
+                core: registry.tiers.core.length,
+                common: registry.tiers.common.length,
+                formatSpecific: registry.tiers.format_specific.length,
+                reserved: registry.tiers.reserved.length
+            });
+            return registry;
+        } catch (error) {
+            console.error('[UTLXService] Get USDL directives error:', error);
+            return createEmptyDirectiveRegistry();
         }
     }
 
