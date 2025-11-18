@@ -1,4 +1,5 @@
 %utlx 1.0
+// Note: This example may also work with: xsd, proto, jsch
 output avro
 ---
 %namespace: "com.example.location"

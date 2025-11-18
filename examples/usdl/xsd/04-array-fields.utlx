@@ -1,4 +1,5 @@
 %utlx 1.0
+// Note: This example is specific to xsd due to: %elementFormDefault, %minOccurs, %maxOccurs
 output xsd
 ---
 %namespace: "http://example.com/product/v1"

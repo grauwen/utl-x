@@ -1,4 +1,5 @@
 %utlx 1.0
+// Note: This example is specific to proto due to: %syntax, %fieldNumber
 output proto
 ---
 %namespace: "com.example.user"

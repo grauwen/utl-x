@@ -1,4 +1,5 @@
 %utlx 1.0
+// Note: This example is specific to avro due to: %logicalType, %map
 output avro
 ---
 %namespace: "com.example.streaming"

@@ -1,4 +1,5 @@
 %utlx 1.0
+// Note: This example is specific to jsch due to: %schemaId, %schema, %format, %minLength, %maxLength
 output jsch
 ---
 %namespace: "http://example.com/schemas/person"
