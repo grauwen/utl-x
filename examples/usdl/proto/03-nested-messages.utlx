@@ -1,0 +1,43 @@
+%utlx 1.0
+output proto
+---
+%namespace: "com.example.location"
+%version: "1.0"
+%syntax: "proto3"
+%documentation: "Location data with nested message structures"
+
+%types: {
+  Coordinates: {
+    %kind: "structure",
+    %documentation: "Geographic coordinates (lat/long)",
+    %fields: [
+      {%name: "latitude", %type: "double", %fieldNumber: 1, %required: true, %description: "Latitude in decimal degrees"},
+      {%name: "longitude", %type: "double", %fieldNumber: 2, %required: true, %description: "Longitude in decimal degrees"},
+      {%name: "altitude", %type: "double", %fieldNumber: 3, %required: false, %description: "Altitude in meters"}
+    ]
+  },
+
+  Address: {
+    %kind: "structure",
+    %documentation: "Physical address with coordinates",
+    %fields: [
+      {%name: "street", %type: "string", %fieldNumber: 1, %required: true, %description: "Street address"},
+      {%name: "city", %type: "string", %fieldNumber: 2, %required: true, %description: "City name"},
+      {%name: "state", %type: "string", %fieldNumber: 3, %required: false, %description: "State or province"},
+      {%name: "postal_code", %type: "string", %fieldNumber: 4, %required: true, %description: "Postal code"},
+      {%name: "country", %type: "string", %fieldNumber: 5, %required: true, %description: "Country name"},
+      {%name: "coordinates", %type: "Coordinates", %fieldNumber: 6, %required: false, %description: "GPS coordinates"}
+    ]
+  },
+
+  Location: {
+    %kind: "structure",
+    %documentation: "Named location with address",
+    %fields: [
+      {%name: "location_id", %type: "string", %fieldNumber: 1, %required: true, %description: "Location identifier"},
+      {%name: "name", %type: "string", %fieldNumber: 2, %required: true, %description: "Location name"},
+      {%name: "address", %type: "Address", %fieldNumber: 3, %required: true, %description: "Physical address"},
+      {%name: "phone_number", %type: "string", %fieldNumber: 4, %required: false, %description: "Contact phone number"}
+    ]
+  }
+}

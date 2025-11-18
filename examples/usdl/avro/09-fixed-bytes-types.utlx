@@ -1,0 +1,48 @@
+%utlx 1.0
+output avro
+---
+%namespace: "com.example.security"
+%version: "1.0"
+%documentation: "Security data with fixed and bytes types"
+
+%types: {
+  MD5Hash: {
+    %kind: "fixed",
+    %size: 16,
+    %documentation: "MD5 hash (128 bits / 16 bytes)"
+  },
+
+  SHA256Hash: {
+    %kind: "fixed",
+    %size: 32,
+    %documentation: "SHA-256 hash (256 bits / 32 bytes)"
+  },
+
+  AccessToken: {
+    %kind: "structure",
+    %documentation: "Access token with hash and signature",
+    %fields: [
+      {%name: "tokenId", %type: "string", %required: true, %logicalType: "uuid", %description: "Token UUID"},
+      {%name: "userId", %type: "string", %required: true, %description: "User identifier"},
+      {%name: "issuedAt", %type: "long", %required: true, %logicalType: "timestamp-millis", %description: "Token issue time"},
+      {%name: "expiresAt", %type: "long", %required: true, %logicalType: "timestamp-millis", %description: "Token expiration time"},
+      {%name: "hash", %type: "SHA256Hash", %required: true, %description: "Token hash (SHA-256)"},
+      {%name: "signature", %type: "bytes", %required: true, %description: "Cryptographic signature (variable length)"},
+      {%name: "refreshToken", %type: "bytes", %required: false, %description: "Refresh token data"}
+    ]
+  },
+
+  FileMetadata: {
+    %kind: "structure",
+    %documentation: "File metadata with checksums",
+    %fields: [
+      {%name: "fileId", %type: "string", %required: true, %description: "File identifier"},
+      {%name: "fileName", %type: "string", %required: true, %description: "File name"},
+      {%name: "fileSize", %type: "long", %required: true, %description: "File size in bytes"},
+      {%name: "md5Checksum", %type: "MD5Hash", %required: true, %description: "MD5 checksum (16 bytes)"},
+      {%name: "sha256Checksum", %type: "SHA256Hash", %required: true, %description: "SHA-256 checksum (32 bytes)"},
+      {%name: "content", %type: "bytes", %required: false, %description: "File content (for small files)"},
+      {%name: "uploadedAt", %type: "long", %required: true, %logicalType: "timestamp-millis", %description: "Upload timestamp"}
+    ]
+  }
+}

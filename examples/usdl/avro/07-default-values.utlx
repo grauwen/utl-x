@@ -1,0 +1,42 @@
+%utlx 1.0
+output avro
+---
+%namespace: "com.example.config"
+%version: "1.0"
+%documentation: "Configuration schema with default values"
+
+%types: {
+  LogLevel: {
+    %kind: "enumeration",
+    %documentation: "Logging level",
+    %values: ["DEBUG", "INFO", "WARN", "ERROR"],
+    %default: "INFO"
+  },
+
+  DatabaseConfig: {
+    %kind: "structure",
+    %documentation: "Database configuration with sensible defaults",
+    %fields: [
+      {%name: "host", %type: "string", %required: false, %default: "localhost", %description: "Database host"},
+      {%name: "port", %type: "integer", %required: false, %default: 5432, %description: "Database port"},
+      {%name: "database", %type: "string", %required: true, %description: "Database name"},
+      {%name: "maxConnections", %type: "integer", %required: false, %default: 10, %description: "Max connection pool size"},
+      {%name: "connectionTimeout", %type: "integer", %required: false, %default: 30000, %description: "Connection timeout in ms"},
+      {%name: "sslEnabled", %type: "boolean", %required: false, %default: false, %description: "Enable SSL connections"}
+    ]
+  },
+
+  ApplicationConfig: {
+    %kind: "structure",
+    %documentation: "Application configuration",
+    %fields: [
+      {%name: "appName", %type: "string", %required: true, %description: "Application name"},
+      {%name: "version", %type: "string", %required: true, %description: "Application version"},
+      {%name: "logLevel", %type: "LogLevel", %required: false, %default: "INFO", %description: "Logging level"},
+      {%name: "enableMetrics", %type: "boolean", %required: false, %default: true, %description: "Enable metrics collection"},
+      {%name: "enableTracing", %type: "boolean", %required: false, %default: false, %description: "Enable distributed tracing"},
+      {%name: "database", %type: "DatabaseConfig", %required: true, %description: "Database configuration"},
+      {%name: "tags", %type: "string", %map: true, %required: false, %description: "Application tags (key-value pairs)"}
+    ]
+  }
+}

@@ -1,0 +1,97 @@
+%utlx 1.0
+output jsch
+---
+%namespace: "http://example.com/schemas/api"
+%version: "1.0"
+%schemaId: "https://example.com/api-response.schema.json"
+%schema: "https://json-schema.org/draft/2020-12/schema"
+%documentation: "Comprehensive API response schema with pagination and error handling"
+
+%types: {
+  ErrorCode: {
+    %kind: "enumeration",
+    %title: "Error Code",
+    %documentation: "API error codes",
+    %values: [
+      "VALIDATION_ERROR",
+      "NOT_FOUND",
+      "UNAUTHORIZED",
+      "FORBIDDEN",
+      "INTERNAL_ERROR",
+      "RATE_LIMIT_EXCEEDED"
+    ]
+  },
+
+  Error: {
+    %kind: "structure",
+    %title: "Error",
+    %documentation: "Error details",
+    %fields: [
+      {%name: "code", %type: "ErrorCode", %required: true, %description: "Error code"},
+      {%name: "message", %type: "string", %required: true, %description: "Error message", %minLength: 1},
+      {%name: "field", %type: "string", %required: false, %description: "Field that caused the error"},
+      {%name: "details", %type: "string", %required: false, %description: "Additional error details"}
+    ]
+  },
+
+  PaginationInfo: {
+    %kind: "structure",
+    %title: "Pagination Info",
+    %documentation: "Pagination metadata",
+    %fields: [
+      {%name: "page", %type: "integer", %required: true, %minimum: 1, %description: "Current page number"},
+      {%name: "pageSize", %type: "integer", %required: true, %minimum: 1, %maximum: 100, %description: "Items per page"},
+      {%name: "totalPages", %type: "integer", %required: true, %minimum: 0, %description: "Total number of pages"},
+      {%name: "totalItems", %type: "integer", %required: true, %minimum: 0, %description: "Total number of items"},
+      {%name: "hasNext", %type: "boolean", %required: true, %description: "Whether there's a next page"},
+      {%name: "hasPrevious", %type: "boolean", %required: true, %description: "Whether there's a previous page"}
+    ]
+  },
+
+  User: {
+    %kind: "structure",
+    %title: "User",
+    %documentation: "User data object",
+    %fields: [
+      {%name: "id", %type: "string", %required: true, %format: "uuid", %description: "User ID"},
+      {%name: "username", %type: "string", %required: true, %minLength: 3, %maxLength: 30, %description: "Username"},
+      {%name: "email", %type: "string", %required: true, %format: "email", %description: "Email address"},
+      {%name: "fullName", %type: "string", %required: false, %description: "Full name"},
+      {%name: "createdAt", %type: "string", %required: true, %format: "date-time", %description: "Account creation time"},
+      {%name: "lastLoginAt", %type: "string", %required: false, %format: "date-time", %description: "Last login time"}
+    ]
+  },
+
+  SuccessResponse: {
+    %kind: "structure",
+    %title: "Success Response",
+    %documentation: "Successful API response with data and pagination",
+    %fields: [
+      {%name: "success", %type: "boolean", %required: true, %const: true, %description: "Success indicator"},
+      {%name: "data", %type: "User", %array: true, %required: true, %description: "Response data"},
+      {%name: "pagination", %type: "PaginationInfo", %required: false, %description: "Pagination info (for list endpoints)"},
+      {%name: "timestamp", %type: "string", %required: true, %format: "date-time", %description: "Response timestamp"}
+    ]
+  },
+
+  ErrorResponse: {
+    %kind: "structure",
+    %title: "Error Response",
+    %documentation: "Error API response",
+    %fields: [
+      {%name: "success", %type: "boolean", %required: true, %const: false, %description: "Success indicator"},
+      {%name: "errors", %type: "Error", %array: true, %required: true, %minItems: 1, %description: "List of errors"},
+      {%name: "timestamp", %type: "string", %required: true, %format: "date-time", %description: "Response timestamp"}
+    ]
+  },
+
+  ApiResponse: {
+    %kind: "union",
+    %title: "API Response",
+    %documentation: "API response (success OR error)",
+    %oneOf: [
+      {%type: "SuccessResponse", %description: "Successful response"},
+      {%type: "ErrorResponse", %description: "Error response"}
+    ]
+  }
+}

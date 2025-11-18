@@ -1,0 +1,47 @@
+%utlx 1.0
+output jsch
+---
+%namespace: "http://example.com/schemas/company"
+%version: "1.0"
+%schemaId: "https://example.com/company.schema.json"
+%schema: "https://json-schema.org/draft/2020-12/schema"
+%documentation: "Company schema with nested address and contact objects"
+
+%types: {
+  Address: {
+    %kind: "structure",
+    %title: "Address",
+    %documentation: "Physical address",
+    %fields: [
+      {%name: "street", %type: "string", %required: true, %description: "Street address"},
+      {%name: "city", %type: "string", %required: true, %description: "City name"},
+      {%name: "state", %type: "string", %required: false, %description: "State/province"},
+      {%name: "postalCode", %type: "string", %required: true, %description: "Postal code", %pattern: "^[0-9]{5}(?:-[0-9]{4})?$"},
+      {%name: "country", %type: "string", %required: true, %description: "Country", %minLength: 2, %maxLength: 2}
+    ]
+  },
+
+  Contact: {
+    %kind: "structure",
+    %title: "Contact",
+    %documentation: "Contact information",
+    %fields: [
+      {%name: "name", %type: "string", %required: true, %description: "Contact name"},
+      {%name: "email", %type: "string", %required: true, %description: "Contact email", %format: "email"},
+      {%name: "phone", %type: "string", %required: false, %description: "Phone number", %pattern: "^\\+?[1-9]\\d{1,14}$"}
+    ]
+  },
+
+  Company: {
+    %kind: "structure",
+    %title: "Company",
+    %documentation: "Company with address and contacts",
+    %fields: [
+      {%name: "id", %type: "string", %required: true, %description: "Company ID", %format: "uuid"},
+      {%name: "name", %type: "string", %required: true, %description: "Company name"},
+      {%name: "founded", %type: "string", %required: false, %description: "Founding date", %format: "date"},
+      {%name: "address", %type: "Address", %required: true, %description: "Company address"},
+      {%name: "contacts", %type: "Contact", %array: true, %required: false, %description: "Contact persons", %minItems: 0, %maxItems: 10}
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+%utlx 1.0
+output avro
+---
+%namespace: "com.example.user"
+%version: "1.0"
+%documentation: "Simple user record in Avro format"
+
+%types: {
+  User: {
+    %kind: "structure",
+    %documentation: "User entity with basic information",
+    %fields: [
+      {%name: "id", %type: "string", %required: true, %description: "Unique user identifier (UUID)"},
+      {%name: "username", %type: "string", %required: true, %description: "Username for login"},
+      {%name: "email", %type: "string", %required: true, %description: "User email address"},
+      {%name: "age", %type: "integer", %required: false, %description: "User age (optional)"},
+      {%name: "isActive", %type: "boolean", %required: true, %default: true, %description: "Account active status"}
+    ]
+  }
+}

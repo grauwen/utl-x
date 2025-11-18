@@ -1,0 +1,91 @@
+%utlx 1.0
+output proto
+---
+%namespace: "com.example.api"
+%version: "1.0"
+%syntax: "proto3"
+%documentation: "gRPC service definition with request/response messages"
+
+%types: {
+  GetUserRequest: {
+    %kind: "structure",
+    %documentation: "Request to get user by ID",
+    %fields: [
+      {%name: "user_id", %type: "string", %fieldNumber: 1, %required: true, %description: "User identifier"}
+    ]
+  },
+
+  GetUserResponse: {
+    %kind: "structure",
+    %documentation: "User data response",
+    %fields: [
+      {%name: "user_id", %type: "string", %fieldNumber: 1, %required: true, %description: "User identifier"},
+      {%name: "username", %type: "string", %fieldNumber: 2, %required: true, %description: "Username"},
+      {%name: "email", %type: "string", %fieldNumber: 3, %required: true, %description: "Email address"}
+    ]
+  },
+
+  CreateUserRequest: {
+    %kind: "structure",
+    %documentation: "Request to create a new user",
+    %fields: [
+      {%name: "username", %type: "string", %fieldNumber: 1, %required: true, %description: "Desired username"},
+      {%name: "email", %type: "string", %fieldNumber: 2, %required: true, %description: "Email address"},
+      {%name: "password", %type: "string", %fieldNumber: 3, %required: true, %description: "User password"}
+    ]
+  },
+
+  CreateUserResponse: {
+    %kind: "structure",
+    %documentation: "Response after user creation",
+    %fields: [
+      {%name: "user_id", %type: "string", %fieldNumber: 1, %required: true, %description: "Generated user ID"},
+      {%name: "success", %type: "bool", %fieldNumber: 2, %required: true, %description: "Creation success flag"}
+    ]
+  },
+
+  ListUsersRequest: {
+    %kind: "structure",
+    %documentation: "Request to list users with pagination",
+    %fields: [
+      {%name: "page_size", %type: "int32", %fieldNumber: 1, %required: false, %description: "Number of users per page"},
+      {%name: "page_token", %type: "string", %fieldNumber: 2, %required: false, %description: "Page token for pagination"}
+    ]
+  },
+
+  ListUsersResponse: {
+    %kind: "structure",
+    %documentation: "Response with user list",
+    %fields: [
+      {%name: "users", %type: "GetUserResponse", %repeated: true, %fieldNumber: 1, %description: "List of users"},
+      {%name: "next_page_token", %type: "string", %fieldNumber: 2, %required: false, %description: "Token for next page"}
+    ]
+  }
+}
+
+%services: [
+  {
+    %name: "UserService",
+    %documentation: "User management gRPC service",
+    %methods: [
+      {
+        %name: "GetUser",
+        %inputType: "GetUserRequest",
+        %outputType: "GetUserResponse",
+        %documentation: "Get a user by ID"
+      },
+      {
+        %name: "CreateUser",
+        %inputType: "CreateUserRequest",
+        %outputType: "CreateUserResponse",
+        %documentation: "Create a new user"
+      },
+      {
+        %name: "ListUsers",
+        %inputType: "ListUsersRequest",
+        %outputType: "ListUsersResponse",
+        %documentation: "List users with pagination"
+      }
+    ]
+  }
+]

@@ -1,0 +1,90 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Financial transaction record
+output [FORMAT]
+---
+%namespace: "com.example.finance"
+%version: "1.0"
+%documentation: "Financial transaction schema"
+
+%types: {
+  TransactionType: {
+    %kind: "enumeration",
+    %documentation: "Transaction types",
+    %values: ["DEBIT", "CREDIT", "TRANSFER", "REFUND", "FEE"]
+  },
+
+  Currency: {
+    %kind: "enumeration",
+    %documentation: "Currency codes",
+    %values: ["USD", "EUR", "GBP", "JPY", "CNY"]
+  },
+
+  Amount: {
+    %kind: "structure",
+    %documentation: "Monetary amount",
+    %fields: [
+      {
+        %name: "value",
+        %type: "double",
+        %required: true,
+        %description: "Numeric amount"
+      },
+      {
+        %name: "currency",
+        %type: "Currency",
+        %required: true,
+        %description: "Currency code"
+      }
+    ]
+  },
+
+  Transaction: {
+    %kind: "structure",
+    %documentation: "Financial transaction",
+    %fields: [
+      {
+        %name: "transactionId",
+        %type: "string",
+        %required: true,
+        %description: "Transaction identifier"
+      },
+      {
+        %name: "type",
+        %type: "TransactionType",
+        %required: true,
+        %description: "Transaction type"
+      },
+      {
+        %name: "amount",
+        %type: "Amount",
+        %required: true,
+        %description: "Transaction amount"
+      },
+      {
+        %name: "accountFrom",
+        %type: "string",
+        %required: false,
+        %description: "Source account ID"
+      },
+      {
+        %name: "accountTo",
+        %type: "string",
+        %required: false,
+        %description: "Destination account ID"
+      },
+      {
+        %name: "timestamp",
+        %type: "long",
+        %required: true,
+        %description: "Transaction timestamp"
+      },
+      {
+        %name: "description",
+        %type: "string",
+        %required: false,
+        %description: "Transaction description"
+      }
+    ]
+  }
+}

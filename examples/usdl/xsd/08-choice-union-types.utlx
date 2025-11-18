@@ -1,0 +1,58 @@
+%utlx 1.0
+output xsd
+---
+%namespace: "http://example.com/payment/v1"
+%version: "1.0"
+%elementFormDefault: "qualified"
+%documentation: "Schema with choice/union types for polymorphic data"
+
+%types: {
+  CreditCardPayment: {
+    %kind: "structure",
+    %documentation: "Credit card payment details",
+    %fields: [
+      {%name: "cardNumber", %type: "string", %required: true, %description: "Card number (masked)", %pattern: "^\\d{4}-\\*{4}-\\*{4}-\\d{4}$"},
+      {%name: "cardholderName", %type: "string", %required: true, %description: "Name on card"},
+      {%name: "expiryDate", %type: "string", %required: true, %description: "Expiry date (MM/YY)", %pattern: "^(0[1-9]|1[0-2])/\\d{2}$"}
+    ]
+  },
+
+  BankTransferPayment: {
+    %kind: "structure",
+    %documentation: "Bank transfer payment details",
+    %fields: [
+      {%name: "accountNumber", %type: "string", %required: true, %description: "Bank account number"},
+      {%name: "routingNumber", %type: "string", %required: true, %description: "Bank routing number"},
+      {%name: "accountHolderName", %type: "string", %required: true, %description: "Account holder name"}
+    ]
+  },
+
+  PayPalPayment: {
+    %kind: "structure",
+    %documentation: "PayPal payment details",
+    %fields: [
+      {%name: "email", %type: "string", %required: true, %description: "PayPal account email"},
+      {%name: "transactionId", %type: "string", %required: true, %description: "PayPal transaction ID"}
+    ]
+  },
+
+  PaymentMethod: {
+    %kind: "union",
+    %documentation: "Payment method (choice of credit card, bank transfer, or PayPal)",
+    %options: [
+      {%type: "CreditCardPayment", %description: "Pay by credit card"},
+      {%type: "BankTransferPayment", %description: "Pay by bank transfer"},
+      {%type: "PayPalPayment", %description: "Pay via PayPal"}
+    ]
+  },
+
+  Payment: {
+    %kind: "structure",
+    %documentation: "Payment record with polymorphic payment method",
+    %fields: [
+      {%name: "paymentId", %type: "string", %required: true, %description: "Payment identifier"},
+      {%name: "amount", %type: "decimal", %required: true, %description: "Payment amount"},
+      {%name: "method", %type: "PaymentMethod", %required: true, %description: "Payment method details"}
+    ]
+  }
+}

@@ -1,0 +1,59 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: All common primitive types
+output [FORMAT]
+---
+%namespace: "com.example.primitives"
+%version: "1.0"
+%documentation: "All primitive data types"
+
+%types: {
+  AllTypes: {
+    %kind: "structure",
+    %documentation: "Structure demonstrating all primitive types",
+    %fields: [
+      {
+        %name: "stringField",
+        %type: "string",
+        %required: true,
+        %description: "String value"
+      },
+      {
+        %name: "intField",
+        %type: "integer",
+        %required: true,
+        %description: "Integer value"
+      },
+      {
+        %name: "longField",
+        %type: "long",
+        %required: true,
+        %description: "Long integer value"
+      },
+      {
+        %name: "floatField",
+        %type: "float",
+        %required: true,
+        %description: "Float value"
+      },
+      {
+        %name: "doubleField",
+        %type: "double",
+        %required: true,
+        %description: "Double value"
+      },
+      {
+        %name: "boolField",
+        %type: "boolean",
+        %required: true,
+        %description: "Boolean value"
+      },
+      {
+        %name: "bytesField",
+        %type: "bytes",
+        %required: false,
+        %description: "Binary data"
+      }
+    ]
+  }
+}

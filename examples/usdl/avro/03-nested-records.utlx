@@ -1,0 +1,42 @@
+%utlx 1.0
+output avro
+---
+%namespace: "com.example.location"
+%version: "1.0"
+%documentation: "Location data with nested address records"
+
+%types: {
+  Coordinates: {
+    %kind: "structure",
+    %documentation: "Geographic coordinates (lat/long)",
+    %fields: [
+      {%name: "latitude", %type: "double", %required: true, %description: "Latitude in decimal degrees"},
+      {%name: "longitude", %type: "double", %required: true, %description: "Longitude in decimal degrees"},
+      {%name: "altitude", %type: "double", %required: false, %description: "Altitude in meters"}
+    ]
+  },
+
+  Address: {
+    %kind: "structure",
+    %documentation: "Physical address with coordinates",
+    %fields: [
+      {%name: "street", %type: "string", %required: true, %description: "Street address"},
+      {%name: "city", %type: "string", %required: true, %description: "City name"},
+      {%name: "state", %type: "string", %required: false, %description: "State or province"},
+      {%name: "postalCode", %type: "string", %required: true, %description: "Postal code"},
+      {%name: "country", %type: "string", %required: true, %description: "Country name"},
+      {%name: "coordinates", %type: "Coordinates", %required: false, %description: "GPS coordinates"}
+    ]
+  },
+
+  Location: {
+    %kind: "structure",
+    %documentation: "Named location with address",
+    %fields: [
+      {%name: "locationId", %type: "string", %required: true, %description: "Location identifier"},
+      {%name: "name", %type: "string", %required: true, %description: "Location name"},
+      {%name: "address", %type: "Address", %required: true, %description: "Physical address"},
+      {%name: "phoneNumber", %type: "string", %required: false, %description: "Contact phone number"}
+    ]
+  }
+}

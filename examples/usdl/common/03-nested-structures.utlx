@@ -1,0 +1,60 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Nested structure within another structure
+output [FORMAT]
+---
+%namespace: "com.example.address"
+%version: "1.0"
+%documentation: "Address with nested structures"
+
+%types: {
+  Address: {
+    %kind: "structure",
+    %documentation: "Physical address",
+    %fields: [
+      {
+        %name: "street",
+        %type: "string",
+        %required: true,
+        %description: "Street address"
+      },
+      {
+        %name: "city",
+        %type: "string",
+        %required: true,
+        %description: "City name"
+      },
+      {
+        %name: "postalCode",
+        %type: "string",
+        %required: true,
+        %description: "Postal or ZIP code"
+      },
+      {
+        %name: "country",
+        %type: "string",
+        %required: true,
+        %description: "Country name"
+      }
+    ]
+  },
+
+  Person: {
+    %kind: "structure",
+    %documentation: "Person with address",
+    %fields: [
+      {
+        %name: "name",
+        %type: "string",
+        %required: true,
+        %description: "Full name"
+      },
+      {
+        %name: "address",
+        %type: "Address",
+        %required: true,
+        %description: "Home address"
+      }
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Hierarchical/tree structure
+output [FORMAT]
+---
+%namespace: "com.example.organization"
+%version: "1.0"
+%documentation: "Organizational hierarchy"
+
+%types: {
+  EmployeeLevel: {
+    %kind: "enumeration",
+    %documentation: "Employee levels",
+    %values: ["ENTRY", "JUNIOR", "SENIOR", "LEAD", "MANAGER", "EXECUTIVE"]
+  },
+
+  Team: {
+    %kind: "structure",
+    %documentation: "Organizational team",
+    %fields: [
+      {
+        %name: "teamId",
+        %type: "string",
+        %required: true,
+        %description: "Team identifier"
+      },
+      {
+        %name: "teamName",
+        %type: "string",
+        %required: true,
+        %description: "Team name"
+      },
+      {
+        %name: "managerId",
+        %type: "string",
+        %required: true,
+        %description: "Manager employee ID"
+      }
+    ]
+  },
+
+  OrgUnit: {
+    %kind: "structure",
+    %documentation: "Organizational unit",
+    %fields: [
+      {
+        %name: "unitId",
+        %type: "string",
+        %required: true,
+        %description: "Unit identifier"
+      },
+      {
+        %name: "unitName",
+        %type: "string",
+        %required: true,
+        %description: "Unit name"
+      },
+      {
+        %name: "parentUnitId",
+        %type: "string",
+        %required: false,
+        %description: "Parent unit ID for hierarchy"
+      },
+      {
+        %name: "teams",
+        %type: "Team",
+        %array: true,
+        %required: false,
+        %description: "Teams in this unit"
+      }
+    ]
+  }
+}

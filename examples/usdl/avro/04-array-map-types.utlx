@@ -1,0 +1,35 @@
+%utlx 1.0
+output avro
+---
+%namespace: "com.example.catalog"
+%version: "1.0"
+%documentation: "Product catalog with arrays and maps"
+
+%types: {
+  Product: {
+    %kind: "structure",
+    %documentation: "Product with tags, images, and metadata",
+    %fields: [
+      {%name: "productId", %type: "string", %required: true, %description: "Product identifier"},
+      {%name: "name", %type: "string", %required: true, %description: "Product name"},
+      {%name: "price", %type: "double", %required: true, %description: "Product price"},
+      {%name: "tags", %type: "string", %array: true, %required: false, %description: "Product tags for search"},
+      {%name: "imageUrls", %type: "string", %array: true, %required: false, %description: "Product image URLs"},
+      {%name: "attributes", %type: "string", %map: true, %required: false, %description: "Custom attributes (key-value pairs)"},
+      {%name: "reviews", %type: "integer", %required: false, %default: 0, %description: "Number of reviews"},
+      {%name: "rating", %type: "double", %required: false, %description: "Average rating (0-5)"}
+    ]
+  },
+
+  Catalog: {
+    %kind: "structure",
+    %documentation: "Product catalog with multiple products",
+    %fields: [
+      {%name: "catalogId", %type: "string", %required: true, %description: "Catalog identifier"},
+      {%name: "name", %type: "string", %required: true, %description: "Catalog name"},
+      {%name: "description", %type: "string", %required: false, %description: "Catalog description"},
+      {%name: "products", %type: "Product", %array: true, %required: true, %description: "Products in this catalog"},
+      {%name: "metadata", %type: "string", %map: true, %required: false, %description: "Catalog metadata"}
+    ]
+  }
+}

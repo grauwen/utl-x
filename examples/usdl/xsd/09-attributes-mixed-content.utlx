@@ -1,0 +1,53 @@
+%utlx 1.0
+output xsd
+---
+%namespace: "http://example.com/document/v1"
+%version: "1.0"
+%elementFormDefault: "qualified"
+%attributeFormDefault: "unqualified"
+%documentation: "Schema with XML attributes and mixed content"
+
+%types: {
+  Paragraph: {
+    %kind: "structure",
+    %documentation: "Paragraph with styling attributes",
+    %mixed: true,
+    %fields: [
+      {%name: "id", %type: "string", %attribute: true, %required: false, %description: "Paragraph ID"},
+      {%name: "style", %type: "string", %attribute: true, %required: false, %description: "CSS style class"},
+      {%name: "lang", %type: "string", %attribute: true, %required: false, %description: "Language code"}
+    ]
+  },
+
+  Link: {
+    %kind: "structure",
+    %documentation: "Hyperlink with href attribute",
+    %mixed: true,
+    %fields: [
+      {%name: "href", %type: "string", %attribute: true, %required: true, %description: "Link URL"},
+      {%name: "target", %type: "string", %attribute: true, %required: false, %description: "Link target (_blank, _self)"}
+    ]
+  },
+
+  Image: {
+    %kind: "structure",
+    %documentation: "Image element with attributes",
+    %fields: [
+      {%name: "src", %type: "string", %attribute: true, %required: true, %description: "Image source URL"},
+      {%name: "alt", %type: "string", %attribute: true, %required: true, %description: "Alternative text"},
+      {%name: "width", %type: "integer", %attribute: true, %required: false, %description: "Image width in pixels"},
+      {%name: "height", %type: "integer", %attribute: true, %required: false, %description: "Image height in pixels"}
+    ]
+  },
+
+  Document: {
+    %kind: "structure",
+    %documentation: "Document with metadata attributes",
+    %fields: [
+      {%name: "version", %type: "string", %attribute: true, %required: true, %description: "Document version"},
+      {%name: "author", %type: "string", %attribute: true, %required: false, %description: "Document author"},
+      {%name: "title", %type: "string", %required: true, %description: "Document title"},
+      {%name: "content", %type: "Paragraph", %array: true, %minOccurs: 1, %maxOccurs: "unbounded", %description: "Document paragraphs"}
+    ]
+  }
+}

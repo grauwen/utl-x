@@ -1,0 +1,16 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Simple enumeration type
+output [FORMAT]
+---
+%namespace: "com.example.status"
+%version: "1.0"
+%documentation: "Status enumeration"
+
+%types: {
+  Status: {
+    %kind: "enumeration",
+    %documentation: "Entity status values",
+    %values: ["ACTIVE", "INACTIVE", "PENDING", "ARCHIVED"]
+  }
+}

@@ -1,0 +1,67 @@
+%utlx 1.0
+output jsch
+---
+%namespace: "http://example.com/schemas/config"
+%version: "1.0"
+%schemaId: "https://example.com/config.schema.json"
+%schema: "https://json-schema.org/draft/2020-12/schema"
+%documentation: "Configuration schema with additionalProperties and patternProperties"
+
+%types: {
+  ServiceConfig: {
+    %kind: "structure",
+    %title: "Service Configuration",
+    %documentation: "Service configuration with strict schema (no additional properties)",
+    %additionalProperties: false,
+    %fields: [
+      {%name: "serviceName", %type: "string", %required: true, %description: "Service name"},
+      {%name: "port", %type: "integer", %required: true, %minimum: 1, %maximum: 65535, %description: "Service port"},
+      {%name: "enabled", %type: "boolean", %required: true, %description: "Service enabled"}
+    ]
+  },
+
+  ApplicationSettings: {
+    %kind: "structure",
+    %title: "Application Settings",
+    %documentation: "Application settings allowing typed additional properties",
+    %fields: [
+      {%name: "appName", %type: "string", %required: true, %description: "Application name"},
+      {%name: "version", %type: "string", %required: true, %description: "Application version"}
+    ],
+    %additionalProperties: {
+      %type: "string",
+      %description: "Additional string settings allowed"
+    }
+  },
+
+  FeatureFlags: {
+    %kind: "structure",
+    %title: "Feature Flags",
+    %documentation: "Feature flags with pattern-based properties",
+    %fields: [
+      {%name: "globalEnabled", %type: "boolean", %required: true, %description: "Global enable flag"}
+    ],
+    %patternProperties: {
+      "^feature_[a-z_]+$": {
+        %type: "boolean",
+        %description: "Feature flags matching pattern feature_*"
+      },
+      "^config_[a-z_]+$": {
+        %type: "string",
+        %description: "Configuration values matching pattern config_*"
+      }
+    },
+    %additionalProperties: false
+  },
+
+  Metadata: {
+    %kind: "structure",
+    %title: "Metadata",
+    %documentation: "Flexible metadata object allowing any additional properties",
+    %fields: [
+      {%name: "id", %type: "string", %required: true, %description: "Metadata ID"},
+      {%name: "type", %type: "string", %required: true, %description: "Metadata type"}
+    ],
+    %additionalProperties: true
+  }
+}

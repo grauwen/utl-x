@@ -1,0 +1,36 @@
+%utlx 1.0
+output proto
+---
+%namespace: "com.example.catalog"
+%version: "1.0"
+%syntax: "proto3"
+%documentation: "Product catalog with repeated fields and maps"
+
+%types: {
+  Product: {
+    %kind: "structure",
+    %documentation: "Product with tags, images, and metadata",
+    %fields: [
+      {%name: "product_id", %type: "string", %fieldNumber: 1, %required: true, %description: "Product identifier"},
+      {%name: "name", %type: "string", %fieldNumber: 2, %required: true, %description: "Product name"},
+      {%name: "price", %type: "double", %fieldNumber: 3, %required: true, %description: "Product price"},
+      {%name: "tags", %type: "string", %repeated: true, %fieldNumber: 4, %description: "Product tags for search"},
+      {%name: "image_urls", %type: "string", %repeated: true, %fieldNumber: 5, %description: "Product image URLs"},
+      {%name: "attributes", %type: "string", %map: true, %fieldNumber: 6, %description: "Custom attributes (key-value pairs)"},
+      {%name: "review_count", %type: "int32", %fieldNumber: 7, %required: false, %description: "Number of reviews"},
+      {%name: "rating", %type: "float", %fieldNumber: 8, %required: false, %description: "Average rating (0-5)"}
+    ]
+  },
+
+  Catalog: {
+    %kind: "structure",
+    %documentation: "Product catalog with multiple products",
+    %fields: [
+      {%name: "catalog_id", %type: "string", %fieldNumber: 1, %required: true, %description: "Catalog identifier"},
+      {%name: "name", %type: "string", %fieldNumber: 2, %required: true, %description: "Catalog name"},
+      {%name: "description", %type: "string", %fieldNumber: 3, %required: false, %description: "Catalog description"},
+      {%name: "products", %type: "Product", %repeated: true, %fieldNumber: 4, %description: "Products in this catalog"},
+      {%name: "metadata", %type: "string", %map: true, %fieldNumber: 5, %description: "Catalog metadata"}
+    ]
+  }
+}

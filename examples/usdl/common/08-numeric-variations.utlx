@@ -1,0 +1,53 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Different numeric types (integer, long, float, double)
+output [FORMAT]
+---
+%namespace: "com.example.metrics"
+%version: "1.0"
+%documentation: "Metrics with various numeric types"
+
+%types: {
+  Metrics: {
+    %kind: "structure",
+    %documentation: "System metrics data",
+    %fields: [
+      {
+        %name: "metricId",
+        %type: "string",
+        %required: true,
+        %description: "Metric identifier"
+      },
+      {
+        %name: "count",
+        %type: "integer",
+        %required: true,
+        %description: "Item count (32-bit integer)"
+      },
+      {
+        %name: "totalBytes",
+        %type: "long",
+        %required: true,
+        %description: "Total bytes (64-bit integer)"
+      },
+      {
+        %name: "percentage",
+        %type: "float",
+        %required: true,
+        %description: "Percentage value (32-bit float)"
+      },
+      {
+        %name: "preciseValue",
+        %type: "double",
+        %required: true,
+        %description: "Precise measurement (64-bit double)"
+      },
+      {
+        %name: "averageLatency",
+        %type: "double",
+        %required: false,
+        %description: "Average latency in milliseconds"
+      }
+    ]
+  }
+}

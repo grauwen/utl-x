@@ -1,0 +1,53 @@
+%utlx 1.0
+output xsd
+---
+%namespace: "http://example.com/validation/v1"
+%version: "1.0"
+%elementFormDefault: "qualified"
+%documentation: "Schema demonstrating string validation constraints"
+
+%types: {
+  User: {
+    %kind: "structure",
+    %documentation: "User entity with validated string fields",
+    %fields: [
+      {
+        %name: "userId",
+        %type: "string",
+        %required: true,
+        %description: "User ID in UUID format",
+        %pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      {
+        %name: "username",
+        %type: "string",
+        %required: true,
+        %description: "Username (3-20 characters, alphanumeric)",
+        %minLength: 3,
+        %maxLength: 20,
+        %pattern: "^[a-zA-Z0-9_]+$"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %required: true,
+        %description: "Valid email address",
+        %pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+      },
+      {
+        %name: "phoneNumber",
+        %type: "string",
+        %required: false,
+        %description: "US phone number format",
+        %pattern: "^\\+?1?[-.]?\\(?[0-9]{3}\\)?[-.]?[0-9]{3}[-.]?[0-9]{4}$"
+      },
+      {
+        %name: "bio",
+        %type: "string",
+        %required: false,
+        %description: "User biography (max 500 characters)",
+        %maxLength: 500
+      }
+    ]
+  }
+}

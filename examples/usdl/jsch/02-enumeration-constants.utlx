@@ -1,0 +1,32 @@
+%utlx 1.0
+output jsch
+---
+%namespace: "http://example.com/schemas/product"
+%version: "1.0"
+%schemaId: "https://example.com/product.schema.json"
+%schema: "https://json-schema.org/draft/2020-12/schema"
+%documentation: "Product schema with enum and const values"
+
+%types: {
+  ProductCategory: {
+    %kind: "enumeration",
+    %title: "Product Category",
+    %documentation: "Available product categories",
+    %values: ["Electronics", "Clothing", "Books", "Home & Garden", "Sports"]
+  },
+
+  Product: {
+    %kind: "structure",
+    %title: "Product",
+    %documentation: "Product with category and status",
+    %fields: [
+      {%name: "id", %type: "string", %required: true, %description: "Product ID", %format: "uuid"},
+      {%name: "name", %type: "string", %required: true, %description: "Product name", %minLength: 1},
+      {%name: "category", %type: "ProductCategory", %required: true, %description: "Product category"},
+      {%name: "price", %type: "number", %required: true, %description: "Price in USD", %minimum: 0, %exclusiveMinimum: true},
+      {%name: "currency", %type: "string", %required: true, %const: "USD", %description: "Currency (always USD)"},
+      {%name: "inStock", %type: "boolean", %required: true, %description: "Whether product is in stock"},
+      {%name: "tags", %type: "string", %array: true, %required: false, %description: "Product tags", %uniqueItems: true}
+    ]
+  }
+}

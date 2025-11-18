@@ -1,0 +1,33 @@
+%utlx 1.0
+output xsd
+---
+%namespace: "http://example.com/order/v1"
+%version: "1.0"
+%elementFormDefault: "qualified"
+%documentation: "Order schema with enumerated status values"
+
+%types: {
+  OrderStatus: {
+    %kind: "enumeration",
+    %documentation: "Valid order status values",
+    %values: [
+      {%value: "PENDING", %description: "Order is pending processing"},
+      {%value: "CONFIRMED", %description: "Order has been confirmed"},
+      {%value: "SHIPPED", %description: "Order has been shipped"},
+      {%value: "DELIVERED", %description: "Order has been delivered"},
+      {%value: "CANCELLED", %description: "Order has been cancelled"}
+    ]
+  },
+
+  Order: {
+    %kind: "structure",
+    %documentation: "Order entity with items and status",
+    %fields: [
+      {%name: "orderId", %type: "string", %required: true, %description: "Unique order identifier"},
+      {%name: "customerId", %type: "string", %required: true, %description: "Reference to customer"},
+      {%name: "status", %type: "OrderStatus", %required: true, %description: "Current order status"},
+      {%name: "orderDate", %type: "date", %required: true, %description: "Date order was placed"},
+      {%name: "totalAmount", %type: "decimal", %required: true, %description: "Total order amount"}
+    ]
+  }
+}

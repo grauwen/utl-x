@@ -1,0 +1,72 @@
+%utlx 1.0
+output xsd
+---
+%namespace: "http://example.com/schedule/v1"
+%version: "1.0"
+%elementFormDefault: "qualified"
+%documentation: "Schema demonstrating date and time types"
+
+%types: {
+  Event: {
+    %kind: "structure",
+    %documentation: "Scheduled event with various temporal fields",
+    %fields: [
+      {
+        %name: "eventId",
+        %type: "string",
+        %required: true,
+        %description: "Unique event identifier"
+      },
+      {
+        %name: "title",
+        %type: "string",
+        %required: true,
+        %description: "Event title"
+      },
+      {
+        %name: "startDateTime",
+        %type: "date-time",
+        %required: true,
+        %description: "Event start date and time (ISO 8601 format)"
+      },
+      {
+        %name: "endDateTime",
+        %type: "date-time",
+        %required: true,
+        %description: "Event end date and time (ISO 8601 format)"
+      },
+      {
+        %name: "createdDate",
+        %type: "date",
+        %required: true,
+        %description: "Date the event was created (YYYY-MM-DD)"
+      },
+      {
+        %name: "startTime",
+        %type: "time",
+        %required: false,
+        %description: "Event start time (HH:MM:SS)"
+      },
+      {
+        %name: "durationMinutes",
+        %type: "integer",
+        %required: true,
+        %description: "Event duration in minutes",
+        %minimum: 1,
+        %maximum: 1440
+      },
+      {
+        %name: "allDay",
+        %type: "boolean",
+        %required: true,
+        %description: "Whether this is an all-day event"
+      },
+      {
+        %name: "recurringUntil",
+        %type: "date",
+        %required: false,
+        %description: "Last date for recurring event"
+      }
+    ]
+  }
+}

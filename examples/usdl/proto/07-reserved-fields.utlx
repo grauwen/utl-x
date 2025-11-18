@@ -1,0 +1,30 @@
+%utlx 1.0
+output proto
+---
+%namespace: "com.example.user"
+%version: "2.0"
+%syntax: "proto3"
+%documentation: "User schema with reserved fields for safe evolution"
+
+%types: {
+  User: {
+    %kind: "structure",
+    %documentation: "User message with field reservations for backward compatibility",
+    %reserved: [
+      {%fieldNumber: 4, %description: "Old 'age' field removed in v2.0"},
+      {%fieldNumber: 7, %description: "Old 'legacy_id' field removed"},
+      {%fieldName: "old_username", %description: "Field name reserved to prevent reuse"}
+    ],
+    %fields: [
+      {%name: "user_id", %type: "string", %fieldNumber: 1, %required: true, %description: "User identifier"},
+      {%name: "username", %type: "string", %fieldNumber: 2, %required: true, %description: "Current username"},
+      {%name: "email", %type: "string", %fieldNumber: 3, %required: true, %description: "Email address"},
+      // Field 4 is reserved (was 'age')
+      {%name: "full_name", %type: "string", %fieldNumber: 5, %required: false, %description: "Full name"},
+      {%name: "created_timestamp", %type: "int64", %fieldNumber: 6, %required: true, %description: "Account creation time"},
+      // Field 7 is reserved (was 'legacy_id')
+      {%name: "is_verified", %type: "bool", %fieldNumber: 8, %required: false, %description: "Email verified"},
+      {%name: "profile_image_url", %type: "string", %fieldNumber: 9, %required: false, %description: "Profile image URL"}
+    ]
+  }
+}

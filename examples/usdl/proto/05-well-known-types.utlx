@@ -1,0 +1,66 @@
+%utlx 1.0
+output proto
+---
+%namespace: "com.example.event"
+%version: "1.0"
+%syntax: "proto3"
+%imports: ["google/protobuf/timestamp.proto", "google/protobuf/duration.proto", "google/protobuf/wrappers.proto"]
+%documentation: "Event schema using Protocol Buffers well-known types"
+
+%types: {
+  Event: {
+    %kind: "structure",
+    %documentation: "Event record with well-known types",
+    %fields: [
+      {
+        %name: "event_id",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: true,
+        %description: "Event identifier"
+      },
+      {
+        %name: "timestamp",
+        %type: "google.protobuf.Timestamp",
+        %fieldNumber: 2,
+        %required: true,
+        %description: "Event timestamp (well-known type)"
+      },
+      {
+        %name: "duration",
+        %type: "google.protobuf.Duration",
+        %fieldNumber: 3,
+        %required: false,
+        %description: "Event duration (well-known type)"
+      },
+      {
+        %name: "count",
+        %type: "google.protobuf.Int32Value",
+        %fieldNumber: 4,
+        %required: false,
+        %description: "Optional count (wrapper type distinguishes null from 0)"
+      },
+      {
+        %name: "percentage",
+        %type: "google.protobuf.DoubleValue",
+        %fieldNumber: 5,
+        %required: false,
+        %description: "Optional percentage (wrapper type)"
+      },
+      {
+        %name: "enabled",
+        %type: "google.protobuf.BoolValue",
+        %fieldNumber: 6,
+        %required: false,
+        %description: "Optional boolean flag (wrapper type)"
+      },
+      {
+        %name: "notes",
+        %type: "string",
+        %fieldNumber: 7,
+        %required: false,
+        %description: "Event notes"
+      }
+    ]
+  }
+}

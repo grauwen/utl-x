@@ -1,0 +1,75 @@
+%utlx 1.0
+output jsch
+---
+%namespace: "http://example.com/schemas/measurement"
+%version: "1.0"
+%schemaId: "https://example.com/measurement.schema.json"
+%schema: "https://json-schema.org/draft/2020-12/schema"
+%documentation: "Measurement schema with numeric constraints"
+
+%types: {
+  Measurement: {
+    %kind: "structure",
+    %title: "Measurement",
+    %documentation: "Sensor measurement with validated numeric fields",
+    %fields: [
+      {
+        %name: "sensorId",
+        %type: "string",
+        %required: true,
+        %description: "Sensor identifier"
+      },
+      {
+        %name: "temperature",
+        %type: "number",
+        %required: true,
+        %description: "Temperature in Celsius (-50 to 100)",
+        %minimum: -50,
+        %maximum: 100
+      },
+      {
+        %name: "humidity",
+        %type: "number",
+        %required: true,
+        %description: "Humidity percentage (0-100, exclusive bounds)",
+        %minimum: 0,
+        %maximum: 100,
+        %exclusiveMinimum: true,
+        %exclusiveMaximum: true
+      },
+      {
+        %name: "pressure",
+        %type: "number",
+        %required: true,
+        %description: "Atmospheric pressure in hPa (multiple of 0.1)",
+        %multipleOf: 0.1,
+        %minimum: 900,
+        %maximum: 1100
+      },
+      {
+        %name: "batteryLevel",
+        %type: "integer",
+        %required: true,
+        %description: "Battery level percentage (0-100)",
+        %minimum: 0,
+        %maximum: 100
+      },
+      {
+        %name: "readingCount",
+        %type: "integer",
+        %required: true,
+        %description: "Number of readings taken",
+        %minimum: 0
+      },
+      {
+        %name: "voltage",
+        %type: "number",
+        %required: false,
+        %description: "Supply voltage (multiples of 0.01)",
+        %multipleOf: 0.01,
+        %minimum: 3.0,
+        %maximum: 5.0
+      }
+    ]
+  }
+}

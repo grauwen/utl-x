@@ -1,0 +1,66 @@
+%utlx 1.0
+output avro
+---
+%namespace: "com.example.event"
+%version: "1.0"
+%documentation: "Event schema with Avro logical types"
+
+%types: {
+  Event: {
+    %kind: "structure",
+    %documentation: "Event record with various temporal logical types",
+    %fields: [
+      {
+        %name: "eventId",
+        %type: "string",
+        %required: true,
+        %logicalType: "uuid",
+        %description: "Event UUID"
+      },
+      {
+        %name: "timestamp",
+        %type: "long",
+        %required: true,
+        %logicalType: "timestamp-millis",
+        %description: "Event timestamp in milliseconds since epoch"
+      },
+      {
+        %name: "timestampMicros",
+        %type: "long",
+        %required: false,
+        %logicalType: "timestamp-micros",
+        %description: "High-precision timestamp in microseconds"
+      },
+      {
+        %name: "eventDate",
+        %type: "integer",
+        %required: true,
+        %logicalType: "date",
+        %description: "Event date (days since epoch)"
+      },
+      {
+        %name: "eventTime",
+        %type: "long",
+        %required: false,
+        %logicalType: "time-millis",
+        %description: "Time of day in milliseconds"
+      },
+      {
+        %name: "duration",
+        %type: "long",
+        %required: false,
+        %logicalType: "duration",
+        %description: "Event duration"
+      },
+      {
+        %name: "amount",
+        %type: "bytes",
+        %required: false,
+        %logicalType: "decimal",
+        %precision: 10,
+        %scale: 2,
+        %description: "Monetary amount with decimal precision"
+      }
+    ]
+  }
+}

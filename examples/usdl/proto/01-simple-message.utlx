@@ -1,0 +1,21 @@
+%utlx 1.0
+output proto
+---
+%namespace: "com.example.user"
+%version: "1.0"
+%syntax: "proto3"
+%documentation: "Simple user message in Protocol Buffers format"
+
+%types: {
+  User: {
+    %kind: "structure",
+    %documentation: "User entity with basic information",
+    %fields: [
+      {%name: "id", %type: "string", %fieldNumber: 1, %required: true, %description: "Unique user identifier"},
+      {%name: "username", %type: "string", %fieldNumber: 2, %required: true, %description: "Username for login"},
+      {%name: "email", %type: "string", %fieldNumber: 3, %required: true, %description: "User email address"},
+      {%name: "age", %type: "int32", %fieldNumber: 4, %required: false, %description: "User age (optional in proto3)"},
+      {%name: "is_active", %type: "bool", %fieldNumber: 5, %required: false, %description: "Account active status"}
+    ]
+  }
+}

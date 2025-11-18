@@ -1,0 +1,68 @@
+%utlx 1.0
+output xsd
+---
+%namespace: "http://example.com/finance/v1"
+%version: "1.0"
+%elementFormDefault: "qualified"
+%documentation: "Financial schema with numeric constraints"
+
+%types: {
+  Transaction: {
+    %kind: "structure",
+    %documentation: "Financial transaction with validated amounts",
+    %fields: [
+      {
+        %name: "transactionId",
+        %type: "string",
+        %required: true,
+        %description: "Transaction identifier"
+      },
+      {
+        %name: "amount",
+        %type: "decimal",
+        %required: true,
+        %description: "Transaction amount (must be positive)",
+        %minimum: 0.01,
+        %maximum: 1000000.00,
+        %fractionDigits: 2
+      },
+      {
+        %name: "quantity",
+        %type: "integer",
+        %required: true,
+        %description: "Item quantity (1-1000)",
+        %minimum: 1,
+        %maximum: 1000
+      },
+      {
+        %name: "discountPercent",
+        %type: "decimal",
+        %required: false,
+        %description: "Discount percentage (0-100)",
+        %minimum: 0,
+        %maximum: 100,
+        %fractionDigits: 2
+      },
+      {
+        %name: "taxRate",
+        %type: "decimal",
+        %required: true,
+        %description: "Tax rate (0.00-0.25)",
+        %minimum: 0.00,
+        %maximum: 0.25,
+        %fractionDigits: 4
+      }
+    ]
+  },
+
+  Invoice: {
+    %kind: "structure",
+    %documentation: "Invoice with calculated totals",
+    %fields: [
+      {%name: "invoiceId", %type: "string", %required: true, %description: "Invoice number"},
+      {%name: "subtotal", %type: "decimal", %required: true, %minimum: 0, %fractionDigits: 2, %description: "Subtotal before tax"},
+      {%name: "taxAmount", %type: "decimal", %required: true, %minimum: 0, %fractionDigits: 2, %description: "Tax amount"},
+      {%name: "total", %type: "decimal", %required: true, %minimum: 0, %fractionDigits: 2, %description: "Total amount including tax"}
+    ]
+  }
+}

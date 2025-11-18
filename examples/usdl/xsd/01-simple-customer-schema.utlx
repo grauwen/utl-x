@@ -1,0 +1,22 @@
+%utlx 1.0
+output xsd
+---
+%namespace: "http://example.com/customer/v1"
+%version: "1.0"
+%elementFormDefault: "qualified"
+%documentation: "Customer schema with basic contact information"
+
+%types: {
+  Customer: {
+    %kind: "structure",
+    %documentation: "Customer entity with contact details",
+    %fields: [
+      {%name: "id", %type: "string", %required: true, %description: "Unique customer identifier"},
+      {%name: "firstName", %type: "string", %required: true, %description: "Customer first name"},
+      {%name: "lastName", %type: "string", %required: true, %description: "Customer last name"},
+      {%name: "email", %type: "string", %required: true, %description: "Email address for notifications"},
+      {%name: "phone", %type: "string", %required: false, %description: "Contact phone number"},
+      {%name: "createdAt", %type: "date-time", %required: true, %description: "Account creation timestamp"}
+    ]
+  }
+}

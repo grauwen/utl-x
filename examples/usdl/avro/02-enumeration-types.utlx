@@ -1,0 +1,33 @@
+%utlx 1.0
+output avro
+---
+%namespace: "com.example.customer"
+%version: "1.0"
+%documentation: "Customer record with enum fields"
+
+%types: {
+  AccountType: {
+    %kind: "enumeration",
+    %documentation: "Customer account tier",
+    %values: ["BASIC", "PREMIUM", "ENTERPRISE"],
+    %default: "BASIC"
+  },
+
+  Status: {
+    %kind: "enumeration",
+    %documentation: "Account status",
+    %values: ["ACTIVE", "SUSPENDED", "CLOSED"]
+  },
+
+  Customer: {
+    %kind: "structure",
+    %documentation: "Customer with account type and status",
+    %fields: [
+      {%name: "customerId", %type: "string", %required: true, %description: "Customer identifier"},
+      {%name: "name", %type: "string", %required: true, %description: "Customer full name"},
+      {%name: "accountType", %type: "AccountType", %required: true, %default: "BASIC", %description: "Account tier"},
+      {%name: "status", %type: "Status", %required: true, %description: "Current account status"},
+      {%name: "registeredDate", %type: "long", %required: true, %logicalType: "timestamp-millis", %description: "Registration timestamp"}
+    ]
+  }
+}

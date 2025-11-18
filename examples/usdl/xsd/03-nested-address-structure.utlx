@@ -1,0 +1,37 @@
+%utlx 1.0
+output xsd
+---
+%namespace: "http://example.com/address/v1"
+%version: "1.0"
+%elementFormDefault: "qualified"
+%documentation: "Address schema with nested structures"
+
+%types: {
+  Country: {
+    %kind: "enumeration",
+    %documentation: "ISO 3166-1 country codes",
+    %values: ["US", "CA", "GB", "DE", "FR", "JP", "AU"]
+  },
+
+  Address: {
+    %kind: "structure",
+    %documentation: "Physical address with street and location details",
+    %fields: [
+      {%name: "street", %type: "string", %required: true, %description: "Street address"},
+      {%name: "city", %type: "string", %required: true, %description: "City name"},
+      {%name: "state", %type: "string", %required: false, %description: "State or province"},
+      {%name: "postalCode", %type: "string", %required: true, %description: "Postal or ZIP code"},
+      {%name: "country", %type: "Country", %required: true, %description: "ISO country code"}
+    ]
+  },
+
+  Person: {
+    %kind: "structure",
+    %documentation: "Person with contact address",
+    %fields: [
+      {%name: "name", %type: "string", %required: true, %description: "Full name"},
+      {%name: "homeAddress", %type: "Address", %required: true, %description: "Home address"},
+      {%name: "workAddress", %type: "Address", %required: false, %description: "Work address"}
+    ]
+  }
+}

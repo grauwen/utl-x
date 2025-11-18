@@ -1,0 +1,79 @@
+%utlx 1.0
+output jsch
+---
+%namespace: "http://example.com/schemas/document"
+%version: "1.0"
+%schemaId: "https://example.com/document.schema.json"
+%schema: "https://json-schema.org/draft/2020-12/schema"
+%documentation: "Document schema with anyOf, oneOf, and allOf composition"
+
+%types: {
+  TextContent: {
+    %kind: "structure",
+    %title: "Text Content",
+    %documentation: "Plain text content",
+    %fields: [
+      {%name: "type", %type: "string", %required: true, %const: "text", %description: "Content type"},
+      {%name: "text", %type: "string", %required: true, %description: "Text content"}
+    ]
+  },
+
+  ImageContent: {
+    %kind: "structure",
+    %title: "Image Content",
+    %documentation: "Image content with URL",
+    %fields: [
+      {%name: "type", %type: "string", %required: true, %const: "image", %description: "Content type"},
+      {%name: "imageUrl", %type: "string", %required: true, %description: "Image URL", %format: "uri"},
+      {%name: "altText", %type: "string", %required: false, %description: "Alternative text"}
+    ]
+  },
+
+  Timestamped: {
+    %kind: "structure",
+    %title: "Timestamped",
+    %documentation: "Mixin for timestamp fields",
+    %fields: [
+      {%name: "createdAt", %type: "string", %required: true, %format: "date-time", %description: "Creation timestamp"},
+      {%name: "updatedAt", %type: "string", %required: false, %format: "date-time", %description: "Last update timestamp"}
+    ]
+  },
+
+  Authored: {
+    %kind: "structure",
+    %title: "Authored",
+    %documentation: "Mixin for author information",
+    %fields: [
+      {%name: "authorId", %type: "string", %required: true, %description: "Author user ID"},
+      {%name: "authorName", %type: "string", %required: true, %description: "Author name"}
+    ]
+  },
+
+  Content: {
+    %kind: "union",
+    %title: "Content",
+    %documentation: "Content can be text OR image (oneOf)",
+    %oneOf: [
+      {%type: "TextContent", %description: "Text content"},
+      {%type: "ImageContent", %description: "Image content"}
+    ]
+  },
+
+  Document: {
+    %kind: "structure",
+    %title: "Document",
+    %documentation: "Document with polymorphic content (allOf for composition)",
+    %allOf: [
+      {
+        %type: "structure",
+        %fields: [
+          {%name: "id", %type: "string", %required: true, %description: "Document ID"},
+          {%name: "title", %type: "string", %required: true, %description: "Document title"},
+          {%name: "content", %type: "Content", %required: true, %description: "Document content"}
+        ]
+      },
+      {%type: "Timestamped"},
+      {%type: "Authored"}
+    ]
+  }
+}

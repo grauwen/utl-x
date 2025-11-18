@@ -1,0 +1,116 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: API response wrapper schema
+output [FORMAT]
+---
+%namespace: "com.example.api"
+%version: "1.0"
+%documentation: "Generic API response schema"
+
+%types: {
+  ResponseStatus: {
+    %kind: "enumeration",
+    %documentation: "Response status codes",
+    %values: ["SUCCESS", "ERROR", "PARTIAL", "PENDING"]
+  },
+
+  ErrorDetail: {
+    %kind: "structure",
+    %documentation: "Error information",
+    %fields: [
+      {
+        %name: "code",
+        %type: "string",
+        %required: true,
+        %description: "Error code"
+      },
+      {
+        %name: "message",
+        %type: "string",
+        %required: true,
+        %description: "Error message"
+      },
+      {
+        %name: "field",
+        %type: "string",
+        %required: false,
+        %description: "Related field name"
+      }
+    ]
+  },
+
+  Pagination: {
+    %kind: "structure",
+    %documentation: "Pagination information",
+    %fields: [
+      {
+        %name: "page",
+        %type: "integer",
+        %required: true,
+        %description: "Current page number"
+      },
+      {
+        %name: "pageSize",
+        %type: "integer",
+        %required: true,
+        %description: "Items per page"
+      },
+      {
+        %name: "totalPages",
+        %type: "integer",
+        %required: true,
+        %description: "Total number of pages"
+      },
+      {
+        %name: "totalItems",
+        %type: "long",
+        %required: true,
+        %description: "Total number of items"
+      }
+    ]
+  },
+
+  ApiResponse: {
+    %kind: "structure",
+    %documentation: "Generic API response wrapper",
+    %fields: [
+      {
+        %name: "requestId",
+        %type: "string",
+        %required: true,
+        %description: "Request identifier for tracking"
+      },
+      {
+        %name: "status",
+        %type: "ResponseStatus",
+        %required: true,
+        %description: "Response status"
+      },
+      {
+        %name: "timestamp",
+        %type: "long",
+        %required: true,
+        %description: "Response timestamp"
+      },
+      {
+        %name: "errors",
+        %type: "ErrorDetail",
+        %array: true,
+        %required: false,
+        %description: "Error details if any"
+      },
+      {
+        %name: "pagination",
+        %type: "Pagination",
+        %required: false,
+        %description: "Pagination info for list responses"
+      },
+      {
+        %name: "message",
+        %type: "string",
+        %required: false,
+        %description: "Human-readable message"
+      }
+    ]
+  }
+}

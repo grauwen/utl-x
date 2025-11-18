@@ -1,0 +1,37 @@
+%utlx 1.0
+output jsch
+---
+%namespace: "http://example.com/schemas/playlist"
+%version: "1.0"
+%schemaId: "https://example.com/playlist.schema.json"
+%schema: "https://json-schema.org/draft/2020-12/schema"
+%documentation: "Playlist schema with array constraints"
+
+%types: {
+  Song: {
+    %kind: "structure",
+    %title: "Song",
+    %documentation: "Song in a playlist",
+    %fields: [
+      {%name: "id", %type: "string", %required: true, %description: "Song ID", %format: "uuid"},
+      {%name: "title", %type: "string", %required: true, %description: "Song title", %minLength: 1},
+      {%name: "artist", %type: "string", %required: true, %description: "Artist name"},
+      {%name: "duration", %type: "integer", %required: true, %description: "Duration in seconds", %minimum: 1, %maximum: 7200},
+      {%name: "genres", %type: "string", %array: true, %required: false, %description: "Music genres", %minItems: 1, %maxItems: 5, %uniqueItems: true}
+    ]
+  },
+
+  Playlist: {
+    %kind: "structure",
+    %title: "Playlist",
+    %documentation: "Music playlist with songs",
+    %fields: [
+      {%name: "id", %type: "string", %required: true, %description: "Playlist ID", %format: "uuid"},
+      {%name: "name", %type: "string", %required: true, %description: "Playlist name", %minLength: 1, %maxLength: 100},
+      {%name: "description", %type: "string", %required: false, %description: "Playlist description", %maxLength: 500},
+      {%name: "songs", %type: "Song", %array: true, %required: true, %description: "Songs in playlist", %minItems: 1, %maxItems: 1000},
+      {%name: "tags", %type: "string", %array: true, %required: false, %description: "Playlist tags", %uniqueItems: true},
+      {%name: "isPublic", %type: "boolean", %required: true, %default: false, %description: "Public visibility"}
+    ]
+  }
+}

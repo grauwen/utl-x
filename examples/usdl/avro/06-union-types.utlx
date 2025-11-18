@@ -1,0 +1,61 @@
+%utlx 1.0
+output avro
+---
+%namespace: "com.example.messaging"
+%version: "1.0"
+%documentation: "Message schema with union types for polymorphic data"
+
+%types: {
+  TextMessage: {
+    %kind: "structure",
+    %documentation: "Plain text message",
+    %fields: [
+      {%name: "text", %type: "string", %required: true, %description: "Message text content"},
+      {%name: "format", %type: "string", %required: false, %default: "plain", %description: "Text format (plain, markdown)"}
+    ]
+  },
+
+  ImageMessage: {
+    %kind: "structure",
+    %documentation: "Image message with URL",
+    %fields: [
+      {%name: "imageUrl", %type: "string", %required: true, %description: "Image URL"},
+      {%name: "thumbnailUrl", %type: "string", %required: false, %description: "Thumbnail URL"},
+      {%name: "width", %type: "integer", %required: false, %description: "Image width in pixels"},
+      {%name: "height", %type: "integer", %required: false, %description: "Image height in pixels"}
+    ]
+  },
+
+  FileMessage: {
+    %kind: "structure",
+    %documentation: "File attachment message",
+    %fields: [
+      {%name: "fileUrl", %type: "string", %required: true, %description: "File download URL"},
+      {%name: "fileName", %type: "string", %required: true, %description: "Original file name"},
+      {%name: "fileSize", %type: "long", %required: true, %description: "File size in bytes"},
+      {%name: "mimeType", %type: "string", %required: false, %description: "MIME type"}
+    ]
+  },
+
+  MessageContent: {
+    %kind: "union",
+    %documentation: "Message content (text, image, or file)",
+    %options: [
+      {%type: "TextMessage", %description: "Text message"},
+      {%type: "ImageMessage", %description: "Image message"},
+      {%type: "FileMessage", %description: "File attachment"}
+    ]
+  },
+
+  Message: {
+    %kind: "structure",
+    %documentation: "Chat message with polymorphic content",
+    %fields: [
+      {%name: "messageId", %type: "string", %required: true, %description: "Message identifier"},
+      {%name: "senderId", %type: "string", %required: true, %description: "Sender user ID"},
+      {%name: "timestamp", %type: "long", %required: true, %logicalType: "timestamp-millis", %description: "Message timestamp"},
+      {%name: "content", %type: "MessageContent", %required: true, %description: "Message content (union type)"},
+      {%name: "edited", %type: "boolean", %required: false, %default: false, %description: "Whether message was edited"}
+    ]
+  }
+}

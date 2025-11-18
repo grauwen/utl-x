@@ -1,0 +1,81 @@
+%utlx 1.0
+output jsch
+---
+%namespace: "http://example.com/schemas/user"
+%version: "1.0"
+%schemaId: "https://example.com/user.schema.json"
+%schema: "https://json-schema.org/draft/2020-12/schema"
+%documentation: "User schema demonstrating string formats and patterns"
+
+%types: {
+  User: {
+    %kind: "structure",
+    %title: "User",
+    %documentation: "User with various validated string fields",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "User ID (UUID v4)",
+        %format: "uuid"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %required: true,
+        %description: "Email address",
+        %format: "email"
+      },
+      {
+        %name: "website",
+        %type: "string",
+        %required: false,
+        %description: "Personal website URL",
+        %format: "uri"
+      },
+      {
+        %name: "birthDate",
+        %type: "string",
+        %required: false,
+        %description: "Birth date (YYYY-MM-DD)",
+        %format: "date"
+      },
+      {
+        %name: "registeredAt",
+        %type: "string",
+        %required: true,
+        %description: "Registration timestamp (ISO 8601)",
+        %format: "date-time"
+      },
+      {
+        %name: "preferredTime",
+        %type: "string",
+        %required: false,
+        %description: "Preferred contact time (HH:MM:SS)",
+        %format: "time"
+      },
+      {
+        %name: "ipAddress",
+        %type: "string",
+        %required: false,
+        %description: "Last login IP address",
+        %format: "ipv4"
+      },
+      {
+        %name: "jsonData",
+        %type: "string",
+        %required: false,
+        %description: "Custom JSON data",
+        %contentMediaType: "application/json"
+      },
+      {
+        %name: "base64Avatar",
+        %type: "string",
+        %required: false,
+        %description: "Avatar image (base64 encoded)",
+        %contentEncoding: "base64"
+      }
+    ]
+  }
+}

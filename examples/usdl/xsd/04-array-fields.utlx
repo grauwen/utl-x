@@ -1,0 +1,41 @@
+%utlx 1.0
+output xsd
+---
+%namespace: "http://example.com/product/v1"
+%version: "1.0"
+%elementFormDefault: "qualified"
+%documentation: "Product catalog schema with arrays"
+
+%types: {
+  Tag: {
+    %kind: "structure",
+    %documentation: "Product tag for categorization",
+    %fields: [
+      {%name: "name", %type: "string", %required: true, %description: "Tag name"},
+      {%name: "value", %type: "string", %required: true, %description: "Tag value"}
+    ]
+  },
+
+  Product: {
+    %kind: "structure",
+    %documentation: "Product with multiple tags and images",
+    %fields: [
+      {%name: "productId", %type: "string", %required: true, %description: "Unique product identifier"},
+      {%name: "name", %type: "string", %required: true, %description: "Product name"},
+      {%name: "description", %type: "string", %required: false, %description: "Product description"},
+      {%name: "price", %type: "decimal", %required: true, %description: "Product price"},
+      {%name: "tags", %type: "Tag", %array: true, %minOccurs: 0, %maxOccurs: "unbounded", %description: "Product tags"},
+      {%name: "imageUrls", %type: "string", %array: true, %minOccurs: 1, %maxOccurs: 10, %description: "Product image URLs"}
+    ]
+  },
+
+  Catalog: {
+    %kind: "structure",
+    %documentation: "Product catalog containing multiple products",
+    %fields: [
+      {%name: "catalogId", %type: "string", %required: true, %description: "Catalog identifier"},
+      {%name: "name", %type: "string", %required: true, %description: "Catalog name"},
+      {%name: "products", %type: "Product", %array: true, %minOccurs: 0, %maxOccurs: "unbounded", %description: "Products in catalog"}
+    ]
+  }
+}

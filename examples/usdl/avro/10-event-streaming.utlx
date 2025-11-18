@@ -1,0 +1,71 @@
+%utlx 1.0
+output avro
+---
+%namespace: "com.example.streaming"
+%version: "1.0"
+%documentation: "Event streaming schema for Kafka/Avro integration"
+
+%types: {
+  EventType: {
+    %kind: "enumeration",
+    %documentation: "Event type classification",
+    %values: ["USER_CREATED", "USER_UPDATED", "USER_DELETED", "ORDER_PLACED", "ORDER_SHIPPED", "PAYMENT_PROCESSED"]
+  },
+
+  EventMetadata: {
+    %kind: "structure",
+    %documentation: "Event metadata for tracing and correlation",
+    %fields: [
+      {%name: "eventId", %type: "string", %required: true, %logicalType: "uuid", %description: "Unique event ID"},
+      {%name: "timestamp", %type: "long", %required: true, %logicalType: "timestamp-millis", %description: "Event timestamp"},
+      {%name: "source", %type: "string", %required: true, %description: "Event source service"},
+      {%name: "correlationId", %type: "string", %required: false, %logicalType: "uuid", %description: "Correlation ID for distributed tracing"},
+      {%name: "userId", %type: "string", %required: false, %description: "User who triggered the event"},
+      {%name: "sessionId", %type: "string", %required: false, %description: "Session identifier"}
+    ]
+  },
+
+  UserCreatedPayload: {
+    %kind: "structure",
+    %documentation: "Payload for USER_CREATED event",
+    %fields: [
+      {%name: "userId", %type: "string", %required: true, %description: "New user ID"},
+      {%name: "username", %type: "string", %required: true, %description: "Username"},
+      {%name: "email", %type: "string", %required: true, %description: "Email address"},
+      {%name: "registrationMethod", %type: "string", %required: false, %description: "How user registered (email, google, facebook)"}
+    ]
+  },
+
+  OrderPlacedPayload: {
+    %kind: "structure",
+    %documentation: "Payload for ORDER_PLACED event",
+    %fields: [
+      {%name: "orderId", %type: "string", %required: true, %description: "Order ID"},
+      {%name: "customerId", %type: "string", %required: true, %description: "Customer ID"},
+      {%name: "totalAmount", %type: "double", %required: true, %description: "Order total"},
+      {%name: "currency", %type: "string", %required: true, %description: "Currency code"},
+      {%name: "itemCount", %type: "integer", %required: true, %description: "Number of items"}
+    ]
+  },
+
+  EventPayload: {
+    %kind: "union",
+    %documentation: "Event payload (union of all event types)",
+    %options: [
+      {%type: "UserCreatedPayload", %description: "User creation payload"},
+      {%type: "OrderPlacedPayload", %description: "Order placement payload"}
+    ]
+  },
+
+  DomainEvent: {
+    %kind: "structure",
+    %documentation: "Generic domain event for event sourcing and streaming",
+    %fields: [
+      {%name: "metadata", %type: "EventMetadata", %required: true, %description: "Event metadata"},
+      {%name: "type", %type: "EventType", %required: true, %description: "Event type"},
+      {%name: "version", %type: "string", %required: true, %description: "Event schema version"},
+      {%name: "payload", %type: "EventPayload", %required: true, %description: "Event payload (union type)"},
+      {%name: "tags", %type: "string", %map: true, %required: false, %description: "Additional event tags"}
+    ]
+  }
+}

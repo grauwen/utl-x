@@ -1,0 +1,103 @@
+%utlx 1.0
+output proto
+---
+%namespace: "com.example.ecommerce"
+%version: "1.0"
+%syntax: "proto3"
+%documentation: "Comprehensive e-commerce order system in Protocol Buffers"
+
+%types: {
+  Currency: {
+    %kind: "enumeration",
+    %documentation: "Supported currencies",
+    %values: [
+      {%value: 0, %name: "CURRENCY_UNSPECIFIED"},
+      {%value: 1, %name: "USD"},
+      {%value: 2, %name: "EUR"},
+      {%value: 3, %name: "GBP"},
+      {%value: 4, %name: "JPY"}
+    ]
+  },
+
+  OrderStatus: {
+    %kind: "enumeration",
+    %documentation: "Order lifecycle status",
+    %values: [
+      {%value: 0, %name: "STATUS_UNSPECIFIED"},
+      {%value: 1, %name: "PENDING"},
+      {%value: 2, %name: "PROCESSING"},
+      {%value: 3, %name: "SHIPPED"},
+      {%value: 4, %name: "DELIVERED"},
+      {%value: 5, %name: "CANCELLED"}
+    ]
+  },
+
+  Money: {
+    %kind: "structure",
+    %documentation: "Monetary amount with currency",
+    %fields: [
+      {%name: "amount", %type: "int64", %fieldNumber: 1, %required: true, %description: "Amount in smallest currency unit (e.g., cents)"},
+      {%name: "currency", %type: "Currency", %fieldNumber: 2, %required: true, %description: "Currency code"}
+    ]
+  },
+
+  Address: {
+    %kind: "structure",
+    %documentation: "Shipping or billing address",
+    %fields: [
+      {%name: "recipient_name", %type: "string", %fieldNumber: 1, %required: true, %description: "Recipient name"},
+      {%name: "street1", %type: "string", %fieldNumber: 2, %required: true, %description: "Street address line 1"},
+      {%name: "street2", %type: "string", %fieldNumber: 3, %required: false, %description: "Street address line 2"},
+      {%name: "city", %type: "string", %fieldNumber: 4, %required: true, %description: "City"},
+      {%name: "state", %type: "string", %fieldNumber: 5, %required: false, %description: "State/province"},
+      {%name: "postal_code", %type: "string", %fieldNumber: 6, %required: true, %description: "Postal code"},
+      {%name: "country_code", %type: "string", %fieldNumber: 7, %required: true, %description: "ISO country code"}
+    ]
+  },
+
+  OrderItem: {
+    %kind: "structure",
+    %documentation: "Individual item in order",
+    %fields: [
+      {%name: "item_id", %type: "string", %fieldNumber: 1, %required: true, %description: "Line item ID"},
+      {%name: "product_id", %type: "string", %fieldNumber: 2, %required: true, %description: "Product ID"},
+      {%name: "product_name", %type: "string", %fieldNumber: 3, %required: true, %description: "Product name"},
+      {%name: "quantity", %type: "int32", %fieldNumber: 4, %required: true, %description: "Quantity ordered"},
+      {%name: "unit_price", %type: "Money", %fieldNumber: 5, %required: true, %description: "Price per unit"},
+      {%name: "subtotal", %type: "Money", %fieldNumber: 6, %required: true, %description: "Line item subtotal"},
+      {%name: "tax_amount", %type: "Money", %fieldNumber: 7, %required: true, %description: "Tax amount"}
+    ]
+  },
+
+  ShippingInfo: {
+    %kind: "structure",
+    %documentation: "Shipping method and tracking",
+    %fields: [
+      {%name: "method", %type: "string", %fieldNumber: 1, %required: true, %description: "Shipping method"},
+      {%name: "carrier", %type: "string", %fieldNumber: 2, %required: false, %description: "Carrier name"},
+      {%name: "tracking_number", %type: "string", %fieldNumber: 3, %required: false, %description: "Tracking number"},
+      {%name: "estimated_delivery_timestamp", %type: "int64", %fieldNumber: 4, %required: false, %description: "Estimated delivery (Unix timestamp)"},
+      {%name: "shipping_cost", %type: "Money", %fieldNumber: 5, %required: true, %description: "Shipping cost"}
+    ]
+  },
+
+  Order: {
+    %kind: "structure",
+    %documentation: "Complete order with items, addresses, and shipping",
+    %fields: [
+      {%name: "order_id", %type: "string", %fieldNumber: 1, %required: true, %description: "Unique order ID"},
+      {%name: "customer_id", %type: "string", %fieldNumber: 2, %required: true, %description: "Customer ID"},
+      {%name: "order_timestamp", %type: "int64", %fieldNumber: 3, %required: true, %description: "Order placement time"},
+      {%name: "status", %type: "OrderStatus", %fieldNumber: 4, %required: true, %description: "Current status"},
+      {%name: "items", %type: "OrderItem", %repeated: true, %fieldNumber: 5, %description: "Order line items"},
+      {%name: "shipping_address", %type: "Address", %fieldNumber: 6, %required: true, %description: "Shipping address"},
+      {%name: "billing_address", %type: "Address", %fieldNumber: 7, %required: true, %description: "Billing address"},
+      {%name: "shipping_info", %type: "ShippingInfo", %fieldNumber: 8, %required: false, %description: "Shipping details"},
+      {%name: "subtotal", %type: "Money", %fieldNumber: 9, %required: true, %description: "Subtotal before tax/shipping"},
+      {%name: "tax_total", %type: "Money", %fieldNumber: 10, %required: true, %description: "Total tax"},
+      {%name: "shipping_total", %type: "Money", %fieldNumber: 11, %required: true, %description: "Total shipping cost"},
+      {%name: "grand_total", %type: "Money", %fieldNumber: 12, %required: true, %description: "Grand total"},
+      {%name: "notes", %type: "string", %fieldNumber: 13, %required: false, %description: "Order notes"}
+    ]
+  }
+}

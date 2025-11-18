@@ -1,0 +1,76 @@
+%utlx 1.0
+output proto
+---
+%namespace: "com.example.api"
+%version: "1.0"
+%syntax: "proto3"
+%documentation: "Protocol Buffers with field options and custom options"
+
+%types: {
+  ValidationRule: {
+    %kind: "structure",
+    %documentation: "Validation metadata for fields",
+    %fields: [
+      {%name: "min_length", %type: "int32", %fieldNumber: 1, %required: false, %description: "Minimum string length"},
+      {%name: "max_length", %type: "int32", %fieldNumber: 2, %required: false, %description: "Maximum string length"},
+      {%name: "pattern", %type: "string", %fieldNumber: 3, %required: false, %description: "Regex pattern"}
+    ]
+  },
+
+  User: {
+    %kind: "structure",
+    %documentation: "User message with field options",
+    %options: [
+      {%option: "deprecated", %value: false, %description: "Not deprecated"}
+    ],
+    %fields: [
+      {
+        %name: "user_id",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: true,
+        %description: "User identifier",
+        %options: [
+          {%option: "json_name", %value: "userId", %description: "JSON field name override"}
+        ]
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %fieldNumber: 2,
+        %required: true,
+        %description: "Email address (validated)",
+        %options: [
+          {%option: "json_name", %value: "email"}
+        ]
+      },
+      {
+        %name: "legacy_field",
+        %type: "string",
+        %fieldNumber: 3,
+        %required: false,
+        %description: "Old field (deprecated)",
+        %options: [
+          {%option: "deprecated", %value: true, %description: "Use 'new_field' instead"}
+        ]
+      },
+      {
+        %name: "password_hash",
+        %type: "bytes",
+        %fieldNumber: 4,
+        %required: true,
+        %description: "Hashed password"
+      },
+      {
+        %name: "created_timestamp",
+        %type: "int64",
+        %fieldNumber: 5,
+        %required: true,
+        %description: "Creation timestamp",
+        %options: [
+          {%option: "json_name", %value: "createdAt"}
+        ]
+      }
+    ]
+  }
+}

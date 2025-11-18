@@ -1,0 +1,80 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Composition pattern with multiple nested types
+output [FORMAT]
+---
+%namespace: "com.example.order"
+%version: "1.0"
+%documentation: "Order system with composition"
+
+%types: {
+  Customer: {
+    %kind: "structure",
+    %documentation: "Customer information",
+    %fields: [
+      {
+        %name: "customerId",
+        %type: "string",
+        %required: true,
+        %description: "Customer identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %required: true,
+        %description: "Customer name"
+      }
+    ]
+  },
+
+  OrderItem: {
+    %kind: "structure",
+    %documentation: "Order line item",
+    %fields: [
+      {
+        %name: "productId",
+        %type: "string",
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "quantity",
+        %type: "integer",
+        %required: true,
+        %description: "Quantity ordered"
+      },
+      {
+        %name: "price",
+        %type: "double",
+        %required: true,
+        %description: "Unit price"
+      }
+    ]
+  },
+
+  Order: {
+    %kind: "structure",
+    %documentation: "Order composed of customer and items",
+    %fields: [
+      {
+        %name: "orderId",
+        %type: "string",
+        %required: true,
+        %description: "Order identifier"
+      },
+      {
+        %name: "customer",
+        %type: "Customer",
+        %required: true,
+        %description: "Order customer"
+      },
+      {
+        %name: "items",
+        %type: "OrderItem",
+        %array: true,
+        %required: true,
+        %description: "Order items"
+      }
+    ]
+  }
+}

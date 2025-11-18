@@ -1,0 +1,102 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: IoT sensor reading schema
+output [FORMAT]
+---
+%namespace: "com.example.iot"
+%version: "1.0"
+%documentation: "IoT sensor data schema"
+
+%types: {
+  SensorType: {
+    %kind: "enumeration",
+    %documentation: "Sensor types",
+    %values: ["TEMPERATURE", "HUMIDITY", "PRESSURE", "MOTION", "LIGHT"]
+  },
+
+  Unit: {
+    %kind: "enumeration",
+    %documentation: "Measurement units",
+    %values: ["CELSIUS", "FAHRENHEIT", "PERCENT", "PASCAL", "LUX", "BOOLEAN"]
+  },
+
+  Location: {
+    %kind: "structure",
+    %documentation: "Geographic location",
+    %fields: [
+      {
+        %name: "latitude",
+        %type: "double",
+        %required: true,
+        %description: "Latitude coordinate"
+      },
+      {
+        %name: "longitude",
+        %type: "double",
+        %required: true,
+        %description: "Longitude coordinate"
+      },
+      {
+        %name: "altitude",
+        %type: "double",
+        %required: false,
+        %description: "Altitude in meters"
+      }
+    ]
+  },
+
+  SensorReading: {
+    %kind: "structure",
+    %documentation: "Sensor measurement reading",
+    %fields: [
+      {
+        %name: "readingId",
+        %type: "string",
+        %required: true,
+        %description: "Reading identifier"
+      },
+      {
+        %name: "sensorId",
+        %type: "string",
+        %required: true,
+        %description: "Sensor identifier"
+      },
+      {
+        %name: "sensorType",
+        %type: "SensorType",
+        %required: true,
+        %description: "Type of sensor"
+      },
+      {
+        %name: "value",
+        %type: "double",
+        %required: true,
+        %description: "Measured value"
+      },
+      {
+        %name: "unit",
+        %type: "Unit",
+        %required: true,
+        %description: "Unit of measurement"
+      },
+      {
+        %name: "timestamp",
+        %type: "long",
+        %required: true,
+        %description: "Reading timestamp"
+      },
+      {
+        %name: "location",
+        %type: "Location",
+        %required: false,
+        %description: "Sensor location"
+      },
+      {
+        %name: "accuracy",
+        %type: "float",
+        %required: false,
+        %description: "Reading accuracy"
+      }
+    ]
+  }
+}

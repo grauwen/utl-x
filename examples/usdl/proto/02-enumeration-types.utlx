@@ -1,0 +1,43 @@
+%utlx 1.0
+output proto
+---
+%namespace: "com.example.customer"
+%version: "1.0"
+%syntax: "proto3"
+%documentation: "Customer message with enum fields"
+
+%types: {
+  AccountType: {
+    %kind: "enumeration",
+    %documentation: "Customer account tier",
+    %values: [
+      {%value: 0, %name: "ACCOUNT_TYPE_UNSPECIFIED", %description: "Default value (proto3 requirement)"},
+      {%value: 1, %name: "BASIC", %description: "Basic account"},
+      {%value: 2, %name: "PREMIUM", %description: "Premium account"},
+      {%value: 3, %name: "ENTERPRISE", %description: "Enterprise account"}
+    ]
+  },
+
+  Status: {
+    %kind: "enumeration",
+    %documentation: "Account status",
+    %values: [
+      {%value: 0, %name: "STATUS_UNSPECIFIED", %description: "Default value"},
+      {%value: 1, %name: "ACTIVE", %description: "Active account"},
+      {%value: 2, %name: "SUSPENDED", %description: "Suspended account"},
+      {%value: 3, %name: "CLOSED", %description: "Closed account"}
+    ]
+  },
+
+  Customer: {
+    %kind: "structure",
+    %documentation: "Customer with account type and status",
+    %fields: [
+      {%name: "customer_id", %type: "string", %fieldNumber: 1, %required: true, %description: "Customer identifier"},
+      {%name: "name", %type: "string", %fieldNumber: 2, %required: true, %description: "Customer full name"},
+      {%name: "account_type", %type: "AccountType", %fieldNumber: 3, %required: true, %description: "Account tier"},
+      {%name: "status", %type: "Status", %fieldNumber: 4, %required: true, %description: "Current account status"},
+      {%name: "registered_timestamp", %type: "int64", %fieldNumber: 5, %required: true, %description: "Registration Unix timestamp"}
+    ]
+  }
+}

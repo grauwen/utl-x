@@ -1,0 +1,58 @@
+%utlx 1.0
+output proto
+---
+%namespace: "com.example.payment"
+%version: "1.0"
+%syntax: "proto3"
+%documentation: "Payment schema with oneof fields for polymorphic data"
+
+%types: {
+  CreditCard: {
+    %kind: "structure",
+    %documentation: "Credit card payment details",
+    %fields: [
+      {%name: "card_number", %type: "string", %fieldNumber: 1, %required: true, %description: "Card number (masked)"},
+      {%name: "cardholder_name", %type: "string", %fieldNumber: 2, %required: true, %description: "Name on card"},
+      {%name: "expiry_date", %type: "string", %fieldNumber: 3, %required: true, %description: "Expiry date (MM/YY)"}
+    ]
+  },
+
+  BankTransfer: {
+    %kind: "structure",
+    %documentation: "Bank transfer payment details",
+    %fields: [
+      {%name: "account_number", %type: "string", %fieldNumber: 1, %required: true, %description: "Bank account number"},
+      {%name: "routing_number", %type: "string", %fieldNumber: 2, %required: true, %description: "Bank routing number"},
+      {%name: "account_holder", %type: "string", %fieldNumber: 3, %required: true, %description: "Account holder name"}
+    ]
+  },
+
+  PayPal: {
+    %kind: "structure",
+    %documentation: "PayPal payment details",
+    %fields: [
+      {%name: "email", %type: "string", %fieldNumber: 1, %required: true, %description: "PayPal account email"},
+      {%name: "transaction_id", %type: "string", %fieldNumber: 2, %required: true, %description: "PayPal transaction ID"}
+    ]
+  },
+
+  Payment: {
+    %kind: "structure",
+    %documentation: "Payment record with polymorphic payment method (oneof)",
+    %fields: [
+      {%name: "payment_id", %type: "string", %fieldNumber: 1, %required: true, %description: "Payment identifier"},
+      {%name: "amount", %type: "double", %fieldNumber: 2, %required: true, %description: "Payment amount"},
+      {%name: "currency", %type: "string", %fieldNumber: 3, %required: true, %description: "Currency code"},
+      // Oneof group - exactly one must be set
+      {
+        %name: "payment_method",
+        %oneof: true,
+        %oneofFields: [
+          {%name: "credit_card", %type: "CreditCard", %fieldNumber: 10, %description: "Credit card payment"},
+          {%name: "bank_transfer", %type: "BankTransfer", %fieldNumber: 11, %description: "Bank transfer payment"},
+          {%name: "paypal", %type: "PayPal", %fieldNumber: 12, %description: "PayPal payment"}
+        ]
+      }
+    ]
+  }
+}

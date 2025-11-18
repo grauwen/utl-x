@@ -1,0 +1,57 @@
+%utlx 1.0
+output jsch
+---
+%namespace: "http://example.com/schemas/form"
+%version: "1.0"
+%schemaId: "https://example.com/form.schema.json"
+%schema: "https://json-schema.org/draft/2020-12/schema"
+%documentation: "Form schema with conditional validation (if/then/else)"
+
+%types: {
+  FormSubmission: {
+    %kind: "structure",
+    %title: "Form Submission",
+    %documentation: "Form with conditional field requirements",
+    %fields: [
+      {%name: "submissionId", %type: "string", %required: true, %description: "Submission ID"},
+      {%name: "userType", %type: "string", %required: true, %enum: ["individual", "business"], %description: "Type of user"},
+      {%name: "email", %type: "string", %required: true, %format: "email", %description: "Email address"},
+
+      // Individual fields (required if userType="individual")
+      {%name: "firstName", %type: "string", %required: false, %description: "First name (required for individuals)"},
+      {%name: "lastName", %type: "string", %required: false, %description: "Last name (required for individuals)"},
+
+      // Business fields (required if userType="business")
+      {%name: "companyName", %type: "string", %required: false, %description: "Company name (required for businesses)"},
+      {%name: "taxId", %type: "string", %required: false, %description: "Tax ID (required for businesses)"}
+    ],
+
+    // Conditional validation
+    %if: {
+      %properties: {
+        userType: {%const: "individual"}
+      }
+    },
+    %then: {
+      %required: ["firstName", "lastName"],
+      %properties: {
+        firstName: {%minLength: 1},
+        lastName: {%minLength: 1}
+      }
+    },
+    %else: {
+      %if: {
+        %properties: {
+          userType: {%const: "business"}
+        }
+      },
+      %then: {
+        %required: ["companyName", "taxId"],
+        %properties: {
+          companyName: {%minLength: 1},
+          taxId: {%pattern: "^[0-9]{2}-[0-9]{7}$"}
+        }
+      }
+    }
+  }
+}

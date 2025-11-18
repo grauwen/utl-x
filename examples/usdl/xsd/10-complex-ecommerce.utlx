@@ -1,0 +1,90 @@
+%utlx 1.0
+output xsd
+---
+%namespace: "http://example.com/ecommerce/v2"
+%version: "2.0.0"
+%elementFormDefault: "qualified"
+%documentation: "Comprehensive e-commerce schema with multiple entity types"
+
+%types: {
+  Currency: {
+    %kind: "enumeration",
+    %documentation: "Supported currency codes (ISO 4217)",
+    %values: ["USD", "EUR", "GBP", "JPY", "CAD", "AUD"]
+  },
+
+  OrderStatus: {
+    %kind: "enumeration",
+    %documentation: "Order lifecycle status",
+    %values: ["CART", "PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]
+  },
+
+  Money: {
+    %kind: "structure",
+    %documentation: "Monetary amount with currency",
+    %fields: [
+      {%name: "amount", %type: "decimal", %required: true, %minimum: 0, %fractionDigits: 2, %description: "Amount value"},
+      {%name: "currency", %type: "Currency", %required: true, %description: "Currency code"}
+    ]
+  },
+
+  Address: {
+    %kind: "structure",
+    %documentation: "Shipping or billing address",
+    %fields: [
+      {%name: "recipientName", %type: "string", %required: true, %description: "Recipient name"},
+      {%name: "street1", %type: "string", %required: true, %description: "Street address line 1"},
+      {%name: "street2", %type: "string", %required: false, %description: "Street address line 2"},
+      {%name: "city", %type: "string", %required: true, %description: "City"},
+      {%name: "state", %type: "string", %required: false, %description: "State/province"},
+      {%name: "postalCode", %type: "string", %required: true, %description: "Postal code"},
+      {%name: "country", %type: "string", %required: true, %minLength: 2, %maxLength: 2, %description: "ISO country code"}
+    ]
+  },
+
+  OrderItem: {
+    %kind: "structure",
+    %documentation: "Individual item in an order",
+    %fields: [
+      {%name: "itemId", %type: "string", %required: true, %description: "Line item identifier"},
+      {%name: "productId", %type: "string", %required: true, %description: "Product identifier"},
+      {%name: "productName", %type: "string", %required: true, %description: "Product name"},
+      {%name: "quantity", %type: "integer", %required: true, %minimum: 1, %maximum: 999, %description: "Quantity ordered"},
+      {%name: "unitPrice", %type: "Money", %required: true, %description: "Price per unit"},
+      {%name: "subtotal", %type: "Money", %required: true, %description: "Line item subtotal"},
+      {%name: "taxAmount", %type: "Money", %required: true, %description: "Tax for this item"}
+    ]
+  },
+
+  ShippingInfo: {
+    %kind: "structure",
+    %documentation: "Shipping method and tracking",
+    %fields: [
+      {%name: "method", %type: "string", %required: true, %description: "Shipping method name"},
+      {%name: "carrier", %type: "string", %required: false, %description: "Shipping carrier"},
+      {%name: "trackingNumber", %type: "string", %required: false, %description: "Package tracking number"},
+      {%name: "estimatedDelivery", %type: "date", %required: false, %description: "Estimated delivery date"},
+      {%name: "shippingCost", %type: "Money", %required: true, %description: "Shipping cost"}
+    ]
+  },
+
+  Order: {
+    %kind: "structure",
+    %documentation: "Complete order with items, addresses, and shipping",
+    %fields: [
+      {%name: "orderId", %type: "string", %required: true, %description: "Unique order identifier"},
+      {%name: "customerId", %type: "string", %required: true, %description: "Customer identifier"},
+      {%name: "orderDate", %type: "date-time", %required: true, %description: "Date order was placed"},
+      {%name: "status", %type: "OrderStatus", %required: true, %description: "Current order status"},
+      {%name: "items", %type: "OrderItem", %array: true, %minOccurs: 1, %maxOccurs: "unbounded", %description: "Order line items"},
+      {%name: "shippingAddress", %type: "Address", %required: true, %description: "Shipping address"},
+      {%name: "billingAddress", %type: "Address", %required: true, %description: "Billing address"},
+      {%name: "shippingInfo", %type: "ShippingInfo", %required: false, %description: "Shipping details"},
+      {%name: "subtotal", %type: "Money", %required: true, %description: "Subtotal before tax and shipping"},
+      {%name: "taxTotal", %type: "Money", %required: true, %description: "Total tax amount"},
+      {%name: "shippingTotal", %type: "Money", %required: true, %description: "Total shipping cost"},
+      {%name: "grandTotal", %type: "Money", %required: true, %description: "Grand total including all charges"},
+      {%name: "notes", %type: "string", %required: false, %maxLength: 1000, %description: "Order notes or special instructions"}
+    ]
+  }
+}

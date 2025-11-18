@@ -1,0 +1,43 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Array/repeated fields
+output [FORMAT]
+---
+%namespace: "com.example.product"
+%version: "1.0"
+%documentation: "Product with arrays"
+
+%types: {
+  Product: {
+    %kind: "structure",
+    %documentation: "Product with tags and categories",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %required: true,
+        %description: "Product name"
+      },
+      {
+        %name: "tags",
+        %type: "string",
+        %array: true,
+        %required: false,
+        %description: "Product tags"
+      },
+      {
+        %name: "categories",
+        %type: "string",
+        %array: true,
+        %required: false,
+        %description: "Product categories"
+      }
+    ]
+  }
+}

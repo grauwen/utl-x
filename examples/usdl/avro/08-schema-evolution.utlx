@@ -1,0 +1,44 @@
+%utlx 1.0
+output avro
+---
+%namespace: "com.example.user"
+%version: "2.0"
+%documentation: "User schema evolved with new optional fields (backward compatible)"
+
+%types: {
+  UserRole: {
+    %kind: "enumeration",
+    %documentation: "User role enumeration",
+    %values: ["USER", "ADMIN", "MODERATOR"],
+    %default: "USER"
+  },
+
+  Preferences: {
+    %kind: "structure",
+    %documentation: "User preferences (added in v2.0)",
+    %fields: [
+      {%name: "theme", %type: "string", %required: false, %default: "light", %description: "UI theme preference"},
+      {%name: "language", %type: "string", %required: false, %default: "en", %description: "Preferred language"},
+      {%name: "notifications", %type: "boolean", %required: false, %default: true, %description: "Enable notifications"}
+    ]
+  },
+
+  User: {
+    %kind: "structure",
+    %documentation: "User record with schema evolution v1.0 -> v2.0",
+    %aliases: ["com.example.user.UserV1"],
+    %fields: [
+      // Original v1.0 fields (required fields must not change)
+      {%name: "id", %type: "string", %required: true, %description: "User ID (v1.0)"},
+      {%name: "username", %type: "string", %required: true, %description: "Username (v1.0)"},
+      {%name: "email", %type: "string", %required: true, %description: "Email (v1.0)"},
+      {%name: "createdAt", %type: "long", %required: true, %logicalType: "timestamp-millis", %description: "Created timestamp (v1.0)"},
+
+      // New optional fields in v2.0 (backward compatible)
+      {%name: "role", %type: "UserRole", %required: false, %default: "USER", %description: "User role (added in v2.0)"},
+      {%name: "preferences", %type: "Preferences", %required: false, %description: "User preferences (added in v2.0)"},
+      {%name: "lastLogin", %type: "long", %required: false, %logicalType: "timestamp-millis", %description: "Last login timestamp (added in v2.0)"},
+      {%name: "profileImageUrl", %type: "string", %required: false, %description: "Profile image URL (added in v2.0)"}
+    ]
+  }
+}
