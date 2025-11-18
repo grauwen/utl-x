@@ -129,13 +129,31 @@ Suggestions shown in editor
 
 ### For Users
 
-**Option 1: Install from VSIX**
+**Option 1: Install from VSIX (VS Code)**
 1. Download `utlx-language-support-1.0.0.vsix`
 2. In VS Code: `Extensions → ... → Install from VSIX`
 3. Select the downloaded .vsix file
 4. Reload VS Code
 
-**Option 2: Install in Theia**
+**Option 2: Bundled with Theia (Recommended for Theia Users)**
+
+The UTL-X Theia application comes with the VS Code extension pre-bundled!
+
+When you build the Theia application, the VS Code extension is:
+- Automatically built via `build-vscode-extension.sh`
+- Packaged as a VSIX file
+- Loaded via the `theiaPlugins` configuration in `browser-app/package.json`
+- Available immediately on Theia startup
+
+**No additional installation needed!** Just build and start Theia:
+```bash
+cd theia-extension/browser-app
+yarn install
+yarn build
+yarn start
+```
+
+**Option 3: Manual Install in Theia**
 1. Copy .vsix to Theia extensions directory:
    ```bash
    cp utlx-language-support-1.0.0.vsix ~/theia-extensions/
@@ -407,59 +425,135 @@ $input.field   // Field access
 
 ---
 
-## Comparison with Direct Monaco Providers
+## Theia Integration: Dual Extension Architecture
 
-### Current Theia Extension (Direct Providers)
+### How Both Extensions Work Together
+
+The UTL-X Theia application uses **BOTH** extensions simultaneously for optimal functionality:
+
+```
+┌────────────────────────────────────────────────────────┐
+│  Theia IDE (Browser)                                   │
+│                                                        │
+│  ┌──────────────────────┐  ┌─────────────────────────┐│
+│  │ Theia Extension      │  │ VS Code Extension       ││
+│  │ (utlx-theia-ext)     │  │ (utlx-language-support) ││
+│  │                      │  │                         ││
+│  │ - Custom UI widgets  │  │ - LSP client            ││
+│  │ - Input/Output panels│  │ - Completion provider   ││
+│  │ - Function Builder   │  │ - Hover provider        ││
+│  │ - Custom completions │  │ - Diagnostics           ││
+│  │   ($input.field)     │  │ - Semantic highlighting ││
+│  │ - REST API calls     │  │                         ││
+│  └──────────┬───────────┘  └──────────┬──────────────┘│
+│             │                         │               │
+└─────────────┼─────────────────────────┼───────────────┘
+              │                         │
+       REST API (7779)             LSP (7777)
+              │                         │
+              └─────────┬───────────────┘
+                        │
+              ┌─────────▼──────────┐
+              │  UTLXD Daemon      │
+              └────────────────────┘
+```
+
+### What Each Extension Provides
+
+| Feature | Theia Extension | VS Code Extension |
+|---------|----------------|-------------------|
+| **UI Widgets** | ✅ Input/Output panels | ❌ |
+| **Function Builder** | ✅ Dialog UI | ❌ |
+| **Execute Transform** | ✅ REST API | ❌ |
+| **Data Completions** | ✅ $input.field (UDM) | ❌ |
+| **Function Completions** | ❌ | ✅ LSP-based (650+ funcs) |
+| **Hover Info** | ❌ | ✅ LSP-based |
+| **Diagnostics** | ❌ | ✅ Real-time errors |
+| **Semantic Highlighting** | ❌ | ✅ Function coloring |
+| **Schema Support** | ✅ REST API | ✅ LSP protocol |
+
+### How Monaco Benefits
+
+Monaco editor gets **combined capabilities**:
+
+**Completion Suggestions (Merged):**
+```
+User types: $customers.
+├─ Theia Extension provides: field completions from actual data
+│  └─ name, address, email (from loaded JSON)
+└─ VS Code Extension provides: (not applicable for fields)
+
+User types: upper
+├─ Theia Extension provides: (none - doesn't know functions)
+└─ VS Code Extension provides: upperCase, upper (from LSP)
+    └─ With full documentation, examples, signatures
+```
+
+### Why This Architecture?
+
+**Benefits:**
+1. ✅ **Best of both worlds** - Custom UI + Standard LSP
+2. ✅ **Data-driven completions** - Real input data fields
+3. ✅ **Schema-driven completions** - All 650+ functions
+4. ✅ **Semantic highlighting** - Functions colored by type
+5. ✅ **Works in VS Code** - Extension can be used standalone
+6. ✅ **Future-proof** - Standard LSP protocol
+
+**No Conflicts:**
+- Both extensions register different providers
+- Monaco merges all completion sources
+- Each provider handles its domain (data vs schema)
+
+### Comparison with Direct Monaco Providers
+
+### Old Approach: Theia Extension Only
 
 **Architecture:**
 ```
-Theia Extension
-  ↓ HTTP REST API (port 7779)
-UTLXD Daemon
+Theia Extension → REST API (7779) → UTLXD Daemon
 ```
 
-**Pros:**
-- Works in Theia without VS Code extension
-- Custom UI widgets (input panel, output panel, etc.)
-- Direct control over completion behavior
+**Limitations:**
+- ❌ No semantic highlighting
+- ❌ No LSP-based hover
+- ❌ No real-time diagnostics
+- ❌ Can't share with VS Code
+- ❌ UTLXD LSP server unused
 
-**Cons:**
-- Uses REST API, not LSP protocol
-- Higher latency (HTTP request/response)
-- Doesn't leverage UTLXD LSP capabilities
-- Can't share with VS Code users
-
-### VS Code Extension (LSP Client)
+### New Approach: Dual Extension
 
 **Architecture:**
 ```
-VS Code Extension
-  ↓ LSP Protocol (socket 7777)
-UTLXD Daemon
+Theia Extension → REST API (7779) ──┐
+                                    ├→ UTLXD Daemon
+VS Code Extension → LSP (7777) ─────┘
 ```
 
-**Pros:**
-- Standard LSP protocol (lower latency)
-- Works in both VS Code and Theia
-- Full LSP features (semantic tokens, etc.)
-- Utilizes UTLXD LSP server implementation
-- Can be distributed on marketplace
+**Benefits:**
+- ✅ Full LSP features
+- ✅ Semantic highlighting
+- ✅ Real-time diagnostics
+- ✅ Works in VS Code too
+- ✅ Utilizes UTLXD LSP server
 
-**Cons:**
-- Requires separate extension package
-- Less control over specific UI behavior
-- Theia-specific widgets need separate extension
+### Migration Impact
 
-### Recommended Approach
+**For existing Theia users:**
+- No breaking changes
+- Custom UI widgets still work
+- REST API still functional
+- **Added:** LSP features automatically available
 
-**Use BOTH:**
-1. **VS Code Extension** - For language features (completion, hover, diagnostics)
-2. **Theia Extension** - For custom UI (input/output panels, function builder)
+**Build process change:**
+```bash
+# Before
+cd theia-extension/browser-app
+yarn build
 
-They can coexist:
-- VS Code extension provides LSP features
-- Theia extension provides custom widgets
-- Both connect to same UTLXD daemon
+# After (automatic!)
+cd theia-extension/browser-app
+yarn build  # Automatically builds VS Code extension first
+```
 
 ---
 

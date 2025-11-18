@@ -20,13 +20,16 @@
     "@vscode/ripgrep": "^1.17.0",
     "utlx-theia-extension": "file:../utlx-theia-extension"
   },
+  "theiaPlugins": {
+    "utlx-language-support": "file:../../vscode-extension/utlx-language-support-1.0.0.vsix"
+  },
   "devDependencies": {
     "@theia/cli": "1.64.0",
     "rimraf": "^5.0.0"
   },
   "scripts": {
-    "prepare": "theia build --mode development",
-    "build": "theia build --mode production",
+    "prepare": "../build-vscode-extension.sh && theia build --mode development",
+    "build": "../build-vscode-extension.sh && theia build --mode production",
     "start": "theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace",
     "start:debug": "theia start --hostname=0.0.0.0 --port=4000 --loglevel=debug ~/data/utlx-workspace",
     "rebuild-and-start": "../rebuild-and-start.sh",
