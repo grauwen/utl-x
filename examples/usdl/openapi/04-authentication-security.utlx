@@ -1,0 +1,88 @@
+%utlx 1.0
+// Demonstrates: API security with authentication schemes
+// Note: This example is specific to OpenAPI due to: %securitySchemes, %security, %paths with security requirements
+output openapi
+---
+%namespace: "http://api.example.com/v1"
+%version: "1.0.0"
+%documentation: "Secured API with authentication"
+
+%securitySchemes: {
+  apiKey: {
+    %type: "apiKey",
+    %in: "header",
+    %name: "X-API-Key",
+    %description: "API Key authentication"
+  },
+  bearerAuth: {
+    %type: "http",
+    %scheme: "bearer",
+    %bearerFormat: "JWT",
+    %description: "JWT Bearer token"
+  }
+}
+
+%types: {
+  Account: {
+    %kind: "structure",
+    %documentation: "User account",
+    %fields: [
+      {
+        %name: "accountId",
+        %type: "string",
+        %required: true,
+        %description: "Account identifier"
+      },
+      {
+        %name: "balance",
+        %type: "double",
+        %required: true,
+        %description: "Account balance"
+      },
+      {
+        %name: "currency",
+        %type: "string",
+        %required: true,
+        %description: "Currency code"
+      }
+    ]
+  }
+}
+
+%paths: {
+  "/account": {
+    %method: "GET",
+    %operationId: "getAccount",
+    %summary: "Get account details (requires JWT)",
+    %security: [
+      {
+        %scheme: "bearerAuth"
+      }
+    ],
+    %responses: {
+      "200": {
+        %apiSchema: "Account",
+        %description: "Account details"
+      },
+      "401": {
+        %description: "Unauthorized"
+      }
+    }
+  },
+
+  "/account/balance": {
+    %method: "GET",
+    %operationId: "getBalance",
+    %summary: "Get balance (requires API Key)",
+    %security: [
+      {
+        %scheme: "apiKey"
+      }
+    ],
+    %responses: {
+      "200": {
+        %description: "Balance retrieved"
+      }
+    }
+  }
+}

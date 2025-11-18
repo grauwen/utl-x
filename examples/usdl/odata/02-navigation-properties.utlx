@@ -1,0 +1,86 @@
+%utlx 1.0
+// Demonstrates: Navigation properties between entities (1:N relationship)
+// Note: This example is specific to OData due to: %entityType, %key, %navigation, %target, %cardinality
+output odata
+---
+%namespace: "ODataDemo.Sales"
+%version: "1.0"
+%documentation: "Customer and Order entities with navigation"
+
+%types: {
+  Customer: {
+    %kind: "structure",
+    %entityType: true,
+    %documentation: "Customer entity",
+    %fields: [
+      {
+        %name: "CustomerId",
+        %type: "integer",
+        %key: true,
+        %required: true,
+        %description: "Customer identifier"
+      },
+      {
+        %name: "Name",
+        %type: "string",
+        %required: true,
+        %description: "Customer name"
+      },
+      {
+        %name: "Email",
+        %type: "string",
+        %required: true,
+        %description: "Customer email"
+      }
+    ],
+    %navigation: [
+      {
+        %name: "Orders",
+        %target: "Order",
+        %cardinality: "1:N",
+        %description: "Customer's orders"
+      }
+    ]
+  },
+
+  Order: {
+    %kind: "structure",
+    %entityType: true,
+    %documentation: "Order entity",
+    %fields: [
+      {
+        %name: "OrderId",
+        %type: "integer",
+        %key: true,
+        %required: true,
+        %description: "Order identifier"
+      },
+      {
+        %name: "CustomerId",
+        %type: "integer",
+        %required: true,
+        %description: "Customer reference"
+      },
+      {
+        %name: "OrderDate",
+        %type: "string",
+        %required: true,
+        %description: "Order date"
+      },
+      {
+        %name: "TotalAmount",
+        %type: "double",
+        %required: true,
+        %description: "Order total"
+      }
+    ],
+    %navigation: [
+      {
+        %name: "Customer",
+        %target: "Customer",
+        %cardinality: "N:1",
+        %description: "Order's customer"
+      }
+    ]
+  }
+}

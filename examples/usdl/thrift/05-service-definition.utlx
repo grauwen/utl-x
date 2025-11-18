@@ -1,0 +1,99 @@
+%utlx 1.0
+// Demonstrates: Thrift service definition with RPC methods
+// Note: This example is specific to Thrift due to: %services, %methods for RPC definitions
+output thrift
+---
+%namespace: "com.example.thrift"
+%version: "1.0"
+%documentation: "Thrift service with RPC methods"
+
+%types: {
+  UserRequest: {
+    %kind: "structure",
+    %documentation: "User request",
+    %fields: [
+      {
+        %name: "userId",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: true,
+        %description: "User identifier"
+      }
+    ]
+  },
+
+  UserResponse: {
+    %kind: "structure",
+    %documentation: "User response",
+    %fields: [
+      {
+        %name: "userId",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: true,
+        %description: "User identifier"
+      },
+      {
+        %name: "username",
+        %type: "string",
+        %fieldNumber: 2,
+        %required: true,
+        %description: "Username"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %fieldNumber: 3,
+        %required: true,
+        %description: "Email address"
+      }
+    ]
+  },
+
+  CreateUserRequest: {
+    %kind: "structure",
+    %documentation: "Create user request",
+    %fields: [
+      {
+        %name: "username",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: true,
+        %description: "Username"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %fieldNumber: 2,
+        %required: true,
+        %description: "Email address"
+      }
+    ]
+  }
+}
+
+%services: {
+  UserService: {
+    %documentation: "User management service",
+    %methods: [
+      {
+        %name: "getUser",
+        %input: "UserRequest",
+        %output: "UserResponse",
+        %documentation: "Retrieve user by ID"
+      },
+      {
+        %name: "createUser",
+        %input: "CreateUserRequest",
+        %output: "UserResponse",
+        %documentation: "Create a new user"
+      },
+      {
+        %name: "deleteUser",
+        %input: "UserRequest",
+        %output: "boolean",
+        %documentation: "Delete user by ID"
+      }
+    ]
+  }
+}

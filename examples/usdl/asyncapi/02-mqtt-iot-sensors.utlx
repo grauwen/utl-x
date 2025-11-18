@@ -1,0 +1,67 @@
+%utlx 1.0
+// Demonstrates: MQTT protocol for IoT sensor data
+// Note: This example is specific to AsyncAPI due to: %channels, %protocol (mqtt), %subscribe, %messages
+output asyncapi
+---
+%namespace: "com.example.iot"
+%version: "1.0.0"
+%documentation: "IoT sensor data via MQTT"
+
+%servers: {
+  mosquitto: {
+    %host: "mqtt.example.com:1883",
+    %protocol: "mqtt",
+    %description: "MQTT broker for IoT devices"
+  }
+}
+
+%types: {
+  SensorReading: {
+    %kind: "structure",
+    %documentation: "Sensor measurement",
+    %fields: [
+      {
+        %name: "sensorId",
+        %type: "string",
+        %required: true,
+        %description: "Sensor identifier"
+      },
+      {
+        %name: "temperature",
+        %type: "double",
+        %required: true,
+        %description: "Temperature in Celsius"
+      },
+      {
+        %name: "humidity",
+        %type: "double",
+        %required: true,
+        %description: "Humidity percentage"
+      },
+      {
+        %name: "timestamp",
+        %type: "long",
+        %required: true,
+        %description: "Measurement timestamp"
+      }
+    ]
+  }
+}
+
+%channels: {
+  "sensors/{sensorId}/data": {
+    %address: "sensors/{sensorId}/data",
+    %protocol: "mqtt",
+    %description: "Sensor data stream",
+    %subscribe: {
+      %message: "SensorReading"
+    }
+  }
+}
+
+%messages: {
+  SensorReading: {
+    %contentType: "application/json",
+    %payload: "SensorReading"
+  }
+}

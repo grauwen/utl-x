@@ -1,0 +1,82 @@
+%utlx 1.0
+// Demonstrates: Foreign key relationships between tables
+// Note: This example is specific to SQL due to: %table, %primaryKey, %foreignKey, %onDelete, %onUpdate
+output sql
+---
+%namespace: "public"
+%version: "1.0"
+%documentation: "Tables with foreign key relationships"
+
+%types: {
+  Customers: {
+    %kind: "structure",
+    %table: "customers",
+    %documentation: "Customers table",
+    %fields: [
+      {
+        %name: "customer_id",
+        %type: "integer",
+        %primaryKey: true,
+        %autoIncrement: true,
+        %required: true,
+        %description: "Customer identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %sqlType: "VARCHAR(100)",
+        %required: true,
+        %description: "Customer name"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %sqlType: "VARCHAR(255)",
+        %required: true,
+        %description: "Email address"
+      }
+    ]
+  },
+
+  Orders: {
+    %kind: "structure",
+    %table: "orders",
+    %documentation: "Orders table",
+    %fields: [
+      {
+        %name: "order_id",
+        %type: "integer",
+        %primaryKey: true,
+        %autoIncrement: true,
+        %required: true,
+        %description: "Order identifier"
+      },
+      {
+        %name: "customer_id",
+        %type: "integer",
+        %required: true,
+        %foreignKey: {
+          %table: "customers",
+          %column: "customer_id",
+          %onDelete: "CASCADE",
+          %onUpdate: "CASCADE"
+        },
+        %description: "Customer reference"
+      },
+      {
+        %name: "order_date",
+        %type: "string",
+        %sqlType: "DATE",
+        %required: true,
+        %description: "Order date"
+      },
+      {
+        %name: "total_amount",
+        %type: "double",
+        %sqlType: "DECIMAL(10,2)",
+        %required: true,
+        %description: "Total amount"
+      }
+    ]
+  }
+}

@@ -1,0 +1,151 @@
+%utlx 1.0
+// Demonstrates: Many-to-many relationship through association entity
+// Note: This example is specific to OData due to: %entityType, %key, %navigation, %cardinality (N:N)
+output odata
+---
+%namespace: "ODataDemo.Education"
+%version: "1.0"
+%documentation: "Students and Courses with many-to-many relationship"
+
+%types: {
+  Student: {
+    %kind: "structure",
+    %entityType: true,
+    %documentation: "Student entity",
+    %fields: [
+      {
+        %name: "StudentId",
+        %type: "integer",
+        %key: true,
+        %required: true,
+        %description: "Student identifier"
+      },
+      {
+        %name: "FirstName",
+        %type: "string",
+        %required: true,
+        %description: "First name"
+      },
+      {
+        %name: "LastName",
+        %type: "string",
+        %required: true,
+        %description: "Last name"
+      },
+      {
+        %name: "Email",
+        %type: "string",
+        %required: true,
+        %description: "Email address"
+      },
+      {
+        %name: "EnrollmentDate",
+        %type: "string",
+        %required: true,
+        %description: "Enrollment date"
+      }
+    ],
+    %navigation: [
+      {
+        %name: "Enrollments",
+        %target: "Enrollment",
+        %cardinality: "1:N",
+        %description: "Student's course enrollments"
+      }
+    ]
+  },
+
+  Course: {
+    %kind: "structure",
+    %entityType: true,
+    %documentation: "Course entity",
+    %fields: [
+      {
+        %name: "CourseId",
+        %type: "integer",
+        %key: true,
+        %required: true,
+        %description: "Course identifier"
+      },
+      {
+        %name: "CourseName",
+        %type: "string",
+        %required: true,
+        %description: "Course name"
+      },
+      {
+        %name: "Credits",
+        %type: "integer",
+        %required: true,
+        %description: "Course credits"
+      },
+      {
+        %name: "Instructor",
+        %type: "string",
+        %required: true,
+        %description: "Instructor name"
+      }
+    ],
+    %navigation: [
+      {
+        %name: "Enrollments",
+        %target: "Enrollment",
+        %cardinality: "1:N",
+        %description: "Course enrollments"
+      }
+    ]
+  },
+
+  Enrollment: {
+    %kind: "structure",
+    %entityType: true,
+    %documentation: "Enrollment junction entity (many-to-many)",
+    %fields: [
+      {
+        %name: "EnrollmentId",
+        %type: "integer",
+        %key: true,
+        %required: true,
+        %description: "Enrollment identifier"
+      },
+      {
+        %name: "StudentId",
+        %type: "integer",
+        %required: true,
+        %description: "Student reference"
+      },
+      {
+        %name: "CourseId",
+        %type: "integer",
+        %required: true,
+        %description: "Course reference"
+      },
+      {
+        %name: "EnrolledDate",
+        %type: "string",
+        %required: true,
+        %description: "Enrollment date"
+      },
+      {
+        %name: "Grade",
+        %type: "string",
+        %required: false,
+        %description: "Final grade"
+      }
+    ],
+    %navigation: [
+      {
+        %name: "Student",
+        %target: "Student",
+        %cardinality: "N:1",
+        %description: "Enrolled student"
+      },
+      {
+        %name: "Course",
+        %target: "Course",
+        %cardinality: "N:1",
+        %description: "Enrolled course"
+      }
+    ]
+  }
+}

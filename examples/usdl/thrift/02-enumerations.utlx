@@ -1,0 +1,70 @@
+%utlx 1.0
+// Demonstrates: Thrift enumerations with ordinals
+// Note: This example is specific to Thrift due to: %ordinal for enum values
+output thrift
+---
+%namespace: "com.example.thrift"
+%version: "1.0"
+%documentation: "Thrift enumerations"
+
+%types: {
+  OrderStatus: {
+    %kind: "enumeration",
+    %documentation: "Order status values",
+    %values: [
+      {
+        %value: "PENDING",
+        %ordinal: 0,
+        %description: "Order pending"
+      },
+      {
+        %value: "PROCESSING",
+        %ordinal: 1,
+        %description: "Order processing"
+      },
+      {
+        %value: "SHIPPED",
+        %ordinal: 2,
+        %description: "Order shipped"
+      },
+      {
+        %value: "DELIVERED",
+        %ordinal: 3,
+        %description: "Order delivered"
+      },
+      {
+        %value: "CANCELLED",
+        %ordinal: 4,
+        %description: "Order cancelled"
+      }
+    ]
+  },
+
+  Order: {
+    %kind: "structure",
+    %documentation: "Order with status",
+    %fields: [
+      {
+        %name: "orderId",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: true,
+        %description: "Order identifier"
+      },
+      {
+        %name: "status",
+        %type: "OrderStatus",
+        %fieldNumber: 2,
+        %required: true,
+        %description: "Order status"
+      },
+      {
+        %name: "totalAmount",
+        %type: "double",
+        %fieldNumber: 3,
+        %required: true,
+        %description: "Total amount"
+      }
+    ]
+  }
+}

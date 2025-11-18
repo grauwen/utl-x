@@ -1,0 +1,55 @@
+%utlx 1.0
+// Demonstrates: Basic SQL table with primary key
+// Note: This example is specific to SQL due to: %table, %primaryKey, %sqlType
+output sql
+---
+%namespace: "public"
+%version: "1.0"
+%documentation: "Simple database table"
+
+%types: {
+  Users: {
+    %kind: "structure",
+    %table: "users",
+    %documentation: "Users table",
+    %fields: [
+      {
+        %name: "user_id",
+        %type: "integer",
+        %primaryKey: true,
+        %autoIncrement: true,
+        %required: true,
+        %description: "User identifier"
+      },
+      {
+        %name: "username",
+        %type: "string",
+        %sqlType: "VARCHAR(50)",
+        %required: true,
+        %unique: true,
+        %description: "Username"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %sqlType: "VARCHAR(255)",
+        %required: true,
+        %unique: true,
+        %description: "Email address"
+      },
+      {
+        %name: "created_at",
+        %type: "string",
+        %sqlType: "TIMESTAMP",
+        %required: true,
+        %description: "Creation timestamp"
+      },
+      {
+        %name: "is_active",
+        %type: "boolean",
+        %required: true,
+        %description: "Account active status"
+      }
+    ]
+  }
+}

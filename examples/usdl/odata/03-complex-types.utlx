@@ -1,0 +1,93 @@
+%utlx 1.0
+// Demonstrates: Entity types vs complex types (non-entity structures)
+// Note: This example is specific to OData due to: %entityType (true vs false/omitted), %key
+output odata
+---
+%namespace: "ODataDemo.HR"
+%version: "1.0"
+%documentation: "Employee entity with complex Address type"
+
+%types: {
+  Address: {
+    %kind: "structure",
+    %entityType: false,
+    %documentation: "Address complex type (not an entity)",
+    %fields: [
+      {
+        %name: "Street",
+        %type: "string",
+        %required: true,
+        %description: "Street address"
+      },
+      {
+        %name: "City",
+        %type: "string",
+        %required: true,
+        %description: "City name"
+      },
+      {
+        %name: "State",
+        %type: "string",
+        %required: true,
+        %description: "State code"
+      },
+      {
+        %name: "PostalCode",
+        %type: "string",
+        %required: true,
+        %description: "Postal code"
+      },
+      {
+        %name: "Country",
+        %type: "string",
+        %required: true,
+        %description: "Country name"
+      }
+    ]
+  },
+
+  Employee: {
+    %kind: "structure",
+    %entityType: true,
+    %documentation: "Employee entity",
+    %fields: [
+      {
+        %name: "EmployeeId",
+        %type: "integer",
+        %key: true,
+        %required: true,
+        %description: "Employee identifier"
+      },
+      {
+        %name: "FirstName",
+        %type: "string",
+        %required: true,
+        %description: "First name"
+      },
+      {
+        %name: "LastName",
+        %type: "string",
+        %required: true,
+        %description: "Last name"
+      },
+      {
+        %name: "HomeAddress",
+        %type: "Address",
+        %required: false,
+        %description: "Home address (complex type)"
+      },
+      {
+        %name: "WorkAddress",
+        %type: "Address",
+        %required: false,
+        %description: "Work address (complex type)"
+      },
+      {
+        %name: "HireDate",
+        %type: "string",
+        %required: true,
+        %description: "Hire date"
+      }
+    ]
+  }
+}

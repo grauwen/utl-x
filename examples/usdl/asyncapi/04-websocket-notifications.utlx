@@ -1,0 +1,93 @@
+%utlx 1.0
+// Demonstrates: WebSocket protocol for real-time notifications
+// Note: This example is specific to AsyncAPI due to: %channels, %protocol (websocket), %messages, %headers
+output asyncapi
+---
+%namespace: "com.example.notifications"
+%version: "1.0.0"
+%documentation: "Real-time notifications via WebSocket"
+
+%servers: {
+  websocket: {
+    %host: "ws.example.com",
+    %protocol: "websocket",
+    %description: "WebSocket server for notifications"
+  }
+}
+
+%types: {
+  NotificationHeaders: {
+    %kind: "structure",
+    %documentation: "Message headers",
+    %fields: [
+      {
+        %name: "userId",
+        %type: "string",
+        %required: true,
+        %description: "Target user ID"
+      },
+      {
+        %name: "priority",
+        %type: "string",
+        %required: false,
+        %description: "Notification priority"
+      }
+    ]
+  },
+
+  Notification: {
+    %kind: "structure",
+    %documentation: "Notification message",
+    %fields: [
+      {
+        %name: "notificationId",
+        %type: "string",
+        %required: true,
+        %description: "Notification identifier"
+      },
+      {
+        %name: "type",
+        %type: "string",
+        %required: true,
+        %description: "Notification type"
+      },
+      {
+        %name: "title",
+        %type: "string",
+        %required: true,
+        %description: "Notification title"
+      },
+      {
+        %name: "message",
+        %type: "string",
+        %required: true,
+        %description: "Notification message"
+      },
+      {
+        %name: "timestamp",
+        %type: "long",
+        %required: true,
+        %description: "Notification timestamp"
+      }
+    ]
+  }
+}
+
+%channels: {
+  "notifications": {
+    %address: "/notifications",
+    %protocol: "websocket",
+    %description: "User notifications channel",
+    %subscribe: {
+      %message: "Notification"
+    }
+  }
+}
+
+%messages: {
+  Notification: {
+    %contentType: "application/json",
+    %headers: "NotificationHeaders",
+    %payload: "Notification"
+  }
+}

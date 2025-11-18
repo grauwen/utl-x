@@ -1,0 +1,73 @@
+%utlx 1.0
+// Demonstrates: Indexes, unique constraints, and check constraints
+// Note: This example is specific to SQL due to: %index, %unique, %check, %sqlType
+output sql
+---
+%namespace: "public"
+%version: "1.0"
+%documentation: "Table with indexes and constraints"
+
+%types: {
+  Products: {
+    %kind: "structure",
+    %table: "products",
+    %documentation: "Products table with constraints",
+    %fields: [
+      {
+        %name: "product_id",
+        %type: "integer",
+        %primaryKey: true,
+        %autoIncrement: true,
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "sku",
+        %type: "string",
+        %sqlType: "VARCHAR(50)",
+        %required: true,
+        %unique: true,
+        %index: "idx_product_sku",
+        %description: "Stock keeping unit"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %sqlType: "VARCHAR(200)",
+        %required: true,
+        %index: "idx_product_name",
+        %description: "Product name"
+      },
+      {
+        %name: "category",
+        %type: "string",
+        %sqlType: "VARCHAR(50)",
+        %required: true,
+        %index: "idx_product_category",
+        %description: "Product category"
+      },
+      {
+        %name: "price",
+        %type: "double",
+        %sqlType: "DECIMAL(10,2)",
+        %required: true,
+        %check: "price >= 0",
+        %description: "Product price (must be positive)"
+      },
+      {
+        %name: "stock_quantity",
+        %type: "integer",
+        %required: true,
+        %check: "stock_quantity >= 0",
+        %description: "Stock quantity (must be non-negative)"
+      },
+      {
+        %name: "created_at",
+        %type: "string",
+        %sqlType: "TIMESTAMP",
+        %required: true,
+        %description: "Creation timestamp"
+      }
+    ]
+  }
+}

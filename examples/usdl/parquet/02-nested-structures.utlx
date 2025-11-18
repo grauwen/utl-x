@@ -1,0 +1,73 @@
+%utlx 1.0
+// Demonstrates: Nested structures in Parquet
+// Note: This example is specific to Parquet due to: %repetition, nested structure handling
+output parquet
+---
+%namespace: "com.example.parquet"
+%version: "1.0"
+%documentation: "Parquet schema with nested structures"
+
+%types: {
+  Address: {
+    %kind: "structure",
+    %documentation: "Address structure",
+    %fields: [
+      {
+        %name: "street",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %description: "Street address"
+      },
+      {
+        %name: "city",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %description: "City"
+      },
+      {
+        %name: "postal_code",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %description: "Postal code"
+      }
+    ]
+  },
+
+  Person: {
+    %kind: "structure",
+    %documentation: "Person with nested address",
+    %fields: [
+      {
+        %name: "person_id",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %description: "Person identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %description: "Person name"
+      },
+      {
+        %name: "age",
+        %type: "integer",
+        %repetition: "optional",
+        %required: false,
+        %description: "Age"
+      },
+      {
+        %name: "address",
+        %type: "Address",
+        %repetition: "optional",
+        %required: false,
+        %description: "Home address"
+      }
+    ]
+  }
+}

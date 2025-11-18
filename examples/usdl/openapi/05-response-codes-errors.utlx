@@ -1,0 +1,130 @@
+%utlx 1.0
+// Demonstrates: Comprehensive response codes and error handling
+// Note: This example is specific to OpenAPI due to: %responses with multiple status codes, %statusCode
+output openapi
+---
+%namespace: "http://api.example.com/v1"
+%version: "1.0.0"
+%documentation: "API with comprehensive error handling"
+
+%types: {
+  Order: {
+    %kind: "structure",
+    %documentation: "Order entity",
+    %fields: [
+      {
+        %name: "orderId",
+        %type: "string",
+        %required: true,
+        %description: "Order identifier"
+      },
+      {
+        %name: "status",
+        %type: "string",
+        %required: true,
+        %description: "Order status"
+      },
+      {
+        %name: "totalAmount",
+        %type: "double",
+        %required: true,
+        %description: "Total amount"
+      }
+    ]
+  },
+
+  Error: {
+    %kind: "structure",
+    %documentation: "Error response",
+    %fields: [
+      {
+        %name: "code",
+        %type: "string",
+        %required: true,
+        %description: "Error code"
+      },
+      {
+        %name: "message",
+        %type: "string",
+        %required: true,
+        %description: "Error message"
+      },
+      {
+        %name: "details",
+        %type: "string",
+        %array: true,
+        %required: false,
+        %description: "Error details"
+      }
+    ]
+  },
+
+  ValidationError: {
+    %kind: "structure",
+    %documentation: "Validation error response",
+    %fields: [
+      {
+        %name: "field",
+        %type: "string",
+        %required: true,
+        %description: "Field name"
+      },
+      {
+        %name: "message",
+        %type: "string",
+        %required: true,
+        %description: "Validation message"
+      }
+    ]
+  }
+}
+
+%paths: {
+  "/orders": {
+    %method: "POST",
+    %operationId: "createOrder",
+    %summary: "Create order with comprehensive error handling",
+    %requestBody: {
+      %apiSchema: "Order",
+      %required: true
+    },
+    %responses: {
+      "201": {
+        %statusCode: 201,
+        %apiSchema: "Order",
+        %description: "Order created successfully"
+      },
+      "400": {
+        %statusCode: 400,
+        %apiSchema: "ValidationError",
+        %array: true,
+        %description: "Bad request - validation errors"
+      },
+      "401": {
+        %statusCode: 401,
+        %apiSchema: "Error",
+        %description: "Unauthorized"
+      },
+      "403": {
+        %statusCode: 403,
+        %apiSchema: "Error",
+        %description: "Forbidden"
+      },
+      "409": {
+        %statusCode: 409,
+        %apiSchema: "Error",
+        %description: "Conflict - order already exists"
+      },
+      "500": {
+        %statusCode: 500,
+        %apiSchema: "Error",
+        %description: "Internal server error"
+      },
+      "503": {
+        %statusCode: 503,
+        %apiSchema: "Error",
+        %description: "Service unavailable"
+      }
+    }
+  }
+}

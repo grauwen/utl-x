@@ -1,0 +1,67 @@
+%utlx 1.0
+// Demonstrates: Basic Kafka event with publish/subscribe
+// Note: This example is specific to AsyncAPI due to: %channels, %protocol, %publish, %subscribe, %messages
+output asyncapi
+---
+%namespace: "com.example.events"
+%version: "1.0.0"
+%documentation: "Simple Kafka event stream"
+
+%servers: {
+  production: {
+    %host: "kafka.example.com:9092",
+    %protocol: "kafka",
+    %description: "Production Kafka cluster"
+  }
+}
+
+%types: {
+  UserCreated: {
+    %kind: "structure",
+    %documentation: "User created event",
+    %fields: [
+      {
+        %name: "userId",
+        %type: "string",
+        %required: true,
+        %description: "User identifier"
+      },
+      {
+        %name: "username",
+        %type: "string",
+        %required: true,
+        %description: "Username"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %required: true,
+        %description: "Email address"
+      },
+      {
+        %name: "createdAt",
+        %type: "long",
+        %required: true,
+        %description: "Creation timestamp"
+      }
+    ]
+  }
+}
+
+%channels: {
+  "user.created": {
+    %address: "user.created",
+    %protocol: "kafka",
+    %description: "User creation events",
+    %publish: {
+      %message: "UserCreated"
+    }
+  }
+}
+
+%messages: {
+  UserCreated: {
+    %contentType: "application/json",
+    %payload: "UserCreated"
+  }
+}

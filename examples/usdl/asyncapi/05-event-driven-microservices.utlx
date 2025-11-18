@@ -1,0 +1,150 @@
+%utlx 1.0
+// Demonstrates: Event-driven microservices architecture with multiple event types
+// Note: This example is specific to AsyncAPI due to: %channels, %operations, %action (publish/subscribe), %messages
+output asyncapi
+---
+%namespace: "com.example.ecommerce"
+%version: "1.0.0"
+%documentation: "E-commerce event-driven architecture"
+
+%servers: {
+  kafka: {
+    %host: "kafka.example.com:9092",
+    %protocol: "kafka",
+    %description: "Kafka event stream"
+  }
+}
+
+%types: {
+  ProductUpdated: {
+    %kind: "structure",
+    %documentation: "Product update event",
+    %fields: [
+      {
+        %name: "productId",
+        %type: "string",
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %required: true,
+        %description: "Product name"
+      },
+      {
+        %name: "price",
+        %type: "double",
+        %required: true,
+        %description: "Updated price"
+      }
+    ]
+  },
+
+  InventoryChanged: {
+    %kind: "structure",
+    %documentation: "Inventory change event",
+    %fields: [
+      {
+        %name: "productId",
+        %type: "string",
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "quantity",
+        %type: "integer",
+        %required: true,
+        %description: "New quantity"
+      },
+      {
+        %name: "warehouse",
+        %type: "string",
+        %required: true,
+        %description: "Warehouse location"
+      }
+    ]
+  },
+
+  PaymentProcessed: {
+    %kind: "structure",
+    %documentation: "Payment processed event",
+    %fields: [
+      {
+        %name: "paymentId",
+        %type: "string",
+        %required: true,
+        %description: "Payment identifier"
+      },
+      {
+        %name: "orderId",
+        %type: "string",
+        %required: true,
+        %description: "Order identifier"
+      },
+      {
+        %name: "amount",
+        %type: "double",
+        %required: true,
+        %description: "Payment amount"
+      },
+      {
+        %name: "status",
+        %type: "string",
+        %required: true,
+        %description: "Payment status"
+      }
+    ]
+  }
+}
+
+%channels: {
+  "catalog.product.updated": {
+    %address: "catalog.product.updated",
+    %description: "Product catalog updates"
+  },
+  "inventory.changed": {
+    %address: "inventory.changed",
+    %description: "Inventory changes"
+  },
+  "payment.processed": {
+    %address: "payment.processed",
+    %description: "Payment processing events"
+  }
+}
+
+%operations: {
+  onProductUpdate: {
+    %action: "receive",
+    %channel: "catalog.product.updated",
+    %message: "ProductUpdated",
+    %summary: "Subscribe to product updates"
+  },
+  onInventoryChange: {
+    %action: "receive",
+    %channel: "inventory.changed",
+    %message: "InventoryChanged",
+    %summary: "Subscribe to inventory changes"
+  },
+  publishPayment: {
+    %action: "send",
+    %channel: "payment.processed",
+    %message: "PaymentProcessed",
+    %summary: "Publish payment processed events"
+  }
+}
+
+%messages: {
+  ProductUpdated: {
+    %contentType: "application/json",
+    %payload: "ProductUpdated"
+  },
+  InventoryChanged: {
+    %contentType: "application/json",
+    %payload: "InventoryChanged"
+  },
+  PaymentProcessed: {
+    %contentType: "application/json",
+    %payload: "PaymentProcessed"
+  }
+}

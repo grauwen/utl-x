@@ -1,0 +1,77 @@
+%utlx 1.0
+// Demonstrates: Basic REST API with GET and POST operations
+// Note: This example is specific to OpenAPI due to: %paths, %method, %operationId, %responses, %requestBody
+output openapi
+---
+%namespace: "http://api.example.com/v1"
+%version: "1.0.0"
+%documentation: "Simple User API"
+
+%types: {
+  User: {
+    %kind: "structure",
+    %documentation: "User entity",
+    %fields: [
+      {
+        %name: "id",
+        %type: "integer",
+        %required: true,
+        %description: "User identifier"
+      },
+      {
+        %name: "username",
+        %type: "string",
+        %required: true,
+        %description: "Username"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %required: true,
+        %description: "Email address",
+        %constraints: {
+          %format: "email"
+        }
+      }
+    ]
+  }
+}
+
+%paths: {
+  "/users": {
+    %method: "GET",
+    %operationId: "listUsers",
+    %summary: "List all users",
+    %responses: {
+      "200": {
+        %apiSchema: "User",
+        %array: true,
+        %description: "Successful response"
+      }
+    }
+  },
+
+  "/users/{id}": {
+    %method: "GET",
+    %operationId: "getUser",
+    %summary: "Get user by ID",
+    %parameters: [
+      {
+        %name: "id",
+        %in: "path",
+        %type: "integer",
+        %required: true,
+        %description: "User ID"
+      }
+    ],
+    %responses: {
+      "200": {
+        %apiSchema: "User",
+        %description: "Successful response"
+      },
+      "404": {
+        %description: "User not found"
+      }
+    }
+  }
+}

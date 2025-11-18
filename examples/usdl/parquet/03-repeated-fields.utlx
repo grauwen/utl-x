@@ -1,0 +1,54 @@
+%utlx 1.0
+// Demonstrates: Repeated fields (arrays) in Parquet
+// Note: This example is specific to Parquet due to: %repetition (repeated), array handling
+output parquet
+---
+%namespace: "com.example.parquet"
+%version: "1.0"
+%documentation: "Parquet schema with repeated fields"
+
+%types: {
+  Product: {
+    %kind: "structure",
+    %documentation: "Product with tags",
+    %fields: [
+      {
+        %name: "product_id",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %description: "Product name"
+      },
+      {
+        %name: "price",
+        %type: "double",
+        %repetition: "required",
+        %required: true,
+        %description: "Product price"
+      },
+      {
+        %name: "tags",
+        %type: "string",
+        %repetition: "repeated",
+        %array: true,
+        %required: false,
+        %description: "Product tags (array)"
+      },
+      {
+        %name: "categories",
+        %type: "string",
+        %repetition: "repeated",
+        %array: true,
+        %required: false,
+        %description: "Product categories (array)"
+      }
+    ]
+  }
+}

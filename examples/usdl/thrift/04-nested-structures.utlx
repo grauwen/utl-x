@@ -1,0 +1,108 @@
+%utlx 1.0
+// Demonstrates: Nested Thrift structures
+// Note: This example is specific to Thrift due to: %fieldNumber, nested struct handling
+output thrift
+---
+%namespace: "com.example.thrift"
+%version: "1.0"
+%documentation: "Nested Thrift structures"
+
+%types: {
+  Address: {
+    %kind: "structure",
+    %documentation: "Address structure",
+    %fields: [
+      {
+        %name: "street",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: true,
+        %description: "Street address"
+      },
+      {
+        %name: "city",
+        %type: "string",
+        %fieldNumber: 2,
+        %required: true,
+        %description: "City"
+      },
+      {
+        %name: "state",
+        %type: "string",
+        %fieldNumber: 3,
+        %required: true,
+        %description: "State"
+      },
+      {
+        %name: "zipCode",
+        %type: "string",
+        %fieldNumber: 4,
+        %required: true,
+        %description: "ZIP code"
+      }
+    ]
+  },
+
+  Contact: {
+    %kind: "structure",
+    %documentation: "Contact information",
+    %fields: [
+      {
+        %name: "phone",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: false,
+        %description: "Phone number"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %fieldNumber: 2,
+        %required: true,
+        %description: "Email address"
+      }
+    ]
+  },
+
+  Customer: {
+    %kind: "structure",
+    %documentation: "Customer with nested data",
+    %fields: [
+      {
+        %name: "customerId",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: true,
+        %description: "Customer identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %fieldNumber: 2,
+        %required: true,
+        %description: "Customer name"
+      },
+      {
+        %name: "shippingAddress",
+        %type: "Address",
+        %fieldNumber: 3,
+        %required: true,
+        %description: "Shipping address"
+      },
+      {
+        %name: "billingAddress",
+        %type: "Address",
+        %fieldNumber: 4,
+        %required: false,
+        %description: "Billing address"
+      },
+      {
+        %name: "contact",
+        %type: "Contact",
+        %fieldNumber: 5,
+        %required: true,
+        %description: "Contact information"
+      }
+    ]
+  }
+}

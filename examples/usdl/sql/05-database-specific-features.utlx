@@ -1,0 +1,77 @@
+%utlx 1.0
+// Demonstrates: Database-specific features (PostgreSQL)
+// Note: This example is specific to SQL due to: %sqlDialect, %sqlType (JSONB, UUID, ARRAY), %engine, %charset
+output sql
+---
+%namespace: "public"
+%version: "1.0"
+%documentation: "PostgreSQL-specific features"
+%sqlDialect: "postgresql"
+
+%types: {
+  Documents: {
+    %kind: "structure",
+    %table: "documents",
+    %documentation: "Documents table with PostgreSQL-specific types",
+    %fields: [
+      {
+        %name: "document_id",
+        %type: "string",
+        %sqlType: "UUID",
+        %primaryKey: true,
+        %required: true,
+        %description: "Document UUID"
+      },
+      {
+        %name: "title",
+        %type: "string",
+        %sqlType: "VARCHAR(255)",
+        %required: true,
+        %index: true,
+        %description: "Document title"
+      },
+      {
+        %name: "content",
+        %type: "string",
+        %sqlType: "TEXT",
+        %required: true,
+        %description: "Document content"
+      },
+      {
+        %name: "metadata",
+        %type: "string",
+        %sqlType: "JSONB",
+        %required: false,
+        %description: "Document metadata (JSON)"
+      },
+      {
+        %name: "tags",
+        %type: "string",
+        %sqlType: "TEXT[]",
+        %array: true,
+        %required: false,
+        %description: "Document tags (array)"
+      },
+      {
+        %name: "version",
+        %type: "integer",
+        %required: true,
+        %description: "Document version"
+      },
+      {
+        %name: "created_at",
+        %type: "string",
+        %sqlType: "TIMESTAMP WITH TIME ZONE",
+        %required: true,
+        %description: "Creation timestamp"
+      },
+      {
+        %name: "updated_at",
+        %type: "string",
+        %sqlType: "TIMESTAMP WITH TIME ZONE",
+        %required: false,
+        %description: "Last update timestamp"
+      }
+    ]
+  }
+}

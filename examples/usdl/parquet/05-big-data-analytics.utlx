@@ -1,0 +1,78 @@
+%utlx 1.0
+// Demonstrates: Big data analytics schema with decimal precision
+// Note: This example is specific to Parquet due to: %precision, %scale, %compression, %encoding
+output parquet
+---
+%namespace: "com.example.analytics"
+%version: "1.0"
+%documentation: "Analytics data for big data processing"
+
+%types: {
+  Transaction: {
+    %kind: "structure",
+    %compression: "gzip",
+    %documentation: "Financial transaction record",
+    %fields: [
+      {
+        %name: "transaction_id",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %encoding: "PLAIN",
+        %description: "Transaction identifier"
+      },
+      {
+        %name: "account_id",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %encoding: "PLAIN_DICTIONARY",
+        %description: "Account identifier"
+      },
+      {
+        %name: "amount",
+        %type: "bytes",
+        %logicalType: "decimal",
+        %precision: 18,
+        %scale: 2,
+        %repetition: "required",
+        %required: true,
+        %description: "Transaction amount (decimal 18,2)"
+      },
+      {
+        %name: "currency",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %encoding: "PLAIN_DICTIONARY",
+        %description: "Currency code"
+      },
+      {
+        %name: "merchant_id",
+        %type: "string",
+        %repetition: "optional",
+        %required: false,
+        %encoding: "PLAIN_DICTIONARY",
+        %description: "Merchant identifier"
+      },
+      {
+        %name: "timestamp",
+        %type: "long",
+        %logicalType: "timestamp-millis",
+        %repetition: "required",
+        %required: true,
+        %encoding: "DELTA_BINARY_PACKED",
+        %description: "Transaction timestamp"
+      },
+      {
+        %name: "tags",
+        %type: "string",
+        %repetition: "repeated",
+        %array: true,
+        %required: false,
+        %encoding: "PLAIN_DICTIONARY",
+        %description: "Transaction tags"
+      }
+    ]
+  }
+}

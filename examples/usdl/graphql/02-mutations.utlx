@@ -1,0 +1,112 @@
+%utlx 1.0
+// Demonstrates: GraphQL mutations for data modification
+// Note: This example is specific to GraphQL due to: Mutation type, %resolver
+output graphql
+---
+%namespace: "com.example.graphql"
+%version: "1.0"
+%documentation: "GraphQL schema with mutations"
+
+%types: {
+  Product: {
+    %kind: "structure",
+    %documentation: "Product type",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %required: true,
+        %description: "Product name"
+      },
+      {
+        %name: "price",
+        %type: "double",
+        %required: true,
+        %description: "Product price"
+      }
+    ]
+  },
+
+  CreateProductInput: {
+    %kind: "structure",
+    %documentation: "Input for creating a product",
+    %fields: [
+      {
+        %name: "name",
+        %type: "string",
+        %required: true,
+        %description: "Product name"
+      },
+      {
+        %name: "price",
+        %type: "double",
+        %required: true,
+        %description: "Product price"
+      }
+    ]
+  },
+
+  Query: {
+    %kind: "structure",
+    %documentation: "Root query type",
+    %fields: [
+      {
+        %name: "product",
+        %type: "Product",
+        %required: false,
+        %resolver: "getProduct",
+        %description: "Get product by ID",
+        %parameters: [
+          {
+            %name: "id",
+            %type: "string",
+            %required: true
+          }
+        ]
+      }
+    ]
+  },
+
+  Mutation: {
+    %kind: "structure",
+    %documentation: "Root mutation type",
+    %fields: [
+      {
+        %name: "createProduct",
+        %type: "Product",
+        %required: true,
+        %resolver: "createProduct",
+        %description: "Create a new product",
+        %parameters: [
+          {
+            %name: "input",
+            %type: "CreateProductInput",
+            %required: true,
+            %description: "Product data"
+          }
+        ]
+      },
+      {
+        %name: "deleteProduct",
+        %type: "boolean",
+        %required: true,
+        %resolver: "deleteProduct",
+        %description: "Delete a product",
+        %parameters: [
+          {
+            %name: "id",
+            %type: "string",
+            %required: true,
+            %description: "Product ID"
+          }
+        ]
+      }
+    ]
+  }
+}
