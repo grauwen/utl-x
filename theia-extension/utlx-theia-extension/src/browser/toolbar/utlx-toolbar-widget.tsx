@@ -141,7 +141,10 @@ export class UTLXToolbarWidget extends ReactWidget {
                             <div className='utlx-dialog-footer'>
                                 <button
                                     className='utlx-dialog-button utlx-dialog-button-secondary'
-                                    onClick={() => this.closeMCPDialog()}
+                                    onClick={() => {
+                                        console.log('[UTLXToolbar] 🔘 Cancel button clicked');
+                                        this.closeMCPDialog();
+                                    }}
                                     disabled={mcpLoading}
                                 >
                                     Cancel
@@ -185,11 +188,15 @@ export class UTLXToolbarWidget extends ReactWidget {
     }
 
     private openMCPDialog(): void {
+        console.log('[UTLXToolbar] 🤖 Opening MCP dialog');
         this.setState({ showMCPDialog: true, mcpPrompt: '' });
+        console.log('[UTLXToolbar] ✅ MCP dialog state updated, showMCPDialog:', true);
     }
 
     private closeMCPDialog(): void {
+        console.log('[UTLXToolbar] 🚪 Closing MCP dialog');
         this.setState({ showMCPDialog: false, mcpPrompt: '', mcpLoading: false });
+        console.log('[UTLXToolbar] ✅ MCP dialog state updated to closed');
     }
 
     private async submitMCPPrompt(): Promise<void> {
@@ -237,8 +244,12 @@ export class UTLXToolbarWidget extends ReactWidget {
     }
 
     private setState(partial: Partial<ToolbarState>): void {
+        console.log('[UTLXToolbar] setState called with:', partial);
+        const oldState = { ...this.state };
         this.state = { ...this.state, ...partial };
+        console.log('[UTLXToolbar] State updated from:', oldState, 'to:', this.state);
         this.update();
+        console.log('[UTLXToolbar] update() called, triggering re-render');
     }
 
     /**
