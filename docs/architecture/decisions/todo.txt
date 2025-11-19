@@ -18,6 +18,21 @@ Configuration Options
   export OLLAMA_ENDPOINT=http://localhost:11434  # optional
   export OLLAMA_MODEL=codellama  # optional
 
+ Start the MCP Server:
+  # With Claude (requires API key)
+  export UTLX_LLM_PROVIDER=claude
+  export ANTHROPIC_API_KEY=your-api-key
+  npm start
+
+  # With Ollama (requires Ollama running locally)
+  export UTLX_LLM_PROVIDER=ollama
+  npm start
+
+  # Or start with HTTP transport for debugging
+  export UTLX_MCP_TRANSPORT=http
+  export UTLX_MCP_PORT=3000
+  npm start
+
 ----
 
 
