@@ -11,6 +11,7 @@ import { BackendApplicationContribution } from '@theia/core/lib/node';
 import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { UTLXServiceImpl } from './services/utlx-service-impl';
 import { UTLXDaemonClient } from './daemon/utlx-daemon-client';
+import { MCPClient } from './mcp/mcp-client';
 import { ServiceLifecycleManager } from './services/service-lifecycle-manager';
 
 // Import the service starter
@@ -23,6 +24,10 @@ export default new ContainerModule(bind => {
     // Bind daemon client as singleton
     bind(UTLXDaemonClient).toSelf().inSingletonScope();
     console.log('[Backend Module] Daemon client bound');
+
+    // Bind MCP client as singleton
+    bind(MCPClient).toSelf().inSingletonScope();
+    console.log('[Backend Module] MCP client bound');
 
     // Bind service lifecycle manager directly as BackendApplicationContribution
     bind(BackendApplicationContribution).to(ServiceLifecycleManager).inSingletonScope();

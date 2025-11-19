@@ -22,15 +22,21 @@ import {
     ModeConfiguration,
     UTLXMode,
     ValidateUdmRequest,
-    ValidateUdmResult
+    ValidateUdmResult,
+    GenerateUtlxRequest,
+    GenerateUtlxResponse
 } from '../../common/protocol';
 import { DirectiveRegistry, createEmptyDirectiveRegistry } from '../../common/usdl-types';
 import { UTLXDaemonClient } from '../daemon/utlx-daemon-client';
+import { MCPClient } from '../mcp/mcp-client';
 
 @injectable()
 export class UTLXServiceImpl implements UTLXService {
     @inject(UTLXDaemonClient)
     private readonly daemonClient!: UTLXDaemonClient;
+
+    @inject(MCPClient)
+    private readonly mcpClient!: MCPClient;
 
     private currentMode: ModeConfiguration = {
         mode: UTLXMode.RUNTIME,
@@ -278,6 +284,51 @@ export class UTLXServiceImpl implements UTLXService {
         } catch (error) {
             console.error('Failed to restart daemon:', error);
             throw new Error(`Daemon restart failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Generate UTLX code from natural language prompt using AI
+     */
+    async generateUtlxFromPrompt(request: GenerateUtlxRequest): Promise<GenerateUtlxResponse> {
+        console.log('[BACKEND] ========================================');
+        console.log('[BACKEND] generateUtlxFromPrompt() called');
+        console.log('[BACKEND] Prompt:', request.prompt.substring(0, 100));
+        console.log('[BACKEND] Input count:', request.inputs.length);
+        console.log('[BACKEND] Output format:', request.outputFormat);
+        console.log('[BACKEND] ========================================');
+
+        try {
+            // Check if MCP server is available
+            const isAvailable = await this.mcpClient.ping();
+            if (!isAvailable) {
+                console.error('[BACKEND] MCP server is not available');
+                return {
+                    success: false,
+                    error: 'MCP server is not available. Please ensure the MCP server is running.',
+                };
+            }
+
+            // Call the generate_utlx_from_prompt tool via MCP
+            console.log('[BACKEND] Calling MCP tool: generate_utlx_from_prompt');
+            const result = await this.mcpClient.callTool('generate_utlx_from_prompt', {
+                prompt: request.prompt,
+                inputs: request.inputs,
+                outputFormat: request.outputFormat,
+            });
+
+            console.log('[BACKEND] MCP tool returned:', result.success ? 'SUCCESS' : 'FAILURE');
+            console.log('[BACKEND] ========================================');
+
+            return result as GenerateUtlxResponse;
+        } catch (error) {
+            console.error('[BACKEND] Generate UTLX error:', error);
+            console.error('[BACKEND] Error stack:', error instanceof Error ? error.stack : 'N/A');
+            console.log('[BACKEND] ========================================');
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : String(error),
+            };
         }
     }
 

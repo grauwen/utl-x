@@ -328,6 +328,11 @@ export interface UTLXService {
      * Restart daemon
      */
     restart(): Promise<void>;
+
+    /**
+     * Generate UTLX code from natural language prompt using AI
+     */
+    generateUtlxFromPrompt(request: GenerateUtlxRequest): Promise<GenerateUtlxResponse>;
 }
 
 /**
@@ -374,6 +379,38 @@ export interface MCPToolRequest {
 export interface MCPToolResponse {
     success: boolean;
     result?: any;
+    error?: string;
+}
+
+/**
+ * AI Code Generation types
+ */
+export interface GenerateUtlxInput {
+    name: string;
+    format: string;
+    originalData?: string;
+    udm?: string;
+}
+
+export interface GenerateUtlxRequest {
+    prompt: string;
+    inputs: GenerateUtlxInput[];
+    outputFormat: string;
+}
+
+export interface GenerateUtlxResponse {
+    success: boolean;
+    utlx?: string;
+    validation?: {
+        valid: boolean;
+        diagnostics?: Diagnostic[];
+        message?: string;
+        warning?: string;
+    };
+    usage?: {
+        inputTokens: number;
+        outputTokens: number;
+    };
     error?: string;
 }
 

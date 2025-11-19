@@ -15,16 +15,24 @@ import {
 import { DaemonClient } from '../client/DaemonClient';
 import { toolHandlers } from '../tools/handlers';
 import { tools } from '../tools';
+import { LLMGateway } from '../llm/llm-gateway';
 
 export class JsonRpcHandler {
   private logger: Logger;
   private daemonClient: DaemonClient;
+  private llmGateway?: LLMGateway;
   private toolsMap: Map<string, Tool>;
   private shutdownCallback?: () => void;
 
-  constructor(daemonClient: DaemonClient, logger: Logger, shutdownCallback?: () => void) {
+  constructor(
+    daemonClient: DaemonClient,
+    logger: Logger,
+    shutdownCallback?: () => void,
+    llmGateway?: LLMGateway
+  ) {
     this.logger = logger;
     this.daemonClient = daemonClient;
+    this.llmGateway = llmGateway;
     this.shutdownCallback = shutdownCallback;
 
     // Build tools map for quick lookup
@@ -175,7 +183,7 @@ export class JsonRpcHandler {
 
     try {
       // Invoke tool handler
-      const result = await handler(args, this.daemonClient, this.logger);
+      const result = await handler(args, this.daemonClient, this.logger, this.llmGateway);
 
       return {
         jsonrpc: '2.0',

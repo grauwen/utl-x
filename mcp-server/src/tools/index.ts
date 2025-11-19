@@ -13,8 +13,9 @@ import { inferOutputSchemaTool } from './inferOutputSchema';
 import { executeTransformationTool } from './executeTransformation';
 import { getExamplesTool } from './getExamples';
 import { getUsdlDirectivesTool } from './getUsdlDirectives';
+import { generateUtlxTool } from './generateUtlx';
 
-// Export all 8 MCP tools in logical order
+// Export all 9 MCP tools in logical order
 export const tools: Tool[] = [
   getInputSchemaTool,        // Tool 1: Parse input schemas
   getStdlibFunctionsTool,    // Tool 2: Get stdlib function registry
@@ -24,6 +25,7 @@ export const tools: Tool[] = [
   inferOutputSchemaTool,     // Tool 6: Infer output schema
   executeTransformationTool, // Tool 7: Execute transformation
   getExamplesTool,           // Tool 8: Search conformance examples
+  generateUtlxTool,          // Tool 9: Generate UTLX from natural language
 ];
 
 export {
@@ -35,4 +37,5 @@ export {
   inferOutputSchemaTool,
   executeTransformationTool,
   getExamplesTool,
+  generateUtlxTool,
 };

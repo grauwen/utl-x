@@ -30,6 +30,7 @@
   "author": "UTL-X Team",
   "license": "Apache-2.0",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
     "axios": "^1.6.2",
     "zod": "^3.22.4",
     "winston": "^3.11.0",

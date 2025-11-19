@@ -13,6 +13,8 @@ import { createLogger, format, transports, Logger } from 'winston';
 import { DaemonClient } from './client/DaemonClient';
 import { JsonRpcHandler } from './protocol/JsonRpcHandler';
 import { JsonRpcRequest, JsonRpcResponse } from './types/mcp';
+import { LLMGateway } from './llm/llm-gateway';
+import { loadLLMConfig } from './config/llm-config';
 
 // Environment configuration
 const DAEMON_URL = process.env.UTLX_DAEMON_URL || 'http://localhost:7779';
@@ -295,14 +297,39 @@ async function main(): Promise<void> {
       });
     }
 
+    // Load LLM configuration
+    const llmConfig = loadLLMConfig(logger);
+    let llmGateway: LLMGateway | undefined;
+
+    if (llmConfig) {
+      try {
+        llmGateway = new LLMGateway(llmConfig);
+        const isAvailable = await llmGateway.isAvailable();
+
+        if (isAvailable) {
+          logger.info('LLM provider initialized successfully', {
+            provider: llmGateway.getProviderName(),
+          });
+        } else {
+          logger.warn('LLM provider configured but not available', {
+            provider: llmGateway.getProviderName(),
+          });
+          llmGateway = undefined;
+        }
+      } catch (error) {
+        logger.error('Error initializing LLM provider', { error });
+        llmGateway = undefined;
+      }
+    }
+
     // Create server reference for shutdown callback
     const serverRef: { httpServer?: http.Server } = {};
 
     // Create shutdown handler
     const shutdownHandler = createShutdownHandler(logger, serverRef.httpServer);
 
-    // Create JSON-RPC handler with shutdown callback
-    const handler = new JsonRpcHandler(daemonClient, logger, shutdownHandler);
+    // Create JSON-RPC handler with shutdown callback and LLM gateway
+    const handler = new JsonRpcHandler(daemonClient, logger, shutdownHandler, llmGateway);
 
     // Start server with appropriate transport
     if (TRANSPORT === 'stdio') {

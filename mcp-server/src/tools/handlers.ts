@@ -16,11 +16,14 @@ import { handleInferOutputSchema } from './inferOutputSchema';
 import { handleExecuteTransformation } from './executeTransformation';
 import { handleGetExamples } from './getExamples';
 import { handleGetUsdlDirectives } from './getUsdlDirectives';
+import { handleGenerateUtlx } from './generateUtlx';
+import { LLMGateway } from '../llm/llm-gateway';
 
 export type ToolHandler = (
   args: Record<string, unknown>,
   daemonClient: DaemonClient,
-  logger: Logger
+  logger: Logger,
+  llmGateway?: LLMGateway
 ) => Promise<ToolInvocationResponse>;
 
 export const toolHandlers: Record<string, ToolHandler> = {
@@ -32,4 +35,5 @@ export const toolHandlers: Record<string, ToolHandler> = {
   execute_transformation: handleExecuteTransformation,
   get_examples: handleGetExamples,
   get_usdl_directives: handleGetUsdlDirectives,
+  generate_utlx_from_prompt: handleGenerateUtlx,
 };
