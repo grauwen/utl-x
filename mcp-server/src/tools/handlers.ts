@@ -15,6 +15,7 @@ import { handleValidateUtlx } from './validateUtlx';
 import { handleInferOutputSchema } from './inferOutputSchema';
 import { handleExecuteTransformation } from './executeTransformation';
 import { handleGetExamples } from './getExamples';
+import { handleGetUsdlDirectives } from './getUsdlDirectives';
 
 export type ToolHandler = (
   args: Record<string, unknown>,
@@ -30,4 +31,5 @@ export const toolHandlers: Record<string, ToolHandler> = {
   infer_output_schema: handleInferOutputSchema,
   execute_transformation: handleExecuteTransformation,
   get_examples: handleGetExamples,
+  get_usdl_directives: handleGetUsdlDirectives,
 };

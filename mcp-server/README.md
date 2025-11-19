@@ -1,6 +1,6 @@
 # UTL-X MCP Server
 
-Model Context Protocol server for UTL-X transformation assistance. Provides 6 tools for working with UTL-X transformations through LLM integration.
+Model Context Protocol server for UTL-X transformation assistance. Provides 8 tools for working with UTL-X transformations through LLM integration.
 
 ## Features
 
@@ -8,10 +8,12 @@ Model Context Protocol server for UTL-X transformation assistance. Provides 6 to
 
 1. **get_input_schema** - Parse input schemas (XSD, JSON Schema, CSV) into structured type definitions
 2. **get_stdlib_functions** - Retrieve UTL-X standard library function registry with signatures and documentation
-3. **validate_utlx** - Validate UTLX transformation code for syntax and type errors
-4. **infer_output_schema** - Infer output schema from UTLX transformation code
-5. **execute_transformation** - Execute UTLX transformations with sample input data
-6. **get_examples** - Search conformance suite tests for relevant examples using TF-IDF similarity
+3. **get_operators** - Retrieve UTL-X operator registry with precedence, associativity, and usage
+4. **get_usdl_directives** - Retrieve USDL directive registry for schema generation assistance (119 directives across 4 tiers)
+5. **validate_utlx** - Validate UTLX transformation code for syntax and type errors
+6. **infer_output_schema** - Infer output schema from UTLX transformation code
+7. **execute_transformation** - Execute UTLX transformations with sample input data
+8. **get_examples** - Search conformance suite tests for relevant examples using TF-IDF similarity
 
 ## Installation
 

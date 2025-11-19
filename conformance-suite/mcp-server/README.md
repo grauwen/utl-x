@@ -7,7 +7,7 @@ This test suite validates the MCP (Model Context Protocol) Server implementation
 The MCP Server conformance suite tests the MCP Server's implementation of the Model Context Protocol:
 
 - **Protocol compliance**: JSON-RPC 2.0 format, initialize sequence, capabilities exchange
-- **Tool invocation**: All 6 MCP tools with various parameter combinations
+- **Tool invocation**: All 8 MCP tools with various parameter combinations
 - **Transport modes**: stdio (primary) and HTTP
 - **Error handling**: Proper JSON-RPC error codes and messages
 - **Backend integration**: Correct usage of daemon REST API endpoints
@@ -27,13 +27,15 @@ The MCP Server conformance suite tests the MCP Server's implementation of the Mo
 │   MCP Server     │ ← THIS SUITE TESTS THIS
 │  (TypeScript)    │
 │                  │
-│  6 MCP Tools:    │
+│  8 MCP Tools:    │
 │  1. get_input_schema
 │  2. get_stdlib_functions
-│  3. validate_utlx
-│  4. infer_output_schema
-│  5. execute_transformation
-│  6. get_examples
+│  3. get_operators
+│  4. get_usdl_directives
+│  5. validate_utlx
+│  6. infer_output_schema
+│  7. execute_transformation
+│  8. get_examples
 └────────┬─────────┘
          │ HTTP/REST
          ↓
@@ -54,6 +56,8 @@ mcp-server/
 │   ├── tools/                       # Tool invocation
 │   │   ├── get_input_schema/
 │   │   ├── get_stdlib_functions/
+│   │   ├── get_operators/
+│   │   ├── get_usdl_directives/
 │   │   ├── validate_utlx/
 │   │   ├── infer_output_schema/
 │   │   ├── execute_transformation/

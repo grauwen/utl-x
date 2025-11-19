@@ -1,0 +1,80 @@
+name: get_usdl_directives_search
+description: Test searching USDL directives by keyword
+tags:
+  - tools
+  - get_usdl_directives
+  - search
+
+sequence:
+  - description: "Search for 'required' keyword"
+    request:
+      jsonrpc: "2.0"
+      id: 53
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          keyword: "required"
+    expect:
+      jsonrpc: "2.0"
+      id: 53
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*matching.*}}"
+        # Should find directives with 'required' in name/description/examples
+        # Likely includes %required directive
+
+  - description: "Search for 'string' keyword"
+    request:
+      jsonrpc: "2.0"
+      id: 54
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          keyword: "string"
+    expect:
+      jsonrpc: "2.0"
+      id: 54
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*matching.*}}"
+        # Should find string-related directives (%minLength, %maxLength, %pattern, etc.)
+
+  - description: "Search for 'validation' keyword"
+    request:
+      jsonrpc: "2.0"
+      id: 55
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          keyword: "validation"
+    expect:
+      jsonrpc: "2.0"
+      id: 55
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*matching.*}}"
+        # Should find validation-related directives
+
+  - description: "Search with no matches"
+    request:
+      jsonrpc: "2.0"
+      id: 56
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          keyword: "xyznonexistent123"
+    expect:
+      jsonrpc: "2.0"
+      id: 56
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*No directives found.*}}"
+        # Should return no matches message

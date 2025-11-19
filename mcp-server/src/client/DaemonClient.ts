@@ -17,6 +17,7 @@ import {
   FunctionRegistry,
 } from '../types/daemon';
 import { OperatorRegistry } from '../types/operator';
+import { DirectiveRegistry } from '../types/usdl';
 
 export interface DaemonClientConfig {
   baseUrl: string;
@@ -134,6 +135,16 @@ export class DaemonClient {
   async getOperators(): Promise<OperatorRegistry> {
     return this.withRetry(async () => {
       const response = await this.client.get<OperatorRegistry>('/api/operators');
+      return response.data;
+    });
+  }
+
+  /**
+   * Get USDL directive registry
+   */
+  async getUsdlDirectives(): Promise<DirectiveRegistry> {
+    return this.withRetry(async () => {
+      const response = await this.client.get<DirectiveRegistry>('/api/usdl/directives');
       return response.data;
     });
   }
