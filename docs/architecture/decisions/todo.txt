@@ -6,6 +6,21 @@ Paralellization, see https://github.com/grauwen/utl-x/blob/main/docs/architectur
 ----
 Function modules, see https://github.com/grauwen/utl-x/blob/main/docs/architecture/module-system-design.md
 ----
+Configuration Options
+
+  For Claude:
+  export UTLX_LLM_PROVIDER=claude
+  export ANTHROPIC_API_KEY=your-api-key
+  export UTLX_LLM_MODEL=claude-3-5-sonnet-20241022  # optional
+
+  For Ollama:
+  export UTLX_LLM_PROVIDER=ollama
+  export OLLAMA_ENDPOINT=http://localhost:11434  # optional
+  export OLLAMA_MODEL=codellama  # optional
+
+----
+
+
 BUG
 
 <?xml version="1.0" encoding="UTF-8"?>
