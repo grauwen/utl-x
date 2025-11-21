@@ -70,6 +70,25 @@ export class LLMGateway {
   }
 
   /**
+   * Get the model name being used
+   */
+  getModelName(): string {
+    if (!this.provider) {
+      return 'None';
+    }
+
+    if (this.config.type === 'claude' && this.config.claude) {
+      return this.config.claude.model;
+    }
+
+    if (this.config.type === 'ollama' && this.config.ollama) {
+      return this.config.ollama.model;
+    }
+
+    return 'Unknown';
+  }
+
+  /**
    * Reload configuration and reinitialize provider
    */
   async reload(config: LLMProviderConfig): Promise<void> {

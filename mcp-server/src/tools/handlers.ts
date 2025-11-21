@@ -17,6 +17,7 @@ import { handleExecuteTransformation } from './executeTransformation';
 import { handleGetExamples } from './getExamples';
 import { handleGetUsdlDirectives } from './getUsdlDirectives';
 import { handleGenerateUtlx } from './generateUtlx';
+import { handleCheckLlmStatus } from './checkLlmStatus';
 import { LLMGateway } from '../llm/llm-gateway';
 
 export type ToolHandler = (
@@ -36,4 +37,5 @@ export const toolHandlers: Record<string, ToolHandler> = {
   get_examples: handleGetExamples,
   get_usdl_directives: handleGetUsdlDirectives,
   generate_utlx_from_prompt: handleGenerateUtlx,
+  check_llm_status: handleCheckLlmStatus,
 };

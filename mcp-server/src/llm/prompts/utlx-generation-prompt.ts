@@ -171,10 +171,14 @@ export function buildUTLXGenerationUserPrompt(context: UTLXGenerationContext): s
 
   prompt += `TARGET OUTPUT FORMAT: ${context.outputFormat}\n\n`;
   prompt += `USER REQUEST:\n${context.userPrompt}\n\n`;
-  prompt += `GENERATE:\n`;
-  prompt += `Complete UTLX transformation code including header and transformation logic.\n`;
-  prompt += `Ensure the code is syntactically correct and properly references all inputs.\n`;
-  prompt += `Return ONLY the UTLX code, no explanations.`;
+  prompt += `CRITICAL INSTRUCTIONS:\n`;
+  prompt += `1. Generate complete UTLX transformation code with header (%utlx 1.0, input declarations, output format, ---)\n`;
+  prompt += `2. Return ONLY the raw UTLX code - NO markdown code blocks, NO explanations, NO commentary\n`;
+  prompt += `3. Do NOT wrap in \`\`\`utlx or \`\`\` blocks\n`;
+  prompt += `4. Do NOT include any text before or after the UTLX code\n`;
+  prompt += `5. Start with %utlx 1.0 and end with the transformation expression\n`;
+  prompt += `6. Ensure syntactically correct code that references all inputs properly\n\n`;
+  prompt += `YOUR RESPONSE MUST START WITH: %utlx 1.0`;
 
   return prompt;
 }

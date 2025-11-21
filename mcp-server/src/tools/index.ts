@@ -14,8 +14,9 @@ import { executeTransformationTool } from './executeTransformation';
 import { getExamplesTool } from './getExamples';
 import { getUsdlDirectivesTool } from './getUsdlDirectives';
 import { generateUtlxTool } from './generateUtlx';
+import { checkLlmStatusTool } from './checkLlmStatus';
 
-// Export all 9 MCP tools in logical order
+// Export all 10 MCP tools in logical order
 export const tools: Tool[] = [
   getInputSchemaTool,        // Tool 1: Parse input schemas
   getStdlibFunctionsTool,    // Tool 2: Get stdlib function registry
@@ -26,6 +27,7 @@ export const tools: Tool[] = [
   executeTransformationTool, // Tool 7: Execute transformation
   getExamplesTool,           // Tool 8: Search conformance examples
   generateUtlxTool,          // Tool 9: Generate UTLX from natural language
+  checkLlmStatusTool,        // Tool 10: Check LLM provider status
 ];
 
 export {
@@ -38,4 +40,5 @@ export {
   executeTransformationTool,
   getExamplesTool,
   generateUtlxTool,
+  checkLlmStatusTool,
 };
