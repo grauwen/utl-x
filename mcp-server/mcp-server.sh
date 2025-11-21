@@ -52,11 +52,29 @@ while [[ $# -gt 0 ]]; do
             echo "  --log-level <level>        Log level (default: info)"
             echo "  -h, --help                 Show this help message"
             echo ""
+            echo "LLM Configuration (via environment variables):"
+            echo "  Default: Ollama with codellama:70b on localhost:11434"
+            echo ""
+            echo "  For Claude API (cloud):"
+            echo "    export UTLX_LLM_PROVIDER=claude"
+            echo "    export ANTHROPIC_API_KEY=sk-ant-your-key"
+            echo "    export UTLX_LLM_MODEL=claude-3-5-sonnet-20241022  # optional"
+            echo ""
+            echo "  For Ollama (local):"
+            echo "    export UTLX_LLM_PROVIDER=ollama"
+            echo "    export OLLAMA_ENDPOINT=http://localhost:11434      # optional"
+            echo "    export OLLAMA_MODEL=codellama:13b                  # optional"
+            echo ""
             echo "Examples:"
-            echo "  $0                                          # Start with defaults (HTTP on port 3001)"
+            echo "  $0                                          # Start with defaults (Ollama codellama:70b)"
             echo "  $0 --transport stdio                        # Start with stdio transport"
             echo "  $0 --port 3002                              # Start HTTP on custom port"
-            echo "  $0 --daemon-url http://localhost:8080       # Use custom UTLXD URL"
+            echo ""
+            echo "  # With Claude API:"
+            echo "  export UTLX_LLM_PROVIDER=claude && export ANTHROPIC_API_KEY=sk-ant-xxx && $0"
+            echo ""
+            echo "  # With different Ollama model:"
+            echo "  export OLLAMA_MODEL=codellama:13b && $0"
             exit 0
             ;;
         *)
@@ -81,13 +99,52 @@ export UTLX_MCP_PORT="$PORT"
 export UTLX_LOG_LEVEL="$LOG_LEVEL"
 export NODE_ENV="production"
 
-echo "Starting UTL-X MCP Server..."
+echo "========================================"
+echo "  UTL-X MCP Server Starting"
+echo "========================================"
+echo ""
+echo "Configuration:"
 echo "  Transport:   $TRANSPORT"
 if [ "$TRANSPORT" = "http" ]; then
     echo "  Port:        $PORT"
 fi
 echo "  Daemon URL:  $DAEMON_URL"
 echo "  Log Level:   $LOG_LEVEL"
+echo ""
+
+# Display LLM configuration
+echo "LLM Provider:"
+if [ -n "$UTLX_LLM_PROVIDER" ]; then
+    if [ "$UTLX_LLM_PROVIDER" = "claude" ]; then
+        echo "  Provider:    Claude API (Anthropic)"
+        if [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "  API Key:     ✓ Configured"
+        else
+            echo "  API Key:     ✗ NOT SET (will fail)"
+        fi
+        echo "  Model:       ${UTLX_LLM_MODEL:-claude-3-5-sonnet-20241022}"
+    elif [ "$UTLX_LLM_PROVIDER" = "ollama" ]; then
+        echo "  Provider:    Ollama (Local)"
+        echo "  Endpoint:    ${OLLAMA_ENDPOINT:-http://localhost:11434}"
+        echo "  Model:       ${OLLAMA_MODEL:-codellama}"
+    else
+        echo "  Provider:    Unknown ($UTLX_LLM_PROVIDER)"
+    fi
+else
+    echo "  Provider:    Ollama (Default)"
+    echo "  Endpoint:    http://localhost:11434"
+    echo "  Model:       codellama:70b"
+    echo ""
+    echo "  💡 To use Claude instead, set:"
+    echo "     export UTLX_LLM_PROVIDER=claude"
+    echo "     export ANTHROPIC_API_KEY=sk-ant-your-key"
+    echo ""
+    echo "  💡 To use a different Ollama model, set:"
+    echo "     export UTLX_LLM_PROVIDER=ollama"
+    echo "     export OLLAMA_MODEL=codellama:13b"
+fi
+echo ""
+echo "========================================"
 echo ""
 
 # Start the server

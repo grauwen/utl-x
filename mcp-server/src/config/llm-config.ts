@@ -76,9 +76,16 @@ export function loadLLMConfig(logger: Logger): LLMProviderConfig | null {
     }
   }
 
-  // No configuration found
-  logger.info('No LLM provider configured. AI code generation will not be available.');
-  logger.info('To enable, set UTLX_LLM_PROVIDER=claude or ollama with appropriate credentials.');
+  // No configuration found - default to Ollama with codellama:70b
+  logger.info('No LLM provider configured. Using default: Ollama with codellama:70b');
+  logger.info('To override, set UTLX_LLM_PROVIDER=claude or ollama with appropriate credentials.');
 
-  return null;
+  return {
+    type: 'ollama',
+    ollama: {
+      endpoint: 'http://localhost:11434',
+      model: 'codellama:70b',
+      maxTokens: 4096,
+    },
+  };
 }
