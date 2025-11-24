@@ -24,7 +24,8 @@ import {
     ValidateUdmRequest,
     ValidateUdmResult,
     GenerateUtlxRequest,
-    GenerateUtlxResponse
+    GenerateUtlxResponse,
+    LlmStatusResponse
 } from '../../common/protocol';
 import { DirectiveRegistry, createEmptyDirectiveRegistry } from '../../common/usdl-types';
 import { UTLXDaemonClient } from '../daemon/utlx-daemon-client';
@@ -309,13 +310,19 @@ export class UTLXServiceImpl implements UTLXService {
                 };
             }
 
-            // Call the generate_utlx_from_prompt tool via MCP
-            console.log('[BACKEND] Calling MCP tool: generate_utlx_from_prompt');
-            const result = await this.mcpClient.callTool('generate_utlx_from_prompt', {
-                prompt: request.prompt,
-                inputs: request.inputs,
-                outputFormat: request.outputFormat,
-            });
+            // Call the generate_utlx_from_prompt tool via MCP with SSE progress
+            console.log('[BACKEND] Calling MCP tool: generate_utlx_from_prompt (with SSE progress)');
+            const result = await this.mcpClient.callToolWithProgress(
+                'generate_utlx_from_prompt',
+                {
+                    prompt: request.prompt,
+                    inputs: request.inputs,
+                    outputFormat: request.outputFormat,
+                },
+                (progress, message) => {
+                    console.log(`[BACKEND] Progress: ${progress}% - ${message}`);
+                }
+            );
 
             console.log('[BACKEND] MCP tool returned:', result.success ? 'SUCCESS' : 'FAILURE');
             console.log('[BACKEND] ========================================');
@@ -327,6 +334,41 @@ export class UTLXServiceImpl implements UTLXService {
             console.log('[BACKEND] ========================================');
             return {
                 success: false,
+                error: error instanceof Error ? error.message : String(error),
+            };
+        }
+    }
+
+    /**
+     * Check if LLM provider is configured and available
+     */
+    async checkLlmStatus(): Promise<LlmStatusResponse> {
+        console.log('[BACKEND] checkLlmStatus() called');
+
+        try {
+            // Check if MCP server is available
+            const isAvailable = await this.mcpClient.ping();
+            if (!isAvailable) {
+                console.error('[BACKEND] MCP server is not available');
+                return {
+                    configured: false,
+                    available: false,
+                    error: 'MCP server is not available. Please ensure the MCP server is running.',
+                };
+            }
+
+            // Call the check_llm_status tool via MCP
+            console.log('[BACKEND] Calling MCP tool: check_llm_status');
+            const result = await this.mcpClient.callTool('check_llm_status', {});
+
+            console.log('[BACKEND] LLM status:', result);
+
+            return result as LlmStatusResponse;
+        } catch (error) {
+            console.error('[BACKEND] Check LLM status error:', error);
+            return {
+                configured: false,
+                available: false,
                 error: error instanceof Error ? error.message : String(error),
             };
         }

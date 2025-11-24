@@ -239,6 +239,7 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
     justify-content: space-between;
     padding: 16px 20px;
     border-bottom: 1px solid var(--theia-panel-border, #3c3c3c);
+    gap: 16px;
 }
 
 .utlx-dialog-header h3 {
@@ -246,6 +247,66 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
     font-size: 16px;
     font-weight: 600;
     color: var(--theia-foreground, #cccccc);
+}
+
+/* Status Indicators */
+.utlx-status-indicators {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: flex-end;
+    margin-right: 12px;
+}
+
+.utlx-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    background: var(--theia-editor-background, #1e1e1e);
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+}
+
+.utlx-status-icon {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.utlx-status-label {
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.utlx-status-checking .utlx-status-icon {
+    color: var(--theia-foreground, #cccccc);
+    opacity: 0.7;
+}
+
+.utlx-status-ok {
+    border-color: #4caf50;
+}
+
+.utlx-status-ok .utlx-status-icon {
+    color: #4caf50;
+}
+
+.utlx-status-ok .utlx-status-label {
+    color: #4caf50;
+}
+
+.utlx-status-error {
+    border-color: #f44336;
+}
+
+.utlx-status-error .utlx-status-icon {
+    color: #f44336;
+}
+
+.utlx-status-error .utlx-status-label {
+    color: #f44336;
 }
 
 .utlx-dialog-close {
@@ -299,6 +360,13 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
     cursor: not-allowed;
 }
 
+.utlx-preview-code {
+    min-height: 300px !important;
+    background: var(--theia-editor-background, #1e1e1e) !important;
+    border: 1px solid var(--theia-panel-border, #3c3c3c) !important;
+    cursor: default !important;
+}
+
 .utlx-dialog-footer {
     display: flex;
     align-items: center;
@@ -343,4 +411,38 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+}
+
+/* MCP Progress Indicator */
+.utlx-mcp-progress {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: var(--theia-editor-background, #1e1e1e);
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.utlx-mcp-progress-spinner {
+    font-size: 20px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.utlx-mcp-progress-message {
+    color: var(--theia-foreground, #cccccc);
+    font-size: 13px;
+    flex: 1;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+    }
 }

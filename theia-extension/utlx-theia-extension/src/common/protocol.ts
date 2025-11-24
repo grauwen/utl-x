@@ -333,6 +333,11 @@ export interface UTLXService {
      * Generate UTLX code from natural language prompt using AI
      */
     generateUtlxFromPrompt(request: GenerateUtlxRequest): Promise<GenerateUtlxResponse>;
+
+    /**
+     * Check if LLM provider is configured and available
+     */
+    checkLlmStatus(): Promise<LlmStatusResponse>;
 }
 
 /**
@@ -411,6 +416,18 @@ export interface GenerateUtlxResponse {
         inputTokens: number;
         outputTokens: number;
     };
+    error?: string;
+}
+
+/**
+ * LLM status check response
+ */
+export interface LlmStatusResponse {
+    configured: boolean;
+    available: boolean;
+    provider?: string;
+    model?: string;
+    message?: string;
     error?: string;
 }
 
