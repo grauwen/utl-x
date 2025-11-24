@@ -67,6 +67,20 @@ export interface ToolInvocationResponse {
 }
 
 /**
+ * Progress notification for long-running tool operations
+ */
+export interface ProgressNotification {
+  progress: number;  // 0-100
+  total?: number;    // optional total value
+  message?: string;  // optional progress message
+}
+
+/**
+ * Progress callback type for tools that support progress notifications
+ */
+export type ProgressCallback = (notification: ProgressNotification) => void;
+
+/**
  * MCP Server capabilities
  */
 export interface ServerCapabilities {

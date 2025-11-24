@@ -24,7 +24,8 @@ export type ToolHandler = (
   args: Record<string, unknown>,
   daemonClient: DaemonClient,
   logger: Logger,
-  llmGateway?: LLMGateway
+  llmGateway?: LLMGateway,
+  onProgress?: (progress: number, message?: string) => void
 ) => Promise<ToolInvocationResponse>;
 
 export const toolHandlers: Record<string, ToolHandler> = {

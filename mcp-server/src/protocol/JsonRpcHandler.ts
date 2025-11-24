@@ -46,9 +46,30 @@ export class JsonRpcHandler {
    * Handle a JSON-RPC request
    */
   async handleRequest(request: JsonRpcRequest): Promise<JsonRpcResponse> {
+    return this.handleRequestInternal(request);
+  }
+
+  /**
+   * Handle a JSON-RPC request with progress callback for SSE
+   */
+  async handleRequestWithProgress(
+    request: JsonRpcRequest,
+    onProgress: (progress: number, message?: string) => void
+  ): Promise<JsonRpcResponse> {
+    return this.handleRequestInternal(request, onProgress);
+  }
+
+  /**
+   * Internal request handler that optionally supports progress callbacks
+   */
+  private async handleRequestInternal(
+    request: JsonRpcRequest,
+    onProgress?: (progress: number, message?: string) => void
+  ): Promise<JsonRpcResponse> {
     this.logger.info('Handling JSON-RPC request', {
       method: request.method,
       id: request.id,
+      withProgress: !!onProgress,
     });
 
     try {
@@ -70,7 +91,7 @@ export class JsonRpcHandler {
           return this.handleToolsList(request);
 
         case 'tools/call':
-          return this.handleToolsCall(request);
+          return this.handleToolsCall(request, onProgress);
 
         case 'shutdown':
           return this.handleShutdown(request);
@@ -146,7 +167,10 @@ export class JsonRpcHandler {
   /**
    * Handle tools/call request
    */
-  private async handleToolsCall(request: JsonRpcRequest): Promise<JsonRpcResponse> {
+  private async handleToolsCall(
+    request: JsonRpcRequest,
+    onProgress?: (progress: number, message?: string) => void
+  ): Promise<JsonRpcResponse> {
     const params = request.params as { name?: string; arguments?: Record<string, unknown> };
 
     if (!params || !params.name) {
@@ -182,8 +206,8 @@ export class JsonRpcHandler {
     }
 
     try {
-      // Invoke tool handler
-      const result = await handler(args, this.daemonClient, this.logger, this.llmGateway);
+      // Invoke tool handler with progress callback
+      const result = await handler(args, this.daemonClient, this.logger, this.llmGateway, onProgress);
 
       return {
         jsonrpc: '2.0',

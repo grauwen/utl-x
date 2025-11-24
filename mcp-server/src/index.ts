@@ -210,12 +210,56 @@ async function startHttpServer(
 
         const request = parsed as JsonRpcRequest;
 
-        // Handle request
-        const response = await handler.handleRequest(request);
+        // Check if client accepts SSE (for progress notifications)
+        const acceptHeader = req.headers['accept'] || '';
+        const supportsSSE = acceptHeader.includes('text/event-stream');
 
-        // Send response
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(response));
+        if (supportsSSE && request.method === 'tools/call') {
+          // Use SSE for tool calls that support progress
+          res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          });
+
+          // Progress callback that sends SSE events
+          const sendProgress = (progress: number, message?: string) => {
+            const progressData = JSON.stringify({
+              jsonrpc: '2.0',
+              method: 'notifications/progress',
+              params: { progress, message },
+            });
+            res.write(`data: ${progressData}\n\n`);
+          };
+
+          try {
+            // Handle request with progress callback
+            const response = await handler.handleRequestWithProgress(request, sendProgress);
+
+            // Send final result as SSE event
+            const resultData = JSON.stringify(response);
+            res.write(`data: ${resultData}\n\n`);
+            res.end();
+          } catch (error) {
+            logger.error('Error in SSE request', { error });
+            const errorResponse: JsonRpcResponse = {
+              jsonrpc: '2.0',
+              id: request.id,
+              error: {
+                code: -32603,
+                message: 'Internal error',
+                data: error instanceof Error ? error.message : 'Unknown error',
+              },
+            };
+            res.write(`data: ${JSON.stringify(errorResponse)}\n\n`);
+            res.end();
+          }
+        } else {
+          // Regular JSON-RPC response (no progress)
+          const response = await handler.handleRequest(request);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(response));
+        }
       } catch (error) {
         logger.error('Error processing HTTP request', { error, body });
 

@@ -161,7 +161,8 @@ export async function handleGenerateUtlx(
   args: Record<string, unknown>,
   daemonClient: DaemonClient,
   logger: Logger,
-  llmGateway?: LLMGateway
+  llmGateway?: LLMGateway,
+  onProgress?: (progress: number, message?: string) => void
 ): Promise<ToolInvocationResponse> {
   try {
     // Validate arguments
@@ -172,6 +173,11 @@ export async function handleGenerateUtlx(
       inputCount: inputs.length,
       outputFormat,
     });
+
+    // Report progress: Starting
+    if (onProgress) {
+      onProgress(10, 'Initializing AI assistant...');
+    }
 
     // Check if LLM gateway is configured
     if (!llmGateway) {
@@ -204,6 +210,11 @@ export async function handleGenerateUtlx(
         ],
         isError: true,
       };
+    }
+
+    // Report progress: Fetching context
+    if (onProgress) {
+      onProgress(20, 'Collecting UTLX function and operator context...');
     }
 
     // Fetch available functions and operators for context
@@ -261,6 +272,11 @@ export async function handleGenerateUtlx(
       hasOperators: !!operatorsContext,
     });
 
+    // Report progress: Calling LLM
+    if (onProgress) {
+      onProgress(40, `Calling ${llmGateway.getProviderName()} to generate transformation...`);
+    }
+
     // Call LLM
     const response = await llmGateway.generateCompletion({
       messages: [
@@ -273,6 +289,11 @@ export async function handleGenerateUtlx(
 
     let generatedCode = response.content.trim();
 
+    // Report progress: Processing response
+    if (onProgress) {
+      onProgress(80, 'Processing AI response and extracting clean code...');
+    }
+
     // Extract clean code from response (handle cases where LLM adds explanations)
     generatedCode = extractCleanCode(generatedCode);
 
@@ -283,6 +304,11 @@ export async function handleGenerateUtlx(
       inputTokens: response.usage?.inputTokens,
       outputTokens: response.usage?.outputTokens,
     });
+
+    // Report progress: Complete
+    if (onProgress) {
+      onProgress(100, 'Transformation generated successfully!');
+    }
 
     // NOTE: We do NOT validate here because we only have the body.
     // The header will be restored by the frontend, and validation should happen there.
