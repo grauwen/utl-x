@@ -72,6 +72,91 @@ const GenerateUtlxArgsSchema = z.object({
   outputFormat: z.string(),
 });
 
+/**
+ * Extract clean UTLX code from LLM response
+ * Handles cases where LLM adds markdown, explanations, or headers
+ */
+function extractCleanCode(response: string): string {
+  let code = response.trim();
+
+  // Step 1: Remove numbered list prefix (e.g., "1. ```")
+  code = code.replace(/^\d+\.\s*/, '');
+
+  // Step 2: Remove markdown code blocks
+  code = code.replace(/^```(?:utlx|javascript|js)?\n?/gm, '');
+  code = code.replace(/\n?```$/gm, '');
+
+  // Step 3: Find the separator (---) which marks start of actual transformation
+  const separatorIndex = code.indexOf('---');
+  if (separatorIndex !== -1) {
+    // Extract everything after the separator
+    code = code.substring(separatorIndex + 3).trim();
+  } else {
+    // No separator found - skip header-like lines manually
+    const lines = code.split('\n');
+    let startIndex = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      // Skip all header patterns
+      if (line.startsWith('%utlx') ||
+          line.startsWith('input:') ||
+          line.startsWith('input ') ||
+          line.startsWith('- name:') ||
+          line.startsWith('type:') ||
+          line.startsWith('output:') ||
+          line.startsWith('output ') ||
+          line === '---' ||
+          line === '') {
+        startIndex = i + 1;
+        continue;
+      }
+
+      // Found actual transformation code
+      break;
+    }
+
+    code = lines.slice(startIndex).join('\n').trim();
+  }
+
+  // Step 4: Remove trailing explanations
+  // Split by newlines and find where explanation starts
+  const codeLines = code.split('\n');
+  let endIndex = codeLines.length;
+
+  // Look for explanation patterns from the end
+  for (let i = codeLines.length - 1; i >= 0; i--) {
+    const line = codeLines[i].trim();
+
+    // Skip empty lines
+    if (line === '') {
+      continue;
+    }
+
+    // Check if this looks like an explanation
+    if (line.toLowerCase().startsWith('this is') ||
+        line.toLowerCase().startsWith('this will') ||
+        line.toLowerCase().startsWith('the ') ||
+        line.toLowerCase().startsWith('note:') ||
+        line.toLowerCase().includes('correct utlx') ||
+        /^[\d.)\-*]/.test(line)) {
+      endIndex = i;
+      continue;
+    }
+
+    // If we hit actual code (ends with }, ], ), or is a valid expression), stop
+    if (line.endsWith('}') || line.endsWith(']') || line.endsWith(')') ||
+        line.startsWith('$') || line.includes('=>')) {
+      break;
+    }
+  }
+
+  code = codeLines.slice(0, endIndex).join('\n').trim();
+
+  return code;
+}
+
 export async function handleGenerateUtlx(
   args: Record<string, unknown>,
   daemonClient: DaemonClient,
@@ -121,6 +206,37 @@ export async function handleGenerateUtlx(
       };
     }
 
+    // Fetch available functions and operators for context
+    logger.info('Fetching UTLX functions and operators for LLM context');
+    let functionsContext = '';
+    let operatorsContext = '';
+
+    try {
+      // Get all stdlib functions - just names, no details
+      const functionsResult = await daemonClient.getFunctions();
+      if (functionsResult && functionsResult.functions) {
+        functionsContext = '\nAVAILABLE FUNCTIONS: ';
+        functionsContext += functionsResult.functions.map(fn => fn.name).join(', ');
+        functionsContext += '\n';
+        logger.info(`Added ${functionsResult.functions.length} function names to context`);
+      }
+    } catch (error) {
+      logger.warn('Could not fetch functions, proceeding without function context', { error });
+    }
+
+    try {
+      // Get all operators - just symbols, no details
+      const operatorsResult = await daemonClient.getOperators();
+      if (operatorsResult && operatorsResult.operators) {
+        operatorsContext = '\nAVAILABLE OPERATORS: ';
+        operatorsContext += operatorsResult.operators.map(op => op.symbol).join(', ');
+        operatorsContext += '\n';
+        logger.info(`Added ${operatorsResult.operators.length} operator symbols to context`);
+      }
+    } catch (error) {
+      logger.warn('Could not fetch operators, proceeding without operator context', { error });
+    }
+
     // Build context for prompt
     const context: UTLXGenerationContext = {
       inputs: inputs.map(input => ({
@@ -131,13 +247,19 @@ export async function handleGenerateUtlx(
       })),
       outputFormat,
       userPrompt: prompt,
+      functionsContext,
+      operatorsContext,
     };
 
     // Build prompts
     const systemPrompt = buildUTLXGenerationSystemPrompt();
     const userPrompt = buildUTLXGenerationUserPrompt(context);
 
-    logger.info('Calling LLM for UTLX generation');
+    logger.info('Calling LLM for UTLX generation', {
+      promptLength: systemPrompt.length + userPrompt.length,
+      hasFunctions: !!functionsContext,
+      hasOperators: !!operatorsContext,
+    });
 
     // Call LLM
     const response = await llmGateway.generateCompletion({
@@ -149,7 +271,12 @@ export async function handleGenerateUtlx(
       temperature: 0.3, // Lower temperature for more deterministic code generation
     });
 
-    const generatedCode = response.content.trim();
+    let generatedCode = response.content.trim();
+
+    // Extract clean code from response (handle cases where LLM adds explanations)
+    generatedCode = extractCleanCode(generatedCode);
+
+    logger.info('Extracted clean code', { length: generatedCode.length });
 
     logger.info('UTLX code generated', {
       length: generatedCode.length,
@@ -157,87 +284,11 @@ export async function handleGenerateUtlx(
       outputTokens: response.usage?.outputTokens,
     });
 
-    // Validate generated code
-    logger.info('Validating generated UTLX code');
-    const validationResult = await daemonClient.validate({
-      utlx: generatedCode,
-      strict: false,
-    });
+    // NOTE: We do NOT validate here because we only have the body.
+    // The header will be restored by the frontend, and validation should happen there.
+    // Validating body-only code will fail with "Expected '---' separator after header"
 
-    if (!validationResult.valid) {
-      // Log validation errors but still return the code
-      const errors = validationResult.diagnostics
-        .filter(d => d.severity === 'error')
-        .map(d => d.message)
-        .join(', ');
-
-      logger.warn('Generated code has validation errors', { errors });
-
-      // Try to regenerate with error feedback
-      logger.info('Attempting to regenerate with error feedback');
-
-      const retryPrompt = `${userPrompt}\n\nPREVIOUS ATTEMPT HAD ERRORS:\n${errors}\n\nPlease fix these errors and generate correct UTLX code.`;
-
-      const retryResponse = await llmGateway.generateCompletion({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: retryPrompt },
-        ],
-        maxTokens: 4096,
-        temperature: 0.3,
-      });
-
-      const retriedCode = retryResponse.content.trim();
-
-      // Validate again
-      const retryValidation = await daemonClient.validate({
-        utlx: retriedCode,
-        strict: false,
-      });
-
-      if (retryValidation.valid) {
-        logger.info('Regenerated code is valid');
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                utlx: retriedCode,
-                validation: {
-                  valid: true,
-                  message: 'Code generated and validated successfully (after retry)',
-                },
-                usage: {
-                  inputTokens: (response.usage?.inputTokens || 0) + (retryResponse.usage?.inputTokens || 0),
-                  outputTokens: (response.usage?.outputTokens || 0) + (retryResponse.usage?.outputTokens || 0),
-                },
-              }, null, 2),
-            },
-          ],
-        };
-      } else {
-        // Return code with validation warnings
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                utlx: retriedCode,
-                validation: {
-                  valid: false,
-                  diagnostics: retryValidation.diagnostics,
-                  warning: 'Generated code may have validation issues',
-                },
-              }, null, 2),
-            },
-          ],
-        };
-      }
-    }
-
-    // Code is valid
+    // Return the extracted body only - frontend will restore the header
     return {
       content: [
         {
@@ -247,7 +298,7 @@ export async function handleGenerateUtlx(
             utlx: generatedCode,
             validation: {
               valid: true,
-              message: 'Code generated and validated successfully',
+              message: 'Body generated successfully (header will be preserved by client)',
             },
             usage: {
               inputTokens: response.usage?.inputTokens,

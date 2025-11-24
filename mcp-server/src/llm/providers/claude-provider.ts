@@ -80,7 +80,8 @@ export class ClaudeProvider implements LLMProvider {
         messages: [{ role: 'user', content: 'test' }],
       });
       return true;
-    } catch {
+    } catch (error) {
+      console.error('[ClaudeProvider] Availability check failed:', error instanceof Error ? error.message : String(error));
       return false;
     }
   }

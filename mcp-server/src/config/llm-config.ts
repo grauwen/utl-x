@@ -23,7 +23,7 @@ export function loadLLMConfig(logger: Logger): LLMProviderConfig | null {
       return null;
     }
 
-    const model = process.env.UTLX_LLM_MODEL || 'claude-3-5-sonnet-20241022';
+    const model = process.env.UTLX_LLM_MODEL || 'claude-3-sonnet-20240229';
     const maxTokens = process.env.UTLX_LLM_MAX_TOKENS
       ? parseInt(process.env.UTLX_LLM_MAX_TOKENS, 10)
       : 4096;
@@ -76,15 +76,15 @@ export function loadLLMConfig(logger: Logger): LLMProviderConfig | null {
     }
   }
 
-  // No configuration found - default to Ollama with codellama:70b
-  logger.info('No LLM provider configured. Using default: Ollama with codellama:70b');
+  // No configuration found - default to Ollama with codellama:7b
+  logger.info('No LLM provider configured. Using default: Ollama with codellama:7b');
   logger.info('To override, set UTLX_LLM_PROVIDER=claude or ollama with appropriate credentials.');
 
   return {
     type: 'ollama',
     ollama: {
       endpoint: 'http://localhost:11434',
-      model: 'codellama:70b',
+      model: 'codellama:7b',
       maxTokens: 4096,
     },
   };

@@ -53,12 +53,12 @@ while [[ $# -gt 0 ]]; do
             echo "  -h, --help                 Show this help message"
             echo ""
             echo "LLM Configuration (via environment variables):"
-            echo "  Default: Ollama with codellama:70b on localhost:11434"
+            echo "  Default: Ollama with codellama:7b on localhost:11434"
             echo ""
             echo "  For Claude API (cloud):"
             echo "    export UTLX_LLM_PROVIDER=claude"
             echo "    export ANTHROPIC_API_KEY=sk-ant-your-key"
-            echo "    export UTLX_LLM_MODEL=claude-3-5-sonnet-20241022  # optional"
+            echo "    export UTLX_LLM_MODEL=claude-3-sonnet-20240229  # optional"
             echo ""
             echo "  For Ollama (local):"
             echo "    export UTLX_LLM_PROVIDER=ollama"
@@ -66,7 +66,7 @@ while [[ $# -gt 0 ]]; do
             echo "    export OLLAMA_MODEL=codellama:13b                  # optional"
             echo ""
             echo "Examples:"
-            echo "  $0                                          # Start with defaults (Ollama codellama:70b)"
+            echo "  $0                                          # Start with defaults (Ollama codellama:7b)"
             echo "  $0 --transport stdio                        # Start with stdio transport"
             echo "  $0 --port 3002                              # Start HTTP on custom port"
             echo ""
@@ -122,7 +122,7 @@ if [ -n "$UTLX_LLM_PROVIDER" ]; then
         else
             echo "  API Key:     ✗ NOT SET (will fail)"
         fi
-        echo "  Model:       ${UTLX_LLM_MODEL:-claude-3-5-sonnet-20241022}"
+        echo "  Model:       ${UTLX_LLM_MODEL:-claude-3-sonnet-20240229}"
     elif [ "$UTLX_LLM_PROVIDER" = "ollama" ]; then
         echo "  Provider:    Ollama (Local)"
         echo "  Endpoint:    ${OLLAMA_ENDPOINT:-http://localhost:11434}"
@@ -133,11 +133,12 @@ if [ -n "$UTLX_LLM_PROVIDER" ]; then
 else
     echo "  Provider:    Ollama (Default)"
     echo "  Endpoint:    http://localhost:11434"
-    echo "  Model:       codellama:70b"
+    echo "  Model:       codellama:7b"
     echo ""
     echo "  💡 To use Claude instead, set:"
     echo "     export UTLX_LLM_PROVIDER=claude"
     echo "     export ANTHROPIC_API_KEY=sk-ant-your-key"
+    echo "     export UTLX_LLM_MODEL=claude-3-sonnet-20240229  # optional, this is the default"
     echo ""
     echo "  💡 To use a different Ollama model, set:"
     echo "     export UTLX_LLM_PROVIDER=ollama"
@@ -148,4 +149,4 @@ echo "========================================"
 echo ""
 
 # Start the server
-exec node "$SCRIPT_DIR/dist/index.js"
+exec node "$SCRIPT_DIR/dist/index.js" &

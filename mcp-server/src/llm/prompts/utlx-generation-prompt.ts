@@ -13,23 +13,21 @@ export interface UTLXGenerationContext {
   inputs: UTLXGenerationInput[];
   outputFormat: string;
   userPrompt: string;
+  functionsContext?: string;
+  operatorsContext?: string;
 }
 
 /**
  * Build the system prompt for UTLX generation
  */
 export function buildUTLXGenerationSystemPrompt(): string {
-  return `You are an expert at writing UTLX (Universal Transformation Language) code.
+  return `You are an expert at writing UTLX (Universal Transformation Language) transformation expressions.
 
-UTLX SYNTAX OVERVIEW:
+CRITICAL: You generate ONLY transformation expressions (the body). The header is handled separately.
 
-1. HEADER FORMAT:
-%utlx 1.0
-input: name1 format1, name2 format2, ...
-output format
----
+UTLX TRANSFORMATION SYNTAX:
 
-2. DATA ACCESS:
+1. DATA ACCESS:
 - Reference inputs with $inputName
 - Access object properties: $input.property
 - Access nested properties: $input.parent.child
@@ -78,85 +76,64 @@ IMPORTANT RULES:
 - Objects can be constructed with { } syntax
 - Reference multiple inputs by name: $input1, $input2, etc.
 
-EXAMPLE 1 - Simple pass-through:
-%utlx 1.0
-input: data-json json
-output json
----
-$data-json
+TRANSFORMATION EXPRESSION EXAMPLES:
 
-EXAMPLE 2 - XML to JSON with attribute access:
-%utlx 1.0
-input: customers-xml xml
-output json
----
+Simple pass-through:
+$data
+
+Array transformation:
+$items |> map(item => {
+  id: item.id,
+  name: item.name
+})
+
+XML with attributes:
+$xml.root.elements |> map(el => {
+  id: el.@id,
+  value: el.text
+})
+
+Filtering and mapping:
+$data |> filter(x => x.active) |> map(x => x.name)
+
+Object construction:
 {
-  customers: $customers-xml.customers.customer |> map(c => {
-    id: c.@id,
-    name: c.name,
-    email: c.email
-  })
+  total: $data |> map(x => x.amount) |> sum(),
+  items: $data
 }
 
-EXAMPLE 3 - Multi-input transformation:
-%utlx 1.0
-input: customers-xml xml, orders-csv csv
-output json
----
-{
-  customers: $customers-xml.customers.customer |> map(c => {
-    id: c.@id,
-    name: c.name,
-    orders: $orders-csv |> filter(o => o.CustomerID == c.@id)
-  })
-}
-
-EXAMPLE 4 - CSV to XML:
-%utlx 1.0
-input: employees-csv csv
-output xml
----
-{
-  Employees: {
-    Employee: $employees-csv |> map(e => {
-      _: e.Name,
-      @id: e.EmployeeID,
-      Department: e.Department
-    })
-  }
-}
-
-When generating UTLX code:
-1. Carefully examine the UDM structure to understand data layout
-2. Use appropriate operators (map, filter) for arrays
-3. Access XML attributes correctly with @ prefix
-4. Ensure proper nesting for output structure
-5. Reference inputs by their exact names
-6. Include complete, syntactically correct code`;
+SYNTAX RULES:
+- Use $inputName to reference inputs
+- Use |> to pipe operations
+- Use => for lambdas
+- Use { } for objects
+- Use [ ] for arrays
+- Use @ for XML attributes
+- Start with $ or { or [`;
 }
 
 /**
  * Build the user prompt with context
  */
 export function buildUTLXGenerationUserPrompt(context: UTLXGenerationContext): string {
-  let prompt = 'AVAILABLE INPUTS:\n\n';
+  // Build dynamic examples based on actual inputs
+  let prompt = '==================================================\n';
+  prompt += 'YOUR TASK: Generate UTLX transformation body ONLY\n';
+  prompt += '==================================================\n\n';
 
+  prompt += 'INPUTS YOU MUST USE:\n';
   for (const input of context.inputs) {
-    prompt += `Input: $${input.name} (${input.format} format)\n`;
+    prompt += `- $${input.name} (${input.format} format)\n`;
+  }
+  prompt += '\n';
 
-    if (input.originalData) {
-      prompt += `\nOriginal ${input.format.toUpperCase()} data:\n`;
-      prompt += '```\n';
-      // Truncate if too long
-      const truncated = input.originalData.length > 1000
-        ? input.originalData.substring(0, 1000) + '\n... (truncated)'
-        : input.originalData;
-      prompt += truncated;
-      prompt += '\n```\n';
-    }
+  // Show data structure for each input
+  for (const input of context.inputs) {
+    prompt += `INPUT: $${input.name}\n`;
+    prompt += `Format: ${input.format.toUpperCase()}\n`;
 
     if (input.udm) {
-      prompt += `\nAfter UTLX parsing (UDM structure):\n`;
+      prompt += `\nData Structure (UDM):\n`;
       prompt += '```\n';
       // Truncate if too long
       const truncated = input.udm.length > 1500
@@ -164,21 +141,74 @@ export function buildUTLXGenerationUserPrompt(context: UTLXGenerationContext): s
         : input.udm;
       prompt += truncated;
       prompt += '\n```\n';
+    } else if (input.originalData) {
+      prompt += `\nSample Data:\n`;
+      prompt += '```\n';
+      const truncated = input.originalData.length > 800
+        ? input.originalData.substring(0, 800) + '\n... (truncated)'
+        : input.originalData;
+      prompt += truncated;
+      prompt += '\n```\n';
     }
 
+    prompt += `\nTo access this input: $${input.name}\n`;
+    prompt += `To access properties: $${input.name}.propertyName\n`;
+    if (input.format === 'xml') {
+      prompt += `To access XML attributes: $${input.name}.element.@attributeName\n`;
+    }
+    if (input.format === 'json' || input.format === 'csv') {
+      prompt += `If array, use: $${input.name} |> map(item => { ... })\n`;
+    }
     prompt += '\n---\n\n';
   }
 
+  // Add functions and operators context if available
+  if (context.functionsContext) {
+    prompt += context.functionsContext;
+    prompt += '\n';
+  }
+
+  if (context.operatorsContext) {
+    prompt += context.operatorsContext;
+    prompt += '\n';
+  }
+
   prompt += `TARGET OUTPUT FORMAT: ${context.outputFormat}\n\n`;
-  prompt += `USER REQUEST:\n${context.userPrompt}\n\n`;
-  prompt += `CRITICAL INSTRUCTIONS:\n`;
-  prompt += `1. Generate complete UTLX transformation code with header (%utlx 1.0, input declarations, output format, ---)\n`;
-  prompt += `2. Return ONLY the raw UTLX code - NO markdown code blocks, NO explanations, NO commentary\n`;
-  prompt += `3. Do NOT wrap in \`\`\`utlx or \`\`\` blocks\n`;
-  prompt += `4. Do NOT include any text before or after the UTLX code\n`;
-  prompt += `5. Start with %utlx 1.0 and end with the transformation expression\n`;
-  prompt += `6. Ensure syntactically correct code that references all inputs properly\n\n`;
-  prompt += `YOUR RESPONSE MUST START WITH: %utlx 1.0`;
+  prompt += `==================================================\n`;
+  prompt += `USER REQUEST:\n`;
+  prompt += `${context.userPrompt}\n`;
+  prompt += `==================================================\n\n`;
+
+  // Generate dynamic example based on actual inputs
+  prompt += `STRICT INSTRUCTIONS:\n\n`;
+  prompt += `1. Generate ONLY the transformation body (NO header, NO ---)\n`;
+  prompt += `2. Start your response with: $${context.inputs[0].name} or { or [\n`;
+  prompt += `3. Use EXACTLY these input names:\n`;
+  for (const input of context.inputs) {
+    prompt += `   - $${input.name}\n`;
+  }
+  prompt += `4. Use |> for piping (e.g., $${context.inputs[0].name} |> map(x => ...))\n`;
+  prompt += `5. Use => for lambda functions (e.g., x => x.property)\n`;
+  prompt += `6. Use { } for objects, [ ] for arrays\n`;
+  prompt += `7. NO explanations, NO markdown, NO code blocks\n`;
+  prompt += `8. Output ${context.outputFormat.toUpperCase()} format\n\n`;
+
+  prompt += `EXAMPLE for $${context.inputs[0].name}:\n`;
+  if (context.inputs.length === 1) {
+    if (context.inputs[0].format === 'json' || context.inputs[0].format === 'csv') {
+      prompt += `$${context.inputs[0].name} |> map(item => {\n`;
+      prompt += `  property1: item.field1,\n`;
+      prompt += `  property2: item.field2\n`;
+      prompt += `})\n\n`;
+    } else if (context.inputs[0].format === 'xml') {
+      prompt += `$${context.inputs[0].name}.rootElement.childArray |> map(item => {\n`;
+      prompt += `  id: item.@id,\n`;
+      prompt += `  name: item.name\n`;
+      prompt += `})\n\n`;
+    }
+  }
+
+  prompt += `NOW GENERATE THE TRANSFORMATION:\n`;
 
   return prompt;
 }
