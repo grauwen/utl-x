@@ -19,7 +19,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TRANSPORT="http"
 PORT="3001"
 DAEMON_URL="http://localhost:7779"
-LOG_LEVEL="info"
+LOG_LEVEL="debug"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -53,7 +53,7 @@ while [[ $# -gt 0 ]]; do
             echo "  -h, --help                 Show this help message"
             echo ""
             echo "LLM Configuration (via environment variables):"
-            echo "  Default: Ollama with codellama:7b on localhost:11434"
+            echo "  Default: Ollama with codellama-34b-16k:latest (16K context) on localhost:11434"
             echo ""
             echo "  For Claude API (cloud):"
             echo "    export UTLX_LLM_PROVIDER=claude"
@@ -63,10 +63,10 @@ while [[ $# -gt 0 ]]; do
             echo "  For Ollama (local):"
             echo "    export UTLX_LLM_PROVIDER=ollama"
             echo "    export OLLAMA_ENDPOINT=http://localhost:11434      # optional"
-            echo "    export OLLAMA_MODEL=codellama:13b                  # optional"
+            echo "    export OLLAMA_MODEL=codellama:13b                  # optional (codellama:34b-16k is default)"
             echo ""
             echo "Examples:"
-            echo "  $0                                          # Start with defaults (Ollama codellama:7b)"
+            echo "  $0                                          # Start with defaults (Ollama codellama-34b-16k:latest)"
             echo "  $0 --transport stdio                        # Start with stdio transport"
             echo "  $0 --port 3002                              # Start HTTP on custom port"
             echo ""
@@ -74,7 +74,7 @@ while [[ $# -gt 0 ]]; do
             echo "  export UTLX_LLM_PROVIDER=claude && export ANTHROPIC_API_KEY=sk-ant-xxx && $0"
             echo ""
             echo "  # With different Ollama model:"
-            echo "  export OLLAMA_MODEL=codellama:13b && $0"
+            echo "  export OLLAMA_MODEL=codellama:7b && $0"
             exit 0
             ;;
         *)
@@ -133,7 +133,8 @@ if [ -n "$UTLX_LLM_PROVIDER" ]; then
 else
     echo "  Provider:    Ollama (Default)"
     echo "  Endpoint:    http://localhost:11434"
-    echo "  Model:       codellama:7b"
+    echo "  Model:       codellama-34b-16k:latest"
+    echo "  Context:     16,384 tokens (16K)"
     echo ""
     echo "  💡 To use Claude instead, set:"
     echo "     export UTLX_LLM_PROVIDER=claude"

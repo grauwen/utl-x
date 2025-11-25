@@ -34,6 +34,7 @@ export interface LLMProviderConfig {
     endpoint: string;
     model: string;
     maxTokens?: number;
+    numCtx?: number;  // Context window size (e.g., 2048, 4096, 8192, 16384)
   };
 }
 

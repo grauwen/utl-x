@@ -76,16 +76,17 @@ export function loadLLMConfig(logger: Logger): LLMProviderConfig | null {
     }
   }
 
-  // No configuration found - default to Ollama with codellama:7b
-  logger.info('No LLM provider configured. Using default: Ollama with codellama:7b');
+  // No configuration found - default to Ollama with codellama-34b-16k
+  logger.info('No LLM provider configured. Using default: Ollama with codellama-34b-16k (16K context)');
   logger.info('To override, set UTLX_LLM_PROVIDER=claude or ollama with appropriate credentials.');
 
   return {
     type: 'ollama',
     ollama: {
       endpoint: 'http://localhost:11434',
-      model: 'codellama:7b',
+      model: 'codellama-34b-16k:latest',
       maxTokens: 4096,
+      numCtx: 16384,  // 16K context window
     },
   };
 }

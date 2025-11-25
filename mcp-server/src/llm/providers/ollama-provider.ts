@@ -8,6 +8,7 @@ export interface OllamaConfig {
   endpoint: string;
   model: string;
   maxTokens?: number;
+  numCtx?: number;  // Context window size
 }
 
 interface OllamaMessage {
@@ -22,6 +23,7 @@ interface OllamaRequest {
   options?: {
     temperature?: number;
     num_predict?: number;
+    num_ctx?: number;  // Context window size
     stop?: string[];
   };
 }
@@ -44,11 +46,13 @@ export class OllamaProvider implements LLMProvider {
   private endpoint: string;
   private model: string;
   private defaultMaxTokens: number;
+  private numCtx?: number;
 
   constructor(config: OllamaConfig) {
     this.endpoint = config.endpoint || 'http://localhost:11434';
     this.model = config.model || 'codellama';
     this.defaultMaxTokens = config.maxTokens || 4096;
+    this.numCtx = config.numCtx;  // Optional context window size
   }
 
   async generateCompletion(request: LLMCompletionRequest): Promise<LLMCompletionResponse> {
@@ -63,6 +67,7 @@ export class OllamaProvider implements LLMProvider {
         options: {
           temperature: request.temperature !== undefined ? request.temperature : 0.7,
           num_predict: request.maxTokens || this.defaultMaxTokens,
+          num_ctx: this.numCtx,  // Set context window if specified
           stop: request.stopSequences,
         },
       };

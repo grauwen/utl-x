@@ -176,7 +176,7 @@ export async function handleGenerateUtlx(
 
     // Report progress: Starting
     if (onProgress) {
-      onProgress(10, 'Initializing AI assistant...');
+      onProgress(0, 'Initializing AI assistant...');
     }
 
     // Check if LLM gateway is configured
@@ -214,7 +214,7 @@ export async function handleGenerateUtlx(
 
     // Report progress: Fetching context
     if (onProgress) {
-      onProgress(20, 'Collecting UTLX function and operator context...');
+      onProgress(0, 'Collecting UTLX function and operator context...');
     }
 
     // Fetch available functions and operators for context
@@ -268,53 +268,182 @@ export async function handleGenerateUtlx(
 
     logger.info('Calling LLM for UTLX generation', {
       promptLength: systemPrompt.length + userPrompt.length,
+      systemPromptLength: systemPrompt.length,
+      userPromptLength: userPrompt.length,
       hasFunctions: !!functionsContext,
       hasOperators: !!operatorsContext,
     });
 
-    // Report progress: Calling LLM
-    if (onProgress) {
-      onProgress(40, `Calling ${llmGateway.getProviderName()} to generate transformation...`);
+    // Log the full prompts for debugging (can be disabled in production)
+    logger.debug('=== SYSTEM PROMPT ===');
+    logger.debug(systemPrompt);
+    logger.debug('=== USER PROMPT ===');
+    logger.debug(userPrompt);
+    logger.debug('=== END PROMPTS ===');
+
+    // Iterative refinement: Try up to 3 times with validation feedback
+    const MAX_ATTEMPTS = 3;
+    let generatedCode = '';
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    let validationResult: any = null;
+
+    const conversationHistory: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ];
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      // Report progress
+      if (onProgress) {
+        if (attempt === 1) {
+          onProgress(0, `Generating transformation code (attempt ${attempt}/${MAX_ATTEMPTS})...`);
+        } else {
+          onProgress(0, `Refining code based on validation errors (attempt ${attempt}/${MAX_ATTEMPTS})...`);
+        }
+      }
+
+      logger.info(`Generation attempt ${attempt}/${MAX_ATTEMPTS}`);
+
+      // Call LLM
+      const response = await llmGateway.generateCompletion({
+        messages: conversationHistory,
+        maxTokens: 4096,
+        temperature: 0.3, // Lower temperature for more deterministic code generation
+      });
+
+      totalInputTokens += response.usage?.inputTokens || 0;
+      totalOutputTokens += response.usage?.outputTokens || 0;
+
+      // Add assistant response to conversation
+      conversationHistory.push({ role: 'assistant', content: response.content });
+
+      // Extract clean code
+      generatedCode = extractCleanCode(response.content.trim());
+
+      logger.info(`Attempt ${attempt}: Generated code`, { length: generatedCode.length });
+
+      // Report progress: Validating
+      if (onProgress) {
+        onProgress(0, 'Validating generated code...');
+      }
+
+      // Reconstruct full UTLX program for validation
+      // Build a minimal header based on inputs
+      let headerInputs: string;
+      if (inputs.length === 1) {
+        // Single input: input name format
+        headerInputs = `input ${inputs[0].name} ${inputs[0].format}`;
+      } else {
+        // Multiple inputs: input: name1 format1, name2 format2, ...
+        const inputList = inputs.map(inp => `${inp.name} ${inp.format}`).join(', ');
+        headerInputs = `input: ${inputList}`;
+      }
+
+      const fullProgram = `%utlx 1.0\n${headerInputs}\noutput ${outputFormat}\n---\n${generatedCode}`;
+
+      logger.info(`Attempt ${attempt}: Validating full program`, {
+        programLength: fullProgram.length
+      });
+
+      // Validate the code using daemon
+      try {
+        validationResult = await daemonClient.validate({ utlx: fullProgram });
+
+        // Check if validation passed (valid=true and no error-level diagnostics)
+        const errorDiagnostics = (validationResult.diagnostics || []).filter((d: any) => d.severity === 'error');
+
+        if (validationResult.valid && errorDiagnostics.length === 0) {
+          // Validation passed!
+          logger.info(`Attempt ${attempt}: Validation PASSED`);
+
+          if (onProgress) {
+            onProgress(0, `Code validated successfully on attempt ${attempt}!`);
+          }
+
+          // Success - return the body
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  utlx: generatedCode,
+                  validation: {
+                    valid: true,
+                    message: `Validation passed on attempt ${attempt}/${MAX_ATTEMPTS}`,
+                    attempts: attempt,
+                  },
+                  usage: {
+                    inputTokens: totalInputTokens,
+                    outputTokens: totalOutputTokens,
+                  },
+                }, null, 2),
+              },
+            ],
+          };
+        } else {
+          // Validation failed - prepare feedback for next attempt
+          const errors = errorDiagnostics;
+          logger.warn(`Attempt ${attempt}: Validation FAILED with ${errors.length} error(s)`, { errors });
+
+          if (onProgress) {
+            onProgress(0, `Validation failed: ${errors.length} error(s). Refining...`);
+          }
+
+          if (attempt < MAX_ATTEMPTS) {
+            // Prepare feedback message for LLM
+            const errorMessages = errors.map((err: any, idx: number) =>
+              `${idx + 1}. Line ${err.line || '?'}: ${err.message}`
+            ).join('\n');
+
+            const feedbackPrompt = `The generated code has validation errors:\n\n${errorMessages}\n\nPlease fix these errors. Generate ONLY the corrected transformation body (no header, no ---, no explanations).`;
+
+            // Add feedback to conversation
+            conversationHistory.push({ role: 'user', content: feedbackPrompt });
+
+            logger.info(`Attempt ${attempt}: Added validation feedback to conversation`);
+          }
+        }
+      } catch (validationError) {
+        logger.error(`Attempt ${attempt}: Validation call failed`, { error: validationError });
+
+        // If validation API fails, proceed with the generated code
+        if (attempt === MAX_ATTEMPTS) {
+          logger.warn('Validation API failed, returning code without validation');
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  utlx: generatedCode,
+                  validation: {
+                    valid: false,
+                    message: 'Validation API unavailable - code not validated',
+                    attempts: attempt,
+                  },
+                  usage: {
+                    inputTokens: totalInputTokens,
+                    outputTokens: totalOutputTokens,
+                  },
+                }, null, 2),
+              },
+            ],
+          };
+        }
+      }
     }
 
-    // Call LLM
-    const response = await llmGateway.generateCompletion({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      maxTokens: 4096,
-      temperature: 0.3, // Lower temperature for more deterministic code generation
-    });
+    // All attempts exhausted - return last generated code with validation errors
+    logger.warn(`All ${MAX_ATTEMPTS} attempts completed, validation still failing`);
 
-    let generatedCode = response.content.trim();
-
-    // Report progress: Processing response
     if (onProgress) {
-      onProgress(80, 'Processing AI response and extracting clean code...');
+      onProgress(0, `Generation complete after ${MAX_ATTEMPTS} attempts (validation issues remain)`);
     }
 
-    // Extract clean code from response (handle cases where LLM adds explanations)
-    generatedCode = extractCleanCode(generatedCode);
+    const finalErrors = validationResult?.diagnostics?.filter((d: any) => d.severity === 'error') || [];
 
-    logger.info('Extracted clean code', { length: generatedCode.length });
-
-    logger.info('UTLX code generated', {
-      length: generatedCode.length,
-      inputTokens: response.usage?.inputTokens,
-      outputTokens: response.usage?.outputTokens,
-    });
-
-    // Report progress: Complete
-    if (onProgress) {
-      onProgress(100, 'Transformation generated successfully!');
-    }
-
-    // NOTE: We do NOT validate here because we only have the body.
-    // The header will be restored by the frontend, and validation should happen there.
-    // Validating body-only code will fail with "Expected '---' separator after header"
-
-    // Return the extracted body only - frontend will restore the header
     return {
       content: [
         {
@@ -323,12 +452,14 @@ export async function handleGenerateUtlx(
             success: true,
             utlx: generatedCode,
             validation: {
-              valid: true,
-              message: 'Body generated successfully (header will be preserved by client)',
+              valid: false,
+              message: `Code generated but validation failed after ${MAX_ATTEMPTS} attempts`,
+              attempts: MAX_ATTEMPTS,
+              errors: finalErrors,
             },
             usage: {
-              inputTokens: response.usage?.inputTokens,
-              outputTokens: response.usage?.outputTokens,
+              inputTokens: totalInputTokens,
+              outputTokens: totalOutputTokens,
             },
           }, null, 2),
         },

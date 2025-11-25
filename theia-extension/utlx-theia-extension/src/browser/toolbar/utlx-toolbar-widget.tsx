@@ -21,6 +21,7 @@ import {
 import { UTLXEventService } from '../events/utlx-event-service';
 import { MultiInputPanelWidget } from '../input-panel/multi-input-panel-widget';
 import { UTLXEditorWidget } from '../editor/utlx-editor-widget';
+import { extractInputPaths, formatPathsAsSimpleList } from '../utils/udm-path-extractor';
 
 export interface ToolbarState {
     currentMode: UTLXMode;
@@ -493,39 +494,38 @@ export class UTLXToolbarWidget extends ReactWidget {
                         hasContent: !!fullInput?.instanceContent,
                         hasUDM: !!fullInput?.udmLanguage
                     });
+
+                    // Extract compact path structure from UDM instead of sending full UDM
+                    let pathStructure: string | undefined;
+                    if (fullInput?.udmLanguage) {
+                        try {
+                            const paths = extractInputPaths(fullInput.udmLanguage, input.name);
+                            pathStructure = formatPathsAsSimpleList(paths);
+                            console.log('[Toolbar] Extracted', paths.length, 'paths from UDM for', input.name);
+                        } catch (error) {
+                            console.error('[Toolbar] Failed to extract paths from UDM:', error);
+                            // Fallback to sending full UDM
+                            pathStructure = undefined;
+                        }
+                    }
+
                     return {
                         name: input.name,
                         format: input.format,
                         originalData: fullInput?.instanceContent,
-                        udm: fullInput?.udmLanguage
+                        udm: pathStructure || fullInput?.udmLanguage  // Use paths if available, fallback to UDM
                     };
                 }),
                 outputFormat
             };
 
             console.log('[Toolbar] Step 4: Calling backend service...');
-            this.setState({ mcpProgressMessage: 'Initializing AI assistant...', mcpProgressPercent: 10 });
+            this.setState({ mcpProgressMessage: 'Generating transformation with AI (this may take 30-60 seconds)...', mcpProgressPercent: 0 });
 
-            // Simulate progress updates to match MCP server steps
-            const progressInterval = setInterval(() => {
-                const currentPercent = this.state.mcpProgressPercent;
-                if (currentPercent < 20) {
-                    this.setState({ mcpProgressMessage: 'Collecting UTLX function and operator context...', mcpProgressPercent: 20 });
-                } else if (currentPercent < 40) {
-                    this.setState({ mcpProgressMessage: `Calling ${this.state.systemStatus.llmProvider || 'LLM'} to generate transformation...`, mcpProgressPercent: 40 });
-                } else if (currentPercent < 80) {
-                    this.setState({ mcpProgressMessage: 'Waiting for AI response...', mcpProgressPercent: 60 });
-                }
-            }, 2000); // Update every 2 seconds
-
-            // Call the backend service
+            // Call the backend service (no progress simulation - backend will iterate)
             const result = await this.utlxService.generateUtlxFromPrompt(request);
 
-            // Clear the interval
-            clearInterval(progressInterval);
-
             console.log('[Toolbar] Step 5: Backend returned:', result);
-            this.setState({ mcpProgressMessage: 'Processing AI response and extracting clean code...', mcpProgressPercent: 80 });
 
             if (!result.success) {
                 throw new Error(result.error || 'Generation failed');
@@ -535,7 +535,16 @@ export class UTLXToolbarWidget extends ReactWidget {
                 throw new Error('No UTLX code returned');
             }
 
-            this.setState({ mcpProgressMessage: 'Transformation generated successfully!', mcpProgressPercent: 100 });
+            // Show validation status
+            if (result.validation) {
+                if (result.validation.valid) {
+                    this.setState({ mcpProgressMessage: `Code generated and validated successfully! (${result.validation.attempts || 1} attempt(s))`, mcpProgressPercent: 0 });
+                } else {
+                    this.setState({ mcpProgressMessage: `Code generated but validation has issues (${result.validation.attempts || 1} attempt(s))`, mcpProgressPercent: 0 });
+                }
+            } else {
+                this.setState({ mcpProgressMessage: 'Transformation generated successfully!', mcpProgressPercent: 0 });
+            }
 
             // ALWAYS put back the original header, no matter what AI returned
             const generatedBody = this.extractBodyFromGenerated(result.utlx);
