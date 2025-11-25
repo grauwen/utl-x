@@ -23,6 +23,12 @@ import { MultiInputPanelWidget } from '../input-panel/multi-input-panel-widget';
 import { UTLXEditorWidget } from '../editor/utlx-editor-widget';
 import { extractInputPaths, formatPathsAsSimpleList } from '../utils/udm-path-extractor';
 
+export interface PromptHistoryEntry {
+    timestamp: string;
+    prompt: string;
+    result?: string;  // The generated UTLX code
+}
+
 export interface ToolbarState {
     currentMode: UTLXMode;
     showMCPDialog: boolean;
@@ -32,6 +38,7 @@ export interface ToolbarState {
     mcpProgressPercent: number;  // 0-100
     mcpDialogMode: 'prompt' | 'preview';  // 'prompt' = input, 'preview' = show result
     generatedCode: string;  // The generated code to preview
+    promptHistory: PromptHistoryEntry[];  // History of prompts
     systemStatus: {
         mcpServer: boolean | null;  // null = checking, true = ok, false = error
         utlxd: boolean | null;
@@ -58,6 +65,9 @@ export class UTLXToolbarWidget extends ReactWidget {
     @inject(ApplicationShell)
     protected readonly shell!: ApplicationShell;
 
+    private static readonly PROMPT_HISTORY_KEY = 'utlx.ai-assistant.prompt-history';
+    private static readonly MAX_HISTORY_ENTRIES = 10;
+
     private state: ToolbarState = {
         currentMode: UTLXMode.RUNTIME,
         showMCPDialog: false,
@@ -67,6 +77,7 @@ export class UTLXToolbarWidget extends ReactWidget {
         mcpProgressPercent: 0,
         mcpDialogMode: 'prompt',
         generatedCode: '',
+        promptHistory: this.loadPromptHistory(),
         systemStatus: {
             mcpServer: null,
             utlxd: null,
@@ -88,6 +99,55 @@ export class UTLXToolbarWidget extends ReactWidget {
     protected init(): void {
         this.update();
         // Mode will be loaded from other widgets via events if needed
+    }
+
+    /**
+     * Load prompt history from localStorage
+     */
+    private loadPromptHistory(): PromptHistoryEntry[] {
+        try {
+            const stored = localStorage.getItem(UTLXToolbarWidget.PROMPT_HISTORY_KEY);
+            if (stored) {
+                const history = JSON.parse(stored) as PromptHistoryEntry[];
+                console.log('[UTLXToolbar] Loaded', history.length, 'prompt history entries');
+                return history;
+            }
+        } catch (error) {
+            console.error('[UTLXToolbar] Failed to load prompt history:', error);
+        }
+        return [];
+    }
+
+    /**
+     * Save prompt history to localStorage
+     */
+    private savePromptHistory(history: PromptHistoryEntry[]): void {
+        try {
+            // Keep only the most recent entries
+            const toSave = history.slice(-UTLXToolbarWidget.MAX_HISTORY_ENTRIES);
+            localStorage.setItem(UTLXToolbarWidget.PROMPT_HISTORY_KEY, JSON.stringify(toSave));
+            console.log('[UTLXToolbar] Saved', toSave.length, 'prompt history entries');
+        } catch (error) {
+            console.error('[UTLXToolbar] Failed to save prompt history:', error);
+        }
+    }
+
+    /**
+     * Add a new entry to prompt history
+     */
+    private addToPromptHistory(prompt: string, result?: string): void {
+        const entry: PromptHistoryEntry = {
+            timestamp: new Date().toISOString(),
+            prompt,
+            result
+        };
+
+        const newHistory = [...this.state.promptHistory, entry];
+        this.savePromptHistory(newHistory);
+
+        this.setState({
+            promptHistory: newHistory
+        });
     }
 
     protected render(): React.ReactNode {
@@ -175,6 +235,39 @@ export class UTLXToolbarWidget extends ReactWidget {
                                 <>
                                     <div className='utlx-dialog-body'>
                                         <p>Describe what transformation you want to create:</p>
+
+                                        {/* Prompt History Dropdown */}
+                                        {this.state.promptHistory.length > 1 && (
+                                            <div className='utlx-prompt-history'>
+                                                <label>Previous prompts:</label>
+                                                <select
+                                                    className='utlx-prompt-history-select'
+                                                    onChange={(e) => {
+                                                        const index = parseInt(e.target.value, 10);
+                                                        if (index >= 0 && index < this.state.promptHistory.length) {
+                                                            this.setState({ mcpPrompt: this.state.promptHistory[index].prompt });
+                                                        }
+                                                    }}
+                                                    disabled={mcpLoading}
+                                                >
+                                                    <option value="">-- Select a previous prompt --</option>
+                                                    {this.state.promptHistory.slice().reverse().map((entry, idx) => {
+                                                        const actualIndex = this.state.promptHistory.length - 1 - idx;
+                                                        const date = new Date(entry.timestamp);
+                                                        const timeStr = date.toLocaleString();
+                                                        const preview = entry.prompt.length > 60
+                                                            ? entry.prompt.substring(0, 60) + '...'
+                                                            : entry.prompt;
+                                                        return (
+                                                            <option key={actualIndex} value={actualIndex}>
+                                                                {timeStr}: {preview}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                            </div>
+                                        )}
+
                                         <textarea
                                             className='utlx-mcp-prompt-input'
                                             value={mcpPrompt}
@@ -281,9 +374,19 @@ export class UTLXToolbarWidget extends ReactWidget {
 
     private openMCPDialog(): void {
         console.log('[UTLXToolbar] 🤖 Opening MCP dialog');
+
+        // Get the most recent prompt from history
+        const lastPrompt = this.state.promptHistory.length > 0
+            ? this.state.promptHistory[this.state.promptHistory.length - 1].prompt
+            : '';
+
+        if (lastPrompt) {
+            console.log('[UTLXToolbar] Restoring last prompt:', lastPrompt.substring(0, 50) + '...');
+        }
+
         this.setState({
             showMCPDialog: true,
-            mcpPrompt: '',
+            mcpPrompt: lastPrompt,  // Restore last prompt
             systemStatus: {
                 mcpServer: null,
                 utlxd: null,
@@ -516,10 +619,18 @@ export class UTLXToolbarWidget extends ReactWidget {
                         udm: pathStructure || fullInput?.udmLanguage  // Use paths if available, fallback to UDM
                     };
                 }),
-                outputFormat
+                outputFormat,
+                originalHeader: header  // Send original header for validation
             };
 
             console.log('[Toolbar] Step 4: Calling backend service...');
+            console.log('[Toolbar] Request:', {
+                prompt: request.prompt.substring(0, 50),
+                inputCount: request.inputs.length,
+                outputFormat: request.outputFormat,
+                hasOriginalHeader: !!request.originalHeader,
+                originalHeaderPreview: request.originalHeader?.substring(0, 100)
+            });
             this.setState({ mcpProgressMessage: 'Generating transformation with AI (this may take 30-60 seconds)...', mcpProgressPercent: 0 });
 
             // Call the backend service (no progress simulation - backend will iterate)
@@ -553,6 +664,9 @@ export class UTLXToolbarWidget extends ReactWidget {
             console.log('[Toolbar] Original header (preserved):', header);
             console.log('[Toolbar] Extracted body:', generatedBody);
             console.log('[Toolbar] Final code:', finalCode);
+
+            // Save prompt to history
+            this.addToPromptHistory(mcpPrompt, finalCode);
 
             // Show preview mode instead of directly updating editor
             this.setState({

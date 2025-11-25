@@ -401,6 +401,7 @@ export interface GenerateUtlxRequest {
     prompt: string;
     inputs: GenerateUtlxInput[];
     outputFormat: string;
+    originalHeader: string;  // Original UTLX header from editor (required for validation)
 }
 
 export interface GenerateUtlxResponse {
@@ -411,6 +412,7 @@ export interface GenerateUtlxResponse {
         diagnostics?: Diagnostic[];
         message?: string;
         warning?: string;
+        attempts?: number;  // Number of LLM attempts made
     };
     usage?: {
         inputTokens: number;

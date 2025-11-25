@@ -56,8 +56,12 @@ export const generateUtlxTool: Tool = {
         type: 'string',
         description: 'Target output format (xml, json, csv, yaml, etc.)',
       },
+      originalHeader: {
+        type: 'string',
+        description: 'Original UTLX header from editor (required for validation)',
+      },
     },
-    required: ['prompt', 'inputs', 'outputFormat'],
+    required: ['prompt', 'inputs', 'outputFormat', 'originalHeader'],
   },
 };
 
@@ -70,6 +74,7 @@ const GenerateUtlxArgsSchema = z.object({
     udm: z.string().optional(),
   })),
   outputFormat: z.string(),
+  originalHeader: z.string(),
 });
 
 /**
@@ -99,7 +104,7 @@ function extractCleanCode(response: string): string {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
 
-      // Skip all header patterns
+      // Skip all header patterns and stray words
       if (line.startsWith('%utlx') ||
           line.startsWith('input:') ||
           line.startsWith('input ') ||
@@ -108,7 +113,9 @@ function extractCleanCode(response: string): string {
           line.startsWith('output:') ||
           line.startsWith('output ') ||
           line === '---' ||
-          line === '') {
+          line === '' ||
+          // Skip single standalone words (likely fragments)
+          (line.length <= 3 && !/^[\$\{\[]/.test(line))) {
         startIndex = i + 1;
         continue;
       }
@@ -134,13 +141,15 @@ function extractCleanCode(response: string): string {
       continue;
     }
 
-    // Check if this looks like an explanation
+    // Check if this looks like an explanation or stray word
     if (line.toLowerCase().startsWith('this is') ||
         line.toLowerCase().startsWith('this will') ||
         line.toLowerCase().startsWith('the ') ||
         line.toLowerCase().startsWith('note:') ||
         line.toLowerCase().includes('correct utlx') ||
-        /^[\d.)\-*]/.test(line)) {
+        /^[\d.)\-*]/.test(line) ||
+        // Skip single standalone words (likely fragments from explanations)
+        (line.length <= 3 && !/^[\$\{\[]/.test(line))) {
       endIndex = i;
       continue;
     }
@@ -166,12 +175,13 @@ export async function handleGenerateUtlx(
 ): Promise<ToolInvocationResponse> {
   try {
     // Validate arguments
-    const { prompt, inputs, outputFormat } = GenerateUtlxArgsSchema.parse(args);
+    const { prompt, inputs, outputFormat, originalHeader } = GenerateUtlxArgsSchema.parse(args);
 
     logger.info('Generating UTLX code', {
       prompt: prompt.substring(0, 100),
       inputCount: inputs.length,
       outputFormat,
+      hasOriginalHeader: !!originalHeader,
     });
 
     // Report progress: Starting
@@ -319,32 +329,31 @@ export async function handleGenerateUtlx(
       conversationHistory.push({ role: 'assistant', content: response.content });
 
       // Extract clean code
-      generatedCode = extractCleanCode(response.content.trim());
+      const rawResponse = response.content.trim();
+      generatedCode = extractCleanCode(rawResponse);
 
       logger.info(`Attempt ${attempt}: Generated code`, { length: generatedCode.length });
+      logger.debug(`Attempt ${attempt}: Raw LLM response:\n${rawResponse}`);
+      logger.debug(`Attempt ${attempt}: Extracted clean code:\n${generatedCode}`);
 
       // Report progress: Validating
       if (onProgress) {
         onProgress(0, 'Validating generated code...');
       }
 
-      // Reconstruct full UTLX program for validation
-      // Build a minimal header based on inputs
-      let headerInputs: string;
-      if (inputs.length === 1) {
-        // Single input: input name format
-        headerInputs = `input ${inputs[0].name} ${inputs[0].format}`;
-      } else {
-        // Multiple inputs: input: name1 format1, name2 format2, ...
-        const inputList = inputs.map(inp => `${inp.name} ${inp.format}`).join(', ');
-        headerInputs = `input: ${inputList}`;
-      }
+      // Reconstruct full UTLX program for validation using original header
+      // Note: header already includes trailing newline from frontend
+      const header = originalHeader.endsWith('\n') ? originalHeader.slice(0, -1) : originalHeader;
+      logger.info(`Attempt ${attempt}: Using original header from editor`);
 
-      const fullProgram = `%utlx 1.0\n${headerInputs}\noutput ${outputFormat}\n---\n${generatedCode}`;
+      const fullProgram = `${header}\n---\n${generatedCode}`;
 
       logger.info(`Attempt ${attempt}: Validating full program`, {
         programLength: fullProgram.length
       });
+
+      // Log the actual program being validated for debugging
+      logger.debug(`Attempt ${attempt}: Full program to validate:\n${fullProgram}`);
 
       // Validate the code using daemon
       try {

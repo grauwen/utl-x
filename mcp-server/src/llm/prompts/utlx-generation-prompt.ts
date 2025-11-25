@@ -60,6 +60,7 @@ export function buildUTLXGenerationSystemPrompt(): string {
 3. **Use exact input names** from the context provided
 4. **No explanations, no markdown, no code blocks** - just valid UTLX code
 5. **Follow UTLX syntax precisely** as specified in the reference below
+6. **NO TRAILING COMMAS** - Do not add commas after the last property in objects or arrays
 
 # UTLX LANGUAGE REFERENCE
 

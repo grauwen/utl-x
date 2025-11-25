@@ -336,6 +336,46 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
     font-size: 14px;
 }
 
+/* Prompt History Dropdown */
+.utlx-prompt-history {
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.utlx-prompt-history label {
+    font-size: 13px;
+    color: var(--theia-foreground, #cccccc);
+    font-weight: 500;
+}
+
+.utlx-prompt-history-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--theia-input-border, #3c3c3c);
+    border-radius: 4px;
+    background: var(--theia-input-background, #2d2d30);
+    color: var(--theia-input-foreground, #cccccc);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.utlx-prompt-history-select:hover {
+    border-color: var(--theia-focusBorder, #007acc);
+}
+
+.utlx-prompt-history-select:focus {
+    outline: none;
+    border-color: var(--theia-focusBorder, #007acc);
+}
+
+.utlx-prompt-history-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .utlx-mcp-prompt-input {
     width: 100%;
     min-height: 120px;

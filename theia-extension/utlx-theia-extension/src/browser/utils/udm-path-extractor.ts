@@ -5,8 +5,8 @@
  * Provides a compact, readable format showing how to access data in UTLX.
  */
 
-import { UDMLanguageParser } from '@apache/utlx-core/dist/udm/UDMLanguageParser';
-import { isArray, isObject, UDMObjectHelper } from '@apache/utlx-core/dist/udm/UDMHelpers';
+import { UDMLanguageParser } from '../udm/udm-language-parser';
+import { isArray, isObject, UDMObjectHelper } from '../udm/udm-core';
 
 export interface PathInfo {
     path: string;
@@ -57,9 +57,9 @@ function extractPathsRecursive(
     });
 
     // Handle arrays
-    if (isArray(node) && node.length > 0) {
+    if (isArray(node) && node.elements.length > 0) {
         // Get first element as template
-        const firstElement = node[0];
+        const firstElement = node.elements[0];
         extractPathsRecursive(firstElement, `${currentPath}[]`, paths, depth + 1, maxDepth);
     }
     // Handle objects

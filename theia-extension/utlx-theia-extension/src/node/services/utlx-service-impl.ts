@@ -297,6 +297,8 @@ export class UTLXServiceImpl implements UTLXService {
         console.log('[BACKEND] Prompt:', request.prompt.substring(0, 100));
         console.log('[BACKEND] Input count:', request.inputs.length);
         console.log('[BACKEND] Output format:', request.outputFormat);
+        console.log('[BACKEND] Has original header:', !!request.originalHeader);
+        console.log('[BACKEND] Original header preview:', request.originalHeader?.substring(0, 100));
         console.log('[BACKEND] ========================================');
 
         try {
@@ -318,6 +320,7 @@ export class UTLXServiceImpl implements UTLXService {
                     prompt: request.prompt,
                     inputs: request.inputs,
                     outputFormat: request.outputFormat,
+                    originalHeader: request.originalHeader,
                 },
                 (progress, message) => {
                     console.log(`[BACKEND] Progress: ${progress}% - ${message}`);
