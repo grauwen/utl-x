@@ -288,7 +288,7 @@ export class UTLXDaemonClient extends EventEmitter {
      */
     async ping(): Promise<boolean> {
         try {
-            await this.httpRequest('/health', 'GET');
+            await this.httpRequest('/api/health', 'GET');
             return true;
         } catch (error) {
             return false;

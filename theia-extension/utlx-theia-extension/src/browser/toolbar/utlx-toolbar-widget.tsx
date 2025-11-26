@@ -67,6 +67,9 @@ export class UTLXToolbarWidget extends ReactWidget {
 
     private static readonly PROMPT_HISTORY_KEY = 'utlx.ai-assistant.prompt-history';
     private static readonly MAX_HISTORY_ENTRIES = 10;
+    private static readonly STATUS_CHECK_INTERVAL_MS = 2000;  // Check status every 2 seconds
+
+    private statusCheckInterval?: NodeJS.Timeout;  // Timer for periodic status checks
 
     private state: ToolbarState = {
         currentMode: UTLXMode.RUNTIME,
@@ -99,6 +102,12 @@ export class UTLXToolbarWidget extends ReactWidget {
     protected init(): void {
         this.update();
         // Mode will be loaded from other widgets via events if needed
+    }
+
+    dispose(): void {
+        // Clean up periodic status checks
+        this.stopStatusChecks();
+        super.dispose();
     }
 
     /**
@@ -397,45 +406,78 @@ export class UTLXToolbarWidget extends ReactWidget {
         });
         console.log('[UTLXToolbar] ✅ MCP dialog state updated, showMCPDialog:', true);
 
-        // Check system status asynchronously
+        // Check system status immediately
         this.checkSystemStatus();
+
+        // Start periodic status checks every 2 seconds
+        this.startStatusChecks();
     }
 
     private async checkSystemStatus(): Promise<void> {
         console.log('[UTLXToolbar] Checking system status...');
 
-        // Check MCP Server & LLM in parallel
+        // Check all services in parallel
+        let mcpServerOk = false;
+        let utlxdOk = false;
+        let llmAvailable = false;
+        let llmProvider: string | undefined;
+        let llmModel: string | undefined;
+
         try {
+            // Check LLM status (which also validates MCP server connection)
             const llmStatus = await this.utlxService.checkLlmStatus();
             console.log('[UTLXToolbar] LLM status result:', llmStatus);
 
-            // MCP Server is OK if we got a response
-            const mcpServerOk = true;
+            // MCP Server is OK if we got a valid response from checkLlmStatus
+            mcpServerOk = true;
+            llmAvailable = llmStatus.available;
+            llmProvider = llmStatus.provider;
+            llmModel = llmStatus.model;
+        } catch (llmError) {
+            console.warn('[UTLXToolbar] LLM/MCP check failed:', llmError);
+            mcpServerOk = false;
+            llmAvailable = false;
+        }
 
-            // UTLXD check - we'll assume it's OK if MCP is OK (they're tightly coupled)
-            // In the future, we could add a separate UTLXD ping endpoint
-            const utlxdOk = true;
+        try {
+            // Check UTLXD separately
+            utlxdOk = await this.utlxService.ping();
+            console.log('[UTLXToolbar] UTLXD ping result:', utlxdOk);
+        } catch (pingError) {
+            console.warn('[UTLXToolbar] UTLXD ping failed:', pingError);
+            utlxdOk = false;
+        }
 
-            this.setState({
-                systemStatus: {
-                    mcpServer: mcpServerOk,
-                    utlxd: utlxdOk,
-                    llm: llmStatus.available,
-                    llmProvider: llmStatus.provider,
-                    llmModel: llmStatus.model
-                }
-            });
-        } catch (error) {
-            console.error('[UTLXToolbar] Error checking system status:', error);
-            this.setState({
-                systemStatus: {
-                    mcpServer: false,
-                    utlxd: false,
-                    llm: false,
-                    llmProvider: undefined,
-                    llmModel: undefined
-                }
-            });
+        // Update state with all results
+        this.setState({
+            systemStatus: {
+                mcpServer: mcpServerOk,
+                utlxd: utlxdOk,
+                llm: llmAvailable,
+                llmProvider: llmProvider,
+                llmModel: llmModel
+            }
+        });
+    }
+
+    private startStatusChecks(): void {
+        // Clear any existing interval
+        this.stopStatusChecks();
+
+        // Start periodic checks
+        this.statusCheckInterval = setInterval(() => {
+            console.log('[UTLXToolbar] Periodic status check triggered');
+            this.checkSystemStatus();
+        }, UTLXToolbarWidget.STATUS_CHECK_INTERVAL_MS);
+
+        console.log('[UTLXToolbar] Started periodic status checks every', UTLXToolbarWidget.STATUS_CHECK_INTERVAL_MS, 'ms');
+    }
+
+    private stopStatusChecks(): void {
+        if (this.statusCheckInterval) {
+            clearInterval(this.statusCheckInterval);
+            this.statusCheckInterval = undefined;
+            console.log('[UTLXToolbar] Stopped periodic status checks');
         }
     }
 
@@ -467,6 +509,10 @@ export class UTLXToolbarWidget extends ReactWidget {
 
     private closeMCPDialog(): void {
         console.log('[UTLXToolbar] 🚪 Closing MCP dialog');
+
+        // Stop periodic status checks
+        this.stopStatusChecks();
+
         this.setState({
             showMCPDialog: false,
             mcpPrompt: '',
