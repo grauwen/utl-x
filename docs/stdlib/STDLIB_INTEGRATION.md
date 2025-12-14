@@ -4,7 +4,7 @@ This document describes the integration of the comprehensive UTL-X Standard Libr
 
 ## Overview
 
-The UTL-X Standard Library has been successfully integrated into the core interpreter and CLI, providing access to over 200+ functions across multiple domains:
+The UTL-X Standard Library has been successfully integrated into the core interpreter and CLI, providing access to over 650+ functions across multiple domains:
 
 - **Array Functions**: Manipulation, aggregation, joins, transformations
 - **String Functions**: Text processing, regex, case conversion, formatting
