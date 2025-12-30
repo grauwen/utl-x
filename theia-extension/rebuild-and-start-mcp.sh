@@ -9,6 +9,10 @@ set -x  # Print each command before executing (verbose mode)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 EXTENSION_DIR="$SCRIPT_DIR/utlx-theia-extension"
 BROWSER_APP_DIR="$SCRIPT_DIR/browser-app"
+MCP_SERVER_DIR="$SCRIPT_DIR/../playwright-mcp-server"
+
+# CDP port for remote debugging (default 9223 for UTLX, to avoid conflict with port 9222)
+CDP_PORT="${CDP_PORT:-9223}"
 
 echo "================================"
 echo "UTLX Theia Rebuild & Start (MCP)"
@@ -16,6 +20,8 @@ echo "================================"
 echo "Script Dir: $SCRIPT_DIR"
 echo "Extension Dir: $EXTENSION_DIR"
 echo "Browser App Dir: $BROWSER_APP_DIR"
+echo "MCP Server Dir: $MCP_SERVER_DIR"
+echo "CDP Port: $CDP_PORT"
 echo "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""
 
@@ -54,20 +60,30 @@ fi
 echo "✓ Theia stopped at $(date '+%H:%M:%S')"
 echo ""
 
-# Step 2: Kill Chrome browsers with remote debugging
-echo "Step 2/8: Stopping Chrome browsers with remote debugging..."
+# Step 2: Kill MCP server and Chrome browsers with remote debugging
+echo "Step 2/8: Stopping MCP server and Chrome browsers..."
+
+# Kill MCP server processes
+MCP_PIDS=$(pgrep -f "playwright-mcp-server" 2>/dev/null || true)
+if [ -n "$MCP_PIDS" ]; then
+    echo "Killing MCP server processes: $MCP_PIDS"
+    echo "$MCP_PIDS" | xargs kill -9 2>/dev/null || true
+    sleep 1
+else
+    echo "No MCP server processes found"
+fi
 
 # Kill any Chrome with remote debugging port
-CDP_PIDS=$(lsof -ti:9222 2>/dev/null || true)
+CDP_PIDS=$(lsof -ti:$CDP_PORT 2>/dev/null || true)
 if [ -n "$CDP_PIDS" ]; then
-    echo "Killing processes on CDP port 9222: $CDP_PIDS"
+    echo "Killing processes on CDP port $CDP_PORT: $CDP_PIDS"
     echo "$CDP_PIDS" | xargs kill -9 2>/dev/null || true
     sleep 2
 else
-    echo "CDP port 9222 is clear"
+    echo "CDP port $CDP_PORT is clear"
 fi
 
-echo "✓ Chrome browsers stopped at $(date '+%H:%M:%S')"
+echo "✓ MCP server and Chrome browsers stopped at $(date '+%H:%M:%S')"
 echo ""
 
 # Step 3: Clean TypeScript output
@@ -166,7 +182,7 @@ echo "Waiting 5 seconds for services to initialize..."
 sleep 5
 
 # Launch Chrome Canary with remote debugging
-echo "Launching Chrome Canary with remote debugging on port 9222..."
+echo "Launching Chrome Canary with remote debugging on port $CDP_PORT..."
 echo ""
 
 # Find Chrome Canary path on macOS (try Canary first, fall back to regular Chrome)
@@ -191,7 +207,7 @@ fi
 
 # Launch Chrome Canary with remote debugging, clean profile
 "$BROWSER_PATH" \
-    --remote-debugging-port=9222 \
+    --remote-debugging-port=$CDP_PORT \
     --user-data-dir="$HOME/.utlx-chrome-canary-profile" \
     --no-first-run \
     --no-default-browser-check \
@@ -199,8 +215,41 @@ fi
 
 CHROME_PID=$!
 
-echo "✓ Chrome launched (PID: $CHROME_PID)"
+echo "✓ $BROWSER_NAME launched (PID: $CHROME_PID)"
 echo ""
+
+# Wait for Chrome to fully start and connect to Theia
+echo "Waiting 3 seconds for Chrome to connect..."
+sleep 3
+
+# Start Playwright MCP Server
+echo "Starting Playwright MCP server..."
+echo ""
+
+if [ ! -d "$MCP_SERVER_DIR" ]; then
+    echo "✗ MCP server directory not found: $MCP_SERVER_DIR"
+    echo "Skipping MCP server startup"
+else
+    cd "$MCP_SERVER_DIR"
+
+    # Check if node_modules exists
+    if [ ! -d "node_modules" ]; then
+        echo "Installing MCP server dependencies..."
+        npm install
+    fi
+
+    # Start MCP server in background with custom CDP port
+    MCP_LOG_FILE="$MCP_SERVER_DIR/mcp-server.log"
+    echo "MCP server command: CDP_URL=http://localhost:$CDP_PORT npm start"
+    echo "Output will be logged to: $MCP_LOG_FILE"
+    echo ""
+
+    CDP_URL="http://localhost:$CDP_PORT" nohup npm start > "$MCP_LOG_FILE" 2>&1 &
+    MCP_PID=$!
+
+    echo "✓ Playwright MCP server started (PID: $MCP_PID)"
+    echo ""
+fi
 
 echo ""
 echo "================================"
@@ -214,16 +263,22 @@ echo "  Logs: tail -f $LOG_FILE"
 echo ""
 echo "$BROWSER_NAME:"
 echo "  PID: $CHROME_PID"
-echo "  Remote Debugging: http://localhost:9222"
+echo "  Remote Debugging: http://localhost:$CDP_PORT"
 echo "  Profile: ~/.utlx-chrome-canary-profile"
 echo ""
-echo "MCP Server:"
-echo "  The Playwright MCP server can now connect to CDP on port 9222"
-echo "  Start MCP server with: cd ../playwright-mcp-server && npm start"
-echo ""
+if [ -n "$MCP_PID" ]; then
+    echo "Playwright MCP Server:"
+    echo "  PID: $MCP_PID"
+    echo "  Connected to: http://localhost:$CDP_PORT (CDP)"
+    echo "  Logs: tail -f $MCP_LOG_FILE"
+    echo ""
+fi
 echo "To stop:"
 echo "  Theia: kill $SERVER_PID"
-echo "  Chrome: Close browser window or kill $CHROME_PID"
+echo "  $BROWSER_NAME: Close browser window or kill $CHROME_PID"
+if [ -n "$MCP_PID" ]; then
+    echo "  MCP Server: kill $MCP_PID"
+fi
 echo ""
 echo "Finished at: $(date '+%H:%M:%S')"
 echo "================================"
