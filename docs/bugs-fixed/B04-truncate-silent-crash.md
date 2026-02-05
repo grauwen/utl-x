@@ -1,19 +1,11 @@
 # BUG: `truncate` causes silent crash (exit 1, no error output)
 
->> string function with bounds issues 
-
 ## Summary
 
 Calling `truncate(string, maxLength)` causes the transformation to fail
 silently: exit code 1, zero bytes on both stdout and stderr. No error
 message is produced, making the failure impossible to diagnose without
 binary search over the source.
-
-This is related to the `substring` bounds bug
-(`BUG-substring-out-of-bounds-masked-as-undefined-function.md`) but
-behaves worse -- `substring` at least prints a DEBUG line to stderr
-before the misleading "Undefined function" error, while `truncate`
-produces **nothing at all**.
 
 ---
 
@@ -98,28 +90,96 @@ so `truncate` should have been a no-op.
 
 ---
 
-## Likely root cause
+## Investigation: source code review
 
-`truncate` probably delegates to `substring` internally. The `substring`
-implementation (`StringFunctions.kt:135`) passes indices directly to
-Java's `String.substring(start, end)` without clamping:
+Inspecting the `truncate` implementation in
+`CaseConversionFunctions.kt:97-148` reveals that **the code looks safe**:
 
 ```kotlin
-return UDM.Scalar(str.substring(start, end))
+fun truncate(args: List<UDM>): UDM {
+    // ... argument validation ...
+    val input = str.value as String
+    val max = (maxLength.value as Number).toInt()
+
+    if (input.length <= max) {
+        return UDM.Scalar(input)   // <-- should return early for our case
+    }
+
+    val truncateAt = max - ellipsis.length
+    val result = input.take(truncateAt).trimEnd() + ellipsis  // uses .take(), safe
+    return UDM.Scalar(result)
+}
 ```
 
-When `end > str.length`, Java throws `StringIndexOutOfBoundsException`.
+It uses Kotlin's `.take()` (which clamps internally) and has an early
+return when `input.length <= max`. So the bounds-clamping hypothesis
+from the earlier `substring` bug does **not** apply here.
 
-The exception is then swallowed by `Interpreter.tryLoadStdlibFunction`
-(see `BUG-substring-out-of-bounds-masked-as-undefined-function.md` for
-the full analysis of the error-masking catch block). For `truncate` the
-masking is total -- no output reaches stderr at all, unlike `substring`
-which at least prints a DEBUG line.
+### Likely root cause: function loading / registration failure
+
+Since the implementation itself is correct, the silent crash most likely
+comes from `truncate` not being found or not being callable through the
+interpreter's function resolution path (`tryLoadStdlibFunction`). The
+function lives in `CaseConversionFunctions.kt`, separate from the main
+`StringFunctions.kt`. If it is not registered in the function registry
+or not reachable via `tryDirectFunctionInvocation`, the interpreter
+would:
+
+1. Fail in `tryDirectFunctionInvocation` (throws `RuntimeError`)
+2. Fall through to the registry lookup
+3. Not find `truncate` in the registry
+4. Fall through to `throw RuntimeError("Undefined function: truncate")`
+
+The completely silent output (vs `substring` which at least prints
+DEBUG lines) suggests that the function is **never found at all** --
+neither the direct invocation path nor the registry path reaches it.
 
 ---
 
-## Suggested fix
+## Broader investigation: other string/array functions
 
-1. **`truncate` implementation**: clamp the end index to `min(maxLength, str.length)` before calling `substring`.
-2. **`substring` implementation**: clamp both `start` and `end` to `[0, str.length]` as every other scripting language does.
-3. **`tryLoadStdlibFunction` error handler**: rethrow all exceptions from stdlib functions as `RuntimeError` with the real message, instead of swallowing them silently.
+A review of all index-based functions in the stdlib found:
+
+### Vulnerable
+
+| Function | File | Issue |
+|----------|------|-------|
+| `substring` | `StringFunctions.kt:135` | No bounds clamping -- passes `start`/`end` directly to Java `String.substring()` |
+
+### Safe (proper bounds validation)
+
+| Function | File | Validation method |
+|----------|------|-------------------|
+| `charAt` | `MoreStringFunctions.kt:201` | Explicit `if (index < 0 \|\| index >= str.length)` check |
+| `charCodeAt` | `MoreStringFunctions.kt:231` | Explicit bounds check |
+| `substringBefore` | `ExtendedStringFunctions.kt:31` | Uses `indexOf` before `substring` |
+| `substringAfter` | `ExtendedStringFunctions.kt:61` | Uses `indexOf` before `substring` |
+| `substringBeforeLast` | `ExtendedStringFunctions.kt:90` | Uses `lastIndexOf` before `substring` |
+| `substringAfterLast` | `ExtendedStringFunctions.kt:119` | Uses `lastIndexOf` before `substring` |
+| `extractBetween` | `ExtendedStringFunctions.kt:274` | Uses `indexOf` for both delimiters |
+| `padLeft` / `padRight` | `ExtendedStringFunctions.kt` | Uses safe Kotlin `.padStart()`/`.padEnd()` |
+| `get` (array) | `ArrayFunctions.kt:638` | Bounds check, returns null if out of range |
+| `slice` (array) | `MoreArrayFunctions.kt:227` | Validates both start and end |
+| `remove` (array) | `MoreArrayFunctions.kt:32` | Explicit bounds check |
+| `insertBefore/After` | `MoreArrayFunctions.kt` | Explicit bounds checks |
+
+### Conclusion
+
+- **`substring`** is the only function with a direct bounds-clamping vulnerability.
+- **`truncate`** has a different root cause: likely a function registration/loading
+  issue rather than a bounds problem. The implementation is correct but the function
+  appears unreachable at runtime.
+- All other index-based string and array functions have proper validation.
+
+---
+
+## Suggested fixes
+
+1. **`truncate` registration**: verify that `truncate` from `CaseConversionFunctions.kt`
+   is properly registered in the function registry and reachable through
+   `tryDirectFunctionInvocation`.
+2. **`substring` bounds clamping** (`StringFunctions.kt:135`): clamp indices to
+   `[0, str.length]` as every scripting language does.
+3. **`tryLoadStdlibFunction` error handling** (`interpreter.kt:1008-1032`): rethrow
+   all exceptions from stdlib functions as `RuntimeError` with the real message,
+   instead of swallowing them and reporting "Undefined function".
