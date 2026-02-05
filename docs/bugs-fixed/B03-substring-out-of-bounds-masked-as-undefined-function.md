@@ -136,3 +136,5 @@ Any stdlib string or array function that receives an out-of-bounds index will
 appear to be "undefined" to the user. This affects at least `substring` and
 `truncate`, and potentially other functions that can throw unchecked Java
 exceptions.
+
+# truncate is the culprit. It silently crashes. This is the same family as the substring bug
