@@ -1,5 +1,7 @@
 # BUG: `truncate` causes silent crash (exit 1, no error output)
 
+>> string function with bounds issues 
+
 ## Summary
 
 Calling `truncate(string, maxLength)` causes the transformation to fail
