@@ -1,0 +1,190 @@
+%utlx 1.0
+input json
+output xml
+---
+
+// ============================================================================
+// Business Scenario: Shipping Manifest → Customs Declaration
+// ----------------------------------------------------------------------------
+// Input:  Domestic shipping manifest (07-shipping-manifest.json)
+// Output: XML customs/trade compliance document for cross-border extension
+//
+// When a shipment is re-routed internationally or a domestic manifest
+// needs to be enriched for trade compliance, this transformation produces
+// a customs declaration. It calculates volumetric weights, determines
+// the chargeable weight, estimates duties, converts units to metric,
+// generates HS code hints based on product descriptions, and adds
+// the regulatory fields required by customs authorities.
+// ============================================================================
+
+function HsCodeHint(description) {
+  let desc = lowerCase(description) in
+  if (contains(desc, "tv") || contains(desc, "television")) "8528.72"
+  else if (contains(desc, "soundbar") || contains(desc, "speaker")) "8518.22"
+  else if (contains(desc, "laptop") || contains(desc, "computer")) "8471.30"
+  else if (contains(desc, "phone") || contains(desc, "mobile")) "8517.13"
+  else "9999.99"
+}
+
+function DutyRate(hsCode) {
+  if (startsWith(hsCode, "8528")) 0.05
+  else if (startsWith(hsCode, "8518")) 0.035
+  else if (startsWith(hsCode, "8471")) 0.0
+  else if (startsWith(hsCode, "8517")) 0.0
+  else 0.10
+}
+
+function CountryOfOrigin(description) {
+  let desc = lowerCase(description) in
+  if (contains(desc, "tv") || contains(desc, "soundbar")) "CN"
+  else if (contains(desc, "laptop")) "TW"
+  else "US"
+}
+
+{
+  let lbsToKg = 0.453592;
+  let inToCm = 2.54;
+  let volumetricDivisor = 5000;
+  let allContents = flatMap($input.packages, pkg => pkg.contents);
+  let totalPieces = sumBy(allContents, item => item.quantity);
+  let totalDeclaredValue = sumBy(allContents, item => roundToCents(item.value * item.quantity));
+  let totalActualKg = roundToDecimalPlaces($input.totalWeight * lbsToKg, 2);
+
+  let packagesEnriched = $input.packages |> map(pkg => {
+    let lengthCm = roundToDecimalPlaces(pkg.dimensions.length * inToCm, 1);
+    let widthCm = roundToDecimalPlaces(pkg.dimensions.width * inToCm, 1);
+    let heightCm = roundToDecimalPlaces(pkg.dimensions.height * inToCm, 1);
+    let volumeCm3 = round(lengthCm * widthCm * heightCm);
+    let volumetricKg = roundToDecimalPlaces(volumeCm3 / volumetricDivisor, 2);
+    let actualKg = roundToDecimalPlaces(pkg.weight * lbsToKg, 2);
+    let chargeableKg = max(volumetricKg, actualKg);
+    {
+      id: pkg.packageId,
+      actualKg: actualKg,
+      volumetricKg: volumetricKg,
+      chargeableKg: chargeableKg,
+      volumeCm3: volumeCm3,
+      lengthCm: lengthCm,
+      widthCm: widthCm,
+      heightCm: heightCm,
+      contents: pkg.contents
+    }
+  });
+
+  let totalChargeableKg = roundToDecimalPlaces(
+    sumBy(packagesEnriched, pkg => pkg.chargeableKg), 2
+  );
+
+  CustomsDeclaration: {
+    @declarationId: "CD-" + replace(substring(generateUuid(), 0, 8), "-", ""),
+    @generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    @declarationType: "EXPORT",
+    ShipmentReference: {
+      ManifestId: $input.manifestId,
+      ManifestDate: $input.manifestDate,
+      TrackingNumber: $input.carrier.trackingNumber,
+      Carrier: upperCase($input.carrier.name),
+      ServiceLevel: $input.carrier.serviceType
+    },
+    Exporter: {
+      Name: upperCase($input.origin.name),
+      Address: $input.origin.address.street + ", " +
+               $input.origin.address.city + ", " +
+               $input.origin.address.state + " " +
+               $input.origin.address.zipCode,
+      Country: $input.origin.address.country,
+      Phone: $input.origin.contactPhone
+    },
+    Consignee: {
+      @customerId: $input.destination.customerId,
+      Name: upperCase($input.destination.companyName),
+      Attention: $input.destination.contactPerson,
+      Address: $input.destination.address.street + ", " +
+               $input.destination.address.city + ", " +
+               $input.destination.address.state + " " +
+               $input.destination.address.zipCode,
+      Country: $input.destination.address.country,
+      Phone: $input.destination.contactPhone
+    },
+    GoodsSummary: {
+      TotalPackages: count($input.packages),
+      TotalPieces: totalPieces,
+      TotalActualWeightKg: totalActualKg,
+      TotalVolumetricWeightKg: roundToDecimalPlaces(
+        sumBy(packagesEnriched, pkg => pkg.volumetricKg), 2
+      ),
+      TotalChargeableWeightKg: totalChargeableKg,
+      WeightMethod: if (totalChargeableKg > totalActualKg) "VOLUMETRIC" else "ACTUAL",
+      DeclaredValueUSD: totalDeclaredValue,
+      InsuredValueUSD: $input.insurance > 0,
+      HazardousMaterials: $input.hazardousMaterials,
+      SpecialHandling: if (isNotEmpty($input.specialInstructions))
+                         $input.specialInstructions else "NONE"
+    },
+    Packages: {
+      Package: packagesEnriched |> map(pkg => {
+        {
+          @id: pkg.id,
+          @chargeableKg: pkg.chargeableKg,
+          Weight: {
+            ActualKg: pkg.actualKg,
+            VolumetricKg: pkg.volumetricKg,
+            Method: if (pkg.volumetricKg > pkg.actualKg) "VOLUMETRIC" else "ACTUAL"
+          },
+          Dimensions: {
+            @unit: "CM",
+            Length: pkg.lengthCm,
+            Width: pkg.widthCm,
+            Height: pkg.heightCm,
+            VolumeCm3: pkg.volumeCm3
+          },
+          Contents: {
+            Item: pkg.contents |> map(item => {
+              let hsCode = HsCodeHint(item.description);
+              let dutyRate = DutyRate(hsCode);
+              let lineValue = roundToCents(item.value * item.quantity);
+              let estimatedDuty = roundToCents(lineValue * dutyRate);
+              {
+                @sku: item.sku,
+                @hsCode: hsCode,
+                Description: upperCase(item.description),
+                Quantity: item.quantity,
+                UnitValueUSD: item.value,
+                TotalValueUSD: lineValue,
+                CountryOfOrigin: CountryOfOrigin(item.description),
+                DutyRate: toString(round(dutyRate * 100)) + "%",
+                EstimatedDutyUSD: estimatedDuty
+              }
+            })
+          }
+        }
+      })
+    },
+    DutyEstimate: {
+      TotalEstimatedDuty: formatCurrency(
+        sumBy(allContents, item => {
+          let rate = DutyRate(HsCodeHint(item.description));
+          roundToCents(item.value * item.quantity * rate)
+        }),
+        "USD"
+      ),
+      TotalLandedCost: formatCurrency(
+        roundToCents(totalDeclaredValue + $input.shippingCost + $input.insurance +
+          sumBy(allContents, item => {
+            let rate = DutyRate(HsCodeHint(item.description));
+            roundToCents(item.value * item.quantity * rate)
+          })
+        ),
+        "USD"
+      ),
+      ShippingCost: $input.shippingCost,
+      Insurance: $input.insurance
+    },
+    Compliance: {
+      SignatureRequired: $input.signatureRequired,
+      ExportLicenseRequired: totalDeclaredValue > 2500,
+      AESFilingRequired: totalDeclaredValue > 2500,
+      DangerousGoods: $input.hazardousMaterials
+    }
+  }
+}

@@ -1,0 +1,159 @@
+%utlx 1.0
+input json
+output json
+---
+
+// ============================================================================
+// Business Scenario: Product Catalog → Marketplace Listing Feed
+// ----------------------------------------------------------------------------
+// Input:  Internal product catalog (08-product-catalog.json)
+// Output: JSON feed for marketplace syndication (Amazon/Shopify-style)
+//
+// The e-commerce team syndicates product data to external marketplaces.
+// This transformation generates a normalized listing feed with SEO-
+// optimized slugs, price margin analysis, inventory health indicators,
+// promotional badge logic, structured spec extraction, and marketplace-
+// required fields like GTIN placeholders and fulfillment eligibility.
+// ============================================================================
+
+function InventoryHealth(available, reorderLevel) {
+  let ratio = available / reorderLevel in
+  if (ratio <= 0) "OUT_OF_STOCK"
+  else if (ratio < 1.0) "CRITICAL"
+  else if (ratio < 2.0) "LOW"
+  else if (ratio < 5.0) "HEALTHY"
+  else "OVERSTOCKED"
+}
+
+function PriceBadge(msrp, salePrice) {
+  let savingsPct = round((msrp - salePrice) / msrp * 100) in
+  if (savingsPct >= 25) "CLEARANCE"
+  else if (savingsPct >= 15) "GREAT_DEAL"
+  else if (savingsPct >= 5) "ON_SALE"
+  else "REGULAR_PRICE"
+}
+
+function FulfillmentEligibility(weightLbs, price) {
+  let weight = parseFloat(replace(weightLbs, " lbs", "")) in
+  if (weight > 70) "FREIGHT_ONLY"
+  else if (weight > 20) "GROUND_ONLY"
+  else if (price > 500 && weight <= 10) "PRIME_ELIGIBLE"
+  else "STANDARD"
+}
+
+{
+  let feedMeta = {
+    feedId: "FEED-" + replace(substring(generateUuid(), 0, 8), "-", ""),
+    generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    sourceSystem: "INTERNAL_CATALOG",
+    catalogId: $input.catalogId,
+    catalogName: $input.catalogName,
+    validFrom: $input.effectiveDate,
+    validUntil: $input.expirationDate,
+    totalListings: count($input.products),
+    format: "MARKETPLACE_FEED_V2"
+  };
+
+  {
+    feedMetadata: feedMeta,
+    listings: $input.products
+      |> filter(product => product.active)
+      |> map(product => {
+        let savings = roundToCents(product.pricing.msrp - product.pricing.salePrice);
+        let savingsPct = round((product.pricing.msrp - product.pricing.salePrice) / product.pricing.msrp * 100);
+        let marginPct = roundToDecimalPlaces(
+          (product.pricing.salePrice - product.pricing.wholesale) / product.pricing.salePrice * 100, 1
+        );
+        let inventoryStatus = InventoryHealth(product.inventory.available, product.inventory.reorderLevel);
+        let badge = PriceBadge(product.pricing.msrp, product.pricing.salePrice);
+        let daysUntilExpiry = diffDays(now(), parseDate($input.expirationDate));
+        let daysSinceRelease = diffDays(parseDate(product.releaseDate), now());
+
+        {
+          listingId: slugify(product.name) + "-" + lowerCase(product.sku),
+          sku: product.sku,
+          internalProductId: product.productId,
+          title: product.name,
+          slug: slugify(product.name),
+          brand: product.brand,
+          description: product.description,
+          seoTitle: product.name + " | " + product.brand + " | " + product.category,
+          seoDescription: product.description,
+          category: {
+            primary: product.category,
+            sub: product.subcategory,
+            breadcrumb: product.category + " > " + product.subcategory,
+            path: kebabCase(product.category) + "/" + kebabCase(product.subcategory)
+          },
+          specifications: entries(product.specifications) |> map(entry => {
+            {
+              key: titleCase(fromCamelCase(entry.key)),
+              value: entry.value,
+              searchable: true
+            }
+          }),
+          pricing: {
+            currency: product.pricing.currency,
+            msrp: product.pricing.msrp,
+            listPrice: product.pricing.retailPrice,
+            salePrice: product.pricing.salePrice,
+            savings: savings,
+            savingsPercent: savingsPct,
+            margin: marginPct,
+            pricePerformance: roundToDecimalPlaces(
+              product.pricing.salePrice / parseFloat(replace(product.specifications.ram, "GB DDR5", "")),
+              2
+            ),
+            badge: badge,
+            formattedPrice: formatCurrency(product.pricing.salePrice, "USD"),
+            formattedMsrp: formatCurrency(product.pricing.msrp, "USD"),
+            formattedSavings: formatCurrency(savings, "USD")
+          },
+          inventory: {
+            available: product.inventory.available,
+            reserved: product.inventory.reserved,
+            total: product.inventory.inStock,
+            status: inventoryStatus,
+            lowStockThreshold: product.inventory.reorderLevel,
+            reorderQuantity: product.inventory.reorderQuantity,
+            daysOfStock: if (product.inventory.available > 0)
+              round(product.inventory.available / max(1, product.inventory.reorderQuantity / 90))
+              else 0
+          },
+          fulfillment: {
+            weight: product.specifications.weight,
+            eligibility: FulfillmentEligibility(product.specifications.weight, product.pricing.salePrice),
+            shippingClass: if (parseFloat(replace(product.specifications.weight, " lbs", "")) > 5) "OVERSIZED" else "STANDARD",
+            freeShippingEligible: product.pricing.salePrice >= 35
+          },
+          warranty: {
+            durationMonths: product.warranty.duration,
+            type: lower(product.warranty.durationType),
+            coverage: product.warranty.coverage,
+            summary: toString(product.warranty.duration) + " " + lowerCase(product.warranty.durationType) + " warranty"
+          },
+          media: {
+            images: product.images,
+            imageCount: count(product.images),
+            primaryImage: first(product.images)
+          },
+          flags: {
+            featured: product.featured,
+            active: product.active,
+            newArrival: daysSinceRelease < 90,
+            seasonalExpiring: daysUntilExpiry < 30,
+            highValue: product.pricing.salePrice > 1000,
+            onSale: savingsPct > 0
+          },
+          dates: {
+            releaseDate: product.releaseDate,
+            daysSinceRelease: daysSinceRelease,
+            catalogExpiry: $input.expirationDate,
+            daysUntilExpiry: daysUntilExpiry,
+            listingCreated: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'")
+          },
+          checksum: md5(product.sku + toString(product.pricing.salePrice) + toString(product.inventory.available))
+        }
+      })
+  }
+}

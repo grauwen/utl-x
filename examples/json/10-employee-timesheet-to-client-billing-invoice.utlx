@@ -1,0 +1,96 @@
+%utlx 1.0
+input json
+output csv {
+  headers: true,
+  delimiter: ","
+}
+---
+
+// ============================================================================
+// Business Scenario: Employee Timesheet → Client Billing Invoice Lines
+// ----------------------------------------------------------------------------
+// Input:  Weekly employee timesheet with daily entries (10-employee-timesheet.json)
+// Output: CSV billing invoice lines for Accounts Receivable
+//
+// Professional services firms convert approved timesheets into client
+// invoices. This transformation filters to billable hours only, groups
+// by project/client, applies blended billing rates by task type,
+// calculates extended amounts, and produces invoice-ready line items
+// with project utilization metrics for the finance team.
+// ============================================================================
+
+function BillingRate(position, taskType) {
+  let baseRate = if (contains(position, "Senior")) 225
+                 else if (contains(position, "Lead")) 250
+                 else if (contains(position, "Junior")) 125
+                 else 175 in
+  let taskMultiplier = match (taskType) {
+    "DEVELOPMENT" => 1.0,
+    "MEETING" => 0.75,
+    "TESTING" => 0.9,
+    "CODE_REVIEW" => 1.0,
+    "ARCHITECTURE" => 1.25,
+    _ => 0.85
+  } in
+  roundToCents(baseRate * taskMultiplier)
+}
+
+{
+  let allEntries = flatMap($input.dailyEntries, day =>
+    day.entries |> filter(entry => entry.billable) |> map(entry => {
+      {
+        date: day.date,
+        dayOfWeek: day.dayOfWeek,
+        project: entry.project,
+        taskType: entry.taskType,
+        description: entry.description,
+        hours: entry.duration,
+        rate: BillingRate($input.employee.position, entry.taskType)
+      }
+    })
+  );
+
+  let grouped = groupBy(allEntries, entry => entry.project.projectId);
+  let projectIds = distinct(map(allEntries, entry => entry.project.projectId));
+  let totalBillableHours = sumBy(allEntries, entry => entry.hours);
+  let totalAmount = sumBy(allEntries, entry => roundToCents(entry.hours * entry.rate));
+
+  projectIds |> flatMap(projId => {
+    let projectEntries = filter(allEntries, entry => entry.project.projectId == projId);
+    let projectName = first(projectEntries).project.projectName;
+    let clientId = first(projectEntries).project.clientId;
+    let projectHours = sumBy(projectEntries, e => e.hours);
+    let projectAmount = sumBy(projectEntries, e => roundToCents(e.hours * e.rate));
+    let taskTypes = distinct(map(projectEntries, e => e.taskType));
+    let weekStart = $input.payPeriod.startDate;
+    let weekEnd = $input.payPeriod.endDate;
+    let blendedRate = if (projectHours > 0) roundToCents(projectAmount / projectHours) else 0;
+
+    projectEntries |> sortBy(entry => entry.date) |> map(entry => {
+      let amount = roundToCents(entry.hours * entry.rate);
+      {
+        invoice_period: weekStart + " to " + weekEnd,
+        client_id: coalesce(clientId, "INTERNAL"),
+        project_id: projId,
+        project_name: projectName,
+        employee_id: $input.employee.employeeId,
+        employee_name: $input.employee.name,
+        role: $input.employee.position,
+        date: entry.date,
+        day: entry.dayOfWeek,
+        task_type: entry.taskType,
+        description: entry.description,
+        hours: entry.hours,
+        hourly_rate: entry.rate,
+        line_amount: amount,
+        project_total_hours: projectHours,
+        project_total_amount: projectAmount,
+        blended_rate: blendedRate,
+        pct_of_project: if (projectHours > 0) roundToDecimalPlaces(entry.hours / projectHours * 100, 1) else 0,
+        timesheet_id: $input.timesheetId,
+        timesheet_status: $input.status,
+        approved_by: coalesce($input.approvedBy, "PENDING")
+      }
+    })
+  })
+}

@@ -1,0 +1,115 @@
+%utlx 1.0
+input json
+output xml
+---
+
+// ============================================================================
+// Business Scenario: Customer Order → Warehouse Pick List
+// ----------------------------------------------------------------------------
+// Input:  Customer e-commerce order (01-customer-order.json)
+// Output: XML pick list for a Warehouse Management System (WMS)
+//
+// A warehouse operator receives this pick list to fulfill the order.
+// Items are sorted by SKU for efficient aisle walking, quantities are
+// validated, weights estimated for carrier selection, and the pick list
+// includes zone assignments, packing instructions, and a priority score
+// based on order value and shipping tier.
+// ============================================================================
+
+function WarehouseZone(sku) {
+  if (startsWith(sku, "LAPTOP")) "ZONE-A-HIGH-VALUE"
+  else if (startsWith(sku, "MOUSE")) "ZONE-C-ACCESSORIES"
+  else if (startsWith(sku, "MONITOR")) "ZONE-B-DISPLAYS"
+  else "ZONE-D-GENERAL"
+}
+
+function EstimateWeight(sku, qty) {
+  let unitKg = if (contains(sku, "LAPTOP")) 2.5
+               else if (contains(sku, "MOUSE")) 0.15
+               else if (contains(sku, "MONITOR")) 8.0
+               else 1.0 in
+  roundToDecimalPlaces(unitKg * qty, 2)
+}
+
+function PackingType(sku) {
+  if (contains(sku, "LAPTOP")) "INDIVIDUAL_BOX_BUBBLE_WRAP"
+  else if (contains(sku, "MOUSE")) "MULTI_PACK_POLYBAG"
+  else "STANDARD_BOX"
+}
+
+function PriorityScore(total, status) {
+  let valueFactor = if (total > 5000) 40 else if (total > 1000) 20 else 10 in
+  let urgencyFactor = match (status) {
+    "PENDING_FULFILLMENT" => 30,
+    "PROCESSING" => 20,
+    _ => 10
+  } in
+  valueFactor + urgencyFactor
+}
+
+{
+  let priorityScore = PriorityScore($input.total, $input.status);
+  let sortedItems = $input.items |> sortBy(item => item.sku);
+  let totalUnits = sumBy($input.items, item => item.quantity);
+  let totalWeight = sumBy($input.items, item => EstimateWeight(item.sku, item.quantity));
+  let distinctZones = distinct(map($input.items, item => WarehouseZone(item.sku)));
+
+  PickList: {
+    @pickListId: "PL-" + replace(substring(generateUuid(), 0, 8), "-", ""),
+    @generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    @priority: if (priorityScore >= 60) "RUSH" else if (priorityScore >= 40) "HIGH" else "NORMAL",
+    OrderReference: {
+      OrderId: $input.orderId,
+      OrderDate: formatDate(parseDate($input.orderDate), "dd-MMM-yyyy"),
+      DayOfWeek: dayOfWeekName(parseDate($input.orderDate)),
+      Customer: upperCase($input.customer.name),
+      CustomerId: $input.customer.customerId
+    },
+    ShipTo: {
+      Label: upperCase($input.customer.name) + "\n" +
+             upperCase($input.customer.shippingAddress.street) + "\n" +
+             upperCase($input.customer.shippingAddress.city) + ", " +
+             $input.customer.shippingAddress.state + " " +
+             $input.customer.shippingAddress.zipCode,
+      Country: $input.customer.shippingAddress.country,
+      PostalZone: substring($input.customer.shippingAddress.zipCode, 0, 3)
+    },
+    PickSummary: {
+      TotalLineItems: count($input.items),
+      TotalUnits: totalUnits,
+      EstimatedWeightKg: totalWeight,
+      EstimatedWeightLbs: roundToDecimalPlaces(totalWeight * 2.20462, 1),
+      ZonesToVisit: count(distinctZones),
+      Zones: joinToString(distinctZones, ", "),
+      PriorityScore: priorityScore,
+      CarrierRecommendation: if (totalWeight > 20) "FREIGHT" else if (totalWeight > 5) "GROUND" else "PARCEL"
+    },
+    Items: {
+      Item: sortedItems |> map(item => {
+        let zone = WarehouseZone(item.sku);
+        let weight = EstimateWeight(item.sku, item.quantity);
+        let netValue = roundToCents(item.unitPrice * item.quantity * (1 - item.discount));
+        {
+          @seq: toString(findIndex(sortedItems, i => i.sku == item.sku) + 1),
+          @zone: zone,
+          SKU: item.sku,
+          Description: item.productName,
+          BinLocation: upperCase(substring(zone, 0, 6)) + "-" + padRight(substring(item.sku, 0, 5), 5, "0"),
+          QuantityToPick: item.quantity,
+          UnitWeightKg: roundToDecimalPlaces(weight / item.quantity, 2),
+          TotalWeightKg: weight,
+          NetValue: formatCurrency(netValue, "USD"),
+          PackingInstruction: PackingType(item.sku),
+          QualityCheck: if (netValue > 1000) "REQUIRED" else "SPOT_CHECK"
+        }
+      })
+    },
+    PackingInstructions: {
+      ShipVia: if (totalWeight > 20) "LTL_FREIGHT" else "PARCEL_GROUND",
+      InsuranceRequired: $input.total > 2000,
+      SignatureRequired: $input.total > 1000,
+      CustomsRequired: $input.customer.shippingAddress.country != "USA",
+      LabelFormat: "4x6_THERMAL"
+    }
+  }
+}

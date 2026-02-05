@@ -1,0 +1,194 @@
+%utlx 1.0
+input json
+output yaml
+---
+
+// ============================================================================
+// Business Scenario: Sales Report → Commission Calculation
+// ----------------------------------------------------------------------------
+// Input:  Quarterly sales performance report (12-sales-report.json)
+// Output: YAML commission calculation for payroll integration
+//
+// At quarter-end, finance calculates sales commissions. This transforms
+// the sales report into commission payouts per rep using tiered rates
+// based on quota attainment, accelerators for over-performers, and
+// regional bonuses. It includes statistical benchmarks (median, stdDev,
+// percentiles) so management can evaluate team distribution and
+// identify outliers for recognition or coaching.
+// ============================================================================
+
+function CommissionRate(quotaAttainment) {
+  if (quotaAttainment >= 120) 0.15
+  else if (quotaAttainment >= 100) 0.12
+  else if (quotaAttainment >= 80) 0.08
+  else if (quotaAttainment >= 50) 0.05
+  else 0.02
+}
+
+function CommissionTier(quotaAttainment) {
+  if (quotaAttainment >= 120) "ACCELERATOR"
+  else if (quotaAttainment >= 100) "ON_TARGET"
+  else if (quotaAttainment >= 80) "APPROACHING"
+  else if (quotaAttainment >= 50) "DEVELOPING"
+  else "BELOW_THRESHOLD"
+}
+
+function Accelerator(quotaAttainment) {
+  if (quotaAttainment >= 120) roundToDecimalPlaces((quotaAttainment - 120) * 0.002, 4)
+  else 0
+}
+
+function RegionalBonus(territory, revenue) {
+  let isGrowthRegion = contains(territory, "APAC") || contains(territory, "Latin") in
+  if (isGrowthRegion && revenue > 100000) roundToCents(revenue * 0.01)
+  else 0
+}
+
+{
+  let reps = $input.topSalesRepresentatives;
+  let revenues = map(reps, r => r.revenue);
+  let attainments = map(reps, r => r.quotaAttainment);
+  let conversionRates = map(reps, r => r.conversionRate);
+  let medianRevenue = median(revenues);
+  let avgRevenue = roundToCents(avg(revenues));
+  let revenueStdDev = roundToCents(stdDev(revenues));
+  let medianAttainment = median(attainments);
+  let topPerformer = maxBy(reps, r => r.revenue);
+  let bottomPerformer = minBy(reps, r => r.revenue);
+  let aboveQuota = filter(reps, r => r.quotaAttainment >= 100);
+  let belowQuota = filter(reps, r => r.quotaAttainment < 100);
+
+  {
+    commissionReport: {
+      metadata: {
+        reportId: "COMM-" + replace(substring(generateUuid(), 0, 8), "-", ""),
+        generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+        sourceReportId: $input.reportId,
+        period: "Q" + toString($input.reportPeriod.quarter) + " " + toString($input.reportPeriod.year),
+        fiscalYear: $input.reportPeriod.fiscalYear,
+        preparedBy: $input.generatedBy.name,
+        status: "PENDING_APPROVAL"
+      },
+      teamBenchmarks: {
+        headcount: count(reps),
+        aboveQuotaCount: count(aboveQuota),
+        belowQuotaCount: count(belowQuota),
+        quotaHitRate: roundToDecimalPlaces(count(aboveQuota) / count(reps) * 100, 1),
+        revenue: {
+          total: sum(revenues),
+          average: avgRevenue,
+          median: medianRevenue,
+          stdDev: revenueStdDev,
+          min: min(revenues),
+          max: max(revenues),
+          spread: max(revenues) - min(revenues),
+          p25: percentile(revenues, 25),
+          p75: percentile(revenues, 75),
+          iqr: iqr(revenues)
+        },
+        attainment: {
+          average: roundToDecimalPlaces(avg(attainments), 1),
+          median: medianAttainment,
+          stdDev: roundToDecimalPlaces(stdDev(attainments), 2),
+          min: min(attainments),
+          max: max(attainments)
+        },
+        conversionRate: {
+          average: roundToDecimalPlaces(avg(conversionRates), 1),
+          best: max(conversionRates),
+          worst: min(conversionRates)
+        },
+        topPerformer: topPerformer.name,
+        bottomPerformer: bottomPerformer.name
+      },
+      commissions: reps
+        |> sortBy(r => -r.quotaAttainment)
+        |> map(rep => {
+          let rate = CommissionRate(rep.quotaAttainment);
+          let tier = CommissionTier(rep.quotaAttainment);
+          let accelerator = Accelerator(rep.quotaAttainment);
+          let effectiveRate = roundToDecimalPlaces(rate + accelerator, 4);
+          let baseCommission = roundToCents(rep.revenue * rate);
+          let acceleratorBonus = roundToCents(rep.revenue * accelerator);
+          let regionalBonus = RegionalBonus(rep.territory, rep.revenue);
+          let totalPayout = roundToCents(baseCommission + acceleratorBonus + regionalBonus);
+          let revenueVsMedian = roundToDecimalPlaces(
+            percentageChange(medianRevenue, rep.revenue), 1
+          );
+          let revenueZScore = if (revenueStdDev > 0)
+            roundToDecimalPlaces((rep.revenue - avgRevenue) / revenueStdDev, 2)
+            else 0;
+          {
+            employeeId: rep.employeeId,
+            name: rep.name,
+            territory: rep.territory,
+            performance: {
+              revenue: rep.revenue,
+              quota: rep.quota,
+              attainment: rep.quotaAttainment,
+              orders: rep.orders,
+              conversionRate: rep.conversionRate,
+              avgDealSize: roundToCents(rep.revenue / rep.orders),
+              revenueVsMedian: revenueVsMedian,
+              zScore: revenueZScore,
+              ranking: findIndex(
+                reps |> sortBy(r => -r.revenue),
+                r => r.employeeId == rep.employeeId
+              ) + 1
+            },
+            commission: {
+              tier: tier,
+              baseRate: rate,
+              accelerator: accelerator,
+              effectiveRate: effectiveRate,
+              baseCommission: baseCommission,
+              acceleratorBonus: acceleratorBonus,
+              regionalBonus: regionalBonus,
+              totalPayout: totalPayout,
+              commissionToRevenueRatio: roundToDecimalPlaces(totalPayout / rep.revenue * 100, 2)
+            },
+            flags: {
+              overPerformer: rep.quotaAttainment >= 110,
+              underPerformer: rep.quotaAttainment < 80,
+              eligibleForPresidentsClub: rep.quotaAttainment >= 120 && rep.conversionRate >= 30,
+              coachingRecommended: rep.quotaAttainment < 80 || rep.conversionRate < 25,
+              outlier: abs(revenueZScore) > 1.5
+            }
+          }
+      }),
+      financialSummary: {
+        totalCommissions: roundToCents(sumBy(reps, rep => {
+          let rate = CommissionRate(rep.quotaAttainment);
+          let acc = Accelerator(rep.quotaAttainment);
+          let regional = RegionalBonus(rep.territory, rep.revenue);
+          roundToCents(rep.revenue * (rate + acc)) + regional
+        })),
+        totalBaseCommissions: roundToCents(sumBy(reps, rep =>
+          roundToCents(rep.revenue * CommissionRate(rep.quotaAttainment))
+        )),
+        totalAccelerators: roundToCents(sumBy(reps, rep =>
+          roundToCents(rep.revenue * Accelerator(rep.quotaAttainment))
+        )),
+        totalRegionalBonuses: roundToCents(sumBy(reps, rep =>
+          RegionalBonus(rep.territory, rep.revenue)
+        )),
+        averageCommission: roundToCents(
+          sumBy(reps, rep => {
+            let rate = CommissionRate(rep.quotaAttainment);
+            let acc = Accelerator(rep.quotaAttainment);
+            let regional = RegionalBonus(rep.territory, rep.revenue);
+            roundToCents(rep.revenue * (rate + acc)) + regional
+          }) / count(reps)
+        ),
+        commissionAsPercentOfRevenue: roundToDecimalPlaces(
+          sumBy(reps, rep => {
+            let rate = CommissionRate(rep.quotaAttainment);
+            let acc = Accelerator(rep.quotaAttainment);
+            let regional = RegionalBonus(rep.territory, rep.revenue);
+            roundToCents(rep.revenue * (rate + acc)) + regional
+          }) / $input.overallSummary.totalRevenue * 100, 2
+        )
+      }
+    }
+  }
+}

@@ -1,0 +1,166 @@
+%utlx 1.0
+input json
+output yaml
+---
+
+// ============================================================================
+// Business Scenario: Support Ticket → SLA Compliance Report
+// ----------------------------------------------------------------------------
+// Input:  Customer support ticket with activity log (05-customer-support-ticket.json)
+// Output: YAML SLA compliance report for the operations dashboard
+//
+// The support ops team runs this nightly to evaluate whether each ticket
+// meets contractual SLA targets. It calculates response times, resolution
+// progress, breach risk, classifies activities by type, and produces
+// an actionable compliance snapshot with escalation recommendations.
+// Enterprise-tier SLA: first response < 1 hour, resolution < 24 hours.
+// ============================================================================
+
+function SlaTarget(tier, metric) {
+  let hours = match (tier) {
+    "ENTERPRISE" => match (metric) {
+      "FIRST_RESPONSE_HOURS" => 1,
+      "RESOLUTION_HOURS" => 24,
+      _ => 48
+    },
+    "PREMIUM" => match (metric) {
+      "FIRST_RESPONSE_HOURS" => 4,
+      "RESOLUTION_HOURS" => 48,
+      _ => 72
+    },
+    _ => match (metric) {
+      "FIRST_RESPONSE_HOURS" => 8,
+      "RESOLUTION_HOURS" => 72,
+      _ => 120
+    }
+  } in
+  hours
+}
+
+function BreachRisk(elapsed, target) {
+  let ratio = elapsed / target in
+  if (ratio >= 1.0) "BREACHED"
+  else if (ratio >= 0.8) "AT_RISK"
+  else if (ratio >= 0.5) "ON_TRACK"
+  else "HEALTHY"
+}
+
+{
+  let created = parseDate($input.createdAt);
+  let updated = parseDate($input.updatedAt);
+  let estimatedRes = parseDate($input.estimatedResolution);
+  let firstResponse = find($input.activities, a => a.type == "ASSIGNED" || a.type == "COMMENT");
+  let firstResponseTime = if (isNotEmpty(firstResponse))
+    parseDate(firstResponse.timestamp) else updated;
+  let responseHours = roundToDecimalPlaces(diffMinutes(created, firstResponseTime) / 60, 2);
+  let elapsedHours = roundToDecimalPlaces(diffMinutes(created, updated) / 60, 2);
+  let estimatedTotalHours = roundToDecimalPlaces(diffMinutes(created, estimatedRes) / 60, 2);
+  let responseTarget = SlaTarget($input.customer.accountTier, "FIRST_RESPONSE_HOURS");
+  let resolutionTarget = SlaTarget($input.customer.accountTier, "RESOLUTION_HOURS");
+  let responseStatus = BreachRisk(responseHours, responseTarget);
+  let resolutionStatus = BreachRisk(elapsedHours, resolutionTarget);
+  let agentActivities = filter($input.activities, a => a.author != "System");
+  let systemActivities = filter($input.activities, a => a.author == "System");
+  let comments = filter($input.activities, a => a.type == "COMMENT");
+  let updates = filter($input.activities, a => a.type == "UPDATE");
+  let activityGaps = if (count($input.activities) > 1)
+    map(slice($input.activities, 1, count($input.activities)), a => {
+      let prevIdx = findIndex($input.activities, act => act.timestamp == a.timestamp) - 1;
+      let prev = get($input.activities, prevIdx);
+      let gapMinutes = diffMinutes(parseDate(prev.timestamp), parseDate(a.timestamp));
+      {
+        from: prev.type,
+        to: a.type,
+        gapMinutes: gapMinutes,
+        gapHours: roundToDecimalPlaces(gapMinutes / 60, 1)
+      }
+    })
+  else [];
+  let maxGap = if (count(activityGaps) > 0)
+    maxBy(activityGaps, g => g.gapMinutes)
+  else null;
+
+  {
+    slaComplianceReport: {
+      generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+      reportType: "TICKET_SLA_ANALYSIS",
+      ticket: {
+        id: $input.ticketId,
+        subject: $input.subject,
+        priority: $input.priority,
+        status: $input.status,
+        category: titleCase(replace($input.category, "_", " ")),
+        tags: $input.tags
+      },
+      customer: {
+        id: $input.customer.customerId,
+        name: $input.customer.name,
+        tier: $input.customer.accountTier,
+        emailDomain: substringAfter($input.customer.email, "@")
+      },
+      product: {
+        name: $input.affectedProduct.productName,
+        version: $input.affectedProduct.version,
+        versionMajor: parseInt(substringBefore($input.affectedProduct.version, "."))
+      },
+      agent: {
+        name: $input.assignedTo.name,
+        team: $input.assignedTo.team,
+        activityCount: count(agentActivities)
+      },
+      slaMetrics: {
+        tier: $input.customer.accountTier,
+        firstResponse: {
+          targetHours: responseTarget,
+          actualHours: responseHours,
+          status: responseStatus,
+          met: responseHours <= responseTarget
+        },
+        resolution: {
+          targetHours: resolutionTarget,
+          elapsedHours: elapsedHours,
+          estimatedTotalHours: estimatedTotalHours,
+          status: resolutionStatus,
+          projectedToMeet: estimatedTotalHours <= resolutionTarget
+        },
+        overallCompliance: if (responseStatus == "BREACHED" || resolutionStatus == "BREACHED") "NON_COMPLIANT"
+                           else if (responseStatus == "AT_RISK" || resolutionStatus == "AT_RISK") "AT_RISK"
+                           else "COMPLIANT"
+      },
+      activityAnalysis: {
+        totalActivities: count($input.activities),
+        agentTouches: count(agentActivities),
+        systemEvents: count(systemActivities),
+        commentsCount: count(comments),
+        updatesCount: count(updates),
+        longestGap: if (isNotEmpty(maxGap)) {
+          fromEvent: maxGap.from,
+          toEvent: maxGap.to,
+          durationHours: maxGap.gapHours
+        } else null,
+        timeline: $input.activities |> map(a => {
+          let hoursSinceCreation = roundToDecimalPlaces(
+            diffMinutes(created, parseDate(a.timestamp)) / 60, 1
+          );
+          {
+            event: a.type,
+            author: a.author,
+            hoursSinceCreation: hoursSinceCreation,
+            summary: a.note
+          }
+        })
+      },
+      escalation: {
+        recommended: $input.priority == "HIGH" && elapsedHours > (resolutionTarget * 0.5),
+        reason: if ($input.priority == "HIGH" && elapsedHours > (resolutionTarget * 0.5))
+                  "High-priority ticket past 50% of resolution SLA window"
+                else "No escalation needed",
+        escalationPath: match ($input.customer.accountTier) {
+          "ENTERPRISE" => "VP_CUSTOMER_SUCCESS",
+          "PREMIUM" => "DIRECTOR_SUPPORT",
+          _ => "TEAM_LEAD"
+        }
+      }
+    }
+  }
+}
