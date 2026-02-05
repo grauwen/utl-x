@@ -1,3 +1,5 @@
+BUG report 03
+
 # BUG: `substring` out-of-bounds exception masked as "Undefined function"
 
 ## Summary
