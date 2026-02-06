@@ -112,4 +112,5 @@ examples/**/output.*
 theia-extension/
 conformance-suite/theia-extension/
 
----
+# Playwright MCP server (development only)
+playwright-mcp-server/
