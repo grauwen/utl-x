@@ -183,3 +183,38 @@ A review of all index-based functions in the stdlib found:
 3. **`tryLoadStdlibFunction` error handling** (`interpreter.kt:1008-1032`): rethrow
    all exceptions from stdlib functions as `RuntimeError` with the real message,
    instead of swallowing them and reporting "Undefined function".
+
+
+Found the bug! Look at line 68-69 of CaseConversionFunctions.kt:
+
+  @UTLXFunction(
+      description = "Truncate string with ellipsis",
+      minArgs = 3,   // <-- BUG: says 3
+      maxArgs = 3,   // <-- BUG: says 3
+
+  But the implementation at lines 97-99 expects 2-3 arguments:
+
+  fun truncate(args: List<UDM>): UDM {
+      if (args.size !in 2..3) {  // <-- accepts 2 OR 3 args
+          throw IllegalArgumentException("truncate expects 2-3 arguments, got ${args.size}")
+
+  Root cause: The @UTLXFunction annotation incorrectly requires exactly 3 arguments (minArgs = 3, maxArgs = 3), but the function implementation accepts 2-3 arguments (the ellipsis is optional, defaulting to "...").
+
+  When you call truncate(str, 50) with 2 arguments, the function registry rejects it because the annotation says 3 are required. This causes a silent failure.
+
+  Let me verify this is the only issue by checking function registration:
+
+Summary of B04 fix and tests added:
+
+  1. Fixed: minArgs = 3 → minArgs = 2 in CaseConversionFunctions.kt:69
+  2. Added tests:
+    - testTruncateB04RegressionTwoArguments() - Tests the exact B04 scenario:
+        - truncate("Cloud Infrastructure Services - Premium Tier", 50) with 2 args
+      - String shorter than limit returns unchanged
+      - Truncation with 2 args uses default ellipsis "..."
+    - testTruncateThreeArguments() - Verifies 3-arg calls still work:
+        - Standard ellipsis truncation
+      - Custom single-char ellipsis
+      - String shorter than limit with custom ellipsis
+
+  All tests pass. 
