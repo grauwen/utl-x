@@ -251,7 +251,7 @@ Commonly needed for API field transformations""",
     
     @UTLXFunction(
         description = "Truncate string with ellipsis",
-        minArgs = 3,
+        minArgs = 2,
         maxArgs = 3,
         category = "String",
         parameters = [
