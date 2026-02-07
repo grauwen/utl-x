@@ -86,9 +86,10 @@ function FulfillmentEligibility(weightLbs, price) {
             path: kebabCase(product.category) + "/" + kebabCase(product.subcategory)
           },
           specifications: entries(product.specifications) |> map(entry => {
+            // entries() returns [key, value] arrays
             {
-              key: titleCase(fromCamelCase(entry.key)),
-              value: entry.value,
+              key: titleCase(fromCamelCase(entry[0])),
+              value: entry[1],
               searchable: true
             }
           }),
