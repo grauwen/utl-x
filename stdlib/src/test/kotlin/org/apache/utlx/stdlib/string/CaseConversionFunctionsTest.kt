@@ -81,6 +81,77 @@ class CaseConversionFunctionsTest {
         assertEquals("...", (result9 as UDM.Scalar).value)
     }
 
+    /**
+     * Regression test for B04: truncate silent crash
+     *
+     * Previously, calling truncate with 2 arguments caused a silent crash (exit 1, no output)
+     * because the @UTLXFunction annotation incorrectly required 3 arguments (minArgs=3)
+     * while the implementation accepts 2-3 arguments (ellipsis is optional).
+     *
+     * @see docs/bugs-fixed/B04-truncate-silent-crash.md
+     */
+    @Test
+    fun testTruncateB04RegressionTwoArguments() {
+        // Exact scenario from B04 bug report:
+        // truncate("Cloud Infrastructure Services - Premium Tier", 50)
+        // String is 44 chars, limit is 50, should return unchanged
+        val description = "Cloud Infrastructure Services - Premium Tier"
+        assertEquals(44, description.length, "Test precondition: string should be 44 chars")
+
+        val result = CaseConversionFunctions.truncate(listOf(
+            UDM.Scalar(description),
+            UDM.Scalar(50)  // 2 arguments only - ellipsis defaults to "..."
+        ))
+        assertEquals(description, (result as UDM.Scalar).value,
+            "String shorter than limit should be returned unchanged with 2 args")
+
+        // Additional 2-argument tests to verify the fix
+        val result2 = CaseConversionFunctions.truncate(listOf(
+            UDM.Scalar("Short text"),
+            UDM.Scalar(100)
+        ))
+        assertEquals("Short text", (result2 as UDM.Scalar).value,
+            "Short string with 2 args should work")
+
+        // Test 2-argument call that actually truncates
+        val result3 = CaseConversionFunctions.truncate(listOf(
+            UDM.Scalar("This is a long string that needs truncation"),
+            UDM.Scalar(20)
+        ))
+        assertEquals("This is a long st...", (result3 as UDM.Scalar).value,
+            "Truncation with 2 args should work with default ellipsis")
+    }
+
+    @Test
+    fun testTruncateThreeArguments() {
+        // Verify 3-argument calls still work correctly
+        // "Hello World Example" (19 chars), limit 12, ellipsis "..." (3 chars)
+        // truncateAt = 12 - 3 = 9, take first 9 chars "Hello Wor", trimEnd, add "..."
+        val result1 = CaseConversionFunctions.truncate(listOf(
+            UDM.Scalar("Hello World Example"),
+            UDM.Scalar(12),
+            UDM.Scalar("...")
+        ))
+        assertEquals("Hello Wor...", (result1 as UDM.Scalar).value,
+            "3-arg truncation with standard ellipsis")
+
+        val result2 = CaseConversionFunctions.truncate(listOf(
+            UDM.Scalar("Hello World Example"),
+            UDM.Scalar(12),
+            UDM.Scalar("→")
+        ))
+        assertEquals("Hello World→", (result2 as UDM.Scalar).value,
+            "3-arg truncation with custom single-char ellipsis")
+
+        val result3 = CaseConversionFunctions.truncate(listOf(
+            UDM.Scalar("Short"),
+            UDM.Scalar(100),
+            UDM.Scalar("[...]")
+        ))
+        assertEquals("Short", (result3 as UDM.Scalar).value,
+            "3-arg call with string shorter than limit returns unchanged")
+    }
+
     @Test
     fun testSlugify() {
         // Test basic slugification
