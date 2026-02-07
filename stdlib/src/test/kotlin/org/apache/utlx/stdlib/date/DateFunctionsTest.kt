@@ -852,13 +852,13 @@ class DateFunctionsTest {
     
     @Test
     fun `test real-world - booking system date range`() {
-        val checkIn = UDM.Scalar("2025-12-20T15:00:00Z")
-        val checkOut = UDM.Scalar("2025-12-25T11:00:00Z")
-        
+        val checkIn = UDM.Scalar("2027-12-20T15:00:00Z")
+        val checkOut = UDM.Scalar("2027-12-25T11:00:00Z")
+
         // Calculate number of nights
         val nights = DateFunctions.diffDays(listOf(checkIn, checkOut))
         assertEquals(4.0, (nights as UDM.Scalar).value as Double, "Dec 20 3pm to Dec 25 11am is 4 whole days")
-        
+
         // Check if booking is in the future
         val now = DateFunctions.now(listOf())
         val nowStr = now.toDateString()
