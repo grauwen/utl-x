@@ -131,8 +131,10 @@ object StringFunctions {
         val str = args[0].asString()
         val start = args[1].asNumber().toInt()
         val end = if (args.size > 2) args[2].asNumber().toInt() else str.length
-        
-        return UDM.Scalar(str.substring(start, end))
+        val clampedStart = start.coerceIn(0, str.length)
+        val clampedEnd   = end.coerceIn(clampedStart, str.length)
+        return UDM.Scalar(str.substring(clampedStart, clampedEnd))
+        //return UDM.Scalar(str.substring(start, end)) <--- BUG 
     }
     
     @UTLXFunction(

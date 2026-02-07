@@ -47,10 +47,72 @@ class StringFunctionsTest {
         val result = StringFunctions.substring(listOf(UDM.Scalar("hello world"), UDM.Scalar(0), UDM.Scalar(5)))
         assertTrue(result is UDM.Scalar)
         assertEquals("hello", (result as UDM.Scalar).value)
-        
+
         // Test from index only
         val fromResult = StringFunctions.substring(listOf(UDM.Scalar("hello world"), UDM.Scalar(6)))
         assertEquals("world", (fromResult as UDM.Scalar).value)
+    }
+
+    /**
+     * Test for B03: substring out-of-bounds should clamp indices, not throw exception.
+     *
+     * Previously, substring(str, 0, 80) on a 52-char string would throw
+     * StringIndexOutOfBoundsException, which was masked as "Undefined function: substring".
+     *
+     * @see docs/bugs-fixed/B03-substring-out-of-bounds-masked-as-undefined-function.md
+     */
+    @Test
+    fun testSubstringBoundsClamping() {
+        // Reproduce the exact scenario from the bug report:
+        // substring("Implemented authentication middleware for API gateway", 0, 80)
+        // The string is 53 chars, end index 80 should be clamped to 53
+        val description = "Implemented authentication middleware for API gateway"
+        assertEquals(53, description.length, "Test precondition: string should be 53 chars")
+
+        val result = StringFunctions.substring(listOf(
+            UDM.Scalar(description),
+            UDM.Scalar(0),
+            UDM.Scalar(80)  // end index > string length
+        ))
+        assertTrue(result is UDM.Scalar)
+        assertEquals(description, (result as UDM.Scalar).value,
+            "End index beyond string length should be clamped, returning full string")
+
+        // Test: start index beyond string length should return empty string
+        val emptyResult = StringFunctions.substring(listOf(
+            UDM.Scalar("hello"),
+            UDM.Scalar(100),  // start index > string length
+            UDM.Scalar(200)
+        ))
+        assertEquals("", (emptyResult as UDM.Scalar).value,
+            "Start index beyond string length should return empty string")
+
+        // Test: negative start index should be clamped to 0
+        val negativeStartResult = StringFunctions.substring(listOf(
+            UDM.Scalar("hello"),
+            UDM.Scalar(-5),
+            UDM.Scalar(3)
+        ))
+        assertEquals("hel", (negativeStartResult as UDM.Scalar).value,
+            "Negative start index should be clamped to 0")
+
+        // Test: both indices out of bounds
+        val bothOutOfBounds = StringFunctions.substring(listOf(
+            UDM.Scalar("test"),
+            UDM.Scalar(-10),
+            UDM.Scalar(100)
+        ))
+        assertEquals("test", (bothOutOfBounds as UDM.Scalar).value,
+            "Both indices out of bounds should be clamped, returning full string")
+
+        // Test: start > end after clamping should return empty string
+        val invertedResult = StringFunctions.substring(listOf(
+            UDM.Scalar("hello"),
+            UDM.Scalar(10),  // clamped to 5
+            UDM.Scalar(3)    // clamped to 3, but start > end
+        ))
+        assertEquals("", (invertedResult as UDM.Scalar).value,
+            "When start > end after clamping, should return empty string")
     }
 
     @Test
