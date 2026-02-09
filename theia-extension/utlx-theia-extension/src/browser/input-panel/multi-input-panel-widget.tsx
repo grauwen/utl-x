@@ -671,7 +671,9 @@ export class MultiInputPanelWidget extends ReactWidget {
     }
 
     private handleDeleteInput(inputId: string, event: React.MouseEvent): void {
+        // Prevent event from bubbling to parent (which would select the input)
         event.stopPropagation();
+        event.preventDefault();
 
         if (this.state.inputs.length <= 1) {
             this.messageService.warn('Cannot delete the last input');
@@ -681,16 +683,20 @@ export class MultiInputPanelWidget extends ReactWidget {
         const inputToDelete = this.state.inputs.find(i => i.id === inputId);
         if (!inputToDelete) return;
 
-        const confirmed = confirm(`Delete "${inputToDelete.name}"?`);
-        if (!confirmed) return;
+        // Perform the delete directly (no confirmation dialog to avoid issues)
+        // The user clicked the X button deliberately, so we trust their intent
+        this.doDeleteInput(inputToDelete);
+    }
 
-        const newInputs = this.state.inputs.filter(input => input.id !== inputId);
+    private doDeleteInput(inputToDelete: InputTab): void {
+        const newInputs = this.state.inputs.filter(input => input.id !== inputToDelete.id);
         let newActiveId = this.state.activeInputId;
 
-        if (this.state.activeInputId === inputId) {
+        if (this.state.activeInputId === inputToDelete.id) {
             newActiveId = newInputs[0]?.id || '';
         }
 
+        // Update state
         this.setState({
             inputs: newInputs,
             activeInputId: newActiveId
@@ -698,11 +704,13 @@ export class MultiInputPanelWidget extends ReactWidget {
 
         this.messageService.info(`Deleted ${inputToDelete.name}`);
 
-        // Fire input deleted event
-        this.eventService.fireInputDeleted({
-            inputId: inputToDelete.id,
-            name: inputToDelete.name
-        });
+        // Use setTimeout to ensure state update is processed before firing event
+        setTimeout(() => {
+            this.eventService.fireInputDeleted({
+                inputId: inputToDelete.id,
+                name: inputToDelete.name
+            });
+        }, 0);
     }
 
     private handleRenameInput(inputId: string, newName: string): void {
