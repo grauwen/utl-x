@@ -10,6 +10,9 @@ import * as React from 'react';
 import { injectable, inject, postConstruct, optional } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MessageService } from '@theia/core';
+import { FileDialogService, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
+import { FileService } from '@theia/filesystem/lib/browser/file-service';
+import { URI } from '@theia/core/lib/common/uri';
 import {
     UTLXService, UTLX_SERVICE_SYMBOL,
     UTLXMode,
@@ -73,6 +76,12 @@ export class OutputPanelWidget extends ReactWidget {
 
     @inject(UTLXEventService)
     protected readonly eventService!: UTLXEventService;
+
+    @inject(FileDialogService)
+    protected readonly fileDialogService!: FileDialogService;
+
+    @inject(FileService)
+    protected readonly fileService!: FileService;
 
     private state: OutputPanelState = {
         mode: UTLXMode.RUNTIME,
@@ -503,8 +512,78 @@ export class OutputPanelWidget extends ReactWidget {
     }
 
     private async handleSave(): Promise<void> {
-        // TODO: Implement save to file dialog
-        this.messageService.info('Save functionality not yet implemented');
+        try {
+            // Get current content based on active tab
+            const content = this.state.activeTab === 'instance'
+                ? this.state.instanceContent
+                : this.state.schemaContent;
+
+            if (!content) {
+                this.messageService.warn('No content to save');
+                return;
+            }
+
+            // Determine file extension based on format
+            const format = this.state.activeTab === 'instance'
+                ? this.state.instanceFormat
+                : this.state.schemaFormat;
+
+            const extension = this.getFileExtension(format);
+            const defaultFileName = this.state.activeTab === 'instance'
+                ? `output${extension}`
+                : `schema${extension}`;
+
+            // Show save file dialog
+            const dialogProps: SaveFileDialogProps = {
+                title: `Save ${this.state.activeTab === 'instance' ? 'Output' : 'Schema'}`,
+                saveLabel: 'Save',
+                filters: {
+                    'All Files': ['*']
+                },
+                inputValue: defaultFileName
+            };
+
+            const uri = await this.fileDialogService.showSaveDialog(dialogProps);
+
+            if (!uri) {
+                console.log('[OutputPanel] Save cancelled by user');
+                return;
+            }
+
+            // Write content to file
+            await this.fileService.write(uri, content);
+
+            this.messageService.info(`Saved to ${uri.path.base}`);
+        } catch (error) {
+            console.error('[OutputPanel] Save error:', error);
+            this.messageService.error(`Failed to save: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Get file extension based on format
+     */
+    private getFileExtension(format?: string): string {
+        switch (format) {
+            case 'json':
+                return '.json';
+            case 'xml':
+                return '.xml';
+            case 'csv':
+                return '.csv';
+            case 'yaml':
+                return '.yaml';
+            case 'xsd':
+                return '.xsd';
+            case 'jsch':
+                return '.schema.json';
+            case 'avro':
+                return '.avsc';
+            case 'proto':
+                return '.proto';
+            default:
+                return '.txt';
+        }
     }
 
     private handleClear(): void {
