@@ -1,11 +1,81 @@
 package org.apache.utlx.stdlib.string
 
 import org.apache.utlx.core.udm.UDM
+import org.apache.utlx.stdlib.StandardLibrary
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
+/**
+ * Tests for CaseConversionFunctions including truncate, slugify, and case conversion utilities.
+ *
+ * IMPORTANT: This test includes registration tests that verify all implemented functions
+ * are actually registered in Functions.kt - preventing issues like the truncate bug where
+ * a function was implemented but never registered.
+ */
 class CaseConversionFunctionsTest {
+
+    // ========================================================================
+    // Registration Tests - Ensure all functions are registered in StandardLibrary
+    // ========================================================================
+
+    /**
+     * CRITICAL TEST: Verifies all public functions in CaseConversionFunctions are registered.
+     *
+     * This test prevents the "truncate bug" where a function was implemented but never
+     * registered in Functions.kt, causing "undefined function" errors at runtime.
+     *
+     * If this test fails, add the missing registration to Functions.kt:
+     *   register("functionName", CaseConversionFunctions::functionName)
+     */
+    @Test
+    fun `all CaseConversionFunctions should be registered in StandardLibrary`() {
+        val expectedFunctions = listOf(
+            "truncate",
+            "slugify",
+            "fromCamelCase",
+            "fromPascalCase",
+            "fromKebabCase",
+            "fromSnakeCase",
+            "fromConstantCase",
+            "fromTitleCase",
+            "fromDotCase",
+            "fromPathCase",
+            "wordCase"
+        )
+
+        val missingFunctions = expectedFunctions.filter { !StandardLibrary.hasFunction(it) }
+
+        assertTrue(
+            missingFunctions.isEmpty(),
+            "The following functions are implemented in CaseConversionFunctions but NOT registered in StandardLibrary:\n" +
+            missingFunctions.joinToString("\n") { "  - $it: Add register(\"$it\", CaseConversionFunctions::$it) to Functions.kt" }
+        )
+    }
+
+    @Test
+    fun `truncate should be callable via StandardLibrary lookup`() {
+        val truncateFunc = StandardLibrary.getFunction("truncate")
+        assertTrue(truncateFunc != null, "truncate function should be registered in StandardLibrary")
+
+        // Verify it works through the registry
+        val result = truncateFunc!!.execute(listOf(UDM.Scalar("Hello World"), UDM.Scalar(8)))
+        assertEquals("Hello...", (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun `slugify should be callable via StandardLibrary lookup`() {
+        val slugifyFunc = StandardLibrary.getFunction("slugify")
+        assertTrue(slugifyFunc != null, "slugify function should be registered in StandardLibrary")
+
+        val result = slugifyFunc!!.execute(listOf(UDM.Scalar("Hello World!")))
+        assertEquals("hello-world", (result as UDM.Scalar).value)
+    }
+
+    // ========================================================================
+    // Unit Tests - Function Behavior
+    // ========================================================================
 
    
     @Test

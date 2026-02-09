@@ -137,7 +137,7 @@ class FunctionsTest {
             "leftTrim", "rightTrim", "translate", "reverse", "isBlank",
             "charAt", "capitalize", "titleCase", "camelCase", "pascalCase",
             "kebabCase", "snakeCase", "constantCase", "dotCase", "pathCase",
-             "slugify", "pluralize", "singularize",
+            "slugify", "truncate", "pluralize", "singularize",
             // Canonical names for renamed functions
             "upperCase", "lowerCase", "camelCase",
             // New reverse case conversion functions

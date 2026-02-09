@@ -375,6 +375,7 @@ object StandardLibrary {
 
         // Utilities
         register("slugify", CaseConversionFunctions::slugify)
+        register("truncate", CaseConversionFunctions::truncate)
 
         // Pluralization functions
         register("pluralize", PluralizationFunctions::pluralize)
@@ -497,6 +498,7 @@ object StandardLibrary {
 
         // Extended date functions
         register("day", ExtendedDateFunctions::day)
+        registerAlias("dayOfMonth", "day", "Common alias for day-of-month extraction")
         register("month", ExtendedDateFunctions::month)
         register("year", ExtendedDateFunctions::year)
         register("hours", ExtendedDateFunctions::hours)
