@@ -136,7 +136,7 @@ class FunctionsTest {
             "leftTrim", "rightTrim", "translate", "reverse", "isBlank",
             "charAt", "capitalize", "titleCase", "camelize", "pascalCase",
             "kebabCase", "snakeCase", "constantCase", "dotCase", "pathCase",
-            "uncamelize", "slugify", "pluralize", "singularize"
+            "uncamelize", "slugify", "truncate", "pluralize", "singularize"
         )
         
         stringFunctions.forEach { funcName ->
