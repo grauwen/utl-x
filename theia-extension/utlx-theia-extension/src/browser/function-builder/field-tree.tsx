@@ -478,23 +478,113 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                             ) : (
                                 <div style={{
                                     fontSize: '12px',
-                                    color: 'var(--theia-descriptionForeground)',
-                                    fontStyle: 'italic'
+                                    color: 'var(--theia-descriptionForeground)'
                                 }}>
                                     {(() => {
                                         // Check if this field is from a schema source
                                         const selectedTree = fieldTrees.find(t => t.inputName === selectedField.inputName);
                                         if (selectedTree?.isSchemaSource) {
+                                            // Find the selected field in the tree to get schema details
+                                            const findField = (fields: UdmField[], path: string): UdmField | null => {
+                                                const parts = path.split('.');
+                                                let current: UdmField | null = null;
+                                                let currentFields = fields;
+
+                                                for (const part of parts) {
+                                                    // Handle array notation
+                                                    const cleanPart = part.replace('[]', '');
+                                                    current = currentFields.find(f => f.name === cleanPart) || null;
+                                                    if (!current) break;
+                                                    currentFields = current.fields || [];
+                                                }
+                                                return current;
+                                            };
+
+                                            const schemaField = findField(selectedTree.fields, selectedField.fieldPath) as any;
+
                                             return (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                    <span>Schema-derived field (no instance data)</span>
-                                                    <span style={{ fontSize: '11px', opacity: 0.8 }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                    {/* Schema Info Header */}
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        padding: '6px 8px',
+                                                        background: 'rgba(98, 114, 164, 0.2)',
+                                                        borderRadius: '4px'
+                                                    }}>
+                                                        <span className='codicon codicon-symbol-structure' style={{ color: '#8be9fd' }}></span>
+                                                        <span style={{ fontWeight: 500 }}>Schema Details</span>
+                                                    </div>
+
+                                                    {schemaField ? (
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                            {/* Type */}
+                                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                                <span style={{ color: 'var(--theia-descriptionForeground)', minWidth: '80px' }}>Type:</span>
+                                                                <span style={{ color: '#8be9fd', fontFamily: 'var(--monaco-monospace-font)' }}>
+                                                                    {schemaField.schemaType || schemaField.type || 'unknown'}
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Required/Optional */}
+                                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                                <span style={{ color: 'var(--theia-descriptionForeground)', minWidth: '80px' }}>Required:</span>
+                                                                <span style={{ color: schemaField.isRequired ? '#ff79c6' : '#50fa7b' }}>
+                                                                    {schemaField.isRequired ? 'Yes' : 'No (optional)'}
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Constraints */}
+                                                            {schemaField.constraints && (
+                                                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                                                    <span style={{ color: 'var(--theia-descriptionForeground)', minWidth: '80px' }}>Constraints:</span>
+                                                                    <span style={{ color: '#f1fa8c', fontFamily: 'var(--monaco-monospace-font)', fontSize: '11px' }}>
+                                                                        {schemaField.constraints}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Description */}
+                                                            {schemaField.description && (
+                                                                <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                                                                    <span style={{ color: 'var(--theia-descriptionForeground)' }}>Description:</span>
+                                                                    <span style={{ color: 'var(--theia-foreground)', fontStyle: 'italic', paddingLeft: '8px' }}>
+                                                                        {schemaField.description}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Nested Fields Count */}
+                                                            {schemaField.fields && schemaField.fields.length > 0 && (
+                                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                                    <span style={{ color: 'var(--theia-descriptionForeground)', minWidth: '80px' }}>Children:</span>
+                                                                    <span style={{ color: '#bd93f9' }}>
+                                                                        {schemaField.fields.length} nested field{schemaField.fields.length !== 1 ? 's' : ''}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span style={{ fontStyle: 'italic', opacity: 0.7 }}>
+                                                            Field details not available
+                                                        </span>
+                                                    )}
+
+                                                    {/* Footer hint */}
+                                                    <div style={{
+                                                        fontSize: '11px',
+                                                        opacity: 0.6,
+                                                        borderTop: '1px solid var(--theia-panel-border)',
+                                                        paddingTop: '8px',
+                                                        marginTop: '4px'
+                                                    }}>
                                                         Load instance data to see sample values
-                                                    </span>
+                                                    </div>
                                                 </div>
                                             );
                                         }
-                                        return 'No data available for this field';
+                                        return <span style={{ fontStyle: 'italic' }}>No data available for this field</span>;
                                     })()}
                                 </div>
                             )}

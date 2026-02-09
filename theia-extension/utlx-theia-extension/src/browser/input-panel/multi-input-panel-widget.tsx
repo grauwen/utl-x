@@ -1733,7 +1733,11 @@ export class MultiInputPanelWidget extends ReactWidget {
                     console.log('[MultiInputPanel] Current format in state:', this.state.inputs.find(i => i.id === this.state.activeInputId)?.instanceFormat);
                     console.log('[MultiInputPanel] ════════════════════════════════════════');
 
+                    // Get current input for event firing
+                    const currentInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
+
                     // Update content and optionally format
+                    // When loading schema: also clear instance content so Function Builder shows schema structure
                     this.setState({
                         inputs: this.state.inputs.map(input =>
                             input.id === this.state.activeInputId
@@ -1741,7 +1745,14 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     ...input,
                                     [isSchema ? 'schemaContent' : 'instanceContent']: content,
                                     ...(detectedFormat && !isSchema ? { instanceFormat: detectedFormat } : {}),
-                                    ...(detectedFormat && isSchema ? { schemaFormat: detectedFormat as SchemaFormatType } : {})
+                                    ...(detectedFormat && isSchema ? { schemaFormat: detectedFormat as SchemaFormatType } : {}),
+                                    // Clear instance content and UDM when loading a new schema
+                                    ...(isSchema ? {
+                                        instanceContent: '',
+                                        udmLanguage: undefined,
+                                        udmParsed: false,
+                                        udmError: undefined
+                                    } : {})
                                 }
                                 : input
                         ),
@@ -1761,6 +1772,17 @@ export class MultiInputPanelWidget extends ReactWidget {
 
                     // Fire content changed event
                     if (isSchema) {
+                        // Clear the old instance UDM from editor widget first
+                        if (currentInput) {
+                            console.log('[MultiInputPanel] Schema loaded - clearing instance UDM for:', currentInput.name);
+                            this.eventService.fireInputUdmUpdated({
+                                inputId: this.state.activeInputId,
+                                inputName: currentInput.name,
+                                udmLanguage: '',  // Empty UDM signals clear
+                                format: currentInput.instanceFormat || 'json'
+                            });
+                        }
+
                         this.eventService.fireInputSchemaContentChanged({
                             inputId: this.state.activeInputId,
                             content
