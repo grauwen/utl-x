@@ -376,7 +376,7 @@ class Interpreter {
                 // Create temporary environment with piped value
                 val pipeEnv = env.createChild()
                 pipeEnv.define("$", sourceValue)  // Pipe value available as $
-                
+
                 when (expr.target) {
                     is Expression.FunctionCall -> {
                         // Inject piped value as first argument
@@ -387,6 +387,20 @@ class Interpreter {
                             expr.target.location
                         )
                         evaluate(modifiedCall, env)
+                    }
+                    is Expression.Lambda -> {
+                        // Lambda piped directly: value |> (x => expr)
+                        // Evaluate the lambda to get a FunctionValue, then call it with the piped value
+                        val lambda = expr.target
+                        if (lambda.parameters.isEmpty()) {
+                            // No parameters - just evaluate the body with $ available
+                            evaluate(lambda.body, pipeEnv)
+                        } else {
+                            // Bind the piped value to the first parameter
+                            val lambdaEnv = env.createChild()
+                            lambdaEnv.define(lambda.parameters[0].name, sourceValue)
+                            evaluate(lambda.body, lambdaEnv)
+                        }
                     }
                     else -> evaluate(expr.target, pipeEnv)
                 }
