@@ -98,9 +98,19 @@ export class OutputPanelWidget extends ReactWidget {
         // Try to load initial mode from service if available
         if (this.utlxService) {
             this.utlxService.getMode().then(config => {
+                // When entering design-time mode, link schema format to instance format
+                let linkedSchemaFormat = this.state.schemaFormat;
+                if (config.mode === UTLXMode.DESIGN_TIME && this.state.instanceFormat) {
+                    const linked = this.getLinkedSchemaFormat(this.state.instanceFormat);
+                    if (linked) {
+                        linkedSchemaFormat = linked;
+                    }
+                }
+
                 this.setState({
                     mode: config.mode,
-                    activeTab: config.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+                    activeTab: config.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance',
+                    schemaFormat: linkedSchemaFormat
                 });
             }).catch(error => {
                 console.error('[OutputPanel] Failed to load initial mode:', error);
@@ -110,9 +120,20 @@ export class OutputPanelWidget extends ReactWidget {
         // Subscribe to mode changes
         this.eventService.onModeChanged(event => {
             console.log('[OutputPanelWidget] Mode changed to:', event.mode);
+
+            // When entering design-time mode, link schema format to instance format
+            let linkedSchemaFormat = this.state.schemaFormat;
+            if (event.mode === UTLXMode.DESIGN_TIME && this.state.instanceFormat) {
+                const linked = this.getLinkedSchemaFormat(this.state.instanceFormat);
+                if (linked) {
+                    linkedSchemaFormat = linked;
+                }
+            }
+
             this.setState({
                 mode: event.mode,
-                activeTab: event.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+                activeTab: event.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance',
+                schemaFormat: linkedSchemaFormat
             });
         });
     }
