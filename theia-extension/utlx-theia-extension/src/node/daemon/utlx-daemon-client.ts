@@ -422,14 +422,13 @@ export class UTLXDaemonClient extends EventEmitter {
 
     /**
      * Infer output schema (design-time mode)
+     * Request format: { utlx: string, inputSchema?: string, format?: string }
      */
     async inferSchema(source: string, inputSchema?: SchemaDocument): Promise<SchemaInferenceResult> {
-        return this.httpRequest('/inferSchema', 'POST', {
-            source,
-            inputSchema: inputSchema ? {
-                format: inputSchema.format,
-                content: inputSchema.content
-            } : undefined
+        return this.httpRequest('/api/infer-schema', 'POST', {
+            utlx: source,
+            inputSchema: inputSchema?.content,
+            format: 'json-schema' // Output schema format
         });
     }
 

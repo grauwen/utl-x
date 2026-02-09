@@ -242,16 +242,12 @@ export class UTLXServiceImpl implements UTLXService {
 
     /**
      * Set mode configuration
+     * Note: Mode is tracked locally in the service, daemon doesn't have a mode endpoint
      */
     async setMode(config: ModeConfiguration): Promise<void> {
         this.currentMode = { ...config };
-        try {
-            await this.daemonClient.setMode(config);
-            console.log('Mode changed to:', config.mode);
-        } catch (error) {
-            console.error('Set mode error:', error);
-            throw new Error(`Failed to set mode: ${error instanceof Error ? error.message : String(error)}`);
-        }
+        console.log('[BACKEND] Mode changed to:', config.mode);
+        // Mode is only tracked locally, daemon doesn't need to know
     }
 
     /**
