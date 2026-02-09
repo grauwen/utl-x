@@ -1,0 +1,236 @@
+%utlx 1.0
+input json
+output json
+---
+
+// ============================================================================
+// Business Scenario: Purchase Order → Vendor Confirmation Request
+// ----------------------------------------------------------------------------
+// Input:  Detailed purchase order (11-purchase-order.json)
+// Output: JSON vendor confirmation request for order acknowledgment
+//
+// When a PO is issued, the vendor needs a structured confirmation request
+// showing items to confirm, delivery schedules, and pricing agreements.
+// This generates a confirmation document with grouped items by delivery date
+// and GL account categorization.
+// ============================================================================
+
+function DeliveryUrgency(daysUntilDelivery) {
+  if (daysUntilDelivery <= 7) "RUSH"
+  else if (daysUntilDelivery <= 14) "EXPEDITE"
+  else if (daysUntilDelivery <= 30) "STANDARD"
+  else "FLEXIBLE"
+}
+
+function ItemCategory(glAccount) {
+  if (contains(glAccount, "Equipment")) "CAPITAL_EQUIPMENT"
+  else if (contains(glAccount, "Supplies")) "CONSUMABLES"
+  else if (contains(glAccount, "Services")) "SERVICES"
+  else "OTHER"
+}
+
+function ConfirmationPriority(totalAmount, itemCount) {
+  let valueFactor = if (totalAmount > 50000) 50 else if (totalAmount > 10000) 30 else 10 in
+  let complexityFactor = if (itemCount > 5) 20 else if (itemCount > 2) 10 else 5 in
+  valueFactor + complexityFactor
+}
+
+
+{
+  let poDate = parseDate($input.poDate);
+  let itemCount = count($input.lineItems);
+  let productItems = filter($input.lineItems, li => li.itemType == "PRODUCT");
+  let serviceItems = filter($input.lineItems, li => li.itemType == "SERVICE");
+  let totalQuantity = sum(map($input.lineItems, li => li.quantity));
+  let priorityScore = ConfirmationPriority($input.financialSummary.totalAmount, itemCount);
+  let dueDate = parseDate($input.paymentTerms.dueDate);
+  let distinctGLAccounts = distinct(map($input.lineItems, li => li.glAccount));
+  let earliestDelivery = first(sortBy($input.lineItems, li => li.requestedDeliveryDate)).requestedDeliveryDate;
+
+  {
+    confirmationRequest: {
+      requestId: "CONF-" + replace(generateUuid(), "-", ""),
+      requestType: "PURCHASE_ORDER_CONFIRMATION",
+      generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+      responseDeadline: formatDate(addDays(now(), 3), "yyyy-MM-dd"),
+      priorityLevel: if (priorityScore >= 60) "HIGH" else if (priorityScore >= 30) "MEDIUM" else "LOW",
+      priorityScore: priorityScore
+    },
+    purchaseOrderSummary: {
+      poNumber: $input.poNumber,
+      poDate: $input.poDate,
+      poDateFormatted: formatDate(poDate, "MMMM d, yyyy"),
+      poWeekday: dayOfWeekName(poDate),
+      status: $input.status,
+      priority: $input.priority,
+      requisitionRef: $input.requisition.requisitionId,
+      requestedBy: $input.requisition.requestedBy.name,
+      requestedByDepartment: $input.requisition.requestedBy.department,
+      requestedByEmail: $input.requisition.requestedBy.email
+    },
+    buyerInformation: {
+      companyName: $input.buyer.companyName,
+      department: $input.buyer.department,
+      taxId: $input.buyer.taxId,
+      contact: {
+        name: $input.buyer.contact.name,
+        phone: $input.buyer.contact.phone,
+        email: $input.buyer.contact.email,
+        phoneDigitsOnly: replace(replace(replace($input.buyer.contact.phone, "+", ""), "-", ""), " ", "")
+      },
+      address: {
+        formatted: joinToString([
+          $input.buyer.address.street,
+          $input.buyer.address.city + ", " + $input.buyer.address.state + " " + $input.buyer.address.zipCode,
+          $input.buyer.address.country
+        ], "\n"),
+        cityState: $input.buyer.address.city + ", " + $input.buyer.address.state
+      }
+    },
+    vendorAcknowledgment: {
+      vendorId: $input.vendor.vendorId,
+      vendorName: $input.vendor.companyName,
+      vendorSlug: slugify($input.vendor.companyName),
+      contact: {
+        name: $input.vendor.contact.name,
+        phone: $input.vendor.contact.phone,
+        email: $input.vendor.contact.email
+      },
+      taxId: $input.vendor.taxId,
+      agreedPaymentTerms: $input.vendor.paymentTerms,
+      address: {
+        street: $input.vendor.address.street,
+        cityStateZip: $input.vendor.address.city + ", " + $input.vendor.address.state + " " + $input.vendor.address.zipCode,
+        country: $input.vendor.address.country
+      }
+    },
+    deliveryDetails: {
+      shipTo: {
+        locationName: $input.shipTo.locationName,
+        attention: $input.shipTo.attention,
+        fullAddress: joinToString([
+          $input.shipTo.address.street,
+          $input.shipTo.address.city,
+          $input.shipTo.address.state + " " + $input.shipTo.address.zipCode
+        ], ", "),
+        contactName: $input.shipTo.contact.name,
+        contactPhone: $input.shipTo.contact.phone,
+        instructions: truncate($input.shipTo.deliveryInstructions, 80, "...")
+      },
+      shippingMethod: $input.shippingDetails.shippingMethod,
+      carrier: $input.shippingDetails.carrier,
+      estimatedDelivery: $input.shippingDetails.estimatedDeliveryDate,
+      daysUntilDelivery: diffDays(now(), parseDate(earliestDelivery)),
+      urgency: DeliveryUrgency(diffDays(now(), parseDate(earliestDelivery))),
+      specialInstructions: $input.shippingDetails.shippingInstructions
+    },
+    lineItemsToConfirm: {
+      totalItems: itemCount,
+      productCount: count(productItems),
+      serviceCount: count(serviceItems),
+      totalQuantity: totalQuantity,
+      distinctCategories: count(distinctGLAccounts),
+      items: $input.lineItems |> map(li => {
+        let itemCat = ItemCategory(li.glAccount);
+        let daysToDelivery = diffDays(now(), parseDate(li.requestedDeliveryDate));
+        {
+          lineNumber: li.lineNumber,
+          itemType: li.itemType,
+          category: itemCat,
+          sku: li.sku,
+          skuPrefix: substring(li.sku, 0, 3),
+          description: truncate(li.description, 50, "..."),
+          fullDescription: li.description,
+          manufacturer: if (isNull(li.manufacturer)) "N/A" else li.manufacturer,
+          manufacturerPartNumber: if (isNull(li.manufacturerPartNumber)) "N/A" else li.manufacturerPartNumber,
+          quantity: li.quantity,
+          unitOfMeasure: li.unitOfMeasure,
+          pricing: {
+            unitPrice: li.unitPrice,
+            unitPriceFormatted: formatCurrency(li.unitPrice, "USD"),
+            subtotal: li.subtotal,
+            taxRate: li.taxRate,
+            taxAmount: li.taxAmount,
+            lineTotal: li.total,
+            lineTotalFormatted: formatCurrency(li.total, "USD")
+          },
+          delivery: {
+            requestedDate: li.requestedDeliveryDate,
+            daysUntilDue: daysToDelivery,
+            urgency: DeliveryUrgency(daysToDelivery)
+          },
+          accounting: {
+            glAccount: li.glAccount,
+            costCenter: substring(li.glAccount, 0, 4)
+          },
+          confirmationRequired: true
+        }
+      })
+    },
+    financialConfirmation: {
+      currency: $input.financialSummary.currency,
+      subtotal: $input.financialSummary.subtotal,
+      subtotalFormatted: formatCurrency($input.financialSummary.subtotal, "USD"),
+      taxAmount: $input.financialSummary.taxAmount,
+      taxAmountFormatted: formatCurrency($input.financialSummary.taxAmount, "USD"),
+      shippingCost: $input.financialSummary.shippingCost,
+      shippingCostFormatted: formatCurrency($input.financialSummary.shippingCost, "USD"),
+      shippingTax: $input.financialSummary.shippingTax,
+      discount: $input.financialSummary.discount,
+      totalAmount: $input.financialSummary.totalAmount,
+      totalAmountFormatted: formatCurrency($input.financialSummary.totalAmount, "USD"),
+      averageLineValue: roundToCents($input.financialSummary.subtotal / itemCount)
+    },
+    paymentTermsConfirmation: {
+      terms: $input.paymentTerms.terms,
+      dueDate: $input.paymentTerms.dueDate,
+      dueDateFormatted: formatDate(dueDate, "MMMM d, yyyy"),
+      daysUntilDue: diffDays(now(), dueDate),
+      earlyPaymentDiscount: if (count($input.paymentTerms.discounts) > 0) (
+        let disc = first($input.paymentTerms.discounts) in
+        {
+          available: true,
+          percentage: disc.percentage,
+          validUntil: disc.validUntil,
+          description: disc.description,
+          potentialSavings: formatCurrency(roundToCents($input.financialSummary.totalAmount * disc.percentage / 100), "USD")
+        }
+      ) else (
+        { available: false }
+      )
+    },
+    approvalStatus: {
+      totalApprovals: count($input.approvals),
+      approvers: $input.approvals |> map(appr => {
+        {
+          name: appr.approver.name,
+          title: appr.approver.title,
+          approvalDate: formatDate(parseDate(appr.approvalDate), "yyyy-MM-dd"),
+          status: appr.status,
+          comments: truncate(appr.comments, 40, "...")
+        }
+      }),
+      allApproved: count(filter($input.approvals, a => a.status == "APPROVED")) == count($input.approvals)
+    },
+    revisionInfo: {
+      currentRevision: count($input.revisionHistory),
+      lastRevision: if (count($input.revisionHistory) > 0) (
+        let lastRev = last($input.revisionHistory) in
+        {
+          revisionNumber: lastRev.revisionNumber,
+          revisionDate: lastRev.revisionDate,
+          revisedBy: lastRev.revisedBy,
+          changes: lastRev.changes
+        }
+      ) else null
+    },
+    responseInstructions: {
+      confirmationMethod: "EMAIL",
+      confirmationEmail: $input.buyer.contact.email,
+      requiredFields: ["confirmationNumber", "confirmedDeliveryDates", "acceptedPricing"],
+      deadline: formatDate(addDays(now(), 3), "yyyy-MM-dd'T'17:00:00'Z'"),
+      notes: "Please confirm all line items and delivery dates within 3 business days."
+    },
+    documentHash: sha256($input.poNumber + toString($input.financialSummary.totalAmount) + $input.poDate)
+  }
+}

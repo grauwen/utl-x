@@ -1,0 +1,177 @@
+%utlx 1.0
+input json
+output json
+---
+
+// ============================================================================
+// Business Scenario: Financial Transaction → Audit Trail Record
+// ----------------------------------------------------------------------------
+// Input:  Wire transfer payment (06-financial-transaction.json)
+// Output: JSON audit trail record for compliance and SOX reporting
+//
+// Financial institutions must maintain detailed audit trails for all monetary
+// transactions. This transformation creates a comprehensive audit record with
+// risk scoring, compliance flags, temporal analysis, and cryptographic proofs.
+// ============================================================================
+
+function TransactionRiskScore(amount, paymentMethod, requiresAudit) {
+  let baseScore = if (amount > 50000) 40
+                  else if (amount > 10000) 25
+                  else if (amount > 1000) 10
+                  else 5 in
+  let methodScore = match (paymentMethod) {
+    "WIRE_TRANSFER" => 15,
+    "ACH" => 10,
+    "CHECK" => 5,
+    _ => 20
+  } in
+  let auditScore = if (requiresAudit) 20 else 0 in
+  baseScore + methodScore + auditScore
+}
+
+function RiskCategory(score) {
+  if (score >= 70) "HIGH"
+  else if (score >= 40) "MEDIUM"
+  else "LOW"
+}
+
+function MaskAccountNumber(accountNum) {
+  let len = length(accountNum) in
+  repeat("*", max(0, len - 4)) + substring(accountNum, max(0, len - 4), len)
+}
+
+
+{
+  let txnDateTime = parseDate($input.transactionDate);
+  let approvalDateTime = parseDate($input.approvedBy.approvalDate);
+  let reconcileDateTime = parseDate($input.reconciliation.reconciledDate);
+  let riskScore = TransactionRiskScore($input.amount, $input.paymentMethod, $input.compliance.requiresAudit);
+  let riskCat = RiskCategory(riskScore);
+  let processingTimeMinutes = round(diffMinutes(approvalDateTime, reconcileDateTime));
+
+  {
+    auditRecord: {
+      recordId: "AUD-" + replace(generateUuid(), "-", ""),
+      recordType: "FINANCIAL_TRANSACTION_AUDIT",
+      generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+      version: "3.0",
+      sourceSystem: "TREASURY_MANAGEMENT"
+    },
+    transactionDetails: {
+      transactionId: $input.transactionId,
+      transactionType: $input.transactionType,
+      status: $input.status,
+      statusCode: match ($input.status) {
+        "COMPLETED" => 200,
+        "PENDING" => 100,
+        "FAILED" => 500,
+        _ => 999
+      },
+      paymentMethod: $input.paymentMethod,
+      paymentMethodDisplay: replace(replace($input.paymentMethod, "_", " "), "WIRE", "Wire"),
+      reference: $input.reference,
+      description: truncate($input.description, 50, "...")
+    },
+    temporalAnalysis: {
+      transactionTimestamp: $input.transactionDate,
+      transactionDate: formatDate(txnDateTime, "yyyy-MM-dd"),
+      transactionTime: formatDate(txnDateTime, "HH:mm:ss"),
+      dayOfWeek: dayOfWeekName(txnDateTime),
+      dayOfMonth: dayOfMonth(txnDateTime),
+      weekOfYear: weekOfYear(txnDateTime),
+      quarter: "Q" + toString(quarter(txnDateTime)),
+      fiscalYear: year(txnDateTime),
+      isWeekend: contains("Saturday,Sunday", dayOfWeekName(txnDateTime)),
+      isEndOfMonth: dayOfMonth(txnDateTime) >= 28,
+      approvalTimestamp: $input.approvedBy.approvalDate,
+      reconciliationTimestamp: $input.reconciliation.reconciledDate,
+      processingDurationMinutes: processingTimeMinutes,
+      processingEfficiency: if (processingTimeMinutes <= 30) "FAST"
+                           else if (processingTimeMinutes <= 120) "NORMAL"
+                           else "SLOW"
+    },
+    monetaryDetails: {
+      currency: $input.fromAccount.currency,
+      principalAmount: $input.amount,
+      transactionFee: $input.fee,
+      totalDeducted: $input.totalDeducted,
+      feePercentage: roundToDecimalPlaces($input.fee / $input.amount * 100, 3),
+      formattedAmount: formatCurrency($input.amount, "USD"),
+      formattedFee: formatCurrency($input.fee, "USD"),
+      formattedTotal: formatCurrency($input.totalDeducted, "USD"),
+      amountInCents: round($input.amount * 100),
+      amountBracket: if ($input.amount >= 100000) "LARGE"
+                     else if ($input.amount >= 10000) "MEDIUM"
+                     else "SMALL"
+    },
+    partyInformation: {
+      originator: {
+        accountId: $input.fromAccount.accountId,
+        accountType: $input.fromAccount.accountType,
+        accountTypeDisplay: titleCase(replace($input.fromAccount.accountType, "_", " ")),
+        accountHolder: $input.fromAccount.accountHolder,
+        accountHolderSlug: slugify($input.fromAccount.accountHolder),
+        bankName: $input.fromAccount.bankName,
+        maskedAccount: MaskAccountNumber($input.fromAccount.accountNumber)
+      },
+      beneficiary: {
+        accountId: $input.toAccount.accountId,
+        accountType: $input.toAccount.accountType,
+        accountTypeDisplay: titleCase(replace($input.toAccount.accountType, "_", " ")),
+        accountHolder: $input.toAccount.accountHolder,
+        accountHolderSlug: slugify($input.toAccount.accountHolder),
+        bankName: $input.toAccount.bankName,
+        maskedAccount: MaskAccountNumber($input.toAccount.accountNumber)
+      },
+      isSameBank: $input.fromAccount.bankName == $input.toAccount.bankName
+    },
+    approvalChain: {
+      initiator: {
+        userId: $input.initiatedBy.userId,
+        name: $input.initiatedBy.name,
+        nameReversed: joinToString(reverse(split($input.initiatedBy.name, " ")), ", "),
+        role: $input.initiatedBy.role,
+        department: $input.initiatedBy.department
+      },
+      approver: {
+        userId: $input.approvedBy.userId,
+        name: $input.approvedBy.name,
+        role: $input.approvedBy.role,
+        approvalTimestamp: $input.approvedBy.approvalDate
+      },
+      dualControlApplied: $input.initiatedBy.userId != $input.approvedBy.userId
+    },
+    reconciliationInfo: {
+      reconciliationId: $input.reconciliation.reconciliationId,
+      reconciliationDate: $input.reconciliation.reconciledDate,
+      ledgerEntry: $input.reconciliation.ledgerEntry,
+      ledgerPrefix: substring($input.reconciliation.ledgerEntry, 0, 2)
+    },
+    riskAssessment: {
+      riskScore: riskScore,
+      maxScore: 100,
+      riskPercentage: roundToDecimalPlaces(riskScore / 100.0 * 100, 1),
+      riskCategory: riskCat,
+      riskColor: match (riskCat) {
+        "HIGH" => "#FF0000",
+        "MEDIUM" => "#FFA500",
+        _ => "#00FF00"
+      },
+      requiresManualReview: riskScore >= 50,
+      escalationRequired: riskScore >= 70
+    },
+    complianceFlags: {
+      auditRequired: $input.compliance.requiresAudit,
+      fraudCheckPassed: $input.compliance.fraudCheckPassed,
+      complianceOfficer: $input.compliance.complianceOfficer,
+      complianceNotes: $input.compliance.notes,
+      notesWordCount: count(split($input.compliance.notes, " ")),
+      allChecksPassed: $input.compliance.fraudCheckPassed && $input.status == "COMPLETED"
+    },
+    cryptographicProof: {
+      transactionHash: sha256($input.transactionId + toString($input.amount) + $input.transactionDate),
+      recordHash: md5($input.transactionId + $input.fromAccount.accountId + $input.toAccount.accountId),
+      integrityToken: base64Encode($input.transactionId + "|" + toString($input.totalDeducted))
+    }
+  }
+}

@@ -1,0 +1,197 @@
+%utlx 1.0
+input json
+output xml
+---
+
+// ============================================================================
+// Business Scenario: EU Customer Order (DE) → Cross-Border Shipping Label
+// ----------------------------------------------------------------------------
+// Input:  German customer order (13-eu-customer-order-de.json)
+// Output: XML shipping label for EU cross-border logistics
+//
+// German B2B orders require detailed shipping labels compliant with EU customs
+// regulations. This transformation generates a standardized shipping label with
+// weight calculations, customs declarations, and tracking information.
+// ============================================================================
+
+function ShippingClass(totalWeight) {
+  if (totalWeight > 1000) "FREIGHT_LTL"
+  else if (totalWeight > 100) "PARCEL_HEAVY"
+  else if (totalWeight > 30) "PARCEL_STANDARD"
+  else "PARCEL_LIGHT"
+}
+
+function CustomsDeclarationRequired(country, totalValue) {
+  // Intra-EU shipments generally don't need customs declarations for goods
+  // But high-value shipments may need additional documentation
+  let euCountries = "Deutschland,Frankreich,Italien,Spanien,Niederlande,Belgien,Österreich,Polen" in
+  if (contains(euCountries, country)) (
+    if (totalValue > 10000) "PROFORMA_INVOICE"
+    else "NONE"
+  ) else "FULL_DECLARATION"
+}
+
+function EstimatePackageWeight(item) {
+  // Estimate based on category
+  match (substring(item.artikelnummer, 0, 3)) {
+    "IND" => item.menge * 25.5,  // Industrial motors
+    "FRE" => item.menge * 18.0,  // Frequency converters
+    "SEN" => item.menge * 0.3,   // Sensors
+    "KAB" => item.menge * 15.0,  // Cables per roll
+    _ => item.menge * 2.0
+  }
+}
+
+
+{
+  let orderDate = parseDate($input.bestelldatum);
+  let deliveryDate = parseDate($input.versanddetails.voraussichtlicheLieferung);
+  let daysToDelivery = diffDays(now(), deliveryDate);
+  let totalItems = count($input.artikel);
+  let totalUnits = sum(map($input.artikel, a => a.menge));
+  let estimatedWeight = sum(map($input.artikel, a => EstimatePackageWeight(a)));
+  let shippingClass = ShippingClass(estimatedWeight);
+  let customsRequired = CustomsDeclarationRequired($input.kunde.lieferadresse.land, $input.kostenzusammenfassung.gesamtbetrag);
+
+  ShippingLabel: {
+    @labelId: "LBL-" + replace(substring(generateUuid(), 0, 8), "-", ""),
+    @generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    @labelType: "EU_CROSS_BORDER",
+    @version: "3.1",
+    TrackingInfo: {
+      TrackingNumber: $input.versanddetails.sendungsnummer,
+      TrackingBarcode: "BARCODE:" + $input.versanddetails.sendungsnummer,
+      Carrier: $input.versanddetails.spediteur,
+      CarrierCode: upperCase(substring(replace($input.versanddetails.spediteur, " ", ""), 0, 4)),
+      ServiceType: shippingClass,
+      Incoterms: $input.versanddetails.incoterms
+    },
+    OrderReference: {
+      OrderNumber: $input.bestellnummer,
+      OrderDate: formatDate(orderDate, "dd.MM.yyyy"),
+      OrderDateISO: $input.bestelldatum,
+      InvoiceNumber: first(filter($input.dokumente, d => d.typ == "RECHNUNG")).nummer,
+      DeliveryNoteNumber: first(filter($input.dokumente, d => d.typ == "LIEFERSCHEIN")).nummer,
+      CustomerReference: $input.kunde.kundenId
+    },
+    Shipper: {
+      CompanyName: "Industriebedarf Europa GmbH",
+      AddressLine1: "Industriestraße 100",
+      AddressLine2: "",
+      PostalCode: "60314",
+      City: "Frankfurt am Main",
+      Country: "Deutschland",
+      CountryCode: "DE",
+      Contact: {
+        Name: $input.verkäufer.name,
+        Phone: $input.verkäufer.telefon,
+        Email: $input.verkäufer.email
+      },
+      VATNumber: "DE123456789"
+    },
+    Recipient: {
+      CompanyName: upperCase($input.kunde.firmenname),
+      Attention: $input.kunde.ansprechpartner,
+      AddressLine1: upperCase($input.kunde.lieferadresse.strasse),
+      AddressLine2: "",
+      PostalCode: $input.kunde.lieferadresse.plz,
+      City: upperCase($input.kunde.lieferadresse.stadt),
+      State: $input.kunde.lieferadresse.bundesland,
+      Country: $input.kunde.lieferadresse.land,
+      CountryCode: "DE",
+      Contact: {
+        Phone: $input.kunde.telefon,
+        Email: $input.kunde.email
+      },
+      VATNumber: $input.kunde.ustIdNr,
+      DeliveryInstructions: truncate($input.bemerkungen, 100, "...")
+    },
+    PackageDetails: {
+      TotalPackages: ceil(totalUnits / 10),
+      EstimatedWeightKg: roundToDecimalPlaces(estimatedWeight, 1),
+      EstimatedWeightLbs: roundToDecimalPlaces(estimatedWeight * 2.20462, 1),
+      ShippingClass: shippingClass,
+      IsHeavyFreight: estimatedWeight > 100,
+      HandlingInstructions: if (estimatedWeight > 100) "FORKLIFT_REQUIRED"
+                           else if (estimatedWeight > 30) "TWO_PERSON_LIFT"
+                           else "STANDARD"
+    },
+    Contents: {
+      TotalLineItems: totalItems,
+      TotalUnits: totalUnits,
+      Currency: $input.kostenzusammenfassung.währung,
+      TotalValue: formatCurrency($input.kostenzusammenfassung.gesamtbetrag, "EUR"),
+      TotalValueNumeric: $input.kostenzusammenfassung.gesamtbetrag,
+      Items: {
+        Item: $input.artikel |> map(art => {
+          let itemWeight = EstimatePackageWeight(art) in
+          {
+            @position: toString(art.position),
+            SKU: art.artikelnummer,
+            Description: truncate(art.bezeichnung, 40, "..."),
+            FullDescription: art.bezeichnung,
+            Manufacturer: art.hersteller,
+            Quantity: art.menge,
+            Unit: art.einheit,
+            UnitValue: formatCurrency(art.einzelpreis, "EUR"),
+            TotalValue: formatCurrency(art.gesamtpreis, "EUR"),
+            EstimatedWeight: roundToDecimalPlaces(itemWeight, 2),
+            DeliveryTime: art.lieferzeit,
+            Warranty: art.garantie,
+            HarmonizedCode: "8501.52",
+            CountryOfOrigin: "DE"
+          }
+        })
+      }
+    },
+    Delivery: {
+      EstimatedDeliveryDate: $input.versanddetails.voraussichtlicheLieferung,
+      EstimatedDeliveryFormatted: formatDate(deliveryDate, "EEEE, d MMMM yyyy"),
+      DaysUntilDelivery: daysToDelivery,
+      DeliveryUrgency: if (daysToDelivery <= 3) "EXPRESS"
+                       else if (daysToDelivery <= 7) "PRIORITY"
+                       else "STANDARD",
+      ShippingMethod: titleCase($input.versanddetails.versandart),
+      RequiresAppointment: contains($input.bemerkungen, "Avisierung")
+    },
+    CustomsInformation: {
+      DeclarationRequired: customsRequired != "NONE",
+      DeclarationType: customsRequired,
+      ShipmentType: "COMMERCIAL",
+      ExportReason: "SALE",
+      IntrastatRequired: $input.kostenzusammenfassung.gesamtbetrag > 500000,
+      ProformaInvoice: customsRequired == "PROFORMA_INVOICE",
+      TotalDeclaredValue: formatCurrency($input.kostenzusammenfassung.bruttobetrag, "EUR"),
+      VATHandling: "DESTINATION_VAT"
+    },
+    PaymentInfo: {
+      PaymentTerms: $input.zahlungsbedingungen.zahlungsziel,
+      PaymentMethod: titleCase(replace($input.zahlungsbedingungen.zahlungsart, "_", " ")),
+      EarlyPaymentDiscount: {
+        Available: $input.zahlungsbedingungen.skonto.prozent > 0,
+        Percentage: $input.zahlungsbedingungen.skonto.prozent,
+        DaysValid: parseFloat(replace($input.zahlungsbedingungen.skonto.frist, " Tage", "")),
+        Savings: formatCurrency($input.zahlungsbedingungen.skonto.betrag, "EUR")
+      },
+      BankDetails: {
+        AccountHolder: $input.zahlungsbedingungen.bankverbindung.kontoinhaber,
+        IBAN: $input.zahlungsbedingungen.bankverbindung.iban,
+        BIC: $input.zahlungsbedingungen.bankverbindung.bic,
+        Bank: $input.zahlungsbedingungen.bankverbindung.bankname
+      }
+    },
+    LabelBarcode: {
+      Format: "CODE128",
+      Content: $input.versanddetails.sendungsnummer,
+      HumanReadable: joinToString(
+        [substring($input.versanddetails.sendungsnummer, 0, 4),
+         substring($input.versanddetails.sendungsnummer, 4, 8),
+         substring($input.versanddetails.sendungsnummer, 8, 12),
+         substring($input.versanddetails.sendungsnummer, 12, 16),
+         substring($input.versanddetails.sendungsnummer, 16, 20)],
+        " "
+      )
+    },
+    Checksum: md5($input.bestellnummer + $input.versanddetails.sendungsnummer + toString($input.kostenzusammenfassung.gesamtbetrag))
+  }
+}

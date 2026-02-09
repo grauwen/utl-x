@@ -1,0 +1,275 @@
+%utlx 1.0
+input json
+output json
+---
+
+// ============================================================================
+// Business Scenario: EU Bank Statement (SE) → Cash Flow Analysis
+// ----------------------------------------------------------------------------
+// Input:  Swedish bank statement (19-eu-bank-statement-se.json)
+// Output: JSON cash flow analysis report for financial planning
+//
+// Swedish companies analyze bank statements to understand cash flow patterns.
+// This transformation categorizes transactions, calculates inflows/outflows,
+// identifies trends, and generates a management-ready cash flow report.
+// ============================================================================
+
+function CashFlowCategory(transactionType, category) {
+  if (transactionType == "BETALNING_MOTTAGEN") "INFLOW"
+  else if (transactionType == "BETALNING_SKICKAD") "OUTFLOW"
+  else "OTHER"
+}
+
+function TransactionRiskFlag(amount, category) {
+  let absAmount = abs(amount) in
+  if (absAmount > 500000) "HIGH_VALUE"
+  else if (absAmount > 100000) "SIGNIFICANT"
+  else if (category == "SKATT_AVGIFT") "TAX_RELATED"
+  else "NORMAL"
+}
+
+function CategoryEnglish(swedishCategory) {
+  match (swedishCategory) {
+    "KUNDBETALNING" => "Customer Payment",
+    "LÖNEKOSTNAD" => "Payroll Expense",
+    "LOKALHYRA" => "Rent Expense",
+    "SKATT_AVGIFT" => "Tax & Fees",
+    "LEVERANTÖRSBETALNING" => "Supplier Payment",
+    "FÖRSÄKRING" => "Insurance",
+    "KONSULTTJÄNST" => "Consulting Services",
+    _ => "Other"
+  }
+}
+
+
+{
+  let startDate = parseDate($input.period.startdatum);
+  let endDate = parseDate($input.period.slutdatum);
+  let periodDays = diffDays(startDate, endDate);
+  let inflows = filter($input.transaktioner, t => t.transaktionstyp == "BETALNING_MOTTAGEN");
+  let outflows = filter($input.transaktioner, t => t.transaktionstyp == "BETALNING_SKICKAD");
+  let totalInflow = sum(map(inflows, t => t.belopp));
+  let totalOutflow = abs(sum(map(outflows, t => t.belopp)));
+  let avgDailyInflow = roundToDecimalPlaces(totalInflow / periodDays, 2);
+  let avgDailyOutflow = roundToDecimalPlaces(totalOutflow / periodDays, 2);
+  let netCashFlow = $input.sammanfattning.nettförändring;
+
+  {
+    cashFlowReport: {
+      reportId: "CFR-" + replace(generateUuid(), "-", ""),
+      reportType: "MONTHLY_CASH_FLOW_ANALYSIS",
+      generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+      reportCurrency: $input.kontouppgifter.valuta,
+      reportLanguage: "EN"
+    },
+    statementSource: {
+      statementId: $input.kontoutdragId,
+      statementType: $input.kontoutdragTyp,
+      bank: {
+        name: $input.bank.banknamn,
+        clearingNumber: $input.bank.clearingnummer,
+        swiftBic: $input.bank.swiftBic,
+        city: $input.bank.adress.stad,
+        country: $input.bank.adress.land
+      },
+      account: {
+        accountNumber: $input.kontouppgifter.kontonummer,
+        iban: $input.kontouppgifter.iban,
+        accountType: $input.kontouppgifter.kontotyp,
+        currency: $input.kontouppgifter.valuta
+      }
+    },
+    accountHolder: {
+      companyName: $input.kontoinnehavare.företagsnamn,
+      companySlug: slugify($input.kontoinnehavare.företagsnamn),
+      registrationNumber: $input.kontoinnehavare.organisationsnummer,
+      vatNumber: $input.kontoinnehavare.momsregistreringsnummer,
+      address: {
+        street: $input.kontoinnehavare.adress.gatuadress,
+        postalCode: $input.kontoinnehavare.adress.postnummer,
+        city: $input.kontoinnehavare.adress.stad,
+        country: $input.kontoinnehavare.adress.land
+      },
+      contact: {
+        name: $input.kontoinnehavare.kontaktperson.namn,
+        title: $input.kontoinnehavare.kontaktperson.titel,
+        email: $input.kontoinnehavare.kontaktperson.epost,
+        phone: $input.kontoinnehavare.kontaktperson.telefon
+      }
+    },
+    periodSummary: {
+      period: {
+        month: $input.period.månad,
+        year: $input.period.år,
+        startDate: $input.period.startdatum,
+        endDate: $input.period.slutdatum,
+        durationDays: periodDays
+      },
+      balances: {
+        opening: {
+          amount: $input.saldo.ingåendeSaldo,
+          formatted: formatCurrency($input.saldo.ingåendeSaldo, "SEK")
+        },
+        closing: {
+          amount: $input.saldo.utgåendeSaldo,
+          formatted: formatCurrency($input.saldo.utgåendeSaldo, "SEK")
+        },
+        available: {
+          amount: $input.saldo.tillgängligtBelopp,
+          formatted: formatCurrency($input.saldo.tillgängligtBelopp, "SEK")
+        },
+        reserved: $input.saldo.reserveratBelopp,
+        netChange: {
+          amount: netCashFlow,
+          formatted: formatCurrency(netCashFlow, "SEK"),
+          percentChange: roundToDecimalPlaces(netCashFlow / $input.saldo.ingåendeSaldo * 100, 2)
+        }
+      },
+      transactionVolume: {
+        totalTransactions: $input.sammanfattning.antalTransaktioner,
+        inflowCount: count(inflows),
+        outflowCount: count(outflows),
+        avgTransactionSize: roundToDecimalPlaces(($input.sammanfattning.totaltInsatt + $input.sammanfattning.totaltUttaget) / $input.sammanfattning.antalTransaktioner, 2)
+      }
+    },
+    cashFlowAnalysis: {
+      inflows: {
+        total: totalInflow,
+        totalFormatted: formatCurrency(totalInflow, "SEK"),
+        transactionCount: count(inflows),
+        avgDaily: avgDailyInflow,
+        avgDailyFormatted: formatCurrency(avgDailyInflow, "SEK"),
+        avgPerTransaction: roundToDecimalPlaces(totalInflow / max(1, count(inflows)), 2),
+        largest: {
+          amount: max(map(inflows, t => t.belopp)),
+          formatted: formatCurrency(max(map(inflows, t => t.belopp)), "SEK")
+        },
+        smallest: {
+          amount: min(map(inflows, t => t.belopp)),
+          formatted: formatCurrency(min(map(inflows, t => t.belopp)), "SEK")
+        }
+      },
+      outflows: {
+        total: totalOutflow,
+        totalFormatted: formatCurrency(totalOutflow, "SEK"),
+        transactionCount: count(outflows),
+        avgDaily: avgDailyOutflow,
+        avgDailyFormatted: formatCurrency(avgDailyOutflow, "SEK"),
+        avgPerTransaction: roundToDecimalPlaces(totalOutflow / max(1, count(outflows)), 2),
+        largest: {
+          amount: abs(min(map(outflows, t => t.belopp))),
+          formatted: formatCurrency(abs(min(map(outflows, t => t.belopp))), "SEK")
+        }
+      },
+      netFlow: {
+        amount: netCashFlow,
+        formatted: formatCurrency(netCashFlow, "SEK"),
+        direction: if (netCashFlow > 0) "POSITIVE" else if (netCashFlow < 0) "NEGATIVE" else "NEUTRAL",
+        coverageRatio: roundToDecimalPlaces(totalInflow / totalOutflow, 2)
+      },
+      burnRate: {
+        dailyBurn: avgDailyOutflow,
+        monthlyBurn: roundToDecimalPlaces(avgDailyOutflow * 30, 2),
+        runwayDays: round($input.saldo.utgåendeSaldo / avgDailyOutflow)
+      }
+    },
+    transactionDetails: {
+      allTransactions: $input.transaktioner |> map(t => {
+        let flowType = CashFlowCategory(t.transaktionstyp, t.kategori);
+        let categoryEn = CategoryEnglish(t.kategori);
+        let riskFlag = TransactionRiskFlag(t.belopp, t.kategori);
+        {
+          date: t.datum,
+          valueDate: t.valutadatum,
+          dayOfWeek: dayOfWeekName(parseDate(t.datum)),
+          type: t.transaktionstyp,
+          flowType: flowType,
+          description: truncate(t.beskrivning, 50, "..."),
+          fullDescription: t.beskrivning,
+          reference: t.referens,
+          counterparty: if (isNull(t.motpart)) null else {
+            name: t.motpart.namn,
+            nameSlug: slugify(t.motpart.namn),
+            accountNumber: if (isNull(t.motpart.kontonummer)) null else t.motpart.kontonummer
+          },
+          amount: t.belopp,
+          amountFormatted: formatCurrency(t.belopp, "SEK"),
+          absoluteAmount: abs(t.belopp),
+          balance: t.saldo,
+          balanceFormatted: formatCurrency(t.saldo, "SEK"),
+          categorySwedish: t.kategori,
+          categoryEnglish: categoryEn,
+          riskFlag: riskFlag
+        }
+      })
+    },
+    categoryBreakdown: {
+      inflows: {
+        customerPayments: {
+          count: count(filter(inflows, t => t.kategori == "KUNDBETALNING")),
+          total: sum(map(filter(inflows, t => t.kategori == "KUNDBETALNING"), t => t.belopp)),
+          percentOfInflows: roundToDecimalPlaces(sum(map(filter(inflows, t => t.kategori == "KUNDBETALNING"), t => t.belopp)) / max(1, totalInflow) * 100, 1)
+        }
+      },
+      outflows: {
+        payroll: {
+          count: count(filter(outflows, t => t.kategori == "LÖNEKOSTNAD")),
+          total: abs(sum(map(filter(outflows, t => t.kategori == "LÖNEKOSTNAD"), t => t.belopp))),
+          percentOfOutflows: roundToDecimalPlaces(abs(sum(map(filter(outflows, t => t.kategori == "LÖNEKOSTNAD"), t => t.belopp))) / max(1, totalOutflow) * 100, 1)
+        },
+        taxes: {
+          count: count(filter(outflows, t => t.kategori == "SKATT_AVGIFT")),
+          total: abs(sum(map(filter(outflows, t => t.kategori == "SKATT_AVGIFT"), t => t.belopp))),
+          percentOfOutflows: roundToDecimalPlaces(abs(sum(map(filter(outflows, t => t.kategori == "SKATT_AVGIFT"), t => t.belopp))) / max(1, totalOutflow) * 100, 1)
+        },
+        suppliers: {
+          count: count(filter(outflows, t => t.kategori == "LEVERANTÖRSBETALNING")),
+          total: abs(sum(map(filter(outflows, t => t.kategori == "LEVERANTÖRSBETALNING"), t => t.belopp))),
+          percentOfOutflows: roundToDecimalPlaces(abs(sum(map(filter(outflows, t => t.kategori == "LEVERANTÖRSBETALNING"), t => t.belopp))) / max(1, totalOutflow) * 100, 1)
+        },
+        rent: {
+          count: count(filter(outflows, t => t.kategori == "LOKALHYRA")),
+          total: abs(sum(map(filter(outflows, t => t.kategori == "LOKALHYRA"), t => t.belopp)))
+        },
+        consulting: {
+          count: count(filter(outflows, t => t.kategori == "KONSULTTJÄNST")),
+          total: abs(sum(map(filter(outflows, t => t.kategori == "KONSULTTJÄNST"), t => t.belopp)))
+        },
+        insurance: {
+          count: count(filter(outflows, t => t.kategori == "FÖRSÄKRING")),
+          total: abs(sum(map(filter(outflows, t => t.kategori == "FÖRSÄKRING"), t => t.belopp)))
+        }
+      }
+    },
+    fees: {
+      accountFee: $input.månatligaAvgifter.kontoavgift,
+      transactionFees: $input.månatligaAvgifter.transaktionsavgifter,
+      totalFees: $input.månatligaAvgifter.totaltAvgifter,
+      feeNote: $input.månatligaAvgifter.beskrivning
+    },
+    interest: {
+      rate: $input.ränteberäkning.räntesats,
+      income: $input.ränteberäkning.ränteintäkter,
+      expense: $input.ränteberäkning.räntekostnader,
+      note: $input.ränteberäkning.beskrivning
+    },
+    keyInsights: {
+      cashPositionHealth: if ($input.saldo.utgåendeSaldo > 2000000) "STRONG"
+                          else if ($input.saldo.utgåendeSaldo > 500000) "ADEQUATE"
+                          else "NEEDS_ATTENTION",
+      flowDirection: if (netCashFlow > 100000) "STRONGLY_POSITIVE"
+                     else if (netCashFlow > 0) "POSITIVE"
+                     else if (netCashFlow > -100000) "SLIGHTLY_NEGATIVE"
+                     else "NEGATIVE",
+      liquidityCoverage: roundToDecimalPlaces($input.saldo.utgåendeSaldo / totalOutflow, 2),
+      largestInflowSource: "KUNDBETALNING",
+      largestOutflowCategory: "LÖNEKOSTNAD"
+    },
+    reportMetadata: {
+      generatedDate: formatDate(parseDate($input.genereratDatum), "yyyy-MM-dd"),
+      pageInfo: $input.sidnummer,
+      bankNotes: $input.information,
+      documentHash: md5($input.kontoutdragId + toString($input.saldo.utgåendeSaldo) + $input.period.startdatum)
+    }
+  }
+}

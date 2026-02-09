@@ -1,0 +1,279 @@
+%utlx 1.0
+input json
+output json
+---
+
+// ============================================================================
+// Business Scenario: EU VAT Report (NL) → Quarterly Tax Summary
+// ----------------------------------------------------------------------------
+// Input:  Dutch VAT return (16-eu-vat-report-nl.json)
+// Output: JSON tax summary for management reporting and auditing
+//
+// Dutch businesses submit quarterly VAT returns to the Belastingdienst.
+// This transformation creates a simplified executive summary with key metrics,
+// trend indicators, and compliance status for management review.
+// ============================================================================
+
+function VATHealthIndicator(totalOwed, inputVAT) {
+  let ratio = inputVAT / totalOwed in
+  if (ratio > 0.8) "HIGH_INPUT_RATIO"
+  else if (ratio > 0.5) "BALANCED"
+  else if (ratio > 0.3) "NET_PAYER"
+  else "SIGNIFICANT_NET_PAYER"
+}
+
+function ComplianceRisk(totalAmount, hasCorrections) {
+  if (hasCorrections && totalAmount > 100000) "ELEVATED"
+  else if (totalAmount > 500000) "MONITORED"
+  else "STANDARD"
+}
+
+function QuarterName(quarterNum) {
+  match (quarterNum) {
+    1 => "Q1 (Jan-Mar)",
+    2 => "Q2 (Apr-Jun)",
+    3 => "Q3 (Jul-Sep)",
+    4 => "Q4 (Oct-Dec)",
+    _ => "Unknown"
+  }
+}
+
+{
+  let startDate = parseDate($input.periode.startDatum);
+  let endDate = parseDate($input.periode.eindDatum);
+  let filingDate = parseDate($input.periode.indienDatum);
+  let daysUntilFiling = diffDays(now(), filingDate);
+  let totalRevenue = $input.omzet.totaalOmzet.omzetBedrag;
+  let totalVATOwed = $input.omzet.totaalOmzet.totaalVerschuldigdBtw;
+  let totalInputVAT = $input.voorbelasting.totaalVoorbelasting;
+  let netVATPayable = $input.berekening.teBetalenAanBelastingdienst;
+  let hasCorrections = abs($input.berekening.correctiesVorigePeriode.bedrag) > 0;
+  let vatHealth = VATHealthIndicator(totalVATOwed, totalInputVAT);
+  let complianceRisk = ComplianceRisk(netVATPayable, hasCorrections);
+  let icCustomerCount = count($input.specificatieLeveringen.belangrijksteKlanten);
+  let icSupplierCount = count($input.specificatieLeveringen.belangrijksteLeveranciers);
+
+  {
+    taxSummary: {
+      summaryId: "TAXSUM-" + replace(generateUuid(), "-", ""),
+      summaryType: "QUARTERLY_VAT_EXECUTIVE",
+      generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+      reportingPeriod: {
+        quarter: $input.periode.kwartaal,
+        quarterName: QuarterName($input.periode.kwartaal),
+        year: $input.periode.jaar,
+        startDate: $input.periode.startDatum,
+        endDate: $input.periode.eindDatum,
+        periodDays: diffDays(startDate, endDate),
+        filingDeadline: $input.periode.indienDatum,
+        daysUntilDeadline: daysUntilFiling,
+        filingStatus: if (daysUntilFiling < 0) "OVERDUE"
+                      else if (daysUntilFiling <= 7) "DUE_SOON"
+                      else "ON_TRACK"
+      },
+      sourceDocument: {
+        documentId: $input.aangifteId,
+        documentType: titleCase(replace($input.aangifteType, "_", " ")),
+        reportName: $input.rapportageNaam
+      }
+    },
+    businessEntity: {
+      companyName: $input.ondernemer.bedrijfsnaam,
+      companySlug: slugify($input.ondernemer.bedrijfsnaam),
+      registrations: {
+        kvkNumber: $input.ondernemer.kvkNummer,
+        vatNumber: $input.ondernemer.btwNummer,
+        rsinNumber: $input.ondernemer.rsinNummer
+      },
+      location: {
+        street: $input.ondernemer.adres.straat + " " + $input.ondernemer.adres.huisnummer,
+        postalCode: $input.ondernemer.adres.postcode,
+        city: $input.ondernemer.adres.plaats,
+        province: $input.ondernemer.adres.provincie,
+        country: $input.ondernemer.adres.land,
+        fullAddress: joinToString([
+          $input.ondernemer.adres.straat + " " + $input.ondernemer.adres.huisnummer,
+          $input.ondernemer.adres.postcode + " " + $input.ondernemer.adres.plaats,
+          $input.ondernemer.adres.land
+        ], ", ")
+      },
+      contact: {
+        name: $input.ondernemer.contact.naam,
+        email: $input.ondernemer.contact.email,
+        phone: $input.ondernemer.contact.telefoon
+      },
+      financialAdvisor: {
+        firm: $input.ondernemer.financieelAdviseur.kantoor,
+        contact: $input.ondernemer.financieelAdviseur.contactpersoon,
+        email: $input.ondernemer.financieelAdviseur.email
+      }
+    },
+    revenueBreakdown: {
+      totalRevenue: totalRevenue,
+      totalRevenueFormatted: formatCurrency(totalRevenue, "EUR"),
+      domestic: {
+        goods: {
+          highRate: {
+            revenue: $input.omzet.binnenland.leveringenGoederen.hoog21Procent.omzetBedrag,
+            vat: $input.omzet.binnenland.leveringenGoederen.hoog21Procent.btwBedrag,
+            rate: $input.omzet.binnenland.leveringenGoederen.hoog21Procent.percentage
+          },
+          reducedRate: {
+            revenue: $input.omzet.binnenland.leveringenGoederen.laag9Procent.omzetBedrag,
+            vat: $input.omzet.binnenland.leveringenGoederen.laag9Procent.btwBedrag,
+            rate: $input.omzet.binnenland.leveringenGoederen.laag9Procent.percentage
+          },
+          subtotal: {
+            revenue: $input.omzet.binnenland.leveringenGoederen.subtotaal.omzet,
+            vat: $input.omzet.binnenland.leveringenGoederen.subtotaal.btw
+          }
+        },
+        services: {
+          highRate: {
+            revenue: $input.omzet.binnenland.dienstenLeveringen.hoog21Procent.omzetBedrag,
+            vat: $input.omzet.binnenland.dienstenLeveringen.hoog21Procent.btwBedrag
+          },
+          subtotal: {
+            revenue: $input.omzet.binnenland.dienstenLeveringen.subtotaal.omzet,
+            vat: $input.omzet.binnenland.dienstenLeveringen.subtotaal.btw
+          }
+        },
+        total: {
+          revenue: $input.omzet.binnenland.totaalBinnenland.omzet,
+          vat: $input.omzet.binnenland.totaalBinnenland.btw,
+          percentOfTotal: roundToDecimalPlaces($input.omzet.binnenland.totaalBinnenland.omzet / totalRevenue * 100, 1)
+        }
+      },
+      intraCommunity: {
+        icDeliveries: {
+          revenue: $input.omzet.intracommunautair.icLeveringen.omzetBedrag,
+          vat: $input.omzet.intracommunautair.icLeveringen.btwBedrag,
+          description: $input.omzet.intracommunautair.icLeveringen.beschrijving
+        },
+        icAcquisitions: {
+          revenue: $input.omzet.intracommunautair.icVerwervingen.omzetBedrag,
+          vat: $input.omzet.intracommunautair.icVerwervingen.btwBedrag,
+          rate: $input.omzet.intracommunautair.icVerwervingen.percentage
+        },
+        icServices: {
+          revenue: $input.omzet.intracommunautair.icDiensten.omzetBedrag,
+          vat: $input.omzet.intracommunautair.icDiensten.btwBedrag
+        }
+      },
+      exports: {
+        revenue: $input.omzet.uitvoerBuitenEU.omzetBedrag,
+        vat: $input.omzet.uitvoerBuitenEU.btwBedrag,
+        percentOfTotal: roundToDecimalPlaces($input.omzet.uitvoerBuitenEU.omzetBedrag / totalRevenue * 100, 1),
+        description: $input.omzet.uitvoerBuitenEU.beschrijving
+      }
+    },
+    inputVATSummary: {
+      purchases: {
+        goods: {
+          amount: $input.voorbelasting.inkopen.goederen.bedrag,
+          vat: $input.voorbelasting.inkopen.goederen.btwBedrag
+        },
+        services: {
+          amount: $input.voorbelasting.inkopen.diensten.bedrag,
+          vat: $input.voorbelasting.inkopen.diensten.btwBedrag
+        },
+        subtotal: {
+          amount: $input.voorbelasting.inkopen.subtotaal.bedrag,
+          vat: $input.voorbelasting.inkopen.subtotaal.btw
+        }
+      },
+      investments: {
+        amount: $input.voorbelasting.investeringen.bedrijfsmiddelen.bedrag,
+        vat: $input.voorbelasting.investeringen.bedrijfsmiddelen.btwBedrag,
+        description: $input.voorbelasting.investeringen.bedrijfsmiddelen.beschrijving
+      },
+      icAcquisitionsVAT: {
+        amount: $input.voorbelasting.icVerwervingen.bedrag,
+        vat: $input.voorbelasting.icVerwervingen.btwBedrag
+      },
+      totalInputVAT: totalInputVAT,
+      totalInputVATFormatted: formatCurrency(totalInputVAT, "EUR"),
+      smallBusinessScheme: $input.voorbelasting.kleineOndernemersRegeling.vanToepassing
+    },
+    vatCalculation: {
+      outputVAT: totalVATOwed,
+      outputVATFormatted: formatCurrency(totalVATOwed, "EUR"),
+      inputVAT: totalInputVAT,
+      inputVATFormatted: formatCurrency(totalInputVAT, "EUR"),
+      subtotal: $input.berekening.subtotaal,
+      subtotalFormatted: formatCurrency($input.berekening.subtotaal, "EUR"),
+      priorPeriodCorrection: {
+        amount: $input.berekening.correctiesVorigePeriode.bedrag,
+        description: $input.berekening.correctiesVorigePeriode.beschrijving,
+        hasCorrection: hasCorrections
+      },
+      netPayable: netVATPayable,
+      netPayableFormatted: formatCurrency(netVATPayable, "EUR"),
+      effectiveVATRate: roundToDecimalPlaces(totalVATOwed / totalRevenue * 100, 2),
+      inputToOutputRatio: roundToDecimalPlaces(totalInputVAT / totalVATOwed * 100, 1)
+    },
+    tradingPartners: {
+      topCustomers: $input.specificatieLeveringen.belangrijksteKlanten |> map(k => {
+        {
+          name: k.klantNaam,
+          country: k.land,
+          vatNumber: k.btwNummer,
+          revenue: k.omzet,
+          revenueFormatted: formatCurrency(k.omzet, "EUR"),
+          transactionType: k.type
+        }
+      }),
+      topSuppliers: $input.specificatieLeveringen.belangrijksteLeveranciers |> map(l => {
+        {
+          name: l.leverancierNaam,
+          country: l.land,
+          vatNumber: l.btwNummer,
+          purchases: l.inkoopBedrag,
+          purchasesFormatted: formatCurrency(l.inkoopBedrag, "EUR"),
+          transactionType: l.type
+        }
+      }),
+      icCustomerCount: icCustomerCount,
+      icSupplierCount: icSupplierCount
+    },
+    paymentDetails: {
+      deadline: $input.betaalgegevens.uitersteBetalingsdatum,
+      deadlineFormatted: formatDate(parseDate($input.betaalgegevens.uitersteBetalingsdatum), "d MMMM yyyy"),
+      daysUntilDue: diffDays(now(), parseDate($input.betaalgegevens.uitersteBetalingsdatum)),
+      paymentReference: $input.betaalgegevens.betalingskenmerk,
+      bankDetails: {
+        iban: $input.betaalgegevens.rekeningnummer.iban,
+        bic: $input.betaalgegevens.rekeningnummer.bic,
+        beneficiary: $input.betaalgegevens.rekeningnummer.tenNameVan
+      }
+    },
+    complianceMetrics: {
+      vatHealthIndicator: vatHealth,
+      complianceRisk: complianceRisk,
+      filingStatus: {
+        method: $input.indienGegevens.methode,
+        filedBy: $input.indienGegevens.ingediendDoor,
+        filedAt: $input.indienGegevens.indiendatum,
+        confirmationNumber: $input.indienGegevens.bevestigingsnummer,
+        status: $input.indienGegevens.status
+      },
+      attachments: $input.bijlagen |> map(b => {
+        {
+          type: b.type,
+          fileName: b.bestandsnaam,
+          description: b.beschrijving
+        }
+      }),
+      notes: $input.opmerkingen
+    },
+    keyMetrics: {
+      totalRevenue: formatCurrency(totalRevenue, "EUR"),
+      netVATPayable: formatCurrency(netVATPayable, "EUR"),
+      effectiveRate: roundToDecimalPlaces(netVATPayable / totalRevenue * 100, 2) + "%",
+      domesticShare: roundToDecimalPlaces($input.omzet.binnenland.totaalBinnenland.omzet / totalRevenue * 100, 1) + "%",
+      icShare: roundToDecimalPlaces(($input.omzet.intracommunautair.icLeveringen.omzetBedrag + $input.omzet.intracommunautair.icDiensten.omzetBedrag) / totalRevenue * 100, 1) + "%",
+      exportShare: roundToDecimalPlaces($input.omzet.uitvoerBuitenEU.omzetBedrag / totalRevenue * 100, 1) + "%"
+    },
+    documentHash: sha256($input.aangifteId + toString(netVATPayable) + $input.periode.startDatum)
+  }
+}
