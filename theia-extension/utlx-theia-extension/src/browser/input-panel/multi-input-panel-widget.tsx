@@ -1575,10 +1575,23 @@ export class MultiInputPanelWidget extends ReactWidget {
 
     private async handleLoadFile(): Promise<void> {
         try {
+            // Determine if we're loading into schema tab in design mode
+            const isSchemaTab = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+            const activeInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
+
             // Create file input element
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = '.csv,.json,.xml,.yaml,.yml,.xsd,.avsc,.proto,text/*';
+
+            // Set file filter based on context
+            if (isSchemaTab && activeInput) {
+                // In schema tab, filter by expected schema format based on instance format
+                const schemaExtensions = this.getSchemaFileExtensions(activeInput.schemaFormat);
+                input.accept = schemaExtensions;
+            } else {
+                // In instance tab or runtime mode, allow all data formats
+                input.accept = '.csv,.json,.xml,.yaml,.yml,.xsd,.avsc,.proto,text/*';
+            }
 
             // Handle file selection
             input.onchange = async (e: Event) => {
@@ -1664,6 +1677,25 @@ export class MultiInputPanelWidget extends ReactWidget {
             input.click();
         } catch (error) {
             this.messageService.error(`Failed to open file dialog: ${error}`);
+        }
+    }
+
+    /**
+     * Get file extensions filter for schema format
+     * Used when loading schema files in Design Mode
+     */
+    private getSchemaFileExtensions(schemaFormat: SchemaFormatType): string {
+        switch (schemaFormat) {
+            case 'xsd':
+                return '.xsd';
+            case 'jsch':
+                return '.json,.schema.json';
+            case 'avro':
+                return '.avsc,.avro,.json';
+            case 'proto':
+                return '.proto';
+            default:
+                return '.xsd,.json,.avsc,.proto';
         }
     }
 
