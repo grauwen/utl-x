@@ -15,3 +15,21 @@ should the utlx parser support unicode identifiers? Is it a bug?
 
   The Fix: The lexer likely only recognizes ASCII [a-zA-Z_][a-zA-Z0-9_]* as valid identifiers. It should follow Unicode Standard Annex #31 (Unicode Identifier and Pattern Syntax) or at minimum allow Unicode letters in identifiers.
 
+ Fix: Unicode Identifier Support in UTL-X Parser
+
+ Problem
+
+ The UTL-X parser doesn't support Unicode characters in identifiers/property names. Examples like $input.period.år (Swedish) or $input.løn.grundløn (Danish) fail with "Expected property name" errors.
+
+ This is a bug because JSON supports Unicode keys, and UTL-X should be able to access them.
+
+ Root Cause
+
+ File: modules/core/src/main/kotlin/org/apache/utlx/core/lexer/lexer_impl.kt
+
+ Line 218: The initial identifier character check uses ASCII-only ranges:
+ in 'a'..'z', in 'A'..'Z', '_' -> {
+
+ This prevents Unicode letters like å, ø, ü, ş from being recognized as valid identifier start characters.
+
+ Note: The continuation check at line 298 already uses isLetterOrDigit() which IS Unicode-aware, but it's never reached for Unicode-starting identifiers.
