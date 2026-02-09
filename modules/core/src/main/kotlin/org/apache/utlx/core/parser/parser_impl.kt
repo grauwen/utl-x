@@ -1005,7 +1005,22 @@ class Parser(
                     else -> error("Unexpected token: $tokenType")
                 }
 
-                letBindings.add(letExpr as Expression.LetBinding)
+                // Handle the result based on type:
+                // - LetBinding: a scoped binding (let x = value)
+                // - FunctionCall: a desugared let...in expression (let x = value in body)
+                //   which is self-contained and should be returned as a block expression
+                when (letExpr) {
+                    is Expression.LetBinding -> letBindings.add(letExpr)
+                    is Expression.FunctionCall -> {
+                        // This is a "let x = value in body" expression, desugared to a lambda application.
+                        // It's self-contained (body is already parsed), so return it as the block's content.
+                        // Any prior let bindings scope over this expression.
+                        consume(TokenType.RBRACE, "Expected '}' after let...in expression")
+                        val allExpressions: List<Expression> = letBindings + letExpr
+                        return Expression.Block(allExpressions, Location.from(startToken))
+                    }
+                    else -> throw error("Unexpected expression type from let/function: ${letExpr::class.simpleName}")
+                }
 
                 // In blocks, let bindings and function definitions should be terminated with semicolon or comma
                 // to prevent ambiguity with subsequent expressions (especially arrays)
