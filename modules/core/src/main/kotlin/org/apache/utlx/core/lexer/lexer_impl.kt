@@ -214,14 +214,23 @@ class Lexer(private val source: String) {
                 number(start, startColumn)
             }
             
-            // Identifiers and keywords
+            // Identifiers and keywords (ASCII)
             in 'a'..'z', in 'A'..'Z', '_' -> {
                 current-- // back up
                 column--
                 identifier(start, startColumn)
             }
-            
-            else -> error(start, startColumn, "Unexpected character: $c")
+
+            else -> {
+                // Support Unicode letters in identifiers (e.g., å, ø, ü, ş)
+                if (c.isLetter()) {
+                    current-- // back up
+                    column--
+                    identifier(start, startColumn)
+                } else {
+                    error(start, startColumn, "Unexpected character: $c")
+                }
+            }
         }
     }
     
