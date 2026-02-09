@@ -367,7 +367,7 @@ export class UTLXToolbarWidget extends ReactWidget {
         }
     }
 
-    private toggleMode(): void {
+    private async toggleMode(): Promise<void> {
         const newMode = this.state.currentMode === UTLXMode.RUNTIME
             ? UTLXMode.DESIGN_TIME
             : UTLXMode.RUNTIME;
@@ -376,6 +376,18 @@ export class UTLXToolbarWidget extends ReactWidget {
 
         const modeName = newMode === UTLXMode.RUNTIME ? 'Runtime' : 'Design-Time';
         this.messageService.info(`✓ Switched to ${modeName} mode`);
+
+        // Update backend mode
+        try {
+            await this.utlxService.setMode({
+                mode: newMode,
+                autoInferSchema: false,
+                enableTypeChecking: true
+            });
+            console.log('[UTLXToolbar] Backend mode updated to:', newMode);
+        } catch (error) {
+            console.error('[UTLXToolbar] Failed to update backend mode:', error);
+        }
 
         // Fire event for other widgets to update
         this.eventService.fireModeChanged({ mode: newMode });
