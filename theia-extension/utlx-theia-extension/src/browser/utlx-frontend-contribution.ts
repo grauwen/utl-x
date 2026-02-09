@@ -31,6 +31,7 @@ import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { UTLXEventService } from './events/utlx-event-service';
+import { inferSchemaFromJson, formatSchema } from './utils/schema-inferrer';
 
 @injectable()
 export class UTLXFrontendContribution implements
@@ -961,7 +962,10 @@ export class UTLXFrontendContribution implements
 
     /**
      * Execute schema inference (design-time mode)
-     * Gets UTLX code from editor and infers the output schema
+     *
+     * Strategy:
+     * 1. If instance output exists (from transformation execution), infer schema from that
+     * 2. Otherwise, fall back to static UTLX code analysis
      */
     private async executeSchemaInference(schemaFormat: string): Promise<void> {
         console.log('[UTLXFrontendContribution] ========================================');
@@ -970,35 +974,70 @@ export class UTLXFrontendContribution implements
         console.log('[UTLXFrontendContribution] ========================================');
 
         try {
-            // 1. Get editor widget to get UTLX code
+            // Get output panel
+            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
+                OutputPanelWidget.ID
+            );
+
+            // Check if we have instance output to infer from
+            const instanceData = outputPanel.getInstanceData();
+            console.log('[SchemaInference] Instance data:', {
+                hasContent: !!instanceData.content,
+                contentLength: instanceData.content?.length || 0,
+                format: instanceData.format
+            });
+
+            // If we have instance content, infer schema from it
+            if (instanceData.content && instanceData.content.trim().length > 0) {
+                console.log('[SchemaInference] Using instance-based inference');
+                this.messageService.info('Inferring schema from instance output...');
+
+                try {
+                    // Currently only JSON is supported for instance-based inference
+                    if (instanceData.format === 'json' || instanceData.format === 'yaml') {
+                        const schema = inferSchemaFromJson(instanceData.content);
+                        const schemaString = formatSchema(schema);
+
+                        outputPanel.displaySchemaResult({
+                            success: true,
+                            schema: schemaString,
+                            schemaFormat: 'jsch'
+                        });
+
+                        this.messageService.info('Schema inferred from instance output');
+                        return;
+                    } else if (instanceData.format === 'xml') {
+                        // For XML, fall back to static analysis for now
+                        console.log('[SchemaInference] XML instance - falling back to static analysis');
+                    } else {
+                        console.log('[SchemaInference] Unsupported format for instance inference:', instanceData.format);
+                    }
+                } catch (instanceError) {
+                    console.warn('[SchemaInference] Instance-based inference failed, falling back to static:', instanceError);
+                }
+            }
+
+            // Fall back to static UTLX analysis
+            console.log('[SchemaInference] Using static UTLX analysis');
+
             const editor = await this.widgetManager.getOrCreateWidget<UTLXEditorWidget>(
                 UTLXEditorWidget.ID
             );
             const utlxCode = editor.getContent();
 
             if (!utlxCode || utlxCode.trim().length === 0) {
-                this.messageService.warn('No UTLX code to infer schema from. Please enter a transformation.');
+                this.messageService.warn('No UTLX code and no instance output. Please execute transformation first or enter UTLX code.');
                 return;
             }
 
-            console.log('[SchemaInference] UTLX code length:', utlxCode.length);
-
-            // 2. Get output panel to display result
-            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
-                OutputPanelWidget.ID
-            );
-
-            // 3. Call service to infer schema
-            this.messageService.info('Inferring output schema...');
+            this.messageService.info('Inferring output schema from UTLX code...');
             const result = await this.utlxService.inferSchema(utlxCode);
 
-            console.log('[SchemaInference] Result:', result);
-
-            // 4. Display result in output panel
+            console.log('[SchemaInference] Static analysis result:', result);
             outputPanel.displaySchemaResult(result);
 
             if (result.success) {
-                this.messageService.info('Schema inference completed successfully');
+                this.messageService.info('Schema inference completed (static analysis)');
             } else {
                 this.messageService.warn('Schema inference completed with issues');
             }
@@ -1007,7 +1046,6 @@ export class UTLXFrontendContribution implements
             console.error('[SchemaInference] Error:', error);
             this.messageService.error(`Schema inference failed: ${error instanceof Error ? error.message : String(error)}`);
 
-            // Display error in output panel
             const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
                 OutputPanelWidget.ID
             );

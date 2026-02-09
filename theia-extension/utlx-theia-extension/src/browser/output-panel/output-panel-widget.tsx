@@ -770,6 +770,17 @@ export class OutputPanelWidget extends ReactWidget {
     }
 
     /**
+     * Get instance content and format for schema inference
+     * PUBLIC: Called by frontend contribution for instance-based schema inference
+     */
+    public getInstanceData(): { content: string; format: string } {
+        return {
+            content: this.state.instanceContent,
+            format: this.state.instanceFormat || 'json'
+        };
+    }
+
+    /**
      * Get output format options for UTLX header generation
      * PUBLIC: Called by editor widget to build output format spec
      */
