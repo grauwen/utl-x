@@ -31,7 +31,7 @@ import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { UTLXEventService } from './events/utlx-event-service';
-import { inferSchemaFromJson, formatSchema } from './utils/schema-inferrer';
+import { inferSchemaFromJson, inferSchemaFromXml, formatSchema } from './utils/schema-inferrer';
 
 @injectable()
 export class UTLXFrontendContribution implements
@@ -993,8 +993,8 @@ export class UTLXFrontendContribution implements
                 this.messageService.info('Inferring schema from instance output...');
 
                 try {
-                    // Currently only JSON is supported for instance-based inference
                     if (instanceData.format === 'json' || instanceData.format === 'yaml') {
+                        // Infer JSON Schema from JSON/YAML
                         const schema = inferSchemaFromJson(instanceData.content);
                         const schemaString = formatSchema(schema);
 
@@ -1004,11 +1004,20 @@ export class UTLXFrontendContribution implements
                             schemaFormat: 'jsch'
                         });
 
-                        this.messageService.info('Schema inferred from instance output');
+                        this.messageService.info('JSON Schema inferred from instance output');
                         return;
                     } else if (instanceData.format === 'xml') {
-                        // For XML, fall back to static analysis for now
-                        console.log('[SchemaInference] XML instance - falling back to static analysis');
+                        // Infer XSD from XML
+                        const xsdString = inferSchemaFromXml(instanceData.content);
+
+                        outputPanel.displaySchemaResult({
+                            success: true,
+                            schema: xsdString,
+                            schemaFormat: 'xsd'
+                        });
+
+                        this.messageService.info('XSD schema inferred from instance output');
+                        return;
                     } else {
                         console.log('[SchemaInference] Unsupported format for instance inference:', instanceData.format);
                     }

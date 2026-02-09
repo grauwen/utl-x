@@ -27,6 +27,7 @@ import {
     INPUT_PANEL_ID
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
+import { inferSchemaFromJson, inferSchemaFromXml, formatSchema } from '../utils/schema-inferrer';
 
 // Input panel format types (separate from protocol types)
 // Data formats - used for actual data instances
@@ -301,6 +302,16 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 >
                                     <span className='codicon codicon-eye' style={{fontSize: '11px'}}></span>
                                     {' '}UDM
+                                </button>
+                            )}
+                            {/* Infer Schema button - only in design-time mode on schema tab with instance content */}
+                            {isDesignTime && activeSubTab === 'schema' && !this.isSchemaTabDisabled(activeInput.instanceFormat) && activeInput.instanceContent && (
+                                <button
+                                    onClick={() => this.handleInferInputSchema()}
+                                    title='Infer input schema from instance data'
+                                >
+                                    <span className='codicon codicon-symbol-structure' style={{fontSize: '11px'}}></span>
+                                    {' '}Infer Schema
                                 </button>
                             )}
                             <button
@@ -1281,6 +1292,63 @@ export class MultiInputPanelWidget extends ReactWidget {
         return ['UTF-8', 'UTF-16LE', 'UTF-16BE'].includes(encoding);
     }
     */
+
+    /**
+     * Infer input schema from instance data
+     * Uses the schema inferrer to generate a JSON Schema from the instance content
+     */
+    private handleInferInputSchema(): void {
+        const activeInput = this.state.inputs.find(input => input.id === this.state.activeInputId);
+        if (!activeInput) {
+            this.messageService.warn('No active input');
+            return;
+        }
+
+        if (!activeInput.instanceContent || activeInput.instanceContent.trim().length === 0) {
+            this.messageService.warn('No instance content to infer schema from');
+            return;
+        }
+
+        try {
+            let schemaString: string;
+            let schemaFormat: SchemaFormatType;
+
+            if (activeInput.instanceFormat === 'json' || activeInput.instanceFormat === 'yaml') {
+                // Infer JSON Schema from JSON/YAML
+                const schema = inferSchemaFromJson(activeInput.instanceContent);
+                schemaString = formatSchema(schema);
+                schemaFormat = 'jsch';
+            } else if (activeInput.instanceFormat === 'xml') {
+                // Infer XSD from XML
+                schemaString = inferSchemaFromXml(activeInput.instanceContent);
+                schemaFormat = 'xsd';
+            } else if (activeInput.instanceFormat === 'csv') {
+                this.messageService.warn('CSV schema inference not yet implemented.');
+                return;
+            } else {
+                this.messageService.warn(`Schema inference not supported for format: ${activeInput.instanceFormat}`);
+                return;
+            }
+
+            // Update the schema content for this input
+            this.setState({
+                inputs: this.state.inputs.map(input =>
+                    input.id === this.state.activeInputId
+                        ? {
+                            ...input,
+                            schemaContent: schemaString,
+                            schemaFormat: schemaFormat
+                        }
+                        : input
+                )
+            });
+
+            this.messageService.info(`${schemaFormat.toUpperCase()} schema inferred from instance data`);
+        } catch (error) {
+            console.error('[MultiInputPanel] Schema inference error:', error);
+            this.messageService.error(`Failed to infer schema: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
 
     private handleClear(): void {
         const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
