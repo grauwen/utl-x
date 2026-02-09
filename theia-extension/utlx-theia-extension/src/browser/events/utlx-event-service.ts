@@ -12,6 +12,7 @@
 import { injectable } from '@theia/core/shared/inversify';
 import { Emitter, Event } from '@theia/core';
 import { UTLXMode } from '../../common/protocol';
+import { SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 
 /**
  * Event fired when the mode changes between Design-Time and Runtime
@@ -90,6 +91,17 @@ export interface InputUdmUpdatedEvent {
     inputName: string;
     udmLanguage: string;
     format: string; // json, csv, xml, yaml, etc.
+}
+
+/**
+ * Event fired when a schema is parsed into a field tree (Design-Time mode)
+ * This provides schema-aware field information without needing instance data.
+ */
+export interface InputSchemaFieldTreeEvent {
+    inputId: string;
+    inputName: string;
+    fieldTree: SchemaFieldInfo[];
+    schemaFormat: 'jsch' | 'xsd';
 }
 
 /**
@@ -314,6 +326,27 @@ export class UTLXEventService {
         console.log(event.udmLanguage.substring(Math.max(0, event.udmLanguage.length - 200)));
         console.log('╚' + '═'.repeat(78) + '╝');
         this.onInputUdmUpdatedEmitter.fire(event);
+    }
+
+    private readonly onInputSchemaFieldTreeEmitter = new Emitter<InputSchemaFieldTreeEvent>();
+    /**
+     * Event fired when a schema is parsed into a field tree (Design-Time mode)
+     */
+    readonly onInputSchemaFieldTree: Event<InputSchemaFieldTreeEvent> = this.onInputSchemaFieldTreeEmitter.event;
+
+    /**
+     * Fire an input schema field tree event
+     */
+    fireInputSchemaFieldTree(event: InputSchemaFieldTreeEvent): void {
+        console.log('╔' + '═'.repeat(78) + '╗');
+        console.log('║ [UTLXEventService] 🔥 FIRING Input Schema Field Tree Event');
+        console.log('╠' + '═'.repeat(78) + '╣');
+        console.log('[UTLXEventService] Input ID:', event.inputId);
+        console.log('[UTLXEventService] Input Name:', event.inputName);
+        console.log('[UTLXEventService] Schema Format:', event.schemaFormat);
+        console.log('[UTLXEventService] Field Tree Size:', event.fieldTree.length, 'top-level fields');
+        console.log('╚' + '═'.repeat(78) + '╝');
+        this.onInputSchemaFieldTreeEmitter.fire(event);
     }
 
     private readonly onRequestCurrentUdmEmitter = new Emitter<void>();
@@ -543,6 +576,7 @@ export class UTLXEventService {
         this.onInputInferSchemaEmitter.dispose();
         this.onInputInstanceContentChangedEmitter.dispose();
         this.onInputSchemaContentChangedEmitter.dispose();
+        this.onInputSchemaFieldTreeEmitter.dispose();
         this.onOutputFormatChangedEmitter.dispose();
         this.onOutputPresetOnEmitter.dispose();
         this.onOutputPresetOffEmitter.dispose();

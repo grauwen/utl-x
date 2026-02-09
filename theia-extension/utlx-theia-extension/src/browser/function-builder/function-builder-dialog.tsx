@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 import * as monaco from '@theia/monaco-editor-core';
-import { FunctionInfo } from '../../common/protocol';
+import { FunctionInfo, UTLXMode } from '../../common/protocol';
 import { parseUdmToTree, UdmInputTree } from './udm-parser-new';
 import { FieldTree } from './field-tree';
 import { InsertionContext, CursorValue, getContextDescription, analyzeInsertionContext } from './context-analyzer';
@@ -24,6 +24,7 @@ import { OperatorInfo, UTLX_OPERATORS } from './operators-data';
 import { generateOperatorInsertion, generateOperatorInsertionPreview } from './operator-insertion-generator';
 import { DirectivesTree } from './directives-tree';
 import { DirectiveRegistry } from '../../common/usdl-types';
+import { SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 
 /**
  * Props for the Function Builder Dialog
@@ -37,6 +38,9 @@ export interface FunctionBuilderDialogProps {
     outputFormat: string; // NEW: Current output format
     directiveRegistry: DirectiveRegistry | null; // NEW: USDL directives
     cursorContext: InsertionContext | null;
+    // Design-Time mode support for schema-aware field browsing
+    mode?: UTLXMode;
+    schemaFieldTreeMap?: Map<string, SchemaFieldInfo[]>; // inputName -> schema field tree
     onInsert: (code: string) => void;
     onClose: () => void;
 }
@@ -64,9 +68,13 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     outputFormat,
     directiveRegistry,
     cursorContext,
+    mode = UTLXMode.RUNTIME,
+    schemaFieldTreeMap,
     onInsert,
     onClose
 }) => {
+    // Design-Time mode flag for UI changes
+    const isDesignTime = mode === UTLXMode.DESIGN_TIME;
     const [searchQuery, setSearchQuery] = React.useState('');
     const [expandedCategories, setExpandedCategories] = React.useState<Set<string>>(new Set());
     const [selectedFunction, setSelectedFunction] = React.useState<FunctionInfo | null>(null);
@@ -250,20 +258,24 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         return new Map([...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0])));
     }, [functions, searchQuery]);
 
-    // Parse UDM into field trees
+    // Parse UDM into field trees (or use schema field trees in Design-Time mode)
     const fieldTrees = React.useMemo(() => {
         console.log('╔' + '═'.repeat(78) + '╗');
         console.log('║ [FunctionBuilder] PARSING FIELD TREES');
         console.log('╠' + '═'.repeat(78) + '╣');
+        console.log('[FunctionBuilder] Mode:', isDesignTime ? 'Design-Time' : 'Runtime');
         console.log('[FunctionBuilder] Available inputs count:', availableInputs.length);
         console.log('[FunctionBuilder] Available inputs:', availableInputs);
         console.log('[FunctionBuilder] UDM map size:', udmMap.size);
         console.log('[FunctionBuilder] UDM map keys:', Array.from(udmMap.keys()));
+        console.log('[FunctionBuilder] Schema field tree map size:', schemaFieldTreeMap?.size || 0);
+        console.log('[FunctionBuilder] Schema field tree keys:', schemaFieldTreeMap ? Array.from(schemaFieldTreeMap.keys()) : []);
         console.log('[FunctionBuilder] Input formats map size:', inputFormatsMap.size);
         console.log('[FunctionBuilder] Input formats:', Array.from(inputFormatsMap.entries()));
 
         const results = availableInputs.map(inputName => {
             const udm = udmMap.get(inputName);
+            const schemaFieldTree = schemaFieldTreeMap?.get(inputName);
             const format = inputFormatsMap.get(inputName) || 'json'; // Default to json if not found
 
             console.log('');
@@ -271,28 +283,60 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
             console.log('[FunctionBuilder] Processing input:', inputName);
             console.log('[FunctionBuilder] Format:', format);
             console.log('[FunctionBuilder] UDM exists:', udm ? 'YES' : 'NO');
+            console.log('[FunctionBuilder] Schema field tree exists:', schemaFieldTree ? 'YES' : 'NO');
             console.log('[FunctionBuilder] UDM length:', udm?.length || 0);
 
+            // Priority: UDM > Schema Field Tree
             if (udm) {
+                console.log('[FunctionBuilder] Using UDM (instance data)');
                 console.log('[FunctionBuilder] UDM preview (first 500 chars):');
                 console.log(udm.substring(0, 500));
                 console.log('[FunctionBuilder] UDM preview (last 200 chars):');
                 console.log(udm.substring(Math.max(0, udm.length - 200)));
+
+                const tree = parseUdmToTree(inputName, format, udm);
+
+                console.log('[FunctionBuilder] Tree result for', inputName, ':');
+                console.log('[FunctionBuilder]   - isArray:', tree.isArray);
+                console.log('[FunctionBuilder]   - fields count:', tree.fields.length);
+                console.log('[FunctionBuilder]   - fields:', tree.fields.map(f => f.name));
+
+                return tree;
+            } else if (schemaFieldTree && schemaFieldTree.length > 0) {
+                // Use schema field tree (Design-Time mode, no instance data)
+                console.log('[FunctionBuilder] Using schema field tree (Design-Time mode)');
+                console.log('[FunctionBuilder] Schema fields:', schemaFieldTree.map(f => f.name));
+
+                // Convert SchemaFieldInfo[] to UdmInputTree format
+                const tree: UdmInputTree = {
+                    inputName,
+                    format,
+                    isArray: false,  // Schemas typically define object structure, not array
+                    fields: schemaFieldTree,
+                    isSchemaSource: true  // Flag to indicate this came from schema
+                };
+
+                console.log('[FunctionBuilder] Tree result for', inputName, '(from schema):');
+                console.log('[FunctionBuilder]   - isArray:', tree.isArray);
+                console.log('[FunctionBuilder]   - fields count:', tree.fields.length);
+                console.log('[FunctionBuilder]   - isSchemaSource:', true);
+
+                return tree;
+            } else {
+                // No UDM and no schema - return empty tree
+                console.log('[FunctionBuilder] No UDM or schema for input:', inputName);
+                const tree = parseUdmToTree(inputName, format, undefined);
+
+                console.log('[FunctionBuilder] Tree result for', inputName, '(empty):');
+                console.log('[FunctionBuilder]   - fields count:', tree.fields.length);
+
+                return tree;
             }
-
-            const tree = parseUdmToTree(inputName, format, udm);
-
-            console.log('[FunctionBuilder] Tree result for', inputName, ':');
-            console.log('[FunctionBuilder]   - isArray:', tree.isArray);
-            console.log('[FunctionBuilder]   - fields count:', tree.fields.length);
-            console.log('[FunctionBuilder]   - fields:', tree.fields.map(f => f.name));
-
-            return tree;
         });
 
         console.log('╚' + '═'.repeat(78) + '╝');
         return results;
-    }, [availableInputs, udmMap, inputFormatsMap]);
+    }, [availableInputs, udmMap, inputFormatsMap, schemaFieldTreeMap, isDesignTime]);
 
     // Check if output format is USDL (Tier 2+ schema format)
     const isUsdlFormat = React.useMemo(() => {
@@ -865,11 +909,28 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         {/* Tab Content: Available Inputs */}
                         {activeTab === 'inputs' && (
                             <div className='inputs-tab-content' style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                {/* Design-Time Mode Indicator */}
+                                {isDesignTime && (
+                                    <div className='design-time-indicator' style={{
+                                        padding: '4px 8px',
+                                        background: 'rgba(98, 114, 164, 0.3)',
+                                        borderBottom: '1px solid rgba(98, 114, 164, 0.5)',
+                                        fontSize: '11px',
+                                        color: '#8be9fd',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}>
+                                        <span className='codicon codicon-beaker' style={{ fontSize: '12px' }}></span>
+                                        Design-Time Mode
+                                    </div>
+                                )}
                                 <FieldTree
                                     fieldTrees={fieldTrees}
                                     onInsertField={handleInsertField}
                                     onInsertValue={insertIntoMonaco}
                                     udmMap={udmMap}
+                                    isDesignTime={isDesignTime}
                                 />
                             </div>
                         )}

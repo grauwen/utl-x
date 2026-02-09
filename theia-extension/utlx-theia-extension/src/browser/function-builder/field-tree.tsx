@@ -256,6 +256,7 @@ export interface FieldTreeProps {
     onInsertField: (inputName: string, fieldPath: string) => void;
     onInsertValue?: (value: string) => void; // Optional callback to insert raw values into editor
     udmMap: Map<string, string>; // inputName -> UDM language string
+    isDesignTime?: boolean; // Design-Time mode flag for schema-aware rendering
 }
 
 /**
@@ -263,7 +264,7 @@ export interface FieldTreeProps {
  *
  * Displays all inputs with their fields in a tree structure with horizontal split
  */
-export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField, onInsertValue, udmMap }) => {
+export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField, onInsertValue, udmMap, isDesignTime = false }) => {
     const [expandedInputs, setExpandedInputs] = React.useState<Set<string>>(new Set());
     const [selectedField, setSelectedField] = React.useState<{ inputName: string; fieldPath: string } | null>(null);
 
@@ -359,6 +360,7 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                             onToggle={() => toggleInput(tree.inputName)}
                             onInsertField={onInsertField}
                             onFieldSelect={setSelectedField}
+                            isDesignTime={isDesignTime}
                         />
                     ))}
                 </div>
@@ -479,7 +481,21 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                     color: 'var(--theia-descriptionForeground)',
                                     fontStyle: 'italic'
                                 }}>
-                                    No data available for this field
+                                    {(() => {
+                                        // Check if this field is from a schema source
+                                        const selectedTree = fieldTrees.find(t => t.inputName === selectedField.inputName);
+                                        if (selectedTree?.isSchemaSource) {
+                                            return (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                    <span>Schema-derived field (no instance data)</span>
+                                                    <span style={{ fontSize: '11px', opacity: 0.8 }}>
+                                                        Load instance data to see sample values
+                                                    </span>
+                                                </div>
+                                            );
+                                        }
+                                        return 'No data available for this field';
+                                    })()}
                                 </div>
                             )}
                         </div>
@@ -494,7 +510,9 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                         }}>
                             <span className='codicon codicon-info' style={{ fontSize: '32px', opacity: 0.5 }}></span>
                             <span style={{ fontSize: '13px', color: 'var(--theia-descriptionForeground)' }}>
-                                Click on a field to see available data
+                                {isDesignTime
+                                    ? 'Click on a field to see type info or available data'
+                                    : 'Click on a field to see available data'}
                             </span>
                         </div>
                     )}
@@ -513,6 +531,7 @@ interface InputNodeProps {
     onToggle: () => void;
     onInsertField: (inputName: string, fieldPath: string) => void;
     onFieldSelect: (field: { inputName: string; fieldPath: string } | null) => void;
+    isDesignTime?: boolean;
 }
 
 /**
@@ -538,7 +557,7 @@ function getFormatTier(format: string): string {
  *
  * Represents a single input (root level)
  */
-const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onInsertField, onFieldSelect }) => {
+const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onInsertField, onFieldSelect, isDesignTime = false }) => {
     const typeLabel = tree.isArray ? 'Array' : 'Object';
     const icon = tree.isArray ? 'codicon-symbol-array' : 'codicon-symbol-variable';
     const tier = getFormatTier(tree.format);
@@ -655,6 +674,8 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                             onInsert={onInsertField}
                             onSelect={onFieldSelect}
                             level={1}
+                            isSchemaSource={tree.isSchemaSource}
+                            isDesignTime={isDesignTime}
                         />
                     ))}
                 </div>
@@ -662,7 +683,28 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
 
             {isExpanded && tree.fields.length === 0 && (
                 <div className='empty-fields'>
-                    <small>No fields available (paste data to populate)</small>
+                    <small>
+                        {isDesignTime
+                            ? 'No fields available (load instance data or schema to populate)'
+                            : 'No fields available (paste data to populate)'}
+                    </small>
+                </div>
+            )}
+
+            {/* Schema-derived indicator */}
+            {isExpanded && tree.isSchemaSource && tree.fields.length > 0 && (
+                <div className='schema-source-indicator' style={{
+                    marginLeft: '20px',
+                    padding: '2px 6px',
+                    fontSize: '10px',
+                    color: '#8be9fd',
+                    opacity: 0.7,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                }}>
+                    <span className='codicon codicon-symbol-structure' style={{ fontSize: '10px' }}></span>
+                    Schema-derived (no instance data)
                 </div>
             )}
         </div>
@@ -680,6 +722,8 @@ interface FieldNodeProps {
     onInsert: (inputName: string, fieldPath: string) => void;
     onSelect: (field: { inputName: string; fieldPath: string } | null) => void;
     level: number;
+    isSchemaSource?: boolean;  // True if this field came from a schema (Design-Time mode)
+    isDesignTime?: boolean;    // Design-Time mode flag
 }
 
 /**
@@ -694,7 +738,9 @@ const FieldNode: React.FC<FieldNodeProps> = ({
     inputIsArray,
     onInsert,
     onSelect,
-    level
+    level,
+    isSchemaSource = false,
+    isDesignTime = false
 }) => {
     const [expanded, setExpanded] = React.useState(false);
     const hasChildren = (field.type === 'object' || field.type === 'array') &&
@@ -703,6 +749,12 @@ const FieldNode: React.FC<FieldNodeProps> = ({
 
     const typeIcon = getTypeIcon(field.type);
     const typeDisplay = getTypeDisplayName(field.type);
+
+    // Extract schema-specific info from SchemaFieldInfo (when isSchemaSource)
+    const schemaField = field as any; // Cast to access SchemaFieldInfo properties
+    const isRequired = schemaField.isRequired === true;
+    const schemaType = schemaField.schemaType;
+    const constraints = schemaField.constraints;
 
     // Build the full field path for insertion
     const buildInsertPath = () => {
@@ -725,8 +777,29 @@ const FieldNode: React.FC<FieldNodeProps> = ({
                     <span className='field-spacer' style={{ width: '16px', display: 'inline-block' }}></span>
                 )}
                 <span className={`codicon ${typeIcon} field-icon`}></span>
-                <span className='field-name'>{field.name}</span>
-                <span className='field-type'>{typeDisplay}</span>
+                <span className='field-name'>
+                    {field.name}
+                    {isSchemaSource && isRequired && (
+                        <span className='required-indicator' style={{
+                            color: '#ff79c6',
+                            marginLeft: '2px',
+                            fontWeight: 'bold'
+                        }} title='Required field'>*</span>
+                    )}
+                </span>
+                <span className='field-type' title={constraints || undefined}>
+                    {isSchemaSource && schemaType ? schemaType : typeDisplay}
+                </span>
+                {isSchemaSource && constraints && (
+                    <span className='field-constraints' style={{
+                        fontSize: '10px',
+                        color: '#8be9fd',
+                        marginLeft: '4px',
+                        opacity: 0.8
+                    }} title={constraints}>
+                        ({constraints.length > 20 ? constraints.substring(0, 20) + '...' : constraints})
+                    </span>
+                )}
                 <button
                     className='insert-btn'
                     title={`Insert $${inputName}.${path}`}
@@ -770,6 +843,8 @@ const FieldNode: React.FC<FieldNodeProps> = ({
                                 onInsert={onInsert}
                                 onSelect={onSelect}
                                 level={level + 1}
+                                isSchemaSource={isSchemaSource}
+                                isDesignTime={isDesignTime}
                             />
                         );
                     })}

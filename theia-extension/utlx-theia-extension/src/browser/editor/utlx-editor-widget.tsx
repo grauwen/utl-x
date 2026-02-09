@@ -18,9 +18,10 @@ import * as monaco from '@theia/monaco-editor-core';
 import { UTLXEventService } from '../events/utlx-event-service';
 import { parseUTLXHeaders } from '../parser/utlx-header-parser';
 import { FunctionBuilderDialog } from '../function-builder/function-builder-dialog';
-import { UTLXService } from '../../common/protocol';
+import { UTLXService, UTLXMode } from '../../common/protocol';
 import { UTLX_SERVICE_SYMBOL } from '../../common/protocol';
 import { FunctionInfo, OperatorInfo } from '../../common/protocol';
+import { SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 import { DirectiveRegistry } from '../../common/usdl-types';
 import { analyzeInsertionContext, InsertionContext } from '../function-builder/context-analyzer';
 import { UDMLanguageParser, UDMParseException } from '../udm/udm-language-parser';
@@ -62,6 +63,10 @@ export class UTLXEditorWidget extends ReactWidget {
     protected inputUdmMap: Map<string, string> = new Map(); // inputName -> UDM language
     protected inputFormatsMap: Map<string, string> = new Map(); // inputName -> format (json, csv, xml, etc.)
 
+    // Design-Time mode state for schema-aware Function Builder
+    protected currentMode: UTLXMode = UTLXMode.RUNTIME;
+    protected schemaFieldTreeMap: Map<string, SchemaFieldInfo[]> = new Map(); // inputName -> schema field tree
+
     // Output format tracking for UDSL indicator
     protected outputFormat: string = '';
 
@@ -88,6 +93,11 @@ export class UTLXEditorWidget extends ReactWidget {
         // ===== Mode Events =====
         this.eventService.onModeChanged(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Mode changed:', event);
+            this.currentMode = event.mode;
+            // Re-render if Function Builder is open to update mode-aware display
+            if (this.showFunctionBuilderDialog) {
+                this.update();
+            }
         });
 
         // ===== Input Management Events =====
@@ -116,14 +126,58 @@ export class UTLXEditorWidget extends ReactWidget {
                 udmLanguageLength: event.udmLanguage.length,
                 format: event.format
             });
-            // Store UDM and format for autocomplete and Function Builder
-            this.inputUdmMap.set(event.inputName, event.udmLanguage);
-            this.inputFormatsMap.set(event.inputName, event.format);
+
+            // Handle empty UDM (cleared instance) vs actual UDM
+            if (event.udmLanguage && event.udmLanguage.trim().length > 0) {
+                // Store UDM and format for autocomplete and Function Builder
+                this.inputUdmMap.set(event.inputName, event.udmLanguage);
+                this.inputFormatsMap.set(event.inputName, event.format);
+
+                // Instance UDM takes priority over schema field tree - clear schema tree for this input
+                if (this.schemaFieldTreeMap.has(event.inputName)) {
+                    console.log('[UTLXEditorWidget] Instance UDM received, clearing schema field tree for:', event.inputName);
+                    this.schemaFieldTreeMap.delete(event.inputName);
+                }
+            } else {
+                // Empty UDM = instance was cleared - remove from maps
+                console.log('[UTLXEditorWidget] Empty UDM received (instance cleared), removing from maps for:', event.inputName);
+                this.inputUdmMap.delete(event.inputName);
+                this.inputFormatsMap.delete(event.inputName);
+                // Note: Schema field tree will be added separately if schema exists
+            }
 
             // Re-render if Function Builder is open to update field tree
             if (this.showFunctionBuilderDialog) {
                 console.log('[UTLXEditorWidget] Function Builder is open, re-rendering with updated UDM');
                 this.update();
+            }
+        });
+
+        // ===== Schema Field Tree Events (Design-Time mode) =====
+        this.eventService.onInputSchemaFieldTree(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Input schema field tree:', {
+                inputId: event.inputId,
+                inputName: event.inputName,
+                fieldCount: event.fieldTree.length,
+                schemaFormat: event.schemaFormat
+            });
+
+            // Check if there's actual instance UDM for this input (non-empty)
+            const existingUdm = this.inputUdmMap.get(event.inputName);
+            const hasInstanceUdm = existingUdm && existingUdm.trim().length > 0;
+
+            // Only store schema field tree if there's no instance UDM (schema is fallback)
+            if (!hasInstanceUdm) {
+                this.schemaFieldTreeMap.set(event.inputName, event.fieldTree);
+                console.log('[UTLXEditorWidget] Stored schema field tree for:', event.inputName);
+
+                // Re-render if Function Builder is open
+                if (this.showFunctionBuilderDialog) {
+                    console.log('[UTLXEditorWidget] Function Builder is open, re-rendering with schema field tree');
+                    this.update();
+                }
+            } else {
+                console.log('[UTLXEditorWidget] Instance UDM exists for', event.inputName, '- schema field tree not stored (UDM takes priority)');
             }
         });
 
@@ -1655,12 +1709,14 @@ output json
                     <FunctionBuilderDialog
                         functions={this.functionBuilderFunctions}
                         operators={this.functionBuilderOperators}
-                        availableInputs={Array.from(new Set([...this.inputNamesFromHeaders, ...Array.from(this.inputUdmMap.keys())]))}
+                        availableInputs={Array.from(new Set([...this.inputNamesFromHeaders, ...Array.from(this.inputUdmMap.keys()), ...Array.from(this.schemaFieldTreeMap.keys())]))}
                         udmMap={this.inputUdmMap}
                         inputFormatsMap={this.inputFormatsMap}
                         outputFormat={this.outputFormat}
                         directiveRegistry={this.functionBuilderDirectives}
                         cursorContext={this.analyzeCursorContext()}
+                        mode={this.currentMode}
+                        schemaFieldTreeMap={this.schemaFieldTreeMap}
                         onInsert={(code) => this.handleInsertFromBuilder(code)}
                         onClose={() => {
                             this.showFunctionBuilderDialog = false;

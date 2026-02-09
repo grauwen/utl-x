@@ -28,6 +28,7 @@ import {
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
 import { inferSchemaFromJson, inferSchemaFromXml, formatSchema } from '../utils/schema-inferrer';
+import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 
 // Input panel format types (separate from protocol types)
 // Data formats - used for actual data instances
@@ -1215,6 +1216,74 @@ export class MultiInputPanelWidget extends ReactWidget {
         });
     }
 
+    /**
+     * Parse schema content and fire schema field tree event for Design-Time mode.
+     * This allows the Function Builder to display schema structure without instance data.
+     */
+    private parseAndFireSchemaFieldTree(inputId: string): void {
+        const input = this.state.inputs.find(i => i.id === inputId);
+        if (!input) {
+            console.warn('[MultiInputPanel] parseAndFireSchemaFieldTree: Input not found:', inputId);
+            return;
+        }
+
+        // Only process if:
+        // 1. We're in Design-Time mode
+        // 2. There's schema content
+        // 3. There's NO instance content (schema is primary source for structure)
+        if (this.state.mode !== UTLXMode.DESIGN_TIME) {
+            console.log('[MultiInputPanel] parseAndFireSchemaFieldTree: Not in Design-Time mode, skipping');
+            return;
+        }
+
+        if (!input.schemaContent || input.schemaContent.trim().length === 0) {
+            console.log('[MultiInputPanel] parseAndFireSchemaFieldTree: No schema content, skipping');
+            return;
+        }
+
+        // If instance content exists, UDM takes priority - don't fire schema field tree
+        if (input.instanceContent && input.instanceContent.trim().length > 0) {
+            console.log('[MultiInputPanel] parseAndFireSchemaFieldTree: Instance content exists, UDM takes priority');
+            return;
+        }
+
+        console.log('[MultiInputPanel] ════════════════════════════════════════');
+        console.log('[MultiInputPanel] 📊 PARSING SCHEMA TO FIELD TREE');
+        console.log('[MultiInputPanel] Input:', input.name);
+        console.log('[MultiInputPanel] Schema format:', input.schemaFormat);
+        console.log('[MultiInputPanel] Schema content length:', input.schemaContent.length);
+        console.log('[MultiInputPanel] ════════════════════════════════════════');
+
+        try {
+            let fieldTree: SchemaFieldInfo[] = [];
+
+            if (input.schemaFormat === 'jsch') {
+                fieldTree = parseJsonSchemaToFieldTree(input.schemaContent);
+                console.log('[MultiInputPanel] Parsed JSON Schema, got', fieldTree.length, 'top-level fields');
+            } else if (input.schemaFormat === 'xsd') {
+                fieldTree = parseXsdToFieldTree(input.schemaContent);
+                console.log('[MultiInputPanel] Parsed XSD, got', fieldTree.length, 'top-level fields');
+            } else {
+                console.warn('[MultiInputPanel] Schema format not supported for field tree:', input.schemaFormat);
+                return;
+            }
+
+            if (fieldTree.length > 0) {
+                console.log('[MultiInputPanel] Firing schema field tree event');
+                this.eventService.fireInputSchemaFieldTree({
+                    inputId: input.id,
+                    inputName: input.name,
+                    fieldTree,
+                    schemaFormat: input.schemaFormat as 'jsch' | 'xsd'
+                });
+            } else {
+                console.warn('[MultiInputPanel] No fields extracted from schema');
+            }
+        } catch (error) {
+            console.error('[MultiInputPanel] Failed to parse schema to field tree:', error);
+        }
+    }
+
     private handleCsvHeadersChange(hasHeaders: boolean): void {
         const activeInput = this.state.inputs.find(input => input.id === this.state.activeInputId);
 
@@ -1352,6 +1421,9 @@ export class MultiInputPanelWidget extends ReactWidget {
             });
 
             this.messageService.info(`${schemaFormat.toUpperCase()} schema inferred from instance data`);
+
+            // Note: Don't fire schema field tree event here because instance content exists
+            // (we just inferred from it). Instance UDM takes priority.
         } catch (error) {
             console.error('[MultiInputPanel] Schema inference error:', error);
             this.messageService.error(`Failed to infer schema: ${error instanceof Error ? error.message : String(error)}`);
@@ -1360,17 +1432,54 @@ export class MultiInputPanelWidget extends ReactWidget {
 
     private handleClear(): void {
         const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+        const activeInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
 
         this.setState({
             inputs: this.state.inputs.map(input =>
                 input.id === this.state.activeInputId
                     ? {
                         ...input,
-                        [isSchema ? 'schemaContent' : 'instanceContent']: ''
+                        [isSchema ? 'schemaContent' : 'instanceContent']: '',
+                        // Also clear UDM when clearing instance content
+                        ...(isSchema ? {} : { udmLanguage: undefined, udmParsed: false, udmError: undefined })
                     }
                     : input
             )
         });
+
+        // Fire events to notify editor widget
+        if (activeInput) {
+            if (isSchema) {
+                // Clear schema - fire event to clear schema field tree
+                console.log('[MultiInputPanel] Clear: Firing schema content cleared for:', activeInput.name);
+                this.eventService.fireInputSchemaContentChanged({
+                    inputId: this.state.activeInputId,
+                    content: ''
+                });
+            } else {
+                // Clear instance - fire event with empty UDM to clear the field tree
+                console.log('[MultiInputPanel] Clear: Firing UDM cleared for:', activeInput.name);
+                this.eventService.fireInputUdmUpdated({
+                    inputId: this.state.activeInputId,
+                    inputName: activeInput.name,
+                    udmLanguage: '',  // Empty UDM signals clear
+                    format: activeInput.instanceFormat || 'json'
+                });
+
+                // Also fire instance content changed
+                this.eventService.fireInputInstanceContentChanged({
+                    inputId: this.state.activeInputId,
+                    content: ''
+                });
+
+                // If schema exists and no instance, fire schema field tree event
+                if (activeInput.schemaContent && activeInput.schemaContent.trim().length > 0) {
+                    console.log('[MultiInputPanel] Clear: Instance cleared, triggering schema field tree parse');
+                    // Delay to ensure state is updated
+                    setTimeout(() => this.parseAndFireSchemaFieldTree(this.state.activeInputId), 100);
+                }
+            }
+        }
     }
 
     private handleViewUdm(): void {
@@ -1609,11 +1718,17 @@ export class MultiInputPanelWidget extends ReactWidget {
                     const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
 
                     // Auto-detect format from file extension
-                    const detectedFormat = this.detectFormatFromFilename(file.name);
+                    let detectedFormat = this.detectFormatFromFilename(file.name);
+
+                    // Special handling for schema tab: .json files are JSON Schema (jsch)
+                    if (isSchema && detectedFormat === 'json') {
+                        detectedFormat = 'jsch';
+                    }
 
                     console.log('[MultiInputPanel] ════════════════════════════════════════');
                     console.log('[MultiInputPanel] FILE LOAD - Setting format from extension');
                     console.log('[MultiInputPanel] File:', file.name);
+                    console.log('[MultiInputPanel] isSchema:', isSchema);
                     console.log('[MultiInputPanel] Detected format from extension:', detectedFormat || 'none');
                     console.log('[MultiInputPanel] Current format in state:', this.state.inputs.find(i => i.id === this.state.activeInputId)?.instanceFormat);
                     console.log('[MultiInputPanel] ════════════════════════════════════════');
@@ -1650,6 +1765,11 @@ export class MultiInputPanelWidget extends ReactWidget {
                             inputId: this.state.activeInputId,
                             content
                         });
+
+                        // Parse schema to field tree for Function Builder (Design-Time mode)
+                        // Wait for state to update before parsing
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                        this.parseAndFireSchemaFieldTree(this.state.activeInputId);
                     } else {
                         this.eventService.fireInputInstanceContentChanged({
                             inputId: this.state.activeInputId,
