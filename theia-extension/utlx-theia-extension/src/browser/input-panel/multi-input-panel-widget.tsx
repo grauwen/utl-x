@@ -1218,19 +1218,35 @@ export class MultiInputPanelWidget extends ReactWidget {
 
     /**
      * Parse schema content and fire schema field tree event for Design-Time mode.
-     * This allows the Function Builder to display schema structure without instance data.
+     * This allows the Function Builder to display schema structure.
+     *
+     * @param inputId - The input ID to parse schema for
+     * @param forceFireWithInstance - If true, fire event even when instance content exists.
+     *                                Used for "Infer Schema" to show BOTH instance samples AND schema types.
      */
-    private parseAndFireSchemaFieldTree(inputId: string): void {
+    private parseAndFireSchemaFieldTree(inputId: string, forceFireWithInstance: boolean = false): void {
+        console.log('[MultiInputPanel] parseAndFireSchemaFieldTree called:', {
+            inputId,
+            forceFireWithInstance,
+            mode: this.state.mode
+        });
+
         const input = this.state.inputs.find(i => i.id === inputId);
         if (!input) {
             console.warn('[MultiInputPanel] parseAndFireSchemaFieldTree: Input not found:', inputId);
             return;
         }
 
+        console.log('[MultiInputPanel] parseAndFireSchemaFieldTree: Found input:', {
+            name: input.name,
+            schemaFormat: input.schemaFormat,
+            schemaContentLength: input.schemaContent?.length || 0,
+            instanceContentLength: input.instanceContent?.length || 0
+        });
+
         // Only process if:
         // 1. We're in Design-Time mode
         // 2. There's schema content
-        // 3. There's NO instance content (schema is primary source for structure)
         if (this.state.mode !== UTLXMode.DESIGN_TIME) {
             console.log('[MultiInputPanel] parseAndFireSchemaFieldTree: Not in Design-Time mode, skipping');
             return;
@@ -1241,9 +1257,10 @@ export class MultiInputPanelWidget extends ReactWidget {
             return;
         }
 
-        // If instance content exists, UDM takes priority - don't fire schema field tree
-        if (input.instanceContent && input.instanceContent.trim().length > 0) {
-            console.log('[MultiInputPanel] parseAndFireSchemaFieldTree: Instance content exists, UDM takes priority');
+        // If instance content exists and we're not forcing, skip (UDM takes priority for structure)
+        // But when forceFireWithInstance=true (Infer Schema), we fire to show BOTH samples AND types
+        if (!forceFireWithInstance && input.instanceContent && input.instanceContent.trim().length > 0) {
+            console.log('[MultiInputPanel] parseAndFireSchemaFieldTree: Instance content exists, UDM takes priority (use forceFireWithInstance=true to override)');
             return;
         }
 
@@ -1408,6 +1425,7 @@ export class MultiInputPanelWidget extends ReactWidget {
             }
 
             // Update the schema content for this input
+            const inputId = this.state.activeInputId;
             this.setState({
                 inputs: this.state.inputs.map(input =>
                     input.id === this.state.activeInputId
@@ -1422,13 +1440,13 @@ export class MultiInputPanelWidget extends ReactWidget {
 
             this.messageService.info(`${schemaFormat.toUpperCase()} schema inferred from instance data`);
 
-            // Fire schema field tree event so Function Builder can show BOTH:
-            // - Instance data with sample values (from UDM)
-            // - Schema type info (from schema field tree)
-            // Wait for state to update before parsing
-            setTimeout(() => {
-                this.parseAndFireSchemaFieldTree(this.state.activeInputId);
-            }, 50);
+            // Fire schema field tree event AFTER state update
+            // Use requestAnimationFrame to ensure React has processed setState
+            // This allows Function Builder to show BOTH instance samples AND schema types
+            requestAnimationFrame(() => {
+                console.log('[MultiInputPanel] Infer Schema: Firing schema field tree after state update');
+                this.parseAndFireSchemaFieldTree(inputId, true);
+            });
         } catch (error) {
             console.error('[MultiInputPanel] Schema inference error:', error);
             this.messageService.error(`Failed to infer schema: ${error instanceof Error ? error.message : String(error)}`);

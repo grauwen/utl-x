@@ -913,11 +913,18 @@ const FieldNode: React.FC<FieldNodeProps> = ({
     const typeIcon = getTypeIcon(field.type);
     const typeDisplay = getTypeDisplayName(field.type);
 
-    // Extract schema-specific info from SchemaFieldInfo (when isSchemaSource)
-    const schemaField = field as any; // Cast to access SchemaFieldInfo properties
+    // Extract schema-specific info from SchemaFieldInfo/MergedFieldInfo (when isSchemaSource)
+    const schemaField = field as any; // Cast to access SchemaFieldInfo/MergedFieldInfo properties
     const isRequired = schemaField.isRequired === true;
     const schemaType = schemaField.schemaType;
     const constraints = schemaField.constraints;
+    // Sample values from merged field (when both schema and instance exist)
+    const sampleValues: string[] = schemaField.sampleValues || [];
+    const hasSampleData = schemaField.hasSampleData === true;
+    // Get first sample value for inline display (truncate if too long)
+    const inlineSample = sampleValues.length > 0 && sampleValues[0] !== '{...}'
+        ? (sampleValues[0].length > 25 ? sampleValues[0].substring(0, 25) + '...' : sampleValues[0])
+        : null;
 
     // Build the full field path for insertion
     const buildInsertPath = () => {
@@ -961,6 +968,18 @@ const FieldNode: React.FC<FieldNodeProps> = ({
                         opacity: 0.8
                     }} title={constraints}>
                         ({constraints.length > 20 ? constraints.substring(0, 20) + '...' : constraints})
+                    </span>
+                )}
+                {/* Inline sample value (when schema + instance data exist) */}
+                {isSchemaSource && hasSampleData && inlineSample && (
+                    <span className='field-sample' style={{
+                        fontSize: '11px',
+                        color: '#50fa7b',
+                        marginLeft: '8px',
+                        fontFamily: 'var(--monaco-monospace-font)',
+                        opacity: 0.9
+                    }} title={`Sample: ${sampleValues[0]}`}>
+                        → {inlineSample}
                     </span>
                 )}
                 <button

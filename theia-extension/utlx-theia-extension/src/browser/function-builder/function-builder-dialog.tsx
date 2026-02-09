@@ -286,13 +286,43 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
             console.log('[FunctionBuilder] Schema field tree exists:', schemaFieldTree ? 'YES' : 'NO');
             console.log('[FunctionBuilder] UDM length:', udm?.length || 0);
 
-            // Priority: UDM > Schema Field Tree
-            if (udm) {
-                console.log('[FunctionBuilder] Using UDM (instance data)');
+            // Priority: Schema > UDM (Schema-First approach)
+            // Schema provides structure with types/constraints; UDM provides sample values
+            if (schemaFieldTree && schemaFieldTree.length > 0) {
+                // Use schema as primary structure
+                console.log('[FunctionBuilder] Using SCHEMA-FIRST approach');
+                console.log('[FunctionBuilder] Schema fields:', schemaFieldTree.map(f => f.name));
+
+                // If UDM exists, merge sample values into schema structure
+                let mergedFields = schemaFieldTree;
+                if (udm) {
+                    console.log('[FunctionBuilder] Merging sample values from UDM into schema');
+                    // Import merge function
+                    const { mergeSchemaWithSamples } = require('../utils/schema-field-tree-parser');
+                    mergedFields = mergeSchemaWithSamples(schemaFieldTree, udm);
+                    console.log('[FunctionBuilder] Merged fields with samples');
+                }
+
+                const tree: UdmInputTree = {
+                    inputName,
+                    format,
+                    isArray: false,  // Schemas typically define object structure
+                    fields: mergedFields,
+                    isSchemaSource: true  // Flag to indicate schema-first structure
+                };
+
+                console.log('[FunctionBuilder] Tree result for', inputName, '(schema-first):');
+                console.log('[FunctionBuilder]   - isArray:', tree.isArray);
+                console.log('[FunctionBuilder]   - fields count:', tree.fields.length);
+                console.log('[FunctionBuilder]   - isSchemaSource:', true);
+                console.log('[FunctionBuilder]   - hasSampleData:', udm ? 'YES' : 'NO');
+
+                return tree;
+            } else if (udm) {
+                // No schema - fall back to UDM-only tree
+                console.log('[FunctionBuilder] Using UDM-only (no schema available)');
                 console.log('[FunctionBuilder] UDM preview (first 500 chars):');
                 console.log(udm.substring(0, 500));
-                console.log('[FunctionBuilder] UDM preview (last 200 chars):');
-                console.log(udm.substring(Math.max(0, udm.length - 200)));
 
                 const tree = parseUdmToTree(inputName, format, udm);
 
@@ -300,26 +330,6 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                 console.log('[FunctionBuilder]   - isArray:', tree.isArray);
                 console.log('[FunctionBuilder]   - fields count:', tree.fields.length);
                 console.log('[FunctionBuilder]   - fields:', tree.fields.map(f => f.name));
-
-                return tree;
-            } else if (schemaFieldTree && schemaFieldTree.length > 0) {
-                // Use schema field tree (Design-Time mode, no instance data)
-                console.log('[FunctionBuilder] Using schema field tree (Design-Time mode)');
-                console.log('[FunctionBuilder] Schema fields:', schemaFieldTree.map(f => f.name));
-
-                // Convert SchemaFieldInfo[] to UdmInputTree format
-                const tree: UdmInputTree = {
-                    inputName,
-                    format,
-                    isArray: false,  // Schemas typically define object structure, not array
-                    fields: schemaFieldTree,
-                    isSchemaSource: true  // Flag to indicate this came from schema
-                };
-
-                console.log('[FunctionBuilder] Tree result for', inputName, '(from schema):');
-                console.log('[FunctionBuilder]   - isArray:', tree.isArray);
-                console.log('[FunctionBuilder]   - fields count:', tree.fields.length);
-                console.log('[FunctionBuilder]   - isSchemaSource:', true);
 
                 return tree;
             } else {

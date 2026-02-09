@@ -495,3 +495,109 @@ export function getSchemaTypeDisplayName(type: string, schemaType?: string): str
 export function getRequiredIndicatorClass(isRequired?: boolean): string {
     return isRequired ? 'schema-field-required' : 'schema-field-optional';
 }
+
+// ============================================================================
+// Merged Field Tree (Schema + Instance Samples)
+// ============================================================================
+
+/**
+ * Extended field info with both schema metadata AND sample values from instance
+ */
+export interface MergedFieldInfo extends SchemaFieldInfo {
+    sampleValues?: string[];  // Sample values from instance data (up to 3)
+    hasSampleData?: boolean;  // True if instance data exists for this field
+}
+
+/**
+ * Merge schema field tree with sample values extracted from UDM.
+ * Schema provides the structure; UDM provides sample values.
+ *
+ * @param schemaFields - Field tree from schema parsing
+ * @param udmLanguage - UDM language string from instance data
+ * @returns Merged field tree with schema info + sample values
+ */
+export function mergeSchemaWithSamples(
+    schemaFields: SchemaFieldInfo[],
+    udmLanguage: string | undefined
+): MergedFieldInfo[] {
+    if (!udmLanguage || udmLanguage.trim().length === 0) {
+        // No instance data - return schema fields as-is (no samples)
+        return schemaFields.map(f => ({ ...f, hasSampleData: false }));
+    }
+
+    // Lazy import to avoid circular dependencies
+    const { UDMLanguageParser } = require('../udm/udm-language-parser');
+    const { navigate } = require('../udm/udm-navigator');
+    const { isScalar, isArray, isObject, UDMObjectHelper } = require('../udm/udm-core');
+
+    try {
+        const udm = UDMLanguageParser.parse(udmLanguage);
+
+        return schemaFields.map(field => mergeFieldWithSamples(field, udm, '', {
+            navigate, isScalar, isArray, isObject, UDMObjectHelper
+        }));
+    } catch (error) {
+        console.error('[SchemaParser] Failed to parse UDM for sample extraction:', error);
+        return schemaFields.map(f => ({ ...f, hasSampleData: false }));
+    }
+}
+
+/**
+ * Recursively merge a single field with sample values from UDM
+ */
+function mergeFieldWithSamples(
+    field: SchemaFieldInfo,
+    udm: any,
+    parentPath: string,
+    utils: { navigate: any; isScalar: any; isArray: any; isObject: any; UDMObjectHelper: any }
+): MergedFieldInfo {
+    const { navigate, isScalar, isArray, isObject, UDMObjectHelper } = utils;
+
+    const fieldPath = parentPath ? `${parentPath}.${field.name}` : field.name;
+    const merged: MergedFieldInfo = {
+        ...field,
+        hasSampleData: false,
+        sampleValues: []
+    };
+
+    try {
+        // Navigate to this field in UDM
+        const node = navigate(udm, fieldPath);
+
+        if (node && typeof node !== 'string') {
+            merged.hasSampleData = true;
+
+            if (isScalar(node)) {
+                // Simple value
+                merged.sampleValues = [String(node.value)];
+            } else if (isArray(node)) {
+                // Array - extract first few element values
+                const arr = node as any;
+                const samples: string[] = [];
+                for (let i = 0; i < Math.min(3, arr.elements.length); i++) {
+                    const elem = arr.elements[i];
+                    if (isScalar(elem)) {
+                        samples.push(String(elem.value));
+                    } else if (isObject(elem)) {
+                        samples.push(`{...}`); // Object in array
+                    }
+                }
+                merged.sampleValues = samples;
+            } else if (isObject(node)) {
+                // Object - mark as having data but no direct sample value
+                merged.sampleValues = ['{...}'];
+            }
+        }
+    } catch (e) {
+        // Field not found in UDM - that's OK, just no samples
+    }
+
+    // Recursively process nested fields
+    if (field.fields && field.fields.length > 0) {
+        merged.fields = field.fields.map(childField =>
+            mergeFieldWithSamples(childField as SchemaFieldInfo, udm, fieldPath, utils)
+        );
+    }
+
+    return merged;
+}
