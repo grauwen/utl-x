@@ -304,7 +304,7 @@
     "names": ["Seán O'Sullivan", "Aoife Ní Mhaoláin", "François", "José", "Müller"],
     "accents": ["café", "naïve", "résumé", "déjà vu", "piñata", "jalapeño"],
     "symbols": ["™", "®", "©", "°", "±", "×", "÷", "≤", "≥"],
-    "quotes": ["'single'", "\"double\"", ""fancy"", "'curly'"],
+    "quotes": ["'single'", "\"double\"", "\u201cfancy\u201d", "\u2018curly\u2019"],
     "dashes": ["em—dash", "en–dash", "hy-phen"],
     "fractions": ["½", "⅓", "¼", "¾", "⅛"],
     "measurements": ["°C", "℉", "№", "℃"]

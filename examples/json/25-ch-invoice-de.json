@@ -51,23 +51,23 @@
     {
       "position": 1,
       "artikelNummer": "PM-CNC-4567",
-      "beschreibung": "CNC-gefräste Präzisionsteile aus Edelstahl 316L, Toleranz ±0'005 mm",
+      "beschreibung": "CNC-gefräste Präzisionsteile aus Edelstahl 316L, Toleranz ±0005 mm",
       "menge": 250,
       "einheit": "Stk.",
       "einzelpreis": 145.50,
       "rabatt": {
         "prozent": 5.0,
-        "betrag": 1'818.75
+        "betrag": 1818.75
       },
-      "nettopreis": 34'556.25,
+      "nettopreis": 34556.25,
       "mwstSatz": 8.1,
-      "mwstBetrag": 2'799.06,
-      "bruttopreis": 37'355.31
+      "mwstBetrag": 2799.06,
+      "bruttopreis": 37355.31
     },
     {
       "position": 2,
       "artikelNummer": "PM-WELLE-2890",
-      "beschreibung": "Spindelwellen, geschliffen & gehärtet, Oberflächengüte Ra ≤ 0'4 µm",
+      "beschreibung": "Spindelwellen, geschliffen & gehärtet, Oberflächengüte Ra ≤ 04 µm",
       "menge": 50,
       "einheit": "Stk.",
       "einzelpreis": 892.80,
@@ -75,10 +75,10 @@
         "prozent": 0.0,
         "betrag": 0.00
       },
-      "nettopreis": 44'640.00,
+      "nettopreis": 44640.00,
       "mwstSatz": 8.1,
-      "mwstBetrag": 3'615.84,
-      "bruttopreis": 48'255.84
+      "mwstBetrag": 3615.84,
+      "bruttopreis": 48255.84
     },
     {
       "position": 3,
@@ -89,12 +89,12 @@
       "einzelpreis": 234.90,
       "rabatt": {
         "prozent": 10.0,
-        "betrag": 2'818.80
+        "betrag": 2818.80
       },
-      "nettopreis": 25'369.20,
+      "nettopreis": 25369.20,
       "mwstSatz": 8.1,
-      "mwstBetrag": 2'054.91,
-      "bruttopreis": 27'424.11
+      "mwstBetrag": 2054.91,
+      "bruttopreis": 27424.11
     },
     {
       "position": 4,
@@ -107,25 +107,25 @@
         "prozent": 0.0,
         "betrag": 0.00
       },
-      "nettopreis": 2'800.00,
+      "nettopreis": 2800.00,
       "mwstSatz": 8.1,
       "mwstBetrag": 226.80,
-      "bruttopreis": 3'026.80
+      "bruttopreis": 3026.80
     }
   ],
   "zusammenfassung": {
-    "zwischensumme": 107'365.45,
-    "rabattGesamt": 4'637.55,
-    "nettoGesamt": 107'365.45,
+    "zwischensumme": 107365.45,
+    "rabattGesamt": 4637.55,
+    "nettoGesamt": 107365.45,
     "mwst": [
       {
         "satz": 8.1,
-        "bemessungsgrundlage": 107'365.45,
-        "betrag": 8'696.61
+        "bemessungsgrundlage": 107365.45,
+        "betrag": 8696.61
       }
     ],
-    "mwstGesamt": 8'696.61,
-    "bruttoGesamt": 116'062.06,
+    "mwstGesamt": 8696.61,
+    "bruttoGesamt": 116062.06,
     "währung": "CHF",
     "währungsSymbol": "CHF",
     "rundungsdifferenz": 0.00
@@ -137,8 +137,8 @@
       "prozent": 2.0,
       "frist": 10,
       "fristEinheit": "TAGE",
-      "betragBeiSkonto": 113'740.82,
-      "ersparnis": 2'321.24
+      "betragBeiSkonto": 113740.82,
+      "ersparnis": 2321.24
     },
     "mahngebuehren": {
       "ersteMahnung": 25.00,
@@ -209,7 +209,7 @@
       "addressLine2": "8002 Zürich",
       "country": "CH"
     },
-    "amount": 116'062.06,
+    "amount": 116062.06,
     "currency": "CHF",
     "debtor": {
       "name": "Maschinenbau Süd-Deutschland GmbH",
