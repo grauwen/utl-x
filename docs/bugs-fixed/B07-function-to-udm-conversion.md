@@ -1,5 +1,7 @@
 # B07: Cannot Convert Function to UDM
 
+**Status: OPEN - Complex Issue**
+
 ## Summary
 
 When user-defined functions with internal `let ... in` expressions are called with computed arguments inside `map` lambdas, the interpreter returns a function object instead of the function's return value, causing the UDM serializer to fail.
@@ -12,20 +14,29 @@ Cannot convert function to UDM
 ## Affected Transformations
 - `29-tr-fatura-to-shipping-manifest.utlx`
 
-## Reproduction
+## Complexity Assessment
 
-The bug occurs with this pattern:
+This bug is **complex** due to the interaction of multiple language features:
+
+1. **User-defined functions** - stored as closures with captured environments
+2. **`let ... in` desugaring** - converted to immediately-invoked lambda expressions
+3. **Nested lambda contexts** - `map` creates a lambda, function body is another lambda
+4. **Environment/scope chaining** - multiple nested scopes must resolve correctly
+
+The bug likely involves subtle issues in how closures capture and resolve variables across multiple nested evaluation contexts.
+
+## Reproduction
 
 ```utlx
 function PackageType(weight, count) {
-  let total = weight * count in
+  let total = weight * count in        // Desugared to: ((total) => ...)(weight * count)
   if (total > 500) "PALLET"
   else if (total > 50) "CRATE"
   else "BOX"
 }
 
 {
-  items: $input.items |> map(item => {
+  items: $input.items |> map(item => {   // Lambda context 1
     let estimatedWeight = item.weight / 10;
     {
       packageType: PackageType(estimatedWeight, 1)  // Fails here
@@ -34,13 +45,50 @@ function PackageType(weight, count) {
 }
 ```
 
-### Conditions that trigger the bug:
-1. User-defined function uses `let ... in` syntax internally
-2. Function is called with computed arguments (variables, not literals)
-3. Call happens inside a `map` lambda
-4. Result is assigned to an object property
+## The Desugaring Chain
 
-### Working patterns (no bug):
+When `let x = value in body` is parsed, it becomes:
+```
+FunctionCall(
+  Lambda([x], body),   // Inner lambda
+  [value]              // Arguments
+)
+```
+
+So a function like:
+```utlx
+function Foo(a) {
+  let b = a * 2 in
+  b + 1
+}
+```
+
+Becomes (conceptually):
+```utlx
+function Foo(a) {
+  ((b) => b + 1)(a * 2)   // Immediately-invoked lambda
+}
+```
+
+When `Foo` is called inside a `map` lambda:
+```
+map lambda → Foo call → desugared let (another lambda call)
+```
+
+This creates **three nested evaluation contexts**. Somewhere the innermost lambda is being returned instead of evaluated.
+
+## Conditions That Trigger the Bug
+
+| Condition | Required? |
+|-----------|-----------|
+| User-defined function | Yes |
+| Function uses `let ... in` internally | Yes |
+| Called with computed arguments | Yes |
+| Called inside `map` lambda | Yes |
+| Result assigned to object property | Yes |
+
+## Working Patterns (No Bug)
+
 ```utlx
 // Direct call with literals - works
 PackageType(100, 2)
@@ -48,56 +96,57 @@ PackageType(100, 2)
 // Call outside map - works
 let result = PackageType(someValue, 1)
 
-// Function without let...in - works
+// Function WITHOUT let...in - works
 function Simple(x) { x * 2 }
 map(items, i => { value: Simple(i.x) })
+
+// Inline let...in (not in function) - works
+map(items, i => {
+  let total = i.weight * 2 in
+  { value: total }
+})
 ```
-
-## Probable Cause
-
-The interpreter evaluates the function call but returns the function closure instead of executing it and returning the result. This happens specifically when:
-
-1. The function body contains `let ... in` (desugared to lambda application)
-2. The function is called within a nested lambda context (inside `map`)
-3. Arguments are expressions rather than literals
-
-The closure capture or environment scoping may be incorrect, causing the function to be returned unevaluated.
 
 ## Investigation Areas
 
-1. **Function call evaluation** in `interpreter.kt` (~lines 935-973)
-   - Check if `FunctionValue` is being returned instead of evaluated
+### 1. UDM Conversion
+Find where "Cannot convert function to UDM" is thrown - this happens when `RuntimeValue.FunctionValue` reaches the serializer.
 
-2. **Closure handling** when functions contain desugared `let ... in`
-   - The function body is itself a `FunctionCall` (lambda application)
-   - Nested function calls may not be fully evaluated
+### 2. Function Call Evaluation
+In `interpreter.kt`, check `evaluateFunctionCall()`:
+- When `function.body` is itself a `FunctionCall` (from `let...in`), is it fully evaluated?
 
-3. **Environment scoping** in nested lambda contexts
-   - Variables from outer `map` lambda may affect function resolution
+### 3. Closure Capture
+When a lambda is created, it captures the current environment. Check if the closure has the right scope when deeply nested.
 
-## Related
+### 4. Possible Root Causes
 
-- B06 (Fixed): FunctionCall/LetBinding cast error - similar context but different root cause
-- Both bugs involve user-defined functions in `map` lambdas with `let` expressions
+1. **Incomplete evaluation**: Desugared `let...in` lambda returned instead of invoked
+2. **Environment mismatch**: Inner lambda's closure missing function parameters
+3. **Evaluation short-circuit**: Early return with lambda instead of result
+4. **Type confusion**: Evaluator returns `FunctionValue` instead of evaluating
+
+## Key Files
+
+- `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt`
+- `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt` (let...in desugaring)
 
 ## Workaround
 
-Avoid using `let ... in` inside user-defined functions, or inline the logic:
+Inline the logic instead of using `let ... in` in functions:
 
 ```utlx
-// Instead of:
-function PackageType(weight, count) {
-  let total = weight * count in
-  if (total > 500) "PALLET" else "BOX"
-}
-
-// Use inline:
+// Instead of function with let...in:
 {
   items: $input.items |> map(item => {
-    let total = item.weight * item.count;
+    let total = item.weight * item.count in
     {
       packageType: if (total > 500) "PALLET" else "BOX"
     }
   })
 }
 ```
+
+## Related
+
+- **B06 (Fixed)**: FunctionCall/LetBinding cast error - same context, parser layer
