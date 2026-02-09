@@ -257,6 +257,7 @@ export interface FieldTreeProps {
     onInsertValue?: (value: string) => void; // Optional callback to insert raw values into editor
     udmMap: Map<string, string>; // inputName -> UDM language string
     isDesignTime?: boolean; // Design-Time mode flag for schema-aware rendering
+    schemaFieldTreeMap?: Map<string, UdmField[]>; // inputName -> schema field tree (for type info)
 }
 
 /**
@@ -264,9 +265,29 @@ export interface FieldTreeProps {
  *
  * Displays all inputs with their fields in a tree structure with horizontal split
  */
-export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField, onInsertValue, udmMap, isDesignTime = false }) => {
+export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField, onInsertValue, udmMap, isDesignTime = false, schemaFieldTreeMap }) => {
     const [expandedInputs, setExpandedInputs] = React.useState<Set<string>>(new Set());
     const [selectedField, setSelectedField] = React.useState<{ inputName: string; fieldPath: string } | null>(null);
+
+    // Helper to find schema info for a field path
+    const findSchemaFieldInfo = React.useCallback((inputName: string, fieldPath: string): UdmField | null => {
+        if (!schemaFieldTreeMap) return null;
+        const schemaFields = schemaFieldTreeMap.get(inputName);
+        if (!schemaFields) return null;
+
+        const parts = fieldPath.split('.');
+        let current: UdmField | null = null;
+        let currentFields = schemaFields;
+
+        for (const part of parts) {
+            // Handle array notation
+            const cleanPart = part.replace('[]', '');
+            current = currentFields.find(f => f.name === cleanPart) || null;
+            if (!current) break;
+            currentFields = current.fields || [];
+        }
+        return current;
+    }, [schemaFieldTreeMap]);
 
     // Extract sample values for selected field
     const sampleValues = React.useMemo(() => {
@@ -391,44 +412,119 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                 ${selectedField.inputName}.{selectedField.fieldPath}
                             </div>
                             {sampleValues.length > 0 ? (
-                                <div>
-                                    <div style={{
-                                        fontSize: '11px',
-                                        color: 'var(--theia-descriptionForeground)',
-                                        marginBottom: '8px'
-                                    }}>
-                                        {sampleValues.length} unique {sampleValues.length === 1 ? 'value' : 'values'}:
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                        {sampleValues.map((value, index) => {
-                                            const quotedValue = formatValueForUTLX(value);
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    {/* Schema Info Section (when both instance and schema exist) */}
+                                    {(() => {
+                                        const schemaField = findSchemaFieldInfo(selectedField.inputName, selectedField.fieldPath) as any;
+                                        if (schemaField && isDesignTime) {
                                             return (
-                                            <div
-                                                key={index}
-                                                style={{
-                                                    padding: '6px 8px',
-                                                    background: 'var(--theia-editor-background)',
-                                                    border: '1px solid var(--theia-panel-border)',
-                                                    borderRadius: '3px',
-                                                    fontSize: '12px',
-                                                    fontFamily: 'var(--monaco-monospace-font)',
-                                                    color: 'var(--theia-foreground)',
-                                                    wordBreak: 'break-all',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '8px'
-                                                }}
-                                            >
-                                                <span style={{ flex: 1 }}>{value}</span>
-                                                <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                                                    {onInsertValue && (
+                                                <div style={{
+                                                    padding: '10px',
+                                                    background: 'rgba(98, 114, 164, 0.15)',
+                                                    borderRadius: '4px',
+                                                    borderLeft: '3px solid #8be9fd'
+                                                }}>
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                        marginBottom: '8px',
+                                                        fontSize: '11px',
+                                                        fontWeight: 600,
+                                                        color: '#8be9fd'
+                                                    }}>
+                                                        <span className='codicon codicon-symbol-structure'></span>
+                                                        Schema Info
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '11px' }}>
+                                                        <span>
+                                                            <span style={{ color: 'var(--theia-descriptionForeground)' }}>Type: </span>
+                                                            <span style={{ color: '#8be9fd', fontFamily: 'var(--monaco-monospace-font)' }}>
+                                                                {schemaField.schemaType || schemaField.type}
+                                                            </span>
+                                                        </span>
+                                                        <span>
+                                                            <span style={{ color: 'var(--theia-descriptionForeground)' }}>Required: </span>
+                                                            <span style={{ color: schemaField.isRequired ? '#ff79c6' : '#50fa7b' }}>
+                                                                {schemaField.isRequired ? 'Yes' : 'No'}
+                                                            </span>
+                                                        </span>
+                                                        {schemaField.constraints && (
+                                                            <span>
+                                                                <span style={{ color: 'var(--theia-descriptionForeground)' }}>Constraints: </span>
+                                                                <span style={{ color: '#f1fa8c' }}>{schemaField.constraints}</span>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
+
+                                    {/* Sample Values Section */}
+                                    <div>
+                                        <div style={{
+                                            fontSize: '11px',
+                                            color: 'var(--theia-descriptionForeground)',
+                                            marginBottom: '8px'
+                                        }}>
+                                            {sampleValues.length} unique {sampleValues.length === 1 ? 'value' : 'values'}:
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            {sampleValues.map((value, index) => {
+                                                const quotedValue = formatValueForUTLX(value);
+                                                return (
+                                                <div
+                                                    key={index}
+                                                    style={{
+                                                        padding: '6px 8px',
+                                                        background: 'var(--theia-editor-background)',
+                                                        border: '1px solid var(--theia-panel-border)',
+                                                        borderRadius: '3px',
+                                                        fontSize: '12px',
+                                                        fontFamily: 'var(--monaco-monospace-font)',
+                                                        color: 'var(--theia-foreground)',
+                                                        wordBreak: 'break-all',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px'
+                                                    }}
+                                                >
+                                                    <span style={{ flex: 1 }}>{value}</span>
+                                                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                                                        {onInsertValue && (
+                                                            <button
+                                                                className='insert-btn'
+                                                                title={`Insert ${quotedValue} into editor`}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onInsertValue(quotedValue);
+                                                                    console.log('[FieldTree] Inserted quoted value:', quotedValue);
+                                                                }}
+                                                                style={{
+                                                                    background: 'transparent',
+                                                                    border: 'none',
+                                                                    cursor: 'pointer',
+                                                                    padding: '2px 4px',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    color: 'var(--theia-foreground)',
+                                                                    opacity: 0.7
+                                                                }}
+                                                                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+                                                                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; }}
+                                                            >
+                                                                <span className='codicon codicon-insert' style={{ fontSize: '12px' }}></span>
+                                                            </button>
+                                                        )}
                                                         <button
-                                                            className='insert-btn'
-                                                            title={`Insert ${quotedValue} into editor`}
+                                                            className='copy-btn'
+                                                            title={`Copy ${quotedValue} to clipboard`}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                onInsertValue(quotedValue);
-                                                                console.log('[FieldTree] Inserted quoted value:', quotedValue);
+                                                                navigator.clipboard.writeText(quotedValue);
+                                                                console.log('[FieldTree] Copied quoted value to clipboard:', quotedValue);
                                                             }}
                                                             style={{
                                                                 background: 'transparent',
@@ -443,36 +539,13 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                                             onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
                                                             onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; }}
                                                         >
-                                                            <span className='codicon codicon-insert' style={{ fontSize: '12px' }}></span>
+                                                            <span className='codicon codicon-copy' style={{ fontSize: '12px' }}></span>
                                                         </button>
-                                                    )}
-                                                    <button
-                                                        className='copy-btn'
-                                                        title={`Copy ${quotedValue} to clipboard`}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            navigator.clipboard.writeText(quotedValue);
-                                                            console.log('[FieldTree] Copied quoted value to clipboard:', quotedValue);
-                                                        }}
-                                                        style={{
-                                                            background: 'transparent',
-                                                            border: 'none',
-                                                            cursor: 'pointer',
-                                                            padding: '2px 4px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            color: 'var(--theia-foreground)',
-                                                            opacity: 0.7
-                                                        }}
-                                                        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
-                                                        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; }}
-                                                    >
-                                                        <span className='codicon codicon-copy' style={{ fontSize: '12px' }}></span>
-                                                    </button>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            );
-                                        })}
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                             ) : (

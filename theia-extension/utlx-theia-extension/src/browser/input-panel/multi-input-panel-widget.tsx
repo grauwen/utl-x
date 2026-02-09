@@ -1422,8 +1422,13 @@ export class MultiInputPanelWidget extends ReactWidget {
 
             this.messageService.info(`${schemaFormat.toUpperCase()} schema inferred from instance data`);
 
-            // Note: Don't fire schema field tree event here because instance content exists
-            // (we just inferred from it). Instance UDM takes priority.
+            // Fire schema field tree event so Function Builder can show BOTH:
+            // - Instance data with sample values (from UDM)
+            // - Schema type info (from schema field tree)
+            // Wait for state to update before parsing
+            setTimeout(() => {
+                this.parseAndFireSchemaFieldTree(this.state.activeInputId);
+            }, 50);
         } catch (error) {
             console.error('[MultiInputPanel] Schema inference error:', error);
             this.messageService.error(`Failed to infer schema: ${error instanceof Error ? error.message : String(error)}`);
@@ -1737,7 +1742,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                     const currentInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
 
                     // Update content and optionally format
-                    // When loading schema: also clear instance content so Function Builder shows schema structure
+                    // When loading schema: clear instance content so Function Builder shows schema structure
+                    // When loading instance: clear schema content so user can infer new schema if needed
                     this.setState({
                         inputs: this.state.inputs.map(input =>
                             input.id === this.state.activeInputId
@@ -1752,6 +1758,10 @@ export class MultiInputPanelWidget extends ReactWidget {
                                         udmLanguage: undefined,
                                         udmParsed: false,
                                         udmError: undefined
+                                    } : {}),
+                                    // Clear schema content when loading a new instance (user can infer schema later)
+                                    ...(!isSchema && this.state.mode === UTLXMode.DESIGN_TIME ? {
+                                        schemaContent: ''
                                     } : {})
                                 }
                                 : input
@@ -1793,6 +1803,15 @@ export class MultiInputPanelWidget extends ReactWidget {
                         await new Promise(resolve => setTimeout(resolve, 50));
                         this.parseAndFireSchemaFieldTree(this.state.activeInputId);
                     } else {
+                        // When loading instance in Design-Time mode, notify that schema was cleared
+                        if (this.state.mode === UTLXMode.DESIGN_TIME) {
+                            console.log('[MultiInputPanel] Instance loaded in Design-Time mode - clearing schema');
+                            this.eventService.fireInputSchemaContentChanged({
+                                inputId: this.state.activeInputId,
+                                content: ''
+                            });
+                        }
+
                         this.eventService.fireInputInstanceContentChanged({
                             inputId: this.state.activeInputId,
                             content

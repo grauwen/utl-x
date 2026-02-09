@@ -931,6 +931,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                     onInsertValue={insertIntoMonaco}
                                     udmMap={udmMap}
                                     isDesignTime={isDesignTime}
+                                    schemaFieldTreeMap={schemaFieldTreeMap}
                                 />
                             </div>
                         )}

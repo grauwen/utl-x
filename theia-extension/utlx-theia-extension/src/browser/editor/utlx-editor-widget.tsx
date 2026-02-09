@@ -133,11 +133,11 @@ export class UTLXEditorWidget extends ReactWidget {
                 this.inputUdmMap.set(event.inputName, event.udmLanguage);
                 this.inputFormatsMap.set(event.inputName, event.format);
 
-                // Instance UDM takes priority over schema field tree - clear schema tree for this input
-                if (this.schemaFieldTreeMap.has(event.inputName)) {
-                    console.log('[UTLXEditorWidget] Instance UDM received, clearing schema field tree for:', event.inputName);
-                    this.schemaFieldTreeMap.delete(event.inputName);
-                }
+                // NOTE: We no longer clear schema field tree when UDM exists
+                // This allows showing both instance data (sample values) AND schema info (types)
+                // when both are available (e.g., after "Infer Schema")
+                console.log('[UTLXEditorWidget] UDM stored for:', event.inputName,
+                    '- Schema field tree preserved:', this.schemaFieldTreeMap.has(event.inputName));
             } else {
                 // Empty UDM = instance was cleared - remove from maps
                 console.log('[UTLXEditorWidget] Empty UDM received (instance cleared), removing from maps for:', event.inputName);
@@ -162,22 +162,17 @@ export class UTLXEditorWidget extends ReactWidget {
                 schemaFormat: event.schemaFormat
             });
 
-            // Check if there's actual instance UDM for this input (non-empty)
-            const existingUdm = this.inputUdmMap.get(event.inputName);
-            const hasInstanceUdm = existingUdm && existingUdm.trim().length > 0;
+            // Always store schema field tree - it provides type info even when instance UDM exists
+            // This allows showing both sample values (from UDM) AND type info (from schema)
+            this.schemaFieldTreeMap.set(event.inputName, event.fieldTree);
+            const hasInstanceUdm = this.inputUdmMap.has(event.inputName);
+            console.log('[UTLXEditorWidget] Stored schema field tree for:', event.inputName,
+                '- Instance UDM also exists:', hasInstanceUdm);
 
-            // Only store schema field tree if there's no instance UDM (schema is fallback)
-            if (!hasInstanceUdm) {
-                this.schemaFieldTreeMap.set(event.inputName, event.fieldTree);
-                console.log('[UTLXEditorWidget] Stored schema field tree for:', event.inputName);
-
-                // Re-render if Function Builder is open
-                if (this.showFunctionBuilderDialog) {
-                    console.log('[UTLXEditorWidget] Function Builder is open, re-rendering with schema field tree');
-                    this.update();
-                }
-            } else {
-                console.log('[UTLXEditorWidget] Instance UDM exists for', event.inputName, '- schema field tree not stored (UDM takes priority)');
+            // Re-render if Function Builder is open
+            if (this.showFunctionBuilderDialog) {
+                console.log('[UTLXEditorWidget] Function Builder is open, re-rendering with schema field tree');
+                this.update();
             }
         });
 
