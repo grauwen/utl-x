@@ -151,3 +151,73 @@ function Compute(a, b) {
 }
 // Fails: Cannot convert function to UDM
 ```
+
+Fix: B06 Bug 1 - FunctionCall Cannot Be Cast to LetBinding
+
+ Problem
+
+ When using let ... in syntax inside object literals within lambdas, the parser throws:
+ class org.apache.utlx.core.ast.Expression$FunctionCall cannot be cast to
+ class org.apache.utlx.core.ast.Expression$LetBinding
+
+ Affects transformations: 09-service-contract, 13-eu-customer-order-de
+
+ Root Cause
+
+ File: modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt
+
+ Line 1008: Unsafe type cast in parseObjectLiteral():
+ letBindings.add(letExpr as Expression.LetBinding)  // UNSAFE CAST!
+
+ The problem is that parseLetBinding() (lines 1168-1194) can return TWO different types:
+ - Expression.LetBinding for simple let x = value
+ - Expression.FunctionCall for let x = value in body (desugared to lambda application)
+
+ But the calling code at line 1008 assumes it ALWAYS gets LetBinding.
+
+ Failing Pattern
+
+ map(item => {
+   let computed = someFunction(item.value) in  // Uses "in" keyword
+   {
+     result: computed  // Object literal triggers parseObjectLiteral()
+   }
+ })
+
+ Fix
+
+ Step 1: Update parseObjectLiteral() at line 1008
+
+ Change from:
+ letBindings.add(letExpr as Expression.LetBinding)
+
+ To handle both return types:
+ when (letExpr) {
+     is Expression.LetBinding -> letBindings.add(letExpr)
+     is Expression.FunctionCall -> {
+         // Desugared let...in expression - add to expressions to evaluate
+         // The FunctionCall wraps a lambda that should be executed
+         scopedExpressions.add(letExpr)
+     }
+     else -> error("Unexpected expression type from let binding: ${letExpr::class.simpleName}")
+ }
+
+ Step 2: Update object literal construction
+
+ The object literal needs to wrap any scoped expressions (FunctionCalls from let...in) around the final object construction. This may require restructuring how the final expression is built.
+
+ Step 3: Add unit tests
+
+ File: modules/core/src/test/kotlin/org/apache/utlx/core/parser/LetInObjectLiteralTest.kt
+
+ Test cases:
+ 1. Simple let ... in inside object literal
+ 2. let ... in with function call inside lambda
+ 3. Multiple let ... in bindings
+ 4. Nested let ... in expressions
+
+ Files to Modify
+
+ 1. modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt - Fix unsafe cast at line 1008
+ 2. modules/core/src/test/kotlin/org/apache/utlx/core/parser/ - Add tests
+
