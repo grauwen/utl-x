@@ -143,11 +143,14 @@ class XMLParser(
             attributes
         }
 
+        // Build namespace context metadata for this element
+        val nsMetadata = buildNsContextMetadata(namespaces)
+
         // Self-closing tag
         if (peek() == '/') {
             advance() // /
             consume('>', "Expected '>'")
-            return UDM.Object(emptyMap(), finalAttributes, name)
+            return UDM.Object(emptyMap(), finalAttributes, name, nsMetadata)
         }
 
         consume('>', "Expected '>'")
@@ -203,13 +206,13 @@ class XMLParser(
         return when {
             children.isEmpty() && content.isEmpty() -> {
                 // Empty element
-                UDM.Object(emptyMap(), finalAttributes, name)
+                UDM.Object(emptyMap(), finalAttributes, name, nsMetadata)
             }
             children.isEmpty() && content.isNotEmpty() -> {
                 // Leaf element with text only
                 val textValue = tryParseNumber(content) ?: UDM.Scalar.string(content)
                 // Always wrap text as object with _text property for consistent structure
-                UDM.Object(mapOf("_text" to textValue), finalAttributes, name)
+                UDM.Object(mapOf("_text" to textValue), finalAttributes, name, nsMetadata)
             }
             else -> {
                 // Element with children
@@ -235,7 +238,7 @@ class XMLParser(
                     properties["_text"] = UDM.Scalar.string(content)
                 }
 
-                UDM.Object(properties, finalAttributes, name)
+                UDM.Object(properties, finalAttributes, name, nsMetadata)
             }
         }
     }
@@ -411,6 +414,36 @@ class XMLParser(
      */
     private fun tryParseNumber(str: String): UDM.Scalar? {
         return str.toDoubleOrNull()?.let { UDM.Scalar.number(it) }
+    }
+
+    /**
+     * Build namespace context metadata from the current namespace map.
+     * Converts xmlns:prefix -> uri to a simple prefix -> uri mapping stored as metadata.
+     * Format: "prefix1=uri1|prefix2=uri2|..." (empty string "" key for default namespace)
+     */
+    private fun buildNsContextMetadata(namespaces: Map<String, String>): Map<String, String> {
+        if (namespaces.isEmpty()) return emptyMap()
+
+        val nsContext = StringBuilder()
+        var first = true
+        for ((key, uri) in namespaces) {
+            val prefix = when {
+                key == "xmlns" -> ""  // Default namespace
+                key.startsWith("xmlns:") -> key.removePrefix("xmlns:")
+                else -> continue  // Skip non-namespace entries
+            }
+            if (!first) nsContext.append("|")
+            first = false
+            // Escape | and = in URIs (rare but possible)
+            val escapedUri = uri.replace("\\", "\\\\").replace("|", "\\|").replace("=", "\\=")
+            nsContext.append("$prefix=$escapedUri")
+        }
+
+        return if (nsContext.isNotEmpty()) {
+            mapOf("__nsContext" to nsContext.toString())
+        } else {
+            emptyMap()
+        }
     }
 }
 

@@ -76,8 +76,9 @@ object QNameFunctions {
     /**
      * Get namespace URI from XML element
      * Usage: namespace-uri(element) => "http://schemas.xmlsoap.org/soap/envelope/"
-     * 
+     *
      * Returns empty string if no namespace.
+     * Supports inherited namespaces via __nsContext metadata from XMLParser.
      */
     fun namespaceUri(args: List<UDM>): UDM {
         requireArgs(args, 1, "namespace-uri")
@@ -91,7 +92,7 @@ object QNameFunctions {
                     return UDM.Scalar(nsUriProp.value?.toString() ?: "")
                 }
 
-                // Otherwise extract from element name and xmlns attributes (parser format)
+                // Extract prefix from element name
                 val nodeNameProp = element.properties["__nodeName"] as? UDM.Scalar
                 val nameStr = nodeNameProp?.value?.toString() ?: element.name ?: ""
                 val prefix = if (nameStr.contains(":")) {
@@ -100,7 +101,17 @@ object QNameFunctions {
                     "" // No prefix, check for default namespace
                 }
 
-                // Look up namespace URI from xmlns attributes
+                // Check __nsContext metadata first (includes inherited namespaces from parser)
+                val nsContext = element.metadata["__nsContext"]
+                if (nsContext != null) {
+                    val nsMap = parseNsContext(nsContext)
+                    val uri = nsMap[prefix]
+                    if (uri != null) {
+                        return UDM.Scalar(uri)
+                    }
+                }
+
+                // Fallback: Look up namespace URI from xmlns attributes (local declarations only)
                 val namespaceUri = if (prefix.isNotEmpty()) {
                     element.attributes["xmlns:$prefix"] ?: ""
                 } else {
@@ -310,6 +321,8 @@ Context provides namespace bindings.""",
     /**
      * Check if element has namespace
      * Usage: has-namespace(element) => true
+     *
+     * Supports inherited namespaces via __nsContext metadata from XMLParser.
      */
     fun hasNamespace(args: List<UDM>): UDM {
         requireArgs(args, 1, "has-namespace")
@@ -324,17 +337,33 @@ Context provides namespace bindings.""",
                     return UDM.Scalar(nsUri.isNotEmpty())
                 }
 
-                // Otherwise check element name and xmlns attributes (parser format)
+                // Extract prefix from element name
                 val nodeNameProp = element.properties["__nodeName"] as? UDM.Scalar
                 val nameStr = nodeNameProp?.value?.toString() ?: element.name ?: ""
                 val hasPrefix = nameStr.contains(":")
+                val prefix = if (hasPrefix) nameStr.substringBefore(":") else ""
 
+                // Check __nsContext metadata first (includes inherited namespaces)
+                val nsContext = element.metadata["__nsContext"]
+                if (nsContext != null) {
+                    val nsMap = parseNsContext(nsContext)
+                    if (hasPrefix) {
+                        // Has prefix, check if it's in namespace context
+                        if (nsMap.containsKey(prefix)) {
+                            return UDM.Scalar(true)
+                        }
+                    } else {
+                        // No prefix, check for default namespace
+                        if (nsMap.containsKey("")) {
+                            return UDM.Scalar(true)
+                        }
+                    }
+                }
+
+                // Fallback: check xmlns attributes (local declarations only)
                 if (!hasPrefix) {
-                    // Check for default namespace
                     UDM.Scalar(element.attributes.containsKey("xmlns"))
                 } else {
-                    // Has prefix, check if xmlns:prefix is declared
-                    val prefix = nameStr.substringBefore(":")
                     UDM.Scalar(element.attributes.containsKey("xmlns:$prefix"))
                 }
             }
@@ -455,6 +484,57 @@ Context provides namespace bindings.""",
         }
     }
     
+    /**
+     * Parse namespace context string from __nsContext metadata.
+     * Format: "prefix1=uri1|prefix2=uri2|..." (empty string "" key for default namespace)
+     * Handles escaped characters: \\ for \, \| for |, \= for =
+     */
+    private fun parseNsContext(nsContext: String): Map<String, String> {
+        if (nsContext.isEmpty()) return emptyMap()
+
+        val result = mutableMapOf<String, String>()
+        var i = 0
+        val entries = mutableListOf<String>()
+        val current = StringBuilder()
+
+        // Split by | handling escapes
+        while (i < nsContext.length) {
+            when {
+                nsContext[i] == '\\' && i + 1 < nsContext.length -> {
+                    current.append(nsContext[i + 1])
+                    i += 2
+                }
+                nsContext[i] == '|' -> {
+                    entries.add(current.toString())
+                    current.clear()
+                    i++
+                }
+                else -> {
+                    current.append(nsContext[i])
+                    i++
+                }
+            }
+        }
+        if (current.isNotEmpty()) {
+            entries.add(current.toString())
+        }
+
+        // Parse each entry as prefix=uri
+        for (entry in entries) {
+            val eqIndex = entry.indexOf('=')
+            if (eqIndex >= 0) {
+                val prefix = entry.substring(0, eqIndex)
+                val uri = entry.substring(eqIndex + 1)
+                    .replace("\\=", "=")
+                    .replace("\\|", "|")
+                    .replace("\\\\", "\\")
+                result[prefix] = uri
+            }
+        }
+
+        return result
+    }
+
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
             throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
