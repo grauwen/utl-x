@@ -89,7 +89,10 @@ object Main {
             when (result) {
                 is CommandResult.Success -> exitProcess(0)
                 is CommandResult.Failure -> {
-                    // Error message already printed by command
+                    // Print error message if provided
+                    if (result.message.isNotEmpty()) {
+                        System.err.println("Error: ${result.message}")
+                    }
                     exitProcess(result.exitCode)
                 }
             }
