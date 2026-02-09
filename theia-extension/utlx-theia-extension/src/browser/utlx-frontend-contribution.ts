@@ -14,6 +14,8 @@ import {
     StatusBar,
     StatusBarAlignment
 } from '@theia/core/lib/browser';
+import { FileDialogService, OpenFileDialogProps } from '@theia/filesystem/lib/browser';
+import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import {
     Command,
     CommandContribution,
@@ -54,6 +56,12 @@ export class UTLXFrontendContribution implements
 
     @inject(UTLX_SERVICE_SYMBOL)
     protected readonly utlxService!: UTLXService;
+
+    @inject(FileDialogService)
+    protected readonly fileDialogService!: FileDialogService;
+
+    @inject(FileService)
+    protected readonly fileService!: FileService;
 
     private utlxdStatusId = 'utlxd-status';
     private mcpStatusId = 'mcp-status';
@@ -504,6 +512,18 @@ export class UTLXFrontendContribution implements
             this.updateEditorHeaders();
         });
 
+        // Subscribe to request output schema inference (design-time mode)
+        this.eventService.onRequestOutputSchemaInference(async event => {
+            console.log('[UTLXFrontendContribution] Request output schema inference:', event);
+            await this.executeSchemaInference(event.schemaFormat);
+        });
+
+        // Subscribe to request load output schema (design-time mode)
+        this.eventService.onRequestLoadOutputSchema(async event => {
+            console.log('[UTLXFrontendContribution] Request load output schema:', event);
+            await this.loadOutputSchemaFromFile(event.schemaFormat);
+        });
+
         // Subscribe to headers parsed from editor (copy/paste sync)
         this.eventService.onHeadersParsed(event => {
             console.log('[UTLXFrontendContribution] Headers parsed from editor:', event);
@@ -937,5 +957,148 @@ export class UTLXFrontendContribution implements
         console.log('[UTLXFrontendContribution] ========================================');
         console.log('[UTLXFrontendContribution] Execute/evaluate event coordination initialized');
         console.log('[UTLXFrontendContribution] ========================================');
+    }
+
+    /**
+     * Execute schema inference (design-time mode)
+     * Gets UTLX code from editor and infers the output schema
+     */
+    private async executeSchemaInference(schemaFormat: string): Promise<void> {
+        console.log('[UTLXFrontendContribution] ========================================');
+        console.log('[UTLXFrontendContribution] SCHEMA INFERENCE REQUESTED');
+        console.log('[UTLXFrontendContribution] Schema format:', schemaFormat);
+        console.log('[UTLXFrontendContribution] ========================================');
+
+        try {
+            // 1. Get editor widget to get UTLX code
+            const editor = await this.widgetManager.getOrCreateWidget<UTLXEditorWidget>(
+                UTLXEditorWidget.ID
+            );
+            const utlxCode = editor.getContent();
+
+            if (!utlxCode || utlxCode.trim().length === 0) {
+                this.messageService.warn('No UTLX code to infer schema from. Please enter a transformation.');
+                return;
+            }
+
+            console.log('[SchemaInference] UTLX code length:', utlxCode.length);
+
+            // 2. Get output panel to display result
+            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
+                OutputPanelWidget.ID
+            );
+
+            // 3. Call service to infer schema
+            this.messageService.info('Inferring output schema...');
+            const result = await this.utlxService.inferSchema(utlxCode);
+
+            console.log('[SchemaInference] Result:', result);
+
+            // 4. Display result in output panel
+            outputPanel.displaySchemaResult(result);
+
+            if (result.success) {
+                this.messageService.info('Schema inference completed successfully');
+            } else {
+                this.messageService.warn('Schema inference completed with issues');
+            }
+
+        } catch (error) {
+            console.error('[SchemaInference] Error:', error);
+            this.messageService.error(`Schema inference failed: ${error instanceof Error ? error.message : String(error)}`);
+
+            // Display error in output panel
+            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
+                OutputPanelWidget.ID
+            );
+            outputPanel.displayError(error instanceof Error ? error.message : String(error));
+        }
+    }
+
+    /**
+     * Load output schema from file (design-time mode)
+     * Opens a file dialog to let the user select a schema file
+     */
+    private async loadOutputSchemaFromFile(schemaFormat: string): Promise<void> {
+        console.log('[UTLXFrontendContribution] ========================================');
+        console.log('[UTLXFrontendContribution] LOAD OUTPUT SCHEMA FROM FILE');
+        console.log('[UTLXFrontendContribution] Schema format:', schemaFormat);
+        console.log('[UTLXFrontendContribution] ========================================');
+
+        try {
+            // Determine file extensions based on schema format
+            const extensions = this.getSchemaFileExtensions(schemaFormat);
+            const formatLabel = schemaFormat.toUpperCase();
+
+            // Open file dialog
+            const dialogProps: OpenFileDialogProps = {
+                title: `Load ${formatLabel} Schema`,
+                canSelectFiles: true,
+                canSelectFolders: false,
+                canSelectMany: false,
+                filters: {
+                    [`${formatLabel} Schema Files`]: extensions
+                }
+            };
+
+            const selectedUri = await this.fileDialogService.showOpenDialog(dialogProps);
+
+            if (!selectedUri) {
+                console.log('[LoadSchema] User cancelled file selection');
+                return;
+            }
+
+            // Handle both single URI and array (canSelectMany: false means single)
+            const uri = Array.isArray(selectedUri) ? selectedUri[0] : selectedUri;
+            console.log('[LoadSchema] Selected file:', uri.toString());
+
+            // Read file content
+            const fileContent = await this.fileService.read(uri);
+            const content = fileContent.value;
+
+            console.log('[LoadSchema] File content length:', content.length);
+
+            // Get output panel to display the loaded schema
+            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
+                OutputPanelWidget.ID
+            );
+
+            // Display the loaded schema (cast to proper type)
+            outputPanel.displaySchemaResult({
+                success: true,
+                schema: content,
+                schemaFormat: schemaFormat as 'xsd' | 'jsch' | 'avro' | 'proto'
+            });
+
+            this.messageService.info(`Schema loaded from ${uri.path.base}`);
+
+        } catch (error) {
+            console.error('[LoadSchema] Error:', error);
+            this.messageService.error(`Failed to load schema: ${error instanceof Error ? error.message : String(error)}`);
+
+            // Display error in output panel
+            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
+                OutputPanelWidget.ID
+            );
+            outputPanel.displayError(error instanceof Error ? error.message : String(error));
+        }
+    }
+
+    /**
+     * Get file extensions for a schema format
+     */
+    private getSchemaFileExtensions(schemaFormat: string): string[] {
+        switch (schemaFormat) {
+            case 'jsch':
+                return ['json', 'jsch', 'schema.json'];
+            case 'xsd':
+                return ['xsd', 'xml'];
+            case 'avro':
+                return ['avsc', 'json'];
+            case 'proto':
+                return ['proto'];
+            default:
+                return ['*'];
+        }
     }
 }

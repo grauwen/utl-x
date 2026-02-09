@@ -168,6 +168,26 @@ export class OutputPanelWidget extends ReactWidget {
                 <div className='utlx-panel-header'>
                     <h3>Output</h3>
                     <div className='utlx-panel-actions'>
+                        {/* Infer Schema / Load button - only in design-time mode on schema tab */}
+                        {mode === UTLXMode.DESIGN_TIME && activeTab === 'schema' && !this.isSchemaTabDisabled() && instanceFormat !== 'csv' && (
+                            instanceContent ? (
+                                <button
+                                    onClick={() => this.handleInferSchema()}
+                                    title='Infer output schema from transformation'
+                                >
+                                    <span className='codicon codicon-symbol-structure' style={{fontSize: '11px'}}></span>
+                                    {' '}Infer Schema
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => this.handleLoadSchema()}
+                                    title='Load schema from file'
+                                >
+                                    <span className='codicon codicon-folder-opened' style={{fontSize: '11px'}}></span>
+                                    {' '}Load
+                                </button>
+                            )
+                        )}
                         <button
                             onClick={() => this.handleCopy()}
                             disabled={!currentContent}
@@ -554,6 +574,30 @@ export class OutputPanelWidget extends ReactWidget {
             format: 'xml',
             tab: this.state.activeTab,
             xmlEncoding: encoding
+        });
+    }
+
+    /**
+     * Handle "Infer Schema" button click
+     * Fires event for frontend-contribution to execute schema inference
+     */
+    private handleInferSchema(): void {
+        const schemaFormat = this.state.schemaFormat || this.getLinkedSchemaFormat(this.state.instanceFormat || 'json') || 'jsch';
+        console.log('[OutputPanelWidget] Infer Schema requested, format:', schemaFormat);
+        this.eventService.fireRequestOutputSchemaInference({
+            schemaFormat
+        });
+    }
+
+    /**
+     * Handle "Load" button click
+     * Fires event for frontend-contribution to open file dialog and load schema
+     */
+    private handleLoadSchema(): void {
+        const schemaFormat = this.state.schemaFormat || this.getLinkedSchemaFormat(this.state.instanceFormat || 'json') || 'jsch';
+        console.log('[OutputPanelWidget] Load Schema requested, format:', schemaFormat);
+        this.eventService.fireRequestLoadOutputSchema({
+            schemaFormat
         });
     }
 

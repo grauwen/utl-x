@@ -138,6 +138,20 @@ export interface OutputSchemaContentChangedEvent {
 }
 
 /**
+ * Event fired when user requests output schema inference (design-time mode)
+ */
+export interface RequestOutputSchemaInferenceEvent {
+    schemaFormat: string;  // 'jsch' | 'xsd'
+}
+
+/**
+ * Event fired when user requests to load output schema from file (design-time mode)
+ */
+export interface RequestLoadOutputSchemaEvent {
+    schemaFormat: string;  // 'jsch' | 'xsd'
+}
+
+/**
  * Event fired when editor content changes
  */
 export interface ContentChangedEvent {
@@ -419,6 +433,34 @@ export class UTLXEventService {
         this.onOutputSchemaContentChangedEmitter.fire(event);
     }
 
+    private readonly onRequestOutputSchemaInferenceEmitter = new Emitter<RequestOutputSchemaInferenceEvent>();
+    /**
+     * Event fired when user requests output schema inference
+     */
+    readonly onRequestOutputSchemaInference: Event<RequestOutputSchemaInferenceEvent> = this.onRequestOutputSchemaInferenceEmitter.event;
+
+    /**
+     * Fire a request output schema inference event
+     */
+    fireRequestOutputSchemaInference(event: RequestOutputSchemaInferenceEvent): void {
+        console.log('[UTLXEventService] Request output schema inference:', event.schemaFormat);
+        this.onRequestOutputSchemaInferenceEmitter.fire(event);
+    }
+
+    private readonly onRequestLoadOutputSchemaEmitter = new Emitter<RequestLoadOutputSchemaEvent>();
+    /**
+     * Event fired when user requests to load output schema from file
+     */
+    readonly onRequestLoadOutputSchema: Event<RequestLoadOutputSchemaEvent> = this.onRequestLoadOutputSchemaEmitter.event;
+
+    /**
+     * Fire a request load output schema event
+     */
+    fireRequestLoadOutputSchema(event: RequestLoadOutputSchemaEvent): void {
+        console.log('[UTLXEventService] Request load output schema:', event.schemaFormat);
+        this.onRequestLoadOutputSchemaEmitter.fire(event);
+    }
+
     // ===== Content Change Events =====
 
     private readonly onContentChangedEmitter = new Emitter<ContentChangedEvent>();
@@ -506,6 +548,8 @@ export class UTLXEventService {
         this.onOutputPresetOffEmitter.dispose();
         this.onOutputSchemaFormatChangedEmitter.dispose();
         this.onOutputSchemaContentChangedEmitter.dispose();
+        this.onRequestOutputSchemaInferenceEmitter.dispose();
+        this.onRequestLoadOutputSchemaEmitter.dispose();
         this.onContentChangedEmitter.dispose();
         this.onHeadersParsedEmitter.dispose();
         this.onUTLXGeneratedEmitter.dispose();
