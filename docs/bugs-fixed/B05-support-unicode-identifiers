@@ -1,0 +1,17 @@
+should the utlx parser support unicode identifiers? Is it a bug? 
+
+⏺ Yes, this is likely a bug/limitation that should be fixed. Here's the reasoning:
+
+  JSON Standard (RFC 8259): JSON explicitly supports Unicode strings as object keys. Properties like "år", "løn", "satıcı" are valid JSON.
+
+  Industry Practice: Most transformation and query languages support Unicode identifiers:
+  - JavaScript/ECMAScript: Full Unicode identifier support
+  - Python: Unicode identifiers (PEP 3131)
+  - XPath/XSLT: Unicode in names
+  - JSONPath: Operates on valid JSON, so should handle Unicode keys
+  - jq: Supports Unicode property names
+
+  UTL-X's Purpose: As a transformation language designed to work with JSON and XML from international sources (Swedish bank statements, Danish contracts, Turkish invoices), it should be able to access all valid JSON properties.
+
+  The Fix: The lexer likely only recognizes ASCII [a-zA-Z_][a-zA-Z0-9_]* as valid identifiers. It should follow Unicode Standard Annex #31 (Unicode Identifier and Pattern Syntax) or at minimum allow Unicode letters in identifiers.
+
