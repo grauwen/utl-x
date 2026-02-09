@@ -332,6 +332,7 @@ object StandardLibrary {
         register("substringBeforeLast", ExtendedStringFunctions::substringBeforeLast)
         register("substringAfterLast", ExtendedStringFunctions::substringAfterLast)
         register("pad", ExtendedStringFunctions::pad)
+        registerAlias("padLeft", "pad", "Explicit left padding - pad() defaults to left")
         register("padRight", ExtendedStringFunctions::padRight)
         register("normalizeSpace", ExtendedStringFunctions::normalizeSpace)
         register("repeat", ExtendedStringFunctions::repeat)
