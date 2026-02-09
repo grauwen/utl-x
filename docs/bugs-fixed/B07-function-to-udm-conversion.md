@@ -1,152 +1,90 @@
 # B07: Cannot Convert Function to UDM
 
-**Status: OPEN - Complex Issue**
+**Status: FIXED**
 
 ## Summary
 
-When user-defined functions with internal `let ... in` expressions are called with computed arguments inside `map` lambdas, the interpreter returns a function object instead of the function's return value, causing the UDM serializer to fail.
+When using the pipe operator `|>` with a lambda expression as the target (e.g., `value |> (x => {...})`), the interpreter returned the lambda itself as a FunctionValue instead of evaluating it with the piped value. This caused the UDM serializer to fail when trying to convert the result to output format.
 
 ## Error Message
 ```
 Cannot convert function to UDM
 ```
 
+## Root Cause
+
+In `interpreter.kt`, the pipe operator (`Expression.Pipe`) had handling for `FunctionCall` targets but not for `Lambda` targets. When a lambda was used directly after the pipe, the code fell through to the `else` branch which just evaluated the lambda expression, returning a `FunctionValue` instead of calling it.
+
+**Before fix (lines 399-418):**
+```kotlin
+is Expression.Pipe -> {
+    val sourceValue = evaluate(expr.source, env)
+    val pipeEnv = env.createChild()
+    pipeEnv.define("$", sourceValue)
+
+    when (expr.target) {
+        is Expression.FunctionCall -> {
+            // Handled correctly
+        }
+        else -> evaluate(expr.target, pipeEnv)  // Lambda returned as FunctionValue!
+    }
+}
+```
+
+## Fix
+
+Added explicit handling for `Expression.Lambda` targets that binds the piped value to the lambda's parameter and evaluates the body:
+
+```kotlin
+is Expression.Lambda -> {
+    val lambda = expr.target
+    if (lambda.parameters.isEmpty()) {
+        // No parameters - just evaluate the body with $ available
+        evaluate(lambda.body, pipeEnv)
+    } else {
+        // Bind the piped value to the first parameter
+        val lambdaEnv = env.createChild()
+        lambdaEnv.define(lambda.parameters[0].name, sourceValue)
+        evaluate(lambda.body, lambdaEnv)
+    }
+}
+```
+
 ## Affected Transformations
 - `29-tr-fatura-to-shipping-manifest.utlx`
+- Any transformation using the pattern `expr |> (x => {...})`
 
-## Complexity Assessment
-
-This bug is **complex** due to the interaction of multiple language features:
-
-1. **User-defined functions** - stored as closures with captured environments
-2. **`let ... in` desugaring** - converted to immediately-invoked lambda expressions
-3. **Nested lambda contexts** - `map` creates a lambda, function body is another lambda
-4. **Environment/scope chaining** - multiple nested scopes must resolve correctly
-
-The bug likely involves subtle issues in how closures capture and resolve variables across multiple nested evaluation contexts.
-
-## Reproduction
+## Reproduction (Before Fix)
 
 ```utlx
-function PackageType(weight, count) {
-  let total = weight * count in        // Desugared to: ((total) => ...)(weight * count)
-  if (total > 500) "PALLET"
-  else if (total > 50) "CRATE"
-  else "BOX"
-}
-
 {
-  items: $input.items |> map(item => {   // Lambda context 1
-    let estimatedWeight = item.weight / 10;
+  Rate: first($input.items) |> (item => {
     {
-      packageType: PackageType(estimatedWeight, 1)  // Fails here
+      Name: item.name
     }
   })
 }
 ```
 
-## The Desugaring Chain
+This returned a FunctionValue instead of the object `{ Name: "..." }`.
 
-When `let x = value in body` is parsed, it becomes:
-```
-FunctionCall(
-  Lambda([x], body),   // Inner lambda
-  [value]              // Arguments
-)
-```
-
-So a function like:
-```utlx
-function Foo(a) {
-  let b = a * 2 in
-  b + 1
-}
-```
-
-Becomes (conceptually):
-```utlx
-function Foo(a) {
-  ((b) => b + 1)(a * 2)   // Immediately-invoked lambda
-}
-```
-
-When `Foo` is called inside a `map` lambda:
-```
-map lambda → Foo call → desugared let (another lambda call)
-```
-
-This creates **three nested evaluation contexts**. Somewhere the innermost lambda is being returned instead of evaluated.
-
-## Conditions That Trigger the Bug
-
-| Condition | Required? |
-|-----------|-----------|
-| User-defined function | Yes |
-| Function uses `let ... in` internally | Yes |
-| Called with computed arguments | Yes |
-| Called inside `map` lambda | Yes |
-| Result assigned to object property | Yes |
-
-## Working Patterns (No Bug)
-
-```utlx
-// Direct call with literals - works
-PackageType(100, 2)
-
-// Call outside map - works
-let result = PackageType(someValue, 1)
-
-// Function WITHOUT let...in - works
-function Simple(x) { x * 2 }
-map(items, i => { value: Simple(i.x) })
-
-// Inline let...in (not in function) - works
-map(items, i => {
-  let total = i.weight * 2 in
-  { value: total }
-})
-```
-
-## Investigation Areas
-
-### 1. UDM Conversion
-Find where "Cannot convert function to UDM" is thrown - this happens when `RuntimeValue.FunctionValue` reaches the serializer.
-
-### 2. Function Call Evaluation
-In `interpreter.kt`, check `evaluateFunctionCall()`:
-- When `function.body` is itself a `FunctionCall` (from `let...in`), is it fully evaluated?
-
-### 3. Closure Capture
-When a lambda is created, it captures the current environment. Check if the closure has the right scope when deeply nested.
-
-### 4. Possible Root Causes
-
-1. **Incomplete evaluation**: Desugared `let...in` lambda returned instead of invoked
-2. **Environment mismatch**: Inner lambda's closure missing function parameters
-3. **Evaluation short-circuit**: Early return with lambda instead of result
-4. **Type confusion**: Evaluator returns `FunctionValue` instead of evaluating
-
-## Key Files
-
+## Files Modified
 - `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt`
-- `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt` (let...in desugaring)
+- `modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt` (CLI bug fix: error messages weren't displayed)
 
-## Workaround
+## Additional Fix: CLI Error Display
 
-Inline the logic instead of using `let ... in` in functions:
+During investigation, discovered that the CLI wasn't displaying error messages. Fixed `Main.kt` to print the error message from `CommandResult.Failure`:
 
-```utlx
-// Instead of function with let...in:
-{
-  items: $input.items |> map(item => {
-    let total = item.weight * item.count in
-    {
-      packageType: if (total > 500) "PALLET" else "BOX"
+```kotlin
+is CommandResult.Failure -> {
+    if (result.message.isNotEmpty()) {
+        System.err.println("Error: ${result.message}")
     }
-  })
+    exitProcess(result.exitCode)
 }
 ```
 
 ## Related
 
-- **B06 (Fixed)**: FunctionCall/LetBinding cast error - same context, parser layer
+- **B06 (Fixed)**: FunctionCall/LetBinding cast error in parser
