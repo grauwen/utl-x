@@ -1,3 +1,5 @@
+Fixed
+
 should the utlx parser support unicode identifiers? Is it a bug? 
 
 ⏺ Yes, this is likely a bug/limitation that should be fixed. Here's the reasoning:
