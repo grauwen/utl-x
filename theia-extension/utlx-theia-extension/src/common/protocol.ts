@@ -148,6 +148,7 @@ export interface SchemaInferenceResult {
     success: boolean;
     schema?: string; // JSON Schema or XSD
     schemaFormat?: SchemaFormat;
+    error?: string;  // Error message when success=false
     typeErrors?: Diagnostic[];
     warnings?: Diagnostic[];
 }

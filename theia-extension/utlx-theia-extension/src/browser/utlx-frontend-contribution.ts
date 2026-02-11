@@ -823,7 +823,58 @@ export class UTLXFrontendContribution implements
                 console.log('[Execute] Sending UTLX code (' + utlxCode.length + ' characters):');
                 console.log(utlxCode);
 
-                // 3. Collect input documents
+                // 2a. Handle EVALUATE mode (Design-Time) - infer output schema
+                if (event.mode === 'evaluate') {
+                    console.log('[Evaluate] Design-Time mode - inferring output schema');
+
+                    // Get input schema if available (optional for inference)
+                    const inputSchema = inputPanel.getSchemaDocument();
+                    console.log('[Evaluate] Input schema:', inputSchema ? `${inputSchema.format} (${inputSchema.content.length} chars)` : 'none');
+
+                    // Call inferSchema service
+                    this.messageService.info('🔍 Evaluating transformation...');
+                    const startTime = Date.now();
+
+                    try {
+                        const result = await this.utlxService.inferSchema(utlxCode, inputSchema || undefined);
+                        const executionTime = Date.now() - startTime;
+
+                        console.log('[Evaluate] Schema inference result:', {
+                            success: result.success,
+                            schemaLength: result.schema?.length,
+                            schemaFormat: result.schemaFormat,
+                            error: result.error
+                        });
+
+                        // Display result in output panel schema tab
+                        if (result.success && result.schema) {
+                            outputPanel.displaySchemaResult({
+                                success: true,
+                                schema: result.schema,
+                                schemaFormat: result.schemaFormat || 'jsch'
+                            });
+                            this.messageService.info(`✓ Output schema inferred successfully (${executionTime}ms)`);
+                        } else {
+                            outputPanel.displaySchemaResult({
+                                success: false,
+                                error: result.error || 'Failed to infer schema',
+                                typeErrors: result.typeErrors
+                            });
+                            this.messageService.error(`✗ Schema inference failed: ${result.error || 'Unknown error'}`);
+                        }
+                    } catch (error) {
+                        console.error('[Evaluate] Schema inference threw exception:', error);
+                        outputPanel.displaySchemaResult({
+                            success: false,
+                            error: error instanceof Error ? error.message : String(error)
+                        });
+                        this.messageService.error(`✗ Evaluation failed: ${error instanceof Error ? error.message : String(error)}`);
+                    }
+
+                    return; // Exit early - don't continue to execute path
+                }
+
+                // 3. Collect input documents (for EXECUTE mode only)
                 const inputs = inputPanel.getInputDocuments();
                 console.log('[Execute] Sending ' + inputs.length + ' input(s):');
                 inputs.forEach(input => {

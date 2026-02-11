@@ -797,6 +797,7 @@ export class OutputPanelWidget extends ReactWidget {
     displaySchemaResult(result: SchemaInferenceResult): void {
         if (result.success && result.schema) {
             this.setState({
+                activeTab: 'schema',  // Switch to schema tab to show result
                 schemaContent: result.schema,
                 schemaFormat: result.schemaFormat,
                 schemaError: undefined,
@@ -804,8 +805,9 @@ export class OutputPanelWidget extends ReactWidget {
             });
         } else {
             this.setState({
+                activeTab: 'schema',  // Switch to schema tab to show error
                 schemaContent: '',
-                schemaError: 'Failed to infer schema',
+                schemaError: result.error || 'Failed to infer schema',
                 schemaDiagnostics: result.typeErrors
             });
         }
