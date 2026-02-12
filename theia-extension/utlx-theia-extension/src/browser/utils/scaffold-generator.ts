@@ -4,6 +4,9 @@
  * Generates UTLX code scaffolds from output schema/instance structure.
  * Produces code with `???` placeholders that users fill in manually.
  *
+ * UTLX uses the same JSON-like object notation for both JSON and XML output.
+ * For XML: property keys become element names, @-prefixed keys become attributes.
+ *
  * Supports JSON and XML formats only (CSV excluded - flat structure trivial to type).
  */
 
@@ -22,6 +25,9 @@ export interface ScaffoldResult {
  * Generate UTLX code scaffold from output structure.
  * Uses `???` as placeholder for values that user fills in.
  *
+ * UTLX body syntax is the same for both JSON and XML output —
+ * a JSON-like object notation where keys map to elements/fields.
+ *
  * @param fields - Field tree from schema or instance parsing
  * @param format - Output format ('json' or 'xml')
  * @returns Generated UTLX code scaffold
@@ -38,14 +44,8 @@ export function generateScaffoldFromStructure(
     }
 
     try {
-        let code: string;
-
-        if (format === 'xml') {
-            code = generateXmlScaffold(fields, 0);
-        } else {
-            // Default to JSON-like syntax
-            code = generateJsonScaffold(fields, 0);
-        }
+        // UTLX uses the same object notation for both JSON and XML output
+        const code = generateScaffold(fields, 0);
 
         return {
             success: true,
@@ -59,14 +59,10 @@ export function generateScaffoldFromStructure(
     }
 }
 
-// ============================================================================
-// JSON Scaffold Generation
-// ============================================================================
-
 /**
- * Generate JSON-style UTLX scaffold
+ * Generate UTLX scaffold from field tree
  */
-function generateJsonScaffold(fields: SchemaFieldInfo[], indent: number): string {
+function generateScaffold(fields: SchemaFieldInfo[], indent: number): string {
     const pad = '  '.repeat(indent);
     const innerPad = '  '.repeat(indent + 1);
 
@@ -75,7 +71,7 @@ function generateJsonScaffold(fields: SchemaFieldInfo[], indent: number): string
         const arrayField = fields[0];
         if (arrayField.fields && arrayField.fields.length > 0) {
             // Array of objects
-            const objectContent = generateJsonObject(arrayField.fields as SchemaFieldInfo[], indent + 1);
+            const objectContent = generateObject(arrayField.fields as SchemaFieldInfo[], indent + 1);
             return `[\n${innerPad}${objectContent}\n${pad}]`;
         } else {
             // Array of primitives
@@ -84,13 +80,13 @@ function generateJsonScaffold(fields: SchemaFieldInfo[], indent: number): string
     }
 
     // Regular object
-    return generateJsonObject(fields, indent);
+    return generateObject(fields, indent);
 }
 
 /**
- * Generate a JSON object structure
+ * Generate a UTLX object structure
  */
-function generateJsonObject(fields: SchemaFieldInfo[], indent: number): string {
+function generateObject(fields: SchemaFieldInfo[], indent: number): string {
     const pad = '  '.repeat(indent);
     const innerPad = '  '.repeat(indent + 1);
     const lines: string[] = ['{'];
@@ -98,7 +94,7 @@ function generateJsonObject(fields: SchemaFieldInfo[], indent: number): string {
     for (let i = 0; i < fields.length; i++) {
         const field = fields[i];
         const isLast = i === fields.length - 1;
-        const value = generateJsonFieldValue(field, indent + 1);
+        const value = generateFieldValue(field, indent + 1);
         const comma = isLast ? '' : ',';
 
         // Add comment with type info if available
@@ -114,19 +110,19 @@ function generateJsonObject(fields: SchemaFieldInfo[], indent: number): string {
 }
 
 /**
- * Generate value for a single JSON field
+ * Generate value for a single field
  */
-function generateJsonFieldValue(field: SchemaFieldInfo, indent: number): string {
+function generateFieldValue(field: SchemaFieldInfo, indent: number): string {
     // Nested object
     if (field.type === 'object' && field.fields && field.fields.length > 0) {
-        return generateJsonObject(field.fields as SchemaFieldInfo[], indent);
+        return generateObject(field.fields as SchemaFieldInfo[], indent);
     }
 
     // Array
     if (field.type === 'array') {
         if (field.fields && field.fields.length > 0) {
             // Array of objects - show single object template
-            const objectContent = generateJsonObject(field.fields as SchemaFieldInfo[], indent + 1);
+            const objectContent = generateObject(field.fields as SchemaFieldInfo[], indent + 1);
             const innerPad = '  '.repeat(indent + 1);
             const pad = '  '.repeat(indent);
             return `[\n${innerPad}${objectContent}\n${pad}]`;
@@ -138,65 +134,6 @@ function generateJsonFieldValue(field: SchemaFieldInfo, indent: number): string 
 
     // Simple field - use placeholder
     return '???';
-}
-
-// ============================================================================
-// XML Scaffold Generation
-// ============================================================================
-
-/**
- * Generate XML-style UTLX scaffold
- */
-function generateXmlScaffold(fields: SchemaFieldInfo[], indent: number): string {
-    const lines: string[] = [];
-
-    for (const field of fields) {
-        lines.push(generateXmlElement(field, indent));
-    }
-
-    return lines.join('\n');
-}
-
-/**
- * Generate a single XML element
- */
-function generateXmlElement(field: SchemaFieldInfo, indent: number): string {
-    const pad = '  '.repeat(indent);
-    const name = field.name;
-
-    // Handle attributes (fields starting with @)
-    if (name.startsWith('@')) {
-        // Attributes are handled within their parent element
-        return '';
-    }
-
-    // Collect attributes from child fields
-    const attributes = (field.fields || [])
-        .filter(f => f.name.startsWith('@'))
-        .map(f => `${f.name.substring(1)}="???"`)
-        .join(' ');
-
-    const attrStr = attributes ? ` ${attributes}` : '';
-
-    // Check for nested elements
-    const childElements = (field.fields || []).filter(f => !f.name.startsWith('@'));
-
-    if (childElements.length > 0) {
-        // Element with children
-        const children = childElements
-            .map(child => generateXmlElement(child as SchemaFieldInfo, indent + 1))
-            .filter(s => s.length > 0)
-            .join('\n');
-
-        return `${pad}<${name}${attrStr}>\n${children}\n${pad}</${name}>`;
-    } else if (field.type === 'array') {
-        // Array element - show template for iteration
-        const itemName = name.endsWith('s') ? name.slice(0, -1) : 'item';
-        return `${pad}<${name}${attrStr}>\n${pad}  <${itemName}>???</${itemName}>\n${pad}</${name}>`;
-    } else {
-        // Simple element with placeholder value
-        return `${pad}<${name}${attrStr}>???</${name}>`;
-    }
 }
 
 // ============================================================================
