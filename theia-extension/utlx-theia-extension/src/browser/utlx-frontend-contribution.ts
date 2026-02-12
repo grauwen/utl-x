@@ -221,18 +221,60 @@ export class UTLXFrontendContribution implements
             await this.shell.leftPanelHandler.expand();
             await this.shell.rightPanelHandler.expand();
 
-            // Monitor when active widget changes - restore Input Panel when Explorer closes
+            // Hide the right panel's sidebar strip (tab bar + menus) so the Output Panel
+            // extends fully to the right edge. Also close the Outline view which is not
+            // useful for the custom UTL-X editor.
+            const cleanupRightPanel = () => {
+                try {
+                    // Close the Outline widget if present
+                    const outlineWidget = this.shell.getWidgets('right')
+                        .find(w => w.id === 'outline-view');
+                    if (outlineWidget) {
+                        outlineWidget.close();
+                    }
+
+                    // Hide the right sidebar container (tab bar strip) so Output Panel
+                    // fills to the window edge. The container is the first child of the
+                    // rightPanelHandler's container BoxLayout.
+                    const handler = this.shell.rightPanelHandler as any;
+                    if (handler && handler.container) {
+                        const layout = handler.container.layout;
+                        if (layout && layout.widgets) {
+                            for (let i = 0; i < layout.widgets.length; i++) {
+                                const w = layout.widgets[i];
+                                if (w.node && w.node.classList.contains('theia-app-sidebar-container')) {
+                                    w.hide();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    this.shell.activateWidget(outputPanel.id);
+                } catch (e) {
+                    console.error('[UTLXFrontendContribution] cleanupRightPanel error:', e);
+                }
+            };
+            // Run deferred — OutlineViewContribution.initializeLayout() runs after onStart()
+            setTimeout(cleanupRightPanel, 500);
+            setTimeout(cleanupRightPanel, 1500);
+            setTimeout(cleanupRightPanel, 3000);
+
+            // Monitor when active widget changes - restore Input/Output panels
             this.shell.onDidChangeActiveWidget((widget) => {
-                // Only activate Input Panel if it's not visible AND the new active widget is NOT in the left area
-                // This means Explorer was closed and we should show Input Panel
                 setTimeout(() => {
                     const currentActiveWidget = this.shell.activeWidget;
-                    const isLeftAreaWidget = currentActiveWidget &&
-                        this.shell.getAreaFor(currentActiveWidget) === 'left';
+                    const activeArea = currentActiveWidget &&
+                        this.shell.getAreaFor(currentActiveWidget);
 
                     // If Input Panel is hidden and no other left area widget is active, restore it
-                    if (inputPanel.isAttached && !inputPanel.isVisible && !isLeftAreaWidget) {
+                    if (inputPanel.isAttached && !inputPanel.isVisible && activeArea !== 'left') {
                         this.shell.activateWidget(inputPanel.id);
+                    }
+
+                    // If Output Panel is hidden (e.g. Outline took over), restore it
+                    if (outputPanel.isAttached && !outputPanel.isVisible && activeArea !== 'right') {
+                        this.shell.activateWidget(outputPanel.id);
                     }
                 }, 100);
             });
