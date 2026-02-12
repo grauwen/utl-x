@@ -76,6 +76,9 @@ export class UTLXEditorWidget extends ReactWidget {
     protected functionBuilderOperators: OperatorInfo[] = [];
     protected functionBuilderDirectives: DirectiveRegistry | null = null;
 
+    // Scaffold Output state - tracks if output structure is available for scaffolding
+    protected hasOutputStructure: boolean = false;
+
     constructor() {
         super();
         this.id = UTLX_EDITOR_WIDGET_ID;
@@ -221,6 +224,13 @@ export class UTLXEditorWidget extends ReactWidget {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Output schema content changed:', {
                 contentLength: event.content.length
             });
+            // Update scaffold button state when output schema changes
+            this.updateScaffoldButtonState();
+        });
+
+        // Update scaffold state when output format changes (may affect availability)
+        this.eventService.onOutputFormatChanged(() => {
+            this.updateScaffoldButtonState();
         });
 
         // ===== AI Generation Events =====
@@ -1375,6 +1385,29 @@ output json
     }
 
     /**
+     * Update the scaffold button state by firing an event to check output panel
+     * This is called when output schema/instance changes
+     */
+    protected updateScaffoldButtonState(): void {
+        // Fire scaffold output event to trigger state check
+        // The frontend contribution will coordinate with output panel
+        // For now, we track this locally based on output format
+        const supportedFormats = ['json', 'xml', 'jsch', 'xsd'];
+        const formatLower = this.outputFormat.toLowerCase();
+        this.hasOutputStructure = supportedFormats.includes(formatLower);
+        this.update();
+    }
+
+    /**
+     * Handle Scaffold Output button click
+     * Fires event for frontend contribution to coordinate scaffold generation
+     */
+    protected handleScaffoldOutput(): void {
+        console.log('[UTLXEditor] 🏗️ Scaffold Output button clicked');
+        this.eventService.fireScaffoldOutput({});
+    }
+
+    /**
      * Open the Function Builder dialog
      */
     protected async openFunctionBuilder(): Promise<void> {
@@ -1653,6 +1686,16 @@ output json
                                 ✓ UDSL
                             </span>
                         )}
+                        <button
+                            title={this.hasOutputStructure
+                                ? 'Generate UTLX structure from output schema/instance'
+                                : 'No output schema or instance available (JSON/XML only)'}
+                            onClick={() => this.handleScaffoldOutput()}
+                            disabled={!this.hasOutputStructure}
+                        >
+                            <span className='codicon codicon-layout' style={{fontSize: '11px'}}></span>
+                            {' '}Scaffold Output
+                        </button>
                         <button
                             title='Function Builder - Browse and insert stdlib functions'
                             onClick={() => this.openFunctionBuilder()}

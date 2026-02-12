@@ -22,6 +22,8 @@ import {
     OUTPUT_PANEL_ID
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
+import { SchemaFieldInfo, parseJsonSchemaToFieldTree, parseXsdToFieldTree } from '../utils/schema-field-tree-parser';
+import { isScaffoldSupportedFormat } from '../utils/scaffold-generator';
 
 export interface OutputPanelState {
     mode: UTLXMode;
@@ -906,5 +908,245 @@ export class OutputPanelWidget extends ReactWidget {
         });
 
         console.log('[OutputPanelWidget] Synced to format:', parsedOutput.format);
+    }
+
+    /**
+     * Check if output structure is available for scaffolding.
+     * Scaffolding is available when:
+     * - Output schema exists (JSON Schema or XSD), OR
+     * - Output instance exists (JSON or XML)
+     * CSV is not supported for scaffolding.
+     *
+     * PUBLIC: Called by toolbar to determine button state
+     */
+    public hasOutputStructure(): boolean {
+        // Check schema first (preferred source)
+        if (this.state.schemaContent && this.state.schemaFormat) {
+            const format = this.state.schemaFormat.toLowerCase();
+            if (format === 'jsch' || format === 'xsd') {
+                return true;
+            }
+        }
+
+        // Check instance content (fallback)
+        if (this.state.instanceContent && this.state.instanceFormat) {
+            return isScaffoldSupportedFormat(this.state.instanceFormat);
+        }
+
+        return false;
+    }
+
+    /**
+     * Get output structure for scaffold generation.
+     * Priority: Schema > Instance
+     *
+     * Returns null if no valid structure is available.
+     * PUBLIC: Called by frontend contribution for scaffold generation
+     */
+    public getStructureForScaffold(): { fields: SchemaFieldInfo[]; format: 'json' | 'xml' } | null {
+        console.log('[OutputPanelWidget] getStructureForScaffold called');
+        console.log('[OutputPanelWidget] Schema content length:', this.state.schemaContent?.length || 0);
+        console.log('[OutputPanelWidget] Schema format:', this.state.schemaFormat);
+        console.log('[OutputPanelWidget] Instance content length:', this.state.instanceContent?.length || 0);
+        console.log('[OutputPanelWidget] Instance format:', this.state.instanceFormat);
+
+        // Priority 1: Use schema if available
+        if (this.state.schemaContent && this.state.schemaFormat) {
+            const schemaFormat = this.state.schemaFormat.toLowerCase();
+
+            if (schemaFormat === 'jsch') {
+                const fields = parseJsonSchemaToFieldTree(this.state.schemaContent);
+                if (fields.length > 0) {
+                    console.log('[OutputPanelWidget] Using JSON Schema, fields:', fields.length);
+                    return { fields, format: 'json' };
+                }
+            } else if (schemaFormat === 'xsd') {
+                const fields = parseXsdToFieldTree(this.state.schemaContent);
+                if (fields.length > 0) {
+                    console.log('[OutputPanelWidget] Using XSD, fields:', fields.length);
+                    return { fields, format: 'xml' };
+                }
+            }
+        }
+
+        // Priority 2: Parse instance content to infer structure
+        if (this.state.instanceContent && this.state.instanceFormat) {
+            const instanceFormat = this.state.instanceFormat.toLowerCase();
+
+            if (instanceFormat === 'json') {
+                const fields = this.parseJsonInstanceToFields(this.state.instanceContent);
+                if (fields && fields.length > 0) {
+                    console.log('[OutputPanelWidget] Using JSON instance, fields:', fields.length);
+                    return { fields, format: 'json' };
+                }
+            } else if (instanceFormat === 'xml') {
+                const fields = this.parseXmlInstanceToFields(this.state.instanceContent);
+                if (fields && fields.length > 0) {
+                    console.log('[OutputPanelWidget] Using XML instance, fields:', fields.length);
+                    return { fields, format: 'xml' };
+                }
+            }
+        }
+
+        console.log('[OutputPanelWidget] No valid structure available for scaffolding');
+        return null;
+    }
+
+    /**
+     * Parse JSON instance to field tree (for scaffolding when no schema available)
+     */
+    private parseJsonInstanceToFields(content: string): SchemaFieldInfo[] | null {
+        try {
+            const data = JSON.parse(content);
+            return this.objectToFields(data);
+        } catch (error) {
+            console.error('[OutputPanelWidget] Failed to parse JSON instance:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Convert a JS object to field tree
+     */
+    private objectToFields(obj: any, isArrayItem: boolean = false): SchemaFieldInfo[] {
+        if (obj === null || obj === undefined) {
+            return [];
+        }
+
+        if (Array.isArray(obj)) {
+            // Array - analyze first element to infer item structure
+            if (obj.length > 0 && typeof obj[0] === 'object' && obj[0] !== null) {
+                return [{
+                    name: '[]',
+                    type: 'array',
+                    fields: this.objectToFields(obj[0], true)
+                }];
+            }
+            return [{
+                name: '[]',
+                type: 'array'
+            }];
+        }
+
+        if (typeof obj === 'object') {
+            const fields: SchemaFieldInfo[] = [];
+            for (const [key, value] of Object.entries(obj)) {
+                const field: SchemaFieldInfo = {
+                    name: key,
+                    type: this.inferType(value)
+                };
+
+                if (Array.isArray(value)) {
+                    field.type = 'array';
+                    if (value.length > 0 && typeof value[0] === 'object' && value[0] !== null) {
+                        field.fields = this.objectToFields(value[0], true);
+                    }
+                } else if (typeof value === 'object' && value !== null) {
+                    field.type = 'object';
+                    field.fields = this.objectToFields(value);
+                }
+
+                fields.push(field);
+            }
+            return fields;
+        }
+
+        return [];
+    }
+
+    /**
+     * Infer type from value
+     */
+    private inferType(value: any): string {
+        if (value === null) return 'null';
+        if (Array.isArray(value)) return 'array';
+        if (typeof value === 'boolean') return 'boolean';
+        if (typeof value === 'number') {
+            return Number.isInteger(value) ? 'integer' : 'number';
+        }
+        if (typeof value === 'string') return 'string';
+        if (typeof value === 'object') return 'object';
+        return 'any';
+    }
+
+    /**
+     * Parse XML instance to field tree (for scaffolding when no schema available)
+     */
+    private parseXmlInstanceToFields(content: string): SchemaFieldInfo[] | null {
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(content, 'text/xml');
+
+            // Check for parse errors
+            const parseError = doc.querySelector('parsererror');
+            if (parseError) {
+                console.error('[OutputPanelWidget] XML parse error:', parseError.textContent);
+                return null;
+            }
+
+            // Start from document element
+            const root = doc.documentElement;
+            if (!root) {
+                return null;
+            }
+
+            return [this.xmlElementToField(root)];
+        } catch (error) {
+            console.error('[OutputPanelWidget] Failed to parse XML instance:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Convert XML element to field info
+     */
+    private xmlElementToField(element: Element): SchemaFieldInfo {
+        const field: SchemaFieldInfo = {
+            name: element.tagName,
+            type: 'element'
+        };
+
+        const childFields: SchemaFieldInfo[] = [];
+
+        // Add attributes
+        for (const attr of Array.from(element.attributes)) {
+            childFields.push({
+                name: `@${attr.name}`,
+                type: 'string'
+            });
+        }
+
+        // Add child elements
+        const childElements = Array.from(element.children);
+        const elementCounts = new Map<string, number>();
+
+        // Count occurrences of each element name
+        for (const child of childElements) {
+            const count = elementCounts.get(child.tagName) || 0;
+            elementCounts.set(child.tagName, count + 1);
+        }
+
+        // Process unique child elements
+        const processedNames = new Set<string>();
+        for (const child of childElements) {
+            if (processedNames.has(child.tagName)) continue;
+            processedNames.add(child.tagName);
+
+            const childField = this.xmlElementToField(child);
+
+            // If element appears multiple times, mark as array
+            if ((elementCounts.get(child.tagName) || 0) > 1) {
+                childField.type = 'array';
+            }
+
+            childFields.push(childField);
+        }
+
+        if (childFields.length > 0) {
+            field.fields = childFields;
+            field.type = 'object';
+        }
+
+        return field;
     }
 }

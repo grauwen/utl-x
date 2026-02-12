@@ -207,6 +207,13 @@ export interface ExecuteTransformationEvent {
 }
 
 /**
+ * Event fired when Scaffold Output button is clicked
+ */
+export interface ScaffoldOutputEvent {
+    // No additional data needed - output structure comes from output panel
+}
+
+/**
  * Centralized event service for UTL-X widget communication.
  *
  * This service uses Theia's Emitter/Event pattern to provide
@@ -562,6 +569,22 @@ export class UTLXEventService {
         console.log('[UTLXEventService] Event fired to all listeners');
     }
 
+    // ===== Scaffold Output Events =====
+
+    private readonly onScaffoldOutputEmitter = new Emitter<ScaffoldOutputEvent>();
+    /**
+     * Event fired when Scaffold Output button is clicked
+     */
+    readonly onScaffoldOutput: Event<ScaffoldOutputEvent> = this.onScaffoldOutputEmitter.event;
+
+    /**
+     * Fire a scaffold output event
+     */
+    fireScaffoldOutput(event: ScaffoldOutputEvent): void {
+        console.log('[UTLXEventService] FIRING Scaffold Output Event');
+        this.onScaffoldOutputEmitter.fire(event);
+    }
+
     // ===== Lifecycle =====
 
     /**
@@ -588,5 +611,6 @@ export class UTLXEventService {
         this.onHeadersParsedEmitter.dispose();
         this.onUTLXGeneratedEmitter.dispose();
         this.onExecuteTransformationEmitter.dispose();
+        this.onScaffoldOutputEmitter.dispose();
     }
 }

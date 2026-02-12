@@ -32,6 +32,7 @@ import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { UTLXEventService } from './events/utlx-event-service';
 import { inferSchemaFromJson, inferSchemaFromXml, formatSchema } from './utils/schema-inferrer';
+import { generateScaffoldFromStructure } from './utils/scaffold-generator';
 
 @injectable()
 export class UTLXFrontendContribution implements
@@ -262,6 +263,7 @@ export class UTLXFrontendContribution implements
 
             // Monitor when active widget changes - restore Input/Output panels
             this.shell.onDidChangeActiveWidget((widget) => {
+                // Restore Input Panel and Output Panel when other views (Explorer, Outline) take over
                 setTimeout(() => {
                     const currentActiveWidget = this.shell.activeWidget;
                     const activeArea = currentActiveWidget &&
@@ -571,6 +573,12 @@ export class UTLXFrontendContribution implements
         this.eventService.onHeadersParsed(event => {
             console.log('[UTLXFrontendContribution] Headers parsed from editor:', event);
             this.updatePanelsFromParsedHeaders(event);
+        });
+
+        // Subscribe to scaffold output request
+        this.eventService.onScaffoldOutput(async () => {
+            console.log('[UTLXFrontendContribution] Scaffold Output event received');
+            await this.handleScaffoldOutput();
         });
 
         console.log('[UTLXFrontendContribution] Format change coordination initialized');
@@ -1239,6 +1247,71 @@ export class UTLXFrontendContribution implements
                 return ['proto'];
             default:
                 return ['*'];
+        }
+    }
+
+    /**
+     * Handle scaffold output request
+     * Generates UTLX code structure from output schema/instance
+     */
+    private async handleScaffoldOutput(): Promise<void> {
+        console.log('[UTLXFrontendContribution] ========================================');
+        console.log('[UTLXFrontendContribution] SCAFFOLD OUTPUT REQUESTED');
+        console.log('[UTLXFrontendContribution] ========================================');
+
+        try {
+            // 1. Get output panel to retrieve structure
+            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
+                OutputPanelWidget.ID
+            );
+
+            // 2. Get structure for scaffolding (schema preferred, instance fallback)
+            const structure = outputPanel.getStructureForScaffold();
+
+            if (!structure) {
+                this.messageService.warn('No output schema or instance data available for scaffolding (JSON/XML only)');
+                return;
+            }
+
+            console.log('[Scaffold] Structure retrieved:', {
+                fieldCount: structure.fields.length,
+                format: structure.format
+            });
+
+            // 3. Generate scaffold code
+            const result = generateScaffoldFromStructure(structure.fields, structure.format);
+
+            if (!result.success || !result.code) {
+                this.messageService.error(`Scaffold generation failed: ${result.error || 'Unknown error'}`);
+                return;
+            }
+
+            console.log('[Scaffold] Generated code:', result.code);
+
+            // 4. Get editor and insert scaffold code
+            const editor = await this.widgetManager.getOrCreateWidget<UTLXEditorWidget>(
+                UTLXEditorWidget.ID
+            );
+
+            // Get current content to preserve headers
+            const currentContent = editor.getContent();
+            const separatorIndex = currentContent.indexOf('---');
+
+            if (separatorIndex !== -1) {
+                // Has header - preserve it and replace body with scaffold
+                const header = currentContent.substring(0, separatorIndex + 3); // Include '---'
+                const newContent = header + '\n' + result.code;
+                editor.setContent(newContent);
+            } else {
+                // No header - just set the scaffold code
+                editor.setContent(result.code);
+            }
+
+            this.messageService.info(`✓ UTLX scaffold generated (${structure.fields.length} fields)`);
+
+        } catch (error) {
+            console.error('[Scaffold] Error:', error);
+            this.messageService.error(`Scaffold generation failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 }
