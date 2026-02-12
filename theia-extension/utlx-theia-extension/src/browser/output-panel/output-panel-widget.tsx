@@ -10,7 +10,7 @@ import * as React from 'react';
 import { injectable, inject, postConstruct, optional } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MessageService } from '@theia/core';
-import { FileDialogService, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
+import { FileDialogService, OpenFileDialogProps, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import { URI } from '@theia/core/lib/common/uri';
 import {
@@ -179,25 +179,15 @@ export class OutputPanelWidget extends ReactWidget {
                 <div className='utlx-panel-header'>
                     <h3>Output</h3>
                     <div className='utlx-panel-actions'>
-                        {/* Infer Schema / Load button - only in design-time mode on schema tab */}
-                        {mode === UTLXMode.DESIGN_TIME && activeTab === 'schema' && !this.isSchemaTabDisabled() && instanceFormat !== 'csv' && (
-                            instanceContent ? (
-                                <button
-                                    onClick={() => this.handleInferSchema()}
-                                    title='Infer output schema from transformation'
-                                >
-                                    <span className='codicon codicon-symbol-structure' style={{fontSize: '11px'}}></span>
-                                    {' '}Infer Schema
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => this.handleLoadSchema()}
-                                    title='Load schema from file'
-                                >
-                                    <span className='codicon codicon-folder-opened' style={{fontSize: '11px'}}></span>
-                                    {' '}Load
-                                </button>
-                            )
+                        {/* Infer Schema button - only in design-time mode on schema tab when instance exists */}
+                        {mode === UTLXMode.DESIGN_TIME && activeTab === 'schema' && !this.isSchemaTabDisabled() && instanceFormat !== 'csv' && instanceContent && (
+                            <button
+                                onClick={() => this.handleInferSchema()}
+                                title='Infer output schema from transformation'
+                            >
+                                <span className='codicon codicon-symbol-structure' style={{fontSize: '11px'}}></span>
+                                {' '}Infer Schema
+                            </button>
                         )}
                         <button
                             onClick={() => this.handleCopy()}
@@ -206,6 +196,13 @@ export class OutputPanelWidget extends ReactWidget {
                         >
                             <span className='codicon codicon-copy' style={{fontSize: '11px'}}></span>
                             {' '}Copy
+                        </button>
+                        <button
+                            onClick={() => this.handleLoad()}
+                            title={activeTab === 'schema' ? 'Load schema from file' : 'Load instance from file'}
+                        >
+                            <span className='codicon codicon-folder-opened' style={{fontSize: '11px'}}></span>
+                            {' '}Load
                         </button>
                         <button
                             onClick={() => this.handleSave()}
@@ -559,6 +556,93 @@ export class OutputPanelWidget extends ReactWidget {
         } catch (error) {
             console.error('[OutputPanel] Save error:', error);
             this.messageService.error(`Failed to save: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Handle Load button - load instance or schema from file depending on active tab
+     */
+    private async handleLoad(): Promise<void> {
+        if (this.state.activeTab === 'schema') {
+            // Delegate schema loading to frontend contribution via event
+            this.handleLoadSchema();
+            return;
+        }
+
+        // Instance tab - load instance file directly
+        try {
+            const format = this.state.instanceFormat || 'json';
+            const extensions = this.getInstanceFileExtensions(format);
+            const formatLabel = format.toUpperCase();
+
+            const dialogProps: OpenFileDialogProps = {
+                title: `Load ${formatLabel} Instance`,
+                canSelectFiles: true,
+                canSelectFolders: false,
+                canSelectMany: false,
+                filters: {
+                    [`${formatLabel} Files`]: extensions
+                }
+            };
+
+            const selectedUri = await this.fileDialogService.showOpenDialog(dialogProps);
+            if (!selectedUri) return;
+
+            const uri = Array.isArray(selectedUri) ? selectedUri[0] : selectedUri;
+            const fileContent = await this.fileService.read(uri);
+            const content = fileContent.value;
+
+            // Detect format from file extension if needed
+            const ext = uri.path.ext.toLowerCase().replace('.', '');
+            const detectedFormat = this.detectFormatFromExtension(ext) || format;
+
+            this.setState({
+                instanceContent: content,
+                instanceFormat: detectedFormat,
+                instanceError: undefined,
+                instanceDiagnostics: undefined,
+                instanceExecutionTime: undefined
+            });
+
+            // Fire format changed event so editor headers stay in sync
+            this.eventService.fireOutputFormatChanged({
+                format: detectedFormat,
+                tab: 'instance'
+            });
+
+            this.messageService.info(`Loaded ${uri.path.base}`);
+        } catch (error) {
+            console.error('[OutputPanel] Load error:', error);
+            this.messageService.error(`Failed to load: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
+     * Get file extensions for instance formats
+     */
+    private getInstanceFileExtensions(format: string): string[] {
+        switch (format) {
+            case 'json': return ['json'];
+            case 'xml': return ['xml'];
+            case 'csv': return ['csv', 'tsv'];
+            case 'yaml': return ['yaml', 'yml'];
+            default: return ['*'];
+        }
+    }
+
+    /**
+     * Detect format from file extension
+     */
+    private detectFormatFromExtension(ext: string): string | null {
+        switch (ext) {
+            case 'json': return 'json';
+            case 'xml': return 'xml';
+            case 'csv': case 'tsv': return 'csv';
+            case 'yaml': case 'yml': return 'yaml';
+            case 'xsd': return 'xsd';
+            case 'avsc': return 'avro';
+            case 'proto': return 'proto';
+            default: return null;
         }
     }
 
