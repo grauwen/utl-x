@@ -267,10 +267,11 @@ function parseXsdElement(element: Element, doc: Document): SchemaFieldInfo | nul
     const name = element.getAttribute('name');
     if (!name) return null;
 
+    const schemaType = element.getAttribute('type') || undefined;
     const field: SchemaFieldInfo = {
         name,
-        type: 'element',
-        schemaType: element.getAttribute('type') || undefined,
+        type: schemaType ? mapXsdTypeToFieldType(schemaType) : 'string',
+        schemaType,
     };
 
     // Check minOccurs/maxOccurs for required/array

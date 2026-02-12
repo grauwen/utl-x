@@ -2,7 +2,12 @@
  * Scaffold Generator
  *
  * Generates UTLX code scaffolds from output schema/instance structure.
- * Produces code with `???` placeholders that users fill in manually.
+ * Produces typed `???(type)` placeholders that the Function Builder can
+ * detect and replace with type-matched expressions.
+ *
+ * Types use the normalized type system (string, integer, number, boolean,
+ * date, time, datetime, binary) — consistent across JSON Schema and XSD sources.
+ * Original schema types (e.g. xs:string) are preserved in code comments.
  *
  * UTLX uses the same JSON-like object notation for both JSON and XML output.
  * For XML: property keys become element names, @-prefixed keys become attributes.
@@ -23,7 +28,7 @@ export interface ScaffoldResult {
 
 /**
  * Generate UTLX code scaffold from output structure.
- * Uses `???` as placeholder for values that user fills in.
+ * Uses typed `???(type)` placeholders for values that user fills in.
  *
  * UTLX body syntax is the same for both JSON and XML output —
  * a JSON-like object notation where keys map to elements/fields.
@@ -66,20 +71,26 @@ function generateScaffold(fields: SchemaFieldInfo[], indent: number): string {
     const pad = '  '.repeat(indent);
     const innerPad = '  '.repeat(indent + 1);
 
-    // Check if this is a root array (single field that is an array)
-    if (fields.length === 1 && fields[0].type === 'array') {
-        const arrayField = fields[0];
-        if (arrayField.fields && arrayField.fields.length > 0) {
-            // Array of objects
-            const objectContent = generateObject(arrayField.fields as SchemaFieldInfo[], indent + 1);
+    // Unwrap trivial single-element root wrapper (e.g. XML document element).
+    // The root element name is already declared in the UTLX output format header,
+    // so the scaffold body should contain its children directly.
+    if (fields.length === 1 && fields[0].fields && fields[0].fields.length > 0) {
+        const root = fields[0];
+        if (root.type === 'array') {
+            // Root array - show single object template
+            const objectContent = generateObject(root.fields as SchemaFieldInfo[], indent + 1);
             return `[\n${innerPad}${objectContent}\n${pad}]`;
-        } else {
-            // Array of primitives
-            return `[\n${innerPad}???\n${pad}]`;
         }
+        // Root object - unwrap and use children
+        return generateObject(root.fields as SchemaFieldInfo[], indent);
     }
 
-    // Regular object
+    // Check if this is a root array (single field that is an array, no children)
+    if (fields.length === 1 && fields[0].type === 'array') {
+        return `[\n${innerPad}${typedPlaceholder(fields[0].type)}\n${pad}]`;
+    }
+
+    // Regular object (multiple top-level fields)
     return generateObject(fields, indent);
 }
 
@@ -97,16 +108,25 @@ function generateObject(fields: SchemaFieldInfo[], indent: number): string {
         const value = generateFieldValue(field, indent + 1);
         const comma = isLast ? '' : ',';
 
-        // Add comment with type info if available
-        const typeComment = field.schemaType || field.type;
+        // Comment shows original schema type (if different from normalized type) + required marker
         const requiredMarker = field.isRequired ? ' (required)' : '';
-        const comment = typeComment ? `  // ${typeComment}${requiredMarker}` : '';
+        const schemaNote = field.schemaType && field.schemaType !== field.type ? field.schemaType : '';
+        const comment = schemaNote || requiredMarker
+            ? `  // ${schemaNote}${requiredMarker}`
+            : '';
 
         lines.push(`${innerPad}${field.name}: ${value}${comma}${comment}`);
     }
 
     lines.push(`${pad}}`);
     return lines.join('\n');
+}
+
+/**
+ * Generate typed placeholder: ???(type)
+ */
+function typedPlaceholder(type: string): string {
+    return `???(${type || 'any'})`;
 }
 
 /**
@@ -128,12 +148,12 @@ function generateFieldValue(field: SchemaFieldInfo, indent: number): string {
             return `[\n${innerPad}${objectContent}\n${pad}]`;
         } else {
             // Array of primitives
-            return '[???]';
+            return `[${typedPlaceholder(field.type)}]`;
         }
     }
 
-    // Simple field - use placeholder
-    return '???';
+    // Simple field - typed placeholder
+    return typedPlaceholder(field.type);
 }
 
 // ============================================================================

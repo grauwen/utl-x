@@ -1103,7 +1103,7 @@ export class OutputPanelWidget extends ReactWidget {
     private xmlElementToField(element: Element): SchemaFieldInfo {
         const field: SchemaFieldInfo = {
             name: element.tagName,
-            type: 'element'
+            type: 'string' // default for leaf elements
         };
 
         const childFields: SchemaFieldInfo[] = [];
@@ -1112,7 +1112,7 @@ export class OutputPanelWidget extends ReactWidget {
         for (const attr of Array.from(element.attributes)) {
             childFields.push({
                 name: `@${attr.name}`,
-                type: 'string'
+                type: this.inferTypeFromValue(attr.value)
             });
         }
 
@@ -1145,8 +1145,29 @@ export class OutputPanelWidget extends ReactWidget {
         if (childFields.length > 0) {
             field.fields = childFields;
             field.type = 'object';
+        } else {
+            // Leaf element - infer type from text content
+            const text = element.textContent || '';
+            field.type = this.inferTypeFromValue(text);
         }
 
         return field;
+    }
+
+    /**
+     * Infer normalized type from a string value.
+     * Best-effort for instance documents where no schema type is available.
+     */
+    private inferTypeFromValue(value: string): string {
+        const trimmed = value.trim();
+        if (trimmed === '') return 'string';
+        if (trimmed === 'true' || trimmed === 'false') return 'boolean';
+        if (/^-?\d+$/.test(trimmed)) return 'integer';
+        if (/^-?\d+\.\d+$/.test(trimmed)) return 'number';
+        // ISO date patterns
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(trimmed)) return 'datetime';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return 'date';
+        if (/^\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) return 'time';
+        return 'string';
     }
 }
