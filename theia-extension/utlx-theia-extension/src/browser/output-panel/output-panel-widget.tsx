@@ -1192,8 +1192,11 @@ export class OutputPanelWidget extends ReactWidget {
 
         const childFields: SchemaFieldInfo[] = [];
 
-        // Add attributes
+        // Add attributes (skip xmlns namespace declarations — not mappable in UTLX)
         for (const attr of Array.from(element.attributes)) {
+            if (attr.name === 'xmlns' || attr.name.startsWith('xmlns:') || attr.name.startsWith('xsi:')) {
+                continue;
+            }
             childFields.push({
                 name: `@${attr.name}`,
                 type: this.inferTypeFromValue(attr.value)
