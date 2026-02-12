@@ -1227,6 +1227,18 @@ export class OutputPanelWidget extends ReactWidget {
         }
 
         if (childFields.length > 0) {
+            // If element has attributes but no child elements, check for text content.
+            // This is mixed content: <Note type="X">text here</Note>
+            // Represented in UTLX as { @type: ..., _text: ... }
+            if (childElements.length === 0) {
+                const text = (element.textContent || '').trim();
+                if (text) {
+                    childFields.push({
+                        name: '_text',
+                        type: this.inferTypeFromValue(text)
+                    });
+                }
+            }
             field.fields = childFields;
             field.type = 'object';
         } else {
