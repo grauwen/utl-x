@@ -38,6 +38,7 @@ export interface FunctionBuilderDialogProps {
     outputFormat: string; // NEW: Current output format
     directiveRegistry: DirectiveRegistry | null; // NEW: USDL directives
     cursorContext: InsertionContext | null;
+    initialExpression?: string; // Pre-populate Expression Editor with value from cursor line
     // Design-Time mode support for schema-aware field browsing
     mode?: UTLXMode;
     schemaFieldTreeMap?: Map<string, SchemaFieldInfo[]>; // inputName -> schema field tree
@@ -68,6 +69,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     outputFormat,
     directiveRegistry,
     cursorContext,
+    initialExpression,
     mode = UTLXMode.RUNTIME,
     schemaFieldTreeMap,
     onInsert,
@@ -100,7 +102,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     const [savedSelection, setSavedSelection] = React.useState<monaco.Selection | null>(null);
 
     // State to track whether Expression Editor has content (for Apply button)
-    const [hasEditorContent, setHasEditorContent] = React.useState(false);
+    const [hasEditorContent, setHasEditorContent] = React.useState(!!initialExpression?.trim());
 
     // State for draggable dialog
     const [dialogPosition, setDialogPosition] = React.useState({ x: 0, y: 0 });
@@ -115,9 +117,9 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
 
         console.log('[FunctionBuilder] Creating Expression Editor (Monaco)');
 
-        // Create Monaco editor
+        // Create Monaco editor, seeded with the expression from the cursor line
         const editor = monaco.editor.create(expressionEditorContainerRef.current, {
-            value: '',
+            value: initialExpression || '',
             language: 'plaintext', // TODO: Use 'utlx' when available
             theme: 'vs-dark',
             minimap: { enabled: false },

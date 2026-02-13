@@ -79,6 +79,11 @@ export class UTLXEditorWidget extends ReactWidget {
     // Scaffold Output state - tracks if output structure is available for scaffolding
     protected hasOutputStructure: boolean = false;
 
+    // Saved cursor state for Function Builder — captured when dialog opens so that
+    // "Apply to Main Editor" inserts at the line where the cursor was positioned
+    protected savedMainEditorPosition: monaco.Position | null = null;
+    protected savedMainEditorSelection: monaco.Selection | null = null;
+
     constructor() {
         super();
         this.id = UTLX_EDITOR_WIDGET_ID;
@@ -1413,6 +1418,25 @@ output json
     protected async openFunctionBuilder(): Promise<void> {
         console.log('[UTLXEditor] Opening Function Builder');
 
+        // Capture cursor position BEFORE the dialog steals focus.
+        // If cursor is on a header line, clamp to first body line.
+        if (this.editor) {
+            const pos = this.editor.getPosition();
+            const sel = this.editor.getSelection();
+            const bodyStartLine = this.headerEndLine + 2;
+
+            if (pos && pos.lineNumber <= this.headerEndLine + 1) {
+                // Cursor is in header area — move to body start
+                this.savedMainEditorPosition = new monaco.Position(bodyStartLine, 1);
+                this.savedMainEditorSelection = null;
+                console.log('[UTLXEditor] Cursor was in header, clamped to body line:', bodyStartLine);
+            } else {
+                this.savedMainEditorPosition = pos;
+                this.savedMainEditorSelection = sel;
+                console.log('[UTLXEditor] Saved cursor position for Function Builder:', pos);
+            }
+        }
+
         try {
             // Parse headers DIRECTLY to ensure inputNamesFromHeaders is up to date
             const content = this.getContent();
@@ -1490,19 +1514,56 @@ output json
             return;
         }
 
-        const position = this.editor.getPosition();
+        // Use saved position from when the Function Builder was opened,
+        // since the main editor loses focus when the dialog is shown
+        const position = this.savedMainEditorPosition || this.editor.getPosition();
+        const selection = this.savedMainEditorSelection;
         if (!position) {
             console.error('[UTLXEditor] No cursor position available');
             return;
         }
 
-        // Insert the code at cursor position
-        const range = new monaco.Range(
-            position.lineNumber,
-            position.column,
-            position.lineNumber,
-            position.column
-        );
+        console.log('[UTLXEditor] Inserting at saved position:', position, 'selection:', selection);
+
+        const model = this.editor.getModel();
+
+        // Determine the replacement range:
+        // - If there was a selection, replace the selection
+        // - If the Expression Editor was seeded with line content, replace the full line
+        //   (preserving leading indentation)
+        // - Otherwise, insert at cursor position
+        let range: monaco.Range;
+
+        if (selection && !selection.isEmpty()) {
+            range = new monaco.Range(
+                selection.startLineNumber,
+                selection.startColumn,
+                selection.endLineNumber,
+                selection.endColumn
+            );
+        } else if (model) {
+            // Replace entire line content but preserve indentation
+            const lineContent = model.getLineContent(position.lineNumber);
+            const indentMatch = lineContent.match(/^(\s*)/);
+            const indentLength = indentMatch ? indentMatch[1].length : 0;
+            const lineLength = lineContent.length;
+
+            range = new monaco.Range(
+                position.lineNumber,
+                indentLength + 1, // start after indentation (1-indexed)
+                position.lineNumber,
+                lineLength + 1
+            );
+            // Re-indent the code to match
+            // (code from Expression Editor is already without indentation)
+        } else {
+            range = new monaco.Range(
+                position.lineNumber,
+                position.column,
+                position.lineNumber,
+                position.column
+            );
+        }
 
         this.editor.executeEdits('function-builder', [{
             range: range,
@@ -1515,9 +1576,11 @@ output json
         if (placeholderMatch) {
             const lines = code.substring(0, placeholderMatch.index).split('\n');
             const lastLine = lines[lines.length - 1];
+            const insertLine = range.startLineNumber;
+            const insertCol = range.startColumn;
             const newPosition = new monaco.Position(
-                position.lineNumber + lines.length - 1,
-                lines.length === 1 ? position.column + lastLine.length : lastLine.length + 1
+                insertLine + lines.length - 1,
+                lines.length === 1 ? insertCol + lastLine.length : lastLine.length + 1
             );
 
             this.editor.setPosition(newPosition);
@@ -1535,6 +1598,10 @@ output json
                 forceMoveMarkers: true
             }]);
         }
+
+        // Clear saved positions
+        this.savedMainEditorPosition = null;
+        this.savedMainEditorSelection = null;
 
         // Force the editor to refresh its view and layout
         this.editor.layout();
@@ -1647,17 +1714,43 @@ output json
     protected analyzeCursorContext(): InsertionContext | null {
         if (!this.editor) return null;
 
-        const position = this.editor.getPosition();
-        if (!position) return null;
-
         const model = this.editor.getModel();
         if (!model) return null;
 
-        // Get current selection (if any)
-        const selection = this.editor.getSelection();
+        // Use saved position when Function Builder is open (main editor lost focus)
+        const position = this.savedMainEditorPosition || this.editor.getPosition();
+        if (!position) return null;
+
+        const selection = this.savedMainEditorSelection || this.editor.getSelection();
 
         // Use the full context analyzer from context-analyzer.ts
         return analyzeInsertionContext(model, position, selection ?? undefined);
+    }
+
+    /**
+     * Get the full line content at the cursor position to seed the Function Builder.
+     * Returns the exact trimmed line including comma and comments (WYSIWYG).
+     * Returns undefined for empty/structural-only lines.
+     */
+    protected getExpressionAtCursor(): string | undefined {
+        if (!this.editor) return undefined;
+
+        const model = this.editor.getModel();
+        if (!model) return undefined;
+
+        const position = this.savedMainEditorPosition || this.editor.getPosition();
+        if (!position) return undefined;
+
+        const lineContent = model.getLineContent(position.lineNumber);
+        const trimmed = lineContent.trim();
+
+        // Skip empty lines, comments-only, and structural-only tokens
+        if (!trimmed || trimmed === '{' || trimmed === '}' || trimmed === '[' || trimmed === ']'
+            || trimmed.startsWith('//')) {
+            return undefined;
+        }
+
+        return trimmed;
     }
 
     /**
@@ -1753,6 +1846,7 @@ output json
                         outputFormat={this.outputFormat}
                         directiveRegistry={this.functionBuilderDirectives}
                         cursorContext={this.analyzeCursorContext()}
+                        initialExpression={this.getExpressionAtCursor()}
                         mode={this.currentMode}
                         schemaFieldTreeMap={this.schemaFieldTreeMap}
                         onInsert={(code) => this.handleInsertFromBuilder(code)}
