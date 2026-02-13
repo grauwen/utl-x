@@ -1420,9 +1420,11 @@ output json
 
         // Capture cursor position BEFORE the dialog steals focus.
         // If cursor is on a header line, clamp to first body line.
+        // Snap multiline selections to full lines for clean replacement.
         if (this.editor) {
             const pos = this.editor.getPosition();
             const sel = this.editor.getSelection();
+            const model = this.editor.getModel();
             const bodyStartLine = this.headerEndLine + 2;
 
             if (pos && pos.lineNumber <= this.headerEndLine + 1) {
@@ -1430,6 +1432,17 @@ output json
                 this.savedMainEditorPosition = new monaco.Position(bodyStartLine, 1);
                 this.savedMainEditorSelection = null;
                 console.log('[UTLXEditor] Cursor was in header, clamped to body line:', bodyStartLine);
+            } else if (sel && !sel.isEmpty() && sel.startLineNumber !== sel.endLineNumber && model) {
+                // Multiline selection — snap to full lines
+                const startLine = Math.max(sel.startLineNumber, bodyStartLine);
+                const endLine = sel.endLineNumber;
+                const endLineLength = model.getLineContent(endLine).length;
+                this.savedMainEditorPosition = pos;
+                this.savedMainEditorSelection = new monaco.Selection(
+                    startLine, 1,
+                    endLine, endLineLength + 1
+                );
+                console.log('[UTLXEditor] Snapped selection to full lines:', startLine, '-', endLine);
             } else {
                 this.savedMainEditorPosition = pos;
                 this.savedMainEditorSelection = sel;
@@ -1544,6 +1557,10 @@ output json
                 selection.endLineNumber,
                 selection.endColumn
             );
+            // Get indentation from the first selected line
+            const firstLine = model.getLineContent(selection.startLineNumber);
+            const firstIndentMatch = firstLine.match(/^(\s*)/);
+            indent = firstIndentMatch ? firstIndentMatch[1] : '';
         } else {
             // Replace entire line content but preserve indentation
             const lineContent = model.getLineContent(position.lineNumber);
@@ -1564,10 +1581,11 @@ output json
         //   bracket (} or ]) — if so, no comma; otherwise add comma.
         const codeLines = code.split('\n');
         if (codeLines.length > 1) {
-            // Determine if last line needs a comma by looking at what follows in the main editor
+            // Determine if last line needs a comma by looking at what follows after the replaced range
             const totalLines = model.getLineCount();
+            const lastReplacedLine = range.endLineNumber;
             let nextLineNeedsComma = false;
-            for (let i = position.lineNumber + 1; i <= totalLines; i++) {
+            for (let i = lastReplacedLine + 1; i <= totalLines; i++) {
                 const nextLine = model.getLineContent(i).trim();
                 if (!nextLine || nextLine.startsWith('//')) continue; // skip empty/comments
                 // If next meaningful line is a closing bracket, no comma on last line
@@ -1607,8 +1625,15 @@ output json
                 }
             }
 
-            // Join with newlines, adding indentation for subsequent lines
-            code = codeLines.map((line, i) => i === 0 ? line.trim() : indent + line.trim()).join('\n');
+            // Join with newlines, adding indentation.
+            // For full-line selection (starts at col 1), indent ALL lines.
+            // For partial replacement (starts after indent), indent only subsequent lines.
+            const indentAll = range.startColumn === 1;
+            code = codeLines.map((line, i) => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return ''; // preserve empty lines
+                return (i === 0 && !indentAll) ? trimmedLine : indent + trimmedLine;
+            }).join('\n');
         }
 
         this.editor.executeEdits('function-builder', [{
@@ -1784,6 +1809,22 @@ output json
         const model = this.editor.getModel();
         if (!model) return undefined;
 
+        const selection = this.savedMainEditorSelection;
+
+        // If there's a multiline selection, return all selected lines (trimmed individually)
+        if (selection && !selection.isEmpty()
+            && selection.startLineNumber !== selection.endLineNumber) {
+            const lines: string[] = [];
+            for (let i = selection.startLineNumber; i <= selection.endLineNumber; i++) {
+                const line = model.getLineContent(i).trim();
+                if (line) {
+                    lines.push(line);
+                }
+            }
+            return lines.length > 0 ? lines.join('\n') : undefined;
+        }
+
+        // Single line: use cursor position
         const position = this.savedMainEditorPosition || this.editor.getPosition();
         if (!position) return undefined;
 
