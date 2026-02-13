@@ -1526,13 +1526,16 @@ output json
         console.log('[UTLXEditor] Inserting at saved position:', position, 'selection:', selection);
 
         const model = this.editor.getModel();
+        if (!model) {
+            console.error('[UTLXEditor] No model available');
+            return;
+        }
 
         // Determine the replacement range:
         // - If there was a selection, replace the selection
-        // - If the Expression Editor was seeded with line content, replace the full line
-        //   (preserving leading indentation)
-        // - Otherwise, insert at cursor position
+        // - Otherwise, replace the full line content (preserving indentation)
         let range: monaco.Range;
+        let indent = '';
 
         if (selection && !selection.isEmpty()) {
             range = new monaco.Range(
@@ -1541,28 +1544,71 @@ output json
                 selection.endLineNumber,
                 selection.endColumn
             );
-        } else if (model) {
+        } else {
             // Replace entire line content but preserve indentation
             const lineContent = model.getLineContent(position.lineNumber);
             const indentMatch = lineContent.match(/^(\s*)/);
-            const indentLength = indentMatch ? indentMatch[1].length : 0;
-            const lineLength = lineContent.length;
+            indent = indentMatch ? indentMatch[1] : '';
 
             range = new monaco.Range(
                 position.lineNumber,
-                indentLength + 1, // start after indentation (1-indexed)
+                indent.length + 1, // start after indentation (1-indexed)
                 position.lineNumber,
-                lineLength + 1
+                lineContent.length + 1
             );
-            // Re-indent the code to match
-            // (code from Expression Editor is already without indentation)
-        } else {
-            range = new monaco.Range(
-                position.lineNumber,
-                position.column,
-                position.lineNumber,
-                position.column
-            );
+        }
+
+        // Process multiline code: ensure comma separators between lines.
+        // - All lines except the last get a trailing comma (if they look like key-value pairs)
+        // - The last line: check if the next non-empty line in the main editor is a closing
+        //   bracket (} or ]) — if so, no comma; otherwise add comma.
+        const codeLines = code.split('\n');
+        if (codeLines.length > 1) {
+            // Determine if last line needs a comma by looking at what follows in the main editor
+            const totalLines = model.getLineCount();
+            let nextLineNeedsComma = false;
+            for (let i = position.lineNumber + 1; i <= totalLines; i++) {
+                const nextLine = model.getLineContent(i).trim();
+                if (!nextLine || nextLine.startsWith('//')) continue; // skip empty/comments
+                // If next meaningful line is a closing bracket, no comma on last line
+                nextLineNeedsComma = nextLine !== '}' && nextLine !== ']'
+                    && !nextLine.startsWith('}') && !nextLine.startsWith(']');
+                break;
+            }
+
+            for (let i = 0; i < codeLines.length; i++) {
+                let line = codeLines[i].trim();
+                if (!line || line.startsWith('//')) continue; // don't touch empty/comment lines
+
+                const isLast = i === codeLines.length - 1;
+                const hasComma = line.endsWith(',') || /,\s*\/\//.test(line);
+
+                if (!isLast && !hasComma) {
+                    // Non-last line without comma — add one (before any inline comment)
+                    const commentMatch = line.match(/^(.+?)\s*(\/\/.*)$/);
+                    if (commentMatch) {
+                        codeLines[i] = commentMatch[1] + ',  ' + commentMatch[2];
+                    } else {
+                        codeLines[i] = line + ',';
+                    }
+                } else if (isLast) {
+                    if (nextLineNeedsComma && !hasComma) {
+                        // Last line needs comma (more fields follow)
+                        const commentMatch = line.match(/^(.+?)\s*(\/\/.*)$/);
+                        if (commentMatch) {
+                            codeLines[i] = commentMatch[1] + ',  ' + commentMatch[2];
+                        } else {
+                            codeLines[i] = line + ',';
+                        }
+                    } else if (!nextLineNeedsComma && hasComma) {
+                        // Last line has comma but shouldn't (closing bracket follows)
+                        codeLines[i] = line.replace(/,(\s*\/\/.*)$/, '$1').replace(/,$/, '');
+                    }
+                }
+            }
+
+            // Join with newlines, adding indentation for subsequent lines
+            code = codeLines.map((line, i) => i === 0 ? line.trim() : indent + line.trim()).join('\n');
         }
 
         this.editor.executeEdits('function-builder', [{
