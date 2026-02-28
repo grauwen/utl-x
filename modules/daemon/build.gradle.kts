@@ -24,6 +24,7 @@ dependencies {
     implementation(project(":formats:avro"))
     implementation(project(":formats:protobuf"))
     implementation(project(":formats:odata"))
+    implementation(project(":formats:osch"))
 
     // Schema module for DirectiveRegistry
     implementation(project(":schema"))

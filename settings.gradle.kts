@@ -47,6 +47,7 @@ include("formats:jsch")
 include("formats:avro")
 include("formats:protobuf")
 include("formats:odata")
+include("formats:osch")
 //include("formats:plugin")
 
 // Standard library

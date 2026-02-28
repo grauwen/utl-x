@@ -22,6 +22,8 @@ import org.apache.utlx.formats.jsch.JSONSchemaSerializer
 import org.apache.utlx.formats.json.JSONParser
 import org.apache.utlx.formats.json.JSONSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
+import org.apache.utlx.formats.osch.EDMXParser
+import org.apache.utlx.formats.osch.EDMXSerializer
 import org.apache.utlx.formats.odata.ODataJSONParser
 import org.apache.utlx.formats.odata.ODataJSONSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
@@ -214,6 +216,9 @@ class TransformationService {
                 "odata" -> {
                     ODataJSONParser(data, options).parse()
                 }
+                "osch" -> {
+                    EDMXParser(data, options).parse()
+                }
                 "csv" -> {
                     val delimiter = (options["delimiter"] as? String)?.firstOrNull() ?: ','
                     val headers = (options["headers"] as? Boolean) ?: true
@@ -266,6 +271,10 @@ class TransformationService {
                         formatSpec.options["wrapCollection"]?.let { put("wrapCollection", it) }
                     }
                     ODataJSONSerializer(odataOptions).serialize(udm)
+                }
+                "osch" -> {
+                    val namespace = formatSpec.options["namespace"] as? String
+                    EDMXSerializer(namespace = namespace, prettyPrint = pretty).serialize(udm)
                 }
                 "csv" -> {
                     val delimiter = (formatSpec.options["delimiter"] as? String)?.firstOrNull() ?: ','

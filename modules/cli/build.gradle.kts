@@ -22,6 +22,7 @@ dependencies {
     implementation(project(":formats:avro"))
     implementation(project(":formats:protobuf"))
     implementation(project(":formats:odata"))
+    implementation(project(":formats:osch"))
     implementation(project(":stdlib"))
     // implementation(project(":stdlib-security"))  // Temporarily disabled
     

@@ -393,8 +393,8 @@ object TransformCommand {
             |      --output name=FILE      Named output for multi-output transformations
             |  -i, --input FILE            Read input from FILE
             |      --input name=FILE       Named input for multi-input transformations
-            |  --input-format FORMAT       Force input format (xml, json, csv, yaml, odata)
-            |  --output-format FORMAT      Force output format (xml, json, csv, yaml, odata)
+            |  --input-format FORMAT       Force input format (xml, json, csv, yaml, odata, osch)
+            |  --output-format FORMAT      Force output format (xml, json, csv, yaml, odata, osch)
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing
             |  --strict-types              Enforce type checking (fail on type errors)

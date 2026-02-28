@@ -14,6 +14,8 @@ import org.apache.utlx.formats.jsch.JSONSchemaParser
 import org.apache.utlx.formats.jsch.JSONSchemaSerializer
 import org.apache.utlx.formats.json.JSONParser
 import org.apache.utlx.formats.json.JSONSerializer
+import org.apache.utlx.formats.osch.EDMXParser
+import org.apache.utlx.formats.osch.EDMXSerializer
 import org.apache.utlx.formats.odata.ODataJSONParser
 import org.apache.utlx.formats.odata.ODataJSONSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
@@ -50,7 +52,7 @@ class UDMService {
             // Tier 1
             "json", "xml", "csv", "yaml", "odata",
             // Tier 2
-            "jsch", "xsd", "avro", "proto"
+            "osch", "jsch", "xsd", "avro", "proto"
         )
     }
 
@@ -258,6 +260,10 @@ class UDMService {
                 ODataJSONParser(content, options).parse()
             }
 
+            "osch" -> {
+                EDMXParser(content, options).parse()
+            }
+
             "xml" -> {
                 val arrayHints = (options["arrayHints"] as? String)
                     ?.split(",")?.map { it.trim() }?.toSet() ?: emptySet()
@@ -314,6 +320,11 @@ class UDMService {
 
             "odata" -> {
                 ODataJSONSerializer(options).serialize(udm)
+            }
+
+            "osch" -> {
+                val namespace = options["namespace"] as? String
+                EDMXSerializer(namespace = namespace, prettyPrint = true).serialize(udm)
             }
 
             "xml" -> {
