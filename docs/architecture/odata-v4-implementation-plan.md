@@ -5,7 +5,7 @@
 OData has a dual nature: it is both a **metadata/schema description** (CSDL/EDMX — like XSD or JSON Schema) and a **data exchange format** (OData JSON — like JSON or XML). This requires two distinct integration tracks in UTLX:
 
 - **Tier 1 (Data):** OData JSON payloads as transformation input/output — the actual entity data with `@odata.*` control annotations
-- **Tier 2 (Schema):** CSDL/EDMX metadata as schema format — entity models with types, keys, navigation properties, annotations
+- **Tier 2 (Schema):** CSDL/EDMX metadata as schema format (`osch`) — entity models with types, keys, navigation properties, annotations
 
 Both tracks converge through UDM (Universal Data Model) as the internal representation, following the established UTLX pattern where all formats parse to UDM and serialize from UDM.
 
@@ -215,9 +215,16 @@ Both forms use the same underlying UDM attribute mechanism. The quoted form is n
 
 ---
 
-## Track 2: EDMX/CSDL as Schema Format (Tier 2)
+## Track 2: OData Schema Format — `osch` (Tier 2)
 
-EDMX (Entity Data Model XML) / CSDL (Common Schema Definition Language) is the schema metadata format for OData services. This is analogous to XSD for XML or JSON Schema for JSON — it describes the structure, types, keys, and relationships of entities.
+OData metadata is described using two related but distinct standards:
+
+- **CSDL** (Common Schema Definition Language) — the actual schema language that defines entity types, properties, relationships, etc. This is the *content*.
+- **EDMX** (Entity Data Model XML) — the XML envelope/wrapper that contains CSDL plus additional elements like `<edmx:Reference>` for external schema imports. This is the *container*.
+
+In OData v4.0, CSDL is only available inside an EDMX XML wrapper. In v4.01, CSDL also has a standalone JSON representation (no EDMX envelope needed). In practice, people use "EDMX" and "CSDL" interchangeably to mean "the OData metadata file."
+
+**UTLX uses a single format name `osch` (OData SCHema) for both.** Whether the underlying file is XML EDMX or JSON CSDL, the UTLX header uses `input osch` / `output osch`. This is analogous to XSD for XML or JSON Schema for JSON — it describes the structure, types, keys, and relationships of entities.
 
 ### 2.1 Backend: EDMX Parser
 
@@ -277,7 +284,7 @@ Parsing flow:
 
 **Parser dispatch in `UDMService.kt`:**
 ```kotlin
-"edmx", "csdl", "odata-schema" -> EDMXParser(content).parse()
+"osch" -> EDMXParser(content).parse()
 ```
 
 ### 2.2 Backend: EDMX Serializer
@@ -319,7 +326,7 @@ USDL mode transformation:
 
 **Serializer dispatch in `UDMService.kt`:**
 ```kotlin
-"edmx", "csdl", "odata-schema" -> EDMXSerializer(options).serialize(udm)
+"osch" -> EDMXSerializer(options).serialize(udm)
 ```
 
 ### 2.3 Backend: OData Model Types
@@ -404,30 +411,30 @@ Parse flow:
 6. Convert to same ODataSchema model as EDMX parser
 ```
 
-### 2.5 Frontend: EDMX Schema Support
+### 2.5 Frontend: OData Schema (`osch`) Support
 
 **Protocol type additions (`protocol.ts`):**
 ```typescript
-export type SchemaFormat = '...' | 'edmx' | 'csdl';
-export type Tier2Format = '...' | 'edmx';
+export type SchemaFormat = '...' | 'osch';
+export type Tier2Format = '...' | 'osch';
 ```
 
 **Input panel (`multi-input-panel-widget.tsx`):**
-- Add `'edmx'` to `InputSchemaFormatType`
-- Schema tab: EDMX as loadable schema format
-- Auto-detect: XML content with `<edmx:Edmx` → suggest `edmx`
+- Add `'osch'` to `InputSchemaFormatType`
+- Schema tab: OData schema as loadable schema format
+- Auto-detect: XML content with `<edmx:Edmx` or JSON with `"$Version"` → suggest `osch`
 
 **Output panel (`output-panel-widget.tsx`):**
-- Add `edmx` as output schema format option
-- Scaffold generation: EDMX → SchemaFieldInfo[] for scaffold
+- Add `osch` as output schema format option
+- Scaffold generation: EDMX/CSDL → SchemaFieldInfo[] for scaffold
 
 **Schema field tree parser (`schema-field-tree-parser.ts`):**
 
-**New function: `parseEdmxToFieldTree(edmxContent: string): SchemaFieldInfo[]`**
+**New function: `parseOSchToFieldTree(content: string): SchemaFieldInfo[]`**
 
 ```
 Follows same pattern as parseXsdToFieldTree():
-1. Parse XML with DOMParser
+1. Parse XML with DOMParser (or JSON for v4.01 CSDL)
 2. Find EntityType elements
 3. For each EntityType:
    - Create SchemaFieldInfo with name, type mapping
@@ -437,7 +444,7 @@ Follows same pattern as parseXsdToFieldTree():
 5. Return SchemaFieldInfo[] for Function Builder display
 ```
 
-**Tree strategy (`strategies/edmx-tree-strategy.ts`):**
+**Tree strategy (`strategies/osch-tree-strategy.ts`):**
 ```
 New FormatTreeStrategy implementation:
 - Entity types shown with key icon
@@ -449,27 +456,25 @@ New FormatTreeStrategy implementation:
 
 **Strategy factory update (`strategies/index.ts`):**
 ```typescript
-case 'edmx':
-case 'csdl':
-case 'odata-schema':
-    return new EDMXTreeStrategy();
+case 'osch':
+    return new OSchTreeStrategy();
 ```
 
 ### 2.6 UTLX Header Syntax
 
 ```utlx
 %utlx 1.0
-input edmx                        # EDMX schema as input (rare, for schema transforms)
+input osch                        # OData schema as input (rare, for schema transforms)
 output json
 ---
 // Transform OData metadata to JSON documentation
 ```
 
-More commonly, EDMX is used in Design-Time mode:
+More commonly, OData schema is used in Design-Time mode:
 ```
 Design-Time mode:
-1. User loads EDMX in input schema tab
-2. UTLX parses EDMX → SchemaFieldInfo[]
+1. User loads EDMX/CSDL file as osch in input schema tab
+2. UTLX parses EDMX/CSDL → SchemaFieldInfo[]
 3. Function Builder shows entity types with typed fields
 4. User writes transformation with full type awareness
 ```
@@ -504,7 +509,7 @@ Add new directives to the OData section of the registry, following existing patt
 
 ## Implementation Phases
 
-### Phase 1: EDMX Parser (Tier 2 — Schema, Read Direction)
+### Phase 1: OData Schema Parser (Tier 2 — Schema, Read Direction)
 **Effort: 3-4 days**
 
 This is the highest value deliverable — it enables Design-Time mode with OData services.
@@ -515,25 +520,25 @@ This is the highest value deliverable — it enables Design-Time mode with OData
 | 1.2 | `formats/odata/.../ODataModel.kt` | Intermediate model types |
 | 1.3 | `formats/odata/.../EDMXParser.kt` | XML CSDL → ODataSchema → UDM |
 | 1.4 | `formats/odata/.../JSONCSDLParser.kt` | JSON CSDL → ODataSchema → UDM |
-| 1.5 | `modules/cli/.../UDMService.kt` | Register `"edmx"`, `"csdl"` in parseInputToUDM() |
+| 1.5 | `modules/cli/.../UDMService.kt` | Register `"osch"` in parseInputToUDM() |
 | 1.6 | `modules/daemon/.../RestApiServer.kt` | Verify format dispatch works |
 | 1.7 | `formats/odata/src/test/...` | Unit tests with real EDMX samples |
 
-**Deliverable:** `POST /api/udm/export` with `format: "edmx"` returns UDM with USDL directives.
+**Deliverable:** `POST /api/udm/export` with `format: "osch"` returns UDM with USDL directives.
 
-### Phase 2: EDMX Frontend Integration (Tier 2 — Schema, UI)
+### Phase 2: OData Schema Frontend Integration (Tier 2 — Schema, UI)
 **Effort: 2-3 days**
 
-Wire the EDMX parser into the Theia IDE.
+Wire the OData schema parser into the Theia IDE.
 
 | Step | File | Description |
 |------|------|-------------|
-| 2.1 | `protocol.ts` | Add `'edmx'` to SchemaFormat, DataFormat |
-| 2.2 | `multi-input-panel-widget.tsx` | Add `'edmx'` to schema format dropdown |
-| 2.3 | `schema-field-tree-parser.ts` | Add `parseEdmxToFieldTree()` |
-| 2.4 | `strategies/edmx-tree-strategy.ts` | New FormatTreeStrategy for EDMX |
+| 2.1 | `protocol.ts` | Add `'osch'` to SchemaFormat, DataFormat |
+| 2.2 | `multi-input-panel-widget.tsx` | Add `'osch'` to schema format dropdown |
+| 2.3 | `schema-field-tree-parser.ts` | Add `parseOSchToFieldTree()` |
+| 2.4 | `strategies/osch-tree-strategy.ts` | New FormatTreeStrategy for OData schema |
 | 2.5 | `strategies/index.ts` | Register strategy |
-| 2.6 | `output-panel-widget.tsx` | Add EDMX as schema format option |
+| 2.6 | `output-panel-widget.tsx` | Add `osch` as schema format option |
 
 **Deliverable:** Load `.edmx` file in Design-Time schema tab → entities appear in Function Builder with types.
 
@@ -564,16 +569,16 @@ Handle OData JSON payloads as a first-class data format.
 
 **Deliverable:** Full round-trip: load OData JSON → transform → output.
 
-### Phase 5: EDMX Serializer (Tier 2 — Schema, Write Direction)
+### Phase 5: OData Schema Serializer (Tier 2 — Schema, Write Direction)
 **Effort: 2-3 days**
 
-Generate EDMX from USDL-annotated UDM.
+Generate EDMX/CSDL from USDL-annotated UDM.
 
 | Step | File | Description |
 |------|------|-------------|
 | 5.1 | `formats/odata/.../EDMXSerializer.kt` | UDM (with USDL directives) → EDMX XML |
 | 5.2 | `formats/odata/.../JSONCSDLSerializer.kt` | UDM → JSON CSDL (v4.01) |
-| 5.3 | `modules/cli/.../UDMService.kt` | Register in serializeUDMToFormat() |
+| 5.3 | `modules/cli/.../UDMService.kt` | Register `"osch"` in serializeUDMToFormat() |
 | 5.4 | Two-mode detection | USDL mode vs low-level mode (following XSD pattern) |
 | 5.5 | Tests | Round-trip: EDMX → UDM → EDMX |
 
@@ -609,11 +614,11 @@ Generate EDMX from USDL-annotated UDM.
 
 | Phase | Track | Effort | Dependency |
 |-------|-------|--------|------------|
-| Phase 1: EDMX Parser | Tier 2 backend | 3-4 days | None |
-| Phase 2: EDMX Frontend | Tier 2 frontend | 2-3 days | Phase 1 |
+| Phase 1: OData Schema Parser | Tier 2 backend | 3-4 days | None |
+| Phase 2: OData Schema Frontend | Tier 2 frontend | 2-3 days | Phase 1 |
 | Phase 3: OData JSON | Tier 1 backend | 2-3 days | None (parallel with Phase 2) |
 | Phase 4: OData JSON UI | Tier 1 frontend | 1-2 days | Phase 3 |
-| Phase 5: EDMX Serializer | Tier 2 backend | 2-3 days | Phase 1 |
+| Phase 5: OData Schema Serializer | Tier 2 backend | 2-3 days | Phase 1 |
 | Phase 6: Directives | Cross-cutting | 1-2 days | Phase 1 |
 | Phase 7: Testing & Docs | Cross-cutting | 2-3 days | All phases |
 | **Total** | | **~13-20 days** | |
@@ -625,7 +630,7 @@ Generate EDMX from USDL-annotated UDM.
 - Phase 6 can start anytime
 - Phase 7 runs last
 
-**Critical path:** Phase 1 → Phase 2 → Phase 7 (EDMX Design-Time support = highest user value)
+**Critical path:** Phase 1 → Phase 2 → Phase 7 (OData schema Design-Time support = highest user value)
 
 ---
 
@@ -672,7 +677,7 @@ formats/json/src/main/kotlin/org/apache/utlx/formats/json/
 ```
 theia-extension/utlx-theia-extension/src/browser/
 ├── function-builder/strategies/
-│   ├── edmx-tree-strategy.ts          # FormatTreeStrategy for EDMX
+│   ├── osch-tree-strategy.ts           # FormatTreeStrategy for OData schema
 │   └── odata-tree-strategy.ts    # FormatTreeStrategy for OData JSON
 ```
 
@@ -680,7 +685,7 @@ theia-extension/utlx-theia-extension/src/browser/
 
 ```
 Backend (Kotlin):
-  modules/cli/.../UDMService.kt            # Add odata, edmx to dispatch
+  modules/cli/.../UDMService.kt            # Add odata, osch to dispatch
   modules/daemon/.../RestApiServer.kt      # Verify format support
   schema/.../USDL10.kt                     # New OData directives
   schema/.../DirectiveRegistry.kt          # Update compatibility matrix
@@ -690,7 +695,7 @@ Frontend (TypeScript):
   src/common/protocol.ts                   # Add types
   src/browser/input-panel/multi-input-panel-widget.tsx   # Format dropdowns
   src/browser/output-panel/output-panel-widget.tsx       # Schema format
-  src/browser/utils/schema-field-tree-parser.ts          # parseEdmxToFieldTree()
+  src/browser/utils/schema-field-tree-parser.ts          # parseOSchToFieldTree()
   src/browser/function-builder/strategies/index.ts       # Register strategies
 ```
 

@@ -1,8 +1,8 @@
 # OData Integration in UTLX — Recap
 
-## Current Status: Tier 2 (Planned)
+## Current Status: Tier 1 Implemented, Tier 2 Planned
 
-OData is positioned as a **REST/entity-focused schema format** — not a pure schema like XSD or JSON Schema, but important for SAP Gateway and entity-relationship modeling.
+OData is positioned as a **REST/entity-focused schema format** — not a pure schema like XSD or JSON Schema, but important for SAP Gateway and entity-relationship modeling. UTLX uses two format names: `odata` for Tier 1 (JSON data payloads) and `osch` for Tier 2 (EDMX/CSDL metadata schema).
 
 ## What's Already Done
 
@@ -34,12 +34,14 @@ OData is positioned as a **REST/entity-focused schema format** — not a pure sc
 %cardinality        → Multiplicity attribute
 ```
 
-## What Remains (Parser + Serializer)
+## What Remains (Tier 2 — `osch` Parser + Serializer)
+
+OData metadata uses two related standards: **CSDL** (the schema language defining entity types) and **EDMX** (the XML envelope wrapping CSDL). In v4.01, CSDL also has a standalone JSON representation. UTLX uses a single format name `osch` for both — `input osch` / `output osch` in UTLX headers.
 
 No explicit effort estimates were written down. Based on the Avro study (which documented similar scope):
 
-- **EDMX/CSDL Parser** (OData schema → USDL): ~2-3 days
-- **EDMX/CSDL Serializer** (USDL → OData schema): ~2-3 days
+- **`osch` Parser** (EDMX/CSDL → USDL): ~2-3 days
+- **`osch` Serializer** (USDL → EDMX/CSDL): ~2-3 days
 - **Estimated total**: ~4-6 days for core implementation
 
 ## Why Only 60% Compatibility?

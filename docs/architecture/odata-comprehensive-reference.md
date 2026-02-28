@@ -713,9 +713,20 @@ No metadata at all. Smallest payload but client needs out-of-band knowledge.
 
 OData's dual nature as both metadata description and exchange format creates two integration paths for UTLX:
 
-1. **CSDL/EDMX as schema format** (like XSD, JSON Schema) — parse OData metadata to understand entity models, types, relationships, constraints. This maps to USDL directives.
+1. **CSDL/EDMX as schema format → `osch`** (like XSD, JSON Schema) — parse OData metadata to understand entity models, types, relationships, constraints. This maps to USDL directives.
 
-2. **OData JSON as data format** (like JSON, XML) — transform OData JSON payloads as input/output. The control annotations (`@odata.*`) need special handling.
+2. **OData JSON as data format → `odata`** (like JSON, XML) — transform OData JSON payloads as input/output. The control annotations (`@odata.*`) need special handling.
+
+### UTLX Format Names
+
+OData metadata uses two related but distinct standards: **CSDL** (Common Schema Definition Language) is the actual schema content defining entity types, properties, and relationships. **EDMX** (Entity Data Model XML) is the XML envelope wrapping CSDL, adding `<edmx:Reference>` for external schema imports. In v4.0 CSDL is only available inside EDMX; in v4.01 it also has a standalone JSON representation.
+
+In practice, "EDMX" and "CSDL" are used interchangeably to mean "the OData metadata file." UTLX unifies both under a single format name:
+
+| UTLX Format | OData Layer | Header Syntax |
+|-------------|-------------|---------------|
+| `odata` | Tier 1 — JSON data payloads | `input odata` / `output odata` |
+| `osch` | Tier 2 — EDMX/CSDL metadata schema | `input osch` / `output osch` |
 
 ### USDL Directive Mapping (already designed)
 
@@ -750,8 +761,8 @@ OData's dual nature as both metadata description and exchange format creates two
 
 | Component | Effort | Notes |
 |-----------|--------|-------|
-| EDMX/CSDL Parser → USDL | ~2-3 days | XML parsing, entity/complex type mapping |
-| USDL → EDMX/CSDL Serializer | ~2-3 days | Reverse direction |
+| `osch` Parser (EDMX/CSDL → USDL) | ~2-3 days | XML parsing, entity/complex type mapping |
+| `osch` Serializer (USDL → EDMX/CSDL) | ~2-3 days | Reverse direction |
 | OData JSON payload handling | ~1-2 days | Strip/preserve `@odata.*` annotations |
 | OData type facet mapping | ~1 day | Precision, Scale, MaxLength → USDL constraints |
 | Navigation property support | ~1-2 days | Relationship modeling in transforms |
