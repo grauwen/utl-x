@@ -80,7 +80,7 @@ OData JSON is declared via the UTLX header `input odata` (or `input json` with a
 
 ### 1.2 Backend: OData JSON Parser Extension
 
-**File:** `formats/json/src/main/kotlin/org/apache/utlx/formats/json/ODataJSONParser.kt`
+**File:** `formats/odata/src/main/kotlin/org/apache/utlx/formats/odata/ODataJSONParser.kt`
 
 ```
 Extends JSONParser with:
@@ -99,7 +99,7 @@ Extends JSONParser with:
 
 ### 1.3 Backend: OData JSON Serializer Extension
 
-**File:** `formats/json/src/main/kotlin/org/apache/utlx/formats/json/ODataJSONSerializer.kt`
+**File:** `formats/odata/src/main/kotlin/org/apache/utlx/formats/odata/ODataJSONSerializer.kt`
 
 ```
 Extends JSONSerializer with:
@@ -549,10 +549,10 @@ Handle OData JSON payloads as a first-class data format.
 
 | Step | File | Description |
 |------|------|-------------|
-| 3.1 | `formats/json/.../ODataJSONParser.kt` | OData JSON → UDM (annotation-aware) |
-| 3.2 | `formats/json/.../ODataJSONSerializer.kt` | UDM → OData JSON (with control info) |
+| 3.1 | `formats/odata/.../ODataJSONParser.kt` | OData JSON → UDM (annotation-aware) |
+| 3.2 | `formats/odata/.../ODataJSONSerializer.kt` | UDM → OData JSON (with control info) |
 | 3.3 | `modules/cli/.../UDMService.kt` | Register `"odata"` in dispatch |
-| 3.4 | `formats/json/src/test/...` | Tests with OData JSON samples |
+| 3.4 | `formats/odata/src/test/...` | Tests with OData JSON samples |
 
 **Deliverable:** `input odata` in UTLX header works; `@odata.*` annotations handled correctly.
 
@@ -656,20 +656,19 @@ formats/odata/
 └── src/
     ├── main/kotlin/org/apache/utlx/formats/odata/
     │   ├── ODataModel.kt              # Intermediate model types
+    │   ├── ODataJSONParser.kt         # OData JSON → UDM (extends JSONParser)
+    │   ├── ODataJSONSerializer.kt     # UDM → OData JSON (extends JSONSerializer)
     │   ├── EDMXParser.kt              # XML CSDL → ODataSchema → UDM
     │   ├── EDMXSerializer.kt          # UDM → EDMX XML
     │   ├── JSONCSDLParser.kt          # JSON CSDL (v4.01) → ODataSchema → UDM
     │   ├── JSONCSDLSerializer.kt      # UDM → JSON CSDL (v4.01)
     │   └── EdmTypeMapper.kt           # Edm.* ↔ UTLX type mapping
     └── test/kotlin/org/apache/utlx/formats/odata/
+        ├── ODataJSONParserTest.kt
+        ├── ODataJSONSerializerTest.kt
         ├── EDMXParserTest.kt
         ├── EDMXSerializerTest.kt
-        ├── ODataJSONTest.kt
-        └── testdata/                  # EDMX/CSDL test fixtures
-
-formats/json/src/main/kotlin/org/apache/utlx/formats/json/
-├── ODataJSONParser.kt                 # OData JSON → UDM (extends JSONParser)
-└── ODataJSONSerializer.kt             # UDM → OData JSON (extends JSONSerializer)
+        └── testdata/                  # EDMX/CSDL + OData JSON test fixtures
 ```
 
 ### New Files (Frontend — TypeScript)
