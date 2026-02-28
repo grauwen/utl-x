@@ -32,28 +32,85 @@ class JSONParserTest {
     fun `parse integer`() {
         val result = JSONParser("42").parse()
         assertTrue(result is UDM.Scalar)
-        assertEquals(42.0, (result as UDM.Scalar).asNumber())
+        assertEquals(42L, (result as UDM.Scalar).value)
     }
-    
+
     @Test
     fun `parse negative number`() {
         val result = JSONParser("-123").parse()
         assertTrue(result is UDM.Scalar)
-        assertEquals(-123.0, (result as UDM.Scalar).asNumber())
+        assertEquals(-123L, (result as UDM.Scalar).value)
     }
-    
+
+    @Test
+    fun `parse zero as Long`() {
+        val result = JSONParser("0").parse()
+        assertTrue(result is UDM.Scalar)
+        assertEquals(0L, (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun `parse integer preserves Int64 precision`() {
+        val result = JSONParser("9007199254740993").parse()
+        assertTrue(result is UDM.Scalar)
+        assertEquals(9007199254740993L, (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun `parse Long MAX_VALUE as Long`() {
+        val result = JSONParser("9223372036854775807").parse()
+        assertTrue(result is UDM.Scalar)
+        assertEquals(Long.MAX_VALUE, (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun `parse beyond Long MAX_VALUE falls back to Double`() {
+        val result = JSONParser("9223372036854775808").parse()
+        assertTrue(result is UDM.Scalar)
+        assertTrue((result as UDM.Scalar).value is Double)
+    }
+
     @Test
     fun `parse decimal number`() {
         val result = JSONParser("3.14159").parse()
         assertTrue(result is UDM.Scalar)
-        assertEquals(3.14159, (result as UDM.Scalar).asNumber())
+        assertEquals(3.14159, (result as UDM.Scalar).value)
     }
-    
+
     @Test
-    fun `parse scientific notation`() {
+    fun `parse negative decimal as Double`() {
+        val result = JSONParser("-3.14").parse()
+        assertTrue(result is UDM.Scalar)
+        assertEquals(-3.14, (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun `parse scientific notation lowercase e as Double`() {
         val result = JSONParser("1.5e10").parse()
         assertTrue(result is UDM.Scalar)
-        assertEquals(1.5e10, (result as UDM.Scalar).asNumber())
+        assertEquals(1.5e10, (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun `parse scientific notation uppercase E as Double`() {
+        val result = JSONParser("2.5E10").parse()
+        assertTrue(result is UDM.Scalar)
+        assertEquals(2.5e10, (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun `parse integer with scientific notation as Double`() {
+        // 1e5 has no decimal point but has 'e', so it must be Double
+        val result = JSONParser("1e5").parse()
+        assertTrue(result is UDM.Scalar)
+        assertEquals(1e5, (result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun `parse negative scientific notation as Double`() {
+        val result = JSONParser("-1.5e-3").parse()
+        assertTrue(result is UDM.Scalar)
+        assertEquals(-1.5e-3, (result as UDM.Scalar).value)
     }
     
     @Test
@@ -260,9 +317,28 @@ class JSONSerializerTest {
     fun `serialize number`() {
         val intResult = JSONSerializer(prettyPrint = false).serialize(UDM.Scalar.number(42))
         assertEquals("42", intResult)
-        
+
         val decimalResult = JSONSerializer(prettyPrint = false).serialize(UDM.Scalar.number(3.14))
         assertEquals("3.14", decimalResult)
+    }
+
+    @Test
+    fun `serialize Long number`() {
+        val result = JSONSerializer(prettyPrint = false).serialize(UDM.Scalar.number(42L))
+        assertEquals("42", result)
+    }
+
+    @Test
+    fun `serialize large Long preserves precision`() {
+        val result = JSONSerializer(prettyPrint = false).serialize(UDM.Scalar.number(9007199254740993L))
+        assertEquals("9007199254740993", result)
+    }
+
+    @Test
+    fun `serialize whole-number Double writes as integer`() {
+        // The compensating hack: Double 42.0 is written as "42"
+        val result = JSONSerializer(prettyPrint = false).serialize(UDM.Scalar.number(42.0))
+        assertEquals("42", result)
     }
     
     @Test
@@ -363,20 +439,156 @@ class JSONSerializerTest {
         val original = """{"name":"Alice","age":30,"active":true}"""
         val parsed = JSONParser(original).parse()
         val serialized = JSONSerializer(prettyPrint = false).serialize(parsed)
-        
+
         // Parse again to compare structures
         val reparsed = JSONParser(serialized).parse()
-        
+
         assertTrue(parsed is UDM.Object)
         assertTrue(reparsed is UDM.Object)
-        
+
         val obj1 = parsed as UDM.Object
         val obj2 = reparsed as UDM.Object
-        
-        assertEquals(obj1.get("name")?.asScalar()?.asString(), 
+
+        assertEquals(obj1.get("name")?.asScalar()?.asString(),
                      obj2.get("name")?.asScalar()?.asString())
         assertEquals(obj1.get("age")?.asScalar()?.asNumber(),
                      obj2.get("age")?.asScalar()?.asNumber())
+    }
+
+    @Test
+    fun `round trip preserves positive integer as Long`() {
+        val serialized = roundTrip("42")
+        assertEquals("42", serialized)
+        assertEquals(42L, JSONParser(serialized).parse().asScalar()?.value)
+    }
+
+    @Test
+    fun `round trip preserves negative integer as Long`() {
+        val serialized = roundTrip("-123")
+        assertEquals("-123", serialized)
+        assertEquals(-123L, JSONParser(serialized).parse().asScalar()?.value)
+    }
+
+    @Test
+    fun `round trip preserves zero as Long`() {
+        val serialized = roundTrip("0")
+        assertEquals("0", serialized)
+        assertEquals(0L, JSONParser(serialized).parse().asScalar()?.value)
+    }
+
+    @Test
+    fun `round trip preserves large Int64`() {
+        val serialized = roundTrip("9007199254740993")
+        assertEquals("9007199254740993", serialized)
+        assertEquals(9007199254740993L, JSONParser(serialized).parse().asScalar()?.value)
+    }
+
+    @Test
+    fun `round trip preserves decimal as Double`() {
+        val serialized = roundTrip("3.14")
+        assertEquals("3.14", serialized)
+        assertEquals(3.14, JSONParser(serialized).parse().asScalar()?.value)
+    }
+
+    @Test
+    fun `round trip preserves negative decimal as Double`() {
+        val serialized = roundTrip("-0.5")
+        assertEquals("-0.5", serialized)
+        assertEquals(-0.5, JSONParser(serialized).parse().asScalar()?.value)
+    }
+
+    @Test
+    fun `round trip whole-number scientific notation narrows to Long`() {
+        // 1.5e10 = 15000000000.0 (whole number Double)
+        // Serializer writes "15000000000" (no dot) → reparsed as Long
+        val parsed = JSONParser("1.5e10").parse() as UDM.Scalar
+        assertTrue(parsed.value is Double)
+        val serialized = JSONSerializer(prettyPrint = false).serialize(parsed)
+        assertEquals("15000000000", serialized)
+        val reparsed = JSONParser(serialized).parse() as UDM.Scalar
+        assertEquals(15000000000L, reparsed.value)
+    }
+
+    @Test
+    fun `round trip fractional scientific notation stays Double`() {
+        // 2.5E-1 = 0.25 (not a whole number) → stays Double
+        val parsed = JSONParser("2.5E-1").parse() as UDM.Scalar
+        assertTrue(parsed.value is Double)
+        val serialized = JSONSerializer(prettyPrint = false).serialize(parsed)
+        assertEquals("0.25", serialized)
+        val reparsed = JSONParser(serialized).parse() as UDM.Scalar
+        assertTrue(reparsed.value is Double)
+        assertEquals(0.25, reparsed.value)
+    }
+
+    @Test
+    fun `round trip integer scientific notation`() {
+        // 1e5 has no decimal but has 'e' → Double → serialized → reparsed
+        val parsed = JSONParser("1e5").parse() as UDM.Scalar
+        assertTrue(parsed.value is Double)
+        val serialized = JSONSerializer(prettyPrint = false).serialize(parsed)
+        // Double 100000.0 is a whole number → serializer writes "100000"
+        assertEquals("100000", serialized)
+        // Reparsed as Long (no dot, no e in serialized form)
+        val reparsed = JSONParser(serialized).parse() as UDM.Scalar
+        assertEquals(100000L, reparsed.value)
+    }
+
+    @Test
+    fun `round trip negative scientific notation`() {
+        val parsed = JSONParser("-1.5e-3").parse() as UDM.Scalar
+        val serialized = JSONSerializer(prettyPrint = false).serialize(parsed)
+        val reparsed = JSONParser(serialized).parse() as UDM.Scalar
+        assertTrue(reparsed.value is Double)
+        assertEquals(-0.0015, reparsed.value)
+    }
+
+    @Test
+    fun `round trip mixed object preserves types`() {
+        val original = """{"count":42,"price":9.99,"big":9007199254740993,"neg":-7,"zero":0}"""
+        val parsed = JSONParser(original).parse() as UDM.Object
+        val serialized = JSONSerializer(prettyPrint = false).serialize(parsed)
+        val reparsed = JSONParser(serialized).parse() as UDM.Object
+
+        assertEquals(42L, reparsed.get("count")?.asScalar()?.value)
+        assertEquals(9.99, reparsed.get("price")?.asScalar()?.value)
+        assertEquals(9007199254740993L, reparsed.get("big")?.asScalar()?.value)
+        assertEquals(-7L, reparsed.get("neg")?.asScalar()?.value)
+        assertEquals(0L, reparsed.get("zero")?.asScalar()?.value)
+    }
+
+    private fun roundTrip(json: String): String {
+        val parsed = JSONParser(json).parse()
+        return JSONSerializer(prettyPrint = false).serialize(parsed)
+    }
+
+    @Test
+    fun `UDM accessors work for Long-backed scalar`() {
+        val parsed = JSONParser("42").parse() as UDM.Scalar
+
+        // Raw value is Long
+        assertEquals(42L, parsed.value)
+        assertTrue(parsed.value is Long)
+
+        // asNumber() converts to Double
+        assertEquals(42.0, parsed.asNumber())
+
+        // asString() gives "42" not "42.0"
+        assertEquals("42", parsed.asString())
+
+        // isNumber() recognizes Long as Number
+        assertTrue(parsed.isNumber())
+    }
+
+    @Test
+    fun `UDM accessors work for Double-backed scalar`() {
+        val parsed = JSONParser("3.14").parse() as UDM.Scalar
+
+        assertEquals(3.14, parsed.value)
+        assertTrue(parsed.value is Double)
+        assertEquals(3.14, parsed.asNumber())
+        assertEquals("3.14", parsed.asString())
+        assertTrue(parsed.isNumber())
     }
 }
 
