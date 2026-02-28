@@ -1,6 +1,6 @@
 # Bug: JSON Parser Loses Integer Type — All Numbers Parsed as Double
 
-**Status:** Open
+**Status:** Fixed
 **Component:** `formats/json` — `json_parser.kt`
 **Severity:** Medium
 **Affects:** All formats that consume JSON parser output (json, odata, jsch)
