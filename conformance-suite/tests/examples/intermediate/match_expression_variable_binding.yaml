@@ -29,7 +29,7 @@ expected:
   format: json
   data: |
     {
-      "result": "double digit: 42.0"
+      "result": "double digit: 42"
     }
 
 performance_limits:
