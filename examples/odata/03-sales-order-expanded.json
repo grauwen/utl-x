@@ -1,0 +1,80 @@
+{
+  "@odata.context": "$metadata#SalesOrders(Customer,Items(Product))/$entity",
+  "@odata.type": "#SAP.SalesOrder",
+  "@odata.id": "SalesOrders('0500000001')",
+  "@odata.etag": "W/\"datetimeoffset'2026-01-15T08%3A30%3A00Z'\"",
+  "SalesOrderID": "0500000001",
+  "CreatedAt": "2026-01-15T08:30:00Z",
+  "ChangedAt": "2026-01-16T14:22:00Z",
+  "NoteLanguage": "EN",
+  "Note": "Rush delivery requested",
+  "CurrencyCode": "USD",
+  "GrossAmount": 24850.00,
+  "NetAmount": 21000.00,
+  "TaxAmount": 3850.00,
+  "LifecycleStatus": "N",
+  "LifecycleStatusDescription": "New",
+  "BillingStatus": "I",
+  "BillingStatusDescription": "Initial",
+  "DeliveryStatus": "I",
+  "DeliveryStatusDescription": "Initial",
+  "Customer": {
+    "@odata.type": "#SAP.BusinessPartner",
+    "@odata.id": "BusinessPartners('CUST-0100000001')",
+    "BusinessPartnerID": "CUST-0100000001",
+    "CompanyName": "Alpine Electronics GmbH",
+    "CurrencyCode": "EUR",
+    "Address": {
+      "Street": "Industriestrasse 42",
+      "City": "Munich",
+      "PostalCode": "80331",
+      "Country": "DE"
+    }
+  },
+  "Items": [
+    {
+      "@odata.type": "#SAP.SalesOrderItem",
+      "ItemPosition": 10,
+      "Quantity": 5,
+      "QuantityUnit": "EA",
+      "NetAmount": 12500.00,
+      "TaxAmount": 2375.00,
+      "GrossAmount": 14875.00,
+      "CurrencyCode": "USD",
+      "Product": {
+        "@odata.type": "#SAP.Product",
+        "@odata.id": "Products('HT-1000')",
+        "ProductID": "HT-1000",
+        "Name": "Notebook Basic 15",
+        "Description": "15-inch business notebook with 16GB RAM",
+        "Category": "Notebooks",
+        "Price": 2500.00,
+        "CurrencyCode": "USD",
+        "WeightMeasure": 1.8,
+        "WeightUnit": "KG"
+      }
+    },
+    {
+      "@odata.type": "#SAP.SalesOrderItem",
+      "ItemPosition": 20,
+      "Quantity": 10,
+      "QuantityUnit": "EA",
+      "NetAmount": 8500.00,
+      "TaxAmount": 1475.00,
+      "GrossAmount": 9975.00,
+      "CurrencyCode": "USD",
+      "Product": {
+        "@odata.type": "#SAP.Product",
+        "@odata.id": "Products('HT-1030')",
+        "ProductID": "HT-1030",
+        "Name": "Ergo Screen E-III",
+        "Description": "27-inch ergonomic 4K monitor",
+        "Category": "Monitors",
+        "Price": 850.00,
+        "CurrencyCode": "USD",
+        "WeightMeasure": 6.2,
+        "WeightUnit": "KG"
+      }
+    }
+  ]
+}

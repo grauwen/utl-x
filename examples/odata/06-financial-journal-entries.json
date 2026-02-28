@@ -1,0 +1,146 @@
+{
+  "@odata.context": "$metadata#JournalEntries",
+  "@odata.count": 3,
+  "value": [
+    {
+      "@odata.type": "#Finance.JournalEntry",
+      "@odata.id": "JournalEntries('JE-2026-001542')",
+      "DocumentNumber": "JE-2026-001542",
+      "PostingDate": "2026-01-31",
+      "DocumentDate": "2026-01-31",
+      "CompanyCode": "1000",
+      "FiscalYear": 2026,
+      "FiscalPeriod": 1,
+      "DocumentType": "SA",
+      "ReferenceNumber": "DEPRECIATION-JAN-2026",
+      "HeaderText": "Monthly depreciation posting - January 2026",
+      "CurrencyCode": "USD",
+      "TotalDebit": 45200.00,
+      "TotalCredit": 45200.00,
+      "Status": "POSTED",
+      "CreatedBy": "FI-BATCH-001",
+      "LineItems": [
+        {
+          "LineNumber": 1,
+          "GLAccount": "6200000",
+          "GLAccountName": "Depreciation Expense - Equipment",
+          "DebitAmount": 32500.00,
+          "CreditAmount": 0.00,
+          "CostCenter": "CC-4100",
+          "ProfitCenter": "PC-1000",
+          "Text": "Equipment depreciation Jan 2026"
+        },
+        {
+          "LineNumber": 2,
+          "GLAccount": "6210000",
+          "GLAccountName": "Depreciation Expense - Vehicles",
+          "DebitAmount": 12700.00,
+          "CreditAmount": 0.00,
+          "CostCenter": "CC-4200",
+          "ProfitCenter": "PC-1000",
+          "Text": "Vehicle depreciation Jan 2026"
+        },
+        {
+          "LineNumber": 3,
+          "GLAccount": "1800000",
+          "GLAccountName": "Accumulated Depreciation - Equipment",
+          "DebitAmount": 0.00,
+          "CreditAmount": 32500.00,
+          "CostCenter": null,
+          "ProfitCenter": "PC-1000",
+          "Text": "Contra account - equipment"
+        },
+        {
+          "LineNumber": 4,
+          "GLAccount": "1810000",
+          "GLAccountName": "Accumulated Depreciation - Vehicles",
+          "DebitAmount": 0.00,
+          "CreditAmount": 12700.00,
+          "CostCenter": null,
+          "ProfitCenter": "PC-1000",
+          "Text": "Contra account - vehicles"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Finance.JournalEntry",
+      "@odata.id": "JournalEntries('JE-2026-001543')",
+      "DocumentNumber": "JE-2026-001543",
+      "PostingDate": "2026-01-31",
+      "DocumentDate": "2026-01-31",
+      "CompanyCode": "1000",
+      "FiscalYear": 2026,
+      "FiscalPeriod": 1,
+      "DocumentType": "SA",
+      "ReferenceNumber": "ACCRUAL-JAN-2026",
+      "HeaderText": "Monthly accrual - utilities January 2026",
+      "CurrencyCode": "USD",
+      "TotalDebit": 8750.00,
+      "TotalCredit": 8750.00,
+      "Status": "POSTED",
+      "CreatedBy": "anna.kowalski@contoso.com",
+      "LineItems": [
+        {
+          "LineNumber": 1,
+          "GLAccount": "6500000",
+          "GLAccountName": "Utilities Expense",
+          "DebitAmount": 8750.00,
+          "CreditAmount": 0.00,
+          "CostCenter": "CC-1000",
+          "ProfitCenter": "PC-1000",
+          "Text": "Estimated utilities Jan 2026"
+        },
+        {
+          "LineNumber": 2,
+          "GLAccount": "2100000",
+          "GLAccountName": "Accrued Liabilities",
+          "DebitAmount": 0.00,
+          "CreditAmount": 8750.00,
+          "CostCenter": null,
+          "ProfitCenter": "PC-1000",
+          "Text": "Utilities accrual Jan 2026"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Finance.JournalEntry",
+      "@odata.id": "JournalEntries('JE-2026-001544')",
+      "DocumentNumber": "JE-2026-001544",
+      "PostingDate": "2026-01-31",
+      "DocumentDate": "2026-01-28",
+      "CompanyCode": "1000",
+      "FiscalYear": 2026,
+      "FiscalPeriod": 1,
+      "DocumentType": "KR",
+      "ReferenceNumber": "INV-VENDOR-2026-0102",
+      "HeaderText": "Vendor invoice - Office supplies",
+      "CurrencyCode": "USD",
+      "TotalDebit": 2340.00,
+      "TotalCredit": 2340.00,
+      "Status": "POSTED",
+      "CreatedBy": "ap-processor@contoso.com",
+      "LineItems": [
+        {
+          "LineNumber": 1,
+          "GLAccount": "6300000",
+          "GLAccountName": "Office Supplies Expense",
+          "DebitAmount": 2340.00,
+          "CreditAmount": 0.00,
+          "CostCenter": "CC-1000",
+          "ProfitCenter": "PC-1000",
+          "Text": "Office supplies Q1 replenishment"
+        },
+        {
+          "LineNumber": 2,
+          "GLAccount": "2000000",
+          "GLAccountName": "Accounts Payable",
+          "DebitAmount": 0.00,
+          "CreditAmount": 2340.00,
+          "CostCenter": null,
+          "ProfitCenter": null,
+          "Text": "Payable to Staples Inc."
+        }
+      ]
+    }
+  ]
+}

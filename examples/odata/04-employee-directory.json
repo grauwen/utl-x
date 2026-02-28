@@ -1,0 +1,51 @@
+{
+  "@odata.context": "$metadata#Employees",
+  "@odata.count": 1247,
+  "value": [
+    {
+      "@odata.type": "#HR.Employee",
+      "@odata.id": "Employees('E10042')",
+      "EmployeeID": "E10042",
+      "FirstName": "Sarah",
+      "LastName": "Martinez",
+      "Title": "Senior Software Engineer",
+      "Department": "Engineering",
+      "HireDate": "2021-03-15",
+      "Email": "sarah.martinez@contoso.com",
+      "Phone": "+1-425-555-0142",
+      "ManagerID": "E10005",
+      "Location": {
+        "Office": "Building 25",
+        "Floor": 3,
+        "City": "Redmond",
+        "Country": "US"
+      },
+      "Skills": ["Java", "Python", "Azure", "Kubernetes"],
+      "Manager@odata.navigationLink": "Employees('E10005')",
+      "DirectReports@odata.navigationLink": "Employees('E10042')/DirectReports"
+    },
+    {
+      "@odata.type": "#HR.Employee",
+      "@odata.id": "Employees('E10105')",
+      "EmployeeID": "E10105",
+      "FirstName": "James",
+      "LastName": "Okafor",
+      "Title": "Product Manager",
+      "Department": "Product",
+      "HireDate": "2019-08-01",
+      "Email": "james.okafor@contoso.com",
+      "Phone": "+1-425-555-0205",
+      "ManagerID": "E10003",
+      "Location": {
+        "Office": "Building 18",
+        "Floor": 5,
+        "City": "Redmond",
+        "Country": "US"
+      },
+      "Skills": ["Product Strategy", "Agile", "Data Analysis"],
+      "Manager@odata.navigationLink": "Employees('E10003')",
+      "DirectReports@odata.navigationLink": "Employees('E10105')/DirectReports"
+    }
+  ],
+  "@odata.nextLink": "Employees?$skip=2&$top=2"
+}

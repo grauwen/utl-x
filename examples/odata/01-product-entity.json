@@ -1,0 +1,16 @@
+{
+  "@odata.context": "$metadata#Products/$entity",
+  "@odata.type": "#Northwind.Product",
+  "@odata.id": "Products(1)",
+  "@odata.etag": "W/\"08D5C3A9F1B2E4D6\"",
+  "ProductID": 1,
+  "ProductName": "Chai",
+  "SupplierID": 1,
+  "CategoryID": 1,
+  "QuantityPerUnit": "10 boxes x 20 bags",
+  "UnitPrice": 18.00,
+  "UnitsInStock": 39,
+  "UnitsOnOrder": 0,
+  "ReorderLevel": 10,
+  "Discontinued": false
+}
