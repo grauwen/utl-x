@@ -285,7 +285,7 @@ class Parser(
             // Check if this is a format keyword
             val isFormatKeyword = currentToken.type in listOf(
                 TokenType.XML, TokenType.JSON, TokenType.CSV, TokenType.YAML,
-                TokenType.AUTO, TokenType.XSD, TokenType.JSCH, TokenType.AVRO, TokenType.PROTO
+                TokenType.AUTO, TokenType.XSD, TokenType.JSCH, TokenType.AVRO, TokenType.PROTO, TokenType.ODATA
             )
 
             // If it's a format keyword, check if it's followed by a hyphen
@@ -412,7 +412,8 @@ class Parser(
             TokenType.XSD,
             TokenType.JSCH,
             TokenType.AVRO,
-            TokenType.PROTO
+            TokenType.PROTO,
+            TokenType.ODATA
         )
     }
 
@@ -539,8 +540,9 @@ class Parser(
             match(TokenType.JSCH) -> FormatType.JSCH
             match(TokenType.AVRO) -> FormatType.AVRO
             match(TokenType.PROTO) -> FormatType.PROTO
+            match(TokenType.ODATA) -> FormatType.ODATA
             else -> {
-                error("Expected format type (auto, xml, json, csv, yaml, xsd, jsch, avro, proto)")
+                error("Expected format type (auto, xml, json, csv, yaml, odata, xsd, jsch, avro, proto)")
                 FormatType.AUTO
             }
         }
