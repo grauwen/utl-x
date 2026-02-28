@@ -602,3 +602,234 @@ function mergeFieldWithSamples(
 
     return merged;
 }
+
+// ============================================================================
+// OData Schema (EDMX/CSDL) Parser
+// ============================================================================
+
+/**
+ * Edm type to normalized type mapping
+ */
+const EDM_TYPE_MAP: { [key: string]: string } = {
+    'Edm.String': 'string',
+    'Edm.Guid': 'string',
+    'Edm.Duration': 'string',
+    'Edm.Boolean': 'boolean',
+    'Edm.Byte': 'integer',
+    'Edm.SByte': 'integer',
+    'Edm.Int16': 'integer',
+    'Edm.Int32': 'integer',
+    'Edm.Int64': 'integer',
+    'Edm.Single': 'number',
+    'Edm.Double': 'number',
+    'Edm.Decimal': 'number',
+    'Edm.Date': 'date',
+    'Edm.TimeOfDay': 'time',
+    'Edm.DateTimeOffset': 'datetime',
+    'Edm.Binary': 'binary',
+    'Edm.Stream': 'binary',
+};
+
+/**
+ * Map an Edm type string to a normalized type
+ */
+function mapEdmTypeToFieldType(edmType: string): string {
+    return EDM_TYPE_MAP[edmType] || 'string';
+}
+
+/**
+ * Parse OData EDMX/CSDL metadata directly to field tree
+ */
+export function parseOSchToFieldTree(edmxContent: string): SchemaFieldInfo[] {
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(edmxContent, 'text/xml');
+
+        // Check for parse errors
+        const parseError = doc.querySelector('parsererror');
+        if (parseError) {
+            console.error('[SchemaParser] EDMX parse error:', parseError.textContent);
+            return [];
+        }
+
+        const fields: SchemaFieldInfo[] = [];
+
+        // Find EntityType elements (with or without namespace prefix)
+        const entityTypes = doc.querySelectorAll('EntityType');
+        for (let i = 0; i < entityTypes.length; i++) {
+            const entityType = entityTypes[i];
+            const field = parseEdmxEntityType(entityType, doc);
+            if (field) {
+                fields.push(field);
+            }
+        }
+
+        // Find ComplexType elements
+        const complexTypes = doc.querySelectorAll('ComplexType');
+        for (let i = 0; i < complexTypes.length; i++) {
+            const complexType = complexTypes[i];
+            const field = parseEdmxComplexType(complexType, doc);
+            if (field) {
+                fields.push(field);
+            }
+        }
+
+        // Find EnumType elements
+        const enumTypes = doc.querySelectorAll('EnumType');
+        for (let i = 0; i < enumTypes.length; i++) {
+            const enumType = enumTypes[i];
+            const field = parseEdmxEnumType(enumType);
+            if (field) {
+                fields.push(field);
+            }
+        }
+
+        return fields;
+    } catch (error) {
+        console.error('[SchemaParser] Failed to parse EDMX:', error);
+        return [];
+    }
+}
+
+/**
+ * Parse an EDMX EntityType element
+ */
+function parseEdmxEntityType(element: Element, doc: Document): SchemaFieldInfo | null {
+    const name = element.getAttribute('Name');
+    if (!name) return null;
+
+    const field: SchemaFieldInfo = {
+        name,
+        type: 'object',
+        schemaType: 'EntityType',
+        fields: [],
+    };
+
+    // Collect key property names
+    const keyNames = new Set<string>();
+    const keyElement = element.querySelector(':scope > Key');
+    if (keyElement) {
+        const propRefs = keyElement.querySelectorAll('PropertyRef');
+        propRefs.forEach(ref => {
+            const refName = ref.getAttribute('Name');
+            if (refName) keyNames.add(refName);
+        });
+    }
+
+    // Parse properties
+    const properties = element.querySelectorAll(':scope > Property');
+    properties.forEach(prop => {
+        const propField = parseEdmxProperty(prop, keyNames);
+        if (propField) {
+            (field.fields as SchemaFieldInfo[]).push(propField);
+        }
+    });
+
+    // Parse navigation properties
+    const navProps = element.querySelectorAll(':scope > NavigationProperty');
+    navProps.forEach(navProp => {
+        const navField = parseEdmxNavigationProperty(navProp);
+        if (navField) {
+            (field.fields as SchemaFieldInfo[]).push(navField);
+        }
+    });
+
+    return field;
+}
+
+/**
+ * Parse an EDMX ComplexType element
+ */
+function parseEdmxComplexType(element: Element, doc: Document): SchemaFieldInfo | null {
+    const name = element.getAttribute('Name');
+    if (!name) return null;
+
+    const field: SchemaFieldInfo = {
+        name,
+        type: 'object',
+        schemaType: 'ComplexType',
+        fields: [],
+    };
+
+    const properties = element.querySelectorAll(':scope > Property');
+    properties.forEach(prop => {
+        const propField = parseEdmxProperty(prop, new Set());
+        if (propField) {
+            (field.fields as SchemaFieldInfo[]).push(propField);
+        }
+    });
+
+    return field;
+}
+
+/**
+ * Parse an EDMX EnumType element
+ */
+function parseEdmxEnumType(element: Element): SchemaFieldInfo | null {
+    const name = element.getAttribute('Name');
+    if (!name) return null;
+
+    const members: string[] = [];
+    const memberElements = element.querySelectorAll(':scope > Member');
+    memberElements.forEach(member => {
+        const memberName = member.getAttribute('Name');
+        if (memberName) members.push(memberName);
+    });
+
+    return {
+        name,
+        type: 'string',
+        schemaType: 'EnumType',
+        constraints: members.length > 0 ? `enum: [${members.join(', ')}]` : undefined,
+    };
+}
+
+/**
+ * Parse an EDMX Property element
+ */
+function parseEdmxProperty(element: Element, keyNames: Set<string>): SchemaFieldInfo | null {
+    const name = element.getAttribute('Name');
+    if (!name) return null;
+
+    const edmType = element.getAttribute('Type') || 'Edm.String';
+    const nullable = element.getAttribute('Nullable');
+    const maxLength = element.getAttribute('MaxLength');
+    const precision = element.getAttribute('Precision');
+    const scale = element.getAttribute('Scale');
+
+    // Build constraints
+    const constraints: string[] = [];
+    if (maxLength) constraints.push(`maxLength: ${maxLength}`);
+    if (precision) constraints.push(`precision: ${precision}`);
+    if (scale) constraints.push(`scale: ${scale}`);
+
+    return {
+        name,
+        type: mapEdmTypeToFieldType(edmType),
+        schemaType: edmType,
+        isRequired: keyNames.has(name) || nullable === 'false',
+        constraints: constraints.length > 0 ? constraints.join(', ') : undefined,
+    };
+}
+
+/**
+ * Parse an EDMX NavigationProperty element
+ */
+function parseEdmxNavigationProperty(element: Element): SchemaFieldInfo | null {
+    const name = element.getAttribute('Name');
+    if (!name) return null;
+
+    const typeStr = element.getAttribute('Type') || '';
+    const isCollection = typeStr.startsWith('Collection(');
+    const targetType = isCollection
+        ? typeStr.substring(11, typeStr.length - 1)
+        : typeStr;
+    const shortName = targetType.includes('.') ? targetType.split('.').pop() || targetType : targetType;
+
+    return {
+        name,
+        type: isCollection ? 'array' : 'object',
+        schemaType: `NavigationProperty → ${shortName}`,
+        description: `Navigation to ${shortName}${isCollection ? ' (collection)' : ''}`,
+    };
+}

@@ -26,10 +26,10 @@ export enum UTLXMode {
 /**
  * Format types
  */
-export type DataFormat = 'xml' | 'json' | 'yaml' | 'csv' | 'odata' | 'xsd' | 'jsch' | 'avro' | 'proto' | 'auto';
-export type SchemaFormat = 'xsd' | 'jsch' | 'avro' | 'proto';
+export type DataFormat = 'xml' | 'json' | 'yaml' | 'csv' | 'odata' | 'osch' | 'xsd' | 'jsch' | 'avro' | 'proto' | 'auto';
+export type SchemaFormat = 'xsd' | 'jsch' | 'avro' | 'proto' | 'osch';
 export type Tier1Format = 'xml' | 'json' | 'yaml' | 'csv' | 'odata';
-export type Tier2Format = 'xsd' | 'jsch' | 'avsc' | 'proto';
+export type Tier2Format = 'xsd' | 'jsch' | 'avsc' | 'proto' | 'osch';
 
 /**
  * Position in a text document

@@ -39,7 +39,7 @@ export interface ScaffoldResult {
  */
 export function generateScaffoldFromStructure(
     fields: SchemaFieldInfo[],
-    format: 'json' | 'xml'
+    format: 'json' | 'xml' | 'osch'
 ): ScaffoldResult {
     if (!fields || fields.length === 0) {
         return {
@@ -166,5 +166,5 @@ function generateFieldValue(field: SchemaFieldInfo, indent: number): string {
  */
 export function isScaffoldSupportedFormat(format: string): boolean {
     const normalizedFormat = format.toLowerCase();
-    return normalizedFormat === 'json' || normalizedFormat === 'odata' || normalizedFormat === 'xml';
+    return normalizedFormat === 'json' || normalizedFormat === 'odata' || normalizedFormat === 'xml' || normalizedFormat === 'osch';
 }

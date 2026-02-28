@@ -101,7 +101,7 @@ export interface InputSchemaFieldTreeEvent {
     inputId: string;
     inputName: string;
     fieldTree: SchemaFieldInfo[];
-    schemaFormat: 'jsch' | 'xsd';
+    schemaFormat: 'jsch' | 'xsd' | 'osch';
 }
 
 /**

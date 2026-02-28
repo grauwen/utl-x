@@ -15,6 +15,7 @@ export { CSVTreeStrategy } from './csv-tree-strategy';
 export { AVROTreeStrategy } from './avro-tree-strategy';
 export { ProtoTreeStrategy } from './proto-tree-strategy';
 export { ODataTreeStrategy } from './odata-tree-strategy';
+export { OSchTreeStrategy } from './osch-tree-strategy';
 
 import { FormatTreeStrategy } from './format-tree-strategy';
 import { XMLTreeStrategy } from './xml-tree-strategy';
@@ -26,11 +27,12 @@ import { CSVTreeStrategy } from './csv-tree-strategy';
 import { AVROTreeStrategy } from './avro-tree-strategy';
 import { ProtoTreeStrategy } from './proto-tree-strategy';
 import { ODataTreeStrategy } from './odata-tree-strategy';
+import { OSchTreeStrategy } from './osch-tree-strategy';
 
 /**
  * Get the appropriate tree building strategy for a given format
  *
- * @param format Format string (xml, xsd, json, jsch, yaml, csv, avro, proto)
+ * @param format Format string (xml, xsd, json, jsch, yaml, csv, avro, proto, odata, osch)
  * @returns Format-specific strategy instance
  * @throws Error if format is not recognized (all IDE formats should be defined)
  */
@@ -64,6 +66,9 @@ export function getStrategyForFormat(format: string): FormatTreeStrategy {
 
         case 'odata':
             return new ODataTreeStrategy();
+
+        case 'osch':
+            return new OSchTreeStrategy();
 
         default:
             // All formats should be explicitly defined in IDE

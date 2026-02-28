@@ -28,14 +28,14 @@ import {
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
 import { inferSchemaFromJson, inferSchemaFromXml, formatSchema } from '../utils/schema-inferrer';
-import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
+import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 
 // Input panel format types (separate from protocol types)
 // Data formats - used for actual data instances
 export type InputDataFormatType = 'csv' | 'json' | 'xml' | 'yaml' | 'odata';
 
 // Schema formats - used for schema definitions
-export type InputSchemaFormatType = 'xsd' | 'jsch' | 'avro' | 'proto';
+export type InputSchemaFormatType = 'xsd' | 'jsch' | 'avro' | 'proto' | 'osch';
 
 // All 8 formats (tier1 data + tier2 schema formats)
 export type AllInputFormats = InputDataFormatType | InputSchemaFormatType;
@@ -380,15 +380,16 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 ) : (
                                     // Runtime mode + Design-Time Instance tab: all 8 formats
                                     <>
-                                        <option value='csv'>csv</option>
                                         <option value='json'>json</option>
-                                        <option value='odata'>odata</option>
                                         <option value='xml'>xml</option>
                                         <option value='yaml'>yaml</option>
-                                        <option value='xsd'>xsd</option>
+                                        <option value='csv'>csv</option>
+                                        <option value='odata'>odata</option>
                                         <option value='jsch'>jsch</option>
+                                        <option value='xsd'>xsd</option>
                                         <option value='avro'>avro</option>
                                         <option value='proto'>proto</option>
+                                        <option value='osch'>osch</option>
                                     </>
                                 )}
                             </select>
@@ -576,10 +577,14 @@ export class MultiInputPanelWidget extends ReactWidget {
             case 'yaml':
             case 'odata':
                 return [
-                    <option key='jsch' value='jsch'>jsch</option>
+                    <option key='jsch' value='jsch'>jsch</option>,
+                    <option key='osch' value='osch'>osch</option>
                 ];
             case 'xml':
-                return [<option key='xsd' value='xsd'>xsd</option>];
+                return [
+                    <option key='xsd' value='xsd'>xsd</option>,
+                    <option key='osch' value='osch'>osch</option>
+                ];
             case 'csv':
                 return [<option key='tsch' value='tsch'>tsch (not implemented yet)</option>];
             default:
@@ -589,10 +594,10 @@ export class MultiInputPanelWidget extends ReactWidget {
 
     /**
      * Check if schema tab should be disabled (blurred)
-     * Schema formats (xsd, jsch, avro, proto) when selected as instance should blur the schema tab
+     * Schema formats (xsd, jsch, avro, proto, osch) when selected as instance should blur the schema tab
      */
     private isSchemaTabDisabled(instanceFormat: InstanceFormat | SchemaFormatType): boolean {
-        return ['xsd', 'jsch', 'avro', 'proto'].includes(instanceFormat);
+        return ['xsd', 'jsch', 'avro', 'proto', 'osch'].includes(instanceFormat);
     }
 
     private getPlaceholder(input: InputTab, activeSubTab: 'instance' | 'schema'): string {
@@ -609,6 +614,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                     return '{\n  "type": "record",\n  "name": "Example",\n  "fields": [\n    ...\n  ]\n}';
                 case 'proto':
                     return 'syntax = "proto3";\n\nmessage Example {\n  ...\n}';
+                case 'osch':
+                    return '<?xml version="1.0" encoding="utf-8"?>\n<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">\n  <edmx:DataServices>\n    <Schema Namespace="Example" xmlns="http://docs.oasis-open.org/odata/ns/edm">\n      ...\n    </Schema>\n  </edmx:DataServices>\n</edmx:Edmx>';
                 default:
                     return 'Paste or load your schema here...';
             }
@@ -631,6 +638,10 @@ export class MultiInputPanelWidget extends ReactWidget {
                     return '{\n  "type": "record",\n  "name": "Example",\n  "fields": [\n    ...\n  ]\n}';
                 case 'proto':
                     return 'syntax = "proto3";\n\nmessage Example {\n  ...\n}';
+                case 'odata':
+                    return '{\n  "@odata.context": "$metadata#Products",\n  "value": [\n    { "ID": 1, "Name": "Widget" }\n  ]\n}';
+                case 'osch':
+                    return '<?xml version="1.0" encoding="utf-8"?>\n<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">\n  <edmx:DataServices>\n    <Schema Namespace="Example" xmlns="http://docs.oasis-open.org/odata/ns/edm">\n      <EntityType Name="Product">\n        <Key>\n          <PropertyRef Name="ID"/>\n        </Key>\n        <Property Name="ID" Type="Edm.Int32" Nullable="false"/>\n        <Property Name="Name" Type="Edm.String"/>\n      </EntityType>\n    </Schema>\n  </edmx:DataServices>\n</edmx:Edmx>';
                 default:
                     return 'Paste or load your input data here...';
             }
@@ -866,9 +877,17 @@ export class MultiInputPanelWidget extends ReactWidget {
         const trimmed = content.trim();
         if (!trimmed) return null;
 
+        // EDMX/CSDL detection - OData metadata has specific namespace and elements
+        // Must check BEFORE generic XML since EDMX is XML
+        const withoutComments = trimmed.replace(/<!--[\s\S]*?-->/g, '').trim();
+        if (/<edmx:Edmx/i.test(trimmed) ||
+            trimmed.includes('docs.oasis-open.org/odata/ns/edmx') ||
+            trimmed.includes('schemas.microsoft.com/ado/2007/06/edmx')) {
+            return 'osch';
+        }
+
         // XSD detection - XML Schema has specific namespace and elements
         // Must check BEFORE generic XML since XSD is XML
-        const withoutComments = trimmed.replace(/<!--[\s\S]*?-->/g, '').trim();
         // XSD must have <xs:schema> or <xsd:schema> or <schema> as ROOT element with XMLSchema namespace
         // Don't confuse with regular XML that just uses xmlns:xsi for validation
         if (/<xs:schema|<xsd:schema/i.test(trimmed) ||
@@ -1287,6 +1306,9 @@ export class MultiInputPanelWidget extends ReactWidget {
             } else if (input.schemaFormat === 'xsd') {
                 fieldTree = parseXsdToFieldTree(input.schemaContent);
                 console.log('[MultiInputPanel] Parsed XSD, got', fieldTree.length, 'top-level fields');
+            } else if (input.schemaFormat === 'osch') {
+                fieldTree = parseOSchToFieldTree(input.schemaContent);
+                console.log('[MultiInputPanel] Parsed EDMX/CSDL, got', fieldTree.length, 'top-level fields');
             } else {
                 console.warn('[MultiInputPanel] Schema format not supported for field tree:', input.schemaFormat);
                 return;
@@ -1889,8 +1911,10 @@ export class MultiInputPanelWidget extends ReactWidget {
                 return '.avsc,.avro,.json';
             case 'proto':
                 return '.proto';
+            case 'osch':
+                return '.edmx,.xml';
             default:
-                return '.xsd,.json,.avsc,.proto';
+                return '.xsd,.json,.avsc,.proto,.edmx';
         }
     }
 
@@ -1918,6 +1942,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                 return 'avro';
             case 'proto':
                 return 'proto';
+            case 'edmx':
+                return 'osch';
             case 'jsonschema':
             case 'schema':
                 return 'jsch';
@@ -1971,6 +1997,7 @@ export class MultiInputPanelWidget extends ReactWidget {
             'csv': 'csv',
             'json': 'json',
             'odata': 'odata',
+            'osch': 'osch',
             'xml': 'xml',
             'yaml': 'yaml',
             'xsd': 'xsd',
@@ -2004,7 +2031,8 @@ export class MultiInputPanelWidget extends ReactWidget {
             'xsd': 'xsd',
             'jsch': 'jsch',
             'avro': 'avro',
-            'proto': 'proto'
+            'proto': 'proto',
+            'osch': 'osch'
         };
         return formatMap[format] || 'jsch';
     }

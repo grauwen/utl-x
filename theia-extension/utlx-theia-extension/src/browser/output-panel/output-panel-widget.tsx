@@ -22,7 +22,7 @@ import {
     OUTPUT_PANEL_ID
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
-import { SchemaFieldInfo, parseJsonSchemaToFieldTree, parseXsdToFieldTree } from '../utils/schema-field-tree-parser';
+import { SchemaFieldInfo, parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree } from '../utils/schema-field-tree-parser';
 import { isScaffoldSupportedFormat } from '../utils/scaffold-generator';
 
 export interface OutputPanelState {
@@ -255,15 +255,16 @@ export class OutputPanelWidget extends ReactWidget {
                             value={currentFormat || 'json'}
                             onChange={(e) => this.handleFormatChange((e.target as HTMLSelectElement).value)}
                         >
-                            <option value='csv'>csv</option>
                             <option value='json'>json</option>
-                            <option value='odata'>odata</option>
                             <option value='xml'>xml</option>
                             <option value='yaml'>yaml</option>
-                            <option value='xsd'>xsd %USDL 1.0</option>
+                            <option value='csv'>csv</option>
+                            <option value='odata'>odata</option>
                             <option value='jsch'>jsch %USDL 1.0</option>
+                            <option value='xsd'>xsd %USDL 1.0</option>
                             <option value='avro'>avro %USDL 1.0</option>
                             <option value='proto'>proto %USDL 1.0</option>
+                            <option value='osch'>osch %USDL 1.0</option>
                         </select>
                     </label>
 
@@ -890,6 +891,7 @@ export class OutputPanelWidget extends ReactWidget {
             case 'jsch':
             case 'avro':
             case 'proto':
+            case 'osch':
                 return null; // Schema formats can't have schemas
             default:
                 return null;
@@ -905,7 +907,7 @@ export class OutputPanelWidget extends ReactWidget {
         if (!instanceFormat) return false;
 
         // Disable schema tab for schema formats (can't have schema of schema)
-        return ['xsd', 'jsch', 'avro', 'proto'].includes(instanceFormat);
+        return ['xsd', 'jsch', 'avro', 'proto', 'osch'].includes(instanceFormat);
     }
 
     /**
@@ -1140,6 +1142,12 @@ export class OutputPanelWidget extends ReactWidget {
                 if (fields.length > 0) {
                     console.log('[OutputPanelWidget] Using XSD, fields:', fields.length);
                     return { fields, format: 'xml' };
+                }
+            } else if (schemaFormat === 'osch') {
+                const fields = parseOSchToFieldTree(this.state.schemaContent);
+                if (fields.length > 0) {
+                    console.log('[OutputPanelWidget] Using EDMX/CSDL, fields:', fields.length);
+                    return { fields, format: 'json' };
                 }
             }
         }

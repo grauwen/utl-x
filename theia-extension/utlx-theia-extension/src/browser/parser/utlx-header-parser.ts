@@ -54,17 +54,17 @@ const PATTERNS = {
     // input name format OR input name format {options}
     // Allow hyphens in input names: [a-zA-Z_][a-zA-Z0-9_-]*
     // Note: odata must appear before json/xml to prevent partial match on 'o' in input names
-    SINGLE_INPUT: /^input\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|odata|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
+    SINGLE_INPUT: /^input\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|odata|osch|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
 
     // input: name1 format1, name2 format2, ...
     MULTI_INPUT: /^input:\s*(.+)$/,
 
     // Individual input in multi-input: name format {options}
     // Allow hyphens in input names: [a-zA-Z_][a-zA-Z0-9_-]*
-    INPUT_PART: /([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|odata|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/g,
+    INPUT_PART: /([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|odata|osch|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/g,
 
     // output format OR output format {options}
-    OUTPUT: /^output\s+(csv|odata|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
+    OUTPUT: /^output\s+(csv|odata|osch|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
 
     // CSV options
     CSV_HEADERS: /headers:\s*(true|false)/,
