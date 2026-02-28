@@ -13,6 +13,7 @@ import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.yaml.YAMLParser
 import org.apache.utlx.formats.xsd.XSDParser
 import org.apache.utlx.formats.jsch.JSONSchemaParser
+import org.apache.utlx.formats.odata.ODataJSONParser
 import java.io.File
 import org.jline.reader.LineReaderBuilder
 import org.jline.reader.LineReader

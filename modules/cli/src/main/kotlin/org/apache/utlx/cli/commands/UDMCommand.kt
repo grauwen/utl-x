@@ -209,7 +209,7 @@ object UDMCommand {
             |
             |REQUIRED FLAGS:
             |  --format <format>     Input data format
-            |                        Formats: json, xml, csv, yaml, jsonschema, xsd, avro, protobuf
+            |                        Formats: json, xml, csv, yaml, odata, jsch, xsd, avro, proto
             |
             |OPTIONAL FLAGS:
             |  --input <file>        Input file path (default: stdin)
@@ -346,7 +346,7 @@ object UDMCommand {
             |
             |REQUIRED FLAGS:
             |  --format <format>     Output data format
-            |                        Formats: json, xml, csv, yaml, jsonschema, xsd, avro, protobuf
+            |                        Formats: json, xml, csv, yaml, odata, jsch, xsd, avro, proto
             |
             |OPTIONAL FLAGS:
             |  --input <file>        Input .udm file path (default: stdin)
@@ -739,7 +739,7 @@ object UDMCommand {
             |  utlx udm <subcommand> --help
             |
             |Supported formats:
-            |  json, xml, csv, yaml, jsonschema, xsd, avro, protobuf
+            |  json, xml, csv, yaml, odata, jsch, xsd, avro, proto
         """.trimMargin())
     }
 }
