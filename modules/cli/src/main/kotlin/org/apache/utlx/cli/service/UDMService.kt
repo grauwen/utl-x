@@ -14,6 +14,8 @@ import org.apache.utlx.formats.jsch.JSONSchemaParser
 import org.apache.utlx.formats.jsch.JSONSchemaSerializer
 import org.apache.utlx.formats.json.JSONParser
 import org.apache.utlx.formats.json.JSONSerializer
+import org.apache.utlx.formats.odata.ODataJSONParser
+import org.apache.utlx.formats.odata.ODataJSONSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
 import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
 import org.apache.utlx.formats.xml.XMLParser
@@ -46,7 +48,7 @@ class UDMService {
          */
         val SUPPORTED_FORMATS = listOf(
             // Tier 1
-            "json", "xml", "csv", "yaml",
+            "json", "xml", "csv", "yaml", "odata",
             // Tier 2
             "jsch", "xsd", "avro", "proto"
         )
@@ -83,7 +85,12 @@ class UDMService {
         val pattern: String? = null,  // "russian-doll", "salami-slice", etc.
 
         // Avro options
-        val validate: Boolean? = null
+        val validate: Boolean? = null,
+
+        // OData JSON options
+        val odataMetadata: String? = null,    // "minimal", "full", "none"
+        val odataContext: String? = null,      // @odata.context URL
+        val odataWrapCollection: Boolean? = null  // Wrap arrays in { "value": [...] }
     ) {
         /**
          * Convert to Map<String, Any> for internal use
@@ -101,6 +108,9 @@ class UDMService {
             namespace?.let { put("namespace", it) }
             pattern?.let { put("pattern", it) }
             validate?.let { put("validate", it) }
+            odataMetadata?.let { put("metadata", it) }
+            odataContext?.let { put("context", it) }
+            odataWrapCollection?.let { put("wrapCollection", it) }
         }
     }
 
@@ -244,6 +254,10 @@ class UDMService {
                 JSONParser(content).parse()
             }
 
+            "odata" -> {
+                ODataJSONParser(content, options).parse()
+            }
+
             "xml" -> {
                 val arrayHints = (options["arrayHints"] as? String)
                     ?.split(",")?.map { it.trim() }?.toSet() ?: emptySet()
@@ -296,6 +310,10 @@ class UDMService {
         return when (format.lowercase()) {
             "json" -> {
                 JSONSerializer(prettyPrint = true).serialize(udm)
+            }
+
+            "odata" -> {
+                ODataJSONSerializer(options).serialize(udm)
             }
 
             "xml" -> {

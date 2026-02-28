@@ -46,6 +46,7 @@ include("formats:xsd")
 include("formats:jsch")
 include("formats:avro")
 include("formats:protobuf")
+include("formats:odata")
 //include("formats:plugin")
 
 // Standard library
