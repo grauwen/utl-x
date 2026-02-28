@@ -202,9 +202,16 @@ class JSONParser(private val source: Reader) {
         }
         
         val numStr = text.substring(start, current)
-        val value = numStr.toDoubleOrNull() 
+
+        // Try integer first (preserves Int64 precision)
+        if (!numStr.contains('.') && !numStr.contains('e') && !numStr.contains('E')) {
+            numStr.toLongOrNull()?.let { return UDM.Scalar.number(it) }
+        }
+
+        // Fall back to Double for decimals and scientific notation
+        val value = numStr.toDoubleOrNull()
             ?: throw JSONParseException("Invalid number: $numStr", line, column)
-        
+
         return UDM.Scalar.number(value)
     }
     

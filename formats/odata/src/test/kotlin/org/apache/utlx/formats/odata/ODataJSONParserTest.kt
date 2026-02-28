@@ -87,7 +87,7 @@ class ODataJSONParserTest {
 
             // All three data properties present
             result.properties.size shouldBe 3
-            (result.properties["ID"] as UDM.Scalar).value shouldBe 1.0
+            (result.properties["ID"] as UDM.Scalar).value shouldBe 1L
             (result.properties["Name"] as UDM.Scalar).value shouldBe "Widget"
             (result.properties["Price"] as UDM.Scalar).value shouldBe 29.99
         }
@@ -139,7 +139,7 @@ class ODataJSONParserTest {
             result.shouldBeInstanceOf<UDM.Object>()
             val obj = result as UDM.Object
             obj.attributes["odata.context"] shouldNotBe null
-            obj.attributes["odata.count"] shouldBe "42.0"
+            obj.attributes["odata.count"] shouldBe "42"
 
             val valueArr = obj.properties["value"] as UDM.Array
             valueArr.elements.size shouldBe 1
