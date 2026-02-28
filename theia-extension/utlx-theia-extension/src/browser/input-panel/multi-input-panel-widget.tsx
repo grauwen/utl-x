@@ -64,8 +64,6 @@ export interface InputTab {
     // CSV-specific parameters
     csvHeaders?: boolean;      // Default true
     csvDelimiter?: string;     // Default ","
-    // OData-specific parameters
-    odataMetadata?: 'minimal' | 'full' | 'none';  // Default "minimal"
     // Encoding parameters (COMMENTED OUT - encoding/BOM are auto-detected for inputs, not manually set)
     // encoding?: string;         // Character encoding (UTF-8, UTF-16LE, UTF-16BE, ISO-8859-1, Windows-1252)
     // bom?: boolean;             // Byte Order Mark (default false)
@@ -424,22 +422,6 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     </select>
                                 </label>
                             </>
-                        )}
-
-                        {/* OData-specific parameters - shown inline to the right of format */}
-                        {currentFormat === 'odata' && activeSubTab === 'instance' && (
-                            <label>
-                                Metadata:
-                                <select
-                                    value={activeInput.odataMetadata || 'minimal'}
-                                    onChange={(e) => this.handleOdataMetadataChange(e.target.value as 'minimal' | 'full' | 'none')}
-                                    disabled={loading}
-                                >
-                                    <option value='minimal'>Minimal</option>
-                                    <option value='full'>Full</option>
-                                    <option value='none'>None</option>
-                                </select>
-                            </label>
                         )}
 
                         {/* Encoding parameters - shown for all formats in instance tab */}
@@ -1374,27 +1356,6 @@ export class MultiInputPanelWidget extends ReactWidget {
         });
     }
 
-    private handleOdataMetadataChange(metadata: 'minimal' | 'full' | 'none'): void {
-        this.setState({
-            inputs: this.state.inputs.map(input =>
-                input.id === this.state.activeInputId
-                    ? {
-                        ...input,
-                        odataMetadata: metadata
-                    }
-                    : input
-            )
-        });
-
-        // Fire event to notify about OData parameter change
-        this.eventService.fireInputFormatChanged({
-            format: 'odata',
-            isSchema: false,
-            inputId: this.state.activeInputId,
-            odataMetadata: metadata
-        });
-    }
-
     // ENCODING/BOM HANDLERS COMMENTED OUT - These are for outputs, not inputs (inputs auto-detect encoding/BOM)
     // Keeping code here in case we want to use it for output panel later
     /*
@@ -1786,8 +1747,15 @@ export class MultiInputPanelWidget extends ReactWidget {
                     // Determine if we're loading into instance or schema
                     const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
 
-                    // Auto-detect format from file extension
+                    // Auto-detect format: start with file extension, then refine with content analysis
                     let detectedFormat = this.detectFormatFromFilename(file.name);
+
+                    // Content-based detection is more specific than filename for specialized formats
+                    // e.g., OData JSON files have .json extension but content reveals @odata.* markers
+                    const contentDetectedFormat = this.detectContentFormat(content);
+                    if (contentDetectedFormat) {
+                        detectedFormat = contentDetectedFormat as InstanceFormat | SchemaFormatType;
+                    }
 
                     // Special handling for schema tab: .json files are JSON Schema (jsch)
                     if (isSchema && detectedFormat === 'json') {
@@ -1795,10 +1763,12 @@ export class MultiInputPanelWidget extends ReactWidget {
                     }
 
                     console.log('[MultiInputPanel] ════════════════════════════════════════');
-                    console.log('[MultiInputPanel] FILE LOAD - Setting format from extension');
+                    console.log('[MultiInputPanel] FILE LOAD - Format detection');
                     console.log('[MultiInputPanel] File:', file.name);
                     console.log('[MultiInputPanel] isSchema:', isSchema);
-                    console.log('[MultiInputPanel] Detected format from extension:', detectedFormat || 'none');
+                    console.log('[MultiInputPanel] Format from filename:', this.detectFormatFromFilename(file.name) || 'none');
+                    console.log('[MultiInputPanel] Format from content:', contentDetectedFormat || 'none');
+                    console.log('[MultiInputPanel] Final detected format:', detectedFormat || 'none');
                     console.log('[MultiInputPanel] Current format in state:', this.state.inputs.find(i => i.id === this.state.activeInputId)?.instanceFormat);
                     console.log('[MultiInputPanel] ════════════════════════════════════════');
 
@@ -1983,14 +1953,13 @@ export class MultiInputPanelWidget extends ReactWidget {
      * Get all input tabs (for header generation)
      * PUBLIC: Called by frontend contribution for UTLX header generation
      */
-    public getAllInputTabs(): Array<{id: string; name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string; odataMetadata?: string}> {
+    public getAllInputTabs(): Array<{id: string; name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string}> {
         return this.state.inputs.map(input => ({
             id: input.id,
             name: input.name,
             format: input.instanceFormat,
             csvHeaders: input.csvHeaders,
-            csvDelimiter: input.csvDelimiter,
-            odataMetadata: input.odataMetadata
+            csvDelimiter: input.csvDelimiter
         }));
     }
 

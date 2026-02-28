@@ -14,7 +14,6 @@ export interface ParsedInput {
     csvHeaders?: boolean;
     csvDelimiter?: string;
     xmlArrays?: string[];
-    odataMetadata?: 'minimal' | 'full' | 'none';
 }
 
 /**
