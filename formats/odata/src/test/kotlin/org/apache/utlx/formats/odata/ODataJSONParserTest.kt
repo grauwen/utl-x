@@ -46,7 +46,7 @@ class ODataJSONParserTest {
         }
 
         @Test
-        fun `per-property @odata annotations extracted in full mode`() {
+        fun `per-property @odata annotations always extracted as attributes`() {
             val json = """
                 {
                     "Name": "Widget",
@@ -54,7 +54,7 @@ class ODataJSONParserTest {
                 }
             """.trimIndent()
 
-            val result = ODataJSONParser(json, mapOf("metadata" to "full")).parse()
+            val result = ODataJSONParser(json).parse()
 
             result.shouldBeInstanceOf<UDM.Object>()
             val obj = result as UDM.Object
@@ -180,47 +180,47 @@ class ODataJSONParserTest {
         }
     }
 
-    // ==================== Metadata Levels ====================
+    // ==================== Full Extraction ====================
 
     @Nested
-    @DisplayName("Metadata Levels")
-    inner class MetadataLevels {
-
-        private val odataJson = """
-            {
-                "@odata.context": "${'$'}metadata#Products/${'$'}entity",
-                "@odata.type": "#Products.Product",
-                "ID": 1,
-                "Name": "Widget"
-            }
-        """.trimIndent()
+    @DisplayName("Full Annotation Extraction")
+    inner class FullExtraction {
 
         @Test
-        fun `minimal mode extracts annotations as attributes`() {
-            val result = ODataJSONParser(odataJson, mapOf("metadata" to "minimal")).parse() as UDM.Object
+        fun `all annotations always extracted as attributes`() {
+            val odataJson = """
+                {
+                    "@odata.context": "${'$'}metadata#Products/${'$'}entity",
+                    "@odata.type": "#Products.Product",
+                    "ID": 1,
+                    "Name": "Widget"
+                }
+            """.trimIndent()
 
-            result.attributes["odata.context"] shouldNotBe null
-            result.attributes["odata.type"] shouldBe "#Products.Product"
-            result.properties.size shouldBe 2
-        }
-
-        @Test
-        fun `none mode treats OData keys as regular properties`() {
-            val result = ODataJSONParser(odataJson, mapOf("metadata" to "none")).parse() as UDM.Object
-
-            // No attributes should be set — annotations stay as properties
-            result.attributes.isEmpty() shouldBe true
-            result.properties.containsKey("@odata.context") shouldBe true
-            result.properties.containsKey("@odata.type") shouldBe true
-            result.properties.containsKey("ID") shouldBe true
-            result.properties.containsKey("Name") shouldBe true
-        }
-
-        @Test
-        fun `default metadata level is minimal`() {
             val result = ODataJSONParser(odataJson).parse() as UDM.Object
 
-            // Default behavior = minimal: annotations as attributes
+            // All annotations extracted as attributes
+            result.attributes["odata.context"] shouldNotBe null
+            result.attributes["odata.type"] shouldBe "#Products.Product"
+
+            // Only data properties remain
+            result.properties.size shouldBe 2
+            result.properties.containsKey("@odata.context") shouldBe false
+            result.properties.containsKey("@odata.type") shouldBe false
+        }
+
+        @Test
+        fun `options parameter is accepted but metadata level is ignored`() {
+            val odataJson = """
+                {
+                    "@odata.context": "${'$'}metadata#Products/${'$'}entity",
+                    "ID": 1
+                }
+            """.trimIndent()
+
+            // Parser accepts options map for forward compatibility but always does full extraction
+            val result = ODataJSONParser(odataJson, mapOf("someOption" to "value")).parse() as UDM.Object
+
             result.attributes.containsKey("odata.context") shouldBe true
             result.properties.containsKey("@odata.context") shouldBe false
         }

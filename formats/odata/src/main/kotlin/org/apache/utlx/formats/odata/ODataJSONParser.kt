@@ -14,25 +14,18 @@ import org.apache.utlx.formats.json.JSONParser
  * - { "value": [...] } collection wrapper unwrapped to UDM.Array
  * - Property@odata.* per-property annotations stored as attributes
  *
- * Metadata levels:
- * - "minimal" (default): Parse @odata.* as UDM attributes, expose only data properties
- * - "full": Same as minimal but also preserves @odata.type per-property annotations
- * - "none": Treat as plain JSON — @odata.* properties become regular data fields
+ * The parser always performs full extraction — all OData annotations
+ * (top-level and per-property) are preserved as UDM attributes.
+ * No information is lost at parse time. The metadata level (minimal,
+ * full, none) is an output concern handled by ODataJSONSerializer.
  */
 class ODataJSONParser(
     private val content: String,
     private val options: Map<String, Any> = emptyMap()
 ) {
-    private val metadataLevel: String = (options["metadata"] as? String) ?: "minimal"
-
     fun parse(): UDM {
         // Step 1: Parse as standard JSON
         val udm = JSONParser(content).parse()
-
-        // If metadata=none, treat as plain JSON (no OData processing)
-        if (metadataLevel == "none") {
-            return udm
-        }
 
         // Step 2: Post-process UDM tree for OData annotations
         return processNode(udm)
@@ -88,20 +81,18 @@ class ODataJSONParser(
             }
         }
 
-        // Apply per-property annotations to their target properties (for "full" metadata)
-        if (metadataLevel == "full") {
-            for ((propName, annotations) in perPropertyAnnotations) {
-                val prop = dataProperties[propName]
-                if (prop is UDM.Object) {
-                    val mergedAttrs = prop.attributes.toMutableMap()
-                    mergedAttrs.putAll(annotations)
-                    dataProperties[propName] = UDM.Object(
-                        properties = prop.properties,
-                        attributes = mergedAttrs,
-                        name = prop.name,
-                        metadata = prop.metadata
-                    )
-                }
+        // Apply per-property annotations to their target properties
+        for ((propName, annotations) in perPropertyAnnotations) {
+            val prop = dataProperties[propName]
+            if (prop is UDM.Object) {
+                val mergedAttrs = prop.attributes.toMutableMap()
+                mergedAttrs.putAll(annotations)
+                dataProperties[propName] = UDM.Object(
+                    properties = prop.properties,
+                    attributes = mergedAttrs,
+                    name = prop.name,
+                    metadata = prop.metadata
+                )
             }
         }
 
