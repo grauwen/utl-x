@@ -63,6 +63,10 @@ export interface OutputPanelState {
     */
     // XML-specific output parameters
     xmlEncoding?: string;      // Default "UTF-8"
+    // OData-specific output parameters
+    odataMetadata?: 'minimal' | 'full' | 'none';  // Default "minimal"
+    odataContext?: string;           // @odata.context URL
+    odataWrapCollection?: boolean;   // Default true
 }
 
 @injectable()
@@ -253,6 +257,7 @@ export class OutputPanelWidget extends ReactWidget {
                         >
                             <option value='csv'>csv</option>
                             <option value='json'>json</option>
+                            <option value='odata'>odata</option>
                             <option value='xml'>xml</option>
                             <option value='yaml'>yaml</option>
                             <option value='xsd'>xsd %USDL 1.0</option>
@@ -317,6 +322,43 @@ export class OutputPanelWidget extends ReactWidget {
                                 <option value='Windows-1252'>Windows-1252</option>
                             </select>
                         </label>
+                    )}
+
+                    {/* OData-specific parameters */}
+                    {currentFormat === 'odata' && activeTab === 'instance' && (
+                        <>
+                            <label>
+                                Metadata:
+                                <select
+                                    value={this.state.odataMetadata || 'minimal'}
+                                    onChange={(e) => this.handleOdataMetadataChange(e.target.value as 'minimal' | 'full' | 'none')}
+                                >
+                                    <option value='minimal'>Minimal</option>
+                                    <option value='full'>Full</option>
+                                    <option value='none'>None</option>
+                                </select>
+                            </label>
+                            <label>
+                                Context:
+                                <input
+                                    type='text'
+                                    value={this.state.odataContext || ''}
+                                    onChange={(e) => this.handleOdataContextChange(e.target.value)}
+                                    placeholder='$metadata#Entity'
+                                    style={{width: '160px'}}
+                                />
+                            </label>
+                            <label>
+                                Wrap Collection:
+                                <select
+                                    value={this.state.odataWrapCollection === false ? 'false' : 'true'}
+                                    onChange={(e) => this.handleOdataWrapCollectionChange(e.target.value === 'true')}
+                                >
+                                    <option value='true'>Yes</option>
+                                    <option value='false'>No</option>
+                                </select>
+                            </label>
+                        </>
                     )}
 
                     <label>
@@ -623,6 +665,7 @@ export class OutputPanelWidget extends ReactWidget {
     private getInstanceFileExtensions(format: string): string[] {
         switch (format) {
             case 'json': return ['json'];
+            case 'odata': return ['json'];
             case 'xml': return ['xml'];
             case 'csv': return ['csv', 'tsv'];
             case 'yaml': return ['yaml', 'yml'];
@@ -652,6 +695,8 @@ export class OutputPanelWidget extends ReactWidget {
     private getFileExtension(format?: string): string {
         switch (format) {
             case 'json':
+                return '.json';
+            case 'odata':
                 return '.json';
             case 'xml':
                 return '.xml';
@@ -742,6 +787,39 @@ export class OutputPanelWidget extends ReactWidget {
         });
     }
 
+    private handleOdataMetadataChange(metadata: 'minimal' | 'full' | 'none'): void {
+        this.setState({ odataMetadata: metadata });
+        this.eventService.fireOutputFormatChanged({
+            format: 'odata',
+            tab: this.state.activeTab,
+            odataMetadata: metadata,
+            odataContext: this.state.odataContext,
+            odataWrapCollection: this.state.odataWrapCollection
+        });
+    }
+
+    private handleOdataContextChange(context: string): void {
+        this.setState({ odataContext: context || undefined });
+        this.eventService.fireOutputFormatChanged({
+            format: 'odata',
+            tab: this.state.activeTab,
+            odataMetadata: this.state.odataMetadata,
+            odataContext: context || undefined,
+            odataWrapCollection: this.state.odataWrapCollection
+        });
+    }
+
+    private handleOdataWrapCollectionChange(wrap: boolean): void {
+        this.setState({ odataWrapCollection: wrap });
+        this.eventService.fireOutputFormatChanged({
+            format: 'odata',
+            tab: this.state.activeTab,
+            odataMetadata: this.state.odataMetadata,
+            odataContext: this.state.odataContext,
+            odataWrapCollection: wrap
+        });
+    }
+
     /**
      * Handle "Infer Schema" button click
      * Fires event for frontend-contribution to execute schema inference
@@ -802,6 +880,7 @@ export class OutputPanelWidget extends ReactWidget {
         switch (instanceFormat) {
             case 'json':
             case 'yaml':
+            case 'odata':
                 return 'jsch';
             case 'xml':
                 return 'xsd';
@@ -957,6 +1036,9 @@ export class OutputPanelWidget extends ReactWidget {
         csvDelimiter?: string;
         csvBom?: boolean;
         xmlEncoding?: string;
+        odataMetadata?: 'minimal' | 'full' | 'none';
+        odataContext?: string;
+        odataWrapCollection?: boolean;
     } {
         const format = this.state.instanceFormat || 'json';
 
@@ -965,7 +1047,10 @@ export class OutputPanelWidget extends ReactWidget {
             csvHeaders: this.state.csvHeaders,
             csvDelimiter: this.state.csvDelimiter,
             csvBom: this.state.csvBom,
-            xmlEncoding: this.state.xmlEncoding
+            xmlEncoding: this.state.xmlEncoding,
+            odataMetadata: this.state.odataMetadata,
+            odataContext: this.state.odataContext,
+            odataWrapCollection: this.state.odataWrapCollection
         };
     }
 
@@ -979,6 +1064,9 @@ export class OutputPanelWidget extends ReactWidget {
         csvDelimiter?: string;
         csvBom?: boolean;
         xmlEncoding?: string;
+        odataMetadata?: 'minimal' | 'full' | 'none';
+        odataContext?: string;
+        odataWrapCollection?: boolean;
     }): void {
         console.log('[OutputPanelWidget] Syncing from headers:', parsedOutput);
 
@@ -988,7 +1076,10 @@ export class OutputPanelWidget extends ReactWidget {
             csvHeaders: parsedOutput.csvHeaders,
             csvDelimiter: parsedOutput.csvDelimiter,
             csvBom: parsedOutput.csvBom,
-            xmlEncoding: parsedOutput.xmlEncoding
+            xmlEncoding: parsedOutput.xmlEncoding,
+            odataMetadata: parsedOutput.odataMetadata,
+            odataContext: parsedOutput.odataContext,
+            odataWrapCollection: parsedOutput.odataWrapCollection
         });
 
         console.log('[OutputPanelWidget] Synced to format:', parsedOutput.format);
@@ -1057,7 +1148,7 @@ export class OutputPanelWidget extends ReactWidget {
         if (this.state.instanceContent && this.state.instanceFormat) {
             const instanceFormat = this.state.instanceFormat.toLowerCase();
 
-            if (instanceFormat === 'json') {
+            if (instanceFormat === 'json' || instanceFormat === 'odata') {
                 const fields = this.parseJsonInstanceToFields(this.state.instanceContent);
                 if (fields && fields.length > 0) {
                     console.log('[OutputPanelWidget] Using JSON instance, fields:', fields.length);

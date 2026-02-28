@@ -31,6 +31,8 @@ export interface InputFormatChangedEvent {
     // CSV-specific parameters
     csvHeaders?: boolean;
     csvDelimiter?: string;
+    // OData-specific parameters
+    odataMetadata?: 'minimal' | 'full' | 'none';
 }
 
 /**
@@ -116,6 +118,10 @@ export interface OutputFormatChangedEvent {
     csvBom?: boolean;
     // XML-specific options
     xmlEncoding?: string;
+    // OData-specific options
+    odataMetadata?: 'minimal' | 'full' | 'none';
+    odataContext?: string;
+    odataWrapCollection?: boolean;
 }
 
 /**

@@ -14,6 +14,7 @@ export { YAMLTreeStrategy } from './yaml-tree-strategy';
 export { CSVTreeStrategy } from './csv-tree-strategy';
 export { AVROTreeStrategy } from './avro-tree-strategy';
 export { ProtoTreeStrategy } from './proto-tree-strategy';
+export { ODataTreeStrategy } from './odata-tree-strategy';
 
 import { FormatTreeStrategy } from './format-tree-strategy';
 import { XMLTreeStrategy } from './xml-tree-strategy';
@@ -24,6 +25,7 @@ import { YAMLTreeStrategy } from './yaml-tree-strategy';
 import { CSVTreeStrategy } from './csv-tree-strategy';
 import { AVROTreeStrategy } from './avro-tree-strategy';
 import { ProtoTreeStrategy } from './proto-tree-strategy';
+import { ODataTreeStrategy } from './odata-tree-strategy';
 
 /**
  * Get the appropriate tree building strategy for a given format
@@ -59,6 +61,9 @@ export function getStrategyForFormat(format: string): FormatTreeStrategy {
 
         case 'proto':
             return new ProtoTreeStrategy();
+
+        case 'odata':
+            return new ODataTreeStrategy();
 
         default:
             // All formats should be explicitly defined in IDE

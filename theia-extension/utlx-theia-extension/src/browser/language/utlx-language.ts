@@ -59,7 +59,7 @@ export class UTLXLanguageGrammarContribution implements LanguageGrammarDefinitio
 
             // Data format keywords
             formats: [
-                'json', 'xml', 'yaml', 'csv', 'avro', 'proto', 'xsd', 'jsch'
+                'json', 'xml', 'yaml', 'csv', 'avro', 'proto', 'xsd', 'jsch', 'odata', 'osch'
             ],
 
             // Only actual UTLX operators
@@ -80,7 +80,7 @@ export class UTLXLanguageGrammarContribution implements LanguageGrammarDefinitio
 
                     // Everything else in header is blue (keyword color)
                     // Except format keywords which are purple
-                    [/\b(json|xml|yaml|csv|avro|proto|xsd|jsch)\b/, 'type'],
+                    [/\b(json|xml|yaml|csv|avro|proto|xsd|jsch|odata|osch)\b/, 'type'],
 
                     // Version numbers
                     [/\d+\.\d+/, 'number'],

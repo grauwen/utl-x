@@ -162,9 +162,9 @@ function generateFieldValue(field: SchemaFieldInfo, indent: number): string {
 
 /**
  * Check if format is supported for scaffolding
- * Only JSON and XML are supported (CSV excluded)
+ * JSON, OData (JSON-based), and XML are supported (CSV excluded)
  */
 export function isScaffoldSupportedFormat(format: string): boolean {
     const normalizedFormat = format.toLowerCase();
-    return normalizedFormat === 'json' || normalizedFormat === 'xml';
+    return normalizedFormat === 'json' || normalizedFormat === 'odata' || normalizedFormat === 'xml';
 }

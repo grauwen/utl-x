@@ -32,7 +32,7 @@ import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, SchemaFieldInfo } from
 
 // Input panel format types (separate from protocol types)
 // Data formats - used for actual data instances
-export type InputDataFormatType = 'csv' | 'json' | 'xml' | 'yaml';
+export type InputDataFormatType = 'csv' | 'json' | 'xml' | 'yaml' | 'odata';
 
 // Schema formats - used for schema definitions
 export type InputSchemaFormatType = 'xsd' | 'jsch' | 'avro' | 'proto';
@@ -64,6 +64,8 @@ export interface InputTab {
     // CSV-specific parameters
     csvHeaders?: boolean;      // Default true
     csvDelimiter?: string;     // Default ","
+    // OData-specific parameters
+    odataMetadata?: 'minimal' | 'full' | 'none';  // Default "minimal"
     // Encoding parameters (COMMENTED OUT - encoding/BOM are auto-detected for inputs, not manually set)
     // encoding?: string;         // Character encoding (UTF-8, UTF-16LE, UTF-16BE, ISO-8859-1, Windows-1252)
     // bom?: boolean;             // Byte Order Mark (default false)
@@ -382,6 +384,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     <>
                                         <option value='csv'>csv</option>
                                         <option value='json'>json</option>
+                                        <option value='odata'>odata</option>
                                         <option value='xml'>xml</option>
                                         <option value='yaml'>yaml</option>
                                         <option value='xsd'>xsd</option>
@@ -421,6 +424,22 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     </select>
                                 </label>
                             </>
+                        )}
+
+                        {/* OData-specific parameters - shown inline to the right of format */}
+                        {currentFormat === 'odata' && activeSubTab === 'instance' && (
+                            <label>
+                                Metadata:
+                                <select
+                                    value={activeInput.odataMetadata || 'minimal'}
+                                    onChange={(e) => this.handleOdataMetadataChange(e.target.value as 'minimal' | 'full' | 'none')}
+                                    disabled={loading}
+                                >
+                                    <option value='minimal'>Minimal</option>
+                                    <option value='full'>Full</option>
+                                    <option value='none'>None</option>
+                                </select>
+                            </label>
                         )}
 
                         {/* Encoding parameters - shown for all formats in instance tab */}
@@ -573,6 +592,7 @@ export class MultiInputPanelWidget extends ReactWidget {
         switch (instanceFormat) {
             case 'json':
             case 'yaml':
+            case 'odata':
                 return [
                     <option key='jsch' value='jsch'>jsch</option>
                 ];
@@ -845,6 +865,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                 return 'xsd';
             case 'json':
             case 'yaml':
+            case 'odata':
                 return 'jsch';
             case 'csv':
                 return 'jsch'; // Default to jsch, though tsch is mentioned in design
@@ -892,8 +913,7 @@ export class MultiInputPanelWidget extends ReactWidget {
             return 'xml';
         }
 
-        // JSON Schema detection - check BEFORE generic JSON
-        // JSON Schema has "$schema" property
+        // JSON Schema / OData / generic JSON detection
         if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
             try {
                 const parsed = JSON.parse(trimmed);
@@ -905,6 +925,11 @@ export class MultiInputPanelWidget extends ReactWidget {
                         parsed.definitions ||
                         parsed.$defs) {
                         return 'jsch';
+                    }
+                    // Check for OData JSON markers (@odata.context, @odata.type, @odata.id)
+                    if (parsed['@odata.context'] || parsed['@odata.type'] || parsed['@odata.id'] ||
+                        (parsed.value && Array.isArray(parsed.value) && parsed['@odata.context'])) {
+                        return 'odata';
                     }
                 }
                 // Regular JSON
@@ -1346,6 +1371,27 @@ export class MultiInputPanelWidget extends ReactWidget {
             inputId: this.state.activeInputId,
             csvHeaders: activeInput?.csvHeaders,
             csvDelimiter: delimiter
+        });
+    }
+
+    private handleOdataMetadataChange(metadata: 'minimal' | 'full' | 'none'): void {
+        this.setState({
+            inputs: this.state.inputs.map(input =>
+                input.id === this.state.activeInputId
+                    ? {
+                        ...input,
+                        odataMetadata: metadata
+                    }
+                    : input
+            )
+        });
+
+        // Fire event to notify about OData parameter change
+        this.eventService.fireInputFormatChanged({
+            format: 'odata',
+            isSchema: false,
+            inputId: this.state.activeInputId,
+            odataMetadata: metadata
         });
     }
 
@@ -1937,13 +1983,14 @@ export class MultiInputPanelWidget extends ReactWidget {
      * Get all input tabs (for header generation)
      * PUBLIC: Called by frontend contribution for UTLX header generation
      */
-    public getAllInputTabs(): Array<{id: string; name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string}> {
+    public getAllInputTabs(): Array<{id: string; name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string; odataMetadata?: string}> {
         return this.state.inputs.map(input => ({
             id: input.id,
             name: input.name,
             format: input.instanceFormat,
             csvHeaders: input.csvHeaders,
-            csvDelimiter: input.csvDelimiter
+            csvDelimiter: input.csvDelimiter,
+            odataMetadata: input.odataMetadata
         }));
     }
 
@@ -1954,6 +2001,7 @@ export class MultiInputPanelWidget extends ReactWidget {
         const formatMap: { [key: string]: DataFormat } = {
             'csv': 'csv',
             'json': 'json',
+            'odata': 'odata',
             'xml': 'xml',
             'yaml': 'yaml',
             'xsd': 'xsd',

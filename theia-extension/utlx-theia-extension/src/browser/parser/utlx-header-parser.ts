@@ -14,6 +14,7 @@ export interface ParsedInput {
     csvHeaders?: boolean;
     csvDelimiter?: string;
     xmlArrays?: string[];
+    odataMetadata?: 'minimal' | 'full' | 'none';
 }
 
 /**
@@ -25,6 +26,9 @@ export interface ParsedOutput {
     csvDelimiter?: string;
     csvBom?: boolean;
     xmlEncoding?: string;
+    odataMetadata?: 'minimal' | 'full' | 'none';
+    odataContext?: string;
+    odataWrapCollection?: boolean;
 }
 
 /**
@@ -50,17 +54,18 @@ const PATTERNS = {
 
     // input name format OR input name format {options}
     // Allow hyphens in input names: [a-zA-Z_][a-zA-Z0-9_-]*
-    SINGLE_INPUT: /^input\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
+    // Note: odata must appear before json/xml to prevent partial match on 'o' in input names
+    SINGLE_INPUT: /^input\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|odata|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
 
     // input: name1 format1, name2 format2, ...
     MULTI_INPUT: /^input:\s*(.+)$/,
 
     // Individual input in multi-input: name format {options}
     // Allow hyphens in input names: [a-zA-Z_][a-zA-Z0-9_-]*
-    INPUT_PART: /([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/g,
+    INPUT_PART: /([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|odata|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/g,
 
     // output format OR output format {options}
-    OUTPUT: /^output\s+(csv|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
+    OUTPUT: /^output\s+(csv|odata|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
 
     // CSV options
     CSV_HEADERS: /headers:\s*(true|false)/,
@@ -69,7 +74,12 @@ const PATTERNS = {
 
     // XML options
     XML_ENCODING: /encoding:\s*"([^"]+)"/,
-    XML_ARRAYS: /arrays:\s*\[([^\]]+)\]/
+    XML_ARRAYS: /arrays:\s*\[([^\]]+)\]/,
+
+    // OData JSON options
+    ODATA_METADATA: /metadata:\s*"(minimal|full|none)"/,
+    ODATA_CONTEXT: /context:\s*"([^"]+)"/,
+    ODATA_WRAP_COLLECTION: /wrapCollection:\s*(true|false)/
 };
 
 /**
@@ -82,6 +92,9 @@ function parseOptions(optionsStr: string | undefined): {
     csvBom?: boolean;
     xmlEncoding?: string;
     xmlArrays?: string[];
+    odataMetadata?: 'minimal' | 'full' | 'none';
+    odataContext?: string;
+    odataWrapCollection?: boolean;
 } {
     if (!optionsStr) {
         return {};
@@ -123,6 +136,24 @@ function parseOptions(optionsStr: string | undefined): {
         options.xmlArrays = arraysMatch[1]
             .split(',')
             .map(s => s.trim().replace(/^["']|["']$/g, ''));
+    }
+
+    // Parse OData metadata level
+    const metadataMatch = optionsStr.match(PATTERNS.ODATA_METADATA);
+    if (metadataMatch) {
+        options.odataMetadata = metadataMatch[1] as 'minimal' | 'full' | 'none';
+    }
+
+    // Parse OData context URL
+    const contextMatch = optionsStr.match(PATTERNS.ODATA_CONTEXT);
+    if (contextMatch) {
+        options.odataContext = contextMatch[1];
+    }
+
+    // Parse OData wrapCollection
+    const wrapMatch = optionsStr.match(PATTERNS.ODATA_WRAP_COLLECTION);
+    if (wrapMatch) {
+        options.odataWrapCollection = wrapMatch[1] === 'true';
     }
 
     return options;
