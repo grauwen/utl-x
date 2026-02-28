@@ -756,3 +756,23 @@ OData's dual nature as both metadata description and exchange format creates two
 | OData type facet mapping | ~1 day | Precision, Scale, MaxLength → USDL constraints |
 | Navigation property support | ~1-2 days | Relationship modeling in transforms |
 | **Total** | **~7-12 days** | Full bidirectional support |
+
+### OData Annotations in UTLX Expressions
+
+OData control annotations (`@odata.context`, `@odata.type`, `@odata.id`, etc.) need special handling in UTLX expressions. UTLX uses the `@` prefix to set **UDM attributes** — the same mechanism used for XML attribute output. For OData, the dotted annotation names require **quoted string keys**:
+
+```utlx
+// XML output — unquoted, simple attribute names:
+{ @currency: "USD" }
+
+// OData output — quoted, dotted annotation names:
+{ "@odata.type": "#Products.Product", "@odata.id": "Products(1)" }
+```
+
+Both forms use the same underlying mechanism: the UTLX parser (`parser_impl.kt:1118-1134`) treats any quoted key starting with `@` as a UDM attribute, stripping the `@` prefix. So `"@odata.type"` sets the UDM attribute `odata.type`, which the OData serializer writes as the JSON key `@odata.type`.
+
+**Three methods for OData annotations reaching output:**
+
+1. **Header options** — The `odata` serializer auto-injects annotations from format options (e.g., `%option odata.context "$metadata#Products/$entity"`)
+2. **Attribute passthrough** — When both input and output are `odata`, annotations parsed as UDM attributes pass through automatically
+3. **Manual expression** — Explicitly set annotations using quoted `"@odata.*"` keys in the UTLX expression body

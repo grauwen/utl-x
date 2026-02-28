@@ -60,3 +60,21 @@ Referenced in the SAP IDoc integration study as a transformation path: SAP Gatew
 - `docs/design/usdl-syntax-rationale.md` — most comprehensive analysis (EDMX mapping, examples, compatibility)
 - `docs/language-guide/universal-schema-dsl.md` — tier status, directive docs
 - `docs/idoc/sap-idoc-integration-study.md` — SAP Gateway context
+
+## OData Tier 1 Implementation Status
+
+**Tier 1 (OData JSON data format) is implemented.** The `odata` format is registered in the parser/serializer dispatch and supports OData JSON payloads as both transformation input and output.
+
+Key implementation details:
+- Format name: `odata` (used in UTLX headers as `input odata` / `output odata`)
+- Parser: `ODataJSONParser.kt` — parses OData JSON, maps `@odata.*` annotations to UDM attributes
+- Serializer: `ODataJSONSerializer.kt` — serializes UDM to OData-compliant JSON with control annotations
+- Tree strategy: `odata-tree-strategy.ts` — filters `@odata.*` from property display
+
+**OData annotations in UTLX expressions** use quoted string keys with the `@` prefix. Since `@` sets UDM attributes (the same mechanism used for XML attributes), dotted OData annotation names require quoting:
+
+```utlx
+{ "@odata.type": "#Products.Product", "@odata.id": "Products(1)" }
+```
+
+The parser (`parser_impl.kt:1118-1134`) handles this — quoted keys starting with `@` are treated as attributes with the prefix stripped. See `docs/architecture/odata-v4-implementation-plan.md` section 1.7 for full details.

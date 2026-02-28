@@ -71,7 +71,7 @@ OData JSON payloads are valid JSON. The difference is semantic:
 
 **Approach: Extend the existing JSON parser, don't create a separate format.**
 
-OData JSON is declared via the UTLX header `input odata-json` (or `input json` with auto-detection). The JSON parser gains an OData-aware mode that:
+OData JSON is declared via the UTLX header `input odata` (or `input json` with auto-detection). The JSON parser gains an OData-aware mode that:
 
 1. Recognizes `@odata.*` annotations and maps them to UDM attributes (not properties)
 2. Strips or preserves annotations based on a format option
@@ -94,7 +94,7 @@ Extends JSONParser with:
 
 **Parser dispatch addition in `UDMService.kt`:**
 ```kotlin
-"odata-json", "odata" -> ODataJSONParser(content, options).parse()
+"odata" -> ODataJSONParser(content, options).parse()
 ```
 
 ### 1.3 Backend: OData JSON Serializer Extension
@@ -112,7 +112,7 @@ Extends JSONSerializer with:
 
 **Serializer dispatch addition in `UDMService.kt`:**
 ```kotlin
-"odata-json", "odata" -> ODataJSONSerializer(options).serialize(udm)
+"odata" -> ODataJSONSerializer(options).serialize(udm)
 ```
 
 ### 1.4 Format Options for OData JSON
@@ -130,15 +130,15 @@ val odataCollectionWrap: Boolean? = null    // Wrap output in { "value": [...] }
 
 **Protocol type additions (`protocol.ts`):**
 ```typescript
-export type DataFormat = '...' | 'odata-json';
-export type Tier1Format = '...' | 'odata-json';
+export type DataFormat = '...' | 'odata';
+export type Tier1Format = '...' | 'odata';
 ```
 
 **Input panel (`multi-input-panel-widget.tsx`):**
-- Add `'odata-json'` to `InputDataFormatType`
-- Auto-detect: if JSON content contains `@odata.context`, suggest `odata-json`
+- Add `'odata'` to `InputDataFormatType`
+- Auto-detect: if JSON content contains `@odata.context`, suggest `odata`
 
-**Tree strategy (`strategies/odata-json-tree-strategy.ts`):**
+**Tree strategy (`strategies/odata-tree-strategy.ts`):**
 ```
 Extends JSONTreeStrategy with:
 - Filter @odata.* from property display (show as attributes instead)
@@ -150,7 +150,7 @@ Extends JSONTreeStrategy with:
 
 ```utlx
 %utlx 1.0
-input odata-json          # OData JSON payload (auto-strips @odata.*)
+input odata          # OData JSON payload (auto-strips @odata.*)
 output json               # Output as plain JSON
 ---
 {
@@ -164,14 +164,54 @@ Or used as output:
 ```utlx
 %utlx 1.0
 input json
-output odata-json         # Produces OData-compliant JSON
+output odata         # Produces OData-compliant JSON
 ---
 {
-  @odata.context: "$metadata#Products/$entity",
+  "@odata.context": "$metadata#Products/$entity",
   ID: $input.id,
   Name: $input.name
 }
 ```
+
+### 1.7 OData Annotations in UTLX Expressions
+
+OData `@odata.*` annotations use **dotted names** (e.g., `@odata.context`, `@odata.type`). In UTLX, the `@` prefix is the general mechanism for setting **UDM attributes** — the same mechanism used for XML attributes in XML output. The key question is: how do dotted annotation names work?
+
+**The answer: quoted string keys with the `@` prefix.**
+
+UTLX's parser (`parser_impl.kt:1118-1134`) already supports quoted property names. When a quoted key starts with `@`, it is treated as an attribute — exactly like the unquoted `@attr` syntax used for simple XML attributes. This means:
+
+```utlx
+// XML output — unquoted, simple attribute names:
+{ @currency: "USD" }              // → UDM attribute "currency" = "USD"
+
+// OData output — quoted, dotted annotation names:
+{ "@odata.type": "#Products.Product" }  // → UDM attribute "odata.type" = "#Products.Product"
+```
+
+Both forms use the same underlying UDM attribute mechanism. The quoted form is necessary because dotted names like `odata.context` cannot be expressed as bare identifiers.
+
+**Three methods for OData annotations reaching output:**
+
+1. **Header options** — The `odata` format serializer can auto-inject annotations based on format options:
+   ```utlx
+   %utlx 1.0
+   output odata
+   %option odata.context "$metadata#Products/$entity"
+   ```
+
+2. **Attribute passthrough** — When both input and output are `odata`, annotations parsed as UDM attributes pass through automatically.
+
+3. **Manual expression** — Explicitly set annotations using the quoted `@` syntax:
+   ```utlx
+   {
+     "@odata.context": "$metadata#Products/$entity",
+     "@odata.type": "#Products.Product",
+     "@odata.id": "Products(" + $input.ID + ")",
+     ID: $input.ID,
+     Name: $input.Name
+   }
+   ```
 
 ---
 
@@ -506,21 +546,21 @@ Handle OData JSON payloads as a first-class data format.
 |------|------|-------------|
 | 3.1 | `formats/json/.../ODataJSONParser.kt` | OData JSON → UDM (annotation-aware) |
 | 3.2 | `formats/json/.../ODataJSONSerializer.kt` | UDM → OData JSON (with control info) |
-| 3.3 | `modules/cli/.../UDMService.kt` | Register `"odata-json"` in dispatch |
+| 3.3 | `modules/cli/.../UDMService.kt` | Register `"odata"` in dispatch |
 | 3.4 | `formats/json/src/test/...` | Tests with OData JSON samples |
 
-**Deliverable:** `input odata-json` in UTLX header works; `@odata.*` annotations handled correctly.
+**Deliverable:** `input odata` in UTLX header works; `@odata.*` annotations handled correctly.
 
 ### Phase 4: OData JSON Frontend Integration (Tier 1 — Data, UI)
 **Effort: 1-2 days**
 
 | Step | File | Description |
 |------|------|-------------|
-| 4.1 | `protocol.ts` | Add `'odata-json'` to Tier1Format |
-| 4.2 | `multi-input-panel-widget.tsx` | Add `'odata-json'` to data format dropdown |
-| 4.3 | `strategies/odata-json-tree-strategy.ts` | Tree strategy filtering `@odata.*` |
+| 4.1 | `protocol.ts` | Add `'odata'` to Tier1Format |
+| 4.2 | `multi-input-panel-widget.tsx` | Add `'odata'` to data format dropdown |
+| 4.3 | `strategies/odata-tree-strategy.ts` | Tree strategy filtering `@odata.*` |
 | 4.4 | `strategies/index.ts` | Register strategy |
-| 4.5 | Auto-detection logic | Detect `@odata.context` in JSON → suggest odata-json |
+| 4.5 | Auto-detection logic | Detect `@odata.context` in JSON → suggest odata |
 
 **Deliverable:** Full round-trip: load OData JSON → transform → output.
 
@@ -633,14 +673,14 @@ formats/json/src/main/kotlin/org/apache/utlx/formats/json/
 theia-extension/utlx-theia-extension/src/browser/
 ├── function-builder/strategies/
 │   ├── edmx-tree-strategy.ts          # FormatTreeStrategy for EDMX
-│   └── odata-json-tree-strategy.ts    # FormatTreeStrategy for OData JSON
+│   └── odata-tree-strategy.ts    # FormatTreeStrategy for OData JSON
 ```
 
 ### Modified Files
 
 ```
 Backend (Kotlin):
-  modules/cli/.../UDMService.kt            # Add odata-json, edmx to dispatch
+  modules/cli/.../UDMService.kt            # Add odata, edmx to dispatch
   modules/daemon/.../RestApiServer.kt      # Verify format support
   schema/.../USDL10.kt                     # New OData directives
   schema/.../DirectiveRegistry.kt          # Update compatibility matrix
