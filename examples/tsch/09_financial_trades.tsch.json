@@ -1,0 +1,119 @@
+{
+  "fields": [
+    {
+      "name": "trade_id",
+      "type": "string",
+      "description": "Unique trade identifier",
+      "example": "TRD-20240115-00001",
+      "constraints": {
+        "required": true,
+        "pattern": "^TRD-[0-9]{8}-[0-9]{5}$"
+      }
+    },
+    {
+      "name": "trade_datetime",
+      "type": "datetime",
+      "description": "Trade execution timestamp (ISO 8601)",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "trader_id",
+      "type": "string",
+      "description": "Identifier of the executing trader",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "instrument",
+      "type": "string",
+      "description": "Traded instrument ticker or symbol",
+      "example": "AAPL",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "instrument_type",
+      "type": "string",
+      "description": "Type of financial instrument",
+      "constraints": {
+        "required": true,
+        "enum": ["equity", "fx", "commodity", "bond", "option", "future"]
+      }
+    },
+    {
+      "name": "trade_type",
+      "type": "string",
+      "description": "Direction of the trade",
+      "constraints": {
+        "required": true,
+        "enum": ["buy", "sell"]
+      }
+    },
+    {
+      "name": "quantity",
+      "type": "integer",
+      "description": "Number of units traded",
+      "constraints": {
+        "required": true,
+        "minimum": 1
+      }
+    },
+    {
+      "name": "price",
+      "type": "number",
+      "description": "Execution price per unit",
+      "constraints": {
+        "required": true,
+        "minimum": 0.0001
+      }
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "description": "Settlement currency (ISO 4217)",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "exchange",
+      "type": "string",
+      "description": "Exchange or venue where the trade was executed",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "description": "Current trade status",
+      "constraints": {
+        "required": true,
+        "enum": ["pending", "filled", "partially_filled", "cancelled", "rejected"]
+      }
+    },
+    {
+      "name": "tags",
+      "type": "array",
+      "description": "Trade classification tags (JSON array)",
+      "example": "[\"algo\", \"momentum\"]",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "execution_details",
+      "type": "object",
+      "description": "Execution metadata — broker, desk, etc. (JSON object)",
+      "example": "{\"broker\": \"GS\", \"desk\": \"EQ-US\"}",
+      "constraints": {
+        "required": true
+      }
+    }
+  ],
+  "primaryKey": "trade_id"
+}

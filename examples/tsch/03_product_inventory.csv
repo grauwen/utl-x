@@ -1,0 +1,11 @@
+sku,product_name,category,quantity_on_hand,reorder_point,unit_cost,list_price,is_active,warehouse
+SKU-10001,Wireless Mouse,Electronics,342,50,12.50,29.99,yes,Warehouse-A
+SKU-10002,Mechanical Keyboard,Electronics,128,30,35.00,89.99,yes,Warehouse-A
+SKU-10003,USB-C Hub,Electronics,215,40,18.75,49.99,yes,Warehouse-B
+SKU-10004,Monitor Stand,Furniture,87,20,14.00,34.99,yes,Warehouse-A
+SKU-10005,Desk Lamp,Furniture,64,15,17.50,42.99,yes,Warehouse-B
+SKU-10006,Webcam HD,Electronics,193,35,22.00,59.99,yes,Warehouse-A
+SKU-10007,HDMI Cable,Accessories,512,100,3.25,12.99,yes,Warehouse-B
+SKU-10008,Laptop Sleeve,Accessories,276,60,7.00,19.99,yes,Warehouse-A
+SKU-10009,Ergonomic Chair,Furniture,12,5,120.00,299.99,yes,Warehouse-C
+SKU-10010,VGA Adapter,Accessories,0,25,2.50,9.99,no,Warehouse-B

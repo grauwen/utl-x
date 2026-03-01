@@ -1,0 +1,9 @@
+trade_id,trade_datetime,trader_id,instrument,instrument_type,trade_type,quantity,price,currency,exchange,status,tags,execution_details
+TRD-20240115-00001,2024-01-15T09:30:15Z,TRADER-042,AAPL,equity,buy,500,185.50,USD,NASDAQ,filled,"[""algo"",""momentum""]","{""broker"":""GS"",""desk"":""EQ-US""}"
+TRD-20240115-00002,2024-01-15T09:31:02Z,TRADER-017,EUR/USD,fx,sell,100000,1.0892,USD,FOREX,filled,"[""manual""]","{""broker"":""JPM"",""desk"":""FX-G10""}"
+TRD-20240115-00003,2024-01-15T09:45:30Z,TRADER-042,MSFT,equity,buy,200,390.25,USD,NASDAQ,filled,"[""algo"",""value""]","{""broker"":""GS"",""desk"":""EQ-US""}"
+TRD-20240115-00004,2024-01-15T10:12:00Z,TRADER-008,GC=F,commodity,buy,10,2028.40,USD,COMEX,filled,"[""manual"",""hedge""]","{""broker"":""MS"",""desk"":""CMDTY""}"
+TRD-20240115-00005,2024-01-15T10:30:45Z,TRADER-017,GBP/JPY,fx,buy,50000,188.75,JPY,FOREX,filled,"[""manual""]","{""broker"":""JPM"",""desk"":""FX-EM""}"
+TRD-20240115-00006,2024-01-15T11:00:00Z,TRADER-008,AAPL,equity,sell,300,186.10,USD,NASDAQ,partially_filled,"[""algo""]","{""broker"":""GS"",""desk"":""EQ-US""}"
+TRD-20240115-00007,2024-01-15T11:15:22Z,TRADER-042,TSLA,equity,buy,150,220.00,USD,NASDAQ,pending,"[""algo"",""momentum""]","{""broker"":""GS"",""desk"":""EQ-US""}"
+TRD-20240115-00008,2024-01-15T13:05:00Z,TRADER-017,USD/CHF,fx,sell,75000,0.8612,CHF,FOREX,cancelled,"[]","{""broker"":""JPM"",""desk"":""FX-G10""}"

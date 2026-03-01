@@ -1,0 +1,9 @@
+invoice_number,line_number,customer_id,product_description,quantity,unit_price,line_total,tax_rate,invoice_date,due_date
+INV-2024-0001,1,CUST-1001,Wireless Mouse (bulk),10,"24,99","249,90","0,08",15/01/2024,14/02/2024
+INV-2024-0001,2,CUST-1001,USB-C Hub,5,"44,99","224,95","0,08",15/01/2024,14/02/2024
+INV-2024-0001,3,CUST-1001,HDMI Cable,20,"10,99","219,80","0,08",15/01/2024,14/02/2024
+INV-2024-0002,1,CUST-1007,Ergonomic Chair,2,"269,99","539,98","0,08",18/01/2024,17/02/2024
+INV-2024-0002,2,CUST-1007,Monitor Stand,4,"29,99","119,96","0,08",18/01/2024,17/02/2024
+INV-2024-0003,1,CUST-1002,Mechanical Keyboard,3,"79,99","239,97","0,06",20/01/2024,19/02/2024
+INV-2024-0003,2,CUST-1002,Webcam HD,3,"54,99","164,97","0,06",20/01/2024,19/02/2024
+INV-2024-0004,1,CUST-1006,Desk Lamp,8,"38,99","311,92","0,07",22/01/2024,21/02/2024

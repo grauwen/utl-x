@@ -1,0 +1,9 @@
+transaction_id,transaction_datetime,customer_id,product_name,quantity,unit_price,total_amount,payment_method,store_location
+f47ac10b-58cc-4372-a567-0e02b2c3d479,2024-01-15T09:32:00Z,CUST-1001,Wireless Mouse,2,29.99,59.98,credit_card,Downtown
+a3bb189e-8bf9-4c82-9b55-f201dcf3052e,2024-01-15T10:15:00Z,CUST-1042,USB-C Hub,1,49.99,49.99,debit_card,Mall
+9c4e8612-d20f-4a33-b0f7-6514fc3e9a71,2024-01-15T11:45:00Z,CUST-1015,Mechanical Keyboard,1,89.99,89.99,credit_card,Downtown
+b7d14ef5-3a8c-41e9-bc6d-8f29ea5c7d02,2024-01-15T14:20:00Z,CUST-1001,Monitor Stand,1,34.99,34.99,cash,Downtown
+e1f26c90-7d4b-4a19-8935-2d4718ec65af,2024-01-16T08:05:00Z,CUST-1078,Laptop Sleeve,3,19.99,59.97,mobile_pay,Airport
+d82c4fb3-6e15-4890-a7c2-93b5d0f41e87,2024-01-16T12:30:00Z,CUST-1023,Webcam HD,1,59.99,59.99,credit_card,Mall
+c5a93d71-8b02-4f67-9de4-a1b0c2d3e4f5,2024-01-16T15:50:00Z,CUST-1042,HDMI Cable,2,12.99,25.98,debit_card,Mall
+ae6f8b24-1c39-4d7e-b5a0-f6e7d8c9b0a1,2024-01-17T09:10:00Z,CUST-1056,Desk Lamp,1,42.99,42.99,credit_card,Online

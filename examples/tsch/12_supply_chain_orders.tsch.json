@@ -1,0 +1,135 @@
+{
+  "fields": [
+    {
+      "name": "po_number",
+      "type": "string",
+      "description": "Purchase order number",
+      "constraints": {
+        "required": true,
+        "pattern": "^PO-[0-9]{4}-[0-9]{5}$"
+      }
+    },
+    {
+      "name": "supplier_id",
+      "type": "string",
+      "description": "Supplier identifier",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "warehouse_id",
+      "type": "string",
+      "description": "Destination warehouse identifier",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "item_description",
+      "type": "string",
+      "description": "Description of the ordered item",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "quantity",
+      "type": "integer",
+      "description": "Number of units ordered",
+      "bareNumber": true,
+      "constraints": {
+        "required": true,
+        "minimum": 1
+      }
+    },
+    {
+      "name": "unit_cost",
+      "type": "number",
+      "description": "Cost per unit in USD",
+      "constraints": {
+        "required": true,
+        "minimum": 0.01
+      }
+    },
+    {
+      "name": "total_cost",
+      "type": "number",
+      "description": "Total order cost in USD",
+      "constraints": {
+        "required": true,
+        "minimum": 0.01
+      }
+    },
+    {
+      "name": "order_date",
+      "type": "date",
+      "description": "Date the purchase order was placed",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "expected_delivery",
+      "type": "date",
+      "description": "Expected delivery date",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "description": "Order status",
+      "constraints": {
+        "required": true,
+        "enum": ["pending", "confirmed", "in_transit", "delivered", "cancelled"]
+      }
+    },
+    {
+      "name": "priority",
+      "type": "string",
+      "description": "Order priority level",
+      "constraints": {
+        "required": true,
+        "enum": ["low", "normal", "high", "critical"]
+      }
+    },
+    {
+      "name": "is_expedited",
+      "type": "boolean",
+      "description": "Whether the order requires expedited shipping",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "notes",
+      "type": "any",
+      "description": "Free-form notes field (any value accepted without type coercion)"
+    },
+    {
+      "name": "attachment_data",
+      "type": "string",
+      "format": "binary",
+      "description": "Base64-encoded attachment document"
+    }
+  ],
+  "primaryKey": "po_number",
+  "foreignKeys": [
+    {
+      "fields": ["supplier_id"],
+      "reference": {
+        "resource": "suppliers",
+        "fields": ["supplier_id"]
+      }
+    },
+    {
+      "fields": ["warehouse_id"],
+      "reference": {
+        "resource": "warehouses",
+        "fields": ["warehouse_id"]
+      }
+    }
+  ]
+}

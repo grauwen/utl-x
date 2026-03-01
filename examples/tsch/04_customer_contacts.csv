@@ -1,0 +1,9 @@
+customer_id,company_name,contact_name,email,phone,website,customer_type,status,is_verified,signup_date
+CUST-1001,Acme Corp,Alice Martin,alice.martin@acmecorp.com,+15550101,https://www.acmecorp.com,enterprise,active,true,2021-03-10
+CUST-1002,Beta Inc,Bob Rivera,bob.rivera@betainc.com,+15550102,https://www.betainc.com,small_business,active,true,2021-06-22
+CUST-1003,,Carlos Diaz,carlos.diaz@email.com,+15550103,,individual,active,false,2022-01-15
+CUST-1004,Gamma LLC,Diana Okafor,diana.okafor@gammallc.com,+15550104,https://www.gammallc.com,enterprise,inactive,true,2020-09-01
+CUST-1005,,Erik Svensson,erik.svensson@email.com,+15550105,,individual,active,true,2022-08-30
+CUST-1006,Delta Systems,Fatima Al-Rashid,fatima@deltasys.com,+15550106,https://deltasys.com,small_business,active,true,2023-02-14
+CUST-1007,Epsilon Group,George Tanaka,george.tanaka@epsilongrp.com,+15550107,https://www.epsilongrp.com,enterprise,active,true,2019-11-20
+CUST-1008,,Hannah Lee,hannah.lee@email.com,+15550108,,individual,suspended,false,2023-07-05

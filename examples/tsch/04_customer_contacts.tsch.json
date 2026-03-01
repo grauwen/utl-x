@@ -1,0 +1,104 @@
+{
+  "fields": [
+    {
+      "name": "customer_id",
+      "title": "Customer ID",
+      "type": "string",
+      "description": "Unique customer identifier",
+      "rdfType": "https://schema.org/identifier",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "company_name",
+      "title": "Company Name",
+      "type": "string",
+      "description": "Company name (for business customers)",
+      "rdfType": "https://schema.org/legalName",
+      "constraints": {
+        "maxLength": 200
+      }
+    },
+    {
+      "name": "contact_name",
+      "title": "Contact Name",
+      "type": "string",
+      "description": "Primary contact person name",
+      "rdfType": "https://schema.org/name",
+      "constraints": {
+        "required": true,
+        "minLength": 2,
+        "maxLength": 150
+      }
+    },
+    {
+      "name": "email",
+      "title": "Email",
+      "type": "string",
+      "format": "email",
+      "description": "Contact email address",
+      "rdfType": "https://schema.org/email",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "phone",
+      "title": "Phone",
+      "type": "string",
+      "description": "Contact phone number",
+      "rdfType": "https://schema.org/telephone",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "website",
+      "title": "Website",
+      "type": "string",
+      "format": "uri",
+      "description": "Company website URL",
+      "rdfType": "https://schema.org/url"
+    },
+    {
+      "name": "customer_type",
+      "title": "Customer Type",
+      "type": "string",
+      "description": "Type of customer",
+      "constraints": {
+        "required": true,
+        "enum": ["individual", "small_business", "enterprise"]
+      }
+    },
+    {
+      "name": "status",
+      "title": "Status",
+      "type": "string",
+      "description": "Account status",
+      "constraints": {
+        "required": true,
+        "enum": ["active", "inactive", "suspended"]
+      }
+    },
+    {
+      "name": "is_verified",
+      "title": "Verified",
+      "type": "boolean",
+      "description": "Whether the contact information has been verified",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "signup_date",
+      "title": "Signup Date",
+      "type": "date",
+      "description": "Date the customer account was created",
+      "constraints": {
+        "required": true
+      }
+    }
+  ],
+  "primaryKey": "customer_id"
+}

@@ -1,0 +1,97 @@
+{
+  "fields": [
+    {
+      "name": "tracking_number",
+      "type": "string",
+      "description": "Carrier tracking number",
+      "example": "1Z999AA10123456784",
+      "constraints": {
+        "required": true,
+        "pattern": "^[A-Z0-9]{18,22}$"
+      }
+    },
+    {
+      "name": "order_id",
+      "type": "string",
+      "description": "Internal order identifier",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "carrier",
+      "type": "string",
+      "description": "Shipping carrier",
+      "example": "UPS",
+      "constraints": {
+        "required": true,
+        "enum": ["UPS", "FedEx", "USPS", "DHL"]
+      }
+    },
+    {
+      "name": "ship_date",
+      "type": "date",
+      "description": "Date the shipment was dispatched",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "estimated_delivery",
+      "type": "date",
+      "description": "Estimated delivery date",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "actual_delivery",
+      "type": "datetime",
+      "description": "Actual delivery date and time (ISO 8601)"
+    },
+    {
+      "name": "weight_kg",
+      "type": "number",
+      "description": "Package weight in kilograms",
+      "example": "2.5",
+      "constraints": {
+        "required": true,
+        "minimum": 0.01,
+        "maximum": 500
+      }
+    },
+    {
+      "name": "origin_location",
+      "type": "geopoint",
+      "description": "Origin GPS coordinates (lon, lat)",
+      "example": "-87.6298, 41.8781",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "destination_location",
+      "type": "geopoint",
+      "description": "Destination GPS coordinates (lon, lat)",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "transit_duration",
+      "type": "duration",
+      "description": "Expected transit duration (ISO 8601 duration)",
+      "example": "P5D"
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "description": "Current shipment status",
+      "constraints": {
+        "required": true,
+        "enum": ["label_created", "picked_up", "in_transit", "customs", "out_for_delivery", "delivered", "returned"]
+      }
+    }
+  ],
+  "primaryKey": "tracking_number"
+}

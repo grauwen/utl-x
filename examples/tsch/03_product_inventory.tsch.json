@@ -1,0 +1,96 @@
+{
+  "fields": [
+    {
+      "name": "sku",
+      "title": "SKU",
+      "type": "string",
+      "description": "Stock keeping unit — unique product identifier",
+      "constraints": {
+        "required": true,
+        "unique": true
+      }
+    },
+    {
+      "name": "product_name",
+      "title": "Product Name",
+      "type": "string",
+      "description": "Product display name",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "category",
+      "title": "Category",
+      "type": "string",
+      "description": "Product category",
+      "constraints": {
+        "required": true,
+        "enum": ["Electronics", "Furniture", "Accessories", "Office Supplies"]
+      }
+    },
+    {
+      "name": "quantity_on_hand",
+      "title": "Quantity on Hand",
+      "type": "integer",
+      "description": "Current stock quantity",
+      "constraints": {
+        "required": true,
+        "minimum": 0
+      }
+    },
+    {
+      "name": "reorder_point",
+      "title": "Reorder Point",
+      "type": "integer",
+      "description": "Threshold at which to reorder",
+      "bareNumber": false,
+      "constraints": {
+        "required": true,
+        "minimum": 0
+      }
+    },
+    {
+      "name": "unit_cost",
+      "title": "Unit Cost (USD)",
+      "type": "number",
+      "description": "Cost per unit in USD",
+      "bareNumber": true,
+      "constraints": {
+        "required": true,
+        "minimum": 0
+      }
+    },
+    {
+      "name": "list_price",
+      "title": "List Price (USD)",
+      "type": "number",
+      "description": "Retail list price in USD",
+      "constraints": {
+        "required": true,
+        "minimum": 0
+      }
+    },
+    {
+      "name": "is_active",
+      "title": "Active",
+      "type": "boolean",
+      "description": "Whether the product is currently active",
+      "trueValues": ["yes", "Yes", "YES", "1"],
+      "falseValues": ["no", "No", "NO", "0"],
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "warehouse",
+      "title": "Warehouse",
+      "type": "string",
+      "description": "Warehouse location",
+      "constraints": {
+        "required": true
+      }
+    }
+  ],
+  "primaryKey": "sku"
+}

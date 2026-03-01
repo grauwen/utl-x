@@ -1,0 +1,9 @@
+listing_id,address,city,state,property_type,bedrooms,bathrooms,square_feet,price,year_built,is_new_construction,status,listing_url,coordinates,list_date
+LST-10001,123 Oak Avenue,Austin,TX,single_family,3,2,1850,425000,1998,false,active,https://listings.example.com/LST-10001,"{""lon"": -97.7431, ""lat"": 30.2672}",2024-01-10
+LST-10002,456 Pine Street Unit 12B,Denver,CO,condo,2,2,1100,310000,2015,false,active,https://listings.example.com/LST-10002,"{""lon"": -104.9903, ""lat"": 39.7392}",2024-01-12
+LST-10003,789 Maple Drive,Portland,OR,townhouse,3,2,1600,385000,2020,false,pending,https://listings.example.com/LST-10003,"{""lon"": -122.6765, ""lat"": 45.5152}",2024-01-08
+LST-10004,101 Cedar Lane,Nashville,TN,single_family,4,3,2400,550000,2023,true,active,https://listings.example.com/LST-10004,"{""lon"": -86.7816, ""lat"": 36.1627}",2024-01-15
+LST-10005,222 Birch Court,Raleigh,NC,single_family,5,4,3200,725000,2005,false,active,https://listings.example.com/LST-10005,"{""lon"": -78.6382, ""lat"": 35.7796}",2024-01-14
+LST-10006,333 Elm Boulevard Unit 5A,Seattle,WA,condo,1,1,750,289000,2018,false,sold,https://listings.example.com/LST-10006,"{""lon"": -122.3321, ""lat"": 47.6062}",2023-12-20
+LST-10007,444 Walnut Street,Charlotte,NC,townhouse,2,2,1350,295000,2019,false,active,https://listings.example.com/LST-10007,"{""lon"": -80.8431, ""lat"": 35.2271}",2024-01-16
+LST-10008,555 Spruce Road,Boise,ID,single_family,3,2,1950,375000,1990,false,withdrawn,https://listings.example.com/LST-10008,"{""lon"": -116.2023, ""lat"": 43.6150}",2023-11-05
