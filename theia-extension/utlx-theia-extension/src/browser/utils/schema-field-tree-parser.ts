@@ -652,42 +652,66 @@ export function parseOSchToFieldTree(edmxContent: string): SchemaFieldInfo[] {
             return [];
         }
 
-        const fields: SchemaFieldInfo[] = [];
+        // Phase 1: Parse all types into a lookup map (by short name)
+        const typeMap = new Map<string, SchemaFieldInfo>();
 
-        // Find EntityType elements (with or without namespace prefix)
         const entityTypes = doc.querySelectorAll('EntityType');
         for (let i = 0; i < entityTypes.length; i++) {
-            const entityType = entityTypes[i];
-            const field = parseEdmxEntityType(entityType, doc);
-            if (field) {
-                fields.push(field);
-            }
+            const field = parseEdmxEntityType(entityTypes[i], doc);
+            if (field) typeMap.set(field.name, field);
         }
 
-        // Find ComplexType elements
         const complexTypes = doc.querySelectorAll('ComplexType');
         for (let i = 0; i < complexTypes.length; i++) {
-            const complexType = complexTypes[i];
-            const field = parseEdmxComplexType(complexType, doc);
-            if (field) {
-                fields.push(field);
-            }
+            const field = parseEdmxComplexType(complexTypes[i], doc);
+            if (field) typeMap.set(field.name, field);
         }
 
-        // Find EnumType elements
         const enumTypes = doc.querySelectorAll('EnumType');
         for (let i = 0; i < enumTypes.length; i++) {
-            const enumType = enumTypes[i];
-            const field = parseEdmxEnumType(enumType);
-            if (field) {
-                fields.push(field);
-            }
+            const field = parseEdmxEnumType(enumTypes[i]);
+            if (field) typeMap.set(field.name, field);
         }
 
-        return fields;
+        // Phase 2: Resolve navigation properties to inline target type fields
+        resolveEdmxNavigationProperties(typeMap);
+
+        return Array.from(typeMap.values());
     } catch (error) {
         console.error('[SchemaParser] Failed to parse EDMX:', error);
         return [];
+    }
+}
+
+/**
+ * Resolve NavigationProperty fields by inlining the target type's fields.
+ * Handles circular references by limiting depth.
+ */
+function resolveEdmxNavigationProperties(typeMap: Map<string, SchemaFieldInfo>): void {
+    for (const typeDef of typeMap.values()) {
+        if (!typeDef.fields) continue;
+        for (let i = 0; i < typeDef.fields.length; i++) {
+            const field = typeDef.fields[i] as SchemaFieldInfo;
+            if (!field.schemaType || !field.schemaType.startsWith('NavigationProperty')) continue;
+
+            // Extract target type name from "NavigationProperty → TypeName"
+            const arrow = field.schemaType.indexOf('→');
+            if (arrow === -1) continue;
+            const targetName = field.schemaType.substring(arrow + 1).trim();
+
+            const targetType = typeMap.get(targetName);
+            if (!targetType || !targetType.fields) continue;
+
+            // Clone target fields (one level deep — no recursive expansion to avoid cycles)
+            field.fields = targetType.fields.map(child => {
+                const clone: SchemaFieldInfo = { ...(child as SchemaFieldInfo) };
+                // Don't recurse into nav properties of the target to avoid infinite nesting
+                if (clone.schemaType && clone.schemaType.startsWith('NavigationProperty')) {
+                    delete clone.fields;
+                }
+                return clone;
+            });
+        }
     }
 }
 

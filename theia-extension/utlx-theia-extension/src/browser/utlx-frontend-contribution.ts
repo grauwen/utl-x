@@ -65,6 +65,7 @@ export class UTLXFrontendContribution implements
     @inject(FileService)
     protected readonly fileService!: FileService;
 
+
     private utlxdStatusId = 'utlxd-status';
     private mcpStatusId = 'mcp-status';
     private inputs: Map<string, { name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string }> = new Map(); // inputId -> {name, format, csvHeaders, csvDelimiter}
