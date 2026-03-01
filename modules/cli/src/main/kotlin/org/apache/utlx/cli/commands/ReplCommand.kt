@@ -13,6 +13,7 @@ import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.yaml.YAMLParser
 import org.apache.utlx.formats.xsd.XSDParser
 import org.apache.utlx.formats.jsch.JSONSchemaParser
+import org.apache.utlx.formats.tsch.TableSchemaParser
 import org.apache.utlx.formats.osch.EDMXParser
 import org.apache.utlx.formats.odata.ODataJSONParser
 import java.io.File
@@ -212,10 +213,11 @@ object ReplCommand {
                 "yaml", "yml" -> YAMLParser().parse(content)
                 "xsd" -> XSDParser(content.reader()).parse()
                 "jsch" -> JSONSchemaParser(content.reader()).parse()
+                "tsch" -> TableSchemaParser(content.reader()).parse()
                 "edmx" -> EDMXParser(content).parse()
                 else -> {
                     println("Unsupported format: ${file.extension}")
-                    println("Supported: json, xml, csv, yaml, xsd, jsch, edmx")
+                    println("Supported: json, xml, csv, yaml, xsd, jsch, tsch, edmx")
                     return
                 }
             }

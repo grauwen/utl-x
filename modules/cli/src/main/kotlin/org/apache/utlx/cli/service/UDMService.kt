@@ -16,6 +16,8 @@ import org.apache.utlx.formats.json.JSONParser
 import org.apache.utlx.formats.json.JSONSerializer
 import org.apache.utlx.formats.osch.EDMXParser
 import org.apache.utlx.formats.osch.EDMXSerializer
+import org.apache.utlx.formats.tsch.TableSchemaParser
+import org.apache.utlx.formats.tsch.TableSchemaSerializer
 import org.apache.utlx.formats.odata.ODataJSONParser
 import org.apache.utlx.formats.odata.ODataJSONSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
@@ -52,7 +54,7 @@ class UDMService {
             // Tier 1
             "json", "xml", "csv", "yaml", "odata",
             // Tier 2
-            "osch", "jsch", "xsd", "avro", "proto"
+            "osch", "tsch", "jsch", "xsd", "avro", "proto"
         )
     }
 
@@ -287,6 +289,10 @@ class UDMService {
                 JSONSchemaParser(content).parse()
             }
 
+            "tsch" -> {
+                TableSchemaParser(content).parse()
+            }
+
             "xsd" -> {
                 val arrayHints = (options["arrayHints"] as? String)
                     ?.split(",")?.map { it.trim() }?.toSet() ?: emptySet()
@@ -357,6 +363,10 @@ class UDMService {
             "jsch", "jsonschema", "json-schema" -> {
                 val draft = (options["draft"] as? String) ?: "2020-12"
                 JSONSchemaSerializer(draft, prettyPrint = true).serialize(udm)
+            }
+
+            "tsch" -> {
+                TableSchemaSerializer(prettyPrint = true).serialize(udm)
             }
 
             "xsd" -> {

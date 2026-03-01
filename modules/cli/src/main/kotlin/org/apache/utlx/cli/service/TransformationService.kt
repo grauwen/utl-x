@@ -24,6 +24,8 @@ import org.apache.utlx.formats.json.JSONSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
 import org.apache.utlx.formats.osch.EDMXParser
 import org.apache.utlx.formats.osch.EDMXSerializer
+import org.apache.utlx.formats.tsch.TableSchemaParser
+import org.apache.utlx.formats.tsch.TableSchemaSerializer
 import org.apache.utlx.formats.odata.ODataJSONParser
 import org.apache.utlx.formats.odata.ODataJSONSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
@@ -239,6 +241,9 @@ class TransformationService {
                 "jsch" -> {
                     JSONSchemaParser(data).parse()
                 }
+                "tsch" -> {
+                    TableSchemaParser(data).parse()
+                }
                 "avro" -> {
                     AvroSchemaParser().parse(data)
                 }
@@ -332,6 +337,14 @@ class TransformationService {
                     JSONSchemaSerializer(
                         draft = draft,
                         addDescriptions = addDesc,
+                        prettyPrint = pretty,
+                        strict = strict
+                    ).serialize(udm)
+                }
+                "tsch" -> {
+                    val strict = formatSpec.options["strict"] as? Boolean ?: true
+
+                    TableSchemaSerializer(
                         prettyPrint = pretty,
                         strict = strict
                     ).serialize(udm)
