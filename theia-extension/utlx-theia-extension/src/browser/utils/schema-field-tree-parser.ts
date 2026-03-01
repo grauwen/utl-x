@@ -833,3 +833,169 @@ function parseEdmxNavigationProperty(element: Element): SchemaFieldInfo | null {
         description: `Navigation to ${shortName}${isCollection ? ' (collection)' : ''}`,
     };
 }
+
+// ============================================================================
+// Table Schema (tsch) Parser
+// ============================================================================
+
+/**
+ * Map Table Schema type strings to normalized field types
+ */
+function mapTschTypeToFieldType(tschType: string): string {
+    switch (tschType) {
+        case 'string':
+            return 'string';
+        case 'integer':
+            return 'integer';
+        case 'number':
+            return 'number';
+        case 'boolean':
+            return 'boolean';
+        case 'date':
+            return 'date';
+        case 'time':
+            return 'time';
+        case 'datetime':
+            return 'datetime';
+        case 'year':
+        case 'yearmonth':
+        case 'duration':
+            return 'string';
+        case 'geopoint':
+        case 'geojson':
+            return 'string';
+        case 'object':
+            return 'object';
+        case 'array':
+            return 'array';
+        case 'any':
+        default:
+            return tschType || 'any';
+    }
+}
+
+/**
+ * Parse a Frictionless Table Schema JSON document directly to field tree
+ */
+export function parseTschToFieldTree(tschContent: string): SchemaFieldInfo[] {
+    try {
+        const schema = JSON.parse(tschContent);
+        const fieldsArray: any[] = schema.fields;
+        if (!Array.isArray(fieldsArray)) {
+            console.warn('[SchemaParser] Table Schema has no "fields" array');
+            return [];
+        }
+
+        // Collect primaryKey field names
+        const primaryKeyNames = new Set<string>();
+        if (schema.primaryKey) {
+            const pk = Array.isArray(schema.primaryKey) ? schema.primaryKey : [schema.primaryKey];
+            pk.forEach((k: string) => primaryKeyNames.add(k));
+        }
+
+        // Build foreignKey lookup: fieldName → "tableName.fieldName"
+        const foreignKeyMap = new Map<string, string>();
+        if (Array.isArray(schema.foreignKeys)) {
+            for (const fk of schema.foreignKeys) {
+                const localFields: string[] = Array.isArray(fk.fields) ? fk.fields : [fk.fields];
+                const ref = fk.reference;
+                if (ref) {
+                    const refResource = ref.resource || '';
+                    const refFields: string[] = Array.isArray(ref.fields) ? ref.fields : [ref.fields];
+                    for (let i = 0; i < localFields.length; i++) {
+                        const target = refFields[i] || refFields[0] || '';
+                        foreignKeyMap.set(localFields[i], refResource ? `${refResource}.${target}` : target);
+                    }
+                }
+            }
+        }
+
+        return fieldsArray.map(fieldDef => parseTschField(fieldDef, primaryKeyNames, foreignKeyMap));
+    } catch (error) {
+        console.error('[SchemaParser] Failed to parse Table Schema:', error);
+        return [];
+    }
+}
+
+/**
+ * Parse a single Table Schema field definition
+ */
+function parseTschField(
+    fieldDef: any,
+    primaryKeyNames: Set<string>,
+    foreignKeyMap: Map<string, string>
+): SchemaFieldInfo {
+    const name: string = fieldDef.name || 'unnamed';
+    const tschType: string = fieldDef.type || 'string';
+    const constraints = fieldDef.constraints || {};
+
+    const field: SchemaFieldInfo = {
+        name,
+        type: mapTschTypeToFieldType(tschType),
+        schemaType: tschType,
+        isRequired: constraints.required === true,
+    };
+
+    // Build description from title and description
+    if (fieldDef.description) {
+        field.description = fieldDef.description;
+    } else if (fieldDef.title) {
+        field.description = fieldDef.title;
+    }
+
+    // Build constraints string
+    const parts: string[] = [];
+
+    if (primaryKeyNames.has(name)) {
+        parts.push('primaryKey');
+    }
+    if (foreignKeyMap.has(name)) {
+        parts.push(`foreignKey → ${foreignKeyMap.get(name)}`);
+    }
+    if (constraints.required === true) {
+        parts.push('required');
+    }
+    if (constraints.unique === true) {
+        parts.push('unique');
+    }
+    if (constraints.enum) {
+        const enumValues: any[] = constraints.enum;
+        const enumStr = enumValues.length <= 5
+            ? enumValues.map((v: any) => String(v)).join(', ')
+            : `${enumValues.slice(0, 3).map((v: any) => String(v)).join(', ')}... (${enumValues.length} values)`;
+        parts.push(`enum: [${enumStr}]`);
+    }
+    if (constraints.pattern) {
+        parts.push(`pattern: ${constraints.pattern}`);
+    }
+    if (constraints.minimum !== undefined) {
+        parts.push(`min: ${constraints.minimum}`);
+    }
+    if (constraints.maximum !== undefined) {
+        parts.push(`max: ${constraints.maximum}`);
+    }
+    if (constraints.minLength !== undefined) {
+        parts.push(`minLength: ${constraints.minLength}`);
+    }
+    if (constraints.maxLength !== undefined) {
+        parts.push(`maxLength: ${constraints.maxLength}`);
+    }
+    if (fieldDef.format && fieldDef.format !== 'default') {
+        parts.push(`format: ${fieldDef.format}`);
+    }
+    if (fieldDef.decimalChar && fieldDef.decimalChar !== '.') {
+        parts.push(`decimalChar: ${fieldDef.decimalChar}`);
+    }
+    if (fieldDef.groupChar) {
+        parts.push(`groupChar: ${fieldDef.groupChar}`);
+    }
+    if (fieldDef.bareNumber === false) {
+        parts.push('bareNumber: false');
+    }
+
+    if (parts.length > 0) {
+        field.constraints = parts.join(', ');
+    }
+
+    return field;
+}

@@ -28,7 +28,7 @@ import {
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
 import { inferSchemaFromJson, inferSchemaFromXml, inferTableSchemaFromCsv, formatSchema } from '../utils/schema-inferrer';
-import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
+import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree, parseTschToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 
 // Input panel format types (separate from protocol types)
 // Data formats - used for actual data instances
@@ -1319,6 +1319,9 @@ export class MultiInputPanelWidget extends ReactWidget {
             } else if (input.schemaFormat === 'osch') {
                 fieldTree = parseOSchToFieldTree(input.schemaContent);
                 console.log('[MultiInputPanel] Parsed EDMX/CSDL, got', fieldTree.length, 'top-level fields');
+            } else if (input.schemaFormat === 'tsch') {
+                fieldTree = parseTschToFieldTree(input.schemaContent);
+                console.log('[MultiInputPanel] Parsed Table Schema, got', fieldTree.length, 'fields');
             } else {
                 console.warn('[MultiInputPanel] Schema format not supported for field tree:', input.schemaFormat);
                 return;
@@ -1330,7 +1333,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                     inputId: input.id,
                     inputName: input.name,
                     fieldTree,
-                    schemaFormat: input.schemaFormat as 'jsch' | 'xsd'
+                    schemaFormat: input.schemaFormat as 'jsch' | 'xsd' | 'osch' | 'tsch'
                 });
             } else {
                 console.warn('[MultiInputPanel] No fields extracted from schema');
