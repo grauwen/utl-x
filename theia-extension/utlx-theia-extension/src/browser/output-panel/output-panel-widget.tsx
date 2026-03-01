@@ -1093,7 +1093,7 @@ export class OutputPanelWidget extends ReactWidget {
         // Check schema first (preferred source)
         if (this.state.schemaContent && this.state.schemaFormat) {
             const format = this.state.schemaFormat.toLowerCase();
-            if (format === 'jsch' || format === 'xsd') {
+            if (format === 'jsch' || format === 'xsd' || format === 'osch') {
                 return true;
             }
         }
@@ -1113,7 +1113,7 @@ export class OutputPanelWidget extends ReactWidget {
      * Returns null if no valid structure is available.
      * PUBLIC: Called by frontend contribution for scaffold generation
      */
-    public getStructureForScaffold(): { fields: SchemaFieldInfo[]; format: 'json' | 'xml' } | null {
+    public getStructureForScaffold(): { fields: SchemaFieldInfo[]; format: 'json' | 'xml'; schemaFormat?: string } | null {
         console.log('[OutputPanelWidget] getStructureForScaffold called');
         console.log('[OutputPanelWidget] Schema content length:', this.state.schemaContent?.length || 0);
         console.log('[OutputPanelWidget] Schema format:', this.state.schemaFormat);
@@ -1140,7 +1140,7 @@ export class OutputPanelWidget extends ReactWidget {
                 const fields = parseOSchToFieldTree(this.state.schemaContent);
                 if (fields.length > 0) {
                     console.log('[OutputPanelWidget] Using EDMX/CSDL, fields:', fields.length);
-                    return { fields, format: 'json' };
+                    return { fields, format: 'json', schemaFormat: 'osch' };
                 }
             }
         }

@@ -1397,7 +1397,7 @@ output json
         // Fire scaffold output event to trigger state check
         // The frontend contribution will coordinate with output panel
         // For now, we track this locally based on output format
-        const supportedFormats = ['json', 'xml', 'jsch', 'xsd'];
+        const supportedFormats = ['json', 'xml', 'odata', 'jsch', 'xsd', 'osch'];
         const formatLower = this.outputFormat.toLowerCase();
         this.hasOutputStructure = supportedFormats.includes(formatLower);
         this.update();
