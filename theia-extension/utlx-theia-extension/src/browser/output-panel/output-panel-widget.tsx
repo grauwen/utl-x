@@ -265,6 +265,7 @@ export class OutputPanelWidget extends ReactWidget {
                             <option value='avro'>avro %USDL 1.0</option>
                             <option value='proto'>proto %USDL 1.0</option>
                             <option value='osch'>osch %USDL 1.0</option>
+                            <option value='tsch'>tsch %USDL 1.0</option>
                         </select>
                     </label>
 
@@ -907,7 +908,7 @@ export class OutputPanelWidget extends ReactWidget {
         if (!instanceFormat) return false;
 
         // Disable schema tab for schema formats (can't have schema of schema)
-        return ['xsd', 'jsch', 'avro', 'proto', 'osch'].includes(instanceFormat);
+        return ['xsd', 'jsch', 'avro', 'proto', 'osch', 'tsch'].includes(instanceFormat);
     }
 
     /**
