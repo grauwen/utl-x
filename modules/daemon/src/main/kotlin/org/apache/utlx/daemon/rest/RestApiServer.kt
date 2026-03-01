@@ -48,6 +48,12 @@ import org.apache.utlx.formats.avro.AvroSchemaParser
 import org.apache.utlx.formats.avro.AvroSchemaSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
 import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
+import org.apache.utlx.formats.odata.ODataJSONParser
+import org.apache.utlx.formats.odata.ODataJSONSerializer
+import org.apache.utlx.formats.osch.EDMXParser
+import org.apache.utlx.formats.osch.EDMXSerializer
+import org.apache.utlx.formats.tsch.TableSchemaParser as TschParser
+import org.apache.utlx.formats.tsch.TableSchemaSerializer as TschSerializer
 import org.apache.utlx.stdlib.StandardLibrary
 import org.apache.utlx.stdlib.OperatorRegistry
 import org.apache.utlx.schema.usdl.DirectiveRegistry
@@ -928,7 +934,16 @@ class RestApiServer(
             "proto", "protobuf" -> {
                 ProtobufSchemaParser().parse(data)
             }
-            else -> throw IllegalArgumentException("Unsupported input format: $format. Supported formats: xml, json, csv, yaml, xsd, jsch, avro, proto")
+            "odata" -> {
+                ODataJSONParser(data).parse()
+            }
+            "osch" -> {
+                EDMXParser(data).parse()
+            }
+            "tsch" -> {
+                TschParser(data).parse()
+            }
+            else -> throw IllegalArgumentException("Unsupported input format: $format. Supported formats: xml, json, csv, yaml, xsd, jsch, avro, proto, odata, osch, tsch")
         }
     }
 
@@ -1008,7 +1023,18 @@ class RestApiServer(
             "proto", "protobuf" -> {
                 ProtobufSchemaSerializer().serialize(udm)
             }
-            else -> throw IllegalArgumentException("Unsupported output format: $format. Supported formats: xml, json, csv, yaml, xsd, jsch, avro, proto")
+            "odata" -> {
+                ODataJSONSerializer().serialize(udm)
+            }
+            "osch" -> {
+                EDMXSerializer(prettyPrint = pretty).serialize(udm)
+            }
+            "tsch" -> {
+                TschSerializer(
+                    prettyPrint = pretty
+                ).serialize(udm)
+            }
+            else -> throw IllegalArgumentException("Unsupported output format: $format. Supported formats: xml, json, csv, yaml, xsd, jsch, avro, proto, odata, osch, tsch")
         }
     }
 
