@@ -27,7 +27,7 @@ import {
     INPUT_PANEL_ID
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
-import { inferSchemaFromJson, inferSchemaFromXml, formatSchema } from '../utils/schema-inferrer';
+import { inferSchemaFromJson, inferSchemaFromXml, inferTableSchemaFromCsv, formatSchema } from '../utils/schema-inferrer';
 import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 
 // Input panel format types (separate from protocol types)
@@ -1456,8 +1456,9 @@ export class MultiInputPanelWidget extends ReactWidget {
                 schemaString = inferSchemaFromXml(activeInput.instanceContent);
                 schemaFormat = 'xsd';
             } else if (activeInput.instanceFormat === 'csv') {
-                this.messageService.warn('CSV schema inference not yet implemented.');
-                return;
+                // Infer Table Schema from CSV
+                schemaString = inferTableSchemaFromCsv(activeInput.instanceContent);
+                schemaFormat = 'tsch';
             } else {
                 this.messageService.warn(`Schema inference not supported for format: ${activeInput.instanceFormat}`);
                 return;

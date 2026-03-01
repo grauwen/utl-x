@@ -506,3 +506,191 @@ function generateXsdType(
 export function inferSchemaFromXml(xmlString: string): string {
     return inferXsdFromXml(xmlString);
 }
+
+// ============================================================================
+// Table Schema (tsch) Inference from CSV
+// ============================================================================
+
+/**
+ * Parse CSV content into rows of string values.
+ * Handles quoted fields, embedded commas, and embedded newlines.
+ */
+function parseCsvRows(csvString: string): string[][] {
+    const rows: string[][] = [];
+    let current = '';
+    let inQuotes = false;
+    let row: string[] = [];
+
+    for (let i = 0; i < csvString.length; i++) {
+        const ch = csvString[i];
+        const next = csvString[i + 1];
+
+        if (inQuotes) {
+            if (ch === '"' && next === '"') {
+                current += '"';
+                i++; // skip escaped quote
+            } else if (ch === '"') {
+                inQuotes = false;
+            } else {
+                current += ch;
+            }
+        } else {
+            if (ch === '"') {
+                inQuotes = true;
+            } else if (ch === ',') {
+                row.push(current);
+                current = '';
+            } else if (ch === '\r' && next === '\n') {
+                row.push(current);
+                current = '';
+                rows.push(row);
+                row = [];
+                i++; // skip \n
+            } else if (ch === '\n') {
+                row.push(current);
+                current = '';
+                rows.push(row);
+                row = [];
+            } else {
+                current += ch;
+            }
+        }
+    }
+
+    // Push last field/row
+    if (current.length > 0 || row.length > 0) {
+        row.push(current);
+        rows.push(row);
+    }
+
+    return rows;
+}
+
+/**
+ * Infer a Table Schema field type from sample values.
+ * Checks all non-empty sample values to determine the most specific type.
+ */
+function inferTschFieldType(values: string[]): string {
+    const nonEmpty = values.filter(v => v.trim().length > 0);
+    if (nonEmpty.length === 0) {
+        return 'string';
+    }
+
+    // Check if all values match a specific type
+    const allMatch = (testFn: (v: string) => boolean) => nonEmpty.every(testFn);
+
+    if (allMatch(isBooleanValue)) return 'boolean';
+    if (allMatch(isIntegerValue)) return 'integer';
+    if (allMatch(isNumberValue)) return 'number';
+    if (allMatch(isDateTimeValue)) return 'datetime';
+    if (allMatch(isDateValue)) return 'date';
+    if (allMatch(isTimeValue)) return 'time';
+    if (allMatch(isYearMonthValue)) return 'yearmonth';
+    if (allMatch(isYearValue)) return 'year';
+
+    return 'string';
+}
+
+function isBooleanValue(v: string): boolean {
+    const lower = v.trim().toLowerCase();
+    return ['true', 'false', 'yes', 'no', '1', '0'].includes(lower);
+}
+
+function isIntegerValue(v: string): boolean {
+    return /^-?\d+$/.test(v.trim());
+}
+
+function isNumberValue(v: string): boolean {
+    return /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(v.trim());
+}
+
+function isDateValue(v: string): boolean {
+    return /^\d{4}-\d{2}-\d{2}$/.test(v.trim());
+}
+
+function isTimeValue(v: string): boolean {
+    return /^\d{2}:\d{2}(:\d{2})?$/.test(v.trim());
+}
+
+function isDateTimeValue(v: string): boolean {
+    return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(v.trim());
+}
+
+function isYearValue(v: string): boolean {
+    return /^\d{4}$/.test(v.trim());
+}
+
+function isYearMonthValue(v: string): boolean {
+    return /^\d{4}-\d{2}$/.test(v.trim());
+}
+
+/**
+ * Generate a human-readable title from a field name.
+ * Converts snake_case and camelCase to Title Case.
+ */
+function fieldNameToTitle(name: string): string {
+    return name
+        .replace(/([a-z])([A-Z])/g, '$1 $2')  // camelCase → camel Case
+        .replace(/[_-]/g, ' ')                   // snake_case → snake case
+        .replace(/\b\w/g, c => c.toUpperCase());  // capitalize words
+}
+
+/**
+ * Check if a column has any empty values (to determine required constraint).
+ */
+function hasEmptyValues(values: string[]): boolean {
+    return values.some(v => v.trim().length === 0);
+}
+
+/**
+ * Infer a Frictionless Table Schema from CSV content.
+ * Parses headers and samples data rows to determine field types and constraints.
+ *
+ * @param csvString CSV content (must have a header row)
+ * @returns Table Schema JSON string
+ */
+export function inferTableSchemaFromCsv(csvString: string): string {
+    const rows = parseCsvRows(csvString);
+    if (rows.length === 0) {
+        throw new Error('CSV is empty');
+    }
+
+    const headers = rows[0];
+    if (headers.length === 0 || (headers.length === 1 && headers[0].trim() === '')) {
+        throw new Error('CSV has no header columns');
+    }
+
+    const dataRows = rows.slice(1).filter(row => row.some(cell => cell.trim().length > 0));
+
+    // Collect column values for type inference
+    const columnValues: string[][] = headers.map(() => []);
+    for (const row of dataRows) {
+        for (let i = 0; i < headers.length; i++) {
+            columnValues[i].push(i < row.length ? row[i] : '');
+        }
+    }
+
+    // Build fields
+    const fields = headers.map((header, i) => {
+        const name = header.trim();
+        const type = inferTschFieldType(columnValues[i]);
+        const title = fieldNameToTitle(name);
+
+        const field: any = {
+            name,
+            title,
+            type
+        };
+
+        // Add required constraint if all values are present
+        if (dataRows.length > 0 && !hasEmptyValues(columnValues[i])) {
+            field.constraints = { required: true };
+        }
+
+        return field;
+    });
+
+    const schema: any = { fields };
+
+    return JSON.stringify(schema, null, 2);
+}
