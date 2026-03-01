@@ -31,7 +31,7 @@ import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { UTLXEventService } from './events/utlx-event-service';
-import { inferSchemaFromJson, inferSchemaFromXml, formatSchema } from './utils/schema-inferrer';
+import { inferSchemaFromJson, inferSchemaFromXml, inferEdmxFromOData, inferTableSchemaFromCsv, formatSchema } from './utils/schema-inferrer';
 import { generateScaffoldFromStructure } from './utils/scaffold-generator';
 
 @injectable()
@@ -1118,6 +1118,30 @@ export class UTLXFrontendContribution implements
                         });
 
                         this.messageService.info('XSD schema inferred from instance output');
+                        return;
+                    } else if (instanceData.format === 'odata') {
+                        // Infer EDMX/CSDL from OData JSON
+                        const edmxString = inferEdmxFromOData(instanceData.content);
+
+                        outputPanel.displaySchemaResult({
+                            success: true,
+                            schema: edmxString,
+                            schemaFormat: 'osch'
+                        });
+
+                        this.messageService.info('EDMX schema inferred from OData output');
+                        return;
+                    } else if (instanceData.format === 'csv') {
+                        // Infer Table Schema from CSV
+                        const tschString = inferTableSchemaFromCsv(instanceData.content);
+
+                        outputPanel.displaySchemaResult({
+                            success: true,
+                            schema: tschString,
+                            schemaFormat: 'tsch'
+                        });
+
+                        this.messageService.info('Table Schema inferred from CSV output');
                         return;
                     } else {
                         console.log('[SchemaInference] Unsupported format for instance inference:', instanceData.format);

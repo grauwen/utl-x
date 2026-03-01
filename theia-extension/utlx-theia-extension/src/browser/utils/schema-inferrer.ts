@@ -694,3 +694,251 @@ export function inferTableSchemaFromCsv(csvString: string): string {
 
     return JSON.stringify(schema, null, 2);
 }
+
+// ============================================================================
+// OData EDMX/CSDL Inference from OData JSON
+// ============================================================================
+
+/**
+ * Map a JSON value to an Edm type string
+ */
+function inferEdmType(value: any): string {
+    if (value === null || value === undefined) {
+        return 'Edm.String';
+    }
+    if (typeof value === 'boolean') {
+        return 'Edm.Boolean';
+    }
+    if (typeof value === 'number') {
+        return Number.isInteger(value) ? 'Edm.Int32' : 'Edm.Double';
+    }
+    if (typeof value === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) return 'Edm.DateTimeOffset';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Edm.Date';
+        if (/^\d{2}:\d{2}(:\d{2})?/.test(value)) return 'Edm.TimeOfDay';
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) return 'Edm.Guid';
+        return 'Edm.String';
+    }
+    return 'Edm.String';
+}
+
+/**
+ * Escape XML special characters in attribute values
+ */
+function escapeXmlAttr(value: string): string {
+    return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+interface EdmxPropertyInfo {
+    name: string;
+    type: string;
+    nullable: boolean;
+    isNavigation: boolean;
+    isCollection: boolean;
+    complexTypeName?: string;
+}
+
+interface EdmxTypeInfo {
+    name: string;
+    properties: EdmxPropertyInfo[];
+    keyProperties: string[];
+}
+
+/**
+ * Analyze an OData JSON entity to extract property info.
+ * Merges properties across multiple entities for collections.
+ */
+function analyzeODataEntities(entities: any[], typeName: string): { types: EdmxTypeInfo[], complexTypes: EdmxTypeInfo[] } {
+    const propertyMap = new Map<string, EdmxPropertyInfo>();
+    const complexTypes: EdmxTypeInfo[] = [];
+    const keyProperties: string[] = [];
+
+    for (const entity of entities) {
+        for (const [key, value] of Object.entries(entity)) {
+            // Skip @odata annotations
+            if (key.startsWith('@odata.') || key.startsWith('@')) {
+                continue;
+            }
+
+            if (propertyMap.has(key)) {
+                // Already seen - update nullable if this value is null
+                if (value === null) {
+                    propertyMap.get(key)!.nullable = true;
+                }
+                continue;
+            }
+
+            if (Array.isArray(value)) {
+                // Navigation property (collection)
+                const complexName = key.charAt(0).toUpperCase() + key.slice(1);
+                propertyMap.set(key, {
+                    name: key,
+                    type: `Collection(Inferred.${complexName})`,
+                    nullable: false,
+                    isNavigation: true,
+                    isCollection: true,
+                    complexTypeName: complexName,
+                });
+                // Recurse into array items if they are objects
+                const objectItems = value.filter(v => v && typeof v === 'object' && !Array.isArray(v));
+                if (objectItems.length > 0) {
+                    const nested = analyzeODataEntities(objectItems, complexName);
+                    complexTypes.push(...nested.types);
+                    complexTypes.push(...nested.complexTypes);
+                }
+            } else if (value !== null && typeof value === 'object') {
+                // Navigation property (single) or complex type
+                const complexName = key.charAt(0).toUpperCase() + key.slice(1);
+                propertyMap.set(key, {
+                    name: key,
+                    type: `Inferred.${complexName}`,
+                    nullable: true,
+                    isNavigation: true,
+                    isCollection: false,
+                    complexTypeName: complexName,
+                });
+                const nested = analyzeODataEntities([value], complexName);
+                complexTypes.push(...nested.types);
+                complexTypes.push(...nested.complexTypes);
+            } else {
+                // Scalar property
+                propertyMap.set(key, {
+                    name: key,
+                    type: inferEdmType(value),
+                    nullable: value === null,
+                    isNavigation: false,
+                    isCollection: false,
+                });
+            }
+        }
+    }
+
+    // Heuristic: if there's an "ID" or "<TypeName>ID" property, treat it as key
+    const props = Array.from(propertyMap.values());
+    for (const p of props) {
+        if (!p.isNavigation) {
+            const lower = p.name.toLowerCase();
+            if (lower === 'id' || lower === typeName.toLowerCase() + 'id' || lower === typeName.toLowerCase() + '_id') {
+                keyProperties.push(p.name);
+                p.nullable = false;
+                break;
+            }
+        }
+    }
+
+    return {
+        types: [{
+            name: typeName,
+            properties: props,
+            keyProperties,
+        }],
+        complexTypes,
+    };
+}
+
+/**
+ * Generate EDMX/CSDL XML from analyzed type info
+ */
+function generateEdmx(entityTypes: EdmxTypeInfo[], complexTypes: EdmxTypeInfo[]): string {
+    const lines: string[] = [];
+    lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+    lines.push('<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">');
+    lines.push('  <edmx:DataServices>');
+    lines.push('    <Schema Namespace="Inferred" xmlns="http://docs.oasis-open.org/odata/ns/edm">');
+
+    // Entity types
+    for (const et of entityTypes) {
+        lines.push(`      <EntityType Name="${escapeXmlAttr(et.name)}">`);
+        if (et.keyProperties.length > 0) {
+            lines.push('        <Key>');
+            for (const kp of et.keyProperties) {
+                lines.push(`          <PropertyRef Name="${escapeXmlAttr(kp)}"/>`);
+            }
+            lines.push('        </Key>');
+        }
+        for (const prop of et.properties) {
+            if (prop.isNavigation) {
+                lines.push(`        <NavigationProperty Name="${escapeXmlAttr(prop.name)}" Type="${escapeXmlAttr(prop.type)}"/>`);
+            } else {
+                lines.push(`        <Property Name="${escapeXmlAttr(prop.name)}" Type="${escapeXmlAttr(prop.type)}" Nullable="${prop.nullable}"/>`);
+            }
+        }
+        lines.push('      </EntityType>');
+    }
+
+    // Complex types (from nested objects)
+    const emittedComplex = new Set<string>();
+    for (const ct of complexTypes) {
+        if (emittedComplex.has(ct.name)) continue;
+        emittedComplex.add(ct.name);
+        lines.push(`      <ComplexType Name="${escapeXmlAttr(ct.name)}">`);
+        for (const prop of ct.properties) {
+            if (prop.isNavigation) {
+                lines.push(`        <NavigationProperty Name="${escapeXmlAttr(prop.name)}" Type="${escapeXmlAttr(prop.type)}"/>`);
+            } else {
+                lines.push(`        <Property Name="${escapeXmlAttr(prop.name)}" Type="${escapeXmlAttr(prop.type)}" Nullable="${prop.nullable}"/>`);
+            }
+        }
+        lines.push('      </ComplexType>');
+    }
+
+    lines.push('    </Schema>');
+    lines.push('  </edmx:DataServices>');
+    lines.push('</edmx:Edmx>');
+
+    return lines.join('\n');
+}
+
+/**
+ * Infer OData EDMX/CSDL schema from OData JSON instance data.
+ *
+ * Handles both collection responses (with "value" array) and single entities.
+ * Filters out @odata.* annotations and infers Edm types from values.
+ *
+ * @param odataJson OData JSON string
+ * @returns EDMX/CSDL XML string
+ */
+export function inferEdmxFromOData(odataJson: string): string {
+    try {
+        const parsed = JSON.parse(odataJson);
+
+        let entities: any[];
+        let typeName = 'Entity';
+
+        if (Array.isArray(parsed)) {
+            // Plain array
+            entities = parsed.filter(v => v && typeof v === 'object');
+        } else if (parsed && typeof parsed === 'object') {
+            if (Array.isArray(parsed.value)) {
+                // OData collection response { "value": [...] }
+                entities = parsed.value.filter((v: any) => v && typeof v === 'object');
+                // Try to guess entity name from @odata.context
+                if (parsed['@odata.context'] && typeof parsed['@odata.context'] === 'string') {
+                    const ctx: string = parsed['@odata.context'];
+                    const match = ctx.match(/\/(\w+)(?:\(|$)/);
+                    if (match) {
+                        typeName = match[1];
+                        // Singularize simple plural (remove trailing 's')
+                        if (typeName.endsWith('s') && typeName.length > 2) {
+                            typeName = typeName.slice(0, -1);
+                        }
+                    }
+                }
+            } else {
+                // Single entity
+                entities = [parsed];
+            }
+        } else {
+            throw new Error('OData content is not a JSON object or array');
+        }
+
+        if (entities.length === 0) {
+            throw new Error('No entity data found to infer schema from');
+        }
+
+        const { types, complexTypes } = analyzeODataEntities(entities, typeName);
+        return generateEdmx(types, complexTypes);
+    } catch (error) {
+        throw new Error(`Failed to infer EDMX from OData: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
