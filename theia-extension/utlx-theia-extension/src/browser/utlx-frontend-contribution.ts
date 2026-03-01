@@ -1239,7 +1239,7 @@ export class UTLXFrontendContribution implements
             outputPanel.displaySchemaResult({
                 success: true,
                 schema: content,
-                schemaFormat: schemaFormat as 'xsd' | 'jsch' | 'avro' | 'proto'
+                schemaFormat: schemaFormat as 'xsd' | 'jsch' | 'avro' | 'proto' | 'osch' | 'tsch'
             });
 
             this.messageService.info(`Schema loaded from ${uri.path.base}`);
@@ -1269,6 +1269,10 @@ export class UTLXFrontendContribution implements
                 return ['avsc', 'json'];
             case 'proto':
                 return ['proto'];
+            case 'osch':
+                return ['edmx', 'xml'];
+            case 'tsch':
+                return ['tsch.json', 'json'];
             default:
                 return ['*'];
         }

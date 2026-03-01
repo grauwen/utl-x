@@ -880,22 +880,18 @@ export class OutputPanelWidget extends ReactWidget {
      */
     private getLinkedSchemaFormat(instanceFormat: string): string | null {
         switch (instanceFormat) {
-            case 'json':
-            case 'yaml':
-            case 'odata':
-                return 'jsch';
-            case 'xml':
-                return 'xsd';
-            case 'csv':
-                return null; // tsch not implemented yet
-            case 'xsd':
-            case 'jsch':
-            case 'avro':
-            case 'proto':
-            case 'osch':
-                return null; // Schema formats can't have schemas
-            default:
-                return null;
+            case 'json':  return 'jsch';
+            case 'yaml':  return 'jsch';
+            case 'xml':   return 'xsd';
+            case 'odata': return 'osch';
+            case 'csv':   return 'tsch';
+            case 'xsd':   return null;
+            case 'jsch':  return null;
+            case 'avro':  return null;
+            case 'proto': return null;
+            case 'osch':  return null;
+            case 'tsch':  return null;
+            default:      return null;
         }
     }
 
@@ -916,10 +912,6 @@ export class OutputPanelWidget extends ReactWidget {
      */
     private getSchemaPlaceholder(): string {
         const { instanceFormat } = this.state;
-
-        if (instanceFormat === 'csv') {
-            return '// tsch not implemented yet';
-        }
 
         if (this.isSchemaTabDisabled()) {
             return '❌ Schema not available for schema formats';
