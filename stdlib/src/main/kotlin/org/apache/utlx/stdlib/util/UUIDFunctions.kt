@@ -41,7 +41,7 @@ import org.apache.utlx.stdlib.annotations.UTLXFunction
 
 object UUIDFunctions {
     
-    private val secureRandom = SecureRandom()
+    private val secureRandom by lazy { SecureRandom() }
     
     @UTLXFunction(
         description = "Generate UUID v4 (random)",
