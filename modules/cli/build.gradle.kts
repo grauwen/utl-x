@@ -105,6 +105,10 @@ graalvmNative {
     }
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 tasks.test {
     useJUnitPlatform()
 }
