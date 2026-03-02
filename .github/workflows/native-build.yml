@@ -25,6 +25,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup JDK 17 (for Gradle toolchain)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
