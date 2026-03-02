@@ -55,7 +55,7 @@ jobs:
 
       - name: Build native binary (Windows)
         if: runner.os == 'Windows'
-        run: .\gradlew.bat :modules:cli:nativeCompile
+        run: .\gradlew.bat :modules:cli:nativeCompile "-Porg.gradle.java.installations.fromEnv=JAVA_HOME_17_X64"
 
       - name: Test binary (Unix)
         if: runner.os != 'Windows'
