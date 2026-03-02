@@ -24,6 +24,110 @@
     "allDeclaredFields": true
   },
   {
+    "name": "org.apache.utlx.core.udm.UDM$Scalar",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Scalar$Companion",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Array",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Array$Companion",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Object",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Object$Companion",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$DateTime",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$DateTime$Companion",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Date",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Date$Companion",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$LocalDateTime",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$LocalDateTime$Companion",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Time",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Time$Companion",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Binary",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Binary$Companion",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Lambda",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Lambda$Companion",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.utlx.core.udm.UDM$Companion",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
     "name": "kotlin.reflect.jvm.internal.KClassImpl",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
