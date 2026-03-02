@@ -6,13 +6,11 @@ on:
 jobs:
   build-native:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             platform: linux-x64
-            binary: utlx
-          - os: macos-13
-            platform: macos-x64
             binary: utlx
           - os: macos-latest
             platform: macos-arm64
@@ -45,12 +43,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build native binary
+      - name: Build native binary (Unix)
+        if: runner.os != 'Windows'
         run: ./gradlew :modules:cli:nativeCompile
 
-      - name: Test binary
-        run: |
-          ./modules/cli/build/native/nativeCompile/${{ matrix.binary }} --version
+      - name: Build native binary (Windows)
+        if: runner.os == 'Windows'
+        run: .\gradlew.bat :modules:cli:nativeCompile
+
+      - name: Test binary (Unix)
+        if: runner.os != 'Windows'
+        run: ./modules/cli/build/native/nativeCompile/${{ matrix.binary }} --version
+
+      - name: Test binary (Windows)
+        if: runner.os == 'Windows'
+        run: .\modules\cli\build\native\nativeCompile\${{ matrix.binary }} --version
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
