@@ -1,22 +1,18 @@
 name: Build Native Binaries
 
 on:
-  workflow_dispatch:  # Only run manually
-  # push:             # Commented out
-  #   branches: [ main, develop ]
-  # pull_request:
-  #   branches: [ main ]
-  release:
-    types: [ created ]
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   build-native:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - os: ubuntu-latest
             platform: linux-x64
+            binary: utlx
+          - os: macos-13
+            platform: macos-x64
             binary: utlx
           - os: macos-latest
             platform: macos-arm64
@@ -40,7 +36,7 @@ jobs:
           native-image-job-reports: 'true'
 
       - name: Cache Gradle packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -57,18 +53,7 @@ jobs:
           ./modules/cli/build/native/nativeCompile/${{ matrix.binary }} --version
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: utlx-${{ matrix.platform }}
           path: modules/cli/build/native/nativeCompile/${{ matrix.binary }}
-
-      - name: Upload to release
-        if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: modules/cli/build/native/nativeCompile/${{ matrix.binary }}
-          asset_name: utlx-${{ matrix.platform }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
-          asset_content_type: application/octet-stream
