@@ -42,7 +42,30 @@ Invoke-WebRequest -Uri "https://github.com/grauwen/utl-x/releases/latest/downloa
 Move-Item utlx.exe C:\Windows\System32\
 ```
 
-### Option 2: Build from Source
+### Option 2a: Build from Source — macOS (Homebrew)
+
+The simplest way to set up GraalVM on macOS:
+
+```bash
+# Install GraalVM via Homebrew
+brew install --cask graalvm-jdk
+
+# Set environment variables (add to ~/.zshrc for persistence)
+export GRAALVM_HOME=/Library/Java/JavaVirtualMachines/graalvm-jdk-<version>/Contents/Home
+export JAVA_HOME=$GRAALVM_HOME
+export PATH=$GRAALVM_HOME/bin:$PATH
+
+# Clone and build
+git clone https://github.com/grauwen/utl-x.git
+cd utl-x
+./gradlew :modules:cli:nativeCompile
+
+# Binary will be at: modules/cli/build/native/nativeCompile/utlx
+```
+
+> **Note:** GraalVM JDK 21+ bundles `native-image` out of the box — no need to run `gu install native-image`.
+
+### Option 2b: Build from Source — Linux / CI
 
 ```bash
 # Clone repository
