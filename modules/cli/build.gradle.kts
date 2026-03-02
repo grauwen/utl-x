@@ -80,12 +80,15 @@ graalvmNative {
             
             buildArgs.addAll(
                 "--no-fallback",
-                "--initialize-at-build-time=kotlin,kotlinx",
+                "--strict-image-heap",
+                "--initialize-at-build-time=kotlin,kotlinx,ch.qos.logback,org.slf4j,org.xml.sax,org.apache.xml.security",
                 "--report-unsupported-elements-at-runtime",
                 "-H:+ReportExceptionStackTraces",
                 "-H:+AddAllCharsets",
                 "--enable-url-protocols=http,https",
-                "--allow-incomplete-classpath"
+                "--allow-incomplete-classpath",
+                "-march=native",
+                "-R:MaxHeapSize=256m"
             )
             
             // Add verbose output for debugging
@@ -99,6 +102,10 @@ graalvmNative {
     binaries.named("test") {
         buildArgs.add("--no-fallback")
     }
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 tasks.test {
