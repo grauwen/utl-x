@@ -84,7 +84,7 @@ graalvmNative {
             
             buildArgs.addAll(
                 "--no-fallback",
-                "--initialize-at-build-time=kotlin,kotlinx,ch.qos.logback,org.slf4j",
+                "--initialize-at-build-time=kotlin,kotlinx,ch.qos.logback,org.slf4j,org.xml.sax",
                 "--report-unsupported-elements-at-runtime",
                 "-H:+ReportExceptionStackTraces",
                 "-H:+AddAllCharsets",
