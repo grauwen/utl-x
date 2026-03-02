@@ -47,11 +47,11 @@ Move-Item utlx.exe C:\Windows\System32\
 The simplest way to set up GraalVM on macOS:
 
 ```bash
-# Install GraalVM via Homebrew
-brew install --cask graalvm-jdk
+# Install GraalVM Community Edition via Homebrew
+brew install --cask graalvm/tap/graalvm-community-jdk22
 
 # Set environment variables (add to ~/.zshrc for persistence)
-export GRAALVM_HOME=/Library/Java/JavaVirtualMachines/graalvm-jdk-<version>/Contents/Home
+export GRAALVM_HOME=/Library/Java/JavaVirtualMachines/graalvm-community-openjdk-22/Contents/Home
 export JAVA_HOME=$GRAALVM_HOME
 export PATH=$GRAALVM_HOME/bin:$PATH
 
