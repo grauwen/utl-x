@@ -101,7 +101,12 @@ export class UTLXToolbarWidget extends ReactWidget {
     @postConstruct()
     protected init(): void {
         this.update();
-        // Mode will be loaded from other widgets via events if needed
+        // Sync backend mode with toolbar's default on startup
+        this.utlxService.setMode({
+            mode: this.state.currentMode,
+            autoInferSchema: false,
+            enableTypeChecking: true
+        }).catch(err => console.error('[UTLXToolbar] Failed to sync initial mode:', err));
     }
 
     dispose(): void {
