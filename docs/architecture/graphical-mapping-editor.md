@@ -19,12 +19,13 @@
 9. [Phase 4: Code Generation](#phase-4-code-generation)
 10. [Phase 5: Theia Integration](#phase-5-theia-integration)
 11. [Phase 6: Code-to-Canvas Visualization](#phase-6-code-to-canvas-visualization)
-12. [Data Model](#data-model)
-13. [Component Specifications](#component-specifications)
-14. [API Integration](#api-integration)
-15. [CSS & Theming](#css--theming)
-16. [Testing Strategy](#testing-strategy)
-17. [Known Limitations](#known-limitations)
+12. [State & Layout Persistence](#state--layout-persistence)
+13. [Data Model](#data-model)
+14. [Component Specifications](#component-specifications)
+15. [API Integration](#api-integration)
+16. [CSS & Theming](#css--theming)
+17. [Testing Strategy](#testing-strategy)
+18. [Known Limitations](#known-limitations)
 
 ---
 
@@ -245,6 +246,37 @@ theia-extension/utlx-theia-extension/src/browser/
 | 6.4 | Parse operator expressions: `Key: $input.a + $input.b` | `mapping-code-parser.ts` |
 | 6.5 | Wrap unparseable expressions in `CodeBlockNode` | `mapping-code-parser.ts` |
 | 6.6 | Request new daemon API `POST /api/decompose` for complex expression parsing | Backend (Kotlin) |
+
+---
+
+## State & Layout Persistence
+
+**Decision: Zustand in-memory only — no browser or file persistence.**
+
+All graphical state (node positions, expanded/collapsed fields, viewport zoom/pan, selected edges) lives exclusively in the Zustand store. When the user closes the tab or navigates away, layout state is lost. When a UTLX file is loaded or the user switches from code to canvas, dagre auto-layout rebuilds the graph from scratch.
+
+### Rationale
+
+- **Deployment flexibility** — UTLX IDE may run as SaaS, embedded in a 3rd party IDE, or as an Electron app. Browser storage APIs (localStorage, sessionStorage, IndexedDB) behave differently across these contexts, especially in embedded webviews. In-memory avoids all cross-platform concerns.
+- **No stale data** — No cleanup, eviction, or key-management logic needed.
+- **Simplicity** — Zustand is already the store for the mapping model (nodes, edges). Layout state is just additional fields in the same store. Zero additional dependencies.
+- **Deterministic layout** — dagre produces consistent left-to-right layouts. Users get a clean starting point every time, which is predictable and debuggable.
+- **Matches existing patterns** — All other IDE widgets (input panel, output panel, editor) use in-memory React state with no persistence. Only prompt history uses localStorage.
+
+### What the Zustand Store Tracks
+
+| State | Type | Lifetime |
+|---|---|---|
+| Node positions (x, y) | `Record<string, {x, y}>` | Session (in-memory) |
+| Expanded field paths | `Set<string>` | Session (in-memory) |
+| Viewport (zoom, pan offset) | `{x, y, zoom}` | Session (in-memory) |
+| Selected node/edge IDs | `string[]` | Session (in-memory) |
+| View mode (code/canvas) | `'code' \| 'canvas'` | Session (in-memory) |
+| Function palette search query | `string` | Session (in-memory) |
+
+### Future Option
+
+If user feedback indicates that losing layout on refresh is a problem, **sessionStorage** (keyed by UTLX content hash) can be added later with minimal changes — just serialize/deserialize the layout slice of the Zustand store. This would survive page refreshes within the same tab without persisting across sessions.
 
 ---
 
