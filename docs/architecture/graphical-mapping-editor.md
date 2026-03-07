@@ -86,7 +86,7 @@ The mapping model is the single source of truth when in canvas mode. The model s
 
 ### Integration with Current IDE
 
-The graphical editor is a **new panel/view** toggling with the existing code editor:
+The graphical editor is a **new view mode** within the existing center panel, toggling with the Monaco code editor:
 
 ```
 Current:  [Input] [Code Editor] [Output]
@@ -94,24 +94,77 @@ New:      [Input] [Code Editor | Mapping Canvas] [Output]
                    ↑ toggle between views
 ```
 
-The `UTLXEditorWidget` gains a toggle button to switch between Monaco editor and the mapping canvas. Both views share the same underlying UTLX content — switching from canvas to code shows the generated UTLX, switching from code to canvas attempts to parse it back into a graph.
+The `UTLXEditorWidget` header gains a **view toggle** to switch between Classic and Canvas modes. Both views share the same underlying UTLX content — switching from canvas to classic generates UTLX and sets it in Monaco, switching from classic to canvas attempts to parse the UTLX into a graph.
+
+### View Toggle: Classic / Canvas
+
+A simple toggle switch in the editor header bar allows switching between the two views:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  UTLX code    [Classic ● | Canvas ○]   Scaffold  Fn Builder │
+├──────────────────────────────────────────────────────────────┤
+│  Monaco Editor (classic mode)                                │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│  UTLX code    [Classic ○ | Canvas ●]   Auto-layout  Fit View│
+├──────────────────────────────────────────────────────────────┤
+│  Mapping Canvas (canvas mode)                                │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**This toggle is temporary.** It exists so that users can fall back to the classic view while the canvas matures. Once the canvas is stable and proven, the toggle may be removed, making canvas the default (or only) view.
+
+**Classic view** (default, current behavior unchanged):
+- Monaco editor with all existing toolbar buttons (Scaffold, Function Builder, Load, Save, Clear)
+- Function Builder opens as a modal dialog — exactly as today
+
+**Canvas view**:
+- Mapping canvas replaces the Monaco editor area
+- Toolbar adapts: Scaffold and Function Builder buttons are replaced by Auto-layout and Fit View
+- The **Function Palette** sidebar within the canvas provides function/operator browsing (absorbs the Function Builder's role)
+- Load, Save, Clear remain available in both views
+
+Switching between views preserves the transformation — UTLX code is the interchange format between the two modes.
+
+### Relationship with Function Builder
+
+The existing **Function Builder** dialog and the new **Mapping Canvas** serve different scopes:
+
+| | Function Builder (Classic) | Function Palette (Canvas) |
+|---|---|---|
+| **Scope** | Single expression / field | Entire transformation |
+| **UI type** | Modal dialog (overlay) | Sidebar within canvas |
+| **Available in** | Classic view only | Canvas view only |
+| **Purpose** | "Help me write `toUpperCase(trim($input.name))`" | Browse & drag functions onto canvas |
+| **Field browsing** | Field tree in dialog | Schema nodes on canvas |
+| **Function search** | Tabs (functions, operators, directives) | Searchable categorized list |
+
+The Function Palette in canvas view reuses the same data (`/api/functions`, `/api/operators`) as the Function Builder but presents it as a drag source rather than a code insertion tool.
 
 ### Widget Hierarchy
 
 ```
 UTLXEditorWidget (existing, modified)
-├── Monaco Editor (existing, shown in code mode)
-└── MappingCanvasWidget (NEW, shown in canvas mode)
-    ├── FunctionPalette (searchable sidebar)
-    ├── ReactFlowCanvas
-    │   ├── InputSchemaNode (custom node)
-    │   ├── OutputSchemaNode (custom node)
-    │   ├── FunctionNode (custom node)
-    │   ├── OperatorNode (custom node)
-    │   ├── LiteralNode (custom node)
-    │   ├── ConditionalNode (custom node)
-    │   └── CodeBlockNode (custom node, opaque UTLX)
-    └── CanvasToolbar (auto-layout, zoom, toggle)
+├── View Toggle [Classic | Canvas] (NEW, temporary)
+├── Classic View (shown when toggle = Classic)
+│   ├── Monaco Editor (existing)
+│   ├── Existing toolbar buttons (Scaffold, Fn Builder, Load, Save, Clear)
+│   └── Function Builder Dialog (existing, opens as overlay)
+└── Canvas View (shown when toggle = Canvas)
+    ├── Canvas toolbar (Auto-layout, Fit View, Load, Save, Clear)
+    └── MappingCanvasWidget (NEW)
+        ├── FunctionPalette (searchable sidebar)
+        ├── ReactFlowCanvas
+        │   ├── InputSchemaNode (custom node)
+        │   ├── OutputSchemaNode (custom node)
+        │   ├── FunctionNode (custom node)
+        │   ├── OperatorNode (custom node)
+        │   ├── LiteralNode (custom node)
+        │   ├── ConditionalNode (custom node)
+        │   └── CodeBlockNode (custom node, opaque UTLX)
+        └── CanvasToolbar (zoom controls)
 ```
 
 ---
