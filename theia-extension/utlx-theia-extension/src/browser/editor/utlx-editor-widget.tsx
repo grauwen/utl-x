@@ -21,12 +21,17 @@ import { FunctionBuilderDialog } from '../function-builder/function-builder-dial
 import { UTLXService, UTLXMode } from '../../common/protocol';
 import { UTLX_SERVICE_SYMBOL } from '../../common/protocol';
 import { FunctionInfo, OperatorInfo } from '../../common/protocol';
-import { SchemaFieldInfo } from '../utils/schema-field-tree-parser';
+import { SchemaFieldInfo, parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree, parseTschToFieldTree } from '../utils/schema-field-tree-parser';
 import { DirectiveRegistry } from '../../common/usdl-types';
 import { analyzeInsertionContext, InsertionContext } from '../function-builder/context-analyzer';
 import { UDMLanguageParser, UDMParseException } from '../udm/udm-language-parser';
 import { navigate, getAllPaths } from '../udm/udm-navigator';
 import { UDM, UDMObjectHelper, isObject, isArray, isScalar } from '../udm/udm-core';
+import { MappingCanvasWidget } from '../mapping-editor/mapping-canvas-widget';
+import type { ViewMode } from '../mapping-editor/mapping-types';
+import { useMappingStore } from '../mapping-editor/mapping-store';
+import { schemaFieldInfoToSchemaFields, udmFieldsToSchemaFields, jsonInstanceToSchemaFields, xmlInstanceToSchemaFields } from '../mapping-editor/schema-converter';
+import { parseUdmToTree } from '../function-builder/udm-parser-new';
 
 export const UTLX_EDITOR_WIDGET_ID = 'utlx-editor';
 
@@ -84,6 +89,17 @@ export class UTLXEditorWidget extends ReactWidget {
     protected savedMainEditorPosition: monaco.Position | null = null;
     protected savedMainEditorSelection: monaco.Selection | null = null;
 
+    // View mode toggle: 'classic' (Monaco editor) or 'canvas' (graphical mapping)
+    protected editorViewMode: ViewMode = 'classic';
+
+    // Output schema state for canvas mapping
+    protected outputSchemaContent: string = '';
+    protected outputSchemaFormat: string = '';
+
+    // Output instance state for canvas mapping (fallback when no schema)
+    protected outputInstanceContent: string = '';
+    protected outputInstanceFormat: string = '';
+
     constructor() {
         super();
         this.id = UTLX_EDITOR_WIDGET_ID;
@@ -117,6 +133,10 @@ export class UTLXEditorWidget extends ReactWidget {
         this.eventService.onInputNameChanged(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Input name changed:', event);
             this.renameInputReferences(event.oldName, event.newName);
+            // Rename the canvas node (preserves edges by remapping handles)
+            if (this.editorViewMode === 'canvas') {
+                useMappingStore.getState().renameInputNode(event.oldName, event.newName);
+            }
         });
 
         this.eventService.onInputAdded(event => {
@@ -125,6 +145,10 @@ export class UTLXEditorWidget extends ReactWidget {
 
         this.eventService.onInputDeleted(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Input deleted:', event);
+            // Remove from canvas store
+            if (this.editorViewMode === 'canvas') {
+                useMappingStore.getState().removeNode(`input-${event.name}`);
+            }
         });
 
         this.eventService.onInputUdmUpdated(event => {
@@ -154,6 +178,11 @@ export class UTLXEditorWidget extends ReactWidget {
                 // Note: Schema field tree will be added separately if schema exists
             }
 
+            // Update canvas store if in canvas mode
+            if (this.editorViewMode === 'canvas') {
+                this.refreshCanvasSchemas();
+            }
+
             // Re-render if Function Builder is open to update field tree
             if (this.showFunctionBuilderDialog) {
                 console.log('[UTLXEditorWidget] Function Builder is open, re-rendering with updated UDM');
@@ -176,6 +205,13 @@ export class UTLXEditorWidget extends ReactWidget {
             const hasInstanceUdm = this.inputUdmMap.has(event.inputName);
             console.log('[UTLXEditorWidget] Stored schema field tree for:', event.inputName,
                 '- Instance UDM also exists:', hasInstanceUdm);
+
+            // Update canvas store with new schema fields
+            if (this.editorViewMode === 'canvas') {
+                const format = this.inputFormatsMap.get(event.inputName) || 'json';
+                const canvasFields = schemaFieldInfoToSchemaFields(event.fieldTree, `input-${event.inputName}`);
+                useMappingStore.getState().setInputSchema(event.inputName, format, canvasFields, false);
+            }
 
             // Re-render if Function Builder is open
             if (this.showFunctionBuilderDialog) {
@@ -215,21 +251,49 @@ export class UTLXEditorWidget extends ReactWidget {
                 format: event.schemaFormat,
                 contentLength: event.schemaContent.length
             });
+            this.outputSchemaContent = event.schemaContent;
+            this.outputSchemaFormat = event.schemaFormat;
+            if (this.editorViewMode === 'canvas') {
+                this.refreshCanvasOutputSchema();
+            }
         });
 
-        this.eventService.onOutputPresetOff(event => {
+        this.eventService.onOutputPresetOff(_event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Output preset mode OFF');
+            this.outputSchemaContent = '';
+            this.outputSchemaFormat = '';
         });
 
         this.eventService.onOutputSchemaFormatChanged(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Output schema format changed:', event);
+            this.outputSchemaFormat = event.format;
+            if (this.editorViewMode === 'canvas') {
+                this.refreshCanvasOutputSchema();
+            }
         });
 
         this.eventService.onOutputSchemaContentChanged(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Output schema content changed:', {
                 contentLength: event.content.length
             });
+            this.outputSchemaContent = event.content;
+            if (this.editorViewMode === 'canvas') {
+                this.refreshCanvasOutputSchema();
+            }
             // Update scaffold button state when output schema changes
+            this.updateScaffoldButtonState();
+        });
+
+        this.eventService.onOutputInstanceContentChanged(event => {
+            console.log('[UTLXEditorWidget] 📡 RECEIVED: Output instance content changed:', {
+                format: event.format,
+                contentLength: event.content.length
+            });
+            this.outputInstanceContent = event.content;
+            this.outputInstanceFormat = event.format;
+            if (this.editorViewMode === 'canvas') {
+                this.refreshCanvasOutputSchema();
+            }
             this.updateScaffoldButtonState();
         });
 
@@ -1848,41 +1912,230 @@ output json
         return tier2Formats.includes(this.outputFormat.toLowerCase());
     }
 
+    /**
+     * Switch between Classic and Canvas view modes
+     */
+    protected switchViewMode(mode: ViewMode): void {
+        if (mode === this.editorViewMode) return;
+
+        console.log('[UTLXEditorWidget] Switching view mode:', this.editorViewMode, '->', mode);
+        this.editorViewMode = mode;
+
+        // When switching to classic, re-layout the Monaco editor
+        if (mode === 'classic' && this.editor) {
+            setTimeout(() => this.editor?.layout(), 50);
+        }
+
+        // When switching to canvas, push schemas and load functions for palette
+        if (mode === 'canvas') {
+            this.refreshCanvasSchemas();
+            useMappingStore.getState().autoLayout();
+            this.ensureCanvasDataLoaded();
+        }
+
+        this.update();
+    }
+
+    /**
+     * Push all current schema data into the mapping canvas Zustand store.
+     * Called when switching to canvas mode and when schema data changes.
+     */
+    protected refreshCanvasSchemas(): void {
+        const store = useMappingStore.getState();
+
+        // ── Input schemas ──
+        // Priority: SchemaFieldInfo (design-time) > UDM-parsed fields (runtime)
+        const allInputNames = new Set([
+            ...this.schemaFieldTreeMap.keys(),
+            ...this.inputUdmMap.keys(),
+        ]);
+
+        for (const inputName of allInputNames) {
+            const format = this.inputFormatsMap.get(inputName) || 'json';
+            const schemaFields = this.schemaFieldTreeMap.get(inputName);
+
+            if (schemaFields && schemaFields.length > 0) {
+                // Use schema field tree (has precise types)
+                const canvasFields = schemaFieldInfoToSchemaFields(schemaFields, `input-${inputName}`);
+                store.setInputSchema(inputName, format, canvasFields, false);
+            } else {
+                // Fall back to UDM parsing
+                const udmLanguage = this.inputUdmMap.get(inputName);
+                if (udmLanguage) {
+                    try {
+                        const tree = parseUdmToTree(inputName, format, udmLanguage);
+                        if (tree.fields.length > 0) {
+                            const canvasFields = udmFieldsToSchemaFields(tree.fields, `input-${inputName}`);
+                            store.setInputSchema(inputName, format, canvasFields, tree.isArray);
+                        } else {
+                            console.warn('[UTLXEditorWidget] UDM parsing produced no fields for:', inputName, 'format:', format);
+                        }
+                    } catch (err) {
+                        console.warn('[UTLXEditorWidget] UDM parsing failed for:', inputName, 'format:', format, err);
+                    }
+                }
+            }
+        }
+
+        // ── Output schema ──
+        this.refreshCanvasOutputSchema();
+    }
+
+    /**
+     * Parse and push output schema into the canvas store.
+     * Priority: schema > instance (when only instance exists, parse its structure).
+     */
+    protected refreshCanvasOutputSchema(): void {
+        const store = useMappingStore.getState();
+
+        // Priority 1: Use schema if available
+        if (this.outputSchemaContent && this.outputSchemaFormat) {
+            const fmt = this.outputSchemaFormat.toLowerCase();
+            let fields: SchemaFieldInfo[] = [];
+
+            if (fmt === 'jsch') {
+                fields = parseJsonSchemaToFieldTree(this.outputSchemaContent);
+            } else if (fmt === 'xsd') {
+                fields = parseXsdToFieldTree(this.outputSchemaContent);
+            } else if (fmt === 'osch') {
+                fields = parseOSchToFieldTree(this.outputSchemaContent);
+            } else if (fmt === 'tsch') {
+                fields = parseTschToFieldTree(this.outputSchemaContent);
+            }
+
+            if (fields.length > 0) {
+                const canvasFields = schemaFieldInfoToSchemaFields(fields, 'output');
+                store.setOutputSchema(this.outputFormat || 'json', canvasFields);
+                return;
+            }
+        }
+
+        // Priority 2: Parse instance content to infer structure
+        if (this.outputInstanceContent && this.outputInstanceFormat) {
+            const fmt = this.outputInstanceFormat.toLowerCase();
+
+            if (fmt === 'json' || fmt === 'odata') {
+                const canvasFields = jsonInstanceToSchemaFields(this.outputInstanceContent, 'output');
+                if (canvasFields.length > 0) {
+                    store.setOutputSchema(fmt, canvasFields);
+                    return;
+                }
+            } else if (fmt === 'xml') {
+                const canvasFields = xmlInstanceToSchemaFields(this.outputInstanceContent, 'output');
+                if (canvasFields.length > 0) {
+                    store.setOutputSchema(fmt, canvasFields);
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * Ensure functions and operators are loaded for the canvas palette.
+     * Loads lazily on first canvas switch, reuses cached data after that.
+     */
+    protected async ensureCanvasDataLoaded(): Promise<void> {
+        if (this.functionBuilderFunctions.length > 0) return; // Already loaded
+        try {
+            this.functionBuilderFunctions = await this.utlxService.getFunctions();
+            this.functionBuilderOperators = await this.utlxService.getOperators();
+            console.log('[UTLXEditorWidget] Loaded canvas palette data:',
+                this.functionBuilderFunctions.length, 'functions,',
+                this.functionBuilderOperators.length, 'operators');
+            this.update(); // Re-render to pass data to canvas
+        } catch (err) {
+            console.error('[UTLXEditorWidget] Failed to load canvas palette data:', err);
+        }
+    }
+
+    /**
+     * Apply generated UTLX code from the canvas to the Monaco editor body section.
+     */
+    protected applyCanvasCode(code: string): void {
+        if (!this.editor) return;
+        const model = this.editor.getModel();
+        if (!model) return;
+
+        // Find the body section (after --- separator)
+        const content = model.getValue();
+        const separatorIndex = content.indexOf('---');
+
+        if (separatorIndex >= 0) {
+            // Replace everything after the separator line
+            const headerPart = content.substring(0, separatorIndex);
+            const separatorLineEnd = content.indexOf('\n', separatorIndex);
+            const newContent = headerPart + content.substring(separatorIndex, separatorLineEnd + 1) + code + '\n';
+            model.setValue(newContent);
+        } else {
+            // No separator — append the code
+            model.setValue(content + '\n' + code + '\n');
+        }
+
+        console.log('[UTLXEditorWidget] Applied canvas-generated code to editor');
+    }
+
     protected render(): React.ReactNode {
+        const isClassic = this.editorViewMode === 'classic';
+        const isCanvas = this.editorViewMode === 'canvas';
+
         return (
             <div className='utlx-editor-container'>
                 <div className='utlx-editor-header'>
                     <div className='utlx-editor-title'>
-                        <span>UTLX code</span>
+                        {/* View Mode Toggle */}
+                        <div className='mapping-view-toggle'>
+                            <button
+                                className={`mapping-view-toggle-btn ${isClassic ? 'active' : ''}`}
+                                onClick={() => this.switchViewMode('classic')}
+                                title='Classic view — Monaco code editor'
+                            >
+                                <span className='codicon codicon-code' style={{ fontSize: '11px' }} />
+                                {' '}Classic
+                            </button>
+                            <button
+                                className={`mapping-view-toggle-btn ${isCanvas ? 'active' : ''}`}
+                                onClick={() => this.switchViewMode('canvas')}
+                                title='Canvas view — graphical mapping editor'
+                            >
+                                <span className='codicon codicon-type-hierarchy' style={{ fontSize: '11px' }} />
+                                {' '}Canvas
+                            </button>
+                        </div>
                     </div>
                     <div className='utlx-panel-actions'>
-                        {/* UDSL Indicator - only show for Tier 2 output formats */}
-                        {this.isUdslFormat() && (
-                            <span
-                                className='utlx-udm-indicator'
-                                style={{ color: '#50fa7b' }}
-                                title='UDSL format active (Tier 2 output)'
-                            >
-                                ✓ UDSL
-                            </span>
+                        {/* Classic-only buttons */}
+                        {isClassic && (
+                            <>
+                                {/* UDSL Indicator - only show for Tier 2 output formats */}
+                                {this.isUdslFormat() && (
+                                    <span
+                                        className='utlx-udm-indicator'
+                                        style={{ color: '#50fa7b' }}
+                                        title='UDSL format active (Tier 2 output)'
+                                    >
+                                        ✓ UDSL
+                                    </span>
+                                )}
+                                <button
+                                    title={this.hasOutputStructure
+                                        ? 'Generate UTLX structure from output schema/instance'
+                                        : 'No output schema or instance available (JSON/XML only)'}
+                                    onClick={() => this.handleScaffoldOutput()}
+                                    disabled={!this.hasOutputStructure}
+                                >
+                                    <span className='codicon codicon-layout' style={{fontSize: '11px'}}></span>
+                                    {' '}Scaffold Output
+                                </button>
+                                <button
+                                    title='Function Builder - Browse and insert stdlib functions'
+                                    onClick={() => this.openFunctionBuilder()}
+                                >
+                                    <span className='codicon codicon-symbol-method' style={{fontSize: '11px'}}></span>
+                                    {' '}Function Builder
+                                </button>
+                            </>
                         )}
-                        <button
-                            title={this.hasOutputStructure
-                                ? 'Generate UTLX structure from output schema/instance'
-                                : 'No output schema or instance available (JSON/XML only)'}
-                            onClick={() => this.handleScaffoldOutput()}
-                            disabled={!this.hasOutputStructure}
-                        >
-                            <span className='codicon codicon-layout' style={{fontSize: '11px'}}></span>
-                            {' '}Scaffold Output
-                        </button>
-                        <button
-                            title='Function Builder - Browse and insert stdlib functions'
-                            onClick={() => this.openFunctionBuilder()}
-                        >
-                            <span className='codicon codicon-symbol-method' style={{fontSize: '11px'}}></span>
-                            {' '}Function Builder
-                        </button>
+                        {/* Shared buttons (both views) */}
                         <button
                             title='Load UTLX File'
                             onClick={() => this.handleLoadFile()}
@@ -1906,8 +2159,11 @@ output json
                         </button>
                     </div>
                 </div>
+
+                {/* Classic View: Monaco Editor */}
                 <div
                     className='utlx-editor-content'
+                    style={{ display: isClassic ? 'block' : 'none' }}
                     ref={container => {
                         if (container && !this.editorContainer) {
                             this.editorContainer = container;
@@ -1916,14 +2172,28 @@ output json
                         }
                     }}
                 />
+
+                {/* Canvas View: Graphical Mapping Editor */}
+                {isCanvas && (
+                    <div className='utlx-editor-content'>
+                        <MappingCanvasWidget
+                            functions={this.functionBuilderFunctions}
+                            operators={this.functionBuilderOperators}
+                            onApplyCode={(code) => this.applyCanvasCode(code)}
+                        />
+                    </div>
+                )}
+
                 <div className='utlx-editor-footer'>
                     <span className='utlx-editor-info'>
-                        UTLX Editor | Connected to LSP on localhost:7777
+                        {isClassic
+                            ? 'UTLX Editor | Connected to LSP on localhost:7777'
+                            : 'Mapping Canvas | Draw connections between fields'}
                     </span>
                 </div>
 
-                {/* Function Builder Dialog */}
-                {this.showFunctionBuilderDialog && (
+                {/* Function Builder Dialog (Classic mode only) */}
+                {isClassic && this.showFunctionBuilderDialog && (
                     <FunctionBuilderDialog
                         functions={this.functionBuilderFunctions}
                         operators={this.functionBuilderOperators}

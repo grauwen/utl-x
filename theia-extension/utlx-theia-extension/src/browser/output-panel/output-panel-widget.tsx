@@ -632,6 +632,12 @@ export class OutputPanelWidget extends ReactWidget {
                 tab: 'instance'
             });
 
+            // Notify canvas about instance content change
+            this.eventService.fireOutputInstanceContentChanged({
+                content,
+                format: detectedFormat
+            });
+
             this.messageService.info(`Loaded ${uri.path.base}`);
         } catch (error) {
             console.error('[OutputPanel] Load error:', error);
@@ -843,6 +849,8 @@ export class OutputPanelWidget extends ReactWidget {
             }
         } else {
             this.setState({ schemaFormat: format });
+            // Fire schema format changed event for canvas
+            this.eventService.fireOutputSchemaFormatChanged({ format });
         }
 
         // Fire format change event for editor widget to update headers
@@ -909,13 +917,19 @@ export class OutputPanelWidget extends ReactWidget {
      */
     public displayExecutionResult(result: ExecutionResult): void {
         if (result.success && result.output) {
+            const instanceFormat = result.format || this.state.instanceFormat || 'json';
             this.setState({
                 instanceContent: result.output,
-                // Preserve existing format if result doesn't provide one
-                instanceFormat: result.format || this.state.instanceFormat || 'json',
+                instanceFormat,
                 instanceExecutionTime: result.executionTimeMs,
                 instanceError: undefined,
                 instanceDiagnostics: result.diagnostics
+            });
+
+            // Notify canvas about instance content change
+            this.eventService.fireOutputInstanceContentChanged({
+                content: result.output,
+                format: instanceFormat
             });
         } else {
             this.setState({
@@ -941,6 +955,16 @@ export class OutputPanelWidget extends ReactWidget {
                 schemaError: undefined,
                 schemaDiagnostics: result.typeErrors
             });
+
+            // Notify other widgets (e.g., mapping canvas) about the schema update
+            this.eventService.fireOutputSchemaContentChanged({
+                content: result.schema
+            });
+            if (result.schemaFormat) {
+                this.eventService.fireOutputSchemaFormatChanged({
+                    format: result.schemaFormat
+                });
+            }
         } else {
             this.setState({
                 activeTab: 'schema',  // Switch to schema tab to show error

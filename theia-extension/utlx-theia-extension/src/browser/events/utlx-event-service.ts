@@ -154,6 +154,14 @@ export interface OutputSchemaContentChangedEvent {
 }
 
 /**
+ * Event fired when output instance content changes (load from file or execution result)
+ */
+export interface OutputInstanceContentChangedEvent {
+    content: string;
+    format: string;
+}
+
+/**
  * Event fired when user requests output schema inference (design-time mode)
  */
 export interface RequestOutputSchemaInferenceEvent {
@@ -475,6 +483,20 @@ export class UTLXEventService {
     fireOutputSchemaContentChanged(event: OutputSchemaContentChangedEvent): void {
         console.log('[UTLXEventService] Output schema content changed:', { length: event.content.length });
         this.onOutputSchemaContentChangedEmitter.fire(event);
+    }
+
+    private readonly onOutputInstanceContentChangedEmitter = new Emitter<OutputInstanceContentChangedEvent>();
+    /**
+     * Event fired when output instance content changes
+     */
+    readonly onOutputInstanceContentChanged: Event<OutputInstanceContentChangedEvent> = this.onOutputInstanceContentChangedEmitter.event;
+
+    /**
+     * Fire an output instance content changed event
+     */
+    fireOutputInstanceContentChanged(event: OutputInstanceContentChangedEvent): void {
+        console.log('[UTLXEventService] Output instance content changed:', { format: event.format, length: event.content.length });
+        this.onOutputInstanceContentChangedEmitter.fire(event);
     }
 
     private readonly onRequestOutputSchemaInferenceEmitter = new Emitter<RequestOutputSchemaInferenceEvent>();
