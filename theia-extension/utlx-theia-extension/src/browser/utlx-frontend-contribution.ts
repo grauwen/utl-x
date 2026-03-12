@@ -25,7 +25,7 @@ import {
 } from '@theia/core/lib/common';
 import { KeybindingContribution, KeybindingRegistry } from '@theia/core/lib/browser';
 import { MessageService } from '@theia/core';
-import { UTLXCommands, UTLXService, UTLX_SERVICE_SYMBOL } from '../common/protocol';
+import { UTLXCommands, UTLXService, UTLX_SERVICE_SYMBOL, UTLXMode } from '../common/protocol';
 import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
@@ -77,6 +77,7 @@ export class UTLXFrontendContribution implements
     private mcpStatusId = 'mcp-status';
     private inputs: Map<string, { name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string }> = new Map(); // inputId -> {name, format, csvHeaders, csvDelimiter}
     private outputFormat: string = 'json';
+    private currentMode: UTLXMode = UTLXMode.RUNTIME;
     private isUpdatingFromParsedHeaders: boolean = false; // Flag to prevent circular updates
 
     async onStart(app: FrontendApplication): Promise<void> {
@@ -474,6 +475,11 @@ export class UTLXFrontendContribution implements
     private subscribeToFormatChanges(): void {
         console.log('[UTLXFrontendContribution] Setting up format change coordination...');
 
+        // Track current mode
+        this.eventService.onModeChanged(event => {
+            this.currentMode = event.mode;
+        });
+
         // Subscribe to input added
         this.eventService.onInputAdded(event => {
             if (this.isUpdatingFromParsedHeaders) return;
@@ -554,12 +560,19 @@ export class UTLXFrontendContribution implements
             this.updateEditorHeaders();
         });
 
-        // Subscribe to output schema format changes (preset mode)
+        // Subscribe to output schema format changes
         this.eventService.onOutputSchemaFormatChanged(event => {
             console.log('[UTLXFrontendContribution] Output schema format changed:', event);
 
-            // Track output schema format in preset mode
-            this.outputFormat = event.format;
+            if (this.currentMode === UTLXMode.DESIGN_TIME) {
+                // In Design-Time, the schema describes the output data format.
+                // Map schema format → instance format for the UTLX header:
+                // jsch→json, xsd→xml, osch→odata, tsch→csv
+                this.outputFormat = this.schemaFormatToInstanceFormat(event.format);
+            } else {
+                // In Runtime, use the format as-is
+                this.outputFormat = event.format;
+            }
 
             // Update editor headers
             this.updateEditorHeaders();
@@ -1364,6 +1377,22 @@ export class UTLXFrontendContribution implements
         } catch (error) {
             console.error('[UTLXFrontendContribution] Failed to parse schema:', error);
             return [];
+        }
+    }
+
+    /**
+     * Map schema format to the instance format it describes.
+     * e.g. jsch→json, xsd→xml, osch→odata, tsch→csv
+     * Used in Design-Time mode so the UTLX header shows the data output format,
+     * not the schema notation format.
+     */
+    private schemaFormatToInstanceFormat(schemaFormat: string): string {
+        switch (schemaFormat.toLowerCase()) {
+            case 'jsch':  return 'json';
+            case 'xsd':   return 'xml';
+            case 'osch':  return 'odata';
+            case 'tsch':  return 'csv';
+            default:      return schemaFormat;  // Not a schema format, pass through
         }
     }
 
