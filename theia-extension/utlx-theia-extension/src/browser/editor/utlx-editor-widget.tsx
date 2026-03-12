@@ -1934,6 +1934,7 @@ output json
 
         console.log('[UTLXEditorWidget] Switching view mode:', this.editorViewMode, '->', mode);
         this.editorViewMode = mode;
+        this.eventService.fireEditorViewModeChanged({ viewMode: mode });
 
         // When switching to classic, re-layout the Monaco editor
         if (mode === 'classic' && this.editor) {

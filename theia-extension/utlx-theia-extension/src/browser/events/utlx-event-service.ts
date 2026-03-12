@@ -227,6 +227,13 @@ export interface ScaffoldOutputEvent {
 }
 
 /**
+ * Event fired when the editor view mode changes (Classic ↔ Canvas)
+ */
+export interface EditorViewModeChangedEvent {
+    viewMode: 'classic' | 'canvas';
+}
+
+/**
  * Event fired when validation result is available (Design-Time mode)
  */
 export interface ValidationResultEvent {
@@ -619,6 +626,22 @@ export class UTLXEventService {
         this.onScaffoldOutputEmitter.fire(event);
     }
 
+    // ===== Editor View Mode Events =====
+
+    private readonly onEditorViewModeChangedEmitter = new Emitter<EditorViewModeChangedEvent>();
+    /**
+     * Event fired when the editor view mode changes (Classic ↔ Canvas)
+     */
+    readonly onEditorViewModeChanged: Event<EditorViewModeChangedEvent> = this.onEditorViewModeChangedEmitter.event;
+
+    /**
+     * Fire an editor view mode changed event
+     */
+    fireEditorViewModeChanged(event: EditorViewModeChangedEvent): void {
+        console.log('[UTLXEventService] Editor view mode changed:', event.viewMode);
+        this.onEditorViewModeChangedEmitter.fire(event);
+    }
+
     // ===== Validation Result Events =====
 
     private readonly onValidationResultEmitter = new Emitter<ValidationResultEvent>();
@@ -668,6 +691,7 @@ export class UTLXEventService {
         this.onUTLXGeneratedEmitter.dispose();
         this.onExecuteTransformationEmitter.dispose();
         this.onScaffoldOutputEmitter.dispose();
+        this.onEditorViewModeChangedEmitter.dispose();
         this.onValidationResultEmitter.dispose();
     }
 }

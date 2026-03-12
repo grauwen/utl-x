@@ -79,6 +79,7 @@ export class UTLXFrontendContribution implements
     private outputFormat: string = 'json';
     private currentMode: UTLXMode = UTLXMode.RUNTIME;
     private isUpdatingFromParsedHeaders: boolean = false; // Flag to prevent circular updates
+    private canvasFullScreen: boolean = false;
 
     async onStart(app: FrontendApplication): Promise<void> {
         console.log('[UTLXFrontendContribution] ===== onStart() called =====');
@@ -272,8 +273,12 @@ export class UTLXFrontendContribution implements
 
             // Monitor when active widget changes - restore Input/Output panels
             this.shell.onDidChangeActiveWidget((widget) => {
+                // Skip restoring panels when canvas is full-screen
+                if (this.canvasFullScreen) return;
                 // Restore Input Panel and Output Panel when other views (Explorer, Outline) take over
                 setTimeout(() => {
+                    // Re-check: canvas may have gone full-screen while this timer was pending
+                    if (this.canvasFullScreen) return;
                     const currentActiveWidget = this.shell.activeWidget;
                     const activeArea = currentActiveWidget &&
                         this.shell.getAreaFor(currentActiveWidget);
@@ -478,6 +483,24 @@ export class UTLXFrontendContribution implements
         // Track current mode
         this.eventService.onModeChanged(event => {
             this.currentMode = event.mode;
+        });
+
+        // Toggle side panels when editor view mode changes (Classic ↔ Canvas)
+        this.eventService.onEditorViewModeChanged(event => {
+            if (event.viewMode === 'canvas') {
+                this.canvasFullScreen = true;
+                // Delay collapse so any already-pending panel-restore timers (100ms) run first
+                // and get blocked by the canvasFullScreen guard
+                setTimeout(() => {
+                    if (!this.canvasFullScreen) return;
+                    this.shell.leftPanelHandler.collapse();
+                    this.shell.rightPanelHandler.collapse();
+                }, 150);
+            } else {
+                this.canvasFullScreen = false;
+                this.shell.leftPanelHandler.expand();
+                this.shell.rightPanelHandler.expand();
+            }
         });
 
         // Subscribe to input added
