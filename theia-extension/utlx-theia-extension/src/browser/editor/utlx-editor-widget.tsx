@@ -114,14 +114,21 @@ export class UTLXEditorWidget extends ReactWidget {
     protected init(): void {
         this.update();
 
+        // Seed currentMode from daemon so the toggle renders correctly on first paint
+        this.utlxService.getMode().then(config => {
+            this.currentMode = config.mode;
+            this.update();
+        }).catch(() => { /* daemon not ready yet — onModeChanged will sync later */ });
+
         // ===== Mode Events =====
         this.eventService.onModeChanged(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Mode changed:', event);
             this.currentMode = event.mode;
-            // Re-render if Function Builder is open to update mode-aware display
-            if (this.showFunctionBuilderDialog) {
-                this.update();
+            // Canvas is Design-Time only — switch back to classic when entering Runtime
+            if (event.mode === UTLXMode.RUNTIME && this.editorViewMode === 'canvas') {
+                this.switchViewMode('classic');
             }
+            this.update();
         });
 
         // ===== Input Management Events =====
@@ -2089,25 +2096,27 @@ output json
             <div className='utlx-editor-container'>
                 <div className='utlx-editor-header'>
                     <div className='utlx-editor-title'>
-                        {/* View Mode Toggle */}
-                        <div className='mapping-view-toggle'>
-                            <button
-                                className={`mapping-view-toggle-btn ${isClassic ? 'active' : ''}`}
-                                onClick={() => this.switchViewMode('classic')}
-                                title='Classic view — Monaco code editor'
-                            >
-                                <span className='codicon codicon-code' style={{ fontSize: '11px' }} />
-                                {' '}Classic
-                            </button>
-                            <button
-                                className={`mapping-view-toggle-btn ${isCanvas ? 'active' : ''}`}
-                                onClick={() => this.switchViewMode('canvas')}
-                                title='Canvas view — graphical mapping editor'
-                            >
-                                <span className='codicon codicon-type-hierarchy' style={{ fontSize: '11px' }} />
-                                {' '}Canvas
-                            </button>
-                        </div>
+                        {/* View Mode Toggle — only in Design-Time (canvas needs schemas) */}
+                        {this.currentMode === UTLXMode.DESIGN_TIME && (
+                            <div className='mapping-view-toggle'>
+                                <button
+                                    className={`mapping-view-toggle-btn ${isClassic ? 'active' : ''}`}
+                                    onClick={() => this.switchViewMode('classic')}
+                                    title='Classic view — Monaco code editor'
+                                >
+                                    <span className='codicon codicon-code' style={{ fontSize: '11px' }} />
+                                    {' '}Classic
+                                </button>
+                                <button
+                                    className={`mapping-view-toggle-btn ${isCanvas ? 'active' : ''}`}
+                                    onClick={() => this.switchViewMode('canvas')}
+                                    title='Canvas view — graphical mapping editor'
+                                >
+                                    <span className='codicon codicon-type-hierarchy' style={{ fontSize: '11px' }} />
+                                    {' '}Canvas
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <div className='utlx-panel-actions'>
                         {/* Classic-only buttons */}
