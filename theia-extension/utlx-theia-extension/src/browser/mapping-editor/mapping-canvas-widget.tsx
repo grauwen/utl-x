@@ -67,9 +67,11 @@ const edgeTypes: EdgeTypes = {
 interface CanvasToolbarProps {
     showCodePreview: boolean;
     onToggleCodePreview: () => void;
+    isFullScreen: boolean;
+    onToggleFullScreen: () => void;
 }
 
-function CanvasToolbar({ showCodePreview, onToggleCodePreview }: CanvasToolbarProps) {
+function CanvasToolbar({ showCodePreview, onToggleCodePreview, isFullScreen, onToggleFullScreen }: CanvasToolbarProps) {
     const { fitView } = useReactFlow();
     const autoLayout = useMappingStore(s => s.autoLayout);
     const addNode = useMappingStore(s => s.addNode);
@@ -116,6 +118,14 @@ function CanvasToolbar({ showCodePreview, onToggleCodePreview }: CanvasToolbarPr
                 <span className="codicon codicon-screen-full" style={{ fontSize: '11px' }} />
                 {' '}Fit View
             </button>
+            <button
+                className={`mapping-toolbar-btn ${isFullScreen ? 'active' : ''}`}
+                onClick={onToggleFullScreen}
+                title={isFullScreen ? 'Show Input/Output panels' : 'Hide Input/Output panels'}
+            >
+                <span className={`codicon ${isFullScreen ? 'codicon-screen-normal' : 'codicon-screen-full'}`} style={{ fontSize: '11px' }} />
+                {isFullScreen ? ' Exit Full Screen' : ' Full Screen'}
+            </button>
             <div style={{ flex: 1 }} />
             <button
                 className="mapping-toolbar-btn"
@@ -143,9 +153,11 @@ interface MappingCanvasInnerProps {
     functions: FunctionInfo[];
     operators: OperatorInfo[];
     onApplyCode?: (code: string) => void;
+    isFullScreen: boolean;
+    onToggleFullScreen: () => void;
 }
 
-function MappingCanvasInner({ functions, operators, onApplyCode }: MappingCanvasInnerProps) {
+function MappingCanvasInner({ functions, operators, onApplyCode, isFullScreen, onToggleFullScreen }: MappingCanvasInnerProps) {
     const {
         nodes,
         edges,
@@ -240,6 +252,8 @@ function MappingCanvasInner({ functions, operators, onApplyCode }: MappingCanvas
             <CanvasToolbar
                 showCodePreview={showCodePreview}
                 onToggleCodePreview={() => setShowCodePreview(v => !v)}
+                isFullScreen={isFullScreen}
+                onToggleFullScreen={onToggleFullScreen}
             />
             <div className="mapping-canvas-body">
                 <FunctionPalette functions={functions} operators={operators} />
@@ -327,12 +341,20 @@ export interface MappingCanvasWidgetProps {
     functions: FunctionInfo[];
     operators: OperatorInfo[];
     onApplyCode?: (code: string) => void;
+    isFullScreen: boolean;
+    onToggleFullScreen: () => void;
 }
 
-export function MappingCanvasWidget({ functions, operators, onApplyCode }: MappingCanvasWidgetProps) {
+export function MappingCanvasWidget({ functions, operators, onApplyCode, isFullScreen, onToggleFullScreen }: MappingCanvasWidgetProps) {
     return (
         <ReactFlowProvider>
-            <MappingCanvasInner functions={functions} operators={operators} onApplyCode={onApplyCode} />
+            <MappingCanvasInner
+                functions={functions}
+                operators={operators}
+                onApplyCode={onApplyCode}
+                isFullScreen={isFullScreen}
+                onToggleFullScreen={onToggleFullScreen}
+            />
         </ReactFlowProvider>
     );
 }

@@ -92,6 +92,9 @@ export class UTLXEditorWidget extends ReactWidget {
     // View mode toggle: 'classic' (Monaco editor) or 'canvas' (graphical mapping)
     protected editorViewMode: ViewMode = 'classic';
 
+    // Canvas full-screen: panels collapsed. Default false — user opts in via button.
+    protected canvasFullScreen: boolean = false;
+
     // Output schema state for canvas mapping
     protected outputSchemaContent: string = '';
     protected outputSchemaFormat: string = '';
@@ -1934,7 +1937,16 @@ output json
 
         console.log('[UTLXEditorWidget] Switching view mode:', this.editorViewMode, '->', mode);
         this.editorViewMode = mode;
-        this.eventService.fireEditorViewModeChanged({ viewMode: mode });
+
+        // Start canvas in normal (non-full-screen) mode — panels stay visible
+        if (mode === 'canvas') {
+            this.canvasFullScreen = false;
+        }
+
+        this.eventService.fireEditorViewModeChanged({
+            viewMode: mode,
+            fullScreen: mode === 'canvas' ? false : undefined,
+        });
 
         // When switching to classic, re-layout the Monaco editor
         if (mode === 'classic' && this.editor) {
@@ -1950,6 +1962,18 @@ output json
 
         this.update();
     }
+
+    /**
+     * Toggle canvas full-screen mode (collapse/expand Input/Output panels)
+     */
+    protected toggleCanvasFullScreen = (): void => {
+        this.canvasFullScreen = !this.canvasFullScreen;
+        this.eventService.fireEditorViewModeChanged({
+            viewMode: 'canvas',
+            fullScreen: this.canvasFullScreen,
+        });
+        this.update();
+    };
 
     /**
      * Push all current schema data into the mapping canvas Zustand store.
@@ -2197,6 +2221,8 @@ output json
                             functions={this.functionBuilderFunctions}
                             operators={this.functionBuilderOperators}
                             onApplyCode={(code) => this.applyCanvasCode(code)}
+                            isFullScreen={this.canvasFullScreen}
+                            onToggleFullScreen={this.toggleCanvasFullScreen}
                         />
                     </div>
                 )}

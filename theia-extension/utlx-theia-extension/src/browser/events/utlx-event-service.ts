@@ -231,6 +231,7 @@ export interface ScaffoldOutputEvent {
  */
 export interface EditorViewModeChangedEvent {
     viewMode: 'classic' | 'canvas';
+    fullScreen?: boolean;  // Only relevant for canvas — toggles panel collapse
 }
 
 /**

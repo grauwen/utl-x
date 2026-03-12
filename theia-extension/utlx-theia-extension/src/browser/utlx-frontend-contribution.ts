@@ -488,14 +488,22 @@ export class UTLXFrontendContribution implements
         // Toggle side panels when editor view mode changes (Classic ↔ Canvas)
         this.eventService.onEditorViewModeChanged(event => {
             if (event.viewMode === 'canvas') {
-                this.canvasFullScreen = true;
-                // Delay collapse so any already-pending panel-restore timers (100ms) run first
-                // and get blocked by the canvasFullScreen guard
-                setTimeout(() => {
-                    if (!this.canvasFullScreen) return;
-                    this.shell.leftPanelHandler.collapse();
-                    this.shell.rightPanelHandler.collapse();
-                }, 150);
+                if (event.fullScreen !== false) {
+                    // Default: canvas collapses panels (backward compat)
+                    this.canvasFullScreen = true;
+                    // Delay collapse so any already-pending panel-restore timers (100ms) run first
+                    // and get blocked by the canvasFullScreen guard
+                    setTimeout(() => {
+                        if (!this.canvasFullScreen) return;
+                        this.shell.leftPanelHandler.collapse();
+                        this.shell.rightPanelHandler.collapse();
+                    }, 150);
+                } else {
+                    // User toggled off full-screen while staying in canvas
+                    this.canvasFullScreen = false;
+                    this.shell.leftPanelHandler.expand();
+                    this.shell.rightPanelHandler.expand();
+                }
             } else {
                 this.canvasFullScreen = false;
                 this.shell.leftPanelHandler.expand();
