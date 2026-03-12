@@ -26,6 +26,7 @@ export interface PaletteDragData {
 // ─── Component ───
 
 export function FunctionPalette({ functions, operators }: FunctionPaletteProps) {
+    const [collapsed, setCollapsed] = React.useState(true);
     const [searchQuery, setSearchQuery] = React.useState('');
     const [expandedCategories, setExpandedCategories] = React.useState<Set<string>>(new Set());
 
@@ -86,9 +87,27 @@ export function FunctionPalette({ functions, operators }: FunctionPaletteProps) 
         e.dataTransfer.effectAllowed = 'move';
     };
 
+    if (collapsed) {
+        return (
+            <div
+                className="mapping-palette mapping-palette-collapsed"
+                onClick={() => setCollapsed(false)}
+                title="Show function palette"
+            >
+                <span className="codicon codicon-chevron-right" style={{ fontSize: '12px' }} />
+                <span className="mapping-palette-collapsed-label">Functions</span>
+            </div>
+        );
+    }
+
     return (
         <div className="mapping-palette">
             <div className="mapping-palette-header">
+                <span
+                    className="codicon codicon-chevron-left mapping-palette-collapse-btn"
+                    title="Collapse function palette"
+                    onClick={() => setCollapsed(true)}
+                />
                 <span className="codicon codicon-symbol-method" style={{ fontSize: '12px' }} />
                 <span className="mapping-palette-title">Functions</span>
             </div>
