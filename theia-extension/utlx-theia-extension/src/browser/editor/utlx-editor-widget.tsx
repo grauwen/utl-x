@@ -270,6 +270,7 @@ export class UTLXEditorWidget extends ReactWidget {
             if (this.editorViewMode === 'canvas') {
                 this.refreshCanvasOutputSchema();
             }
+            this.updateScaffoldButtonState();
         });
 
         this.eventService.onOutputSchemaContentChanged(event => {
@@ -1454,16 +1455,22 @@ output json
     }
 
     /**
-     * Update the scaffold button state by firing an event to check output panel
-     * This is called when output schema/instance changes
+     * Update the scaffold button state based on available output structure.
+     * Scaffold is available when:
+     * - Output schema exists with a supported schema format, OR
+     * - Output instance exists with a supported instance format
      */
     protected updateScaffoldButtonState(): void {
-        // Fire scaffold output event to trigger state check
-        // The frontend contribution will coordinate with output panel
-        // For now, we track this locally based on output format
-        const supportedFormats = ['json', 'xml', 'odata', 'jsch', 'xsd', 'osch'];
-        const formatLower = this.outputFormat.toLowerCase();
-        this.hasOutputStructure = supportedFormats.includes(formatLower);
+        const supportedInstanceFormats = ['json', 'xml', 'odata'];
+        const supportedSchemaFormats = ['jsch', 'xsd', 'osch'];
+
+        const hasSchema = !!this.outputSchemaContent &&
+            supportedSchemaFormats.includes((this.outputSchemaFormat || '').toLowerCase());
+
+        const hasInstance = !!this.outputInstanceContent &&
+            supportedInstanceFormats.includes((this.outputFormat || this.outputInstanceFormat || '').toLowerCase());
+
+        this.hasOutputStructure = hasSchema || hasInstance;
         this.update();
     }
 

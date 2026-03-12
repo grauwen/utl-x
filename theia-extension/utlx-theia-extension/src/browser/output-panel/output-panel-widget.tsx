@@ -720,6 +720,8 @@ export class OutputPanelWidget extends ReactWidget {
                 schemaError: undefined,
                 schemaDiagnostics: undefined
             });
+            // Notify other widgets that schema was cleared
+            this.eventService.fireOutputSchemaContentChanged({ content: '' });
         }
     }
 
