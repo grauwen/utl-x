@@ -373,7 +373,9 @@ export class OutputPanelWidget extends ReactWidget {
                         <div className='utlx-placeholder'>
                             {activeTab === 'schema'
                                 ? this.getSchemaPlaceholder()
-                                : '▶️ Click "Execute" to see transformation output'}
+                                : mode === UTLXMode.DESIGN_TIME
+                                    ? 'Load an output instance or switch to Runtime mode to execute'
+                                    : '▶️ Click "Execute" to see transformation output'}
                         </div>
                     )}
 
