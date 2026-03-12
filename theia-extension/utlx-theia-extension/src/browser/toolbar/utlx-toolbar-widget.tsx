@@ -22,6 +22,8 @@ import { UTLXEventService } from '../events/utlx-event-service';
 import { MultiInputPanelWidget } from '../input-panel/multi-input-panel-widget';
 import { UTLXEditorWidget } from '../editor/utlx-editor-widget';
 import { extractInputPaths, formatPathsAsSimpleList } from '../utils/udm-path-extractor';
+import { SchemaComparisonResult } from '../utils/schema-comparator';
+import { ValidationResultDialog } from './validation-result-dialog';
 
 export interface PromptHistoryEntry {
     timestamp: string;
@@ -46,6 +48,8 @@ export interface ToolbarState {
         llmProvider?: string;
         llmModel?: string;
     };
+    showValidationDialog: boolean;
+    validationResult: SchemaComparisonResult | null;
 }
 
 @injectable()
@@ -87,7 +91,9 @@ export class UTLXToolbarWidget extends ReactWidget {
             llm: null,
             llmProvider: undefined,
             llmModel: undefined
-        }
+        },
+        showValidationDialog: false,
+        validationResult: null
     };
 
     constructor() {
@@ -101,6 +107,15 @@ export class UTLXToolbarWidget extends ReactWidget {
     @postConstruct()
     protected init(): void {
         this.update();
+
+        // Subscribe to validation result events
+        this.eventService.onValidationResult(event => {
+            this.setState({
+                showValidationDialog: true,
+                validationResult: event.result
+            });
+        });
+
         // Sync backend mode with toolbar's default on startup
         this.utlxService.setMode({
             mode: this.state.currentMode,
@@ -214,9 +229,9 @@ export class UTLXToolbarWidget extends ReactWidget {
                     <button
                         className='utlx-toolbar-button'
                         onClick={() => this.handleExecute()}
-                        title={currentMode === UTLXMode.RUNTIME ? 'Execute transformation' : 'Evaluate transformation'}
+                        title={currentMode === UTLXMode.RUNTIME ? 'Execute transformation' : 'Validate output schema'}
                     >
-                        {currentMode === UTLXMode.RUNTIME ? '▶️ Execute' : '🔍 Evaluate'}
+                        {currentMode === UTLXMode.RUNTIME ? '▶️ Execute' : '✅ Validate'}
                     </button>
                 </div>
 
@@ -358,6 +373,14 @@ export class UTLXToolbarWidget extends ReactWidget {
                             )}
                         </div>
                     </div>
+                )}
+
+                {/* Validation Result Dialog */}
+                {this.state.showValidationDialog && this.state.validationResult && (
+                    <ValidationResultDialog
+                        result={this.state.validationResult}
+                        onClose={() => this.setState({ showValidationDialog: false, validationResult: null })}
+                    />
                 )}
             </div>
         );
@@ -841,9 +864,9 @@ export class UTLXToolbarWidget extends ReactWidget {
 
     private async handleExecute(): Promise<void> {
         const mode = this.state.currentMode === UTLXMode.RUNTIME ? 'execute' : 'evaluate';
-        const modeLabel = this.state.currentMode === UTLXMode.RUNTIME ? 'Executing' : 'Evaluating';
+        const modeLabel = this.state.currentMode === UTLXMode.RUNTIME ? 'Executing' : 'Validating';
 
-        this.messageService.info(`${mode === 'execute' ? '▶️' : '🔍'} ${modeLabel} transformation...`);
+        this.messageService.info(`${mode === 'execute' ? '▶️' : '✅'} ${modeLabel} transformation...`);
 
         // Fire event for frontend contribution to coordinate execution
         this.eventService.fireExecuteTransformation({ mode });

@@ -13,6 +13,7 @@ import { injectable } from '@theia/core/shared/inversify';
 import { Emitter, Event } from '@theia/core';
 import { UTLXMode } from '../../common/protocol';
 import { SchemaFieldInfo } from '../utils/schema-field-tree-parser';
+import { SchemaComparisonResult } from '../utils/schema-comparator';
 
 /**
  * Event fired when the mode changes between Design-Time and Runtime
@@ -223,6 +224,13 @@ export interface ExecuteTransformationEvent {
  */
 export interface ScaffoldOutputEvent {
     // No additional data needed - output structure comes from output panel
+}
+
+/**
+ * Event fired when validation result is available (Design-Time mode)
+ */
+export interface ValidationResultEvent {
+    result: SchemaComparisonResult;
 }
 
 /**
@@ -611,6 +619,28 @@ export class UTLXEventService {
         this.onScaffoldOutputEmitter.fire(event);
     }
 
+    // ===== Validation Result Events =====
+
+    private readonly onValidationResultEmitter = new Emitter<ValidationResultEvent>();
+    /**
+     * Event fired when validation result is available (Design-Time mode)
+     */
+    readonly onValidationResult: Event<ValidationResultEvent> = this.onValidationResultEmitter.event;
+
+    /**
+     * Fire a validation result event
+     */
+    fireValidationResult(event: ValidationResultEvent): void {
+        console.log('[UTLXEventService] Validation result:', {
+            matchCount: event.result.matchCount,
+            missingCount: event.result.missingCount,
+            extraCount: event.result.extraCount,
+            typeMismatchCount: event.result.typeMismatchCount,
+            isValid: event.result.isValid
+        });
+        this.onValidationResultEmitter.fire(event);
+    }
+
     // ===== Lifecycle =====
 
     /**
@@ -638,5 +668,6 @@ export class UTLXEventService {
         this.onUTLXGeneratedEmitter.dispose();
         this.onExecuteTransformationEmitter.dispose();
         this.onScaffoldOutputEmitter.dispose();
+        this.onValidationResultEmitter.dispose();
     }
 }

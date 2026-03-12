@@ -1013,6 +1013,15 @@ export class OutputPanelWidget extends ReactWidget {
     }
 
     /**
+     * Get expected output schema content and format (user-provided schema in Design-Time mode)
+     * PUBLIC: Called by frontend contribution for validation
+     */
+    public getExpectedSchema(): { content: string; format: string } | null {
+        if (!this.state.schemaContent || !this.state.schemaFormat) return null;
+        return { content: this.state.schemaContent, format: this.state.schemaFormat };
+    }
+
+    /**
      * Get instance content and format for schema inference
      * PUBLIC: Called by frontend contribution for instance-based schema inference
      */

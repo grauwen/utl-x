@@ -33,6 +33,13 @@ import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { UTLXEventService } from './events/utlx-event-service';
 import { inferSchemaFromJson, inferSchemaFromXml, inferEdmxFromOData, inferTableSchemaFromCsv, formatSchema } from './utils/schema-inferrer';
 import { generateScaffoldFromStructure } from './utils/scaffold-generator';
+import { compareSchemas } from './utils/schema-comparator';
+import {
+    parseJsonSchemaToFieldTree,
+    parseXsdToFieldTree,
+    parseOSchToFieldTree,
+    parseTschToFieldTree
+} from './utils/schema-field-tree-parser';
 
 @injectable()
 export class UTLXFrontendContribution implements
@@ -874,52 +881,97 @@ export class UTLXFrontendContribution implements
                 console.log('[Execute] Sending UTLX code (' + utlxCode.length + ' characters):');
                 console.log(utlxCode);
 
-                // 2a. Handle EVALUATE mode (Design-Time) - infer output schema
+                // 2a. Handle EVALUATE/VALIDATE mode (Design-Time) - validate output schema
                 if (event.mode === 'evaluate') {
-                    console.log('[Evaluate] Design-Time mode - inferring output schema');
+                    console.log('[Validate] Design-Time mode - validating output schema');
 
-                    // Get input schema if available (optional for inference)
+                    // Step 1: Get expected output schema from output panel
+                    const expectedSchema = outputPanel.getExpectedSchema();
+                    if (!expectedSchema) {
+                        this.messageService.warn('Please define an output schema first (use the Schema tab in the Output panel)');
+                        return;
+                    }
+                    console.log('[Validate] Expected schema format:', expectedSchema.format);
+                    console.log('[Validate] Expected schema content length:', expectedSchema.content.length);
+                    console.log('[Validate] Expected schema content preview:', expectedSchema.content.substring(0, 300));
+
+                    // Step 2: Get input schema if available (optional for inference)
                     const inputSchema = inputPanel.getSchemaDocument();
-                    console.log('[Evaluate] Input schema:', inputSchema ? `${inputSchema.format} (${inputSchema.content.length} chars)` : 'none');
+                    console.log('[Validate] Input schema:', inputSchema ? `${inputSchema.format} (${inputSchema.content.length} chars)` : 'none');
 
-                    // Call inferSchema service
-                    this.messageService.info('🔍 Evaluating transformation...');
+                    // Step 3: Infer output schema via service
+                    this.messageService.info('✅ Validating transformation output...');
                     const startTime = Date.now();
 
                     try {
                         const result = await this.utlxService.inferSchema(utlxCode, inputSchema || undefined);
                         const executionTime = Date.now() - startTime;
 
-                        console.log('[Evaluate] Schema inference result:', {
+                        console.log('[Validate] Schema inference result:', {
                             success: result.success,
                             schemaLength: result.schema?.length,
                             schemaFormat: result.schemaFormat,
                             error: result.error
                         });
 
-                        // Display result in output panel schema tab
-                        if (result.success && result.schema) {
-                            outputPanel.displaySchemaResult({
-                                success: true,
-                                schema: result.schema,
-                                schemaFormat: result.schemaFormat || 'jsch'
-                            });
-                            this.messageService.info(`✓ Output schema inferred successfully (${executionTime}ms)`);
-                        } else {
+                        if (!result.success || !result.schema) {
+                            this.messageService.error(`✗ Schema inference failed: ${result.error || 'Unknown error'}`);
                             outputPanel.displaySchemaResult({
                                 success: false,
                                 error: result.error || 'Failed to infer schema',
                                 typeErrors: result.typeErrors
                             });
-                            this.messageService.error(`✗ Schema inference failed: ${result.error || 'Unknown error'}`);
+                            return;
                         }
-                    } catch (error) {
-                        console.error('[Evaluate] Schema inference threw exception:', error);
-                        outputPanel.displaySchemaResult({
-                            success: false,
-                            error: error instanceof Error ? error.message : String(error)
+
+                        // Step 4: Parse both schemas to SchemaFieldInfo[]
+                        console.log('[Validate] Parsing expected schema: format =', expectedSchema.format, 'normalized =', this.normalizeSchemaFormat(expectedSchema.format));
+                        const expectedFields = this.parseSchemaToFieldTree(expectedSchema.content, expectedSchema.format);
+                        console.log('[Validate] Parsing inferred schema: format =', result.schemaFormat || 'jsch');
+                        const inferredFields = this.parseSchemaToFieldTree(result.schema, result.schemaFormat || 'jsch');
+
+                        console.log('[Validate] Expected fields:', expectedFields.length, 'top-level');
+                        console.log('[Validate] Inferred fields:', inferredFields.length, 'top-level');
+                        if (expectedFields.length > 0) {
+                            console.log('[Validate] Expected field names:', expectedFields.map(f => f.name));
+                        }
+                        if (inferredFields.length > 0) {
+                            console.log('[Validate] Inferred field names:', inferredFields.map(f => f.name));
+                        }
+
+                        if (expectedFields.length === 0) {
+                            const normalizedFmt = this.normalizeSchemaFormat(expectedSchema.format);
+                            this.messageService.warn(
+                                `Could not parse expected output schema (format: ${expectedSchema.format}→${normalizedFmt}, ` +
+                                `${expectedSchema.content.length} chars). Check that the Schema tab contains a valid schema.`
+                            );
+                            return;
+                        }
+
+                        // Step 5: Compare schemas
+                        const comparison = compareSchemas(expectedFields, inferredFields);
+                        console.log('[Validate] Comparison result:', {
+                            matchCount: comparison.matchCount,
+                            missingCount: comparison.missingCount,
+                            extraCount: comparison.extraCount,
+                            typeMismatchCount: comparison.typeMismatchCount,
+                            isValid: comparison.isValid
                         });
-                        this.messageService.error(`✗ Evaluation failed: ${error instanceof Error ? error.message : String(error)}`);
+
+                        // Step 6: Fire validation result event (toolbar will show dialog)
+                        this.eventService.fireValidationResult({ result: comparison });
+
+                        // Step 7: Show summary toast
+                        if (comparison.isValid) {
+                            this.messageService.info(`✓ Validation passed — ${comparison.matchCount} fields matched (${executionTime}ms)`);
+                        } else {
+                            const issues = comparison.missingCount + comparison.typeMismatchCount;
+                            this.messageService.warn(`✗ ${issues} issue(s) found (${comparison.missingCount} missing, ${comparison.typeMismatchCount} type mismatch)`);
+                        }
+
+                    } catch (error) {
+                        console.error('[Validate] Validation threw exception:', error);
+                        this.messageService.error(`✗ Validation failed: ${error instanceof Error ? error.message : String(error)}`);
                     }
 
                     return; // Exit early - don't continue to execute path
@@ -1277,6 +1329,83 @@ export class UTLXFrontendContribution implements
             default:
                 return ['*'];
         }
+    }
+
+    /**
+     * Parse a schema string to SchemaFieldInfo[] based on its format.
+     * Supports jsch, xsd, osch, tsch formats, plus instance-format aliases
+     * (json→jsch, xml→xsd, yaml→jsch) for when the output panel stores
+     * an instance-format name instead of a schema-format name.
+     */
+    private parseSchemaToFieldTree(schemaContent: string, schemaFormat: string): import('./utils/schema-field-tree-parser').SchemaFieldInfo[] {
+        const format = this.normalizeSchemaFormat(schemaFormat);
+        console.log('[UTLXFrontendContribution] parseSchemaToFieldTree: input format =', schemaFormat, '→ normalized =', format);
+        try {
+            switch (format) {
+                case 'jsch':
+                    return parseJsonSchemaToFieldTree(schemaContent);
+                case 'xsd':
+                    return parseXsdToFieldTree(schemaContent);
+                case 'osch':
+                    return parseOSchToFieldTree(schemaContent);
+                case 'tsch':
+                    return parseTschToFieldTree(schemaContent);
+                default: {
+                    // Last resort: try to auto-detect from content
+                    const detected = this.detectSchemaFormat(schemaContent);
+                    if (detected) {
+                        console.log('[UTLXFrontendContribution] Auto-detected schema format:', detected);
+                        return this.parseSchemaToFieldTree(schemaContent, detected);
+                    }
+                    console.warn('[UTLXFrontendContribution] Unknown schema format for parsing:', schemaFormat);
+                    return [];
+                }
+            }
+        } catch (error) {
+            console.error('[UTLXFrontendContribution] Failed to parse schema:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Normalize schema format: map instance-format names to their schema equivalents.
+     * e.g. 'json' → 'jsch', 'xml' → 'xsd', 'yaml' → 'jsch'
+     */
+    private normalizeSchemaFormat(format: string): string {
+        switch (format.toLowerCase()) {
+            case 'jsch':  return 'jsch';
+            case 'xsd':   return 'xsd';
+            case 'osch':  return 'osch';
+            case 'tsch':  return 'tsch';
+            case 'json':  return 'jsch';  // JSON content on schema tab is likely JSON Schema
+            case 'yaml':  return 'jsch';  // YAML schema → JSON Schema
+            case 'xml':   return 'xsd';   // XML content on schema tab is likely XSD
+            case 'odata': return 'osch';  // OData schema → EDMX/CSDL
+            case 'csv':   return 'tsch';  // CSV schema → Table Schema
+            default:      return format.toLowerCase();
+        }
+    }
+
+    /**
+     * Try to auto-detect schema format from content.
+     * Returns null if detection fails.
+     */
+    private detectSchemaFormat(content: string): string | null {
+        const trimmed = content.trim();
+        if (trimmed.startsWith('{')) {
+            // Could be JSON Schema, Table Schema, or OData
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (parsed.$schema || parsed.type || parsed.properties) return 'jsch';
+                if (parsed.fields && Array.isArray(parsed.fields)) return 'tsch';
+            } catch { /* not valid JSON */ }
+        }
+        if (trimmed.startsWith('<')) {
+            // Could be XSD or EDMX
+            if (trimmed.includes('xs:schema') || trimmed.includes('xsd:schema') || trimmed.includes('<schema')) return 'xsd';
+            if (trimmed.includes('edmx:Edmx') || trimmed.includes('<Edmx') || trimmed.includes('EntityType')) return 'osch';
+        }
+        return null;
     }
 
     /**
