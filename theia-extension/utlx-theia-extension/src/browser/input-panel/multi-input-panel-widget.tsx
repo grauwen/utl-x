@@ -149,9 +149,18 @@ export class MultiInputPanelWidget extends ReactWidget {
         // Subscribe to mode changes
         this.eventService.onModeChanged(event => {
             console.log('[MultiInputPanelWidget] Mode changed to:', event.mode);
+            // When entering Design-Time, sync schemaFormat to match instanceFormat
+            // (the auto-linking only fires on instance format changes while already in DT mode)
+            const updatedInputs = event.mode === UTLXMode.DESIGN_TIME
+                ? this.state.inputs.map(input => ({
+                    ...input,
+                    schemaFormat: this.getDefaultSchemaFormat(input.instanceFormat)
+                }))
+                : this.state.inputs;
             this.setState({
                 mode: event.mode,
-                activeSubTab: event.mode === UTLXMode.DESIGN_TIME ? 'instance' : 'instance'
+                inputs: updatedInputs,
+                activeSubTab: 'instance'
             });
         });
 
@@ -1726,12 +1735,13 @@ export class MultiInputPanelWidget extends ReactWidget {
         try {
             // Show save dialog
             const defaultFileName = `${activeInput.name}.udm`;
+            const folder = await this.resolveDialogFolder();
             const saveUri = await this.fileDialogService.showSaveDialog({
                 title: 'Save UDM File',
                 saveLabel: 'Save',
                 filters: { 'UDM Files': ['udm'], 'All Files': ['*'] },
                 inputValue: defaultFileName
-            });
+            }, folder);
 
             if (!saveUri) {
                 // User cancelled
@@ -1744,6 +1754,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                 saveUri,
                 content
             );
+            this.eventService.setLastUsedDirectoryUri(saveUri.parent.toString());
 
             this.messageService.info(`UDM saved to ${saveUri.path.base}`);
         } catch (error) {
@@ -1917,6 +1928,23 @@ export class MultiInputPanelWidget extends ReactWidget {
             input.click();
         } catch (error) {
             this.messageService.error(`Failed to open file dialog: ${error}`);
+        }
+    }
+
+    /**
+     * Resolve the initial folder for file dialogs.
+     * Uses the last-used directory (shared across panels), falling back to the examples directory.
+     */
+    private async resolveDialogFolder(): Promise<import('@theia/filesystem/lib/common/files').FileStat | undefined> {
+        try {
+            const lastUri = this.eventService.lastUsedDirectoryUri;
+            if (lastUri) {
+                return await this.fileService.resolve(new URI(lastUri));
+            }
+            const examplesUri = new URI('file:///').resolve('Users/magr/data/mapping/github-git/utl-x/examples');
+            return await this.fileService.resolve(examplesUri);
+        } catch {
+            return undefined;
         }
     }
 

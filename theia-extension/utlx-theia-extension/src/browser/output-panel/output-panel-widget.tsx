@@ -557,6 +557,7 @@ export class OutputPanelWidget extends ReactWidget {
                 : `schema${extension}`;
 
             // Show save file dialog
+            const folder = await this.resolveDialogFolder();
             const dialogProps: SaveFileDialogProps = {
                 title: `Save ${this.state.activeTab === 'instance' ? 'Output' : 'Schema'}`,
                 saveLabel: 'Save',
@@ -566,7 +567,7 @@ export class OutputPanelWidget extends ReactWidget {
                 inputValue: defaultFileName
             };
 
-            const uri = await this.fileDialogService.showSaveDialog(dialogProps);
+            const uri = await this.fileDialogService.showSaveDialog(dialogProps, folder);
 
             if (!uri) {
                 console.log('[OutputPanel] Save cancelled by user');
@@ -575,6 +576,7 @@ export class OutputPanelWidget extends ReactWidget {
 
             // Write content to file
             await this.fileService.write(uri, content);
+            this.updateLastUsedDirectory(uri);
 
             this.messageService.info(`Saved to ${uri.path.base}`);
         } catch (error) {
@@ -598,6 +600,7 @@ export class OutputPanelWidget extends ReactWidget {
             const format = this.state.instanceFormat || 'json';
             const extensions = this.getInstanceFileExtensions(format);
             const formatLabel = format.toUpperCase();
+            const folder = await this.resolveDialogFolder();
 
             const dialogProps: OpenFileDialogProps = {
                 title: `Load ${formatLabel} Instance`,
@@ -609,10 +612,11 @@ export class OutputPanelWidget extends ReactWidget {
                 }
             };
 
-            const selectedUri = await this.fileDialogService.showOpenDialog(dialogProps);
+            const selectedUri = await this.fileDialogService.showOpenDialog(dialogProps, folder);
             if (!selectedUri) return;
 
             const uri = Array.isArray(selectedUri) ? selectedUri[0] : selectedUri;
+            this.updateLastUsedDirectory(uri);
             const fileContent = await this.fileService.read(uri);
             const content = fileContent.value;
 
@@ -645,6 +649,32 @@ export class OutputPanelWidget extends ReactWidget {
             console.error('[OutputPanel] Load error:', error);
             this.messageService.error(`Failed to load: ${error instanceof Error ? error.message : String(error)}`);
         }
+    }
+
+    /**
+     * Resolve the initial folder for file dialogs.
+     * Uses the last-used directory (shared across panels), falling back to the examples directory.
+     */
+    private async resolveDialogFolder(): Promise<import('@theia/filesystem/lib/common/files').FileStat | undefined> {
+        try {
+            const lastUri = this.eventService.lastUsedDirectoryUri;
+            if (lastUri) {
+                return await this.fileService.resolve(new URI(lastUri));
+            }
+            // Default: examples directory (two levels up from theia-extension/browser-app)
+            const examplesUri = new URI('file:///').resolve('Users/magr/data/mapping/github-git/utl-x/examples');
+            return await this.fileService.resolve(examplesUri);
+        } catch {
+            return undefined;
+        }
+    }
+
+    /**
+     * Update the last-used directory from a selected file URI.
+     */
+    private updateLastUsedDirectory(fileUri: URI): void {
+        const parentUri = fileUri.parent.toString();
+        this.eventService.setLastUsedDirectoryUri(parentUri);
     }
 
     /**

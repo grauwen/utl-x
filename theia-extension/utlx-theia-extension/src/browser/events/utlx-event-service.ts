@@ -250,6 +250,19 @@ export interface ValidationResultEvent {
 @injectable()
 export class UTLXEventService {
 
+    // ===== Shared File Dialog State =====
+
+    /** Last directory URI used by any file dialog (shared across all panels) */
+    private _lastUsedDirectoryUri: string | undefined;
+
+    get lastUsedDirectoryUri(): string | undefined {
+        return this._lastUsedDirectoryUri;
+    }
+
+    setLastUsedDirectoryUri(uri: string): void {
+        this._lastUsedDirectoryUri = uri;
+    }
+
     // ===== Mode Change Events =====
 
     private readonly onModeChangedEmitter = new Emitter<ModeChangedEvent>();

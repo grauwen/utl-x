@@ -16,6 +16,7 @@ import {
 } from '@theia/core/lib/browser';
 import { FileDialogService, OpenFileDialogProps } from '@theia/filesystem/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
+import URI from '@theia/core/lib/common/uri';
 import {
     Command,
     CommandContribution,
@@ -1298,6 +1299,7 @@ export class UTLXFrontendContribution implements
             // Determine file extensions based on schema format
             const extensions = this.getSchemaFileExtensions(schemaFormat);
             const formatLabel = schemaFormat.toUpperCase();
+            const folder = await this.resolveDialogFolder();
 
             // Open file dialog
             const dialogProps: OpenFileDialogProps = {
@@ -1310,7 +1312,7 @@ export class UTLXFrontendContribution implements
                 }
             };
 
-            const selectedUri = await this.fileDialogService.showOpenDialog(dialogProps);
+            const selectedUri = await this.fileDialogService.showOpenDialog(dialogProps, folder);
 
             if (!selectedUri) {
                 console.log('[LoadSchema] User cancelled file selection');
@@ -1319,6 +1321,7 @@ export class UTLXFrontendContribution implements
 
             // Handle both single URI and array (canSelectMany: false means single)
             const uri = Array.isArray(selectedUri) ? selectedUri[0] : selectedUri;
+            this.eventService.setLastUsedDirectoryUri(uri.parent.toString());
             console.log('[LoadSchema] Selected file:', uri.toString());
 
             // Read file content
@@ -1372,6 +1375,23 @@ export class UTLXFrontendContribution implements
                 return ['tsch.json', 'json'];
             default:
                 return ['*'];
+        }
+    }
+
+    /**
+     * Resolve the initial folder for file dialogs.
+     * Uses the last-used directory (shared across panels), falling back to the examples directory.
+     */
+    private async resolveDialogFolder(): Promise<import('@theia/filesystem/lib/common/files').FileStat | undefined> {
+        try {
+            const lastUri = this.eventService.lastUsedDirectoryUri;
+            if (lastUri) {
+                return await this.fileService.resolve(new URI(lastUri));
+            }
+            const examplesUri = new URI('file:///').resolve('Users/magr/data/mapping/github-git/utl-x/examples');
+            return await this.fileService.resolve(examplesUri);
+        } catch {
+            return undefined;
         }
     }
 

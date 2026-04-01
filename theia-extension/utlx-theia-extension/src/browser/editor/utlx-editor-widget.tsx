@@ -2261,6 +2261,23 @@ output json
     }
 
     /**
+     * Resolve the initial folder for file dialogs.
+     * Uses the last-used directory (shared across panels), falling back to the examples directory.
+     */
+    private async resolveDialogFolder(): Promise<import('@theia/filesystem/lib/common/files').FileStat | undefined> {
+        try {
+            const lastUri = this.eventService.lastUsedDirectoryUri;
+            if (lastUri) {
+                return await this.fileService.resolve(new URI(lastUri));
+            }
+            const examplesUri = new URI('file:///').resolve('Users/magr/data/mapping/github-git/utl-x/examples');
+            return await this.fileService.resolve(examplesUri);
+        } catch {
+            return undefined;
+        }
+    }
+
+    /**
      * Handle load file button click
      */
     protected async handleLoadFile(): Promise<void> {
@@ -2289,6 +2306,7 @@ output json
 
         try {
             // Use Theia's FileDialogService which triggers Electron's native save dialog
+            const folder = await this.resolveDialogFolder();
             const saveDialogProps: SaveFileDialogProps = {
                 title: 'Save UTLX File',
                 filters: {
@@ -2298,11 +2316,12 @@ output json
                 inputValue: 'transformation.utlx'
             };
 
-            const targetUri = await this.fileDialogService.showSaveDialog(saveDialogProps);
+            const targetUri = await this.fileDialogService.showSaveDialog(saveDialogProps, folder);
 
             if (targetUri) {
                 // Write the file to the selected location
                 await this.fileService.write(targetUri, content);
+                this.eventService.setLastUsedDirectoryUri(targetUri.parent.toString());
                 console.log(`UTLX file saved to: ${targetUri.toString()}`);
             } else {
                 console.log('Save dialog cancelled by user');
