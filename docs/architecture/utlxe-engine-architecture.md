@@ -85,7 +85,8 @@ For teams coming from enterprise middleware, the mapping is:
 | Tibco BW Concept | UTL-X Equivalent |
 |------------------|-------------------|
 | BusinessWorks Designer | Theia IDE + `utlxd` |
-| Process Definition (`.process`) | UTL-X transformation (`.utlx`) |
+| Process Definition (`.process`) — flow of activities | Flow (chain of transformations wired in `engine.yaml`) |
+| Activity / Mapper — single step in a process | UTL-X transformation (`.utlx`) |
 | EAR (deployment archive) | Project bundle (`.utlxp`) |
 | BW Engine | `utlxe` |
 | Engine Thread Pool | `utlxe` thread management |
@@ -192,63 +193,76 @@ class AutoStrategy : ExecutionStrategy     { /* delegates to one of the above */
 
 ### Project Bundle
 
-An engine loads a **project bundle** (`.utlxp`) containing one or more transformations with their schemas and configuration:
+An engine loads a **project bundle** (`.utlxp`) containing one or more transformations. Each transformation is a **self-contained directory** with its own source, configuration, and schemas. The engine discovers transformations by scanning `transformations/*/transform.yaml`.
 
 ```
 order-processing.utlxp/
-├── manifest.yaml
-├── transformations/
-│   ├── xml-to-json.utlx
-│   ├── enrich-order.utlx
-│   └── validate-output.utlx
-├── schemas/
-│   ├── order-v1.xsd
-│   ├── order-v1.json
-│   └── invoice-v2.json
-└── config/
-    └── engine.yaml
+├── engine.yaml
+└── transformations/
+    ├── xml-to-json/
+    │   ├── xml-to-json.utlx
+    │   ├── transform.yaml
+    │   └── schemas/
+    │       ├── order-v1.xsd          # input schema
+    │       └── order-v1.json         # output schema
+    ├── enrich-order/
+    │   ├── enrich-order.utlx
+    │   ├── transform.yaml
+    │   └── schemas/
+    │       ├── order-v1.json         # input schema
+    │       ├── inventory-v1.json     # input schema
+    │       └── invoice-v2.json       # output schema
+    └── validate-output/
+        ├── validate-output.utlx
+        ├── transform.yaml
+        └── schemas/
+            └── invoice-v2.json       # input + output schema
 ```
 
-### Manifest
+**Design rationale:**
+- **Add a transformation** = drop a new directory under `transformations/`
+- **Remove a transformation** = delete the directory
+- **Each transformation is fully portable** — move or copy the folder and nothing else breaks
+- **No central manifest** — the engine discovers what's available by scanning the directory structure
+- **Schemas live with their transformation** — even if the same schema appears in multiple directories, each transformation is self-contained. Schema drift between copies is a tooling concern (the engine can detect and warn).
+
+### Per-Transformation Configuration (transform.yaml)
+
+Each transformation directory contains a `transform.yaml` that declares its strategy, inputs, output, and resource limits:
 
 ```yaml
-# manifest.yaml
-bundle:
-  name: order-processing
-  version: 1.0.0
+# transformations/xml-to-json/transform.yaml
+strategy: TEMPLATE
+inputs:
+  - name: order
+    schema: schemas/order-v1.xsd
+output:
+  schema: schemas/order-v1.json
+maxConcurrent: 8
+```
 
-transformations:
-  - name: xml-to-json
-    source: transformations/xml-to-json.utlx
-    strategy: TEMPLATE
-    inputs:
-      - name: order
-        schema: schemas/order-v1.xsd
-    output:
-      schema: schemas/order-v1.json
-    maxConcurrent: 8
+```yaml
+# transformations/enrich-order/transform.yaml
+strategy: COPY
+validationPolicy: WARN     # STRICT | WARN | SKIP
+inputs:
+  - name: order
+    schema: schemas/order-v1.json
+  - name: inventory
+    schema: schemas/inventory-v1.json
+output:
+  schema: schemas/invoice-v2.json
+maxConcurrent: 4
+```
 
-  - name: enrich-order
-    source: transformations/enrich-order.utlx
-    strategy: COPY
-    validationPolicy: WARN     # validate but continue on failure
-    inputs:
-      - name: order
-        schema: schemas/order-v1.json
-      - name: inventory
-        schema: schemas/inventory-v1.json
-    output:
-      schema: schemas/invoice-v2.json
-    maxConcurrent: 4
-
-  - name: validate-output
-    source: transformations/validate-output.utlx
-    strategy: AUTO
-    inputs:
-      - name: invoice
-        schema: schemas/invoice-v2.json
-    output:
-      schema: schemas/invoice-v2.json
+```yaml
+# transformations/validate-output/transform.yaml
+strategy: AUTO
+inputs:
+  - name: invoice
+    schema: schemas/invoice-v2.json
+output:
+  schema: schemas/invoice-v2.json
 ```
 
 ### Transformation Registry
@@ -273,7 +287,7 @@ class TransformationInstance(
 )
 ```
 
-### Chained Transformations
+### Chained Transformations (Flows)
 
 Transformations can be chained so that the output of T1 feeds into the input of T2 via in-process pipes:
 
@@ -283,7 +297,7 @@ T1 (xml-to-json)  ──output──→  in-process queue  ──input──→ 
                                                               ──input──→  inventory (Kafka pipe)
 ```
 
-Chaining is declared in engine configuration, not in the manifest (the manifest defines standalone transformations; the engine wires them together).
+Chaining is declared in `engine.yaml` via pipe wiring and optional named flows — not in the individual `transform.yaml` files. Each transformation is self-contained and reusable; the engine wires them together. This mirrors the Tibco BW model where a Process (flow) wires together Activities (transformations). See [Section 10](#10-configuration) for the `pipes:` and `flows:` configuration.
 
 ---
 
@@ -620,7 +634,11 @@ dependencies {
 
 ## 10. Configuration
 
-### engine.yaml
+Configuration is split between engine-level concerns (`engine.yaml`) and per-transformation concerns (`transform.yaml` in each transformation directory).
+
+### engine.yaml (engine-level)
+
+The single `engine.yaml` at the bundle root handles engine-wide settings: threads, monitoring, default strategy, and **flow wiring** (how transformations chain together).
 
 ```yaml
 engine:
@@ -647,56 +665,61 @@ engine:
     jmx:
       enabled: true
 
-  # Default strategy (can be overridden per transformation)
+  # Default strategy (can be overridden per transform.yaml)
   defaultStrategy: AUTO
 
-# Per-transformation configuration
-transformations:
+# Pipe wiring — connects transformations to external transports and to each other.
+# Per-transformation config (strategy, schemas, maxConcurrent) lives in each
+# transformation's own transform.yaml. This section only declares I/O plumbing.
+pipes:
   xml-to-json:
-    source: transformations/xml-to-json.utlx
-    strategy: TEMPLATE
     inputs:
       - name: order
-        pipe:
-          transport: kafka
-          topic: orders-xml
-          group: utlxe-order-processing
-    output:
-      pipe:
         transport: kafka
-        topic: orders-json
-    maxConcurrent: 8
-    queueCapacity: 2048
-    memoryBudget: 256m
+        topic: orders-xml
+        group: utlxe-order-processing
+    output:
+      transport: kafka
+      topic: orders-json
 
   enrich-order:
-    source: transformations/enrich-order.utlx
-    strategy: COPY
-    validationPolicy: WARN       # STRICT | WARN | SKIP
     inputs:
       - name: order
-        pipe:
-          transport: in-process   # chained from xml-to-json output
-          source: xml-to-json
+        transport: in-process     # chained from xml-to-json output
+        source: xml-to-json
       - name: inventory
-        pipe:
-          transport: kafka
-          topic: inventory-updates
-          group: utlxe-order-processing
+        transport: kafka
+        topic: inventory-updates
+        group: utlxe-order-processing
     output:
-      pipe:
-        transport: stdout
-    workerThreads: 4             # dedicated pool
-    maxConcurrent: 4
-    queueCapacity: 512
-    memoryBudget: 512m
+      transport: stdout
+
+  validate-output:
+    inputs:
+      - name: invoice
+        transport: in-process
+        source: enrich-order
+    output:
+      transport: kafka
+      topic: invoices-validated
+
+# Named flows — optional, for documentation and operational clarity.
+# The engine infers the flow graph from pipe wiring above. Declaring a flow
+# gives it a name for health/metrics and validates the chain at startup.
+flows:
+  order-to-invoice:
+    steps: [xml-to-json, enrich-order, validate-output]
 ```
+
+### transform.yaml (per-transformation)
+
+Each transformation's `transform.yaml` declares what the transformation *is* — its strategy, schemas, and resource limits. See [Section 4](#4-multi-transformation-support) for examples.
 
 ### Configuration Precedence
 
 1. **Command-line flags** (highest priority)
 2. **Environment variables** (`UTLXE_THREADS_SHARED_POOL_SIZE=16`)
-3. **engine.yaml** in project bundle
+3. **engine.yaml** + per-transformation `transform.yaml`
 4. **Defaults** (lowest priority)
 
 ---
@@ -804,7 +827,7 @@ spec:
 | **Monitoring** | Exit code | LSP diagnostics | Health, metrics, JMX |
 | **Hot Reload** | N/A | File watcher | Per-transformation reload |
 | **Deployment** | Native image | Fat JAR | Fat JAR, Docker, K8s, native |
-| **Config** | CLI flags | daemon.yaml | engine.yaml + manifest.yaml |
+| **Config** | CLI flags | daemon.yaml | engine.yaml + per-transformation transform.yaml |
 | **Typical Latency** | N/A (batch) | N/A (interactive) | 5–25 ms/msg (strategy-dependent) |
 
 ---
@@ -829,7 +852,7 @@ spec:
 - Multi-transformation registry
 - In-process pipes for chaining
 - Correlator for multi-input transformations
-- Manifest and project bundle format
+- Project bundle format (directory scanning, transform.yaml discovery)
 
 **Exit criteria:** Engine loads a `.utlxp` bundle with two chained transformations, one using template and one using copy strategy.
 
@@ -860,7 +883,7 @@ spec:
 
 | # | Question | Options | Impact |
 |---|----------|---------|--------|
-| 1 | **Project bundle format** | ZIP archive vs directory on disk? | Deployment, tooling |
+| 1 | **Project bundle packaging** | Deploy as directory on disk, or also support ZIP archive for transport? | Deployment, tooling |
 | 2 | **Pipe framing protocol** | Length-prefixed binary vs newline-delimited JSON? | stdin/TCP transports |
 | 3 | **Schema registry integration** | Confluent Schema Registry for Kafka schemas? | Kafka transport |
 | 4 | **Clustering / multi-instance** | Engine-level coordination or delegate to Kubernetes? | Horizontal scaling |
