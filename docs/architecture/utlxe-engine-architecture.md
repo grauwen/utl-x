@@ -321,20 +321,50 @@ These pipe types **mix freely**. A single transformation can receive some inputs
 
 **Separate pipes** map naturally to independent data sources: an order arrives on one Pulsar topic, inventory data on another. You need correlation to join them.
 
-**Multipart pipes** arise in middleware pipelines where services accumulate context as messages flow through a chain:
+**Multipart pipes** arise in middleware pipelines where services accumulate context as messages flow through a chain. A concrete example is the **Open-M Pipeline Envelope**. In Open-M, every message travelling through a pipeline carries the full step history:
 
 ```
-Service A ──→ Service B ──→ Service C (utlxe transformation)
+order-ingress ──→ fraud-check ──→ inventory-reserve ──→ fulfillment (utlxe transformation)
 ```
 
-When Service B forwards to C, it attaches A's original output alongside its own. C receives **one message on one transport** containing the accumulated context from the whole pipeline:
+When the message reaches the `fulfillment` step, it arrives as a single message on a single Pulsar topic — a **Pipeline Envelope** carrying the accumulated outputs of all previous steps:
 
 ```json
 {
-  "serviceA": { "orderId": "123", "customer": { "name": "Acme" } },
-  "serviceB": { "enriched": true, "pricing": { "total": 99.50 } }
+  "pipeline_id": "550e8400-e29b-41d4-a716-446655440000",
+  "correlation_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "pipeline_name": "order-processing",
+  "step_depth": 3,
+  "steps": [
+    {
+      "step": -3,
+      "component": "order-ingress",
+      "timestamp": "2026-04-02T10:00:00Z",
+      "payload": { "orderId": "ORD-123", "customer": { "name": "Acme" } }
+    },
+    {
+      "step": -2,
+      "component": "fraud-check",
+      "timestamp": "2026-04-02T10:00:01Z",
+      "payload": { "riskScore": 0.12, "approved": true }
+    },
+    {
+      "step": -1,
+      "component": "inventory-reserve",
+      "timestamp": "2026-04-02T10:00:02Z",
+      "payload": { "reserved": true, "warehouse": "EU-3", "items": [ ... ] }
+    }
+  ],
+  "current_payload": { "reserved": true, "warehouse": "EU-3", "items": [ ... ] }
 }
 ```
+
+The `fulfillment` transformation needs to access:
+- `current_payload` — the most recent step's output (primary input)
+- `steps[-3].payload` — the original order from `order-ingress` (for customer details)
+- `steps[-2].payload` — the fraud-check result (for approval status)
+
+This is **not** a flat `{ "partA": {...}, "partB": {...} }` structure — it's an ordered step history. Parts are addressed by **component name** within a `steps` array, not by top-level JSON keys. The MultipartAdapter for Open-M understands this structure and extracts named parts accordingly.
 
 Forcing this into separate pipes would mean artificially splitting a message that's already composed, sending each part to a different pipe, and re-correlating them — wasteful work for no benefit.
 
@@ -352,41 +382,46 @@ Constants are **pipes, not a special source type**. This means:
 
 ### The Mixed Case
 
-In a real middleware platform, these pipe types combine. Consider:
+In a real middleware platform, these pipe types combine. Consider an Open-M `fulfillment` step that needs:
+- The **pipeline envelope** (multipart: order-ingress, fraud-check, inventory-reserve outputs)
+- A **pricing service** response (separate pipe, independent source)
+- A **shipping config** (constant pipe: warehouse rules, carrier preferences)
 
 ```
-Service A ──→ Service B ──→┐  (multipart pipe: A's output + B's output, one message)
-                           ├──→ Service C (utlxe transformation)
-Service D ─────────────────┘  (separate pipe, independent source)
-              + shared config  (constant pipe: complex config structure)
+order-ingress ──→ fraud-check ──→ inventory-reserve ──→┐  (Open-M pipeline envelope)
+                                                        ├──→ fulfillment (utlxe)
+pricing-service ───────────────────────────────────────┘  (separate pipe)
+                                                + config  (constant pipe)
 ```
 
-Service C's transformation has four input slots:
-- `serviceA` — extracted from the multipart pipe carrying the A→B pipeline output
-- `serviceB` — extracted from the same multipart pipe
-- `serviceD` — arrives independently on its own pipe
-- `sharedConfig` — constant pipe, loaded once, shared across transformations
+The `fulfillment` transformation has five input slots:
+- `currentPayload` — extracted from the pipeline envelope (`current_payload`)
+- `orderIngress` — extracted from the pipeline envelope (`steps`, component `order-ingress`)
+- `fraudCheck` — extracted from the pipeline envelope (`steps`, component `fraud-check`)
+- `pricingResponse` — arrives independently on its own Pulsar topic
+- `shippingConfig` — constant pipe, loaded from file, shared across transformations
 
 The engine handles this by feeding each pipe through its appropriate mechanism, then correlating:
 
 ```
-                                                                ┌──────────────┐
-Pipe "pipeline-ab" ──→ MultipartAdapter ──→ [serviceA,         │              │
-                                             serviceB]     ──→ │              │
-                                                                │  Correlator  │──→ Strategy ──→ Out
-Pipe "service-d"   ──→ [serviceD]          ─────────────── ──→ │              │
-                                                                │              │
-Pipe "shared-cfg"  ──→ [sharedConfig]      ─────────────── ──→ │              │
-  (constant pipe)                                               └──────────────┘
+                                                                   ┌──────────────┐
+Pipe "order-pipeline" ──→ MultipartAdapter ──→ [currentPayload,   │              │
+  (Open-M envelope)        (open-m format)      orderIngress,     │              │
+                                                fraudCheck]   ──→ │              │
+                                                                   │  Correlator  │──→ Strategy ──→ Out
+Pipe "pricing"        ──→ [pricingResponse]  ──────────────── ──→ │              │
+                                                                   │              │
+Pipe "shipping-cfg"   ──→ [shippingConfig]   ──────────────── ──→ │              │
+  (constant pipe)                                                  └──────────────┘
 ```
 
 **How correlation works in the mixed case:**
-- The multipart message arrives on the pipeline pipe. The `MultipartAdapter` extracts `serviceA` and `serviceB` — these arrive as a group and share the same `correlationId` (from the original message).
-- `serviceD` arrives on its own pipe with a matching `correlationId`.
-- The constant pipe `sharedConfig` is always ready — it doesn't participate in correlation.
+- The Open-M pipeline envelope arrives on the pipeline topic. The `MultipartAdapter` extracts `currentPayload`, `orderIngress`, and `fraudCheck` — these arrive as a group. The `correlation_id` from the envelope is used for cross-pipe correlation.
+- `pricingResponse` arrives on its own pipe with a matching `correlationId`.
+- The constant pipe `shippingConfig` is always ready — it doesn't participate in correlation.
 - The Correlator waits until all non-constant slots for a given `correlationId` are filled, then dispatches.
 
-Multiple multipart pipes also work — e.g., one multipart from pipeline A→B and another from pipeline E→F, each on its own pipe, each with its own `MultipartAdapter`. The Correlator treats the extracted parts the same as any other input slot.
+Multiple multipart pipes also work — e.g., one Open-M pipeline envelope and a separate multipart message from another system, each on its own pipe, each with its own `MultipartAdapter`. The Correlator treats the extracted parts the same as any other input slot.
 
 ### Pipe Transports
 
@@ -401,16 +436,26 @@ Multiple multipart pipes also work — e.g., one multipart from pipeline A→B a
 
 ### Multipart Envelope Formats
 
-When a pipe carries multipart messages, the `MultipartAdapter` needs to know the envelope format — how parts are packed:
+When a pipe carries multipart messages, the `MultipartAdapter` needs to know the envelope format — how parts are packed in the message. Different formats require different extraction logic:
 
-| Envelope Format | Description | Example |
-|-----------------|-------------|---------|
-| **json-object** | Parts are top-level keys in a JSON object | `{ "partA": {...}, "partB": {...} }` |
-| **xml-elements** | Parts are child elements of a root element | `<envelope><partA>...</partA><partB>...</partB></envelope>` |
-| **mime-multipart** | Standard MIME multipart (HTTP-style) | `Content-Type: multipart/mixed; boundary=...` |
-| **custom** | Pluggable parser provided by the middleware platform | Platform-specific |
+| Envelope Format | Part Addressing | Description |
+|-----------------|-----------------|-------------|
+| **open-m** | By component name in `steps[]` array + `current_payload` | Open-M Pipeline Envelope — ordered step history with accumulated context |
+| **json-object** | By top-level key name | Simple flat structure: `{ "partA": {...}, "partB": {...} }` |
+| **xml-elements** | By child element name | `<envelope><partA>...</partA><partB>...</partB></envelope>` |
+| **mime-multipart** | By Content-Disposition name | Standard MIME multipart (HTTP-style) |
+| **custom** | Platform-defined | Pluggable parser provided by the middleware platform |
 
-The envelope format is typically defined by the middleware platform that hosts utlxe, not by individual transformations.
+The `open-m` format is notable because parts are **not** top-level keys — they live inside an ordered `steps` array, addressed by component name or relative step number. The adapter must understand the envelope structure to navigate it:
+
+```
+Open-M envelope → MultipartAdapter (open-m format)
+  ├── "currentPayload"  ←  envelope.current_payload
+  ├── "orderIngress"    ←  envelope.steps[component="order-ingress"].payload
+  └── "fraudCheck"      ←  envelope.steps[component="fraud-check"].payload
+```
+
+The envelope format is typically defined by the middleware platform that hosts utlxe, not by individual transformations. The `open-m` adapter also extracts the `correlation_id` from the envelope metadata for cross-pipe correlation.
 
 ### Configuration: transform.yaml vs engine.yaml
 
@@ -419,20 +464,22 @@ The separation is clean: **transform.yaml declares what inputs a transformation 
 **transform.yaml** — declares input slots (names and schemas only):
 
 ```yaml
-# transformations/service-c/transform.yaml
+# transformations/fulfillment/transform.yaml
 strategy: COPY
 validationPolicy: WARN
 inputs:
-  - name: serviceA
-    schema: schemas/service-a-output.json
-  - name: serviceB
-    schema: schemas/service-b-output.json
-  - name: serviceD
-    schema: schemas/service-d-output.json
-  - name: sharedConfig
-    schema: schemas/shared-config.json
+  - name: currentPayload
+    schema: schemas/inventory-reserve-output.json
+  - name: orderIngress
+    schema: schemas/order-ingress-output.json
+  - name: fraudCheck
+    schema: schemas/fraud-check-output.json
+  - name: pricingResponse
+    schema: schemas/pricing-response.json
+  - name: shippingConfig
+    schema: schemas/shipping-config.json
 output:
-  schema: schemas/service-c-output.json
+  schema: schemas/fulfillment-output.json
 maxConcurrent: 4
 ```
 
@@ -440,34 +487,36 @@ maxConcurrent: 4
 
 ```yaml
 pipes:
-  service-c:
+  fulfillment:
     inputs:
-      # Multipart: one Pulsar topic carries serviceA + serviceB
-      - multipart: pipeline-ab
+      # Multipart: Open-M pipeline envelope on one Pulsar topic
+      - multipart: order-pipeline
         transport: pulsar
-        topic: pipeline-ab-output
-        subscription: utlxe-service-c
+        topic: persistent://open-m/orders/pipeline
+        subscription: utlxe-fulfillment
+        envelope: open-m
         parts:
-          - name: serviceA
-            key: serviceA
-          - name: serviceB
-            key: serviceB
-        envelope: json-object
+          - name: currentPayload
+            source: current_payload
+          - name: orderIngress
+            component: order-ingress
+          - name: fraudCheck
+            component: fraud-check
 
-      # Separate pipe: serviceD on its own topic
-      - name: serviceD
+      # Separate pipe: pricing service on its own topic
+      - name: pricingResponse
         transport: pulsar
-        topic: service-d-output
-        subscription: utlxe-service-c
+        topic: persistent://open-m/pricing/responses
+        subscription: utlxe-fulfillment
 
-      # Constant pipe: complex config structure, loaded from file
-      - name: sharedConfig
+      # Constant pipe: shipping rules, loaded from file
+      - name: shippingConfig
         transport: constant
-        file: config/shared-config.json
+        file: config/shipping-config.json
         format: json
     output:
       transport: pulsar
-      topic: service-c-output
+      topic: persistent://open-m/orders/fulfilled
 ```
 
 This separation means the **same transformation** can be deployed with different wiring in different environments — Pulsar topics in production, constant files in testing, in-process pipes in integration tests — with no change to `transform.yaml`.
@@ -840,36 +889,38 @@ pipes:
       transport: pulsar
       topic: invoices-validated
 
-  # Mixed-mode example: multipart + separate pipe + constant pipe.
-  # (See Section 5 for the full service-c scenario.)
-  service-c:
+  # Mixed-mode example: Open-M pipeline envelope + separate pipe + constant.
+  # (See Section 5 for the full fulfillment scenario.)
+  fulfillment:
     inputs:
-      # Multipart: one Pulsar topic carries serviceA + serviceB parts
-      - multipart: pipeline-ab
+      # Multipart: Open-M pipeline envelope on one Pulsar topic
+      - multipart: order-pipeline
         transport: pulsar
-        topic: pipeline-ab-output
-        subscription: utlxe-service-c
+        topic: persistent://open-m/orders/pipeline
+        subscription: utlxe-fulfillment
+        envelope: open-m
         parts:
-          - name: serviceA
-            key: serviceA
-          - name: serviceB
-            key: serviceB
-        envelope: json-object
+          - name: currentPayload
+            source: current_payload
+          - name: orderIngress
+            component: order-ingress
+          - name: fraudCheck
+            component: fraud-check
 
-      # Separate pipe: serviceD on its own topic
-      - name: serviceD
+      # Separate pipe: pricing service on its own topic
+      - name: pricingResponse
         transport: pulsar
-        topic: service-d-output
-        subscription: utlxe-service-c
+        topic: persistent://open-m/pricing/responses
+        subscription: utlxe-fulfillment
 
-      # Constant pipe: complex config loaded from file, shared across engine
-      - name: sharedConfig
+      # Constant pipe: shipping rules loaded from file
+      - name: shippingConfig
         transport: constant
-        file: config/shared-config.json
+        file: config/shipping-config.json
         format: json
     output:
       transport: pulsar
-      topic: service-c-output
+      topic: persistent://open-m/orders/fulfilled
 
 # Named flows — optional, for documentation and operational clarity.
 # The engine infers the flow graph from pipe wiring above. Declaring a flow
@@ -881,7 +932,7 @@ flows:
 
 ### transform.yaml (per-transformation)
 
-Each transformation's `transform.yaml` declares what the transformation *is* — its strategy, schemas, input source types, and resource limits. See [Section 4](#4-multi-transformation-support) for basic examples and [Section 5](#5-io-pipe-model) for the full mixed-mode input syntax.
+Each transformation's `transform.yaml` declares what the transformation *is* — its strategy, input names with schemas, and resource limits. It does **not** declare how inputs are sourced — that's pipe wiring in `engine.yaml`. See [Section 4](#4-multi-transformation-support) for basic examples and [Section 5](#5-io-pipe-model) for the full mixed-mode wiring syntax.
 
 ### Configuration Precedence
 
