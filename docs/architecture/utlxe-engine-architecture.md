@@ -73,10 +73,10 @@ Both documents independently converge on the same `TransformExecutor` interface 
 | **Purpose** | Single transform execution | IDE integration, design-time | Production message processing |
 | **Lifecycle** | Start → execute → exit | Long-running daemon | Long-running engine |
 | **Concurrency** | Single-threaded | Multi-session | Multi-transformation, pooled threads |
-| **Input** | Files, stdin | LSP messages, REST requests | Pipes (stdin, TCP, Kafka, HTTP) |
+| **Input** | Files, stdin | LSP messages, REST requests | Pipes (stdin, TCP, Pulsar, HTTP) |
 | **State** | Stateless | Session state | Transformation state + queues |
 | **Deployment** | Native image, Docker | Fat JAR, Docker | Fat JAR, Docker, Kubernetes |
-| **Use Case** | CI/CD, scripts, ad-hoc | Theia IDE, VS Code | ESB, Kafka consumer, API gateway |
+| **Use Case** | CI/CD, scripts, ad-hoc | Theia IDE, VS Code | ESB, Pulsar consumer, API gateway |
 
 ### Tibco BusinessWorks Conceptual Mapping
 
@@ -90,7 +90,7 @@ For teams coming from enterprise middleware, the mapping is:
 | EAR (deployment archive) | Project bundle (`.utlxp`) |
 | BW Engine | `utlxe` |
 | Engine Thread Pool | `utlxe` thread management |
-| Process Starter (HTTP/Kafka/File) | Input pipe (transport-specific) |
+| Process Starter (HTTP/Pulsar/File) | Input pipe (transport-specific) |
 | Schema (XSD) | USDL schema directives |
 | Activity Palette | UTL-X stdlib functions |
 
@@ -294,7 +294,7 @@ Transformations can be chained so that the output of T1 feeds into the input of 
 ```
 T1 (xml-to-json)  ──output──→  in-process queue  ──input──→  T2 (enrich-order)
                                                                     │
-                                                              ──input──→  inventory (Kafka pipe)
+                                                              ──input──→  inventory (Pulsar pipe)
 ```
 
 Chaining is declared in `engine.yaml` via pipe wiring and optional named flows — not in the individual `transform.yaml` files. Each transformation is self-contained and reusable; the engine wires them together. This mirrors the Tibco BW model where a Process (flow) wires together Activities (transformations). See [Section 10](#10-configuration) for the `pipes:` and `flows:` configuration.
@@ -305,23 +305,23 @@ Chaining is declared in `engine.yaml` via pipe wiring and optional named flows �
 
 ### Key Decision
 
-> **Named input slots as the internal model. Each slot declares its source type: pipe, multipart part, or constant. Source types can be freely mixed within a single transformation.**
+> **Named input slots as the internal model. Each slot is fed by a pipe. Pipes can be separate (one per input), multipart (one pipe, multiple parts extracted), or constant (static value, potentially complex). These mix freely within a single transformation.**
 
-Internally, the engine always works with **named input slots** — each with its own schema and typed data. How each slot gets populated is declared per-slot:
+Internally, the engine always works with **named input slots** — each with its own schema and typed data. How each slot gets populated depends on the pipe wired to it in `engine.yaml`:
 
-| Source Type | Description | Mechanism |
-|-------------|-------------|-----------|
-| **pipe** | Independent source (own transport) | Dedicated pipe, Correlator groups by `correlationId` |
-| **multipart** | Named part inside a multipart message | Shares a pipe with other parts, MultipartAdapter extracts |
-| **constant** | Static value set at configuration time | Always available, no pipe or correlation needed |
+| Pipe Type | Description | Mechanism |
+|-----------|-------------|-----------|
+| **Separate pipe** | Independent source (own transport) | Dedicated pipe, Correlator groups by `correlationId` |
+| **Multipart pipe** | Carries a message with multiple named parts | Shared pipe, MultipartAdapter extracts parts into slots |
+| **Constant pipe** | Static or slow-changing value | Always available, no correlation needed |
 
-These source types **mix freely**. A single transformation can receive some inputs from multipart extraction, others from separate pipes, and others as constants — all unified into named slots before the strategy executes.
+These pipe types **mix freely**. A single transformation can receive some inputs from multipart extraction, others from separate pipes, and others as constants — all unified into named slots before the strategy executes. The transformation itself is **agnostic** — it declares input names and schemas in `transform.yaml` but doesn't know whether a given input comes from Pulsar, a multipart extraction, or a constant. That's a deployment concern handled in `engine.yaml`.
 
-### Input Source Types
+### Pipe Types in Detail
 
-**Separate pipes** map naturally to independent data sources: an order arrives on one Kafka topic, inventory data on another. You need correlation to join them.
+**Separate pipes** map naturally to independent data sources: an order arrives on one Pulsar topic, inventory data on another. You need correlation to join them.
 
-**Multipart messages** arise in middleware pipelines where services accumulate context as messages flow through a chain:
+**Multipart pipes** arise in middleware pipelines where services accumulate context as messages flow through a chain:
 
 ```
 Service A ──→ Service B ──→ Service C (utlxe transformation)
@@ -338,42 +338,52 @@ When Service B forwards to C, it attaches A's original output alongside its own.
 
 Forcing this into separate pipes would mean artificially splitting a message that's already composed, sending each part to a different pipe, and re-correlating them — wasteful work for no benefit.
 
-**Constants** are static values known at deployment time — region codes, environment names, version identifiers, configuration parameters. They occupy an input slot like any other input but require no pipe or correlation.
+**Constant pipes** carry values known at deployment time that don't change per-message (or change rarely). A constant can be:
+- A simple value: `"eu-west-1"`
+- A complex structure recognizable by UTL-X: a full JSON/XML/YAML configuration object parsed into UDM
+- A shared config loaded from a file, used by multiple transformations across many threads
+
+Constants are **pipes, not a special source type**. This means:
+- The transformation doesn't know an input is constant — it just sees an input slot with a schema
+- The same transformation can use a Pulsar topic in production and a constant file in testing, with no change to `transform.yaml`
+- Complex structures work naturally — a constant pipe carries a message payload like any other pipe
+- Multiple transformations can share the same constant pipe (e.g., shared config across the engine)
+- A constant pipe sits on a spectrum: true constant (loaded once at startup) → slow-changing config (file watcher reloads on change) → live pipe (continuous messages). The transformation doesn't care where on this spectrum its input sits.
 
 ### The Mixed Case
 
-In a real middleware platform, these source types combine. Consider:
+In a real middleware platform, these pipe types combine. Consider:
 
 ```
-Service A ──→ Service B ──→┐  (multipart: A's output + B's output, one message)
+Service A ──→ Service B ──→┐  (multipart pipe: A's output + B's output, one message)
                            ├──→ Service C (utlxe transformation)
 Service D ─────────────────┘  (separate pipe, independent source)
-              + constants      (e.g. region = "eu-west-1")
+              + shared config  (constant pipe: complex config structure)
 ```
 
 Service C's transformation has four input slots:
-- `serviceA` — extracted from the multipart message on the pipeline pipe
-- `serviceB` — extracted from the same multipart message
+- `serviceA` — extracted from the multipart pipe carrying the A→B pipeline output
+- `serviceB` — extracted from the same multipart pipe
 - `serviceD` — arrives independently on its own pipe
-- `region` — constant, always available
+- `sharedConfig` — constant pipe, loaded once, shared across transformations
 
-The engine handles this by feeding each source through its appropriate mechanism, then correlating across pipes:
+The engine handles this by feeding each pipe through its appropriate mechanism, then correlating:
 
 ```
-                                                              ┌──────────────┐
-Pipe "pipeline-ab" ──→ MultipartAdapter ──→ [serviceA,       │              │
-                                            serviceB]    ──→ │              │
-                                                              │  Correlator  │──→ Strategy ──→ Out
-Pipe "service-d"   ──→ [serviceD]        ─────────────── ──→ │              │
-                                                              │              │
-Constants          ──→ [region]          ─────────────── ──→ │              │
-                                                              └──────────────┘
+                                                                ┌──────────────┐
+Pipe "pipeline-ab" ──→ MultipartAdapter ──→ [serviceA,         │              │
+                                             serviceB]     ──→ │              │
+                                                                │  Correlator  │──→ Strategy ──→ Out
+Pipe "service-d"   ──→ [serviceD]          ─────────────── ──→ │              │
+                                                                │              │
+Pipe "shared-cfg"  ──→ [sharedConfig]      ─────────────── ──→ │              │
+  (constant pipe)                                               └──────────────┘
 ```
 
 **How correlation works in the mixed case:**
 - The multipart message arrives on the pipeline pipe. The `MultipartAdapter` extracts `serviceA` and `serviceB` — these arrive as a group and share the same `correlationId` (from the original message).
 - `serviceD` arrives on its own pipe with a matching `correlationId`.
-- Constants are always ready — they don't participate in correlation.
+- The constant pipe `sharedConfig` is always ready — it doesn't participate in correlation.
 - The Correlator waits until all non-constant slots for a given `correlationId` are filled, then dispatches.
 
 Multiple multipart pipes also work — e.g., one multipart from pipeline A→B and another from pipeline E→F, each on its own pipe, each with its own `MultipartAdapter`. The Correlator treats the extracted parts the same as any other input slot.
@@ -385,8 +395,9 @@ Multiple multipart pipes also work — e.g., one multipart from pipeline A→B a
 | **stdin / stdout** | In / Out | CLI integration, Unix pipelines |
 | **In-process queue** | In / Out | Chained transformations (zero-copy when format matches) |
 | **TCP socket** | In / Out | Remote network integration |
-| **Kafka consumer / producer** | In / Out | Message broker integration |
+| **Pulsar consumer / producer** | In / Out | Message broker integration |
 | **HTTP endpoint** | In | REST API input (engine hosts endpoint) |
+| **Constant** | In | Static value (inline, file, or URL), loaded once or on change |
 
 ### Multipart Envelope Formats
 
@@ -401,74 +412,65 @@ When a pipe carries multipart messages, the `MultipartAdapter` needs to know the
 
 The envelope format is typically defined by the middleware platform that hosts utlxe, not by individual transformations.
 
-### Configuration in transform.yaml
+### Configuration: transform.yaml vs engine.yaml
 
-All inputs are declared in a single unified `inputs:` list. Each input declares its source type:
+The separation is clean: **transform.yaml declares what inputs a transformation needs** (names + schemas). **engine.yaml declares how those inputs are wired** (pipe types, transports, multipart extraction, constants). The transformation is agnostic about its input sources.
 
-**Simple case — single pipe input:**
-
-```yaml
-inputs:
-  - name: order
-    schema: schemas/order.json
-```
-
-**Separate pipes — fan-in with correlation:**
+**transform.yaml** — declares input slots (names and schemas only):
 
 ```yaml
-inputs:
-  - name: order
-    schema: schemas/order.json
-  - name: inventory
-    schema: schemas/inventory.json
-```
-
-**Multipart only — all inputs from one multipart message:**
-
-```yaml
+# transformations/service-c/transform.yaml
+strategy: COPY
+validationPolicy: WARN
 inputs:
   - name: serviceA
-    multipart: pipeline-ab
-    key: serviceA
     schema: schemas/service-a-output.json
   - name: serviceB
-    multipart: pipeline-ab
-    key: serviceB
     schema: schemas/service-b-output.json
-
-multipart:
-  pipeline-ab:
-    envelope: json-object
-```
-
-**Mixed — multipart + separate pipe + constant:**
-
-```yaml
-inputs:
-  # Parts extracted from a multipart message
-  - name: serviceA
-    multipart: pipeline-ab
-    key: serviceA
-    schema: schemas/service-a-output.json
-  - name: serviceB
-    multipart: pipeline-ab
-    key: serviceB
-    schema: schemas/service-b-output.json
-
-  # Independent source on its own pipe
   - name: serviceD
     schema: schemas/service-d-output.json
-
-  # Static configuration value
-  - name: region
-    constant: "eu-west-1"
-
-multipart:
-  pipeline-ab:
-    envelope: json-object
+  - name: sharedConfig
+    schema: schemas/shared-config.json
+output:
+  schema: schemas/service-c-output.json
+maxConcurrent: 4
 ```
 
-The `multipart:` key on an input references a named multipart group. The group's envelope format is declared in the `multipart:` section at the bottom. Inputs without a `multipart:` key are separate pipes (wired in `engine.yaml`). Inputs with a `constant:` key carry a static value.
+**engine.yaml** — wires inputs to pipes (see [Section 10](#10-configuration) for full example):
+
+```yaml
+pipes:
+  service-c:
+    inputs:
+      # Multipart: one Pulsar topic carries serviceA + serviceB
+      - multipart: pipeline-ab
+        transport: pulsar
+        topic: pipeline-ab-output
+        subscription: utlxe-service-c
+        parts:
+          - name: serviceA
+            key: serviceA
+          - name: serviceB
+            key: serviceB
+        envelope: json-object
+
+      # Separate pipe: serviceD on its own topic
+      - name: serviceD
+        transport: pulsar
+        topic: service-d-output
+        subscription: utlxe-service-c
+
+      # Constant pipe: complex config structure, loaded from file
+      - name: sharedConfig
+        transport: constant
+        file: config/shared-config.json
+        format: json
+    output:
+      transport: pulsar
+      topic: service-c-output
+```
+
+This separation means the **same transformation** can be deployed with different wiring in different environments — Pulsar topics in production, constant files in testing, in-process pipes in integration tests — with no change to `transform.yaml`.
 
 ### Pipe Interface
 
@@ -548,7 +550,7 @@ interface MultipartAdapter {
 When a transformation's queue reaches `queueCapacity`:
 
 1. **Stop reading** from input pipes for that transformation
-2. **Signal upstream** (Kafka: pause consumer, HTTP: return 503, TCP: stop accepting)
+2. **Signal upstream** (Pulsar: pause consumer, HTTP: return 503, TCP: stop accepting)
 3. **Resume** when queue drops below 75% capacity
 
 This prevents unbounded memory growth and cascading failures.
@@ -706,6 +708,7 @@ utl-x/
 │           │   ├── OutputPipe.kt
 │           │   ├── StdioPipe.kt
 │           │   ├── InProcessPipe.kt
+│           │   ├── ConstantPipe.kt
 │           │   ├── MultipartAdapter.kt
 │           │   └── Correlator.kt
 │           ├── registry/
@@ -797,23 +800,23 @@ engine:
   # Default strategy (can be overridden per transform.yaml)
   defaultStrategy: AUTO
 
-# Pipe wiring — connects transformations to external transports and to each other.
+# Pipe wiring — connects transformation inputs/outputs to transports.
 # Per-transformation config (strategy, schemas, maxConcurrent) lives in each
 # transformation's own transform.yaml. This section only declares I/O plumbing.
 #
-# For pipe inputs:
-# - "name" matches the input name in transform.yaml (for simple pipe inputs)
-# - "multipart" matches the multipart group name in transform.yaml
-# - Constants declared in transform.yaml need no pipe wiring
+# Pipe types:
+# - "name" → separate pipe (one transport per input slot)
+# - "multipart" → single transport, MultipartAdapter extracts named parts
+# - "transport: constant" → static/slow-changing value (inline, file, or URL)
 pipes:
   xml-to-json:
     inputs:
       - name: order
-        transport: kafka
+        transport: pulsar
         topic: orders-xml
-        group: utlxe-order-processing
+        subscription: utlxe-order-processing
     output:
-      transport: kafka
+      transport: pulsar
       topic: orders-json
 
   enrich-order:
@@ -822,9 +825,9 @@ pipes:
         transport: in-process     # chained from xml-to-json output
         source: xml-to-json
       - name: inventory
-        transport: kafka
+        transport: pulsar
         topic: inventory-updates
-        group: utlxe-order-processing
+        subscription: utlxe-order-processing
     output:
       transport: stdout
 
@@ -834,26 +837,38 @@ pipes:
         transport: in-process
         source: enrich-order
     output:
-      transport: kafka
+      transport: pulsar
       topic: invoices-validated
 
-  # Mixed-mode example: multipart pipe + separate pipe + constants.
-  # (See Section 5 for the service-c scenario.)
-  # The multipart group "pipeline-ab" is wired to a Kafka topic.
-  # The separate input "serviceD" gets its own pipe.
-  # The constant "region" needs no wiring — it's in transform.yaml.
+  # Mixed-mode example: multipart + separate pipe + constant pipe.
+  # (See Section 5 for the full service-c scenario.)
   service-c:
     inputs:
-      - multipart: pipeline-ab    # carries serviceA + serviceB parts
-        transport: kafka
+      # Multipart: one Pulsar topic carries serviceA + serviceB parts
+      - multipart: pipeline-ab
+        transport: pulsar
         topic: pipeline-ab-output
-        group: utlxe-service-c
-      - name: serviceD            # independent source
-        transport: kafka
+        subscription: utlxe-service-c
+        parts:
+          - name: serviceA
+            key: serviceA
+          - name: serviceB
+            key: serviceB
+        envelope: json-object
+
+      # Separate pipe: serviceD on its own topic
+      - name: serviceD
+        transport: pulsar
         topic: service-d-output
-        group: utlxe-service-c
+        subscription: utlxe-service-c
+
+      # Constant pipe: complex config loaded from file, shared across engine
+      - name: sharedConfig
+        transport: constant
+        file: config/shared-config.json
+        format: json
     output:
-      transport: kafka
+      transport: pulsar
       topic: service-c-output
 
 # Named flows — optional, for documentation and operational clarity.
@@ -890,10 +905,11 @@ Each transformation's `transform.yaml` declares what the transformation *is* —
 | Transport | Security |
 |-----------|----------|
 | TCP socket | TLS required for non-localhost connections |
-| Kafka | Inherits Kafka security config (SASL, SSL) |
+| Pulsar | Inherits Pulsar security config (TLS, JWT, OAuth2) |
 | HTTP endpoint | TLS optional, configurable |
 | stdin/stdout | OS-level process isolation |
 | In-process | No transport — same JVM |
+| Constant | File-system permissions; no network exposure |
 
 ### Resource Isolation
 
@@ -1017,9 +1033,10 @@ spec:
 - Prometheus metrics endpoint
 - JMX beans
 - Hot reload of individual transformations
-- Kafka and TCP pipe transports
+- Pulsar, constant, and TCP pipe transports
+- Multipart adapter (json-object, xml-elements)
 
-**Exit criteria:** Engine runs in production with Kafka input, multiple transformations, monitoring dashboards.
+**Exit criteria:** Engine runs in production with Pulsar input, multiple transformations, monitoring dashboards.
 
 ### Phase 4 — Compiled Strategy + GraalVM Native
 
@@ -1038,12 +1055,13 @@ spec:
 |---|----------|---------|--------|
 | 1 | **Project bundle packaging** | Deploy as directory on disk, or also support ZIP archive for transport? | Deployment, tooling |
 | 2 | **Pipe framing protocol** | Length-prefixed binary vs newline-delimited JSON? | stdin/TCP transports |
-| 3 | **Schema registry integration** | Confluent Schema Registry for Kafka schemas? | Kafka transport |
+| 3 | **Schema registry integration** | Pulsar built-in schema registry or external? | Pulsar transport |
 | 4 | **Clustering / multi-instance** | Engine-level coordination or delegate to Kubernetes? | Horizontal scaling |
 | 5 | **Management REST API** | Admin endpoints for runtime inspection and control? | Operations |
 | 6 | **Compiled strategy scope** | Full JVM bytecode or limit to expression compilation? | Phase 4 complexity |
 | 7 | **Daemon embedding** | Full engine embed in `utlxd` or lightweight preview-only? | IDE experience |
 | 8 | **Default multipart envelope** | Which envelope format should be the default for middleware integration? Platform-defined or utlxe-defined? | Multipart input support |
+| 9 | **Constant pipe reload** | Should constant pipes support file-watcher reload (slow-changing config), or only load once at startup? | Operational flexibility |
 
 ---
 
