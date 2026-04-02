@@ -430,9 +430,12 @@ Multiple multipart pipes also work — e.g., one Open-M pipeline envelope and a 
 | **stdin / stdout** | In / Out | CLI integration, Unix pipelines |
 | **In-process queue** | In / Out | Chained transformations (zero-copy when format matches) |
 | **TCP socket** | In / Out | Remote network integration |
-| **Pulsar consumer / producer** | In / Out | Message broker integration |
+| **Pulsar consumer / producer** | In / Out | Message broker integration (Open-M default) |
+| **Kafka consumer / producer** | In / Out | Message broker integration (alternative) |
 | **HTTP endpoint** | In | REST API input (engine hosts endpoint) |
 | **Constant** | In | Static value (inline, file, or URL), loaded once or on change |
+
+**Broker support:** utlxe supports both Apache Pulsar and Apache Kafka as message broker transports. Open-M uses Pulsar as its default broker, but Kafka is a first-class alternative — the pipe wiring in `engine.yaml` simply declares `transport: pulsar` or `transport: kafka`. The transformation and the engine are broker-agnostic; only the pipe transport layer differs.
 
 ### Multipart Envelope Formats
 
@@ -957,6 +960,7 @@ Each transformation's `transform.yaml` declares what the transformation *is* —
 |-----------|----------|
 | TCP socket | TLS required for non-localhost connections |
 | Pulsar | Inherits Pulsar security config (TLS, JWT, OAuth2) |
+| Kafka | Inherits Kafka security config (SASL, SSL) |
 | HTTP endpoint | TLS optional, configurable |
 | stdin/stdout | OS-level process isolation |
 | In-process | No transport — same JVM |
@@ -1106,7 +1110,7 @@ spec:
 |---|----------|---------|--------|
 | 1 | **Project bundle packaging** | Deploy as directory on disk, or also support ZIP archive for transport? | Deployment, tooling |
 | 2 | **Pipe framing protocol** | Length-prefixed binary vs newline-delimited JSON? | stdin/TCP transports |
-| 3 | **Schema registry integration** | Pulsar built-in schema registry or external? | Pulsar transport |
+| 3 | **Schema registry integration** | Pulsar built-in schema registry, Confluent Schema Registry for Kafka, or both? | Broker transports |
 | 4 | **Clustering / multi-instance** | Engine-level coordination or delegate to Kubernetes? | Horizontal scaling |
 | 5 | **Management REST API** | Admin endpoints for runtime inspection and control? | Operations |
 | 6 | **Compiled strategy scope** | Full JVM bytecode or limit to expression compilation? | Phase 4 complexity |
