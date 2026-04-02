@@ -305,28 +305,78 @@ Chaining is declared in `engine.yaml` via pipe wiring and optional named flows �
 
 ### Key Decision
 
-> **Multiple separate input pipes (one per input slot) with correlation, NOT a single multipart pipe.**
+> **Named input slots as the internal model. Each slot declares its source type: pipe, multipart part, or constant. Source types can be freely mixed within a single transformation.**
 
-**Reasoning:**
+Internally, the engine always works with **named input slots** — each with its own schema and typed data. How each slot gets populated is declared per-slot:
 
-1. **Maps to real-world systems.** One Kafka topic per input, one HTTP endpoint per input, one file per input. No custom framing protocol needed.
-2. **Each pipe is independently readable/writable.** A pipe can be backed by any transport without affecting other pipes.
-3. **Correlation via `correlationId`.** When a transformation has multiple inputs, related messages across pipes share a `correlationId` header.
-4. **A multipart pipe would need custom framing** (length-prefixed chunks, content-type markers) with no existing tooling support.
+| Source Type | Description | Mechanism |
+|-------------|-------------|-----------|
+| **pipe** | Independent source (own transport) | Dedicated pipe, Correlator groups by `correlationId` |
+| **multipart** | Named part inside a multipart message | Shares a pipe with other parts, MultipartAdapter extracts |
+| **constant** | Static value set at configuration time | Always available, no pipe or correlation needed |
 
-### Pipe Architecture
+These source types **mix freely**. A single transformation can receive some inputs from multipart extraction, others from separate pipes, and others as constants — all unified into named slots before the strategy executes.
+
+### Input Source Types
+
+**Separate pipes** map naturally to independent data sources: an order arrives on one Kafka topic, inventory data on another. You need correlation to join them.
+
+**Multipart messages** arise in middleware pipelines where services accumulate context as messages flow through a chain:
 
 ```
-                    ┌─────────────────────────────────────┐
-                    │         TransformationInstance       │
-                    │                                     │
-  Input Pipe A ───→ │  ┌─────────┐   ┌────────────────┐  │
-  (Kafka topic)     │  │ Correlator│→ │ ExecutionStrategy│ │ ──→ Output Pipe
-                    │  │         │   │                │  │     (stdout / Kafka / TCP)
-  Input Pipe B ───→ │  └─────────┘   └────────────────┘  │
-  (HTTP endpoint)   │                                     │
-                    └─────────────────────────────────────┘
+Service A ──→ Service B ──→ Service C (utlxe transformation)
 ```
+
+When Service B forwards to C, it attaches A's original output alongside its own. C receives **one message on one transport** containing the accumulated context from the whole pipeline:
+
+```json
+{
+  "serviceA": { "orderId": "123", "customer": { "name": "Acme" } },
+  "serviceB": { "enriched": true, "pricing": { "total": 99.50 } }
+}
+```
+
+Forcing this into separate pipes would mean artificially splitting a message that's already composed, sending each part to a different pipe, and re-correlating them — wasteful work for no benefit.
+
+**Constants** are static values known at deployment time — region codes, environment names, version identifiers, configuration parameters. They occupy an input slot like any other input but require no pipe or correlation.
+
+### The Mixed Case
+
+In a real middleware platform, these source types combine. Consider:
+
+```
+Service A ──→ Service B ──→┐  (multipart: A's output + B's output, one message)
+                           ├──→ Service C (utlxe transformation)
+Service D ─────────────────┘  (separate pipe, independent source)
+              + constants      (e.g. region = "eu-west-1")
+```
+
+Service C's transformation has four input slots:
+- `serviceA` — extracted from the multipart message on the pipeline pipe
+- `serviceB` — extracted from the same multipart message
+- `serviceD` — arrives independently on its own pipe
+- `region` — constant, always available
+
+The engine handles this by feeding each source through its appropriate mechanism, then correlating across pipes:
+
+```
+                                                              ┌──────────────┐
+Pipe "pipeline-ab" ──→ MultipartAdapter ──→ [serviceA,       │              │
+                                            serviceB]    ──→ │              │
+                                                              │  Correlator  │──→ Strategy ──→ Out
+Pipe "service-d"   ──→ [serviceD]        ─────────────── ──→ │              │
+                                                              │              │
+Constants          ──→ [region]          ─────────────── ──→ │              │
+                                                              └──────────────┘
+```
+
+**How correlation works in the mixed case:**
+- The multipart message arrives on the pipeline pipe. The `MultipartAdapter` extracts `serviceA` and `serviceB` — these arrive as a group and share the same `correlationId` (from the original message).
+- `serviceD` arrives on its own pipe with a matching `correlationId`.
+- Constants are always ready — they don't participate in correlation.
+- The Correlator waits until all non-constant slots for a given `correlationId` are filled, then dispatches.
+
+Multiple multipart pipes also work — e.g., one multipart from pipeline A→B and another from pipeline E→F, each on its own pipe, each with its own `MultipartAdapter`. The Correlator treats the extracted parts the same as any other input slot.
 
 ### Pipe Transports
 
@@ -338,18 +388,87 @@ Chaining is declared in `engine.yaml` via pipe wiring and optional named flows �
 | **Kafka consumer / producer** | In / Out | Message broker integration |
 | **HTTP endpoint** | In | REST API input (engine hosts endpoint) |
 
-### Correlation
+### Multipart Envelope Formats
 
-When a transformation declares multiple inputs, incoming messages must be correlated:
+When a pipe carries multipart messages, the `MultipartAdapter` needs to know the envelope format — how parts are packed:
 
+| Envelope Format | Description | Example |
+|-----------------|-------------|---------|
+| **json-object** | Parts are top-level keys in a JSON object | `{ "partA": {...}, "partB": {...} }` |
+| **xml-elements** | Parts are child elements of a root element | `<envelope><partA>...</partA><partB>...</partB></envelope>` |
+| **mime-multipart** | Standard MIME multipart (HTTP-style) | `Content-Type: multipart/mixed; boundary=...` |
+| **custom** | Pluggable parser provided by the middleware platform | Platform-specific |
+
+The envelope format is typically defined by the middleware platform that hosts utlxe, not by individual transformations.
+
+### Configuration in transform.yaml
+
+All inputs are declared in a single unified `inputs:` list. Each input declares its source type:
+
+**Simple case — single pipe input:**
+
+```yaml
+inputs:
+  - name: order
+    schema: schemas/order.json
 ```
-Input pipe "order":     { correlationId: "abc-123", data: "<Order>...</Order>" }
-Input pipe "inventory": { correlationId: "abc-123", data: "{\"sku\": ...}" }
+
+**Separate pipes — fan-in with correlation:**
+
+```yaml
+inputs:
+  - name: order
+    schema: schemas/order.json
+  - name: inventory
+    schema: schemas/inventory.json
 ```
 
-The engine's **Correlator** buffers messages until all inputs for a given `correlationId` are available, then dispatches to the strategy.
+**Multipart only — all inputs from one multipart message:**
 
-**Single-input shorthand:** When a transformation has only one input, no correlation is needed — messages flow directly to the strategy.
+```yaml
+inputs:
+  - name: serviceA
+    multipart: pipeline-ab
+    key: serviceA
+    schema: schemas/service-a-output.json
+  - name: serviceB
+    multipart: pipeline-ab
+    key: serviceB
+    schema: schemas/service-b-output.json
+
+multipart:
+  pipeline-ab:
+    envelope: json-object
+```
+
+**Mixed — multipart + separate pipe + constant:**
+
+```yaml
+inputs:
+  # Parts extracted from a multipart message
+  - name: serviceA
+    multipart: pipeline-ab
+    key: serviceA
+    schema: schemas/service-a-output.json
+  - name: serviceB
+    multipart: pipeline-ab
+    key: serviceB
+    schema: schemas/service-b-output.json
+
+  # Independent source on its own pipe
+  - name: serviceD
+    schema: schemas/service-d-output.json
+
+  # Static configuration value
+  - name: region
+    constant: "eu-west-1"
+
+multipart:
+  pipeline-ab:
+    envelope: json-object
+```
+
+The `multipart:` key on an input references a named multipart group. The group's envelope format is declared in the `multipart:` section at the bottom. Inputs without a `multipart:` key are separate pipes (wired in `engine.yaml`). Inputs with a `constant:` key carry a static value.
 
 ### Pipe Interface
 
@@ -373,6 +492,15 @@ data class Message(
     val contentType: String,      // "application/xml", "application/json", etc.
     val headers: Map<String, String> = emptyMap()
 )
+
+/**
+ * Extracts named parts from a single multipart message.
+ * Pluggable per envelope format.
+ */
+interface MultipartAdapter {
+    fun extract(message: Message): Map<String, Message>
+    val envelopeFormat: String
+}
 ```
 
 ---
@@ -578,6 +706,7 @@ utl-x/
 │           │   ├── OutputPipe.kt
 │           │   ├── StdioPipe.kt
 │           │   ├── InProcessPipe.kt
+│           │   ├── MultipartAdapter.kt
 │           │   └── Correlator.kt
 │           ├── registry/
 │           │   └── TransformationRegistry.kt
@@ -671,6 +800,11 @@ engine:
 # Pipe wiring — connects transformations to external transports and to each other.
 # Per-transformation config (strategy, schemas, maxConcurrent) lives in each
 # transformation's own transform.yaml. This section only declares I/O plumbing.
+#
+# For pipe inputs:
+# - "name" matches the input name in transform.yaml (for simple pipe inputs)
+# - "multipart" matches the multipart group name in transform.yaml
+# - Constants declared in transform.yaml need no pipe wiring
 pipes:
   xml-to-json:
     inputs:
@@ -703,6 +837,25 @@ pipes:
       transport: kafka
       topic: invoices-validated
 
+  # Mixed-mode example: multipart pipe + separate pipe + constants.
+  # (See Section 5 for the service-c scenario.)
+  # The multipart group "pipeline-ab" is wired to a Kafka topic.
+  # The separate input "serviceD" gets its own pipe.
+  # The constant "region" needs no wiring — it's in transform.yaml.
+  service-c:
+    inputs:
+      - multipart: pipeline-ab    # carries serviceA + serviceB parts
+        transport: kafka
+        topic: pipeline-ab-output
+        group: utlxe-service-c
+      - name: serviceD            # independent source
+        transport: kafka
+        topic: service-d-output
+        group: utlxe-service-c
+    output:
+      transport: kafka
+      topic: service-c-output
+
 # Named flows — optional, for documentation and operational clarity.
 # The engine infers the flow graph from pipe wiring above. Declaring a flow
 # gives it a name for health/metrics and validates the chain at startup.
@@ -713,7 +866,7 @@ flows:
 
 ### transform.yaml (per-transformation)
 
-Each transformation's `transform.yaml` declares what the transformation *is* — its strategy, schemas, and resource limits. See [Section 4](#4-multi-transformation-support) for examples.
+Each transformation's `transform.yaml` declares what the transformation *is* — its strategy, schemas, input source types, and resource limits. See [Section 4](#4-multi-transformation-support) for basic examples and [Section 5](#5-io-pipe-model) for the full mixed-mode input syntax.
 
 ### Configuration Precedence
 
@@ -890,6 +1043,7 @@ spec:
 | 5 | **Management REST API** | Admin endpoints for runtime inspection and control? | Operations |
 | 6 | **Compiled strategy scope** | Full JVM bytecode or limit to expression compilation? | Phase 4 complexity |
 | 7 | **Daemon embedding** | Full engine embed in `utlxd` or lightweight preview-only? | IDE experience |
+| 8 | **Default multipart envelope** | Which envelope format should be the default for middleware integration? Platform-defined or utlxe-defined? | Multipart input support |
 
 ---
 
