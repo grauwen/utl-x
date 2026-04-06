@@ -306,14 +306,16 @@ sealed class Expression : Node() {
 
 /**
  * Object property
- * Can be a regular property (key: value) or a spread property (...expression)
+ * Can be a regular property (key: value), a spread property (...expression),
+ * or a computed property ([expr]: value)
  */
 data class Property(
-    val key: String?,  // Null for spread properties
+    val key: String?,  // Null for spread properties and computed properties
     val value: Expression,
     val location: Location,
     val isAttribute: Boolean = false,  // True if property represents an XML attribute (@key)
-    val isSpread: Boolean = false  // True for spread properties (...obj)
+    val isSpread: Boolean = false,  // True for spread properties (...obj)
+    val computedKey: Expression? = null  // Non-null for computed property names ([expr]: value)
 )
 
 /**

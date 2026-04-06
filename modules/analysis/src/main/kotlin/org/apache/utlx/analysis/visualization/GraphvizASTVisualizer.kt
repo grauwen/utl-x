@@ -137,7 +137,7 @@ class GraphvizASTVisualizer {
                 edges.add(formatEdge(nodeId, valueId, "...spread[$index]"))
             } else {
                 val valueId = visitExpression(prop.value, options)
-                val label = if (prop.isAttribute) "@${prop.key}" else prop.key ?: "?"
+                val label = if (prop.isAttribute) "@${prop.key}" else if (prop.computedKey != null) "[computed]" else prop.key ?: "?"
                 edges.add(formatEdge(nodeId, valueId, label))
             }
         }

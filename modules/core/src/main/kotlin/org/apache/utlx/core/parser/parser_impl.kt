@@ -1147,6 +1147,14 @@ class Parser(
                         // Allow keywords as property names in object literals
                         // e.g., { template: value, match: value, input: value }
                         key = advance().lexeme
+                    } else if (match(TokenType.LBRACKET)) {
+                        // Computed property name: [expr]: value
+                        val computedKeyExpr = parseExpression()
+                        consume(TokenType.RBRACKET, "Expected ']' after computed property name")
+                        consume(TokenType.COLON, "Expected ':' after computed property name")
+                        val value = parseExpression()
+                        properties.add(Property(null, value, Location.from(previous()), isAttribute = false, isSpread = false, computedKey = computedKeyExpr))
+                        continue
                     } else {
                         throw error("Expected property name or spread operator")
                     }

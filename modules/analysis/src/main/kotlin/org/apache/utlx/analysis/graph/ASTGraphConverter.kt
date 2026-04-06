@@ -235,7 +235,7 @@ class ASTGraphConverter {
 
                 // Process properties
                 expr.properties.forEach { property ->
-                    val key = property.key ?: "...spread"
+                    val key = property.key ?: if (property.computedKey != null) "[computed]" else "...spread"
                     val propertyNode = builder.node(
                         id = nextNodeId(),
                         label = key,

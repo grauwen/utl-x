@@ -114,6 +114,9 @@ class AdvancedTypeInference : TypeInferenceContext {
                         // Can't spread non-object - ignore
                     }
                 }
+            } else if (property.computedKey != null) {
+                // Computed property: [expr]: value — key is dynamic
+                analyzeExpression(property.value) // still analyze the value
             } else {
                 val key = property.key ?: error("Non-spread property must have a key")
                 val propType = analyzeExpression(property.value)
