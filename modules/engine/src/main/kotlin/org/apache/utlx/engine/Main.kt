@@ -17,6 +17,7 @@ fun main(args: Array<String>) {
     var bundlePath: String? = null
     var configPath: String? = null
     var portOverride: Int? = null
+    var validateOnly = false
 
     var i = 0
     while (i < args.size) {
@@ -40,6 +41,9 @@ fun main(args: Array<String>) {
                 if (portOverride !in 1..65535) {
                     exitWithError("--port must be between 1 and 65535: $portOverride")
                 }
+            }
+            "--validate" -> {
+                validateOnly = true
             }
             "--version", "-v" -> {
                 println("utlxe v$VERSION")
@@ -77,13 +81,23 @@ fun main(args: Array<String>) {
 
         val engine = UtlxEngine(config)
 
+        engine.initialize(Paths.get(bundlePath))
+
+        if (validateOnly) {
+            val transformations = engine.registry.list()
+            println("Bundle validated successfully: ${transformations.size} transformation(s)")
+            transformations.forEach { tx ->
+                println("  ${tx.name} [${tx.config.strategy}]")
+            }
+            exitProcess(0)
+        }
+
         // Shutdown hook for graceful drain
         Runtime.getRuntime().addShutdownHook(Thread {
             logger.info("Shutdown signal received")
             engine.stop()
         })
 
-        engine.initialize(Paths.get(bundlePath))
         engine.start()
 
     } catch (e: Exception) {
@@ -103,6 +117,7 @@ private fun printUsage() {
           --bundle, -b <path>    Path to .utlxp project bundle directory (required)
           --config, -c <path>    Path to engine.yaml config file (optional)
           --port,   -p <port>    Health endpoint port override (optional)
+          --validate             Load and compile the bundle, then exit (no processing)
           --version, -v          Print version and exit
           --help, -h             Print this help and exit
 
