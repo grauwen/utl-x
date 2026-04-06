@@ -279,9 +279,7 @@ gradlew.bat :modules:cli:jar
 
 **macOS / Linux:**
 ```bash
-./utlx transform script.utlx input.xml           # with subcommand
-./utlx script.utlx input.xml                      # implicit transform
-cat data.xml | ./utlx                              # instant format conversion
+./utlx transform script.utlx input.xml
 ```
 
 **Windows (Command Prompt):**
@@ -338,29 +336,6 @@ Output:
 ```bash
 utlx transform hello.utlx $input.json -o output.json
 ```
-
-### 5. Instant Format Conversion (No Script Needed)
-
-UTL-X can convert between formats with zero ceremony -- just pipe your data:
-
-```bash
-# XML to JSON (auto-detected)
-cat data.xml | utlx
-
-# JSON to XML (auto-detected)
-cat data.json | utlx
-
-# CSV to JSON (auto-detected)
-cat data.csv | utlx
-
-# Override the default with --to
-cat data.xml | utlx --to yaml
-
-# Explicit input and output formats
-cat data.csv | utlx --from csv --to xml
-```
-
-**How it works:** When no script file is provided, UTL-X performs an identity (passthrough) transform with smart format detection. XML and JSON automatically flip to each other (the most common conversion); CSV and YAML default to JSON output. Use `--to` to override.
 
 ## Key Features
 

@@ -14,8 +14,6 @@ import kotlin.system.exitProcess
  * Usage:
  *   utlx transform <input-file> <script-file> [options]
  *   utlx transform <script-file> [options]  # reads from stdin
- *   cat data.xml | utlx                     # identity mode: auto-detect input, smart flip output
- *   cat data.xml | utlx --to json           # identity mode with explicit output format
  */
 object TransformCommand {
 
@@ -25,7 +23,7 @@ object TransformCommand {
     data class TransformOptions(
         val namedInputs: Map<String, File> = emptyMap(),        // Named inputs: input1=file1.xml, input2=file2.json
         val namedOutputs: Map<String, File> = emptyMap(),       // Named outputs: summary=out.json, details=out.xml
-        val scriptFile: File? = null,                           // null = identity mode (passthrough)
+        val scriptFile: File,
         val inputFormat: String? = null,
         val outputFormat: String? = null,
         val verbose: Boolean = false,
@@ -33,8 +31,7 @@ object TransformCommand {
         val captureEnabled: Boolean? = null,  // null = use config, true = force enable, false = force disable
         val debugLevel: DebugConfig.LogLevel? = null,  // Global debug level
         val debugComponents: Set<DebugConfig.Component> = emptySet(),  // Component-specific debug
-        val strictTypes: Boolean = false,  // Enforce type checking (fail on type errors)
-        val identityMode: Boolean = false  // true = no script, passthrough with smart format flip
+        val strictTypes: Boolean = false  // Enforce type checking (fail on type errors)
     ) {
         // Backward compatibility properties
         val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
@@ -42,43 +39,9 @@ object TransformCommand {
         val hasMultipleInputs: Boolean get() = namedInputs.size > 1
         val hasMultipleOutputs: Boolean get() = namedOutputs.size > 1
     }
-
-    /**
-     * Detect format from data content (same logic as TransformationService auto-detect)
-     */
-    private fun detectFormatFromContent(data: String): String {
-        val trimmed = data.trim()
-        return when {
-            trimmed.startsWith("<") -> "xml"
-            trimmed.startsWith("{") || trimmed.startsWith("[") -> "json"
-            trimmed.startsWith("---") || trimmed.contains(":\n") || trimmed.contains(": ") -> "yaml"
-            trimmed.contains(",") && trimmed.lines().size > 1 -> {
-                val lines = trimmed.lines().filter { it.isNotBlank() }
-                val firstLineCommas = lines.firstOrNull()?.count { it == ',' } ?: 0
-                if (firstLineCommas > 0 && lines.take(3).all { it.count { c -> c == ',' } == firstLineCommas }) {
-                    "csv"
-                } else {
-                    "json"
-                }
-            }
-            else -> "json"
-        }
-    }
-
-    /**
-     * Smart format flip: choose the most useful output format based on detected input.
-     * XML↔JSON is the #1 use case; everything else defaults to JSON.
-     */
-    private fun inferOutputFormat(detectedInputFormat: String): String {
-        return when (detectedInputFormat) {
-            "xml"  -> "json"
-            "json" -> "xml"
-            else   -> "json"
-        }
-    }
-
-    fun execute(args: Array<String>, identityMode: Boolean = false) {
-        val options = parseOptions(args, allowIdentityMode = identityMode)
+    
+    fun execute(args: Array<String>) {
+        val options = parseOptions(args)
 
         // Apply debug settings from CLI flags
         options.debugLevel?.let { level ->
@@ -89,12 +52,8 @@ object TransformCommand {
         }
 
         if (options.verbose) {
-            if (options.identityMode) {
-                println("UTL-X Identity Transform (passthrough with format conversion)")
-            } else {
-                println("UTL-X Transform")
-                println("Script: ${options.scriptFile!!.absolutePath}")
-            }
+            println("UTL-X Transform")
+            println("Script: ${options.scriptFile.absolutePath}")
             options.inputFile?.let { println("Input: ${it.absolutePath}") }
             options.outputFile?.let { println("Output: ${it.absolutePath}") }
         }
@@ -106,6 +65,9 @@ object TransformCommand {
         var captureOutputData = ""
 
         try {
+            // Step 1: Read script file
+            val scriptContent = options.scriptFile.readText()
+
             // Step 2: Read input files and create InputData map
             val inputs = if (options.namedInputs.isNotEmpty()) {
                 // Named inputs from --input flags
@@ -139,43 +101,12 @@ object TransformCommand {
                 ))
             }
 
-            // Step 1: Determine script content (file or synthesized identity)
-            val scriptContent: String
-            val effectiveOutputFormat: String?
-
-            if (options.identityMode) {
-                // Identity mode: synthesize a passthrough script with smart format flip
-                val primaryInput = inputs.values.first()
-                val detectedInputFormat = options.inputFormat
-                    ?: detectFormatFromContent(primaryInput.content)
-
-                // User-specified output format wins; otherwise smart flip
-                effectiveOutputFormat = options.outputFormat
-                    ?: inferOutputFormat(detectedInputFormat)
-
-                if (options.verbose) {
-                    println("Detected input format: $detectedInputFormat")
-                    println("Output format: $effectiveOutputFormat" +
-                        if (options.outputFormat != null) " (explicit)" else " (smart flip)")
-                }
-
-                scriptContent = """%utlx 1.0
-input auto
-output $effectiveOutputFormat
----
-${"$"}input"""
-            } else {
-                // Normal mode: read script from file
-                scriptContent = options.scriptFile!!.readText()
-                effectiveOutputFormat = options.outputFormat
-            }
-
             // Step 3: Call TransformationService
             val serviceOptions = TransformationService.TransformOptions(
                 verbose = options.verbose,
                 pretty = options.pretty,
                 strictTypes = options.strictTypes,
-                overrideOutputFormat = effectiveOutputFormat
+                overrideOutputFormat = options.outputFormat
             )
 
             val (outputData, outputFormat) = transformationService.transform(scriptContent, inputs, serviceOptions)
@@ -197,9 +128,9 @@ ${"$"}input"""
                 println(outputData)
             }
 
-            // Step 4: Capture successful execution (for single input only, skip identity mode)
+            // Step 4: Capture successful execution (for single input only)
             val durationMs = System.currentTimeMillis() - startTime
-            if (!options.hasMultipleInputs && !options.identityMode) {
+            if (!options.hasMultipleInputs) {
                 val primaryInputData = inputs.values.firstOrNull()
                 val captureInputFormat = primaryInputData?.format ?: "json"
 
@@ -212,7 +143,7 @@ ${"$"}input"""
                     success = true,
                     error = null,
                     durationMs = durationMs,
-                    scriptFile = options.scriptFile!!,
+                    scriptFile = options.scriptFile,
                     overrideEnabled = options.captureEnabled
                 )
             }
@@ -222,8 +153,8 @@ ${"$"}input"""
             captureError = e.message ?: "Unknown error"
             val durationMs = System.currentTimeMillis() - startTime
 
-            // Try to capture the failure (only for single input, skip identity mode)
-            if (!options.hasMultipleInputs && !options.identityMode && options.scriptFile != null) {
+            // Try to capture the failure (only for single input)
+            if (!options.hasMultipleInputs) {
                 try {
                     val scriptContent = options.scriptFile.readText()
                     val inputFilePath = options.inputFile
@@ -240,10 +171,10 @@ ${"$"}input"""
                         inputFormat = inputFormat,
                         outputData = captureError,
                         outputFormat = options.outputFormat ?: inputFormat,
-                        success = false,
-                        error = captureError,
-                        durationMs = durationMs,
-                        scriptFile = options.scriptFile!!,
+                    success = false,
+                    error = captureError,
+                    durationMs = durationMs,
+                    scriptFile = options.scriptFile,
                         overrideEnabled = options.captureEnabled
                     )
                 } catch (captureException: Exception) {
@@ -258,7 +189,7 @@ ${"$"}input"""
             throw e
         }
     }
-
+    
     private fun detectFormat(data: String, extension: String?): String {
         // Try extension first
         extension?.lowercase()?.let {
@@ -272,7 +203,7 @@ ${"$"}input"""
                 }
             }
         }
-
+        
         // Auto-detect from content
         val trimmed = data.trim()
         return when {
@@ -286,21 +217,12 @@ ${"$"}input"""
             }
         }
     }
-
+    
     private fun readStdin(): String {
         return generateSequence { readLine() }.joinToString("\n")
     }
-
-    /**
-     * Parse options - supports both normal mode (with script file) and identity mode (no script).
-     * @param allowIdentityMode if true, missing script file triggers identity mode instead of error.
-     *                          Set to true when invoked from Main.kt's implicit routing.
-     */
-    fun parseOptions(args: Array<String>, allowIdentityMode: Boolean = false): TransformOptions {
-        // Identity mode: no args at all means passthrough (read stdin, smart flip output)
-        if (args.isEmpty() && allowIdentityMode) {
-            return TransformOptions(identityMode = true)
-        }
+    
+    private fun parseOptions(args: Array<String>): TransformOptions {
         if (args.isEmpty()) {
             printUsage()
             exitProcess(1)
@@ -341,10 +263,10 @@ ${"$"}input"""
                         namedInputs["input"] = File(arg)
                     }
                 }
-                "--input-format", "--from" -> {
+                "--input-format" -> {
                     inputFormat = args[++i]
                 }
-                "--output-format", "--to" -> {
+                "--output-format" -> {
                     outputFormat = args[++i]
                 }
                 "-v", "--verbose" -> {
@@ -405,24 +327,7 @@ ${"$"}input"""
             i++
         }
 
-        // If no script file: identity mode (when allowed) or error
         if (scriptFile == null) {
-            if (allowIdentityMode) {
-                return TransformOptions(
-                    namedInputs = namedInputs,
-                    namedOutputs = namedOutputs,
-                    scriptFile = null,
-                    inputFormat = inputFormat,
-                    outputFormat = outputFormat,
-                    verbose = verbose,
-                    pretty = pretty,
-                    captureEnabled = captureEnabled,
-                    debugLevel = debugLevel,
-                    debugComponents = debugComponents,
-                    strictTypes = strictTypes,
-                    identityMode = true
-                )
-            }
             System.err.println("Error: Script file is required")
             printUsage()
             exitProcess(1)
@@ -455,7 +360,7 @@ ${"$"}input"""
             strictTypes = strictTypes
         )
     }
-
+    
     private fun printUsage() {
         println("""
             |Transform data using UTL-X scripts
@@ -465,17 +370,9 @@ ${"$"}input"""
             |  utlx transform <script-file> [options] < input-file
             |  utlx transform <script-file> --input input1=file1.xml --input input2=file2.json [options]
             |
-            |Identity mode (no script, format conversion):
-            |  cat data.xml | utlx                        Auto-detect XML, output JSON (smart flip)
-            |  cat data.json | utlx                       Auto-detect JSON, output XML (smart flip)
-            |  cat data.csv | utlx                        Auto-detect CSV, output JSON
-            |  cat data.xml | utlx --to yaml              Override smart flip with explicit format
-            |  cat data.csv | utlx --from csv --to xml    Explicit input and output formats
-            |
             |Arguments:
             |  input-file      Input data file (if not provided, reads from stdin)
             |  script-file     UTL-X transformation script (.utlx)
-            |                  If omitted, identity transform is used (passthrough with format conversion)
             |
             |Options:
             |  -o, --output FILE           Write output to FILE (default: stdout)
@@ -483,9 +380,7 @@ ${"$"}input"""
             |  -i, --input FILE            Read input from FILE
             |      --input name=FILE       Named input for multi-input transformations
             |  --input-format FORMAT       Force input format (xml, json, csv, yaml)
-            |  --from FORMAT               Alias for --input-format
             |  --output-format FORMAT      Force output format (xml, json, csv, yaml)
-            |  --to FORMAT                 Alias for --output-format
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing
             |  --strict-types              Enforce type checking (fail on type errors)
@@ -502,21 +397,7 @@ ${"$"}input"""
             |  --debug-all                 Enable DEBUG logging for all components (same as --debug)
             |  --trace                     Enable TRACE level logging (most verbose)
             |
-            |Identity Mode (Smart Format Flip):
-            |  When no script file is provided, utlx performs a passthrough (identity) transform.
-            |  The output format is automatically chosen as the "opposite" of the detected input:
-            |    XML  -> JSON     (most common conversion)
-            |    JSON -> XML      (most common conversion)
-            |    CSV  -> JSON     (JSON is universal interchange)
-            |    YAML -> JSON     (JSON is universal interchange)
-            |  Use --to to override the smart default.
-            |
             |Examples:
-            |  # Identity mode: format conversion without a script
-            |  cat data.xml | utlx                                    # XML to JSON
-            |  cat data.json | utlx                                   # JSON to XML
-            |  cat data.csv | utlx --to yaml                          # CSV to YAML
-            |
             |  # Single input/output (backward compatible)
             |  utlx transform script.utlx input.xml -o output.json
             |
