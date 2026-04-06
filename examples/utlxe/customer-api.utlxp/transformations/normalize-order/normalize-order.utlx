@@ -1,0 +1,56 @@
+%utlx 1.0
+input json
+output json
+---
+// Normalize an incoming REST API order into a standard invoice format.
+// Handles missing fields, date reformatting, and line-item totals.
+
+{
+  let items = input.order.items |> map(item => {
+    let qty = item.quantity ?? 1;
+    let price = item.unitPrice ?? 0;
+    let discount = item.discount ?? 0;
+    let lineTotal = roundToDecimalPlaces(qty * price * (1 - discount), 2);
+    {
+      sku: item.sku,
+      description: item.name ?? item.sku,
+      quantity: qty,
+      unitPrice: price,
+      discount: discount,
+      lineTotal: lineTotal
+    }
+  });
+
+  let subtotal = roundToDecimalPlaces(items |> map(i => i.lineTotal) |> sum(), 2);
+  let taxRate = input.order.taxRate ?? 0.21;
+  let taxAmount = roundToDecimalPlaces(subtotal * taxRate, 2);
+  let total = roundToDecimalPlaces(subtotal + taxAmount, 2);
+
+  invoice: {
+    invoiceNumber: "INV-" + input.order.orderId,
+    currency: input.order.currency ?? "EUR",
+
+    customer: {
+      name: input.order.customer.firstName + " " + input.order.customer.lastName,
+      email: input.order.customer.email,
+      vatNumber: input.order.customer.vatNumber ?? null,
+      address: {
+        street: input.order.customer.address.street,
+        city: input.order.customer.address.city,
+        postalCode: input.order.customer.address.postalCode,
+        country: input.order.customer.address.country ?? "NL"
+      }
+    },
+
+    lineItems: items,
+
+    totals: {
+      subtotal: subtotal,
+      taxRate: taxRate,
+      taxAmount: taxAmount,
+      total: total
+    },
+
+    status: if (total > 10000) "REVIEW_REQUIRED" else "APPROVED"
+  }
+}

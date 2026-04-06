@@ -1,0 +1,89 @@
+{
+  "order": {
+    "orderId": "ORD-2026-10042",
+    "orderDate": "2026-04-02T09:15:00Z",
+    "customerId": "CUST-0037",
+    "items": [
+      {
+        "sku": "LAPTOP-PRO-15",
+        "quantity": 3,
+        "unitPrice": 1299.00
+      },
+      {
+        "sku": "DOCK-USB-C",
+        "quantity": 3,
+        "unitPrice": 189.00
+      },
+      {
+        "sku": "MONITOR-4K-27",
+        "quantity": 6,
+        "unitPrice": 549.00
+      },
+      {
+        "sku": "KEYBOARD-MECH",
+        "quantity": 3,
+        "unitPrice": 129.00
+      }
+    ]
+  },
+  "customers": {
+    "customers": [
+      {
+        "customerId": "CUST-0037",
+        "name": "TechCorp GmbH",
+        "tier": "Gold",
+        "creditLimit": 25000.00,
+        "region": "DACH",
+        "contactEmail": "procurement@techcorp.de"
+      },
+      {
+        "customerId": "CUST-0042",
+        "name": "Nordic Solutions AB",
+        "tier": "Silver",
+        "creditLimit": 10000.00,
+        "region": "Nordics",
+        "contactEmail": "orders@nordicsolutions.se"
+      },
+      {
+        "customerId": "CUST-0051",
+        "name": "Acme Industries",
+        "tier": "Standard",
+        "creditLimit": 5000.00,
+        "region": "US-East",
+        "contactEmail": "buying@acme.com"
+      }
+    ]
+  },
+  "inventory": {
+    "products": [
+      {
+        "sku": "LAPTOP-PRO-15",
+        "productName": "ProBook Laptop 15 inch",
+        "quantityOnHand": 12,
+        "warehouse": "EU-WEST-1",
+        "reorderPoint": 5
+      },
+      {
+        "sku": "DOCK-USB-C",
+        "productName": "USB-C Docking Station",
+        "quantityOnHand": 45,
+        "warehouse": "EU-WEST-1",
+        "reorderPoint": 10
+      },
+      {
+        "sku": "MONITOR-4K-27",
+        "productName": "Ultra HD Monitor 27 inch",
+        "quantityOnHand": 4,
+        "warehouse": "EU-CENTRAL-1",
+        "reorderPoint": 8
+      },
+      {
+        "sku": "KEYBOARD-MECH",
+        "productName": "Mechanical Keyboard Cherry MX",
+        "quantityOnHand": 30,
+        "warehouse": "EU-WEST-1",
+        "reorderPoint": 15
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "freeShippingThreshold": 1000.00,
+  "flatShippingRate": 29.95,
+  "fallbackCarrier": "DHL-Express",
+  "zones": [
+    {
+      "warehouse": "EU-WEST-1",
+      "region": "Western Europe",
+      "defaultCarrier": "PostNL",
+      "transitDays": 2,
+      "countries": ["NL", "BE", "LU", "DE", "FR"]
+    },
+    {
+      "warehouse": "EU-CENTRAL-1",
+      "region": "Central Europe",
+      "defaultCarrier": "DHL-Paket",
+      "transitDays": 3,
+      "countries": ["DE", "AT", "CH", "PL", "CZ"]
+    },
+    {
+      "warehouse": "EU-NORTH-1",
+      "region": "Northern Europe",
+      "defaultCarrier": "PostNord",
+      "transitDays": 4,
+      "countries": ["SE", "NO", "DK", "FI"]
+    }
+  ],
+  "hazmatCarriers": ["DHL-Express", "TNT-Hazmat"],
+  "maxWeightKg": 31.5,
+  "oversizeThresholdCm": 150
+}

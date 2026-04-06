@@ -1,0 +1,4 @@
+strategy: TEMPLATE
+inputs:
+  - name: input
+maxConcurrent: 4
