@@ -1,128 +1,3824 @@
 {
-  "utlx-abs": {
-    "prefix": "abs",
-    "body": "abs(${1:arg1})",
-    "description": "Return absolute value of a number",
+  "utlx-assert": {
+    "prefix": "assert",
+    "body": "assert(${1:arg1})",
+    "description": "Asserts a condition is true",
     "scope": "utlx"
   },
-  "utlx-avg": {
-    "prefix": "avg",
-    "body": "avg(${1:arg1})",
-    "description": "Calculate average of numeric array elements",
+  "utlx-assertEqual": {
+    "prefix": "assertEqual",
+    "body": "assertEqual(${1:arg1}, ${2:arg2})",
+    "description": "Asserts two values are equal",
     "scope": "utlx"
   },
-  "utlx-ceil": {
-    "prefix": "ceil",
-    "body": "ceil(${1:arg1})",
-    "description": "Round number up to next integer",
+  "utlx-availableProcessors": {
+    "prefix": "availableProcessors",
+    "body": "availableProcessors(${1:arg1})",
+    "description": "Get number of available CPU cores/processors",
     "scope": "utlx"
   },
-  "utlx-floor": {
-    "prefix": "floor",
-    "body": "floor(${1:arg1})",
-    "description": "Round number down to previous integer",
+  "utlx-clearLogs": {
+    "prefix": "clearLogs",
+    "body": "clearLogs(${1:arg1})",
+    "description": "Clears all log entries",
     "scope": "utlx"
   },
-  "utlx-max": {
-    "prefix": "max",
-    "body": "max(${1:arg1})",
-    "description": "Find maximum value in numeric array",
+  "utlx-coalesce": {
+    "prefix": "coalesce",
+    "body": "coalesce(${1:arg1})",
+    "description": "Coalesce - return first non-null value",
     "scope": "utlx"
   },
-  "utlx-min": {
-    "prefix": "min",
-    "body": "min(${1:arg1})",
-    "description": "Find minimum value in numeric array",
+  "utlx-concat": {
+    "prefix": "concat",
+    "body": "concat(${1:arg1})",
+    "description": "Concatenate multiple arrays",
     "scope": "utlx"
   },
-  "utlx-round": {
-    "prefix": "round",
-    "body": "round(${1:arg1})",
-    "description": "Round number to nearest integer",
+  "utlx-contains": {
+    "prefix": "contains",
+    "body": "contains(${1:arg1})",
+    "description": "Check if string contains substring",
     "scope": "utlx"
   },
-  "utlx-sum": {
-    "prefix": "sum",
-    "body": "sum(${1:arg1})",
-    "description": "Calculate sum of numeric array elements",
+  "utlx-currentDir": {
+    "prefix": "currentDir",
+    "body": "currentDir(${1:arg1})",
+    "description": "Get current working directory",
     "scope": "utlx"
   },
-  "utlx-base64Decode": {
-    "prefix": "base64Decode",
-    "body": "base64Decode(${1:arg1})",
-    "description": "Decode Base64 encoded string",
+  "utlx-debug": {
+    "prefix": "debug",
+    "body": "debug(${1:arg1})",
+    "description": "Logs with DEBUG level",
     "scope": "utlx"
   },
-  "utlx-base64Encode": {
-    "prefix": "base64Encode",
-    "body": "base64Encode(${1:arg1})",
-    "description": "Encode string to Base64 format",
+  "utlx-default": {
+    "prefix": "default",
+    "body": "default(${1:arg1})",
+    "description": "Default value if undefined or null",
     "scope": "utlx"
   },
-  "utlx-urlDecode": {
-    "prefix": "urlDecode",
-    "body": "urlDecode(${1:arg1})",
-    "description": "URL decode encoded string",
+  "utlx-endTimer": {
+    "prefix": "endTimer",
+    "body": "endTimer(${1:arg1})",
+    "description": "Logs elapsed time since startTimer()",
     "scope": "utlx"
   },
-  "utlx-urlEncode": {
-    "prefix": "urlEncode",
-    "body": "urlEncode(${1:arg1})",
-    "description": "URL encode string for web safety",
+  "utlx-env": {
+    "prefix": "env",
+    "body": "env(${1:arg1}, ${2:arg2})",
+    "description": "Get environment variable value",
+    "scope": "utlx"
+  },
+  "utlx-envAll": {
+    "prefix": "envAll",
+    "body": "envAll(${1:arg1})",
+    "description": "Get all environment variables",
+    "scope": "utlx"
+  },
+  "utlx-envOrDefault": {
+    "prefix": "envOrDefault",
+    "body": "envOrDefault(${1:arg1}, ${2:arg2})",
+    "description": "Get environment variable with default fallback",
+    "scope": "utlx"
+  },
+  "utlx-environment": {
+    "prefix": "environment",
+    "body": "environment(${1:arg1})",
+    "description": "Get current environment name",
+    "scope": "utlx"
+  },
+  "utlx-error": {
+    "prefix": "error",
+    "body": "error(${1:arg1})",
+    "description": "Logs with ERROR level",
+    "scope": "utlx"
+  },
+  "utlx-filter": {
+    "prefix": "filter",
+    "body": "filter(${1:arg1})",
+    "description": "Generic filter function that works on arrays, objects, and strings",
+    "scope": "utlx"
+  },
+  "utlx-generateUuid": {
+    "prefix": "generateUuid",
+    "body": "generateUuid(${1:arg1})",
+    "description": "Generate UUID/GUID",
+    "scope": "utlx"
+  },
+  "utlx-getLogs": {
+    "prefix": "getLogs",
+    "body": "getLogs(${1:arg1})",
+    "description": "Retrieves all log entries",
+    "scope": "utlx"
+  },
+  "utlx-hasEnv": {
+    "prefix": "hasEnv",
+    "body": "hasEnv(${1:arg1}, ${2:arg2})",
+    "description": "Check if environment variable exists",
+    "scope": "utlx"
+  },
+  "utlx-homeDir": {
+    "prefix": "homeDir",
+    "body": "homeDir(${1:arg1})",
+    "description": "Get user home directory",
+    "scope": "utlx"
+  },
+  "utlx-ifThenElse": {
+    "prefix": "ifThenElse",
+    "body": "ifThenElse(${1:arg1})",
+    "description": "Inline if-then-else conditional",
+    "scope": "utlx"
+  },
+  "utlx-info": {
+    "prefix": "info",
+    "body": "info(${1:arg1})",
+    "description": "Logs with INFO level",
+    "scope": "utlx"
+  },
+  "utlx-isDebugMode": {
+    "prefix": "isDebugMode",
+    "body": "isDebugMode(${1:arg1})",
+    "description": "Check if running in debug mode",
+    "scope": "utlx"
+  },
+  "utlx-isEmpty": {
+    "prefix": "isEmpty",
+    "body": "isEmpty(${1:arg1})",
+    "description": "Check if string is empty (length 0)",
+    "scope": "utlx"
+  },
+  "utlx-isNotEmpty": {
+    "prefix": "isNotEmpty",
+    "body": "isNotEmpty(${1:arg1}, ${2:arg2})",
+    "description": "Checks if a value is not empty (inverse of isEmpty)",
+    "scope": "utlx"
+  },
+  "utlx-javaVersion": {
+    "prefix": "javaVersion",
+    "body": "javaVersion(${1:arg1})",
+    "description": "Get Java/JVM version",
+    "scope": "utlx"
+  },
+  "utlx-log": {
+    "prefix": "log",
+    "body": "log(${1:arg1})",
+    "description": "If no base is provided, uses natural logarithm (base e).",
+    "scope": "utlx"
+  },
+  "utlx-logCount": {
+    "prefix": "logCount",
+    "body": "logCount(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-logPretty": {
+    "prefix": "logPretty",
+    "body": "logPretty(${1:arg1})",
+    "description": "Logs a pretty-printed representation of a value",
+    "scope": "utlx"
+  },
+  "utlx-logSize": {
+    "prefix": "logSize",
+    "body": "logSize(${1:arg1})",
+    "description": "Logs the size/length of a value",
+    "scope": "utlx"
+  },
+  "utlx-logType": {
+    "prefix": "logType",
+    "body": "logType(${1:arg1})",
+    "description": "Logs the type of a value",
+    "scope": "utlx"
+  },
+  "utlx-memoryInfo": {
+    "prefix": "memoryInfo",
+    "body": "memoryInfo(${1:arg1})",
+    "description": "Get JVM memory information in bytes",
+    "scope": "utlx"
+  },
+  "utlx-osArch": {
+    "prefix": "osArch",
+    "body": "osArch(${1:arg1})",
+    "description": "Get operating system architecture",
+    "scope": "utlx"
+  },
+  "utlx-osVersion": {
+    "prefix": "osVersion",
+    "body": "osVersion(${1:arg1})",
+    "description": "Get operating system version",
+    "scope": "utlx"
+  },
+  "utlx-platform": {
+    "prefix": "platform",
+    "body": "platform(${1:arg1})",
+    "description": "Get platform/operating system name",
+    "scope": "utlx"
+  },
+  "utlx-runtimeInfo": {
+    "prefix": "runtimeInfo",
+    "body": "runtimeInfo(${1:arg1})",
+    "description": "Get comprehensive runtime information",
+    "scope": "utlx"
+  },
+  "utlx-setConsoleLogging": {
+    "prefix": "setConsoleLogging",
+    "body": "setConsoleLogging(${1:arg1})",
+    "description": "Enables or disables console logging",
+    "scope": "utlx"
+  },
+  "utlx-setLogLevel": {
+    "prefix": "setLogLevel",
+    "body": "setLogLevel(${1:arg1})",
+    "description": "Sets the minimum log level",
+    "scope": "utlx"
+  },
+  "utlx-startTimer": {
+    "prefix": "startTimer",
+    "body": "startTimer(${1:arg1})",
+    "description": "Logs execution time of a block",
+    "scope": "utlx"
+  },
+  "utlx-systemPropertiesAll": {
+    "prefix": "systemPropertiesAll",
+    "body": "systemPropertiesAll(${1:arg1})",
+    "description": "Get all system properties",
+    "scope": "utlx"
+  },
+  "utlx-systemProperty": {
+    "prefix": "systemProperty",
+    "body": "systemProperty(${1:arg1}, ${2:arg2})",
+    "description": "Get Java system property",
+    "scope": "utlx"
+  },
+  "utlx-systemPropertyOrDefault": {
+    "prefix": "systemPropertyOrDefault",
+    "body": "systemPropertyOrDefault(${1:arg1}, ${2:arg2})",
+    "description": "Get system property with default fallback",
+    "scope": "utlx"
+  },
+  "utlx-tempDir": {
+    "prefix": "tempDir",
+    "body": "tempDir(${1:arg1})",
+    "description": "Get temporary directory",
+    "scope": "utlx"
+  },
+  "utlx-trace": {
+    "prefix": "trace",
+    "body": "trace(${1:arg1})",
+    "description": "Logs with TRACE level",
+    "scope": "utlx"
+  },
+  "utlx-uptime": {
+    "prefix": "uptime",
+    "body": "uptime(${1:arg1})",
+    "description": "Get JVM uptime in milliseconds",
+    "scope": "utlx"
+  },
+  "utlx-username": {
+    "prefix": "username",
+    "body": "username(${1:arg1})",
+    "description": "Get current username",
+    "scope": "utlx"
+  },
+  "utlx-version": {
+    "prefix": "version",
+    "body": "version(${1:arg1})",
+    "description": "Get UTL-X version",
+    "scope": "utlx"
+  },
+  "utlx-warn": {
+    "prefix": "warn",
+    "body": "warn(${1:arg1})",
+    "description": "Logs with WARN level",
+    "scope": "utlx"
+  },
+  "utlx-analyzeString": {
+    "prefix": "analyzeString",
+    "body": "analyzeString(${1:arg1}, ${2:arg2})",
+    "description": "Analyzes a string with a regex pattern and returns detailed match information.",
+    "scope": "utlx"
+  },
+  "utlx-camelCase": {
+    "prefix": "camelCase",
+    "body": "camelCase(${1:arg1})",
+    "description": "Convert string to camelCase",
+    "scope": "utlx"
+  },
+  "utlx-camelize": {
+    "prefix": "camelize",
+    "body": "camelize(${1:arg1})",
+    "description": "Convert string to camelCase (Legacy naming - use camelCase)",
+    "scope": "utlx"
+  },
+  "utlx-capitalize": {
+    "prefix": "capitalize",
+    "body": "capitalize(${1:arg1})",
+    "description": "Capitalize first letter of string",
+    "scope": "utlx"
+  },
+  "utlx-charAt": {
+    "prefix": "charAt",
+    "body": "charAt(${1:arg1})",
+    "description": "Get character at index",
+    "scope": "utlx"
+  },
+  "utlx-charCodeAt": {
+    "prefix": "charCodeAt",
+    "body": "charCodeAt(${1:arg1})",
+    "description": "Get character code (Unicode code point) at index",
+    "scope": "utlx"
+  },
+  "utlx-constantCase": {
+    "prefix": "constantCase",
+    "body": "constantCase(${1:arg1})",
+    "description": "Convert string to CONSTANT_CASE",
+    "scope": "utlx"
+  },
+  "utlx-dotCase": {
+    "prefix": "dotCase",
+    "body": "dotCase(${1:arg1})",
+    "description": "Convert string to dot.case",
+    "scope": "utlx"
+  },
+  "utlx-endsWith": {
+    "prefix": "endsWith",
+    "body": "endsWith(${1:arg1})",
+    "description": "Check if string ends with suffix",
+    "scope": "utlx"
+  },
+  "utlx-extractBetween": {
+    "prefix": "extractBetween",
+    "body": "extractBetween(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Extract substring between two delimiters",
+    "scope": "utlx"
+  },
+  "utlx-findAllMatches": {
+    "prefix": "findAllMatches",
+    "body": "findAllMatches(${1:arg1}, ${2:arg2})",
+    "description": "Finds all matches of a pattern and returns them with positions.",
+    "scope": "utlx"
+  },
+  "utlx-formatPlural": {
+    "prefix": "formatPlural",
+    "body": "formatPlural(${1:arg1}, ${2:arg2})",
+    "description": "Creates a formatted string with count and correctly pluralized word",
+    "scope": "utlx"
+  },
+  "utlx-fromCamelCase": {
+    "prefix": "fromCamelCase",
+    "body": "fromCamelCase(${1:arg1})",
+    "description": "Convert from camelCase to separate words",
+    "scope": "utlx"
+  },
+  "utlx-fromCharCode": {
+    "prefix": "fromCharCode",
+    "body": "fromCharCode(${1:arg1})",
+    "description": "Create string from character code",
+    "scope": "utlx"
+  },
+  "utlx-fromConstantCase": {
+    "prefix": "fromConstantCase",
+    "body": "fromConstantCase(${1:arg1})",
+    "description": "Convert from CONSTANT_CASE to separate words",
+    "scope": "utlx"
+  },
+  "utlx-fromDotCase": {
+    "prefix": "fromDotCase",
+    "body": "fromDotCase(${1:arg1})",
+    "description": "Convert from dot.case to separate words",
+    "scope": "utlx"
+  },
+  "utlx-fromKebabCase": {
+    "prefix": "fromKebabCase",
+    "body": "fromKebabCase(${1:arg1})",
+    "description": "Convert from kebab-case to separate words",
+    "scope": "utlx"
+  },
+  "utlx-fromPascalCase": {
+    "prefix": "fromPascalCase",
+    "body": "fromPascalCase(${1:arg1})",
+    "description": "Convert from PascalCase to separate words",
+    "scope": "utlx"
+  },
+  "utlx-fromPathCase": {
+    "prefix": "fromPathCase",
+    "body": "fromPathCase(${1:arg1})",
+    "description": "Convert from path/case to separate words",
+    "scope": "utlx"
+  },
+  "utlx-fromSnakeCase": {
+    "prefix": "fromSnakeCase",
+    "body": "fromSnakeCase(${1:arg1})",
+    "description": "Convert from snake_case to separate words",
+    "scope": "utlx"
+  },
+  "utlx-fromTitleCase": {
+    "prefix": "fromTitleCase",
+    "body": "fromTitleCase(${1:arg1})",
+    "description": "Convert from Title Case to separate lowercase words",
+    "scope": "utlx"
+  },
+  "utlx-hasAlpha": {
+    "prefix": "hasAlpha",
+    "body": "hasAlpha(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-hasNumeric": {
+    "prefix": "hasNumeric",
+    "body": "hasNumeric(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-isAlpha": {
+    "prefix": "isAlpha",
+    "body": "isAlpha(${1:arg1})",
+    "description": "Alphabetic characters include A-Z, a-z, and Unicode letters.",
+    "scope": "utlx"
+  },
+  "utlx-isAlphanumeric": {
+    "prefix": "isAlphanumeric",
+    "body": "isAlphanumeric(${1:arg1})",
+    "description": "Combines isAlpha and isNumeric: characters must be A-Z, a-z, 0-9, or Unicode letters.",
+    "scope": "utlx"
+  },
+  "utlx-isAscii": {
+    "prefix": "isAscii",
+    "body": "isAscii(${1:arg1})",
+    "description": "ASCII includes standard English letters, digits, and punctuation.",
+    "scope": "utlx"
+  },
+  "utlx-isBlank": {
+    "prefix": "isBlank",
+    "body": "isBlank(${1:arg1})",
+    "description": "Check if string is blank (empty or only whitespace)",
+    "scope": "utlx"
+  },
+  "utlx-isHexadecimal": {
+    "prefix": "isHexadecimal",
+    "body": "isHexadecimal(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-isLowerCase": {
+    "prefix": "isLowerCase",
+    "body": "isLowerCase(${1:arg1})",
+    "description": "Non-alphabetic characters (digits, spaces, etc.) are ignored.",
+    "scope": "utlx"
+  },
+  "utlx-isNumeric": {
+    "prefix": "isNumeric",
+    "body": "isNumeric(${1:arg1})",
+    "description": "Only recognizes 0-9 as numeric digits.",
+    "scope": "utlx"
+  },
+  "utlx-isPlural": {
+    "prefix": "isPlural",
+    "body": "isPlural(${1:arg1})",
+    "description": "Checks if a word is in plural form",
+    "scope": "utlx"
+  },
+  "utlx-isPrintable": {
+    "prefix": "isPrintable",
+    "body": "isPrintable(${1:arg1})",
+    "description": "Printable characters include letters, digits, punctuation, and spaces.",
+    "scope": "utlx"
+  },
+  "utlx-isSingular": {
+    "prefix": "isSingular",
+    "body": "isSingular(${1:arg1}, ${2:arg2})",
+    "description": "Checks if a word is in singular form",
+    "scope": "utlx"
+  },
+  "utlx-isUpperCase": {
+    "prefix": "isUpperCase",
+    "body": "isUpperCase(${1:arg1})",
+    "description": "Non-alphabetic characters (digits, spaces, etc.) are ignored.",
+    "scope": "utlx"
+  },
+  "utlx-isWhitespace": {
+    "prefix": "isWhitespace",
+    "body": "isWhitespace(${1:arg1})",
+    "description": "Whitespace includes spaces, tabs, newlines, and other Unicode whitespace.",
+    "scope": "utlx"
+  },
+  "utlx-join": {
+    "prefix": "join",
+    "body": "join(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Inner join - returns only items that have matches in both arrays",
+    "scope": "utlx"
+  },
+  "utlx-kebabCase": {
+    "prefix": "kebabCase",
+    "body": "kebabCase(${1:arg1})",
+    "description": "Convert string to kebab-case",
+    "scope": "utlx"
+  },
+  "utlx-leftTrim": {
+    "prefix": "leftTrim",
+    "body": "leftTrim(${1:arg1})",
+    "description": "Remove leading whitespace only",
+    "scope": "utlx"
+  },
+  "utlx-length": {
+    "prefix": "length",
+    "body": "length(${1:arg1})",
+    "description": "Get length of string or array",
     "scope": "utlx"
   },
   "utlx-lower": {
     "prefix": "lower",
     "body": "lower(${1:arg1})",
+    "description": "Convert string to lowercase (Legacy naming - use lowerCase)",
+    "scope": "utlx"
+  },
+  "utlx-lowerCase": {
+    "prefix": "lowerCase",
+    "body": "lowerCase(${1:arg1})",
     "description": "Convert string to lowercase",
+    "scope": "utlx"
+  },
+  "utlx-matches": {
+    "prefix": "matches",
+    "body": "matches(${1:arg1})",
+    "description": "Performs matches operation",
+    "scope": "utlx"
+  },
+  "utlx-matchesWhole": {
+    "prefix": "matchesWhole",
+    "body": "matchesWhole(${1:arg1}, ${2:arg2})",
+    "description": "Tests if a string matches a pattern completely (not just contains).",
+    "scope": "utlx"
+  },
+  "utlx-normalizeSpace": {
+    "prefix": "normalizeSpace",
+    "body": "normalizeSpace(${1:arg1})",
+    "description": "Normalize whitespace (collapse multiple spaces to single space)",
+    "scope": "utlx"
+  },
+  "utlx-pad": {
+    "prefix": "pad",
+    "body": "pad(${1:arg1})",
+    "description": "Pad string to length with character",
+    "scope": "utlx"
+  },
+  "utlx-padLeft": {
+    "prefix": "padLeft",
+    "body": "padLeft(${1:arg1})",
+    "description": "Pad string to length with character (Explicit left padding - pad() defaults to left)",
+    "scope": "utlx"
+  },
+  "utlx-padRight": {
+    "prefix": "padRight",
+    "body": "padRight(${1:arg1})",
+    "description": "Pad string on right",
+    "scope": "utlx"
+  },
+  "utlx-pascalCase": {
+    "prefix": "pascalCase",
+    "body": "pascalCase(${1:arg1})",
+    "description": "Convert string to PascalCase (also called UpperCamelCase)",
+    "scope": "utlx"
+  },
+  "utlx-pathCase": {
+    "prefix": "pathCase",
+    "body": "pathCase(${1:arg1})",
+    "description": "Convert string to path/case",
+    "scope": "utlx"
+  },
+  "utlx-pluralize": {
+    "prefix": "pluralize",
+    "body": "pluralize(${1:arg1})",
+    "description": "Converts a singular noun to its plural form",
+    "scope": "utlx"
+  },
+  "utlx-pluralizeWithCount": {
+    "prefix": "pluralizeWithCount",
+    "body": "pluralizeWithCount(${1:arg1}, ${2:arg2})",
+    "description": "Examples:",
+    "scope": "utlx"
+  },
+  "utlx-regexGroups": {
+    "prefix": "regexGroups",
+    "body": "regexGroups(${1:arg1}, ${2:arg2})",
+    "description": "Extracts all capture groups from the first match of a pattern.",
+    "scope": "utlx"
+  },
+  "utlx-regexNamedGroups": {
+    "prefix": "regexNamedGroups",
+    "body": "regexNamedGroups(${1:arg1}, ${2:arg2})",
+    "description": "Extracts named capture groups from the first match.",
+    "scope": "utlx"
+  },
+  "utlx-repeat": {
+    "prefix": "repeat",
+    "body": "repeat(${1:arg1})",
+    "description": "Repeat string n times",
+    "scope": "utlx"
+  },
+  "utlx-replace": {
+    "prefix": "replace",
+    "body": "replace(${1:arg1}, ${2:arg2})",
+    "description": "Replace occurrences in string. Supports single replacement or multiple replacements via object/array.",
+    "scope": "utlx"
+  },
+  "utlx-replaceRegex": {
+    "prefix": "replaceRegex",
+    "body": "replaceRegex(${1:arg1})",
+    "description": "Performs replaceRegex operation",
+    "scope": "utlx"
+  },
+  "utlx-replaceWithFunction": {
+    "prefix": "replaceWithFunction",
+    "body": "replaceWithFunction(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Replaces all matches with results from a function.",
+    "scope": "utlx"
+  },
+  "utlx-reverse": {
+    "prefix": "reverse",
+    "body": "reverse(${1:arg1})",
+    "description": "Reverse array",
+    "scope": "utlx"
+  },
+  "utlx-rightTrim": {
+    "prefix": "rightTrim",
+    "body": "rightTrim(${1:arg1})",
+    "description": "Remove trailing whitespace only",
+    "scope": "utlx"
+  },
+  "utlx-singularize": {
+    "prefix": "singularize",
+    "body": "singularize(${1:arg1})",
+    "description": "Converts a plural noun to its singular form",
+    "scope": "utlx"
+  },
+  "utlx-slugify": {
+    "prefix": "slugify",
+    "body": "slugify(${1:arg1})",
+    "description": "Convert string to URL-safe slug",
+    "scope": "utlx"
+  },
+  "utlx-snakeCase": {
+    "prefix": "snakeCase",
+    "body": "snakeCase(${1:arg1})",
+    "description": "Convert string to snake_case",
+    "scope": "utlx"
+  },
+  "utlx-split": {
+    "prefix": "split",
+    "body": "split(${1:arg1})",
+    "description": "Split string by delimiter",
+    "scope": "utlx"
+  },
+  "utlx-splitWithMatches": {
+    "prefix": "splitWithMatches",
+    "body": "splitWithMatches(${1:arg1}, ${2:arg2})",
+    "description": "Splits a string by a pattern, but keeps the matched parts.",
+    "scope": "utlx"
+  },
+  "utlx-startsWith": {
+    "prefix": "startsWith",
+    "body": "startsWith(${1:arg1})",
+    "description": "Check if string starts with prefix",
+    "scope": "utlx"
+  },
+  "utlx-substring": {
+    "prefix": "substring",
+    "body": "substring(${1:arg1}, ${2:arg2})",
+    "description": "Extract substring",
+    "scope": "utlx"
+  },
+  "utlx-substringAfter": {
+    "prefix": "substringAfter",
+    "body": "substringAfter(${1:arg1})",
+    "description": "Substring after first occurrence",
+    "scope": "utlx"
+  },
+  "utlx-substringAfterLast": {
+    "prefix": "substringAfterLast",
+    "body": "substringAfterLast(${1:arg1})",
+    "description": "Substring after last occurrence",
+    "scope": "utlx"
+  },
+  "utlx-substringBefore": {
+    "prefix": "substringBefore",
+    "body": "substringBefore(${1:arg1})",
+    "description": "Substring before first occurrence",
+    "scope": "utlx"
+  },
+  "utlx-substringBeforeLast": {
+    "prefix": "substringBeforeLast",
+    "body": "substringBeforeLast(${1:arg1})",
+    "description": "Substring before last occurrence",
+    "scope": "utlx"
+  },
+  "utlx-titleCase": {
+    "prefix": "titleCase",
+    "body": "titleCase(${1:arg1})",
+    "description": "Convert string to Title Case",
+    "scope": "utlx"
+  },
+  "utlx-toTitleCase": {
+    "prefix": "toTitleCase",
+    "body": "toTitleCase(${1:arg1})",
+    "description": "Convert string to title case (capitalize first letter of each word)",
+    "scope": "utlx"
+  },
+  "utlx-translate": {
+    "prefix": "translate",
+    "body": "translate(${1:arg1})",
+    "description": "Translate characters in string (character mapping)",
+    "scope": "utlx"
+  },
+  "utlx-trim": {
+    "prefix": "trim",
+    "body": "trim(${1:arg1}, ${2:arg2})",
+    "description": "Trim whitespace from both ends",
+    "scope": "utlx"
+  },
+  "utlx-truncate": {
+    "prefix": "truncate",
+    "body": "truncate(${1:arg1}, ${2:arg2})",
+    "description": "Truncate string with ellipsis",
+    "scope": "utlx"
+  },
+  "utlx-uncamelize": {
+    "prefix": "uncamelize",
+    "body": "uncamelize(${1:arg1})",
+    "description": "Convert from camelCase to separate words (Legacy naming - use fromCamelCase)",
     "scope": "utlx"
   },
   "utlx-upper": {
     "prefix": "upper",
     "body": "upper(${1:arg1})",
+    "description": "Convert string to uppercase (Legacy naming - use upperCase)",
+    "scope": "utlx"
+  },
+  "utlx-upperCase": {
+    "prefix": "upperCase",
+    "body": "upperCase(${1:arg1})",
     "description": "Convert string to uppercase",
+    "scope": "utlx"
+  },
+  "utlx-wordCase": {
+    "prefix": "wordCase",
+    "body": "wordCase(${1:arg1})",
+    "description": "Convert string to word case (capitalize first letter, rest lowercase)",
+    "scope": "utlx"
+  },
+  "utlx-avg": {
+    "prefix": "avg",
+    "body": "avg()",
+    "description": "Calculate the average (mean) of all numeric elements in an array",
+    "scope": "utlx"
+  },
+  "utlx-avgBy": {
+    "prefix": "avgBy",
+    "body": "avgBy(${1:arg1}, ${2:arg2})",
+    "description": "Calculates the average value using a mapping function.",
+    "scope": "utlx"
+  },
+  "utlx-chunk": {
+    "prefix": "chunk",
+    "body": "chunk(${1:arg1})",
+    "description": "Chunks array into arrays of specified size",
+    "scope": "utlx"
+  },
+  "utlx-compact": {
+    "prefix": "compact",
+    "body": "compact(${1:arg1})",
+    "description": "Remove null, undefined, and empty values from array",
+    "scope": "utlx"
+  },
+  "utlx-count": {
+    "prefix": "count",
+    "body": "count()",
+    "description": "Count the number of elements in an array",
+    "scope": "utlx"
+  },
+  "utlx-countBy": {
+    "prefix": "countBy",
+    "body": "countBy(${1:arg1}, ${2:arg2})",
+    "description": "Counts the number of elements in an array that match a predicate.",
+    "scope": "utlx"
+  },
+  "utlx-crossJoin": {
+    "prefix": "crossJoin",
+    "body": "crossJoin(${1:arg1}, ${2:arg2})",
+    "description": "Cross join - Cartesian product of both arrays",
+    "scope": "utlx"
+  },
+  "utlx-difference": {
+    "prefix": "difference",
+    "body": "difference(${1:arg1})",
+    "description": "Performs difference operation",
+    "scope": "utlx"
+  },
+  "utlx-distinct": {
+    "prefix": "distinct",
+    "body": "distinct(${1:arg1})",
+    "description": "Removes duplicate elements from array",
+    "scope": "utlx"
+  },
+  "utlx-distinctBy": {
+    "prefix": "distinctBy",
+    "body": "distinctBy(${1:arg1}, ${2:arg2})",
+    "description": "Similar to distinct(), but uses a key function to determine uniqueness.",
+    "scope": "utlx"
+  },
+  "utlx-drop": {
+    "prefix": "drop",
+    "body": "drop(${1:arg1})",
+    "description": "Drop first n elements",
     "scope": "utlx"
   },
   "utlx-every": {
     "prefix": "every",
-    "body": "every(${1:arg1}, ${2:arg2})",
-    "description": "Check if all elements match a condition",
-    "scope": "utlx"
-  },
-  "utlx-filter": {
-    "prefix": "filter",
-    "body": "filter(${1:arg1}, ${2:arg2})",
-    "description": "Filter array elements that match a condition",
+    "body": "every(${1:arg1})",
+    "description": "Check if all elements match predicate",
     "scope": "utlx"
   },
   "utlx-find": {
     "prefix": "find",
-    "body": "find(${1:arg1}, ${2:arg2})",
-    "description": "Find first element matching a condition",
+    "body": "find(${1:arg1})",
+    "description": "Find first element matching predicate",
     "scope": "utlx"
   },
   "utlx-findIndex": {
     "prefix": "findIndex",
     "body": "findIndex(${1:arg1}, ${2:arg2})",
-    "description": "Find index of first element matching condition",
+    "description": "Find the index of the first element matching predicate",
+    "scope": "utlx"
+  },
+  "utlx-findLastIndex": {
+    "prefix": "findLastIndex",
+    "body": "findLastIndex(${1:arg1}, ${2:arg2})",
+    "description": "Find the index of the last element matching predicate",
+    "scope": "utlx"
+  },
+  "utlx-first": {
+    "prefix": "first",
+    "body": "first(${1:arg1})",
+    "description": "Get first element",
+    "scope": "utlx"
+  },
+  "utlx-flatMap": {
+    "prefix": "flatMap",
+    "body": "flatMap(${1:arg1})",
+    "description": "Maps each element using function, then flattens result",
+    "scope": "utlx"
+  },
+  "utlx-flatten": {
+    "prefix": "flatten",
+    "body": "flatten(${1:arg1})",
+    "description": "Flatten nested arrays",
+    "scope": "utlx"
+  },
+  "utlx-flattenDeep": {
+    "prefix": "flattenDeep",
+    "body": "flattenDeep(${1:arg1})",
+    "description": "Deep flatten - flattens all nested levels",
+    "scope": "utlx"
+  },
+  "utlx-fullOuterJoin": {
+    "prefix": "fullOuterJoin",
+    "body": "fullOuterJoin(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Full outer join - returns all items from both arrays",
+    "scope": "utlx"
+  },
+  "utlx-get": {
+    "prefix": "get",
+    "body": "get(${1:arg1})",
+    "description": "Gets element at specific index (0-based)",
+    "scope": "utlx"
+  },
+  "utlx-groupBy": {
+    "prefix": "groupBy",
+    "body": "groupBy(${1:arg1}, ${2:arg2})",
+    "description": "Groups array elements by a key function.",
+    "scope": "utlx"
+  },
+  "utlx-includes": {
+    "prefix": "includes",
+    "body": "includes(${1:arg1}, ${2:arg2})",
+    "description": "Check if array includes value",
+    "scope": "utlx"
+  },
+  "utlx-indexOf": {
+    "prefix": "indexOf",
+    "body": "indexOf(${1:arg1})",
+    "description": "Find index of value in array (simple equality)",
+    "scope": "utlx"
+  },
+  "utlx-insertAfter": {
+    "prefix": "insertAfter",
+    "body": "insertAfter(${1:arg1})",
+    "description": "Insert element after index in array",
+    "scope": "utlx"
+  },
+  "utlx-insertBefore": {
+    "prefix": "insertBefore",
+    "body": "insertBefore(${1:arg1})",
+    "description": "Insert element before index in array",
+    "scope": "utlx"
+  },
+  "utlx-intersect": {
+    "prefix": "intersect",
+    "body": "intersect(${1:arg1})",
+    "description": "Performs intersect operation",
+    "scope": "utlx"
+  },
+  "utlx-joinToString": {
+    "prefix": "joinToString",
+    "body": "joinToString(${1:arg1})",
+    "description": "Joins array elements into string",
+    "scope": "utlx"
+  },
+  "utlx-joinWith": {
+    "prefix": "joinWith",
+    "body": "joinWith(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4}, ${5:arg5})",
+    "description": "Join with custom combiner function",
+    "scope": "utlx"
+  },
+  "utlx-last": {
+    "prefix": "last",
+    "body": "last(${1:arg1})",
+    "description": "Get last element",
+    "scope": "utlx"
+  },
+  "utlx-lastIndexOf": {
+    "prefix": "lastIndexOf",
+    "body": "lastIndexOf(${1:arg1}, ${2:arg2})",
+    "description": "Find last index of value in array",
+    "scope": "utlx"
+  },
+  "utlx-leftJoin": {
+    "prefix": "leftJoin",
+    "body": "leftJoin(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Left join - returns all items from left array, with matching items from right",
     "scope": "utlx"
   },
   "utlx-map": {
     "prefix": "map",
-    "body": "map(${1:arg1}, ${2:arg2})",
-    "description": "Transform each element of an array using a function",
+    "body": "map(${1:arg1})",
+    "description": "Map function over array",
+    "scope": "utlx"
+  },
+  "utlx-max": {
+    "prefix": "max",
+    "body": "max()",
+    "description": "Find the maximum value from an array or multiple arguments",
+    "scope": "utlx"
+  },
+  "utlx-maxBy": {
+    "prefix": "maxBy",
+    "body": "maxBy(${1:arg1}, ${2:arg2})",
+    "description": "Finds the element with the maximum value according to a comparator function.",
+    "scope": "utlx"
+  },
+  "utlx-min": {
+    "prefix": "min",
+    "body": "min()",
+    "description": "Find the minimum value from an array or multiple arguments",
+    "scope": "utlx"
+  },
+  "utlx-minBy": {
+    "prefix": "minBy",
+    "body": "minBy(${1:arg1}, ${2:arg2})",
+    "description": "Finds the element with the minimum value according to a comparator function.",
+    "scope": "utlx"
+  },
+  "utlx-partition": {
+    "prefix": "partition",
+    "body": "partition(${1:arg1}, ${2:arg2})",
+    "description": "Splits an array into two groups based on a predicate function.",
     "scope": "utlx"
   },
   "utlx-reduce": {
     "prefix": "reduce",
-    "body": "reduce(${1:arg1}, ${2:arg2}, ${3:arg3})",
-    "description": "Reduce array to single value using accumulator function",
+    "body": "reduce(${1:arg1})",
+    "description": "Reduce array to single value",
+    "scope": "utlx"
+  },
+  "utlx-remove": {
+    "prefix": "remove",
+    "body": "remove(${1:arg1})",
+    "description": "Remove element at index from array",
+    "scope": "utlx"
+  },
+  "utlx-rightJoin": {
+    "prefix": "rightJoin",
+    "body": "rightJoin(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Right join - returns all items from right array, with matching items from left",
+    "scope": "utlx"
+  },
+  "utlx-scan": {
+    "prefix": "scan",
+    "body": "scan(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Scan - like reduce but returns all intermediate results",
+    "scope": "utlx"
+  },
+  "utlx-size": {
+    "prefix": "size",
+    "body": "size(${1:arg1})",
+    "description": "Performs size operation",
+    "scope": "utlx"
+  },
+  "utlx-slice": {
+    "prefix": "slice",
+    "body": "slice(${1:arg1}, ${2:arg2})",
+    "description": "Slice array from start to end index",
     "scope": "utlx"
   },
   "utlx-some": {
     "prefix": "some",
-    "body": "some(${1:arg1}, ${2:arg2})",
-    "description": "Check if any element matches a condition",
+    "body": "some(${1:arg1})",
+    "description": "Check if any element matches predicate",
+    "scope": "utlx"
+  },
+  "utlx-sort": {
+    "prefix": "sort",
+    "body": "sort(${1:arg1})",
+    "description": "Sort array",
+    "scope": "utlx"
+  },
+  "utlx-sortBy": {
+    "prefix": "sortBy",
+    "body": "sortBy(${1:arg1})",
+    "description": "Sort array by key function",
+    "scope": "utlx"
+  },
+  "utlx-sum": {
+    "prefix": "sum",
+    "body": "sum()",
+    "description": "Calculate the sum of all numeric elements in an array",
+    "scope": "utlx"
+  },
+  "utlx-sumBy": {
+    "prefix": "sumBy",
+    "body": "sumBy(${1:arg1}, ${2:arg2})",
+    "description": "Maps each element with a function and sums the results.",
+    "scope": "utlx"
+  },
+  "utlx-symmetricDifference": {
+    "prefix": "symmetricDifference",
+    "body": "symmetricDifference(${1:arg1})",
+    "description": "Symmetric difference - elements in either array but not both",
+    "scope": "utlx"
+  },
+  "utlx-tail": {
+    "prefix": "tail",
+    "body": "tail(${1:arg1})",
+    "description": "Performs tail operation",
+    "scope": "utlx"
+  },
+  "utlx-take": {
+    "prefix": "take",
+    "body": "take(${1:arg1})",
+    "description": "Take first n elements",
+    "scope": "utlx"
+  },
+  "utlx-transpose": {
+    "prefix": "transpose",
+    "body": "transpose(${1:arg1})",
+    "description": "Transpose a 2D array (swap rows and columns)",
+    "scope": "utlx"
+  },
+  "utlx-union": {
+    "prefix": "union",
+    "body": "union(${1:arg1})",
+    "description": "Combines two arrays and removes duplicates (set union: A \u222a B)",
+    "scope": "utlx"
+  },
+  "utlx-unique": {
+    "prefix": "unique",
+    "body": "unique(${1:arg1})",
+    "description": "Get unique elements",
+    "scope": "utlx"
+  },
+  "utlx-unzip": {
+    "prefix": "unzip",
+    "body": "unzip(${1:arg1})",
+    "description": "Unzip array of pairs into two arrays (inverse of zip)",
+    "scope": "utlx"
+  },
+  "utlx-unzipN": {
+    "prefix": "unzipN",
+    "body": "unzipN(${1:arg1})",
+    "description": "Unzip array of N-tuples into N arrays",
+    "scope": "utlx"
+  },
+  "utlx-windowed": {
+    "prefix": "windowed",
+    "body": "windowed(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Windowed - create sliding window over array",
+    "scope": "utlx"
+  },
+  "utlx-zip": {
+    "prefix": "zip",
+    "body": "zip(${1:arg1})",
+    "description": "Zip two arrays together",
+    "scope": "utlx"
+  },
+  "utlx-zipAll": {
+    "prefix": "zipAll",
+    "body": "zipAll(${1:arg1}, ${2:arg2})",
+    "description": "ZipAll - zip arrays with padding for different lengths",
+    "scope": "utlx"
+  },
+  "utlx-zipWith": {
+    "prefix": "zipWith",
+    "body": "zipWith(${1:arg1})",
+    "description": "Zip multiple arrays together (generalized zip)",
+    "scope": "utlx"
+  },
+  "utlx-zipWithIndex": {
+    "prefix": "zipWithIndex",
+    "body": "zipWithIndex(${1:arg1})",
+    "description": "Zip arrays with indices",
+    "scope": "utlx"
+  },
+  "utlx-abs": {
+    "prefix": "abs",
+    "body": "abs(${1:arg1})",
+    "description": "Performs abs operation",
+    "scope": "utlx"
+  },
+  "utlx-acos": {
+    "prefix": "acos",
+    "body": "acos(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-asin": {
+    "prefix": "asin",
+    "body": "asin(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-atan": {
+    "prefix": "atan",
+    "body": "atan(${1:arg1}, ${2:arg2})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-atan2": {
+    "prefix": "atan2",
+    "body": "atan2(${1:arg1}, ${2:arg2})",
+    "description": "coordinates (x, y) to polar coordinates (r, theta).",
+    "scope": "utlx"
+  },
+  "utlx-ceil": {
+    "prefix": "ceil",
+    "body": "ceil(${1:arg1})",
+    "description": "Performs ceil operation",
+    "scope": "utlx"
+  },
+  "utlx-cos": {
+    "prefix": "cos",
+    "body": "cos(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-cosh": {
+    "prefix": "cosh",
+    "body": "cosh(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-e": {
+    "prefix": "e",
+    "body": "e(${1:arg1})",
+    "description": "Approximately 2.71828182845904523536",
+    "scope": "utlx"
+  },
+  "utlx-exp": {
+    "prefix": "exp",
+    "body": "exp(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-floor": {
+    "prefix": "floor",
+    "body": "floor(${1:arg1})",
+    "description": "Performs floor operation",
+    "scope": "utlx"
+  },
+  "utlx-formatNumber": {
+    "prefix": "formatNumber",
+    "body": "formatNumber(${1:arg1})",
+    "description": "Format number with pattern",
+    "scope": "utlx"
+  },
+  "utlx-goldenRatio": {
+    "prefix": "goldenRatio",
+    "body": "goldenRatio(${1:arg1})",
+    "description": "Approximately 1.61803398874989484820",
+    "scope": "utlx"
+  },
+  "utlx-iqr": {
+    "prefix": "iqr",
+    "body": "iqr(${1:arg1})",
+    "description": "Calculate interquartile range (IQR)",
+    "scope": "utlx"
+  },
+  "utlx-ln": {
+    "prefix": "ln",
+    "body": "ln(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-log10": {
+    "prefix": "log10",
+    "body": "log10(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-log2": {
+    "prefix": "log2",
+    "body": "log2(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-median": {
+    "prefix": "median",
+    "body": "median(${1:arg1})",
+    "description": "Calculate median (middle value)",
+    "scope": "utlx"
+  },
+  "utlx-mode": {
+    "prefix": "mode",
+    "body": "mode(${1:arg1})",
+    "description": "Calculate mode (most frequent value)",
+    "scope": "utlx"
+  },
+  "utlx-parseFloat": {
+    "prefix": "parseFloat",
+    "body": "parseFloat(${1:arg1})",
+    "description": "Parse float/decimal from string (alias for parseNumber)",
+    "scope": "utlx"
+  },
+  "utlx-parseInt": {
+    "prefix": "parseInt",
+    "body": "parseInt(${1:arg1}, ${2:arg2})",
+    "description": "Parse integer from string",
+    "scope": "utlx"
+  },
+  "utlx-percentile": {
+    "prefix": "percentile",
+    "body": "percentile(${1:arg1}, ${2:arg2})",
+    "description": "Calculate percentile",
+    "scope": "utlx"
+  },
+  "utlx-pi": {
+    "prefix": "pi",
+    "body": "pi(${1:arg1})",
+    "description": "Approximately 3.14159265358979323846",
+    "scope": "utlx"
+  },
+  "utlx-pow": {
+    "prefix": "pow",
+    "body": "pow(${1:arg1})",
+    "description": "Performs pow operation",
+    "scope": "utlx"
+  },
+  "utlx-quartiles": {
+    "prefix": "quartiles",
+    "body": "quartiles(${1:arg1})",
+    "description": "Calculate quartiles (Q1, Q2/median, Q3)",
+    "scope": "utlx"
+  },
+  "utlx-random": {
+    "prefix": "random",
+    "body": "random(${1:arg1})",
+    "description": "Performs random operation",
+    "scope": "utlx"
+  },
+  "utlx-round": {
+    "prefix": "round",
+    "body": "round(${1:arg1})",
+    "description": "Performs round operation",
+    "scope": "utlx"
+  },
+  "utlx-sin": {
+    "prefix": "sin",
+    "body": "sin(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-sinh": {
+    "prefix": "sinh",
+    "body": "sinh(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-sqrt": {
+    "prefix": "sqrt",
+    "body": "sqrt(${1:arg1})",
+    "description": "Performs sqrt operation",
+    "scope": "utlx"
+  },
+  "utlx-stdDev": {
+    "prefix": "stdDev",
+    "body": "stdDev(${1:arg1})",
+    "description": "Calculate standard deviation",
+    "scope": "utlx"
+  },
+  "utlx-tan": {
+    "prefix": "tan",
+    "body": "tan(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-tanh": {
+    "prefix": "tanh",
+    "body": "tanh(${1:arg1})",
+    "description": "Example:",
+    "scope": "utlx"
+  },
+  "utlx-toDegrees": {
+    "prefix": "toDegrees",
+    "body": "toDegrees(${1:arg1})",
+    "description": "Converts radians to degrees.",
+    "scope": "utlx"
+  },
+  "utlx-toRadians": {
+    "prefix": "toRadians",
+    "body": "toRadians(${1:arg1})",
+    "description": "Converts degrees to radians.",
+    "scope": "utlx"
+  },
+  "utlx-variance": {
+    "prefix": "variance",
+    "body": "variance(${1:arg1})",
+    "description": "Calculate variance",
+    "scope": "utlx"
+  },
+  "utlx-addDays": {
+    "prefix": "addDays",
+    "body": "addDays(${1:arg1}, ${2:arg2})",
+    "description": "Add days to a date or datetime",
+    "scope": "utlx"
+  },
+  "utlx-addHours": {
+    "prefix": "addHours",
+    "body": "addHours(${1:arg1})",
+    "description": "Performs addHours operation",
+    "scope": "utlx"
+  },
+  "utlx-addMinutes": {
+    "prefix": "addMinutes",
+    "body": "addMinutes(${1:arg1})",
+    "description": "Add minutes to date",
+    "scope": "utlx"
+  },
+  "utlx-addMonths": {
+    "prefix": "addMonths",
+    "body": "addMonths(${1:arg1})",
+    "description": "Add months to date",
+    "scope": "utlx"
+  },
+  "utlx-addQuarters": {
+    "prefix": "addQuarters",
+    "body": "addQuarters(${1:arg1})",
+    "description": "Add quarters to date",
+    "scope": "utlx"
+  },
+  "utlx-addSeconds": {
+    "prefix": "addSeconds",
+    "body": "addSeconds(${1:arg1})",
+    "description": "Add seconds to date",
+    "scope": "utlx"
+  },
+  "utlx-addWeeks": {
+    "prefix": "addWeeks",
+    "body": "addWeeks(${1:arg1})",
+    "description": "Add weeks to date",
+    "scope": "utlx"
+  },
+  "utlx-addYears": {
+    "prefix": "addYears",
+    "body": "addYears(${1:arg1})",
+    "description": "Add years to date",
+    "scope": "utlx"
+  },
+  "utlx-age": {
+    "prefix": "age",
+    "body": "age(${1:arg1})",
+    "description": "Calculate age in years from birthdate",
+    "scope": "utlx"
+  },
+  "utlx-compareDates": {
+    "prefix": "compareDates",
+    "body": "compareDates(${1:arg1})",
+    "description": "Compare two dates",
+    "scope": "utlx"
+  },
+  "utlx-convertTimezone": {
+    "prefix": "convertTimezone",
+    "body": "convertTimezone(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Convert datetime between timezones",
+    "scope": "utlx"
+  },
+  "utlx-currentDate": {
+    "prefix": "currentDate",
+    "body": "currentDate(${1:arg1})",
+    "description": "Get current date only (no time component)",
+    "scope": "utlx"
+  },
+  "utlx-currentTime": {
+    "prefix": "currentTime",
+    "body": "currentTime(${1:arg1})",
+    "description": "Get current time only (no date component)",
+    "scope": "utlx"
+  },
+  "utlx-day": {
+    "prefix": "day",
+    "body": "day(${1:arg1})",
+    "description": "Extract day component",
+    "scope": "utlx"
+  },
+  "utlx-dayOfMonth": {
+    "prefix": "dayOfMonth",
+    "body": "dayOfMonth(${1:arg1})",
+    "description": "Extract day component (Common alias for day-of-month extraction)",
+    "scope": "utlx"
+  },
+  "utlx-dayOfWeek": {
+    "prefix": "dayOfWeek",
+    "body": "dayOfWeek(${1:arg1})",
+    "description": "Get day of week (1=Monday, 7=Sunday)",
+    "scope": "utlx"
+  },
+  "utlx-dayOfWeekName": {
+    "prefix": "dayOfWeekName",
+    "body": "dayOfWeekName(${1:arg1})",
+    "description": "Get day of week name",
+    "scope": "utlx"
+  },
+  "utlx-dayOfYear": {
+    "prefix": "dayOfYear",
+    "body": "dayOfYear(${1:arg1})",
+    "description": "Get day of year (1-365/366)",
+    "scope": "utlx"
+  },
+  "utlx-daysBetween": {
+    "prefix": "daysBetween",
+    "body": "daysBetween(${1:arg1}, ${2:arg2})",
+    "description": "Calculate difference in days between two dates (DataWeave compatibility)",
+    "scope": "utlx"
+  },
+  "utlx-daysInMonth": {
+    "prefix": "daysInMonth",
+    "body": "daysInMonth(${1:arg1})",
+    "description": "Get days in month",
+    "scope": "utlx"
+  },
+  "utlx-daysInYear": {
+    "prefix": "daysInYear",
+    "body": "daysInYear(${1:arg1})",
+    "description": "Get days in year",
+    "scope": "utlx"
+  },
+  "utlx-diffDays": {
+    "prefix": "diffDays",
+    "body": "diffDays(${1:arg1}, ${2:arg2})",
+    "description": "Calculate difference in days between two dates",
+    "scope": "utlx"
+  },
+  "utlx-diffHours": {
+    "prefix": "diffHours",
+    "body": "diffHours(${1:arg1})",
+    "description": "Difference in hours between two dates",
+    "scope": "utlx"
+  },
+  "utlx-diffMinutes": {
+    "prefix": "diffMinutes",
+    "body": "diffMinutes(${1:arg1})",
+    "description": "Difference in minutes between two dates",
+    "scope": "utlx"
+  },
+  "utlx-diffMonths": {
+    "prefix": "diffMonths",
+    "body": "diffMonths(${1:arg1})",
+    "description": "Difference in months between two dates (approximate)",
+    "scope": "utlx"
+  },
+  "utlx-diffSeconds": {
+    "prefix": "diffSeconds",
+    "body": "diffSeconds(${1:arg1})",
+    "description": "Difference in seconds between two dates",
+    "scope": "utlx"
+  },
+  "utlx-diffWeeks": {
+    "prefix": "diffWeeks",
+    "body": "diffWeeks(${1:arg1})",
+    "description": "Difference in weeks between two dates",
+    "scope": "utlx"
+  },
+  "utlx-diffYears": {
+    "prefix": "diffYears",
+    "body": "diffYears(${1:arg1})",
+    "description": "Difference in years between two dates",
+    "scope": "utlx"
+  },
+  "utlx-endOfDay": {
+    "prefix": "endOfDay",
+    "body": "endOfDay(${1:arg1})",
+    "description": "Get end of day",
+    "scope": "utlx"
+  },
+  "utlx-endOfMonth": {
+    "prefix": "endOfMonth",
+    "body": "endOfMonth(${1:arg1})",
+    "description": "Get end of month",
+    "scope": "utlx"
+  },
+  "utlx-endOfQuarter": {
+    "prefix": "endOfQuarter",
+    "body": "endOfQuarter(${1:arg1})",
+    "description": "Get end of quarter",
+    "scope": "utlx"
+  },
+  "utlx-endOfWeek": {
+    "prefix": "endOfWeek",
+    "body": "endOfWeek(${1:arg1})",
+    "description": "Get end of week (Sunday)",
+    "scope": "utlx"
+  },
+  "utlx-endOfYear": {
+    "prefix": "endOfYear",
+    "body": "endOfYear(${1:arg1})",
+    "description": "Get end of year",
+    "scope": "utlx"
+  },
+  "utlx-formatDate": {
+    "prefix": "formatDate",
+    "body": "formatDate(${1:arg1})",
+    "description": "Format a date/time value with optional pattern and locale",
+    "scope": "utlx"
+  },
+  "utlx-formatDateTimeInTimezone": {
+    "prefix": "formatDateTimeInTimezone",
+    "body": "formatDateTimeInTimezone(${1:arg1}, ${2:arg2})",
+    "description": "Format datetime in specific timezone",
+    "scope": "utlx"
+  },
+  "utlx-fromUTC": {
+    "prefix": "fromUTC",
+    "body": "fromUTC(${1:arg1})",
+    "description": "Get local datetime from UTC in specified timezone",
+    "scope": "utlx"
+  },
+  "utlx-getTimezone": {
+    "prefix": "getTimezone",
+    "body": "getTimezone(${1:arg1})",
+    "description": "Get timezone offset from datetime",
+    "scope": "utlx"
+  },
+  "utlx-getTimezoneName": {
+    "prefix": "getTimezoneName",
+    "body": "getTimezoneName(${1:arg1})",
+    "description": "Get timezone name/ID for current system",
+    "scope": "utlx"
+  },
+  "utlx-getTimezoneOffsetHours": {
+    "prefix": "getTimezoneOffsetHours",
+    "body": "getTimezoneOffsetHours(${1:arg1}, ${2:arg2})",
+    "description": "Get timezone offset in hours",
+    "scope": "utlx"
+  },
+  "utlx-getTimezoneOffsetSeconds": {
+    "prefix": "getTimezoneOffsetSeconds",
+    "body": "getTimezoneOffsetSeconds(${1:arg1})",
+    "description": "Get timezone offset in seconds",
+    "scope": "utlx"
+  },
+  "utlx-hours": {
+    "prefix": "hours",
+    "body": "hours(${1:arg1})",
+    "description": "Extract hours component (0-23)",
+    "scope": "utlx"
+  },
+  "utlx-isAfter": {
+    "prefix": "isAfter",
+    "body": "isAfter(${1:arg1})",
+    "description": "Check if date is after another date",
+    "scope": "utlx"
+  },
+  "utlx-isBefore": {
+    "prefix": "isBefore",
+    "body": "isBefore(${1:arg1})",
+    "description": "Check if date is before another date",
+    "scope": "utlx"
+  },
+  "utlx-isBetween": {
+    "prefix": "isBetween",
+    "body": "isBetween(${1:arg1})",
+    "description": "Check if date is between two dates (inclusive)",
+    "scope": "utlx"
+  },
+  "utlx-isLeapYearFunc": {
+    "prefix": "isLeapYearFunc",
+    "body": "isLeapYearFunc(${1:arg1})",
+    "description": "Check if leap year",
+    "scope": "utlx"
+  },
+  "utlx-isSameDay": {
+    "prefix": "isSameDay",
+    "body": "isSameDay(${1:arg1})",
+    "description": "Check if dates are same day",
+    "scope": "utlx"
+  },
+  "utlx-isToday": {
+    "prefix": "isToday",
+    "body": "isToday(${1:arg1})",
+    "description": "Check if date is today",
+    "scope": "utlx"
+  },
+  "utlx-isValidTimezone": {
+    "prefix": "isValidTimezone",
+    "body": "isValidTimezone(${1:arg1})",
+    "description": "Check if timezone is valid",
+    "scope": "utlx"
+  },
+  "utlx-isWeekday": {
+    "prefix": "isWeekday",
+    "body": "isWeekday(${1:arg1})",
+    "description": "Check if date is weekday (Monday-Friday)",
+    "scope": "utlx"
+  },
+  "utlx-isWeekend": {
+    "prefix": "isWeekend",
+    "body": "isWeekend(${1:arg1})",
+    "description": "Check if date is weekend (Saturday or Sunday)",
+    "scope": "utlx"
+  },
+  "utlx-minutes": {
+    "prefix": "minutes",
+    "body": "minutes(${1:arg1})",
+    "description": "Extract minutes component (0-59)",
+    "scope": "utlx"
+  },
+  "utlx-month": {
+    "prefix": "month",
+    "body": "month(${1:arg1})",
+    "description": "Extract month component (1-12)",
+    "scope": "utlx"
+  },
+  "utlx-monthName": {
+    "prefix": "monthName",
+    "body": "monthName(${1:arg1})",
+    "description": "Get month name",
+    "scope": "utlx"
+  },
+  "utlx-now": {
+    "prefix": "now",
+    "body": "now(${1:arg1})",
+    "description": "Performs now operation",
+    "scope": "utlx"
+  },
+  "utlx-parseDate": {
+    "prefix": "parseDate",
+    "body": "parseDate(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Parse date from string with optional format",
+    "scope": "utlx"
+  },
+  "utlx-parseDateTimeWithTimezone": {
+    "prefix": "parseDateTimeWithTimezone",
+    "body": "parseDateTimeWithTimezone(${1:arg1}, ${2:arg2})",
+    "description": "Parse datetime with timezone",
+    "scope": "utlx"
+  },
+  "utlx-quarter": {
+    "prefix": "quarter",
+    "body": "quarter(${1:arg1})",
+    "description": "Get quarter (1-4)",
+    "scope": "utlx"
+  },
+  "utlx-seconds": {
+    "prefix": "seconds",
+    "body": "seconds(${1:arg1})",
+    "description": "Extract seconds component (0-59)",
+    "scope": "utlx"
+  },
+  "utlx-startOfDay": {
+    "prefix": "startOfDay",
+    "body": "startOfDay(${1:arg1})",
+    "description": "Get start of day",
+    "scope": "utlx"
+  },
+  "utlx-startOfMonth": {
+    "prefix": "startOfMonth",
+    "body": "startOfMonth(${1:arg1})",
+    "description": "Get start of month",
+    "scope": "utlx"
+  },
+  "utlx-startOfQuarter": {
+    "prefix": "startOfQuarter",
+    "body": "startOfQuarter(${1:arg1})",
+    "description": "Get start of quarter",
+    "scope": "utlx"
+  },
+  "utlx-startOfWeek": {
+    "prefix": "startOfWeek",
+    "body": "startOfWeek(${1:arg1})",
+    "description": "Get start of week (Monday)",
+    "scope": "utlx"
+  },
+  "utlx-startOfYear": {
+    "prefix": "startOfYear",
+    "body": "startOfYear(${1:arg1})",
+    "description": "Get start of year",
+    "scope": "utlx"
+  },
+  "utlx-toDate": {
+    "prefix": "toDate",
+    "body": "toDate(${1:arg1})",
+    "description": "Convert string to date (alias for parseDate, simpler for single argument)",
+    "scope": "utlx"
+  },
+  "utlx-toUTC": {
+    "prefix": "toUTC",
+    "body": "toUTC(${1:arg1})",
+    "description": "Get UTC datetime from local datetime and timezone",
+    "scope": "utlx"
+  },
+  "utlx-validateDate": {
+    "prefix": "validateDate",
+    "body": "validateDate(${1:arg1})",
+    "description": "Validate date string (ISO 8601 format or custom pattern)",
+    "scope": "utlx"
+  },
+  "utlx-weekOfYear": {
+    "prefix": "weekOfYear",
+    "body": "weekOfYear(${1:arg1})",
+    "description": "Get week of year (ISO week)",
+    "scope": "utlx"
+  },
+  "utlx-year": {
+    "prefix": "year",
+    "body": "year(${1:arg1})",
+    "description": "Extract year component",
+    "scope": "utlx"
+  },
+  "utlx-getType": {
+    "prefix": "getType",
+    "body": "getType(${1:arg1})",
+    "description": "Returns the type of a value as a string",
+    "scope": "utlx"
+  },
+  "utlx-isArray": {
+    "prefix": "isArray",
+    "body": "isArray(${1:arg1})",
+    "description": "Performs isArray operation",
+    "scope": "utlx"
+  },
+  "utlx-isBoolean": {
+    "prefix": "isBoolean",
+    "body": "isBoolean(${1:arg1})",
+    "description": "Performs isBoolean operation",
+    "scope": "utlx"
+  },
+  "utlx-isDate": {
+    "prefix": "isDate",
+    "body": "isDate(${1:arg1})",
+    "description": "Check if value is a date (date-only, no time)",
+    "scope": "utlx"
+  },
+  "utlx-isDateTime": {
+    "prefix": "isDateTime",
+    "body": "isDateTime(${1:arg1})",
+    "description": "Check if value is a datetime (with timezone)",
+    "scope": "utlx"
+  },
+  "utlx-isDefined": {
+    "prefix": "isDefined",
+    "body": "isDefined(${1:arg1})",
+    "description": "Performs isDefined operation",
+    "scope": "utlx"
+  },
+  "utlx-isLocalDateTime": {
+    "prefix": "isLocalDateTime",
+    "body": "isLocalDateTime(${1:arg1})",
+    "description": "Check if value is a local datetime (no timezone)",
+    "scope": "utlx"
+  },
+  "utlx-isNull": {
+    "prefix": "isNull",
+    "body": "isNull(${1:arg1})",
+    "description": "Performs isNull operation",
+    "scope": "utlx"
+  },
+  "utlx-isNumber": {
+    "prefix": "isNumber",
+    "body": "isNumber(${1:arg1})",
+    "description": "Performs isNumber operation",
+    "scope": "utlx"
+  },
+  "utlx-isObject": {
+    "prefix": "isObject",
+    "body": "isObject(${1:arg1})",
+    "description": "Performs isObject operation",
+    "scope": "utlx"
+  },
+  "utlx-isString": {
+    "prefix": "isString",
+    "body": "isString(${1:arg1})",
+    "description": "Performs isString operation",
+    "scope": "utlx"
+  },
+  "utlx-isTime": {
+    "prefix": "isTime",
+    "body": "isTime(${1:arg1})",
+    "description": "Check if value is a time (time-only, no date)",
+    "scope": "utlx"
+  },
+  "utlx-numberOrDefault": {
+    "prefix": "numberOrDefault",
+    "body": "numberOrDefault(${1:arg1}, ${2:arg2})",
+    "description": "Safely convert to number with default",
+    "scope": "utlx"
+  },
+  "utlx-parseBoolean": {
+    "prefix": "parseBoolean",
+    "body": "parseBoolean(${1:arg1}, ${2:arg2})",
+    "description": "Parse boolean from string or number",
+    "scope": "utlx"
+  },
+  "utlx-parseDouble": {
+    "prefix": "parseDouble",
+    "body": "parseDouble(${1:arg1})",
+    "description": "Parse double from string (alias for parseNumber)",
+    "scope": "utlx"
+  },
+  "utlx-parseNumber": {
+    "prefix": "parseNumber",
+    "body": "parseNumber(${1:arg1}, ${2:arg2})",
+    "description": "This is the PRIMARY function for converting XML/CSV string values to numbers",
+    "scope": "utlx"
+  },
+  "utlx-stringOrDefault": {
+    "prefix": "stringOrDefault",
+    "body": "stringOrDefault(${1:arg1}, ${2:arg2})",
+    "description": "Safely convert to string with default",
+    "scope": "utlx"
+  },
+  "utlx-toArray": {
+    "prefix": "toArray",
+    "body": "toArray(${1:arg1})",
+    "description": "Convert value to array",
+    "scope": "utlx"
+  },
+  "utlx-toBoolean": {
+    "prefix": "toBoolean",
+    "body": "toBoolean(${1:arg1})",
+    "description": "Convert value to boolean (stricter than parseBoolean)",
+    "scope": "utlx"
+  },
+  "utlx-toNumber": {
+    "prefix": "toNumber",
+    "body": "toNumber(${1:arg1})",
+    "description": "Convert value to number (alias for parseNumber, stricter)",
+    "scope": "utlx"
+  },
+  "utlx-toObject": {
+    "prefix": "toObject",
+    "body": "toObject(${1:arg1})",
+    "description": "Try to convert value to object",
+    "scope": "utlx"
+  },
+  "utlx-toString": {
+    "prefix": "toString",
+    "body": "toString(${1:arg1})",
+    "description": "Convert any value to string",
+    "scope": "utlx"
+  },
+  "utlx-typeOf": {
+    "prefix": "typeOf",
+    "body": "typeOf(${1:arg1})",
+    "description": "Returns the type of a value as a string (UTL-X camelCase naming convention)",
+    "scope": "utlx"
+  },
+  "utlx-typeof": {
+    "prefix": "typeof",
+    "body": "typeof(${1:arg1})",
+    "description": "Returns the type of a value as a string (JavaScript/TypeScript compatibility)",
+    "scope": "utlx"
+  },
+  "utlx-addQueryParam": {
+    "prefix": "addQueryParam",
+    "body": "addQueryParam(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Add query parameter to URL",
+    "scope": "utlx"
+  },
+  "utlx-all": {
+    "prefix": "all",
+    "body": "all(${1:arg1})",
+    "description": "Check if all values in array are true",
+    "scope": "utlx"
+  },
+  "utlx-and": {
+    "prefix": "and",
+    "body": "and(${1:arg1})",
+    "description": "Logical AND (variadic)",
+    "scope": "utlx"
+  },
+  "utlx-any": {
+    "prefix": "any",
+    "body": "any(${1:arg1})",
+    "description": "Check if any value in array is true",
+    "scope": "utlx"
+  },
+  "utlx-buildQueryString": {
+    "prefix": "buildQueryString",
+    "body": "buildQueryString(${1:arg1})",
+    "description": "Build query string from object",
+    "scope": "utlx"
+  },
+  "utlx-buildURL": {
+    "prefix": "buildURL",
+    "body": "buildURL(${1:arg1})",
+    "description": "Build URL from components",
+    "scope": "utlx"
+  },
+  "utlx-compactCSV": {
+    "prefix": "compactCSV",
+    "body": "compactCSV(${1:arg1}, ${2:arg2})",
+    "description": "Compacts a CSV string (removes extra whitespace)",
+    "scope": "utlx"
+  },
+  "utlx-compactJSON": {
+    "prefix": "compactJSON",
+    "body": "compactJSON(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Compacts a JSON string (removes all unnecessary whitespace)",
+    "scope": "utlx"
+  },
+  "utlx-compactXML": {
+    "prefix": "compactXML",
+    "body": "compactXML(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Compacts an XML string (removes unnecessary whitespace)",
+    "scope": "utlx"
+  },
+  "utlx-containsKey": {
+    "prefix": "containsKey",
+    "body": "containsKey(${1:arg1})",
+    "description": "Checks if an object contains a specific key",
+    "scope": "utlx"
+  },
+  "utlx-containsValue": {
+    "prefix": "containsValue",
+    "body": "containsValue(${1:arg1})",
+    "description": "Checks if an object contains a specific value",
+    "scope": "utlx"
+  },
+  "utlx-countEntries": {
+    "prefix": "countEntries",
+    "body": "countEntries(${1:arg1}, ${2:arg2})",
+    "description": "[1] predicate function (key, value) => boolean",
+    "scope": "utlx"
+  },
+  "utlx-debugPrint": {
+    "prefix": "debugPrint",
+    "body": "debugPrint(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Creates a human-readable debug representation of UDM",
+    "scope": "utlx"
+  },
+  "utlx-debugPrintCompact": {
+    "prefix": "debugPrintCompact",
+    "body": "debugPrintCompact(${1:arg1}, ${2:arg2})",
+    "description": "Creates a compact single-line debug representation",
+    "scope": "utlx"
+  },
+  "utlx-deepClone": {
+    "prefix": "deepClone",
+    "body": "deepClone(${1:arg1})",
+    "description": "Deep clone an object (recursive copy)",
+    "scope": "utlx"
+  },
+  "utlx-deepMerge": {
+    "prefix": "deepMerge",
+    "body": "deepMerge(${1:arg1}, ${2:arg2})",
+    "description": "Deep merge objects recursively",
+    "scope": "utlx"
+  },
+  "utlx-deepMergeAll": {
+    "prefix": "deepMergeAll",
+    "body": "deepMergeAll(${1:arg1})",
+    "description": "Deep merge multiple objects",
+    "scope": "utlx"
+  },
+  "utlx-divideBy": {
+    "prefix": "divideBy",
+    "body": "divideBy(${1:arg1}, ${2:arg2})",
+    "description": "Divides an object into sub-objects containing n key-value pairs each.",
+    "scope": "utlx"
+  },
+  "utlx-entries": {
+    "prefix": "entries",
+    "body": "entries(${1:arg1})",
+    "description": "Performs entries operation",
+    "scope": "utlx"
+  },
+  "utlx-everyEntry": {
+    "prefix": "everyEntry",
+    "body": "everyEntry(${1:arg1}, ${2:arg2})",
+    "description": "The predicate function receives two arguments: key and value.",
+    "scope": "utlx"
+  },
+  "utlx-filterEntries": {
+    "prefix": "filterEntries",
+    "body": "filterEntries(${1:arg1}, ${2:arg2})",
+    "description": "Filters an object to include only entries that satisfy the predicate.",
+    "scope": "utlx"
+  },
+  "utlx-fromEntries": {
+    "prefix": "fromEntries",
+    "body": "fromEntries(${1:arg1})",
+    "description": "Create object from array of [key, value] pairs (inverse of entries)",
+    "scope": "utlx"
+  },
+  "utlx-getBaseURL": {
+    "prefix": "getBaseURL",
+    "body": "getBaseURL(${1:arg1})",
+    "description": "Get base URL (protocol + host + port)",
+    "scope": "utlx"
+  },
+  "utlx-getFragment": {
+    "prefix": "getFragment",
+    "body": "getFragment(${1:arg1})",
+    "description": "Get fragment/hash from URL",
+    "scope": "utlx"
+  },
+  "utlx-getHost": {
+    "prefix": "getHost",
+    "body": "getHost(${1:arg1})",
+    "description": "Get host from URL",
+    "scope": "utlx"
+  },
+  "utlx-getPath": {
+    "prefix": "getPath",
+    "body": "getPath(${1:arg1})",
+    "description": "Get path from URL",
+    "scope": "utlx"
+  },
+  "utlx-getPort": {
+    "prefix": "getPort",
+    "body": "getPort(${1:arg1})",
+    "description": "Get port from URL",
+    "scope": "utlx"
+  },
+  "utlx-getProtocol": {
+    "prefix": "getProtocol",
+    "body": "getProtocol(${1:arg1})",
+    "description": "Get protocol/scheme from URL",
+    "scope": "utlx"
+  },
+  "utlx-getQuery": {
+    "prefix": "getQuery",
+    "body": "getQuery(${1:arg1})",
+    "description": "Get query string from URL",
+    "scope": "utlx"
+  },
+  "utlx-getQueryParams": {
+    "prefix": "getQueryParams",
+    "body": "getQueryParams(${1:arg1})",
+    "description": "Get query parameters as object",
+    "scope": "utlx"
+  },
+  "utlx-hasKey": {
+    "prefix": "hasKey",
+    "body": "hasKey(${1:arg1})",
+    "description": "Checks if an object contains a specific key (Common object method name)",
+    "scope": "utlx"
+  },
+  "utlx-implies": {
+    "prefix": "implies",
+    "body": "implies(${1:arg1})",
+    "description": "Logical IMPLIES (Material Implication)",
+    "scope": "utlx"
+  },
+  "utlx-invert": {
+    "prefix": "invert",
+    "body": "invert(${1:arg1})",
+    "description": "Invert object - swap keys and values",
+    "scope": "utlx"
+  },
+  "utlx-isValidURL": {
+    "prefix": "isValidURL",
+    "body": "isValidURL(${1:arg1})",
+    "description": "Validate URL",
+    "scope": "utlx"
+  },
+  "utlx-keys": {
+    "prefix": "keys",
+    "body": "keys(${1:arg1})",
+    "description": "Performs keys operation",
+    "scope": "utlx"
+  },
+  "utlx-mapEntries": {
+    "prefix": "mapEntries",
+    "body": "mapEntries(${1:arg1}, ${2:arg2})",
+    "description": "Transforms each entry in the object using a mapping function.",
+    "scope": "utlx"
+  },
+  "utlx-mapKeys": {
+    "prefix": "mapKeys",
+    "body": "mapKeys(${1:arg1}, ${2:arg2})",
+    "description": "Transforms an object's keys using a mapping function.",
+    "scope": "utlx"
+  },
+  "utlx-mapValues": {
+    "prefix": "mapValues",
+    "body": "mapValues(${1:arg1}, ${2:arg2})",
+    "description": "Transforms an object's values using a mapping function.",
+    "scope": "utlx"
+  },
+  "utlx-merge": {
+    "prefix": "merge",
+    "body": "merge(${1:arg1})",
+    "description": "Performs merge operation",
+    "scope": "utlx"
+  },
+  "utlx-nand": {
+    "prefix": "nand",
+    "body": "nand(${1:arg1})",
+    "description": "Logical NAND (NOT AND)",
+    "scope": "utlx"
+  },
+  "utlx-none": {
+    "prefix": "none",
+    "body": "none(${1:arg1})",
+    "description": "Check if no values in array are true (all false)",
+    "scope": "utlx"
+  },
+  "utlx-nor": {
+    "prefix": "nor",
+    "body": "nor(${1:arg1})",
+    "description": "Logical NOR (NOT OR)",
+    "scope": "utlx"
+  },
+  "utlx-not": {
+    "prefix": "not",
+    "body": "not(${1:arg1})",
+    "description": "Logical NOT",
+    "scope": "utlx"
+  },
+  "utlx-omit": {
+    "prefix": "omit",
+    "body": "omit(${1:arg1})",
+    "description": "Performs omit operation",
+    "scope": "utlx"
+  },
+  "utlx-or": {
+    "prefix": "or",
+    "body": "or(${1:arg1})",
+    "description": "Logical OR (variadic)",
+    "scope": "utlx"
+  },
+  "utlx-parse": {
+    "prefix": "parse",
+    "body": "parse(${1:arg1})",
+    "description": "Auto-detect format and parse",
+    "scope": "utlx"
+  },
+  "utlx-parseCsv": {
+    "prefix": "parseCsv",
+    "body": "parseCsv(${1:arg1})",
+    "description": "Parse a CSV string into a UDM array",
+    "scope": "utlx"
+  },
+  "utlx-parseJson": {
+    "prefix": "parseJson",
+    "body": "parseJson(${1:arg1})",
+    "description": "Parse a JSON string into a UDM object",
+    "scope": "utlx"
+  },
+  "utlx-parseQueryString": {
+    "prefix": "parseQueryString",
+    "body": "parseQueryString(${1:arg1})",
+    "description": "Parse query string from string (public wrapper)",
+    "scope": "utlx"
+  },
+  "utlx-parseURL": {
+    "prefix": "parseURL",
+    "body": "parseURL(${1:arg1})",
+    "description": "Parse URL into components",
+    "scope": "utlx"
+  },
+  "utlx-parseXml": {
+    "prefix": "parseXml",
+    "body": "parseXml(${1:arg1})",
+    "description": "Parse an XML string into a UDM object",
+    "scope": "utlx"
+  },
+  "utlx-parseYaml": {
+    "prefix": "parseYaml",
+    "body": "parseYaml(${1:arg1})",
+    "description": "Parse a YAML string into a UDM object",
+    "scope": "utlx"
+  },
+  "utlx-pick": {
+    "prefix": "pick",
+    "body": "pick(${1:arg1})",
+    "description": "Performs pick operation",
+    "scope": "utlx"
+  },
+  "utlx-prettyPrint": {
+    "prefix": "prettyPrint",
+    "body": "prettyPrint(${1:arg1}, ${2:arg2})",
+    "description": "Automatically detects format and pretty-prints",
+    "scope": "utlx"
+  },
+  "utlx-prettyPrintCSV": {
+    "prefix": "prettyPrintCSV",
+    "body": "prettyPrintCSV(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Formats a CSV string with aligned columns",
+    "scope": "utlx"
+  },
+  "utlx-prettyPrintFormat": {
+    "prefix": "prettyPrintFormat",
+    "body": "prettyPrintFormat(${1:arg1}, ${2:arg2})",
+    "description": "Pretty-prints a UDM object in the specified format",
+    "scope": "utlx"
+  },
+  "utlx-prettyPrintJSON": {
+    "prefix": "prettyPrintJSON",
+    "body": "prettyPrintJSON(${1:arg1}, ${2:arg2})",
+    "description": "Pretty-prints a JSON string with optional indentation",
+    "scope": "utlx"
+  },
+  "utlx-prettyPrintXML": {
+    "prefix": "prettyPrintXML",
+    "body": "prettyPrintXML(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Pretty-prints an XML string with optional formatting options",
+    "scope": "utlx"
+  },
+  "utlx-prettyPrintYAML": {
+    "prefix": "prettyPrintYAML",
+    "body": "prettyPrintYAML(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Pretty-prints a YAML string with optional formatting options",
+    "scope": "utlx"
+  },
+  "utlx-reduceEntries": {
+    "prefix": "reduceEntries",
+    "body": "reduceEntries(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Reduces all entries in an object to a single value.",
+    "scope": "utlx"
+  },
+  "utlx-removeQueryParam": {
+    "prefix": "removeQueryParam",
+    "body": "removeQueryParam(${1:arg1}, ${2:arg2})",
+    "description": "Remove query parameter from URL",
+    "scope": "utlx"
+  },
+  "utlx-render": {
+    "prefix": "render",
+    "body": "render(${1:arg1}, ${2:arg2})",
+    "description": "Render object to specified format",
+    "scope": "utlx"
+  },
+  "utlx-renderCsv": {
+    "prefix": "renderCsv",
+    "body": "renderCsv(${1:arg1})",
+    "description": "Render a UDM array as a CSV string",
+    "scope": "utlx"
+  },
+  "utlx-renderJson": {
+    "prefix": "renderJson",
+    "body": "renderJson(${1:arg1})",
+    "description": "Render a UDM object as a JSON string",
+    "scope": "utlx"
+  },
+  "utlx-renderXml": {
+    "prefix": "renderXml",
+    "body": "renderXml(${1:arg1})",
+    "description": "Render a UDM object as an XML string",
+    "scope": "utlx"
+  },
+  "utlx-renderYaml": {
+    "prefix": "renderYaml",
+    "body": "renderYaml(${1:arg1})",
+    "description": "Render a UDM object as a YAML string",
+    "scope": "utlx"
+  },
+  "utlx-setPath": {
+    "prefix": "setPath",
+    "body": "setPath(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Set nested value using path",
+    "scope": "utlx"
+  },
+  "utlx-someEntry": {
+    "prefix": "someEntry",
+    "body": "someEntry(${1:arg1}, ${2:arg2})",
+    "description": "The predicate function receives two arguments: key and value.",
+    "scope": "utlx"
+  },
+  "utlx-udmToJSON": {
+    "prefix": "udmToJSON",
+    "body": "udmToJSON(${1:arg1}, ${2:arg2})",
+    "description": "Pretty-prints a UDM object as JSON",
+    "scope": "utlx"
+  },
+  "utlx-udmToXML": {
+    "prefix": "udmToXML",
+    "body": "udmToXML(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Pretty-prints a UDM object as XML",
+    "scope": "utlx"
+  },
+  "utlx-udmToYAML": {
+    "prefix": "udmToYAML",
+    "body": "udmToYAML(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Pretty-prints a UDM object as YAML",
+    "scope": "utlx"
+  },
+  "utlx-values": {
+    "prefix": "values",
+    "body": "values(${1:arg1})",
+    "description": "Performs values operation",
+    "scope": "utlx"
+  },
+  "utlx-xnor": {
+    "prefix": "xnor",
+    "body": "xnor(${1:arg1})",
+    "description": "Logical XNOR (Exclusive NOR / Equivalence)",
+    "scope": "utlx"
+  },
+  "utlx-xor": {
+    "prefix": "xor",
+    "body": "xor(${1:arg1})",
+    "description": "Logical XOR (Exclusive OR)",
+    "scope": "utlx"
+  },
+  "utlx-mapTree": {
+    "prefix": "mapTree",
+    "body": "mapTree(${1:arg1}, ${2:arg2})",
+    "description": "Recursively transforms all values in a nested structure (objects and arrays) by applying a transformer function.",
+    "scope": "utlx"
+  },
+  "utlx-base64Decode": {
+    "prefix": "base64Decode",
+    "body": "base64Decode(${1:arg1})",
+    "description": "Base64 decode",
+    "scope": "utlx"
+  },
+  "utlx-base64Encode": {
+    "prefix": "base64Encode",
+    "body": "base64Encode(${1:arg1})",
+    "description": "Base64 encode",
+    "scope": "utlx"
+  },
+  "utlx-decryptAES": {
+    "prefix": "decryptAES",
+    "body": "decryptAES(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Decrypts data using AES-128-CBC",
+    "scope": "utlx"
+  },
+  "utlx-decryptAES256": {
+    "prefix": "decryptAES256",
+    "body": "decryptAES256(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Decrypts data using AES-256-CBC",
+    "scope": "utlx"
+  },
+  "utlx-encryptAES": {
+    "prefix": "encryptAES",
+    "body": "encryptAES(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Encrypts data using AES-128-CBC",
+    "scope": "utlx"
+  },
+  "utlx-encryptAES256": {
+    "prefix": "encryptAES256",
+    "body": "encryptAES256(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Encrypts data using AES-256-CBC (requires key length of 32 bytes)",
+    "scope": "utlx"
+  },
+  "utlx-generateIV": {
+    "prefix": "generateIV",
+    "body": "generateIV(${1:arg1})",
+    "description": "Generates a random initialization vector (IV) for encryption",
+    "scope": "utlx"
+  },
+  "utlx-generateKey": {
+    "prefix": "generateKey",
+    "body": "generateKey(${1:arg1})",
+    "description": "Generates a random encryption key",
+    "scope": "utlx"
+  },
+  "utlx-hash": {
+    "prefix": "hash",
+    "body": "hash(${1:arg1})",
+    "description": "Calculate hash using specified algorithm",
+    "scope": "utlx"
+  },
+  "utlx-hexDecode": {
+    "prefix": "hexDecode",
+    "body": "hexDecode(${1:arg1})",
+    "description": "Hex decode",
+    "scope": "utlx"
+  },
+  "utlx-hexEncode": {
+    "prefix": "hexEncode",
+    "body": "hexEncode(${1:arg1})",
+    "description": "Hex encode",
+    "scope": "utlx"
+  },
+  "utlx-hmac": {
+    "prefix": "hmac",
+    "body": "hmac(${1:arg1}, ${2:arg2})",
+    "description": "Calculate HMAC (Hash-based Message Authentication Code)",
+    "scope": "utlx"
+  },
+  "utlx-hmacBase64": {
+    "prefix": "hmacBase64",
+    "body": "hmacBase64(${1:arg1}, ${2:arg2})",
+    "description": "Computes HMAC and returns as base64",
+    "scope": "utlx"
+  },
+  "utlx-hmacMD5": {
+    "prefix": "hmacMD5",
+    "body": "hmacMD5(${1:arg1}, ${2:arg2})",
+    "description": "Computes HMAC-MD5 hash",
+    "scope": "utlx"
+  },
+  "utlx-hmacSHA1": {
+    "prefix": "hmacSHA1",
+    "body": "hmacSHA1(${1:arg1}, ${2:arg2})",
+    "description": "Computes HMAC-SHA1 hash",
+    "scope": "utlx"
+  },
+  "utlx-hmacSHA256": {
+    "prefix": "hmacSHA256",
+    "body": "hmacSHA256(${1:arg1}, ${2:arg2})",
+    "description": "Computes HMAC-SHA256 hash",
+    "scope": "utlx"
+  },
+  "utlx-hmacSHA384": {
+    "prefix": "hmacSHA384",
+    "body": "hmacSHA384(${1:arg1}, ${2:arg2})",
+    "description": "Computes HMAC-SHA384 hash",
+    "scope": "utlx"
+  },
+  "utlx-hmacSHA512": {
+    "prefix": "hmacSHA512",
+    "body": "hmacSHA512(${1:arg1}, ${2:arg2})",
+    "description": "Computes HMAC-SHA512 hash",
+    "scope": "utlx"
+  },
+  "utlx-md5": {
+    "prefix": "md5",
+    "body": "md5(${1:arg1})",
+    "description": "Calculate MD5 hash of a string",
+    "scope": "utlx"
+  },
+  "utlx-sha1": {
+    "prefix": "sha1",
+    "body": "sha1(${1:arg1})",
+    "description": "Performs sha1 operation",
+    "scope": "utlx"
+  },
+  "utlx-sha224": {
+    "prefix": "sha224",
+    "body": "sha224(${1:arg1})",
+    "description": "Computes SHA-224 hash",
+    "scope": "utlx"
+  },
+  "utlx-sha256": {
+    "prefix": "sha256",
+    "body": "sha256(${1:arg1})",
+    "description": "Calculate SHA-256 hash of a string",
+    "scope": "utlx"
+  },
+  "utlx-sha384": {
+    "prefix": "sha384",
+    "body": "sha384(${1:arg1})",
+    "description": "Computes SHA-384 hash",
+    "scope": "utlx"
+  },
+  "utlx-sha3_256": {
+    "prefix": "sha3_256",
+    "body": "sha3_256(${1:arg1})",
+    "description": "Computes SHA3-256 hash (if available)",
+    "scope": "utlx"
+  },
+  "utlx-sha3_512": {
+    "prefix": "sha3_512",
+    "body": "sha3_512(${1:arg1})",
+    "description": "Computes SHA3-512 hash (if available)",
+    "scope": "utlx"
+  },
+  "utlx-sha512": {
+    "prefix": "sha512",
+    "body": "sha512(${1:arg1})",
+    "description": "Calculate SHA-512 hash of a string",
+    "scope": "utlx"
+  },
+  "utlx-urlDecode": {
+    "prefix": "urlDecode",
+    "body": "urlDecode(${1:arg1})",
+    "description": "URL decode",
+    "scope": "utlx"
+  },
+  "utlx-urlDecodeComponent": {
+    "prefix": "urlDecodeComponent",
+    "body": "urlDecodeComponent(${1:arg1})",
+    "description": "URL decode component (RFC 3986) - decodes %20 as spaces",
+    "scope": "utlx"
+  },
+  "utlx-urlEncode": {
+    "prefix": "urlEncode",
+    "body": "urlEncode(${1:arg1})",
+    "description": "URL encode",
+    "scope": "utlx"
+  },
+  "utlx-urlEncodeComponent": {
+    "prefix": "urlEncodeComponent",
+    "body": "urlEncodeComponent(${1:arg1})",
+    "description": "URL encode component (RFC 3986) - encodes spaces as %20 for URI paths",
+    "scope": "utlx"
+  },
+  "utlx-addBOM": {
+    "prefix": "addBOM",
+    "body": "addBOM(${1:arg1})",
+    "description": "Add BOM to data for specified encoding",
+    "scope": "utlx"
+  },
+  "utlx-addNamespaceDeclarations": {
+    "prefix": "addNamespaceDeclarations",
+    "body": "addNamespaceDeclarations(${1:arg1}, ${2:arg2})",
+    "description": "Adds namespace declarations to XML",
+    "scope": "utlx"
+  },
+  "utlx-attribute": {
+    "prefix": "attribute",
+    "body": "attribute(${1:arg1})",
+    "description": "Get specific attribute value",
+    "scope": "utlx"
+  },
+  "utlx-attributes": {
+    "prefix": "attributes",
+    "body": "attributes(${1:arg1})",
+    "description": "Get all attributes from XML element as object",
+    "scope": "utlx"
+  },
+  "utlx-c14n": {
+    "prefix": "c14n",
+    "body": "c14n(${1:arg1})",
+    "description": "Canonicalizes XML using Canonical XML 1.0 (without comments)",
+    "scope": "utlx"
+  },
+  "utlx-c14n11": {
+    "prefix": "c14n11",
+    "body": "c14n11(${1:arg1})",
+    "description": "Canonicalizes XML using Canonical XML 1.1 (without comments)",
+    "scope": "utlx"
+  },
+  "utlx-c14n11WithComments": {
+    "prefix": "c14n11WithComments",
+    "body": "c14n11WithComments(${1:arg1})",
+    "description": "Canonicalizes XML using Canonical XML 1.1 (with comments)",
+    "scope": "utlx"
+  },
+  "utlx-c14nEquals": {
+    "prefix": "c14nEquals",
+    "body": "c14nEquals(${1:arg1}, ${2:arg2})",
+    "description": "Compares two XML documents for canonical equivalence",
+    "scope": "utlx"
+  },
+  "utlx-c14nFingerprint": {
+    "prefix": "c14nFingerprint",
+    "body": "c14nFingerprint(${1:arg1})",
+    "description": "Creates a normalized fingerprint of XML for deduplication",
+    "scope": "utlx"
+  },
+  "utlx-c14nHash": {
+    "prefix": "c14nHash",
+    "body": "c14nHash(${1:arg1})",
+    "description": "Canonicalizes XML and computes its hash",
+    "scope": "utlx"
+  },
+  "utlx-c14nPhysical": {
+    "prefix": "c14nPhysical",
+    "body": "c14nPhysical(${1:arg1}, ${2:arg2})",
+    "description": "Canonicalizes XML using Physical Canonical XML",
+    "scope": "utlx"
+  },
+  "utlx-c14nSubset": {
+    "prefix": "c14nSubset",
+    "body": "c14nSubset(${1:arg1}, ${2:arg2})",
+    "description": "Canonicalizes a subset of XML selected by XPath",
+    "scope": "utlx"
+  },
+  "utlx-c14nWithComments": {
+    "prefix": "c14nWithComments",
+    "body": "c14nWithComments(${1:arg1})",
+    "description": "Canonicalizes XML using Canonical XML 1.0 (with comments)",
+    "scope": "utlx"
+  },
+  "utlx-canonicalizeWithAlgorithm": {
+    "prefix": "canonicalizeWithAlgorithm",
+    "body": "canonicalizeWithAlgorithm(${1:arg1}, ${2:arg2})",
+    "description": "Canonicalizes XML using specified algorithm",
+    "scope": "utlx"
+  },
+  "utlx-childCount": {
+    "prefix": "childCount",
+    "body": "childCount(${1:arg1})",
+    "description": "Count child elements",
+    "scope": "utlx"
+  },
+  "utlx-childNames": {
+    "prefix": "childNames",
+    "body": "childNames(${1:arg1})",
+    "description": "Get child element names",
+    "scope": "utlx"
+  },
+  "utlx-convertXMLEncoding": {
+    "prefix": "convertXMLEncoding",
+    "body": "convertXMLEncoding(${1:arg1})",
+    "description": "Convert XML from one encoding to another",
+    "scope": "utlx"
+  },
+  "utlx-createCDATA": {
+    "prefix": "createCDATA",
+    "body": "createCDATA(${1:arg1})",
+    "description": "Creates a CDATA section with the given content",
+    "scope": "utlx"
+  },
+  "utlx-createQName": {
+    "prefix": "createQName",
+    "body": "createQName(${1:arg1}, ${2:arg2})",
+    "description": "Create QName string from local name and namespace URI",
+    "scope": "utlx"
+  },
+  "utlx-createSOAPEnvelope": {
+    "prefix": "createSOAPEnvelope",
+    "body": "createSOAPEnvelope(${1:arg1}, ${2:arg2})",
+    "description": "Creates SOAP envelope with proper namespace prefixes",
+    "scope": "utlx"
+  },
+  "utlx-detectBOM": {
+    "prefix": "detectBOM",
+    "body": "detectBOM(${1:arg1})",
+    "description": "Detect BOM type from binary data",
+    "scope": "utlx"
+  },
+  "utlx-detectXMLEncoding": {
+    "prefix": "detectXMLEncoding",
+    "body": "detectXMLEncoding(${1:arg1})",
+    "description": "Detect encoding from XML declaration or BOM",
+    "scope": "utlx"
+  },
+  "utlx-elementPath": {
+    "prefix": "elementPath",
+    "body": "elementPath(${1:arg1})",
+    "description": "Get element path (like XPath)",
+    "scope": "utlx"
+  },
+  "utlx-enforceNamespacePrefixes": {
+    "prefix": "enforceNamespacePrefixes",
+    "body": "enforceNamespacePrefixes(${1:arg1})",
+    "description": "Enforces specific namespace prefixes on an XML string",
+    "scope": "utlx"
+  },
+  "utlx-escapeXML": {
+    "prefix": "escapeXML",
+    "body": "escapeXML(${1:arg1})",
+    "description": "Escapes text for XML without using CDATA",
+    "scope": "utlx"
+  },
+  "utlx-excC14n": {
+    "prefix": "excC14n",
+    "body": "excC14n(${1:arg1})",
+    "description": "Canonicalizes XML using Exclusive Canonical XML (without comments)",
+    "scope": "utlx"
+  },
+  "utlx-excC14nWithComments": {
+    "prefix": "excC14nWithComments",
+    "body": "excC14nWithComments(${1:arg1})",
+    "description": "Canonicalizes XML using Exclusive Canonical XML (with comments)",
+    "scope": "utlx"
+  },
+  "utlx-extractCDATA": {
+    "prefix": "extractCDATA",
+    "body": "extractCDATA(${1:arg1}, ${2:arg2})",
+    "description": "Extracts content from a CDATA section",
+    "scope": "utlx"
+  },
+  "utlx-formatEmptyElements": {
+    "prefix": "formatEmptyElements",
+    "body": "formatEmptyElements(${1:arg1})",
+    "description": "Formats empty elements according to specified style",
+    "scope": "utlx"
+  },
+  "utlx-getBOMBytes": {
+    "prefix": "getBOMBytes",
+    "body": "getBOMBytes(${1:arg1})",
+    "description": "Get BOM bytes for encoding",
+    "scope": "utlx"
+  },
+  "utlx-getNamespaces": {
+    "prefix": "getNamespaces",
+    "body": "getNamespaces(${1:arg1})",
+    "description": "Get all namespace declarations from element",
+    "scope": "utlx"
+  },
+  "utlx-hasAttribute": {
+    "prefix": "hasAttribute",
+    "body": "hasAttribute(${1:arg1})",
+    "description": "Check if element has attribute",
+    "scope": "utlx"
+  },
+  "utlx-hasBOM": {
+    "prefix": "hasBOM",
+    "body": "hasBOM(${1:arg1})",
+    "description": "Check if data starts with BOM",
+    "scope": "utlx"
+  },
+  "utlx-hasContent": {
+    "prefix": "hasContent",
+    "body": "hasContent(${1:arg1})",
+    "description": "Check if XML element has any content (child elements or text)",
+    "scope": "utlx"
+  },
+  "utlx-hasNamespace": {
+    "prefix": "hasNamespace",
+    "body": "hasNamespace(${1:arg1})",
+    "description": "Check if element has namespace",
+    "scope": "utlx"
+  },
+  "utlx-isCDATA": {
+    "prefix": "isCDATA",
+    "body": "isCDATA(${1:arg1}, ${2:arg2})",
+    "description": "Checks if a string is a CDATA section",
+    "scope": "utlx"
+  },
+  "utlx-isEmptyElement": {
+    "prefix": "isEmptyElement",
+    "body": "isEmptyElement(${1:arg1})",
+    "description": "Check if element is empty (no children, no text)",
+    "scope": "utlx"
+  },
+  "utlx-localName": {
+    "prefix": "localName",
+    "body": "localName(${1:arg1})",
+    "description": "Get local name (without namespace prefix) from XML element",
+    "scope": "utlx"
+  },
+  "utlx-matchesQName": {
+    "prefix": "matchesQName",
+    "body": "matchesQName(${1:arg1})",
+    "description": "Match element by qualified name",
+    "scope": "utlx"
+  },
+  "utlx-namespacePrefix": {
+    "prefix": "namespacePrefix",
+    "body": "namespacePrefix(${1:arg1})",
+    "description": "Get namespace prefix from XML element",
+    "scope": "utlx"
+  },
+  "utlx-namespaceUri": {
+    "prefix": "namespaceUri",
+    "body": "namespaceUri(${1:arg1})",
+    "description": "Get namespace URI from XML element",
+    "scope": "utlx"
+  },
+  "utlx-nodeType": {
+    "prefix": "nodeType",
+    "body": "nodeType(${1:arg1})",
+    "description": "Get node type (element, attribute, text, etc.)",
+    "scope": "utlx"
+  },
+  "utlx-normalizeBOM": {
+    "prefix": "normalizeBOM",
+    "body": "normalizeBOM(${1:arg1})",
+    "description": "Convert to target encoding with BOM handling",
+    "scope": "utlx"
+  },
+  "utlx-normalizeXMLEncoding": {
+    "prefix": "normalizeXMLEncoding",
+    "body": "normalizeXMLEncoding(${1:arg1})",
+    "description": "Auto-detect and convert to target encoding",
+    "scope": "utlx"
+  },
+  "utlx-parent": {
+    "prefix": "parent",
+    "body": "parent(${1:arg1})",
+    "description": "Get parent element (if metadata available)",
+    "scope": "utlx"
+  },
+  "utlx-prepareForSignature": {
+    "prefix": "prepareForSignature",
+    "body": "prepareForSignature(${1:arg1})",
+    "description": "Prepares XML for digital signature (XMLDSig)",
+    "scope": "utlx"
+  },
+  "utlx-qualifiedName": {
+    "prefix": "qualifiedName",
+    "body": "qualifiedName(${1:arg1})",
+    "description": "Get qualified name (with prefix) from XML element",
+    "scope": "utlx"
+  },
+  "utlx-removeBOM": {
+    "prefix": "removeBOM",
+    "body": "removeBOM(${1:arg1})",
+    "description": "Remove BOM if present",
+    "scope": "utlx"
+  },
+  "utlx-resolveQName": {
+    "prefix": "resolveQName",
+    "body": "resolveQName(${1:arg1}, ${2:arg2})",
+    "description": "Resolve QName string to full qualified name with namespace",
+    "scope": "utlx"
+  },
+  "utlx-shouldUseCDATA": {
+    "prefix": "shouldUseCDATA",
+    "body": "shouldUseCDATA(${1:arg1}, ${2:arg2})",
+    "description": "Determines if content should be wrapped in CDATA",
+    "scope": "utlx"
+  },
+  "utlx-stripBOM": {
+    "prefix": "stripBOM",
+    "body": "stripBOM(${1:arg1})",
+    "description": "Remove BOM character from string (U+FEFF)",
+    "scope": "utlx"
+  },
+  "utlx-textContent": {
+    "prefix": "textContent",
+    "body": "textContent(${1:arg1})",
+    "description": "Get text content from XML element (all text nodes concatenated)",
+    "scope": "utlx"
+  },
+  "utlx-unescapeXML": {
+    "prefix": "unescapeXML",
+    "body": "unescapeXML(${1:arg1})",
+    "description": "Unescapes XML entities",
+    "scope": "utlx"
+  },
+  "utlx-unwrapCDATA": {
+    "prefix": "unwrapCDATA",
+    "body": "unwrapCDATA(${1:arg1}, ${2:arg2})",
+    "description": "Unwraps CDATA if present, otherwise returns original",
+    "scope": "utlx"
+  },
+  "utlx-updateXMLEncoding": {
+    "prefix": "updateXMLEncoding",
+    "body": "updateXMLEncoding(${1:arg1})",
+    "description": "Update encoding in XML declaration",
+    "scope": "utlx"
+  },
+  "utlx-validateDigest": {
+    "prefix": "validateDigest",
+    "body": "validateDigest(${1:arg1}, ${2:arg2})",
+    "description": "Validates that XML digest matches expected value",
+    "scope": "utlx"
+  },
+  "utlx-validateEncoding": {
+    "prefix": "validateEncoding",
+    "body": "validateEncoding(${1:arg1})",
+    "description": "Check if encoding name is valid",
+    "scope": "utlx"
+  },
+  "utlx-wrapIfNeeded": {
+    "prefix": "wrapIfNeeded",
+    "body": "wrapIfNeeded(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Automatically wraps content in CDATA if beneficial",
+    "scope": "utlx"
+  },
+  "utlx-xmlEscape": {
+    "prefix": "xmlEscape",
+    "body": "xmlEscape(${1:arg1})",
+    "description": "Escape XML special characters",
+    "scope": "utlx"
+  },
+  "utlx-xmlUnescape": {
+    "prefix": "xmlUnescape",
+    "body": "xmlUnescape(${1:arg1})",
+    "description": "Unescape XML special characters",
+    "scope": "utlx"
+  },
+  "utlx-decodeJWS": {
+    "prefix": "decodeJWS",
+    "body": "decodeJWS(${1:arg1})",
+    "description": "Decodes a JWS token WITHOUT verifying the signature",
+    "scope": "utlx"
+  },
+  "utlx-decodeJWT": {
+    "prefix": "decodeJWT",
+    "body": "decodeJWT(${1:arg1})",
+    "description": "Decodes a JWT token WITHOUT verification",
+    "scope": "utlx"
+  },
+  "utlx-getJWSAlgorithm": {
+    "prefix": "getJWSAlgorithm",
+    "body": "getJWSAlgorithm(${1:arg1})",
+    "description": "Gets the algorithm from a JWS token header",
+    "scope": "utlx"
+  },
+  "utlx-getJWSHeader": {
+    "prefix": "getJWSHeader",
+    "body": "getJWSHeader(${1:arg1})",
+    "description": "Extracts the header from a JWS token",
+    "scope": "utlx"
+  },
+  "utlx-getJWSInfo": {
+    "prefix": "getJWSInfo",
+    "body": "getJWSInfo(${1:arg1})",
+    "description": "Gets information about the JWS token structure",
+    "scope": "utlx"
+  },
+  "utlx-getJWSKeyId": {
+    "prefix": "getJWSKeyId",
+    "body": "getJWSKeyId(${1:arg1})",
+    "description": "Gets the Key ID (kid) from a JWS token header",
+    "scope": "utlx"
+  },
+  "utlx-getJWSPayload": {
+    "prefix": "getJWSPayload",
+    "body": "getJWSPayload(${1:arg1})",
+    "description": "Extracts the payload from a JWS token WITHOUT verification",
+    "scope": "utlx"
+  },
+  "utlx-getJWSSigningInput": {
+    "prefix": "getJWSSigningInput",
+    "body": "getJWSSigningInput(${1:arg1})",
+    "description": "Extracts the signing input from a JWS token",
+    "scope": "utlx"
+  },
+  "utlx-getJWSTokenType": {
+    "prefix": "getJWSTokenType",
+    "body": "getJWSTokenType(${1:arg1})",
+    "description": "Gets the token type from a JWS token header",
+    "scope": "utlx"
+  },
+  "utlx-getJWTAudience": {
+    "prefix": "getJWTAudience",
+    "body": "getJWTAudience(${1:arg1})",
+    "description": "Gets the audience (aud) claim from JWT",
+    "scope": "utlx"
+  },
+  "utlx-getJWTClaim": {
+    "prefix": "getJWTClaim",
+    "body": "getJWTClaim(${1:arg1})",
+    "description": "Gets a specific claim from JWT",
+    "scope": "utlx"
+  },
+  "utlx-getJWTClaims": {
+    "prefix": "getJWTClaims",
+    "body": "getJWTClaims(${1:arg1})",
+    "description": "Extracts claims from JWT payload WITHOUT verification",
+    "scope": "utlx"
+  },
+  "utlx-getJWTIssuer": {
+    "prefix": "getJWTIssuer",
+    "body": "getJWTIssuer(${1:arg1})",
+    "description": "Gets the issuer (iss) claim from JWT",
+    "scope": "utlx"
+  },
+  "utlx-getJWTSubject": {
+    "prefix": "getJWTSubject",
+    "body": "getJWTSubject(${1:arg1})",
+    "description": "Gets the subject (sub) claim from JWT",
+    "scope": "utlx"
+  },
+  "utlx-isJWSFormat": {
+    "prefix": "isJWSFormat",
+    "body": "isJWSFormat(${1:arg1})",
+    "description": "Checks if a string is in valid JWS format",
+    "scope": "utlx"
+  },
+  "utlx-isJWTExpired": {
+    "prefix": "isJWTExpired",
+    "body": "isJWTExpired(${1:arg1})",
+    "description": "Checks if JWT is expired based on 'exp' claim",
+    "scope": "utlx"
+  },
+  "utlx-canonicalJSONHash": {
+    "prefix": "canonicalJSONHash",
+    "body": "canonicalJSONHash(${1:arg1}, ${2:arg2})",
+    "description": "Canonicalizes JSON and computes cryptographic hash",
+    "scope": "utlx"
+  },
+  "utlx-canonicalJSONSize": {
+    "prefix": "canonicalJSONSize",
+    "body": "canonicalJSONSize(${1:arg1})",
+    "description": "Gets the canonical form size in bytes (UTF-8)",
+    "scope": "utlx"
+  },
+  "utlx-canonicalizeJSON": {
+    "prefix": "canonicalizeJSON",
+    "body": "canonicalizeJSON(${1:arg1}, ${2:arg2})",
+    "description": "Canonicalizes JSON according to RFC 8785 (JSON Canonicalization Scheme)",
+    "scope": "utlx"
+  },
+  "utlx-isCanonicalJSON": {
+    "prefix": "isCanonicalJSON",
+    "body": "isCanonicalJSON(${1:arg1})",
+    "description": "Validates that a string is valid canonical JSON per RFC 8785",
+    "scope": "utlx"
+  },
+  "utlx-jcs": {
+    "prefix": "jcs",
+    "body": "jcs(${1:arg1}, ${2:arg2})",
+    "description": "Alias for canonicalizeJSON - shorter form (JCS)",
+    "scope": "utlx"
+  },
+  "utlx-jsonEquals": {
+    "prefix": "jsonEquals",
+    "body": "jsonEquals(${1:arg1})",
+    "description": "Compares two JSON values for semantic equality using canonicalization",
+    "scope": "utlx"
+  },
+  "utlx-binaryConcat": {
+    "prefix": "binaryConcat",
+    "body": "binaryConcat(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Concatenate binary data",
+    "scope": "utlx"
+  },
+  "utlx-binaryEquals": {
+    "prefix": "binaryEquals",
+    "body": "binaryEquals(${1:arg1}, ${2:arg2})",
+    "description": "Compare two binary values",
+    "scope": "utlx"
+  },
+  "utlx-binaryLength": {
+    "prefix": "binaryLength",
+    "body": "binaryLength(${1:arg1})",
+    "description": "Get binary length in bytes",
+    "scope": "utlx"
+  },
+  "utlx-binarySlice": {
+    "prefix": "binarySlice",
+    "body": "binarySlice(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Slice binary data",
+    "scope": "utlx"
+  },
+  "utlx-binaryToString": {
+    "prefix": "binaryToString",
+    "body": "binaryToString(${1:arg1}, ${2:arg2})",
+    "description": "Convert binary to string",
+    "scope": "utlx"
+  },
+  "utlx-bitwiseAnd": {
+    "prefix": "bitwiseAnd",
+    "body": "bitwiseAnd(${1:arg1}, ${2:arg2})",
+    "description": "Performs bitwise AND operation on two binaries",
+    "scope": "utlx"
+  },
+  "utlx-bitwiseNot": {
+    "prefix": "bitwiseNot",
+    "body": "bitwiseNot(${1:arg1}, ${2:arg2})",
+    "description": "Performs bitwise NOT operation (inversion)",
+    "scope": "utlx"
+  },
+  "utlx-bitwiseOr": {
+    "prefix": "bitwiseOr",
+    "body": "bitwiseOr(${1:arg1}, ${2:arg2})",
+    "description": "Performs bitwise OR operation on two binaries",
+    "scope": "utlx"
+  },
+  "utlx-bitwiseXor": {
+    "prefix": "bitwiseXor",
+    "body": "bitwiseXor(${1:arg1}, ${2:arg2})",
+    "description": "Performs bitwise XOR operation on two binaries",
+    "scope": "utlx"
+  },
+  "utlx-compress": {
+    "prefix": "compress",
+    "body": "compress(${1:arg1})",
+    "description": "Compress data using specified algorithm",
+    "scope": "utlx"
+  },
+  "utlx-decompress": {
+    "prefix": "decompress",
+    "body": "decompress(${1:arg1})",
+    "description": "Decompress data using specified algorithm",
+    "scope": "utlx"
+  },
+  "utlx-deflate": {
+    "prefix": "deflate",
+    "body": "deflate(${1:arg1})",
+    "description": "Compress data using Deflate algorithm (raw)",
+    "scope": "utlx"
+  },
+  "utlx-equals": {
+    "prefix": "equals",
+    "body": "equals(${1:arg1}, ${2:arg2})",
+    "description": "Compares two binaries for equality",
+    "scope": "utlx"
+  },
+  "utlx-fromBase64": {
+    "prefix": "fromBase64",
+    "body": "fromBase64(${1:arg1})",
+    "description": "Create binary from Base64 string",
+    "scope": "utlx"
+  },
+  "utlx-fromBytes": {
+    "prefix": "fromBytes",
+    "body": "fromBytes(${1:arg1})",
+    "description": "Create binary from byte array",
+    "scope": "utlx"
+  },
+  "utlx-fromHex": {
+    "prefix": "fromHex",
+    "body": "fromHex(${1:arg1})",
+    "description": "Create binary from hex string",
+    "scope": "utlx"
+  },
+  "utlx-gunzip": {
+    "prefix": "gunzip",
+    "body": "gunzip(${1:arg1})",
+    "description": "Decompress Gzip data",
+    "scope": "utlx"
+  },
+  "utlx-gzip": {
+    "prefix": "gzip",
+    "body": "gzip(${1:arg1})",
+    "description": "Compress data using Gzip",
+    "scope": "utlx"
+  },
+  "utlx-inflate": {
+    "prefix": "inflate",
+    "body": "inflate(${1:arg1})",
+    "description": "Decompress Deflate data",
+    "scope": "utlx"
+  },
+  "utlx-isGzipped": {
+    "prefix": "isGzipped",
+    "body": "isGzipped(${1:arg1})",
+    "description": "Check if data is gzip compressed",
+    "scope": "utlx"
+  },
+  "utlx-isJarFile": {
+    "prefix": "isJarFile",
+    "body": "isJarFile(${1:arg1})",
+    "description": "Check if data is a JAR file",
+    "scope": "utlx"
+  },
+  "utlx-isZipArchive": {
+    "prefix": "isZipArchive",
+    "body": "isZipArchive(${1:arg1}, ${2:arg2})",
+    "description": "Check if data is a zip archive",
+    "scope": "utlx"
+  },
+  "utlx-listJarEntries": {
+    "prefix": "listJarEntries",
+    "body": "listJarEntries(${1:arg1})",
+    "description": "List all entries in a JAR file",
+    "scope": "utlx"
+  },
+  "utlx-listZipEntries": {
+    "prefix": "listZipEntries",
+    "body": "listZipEntries(${1:arg1})",
+    "description": "List all entries in a zip archive",
+    "scope": "utlx"
+  },
+  "utlx-readByte": {
+    "prefix": "readByte",
+    "body": "readByte(${1:arg1}, ${2:arg2})",
+    "description": "Read single byte",
+    "scope": "utlx"
+  },
+  "utlx-readDouble": {
+    "prefix": "readDouble",
+    "body": "readDouble(${1:arg1}, ${2:arg2})",
+    "description": "Read double (64-bit) from binary",
+    "scope": "utlx"
+  },
+  "utlx-readFloat": {
+    "prefix": "readFloat",
+    "body": "readFloat(${1:arg1}, ${2:arg2})",
+    "description": "Read float (32-bit) from binary",
+    "scope": "utlx"
+  },
+  "utlx-readInt16": {
+    "prefix": "readInt16",
+    "body": "readInt16(${1:arg1}, ${2:arg2})",
+    "description": "Read 16-bit integer from binary (big endian)",
+    "scope": "utlx"
+  },
+  "utlx-readInt32": {
+    "prefix": "readInt32",
+    "body": "readInt32(${1:arg1}, ${2:arg2})",
+    "description": "Read 32-bit integer from binary (big endian)",
+    "scope": "utlx"
+  },
+  "utlx-readInt64": {
+    "prefix": "readInt64",
+    "body": "readInt64(${1:arg1}, ${2:arg2})",
+    "description": "Read 64-bit integer from binary (big endian)",
+    "scope": "utlx"
+  },
+  "utlx-readJarEntry": {
+    "prefix": "readJarEntry",
+    "body": "readJarEntry(${1:arg1}, ${2:arg2})",
+    "description": "Read a single entry from a JAR file",
+    "scope": "utlx"
+  },
+  "utlx-readJarManifest": {
+    "prefix": "readJarManifest",
+    "body": "readJarManifest(${1:arg1})",
+    "description": "Read JAR manifest",
+    "scope": "utlx"
+  },
+  "utlx-readZipEntry": {
+    "prefix": "readZipEntry",
+    "body": "readZipEntry(${1:arg1}, ${2:arg2})",
+    "description": "Read a single entry from a zip archive",
+    "scope": "utlx"
+  },
+  "utlx-shiftLeft": {
+    "prefix": "shiftLeft",
+    "body": "shiftLeft(${1:arg1}, ${2:arg2})",
+    "description": "Shifts bits left by specified positions",
+    "scope": "utlx"
+  },
+  "utlx-shiftRight": {
+    "prefix": "shiftRight",
+    "body": "shiftRight(${1:arg1}, ${2:arg2})",
+    "description": "Shifts bits right by specified positions",
+    "scope": "utlx"
+  },
+  "utlx-toBase64": {
+    "prefix": "toBase64",
+    "body": "toBase64(${1:arg1})",
+    "description": "Convert binary to Base64 string",
+    "scope": "utlx"
+  },
+  "utlx-toBinary": {
+    "prefix": "toBinary",
+    "body": "toBinary(${1:arg1}, ${2:arg2})",
+    "description": "Create binary from string",
+    "scope": "utlx"
+  },
+  "utlx-toBytes": {
+    "prefix": "toBytes",
+    "body": "toBytes(${1:arg1})",
+    "description": "Convert binary to byte array",
+    "scope": "utlx"
+  },
+  "utlx-toHex": {
+    "prefix": "toHex",
+    "body": "toHex(${1:arg1})",
+    "description": "Convert binary to hex string",
+    "scope": "utlx"
+  },
+  "utlx-unzipArchive": {
+    "prefix": "unzipArchive",
+    "body": "unzipArchive(${1:arg1}, ${2:arg2})",
+    "description": "Extract all files from a zip archive",
+    "scope": "utlx"
+  },
+  "utlx-writeByte": {
+    "prefix": "writeByte",
+    "body": "writeByte(${1:arg1})",
+    "description": "Write single byte",
+    "scope": "utlx"
+  },
+  "utlx-writeDouble": {
+    "prefix": "writeDouble",
+    "body": "writeDouble(${1:arg1})",
+    "description": "Write double (64-bit) to binary",
+    "scope": "utlx"
+  },
+  "utlx-writeFloat": {
+    "prefix": "writeFloat",
+    "body": "writeFloat(${1:arg1})",
+    "description": "Write float (32-bit) to binary",
+    "scope": "utlx"
+  },
+  "utlx-writeInt16": {
+    "prefix": "writeInt16",
+    "body": "writeInt16(${1:arg1})",
+    "description": "Write 16-bit integer to binary (big endian)",
+    "scope": "utlx"
+  },
+  "utlx-writeInt32": {
+    "prefix": "writeInt32",
+    "body": "writeInt32(${1:arg1})",
+    "description": "Write 32-bit integer to binary (big endian)",
+    "scope": "utlx"
+  },
+  "utlx-writeInt64": {
+    "prefix": "writeInt64",
+    "body": "writeInt64(${1:arg1})",
+    "description": "Write 64-bit integer to binary (big endian)",
+    "scope": "utlx"
+  },
+  "utlx-zipArchive": {
+    "prefix": "zipArchive",
+    "body": "zipArchive(${1:arg1})",
+    "description": "Create a zip archive from multiple files",
+    "scope": "utlx"
+  },
+  "utlx-canCoerce": {
+    "prefix": "canCoerce",
+    "body": "canCoerce(${1:arg1}, ${2:arg2})",
+    "description": "Check if value can be coerced to type",
+    "scope": "utlx"
+  },
+  "utlx-coerce": {
+    "prefix": "coerce",
+    "body": "coerce(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Coerce value to target type with default",
+    "scope": "utlx"
+  },
+  "utlx-coerceAll": {
+    "prefix": "coerceAll",
+    "body": "coerceAll(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Coerce all values in array to target type",
+    "scope": "utlx"
+  },
+  "utlx-extractTimestampFromUuidV7": {
+    "prefix": "extractTimestampFromUuidV7",
+    "body": "extractTimestampFromUuidV7(${1:arg1})",
+    "description": "Extract timestamp from UUID v7",
+    "scope": "utlx"
+  },
+  "utlx-generateUuidV4": {
+    "prefix": "generateUuidV4",
+    "body": "generateUuidV4()",
+    "description": "Generate UUID v4 (random)",
+    "scope": "utlx"
+  },
+  "utlx-generateUuidV7": {
+    "prefix": "generateUuidV7",
+    "body": "generateUuidV7()",
+    "description": "Generate UUID v7 (time-ordered)",
+    "scope": "utlx"
+  },
+  "utlx-generateUuidV7Batch": {
+    "prefix": "generateUuidV7Batch",
+    "body": "generateUuidV7Batch(${1:arg1})",
+    "description": "Generate batch of UUID v7s with monotonic guarantee",
+    "scope": "utlx"
+  },
+  "utlx-getUuidVersion": {
+    "prefix": "getUuidVersion",
+    "body": "getUuidVersion(${1:arg1})",
+    "description": "Get UUID version number",
+    "scope": "utlx"
+  },
+  "utlx-isUuidV7": {
+    "prefix": "isUuidV7",
+    "body": "isUuidV7(${1:arg1})",
+    "description": "Check if UUID is version 7",
+    "scope": "utlx"
+  },
+  "utlx-isValidUuid": {
+    "prefix": "isValidUuid",
+    "body": "isValidUuid(${1:arg1})",
+    "description": "Validate UUID format",
+    "scope": "utlx"
+  },
+  "utlx-measure": {
+    "prefix": "measure",
+    "body": "measure(${1:arg1})",
+    "description": "Measure execution time of expression (would need runtime support)",
+    "scope": "utlx"
+  },
+  "utlx-smartCoerce": {
+    "prefix": "smartCoerce",
+    "body": "smartCoerce(${1:arg1})",
+    "description": "Smart coercion - infers target type from context",
+    "scope": "utlx"
+  },
+  "utlx-timerCheck": {
+    "prefix": "timerCheck",
+    "body": "timerCheck(${1:arg1})",
+    "description": "Get elapsed time without stopping timer",
+    "scope": "utlx"
+  },
+  "utlx-timerClear": {
+    "prefix": "timerClear",
+    "body": "timerClear(${1:arg1})",
+    "description": "Clear all timers and measurements",
+    "scope": "utlx"
+  },
+  "utlx-timerList": {
+    "prefix": "timerList",
+    "body": "timerList(${1:arg1})",
+    "description": "List all active timers",
+    "scope": "utlx"
+  },
+  "utlx-timerReset": {
+    "prefix": "timerReset",
+    "body": "timerReset(${1:arg1})",
+    "description": "Reset a timer",
+    "scope": "utlx"
+  },
+  "utlx-timerStart": {
+    "prefix": "timerStart",
+    "body": "timerStart(${1:arg1})",
+    "description": "Start a named timer",
+    "scope": "utlx"
+  },
+  "utlx-timerStats": {
+    "prefix": "timerStats",
+    "body": "timerStats(${1:arg1})",
+    "description": "Get statistics for a timer",
+    "scope": "utlx"
+  },
+  "utlx-timerStop": {
+    "prefix": "timerStop",
+    "body": "timerStop(${1:arg1})",
+    "description": "Stop a named timer and get elapsed time",
+    "scope": "utlx"
+  },
+  "utlx-timestamp": {
+    "prefix": "timestamp",
+    "body": "timestamp(${1:arg1})",
+    "description": "Get current timestamp",
+    "scope": "utlx"
+  },
+  "utlx-treeDepth": {
+    "prefix": "treeDepth",
+    "body": "treeDepth(${1:arg1})",
+    "description": "Get tree depth (maximum nesting level)",
+    "scope": "utlx"
+  },
+  "utlx-treeFilter": {
+    "prefix": "treeFilter",
+    "body": "treeFilter(${1:arg1}, ${2:arg2})",
+    "description": "Filter tree nodes by predicate",
+    "scope": "utlx"
+  },
+  "utlx-treeFind": {
+    "prefix": "treeFind",
+    "body": "treeFind(${1:arg1}, ${2:arg2})",
+    "description": "Find node by path in tree",
+    "scope": "utlx"
+  },
+  "utlx-treeFlatten": {
+    "prefix": "treeFlatten",
+    "body": "treeFlatten(${1:arg1})",
+    "description": "Flatten tree to array of leaf nodes",
+    "scope": "utlx"
+  },
+  "utlx-treeMap": {
+    "prefix": "treeMap",
+    "body": "treeMap(${1:arg1}, ${2:arg2})",
+    "description": "Map over all nodes in a tree structure",
+    "scope": "utlx"
+  },
+  "utlx-treePaths": {
+    "prefix": "treePaths",
+    "body": "treePaths(${1:arg1})",
+    "description": "Get all paths in tree",
+    "scope": "utlx"
+  },
+  "utlx-tryCoerce": {
+    "prefix": "tryCoerce",
+    "body": "tryCoerce(${1:arg1}, ${2:arg2})",
+    "description": "Try to coerce, return null on failure",
+    "scope": "utlx"
+  },
+  "utlx-addTax": {
+    "prefix": "addTax",
+    "body": "addTax(${1:arg1}, ${2:arg2})",
+    "description": "Calculates the total amount including tax.",
+    "scope": "utlx"
+  },
+  "utlx-calculateDiscount": {
+    "prefix": "calculateDiscount",
+    "body": "calculateDiscount(${1:arg1}, ${2:arg2})",
+    "description": "Calculates the price after applying a discount.",
+    "scope": "utlx"
+  },
+  "utlx-calculateTax": {
+    "prefix": "calculateTax",
+    "body": "calculateTax(${1:arg1}, ${2:arg2})",
+    "description": "Calculates tax amount for a given amount and rate.",
+    "scope": "utlx"
+  },
+  "utlx-compoundInterest": {
+    "prefix": "compoundInterest",
+    "body": "compoundInterest(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Calculates compound interest.",
+    "scope": "utlx"
+  },
+  "utlx-formatCurrency": {
+    "prefix": "formatCurrency",
+    "body": "formatCurrency(${1:arg1})",
+    "description": "Formats a number as currency with locale-specific formatting.",
+    "scope": "utlx"
+  },
+  "utlx-futureValue": {
+    "prefix": "futureValue",
+    "body": "futureValue(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Calculates the future value of a present amount.",
+    "scope": "utlx"
+  },
+  "utlx-getCurrencyDecimals": {
+    "prefix": "getCurrencyDecimals",
+    "body": "getCurrencyDecimals(${1:arg1})",
+    "description": "Gets the number of decimal places for a currency.",
+    "scope": "utlx"
+  },
+  "utlx-isValidAmount": {
+    "prefix": "isValidAmount",
+    "body": "isValidAmount(${1:arg1})",
+    "description": "Validates if an amount is within acceptable range.",
+    "scope": "utlx"
+  },
+  "utlx-isValidCurrency": {
+    "prefix": "isValidCurrency",
+    "body": "isValidCurrency(${1:arg1})",
+    "description": "Validates if a currency code is valid (ISO 4217).",
+    "scope": "utlx"
+  },
+  "utlx-parseCurrency": {
+    "prefix": "parseCurrency",
+    "body": "parseCurrency(${1:arg1})",
+    "description": "Parses a currency string to a number.",
+    "scope": "utlx"
+  },
+  "utlx-percentageChange": {
+    "prefix": "percentageChange",
+    "body": "percentageChange(${1:arg1}, ${2:arg2})",
+    "description": "Calculates the percentage change between two values.",
+    "scope": "utlx"
+  },
+  "utlx-presentValue": {
+    "prefix": "presentValue",
+    "body": "presentValue(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Calculates the present value of a future amount.",
+    "scope": "utlx"
+  },
+  "utlx-removeTax": {
+    "prefix": "removeTax",
+    "body": "removeTax(${1:arg1}, ${2:arg2})",
+    "description": "Calculates the original amount from a total that includes tax.",
+    "scope": "utlx"
+  },
+  "utlx-roundToCents": {
+    "prefix": "roundToCents",
+    "body": "roundToCents(${1:arg1}, ${2:arg2})",
+    "description": "Rounds up to the nearest cent (2 decimal places).",
+    "scope": "utlx"
+  },
+  "utlx-roundToDecimalPlaces": {
+    "prefix": "roundToDecimalPlaces",
+    "body": "roundToDecimalPlaces(${1:arg1}, ${2:arg2})",
+    "description": "Rounds a number to a specified number of decimal places using banker's rounding.",
+    "scope": "utlx"
+  },
+  "utlx-simpleInterest": {
+    "prefix": "simpleInterest",
+    "body": "simpleInterest(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Calculates simple interest.",
+    "scope": "utlx"
+  },
+  "utlx-bearing": {
+    "prefix": "bearing",
+    "body": "bearing(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Calculates the initial bearing (forward azimuth) from point1 to point2.",
+    "scope": "utlx"
+  },
+  "utlx-boundingBox": {
+    "prefix": "boundingBox",
+    "body": "boundingBox(${1:arg1})",
+    "description": "Calculates the bounding box (min/max lat/lon) for an array of coordinates.",
+    "scope": "utlx"
+  },
+  "utlx-destinationPoint": {
+    "prefix": "destinationPoint",
+    "body": "destinationPoint(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Calculates a destination point given a starting point, bearing, and distance.",
+    "scope": "utlx"
+  },
+  "utlx-distance": {
+    "prefix": "distance",
+    "body": "distance(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Calculates the distance between two geographic coordinates using the Haversine formula.",
+    "scope": "utlx"
+  },
+  "utlx-isPointInCircle": {
+    "prefix": "isPointInCircle",
+    "body": "isPointInCircle(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4}, ${5:arg5})",
+    "description": "Checks if a point is within a circular radius from a center point.",
+    "scope": "utlx"
+  },
+  "utlx-isPointInPolygon": {
+    "prefix": "isPointInPolygon",
+    "body": "isPointInPolygon(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Checks if a point is inside a polygon using the ray casting algorithm.",
+    "scope": "utlx"
+  },
+  "utlx-isValidCoordinates": {
+    "prefix": "isValidCoordinates",
+    "body": "isValidCoordinates(${1:arg1}, ${2:arg2})",
+    "description": "Checks if coordinates are valid.",
+    "scope": "utlx"
+  },
+  "utlx-midpoint": {
+    "prefix": "midpoint",
+    "body": "midpoint(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Calculates the midpoint between two coordinates.",
+    "scope": "utlx"
+  },
+  "utlx-csvAddColumn": {
+    "prefix": "csvAddColumn",
+    "body": "csvAddColumn(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Add a new column to CSV with computed values",
+    "scope": "utlx"
+  },
+  "utlx-csvCell": {
+    "prefix": "csvCell",
+    "body": "csvCell(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Get a specific cell value",
+    "scope": "utlx"
+  },
+  "utlx-csvColumn": {
+    "prefix": "csvColumn",
+    "body": "csvColumn(${1:arg1})",
+    "description": "Get a specific column as array",
+    "scope": "utlx"
+  },
+  "utlx-csvColumns": {
+    "prefix": "csvColumns",
+    "body": "csvColumns(${1:arg1})",
+    "description": "Get all column names/headers from CSV data",
+    "scope": "utlx"
+  },
+  "utlx-csvFilter": {
+    "prefix": "csvFilter",
+    "body": "csvFilter(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Filter CSV rows based on column value",
+    "scope": "utlx"
+  },
+  "utlx-csvRemoveColumns": {
+    "prefix": "csvRemoveColumns",
+    "body": "csvRemoveColumns(${1:arg1})",
+    "description": "Remove columns from CSV",
+    "scope": "utlx"
+  },
+  "utlx-csvRow": {
+    "prefix": "csvRow",
+    "body": "csvRow(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Get a specific row by index",
+    "scope": "utlx"
+  },
+  "utlx-csvRows": {
+    "prefix": "csvRows",
+    "body": "csvRows(${1:arg1})",
+    "description": "Get all rows from CSV data",
+    "scope": "utlx"
+  },
+  "utlx-csvSelectColumns": {
+    "prefix": "csvSelectColumns",
+    "body": "csvSelectColumns(${1:arg1}, ${2:arg2})",
+    "description": "Select/project specific columns from CSV",
+    "scope": "utlx"
+  },
+  "utlx-csvSort": {
+    "prefix": "csvSort",
+    "body": "csvSort(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Sort CSV by specified columns",
+    "scope": "utlx"
+  },
+  "utlx-csvSummarize": {
+    "prefix": "csvSummarize",
+    "body": "csvSummarize(${1:arg1}, ${2:arg2})",
+    "description": "Calculate summary statistics for CSV columns",
+    "scope": "utlx"
+  },
+  "utlx-csvTranspose": {
+    "prefix": "csvTranspose",
+    "body": "csvTranspose(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Transpose CSV (swap rows and columns)",
+    "scope": "utlx"
+  },
+  "utlx-yamlDelete": {
+    "prefix": "yamlDelete",
+    "body": "yamlDelete(${1:arg1})",
+    "description": "Delete value at YAML path",
+    "scope": "utlx"
+  },
+  "utlx-yamlEntries": {
+    "prefix": "yamlEntries",
+    "body": "yamlEntries(${1:arg1})",
+    "description": "Get entries (key-value pairs) from a YAML object",
+    "scope": "utlx"
+  },
+  "utlx-yamlExists": {
+    "prefix": "yamlExists",
+    "body": "yamlExists(${1:arg1})",
+    "description": "Check if path exists in YAML",
+    "scope": "utlx"
+  },
+  "utlx-yamlFilterByKeyPattern": {
+    "prefix": "yamlFilterByKeyPattern",
+    "body": "yamlFilterByKeyPattern(${1:arg1})",
+    "description": "Filter YAML object by key pattern",
+    "scope": "utlx"
+  },
+  "utlx-yamlFindByField": {
+    "prefix": "yamlFindByField",
+    "body": "yamlFindByField(${1:arg1}, ${2:arg2})",
+    "description": "Find all values in YAML structure by field name",
+    "scope": "utlx"
+  },
+  "utlx-yamlFindObjectsWithField": {
+    "prefix": "yamlFindObjectsWithField",
+    "body": "yamlFindObjectsWithField(${1:arg1}, ${2:arg2})",
+    "description": "Find all objects containing specific field",
+    "scope": "utlx"
+  },
+  "utlx-yamlFromEntries": {
+    "prefix": "yamlFromEntries",
+    "body": "yamlFromEntries(${1:arg1})",
+    "description": "Create YAML object from entries array",
+    "scope": "utlx"
+  },
+  "utlx-yamlGetDocument": {
+    "prefix": "yamlGetDocument",
+    "body": "yamlGetDocument(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Get specific document from multi-document YAML by index",
+    "scope": "utlx"
+  },
+  "utlx-yamlHasRequiredFields": {
+    "prefix": "yamlHasRequiredFields",
+    "body": "yamlHasRequiredFields(${1:arg1})",
+    "description": "Check if YAML has required fields",
+    "scope": "utlx"
+  },
+  "utlx-yamlKeys": {
+    "prefix": "yamlKeys",
+    "body": "yamlKeys(${1:arg1})",
+    "description": "Get all keys from a YAML object",
+    "scope": "utlx"
+  },
+  "utlx-yamlMerge": {
+    "prefix": "yamlMerge",
+    "body": "yamlMerge(${1:arg1})",
+    "description": "Deep merge two YAML objects",
+    "scope": "utlx"
+  },
+  "utlx-yamlMergeAll": {
+    "prefix": "yamlMergeAll",
+    "body": "yamlMergeAll(${1:arg1})",
+    "description": "Merge multiple YAML documents in order",
+    "scope": "utlx"
+  },
+  "utlx-yamlMergeDocuments": {
+    "prefix": "yamlMergeDocuments",
+    "body": "yamlMergeDocuments(${1:arg1})",
+    "description": "Merge multiple YAML documents into single multi-document string",
+    "scope": "utlx"
+  },
+  "utlx-yamlOmitKeys": {
+    "prefix": "yamlOmitKeys",
+    "body": "yamlOmitKeys(${1:arg1})",
+    "description": "Omit specific keys from YAML object",
+    "scope": "utlx"
+  },
+  "utlx-yamlPath": {
+    "prefix": "yamlPath",
+    "body": "yamlPath(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Query YAML using path expression",
+    "scope": "utlx"
+  },
+  "utlx-yamlSelectKeys": {
+    "prefix": "yamlSelectKeys",
+    "body": "yamlSelectKeys(${1:arg1})",
+    "description": "Select specific keys from YAML object",
+    "scope": "utlx"
+  },
+  "utlx-yamlSet": {
+    "prefix": "yamlSet",
+    "body": "yamlSet(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Set value at YAML path",
+    "scope": "utlx"
+  },
+  "utlx-yamlSort": {
+    "prefix": "yamlSort",
+    "body": "yamlSort(${1:arg1}, ${2:arg2})",
+    "description": "Sort YAML object keys alphabetically",
+    "scope": "utlx"
+  },
+  "utlx-yamlSplitDocuments": {
+    "prefix": "yamlSplitDocuments",
+    "body": "yamlSplitDocuments(${1:arg1})",
+    "description": "Split multi-document YAML into array of documents",
+    "scope": "utlx"
+  },
+  "utlx-yamlValidate": {
+    "prefix": "yamlValidate",
+    "body": "yamlValidate(${1:arg1}, ${2:arg2})",
+    "description": "Validate YAML syntax",
+    "scope": "utlx"
+  },
+  "utlx-yamlValidateKeyPattern": {
+    "prefix": "yamlValidateKeyPattern",
+    "body": "yamlValidateKeyPattern(${1:arg1}, ${2:arg2})",
+    "description": "Validate all keys match a pattern",
+    "scope": "utlx"
+  },
+  "utlx-yamlValues": {
+    "prefix": "yamlValues",
+    "body": "yamlValues(${1:arg1})",
+    "description": "Get all values from a YAML object",
     "scope": "utlx"
   }
 }
