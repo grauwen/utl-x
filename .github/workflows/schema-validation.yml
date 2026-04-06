@@ -2,22 +2,23 @@
 name: Schema Validation
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-    paths:
-      - 'transforms/**/*.utlx'
-      - 'schemas/**'
-      - 'modules/analysis/**'
-  pull_request:
-    branches:
-      - main
-      - develop
-    paths:
-      - 'transforms/**/*.utlx'
-      - 'schemas/**'
-      - 'modules/analysis/**'
+  workflow_dispatch:  # Manual trigger only
+  # push:
+  #   branches:
+  #     - main
+  #     - develop
+  #   paths:
+  #     - 'transforms/**/*.utlx'
+  #     - 'schemas/**'
+  #     - 'modules/analysis/**'
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - develop
+  #   paths:
+  #     - 'transforms/**/*.utlx'
+  #     - 'schemas/**'
+  #     - 'modules/analysis/**'
 
 jobs:
   validate-schemas:

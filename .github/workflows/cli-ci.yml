@@ -2,21 +2,22 @@
 name: CLI Build and Test
 
 on:
-  push:
-    branches: [ main, develop ]
-    paths:
-      - 'modules/cli/**'
-      - 'modules/core/**'
-      - 'formats/**'
-      - 'scripts/build-cli.sh'
-      - 'scripts/test-cli-comprehensive.sh'
-      - '.github/workflows/cli-ci.yml'
-  pull_request:
-    branches: [ main, develop ]
-    paths:
-      - 'modules/cli/**'
-      - 'modules/core/**'
-      - 'formats/**'
+  workflow_dispatch:  # Manual trigger only
+  # push:
+  #   branches: [ main, develop ]
+  #   paths:
+  #     - 'modules/cli/**'
+  #     - 'modules/core/**'
+  #     - 'formats/**'
+  #     - 'scripts/build-cli.sh'
+  #     - 'scripts/test-cli-comprehensive.sh'
+  #     - '.github/workflows/cli-ci.yml'
+  # pull_request:
+  #   branches: [ main, develop ]
+  #   paths:
+  #     - 'modules/cli/**'
+  #     - 'modules/core/**'
+  #     - 'formats/**'
 
 jobs:
   # Job 1: Build and test JAR
