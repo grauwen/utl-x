@@ -1,0 +1,305 @@
+{
+  "reportId": "RPT-SALES-2025-Q1-001",
+  "reportType": "QUARTERLY_SALES_SUMMARY",
+  "reportName": "Q1 2025 Sales Performance Report",
+  "generatedDate": "2025-01-16T18:00:00Z",
+  "generatedBy": {
+    "employeeId": "EMP-3312",
+    "name": "Lisa Chen",
+    "title": "CFO",
+    "department": "Finance"
+  },
+  "reportPeriod": {
+    "quarter": 1,
+    "year": 2025,
+    "startDate": "2025-01-01",
+    "endDate": "2025-01-16",
+    "daysInPeriod": 16,
+    "fiscalYear": "FY2025"
+  },
+  "overallSummary": {
+    "totalRevenue": 2847500.00,
+    "totalCost": 1425600.00,
+    "grossProfit": 1421900.00,
+    "grossMargin": 49.94,
+    "totalOrders": 1248,
+    "averageOrderValue": 2281.89,
+    "newCustomers": 187,
+    "returningCustomers": 456,
+    "currency": "USD"
+  },
+  "revenueByRegion": [
+    {
+      "region": "North America",
+      "regionCode": "NA",
+      "revenue": 1545000.00,
+      "percentOfTotal": 54.26,
+      "orders": 678,
+      "averageOrderValue": 2278.17,
+      "growth": {
+        "compareToLastYear": 12.5,
+        "compareToLastQuarter": 8.3
+      }
+    },
+    {
+      "region": "Europe",
+      "regionCode": "EU",
+      "revenue": 854500.00,
+      "percentOfTotal": 30.01,
+      "orders": 389,
+      "averageOrderValue": 2196.92,
+      "growth": {
+        "compareToLastYear": 18.2,
+        "compareToLastQuarter": 15.7
+      }
+    },
+    {
+      "region": "Asia Pacific",
+      "regionCode": "APAC",
+      "revenue": 348000.00,
+      "percentOfTotal": 12.22,
+      "orders": 145,
+      "averageOrderValue": 2400.00,
+      "growth": {
+        "compareToLastYear": 25.8,
+        "compareToLastQuarter": 22.4
+      }
+    },
+    {
+      "region": "Latin America",
+      "regionCode": "LATAM",
+      "revenue": 100000.00,
+      "percentOfTotal": 3.51,
+      "orders": 36,
+      "averageOrderValue": 2777.78,
+      "growth": {
+        "compareToLastYear": 45.2,
+        "compareToLastQuarter": 35.1
+      }
+    }
+  ],
+  "revenueByProductCategory": [
+    {
+      "categoryId": "CAT-SOFTWARE",
+      "categoryName": "Software Licenses",
+      "revenue": 1250000.00,
+      "percentOfTotal": 43.90,
+      "unitsSold": 2450,
+      "averagePrice": 510.20,
+      "topProducts": [
+        {
+          "productId": "PROD-SW-ENT-2025",
+          "productName": "Enterprise Suite 2025",
+          "revenue": 675000.00,
+          "unitsSold": 450
+        },
+        {
+          "productId": "PROD-SW-PRO-2025",
+          "productName": "Professional Suite 2025",
+          "revenue": 425000.00,
+          "unitsSold": 850
+        }
+      ]
+    },
+    {
+      "categoryId": "CAT-SERVICES",
+      "categoryName": "Professional Services",
+      "revenue": 895000.00,
+      "percentOfTotal": 31.43,
+      "unitsSold": 178,
+      "averagePrice": 5028.09,
+      "topProducts": [
+        {
+          "productId": "SVC-CONSULTING",
+          "productName": "Consulting Services",
+          "revenue": 545000.00,
+          "unitsSold": 89
+        },
+        {
+          "productId": "SVC-TRAINING",
+          "productName": "Training Services",
+          "revenue": 225000.00,
+          "unitsSold": 45
+        }
+      ]
+    },
+    {
+      "categoryId": "CAT-HARDWARE",
+      "categoryName": "Hardware Products",
+      "revenue": 545000.00,
+      "percentOfTotal": 19.14,
+      "unitsSold": 1245,
+      "averagePrice": 437.75,
+      "topProducts": [
+        {
+          "productId": "HW-SERVER-ENT",
+          "productName": "Enterprise Server",
+          "revenue": 325000.00,
+          "unitsSold": 65
+        },
+        {
+          "productId": "HW-NETWORK-SW",
+          "productName": "Network Switch",
+          "revenue": 145000.00,
+          "unitsSold": 145
+        }
+      ]
+    },
+    {
+      "categoryId": "CAT-SUPPORT",
+      "categoryName": "Support Contracts",
+      "revenue": 157500.00,
+      "percentOfTotal": 5.53,
+      "unitsSold": 315,
+      "averagePrice": 500.00,
+      "topProducts": [
+        {
+          "productId": "SUP-PREMIUM",
+          "productName": "Premium Support",
+          "revenue": 125000.00,
+          "unitsSold": 125
+        }
+      ]
+    }
+  ],
+  "salesByChannel": [
+    {
+      "channel": "Direct Sales",
+      "revenue": 1425000.00,
+      "percentOfTotal": 50.05,
+      "orders": 445,
+      "averageOrderValue": 3202.25
+    },
+    {
+      "channel": "Online Store",
+      "revenue": 895000.00,
+      "percentOfTotal": 31.43,
+      "orders": 625,
+      "averageOrderValue": 1432.00
+    },
+    {
+      "channel": "Partner Resellers",
+      "revenue": 445000.00,
+      "percentOfTotal": 15.63,
+      "orders": 145,
+      "averageOrderValue": 3068.97
+    },
+    {
+      "channel": "Marketplaces",
+      "revenue": 82500.00,
+      "percentOfTotal": 2.90,
+      "orders": 33,
+      "averageOrderValue": 2500.00
+    }
+  ],
+  "topSalesRepresentatives": [
+    {
+      "employeeId": "EMP-7742",
+      "name": "Michael Johnson",
+      "territory": "Northeast US",
+      "revenue": 545000.00,
+      "orders": 89,
+      "conversionRate": 35.6,
+      "averageDealSize": 6123.60,
+      "quota": 500000.00,
+      "quotaAttainment": 109.0
+    },
+    {
+      "employeeId": "EMP-8821",
+      "name": "Sarah Williams",
+      "territory": "Western Europe",
+      "revenue": 425000.00,
+      "orders": 67,
+      "conversionRate": 32.1,
+      "averageDealSize": 6343.28,
+      "quota": 400000.00,
+      "quotaAttainment": 106.25
+    },
+    {
+      "employeeId": "EMP-5563",
+      "name": "David Chen",
+      "territory": "APAC",
+      "revenue": 348000.00,
+      "orders": 56,
+      "conversionRate": 28.7,
+      "averageDealSize": 6214.29,
+      "quota": 350000.00,
+      "quotaAttainment": 99.43
+    },
+    {
+      "employeeId": "EMP-6634",
+      "name": "Emily Rodriguez",
+      "territory": "Southeast US",
+      "revenue": 325000.00,
+      "orders": 78,
+      "conversionRate": 31.2,
+      "averageDealSize": 4166.67,
+      "quota": 300000.00,
+      "quotaAttainment": 108.33
+    },
+    {
+      "employeeId": "EMP-4492",
+      "name": "James Anderson",
+      "territory": "Midwest US",
+      "revenue": 285000.00,
+      "orders": 92,
+      "conversionRate": 29.5,
+      "averageDealSize": 3097.83,
+      "quota": 300000.00,
+      "quotaAttainment": 95.0
+    }
+  ],
+  "customerMetrics": {
+    "totalCustomers": 643,
+    "newCustomers": 187,
+    "returningCustomers": 456,
+    "churnedCustomers": 12,
+    "customerRetentionRate": 97.44,
+    "averageCustomerLifetimeValue": 15450.00,
+    "topCustomers": [
+      {
+        "customerId": "CUST-9912",
+        "companyName": "Global Enterprises LLC",
+        "revenue": 125000.00,
+        "orders": 8,
+        "industry": "Technology"
+      },
+      {
+        "customerId": "CUST-7788",
+        "companyName": "Manufacturing Corp",
+        "revenue": 98500.00,
+        "orders": 5,
+        "industry": "Manufacturing"
+      },
+      {
+        "customerId": "CUST-5544",
+        "companyName": "Healthcare Systems Inc",
+        "revenue": 87500.00,
+        "orders": 6,
+        "industry": "Healthcare"
+      }
+    ]
+  },
+  "pipelineMetrics": {
+    "totalPipelineValue": 4500000.00,
+    "qualifiedLeads": 234,
+    "opportunitiesInProgress": 156,
+    "averageSalesCycleDays": 45,
+    "winRate": 28.5,
+    "projectedQuarterEndRevenue": 5200000.00,
+    "forecastConfidence": 85.5
+  },
+  "keyInsights": [
+    "APAC region showing strongest growth at 25.8% YoY",
+    "Software licenses remain top revenue category at 43.9% of total",
+    "Average order value increased 5.2% compared to Q4 2024",
+    "Direct sales channel performing above target with 50% of revenue",
+    "Customer retention rate improved to 97.44% from 95.1% last quarter"
+  ],
+  "recommendations": [
+    "Increase investment in APAC market to capitalize on growth momentum",
+    "Expand online store capabilities to improve conversion rates",
+    "Focus on upselling professional services to existing software customers",
+    "Develop partner enablement program to increase reseller channel performance"
+  ]
+}

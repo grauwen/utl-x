@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlightReservation xmlns="http://www.airlines.us/booking/v1"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <BookingReference>
+        <ConfirmationCode>ABC123</ConfirmationCode>
+        <RecordLocator>PNR-US-2025-789456</RecordLocator>
+        <BookingDate>2025-01-16T14:30:00-05:00</BookingDate>
+        <BookingChannel>ONLINE</BookingChannel>
+        <BookingStatus>CONFIRMED</BookingStatus>
+    </BookingReference>
+
+    <TravelAgency>
+        <AgencyName>American Travel Services, Inc.</AgencyName>
+        <AgencyCode>ARC-12345678</AgencyCode>
+        <IAT ANumber>12-345678-9</IATANumber>
+        <Agent>
+            <Name>Jennifer Martinez</Name>
+            <AgentID>JM-456789</AgentID>
+            <Phone>+1-212-555-0123</Phone>
+            <Email>jennifer.martinez@ats.com</Email>
+        </Agent>
+    </TravelAgency>
+
+    <Passengers>
+        <Passenger>
+            <PassengerNumber>1</PassengerNumber>
+            <PassengerType>ADULT</PassengerType>
+            <FrequentFlyerNumber>AA-123456789</FrequentFlyerNumber>
+            <Title>Mr</Title>
+            <FirstName>John</FirstName>
+            <MiddleName>Michael</MiddleName>
+            <LastName>Smith</LastName>
+            <DateOfBirth>1980-05-15</DateOfBirth>
+            <Gender>M</Gender>
+            <Nationality>USA</Nationality>
+            <PassportNumber>123456789</PassportNumber>
+            <PassportExpiry>2030-05-14</PassportExpiry>
+            <PassportCountry>USA</PassportCountry>
+            <TSA_PreCheck>
+                <KnownTravelerNumber>987654321</KnownTravelerNumber>
+            </TSA_PreCheck>
+            <Contact>
+                <Email>john.smith@example.com</Email>
+                <Phone>+1-212-555-0100</Phone>
+                <Mobile>+1-917-555-0100</Mobile>
+            </Contact>
+            <Address>
+                <Street>123 Park Avenue</Street>
+                <Apartment>Apt 45B</Apartment>
+                <City>New York</City>
+                <State>NY</State>
+                <ZipCode>10016</ZipCode>
+                <Country>USA</Country>
+            </Address>
+            <SpecialRequests>
+                <Request>AISLE_SEAT</Request>
+                <Request>VEGETARIAN_MEAL</Request>
+                <Request>EXTRA_LEGROOM</Request>
+            </SpecialRequests>
+        </Passenger>
+
+        <Passenger>
+            <PassengerNumber>2</PassengerNumber>
+            <PassengerType>ADULT</PassengerType>
+            <FrequentFlyerNumber>AA-987654321</FrequentFlyerNumber>
+            <Title>Mrs</Title>
+            <FirstName>Emily</FirstName>
+            <MiddleName>Rose</MiddleName>
+            <LastName>Smith</LastName>
+            <DateOfBirth>1982-08-22</DateOfBirth>
+            <Gender>F</Gender>
+            <Nationality>USA</Nationality>
+            <PassportNumber>987654321</PassportNumber>
+            <PassportExpiry>2029-08-21</PassportExpiry>
+            <PassportCountry>USA</PassportCountry>
+            <Contact>
+                <Email>emily.smith@example.com</Email>
+                <Phone>+1-212-555-0101</Phone>
+                <Mobile>+1-917-555-0101</Mobile>
+            </Contact>
+            <SpecialRequests>
+                <Request>WINDOW_SEAT</Request>
+                <Request>GLUTEN_FREE_MEAL</Request>
+            </SpecialRequests>
+        </Passenger>
+    </Passengers>
+
+    <Itinerary>
+        <TotalSegments>4</TotalSegments>
+        <TripType>ROUND_TRIP</TripType>
+
+        <Segment>
+            <SegmentNumber>1</SegmentNumber>
+            <FlightDetails>
+                <Airline>
+                    <Code>AA</Code>
+                    <Name>American Airlines</Name>
+                </Airline>
+                <FlightNumber>AA1234</FlightNumber>
+                <OperatingCarrier>AA</OperatingCarrier>
+                <AircraftType>Boeing 787-9 Dreamliner</AircraftType>
+                <AircraftRegistration>N987AN</AircraftRegistration>
+                <ServiceClass>BUSINESS</ServiceClass>
+            </FlightDetails>
+            <Departure>
+                <Airport>
+                    <Code>JFK</Code>
+                    <Name>John F. Kennedy International Airport</Name>
+                    <Terminal>8</Terminal>
+                    <City>New York</City>
+                    <State>NY</State>
+                    <Country>USA</Country>
+                </Airport>
+                <DateTime>2025-02-15T18:30:00-05:00</DateTime>
+                <TimeZone>EST</TimeZone>
+            </Departure>
+            <Arrival>
+                <Airport>
+                    <Code>LAX</Code>
+                    <Name>Los Angeles International Airport</Name>
+                    <Terminal>4</Terminal>
+                    <City>Los Angeles</City>
+                    <State>CA</State>
+                    <Country>USA</Country>
+                </Airport>
+                <DateTime>2025-02-15T21:45:00-08:00</DateTime>
+                <TimeZone>PST</TimeZone>
+            </Arrival>
+            <Duration>PT5H15M</Duration>
+            <Distance>
+                <Miles>2,475</Miles>
+                <Kilometers>3,983</Kilometers>
+            </Distance>
+            <Status>CONFIRMED</Status>
+            <SeatAssignments>
+                <Passenger>
+                    <PassengerNumber>1</PassengerNumber>
+                    <SeatNumber>3A</SeatNumber>
+                    <SeatType>WINDOW</SeatType>
+                </Passenger>
+                <Passenger>
+                    <PassengerNumber>2</PassengerNumber>
+                    <SeatNumber>3C</SeatNumber>
+                    <SeatType>AISLE</SeatType>
+                </Passenger>
+            </SeatAssignments>
+        </Segment>
+
+        <Segment>
+            <SegmentNumber>2</SegmentNumber>
+            <FlightDetails>
+                <Airline>
+                    <Code>AA</Code>
+                    <Name>American Airlines</Name>
+                </Airline>
+                <FlightNumber>AA5678</FlightNumber>
+                <OperatingCarrier>AA</OperatingCarrier>
+                <AircraftType>Airbus A321neo</AircraftType>
+                <AircraftRegistration>N456AA</AircraftRegistration>
+                <ServiceClass>BUSINESS</ServiceClass>
+            </FlightDetails>
+            <Departure>
+                <Airport>
+                    <Code>LAX</Code>
+                    <Name>Los Angeles International Airport</Name>
+                    <Terminal>4</Terminal>
+                    <City>Los Angeles</City>
+                    <State>CA</State>
+                    <Country>USA</Country>
+                </Airport>
+                <DateTime>2025-02-16T08:00:00-08:00</DateTime>
+                <TimeZone>PST</TimeZone>
+            </Departure>
+            <Arrival>
+                <Airport>
+                    <Code>SFO</Code>
+                    <Name>San Francisco International Airport</Name>
+                    <Terminal>1</Terminal>
+                    <City>San Francisco</City>
+                    <State>CA</State>
+                    <Country>USA</Country>
+                </Airport>
+                <DateTime>2025-02-16T09:25:00-08:00</DateTime>
+                <TimeZone>PST</TimeZone>
+            </Arrival>
+            <Duration>PT1H25M</Duration>
+            <Distance>
+                <Miles>337</Miles>
+                <Kilometers>542</Kilometers>
+            </Distance>
+            <Status>CONFIRMED</Status>
+            <SeatAssignments>
+                <Passenger>
+                    <PassengerNumber>1</PassengerNumber>
+                    <SeatNumber>5D</SeatNumber>
+                    <SeatType>AISLE</SeatType>
+                </Passenger>
+                <Passenger>
+                    <PassengerNumber>2</PassengerNumber>
+                    <SeatNumber>5F</SeatNumber>
+                    <SeatType>WINDOW</SeatType>
+                </Passenger>
+            </SeatAssignments>
+        </Segment>
+
+        <Segment>
+            <SegmentNumber>3</SegmentNumber>
+            <FlightDetails>
+                <Airline>
+                    <Code>AA</Code>
+                    <Name>American Airlines</Name>
+                </Airline>
+                <FlightNumber>AA9012</FlightNumber>
+                <OperatingCarrier>AA</OperatingCarrier>
+                <AircraftType>Boeing 737 MAX 8</AircraftType>
+                <AircraftRegistration>N789AA</AircraftRegistration>
+                <ServiceClass>BUSINESS</ServiceClass>
+            </FlightDetails>
+            <Departure>
+                <Airport>
+                    <Code>SFO</Code>
+                    <Name>San Francisco International Airport</Name>
+                    <Terminal>1</Terminal>
+                    <City>San Francisco</City>
+                    <State>CA</State>
+                    <Country>USA</Country>
+                </Airport>
+                <DateTime>2025-02-22T15:45:00-08:00</DateTime>
+                <TimeZone>PST</TimeZone>
+            </Departure>
+            <Arrival>
+                <Airport>
+                    <Code>LAX</Code>
+                    <Name>Los Angeles International Airport</Name>
+                    <Terminal>4</Terminal>
+                    <City>Los Angeles</City>
+                    <State>CA</State>
+                    <Country>USA</Country>
+                </Airport>
+                <DateTime>2025-02-22T17:10:00-08:00</DateTime>
+                <TimeZone>PST</TimeZone>
+            </Arrival>
+            <Duration>PT1H25M</Duration>
+            <Distance>
+                <Miles>337</Miles>
+                <Kilometers>542</Kilometers>
+            </Distance>
+            <Status>CONFIRMED</Status>
+            <SeatAssignments>
+                <Passenger>
+                    <PassengerNumber>1</PassengerNumber>
+                    <SeatNumber>7A</SeatNumber>
+                    <SeatType>WINDOW</SeatType>
+                </Passenger>
+                <Passenger>
+                    <PassengerNumber>2</PassengerNumber>
+                    <SeatNumber>7C</SeatNumber>
+                    <SeatType>AISLE</SeatType>
+                </Passenger>
+            </SeatAssignments>
+        </Segment>
+
+        <Segment>
+            <SegmentNumber>4</SegmentNumber>
+            <FlightDetails>
+                <Airline>
+                    <Code>AA</Code>
+                    <Name>American Airlines</Name>
+                </Airline>
+                <FlightNumber>AA3456</FlightNumber>
+                <OperatingCarrier>AA</OperatingCarrier>
+                <AircraftType>Boeing 787-8 Dreamliner</AircraftType>
+                <AircraftRegistration>N234AN</AircraftRegistration>
+                <ServiceClass>BUSINESS</ServiceClass>
+            </FlightDetails>
+            <Departure>
+                <Airport>
+                    <Code>LAX</Code>
+                    <Name>Los Angeles International Airport</Name>
+                    <Terminal>4</Terminal>
+                    <City>Los Angeles</City>
+                    <State>CA</State>
+                    <Country>USA</Country>
+                </Airport>
+                <DateTime>2025-02-22T20:15:00-08:00</DateTime>
+                <TimeZone>PST</TimeZone>
+            </Departure>
+            <Arrival>
+                <Airport>
+                    <Code>JFK</Code>
+                    <Name>John F. Kennedy International Airport</Name>
+                    <Terminal>8</Terminal>
+                    <City>New York</City>
+                    <State>NY</State>
+                    <Country>USA</Country>
+                </Airport>
+                <DateTime>2025-02-23T04:30:00-05:00</DateTime>
+                <TimeZone>EST</TimeZone>
+            </Arrival>
+            <Duration>PT5H15M</Duration>
+            <Distance>
+                <Miles>2,475</Miles>
+                <Kilometers>3,983</Kilometers>
+            </Distance>
+            <Status>CONFIRMED</Status>
+            <SeatAssignments>
+                <Passenger>
+                    <PassengerNumber>1</PassengerNumber>
+                    <SeatNumber>2K</SeatNumber>
+                    <SeatType>WINDOW</SeatType>
+                </Passenger>
+                <Passenger>
+                    <PassengerNumber>2</PassengerNumber>
+                    <SeatNumber>2H</SeatNumber>
+                    <SeatType>AISLE</SeatType>
+                </Passenger>
+            </SeatAssignments>
+        </Segment>
+    </Itinerary>
+
+    <Baggage>
+        <CheckedBaggage>
+            <IncludedBags>2</IncludedBags>
+            <MaxWeight>
+                <Pounds>50</Pounds>
+                <Kilograms>23</Kilograms>
+            </MaxWeight>
+            <MaxDimensions>62 linear inches (158 cm)</MaxDimensions>
+        </CheckedBaggage>
+        <CarryOnBaggage>
+            <IncludedBags>1</IncludedBags>
+            <PersonalItem>1</PersonalItem>
+            <MaxDimensions>22 x 14 x 9 inches (56 x 36 x 23 cm)</MaxDimensions>
+        </CarryOnBaggage>
+    </Baggage>
+
+    <FareDetails>
+        <FareClass>J</FareClass>
+        <FareBasis>JBUS14</FareBasis>
+        <CabinClass>BUSINESS</CabinClass>
+        <BookingClass>J</BookingClass>
+        <TariffCode>TRF-BUS-2025</TariffCode>
+    </FareDetails>
+
+    <Pricing>
+        <Passenger>
+            <PassengerNumber>1</PassengerNumber>
+            <BaseFare currency="USD">3,450.00</BaseFare>
+            <Taxes>
+                <Tax>
+                    <Code>US</Code>
+                    <Description>US Transportation Tax</Description>
+                    <Amount currency="USD">241.50</Amount>
+                </Tax>
+                <Tax>
+                    <Code>AY</Code>
+                    <Description>US September 11th Security Fee</Description>
+                    <Amount currency="USD">11.20</Amount>
+                </Tax>
+                <Tax>
+                    <Code>XF</Code>
+                    <Description>Passenger Facility Charges</Description>
+                    <Amount currency="USD">18.00</Amount>
+                </Tax>
+                <Tax>
+                    <Code>ZP</Code>
+                    <Description>US Segment Fee</Description>
+                    <Amount currency="USD">17.60</Amount>
+                </Tax>
+            </Taxes>
+            <TotalTaxes currency="USD">288.30</TotalTaxes>
+            <TotalFare currency="USD">3,738.30</TotalFare>
+        </Passenger>
+        <Passenger>
+            <PassengerNumber>2</PassengerNumber>
+            <BaseFare currency="USD">3,450.00</BaseFare>
+            <Taxes>
+                <Tax>
+                    <Code>US</Code>
+                    <Description>US Transportation Tax</Description>
+                    <Amount currency="USD">241.50</Amount>
+                </Tax>
+                <Tax>
+                    <Code>AY</Code>
+                    <Description>US September 11th Security Fee</Description>
+                    <Amount currency="USD">11.20</Amount>
+                </Tax>
+                <Tax>
+                    <Code>XF</Code>
+                    <Description>Passenger Facility Charges</Description>
+                    <Amount currency="USD">18.00</Amount>
+                </Tax>
+                <Tax>
+                    <Code>ZP</Code>
+                    <Description>US Segment Fee</Description>
+                    <Amount currency="USD">17.60</Amount>
+                </Tax>
+            </Taxes>
+            <TotalTaxes currency="USD">288.30</TotalTaxes>
+            <TotalFare currency="USD">3,738.30</TotalFare>
+        </Passenger>
+        <TotalCost>
+            <SubtotalBaseFares currency="USD">6,900.00</SubtotalBaseFares>
+            <SubtotalTaxes currency="USD">576.60</SubtotalTaxes>
+            <GrandTotal currency="USD">7,476.60</GrandTotal>
+            <AmountInWords>Seven thousand four hundred seventy-six dollars and sixty cents</AmountInWords>
+        </TotalCost>
+    </Pricing>
+
+    <Payment>
+        <PaymentMethod>CREDIT_CARD</PaymentMethod>
+        <CardType>Visa</CardType>
+        <CardNumber>****-****-****-4532</CardNumber>
+        <CardholderName>JOHN M SMITH</CardholderName>
+        <BillingAddress>
+            <Street>123 Park Avenue</Street>
+            <Apartment>Apt 45B</Apartment>
+            <City>New York</City>
+            <State>NY</State>
+            <ZipCode>10016</ZipCode>
+            <Country>USA</Country>
+        </BillingAddress>
+        <TransactionID>TXN-US-2025-0116-143000</TransactionID>
+        <AuthorizationCode>AUTH-789456</AuthorizationCode>
+        <TransactionDate>2025-01-16T14:30:00-05:00</TransactionDate>
+        <AmountCharged currency="USD">7,476.60</AmountCharged>
+        <PaymentStatus>APPROVED</PaymentStatus>
+    </Payment>
+
+    <TicketNumbers>
+        <Ticket>
+            <PassengerNumber>1</PassengerNumber>
+            <TicketNumber>001-2345678901</TicketNumber>
+            <ElectronicTicket>true</ElectronicTicket>
+        </Ticket>
+        <Ticket>
+            <PassengerNumber>2</PassengerNumber>
+            <TicketNumber>001-2345678902</TicketNumber>
+            <ElectronicTicket>true</ElectronicTicket>
+        </Ticket>
+    </TicketNumbers>
+
+    <ImportantInformation>
+        <TicketingDeadline>2025-01-18T23:59:00-05:00</TicketingDeadline>
+        <CancellationPolicy>Business class tickets are refundable with a $250 cancellation fee per ticket. Changes allowed with a $150 change fee per ticket.</CancellationPolicy>
+        <CheckInWindow>Online check-in opens 24 hours before departure</CheckInWindow>
+        <TSA_Requirements>All passengers must have valid government-issued photo ID. TSA PreCheck members may use expedited security screening.</TSA_Requirements>
+    </ImportantInformation>
+
+    <USAirlineTerms>
+        <Terms>AA, JFK, LAX, SFO, TSA PreCheck, Visa, American Airlines</Terms>
+        <Symbols>$, &amp;, ®, ™, ©</Symbols>
+    </USAirlineTerms>
+</FlightReservation>

@@ -1,0 +1,28 @@
+name: get_examples_search_basic
+description: Test get_examples tool with basic search query
+tags:
+  - tools
+  - get_examples
+  - tfidf
+  - search
+
+sequence:
+  - description: "Search for array transformation examples"
+    request:
+      jsonrpc: "2.0"
+      id: 40
+      method: "tools/call"
+      params:
+        name: "get_examples"
+        arguments:
+          query: "array transformation map filter"
+          limit: 5
+    expect:
+      jsonrpc: "2.0"
+      id: 40
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+        # Parsed JSON should contain:
+        # {"success": true, "examples": [...], "count": <number>, "totalIndexed": <number>}

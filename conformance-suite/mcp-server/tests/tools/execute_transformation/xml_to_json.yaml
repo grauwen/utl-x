@@ -1,0 +1,28 @@
+name: execute_transformation_xml_to_json
+description: Test execute_transformation tool with XML input, JSON output
+tags:
+  - tools
+  - execute_transformation
+  - xml
+  - format
+
+sequence:
+  - description: "Execute XML to JSON transformation"
+    request:
+      jsonrpc: "2.0"
+      id: 21
+      method: "tools/call"
+      params:
+        name: "execute_transformation"
+        arguments:
+          utlx: "output: { name: input.person.name, age: input.person.age }"
+          input: "<person><name>John Doe</name><age>30</age></person>"
+          inputFormat: "xml"
+          outputFormat: "json"
+    expect:
+      jsonrpc: "2.0"
+      id: 21
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

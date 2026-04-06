@@ -1,0 +1,29 @@
+@udm-version: 1.0
+
+{
+  input: {
+    orders: [
+      { orderId: "ORD-001", amount: 100.50, status: "completed" },
+      { orderId: "ORD-002", amount: 250.00, status: "pending" },
+      { orderId: "ORD-003", amount: 75.25, status: "completed" }
+    ]
+  },
+
+  transformations: {
+    completedOrders: %filter($input.orders, o => o.status == "completed"),
+
+    totalRevenue: %reduce(
+      %filter($input.orders, o => o.status == "completed"),
+      0,
+      (acc, order) => acc + order.amount
+    ),
+
+    orderIds: %map($input.orders, o => o.orderId),
+
+    formattedOrders: %map($input.orders, o => {
+      orderId: o.orderId,
+      amountUSD: "$" + o.amount,
+      isCompleted: o.status == "completed"
+    })
+  }
+}

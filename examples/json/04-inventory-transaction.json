@@ -1,0 +1,50 @@
+{
+  "transactionId": "TXN-2025-IN-00892",
+  "transactionType": "STOCK_RECEIPT",
+  "transactionDate": "2025-01-16T14:22:00Z",
+  "warehouse": {
+    "warehouseId": "WH-WEST-01",
+    "name": "West Coast Distribution Center",
+    "location": {
+      "city": "Los Angeles",
+      "state": "CA",
+      "country": "USA"
+    }
+  },
+  "supplier": {
+    "supplierId": "SUP-4432",
+    "name": "Pacific Manufacturing Co.",
+    "poNumber": "PO-2024-9876"
+  },
+  "items": [
+    {
+      "sku": "WDG-100-BLU",
+      "productName": "Blue Widget",
+      "category": "Widgets",
+      "quantityReceived": 500,
+      "unitCost": 12.50,
+      "totalCost": 6250.00,
+      "binLocation": "A-12-C",
+      "lotNumber": "LOT-2025-0116-001",
+      "expirationDate": "2027-01-16"
+    },
+    {
+      "sku": "GADGET-PRO-200",
+      "productName": "Professional Gadget",
+      "category": "Gadgets",
+      "quantityReceived": 200,
+      "unitCost": 45.00,
+      "totalCost": 9000.00,
+      "binLocation": "B-05-A",
+      "lotNumber": "LOT-2025-0116-002",
+      "expirationDate": null
+    }
+  ],
+  "totalValue": 15250.00,
+  "receivedBy": {
+    "employeeId": "EMP-7821",
+    "name": "Carlos Rodriguez"
+  },
+  "inspectionStatus": "PASSED",
+  "notes": "All items received in good condition. Quality check completed."
+}

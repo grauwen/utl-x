@@ -1,0 +1,81 @@
+name: search_validate_execute
+description: Integration test - search examples, validate code, execute transformation
+tags:
+  - integration
+  - workflow
+  - search
+  - validate
+  - execute
+
+sequence:
+  - description: "Step 1: Search for transformation examples"
+    request:
+      jsonrpc: "2.0"
+      id: 96
+      method: "tools/call"
+      params:
+        name: "get_examples"
+        arguments:
+          query: "string concatenation"
+          limit: 3
+    expect:
+      jsonrpc: "2.0"
+      id: 96
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Step 2: Get stdlib functions for string operations"
+    request:
+      jsonrpc: "2.0"
+      id: 97
+      method: "tools/call"
+      params:
+        name: "get_stdlib_functions"
+        arguments:
+          category: "string"
+    expect:
+      jsonrpc: "2.0"
+      id: 97
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Step 3: Validate transformation code"
+    request:
+      jsonrpc: "2.0"
+      id: 98
+      method: "tools/call"
+      params:
+        name: "validate_utlx"
+        arguments:
+          code: "output: { message: 'Hello, ' + input.name + '!' }"
+    expect:
+      jsonrpc: "2.0"
+      id: 98
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Step 4: Execute the transformation"
+    request:
+      jsonrpc: "2.0"
+      id: 99
+      method: "tools/call"
+      params:
+        name: "execute_transformation"
+        arguments:
+          utlx: "output: { message: 'Hello, ' + input.name + '!' }"
+          input: "{\"name\": \"Alice\"}"
+          inputFormat: "json"
+          outputFormat: "json"
+    expect:
+      jsonrpc: "2.0"
+      id: 99
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

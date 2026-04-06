@@ -1,0 +1,23 @@
+EntityName,FieldName,FieldType,Required,MinLength,MaxLength,Pattern,Description,Example
+Customer,customerId,string,true,8,12,^CUST-[0-9]{4,8}$,Unique customer identifier,CUST-10001
+Customer,email,string,true,5,100,^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$,Customer email address,customer@example.com
+Customer,firstName,string,true,1,50,,Customer first name,John
+Customer,lastName,string,true,1,50,,Customer last name,Smith
+Customer,phoneNumber,string,false,10,20,^\+?[0-9\-\s()]+$,Contact phone number,+1-555-0123
+Customer,dateOfBirth,string,false,10,10,^\d{4}-\d{2}-\d{2}$,Birth date in ISO format,1985-03-15
+Customer,accountStatus,string,true,,,^(active|inactive|suspended)$,Account status enumeration,active
+Customer,accountType,string,true,,,^(standard|premium|enterprise)$,Account tier,premium
+Customer,registrationDate,string,true,,,^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$,ISO 8601 registration timestamp,2024-01-15T10:30:00Z
+Customer,creditLimit,number,false,,,,,Maximum credit limit in USD,50000.00
+Customer,currentBalance,number,true,,,,,Current account balance,12450.75
+Address,street,string,true,1,100,,Street address,123 Main Street
+Address,city,string,true,1,50,,City name,New York
+Address,state,string,true,2,2,^[A-Z]{2}$,US state code,NY
+Address,postalCode,string,true,5,10,^\d{5}(-\d{4})?$,ZIP or ZIP+4 code,10001
+Address,country,string,true,2,3,^[A-Z]{2,3}$,ISO country code,US
+Address,addressType,string,true,,,^(billing|shipping|both)$,Address type classification,billing
+Preferences,newsletter,boolean,true,,,,Newsletter subscription flag,true
+Preferences,smsNotifications,boolean,true,,,,SMS alerts enabled,false
+Preferences,language,string,true,2,5,^[a-z]{2}(-[A-Z]{2})?$,Preferred language code,en-US
+Preferences,timezone,string,false,,,^[A-Za-z]+/[A-Za-z_]+$,IANA timezone identifier,America/New_York
+Preferences,currency,string,true,3,3,^[A-Z]{3}$,ISO 4217 currency code,USD

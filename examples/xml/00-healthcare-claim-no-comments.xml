@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<HealthcareClaim xmlns="http://healthcare.example.com/claim/v2"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 claimId="CLM-2024-789456"
+                 submissionDate="2024-03-20T09:15:00Z"
+                 claimStatus="pending_review"
+                 claimVersion="2.1"
+                 processingPriority="standard">
+
+    <ClaimMetadata>
+        <CreatedBy userId="USR-5678" userName="Dr. Sarah Williams" role="attending_physician"/>
+        <CreatedDate>2024-03-20T09:15:00Z</CreatedDate>
+        <LastModifiedBy userId="USR-5679" userName="Jane Smith" role="claims_processor"/>
+        <LastModifiedDate>2024-03-20T14:30:00Z</LastModifiedDate>
+        <SourceSystem systemId="EHR-EPIC-001" systemName="Epic Electronic Health Records" version="2023.4"/>
+        <ProcessingRegion code="US-CA-NORTH" name="Northern California" timezone="America/Los_Angeles"/>
+    </ClaimMetadata>
+
+    <Patient patientId="PAT-10234567"
+             recordNumber="MRN-89456123"
+             accountStatus="active"
+             vipStatus="false">
+
+        <PersonalInformation>
+            <FullName prefix="Ms." firstName="Jennifer" middleName="Marie" lastName="Anderson" suffix="">Jennifer Marie Anderson</FullName>
+            <DateOfBirth>1985-06-15</DateOfBirth>
+            <Gender code="F">Female</Gender>
+            <SocialSecurityNumber encrypted="true">***-**-4567</SocialSecurityNumber>
+            <MaritalStatus code="M">Married</MaritalStatus>
+
+            <ContactDetails preferredMethod="email" consentToContact="true">
+                <PrimaryPhone type="mobile"
+                             countryCode="+1"
+                             areaCode="415"
+                             number="555-0198"
+                             extension=""
+                             verified="true"
+                             verifiedDate="2024-01-10">+1-415-555-0198</PrimaryPhone>
+
+                <SecondaryPhone type="home"
+                               countryCode="+1"
+                               areaCode="415"
+                               number="555-0199"
+                               extension=""
+                               verified="false">+1-415-555-0199</SecondaryPhone>
+
+                <EmailAddress type="personal"
+                             verified="true"
+                             verifiedDate="2024-01-10"
+                             marketingConsent="true">jennifer.anderson@email.com</EmailAddress>
+
+                <ResidentialAddress addressId="ADDR-45678"
+                                   addressType="primary"
+                                   residenceSince="2020-03-01"
+                                   ownershipStatus="owner">
+                    <StreetAddress1>2847 Pacific Heights Avenue</StreetAddress1>
+                    <StreetAddress2>Apartment 12B</StreetAddress2>
+                    <City>San Francisco</City>
+                    <StateProvince code="CA">California</StateProvince>
+                    <PostalCode type="ZIP+4">94109-1234</PostalCode>
+                    <Country code="US">United States</Country>
+
+                    <GeoLocation coordinateSystem="WGS84"
+                                accuracy="rooftop"
+                                lastUpdated="2024-01-15T10:00:00Z"
+                                verificationMethod="GPS">
+                        <Latitude unit="degrees">37.7955</Latitude>
+                        <Longitude unit="degrees">-122.4232</Longitude>
+                        <Altitude unit="meters">52.3</Altitude>
+                        <GeoPrecision unit="meters">5.0</GeoPrecision>
+
+
+                        <ServiceArea regionCode="SF-NORTH"
+                                    regionName="San Francisco North"
+                                    serviceLevel="full"
+                                    emergencyServicesAvailable="true">
+                            <ProviderNetwork networkId="NET-001"
+                                           networkName="Bay Area Premier Health Network"
+                                           tierLevel="1"
+                                           inNetworkDiscount="20">
+                                <NetworkCoverage coverageType="comprehensive" effectiveDate="2024-01-01">
+                                    <CoverageDetails planType="PPO"
+                                                    deductibleMet="false"
+                                                    outOfPocketMet="false">
+                                        <AnnualDeductible currency="USD">2500.00</AnnualDeductible>
+                                        <DeductibleProgress currency="USD" asOfDate="2024-03-20">825.50</DeductibleProgress>
+                                        <OutOfPocketMax currency="USD">6000.00</OutOfPocketMax>
+                                        <OutOfPocketProgress currency="USD" asOfDate="2024-03-20">1340.25</OutOfPocketProgress>
+
+                             
+                                        <BenefitUtilization trackingPeriod="calendar_year"
+                                                          utilizationStatus="normal"
+                                                          alertThreshold="80">
+                                            <ServiceCategory categoryCode="SPECIALIST_VISITS"
+                                                           categoryName="Specialist Office Visits"
+                                                           requiresAuthorization="false">
+                                                <AllowedVisits period="year">20</AllowedVisits>
+                                                <UsedVisits asOfDate="2024-03-20">4</UsedVisits>
+                                                <RemainingVisits>16</RemainingVisits>
+                                                <CopayAmount currency="USD">45.00</CopayAmount>
+                                                <CoinsurancePercent>20</CoinsurancePercent>
+                                                <LastUtilization date="2024-03-18"
+                                                               providerId="PRV-789"
+                                                               claimId="CLM-2024-789123">
+                                                    <ServiceDescription>Cardiology consultation</ServiceDescription>
+                                                    <ChargedAmount currency="USD">350.00</ChargedAmount>
+                                                    <AllowedAmount currency="USD">280.00</AllowedAmount>
+                                                    <PatientResponsibility currency="USD">101.00</PatientResponsibility>
+                                                </LastUtilization>
+                                            </ServiceCategory>
+                                        </BenefitUtilization>
+                                    </CoverageDetails>
+                                </NetworkCoverage>
+                            </ProviderNetwork>
+                        </ServiceArea>
+                    </GeoLocation>
+                </ResidentialAddress>
+            </ContactDetails>
+        </PersonalInformation>
+
+        <InsuranceCoverage coverageId="COV-456789"
+                          coverageType="primary"
+                          effectiveDate="2024-01-01"
+                          terminationDate="2024-12-31"
+                          coverageStatus="active">
+            <InsuranceCarrier carrierId="INS-001" carrierType="commercial">
+                <CarrierName>Blue Shield of California</CarrierName>
+                <CarrierCode type="NAIC">12345</CarrierCode>
+                <GroupNumber>GRP-789456</GroupNumber>
+                <PolicyNumber>POL-BSC-2024-456789</PolicyNumber>
+            </InsuranceCarrier>
+
+            <Subscriber relationship="self"
+                       subscriberId="SUB-456789"
+                       employmentStatus="full_time">
+                <EmployerInformation employerId="EMP-001"
+                                   employerStatus="active"
+                                   contributionType="shared">
+                    <EmployerName>Tech Innovations Corp</EmployerName>
+                    <EmployerAddress>
+                        <Street>500 Market Street</Street>
+                        <City>San Francisco</City>
+                        <State>CA</State>
+                        <Zip>94105</Zip>
+                    </EmployerAddress>
+                    <EmployerContribution percentage="75"
+                                        amount="562.50"
+                                        currency="USD"
+                                        frequency="monthly"/>
+                </EmployerInformation>
+            </Subscriber>
+        </InsuranceCoverage>
+    </Patient>
+
+    <Provider providerId="PRV-55789"
+             providerType="physician"
+             networkStatus="in_network"
+             boardCertified="true">
+
+        <ProviderDetails npiNumber="1234567890"
+                        taxonomyCode="207R00000X"
+                        specialtyCode="CARD"
+                        yearsOfPractice="15">
+            <ProviderName prefix="Dr." firstName="Michael" lastName="Chen" credentials="MD, FACC">Dr. Michael Chen, MD, FACC</ProviderName>
+            <Specialty primarySpecialty="true">Cardiology</Specialty>
+            <SubSpecialty>Interventional Cardiology</SubSpecialty>
+
+            <PracticeInformation practiceId="PRC-001"
+                               practiceType="group"
+                               taxId="94-1234567">
+                <PracticeName>Bay Area Cardiology Associates</PracticeName>
+
+                <PracticeLocation locationId="LOC-001"
+                                 locationName="Downtown Medical Center"
+                                 facilityType="outpatient_clinic"
+                                 accreditationStatus="JCAHO">
+                    <FacilityAddress>
+                        <Street>750 Medical Plaza Drive</Street>
+                        <Suite>Suite 200</Suite>
+                        <City>San Francisco</City>
+                        <State>CA</State>
+                        <Zip>94143</Zip>
+                        <Country>US</Country>
+                    </FacilityAddress>
+
+                    <ContactInformation>
+                        <Phone type="main">+1-415-555-7890</Phone>
+                        <Phone type="appointments">+1-415-555-7891</Phone>
+                        <Fax>+1-415-555-7892</Fax>
+                        <Email>appointments@bayareacardio.com</Email>
+                        <Website>https://www.bayareacardio.com</Website>
+                    </ContactInformation>
+
+                    <OperatingHours timezone="America/Los_Angeles">
+                        <Weekday day="Monday" open="08:00" close="17:00"/>
+                        <Weekday day="Tuesday" open="08:00" close="17:00"/>
+                        <Weekday day="Wednesday" open="08:00" close="17:00"/>
+                        <Weekday day="Thursday" open="08:00" close="19:00"/>
+                        <Weekday day="Friday" open="08:00" close="16:00"/>
+                    </OperatingHours>
+
+                    <AccessibilityFeatures wheelchairAccessible="true"
+                                         parkingAvailable="true"
+                                         publicTransitNearby="true">
+                        <DisabilityServices hearingImpaired="true" visuallyImpaired="true"/>
+                        <Languages>
+                            <Language primary="true">English</Language>
+                            <Language primary="false">Spanish</Language>
+                            <Language primary="false">Mandarin</Language>
+                        </Languages>
+                    </AccessibilityFeatures>
+                </PracticeLocation>
+            </PracticeInformation>
+        </ProviderDetails>
+    </Provider>
+
+    <ClinicalInformation encounterDate="2024-03-18T10:30:00Z"
+                        encounterType="office_visit"
+                        urgencyLevel="routine">
+
+        <DiagnosisCodes codingSystem="ICD-10-CM"
+                       version="2024"
+                       primaryDiagnosisSequence="1">
+            <Diagnosis diagnosisId="DX-001"
+                      diagnosisCode="I25.10"
+                      diagnosisType="primary"
+                      presentOnAdmission="yes">
+                <DiagnosisDescription>Atherosclerotic heart disease of native coronary artery without angina pectoris</DiagnosisDescription>
+                <OnsetDate>2023-11-15</OnsetDate>
+                <DiagnosisStatus>active</DiagnosisStatus>
+                <Severity level="moderate" score="6" maxScore="10"/>
+            </Diagnosis>
+
+            <Diagnosis diagnosisId="DX-002"
+                      diagnosisCode="I10"
+                      diagnosisType="secondary"
+                      presentOnAdmission="yes">
+                <DiagnosisDescription>Essential (primary) hypertension</DiagnosisDescription>
+                <OnsetDate>2020-05-10</OnsetDate>
+                <DiagnosisStatus>active</DiagnosisStatus>
+                <Severity level="mild" score="3" maxScore="10"/>
+            </Diagnosis>
+        </DiagnosisCodes>
+
+        <ProceduresPerformed codingSystem="CPT" version="2024">
+            <Procedure procedureId="PROC-001"
+                      procedureCode="93000"
+                      procedureType="diagnostic"
+                      procedureStatus="completed">
+                <ProcedureDescription>Electrocardiogram, routine ECG with at least 12 leads</ProcedureDescription>
+                <PerformedDateTime>2024-03-18T10:45:00Z</PerformedDateTime>
+                <Duration unit="minutes">15</Duration>
+                <PerformingProvider providerId="PRV-55789">Dr. Michael Chen, MD, FACC</PerformingProvider>
+
+                <ClinicalFindings findingDate="2024-03-18T11:00:00Z"
+                                reviewedBy="PRV-55789"
+                                criticalResult="false">
+                    <Finding findingId="FIND-001"
+                            findingType="observation"
+                            abnormalFlag="N">
+                        <FindingDescription>Normal sinus rhythm</FindingDescription>
+                        <FindingValue type="qualitative">Regular rhythm, rate 72 bpm</FindingValue>
+                        <ReferenceRange>60-100 bpm</ReferenceRange>
+                    </Finding>
+
+                    <Finding findingId="FIND-002"
+                            findingType="observation"
+                            abnormalFlag="N">
+                        <FindingDescription>No acute ST-T wave changes</FindingDescription>
+                        <FindingValue type="qualitative">Within normal limits</FindingValue>
+                    </Finding>
+
+                    <ClinicalRecommendations priorityLevel="routine"
+                                            followUpRequired="true"
+                                            followUpTimeframe="3_months">
+                        <Recommendation recommendationId="REC-001"
+                                      recommendationType="follow_up"
+                                      urgency="routine">
+                            <RecommendationText>Continue current cardiac medications. Follow-up in 3 months with repeat ECG and lipid panel.</RecommendationText>
+                            <ScheduledDate>2024-06-18</ScheduledDate>
+                            <AssignedProvider providerId="PRV-55789">Dr. Michael Chen, MD, FACC</AssignedProvider>
+
+                            <TreatmentPlan planId="TP-001"
+                                         planStatus="active"
+                                         reviewDate="2024-06-18">
+                                <PlanObjective>Monitor cardiovascular health and manage coronary artery disease</PlanObjective>
+
+                                <Medications instructionsGiven="true"
+                                           patientEducationProvided="true">
+                                    <Medication medicationId="MED-001"
+                                              rxNumber="RX-2024-12345"
+                                              prescriptionStatus="active">
+                                        <MedicationName generic="Atorvastatin" brand="Lipitor">Atorvastatin 40mg</MedicationName>
+                                        <Dosage>
+                                            <Strength>40</Strength>
+                                            <StrengthUnit>mg</StrengthUnit>
+                                            <Form>tablet</Form>
+                                            <Route>oral</Route>
+                                            <Frequency>once daily</Frequency>
+                                            <TimingInstructions>Take at bedtime</TimingInstructions>
+                                        </Dosage>
+                                        <Quantity>90</Quantity>
+                                        <Refills>3</Refills>
+                                        <PrescribedDate>2024-03-18</PrescribedDate>
+                                        <ExpirationDate>2025-03-18</ExpirationDate>
+
+                                        <PharmacyInformation pharmacyId="PHARM-001"
+                                                           pharmacyNPI="9876543210"
+                                                           preferredPharmacy="true">
+                                            <PharmacyName>Bay Area Pharmacy</PharmacyName>
+                                            <PharmacyAddress>
+                                                <Street>850 Market Street</Street>
+                                                <City>San Francisco</City>
+                                                <State>CA</State>
+                                                <Zip>94109</Zip>
+                                            </PharmacyAddress>
+                                            <PharmacyContact phone="+1-415-555-9900" fax="+1-415-555-9901"/>
+
+                                            <DispensingRecord recordId="DISP-2024-45678"
+                                                            dispensedDate="2024-03-19"
+                                                            dispensedBy="pharmacist_RPH123"
+                                                            verificationStatus="verified">
+                                                <DispensedQuantity>90</DispensedQuantity>
+                                                <DaysSupply>90</DaysSupply>
+                                                <RefillsRemaining>3</RefillsRemaining>
+                                                <NextRefillDate>2024-06-17</NextRefillDate>
+                                                <CostInformation currency="USD">
+                                                    <WholesaleCost>12.50</WholesaleCost>
+                                                    <PharmacyCharge>25.00</PharmacyCharge>
+                                                    <InsurancePaid>20.00</InsurancePaid>
+                                                    <PatientCopay>5.00</PatientCopay>
+                                                </CostInformation>
+                                                <DispensingNotes>Generic substitution per insurance requirement. Patient counseled on side effects.</DispensingNotes>
+                                            </DispensingRecord>
+                                        </PharmacyInformation>
+                                    </Medication>
+                                </Medications>
+                            </TreatmentPlan>
+                        </Recommendation>
+                    </ClinicalRecommendations>
+                </ClinicalFindings>
+
+                <ChargeInformation chargeId="CHG-001"
+                                 chargeStatus="submitted"
+                                 revenueCode="0320">
+                    <ServiceUnits>1</ServiceUnits>
+                    <ChargedAmount currency="USD">125.00</ChargedAmount>
+                    <AllowedAmount currency="USD">98.50</AllowedAmount>
+                    <ContractualAdjustment currency="USD">26.50</ContractualAdjustment>
+
+                    <PatientResponsibility totalAmount="49.70" currency="USD">
+                        <Copay>45.00</Copay>
+                        <Coinsurance>4.70</Coinsurance>
+                        <Deductible>0.00</Deductible>
+                    </PatientResponsibility>
+
+                    <InsurancePayment expectedAmount="48.80" currency="USD">
+                        <ClaimSubmissionDate>2024-03-20</ClaimSubmissionDate>
+                        <ExpectedPaymentDate>2024-04-05</ExpectedPaymentDate>
+                    </InsurancePayment>
+                </ChargeInformation>
+            </Procedure>
+
+            <Procedure procedureId="PROC-002"
+                      procedureCode="99214"
+                      procedureType="evaluation_management"
+                      procedureStatus="completed">
+                <ProcedureDescription>Office visit for established patient, moderate complexity</ProcedureDescription>
+                <PerformedDateTime>2024-03-18T10:30:00Z</PerformedDateTime>
+                <Duration unit="minutes">30</Duration>
+                <PerformingProvider providerId="PRV-55789">Dr. Michael Chen, MD, FACC</PerformingProvider>
+
+                <ChargeInformation chargeId="CHG-002"
+                                 chargeStatus="submitted"
+                                 revenueCode="0510">
+                    <ServiceUnits>1</ServiceUnits>
+                    <ChargedAmount currency="USD">225.00</ChargedAmount>
+                    <AllowedAmount currency="USD">181.50</AllowedAmount>
+                    <ContractualAdjustment currency="USD">43.50</ContractualAdjustment>
+
+                    <PatientResponsibility totalAmount="81.30" currency="USD">
+                        <Copay>45.00</Copay>
+                        <Coinsurance>36.30</Coinsurance>
+                        <Deductible>0.00</Deductible>
+                    </PatientResponsibility>
+
+                    <InsurancePayment expectedAmount="100.20" currency="USD">
+                        <ClaimSubmissionDate>2024-03-20</ClaimSubmissionDate>
+                        <ExpectedPaymentDate>2024-04-05</ExpectedPaymentDate>
+                    </InsurancePayment>
+                </ChargeInformation>
+            </Procedure>
+        </ProceduresPerformed>
+    </ClinicalInformation>
+
+    <ClaimTotals currency="USD">
+        <TotalCharges>350.00</TotalCharges>
+        <TotalAllowed>280.00</TotalAllowed>
+        <TotalAdjustments>70.00</TotalAdjustments>
+        <TotalPatientResponsibility>131.00</TotalPatientResponsibility>
+        <TotalInsurancePayment>149.00</TotalInsurancePayment>
+    </ClaimTotals>
+
+    <SubmissionInformation submittedBy="CLM-PROC-5679"
+                          submissionMethod="electronic"
+                          clearinghouse="CH-001">
+        <ClearinghouseName>HealthCare Clearing Solutions</ClearinghouseName>
+        <ClearinghouseId>HC-CLR-12345</ClearinghouseId>
+        <BatchId>BATCH-2024-03-20-001</BatchId>
+        <SubmissionDateTime>2024-03-20T14:45:00Z</SubmissionDateTime>
+        <AcknowledgementReceived>true</AcknowledgementReceived>
+        <AcknowledgementDateTime>2024-03-20T14:47:32Z</AcknowledgementDateTime>
+    </SubmissionInformation>
+
+    <ProcessingNotes>
+        <Note noteId="NOTE-001"
+             noteType="clinical"
+             noteDate="2024-03-18T11:15:00Z"
+             author="PRV-55789">
+            <Subject>Patient Education</Subject>
+            <Content>Patient counseled on importance of medication compliance, dietary modifications (low sodium, heart-healthy diet), and regular exercise. Patient verbalized understanding. Educational materials provided.</Content>
+        </Note>
+
+        <Note noteId="NOTE-002"
+             noteType="administrative"
+             noteDate="2024-03-20T14:30:00Z"
+             author="CLM-PROC-5679">
+            <Subject>Claim Verification</Subject>
+            <Content>Insurance eligibility verified. Pre-authorization not required for routine office visit and ECG. All documentation complete and compliant with payer requirements.</Content>
+        </Note>
+    </ProcessingNotes>
+</HealthcareClaim>

@@ -11,7 +11,8 @@ version = "1.0.0-SNAPSHOT"
 dependencies {
     // Internal dependencies
     implementation(project(":modules:core"))
-    // implementation(project(":modules:analysis"))  // Temporarily disabled - test compilation errors
+    implementation(project(":modules:analysis"))
+    // Daemon removed - design-time features now in utlxd server
     implementation(project(":formats:xml"))
     implementation(project(":formats:json"))
     implementation(project(":formats:csv"))
@@ -20,6 +21,9 @@ dependencies {
     implementation(project(":formats:jsch"))
     implementation(project(":formats:avro"))
     implementation(project(":formats:protobuf"))
+    implementation(project(":formats:odata"))
+    implementation(project(":formats:osch"))
+    implementation(project(":formats:tsch"))
     implementation(project(":stdlib"))
     // implementation(project(":stdlib-security"))  // Temporarily disabled
     

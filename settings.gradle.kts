@@ -33,7 +33,9 @@ include("modules:core")
 //include("modules:javascript")
 //include("modules:native")
 include("modules:cli")
-//include("modules:analysis")  // Temporarily disabled - test compilation errors
+include("modules:analysis")
+include("modules:daemon")  // UTLXD - unified daemon with LSP + REST API + CLI
+include("modules:engine")  // UTLXE - production runtime engine
 
 
 // Format parsers/serializers
@@ -45,6 +47,9 @@ include("formats:xsd")
 include("formats:jsch")
 include("formats:avro")
 include("formats:protobuf")
+include("formats:odata")
+include("formats:osch")
+include("formats:tsch")
 //include("formats:plugin")
 
 // Standard library

@@ -235,15 +235,204 @@ class ParserTest {
             ---
             input.items |> filter(i => i.active) |> map(i => i.name)
         """.trimIndent()
-        
+
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
         val parser = Parser(tokens)
         val result = parser.parse()
-        
+
         assertTrue(result is ParseResult.Success)
         val program = (result as ParseResult.Success).program
         assertTrue(program.body is Expression.Pipe)
+    }
+
+    @Test
+    fun `parse single unnamed input - input json`() {
+        val source = """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            { test: 1 }
+        """.trimIndent()
+
+        val lexer = Lexer(source)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens)
+        val result = parser.parse()
+
+        assertTrue(result is ParseResult.Success)
+        val program = (result as ParseResult.Success).program
+        assertEquals(1, program.header.inputs.size)
+        assertEquals("input", program.header.inputs[0].first)
+        assertEquals(FormatType.JSON, program.header.inputs[0].second.type)
+    }
+
+    @Test
+    fun `parse single named input - input myname json`() {
+        val source = """
+            %utlx 1.0
+            input myname json
+            output json
+            ---
+            { test: @myname.value }
+        """.trimIndent()
+
+        val lexer = Lexer(source)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens)
+        val result = parser.parse()
+
+        assertTrue(result is ParseResult.Success)
+        val program = (result as ParseResult.Success).program
+        assertEquals(1, program.header.inputs.size)
+        assertEquals("myname", program.header.inputs[0].first)
+        assertEquals(FormatType.JSON, program.header.inputs[0].second.type)
+    }
+
+    @Test
+    fun `parse single named input - input customer xml`() {
+        val source = """
+            %utlx 1.0
+            input customer xml
+            output json
+            ---
+            { name: @customer.name }
+        """.trimIndent()
+
+        val lexer = Lexer(source)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens)
+        val result = parser.parse()
+
+        assertTrue(result is ParseResult.Success)
+        val program = (result as ParseResult.Success).program
+        assertEquals(1, program.header.inputs.size)
+        assertEquals("customer", program.header.inputs[0].first)
+        assertEquals(FormatType.XML, program.header.inputs[0].second.type)
+    }
+
+    @Test
+    fun `parse multiple inputs with colon - input colon input json comma input2 xml`() {
+        val source = """
+            %utlx 1.0
+            input: input json, input2 xml
+            output json
+            ---
+            { test: @input.value, test2: @input2.value }
+        """.trimIndent()
+
+        val lexer = Lexer(source)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens)
+        val result = parser.parse()
+
+        assertTrue(result is ParseResult.Success)
+        val program = (result as ParseResult.Success).program
+        assertEquals(2, program.header.inputs.size)
+        assertEquals("input", program.header.inputs[0].first)
+        assertEquals(FormatType.JSON, program.header.inputs[0].second.type)
+        assertEquals("input2", program.header.inputs[1].first)
+        assertEquals(FormatType.XML, program.header.inputs[1].second.type)
+    }
+
+    @Test
+    fun `parse multiple inputs with colon - input colon customer json comma order xml`() {
+        val source = """
+            %utlx 1.0
+            input: customer json, order xml
+            output json
+            ---
+            { name: @customer.name, orderId: @order.id }
+        """.trimIndent()
+
+        val lexer = Lexer(source)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens)
+        val result = parser.parse()
+
+        assertTrue(result is ParseResult.Success)
+        val program = (result as ParseResult.Success).program
+        assertEquals(2, program.header.inputs.size)
+        assertEquals("customer", program.header.inputs[0].first)
+        assertEquals(FormatType.JSON, program.header.inputs[0].second.type)
+        assertEquals("order", program.header.inputs[1].first)
+        assertEquals(FormatType.XML, program.header.inputs[1].second.type)
+    }
+
+    @Test
+    fun `parse multiple inputs with colon - three inputs`() {
+        val source = """
+            %utlx 1.0
+            input: input1 xml, input2 json, input3 csv
+            output json
+            ---
+            { test: 1 }
+        """.trimIndent()
+
+        val lexer = Lexer(source)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens)
+        val result = parser.parse()
+
+        assertTrue(result is ParseResult.Success)
+        val program = (result as ParseResult.Success).program
+        assertEquals(3, program.header.inputs.size)
+        assertEquals("input1", program.header.inputs[0].first)
+        assertEquals(FormatType.XML, program.header.inputs[0].second.type)
+        assertEquals("input2", program.header.inputs[1].first)
+        assertEquals(FormatType.JSON, program.header.inputs[1].second.type)
+        assertEquals("input3", program.header.inputs[2].first)
+        assertEquals(FormatType.CSV, program.header.inputs[2].second.type)
+    }
+
+    @Test
+    fun `parse multiple inputs using output keyword as input name`() {
+        val source = """
+            %utlx 1.0
+            input: output json, data xml
+            output json
+            ---
+            { test: @output.value, data: @data.value }
+        """.trimIndent()
+
+        val lexer = Lexer(source)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens)
+        val result = parser.parse()
+
+        assertTrue(result is ParseResult.Success)
+        val program = (result as ParseResult.Success).program
+        assertEquals(2, program.header.inputs.size)
+        assertEquals("output", program.header.inputs[0].first)
+        assertEquals(FormatType.JSON, program.header.inputs[0].second.type)
+        assertEquals("data", program.header.inputs[1].first)
+        assertEquals(FormatType.XML, program.header.inputs[1].second.type)
+    }
+
+    @Test
+    fun `parse single input named output with output declaration`() {
+        val source = """
+            %utlx 1.0
+            input output json
+            output xml
+            ---
+            { test: @output.value }
+        """.trimIndent()
+
+        val lexer = Lexer(source)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens)
+        val result = parser.parse()
+
+        assertTrue(result is ParseResult.Success)
+        val program = (result as ParseResult.Success).program
+        assertEquals(1, program.header.inputs.size)
+        assertEquals("output", program.header.inputs[0].first)
+        assertEquals(FormatType.JSON, program.header.inputs[0].second.type)
+        assertEquals(1, program.header.outputs.size)
+        assertEquals("output", program.header.outputs[0].first)
+        assertEquals(FormatType.XML, program.header.outputs[0].second.type)
     }
 }
 

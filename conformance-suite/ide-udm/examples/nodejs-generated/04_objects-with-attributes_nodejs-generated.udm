@@ -1,0 +1,43 @@
+@udm-version: 1.0
+@source: "nodejs-generated/04_objects-with-attributes_nodejs-generated.udm"
+@parsed-at: "2025-11-16T20:10:01.475Z"
+
+{
+  attributes: {
+    xmlns: "http://example.com/schema",
+    version: "1.0"
+  },
+  properties: {
+    customer: {
+      attributes: {
+        id: "CUST-001",
+        type: "premium",
+        status: "active"
+      },
+      properties: {
+        name: "John Doe",
+        email: "john@example.com"
+      }
+    },
+    order: {
+      attributes: {
+        orderId: "ORD-5678",
+        currency: "USD"
+      },
+      properties: {
+        items: [
+          {
+            attributes: {
+              sku: "LAP-123",
+              category: "electronics"
+            },
+            properties: {
+              product: "Laptop",
+              price: 999.99
+            }
+          }
+        ]
+      }
+    }
+  }
+}

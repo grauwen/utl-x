@@ -1,0 +1,29 @@
+name: get_input_schema_csv_header
+description: Test get_input_schema with CSV header parsing
+tags:
+  - tools
+  - get_input_schema
+  - csv
+  - schema
+
+sequence:
+  - description: "Parse CSV headers to infer schema"
+    request:
+      jsonrpc: "2.0"
+      id: 52
+      method: "tools/call"
+      params:
+        name: "get_input_schema"
+        arguments:
+          schema: |
+            name,age,email,active
+            John Doe,30,john@example.com,true
+            Jane Smith,25,jane@example.com,false
+          format: "csv"
+    expect:
+      jsonrpc: "2.0"
+      id: 52
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

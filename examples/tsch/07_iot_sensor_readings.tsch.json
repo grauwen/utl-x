@@ -1,0 +1,88 @@
+{
+  "fields": [
+    {
+      "name": "sensor_id",
+      "type": "string",
+      "description": "Unique sensor device identifier",
+      "example": "SENS-TH-001",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "timestamp",
+      "type": "datetime",
+      "description": "Reading timestamp (ISO 8601 UTC)",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "reading_time",
+      "type": "time",
+      "description": "Local time of the reading (HH:MM:SS)",
+      "example": "08:00:00",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "temperature_c",
+      "type": "number",
+      "description": "Temperature reading in degrees Celsius",
+      "constraints": {
+        "minimum": -40,
+        "maximum": 85
+      }
+    },
+    {
+      "name": "humidity_pct",
+      "type": "number",
+      "description": "Relative humidity percentage",
+      "constraints": {
+        "minimum": 0,
+        "maximum": 100
+      }
+    },
+    {
+      "name": "pressure_hpa",
+      "type": "number",
+      "description": "Atmospheric pressure in hectopascals",
+      "constraints": {
+        "required": true,
+        "minimum": 300,
+        "maximum": 1100
+      }
+    },
+    {
+      "name": "battery_level",
+      "type": "integer",
+      "description": "Battery charge level percentage",
+      "constraints": {
+        "required": true,
+        "minimum": 0,
+        "maximum": 100
+      }
+    },
+    {
+      "name": "coordinates",
+      "type": "geopoint",
+      "format": "array",
+      "description": "Sensor GPS coordinates as [lon, lat] JSON array",
+      "example": "[-87.6298, 41.8781]",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "firmware_version",
+      "type": "string",
+      "description": "Sensor firmware version",
+      "constraints": {
+        "required": true
+      }
+    }
+  ],
+  "primaryKey": ["sensor_id", "timestamp"],
+  "missingValues": ["", "N/A", "NULL"]
+}

@@ -1,0 +1,28 @@
+%utlx 1.0
+input infra yaml
+output csv
+---
+map($infra.infrastructure.servers, fn(server) => {
+  "Hostname": server.hostname,
+  "IP_Address": server.ip_address,
+  "ServerType": server.type,
+  "OS": server.os.name + " " + server.os.version,
+  "CPU_Cores": server.hardware.cpu_cores,
+  "Memory_GB": server.hardware.memory_gb,
+  "Storage_GB": server.hardware.storage_gb,
+  "TotalRAM_TB": server.hardware.memory_gb / 1024,
+  "TotalStorage_TB": server.hardware.storage_gb / 1024,
+  "PrimaryService": server.services[0].name,
+  "PrimaryPort": server.services[0].port,
+  "ServiceCount": count(server.services),
+  "AllServices": join(map(server.services, fn(s) => s.name), ", "),
+  "MonitoringEnabled": if (server.monitoring.enabled) then "Yes" else "No",
+  "MonitoringAgent": server.monitoring.agent_version,
+  "BackupEnabled": if (server.backup.enabled) then "Yes" else "No",
+  "BackupFrequency": server.backup.frequency,
+  "LastBackup": server.backup.last_backup,
+  "Tags": join(server.tags, ", "),
+  "IsCritical": if (contains(server.tags, "critical")) then "Yes" else "No",
+  "Environment": "Production",
+  "Datacenter": "US-EAST-1"
+})

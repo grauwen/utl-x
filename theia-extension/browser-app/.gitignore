@@ -1,0 +1,23 @@
+# Theia generated files
+src-gen/
+gen-webpack.config.js
+gen-webpack.node.config.js
+webpack.config.js
+lib/
+
+# Build output
+.theia/
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/

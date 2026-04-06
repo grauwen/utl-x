@@ -1,0 +1,124 @@
+%utlx 1.0
+// Demonstrates: Query parameters for filtering, sorting, and pagination
+// Note: This example is specific to OpenAPI due to: %paths, %parameters, %in (query), %responses
+output openapi
+---
+%namespace: "http://api.example.com/v1"
+%version: "1.0.0"
+%documentation: "Search API with query parameters"
+
+%types: {
+  SearchResult: {
+    %kind: "structure",
+    %documentation: "Search result item",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "Item identifier"
+      },
+      {
+        %name: "title",
+        %type: "string",
+        %required: true,
+        %description: "Item title"
+      },
+      {
+        %name: "category",
+        %type: "string",
+        %required: false,
+        %description: "Item category"
+      },
+      {
+        %name: "score",
+        %type: "double",
+        %required: true,
+        %description: "Relevance score"
+      }
+    ]
+  },
+
+  PaginatedResults: {
+    %kind: "structure",
+    %documentation: "Paginated search results",
+    %fields: [
+      {
+        %name: "items",
+        %type: "SearchResult",
+        %array: true,
+        %required: true,
+        %description: "Result items"
+      },
+      {
+        %name: "total",
+        %type: "integer",
+        %required: true,
+        %description: "Total results"
+      },
+      {
+        %name: "page",
+        %type: "integer",
+        %required: true,
+        %description: "Current page"
+      },
+      {
+        %name: "pageSize",
+        %type: "integer",
+        %required: true,
+        %description: "Page size"
+      }
+    ]
+  }
+}
+
+%paths: {
+  "/search": {
+    %method: "GET",
+    %operationId: "search",
+    %summary: "Search with filtering and pagination",
+    %parameters: [
+      {
+        %name: "q",
+        %in: "query",
+        %type: "string",
+        %required: true,
+        %description: "Search query"
+      },
+      {
+        %name: "category",
+        %in: "query",
+        %type: "string",
+        %required: false,
+        %description: "Filter by category"
+      },
+      {
+        %name: "sort",
+        %in: "query",
+        %type: "string",
+        %required: false,
+        %description: "Sort field (title, score)"
+      },
+      {
+        %name: "page",
+        %in: "query",
+        %type: "integer",
+        %required: false,
+        %description: "Page number (default: 1)"
+      },
+      {
+        %name: "pageSize",
+        %in: "query",
+        %type: "integer",
+        %required: false,
+        %description: "Items per page (default: 20)"
+      }
+    ],
+    %responses: {
+      "200": {
+        %apiSchema: "PaginatedResults",
+        %description: "Search results"
+      }
+    }
+  }
+}

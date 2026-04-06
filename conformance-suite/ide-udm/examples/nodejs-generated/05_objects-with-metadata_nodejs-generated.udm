@@ -1,0 +1,28 @@
+@udm-version: 1.0
+@source: "nodejs-generated/05_objects-with-metadata_nodejs-generated.udm"
+@parsed-at: "2025-11-16T20:10:01.475Z"
+
+@Object(
+  metadata:
+  {
+    schema-version: "2.0",
+    generated-by: "nodejs-generator"
+  }
+) {
+  properties: {
+    root: @Object(
+      name: "RootElement",
+      metadata:
+      {
+        source-file: "example.xml",
+        line-number: "10",
+        validation-status: "valid"
+      }
+    ) {
+      properties: {
+        child1: "value1",
+        child2: "value2"
+      }
+    }
+  }
+}

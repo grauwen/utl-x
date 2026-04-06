@@ -1,0 +1,44 @@
+@udm-version: 1.0
+
+@Object(metadata: { validation: "enabled" }) {
+  properties: {
+    user: {
+      username: %validate(
+        "johndoe",
+        rules: [
+          { type: "minLength", value: 3 },
+          { type: "maxLength", value: 20 },
+          { type: "pattern", value: "^[a-zA-Z0-9_]+$" }
+        ]
+      ),
+
+      email: %validate(
+        "john@example.com",
+        rules: [
+          { type: "email" },
+          { type: "domain", allowed: ["example.com", "test.com"] }
+        ]
+      ),
+
+      password: %validate(
+        "SecureP@ss123",
+        rules: [
+          { type: "minLength", value: 8 },
+          { type: "hasUppercase", value: true },
+          { type: "hasLowercase", value: true },
+          { type: "hasNumber", value: true },
+          { type: "hasSpecialChar", value: true }
+        ]
+      ),
+
+      age: %validate(
+        25,
+        rules: [
+          { type: "min", value: 18 },
+          { type: "max", value: 120 },
+          { type: "integer", value: true }
+        ]
+      )
+    }
+  }
+}

@@ -1,0 +1,26 @@
+%utlx 1.0
+input stocks csv {headers: false}
+output json
+---
+{
+  "marketSummary": {
+    "date": "2024-03-15",
+    "totalVolume": sum(map($stocks, fn(s) => s[6])),
+    "totalStocks": count($stocks),
+    "topGainer": "NVDA",
+    "highestClose": 889.10
+  },
+  "stocks": map($stocks, fn(stock) => {
+    "symbol": stock[0],
+    "date": stock[1],
+    "prices": {
+      "open": stock[2],
+      "high": stock[3],
+      "low": stock[4],
+      "close": stock[5]
+    },
+    "volume": stock[6],
+    "dayChange": stock[5] - stock[2],
+    "dayChangePct": ((stock[5] - stock[2]) / stock[2]) * 100
+  })
+}

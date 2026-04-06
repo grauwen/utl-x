@@ -1,0 +1,138 @@
+%utlx 1.0
+// Demonstrates: Nested relationships between types
+// Note: This example is specific to GraphQL due to: Nested type references, %resolver for relationships
+output graphql
+---
+%namespace: "com.example.graphql"
+%version: "1.0"
+%documentation: "GraphQL schema with nested relationships"
+
+%types: {
+  Author: {
+    %kind: "structure",
+    %documentation: "Author type",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "Author identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %required: true,
+        %description: "Author name"
+      },
+      {
+        %name: "books",
+        %type: "Book",
+        %array: true,
+        %required: true,
+        %resolver: "getAuthorBooks",
+        %description: "Books by this author"
+      }
+    ]
+  },
+
+  Book: {
+    %kind: "structure",
+    %documentation: "Book type",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "Book identifier"
+      },
+      {
+        %name: "title",
+        %type: "string",
+        %required: true,
+        %description: "Book title"
+      },
+      {
+        %name: "author",
+        %type: "Author",
+        %required: true,
+        %resolver: "getBookAuthor",
+        %description: "Book author"
+      },
+      {
+        %name: "reviews",
+        %type: "Review",
+        %array: true,
+        %required: true,
+        %resolver: "getBookReviews",
+        %description: "Book reviews"
+      }
+    ]
+  },
+
+  Review: {
+    %kind: "structure",
+    %documentation: "Review type",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "Review identifier"
+      },
+      {
+        %name: "rating",
+        %type: "integer",
+        %required: true,
+        %description: "Rating (1-5)"
+      },
+      {
+        %name: "comment",
+        %type: "string",
+        %required: false,
+        %description: "Review comment"
+      },
+      {
+        %name: "book",
+        %type: "Book",
+        %required: true,
+        %resolver: "getReviewBook",
+        %description: "Reviewed book"
+      }
+    ]
+  },
+
+  Query: {
+    %kind: "structure",
+    %documentation: "Root query type",
+    %fields: [
+      {
+        %name: "author",
+        %type: "Author",
+        %required: false,
+        %resolver: "getAuthor",
+        %description: "Get author by ID",
+        %parameters: [
+          {
+            %name: "id",
+            %type: "string",
+            %required: true
+          }
+        ]
+      },
+      {
+        %name: "book",
+        %type: "Book",
+        %required: false,
+        %resolver: "getBook",
+        %description: "Get book by ID",
+        %parameters: [
+          {
+            %name: "id",
+            %type: "string",
+            %required: true
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,93 @@
+%utlx 1.0
+input: order json, customers json, inventory json
+output json
+---
+// Enrich an order by joining with customer data and inventory availability.
+// Classic ESB pattern: receive order, look up customer for credit/tier info,
+// check inventory for stock, produce enriched order ready for fulfillment.
+
+{
+  // Look up the customer by scanning the customer list
+  let customer = ($customers.customers
+    |> filter(c => c.customerId == $order.customerId)
+    |> first())
+    ?? {
+      name: "Unknown",
+      tier: "Standard",
+      creditLimit: 0
+    };
+
+  // Enrich each line item with stock info
+  let enrichedItems = $order.items |> map(item => {
+    let stock = $inventory.products
+      |> filter(p => p.sku == item.sku)
+      |> first();
+    let available = if (stock != null) stock.quantityOnHand else 0;
+    let canFulfill = available >= item.quantity;
+    let warehouse = if (stock != null) stock.warehouse else "UNKNOWN";
+    let lineTotal = item.quantity * item.unitPrice;
+    {
+      sku: item.sku,
+      productName: if (stock != null) stock.productName else item.sku,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      lineTotal: lineTotal,
+      availability: {
+        inStock: canFulfill,
+        quantityAvailable: available,
+        warehouse: warehouse,
+        backorderRequired: if (!canFulfill) item.quantity - available else 0
+      }
+    }
+  });
+
+  let orderTotal = roundToDecimalPlaces(enrichedItems |> map(i => i.lineTotal) |> sum(), 2);
+  let allInStock = count(enrichedItems |> filter(i => !i.availability.inStock)) == 0;
+
+  // Apply tiered discount
+  let discount = match (customer.tier) {
+    "Gold" => if (orderTotal > 5000) 0.15 else 0.10,
+    "Silver" => if (orderTotal > 2000) 0.10 else 0.05,
+    _ => 0
+  };
+
+  let discountAmount = roundToDecimalPlaces(orderTotal * discount, 2);
+  let finalTotal = roundToDecimalPlaces(orderTotal - discountAmount, 2);
+  let creditOk = finalTotal <= customer.creditLimit;
+
+  enrichedOrder: {
+    orderId: $order.orderId,
+    orderDate: $order.orderDate,
+    status: if (!creditOk) "CREDIT_HOLD"
+            else if (!allInStock) "PARTIAL_BACKORDER"
+            else "READY_FOR_FULFILLMENT",
+
+    customer: {
+      customerId: $order.customerId,
+      name: customer.name,
+      tier: customer.tier,
+      creditLimit: customer.creditLimit,
+      creditAvailable: customer.creditLimit - finalTotal
+    },
+
+    items: enrichedItems,
+
+    pricing: {
+      subtotal: orderTotal,
+      discountTier: customer.tier,
+      discountPercent: discount * 100,
+      discountAmount: discountAmount,
+      total: finalTotal
+    },
+
+    fulfillment: {
+      allItemsInStock: allInStock,
+      backorderCount: count(enrichedItems |> filter(i => !i.availability.inStock)),
+      warehouses: unique(enrichedItems |> map(i => i.availability.warehouse))
+    },
+
+    audit: {
+      creditApproved: creditOk
+    }
+  }
+}

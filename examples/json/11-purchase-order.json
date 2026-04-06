@@ -1,0 +1,237 @@
+{
+  "poNumber": "PO-2025-001234",
+  "poDate": "2025-01-16",
+  "status": "APPROVED",
+  "priority": "NORMAL",
+  "requisition": {
+    "requisitionId": "REQ-2025-00567",
+    "requestedBy": {
+      "employeeId": "EMP-4421",
+      "name": "Maria Garcia",
+      "department": "IT Operations",
+      "email": "m.garcia@company.com"
+    },
+    "requestDate": "2025-01-10"
+  },
+  "buyer": {
+    "companyName": "TechCorp Industries Inc.",
+    "department": "Procurement",
+    "address": {
+      "street": "1000 Business Park Drive",
+      "city": "Austin",
+      "state": "TX",
+      "zipCode": "78701",
+      "country": "USA"
+    },
+    "contact": {
+      "name": "Amanda Peterson",
+      "phone": "+1-512-555-0188",
+      "email": "procurement@techcorp.com"
+    },
+    "taxId": "74-1234567"
+  },
+  "vendor": {
+    "vendorId": "VEND-8823",
+    "companyName": "Enterprise Hardware Solutions LLC",
+    "address": {
+      "street": "450 Industrial Way",
+      "city": "Santa Clara",
+      "state": "CA",
+      "zipCode": "95050",
+      "country": "USA"
+    },
+    "contact": {
+      "name": "Robert Chen",
+      "phone": "+1-408-555-0299",
+      "email": "sales@enterprisehw.com"
+    },
+    "taxId": "77-9876543",
+    "paymentTerms": "NET_45"
+  },
+  "shipTo": {
+    "locationName": "TechCorp Main Data Center",
+    "attention": "Receiving Department",
+    "address": {
+      "street": "2500 Technology Boulevard",
+      "city": "Austin",
+      "state": "TX",
+      "zipCode": "78758",
+      "country": "USA"
+    },
+    "contact": {
+      "name": "James Wilson",
+      "phone": "+1-512-555-0234"
+    },
+    "deliveryInstructions": "Deliver to Loading Dock B. Requires appointment. Call 24 hours in advance."
+  },
+  "billTo": {
+    "companyName": "TechCorp Industries Inc.",
+    "department": "Accounts Payable",
+    "address": {
+      "street": "1000 Business Park Drive",
+      "city": "Austin",
+      "state": "TX",
+      "zipCode": "78701",
+      "country": "USA"
+    }
+  },
+  "lineItems": [
+    {
+      "lineNumber": 1,
+      "itemType": "PRODUCT",
+      "sku": "SRV-RACK-42U-ENT",
+      "description": "42U Enterprise Server Rack with PDU and Cable Management",
+      "manufacturer": "RackSystems Pro",
+      "manufacturerPartNumber": "RSP-42U-ENT-2025",
+      "quantity": 5,
+      "unitOfMeasure": "EACH",
+      "unitPrice": 1250.00,
+      "subtotal": 6250.00,
+      "taxRate": 8.25,
+      "taxAmount": 515.63,
+      "total": 6765.63,
+      "requestedDeliveryDate": "2025-02-15",
+      "glAccount": "7100-IT-Equipment"
+    },
+    {
+      "lineNumber": 2,
+      "itemType": "PRODUCT",
+      "sku": "NET-SW-48P-10G",
+      "description": "48-Port 10G Ethernet Network Switch",
+      "manufacturer": "NetGear Enterprise",
+      "manufacturerPartNumber": "NGE-48P-10G-V2",
+      "quantity": 10,
+      "unitOfMeasure": "EACH",
+      "unitPrice": 3500.00,
+      "subtotal": 35000.00,
+      "taxRate": 8.25,
+      "taxAmount": 2887.50,
+      "total": 37887.50,
+      "requestedDeliveryDate": "2025-02-15",
+      "glAccount": "7100-IT-Equipment"
+    },
+    {
+      "lineNumber": 3,
+      "itemType": "PRODUCT",
+      "sku": "CABLE-CAT6A-5FT-BLU",
+      "description": "Cat6A Ethernet Cable 5ft Blue (Box of 100)",
+      "manufacturer": "CableWorks",
+      "manufacturerPartNumber": "CW-CAT6A-5FT-BLU-100",
+      "quantity": 3,
+      "unitOfMeasure": "BOX",
+      "unitPrice": 299.99,
+      "subtotal": 899.97,
+      "taxRate": 8.25,
+      "taxAmount": 74.25,
+      "total": 974.22,
+      "requestedDeliveryDate": "2025-02-10",
+      "glAccount": "7110-IT-Supplies"
+    },
+    {
+      "lineNumber": 4,
+      "itemType": "SERVICE",
+      "sku": "SVC-INSTALL-RACK",
+      "description": "Professional Installation and Configuration Service",
+      "manufacturer": "Enterprise Hardware Solutions",
+      "manufacturerPartNumber": null,
+      "quantity": 1,
+      "unitOfMeasure": "SERVICE",
+      "unitPrice": 2500.00,
+      "subtotal": 2500.00,
+      "taxRate": 8.25,
+      "taxAmount": 206.25,
+      "total": 2706.25,
+      "requestedDeliveryDate": "2025-02-16",
+      "glAccount": "7200-Professional-Services"
+    },
+    {
+      "lineNumber": 5,
+      "itemType": "PRODUCT",
+      "sku": "UPS-RACK-3000VA",
+      "description": "3000VA Rackmount UPS with Network Management",
+      "manufacturer": "PowerSafe",
+      "manufacturerPartNumber": "PS-3000RM-NET",
+      "quantity": 5,
+      "unitOfMeasure": "EACH",
+      "unitPrice": 850.00,
+      "subtotal": 4250.00,
+      "taxRate": 8.25,
+      "taxAmount": 350.63,
+      "total": 4600.63,
+      "requestedDeliveryDate": "2025-02-15",
+      "glAccount": "7100-IT-Equipment"
+    }
+  ],
+  "financialSummary": {
+    "subtotal": 48899.97,
+    "taxAmount": 4034.26,
+    "shippingCost": 500.00,
+    "shippingTax": 41.25,
+    "discount": 0.00,
+    "totalAmount": 53475.48,
+    "currency": "USD"
+  },
+  "paymentTerms": {
+    "terms": "NET_45",
+    "dueDate": "2025-03-02",
+    "discounts": [
+      {
+        "description": "2% discount if paid within 10 days",
+        "percentage": 2.0,
+        "validUntil": "2025-01-26"
+      }
+    ]
+  },
+  "shippingDetails": {
+    "shippingMethod": "FREIGHT",
+    "carrier": "National Freight Lines",
+    "trackingNumber": null,
+    "estimatedDeliveryDate": "2025-02-15",
+    "shippingInstructions": "Lift gate required. Inside delivery. Fragile - Handle with care."
+  },
+  "approvals": [
+    {
+      "approver": {
+        "employeeId": "EMP-2211",
+        "name": "Thomas Anderson",
+        "title": "IT Director"
+      },
+      "approvalDate": "2025-01-14T10:30:00Z",
+      "status": "APPROVED",
+      "comments": "Approved for data center expansion project"
+    },
+    {
+      "approver": {
+        "employeeId": "EMP-1001",
+        "name": "Patricia Williams",
+        "title": "VP of Operations"
+      },
+      "approvalDate": "2025-01-15T14:15:00Z",
+      "status": "APPROVED",
+      "comments": "Budget approved"
+    }
+  ],
+  "attachments": [
+    {
+      "fileName": "vendor-quote-12345.pdf",
+      "fileType": "PDF",
+      "uploadDate": "2025-01-12",
+      "description": "Original vendor quotation"
+    },
+    {
+      "fileName": "equipment-specifications.pdf",
+      "fileType": "PDF",
+      "uploadDate": "2025-01-12",
+      "description": "Technical specifications"
+    }
+  ],
+  "internalNotes": "Part of Q1 2025 data center expansion. Equipment must be delivered and installed before fiscal quarter end.",
+  "revisionHistory": [
+    {
+      "revisionNumber": 1,
+      "revisionDate": "2025-01-13T09:00:00Z",
+      "revisedBy": "Amanda Peterson",
+      "changes": "Updated quantities for network switches from 8 to 10 units"
+    }
+  ]
+}

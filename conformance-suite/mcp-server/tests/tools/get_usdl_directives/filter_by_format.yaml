@@ -1,0 +1,80 @@
+name: get_usdl_directives_filter_by_format
+description: Test filtering USDL directives by schema format
+tags:
+  - tools
+  - get_usdl_directives
+  - filter
+  - format
+
+sequence:
+  - description: "Get directives for XSD format"
+    request:
+      jsonrpc: "2.0"
+      id: 45
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          format: "xsd"
+    expect:
+      jsonrpc: "2.0"
+      id: 45
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Format:.*}}"
+        # Should list directives supported by XSD format
+
+  - description: "Get directives for JSON Schema (jsch) format"
+    request:
+      jsonrpc: "2.0"
+      id: 46
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          format: "jsch"
+    expect:
+      jsonrpc: "2.0"
+      id: 46
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Format:.*}}"
+        # Should list directives supported by JSON Schema
+
+  - description: "Get directives for Protobuf format"
+    request:
+      jsonrpc: "2.0"
+      id: 47
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          format: "proto"
+    expect:
+      jsonrpc: "2.0"
+      id: 47
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Format:.*}}"
+        # Should list directives supported by Protobuf
+
+  - description: "Get directives for Avro format"
+    request:
+      jsonrpc: "2.0"
+      id: 48
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          format: "avro"
+    expect:
+      jsonrpc: "2.0"
+      id: 48
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Format:.*}}"
+        # Should list directives supported by Avro

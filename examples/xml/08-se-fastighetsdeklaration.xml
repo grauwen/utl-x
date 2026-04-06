@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Fastighetsdeklaration xmlns="http://www.skatteverket.se/fastighet/v1"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Deklarationsuppgifter>
+        <DeklarationsÅr>2024</DeklarationsÅr>
+        <Taxeringsår>2025</Taxeringsår>
+        <DeklarationsNummer>SE-2025-FD-456789</DeklarationsNummer>
+        <InlämnaDatum>2025-01-20</InlämnaDatum>
+        <DeklarationsTyp>ORDINARIE</DeklarationsTyp>
+    </Deklarationsuppgifter>
+
+    <Fastighet>
+        <FastighetsId>
+            <Fastighetsbeteckning>STOCKHOLM ÖSTERMALM 5:12</Fastighetsbeteckning>
+            <LänKod>01</LänKod>
+            <LänNamn>Stockholms län</LänNamn>
+            <KommunKod>0180</KommunKod>
+            <KommunNamn>Stockholm</KommunNamn>
+            <UUID>fa123456-7890-1234-5678-90abcdef1234</UUID>
+        </FastighetsId>
+        <Fastighetstyp>BOSTADSFASTIGHET</Fastighetstyp>
+        <Adress>
+            <Gatuadress>Strandvägen 145</Gatuadress>
+            <Postnummer>114 36</Postnummer>
+            <Postort>Stockholm</Postort>
+        </Adress>
+        <Områdesuppgifter>
+            <Tomtarea>850</Tomtarea>
+            <Byggnadsarea>420</Byggnadsarea>
+            <BostadsytaBRA>385</BostadsytaBRA>
+            <EnhetArea>m²</EnhetArea>
+        </Områdesuppgifter>
+    </Fastighet>
+
+    <Ägare>
+        <Ägare1>
+            <Personnummer>198506154321</Personnummer>
+            <Förnamn>Erik</Förnamn>
+            <Efternamn>Andersson</Efternamn>
+            <Andel>50.0</Andel>
+            <Adress>
+                <Gatuadress>Strandvägen 145</Gatuadress>
+                <Postnummer>114 36</Postnummer>
+                <Postort>Stockholm</Postort>
+            </Adress>
+            <Kontakt>
+                <Telefon>+46 70 123 45 67</Telefon>
+                <Email>erik.andersson@example.se</Email>
+            </Kontakt>
+        </Ägare1>
+        <Ägare2>
+            <Personnummer>198703258765</Personnummer>
+            <Förnamn>Anna</Förnamn>
+            <Efternamn>Johansson</Efternamn>
+            <Andel>50.0</Andel>
+            <Adress>
+                <Gatuadress>Strandvägen 145</Gatuadress>
+                <Postnummer>114 36</Postnummer>
+                <Postort>Stockholm</Postort>
+            </Adress>
+            <Kontakt>
+                <Telefon>+46 70 987 65 43</Telefon>
+                <Email>anna.johansson@example.se</Email>
+            </Kontakt>
+        </Ägare2>
+    </Ägare>
+
+    <Byggnader>
+        <Byggnad>
+            <ByggnadsNummer>1</ByggnadsNummer>
+            <Byggnadstyp>VILLA</Byggnadstyp>
+            <Användning>BOSTAD</Användning>
+            <Byggnadsår>1928</Byggnadsår>
+            <Ombyggnadsår>2018</Ombyggnadsår>
+            <AntalVåningar>2</AntalVåningar>
+            <BostadsytaBRA>385</BostadsytaBRA>
+            <BiytaBRA>35</BiytaBRA>
+            <Grundläggning>KÄLLARE</Grundläggning>
+            <Stomme>TRÄSTOMME</Stomme>
+            <Takbeläggning>TEGEL</Takbeläggning>
+            <Uppvärmning>
+                <HuvudsakligUppvärmning>FJÄRRVÄRME</HuvudsakligUppvärmning>
+                <Energiklass>B</Energiklass>
+                <Energiprestanda>85</Energiprestanda>
+                <EnhetEnergi>kWh/m² och år</EnhetEnergi>
+            </Uppvärmning>
+            <Standard>NORMALSTANDARD</Standard>
+            <SkickKlass>3</SkickKlass>
+            <SkickBeskrivning>Normalt underhåll, inga större brister</SkickBeskrivning>
+        </Byggnad>
+    </Byggnader>
+
+    <Utrymmen>
+        <Bostadsrum>
+            <AntalRum>8</AntalRum>
+            <VaravKök>2</VaravKök>
+            <AntalBadrum>3</AntalBadrum>
+            <AntalToaletter>4</AntalToaletter>
+        </Bostadsrum>
+        <Specialutrymmen>
+            <Specialutrymme>
+                <Typ>BASTU</Typ>
+                <Area>12</Area>
+            </Specialutrymme>
+            <Specialutrymme>
+                <Typ>VINKÄLLARE</Typ>
+                <Area>18</Area>
+            </Specialutrymme>
+        </Specialutrymmen>
+    </Utrymmen>
+
+    <Installation>
+        <VattenOchAvlopp>JA</VattenOchAvlopp>
+        <Elektricitet>JA</Elektricitet>
+        <Kylanläggnig>JA</Kylanläggnig>
+        <Hiss>NEJ</Hiss>
+        <Ventilation>FTX</Ventilation>
+        <BrandlarmKopplatTillSOS>JA</BrandlarmKopplatTillSOS>
+    </Installation>
+
+    <Tomt>
+        <Tomtarea>850</Tomtarea>
+        <MarkTyp>EXPLOATERAD_TOMT</MarkTyp>
+        <Planbestämmelser>
+            <Detaljplan>JA</Detaljplan>
+            <Användning>BOSTADSÄNDAMÅL</Användning>
+            <Byggrätt>425</Byggrätt>
+            <EnhetByggrätt>m² BTA</EnhetByggrätt>
+            <Exploateringsgrad>0.5</Exploateringsgrad>
+        </Planbestämmelser>
+        <Utbyggnad>
+            <Gatukostnadspliktig>NEJ</Gatukostnadspliktig>
+            <VAKostnadspliktig>NEJ</VAKostnadspliktig>
+        </Utbyggnad>
+    </Tomt>
+
+    <Värdering>
+        <Taxeringsvärde>
+            <VärdeBostad>12'450'000</VärdeBostad>
+            <VärdeTomtmark>8'750'000</VärdeTomtmark>
+            <TotaltTaxeringsvärde>21'200'000</TotaltTaxeringsvärde>
+            <Valuta>SEK</Valuta>
+        </Taxeringsvärde>
+        <VärderingsMetod>ORTSPRISMETODEN</VärderingsMetod>
+        <Jämförelseförsäljningar>
+            <Försäljning>
+                <Beteckning>STOCKHOLM ÖSTERMALM 5:8</Beteckning>
+                <Försäljningsdatum>2024-09-15</Försäljningsdatum>
+                <Pris>23'500'000</Pris>
+                <Bostadsyta>405</Bostadsyta>
+            </Försäljning>
+            <Försäljning>
+                <Beteckning>STOCKHOLM ÖSTERMALM 5:15</Beteckning>
+                <Försäljningsdatum>2024-11-20</Försäljningsdatum>
+                <Pris>19'800'000</Pris>
+                <Bostadsyta>365</Bostadsyta>
+            </Försäljning>
+        </Jämförelseförsäljningar>
+    </Värdering>
+
+    <ÄndringarSedanFörraDeklarationen>
+        <Förändring>
+            <Typ>OMBYGGNAD</Typ>
+            <Beskrivning>Totalrenovering av kök och badrum, installation av nytt ventilationssystem (FTX)</Beskrivning>
+            <Årtal>2024</Årtal>
+            <Kostnad>850'000</Kostnad>
+        </Förändring>
+        <Förändring>
+            <Typ>INSTALLATION</Typ>
+            <Beskrivning>Installation av luftvärmepump som komplement till fjärrvärme</Beskrivning>
+            <Årtal>2024</Årtal>
+            <Kostnad>125'000</Kostnad>
+        </Förändring>
+    </ÄndringarSedanFörraDeklarationen>
+
+    <Fastighetsavgift>
+        <Avgiftsunderlag>385</Avgiftsunderlag>
+        <AvgiftPerM2>8814</AvgiftPerM2>
+        <BeräknadFastighetsavgift>8'814</BeräknadFastighetsavgift>
+        <Valuta>SEK</Valuta>
+        <Beskrivning>Fast avgift enligt 5 § fastighetsskattelagen</Beskrivning>
+    </Fastighetsavgift>
+
+    <Inteckningar>
+        <Inteckning>
+            <InteckningsNummer>1</InteckningsNummer>
+            <Belopp>5'000'000</Belopp>
+            <Bank>Skandiabanken AB</Bank>
+            <LånNummer>SK-2018-123456</LånNummer>
+        </Inteckning>
+        <Inteckning>
+            <InteckningsNummer>2</InteckningsNummer>
+            <Belopp>3'000'000</Belopp>
+            <Bank>Skandiabanken AB</Bank>
+            <LånNummer>SK-2018-123457</LånNummer>
+        </Inteckning>
+        <TotaltIntecknat>8'000'000</TotaltIntecknat>
+    </Inteckningar>
+
+    <Försäkring>
+        <Bolag>Länsförsäkringar Stockholm</Bolag>
+        <Försäkringsnummer>LFS-2024-987654</Försäkringsnummer>
+        <Försäkringsbelopp>25'000'000</Försäkringsbelopp>
+        <Självrisk>15'000</Självrisk>
+        <GiltigTom>2025-12-31</GiltigTom>
+    </Försäkring>
+
+    <Bilagor>
+        <Bilaga>
+            <Typ>ENERGIDEKLARATION</Typ>
+            <Nummer>ED-2024-123456</Nummer>
+            <Datum>2024-08-15</Datum>
+            <Utfärdare>Energiexpert AB</Utfärdare>
+        </Bilaga>
+        <Bilaga>
+            <Typ>KONTROLLPLAN</Typ>
+            <Nummer>KP-2024-987654</Nummer>
+            <Datum>2024-09-20</Datum>
+            <Utfärdare>Byggkontroll Stockholm</Utfärdare>
+        </Bilaga>
+    </Bilagor>
+
+    <Intyg>
+        <Datum>2025-01-20</Datum>
+        <Ort>Stockholm</Ort>
+        <Undertecknare>
+            <Namn>Erik Andersson</Namn>
+            <Roll>ÄGARE</Roll>
+            <DigitalSignatur>ab12cd34ef56gh78ij90kl12mn34op56qr78st90</DigitalSignatur>
+        </Undertecknare>
+        <Undertecknare>
+            <Namn>Anna Johansson</Namn>
+            <Roll>ÄGARE</Roll>
+            <DigitalSignatur>uv12wx34yz56ab78cd90ef12gh34ij56kl78mn90</DigitalSignatur>
+        </Undertecknare>
+        <Försäkran>Undertecknade intygar att uppgifterna i denna deklaration är riktiga och fullständiga enligt bästa vetskap.</Försäkran>
+    </Intyg>
+
+    <SvenskaSpecialTecken>
+        <Bokstäver>å ä ö Å Ä Ö</Bokstäver>
+        <Exempel>Malmö, Göteborg, Jönköping, Örebro, Västerås, Östersund</Exempel>
+        <Valuta>kr SEK kronor öre</Valuta>
+    </SvenskaSpecialTecken>
+</Fastighetsdeklaration>

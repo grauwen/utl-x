@@ -1,0 +1,25 @@
+name: infer_output_schema_simple
+description: Test infer_output_schema with simple transformation
+tags:
+  - tools
+  - infer_output_schema
+  - basic
+
+sequence:
+  - description: "Infer output schema from simple transformation"
+    request:
+      jsonrpc: "2.0"
+      id: 60
+      method: "tools/call"
+      params:
+        name: "infer_output_schema"
+        arguments:
+          utlx: "output: { fullName: input.firstName + \" \" + input.lastName, age: input.age }"
+          format: "json-schema"
+    expect:
+      jsonrpc: "2.0"
+      id: 60
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

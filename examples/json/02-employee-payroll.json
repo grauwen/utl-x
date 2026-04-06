@@ -1,0 +1,51 @@
+{
+  "payPeriod": {
+    "startDate": "2025-01-01",
+    "endDate": "2025-01-15",
+    "payDate": "2025-01-20"
+  },
+  "employee": {
+    "employeeId": "EMP-12345",
+    "firstName": "Sarah",
+    "lastName": "Johnson",
+    "email": "sarah.johnson@company.com",
+    "department": "Engineering",
+    "jobTitle": "Senior Software Engineer",
+    "hireDate": "2020-03-15",
+    "employmentType": "FULL_TIME"
+  },
+  "compensation": {
+    "annualSalary": 120000.00,
+    "payFrequency": "BI_WEEKLY",
+    "grossPay": 4615.38,
+    "regularHours": 80.0,
+    "overtimeHours": 5.0,
+    "overtimePay": 432.69
+  },
+  "deductions": {
+    "federalTax": 830.77,
+    "stateTax": 276.92,
+    "socialSecurity": 286.15,
+    "medicare": 66.95,
+    "healthInsurance": 150.00,
+    "retirement401k": 461.54,
+    "totalDeductions": 2072.33
+  },
+  "benefits": {
+    "healthInsurance": "FAMILY_PLAN",
+    "dentalInsurance": true,
+    "visionInsurance": true,
+    "lifeInsurance": 50000,
+    "paidTimeOffAccrued": 6.67,
+    "paidTimeOffUsed": 0,
+    "paidTimeOffBalance": 120.5
+  },
+  "netPay": 2975.74,
+  "paymentMethod": "DIRECT_DEPOSIT",
+  "bankAccount": {
+    "bankName": "First National Bank",
+    "accountType": "CHECKING",
+    "accountNumberLast4": "5678",
+    "routingNumber": "021000021"
+  }
+}

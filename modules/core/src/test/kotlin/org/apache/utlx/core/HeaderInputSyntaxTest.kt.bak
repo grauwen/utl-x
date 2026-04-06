@@ -1,0 +1,228 @@
+package org.apache.utlx.core
+
+import org.apache.utlx.core.ast.FormatType
+import org.apache.utlx.core.lexer.Lexer
+import org.apache.utlx.core.parser.ParseResult
+import org.apache.utlx.core.parser.Parser
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.*
+
+/**
+ * Test all supported input header syntax variations
+ */
+class HeaderInputSyntaxTest {
+
+    @Test
+    fun `Single unnamed input - input json`() {
+        val source = """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            { test: 1 }
+        """.trimIndent()
+
+        val result = parseSource(source)
+        assertTrue(result is ParseResult.Success)
+
+        val program = (result as ParseResult.Success).program
+        assertEquals(1, program.header.inputs.size)
+        assertEquals("input", program.header.inputs[0].first)
+        assertEquals(FormatType.JSON, program.header.inputs[0].second.format)
+    }
+
+    @Test
+    fun `Single named input - input myname json`() {
+        val source = """
+            %utlx 1.0
+            input myname json
+            output json
+            ---
+            { test: @myname.value }
+        """.trimIndent()
+
+        val result = parseSource(source)
+        result.shouldBeInstanceOf<ParseResult.Success>()
+
+        val program = (result as ParseResult.Success).program
+        program.header.inputs.size shouldBe 1
+        program.header.inputs[0].first shouldBe "myname"
+        program.header.inputs[0].second.formatType shouldBe FormatType.JSON
+    }
+
+    test("Single named input: input customer xml") {
+        val source = """
+            %utlx 1.0
+            input customer xml
+            output json
+            ---
+            { name: @customer.name }
+        """.trimIndent()
+
+        val result = parseSource(source)
+        result.shouldBeInstanceOf<ParseResult.Success>()
+
+        val program = (result as ParseResult.Success).program
+        program.header.inputs.size shouldBe 1
+        program.header.inputs[0].first shouldBe "customer"
+        program.header.inputs[0].second.formatType shouldBe FormatType.XML
+    }
+
+    test("Multiple inputs with colon: input: input json, input2 xml") {
+        val source = """
+            %utlx 1.0
+            input: input json, input2 xml
+            output json
+            ---
+            { test: @input.value, test2: @input2.value }
+        """.trimIndent()
+
+        val result = parseSource(source)
+        result.shouldBeInstanceOf<ParseResult.Success>()
+
+        val program = (result as ParseResult.Success).program
+        program.header.inputs.size shouldBe 2
+        program.header.inputs[0].first shouldBe "input"
+        program.header.inputs[0].second.formatType shouldBe FormatType.JSON
+        program.header.inputs[1].first shouldBe "input2"
+        program.header.inputs[1].second.formatType shouldBe FormatType.XML
+    }
+
+    test("Multiple inputs with colon: input: customer json, order xml") {
+        val source = """
+            %utlx 1.0
+            input: customer json, order xml
+            output json
+            ---
+            { name: @customer.name, orderId: @order.id }
+        """.trimIndent()
+
+        val result = parseSource(source)
+        result.shouldBeInstanceOf<ParseResult.Success>()
+
+        val program = (result as ParseResult.Success).program
+        program.header.inputs.size shouldBe 2
+        program.header.inputs[0].first shouldBe "customer"
+        program.header.inputs[0].second.formatType shouldBe FormatType.JSON
+        program.header.inputs[1].first shouldBe "order"
+        program.header.inputs[1].second.formatType shouldBe FormatType.XML
+    }
+
+    test("Multiple inputs with colon: input: input1 xml, input2 json, input3 csv") {
+        val source = """
+            %utlx 1.0
+            input: input1 xml, input2 json, input3 csv
+            output json
+            ---
+            { test: 1 }
+        """.trimIndent()
+
+        val result = parseSource(source)
+        result.shouldBeInstanceOf<ParseResult.Success>()
+
+        val program = (result as ParseResult.Success).program
+        program.header.inputs.size shouldBe 3
+        program.header.inputs[0].first shouldBe "input1"
+        program.header.inputs[0].second.formatType shouldBe FormatType.XML
+        program.header.inputs[1].first shouldBe "input2"
+        program.header.inputs[1].second.formatType shouldBe FormatType.JSON
+        program.header.inputs[2].first shouldBe "input3"
+        program.header.inputs[2].second.formatType shouldBe FormatType.CSV
+    }
+
+    test("Multiple inputs using 'output' as input name: input: output json, data xml") {
+        val source = """
+            %utlx 1.0
+            input: output json, data xml
+            output json
+            ---
+            { test: @output.value, data: @data.value }
+        """.trimIndent()
+
+        val result = parseSource(source)
+        result.shouldBeInstanceOf<ParseResult.Success>()
+
+        val program = (result as ParseResult.Success).program
+        program.header.inputs.size shouldBe 2
+        program.header.inputs[0].first shouldBe "output"
+        program.header.inputs[0].second.formatType shouldBe FormatType.JSON
+        program.header.inputs[1].first shouldBe "data"
+        program.header.inputs[1].second.formatType shouldBe FormatType.XML
+    }
+
+    test("All format types: input: data1 json, data2 xml, data3 csv, data4 yaml") {
+        val source = """
+            %utlx 1.0
+            input: data1 json, data2 xml, data3 csv, data4 yaml
+            output json
+            ---
+            { test: 1 }
+        """.trimIndent()
+
+        val result = parseSource(source)
+        result.shouldBeInstanceOf<ParseResult.Success>()
+
+        val program = (result as ParseResult.Success).program
+        program.header.inputs.size shouldBe 4
+        program.header.inputs[0].first shouldBe "data1"
+        program.header.inputs[0].second.formatType shouldBe FormatType.JSON
+        program.header.inputs[1].first shouldBe "data2"
+        program.header.inputs[1].second.formatType shouldBe FormatType.XML
+        program.header.inputs[2].first shouldBe "data3"
+        program.header.inputs[2].second.formatType shouldBe FormatType.CSV
+        program.header.inputs[3].first shouldBe "data4"
+        program.header.inputs[3].second.formatType shouldBe FormatType.YAML
+    }
+
+    test("Schema formats: input: schema1 xsd, schema2 jsch, schema3 avro, schema4 proto") {
+        val source = """
+            %utlx 1.0
+            input: schema1 xsd, schema2 jsch, schema3 avro, schema4 proto
+            output json
+            ---
+            { test: 1 }
+        """.trimIndent()
+
+        val result = parseSource(source)
+        result.shouldBeInstanceOf<ParseResult.Success>()
+
+        val program = (result as ParseResult.Success).program
+        program.header.inputs.size shouldBe 4
+        program.header.inputs[0].first shouldBe "schema1"
+        program.header.inputs[0].second.formatType shouldBe FormatType.XSD
+        program.header.inputs[1].first shouldBe "schema2"
+        program.header.inputs[1].second.formatType shouldBe FormatType.JSCH
+        program.header.inputs[2].first shouldBe "schema3"
+        program.header.inputs[2].second.formatType shouldBe FormatType.AVRO
+        program.header.inputs[3].first shouldBe "schema4"
+        program.header.inputs[3].second.formatType shouldBe FormatType.PROTO
+    }
+
+    test("Auto format: input data auto") {
+        val source = """
+            %utlx 1.0
+            input data auto
+            output json
+            ---
+            { test: @data.value }
+        """.trimIndent()
+
+        val result = parseSource(source)
+        result.shouldBeInstanceOf<ParseResult.Success>()
+
+        val program = (result as ParseResult.Success).program
+        program.header.inputs.size shouldBe 1
+        program.header.inputs[0].first shouldBe "data"
+        program.header.inputs[0].second.formatType shouldBe FormatType.AUTO
+    }
+})
+
+/**
+ * Helper function to parse UTLX source
+ */
+private fun parseSource(source: String): ParseResult {
+    val lexer = Lexer(source)
+    val tokens = lexer.scanTokens()
+    val parser = Parser(tokens)
+    return parser.parse()
+}

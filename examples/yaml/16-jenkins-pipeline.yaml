@@ -1,0 +1,56 @@
+# Jenkins Declarative Pipeline as YAML
+# Complete CI/CD pipeline with parallel stages
+pipeline:
+  agent:
+    kubernetes:
+      yaml: |
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+            - name: maven
+              image: maven:3.9-eclipse-temurin-17
+              command: ['cat']
+              tty: true
+            - name: docker
+              image: docker:24-dind
+              privileged: true
+  environment:
+    MAVEN_OPTS: '-Xmx2048m'
+    DOCKER_REGISTRY: 'docker.io'
+    APP_NAME: 'ecommerce-api'
+  stages:
+    - stage: 'Checkout'
+      steps:
+        - checkout: scm
+        - script:
+            - git rev-parse --short HEAD > .git/commit-id
+            - export BUILD_VERSION="$(cat .git/commit-id)"
+    - stage: 'Build & Test'
+      parallel:
+        - stage: 'Unit Tests'
+          steps:
+            - container: maven
+              script:
+                - mvn clean test
+        - stage: 'Integration Tests'
+          steps:
+            - container: maven
+              script:
+                - mvn verify -Pintegration-tests
+    - stage: 'Security Scan'
+      steps:
+        - script:
+            - trivy fs --severity HIGH,CRITICAL .
+    - stage: 'Package'
+      steps:
+        - container: docker
+          script:
+            - docker build -t $DOCKER_REGISTRY/$APP_NAME:$BUILD_VERSION .
+            - docker push $DOCKER_REGISTRY/$APP_NAME:$BUILD_VERSION
+    - stage: 'Deploy'
+      when:
+        branch: main
+      steps:
+        - script:
+            - kubectl set image deployment/$APP_NAME app=$DOCKER_REGISTRY/$APP_NAME:$BUILD_VERSION

@@ -1,0 +1,957 @@
+@udm-version: 1.0
+@parsed-at: "2025-11-15T19:55:50.091944+01:00
+[
+  Europe/Amsterdam
+]
+"
+@Object(metadata:
+{
+  xmlEncoding: "UTF-8"
+}
+)
+{
+  properties:
+  {
+    PurchaseOrder: @Object(name: "PurchaseOrder")
+    {
+      attributes:
+      {
+        xmlns: "http://example.com/schemas/purchase-order",
+        xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance",
+        xsi:schemaLocation: "http://example.com/schemas/purchase-order 01_purchase_order.xsd"
+      }
+      properties:
+      {
+        OrderInfo: @Object(name: "OrderInfo")
+        {
+          attributes:
+          {
+            xmlns: "http://example.com/schemas/purchase-order",
+            xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+          }
+          properties:
+          {
+            PONumber: @Object(name: "PONumber")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "PO-2024-789456"
+              }
+            }
+            OrderDate: @Object(name: "OrderDate")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "2024-10-27"
+              }
+            }
+            RequestedDeliveryDate: @Object(name: "RequestedDeliveryDate")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "2024-11-15"
+              }
+            }
+            Priority: @Object(name: "Priority")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "high"
+              }
+            }
+            Status: @Object(name: "Status")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "submitted"
+              }
+            }
+            Currency: @Object(name: "Currency")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "USD"
+              }
+            }
+          }
+        }
+        Vendor: @Object(name: "Vendor")
+        {
+          attributes:
+          {
+            xmlns: "http://example.com/schemas/purchase-order",
+            xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+          }
+          properties:
+          {
+            PartyID: @Object(name: "PartyID")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "VENDOR-12345"
+              }
+            }
+            Name: @Object(name: "Name")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "Industrial Supplies Inc."
+              }
+            }
+            TaxID: @Object(name: "TaxID")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "12-3456789"
+              }
+            }
+            ContactPerson: @Object(name: "ContactPerson")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "John Smith"
+              }
+            }
+            Email: @Object(name: "Email")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "john.smith@industrialsupplies.example.com"
+              }
+            }
+            Phone: @Object(name: "Phone")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: 1.5551234567E10
+              }
+            }
+            Address: @Object(name: "Address")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                Street: @Object(name: "Street")
+                {
+                  attributes:
+                  {
+                    xmlns: "http://example.com/schemas/purchase-order",
+                    xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                  }
+                  properties:
+                  {
+                    _text: "500 Manufacturing Drive"
+                  }
+                }
+                City: @Object(name: "City")
+                {
+                  attributes:
+                  {
+                    xmlns: "http://example.com/schemas/purchase-order",
+                    xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                  }
+                  properties:
+                  {
+                    _text: "Chicago"
+                  }
+                }
+                State: @Object(name: "State")
+                {
+                  attributes:
+                  {
+                    xmlns: "http://example.com/schemas/purchase-order",
+                    xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                  }
+                  properties:
+                  {
+                    _text: "IL"
+                  }
+                }
+                PostalCode: @Object(name: "PostalCode")
+                {
+                  attributes:
+                  {
+                    xmlns: "http://example.com/schemas/purchase-order",
+                    xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                  }
+                  properties:
+                  {
+                    _text: 60601.0
+                  }
+                }
+                Country: @Object(name: "Country")
+                {
+                  attributes:
+                  {
+                    xmlns: "http://example.com/schemas/purchase-order",
+                    xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                  }
+                  properties:
+                  {
+                    _text: "US"
+                  }
+                }
+              }
+            }
+          }
+        }
+        Buyer: @Object(name: "Buyer")
+        {
+          attributes:
+          {
+            xmlns: "http://example.com/schemas/purchase-order",
+            xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+          }
+          properties:
+          {
+            PartyID: @Object(name: "PartyID")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "BUYER-67890"
+              }
+            }
+            Name: @Object(name: "Name")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "Tech Solutions Corp"
+              }
+            }
+            TaxID: @Object(name: "TaxID")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "98-7654321"
+              }
+            }
+            ContactPerson: @Object(name: "ContactPerson")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "Sarah Johnson"
+              }
+            }
+            Email: @Object(name: "Email")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "sarah.johnson@techsolutions.example.com"
+              }
+            }
+            Phone: @Object(name: "Phone")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: 1.4155559876E10
+              }
+            }
+            Address: @Object(name: "Address")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                Street: @Object(name: "Street")
+                {
+                  attributes:
+                  {
+                    xmlns: "http://example.com/schemas/purchase-order",
+                    xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                  }
+                  properties:
+                  {
+                    _text: "1000 Technology Plaza"
+                  }
+                }
+                City: @Object(name: "City")
+                {
+                  attributes:
+                  {
+                    xmlns: "http://example.com/schemas/purchase-order",
+                    xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                  }
+                  properties:
+                  {
+                    _text: "San Francisco"
+                  }
+                }
+                State: @Object(name: "State")
+                {
+                  attributes:
+                  {
+                    xmlns: "http://example.com/schemas/purchase-order",
+                    xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                  }
+                  properties:
+                  {
+                    _text: "CA"
+                  }
+                }
+                PostalCode: @Object(name: "PostalCode")
+                {
+                  attributes:
+                  {
+                    xmlns: "http://example.com/schemas/purchase-order",
+                    xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                  }
+                  properties:
+                  {
+                    _text: 94102.0
+                  }
+                }
+                Country: @Object(name: "Country")
+                {
+                  attributes:
+                  {
+                    xmlns: "http://example.com/schemas/purchase-order",
+                    xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                  }
+                  properties:
+                  {
+                    _text: "US"
+                  }
+                }
+              }
+            }
+          }
+        }
+        ShippingAddress: @Object(name: "ShippingAddress")
+        {
+          attributes:
+          {
+            xmlns: "http://example.com/schemas/purchase-order",
+            xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+          }
+          properties:
+          {
+            Street: @Object(name: "Street")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "1000 Technology Plaza,
+                Building B"
+              }
+            }
+            City: @Object(name: "City")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "San Francisco"
+              }
+            }
+            State: @Object(name: "State")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "CA"
+              }
+            }
+            PostalCode: @Object(name: "PostalCode")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: 94102.0
+              }
+            }
+            Country: @Object(name: "Country")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "US"
+              }
+            }
+          }
+        }
+        BillingAddress: @Object(name: "BillingAddress")
+        {
+          attributes:
+          {
+            xmlns: "http://example.com/schemas/purchase-order",
+            xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+          }
+          properties:
+          {
+            Street: @Object(name: "Street")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "1000 Technology Plaza,
+                Accounting Dept"
+              }
+            }
+            City: @Object(name: "City")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "San Francisco"
+              }
+            }
+            State: @Object(name: "State")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "CA"
+              }
+            }
+            PostalCode: @Object(name: "PostalCode")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: 94102.0
+              }
+            }
+            Country: @Object(name: "Country")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "US"
+              }
+            }
+          }
+        }
+        LineItems: @Object(name: "LineItems")
+        {
+          attributes:
+          {
+            xmlns: "http://example.com/schemas/purchase-order",
+            xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+          }
+          properties:
+          {
+            LineItem:
+            [
+              @Object(name: "LineItem")
+              {
+                attributes:
+                {
+                  xmlns: "http://example.com/schemas/purchase-order",
+                  xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                }
+                properties:
+                {
+                  LineNumber: @Object(name: "LineNumber")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 1.0
+                    }
+                  }
+                  ProductID: @Object(name: "ProductID")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "WIDGET-001"
+                    }
+                  }
+                  Description: @Object(name: "Description")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "Industrial Widget Type A - Heavy Duty"
+                    }
+                  }
+                  Quantity: @Object(name: "Quantity")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 100.0
+                    }
+                  }
+                  UnitOfMeasure: @Object(name: "UnitOfMeasure")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "PCS"
+                    }
+                  }
+                  UnitPrice: @Object(name: "UnitPrice")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 45.5
+                    }
+                  }
+                  LineTotal: @Object(name: "LineTotal")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 4550.0
+                    }
+                  }
+                  RequestedDeliveryDate: @Object(name: "RequestedDeliveryDate")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "2024-11-10"
+                    }
+                  }
+                }
+              }
+              @Object(name: "LineItem")
+              {
+                attributes:
+                {
+                  xmlns: "http://example.com/schemas/purchase-order",
+                  xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                }
+                properties:
+                {
+                  LineNumber: @Object(name: "LineNumber")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 2.0
+                    }
+                  }
+                  ProductID: @Object(name: "ProductID")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "GADGET-002"
+                    }
+                  }
+                  Description: @Object(name: "Description")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "Precision Gadget - Model X200"
+                    }
+                  }
+                  Quantity: @Object(name: "Quantity")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 50.0
+                    }
+                  }
+                  UnitOfMeasure: @Object(name: "UnitOfMeasure")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "PCS"
+                    }
+                  }
+                  UnitPrice: @Object(name: "UnitPrice")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 125.0
+                    }
+                  }
+                  LineTotal: @Object(name: "LineTotal")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 6250.0
+                    }
+                  }
+                  RequestedDeliveryDate: @Object(name: "RequestedDeliveryDate")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "2024-11-15"
+                    }
+                  }
+                }
+              }
+              @Object(name: "LineItem")
+              {
+                attributes:
+                {
+                  xmlns: "http://example.com/schemas/purchase-order",
+                  xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                }
+                properties:
+                {
+                  LineNumber: @Object(name: "LineNumber")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 3.0
+                    }
+                  }
+                  ProductID: @Object(name: "ProductID")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "SUPPLY-003"
+                    }
+                  }
+                  Description: @Object(name: "Description")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "Industrial Lubricant - 5 Gallon Container"
+                    }
+                  }
+                  Quantity: @Object(name: "Quantity")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 20.0
+                    }
+                  }
+                  UnitOfMeasure: @Object(name: "UnitOfMeasure")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: "GAL"
+                    }
+                  }
+                  UnitPrice: @Object(name: "UnitPrice")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 85.0
+                    }
+                  }
+                  LineTotal: @Object(name: "LineTotal")
+                  {
+                    attributes:
+                    {
+                      xmlns: "http://example.com/schemas/purchase-order",
+                      xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+                    }
+                    properties:
+                    {
+                      _text: 1700.0
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+        PaymentTerms: @Object(name: "PaymentTerms")
+        {
+          attributes:
+          {
+            xmlns: "http://example.com/schemas/purchase-order",
+            xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+          }
+          properties:
+          {
+            PaymentMethod: @Object(name: "PaymentMethod")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: "wire-transfer"
+              }
+            }
+            PaymentDueDays: @Object(name: "PaymentDueDays")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: 30.0
+              }
+            }
+            DiscountPercent: @Object(name: "DiscountPercent")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: 2.0
+              }
+            }
+            DiscountDays: @Object(name: "DiscountDays")
+            {
+              attributes:
+              {
+                xmlns: "http://example.com/schemas/purchase-order",
+                xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+              }
+              properties:
+              {
+                _text: 10.0
+              }
+            }
+          }
+        }
+        Notes: @Object(name: "Notes")
+        {
+          attributes:
+          {
+            xmlns: "http://example.com/schemas/purchase-order",
+            xmlns:xsi: "http://www.w3.org/2001/XMLSchema-instance"
+          }
+          properties:
+          {
+            _text: "Rush order for Q4 production. Please confirm delivery dates within 48 hours."
+          }
+        }
+      }
+    }
+  }
+}

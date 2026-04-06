@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Rechnung xmlns="http://www.faktura.de/v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <RechnungsKopf>
+        <RechnungsNummer>DE-2025-RE-456789</RechnungsNummer>
+        <RechnungsDatum>2025-01-16</RechnungsDatum>
+        <Leistungsdatum>2025-01-10</Leistungsdatum>
+        <Fälligkeitsdatum>2025-02-15</Fälligkeitsdatum>
+    </RechnungsKopf>
+
+    <Rechnungssteller>
+        <Firmenname>Müller &amp; Söhne GmbH &amp; Co. KG</Firmenname>
+        <Straße>Hauptstraße 145</Straße>
+        <PLZ>70565</PLZ>
+        <Ort>Stuttgart</Ort>
+        <Land>Deutschland</Land>
+        <UStIdNr>DE123456789</UStIdNr>
+        <Kontakt>
+            <Telefon>+49 711 123 456</Telefon>
+            <Email>rechnung@mueller-soehne.de</Email>
+        </Kontakt>
+    </Rechnungssteller>
+
+    <Rechnungsempfänger>
+        <Firmenname>Bäckerei Schäfer AG</Firmenname>
+        <Ansprechpartner>Frau Änn
+
+a Schröder</Ansprechpartner>
+        <Straße>Königsallee 78</Straße>
+        <PLZ>40212</PLZ>
+        <Ort>Düsseldorf</Ort>
+        <Land>Deutschland</Land>
+    </Rechnungsempfänger>
+
+    <Positionen>
+        <Position>
+            <Nummer>1</Nummer>
+            <Bezeichnung>Industriebackofen Modell "ProBake 3000"</Bezeichnung>
+            <Menge>2</Menge>
+            <Einheit>Stück</Einheit>
+            <Einzelpreis>15750.00</Einzelpreis>
+            <Gesamtpreis>31500.00</Gesamtpreis>
+            <MwStSatz>19.0</MwStSatz>
+        </Position>
+        <Position>
+            <Nummer>2</Nummer>
+            <Bezeichnung>Installation &amp; Einweisung</Bezeichnung>
+            <Menge>1</Menge>
+            <Einheit>Pauschal</Einheit>
+            <Einzelpreis>2500.00</Einzelpreis>
+            <Gesamtpreis>2500.00</Gesamtpreis>
+            <MwStSatz>19.0</MwStSatz>
+        </Position>
+    </Positionen>
+
+    <Summen>
+        <Nettobetrag>34000.00</Nettobetrag>
+        <MwSt19Prozent>6460.00</MwSt19Prozent>
+        <Bruttobetrag>40460.00</Bruttobetrag>
+        <Währung>EUR</Währung>
+    </Summen>
+</Rechnung>

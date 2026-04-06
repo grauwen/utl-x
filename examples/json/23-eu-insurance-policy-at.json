@@ -1,0 +1,329 @@
+{
+  "polizzenNummer": "AT-2025-BV-456789-001",
+  "versicherungsTyp": "BETRIEBSVERSICHERUNG",
+  "polizzenBezeichnung": "Gewerbliche Betriebsversicherung Komplettschutz",
+  "ausstellungsDatum": "2025-01-16",
+  "versicherer": {
+    "gesellschaft": "Allianz Elementar Versicherungs-AG",
+    "firmenbuchnummer": "FN 123456 a",
+    "umsatzsteuerNummer": "ATU12345678",
+    "hauptsitz": {
+      "strasse": "Hietzinger Kai 101-105",
+      "plz": "1130",
+      "stadt": "Wien",
+      "bundesland": "Wien",
+      "land": "Österreich"
+    },
+    "kontakt": {
+      "telefon": "+43 1 878 00",
+      "email": "service@allianz.at",
+      "website": "www.allianz.at"
+    },
+    "aufsichtsbehörde": {
+      "name": "Finanzmarktaufsicht (FMA)",
+      "adresse": "Otto-Wagner-Platz 5, 1090 Wien"
+    }
+  },
+  "versicherungsnehmer": {
+    "rechtsform": "GMBH",
+    "firmenname": "Metallbau Technologie Wien GmbH",
+    "firmenbuchnummer": "FN 654321 b",
+    "umsatzsteuerNummer": "ATU98765432",
+    "gewerbeberechtigungsnummer": "GBN-2020-WIEN-123456",
+    "firmenadresse": {
+      "strasse": "Industriestraße 45",
+      "plz": "1220",
+      "stadt": "Wien",
+      "bundesland": "Wien",
+      "land": "Österreich"
+    },
+    "betriebsstandorte": [
+      {
+        "bezeichnung": "Hauptbetrieb und Verwaltung",
+        "strasse": "Industriestraße 45",
+        "plz": "1220",
+        "stadt": "Wien"
+      },
+      {
+        "bezeichnung": "Lager und Logistik",
+        "strasse": "Gewerbeparkstraße 12",
+        "plz": "2320",
+        "stadt": "Schwechat",
+        "bundesland": "Niederösterreich"
+      }
+    ],
+    "geschäftsführer": {
+      "name": "Ing. Franz Huber",
+      "email": "f.huber@metallbau-wien.at",
+      "telefon": "+43 1 234 5678",
+      "mobil": "+43 664 123 4567"
+    },
+    "branche": "Metallbau, Stahlkonstruktionen und Maschinenbau",
+    "mitarbeiteranzahl": 45,
+    "jahresumsatz": 5800000.00
+  },
+  "versicherungszeitraum": {
+    "versicherungsbeginn": "2025-02-01T00:00:00+01:00",
+    "versicherungsende": "2026-01-31T23:59:59+01:00",
+    "laufzeit": 1,
+    "laufzeitEinheit": "JAHRE",
+    "verlängerungsoption": "AUTOMATISCH",
+    "kündigungsfrist": {
+      "monate": 3,
+      "stichtag": "Zum Ablauf des Versicherungsjahres"
+    }
+  },
+  "versicherungsumfang": {
+    "gebäudeversicherung": {
+      "versichert": true,
+      "versicherungssumme": 2500000.00,
+      "deckungsart": "NEUWERT",
+      "objektbeschreibung": "Produktionshalle mit Bürotrakt, Baujahr 2018, massive Bauweise, Flachdach",
+      "gebäudefläche": 3500.00,
+      "einheit": "Quadratmeter",
+      "gedeckteGefahren": [
+        "Feuer und Blitzschlag",
+        "Explosion",
+        "Leitungswasser",
+        "Sturm und Hagel",
+        "Elementarschäden (Hochwasser, Überschwemmung, Erdbeben, Schneedruck)"
+      ],
+      "selbstbehalt": {
+        "standard": 500.00,
+        "elementarschäden": 1000.00
+      }
+    },
+    "betriebsinhaltversicherung": {
+      "versichert": true,
+      "versicherungssumme": 1800000.00,
+      "deckungsart": "NEUWERT",
+      "versicherteGegenstände": [
+        "Maschinen und technische Anlagen",
+        "Werkzeuge und Betriebseinrichtungen",
+        "Lagerbestände und Vorräte",
+        "Büroausstattung und IT-Equipment",
+        "Werkstücke und Produkte"
+      ],
+      "gedeckteGefahren": [
+        "Feuer und Blitzschlag",
+        "Einbruchdiebstahl",
+        "Leitungswasser",
+        "Sturm und Hagel",
+        "Vandalismus",
+        "Elementarschäden"
+      ],
+      "selbstbehalt": {
+        "standard": 500.00,
+        "einbruchdiebstahl": 1000.00,
+        "elementarschäden": 1000.00
+      },
+      "zusatzdeckungen": {
+        "elektronikVersicherung": {
+          "versicherungssumme": 250000.00,
+          "selbstbehalt": 500.00,
+          "inklusive": ["IT-Server", "CNC-Steuerungen", "Mess- und Prüfgeräte"]
+        },
+        "maschinenbruchVersicherung": {
+          "versicherungssumme": 850000.00,
+          "selbstbehalt": 1000.00,
+          "inklusive": ["CNC-Fräsmaschinen", "Schweißanlagen", "Krananalagen"]
+        }
+      }
+    },
+    "betriebsunterbrechungsversicherung": {
+      "versichert": true,
+      "versicherungssumme": 600000.00,
+      "haftungszeitraum": 12,
+      "einheit": "MONATE",
+      "gedeckteKosten": [
+        "Fortlaufende Fixkosten (Miete, Gehälter, Leasingraten)",
+        "Entgangener Betriebsgewinn",
+        "Zusätzliche Kosten für Ersatzbeschaffung",
+        "Mehrkosten durch Notmaßnahmen"
+      ],
+      "selbstbehalt": {
+        "tage": 5,
+        "mindestbetrag": 2000.00
+      }
+    },
+    "betriebshaftpflichtVersicherung": {
+      "versichert": true,
+      "deckungssumme": {
+        "personenschäden": 5000000.00,
+        "sachschäden": 2000000.00,
+        "vermögensschäden": 500000.00,
+        "pauschal": 5000000.00,
+        "umweltschäden": 1000000.00
+      },
+      "gedeckteRisiken": [
+        "Betriebliche Tätigkeit und Produkthaftung",
+        "Mietsachschäden",
+        "Bauherrenhaftpflicht für kleinere Bauvorhaben",
+        "Umwelthaftpflicht",
+        "Schäden durch Betriebs-KFZ auf Betriebsgelände"
+      ],
+      "selbstbehalt": 0.00,
+      "territorium": "Weltweit (außer USA/Kanada)",
+      "zusatzklauseln": [
+        "Bearbeitungsklausel für Montage- und Wartungsarbeiten",
+        "Schlüsselverlustklausel",
+        "Tätigkeitsschäden"
+      ]
+    },
+    "rechtsschutzversicherung": {
+      "versichert": true,
+      "deckungssumme": 150000.00,
+      "leistungsarten": [
+        "Arbeitsrechtsschutz",
+        "Vertragsrechtsschutz",
+        "Verwaltungsrechtsschutz",
+        "Steuerrechtsschutz vor Gerichten"
+      ],
+      "selbstbehalt": 200.00,
+      "wartefrist": {
+        "allgemein": 3,
+        "einheit": "MONATE"
+      }
+    }
+  },
+  "prämie": {
+    "jahresprämie": {
+      "gebäudeversicherung": 4250.00,
+      "betriebsinhaltversicherung": 7200.00,
+      "elektronikversicherung": 1800.00,
+      "maschinenbruchversicherung": 3400.00,
+      "betriebsunterbrechung": 4800.00,
+      "betriebshaftpflicht": 3600.00,
+      "rechtsschutz": 950.00,
+      "nettoprämieGesamt": 26000.00,
+      "versicherungssteuer": {
+        "prozentsatz": 11.0,
+        "betrag": 2860.00
+      },
+      "bruttoprämieGesamt": 28860.00,
+      "währung": "EUR"
+    },
+    "zahlungsweise": "JÄHRLICH",
+    "zahlungstermin": "01. Februar jeden Jahres",
+    "zahlungsart": "SEPA_LASTSCHRIFT",
+    "bankverbindung": {
+      "kontoinhaber": "Metallbau Technologie Wien GmbH",
+      "iban": "AT61 1904 3002 3457 3201",
+      "bic": "BAWAATWW",
+      "bankname": "Wiener Stadtbank AG"
+    },
+    "ratenzahlungOption": {
+      "verfügbar": true,
+      "anzahlRaten": 4,
+      "ratenbetrag": 7350.00,
+      "zuschlagProzent": 3.0,
+      "gesamtBeiRatenzahlung": 29400.00
+    }
+  },
+  "besondereVereinbarungen": [
+    "Nachtzuschlag entfällt aufgrund moderner Alarmanlage und Videoüberwachung",
+    "Rabatt 15% wegen schadenfreier Vorjahre",
+    "Selbstbeteiligung kann durch Aufpreis reduziert werden",
+    "Unterversicherungsverzicht bei jährlicher Anpassung der Versicherungssummen",
+    "Vorsorgeversicherung 10% automatisch inkludiert",
+    "Versicherungsschutz gilt auch für Montagetätigkeiten im Inland"
+  ],
+  "obliegenheiten": {
+    "sicherheitsvorschriften": [
+      "Brandschutzvorschriften gemäß TRVB (Technische Richtlinien Vorbeugender Brandschutz) sind einzuhalten",
+      "Jährliche Wartung der Brandmeldeanlage durch konzessionierten Fachbetrieb",
+      "Regelmäßige Prüfung elektrischer Anlagen (mindestens alle 3 Jahre)",
+      "Ordnungsgemäße Lagerung brennbarer Stoffe",
+      "Überwachung des Betriebsgeländes durch Alarmanlage außerhalb der Betriebszeiten"
+    ],
+    "schadenfall": {
+      "meldefrist": "Unverzüglich, spätestens innerhalb 7 Tagen",
+      "meldestelle": {
+        "telefon": "+43 1 878 00-2400",
+        "email": "schaden@allianz.at",
+        "online": "www.allianz.at/schadensmeldung"
+      },
+      "pflichten": [
+        "Schadensminderungspflicht",
+        "Anzeige bei Polizei bei Einbruchdiebstahl",
+        "Keine Veränderung des Schadensortes vor Besichtigung",
+        "Vollständige Schadensdokumentation"
+      ]
+    }
+  },
+  "ausschlüsse": {
+    "allgemein": [
+      "Vorsätzlich herbeigeführte Schäden",
+      "Kriegsereignisse und innere Unruhen",
+      "Kernenergie und Radioaktivität",
+      "Schäden durch mangelnde Wartung und Instandhaltung",
+      "Allmählich wirkende Einflüsse (außer vereinbart)"
+    ],
+    "besondere": [
+      "Schäden an Kraftfahrzeugen (separate KFZ-Versicherung erforderlich)",
+      "Cyber-Risiken (separate Cyber-Versicherung empfohlen)"
+    ]
+  },
+  "vertragsunterlagen": [
+    {
+      "dokumentTyp": "POLIZZE",
+      "bezeichnung": "Versicherungspolizze",
+      "seitenzahl": 12
+    },
+    {
+      "dokumentTyp": "AVB",
+      "bezeichnung": "Allgemeine Versicherungsbedingungen für Sachversicherung",
+      "version": "AVB 2023",
+      "seitenzahl": 28
+    },
+    {
+      "dokumentTyp": "PRODUKTINFO",
+      "bezeichnung": "Informationsblatt für Versicherungsprodukte",
+      "seitenzahl": 3
+    },
+    {
+      "dokumentTyp": "DATENSCHUTZ",
+      "bezeichnung": "Datenschutzinformation gemäß DSGVO",
+      "seitenzahl": 4
+    }
+  ],
+  "makler": {
+    "verwendetMakler": true,
+    "firmenname": "Versicherungsmakler Schmidt & Partner GmbH",
+    "name": "Mag. Maria Schmidt",
+    "gewerbeberechtigung": "GISA-Register Nr. 12345678",
+    "adresse": {
+      "strasse": "Kärntner Ring 5-7",
+      "plz": "1010",
+      "stadt": "Wien"
+    },
+    "kontakt": {
+      "telefon": "+43 1 512 3456",
+      "email": "m.schmidt@makler-schmidt.at"
+    },
+    "provision": "Inkludiert in Prämienberechnung"
+  },
+  "unterschriften": {
+    "versicherer": {
+      "unterschrieben": true,
+      "name": "Dr. Wolfgang Maier",
+      "funktion": "Bevollmächtigter Underwriter",
+      "datum": "2025-01-16",
+      "ort": "Wien"
+    },
+    "versicherungsnehmer": {
+      "unterschrieben": true,
+      "name": "Ing. Franz Huber",
+      "funktion": "Geschäftsführer",
+      "datum": "2025-01-16",
+      "ort": "Wien"
+    }
+  },
+  "rücktrittsrecht": {
+    "frist": 30,
+    "einheit": "TAGE",
+    "beschreibung": "Der Versicherungsnehmer kann binnen 30 Tagen ab Erhalt der Polizze vom Vertrag zurücktreten. Die Rücktrittserklärung ist schriftlich an die Versicherungsgesellschaft zu richten."
+  },
+  "gerichtsstand": "Wien",
+  "anzuwendendesRecht": "Österreichisches Recht"
+}

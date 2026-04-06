@@ -1,0 +1,80 @@
+name: get_usdl_directives_specific
+description: Test retrieving specific USDL directives by name
+tags:
+  - tools
+  - get_usdl_directives
+  - lookup
+
+sequence:
+  - description: "Get %namespace directive details"
+    request:
+      jsonrpc: "2.0"
+      id: 49
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          directive: "%namespace"
+    expect:
+      jsonrpc: "2.0"
+      id: 49
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*%namespace.*}}"
+        # Should show detailed information about %namespace directive
+        # Including syntax, examples, supported formats, scopes
+
+  - description: "Get directive by name without % prefix"
+    request:
+      jsonrpc: "2.0"
+      id: 50
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          directive: "types"
+    expect:
+      jsonrpc: "2.0"
+      id: 50
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*%types.*}}"
+        # Should normalize directive name and find %types
+
+  - description: "Get %fields directive"
+    request:
+      jsonrpc: "2.0"
+      id: 51
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          directive: "%fields"
+    expect:
+      jsonrpc: "2.0"
+      id: 51
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*%fields.*}}"
+        # Should show %fields directive details
+
+  - description: "Get non-existent directive"
+    request:
+      jsonrpc: "2.0"
+      id: 52
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          directive: "%nonexistent"
+    expect:
+      jsonrpc: "2.0"
+      id: 52
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*not found.*}}"
+        # Should return appropriate error message

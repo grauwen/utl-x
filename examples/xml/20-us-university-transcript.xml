@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AcademicTranscript xmlns="http://www.universitytranscripts.edu/v1"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <TranscriptHeader>
+        <TranscriptID>TRANS-2025-001234</TranscriptID>
+        <IssueDate>2025-01-16</IssueDate>
+        <TranscriptType>OFFICIAL</TranscriptType>
+        <IssuedTo>REQUEST_OF_STUDENT</IssuedTo>
+    </TranscriptHeader>
+
+    <Institution>
+        <Name>Stanford University</Name>
+        <Address>
+            <Street>450 Serra Mall</Street>
+            <City>Stanford</City>
+            <State>CA</State>
+            <ZipCode>94305</ZipCode>
+            <Country>USA</Country>
+        </Address>
+        <RegistrarOffice>
+            <Phone>+1-650-723-2091</Phone>
+            <Email>registrar@stanford.edu</Email>
+        </RegistrarOffice>
+        <FICE_Code>001305</FICE_Code>
+        <Accreditation>WASC Senior College and University Commission</Accreditation>
+    </Institution>
+
+    <Student>
+        <StudentID>20185432</StudentID>
+        <Name>
+            <FirstName>Emily</FirstName>
+            <MiddleName>Rose</MiddleName>
+            <LastName>Martinez</LastName>
+        </Name>
+        <DateOfBirth>2000-06-15</DateOfBirth>
+        <SSN_Last4>4567</SSN_Last4>
+        <Email>emily.martinez@stanford.edu</Email>
+    </Student>
+
+    <AcademicHistory>
+        <AdmissionDate>2018-09-20</AdmissionDate>
+        <GraduationDate>2022-06-12</GraduationDate>
+        <DegreeAwarded>
+            <Degree>Bachelor of Science</Degree>
+            <Major>Computer Science</Major>
+            <Minor>Mathematics</Minor>
+            <HonorsDesignation>Magna Cum Laude</HonorsDesignation>
+        </DegreeAwarded>
+        <OverallGPA>3.87</OverallGPA>
+        <MajorGPA>3.95</MajorGPA>
+        <GradingScale>4.00</GradingScale>
+    </AcademicHistory>
+
+    <AcademicTerms>
+        <Term>
+            <TermCode>2018FA</TermCode>
+            <TermName>Fall Quarter 2018</TermName>
+            <Courses>
+                <Course>
+                    <CourseNumber>CS106A</CourseNumber>
+                    <CourseTitle>Programming Methodology</CourseTitle>
+                    <Credits>5</Credits>
+                    <Grade>A</Grade>
+                    <GradePoints>4.00</GradePoints>
+                </Course>
+                <Course>
+                    <CourseNumber>MATH51</CourseNumber>
+                    <CourseTitle>Linear Algebra, Multivariable Calculus</CourseTitle>
+                    <Credits>5</Credits>
+                    <Grade>A-</Grade>
+                    <GradePoints>3.70</GradePoints>
+                </Course>
+            </Courses>
+            <TermGPA>3.85</TermGPA>
+            <TermCredits>15</TermCredits>
+        </Term>
+    </AcademicTerms>
+
+    <USEducationTerms>
+        <Terms>GPA, Credits, Quarter System, Major, Minor</Terms>
+        <Grades>A, A-, B+, B, B-, C+, C, D, F</Grades>
+    </USEducationTerms>
+</AcademicTranscript>

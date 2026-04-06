@@ -1,0 +1,8 @@
+OrderID;CustomerName;Email;Country;OrderTotal;OrderDate;Status
+ORD-5001;Hans Müller;hans.muller@example.de;Germany;1250.50;2024-02-10;Shipped
+ORD-5002;Marie Dubois;marie.dubois@example.fr;France;890.25;2024-02-11;Processing
+ORD-5003;Giovanni Rossi;g.rossi@example.it;Italy;2100.00;2024-02-11;Delivered
+ORD-5004;Anna Schmidt;anna.s@example.at;Austria;567.80;2024-02-12;Shipped
+ORD-5005;Jean Martin;j.martin@example.ch;Switzerland;3400.50;2024-02-13;Processing
+ORD-5006;Lukas Weber;l.weber@example.de;Germany;745.30;2024-02-13;Delivered
+ORD-5007;Sophie Bernard;sophie.b@example.fr;France;1890.00;2024-02-14;Shipped

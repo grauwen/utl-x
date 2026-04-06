@@ -1,0 +1,288 @@
+%utlx 1.0
+input json
+output json
+---
+
+// ============================================================================
+// Business Scenario: Enterprise Order → Warehouse Fulfillment Ticket
+// ----------------------------------------------------------------------------
+// Input:  Enterprise B2B order with deep nesting (00-enterprise-order.json)
+// Output: JSON fulfillment ticket for warehouse management system
+//
+// Enterprise orders contain deeply nested data about products, shipping,
+// warranties, and approval chains. This transformation flattens the structure
+// into an actionable fulfillment ticket with pick lists, packing instructions,
+// and shipping labels for warehouse operations.
+// ============================================================================
+
+function FulfillmentPriority(orderValue, shippingMethod) {
+  let valuePriority = if (orderValue > 40000) 50
+                      else if (orderValue > 20000) 30
+                      else 10 in
+  let shippingPriority = match (shippingMethod) {
+    "express" => 40,
+    "priority" => 25,
+    "standard" => 10,
+    _ => 5
+  } in
+  valuePriority + shippingPriority
+}
+
+function PackingType(weight, value) {
+  if (value > 1000 || weight > 10) "INDIVIDUAL_PROTECTED"
+  else if (weight > 5) "STANDARD_BOX"
+  else "MULTI_PACK"
+}
+
+function QualityCheckLevel(unitPrice, warrantyYears) {
+  if (unitPrice > 1000 && warrantyYears >= 3) "PREMIUM_INSPECTION"
+  else if (unitPrice > 500) "STANDARD_INSPECTION"
+  else "SPOT_CHECK"
+}
+
+
+{
+  let orderDate = parseDate($input.orderDate);
+  let estimatedDelivery = parseDate($input.shippingDetails.estimatedDelivery);
+  let daysToDelivery = diffDays(now(), estimatedDelivery);
+  let itemCount = count($input.lineItems);
+  let totalQuantity = sum(map($input.lineItems, li => li.quantity));
+  let totalWeight = sum(map($input.lineItems, li => li.productDetails.weight * li.quantity));
+  let fulfillmentScore = FulfillmentPriority($input.totalAmount, $input.shippingDetails.shippingMethod);
+  let approvalCount = count($input.orderMetadata.approvalChain.approvers);
+  let allApproved = $input.orderMetadata.approvalChain.currentApprovals == $input.orderMetadata.approvalChain.requiredApprovals;
+
+  {
+    fulfillmentTicket: {
+      ticketId: "FT-" + replace(substring(generateUuid(), 0, 8), "-", ""),
+      ticketType: "ENTERPRISE_ORDER_FULFILLMENT",
+      generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+      priority: if (fulfillmentScore >= 80) "CRITICAL"
+                else if (fulfillmentScore >= 60) "HIGH"
+                else if (fulfillmentScore >= 40) "MEDIUM"
+                else "STANDARD",
+      priorityScore: fulfillmentScore,
+      status: "READY_FOR_PICKING"
+    },
+    orderReference: {
+      orderId: $input.orderId,
+      orderDate: formatDate(orderDate, "yyyy-MM-dd"),
+      orderTime: formatDate(orderDate, "HH:mm:ss"),
+      dayOfWeek: dayOfWeekName(orderDate),
+      orderStatus: $input.orderStatus,
+      totalAmount: $input.totalAmount,
+      totalAmountFormatted: formatCurrency($input.totalAmount, $input.currency),
+      currency: $input.currency,
+      referenceNumber: $input.orderMetadata.referenceNumber,
+      orderSource: $input.orderMetadata.orderSource
+    },
+    customer: {
+      customerId: $input.customer.customerId,
+      customerType: $input.customer.customerType,
+      companyName: $input.customer.companyName,
+      companySlug: slugify($input.customer.companyName),
+      taxId: $input.customer.taxId,
+      primaryContact: {
+        name: $input.customer.primaryContact.firstName + " " + $input.customer.primaryContact.lastName,
+        title: $input.customer.primaryContact.title,
+        email: $input.customer.primaryContact.email,
+        phone: $input.customer.primaryContact.phone
+      },
+      billingContact: {
+        name: $input.customer.billingContact.firstName + " " + $input.customer.billingContact.lastName,
+        title: $input.customer.billingContact.title,
+        email: $input.customer.billingContact.email,
+        phone: $input.customer.billingContact.phone
+      }
+    },
+    shippingDetails: {
+      shipmentId: $input.shippingDetails.shipmentId,
+      shippingMethod: upperCase($input.shippingDetails.shippingMethod),
+      carrier: $input.shippingDetails.carrier,
+      trackingNumber: $input.shippingDetails.trackingNumber,
+      estimatedDelivery: formatDate(estimatedDelivery, "yyyy-MM-dd"),
+      estimatedDeliveryFormatted: formatDate(estimatedDelivery, "EEEE, MMMM d, yyyy"),
+      daysUntilDelivery: daysToDelivery,
+      deliveryUrgency: if (daysToDelivery <= 1) "SAME_DAY"
+                       else if (daysToDelivery <= 2) "NEXT_DAY"
+                       else if (daysToDelivery <= 5) "EXPEDITED"
+                       else "STANDARD",
+      destination: {
+        recipientName: $input.shippingDetails.shippingAddress.recipientName,
+        street: $input.shippingDetails.shippingAddress.streetAddress,
+        suite: $input.shippingDetails.shippingAddress.suite,
+        city: $input.shippingDetails.shippingAddress.city,
+        state: $input.shippingDetails.shippingAddress.state,
+        postalCode: $input.shippingDetails.shippingAddress.postalCode,
+        country: $input.shippingDetails.shippingAddress.country,
+        fullAddress: joinToString([
+          $input.shippingDetails.shippingAddress.streetAddress,
+          $input.shippingDetails.shippingAddress.suite,
+          $input.shippingDetails.shippingAddress.city + ", " + $input.shippingDetails.shippingAddress.state + " " + $input.shippingDetails.shippingAddress.postalCode
+        ], ", "),
+        deliveryInstructions: $input.shippingDetails.shippingAddress.deliveryInstructions,
+        timezone: $input.shippingDetails.shippingAddress.coordinates.timezone,
+        geoRegion: $input.shippingDetails.shippingAddress.coordinates.geoRegion,
+        locationVerified: $input.shippingDetails.shippingAddress.coordinates.locationMetadata.verified,
+        qualityScore: $input.shippingDetails.shippingAddress.coordinates.locationMetadata.qualityScore
+      }
+    },
+    fulfillmentSummary: {
+      totalLineItems: itemCount,
+      totalUnits: totalQuantity,
+      estimatedWeightLbs: roundToDecimalPlaces(totalWeight, 1),
+      estimatedWeightKg: roundToDecimalPlaces(totalWeight * 0.453592, 1),
+      requiresForklift: totalWeight > 100,
+      requiresSignature: $input.totalAmount > 1000,
+      insuranceRequired: $input.totalAmount > 5000
+    },
+    pickList: {
+      items: $input.lineItems |> map(li => {
+        let weight = li.productDetails.weight;
+        let totalLineWeight = weight * li.quantity;
+        let packingType = PackingType(weight, li.unitPrice);
+        let qcLevel = QualityCheckLevel(li.unitPrice, li.warrantyInfo.duration);
+        let volumetricWeight = li.productDetails.dimensions.volumetricWeight;
+
+        {
+          lineItemId: li.lineItemId,
+          pickSequence: findIndex($input.lineItems, item => item.lineItemId == li.lineItemId) + 1,
+          product: {
+            productId: li.productId,
+            sku: li.sku,
+            skuBarcode: "BARCODE:" + li.sku,
+            name: li.productName,
+            nameSlug: slugify(li.productName),
+            category: li.category,
+            manufacturer: li.productDetails.manufacturer,
+            model: li.productDetails.model
+          },
+          quantity: {
+            ordered: li.quantity,
+            toPick: li.quantity,
+            unitOfMeasure: "EACH"
+          },
+          dimensions: {
+            length: li.productDetails.dimensions.length,
+            width: li.productDetails.dimensions.width,
+            height: li.productDetails.dimensions.height,
+            unit: li.productDetails.dimensions.unit,
+            weight: weight,
+            weightUnit: li.productDetails.weightUnit,
+            totalWeight: totalLineWeight,
+            volumetricWeight: volumetricWeight
+          },
+          packaging: {
+            type: packingType,
+            packageType: li.productDetails.dimensions.packagingDetails.packageType,
+            condition: li.productDetails.dimensions.packagingDetails.packageCondition,
+            includesAccessories: li.productDetails.dimensions.packagingDetails.includesAccessories,
+            accessories: joinToString(li.productDetails.dimensions.packagingDetails.accessories, ", "),
+            material: li.productDetails.dimensions.packagingDetails.packagingMaterial
+          },
+          sustainability: {
+            recyclable: li.productDetails.dimensions.packagingDetails.sustainabilityInfo.recyclable,
+            recycledContent: li.productDetails.dimensions.packagingDetails.sustainabilityInfo.recycledContent,
+            carbonFootprint: li.productDetails.dimensions.packagingDetails.sustainabilityInfo.carbonFootprint,
+            ecoScore: li.productDetails.dimensions.packagingDetails.sustainabilityInfo.environmentalMetrics.ecoScore,
+            energyRating: li.productDetails.dimensions.packagingDetails.sustainabilityInfo.environmentalMetrics.energyRating
+          },
+          specifications: {
+            processor: li.productDetails.specifications.processor,
+            memory: li.productDetails.specifications.memory,
+            storage: li.productDetails.specifications.storage
+          },
+          pricing: {
+            unitPrice: li.unitPrice,
+            unitPriceFormatted: formatCurrency(li.unitPrice, $input.currency),
+            lineTotal: li.lineTotal,
+            lineTotalFormatted: formatCurrency(li.lineTotal, $input.currency),
+            taxAmount: li.taxAmount,
+            taxAmountFormatted: formatCurrency(li.taxAmount, $input.currency)
+          },
+          warranty: {
+            warrantyId: li.warrantyInfo.warrantyId,
+            type: li.warrantyInfo.warrantyType,
+            duration: li.warrantyInfo.duration,
+            durationUnit: li.warrantyInfo.durationUnit,
+            startDate: li.warrantyInfo.startDate,
+            endDate: li.warrantyInfo.endDate,
+            coverageType: li.warrantyInfo.coverage.coverageType,
+            includesAccidental: li.warrantyInfo.coverage.includesAccidental,
+            includesOnsite: li.warrantyInfo.coverage.includesOnsite,
+            responseTime: li.warrantyInfo.coverage.responseTime
+          },
+          qualityControl: {
+            level: qcLevel,
+            serialNumberRequired: li.unitPrice > 500,
+            photoRequired: li.unitPrice > 1000,
+            testingRequired: li.productDetails.specifications.technicalDetails.performanceMetrics.testingMetadata.warrantyIncluded
+          }
+        }
+      })
+    },
+    approvalChain: {
+      requiredApprovals: $input.orderMetadata.approvalChain.requiredApprovals,
+      currentApprovals: $input.orderMetadata.approvalChain.currentApprovals,
+      allApproved: allApproved,
+      approvers: $input.orderMetadata.approvalChain.approvers |> map(appr => {
+        {
+          approverId: appr.approverId,
+          name: appr.approverName,
+          role: appr.approverRole,
+          department: appr.approverMetadata.department,
+          costCenter: appr.approverMetadata.costCenter,
+          approvalDate: formatDate(parseDate(appr.approvalDate), "yyyy-MM-dd HH:mm"),
+          notes: truncate(appr.approvalNotes, 30, "...")
+        }
+      })
+    },
+    paymentInfo: {
+      paymentId: $input.paymentDetails.paymentId,
+      paymentMethod: $input.paymentDetails.paymentMethod,
+      paymentStatus: $input.paymentDetails.paymentStatus,
+      invoiceNumber: $input.paymentDetails.invoiceNumber,
+      invoiceDate: $input.paymentDetails.invoiceDate,
+      dueDate: $input.paymentDetails.dueDate,
+      daysUntilDue: diffDays(now(), parseDate($input.paymentDetails.dueDate)),
+      earlyPaymentDiscount: {
+        offered: $input.paymentDetails.paymentTerms.discountOffered,
+        percentage: $input.paymentDetails.paymentTerms.discountPercentage,
+        validDays: $input.paymentDetails.paymentTerms.discountDays,
+        potentialSavings: roundToCents($input.totalAmount * $input.paymentDetails.paymentTerms.discountPercentage / 100)
+      },
+      creditInfo: {
+        creditScore: $input.paymentDetails.bankingDetails.wireInstructions.beneficiaryAddress.bankingMetadata.accountHistory.creditScore.score,
+        rating: $input.paymentDetails.bankingDetails.wireInstructions.beneficiaryAddress.bankingMetadata.accountHistory.creditScore.rating,
+        riskLevel: $input.paymentDetails.bankingDetails.wireInstructions.beneficiaryAddress.bankingMetadata.accountHistory.creditScore.riskLevel
+      }
+    },
+    packingSlip: {
+      slipNumber: "PS-" + $input.orderId,
+      generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+      shipTo: upperCase($input.shippingDetails.shippingAddress.recipientName) + "\n" +
+              upperCase($input.shippingDetails.shippingAddress.streetAddress) + "\n" +
+              $input.shippingDetails.shippingAddress.suite + "\n" +
+              upperCase($input.shippingDetails.shippingAddress.city) + ", " +
+              $input.shippingDetails.shippingAddress.state + " " +
+              $input.shippingDetails.shippingAddress.postalCode,
+      itemSummary: joinToString(
+        map($input.lineItems, li => toString(li.quantity) + "x " + truncate(li.productName, 20, "...")),
+        " | "
+      ),
+      totalItems: totalQuantity,
+      totalWeight: roundToDecimalPlaces(totalWeight, 1) + " lbs",
+      handlingInstructions: if (totalWeight > 50) "HEAVY - Use equipment"
+                           else if ($input.totalAmount > 10000) "HIGH VALUE - Handle with care"
+                           else "Standard handling"
+    },
+    auditInfo: {
+      createdBy: $input.orderMetadata.createdBy,
+      createdDate: $input.orderMetadata.createdDate,
+      lastModifiedBy: $input.orderMetadata.lastModifiedBy,
+      lastModifiedDate: $input.orderMetadata.lastModifiedDate,
+      orderSource: $input.orderMetadata.orderSource,
+      ticketHash: sha256($input.orderId + toString($input.totalAmount) + $input.orderDate)
+    }
+  }
+}

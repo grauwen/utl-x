@@ -1,0 +1,19 @@
+%utlx 1.0
+input data xsd
+output osch
+---
+
+// XSD to OData Schema (EDMX) transformation
+// Converts XSD complex types to OData entity types
+//
+// Usage: utlx transform xsd-to-osch.utlx schema.xsd
+//
+// XSD type mapping to Edm:
+//   xs:string   → Edm.String
+//   xs:int      → Edm.Int32
+//   xs:decimal  → Edm.Decimal
+//   xs:boolean  → Edm.Boolean
+//   xs:date     → Edm.Date
+//   xs:dateTime → Edm.DateTimeOffset
+
+$data

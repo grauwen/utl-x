@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PropertyDeed xmlns="http://www.realestate.us/deed/v1"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <DeedInformation>
+        <DeedType>WARRANTY_DEED</DeedType>
+        <RecordingNumber>2025-001234567</RecordingNumber>
+        <BookNumber>4567</BookNumber>
+        <PageNumber>123</PageNumber>
+        <RecordingDate>2025-01-15</RecordingDate>
+        <RecordingTime>10:45:00</RecordingTime>
+        <DocumentID>US-2025-DEED-CA-789456</DocumentID>
+    </DeedInformation>
+
+    <County>
+        <CountyName>Los Angeles County</CountyName>
+        <State>California</State>
+        <RecordersOffice>
+            <OfficeName>Los Angeles County Registrar-Recorder/County Clerk</OfficeName>
+            <Address>
+                <Street>12400 Imperial Highway</Street>
+                <City>Norwalk</City>
+                <State>CA</State>
+                <ZipCode>90650</ZipCode>
+            </Address>
+            <Phone>+1-562-462-2125</Phone>
+        </RecordersOffice>
+    </County>
+
+    <Grantor>
+        <EntityType>INDIVIDUAL</EntityType>
+        <LastName>Johnson</LastName>
+        <FirstName>Michael</FirstName>
+        <MiddleName>Robert</MiddleName>
+        <Suffix/>
+        <MaritalStatus>MARRIED</MaritalStatus>
+        <Address>
+            <Street>456 Sunset Boulevard</Street>
+            <Unit/>
+            <City>Los Angeles</City>
+            <State>CA</State>
+            <ZipCode>90028</ZipCode>
+        </Address>
+        <SSNLast4>6789</SSNLast4>
+    </Grantor>
+
+    <CoGrantor>
+        <EntityType>INDIVIDUAL</EntityType>
+        <LastName>Johnson</LastName>
+        <FirstName>Sarah</FirstName>
+        <MiddleName>Elizabeth</MiddleName>
+        <Suffix/>
+        <MaritalStatus>MARRIED</MaritalStatus>
+        <Address>
+            <Street>456 Sunset Boulevard</Street>
+            <Unit/>
+            <City>Los Angeles</City>
+            <State>CA</State>
+            <ZipCode>90028</ZipCode>
+        </Address>
+        <SSNLast4>4321</SSNLast4>
+    </CoGrantor>
+
+    <Grantee>
+        <EntityType>INDIVIDUAL</EntityType>
+        <LastName>Chen</LastName>
+        <FirstName>David</FirstName>
+        <MiddleName>Wei</MiddleName>
+        <Suffix/>
+        <MaritalStatus>MARRIED</MaritalStatus>
+        <Address>
+            <Street>789 Pacific Coast Highway</Street>
+            <Unit>Apt 2B</Unit>
+            <City>Malibu</City>
+            <State>CA</State>
+            <ZipCode>90265</ZipCode>
+        </Address>
+        <Email>david.chen@example.com</Email>
+        <Phone>+1-310-555-0123</Phone>
+    </Grantee>
+
+    <CoGrantee>
+        <EntityType>INDIVIDUAL</EntityType>
+        <LastName>Chen</LastName>
+        <FirstName>Jennifer</FirstName>
+        <MiddleName>Marie</MiddleName>
+        <Suffix/>
+        <MaritalStatus>MARRIED</MaritalStatus>
+        <Address>
+            <Street>789 Pacific Coast Highway</Street>
+            <Unit>Apt 2B</Unit>
+            <City>Malibu</City>
+            <State>CA</State>
+            <ZipCode>90265</ZipCode>
+        </Address>
+        <Email>jennifer.chen@example.com</Email>
+        <Phone>+1-310-555-0124</Phone>
+    </CoGrantee>
+
+    <VestingType>JOINT_TENANCY_WITH_RIGHT_OF_SURVIVORSHIP</VestingType>
+
+    <PropertyDescription>
+        <LegalDescription>
+            <ParcelNumber>5432-012-456</ParcelNumber>
+            <LotNumber>12</LotNumber>
+            <Block/>
+            <Tract>54321</Tract>
+            <Subdivision>Pacific Heights Estates</Subdivision>
+            <Range>14W</Range>
+            <Township>2S</Township>
+            <Section>15</Section>
+            <FullLegalDescription>Lot 12 of Tract No. 54321, in the City of Los Angeles, County of Los Angeles, State of California, as per map recorded in Book 789, Pages 45 through 67 inclusive of Maps, in the Office of the County Recorder of said County.</FullLegalDescription>
+        </LegalDescription>
+        <SitusAddress>
+            <Street>456 Sunset Boulevard</Street>
+            <City>Los Angeles</City>
+            <State>CA</State>
+            <ZipCode>90028</ZipCode>
+        </SitusAddress>
+        <PropertyType>SINGLE_FAMILY_RESIDENCE</PropertyType>
+        <LandArea>
+            <SquareFeet>8,500</SquareFeet>
+            <Acres>0.195</Acres>
+        </LandArea>
+        <BuildingArea>
+            <SquareFeet>3,450</SquareFeet>
+            <YearBuilt>2015</YearBuilt>
+            <Bedrooms>5</Bedrooms>
+            <Bathrooms>4.5</Bathrooms>
+        </BuildingArea>
+    </PropertyDescription>
+
+    <Consideration>
+        <Amount currency="USD">2,450,000.00</Amount>
+        <AmountInWords>Two Million Four Hundred Fifty Thousand Dollars</AmountInWords>
+        <ConsiderationNote>This conveyance is made for good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged.</ConsiderationNote>
+    </Consideration>
+
+    <Covenants>
+        <Covenant>Grantor warrants that Grantor is the lawful owner of the property and has the right to convey the same.</Covenant>
+        <Covenant>Grantor warrants that the property is free from all encumbrances except those specifically noted herein.</Covenant>
+        <Covenant>Grantor will warrant and defend the title to the property against all lawful claims and demands.</Covenant>
+    </Covenants>
+
+    <Encumbrances>
+        <Encumbrance>
+            <Type>DEED_OF_TRUST</Type>
+            <RecordingNumber>2015-987654321</RecordingNumber>
+            <RecordingDate>2015-08-15</RecordingDate>
+            <Beneficiary>Wells Fargo Bank, N.A.</Beneficiary>
+            <Amount currency="USD">1,950,000.00</Amount>
+            <Status>TO_BE_PAID_OFF</Status>
+        </Encumbrance>
+        <Encumbrance>
+            <Type>CC&amp;R</Type>
+            <Description>Declaration of Covenants, Conditions, and Restrictions for Pacific Heights Estates</Description>
+            <RecordingNumber>2012-123456789</RecordingNumber>
+            <RecordingDate>2012-04-20</RecordingDate>
+        </Encumbrance>
+        <Encumbrance>
+            <Type>EASEMENT</Type>
+            <Description>Utility easement along the rear 10 feet of the property</Description>
+            <RecordingNumber>2012-123456790</RecordingNumber>
+            <RecordingDate>2012-04-20</RecordingDate>
+        </Encumbrance>
+    </Encumbrances>
+
+    <TaxInformation>
+        <AssessorParcelNumber>5432-012-456</AssessorParcelNumber>
+        <TaxYear>2024-2025</TaxYear>
+        <AssessedValue currency="USD">2,350,000.00</AssessedValue>
+        <AnnualTax currency="USD">28,675.00</AnnualTax>
+        <TaxStatus>CURRENT</TaxStatus>
+    </TaxInformation>
+
+    <TransferTax>
+        <CountyTransferTax currency="USD">2,695.00</CountyTransferTax>
+        <CityTransferTax currency="USD">10,780.00</CityTransferTax>
+        <TotalTransferTax currency="USD">13,475.00</TotalTransferTax>
+        <PaidBy>SELLER</PaidBy>
+    </TransferTax>
+
+    <TitleInsurance>
+        <TitleCompany>First American Title Insurance Company</TitleCompany>
+        <PolicyNumber>FA-2025-123456789</PolicyNumber>
+        <PolicyDate>2025-01-15</PolicyDate>
+        <CoverageAmount currency="USD">2,450,000.00</CoverageAmount>
+        <Premium currency="USD">8,575.00</Premium>
+    </TitleInsurance>
+
+    <Notarization>
+        <NotaryPublic>
+            <Name>Maria Rodriguez</Name>
+            <CommissionNumber>CA-12345678</CommissionNumber>
+            <County>Los Angeles</County>
+            <CommissionExpires>2027-12-31</CommissionExpires>
+        </NotaryPublic>
+        <SigningDate>2025-01-14</SigningDate>
+        <SigningLocation>Los Angeles, California</SigningLocation>
+        <AcknowledgmentText>On January 14, 2025, before me, Maria Rodriguez, Notary Public, personally appeared Michael Robert Johnson and Sarah Elizabeth Johnson, who proved to me on the basis of satisfactory evidence to be the persons whose names are subscribed to the within instrument and acknowledged to me that they executed the same in their authorized capacities, and that by their signatures on the instrument the persons, or the entity upon behalf of which the persons acted, executed the instrument.</AcknowledgmentText>
+        <NotarySeal>NOTARY_SEAL_IMPRINT</NotarySeal>
+    </Notarization>
+
+    <Signatures>
+        <GrantorSignature>
+            <Name>Michael Robert Johnson</Name>
+            <Date>2025-01-14</Date>
+            <ElectronicSignature>MRJ_SIG_2025_01_14_10_30</ElectronicSignature>
+        </GrantorSignature>
+        <CoGrantorSignature>
+            <Name>Sarah Elizabeth Johnson</Name>
+            <Date>2025-01-14</Date>
+            <ElectronicSignature>SEJ_SIG_2025_01_14_10_32</ElectronicSignature>
+        </CoGrantorSignature>
+        <GranteeSignature>
+            <Name>David Wei Chen</Name>
+            <Date>2025-01-14</Date>
+            <ElectronicSignature>DWC_SIG_2025_01_14_10_35</ElectronicSignature>
+        </GranteeSignature>
+        <CoGranteeSignature>
+            <Name>Jennifer Marie Chen</Name>
+            <Date>2025-01-14</Date>
+            <ElectronicSignature>JMC_SIG_2025_01_14_10_37</ElectronicSignature>
+        </CoGranteeSignature>
+    </Signatures>
+
+    <RecordingFees>
+        <RecordingFee currency="USD">75.00</RecordingFee>
+        <AdditionalPages>4</AdditionalPages>
+        <AdditionalPageFee currency="USD">12.00</AdditionalPageFee>
+        <TotalRecordingFee currency="USD">87.00</TotalRecordingFee>
+    </RecordingFees>
+
+    <MailingInstructions>
+        <RecordedDeedTo>
+            <Name>David Wei Chen and Jennifer Marie Chen</Name>
+            <Address>
+                <Street>789 Pacific Coast Highway</Street>
+                <Unit>Apt 2B</Unit>
+                <City>Malibu</City>
+                <State>CA</State>
+                <ZipCode>90265</ZipCode>
+            </Address>
+        </RecordedDeedTo>
+    </MailingInstructions>
+
+    <PreparedBy>
+        <Attorney>
+            <Name>James Patterson, Esq.</Name>
+            <FirmName>Patterson &amp; Associates, LLP</FirmName>
+            <BarNumber>CA-234567</BarNumber>
+            <Address>
+                <Street>1000 Wilshire Boulevard</Street>
+                <Suite>Suite 2500</Suite>
+                <City>Los Angeles</City>
+                <State>CA</State>
+                <ZipCode>90017</ZipCode>
+            </Address>
+            <Phone>+1-213-555-7890</Phone>
+            <Email>jpatterson@pattersonlaw.com</Email>
+        </Attorney>
+        <PreparationDate>2025-01-10</PreparationDate>
+    </PreparedBy>
+
+    <USRealEstateTerms>
+        <TermsUsed>Grantor, Grantee, Warranty Deed, Deed of Trust, CC&amp;Rs, Easement, Notary Public</TermsUsed>
+        <Symbols>$, &amp;, ®, ©</Symbols>
+    </USRealEstateTerms>
+</PropertyDeed>

@@ -1,0 +1,22 @@
+name: invalid_tool_name
+description: Test error handling when calling non-existent tool
+tags:
+  - edge-cases
+  - errors
+  - protocol
+
+sequence:
+  - description: "Call tool that doesn't exist"
+    request:
+      jsonrpc: "2.0"
+      id: 100
+      method: "tools/call"
+      params:
+        name: "non_existent_tool"
+        arguments: {}
+    expect:
+      jsonrpc: "2.0"
+      id: 100
+      error:
+        code: -32601
+        message: "{{STRING}}"

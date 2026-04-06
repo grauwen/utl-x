@@ -104,11 +104,14 @@ class XMLSerializer(
     private fun serializeUDM(udm: UDM, writer: Writer, depth: Int, elementName: String) {
         when (udm) {
             is UDM.Scalar -> {
-                // Scalar at top level - wrap in element
                 writeIndent(writer, depth)
-                writer.write("<$elementName>")
-                writeEscaped(writer, formatScalarValue(udm.value))
-                writer.write("</$elementName>")
+                if (udm.value == null) {
+                    writer.write("<$elementName/>")
+                } else {
+                    writer.write("<$elementName>")
+                    writeEscaped(writer, formatScalarValue(udm.value))
+                    writer.write("</$elementName>")
+                }
                 if (prettyPrint) writer.write("\n")
             }
             

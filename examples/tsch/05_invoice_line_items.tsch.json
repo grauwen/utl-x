@@ -1,0 +1,117 @@
+{
+  "fields": [
+    {
+      "name": "invoice_number",
+      "title": "Invoice Number",
+      "type": "string",
+      "description": "Invoice document number",
+      "constraints": {
+        "required": true,
+        "pattern": "^INV-[0-9]{4}-[0-9]{4}$"
+      }
+    },
+    {
+      "name": "line_number",
+      "title": "Line Number",
+      "type": "integer",
+      "description": "Line item sequence number within the invoice",
+      "constraints": {
+        "required": true,
+        "minimum": 1
+      }
+    },
+    {
+      "name": "customer_id",
+      "title": "Customer ID",
+      "type": "string",
+      "description": "Customer account identifier",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "product_description",
+      "title": "Product Description",
+      "type": "string",
+      "description": "Description of the product or service",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "quantity",
+      "title": "Quantity",
+      "type": "integer",
+      "description": "Number of units",
+      "constraints": {
+        "required": true,
+        "minimum": 1
+      }
+    },
+    {
+      "name": "unit_price",
+      "title": "Unit Price (EUR)",
+      "type": "number",
+      "description": "Price per unit in EUR (European decimal notation)",
+      "decimalChar": ",",
+      "groupChar": ".",
+      "constraints": {
+        "required": true,
+        "minimum": 0.01
+      }
+    },
+    {
+      "name": "line_total",
+      "title": "Line Total (EUR)",
+      "type": "number",
+      "description": "Line total in EUR (quantity × unit_price)",
+      "decimalChar": ",",
+      "groupChar": ".",
+      "constraints": {
+        "required": true,
+        "minimum": 0.01
+      }
+    },
+    {
+      "name": "tax_rate",
+      "title": "Tax Rate",
+      "type": "number",
+      "description": "Applicable tax rate as a decimal",
+      "decimalChar": ",",
+      "constraints": {
+        "required": true,
+        "minimum": 0
+      }
+    },
+    {
+      "name": "invoice_date",
+      "title": "Invoice Date",
+      "type": "date",
+      "format": "%d/%m/%Y",
+      "description": "Date the invoice was issued (DD/MM/YYYY)",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "due_date",
+      "title": "Due Date",
+      "type": "date",
+      "format": "%d/%m/%Y",
+      "description": "Payment due date (DD/MM/YYYY)",
+      "constraints": {
+        "required": true
+      }
+    }
+  ],
+  "primaryKey": ["invoice_number", "line_number"],
+  "foreignKeys": [
+    {
+      "fields": ["customer_id"],
+      "reference": {
+        "resource": "customers",
+        "fields": ["customer_id"]
+      }
+    }
+  ]
+}

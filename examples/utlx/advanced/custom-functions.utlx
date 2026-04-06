@@ -40,7 +40,7 @@ function formatCurrency(amount: Number, currency: String): String {
 
 // Apply functions to orders
 {
-  orders: input.orders |> map(order => {
+  orders: $input.orders |> map(order => {
     let subtotal = sum(order.items.*.total),
     let discount = calculateDiscount(subtotal, order.customer.tier),
     let discountAmount = subtotal * discount,

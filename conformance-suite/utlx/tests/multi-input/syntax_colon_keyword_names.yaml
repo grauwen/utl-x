@@ -1,0 +1,52 @@
+name: "multi_input_syntax_colon_keyword_names"
+category: "multi-input"
+description: "Test that 'input' and 'output' can be used as input names in colon syntax"
+tags: ["multi-input", "syntax", "colon", "keywords"]
+
+inputs:
+  input:
+    format: json
+    data: |
+      {
+        "name": "John Doe",
+        "email": "john@example.com"
+      }
+
+  output:
+    format: json
+    data: |
+      {
+        "id": "ORD-123",
+        "total": 299.99
+      }
+
+transformation: |
+  %utlx 1.0
+  input: input json, output json
+  output json
+  ---
+  {
+    customerName: $input.name,
+    orderId: $output.id,
+    orderTotal: $output.total
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "customerName": "John Doe",
+      "orderId": "ORD-123",
+      "orderTotal": 299.99
+    }
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created_date: "2025-11-10"
+  notes:
+    - "Tests that 'input' and 'output' keywords can be used as input names"
+    - "Parser should allow these keywords as names after colon in header"

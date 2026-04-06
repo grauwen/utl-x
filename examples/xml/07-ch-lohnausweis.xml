@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Lohnausweis xmlns="http://www.estv.admin.ch/lohnausweis/v1"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Grunddaten>
+        <Steuerjahr>2024</Steuerjahr>
+        <AusweisNummer>CH-2024-LA-789456</AusweisNummer>
+        <Ausstellungsdatum>2025-01-20</Ausstellungsdatum>
+        <Sprache>DE</Sprache>
+    </Grunddaten>
+
+    <Arbeitgeber>
+        <UID>CHE-123.456.789</UID>
+        <Firmenname>Schweizer Präzisionswerke AG</Firmenname>
+        <Rechtsform>AKTIENGESELLSCHAFT</Rechtsform>
+        <Adresse>
+            <Strasse>Bahnhofstrasse</Strasse>
+            <Hausnummer>145</Hausnummer>
+            <PLZ>8001</PLZ>
+            <Ort>Zürich</Ort>
+            <Kanton>ZH</Kanton>
+            <Land>Schweiz</Land>
+        </Adresse>
+        <Kontakt>
+            <Telefon>+41 44 123 45 67</Telefon>
+            <Email>personal@praezisionswerke.ch</Email>
+        </Kontakt>
+        <QuellensteuerPflichtig>false</QuellensteuerPflichtig>
+        <SozialversicherungsNummer>756.1234.5678.90</SozialversicherungsNummer>
+    </Arbeitgeber>
+
+    <Arbeitnehmer>
+        <Personalien>
+            <AHVNummer>756.9876.5432.10</AHVNummer>
+            <Name>Müller</Name>
+            <Vorname>Hans-Peter</Vorname>
+            <Geburtsdatum>1985-06-15</Geburtsdatum>
+            <Zivilstand>VERHEIRATET</Zivilstand>
+            <Nationalität>Schweiz</Nationalität>
+        </Personalien>
+        <Wohnadresse>
+            <Strasse>Zürcherstrasse</Strasse>
+            <Hausnummer>78</Hausnummer>
+            <PLZ>8610</PLZ>
+            <Ort>Uster</Ort>
+            <Kanton>ZH</Kanton>
+            <Land>Schweiz</Land>
+        </Wohnadresse>
+        <Kontakt>
+            <Telefon>+41 79 123 45 67</Telefon>
+            <Email>hp.mueller@example.ch</Email>
+        </Kontakt>
+        <Niederlassungsbewilligung/>
+        <Grenzgänger>false</Grenzgänger>
+        <Wochenaufenthalter>false</Wochenaufenthalter>
+    </Arbeitnehmer>
+
+    <Beschäftigungsdaten>
+        <Anstellungsbeginn>2020-03-01</Anstellungsbeginn>
+        <Anstellungsende/>
+        <Beschäftigungsgrad>100.0</Beschäftigungsgrad>
+        <Funktion>Projektleiter Entwicklung</Funktion>
+        <BrancheCode>28.29</BrancheCode>
+        <BrancheBezeichnung>Herstellung von sonstigen Maschinen</BrancheBezeichnung>
+        <TätigkeitInJahren>4.83</TätigkeitInJahren>
+    </Beschäftigungsdaten>
+
+    <Lohnangaben>
+        <Bruttolohn>
+            <Barlohn>135'000.00</Barlohn>
+            <Gratifikationen>18'500.00</Gratifikationen>
+            <Überstundenvergütung>4'250.00</Überstundenvergütung>
+            <Provisionen>0.00</Provisionen>
+            <Spesen>
+                <EffektiveSpesen>2'850.00</EffektiveSpesen>
+                <Pauschalspesen>0.00</Pauschalspesen>
+            </Spesen>
+            <ÜbrigeLohnbestandteile>
+                <Beschreibung>Jubiläumszulage</Beschreibung>
+                <Betrag>5'000.00</Betrag>
+            </ÜbrigeLohnbestandteile>
+            <TotalBruttolohn>165'600.00</TotalBruttolohn>
+        </Bruttolohn>
+
+        <Sozialabzüge>
+            <AHV_IV_EO>
+                <ArbeitnehmerAnteil>8'595.60</ArbeitnehmerAnteil>
+                <Satz>5.3</Satz>
+            </AHV_IV_EO>
+            <ALV>
+                <ArbeitnehmerAnteil>1'821.00</ArbeitnehmerAnteil>
+                <Satz>1.1</Satz>
+            </ALV>
+            <BVG>
+                <ArbeitnehmerBeiträge>9'450.00</ArbeitnehmerBeiträge>
+                <ArbeitgeberBeiträge>12'600.00</ArbeitgeberBeiträge>
+                <Einkaufssumme>0.00</Einkaufssumme>
+            </BVG>
+            <KTG>
+                <Prämie>1'245.00</Prämie>
+                <ArbeitnehmerAnteil>622.50</ArbeitnehmerAnteil>
+            </KTG>
+            <UVG>
+                <NBUV>
+                    <Prämie>245.00</Prämie>
+                    <ArbeitnehmerAnteil>245.00</ArbeitnehmerAnteil>
+                </NBUV>
+            </UVG>
+        </Sozialabzüge>
+
+        <Quellensteuer>
+            <Quellensteuerabzug>0.00</Quellensteuerabzug>
+            <Tarif/>
+            <Tarifcode/>
+        </Quellensteuer>
+
+        <NettoAuszahlung>144'866.90</NettoAuszahlung>
+    </Lohnangaben>
+
+    <Naturalleistungen>
+        <Privatanteil>
+            <Geschäftsfahrzeug>
+                <Fahrzeugtyp>Personenwagen</Fahrzeugtyp>
+                <Marke>BMW 3er</Marke>
+                <Kaufpreis>65'000.00</Kaufpreis>
+                <Privatanteil>7'800.00</Privatanteil>
+                <Berechnungsmethode>0.9% des Kaufpreises pro Monat</Berechnungsmethode>
+            </Geschäftsfahrzeug>
+        </Privatanteil>
+        <Personalrabatte>
+            <Beschreibung>Mitarbeiterrabatt auf Firmenprodukte</Beschreibung>
+            <Betrag>1'250.00</Betrag>
+        </Personalrabatte>
+        <TotalNaturalleistungen>9'050.00</TotalNaturalleistungen>
+    </Naturalleistungen>
+
+    <Kapitalauszahlungen>
+        <Pensionskasse>
+            <Altersleistungen>0.00</Altersleistungen>
+            <Austrittsleistungen>0.00</Austrittsleistungen>
+        </Pensionskasse>
+        <Säule3a>
+            <Auszahlungen>0.00</Auszahlungen>
+        </Säule3a>
+        <TotalKapitalauszahlungen>0.00</TotalKapitalauszahlungen>
+    </Kapitalauszahlungen>
+
+    <SteuerbaresEinkommen>
+        <Bruttolohn>165'600.00</Bruttolohn>
+        <Naturalleistungen>9'050.00</Naturalleistungen>
+        <ArbeitgeberBVGBeiträge>12'600.00</ArbeitgeberBVGBeiträge>
+        <TotalSteuerbaresEinkommen>187'250.00</TotalSteuerbaresEinkommen>
+    </SteuerbaresEinkommen>
+
+    <Spesenregelung>
+        <EffektiveSpesen>
+            <Geschäftsreisen>1'850.00</Geschäftsreisen>
+            <Verpflegung>650.00</Verpflegung>
+            <Übernachtung>350.00</Übernachtung>
+            <Total>2'850.00</Total>
+        </EffektiveSpesen>
+        <PauschaleSpesenentschädigung>
+            <Betrag>0.00</Betrag>
+            <MitVerwendungszweck>false</MitVerwendungszweck>
+        </PauschaleSpesenentschädigung>
+    </Spesenregelung>
+
+    <ZusätzlicheAngaben>
+        <Lohnfortzahlung>
+            <BeiKrankheit>
+                <Dauer>0 Tage</Dauer>
+                <Betrag>0.00</Betrag>
+            </BeiKrankheit>
+            <BeiUnfall>
+                <Dauer>0 Tage</Dauer>
+                <Betrag>0.00</Betrag>
+            </BeiUnfall>
+            <BeiMutterschaft>
+                <Dauer>0 Tage</Dauer>
+                <Betrag>0.00</Betrag>
+            </BeiMutterschaft>
+        </Lohnfortzahlung>
+
+        <Mitarbeiterbeteiligungen>
+            <Aktienoptionen>
+                <AnzahlOptionen>500</AnzahlOptionen>
+                <Ausübungspreis>125.00</Ausübungspreis>
+                <Marktwert>135.00</Marktwert>
+                <SteuerbarerVorteil>5'000.00</SteuerbarerVorteil>
+            </Aktienoptionen>
+        </Mitarbeiterbeteiligungen>
+
+        <WeiterbildungUndAusbildung>
+            <BerufsorientiertArbeitgeber>3'500.00</BerufsorientiertArbeitgeber>
+            <NichtBerufsorientiertArbeitnehmer>0.00</NichtBerufsorientiertArbeitnehmer>
+        </WeiterbildungUndAusbildung>
+    </ZusätzlicheAngaben>
+
+    <Familienzulagen>
+        <Kinderzulagen>
+            <Kind1>
+                <Name>Müller Sophie</Name>
+                <Geburtsdatum>2015-04-12</Geburtsdatum>
+                <ZulagenBetrag>3'000.00</ZulagenBetrag>
+            </Kind1>
+            <Kind2>
+                <Name>Müller Lukas</Name>
+                <Geburtsdatum>2018-09-25</Geburtsdatum>
+                <ZulagenBetrag>3'000.00</ZulagenBetrag>
+            </Kind2>
+        </Kinderzulagen>
+        <Ausbildungszulagen>
+            <AnzahlKinder>0</AnzahlKinder>
+            <Betrag>0.00</Betrag>
+        </Ausbildungszulagen>
+        <TotalFamilienzulagen>6'000.00</TotalFamilienzulagen>
+    </Familienzulagen>
+
+    <Bestätigung>
+        <Ausstellungsort>Zürich</Ausstellungsort>
+        <Ausstellungsdatum>2025-01-20</Ausstellungsdatum>
+        <Unterschrift>
+            <NamePersonalverantwortlicher>Dr. Anna Schmid</NamePersonalverantwortlicher>
+            <FunktionPersonalverantwortlicher>Leiterin Personalwesen</FunktionPersonalverantwortlicher>
+            <DigitaleSignatur>8a9b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b</DigitaleSignatur>
+        </Unterschrift>
+        <Firmenstempel>SCHWEIZER PRÄZISIONSWERKE AG</Firmenstempel>
+    </Bestätigung>
+
+    <Bemerkungen>
+        <Bemerkung>Der Lohnausweis wurde gemäss den Weisungen der ESTV zur Lohnausweiserfassung erstellt.</Bemerkung>
+        <Bemerkung>Sämtliche Beträge verstehen sich in Schweizer Franken (CHF).</Bemerkung>
+        <Bemerkung>Der Arbeitnehmer erhielt zusätzlich 500 Aktienoptionen im Wert von CHF 5'000.</Bemerkung>
+    </Bemerkungen>
+
+    <SchweizerspezifischeTekens>
+        <Umlaute>ä ö ü Ä Ö Ü</Umlaute>
+        <ScharfesS>ß (selten in der Schweiz, meist "ss")</ScharfesS>
+        <Währung>CHF Fr. Franken Rappen</Währung>
+        <Apostrophformat>1'234'567.89</Apostrophformat>
+        <Beispiele>Zürich, Genève, Bâle, Neuchâtel, Schaffhausen, Graubünden</Beispiele>
+    </SchweizerspezifischeTekens>
+</Lohnausweis>

@@ -1,0 +1,9 @@
+PropertyID,Location,Type,SquareMeters,PricePerSqM,TotalPrice,YearBuilt
+RE-CH-001,Zürich Centrum,Apartment,"145,50","12'500,00","1'818'750,00",2019
+RE-CH-002,Geneva Lakefront,Villa,"380,75","18'900,00","7'196'175,00",2021
+RE-CH-003,Basel Altstadt,Apartment,"98,25","9'800,00","962'850,00",2015
+RE-CH-004,Bern Westside,Penthouse,"225,00","14'200,00","3'195'000,00",2020
+RE-CH-005,Lausanne Centre,Apartment,"156,80","11'750,00","1'842'400,00",2018
+RE-CH-006,Lucerne Seeblick,Villa,"420,50","16'500,00","6'938'250,00",2022
+RE-CH-007,Zürich Oerlikon,Office,"890,00","8'900,00","7'921'000,00",2017
+RE-CH-008,Geneva Airport,Commercial,"1'250,00","7'500,00","9'375'000,00",2016

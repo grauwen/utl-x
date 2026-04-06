@@ -1,0 +1,11 @@
+@udm-version: 1.0
+@source: "nodejs-generated/07_lambda-type_nodejs-generated.udm"
+@parsed-at: "2025-11-16T20:10:01.475Z"
+
+{
+  transformations: {
+    mapper: @Lambda(),
+    filter: @Lambda(),
+    reducer: @Lambda()
+  }
+}

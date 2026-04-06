@@ -1,0 +1,25 @@
+name: get_usdl_directives_all
+description: Test get_usdl_directives tool retrieves all USDL directives
+tags:
+  - tools
+  - get_usdl_directives
+  - basic
+
+sequence:
+  - description: "Get all USDL directives without filter"
+    request:
+      jsonrpc: "2.0"
+      id: 40
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments: {}
+    expect:
+      jsonrpc: "2.0"
+      id: 40
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*USDL Directive Registry.*}}"
+        # Response should contain registry header
+        # Should list all 119 directives grouped by tier

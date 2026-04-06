@@ -1,0 +1,86 @@
+name: get_usdl_directives_query_metadata
+description: Test querying USDL directive metadata (statistics, formats, tiers, scopes)
+tags:
+  - tools
+  - get_usdl_directives
+  - metadata
+
+sequence:
+  - description: "Query statistics"
+    request:
+      jsonrpc: "2.0"
+      id: 57
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          query: "statistics"
+    expect:
+      jsonrpc: "2.0"
+      id: 57
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Statistics.*}}"
+        # Should return directive counts by tier, scope, and format statistics
+        # Total should be 119 directives
+
+  - description: "Query formats"
+    request:
+      jsonrpc: "2.0"
+      id: 58
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          query: "formats"
+    expect:
+      jsonrpc: "2.0"
+      id: 58
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Supported Schema Formats.*}}"
+        # Should list all supported formats with compatibility percentages
+        # Should include xsd, jsch, proto, avro, odata, graphql, sql, etc.
+
+  - description: "Query tiers"
+    request:
+      jsonrpc: "2.0"
+      id: 59
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          query: "tiers"
+    expect:
+      jsonrpc: "2.0"
+      id: 59
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Tier 1: Core.*}}"
+        # Should list all 4 tiers with directive counts and descriptions
+        # Tier 1 (Core): 9 directives
+        # Tier 2 (Common): 51 directives
+        # Tier 3 (Format-Specific): 44 directives
+        # Tier 4 (Reserved): 15 directives
+
+  - description: "Query scopes"
+    request:
+      jsonrpc: "2.0"
+      id: 60
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          query: "scopes"
+    expect:
+      jsonrpc: "2.0"
+      id: 60
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*USDL Directive Scopes.*}}"
+        # Should list all scopes with directive counts
+        # Should include TOP_LEVEL, TYPE_DEFINITION, FIELD_DEFINITION, ENUMERATION, etc.

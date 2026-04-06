@@ -1,0 +1,24 @@
+%utlx 1.0
+input data osch
+output jsch
+---
+
+// OData Schema (EDMX) to JSON Schema transformation
+// Converts OData entity types to JSON Schema definitions
+//
+// Usage: utlx transform --input-format osch --output-format jsch < metadata.edmx
+//
+// Map each type from the EDMX metadata to a JSON Schema definition
+// Entity types become JSON Schema objects with properties
+// Key properties are added to the "required" array
+// Navigation properties become $ref references
+//
+// Edm type mapping to JSON Schema:
+//   Edm.String     → { "type": "string" }
+//   Edm.Int32      → { "type": "integer" }
+//   Edm.Decimal    → { "type": "number" }
+//   Edm.Boolean    → { "type": "boolean" }
+//   Edm.Date       → { "type": "string", "format": "date" }
+//   Edm.DateTime   → { "type": "string", "format": "date-time" }
+
+$data

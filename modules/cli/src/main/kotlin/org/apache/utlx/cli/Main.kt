@@ -19,49 +19,106 @@ object Main {
         DebugConfig.initialize()
 
         if (args.isEmpty()) {
+            // No arguments: identity mode if stdin is piped, otherwise show usage
+            if (System.console() == null) {
+                // stdin is piped (not a terminal) - enter identity mode
+                val result = TransformCommand.execute(emptyArray(), identityMode = true)
+                when (result) {
+                    is CommandResult.Success -> exitProcess(0)
+                    is CommandResult.Failure -> {
+                        if (result.message.isNotEmpty()) {
+                            System.err.println("Error: ${result.message}")
+                        }
+                        exitProcess(result.exitCode)
+                    }
+                }
+            }
             printUsage()
             exitProcess(0)
         }
-        
+
         try {
             val command = args[0]
             val commandArgs = args.drop(1).toTypedArray()
-            
-            when (command.lowercase()) {
+
+            val result = when (command.lowercase()) {
                 "transform", "t" -> TransformCommand.execute(commandArgs)
                 "repl", "r" -> ReplCommand.execute(commandArgs)
-                // "schema", "s" -> SchemaCommand.execute(commandArgs)  // Temporarily disabled - depends on analysis module
-                "schema", "s" -> {
-                    println("Schema command temporarily disabled")
-                    println("(Requires analysis module which is currently disabled)")
+                "design", "d" -> {
+                    System.err.println("Design-time analysis features have been moved to the daemon server.")
+                    System.err.println()
+                    System.err.println("Please use 'utlxd' instead of 'utlx' for design commands:")
+                    System.err.println("  utlxd design <subcommand> [options]")
+                    System.err.println()
+                    System.err.println("Available design subcommands:")
+                    System.err.println("  generate-schema  Generate output schema from transformation")
+                    System.err.println("  typecheck        Typecheck transformation against schemas")
+                    System.err.println("  infer            Infer schema from transformation")
+                    System.err.println("  daemon           Start LSP daemon for IDE integration")
+                    System.err.println("  graph            Generate AST visualization")
+                    System.err.println()
+                    System.err.println("Examples:")
+                    System.err.println("  utlxd design generate-schema -t transform.utlx -i input.xsd -f json-schema")
+                    System.err.println("  utlxd design daemon --stdio")
+                    System.err.println("  utlxd design graph transform.utlx -o ast.svg")
+                    CommandResult.Failure("Use 'utlxd design' instead", 1)
                 }
                 "capture" -> CaptureCommand.execute(commandArgs)
-                "validate", "v" -> {
-                    println("Validate command not yet implemented")
-                    println("Coming soon: Validate UTL-X scripts")
-                }
+                "validate", "v" -> ValidateCommand.execute(commandArgs)
+                "lint", "l" -> LintCommand.execute(commandArgs)
+                "udm" -> UDMCommand.execute(commandArgs)
                 "compile", "c" -> {
                     println("Compile command not yet implemented")
                     println("Coming soon: Compile UTL-X scripts to bytecode")
+                    CommandResult.Success
                 }
                 "format", "f" -> {
                     println("Format command not yet implemented")
                     println("Coming soon: Format/pretty-print UTL-X scripts")
+                    CommandResult.Success
                 }
                 "migrate", "m" -> {
                     println("Migrate command not yet implemented")
                     println("Coming soon: Migrate XSLT/DataWeave to UTL-X")
+                    CommandResult.Success
                 }
                 "functions", "fn" -> FunctionsCommand.execute(commandArgs)
                 "version", "--version", "-v" -> {
                     println("UTL-X CLI v$VERSION")
                     println("Universal Transformation Language Extended")
+                    CommandResult.Success
                 }
-                "help", "--help", "-h" -> printUsage()
-                else -> {
-                    System.err.println("Unknown command: $command")
+                "help", "--help", "-h" -> {
                     printUsage()
-                    exitProcess(1)
+                    CommandResult.Success
+                }
+                else -> {
+                    // Check if first arg looks like a .utlx file → implicit transform
+                    if (command.endsWith(".utlx")) {
+                        TransformCommand.execute(args)
+                    }
+                    // Check if first arg is a flag for identity mode (--to, --from, etc.)
+                    else if (command in listOf("--to", "--from", "--output-format", "--input-format",
+                                               "--no-pretty", "--verbose", "-v")) {
+                        TransformCommand.execute(args, identityMode = true)
+                    }
+                    else {
+                        System.err.println("Unknown command: $command")
+                        printUsage()
+                        CommandResult.Failure("Unknown command: $command", 1)
+                    }
+                }
+            }
+
+            // Handle command result - only Main.kt controls process exit
+            when (result) {
+                is CommandResult.Success -> exitProcess(0)
+                is CommandResult.Failure -> {
+                    // Print error message if provided
+                    if (result.message.isNotEmpty()) {
+                        System.err.println("Error: ${result.message}")
+                    }
+                    exitProcess(result.exitCode)
                 }
             }
         } catch (e: Exception) {
@@ -74,10 +131,6 @@ object Main {
     }
     
     private fun printUsage() {
-        // Note: schema command temporarily removed from help (requires analysis module which is disabled)
-        // Commented out lines:
-        //   |  schema    (s)  Generate and validate schemas (design-time analysis)
-        //   |  utlx schema generate --input-schema order.xsd --transform script.utlx --output-format json-schema
         println("""
             |UTL-X CLI v$VERSION - Universal Transformation Language Extended
             |
@@ -86,8 +139,11 @@ object Main {
             |Commands:
             |  transform (t)  Transform data using a UTL-X script
             |  repl      (r)  Start interactive REPL session
+            |  design    (d)  Design-time analysis (typecheck, generate schemas, IDE support)
             |  capture        Manage test capture settings (enable/disable/status)
-            |  validate  (v)  Validate a UTL-X script without executing
+            |  validate  (v)  Validate a UTL-X script for correctness (Levels 1-3)
+            |  lint      (l)  Check for style issues and best practices (Level 4)
+            |  udm            Work with UDM Language files (export, import, validate, format)
             |  compile   (c)  Compile a UTL-X script to bytecode
             |  format    (f)  Format/pretty-print a UTL-X script
             |  migrate   (m)  Migrate XSLT/DataWeave to UTL-X
@@ -96,10 +152,18 @@ object Main {
             |  help           Show this help message
             |
             |Examples:
+            |  cat data.xml | utlx                    Identity mode: XML to JSON (smart flip)
+            |  cat data.json | utlx                   Identity mode: JSON to XML (smart flip)
+            |  cat data.csv | utlx --to yaml          Identity mode: CSV to YAML
+            |  utlx script.utlx input.xml             Implicit transform (no 'transform' subcommand)
             |  utlx repl
             |  utlx transform script.utlx input.xml -o output.json
+            |  utlx design generate-schema --input-schema order.xsd --transform script.utlx --output-format json-schema
+            |  utlx design typecheck --input-schema order.xsd --transform script.utlx --expected-output invoice-schema.json
             |  utlx capture status
             |  utlx validate script.utlx
+            |  utlx udm export data.json data.udm
+            |  utlx udm validate data.udm
             |  utlx transform --input-format xml --output-format json script.utlx < input.xml
             |  utlx transform data.yaml script.utlx --output-format json
             |

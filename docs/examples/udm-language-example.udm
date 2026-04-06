@@ -1,0 +1,29 @@
+@udm-version: 1.0
+
+@Object(
+  name: "Order",
+  metadata: {source: "xml", lineNumber: "10", validated: "true"}
+) {
+  attributes: {
+    id: "ORD-001",
+    status: "confirmed"
+  },
+  properties: {
+    customer: @Object(
+      name: "Customer"
+    ) {
+      properties: {
+        name: "Alice Johnson",
+        email: "alice@example.com"
+      }
+    },
+    total: 1299.99,
+    orderDate: @DateTime("2024-01-15T10:30:00Z"),
+    items: [
+      {
+        sku: "LAPTOP-X1",
+        price: 1299.99
+      }
+    ]
+  }
+}

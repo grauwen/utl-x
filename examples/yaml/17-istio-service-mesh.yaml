@@ -1,0 +1,83 @@
+# Istio Service Mesh Configuration
+# Complete traffic management, security, and observability
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ecommerce-frontend
+  namespace: production
+spec:
+  hosts:
+    - ecommerce.example.com
+  gateways:
+    - ecommerce-gateway
+  http:
+    - match:
+        - headers:
+            canary:
+              exact: "true"
+      route:
+        - destination:
+            host: frontend-service
+            subset: v2
+          weight: 100
+    - route:
+        - destination:
+            host: frontend-service
+            subset: v1
+          weight: 90
+        - destination:
+            host: frontend-service
+            subset: v2
+          weight: 10
+      timeout: 30s
+      retries:
+        attempts: 3
+        perTryTimeout: 10s
+        retryOn: 5xx,reset,connect-failure,refused-stream
+      corsPolicy:
+        allowOrigins:
+          - exact: https://www.ecommerce.example.com
+        allowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+        allowHeaders:
+          - content-type
+          - authorization
+        maxAge: 24h
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: frontend-service
+spec:
+  host: frontend-service
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpCookie:
+          name: session-cookie
+          ttl: 3600s
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 10
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+    - name: v2
+      labels:
+        version: v2
+      trafficPolicy:
+        loadBalancer:
+          simple: LEAST_REQUEST

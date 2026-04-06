@@ -1,0 +1,20 @@
+%utlx 1.0
+input json
+output json
+---
+// Simple JSON to JSON transformation
+// Extracts customer information and calculates order total
+
+{
+  customer: {
+    name: $input.order.customer.firstName + " " + $input.order.customer.lastName,
+    email: $input.order.customer.email
+  },
+  orderSummary: {
+    orderId: $input.order.id,
+    itemCount: $input.order.items.length,
+    total: $input.order.items
+      |> map(item => item.price * item.quantity)
+      |> sum()
+  }
+}

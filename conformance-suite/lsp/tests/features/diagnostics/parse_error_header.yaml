@@ -1,0 +1,46 @@
+name: "parse_error_header"
+description: "Parser diagnostics for header errors (missing separator)"
+category: "features/diagnostics"
+tags: ["diagnostics", "parser", "header"]
+
+documents:
+  header_error:
+    uri: "file:///header_error.utlx"
+    languageId: "utlx"
+    version: 1
+    text: |
+      %utlx 1.0
+      input json
+      output json
+      {
+        result: $input.value
+      }
+
+sequence:
+  # Initialize
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp"
+      capabilities: {}
+
+  # Open document with header error - expect parser diagnostics
+  - type: notification
+    method: "textDocument/didOpen"
+    params:
+      textDocument:
+        uri: "{{documents.header_error.uri}}"
+        languageId: "{{documents.header_error.languageId}}"
+        version: "{{documents.header_error.version}}"
+        text: "{{documents.header_error.text}}"
+
+    # Expect server to send parser diagnostics notification
+    expect_notification:
+      method: "textDocument/publishDiagnostics"
+      params:
+        uri: "file:///header_error.utlx"
+        diagnostics:
+          - severity: 1  # ERROR
+            source: "utlx-separator"
+            message: "Expected '---' separator after header (not found in script)"

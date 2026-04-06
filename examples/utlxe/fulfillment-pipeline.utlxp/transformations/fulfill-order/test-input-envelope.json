@@ -1,0 +1,152 @@
+{
+  "currentPayload": {
+    "pipelineId": "550e8400-e29b-41d4-a716-446655440000",
+    "reservations": [
+      {
+        "sku": "SERVER-RACK-42U",
+        "reserved": true,
+        "quantity": 1,
+        "warehouse": "EU-CENTRAL-1"
+      },
+      {
+        "sku": "SWITCH-48P",
+        "reserved": true,
+        "quantity": 2,
+        "warehouse": "EU-CENTRAL-1"
+      },
+      {
+        "sku": "CABLE-CAT6-30M",
+        "reserved": true,
+        "quantity": 24,
+        "warehouse": "EU-WEST-1"
+      }
+    ]
+  },
+  "orderIngress": {
+    "order": {
+      "orderId": "ORD-2026-07821",
+      "orderDate": "2026-04-02T09:58:30Z",
+      "currency": "EUR",
+      "customer": {
+        "customerId": "CUST-0037",
+        "firstName": "Markus",
+        "lastName": "Schmidt",
+        "email": "markus.schmidt@techcorp.de",
+        "address": {
+          "street": "Friedrichstraße 43",
+          "city": "Berlin",
+          "postalCode": "10117",
+          "country": "DE"
+        }
+      },
+      "items": [
+        {
+          "sku": "SERVER-RACK-42U",
+          "name": "42U Server Rack Cabinet",
+          "quantity": 1,
+          "unitPrice": 2450.00
+        },
+        {
+          "sku": "SWITCH-48P",
+          "name": "48-Port Managed Switch",
+          "quantity": 2,
+          "unitPrice": 890.00
+        },
+        {
+          "sku": "CABLE-CAT6-30M",
+          "name": "Cat6 Ethernet Cable 30m",
+          "quantity": 24,
+          "unitPrice": 18.50
+        }
+      ]
+    }
+  },
+  "fraudCheck": {
+    "approved": true,
+    "riskScore": 0.08,
+    "checks": [
+      "velocity",
+      "geo",
+      "amount"
+    ],
+    "timestamp": "2026-04-02T10:00:01Z"
+  },
+  "pricingResponse": {
+    "correlationId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    "pricedAt": "2026-04-02T10:00:03Z",
+    "prices": [
+      {
+        "sku": "SERVER-RACK-42U",
+        "listPrice": 2450.00,
+        "discount": 0.12,
+        "finalPrice": 2156.00,
+        "priceList": "DACH-Enterprise-2026Q2"
+      },
+      {
+        "sku": "SWITCH-48P",
+        "listPrice": 890.00,
+        "discount": 0.08,
+        "finalPrice": 818.80,
+        "priceList": "DACH-Enterprise-2026Q2"
+      },
+      {
+        "sku": "CABLE-CAT6-30M",
+        "listPrice": 18.50,
+        "discount": 0.0,
+        "finalPrice": 18.50,
+        "priceList": "Standard-2026"
+      }
+    ]
+  },
+  "shippingConfig": {
+    "freeShippingThreshold": 1000.00,
+    "flatShippingRate": 29.95,
+    "fallbackCarrier": "DHL-Express",
+    "zones": [
+      {
+        "warehouse": "EU-WEST-1",
+        "region": "Western Europe",
+        "defaultCarrier": "PostNL",
+        "transitDays": 2,
+        "countries": [
+          "NL",
+          "BE",
+          "LU",
+          "DE",
+          "FR"
+        ]
+      },
+      {
+        "warehouse": "EU-CENTRAL-1",
+        "region": "Central Europe",
+        "defaultCarrier": "DHL-Paket",
+        "transitDays": 3,
+        "countries": [
+          "DE",
+          "AT",
+          "CH",
+          "PL",
+          "CZ"
+        ]
+      },
+      {
+        "warehouse": "EU-NORTH-1",
+        "region": "Northern Europe",
+        "defaultCarrier": "PostNord",
+        "transitDays": 4,
+        "countries": [
+          "SE",
+          "NO",
+          "DK",
+          "FI"
+        ]
+      }
+    ],
+    "hazmatCarriers": [
+      "DHL-Express",
+      "TNT-Hazmat"
+    ],
+    "maxWeightKg": 31.5,
+    "oversizeThresholdCm": 150
+  }
+}

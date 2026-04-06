@@ -309,6 +309,26 @@ class XMLSerializerTest {
     }
     
     @Test
+    fun `serialize null scalar as self-closing element`() {
+        val udm = UDM.Object(
+            properties = mapOf(
+                "InternalOrder" to UDM.Scalar(null),
+                "Name" to UDM.Scalar.string("Alice"),
+                "Description" to UDM.Scalar.string("")
+            ),
+            name = "Root"
+        )
+        val xml = XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(udm)
+
+        // null produces self-closing element
+        assertTrue(xml.contains("<InternalOrder/>"), "null should produce self-closing element, got: $xml")
+        // non-null produces normal element
+        assertTrue(xml.contains("<Name>Alice</Name>"), "non-null string should produce normal element, got: $xml")
+        // empty string produces open+close tags (distinct from null)
+        assertTrue(xml.contains("<Description></Description>"), "empty string should produce open+close tags, got: $xml")
+    }
+
+    @Test
     fun `round trip - parse and serialize`() {
         val original = """
             <Order id="123">

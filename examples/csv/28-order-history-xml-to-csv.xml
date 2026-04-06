@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OrderHistory exportDate="2024-03-15" fiscalYear="2024" quarter="Q1">
+  <Order>
+    <OrderID>ORD-2024-10001</OrderID>
+    <OrderDate>2024-03-01</OrderDate>
+    <Customer>
+      <CustomerID>CUST-5501</CustomerID>
+      <CompanyName>Acme Corporation</CompanyName>
+      <BillingAddress>
+        <Country>USA</Country>
+        <State>CA</State>
+        <City>San Francisco</City>
+      </BillingAddress>
+    </Customer>
+    <Items>
+      <Item>
+        <LineNumber>1</LineNumber>
+        <ProductCode>PROD-A123</ProductCode>
+        <Description>Enterprise Software License</Description>
+        <Quantity>5</Quantity>
+        <UnitPrice>1299.99</UnitPrice>
+        <Discount>10</Discount>
+        <TaxRate>8.5</TaxRate>
+      </Item>
+      <Item>
+        <LineNumber>2</LineNumber>
+        <ProductCode>PROD-B456</ProductCode>
+        <Description>Premium Support Package</Description>
+        <Quantity>5</Quantity>
+        <UnitPrice>299.99</UnitPrice>
+        <Discount>0</Discount>
+        <TaxRate>8.5</TaxRate>
+      </Item>
+    </Items>
+    <Payment>
+      <Method>CreditCard</Method>
+      <Status>Completed</Status>
+      <TransactionID>TXN-98765</TransactionID>
+    </Payment>
+  </Order>
+  <Order>
+    <OrderID>ORD-2024-10002</OrderID>
+    <OrderDate>2024-03-02</OrderDate>
+    <Customer>
+      <CustomerID>CUST-5502</CustomerID>
+      <CompanyName>Global Tech Industries</CompanyName>
+      <BillingAddress>
+        <Country>USA</Country>
+        <State>NY</State>
+        <City>New York</City>
+      </BillingAddress>
+    </Customer>
+    <Items>
+      <Item>
+        <LineNumber>1</LineNumber>
+        <ProductCode>PROD-C789</ProductCode>
+        <Description>Cloud Storage 1TB Annual</Description>
+        <Quantity>10</Quantity>
+        <UnitPrice>499.99</UnitPrice>
+        <Discount>15</Discount>
+        <TaxRate>9.0</TaxRate>
+      </Item>
+    </Items>
+    <Payment>
+      <Method>BankTransfer</Method>
+      <Status>Completed</Status>
+      <TransactionID>TXN-98766</TransactionID>
+    </Payment>
+  </Order>
+  <Order>
+    <OrderID>ORD-2024-10003</OrderID>
+    <OrderDate>2024-03-03</OrderDate>
+    <Customer>
+      <CustomerID>CUST-5503</CustomerID>
+      <CompanyName>Retail Solutions LLC</CompanyName>
+      <BillingAddress>
+        <Country>USA</Country>
+        <State>TX</State>
+        <City>Dallas</City>
+      </BillingAddress>
+    </Customer>
+    <Items>
+      <Item>
+        <LineNumber>1</LineNumber>
+        <ProductCode>PROD-D012</ProductCode>
+        <Description>POS System Hardware</Description>
+        <Quantity>3</Quantity>
+        <UnitPrice>1899.99</UnitPrice>
+        <Discount>5</Discount>
+        <TaxRate>8.25</TaxRate>
+      </Item>
+      <Item>
+        <LineNumber>2</LineNumber>
+        <ProductCode>PROD-E345</ProductCode>
+        <Description>Receipt Printer</Description>
+        <Quantity>3</Quantity>
+        <UnitPrice>249.99</UnitPrice>
+        <Discount>5</Discount>
+        <TaxRate>8.25</TaxRate>
+      </Item>
+      <Item>
+        <LineNumber>3</LineNumber>
+        <ProductCode>PROD-F678</ProductCode>
+        <Description>Barcode Scanner</Description>
+        <Quantity>6</Quantity>
+        <UnitPrice>149.99</UnitPrice>
+        <Discount>5</Discount>
+        <TaxRate>8.25</TaxRate>
+      </Item>
+    </Items>
+    <Payment>
+      <Method>Invoice</Method>
+      <Status>Pending</Status>
+      <TransactionID>TXN-98767</TransactionID>
+    </Payment>
+  </Order>
+</OrderHistory>

@@ -13,6 +13,9 @@ import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.yaml.YAMLParser
 import org.apache.utlx.formats.xsd.XSDParser
 import org.apache.utlx.formats.jsch.JSONSchemaParser
+import org.apache.utlx.formats.tsch.TableSchemaParser
+import org.apache.utlx.formats.osch.EDMXParser
+import org.apache.utlx.formats.odata.ODataJSONParser
 import java.io.File
 import org.jline.reader.LineReaderBuilder
 import org.jline.reader.LineReader
@@ -114,7 +117,7 @@ object ReplCommand {
         // We'll wrap it in a minimal program structure
         val wrappedInput = "%utlx 1.0\ninput json\noutput json\n---\n$input"
         val tokens = Lexer(wrappedInput).tokenize()
-        val parseResult = Parser(tokens).parse()
+        val parseResult = Parser(tokens, wrappedInput).parse()
 
         if (parseResult is ParseResult.Failure) {
             throw RuntimeError("Parse error: ${parseResult.errors.joinToString("; ")}")
@@ -210,9 +213,11 @@ object ReplCommand {
                 "yaml", "yml" -> YAMLParser().parse(content)
                 "xsd" -> XSDParser(content.reader()).parse()
                 "jsch" -> JSONSchemaParser(content.reader()).parse()
+                "tsch" -> TableSchemaParser(content.reader()).parse()
+                "edmx" -> EDMXParser(content).parse()
                 else -> {
                     println("Unsupported format: ${file.extension}")
-                    println("Supported: json, xml, csv, yaml, xsd, jsch")
+                    println("Supported: json, xml, csv, yaml, xsd, jsch, tsch, edmx")
                     return
                 }
             }

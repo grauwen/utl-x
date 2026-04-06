@@ -1,0 +1,102 @@
+%utlx 1.0
+// Demonstrates: Complete CRUD operations (Create, Read, Update, Delete)
+// Note: This example is specific to OpenAPI due to: %paths, %method, %operationId, %requestBody, %responses, %parameters
+output openapi
+---
+%namespace: "http://api.example.com/v1"
+%version: "1.0.0"
+%documentation: "Product CRUD API"
+
+%types: {
+  Product: {
+    %kind: "structure",
+    %documentation: "Product entity",
+    %fields: [
+      {
+        %name: "productId",
+        %type: "string",
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %required: true,
+        %description: "Product name"
+      },
+      {
+        %name: "price",
+        %type: "double",
+        %required: true,
+        %description: "Product price"
+      },
+      {
+        %name: "inStock",
+        %type: "boolean",
+        %required: true,
+        %description: "Stock availability"
+      }
+    ]
+  }
+}
+
+%paths: {
+  "/products": {
+    %method: "POST",
+    %operationId: "createProduct",
+    %summary: "Create a new product",
+    %requestBody: {
+      %apiSchema: "Product",
+      %required: true
+    },
+    %responses: {
+      "201": {
+        %apiSchema: "Product",
+        %description: "Product created"
+      }
+    }
+  },
+
+  "/products/{productId}": {
+    %method: "PUT",
+    %operationId: "updateProduct",
+    %summary: "Update a product",
+    %parameters: [
+      {
+        %name: "productId",
+        %in: "path",
+        %type: "string",
+        %required: true
+      }
+    ],
+    %requestBody: {
+      %apiSchema: "Product",
+      %required: true
+    },
+    %responses: {
+      "200": {
+        %apiSchema: "Product",
+        %description: "Product updated"
+      }
+    }
+  },
+
+  "/products/{productId}/delete": {
+    %method: "DELETE",
+    %operationId: "deleteProduct",
+    %summary: "Delete a product",
+    %parameters: [
+      {
+        %name: "productId",
+        %in: "path",
+        %type: "string",
+        %required: true
+      }
+    ],
+    %responses: {
+      "204": {
+        %description: "Product deleted"
+      }
+    }
+  }
+}

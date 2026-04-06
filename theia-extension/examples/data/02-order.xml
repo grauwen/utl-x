@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Order id="ORD-002" date="2025-11-05">
+  <Customer type="VIP">
+    <Name>Alice Johnson</Name>
+    <Email>alice@example.com</Email>
+  </Customer>
+  <Items>
+    <Item sku="WIDGET-001" quantity="3" price="25.00"/>
+    <Item sku="GADGET-002" quantity="2" price="50.00"/>
+  </Items>
+</Order>

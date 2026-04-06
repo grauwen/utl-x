@@ -1,0 +1,44 @@
+@udm-version: 1.0
+@source: "nodejs-generated/10_all-types-combined_nodejs-generated.udm"
+@parsed-at: "2025-11-16T20:10:01.476Z"
+
+@Object(
+  name: "AllTypes",
+  metadata:
+  {
+    comprehensive: "true"
+  }
+) {
+  attributes: {
+    rootAttr: "value"
+  },
+  properties: {
+    scalars: {
+      string: "text",
+      number: 42,
+      boolean: true,
+      null: null
+    },
+    datetimes: {
+      timestamp: @DateTime("2024-11-16T10:30:00Z"),
+      date: @Date("2024-11-16"),
+      localDateTime: @LocalDateTime("2024-11-16T10:30:00"),
+      time: @Time("10:30:00")
+    },
+    arrays: [
+      1,
+      2,
+      3
+    ],
+    binary: @Binary(size: 5),
+    lambda: @Lambda(),
+    nestedWithAttributes: {
+      attributes: {
+        id: "123"
+      },
+      properties: {
+        value: "nested"
+      }
+    }
+  }
+}

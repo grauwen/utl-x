@@ -1,0 +1,9 @@
+registration_id,event_id,attendee_name,email,ticket_type,registration_date,event_datetime,check_in_time,session_duration,dietary_preference,requires_accommodation,notes
+REG-2024-0001,EVT-100,Alice Martin,alice.martin@email.com,vip,2024-01-05,2024-03-15T09:00:00Z,08:30 AM,PT8H,vegetarian,false,
+REG-2024-0002,EVT-100,Bob Rivera,bob.rivera@email.com,standard,2024-01-06,2024-03-15T09:00:00Z,08:45 AM,PT8H,none,false,
+REG-2024-0003,EVT-100,Carlos Diaz,carlos.diaz@email.com,early_bird,2023-12-15,2024-03-15T09:00:00Z,08:15 AM,PT8H,vegan,true,Wheelchair accessible seating
+REG-2024-0004,EVT-101,Diana Okafor,diana.okafor@email.com,standard,2024-01-10,2024-04-20T10:00:00Z,09:30 AM,PT6H30M,halal,false,
+REG-2024-0005,EVT-101,Erik Svensson,erik.svensson@email.com,vip,2024-01-08,2024-04-20T10:00:00Z,09:15 AM,PT6H30M,none,false,
+REG-2024-0006,EVT-100,Fatima Al-Rashid,fatima@email.com,standard,2024-01-12,2024-03-15T09:00:00Z,08:50 AM,PT8H,halal,false,
+REG-2024-0007,EVT-102,George Tanaka,george.tanaka@email.com,early_bird,2024-01-02,2024-05-10T08:30:00Z,08:00 AM,PT4H,none,true,Sign language interpreter
+REG-2024-0008,EVT-102,Hannah Lee,hannah.lee@email.com,vip,2024-01-14,2024-05-10T08:30:00Z,08:10 AM,PT4H,gluten_free,false,

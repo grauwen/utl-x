@@ -1,0 +1,25 @@
+%utlx 1.0
+input api json
+output csv
+---
+map($api.data.repositories, fn(repo) => {
+  "RepositoryID": repo.id,
+  "Name": repo.name,
+  "FullName": repo.fullName,
+  "Description": repo.description,
+  "Owner": repo.owner.username,
+  "OwnerType": repo.owner.type,
+  "Language": repo.language,
+  "License": repo.license,
+  "Stars": repo.stats.stars,
+  "Forks": repo.stats.forks,
+  "Watchers": repo.stats.watchers,
+  "OpenIssues": repo.stats.openIssues,
+  "Contributors": repo.stats.contributors,
+  "TotalEngagement": repo.stats.stars + repo.stats.forks + repo.stats.watchers,
+  "CreatedDate": repo.timestamps.created,
+  "LastUpdated": repo.timestamps.updated,
+  "LastPush": repo.timestamps.lastPush,
+  "Status": if (repo.isArchived) then "Archived" else "Active",
+  "Visibility": if (repo.isPrivate) then "Private" else "Public"
+})

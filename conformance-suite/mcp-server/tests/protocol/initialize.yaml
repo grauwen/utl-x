@@ -1,0 +1,32 @@
+name: initialize
+description: Test MCP server initialization protocol
+tags:
+  - protocol
+  - initialize
+  - basic
+
+sequence:
+  - description: "Send initialize request"
+    request:
+      jsonrpc: "2.0"
+      id: 1
+      method: "initialize"
+      params:
+        protocolVersion: "2024-11-05"
+        capabilities:
+          tools:
+            supported: true
+        clientInfo:
+          name: "test-client"
+          version: "1.0.0"
+    expect:
+      jsonrpc: "2.0"
+      id: 1
+      result:
+        protocolVersion: "2024-11-05"
+        serverInfo:
+          name: "utlx-mcp-server"
+          version: "{{STRING}}"
+        capabilities:
+          tools:
+            listChanged: false

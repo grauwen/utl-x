@@ -1,0 +1,70 @@
+name: "load_schema_xsd"
+description: "Load XSD schema for design-time type checking"
+category: "custom-methods"
+tags: ["schema", "xsd", "design-time"]
+
+documents:
+  test_doc:
+    uri: "file:///test.utlx"
+    languageId: "utlx"
+    version: 1
+    text: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      {
+        orderId: $input.@id,
+        total: $input.Total
+      }
+
+sequence:
+  # Initialize
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp"
+      capabilities: {}
+    expect:
+      result:
+        capabilities: {}
+
+  # Open document
+  - type: notification
+    method: "textDocument/didOpen"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+        languageId: "{{documents.test_doc.languageId}}"
+        version: "{{documents.test_doc.version}}"
+        text: "{{documents.test_doc.text}}"
+
+  # Load XSD schema
+  - type: request
+    method: "utlx/loadSchema"
+    params:
+      uri: "{{documents.test_doc.uri}}"
+      schemaContent: |
+        <?xml version="1.0"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <xs:element name="Order">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="Total" type="xs:decimal"/>
+              </xs:sequence>
+              <xs:attribute name="id" type="xs:string"/>
+            </xs:complexType>
+          </xs:element>
+        </xs:schema>
+      format: "xsd"
+    expect:
+      result:
+        success: true
+
+  # Expect diagnostics notification after schema load
+  - type: expect_notification
+    method: "textDocument/publishDiagnostics"
+    params:
+      uri: "{{documents.test_doc.uri}}"
+      diagnostics: []

@@ -1,0 +1,24 @@
+name: get_stdlib_functions_filter_category
+description: Test get_stdlib_functions with category filter
+tags:
+  - tools
+  - get_stdlib_functions
+  - filter
+
+sequence:
+  - description: "Get only string functions"
+    request:
+      jsonrpc: "2.0"
+      id: 31
+      method: "tools/call"
+      params:
+        name: "get_stdlib_functions"
+        arguments:
+          category: "string"
+    expect:
+      jsonrpc: "2.0"
+      id: 31
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

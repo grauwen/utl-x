@@ -1,0 +1,53 @@
+name: "path_completion_nested"
+description: "Nested path completion for deeply nested object properties"
+category: "features/completion"
+tags: ["completion", "path", "nested", "object"]
+
+documents:
+  test_doc:
+    uri: "file:///test.utlx"
+    languageId: "utlx"
+    version: 1
+    text: |
+      input: { name: string, address: { city: string, zip: string } }
+      output: input.address.
+
+sequence:
+  # Initialize
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp"
+      capabilities: {}
+
+  # Open document
+  - type: notification
+    method: "textDocument/didOpen"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+        languageId: "{{documents.test_doc.languageId}}"
+        version: "{{documents.test_doc.version}}"
+        text: "{{documents.test_doc.text}}"
+
+  # Request completion at "input.address."
+  - type: request
+    method: "textDocument/completion"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+      position:
+        line: 1
+        character: 22
+      context:
+        triggerKind: 2  # TriggerCharacter
+        triggerCharacter: "."
+    expect:
+      result:
+        isIncomplete: false
+        items:
+          - label: "city"
+            kind: 10  # Property
+          - label: "zip"
+            kind: 10  # Property

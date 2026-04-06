@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+yarn.lock
+
+# Playwright test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Test output
+*.webm
+*.png

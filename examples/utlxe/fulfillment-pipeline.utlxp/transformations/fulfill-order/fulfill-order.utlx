@@ -1,0 +1,111 @@
+%utlx 1.0
+input: currentPayload json, orderIngress json, fraudCheck json, pricingResponse json, shippingConfig json
+output json
+---
+// Fulfillment transformation — the final step in an Open-M order pipeline.
+//
+// Receives five inputs from three different source types:
+//   - currentPayload, orderIngress, fraudCheck → extracted from a single
+//     Open-M pipeline envelope (multipart pipe, open-m format)
+//   - pricingResponse → arrives on a separate Pulsar topic (separate pipe)
+//   - shippingConfig  → loaded from a JSON file at startup (constant pipe)
+//
+// The transformation is agnostic about where its inputs come from.
+
+{
+  let order = $orderIngress.order;
+  let customer = order.customer;
+  let items = order.items;
+  let fraud = $fraudCheck;
+  let reservation = $currentPayload;
+  let pricing = $pricingResponse;
+  let shipping = $shippingConfig;
+
+  // Fraud gate
+  let fraudApproved = fraud.approved == true && fraud.riskScore < 0.5;
+
+  // Calculate fulfillment per item
+  let fulfillmentItems = items |> map(item => {
+    let reserved = reservation.reservations
+      |> filter(r => r.sku == item.sku)
+      |> first();
+
+    let priceInfo = pricing.prices
+      |> filter(p => p.sku == item.sku)
+      |> first();
+
+    let unitPrice = if (priceInfo != null) priceInfo.finalPrice else item.unitPrice;
+    let quantity = item.quantity;
+    let lineTotal = roundToDecimalPlaces(unitPrice * quantity, 2);
+    let warehouse = if (reserved != null) reserved.warehouse else "UNKNOWN";
+    let isReserved = reserved != null && reserved.reserved == true;
+
+    // Look up carrier rules from shipping config
+    let zone = shipping.zones
+      |> filter(z => z.warehouse == warehouse)
+      |> first();
+
+    let carrier = if (zone != null) zone.defaultCarrier else shipping.fallbackCarrier;
+    let estimatedDays = if (zone != null) zone.transitDays else 5;
+
+    {
+      sku: item.sku,
+      productName: item.name,
+      quantity: quantity,
+      unitPrice: unitPrice,
+      lineTotal: lineTotal,
+      warehouse: warehouse,
+      reserved: isReserved,
+      shipping: {
+        carrier: carrier,
+        estimatedDays: estimatedDays
+      }
+    }
+  });
+
+  let subtotal = roundToDecimalPlaces(fulfillmentItems |> map(i => i.lineTotal) |> sum(), 2);
+  let shippingCost = if (subtotal > shipping.freeShippingThreshold) 0
+                     else shipping.flatShippingRate;
+  let total = roundToDecimalPlaces(subtotal + shippingCost, 2);
+  let allReserved = count(fulfillmentItems |> filter(i => !i.reserved)) == 0;
+
+  fulfillment: {
+    orderId: order.orderId,
+    fulfillmentId: "FUL-" + order.orderId,
+
+    status: if (!fraudApproved) "BLOCKED_FRAUD"
+            else if (!allReserved) "PARTIAL_HOLD"
+            else "READY_TO_SHIP",
+
+    customer: {
+      name: customer.firstName + " " + customer.lastName,
+      email: customer.email,
+      shippingAddress: {
+        street: customer.address.street,
+        city: customer.address.city,
+        postalCode: customer.address.postalCode,
+        country: customer.address.country
+      }
+    },
+
+    fraudCheck: {
+      approved: fraud.approved,
+      riskScore: fraud.riskScore,
+      checkedAt: fraud.timestamp
+    },
+
+    items: fulfillmentItems,
+
+    totals: {
+      subtotal: subtotal,
+      shippingCost: shippingCost,
+      total: total,
+      currency: order.currency ?? "EUR"
+    },
+
+    pipeline: {
+      pipelineId: reservation.pipelineId,
+      stepsCompleted: ["order-ingress", "fraud-check", "inventory-reserve", "fulfillment"]
+    }
+  }
+}

@@ -40,7 +40,7 @@ echo "🔍 Detected: $OS_TYPE-$ARCH_TYPE"
 # On macOS, prefer Homebrew if available
 if [ "$OS_TYPE" = "macos" ] && command -v brew &> /dev/null; then
     echo ""
-    echo "🍺 Homebrew detected! Installing GraalVM CE via Homebrew (recommended)..."
+    echo "🍺 Homebrew detected! Installing GraalVM via Homebrew (recommended)..."
     echo ""
     brew install --cask graalvm/tap/graalvm-community-jdk22
 

@@ -1,0 +1,10 @@
+DeviceID	SensorType	Location	Reading	Unit	Timestamp	BatteryLevel
+IOT-2301	Temperature	Warehouse-A	22.5	Celsius	2024-03-15T14:30:00	87
+IOT-2302	Humidity	Warehouse-A	45.2	Percent	2024-03-15T14:30:00	92
+IOT-2303	Temperature	Warehouse-B	18.7	Celsius	2024-03-15T14:30:00	78
+IOT-2304	Pressure	Factory-Floor	1013.25	hPa	2024-03-15T14:30:00	65
+IOT-2305	Humidity	Warehouse-B	52.8	Percent	2024-03-15T14:30:00	81
+IOT-2306	Temperature	Cold-Storage	-5.3	Celsius	2024-03-15T14:30:00	44
+IOT-2307	CO2	Office-A	420	PPM	2024-03-15T14:30:00	95
+IOT-2308	Light	Office-A	550	Lux	2024-03-15T14:30:00	88
+IOT-2309	Temperature	Office-B	21.8	Celsius	2024-03-15T14:30:00	73

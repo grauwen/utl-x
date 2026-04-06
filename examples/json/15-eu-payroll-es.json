@@ -1,0 +1,188 @@
+{
+  "nominaId": "ES-2025-NOM-012345",
+  "periodoLiquidacion": {
+    "mes": "Enero",
+    "año": 2025,
+    "fechaInicio": "2025-01-01",
+    "fechaFin": "2025-01-31",
+    "diasLaborables": 22,
+    "diasNaturales": 31
+  },
+  "empresa": {
+    "razonSocial": "Tecnología Avanzada Barcelona SL",
+    "cif": "B12345678",
+    "numeroSeguridadSocial": "28/1234567/89",
+    "codigoCuentaCotizacion": "28/12345678/90",
+    "domicilio": {
+      "direccion": "Passeig de Gràcia, 125",
+      "codigoPostal": "08008",
+      "ciudad": "Barcelona",
+      "provincia": "Barcelona",
+      "comunidadAutonoma": "Cataluña",
+      "pais": "España"
+    }
+  },
+  "trabajador": {
+    "empleadoId": "ES-EMP-5678",
+    "nombreCompleto": "García López, María Carmen",
+    "nif": "12345678Z",
+    "numeroSeguridadSocial": "28/12345678/90",
+    "fechaNacimiento": "1985-03-15",
+    "fechaAntiguedad": "2018-06-01",
+    "categoria": "Ingeniero/a Superior",
+    "gruposCotizacion": "Grupo 1",
+    "tipoContrato": "INDEFINIDO_TIEMPO_COMPLETO",
+    "domicilio": {
+      "direccion": "Carrer de Balmes, 245, 3º 2ª",
+      "codigoPostal": "08006",
+      "ciudad": "Barcelona",
+      "provincia": "Barcelona",
+      "pais": "España"
+    },
+    "datosBancarios": {
+      "iban": "ES9121000418450200051332",
+      "bic": "CAIXESBBXXX",
+      "banco": "CaixaBank"
+    }
+  },
+  "devengos": {
+    "percepcionesSalariales": {
+      "salarioBase": {
+        "importe": 2800.00,
+        "descripcion": "Salario base mensual según convenio"
+      },
+      "complementosPuesto": {
+        "plusResponsabilidad": 350.00,
+        "plusIdiomas": 150.00,
+        "subtotal": 500.00
+      },
+      "horasExtra": {
+        "horasExtraOrdinarias": {
+          "cantidad": 8,
+          "precioHora": 25.50,
+          "importe": 204.00
+        },
+        "horasExtraFestivas": {
+          "cantidad": 4,
+          "precioHora": 35.00,
+          "importe": 140.00
+        },
+        "subtotal": 344.00
+      },
+      "subtotalPercepcionesSalariales": 3644.00
+    },
+    "percepcionesNoSalariales": {
+      "dietasViajes": {
+        "dias": 3,
+        "importeDia": 45.00,
+        "importe": 135.00
+      },
+      "plusTransporte": 80.00,
+      "plusGuarderia": 120.00,
+      "subtotalPercepcionesNoSalariales": 335.00
+    },
+    "totalDevengado": 3979.00
+  },
+  "deducciones": {
+    "cotizacionesSeguridadSocial": {
+      "contingenciasComunes": {
+        "baseCalculo": 3644.00,
+        "tipo": 4.70,
+        "importe": 171.27
+      },
+      "desempleo": {
+        "baseCalculo": 3644.00,
+        "tipo": 1.55,
+        "importe": 56.48
+      },
+      "formacionProfesional": {
+        "baseCalculo": 3644.00,
+        "tipo": 0.10,
+        "importe": 3.64
+      },
+      "horasExtra": {
+        "baseCalculo": 344.00,
+        "tipo": 4.70,
+        "importe": 16.17
+      },
+      "subtotalSeguridadSocial": 247.56
+    },
+    "irpf": {
+      "baseCalculo": 3644.00,
+      "tipoRetencion": 21.00,
+      "importe": 765.24,
+      "situacionFamiliar": "Casado/a, 1 hijo",
+      "gradoDiscapacidad": 0
+    },
+    "anticipos": {
+      "descripcion": "Anticipo solicitado 10/01/2025",
+      "importe": 200.00
+    },
+    "otrasRetenciones": {
+      "embargoJudicial": 0.00,
+      "cuotasSindicales": 15.00,
+      "seguroMedico": 45.00,
+      "subtotal": 60.00
+    },
+    "totalDeducciones": 1272.80
+  },
+  "liquidacion": {
+    "totalDevengado": 3979.00,
+    "totalDeducciones": 1272.80,
+    "liquidoAPagar": 2706.20,
+    "divisa": "EUR"
+  },
+  "costesEmpresa": {
+    "cotizacionesEmpresariales": {
+      "contingenciasComunes": {
+        "baseCalculo": 3644.00,
+        "tipo": 23.60,
+        "importe": 859.98
+      },
+      "desempleo": {
+        "baseCalculo": 3644.00,
+        "tipo": 5.50,
+        "importe": 200.42
+      },
+      "fogasa": {
+        "baseCalculo": 3644.00,
+        "tipo": 0.20,
+        "importe": 7.29
+      },
+      "formacionProfesional": {
+        "baseCalculo": 3644.00,
+        "tipo": 0.60,
+        "importe": 21.86
+      },
+      "horasExtra": {
+        "baseCalculo": 344.00,
+        "tipo": 23.60,
+        "importe": 81.18
+      },
+      "subtotalCotizacionesEmpresa": 1170.73
+    },
+    "costeEmpresaTotal": 5149.73
+  },
+  "baseCotizacion": {
+    "contingenciasComunes": 3644.00,
+    "contingenciasProfesionales": 3644.00,
+    "desempleo": 3644.00,
+    "formacionProfesional": 3644.00,
+    "horasExtra": 344.00
+  },
+  "informacionAdicional": {
+    "convenioColectivo": "Convenio Colectivo Nacional de Empresas de Consultoría y Estudios de Mercado",
+    "diasVacacionesPendientes": 22,
+    "diasVacacionesConsumidos": 0,
+    "incapacidadTemporal": {
+      "dias": 0,
+      "importe": 0.00
+    }
+  },
+  "observaciones": "Nómina correspondiente al mes de Enero 2025. Incluye horas extraordinarias realizadas durante el proyecto de implantación ERP. El pago se realizará mediante transferencia bancaria el día 28 de Enero de 2025.",
+  "fechaEmision": "2025-01-25",
+  "firmado": {
+    "empresa": true,
+    "trabajador": false
+  }
+}

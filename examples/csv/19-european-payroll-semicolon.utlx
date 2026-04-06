@@ -1,0 +1,31 @@
+%utlx 1.0
+input payroll csv {delimiter: ";"}
+output json
+---
+{
+  "payrollSummary": {
+    "totalEmployees": count($payroll),
+    "totalGrossSalary": sum(map($payroll, fn(e) => e.GrossSalary)),
+    "totalNetSalary": sum(map($payroll, fn(e) => e.NetSalary)),
+    "totalTaxCollected": sum(map($payroll, fn(e) => e.GrossSalary - e.NetSalary)),
+    "averageGrossSalary": sum(map($payroll, fn(e) => e.GrossSalary)) / count($payroll),
+    "byDepartment": {
+      "Engineering": filter($payroll, fn(e) => e.Department == "Engineering"),
+      "Marketing": filter($payroll, fn(e) => e.Department == "Marketing"),
+      "Sales": filter($payroll, fn(e) => e.Department == "Sales"),
+      "HR": filter($payroll, fn(e) => e.Department == "HR"),
+      "Finance": filter($payroll, fn(e) => e.Department == "Finance"),
+      "IT": filter($payroll, fn(e) => e.Department == "IT")
+    }
+  },
+  "employees": map($payroll, fn(emp) => {
+    "id": emp.EmployeeID,
+    "name": emp.Name,
+    "department": emp.Department,
+    "grossSalary": emp.GrossSalary,
+    "taxRate": emp.TaxRate,
+    "taxAmount": emp.GrossSalary - emp.NetSalary,
+    "netSalary": emp.NetSalary,
+    "currency": emp.Currency
+  })
+}

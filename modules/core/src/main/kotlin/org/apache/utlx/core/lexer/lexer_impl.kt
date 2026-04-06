@@ -303,7 +303,8 @@ class Lexer(private val source: String) {
     }
     
     private fun identifier(start: Int, startColumn: Int) {
-        while (peek().isLetterOrDigit() || peek() == '_') advance()
+        // Allow hyphens in identifiers: input-name, my-variable, etc.
+        while (peek().isLetterOrDigit() || peek() == '_' || peek() == '-') advance()
 
         val lexeme = source.substring(start, current)
         val type = Keywords.get(lexeme) ?: TokenType.IDENTIFIER
@@ -327,7 +328,8 @@ class Lexer(private val source: String) {
             return
         }
 
-        while (peek().isLetterOrDigit() || peek() == '_') advance()
+        // Allow hyphens in dollar identifiers: $input-name, $my-variable, etc.
+        while (peek().isLetterOrDigit() || peek() == '_' || peek() == '-') advance()
 
         val lexeme = source.substring(start, current)
         // $identifier is always treated as an IDENTIFIER token (not a keyword)

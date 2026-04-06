@@ -1,0 +1,511 @@
+{
+  "orderId": "ORD-2024-00789",
+  "orderDate": "2024-03-15T14:30:00Z",
+  "orderStatus": "processing",
+  "totalAmount": 45780.50,
+  "currency": "USD",
+  "customer": {
+    "customerId": "CUST-10234",
+    "customerType": "enterprise",
+    "companyName": "Global Tech Solutions Inc.",
+    "taxId": "US-987654321",
+    "primaryContact": {
+      "contactId": "CONT-5678",
+      "firstName": "Sarah",
+      "lastName": "Johnson",
+      "title": "Procurement Manager",
+      "email": "sarah.johnson@globaltech.com",
+      "phone": "+1-555-0123",
+      "address": {
+        "addressId": "ADDR-9012",
+        "streetAddress": "1500 Technology Drive",
+        "suite": "Building C, Floor 12",
+        "city": "San Francisco",
+        "state": "CA",
+        "postalCode": "94105",
+        "country": "USA",
+        "coordinates": {
+          "latitude": 37.7749,
+          "longitude": -122.4194,
+          "accuracy": "rooftop",
+          "geoRegion": "North America",
+          "timezone": "America/Los_Angeles",
+          "locationMetadata": {
+            "verified": true,
+            "verifiedDate": "2024-01-10",
+            "verificationMethod": "GPS",
+            "lastUpdated": "2024-03-01T10:00:00Z",
+            "updateSource": "customer_portal",
+            "qualityScore": 98.5
+          }
+        }
+      }
+    },
+    "billingContact": {
+      "contactId": "CONT-5679",
+      "firstName": "Michael",
+      "lastName": "Chen",
+      "title": "Finance Director",
+      "email": "michael.chen@globaltech.com",
+      "phone": "+1-555-0124",
+      "address": {
+        "addressId": "ADDR-9013",
+        "streetAddress": "1500 Technology Drive",
+        "suite": "Building A, Floor 8",
+        "city": "San Francisco",
+        "state": "CA",
+        "postalCode": "94105",
+        "country": "USA",
+        "coordinates": {
+          "latitude": 37.7749,
+          "longitude": -122.4194,
+          "accuracy": "rooftop",
+          "geoRegion": "North America",
+          "timezone": "America/Los_Angeles",
+          "locationMetadata": {
+            "verified": true,
+            "verifiedDate": "2024-01-10",
+            "verificationMethod": "GPS",
+            "lastUpdated": "2024-03-01T10:00:00Z",
+            "updateSource": "customer_portal",
+            "qualityScore": 98.5
+          }
+        }
+      }
+    }
+  },
+  "shippingDetails": {
+    "shipmentId": "SHIP-2024-45678",
+    "shippingMethod": "express",
+    "carrier": "FedEx",
+    "trackingNumber": "FDX1234567890",
+    "estimatedDelivery": "2024-03-18T17:00:00Z",
+    "shippingAddress": {
+      "addressId": "ADDR-9014",
+      "recipientName": "Global Tech Solutions - Warehouse",
+      "streetAddress": "2800 Industrial Parkway",
+      "suite": "Dock 5",
+      "city": "Austin",
+      "state": "TX",
+      "postalCode": "78758",
+      "country": "USA",
+      "deliveryInstructions": "Deliver to receiving dock. Call 30 minutes before arrival.",
+      "coordinates": {
+        "latitude": 30.2672,
+        "longitude": -97.7431,
+        "accuracy": "rooftop",
+        "geoRegion": "North America",
+        "timezone": "America/Chicago",
+        "locationMetadata": {
+          "verified": true,
+          "verifiedDate": "2024-02-15",
+          "verificationMethod": "GPS",
+          "lastUpdated": "2024-03-01T10:00:00Z",
+          "updateSource": "warehouse_system",
+          "qualityScore": 99.2
+        }
+      }
+    }
+  },
+  "lineItems": [
+    {
+      "lineItemId": "LI-001",
+      "productId": "PROD-8765",
+      "sku": "LAP-DEL-XPS15-001",
+      "productName": "Dell XPS 15 Laptop",
+      "category": "Electronics",
+      "quantity": 25,
+      "unitPrice": 1299.99,
+      "lineTotal": 32499.75,
+      "taxAmount": 2924.98,
+      "productDetails": {
+        "manufacturer": "Dell Technologies",
+        "model": "XPS 15 9530",
+        "weight": 4.23,
+        "weightUnit": "lbs",
+        "dimensions": {
+          "length": 13.57,
+          "width": 9.06,
+          "height": 0.71,
+          "unit": "inches",
+          "volumetricWeight": 5.2,
+          "packagingDetails": {
+            "packageType": "original",
+            "packageCondition": "new",
+            "includesAccessories": true,
+            "accessories": ["Power Adapter", "USB-C Cable", "Documentation"],
+            "packagingMaterial": "recyclable cardboard",
+            "sustainabilityInfo": {
+              "recyclable": true,
+              "recycledContent": 65,
+              "carbonFootprint": 2.3,
+              "carbonUnit": "kg CO2",
+              "certifications": ["FSC", "Energy Star"],
+              "environmentalMetrics": {
+                "ecoScore": 87.5,
+                "waterUsage": 12.5,
+                "waterUnit": "gallons",
+                "energyRating": "A+",
+                "disposalInstructions": "Recycle through certified e-waste facility",
+                "manufacturerTakeBack": true
+              }
+            }
+          }
+        },
+        "specifications": {
+          "processor": "Intel Core i7-13700H",
+          "memory": "32GB DDR5",
+          "storage": "1TB NVMe SSD",
+          "display": "15.6-inch 4K OLED",
+          "graphics": "NVIDIA RTX 4050",
+          "technicalDetails": {
+            "processorSpeed": "5.0 GHz",
+            "processorCores": 14,
+            "memorySpeed": "4800 MHz",
+            "storageInterface": "PCIe 4.0",
+            "displayResolution": "3840x2400",
+            "performanceMetrics": {
+              "benchmarkScore": 18500,
+              "benchmarkSuite": "PCMark 10",
+              "powerConsumption": 130,
+              "powerUnit": "watts",
+              "batteryLife": 8.5,
+              "batteryUnit": "hours",
+              "testingMetadata": {
+                "testDate": "2024-01-20",
+                "testLab": "Dell Quality Assurance",
+                "testStandard": "MIL-STD-810H",
+                "certificationLevel": "Premium",
+                "validityPeriod": "2 years",
+                "warrantyIncluded": true
+              }
+            }
+          }
+        }
+      },
+      "warrantyInfo": {
+        "warrantyId": "WAR-2024-001",
+        "warrantyType": "manufacturer",
+        "duration": 3,
+        "durationUnit": "years",
+        "startDate": "2024-03-15",
+        "endDate": "2027-03-15",
+        "coverage": {
+          "coverageType": "comprehensive",
+          "includesAccidental": true,
+          "includesOnsite": true,
+          "responseTime": "next-business-day",
+          "supportDetails": {
+            "supportLevel": "premium",
+            "phoneSupport": "24/7",
+            "emailSupport": "24/7",
+            "chatSupport": "24/7",
+            "onlineResources": true,
+            "supportMetadata": {
+              "supportRegion": "North America",
+              "supportLanguages": ["English", "Spanish", "French"],
+              "escalationPath": ["L1 Support", "L2 Engineering", "L3 Specialist"],
+              "averageResponseTime": "15 minutes",
+              "customerSatisfactionScore": 4.7,
+              "supportCertifications": ["ISO 9001", "ITIL v4"]
+            }
+          }
+        }
+      }
+    },
+    {
+      "lineItemId": "LI-002",
+      "productId": "PROD-8766",
+      "sku": "MON-LG-34WK-001",
+      "productName": "LG 34-inch UltraWide Monitor",
+      "category": "Electronics",
+      "quantity": 25,
+      "unitPrice": 549.99,
+      "lineTotal": 13749.75,
+      "taxAmount": 1237.48,
+      "productDetails": {
+        "manufacturer": "LG Electronics",
+        "model": "34WK95U",
+        "weight": 17.6,
+        "weightUnit": "lbs",
+        "dimensions": {
+          "length": 32.7,
+          "width": 9.4,
+          "height": 20.9,
+          "unit": "inches",
+          "volumetricWeight": 18.5,
+          "packagingDetails": {
+            "packageType": "original",
+            "packageCondition": "new",
+            "includesAccessories": true,
+            "accessories": ["Power Cable", "HDMI Cable", "DisplayPort Cable", "USB-C Cable", "Stand"],
+            "packagingMaterial": "recyclable cardboard with foam inserts",
+            "sustainabilityInfo": {
+              "recyclable": true,
+              "recycledContent": 55,
+              "carbonFootprint": 45.2,
+              "carbonUnit": "kg CO2",
+              "certifications": ["EPEAT Gold", "Energy Star", "TCO Certified"],
+              "environmentalMetrics": {
+                "ecoScore": 82.0,
+                "waterUsage": 28.3,
+                "waterUnit": "gallons",
+                "energyRating": "A",
+                "disposalInstructions": "Recycle through certified e-waste facility",
+                "manufacturerTakeBack": true
+              }
+            }
+          }
+        },
+        "specifications": {
+          "screenSize": "34 inches",
+          "resolution": "5120x2160",
+          "panelType": "IPS",
+          "refreshRate": "60Hz",
+          "responseTime": "5ms",
+          "technicalDetails": {
+            "brightness": "450 cd/m²",
+            "contrastRatio": "1000:1",
+            "colorGamut": "99% sRGB",
+            "viewingAngle": "178°/178°",
+            "hdriSupport": "HDR10",
+            "performanceMetrics": {
+              "colorAccuracy": "Delta E < 2",
+              "uniformity": "95%",
+              "powerConsumption": 60,
+              "powerUnit": "watts",
+              "powerSaving": 0.5,
+              "powerSavingUnit": "watts in sleep mode",
+              "testingMetadata": {
+                "testDate": "2024-01-15",
+                "testLab": "LG Display Quality Lab",
+                "testStandard": "ISO/IEC 9241-307",
+                "certificationLevel": "Professional",
+                "validityPeriod": "3 years",
+                "warrantyIncluded": true
+              }
+            }
+          }
+        }
+      },
+      "warrantyInfo": {
+        "warrantyId": "WAR-2024-002",
+        "warrantyType": "manufacturer",
+        "duration": 3,
+        "durationUnit": "years",
+        "startDate": "2024-03-15",
+        "endDate": "2027-03-15",
+        "coverage": {
+          "coverageType": "standard",
+          "includesAccidental": false,
+          "includesOnsite": false,
+          "responseTime": "3-5-business-days",
+          "supportDetails": {
+            "supportLevel": "standard",
+            "phoneSupport": "business-hours",
+            "emailSupport": "24/7",
+            "chatSupport": "business-hours",
+            "onlineResources": true,
+            "supportMetadata": {
+              "supportRegion": "North America",
+              "supportLanguages": ["English", "Spanish"],
+              "escalationPath": ["L1 Support", "L2 Technical"],
+              "averageResponseTime": "2 hours",
+              "customerSatisfactionScore": 4.5,
+              "supportCertifications": ["ISO 9001"]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "paymentDetails": {
+    "paymentId": "PAY-2024-9876",
+    "paymentMethod": "net30",
+    "paymentStatus": "pending",
+    "invoiceNumber": "INV-2024-00789",
+    "invoiceDate": "2024-03-15",
+    "dueDate": "2024-04-14",
+    "paymentTerms": {
+      "termCode": "NET30",
+      "description": "Payment due within 30 days",
+      "discountOffered": true,
+      "discountPercentage": 2.0,
+      "discountDays": 10,
+      "lateFee": {
+        "feeType": "percentage",
+        "feeAmount": 1.5,
+        "gracePeriod": 5,
+        "gracePeriodUnit": "days",
+        "maxFee": 500.00,
+        "feeSchedule": {
+          "day1to5": 0,
+          "day6to15": 1.0,
+          "day16to30": 1.5,
+          "day31plus": 2.0,
+          "collectionPolicy": {
+            "collectionAgency": "Premier Collections Ltd",
+            "collectionThreshold": 1000.00,
+            "collectionTiming": "60 days past due",
+            "legalAction": "90 days past due",
+            "writeOffPolicy": "180 days past due",
+            "policyMetadata": {
+              "policyVersion": "2024.1",
+              "effectiveDate": "2024-01-01",
+              "reviewDate": "2024-12-31",
+              "approvedBy": "CFO",
+              "jurisdiction": "California",
+              "complianceStandards": ["FDCPA", "FCRA"]
+            }
+          }
+        }
+      }
+    },
+    "bankingDetails": {
+      "bankName": "Wells Fargo Business",
+      "accountType": "checking",
+      "routingNumber": "121000248",
+      "accountNumberLast4": "7890",
+      "wireInstructions": {
+        "swiftCode": "WFBIUS6S",
+        "iban": "US12345678901234567890",
+        "intermediaryBank": "Federal Reserve Bank",
+        "beneficiaryName": "Global Tech Solutions Inc.",
+        "beneficiaryAddress": {
+          "street": "1500 Technology Drive",
+          "city": "San Francisco",
+          "state": "CA",
+          "zip": "94105",
+          "country": "USA",
+          "bankingMetadata": {
+            "accountOpenDate": "2018-06-15",
+            "accountStatus": "active",
+            "creditLimit": 500000.00,
+            "currentBalance": 125000.00,
+            "averageBalance": 200000.00,
+            "accountHistory": {
+              "yearsActive": 6,
+              "totalTransactions": 2847,
+              "totalVolume": 45680000.00,
+              "onTimePayments": 2841,
+              "latePayments": 6,
+              "creditScore": {
+                "score": 785,
+                "scoreDate": "2024-03-01",
+                "bureau": "Dun & Bradstreet",
+                "rating": "Excellent",
+                "riskLevel": "Low",
+                "scoreMetadata": {
+                  "scoreModel": "PAYDEX",
+                  "industryRisk": "Low",
+                  "financialStress": "Low",
+                  "paymentTrend": "Improving",
+                  "lastReview": "2024-03-01",
+                  "nextReview": "2024-06-01"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "orderMetadata": {
+    "createdBy": "sarah.johnson@globaltech.com",
+    "createdDate": "2024-03-15T14:30:00Z",
+    "lastModifiedBy": "system@procurement.com",
+    "lastModifiedDate": "2024-03-15T14:35:00Z",
+    "orderSource": "enterprise_portal",
+    "referenceNumber": "REQ-2024-5678",
+    "approvalChain": {
+      "requiredApprovals": 3,
+      "currentApprovals": 3,
+      "approvers": [
+        {
+          "approverId": "APPR-001",
+          "approverName": "Sarah Johnson",
+          "approverRole": "Procurement Manager",
+          "approvalDate": "2024-03-15T14:30:00Z",
+          "approvalNotes": "Approved - within budget",
+          "approverMetadata": {
+            "department": "Procurement",
+            "costCenter": "CC-1001",
+            "approvalLimit": 100000.00,
+            "delegationActive": false,
+            "outOfOffice": false,
+            "contactPreference": {
+              "method": "email",
+              "priority": "high",
+              "backupContact": "john.smith@globaltech.com",
+              "escalationPath": ["Manager", "Director", "VP"],
+              "notificationSettings": {
+                "emailNotifications": true,
+                "smsNotifications": true,
+                "pushNotifications": false,
+                "notificationFrequency": "immediate",
+                "quietHours": "22:00-06:00",
+                "timezone": "America/Los_Angeles"
+              }
+            }
+          }
+        },
+        {
+          "approverId": "APPR-002",
+          "approverName": "Michael Chen",
+          "approverRole": "Finance Director",
+          "approvalDate": "2024-03-15T14:32:00Z",
+          "approvalNotes": "Approved - budget allocated",
+          "approverMetadata": {
+            "department": "Finance",
+            "costCenter": "CC-2001",
+            "approvalLimit": 500000.00,
+            "delegationActive": false,
+            "outOfOffice": false,
+            "contactPreference": {
+              "method": "email",
+              "priority": "high",
+              "backupContact": "jane.doe@globaltech.com",
+              "escalationPath": ["Director", "VP", "CFO"],
+              "notificationSettings": {
+                "emailNotifications": true,
+                "smsNotifications": true,
+                "pushNotifications": true,
+                "notificationFrequency": "immediate",
+                "quietHours": "23:00-07:00",
+                "timezone": "America/Los_Angeles"
+              }
+            }
+          }
+        },
+        {
+          "approverId": "APPR-003",
+          "approverName": "David Martinez",
+          "approverRole": "IT Director",
+          "approvalDate": "2024-03-15T14:35:00Z",
+          "approvalNotes": "Approved - technical specifications verified",
+          "approverMetadata": {
+            "department": "Information Technology",
+            "costCenter": "CC-3001",
+            "approvalLimit": 250000.00,
+            "delegationActive": false,
+            "outOfOffice": false,
+            "contactPreference": {
+              "method": "teams",
+              "priority": "normal",
+              "backupContact": "alice.wong@globaltech.com",
+              "escalationPath": ["Senior Manager", "Director", "CTO"],
+              "notificationSettings": {
+                "emailNotifications": true,
+                "smsNotifications": false,
+                "pushNotifications": true,
+                "notificationFrequency": "hourly_digest",
+                "quietHours": "20:00-08:00",
+                "timezone": "America/Los_Angeles"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FakturaVAT xmlns="http://www.mf.gov.pl/faktura/v1"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <DaneFaktury>
+        <NumerFaktury>FV/2025/01/456</NumerFaktury>
+        <DataWystawienia>2025-01-16</DataWystawienia>
+        <DataSprzedaży>2025-01-10</DataSprzedaży>
+        <MiejsceWystawienia>Warszawa</MiejsceWystawienia>
+        <TypFaktury>FAKTURA_VAT</TypFaktury>
+    </DaneFaktury>
+
+    <Sprzedawca>
+        <NazwaFirmy>Kowalski i Wspólnicy Sp. z o.o.</NazwaFirmy>
+        <NIP>5272345678</NIP>
+        <REGON>012345678</REGON>
+        <Adres>
+            <Ulica>ul. Marszałkowska</Ulica>
+            <NumerDomu>123</NumerDomu>
+            <NumerLokalu>45</NumerLokalu>
+            <KodPocztowy>00-001</KodPocztowy>
+            <Miasto>Warszawa</Miasto>
+            <Województwo>mazowieckie</Wojewodztwo>
+            <Kraj>Polska</Kraj>
+        </Adres>
+        <Kontakt>
+            <Telefon>+48 22 123 45 67</Telefon>
+            <Email>biuro@kowalski.pl</Email>
+            <StronaWWW>www.kowalski.pl</StronaWWW>
+        </Kontakt>
+        <DaneBankowe>
+            <NazwaBanku>PKO Bank Polski S.A.</NazwaBanku>
+            <NumerKonta>12 1234 5678 9012 3456 7890 1234</NumerKonta>
+            <SWIFT>BPKOPLPW</SWIFT>
+        </DaneBankowe>
+    </Sprzedawca>
+
+    <Nabywca>
+        <NazwaFirmy>Nowak &amp; Wiśniewski Handel S.A.</NazwaFirmy>
+        <NIP>6789876543</NIP>
+        <REGON>987654321</REGON>
+        <Adres>
+            <Ulica>al. Jerozolimskie</Ulica>
+            <NumerDomu>456</NumerDomu>
+            <NumerLokalu/>
+            <KodPocztowy>02-222</KodPocztowy>
+            <Miasto>Warszawa</Miasto>
+            <Województwo>mazowieckie</Wojewodztwo>
+            <Kraj>Polska</Kraj>
+        </Adres>
+        <Kontakt>
+            <Telefon>+48 22 987 65 43</Telefon>
+            <Email>zamowienia@nowak-wisniewski.pl</Email>
+        </Kontakt>
+    </Nabywca>
+
+    <PozycjeFaktury>
+        <Pozycja>
+            <Lp>1</Lp>
+            <NazwaTowaru>Laptop Dell Latitude 5430</NazwaTowaru>
+            <PKWiU>26.20.11.0</PKWiU>
+            <JednostkaMiary>szt.</JednostkaMiary>
+            <Ilość>15</Ilość>
+            <CenaJednostkowa>4'250.00</CenaJednostkowa>
+            <WartośćNetto>63'750.00</WartośćNetto>
+            <StawkaVAT>23</StawkaVAT>
+            <KwotaVAT>14'662.50</KwotaVAT>
+            <WartośćBrutto>78'412.50</WartośćBrutto>
+        </Pozycja>
+        <Pozycja>
+            <Lp>2</Lp>
+            <NazwaTowaru>Monitor Dell UltraSharp U2722D 27"</NazwaTowaru>
+            <PKWiU>26.20.14.0</PKWiU>
+            <JednostkaMiary>szt.</JednostkaMiary>
+            <Ilość>15</Ilość>
+            <CenaJednostkowa>1'850.00</CenaJednostkowa>
+            <WartośćNetto>27'750.00</WartośćNetto>
+            <StawkaVAT>23</StawkaVAT>
+            <KwotaVAT>6'382.50</KwotaVAT>
+            <WartośćBrutto>34'132.50</WartośćBrutto>
+        </Pozycja>
+        <Pozycja>
+            <Lp>3</Lp>
+            <NazwaTowaru>Stacja dokująca Dell WD19S</NazwaTowaru>
+            <PKWiU>26.20.15.0</PKWiU>
+            <JednostkaMiary>szt.</JednostkaMiary>
+            <Ilość>15</Ilość>
+            <CenaJednostkowa>650.00</CenaJednostkowa>
+            <WartośćNetto>9'750.00</WartośćNetto>
+            <StawkaVAT>23</StawkaVAT>
+            <KwotaVAT>2'242.50</KwotaVAT>
+            <WartośćBrutto>11'992.50</WartośćBrutto>
+        </Pozycja>
+        <Pozycja>
+            <Lp>4</Lp>
+            <NazwaTowaru>Licencja Microsoft Office 365 Business Standard (roczna)</NazwaTowaru>
+            <PKWiU>58.29.12.0</PKWiU>
+            <JednostkaMiary>szt.</JednostkaMiary>
+            <Ilość>15</Ilość>
+            <CenaJednostkowa>520.00</CenaJednostkowa>
+            <WartośćNetto>7'800.00</WartośćNetto>
+            <StawkaVAT>23</StawkaVAT>
+            <KwotaVAT>1'794.00</KwotaVAT>
+            <WartośćBrutto>9'594.00</WartośćBrutto>
+        </Pozycja>
+        <Pozycja>
+            <Lp>5</Lp>
+            <NazwaTowaru>Usługa wdrożenia i konfiguracji sprzętu</NazwaTowaru>
+            <PKWiU>62.02.30.0</PKWiU>
+            <JednostkaMiary>roboczogodzina</JednostkaMiary>
+            <Ilość>24</Ilość>
+            <CenaJednostkowa>180.00</CenaJednostkowa>
+            <WartośćNetto>4'320.00</WartośćNetto>
+            <StawkaVAT>23</StawkaVAT>
+            <KwotaVAT>993.60</KwotaVAT>
+            <WartośćBrutto>5'313.60</WartośćBrutto>
+        </Pozycja>
+        <Pozycja>
+            <Lp>6</Lp>
+            <NazwaTowaru>Transport i ubezpieczenie przesyłki</NazwaTowaru>
+            <PKWiU>49.41.10.0</PKWiU>
+            <JednostkaMiary>usługa</JednostkaMiary>
+            <Ilość>1</Ilość>
+            <CenaJednostkowa>450.00</CenaJednostkowa>
+            <WartośćNetto>450.00</WartośćNetto>
+            <StawkaVAT>23</StawkaVAT>
+            <KwotaVAT>103.50</KwotaVAT>
+            <WartośćBrutto>553.50</WartośćBrutto>
+        </Pozycja>
+    </PozycjeFaktury>
+
+    <PodsumowanieVAT>
+        <StawkaVAT23>
+            <StawkaProcent>23</StawkaProcent>
+            <WartośćNetto>113'820.00</WartośćNetto>
+            <KwotaVAT>26'178.60</KwotaVAT>
+            <WartośćBrutto>139'998.60</WartośćBrutto>
+        </StawkaVAT23>
+    </PodsumowanieVAT>
+
+    <Razem>
+        <SumaNetto>113'820.00</SumaNetto>
+        <SumaVAT>26'178.60</SumaVAT>
+        <SumaBrutto>139'998.60</SumaBrutto>
+        <Waluta>PLN</Waluta>
+    </Razem>
+
+    <DoZapłaty>
+        <Kwota>139'998.60</Kwota>
+        <Słownie>Sto trzydzieści dziewięć tysięcy dziewięćset dziewięćdziesiąt osiem złotych sześćdziesiąt groszy</Słownie>
+        <Waluta>PLN</Waluta>
+    </DoZapłaty>
+
+    <WarunkiPłatności>
+        <FormaPłatności>PRZELEW_BANKOWY</FormaPłatności>
+        <TerminPłatności>2025-01-30</TerminPłatności>
+        <LiczbaDniTermin>14 dni</LiczbaDniTermin>
+    </WarunkiPłatności>
+
+    <UwagiDodatkowe>
+        <Uwaga>Faktura wystawiona zgodnie z ustawą o VAT z dnia 11 marca 2004 r.</Uwaga>
+        <Uwaga>W przypadku opóźnienia w płatności naliczane będą odsetki ustawowe.</Uwaga>
+        <Uwaga>Towar pozostaje własnością sprzedawcy do momentu zapłaty pełnej kwoty.</Uwaga>
+        <Uwaga>Okres gwarancji: laptopy - 36 miesięcy, monitory - 36 miesięcy, akcesoria - 24 miesiące.</Uwaga>
+    </UwagiDodatkowe>
+
+    <OsobaWystawiająca>
+        <ImięNazwisko>Jan Kowalski</ImięNazwisko>
+        <Stanowisko>Kierownik Działu Sprzedaży</Stanowisko>
+        <DataWystawienia>2025-01-16</DataWystawienia>
+        <PodpisCyfrowy>JK_2025_01_16_14_30_45</PodpisCyfrowy>
+    </OsobaWystawiająca>
+
+    <OsobaOdbierająca>
+        <ImięNazwisko>Marek Wiśniewski</ImięNazwisko>
+        <Stanowisko>Kierownik Logistyki</Stanowisko>
+        <DataOdbioru/>
+        <Podpis/>
+    </OsobaOdbierająca>
+
+    <JPK>
+        <SystemJPK>true</SystemJPK>
+        <WersjaJPK>JPK_FA(4)</WersjaJPK>
+        <DataPrzekazania>2025-01-16</DataPrzekazania>
+    </JPK>
+
+    <PolskieZnakiSpecjalne>
+        <Litery>ą ć ę ł ń ó ś ź ż Ą Ć Ę Ł Ń Ó Ś Ź Ż</Litery>
+        <Przykłady>Kraków, Gdańsk, Wrocław, Łódź, Poznań, Szczecin, Bydgoszcz</Przykłady>
+        <Słowa>spółka, z, o.o., województwo, ulica, złotych, groszy</Słowa>
+    </PolskieZnakiSpecjalne>
+</FakturaVAT>

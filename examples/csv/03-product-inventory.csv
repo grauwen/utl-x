@@ -1,0 +1,11 @@
+SKU,ProductName,Category,QuantityOnHand,ReorderLevel,UnitCost,ListPrice,SupplierID
+SKU-1001,Wireless Mouse,Electronics,245,50,8.50,24.99,SUP-A
+SKU-1002,USB-C Cable 6ft,Electronics,892,100,2.25,9.99,SUP-A
+SKU-1003,Laptop Stand,Accessories,67,25,15.75,49.99,SUP-B
+SKU-1004,Mechanical Keyboard,Electronics,123,30,42.00,129.99,SUP-C
+SKU-1005,Webcam HD 1080p,Electronics,45,20,28.50,89.99,SUP-A
+SKU-1006,Monitor Arm,Accessories,34,15,35.00,99.99,SUP-B
+SKU-1007,Desk Pad XL,Accessories,178,40,5.50,19.99,SUP-D
+SKU-1008,Ergonomic Chair,Furniture,12,5,125.00,399.99,SUP-E
+SKU-1009,Cable Management Kit,Accessories,203,50,3.75,14.99,SUP-D
+SKU-1010,LED Desk Lamp,Lighting,89,25,18.00,59.99,SUP-F

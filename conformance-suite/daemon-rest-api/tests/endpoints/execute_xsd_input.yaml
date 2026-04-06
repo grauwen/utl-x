@@ -1,0 +1,273 @@
+name: Execute with XSD Input
+description: Test /api/execute with XSD schema input and JSON output
+tags:
+  - endpoints
+  - execute
+  - formats
+  - xsd
+  - schema
+
+sequence:
+  - description: "Execute with XSD input (Purchase Order schema) to JSON"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput xsd\noutput json\n---\n{\n  message: \"Hello from UTLX!\",\n  content: $input\n}"
+      input: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:po="http://example.com/schemas/purchase-order"
+                   targetNamespace="http://example.com/schemas/purchase-order"
+                   elementFormDefault="qualified">
+
+          <xs:annotation>
+            <xs:documentation>
+              Purchase Order Schema for procurement and supply chain management systems.
+              Version: 1.0
+              Last Updated: 2024-10-27
+            </xs:documentation>
+          </xs:annotation>
+
+          <!-- Root Element -->
+          <xs:element name="PurchaseOrder" type="po:PurchaseOrderType"/>
+
+          <!-- Main Purchase Order Type -->
+          <xs:complexType name="PurchaseOrderType">
+            <xs:sequence>
+              <xs:element name="OrderInfo" type="po:OrderInfoType"/>
+              <xs:element name="Vendor" type="po:PartyType"/>
+              <xs:element name="Buyer" type="po:PartyType"/>
+              <xs:element name="ShippingAddress" type="po:AddressType"/>
+              <xs:element name="BillingAddress" type="po:AddressType"/>
+              <xs:element name="LineItems" type="po:LineItemsType"/>
+              <xs:element name="PaymentTerms" type="po:PaymentTermsType"/>
+              <xs:element name="Notes" type="xs:string" minOccurs="0"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <!-- Order Information -->
+          <xs:complexType name="OrderInfoType">
+            <xs:sequence>
+              <xs:element name="PONumber" type="po:PONumberType"/>
+              <xs:element name="OrderDate" type="xs:date"/>
+              <xs:element name="RequestedDeliveryDate" type="xs:date"/>
+              <xs:element name="Priority" type="po:PriorityType"/>
+              <xs:element name="Status" type="po:OrderStatusType"/>
+              <xs:element name="Currency" type="po:CurrencyCodeType"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <!-- Party (Vendor/Buyer) -->
+          <xs:complexType name="PartyType">
+            <xs:sequence>
+              <xs:element name="PartyID" type="xs:string"/>
+              <xs:element name="Name" type="xs:string"/>
+              <xs:element name="TaxID" type="xs:string" minOccurs="0"/>
+              <xs:element name="ContactPerson" type="xs:string" minOccurs="0"/>
+              <xs:element name="Email" type="po:EmailType"/>
+              <xs:element name="Phone" type="po:PhoneType"/>
+              <xs:element name="Address" type="po:AddressType"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <!-- Address -->
+          <xs:complexType name="AddressType">
+            <xs:sequence>
+              <xs:element name="Street" type="xs:string"/>
+              <xs:element name="City" type="xs:string"/>
+              <xs:element name="State" type="xs:string"/>
+              <xs:element name="PostalCode" type="xs:string"/>
+              <xs:element name="Country" type="po:CountryCodeType"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <!-- Line Items -->
+          <xs:complexType name="LineItemsType">
+            <xs:sequence>
+              <xs:element name="LineItem" type="po:LineItemType" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <xs:complexType name="LineItemType">
+            <xs:sequence>
+              <xs:element name="LineNumber" type="xs:positiveInteger"/>
+              <xs:element name="ProductID" type="xs:string"/>
+              <xs:element name="Description" type="xs:string"/>
+              <xs:element name="Quantity" type="xs:positiveInteger"/>
+              <xs:element name="UnitOfMeasure" type="po:UnitOfMeasureType"/>
+              <xs:element name="UnitPrice" type="po:MoneyType"/>
+              <xs:element name="LineTotal" type="po:MoneyType"/>
+              <xs:element name="RequestedDeliveryDate" type="xs:date" minOccurs="0"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <!-- Payment Terms -->
+          <xs:complexType name="PaymentTermsType">
+            <xs:sequence>
+              <xs:element name="PaymentMethod" type="po:PaymentMethodType"/>
+              <xs:element name="PaymentDueDays" type="xs:positiveInteger"/>
+              <xs:element name="DiscountPercent" type="po:PercentType" minOccurs="0"/>
+              <xs:element name="DiscountDays" type="xs:positiveInteger" minOccurs="0"/>
+            </xs:sequence>
+          </xs:complexType>
+
+          <!-- Simple Types and Restrictions -->
+
+          <xs:simpleType name="PONumberType">
+            <xs:restriction base="xs:string">
+              <xs:pattern value="PO-[0-9]{4}-[0-9]{6}"/>
+            </xs:restriction>
+          </xs:simpleType>
+
+          <xs:simpleType name="PriorityType">
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="low"/>
+              <xs:enumeration value="normal"/>
+              <xs:enumeration value="high"/>
+              <xs:enumeration value="urgent"/>
+            </xs:restriction>
+          </xs:simpleType>
+
+          <xs:simpleType name="OrderStatusType">
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="draft"/>
+              <xs:enumeration value="submitted"/>
+              <xs:enumeration value="approved"/>
+              <xs:enumeration value="in-production"/>
+              <xs:enumeration value="shipped"/>
+              <xs:enumeration value="delivered"/>
+              <xs:enumeration value="cancelled"/>
+            </xs:restriction>
+          </xs:simpleType>
+
+          <xs:simpleType name="CurrencyCodeType">
+            <xs:restriction base="xs:string">
+              <xs:pattern value="[A-Z]{3}"/>
+            </xs:restriction>
+          </xs:simpleType>
+
+          <xs:simpleType name="CountryCodeType">
+            <xs:restriction base="xs:string">
+              <xs:pattern value="[A-Z]{2,3}"/>
+            </xs:restriction>
+          </xs:simpleType>
+
+          <xs:simpleType name="EmailType">
+            <xs:restriction base="xs:string">
+              <xs:pattern value="[^@]+@[^\.]+\..+"/>
+            </xs:restriction>
+          </xs:simpleType>
+
+          <xs:simpleType name="PhoneType">
+            <xs:restriction base="xs:string">
+              <xs:pattern value="\+[0-9]{1,15}"/>
+            </xs:restriction>
+          </xs:simpleType>
+
+          <xs:simpleType name="MoneyType">
+            <xs:restriction base="xs:decimal">
+              <xs:fractionDigits value="2"/>
+              <xs:minInclusive value="0"/>
+            </xs:restriction>
+          </xs:simpleType>
+
+          <xs:simpleType name="PercentType">
+            <xs:restriction base="xs:decimal">
+              <xs:fractionDigits value="2"/>
+              <xs:minInclusive value="0"/>
+              <xs:maxInclusive value="100"/>
+            </xs:restriction>
+          </xs:simpleType>
+
+          <xs:simpleType name="UnitOfMeasureType">
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="EA"/><!-- Each -->
+              <xs:enumeration value="PCS"/><!-- Pieces -->
+              <xs:enumeration value="BOX"/><!-- Box -->
+              <xs:enumeration value="KG"/><!-- Kilogram -->
+              <xs:enumeration value="LB"/><!-- Pound -->
+              <xs:enumeration value="M"/><!-- Meter -->
+              <xs:enumeration value="FT"/><!-- Feet -->
+              <xs:enumeration value="L"/><!-- Liter -->
+              <xs:enumeration value="GAL"/><!-- Gallon -->
+            </xs:restriction>
+          </xs:simpleType>
+
+          <xs:simpleType name="PaymentMethodType">
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="credit-card"/>
+              <xs:enumeration value="wire-transfer"/>
+              <xs:enumeration value="check"/>
+              <xs:enumeration value="purchase-order"/>
+              <xs:enumeration value="letter-of-credit"/>
+            </xs:restriction>
+          </xs:simpleType>
+
+        </xs:schema>
+      inputFormat: "xsd"
+      outputFormat: "json"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{JSON}}"
+        executionTimeMs: "{{NUMBER}}"
+
+  - description: "Execute with simple XSD to JSON transformation"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput xsd\noutput json\n---\n$input"
+      input: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:element name="person">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" type="xs:string"/>
+                        <xs:element name="age" type="xs:int"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+      inputFormat: "xsd"
+      outputFormat: "json"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{JSON}}"
+        executionTimeMs: "{{NUMBER}}"
+
+  - description: "Execute XSD with field extraction"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput xsd\noutput json\n---\n{\n  schemaInfo: {\n    hasElements: $input.elements != null,\n    content: $input\n  }\n}"
+      input: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:element name="product">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="id" type="xs:string"/>
+                        <xs:element name="name" type="xs:string"/>
+                        <xs:element name="price" type="xs:decimal"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+      inputFormat: "xsd"
+      outputFormat: "json"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{JSON}}"
+        executionTimeMs: "{{NUMBER}}"

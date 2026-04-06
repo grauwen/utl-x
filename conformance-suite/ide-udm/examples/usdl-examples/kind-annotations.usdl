@@ -1,0 +1,22 @@
+@udm-version: 1.0
+
+@Object(
+  name: "Customer",
+  metadata: {
+    kind: "entity",
+    validation: "strict"
+  }
+) {
+  attributes: {
+    schema: "customer-v1"
+  },
+  properties: {
+    customerId: %kind("string", { pattern: "^CUST-[0-9]+$" }),
+    name: %kind("string", { minLength: 1, maxLength: 100 }),
+    email: %kind("email"),
+    age: %kind("integer", { min: 18, max: 120 }),
+    joinedAt: @DateTime("2024-01-15T10:30:00Z"),
+    status: %kind("enum", { values: ["active", "inactive", "suspended"] }),
+    tags: %kind("array<string>")
+  }
+}

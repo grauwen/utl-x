@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompanyIncorporation xmlns="http://www.companieshouse.gov.uk/incorporation/v1"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <ApplicationDetails>
+        <ApplicationNumber>APP-2025-UK-123456</ApplicationNumber>
+        <ApplicationDate>2025-01-16</ApplicationDate>
+        <ApplicationType>NEW_COMPANY_REGISTRATION</ApplicationType>
+        <ProcessingStatus>APPROVED</ProcessingStatus>
+    </ApplicationDetails>
+
+    <CompanyDetails>
+        <CompanyName>Smith &amp; Johnson Digital Solutions Ltd</CompanyName>
+        <CompanyNumber>12345678</CompanyNumber>
+        <CompanyType>PRIVATE_LIMITED_BY_SHARES</CompanyType>
+        <IncorporationDate>2025-01-20</IncorporationDate>
+        <JurisdictionOfIncorporation>England and Wales</JurisdictionOfIncorporation>
+    </CompanyDetails>
+
+    <RegisteredOffice>
+        <BuildingName>Innovation Centre</BuildingName>
+        <Street>Silicon Roundabout</Street>
+        <Number>123</Number>
+        <PostTown>London</PostTown>
+        <County>Greater London</County>
+        <Postcode>EC2A 4NE</Postcode>
+        <Country>United Kingdom</Country>
+    </RegisteredOffice>
+
+    <BusinessActivities>
+        <SICCode>62020</SICCode>
+        <Description>Information technology consultancy activities</Description>
+        <NatureOfBusiness>Software development and IT consulting services</NatureOfBusiness>
+    </BusinessActivities>
+
+    <ShareCapital>
+        <Currency>GBP</Currency>
+        <CurrencySymbol>£</CurrencySymbol>
+        <ShareClass>
+            <ClassName>Ordinary Shares</ClassName>
+            <NominalValue>1.00</NominalValue>
+            <NumberOfShares>100</NumberOfShares>
+            <TotalNominalValue>100.00</TotalNominalValue>
+            <Rights>Each share carries one vote and equal dividend rights</Rights>
+        </ShareClass>
+        <TotalShareCapital>100.00</TotalShareCapital>
+    </ShareCapital>
+
+    <Shareholders>
+        <Shareholder>
+            <ShareholderType>INDIVIDUAL</ShareholderType>
+            <Title>Mr</Title>
+            <FirstName>James</FirstName>
+            <MiddleName>Robert</MiddleName>
+            <Surname>Smith</Surname>
+            <DateOfBirth>1985-04-12</DateOfBirth>
+            <Nationality>British</Nationality>
+            <Address>
+                <Street>Park Lane</Street>
+                <Number>456</Number>
+                <PostTown>London</PostTown>
+                <Postcode>W1K 7TN</Postcode>
+                <Country>United Kingdom</Country>
+            </Address>
+            <SharesHeld>
+                <Class>Ordinary</Class>
+                <NumberOfShares>60</NumberOfShares>
+                <PercentageHolding>60.0</PercentageHolding>
+            </SharesHeld>
+        </Shareholder>
+        <Shareholder>
+            <ShareholderType>INDIVIDUAL</ShareholderType>
+            <Title>Ms</Title>
+            <FirstName>Sarah</FirstName>
+            <MiddleName>Elizabeth</MiddleName>
+            <Surname>Johnson</Surname>
+            <DateOfBirth>1987-09-28</DateOfBirth>
+            <Nationality>British</Nationality>
+            <Address>
+                <Street>Baker Street</Street>
+                <Number>221B</Number>
+                <PostTown>London</PostTown>
+                <Postcode>NW1 6XE</Postcode>
+                <Country>United Kingdom</Country>
+            </Address>
+            <SharesHeld>
+                <Class>Ordinary</Class>
+                <NumberOfShares>40</NumberOfShares>
+                <PercentageHolding>40.0</PercentageHolding>
+            </SharesHeld>
+        </Shareholder>
+    </Shareholders>
+
+    <Directors>
+        <Director>
+            <Title>Mr</Title>
+            <FirstName>James</FirstName>
+            <MiddleName>Robert</MiddleName>
+            <Surname>Smith</Surname>
+            <FormerNames/>
+            <DateOfBirth>1985-04-12</DateOfBirth>
+            <Nationality>British</Nationality>
+            <Occupation>Software Developer</Occupation>
+            <ResidentialAddress>
+                <Street>Park Lane</Street>
+                <Number>456</Number>
+                <PostTown>London</PostTown>
+                <Postcode>W1K 7TN</Postcode>
+                <Country>United Kingdom</Country>
+            </ResidentialAddress>
+            <ServiceAddress>
+                <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
+            </ServiceAddress>
+            <AppointmentDate>2025-01-20</AppointmentDate>
+        </Director>
+        <Director>
+            <Title>Ms</Title>
+            <FirstName>Sarah</FirstName>
+            <MiddleName>Elizabeth</MiddleName>
+            <Surname>Johnson</Surname>
+            <FormerNames/>
+            <DateOfBirth>1987-09-28</DateOfBirth>
+            <Nationality>British</Nationality>
+            <Occupation>Business Consultant</Occupation>
+            <ResidentialAddress>
+                <Street>Baker Street</Street>
+                <Number>221B</Number>
+                <PostTown>London</PostTown>
+                <Postcode>NW1 6XE</Postcode>
+                <Country>United Kingdom</Country>
+            </ResidentialAddress>
+            <ServiceAddress>
+                <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
+            </ServiceAddress>
+            <AppointmentDate>2025-01-20</AppointmentDate>
+        </Director>
+    </Directors>
+
+    <CompanySecretary>
+        <SecretaryType>INDIVIDUAL</SecretaryType>
+        <Title>Ms</Title>
+        <FirstName>Emily</FirstName>
+        <Surname>Thompson</Surname>
+        <Address>
+            <Street>Oxford Street</Street>
+            <Number>789</Number>
+            <PostTown>London</PostTown>
+            <Postcode>W1C 1DX</Postcode>
+            <Country>United Kingdom</Country>
+        </Address>
+        <AppointmentDate>2025-01-20</AppointmentDate>
+    </CompanySecretary>
+
+    <StatementOfCompliance>
+        <Statement>I confirm that the requirements of the Companies Act 2006 as to registration have been complied with.</Statement>
+        <SubmitterName>James Robert Smith</SubmitterName>
+        <SubmitterCapacity>DIRECTOR</SubmitterCapacity>
+        <SubmissionDate>2025-01-16</SubmissionDate>
+        <ElectronicSignature>JRS_2025_01_16_10_30</ElectronicSignature>
+    </StatementOfCompliance>
+
+    <StatementOfCapital>
+        <TotalNumberOfShares>100</TotalNumberOfShares>
+        <AggregateNominalValue currency="GBP">100.00</AggregateNominalValue>
+        <AggregateAmountUnpaid currency="GBP">0.00</AggregateAmountUnpaid>
+    </StatementOfCapital>
+
+    <CompaniesHouseFees>
+        <RegistrationFee currency="GBP">12.00</RegistrationFee>
+        <SameDay Registration>false</SameDayRegistration>
+        <PaymentMethod>DEBIT_CARD</PaymentMethod>
+        <PaymentReference>CH-2025-PAY-123456</PaymentReference>
+    </CompaniesHouseFees>
+
+    <Articles>
+        <ArticlesType>MODEL_ARTICLES</ArticlesType>
+        <Description>Model articles for private companies limited by shares (as prescribed by The Companies (Model Articles) Regulations 2008)</Description>
+        <Amendments>None</Amendments>
+    </Articles>
+
+    <PSC_Register>
+        <PSC>
+            <PSCType>INDIVIDUAL_PSC</PSCType>
+            <Name>James Robert Smith</Name>
+            <DateOfBirth>1985-04-12</DateOfBirth>
+            <Nationality>British</Nationality>
+            <CountryOfResidence>United Kingdom</CountryOfResidence>
+            <NatureOfControl>
+                <Control>OWNERSHIP_OF_SHARES_MORE_THAN_25_PERCENT_BUT_NOT_MORE_THAN_50_PERCENT</Control>
+                <Control>RIGHT_TO_APPOINT_AND_REMOVE_DIRECTORS</Control>
+            </NatureOfControl>
+            <NotifiedDate>2025-01-20</NotifiedDate>
+        </PSC>
+        <PSC>
+            <PSCType>INDIVIDUAL_PSC</PSCType>
+            <Name>Sarah Elizabeth Johnson</Name>
+            <DateOfBirth>1987-09-28</DateOfBirth>
+            <Nationality>British</Nationality>
+            <CountryOfResidence>United Kingdom</CountryOfResidence>
+            <NatureOfControl>
+                <Control>OWNERSHIP_OF_SHARES_MORE_THAN_25_PERCENT_BUT_NOT_MORE_THAN_50_PERCENT</Control>
+            </NatureOfControl>
+            <NotifiedDate>2025-01-20</NotifiedDate>
+        </PSC>
+    </PSC_Register>
+
+    <AccountingReferenceDate>
+        <Day>31</Day>
+        <Month>12</Month>
+    </AccountingReferenceDate>
+
+    <ConfirmationStatement>
+        <NextDueDate>2026-02-03</NextDueDate>
+        <Frequency>ANNUAL</Frequency>
+    </ConfirmationStatement>
+
+    <UKTerminology>
+        <Terms>Ltd, Companies House, PSC (Person with Significant Control), Model Articles</Terms>
+        <Symbols>£, &amp;, ©, ®</Symbols>
+    </UKTerminology>
+</CompanyIncorporation>

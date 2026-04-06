@@ -1,0 +1,262 @@
+%utlx 1.0
+input json
+output xml
+---
+
+// ============================================================================
+// Business Scenario: EU Employee Contract (DK) → Payroll System Setup
+// ----------------------------------------------------------------------------
+// Input:  Danish employment contract (20-eu-employee-contract-dk.json)
+// Output: XML payroll configuration for HR/Payroll system integration
+//
+// When a new employee is hired in Denmark, the payroll system needs
+// configuration data including salary components, pension contributions,
+// tax deductions, and benefits setup. This generates a complete payroll record.
+// ============================================================================
+
+function TaxBracket(annualSalary) {
+  // Danish simplified tax brackets (approximate)
+  if (annualSalary > 600000) "TOP_BRACKET"
+  else if (annualSalary > 400000) "MIDDLE_BRACKET"
+  else "BASE_BRACKET"
+}
+
+function SeniorityBonus(yearsEmployed) {
+  if (yearsEmployed >= 10) 5.0
+  else if (yearsEmployed >= 5) 2.5
+  else if (yearsEmployed >= 2) 1.0
+  else 0.0
+}
+
+function BenefitValue(hasBenefit, monthlyValue) {
+  if (hasBenefit) monthlyValue else 0
+}
+
+{
+  let startDate = parseDate($input.ansættelsesforhold.ansættelsesDato);
+  let probationEndDate = parseDate($input.ansættelsesforhold.prøvetid.udløbsdato);
+  let daysUntilStart = diffDays(now(), startDate);
+  let monthlyGross = $input.løn.grundløn.månedsløn;
+  let annualGross = $input.løn.grundløn.årligBruttoløn;
+  let taxBracket = TaxBracket(annualGross);
+  let employerPension = $input.løn.tillæg.pensionsbidrag.månedligBeløbArbejdsgiver;
+  let employeePension = $input.løn.tillæg.pensionsbidrag.månedligBeløbMedarbejder;
+  let totalPension = employerPension + employeePension;
+  let freeChoiceAmount = $input.løn.tillæg.fritvalgKonto.årligBeløb / 12;
+
+  PayrollSetup: {
+    @setupId: "PAY-" + replace(substring(generateUuid(), 0, 8), "-", ""),
+    @generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    @effectiveDate: $input.ansættelsesforhold.ansættelsesDato,
+    @country: "DK",
+    EmployeeRecord: {
+      ContractId: $input.kontraktId,
+      ContractType: titleCase(replace($input.kontraktType, "_", " ")),
+      CreatedDate: $input.udarbejdelsesDato,
+      EmploymentStatus: if (daysUntilStart > 0) "PENDING_START" else "ACTIVE"
+    },
+    PersonalDetails: {
+      CPRNumber: $input.medarbejder.cprNummer,
+      CPRMasked: "******-" + substring($input.medarbejder.cprNummer, 7, 11),
+      FirstName: $input.medarbejder.fornavn,
+      LastName: $input.medarbejder.efternavn,
+      FullName: $input.medarbejder.fuldeNavn,
+      FullNameReversed: $input.medarbejder.efternavn + ", " + $input.medarbejder.fornavn,
+      DateOfBirth: $input.medarbejder.fødselsdato,
+      Age: year(now()) - year(parseDate($input.medarbejder.fødselsdato)),
+      Nationality: $input.medarbejder.nationalitet,
+      Address: {
+        Street: $input.medarbejder.adresse.vejnavn + " " + $input.medarbejder.adresse.husnummer,
+        Floor: $input.medarbejder.adresse.etage,
+        PostalCode: $input.medarbejder.adresse.postnummer,
+        City: $input.medarbejder.adresse.by,
+        Country: $input.medarbejder.adresse.land,
+        FullAddress: joinToString([
+          $input.medarbejder.adresse.vejnavn + " " + $input.medarbejder.adresse.husnummer + ", " + $input.medarbejder.adresse.etage,
+          $input.medarbejder.adresse.postnummer + " " + $input.medarbejder.adresse.by,
+          $input.medarbejder.adresse.land
+        ], " | ")
+      },
+      Contact: {
+        Email: $input.medarbejder.kontakt.email,
+        Mobile: $input.medarbejder.kontakt.mobiltelefon,
+        MobileDigits: replace(replace($input.medarbejder.kontakt.mobiltelefon, "+45 ", ""), " ", "")
+      }
+    },
+    BankingDetails: {
+      RegistrationNumber: $input.medarbejder.bankoplysninger.registreringsnummer,
+      AccountNumber: $input.medarbejder.bankoplysninger.kontonummer,
+      BankName: $input.medarbejder.bankoplysninger.bankNavn,
+      PaymentMethod: "BANK_TRANSFER"
+    },
+    PositionDetails: {
+      JobTitle: $input.stillingsoplysninger.stillingsbetegnelse,
+      JobTitleSlug: slugify($input.stillingsoplysninger.stillingsbetegnelse),
+      Department: $input.stillingsoplysninger.afdelingNavn,
+      DepartmentCode: upperCase(substring(replace($input.stillingsoplysninger.afdelingNavn, " ", ""), 0, 4)),
+      WorkLocation: $input.stillingsoplysninger.arbejdssted.hovedarbejdssted,
+      WorkAddress: $input.stillingsoplysninger.arbejdssted.adresse,
+      ReferenceGroup: $input.stillingsoplysninger.referenceGruppe,
+      ReportsTo: {
+        Name: $input.stillingsoplysninger.nærmesteLeder.navn,
+        Title: $input.stillingsoplysninger.nærmesteLeder.stilling,
+        Email: $input.stillingsoplysninger.nærmesteLeder.email
+      }
+    },
+    EmploymentTerms: {
+      StartDate: $input.ansættelsesforhold.ansættelsesDato,
+      StartDateFormatted: formatDate(startDate, "d. MMMM yyyy"),
+      DaysUntilStart: daysUntilStart,
+      Probation: {
+        Duration: $input.ansættelsesforhold.prøvetid.varighed,
+        Unit: $input.ansættelsesforhold.prøvetid.enhed,
+        EndDate: $input.ansættelsesforhold.prøvetid.udløbsdato,
+        NoticePeriod: $input.ansættelsesforhold.prøvetid.opsigelseVarsel,
+        DaysRemaining: diffDays(now(), probationEndDate)
+      },
+      EmploymentForm: $input.ansættelsesforhold.ansættelsesform,
+      CollectiveAgreement: {
+        Name: $input.ansættelsesforhold.overenskomst.navn,
+        Parties: joinToString($input.ansættelsesforhold.overenskomst.parter, " / "),
+        EffectiveFrom: $input.ansættelsesforhold.overenskomst.ikrafttrædelse
+      }
+    },
+    WorkingHours: {
+      WeeklyHours: $input.arbejdstid.ugentligTimer,
+      DailyHours: roundToDecimalPlaces($input.arbejdstid.ugentligTimer / 5, 2),
+      WorkTimeNorm: $input.arbejdstid.arbejdstidsnorm,
+      FlextimeEnabled: $input.arbejdstid.flekstidsordning,
+      CoreHours: {
+        Start: $input.arbejdstid.kernetid.start,
+        End: $input.arbejdstid.kernetid.slut,
+        Days: joinToString($input.arbejdstid.kernetid.gælderDage, ", ")
+      },
+      FlexBalance: {
+        MaxPositive: $input.arbejdstid.glidetimerOrdning.maksAfspadsering,
+        MaxNegative: $input.arbejdstid.glidetimerOrdning.maksMinus,
+        IsAllowed: $input.arbejdstid.glidetimerOrdning.tilladt
+      }
+    },
+    Compensation: {
+      Currency: $input.løn.grundløn.valuta,
+      BaseSalary: {
+        Monthly: monthlyGross,
+        MonthlyFormatted: formatCurrency(monthlyGross, "DKK"),
+        Annual: annualGross,
+        AnnualFormatted: formatCurrency(annualGross, "DKK"),
+        HourlyRate: roundToDecimalPlaces(annualGross / (52 * $input.arbejdstid.ugentligTimer), 2)
+      },
+      Pension: {
+        EmployerContributionPct: $input.løn.tillæg.pensionsbidrag.arbejdsgiverAndel,
+        EmployeeContributionPct: $input.løn.tillæg.pensionsbidrag.medarbejderAndel,
+        TotalContributionPct: $input.løn.tillæg.pensionsbidrag.totalProcent,
+        EmployerAmountMonthly: employerPension,
+        EmployerAmountFormatted: formatCurrency(employerPension, "DKK"),
+        EmployeeAmountMonthly: employeePension,
+        EmployeeAmountFormatted: formatCurrency(employeePension, "DKK"),
+        TotalMonthly: totalPension,
+        TotalAnnual: totalPension * 12,
+        Provider: $input.pensionsordning.pensionsselskab,
+        PolicyNumber: $input.pensionsordning.policenummer
+      },
+      FreeChoiceAccount: {
+        Percentage: $input.løn.tillæg.fritvalgKonto.procent,
+        AnnualAmount: $input.løn.tillæg.fritvalgKonto.årligBeløb,
+        MonthlyAmount: roundToCents(freeChoiceAmount),
+        Description: $input.løn.tillæg.fritvalgKonto.beskrivelse
+      },
+      TotalMonthlyCompensation: roundToCents(monthlyGross + employerPension + freeChoiceAmount),
+      TotalAnnualCompensation: roundToCents((monthlyGross + employerPension + freeChoiceAmount) * 12)
+    },
+    PaymentSchedule: {
+      Frequency: $input.løn.lønudbetaling.frekvens,
+      PayDay: $input.løn.lønudbetaling.udbetalingsDag,
+      AdvancePayment: $input.løn.lønudbetaling.forskudsbetaling,
+      AnnualAdjustment: {
+        Enabled: $input.løn.regulering.årligLønregulering,
+        Date: $input.løn.regulering.reguleringsDato,
+        Basis: $input.løn.regulering.grundlag
+      }
+    },
+    TaxConfiguration: {
+      TaxBracket: taxBracket,
+      EstimatedTaxRate: match (taxBracket) {
+        "TOP_BRACKET" => 52.0,
+        "MIDDLE_BRACKET" => 42.0,
+        _ => 37.0
+      },
+      TaxCardRequired: true,
+      AMBidragEnabled: true,
+      AMBidragRate: 8.0
+    },
+    LeaveEntitlements: {
+      AnnualVacationDays: $input.ferie.feriedage.årligFerie,
+      VacationYear: $input.ferie.feriedage.ferieår,
+      AccrualPeriod: $input.ferie.feriedage.optjeningsperiode,
+      VacationSupplementPct: $input.ferie.ferietillæg.procent,
+      SpecialVacationDays: $input.ferie.særligeFeriedage.feriedageTilPersonligDisposition,
+      TotalLeaveDays: $input.ferie.feriedage.årligFerie + $input.ferie.særligeFeriedage.feriedageTilPersonligDisposition
+    },
+    PensionCoverages: {
+      Provider: $input.pensionsordning.pensionsselskab,
+      PolicyNumber: $input.pensionsordning.policenummer,
+      Coverages: {
+        RetirementPension: $input.pensionsordning.dækninger.alderspension,
+        DisabilityPension: $input.pensionsordning.dækninger.invalidepension,
+        GroupLifeInsurance: $input.pensionsordning.dækninger.gruppelivsforsikring,
+        CriticalIllness: $input.pensionsordning.dækninger.kritiskSygdom,
+        HealthInsurance: $input.pensionsordning.dækninger.sundhedsforsikring
+      },
+      SumInsured: {
+        GroupLife: formatCurrency($input.pensionsordning.dækningsbeløb.gruppelivDæksum, "DKK"),
+        CriticalIllness: formatCurrency($input.pensionsordning.dækningsbeløb.kritiskSygdomDæksum, "DKK")
+      }
+    },
+    Benefits: {
+      CompanyPhone: {
+        Provided: $input.goder.telefon.gælder,
+        Type: $input.goder.telefon.type,
+        TaxableValue: $input.goder.telefon.værdi
+      },
+      CompanyComputer: {
+        Provided: $input.goder.computer.gælder,
+        Type: $input.goder.computer.type
+      },
+      LunchScheme: {
+        Provided: $input.goder.kantineordning.gælder,
+        EmployeeCost: $input.goder.kantineordning.pris
+      },
+      HealthScheme: {
+        Provided: $input.goder.sundhedsordning.gælder,
+        Coverage: $input.goder.sundhedsordning.indhold
+      },
+      FitnessAllowance: {
+        Provided: $input.goder.motionsordning.gælder,
+        AnnualAmount: $input.goder.motionsordning.årligTilskud,
+        Description: $input.goder.motionsordning.beskrivelse
+      },
+      TotalBenefitsValue: roundToCents(
+        BenefitValue($input.goder.telefon.gælder, $input.goder.telefon.værdi) +
+        BenefitValue($input.goder.motionsordning.gælder, $input.goder.motionsordning.årligTilskud / 12)
+      )
+    },
+    SignatureStatus: {
+      EmployerSigned: $input.underskrifter.arbejdsgiver.underskrift,
+      EmployerSignedBy: $input.underskrifter.arbejdsgiver.navn,
+      EmployerSignedDate: $input.underskrifter.arbejdsgiver.dato,
+      EmployeeSigned: $input.underskrifter.medarbejder.underskrift,
+      EmployeeSignedNote: $input.underskrifter.medarbejder.bemærkning,
+      ContractComplete: $input.underskrifter.arbejdsgiver.underskrift && $input.underskrifter.medarbejder.underskrift
+    },
+    Attachments: {
+      Attachment: $input.bilag |> map(b => {
+        {
+          Type: b.type,
+          Title: b.titel,
+          TypeCode: upperCase(substring(replace(b.type, "_", ""), 0, 4))
+        }
+      })
+    },
+    RecordHash: md5($input.kontraktId + $input.medarbejder.cprNummer + toString(annualGross))
+  }
+}

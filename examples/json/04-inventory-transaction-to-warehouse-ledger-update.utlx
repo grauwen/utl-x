@@ -1,0 +1,143 @@
+%utlx 1.0
+input json
+output xml
+---
+
+// ============================================================================
+// Business Scenario: Inventory Transaction → Warehouse Ledger Update
+// ----------------------------------------------------------------------------
+// Input:  Stock receipt transaction (04-inventory-transaction.json)
+// Output: XML ledger entry for inventory management system
+//
+// When inventory is received at the warehouse, this transformation generates
+// a structured ledger update with bin allocations, expiration tracking,
+// cost allocation, and audit trail information for inventory accounting.
+// ============================================================================
+
+function BinCapacityStatus(binLocation) {
+  let zone = substring(binLocation, 0, 1) in
+  match (zone) {
+    "A" => "HIGH_DENSITY",
+    "B" => "MEDIUM_DENSITY",
+    "C" => "LOW_DENSITY",
+    _ => "STANDARD"
+  }
+}
+
+function ExpirationRiskLevel(expirationDate) {
+  if (isNull(expirationDate)) "NO_EXPIRY"
+  else (
+    let daysUntilExpiry = diffDays(now(), parseDate(expirationDate)) in
+    if (daysUntilExpiry < 90) "CRITICAL"
+    else if (daysUntilExpiry < 180) "WARNING"
+    else if (daysUntilExpiry < 365) "MONITOR"
+    else "SAFE"
+  )
+}
+
+function InventoryClass(unitCost) {
+  if (unitCost >= 100) "CLASS_A_HIGH_VALUE"
+  else if (unitCost >= 25) "CLASS_B_MEDIUM"
+  else "CLASS_C_STANDARD"
+}
+
+
+{
+  let txnDate = parseDate($input.transactionDate);
+  let itemCount = count($input.items);
+  let totalUnits = sum(map($input.items, item => item.quantityReceived));
+  let avgUnitCost = roundToDecimalPlaces($input.totalValue / totalUnits, 2);
+
+  WarehouseLedgerUpdate: {
+    @ledgerId: "WL-" + replace(substring(generateUuid(), 0, 12), "-", ""),
+    @timestamp: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    @version: "2.1",
+    TransactionHeader: {
+      SourceTransactionId: $input.transactionId,
+      TransactionType: snakeCase($input.transactionType),
+      TransactionDate: formatDate(txnDate, "yyyy-MM-dd"),
+      TransactionTime: formatDate(txnDate, "HH:mm:ss"),
+      DayOfWeek: dayOfWeekName(txnDate),
+      FiscalPeriod: "FY" + formatDate(txnDate, "yyyy") + "-M" + formatDate(txnDate, "MM"),
+      ProcessedDate: formatDate(now(), "yyyy-MM-dd")
+    },
+    WarehouseInfo: {
+      WarehouseCode: $input.warehouse.warehouseId,
+      WarehouseName: $input.warehouse.name,
+      Location: upperCase($input.warehouse.location.city) + ", " + $input.warehouse.location.state,
+      Region: if ($input.warehouse.location.state == "CA") "WEST"
+              else if (contains("TX,OK,NM,AZ", $input.warehouse.location.state)) "SOUTHWEST"
+              else "OTHER"
+    },
+    SupplierDetails: {
+      SupplierId: $input.supplier.supplierId,
+      SupplierName: $input.supplier.name,
+      PurchaseOrderRef: $input.supplier.poNumber,
+      SupplierSlug: slugify($input.supplier.name)
+    },
+    ReceiptSummary: {
+      TotalLineItems: itemCount,
+      TotalUnitsReceived: totalUnits,
+      TotalValue: formatCurrency($input.totalValue, "USD"),
+      TotalValueNumeric: $input.totalValue,
+      AverageUnitCost: avgUnitCost,
+      InspectionResult: $input.inspectionStatus,
+      QualityGrade: if ($input.inspectionStatus == "PASSED") "A" else "B"
+    },
+    LineItems: {
+      LineItem: $input.items |> map(item => {
+        let expiryRisk = ExpirationRiskLevel(item.expirationDate);
+        let invClass = InventoryClass(item.unitCost);
+        let binStatus = BinCapacityStatus(item.binLocation);
+        let margin = roundToDecimalPlaces(item.unitCost * 0.35, 2);
+
+        {
+          @seq: toString(findIndex($input.items, i => i.sku == item.sku) + 1),
+          @class: invClass,
+          SKU: item.sku,
+          ProductName: item.productName,
+          ProductSlug: kebabCase(item.productName),
+          Category: titleCase(item.category),
+          Storage: {
+            BinLocation: item.binLocation,
+            BinZone: substring(item.binLocation, 0, 1),
+            BinCapacityStatus: binStatus,
+            LotNumber: item.lotNumber,
+            LotPrefix: substring(item.lotNumber, 0, 3)
+          },
+          Quantities: {
+            Received: item.quantityReceived,
+            UnitOfMeasure: "EA"
+          },
+          Costs: {
+            UnitCost: formatCurrency(item.unitCost, "USD"),
+            TotalCost: formatCurrency(item.totalCost, "USD"),
+            SuggestedRetail: formatCurrency(roundToCents(item.unitCost + margin), "USD"),
+            MarginAmount: formatCurrency(margin, "USD")
+          },
+          Expiration: {
+            ExpirationDate: if (isNull(item.expirationDate)) "N/A" else item.expirationDate,
+            RiskLevel: expiryRisk,
+            DaysUntilExpiry: if (isNull(item.expirationDate)) -1
+                             else diffDays(now(), parseDate(item.expirationDate)),
+            RequiresRotation: expiryRisk == "CRITICAL" || expiryRisk == "WARNING"
+          },
+          Checksum: sha256(item.sku + item.lotNumber + toString(item.quantityReceived))
+        }
+      })
+    },
+    AuditInfo: {
+      ReceivedBy: {
+        EmployeeId: $input.receivedBy.employeeId,
+        EmployeeName: upperCase($input.receivedBy.name),
+        EmployeeInitials: joinToString(
+          map(split($input.receivedBy.name, " "), part => substring(part, 0, 1)),
+          ""
+        )
+      },
+      Notes: truncate($input.notes, 100, "..."),
+      NotesLength: length($input.notes),
+      RecordHash: md5($input.transactionId + toString($input.totalValue))
+    }
+  }
+}

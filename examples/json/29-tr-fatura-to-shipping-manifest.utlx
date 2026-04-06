@@ -1,0 +1,294 @@
+%utlx 1.0
+input json
+output xml
+---
+
+// ============================================================================
+// Business Scenario: Turkish Invoice (Fatura) → Shipping Manifest
+// ----------------------------------------------------------------------------
+// Input:  Turkish commercial invoice (29-tr-fatura.json)
+// Output: XML shipping manifest for logistics and customs documentation
+//
+// Turkish B2B shipments require detailed manifests for domestic logistics.
+// This transformation generates a shipping manifest with package details,
+// customs classifications, weight calculations, and delivery scheduling.
+// ============================================================================
+
+function PackageType(itemWeight, itemCount) {
+  let totalWeight = itemWeight * itemCount in
+  if (totalWeight > 500) "PALLET"
+  else if (totalWeight > 50) "CRATE"
+  else if (totalWeight > 10) "CARTON"
+  else "BOX"
+}
+
+function HandlingCode(description) {
+  if (contains(lowerCase(description), "hidrolik")) "HYD-FRAGILE"
+  else if (contains(lowerCase(description), "basınç")) "PRESSURE-SENSITIVE"
+  else if (contains(lowerCase(description), "elektronik")) "ESD-SENSITIVE"
+  else "STANDARD"
+}
+
+function DeliveryPriority(daysUntilDelivery) {
+  if (daysUntilDelivery <= 3) "URGENT"
+  else if (daysUntilDelivery <= 7) "EXPRESS"
+  else if (daysUntilDelivery <= 14) "STANDARD"
+  else "ECONOMY"
+}
+
+
+{
+  let invoiceDate = parseDate($input.faturaTarihi);
+  let shipDate = parseDate($input.sevkiyat.sevkTarihi);
+  let itemCount = count($input.kalemler);
+  let productItems = filter($input.kalemler, k => k.birim != "Götürü");
+  let serviceItems = filter($input.kalemler, k => k.birim == "Götürü");
+  let totalWeight = $input.sevkiyat.ağırlık.brüt;
+  let netWeight = $input.sevkiyat.ağırlık.net;
+  let packageCount = $input.sevkiyat.koliSayısı;
+  let earliestDelivery = first(sortBy(productItems, k => k.teslimTarihi));
+  let daysToDelivery = diffDays(now(), parseDate(earliestDelivery.teslimTarihi));
+
+  ShippingManifest: {
+    @manifestId: "MAN-" + replace(substring(generateUuid(), 0, 8), "-", ""),
+    @generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    @country: "TR",
+    @language: "TR",
+    DocumentReference: {
+      InvoiceNumber: $input.faturaNo,
+      InvoiceType: titleCase(replace($input.faturaTürü, "_", " ")),
+      InvoiceDate: $input.faturaTarihi,
+      InvoiceSeries: $input.seri,
+      InvoiceSequence: $input.sıraNo,
+      WaybillNumber: $input.sevkiyat.sevkİrsaliyeNo,
+      ETTN: $input.diğerBilgiler.ettn
+    },
+    Shipper: {
+      CompanyName: $input.satıcı.ünvan,
+      ShortName: $input.satıcı.kısaÜnvan,
+      TaxOffice: $input.satıcı.vergiDairesi,
+      TaxNumber: $input.satıcı.vergiNumarası,
+      MersisNumber: $input.satıcı.mersisNo,
+      TradeRegisterNumber: $input.satıcı.sicilNo,
+      Address: {
+        Street: $input.satıcı.adres.açıkAdres,
+        BuildingNo: $input.satıcı.adres.binaNo,
+        Unit: $input.satıcı.adres.daireNo,
+        PostalCode: $input.satıcı.adres.postaKodu,
+        District: $input.satıcı.adres.ilçe,
+        City: $input.satıcı.adres.il,
+        Country: $input.satıcı.adres.ülke,
+        FullAddress: joinToString([
+          $input.satıcı.adres.açıkAdres + " No:" + $input.satıcı.adres.binaNo,
+          $input.satıcı.adres.ilçe + "/" + $input.satıcı.adres.il,
+          $input.satıcı.adres.postaKodu
+        ], ", ")
+      },
+      Contact: {
+        Name: $input.satıcı.iletişim.yetkili,
+        Title: $input.satıcı.iletişim.ünvan,
+        Phone: $input.satıcı.iletişim.telefon,
+        Mobile: $input.satıcı.iletişim.cep,
+        Email: $input.satıcı.iletişim.eposta,
+        Website: $input.satıcı.iletişim.web
+      }
+    },
+    Consignee: {
+      CompanyName: $input.alıcı.ünvan,
+      ShortName: $input.alıcı.kısaÜnvan,
+      TaxOffice: $input.alıcı.vergiDairesi,
+      TaxNumber: $input.alıcı.vergiNumarası,
+      Address: {
+        Street: $input.alıcı.adres.açıkAdres,
+        BuildingNo: $input.alıcı.adres.binaNo,
+        Floor: $input.alıcı.adres.kat,
+        Unit: $input.alıcı.adres.daireNo,
+        PostalCode: $input.alıcı.adres.postaKodu,
+        District: $input.alıcı.adres.ilçe,
+        City: $input.alıcı.adres.il,
+        Country: $input.alıcı.adres.ülke
+      },
+      Contact: {
+        Name: $input.alıcı.iletişim.yetkili,
+        Title: $input.alıcı.iletişim.ünvan,
+        Phone: $input.alıcı.iletişim.telefon,
+        Mobile: $input.alıcı.iletişim.cep,
+        Email: $input.alıcı.iletişim.eposta
+      }
+    },
+    DeliveryPoint: {
+      Description: $input.teslimatAdresi.açıklama,
+      Street: $input.teslimatAdresi.açıkAdres,
+      BuildingNo: $input.teslimatAdresi.binaNo,
+      PostalCode: $input.teslimatAdresi.postaKodu,
+      District: $input.teslimatAdresi.ilçe,
+      City: $input.teslimatAdresi.il,
+      ContactPerson: $input.teslimatAdresi.yetkili,
+      ContactPhone: $input.teslimatAdresi.telefon,
+      DeliveryInstructions: truncate($input.teslimatAdresi.teslimatTalimatı, 80, "..."),
+      FullInstructions: $input.teslimatAdresi.teslimatTalimatı
+    },
+    ShipmentSummary: {
+      TotalLineItems: itemCount,
+      ProductItems: count(productItems),
+      ServiceItems: count(serviceItems),
+      TotalPackages: packageCount,
+      GrossWeightKg: totalWeight,
+      NetWeightKg: netWeight,
+      TareWeightKg: roundToDecimalPlaces(totalWeight - netWeight, 1),
+      WeightUnit: $input.sevkiyat.ağırlık.birim,
+      ShipDate: $input.sevkiyat.sevkTarihi,
+      ShipDateFormatted: formatDate(shipDate, "d MMMM yyyy"),
+      DaysUntilDelivery: daysToDelivery,
+      DeliveryPriority: DeliveryPriority(daysToDelivery)
+    },
+    CarrierInfo: {
+      CarrierName: $input.sevkiyat.taşıyıcı,
+      CarrierSlug: slugify($input.sevkiyat.taşıyıcı),
+      VehiclePlate: $input.sevkiyat.plaka,
+      DriverName: $input.sevkiyat.şoför,
+      DriverPhone: $input.sevkiyat.şoförTelefon,
+      DeliveryTerms: $input.sevkiyat.teslimŞekli,
+      FreightIncluded: $input.sevkiyat.navlunÜcreti.dahil,
+      FreightCost: $input.sevkiyat.navlunÜcreti.tutar,
+      FreightNote: $input.sevkiyat.navlunÜcreti.açıklama
+    },
+    InsuranceInfo: {
+      Required: $input.sevkiyat.sigorta.gerekli,
+      InsuranceCompany: $input.sevkiyat.sigorta.şirket,
+      PolicyNumber: $input.sevkiyat.sigorta.poliçeNo,
+      InsuredValue: $input.sevkiyat.sigorta.bedel,
+      InsuredValueFormatted: formatCurrency($input.sevkiyat.sigorta.bedel, "TRY")
+    },
+    CargoItems: {
+      Item: productItems |> map(item => {
+        let daysToItemDelivery = diffDays(now(), parseDate(item.teslimTarihi));
+        let handlingCode = HandlingCode(item.malHizmetAdı);
+        let estimatedWeight = roundToDecimalPlaces(totalWeight / count(productItems), 1);
+        {
+          @seq: toString(item.sıraNo),
+          @handling: handlingCode,
+          StockCode: item.stokKodu,
+          Description: truncate(item.malHizmetAdı, 50, "..."),
+          FullDescription: item.malHizmetAdı,
+          DetailedSpec: item.açıklama,
+          Quantity: item.miktar,
+          Unit: item.birim,
+          EstimatedWeightKg: estimatedWeight,
+          PackageType: PackageType(estimatedWeight, 1),
+          HandlingCode: handlingCode,
+          CountryOfOrigin: item.menşei,
+          HSCode: item.gtip,
+          RequestedDeliveryDate: item.teslimTarihi,
+          DaysUntilDelivery: daysToItemDelivery,
+          DeliveryUrgency: DeliveryPriority(daysToItemDelivery),
+          WarrantyPeriod: item.garanti,
+          SpecialNotes: if (isNull(item.özelNotlar)) "" else item.özelNotlar,
+          Value: {
+            UnitPrice: item.birimFiyat,
+            DiscountPercent: item.iskonto.oran,
+            DiscountAmount: item.iskonto.tutar,
+            NetValue: item.matrah,
+            VATRate: item.kdvOranı,
+            VATAmount: item.kdvTutarı,
+            TotalValue: item.toplamTutar,
+            TotalFormatted: $input.maliBilgiler.parabirimiSembolü + formatCurrency(item.toplamTutar, "TRY")
+          }
+        }
+      })
+    },
+    FinancialSummary: {
+      Currency: $input.maliBilgiler.parabirimi,
+      CurrencySymbol: $input.maliBilgiler.parabirimiSembolü,
+      SubtotalBeforeDiscount: $input.maliBilgiler.araToplamMatrah + $input.maliBilgiler.toplamİskonto,
+      TotalDiscount: $input.maliBilgiler.toplamİskonto,
+      NetTotal: $input.maliBilgiler.genelToplam,
+      VATBase: $input.maliBilgiler.kdvMatrahı.oran20.matrah,
+      VATRate: $input.maliBilgiler.kdvMatrahı.oran20.oran,
+      VATAmount: $input.maliBilgiler.toplamKDV,
+      GrandTotal: $input.maliBilgiler.genelToplam,
+      GrandTotalFormatted: $input.maliBilgiler.parabirimiSembolü + formatCurrency($input.maliBilgiler.genelToplam, "TRY"),
+      AmountInWords: $input.maliBilgiler.yazıyla
+    },
+    PaymentTerms: {
+      PaymentMethod: titleCase(replace($input.ödemeKoşulları.ödemeŞekli, "_", " ")),
+      PaymentDueDays: replace($input.ödemeKoşulları.vade, " gün", ""),
+      EarlyPaymentDiscount: {
+        Available: $input.ödemeKoşulları.vadedenİndirim.geçerli,
+        DiscountPercent: $input.ödemeKoşulları.vadedenİndirim.oran,
+        DaysValid: $input.ödemeKoşulları.vadedenİndirim.gün,
+        DiscountedTotal: $input.ödemeKoşulları.vadedenİndirim.indirimliTutar
+      },
+      InstallmentOption: {
+        Available: $input.ödemeKoşulları.taksitSeçeneği.mevcut,
+        NumberOfInstallments: $input.ödemeKoşulları.taksitSeçeneği.taksitSayısı,
+        InstallmentAmount: $input.ödemeKoşulları.taksitSeçeneği.taksitTutarı,
+        InstallmentDates: joinToString($input.ödemeKoşulları.taksitSeçeneği.taksitTarihleri, ", "),
+        InterestFree: $input.ödemeKoşulları.taksitSeçeneği.faiz == "Faizsiz"
+      }
+    },
+    CustomsInfo: {
+      VATLaw: $input.kdvBilgileri.kdvKanunu,
+      VATRates: {
+        Rate: first($input.kdvBilgileri.kdvOranları) |> (rate => {
+          {
+            Description: rate.açıklama,
+            Percentage: rate.oran,
+            EffectiveDate: rate.yürürlük,
+            LegalBasis: rate.yasal
+          }
+        })
+      },
+      SpecialConditions: {
+        IsExport: $input.kdvBilgileri.özelDurumlar.ihracat,
+        InwardProcessing: $input.kdvBilgileri.özelDurumlar.dahildeİşleme,
+        TemporaryAdmission: $input.kdvBilgileri.özelDurumlar.geçiciKabul,
+        IsExempt: $input.kdvBilgileri.özelDurumlar.istisna
+      },
+      Withholding: {
+        Applicable: $input.kdvBilgileri.tevkifat.uygulanır,
+        Rate: $input.kdvBilgileri.tevkifat.oran,
+        Amount: $input.kdvBilgileri.tevkifat.tutar
+      }
+    },
+    EInvoiceInfo: {
+      IsEArchive: $input.diğerBilgiler.eArsivFatura,
+      ESignature: {
+        SignedBy: $input.diğerBilgiler.eImza.imzalayan,
+        SignedAt: $input.diğerBilgiler.eImza.tarih,
+        Algorithm: $input.diğerBilgiler.eImza.algoritma,
+        CertificateNo: $input.diğerBilgiler.eImza.sertifikaNo
+      },
+      ETTN: $input.diğerBilgiler.ettn,
+      GIBStatus: {
+        Portal: $input.diğerBilgiler.gelirİdaresiBaşkanlığı.portal,
+        SubmissionDate: $input.diğerBilgiler.gelirİdaresiBaşkanlığı.gönderimTarihi,
+        Status: $input.diğerBilgiler.gelirİdaresiBaşkanlığı.durum,
+        ApprovalDate: $input.diğerBilgiler.gelirİdaresiBaşkanlığı.onayTarihi
+      }
+    },
+    LegalInfo: {
+      ApplicableLaw: $input.yaşalHükümler.uygulanacakHukuk,
+      Jurisdiction: $input.yaşalHükümler.yetkiliMahkeme,
+      DisputeResolution: $input.yaşalHükümler.uyuşmazlıkÇözümü,
+      ForceMajeure: truncate($input.yaşalHükümler.mücbirSebepler, 80, "...")
+    },
+    Attachments: {
+      Attachment: $input.ekler |> map(ek => {
+        {
+          Type: ek.tip,
+          DocumentNumber: if (isNull(ek.no)) "" else ek.no,
+          Description: if (isNull(ek.açıklama)) "" else ek.açıklama,
+          FileName: ek.dosyaAdı
+        }
+      })
+    },
+    ApprovalInfo: {
+      PreparedBy: $input.onay.düzenleyen,
+      Title: $input.onay.ünvan,
+      Date: $input.onay.tarih,
+      Location: $input.onay.yer
+    },
+    ManifestChecksum: md5($input.faturaNo + toString($input.maliBilgiler.genelToplam) + $input.sevkiyat.sevkİrsaliyeNo)
+  }
+}

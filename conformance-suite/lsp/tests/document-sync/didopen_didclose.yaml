@@ -1,0 +1,42 @@
+name: "didopen_didclose"
+description: "Open and close document lifecycle"
+category: "document-sync"
+tags: ["document", "sync", "required"]
+
+documents:
+  test_doc:
+    uri: "file:///test.utlx"
+    languageId: "utlx"
+    version: 1
+    text: |
+      input: { name: string, age: number }
+      output: input
+
+sequence:
+  # Initialize
+  - type: request
+    method: "initialize"
+    params:
+      processId: 12345
+      rootUri: "file:///tmp"
+      capabilities: {}
+    expect:
+      result:
+        capabilities: {}
+
+  # Open document
+  - type: notification
+    method: "textDocument/didOpen"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"
+        languageId: "{{documents.test_doc.languageId}}"
+        version: "{{documents.test_doc.version}}"
+        text: "{{documents.test_doc.text}}"
+
+  # Close document
+  - type: notification
+    method: "textDocument/didClose"
+    params:
+      textDocument:
+        uri: "{{documents.test_doc.uri}}"

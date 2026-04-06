@@ -1,0 +1,16 @@
+strategy: TEMPLATE
+validationPolicy: WARN
+inputs:
+  - name: currentPayload
+    schema: schemas/inventory-reserve-output.json
+  - name: orderIngress
+    schema: schemas/order-ingress-output.json
+  - name: fraudCheck
+    schema: schemas/fraud-check-output.json
+  - name: pricingResponse
+    schema: schemas/pricing-response.json
+  - name: shippingConfig
+    schema: schemas/shipping-config.json
+output:
+  schema: schemas/fulfillment-output.json
+maxConcurrent: 4

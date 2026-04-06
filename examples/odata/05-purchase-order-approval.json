@@ -1,0 +1,93 @@
+{
+  "@odata.context": "$metadata#PurchaseOrders(Supplier,Items,ApprovalHistory)/$entity",
+  "@odata.type": "#Procurement.PurchaseOrder",
+  "@odata.id": "PurchaseOrders('PO-2026-0891')",
+  "@odata.etag": "W/\"2026-02-10T09:45:00Z\"",
+  "PurchaseOrderID": "PO-2026-0891",
+  "CreatedAt": "2026-02-08T11:20:00Z",
+  "CreatedBy": "john.smith@contoso.com",
+  "Status": "PENDING_APPROVAL",
+  "Priority": "HIGH",
+  "CurrencyCode": "EUR",
+  "TotalNetAmount": 87500.00,
+  "TotalTaxAmount": 16625.00,
+  "TotalGrossAmount": 104125.00,
+  "CompanyCode": "1000",
+  "PurchasingOrganization": "EU01",
+  "PurchasingGroup": "IT-HARDWARE",
+  "PaymentTerms": "NET_30",
+  "IncoTerms": "DDP",
+  "Supplier": {
+    "@odata.type": "#Procurement.Supplier",
+    "@odata.id": "Suppliers('SUP-DE-4420')",
+    "SupplierID": "SUP-DE-4420",
+    "CompanyName": "Beckhoff Automation GmbH & Co. KG",
+    "TaxID": "DE814442858",
+    "Country": "DE",
+    "City": "Verl",
+    "PaymentMethod": "BANK_TRANSFER",
+    "IBAN": "DE89370400440532013000",
+    "Rating": "A"
+  },
+  "Items": [
+    {
+      "ItemNumber": 10,
+      "MaterialNumber": "MAT-PLC-CX5130",
+      "Description": "Embedded PC CX5130 - Intel Atom E3827",
+      "Quantity": 25,
+      "QuantityUnit": "EA",
+      "NetPrice": 1850.00,
+      "NetAmount": 46250.00,
+      "TaxRate": 0.19,
+      "DeliveryDate": "2026-03-15",
+      "Plant": "1000",
+      "StorageLocation": "WH01"
+    },
+    {
+      "ItemNumber": 20,
+      "MaterialNumber": "MAT-IO-EL1809",
+      "Description": "EtherCAT Terminal 16-channel digital input 24V DC",
+      "Quantity": 100,
+      "QuantityUnit": "EA",
+      "NetPrice": 125.00,
+      "NetAmount": 12500.00,
+      "TaxRate": 0.19,
+      "DeliveryDate": "2026-03-15",
+      "Plant": "1000",
+      "StorageLocation": "WH01"
+    },
+    {
+      "ItemNumber": 30,
+      "MaterialNumber": "MAT-SW-TF6100",
+      "Description": "TwinCAT 3 OPC UA Server License",
+      "Quantity": 25,
+      "QuantityUnit": "EA",
+      "NetPrice": 1150.00,
+      "NetAmount": 28750.00,
+      "TaxRate": 0.19,
+      "DeliveryDate": "2026-03-01",
+      "Plant": "1000",
+      "StorageLocation": "SW01"
+    }
+  ],
+  "ApprovalHistory": [
+    {
+      "Step": 1,
+      "ApproverID": "E10042",
+      "ApproverName": "Sarah Martinez",
+      "Role": "Cost Center Manager",
+      "Status": "APPROVED",
+      "DecisionDate": "2026-02-09T08:15:00Z",
+      "Comment": "Budget available, approved"
+    },
+    {
+      "Step": 2,
+      "ApproverID": "E10005",
+      "ApproverName": "Robert Chang",
+      "Role": "Department Head",
+      "Status": "PENDING",
+      "DecisionDate": null,
+      "Comment": null
+    }
+  ]
+}

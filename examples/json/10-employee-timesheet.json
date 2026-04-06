@@ -1,0 +1,227 @@
+{
+  "timesheetId": "TS-2025-01-W03-EMP5521",
+  "employee": {
+    "employeeId": "EMP-5521",
+    "name": "Alexandra Kim",
+    "department": "Software Engineering",
+    "position": "Senior Software Engineer",
+    "email": "alex.kim@company.com",
+    "manager": {
+      "employeeId": "EMP-2211",
+      "name": "Thomas Anderson"
+    }
+  },
+  "payPeriod": {
+    "startDate": "2025-01-13",
+    "endDate": "2025-01-19",
+    "periodNumber": 3,
+    "year": 2025
+  },
+  "dailyEntries": [
+    {
+      "date": "2025-01-13",
+      "dayOfWeek": "Monday",
+      "status": "WORKED",
+      "entries": [
+        {
+          "startTime": "09:00:00",
+          "endTime": "12:30:00",
+          "duration": 3.5,
+          "project": {
+            "projectId": "PROJ-2024-API",
+            "projectName": "API Gateway Redesign",
+            "clientId": "CLI-4455"
+          },
+          "taskType": "DEVELOPMENT",
+          "description": "Implemented authentication middleware for API gateway",
+          "billable": true
+        },
+        {
+          "startTime": "13:30:00",
+          "endTime": "18:00:00",
+          "duration": 4.5,
+          "project": {
+            "projectId": "PROJ-2024-API",
+            "projectName": "API Gateway Redesign",
+            "clientId": "CLI-4455"
+          },
+          "taskType": "DEVELOPMENT",
+          "description": "Code review and testing of authentication flows",
+          "billable": true
+        }
+      ],
+      "totalHours": 8.0,
+      "regularHours": 8.0,
+      "overtimeHours": 0.0
+    },
+    {
+      "date": "2025-01-14",
+      "dayOfWeek": "Tuesday",
+      "status": "WORKED",
+      "entries": [
+        {
+          "startTime": "09:00:00",
+          "endTime": "12:00:00",
+          "duration": 3.0,
+          "project": {
+            "projectId": "PROJ-2025-MOBILE",
+            "projectName": "Mobile App Refresh",
+            "clientId": "CLI-6677"
+          },
+          "taskType": "MEETING",
+          "description": "Sprint planning and architecture discussion",
+          "billable": true
+        },
+        {
+          "startTime": "13:00:00",
+          "endTime": "17:30:00",
+          "duration": 4.5,
+          "project": {
+            "projectId": "PROJ-2025-MOBILE",
+            "projectName": "Mobile App Refresh",
+            "clientId": "CLI-6677"
+          },
+          "taskType": "DEVELOPMENT",
+          "description": "Setup CI/CD pipeline for mobile builds",
+          "billable": true
+        }
+      ],
+      "totalHours": 7.5,
+      "regularHours": 7.5,
+      "overtimeHours": 0.0
+    },
+    {
+      "date": "2025-01-15",
+      "dayOfWeek": "Wednesday",
+      "status": "WORKED",
+      "entries": [
+        {
+          "startTime": "09:00:00",
+          "endTime": "17:00:00",
+          "duration": 8.0,
+          "project": {
+            "projectId": "PROJ-2024-API",
+            "projectName": "API Gateway Redesign",
+            "clientId": "CLI-4455"
+          },
+          "taskType": "DEVELOPMENT",
+          "description": "Implemented rate limiting and caching layers",
+          "billable": true
+        }
+      ],
+      "totalHours": 8.0,
+      "regularHours": 8.0,
+      "overtimeHours": 0.0
+    },
+    {
+      "date": "2025-01-16",
+      "dayOfWeek": "Thursday",
+      "status": "WORKED",
+      "entries": [
+        {
+          "startTime": "09:00:00",
+          "endTime": "12:00:00",
+          "duration": 3.0,
+          "project": {
+            "projectId": "INTERNAL-TRAINING",
+            "projectName": "Internal Training",
+            "clientId": null
+          },
+          "taskType": "TRAINING",
+          "description": "Attended Kubernetes certification training",
+          "billable": false
+        },
+        {
+          "startTime": "13:00:00",
+          "endTime": "19:00:00",
+          "duration": 6.0,
+          "project": {
+            "projectId": "PROJ-2024-API",
+            "projectName": "API Gateway Redesign",
+            "clientId": "CLI-4455"
+          },
+          "taskType": "DEVELOPMENT",
+          "description": "Performance optimization and load testing",
+          "billable": true
+        }
+      ],
+      "totalHours": 9.0,
+      "regularHours": 8.0,
+      "overtimeHours": 1.0
+    },
+    {
+      "date": "2025-01-17",
+      "dayOfWeek": "Friday",
+      "status": "WORKED",
+      "entries": [
+        {
+          "startTime": "09:00:00",
+          "endTime": "13:00:00",
+          "duration": 4.0,
+          "project": {
+            "projectId": "PROJ-2025-MOBILE",
+            "projectName": "Mobile App Refresh",
+            "clientId": "CLI-6677"
+          },
+          "taskType": "DEVELOPMENT",
+          "description": "Implemented push notification service",
+          "billable": true
+        },
+        {
+          "startTime": "14:00:00",
+          "endTime": "17:00:00",
+          "duration": 3.0,
+          "project": {
+            "projectId": "INTERNAL-ADMIN",
+            "projectName": "Administrative",
+            "clientId": null
+          },
+          "taskType": "ADMINISTRATIVE",
+          "description": "Team retrospective and documentation updates",
+          "billable": false
+        }
+      ],
+      "totalHours": 7.0,
+      "regularHours": 7.0,
+      "overtimeHours": 0.0
+    }
+  ],
+  "summary": {
+    "totalHours": 39.5,
+    "regularHours": 38.5,
+    "overtimeHours": 1.0,
+    "billableHours": 35.5,
+    "nonBillableHours": 4.0,
+    "projectBreakdown": [
+      {
+        "projectId": "PROJ-2024-API",
+        "projectName": "API Gateway Redesign",
+        "hours": 24.0,
+        "billable": true
+      },
+      {
+        "projectId": "PROJ-2025-MOBILE",
+        "projectName": "Mobile App Refresh",
+        "hours": 11.5,
+        "billable": true
+      },
+      {
+        "projectId": "INTERNAL-TRAINING",
+        "projectName": "Internal Training",
+        "hours": 3.0,
+        "billable": false
+      },
+      {
+        "projectId": "INTERNAL-ADMIN",
+        "projectName": "Administrative",
+        "hours": 3.0,
+        "billable": false
+      }
+    ]
+  },
+  "status": "SUBMITTED",
+  "submittedDate": "2025-01-19T17:30:00Z",
+  "approvedBy": null,
+  "approvedDate": null,
+  "rejectionReason": null
+}

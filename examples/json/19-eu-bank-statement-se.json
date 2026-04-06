@@ -1,0 +1,258 @@
+{
+  "kontoutdragId": "SE-2025-KU-456789",
+  "kontoutdragTyp": "FÖRETAGSKONTO",
+  "period": {
+    "startdatum": "2025-01-01",
+    "slutdatum": "2025-01-31",
+    "månad": "Januari",
+    "år": 2025
+  },
+  "bank": {
+    "banknamn": "Swedbank AB",
+    "clearingnummer": "8327",
+    "swiftBic": "SWEDSESS",
+    "adress": {
+      "gatuadress": "Landsvägen 40",
+      "postnummer": "105 34",
+      "stad": "Stockholm",
+      "län": "Stockholms län",
+      "land": "Sverige"
+    },
+    "kontaktuppgifter": {
+      "telefon": "+46 8 585 900 00",
+      "kundservice": "08-585 900 00",
+      "epost": "foretag@swedbank.se"
+    }
+  },
+  "kontoinnehavare": {
+    "företagsnamn": "Teknisk Innovation Stockholm AB",
+    "organisationsnummer": "556789-1234",
+    "momsregistreringsnummer": "SE556789123401",
+    "adress": {
+      "gatuadress": "Kungsgatan 58",
+      "postnummer": "111 22",
+      "stad": "Stockholm",
+      "län": "Stockholms län",
+      "land": "Sverige"
+    },
+    "kontaktperson": {
+      "namn": "Erik Andersson",
+      "titel": "Ekonomichef",
+      "epost": "erik.andersson@teknikinnovation.se",
+      "telefon": "+46 8 123 456 78"
+    }
+  },
+  "kontouppgifter": {
+    "kontonummer": "8327-9,123 456 789-0",
+    "iban": "SE4580000832791234567890",
+    "kontotyp": "FÖRETAGSKONTO",
+    "valuta": "SEK"
+  },
+  "saldo": {
+    "ingåendeSaldo": 2456789.50,
+    "utgåendeSaldo": 2678234.75,
+    "tillgängligtBelopp": 2678234.75,
+    "reserveratBelopp": 0.00,
+    "disponibeltBelopp": 2678234.75
+  },
+  "sammanfattning": {
+    "antalTransaktioner": 47,
+    "totaltInsatt": 1845670.00,
+    "totaltUttaget": 1624224.75,
+    "ränteintäkter": 0.00,
+    "avgifter": 0.00,
+    "nettförändring": 221445.25
+  },
+  "transaktioner": [
+    {
+      "datum": "2025-01-02",
+      "valutadatum": "2025-01-02",
+      "transaktionstyp": "BETALNING_MOTTAGEN",
+      "beskrivning": "Betalning från Volvo Cars AB - Faktura 2024-456",
+      "referens": "FAKT-2024-456",
+      "motpart": {
+        "namn": "Volvo Cars AB",
+        "kontonummer": "8901-3,456 789 012-3",
+        "clearingnummer": "8901"
+      },
+      "belopp": 456780.00,
+      "saldo": 2913569.50,
+      "kategori": "KUNDBETALNING"
+    },
+    {
+      "datum": "2025-01-03",
+      "valutadatum": "2025-01-03",
+      "transaktionstyp": "BETALNING_SKICKAD",
+      "beskrivning": "Lön januari 2025 - Personal",
+      "referens": "LÖN-2025-01",
+      "motpart": {
+        "namn": "Lönebetalningar samlade",
+        "beskrivning": "15 mottagare"
+      },
+      "belopp": -567890.00,
+      "saldo": 2345679.50,
+      "kategori": "LÖNEKOSTNAD"
+    },
+    {
+      "datum": "2025-01-05",
+      "valutadatum": "2025-01-05",
+      "transaktionstyp": "BETALNING_MOTTAGEN",
+      "beskrivning": "Betalning från Ericsson AB - Faktura 2024-489",
+      "referens": "FAKT-2024-489",
+      "motpart": {
+        "namn": "Ericsson AB",
+        "kontonummer": "9120-1,234 567 890-1",
+        "clearingnummer": "9120"
+      },
+      "belopp": 678900.00,
+      "saldo": 3024579.50,
+      "kategori": "KUNDBETALNING"
+    },
+    {
+      "datum": "2025-01-08",
+      "valutadatum": "2025-01-08",
+      "transaktionstyp": "BETALNING_SKICKAD",
+      "beskrivning": "Hyra kontor - Q1 2025",
+      "referens": "HYRA-2025-Q1",
+      "motpart": {
+        "namn": "FastighetsMäklarna Stockholm AB",
+        "kontonummer": "5421-2,987 654 321-0"
+      },
+      "belopp": -125000.00,
+      "saldo": 2899579.50,
+      "kategori": "LOKALHYRA"
+    },
+    {
+      "datum": "2025-01-10",
+      "valutadatum": "2025-01-10",
+      "transaktionstyp": "BETALNING_SKICKAD",
+      "beskrivning": "Arbetsgivaravgifter december 2024",
+      "referens": "AGA-2024-12",
+      "motpart": {
+        "namn": "Skatteverket",
+        "organisationsnummer": "202100-5448"
+      },
+      "belopp": -178934.50,
+      "saldo": 2720645.00,
+      "kategori": "SKATT_AVGIFT"
+    },
+    {
+      "datum": "2025-01-12",
+      "valutadatum": "2025-01-12",
+      "transaktionstyp": "BETALNING_MOTTAGEN",
+      "beskrivning": "Betalning från IKEA of Sweden AB - Faktura 2025-001",
+      "referens": "FAKT-2025-001",
+      "motpart": {
+        "namn": "IKEA of Sweden AB",
+        "kontonummer": "8256-3,111 222 333-4"
+      },
+      "belopp": 234560.00,
+      "saldo": 2955205.00,
+      "kategori": "KUNDBETALNING"
+    },
+    {
+      "datum": "2025-01-15",
+      "valutadatum": "2025-01-15",
+      "transaktionstyp": "BETALNING_SKICKAD",
+      "beskrivning": "Leverantör - Siemens AB - Inköp komponenter",
+      "referens": "LFT-2025-012",
+      "motpart": {
+        "namn": "Siemens AB",
+        "kontonummer": "6789-0,123 456 789-0"
+      },
+      "belopp": -345670.00,
+      "saldo": 2609535.00,
+      "kategori": "LEVERANTÖRSBETALNING"
+    },
+    {
+      "datum": "2025-01-18",
+      "valutadatum": "2025-01-18",
+      "transaktionstyp": "BETALNING_MOTTAGEN",
+      "beskrivning": "Betalning från Scania CV AB - Faktura 2025-008",
+      "referens": "FAKT-2025-008",
+      "motpart": {
+        "namn": "Scania CV AB",
+        "kontonummer": "8327-5,444 555 666-7"
+      },
+      "belopp": 456780.00,
+      "saldo": 3066315.00,
+      "kategori": "KUNDBETALNING"
+    },
+    {
+      "datum": "2025-01-22",
+      "valutadatum": "2025-01-22",
+      "transaktionstyp": "BETALNING_SKICKAD",
+      "beskrivning": "Moms december 2024",
+      "referens": "MOMS-2024-12",
+      "motpart": {
+        "namn": "Skatteverket",
+        "organisationsnummer": "202100-5448"
+      },
+      "belopp": -234560.25,
+      "saldo": 2831754.75,
+      "kategori": "SKATT_AVGIFT"
+    },
+    {
+      "datum": "2025-01-25",
+      "valutadatum": "2025-01-25",
+      "transaktionstyp": "BETALNING_SKICKAD",
+      "beskrivning": "Försäkringar - Trygg-Hansa Företagsförsäkring",
+      "referens": "FÖRS-2025-Q1",
+      "motpart": {
+        "namn": "Trygg-Hansa Försäkring AB",
+        "kontonummer": "8901-2,345 678 901-2"
+      },
+      "belopp": -45600.00,
+      "saldo": 2786154.75,
+      "kategori": "FÖRSÄKRING"
+    },
+    {
+      "datum": "2025-01-28",
+      "valutadatum": "2025-01-28",
+      "transaktionstyp": "BETALNING_MOTTAGEN",
+      "beskrivning": "Betalning från ABB AB - Faktura 2025-015",
+      "referens": "FAKT-2025-015",
+      "motpart": {
+        "namn": "ABB AB",
+        "kontonummer": "9120-4,777 888 999-0"
+      },
+      "belopp": 18650.00,
+      "saldo": 2804804.75,
+      "kategori": "KUNDBETALNING"
+    },
+    {
+      "datum": "2025-01-30",
+      "valutadatum": "2025-01-30",
+      "transaktionstyp": "BETALNING_SKICKAD",
+      "beskrivning": "Revisor - Ernst & Young AB - Årsbokslut 2024",
+      "referens": "REV-2024-ÅB",
+      "motpart": {
+        "namn": "Ernst & Young AB",
+        "kontonummer": "8327-6,555 666 777-8"
+      },
+      "belopp": -126570.00,
+      "saldo": 2678234.75,
+      "kategori": "KONSULTTJÄNST"
+    }
+  ],
+  "månatligaAvgifter": {
+    "kontoavgift": 0.00,
+    "transaktionsavgifter": 0.00,
+    "totaltAvgifter": 0.00,
+    "beskrivning": "Företagskonto Plus - avgiftsfritt vid omsättning över 1 MSEK/månad"
+  },
+  "ränteberäkning": {
+    "räntesats": 0.00,
+    "ränteintäkter": 0.00,
+    "räntekostnader": 0.00,
+    "beskrivning": "Ingen ränta på företagskonto"
+  },
+  "information": [
+    "Kontoutdrag för Företagskonto i SEK",
+    "Vid frågor kontakta din företagsrådgivare",
+    "Bankens BIC/SWIFT: SWEDSESS",
+    "Detta dokument är en kopia. Original finns i bankens system."
+  ],
+  "genereratDatum": "2025-02-01T08:00:00+01:00",
+  "sidnummer": "1 av 1"
+}

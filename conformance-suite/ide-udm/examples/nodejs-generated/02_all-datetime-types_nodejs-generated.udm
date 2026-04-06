@@ -1,0 +1,14 @@
+@udm-version: 1.0
+@source: "nodejs-generated/02_all-datetime-types_nodejs-generated.udm"
+@parsed-at: "2025-11-16T20:10:01.474Z"
+
+{
+  timestamp: @DateTime("2024-11-16T10:30:00Z"),
+  timestampWithMillis: @DateTime("2024-11-16T10:30:00.123Z"),
+  date: @Date("2024-11-16"),
+  localDateTime: @LocalDateTime("2024-11-16T10:30:00"),
+  time: @Time("10:30:00"),
+  timeWithMillis: @Time("10:30:00.123"),
+  pastDate: @Date("1969-07-20"),
+  futureDate: @Date("2099-12-31")
+}

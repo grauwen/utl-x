@@ -1,0 +1,71 @@
+engine:
+  name: fulfillment-pipeline-engine
+
+  threads:
+    sharedPoolSize: 16
+
+  memory:
+    maxHeap: 2g
+
+  monitoring:
+    health:
+      port: 8083
+      path: /health
+    metrics:
+      enabled: true
+      prometheus:
+        port: 9090
+        path: /metrics
+
+  defaultStrategy: TEMPLATE
+
+# Mixed-mode pipe wiring (Phase 3 target — shown here for documentation).
+#
+# The fulfillment transformation receives inputs from three different sources:
+#
+# 1. MULTIPART — An Open-M pipeline envelope arriving on a single Pulsar topic.
+#    The MultipartAdapter (open-m format) extracts three named parts:
+#    - currentPayload: the inventory-reserve output (most recent step)
+#    - orderIngress:   the original order from the first pipeline step
+#    - fraudCheck:     the fraud-check result from the second step
+#
+# 2. SEPARATE — A pricing response arriving on its own Pulsar topic,
+#    correlated by correlationId with the pipeline envelope.
+#
+# 3. CONSTANT — Shipping rules loaded from a JSON config file at startup.
+#    Shared across all message invocations. Does not participate in correlation.
+#
+# In Phase 1, the engine reads from stdin. This wiring config documents
+# the production target for Phase 3.
+pipes:
+  fulfill-order:
+    inputs:
+      # Multipart: Open-M pipeline envelope on one Pulsar topic
+      - multipart: order-pipeline
+        transport: pulsar
+        topic: persistent://open-m/orders/pipeline
+        subscription: utlxe-fulfillment
+        envelope: open-m
+        parts:
+          - name: currentPayload
+            source: current_payload
+          - name: orderIngress
+            component: order-ingress
+          - name: fraudCheck
+            component: fraud-check
+
+      # Separate pipe: pricing service on its own topic
+      - name: pricingResponse
+        transport: pulsar
+        topic: persistent://open-m/pricing/responses
+        subscription: utlxe-fulfillment
+
+      # Constant pipe: shipping rules loaded from file
+      - name: shippingConfig
+        transport: constant
+        file: config/shipping-config.json
+        format: json
+
+    output:
+      transport: pulsar
+      topic: persistent://open-m/orders/fulfilled

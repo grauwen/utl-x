@@ -1,0 +1,25 @@
+%utlx 1.0
+input xml
+output json
+---
+// XML to JSON transformation
+// Converts XML order to JSON format
+
+{
+  order: {
+    id: $input.Order.@id,
+    date: $input.Order.@date,
+    customer: {
+      name: $input.Order.Customer.Name,
+      email: $input.Order.Customer.Email,
+      type: $input.Order.Customer.@type
+    },
+    items: $input.Order.Items.Item |> map(item => {
+      sku: item.@sku,
+      quantity: parseNumber(item.@quantity),
+      price: parseNumber(item.@price),
+      subtotal: parseNumber(item.@quantity) * parseNumber(item.@price)
+    }),
+    total: sum($input.Order.Items.Item.(parseNumber(@quantity) * parseNumber(@price)))
+  }
+}

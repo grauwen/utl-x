@@ -1,0 +1,86 @@
+@udm-version: 1.0
+@source: "nodejs-generated/08_healthcare-claim_nodejs-generated.udm"
+@parsed-at: "2025-11-16T20:10:01.475Z"
+
+@Object(
+  name: "Claim",
+  metadata:
+  {
+    schema: "hl7-fhir-claim",
+    validationStatus: "passed"
+  }
+) {
+  attributes: {
+    xmlns: "http://hl7.org/fhir",
+    version: "4.0.1"
+  },
+  properties: {
+    claimId: "CLM-2024-001234",
+    submissionDate: @DateTime("2024-11-16T09:15:00Z"),
+    status: "submitted",
+    patient: {
+      attributes: {
+        patientId: "PAT-555",
+        relationshipToSubscriber: "self"
+      },
+      properties: {
+        firstName: "Jane",
+        lastName: "Smith",
+        dateOfBirth: @Date("1985-03-15"),
+        memberId: "MEM-789456"
+      }
+    },
+    provider: {
+      attributes: {
+        providerId: "PRV-001"
+      },
+      properties: {
+        npi: "1234567890",
+        name: "City Hospital",
+        address: {
+          street: "123 Medical Plaza",
+          city: "Boston",
+          state: "MA",
+          zip: "02101"
+        }
+      }
+    },
+    services: [
+      {
+        attributes: {
+          lineNumber: "1",
+          placeOfService: "11"
+        },
+        properties: {
+          procedureCode: "99213",
+          description: "Office Visit - Level 3",
+          serviceDate: @Date("2024-11-10"),
+          chargeAmount: 150,
+          diagnosisCodes: [
+            "J20.9",
+            "R05"
+          ]
+        }
+      },
+      {
+        attributes: {
+          lineNumber: "2"
+        },
+        properties: {
+          procedureCode: "80053",
+          description: "Comprehensive Metabolic Panel",
+          serviceDate: @Date("2024-11-10"),
+          chargeAmount: 85
+        }
+      }
+    ],
+    totalCharges: 235,
+    attachments: [
+      {
+        filename: "lab_results.pdf",
+        documentType: "lab-report",
+        uploadedAt: @DateTime("2024-11-16T09:10:00Z")
+      }
+    ]
+  }
+}

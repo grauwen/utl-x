@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DeclaraçãoIVA xmlns="http://www.portaldasfinancas.gov.pt/iva/v1"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <DadosDeclaração>
+        <NúmeroDeclaração>PT-2025-IVA-123456789</NúmeroDeclaração>
+        <Período>2024-4T</Período>
+        <TipoDeclaração>PERIÓDICA_TRIMESTRAL</TipoDeclaração>
+        <DataSubmissão>2025-01-20T16:30:00Z</DataSubmissão>
+        <EstadoDeclaração>SUBMETIDA</EstadoDeclaração>
+    </DadosDeclaração>
+
+    <SujeitoPassivo>
+        <NIF>501234567</NIF>
+        <Denominação>Silva &amp; Santos, Lda.</Denominação>
+        <NaturezaJurídica>SOCIEDADE_POR_QUOTAS</NaturezaJurídica>
+        <Sede>
+            <Morada>Avenida da Liberdade</Morada>
+            <Número>245</Número>
+            <Andar>3º</Andar>
+            <CódigoPostal>1250-143</CódigoPostal>
+            <Localidade>Lisboa</Localidade>
+            <Freguesia>Santo António</Freguesia>
+            <Concelho>Lisboa</Concelho>
+            <Distrito>Lisboa</Distrito>
+            <País>Portugal</País>
+        </Sede>
+        <Contactos>
+            <Telefone>+351 21 123 45 67</Telefone>
+            <Telemóvel>+351 91 234 56 78</Telemóvel>
+            <Email>contabilidade@silvasantos.pt</Email>
+        </Contactos>
+        <CAE>46730</CAE>
+        <AtividadeEconómica>Comércio por grosso de madeira, materiais de construção e equipamento sanitário</AtividadeEconómica>
+    </SujeitoPassivo>
+
+    <RepresentanteFiscal>
+        <Nome>Dr. João Miguel Ferreira</Nome>
+        <NIF>123456789</NIF>
+        <ProfissãoCertificada>CONTABILISTA_CERTIFICADO</ProfissãoCertificada>
+        <NúmeroCédula>12345</NúmeroCédula>
+        <Morada>
+            <Rua>Rua Augusta</Rua>
+            <Número>178</Número>
+            <CódigoPostal>1100-053</CódigoPostal>
+            <Localidade>Lisboa</Localidade>
+        </Morada>
+        <Contacto>
+            <Telefone>+351 21 987 65 43</Telefone>
+            <Email>jferreira@contabilistas.pt</Email>
+        </Contacto>
+    </RepresentanteFiscal>
+
+    <OperaçõesAtivas>
+        <TransmissõesBensSe rviços>
+            <ContinenteERegiõesAutónomas>
+                <TaxaNormal23>
+                    <BaseIncidência>185'450.00</BaseIncidência>
+                    <TaxaIVA>23.0</TaxaIVA>
+                    <IVALiquidado>42'653.50</IVALiquidado>
+                </TaxaNormal23>
+                <TaxaIntermédia13>
+                    <BaseIncidência>28'750.00</BaseIncidência>
+                    <TaxaIVA>13.0</TaxaIVA>
+                    <IVALiquidado>3'737.50</IVALiquidado>
+                </TaxaIntermédia13>
+                <TaxaReduzida6>
+                    <BaseIncidência>15'600.00</BaseIncidência>
+                    <TaxaIVA>6.0</TaxaIVA>
+                    <IVALiquidado>936.00</IVALiquidado>
+                </TaxaReduzida6>
+            </ContinenteERegiõesAutónomas>
+            <TransmissõesIntracomunitárias>
+                <Valor>67'850.00</Valor>
+                <IVA>0.00</IVA>
+                <Observações>Transmissões isentas ao abrigo do artigo 14º do RITI</Observações>
+            </TransmissõesIntracomunitárias>
+            <Exportações>
+                <Valor>34'560.00</Valor>
+                <IVA>0.00</IVA>
+            </Exportações>
+        </TransmissõesBensServiços>
+        <TotalOperaçõesAtivas>
+            <BaseIncidênciaTotaI>332'210.00</BaseIncidênciaTotaI>
+            <IVATotalLiquidado>47'327.00</IVATotalLiquidado>
+        </TotalOperaçõesAtivas>
+    </OperaçõesAtivas>
+
+    <OperaçõesPassivas>
+        <AquisiçõesBensServiços>
+            <TaxaNormal23>
+                <BaseIncidência>98'750.00</BaseIncidência>
+                <TaxaIVA>23.0</TaxaIVA>
+                <IVADedutível>22'712.50</IVADedutível>
+            </TaxaNormal23>
+            <TaxaIntermédia13>
+                <BaseIncidência>12'450.00</BaseIncidência>
+                <TaxaIVA>13.0</TaxaIVA>
+                <IVADedutível>1'618.50</IVADedutível>
+            </TaxaIntermédia13>
+            <TaxaReduzida6>
+                <BaseIncidência>8'900.00</BaseIncidência>
+                <TaxaIVA>6.0</TaxaIVA>
+                <IVADedutível>534.00</IVADedutível>
+            </TaxaReduzida6>
+        </AquisiçõesBensServiços>
+        <AquisiçõesIntracomunitárias>
+            <Valor>45'680.00</Valor>
+            <IVAAutoLiquidado>10'506.40</IVAAutoLiquidado>
+            <IVADedutível>10'506.40</IVADedutível>
+        </AquisiçõesIntracomunitárias>
+        <Importações>
+            <Valor>23'450.00</Valor>
+            <IVAPagoAlfândega>5'393.50</IVAPagoAlfândega>
+            <IVADedutível>5'393.50</IVADedutível>
+        </Importações>
+        <TotalOperaçõesPassivas>
+            <BaseIncidênciaTotaI>189'230.00</BaseIncidênciaTotaI>
+            <IVATotalDedutível>40'764.90</IVATotalDedutível>
+        </TotalOperaçõesPassivas>
+    </OperaçõesPassivas>
+
+    <ApuramentoIVA>
+        <IVALiquidado>47'327.00</IVALiquidado>
+        <IVADedutível>40'764.90</IVADedutível>
+        <IVAAPagar>6'562.10</IVAAPagar>
+        <IVARecuperar>0.00</IVARecuperar>
+        <SaldoPeríodoAnterior>0.00</SaldoPeríodoAnterior>
+        <IVATotalAPagar>6'562.10</IVATotalAPagar>
+    </ApuramentoIVA>
+
+    <Pagamento>
+        <DataLimite>2025-02-10</DataLimite>
+        <MétodoPagamento>DÉBITO_DIRETO</MétodoPagamento>
+        <EntidadePagamento>Autoridade Tributária e Aduaneira</EntidadePagamento>
+        <NIBDébitoAutorizado>0035 0123 4567 8901 2345 6</NIBDébitoAutorizado>
+        <IBAN>PT50 0035 0123 4567 8901 2345 6</IBAN>
+        <BIC>CGDIPTPL</BIC>
+        <Banco>Caixa Geral de Depósitos</Banco>
+    </Pagamento>
+
+    <MapaRecapitulativo>
+        <TransmissõesIntracomunitárias>
+            <Cliente>
+                <NIFComunitário>ES12345678Z</NIFComunitário>
+                <País>Espanha</País>
+                <Valor>25'600.00</Valor>
+            </Cliente>
+            <Cliente>
+                <NIFComunitário>FR123456789 01</NIFComunitário>
+                <País>França</País>
+                <Valor>22'850.00</Valor>
+            </Cliente>
+            <Cliente>
+                <NIFComunitário>IT12345678901</NIFComunitário>
+                <País>Itália</País>
+                <Valor>19'400.00</Valor>
+            </Cliente>
+        </TransmissõesIntracomunitárias>
+        <AquisiçõesIntracomunitárias>
+            <Fornecedor>
+                <NIFComunitário>DE123456789</NIFComunitário>
+                <País>Alemanha</País>
+                <Valor>28'750.00</Valor>
+            </Fornecedor>
+            <Fornecedor>
+                <NIFComunitário>NL123456789B01</NIFComunitário>
+                <País>Países Baixos</País>
+                <Valor>16'930.00</Valor>
+            </Fornecedor>
+        </AquisiçõesIntracomunitárias>
+    </MapaRecapitulativo>
+
+    <FaturaçãoEletrónica>
+        <SistemaFaturação>SAF-T PT</SistemaFaturação>
+        <VersãoSoftware>1.04_01</VersãoSoftware>
+        <FicheiroComunicado>SAF-T_PT_2024_10_31_501234567.xml</FicheiroComunicado>
+        <DataSubmissão>2024-11-02</DataSubmissão>
+        <NúmeroFacturas>1'256</NúmeroFacturas>
+    </FaturaçãoEletrónica>
+
+    <Observações>
+        <Nota>Declaração periódica de IVA elaborada nos termos do Código do IVA (CIVA) e do Decreto-Lei n.º 186/2009.</Nota>
+        <Nota>Regime Normal Trimestral de IVA.</Nota>
+        <Nota>O IVA das aquisições intracomunitárias foi autoliquidado conforme RITI.</Nota>
+    </Observações>
+
+    <Certificação>
+        <ContabilistaResponsável>
+            <Nome>Dr. João Miguel Ferreira</Nome>
+            <NúmeroCédula>12345</NúmeroCédula>
+            <OrdemContabilistas>OCC</OrdemContabilistas>
+            <DataCertificação>2025-01-20</DataCertificação>
+            <AssinaturaDigital>JMF_2025_01_20_16_30_00</AssinaturaDigital>
+        </ContabilistaResponsável>
+        <SócioGerente>
+            <Nome>António José Silva</Nome>
+            <Qualidade>SÓCIO_GERENTE</Qualidade>
+            <DataCertificação>2025-01-20</DataCertificação>
+            <AssinaturaDigital>AJS_2025_01_20_16_35_00</AssinaturaDigital>
+        </SócioGerente>
+    </Certificação>
+
+    <CaracteresEspeciaisPortugueses>
+        <VogaisAcentuadas>á à â ã é ê í ó ô õ ú ç</VogaisAcentuadas>
+        <Maiúsculas>Á À Â Ã É Ê Í Ó Ô Õ Ú Ç</Maiúsculas>
+        <Exemplos>
+            <Cidades>Lisboa, Porto, Braga, Coimbra, Évora, Aveiro, Setúbal</Cidades>
+            <Palavras>operações, declaração, transmissões, aquisições, liquidação</Palavras>
+        </Exemplos>
+    </CaracteresEspeciaisPortugueses>
+</DeclaraçãoIVA>

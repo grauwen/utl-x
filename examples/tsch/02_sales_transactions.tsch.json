@@ -1,0 +1,102 @@
+{
+  "fields": [
+    {
+      "name": "transaction_id",
+      "title": "Transaction ID",
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique transaction identifier (UUID v4)",
+      "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "transaction_datetime",
+      "title": "Transaction Timestamp",
+      "type": "datetime",
+      "description": "Date and time of transaction (ISO 8601)",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "customer_id",
+      "title": "Customer ID",
+      "type": "string",
+      "description": "Customer identifier",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "product_name",
+      "title": "Product Name",
+      "type": "string",
+      "description": "Name of the purchased product",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "quantity",
+      "title": "Quantity",
+      "type": "integer",
+      "description": "Number of units purchased",
+      "example": "2",
+      "constraints": {
+        "required": true,
+        "minimum": 1
+      }
+    },
+    {
+      "name": "unit_price",
+      "title": "Unit Price",
+      "type": "number",
+      "description": "Price per unit in USD",
+      "constraints": {
+        "required": true,
+        "minimum": 0.01
+      }
+    },
+    {
+      "name": "total_amount",
+      "title": "Total Amount",
+      "type": "number",
+      "description": "Total transaction amount in USD",
+      "constraints": {
+        "required": true,
+        "minimum": 0.01
+      }
+    },
+    {
+      "name": "payment_method",
+      "title": "Payment Method",
+      "type": "string",
+      "description": "Payment method used",
+      "constraints": {
+        "required": true,
+        "enum": ["credit_card", "debit_card", "cash", "mobile_pay", "gift_card"]
+      }
+    },
+    {
+      "name": "store_location",
+      "title": "Store Location",
+      "type": "string",
+      "description": "Store or channel where transaction occurred",
+      "constraints": {
+        "required": true
+      }
+    }
+  ],
+  "primaryKey": "transaction_id",
+  "foreignKeys": [
+    {
+      "fields": ["customer_id"],
+      "reference": {
+        "resource": "customers",
+        "fields": ["customer_id"]
+      }
+    }
+  ]
+}

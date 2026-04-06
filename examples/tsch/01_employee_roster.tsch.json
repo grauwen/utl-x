@@ -1,0 +1,104 @@
+{
+  "fields": [
+    {
+      "name": "employee_id",
+      "title": "Employee ID",
+      "type": "string",
+      "description": "Unique employee identifier",
+      "constraints": {
+        "required": true,
+        "pattern": "^EMP-[0-9]{3}$"
+      }
+    },
+    {
+      "name": "first_name",
+      "title": "First Name",
+      "type": "string",
+      "description": "Employee first name",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "last_name",
+      "title": "Last Name",
+      "type": "string",
+      "description": "Employee last name",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "department",
+      "title": "Department",
+      "type": "string",
+      "description": "Department assignment",
+      "constraints": {
+        "required": true,
+        "enum": ["Engineering", "Marketing", "Sales", "Human Resources", "Finance", "Operations"]
+      }
+    },
+    {
+      "name": "job_title",
+      "title": "Job Title",
+      "type": "string",
+      "description": "Current job title",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "hire_date",
+      "title": "Hire Date",
+      "type": "date",
+      "description": "Date of hire (ISO 8601)",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "salary",
+      "title": "Annual Salary",
+      "type": "number",
+      "description": "Annual salary in USD",
+      "constraints": {
+        "required": true,
+        "minimum": 30000
+      }
+    },
+    {
+      "name": "email",
+      "title": "Corporate Email",
+      "type": "string",
+      "description": "Corporate email address",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "manager_id",
+      "title": "Manager",
+      "type": "string",
+      "description": "Employee ID of the direct manager (self-referencing)"
+    },
+    {
+      "name": "review_period",
+      "title": "Review Period",
+      "type": "yearmonth",
+      "description": "Current performance review period (YYYY-MM)",
+      "constraints": {
+        "required": true
+      }
+    }
+  ],
+  "primaryKey": "employee_id",
+  "foreignKeys": [
+    {
+      "fields": ["manager_id"],
+      "reference": {
+        "resource": "",
+        "fields": ["employee_id"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+%utlx 1.0
+input products csv
+output json
+---
+{
+  "salesSummary": {
+    "totalProducts": count($products),
+    "totalUnitsSold": sum(map($products, fn(p) => p.UnitsSold)),
+    "totalRevenue": sum(map($products, fn(p) => p.TotalRevenue)),
+    "totalProfit": sum(map($products, fn(p) => p.Profit)),
+    "profitMargin": (sum(map($products, fn(p) => p.Profit)) / sum(map($products, fn(p) => p.TotalRevenue))) * 100
+  },
+  "products": map($products, fn(prod) => {
+    "code": prod.ProductCode,
+    "name": prod.ProductName,
+    "unitsSold": prod.UnitsSold,
+    "unitPrice": prod.UnitPrice,
+    "revenue": prod.TotalRevenue,
+    "cost": prod.CostOfGoods,
+    "profit": prod.Profit,
+    "profitMargin": (prod.Profit / prod.TotalRevenue) * 100
+  })
+}

@@ -1,0 +1,69 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Structures with nested arrays
+output [FORMAT]
+---
+%namespace: "com.example.course"
+%version: "1.0"
+%documentation: "Educational course with nested arrays"
+
+%types: {
+  Lesson: {
+    %kind: "structure",
+    %documentation: "Course lesson",
+    %fields: [
+      {
+        %name: "lessonId",
+        %type: "string",
+        %required: true,
+        %description: "Lesson identifier"
+      },
+      {
+        %name: "title",
+        %type: "string",
+        %required: true,
+        %description: "Lesson title"
+      },
+      {
+        %name: "topics",
+        %type: "string",
+        %array: true,
+        %required: false,
+        %description: "Lesson topics"
+      }
+    ]
+  },
+
+  Course: {
+    %kind: "structure",
+    %documentation: "Course with lessons",
+    %fields: [
+      {
+        %name: "courseId",
+        %type: "string",
+        %required: true,
+        %description: "Course identifier"
+      },
+      {
+        %name: "courseName",
+        %type: "string",
+        %required: true,
+        %description: "Course name"
+      },
+      {
+        %name: "lessons",
+        %type: "Lesson",
+        %array: true,
+        %required: true,
+        %description: "Course lessons"
+      },
+      {
+        %name: "prerequisites",
+        %type: "string",
+        %array: true,
+        %required: false,
+        %description: "Prerequisite course IDs"
+      }
+    ]
+  }
+}

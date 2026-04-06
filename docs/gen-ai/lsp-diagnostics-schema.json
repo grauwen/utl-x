@@ -1,0 +1,247 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UTLX LSP Diagnostics",
+  "description": "Diagnostic messages and quick fixes for UTLX syntax errors",
+  "version": "1.0.0",
+  "diagnostics": [
+    {
+      "code": "UTLX-001",
+      "severity": "error",
+      "category": "syntax",
+      "message": "Invalid lambda syntax: 'fn()' wrapper not allowed",
+      "pattern": "fn\\s*\\([^)]+\\)\\s*=>",
+      "explanation": "UTLX uses arrow function syntax without the 'fn' keyword. Use 'parameter => expression' instead.",
+      "examples": {
+        "incorrect": "filter($data, fn(x) => x.value > 10)",
+        "correct": "filter($data, x => x.value > 10)"
+      },
+      "quickFixes": [
+        {
+          "id": "removeFnWrapper",
+          "title": "Remove 'fn()' wrapper",
+          "description": "Convert to arrow function syntax",
+          "edit": {
+            "type": "regex-replace",
+            "find": "fn\\s*\\(([^)]+)\\)\\s*=>",
+            "replace": "$1 =>"
+          }
+        }
+      ],
+      "relatedDocs": "https://utlx-lang.org/docs/functions#lambda-expressions"
+    },
+    {
+      "code": "UTLX-002",
+      "severity": "error",
+      "category": "runtime",
+      "message": "Undefined variable: '{varName}'",
+      "pattern": "Undefined variable: (\\w+)",
+      "explanation": "Lambda expressions require explicit parameter references. The variable '{varName}' is not defined in the current scope.",
+      "contextHints": [
+        "If this is a field access, use 'parameter.{varName}'",
+        "If this is an input variable, use '${varName}'",
+        "If this should be a lambda parameter, add 'param => param.{varName}'"
+      ],
+      "examples": {
+        "incorrect": "filter($employees, Department == 'Sales')",
+        "correct": "filter($employees, e => e.Department == 'Sales')"
+      },
+      "quickFixes": [
+        {
+          "id": "addLambdaParameter",
+          "title": "Add lambda parameter",
+          "description": "Insert lambda parameter and update field references",
+          "edit": {
+            "type": "complex",
+            "steps": [
+              "Detect collection variable name",
+              "Generate parameter name (first letter or 'item')",
+              "Insert 'param => ' before expression",
+              "Prefix field references with 'param.'"
+            ]
+          }
+        },
+        {
+          "id": "addDollarPrefix",
+          "title": "Add '$' prefix to input variable",
+          "description": "Convert to input variable reference",
+          "condition": "variable matches input name from header",
+          "edit": {
+            "type": "prefix",
+            "prefix": "$"
+          }
+        }
+      ],
+      "relatedDocs": "https://utlx-lang.org/docs/variables#scoping"
+    },
+    {
+      "code": "UTLX-003",
+      "severity": "error",
+      "category": "reference",
+      "message": "Input variable must be prefixed with '$'",
+      "pattern": "\\b([a-z][a-zA-Z0-9]*)\\b(?!\\s*=>)",
+      "explanation": "Variables defined in the input declaration must be referenced with a '$' prefix.",
+      "examples": {
+        "incorrect": "filter(employees, e => e.active)",
+        "correct": "filter($employees, e => e.active)"
+      },
+      "quickFixes": [
+        {
+          "id": "addDollarPrefix",
+          "title": "Add '$' prefix",
+          "description": "Convert to input variable reference",
+          "edit": {
+            "type": "prefix",
+            "prefix": "$"
+          }
+        }
+      ],
+      "relatedDocs": "https://utlx-lang.org/docs/input-output#input-variables"
+    },
+    {
+      "code": "UTLX-004",
+      "severity": "info",
+      "category": "style",
+      "message": "Property names should be unquoted identifiers",
+      "pattern": "\"([a-zA-Z_][a-zA-Z0-9_]*)\"\\s*:",
+      "explanation": "In UTLX, object property names that are valid identifiers don't need quotes.",
+      "examples": {
+        "incorrect": "{ \"company\": \"TechCorp\" }",
+        "correct": "{ company: \"TechCorp\" }"
+      },
+      "quickFixes": [
+        {
+          "id": "removePropertyQuotes",
+          "title": "Remove quotes from property name",
+          "description": "Use unquoted identifier",
+          "edit": {
+            "type": "regex-replace",
+            "find": "\"([a-zA-Z_][a-zA-Z0-9_]*)\"\\s*:",
+            "replace": "$1:"
+          }
+        }
+      ],
+      "relatedDocs": "https://utlx-lang.org/docs/objects#property-names"
+    },
+    {
+      "code": "UTLX-005",
+      "severity": "warning",
+      "category": "best-practice",
+      "message": "Consider using explicit lambda parameter",
+      "pattern": "map\\([^,]+,\\s*\\{",
+      "explanation": "While implicit field access may work in some contexts, explicit lambda parameters improve code clarity.",
+      "examples": {
+        "acceptable": "map($data, { id: id, name: name })",
+        "preferred": "map($data, item => { id: item.id, name: item.name })"
+      },
+      "quickFixes": [
+        {
+          "id": "addExplicitParameter",
+          "title": "Add explicit lambda parameter",
+          "description": "Make field references explicit",
+          "edit": {
+            "type": "complex",
+            "steps": [
+              "Generate parameter name",
+              "Insert 'param => ' before object literal",
+              "Prefix field names with 'param.'"
+            ]
+          }
+        }
+      ],
+      "relatedDocs": "https://utlx-lang.org/docs/best-practices#explicit-parameters"
+    },
+    {
+      "code": "UTLX-006",
+      "severity": "error",
+      "category": "syntax",
+      "message": "Assignment operator '=' used in comparison",
+      "pattern": "\\s=\\s(?!=)",
+      "explanation": "Use '==' for equality comparison, not '=' which is for assignment.",
+      "examples": {
+        "incorrect": "filter($data, x => x.value = 10)",
+        "correct": "filter($data, x => x.value == 10)"
+      },
+      "quickFixes": [
+        {
+          "id": "fixEqualityOperator",
+          "title": "Change '=' to '=='",
+          "description": "Use equality comparison operator",
+          "edit": {
+            "type": "replace",
+            "find": "=",
+            "replace": "=="
+          }
+        }
+      ],
+      "relatedDocs": "https://utlx-lang.org/docs/operators#comparison"
+    },
+    {
+      "code": "UTLX-007",
+      "severity": "error",
+      "category": "syntax",
+      "message": "Unbalanced parentheses",
+      "explanation": "The number of opening and closing parentheses doesn't match.",
+      "quickFixes": [],
+      "relatedDocs": "https://utlx-lang.org/docs/syntax#expressions"
+    },
+    {
+      "code": "UTLX-008",
+      "severity": "error",
+      "category": "type",
+      "message": "Type mismatch in comparison",
+      "explanation": "Comparing values of incompatible types. Ensure both sides of the comparison are of compatible types.",
+      "examples": {
+        "incorrect": "filter($data, x => x.count == \"10\")",
+        "correct": "filter($data, x => x.count == 10)"
+      },
+      "quickFixes": [],
+      "relatedDocs": "https://utlx-lang.org/docs/types#type-system"
+    }
+  ],
+  "quickFixActions": {
+    "removeFnWrapper": {
+      "title": "Remove 'fn()' wrapper",
+      "kind": "quickfix",
+      "isPreferred": true
+    },
+    "addLambdaParameter": {
+      "title": "Add lambda parameter",
+      "kind": "quickfix",
+      "isPreferred": true
+    },
+    "addDollarPrefix": {
+      "title": "Add '$' prefix",
+      "kind": "quickfix",
+      "isPreferred": true
+    },
+    "removePropertyQuotes": {
+      "title": "Remove property quotes",
+      "kind": "refactor.rewrite",
+      "isPreferred": false
+    },
+    "addExplicitParameter": {
+      "title": "Add explicit parameter",
+      "kind": "refactor.rewrite",
+      "isPreferred": false
+    },
+    "fixEqualityOperator": {
+      "title": "Fix equality operator",
+      "kind": "quickfix",
+      "isPreferred": true
+    }
+  },
+  "severityLevels": {
+    "error": {
+      "description": "Syntax or runtime error that prevents execution",
+      "color": "#ff0000"
+    },
+    "warning": {
+      "description": "Code that may cause issues or unexpected behavior",
+      "color": "#ff9900"
+    },
+    "info": {
+      "description": "Stylistic suggestion for better code quality",
+      "color": "#0099ff"
+    }
+  }
+}

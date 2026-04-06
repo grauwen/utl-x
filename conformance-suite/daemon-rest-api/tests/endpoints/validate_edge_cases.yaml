@@ -1,0 +1,63 @@
+name: Validate Edge Cases
+description: Test /api/validate with various edge cases and error scenarios
+tags:
+  - endpoints
+  - validate
+  - edge-cases
+
+sequence:
+  - description: "Validate script with missing header separator"
+    method: POST
+    endpoint: /api/validate
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput json\n$input"
+    expect:
+      status: 200
+      body:
+        valid: false
+        diagnostics:
+          - severity: "error"
+            message: "{{STRING}}"
+
+  - description: "Validate script with invalid directive"
+    method: POST
+    endpoint: /api/validate
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%invalid 1.0\n---\n$input"
+    expect:
+      status: 200
+      body:
+        valid: false
+        diagnostics:
+          - severity: "error"
+            message: "{{STRING}}"
+
+  - description: "Validate script with undefined variable"
+    method: POST
+    endpoint: /api/validate
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n$undefinedVar"
+    expect:
+      status: 200
+      body:
+        valid: "{{ANY}}"
+        diagnostics: "{{ANY}}"
+
+  - description: "Validate complex nested transformation"
+    method: POST
+    endpoint: /api/validate
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n{ user: { name: $input.firstName, id: $input.id } }"
+    expect:
+      status: 200
+      body:
+        valid: "{{ANY}}"
+        diagnostics: "{{ANY}}"

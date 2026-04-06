@@ -1,0 +1,70 @@
+# Redis Configuration - Production Setup
+bind: 0.0.0.0
+protected-mode: yes
+port: 6379
+tcp-backlog: 511
+timeout: 0
+tcp-keepalive: 300
+daemonize: no
+pidfile: /var/run/redis_6379.pid
+loglevel: notice
+logfile: ""
+databases: 16
+
+# Snapshotting
+save:
+  - seconds: 900
+    changes: 1
+  - seconds: 300
+    changes: 10
+  - seconds: 60
+    changes: 10000
+stop-writes-on-bgsave-error: yes
+rdbcompression: yes
+rdbchecksum: yes
+dbfilename: dump.rdb
+dir: /data
+
+# Replication
+replica-serve-stale-data: yes
+replica-read-only: yes
+repl-diskless-sync: yes
+repl-diskless-sync-delay: 5
+repl-disable-tcp-nodelay: no
+replica-priority: 100
+
+# Security
+requirepass: ${REDIS_PASSWORD}
+rename-command: CONFIG ""
+rename-command: FLUSHDB ""
+rename-command: FLUSHALL ""
+
+# Limits
+maxclients: 10000
+maxmemory: 4gb
+maxmemory-policy: allkeys-lru
+
+# Append Only File
+appendonly: yes
+appendfilename: "appendonly.aof"
+appendfsync: everysec
+no-appendfsync-on-rewrite: no
+auto-aof-rewrite-percentage: 100
+auto-aof-rewrite-min-size: 64mb
+
+# Slow Log
+slowlog-log-slower-than: 10000
+slowlog-max-len: 128
+
+# Advanced
+hash-max-ziplist-entries: 512
+hash-max-ziplist-value: 64
+list-max-ziplist-size: -2
+set-max-intset-entries: 512
+zset-max-ziplist-entries: 128
+zset-max-ziplist-value: 64
+activerehashing: yes
+client-output-buffer-limit:
+  normal: 0 0 0
+  replica: 256mb 64mb 60
+  pubsub: 32mb 8mb 60

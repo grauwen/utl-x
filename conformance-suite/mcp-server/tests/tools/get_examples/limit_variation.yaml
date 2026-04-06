@@ -1,0 +1,61 @@
+name: get_examples_limit_variation
+description: Test get_examples with different limit values
+tags:
+  - tools
+  - get_examples
+  - search
+  - pagination
+
+sequence:
+  - description: "Search examples with limit=1"
+    request:
+      jsonrpc: "2.0"
+      id: 62
+      method: "tools/call"
+      params:
+        name: "get_examples"
+        arguments:
+          query: "transformation"
+          limit: 1
+    expect:
+      jsonrpc: "2.0"
+      id: 62
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Search examples with limit=10"
+    request:
+      jsonrpc: "2.0"
+      id: 63
+      method: "tools/call"
+      params:
+        name: "get_examples"
+        arguments:
+          query: "transformation"
+          limit: 10
+    expect:
+      jsonrpc: "2.0"
+      id: 63
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"
+
+  - description: "Search examples with no limit (default)"
+    request:
+      jsonrpc: "2.0"
+      id: 64
+      method: "tools/call"
+      params:
+        name: "get_examples"
+        arguments:
+          query: "transformation"
+    expect:
+      jsonrpc: "2.0"
+      id: 64
+      result:
+        content:
+          - type: "text"
+            text: "{{JSON}}"

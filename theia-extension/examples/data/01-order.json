@@ -1,0 +1,24 @@
+{
+  "order": {
+    "id": "ORD-001",
+    "customer": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.doe@example.com"
+    },
+    "items": [
+      {
+        "sku": "WIDGET-001",
+        "name": "Widget",
+        "price": 25.00,
+        "quantity": 2
+      },
+      {
+        "sku": "GADGET-002",
+        "name": "Gadget",
+        "price": 50.00,
+        "quantity": 1
+      }
+    ]
+  }
+}

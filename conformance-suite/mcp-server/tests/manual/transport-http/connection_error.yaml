@@ -1,0 +1,28 @@
+name: connection_error
+description: Test handling of connection errors with HTTP transport
+tags:
+  - transport
+  - http
+  - errors
+  - edge-cases
+
+transport: http
+serverPort: 9999  # Intentionally wrong port to test connection error
+
+sequence:
+  - description: "Attempt connection to wrong port"
+    request:
+      jsonrpc: "2.0"
+      id: 84
+      method: "initialize"
+      params:
+        protocolVersion: "2024-11-05"
+        capabilities:
+          tools:
+            supported: true
+        clientInfo:
+          name: "error-test-client"
+          version: "1.0.0"
+    expectError:
+      type: "connection"
+      message: "{{STRING}}"

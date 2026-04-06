@@ -1,0 +1,6 @@
+{
+  "browserUrl": "http://localhost:3000",
+  "cdpPort": 9222,
+  "logBufferSize": 500,
+  "screenshotPath": "./screenshots"
+}

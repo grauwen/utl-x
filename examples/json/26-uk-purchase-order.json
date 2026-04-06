@@ -1,0 +1,343 @@
+{
+  "purchaseOrderNumber": "UK-2025-PO-789456",
+  "orderDate": "2025-01-16",
+  "requiredDeliveryDate": "2025-02-28",
+  "orderStatus": "APPROVED",
+  "priority": "STANDARD",
+  "buyer": {
+    "companyName": "Engineering Solutions (UK) Ltd",
+    "companyNumber": "12345678",
+    "vatNumber": "GB123456789",
+    "registeredOffice": {
+      "buildingName": "Innovation Centre",
+      "street": "Oxford Road",
+      "town": "Manchester",
+      "county": "Greater Manchester",
+      "postcode": "M1 7ED",
+      "country": "United Kingdom"
+    },
+    "tradingAddress": {
+      "buildingName": "Northern Distribution Centre",
+      "street": "Ashton Old Road",
+      "town": "Manchester",
+      "postcode": "M11 2WJ",
+      "country": "United Kingdom"
+    },
+    "contact": {
+      "name": "Ms. Sarah O'Connor",
+      "position": "Senior Procurement Manager",
+      "email": "s.oconnor@engsolutions.co.uk",
+      "telephone": "+44 161 234 5678",
+      "mobile": "+44 7700 123456"
+    },
+    "accountsPayable": {
+      "email": "accounts.payable@engsolutions.co.uk",
+      "telephone": "+44 161 234 5680"
+    }
+  },
+  "supplier": {
+    "companyName": "Müller & Söhne Maschinenbau GmbH",
+    "vatNumber": "DE987654321",
+    "eoriNumber": "DE987654321000",
+    "address": {
+      "street": "Industriestraße 67",
+      "postcode": "70565",
+      "city": "Stuttgart",
+      "state": "Baden-Württemberg",
+      "country": "Germany"
+    },
+    "contact": {
+      "name": "Herr Klaus Müller",
+      "position": "Export Sales Manager",
+      "email": "k.mueller@muellersohne.de",
+      "telephone": "+49 711 987 654",
+      "mobile": "+49 171 234 5678"
+    },
+    "bankDetails": {
+      "bankName": "Deutsche Bank AG",
+      "iban": "DE89370400440532013000",
+      "bic": "DEUTDEFFXXX",
+      "accountName": "Müller & Söhne Maschinenbau GmbH"
+    }
+  },
+  "deliveryAddress": {
+    "companyName": "Engineering Solutions (UK) Ltd",
+    "buildingName": "Northern Distribution Centre",
+    "street": "Ashton Old Road",
+    "town": "Manchester",
+    "postcode": "M11 2WJ",
+    "country": "United Kingdom",
+    "contactPerson": "Mr. James O'Brien",
+    "telephone": "+44 161 234 5685",
+    "deliveryInstructions": "Deliver to Goods Inward, Bay 3. Please notify 24 hours before delivery. Operating hours: Monday–Friday 08:00–17:00. Fork-lift available for off-loading."
+  },
+  "lineItems": [
+    {
+      "lineNumber": 1,
+      "partNumber": "MS-HYD-CYL-250",
+      "description": "Hydraulic Cylinder, 250mm Bore × 500mm Stroke, Operating Pressure 350 bar",
+      "manufacturer": "Müller & Söhne",
+      "manufacturerPartNumber": "MHC-250/500/350",
+      "quantity": 12,
+      "unit": "Each",
+      "unitPriceEUR": 1850.00,
+      "unitPriceGBP": 1554.50,
+      "lineTotal": 18654.00,
+      "vatRate": 20.0,
+      "vatAmount": 3730.80,
+      "lineTotalIncVAT": 22384.80,
+      "deliveryDate": "2025-02-20",
+      "countryOfOrigin": "Germany",
+      "hsCode": "8412.21.80",
+      "warranty": "24 months from date of delivery"
+    },
+    {
+      "lineNumber": 2,
+      "partNumber": "MS-VLV-SOL-3/2",
+      "description": "3/2-way Solenoid Valve, G3/4\", 24V DC, IP65, with Position Feedback",
+      "manufacturer": "Müller & Söhne",
+      "manufacturerPartNumber": "MSV-32-075-24DC-FB",
+      "quantity": 36,
+      "unit": "Each",
+      "unitPriceEUR": 245.00,
+      "unitPriceGBP": 205.90,
+      "lineTotal": 7412.40,
+      "vatRate": 20.0,
+      "vatAmount": 1482.48,
+      "lineTotalIncVAT": 8894.88,
+      "deliveryDate": "2025-02-15",
+      "countryOfOrigin": "Germany",
+      "hsCode": "8481.80.81",
+      "warranty": "18 months from date of delivery"
+    },
+    {
+      "lineNumber": 3,
+      "partNumber": "MS-PUMP-VAR-45",
+      "description": "Variable Displacement Axial Piston Pump, 45 cm³/rev, Max 280 bar",
+      "manufacturer": "Müller & Söhne",
+      "manufacturerPartNumber": "MVP-45/280",
+      "quantity": 6,
+      "unit": "Each",
+      "unitPriceEUR": 3450.00,
+      "unitPriceGBP": 2899.50,
+      "lineTotal": 17397.00,
+      "vatRate": 20.0,
+      "vatAmount": 3479.40,
+      "lineTotalIncVAT": 20876.40,
+      "deliveryDate": "2025-02-28",
+      "countryOfOrigin": "Germany",
+      "hsCode": "8413.60.20",
+      "warranty": "24 months from date of delivery"
+    },
+    {
+      "lineNumber": 4,
+      "partNumber": "MS-HOSE-HP-1/2",
+      "description": "High-Pressure Hydraulic Hose Assembly, 1/2\" BSP, 400 bar, 2000mm Length",
+      "manufacturer": "Müller & Söhne",
+      "manufacturerPartNumber": "MHH-050-400-2000",
+      "quantity": 48,
+      "unit": "Each",
+      "unitPriceEUR": 67.50,
+      "unitPriceGBP": 56.70,
+      "lineTotal": 2721.60,
+      "vatRate": 20.0,
+      "vatAmount": 544.32,
+      "lineTotalIncVAT": 3265.92,
+      "deliveryDate": "2025-02-15",
+      "countryOfOrigin": "Germany",
+      "hsCode": "4009.42.00",
+      "warranty": "12 months from date of delivery"
+    },
+    {
+      "lineNumber": 5,
+      "partNumber": "SRV-INST",
+      "description": "Installation & Commissioning Service (2 Engineers × 3 Days)",
+      "manufacturer": "Müller & Söhne",
+      "quantity": 1,
+      "unit": "Service",
+      "unitPriceEUR": 4800.00,
+      "unitPriceGBP": 4032.00,
+      "lineTotal": 4032.00,
+      "vatRate": 20.0,
+      "vatAmount": 806.40,
+      "lineTotalIncVAT": 4838.40,
+      "deliveryDate": "2025-03-05",
+      "countryOfOrigin": "N/A",
+      "notes": "Service to be performed at buyer's premises. Travel & accommodation costs included."
+    }
+  ],
+  "financialSummary": {
+    "subtotalGBP": 50217.00,
+    "discount": {
+      "description": "Volume discount - 5%",
+      "percentage": 5.0,
+      "amount": 2510.85
+    },
+    "netTotalGBP": 47706.15,
+    "vat": {
+      "rate20percent": {
+        "netAmount": 47706.15,
+        "vatAmount": 9541.23,
+        "grossAmount": 57247.38
+      }
+    },
+    "totalVATGBP": 9541.23,
+    "totalIncVATGBP": 57247.38,
+    "shippingAndHandling": {
+      "description": "Freight forwarding - DDP Manchester",
+      "netAmount": 850.00,
+      "vatAmount": 170.00,
+      "grossAmount": 1020.00
+    },
+    "grandTotalGBP": 58267.38,
+    "currency": "GBP",
+    "currencySymbol": "£",
+    "exchangeRate": {
+      "fromCurrency": "EUR",
+      "toCurrency": "GBP",
+      "rate": 0.8405,
+      "rateDate": "2025-01-16",
+      "source": "ECB Reference Rate"
+    }
+  },
+  "paymentTerms": {
+    "terms": "60 days from date of invoice",
+    "paymentMethod": "BANK_TRANSFER",
+    "currency": "GBP",
+    "bankDetails": {
+      "beneficiary": "Müller & Söhne Maschinenbau GmbH",
+      "iban": "DE89370400440532013000",
+      "bic": "DEUTDEFFXXX",
+      "bankName": "Deutsche Bank AG",
+      "bankAddress": "Stuttgart, Germany"
+    },
+    "earlyPaymentDiscount": {
+      "available": true,
+      "discount": 2.0,
+      "terms": "2% discount if paid within 14 days"
+    }
+  },
+  "shippingTerms": {
+    "incoterms": "DDP",
+    "incotermLocation": "Manchester M11 2WJ, UK",
+    "shippingMethod": "ROAD_FREIGHT",
+    "forwarder": "European Express Logistics GmbH",
+    "estimatedTransitTime": "5-7 working days",
+    "insurance": {
+      "required": true,
+      "coveredBy": "SUPPLIER",
+      "value": 60000.00,
+      "currency": "GBP"
+    }
+  },
+  "customsAndDuties": {
+    "importDuty": {
+      "responsibility": "SUPPLIER",
+      "note": "DDP terms - all customs duties and import VAT paid by supplier"
+    },
+    "customsDocuments": [
+      "Commercial Invoice",
+      "Packing List",
+      "Certificate of Origin (EUR.1)",
+      "Technical Specifications & Data Sheets"
+    ],
+    "brexit": {
+      "applicableRegulation": "UK Global Tariff (UKGT)",
+      "preferentialOrigin": "EU",
+      "preferentialTreatment": "Zero tariff under UK-EU Trade & Cooperation Agreement"
+    }
+  },
+  "qualityAndCompliance": {
+    "requiredCertificates": [
+      "CE Marking & Declaration of Conformity",
+      "Material Certificates (EN 10204 3.1)",
+      "Pressure Equipment Directive 2014/68/EU compliance",
+      "UKCA Marking (where applicable)",
+      "Test Certificates for all hydraulic components"
+    ],
+    "inspectionAndTesting": {
+      "factoryAcceptanceTest": "Required before shipment",
+      "witnessTest": "Optional - to be arranged if required",
+      "documentation": "Full test reports & certificates to accompany delivery"
+    },
+    "standards": [
+      "ISO 9001:2015 Quality Management",
+      "ISO 14001:2015 Environmental Management",
+      "BS EN 61508 Functional Safety (where applicable)"
+    ]
+  },
+  "approvals": [
+    {
+      "approver": {
+        "name": "Ms. Sarah O'Connor",
+        "position": "Senior Procurement Manager"
+      },
+      "approvalDate": "2025-01-16T10:30:00Z",
+      "status": "APPROVED",
+      "comments": "Approved - within budget allocation for Q1 2025 capital expenditure"
+    },
+    {
+      "approver": {
+        "name": "Mr. David Thompson",
+        "position": "Engineering Director"
+      },
+      "approvalDate": "2025-01-16T14:15:00Z",
+      "status": "APPROVED",
+      "comments": "Technical specification reviewed and approved"
+    },
+    {
+      "approver": {
+        "name": "Ms. Emma Wilson",
+        "position": "Finance Director"
+      },
+      "approvalDate": "2025-01-16T16:45:00Z",
+      "status": "APPROVED",
+      "comments": "Budget approved - charge to Project Code PRJ-2025-045"
+    }
+  ],
+  "termsAndConditions": {
+    "governingLaw": "English Law",
+    "jurisdiction": "Courts of England and Wales",
+    "disputeResolution": "Any disputes to be resolved through arbitration in London under ICC Rules",
+    "forceMajeure": "Standard force majeure clause applies",
+    "confidentiality": "Both parties bound by confidentiality obligations",
+    "dataProtection": "Processing of personal data in accordance with UK GDPR",
+    "anticorruption": "Both parties confirm compliance with UK Bribery Act 2010",
+    "modernSlavery": "Supplier confirms compliance with Modern Slavery Act 2015"
+  },
+  "specialConditions": [
+    "Supplier to provide 48 hours advance notice of delivery",
+    "All components to be clearly marked with part numbers",
+    "Technical manuals & spare parts lists to be provided in English",
+    "Training for 4 engineers to be arranged at Manchester facility",
+    "Supplier to maintain adequate spare parts stock for 10 years",
+    "Annual maintenance contract to be negotiated separately"
+  ],
+  "attachments": [
+    {
+      "documentType": "TECHNICAL_SPECIFICATION",
+      "fileName": "Technical_Spec_Hydraulic_System_Rev3.pdf",
+      "dateAttached": "2025-01-10"
+    },
+    {
+      "documentType": "VENDOR_QUOTATION",
+      "fileName": "Muller_Sohne_Quote_REF_2024_12_456.pdf",
+      "dateAttached": "2024-12-18"
+    },
+    {
+      "documentType": "FRAMEWORK_AGREEMENT",
+      "fileName": "Framework_Agreement_2024_2027.pdf",
+      "dateAttached": "2024-11-01"
+    }
+  ],
+  "internalReferences": {
+    "requisitionNumber": "REQ-2024-11-789",
+    "projectCode": "PRJ-2025-045",
+    "budgetCode": "CAP-EX-HYDRAULICS",
+    "costCentre": "CC-ENG-001",
+    "glAccount": "7100-MACHINERY"
+  },
+  "notes": "This purchase order is subject to our standard Terms & Conditions of Purchase (copy available on request). Supplier must acknowledge receipt of this order within 48 hours and confirm delivery dates. Any changes to specifications or delivery dates must be approved in writing.",
+  "acknowledgedBySupplier": false,
+  "acknowledgementDue": "2025-01-18"
+}

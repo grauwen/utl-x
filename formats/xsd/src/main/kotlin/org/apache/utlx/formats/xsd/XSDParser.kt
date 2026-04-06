@@ -10,7 +10,9 @@ import java.io.StringReader
  *
  * Supports:
  * - XSD 1.0 and XSD 1.1
- * - All 4 design patterns (Russian Doll, Salami Slice, Venetian Blind, Garden of Eden)
+ * - All 7 design patterns:
+ *   - Main 4: Russian Doll, Salami Slice, Venetian Blind, Garden of Eden
+ *   - Extended 3: Bologna Sandwich, Chameleon Schema, Swiss Army Knife
  * - xs:annotation, xs:documentation, xs:appinfo
  * - Namespaces, imports, includes
  * - Pattern detection via scope tagging
@@ -358,28 +360,55 @@ class XSDParser(
      * Detect XSD design pattern based on schema structure
      *
      * Pattern detection rules (order matters - checked from most specific to least):
-     * - Garden of Eden: Both global elements AND global types (most specific)
-     * - Salami Slice: Multiple global elements, no global types (element reuse)
-     * - Russian Doll: Single global element with inline types
-     * - Venetian Blind: Global types, any elements (type reuse - default/fallback)
+     *
+     * Main 4 patterns:
+     * - Russian Doll: Local elements, local types (single root)
+     * - Salami Slice: Global elements, local types (modular enterprise)
+     * - Venetian Blind: Local elements, global types (mid-sized projects)
+     * - Garden of Eden: Global elements, global types (frameworks/standards)
+     *
+     * Extended patterns:
+     * - Bologna Sandwich: Mix of local and global elements, global types (controlled hybrid)
+     * - Chameleon Schema: Mixed element scope, global types (shared components)
+     * - Swiss Army Knife: Global elements/types but small schema (monolithic)
      */
     private fun detectXSDPattern(
         globalElementCount: Int,
         globalTypeCount: Int,
         inlineTypeCount: Int
     ): String {
-        return when {
-            // Garden of Eden: Both global elements and global types (most specific pattern)
-            globalElementCount >= 1 && globalTypeCount >= 1 && inlineTypeCount == 0 -> "garden-of-eden"
+        val totalElementCount = globalElementCount + inlineTypeCount
+        val hasGlobalElements = globalElementCount >= 1
+        val hasGlobalTypes = globalTypeCount >= 1
+        val hasInlineTypes = inlineTypeCount > 0
+        val isSmallSchema = totalElementCount <= 5 && globalTypeCount <= 5
 
-            // Salami Slice: Multiple global elements, no global types (prioritize over Russian Doll)
+        return when {
+            // Russian Doll: Single global element with inline types, no global types
+            globalElementCount == 1 && hasInlineTypes && globalTypeCount == 0 -> "russian-doll"
+
+            // Swiss Army Knife: Global elements and types but small/monolithic (≤5 of each)
+            // Must have multiple global elements (≥2) and be small
+            globalElementCount >= 2 && hasGlobalTypes && isSmallSchema && inlineTypeCount == 0 -> "swiss-army-knife"
+
+            // Garden of Eden: Both global elements AND global types (frameworks, standards)
+            // Large schema with high reuse
+            hasGlobalElements && hasGlobalTypes && !isSmallSchema && inlineTypeCount == 0 -> "garden-of-eden"
+
+            // Chameleon Schema: Global types with mixed element approaches
+            // Has global types and some inline types, but fewer global elements (≤1)
+            // Check BEFORE Bologna Sandwich to prioritize single-root patterns
+            hasGlobalTypes && hasInlineTypes && globalElementCount <= 1 -> "chameleon-schema"
+
+            // Bologna Sandwich: Mix of local and global elements with global types
+            // Has both inline types AND global types AND multiple global elements (≥2)
+            globalElementCount >= 2 && hasGlobalTypes && hasInlineTypes -> "bologna-sandwich"
+
+            // Salami Slice: Multiple global elements, no global types (modular enterprise)
             globalElementCount >= 2 && globalTypeCount == 0 -> "salami-slice"
 
-            // Russian Doll: Single global element with inline types
-            globalElementCount == 1 && inlineTypeCount > 0 && globalTypeCount == 0 -> "russian-doll"
-
-            // Venetian Blind: Has global types (most common pattern - default)
-            globalTypeCount >= 1 && inlineTypeCount == 0 -> "venetian-blind"
+            // Venetian Blind: Global types, local elements (most common, mid-sized)
+            hasGlobalTypes && inlineTypeCount == 0 && globalElementCount <= 1 -> "venetian-blind"
 
             // Default/Undetectable (doesn't fit standard patterns)
             else -> "undetectable"

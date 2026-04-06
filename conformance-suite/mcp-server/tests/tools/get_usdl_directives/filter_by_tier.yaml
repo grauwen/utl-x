@@ -1,0 +1,82 @@
+name: get_usdl_directives_filter_by_tier
+description: Test filtering USDL directives by tier (core, common, format_specific, reserved)
+tags:
+  - tools
+  - get_usdl_directives
+  - filter
+
+sequence:
+  - description: "Get core (Tier 1) directives"
+    request:
+      jsonrpc: "2.0"
+      id: 41
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          tier: "core"
+    expect:
+      jsonrpc: "2.0"
+      id: 41
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Tier: core.*}}"
+        # Should contain core tier directives (%namespace, %version, %types, etc.)
+        # Total should be 9 directives
+
+  - description: "Get common (Tier 2) directives"
+    request:
+      jsonrpc: "2.0"
+      id: 42
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          tier: "common"
+    expect:
+      jsonrpc: "2.0"
+      id: 42
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Tier: common.*}}"
+        # Should contain common tier directives
+        # Total should be 51 directives
+
+  - description: "Get format-specific (Tier 3) directives"
+    request:
+      jsonrpc: "2.0"
+      id: 43
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          tier: "format_specific"
+    expect:
+      jsonrpc: "2.0"
+      id: 43
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Tier: format_specific.*}}"
+        # Should contain format-specific directives
+        # Total should be 44 directives
+
+  - description: "Get reserved (Tier 4) directives"
+    request:
+      jsonrpc: "2.0"
+      id: 44
+      method: "tools/call"
+      params:
+        name: "get_usdl_directives"
+        arguments:
+          tier: "reserved"
+    expect:
+      jsonrpc: "2.0"
+      id: 44
+      result:
+        content:
+          - type: "text"
+            text: "{{REGEX:.*Tier: reserved.*}}"
+        # Should contain reserved directives for future use

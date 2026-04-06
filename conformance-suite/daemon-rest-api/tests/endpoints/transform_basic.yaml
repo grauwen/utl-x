@@ -1,0 +1,24 @@
+name: Transform Basic
+description: Test basic transformation via /api/execute endpoint
+tags:
+  - endpoints
+  - transform
+  - basic
+
+sequence:
+  - description: "Simple identity transformation"
+    method: POST
+    endpoint: /api/execute
+    headers:
+      Content-Type: application/json
+    body:
+      utlx: "%utlx 1.0\ninput json\noutput json\n---\n$input"
+      input: "{\"name\":\"John\",\"age\":30}"
+      inputFormat: "json"
+      outputFormat: "json"
+    expect:
+      status: 200
+      body:
+        success: true
+        output: "{{JSON}}"
+        executionTimeMs: "{{NUMBER}}"

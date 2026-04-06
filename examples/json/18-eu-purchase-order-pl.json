@@ -1,0 +1,256 @@
+{
+  "zamowienieId": "PL-2025-ZAM-987654",
+  "dataZamowienia": "2025-01-16",
+  "terminRealizacji": "2025-02-15",
+  "status": "ZATWIERDZONE",
+  "priorytet": "WYSOKI",
+  "nabywca": {
+    "nazwaFirmy": "Fabryka Maszyn Warszawa Sp. z o.o.",
+    "nip": "1234567890",
+    "regon": "123456789",
+    "adres": {
+      "ulica": "ul. Przemysłowa",
+      "numerDomu": "45",
+      "kodPocztowy": "02-231",
+      "miasto": "Warszawa",
+      "wojewodztwo": "Mazowieckie",
+      "kraj": "Polska"
+    },
+    "daneKontaktowe": {
+      "osoba": "Pan Marek Kowalski",
+      "stanowisko": "Kierownik Działu Zakupów",
+      "email": "m.kowalski@fabryka-maszyn-waw.pl",
+      "telefon": "+48 22 123 45 67",
+      "komorkowy": "+48 601 234 567"
+    },
+    "daneBankowe": {
+      "bank": "PKO Bank Polski SA",
+      "numerKonta": "PL61109010140000071219812345",
+      "swift": "BPKOPLPW"
+    }
+  },
+  "dostawca": {
+    "nazwaFirmy": "Przemysł Elektroniczny Kraków SA",
+    "nip": "9876543210",
+    "regon": "987654321",
+    "adres": {
+      "ulica": "Al. Powstańców Wielkopolskich",
+      "numerDomu": "23",
+      "kodPocztowy": "30-383",
+      "miasto": "Kraków",
+      "wojewodztwo": "Małopolskie",
+      "kraj": "Polska"
+    },
+    "daneKontaktowe": {
+      "osoba": "Pani Anna Nowak",
+      "stanowisko": "Kierownik Sprzedaży",
+      "email": "a.nowak@przemysl-elektr-krakow.pl",
+      "telefon": "+48 12 987 65 43",
+      "komorkowy": "+48 602 987 654"
+    },
+    "daneBankowe": {
+      "bank": "mBank SA",
+      "numerKonta": "PL82114020040000350223794567",
+      "swift": "BREXPLPWMBK"
+    },
+    "terminPlatnosci": "30 dni netto"
+  },
+  "miejsceDostawy": {
+    "nazwaLokalizacji": "Zakład Produkcyjny - Hala C",
+    "adres": {
+      "ulica": "ul. Fabryczna",
+      "numerDomu": "12",
+      "kodPocztowy": "05-092",
+      "miasto": "Łomianki",
+      "wojewodztwo": "Mazowieckie",
+      "kraj": "Polska"
+    },
+    "osobaKontaktowa": {
+      "imieNazwisko": "Pan Piotr Wiśniewski",
+      "telefon": "+48 22 765 43 21"
+    },
+    "instrukcjeDostawy": "Dostawa na rampę załadunkową - bramę nr 3. Przyjęcie towaru: pon-pt w godz. 7:00-15:00. Wymagane wcześniejsze powiadomienie 24h przed dostawą."
+  },
+  "pozycjeZamowienia": [
+    {
+      "lp": 1,
+      "kodTowaru": "STEROW-PLC-S7-1200",
+      "nazwaTowaru": "Sterownik programowalny Siemens S7-1200 CPU 1214C",
+      "producent": "Siemens AG",
+      "krajPochodzenia": "Niemcy",
+      "jednostka": "szt.",
+      "ilosc": 15,
+      "cenaNetto": 1250.00,
+      "wartoscNetto": 18750.00,
+      "stawkaVAT": 23.0,
+      "kwotaVAT": 4312.50,
+      "wartoscBrutto": 23062.50,
+      "terminDostawy": "2025-02-10",
+      "gwarancja": "36 miesięcy",
+      "numerKatalogowy": "6ES7214-1AG40-0XB0"
+    },
+    {
+      "lp": 2,
+      "kodTowaru": "PANEL-HMI-7",
+      "nazwaTowaru": "Panel operatorski HMI 7\" kolorowy TFT",
+      "producent": "Siemens AG",
+      "krajPochodzenia": "Niemcy",
+      "jednostka": "szt.",
+      "ilosc": 15,
+      "cenaNetto": 890.00,
+      "wartoscNetto": 13350.00,
+      "stawkaVAT": 23.0,
+      "kwotaVAT": 3070.50,
+      "wartoscBrutto": 16420.50,
+      "terminDostawy": "2025-02-10",
+      "gwarancja": "36 miesięcy",
+      "numerKatalogowy": "6AV2123-2GB03-0AX0"
+    },
+    {
+      "lp": 3,
+      "kodTowaru": "CZUJ-IND-M18",
+      "nazwaTowaru": "Czujnik indukcyjny M18, PNP, NO, zasięg 8mm",
+      "producent": "ifm electronic gmbh",
+      "krajPochodzenia": "Niemcy",
+      "jednostka": "szt.",
+      "ilosc": 50,
+      "cenaNetto": 125.00,
+      "wartoscNetto": 6250.00,
+      "stawkaVAT": 23.0,
+      "kwotaVAT": 1437.50,
+      "wartoscBrutto": 7687.50,
+      "terminDostawy": "2025-02-05",
+      "gwarancja": "24 miesiące",
+      "numerKatalogowy": "IFM-IE5344"
+    },
+    {
+      "lp": 4,
+      "kodTowaru": "KONW-FREQ-5.5KW",
+      "nazwaTowaru": "Przemiennik częstotliwości 5,5kW, 400V, IP20",
+      "producent": "ABB",
+      "krajPochodzenia": "Finlandia",
+      "jednostka": "szt.",
+      "ilosc": 8,
+      "cenaNetto": 1680.00,
+      "wartoscNetto": 13440.00,
+      "stawkaVAT": 23.0,
+      "kwotaVAT": 3091.20,
+      "wartoscBrutto": 16531.20,
+      "terminDostawy": "2025-02-15",
+      "gwarancja": "24 miesiące",
+      "numerKatalogowy": "ACS580-01-012A-4"
+    },
+    {
+      "lp": 5,
+      "kodTowaru": "KABEL-STER-20M",
+      "nazwaTowaru": "Kabel sterowniczy OLFLEX CLASSIC 110, 4x1,5mm², 20m",
+      "producent": "Lapp Kabel",
+      "krajPochodzenia": "Niemcy",
+      "jednostka": "mb",
+      "ilosc": 500,
+      "cenaNetto": 12.50,
+      "wartoscNetto": 6250.00,
+      "stawkaVAT": 23.0,
+      "kwotaVAT": 1437.50,
+      "wartoscBrutto": 7687.50,
+      "terminDostawy": "2025-02-01",
+      "gwarancja": "12 miesięcy",
+      "numerKatalogowy": "LAPP-1119804"
+    }
+  ],
+  "podsumowanie": {
+    "wartoscNettoRazem": 58040.00,
+    "vat23": 13349.20,
+    "wartoscBruttoRazem": 71389.20,
+    "kosztTransportu": 350.00,
+    "vatTransport": 80.50,
+    "wartoscBruttoTransport": 430.50,
+    "rabat": {
+      "procent": 2.0,
+      "kwotaNetto": 1160.80,
+      "opisRabatu": "Rabat za całość zamówienia"
+    },
+    "wartoscCalkowitaNetto": 57229.20,
+    "vatCalkowity": 13159.72,
+    "wartoscCalkowitaBrutto": 70388.92,
+    "waluta": "PLN"
+  },
+  "warunkiPlatnosci": {
+    "terminPlatnosci": "30 dni od daty dostawy",
+    "formaPlatnosci": "PRZELEW_BANKOWY",
+    "zaliczka": {
+      "wymagana": true,
+      "procent": 30.0,
+      "kwota": 21116.68,
+      "terminWplaty": "2025-01-25"
+    },
+    "pozostalaKwota": 49272.24,
+    "dataWymagalnosciPozostalaKwota": "2025-03-17"
+  },
+  "warunkiDostawy": {
+    "incoterms": "DAP",
+    "sposobTransportu": "TRANSPORT_DROGOWY",
+    "przewoznik": "Firma kurierska DPD Polska",
+    "ubezpieczenie": {
+      "wymagane": true,
+      "wartoscUbezpieczenia": 72000.00,
+      "towarzystwo": "PZU SA"
+    }
+  },
+  "zatwierdzenia": [
+    {
+      "osoba": {
+        "imieNazwisko": "Marek Kowalski",
+        "stanowisko": "Kierownik Działu Zakupów"
+      },
+      "dataZatwierdzenia": "2025-01-16T09:30:00+01:00",
+      "status": "ZATWIERDZONO",
+      "uwagi": "Zamówienie zgodne z budżetem departamentu"
+    },
+    {
+      "osoba": {
+        "imieNazwisko": "Katarzyna Lewandowska",
+        "stanowisko": "Dyrektor Finansowy"
+      },
+      "dataZatwierdzenia": "2025-01-16T14:15:00+01:00",
+      "status": "ZATWIERDZONO",
+      "uwagi": "Zatwierdzono budżet"
+    },
+    {
+      "osoba": {
+        "imieNazwisko": "Jan Dąbrowski",
+        "stanowisko": "Prezes Zarządu"
+      },
+      "dataZatwierdzenia": "2025-01-16T16:00:00+01:00",
+      "status": "ZATWIERDZONO",
+      "uwagi": "Zatwierdzone - zakup zgodny ze strategią modernizacji linii produkcyjnej"
+    }
+  ],
+  "dokumentyZalaczone": [
+    {
+      "typ": "SPECYFIKACJA_TECHNICZNA",
+      "nazwaPliku": "Specyfikacja_techniczna_sterowniki.pdf",
+      "dataZalaczenia": "2025-01-15"
+    },
+    {
+      "typ": "OFERTA_DOSTAWCY",
+      "nazwaPliku": "Oferta_PEK_nr_2024_12_234.pdf",
+      "dataZalaczenia": "2025-01-12"
+    }
+  ],
+  "uwagiDodatkowe": "Zamówienie realizowane w ramach projektu modernizacji linii produkcyjnej nr 3. Wszystkie komponenty muszą być fabrycznie nowe z aktualnymi certyfikatami. Wymagane dostarczenie dokumentacji technicznej w języku polskim.",
+  "historiaZmian": [
+    {
+      "numerWersji": 1,
+      "dataZmiany": "2025-01-14T10:00:00+01:00",
+      "osobaZmieniajaca": "Marek Kowalski",
+      "opisZmiany": "Utworzenie zamówienia"
+    },
+    {
+      "numerWersji": 2,
+      "dataZmiany": "2025-01-15T11:30:00+01:00",
+      "osobaZmieniajaca": "Marek Kowalski",
+      "opisZmiany": "Zwiększenie ilości czujników z 40 do 50 sztuk"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Simple.Model" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="Product">
+        <Key>
+          <PropertyRef Name="ProductID"/>
+        </Key>
+        <Property Name="ProductID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="ProductName" Type="Edm.String" Nullable="false" MaxLength="100"/>
+        <Property Name="Price" Type="Edm.Decimal" Precision="10" Scale="2"/>
+        <Property Name="InStock" Type="Edm.Boolean"/>
+        <Property Name="ReleaseDate" Type="Edm.Date"/>
+        <NavigationProperty Name="Category" Type="Simple.Model.Category" Partner="Products">
+          <ReferentialConstraint Property="CategoryID" ReferencedProperty="CategoryID"/>
+        </NavigationProperty>
+      </EntityType>
+      <EntityType Name="Category">
+        <Key>
+          <PropertyRef Name="CategoryID"/>
+        </Key>
+        <Property Name="CategoryID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="CategoryName" Type="Edm.String" Nullable="false" MaxLength="50"/>
+        <Property Name="Description" Type="Edm.String"/>
+        <NavigationProperty Name="Products" Type="Collection(Simple.Model.Product)" Partner="Category"/>
+      </EntityType>
+      <ComplexType Name="Address">
+        <Property Name="Street" Type="Edm.String"/>
+        <Property Name="City" Type="Edm.String"/>
+        <Property Name="PostalCode" Type="Edm.String" MaxLength="10"/>
+        <Property Name="Country" Type="Edm.String"/>
+      </ComplexType>
+      <EnumType Name="Color">
+        <Member Name="Red" Value="0"/>
+        <Member Name="Green" Value="1"/>
+        <Member Name="Blue" Value="2"/>
+      </EnumType>
+      <EntityContainer Name="SimpleContainer">
+        <EntitySet Name="Products" EntityType="Simple.Model.Product">
+          <NavigationPropertyBinding Path="Category" Target="Categories"/>
+        </EntitySet>
+        <EntitySet Name="Categories" EntityType="Simple.Model.Category">
+          <NavigationPropertyBinding Path="Products" Target="Products"/>
+        </EntitySet>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

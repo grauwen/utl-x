@@ -1,0 +1,181 @@
+---
+infrastructure:
+  version: "2024.1"
+  datacenter: "US-EAST-1"
+  environment: "Production"
+
+  servers:
+    - hostname: web-server-01
+      ip_address: 192.168.1.10
+      type: web
+      os:
+        name: Ubuntu
+        version: "22.04 LTS"
+      hardware:
+        cpu_cores: 8
+        memory_gb: 32
+        storage_gb: 500
+      services:
+        - name: nginx
+          port: 80
+          status: running
+        - name: nginx-ssl
+          port: 443
+          status: running
+      monitoring:
+        enabled: true
+        agent_version: "5.2.1"
+      backup:
+        enabled: true
+        frequency: daily
+        last_backup: "2024-03-14T23:00:00Z"
+      tags:
+        - production
+        - frontend
+        - critical
+
+    - hostname: app-server-01
+      ip_address: 192.168.1.20
+      type: application
+      os:
+        name: Ubuntu
+        version: "22.04 LTS"
+      hardware:
+        cpu_cores: 16
+        memory_gb: 64
+        storage_gb: 1000
+      services:
+        - name: nodejs
+          port: 3000
+          status: running
+        - name: redis
+          port: 6379
+          status: running
+      monitoring:
+        enabled: true
+        agent_version: "5.2.1"
+      backup:
+        enabled: true
+        frequency: hourly
+        last_backup: "2024-03-15T14:00:00Z"
+      tags:
+        - production
+        - backend
+        - critical
+
+    - hostname: db-server-01
+      ip_address: 192.168.1.30
+      type: database
+      os:
+        name: Ubuntu
+        version: "22.04 LTS"
+      hardware:
+        cpu_cores: 32
+        memory_gb: 128
+        storage_gb: 5000
+      services:
+        - name: postgresql
+          port: 5432
+          status: running
+        - name: pg-backup
+          port: null
+          status: running
+      monitoring:
+        enabled: true
+        agent_version: "5.2.1"
+      backup:
+        enabled: true
+        frequency: continuous
+        last_backup: "2024-03-15T14:30:00Z"
+      tags:
+        - production
+        - database
+        - critical
+        - encrypted
+
+    - hostname: cache-server-01
+      ip_address: 192.168.1.40
+      type: cache
+      os:
+        name: Ubuntu
+        version: "22.04 LTS"
+      hardware:
+        cpu_cores: 8
+        memory_gb: 64
+        storage_gb: 500
+      services:
+        - name: redis-cluster
+          port: 6379
+          status: running
+        - name: redis-sentinel
+          port: 26379
+          status: running
+      monitoring:
+        enabled: true
+        agent_version: "5.2.1"
+      backup:
+        enabled: false
+        frequency: none
+        last_backup: null
+      tags:
+        - production
+        - cache
+        - high-performance
+
+    - hostname: worker-server-01
+      ip_address: 192.168.1.50
+      type: worker
+      os:
+        name: Ubuntu
+        version: "22.04 LTS"
+      hardware:
+        cpu_cores: 16
+        memory_gb: 32
+        storage_gb: 1000
+      services:
+        - name: job-queue
+          port: 5672
+          status: running
+        - name: worker-process
+          port: null
+          status: running
+      monitoring:
+        enabled: true
+        agent_version: "5.2.1"
+      backup:
+        enabled: true
+        frequency: daily
+        last_backup: "2024-03-14T23:00:00Z"
+      tags:
+        - production
+        - background
+        - scalable
+
+    - hostname: monitor-server-01
+      ip_address: 192.168.1.60
+      type: monitoring
+      os:
+        name: Ubuntu
+        version: "22.04 LTS"
+      hardware:
+        cpu_cores: 4
+        memory_gb: 16
+        storage_gb: 2000
+      services:
+        - name: prometheus
+          port: 9090
+          status: running
+        - name: grafana
+          port: 3000
+          status: running
+      monitoring:
+        enabled: true
+        agent_version: "5.2.1"
+      backup:
+        enabled: true
+        frequency: weekly
+        last_backup: "2024-03-10T00:00:00Z"
+      tags:
+        - production
+        - monitoring
+        - observability

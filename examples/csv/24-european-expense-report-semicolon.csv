@@ -1,0 +1,11 @@
+ExpenseID;EmployeeName;Category;Date;Description;Amount;Currency;Status
+EXP-7001;Klaus Schmidt;Travel;2024-03-01;Flight Berlin-Paris;"450,75";EUR;Approved
+EXP-7002;Marie Laurent;Meals;2024-03-02;Client dinner Paris;"125,50";EUR;Approved
+EXP-7003;Giovanni Rossi;Hotel;2024-03-03;Hotel Milano 3 nights;"780,00";EUR;Approved
+EXP-7004;Anna Weber;Office;2024-03-04;Office supplies;"89,25";EUR;Pending
+EXP-7005;Jean Dupont;Travel;2024-03-05;Train Geneva-Lyon;"67,80";EUR;Approved
+EXP-7006;Hans Müller;Equipment;2024-03-06;Laptop accessories;"234,90";CHF;Pending
+EXP-7007;Sophie Bernard;Conference;2024-03-07;Tech Summit registration;"1'250,00";EUR;Approved
+EXP-7008;Marco Bianchi;Meals;2024-03-08;Team lunch Rome;"156,75";EUR;Approved
+EXP-7009;Lisa Schneider;Travel;2024-03-09;Car rental Vienna;"320,50";EUR;Pending
+EXP-7010;Pierre Martin;Hotel;2024-03-10;Hotel Brussels 2 nights;"450,00";EUR;Approved

@@ -1,0 +1,47 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Basic structure with required and optional fields
+output [FORMAT]
+---
+%namespace: "com.example.person"
+%version: "1.0"
+%documentation: "Basic person entity"
+
+%types: {
+  Person: {
+    %kind: "structure",
+    %documentation: "Person with basic information",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "Unique person identifier"
+      },
+      {
+        %name: "firstName",
+        %type: "string",
+        %required: true,
+        %description: "First name"
+      },
+      {
+        %name: "lastName",
+        %type: "string",
+        %required: true,
+        %description: "Last name"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %required: true,
+        %description: "Email address"
+      },
+      {
+        %name: "age",
+        %type: "integer",
+        %required: false,
+        %description: "Age in years"
+      }
+    ]
+  }
+}

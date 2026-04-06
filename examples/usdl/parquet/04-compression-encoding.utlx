@@ -1,0 +1,66 @@
+%utlx 1.0
+// Demonstrates: Compression and encoding strategies
+// Note: This example is specific to Parquet due to: %compression, %encoding
+output parquet
+---
+%namespace: "com.example.parquet"
+%version: "1.0"
+%documentation: "Parquet with compression and encoding"
+
+%types: {
+  LogEntry: {
+    %kind: "structure",
+    %compression: "snappy",
+    %documentation: "Log entry with optimized encoding",
+    %fields: [
+      {
+        %name: "log_id",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %encoding: "PLAIN",
+        %description: "Log identifier"
+      },
+      {
+        %name: "severity",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %encoding: "PLAIN_DICTIONARY",
+        %description: "Log severity (uses dictionary encoding)"
+      },
+      {
+        %name: "service",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %encoding: "PLAIN_DICTIONARY",
+        %description: "Service name (uses dictionary encoding)"
+      },
+      {
+        %name: "message",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %encoding: "PLAIN",
+        %description: "Log message"
+      },
+      {
+        %name: "timestamp",
+        %type: "long",
+        %repetition: "required",
+        %required: true,
+        %encoding: "DELTA_BINARY_PACKED",
+        %description: "Timestamp (delta encoding)"
+      },
+      {
+        %name: "duration_ms",
+        %type: "integer",
+        %repetition: "optional",
+        %required: false,
+        %encoding: "RLE",
+        %description: "Duration in milliseconds"
+      }
+    ]
+  }
+}

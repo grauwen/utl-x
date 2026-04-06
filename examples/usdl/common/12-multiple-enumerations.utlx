@@ -1,0 +1,59 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Multiple enumeration types in one schema
+output [FORMAT]
+---
+%namespace: "com.example.ticket"
+%version: "1.0"
+%documentation: "Support ticket with multiple enumerations"
+
+%types: {
+  Priority: {
+    %kind: "enumeration",
+    %documentation: "Ticket priority levels",
+    %values: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+  },
+
+  TicketStatus: {
+    %kind: "enumeration",
+    %documentation: "Ticket status values",
+    %values: ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]
+  },
+
+  Category: {
+    %kind: "enumeration",
+    %documentation: "Ticket categories",
+    %values: ["BUG", "FEATURE_REQUEST", "QUESTION", "DOCUMENTATION"]
+  },
+
+  Ticket: {
+    %kind: "structure",
+    %documentation: "Support ticket",
+    %fields: [
+      {
+        %name: "ticketId",
+        %type: "string",
+        %required: true,
+        %description: "Ticket identifier"
+      },
+      {
+        %name: "priority",
+        %type: "Priority",
+        %required: true,
+        %description: "Ticket priority"
+      },
+      {
+        %name: "status",
+        %type: "TicketStatus",
+        %required: true,
+        %description: "Current status"
+      },
+      {
+        %name: "category",
+        %type: "Category",
+        %required: true,
+        %description: "Ticket category"
+      }
+    ]
+  }
+}
