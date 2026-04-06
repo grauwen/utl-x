@@ -110,7 +110,7 @@ def generate_api_reference(registry):
     
     api_ref = {
         "utlx_version": registry['version'],
-        "generated_at": registry['generatedAt'],
+        "generated_at": registry.get('generatedAt', registry.get('generated', '')),
         "total_functions": registry['totalFunctions'],
         "categories": {}
     }
@@ -160,15 +160,15 @@ def generate_cli_cheatsheet(registry):
 
 ```bash
 # Search by category
-./utlx-functions search "array"      # Array functions
-./utlx-functions search "string"     # String functions  
-./utlx-functions search "math"       # Math functions
-./utlx-functions search "xml"        # XML functions
+utlx functions search "array"      # Array functions
+utlx functions search "string"     # String functions  
+utlx functions search "math"       # Math functions
+utlx functions search "xml"        # XML functions
 
 # Search by operation
-./utlx-functions search "encode"     # Encoding operations
-./utlx-functions search "convert"    # Conversion functions
-./utlx-functions search "transform"  # Transformation functions
+utlx functions search "encode"     # Encoding operations
+utlx functions search "convert"    # Conversion functions
+utlx functions search "transform"  # Transformation functions
 ```
 
 ## Most Used Functions
