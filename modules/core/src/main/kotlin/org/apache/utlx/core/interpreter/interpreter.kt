@@ -223,7 +223,20 @@ class Interpreter {
                     }
 
                     val value = evaluate(prop.value, objectEnv)
-                    val key = prop.key ?: error("Non-spread property must have a key")
+                    val key = if (prop.computedKey != null) {
+                        // Computed property name: [expr]: value
+                        val computedKeyValue = evaluate(prop.computedKey, objectEnv)
+                        when (computedKeyValue) {
+                            is RuntimeValue.StringValue -> computedKeyValue.value
+                            is RuntimeValue.NumberValue -> {
+                                val d = computedKeyValue.value
+                                if (d == d.toLong().toDouble()) d.toLong().toString() else d.toString()
+                            }
+                            else -> computedKeyValue.toString()
+                        }
+                    } else {
+                        prop.key ?: error("Non-spread property must have a key")
+                    }
 
                     if (prop.isAttribute) {
                         // Attributes must be strings - extract string value

@@ -252,6 +252,10 @@ class TypeChecker(private val stdlib: StandardLibrary) {
                                 // Can't spread non-object - ignore for type inference
                             }
                         }
+                    } else if (prop.computedKey != null) {
+                        // Computed property: [expr]: value — key is dynamic, type is Any
+                        // We can't statically determine the key, so we skip adding to propTypes
+                        inferType(prop.value, env) // still type-check the value
                     } else {
                         val key = prop.key ?: error("Non-spread property must have a key")
                         propTypes[key] = inferType(prop.value, env)
