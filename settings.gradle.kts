@@ -35,6 +35,7 @@ include("modules:core")
 include("modules:cli")
 include("modules:analysis")
 include("modules:daemon")  // UTLXD - unified daemon with LSP + REST API + CLI
+include("modules:engine")  // UTLXE - production runtime engine
 
 
 // Format parsers/serializers
