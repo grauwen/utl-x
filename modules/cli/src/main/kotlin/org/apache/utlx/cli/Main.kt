@@ -19,14 +19,20 @@ object Main {
         DebugConfig.initialize()
 
         if (args.isEmpty()) {
+            // No arguments: identity mode if stdin is piped, otherwise show usage
+            if (System.console() == null) {
+                // stdin is piped (not a terminal) - enter identity mode
+                TransformCommand.execute(emptyArray(), identityMode = true)
+                exitProcess(0)
+            }
             printUsage()
             exitProcess(0)
         }
-        
+
         try {
             val command = args[0]
             val commandArgs = args.drop(1).toTypedArray()
-            
+
             when (command.lowercase()) {
                 "transform", "t" -> TransformCommand.execute(commandArgs)
                 "repl", "r" -> ReplCommand.execute(commandArgs)
@@ -59,9 +65,20 @@ object Main {
                 }
                 "help", "--help", "-h" -> printUsage()
                 else -> {
-                    System.err.println("Unknown command: $command")
-                    printUsage()
-                    exitProcess(1)
+                    // Check if first arg looks like a .utlx file → implicit transform
+                    if (command.endsWith(".utlx")) {
+                        TransformCommand.execute(args)
+                    }
+                    // Check if first arg is a flag for identity mode (--to, --from, etc.)
+                    else if (command in listOf("--to", "--from", "--output-format", "--input-format",
+                                               "--no-pretty", "--verbose", "-v")) {
+                        TransformCommand.execute(args, identityMode = true)
+                    }
+                    else {
+                        System.err.println("Unknown command: $command")
+                        printUsage()
+                        exitProcess(1)
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -96,6 +113,10 @@ object Main {
             |  help           Show this help message
             |
             |Examples:
+            |  cat data.xml | utlx                    Identity mode: XML to JSON (smart flip)
+            |  cat data.json | utlx                   Identity mode: JSON to XML (smart flip)
+            |  cat data.csv | utlx --to yaml          Identity mode: CSV to YAML
+            |  utlx script.utlx input.xml             Implicit transform (no 'transform' subcommand)
             |  utlx repl
             |  utlx transform script.utlx input.xml -o output.json
             |  utlx capture status
