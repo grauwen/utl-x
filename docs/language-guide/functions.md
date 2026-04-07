@@ -519,6 +519,8 @@ merge({a: 1, b: 2}, {b: 3, c: 4}) // {a: 1, b: 3, c: 4}
 
 User-defined functions **must** start with an uppercase letter (PascalCase). This prevents collisions with the 652 stdlib functions, which all use lowercase/camelCase.
 
+Functions can be declared anywhere in the script — order doesn't matter. You can use a function before declaring it.
+
 ```utlx
 // ✅ CORRECT - user functions start with uppercase
 function Double(n: Number): Number {
