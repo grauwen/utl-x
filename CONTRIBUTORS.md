@@ -68,6 +68,6 @@ Special thanks to:
 
 ---
 
-Last updated: October 2025
+Last updated: April 2026
 
 ---

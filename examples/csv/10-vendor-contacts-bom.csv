@@ -1,0 +1,7 @@
+﻿VendorID,CompanyName,ContactPerson,Email,Phone,Country,AccountManager
+VEN-101,TechSupply GmbH,Klaus Schmidt,k.schmidt@techsupply.de,+49-30-12345678,Germany,John Davis
+VEN-102,ElectroWorld SA,Marie Laurent,m.laurent@electroworld.fr,+33-1-23456789,France,Sarah Miller
+VEN-103,Components Ltd,James Wilson,j.wilson@components.co.uk,+44-20-87654321,UK,John Davis
+VEN-104,Nordic Parts AB,Anders Svensson,anders@nordicparts.se,+46-8-98765432,Sweden,Maria Garcia
+VEN-105,Supplies España SL,Carmen Rodriguez,c.rodriguez@supplies.es,+34-91-11223344,Spain,Michael Brown
+VEN-106,Swiss Tech AG,Hans Müller,h.mueller@swisstech.ch,+41-44-55667788,Switzerland,Sarah Miller

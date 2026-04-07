@@ -1,0 +1,268 @@
+{
+  "certificadoId": "PT-2025-ISO-9001-789456",
+  "tipoCertificado": "SISTEMA_GESTAO_QUALIDADE",
+  "norma": {
+    "designacao": "ISO 9001:2015",
+    "titulo": "Sistemas de gestão da qualidade - Requisitos",
+    "versao": "2015",
+    "organismoNormalizacao": "ISO - International Organization for Standardization"
+  },
+  "entidadeCertificadora": {
+    "nome": "APCER - Associação Portuguesa de Certificação",
+    "numeroAcreditacao": "OC001",
+    "acreditadoPor": "IPAC - Instituto Português de Acreditação",
+    "numeroAcreditacaoIPAC": "C001",
+    "morada": {
+      "rua": "Rua do Auditor, n.º 4",
+      "codigoPostal": "4050-039",
+      "localidade": "Porto",
+      "concelho": "Porto",
+      "distrito": "Porto",
+      "pais": "Portugal"
+    },
+    "contacto": {
+      "telefone": "+351 22 606 98 00",
+      "email": "info@apcer.pt",
+      "website": "www.apcer.pt"
+    },
+    "auditorResponsavel": {
+      "nome": "Eng.ª Maria João Santos",
+      "numeroAuditor": "AUD-2023-1234",
+      "qualificacao": "Auditora Principal ISO 9001"
+    }
+  },
+  "organizacaoCertificada": {
+    "designacaoSocial": "Industria Metalomecânica do Sul, Lda.",
+    "nif": "PT501234567",
+    "numeroRegistoComercial": "RC Lisboa 123456",
+    "capitalSocial": {
+      "valor": 500000.00,
+      "moeda": "EUR"
+    },
+    "sedeRegisto": {
+      "morada": "Zona Industrial de Palmela, Lote 45",
+      "codigoPostal": "2950-805",
+      "localidade": "Palmela",
+      "concelho": "Palmela",
+      "distrito": "Setúbal",
+      "pais": "Portugal"
+    },
+    "instalacoesAbrangidas": [
+      {
+        "tipo": "SEDE_FABRICA",
+        "designacao": "Unidade Fabril Principal",
+        "morada": "Zona Industrial de Palmela, Lote 45",
+        "codigoPostal": "2950-805",
+        "localidade": "Palmela",
+        "area": 8500.00,
+        "unidade": "metros quadrados"
+      },
+      {
+        "tipo": "FILIAL",
+        "designacao": "Centro Logístico e Armazém",
+        "morada": "Parque Industrial de Sines, Lote 12",
+        "codigoPostal": "7520-064",
+        "localidade": "Sines",
+        "concelho": "Sines",
+        "distrito": "Setúbal",
+        "area": 3200.00,
+        "unidade": "metros quadrados"
+      }
+    ],
+    "cae": {
+      "codigo": "25110",
+      "designacao": "Fabricação de estruturas de construções metálicas"
+    },
+    "numeroColaboradores": 85,
+    "representanteLegal": {
+      "nome": "Dr. António Manuel Silva",
+      "cargo": "Gerente",
+      "nif": "PT123456789"
+    },
+    "representanteGestaoQualidade": {
+      "nome": "Eng. Pedro Costa",
+      "cargo": "Diretor de Qualidade e Ambiente",
+      "email": "p.costa@metalomecanica-sul.pt",
+      "telefone": "+351 212 345 678"
+    }
+  },
+  "âmbitoCertificacao": {
+    "descricaoPortugues": "Conceção, fabrico e comercialização de estruturas metálicas para a construção civil e industrial. Maquinação de componentes metálicos de precisão.",
+    "descricaoIngles": "Design, manufacture and marketing of metal structures for civil and industrial construction. Precision machining of metal components.",
+    "atividadesIncluidas": [
+      "Projeto e engenharia de estruturas metálicas",
+      "Corte, quinagem e soldadura de perfis metálicos",
+      "Tratamento de superfícies (jateamento e pintura)",
+      "Montagem e instalação em obra",
+      "Controlo dimensional e ensaios não destrutivos"
+    ],
+    "exclusoes": {
+      "clausula": "7.3",
+      "justificacao": "Design e desenvolvimento - A organização não desenvolve produtos próprios, trabalhando apenas com projetos fornecidos pelos clientes.",
+      "fundamentacao": "Conforme cláusula 4.3 da ISO 9001:2015, esta exclusão não afeta a capacidade da organização de fornecer produtos conformes."
+    }
+  },
+  "validadeCertificado": {
+    "dataEmissao": "2025-01-16",
+    "dataInicioCertificacao": "2025-01-16",
+    "dataValidade": "2028-01-15",
+    "ciclo": "PRIMEIRO_CICLO",
+    "duracaoCiclo": 3,
+    "unidade": "ANOS",
+    "auditoriasSeguimento": [
+      {
+        "tipo": "AUDITORIA_SEGUIMENTO_1",
+        "dataPrevista": "2025-12-15",
+        "prazoMaximo": "2026-01-15"
+      },
+      {
+        "tipo": "AUDITORIA_SEGUIMENTO_2",
+        "dataPrevista": "2026-12-15",
+        "prazoMaximo": "2027-01-15"
+      },
+      {
+        "tipo": "AUDITORIA_RENOVACAO",
+        "dataPrevista": "2027-10-15",
+        "prazoMaximo": "2028-01-15"
+      }
+    ]
+  },
+  "historicoAuditorias": {
+    "auditoriaInicial": {
+      "fase1": {
+        "data": "2024-10-15",
+        "duracao": 2,
+        "unidade": "DIAS",
+        "resultado": "APTO_FASE_2"
+      },
+      "fase2": {
+        "dataInicio": "2024-12-10",
+        "dataFim": "2024-12-12",
+        "duracao": 3,
+        "unidade": "DIAS",
+        "resultado": "CERTIFICACAO_RECOMENDADA"
+      }
+    },
+    "naoConformidades": {
+      "maiores": 0,
+      "menores": 3,
+      "observacoes": 5
+    },
+    "naoConformidadesMenores": [
+      {
+        "numero": "NC-2024-001",
+        "clausula": "8.5.1",
+        "descricao": "Instruções de trabalho para o processo de soldadura não estavam atualizadas",
+        "dataDetecao": "2024-12-11",
+        "acaoCorretiva": "Revisão e atualização de todas as instruções de trabalho de soldadura",
+        "dataFecho": "2024-12-28",
+        "eficaz": true
+      },
+      {
+        "numero": "NC-2024-002",
+        "clausula": "7.1.5",
+        "descricao": "Certificados de calibração de alguns instrumentos de medição vencidos",
+        "dataDetecao": "2024-12-12",
+        "acaoCorretiva": "Recalibração dos equipamentos e implementação de sistema de controlo de calibrações",
+        "dataFecho": "2025-01-10",
+        "eficaz": true
+      },
+      {
+        "numero": "NC-2024-003",
+        "clausula": "9.1.2",
+        "descricao": "Registo incompleto de inquéritos de satisfação de clientes",
+        "dataDetecao": "2024-12-12",
+        "acaoCorretiva": "Implementação de procedimento formal para inquéritos de satisfação",
+        "dataFecho": "2025-01-08",
+        "eficaz": true
+      }
+    ],
+    "pontosFortes": [
+      "Forte compromisso da gestão de topo com a qualidade",
+      "Competência técnica elevada dos colaboradores",
+      "Bom controlo do processo produtivo",
+      "Sistema de rastreabilidade bem implementado",
+      "Equipamentos modernos e bem mantidos"
+    ]
+  },
+  "decisaoCertificacao": {
+    "decisao": "CERTIFICACAO_CONCEDIDA",
+    "datDecisao": "2025-01-15",
+    "responsavelDecisao": {
+      "nome": "Eng. Carlos Ferreira",
+      "funcao": "Responsável de Certificação",
+      "assinatura": true
+    },
+    "fundamentacao": "Após análise do relatório de auditoria e verificação do fecho eficaz de todas as não conformidades menores, o sistema de gestão da qualidade da organização demonstra conformidade com os requisitos da norma ISO 9001:2015 no âmbito definido."
+  },
+  "marcas": {
+    "utilizacaoMarca": {
+      "permitida": true,
+      "marcaAPCER": true,
+      "marcaIPAC": true,
+      "marcaIAF": true,
+      "condicoesUtilizacao": [
+        "A marca só pode ser utilizada no âmbito certificado",
+        "Não pode ser aplicada diretamente em produtos",
+        "Deve respeitar as regras de utilização definidas pela APCER",
+        "Suspensão automática em caso de não manutenção do certificado"
+      ]
+    }
+  },
+  "obrigacoesOrganizacao": [
+    "Manter o sistema de gestão da qualidade conforme com os requisitos da norma",
+    "Informar a APCER de qualquer alteração que possa afetar o sistema de gestão",
+    "Permitir a realização de auditorias de seguimento e extraordinárias",
+    "Utilizar corretamente as marcas de certificação",
+    "Pagar as taxas de manutenção e auditoria no prazo estabelecido",
+    "Tratar as reclamações de clientes relacionadas com a certificação"
+  ],
+  "documentosReferencia": [
+    {
+      "tipo": "MANUAL_QUALIDADE",
+      "codigo": "MQ-001",
+      "revisao": "03",
+      "data": "2024-11-20"
+    },
+    {
+      "tipo": "POLITICA_QUALIDADE",
+      "codigo": "PQ-001",
+      "revisao": "02",
+      "data": "2024-11-15"
+    },
+    {
+      "tipo": "OBJETIVOS_QUALIDADE",
+      "codigo": "OQ-2025",
+      "revisao": "01",
+      "data": "2024-12-01"
+    }
+  ],
+  "contatoInformacoes": {
+    "certificado": {
+      "numeroCertificado": "PT-2025-ISO-9001-789456",
+      "versao": "01",
+      "dataEmissao": "2025-01-16",
+      "paginaWeb": "www.apcer.pt/certificados",
+      "validadeOnline": "Verificação de validade disponível em www.apcer.pt através do número do certificado"
+    }
+  },
+  "assinaturas": {
+    "representanteAPCER": {
+      "nome": "Dr. João Pedro Almeida",
+      "funcao": "Diretor de Certificação",
+      "data": "2025-01-16",
+      "local": "Porto",
+      "assinaturaDigital": true
+    },
+    "representanteOrganizacao": {
+      "nome": "Dr. António Manuel Silva",
+      "funcao": "Gerente",
+      "data": "2025-01-16",
+      "local": "Palmela",
+      "aceitacao": true
+    }
+  },
+  "idiomas": ["Português", "Inglês"],
+  "codigoVerificacao": "CERT-PT-2025-789456-VER",
+  "qrCode": "https://apcer.pt/verify/PT-2025-ISO-9001-789456"
+}

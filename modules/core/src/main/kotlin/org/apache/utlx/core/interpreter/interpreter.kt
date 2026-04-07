@@ -73,16 +73,29 @@ sealed class RuntimeValue {
 /**
  * Runtime environment for variable bindings
  */
-class Environment(private val parent: Environment? = null) {
+class Environment(
+    private val parent: Environment? = null,
+    private val inputMetadata: Map<String, InterpreterErrorEnhancer.InputMetadata>? = null
+) {
     private val bindings = mutableMapOf<String, RuntimeValue>()
-    
+
     fun define(name: String, value: RuntimeValue) {
         bindings[name] = value
     }
-    
+
     fun get(name: String): RuntimeValue {
-        return bindings[name] ?: parent?.get(name) 
-            ?: throw RuntimeError("Undefined variable: $name")
+        return bindings[name] ?: parent?.get(name)
+            ?: throw InterpreterErrorEnhancer.enhance(
+                InterpreterErrorEnhancer.ErrorContext(
+                    error = RuntimeError("Undefined variable: $name"),
+                    node = null,
+                    env = this,
+                    program = null,
+                    source = null,
+                    inputMetadata = inputMetadata ?: parent?.inputMetadata,
+                    currentFunction = null
+                )
+            )
     }
     
     fun has(name: String): Boolean {
@@ -98,8 +111,8 @@ class Environment(private val parent: Environment? = null) {
             throw RuntimeError("Cannot assign to undefined variable: $name")
         }
     }
-    
-    fun createChild(): Environment = Environment(this)
+
+    fun createChild(): Environment = Environment(this, inputMetadata)
 }
 
 /**
@@ -140,7 +153,19 @@ class Interpreter {
     fun execute(program: Program, namedInputs: Map<String, UDM>): RuntimeValue {
         logger.debug { "Starting execution with ${namedInputs.size} input(s): ${namedInputs.keys.joinToString()}" }
 
-        val env = globalEnv.createChild()
+        // Extract metadata from all inputs for smart error enhancement
+        val inputFormats = program.header.inputs.associate { (name, spec) ->
+            name to (spec?.type?.name?.lowercase() ?: "unknown")
+        }
+        val inputMetadata = InputMetadataExtractor.extractAll(namedInputs, inputFormats)
+
+        logger.trace { "Extracted metadata for ${inputMetadata.size} input(s)" }
+        inputMetadata.forEach { (name, metadata) ->
+            logger.trace { "  $name: ${metadata.fields?.size ?: 0} fields, ${metadata.recordCount ?: 0} records" }
+        }
+
+        // Create environment with metadata for error enhancement
+        val env = Environment(globalEnv, inputMetadata)
 
         // Bind all named inputs to environment
         namedInputs.forEach { (name, data) ->

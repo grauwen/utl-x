@@ -1,0 +1,43 @@
+name: "xsd_detect_swiss_army_knife"
+category: "formats/xsd/patterns"
+description: "Pattern Detection: Swiss Army Knife - Global elements and types but small schema"
+tags: ['xsd', 'patterns', 'detection', 'swiss-army-knife']
+
+input:
+  format: json
+  data: |
+    {
+      "xsdSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"firstName\" type=\"xs:string\"/>\n  <xs:element name=\"lastName\" type=\"xs:string\"/>\n  <xs:complexType name=\"PersonType\">\n    <xs:sequence>\n      <xs:element ref=\"firstName\"/>\n      <xs:element ref=\"lastName\"/>\n    </xs:sequence>\n  </xs:complexType>\n  <xs:element name=\"person\" type=\"PersonType\"/>\n</xs:schema>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let schema = parseXSDSchema($input.xsdSchema)
+  let stats = schema["%xsdPatternStats"]
+  {
+    patternName: "Swiss Army Knife",
+    detectedPattern: schema["%xsdPattern"],
+    globalElements: stats["globalElements"],
+    globalTypes: stats["globalTypes"],
+    inlineTypes: stats["inlineTypes"],
+    characteristics: "Global elements and types but small schema - monolithic systems",
+    bestFor: "Small self-contained schemas, embedded systems",
+    detected: schema["%xsdPattern"] == "swiss-army-knife"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "patternName": "Swiss Army Knife",
+      "detectedPattern": "swiss-army-knife",
+      "globalElements": 3,
+      "globalTypes": 1,
+      "inlineTypes": 0,
+      "characteristics": "Global elements and types but small schema - monolithic systems",
+      "bestFor": "Small self-contained schemas, embedded systems",
+      "detected": true
+    }

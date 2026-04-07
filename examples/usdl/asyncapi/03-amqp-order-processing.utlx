@@ -1,0 +1,111 @@
+%utlx 1.0
+// Demonstrates: AMQP (RabbitMQ) for order processing workflow
+// Note: This example is specific to AsyncAPI due to: %channels, %protocol (amqp), %operations, %action, %bindings
+output asyncapi
+---
+%namespace: "com.example.orders"
+%version: "1.0.0"
+%documentation: "Order processing via RabbitMQ"
+
+%servers: {
+  rabbitmq: {
+    %host: "rabbitmq.example.com:5672",
+    %protocol: "amqp",
+    %description: "RabbitMQ message broker"
+  }
+}
+
+%types: {
+  OrderPlaced: {
+    %kind: "structure",
+    %documentation: "Order placed event",
+    %fields: [
+      {
+        %name: "orderId",
+        %type: "string",
+        %required: true,
+        %description: "Order identifier"
+      },
+      {
+        %name: "customerId",
+        %type: "string",
+        %required: true,
+        %description: "Customer identifier"
+      },
+      {
+        %name: "totalAmount",
+        %type: "double",
+        %required: true,
+        %description: "Total order amount"
+      },
+      {
+        %name: "placedAt",
+        %type: "long",
+        %required: true,
+        %description: "Order placement timestamp"
+      }
+    ]
+  },
+
+  OrderShipped: {
+    %kind: "structure",
+    %documentation: "Order shipped event",
+    %fields: [
+      {
+        %name: "orderId",
+        %type: "string",
+        %required: true,
+        %description: "Order identifier"
+      },
+      {
+        %name: "trackingNumber",
+        %type: "string",
+        %required: true,
+        %description: "Shipping tracking number"
+      },
+      {
+        %name: "shippedAt",
+        %type: "long",
+        %required: true,
+        %description: "Shipment timestamp"
+      }
+    ]
+  }
+}
+
+%channels: {
+  "orders.placed": {
+    %address: "orders.placed",
+    %protocol: "amqp",
+    %description: "Order placement queue"
+  },
+  "orders.shipped": {
+    %address: "orders.shipped",
+    %protocol: "amqp",
+    %description: "Order shipment queue"
+  }
+}
+
+%operations: {
+  publishOrderPlaced: {
+    %action: "send",
+    %channel: "orders.placed",
+    %message: "OrderPlaced"
+  },
+  subscribeOrderShipped: {
+    %action: "receive",
+    %channel: "orders.shipped",
+    %message: "OrderShipped"
+  }
+}
+
+%messages: {
+  OrderPlaced: {
+    %contentType: "application/json",
+    %payload: "OrderPlaced"
+  },
+  OrderShipped: {
+    %contentType: "application/json",
+    %payload: "OrderShipped"
+  }
+}

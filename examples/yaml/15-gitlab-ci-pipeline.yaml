@@ -1,0 +1,102 @@
+# GitLab CI/CD Pipeline - Complete Multi-Stage Pipeline
+stages:
+  - validate
+  - build
+  - test
+  - security
+  - package
+  - deploy
+  - verify
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  KUBERNETES_NAMESPACE: $CI_PROJECT_NAME-$CI_ENVIRONMENT_NAME
+  HELM_VERSION: "3.13.0"
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG'
+
+.docker_template: &docker_config
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+validate:code-quality:
+  stage: validate
+  image: sonarsource/sonar-scanner-cli:latest
+  script:
+    - sonar-scanner
+        -Dsonar.projectKey=$CI_PROJECT_NAME
+        -Dsonar.sources=.
+        -Dsonar.host.url=$SONAR_HOST_URL
+        -Dsonar.login=$SONAR_TOKEN
+  only:
+    - merge_requests
+    - main
+
+build:maven:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17
+  cache:
+    paths:
+      - .m2/repository
+  script:
+    - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+
+test:unit:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn test
+  coverage: '/Total.*?(\d+\.?\d*)%/'
+  artifacts:
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: target/site/cobertura/coverage.xml
+
+security:dependency-scan:
+  stage: security
+  image: aquasec/trivy:latest
+  script:
+    - trivy fs --format json --output trivy-report.json .
+  artifacts:
+    reports:
+      dependency_scanning: trivy-report.json
+
+package:docker:
+  <<: *docker_config
+  stage: package
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+
+deploy:production:
+  stage: deploy
+  image: alpine/helm:$HELM_VERSION
+  environment:
+    name: production
+    url: https://app.example.com
+    kubernetes:
+      namespace: $KUBERNETES_NAMESPACE
+  script:
+    - helm upgrade --install $CI_PROJECT_NAME ./helm
+        --namespace $KUBERNETES_NAMESPACE
+        --set image.tag=$CI_COMMIT_SHA
+        --wait --timeout=5m
+  only:
+    - main

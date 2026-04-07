@@ -1,0 +1,286 @@
+%utlx 1.0
+input json
+output json
+---
+
+// ============================================================================
+// Business Scenario: Swiss Invoice (DE) → Payment Reminder
+// ----------------------------------------------------------------------------
+// Input:  Swiss invoice in German (25-ch-invoice-de.json)
+// Output: JSON payment reminder for accounts receivable follow-up
+//
+// Swiss companies need to send payment reminders for unpaid invoices.
+// This transformation generates a reminder document with urgency levels,
+// late fee calculations, and payment instructions including QR-Bill data.
+// ============================================================================
+
+function ReminderLevel(daysOverdue) {
+  if (daysOverdue <= 0) "NOT_DUE"
+  else if (daysOverdue <= 14) "FRIENDLY_REMINDER"
+  else if (daysOverdue <= 30) "FIRST_REMINDER"
+  else if (daysOverdue <= 45) "SECOND_REMINDER"
+  else "FINAL_NOTICE"
+}
+
+function LateFeeCHF(reminderLevel, baseAmount, feeSchedule) {
+  match (reminderLevel) {
+    "FRIENDLY_REMINDER" => 0,
+    "FIRST_REMINDER" => feeSchedule.ersteMahnung,
+    "SECOND_REMINDER" => feeSchedule.zweiteMahnung,
+    "FINAL_NOTICE" => feeSchedule.dritteMahnung,
+    _ => 0
+  }
+}
+
+function InterestAmount(principal, rate, daysOverdue) {
+  if (daysOverdue <= 0) 0
+  else roundToCents(principal * (rate / 100) * (daysOverdue / 365))
+}
+
+function UrgencyColor(level) {
+  match (level) {
+    "NOT_DUE" => "#00AA00",
+    "FRIENDLY_REMINDER" => "#FFA500",
+    "FIRST_REMINDER" => "#FF8C00",
+    "SECOND_REMINDER" => "#FF4500",
+    "FINAL_NOTICE" => "#FF0000",
+    _ => "#808080"
+  }
+}
+
+
+{
+  let invoiceDate = parseDate($input.rechnungsDatum);
+  let dueDate = parseDate($input.zahlungsziel);
+  let daysOverdue = diffDays(dueDate, now());
+  let daysUntilDue = diffDays(now(), dueDate);
+  let reminderLevel = ReminderLevel(daysOverdue);
+  let lateFee = LateFeeCHF(reminderLevel, $input.zusammenfassung.bruttoGesamt, $input.zahlungsbedingungen.mahngebuehren);
+  let interestDue = InterestAmount($input.zusammenfassung.bruttoGesamt, $input.zahlungsbedingungen.mahngebuehren.verzugszins, daysOverdue);
+  let totalWithFees = roundToCents($input.zusammenfassung.bruttoGesamt + lateFee + interestDue);
+  let lineItemCount = count($input.positionen);
+  let totalDiscount = $input.zusammenfassung.rabattGesamt;
+  let skontoValid = diffDays(now(), addDays(invoiceDate, $input.zahlungsbedingungen.skonto.frist)) > 0;
+
+  {
+    paymentReminder: {
+      reminderId: "REM-" + replace(generateUuid(), "-", ""),
+      reminderType: "INVOICE_PAYMENT_REMINDER",
+      generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+      reminderLanguage: "DE",
+      reminderCountry: "CH"
+    },
+    reminderStatus: {
+      level: reminderLevel,
+      levelNumber: match (reminderLevel) {
+        "NOT_DUE" => 0,
+        "FRIENDLY_REMINDER" => 1,
+        "FIRST_REMINDER" => 2,
+        "SECOND_REMINDER" => 3,
+        "FINAL_NOTICE" => 4,
+        _ => 0
+      },
+      urgencyColor: UrgencyColor(reminderLevel),
+      isOverdue: daysOverdue > 0,
+      daysOverdue: max(0, daysOverdue),
+      daysUntilDue: max(0, daysUntilDue),
+      escalationRequired: reminderLevel == "FINAL_NOTICE",
+      nextAction: match (reminderLevel) {
+        "NOT_DUE" => "WAIT_FOR_DUE_DATE",
+        "FRIENDLY_REMINDER" => "SEND_FRIENDLY_EMAIL",
+        "FIRST_REMINDER" => "SEND_FORMAL_LETTER",
+        "SECOND_REMINDER" => "PHONE_CALL_FOLLOW_UP",
+        "FINAL_NOTICE" => "ESCALATE_TO_COLLECTIONS",
+        _ => "REVIEW"
+      }
+    },
+    originalInvoice: {
+      invoiceNumber: $input.rechnungsNummer,
+      invoiceDate: $input.rechnungsDatum,
+      invoiceDateFormatted: formatDate(invoiceDate, "d. MMMM yyyy"),
+      dueDate: $input.zahlungsziel,
+      dueDateFormatted: formatDate(dueDate, "d. MMMM yyyy"),
+      paymentTerms: $input.zahlungskonditionen,
+      status: $input.status,
+      lineItemCount: lineItemCount,
+      currency: $input.zusammenfassung.währung
+    },
+    creditor: {
+      companyName: $input.rechnungssteller.firma,
+      companySlug: slugify($input.rechnungssteller.firma),
+      uid: $input.rechnungssteller.uid,
+      commercialRegister: $input.rechnungssteller.handelsregisterNummer,
+      address: {
+        street: $input.rechnungssteller.adresse.strasse + " " + $input.rechnungssteller.adresse.hausnummer,
+        postalCode: $input.rechnungssteller.adresse.plz,
+        city: $input.rechnungssteller.adresse.ort,
+        canton: $input.rechnungssteller.adresse.kanton,
+        country: $input.rechnungssteller.adresse.land,
+        fullAddress: joinToString([
+          $input.rechnungssteller.adresse.strasse + " " + $input.rechnungssteller.adresse.hausnummer,
+          $input.rechnungssteller.adresse.plz + " " + $input.rechnungssteller.adresse.ort,
+          $input.rechnungssteller.adresse.land
+        ], ", ")
+      },
+      contact: {
+        name: $input.rechnungssteller.kontakt.person,
+        phone: $input.rechnungssteller.kontakt.telefon,
+        email: $input.rechnungssteller.kontakt.email
+      },
+      bankDetails: {
+        bank: $input.rechnungssteller.bankverbindung.bank,
+        iban: $input.rechnungssteller.bankverbindung.iban,
+        ibanFormatted: replace($input.rechnungssteller.bankverbindung.iban, " ", ""),
+        swift: $input.rechnungssteller.bankverbindung.swift,
+        clearing: $input.rechnungssteller.bankverbindung.clearing,
+        qrIban: $input.rechnungssteller.bankverbindung.qrIban,
+        qrReference: $input.rechnungssteller.bankverbindung.qrReferenz
+      }
+    },
+    debtor: {
+      companyName: $input.rechnungsempfänger.firma,
+      companySlug: slugify($input.rechnungsempfänger.firma),
+      vatNumber: $input.rechnungsempfänger.ustIdNr,
+      address: {
+        street: $input.rechnungsempfänger.adresse.strasse + " " + $input.rechnungsempfänger.adresse.hausnummer,
+        postalCode: $input.rechnungsempfänger.adresse.plz,
+        city: $input.rechnungsempfänger.adresse.ort,
+        state: $input.rechnungsempfänger.adresse.bundesland,
+        country: $input.rechnungsempfänger.adresse.land,
+        isInternational: $input.rechnungsempfänger.adresse.land != "Schweiz"
+      },
+      contact: {
+        name: $input.rechnungsempfänger.kontakt.person,
+        phone: $input.rechnungsempfänger.kontakt.telefon,
+        email: $input.rechnungsempfänger.kontakt.email
+      }
+    },
+    amountBreakdown: {
+      subtotal: {
+        amount: $input.zusammenfassung.zwischensumme,
+        formatted: formatCurrency($input.zusammenfassung.zwischensumme, "CHF")
+      },
+      discounts: {
+        amount: totalDiscount,
+        formatted: formatCurrency(totalDiscount, "CHF"),
+        hasDiscount: totalDiscount > 0
+      },
+      netTotal: {
+        amount: $input.zusammenfassung.nettoGesamt,
+        formatted: formatCurrency($input.zusammenfassung.nettoGesamt, "CHF")
+      },
+      vat: {
+        rate: first($input.zusammenfassung.mwst).satz,
+        base: first($input.zusammenfassung.mwst).bemessungsgrundlage,
+        amount: $input.zusammenfassung.mwstGesamt,
+        formatted: formatCurrency($input.zusammenfassung.mwstGesamt, "CHF")
+      },
+      grossTotal: {
+        amount: $input.zusammenfassung.bruttoGesamt,
+        formatted: formatCurrency($input.zusammenfassung.bruttoGesamt, "CHF")
+      },
+      lateFee: {
+        amount: lateFee,
+        formatted: formatCurrency(lateFee, "CHF"),
+        applicable: lateFee > 0
+      },
+      interestDue: {
+        amount: interestDue,
+        formatted: formatCurrency(interestDue, "CHF"),
+        rate: $input.zahlungsbedingungen.mahngebuehren.verzugszins,
+        calculation: $input.zahlungsbedingungen.mahngebuehren.verzugszinsBerechnung,
+        applicable: interestDue > 0
+      },
+      totalDue: {
+        amount: totalWithFees,
+        formatted: formatCurrency(totalWithFees, "CHF"),
+        additionalCharges: lateFee + interestDue
+      }
+    },
+    skontoOffer: {
+      available: $input.zahlungsbedingungen.skonto.verfügbar,
+      stillValid: skontoValid,
+      percentage: $input.zahlungsbedingungen.skonto.prozent,
+      deadlineDays: $input.zahlungsbedingungen.skonto.frist,
+      discountedAmount: $input.zahlungsbedingungen.skonto.betragBeiSkonto,
+      discountedAmountFormatted: formatCurrency($input.zahlungsbedingungen.skonto.betragBeiSkonto, "CHF"),
+      potentialSavings: $input.zahlungsbedingungen.skonto.ersparnis,
+      potentialSavingsFormatted: formatCurrency($input.zahlungsbedingungen.skonto.ersparnis, "CHF"),
+      message: if (skontoValid)
+               "Bei Zahlung innerhalb von " + toString($input.zahlungsbedingungen.skonto.frist) +
+               " Tagen gewähren wir " + toString($input.zahlungsbedingungen.skonto.prozent) + "% Skonto"
+               else "Skonto-Frist ist abgelaufen"
+    },
+    feeSchedule: {
+      firstReminder: formatCurrency($input.zahlungsbedingungen.mahngebuehren.ersteMahnung, "CHF"),
+      secondReminder: formatCurrency($input.zahlungsbedingungen.mahngebuehren.zweiteMahnung, "CHF"),
+      thirdReminder: formatCurrency($input.zahlungsbedingungen.mahngebuehren.dritteMahnung, "CHF"),
+      interestRate: $input.zahlungsbedingungen.mahngebuehren.verzugszins
+    },
+    lineItemsSummary: {
+      totalItems: lineItemCount,
+      items: $input.positionen |> map(p => {
+        {
+          position: p.position,
+          articleNumber: p.artikelNummer,
+          description: truncate(p.beschreibung, 40, "..."),
+          quantity: p.menge,
+          unit: p.einheit,
+          unitPrice: formatCurrency(p.einzelpreis, "CHF"),
+          discount: p.rabatt.prozent > 0 ? toString(p.rabatt.prozent) + "%" : "-",
+          netPrice: formatCurrency(p.nettopreis, "CHF"),
+          grossPrice: formatCurrency(p.bruttopreis, "CHF")
+        }
+      })
+    },
+    qrBillData: {
+      qrType: $input.qrRechnung.qrType,
+      version: $input.qrRechnung.version,
+      qrIban: $input.qrRechnung.qrIban,
+      amount: $input.qrRechnung.amount,
+      amountWithFees: totalWithFees,
+      currency: $input.qrRechnung.currency,
+      creditorName: $input.qrRechnung.creditor.name,
+      creditorAddress: $input.qrRechnung.creditor.addressLine1 + ", " + $input.qrRechnung.creditor.addressLine2,
+      debtorName: $input.qrRechnung.debtor.name,
+      debtorAddress: $input.qrRechnung.debtor.addressLine1 + ", " + $input.qrRechnung.debtor.addressLine2,
+      referenceType: $input.qrRechnung.referenceType,
+      reference: $input.qrRechnung.reference,
+      additionalInfo: $input.qrRechnung.additionalInfo
+    },
+    deliveryInfo: {
+      deliveryNoteNumber: $input.lieferung.lieferscheinNummer,
+      deliveryDate: $input.lieferung.lieferdatum,
+      shippingMethod: $input.lieferung.versandart,
+      incoterms: $input.lieferung.incoterms,
+      shippingIncluded: $input.lieferung.versandkosten.inklusive,
+      totalWeightKg: $input.lieferung.gewicht.brutto
+    },
+    legalNotices: {
+      paymentDefault: $input.rechtshinweise.zahlungsverzug,
+      retentionOfTitle: $input.rechtshinweise.eigentumsvorbehalt,
+      jurisdiction: $input.rechtshinweise.gerichtsstand,
+      applicableLaw: $input.rechtshinweise.anwendbaresRecht
+    },
+    reminderMessage: {
+      subject: "Zahlungserinnerung - Rechnung " + $input.rechnungsNummer,
+      salutation: "Sehr geehrte " + $input.rechnungsempfänger.kontakt.person + ",",
+      body: match (reminderLevel) {
+        "NOT_DUE" => "wir möchten Sie freundlich daran erinnern, dass die oben genannte Rechnung in Kürze fällig wird.",
+        "FRIENDLY_REMINDER" => "wir erlauben uns, Sie höflich an die ausstehende Zahlung zu erinnern.",
+        "FIRST_REMINDER" => "trotz unserer ersten Erinnerung konnten wir leider noch keinen Zahlungseingang verzeichnen.",
+        "SECOND_REMINDER" => "wir müssen Sie leider erneut an die ausstehende Zahlung erinnern. Bitte begleichen Sie den Betrag umgehend.",
+        "FINAL_NOTICE" => "dies ist unsere letzte Mahnung vor Einleitung rechtlicher Schritte. Bitte zahlen Sie innerhalb von 10 Tagen.",
+        _ => "wir bitten um Begleichung der offenen Rechnung."
+      },
+      closing: "Mit freundlichen Grüssen"
+    },
+    signatureInfo: {
+      location: $input.unterschrift.ort,
+      date: $input.unterschrift.datum,
+      signedBy: $input.unterschrift.person,
+      title: $input.unterschrift.funktion
+    },
+    documentHash: sha256($input.rechnungsNummer + toString(totalWithFees) + $input.rechnungsDatum)
+  }
+}

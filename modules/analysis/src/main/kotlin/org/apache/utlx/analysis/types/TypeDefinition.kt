@@ -90,16 +90,54 @@ sealed class TypeDefinition {
     object Any : TypeDefinition() {
         override fun toString(): String = "Any"
     }
-    
+
+    /**
+     * Unknown type - represents a value whose type is not yet determined
+     * Can be assigned to anything and accepts anything
+     */
+    object Unknown : TypeDefinition() {
+        override fun toString(): String = "Unknown"
+    }
+
+    /**
+     * Never type - represents an impossible or error type
+     * Cannot be assigned to anything (except Never)
+     */
+    object Never : TypeDefinition() {
+        override fun toString(): String = "Never"
+    }
+
     /**
      * Check if this type is compatible with another type
      */
     fun isCompatibleWith(other: TypeDefinition): Boolean {
         return when {
+            // Any type accepts all types
             this is Any || other is Any -> true
-            this::class != other::class -> false
-            this is Scalar && other is Scalar -> this.kind == other.kind
+
+            // Source is union - all members must be compatible with target
+            this is Union -> this.types.all { it.isCompatibleWith(other) }
+
+            // Target is union - source must be compatible with at least one member
+            other is Union -> other.types.any { this.isCompatibleWith(it) }
+
+            // Scalar type compatibility
+            this is Scalar && other is Scalar -> {
+                when {
+                    // Exact match
+                    this.kind == other.kind -> true
+                    // INTEGER can convert to NUMBER
+                    this.kind == ScalarKind.INTEGER && other.kind == ScalarKind.NUMBER -> true
+                    // Everything can convert to STRING
+                    other.kind == ScalarKind.STRING -> true
+                    else -> false
+                }
+            }
+
+            // Array type compatibility
             this is Array && other is Array -> this.elementType.isCompatibleWith(other.elementType)
+
+            // Object type compatibility (structural)
             this is Object && other is Object -> {
                 // Check all required fields in 'other' exist in 'this'
                 other.required.all { field ->
@@ -107,10 +145,7 @@ sealed class TypeDefinition {
                     this.properties[field]!!.type.isCompatibleWith(other.properties[field]!!.type)
                 }
             }
-            this is Union && other is Union -> {
-                // Simplified - real implementation would be more sophisticated
-                this.types.size == other.types.size
-            }
+
             else -> false
         }
     }
@@ -126,15 +161,21 @@ data class PropertyType(
     val defaultValue: Any? = null
 ) {
     fun isNullable(): Boolean = nullable
-    
+
+    /**
+     * Get the effective type including nullability
+     */
+    val effectiveType: TypeDefinition
+        get() = if (nullable) type.nullable() else type
+
     fun withDescription(desc: String): PropertyType {
         return copy(description = desc)
     }
-    
+
     fun withDefault(value: Any): PropertyType {
         return copy(defaultValue = value)
     }
-    
+
     fun makeNullable(): PropertyType {
         return copy(nullable = true)
     }
@@ -181,33 +222,71 @@ enum class ScalarKind {
 /**
  * Constraint on a scalar type
  */
-data class Constraint(
-    val kind: ConstraintKind,
-    val value: Any
-) {
-    override fun toString(): String = "$kind($value)"
-}
+sealed class Constraint {
+    /**
+     * Minimum string length constraint
+     */
+    data class MinLength(val value: Int) : Constraint() {
+        override fun toString(): String = "MinLength($value)"
+    }
 
-/**
- * Types of constraints
- */
-enum class ConstraintKind {
-    MIN_LENGTH,     // Minimum string length
-    MAX_LENGTH,     // Maximum string length
-    PATTERN,        // Regular expression pattern
-    MINIMUM,        // Minimum numeric value (inclusive)
-    MAXIMUM,        // Maximum numeric value (inclusive)
-    ENUM;           // Enumeration of allowed values
-    
+    /**
+     * Maximum string length constraint
+     */
+    data class MaxLength(val value: Int) : Constraint() {
+        override fun toString(): String = "MaxLength($value)"
+    }
+
+    /**
+     * Regular expression pattern constraint
+     */
+    data class Pattern(val regex: String) : Constraint() {
+        override fun toString(): String = "Pattern($regex)"
+    }
+
+    /**
+     * Minimum numeric value constraint (inclusive)
+     */
+    data class Minimum(val value: Double) : Constraint() {
+        override fun toString(): String = "Minimum($value)"
+    }
+
+    /**
+     * Maximum numeric value constraint (inclusive)
+     */
+    data class Maximum(val value: Double) : Constraint() {
+        override fun toString(): String = "Maximum($value)"
+    }
+
+    /**
+     * Enumeration of allowed values
+     */
+    data class Enum(val values: List<Any>) : Constraint() {
+        override fun toString(): String = "Enum($values)"
+    }
+
+    /**
+     * Custom constraint with name and parameters
+     */
+    data class Custom(val name: String, val params: Map<String, Any> = emptyMap()) : Constraint() {
+        override fun toString(): String = "Custom($name, $params)"
+    }
+
     /**
      * Check if this constraint applies to strings
      */
-    fun isStringConstraint(): Boolean = this in setOf(MIN_LENGTH, MAX_LENGTH, PATTERN, ENUM)
-    
+    fun isStringConstraint(): Boolean = when (this) {
+        is MinLength, is MaxLength, is Pattern, is Enum -> true
+        else -> false
+    }
+
     /**
      * Check if this constraint applies to numbers
      */
-    fun isNumericConstraint(): Boolean = this in setOf(MINIMUM, MAXIMUM, ENUM)
+    fun isNumericConstraint(): Boolean = when (this) {
+        is Minimum, is Maximum, is Enum -> true
+        else -> false
+    }
 }
 
 /**
@@ -224,32 +303,32 @@ class TypeBuilder {
             enum: List<String>? = null
         ): TypeDefinition.Scalar {
             val constraints = mutableListOf<Constraint>()
-            minLength?.let { constraints.add(Constraint(ConstraintKind.MIN_LENGTH, it)) }
-            maxLength?.let { constraints.add(Constraint(ConstraintKind.MAX_LENGTH, it)) }
-            pattern?.let { constraints.add(Constraint(ConstraintKind.PATTERN, it)) }
-            enum?.let { constraints.add(Constraint(ConstraintKind.ENUM, it)) }
+            minLength?.let { constraints.add(Constraint.MinLength(it)) }
+            maxLength?.let { constraints.add(Constraint.MaxLength(it)) }
+            pattern?.let { constraints.add(Constraint.Pattern(it)) }
+            enum?.let { constraints.add(Constraint.Enum(it)) }
             return TypeDefinition.Scalar(ScalarKind.STRING, constraints)
         }
-        
+
         fun integer(
             min: Int? = null,
             max: Int? = null,
             enum: List<Int>? = null
         ): TypeDefinition.Scalar {
             val constraints = mutableListOf<Constraint>()
-            min?.let { constraints.add(Constraint(ConstraintKind.MINIMUM, it.toDouble())) }
-            max?.let { constraints.add(Constraint(ConstraintKind.MAXIMUM, it.toDouble())) }
-            enum?.let { constraints.add(Constraint(ConstraintKind.ENUM, it.map { it.toString() })) }
+            min?.let { constraints.add(Constraint.Minimum(it.toDouble())) }
+            max?.let { constraints.add(Constraint.Maximum(it.toDouble())) }
+            enum?.let { constraints.add(Constraint.Enum(it.map { it.toString() })) }
             return TypeDefinition.Scalar(ScalarKind.INTEGER, constraints)
         }
-        
+
         fun number(
             min: Double? = null,
             max: Double? = null
         ): TypeDefinition.Scalar {
             val constraints = mutableListOf<Constraint>()
-            min?.let { constraints.add(Constraint(ConstraintKind.MINIMUM, it)) }
-            max?.let { constraints.add(Constraint(ConstraintKind.MAXIMUM, it)) }
+            min?.let { constraints.add(Constraint.Minimum(it)) }
+            max?.let { constraints.add(Constraint.Maximum(it)) }
             return TypeDefinition.Scalar(ScalarKind.NUMBER, constraints)
         }
         
@@ -317,6 +396,28 @@ fun TypeDefinition.nullable(): TypeDefinition.Union {
 fun TypeDefinition.asArray(minItems: Int? = null, maxItems: Int? = null): TypeDefinition.Array {
     return TypeDefinition.Array(this, minItems, maxItems)
 }
+
+// Check if a type is nullable (i.e., is a Union containing NULL)
+val TypeDefinition.isNullable: Boolean
+    get() = this is TypeDefinition.Union &&
+            this.types.any { it is TypeDefinition.Scalar && it.kind == ScalarKind.NULL }
+
+// Get non-nullable version of a type (removes NULL from Union if present)
+val TypeDefinition.nonNullable: TypeDefinition
+    get() = when {
+        !this.isNullable -> this
+        this is TypeDefinition.Union -> {
+            val nonNullTypes = this.types.filter {
+                !(it is TypeDefinition.Scalar && it.kind == ScalarKind.NULL)
+            }
+            when (nonNullTypes.size) {
+                0 -> TypeDefinition.Never
+                1 -> nonNullTypes[0]
+                else -> TypeDefinition.Union(nonNullTypes)
+            }
+        }
+        else -> this
+    }
 
 // Common type aliases
 object CommonTypes {

@@ -1,0 +1,59 @@
+{
+  "catalogId": "CAT-2025-Q1-ELECTRONICS",
+  "catalogName": "Q1 2025 Electronics Catalog",
+  "effectiveDate": "2025-01-01",
+  "expirationDate": "2025-03-31",
+  "category": "Consumer Electronics",
+  "products": [
+    {
+      "productId": "PROD-LAPTOP-ULTRA-15",
+      "sku": "LPT-ULT-15-SLV",
+      "name": "UltraBook Pro 15-inch",
+      "description": "Premium ultrabook with 15-inch 4K display, latest generation processor, and all-day battery life",
+      "brand": "TechPro",
+      "category": "Laptops",
+      "subcategory": "Premium Notebooks",
+      "specifications": {
+        "processor": "Intel Core i7-14th Gen",
+        "ram": "32GB DDR5",
+        "storage": "1TB NVMe SSD",
+        "display": "15.6-inch 4K OLED",
+        "graphics": "Integrated Iris Xe",
+        "battery": "12 hours",
+        "weight": "3.2 lbs",
+        "os": "Windows 11 Pro"
+      },
+      "pricing": {
+        "msrp": 1899.99,
+        "wholesale": 1329.99,
+        "retailPrice": 1699.99,
+        "salePrice": 1599.99,
+        "currency": "USD"
+      },
+      "inventory": {
+        "inStock": 145,
+        "reserved": 23,
+        "available": 122,
+        "reorderLevel": 50,
+        "reorderQuantity": 100
+      },
+      "images": [
+        "https://cdn.example.com/products/laptop-ultra-15-front.jpg",
+        "https://cdn.example.com/products/laptop-ultra-15-side.jpg"
+      ],
+      "warranty": {
+        "duration": 24,
+        "durationType": "MONTHS",
+        "coverage": "Manufacturer warranty covering defects"
+      },
+      "active": true,
+      "featured": true,
+      "releaseDate": "2024-11-15"
+    }
+  ],
+  "metadata": {
+    "totalProducts": 1,
+    "lastUpdated": "2025-01-15T18:00:00Z",
+    "updatedBy": "catalog-admin"
+  }
+}

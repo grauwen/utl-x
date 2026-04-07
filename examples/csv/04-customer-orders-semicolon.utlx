@@ -1,0 +1,24 @@
+%utlx 1.0
+input orders csv {delimiter: ";"}
+output json
+---
+{
+  "orderSummary": {
+    "totalOrders": count($orders),
+    "totalRevenue": sum(map($orders, o => o.OrderTotal)),
+    "byCountry": {
+      "Germany": filter($orders, o => o.Country == "Germany"),
+      "France": filter($orders, o => o.Country == "France"),
+      "Italy": filter($orders, o => o.Country == "Italy"),
+      "Austria": filter($orders, o => o.Country == "Austria"),
+      "Switzerland": filter($orders, o => o.Country == "Switzerland")
+    },
+    "byStatus": {
+// TODO stdlib function count does not exist, what should be placed here? Should there be a synoniem being made 
+      "Shipped": count(filter($orders, o => o.Status == "Shipped")),
+      "Processing": count(filter($orders, o => o.Status == "Processing")),
+      "Delivered": count(filter($orders, o => o.Status == "Delivered"))
+    }
+  },
+  "orders": $orders
+}

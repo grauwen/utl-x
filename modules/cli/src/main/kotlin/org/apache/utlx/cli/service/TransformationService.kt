@@ -22,6 +22,12 @@ import org.apache.utlx.formats.jsch.JSONSchemaSerializer
 import org.apache.utlx.formats.json.JSONParser
 import org.apache.utlx.formats.json.JSONSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaParser
+import org.apache.utlx.formats.osch.EDMXParser
+import org.apache.utlx.formats.osch.EDMXSerializer
+import org.apache.utlx.formats.tsch.TableSchemaParser
+import org.apache.utlx.formats.tsch.TableSchemaSerializer
+import org.apache.utlx.formats.odata.ODataJSONParser
+import org.apache.utlx.formats.odata.ODataJSONSerializer
 import org.apache.utlx.formats.protobuf.ProtobufSchemaSerializer
 import org.apache.utlx.formats.xml.XMLParser
 import org.apache.utlx.formats.xml.XMLSerializer
@@ -118,7 +124,7 @@ class TransformationService {
         val tokens = lexer.tokenize()
 
         if (options.verbose) println("[TransformationService] Parsing...")
-        val parser = Parser(tokens)
+        val parser = Parser(tokens, source)
         val parseResult = parser.parse()
 
         val program = when (parseResult) {
@@ -127,11 +133,12 @@ class TransformationService {
                 parseResult.program
             }
             is ParseResult.Failure -> {
-                System.err.println("Parse errors:")
-                parseResult.errors.forEach { error ->
-                    System.err.println("  ${error.message} at ${error.location}")
+                val errorMessages = parseResult.errors.joinToString("\n") { error ->
+                    "  ${error.message} at ${error.location}"
                 }
-                throw IllegalStateException("Parsing failed")
+                System.err.println("Parse errors:")
+                System.err.println(errorMessages)
+                throw IllegalStateException("Parse errors:\n$errorMessages")
             }
         }
 
@@ -183,17 +190,18 @@ class TransformationService {
                         trimmed.startsWith("<") -> "xml"
                         trimmed.startsWith("{") || trimmed.startsWith("[") -> "json"
                         trimmed.startsWith("---") || trimmed.contains(":\n") || trimmed.contains(": ") -> "yaml"
+                        // Detect CSV: look for comma-separated values with consistent column counts
                         trimmed.contains(",") && trimmed.lines().size > 1 -> {
-                            // CSV detection: check if comma counts are consistent across lines
                             val lines = trimmed.lines().filter { it.isNotBlank() }
                             val firstLineCommas = lines.firstOrNull()?.count { it == ',' } ?: 0
+                            // If multiple lines have similar comma counts, likely CSV
                             if (firstLineCommas > 0 && lines.take(3).all { it.count { c -> c == ',' } == firstLineCommas }) {
                                 "csv"
                             } else {
-                                "json"
+                                "json" // Default to JSON
                             }
                         }
-                        else -> "json"
+                        else -> "json" // Default to JSON
                     }
                     parseInput(data, detectedFormat, options)
                 }
@@ -206,6 +214,12 @@ class TransformationService {
                 }
                 "json" -> {
                     JSONParser(data).parse()
+                }
+                "odata" -> {
+                    ODataJSONParser(data, options).parse()
+                }
+                "osch" -> {
+                    EDMXParser(data, options).parse()
                 }
                 "csv" -> {
                     val delimiter = (options["delimiter"] as? String)?.firstOrNull() ?: ','
@@ -226,6 +240,9 @@ class TransformationService {
                 }
                 "jsch" -> {
                     JSONSchemaParser(data).parse()
+                }
+                "tsch" -> {
+                    TableSchemaParser(data).parse()
                 }
                 "avro" -> {
                     AvroSchemaParser().parse(data)
@@ -252,6 +269,18 @@ class TransformationService {
                     XMLSerializer(prettyPrint = pretty, outputEncoding = encoding).serialize(udm)
                 }
                 "json" -> JSONSerializer(pretty).serialize(udm)
+                "odata" -> {
+                    val odataOptions = buildMap<String, Any> {
+                        formatSpec.options["metadata"]?.let { put("metadata", it) }
+                        formatSpec.options["context"]?.let { put("context", it) }
+                        formatSpec.options["wrapCollection"]?.let { put("wrapCollection", it) }
+                    }
+                    ODataJSONSerializer(odataOptions).serialize(udm)
+                }
+                "osch" -> {
+                    val namespace = formatSpec.options["namespace"] as? String
+                    EDMXSerializer(namespace = namespace, prettyPrint = pretty).serialize(udm)
+                }
                 "csv" -> {
                     val delimiter = (formatSpec.options["delimiter"] as? String)?.firstOrNull() ?: ','
                     val headers = (formatSpec.options["headers"] as? Boolean) ?: true
@@ -308,6 +337,14 @@ class TransformationService {
                     JSONSchemaSerializer(
                         draft = draft,
                         addDescriptions = addDesc,
+                        prettyPrint = pretty,
+                        strict = strict
+                    ).serialize(udm)
+                }
+                "tsch" -> {
+                    val strict = formatSpec.options["strict"] as? Boolean ?: true
+
+                    TableSchemaSerializer(
                         prettyPrint = pretty,
                         strict = strict
                     ).serialize(udm)

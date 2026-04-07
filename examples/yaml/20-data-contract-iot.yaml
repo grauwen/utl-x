@@ -1,0 +1,60 @@
+# Data Contract - IoT Telemetry Data
+dataContractSpecification: 0.9.3
+id: iot-telemetry-v1
+info:
+  title: IoT Device Telemetry Stream
+  version: 1.0.0
+  description: |
+    Real-time telemetry data from IoT sensors and devices.
+    Supports industrial sensors, environmental monitors, and smart devices.
+  owner: IoT Platform Team
+  tags: [iot, telemetry, sensors, time-series]
+servers:
+  production:
+    type: kafka
+    host: iot-kafka.example.com
+    port: 9092
+    topic: iot.telemetry.v1
+    format: avro
+models:
+  telemetry_reading:
+    type: object
+    fields:
+      device_id:
+        type: string
+        required: true
+        pattern: "^DEV-[A-Z0-9]{12}$"
+        tags: [partition-key]
+      timestamp:
+        type: timestamp
+        required: true
+        precision: nanosecond
+      sensor_type:
+        type: string
+        required: true
+        enum: [temperature, humidity, pressure, motion, light, sound]
+      value:
+        type: decimal
+        required: true
+        precision: 10
+        scale: 4
+      unit:
+        type: string
+        required: true
+      location:
+        type: object
+        fields:
+          latitude:
+            type: decimal
+            precision: 10
+            scale: 7
+          longitude:
+            type: decimal
+            precision: 10
+            scale: 7
+          altitude:
+            type: decimal
+      battery_level:
+        type: integer
+        minimum: 0
+        maximum: 100

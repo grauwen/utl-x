@@ -1,0 +1,9 @@
+patient_id,first_name,last_name,date_of_birth,age,gender,blood_type,email,phone,emergency_contact,is_insured
+PAT-100001,John,Doe,1985-06-15,38,male,O+,john.doe@email.com,+15551001,Jane Doe (+15551002),true
+PAT-100002,Maria,Santos,1990-03-22,33,female,A-,maria.santos@email.com,+15551003,Carlos Santos (+15551004),true
+PAT-100003,Wei,Zhang,1978-11-08,45,male,B+,wei.zhang@email.com,+15551005,Lin Zhang (+15551006),true
+PAT-100004,Amara,Osei,1995-01-30,29,female,AB+,amara.osei@email.com,+15551007,Kwame Osei (+15551008),false
+PAT-100005,Liam,O'Brien,1968-09-12,55,male,A+,liam.obrien@email.com,+15551009,Siobhan O'Brien (+15551010),true
+PAT-100006,Yuki,Tanaka,2000-07-04,23,female,O-,yuki.tanaka@email.com,+15551011,Hiro Tanaka (+15551012),true
+PAT-100007,Raj,Patel,1982-12-25,41,male,B-,raj.patel@email.com,+15551013,Anita Patel (+15551014),true
+PAT-100008,Sofia,Rossi,1973-04-18,50,female,AB-,sofia.rossi@email.com,+15551015,Marco Rossi (+15551016),false

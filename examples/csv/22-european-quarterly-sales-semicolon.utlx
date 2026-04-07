@@ -1,0 +1,41 @@
+%utlx 1.0
+input sales csv {delimiter: ";"}
+output json
+---
+{
+  "annualSalesReport": {
+    "totalRevenue": sum(map($sales, fn(s) => s.YearTotal)),
+    "byRegion": {
+      "DACH": {
+        "total": sum(map(filter($sales, fn(s) => s.Region == "DACH"), fn(s) => s.YearTotal)),
+        "countries": filter($sales, fn(s) => s.Region == "DACH")
+      },
+      "Western": {
+        "total": sum(map(filter($sales, fn(s) => s.Region == "Western"), fn(s) => s.YearTotal)),
+        "countries": filter($sales, fn(s) => s.Region == "Western")
+      },
+      "Southern": {
+        "total": sum(map(filter($sales, fn(s) => s.Region == "Southern"), fn(s) => s.YearTotal)),
+        "countries": filter($sales, fn(s) => s.Region == "Southern")
+      },
+      "Nordic": {
+        "total": sum(map(filter($sales, fn(s) => s.Region == "Nordic"), fn(s) => s.YearTotal)),
+        "countries": filter($sales, fn(s) => s.Region == "Nordic")
+      }
+    },
+    "topCountry": "France",
+    "bestQuarter": "Q4"
+  },
+  "countrySales": map($sales, fn(country) => {
+    "region": country.Region,
+    "country": country.Country,
+    "quarters": {
+      "Q1": country.Q1_Sales,
+      "Q2": country.Q2_Sales,
+      "Q3": country.Q3_Sales,
+      "Q4": country.Q4_Sales
+    },
+    "yearTotal": country.YearTotal,
+    "averageQuarterly": country.YearTotal / 4
+  })
+}

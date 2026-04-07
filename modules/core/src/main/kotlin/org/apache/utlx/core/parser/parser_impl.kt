@@ -9,7 +9,7 @@ private val logger = KotlinLogging.logger {}
 
 /**
  * Recursive descent parser for UTL-X
- * 
+ *
  * Grammar (simplified):
  * program     -> header TRIPLE_DASH expression
  * header      -> PERCENT_DIRECTIVE version input output
@@ -30,10 +30,18 @@ private val logger = KotlinLogging.logger {}
  *              | LBRACE properties RBRACE
  *              | LBRACKET elements RBRACKET
  */
-class Parser(private val tokens: List<Token>) {
+class Parser(
+    private val tokens: List<Token>,
+    private val source: String = ""  // Optional source for error enhancement
+) {
     private var current = 0
     private val errors = mutableListOf<ParseError>()
-    
+    private var currentSection = ScriptSection.HEADER  // Track which section we're parsing
+
+    // Symbol table for declared inputs/outputs (built during header parsing)
+    private val declaredInputs = mutableSetOf<String>()
+    private val declaredOutputs = mutableSetOf<String>()
+
     /**
      * Parse the token stream into an AST
      */
@@ -51,18 +59,46 @@ class Parser(private val tokens: List<Token>) {
             }
         } catch (e: ParseException) {
             logger.error(e) { "Parse exception: ${e.message}" }
-            ParseResult.Failure(errors + ParseError(e.message ?: "Parse error", e.location))
+
+            // Enhance error message with contextual help
+            val enhancedError = ParseErrorEnhancer.enhance(e, source, tokens, current)
+
+            // If we already have errors (from error() calls), don't duplicate
+            // Otherwise, add the exception as an error
+            if (errors.isEmpty()) {
+                ParseResult.Failure(listOf(ParseError(enhancedError.message ?: "Parse error", enhancedError.location, currentSection)))
+            } else {
+                ParseResult.Failure(errors)
+            }
         }
     }
     
     private fun parseProgram(): Program {
         val startToken = peek()
-        val header = parseHeader()
 
-        // Expect --- separator
-        if (!match(TokenType.TRIPLE_DASH)) {
-            error("Expected '---' separator after header")
+        // PASS 1: Find the separator to establish boundaries
+        val separatorIndex = findSeparatorIndex()
+
+        if (separatorIndex == -1) {
+            // No separator found - this is a header error
+            currentSection = ScriptSection.SEPARATOR
+            error("Expected '---' separator after header (not found in script)")
         }
+
+        // PASS 2: Parse header section (tokens before separator)
+        currentSection = ScriptSection.HEADER
+        val savedPosition = current
+        val header = parseHeaderWithBoundary(separatorIndex)
+
+        // Move to separator and consume it
+        current = separatorIndex
+        currentSection = ScriptSection.SEPARATOR
+        if (!match(TokenType.TRIPLE_DASH)) {
+            error("Internal error: separator not at expected position")
+        }
+
+        // PASS 3: Parse content section (tokens after separator)
+        currentSection = ScriptSection.CONTENT
 
         // Parse body: can be multiple let bindings/function definitions followed by a final expression
         val allExpressions = mutableListOf<Expression>()
@@ -90,7 +126,299 @@ class Parser(private val tokens: List<Token>) {
 
         return Program(header, body, Location.from(startToken))
     }
-    
+
+    /**
+     * Find the index of the TRIPLE_DASH separator token
+     * Returns -1 if not found
+     */
+    private fun findSeparatorIndex(): Int {
+        for (i in tokens.indices) {
+            if (tokens[i].type == TokenType.TRIPLE_DASH) {
+                return i
+            }
+        }
+        return -1
+    }
+
+    /**
+     * Parse header section with clear boundary at separator
+     * Will not consume tokens beyond separatorIndex
+     */
+    private fun parseHeaderWithBoundary(separatorIndex: Int): Header {
+        val startToken = peek()
+
+        // Validate we don't go past separator
+        fun checkBoundary() {
+            if (current >= separatorIndex) {
+                error("Header parsing went past separator - malformed header")
+            }
+        }
+
+        // %utlx 1.0
+        checkBoundary()
+        if (!match(TokenType.PERCENT_DIRECTIVE)) {
+            error("Expected UTL-X directive (e.g., %utlx 1.0)")
+        }
+        val version = previous().lexeme.substringAfter(' ').trim()
+
+        // Parse inputs
+        checkBoundary()
+        if (!match(TokenType.INPUT)) {
+            error("Expected 'input' declaration")
+        }
+        val inputs = parseInputsOrOutputsWithBoundary(isInput = true, separatorIndex)
+
+        // Build symbol table for inputs
+        inputs.forEach { (name, _) ->
+            declaredInputs.add(name)
+        }
+
+        // Parse outputs
+        checkBoundary()
+        if (!match(TokenType.OUTPUT)) {
+            error("Expected 'output' declaration")
+        }
+        val outputs = parseInputsOrOutputsWithBoundary(isInput = false, separatorIndex)
+
+        // Build symbol table for outputs
+        outputs.forEach { (name, _) ->
+            declaredOutputs.add(name)
+        }
+
+        return Header(version, inputs, outputs, Location.from(startToken))
+    }
+
+    /**
+     * Try to parse a hyphenated input reference in the BODY section (after ---)
+     * Example: After seeing $my, check if "my-input" or "my-data" exists in declared inputs
+     * If found, consume the additional tokens and return the full name
+     * If not found, return null (leave tokens unconsumed)
+     */
+    private fun tryParseHyphenatedInputReference(baseName: String): String? {
+        val savedPosition = current
+        val nameParts = mutableListOf(baseName)
+
+        // Try to consume hyphens and following tokens
+        // Note: Lexer may tokenize "-2" as a negative NUMBER
+        while (true) {
+            val currentToken = peek()
+
+            // Case 1: Negative NUMBER like "-2" in "$input2-2"
+            if (currentToken.type == TokenType.NUMBER && currentToken.lexeme.startsWith("-")) {
+                // Extract the numeric part (without -)
+                val numLexeme = advance().lexeme
+                nameParts.add(numLexeme.substring(1))
+
+                val candidateName = nameParts.joinToString("-")
+                if (declaredInputs.contains(candidateName)) {
+                    return candidateName
+                }
+                // Continue trying longer names
+
+            // Case 2: Regular MINUS token
+            } else if (check(TokenType.MINUS)) {
+                advance() // consume MINUS
+
+                if (isAtEnd()) {
+                    current = savedPosition
+                    return null
+                }
+
+                val nextToken = peek()
+                val nextLexeme = nextToken.lexeme
+
+                nameParts.add(nextLexeme)
+                val candidateName = nameParts.joinToString("-")
+
+                // Check if this candidate exists in declared inputs
+                if (declaredInputs.contains(candidateName)) {
+                    advance()
+                    return candidateName
+                }
+
+                // Not found yet, but might be a longer name, so continue
+                // However, if the next token is something that can't be part of a name, stop
+                if (nextToken.type in listOf(
+                    TokenType.LPAREN, TokenType.RPAREN, TokenType.LBRACE, TokenType.RBRACE,
+                    TokenType.LBRACKET, TokenType.RBRACKET, TokenType.COMMA, TokenType.SEMICOLON,
+                    TokenType.DOT, TokenType.COLON
+                )) {
+                    current = savedPosition
+                    return null
+                }
+
+                // Consume the next token and continue
+                advance()
+            } else {
+                // No more hyphens
+                break
+            }
+        }
+
+        // Reached end of potential hyphenated name
+        // Check if what we have matches a declared input
+        val finalName = nameParts.joinToString("-")
+        if (declaredInputs.contains(finalName)) {
+            return finalName
+        }
+
+        // No match found, restore position
+        current = savedPosition
+        return null
+    }
+
+    /**
+     * Parse a name in the HEADER section that may contain hyphens
+     * Only called when parsing header (before ---), where we have clear boundaries
+     * Examples: "my-input", "order-id", "customer-data", "input2-2"
+     *
+     * Simple approach: collect all tokens until we hit a format keyword, comma, or separator,
+     * then concatenate their lexemes to form the name
+     */
+    private fun parseHeaderNameWithHyphens(separatorIndex: Int): String {
+        val nameTokens = mutableListOf<String>()
+
+        // Collect tokens until we hit a format keyword (not followed by hyphen), comma, or separator
+        while (current < separatorIndex) {
+            val currentToken = peek()
+
+            // Check if this is a format keyword
+            val isFormatKeyword = currentToken.type in listOf(
+                TokenType.XML, TokenType.JSON, TokenType.CSV, TokenType.YAML,
+                TokenType.AUTO, TokenType.XSD, TokenType.JSCH, TokenType.AVRO, TokenType.PROTO, TokenType.ODATA, TokenType.OSCH, TokenType.TSCH
+            )
+
+            // If it's a format keyword, check if it's followed by a hyphen
+            // If yes, it's part of the name (e.g., "input-auto-data")
+            // If no, it's the actual format
+            if (isFormatKeyword) {
+                val nextTokenIndex = current + 1
+                val isFollowedByHyphen = nextTokenIndex < separatorIndex && (
+                    tokens[nextTokenIndex].type == TokenType.MINUS ||
+                    (tokens[nextTokenIndex].type == TokenType.NUMBER && tokens[nextTokenIndex].lexeme.startsWith("-"))
+                )
+
+                if (!isFollowedByHyphen) {
+                    // This is the format, stop here
+                    break
+                }
+                // Otherwise, it's part of the name, continue collecting
+            }
+
+            // Stop at delimiters
+            if (currentToken.type == TokenType.COMMA || currentToken.type == TokenType.TRIPLE_DASH) {
+                break
+            }
+
+            // Collect the token's lexeme
+            nameTokens.add(advance().lexeme)
+        }
+
+        if (nameTokens.isEmpty()) {
+            error("Expected input/output name")
+            return ""
+        }
+
+        // Concatenate all lexemes to form the name
+        val fullName = nameTokens.joinToString("")
+
+        // Validate: no spaces in name
+        if (fullName.contains(' ')) {
+            error("Input/output names cannot contain spaces: '$fullName'")
+        }
+
+        return fullName
+    }
+
+    /**
+     * Parse inputs/outputs with boundary checking
+     */
+    private fun parseInputsOrOutputsWithBoundary(isInput: Boolean, separatorIndex: Int): List<Pair<String, FormatSpec>> {
+        val defaultName = if (isInput) "input" else "output"
+
+        // Don't go past separator
+        if (current >= separatorIndex) {
+            return listOf(defaultName to FormatSpec(FormatType.JSON, null, emptyMap(), Location.from(peek())))
+        }
+
+        // Check if there's a colon (multiple named inputs/outputs)
+        if (match(TokenType.COLON)) {
+            val result = mutableListOf<Pair<String, FormatSpec>>()
+
+            do {
+                // Stop if we hit the separator
+                if (current >= separatorIndex || check(TokenType.TRIPLE_DASH)) {
+                    break
+                }
+
+                // Parse name - allows hyphens like "my-input", "order-id"
+                // Also allows keywords (input, output) as names
+                val name = parseHeaderNameWithHyphens(separatorIndex)
+
+                val formatSpec = parseFormatSpec()
+                result.add(name to formatSpec)
+
+            } while (match(TokenType.COMMA) && current < separatorIndex)
+
+            if (result.isEmpty()) {
+                error("Expected at least one input/output declaration after colon")
+            }
+
+            return result
+        } else {
+            // Single input/output: optionally named
+            // Syntax: "input [name] format" or just "input format"
+
+            // Check if there's an optional name before the format
+            val name = when {
+                check(TokenType.IDENTIFIER) -> {
+                    // Has a custom name: "input myname json" or "input my-name json"
+                    parseHeaderNameWithHyphens(separatorIndex)
+                }
+                // Allow "input" keyword as a name for outputs, "output" keyword as a name for inputs
+                // BUT only if followed by a format keyword (not starting a new declaration)
+                check(TokenType.INPUT) && !isInput && isFollowedByFormat() -> {
+                    // "output input json" - using "input" as output name
+                    parseHeaderNameWithHyphens(separatorIndex)
+                }
+                check(TokenType.OUTPUT) && isInput && isFollowedByFormat() -> {
+                    // "input output json" - using "output" as input name
+                    parseHeaderNameWithHyphens(separatorIndex)
+                }
+                else -> {
+                    // No name, use default: "input json" or "output json"
+                    defaultName
+                }
+            }
+
+            val formatSpec = parseFormatSpec()
+            return listOf(name to formatSpec)
+        }
+    }
+
+    /**
+     * Check if current position is followed by a format keyword
+     * Used to disambiguate "input output json" (output is name) from "output json" (output is keyword)
+     */
+    private fun isFollowedByFormat(): Boolean {
+        if (current + 1 >= tokens.size) return false
+        val nextToken = tokens[current + 1]
+        return nextToken.type in listOf(
+            TokenType.XML,
+            TokenType.JSON,
+            TokenType.CSV,
+            TokenType.YAML,
+            TokenType.AUTO,
+            TokenType.XSD,
+            TokenType.JSCH,
+            TokenType.AVRO,
+            TokenType.PROTO,
+            TokenType.ODATA,
+            TokenType.OSCH,
+            TokenType.TSCH
+        )
+    }
+
     private fun parseHeader(): Header {
         val startToken = peek()
 
@@ -131,12 +459,33 @@ class Parser(private val tokens: List<Token>) {
             // Parse comma-separated list: input1 xml, input2 json, input3 csv
             do {
                 // Stop if we hit the output/--- separator
-                if (check(TokenType.OUTPUT) || check(TokenType.TRIPLE_DASH) || isAtEnd()) {
+                if (check(TokenType.TRIPLE_DASH) || isAtEnd()) {
                     break
                 }
 
-                // Parse: name format {options}
-                val name = consume(TokenType.IDENTIFIER, "Expected input/output name").lexeme
+                // For "output" keyword, only stop if this is an input declaration
+                // (allows "output" to be used as an input name)
+                if (check(TokenType.OUTPUT) && isInput) {
+                    break
+                }
+
+                // For "input" keyword, only stop if this is an output declaration
+                // (allows "input" to be used as an output name)
+                if (check(TokenType.INPUT) && !isInput) {
+                    break
+                }
+
+                // Parse name - can be IDENTIFIER or keywords used as names (input, output)
+                val name = when {
+                    check(TokenType.IDENTIFIER) -> advance().lexeme
+                    check(TokenType.INPUT) -> advance().lexeme
+                    check(TokenType.OUTPUT) -> advance().lexeme
+                    else -> {
+                        error("Expected input/output name")
+                        ""
+                    }
+                }
+
                 val formatSpec = parseFormatSpec()
                 result.add(name to formatSpec)
 
@@ -149,12 +498,37 @@ class Parser(private val tokens: List<Token>) {
 
             return result
         } else {
-            // Single input/output (backward compatible): "xml" → [("input", spec)]
+            // Single input/output: optionally named
+            // Syntax: "input [name] format" or just "input format"
+
+            // Check if there's an optional name before the format
+            // Name can be IDENTIFIER or keywords (input, output) when used as names
+            val name = when {
+                check(TokenType.IDENTIFIER) -> {
+                    // Has a custom name: "input myname json"
+                    advance().lexeme
+                }
+                // Allow "input" keyword as a name for outputs, "output" keyword as a name for inputs
+                // BUT only if followed by a format keyword (not starting a new declaration)
+                check(TokenType.INPUT) && !isInput && isFollowedByFormat() -> {
+                    // "output input json" - using "input" as output name
+                    advance().lexeme
+                }
+                check(TokenType.OUTPUT) && isInput && isFollowedByFormat() -> {
+                    // "input output json" - using "output" as input name
+                    advance().lexeme
+                }
+                else -> {
+                    // No name, use default: "input json" or "output json"
+                    defaultName
+                }
+            }
+
             val formatSpec = parseFormatSpec()
-            return listOf(defaultName to formatSpec)
+            return listOf(name to formatSpec)
         }
     }
-    
+
     private fun parseFormatSpec(): FormatSpec {
         val startToken = peek()
 
@@ -168,8 +542,11 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.JSCH) -> FormatType.JSCH
             match(TokenType.AVRO) -> FormatType.AVRO
             match(TokenType.PROTO) -> FormatType.PROTO
+            match(TokenType.ODATA) -> FormatType.ODATA
+            match(TokenType.OSCH) -> FormatType.OSCH
+            match(TokenType.TSCH) -> FormatType.TSCH
             else -> {
-                error("Expected format type (auto, xml, json, csv, yaml, xsd, jsch, avro, proto)")
+                error("Expected format type (auto, xml, json, csv, yaml, odata, osch, tsch, xsd, jsch, avro, proto)")
                 FormatType.AUTO
             }
         }
@@ -537,7 +914,24 @@ class Parser(private val tokens: List<Token>) {
                 // Handle $identifier syntax (e.g., $input, $input1, etc.)
                 // Strip the $ prefix to get the actual variable name
                 val name = if (lexeme.startsWith('$')) {
-                    lexeme.substring(1)
+                    val baseName = lexeme.substring(1)
+
+                    // Check if this might be a hyphenated input name (e.g., $my-input, $input2-2)
+                    // Look ahead for MINUS or negative NUMBER, and check if the full name exists
+                    if (currentSection == ScriptSection.CONTENT) {
+                        val nextToken = peek()
+                        val mightBeHyphenated = check(TokenType.MINUS) ||
+                            (nextToken.type == TokenType.NUMBER && nextToken.lexeme.startsWith("-"))
+
+                        if (mightBeHyphenated) {
+                            val fullName = tryParseHyphenatedInputReference(baseName)
+                            fullName ?: baseName  // Use full name if found, otherwise just base
+                        } else {
+                            baseName
+                        }
+                    } else {
+                        baseName
+                    }
                 } else {
                     lexeme
                 }
@@ -1221,7 +1615,7 @@ class Parser(private val tokens: List<Token>) {
     }
     
     private fun error(message: String): Nothing {
-        errors.add(ParseError(message, Location.from(peek())))
+        errors.add(ParseError(message, Location.from(peek()), currentSection))
         throw ParseException(message, Location.from(peek()))
     }
 }
@@ -1235,9 +1629,28 @@ sealed class ParseResult {
 }
 
 /**
- * Parse error with location
+ * Section of the UTL-X script
  */
-data class ParseError(val message: String, val location: Location)
+enum class ScriptSection {
+    HEADER,      // Lines before ---
+    SEPARATOR,   // The --- line itself
+    CONTENT;     // Lines after ---
+
+    fun displayName(): String = when (this) {
+        HEADER -> "Header"
+        SEPARATOR -> "Separator"
+        CONTENT -> "Transformation"
+    }
+}
+
+/**
+ * Parse error with location and section context
+ */
+data class ParseError(
+    val message: String,
+    val location: Location,
+    val section: ScriptSection = ScriptSection.CONTENT  // Default for backward compatibility
+)
 
 /**
  * Exception thrown during parsing

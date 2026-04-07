@@ -171,7 +171,7 @@ class TransformCommandTest {
     fun `test verbose mode`() {
         val input = tempDir.resolve("input.json").toFile()
         input.writeText("{\"test\": true}")
-        
+
         val script = tempDir.resolve("script.utlx").toFile()
         script.writeText("""
             %utlx 1.0
@@ -180,19 +180,370 @@ class TransformCommandTest {
             ---
             { result: input.test }
         """.trimIndent())
-        
+
         val output = tempDir.resolve("output.json").toFile()
-        
+
         val args = arrayOf(
             script.absolutePath,
             input.absolutePath,
             "-o", output.absolutePath,
             "--verbose"
         )
-        
+
         // Should not throw exception
         TransformCommand.execute(args)
 
         assertTrue(output.exists())
+    }
+
+    @Test
+    fun `test type checking default mode - type error produces warning but succeeds`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("{\"value\": 42}")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            (let x: Number = "this is a string" in { result: x })
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            script.absolutePath,
+            input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        // Should succeed - default mode shows warnings but doesn't fail
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Should succeed in default mode")
+        assertTrue(output.exists(), "Output should be created even with type errors in default mode")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("this is a string"), "Should execute despite type mismatch")
+    }
+
+    @Test
+    fun `test strict-types mode - type error causes failure`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("{\"value\": 42}")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            (let x: Number = "this is a string" in { result: x })
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            script.absolutePath,
+            input.absolutePath,
+            "-o", output.absolutePath,
+            "--strict-types"
+        )
+
+        // Should fail - strict mode rejects type errors
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Failure, "Should fail with type errors in strict mode")
+        assertEquals(1, (result as CommandResult.Failure).exitCode, "Exit code should be 1")
+        assertTrue(result.message.contains("Type checking failed"), "Error message should mention type checking")
+        assertTrue(!output.exists(), "Output should not be created when type checking fails")
+    }
+
+    @Test
+    fun `test strict-types mode - valid types succeed`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("{\"value\": 42}")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            (let x: Number = 123 in { result: x })
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            script.absolutePath,
+            input.absolutePath,
+            "-o", output.absolutePath,
+            "--strict-types"
+        )
+
+        // Should succeed - types are valid
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Should succeed with valid types in strict mode")
+        assertTrue(output.exists(), "Output should be created")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("123"), "Should contain the correct value")
+    }
+
+    @Test
+    fun `test strict-types with multiple type errors`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("{\"value\": 42}")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            {
+              error1: (let x: Number = "string" in x),
+              error2: (let y: String = 123 in y),
+              error3: (let z: Boolean = null in z)
+            }
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            script.absolutePath,
+            input.absolutePath,
+            "-o", output.absolutePath,
+            "--strict-types"
+        )
+
+        // Should fail with multiple errors
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Failure, "Should fail with multiple type errors")
+        assertTrue(!output.exists(), "Output should not be created")
+    }
+
+    // =========================================================================
+    // Identity Mode Tests (passthrough with smart format flip)
+    // =========================================================================
+
+    @Test
+    fun `test identity mode - XML to JSON smart flip`() {
+        val inputXml = tempDir.resolve("input.xml").toFile()
+        inputXml.writeText("<person><name>Alice</name><age>30</age></person>")
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            "-i", inputXml.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args, identityMode = true)
+
+        assertTrue(result is CommandResult.Success, "Identity XML→JSON should succeed")
+        assertTrue(output.exists(), "Output file should exist")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("Alice"), "Should contain data from XML input")
+        assertTrue(outputContent.contains("\"name\"") || outputContent.contains("\"person\""),
+            "Output should be JSON format")
+    }
+
+    @Test
+    fun `test identity mode - JSON to XML smart flip`() {
+        val inputJson = tempDir.resolve("input.json").toFile()
+        inputJson.writeText("""{"order": {"id": "ORD-001", "customer": "Bob"}}""")
+
+        val output = tempDir.resolve("output.xml").toFile()
+
+        val args = arrayOf(
+            "-i", inputJson.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args, identityMode = true)
+
+        assertTrue(result is CommandResult.Success, "Identity JSON→XML should succeed")
+        assertTrue(output.exists(), "Output file should exist")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("<"), "Output should be XML format")
+        assertTrue(outputContent.contains("Bob"), "Should contain data from JSON input")
+    }
+
+    @Test
+    fun `test identity mode - CSV to JSON smart flip`() {
+        val inputCsv = tempDir.resolve("input.csv").toFile()
+        inputCsv.writeText("Name,Age\nAlice,25\nBob,30")
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            "-i", inputCsv.absolutePath,
+            "-o", output.absolutePath,
+            "--from", "csv"
+        )
+
+        val result = TransformCommand.execute(args, identityMode = true)
+
+        assertTrue(result is CommandResult.Success, "Identity CSV→JSON should succeed")
+        assertTrue(output.exists(), "Output file should exist")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("Alice"), "Should contain CSV data")
+    }
+
+    @Test
+    fun `test identity mode - explicit --to overrides smart flip`() {
+        val inputXml = tempDir.resolve("input.xml").toFile()
+        inputXml.writeText("<data><value>42</value></data>")
+
+        val output = tempDir.resolve("output.yaml").toFile()
+
+        val args = arrayOf(
+            "-i", inputXml.absolutePath,
+            "-o", output.absolutePath,
+            "--to", "yaml"
+        )
+
+        val result = TransformCommand.execute(args, identityMode = true)
+
+        assertTrue(result is CommandResult.Success, "Identity XML→YAML should succeed")
+        assertTrue(output.exists(), "Output file should exist")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("42"), "Should contain data from input")
+    }
+
+    @Test
+    fun `test identity mode - no args reads stdin`() {
+        // Identity mode with no args (would read stdin in real usage)
+        // Here we test that parseOptions returns identity mode options
+        val options = TransformCommand.parseOptions(emptyArray(), allowIdentityMode = true)
+        assertTrue(options.identityMode, "Should be in identity mode")
+        assertTrue(options.scriptFile == null, "Script file should be null in identity mode")
+    }
+
+    @Test
+    fun `test identity mode - --to and --from aliases work`() {
+        val inputJson = tempDir.resolve("input.json").toFile()
+        inputJson.writeText("""{"name": "test"}""")
+
+        val output = tempDir.resolve("output.yaml").toFile()
+
+        val args = arrayOf(
+            "-i", inputJson.absolutePath,
+            "-o", output.absolutePath,
+            "--from", "json",
+            "--to", "yaml"
+        )
+
+        val result = TransformCommand.execute(args, identityMode = true)
+
+        assertTrue(result is CommandResult.Success, "Identity JSON→YAML with --from/--to should succeed")
+        assertTrue(output.exists(), "Output file should exist")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("test"), "Should contain data from input")
+    }
+
+    // =========================================================================
+    // --to / --from aliases with normal transform mode (backward compat)
+    // =========================================================================
+
+    @Test
+    fun `test --to alias works with script-based transform`() {
+        val inputXml = tempDir.resolve("input.xml").toFile()
+        inputXml.writeText("<data><value>hello</value></data>")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input xml
+            output xml
+            ---
+            { result: input.data.value }
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            script.absolutePath,
+            inputXml.absolutePath,
+            "-o", output.absolutePath,
+            "--to", "json"
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Should succeed with --to alias")
+        assertTrue(output.exists(), "Output file should exist")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("hello"), "Should contain transformed data")
+        assertTrue(outputContent.contains("{"), "Output should be JSON (overridden by --to)")
+    }
+
+    @Test
+    fun `test --from alias works with script-based transform`() {
+        val inputXml = tempDir.resolve("input.xml").toFile()
+        inputXml.writeText("<data><value>world</value></data>")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input auto
+            output json
+            ---
+            { result: input.data.value }
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            script.absolutePath,
+            inputXml.absolutePath,
+            "-o", output.absolutePath,
+            "--from", "xml"
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Should succeed with --from alias")
+        assertTrue(output.exists(), "Output file should exist")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("world"), "Should contain data parsed with --from xml")
+    }
+
+    // =========================================================================
+    // Implicit transform (no 'transform' subcommand, .utlx file as first arg)
+    // =========================================================================
+
+    @Test
+    fun `test implicit transform with utlx file`() {
+        val inputJson = tempDir.resolve("input.json").toFile()
+        inputJson.writeText("""{"greeting": "hello"}""")
+
+        val script = tempDir.resolve("script.utlx").toFile()
+        script.writeText("""
+            %utlx 1.0
+            input json
+            output json
+            ---
+            { msg: input.greeting }
+        """.trimIndent())
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        // Simulate what Main.kt does: pass full args including the .utlx file
+        val args = arrayOf(
+            script.absolutePath,
+            inputJson.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Implicit transform should succeed")
+        assertTrue(output.exists(), "Output file should exist")
+        val outputContent = output.readText()
+        assertTrue(outputContent.contains("hello"), "Should contain transformed data")
     }
 }

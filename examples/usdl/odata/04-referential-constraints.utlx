@@ -1,0 +1,96 @@
+%utlx 1.0
+// Demonstrates: Referential constraints (foreign key relationships)
+// Note: This example is specific to OData due to: %entityType, %key, %navigation, %referentialConstraint
+output odata
+---
+%namespace: "ODataDemo.Catalog"
+%version: "1.0"
+%documentation: "Category and Product with referential constraints"
+
+%types: {
+  Category: {
+    %kind: "structure",
+    %entityType: true,
+    %documentation: "Product category",
+    %fields: [
+      {
+        %name: "CategoryId",
+        %type: "integer",
+        %key: true,
+        %required: true,
+        %description: "Category identifier"
+      },
+      {
+        %name: "CategoryName",
+        %type: "string",
+        %required: true,
+        %description: "Category name"
+      },
+      {
+        %name: "Description",
+        %type: "string",
+        %required: false,
+        %description: "Category description"
+      }
+    ],
+    %navigation: [
+      {
+        %name: "Products",
+        %target: "Product",
+        %cardinality: "1:N",
+        %description: "Products in this category"
+      }
+    ]
+  },
+
+  Product: {
+    %kind: "structure",
+    %entityType: true,
+    %documentation: "Product entity with category reference",
+    %fields: [
+      {
+        %name: "ProductId",
+        %type: "integer",
+        %key: true,
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "ProductName",
+        %type: "string",
+        %required: true,
+        %description: "Product name"
+      },
+      {
+        %name: "CategoryId",
+        %type: "integer",
+        %required: true,
+        %description: "Category foreign key"
+      },
+      {
+        %name: "UnitPrice",
+        %type: "double",
+        %required: true,
+        %description: "Unit price"
+      },
+      {
+        %name: "UnitsInStock",
+        %type: "integer",
+        %required: true,
+        %description: "Stock quantity"
+      }
+    ],
+    %navigation: [
+      {
+        %name: "Category",
+        %target: "Category",
+        %cardinality: "N:1",
+        %referentialConstraint: {
+          %property: "CategoryId",
+          %referencedProperty: "CategoryId"
+        },
+        %description: "Product's category"
+      }
+    ]
+  }
+}

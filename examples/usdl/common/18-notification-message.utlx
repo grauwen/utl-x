@@ -1,0 +1,97 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Notification/message schema
+output [FORMAT]
+---
+%namespace: "com.example.notification"
+%version: "1.0"
+%documentation: "Notification message schema"
+
+%types: {
+  NotificationType: {
+    %kind: "enumeration",
+    %documentation: "Notification types",
+    %values: ["EMAIL", "SMS", "PUSH", "IN_APP"]
+  },
+
+  Priority: {
+    %kind: "enumeration",
+    %documentation: "Message priority",
+    %values: ["LOW", "NORMAL", "HIGH", "URGENT"]
+  },
+
+  Recipient: {
+    %kind: "structure",
+    %documentation: "Notification recipient",
+    %fields: [
+      {
+        %name: "userId",
+        %type: "string",
+        %required: true,
+        %description: "User identifier"
+      },
+      {
+        %name: "channel",
+        %type: "NotificationType",
+        %required: true,
+        %description: "Delivery channel"
+      },
+      {
+        %name: "address",
+        %type: "string",
+        %required: true,
+        %description: "Email, phone, or device token"
+      }
+    ]
+  },
+
+  Notification: {
+    %kind: "structure",
+    %documentation: "Notification message",
+    %fields: [
+      {
+        %name: "notificationId",
+        %type: "string",
+        %required: true,
+        %description: "Notification identifier"
+      },
+      {
+        %name: "title",
+        %type: "string",
+        %required: true,
+        %description: "Notification title"
+      },
+      {
+        %name: "body",
+        %type: "string",
+        %required: true,
+        %description: "Notification body"
+      },
+      {
+        %name: "priority",
+        %type: "Priority",
+        %required: true,
+        %description: "Message priority"
+      },
+      {
+        %name: "recipients",
+        %type: "Recipient",
+        %array: true,
+        %required: true,
+        %description: "Notification recipients"
+      },
+      {
+        %name: "scheduledFor",
+        %type: "long",
+        %required: false,
+        %description: "Scheduled delivery time"
+      },
+      {
+        %name: "expiresAt",
+        %type: "long",
+        %required: false,
+        %description: "Expiration timestamp"
+      }
+    ]
+  }
+}

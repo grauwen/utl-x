@@ -1,0 +1,118 @@
+{
+  "fields": [
+    {
+      "name": "registration_id",
+      "type": "string",
+      "description": "Unique registration identifier",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "event_id",
+      "type": "string",
+      "description": "Event identifier",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "attendee_name",
+      "type": "string",
+      "description": "Full name of the attendee",
+      "constraints": {
+        "required": true,
+        "maxLength": 200
+      }
+    },
+    {
+      "name": "email",
+      "type": "string",
+      "format": "email",
+      "description": "Attendee email address",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "ticket_type",
+      "type": "string",
+      "description": "Type of ticket purchased",
+      "constraints": {
+        "required": true,
+        "enum": ["early_bird", "standard", "vip", "student", "group"]
+      }
+    },
+    {
+      "name": "registration_date",
+      "type": "date",
+      "description": "Date the registration was made",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "event_datetime",
+      "type": "datetime",
+      "format": "any",
+      "description": "Event start date and time (any parseable datetime format)",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "check_in_time",
+      "type": "time",
+      "format": "%I:%M %p",
+      "description": "Expected check-in time (12-hour format: HH:MM AM/PM)",
+      "example": "08:30 AM",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "session_duration",
+      "type": "duration",
+      "description": "Total event session duration (ISO 8601 duration)",
+      "example": "PT8H",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "dietary_preference",
+      "type": "string",
+      "description": "Dietary requirement for catering",
+      "constraints": {
+        "required": true,
+        "enum": ["none", "vegetarian", "vegan", "halal", "kosher", "gluten_free"]
+      }
+    },
+    {
+      "name": "requires_accommodation",
+      "type": "boolean",
+      "description": "Whether the attendee requires special accommodation",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "notes",
+      "type": "string",
+      "description": "Additional notes or accommodation details",
+      "constraints": {
+        "maxLength": 500
+      }
+    }
+  ],
+  "primaryKey": "registration_id",
+  "foreignKeys": [
+    {
+      "fields": ["event_id"],
+      "reference": {
+        "resource": "events",
+        "fields": ["event_id"]
+      }
+    }
+  ]
+}

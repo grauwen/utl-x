@@ -1,0 +1,32 @@
+%utlx 1.0
+input weather csv {headers: false}
+output json
+---
+{
+  "weatherReport": {
+    "observationTime": "2024-03-15T12:00:00",
+    "totalStations": count($weather),
+    "averageTemp": sum(map($weather, fn(w) => w[3])) / count($weather),
+    "averageHumidity": sum(map($weather, fn(w) => w[4])) / count($weather),
+    "averagePressure": sum(map($weather, fn(w) => w[5])) / count($weather),
+    "conditions": {
+      "Sunny": count(filter($weather, fn(w) => w[6] == "Sunny")),
+      "Partly Cloudy": count(filter($weather, fn(w) => w[6] == "Partly Cloudy")),
+      "Overcast": count(filter($weather, fn(w) => w[6] == "Overcast")),
+      "Rainy": count(filter($weather, fn(w) => w[6] == "Rainy"))
+    },
+    "hottestCity": "Phoenix",
+    "coldestCity": "Chicago"
+  },
+  "observations": map($weather, fn(obs) => {
+    "stationID": obs[0],
+    "city": obs[1],
+    "timestamp": obs[2],
+    "temperature": obs[3],
+    "humidity": obs[4],
+    "pressure": obs[5],
+    "condition": obs[6],
+    "windDirection": obs[7],
+    "windSpeed": obs[8]
+  })
+}

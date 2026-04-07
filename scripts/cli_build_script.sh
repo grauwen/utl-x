@@ -120,7 +120,7 @@ if [ "$BUILD_JAR" = true ]; then
     print_info "Building CLI JAR with dependencies..."
     ./gradlew :modules:cli:jar
     
-    JAR_PATH="modules/cli/build/libs/cli-0.9.0.jar"
+    JAR_PATH="modules/cli/build/libs/cli-1.0.0.jar"
     if [ -f "$JAR_PATH" ]; then
         JAR_SIZE=$(du -h "$JAR_PATH" | cut -f1)
         print_success "JAR built successfully: $JAR_PATH ($JAR_SIZE)"

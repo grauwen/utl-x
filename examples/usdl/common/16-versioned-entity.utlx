@@ -1,0 +1,97 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Versioned entity with metadata
+output [FORMAT]
+---
+%namespace: "com.example.document"
+%version: "1.0"
+%documentation: "Document with versioning"
+
+%types: {
+  DocumentStatus: {
+    %kind: "enumeration",
+    %documentation: "Document status",
+    %values: ["DRAFT", "PUBLISHED", "ARCHIVED", "DELETED"]
+  },
+
+  Metadata: {
+    %kind: "structure",
+    %documentation: "Document metadata",
+    %fields: [
+      {
+        %name: "createdBy",
+        %type: "string",
+        %required: true,
+        %description: "Creator user ID"
+      },
+      {
+        %name: "createdAt",
+        %type: "long",
+        %required: true,
+        %description: "Creation timestamp"
+      },
+      {
+        %name: "modifiedBy",
+        %type: "string",
+        %required: false,
+        %description: "Last modifier user ID"
+      },
+      {
+        %name: "modifiedAt",
+        %type: "long",
+        %required: false,
+        %description: "Last modification timestamp"
+      }
+    ]
+  },
+
+  Document: {
+    %kind: "structure",
+    %documentation: "Versioned document",
+    %fields: [
+      {
+        %name: "documentId",
+        %type: "string",
+        %required: true,
+        %description: "Document identifier"
+      },
+      {
+        %name: "version",
+        %type: "integer",
+        %required: true,
+        %description: "Document version number"
+      },
+      {
+        %name: "title",
+        %type: "string",
+        %required: true,
+        %description: "Document title"
+      },
+      {
+        %name: "content",
+        %type: "string",
+        %required: true,
+        %description: "Document content"
+      },
+      {
+        %name: "status",
+        %type: "DocumentStatus",
+        %required: true,
+        %description: "Current status"
+      },
+      {
+        %name: "metadata",
+        %type: "Metadata",
+        %required: true,
+        %description: "Document metadata"
+      },
+      {
+        %name: "tags",
+        %type: "string",
+        %array: true,
+        %required: false,
+        %description: "Document tags"
+      }
+    ]
+  }
+}

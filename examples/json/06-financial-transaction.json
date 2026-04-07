@@ -1,0 +1,51 @@
+{
+  "transactionId": "FIN-2025-0116-789012",
+  "transactionDate": "2025-01-16T11:30:45Z",
+  "transactionType": "PAYMENT",
+  "status": "COMPLETED",
+  "fromAccount": {
+    "accountId": "ACC-12345-CHK",
+    "accountType": "BUSINESS_CHECKING",
+    "accountHolder": "Acme Corporation",
+    "bankName": "First Business Bank",
+    "accountNumber": "****5678",
+    "currency": "USD"
+  },
+  "toAccount": {
+    "accountId": "ACC-98765-CHK",
+    "accountType": "BUSINESS_CHECKING",
+    "accountHolder": "Supplier Services LLC",
+    "bankName": "Commerce National Bank",
+    "accountNumber": "****4321",
+    "currency": "USD"
+  },
+  "amount": 15750.00,
+  "fee": 25.00,
+  "totalDeducted": 15775.00,
+  "paymentMethod": "WIRE_TRANSFER",
+  "reference": "Invoice #INV-2024-12-445",
+  "description": "Payment for December consulting services",
+  "initiatedBy": {
+    "userId": "USR-8821",
+    "name": "Robert Williams",
+    "role": "Accounts Payable Manager",
+    "department": "Finance"
+  },
+  "approvedBy": {
+    "userId": "USR-3312",
+    "name": "Lisa Chen",
+    "role": "CFO",
+    "approvalDate": "2025-01-16T10:15:00Z"
+  },
+  "reconciliation": {
+    "reconciledDate": "2025-01-16T11:35:22Z",
+    "reconciliationId": "REC-2025-0116-123",
+    "ledgerEntry": "LE-2025-001892"
+  },
+  "compliance": {
+    "requiresAudit": true,
+    "fraudCheckPassed": true,
+    "complianceOfficer": "USR-5544",
+    "notes": "Standard wire transfer, all compliance checks passed"
+  }
+}

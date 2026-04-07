@@ -1,0 +1,274 @@
+{
+  "declaratieNummer": "BE-2025-IMF-789012",
+  "declaratieType": "INVOER_FINALE",
+  "datum": "2025-01-16T10:30:00+01:00",
+  "douanekantoor": {
+    "kantoorNaam": "Douane Antwerpen - Haven",
+    "kantoorCode": "BE121100",
+    "adres": {
+      "straat": "Noorderlannn 87",
+      "postcode": "2030",
+      "stad": "Antwerpen",
+      "provincie": "Antwerpen",
+      "land": "België / Belgique"
+    },
+    "contact": {
+      "telefoon": "+32 3 206 57 00",
+      "email": "douane.antwerpen@minfin.fed.be"
+    }
+  },
+  "declarant": {
+    "eoriNummer": "BE0123456789",
+    "bedrijfsnaam": "Import Export Solutions BVBA",
+    "btwnummer": "BE0123456789",
+    "ondernemingsnummer": "0123.456.789",
+    "adres": {
+      "straat": "Mechelsesteenweg",
+      "huisnummer": "456",
+      "postcode": "2018",
+      "stad": "Antwerpen",
+      "provincie": "Antwerpen",
+      "land": "België"
+    },
+    "contactpersoon": {
+      "naam": "Dhr. Jan Vermeulen",
+      "functie": "Douane Expert",
+      "email": "j.vermeulen@importsolutions.be",
+      "gsm": "+32 475 12 34 56"
+    }
+  },
+  "importeur": {
+    "eoriNummer": "BE0987654321",
+    "bedrijfsnaam": "Technologie Distributie Brussel NV",
+    "btwnummer": "BE0987654321",
+    "ondernemingsnummer": "0987.654.321",
+    "adres": {
+      "straat": "Koningsstraat / Rue Royale",
+      "huisnummer": "234",
+      "postcode": "1000",
+      "stad": "Brussel / Bruxelles",
+      "gewest": "Brussels Hoofdstedelijk Gewest",
+      "land": "België / Belgique"
+    }
+  },
+  "exporteur": {
+    "naam": "Shenzhen Electronics Manufacturing Co., Ltd.",
+    "adres": {
+      "adresregel1": "No. 888 Huaqiang North Road",
+      "adresregel2": "Futian District",
+      "stad": "Shenzhen",
+      "provincie": "Guangdong",
+      "postcode": "518000",
+      "land": "China"
+    }
+  },
+  "transport": {
+    "vervoermiddel": "ZEESCHIP",
+    "scheepsnaam": "MSC MARIA",
+    "imo": "IMO9876543",
+    "vlucht_reis": "MSCU4567890",
+    "containerNummers": ["MSCU1234567", "MSCU2345678", "MSCU3456789"],
+    "landVanVerzending": "CN",
+    "landVanOorsprong": "CN",
+    "havenVanLading": {
+      "naam": "Port of Shenzhen",
+      "code": "CNSZX"
+    },
+    "havenVanLossing": {
+      "naam": "Port of Antwerp",
+      "code": "BEANR"
+    },
+    "aankomstDatum": "2025-01-15",
+    "vervoerdocument": {
+      "type": "BILL_OF_LADING",
+      "nummer": "MSCUSZX20250112345",
+      "datum": "2025-01-02"
+    }
+  },
+  "goederen": [
+    {
+      "positieNummer": 1,
+      "tariefnummer": "8471.30.00",
+      "omschrijving": "Draagbare automatische gegevensverwerkende machines, met een gewicht van niet meer dan 10 kg - Laptop computers",
+      "omschrijvingNederlands": "Laptop computers - 15,6 inch zakelijke notebooks",
+      "omschrijvingFrans": "Ordinateurs portables - notebooks professionnels 15,6 pouces",
+      "oorsprongLand": "CN",
+      "brutogewichtKg": 2845.50,
+      "nettogewichtKg": 2340.00,
+      "aantalColli": 120,
+      "verpakking": "KARTONNEN_DOZEN",
+      "statistischeWaarde": 458750.00,
+      "handelswaarde": {
+        "bedrag": 458750.00,
+        "valuta": "EUR",
+        "incotermscode": "CIF"
+      },
+      "douanewaarde": {
+        "bedrag": 458750.00,
+        "valuta": "EUR",
+        "methode": "TRANSACTIEWAARDE"
+      },
+      "rechtenEnBelastingen": {
+        "invoerrecht": {
+          "tarief": 0.0,
+          "bedrag": 0.00,
+          "beschrijving": "Vrij van invoerrecht conform tariefschema"
+        },
+        "btw": {
+          "tarief": 21.0,
+          "bedrag": 96337.50,
+          "btwnummer": "BE0987654321"
+        },
+        "totaal": 96337.50
+      },
+      "preferentie": {
+        "preferentiëleOorsprong": false
+      },
+      "certificaten": []
+    },
+    {
+      "positieNummer": 2,
+      "tariefnummer": "8471.60.70",
+      "omschrijving": "Invoerapparatuur of uitvoerapparatuur - Wireless toetsenborden en muizen",
+      "omschrijvingNederlands": "Draadloze toetsenborden en computermuis sets",
+      "omschrijvingFrans": "Claviers et souris d'ordinateur sans fil - ensembles",
+      "oorsprongLand": "CN",
+      "brutogewichtKg": 456.80,
+      "nettogewichtKg": 380.00,
+      "aantalColli": 40,
+      "verpakking": "KARTONNEN_DOZEN",
+      "statistischeWaarde": 12800.00,
+      "handelswaarde": {
+        "bedrag": 12800.00,
+        "valuta": "EUR",
+        "incotermscode": "CIF"
+      },
+      "douanewaarde": {
+        "bedrag": 12800.00,
+        "valuta": "EUR",
+        "methode": "TRANSACTIEWAARDE"
+      },
+      "rechtenEnBelastingen": {
+        "invoerrecht": {
+          "tarief": 0.0,
+          "bedrag": 0.00,
+          "beschrijving": "Vrij van invoerrecht conform tariefschema"
+        },
+        "btw": {
+          "tarief": 21.0,
+          "bedrag": 2688.00,
+          "btwnummer": "BE0987654321"
+        },
+        "totaal": 2688.00
+      },
+      "preferentie": {
+        "preferentiëleOorsprong": false
+      },
+      "certificaten": []
+    },
+    {
+      "positieNummer": 3,
+      "tariefnummer": "8517.62.00",
+      "omschrijving": "Toestellen voor de ontvangst, omzetting en het uitzenden of regenereren van stem, beeld of andere gegevens - USB webcams",
+      "omschrijvingNederlands": "USB webcams voor videoconferenties - HD kwaliteit",
+      "omschrijvingFrans": "Webcams USB pour vidéoconférences - qualité HD",
+      "oorsprongLand": "CN",
+      "brutogewichtKg": 125.60,
+      "nettogewichtKg": 95.00,
+      "aantalColli": 20,
+      "verpakking": "KARTONNEN_DOZEN",
+      "statistischeWaarde": 8950.00,
+      "handelswaarde": {
+        "bedrag": 8950.00,
+        "valuta": "EUR",
+        "incotermscode": "CIF"
+      },
+      "douanewaarde": {
+        "bedrag": 8950.00,
+        "valuta": "EUR",
+        "methode": "TRANSACTIEWAARDE"
+      },
+      "rechtenEnBelastingen": {
+        "invoerrecht": {
+          "tarief": 0.0,
+          "bedrag": 0.00,
+          "beschrijving": "Vrij van invoerrecht conform tariefschema"
+        },
+        "btw": {
+          "tarief": 21.0,
+          "bedrag": 1879.50,
+          "btwnummer": "BE0987654321"
+        },
+        "totaal": 1879.50
+      },
+      "preferentie": {
+        "preferentiëleOorsprong": false
+      },
+      "certificaten": []
+    }
+  ],
+  "totalen": {
+    "brutoGewichtTotaalKg": 3427.90,
+    "nettoGewichtTotaalKg": 2815.00,
+    "aantalColliTotaal": 180,
+    "douanewaardeEUR": 480500.00,
+    "invoerrechtenTotaal": 0.00,
+    "btwTotaal": 100905.00,
+    "andereBelastingen": 0.00,
+    "totaalTeBetalenEUR": 100905.00
+  },
+  "documenten": [
+    {
+      "type": "HANDELS_FACTUUR",
+      "nummer": "INV-2025-SZ-001234",
+      "datum": "2025-01-05",
+      "omschrijving": "Commerciële factuur exporteur"
+    },
+    {
+      "type": "BILL_OF_LADING",
+      "nummer": "MSCUSZX20250112345",
+      "datum": "2025-01-02",
+      "omschrijving": "Maritiem vervoerdocument"
+    },
+    {
+      "type": "PAKLIJST",
+      "nummer": "PL-2025-001234",
+      "datum": "2025-01-05",
+      "omschrijving": "Gedetailleerde paklijst"
+    },
+    {
+      "type": "VERZEKERING",
+      "nummer": "INS-2025-EUR-456789",
+      "datum": "2025-01-04",
+      "omschrijving": "Transportverzekering"
+    }
+  ],
+  "betaling": {
+    "betalingstermijn": "ONMIDDELLIJK",
+    "betalingsmethode": "PERIODIEKE_BETALING",
+    "uitstelToegekend": false,
+    "rekeningnummer": {
+      "iban": "BE68539007547034",
+      "bic": "GKCCBEBB",
+      "tenNameVan": "FOD Financiën - Algemene Administratie van de Douane en Accijnzen"
+    },
+    "gestructureerdeMededeling": "+++123/4567/89012+++"
+  },
+  "bijzondereVermeldingen": [
+    "Zending volledig voor account van BE0987654321",
+    "Goederen bestemd voor wederverkoop binnen EU",
+    "Conform regelgeving REACH en RoHS",
+    "CE-markering conform EU-richtlijnen"
+  ],
+  "goedkeuring": {
+    "declarantHandtekening": true,
+    "declarantNaam": "Jan Vermeulen",
+    "declarantDatum": "2025-01-16T10:30:00+01:00",
+    "douaneHandtekening": true,
+    "douaneBeambte": "Insp. P. Dubois",
+    "douaneDatum": "2025-01-16T14:15:00+01:00",
+    "status": "VRIJGEGEVEN"
+  },
+  "mrn": "25BE12110012345678901234567",
+  "taalVoorkeur": "NL"
+}

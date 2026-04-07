@@ -1,0 +1,125 @@
+# Data Contract - Healthcare Patient Records
+# HIPAA compliant patient data specification
+dataContractSpecification: 0.9.3
+id: healthcare-patient-records-v1
+info:
+  title: Healthcare Patient Records
+  version: 1.0.0
+  description: |
+    HIPAA-compliant patient electronic health records (EHR) data contract.
+    Includes demographic, clinical, and billing information.
+  owner: Healthcare IT Department
+  contact:
+    name: Health Informatics Team
+    email: hit@hospital.example.com
+  status: active
+  tags:
+    - healthcare
+    - ehr
+    - hipaa
+    - phi
+terms:
+  usage: |
+    HIGHLY CONFIDENTIAL - Protected Health Information (PHI)
+    HIPAA compliance required for all access
+    Access requires: signed BAA, MFA, audit logging
+    Minimum necessary standard applies
+    Data retention: 7 years minimum (state law may require longer)
+  limitations: |
+    Geographic restrictions: US only
+    Encryption required: AES-256 at rest, TLS 1.3 in transit
+    De-identification required for research use
+models:
+  patient_record:
+    type: object
+    description: Complete patient health record
+    fields:
+      patient_id:
+        type: string
+        required: true
+        unique: true
+        pattern: "^MRN-\\d{10}$"
+        description: Medical Record Number
+        tags: [phi, identifier]
+        classification: highly-confidential
+      demographics:
+        type: object
+        required: true
+        tags: [phi]
+        fields:
+          first_name:
+            type: string
+            required: true
+            maxLength: 100
+          last_name:
+            type: string
+            required: true
+            maxLength: 100
+          date_of_birth:
+            type: date
+            required: true
+          social_security_number:
+            type: string
+            pattern: "^\\d{3}-\\d{2}-\\d{4}$"
+            encrypted: true
+          address:
+            type: object
+            fields:
+              street:
+                type: string
+              city:
+                type: string
+              state:
+                type: string
+                pattern: "^[A-Z]{2}$"
+              zip:
+                type: string
+                pattern: "^\\d{5}(-\\d{4})?$"
+      clinical_data:
+        type: object
+        fields:
+          diagnoses:
+            type: array
+            items:
+              type: object
+              fields:
+                icd10_code:
+                  type: string
+                  pattern: "^[A-Z]\\d{2}(\\.\\d{1,4})?$"
+                description:
+                  type: string
+                diagnosis_date:
+                  type: date
+                provider_id:
+                  type: string
+          medications:
+            type: array
+            items:
+              type: object
+              fields:
+                name:
+                  type: string
+                dosage:
+                  type: string
+                frequency:
+                  type: string
+                prescribing_date:
+                  type: date
+                ndc_code:
+                  type: string
+          vital_signs:
+            type: object
+            fields:
+              blood_pressure:
+                type: string
+                pattern: "^\\d{2,3}/\\d{2,3}$"
+              heart_rate:
+                type: integer
+                minimum: 0
+                maximum: 300
+              temperature:
+                type: decimal
+                precision: 3
+                scale: 1
+              recorded_at:
+                type: timestamp

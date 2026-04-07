@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OrdonnanceMédicale xmlns="http://www.sante.gouv.fr/ordonnance/v1"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <EntêteOrdonnance>
+        <NuméroOrdonnance>ORD-FR-2025-456789</NuméroOrdonnance>
+        <DatePrescription>2025-01-16</DatePrescription>
+        <DateValidité>2025-04-16</DateValidité>
+        <TypeOrdonnance>ORDONNANCE_SIMPLE</TypeOrdonnance>
+    </EntêteOrdonnance>
+
+    <Prescripteur>
+        <NuméroRPPS>10001234567</NuméroRPPS>
+        <Civilité>Dr</Civilité>
+        <Nom>Lefèvre</Nom>
+        <Prénom>François</Prénom>
+        <Spécialité>Médecin généraliste</Spécialité>
+        <Cabinet>
+            <NomCabinet>Cabinet Médical du Centre</NomCabinet>
+            <Adresse>
+                <Rue>45 Avenue de la République</Rue>
+                <CodePostal>75011</CodePostal>
+                <Ville>Paris</Ville>
+                <Pays>France</Pays>
+            </Adresse>
+            <Téléphone>+33 1 43 55 67 89</Téléphone>
+            <Email>dr.lefevre@cabinet-centre.fr</Email>
+        </Cabinet>
+        <NuméroADELI>750123456</NuméroADELI>
+        <NuméroFINESS>750000123</NuméroFINESS>
+    </Prescripteur>
+
+    <Patient>
+        <NuméroSécuritéSociale>1 85 06 75 123 456 78</NuméroSécuritéSociale>
+        <Civilité>Mme</Civilité>
+        <Nom>Dubois-Müller</Nom>
+        <Prénom>Éloïse</Prénom>
+        <DateNaissance>1985-06-15</DateNaissance>
+        <Sexe>F</Sexe>
+        <Adresse>
+            <Rue>12 Rue du Château d'Eau</Rue>
+            <Complément>Bâtiment B, Appartement 34</Complément>
+            <CodePostal>75010</CodePostal>
+            <Ville>Paris</Ville>
+            <Pays>France</Pays>
+        </Adresse>
+        <Téléphone>+33 6 12 34 56 78</Téléphone>
+        <Email>eloise.dubois@example.fr</Email>
+        <Mutuelle>
+            <NomMutuelle>MGEN - Mutuelle Générale de l'Éducation Nationale</NomMutuelle>
+            <NuméroAdhérent>MGEN-123456789</NuméroAdhérent>
+        </Mutuelle>
+    </Patient>
+
+    <Médicaments>
+        <Médicament>
+            <NuméroLigne>1</NuméroLigne>
+            <CodeCIP>3400936757950</CodeCIP>
+            <DénominationCommune>AMOXICILLINE/ACIDE CLAVULANIQUE</DénominationCommune>
+            <NomCommercial>AUGMENTIN 1g/125mg</NomCommercial>
+            <Forme>Comprimé pelliculé</Forme>
+            <Dosage>1g/125mg</Dosage>
+            <Posologie>1 comprimé 3 fois par jour</Posologie>
+            <Durée>7 jours</Durée>
+            <Quantité>21 comprimés</Quantité>
+            <VoieAdministration>Orale</VoieAdministration>
+            <MomentPrise>Pendant les repas</MomentPrise>
+            <Substitution>NON_SUBSTITUABLE</Substitution>
+            <Remboursement>
+                <TauxRemboursement>65</TauxRemboursement>
+                <BaseRemboursement>14.85</BaseRemboursement>
+            </Remboursement>
+        </Médicament>
+
+        <Médicament>
+            <NuméroLigne>2</NuméroLigne>
+            <CodeCIP>3400935896414</CodeCIP>
+            <DénominationCommune>PARACÉTAMOL</DénominationCommune>
+            <NomCommercial>DOLIPRANE 1000mg</NomCommercial>
+            <Forme>Comprimé effervescent</Forme>
+            <Dosage>1000mg</Dosage>
+            <Posologie>1 comprimé jusqu'à 3 fois par jour si besoin</Posologie>
+            <Durée>7 jours</Durée>
+            <Quantité>20 comprimés</Quantité>
+            <VoieAdministration>Orale</VoieAdministration>
+            <MomentPrise>Dissoudre dans un verre d'eau</MomentPrise>
+            <Substitution>SUBSTITUABLE</Substitution>
+            <Remboursement>
+                <TauxRemboursement>65</TauxRemboursement>
+                <BaseRemboursement>2.50</BaseRemboursement>
+            </Remboursement>
+            <Précautions>Ne pas dépasser 3g par jour. Respecter un intervalle de 4 heures minimum entre les prises.</Précautions>
+        </Médicament>
+
+        <Médicament>
+            <NuméroLigne>3</NuméroLigne>
+            <CodeCIP>3400937684873</CodeCIP>
+            <DénominationCommune>VITAMINE D3</DénominationCommune>
+            <NomCommercial>ZYMAD 10 000 UI/mL</NomCommercial>
+            <Forme>Solution buvable en gouttes</Forme>
+            <Dosage>10 000 UI/mL</Dosage>
+            <Posologie>4 gouttes par jour</Posologie>
+            <Durée>30 jours</Durée>
+            <Quantité>1 flacon de 10mL</Quantité>
+            <VoieAdministration>Orale</VoieAdministration>
+            <MomentPrise>Le matin, de préférence pendant un repas</MomentPrise>
+            <Substitution>SUBSTITUABLE</Substitution>
+            <Remboursement>
+                <TauxRemboursement>65</TauxRemboursement>
+                <BaseRemboursement>3.75</BaseRemboursement>
+            </Remboursement>
+        </Médicament>
+    </Médicaments>
+
+    <Diagnostic>
+        <CodeCIM10>J06.9</CodeCIM10>
+        <Libellé>Infection aiguë des voies respiratoires supérieures, sans précision</Libellé>
+        <NotesClinicales>Pharyngite aiguë avec fièvre à 38,5°C. Toux productive. Asthénie générale. Pas de signes de gravité.</NotesClinicales>
+    </Diagnostic>
+
+    <Recommandations>
+        <Recommandation>Repos pendant 48 heures</Recommandation>
+        <Recommandation>Hydratation abondante (minimum 1,5L d'eau par jour)</Recommandation>
+        <Recommandation>Consultation de contrôle si persistance des symptômes au-delà de 7 jours</Recommandation>
+        <Recommandation>Consultation urgente en cas d'aggravation : forte fièvre persistante, difficultés respiratoires, douleurs thoraciques</Recommandation>
+    </Recommandations>
+
+    <ArrêtTravail>
+        <DateDébut>2025-01-16</DateDébut>
+        <DateFin>2025-01-20</DateFin>
+        <Durée>5 jours</Durée>
+        <MotifArrêt>Maladie</MotifArrêt>
+        <SortieAutorisée>true</SortieAutorisée>
+    </ArrêtTravail>
+
+    <SignatureÉlectronique>
+        <DateSignature>2025-01-16T14:30:00+01:00</DateSignature>
+        <MéthodeSignature>CARTE_CPS</MéthodeSignature>
+        <HashOrdonnance>8f3d8c9a7b4e5f6d2c1a9b8e7f6a5d4c3b2a1e0f</HashOrdonnance>
+    </SignatureÉlectronique>
+
+    <MentionsLégales>
+        <Mention>Ordonnance à présenter au pharmacien dans les 3 mois suivant la date de prescription</Mention>
+        <Mention>Conservation des médicaments hors de portée des enfants</Mention>
+        <Mention>En cas d'effet indésirable, contacter votre médecin ou pharmacien</Mention>
+        <Mention>Ne jamais utiliser un médicament périmé</Mention>
+    </MentionsLégales>
+</OrdonnanceMédicale>

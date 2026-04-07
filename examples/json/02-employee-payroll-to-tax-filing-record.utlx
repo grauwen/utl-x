@@ -1,0 +1,86 @@
+%utlx 1.0
+input json
+output csv {
+  headers: true,
+  delimiter: ","
+}
+---
+
+// ============================================================================
+// Business Scenario: Employee Payroll → Tax Filing Record
+// ----------------------------------------------------------------------------
+// Input:  Employee payroll data (02-employee-payroll.json)
+// Output: CSV record for batch upload to the tax authority (IRS/state)
+//
+// HR systems export payroll runs into a standardized CSV that the
+// tax compliance team uploads to the IRS EFTPS portal and state
+// revenue department. Each row includes employer/employee identifiers,
+// computed effective rates, annualized projections, FICA breakdown,
+// withholding adequacy checks, and W-2 box mappings.
+// ============================================================================
+
+{
+  let fullName = $input.employee.firstName + " " + $input.employee.lastName;
+  let totalGross = roundToCents($input.compensation.grossPay + $input.compensation.overtimePay);
+  let daysInPeriod = diffDays(parseDate($input.payPeriod.startDate), parseDate($input.payPeriod.endDate));
+  let ficaTotal = roundToCents($input.deductions.socialSecurity + $input.deductions.medicare);
+  let totalIncomeTax = roundToCents($input.deductions.federalTax + $input.deductions.stateTax);
+  let effectiveFederalRate = roundToDecimalPlaces($input.deductions.federalTax / totalGross * 100, 2);
+  let effectiveStateRate = roundToDecimalPlaces($input.deductions.stateTax / totalGross * 100, 2);
+  let effectiveCombinedRate = roundToDecimalPlaces(totalIncomeTax / totalGross * 100, 2);
+  let ssWageBase = 168600;
+  let annualizedGross = roundToCents(totalGross * 26);
+  let projectedSocialSecurity = roundToCents($input.deductions.socialSecurity * 26);
+  let ssCapReached = annualizedGross > ssWageBase;
+  let retirementPct = roundToDecimalPlaces($input.deductions.retirement401k / totalGross * 100, 2);
+  let w2Box1 = roundToCents(totalGross - $input.deductions.retirement401k);
+  let w2Box3 = if (annualizedGross > ssWageBase) roundToCents(ssWageBase / 26) else totalGross;
+  let w2Box5 = totalGross;
+  let payPeriodQuarter = quarter(parseDate($input.payPeriod.payDate));
+  let payPeriodYear = year(parseDate($input.payPeriod.payDate));
+  let withholdingAdequacy = if (effectiveFederalRate >= 18) "ADEQUATE"
+                            else if (effectiveFederalRate >= 12) "MARGINAL"
+                            else "REVIEW_NEEDED";
+
+  [
+    {
+      filing_period: "Q" + toString(payPeriodQuarter) + "-" + toString(payPeriodYear),
+      pay_date: formatDate(parseDate($input.payPeriod.payDate), "MM/dd/yyyy"),
+      period_start: formatDate(parseDate($input.payPeriod.startDate), "MM/dd/yyyy"),
+      period_end: formatDate(parseDate($input.payPeriod.endDate), "MM/dd/yyyy"),
+      period_days: daysInPeriod,
+      employee_id: $input.employee.employeeId,
+      employee_name: upperCase(fullName),
+      department_code: constantCase($input.employee.department),
+      employment_type: $input.employee.employmentType,
+      hire_date: formatDate(parseDate($input.employee.hireDate), "MM/dd/yyyy"),
+      gross_wages: totalGross,
+      regular_wages: $input.compensation.grossPay,
+      overtime_wages: $input.compensation.overtimePay,
+      overtime_pct: roundToDecimalPlaces($input.compensation.overtimeHours / $input.compensation.regularHours * 100, 1),
+      w2_box1_wages: w2Box1,
+      w2_box3_ss_wages: w2Box3,
+      w2_box5_medicare_wages: w2Box5,
+      federal_withheld: $input.deductions.federalTax,
+      state_withheld: $input.deductions.stateTax,
+      total_income_tax: totalIncomeTax,
+      effective_federal_rate: effectiveFederalRate,
+      effective_state_rate: effectiveStateRate,
+      effective_combined_rate: effectiveCombinedRate,
+      social_security: $input.deductions.socialSecurity,
+      medicare: $input.deductions.medicare,
+      fica_total: ficaTotal,
+      ss_wage_base: ssWageBase,
+      ss_cap_projected_reached: ssCapReached,
+      retirement_401k: $input.deductions.retirement401k,
+      retirement_pct: retirementPct,
+      pre_tax_deductions: $input.deductions.retirement401k,
+      annualized_gross: annualizedGross,
+      annualized_federal: roundToCents($input.deductions.federalTax * 26),
+      annualized_ss: projectedSocialSecurity,
+      net_pay: $input.netPay,
+      withholding_status: withholdingAdequacy,
+      record_hash: md5($input.employee.employeeId + $input.payPeriod.payDate + toString(totalGross))
+    }
+  ]
+}

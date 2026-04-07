@@ -1,0 +1,137 @@
+{
+  "contractId": "CONT-2025-SVC-00445",
+  "contractType": "SERVICE_AGREEMENT",
+  "effectiveDate": "2025-02-01",
+  "expirationDate": "2026-01-31",
+  "autoRenewal": true,
+  "status": "ACTIVE",
+  "vendor": {
+    "vendorId": "VEND-2234",
+    "companyName": "CloudTech Solutions Inc.",
+    "contactPerson": "Michael Stevens",
+    "email": "m.stevens@cloudtech.com",
+    "phone": "+1-650-555-0199",
+    "address": {
+      "street": "100 Innovation Drive",
+      "city": "San Francisco",
+      "state": "CA",
+      "zipCode": "94105",
+      "country": "USA"
+    }
+  },
+  "client": {
+    "clientId": "CLI-9876",
+    "companyName": "Global Enterprises LLC",
+    "contactPerson": "Sarah Johnson",
+    "email": "sarah.j@globalent.com",
+    "phone": "+1-212-555-0234",
+    "address": {
+      "street": "500 Corporate Blvd",
+      "city": "New York",
+      "state": "NY",
+      "zipCode": "10001",
+      "country": "USA"
+    }
+  },
+  "services": [
+    {
+      "serviceId": "SVC-CLOUD-HOST",
+      "serviceName": "Cloud Infrastructure Hosting",
+      "description": "24/7 managed cloud hosting with 99.9% uptime SLA",
+      "pricing": {
+        "type": "MONTHLY_RECURRING",
+        "amount": 2500.00,
+        "currency": "USD"
+      },
+      "sla": {
+        "uptime": "99.9%",
+        "responseTime": "15 minutes",
+        "resolutionTime": "4 hours"
+      }
+    },
+    {
+      "serviceId": "SVC-SUPPORT",
+      "serviceName": "Premium Technical Support",
+      "description": "24/7 phone and email support with dedicated account manager",
+      "pricing": {
+        "type": "MONTHLY_RECURRING",
+        "amount": 1200.00,
+        "currency": "USD"
+      },
+      "sla": {
+        "responseTime": "30 minutes",
+        "availability": "24/7/365"
+      }
+    },
+    {
+      "serviceId": "SVC-BACKUP",
+      "serviceName": "Automated Backup Service",
+      "description": "Daily automated backups with 30-day retention",
+      "pricing": {
+        "type": "MONTHLY_RECURRING",
+        "amount": 500.00,
+        "currency": "USD"
+      },
+      "features": [
+        "Daily backups",
+        "30-day retention",
+        "Point-in-time recovery",
+        "Encrypted storage"
+      ]
+    }
+  ],
+  "financialTerms": {
+    "totalMonthlyValue": 4200.00,
+    "totalAnnualValue": 50400.00,
+    "paymentTerms": "NET_30",
+    "billingCycle": "MONTHLY",
+    "currency": "USD",
+    "lateFeePercentage": 1.5,
+    "discounts": [
+      {
+        "description": "Annual prepayment discount",
+        "percentage": 10.0,
+        "conditions": "Payment in full at contract start"
+      }
+    ]
+  },
+  "termsAndConditions": {
+    "terminationNotice": 90,
+    "terminationNoticePeriod": "DAYS",
+    "penaltyForEarlyTermination": 10000.00,
+    "liabilityLimit": 100000.00,
+    "confidentialityPeriod": 5,
+    "confidentialityPeriodUnit": "YEARS"
+  },
+  "signatures": [
+    {
+      "party": "VENDOR",
+      "signedBy": "Michael Stevens",
+      "title": "VP of Sales",
+      "signedDate": "2025-01-20T14:30:00Z",
+      "ipAddress": "203.0.113.45"
+    },
+    {
+      "party": "CLIENT",
+      "signedBy": "Sarah Johnson",
+      "title": "Director of IT",
+      "signedDate": "2025-01-21T09:15:00Z",
+      "ipAddress": "198.51.100.78"
+    }
+  ],
+  "amendments": [],
+  "attachments": [
+    {
+      "fileName": "SLA-Terms.pdf",
+      "fileType": "PDF",
+      "uploadDate": "2025-01-20",
+      "uploadedBy": "Michael Stevens"
+    },
+    {
+      "fileName": "Security-Compliance-Certificate.pdf",
+      "fileType": "PDF",
+      "uploadDate": "2025-01-20",
+      "uploadedBy": "Michael Stevens"
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+%utlx 1.0
+input json
+output xml
+---
+
+// ============================================================================
+// Business Scenario: Service Contract → Billing Schedule
+// ----------------------------------------------------------------------------
+// Input:  Service agreement (09-service-contract.json)
+// Output: XML billing schedule for accounts receivable system
+//
+// When a service contract is signed, the billing department needs a structured
+// schedule showing invoice dates, amounts, and payment terms. This generates
+// a 12-month billing forecast with prorated calculations and renewal tracking.
+// ============================================================================
+
+function BillingPriority(monthlyValue) {
+  if (monthlyValue >= 5000) "PLATINUM"
+  else if (monthlyValue >= 2000) "GOLD"
+  else if (monthlyValue >= 500) "SILVER"
+  else "BRONZE"
+}
+
+function PaymentTermsDays(terms) {
+  match (terms) {
+    "NET_30" => 30,
+    "NET_15" => 15,
+    "NET_45" => 45,
+    "NET_60" => 60,
+    _ => 30
+  }
+}
+
+function MonthName(monthNum) {
+  let months = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"] in
+  months[monthNum - 1]
+}
+
+
+{
+  let effectiveDate = parseDate($input.effectiveDate);
+  let expirationDate = parseDate($input.expirationDate);
+  let contractDays = diffDays(effectiveDate, expirationDate);
+  let monthlyValue = $input.financialTerms.totalMonthlyValue;
+  let annualValue = $input.financialTerms.totalAnnualValue;
+  let paymentDays = PaymentTermsDays($input.financialTerms.paymentTerms);
+  let priority = BillingPriority(monthlyValue);
+  let serviceCount = count($input.services);
+
+  BillingSchedule: {
+    @scheduleId: "SCHED-" + replace(substring(generateUuid(), 0, 8), "-", ""),
+    @generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    @priority: priority,
+    ContractInfo: {
+      ContractId: $input.contractId,
+      ContractType: titleCase(replace($input.contractType, "_", " ")),
+      Status: upperCase($input.status),
+      AutoRenewal: $input.autoRenewal,
+      EffectiveDate: $input.effectiveDate,
+      ExpirationDate: $input.expirationDate,
+      DurationDays: contractDays,
+      DurationMonths: round(contractDays / 30.44)
+    },
+    VendorInfo: {
+      VendorId: $input.vendor.vendorId,
+      VendorName: $input.vendor.companyName,
+      VendorSlug: slugify($input.vendor.companyName),
+      ContactPerson: $input.vendor.contactPerson,
+      ContactEmail: $input.vendor.email,
+      ContactPhone: replace($input.vendor.phone, "+1-", "1-"),
+      FullAddress: joinToString([
+        $input.vendor.address.street,
+        $input.vendor.address.city + ", " + $input.vendor.address.state + " " + $input.vendor.address.zipCode,
+        $input.vendor.address.country
+      ], " | ")
+    },
+    ClientInfo: {
+      ClientId: $input.client.clientId,
+      ClientName: $input.client.companyName,
+      ClientSlug: slugify($input.client.companyName),
+      ContactPerson: $input.client.contactPerson,
+      ContactEmail: $input.client.email,
+      BillingAddress: upperCase($input.client.address.street) + "\n" +
+                      upperCase($input.client.address.city) + ", " +
+                      $input.client.address.state + " " +
+                      $input.client.address.zipCode
+    },
+    ServicesSummary: {
+      TotalServices: serviceCount,
+      ServiceList: joinToString(map($input.services, s => s.serviceName), "; "),
+      Services: {
+        Service: $input.services |> map(svc => {
+          {
+            @id: svc.serviceId,
+            Name: svc.serviceName,
+            NameKebab: kebabCase(svc.serviceName),
+            Description: truncate(svc.description, 60, "..."),
+            PricingType: svc.pricing.type,
+            MonthlyAmount: formatCurrency(svc.pricing.amount, svc.pricing.currency),
+            AnnualAmount: formatCurrency(svc.pricing.amount * 12, svc.pricing.currency),
+            PercentOfTotal: roundToDecimalPlaces(svc.pricing.amount / monthlyValue * 100, 1)
+          }
+        })
+      }
+    },
+    FinancialSummary: {
+      Currency: $input.financialTerms.currency,
+      MonthlyValue: monthlyValue,
+      MonthlyValueFormatted: formatCurrency(monthlyValue, $input.financialTerms.currency),
+      AnnualValue: annualValue,
+      AnnualValueFormatted: formatCurrency(annualValue, $input.financialTerms.currency),
+      PaymentTerms: $input.financialTerms.paymentTerms,
+      PaymentTermsDays: paymentDays,
+      BillingCycle: $input.financialTerms.billingCycle,
+      LateFeePercentage: $input.financialTerms.lateFeePercentage,
+      Discounts: {
+        Discount: $input.financialTerms.discounts |> map(disc => {
+          let savings = roundToCents(annualValue * disc.percentage / 100) in
+          {
+            Description: disc.description,
+            Percentage: disc.percentage,
+            PotentialSavings: formatCurrency(savings, $input.financialTerms.currency),
+            Conditions: disc.conditions
+          }
+        })
+      }
+    },
+    BillingCalendar: {
+      Invoice: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] |> map(monthOffset => {
+        let invoiceMonth = monthOffset;
+        let invoiceYear = year(effectiveDate) + (if (month(effectiveDate) + monthOffset - 1 > 12) 1 else 0);
+        let adjustedMonth = if (month(effectiveDate) + monthOffset - 1 > 12)
+                            (month(effectiveDate) + monthOffset - 13)
+                            else (month(effectiveDate) + monthOffset - 1);
+        let invoiceAmount = monthlyValue;
+        let dueAmount = roundToCents(invoiceAmount * (1 + $input.financialTerms.lateFeePercentage / 100));
+
+        {
+          @period: toString(monthOffset),
+          @month: MonthName(if (adjustedMonth == 0) 12 else adjustedMonth),
+          InvoiceNumber: "INV-" + toString(invoiceYear) + "-" + padLeft(toString(monthOffset), 3, "0"),
+          Amount: formatCurrency(invoiceAmount, $input.financialTerms.currency),
+          AmountNumeric: invoiceAmount,
+          DueWithLateFee: formatCurrency(dueAmount, $input.financialTerms.currency),
+          PaymentStatus: "SCHEDULED",
+          FiscalQuarter: "Q" + toString(ceil(monthOffset / 3))
+        }
+      })
+    },
+    TermsAndConditions: {
+      TerminationNotice: toString($input.termsAndConditions.terminationNotice) + " " +
+                         lowerCase($input.termsAndConditions.terminationNoticePeriod),
+      EarlyTerminationPenalty: formatCurrency($input.termsAndConditions.penaltyForEarlyTermination, $input.financialTerms.currency),
+      LiabilityLimit: formatCurrency($input.termsAndConditions.liabilityLimit, $input.financialTerms.currency),
+      ConfidentialityPeriod: toString($input.termsAndConditions.confidentialityPeriod) + " " +
+                             lowerCase($input.termsAndConditions.confidentialityPeriodUnit)
+    },
+    SignatureStatus: {
+      TotalRequired: count($input.signatures),
+      TotalSigned: count(filter($input.signatures, s => !isNull(s.signedDate))),
+      AllSigned: count($input.signatures) == count(filter($input.signatures, s => !isNull(s.signedDate))),
+      Signatures: {
+        Signature: $input.signatures |> map(sig => {
+          {
+            Party: sig.party,
+            SignedBy: sig.signedBy,
+            Title: sig.title,
+            SignedDate: if (isNull(sig.signedDate)) "PENDING" else formatDate(parseDate(sig.signedDate), "dd-MMM-yyyy"),
+            HasSignature: !isNull(sig.signedDate)
+          }
+        })
+      }
+    },
+    Attachments: {
+      TotalAttachments: count($input.attachments),
+      Attachment: $input.attachments |> map(att => {
+        {
+          FileName: att.fileName,
+          FileType: att.fileType,
+          UploadDate: att.uploadDate,
+          UploadedBy: att.uploadedBy,
+          FileExtension: lowerCase(att.fileType)
+        }
+      })
+    },
+    RecordHash: md5($input.contractId + toString(annualValue) + $input.effectiveDate)
+  }
+}

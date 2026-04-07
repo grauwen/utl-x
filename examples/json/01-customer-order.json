@@ -1,0 +1,50 @@
+{
+  "orderId": "ORD-2025-001234",
+  "orderDate": "2025-01-15T10:30:00Z",
+  "customer": {
+    "customerId": "CUST-5678",
+    "name": "Acme Corporation",
+    "email": "purchasing@acmecorp.com",
+    "phone": "+1-555-0123",
+    "billingAddress": {
+      "street": "123 Business Park Drive",
+      "city": "San Francisco",
+      "state": "CA",
+      "zipCode": "94105",
+      "country": "USA"
+    },
+    "shippingAddress": {
+      "street": "456 Warehouse Lane",
+      "city": "Oakland",
+      "state": "CA",
+      "zipCode": "94607",
+      "country": "USA"
+    }
+  },
+  "items": [
+    {
+      "sku": "LAPTOP-PRO-15",
+      "productName": "Professional Laptop 15-inch",
+      "quantity": 5,
+      "unitPrice": 1299.99,
+      "discount": 0.10,
+      "taxRate": 0.0875,
+      "lineTotal": 6387.19
+    },
+    {
+      "sku": "MOUSE-WIRELESS",
+      "productName": "Wireless Mouse",
+      "quantity": 10,
+      "unitPrice": 29.99,
+      "discount": 0.05,
+      "taxRate": 0.0875,
+      "lineTotal": 309.64
+    }
+  ],
+  "subtotal": 6435.00,
+  "tax": 563.06,
+  "shipping": 25.00,
+  "total": 7023.06,
+  "paymentMethod": "CORPORATE_CREDIT",
+  "status": "PENDING_FULFILLMENT"
+}

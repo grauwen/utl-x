@@ -1,0 +1,170 @@
+%utlx 1.0
+input service csv
+output xsd
+---
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://example.com/inventory"
+           xmlns:tns="http://example.com/inventory"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>SOAP Web Service Contract for Inventory and Order Management</xs:documentation>
+  </xs:annotation>
+
+  <!-- Complex Types for Operations -->
+  {map(
+    ["GetProductInventory", "UpdateInventory", "CheckAvailability", "CreateOrder"],
+    fn(operation) =>
+      <>
+        <xs:element name="{operation}Request">
+          <xs:complexType>
+            <xs:sequence>
+              {map(
+                filter($service, fn(row) => row.Operation == operation && row.MessageType == "Request" && row.DataType != "Address" && row.DataType != "OrderItem"),
+                fn(field) =>
+                  <xs:element name={field.ElementName}
+                             type={if (field.DataType == "string") then "xs:string"
+                                   else if (field.DataType == "int") then "xs:int"
+                                   else if (field.DataType == "boolean") then "xs:boolean"
+                                   else if (field.DataType == "decimal") then "xs:decimal"
+                                   else if (field.DataType == "date") then "xs:date"
+                                   else if (field.DataType == "dateTime") then "xs:dateTime"
+                                   else "tns:" + field.DataType}
+                             minOccurs={field.MinOccurs}
+                             maxOccurs={field.MaxOccurs}
+                             nillable={field.Nillable}>
+                    {if (field.Description != "") then
+                      <xs:annotation>
+                        <xs:documentation>{field.Description}</xs:documentation>
+                      </xs:annotation>
+                    else <xs:annotation><xs:documentation>Element</xs:documentation></xs:annotation>}
+                    {if (field.Pattern != "" || field.MinLength != "" || field.MaxLength != "") then
+                      <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                          {if (field.Pattern != "") then <xs:pattern value={field.Pattern}/> else <xs:annotation><xs:documentation>No pattern</xs:documentation></xs:annotation>}
+                          {if (field.MinLength != "") then <xs:minLength value={field.MinLength}/> else <xs:annotation><xs:documentation>No minLength</xs:documentation></xs:annotation>}
+                          {if (field.MaxLength != "") then <xs:maxLength value={field.MaxLength}/> else <xs:annotation><xs:documentation>No maxLength</xs:documentation></xs:annotation>}
+                        </xs:restriction>
+                      </xs:simpleType>
+                    else <xs:annotation><xs:documentation>No restrictions</xs:documentation></xs:annotation>}
+                  </xs:element>
+              )}
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+        <xs:element name="{operation}Response">
+          <xs:complexType>
+            <xs:sequence>
+              {map(
+                filter($service, fn(row) => row.Operation == operation && row.MessageType == "Response"),
+                fn(field) =>
+                  <xs:element name={field.ElementName}
+                             type={if (field.DataType == "string") then "xs:string"
+                                   else if (field.DataType == "int") then "xs:int"
+                                   else if (field.DataType == "boolean") then "xs:boolean"
+                                   else if (field.DataType == "decimal") then "xs:decimal"
+                                   else if (field.DataType == "date") then "xs:date"
+                                   else if (field.DataType == "dateTime") then "xs:dateTime"
+                                   else "tns:" + field.DataType}
+                             minOccurs={field.MinOccurs}
+                             maxOccurs={field.MaxOccurs}>
+                    <xs:annotation>
+                      <xs:documentation>{field.Description}</xs:documentation>
+                    </xs:annotation>
+                  </xs:element>
+              )}
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </>
+  )}
+
+  <!-- Reusable Complex Types -->
+  <xs:complexType name="WarehouseLocation">
+    <xs:sequence>
+      {map(
+        filter($service, fn(row) => row.ServiceName == "WarehouseLocation"),
+        fn(field) =>
+          <xs:element name={field.ElementName}
+                     type={if (field.DataType == "string") then "xs:string" else if (field.DataType == "int") then "xs:int" else "xs:string"}
+                     minOccurs={field.MinOccurs}
+                     maxOccurs={field.MaxOccurs}>
+            <xs:annotation>
+              <xs:documentation>{field.Description}</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+      )}
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AvailabilityResult">
+    <xs:sequence>
+      {map(
+        filter($service, fn(row) => row.ServiceName == "AvailabilityResult"),
+        fn(field) =>
+          <xs:element name={field.ElementName}
+                     type={if (field.DataType == "string") then "xs:string"
+                           else if (field.DataType == "int") then "xs:int"
+                           else if (field.DataType == "boolean") then "xs:boolean"
+                           else if (field.DataType == "date") then "xs:date"
+                           else "xs:string"}
+                     minOccurs={field.MinOccurs}
+                     maxOccurs={field.MaxOccurs}
+                     nillable={field.Nillable}>
+            <xs:annotation>
+              <xs:documentation>{field.Description}</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+      )}
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Address">
+    <xs:sequence>
+      {map(
+        filter($service, fn(row) => row.ServiceName == "Address"),
+        fn(field) =>
+          <xs:element name={field.ElementName}
+                     type="xs:string"
+                     minOccurs={field.MinOccurs}
+                     maxOccurs={field.MaxOccurs}
+                     nillable={field.Nillable}>
+            <xs:annotation>
+              <xs:documentation>{field.Description}</xs:documentation>
+            </xs:annotation>
+            {if (field.Pattern != "" || field.MinLength != "" || field.MaxLength != "") then
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  {if (field.Pattern != "") then <xs:pattern value={field.Pattern}/> else <xs:annotation><xs:documentation>No pattern</xs:documentation></xs:annotation>}
+                  {if (field.MinLength != "") then <xs:minLength value={field.MinLength}/> else <xs:annotation><xs:documentation>No minLength</xs:documentation></xs:annotation>}
+                  {if (field.MaxLength != "") then <xs:maxLength value={field.MaxLength}/> else <xs:annotation><xs:documentation>No maxLength</xs:documentation></xs:annotation>}
+                </xs:restriction>
+              </xs:simpleType>
+            else <xs:annotation><xs:documentation>No restrictions</xs:documentation></xs:annotation>}
+          </xs:element>
+      )}
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="OrderItem">
+    <xs:sequence>
+      {map(
+        filter($service, fn(row) => row.ServiceName == "OrderItem"),
+        fn(field) =>
+          <xs:element name={field.ElementName}
+                     type={if (field.DataType == "string") then "xs:string"
+                           else if (field.DataType == "int") then "xs:int"
+                           else if (field.DataType == "decimal") then "xs:decimal"
+                           else "xs:string"}
+                     minOccurs={field.MinOccurs}
+                     maxOccurs={field.MaxOccurs}>
+            <xs:annotation>
+              <xs:documentation>{field.Description}</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+      )}
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

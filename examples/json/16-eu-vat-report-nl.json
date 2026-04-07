@@ -1,0 +1,231 @@
+{
+  "aangifteId": "NL-2025-BTW-Q1-001234",
+  "aangifteType": "BTW_AANGIFTE",
+  "rapportageNaam": "BTW-aangifte 1e kwartaal 2025",
+  "periode": {
+    "kwartaal": 1,
+    "jaar": 2025,
+    "startDatum": "2025-01-01",
+    "eindDatum": "2025-03-31",
+    "indienDatum": "2025-04-30"
+  },
+  "ondernemer": {
+    "bedrijfsnaam": "Van den Berg Technische Handel BV",
+    "kvkNummer": "12345678",
+    "btwNummer": "NL123456789B01",
+    "rsinNummer": "123456789",
+    "adres": {
+      "straat": "Amstelveenseweg",
+      "huisnummer": "500",
+      "postcode": "1081 KL",
+      "plaats": "Amsterdam",
+      "provincie": "Noord-Holland",
+      "land": "Nederland"
+    },
+    "contact": {
+      "naam": "Dhr. P. van den Berg",
+      "email": "p.vandenberg@vdberg-techniek.nl",
+      "telefoon": "+31 20 123 4567"
+    },
+    "financieelAdviseur": {
+      "kantoor": "AccountantsGroep Amsterdam",
+      "contactpersoon": "Mw. J. de Vries",
+      "email": "j.devries@accountantsgroep.nl",
+      "telefoon": "+31 20 987 6543"
+    }
+  },
+  "omzet": {
+    "binnenland": {
+      "leveringenGoederen": {
+        "hoog21Procent": {
+          "omzetBedrag": 458750.00,
+          "btwBedrag": 96337.50,
+          "percentage": 21.0
+        },
+        "laag9Procent": {
+          "omzetBedrag": 125000.00,
+          "btwBedrag": 11250.00,
+          "percentage": 9.0
+        },
+        "nulTarief": {
+          "omzetBedrag": 0.00,
+          "btwBedrag": 0.00,
+          "percentage": 0.0
+        },
+        "subtotaal": {
+          "omzet": 583750.00,
+          "btw": 107587.50
+        }
+      },
+      "dienstenLeveringen": {
+        "hoog21Procent": {
+          "omzetBedrag": 234500.00,
+          "btwBedrag": 49245.00,
+          "percentage": 21.0
+        },
+        "laag9Procent": {
+          "omzetBedrag": 0.00,
+          "btwBedrag": 0.00,
+          "percentage": 9.0
+        },
+        "subtotaal": {
+          "omzet": 234500.00,
+          "btw": 49245.00
+        }
+      },
+      "totaalBinnenland": {
+        "omzet": 818250.00,
+        "btw": 156832.50
+      }
+    },
+    "intracommunautair": {
+      "icLeveringen": {
+        "omzetBedrag": 125000.00,
+        "btwBedrag": 0.00,
+        "beschrijving": "Leveringen naar andere EU-landen (btw-verlegd)"
+      },
+      "icVerwervingen": {
+        "omzetBedrag": 45000.00,
+        "btwBedrag": 9450.00,
+        "percentage": 21.0,
+        "beschrijving": "Verwervingen uit andere EU-landen"
+      },
+      "icDiensten": {
+        "omzetBedrag": 12500.00,
+        "btwBedrag": 0.00,
+        "beschrijving": "Diensten naar andere EU-landen"
+      }
+    },
+    "uitvoerBuitenEU": {
+      "omzetBedrag": 78000.00,
+      "btwBedrag": 0.00,
+      "beschrijving": "Export buiten EU (btw-vrij)"
+    },
+    "totaalOmzet": {
+      "omzetBedrag": 1078750.00,
+      "totaalVerschuldigdBtw": 166282.50
+    }
+  },
+  "voorbelasting": {
+    "inkopen": {
+      "goederen": {
+        "bedrag": 285000.00,
+        "btwBedrag": 59850.00,
+        "percentage": 21.0
+      },
+      "diensten": {
+        "bedrag": 125000.00,
+        "btwBedrag": 26250.00,
+        "percentage": 21.0
+      },
+      "subtotaal": {
+        "bedrag": 410000.00,
+        "btw": 86100.00
+      }
+    },
+    "investeringen": {
+      "bedrijfsmiddelen": {
+        "bedrag": 45000.00,
+        "btwBedrag": 9450.00,
+        "percentage": 21.0,
+        "beschrijving": "Aankoop bedrijfsauto en apparatuur"
+      }
+    },
+    "icVerwervingen": {
+      "bedrag": 45000.00,
+      "btwBedrag": 9450.00,
+      "percentage": 21.0
+    },
+    "kleineOndernemersRegeling": {
+      "vanToepassing": false
+    },
+    "totaalVoorbelasting": 105000.00
+  },
+  "berekening": {
+    "verschuldigdeBtw": 166282.50,
+    "aftrekbareVoorbelasting": 105000.00,
+    "subtotaal": 61282.50,
+    "correctiesVorigePeriode": {
+      "bedrag": -450.00,
+      "beschrijving": "Correctie Q4 2024 - teveel aangegeven"
+    },
+    "teBetalenAanBelastingdienst": 60832.50,
+    "valuta": "EUR"
+  },
+  "specificatieLeveringen": {
+    "belangrijksteKlanten": [
+      {
+        "klantNaam": "Industrie Partner GmbH",
+        "land": "Duitsland",
+        "btwNummer": "DE987654321",
+        "omzet": 85000.00,
+        "type": "IC_LEVERING"
+      },
+      {
+        "klantNaam": "Tech Solutions SARL",
+        "land": "Frankrijk",
+        "btwNummer": "FR12345678901",
+        "omzet": 40000.00,
+        "type": "IC_LEVERING"
+      },
+      {
+        "klantNaam": "Rotterdam Bouwmaatschappij BV",
+        "land": "Nederland",
+        "btwNummer": "NL987654321B01",
+        "omzet": 125000.00,
+        "type": "BINNENLAND"
+      }
+    ],
+    "belangrijksteLeveranciers": [
+      {
+        "leverancierNaam": "Siemens Nederland NV",
+        "land": "Nederland",
+        "btwNummer": "NL001122334B01",
+        "inkoopBedrag": 145000.00,
+        "type": "BINNENLAND"
+      },
+      {
+        "leverancierNaam": "Deutsche Elektronik AG",
+        "land": "Duitsland",
+        "btwNummer": "DE111222333",
+        "inkoopBedrag": 45000.00,
+        "type": "IC_VERWERVING"
+      }
+    ]
+  },
+  "betaalgegevens": {
+    "betalingstermijn": "30 dagen na indiening",
+    "uitersteBetalingsdatum": "2025-05-30",
+    "rekeningnummer": {
+      "iban": "NL91ABNA0417164300",
+      "bic": "ABNANL2A",
+      "tenNameVan": "Belastingdienst"
+    },
+    "betalingskenmerk": "BTW-NL123456789B01-2025Q1"
+  },
+  "opmerkingen": [
+    "Kwartaalaangifte conform artikel 15 Wet OB",
+    "IC-leveringen gedaan onder art. 138 BTW-richtlijn",
+    "Opgave ICP (Intracommunautaire Prestaties) separaat ingediend",
+    "Kleine ondernemersregeling niet van toepassing"
+  ],
+  "bijlagen": [
+    {
+      "type": "ICP_OPGAVE",
+      "bestandsnaam": "ICP_2025_Q1.xml",
+      "beschrijving": "Opgave Intracommunautaire Prestaties"
+    },
+    {
+      "type": "GROOTBOEK",
+      "bestandsnaam": "Grootboekrekening_2025_Q1.xlsx",
+      "beschrijving": "Grootboekuitdraai kwartaal 1"
+    }
+  ],
+  "indienGegevens": {
+    "ingediendDoor": "Mw. J. de Vries - AccountantsGroep Amsterdam",
+    "indiendatum": "2025-04-28T14:30:00+02:00",
+    "methode": "ELEKTRONISCH",
+    "bevestigingsnummer": "NL-BELAST-2025-Q1-CONF-789456",
+    "status": "GEACCEPTEERD"
+  }
+}

@@ -1,0 +1,269 @@
+%utlx 1.0
+input json
+output json
+---
+
+// ============================================================================
+// Business Scenario: UK Restaurant Receipt → Corporate Expense Report Entry
+// ----------------------------------------------------------------------------
+// Input:  UK restaurant receipt (28-uk-restaurant-receipt.json)
+// Output: JSON expense report entry for corporate reimbursement system
+//
+// Business travelers need to submit meal receipts for expense reimbursement.
+// This transformation extracts key data, categorizes expenses, calculates
+// VAT recoverable amounts, and flags policy compliance issues.
+// ============================================================================
+
+function ExpenseCategory(itemCategory) {
+  match (itemCategory) {
+    "STARTERS" => "MEALS_ENTERTAINMENT",
+    "MAINS" => "MEALS_ENTERTAINMENT",
+    "DESSERTS" => "MEALS_ENTERTAINMENT",
+    "SIDES" => "MEALS_ENTERTAINMENT",
+    "WINE" => "ALCOHOL",
+    "APERITIFS" => "ALCOHOL",
+    "DIGESTIFS" => "ALCOHOL",
+    "SOFT_DRINKS" => "BEVERAGES",
+    "HOT_BEVERAGES" => "BEVERAGES",
+    _ => "OTHER"
+  }
+}
+
+function PolicyCompliance(totalAmount, guestCount, hasAlcohol) {
+  let perPersonLimit = 75.0 in
+  let perPersonSpend = totalAmount / guestCount in
+  if (perPersonSpend > perPersonLimit * 1.5) "REQUIRES_APPROVAL"
+  else if (perPersonSpend > perPersonLimit) "OVER_LIMIT"
+  else if (hasAlcohol && perPersonSpend > 50) "REVIEW_ALCOHOL"
+  else "COMPLIANT"
+}
+
+function AllergenRisk(allergenList) {
+  let highRisk = ["Nuts", "Peanuts", "Shellfish", "Sesame"] in
+  if (some(allergenList, a => contains(joinToString(highRisk, ","), a))) "HIGH"
+  else if (count(allergenList) > 2) "MEDIUM"
+  else "LOW"
+}
+
+
+{
+  let receiptDate = parseDate($input.transactionDate);
+  let seatedTime = parseDate($input.table.seatedAt);
+  let guestCount = $input.table.numberOfGuests;
+  let foodTotal = $input.financialSummary.foodSubtotal;
+  let beverageTotal = $input.financialSummary.beveragesSubtotal;
+  let alcoholItems = filter($input.beverages, b => !isNull(b.abv));
+  let alcoholTotal = sum(map(alcoholItems, b => b.subtotal));
+  let nonAlcoholTotal = beverageTotal - alcoholTotal;
+  let hasAlcohol = count(alcoholItems) > 0;
+  let tipAmount = $input.financialSummary.serviceCharge.amount;
+  let totalWithTip = $input.financialSummary.totalDue;
+  let vatTotal = $input.financialSummary.vat.totalVAT;
+  let perPersonSpend = roundToCents(totalWithTip / guestCount);
+  let policyStatus = PolicyCompliance(totalWithTip, guestCount, hasAlcohol);
+  let allAllergens = distinct(flatten(map($input.orderItems, item => item.allergens)));
+
+  {
+    expenseEntry: {
+      entryId: "EXP-" + replace(generateUuid(), "-", ""),
+      entryType: "BUSINESS_MEAL",
+      generatedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+      submissionStatus: "DRAFT",
+      currency: $input.financialSummary.currency
+    },
+    receiptDetails: {
+      receiptId: $input.receiptId,
+      receiptType: titleCase(replace($input.receiptType, "_", " ")),
+      transactionDate: formatDate(receiptDate, "yyyy-MM-dd"),
+      transactionTime: formatDate(receiptDate, "HH:mm:ss"),
+      dayOfWeek: dayOfWeekName(receiptDate),
+      isWeekend: contains("Saturday,Sunday", dayOfWeekName(receiptDate)),
+      isEvening: hours(receiptDate) >= 18,
+      diningDuration: round(diffMinutes(seatedTime, receiptDate))
+    },
+    merchantInfo: {
+      name: $input.restaurant.name,
+      tradingAs: $input.restaurant.tradingAs,
+      companyNumber: $input.restaurant.companyNumber,
+      vatNumber: $input.restaurant.vatNumber,
+      vatRegistered: !isNull($input.restaurant.vatNumber),
+      address: {
+        building: $input.restaurant.address.buildingName,
+        street: $input.restaurant.address.street,
+        town: $input.restaurant.address.town,
+        postcode: $input.restaurant.address.postcode,
+        country: $input.restaurant.address.country,
+        fullAddress: joinToString([
+          $input.restaurant.address.buildingName,
+          $input.restaurant.address.street,
+          $input.restaurant.address.town,
+          $input.restaurant.address.postcode
+        ], ", ")
+      },
+      contact: {
+        phone: $input.restaurant.contact.telephone,
+        email: $input.restaurant.contact.email,
+        website: $input.restaurant.contact.website
+      },
+      manager: $input.restaurant.managedBy,
+      tripAdvisorRating: $input.receiptFooter.tripAdvisor
+    },
+    attendeeInfo: {
+      tableNumber: $input.table.tableNumber,
+      section: $input.table.section,
+      numberOfGuests: guestCount,
+      server: {
+        id: $input.server.serverId,
+        name: $input.server.name,
+        position: $input.server.position
+      }
+    },
+    expenseBreakdown: {
+      food: {
+        subtotal: foodTotal,
+        subtotalFormatted: $input.financialSummary.currencySymbol + toString(foodTotal),
+        itemCount: count($input.orderItems),
+        category: "MEALS_ENTERTAINMENT",
+        vatRate: $input.financialSummary.vat.standardRate.rate,
+        vatAmount: $input.financialSummary.vat.standardRate.vatAmount
+      },
+      beveragesNonAlcoholic: {
+        subtotal: nonAlcoholTotal,
+        subtotalFormatted: $input.financialSummary.currencySymbol + toString(roundToCents(nonAlcoholTotal)),
+        category: "BEVERAGES",
+        vatRecoverable: true
+      },
+      alcoholicBeverages: {
+        subtotal: alcoholTotal,
+        subtotalFormatted: $input.financialSummary.currencySymbol + toString(roundToCents(alcoholTotal)),
+        category: "ALCOHOL",
+        itemCount: count(alcoholItems),
+        vatRecoverable: false,
+        policyNote: "Alcohol may not be reimbursable per company policy"
+      },
+      serviceCharge: {
+        percentage: $input.financialSummary.serviceCharge.percentage,
+        amount: tipAmount,
+        amountFormatted: $input.financialSummary.currencySymbol + toString(tipAmount),
+        optional: $input.financialSummary.serviceCharge.optional,
+        note: $input.financialSummary.serviceCharge.note,
+        category: "GRATUITY"
+      },
+      vat: {
+        standardRateTotal: $input.financialSummary.vat.standardRate.vatAmount,
+        alcoholRateTotal: $input.financialSummary.vat.alcoholRate.vatAmount,
+        totalVAT: vatTotal,
+        totalVATFormatted: $input.financialSummary.currencySymbol + toString(vatTotal),
+        recoverableVAT: roundToCents($input.financialSummary.vat.standardRate.vatAmount),
+        nonRecoverableVAT: roundToCents($input.financialSummary.vat.alcoholRate.vatAmount)
+      },
+      grandTotal: {
+        amount: totalWithTip,
+        amountFormatted: $input.financialSummary.currencySymbol + toString(totalWithTip),
+        inWords: $input.financialSummary.amountInWords
+      }
+    },
+    perPersonAnalysis: {
+      averageSpend: perPersonSpend,
+      averageSpendFormatted: $input.financialSummary.currencySymbol + toString(perPersonSpend),
+      foodPerPerson: roundToCents(foodTotal / guestCount),
+      beveragesPerPerson: roundToCents(beverageTotal / guestCount),
+      alcoholPerPerson: roundToCents(alcoholTotal / guestCount),
+      tipPerPerson: roundToCents(tipAmount / guestCount)
+    },
+    policyCompliance: {
+      status: policyStatus,
+      statusColor: match (policyStatus) {
+        "COMPLIANT" => "#00AA00",
+        "REVIEW_ALCOHOL" => "#FFA500",
+        "OVER_LIMIT" => "#FF8C00",
+        "REQUIRES_APPROVAL" => "#FF0000",
+        _ => "#808080"
+      },
+      perPersonLimit: 75.0,
+      perPersonSpend: perPersonSpend,
+      overLimitAmount: max(0, perPersonSpend - 75.0),
+      hasAlcohol: hasAlcohol,
+      alcoholPercentage: if (beverageTotal > 0) roundToDecimalPlaces(alcoholTotal / beverageTotal * 100, 1) else 0,
+      requiresManagerApproval: policyStatus == "REQUIRES_APPROVAL" || policyStatus == "OVER_LIMIT",
+      notes: if (policyStatus == "COMPLIANT") "Expense within policy limits"
+             else if (policyStatus == "REVIEW_ALCOHOL") "Alcohol content may require review"
+             else if (policyStatus == "OVER_LIMIT") "Exceeds per-person limit - manager approval required"
+             else "Significantly over limit - senior approval required"
+    },
+    itemDetails: {
+      foodItems: $input.orderItems |> map(item => {
+        {
+          itemNumber: item.itemNumber,
+          category: item.category,
+          expenseCategory: ExpenseCategory(item.category),
+          name: item.name,
+          description: if (isNull(item.description)) "" else truncate(item.description, 50, "..."),
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          subtotal: item.subtotal,
+          subtotalFormatted: $input.financialSummary.currencySymbol + toString(item.subtotal),
+          allergens: item.allergens,
+          allergenCount: count(item.allergens),
+          allergenRisk: AllergenRisk(item.allergens),
+          dietaryInfo: item.dietaryInfo,
+          specialRequest: if (isNull(item.specialRequest)) null else item.specialRequest
+        }
+      }),
+      beverageItems: $input.beverages |> map(bev => {
+        {
+          itemNumber: bev.itemNumber,
+          category: bev.category,
+          expenseCategory: ExpenseCategory(bev.category),
+          name: bev.name,
+          description: if (isNull(bev.description)) "" else bev.description,
+          quantity: bev.quantity,
+          unitPrice: bev.unitPrice,
+          subtotal: bev.subtotal,
+          subtotalFormatted: $input.financialSummary.currencySymbol + toString(bev.subtotal),
+          volume: if (isNull(bev.volume)) null else bev.volume,
+          abv: if (isNull(bev.abv)) null else bev.abv,
+          isAlcoholic: !isNull(bev.abv),
+          reimbursable: isNull(bev.abv)
+        }
+      })
+    },
+    paymentInfo: {
+      method: $input.payment.paymentMethod,
+      cardType: $input.payment.cardType,
+      lastFourDigits: $input.payment.cardLastFourDigits,
+      cardholderName: $input.payment.cardholderName,
+      authCode: $input.payment.authCode,
+      transactionId: $input.payment.transactionId,
+      terminalId: $input.payment.terminalId,
+      approvalStatus: $input.payment.approvalStatus,
+      tipOnCard: $input.payment.tipAmount,
+      tipMethod: $input.payment.tipMethod
+    },
+    allergenSummary: {
+      allAllergens: allAllergens,
+      allergenCount: count(allAllergens),
+      hasHighRiskAllergens: some(allAllergens, a => contains("Nuts,Peanuts,Shellfish", a)),
+      allergenList: joinToString(allAllergens, ", ")
+    },
+    reimbursementCalculation: {
+      totalExpense: totalWithTip,
+      reimbursableAmount: roundToCents(foodTotal + nonAlcoholTotal + tipAmount),
+      nonReimbursableAmount: roundToCents(alcoholTotal),
+      vatRecoverable: roundToCents($input.financialSummary.vat.standardRate.vatAmount),
+      netReimbursement: roundToCents(foodTotal + nonAlcoholTotal + tipAmount - $input.financialSummary.vat.standardRate.vatAmount),
+      percentageReimbursable: roundToDecimalPlaces((foodTotal + nonAlcoholTotal + tipAmount) / totalWithTip * 100, 1)
+    },
+    attachments: {
+      receiptImage: "PENDING_UPLOAD",
+      feedbackUrl: $input.customerFeedback.feedbackUrl,
+      qrCode: $input.customerFeedback.qrCode
+    },
+    auditTrail: {
+      originalPrintTime: $input.reprintInfo.originalPrintTime,
+      isReprint: $input.reprintInfo.isReprint,
+      printedBy: $input.reprintInfo.printedBy,
+      documentHash: sha256($input.receiptId + toString(totalWithTip) + $input.transactionDate)
+    }
+  }
+}

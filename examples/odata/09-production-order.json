@@ -1,0 +1,103 @@
+{
+  "@odata.context": "$metadata#ProductionOrders(Operations,Components)/$entity",
+  "@odata.type": "#Manufacturing.ProductionOrder",
+  "@odata.id": "ProductionOrders('PRD-2026-00142')",
+  "@odata.etag": "W/\"2026-02-25T06:00:00Z\"",
+  "OrderNumber": "PRD-2026-00142",
+  "OrderType": "PP01",
+  "MaterialNumber": "FG-ASSY-7500",
+  "MaterialDescription": "Industrial Robot Arm Assembly - 6-Axis",
+  "Plant": "1000",
+  "PlantName": "Chicago Main Plant",
+  "ProductionLine": "LINE-03",
+  "OrderQuantity": 8,
+  "QuantityUnit": "EA",
+  "ConfirmedQuantity": 3,
+  "ScrapQuantity": 0,
+  "StartDate": "2026-02-24",
+  "EndDate": "2026-03-07",
+  "ScheduledStartDate": "2026-02-24",
+  "ScheduledEndDate": "2026-03-05",
+  "Priority": 2,
+  "Status": "PARTIALLY_CONFIRMED",
+  "SystemStatus": "REL CNF",
+  "Operations": [
+    {
+      "OperationNumber": "0010",
+      "Description": "CNC machining - base plate",
+      "WorkCenter": "WC-CNC-01",
+      "WorkCenterDescription": "CNC Milling Center 5-Axis",
+      "PlannedDuration": 4.5,
+      "DurationUnit": "HR",
+      "ActualDuration": 4.2,
+      "SetupTime": 0.5,
+      "Status": "CONFIRMED",
+      "ConfirmedQuantity": 8,
+      "ScrapQuantity": 0,
+      "ConfirmationDate": "2026-02-25"
+    },
+    {
+      "OperationNumber": "0020",
+      "Description": "Motor assembly and wiring",
+      "WorkCenter": "WC-ASSY-02",
+      "WorkCenterDescription": "Assembly Station - Robotics",
+      "PlannedDuration": 12.0,
+      "DurationUnit": "HR",
+      "ActualDuration": 9.5,
+      "SetupTime": 1.0,
+      "Status": "IN_PROCESS",
+      "ConfirmedQuantity": 3,
+      "ScrapQuantity": 0,
+      "ConfirmationDate": "2026-02-27"
+    },
+    {
+      "OperationNumber": "0030",
+      "Description": "Calibration and quality testing",
+      "WorkCenter": "WC-QA-01",
+      "WorkCenterDescription": "Quality Assurance Lab",
+      "PlannedDuration": 6.0,
+      "DurationUnit": "HR",
+      "ActualDuration": 0,
+      "SetupTime": 0.25,
+      "Status": "NOT_STARTED",
+      "ConfirmedQuantity": 0,
+      "ScrapQuantity": 0,
+      "ConfirmationDate": null
+    }
+  ],
+  "Components": [
+    {
+      "ItemNumber": "0010",
+      "MaterialNumber": "MAT-10003",
+      "Description": "Servo Motor Siemens 1FK7042",
+      "RequiredQuantity": 48,
+      "IssuedQuantity": 18,
+      "QuantityUnit": "EA",
+      "Plant": "1000",
+      "StorageLocation": "WH10",
+      "Status": "PARTIALLY_ISSUED"
+    },
+    {
+      "ItemNumber": "0020",
+      "MaterialNumber": "MAT-10001",
+      "Description": "Stainless Steel Bearing 6205-2RS",
+      "RequiredQuantity": 96,
+      "IssuedQuantity": 96,
+      "QuantityUnit": "EA",
+      "Plant": "1000",
+      "StorageLocation": "WH01",
+      "Status": "FULLY_ISSUED"
+    },
+    {
+      "ItemNumber": "0030",
+      "MaterialNumber": "MAT-AL-6061",
+      "Description": "Aluminum Alloy 6061-T6 Plate 20mm",
+      "RequiredQuantity": 16,
+      "IssuedQuantity": 16,
+      "QuantityUnit": "EA",
+      "Plant": "1000",
+      "StorageLocation": "WH03",
+      "Status": "FULLY_ISSUED"
+    }
+  ]
+}

@@ -1,0 +1,357 @@
+{
+  "relevéId": "CH-2025-RC-123456",
+  "typeReleve": "COMPTE_ENTREPRISE",
+  "période": {
+    "dateDebut": "2025-01-01",
+    "dateFin": "2025-01-31",
+    "mois": "Janvier",
+    "année": 2025
+  },
+  "banque": {
+    "nom": "Banque Cantonale de Genève",
+    "siège": "Genève",
+    "adresse": {
+      "rue": "Quai de l'Île",
+      "numéro": "17",
+      "npa": "1204",
+      "localité": "Genève",
+      "canton": "Genève",
+      "pays": "Suisse"
+    },
+    "contact": {
+      "téléphone": "+41 22 317 27 27",
+      "email": "info@bcge.ch",
+      "web": "www.bcge.ch"
+    },
+    "clearing": "788",
+    "swift": "BCGECHGGXXX"
+  },
+  "titulaire": {
+    "raisonSociale": "Montres de Luxe Genève SA",
+    "ide": "CHE-234.567.890",
+    "numeroRegistreCommerce": "CH-660.3.234.567-8",
+    "adresseRegistrée": {
+      "rue": "Rue du Rhône",
+      "numéro": "78",
+      "npa": "1204",
+      "localité": "Genève",
+      "canton": "Genève",
+      "pays": "Suisse"
+    },
+    "personneContact": {
+      "nom": "M. Jean-François Dubois",
+      "fonction": "Directeur Financier",
+      "email": "jf.dubois@montres-luxe-ge.ch",
+      "téléphone": "+41 22 345 67 89",
+      "mobile": "+41 79 234 56 78"
+    }
+  },
+  "compte": {
+    "numéroCompte": "788-123456-78",
+    "iban": "CH56 0078 8000 0123 4567 8",
+    "typeCompte": "COMPTE_COURANT_ENTREPRISE",
+    "devise": "CHF",
+    "symboleDevise": "CHF"
+  },
+  "soldes": {
+    "soldeInitial": 1'458'765.50,
+    "soldeFinal": 1'687'234.80,
+    "soldeDisponible": 1'687'234.80,
+    "montantRéservé": 0.00,
+    "limiteCrédit": 500'000.00,
+    "découvertAutorisé": 250'000.00
+  },
+  "résumé": {
+    "nombreTransactions": 89,
+    "totalCrédits": 2'458'970.00,
+    "totalDébits": 2'230'500.70,
+    "intérêtsCréditeurs": 0.00,
+    "fraisBancaires": 125.50,
+    "variationNette": 228'469.30
+  },
+  "transactions": [
+    {
+      "date": "2025-01-02",
+      "dateValeur": "2025-01-02",
+      "typeTransaction": "VIREMENT_REÇU",
+      "description": "Paiement client - Bijouterie Zürich AG - Facture 2024-12-456",
+      "référence": "FACT-2024-12-456",
+      "contrepartie": {
+        "nom": "Bijouterie Zürich AG",
+        "iban": "CH93 0020 3203 4567 8901 2"
+      },
+      "montant": 125'680.00,
+      "solde": 1'584'445.50,
+      "catégorie": "ENCAISSEMENT_CLIENT"
+    },
+    {
+      "date": "2025-01-03",
+      "dateValeur": "2025-01-03",
+      "typeTransaction": "VIREMENT_ÉMIS",
+      "description": "Salaires janvier 2025 - Personnel",
+      "référence": "SAL-2025-01",
+      "contrepartie": {
+        "nom": "Versements salaires groupés",
+        "description": "28 bénéficiaires"
+      },
+      "montant": -456'890.50,
+      "solde": 1'127'555.00,
+      "catégorie": "CHARGES_PERSONNEL"
+    },
+    {
+      "date": "2025-01-05",
+      "dateValeur": "2025-01-05",
+      "typeTransaction": "VIREMENT_REÇU",
+      "description": "Encaissement - Horlogerie Müller GmbH - Facture 2024-12-489",
+      "référence": "FACT-2024-12-489",
+      "contrepartie": {
+        "nom": "Horlogerie Müller GmbH",
+        "iban": "DE89 3704 0044 0532 0130 00"
+      },
+      "montant": 234'560.00,
+      "solde": 1'362'115.00,
+      "catégorie": "ENCAISSEMENT_CLIENT"
+    },
+    {
+      "date": "2025-01-08",
+      "dateValeur": "2025-01-08",
+      "typeTransaction": "VIREMENT_ÉMIS",
+      "description": "Loyer - Immeuble commercial Rue du Rhône",
+      "référence": "LOYER-2025-Q1",
+      "contrepartie": {
+        "nom": "Immobilière Genève SA",
+        "iban": "CH44 0078 8000 0987 6543 2"
+      },
+      "montant": -45'000.00,
+      "solde": 1'317'115.00,
+      "catégorie": "CHARGES_EXPLOITATION"
+    },
+    {
+      "date": "2025-01-10",
+      "dateValeur": "2025-01-10",
+      "typeTransaction": "VIREMENT_ÉMIS",
+      "description": "Cotisations sociales - AVS/AI/APG + AC - Décembre 2024",
+      "référence": "COTIS-SOC-2024-12",
+      "contrepartie": {
+        "nom": "Caisse de compensation Genève",
+        "iban": "CH18 0078 8000 0111 2222 3"
+      },
+      "montant": -89'456.80,
+      "solde": 1'227'658.20,
+      "catégorie": "CHARGES_SOCIALES"
+    },
+    {
+      "date": "2025-01-12",
+      "dateValeur": "2025-01-12",
+      "typeTransaction": "VIREMENT_REÇU",
+      "description": "Règlement - Boutique Champs-Élysées Paris - Facture 2025-01-012",
+      "référence": "FACT-2025-01-012",
+      "contrepartie": {
+        "nom": "Boutique Prestige Paris SARL",
+        "iban": "FR76 1234 5678 9012 3456 7890 123"
+      },
+      "montant": 567'890.00,
+      "solde": 1'795'548.20,
+      "catégorie": "ENCAISSEMENT_CLIENT"
+    },
+    {
+      "date": "2025-01-15",
+      "dateValeur": "2025-01-15",
+      "typeTransaction": "VIREMENT_ÉMIS",
+      "description": "Fournisseur - Mécanismes Précision Neuchâtel SA - Facture F-2024-9876",
+      "référence": "FRN-2024-9876",
+      "contrepartie": {
+        "nom": "Mécanismes Précision Neuchâtel SA",
+        "iban": "CH65 0078 9000 0456 7890 1"
+      },
+      "montant": -234'567.90,
+      "solde": 1'560'980.30,
+      "catégorie": "ACHATS_MARCHANDISES"
+    },
+    {
+      "date": "2025-01-18",
+      "dateValeur": "2025-01-18",
+      "typeTransaction": "VIREMENT_REÇU",
+      "description": "Paiement - Juwelier Schmidt Wien - Facture 2025-01-034",
+      "référence": "FACT-2025-01-034",
+      "contrepartie": {
+        "nom": "Juwelier Schmidt GmbH",
+        "iban": "AT61 1904 3002 3457 3201"
+      },
+      "montant": 189'450.00,
+      "solde": 1'750'430.30,
+      "catégorie": "ENCAISSEMENT_CLIENT"
+    },
+    {
+      "date": "2025-01-20",
+      "dateValeur": "2025-01-20",
+      "typeTransaction": "PRÉLÈVEMENT",
+      "description": "Assurances - Prime annuelle RC & Incendie",
+      "référence": "ASS-2025-001",
+      "contrepartie": {
+        "nom": "Helvetia Assurances SA",
+        "iban": "CH18 0021 5215 1234 5678 9"
+      },
+      "montant": -34'567.00,
+      "solde": 1'715'863.30,
+      "catégorie": "ASSURANCES"
+    },
+    {
+      "date": "2025-01-22",
+      "dateValeur": "2025-01-22",
+      "typeTransaction": "VIREMENT_ÉMIS",
+      "description": "TVA T4 2024 - Administration fédérale des contributions",
+      "référence": "TVA-2024-T4",
+      "contrepartie": {
+        "nom": "AFC - TVA",
+        "iban": "CH37 0010 0010 2565 8741 0"
+      },
+      "montant": -145'678.50,
+      "solde": 1'570'184.80,
+      "catégorie": "IMPOTS_TAXES"
+    },
+    {
+      "date": "2025-01-25",
+      "dateValeur": "2025-01-25",
+      "typeTransaction": "VIREMENT_REÇU",
+      "description": "Encaissement - Luxury Watches London Ltd - Facture 2025-01-045",
+      "référence": "FACT-2025-01-045",
+      "contrepartie": {
+        "nom": "Luxury Watches London Ltd",
+        "iban": "GB29 NWBK 6016 1331 9268 19"
+      },
+      "montant": 341'250.00,
+      "solde": 1'911'434.80,
+      "catégorie": "ENCAISSEMENT_CLIENT"
+    },
+    {
+      "date": "2025-01-28",
+      "dateValeur": "2025-01-28",
+      "typeTransaction": "VIREMENT_ÉMIS",
+      "description": "Marketing & Publicité - Salon Baselworld 2025 - Acompte",
+      "référence": "MRKT-BASEL-2025",
+      "contrepartie": {
+        "nom": "MCH Messe Schweiz AG",
+        "iban": "CH91 0070 0110 0023 4567 8"
+      },
+      "montant": -89'700.00,
+      "solde": 1'821'734.80,
+      "catégorie": "MARKETING"
+    },
+    {
+      "date": "2025-01-30",
+      "dateValeur": "2025-01-30",
+      "typeTransaction": "VIREMENT_ÉMIS",
+      "description": "Conseil juridique - Étude Bérard & Associés - Honoraires T4 2024",
+      "référence": "HONOR-2024-T4",
+      "contrepartie": {
+        "nom": "Étude Bérard & Associés",
+        "iban": "CH22 0078 8000 0234 5678 9"
+      },
+      "montant": -12'500.00,
+      "solde": 1'809'234.80,
+      "catégorie": "SERVICES_PROFESSIONNELS"
+    },
+    {
+      "date": "2025-01-31",
+      "dateValeur": "2025-01-31",
+      "typeTransaction": "FRAIS_BANCAIRES",
+      "description": "Frais de tenue de compte - Janvier 2025",
+      "référence": "FRAIS-2025-01",
+      "montant": -122.00,
+      "solde": 1'809'112.80,
+      "catégorie": "FRAIS_BANQUE"
+    },
+    {
+      "date": "2025-01-31",
+      "dateValeur": "2025-01-31",
+      "typeTransaction": "COMMISSION",
+      "description": "Commission sur paiements internationaux",
+      "référence": "COMM-INT-2025-01",
+      "montant": -3.50,
+      "solde": 1'809'109.30,
+      "catégorie": "FRAIS_BANQUE"
+    }
+  ],
+  "fraisBancaires": {
+    "tenueCompte": 120.00,
+    "commissionsTransactions": 5.50,
+    "total": 125.50,
+    "devise": "CHF",
+    "détail": "Forfait compte entreprise Premium - 120.00 CHF/mois + commissions variables"
+  },
+  "intérêts": {
+    "tauxCréditeur": 0.00,
+    "intérêtsCréditeurs": 0.00,
+    "tauxDébiteur": 7.50,
+    "intérêtsDébiteurs": 0.00,
+    "description": "Pas d'intérêts créditeurs. Découvert autorisé: 7.50% p.a."
+  },
+  "mouvementsParCatégorie": [
+    {
+      "catégorie": "ENCAISSEMENT_CLIENT",
+      "nombreMouvements": 5,
+      "total": 1'458'830.00
+    },
+    {
+      "catégorie": "CHARGES_PERSONNEL",
+      "nombreMouvements": 1,
+      "total": -456'890.50
+    },
+    {
+      "catégorie": "CHARGES_SOCIALES",
+      "nombreMouvements": 1,
+      "total": -89'456.80
+    },
+    {
+      "catégorie": "ACHATS_MARCHANDISES",
+      "nombreMouvements": 1,
+      "total": -234'567.90
+    },
+    {
+      "catégorie": "CHARGES_EXPLOITATION",
+      "nombreMouvements": 1,
+      "total": -45'000.00
+    },
+    {
+      "catégorie": "IMPOTS_TAXES",
+      "nombreMouvements": 1,
+      "total": -145'678.50
+    },
+    {
+      "catégorie": "MARKETING",
+      "nombreMouvements": 1,
+      "total": -89'700.00
+    },
+    {
+      "catégorie": "ASSURANCES",
+      "nombreMouvements": 1,
+      "total": -34'567.00
+    },
+    {
+      "catégorie": "SERVICES_PROFESSIONNELS",
+      "nombreMouvements": 1,
+      "total": -12'500.00
+    },
+    {
+      "catégorie": "FRAIS_BANQUE",
+      "nombreMouvements": 2,
+      "total": -125.50
+    }
+  ],
+  "informations": [
+    "Relevé de compte pour Compte Courant Entreprise en CHF",
+    "Pour toute question, contactez votre conseiller clientèle entreprises",
+    "BIC/SWIFT de la Banque Cantonale de Genève: BCGECHGGXXX",
+    "Ce document fait foi. L'original est archivé dans notre système bancaire."
+  ],
+  "formatNombres": {
+    "séparateurMilliers": "'",
+    "séparateurDécimal": ".",
+    "exemple": "1'234'567.89",
+    "description": "Format suisse: apostrophe pour milliers, point pour décimales"
+  },
+  "généréLe": "2025-02-01T08:00:00+01:00",
+  "page": "1 sur 1",
+  "langue": "Français"
+}

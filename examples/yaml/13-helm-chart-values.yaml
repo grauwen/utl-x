@@ -1,0 +1,135 @@
+# Helm Chart Values - Microservices Application
+# Full configuration for deploying multi-tier application
+global:
+  environment: production
+  domain: ecommerce.example.com
+  imageRegistry: ghcr.io/ecommerce
+  imagePullSecrets:
+    - name: docker-registry-secret
+  storageClass: fast-ssd
+  monitoring:
+    enabled: true
+    prometheus:
+      enabled: true
+    grafana:
+      enabled: true
+
+frontend:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: frontend
+    tag: "2.5.1"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+    hosts:
+      - host: www.ecommerce.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: frontend-tls
+        hosts:
+          - www.ecommerce.example.com
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+backend:
+  enabled: true
+  services:
+    user-service:
+      replicaCount: 2
+      image:
+        repository: user-service
+        tag: "1.8.0"
+      env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: url
+        - name: REDIS_URL
+          value: "redis://redis-master:6379/0"
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "250m"
+        limits:
+          memory: "1Gi"
+          cpu: "1000m"
+    product-service:
+      replicaCount: 3
+      image:
+        repository: product-service
+        tag: "2.1.0"
+      env:
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: mongo-credentials
+              key: uri
+        - name: ELASTICSEARCH_URL
+          value: "http://elasticsearch:9200"
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "250m"
+        limits:
+          memory: "1Gi"
+          cpu: "1000m"
+
+databases:
+  postgres:
+    enabled: true
+    auth:
+      username: postgres
+      password: ""  # From secret
+      database: ecommerce
+    primary:
+      persistence:
+        enabled: true
+        size: 50Gi
+        storageClass: fast-ssd
+    readReplicas:
+      replicaCount: 2
+    metrics:
+      enabled: true
+  mongodb:
+    enabled: true
+    auth:
+      rootPassword: ""  # From secret
+    replicaSet:
+      enabled: true
+      replicas: 3
+    persistence:
+      size: 100Gi
+      storageClass: fast-ssd
+  redis:
+    enabled: true
+    architecture: replication
+    master:
+      persistence:
+        enabled: true
+        size: 10Gi
+    replica:
+      replicaCount: 2

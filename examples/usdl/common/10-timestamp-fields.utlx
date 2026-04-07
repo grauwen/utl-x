@@ -1,0 +1,47 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Timestamp and date-related fields
+output [FORMAT]
+---
+%namespace: "com.example.event"
+%version: "1.0"
+%documentation: "Event with timestamp fields"
+
+%types: {
+  Event: {
+    %kind: "structure",
+    %documentation: "Timestamped event",
+    %fields: [
+      {
+        %name: "eventId",
+        %type: "string",
+        %required: true,
+        %description: "Event identifier"
+      },
+      {
+        %name: "eventType",
+        %type: "string",
+        %required: true,
+        %description: "Event type"
+      },
+      {
+        %name: "createdAt",
+        %type: "long",
+        %required: true,
+        %description: "Creation timestamp (milliseconds since epoch)"
+      },
+      {
+        %name: "updatedAt",
+        %type: "long",
+        %required: false,
+        %description: "Last update timestamp (milliseconds since epoch)"
+      },
+      {
+        %name: "scheduledFor",
+        %type: "long",
+        %required: false,
+        %description: "Scheduled execution time (milliseconds since epoch)"
+      }
+    ]
+  }
+}

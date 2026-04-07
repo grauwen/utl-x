@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eFatura xmlns="http://www.efatura.gov.tr/v1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <FaturaBilgileri>
+        <FaturaNumarası>TR2025000123456</FaturaNumarası>
+        <FaturaTarihi>2025-01-16</FaturaTarihi>
+        <FaturaTürü>SATIŞ</FaturaTürü>
+        <ETTN>ab12cd34-ef56-gh78-ij90-kl12mn34op56</ETTN>
+    </FaturaBilgileri>
+
+    <Satıcı>
+        <ÜnvanıTicaret>Yılmaz Elektronik Ticaret A.Ş.</ÜnvanıTicaret>
+        <VergiNumarası>1234567890</VergiNumarası>
+        <VergiDairesi>İstanbul Kurumlar</VergiDairesi>
+        <MERSİSNo>0123456789012345</MERSİSNo>
+        <Adres>
+            <Cadde>Bağdat Caddesi</Cadde>
+            <No>456</No>
+            <İlçe>Kadıköy</İlçe>
+            <İl>İstanbul</İl>
+            <PostaKodu>34714</PostaKodu>
+        </Adres>
+        <İletişim>
+            <Telefon>+90 216 123 45 67</Telefon>
+            <EPosta>bilgi@yilmazelektronik.com.tr</EPosta>
+        </İletişim>
+    </Satıcı>
+
+    <Alıcı>
+        <ÜnvanıTicaret>Öztürk Bilişim Sistemleri Ltd. Şti.</ÜnvanıTicaret>
+        <VergiNumarası>9876543210</VergiNumarası>
+        <VergiDairesi>Ankara Çankaya</VergiDairesi>
+        <Adres>
+            <Cadde>Atatürk Bulvarı</Cadde>
+            <No>789</No>
+            <İlçe>Çankaya</İlçe>
+            <İl>Ankara</İl>
+            <PostaKodu>06680</PostaKodu>
+        </Adres>
+    </Alıcı>
+
+    <FaturaKalemleri>
+        <Kalem>
+            <SıraNo>1</SıraNo>
+            <MalHizmetAdı>Dizüstü Bilgisayar - İş Serisi</MalHizmetAdı>
+            <Miktar>25</Miktar>
+            <Birim>Adet</Birim>
+            <BirimFiyat>15'750.00</BirimFiyat>
+            <Tutar>393'750.00</Tutar>
+            <KDVOranı>20</KDVOranı>
+            <KDVTutarı>78'750.00</KDVTutarı>
+            <GenelToplam>472'500.00</GenelToplam>
+        </Kalem>
+        <Kalem>
+            <SıraNo>2</SıraNo>
+            <MalHizmetAdı>Kurulum ve Eğitim Hizmeti</MalHizmetAdı>
+            <Miktar>1</Miktar>
+            <Birim>Paket</Birim>
+            <BirimFiyat>12'500.00</BirimFiyat>
+            <Tutar>12'500.00</Tutar>
+            <KDVOranı>20</KDVOranı>
+            <KDVTutarı>2'500.00</KDVTutarı>
+            <GenelToplam>15'000.00</GenelToplam>
+        </Kalem>
+    </FaturaKalemleri>
+
+    <Toplamlar>
+        <MalHizmetTutarı>406'250.00</MalHizmetTutarı>
+        <ToplamKDV>81'250.00</ToplamKDV>
+        <VergilerDahilToplam>487'500.00</VergilerDahilToplam>
+        <ParaBirimi>TRY</ParaBirimi>
+        <SembolPara>₺</SembolPara>
+    </Toplamlar>
+
+    <ÖdemeKoşulları>
+        <ÖdemeŞekli>BANKA_HAVALESİ</ÖdemeŞekli>
+        <VadeTarihi>2025-02-15</VadeTarihi>
+        <BankaHesapBilgileri>
+            <BankaAdı>Türkiye İş Bankası A.Ş.</BankaAdı>
+            <IBAN>TR12 0006 4000 0011 2345 6789 01</IBAN>
+            <ŞubeKodu>456</ŞubeKodu>
+        </BankaHesapBilgileri>
+    </ÖdemeKoşulları>
+
+    <TürkçeÖzelKarakterler>
+        <KüçükHarfler>ç ğ ı ö ş ü</KüçükHarfler>
+        <BüyükHarfler>Ç Ğ İ Ö Ş Ü</BüyükHarfler>
+        <Şehirler>İstanbul, Ankara, İzmir, Şanlıurfa, Diyarbakır, Ağrı, Muğla</Şehirler>
+    </TürkçeÖzelKarakterler>
+</eFatura>

@@ -3,9 +3,9 @@ package org.apache.utlx.cli.commands
 
 import org.apache.utlx.cli.service.TransformationService
 import org.apache.utlx.cli.capture.TestCaptureService
+import org.apache.utlx.cli.CommandResult
 import org.apache.utlx.core.debug.DebugConfig
 import java.io.File
-import kotlin.system.exitProcess
 
 /**
  * Transform command - CLI wrapper for TransformationService
@@ -76,9 +76,20 @@ object TransformCommand {
             else   -> "json"
         }
     }
-
-    fun execute(args: Array<String>, identityMode: Boolean = false) {
-        val options = parseOptions(args, allowIdentityMode = identityMode)
+    
+    fun execute(args: Array<String>, identityMode: Boolean = false): CommandResult {
+        val options = try {
+            parseOptions(args, allowIdentityMode = identityMode)
+        } catch (e: IllegalStateException) {
+            // Special case: --help was requested
+            if (e.message == "HELP_REQUESTED") {
+                return CommandResult.Success
+            }
+            return CommandResult.Failure(e.message ?: "Unknown error", 1)
+        } catch (e: IllegalArgumentException) {
+            // Argument parsing errors (already printed to stderr)
+            return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
+        }
 
         // Apply debug settings from CLI flags
         options.debugLevel?.let { level ->
@@ -217,6 +228,8 @@ ${"$"}input"""
                 )
             }
 
+            return CommandResult.Success
+
         } catch (e: Exception) {
             // Capture failed execution
             captureError = e.message ?: "Unknown error"
@@ -254,11 +267,11 @@ ${"$"}input"""
                 }
             }
 
-            // Re-throw the original error
-            throw e
+            // Return failure with error message
+            return CommandResult.Failure(e.message ?: "Transformation failed", 1)
         }
     }
-
+    
     private fun detectFormat(data: String, extension: String?): String {
         // Try extension first
         extension?.lowercase()?.let {
@@ -272,7 +285,7 @@ ${"$"}input"""
                 }
             }
         }
-
+        
         // Auto-detect from content
         val trimmed = data.trim()
         return when {
@@ -286,11 +299,11 @@ ${"$"}input"""
             }
         }
     }
-
+    
     private fun readStdin(): String {
         return generateSequence { readLine() }.joinToString("\n")
     }
-
+    
     /**
      * Parse options - supports both normal mode (with script file) and identity mode (no script).
      * @param allowIdentityMode if true, missing script file triggers identity mode instead of error.
@@ -303,7 +316,7 @@ ${"$"}input"""
         }
         if (args.isEmpty()) {
             printUsage()
-            exitProcess(1)
+            throw IllegalArgumentException("No arguments provided")
         }
 
         val namedInputs = mutableMapOf<String, File>()
@@ -385,7 +398,8 @@ ${"$"}input"""
                 }
                 "-h", "--help" -> {
                     printUsage()
-                    exitProcess(0)
+                    // Special case: help is a successful operation
+                    throw IllegalStateException("HELP_REQUESTED")
                 }
                 else -> {
                     if (!args[i].startsWith("-")) {
@@ -398,7 +412,7 @@ ${"$"}input"""
                     } else {
                         System.err.println("Unknown option: ${args[i]}")
                         printUsage()
-                        exitProcess(1)
+                        throw IllegalArgumentException("Unknown option: ${args[i]}")
                     }
                 }
             }
@@ -425,19 +439,19 @@ ${"$"}input"""
             }
             System.err.println("Error: Script file is required")
             printUsage()
-            exitProcess(1)
+            throw IllegalArgumentException("Script file is required")
         }
 
         if (!scriptFile.exists()) {
             System.err.println("Error: Script file not found: ${scriptFile.absolutePath}")
-            exitProcess(1)
+            throw IllegalArgumentException("Script file not found: ${scriptFile.absolutePath}")
         }
 
         // Validate all input files exist
         namedInputs.forEach { (name, file) ->
             if (!file.exists()) {
                 System.err.println("Error: Input file not found: ${file.absolutePath} (input: $name)")
-                exitProcess(1)
+                throw IllegalArgumentException("Input file not found: ${file.absolutePath}")
             }
         }
 
@@ -455,7 +469,7 @@ ${"$"}input"""
             strictTypes = strictTypes
         )
     }
-
+    
     private fun printUsage() {
         println("""
             |Transform data using UTL-X scripts
@@ -482,9 +496,9 @@ ${"$"}input"""
             |      --output name=FILE      Named output for multi-output transformations
             |  -i, --input FILE            Read input from FILE
             |      --input name=FILE       Named input for multi-input transformations
-            |  --input-format FORMAT       Force input format (xml, json, csv, yaml)
+            |  --input-format FORMAT       Force input format (xml, json, csv, yaml, odata, osch)
             |  --from FORMAT               Alias for --input-format
-            |  --output-format FORMAT      Force output format (xml, json, csv, yaml)
+            |  --output-format FORMAT      Force output format (xml, json, csv, yaml, odata, osch)
             |  --to FORMAT                 Alias for --output-format
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing

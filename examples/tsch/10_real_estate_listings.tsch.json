@@ -1,0 +1,137 @@
+{
+  "fields": [
+    {
+      "name": "listing_id",
+      "type": "string",
+      "description": "Unique listing identifier",
+      "example": "LST-10001",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "address",
+      "type": "string",
+      "description": "Property street address",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "city",
+      "type": "string",
+      "description": "City",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "state",
+      "type": "string",
+      "description": "State abbreviation",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "property_type",
+      "type": "string",
+      "description": "Type of property",
+      "constraints": {
+        "required": true,
+        "enum": ["single_family", "condo", "townhouse", "multi_family", "land", "commercial"]
+      }
+    },
+    {
+      "name": "bedrooms",
+      "type": "integer",
+      "description": "Number of bedrooms",
+      "constraints": {
+        "required": true,
+        "minimum": 0
+      }
+    },
+    {
+      "name": "bathrooms",
+      "type": "integer",
+      "description": "Number of bathrooms",
+      "constraints": {
+        "required": true,
+        "minimum": 1
+      }
+    },
+    {
+      "name": "square_feet",
+      "type": "integer",
+      "description": "Total living area in square feet",
+      "constraints": {
+        "required": true,
+        "minimum": 100
+      }
+    },
+    {
+      "name": "price",
+      "type": "number",
+      "description": "Listing price in USD",
+      "example": "425000",
+      "constraints": {
+        "required": true,
+        "minimum": 1000
+      }
+    },
+    {
+      "name": "year_built",
+      "type": "year",
+      "description": "Year the property was built (YYYY)",
+      "example": "2005",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "is_new_construction",
+      "type": "boolean",
+      "description": "Whether this is a new construction property",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "description": "Listing status",
+      "constraints": {
+        "required": true,
+        "enum": ["active", "pending", "sold", "withdrawn"]
+      }
+    },
+    {
+      "name": "listing_url",
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the listing page",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "coordinates",
+      "type": "geopoint",
+      "format": "object",
+      "description": "Property GPS coordinates as {\"lon\": n, \"lat\": n} JSON object",
+      "example": "{\"lon\": -97.7431, \"lat\": 30.2672}",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "list_date",
+      "type": "date",
+      "description": "Date the property was listed",
+      "constraints": {
+        "required": true
+      }
+    }
+  ],
+  "primaryKey": "listing_id"
+}

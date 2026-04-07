@@ -7,7 +7,8 @@ Let's create your first UTL-X transformation! This tutorial will guide you throu
 ## What You'll Learn
 
 By the end of this tutorial, you'll know how to:
-- ✅ Write a basic UTL-X transformation
+- ✅ Convert between formats instantly (no script needed)
+- ✅ Write a basic UTL-X transformation script
 - ✅ Transform XML to JSON
 - ✅ Navigate input data
 - ✅ Create output structures
@@ -23,6 +24,27 @@ Before starting, make sure you have:
 - ✅ UTL-X installed (see [Installation Guide](installation.md))
 - ✅ A text editor (VS Code, IntelliJ, or any editor)
 - ✅ Basic understanding of XML and JSON
+
+---
+
+## Step 0: Instant Format Conversion (No Script Needed)
+
+Before writing any scripts, try UTL-X's identity mode — just pipe data and it converts automatically:
+
+```bash
+# XML to JSON (auto-detected)
+echo '<person><name>Alice</name><age>30</age></person>' | utlx
+
+# JSON to XML (auto-detected)
+echo '{"greeting":"Hello World"}' | utlx
+
+# Override with --to
+echo '<data><value>42</value></data>' | utlx --to yaml
+```
+
+UTL-X detects the input format and flips to the opposite: XML becomes JSON, JSON becomes XML. Use `--to` to override.
+
+Now let's write a proper transformation script for more control.
 
 ---
 
@@ -118,7 +140,7 @@ Now let's run the transformation!
 **Open your terminal and run:**
 
 ```bash
-utlx transform order.xml transform.utlx
+utlx transform transform.utlx order.xml
 ```
 
 **You should see:**
@@ -141,7 +163,7 @@ utlx transform order.xml transform.utlx
 To save the output to a file instead of printing to console:
 
 ```bash
-utlx transform order.xml transform.utlx -o output.json
+utlx transform transform.utlx order.xml -o output.json
 ```
 
 This creates an `output.json` file with the transformed data.
@@ -225,7 +247,7 @@ output json
 **Run it again:**
 
 ```bash
-utlx transform order.xml transform.utlx
+utlx transform transform.utlx order.xml
 ```
 
 **New output:**
@@ -351,7 +373,7 @@ output json
 **Run it:**
 
 ```bash
-utlx transform order.xml transform.utlx
+utlx transform transform.utlx order.xml
 ```
 
 **Output:**

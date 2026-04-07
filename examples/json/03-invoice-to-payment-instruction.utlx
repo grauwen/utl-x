@@ -1,0 +1,139 @@
+%utlx 1.0
+input json
+output xml
+---
+
+// ============================================================================
+// Business Scenario: B2B Invoice → Bank Payment Instruction
+// ----------------------------------------------------------------------------
+// Input:  Vendor invoice (03-invoice.json)
+// Output: XML payment instruction for the corporate treasury system
+//
+// When AP approves an invoice, this transformation generates a payment
+// instruction that the treasury desk submits to the bank. It calculates
+// early-payment discount deadlines, schedules the optimal payment date,
+// classifies line items for GL coding, and produces an audit-ready
+// document with hashing for tamper detection.
+// ============================================================================
+
+function GlAccountCode(description) {
+  let desc = lowerCase(description) in
+  if (contains(desc, "cloud") || contains(desc, "infrastructure")) "6100-CLOUD-INFRA"
+  else if (contains(desc, "support")) "6200-TECH-SUPPORT"
+  else if (contains(desc, "license") || contains(desc, "software")) "6300-SOFTWARE-LIC"
+  else if (contains(desc, "consulting")) "6400-CONSULTING"
+  else "6900-GENERAL-EXPENSE"
+}
+
+function CostCenter(description) {
+  let desc = lowerCase(description) in
+  if (contains(desc, "cloud") || contains(desc, "infrastructure")) "CC-IT-OPS"
+  else if (contains(desc, "support")) "CC-IT-SUPPORT"
+  else if (contains(desc, "license")) "CC-IT-SOFTWARE"
+  else "CC-GENERAL"
+}
+
+{
+  let invoiceDate = parseDate($input.invoiceDate);
+  let dueDate = parseDate($input.dueDate);
+  let today = now();
+  let paymentWindowDays = diffDays(invoiceDate, dueDate);
+  let daysRemaining = diffDays(today, dueDate);
+  let earlyPayDeadline = addDays(invoiceDate, 10);
+  let earlyPayDiscount = roundToCents($input.total * 0.02);
+  let earlyPayAmount = roundToCents($input.total - earlyPayDiscount);
+  let isEarlyPayAvailable = isBefore(today, earlyPayDeadline);
+  let optimalPayDate = if (isEarlyPayAvailable) earlyPayDeadline else addDays(dueDate, -2);
+  let avgLineAmount = roundToCents(avg(map($input.lineItems, item => item.amount)));
+  let maxItem = maxBy($input.lineItems, item => item.amount);
+  let concentration = roundToDecimalPlaces(maxItem.amount / $input.subtotal * 100, 1);
+
+  PaymentInstruction: {
+    @messageId: "PAY-" + replace(substring(generateUuid(), 0, 13), "-", ""),
+    @createdAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    @version: "1.0",
+    PaymentHeader: {
+      InvoiceRef: $input.invoiceNumber,
+      InvoiceDate: formatDate(invoiceDate, "yyyy-MM-dd"),
+      DueDate: formatDate(dueDate, "yyyy-MM-dd"),
+      PaymentTerms: $input.paymentTerms,
+      PaymentWindowDays: paymentWindowDays,
+      DaysRemaining: daysRemaining,
+      ScheduledPaymentDate: formatDate(optimalPayDate, "yyyy-MM-dd"),
+      PaymentStrategy: if (isEarlyPayAvailable) "EARLY_PAY_DISCOUNT" else "ON_TIME"
+    },
+    Creditor: {
+      @id: $input.vendor.vendorId,
+      Name: $input.vendor.companyName,
+      TaxRegistration: $input.vendor.taxId,
+      Address: {
+        Line1: $input.vendor.address.street,
+        City: $input.vendor.address.city,
+        Region: $input.vendor.address.state,
+        PostalCode: $input.vendor.address.zipCode,
+        Country: $input.vendor.address.country
+      },
+      Notification: {
+        ContactName: $input.vendor.contact.name,
+        Email: $input.vendor.contact.email
+      }
+    },
+    Debtor: {
+      Name: $input.billTo.companyName,
+      Address: {
+        Line1: $input.billTo.address.street,
+        City: $input.billTo.address.city,
+        Region: $input.billTo.address.state,
+        PostalCode: $input.billTo.address.zipCode,
+        Country: $input.billTo.address.country
+      }
+    },
+    Amount: {
+      @currency: $input.currency,
+      InvoiceSubtotal: $input.subtotal,
+      TaxAmount: $input.taxAmount,
+      InvoiceTotal: $input.total,
+      EarlyPayDiscount: if (isEarlyPayAvailable) earlyPayDiscount else 0,
+      AmountDue: if (isEarlyPayAvailable) earlyPayAmount else $input.total,
+      EarlyPayDeadline: formatDate(earlyPayDeadline, "yyyy-MM-dd"),
+      EarlyPayAvailable: isEarlyPayAvailable,
+      SavingsIfEarlyPay: if (isEarlyPayAvailable) formatCurrency(earlyPayDiscount, "USD") else "N/A"
+    },
+    GLAllocation: {
+      @lineCount: count($input.lineItems),
+      Entry: $input.lineItems |> sortBy(item => -item.amount) |> map(item => {
+        let pctShare = roundToDecimalPlaces(item.amount / $input.subtotal * 100, 1);
+        let taxShare = roundToCents($input.taxAmount * (item.amount / $input.subtotal));
+        {
+          @glCode: GlAccountCode(item.description),
+          @costCenter: CostCenter(item.description),
+          Description: item.description,
+          NetAmount: item.amount,
+          TaxAllocation: taxShare,
+          TotalAmount: roundToCents(item.amount + taxShare),
+          SharePercent: pctShare
+        }
+      })
+    },
+    Analysis: {
+      AverageLineAmount: formatCurrency(avgLineAmount, "USD"),
+      LargestLineItem: maxItem.description,
+      ConcentrationRisk: toString(concentration) + "%",
+      ConcentrationLevel: if (concentration > 65) "HIGH" else if (concentration > 40) "MODERATE" else "DIVERSIFIED",
+      FiscalQuarter: "Q" + toString(quarter(invoiceDate)) + " " + toString(year(invoiceDate)),
+      FiscalMonth: monthName(invoiceDate) + " " + toString(year(invoiceDate))
+    },
+    Verification: {
+      DocumentHash: sha256(
+        $input.invoiceNumber + "|" +
+        $input.vendor.vendorId + "|" +
+        toString($input.total) + "|" +
+        $input.invoiceDate
+      ),
+      ApprovalRequired: $input.total > 10000,
+      ApprovalLevel: if ($input.total > 50000) "VP_FINANCE"
+                     else if ($input.total > 10000) "CONTROLLER"
+                     else "AP_MANAGER"
+    }
+  }
+}

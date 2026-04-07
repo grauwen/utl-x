@@ -36,7 +36,7 @@ UTL-X uses the same transformation logic regardless of input/output formats.
 
 ```utlx
 %utlx 1.0
-input auto  // Auto-detect: XML, JSON, CSV, YAML
+input auto  // Auto-detect: XML, JSON, CSV, YAML, OData
 output json
 ---
 {
@@ -722,7 +722,7 @@ function calculate(x: Number, y: Number): Number {
 
 Key concepts you learned:
 
-- ✅ **Format Agnostic:** Same logic works with XML, JSON, CSV, YAML
+- ✅ **Format Agnostic:** Same logic works with XML, JSON, CSV, YAML, OData
 - ✅ **Universal Data Model:** Internal representation bridging all formats
 - ✅ **Functional Programming:** Pure functions, immutability, composition
 - ✅ **Declarative Style:** Describe what you want, not how to do it

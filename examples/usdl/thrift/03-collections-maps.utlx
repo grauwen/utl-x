@@ -1,0 +1,55 @@
+%utlx 1.0
+// Demonstrates: Thrift collections (lists, sets, maps)
+// Note: This example is specific to Thrift due to: %map, %fieldNumber, collection types
+output thrift
+---
+%namespace: "com.example.thrift"
+%version: "1.0"
+%documentation: "Thrift collections and maps"
+
+%types: {
+  Product: {
+    %kind: "structure",
+    %documentation: "Product with collections",
+    %fields: [
+      {
+        %name: "productId",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %fieldNumber: 2,
+        %required: true,
+        %description: "Product name"
+      },
+      {
+        %name: "tags",
+        %type: "string",
+        %array: true,
+        %fieldNumber: 3,
+        %required: false,
+        %description: "Product tags (list)"
+      },
+      {
+        %name: "attributes",
+        %type: "string",
+        %map: true,
+        %fieldNumber: 4,
+        %required: false,
+        %description: "Product attributes (map)"
+      },
+      {
+        %name: "relatedProducts",
+        %type: "string",
+        %array: true,
+        %fieldNumber: 5,
+        %required: false,
+        %description: "Related product IDs (set)"
+      }
+    ]
+  }
+}

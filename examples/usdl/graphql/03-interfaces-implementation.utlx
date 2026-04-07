@@ -1,0 +1,101 @@
+%utlx 1.0
+// Demonstrates: GraphQL interfaces and type implementations
+// Note: This example is specific to GraphQL due to: %implements, interface types
+output graphql
+---
+%namespace: "com.example.graphql"
+%version: "1.0"
+%documentation: "GraphQL schema with interfaces"
+
+%types: {
+  Node: {
+    %kind: "interface",
+    %documentation: "Node interface (common pattern)",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "Unique identifier"
+      }
+    ]
+  },
+
+  Timestamped: {
+    %kind: "interface",
+    %documentation: "Timestamped interface",
+    %fields: [
+      {
+        %name: "createdAt",
+        %type: "string",
+        %required: true,
+        %description: "Creation timestamp"
+      },
+      {
+        %name: "updatedAt",
+        %type: "string",
+        %required: false,
+        %description: "Last update timestamp"
+      }
+    ]
+  },
+
+  Article: {
+    %kind: "structure",
+    %implements: ["Node", "Timestamped"],
+    %documentation: "Article type implementing interfaces",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "Article identifier"
+      },
+      {
+        %name: "title",
+        %type: "string",
+        %required: true,
+        %description: "Article title"
+      },
+      {
+        %name: "content",
+        %type: "string",
+        %required: true,
+        %description: "Article content"
+      },
+      {
+        %name: "createdAt",
+        %type: "string",
+        %required: true,
+        %description: "Creation timestamp"
+      },
+      {
+        %name: "updatedAt",
+        %type: "string",
+        %required: false,
+        %description: "Last update timestamp"
+      }
+    ]
+  },
+
+  Query: {
+    %kind: "structure",
+    %documentation: "Root query type",
+    %fields: [
+      {
+        %name: "node",
+        %type: "Node",
+        %required: false,
+        %resolver: "getNode",
+        %description: "Get any node by ID",
+        %parameters: [
+          {
+            %name: "id",
+            %type: "string",
+            %required: true
+          }
+        ]
+      }
+    ]
+  }
+}

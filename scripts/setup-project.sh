@@ -156,7 +156,7 @@ plugins {
 
 allprojects {
     group = "org.apache.utlx"
-    version = "0.9.0"
+    version = "1.0.0"
     
     repositories {
         mavenCentral()

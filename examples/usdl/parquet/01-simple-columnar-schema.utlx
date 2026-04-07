@@ -1,0 +1,54 @@
+%utlx 1.0
+// Demonstrates: Basic Parquet columnar schema
+// Note: This example is specific to Parquet due to: %repetition, %encoding
+output parquet
+---
+%namespace: "com.example.parquet"
+%version: "1.0"
+%documentation: "Simple Parquet schema"
+
+%types: {
+  Event: {
+    %kind: "structure",
+    %documentation: "Event record",
+    %fields: [
+      {
+        %name: "event_id",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %description: "Event identifier"
+      },
+      {
+        %name: "user_id",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %encoding: "PLAIN",
+        %description: "User identifier"
+      },
+      {
+        %name: "event_type",
+        %type: "string",
+        %repetition: "required",
+        %required: true,
+        %encoding: "PLAIN_DICTIONARY",
+        %description: "Event type"
+      },
+      {
+        %name: "timestamp",
+        %type: "long",
+        %repetition: "required",
+        %required: true,
+        %description: "Event timestamp (milliseconds)"
+      },
+      {
+        %name: "value",
+        %type: "double",
+        %repetition: "optional",
+        %required: false,
+        %description: "Event value"
+      }
+    ]
+  }
+}

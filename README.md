@@ -3,18 +3,18 @@
 **An open-source, format-agnostic functional transformation language for data transformation.**
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.9.0-green)](https://github.com/grauwen/utl-x/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-green)](https://github.com/grauwen/utl-x/releases)
 [![Documentation](https://img.shields.io/badge/docs-utlx.dev-brightgreen)](https://utl-x.org/docs)
 
 ## Overview
 
-UTL-X is a modern data transformation language - %UTLX 1.0 - that works with message data formats: XML, JSON, CSV, YAML. Write your transformation logic once, and apply it to any supported format. 
+UTL-X is a modern data transformation language that works with message data formats: XML, JSON, CSV, YAML, OData. Write your transformation logic once, and apply it to any supported format. 
 
-Next UTL-X is a modern meta data transformation language - %UTLX 1.0 + %USDL 1.0 - that work with message meta data formats: XSD, JSCH (JSON Schema), AVRO, PROTO(BUF).
+UTL-X also supports meta data transformation across schema formats: XSD, JSCH (JSON Schema), Avro, Protobuf, OSCH (OData/EDMX), and TSCH ([Frictionless Table Schema](https://specs.frictionlessdata.io/table-schema/)).
 
 ## Why UTL-X?
 
-- 🔄 **Format Agnostic** - One transformation works with XML, JSON, CSV, YAML
+- 🔄 **Format Agnostic** - One transformation works with XML, JSON, CSV, YAML, OData
 - 🎯 **Functional & Declarative** - Clean, maintainable transformation logic
 - 💪 **Strongly Typed** - Catch errors at compile time
 - ⚡ **High Performance** - Optimized compilation and execution
@@ -249,7 +249,7 @@ Download from [GitHub Releases](https://github.com/grauwen/utl-x/releases)
 ### Verify Installation
 ```bash
 utlx --version
-# UTL-X version 0.9.0
+# UTL-X version 1.0.0
 ```
 
 ### Building from Source
@@ -294,7 +294,7 @@ utlx.bat transform script.utlx input.xml
 .\utlx.ps1 transform script.utlx input.xml
 ```
 
-The wrapper scripts automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-0.9.0.jar`.
+The wrapper scripts automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-1.0.0.jar`.
 
 ## Quick Start
 
@@ -430,7 +430,7 @@ function calculateTax(amount: Number, rate: Number): Number {
 | **Message Transformation** | Transform messages between different systems |
 | **Configuration Management** | Convert between config formats (XML ↔ JSON ↔ YAML) |
 | **Report Generation** | Transform data into report formats |
-| **Schema transformation** | Transform schemas between XSD, JSON Schema, Avro, Protobuf |
+| **Schema transformation** | Transform schemas between XSD, JSCH (JSON Schema), Avro, Protobuf, OSCH (OData/EDMX), TSCH (Table Schema) |
 
 ## Comparison
 
@@ -448,7 +448,7 @@ function calculateTax(amount: Number, rate: Number): Number {
 
 ### vs Custom Code
 - ✅ **Declarative** - describe what, not how
-- ✅ **Built-in parsers** for XML, JSON, CSV, YAML
+- ✅ **Built-in parsers** for XML, JSON, CSV, YAML, OData
 - ✅ **Type-safe** transformations
 - ✅ **Optimized** performance
 
@@ -548,30 +548,27 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 ## Project Status
 
-**Current Version**: 0.9.0 (Beta)  
-**Target v1.0**: December 2025
+**Current Version**: 1.0.0
 
-See our [Roadmap](docs/community/roadmap.md) for planned features.
+### What's in 1.0.0
 
-### Stability
+- **UTL-X CLI** (`utlx`) — format-agnostic transformation engine with 652 stdlib functions
+- Identity mode: instant format conversion (`cat data.xml | utlx`)
+- **Tier 1 — Data formats:** XML, JSON, CSV, YAML, OData
+- **Tier 2 — Schema/metadata formats:** XSD, JSCH (JSON Schema), Avro, Protobuf, OSCH (OData/EDMX), TSCH (Table Schema)
+- Multi-input transformations across different formats
+- Strong type system with compile-time checking
+- GraalVM native binary support
 
-- ✅ Core UTLX 1.0 - Uniform Transformation Language Extended: **Stable**
-- ✅ UDM - Universal Data Model: **Stable**
-- ✅ USDL 1.0 - Uniform Schema Definition Language: **Stable**
-- ✅ XML support: **Stable**
-- ✅ JSON support: **Stable**
-- ✅ CSV support: **Stable**
-- ✅ YAML support: **Stable**
-- ✅ XSD support: **Stable**
-- ✅ JSCH (JSON schema) support: **Stable**
-- ✅ Avro schema support: **Stable**
-- ✅ Protobuf schema (proto3) support: **Stable**
-- ✅ utlx CLI **Stable**
-- 🚧 JVM runtime (2 variants): **In Development** 
-- 🚧 JavaScript runtime: **In Development** 
-- 🚧 Native runtime: **In Development** 
-- 🚧 WASM runtime: **In Development** 
-- 🚧 VS-code plugin: **In Development** 
+### Roadmap
+
+| Component | Description | Status |
+|-----------|-------------|--------|
+| **UTL-X CLI** (`utlx`) | Transformation engine, format conversion, REPL, 652 stdlib functions | **1.0.0 Released** |
+| **UTL-X Engine** (`utlxe`) | Pipeline orchestration for multi-step transformations and bundle execution | In Development |
+| **UTL-X IDE Support** (`utlxd`) | Language Server Protocol daemon for VS Code and IDE integration | In Development |
+| **JavaScript Runtime** | Browser/Node.js runtime (~75% stdlib coverage, all major formats) | Future |
+| **.NET Runtime** | C#/.NET runtime for Microsoft ecosystem integration | Future |
 
 
 ## License
@@ -628,4 +625,4 @@ If you find UTL-X useful, please consider starring the repository! ⭐
 
 **Made with ❤️ by the UTL-X community**
 
-[Website](https://utl-x.dev) • [Documentation](https://utl-x.dev/docs) • [GitHub](https://github.com/grauwen/utl-x) • [Discord](https://discord.gg/utlx)
+[Website](https://utl-x.dev) • [Documentation](https://utl-x.dev/docs) • [GitHub](https://github.com/grauwen/utl-x) 

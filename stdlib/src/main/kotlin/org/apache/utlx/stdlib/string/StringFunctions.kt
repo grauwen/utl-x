@@ -12,48 +12,46 @@ object StringFunctions {
     
     @UTLXFunction(
         description = "Convert string to uppercase",
-        minArgs = 2,
-        maxArgs = 2,
+        minArgs = 1,
+        maxArgs = 1,
         category = "String",
         parameters = [
-            "str: Str value",
-        "start: Start value"
+            "str: String to convert"
         ],
-        returns = "Result of the operation",
-        example = "upper(\"hello\") => \"HELLO\"",
+        returns = "Uppercased string",
+        example = "upperCase(\"hello\") => \"HELLO\"",
         tags = ["string"],
         since = "1.0"
     )
     /**
      * Convert string to uppercase
-     * Usage: upper("hello") => "HELLO"
+     * Usage: upperCase("hello") => "HELLO"
      */
-    fun upper(args: List<UDM>): UDM {
-        requireArgs(args, 1, "upper")
+    fun upperCase(args: List<UDM>): UDM {
+        requireArgs(args, 1, "upperCase")
         val str = args[0].asString()
         return UDM.Scalar(str.uppercase())
     }
     
     @UTLXFunction(
         description = "Convert string to lowercase",
-        minArgs = 2,
-        maxArgs = 2,
+        minArgs = 1,
+        maxArgs = 1,
         category = "String",
         parameters = [
-            "array: Input array to process",
-        "start: Start value"
+            "str: String to convert"
         ],
-        returns = "Result of the operation",
-        example = "lower(\"HELLO\") => \"hello\"",
+        returns = "Lowercased string",
+        example = "lowerCase(\"HELLO\") => \"hello\"",
         tags = ["string"],
         since = "1.0"
     )
     /**
      * Convert string to lowercase
-     * Usage: lower("HELLO") => "hello"
+     * Usage: lowerCase("HELLO") => "hello"
      */
-    fun lower(args: List<UDM>): UDM {
-        requireArgs(args, 1, "lower")
+    fun lowerCase(args: List<UDM>): UDM {
+        requireArgs(args, 1, "lowerCase")
         val str = args[0].asString()
         return UDM.Scalar(str.lowercase())
     }

@@ -1,0 +1,7 @@
+AccountNumber,AccountName,Balance,InterestRate,LastTransaction
+CH-1001,Business Account Alpha,"125'450.75",1.25,2024-03-10
+CH-1002,Savings Account Beta,"89'234.50",2.50,2024-03-12
+CH-1003,Investment Portfolio,"1'567'890.25",3.75,2024-03-13
+CH-1004,Operating Account,"45'678.90",0.50,2024-03-14
+CH-1005,Reserve Fund,"234'567.80",1.85,2024-03-11
+CH-1006,Pension Account,"678'901.45",2.10,2024-03-09

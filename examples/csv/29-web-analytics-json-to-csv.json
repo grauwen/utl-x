@@ -1,0 +1,161 @@
+{
+  "analyticsReport": {
+    "reportId": "WA-2024-Q1",
+    "period": {
+      "start": "2024-01-01",
+      "end": "2024-03-31",
+      "timezone": "UTC"
+    },
+    "website": {
+      "domain": "example.com",
+      "property": "GA-123456789"
+    },
+    "metrics": [
+      {
+        "date": "2024-03-01",
+        "traffic": {
+          "sessions": 12450,
+          "users": 8920,
+          "newUsers": 3450,
+          "pageviews": 45678,
+          "avgSessionDuration": 245.5,
+          "bounceRate": 42.3
+        },
+        "acquisition": {
+          "organic": 5890,
+          "direct": 3120,
+          "social": 1890,
+          "referral": 980,
+          "paid": 570
+        },
+        "conversions": {
+          "goals": 234,
+          "goalValue": 12450.75,
+          "transactions": 89,
+          "revenue": 23890.50
+        },
+        "devices": {
+          "desktop": 6890,
+          "mobile": 4560,
+          "tablet": 1000
+        }
+      },
+      {
+        "date": "2024-03-02",
+        "traffic": {
+          "sessions": 13120,
+          "users": 9340,
+          "newUsers": 3680,
+          "pageviews": 48230,
+          "avgSessionDuration": 238.2,
+          "bounceRate": 43.1
+        },
+        "acquisition": {
+          "organic": 6120,
+          "direct": 3340,
+          "social": 2010,
+          "referral": 1020,
+          "paid": 630
+        },
+        "conversions": {
+          "goals": 256,
+          "goalValue": 13680.25,
+          "transactions": 98,
+          "revenue": 26340.75
+        },
+        "devices": {
+          "desktop": 7230,
+          "mobile": 4780,
+          "tablet": 1110
+        }
+      },
+      {
+        "date": "2024-03-03",
+        "traffic": {
+          "sessions": 11890,
+          "users": 8540,
+          "newUsers": 3210,
+          "pageviews": 43560,
+          "avgSessionDuration": 252.8,
+          "bounceRate": 41.5
+        },
+        "acquisition": {
+          "organic": 5670,
+          "direct": 2980,
+          "social": 1780,
+          "referral": 920,
+          "paid": 540
+        },
+        "conversions": {
+          "goals": 218,
+          "goalValue": 11230.50,
+          "transactions": 82,
+          "revenue": 21670.25
+        },
+        "devices": {
+          "desktop": 6540,
+          "mobile": 4350,
+          "tablet": 1000
+        }
+      },
+      {
+        "date": "2024-03-04",
+        "traffic": {
+          "sessions": 14560,
+          "users": 10230,
+          "newUsers": 4120,
+          "pageviews": 52340,
+          "avgSessionDuration": 242.1,
+          "bounceRate": 44.2
+        },
+        "acquisition": {
+          "organic": 6780,
+          "direct": 3670,
+          "social": 2230,
+          "referral": 1140,
+          "paid": 740
+        },
+        "conversions": {
+          "goals": 289,
+          "goalValue": 15680.75,
+          "transactions": 112,
+          "revenue": 29450.50
+        },
+        "devices": {
+          "desktop": 8010,
+          "mobile": 5340,
+          "tablet": 1210
+        }
+      },
+      {
+        "date": "2024-03-05",
+        "traffic": {
+          "sessions": 13450,
+          "users": 9560,
+          "newUsers": 3780,
+          "pageviews": 49120,
+          "avgSessionDuration": 248.9,
+          "bounceRate": 42.8
+        },
+        "acquisition": {
+          "organic": 6340,
+          "direct": 3450,
+          "social": 2010,
+          "referral": 1050,
+          "paid": 600
+        },
+        "conversions": {
+          "goals": 267,
+          "goalValue": 14230.25,
+          "transactions": 103,
+          "revenue": 27890.75
+        },
+        "devices": {
+          "desktop": 7450,
+          "mobile": 4890,
+          "tablet": 1110
+        }
+      }
+    ]
+  }
+}

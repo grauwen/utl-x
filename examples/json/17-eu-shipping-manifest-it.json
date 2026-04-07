@@ -1,0 +1,248 @@
+{
+  "manifestoId": "IT-2025-SHIP-MAN-456789",
+  "dataManifesto": "2025-01-16",
+  "tipoTrasporto": "STRADALE_INTERNAZIONALE",
+  "vettore": {
+    "ragioneSociale": "Trasporti Europei Bologna SpA",
+    "partitaIVA": "IT01234567890",
+    "numeroLicenza": "IT-VET-2024-00789",
+    "albo": "Albo Nazionale Autotrasportatori",
+    "numeroAlbo": "BO-123456",
+    "sede": {
+      "indirizzo": "Via dell'Industria, 45",
+      "cap": "40138",
+      "citta": "Bologna",
+      "provincia": "BO",
+      "regione": "Emilia-Romagna",
+      "paese": "Italia"
+    },
+    "contatto": {
+      "nominativo": "Sig. Marco Rossi",
+      "email": "m.rossi@trasporti-europei-bo.it",
+      "telefono": "+39 051 234 5678",
+      "cellulare": "+39 335 123 4567"
+    }
+  },
+  "autista": {
+    "nome": "Giovanni",
+    "cognome": "Bianchi",
+    "numeroPatente": "BO1234567C",
+    "scadenzaPatente": "2028-06-15",
+    "cartaTachigrafica": "IT-TACH-567890",
+    "scadenzaCarta": "2027-03-20",
+    "nazionalita": "Italiana",
+    "telefono": "+39 340 987 6543"
+  },
+  "veicolo": {
+    "tipoVeicolo": "AUTOARTICOLATO",
+    "trattore": {
+      "targa": "AB 123 CD",
+      "marca": "Iveco",
+      "modello": "Stralis XP 480",
+      "anno": 2023,
+      "numeroTelaio": "WJME62NT300123456",
+      "portataKg": 44000
+    },
+    "rimorchio": {
+      "targa": "RM 789 XY",
+      "tipo": "SEMIRIMORCHIO_FURGONATO",
+      "lunghezzaMetri": 13.6,
+      "volumeMetriCubi": 90,
+      "numeroTelaio": "X5DXXXXX0E0123456"
+    },
+    "certificatoADR": {
+      "valido": true,
+      "scadenza": "2025-12-31",
+      "classiAutorizzate": ["4.1", "4.2", "4.3"]
+    }
+  },
+  "mittente": {
+    "ragioneSociale": "Industrie Meccaniche Milano Srl",
+    "partitaIVA": "IT09876543210",
+    "indirizzo": {
+      "via": "Via Mecenate, 78",
+      "cap": "20138",
+      "citta": "Milano",
+      "provincia": "MI",
+      "regione": "Lombardia",
+      "paese": "Italia"
+    },
+    "personaDiContatto": "Sig.ra Laura Verdi",
+    "telefono": "+39 02 1234 5678",
+    "email": "spedizioni@industrie-mec-mi.it"
+  },
+  "destinatario": {
+    "ragioneSociale": "Maschinenbau Stuttgart GmbH",
+    "partitaIVA": "DE987654321",
+    "indirizzo": {
+      "strasse": "Industriestraße 125",
+      "plz": "70565",
+      "stadt": "Stuttgart",
+      "bundesland": "Baden-Württemberg",
+      "land": "Germania"
+    },
+    "personaDiContatto": "Herr Klaus Weber",
+    "telefono": "+49 711 123 456",
+    "email": "receiving@maschinenbau-stuttgart.de"
+  },
+  "itinerario": {
+    "puntoPartenza": {
+      "localita": "Milano (MI)",
+      "data": "2025-01-17",
+      "ora": "06:00",
+      "coordinate": {
+        "latitudine": 45.4642,
+        "longitudine": 9.1900
+      }
+    },
+    "puntoArrivo": {
+      "localita": "Stuttgart",
+      "data": "2025-01-18",
+      "ora": "14:00",
+      "coordinate": {
+        "latitudine": 48.7758,
+        "longitudine": 9.1829
+      }
+    },
+    "distanzaKm": 685,
+    "transitoPrevisto": [
+      {
+        "valico": "Brennero (A22)",
+        "nazioneDa": "Italia",
+        "nazioneA": "Austria",
+        "oraStimata": "09:30"
+      },
+      {
+        "confine": "Kufstein",
+        "nazioneDa": "Austria",
+        "nazioneA": "Germania",
+        "oraStimata": "11:45"
+      }
+    ]
+  },
+  "merci": [
+    {
+      "posizione": 1,
+      "descrizione": "Componenti meccanici torniti - Parti per macchine utensili",
+      "codiceDoganale": "8466.93.98",
+      "colli": 24,
+      "tipologia": "PALLET_EUR",
+      "pesoLordoKg": 2850.00,
+      "pesoNettoKg": 2640.00,
+      "volumeM3": 9.6,
+      "valoreEUR": 45500.00,
+      "origine": "Italia",
+      "marcaturaCE": true
+    },
+    {
+      "posizione": 2,
+      "descrizione": "Cuscinetti a sfere ad alta precisione",
+      "codiceDoganale": "8482.10.10",
+      "colli": 12,
+      "tipologia": "CASSE_LEGNO",
+      "pesoLordoKg": 980.00,
+      "pesoNettoKg": 850.00,
+      "volumeM3": 3.2,
+      "valoreEUR": 28900.00,
+      "origine": "Italia",
+      "marcaturaCE": true
+    },
+    {
+      "posizione": 3,
+      "descrizione": "Motori elettrici trifase 7,5 kW",
+      "codiceDoganale": "8501.52.20",
+      "colli": 8,
+      "tipologia": "PALLET_EUR",
+      "pesoLordoKg": 640.00,
+      "pesoNettoKg": 560.00,
+      "volumeM3": 2.4,
+      "valoreEUR": 12600.00,
+      "origine": "Italia",
+      "marcaturaCE": true
+    }
+  ],
+  "totali": {
+    "numeroColi": 44,
+    "pesoLordoTotaleKg": 4470.00,
+    "pesoNettoTotaleKg": 4050.00,
+    "volumeTotaleM3": 15.2,
+    "valoreTotaleMerceEUR": 87000.00
+  },
+  "documentazione": {
+    "cmr": {
+      "numero": "CMR-IT-2025-456789",
+      "emettitoIn": 3,
+      "data": "2025-01-16"
+    },
+    "fatturaCommerciale": {
+      "numero": "FATT-2025-00234",
+      "data": "2025-01-15",
+      "valoreEUR": 87000.00
+    },
+    "documentiDoganali": {
+      "dau": {
+        "numero": "25IT123456789012345",
+        "tipo": "EX1",
+        "data": "2025-01-16"
+      },
+      "mrn": "25IT123456789012345-1"
+    },
+    "certificati": [
+      {
+        "tipo": "CERTIFICATO_ORIGINE",
+        "numero": "CO-IT-2025-00789",
+        "ente": "Camera di Commercio Milano",
+        "data": "2025-01-15"
+      },
+      {
+        "tipo": "DICHIARAZIONE_CONFORMITA_CE",
+        "numero": "CE-2025-IMM-0234"
+      }
+    ]
+  },
+  "incoterms": "DAP",
+  "condizioniTrasporto": {
+    "assicurazione": {
+      "compagnia": "Assicurazioni Generali SpA",
+      "numeroPolizza": "IT-CARGO-2025-789456",
+      "valoreAssicuratoEUR": 90000.00
+    },
+    "temperaturaControllatа": false,
+    "merciPericolose": false,
+    "istruzioniSpeciali": "Mantenere i colli in posizione verticale. Non sovrapporre pesi superiori a 800 kg. Proteggere dall'umidità."
+  },
+  "costiTrasporto": {
+    "noloPrincipaleEUR": 1450.00,
+    "pedaggiAutostradaliEUR": 125.00,
+    "speseScansioneEUR": 85.00,
+    "totaleEUR": 1660.00,
+    "valuta": "EUR",
+    "modalitaPagamento": "Rimessa diretta a 30 giorni"
+  },
+  "firme": {
+    "mittente": {
+      "firmato": true,
+      "nominativo": "Laura Verdi",
+      "data": "2025-01-16T15:30:00+01:00"
+    },
+    "vettore": {
+      "firmato": true,
+      "nominativo": "Marco Rossi",
+      "data": "2025-01-16T16:00:00+01:00"
+    },
+    "destinatario": {
+      "firmato": false,
+      "prevista": "2025-01-18T14:00:00+01:00"
+    }
+  },
+  "trackingGPS": {
+    "dispositivo": "TRK-EU-567890",
+    "attivo": true,
+    "ultimaPosizione": {
+      "localita": "Autostrada A22 - Bolzano Sud",
+      "dataOra": "2025-01-17T08:45:00+01:00",
+      "latitudine": 46.4983,
+      "longitudine": 11.3548
+    }
+  }
+}

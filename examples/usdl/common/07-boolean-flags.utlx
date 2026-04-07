@@ -1,0 +1,47 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Boolean fields and flags
+output [FORMAT]
+---
+%namespace: "com.example.config"
+%version: "1.0"
+%documentation: "Configuration with boolean flags"
+
+%types: {
+  Configuration: {
+    %kind: "structure",
+    %documentation: "System configuration settings",
+    %fields: [
+      {
+        %name: "configId",
+        %type: "string",
+        %required: true,
+        %description: "Configuration identifier"
+      },
+      {
+        %name: "enabled",
+        %type: "boolean",
+        %required: true,
+        %description: "Whether configuration is enabled"
+      },
+      {
+        %name: "debugMode",
+        %type: "boolean",
+        %required: true,
+        %description: "Debug mode flag"
+      },
+      {
+        %name: "allowPublicAccess",
+        %type: "boolean",
+        %required: false,
+        %description: "Public access permission"
+      },
+      {
+        %name: "notificationsEnabled",
+        %type: "boolean",
+        %required: false,
+        %description: "Notifications flag"
+      }
+    ]
+  }
+}

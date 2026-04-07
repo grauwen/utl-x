@@ -1,0 +1,63 @@
+%utlx 1.0
+// Demonstrates: Composite primary keys and multi-column indexes
+// Note: This example is specific to SQL due to: %primaryKey (array), %table, %index
+output sql
+---
+%namespace: "public"
+%version: "1.0"
+%documentation: "Junction table with composite key"
+
+%types: {
+  StudentCourses: {
+    %kind: "structure",
+    %table: "student_courses",
+    %documentation: "Many-to-many relationship table",
+    %primaryKey: ["student_id", "course_id"],
+    %fields: [
+      {
+        %name: "student_id",
+        %type: "integer",
+        %required: true,
+        %foreignKey: {
+          %table: "students",
+          %column: "student_id",
+          %onDelete: "CASCADE"
+        },
+        %description: "Student identifier"
+      },
+      {
+        %name: "course_id",
+        %type: "integer",
+        %required: true,
+        %foreignKey: {
+          %table: "courses",
+          %column: "course_id",
+          %onDelete: "CASCADE"
+        },
+        %description: "Course identifier"
+      },
+      {
+        %name: "enrollment_date",
+        %type: "string",
+        %sqlType: "DATE",
+        %required: true,
+        %description: "Enrollment date"
+      },
+      {
+        %name: "grade",
+        %type: "string",
+        %sqlType: "VARCHAR(2)",
+        %required: false,
+        %description: "Final grade"
+      },
+      {
+        %name: "status",
+        %type: "string",
+        %sqlType: "VARCHAR(20)",
+        %required: true,
+        %index: "idx_enrollment_status",
+        %description: "Enrollment status"
+      }
+    ]
+  }
+}

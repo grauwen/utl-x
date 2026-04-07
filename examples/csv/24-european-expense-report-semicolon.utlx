@@ -1,0 +1,52 @@
+%utlx 1.0
+input expenses csv {delimiter: ";"}
+output json
+---
+{
+  "expenseReport": {
+    "totalExpenses": count($expenses),
+    "totalAmount": sum(map(filter($expenses, fn(e) => e.Currency == "EUR"), fn(e) => e.Amount)),
+    "totalAmountCHF": sum(map(filter($expenses, fn(e) => e.Currency == "CHF"), fn(e) => e.Amount)),
+    "byCategory": {
+      "Travel": {
+        "count": count(filter($expenses, fn(e) => e.Category == "Travel")),
+        "total": sum(map(filter($expenses, fn(e) => e.Category == "Travel"), fn(e) => e.Amount))
+      },
+      "Meals": {
+        "count": count(filter($expenses, fn(e) => e.Category == "Meals")),
+        "total": sum(map(filter($expenses, fn(e) => e.Category == "Meals"), fn(e) => e.Amount))
+      },
+      "Hotel": {
+        "count": count(filter($expenses, fn(e) => e.Category == "Hotel")),
+        "total": sum(map(filter($expenses, fn(e) => e.Category == "Hotel"), fn(e) => e.Amount))
+      },
+      "Office": {
+        "count": count(filter($expenses, fn(e) => e.Category == "Office")),
+        "total": sum(map(filter($expenses, fn(e) => e.Category == "Office"), fn(e) => e.Amount))
+      },
+      "Equipment": {
+        "count": count(filter($expenses, fn(e) => e.Category == "Equipment")),
+        "total": sum(map(filter($expenses, fn(e) => e.Category == "Equipment"), fn(e) => e.Amount))
+      },
+      "Conference": {
+        "count": count(filter($expenses, fn(e) => e.Category == "Conference")),
+        "total": sum(map(filter($expenses, fn(e) => e.Category == "Conference"), fn(e) => e.Amount))
+      }
+    },
+    "byStatus": {
+      "Approved": count(filter($expenses, fn(e) => e.Status == "Approved")),
+      "Pending": count(filter($expenses, fn(e) => e.Status == "Pending"))
+    },
+    "pendingExpenses": filter($expenses, fn(e) => e.Status == "Pending")
+  },
+  "expenses": map($expenses, fn(exp) => {
+    "id": exp.ExpenseID,
+    "employee": exp.EmployeeName,
+    "category": exp.Category,
+    "date": exp.Date,
+    "description": exp.Description,
+    "amount": exp.Amount,
+    "currency": exp.Currency,
+    "status": exp.Status
+  })
+}

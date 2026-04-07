@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BTWAangifte xmlns="http://www.financien.belgium.be/btw/v1"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <AangifteGegevens>
+        <AangifteNummer>BE-2025-BTW-456789</AangifteNummer>
+        <PeriodiciteitsCode>M</PeriodiciteitsCode>
+        <PeriodeJaar>2024</PeriodeJaar>
+        <PeriodeMaand>12</PeriodeMaand>
+        <IndieningsDatum>2025-01-20T14:30:00+01:00</IndieningsDatum>
+        <StatusAangifte>INGEDIEND</StatusAangifte>
+    </AangifteGegevens>
+
+    <Belastingplichtige>
+        <BTWNummer>BE 0123.456.789</BTWNummer>
+        <Ondernemingsnummer>0123.456.789</Ondernemingsnummer>
+        <Benaming>Van de Velde &amp; Dubois BVBA</Benaming>
+        <Rechtsvorm>BESLOTEN_VENNOOTSCHAP_MET_BEPERKTE_AANSPRAKELIJKHEID</Rechtsvorm>
+        <Adres>
+            <Straat>Leopoldstraat</Straat>
+            <Huisnummer>145</Huisnummer>
+            <Bus>A12</Bus>
+            <Postcode>2000</Postcode>
+            <Gemeente>Antwerpen</Gemeente>
+            <Provincie>Antwerpen</Provincie>
+            <Gewest>Vlaams_Gewest</Gewest>
+            <Land>België</Land>
+        </Adres>
+        <Contactgegevens>
+            <Telefoon>+32 3 123 45 67</Telefoon>
+            <GSM>+32 475 12 34 56</GSM>
+            <Email>boekhouding@vandevelde-dubois.be</Email>
+        </Contactgegevens>
+        <NACE_BEL_Code>46.510</NACE_BEL_Code>
+        <Activiteit>Groothandel in computers, randapparatuur en software</Activiteit>
+    </Belastingplichtige>
+
+    <Boekhouder>
+        <BTWNummer>BE 0987.654.321</BTWNummer>
+        <Naam>Accountantskantoor Peeters</Naam>
+        <Erkend>true</Erkend>
+        <IVB_Nummer>123456</IVB_Nummer>
+        <Contactpersoon>
+            <Naam>Mevr. Sophie Peeters</Naam>
+            <Telefoon>+32 2 987 65 43</Telefoon>
+            <Email>sophie.peeters@accountancy.be</Email>
+        </Contactpersoon>
+    </Boekhouder>
+
+    <Leveringen>
+        <Rooster54>
+            <Vak00_BelgischBinnenland>
+                <Omzet>245'670.00</Omzet>
+                <BTW>51'590.70</BTW>
+            </Vak00_BelgischBinnenland>
+            <Vak01_BTW21Procent>
+                <Omzet>185'450.00</Omzet>
+                <BTW>38'944.50</BTW>
+            </Vak01_BTW21Procent>
+            <Vak02_BTW12Procent>
+                <Omzet>34'750.00</Omzet>
+                <BTW>4'170.00</BTW>
+            </Vak02_BTW12Procent>
+            <Vak03_BTW6Procent>
+                <Omzet>25'470.00</Omzet>
+                <BTW>1'528.20</BTW>
+            </Vak03_BTW6Procent>
+        </Rooster54>
+        <IntracommunautaireLeveringen>
+            <Vak46>
+                <Omzet>78'950.00</Omzet>
+                <BTW>0.00</BTW>
+            </Vak46>
+        </IntracommunautaireLeveringen>
+        <Uitvoer>
+            <Vak47>
+                <Omzet>34'680.00</Omzet>
+                <BTW>0.00</BTW>
+            </Vak47>
+        </Uitvoer>
+    </Leveringen>
+
+    <Verwervingen>
+        <VerwervingInBelgië>
+            <Vak81_Aankopen21Procent>
+                <Omzet>123'450.00</Omzet>
+                <BTW>25'924.50</BTW>
+                <AftekkennaarVak59>25'924.50</AftekkennaarVak59>
+            </Vak81_Aankopen21Procent>
+            <Vak82_Aankopen12Procent>
+                <Omzet>18'750.00</Omzet>
+                <BTW>2'250.00</BTW>
+                <AftekkennaarVak59>2'250.00</AftekkennaarVak59>
+            </Vak82_Aankopen12Procent>
+            <Vak83_Aankopen6Procent>
+                <Omzet>9'870.00</Omzet>
+                <BTW>592.20</BTW>
+                <AftekkennaarVak59>592.20</AftekkennaarVak59>
+            </Vak83_Aankopen6Procent>
+        </VerwervingInBelgië>
+        <IntracommunautaireVerwervingen>
+            <Vak86_ICVerwerving>
+                <Omzet>45'680.00</Omzet>
+                <BTW>9'592.80</BTW>
+                <VerschuldigdBTW_Vak55>9'592.80</VerschuldigdBTW_Vak55>
+                <AftekkennaarVak59>9'592.80</AftekkennaarVak59>
+            </Vak86_ICVerwerving>
+        </IntracommunautaireVerwervingen>
+        <Invoer>
+            <Vak87>
+                <BTWBetaaldBijInvoer>5'673.20</BTWBetaaldBijInvoer>
+                <AftekkennaarVak59>5'673.20</AftekkennaarVak59>
+            </Vak87>
+        </Invoer>
+    </Verwervingen>
+
+    <BTWBerekening>
+        <TeBetalenBTW>
+            <Vak54_BelgischBinnenland>51'590.70</Vak54_BelgischBinnenland>
+            <Vak55_ICVerwervingen>9'592.80</Vak55_ICVerwervingen>
+            <TotaalVerschuldigd>61'183.50</TotaalVerschuldigd>
+        </TeBetalenBTW>
+        <AfTeTrekkenBTW>
+            <Vak59_TotaalAftrek>44'032.70</Vak59_TotaalAftrek>
+        </AfTeTrekkenBTW>
+        <Saldo>
+            <Vak71_TeBetalen>17'150.80</Vak71_TeBetalen>
+            <Vak72_TeOntvangen>0.00</Vak72_TeOntvangen>
+        </Saldo>
+    </BTWBerekening>
+
+    <IntracommunautaireHandel>
+        <Klanten>
+            <Klant>
+                <BTWNummer>NL123456789B01</BTWNummer>
+                <Land>NL</Land>
+                <Bedrag>28'750.00</Bedrag>
+            </Klant>
+            <Klant>
+                <BTWNummer>DE123456789</BTWNummer>
+                <Land>DE</Land>
+                <Bedrag>25'600.00</Bedrag>
+            </Klant>
+            <Klant>
+                <BTWNummer>FR12345678901</BTWNummer>
+                <Land>FR</Land>
+                <Bedrag>24'600.00</Bedrag>
+            </Klant>
+        </Klanten>
+        <Leveranciers>
+            <Leverancier>
+                <BTWNummer>DE987654321</BTWNummer>
+                <Land>DE</Land>
+                <Bedrag>32'450.00</Bedrag>
+            </Leverancier>
+            <Leverancier>
+                <BTWNummer>NL987654321B01</BTWNummer>
+                <Land>NL</Land>
+                <Bedrag>13'230.00</Bedrag>
+            </Leverancier>
+        </Leveranciers>
+    </IntracommunautaireHandel>
+
+    <Betaling>
+        <Uiterste BetalingsDatum>2025-02-20</UitersteBetalingsDatum>
+        <Betalingswijze>DOMICILIERING</Betalingswijze>
+        <Rekeningnummer>
+            <IBAN>BE68 5390 0754 7034</IBAN>
+            <BIC>BBRUBEBB</BIC>
+            <Bank>ING België NV</Bank>
+        </Rekeningnummer>
+        <GestructureerdeMededeling>+++123/4567/89012+++</GestructureerdeMededeling>
+        <TeBetalen>17'150.80</TeBetalen>
+        <Munt>EUR</Munt>
+    </Betaling>
+
+    <AangifteDetails>
+        <AantalFacturenUitgaand>1'456</AantalFacturenUitgaand>
+        <AantalFacturenInkomend>2'134</AantalFacturenInkomend>
+        <Boekhoudprogramma>
+            <Naam>Exact Online</Naam>
+            <Versie>23.4.5</Versie>
+        </Boekhoudprogramma>
+        <IndieningVia>INTERVAT</IndieningVia>
+    </AangifteDetails>
+
+    <Opmerkingen>
+        <Opmerking>Maandelijkse BTW-aangifte ingediend conform het BTW-Wetboek.</Opmerking>
+        <Opmerking>De intracommunautaire verwervingen werden correct autogefactureerd.</Opmerking>
+        <Opmerking>De betaling zal uitgevoerd worden via domiciliëring op de uiterste betalingsdatum.</Opmerking>
+    </Opmerkingen>
+
+    <Handtekening>
+        <Datum>2025-01-20</Datum>
+        <Plaats>Antwerpen</Plaats>
+        <Ondertekenaar>
+            <Naam>Jan Van de Velde</Naam>
+            <Hoedanigheid>ZAAKVOERDER</Hoedanigheid>
+            <DigitaleHandtekening>JVdV_2025_01_20_14_30</DigitaleHandtekening>
+        </Ondertekenaar>
+        <Boekhouder>
+            <Naam>Sophie Peeters</Naam>
+            <Hoedanigheid>ERKEND_BOEKHOUDER</Hoedanigheid>
+            <DigitaleHandtekening>SP_2025_01_20_14_35</DigitaleHandtekening>
+        </Boekhouder>
+    </Handtekening>
+
+    <BelgischeSpecialeTekens>
+        <Voorbeelden>België, Brussel, Brugge, Luik (Liège), Namen (Namur)</Voorbeelden>
+        <Frans>é è ê à ç œ</Frans>
+        <Duits>ä ö ü ß</Duits>
+        <Gewestsnamen>
+            <Nederlands>Vlaams Gewest, Waals Gewest, Brussels Hoofdstedelijk Gewest</Nederlands>
+            <Frans>Région flamande, Région wallonne, Région de Bruxelles-Capitale</Frans>
+            <Duits>Flämische Region, Wallonische Region, Region Brüssel-Hauptstadt</Duits>
+        </Gewestsnamen>
+    </BelgischeSpecialeTekens>
+</BTWAangifte>

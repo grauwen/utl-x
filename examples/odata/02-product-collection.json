@@ -1,0 +1,31 @@
+{
+  "@odata.context": "$metadata#Products",
+  "@odata.count": 77,
+  "value": [
+    {
+      "@odata.id": "Products(1)",
+      "ProductID": 1,
+      "ProductName": "Chai",
+      "UnitPrice": 18.00,
+      "UnitsInStock": 39,
+      "Discontinued": false
+    },
+    {
+      "@odata.id": "Products(2)",
+      "ProductID": 2,
+      "ProductName": "Chang",
+      "UnitPrice": 19.00,
+      "UnitsInStock": 17,
+      "Discontinued": false
+    },
+    {
+      "@odata.id": "Products(3)",
+      "ProductID": 3,
+      "ProductName": "Aniseed Syrup",
+      "UnitPrice": 10.00,
+      "UnitsInStock": 13,
+      "Discontinued": false
+    }
+  ],
+  "@odata.nextLink": "Products?$skip=3&$top=3"
+}

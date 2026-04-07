@@ -1,5 +1,5 @@
 // modules/analysis/src/test/kotlin/org/apache/utlx/analysis/validation/TransformValidatorTest.kt
-import org.junit.jupiter.api.Disabledpackage org.apache.utlx.analysis.validation
+package org.apache.utlx.analysis.validation
 
 import org.apache.utlx.analysis.types.*
 import org.junit.jupiter.api.Test
@@ -8,7 +8,6 @@ import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 import kotlin.test.assertEquals
 
-@Disabled("TODO: Requires constraint API rewrite")
 class TransformValidatorTest {
     
     private lateinit var context: TypeContext
@@ -204,31 +203,31 @@ class TransformValidatorTest {
     
     @Test
     fun `should handle scope management correctly`() {
-        context.defineVariable("outer", TypeDefinition.Scalar(ScalarKind.STRING))
-        
-        context.enterScope()
-        context.defineVariable("inner", TypeDefinition.Scalar(ScalarKind.INTEGER))
-        
-        assertTrue(context.lookupVariable("outer") != null)
-        assertTrue(context.lookupVariable("inner") != null)
-        
-        context.exitScope()
-        
-        assertTrue(context.lookupVariable("outer") != null)
-        assertEquals(null, context.lookupVariable("inner"))
+        context.bind("outer", TypeDefinition.Scalar(ScalarKind.STRING))
+
+        context.pushScope()
+        context.bind("inner", TypeDefinition.Scalar(ScalarKind.INTEGER))
+
+        assertTrue(context.lookup("outer") != null)
+        assertTrue(context.lookup("inner") != null)
+
+        context.popScope()
+
+        assertTrue(context.lookup("outer") != null)
+        assertEquals(null, context.lookup("inner"))
     }
     
     @Test
     fun `should execute block within scope`() {
-        context.defineVariable("before", TypeDefinition.Scalar(ScalarKind.STRING))
-        
+        context.bind("before", TypeDefinition.Scalar(ScalarKind.STRING))
+
         val result = context.withScope {
-            context.defineVariable("inside", TypeDefinition.Scalar(ScalarKind.INTEGER))
-            context.lookupVariable("inside")
+            context.bind("inside", TypeDefinition.Scalar(ScalarKind.INTEGER))
+            context.lookup("inside")
         }
-        
+
         assertTrue(result != null)
-        assertEquals(null, context.lookupVariable("inside"))
+        assertEquals(null, context.lookup("inside"))
     }
     
     @Test
@@ -238,19 +237,20 @@ class TransformValidatorTest {
                 "id" to PropertyType(TypeDefinition.Scalar(ScalarKind.STRING))
             )
         )
-        
-        val templateContext = context.createTemplateContext(matchType)
-        
-        assertEquals(matchType, templateContext.inputType)
+
+        val templateContext = TypeContext()
+        templateContext.bind("\$input", matchType)
+
+        assertEquals(matchType, templateContext.lookup("\$input"))
     }
     
     @Test
     fun `should get all defined variables`() {
-        context.defineVariable("var1", TypeDefinition.Scalar(ScalarKind.STRING))
-        context.defineVariable("var2", TypeDefinition.Scalar(ScalarKind.INTEGER))
-        
-        val allVars = context.getAllVariables()
-        
+        context.bind("var1", TypeDefinition.Scalar(ScalarKind.STRING))
+        context.bind("var2", TypeDefinition.Scalar(ScalarKind.INTEGER))
+
+        val allVars = context.allBindings()
+
         assertEquals(2, allVars.size)
         assertTrue(allVars.containsKey("var1"))
         assertTrue(allVars.containsKey("var2"))

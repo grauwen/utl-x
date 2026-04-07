@@ -56,7 +56,7 @@ cleanup() {
 trap cleanup EXIT
 
 # Check if CLI is built
-CLI_JAR="modules/cli/build/libs/cli-0.9.0.jar"
+CLI_JAR="modules/cli/build/libs/cli-1.0.0.jar"
 if [ ! -f "$CLI_JAR" ]; then
     echo -e "${RED}Error: CLI JAR not found. Run ./scripts/build-cli.sh first${NC}"
     exit 1
@@ -70,7 +70,7 @@ echo ""
 # Test 1: Version command
 print_test "Version command"
 java -jar "$CLI_JAR" version > "$TEST_DIR/version.txt"
-assert_contains "$TEST_DIR/version.txt" "UTL-X v0.9.0"
+assert_contains "$TEST_DIR/version.txt" "UTL-X v1.0.0"
 assert_success "Version command failed"
 echo ""
 

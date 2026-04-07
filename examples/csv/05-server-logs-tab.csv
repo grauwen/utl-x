@@ -1,0 +1,9 @@
+Timestamp	ServerID	LogLevel	Component	Message	ResponseTime
+2024-03-01T08:15:22	SRV-01	INFO	API	Request processed successfully	145
+2024-03-01T08:15:45	SRV-02	WARN	Database	Connection pool near capacity	892
+2024-03-01T08:16:03	SRV-01	ERROR	Auth	Failed login attempt	67
+2024-03-01T08:16:18	SRV-03	INFO	Cache	Cache hit rate: 94%	12
+2024-03-01T08:16:32	SRV-02	INFO	API	Request processed successfully	178
+2024-03-01T08:17:05	SRV-01	WARN	Memory	High memory usage detected	34
+2024-03-01T08:17:28	SRV-03	ERROR	Network	Connection timeout	5000
+2024-03-01T08:17:45	SRV-02	INFO	API	Request processed successfully	156

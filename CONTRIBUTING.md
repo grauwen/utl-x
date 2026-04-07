@@ -531,7 +531,7 @@ var mutable = "Can change"  // ⚠️ Use only when necessary
  * @throws UnsupportedFormatException if the output format is not supported
  * @throws TransformationException if the transformation fails
  *
- * @sample com.glomidco.utlx.samples.basicTransformation
+ * @sample org.apache.utlx.samples.basicTransformation
  * @see UDM
  * @see Format
  * @since 0.1.0
@@ -847,7 +847,7 @@ Report to community@glomidco.com. All reports will be reviewed confidentially.
 ./gradlew clean build
 
 # Check Java version
-java -version  # Should be 11+
+java -version  # Should be 17+
 
 # Check Gradle version
 ./gradlew --version

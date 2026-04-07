@@ -1,0 +1,71 @@
+{
+  "@odata.context": "$metadata#CustomerInvoices(BillingAddress,LineItems)/$entity",
+  "@odata.type": "#Billing.CustomerInvoice",
+  "@odata.id": "CustomerInvoices('INV-2026-005892')",
+  "@odata.etag": "W/\"2026-02-15T16:00:00Z\"",
+  "InvoiceNumber": "INV-2026-005892",
+  "InvoiceDate": "2026-02-15",
+  "DueDate": "2026-03-17",
+  "SalesOrderReference": "SO-2026-001234",
+  "DeliveryNoteReference": "DN-2026-003456",
+  "CustomerID": "CUST-EU-00421",
+  "CustomerName": "Schneider Electric SE",
+  "CustomerTaxID": "FR76542097312",
+  "CompanyCode": "2000",
+  "CurrencyCode": "EUR",
+  "PaymentTerms": "NET_30",
+  "PaymentMethod": "SEPA_TRANSFER",
+  "BillingAddress": {
+    "Street": "35 rue Joseph Monier",
+    "City": "Rueil-Malmaison",
+    "PostalCode": "92500",
+    "Region": "Ile-de-France",
+    "Country": "FR"
+  },
+  "LineItems": [
+    {
+      "ItemNumber": 10,
+      "MaterialNumber": "FG-PWR-2200",
+      "Description": "Power Distribution Unit 3-Phase 32A",
+      "Quantity": 12,
+      "QuantityUnit": "EA",
+      "NetPrice": 1850.00,
+      "NetAmount": 22200.00,
+      "TaxCode": "V1",
+      "TaxRate": 0.20,
+      "TaxAmount": 4440.00,
+      "GrossAmount": 26640.00
+    },
+    {
+      "ItemNumber": 20,
+      "MaterialNumber": "FG-UPS-5000",
+      "Description": "Uninterruptible Power Supply 5kVA Online",
+      "Quantity": 4,
+      "QuantityUnit": "EA",
+      "NetPrice": 4200.00,
+      "NetAmount": 16800.00,
+      "TaxCode": "V1",
+      "TaxRate": 0.20,
+      "TaxAmount": 3360.00,
+      "GrossAmount": 20160.00
+    },
+    {
+      "ItemNumber": 30,
+      "MaterialNumber": "SVC-INSTALL-STD",
+      "Description": "Standard Installation Service - per unit",
+      "Quantity": 16,
+      "QuantityUnit": "HR",
+      "NetPrice": 95.00,
+      "NetAmount": 1520.00,
+      "TaxCode": "V1",
+      "TaxRate": 0.20,
+      "TaxAmount": 304.00,
+      "GrossAmount": 1824.00
+    }
+  ],
+  "TotalNetAmount": 40520.00,
+  "TotalTaxAmount": 8104.00,
+  "TotalGrossAmount": 48624.00,
+  "Status": "OPEN",
+  "DunningLevel": 0
+}

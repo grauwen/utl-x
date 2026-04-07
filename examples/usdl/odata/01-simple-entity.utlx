@@ -1,0 +1,49 @@
+%utlx 1.0
+// Demonstrates: Basic OData entity with key field
+// Note: This example is specific to OData due to: %entityType, %key
+output odata
+---
+%namespace: "ODataDemo.Models"
+%version: "1.0"
+%documentation: "Simple OData entity"
+
+%types: {
+  Product: {
+    %kind: "structure",
+    %entityType: true,
+    %documentation: "Product entity",
+    %fields: [
+      {
+        %name: "ProductId",
+        %type: "integer",
+        %key: true,
+        %required: true,
+        %description: "Product identifier"
+      },
+      {
+        %name: "Name",
+        %type: "string",
+        %required: true,
+        %description: "Product name"
+      },
+      {
+        %name: "Price",
+        %type: "double",
+        %required: true,
+        %description: "Product price"
+      },
+      {
+        %name: "Description",
+        %type: "string",
+        %required: false,
+        %description: "Product description"
+      },
+      {
+        %name: "InStock",
+        %type: "boolean",
+        %required: true,
+        %description: "Availability flag"
+      }
+    ]
+  }
+}

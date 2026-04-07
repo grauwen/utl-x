@@ -1,27 +1,34 @@
 # DataWeave vs UTL-X Standard Library - Complete Comparison
 
-**Analysis Date:** October 14, 2025  
-**UTL-X Functions:** 120+  
+**Last Updated:** April 2026  
+**UTL-X Functions:** 652 (across 18 categories)  
 **DataWeave Core Modules:** 18+
 
 ---
 
-## 📊 Executive Summary
+## Executive Summary
 
 | Metric | DataWeave | UTL-X | Status |
 |--------|-----------|-------|--------|
-| **Total Functions** | ~80-100 | 120+ | ✅ **UTL-X has MORE** |
-| **Array Functions** | 13 core | 25 | ✅ **+92% more** |
-| **String Functions** | 11 core | 33 | ✅ **+200% more** |
-| **Math Functions** | 8 core | 12 | ✅ **+50% more** |
-| **Date Functions** | 5 core | 25 | ✅ **+400% more** |
-| **Object Functions** | 4 core | 10 | ✅ **+150% more** |
-| **Type Functions** | Module | 8 | ✅ Comparable |
-| **Encoding** | Limited | 8 | ✅ **UTL-X better** |
-| **XML Functions** | DTD module | 20 | ✅ **UTL-X better** |
-| **Coverage Score** | 100% | **138%** | ✅ **38% ahead** |
+| **Total Functions** | ~80-100 | 652 | **UTL-X has 6x more** |
+| **Categories** | 18 modules | 18 categories | Comparable structure |
+| **Array Functions** | 13 core | 67 | **+415% more** |
+| **String Functions** | 11 core | 83 | **+655% more** |
+| **Math Functions** | 8 core | 37 | **+363% more** |
+| **Date Functions** | 5 core | 68 | **+1260% more** |
+| **Type Functions** | Module | 27 | **+238% more** |
+| **Encoding** | Limited | 30 | **UTL-X much richer** |
+| **XML Functions** | DTD module | 60 | **UTL-X much richer** |
+| **Binary Functions** | N/A | 47 | **UTL-X only** |
+| **CSV Functions** | N/A | 12 | **UTL-X only** |
+| **YAML Functions** | N/A | 22 | **UTL-X only** |
+| **Financial Functions** | N/A | 16 | **UTL-X only** |
+| **Geospatial Functions** | N/A | 8 | **UTL-X only** |
+| **Security Functions** | N/A | 16 | **UTL-X only** |
 
-**Verdict:** ✅ **UTL-X stdlib is MORE comprehensive than DataWeave**
+**Verdict:** UTL-X stdlib is significantly more comprehensive than DataWeave, with 652 functions vs ~100, covering more domains (financial, geospatial, security, binary) that DataWeave lacks entirely.
+
+See [stdlib-complete-reference.md](../stdlib/stdlib-complete-reference.md) for the full function reference.
 
 ---
 
@@ -421,7 +428,7 @@ private fun registerDataWeaveAliases() {
 
 ```
 DataWeave Core Functions:   ~80-100 functions
-UTL-X Standard Library:      120+ functions
+UTL-X Standard Library:      652 functions (18 categories)
 Coverage Ratio:              138%
 
 UTL-X Advantages:
@@ -439,11 +446,11 @@ DataWeave Advantages:
 
 ### Conclusion
 
-**✅ UTL-X stdlib is MORE COMPREHENSIVE than DataWeave**
+**UTL-X stdlib is significantly more comprehensive than DataWeave**
 
-- **Functional parity:** 95%+ on core operations
-- **Extra functionality:** 38% more functions
-- **Missing items:** Only 3 minor functions (camelize, update, pluralize)
+- **Functional parity:** 100% on core operations
+- **Extra functionality:** 652 vs ~100 functions (6x more)
+- **Unique categories:** Binary, CSV, YAML, Financial, Geospatial, Security — not available in DataWeave
 - **Unique strengths:** Date/time, XML, string processing, logical operations
 
 **Action Items:**
@@ -469,4 +476,4 @@ DataWeave Advantages:
 | XML | ███░░░░░░░ 30% | ██████████ 100% | +70% | ✅ UTL-X Better |
 | Logic | ████░░░░░░ 40% | ██████████ 100% | +60% | ✅ UTL-X Better |
 
-**Overall: UTL-X provides 138% of DataWeave's stdlib 	functionality** ✅
+**Overall: UTL-X provides 652 functions across 18 categories vs DataWeave's ~100 functions**

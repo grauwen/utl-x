@@ -1,0 +1,109 @@
+{
+  "fields": [
+    {
+      "name": "patient_id",
+      "type": "string",
+      "description": "Unique patient identifier",
+      "example": "PAT-100001",
+      "rdfType": "https://schema.org/identifier",
+      "constraints": {
+        "required": true,
+        "pattern": "^PAT-[0-9]{6}$"
+      }
+    },
+    {
+      "name": "first_name",
+      "type": "string",
+      "description": "Patient first name",
+      "rdfType": "https://schema.org/givenName",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "last_name",
+      "type": "string",
+      "description": "Patient last name",
+      "rdfType": "https://schema.org/familyName",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "date_of_birth",
+      "type": "date",
+      "format": "any",
+      "description": "Patient date of birth (any parseable date format)",
+      "rdfType": "https://schema.org/birthDate",
+      "example": "1985-06-15",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "age",
+      "type": "integer",
+      "description": "Patient age in years",
+      "constraints": {
+        "required": true,
+        "minimum": 0,
+        "maximum": 150
+      }
+    },
+    {
+      "name": "gender",
+      "type": "string",
+      "description": "Patient gender",
+      "rdfType": "https://schema.org/gender",
+      "constraints": {
+        "required": true,
+        "enum": ["male", "female", "other", "prefer_not_to_say"]
+      }
+    },
+    {
+      "name": "blood_type",
+      "type": "string",
+      "description": "Patient blood type",
+      "constraints": {
+        "required": true,
+        "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+      }
+    },
+    {
+      "name": "email",
+      "type": "string",
+      "format": "email",
+      "description": "Patient email address",
+      "rdfType": "https://schema.org/email",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "phone",
+      "type": "string",
+      "description": "Patient phone number",
+      "rdfType": "https://schema.org/telephone",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "emergency_contact",
+      "type": "string",
+      "description": "Emergency contact name and number",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "is_insured",
+      "type": "boolean",
+      "description": "Whether the patient has active insurance",
+      "constraints": {
+        "required": true
+      }
+    }
+  ],
+  "primaryKey": "patient_id"
+}

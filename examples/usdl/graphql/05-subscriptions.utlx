@@ -1,0 +1,126 @@
+%utlx 1.0
+// Demonstrates: GraphQL subscriptions for real-time updates
+// Note: This example is specific to GraphQL due to: Subscription type, real-time event streaming
+output graphql
+---
+%namespace: "com.example.graphql"
+%version: "1.0"
+%documentation: "GraphQL schema with subscriptions"
+
+%types: {
+  Message: {
+    %kind: "structure",
+    %documentation: "Chat message",
+    %fields: [
+      {
+        %name: "id",
+        %type: "string",
+        %required: true,
+        %description: "Message identifier"
+      },
+      {
+        %name: "userId",
+        %type: "string",
+        %required: true,
+        %description: "Sender user ID"
+      },
+      {
+        %name: "content",
+        %type: "string",
+        %required: true,
+        %description: "Message content"
+      },
+      {
+        %name: "timestamp",
+        %type: "string",
+        %required: true,
+        %description: "Message timestamp"
+      }
+    ]
+  },
+
+  SendMessageInput: {
+    %kind: "structure",
+    %documentation: "Input for sending a message",
+    %fields: [
+      {
+        %name: "userId",
+        %type: "string",
+        %required: true,
+        %description: "Sender user ID"
+      },
+      {
+        %name: "content",
+        %type: "string",
+        %required: true,
+        %description: "Message content"
+      }
+    ]
+  },
+
+  Query: {
+    %kind: "structure",
+    %documentation: "Root query type",
+    %fields: [
+      {
+        %name: "messages",
+        %type: "Message",
+        %array: true,
+        %required: true,
+        %resolver: "getMessages",
+        %description: "Get all messages"
+      }
+    ]
+  },
+
+  Mutation: {
+    %kind: "structure",
+    %documentation: "Root mutation type",
+    %fields: [
+      {
+        %name: "sendMessage",
+        %type: "Message",
+        %required: true,
+        %resolver: "sendMessage",
+        %description: "Send a new message",
+        %parameters: [
+          {
+            %name: "input",
+            %type: "SendMessageInput",
+            %required: true,
+            %description: "Message data"
+          }
+        ]
+      }
+    ]
+  },
+
+  Subscription: {
+    %kind: "structure",
+    %documentation: "Root subscription type",
+    %fields: [
+      {
+        %name: "messageAdded",
+        %type: "Message",
+        %required: true,
+        %resolver: "subscribeToMessages",
+        %description: "Subscribe to new messages"
+      },
+      {
+        %name: "userTyping",
+        %type: "string",
+        %required: true,
+        %resolver: "subscribeToTyping",
+        %description: "Subscribe to typing events",
+        %parameters: [
+          {
+            %name: "userId",
+            %type: "string",
+            %required: true,
+            %description: "User ID to watch"
+          }
+        ]
+      }
+    ]
+  }
+}

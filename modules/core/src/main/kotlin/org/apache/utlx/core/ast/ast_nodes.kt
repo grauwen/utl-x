@@ -84,7 +84,10 @@ enum class FormatType {
     XSD,   // XML Schema Definition (W3C XSD 1.0/1.1)
     JSCH,  // JSON Schema (draft-07, 2020-12)
     AVRO,  // Apache Avro Schema (1.11.x)
-    PROTO  // Protocol Buffers Schema (Proto3)
+    PROTO, // Protocol Buffers Schema (Proto3)
+    ODATA, // OData JSON (OData v4)
+    OSCH,  // OData Schema / EDMX Metadata (OData v4)
+    TSCH   // Frictionless Table Schema
 }
 
 /**

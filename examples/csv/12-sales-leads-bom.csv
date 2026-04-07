@@ -1,0 +1,8 @@
+﻿LeadID,CompanyName,ContactName,Email,Phone,Industry,LeadSource,Score,LastContact
+LEAD-5001,Acme Corporation,Tom Wilson,t.wilson@acme.com,555-0101,Manufacturing,Website,85,2024-03-10
+LEAD-5002,Global Tech Inc,Lisa Chen,l.chen@globaltech.com,555-0102,Technology,Referral,92,2024-03-12
+LEAD-5003,Retail Solutions Ltd,Mark Johnson,m.johnson@retail.com,555-0103,Retail,TradeShow,67,2024-03-08
+LEAD-5004,Finance Pro AG,Anna Schmidt,a.schmidt@financepro.de,555-0104,Finance,LinkedIn,78,2024-03-14
+LEAD-5005,HealthCare Plus,David Brown,d.brown@healthcare.com,555-0105,Healthcare,Website,88,2024-03-11
+LEAD-5006,EduTech Systems,Sarah Miller,s.miller@edutech.com,555-0106,Education,Referral,95,2024-03-15
+LEAD-5007,Transport Co,James Taylor,j.taylor@transport.com,555-0107,Logistics,ColdCall,45,2024-03-05

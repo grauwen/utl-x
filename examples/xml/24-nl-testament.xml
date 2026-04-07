@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Testament xmlns="http://www.notaris.nl/testament/v1">
+    <TestamentGegevens>
+        <TestamentNummer>NL-2025-TEST-123456</TestamentNummer>
+        <DatumOpgemaakt>2025-01-15</DatumOpgemaakt>
+        <TypeTestament>ONDERHANDSE_TESTAMENT</TypeTestament>
+        <Status>GELDIG</Status>
+    </TestamentGegevens>
+
+    <Testateur>
+        <BSN>123456789</BSN>
+        <Voorletters>J.P.</Voorletters>
+        <Voorvoegsel>van der</Voorvoegsel>
+        <Achternaam>Berg</Achternaam>
+        <Geboortedatum>1955-03-12</Geboortedatum>
+        <Geboorteplaats>Amsterdam</Geboorteplaats>
+        <Nationaliteit>Nederlandse</Nationaliteit>
+        <Burgerlijkestaat>GEHUWD</Burgerlijkestaat>
+        <Woonadres>
+            <Straat>Prinsengracht</Straat>
+            <Huisnummer>456</Huisnummer>
+            <Postcode>1016 HX</Postcode>
+            <Woonplaats>Amsterdam</Woonplaats>
+            <Provincie>Noord-Holland</Provincie>
+        </Woonadres>
+    </Testateur>
+
+    <Echtgenoot>
+        <BSN>987654321</BSN>
+        <Voorletters>M.A.</Voorletters>
+        <Achternaam>Jansen</Achternaam>
+        <Geboortedatum>1958-07-28</Geboortedatum>
+        <DatumHuwelijk>1980-06-15</DatumHuwelijk>
+        <PlaatsHuwelijk>Amsterdam</PlaatsHuwelijk>
+        <Huwelijksevoorwaarden>GEEN_HUWELIJKSE_VOORWAARDEN</Huwelijksevoorwaarden>
+    </Echtgenoot>
+
+    <Erfgenamen>
+        <Erfgenaam>
+            <Type>KIND</Type>
+            <Naam>
+                <Voorletters>S.J.</Voorletters>
+                <Voorvoegsel>van der</Voorvoegsel>
+                <Achternaam>Berg</Achternaam>
+            </Naam>
+            <Geboortedatum>1982-04-15</Geboortedatum>
+            <Erfdeel>
+                <Percentage>50</Percentage>
+                <Beschrijving>De helft van de nalatenschap</Beschrijving>
+            </Erfdeel>
+        </Erfgenaam>
+        <Erfgenaam>
+            <Type>KIND</Type>
+            <Naam>
+                <Voorletters>P.M.</Voorletters>
+                <Voorvoegsel>van der</Voorvoegsel>
+                <Achternaam>Berg</Achternaam>
+            </Naam>
+            <Geboortedatum>1985-11-22</Geboortedatum>
+            <Erfdeel>
+                <Percentage>50</Percentage>
+                <Beschrijving>De helft van de nalatenschap</Beschrijving>
+            </Erfdeel>
+        </Erfgenaam>
+    </Erfgenamen>
+
+    <Legaten>
+        <Legaat>
+            <Legataris>
+                <Naam>Natuurmonumenten</Naam>
+                <Type>RECHTSPERSOON</Type>
+                <RSIN>123456789</RSIN>
+            </Legataris>
+            <Beschrijving>Een bedrag van € 10.000,- (tienduizend euro)</Beschrijving>
+            <Bedrag currency="EUR">10'000.00</Bedrag>
+        </Legaat>
+    </Legaten>
+
+    <Executeur>
+        <Naam>
+            <Voorletters>A.B.</Voorletters>
+            <Achternaam>Pietersen</Achternaam>
+        </Naam>
+        <Beroep>Notaris</Beroep>
+        <Kantoor>Notariskantoor Pietersen &amp; Partners</Kantoor>
+        <Volmachten>
+            <Volmacht>Het beheer van de nalatenschap</Volmacht>
+            <Volmacht>Het verdelen van de erfenis</Volmacht>
+        </Volmachten>
+    </Executeur>
+
+    <Bepalingen>
+        <Bepaling>
+            <Artikel>1</Artikel>
+            <Tekst>Ik benoem mijn echtgenote tot enig erfgename van al mijn bezittingen, met de verplichting om na haar overlijden de nalatenschap te verdelen onder onze kinderen zoals hierboven omschreven.</Tekst>
+        </Bepaling>
+        <Bepaling>
+            <Artikel>2</Artikel>
+            <Tekst>Mocht mijn echtgenote eerder overlijden dan ik, dan benoem ik mijn kinderen tot erfgenamen, ieder voor gelijke delen.</Tekst>
+        </Bepaling>
+    </Bepalingen>
+
+    <Notaris>
+        <Naam>Mr. A.B. Pietersen</Naam>
+        <Kantoor>Notariskantoor Pietersen &amp; Partners</Kantoor>
+        <Adres>
+            <Straat>Keizersgracht</Straat>
+            <Huisnummer>789</Huisnummer>
+            <Postcode>1017 DS</Postcode>
+            <Plaats>Amsterdam</Plaats>
+        </Adres>
+        <KvKNummer>12345678</KvKNummer>
+    </Notaris>
+
+    <Ondertekening>
+        <Plaats>Amsterdam</Plaats>
+        <Datum>2025-01-15</Datum>
+        <HandtekeningTestateur>
+            <Naam>J.P. van der Berg</Naam>
+            <DigitaleHandtekening>JPvdB_2025_01_15_14_00</DigitaleHandtekening>
+        </HandtekeningTestateur>
+        <Getuigen>
+            <Getuige>
+                <Naam>C.D. de Vries</Naam>
+                <Datum>2025-01-15</Datum>
+            </Getuige>
+            <Getuige>
+                <Naam>E.F. Mulder</Naam>
+                <Datum>2025-01-15</Datum>
+            </Getuige>
+        </Getuigen>
+    </Ondertekening>
+
+    <NederlandseSpecialeTekens>
+        <Voorbeelden>ë ï ö ü é è ê à â ç</Voorbeelden>
+        <Woorden>België, Curaçao, naïef, coördinatie, reünie</Woorden>
+        <Plaatsen>Amsterdam, 's-Gravenhage, 's-Hertogenbosch, Den Haag</Plaatsen>
+    </NederlandseSpecialeTekens>
+</Testament>

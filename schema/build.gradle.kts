@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "org.apache.utlx"
-version = "0.9.0"
+version = "1.0.0"
 
 dependencies {
     // Core module (for UDM)
@@ -11,6 +11,11 @@ dependencies {
 
     // Kotlin stdlib
     implementation(kotlin("stdlib"))
+
+    // Jackson for JSON serialization (DirectiveRegistry)
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.15.2")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")

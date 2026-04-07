@@ -1,0 +1,67 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Multiple type definitions in one schema
+output [FORMAT]
+---
+%namespace: "com.example.company"
+%version: "1.0"
+%documentation: "Company schema with multiple related types"
+
+%types: {
+  Department: {
+    %kind: "enumeration",
+    %documentation: "Company departments",
+    %values: ["ENGINEERING", "SALES", "MARKETING", "HR", "FINANCE"]
+  },
+
+  Employee: {
+    %kind: "structure",
+    %documentation: "Employee information",
+    %fields: [
+      {
+        %name: "employeeId",
+        %type: "string",
+        %required: true,
+        %description: "Employee identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %required: true,
+        %description: "Employee name"
+      },
+      {
+        %name: "department",
+        %type: "Department",
+        %required: true,
+        %description: "Department assignment"
+      }
+    ]
+  },
+
+  Company: {
+    %kind: "structure",
+    %documentation: "Company with employees",
+    %fields: [
+      {
+        %name: "companyId",
+        %type: "string",
+        %required: true,
+        %description: "Company identifier"
+      },
+      {
+        %name: "name",
+        %type: "string",
+        %required: true,
+        %description: "Company name"
+      },
+      {
+        %name: "employees",
+        %type: "Employee",
+        %array: true,
+        %required: false,
+        %description: "Company employees"
+      }
+    ]
+  }
+}

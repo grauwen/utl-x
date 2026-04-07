@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ReservaHotel xmlns="http://www.hoteles.es/reserva/v1"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <DatosReserva>
+        <CódigoReserva>ESP-HTL-2025-987654</CódigoReserva>
+        <FechaReserva>2025-01-16T16:45:30+01:00</FechaReserva>
+        <EstadoReserva>CONFIRMADA</EstadoReserva>
+        <TipoReserva>INDIVIDUAL</TipoReserva>
+        <Localizador>ABCDEF</Localizador>
+    </DatosReserva>
+
+    <Hotel>
+        <NombreHotel>Gran Hotel Alhambra Palace &amp; Spa</NombreHotel>
+        <CategoríaEstrellas>5</CategoríaEstrellas>
+        <CIF>B-18123456</CIF>
+        <Dirección>
+            <Calle>Calle Real de la Alhambra</Calle>
+            <Número>53</Número>
+            <CódigoPostal>18009</CódigoPostal>
+            <Ciudad>Granada</Ciudad>
+            <Provincia>Granada</Provincia>
+            <ComunidadAutónoma>Andalucía</ComunidadAutónoma>
+            <País>España</País>
+        </Dirección>
+        <Contacto>
+            <Teléfono>+34 958 22 14 68</Teléfono>
+            <Móvil>+34 600 12 34 56</Móvil>
+            <Email>reservas@alhambrapalace.es</Email>
+            <SitioWeb>www.alhambrapalace.es</SitioWeb>
+        </Contacto>
+        <Ubicación>
+            <Latitud>37.176487</Latitud>
+            <Longitud>-3.588371</Longitud>
+        </Ubicación>
+    </Hotel>
+
+    <Huésped>
+        <DNI>12345678Z</DNI>
+        <NIE>X1234567L</NIE>
+        <Apellidos>García-López Martínez</Apellidos>
+        <Nombre>José María</Nombre>
+        <FechaNacimiento>1978-03-25</FechaNacimiento>
+        <Nacionalidad>Española</Nacionalidad>
+        <Dirección>
+            <Calle>Paseo de la Castellana</Calle>
+            <Número>145</Número>
+            <Piso>5º</Piso>
+            <Puerta>B</Puerta>
+            <CódigoPostal>28046</CódigoPostal>
+            <Ciudad>Madrid</Ciudad>
+            <País>España</País>
+        </Dirección>
+        <Contacto>
+            <Teléfono>+34 91 555 12 34</Teléfono>
+            <Móvil>+34 666 77 88 99</Móvil>
+            <Email>jmgarcia@example.es</Email>
+        </Contacto>
+        <PreferenciaIdioma>Español</PreferenciaIdioma>
+    </Huésped>
+
+    <AcompañantesPrincipales>
+        <Acompañante>
+            <Nombre>María</Nombre>
+            <Apellidos>Fernández Rodríguez</Apellidos>
+            <Relación>Cónyuge</Relación>
+            <Edad>42</Edad>
+        </Acompañante>
+        <Acompañante>
+            <Nombre>Carlos</Nombre>
+            <Apellidos>García Fernández</Apellidos>
+            <Relación>Hijo</Relación>
+            <Edad>12</Edad>
+        </Acompañante>
+        <Acompañante>
+            <Nombre>Lucía</Nombre>
+            <Apellidos>García Fernández</Apellidos>
+            <Relación>Hija</Relación>
+            <Edad>8</Edad>
+        </Acompañante>
+    </AcompañantesPrincipales>
+
+    <DetallesEstancia>
+        <FechaEntrada>2025-02-14</FechaEntrada>
+        <HoraEntrada>15:00</HoraEntrada>
+        <FechaSalida>2025-02-18</FechaSalida>
+        <HoraSalida>12:00</HoraSalida>
+        <NúmeroNoches>4</NúmeroNoches>
+        <NúmeroAdultos>2</NúmeroAdultos>
+        <NúmeroNiños>2</NúmeroNiños>
+        <EdadesNiños>
+            <Edad>12</Edad>
+            <Edad>8</Edad>
+        </EdadesNiños>
+    </DetallesEstancia>
+
+    <Habitaciones>
+        <Habitación>
+            <NúmeroHabitación>1</NúmeroHabitación>
+            <TipoHabitación>SUITE_FAMILIAR_DELUXE</TipoHabitación>
+            <Descripción>Suite Familiar Deluxe con vistas a la Alhambra, 55m², cama king-size + 2 camas individuales, balcón privado, baño completo con bañera de hidromasaje</Descripción>
+            <Planta>4</Planta>
+            <Vistas>VISTA_ALHAMBRA</Vistas>
+            <Ocupación>
+                <Adultos>2</Adultos>
+                <Niños>2</Niños>
+            </Ocupación>
+            <Características>
+                <Característica>WiFi gratuito de alta velocidad</Característica>
+                <Característica>Aire acondicionado y calefacción</Característica>
+                <Característica>TV LED 55" con canales internacionales</Característica>
+                <Característica>Minibar incluido</Característica>
+                <Característica>Caja fuerte</Característica>
+                <Característica>Balcón privado con vistas a la Alhambra</Característica>
+                <Característica>Bañera de hidromasaje</Característica>
+                <Característica>Set de té y café Nespresso</Característica>
+            </Características>
+            <RégimenAlimenticio>MEDIA_PENSIÓN</RégimenAlimenticio>
+            <PrecioPorNoche>385.00</PrecioPorNoche>
+            <PrecioTotal>1540.00</PrecioTotal>
+        </Habitación>
+    </Habitaciones>
+
+    <ServiciosAdicionales>
+        <Servicio>
+            <CódigoServicio>SPA-001</CódigoServicio>
+            <NombreServicio>Circuito Termal Spa (2 adultos)</NombreServicio>
+            <Descripción>Acceso al circuito termal: piscina climatizada, jacuzzi, sauna finlandesa, baño turco, ducha de sensaciones</Descripción>
+            <Fecha>2025-02-15</Fecha>
+            <Hora>11:00</Hora>
+            <Duración>2 horas</Duración>
+            <Cantidad>2</Cantidad>
+            <PrecioUnitario>45.00</PrecioUnitario>
+            <Subtotal>90.00</Subtotal>
+        </Servicio>
+
+        <Servicio>
+            <CódigoServicio>TOUR-ALH-001</CódigoServicio>
+            <NombreServicio>Visita Guiada Privada Alhambra y Generalife</NombreServicio>
+            <Descripción>Visita privada de 3 horas con guía oficial en español. Incluye entradas sin colas y transporte desde el hotel</Descripción>
+            <Fecha>2025-02-16</Fecha>
+            <Hora>09:30</Hora>
+            <Duración>3 horas</Duración>
+            <Participantes>4</Participantes>
+            <PrecioGrupo>180.00</PrecioGrupo>
+            <Subtotal>180.00</Subtotal>
+        </Servicio>
+
+        <Servicio>
+            <CódigoServicio>TRANS-001</CódigoServicio>
+            <NombreServicio>Transfer Aeropuerto-Hotel (ida y vuelta)</NombreServicio>
+            <Descripción>Transporte privado desde/hasta Aeropuerto Federico García Lorca Granada-Jaén (GRX)</Descripción>
+            <Vehículo>Mercedes Clase V (7 plazas)</Vehículo>
+            <TrayectoIda>2025-02-14 13:30 (Vuelo IB8745)</TrayectoIda>
+            <TrayectoVuelta>2025-02-18 14:30 (Vuelo IB8748)</TrayectoVuelta>
+            <PrecioTotal>95.00</PrecioTotal>
+            <Subtotal>95.00</Subtotal>
+        </Servicio>
+
+        <Servicio>
+            <CódigoServicio>CENA-ESP</CódigoServicio>
+            <NombreServicio>Cena Especial San Valentín</NombreServicio>
+            <Descripción>Cena romántica de 5 platos en restaurante "El Mirador" con vistas a la Alhambra. Menú degustación con maridaje de vinos</Descripción>
+            <Fecha>2025-02-14</Fecha>
+            <Hora>21:00</Hora>
+            <Comensales>2</Comensales>
+            <PrecioPorPersona>125.00</PrecioPorPersona>
+            <Subtotal>250.00</Subtotal>
+            <IncluyeMaridaje>true</IncluyeMaridaje>
+        </Servicio>
+
+        <Servicio>
+            <CódigoServicio>PARKING</CódigoServicio>
+            <NombreServicio>Parking Cubierto</NombreServicio>
+            <Descripción>Plaza de parking cubierto en el hotel</Descripción>
+            <Días>4</Días>
+            <PrecioPorDía>18.00</PrecioPorDía>
+            <Subtotal>72.00</Subtotal>
+        </Servicio>
+    </ServiciosAdicionales>
+
+    <ResumenFinanciero>
+        <SubtotalAlojamiento>1540.00</SubtotalAlojamiento>
+        <SubtotalServicios>687.00</SubtotalServicios>
+        <SubtotalAntesDescuentos>2227.00</SubtotalAntesDescuentos>
+        <Descuentos>
+            <Descuento>
+                <Código>VALENTIN2025</Código>
+                <Descripción>Promoción especial San Valentín - 10% descuento</Descripción>
+                <Porcentaje>10.0</Porcentaje>
+                <Importe>222.70</Importe>
+            </Descuento>
+        </Descuentos>
+        <SubtotalDespuésDescuentos>2004.30</SubtotalDespuésDescuentos>
+        <IVA>
+            <TipoReducido10>
+                <BaseImponible>1540.00</BaseImponible>
+                <TipoImpositivo>10.0</TipoImpositivo>
+                <CuotaIVA>154.00</CuotaIVA>
+                <Concepto>Alojamiento turístico</Concepto>
+            </TipoReducido10>
+            <TipoGeneral21>
+                <BaseImponible>464.30</BaseImponible>
+                <TipoImpositivo>21.0</TipoImpositivo>
+                <CuotaIVA>97.50</CuotaIVA>
+                <Concepto>Servicios adicionales</Concepto>
+            </TipoGeneral21>
+        </IVA>
+        <TotalIVA>251.50</TotalIVA>
+        <ImporteTotal>2255.80</ImporteTotal>
+        <Divisa>EUR</Divisa>
+        <SímboloDivisa>€</SímboloDivisa>
+    </ResumenFinanciero>
+
+    <PagoReserva>
+        <MétodoPago>TARJETA_CRÉDITO</MétodoPago>
+        <TipoTarjeta>Visa</TipoTarjeta>
+        <Últimos4Dígitos>4532</Últimos4Dígitos>
+        <Titular>JOSE MARIA GARCIA LOPEZ</Titular>
+        <FechaTransacción>2025-01-16T16:47:15+01:00</FechaTransacción>
+        <IDTransacción>TXN-ESP-2025-0116-164715</IDTransacción>
+        <CódigoAutorización>AUTH-456789</CódigoAutorización>
+        <ImporteCargado>676.74</ImporteCargado>
+        <ConceptoCargo>Depósito 30% - Reserva ABCDEF</ConceptoCargo>
+        <EstadoPago>APROBADO</EstadoPago>
+        <SaldoPendiente>1579.06</SaldoPendiente>
+        <FechaPagoSaldo>2025-02-14</FechaPagoSaldo>
+        <NotaPago>El importe restante se cargará en el momento del check-in</NotaPago>
+    </PagoReserva>
+
+    <PolíticaCancelación>
+        <Tipo>MODERADA</Tipo>
+        <CancelaciónGratuitaHasta>2025-02-07</CancelaciónGratuitaHasta>
+        <Penalizaciones>
+            <Penalización>
+                <Desde>2025-02-08</Desde>
+                <Hasta>2025-02-11</Hasta>
+                <Porcentaje>50</Porcentaje>
+                <Descripción>Cancelación entre 7 y 3 días antes: cargo del 50% del importe total</Descripción>
+            </Penalización>
+            <Penalización>
+                <Desde>2025-02-12</Desde>
+                <Hasta>2025-02-14</Hasta>
+                <Porcentaje>100</Porcentaje>
+                <Descripción>Cancelación con menos de 3 días: cargo del 100% del importe total</Descripción>
+            </Penalización>
+        </Penalizaciones>
+        <NoShow>
+            <Cargo>100</Cargo>
+            <Descripción>No presentación sin cancelación previa: cargo del 100% del importe total</Descripción>
+        </NoShow>
+    </PolíticaCancelación>
+
+    <PeticionesEspeciales>
+        <Petición>Habitación en piso alto con vistas directas a la Alhambra</Petición>
+        <Petición>Cuna para niña de 8 años (opcional)</Petición>
+        <Petición>Almohadas hipoalergénicas</Petición>
+        <Petición>Decoración romántica para San Valentín en la habitación (incluye pétalos de rosa, champán y bombones)</Petición>
+    </PeticionesEspeciales>
+
+    <InformaciónAdicional>
+        <HorarioCheckIn>15:00 - 23:00</HorarioCheckIn>
+        <CheckInTardío>Disponible previa petición (cargo de 25€)</CheckInTardío>
+        <HorarioCheckOut>12:00</HorarioCheckOut>
+        <CheckOutTardío>Disponible hasta las 15:00 (cargo de 50€), sujeto a disponibilidad</CheckOutTardío>
+        <IdiomasRecepción>Español, Inglés, Francés, Alemán, Árabe</IdiomasRecepción>
+        <AccesibilidadMinusválidos>Sí - Hotel totalmente adaptado</AccesibilidadMinusválidos>
+        <MascotasPermitidas>Sí - Perros pequeños (máx. 10kg) con cargo de 25€/noche</MascotasPermitidas>
+    </InformaciónAdicional>
+
+    <CaracteresEspecialesEspañoles>
+        <Vocales>á é í ó ú</Vocales>
+        <Consonantes>ñ Ñ</Consonantes>
+        <Símbolos>¿ ¡ € º ª</Símbolos>
+        <Ejemplos>Señor Pérez, Iñaki, José María, Ángel, Málaga, Cádiz, Córdoba, número, teléfono</Ejemplos>
+    </CaracteresEspecialesEspañoles>
+</ReservaHotel>

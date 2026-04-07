@@ -1,0 +1,60 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Optional nested structures
+output [FORMAT]
+---
+%namespace: "com.example.profile"
+%version: "1.0"
+%documentation: "User profile with optional nested data"
+
+%types: {
+  ContactInfo: {
+    %kind: "structure",
+    %documentation: "Contact information",
+    %fields: [
+      {
+        %name: "phone",
+        %type: "string",
+        %required: true,
+        %description: "Phone number"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %required: true,
+        %description: "Email address"
+      }
+    ]
+  },
+
+  UserProfile: {
+    %kind: "structure",
+    %documentation: "User profile with optional contact",
+    %fields: [
+      {
+        %name: "userId",
+        %type: "string",
+        %required: true,
+        %description: "User identifier"
+      },
+      {
+        %name: "username",
+        %type: "string",
+        %required: true,
+        %description: "Username"
+      },
+      {
+        %name: "contactInfo",
+        %type: "ContactInfo",
+        %required: false,
+        %description: "Optional contact information"
+      },
+      {
+        %name: "bio",
+        %type: "string",
+        %required: false,
+        %description: "User biography"
+      }
+    ]
+  }
+}

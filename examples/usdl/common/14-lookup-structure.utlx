@@ -1,0 +1,72 @@
+%utlx 1.0
+// This example works with output formats: xsd, avro, proto, jsch
+// Demonstrates: Lookup/reference structure pattern
+output [FORMAT]
+---
+%namespace: "com.example.inventory"
+%version: "1.0"
+%documentation: "Inventory with product lookups"
+
+%types: {
+  ProductCategory: {
+    %kind: "enumeration",
+    %documentation: "Product categories",
+    %values: ["ELECTRONICS", "CLOTHING", "FOOD", "BOOKS", "TOYS"]
+  },
+
+  Warehouse: {
+    %kind: "structure",
+    %documentation: "Warehouse location",
+    %fields: [
+      {
+        %name: "warehouseId",
+        %type: "string",
+        %required: true,
+        %description: "Warehouse identifier"
+      },
+      {
+        %name: "location",
+        %type: "string",
+        %required: true,
+        %description: "Warehouse location"
+      }
+    ]
+  },
+
+  InventoryItem: {
+    %kind: "structure",
+    %documentation: "Inventory item with references",
+    %fields: [
+      {
+        %name: "itemId",
+        %type: "string",
+        %required: true,
+        %description: "Item identifier"
+      },
+      {
+        %name: "productId",
+        %type: "string",
+        %required: true,
+        %description: "Product reference"
+      },
+      {
+        %name: "category",
+        %type: "ProductCategory",
+        %required: true,
+        %description: "Product category"
+      },
+      {
+        %name: "warehouse",
+        %type: "Warehouse",
+        %required: true,
+        %description: "Storage location"
+      },
+      {
+        %name: "quantity",
+        %type: "integer",
+        %required: true,
+        %description: "Available quantity"
+      }
+    ]
+  }
+}

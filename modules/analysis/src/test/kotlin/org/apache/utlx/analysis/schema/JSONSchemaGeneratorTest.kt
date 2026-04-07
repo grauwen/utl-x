@@ -81,7 +81,7 @@ class JSONSchemaGeneratorTest {
     fun `should generate schema with minLength constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint(ConstraintKind.MIN_LENGTH, 3))
+            listOf(Constraint.MinLength(3))
         )
 
         val schema = generator.generate(type, GeneratorOptions())
@@ -94,7 +94,7 @@ class JSONSchemaGeneratorTest {
     fun `should generate schema with maxLength constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint(ConstraintKind.MAX_LENGTH, 50))
+            listOf(Constraint.MaxLength(50))
         )
 
         val schema = generator.generate(type, GeneratorOptions())
@@ -107,7 +107,7 @@ class JSONSchemaGeneratorTest {
     fun `should generate schema with pattern constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint(ConstraintKind.PATTERN, "^[A-Z]{3}$"))
+            listOf(Constraint.Pattern("^[A-Z]{3}$"))
         )
 
         val schema = generator.generate(type, GeneratorOptions())
@@ -120,7 +120,7 @@ class JSONSchemaGeneratorTest {
     fun `should generate schema with enum constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
-            listOf(Constraint(ConstraintKind.ENUM, listOf("red", "green", "blue")))
+            listOf(Constraint.Enum(listOf("red", "green", "blue")))
         )
 
         val schema = generator.generate(type, GeneratorOptions())
@@ -133,7 +133,7 @@ class JSONSchemaGeneratorTest {
     fun `should generate schema with minimum constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.NUMBER,
-            listOf(Constraint(ConstraintKind.MINIMUM, 0.0))
+            listOf(Constraint.Minimum(0.0))
         )
 
         val schema = generator.generate(type, GeneratorOptions())
@@ -146,7 +146,7 @@ class JSONSchemaGeneratorTest {
     fun `should generate schema with maximum constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.NUMBER,
-            listOf(Constraint(ConstraintKind.MAXIMUM, 100.0))
+            listOf(Constraint.Maximum(100.0))
         )
 
         val schema = generator.generate(type, GeneratorOptions())

@@ -1,12 +1,11 @@
 // modules/analysis/src/test/kotlin/org/apache/utlx/analysis/schema/XSDGeneratorTest.kt
-import org.junit.jupiter.api.Disabledpackage org.apache.utlx.analysis.schema
+package org.apache.utlx.analysis.schema
 
 import org.apache.utlx.analysis.types.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 
-@Disabled("TODO: Requires constraint API rewrite")
 class XSDGeneratorTest {
     
     @Test
@@ -70,39 +69,39 @@ class XSDGeneratorTest {
             ScalarKind.STRING,
             listOf(Constraint.MinLength(3))
         )
-        
+
         val xsd = generateMockXSD(type, "username")
-        
+
         assertTrue(xsd.contains("minLength"))
         assertTrue(xsd.contains("value=\"3\""))
     }
-    
+
     @Test
     fun `should generate XSD with maxLength constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
             listOf(Constraint.MaxLength(50))
         )
-        
+
         val xsd = generateMockXSD(type, "description")
-        
+
         assertTrue(xsd.contains("maxLength"))
         assertTrue(xsd.contains("value=\"50\""))
     }
-    
+
     @Test
     fun `should generate XSD with pattern constraint`() {
         val type = TypeDefinition.Scalar(
             ScalarKind.STRING,
             listOf(Constraint.Pattern("[0-9]{5}"))
         )
-        
+
         val xsd = generateMockXSD(type, "zipCode")
-        
+
         assertTrue(xsd.contains("pattern"))
         assertTrue(xsd.contains("[0-9]{5}"))
     }
-    
+
     @Test
     fun `should generate XSD with enumeration`() {
         val type = TypeDefinition.Scalar(
@@ -219,7 +218,9 @@ class XSDGeneratorTest {
                                     sb.append("        <xs:enumeration value=\"$value\"/>\n")
                                 }
                             }
-                            else -> {}
+                            is Constraint.Minimum, is Constraint.Maximum, is Constraint.Custom -> {
+                                // Not handled in this mock generator
+                            }
                         }
                     }
                     

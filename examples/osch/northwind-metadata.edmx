@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Northwind.Model" Alias="NW" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="Product">
+        <Key>
+          <PropertyRef Name="ProductID"/>
+        </Key>
+        <Property Name="ProductID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="ProductName" Type="Edm.String" Nullable="false" MaxLength="40"/>
+        <Property Name="QuantityPerUnit" Type="Edm.String" MaxLength="20"/>
+        <Property Name="UnitPrice" Type="Edm.Decimal" Precision="19" Scale="4"/>
+        <Property Name="UnitsInStock" Type="Edm.Int16"/>
+        <Property Name="UnitsOnOrder" Type="Edm.Int16"/>
+        <Property Name="ReorderLevel" Type="Edm.Int16"/>
+        <Property Name="Discontinued" Type="Edm.Boolean" Nullable="false"/>
+        <NavigationProperty Name="Category" Type="Northwind.Model.Category" Partner="Products">
+          <ReferentialConstraint Property="CategoryID" ReferencedProperty="CategoryID"/>
+        </NavigationProperty>
+        <NavigationProperty Name="Supplier" Type="Northwind.Model.Supplier" Partner="Products">
+          <ReferentialConstraint Property="SupplierID" ReferencedProperty="SupplierID"/>
+        </NavigationProperty>
+        <NavigationProperty Name="OrderDetails" Type="Collection(Northwind.Model.OrderDetail)" Partner="Product"/>
+      </EntityType>
+      <EntityType Name="Category">
+        <Key>
+          <PropertyRef Name="CategoryID"/>
+        </Key>
+        <Property Name="CategoryID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="CategoryName" Type="Edm.String" Nullable="false" MaxLength="15"/>
+        <Property Name="Description" Type="Edm.String"/>
+        <Property Name="Picture" Type="Edm.Binary"/>
+        <NavigationProperty Name="Products" Type="Collection(Northwind.Model.Product)" Partner="Category"/>
+      </EntityType>
+      <EntityType Name="Supplier">
+        <Key>
+          <PropertyRef Name="SupplierID"/>
+        </Key>
+        <Property Name="SupplierID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="CompanyName" Type="Edm.String" Nullable="false" MaxLength="40"/>
+        <Property Name="ContactName" Type="Edm.String" MaxLength="30"/>
+        <Property Name="ContactTitle" Type="Edm.String" MaxLength="30"/>
+        <Property Name="Phone" Type="Edm.String" MaxLength="24"/>
+        <Property Name="Fax" Type="Edm.String" MaxLength="24"/>
+        <Property Name="HomePage" Type="Edm.String"/>
+        <NavigationProperty Name="Products" Type="Collection(Northwind.Model.Product)" Partner="Supplier"/>
+      </EntityType>
+      <EntityType Name="Customer">
+        <Key>
+          <PropertyRef Name="CustomerID"/>
+        </Key>
+        <Property Name="CustomerID" Type="Edm.String" Nullable="false" MaxLength="5"/>
+        <Property Name="CompanyName" Type="Edm.String" Nullable="false" MaxLength="40"/>
+        <Property Name="ContactName" Type="Edm.String" MaxLength="30"/>
+        <Property Name="ContactTitle" Type="Edm.String" MaxLength="30"/>
+        <Property Name="Phone" Type="Edm.String" MaxLength="24"/>
+        <Property Name="Fax" Type="Edm.String" MaxLength="24"/>
+        <NavigationProperty Name="Orders" Type="Collection(Northwind.Model.Order)" Partner="Customer"/>
+      </EntityType>
+      <EntityType Name="Order">
+        <Key>
+          <PropertyRef Name="OrderID"/>
+        </Key>
+        <Property Name="OrderID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="OrderDate" Type="Edm.DateTimeOffset"/>
+        <Property Name="RequiredDate" Type="Edm.DateTimeOffset"/>
+        <Property Name="ShippedDate" Type="Edm.DateTimeOffset"/>
+        <Property Name="Freight" Type="Edm.Decimal" Precision="19" Scale="4"/>
+        <Property Name="ShipName" Type="Edm.String" MaxLength="40"/>
+        <Property Name="ShipCity" Type="Edm.String" MaxLength="15"/>
+        <Property Name="ShipCountry" Type="Edm.String" MaxLength="15"/>
+        <NavigationProperty Name="Customer" Type="Northwind.Model.Customer" Partner="Orders">
+          <ReferentialConstraint Property="CustomerID" ReferencedProperty="CustomerID"/>
+        </NavigationProperty>
+        <NavigationProperty Name="OrderDetails" Type="Collection(Northwind.Model.OrderDetail)" Partner="Order"/>
+      </EntityType>
+      <EntityType Name="OrderDetail">
+        <Key>
+          <PropertyRef Name="OrderID"/>
+          <PropertyRef Name="ProductID"/>
+        </Key>
+        <Property Name="OrderID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="ProductID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="UnitPrice" Type="Edm.Decimal" Nullable="false" Precision="19" Scale="4"/>
+        <Property Name="Quantity" Type="Edm.Int16" Nullable="false"/>
+        <Property Name="Discount" Type="Edm.Single" Nullable="false"/>
+        <NavigationProperty Name="Order" Type="Northwind.Model.Order" Partner="OrderDetails">
+          <ReferentialConstraint Property="OrderID" ReferencedProperty="OrderID"/>
+        </NavigationProperty>
+        <NavigationProperty Name="Product" Type="Northwind.Model.Product" Partner="OrderDetails">
+          <ReferentialConstraint Property="ProductID" ReferencedProperty="ProductID"/>
+        </NavigationProperty>
+      </EntityType>
+      <EntityType Name="Employee">
+        <Key>
+          <PropertyRef Name="EmployeeID"/>
+        </Key>
+        <Property Name="EmployeeID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="LastName" Type="Edm.String" Nullable="false" MaxLength="20"/>
+        <Property Name="FirstName" Type="Edm.String" Nullable="false" MaxLength="10"/>
+        <Property Name="Title" Type="Edm.String" MaxLength="30"/>
+        <Property Name="BirthDate" Type="Edm.DateTimeOffset"/>
+        <Property Name="HireDate" Type="Edm.DateTimeOffset"/>
+        <Property Name="Photo" Type="Edm.Binary"/>
+        <Property Name="Notes" Type="Edm.String"/>
+      </EntityType>
+      <ComplexType Name="Address">
+        <Property Name="Street" Type="Edm.String"/>
+        <Property Name="City" Type="Edm.String" MaxLength="15"/>
+        <Property Name="Region" Type="Edm.String" MaxLength="15"/>
+        <Property Name="PostalCode" Type="Edm.String" MaxLength="10"/>
+        <Property Name="Country" Type="Edm.String" MaxLength="15"/>
+      </ComplexType>
+      <EnumType Name="OrderStatus">
+        <Member Name="New" Value="0"/>
+        <Member Name="Processing" Value="1"/>
+        <Member Name="Shipped" Value="2"/>
+        <Member Name="Delivered" Value="3"/>
+        <Member Name="Cancelled" Value="4"/>
+      </EnumType>
+      <EnumType Name="Permission" IsFlags="true">
+        <Member Name="Read" Value="1"/>
+        <Member Name="Write" Value="2"/>
+        <Member Name="Execute" Value="4"/>
+      </EnumType>
+      <EntityContainer Name="NorthwindContainer">
+        <EntitySet Name="Products" EntityType="Northwind.Model.Product">
+          <NavigationPropertyBinding Path="Category" Target="Categories"/>
+          <NavigationPropertyBinding Path="Supplier" Target="Suppliers"/>
+          <NavigationPropertyBinding Path="OrderDetails" Target="OrderDetails"/>
+        </EntitySet>
+        <EntitySet Name="Categories" EntityType="Northwind.Model.Category">
+          <NavigationPropertyBinding Path="Products" Target="Products"/>
+        </EntitySet>
+        <EntitySet Name="Suppliers" EntityType="Northwind.Model.Supplier">
+          <NavigationPropertyBinding Path="Products" Target="Products"/>
+        </EntitySet>
+        <EntitySet Name="Customers" EntityType="Northwind.Model.Customer">
+          <NavigationPropertyBinding Path="Orders" Target="Orders"/>
+        </EntitySet>
+        <EntitySet Name="Orders" EntityType="Northwind.Model.Order">
+          <NavigationPropertyBinding Path="Customer" Target="Customers"/>
+          <NavigationPropertyBinding Path="OrderDetails" Target="OrderDetails"/>
+        </EntitySet>
+        <EntitySet Name="OrderDetails" EntityType="Northwind.Model.OrderDetail">
+          <NavigationPropertyBinding Path="Order" Target="Orders"/>
+          <NavigationPropertyBinding Path="Product" Target="Products"/>
+        </EntitySet>
+        <EntitySet Name="Employees" EntityType="Northwind.Model.Employee"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

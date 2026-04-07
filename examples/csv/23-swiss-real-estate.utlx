@@ -1,0 +1,39 @@
+%utlx 1.0
+input properties csv
+output json
+---
+{
+  "realEstatePortfolio": {
+    "totalProperties": count($properties),
+    "totalValue": sum(map($properties, fn(p) => p.TotalPrice)),
+    "totalSquareMeters": sum(map($properties, fn(p) => p.SquareMeters)),
+    "averagePricePerSqM": sum(map($properties, fn(p) => p.PricePerSqM)) / count($properties),
+    "byType": {
+      "Apartment": filter($properties, fn(p) => p.Type == "Apartment"),
+      "Villa": filter($properties, fn(p) => p.Type == "Villa"),
+      "Penthouse": filter($properties, fn(p) => p.Type == "Penthouse"),
+      "Office": filter($properties, fn(p) => p.Type == "Office"),
+      "Commercial": filter($properties, fn(p) => p.Type == "Commercial")
+    },
+    "byLocation": {
+      "Zürich": count(filter($properties, fn(p) => p.Location startsWith "Zürich")),
+      "Geneva": count(filter($properties, fn(p) => p.Location startsWith "Geneva")),
+      "Basel": count(filter($properties, fn(p) => p.Location startsWith "Basel")),
+      "Bern": count(filter($properties, fn(p) => p.Location startsWith "Bern")),
+      "Lausanne": count(filter($properties, fn(p) => p.Location startsWith "Lausanne")),
+      "Lucerne": count(filter($properties, fn(p) => p.Location startsWith "Lucerne"))
+    },
+    "mostExpensive": "RE-CH-008",
+    "newestProperty": 2022
+  },
+  "properties": map($properties, fn(prop) => {
+    "id": prop.PropertyID,
+    "location": prop.Location,
+    "type": prop.Type,
+    "size": prop.SquareMeters,
+    "pricePerSqM": prop.PricePerSqM,
+    "totalPrice": prop.TotalPrice,
+    "yearBuilt": prop.YearBuilt,
+    "age": 2024 - prop.YearBuilt
+  })
+}

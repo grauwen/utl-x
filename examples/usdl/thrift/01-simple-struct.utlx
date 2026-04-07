@@ -1,0 +1,45 @@
+%utlx 1.0
+// Demonstrates: Basic Thrift struct with field numbers
+// Note: This example is specific to Thrift due to: %fieldNumber, binary serialization
+output thrift
+---
+%namespace: "com.example.thrift"
+%version: "1.0"
+%documentation: "Simple Thrift structure"
+
+%types: {
+  User: {
+    %kind: "structure",
+    %documentation: "User struct",
+    %fields: [
+      {
+        %name: "userId",
+        %type: "string",
+        %fieldNumber: 1,
+        %required: true,
+        %description: "User identifier"
+      },
+      {
+        %name: "username",
+        %type: "string",
+        %fieldNumber: 2,
+        %required: true,
+        %description: "Username"
+      },
+      {
+        %name: "email",
+        %type: "string",
+        %fieldNumber: 3,
+        %required: true,
+        %description: "Email address"
+      },
+      {
+        %name: "age",
+        %type: "integer",
+        %fieldNumber: 4,
+        %required: false,
+        %description: "User age"
+      }
+    ]
+  }
+}

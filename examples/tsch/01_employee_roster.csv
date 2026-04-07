@@ -1,0 +1,9 @@
+employee_id,first_name,last_name,department,job_title,hire_date,salary,email,manager_id,review_period
+EMP-001,Sarah,Johnson,Engineering,Senior Software Engineer,2019-03-15,125000.00,sarah.johnson@example.com,EMP-007,2024-06
+EMP-002,Michael,Chen,Marketing,Marketing Manager,2020-07-01,95000.00,michael.chen@example.com,EMP-008,2024-06
+EMP-003,Priya,Patel,Engineering,Staff Engineer,2018-01-10,145000.00,priya.patel@example.com,EMP-007,2024-06
+EMP-004,James,Williams,Sales,Account Executive,2021-09-20,85000.00,james.williams@example.com,EMP-008,2024-06
+EMP-005,Maria,Garcia,Human Resources,HR Business Partner,2017-11-05,105000.00,maria.garcia@example.com,,2024-06
+EMP-006,David,Kim,Finance,Financial Analyst,2022-02-14,78000.00,david.kim@example.com,,2024-06
+EMP-007,Emily,Brown,Engineering,Engineering Manager,2016-06-30,155000.00,emily.brown@example.com,,2024-06
+EMP-008,Robert,Taylor,Sales,Sales Director,2015-04-22,135000.00,robert.taylor@example.com,,2024-06

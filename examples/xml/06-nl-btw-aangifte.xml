@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BTWAangifte xmlns="http://www.belastingdienst.nl/btw/v1"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <AangifteGegevens>
+        <AangifteNummer>NL-2025-BTW-Q4-123456</AangifteNummer>
+        <TijdvakType>KWARTAAL</TijdvakType>
+        <Jaar>2024</Jaar>
+        <Kwartaal>4</Kwartaal>
+        <DatumIndiening>2025-01-25T14:30:00+01:00</DatumIndiening>
+        <StatusAangifte>DEFINITIEF</StatusAangifte>
+    </AangifteGegevens>
+
+    <Ondernemer>
+        <BTWNummer>NL123456789B01</BTWNummer>
+        <KVKNummer>12345678</KVKNummer>
+        <Bedrijfsnaam>Van der Berg &amp; Zonen B.V.</Bedrijfsnaam>
+        <Rechtsvorm>BESLOTEN_VENNOOTSCHAP</Rechtsvorm>
+        <VestigingsAdres>
+            <Straatnaam>Herengracht</Straatnaam>
+            <Huisnummer>456</Huisnummer>
+            <Toevoeging>A</Toevoeging>
+            <Postcode>1017 CA</Postcode>
+            <Plaatsnaam>Amsterdam</Plaatsnaam>
+            <Provincie>Noord-Holland</Provincie>
+            <Land>Nederland</Land>
+        </VestigingsAdres>
+        <Contactgegevens>
+            <Telefoonnummer>+31 20 123 4567</Telefoonnummer>
+            <Emailadres>administratie@vandenberg.nl</Emailadres>
+        </Contactgegevens>
+        <BedrijfsActiviteit>
+            <SBICode>46.90</SBICode>
+            <Omschrijving>Niet-gespecialiseerde groothandel</Omschrijving>
+        </BedrijfsActiviteit>
+    </Ondernemer>
+
+    <Leveringen>
+        <BinnenlandLeveringen>
+            <Hoog21Procent>
+                <Omzet>156750.00</Omzet>
+                <BTWBedrag>32917.50</BTWBedrag>
+                <BTWTarief>21.0</BTWTarief>
+            </Hoog21Procent>
+            <Laag9Procent>
+                <Omzet>42350.00</Omzet>
+                <BTWBedrag>3811.50</BTWBedrag>
+                <BTWTarief>9.0</BTWTarief>
+            </Laag9Procent>
+            <NulTarief>
+                <Omzet>15600.00</Omzet>
+                <BTWBedrag>0.00</BTWBedrag>
+                <BTWTarief>0.0</BTWTarief>
+                <Toelichting>Uitvoer naar landen buiten de EU</Toelichting>
+            </NulTarief>
+        </BinnenlandLeveringen>
+        <IntracommunautairLeveringen>
+            <Omzet>67850.00</Omzet>
+            <BTWBedrag>0.00</BTWBedrag>
+            <Toelichting>Levering aan BTW-ondernemers in andere EU-landen</Toelichting>
+        </IntracommunautairLeveringen>
+        <VerleggingBTW>
+            <Omzet>23450.00</Omzet>
+            <BTWBedrag>0.00</BTWBedrag>
+            <Toelichting>Leveringen waarbij BTW is verlegd naar de afnemer</Toelichting>
+        </VerleggingBTW>
+        <TotaalLeveringen>
+            <TotaleOmzet>306000.00</TotaleOmzet>
+            <TotaleBTW>36729.00</TotaleBTW>
+        </TotaalLeveringen>
+    </Leveringen>
+
+    <Inkopen>
+        <BinnenlandInkopen>
+            <Hoog21Procent>
+                <Omzet>89450.00</Omzet>
+                <VoorbelastingBedrag>18784.50</VoorbelastingBedrag>
+                <BTWTarief>21.0</BTWTarief>
+            </Hoog21Procent>
+            <Laag9Procent>
+                <Omzet>12650.00</Omzet>
+                <VoorbelastingBedrag>1138.50</VoorbelastingBedrag>
+                <BTWTarief>9.0</BTWTarief>
+            </Laag9Procent>
+        </BinnenlandInkopen>
+        <IntracommunautairVerwerving>
+            <Omzet>34780.00</Omzet>
+            <BTWBedrag>7303.80</BTWBedrag>
+            <VoorbelastingBedrag>7303.80</VoorbelastingBedrag>
+            <BTWTarief>21.0</BTWTarief>
+            <Toelichting>Verwervingen uit andere EU-landen met verlegging</Toelichting>
+        </IntracommunautairVerwerving>
+        <InkopenVerlegging>
+            <Omzet>18950.00</Omzet>
+            <BTWBedrag>3979.50</BTWBedrag>
+            <VoorbelastingBedrag>3979.50</VoorbelastingBedrag>
+            <Toelichting>Inkopen waarbij BTW is verlegd (bouwdiensten, etc.)</Toelichting>
+        </InkopenVerlegging>
+        <TotaalInkopen>
+            <TotaleOmzet>155830.00</TotaleOmzet>
+            <TotaleVoorbelasting>31206.30</TotaleVoorbelasting>
+        </TotaalInkopen>
+    </Inkopen>
+
+    <Berekening>
+        <VerschuldigdeBTW>36729.00</VerschuldigdeBTW>
+        <AfTeVoeren>
+            <Voorbelasting>31206.30</Voorbelasting>
+            <KleinOndernemersregeling>0.00</KleinOndernemersregeling>
+        </AfTeVoeren>
+        <SubtotaalTeVoldoen>5522.70</SubtotaalTeVoldoen>
+        <VorigeAangiftePeriode>
+            <Terug>1245.80</Terug>
+            <TeVoldoen>0.00</TeVoldoen>
+        </VorigeAangiftePeriode>
+        <BTWSaldo>4276.90</BTWSaldo>
+        <TeVoldoen>4276.90</TeVoldoen>
+        <TerugTeVragen>0.00</TerugTeVragen>
+    </Berekening>
+
+    <Suppletieaangifte>
+        <IsSuppletie>false</IsSuppletie>
+        <OrigineleAangifte/>
+        <RedenCorrectie/>
+    </Suppletieaangifte>
+
+    <IntracommunautaireOverzichten>
+        <ICP>
+            <Leveringen>
+                <Levering>
+                    <BTWNummerAfnemer>DE123456789</BTWNummerAfnemer>
+                    <Land>Duitsland</Land>
+                    <Bedrag>25600.00</Bedrag>
+                </Levering>
+                <Levering>
+                    <BTWNummerAfnemer>BE0987654321</BTWNummerAfnemer>
+                    <Land>België</Land>
+                    <Bedrag>18750.00</Bedrag>
+                </Levering>
+                <Levering>
+                    <BTWNummerAfnemer>FR12345678901</BTWNummerAfnemer>
+                    <Land>Frankrijk</Land>
+                    <Bedrag>23500.00</Bedrag>
+                </Levering>
+            </Leveringen>
+            <TotaalLeveringen>67850.00</TotaalLeveringen>
+        </ICP>
+    </IntracommunautaireOverzichten>
+
+    <Betaling>
+        <Betalingskenmerk>****4532****2024Q4</Betalingskenmerk>
+        <IBANBelastingdienst>NL86INGB0002445588</IBANBelastingdienst>
+        <BIBelastingdienst>INGBNL2A</BIBelastingdienst>
+        <TenNameVan>Belastingdienst</TenNameVan>
+        <Betalingstermijn>2025-01-31</Betalingstermijn>
+        <AutomatischeIncasso>
+            <Actief>true</Actief>
+            <IBANOndernemer>NL12RABO0123456789</IBANOndernemer>
+            <DatumIncasso>2025-01-31</DatumIncasso>
+        </AutomatischeIncasso>
+    </Betaling>
+
+    <Bijzonderheden>
+        <KleinOndernemersRegeling>false</KleinOndernemersRegeling>
+        <LandbouwRegeling>false</LandbouwRegeling>
+        <MargeRegeling>
+            <Toegepast>false</Toegepast>
+            <SoortGoederen/>
+        </MargeRegeling>
+        <BuitenlandseOndernemer>false</BuitenlandseOndernemer>
+    </Bijzonderheden>
+
+    <Toelichting>
+        <Opmerking>De intracommunautaire verwervingen betreffen voornamelijk inkoop van elektronica uit Duitsland en Frankrijk.</Opmerking>
+        <Opmerking>De verlegging van BTW op inkopen betreft bouwdiensten conform art. 12 Wet OB 1968.</Opmerking>
+    </Toelichting>
+
+    <Machtiging>
+        <BTWNummer>NL987654321B01</BTWNummer>
+        <Naam>Jansen Belastingadviseurs B.V.</Naam>
+        <Contactpersoon>
+            <Naam>Drs. P. Jansen</Naam>
+            <Functie>Belastingadviseur</Functie>
+            <Telefoonnummer>+31 20 987 6543</Telefoonnummer>
+            <Emailadres>p.jansen@jansenbelasting.nl</Emailadres>
+        </Contactpersoon>
+        <MachtigingNummer>MACH-2024-12345</MachtigingNummer>
+        <GeldigVanaf>2024-01-01</GeldigVanaf>
+        <GeldigTot>2025-12-31</GeldigTot>
+    </Machtiging>
+
+    <Ondertekening>
+        <DatumTijd>2025-01-25T14:35:00+01:00</DatumTijd>
+        <Ondertekenaar>
+            <Naam>Drs. P. Jansen</Naam>
+            <Hoedanigheid>GEMACHTIGDE</Hoedanigheid>
+        </Ondertekenaar>
+        <DigitaleHandtekening>5d8c9b7e4f6d2c1a9b8e7f6a5d4c3b2a1e0f9a3f</DigitaleHandtekening>
+    </Ondertekening>
+
+    <NederlandseSpecialeTekens>
+        <Voorbeelden>ë ï ö ü é è ê à â ç</Voorbeelden>
+        <Woorden>België, Curaçao, naïef, coördinatie, reünie</Woorden>
+        <Symbolen>€ ƒ (gulden-teken historisch)</Symbolen>
+    </NederlandseSpecialeTekens>
+</BTWAangifte>
