@@ -33,8 +33,8 @@ script: |
   output json
   ---
   {
-    name: input.customerName
-    email: input.emailAddress  # Missing comma - should cause parse error
+    name: $input.customerName
+    email: $input.emailAddress  // Missing comma - should cause parse error
   }
 
 # Optional: Input schema for Level 3 validation tests
@@ -278,5 +278,4 @@ python3 utlx/runners/validation-runner.py validation-tests
 ## See Also
 
 - [Lint Test Suite README](../lint-tests/README.md)
-- [Transform Test Suite README](../tests/README.md)
-- [Validation & Analysis Study](../../../docs/architecture/validation-and-analysis-study.md)
+- [Transform Test Suite](../tests/)
