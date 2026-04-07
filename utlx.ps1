@@ -2,7 +2,7 @@
 # UTL-X CLI wrapper script for Windows PowerShell
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$JarPath = Join-Path $ScriptDir "modules\cli\build\libs\cli-1.0.0-SNAPSHOT.jar"
+$JarPath = Join-Path $ScriptDir "modules\cli\build\libs\cli-1.0.0.jar"
 
 if (-not (Test-Path $JarPath)) {
     Write-Error "Error: UTL-X CLI JAR not found at $JarPath"

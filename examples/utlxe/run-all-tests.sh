@@ -12,7 +12,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-ENGINE_JAR="$PROJECT_ROOT/modules/engine/build/libs/utlxe-1.0.0-SNAPSHOT.jar"
+ENGINE_JAR="$PROJECT_ROOT/modules/engine/build/libs/utlxe-1.0.0.jar"
 
 VERBOSE=false
 if [ "${1:-}" = "--verbose" ] || [ "${1:-}" = "-v" ]; then

@@ -29,7 +29,7 @@ FROM eclipse-temurin:17-jre-alpine AS runtime-jvm
 
 LABEL maintainer="Ir. Marcel A. Grauwen"
 LABEL description="UTL-X CLI - Universal Transformation Language Extended"
-LABEL version="1.0.0-SNAPSHOT"
+LABEL version="1.0.0"
 
 # Install bash for script support
 RUN apk add --no-cache bash
@@ -74,7 +74,7 @@ FROM alpine:latest AS runtime-native
 
 LABEL maintainer="Ir. Marcel A. Grauwen"
 LABEL description="UTL-X CLI - Native Binary"
-LABEL version="1.0.0-SNAPSHOT"
+LABEL version="1.0.0"
 
 # Install required libraries for GraalVM native image
 RUN apk add --no-cache libstdc++ zlib

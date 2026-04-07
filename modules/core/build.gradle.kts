@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.apache.utlx"
-version = "0.1.0-SNAPSHOT"
+version = "1.0.0"
 
 // Repository management is handled in settings.gradle.kts
 
