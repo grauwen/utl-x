@@ -8,7 +8,7 @@ This guide will help you install UTL-X on your system.
 
 ### Minimum Requirements
 
-- **Java:** JDK 11 or higher
+- **Java:** JDK 17 or higher (LTS)
 - **Memory:** 256 MB RAM minimum
 - **Disk Space:** 50 MB for installation
 
@@ -23,16 +23,14 @@ This guide will help you install UTL-X on your system.
 
 ## Installation Methods
 
-### Option 1: Build from Source (Recommended for Alpha)
-
-Currently, UTL-X is in alpha development. The best way to try it is to build from source.
+### Option 1: Build from Source (Recommended)
 
 #### 1. Prerequisites
 
 Ensure you have the following installed:
 
 ```bash
-# Check Java version (must be 11+)
+# Check Java version (must be 17+)
 java -version
 
 # Check Git
@@ -47,71 +45,31 @@ If Java is not installed:
 #### 2. Clone the Repository
 
 ```bash
-# Clone UTL-X repository
 git clone https://github.com/grauwen/utl-x.git
 cd utl-x
 ```
 
-#### 3. Build the Project
+#### 3. Build the CLI
 
 **macOS / Linux:**
 ```bash
-# Build using Gradle wrapper (includes all dependencies)
-./gradlew build
-
-# This will:
-# - Download dependencies
-# - Compile the code
-# - Run tests
-# - Create distribution packages
-```
-
-**Windows (Command Prompt):**
-```cmd
-gradlew.bat build
-```
-
-**Windows (PowerShell):**
-```powershell
-.\gradlew.bat build
-```
-
-Build output location:
-```
-utl-x/
-└── build/
-    └── distributions/
-        ├── utlx-0.1.0.tar
-        └── utlx-0.1.0.zip
-```
-
-#### 4. Build the CLI
-
-**macOS / Linux:**
-```bash
-# Build the CLI JAR
 ./gradlew :modules:cli:jar
-
-# The wrapper script 'utlx' is ready to use
-./utlx --version
 ```
 
 **Windows (Command Prompt):**
 ```cmd
-REM Build the CLI JAR
 gradlew.bat :modules:cli:jar
-
-REM Use the wrapper script 'utlx.bat'
-utlx.bat --version
 ```
 
 **Windows (PowerShell):**
 ```powershell
-# Build the CLI JAR
 .\gradlew.bat :modules:cli:jar
+```
 
-# Use the wrapper script 'utlx.ps1'
-.\utlx.ps1 --version
+#### 4. Verify
+
+```bash
+./utlx --version
 ```
 
 **Output:**
@@ -124,121 +82,74 @@ The wrapper scripts (`utlx`, `utlx.bat`, `utlx.ps1`) automatically locate and ru
 
 ---
 
-### Option 2: Download Pre-Built Binary (Coming Soon)
+### Option 2: GraalVM Native Binary
 
-Once UTL-X reaches beta, pre-built binaries will be available.
+For instant startup and zero JVM dependency, build a native binary:
 
-**Planned platforms:**
-- macOS (Intel and Apple Silicon)
-- Linux (x64, ARM64)
-- Windows (x64)
-
-**Installation will be:**
 ```bash
-# macOS/Linux
-curl -fsSL https://utl-x.com/install.sh | bash
+# macOS (Homebrew)
+brew install --cask graalvm/tap/graalvm-community-jdk22
+export GRAALVM_HOME=/Library/Java/JavaVirtualMachines/graalvm-community-openjdk-22/Contents/Home
+export JAVA_HOME=$GRAALVM_HOME
 
-# Windows
-# Download installer from GitHub Releases
+# Build native binary
+./gradlew :modules:cli:nativeCompile
+
+# Binary at: modules/cli/build/native/nativeCompile/utlx
 ```
+
+See [Native Binary Quick Start](native-binary-quickstart.md) for details.
 
 ---
 
-### Option 3: Using a Package Manager (Planned)
-
-Future package manager support:
+### Option 3: Package Managers (Planned)
 
 ```bash
 # macOS - Homebrew (planned)
 brew install utlx
 
-# Linux - apt (planned)
-sudo apt install utlx
-
 # Windows - Chocolatey (planned)
 choco install utlx
-
-# Any OS - SDKMAN! (planned)
-sdk install utlx
 ```
 
 ---
 
-## Verify Installation
+## Quick Test
 
-### Check Version
+### Identity Mode (Instant Format Conversion)
+
+The fastest way to test your installation — no script file needed:
 
 ```bash
-utlx --version
+# XML to JSON (auto-detected)
+echo '<person><name>Alice</name></person>' | ./utlx
+
+# JSON to XML (auto-detected)
+echo '{"greeting":"hello"}' | ./utlx
+
+# With explicit format override
+echo '<data><value>42</value></data>' | ./utlx --to yaml
 ```
 
-**Expected output:**
-```
-UTL-X version 0.1.0
-JVM: 17.0.2
-Kotlin: 1.9.21
-```
+### Script-Based Transformation
 
-### Run Test Transformation
-
-Create a test file:
-
-**macOS / Linux:**
 ```bash
-# Create test input file
+# Create test input
 echo '<root><message>Hello UTL-X!</message></root>' > test-input.xml
 
-# Create test transformation script
+# Create transformation script
 cat > test-transform.utlx << 'EOF'
 %utlx 1.0
 input xml
 output json
 ---
 {
-  greeting: input.root.message
+  greeting: $input.root.message
 }
 EOF
 
-# Run transformation (script first, then input file)
+# Run transformation
 ./utlx transform test-transform.utlx test-input.xml
-```
-
-**Windows (Command Prompt):**
-```cmd
-REM Create test input file
-echo ^<root^>^<message^>Hello UTL-X!^</message^>^</root^> > test-input.xml
-
-REM Create test transformation script (use a text editor or PowerShell for multi-line)
-echo %utlx 1.0 > test-transform.utlx
-echo input xml >> test-transform.utlx
-echo output json >> test-transform.utlx
-echo --- >> test-transform.utlx
-echo { >> test-transform.utlx
-echo   greeting: input.root.message >> test-transform.utlx
-echo } >> test-transform.utlx
-
-REM Run transformation (script first, then input file)
-utlx.bat transform test-transform.utlx test-input.xml
-```
-
-**Windows (PowerShell):**
-```powershell
-# Create test input file
-'<root><message>Hello UTL-X!</message></root>' | Out-File -Encoding UTF8 test-input.xml
-
-# Create test transformation script
-@'
-%utlx 1.0
-input xml
-output json
----
-{
-  greeting: input.root.message
-}
-'@ | Out-File -Encoding UTF8 test-transform.utlx
-
-# Run transformation (script first, then input file)
-.\utlx.ps1 transform test-transform.utlx test-input.xml
 ```
 
 **Expected output:**
@@ -248,12 +159,48 @@ output json
 }
 ```
 
-**Important Notes:**
-- ⚠️ **Argument order**: Always use `utlx transform <script> <input> [options]` (script first, then input)
-- ⚠️ **Variable vs filename**: In the transformation script, `input` (or `$input`) refers to the parsed input data, not the filename
-- ⚠️ **Platform-specific**: Use the appropriate wrapper script (`./utlx`, `utlx.bat`, or `.\utlx.ps1`) for your platform
+---
 
-✅ **If you see the JSON output above, installation successful!**
+## Supported Formats
+
+| Format | Type | Input | Output |
+|--------|------|-------|--------|
+| JSON | Data | Yes | Yes |
+| XML | Data | Yes | Yes |
+| CSV | Data | Yes | Yes |
+| YAML | Data | Yes | Yes |
+| OData | Data | Yes | Yes |
+| XSD | Schema | Yes | Yes |
+| JSCH (JSON Schema) | Schema | Yes | Yes |
+| Avro | Schema | Yes | Yes |
+| Protobuf | Schema | Yes | Yes |
+| OSCH (OData/EDMX) | Schema | Yes | Yes |
+| TSCH (Table Schema) | Schema | Yes | Yes |
+
+---
+
+## CLI Commands
+
+```bash
+./utlx --help                              # Show all commands
+./utlx --version                           # Show version
+
+# Identity mode (no script needed)
+cat data.xml | ./utlx                      # XML to JSON (smart flip)
+cat data.json | ./utlx                     # JSON to XML (smart flip)
+cat data.xml | ./utlx --to yaml            # Override output format
+
+# Script-based transformation
+./utlx transform script.utlx input.xml     # Transform with script
+./utlx script.utlx input.xml               # Implicit transform (same thing)
+./utlx transform script.utlx input.xml -o output.json  # Save to file
+
+# Other commands
+./utlx validate script.utlx               # Validate script syntax
+./utlx functions                           # List all 652 stdlib functions
+./utlx functions search xml                # Search functions
+./utlx repl                                # Interactive REPL
+```
 
 ---
 
@@ -261,340 +208,60 @@ output json
 
 ### IntelliJ IDEA
 
-#### 1. Open Project
-
-```
-File → Open → Select utl-x directory
-```
-
-Wait for Gradle sync to complete.
-
-#### 2. Install Kotlin Plugin
-
-Kotlin plugin should be installed by default. If not:
-```
-Settings → Plugins → Search "Kotlin" → Install
-```
-
-#### 3. Configure JDK
-
-```
-File → Project Structure → Project SDK → Select JDK 17
-```
-
-#### 4. Run Configurations
-
-IntelliJ will auto-detect Gradle tasks. To create a run configuration:
-
-```
-Run → Edit Configurations → + → Gradle
-Name: Build UTL-X
-Gradle project: utl-x
-Tasks: build
-```
+1. **Open Project:** File -> Open -> Select utl-x directory
+2. Wait for Gradle sync to complete
+3. **Configure JDK:** File -> Project Structure -> Project SDK -> Select JDK 17
 
 ### VS Code
 
-#### 1. Install Extensions
-
-```
-- Kotlin Language (fwcd)
-- Gradle for Java
-- Extension Pack for Java
-```
-
-#### 2. Open Project
-
-```
-File → Open Folder → Select utl-x directory
-```
-
-#### 3. Configure Java
-
-Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS):
-```
-Java: Configure Java Runtime → Select JDK 17
-```
-
-#### 4. Build Project
-
-Open integrated terminal:
-
-**macOS / Linux:**
-```bash
-./gradlew build
-```
-
-**Windows:**
-```cmd
-gradlew.bat build
-```
-
----
-
-## Using UTL-X as a Library
-
-### Maven
-
-Add to your `pom.xml`:
-
-```xml
-<dependency>
-    <groupId>com.glomidco.utlx</groupId>
-    <artifactId>utlx-core</artifactId>
-    <version>0.1.0</version>
-</dependency>
-```
-
-### Gradle (Kotlin DSL)
-
-Add to your `build.gradle.kts`:
-
-```kotlin
-dependencies {
-    implementation("com.glomidco.utlx:utlx-core:0.1.0")
-}
-```
-
-### Gradle (Groovy)
-
-Add to your `build.gradle`:
-
-```groovy
-dependencies {
-    implementation 'com.glomidco.utlx:utlx-core:0.1.0'
-}
-```
-
----
-
-## Configuration
-
-### Environment Variables
-
-Optional environment variables for UTL-X:
-
-```bash
-# Set default output format
-export UTLX_DEFAULT_OUTPUT=json
-
-# Set maximum memory
-export UTLX_MAX_MEMORY=512m
-
-# Enable debug logging
-export UTLX_DEBUG=true
-
-# Set custom plugins directory
-export UTLX_PLUGINS_DIR=/path/to/plugins
-```
-
-### Configuration File
-
-Create `~/.utlx/config.yaml`:
-
-```yaml
-# UTL-X Configuration
-defaults:
-  output_format: json
-  pretty_print: true
-  validate_input: true
-
-performance:
-  max_memory: 512m
-  parallel_processing: true
-  cache_enabled: true
-
-logging:
-  level: info
-  file: ~/.utlx/logs/utlx.log
-```
-
----
-
-## Updating UTL-X
-
-### From Source
-
-**macOS / Linux:**
-```bash
-# Navigate to UTL-X directory
-cd utl-x
-
-# Pull latest changes
-git pull origin main
-
-# Rebuild
-./gradlew clean build
-```
-
-**Windows:**
-```cmd
-REM Navigate to UTL-X directory
-cd utl-x
-
-REM Pull latest changes
-git pull origin main
-
-REM Rebuild
-gradlew.bat clean build
-```
-
-### Using Package Manager (Future)
-
-```bash
-# Homebrew
-brew upgrade utlx
-
-# apt
-sudo apt update && sudo apt upgrade utlx
-
-# SDKMAN
-sdk upgrade utlx
-```
-
----
-
-## Uninstalling
-
-### If Installed from Source
-
-```bash
-# Remove symlink (if created)
-sudo rm /usr/local/bin/utlx
-
-# Remove cloned repository
-rm -rf ~/utl-x
-```
-
-### Using Package Manager (Future)
-
-```bash
-# Homebrew
-brew uninstall utlx
-
-# apt
-sudo apt remove utlx
-
-# Chocolatey
-choco uninstall utlx
-```
+1. **Install Extensions:** Kotlin Language (fwcd), Gradle for Java
+2. **Open Project:** File -> Open Folder -> Select utl-x directory
+3. **Build:** Open terminal, run `./gradlew :modules:cli:jar`
 
 ---
 
 ## Troubleshooting
 
-### Issue: "java: command not found"
+### "java: command not found"
 
-**Solution:** Install Java JDK 11 or higher.
-
+Install Java JDK 17 or higher:
 ```bash
 # macOS
 brew install openjdk@17
 
 # Linux (Ubuntu/Debian)
 sudo apt install openjdk-17-jdk
-
-# Verify
-java -version
 ```
 
-### Issue: "JAVA_HOME is not set"
-
-**Solution:** Set JAVA_HOME environment variable.
+### "JAVA_HOME is not set"
 
 ```bash
-# Find Java installation
-which java
-
-# Set JAVA_HOME (add to ~/.bashrc or ~/.zshrc)
+# Add to ~/.bashrc or ~/.zshrc
 export JAVA_HOME=/path/to/java/home
 export PATH=$JAVA_HOME/bin:$PATH
-
-# Reload shell
-source ~/.bashrc  # or source ~/.zshrc
+source ~/.bashrc
 ```
 
-### Issue: Build fails with "permission denied"
-
-**Solution (macOS / Linux):** Make gradlew executable.
+### Build fails with "permission denied"
 
 ```bash
 chmod +x gradlew
-./gradlew build
+./gradlew :modules:cli:jar
 ```
 
-**Note:** This issue typically only occurs on macOS/Linux. Windows users should use `gradlew.bat` which doesn't require execute permissions.
+### "OutOfMemoryError" during build
 
-### Issue: "OutOfMemoryError" during build
-
-**Solution:** Increase Gradle memory.
-
-**macOS / Linux:**
 ```bash
-# Create or edit gradle.properties
 echo "org.gradle.jvmargs=-Xmx2g" >> gradle.properties
-
-# Rebuild
-./gradlew clean build
+./gradlew clean :modules:cli:jar
 ```
-
-**Windows:**
-```cmd
-REM Create or edit gradle.properties
-echo org.gradle.jvmargs=-Xmx2g >> gradle.properties
-
-REM Rebuild
-gradlew.bat clean build
-```
-
-### Issue: Tests fail during build
-
-**Solution:** Skip tests temporarily (not recommended for development).
-
-**macOS / Linux:**
-```bash
-./gradlew build -x test
-```
-
-**Windows:**
-```cmd
-gradlew.bat build -x test
-```
-
-To investigate test failures:
-
-**macOS / Linux:**
-```bash
-./gradlew test --info
-```
-
-**Windows:**
-```cmd
-gradlew.bat test --info
-```
-
----
-
-## Getting Help
-
-If you encounter issues during installation:
-
-- 📖 Check the [FAQ](../community/faq.md)
-- 💬 Ask in [GitHub Discussions](https://github.com/grauwen/utl-x/discussions)
-- 🐛 Report bugs in [GitHub Issues](https://github.com/grauwen/utl-x/issues)
-- 📧 Email: support@glomidco.com
 
 ---
 
 ## Next Steps
 
-Now that UTL-X is installed:
-
-1. ✅ **Learn the basics:** [Your First Transformation](your-first-transformation.md)
-2. 📖 **Understand concepts:** [Basic Concepts](basic-concepts.md)
-3. 💡 **Try examples:** [Examples](../examples/)
-4. 📚 **Deep dive:** [Language Guide](../language-guide/)
-
----
-
-**Happy Transforming! 🚀**
+1. **Try identity mode:** `echo '{"name":"world"}' | ./utlx`
+2. **First transformation:** [Your First Transformation](your-first-transformation.md)
+3. **Core concepts:** [Basic Concepts](basic-concepts.md)
+4. **Quick reference:** [Quick Reference](quick-reference.md)
+5. **Examples:** [Examples](../examples/)

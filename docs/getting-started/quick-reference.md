@@ -1,10 +1,46 @@
 # UTL-X Quick Reference
 
-A quick cheat sheet for UTL-X syntax.
+A quick cheat sheet for UTL-X syntax and CLI usage.
 
 ---
 
-## Basic Structure
+## CLI Usage
+
+### Identity Mode (No Script Needed)
+
+```bash
+cat data.xml | utlx                # XML to JSON (smart flip)
+cat data.json | utlx               # JSON to XML (smart flip)
+cat data.csv | utlx                # CSV to JSON
+cat data.xml | utlx --to yaml     # Override output format
+cat data.csv | utlx --from csv --to xml  # Explicit both
+```
+
+### Script-Based Transformation
+
+```bash
+utlx transform script.utlx input.xml              # Transform
+utlx script.utlx input.xml                         # Implicit transform
+utlx transform script.utlx input.xml -o out.json   # Save to file
+utlx transform script.utlx < input.xml             # Read from stdin
+```
+
+### Other Commands
+
+```bash
+utlx --version                     # Version
+utlx --help                        # Help
+utlx validate script.utlx          # Validate syntax
+utlx lint script.utlx              # Check code quality
+utlx functions                     # List all 652 stdlib functions
+utlx functions search xml          # Search functions
+utlx functions info map            # Function details
+utlx repl                          # Interactive REPL
+```
+
+---
+
+## Script Structure
 
 ```utlx
 %utlx 1.0
@@ -13,6 +49,23 @@ output <format>
 ---
 <transformation>
 ```
+
+### Supported Formats
+
+| Format | Keyword | Type |
+|--------|---------|------|
+| JSON | `json` | Data |
+| XML | `xml` | Data |
+| CSV | `csv` | Data |
+| YAML | `yaml` | Data |
+| OData | `odata` | Data |
+| Auto-detect | `auto` | Data |
+| XSD | `xsd` | Schema |
+| JSON Schema | `jsch` | Schema |
+| Avro | `avro` | Schema |
+| Protobuf | `proto` | Schema |
+| OData/EDMX | `osch` | Schema |
+| Table Schema | `tsch` | Schema |
 
 ---
 
@@ -32,12 +85,12 @@ output <format>
 ## Selectors
 
 ```utlx
-input.root.child              // Navigate path
-input.item.@attribute         // Access attribute
-input.items[0]                // Index access
-input.items[*]                // All elements
-input..recursive              // Recursive search
-input.items[price > 100]      // Filter with predicate
+$input.root.child              // Navigate path
+$input.item.@attribute         // Access XML attribute
+$input.items[0]                // Index access
+$input.items[*]                // All elements
+$input..recursive              // Recursive search
+$input.items[price > 100]      // Filter with predicate
 ```
 
 ---
@@ -45,74 +98,29 @@ input.items[price > 100]      // Filter with predicate
 ## Operators
 
 ### Arithmetic
-
 ```utlx
-+    // Addition
--    // Subtraction
-*    // Multiplication
-/    // Division
-%    // Modulo
++  -  *  /  %  **
 ```
 
 ### Comparison
-
 ```utlx
-==   // Equal
-!=   // Not equal
->    // Greater than
->=   // Greater or equal
-<    // Less than
-<=   // Less or equal
+==  !=  >  >=  <  <=
 ```
 
 ### Logical
-
 ```utlx
-&&   // AND
-||   // OR
-!    // NOT
+&&  ||  !
 ```
 
 ### Pipeline
-
 ```utlx
 |>   // Chain operations
 ```
 
----
-
-## Common Functions
-
-### Aggregation
-
+### Null-safe
 ```utlx
-sum(array)              // Sum of values
-avg(array)              // Average
-min(array)              // Minimum
-max(array)              // Maximum
-count(array)            // Count elements
-```
-
-### String
-
-```utlx
-upper(str)              // UPPERCASE
-lower(str)              // lowercase
-trim(str)               // Remove whitespace
-concat(str1, str2)      // Concatenate
-split(str, delim)       // Split to array
-join(array, delim)      // Join to string
-```
-
-### Array
-
-```utlx
-map(array, fn)          // Transform each element
-filter(array, fn)       // Keep matching elements
-reduce(array, fn, init) // Reduce to single value
-sort(array)             // Sort array
-first(array)            // First element
-last(array)             // Last element
+??   // Nullish coalescing
+?.   // Safe navigation
 ```
 
 ---
@@ -120,13 +128,11 @@ last(array)             // Last element
 ## Control Flow
 
 ### If-Else
-
 ```utlx
 if (condition) value1 else value2
 ```
 
 ### Match
-
 ```utlx
 match expression {
   pattern1 => result1,
@@ -135,27 +141,15 @@ match expression {
 }
 ```
 
----
-
-## Template Matching
-
+### Ternary
 ```utlx
-template match="pattern" {
-  <transformation>
-}
-
-apply(selector)         // Apply matching template
+condition ? value1 : value2
 ```
 
 ---
 
-## Variable Binding
+## Variables
 
-```utlx
-let name = value
-```
-
-**Example:**
 ```utlx
 {
   let x = 10,
@@ -168,25 +162,54 @@ let name = value
 
 ## Functions
 
+### User-Defined (PascalCase required)
+
 ```utlx
-function name(param: Type): ReturnType {
-  <expression>
+function CalculateTotal(price: Number, qty: Number): Number {
+  price * qty
 }
 ```
 
-**Example:**
+### Common Stdlib Functions
+
+**Aggregation:**
 ```utlx
-function add(a: Number, b: Number): Number {
-  a + b
-}
+sum(array)  avg(array)  min(array)  max(array)  count(array)
 ```
+
+**String:**
+```utlx
+upper(str)  lower(str)  trim(str)  concat(str1, str2)
+split(str, delim)  join(array, delim)  replace(str, old, new)
+```
+
+**Array:**
+```utlx
+map(array, fn)  filter(array, fn)  reduce(array, fn, init)
+sort(array)  sortBy(array, fn)  first(array)  last(array)
+take(array, n)  drop(array, n)  distinct(array)  flatten(array)
+groupBy(array, fn)  chunk(array, n)  zip(arr1, arr2)
+```
+
+**Date:**
+```utlx
+now()  parseDate(str, fmt)  formatDate(date, fmt)
+addDays(date, n)  diffDays(date1, date2)
+```
+
+**Type:**
+```utlx
+typeOf(val)  isString(val)  isNumber(val)  isArray(val)
+parseNumber(str)  toString(val)  toBoolean(val)
+```
+
+See `utlx functions` for all 652 functions.
 
 ---
 
 ## Common Patterns
 
 ### Object Construction
-
 ```utlx
 {
   field1: value1,
@@ -194,31 +217,31 @@ function add(a: Number, b: Number): Number {
 }
 ```
 
-### Array Construction
-
+### Array Mapping
 ```utlx
-[item1, item2, item3]
-```
-
-### Mapping
-
-```utlx
-input.items |> map(item => {
+$input.items |> map(item => {
   name: item.name,
   price: item.price
 })
 ```
 
 ### Filtering
-
 ```utlx
-input.items |> filter(item => item.price > 100)
+$input.items |> filter(item => item.price > 100)
 ```
 
-### Sorting
-
+### Pipeline Chaining
 ```utlx
-input.items |> sortBy(item => item.price)
+$input.items
+  |> filter(item => item.active)
+  |> map(item => item.price)
+  |> sum()
+```
+
+### Default Values
+```utlx
+$input.customer.name ?? "Unknown"
+$input.quantity ?? 0
 ```
 
 ---
@@ -226,7 +249,6 @@ input.items |> sortBy(item => item.price)
 ## Examples
 
 ### XML to JSON
-
 ```utlx
 %utlx 1.0
 input xml
@@ -235,12 +257,11 @@ output json
 {
   id: $input.Order.@id,
   customer: $input.Order.Customer.Name,
-  total: sum($input.Order.Items.Item.($price * $quantity))
+  total: sum($input.Order.Items.Item.(parseNumber(@price) * parseNumber(@quantity)))
 }
 ```
 
 ### JSON to XML
-
 ```utlx
 %utlx 1.0
 input json
@@ -257,17 +278,29 @@ output xml
 ```
 
 ### CSV to JSON
-
 ```utlx
 %utlx 1.0
 input csv { headers: true }
 output json
 ---
 {
-  records: $input.rows |> map(row => {
+  records: $input |> map(row => {
     name: row.Name,
-    age: parseNumber(row.Age),
-    email: row.Email
+    age: parseNumber(row.Age)
+  })
+}
+```
+
+### Multi-Input
+```utlx
+%utlx 1.0
+input: orders xml, customers json
+output json
+---
+{
+  enriched: $orders.Order |> map(order => {
+    id: order.@id,
+    customer: $customers[order.customerId]
   })
 }
 ```
@@ -276,32 +309,20 @@ output json
 
 ## Format Options
 
-### XML
+### CSV
+```utlx
+input csv {
+  headers: true,
+  delimiter: ","
+}
+```
 
+### XML Namespaces
 ```utlx
 input xml {
   namespaces: {
     "ns": "http://example.com"
   }
-}
-```
-
-### CSV
-
-```utlx
-input csv {
-  headers: true,
-  delimiter: ",",
-  quote: "\""
-}
-```
-
-### JSON
-
-```utlx
-output json {
-  pretty: true,
-  indent: 2
 }
 ```
 
@@ -320,113 +341,8 @@ output json {
 
 ---
 
-## Type Annotations
-
-```utlx
-let name: String = "Alice"
-let age: Number = 30
-let active: Boolean = true
-```
-
----
-
-## Error Handling
-
-### Default Values
-
-```utlx
-input.customer.name || "Unknown"
-input.quantity || 0
-```
-
----
-
-## Pipeline Chaining
-
-```utlx
-input.items
-  |> filter(item => item.active)
-  |> map(item => item.price)
-  |> sum()
-```
-
----
-
-## Grouping
-
-```utlx
-input.items |> groupBy(item => item.category)
-```
-
----
-
-## Transforming Arrays
-
-```utlx
-// Map
-[1, 2, 3] |> map(x => x * 2)  // [2, 4, 6]
-
-// Filter
-[1, 2, 3, 4] |> filter(x => x > 2)  // [3, 4]
-
-// Reduce
-[1, 2, 3, 4] |> reduce((acc, x) => acc + x, 0)  // 10
-```
-
----
-
-## Common Transformations
-
-### Rename Fields
-
-```utlx
-{
-  newName: $input.oldName,
-  newEmail: $input.oldEmail
-}
-```
-
-### Flatten Nested
-
-```utlx
-{
-  id: $input.order.id,
-  customerName: $input.order.customer.name,
-  customerEmail: $input.order.customer.email
-}
-```
-
-### Aggregate
-
-```utlx
-{
-  total: sum($input.items.*.price),
-  count: count($input.items),
-  average: avg($input.items.*.price)
-}
-```
-
----
-
-## Keyboard Shortcuts (CLI)
-
-```bash
-utlx transform $input.xml script.utlx           # Transform
-utlx transform $input.xml script.utlx -o out.json  # With output
-utlx validate script.utlx                      # Validate syntax
-utlx --help                                    # Help
-utlx --version                                 # Version
-```
-
----
-
 ## Useful Links
 
-- 📖 [Full Language Guide](../language-guide/)
-- 💡 [Examples](../examples/)
-- 📚 [Language Specification](../reference/language-spec.md)
-- 🔧 [Function Reference](../reference/stdlib-reference.md)
-
----
-
-**Print this page for quick reference while coding!** 🚀
+- [Full Language Guide](../language-guide/)
+- [Examples](../examples/)
+- [Stdlib Reference (652 functions)](../stdlib/stdlib-complete-reference.md)
