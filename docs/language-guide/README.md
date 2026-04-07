@@ -21,27 +21,27 @@ Welcome to the UTL-X Language Guide. This documentation covers all aspects of th
 
 - [Multiple Inputs and Outputs](multiple-inputs-outputs.md) - Combine data from multiple sources
 
-## Format Support
+## Supported Formats
 
-- [XML Format](../formats/xml.md)
-- [JSON Format](../formats/json.md)
-- [CSV Format](../formats/csv.md)
-- [YAML Format](../formats/yaml.md)
-- [Custom Formats](../formats/custom-format.md)
+**Tier 1 — Data formats:** XML, JSON, CSV, YAML, OData
 
-## Feature Status
+**Tier 2 — Schema formats:** XSD, JSCH (JSON Schema), Avro, Protobuf, OSCH (OData/EDMX), TSCH (Table Schema)
 
-### ✅ Implemented Features
+## Implemented Features
 
 - **Single Input/Output** - Full support
-- **Multiple Named Inputs** - ✅ **NEW (2025-10-21)** - [Documentation](multiple-inputs-outputs.md)
-- **Per-Input Format Options** - ✅ Supported
-- **Encoding Detection** - ✅ Per-input support
+- **Multiple Named Inputs** - [Documentation](multiple-inputs-outputs.md)
+- **Per-Input Format Options** - Supported
+- **Encoding Detection** - Per-input support
 - **Functional Operators** - map, filter, reduce, pipe
 - **Let Bindings** - Variable declarations
 - **Conditional Expressions** - if/else
 - **Lambda Functions** - Anonymous functions
-- **XML, JSON, CSV, YAML** - All formats supported
+- **Pattern Matching** - match expressions
+- **Spread Operator** - Object and array spread
+- **652 Stdlib Functions** - [Reference](../stdlib/stdlib-complete-reference.md)
+- **Identity Mode** - `cat data.xml | utlx` (format conversion without a script)
+- **All 11 formats** - XML, JSON, CSV, YAML, OData, XSD, JSCH, Avro, Protobuf, OSCH, TSCH
 
 ### Planned Features
 
