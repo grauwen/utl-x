@@ -1,68 +1,68 @@
 # UTL-X Quick Start
 
-Get started with UTL-X native binary in 5 minutes! ⚡
+Get started with UTL-X in 5 minutes.
 
 ## What is UTL-X?
 
-Universal Transformation Language Extended (UTL-X) is a format-agnostic transformation language that converts between XML, JSON, CSV, YAML, and more with a single, elegant syntax.
+UTL-X is a format-agnostic transformation language. Convert between XML, JSON, CSV, YAML, and more — or write transformation scripts for complex data mapping.
 
-**Why UTL-X?**
-- ⚡ Native binary - starts in <10ms
-- 📦 Single file - no JVM or dependencies
-- 🎯 Format agnostic - one language for all formats
-- 🚀 High performance - optimized compilation
-- 📖 Easy to learn - familiar syntax
+- **Tier 1 — Data formats:** XML, JSON, CSV, YAML, OData
+- **Tier 2 — Schema formats:** XSD, JSCH (JSON Schema), Avro, Protobuf, OSCH (OData/EDMX), TSCH (Table Schema)
+- **652 stdlib functions** across 18 categories
 
 ## Installation
 
-### One-Line Install
-
-**macOS / Linux:**
-```bash
-curl -fsSL https://raw.githubusercontent.com/grauwen/utl-x/main/scripts/install.sh | sh
-```
-
-**Windows (PowerShell):**
-```powershell
-iwr -useb https://raw.githubusercontent.com/grauwen/utl-x/main/scripts/install.ps1 | iex
-```
-
-### Manual Install
-
-**Linux (x64):**
-```bash
-curl -L https://github.com/grauwen/utl-x/releases/latest/download/utlx-linux-x64 -o utlx
-chmod +x utlx
-sudo mv utlx /usr/local/bin/
-```
-
-**macOS (Apple Silicon):**
-```bash
-curl -L https://github.com/grauwen/utl-x/releases/latest/download/utlx-macos-arm64 -o utlx
-chmod +x utlx
-sudo mv utlx /usr/local/bin/
-```
-
-**macOS (Intel):**
-```bash
-curl -L https://github.com/grauwen/utl-x/releases/latest/download/utlx-macos-x64 -o utlx
-chmod +x utlx
-sudo mv utlx /usr/local/bin/
-```
-
-**Windows:**
-```powershell
-Invoke-WebRequest -Uri "https://github.com/grauwen/utl-x/releases/latest/download/utlx-windows-x64.exe" -OutFile "utlx.exe"
-Move-Item utlx.exe C:\Windows\System32\
-```
-
-### Verify Installation
+### Build from Source
 
 ```bash
-utlx --version
+# Prerequisites: JDK 17+, Git
+git clone https://github.com/grauwen/utl-x.git
+cd utl-x
+./gradlew :modules:cli:jar
+
+# Verify
+./utlx --version
+# UTL-X CLI v1.0.0
 ```
 
-## Your First Transformation
+### Native Binary (Optional)
+
+For instant startup (<10ms) without JVM dependency:
+
+```bash
+# Requires GraalVM
+./gradlew :modules:cli:nativeCompile
+# Binary at: modules/cli/build/native/nativeCompile/utlx
+```
+
+See [Native Binary Quick Start](docs/getting-started/native-binary-quickstart.md) for details.
+
+## Instant Format Conversion (No Script Needed)
+
+The fastest way to use UTL-X — just pipe your data:
+
+```bash
+# XML to JSON (auto-detected)
+cat data.xml | ./utlx
+
+# JSON to XML (auto-detected)
+cat data.json | ./utlx
+
+# CSV to JSON (auto-detected)
+cat data.csv | ./utlx
+
+# Override output format with --to
+cat data.xml | ./utlx --to yaml
+
+# Explicit input and output
+cat data.csv | ./utlx --from csv --to xml
+```
+
+UTL-X detects the input format and picks the most useful output: XML flips to JSON, JSON flips to XML, everything else defaults to JSON. Use `--to` to override.
+
+## Script-Based Transformation
+
+For more control, write a transformation script.
 
 ### 1. Create Input Data
 
@@ -77,7 +77,7 @@ utlx --version
 </Order>
 ```
 
-### 2. Create Transformation
+### 2. Create Transformation Script
 
 **transform.utlx:**
 ```utlx
@@ -100,10 +100,15 @@ output json
 }
 ```
 
-### 3. Transform
+### 3. Run
 
 ```bash
-utlx transform transform.utlx input.xml -o output.json
+./utlx transform transform.utlx input.xml -o output.json
+```
+
+Or shorter (implicit transform):
+```bash
+./utlx transform.utlx input.xml -o output.json
 ```
 
 ### 4. Result
@@ -116,105 +121,50 @@ utlx transform transform.utlx input.xml -o output.json
   "items": [
     {
       "sku": "WIDGET-01",
-      "price": 50,
+      "price": 50.0,
       "quantity": 2,
-      "subtotal": 100
+      "subtotal": 100.0
     },
     {
       "sku": "GADGET-02",
-      "price": 75,
+      "price": 75.0,
       "quantity": 1,
-      "subtotal": 75
+      "subtotal": 75.0
     }
   ],
-  "total": 175
+  "total": 175.0
 }
 ```
 
-## Common Use Cases
+## More CLI Commands
 
-### XML → JSON
 ```bash
-utlx transform transform.utlx data.xml -o result.json
-```
+# Validate script syntax
+./utlx validate transform.utlx
 
-### JSON → CSV
-```bash
-utlx transform transform.utlx data.json --output-format csv -o result.csv
-```
+# Lint for code quality
+./utlx lint transform.utlx
 
-### Pipe from stdin
-```bash
-cat input.xml | utlx transform transform.utlx
-```
+# List all 652 stdlib functions
+./utlx functions
 
-### Watch mode (auto-reload)
-```bash
-# Note: Watch mode not yet implemented
-utlx transform transform.utlx input.xml -o output.json
-```
+# Search functions
+./utlx functions search xml
 
-### Validate syntax
-```bash
-# Note: Validate command not yet implemented
-# Use transform with --verbose for syntax checking
-utlx transform transform.utlx --verbose
-```
-
-### Benchmark performance
-```bash
-# Note: Benchmark mode not yet implemented
-# Use time command for basic benchmarking
-time utlx transform transform.utlx input.xml -o output.json
-```
-
-## Performance
-
-```
-Startup:  <10ms  (vs 100-500ms for JVM)
-Memory:   ~40MB  (vs 150-300MB for JVM)
-Size:     ~12MB  (vs 300-500MB for JVM+deps)
+# Interactive REPL
+./utlx repl
 ```
 
 ## Next Steps
 
-📖 **Full Documentation:** [docs/getting-started/native-binary-quickstart.md](docs/getting-started/native-binary-quickstart.md)
-
-🎓 **Learn More:**
-- [Language Guide](docs/language-guide/README.md)
-- [Examples](examples/README.md)
-- [API Reference](docs/reference/README.md)
-- [Migration from XSLT](docs/comparison/xslt-migration.md)
-- [Migration from DataWeave](docs/comparison/dataweave-migration.md)
-
-🛠️ **For Contributors:**
-- [Building from Source](README-NATIVE.md)
-- [Contributing Guide](CONTRIBUTING.md)
-- [Architecture](docs/architecture/README.md)
-
-💬 **Get Help:**
-- [GitHub Discussions](https://github.com/grauwen/utl-x/discussions)
-- [Issue Tracker](https://github.com/grauwen/utl-x/issues)
-- [Discord Community](https://discord.gg/utlx)
+- [Your First Transformation](docs/getting-started/your-first-transformation.md) — step-by-step tutorial
+- [Basic Concepts](docs/getting-started/basic-concepts.md) — core language concepts
+- [Quick Reference](docs/getting-started/quick-reference.md) — syntax cheat sheet
+- [Stdlib Reference](docs/stdlib/stdlib-complete-reference.md) — all 652 functions
+- [Examples](docs/examples/) — real-world transformations
 
 ## License
 
 Dual-licensed:
-- **Open Source:** GNU AGPL v3.0 (free for open source projects)
-- **Commercial:** Contact licensing@utlx-lang.org (for proprietary use)
-
-## Quick License Guide
-
-| Use Case | License |
-|----------|---------|
-| Personal/learning use | ✅ Free (AGPL) |
-| Open source project | ✅ Free (AGPL) |
-| Internal company tool | ✅ Free (AGPL) |
-| SaaS product | 💼 Commercial |
-| Embedded in proprietary software | 💼 Commercial |
-
----
-
-**Built with ❤️ by [Ir. Marcel A. Grauwen](https://github.com/grauwen) and the UTL-X Community**
-
-⭐ **Star us on GitHub:** https://github.com/grauwen/utl-x
+- **Open Source:** GNU AGPL v3.0
+- **Commercial:** Contact licensing@glomidco.com
