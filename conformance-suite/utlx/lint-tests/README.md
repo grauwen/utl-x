@@ -36,10 +36,10 @@ script: |
   input json
   output json
   ---
-  let unused_variable = 42
+  let unused_variable = 42,
   let result = {
-    name: input.customerName
-  }
+    name: $input.customerName
+  },
   $result
 
 # Expected lint results
@@ -229,9 +229,9 @@ script: |
   input json
   output json
   ---
-  let computedValue = input.price * 1.2  # Unused!
+  let computedValue = $input.price * 1.2,  // Unused!
   {
-    name: input.productName
+    name: $input.productName
   }
 
 lint_expected:
@@ -257,10 +257,10 @@ variants:
       input json
       output json
       ---
-      let computedValue = input.price * 1.2
+      let computedValue = $input.price * 1.2,
       {
-        name: input.productName,
-        price: computedValue  # Now used!
+        name: $input.productName,
+        price: computedValue  // Now used!
       }
     lint_expected:
       warnings: []
