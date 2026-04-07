@@ -1,6 +1,6 @@
 # Language Overview
 
-UTL-X is a modern, format-agnostic transformation language designed to convert data between XML, JSON, CSV, YAML, and other formats.
+UTL-X is a format-agnostic functional transformation language for converting data between XML, JSON, CSV, YAML, OData, and schema formats (XSD, JSON Schema, Avro, Protobuf, OData/EDMX, Table Schema).
 
 ---
 
@@ -8,12 +8,9 @@ UTL-X is a modern, format-agnostic transformation language designed to convert d
 
 ### 1. Format Agnostic
 
-**One language, any format.**
-
-Write transformation logic once, use it with any input/output format combination.
+Write transformation logic once, use it with any supported format.
 
 ```utlx
-// Same transformation works for XML, JSON, CSV, YAML
 %utlx 1.0
 input auto
 output json
@@ -24,16 +21,14 @@ output json
 }
 ```
 
+This works whether input is XML, JSON, CSV, or YAML.
+
 ### 2. Functional Programming
 
-**Pure functions, immutable data, composability.**
-
-- Functions have no side effects
-- Data cannot be modified
-- Operations compose naturally
+Pure functions, immutable data, composability.
 
 ```utlx
-input.items
+$input.items
   |> filter(item => item.active)
   |> map(item => item.price)
   |> sum()
@@ -41,241 +36,173 @@ input.items
 
 ### 3. Declarative
 
-**Describe what you want, not how to get it.**
-
-Focus on the transformation, not the mechanics.
+Describe what you want, not how to get it.
 
 ```utlx
-// Declarative: what you want
 {
-  total: sum(items.*.price)
+  total: sum($input.items.*.price)
 }
-
-// vs Imperative (traditional programming):
-// let total = 0
-// for each item in items:
-//   total += item.price
 ```
 
 ### 4. Type Safe
 
-**Strong typing with inference.**
-
-Catch errors at compile time, not runtime.
+Strong typing with inference. Catch errors at compile time.
 
 ```utlx
 let count: Number = 42
 let name: String = "Alice"
-
-// Type error caught at compile time:
-let wrong: Number = "hello"  // ❌ ERROR
+let wrong: Number = "hello"  // Type error caught at compile time
 ```
-
-### 5. Performance First
-
-**Optimized compilation, efficient runtime.**
-
-- Compile-time optimization
-- Lazy evaluation
-- Minimal memory footprint
-- Streaming where possible
 
 ---
 
-## Key Features
+## Supported Formats
 
-### Format Support
+### Tier 1 — Data Formats
 
-| Format | Input | Output | Status |
-|--------|-------|--------|--------|
-| **XML** | ✅ | ✅ | Alpha |
-| **JSON** | ✅ | ✅ | Alpha |
-| **CSV** | 🚧 | 🚧 | Planned |
-| **YAML** | 🚧 | 🚧 | Planned |
-| **Custom** | 🔌 | 🔌 | Plugin API |
+| Format | Input | Output |
+|--------|-------|--------|
+| XML | Yes | Yes |
+| JSON | Yes | Yes |
+| CSV | Yes | Yes |
+| YAML | Yes | Yes |
+| OData | Yes | Yes |
 
-### Language Features
+### Tier 2 — Schema/Metadata Formats
 
-- ✅ **Selectors** - XPath-like navigation
-- ✅ **Pipeline Operator** - Chain operations
-- ✅ **Pattern Matching** - Match expressions
-- ✅ **Template Matching** - XSLT-style templates
-- ✅ **Higher-Order Functions** - map, filter, reduce
-- ✅ **Type Inference** - Automatic type detection
-- ✅ **Immutability** - Data safety
-- ✅ **User-Defined Functions** - Reusable logic
+| Format | Input | Output |
+|--------|-------|--------|
+| XSD | Yes | Yes |
+| JSCH (JSON Schema) | Yes | Yes |
+| Avro | Yes | Yes |
+| Protobuf | Yes | Yes |
+| OSCH (OData/EDMX) | Yes | Yes |
+| TSCH (Table Schema) | Yes | Yes |
 
 ---
 
-## Language Comparison
+## CLI Usage
 
-### UTL-X vs XSLT
+### Identity Mode (No Script Needed)
 
-```xml
-<!-- XSLT: Verbose, XML-based -->
-<xsl:template match="Order">
-  <json>
-    <orderId><xsl:value-of select="@id"/></orderId>
-    <total>
-      <xsl:value-of select="sum(Items/Item/@price * Items/Item/@quantity)"/>
-    </total>
-  </json>
-</xsl:template>
+```bash
+cat data.xml | utlx                # XML to JSON (smart flip)
+cat data.json | utlx               # JSON to XML (smart flip)
+cat data.csv | utlx                # CSV to JSON
+cat data.xml | utlx --to yaml     # Override output format
 ```
 
-```utlx
-// UTL-X: Concise, modern syntax
-template match="Order" {
-  orderId: $id,
-  total: sum(Items/Item/($price * $quantity))
-}
+### Script-Based Transformation
+
+```bash
+utlx transform script.utlx input.xml -o output.json
+utlx script.utlx input.xml -o output.json    # implicit transform
 ```
 
-### UTL-X vs DataWeave
-
-```dataweave
-%dw 2.0
-output application/json
 ---
-{
-  orderId: payload.Order.@id,
-  total: sum(payload.Order.Items.*Item map ($.@price * $.@quantity))
-}
-```
 
-```utlx
-%utlx 1.0
-input xml
-output json
----
-{
-  orderId: $input.Order.@id,
-  total: sum($input.Order.Items.Item.($price * $quantity))
-}
-```
+## Language Features
 
-**Differences:**
-- UTL-X: Open source (AGPL-3.0)
-- DataWeave: Proprietary (Salesforce/MuleSoft)
-- Similar syntax and capabilities
-- UTL-X has template matching (XSLT-inspired)
+- **Selectors** — XPath-like data navigation
+- **Pipeline Operator** (`|>`) — chain operations left-to-right
+- **Pattern Matching** — match expressions with multiple cases
+- **Higher-Order Functions** — map, filter, reduce, groupBy, sortBy, etc.
+- **Type Inference** — automatic type detection with optional annotations
+- **Immutability** — data safety, no side effects
+- **User-Defined Functions** — reusable logic (PascalCase naming)
+- **Multi-Input** — combine data from multiple sources/formats
+- **652 Stdlib Functions** — string, array, math, date, encoding, XML, CSV, YAML, financial, geospatial, and more
 
 ---
 
 ## Document Structure
 
-Every UTL-X document follows this structure:
+Every UTL-X script follows this structure:
 
 ```utlx
-%utlx <version>           // 1. Version declaration
-[directive...]            // 2. Configuration directives
----                       // 3. Separator
-<transformation-body>     // 4. Transformation logic
-```
-
-### Example
-
-```utlx
-// 1. Version
-%utlx 1.0
-
-// 2. Directives
-input xml
-output json
-
-// 3. Separator
----
-
-// 4. Transformation
-{
-  result: $input.data
-}
+%utlx 1.0             // Version declaration
+input <format>         // Input format (or auto)
+output <format>        // Output format
+---                    // Separator
+<transformation>       // Transformation body
 ```
 
 ---
 
 ## Core Concepts
 
-### 1. Expressions
+### Expressions
 
-Everything in UTL-X is an expression that returns a value:
-
-```utlx
-// Literals are expressions
-42
-"Hello"
-true
-
-// Operations are expressions
-10 + 20
-
-// Conditionals are expressions
-if (x > 10) "big" else "small"
-
-// Blocks are expressions (return last value)
-{
-  let x = 10,
-  let y = 20,
-  x + y  // Returns 30
-}
-```
-
-### 2. Selectors
-
-Navigate through data structures:
+Everything returns a value:
 
 ```utlx
-input.order.customer.name        // Deep navigation
-input.items[0]                   // Index access
-input.items[*]                   // All elements
-input.order.@id                  // Attribute
-input..productCode               // Recursive search
-input.items[price > 100]         // Predicate filter
+42                                          // Literal
+10 + 20                                     // Arithmetic
+if (x > 10) "big" else "small"              // Conditional
+match status { "active" => 1, _ => 0 }      // Pattern match
 ```
 
-### 3. Pipeline
+### Selectors
+
+Navigate data structures:
+
+```utlx
+$input.order.customer.name        // Deep navigation
+$input.items[0]                   // Index access
+$input.items[*]                   // All elements
+$input.order.@id                  // XML attribute
+$input..productCode               // Recursive search
+$input.items[price > 100]         // Predicate filter
+```
+
+### Pipeline
 
 Chain operations left-to-right:
 
 ```utlx
-input.items
+$input.items
   |> filter(item => item.active)
   |> map(item => item.price * 1.1)
   |> sum()
 ```
 
-### 4. Functions
-
-Built-in and user-defined:
+### Functions
 
 ```utlx
-// Built-in functions
-sum([1, 2, 3])              // 6
-upper("hello")              // "HELLO"
-count($input.items)          // Number of items
+// Built-in (652 functions)
+sum([1, 2, 3])               // 6
+upper("hello")               // "HELLO"
+formatDate(now(), "yyyy-MM-dd")
 
-// User-defined functions
-function calculateTax(amount: Number, rate: Number): Number {
+// User-defined (PascalCase required)
+function CalculateTax(amount: Number, rate: Number): Number {
   amount * rate
 }
 ```
 
-### 5. Templates
-
-XSLT-style template matching:
+### Variables
 
 ```utlx
-template match="Order" {
-  order: {
-    id: $id,
-    customer: apply(Customer),
-    items: apply(Items/Item)
-  }
-}
+{
+  let subtotal = sum($input.items.*.price),
+  let tax = subtotal * 0.08,
 
-template match="Customer" {
-  name: Name,
-  email: Email
+  total: subtotal + tax
+}
+```
+
+### Multi-Input
+
+```utlx
+%utlx 1.0
+input: orders xml, customers json
+output json
+---
+{
+  enriched: $orders.Order |> map(order => {
+    id: order.@id,
+    customer: $customers[order.customerId]
+  })
 }
 ```
 
@@ -283,46 +210,23 @@ template match="Customer" {
 
 ## Data Types
 
-### Scalar Types
-
 ```utlx
 "Hello"          // String
-'World'          // String (single quotes)
 42               // Number (integer)
 3.14             // Number (decimal)
-1.5e10           // Number (scientific notation)
 true             // Boolean
-false            // Boolean
 null             // Null
-```
-
-### Composite Types
-
-```utlx
-// Object
-{
-  name: "Alice",
-  age: 30,
-  active: true
-}
-
-// Array
-[1, 2, 3]
-["red", "green", "blue"]
-[{id: 1}, {id: 2}]
+[1, 2, 3]        // Array
+{name: "Alice"}  // Object
 ```
 
 ---
 
 ## Control Flow
 
-### Conditionals
+### If-Else
 
 ```utlx
-// If-else
-if (condition) expression1 else expression2
-
-// Multi-way
 if (score >= 90) "A"
 else if (score >= 80) "B"
 else if (score >= 70) "C"
@@ -343,7 +247,7 @@ match orderType {
 
 ## Common Patterns
 
-### 1. Rename Fields
+### Rename Fields
 
 ```utlx
 {
@@ -352,7 +256,7 @@ match orderType {
 }
 ```
 
-### 2. Flatten Structure
+### Flatten Structure
 
 ```utlx
 {
@@ -362,7 +266,7 @@ match orderType {
 }
 ```
 
-### 3. Transform Array
+### Transform Array
 
 ```utlx
 {
@@ -374,7 +278,7 @@ match orderType {
 }
 ```
 
-### 4. Filter and Aggregate
+### Filter and Aggregate
 
 ```utlx
 {
@@ -384,174 +288,29 @@ match orderType {
 }
 ```
 
-### 5. Group By
+### Group By
 
 ```utlx
 {
-  byCategory: $input.products 
+  byCategory: $input.products
     |> groupBy(p => p.category)
-    |> map((category, products) => {
-        category: category,
-        count: count(products),
-        total: sum(products.*.price)
-      })
 }
 ```
 
 ---
 
-## Advantages Over Alternatives
+## Language Comparison
 
-### vs XSLT
+| Aspect | UTL-X | XSLT | DataWeave | jq | JSONata |
+|--------|-------|------|-----------|-----|---------|
+| License | AGPL-3.0 / Commercial | W3C (Open) | Proprietary | MIT | MIT |
+| Formats | 11 (data + schema) | XML only | XML, JSON, CSV, Java | JSON only | JSON only |
+| Stdlib | 652 functions | ~100 XPath | ~80-100 | ~50 | ~50 |
+| CLI piping | Yes | No | No | Yes | No |
+| Type system | Strong, inferred | XSD-aware | Strong, inferred | Dynamic | Dynamic |
+| Runtime | JVM / GraalVM native | JVM, .NET, C++ | JVM (MuleSoft) | Native C | JavaScript |
 
-| Aspect | XSLT | UTL-X |
-|--------|------|-------|
-| Syntax | XML-based (verbose) | Modern, concise |
-| Formats | XML only | XML, JSON, CSV, YAML |
-| Learning Curve | Steep | Moderate |
-| Type System | XSD-aware | Strong inference |
-
-### vs DataWeave
-
-| Aspect | DataWeave | UTL-X |
-|--------|-----------|-------|
-| License | Proprietary | Open Source (AGPL-3.0) |
-| Vendor | Salesforce/MuleSoft | Community/Glomidco |
-| Templates | Limited | XSLT-style matching |
-| Cost | MuleSoft license | Free (OSS) or commercial |
-
-### vs JSONata
-
-| Aspect | JSONata | UTL-X |
-|--------|---------|-------|
-| Formats | JSON only | Multiple formats |
-| Templates | No | Yes |
-| Compilation | Interpreted | Compiled |
-| Type System | Dynamic | Static with inference |
-
-### vs Custom Code (Java/JavaScript)
-
-| Aspect | Custom Code | UTL-X |
-|--------|-------------|-------|
-| Development Time | Slow | Fast |
-| Maintenance | Complex | Simple |
-| Format Changes | Manual updates | Automatic |
-| Testing | Extensive | Declarative = less bugs |
-
----
-
-## Evolution Path
-
-### Current (v0.1.0 - Alpha)
-
-- ✅ Core language features
-- ✅ XML and JSON support
-- ✅ Basic transformations
-- ✅ CLI tool
-
-### Near Future (v0.2.0 - Beta)
-
-- 🚧 CSV support
-- 🚧 YAML support
-- 🚧 Standard library expansion
-- 🚧 IDE plugins (VS Code, IntelliJ)
-
-### v1.0.0 (Stable)
-
-- 🎯 Production-ready
-- 🎯 Full format support
-- 🎯 Performance optimizations
-- 🎯 Comprehensive documentation
-- 🎯 Plugin ecosystem
-
----
-
-## Use Cases
-
-### 1. API Integration
-
-Transform between different API formats:
-
-```utlx
-// SOAP XML → REST JSON
-%utlx 1.0
-input xml
-output json
----
-{
-  user: {
-    id: $input.soap:Envelope.soap:Body.GetUserResponse.User.@id,
-    name: $input.soap:Envelope.soap:Body.GetUserResponse.User.Name
-  }
-}
-```
-
-### 2. Data Migration
-
-Convert legacy formats to modern:
-
-```utlx
-// Legacy CSV → Modern JSON
-%utlx 1.0
-input csv { headers: true }
-output json
----
-{
-  records: $input.rows |> map(row => {
-    id: parseNumber(row.ID),
-    fullName: row.FirstName + " " + row.LastName,
-    email: lower(row.Email)
-  })
-}
-```
-
-### 3. ETL Pipelines
-
-Extract, transform, load workflows:
-
-```utlx
-// Extract from XML, aggregate, output to JSON
-%utlx 1.0
-input xml
-output json
----
-{
-  summary: {
-    totalOrders: count($input.Orders.Order),
-    totalRevenue: sum($input.Orders.Order.*.Total),
-    avgOrderValue: avg($input.Orders.Order.*.Total)
-  },
-  byRegion: $input.Orders.Order 
-    |> groupBy(o => o.Region)
-    |> map((region, orders) => {
-        region: region,
-        count: count(orders),
-        revenue: sum(orders.*.Total)
-      })
-}
-```
-
-### 4. Configuration Management
-
-Transform config files:
-
-```utlx
-// XML config → YAML config
-%utlx 1.0
-input xml
-output yaml
----
-{
-  application: {
-    name: $input.config.app.@name,
-    version: $input.config.app.@version,
-    settings: $input.config.settings.* |> map(s => {
-      key: s.@key,
-      value: s.text()
-    })
-  }
-}
-```
+See detailed comparisons: [vs XSLT](../comparison/vs-xslt.md) | [vs DataWeave](../comparison/vs-dataweave.md) | [vs jq](../comparison/vs-jq.md) | [vs JSONata](../comparison/vs-jsonata.md)
 
 ---
 
@@ -571,54 +330,16 @@ output yaml
 3. [Selectors](selectors.md)
 4. [Examples](../examples/)
 
-### Advanced
+### Reference
 
-1. [Templates](templates.md)
-2. [Language Specification](../reference/language-spec.md)
-3. [Architecture](../architecture/overview.md)
-4. [Custom Formats](../formats/custom-formats.md)
-
----
-
-## Community & Support
-
-- 💬 [Discussions](https://github.com/grauwen/utl-x/discussions) - Ask questions
-- 🐛 [Issues](https://github.com/grauwen/utl-x/issues) - Report bugs
-- 📧 [Email](mailto:community@glomidco.com) - Contact us
-- 🐦 [Twitter](https://twitter.com/UTLXLang) - Follow updates
-
----
-
-## Contributing
-
-UTL-X is open source! Contributions welcome:
-
-- 📝 Improve documentation
-- 🐛 Fix bugs
-- ✨ Add features
-- 💡 Suggest improvements
-
-See [Contributing Guide](../../CONTRIBUTING.md)
-
----
-
-## License
-
-UTL-X is dual-licensed:
-- **AGPL-3.0** - Open source use
-- **Commercial** - Proprietary use without AGPL obligations
-
-See [LICENSE.md](../../LICENSE.md)
+1. [Stdlib Reference (652 functions)](../stdlib/stdlib-complete-reference.md)
+2. [Comparison Guides](../comparison/)
 
 ---
 
 ## Next Steps
 
-Ready to dive deeper?
-
-- 📖 [Syntax Guide](syntax.md) - Detailed syntax reference
-- 🔧 [Functions](functions.md) - Built-in functions
-- 💡 [Examples](../examples/) - Practical examples
-- 📚 [Language Spec](../reference/language-spec.md) - Complete specification
-
-**Happy transforming!** 🚀
+- [Your First Transformation](../getting-started/your-first-transformation.md)
+- [Quick Reference](../getting-started/quick-reference.md)
+- [Examples](../examples/)
+- [Stdlib Reference](../stdlib/stdlib-complete-reference.md)

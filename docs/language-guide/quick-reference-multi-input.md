@@ -80,7 +80,7 @@ output json
   EnrichedData: $mainData.items |> map(item => {
     let lookup = $lookupData.Lookup.Item
       |> filter(l => l.@id == item.id)
-      |> first()
+      |> first(),
 
     {
       ...item,
@@ -220,7 +220,7 @@ let value = enrichment?.value ?? "DEFAULT"
 ```utlx
 {
   Results: $mainData.items |> map(item => {
-    let ref = $refData.refs |> filter(r => r.key == item.key) |> first()
+    let ref = $refData.refs |> filter(r => r.key == item.key) |> first(),
 
     {
       id: item.id,

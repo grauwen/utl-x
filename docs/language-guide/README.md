@@ -19,8 +19,7 @@ Welcome to the UTL-X Language Guide. This documentation covers all aspects of th
 
 ### Advanced Features
 
-- ⭐ [Multiple Inputs and Outputs](multiple-inputs-outputs.md) - **NEW: Combine data from multiple sources**
-- [Templates](templates.md) - Declarative transformation templates
+- [Multiple Inputs and Outputs](multiple-inputs-outputs.md) - Combine data from multiple sources
 
 ## Format Support
 
@@ -44,11 +43,9 @@ Welcome to the UTL-X Language Guide. This documentation covers all aspects of th
 - **Lambda Functions** - Anonymous functions
 - **XML, JSON, CSV, YAML** - All formats supported
 
-### 📋 Planned Features
+### Planned Features
 
 - **Multiple Named Outputs** - Syntax designed, implementation pending
-- **Template Matching** - XSLT-style pattern matching
-- **Pattern Matching** - Full match expressions
 - **Module System** - Import/export functionality
 - **Streaming Support** - Large file handling
 
@@ -151,9 +148,9 @@ output json
 
 | Feature | XSLT | UTL-X |
 |---------|------|-------|
-| Formats | XML only | XML, JSON, CSV, YAML |
+| Formats | XML only | XML, JSON, CSV, YAML, OData + 6 schema formats |
 | Syntax | XML-based | JSON-like |
-| Templates | ✅ Full support | 📋 Planned |
+| Stdlib | ~100 XPath functions | 652 functions |
 | Learning Curve | Steep | Moderate |
 
 ## Documentation Organization
@@ -168,9 +165,8 @@ docs/
 │   ├── functions.md
 │   ├── control-flow.md
 │   ├── selectors.md
-│   ├── templates.md
-│   ├── multiple-inputs-outputs.md ⭐ NEW
-│   └── quick-reference-multi-$input.md ⭐ NEW
+│   ├── multiple-inputs-outputs.md
+│   └── quick-reference-multi-input.md
 ├── formats/
 │   ├── xml.md
 │   ├── json.md
@@ -198,18 +194,13 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines on:
 - Submitting pull requests
 - Writing documentation
 
-## Release Notes
-
-- [Multiple Inputs Release (v0.2.0)](../RELEASE-NOTES-MULTI-INPUT.md) - 2025-10-21
-
 ## See Also
 
-- [Project Overview (CLAUDE.md)](../../CLAUDE.md)
-- [UDM Documentation](../udm/udm_documentation_index.md)
-- [Function Reference](../../stdlib/README.md)
+- [Stdlib Reference (652 functions)](../stdlib/stdlib-complete-reference.md)
+- [Examples](../examples/)
+- [Comparison Guides](../comparison/)
 
 ---
 
-**Last Updated:** 2025-10-21
-**UTL-X Version:** v0.2.0
+**UTL-X Version:** 1.0.0
 **License:** AGPL-3.0 / Commercial Dual-License

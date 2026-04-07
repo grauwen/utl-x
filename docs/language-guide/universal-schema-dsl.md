@@ -365,9 +365,9 @@ This USDL will serialize back to:
 input json
 output json
 ---
-let schema = parseXSDSchema($input.xsdSchema)
-let stats = schema["%xsdPatternStats"]
-let pattern = schema["%xsdPattern"]
+let schema = parseXSDSchema($input.xsdSchema),
+let stats = schema["%xsdPatternStats"],
+let pattern = schema["%xsdPattern"],
 {
   detectedPattern: pattern,
   globalElements: stats["globalElements"],

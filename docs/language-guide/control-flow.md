@@ -29,15 +29,13 @@ else
 
 ### Multi-Line If-Else
 
-Use braces for multiple expressions:
+Use let bindings before the if expression, then reference them in the branches:
 
 ```utlx
-if (condition) {
-  let x = calculate()
-  let y = transform(x)
-  y
-} else {
-  defaultValue
+{
+  let x = calculate(),
+  let y = transform(x),
+  result: if (condition) y else defaultValue
 }
 ```
 
@@ -158,7 +156,7 @@ match $input.order {
 }
 ```
 
-### Destructuring in Patterns (v1.1+)
+### Destructuring in Patterns (Future)
 
 ```utlx
 match $input.customer {
@@ -303,7 +301,7 @@ try {
 ```utlx
 {
   result: try {
-    let value = parseNumber($input.value)
+    let value = parseNumber($input.value),
     value * 2
   } catch (e) {
     {
@@ -416,7 +414,7 @@ Include fields conditionally:
 }
 ```
 
-Or using the spread operator (v1.1+):
+Or using the spread operator:
 
 ```utlx
 {

@@ -278,7 +278,7 @@ let key = "name"
 customer[key]
 ```
 
-## Spread Operator (...) (v1.1+)
+## Spread Operator (...)
 
 ### Array Spread
 

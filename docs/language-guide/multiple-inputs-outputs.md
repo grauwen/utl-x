@@ -185,8 +185,8 @@ output xml {encoding: "UTF-8"}
 {
   IntegratedCatalog: {
     Products: $sap.Materials.Material |> map(material => {
-      let sku = material.Number
-      let priceData = $pricing.prices |> filter(p => p.sku == sku) |> first()
+      let sku = material.Number,
+      let priceData = $pricing.prices |> filter(p => p.sku == sku) |> first(),
 
       Product: {
         SKU: sku,
@@ -238,7 +238,7 @@ output json
   Customers: $crm.customers |> map(customer => {
     let erpData = $erp.Customers.Customer
       |> filter(c => c.@id == customer.id)
-      |> first()
+      |> first(),
 
     {
       id: customer.id,
@@ -373,7 +373,7 @@ output xml {encoding: "UTF-8"}
   Products: $sapMaterials.Materials.Material |> map(material => {
     let priceData = $restPricing.prices
       |> filter(p => p.sku == material.Number)
-      |> first()
+      |> first(),
 
     Product: {
       SKU: material.Number,
@@ -416,10 +416,10 @@ output xml {encoding: "UTF-8"}  # Normalize to UTF-8
 ```utlx
 {
   Orders: $orders.Orders.Order |> map(order => {
-    let customerId = order.CustomerID
+    let customerId = order.CustomerID,
     let customerData = $customers.Customers.Customer
       |> filter(c => c.@id == customerId)
-      |> first()
+      |> first(),
 
     Order: {
       OrderID: order.@id,
@@ -437,7 +437,7 @@ output xml {encoding: "UTF-8"}  # Normalize to UTF-8
   Results: $input1.data |> map(item => {
     let enrichment = $input2.lookup
       |> filter(e => e.key == item.id)
-      |> first()
+      |> first(),
 
     if (enrichment != null) {
       {

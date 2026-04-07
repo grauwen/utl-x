@@ -516,7 +516,7 @@ function greet(name: String): String {
 ```utlx
 function calculateTotal(price: Number, quantity: Number, taxRate: Number): Number {
   let subtotal = price * quantity,
-  let tax = subtotal * taxRate
+  let tax = subtotal * taxRate,
   
   subtotal + tax
 }
@@ -605,7 +605,7 @@ let result = $input.items
   |> take(5)
 ```
 
-### Compose Function (v1.1+)
+### Compose Function (Future)
 
 ```utlx
 let processItems = compose(
@@ -645,7 +645,7 @@ function sum(numbers: Array<Number>, acc: Number): Number {
 }
 ```
 
-## Partial Application (v1.1+)
+## Partial Application (Future)
 
 Create functions with pre-filled arguments:
 
@@ -658,7 +658,7 @@ let add5 = partial(add, 5)
 add5(10)  // 15
 ```
 
-## Default Parameters (v1.1+)
+## Default Parameters (Future)
 
 ```utlx
 function greet(name: String, greeting: String = "Hello"): String {
@@ -669,7 +669,7 @@ greet("Alice")              // "Hello, Alice"
 greet("Bob", "Hi")          // "Hi, Bob"
 ```
 
-## Rest Parameters (v1.2+)
+## Rest Parameters (Future)
 
 ```utlx
 function sum(...numbers: Number): Number {
