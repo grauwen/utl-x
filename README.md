@@ -521,9 +521,8 @@ input.customer?.address?.city ?? "Unknown"
 
 - 📖 **[Getting Started Guide](docs/getting-started/installation.md)** - Installation and basics
 - 📚 **[Language Guide](docs/language-guide/overview.md)** - Complete language reference
-- 💡 **[Examples](docs/examples/)** - Real-world transformation examples
-- 🔧 **[API Reference](docs/reference/api-reference.md)** - JVM, JavaScript, Native APIs
-- 🏗️ **[Architecture](docs/architecture/overview.md)** - How UTL-X works internally
+- 💡 **[Examples](docs/examples/README.md)** - Real-world transformation examples
+- 📊 **[Stdlib Reference](docs/stdlib/stdlib-complete-reference.md)** - All 652 functions
 
 ## Community & Support
 
