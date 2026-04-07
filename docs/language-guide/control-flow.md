@@ -316,7 +316,7 @@ try {
   riskyOperation()
 } catch (e) {
   {
-    error: e.message,
+    error: e,
     default: fallbackValue
   }
 }
@@ -332,7 +332,7 @@ try {
   } catch (e) {
     {
       success: false,
-      error: e.message,
+      error: e,
       input: $input.value
     }
   }
