@@ -1,6 +1,31 @@
 # Functions
 
-Functions are reusable blocks of code that perform specific tasks.
+UTL-X has two kinds of functions:
+
+| | Stdlib Functions | User-Defined Functions |
+|--|-----------------|----------------------|
+| **Naming** | lowercase/camelCase | **PascalCase (required)** |
+| **Examples** | `sum`, `map`, `filter`, `parseNumber`, `formatDate` | `CalculateTax`, `FormatName`, `ProcessOrder` |
+| **Count** | 652 built-in | Unlimited |
+| **Availability** | Always available, no import needed | Defined in your `.utlx` script |
+
+**Rule:** User-defined functions must start with an uppercase letter. Lowercase names are reserved for the 652 stdlib functions.
+
+```utlx
+// Stdlib (lowercase) — built-in, always available
+sum([1, 2, 3])
+upper("hello")
+formatDate(now(), "yyyy-MM-dd")
+
+// User-defined (PascalCase) — you write these
+function CalculateTotal(price: Number, qty: Number): Number {
+  price * qty
+}
+```
+
+See the [Stdlib Reference](../stdlib/stdlib-complete-reference.md) for all 652 built-in functions.
+
+---
 
 ## Built-in Functions
 
@@ -490,31 +515,47 @@ merge({a: 1, b: 2}, {b: 3, c: 4}) // {a: 1, b: 3, c: 4}
 
 ## User-Defined Functions
 
-### Function Declaration
+### Naming Convention: PascalCase Required
+
+User-defined functions **must** start with an uppercase letter (PascalCase). This prevents collisions with the 652 stdlib functions, which all use lowercase/camelCase.
 
 ```utlx
-function name(param1: Type1, param2: Type2): ReturnType {
-  // Function body
-  // Last expression is returned
-}
-```
-
-**Example:**
-
-```utlx
-function double(n: Number): Number {
+// ✅ CORRECT - user functions start with uppercase
+function Double(n: Number): Number {
   n * 2
 }
 
-function greet(name: String): String {
-  "Hello, " + name
+function CalculateTax(amount: Number, rate: Number): Number {
+  amount * rate
+}
+
+function FormatName(first: String, last: String): String {
+  upper(first) + " " + upper(last)
+}
+
+// ❌ WRONG - lowercase is reserved for stdlib
+function double(n: Number): Number {  // ERROR: conflicts with stdlib
+  n * 2
+}
+```
+
+**Why PascalCase?**
+- All stdlib functions use lowercase/camelCase (`sum`, `map`, `filter`, `parseNumber`, etc.)
+- Uppercase makes it immediately clear which functions are user-defined
+- Prevents name collisions as the stdlib grows
+
+### Function Declaration
+
+```utlx
+function Name(param1: Type1, param2: Type2): ReturnType {
+  // Function body - last expression is returned
 }
 ```
 
 ### Multiple Statements
 
 ```utlx
-function calculateTotal(price: Number, quantity: Number, taxRate: Number): Number {
+function CalculateTotal(price: Number, quantity: Number, taxRate: Number): Number {
   let subtotal = price * quantity,
   let tax = subtotal * taxRate,
   
@@ -525,7 +566,7 @@ function calculateTotal(price: Number, quantity: Number, taxRate: Number): Numbe
 ### Early Return
 
 ```utlx
-function divide(x: Number, y: Number): Number {
+function Divide(x: Number, y: Number): Number {
   if (y == 0) {
     return 0  // Early return
   }
@@ -568,11 +609,11 @@ n => n * 2       // Parentheses optional for single param
 Functions that take or return functions:
 
 ```utlx
-function apply(fn: (Number) => Number, value: Number): Number {
+function Apply(fn: (Number) => Number, value: Number): Number {
   fn(value)
 }
 
-let result = apply(n => n * 2, 5)  // 10
+let result = Apply(n => n * 2, 5)  // 10
 ```
 
 ### Closures
@@ -580,12 +621,12 @@ let result = apply(n => n * 2, 5)  // 10
 Functions can capture variables from outer scope:
 
 ```utlx
-function makeMultiplier(factor: Number): (Number) => Number {
+function MakeMultiplier(factor: Number): (Number) => Number {
   (n) => n * factor  // Captures 'factor'
 }
 
-let double = makeMultiplier(2)
-let triple = makeMultiplier(3)
+let double = MakeMultiplier(2)
+let triple = MakeMultiplier(3)
 
 double(5)  // 10
 triple(5)  // 15
@@ -622,7 +663,7 @@ processItems($input.items)
 Functions can call themselves:
 
 ```utlx
-function factorial(n: Number): Number {
+function Factorial(n: Number): Number {
   if (n <= 1)
     1
   else
@@ -650,11 +691,11 @@ function sum(numbers: Array<Number>, acc: Number): Number {
 Create functions with pre-filled arguments:
 
 ```utlx
-function add(x: Number, y: Number): Number {
+function Add(x: Number, y: Number): Number {
   x + y
 }
 
-let add5 = partial(add, 5)
+let add5 = partial(Add, 5)
 add5(10)  // 15
 ```
 
@@ -672,7 +713,7 @@ greet("Bob", "Hi")          // "Hi, Bob"
 ## Rest Parameters (Future)
 
 ```utlx
-function sum(...numbers: Number): Number {
+function Sum(...numbers: Number): Number {
   reduce(numbers, (acc, n) => acc + n, 0)
 }
 
@@ -684,7 +725,7 @@ sum(1, 2, 3, 4)             // 10
 ### Transform Array of Objects
 
 ```utlx
-function transformOrders(orders: Array<Object>): Array<Object> {
+function TransformOrders(orders: Array<Object>): Array<Object> {
   orders |> map(order => {
     id: order.id,
     total: sum(order.items.*.price),
@@ -696,7 +737,7 @@ function transformOrders(orders: Array<Object>): Array<Object> {
 ### Calculate Discounts
 
 ```utlx
-function calculateDiscount(total: Number, customerType: String): Number {
+function CalculateDiscount(total: Number, customerType: String): Number {
   if (customerType == "VIP")
     total * 0.20
   else if (customerType == "Premium")
@@ -711,7 +752,7 @@ function calculateDiscount(total: Number, customerType: String): Number {
 ### Format Currency
 
 ```utlx
-function formatCurrency(amount: Number, currency: String): String {
+function FormatCurrency(amount: Number, currency: String): String {
   let formatted = toString(round(amount * 100) / 100)
   currency + " " + formatted
 }
@@ -722,7 +763,7 @@ formatCurrency(29.99, "USD")  // "USD 29.99"
 ### Validate Email
 
 ```utlx
-function isValidEmail(email: String): Boolean {
+function IsValidEmail(email: String): Boolean {
   matches(email, "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 }
 ```
@@ -732,12 +773,12 @@ function isValidEmail(email: String): Boolean {
 ### 1. Use Type Annotations
 
 ```utlx
-// ✅ Good
-function calculateTax(amount: Number, rate: Number): Number {
+// ✅ Good - PascalCase, typed parameters
+function CalculateTax(amount: Number, rate: Number): Number {
   amount * rate
 }
 
-// ❌ Bad
+// ❌ Bad - lowercase name, no types
 function calculateTax(amount, rate) {
   amount * rate
 }
@@ -747,16 +788,16 @@ function calculateTax(amount, rate) {
 
 ```utlx
 // ✅ Good - single responsibility
-function calculateSubtotal(items: Array<Object>): Number {
+function CalculateSubtotal(items: Array<Object>): Number {
   sum(items.*.price)
 }
 
-function calculateTax(subtotal: Number): Number {
+function CalculateTax(subtotal: Number): Number {
   subtotal * 0.08
 }
 
 // ❌ Bad - doing too much
-function processOrder(order: Object): Object {
+function ProcessOrder(order: Object): Object {
   // 100 lines...
 }
 ```
@@ -765,16 +806,16 @@ function processOrder(order: Object): Object {
 
 ```utlx
 // ✅ Good
-function calculateShippingCost(weight: Number, distance: Number): Number { ... }
+function CalculateShippingCost(weight: Number, distance: Number): Number { ... }
 
 // ❌ Bad
-function calc(w: Number, d: Number): Number { ... }
+function Calc(w: Number, d: Number): Number { ... }
 ```
 
 ### 4. Handle Edge Cases
 
 ```utlx
-function divide(x: Number, y: Number): Number {
+function Divide(x: Number, y: Number): Number {
   if (y == 0) {
     return 0  // Or throw error
   }
@@ -786,13 +827,13 @@ function divide(x: Number, y: Number): Number {
 
 ```utlx
 // ✅ Good - pure (same input = same output)
-function add(x: Number, y: Number): Number {
+function Add(x: Number, y: Number): Number {
   x + y
 }
 
 // ❌ Bad - impure (depends on external state)
 let counter = 0
-function increment(): Number {
+function Increment(): Number {
   counter = counter + 1
   counter
 }
