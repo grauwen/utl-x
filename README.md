@@ -10,7 +10,7 @@
 
 UTL-X is a modern data transformation language that works with message data formats: XML, JSON, CSV, YAML, OData. Write your transformation logic once, and apply it to any supported format. 
 
-UTL-X also supports meta data transformation across schema formats: XSD, JSCH (JSON Schema), Avro, Protobuf, OSCH (OData/EDMX), and TSCH ([Frictionless Table Schema](https://specs.frictionlessdata.io/table-schema/)).
+UTL-X also supports meta data transformation across schema formats: XSD, JSCH (JSON Schema), Avro, Protobuf, OSCH (OData/EDMX), and TSCH (Frictionless Table Schema).
 
 ## Why UTL-X?
 
