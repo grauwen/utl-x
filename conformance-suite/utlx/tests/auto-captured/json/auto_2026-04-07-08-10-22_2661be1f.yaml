@@ -1,0 +1,33 @@
+name: "auto_2026-04-07-08-10-22_2661be1f"
+category: "json"
+description: "Auto-captured test for transformation"
+tags: ["auto-generated"]
+auto_generated: true
+captured_at: "2026-04-07T06:10:22.550401Z"
+
+input:
+  format: json
+  data: "<data><value>42</value></data>"
+
+transformation: |
+  %utlx 1.0
+  input auto
+  output json
+  ---
+  { value: input.data.value }
+
+expected:
+  format: json
+  data: |
+    {
+      "value": 42
+    }
+
+performance_limits:
+  max_duration_ms: 0
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2026-04-07"
+  references: ["Auto-generated test case"]

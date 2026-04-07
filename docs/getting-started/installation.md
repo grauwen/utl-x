@@ -116,11 +116,11 @@ utlx.bat --version
 
 **Output:**
 ```
-UTL-X CLI v1.0.0-SNAPSHOT
+UTL-X CLI v0.9.0
 Universal Transformation Language Extended
 ```
 
-The wrapper scripts (`utlx`, `utlx.bat`, `utlx.ps1`) automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar`.
+The wrapper scripts (`utlx`, `utlx.bat`, `utlx.ps1`) automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-0.9.0.jar`.
 
 ---
 

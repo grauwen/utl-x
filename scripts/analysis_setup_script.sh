@@ -43,7 +43,7 @@ plugins {
 }
 
 group = "org.apache.utlx"
-version = "1.0.0-SNAPSHOT"
+version = "0.9.0"
 
 repositories {
     mavenCentral()

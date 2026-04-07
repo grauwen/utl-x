@@ -11,7 +11,7 @@ import kotlin.system.exitProcess
  * A practical CLI for transforming data between formats using UTL-X transformations.
  */
 object Main {
-    private const val VERSION = "1.0.0-SNAPSHOT"
+    private const val VERSION = "0.9.0"
     
     @JvmStatic
     fun main(args: Array<String>) {

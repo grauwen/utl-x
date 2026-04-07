@@ -1,0 +1,53 @@
+name: "auto_2026-04-07-08-10-22_f5a37be7"
+category: "json"
+description: "Auto-captured test for map"
+tags: ["auto-generated", "map", "map"]
+auto_generated: true
+captured_at: "2026-04-07T06:10:22.544017Z"
+
+input:
+  format: json
+  data: |
+    Name,Age,City
+    Alice,25,New York
+    Bob,30,San Francisco
+
+transformation: |
+  %utlx 1.0
+  input csv
+  output json
+  ---
+  {
+    people: input |> map(row => {
+      name: row.Name,
+      age: row.Age,
+      city: row.City
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "people": [
+        {
+          "name": "Alice",
+          "age": 25,
+          "city": "New York"
+        },
+        {
+          "name": "Bob",
+          "age": 30,
+          "city": "San Francisco"
+        }
+      ]
+    }
+
+performance_limits:
+  max_duration_ms: 10
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2026-04-07"
+  references: ["Auto-generated test case"]

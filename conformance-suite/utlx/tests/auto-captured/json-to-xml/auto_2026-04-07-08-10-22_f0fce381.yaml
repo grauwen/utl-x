@@ -1,0 +1,46 @@
+name: "auto_2026-04-07-08-10-22_f0fce381"
+category: "json-to-xml"
+description: "Auto-captured test for transformation"
+tags: ["auto-generated"]
+auto_generated: true
+captured_at: "2026-04-07T06:10:22.523707Z"
+
+input:
+  format: json
+  data: |
+    {
+      "order": {
+        "id": "ORD-001",
+        "customer": "Alice"
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    Order: {
+      @id: input.order.id,
+      Customer: input.order.customer
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Order id="ORD-001">
+      <Customer>Alice</Customer>
+    </Order>
+    
+
+performance_limits:
+  max_duration_ms: 168
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Auto-Capture"
+  captured_date: "2026-04-07"
+  references: ["Auto-generated test case"]

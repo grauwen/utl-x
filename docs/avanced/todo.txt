@@ -123,7 +123,7 @@ Dropdown <list> when an argument is given in an UTLX. (more LSP like capability)
 ----
 
 .gitnore exclude the build jars going into the GIT repo. utlx is a script calling the jar which is not checkin. Keep till a release version?
-JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
+JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-0.9.0.jar"
 -----
 CLI: Documentation: https://utlx-lang.org/docs -> URL is not registered. Change to ....
 -----

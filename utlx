@@ -2,7 +2,7 @@
 
 # UTL-X CLI wrapper script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
+JAR_PATH="$SCRIPT_DIR/modules/cli/build/libs/cli-0.9.0.jar"
 
 if [ ! -f "$JAR_PATH" ]; then
     echo "Error: UTL-X CLI JAR not found at $JAR_PATH"

@@ -3,7 +3,7 @@
 **An open-source, format-agnostic functional transformation language for data transformation.**
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.9.0--beta-orange)](https://github.com/grauwen/utl-x/releases)
+[![Version](https://img.shields.io/badge/version-0.9.0-green)](https://github.com/grauwen/utl-x/releases)
 [![Documentation](https://img.shields.io/badge/docs-utlx.dev-brightgreen)](https://utl-x.org/docs)
 
 ## Overview
@@ -249,7 +249,7 @@ Download from [GitHub Releases](https://github.com/grauwen/utl-x/releases)
 ### Verify Installation
 ```bash
 utlx --version
-# UTL-X version 0.9.0 (beta)
+# UTL-X version 0.9.0
 ```
 
 ### Building from Source
@@ -294,7 +294,7 @@ utlx.bat transform script.utlx input.xml
 .\utlx.ps1 transform script.utlx input.xml
 ```
 
-The wrapper scripts automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar`.
+The wrapper scripts automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-0.9.0.jar`.
 
 ## Quick Start
 
