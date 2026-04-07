@@ -550,30 +550,25 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 **Current Version**: 1.0.0
 
-See our [Roadmap](docs/community/roadmap.md) for planned features.
+### What's in 1.0.0
 
-### Stability
+- **UTL-X CLI** (`utlx`) — format-agnostic transformation engine with 652 stdlib functions
+- Identity mode: instant format conversion (`cat data.xml | utlx`)
+- **Tier 1 — Data formats:** XML, JSON, CSV, YAML, OData
+- **Tier 2 — Schema/metadata formats:** XSD, JSCH (JSON Schema), Avro, Protobuf, OSCH (OData/EDMX), TSCH (Table Schema)
+- Multi-input transformations across different formats
+- Strong type system with compile-time checking
+- GraalVM native binary support
 
-- ✅ Core UTLX 1.0 - Uniform Transformation Language Extended: **Stable**
-- ✅ UDM - Universal Data Model: **Stable**
-- ✅ USDL 1.0 - Uniform Schema Definition Language: **Stable**
-- ✅ XML support: **Stable**
-- ✅ JSON support: **Stable**
-- ✅ CSV support: **Stable**
-- ✅ YAML support: **Stable**
-- ✅ XSD support: **Stable**
-- ✅ JSCH (JSON Schema) support: **Stable**
-- ✅ Avro schema support: **Stable**
-- ✅ Protobuf schema (proto3) support: **Stable**
-- ✅ OData JSON support: **Stable**
-- ✅ OSCH (OData/EDMX metadata) support: **Stable**
-- ✅ TSCH (Table Schema) support: **Stable**
-- ✅ utlx CLI **Stable**
-- 🚧 JVM runtime (2 variants): **In Development** 
-- 🚧 JavaScript runtime: **In Development** 
-- 🚧 Native runtime: **In Development** 
-- 🚧 WASM runtime: **In Development** 
-- 🚧 VS-code plugin: **In Development** 
+### Roadmap
+
+| Component | Description | Status |
+|-----------|-------------|--------|
+| **UTL-X CLI** (`utlx`) | Transformation engine, format conversion, REPL, 652 stdlib functions | **1.0.0 Released** |
+| **UTL-X Engine** (`utlxe`) | Pipeline orchestration for multi-step transformations and bundle execution | In Development |
+| **UTL-X IDE Support** (`utlxd`) | Language Server Protocol daemon for VS Code and IDE integration | In Development |
+| **JavaScript Runtime** | Browser/Node.js runtime (~75% stdlib coverage, all major formats) | Future |
+| **.NET Runtime** | C#/.NET runtime for Microsoft ecosystem integration | Future |
 
 
 ## License
@@ -630,4 +625,4 @@ If you find UTL-X useful, please consider starring the repository! ⭐
 
 **Made with ❤️ by the UTL-X community**
 
-[Website](https://utl-x.dev) • [Documentation](https://utl-x.dev/docs) • [GitHub](https://github.com/grauwen/utl-x) • [Discord](https://discord.gg/utlx)
+[Website](https://utl-x.dev) • [Documentation](https://utl-x.dev/docs) • [GitHub](https://github.com/grauwen/utl-x) 
