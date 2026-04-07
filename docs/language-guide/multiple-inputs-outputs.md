@@ -333,7 +333,7 @@ output xml
 ### UTL-X Advantages
 
 ✅ **Cleaner comma-separated syntax** for compact declarations
-✅ **Consistent `@` prefix** for all inputs
+✅ **Consistent `$` prefix** for all inputs (e.g., `$orders`, `$customers`)
 ✅ **Per-input format options** inline
 ✅ **Backward compatible** with single input/output scripts
 ✅ **Same functional purity as DataWeave** (no file I/O, single output)
