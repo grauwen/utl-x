@@ -597,7 +597,9 @@ We chose AGPL-3.0 to ensure UTL-X remains truly open source:
 ## Project Leadership
 
 **Concept Originator & Project Lead**  
-Ir. Marcel A. Grauwen - [@grauwen](https://github.com/grauwen)
+Ir. Marcel A. Grauwen 
+- [@grauwen](https://github.com/grauwen)
+- Linkedin: https://www.linkedin.com/in/marcelgrauwen/
 
 ## Acknowledgments
 
