@@ -8,13 +8,13 @@
 
 ## Overview
 
-UTL-X is a modern data transformation language - %UTLX 1.0 - that works with message data formats: XML, JSON, CSV, YAML. Write your transformation logic once, and apply it to any supported format. 
+UTL-X is a modern data transformation language that works with message data formats: XML, JSON, CSV, YAML, OData. Write your transformation logic once, and apply it to any supported format. 
 
-Next UTL-X is a modern meta data transformation language - %UTLX 1.0 + %USDL 1.0 - that work with message meta data formats: XSD, JSCH (JSON Schema), AVRO, PROTO(BUF).
+UTL-X also supports meta data transformation across schema formats: XSD, JSCH (JSON Schema), Avro, Protobuf, OSCH (OData/EDMX), and TSCH ([Frictionless Table Schema](https://specs.frictionlessdata.io/table-schema/)).
 
 ## Why UTL-X?
 
-- 🔄 **Format Agnostic** - One transformation works with XML, JSON, CSV, YAML
+- 🔄 **Format Agnostic** - One transformation works with XML, JSON, CSV, YAML, OData
 - 🎯 **Functional & Declarative** - Clean, maintainable transformation logic
 - 💪 **Strongly Typed** - Catch errors at compile time
 - ⚡ **High Performance** - Optimized compilation and execution
@@ -430,7 +430,7 @@ function calculateTax(amount: Number, rate: Number): Number {
 | **Message Transformation** | Transform messages between different systems |
 | **Configuration Management** | Convert between config formats (XML ↔ JSON ↔ YAML) |
 | **Report Generation** | Transform data into report formats |
-| **Schema transformation** | Transform schemas between XSD, JSON Schema, Avro, Protobuf |
+| **Schema transformation** | Transform schemas between XSD, JSCH (JSON Schema), Avro, Protobuf, OSCH (OData/EDMX), TSCH (Table Schema) |
 
 ## Comparison
 
@@ -448,7 +448,7 @@ function calculateTax(amount: Number, rate: Number): Number {
 
 ### vs Custom Code
 - ✅ **Declarative** - describe what, not how
-- ✅ **Built-in parsers** for XML, JSON, CSV, YAML
+- ✅ **Built-in parsers** for XML, JSON, CSV, YAML, OData
 - ✅ **Type-safe** transformations
 - ✅ **Optimized** performance
 
@@ -548,8 +548,7 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 ## Project Status
 
-**Current Version**: 1.0.0  
-**Target v1.0**: December 2025
+**Current Version**: 1.0.0
 
 See our [Roadmap](docs/community/roadmap.md) for planned features.
 
@@ -563,9 +562,12 @@ See our [Roadmap](docs/community/roadmap.md) for planned features.
 - ✅ CSV support: **Stable**
 - ✅ YAML support: **Stable**
 - ✅ XSD support: **Stable**
-- ✅ JSCH (JSON schema) support: **Stable**
+- ✅ JSCH (JSON Schema) support: **Stable**
 - ✅ Avro schema support: **Stable**
 - ✅ Protobuf schema (proto3) support: **Stable**
+- ✅ OData JSON support: **Stable**
+- ✅ OSCH (OData/EDMX metadata) support: **Stable**
+- ✅ TSCH (Table Schema) support: **Stable**
 - ✅ utlx CLI **Stable**
 - 🚧 JVM runtime (2 variants): **In Development** 
 - 🚧 JavaScript runtime: **In Development** 
