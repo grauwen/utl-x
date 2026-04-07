@@ -278,7 +278,7 @@ output json
 
 ---
 
-## Example 5: Template Matching
+## Example 5: Nested Structure with Functions
 
 ### Input XML
 
@@ -310,24 +310,19 @@ output json
 input xml
 output json
 ---
-
-template match="Library" {
+{
   library: {
-    books: apply(Book)
+    books: $input.Library.Book |> map(book => {
+      isbn: book.@isbn,
+      year: parseNumber(book.@year),
+      title: book.Title,
+      author: {
+        name: book.Author.Name,
+        country: book.Author.Country
+      },
+      price: parseNumber(book.Price)
+    })
   }
-}
-
-template match="Book" {
-  isbn: $isbn,
-  year: parseNumber($year),
-  title: Title,
-  author: apply(Author),
-  price: parseNumber(Price)
-}
-
-template match="Author" {
-  name: Name,
-  country: Country
 }
 ```
 
