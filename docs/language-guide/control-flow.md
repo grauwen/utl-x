@@ -29,8 +29,9 @@ else
 
 ### Multi-Line If-Else
 
-Use let bindings before the if expression, then reference them in the branches:
+There are three patterns for using let bindings with if-else:
 
+**Pattern 1: Let bindings before the if (simplest)**
 ```utlx
 {
   let x = calculate(),
@@ -38,6 +39,31 @@ Use let bindings before the if expression, then reference them in the branches:
   result: if (condition) y else defaultValue
 }
 ```
+
+**Pattern 2: Let-in expressions inside branches (scoped)**
+```utlx
+{
+  result: if (condition)
+            (let x = calculate() in let y = transform(x) in y)
+          else
+            defaultValue
+}
+```
+
+**Pattern 3: Object literal branches (when you need to return an object)**
+```utlx
+{
+  result: if (condition) {
+    let x = calculate(),
+    let y = transform(x),
+    answer: y
+  } else {
+    answer: defaultValue
+  }
+}
+```
+
+Note: In UTL-X, `{}` is always an object literal, not a code block. To return a bare value from a let binding inside an if branch, use the `let ... in` syntax (Pattern 2).
 
 ### Else-If Chains
 
