@@ -32,7 +32,7 @@ class YAMLSerializer {
         val indent: Int = 2,
         val defaultFlowStyle: DumperOptions.FlowStyle = DumperOptions.FlowStyle.BLOCK,
         val lineBreak: DumperOptions.LineBreak = DumperOptions.LineBreak.UNIX,
-        val explicitStart: Boolean = true,
+        val explicitStart: Boolean = false,
         val explicitEnd: Boolean = false,
         val canonicalOutput: Boolean = false,
         val allowUnicode: Boolean = true,
