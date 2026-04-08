@@ -26,13 +26,13 @@ import {
 } from '@theia/core/lib/common';
 import { KeybindingContribution, KeybindingRegistry } from '@theia/core/lib/browser';
 import { MessageService } from '@theia/core';
-import { UTLXCommands, UTLXService, UTLX_SERVICE_SYMBOL, UTLXMode } from '../common/protocol';
+import { UTLXCommands, UTLXService, UTLX_SERVICE_SYMBOL, UTLXMode, InputDocument, DataFormat } from '../common/protocol';
 import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { UTLXEventService } from './events/utlx-event-service';
-import { inferSchemaFromJson, inferSchemaFromXml, inferEdmxFromOData, inferTableSchemaFromCsv, formatSchema } from './utils/schema-inferrer';
+import { inferSchemaFromJson, inferSchemaFromYaml, inferSchemaFromXml, inferEdmxFromOData, inferTableSchemaFromCsv, formatSchema } from './utils/schema-inferrer';
 import { generateScaffoldFromStructure } from './utils/scaffold-generator';
 import { compareSchemas } from './utils/schema-comparator';
 import {
@@ -1214,8 +1214,8 @@ export class UTLXFrontendContribution implements
                 this.messageService.info('Inferring schema from instance output...');
 
                 try {
-                    if (instanceData.format === 'json' || instanceData.format === 'yaml') {
-                        // Infer JSON Schema from JSON/YAML
+                    if (instanceData.format === 'json') {
+                        // Infer JSON Schema from JSON
                         const schema = inferSchemaFromJson(instanceData.content);
                         const schemaString = formatSchema(schema);
 
@@ -1225,7 +1225,20 @@ export class UTLXFrontendContribution implements
                             schemaFormat: 'jsch'
                         });
 
-                        this.messageService.info('JSON Schema inferred from instance output');
+                        this.messageService.info('JSON Schema inferred from JSON instance');
+                        return;
+                    } else if (instanceData.format === 'yaml') {
+                        // Infer JSON Schema from YAML (parsed client-side)
+                        const schema = inferSchemaFromYaml(instanceData.content);
+                        const schemaString = formatSchema(schema);
+
+                        outputPanel.displaySchemaResult({
+                            success: true,
+                            schema: schemaString,
+                            schemaFormat: 'jsch'
+                        });
+
+                        this.messageService.info('JSON Schema inferred from YAML instance');
                         return;
                     } else if (instanceData.format === 'xml') {
                         // Infer XSD from XML

@@ -1,8 +1,9 @@
 /**
  * Schema Inferrer - Generates JSON Schema from instance data
  *
- * Analyzes JSON/XML instance documents and generates corresponding schemas.
+ * Analyzes JSON/XML/YAML instance documents and generates corresponding schemas.
  */
+import * as jsyaml from 'js-yaml';
 
 export interface InferredSchema {
     $schema: string;
@@ -213,6 +214,18 @@ export function inferSchemaFromJson(jsonString: string): InferredSchema {
         return inferJsonSchema(parsed, 'Inferred from instance document');
     } catch (error) {
         throw new Error(`Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+/**
+ * Infer JSON Schema from a YAML instance document
+ */
+export function inferSchemaFromYaml(yamlString: string): InferredSchema {
+    try {
+        const parsed = jsyaml.load(yamlString);
+        return inferJsonSchema(parsed, 'Inferred from YAML instance document');
+    } catch (error) {
+        throw new Error(`Failed to parse YAML: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
