@@ -19,7 +19,7 @@ UTL-X also supports meta data transformation across schema formats: XSD, JSCH (J
 - 💪 **Strongly Typed** - Catch errors at compile time
 - ⚡ **High Performance** - Optimized compilation and execution
 - 🔓 **Open Source** - AGPL-3.0, truly free and community-driven
-- 🚀 **Multiple Runtimes** - JVM, JavaScript, Native
+- 🚀 **Multiple Runtimes** - JVM and GraalVM native binary
 
 ## Quick Example
 
@@ -436,7 +436,7 @@ function calculateTax(amount: Number, rate: Number): Number {
 - ✅ Works with **multiple formats**, not just XML
 - ✅ **Modern syntax** - more concise and readable
 - ✅ **Functional programming** features (map, filter, reduce)
-- ✅ **Multiple runtimes** (JVM, JavaScript, Native)
+- ✅ **Multiple runtimes** (JVM and GraalVM native binary)
 
 ### vs DataWeave
 - ✅ **Open source** (AGPL-3.0) - no vendor lock-in
@@ -526,8 +526,6 @@ input.customer?.address?.city ?? "Unknown"
 
 - 💬 **[GitHub Discussions](https://github.com/grauwen/utl-x/discussions)** - Ask questions, share ideas
 - 🐛 **[Issue Tracker](https://github.com/grauwen/utl-x/issues)** - Report bugs, request features
-- 💼 **[Stack Overflow](https://stackoverflow.com/questions/tagged/utl-x)** - Tag: `utl-x`
-- 💭 **[Discord Server](https://discord.gg/utlx)** - Real-time community chat
 - 📧 **Email**: [support@utl-x.dev](mailto:support@utl-x.dev)
 
 ## Contributing
