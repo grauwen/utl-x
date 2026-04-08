@@ -224,77 +224,75 @@ output json
 
 ## Installation
 
-You need to follow the installation manual and build the project yourself for now. See section Building from Source.
+### macOS (Homebrew)
 
-
-### macOS / Linux (featured, soon)
 ```bash
-# Homebrew
 brew tap grauwen/utlx
 brew install utlx
-
-# Or universal installer
-curl -fsSL https://utl-x.dev/install.sh | bash
 ```
 
-### Windows (featured, soon)
+### Windows (Chocolatey)
+
 ```powershell
-# Chocolatey
 choco install utlx
 ```
 
-### Manual Download (featured, soon)
-Download from [GitHub Releases](https://github.com/grauwen/utl-x/releases) 
+Note: Chocolatey package is currently in moderation review. In the meantime, download the binary directly.
 
-### Verify Installation
+### Linux
+
+**Direct download (any distro):**
 ```bash
-utlx --version
-# UTL-X version 1.0.0
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.0.0/utlx-linux-x64.bin -o utlx
+chmod +x utlx
+sudo mv utlx /usr/local/bin/
 ```
+
+**Homebrew (if installed):**
+```bash
+brew tap grauwen/utlx
+brew install utlx
+```
+
+**Ubuntu/Debian (.deb):** Coming soon
+**Fedora/RHEL (.rpm):** Coming soon
+
+### Download Pre-Built Binaries
+
+Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.0.0):
+
+| Platform | Binary |
+|----------|--------|
+| macOS (Apple Silicon) | `utlx-macos-arm64.bin` |
+| Linux (x64) | `utlx-linux-x64.bin` |
+| Windows (x64) | `utlx-windows-x64.exe` |
 
 ### Building from Source
 
-**Prerequisites:**
-- JDK 17 or later
-- Gradle 8.x (included via wrapper)
+If you prefer to build from source (requires JDK 17+):
 
-**Build Steps:**
-
-1. Clone the repository:
 ```bash
 git clone https://github.com/grauwen/utl-x.git
 cd utl-x
-```
-
-2. Build the CLI:
-```bash
-# macOS / Linux
 ./gradlew :modules:cli:jar
-
-# Windows
-gradlew.bat :modules:cli:jar
 ```
 
-3. Run using the wrapper scripts:
+Run using the wrapper scripts:
 
-**macOS / Linux:**
 ```bash
-./utlx transform script.utlx input.xml           # with subcommand
-./utlx script.utlx input.xml                      # implicit transform
-cat data.xml | ./utlx                              # instant format conversion
+./utlx --version                                   # verify
+./utlx transform script.utlx input.xml             # transform
+cat data.xml | ./utlx                               # instant format conversion
 ```
 
-**Windows (Command Prompt):**
-```cmd
-utlx.bat transform script.utlx input.xml
-```
+Windows: use `utlx.bat` or `.\utlx.ps1` instead of `./utlx`.
 
-**Windows (PowerShell):**
-```powershell
-.\utlx.ps1 transform script.utlx input.xml
-```
+### Verify Installation
 
-The wrapper scripts automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-1.0.0.jar`.
+```bash
+utlx --version
+# UTL-X CLI v1.0.0
+```
 
 ## Quick Start
 
