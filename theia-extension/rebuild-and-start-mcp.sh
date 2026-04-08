@@ -86,24 +86,35 @@ fi
 echo "✓ MCP server and Chrome browsers stopped at $(date '+%H:%M:%S')"
 echo ""
 
-# Step 3: Clean TypeScript output
-echo "Step 3/8: Cleaning TypeScript output..."
+# Step 3: Install extension dependencies (if needed)
+echo "Step 3/9: Checking extension dependencies..."
 cd "$EXTENSION_DIR"
 echo "Changed to: $(pwd)"
+if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules/.yarn-integrity" ]; then
+    echo "Dependencies changed or missing — running yarn install..."
+    yarn install --network-timeout 100000
+    echo "✓ Extension dependencies installed at $(date '+%H:%M:%S')"
+else
+    echo "✓ Extension dependencies up to date (skipped yarn install)"
+fi
+echo ""
+
+# Step 4: Clean TypeScript output
+echo "Step 4/9: Cleaning TypeScript output..."
 echo "Removing: lib/ *.tsbuildinfo"
 rm -rfv lib *.tsbuildinfo 2>/dev/null | head -20
 echo "✓ TypeScript output cleaned at $(date '+%H:%M:%S')"
 echo ""
 
-# Step 4: Build extension (TypeScript + copy CSS)
-echo "Step 4/8: Building extension (TypeScript + CSS)..."
+# Step 5: Build extension (TypeScript + copy CSS)
+echo "Step 5/9: Building extension (TypeScript + CSS)..."
 echo "Working directory: $(pwd)"
 npx tsc && mkdir -p lib/browser && cp -r src/browser/style lib/browser/
 echo "✓ Extension built at $(date '+%H:%M:%S')"
 echo ""
 
-# Step 5: Force refresh extension in browser-app's node_modules
-echo "Step 5/8: Refreshing extension in browser-app..."
+# Step 6: Force refresh extension in browser-app's node_modules
+echo "Step 6/9: Refreshing extension in browser-app..."
 cd "$BROWSER_APP_DIR"
 echo "Changed to: $(pwd)"
 echo "Removing stale extension from node_modules..."
@@ -113,8 +124,8 @@ yarn install --check-files --network-timeout 100000
 echo "✓ Extension refreshed at $(date '+%H:%M:%S')"
 echo ""
 
-# Step 6: Clean webpack cache AND frontend bundle
-echo "Step 6/8: Cleaning webpack cache and frontend bundle..."
+# Step 7: Clean webpack cache AND frontend bundle
+echo "Step 7/9: Cleaning webpack cache and frontend bundle..."
 echo "Removing: .theia lib node_modules/.cache"
 rm -rfv .theia lib node_modules/.cache 2>/dev/null | head -20
 if [ -d "node_modules/.cache/webpack" ]; then
@@ -124,16 +135,16 @@ fi
 echo "✓ Cache and bundle cleaned at $(date '+%H:%M:%S')"
 echo ""
 
-# Step 7: Build browser app
-echo "Step 7/8: Building browser app with webpack..."
+# Step 8: Build browser app
+echo "Step 8/9: Building browser app with webpack..."
 echo "Build command: NODE_ENV=production npx theia build --mode production --progress --stats verbose"
 export NODE_ENV=production
 npx theia build --mode production --progress --stats verbose
 echo "✓ Browser app built at $(date '+%H:%M:%S')"
 echo ""
 
-# Step 8: Start Theia and launch Chrome with remote debugging
-echo "Step 8/8: Starting Theia and launching Chrome with remote debugging..."
+# Step 9: Start Theia and launch Chrome with remote debugging
+echo "Step 9/9: Starting Theia and launching Chrome with remote debugging..."
 echo ""
 
 LOG_FILE="$BROWSER_APP_DIR/theia-server.log"
