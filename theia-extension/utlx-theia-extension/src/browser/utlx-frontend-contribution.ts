@@ -788,6 +788,9 @@ export class UTLXFrontendContribution implements
             csvDelimiter?: string;
             csvBom?: boolean;
             xmlEncoding?: string;
+            odataMetadata?: string;
+            odataContext?: string;
+            odataWrapCollection?: boolean;
         }
     ): string {
         const params: string[] = [];
@@ -817,6 +820,25 @@ export class UTLXFrontendContribution implements
             // Only include non-default encoding
             if (encoding !== 'UTF-8') {
                 params.push(`encoding: "${encoding}"`);
+            }
+        }
+
+        // OData options
+        if (format === 'odata') {
+            const metadata = options.odataMetadata ?? 'minimal'; // Default minimal
+            const context = options.odataContext;
+            const wrapCollection = options.odataWrapCollection ?? true; // Default true
+
+            if (metadata !== 'minimal') {
+                params.push(`metadata: "${metadata}"`);
+            }
+            if (context) {
+                // Strip user-provided quotes if present
+                const cleanContext = context.replace(/^["']|["']$/g, '');
+                params.push(`context: "${cleanContext}"`);
+            }
+            if (wrapCollection === false) {
+                params.push(`wrapCollection: false`);
             }
         }
 
