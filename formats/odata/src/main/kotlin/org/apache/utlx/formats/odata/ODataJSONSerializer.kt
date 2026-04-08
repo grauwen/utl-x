@@ -107,7 +107,7 @@ class ODataJSONSerializer(
     private fun annotateArray(array: UDM.Array, isRoot: Boolean): UDM {
         val processedElements = array.elements.map { annotateNode(it) }
 
-        if (wrapCollection) {
+        if (wrapCollection && isRoot) {
             // Wrap in { "value": [...] } with optional @odata.context
             val wrapperProps = linkedMapOf<String, UDM>()
 
