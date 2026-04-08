@@ -14,6 +14,11 @@ object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        // Ensure Netty/Ktor threads inherit the application classloader
+        // This fixes NoClassDefFoundError for Kotlin lambda inner classes
+        // when stdlib functions are invoked via reflection in Ktor request threads
+        Thread.currentThread().contextClassLoader = Main::class.java.classLoader
+
         if (args.isEmpty()) {
             printUsage()
             exitProcess(0)
