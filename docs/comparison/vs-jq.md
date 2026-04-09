@@ -1,81 +1,142 @@
 ## Comparison: UTL-X vs jq
 
-Here’s a comprehensive comparison of these two data transformation tools:
+### Core Purpose
 
-### *Core Purpose*
+**UTL-X** is a format-agnostic functional transformation language that works with XML, JSON, CSV, YAML, and other formats. Write your transformation logic once, apply it to any supported format. 652 built-in functions across 18 categories.
 
-*UTL-X* is a modern transformation language that works with XML, JSON, CSV, YAML, and other formats , designed for format-agnostic data transformation where you write transformation logic once and apply it to any supported format.
+**jq** is a lightweight command-line JSON processor — like sed/awk/grep for JSON data. Focused exclusively on JSON manipulation.
 
-*jq* is a lightweight and flexible command-line JSON processor akin to sed, awk, grep, and friends for JSON data  , specifically focused on JSON manipulation.
+### Key Differences
 
-### *Key Differences*
+| Feature | UTL-X | jq |
+|---------|-------|-----|
+| **Format Support** | XML, JSON, CSV, YAML, OData + 6 schema formats | JSON only |
+| **Language** | Written in Kotlin (JVM or GraalVM native binary) | Written in C, single native binary |
+| **License** | AGPL-3.0 (copyleft) / Commercial dual-license | MIT (permissive) |
+| **Type System** | Strongly typed with compile-time checking | Dynamically typed |
+| **Stdlib** | 652 functions across 18 categories | ~50 built-in functions |
+| **Inline expressions** | `utlx -e '.name'` (dot shorthand like jq) | `jq '.name'` |
+| **Raw output** | `utlx -e '.name' -r` | `jq -r '.name'` |
+| **Piping** | `cat data.xml \| utlx` (smart format flip) | `cat data.json \| jq '.'` |
+| **Script files** | `.utlx` files with header + body | Inline expressions or `.jq` files |
+| **Installation** | JVM (JDK 17+) or GraalVM native binary | Single binary, zero dependencies |
 
-|Feature           |UTL-X                                                                |jq                             |
-|------------------|---------------------------------------------------------------------|-------------------------------|
-|*Format Support*|XML, JSON, CSV, YAML, and other formats                              |JSON only                      |
-|*Maturity*      |Beta (v0.9.0, targeting v1.0 in December 2025)                       |Stable (v1.7.1 released)       |
-|*Language*      |Written in portable C with zero runtime dependencies                 |Written in C, zero dependencies|
-|*License*       |AGPL-3.0 (copyleft, requires source disclosure for network services) |MIT (permissive)               |
-|*Type System*   |Strongly typed with compile-time error checking                      |Dynamically typed              |
-|*Runtimes*      |JVM, JavaScript, Native (in development)                             |Single native binary           |
+### CLI Comparison
 
-### *Syntax Comparison*
+**Identity / format conversion:**
 
-*UTL-X* uses a declarative syntax with explicit input/output format declarations:
+```bash
+# jq: pretty-print JSON
+echo '{"a":1}' | jq .
 
-⁠ utlx
-%utlx 1.0
-input json
-output json
----
-{
-  items: $input.data |> filter(item => item.price > 100)
-}
- ⁠
+# UTL-X: same, plus format conversion
+echo '{"a":1}' | utlx              # JSON to XML (smart flip)
+cat data.xml | utlx                # XML to JSON (smart flip)
+cat data.xml | utlx --to yaml     # XML to YAML
+cat data.csv | utlx                # CSV to JSON
+```
 
-*jq* uses a more concise filter-based approach:
+**Field extraction:**
 
-⁠ bash
-jq '.data | map(select(.price > 100))'
- ⁠
+```bash
+# jq
+echo '{"user":{"name":"Alice"}}' | jq '.user.name'
 
-### *Strengths*
+# UTL-X (-e with dot shorthand — same syntax as jq)
+echo '{"user":{"name":"Alice"}}' | utlx -e '.user.name'
+```
 
-*UTL-X:*
+**Raw output for shell scripts:**
 
-•⁠  ⁠Format agnostic - one transformation works with XML, JSON, CSV, YAML 
-•⁠  ⁠Functional and declarative with clean, maintainable transformation logic 
-•⁠  ⁠Template matching similar to XSLT 
-•⁠  ⁠Type safety catches errors early
-•⁠  ⁠Good for complex multi-format ETL pipelines
+```bash
+# jq
+NAME=$(echo '{"name":"Alice"}' | jq -r '.name')
 
-*jq:*
+# UTL-X
+NAME=$(echo '{"name":"Alice"}' | utlx -e '.name' -r)
+```
 
-•⁠  ⁠Portable C with zero runtime dependencies, single binary deployment 
-•⁠  ⁠Battle-tested and widely adopted
-•⁠  ⁠Extensive built-in functions for JSON processing 
-•⁠  ⁠Excellent for shell scripting and command-line JSON manipulation
-•⁠  ⁠Massive community and ecosystem
+**Filtering:**
 
-### *Use Case Recommendations*
+```bash
+# jq
+cat orders.json | jq '[.[] | select(.status == "active")]'
 
-*Choose UTL-X if you:*
+# UTL-X
+cat orders.json | utlx -e '. |> filter(o => o.status == "active")'
+```
 
-•⁠  ⁠Need to work with multiple data formats (XML, JSON, CSV, YAML)
-•⁠  ⁠Want format-agnostic transformations
-•⁠  ⁠Need strong typing and compile-time validation
-•⁠  ⁠Are building ETL pipelines or data migration tools
-•⁠  ⁠Don’t mind using a newer, less mature tool
+**Aggregation:**
 
-*Choose jq if you:*
+```bash
+# jq
+cat sales.json | jq '{ total: [.[].amount] | add, count: length }'
 
-•⁠  ⁠Only work with JSON
-•⁠  ⁠Need a mature, production-ready tool
-•⁠  ⁠Want the simplest installation (single binary)
-•⁠  ⁠Need extensive community support and resources
-•⁠  ⁠Prefer a permissive (MIT) license
-•⁠  ⁠Need maximum stability and reliability
+# UTL-X
+cat sales.json | utlx -e '{ total: sum(. |> map(s => s.amount)), count: count(.) }'
+```
 
-### *Bottom Line*
+**String manipulation:**
 
-jq is the established standard for JSON processing with a mature ecosystem, while UTL-X is an ambitious newer project offering format flexibility at the cost of maturity. For pure JSON work, jq is the safer choice. For multi-format transformation needs, UTL-X’s format-agnostic approach is compelling—if you’re comfortable with beta software.
+```bash
+# jq
+echo '{"name":"alice"}' | jq -r '.name | ascii_upcase'
+
+# UTL-X
+echo '{"name":"alice"}' | utlx -e 'upper(.name)' -r
+```
+
+**Format conversion (jq cannot do this):**
+
+```bash
+# XML to JSON
+cat data.xml | utlx
+
+# JSON to CSV
+cat users.json | utlx -e '. |> map(u => {name: u.name, email: u.email})' --to csv
+
+# YAML to JSON
+cat config.yaml | utlx -e '.database.host' -r
+```
+
+### Where UTL-X wins
+
+- **Format agnostic** — one transformation works with XML, JSON, CSV, YAML; jq is JSON-only
+- **Zero-flag format conversion** — `cat data.xml | utlx` converts XML to JSON instantly; jq cannot read XML at all
+- **jq-like expressions** — `utlx -e '.name' -r` uses the same dot syntax as jq, with `-r` for raw output
+- **652 functions** — string, array, math, date, XML, CSV, YAML, binary, encoding, financial, geospatial, security
+- **Strong typing** — catches errors at compile time, not at runtime
+- **Multi-input** — join data from multiple files/formats in one transformation
+- **OData support** — parse and serialize OData JSON and EDMX metadata; jq has no OData awareness
+- **Schema awareness** — XSD, JSON Schema, Avro, Protobuf, OData/EDMX, Table Schema
+
+### Where jq wins
+
+- **Zero dependencies** — single native binary, instant install (UTL-X also offers a GraalVM native binary, but jq's is smaller)
+- **Mature ecosystem** — battle-tested, widely adopted, extensive documentation
+- **Concise syntax** — shorter expressions for JSON-only work
+- **Permissive license** — MIT, no copyleft restrictions
+- **Performance** — native C, no JVM startup overhead (though UTL-X GraalVM native binary closes this gap)
+- **Shell integration** — ubiquitous in scripts, CI/CD pipelines
+
+### Use Case Recommendations
+
+**Choose UTL-X if you:**
+
+- Work with multiple data formats (XML, JSON, CSV, YAML)
+- Need format conversion without writing transformation logic
+- Need strong typing and compile-time validation
+- Are building ETL pipelines or data migration tools
+- Need rich stdlib (652 functions across 18 categories)
+
+**Choose jq if you:**
+
+- Only work with JSON
+- Need zero-dependency single-binary installation
+- Want maximum shell scripting integration
+- Need a permissive (MIT) license
+- Need the smallest possible footprint
+
+### Bottom Line
+
+jq is the standard for JSON processing — fast, mature, universal. UTL-X targets a different space: format-agnostic transformation with a rich standard library. For pure JSON work in shell scripts, jq is hard to beat. For anything involving XML, CSV, YAML, or multi-format pipelines, UTL-X does what jq simply cannot. With `-e` expressions and `-r` raw output, UTL-X now matches jq's shell scripting ergonomics while adding format conversion that jq can't do.
