@@ -155,24 +155,38 @@ object Main {
             |  version        Show version information
             |  help           Show this help message
             |
+            |Flags:
+            |  -e, --expression EXPR   Inline expression (no script needed, '.' = ${"$"}input)
+            |  -r, --raw-output        Strip quotes from string output
+            |  --to FORMAT             Output format (json, xml, csv, yaml, odata, xsd, jsch, ...)
+            |  --from FORMAT           Input format (overrides auto-detection)
+            |  -o, --output FILE       Write output to file (default: stdout)
+            |  -i, --input FILE        Read input from file (default: stdin)
+            |  --no-pretty             Disable pretty-printing
+            |  -v, --verbose           Verbose output
+            |  -h, --help              Show help (use 'utlx transform --help' for all options)
+            |
             |Examples:
-            |  cat data.xml | utlx                    Identity mode: XML to JSON (smart flip)
-            |  cat data.json | utlx                   Identity mode: JSON to XML (smart flip)
-            |  cat data.csv | utlx --to yaml          Identity mode: CSV to YAML
-            |  utlx script.utlx input.xml             Implicit transform (no 'transform' subcommand)
+            |  echo '{"name":"Alice"}' | utlx -e '.name'       Expression mode (like jq)
+            |  echo '{"name":"Alice"}' | utlx -e '.name' -r    Raw output (no quotes)
+            |  cat data.xml | utlx                              Identity mode: XML to JSON (smart flip)
+            |  cat data.json | utlx                             Identity mode: JSON to XML (smart flip)
+            |  cat data.csv | utlx --to yaml                   Identity mode: CSV to YAML
+            |  utlx script.utlx input.xml                      Implicit transform (no 'transform' subcommand)
             |  utlx repl
             |  utlx transform script.utlx input.xml -o output.json
             |  utlx design generate-schema --input-schema order.xsd --transform script.utlx --output-format json-schema
             |  utlx design typecheck --input-schema order.xsd --transform script.utlx --expected-output invoice-schema.json
             |  utlx capture status
             |  utlx validate script.utlx
+            |  utlx functions search xml                       Search stdlib
             |  utlx udm export data.json data.udm
             |  utlx udm validate data.udm
             |  utlx transform --input-format xml --output-format json script.utlx < input.xml
             |  utlx transform data.yaml script.utlx --output-format json
             |
             |For more information: https://github.com/grauwen/utl-x
-            |Documentation: https://utlx-lang.org/docs
+            |Documentation: https://github.com/grauwen/utl-x/tree/main/docs
         """.trimMargin())
     }
 }

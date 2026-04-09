@@ -630,70 +630,56 @@ ${"$"}input"""
             |Transform data using UTL-X scripts
             |
             |Usage:
-            |  utlx transform <script-file> [input-file] [options]
-            |  utlx transform <script-file> [options] < input-file
-            |  utlx transform <script-file> --input input1=file1.xml --input input2=file2.json [options]
+            |  utlx -e '<expression>'                     Inline expression (no script needed)
+            |  utlx transform <script-file> [input-file]  Script-based transformation
+            |  cat data.xml | utlx                        Identity mode (format conversion)
+            |
+            |Expression mode (-e):
+            |  echo '{"name":"Alice"}' | utlx -e '.name'           Extract field
+            |  echo '{"name":"Alice"}' | utlx -e '.name' -r        Raw output (no quotes)
+            |  cat data.xml | utlx -e '.person.name' -r            Extract from XML
+            |  cat data.json | utlx -e '. |> filter(x => x.active)' Filter array
+            |  cat data.json | utlx -e 'count(.)'                   Count elements
+            |  cat data.json | utlx -e 'upper(.name)' -r            String functions
+            |
+            |  In -e mode, '.' is shorthand for '${"$"}input':
+            |    .name       = ${"$"}input.name
+            |    .            = ${"$"}input (identity)
+            |    ..field      = ${"$"}input..field (recursive)
             |
             |Identity mode (no script, format conversion):
-            |  cat data.xml | utlx                        Auto-detect XML, output JSON (smart flip)
-            |  cat data.json | utlx                       Auto-detect JSON, output XML (smart flip)
-            |  cat data.csv | utlx                        Auto-detect CSV, output JSON
-            |  cat data.xml | utlx --to yaml              Override smart flip with explicit format
-            |  cat data.csv | utlx --from csv --to xml    Explicit input and output formats
+            |  cat data.xml | utlx                        XML to JSON (smart flip)
+            |  cat data.json | utlx                       JSON to XML (smart flip)
+            |  cat data.csv | utlx                        CSV to JSON
+            |  cat data.xml | utlx --to yaml              Override with --to
             |
-            |Arguments:
-            |  input-file      Input data file (if not provided, reads from stdin)
-            |  script-file     UTL-X transformation script (.utlx)
-            |                  If omitted, identity transform is used (passthrough with format conversion)
+            |Script mode:
+            |  utlx transform script.utlx input.xml -o output.json
+            |  utlx script.utlx input.xml                 Implicit transform
             |
             |Options:
-            |  -o, --output FILE           Write output to FILE (default: stdout)
-            |      --output name=FILE      Named output for multi-output transformations
-            |  -i, --input FILE            Read input from FILE
-            |      --input name=FILE       Named input for multi-input transformations
-            |  --input-format FORMAT       Force input format (xml, json, csv, yaml, odata, osch)
-            |  --from FORMAT               Alias for --input-format
-            |  --output-format FORMAT      Force output format (xml, json, csv, yaml, odata, osch)
-            |  --to FORMAT                 Alias for --output-format
-            |  -v, --verbose               Enable verbose output
-            |  --no-pretty                 Disable pretty-printing
-            |  --strict-types              Enforce type checking (fail on type errors)
-            |  --capture                   Force enable test capture (overrides config)
-            |  --no-capture                Force disable test capture (overrides config)
-            |  -h, --help                  Show this help message
+            |  -e, --expression EXPR      Inline UTL-X expression (no script file needed)
+            |  -r, --raw-output           Strip quotes from string output
+            |  -o, --output FILE          Write output to FILE (default: stdout)
+            |  -i, --input FILE           Read input from FILE (default: stdin)
+            |  --from FORMAT              Force input format (xml, json, csv, yaml, odata)
+            |  --to FORMAT                Force output format
+            |  --no-pretty                Disable pretty-printing
+            |  --strict-types             Enforce type checking (fail on type errors)
+            |  --capture / --no-capture   Override test capture config
+            |  -v, --verbose              Verbose output
+            |  -h, --help                 Show this help message
             |
-            |Debug Options:
-            |  --debug                     Enable DEBUG level logging for all components
-            |  --debug-parser              Enable DEBUG logging for parser only
-            |  --debug-lexer               Enable DEBUG logging for lexer only
-            |  --debug-interpreter         Enable DEBUG logging for interpreter only
-            |  --debug-types               Enable DEBUG logging for type system only
-            |  --debug-all                 Enable DEBUG logging for all components (same as --debug)
-            |  --trace                     Enable TRACE level logging (most verbose)
+            |Debug:
+            |  --debug                    DEBUG logging (all components)
+            |  --debug-parser             DEBUG for parser only
+            |  --debug-lexer              DEBUG for lexer only
+            |  --debug-interpreter        DEBUG for interpreter only
+            |  --debug-types              DEBUG for type system only
+            |  --trace                    TRACE level (most verbose)
             |
-            |Identity Mode (Smart Format Flip):
-            |  When no script file is provided, utlx performs a passthrough (identity) transform.
-            |  The output format is automatically chosen as the "opposite" of the detected input:
-            |    XML  -> JSON     (most common conversion)
-            |    JSON -> XML      (most common conversion)
-            |    CSV  -> JSON     (JSON is universal interchange)
-            |    YAML -> JSON     (JSON is universal interchange)
-            |  Use --to to override the smart default.
-            |
-            |Examples:
-            |  # Identity mode: format conversion without a script
-            |  cat data.xml | utlx                                    # XML to JSON
-            |  cat data.json | utlx                                   # JSON to XML
-            |  cat data.csv | utlx --to yaml                          # CSV to YAML
-            |
-            |  # Single input/output (backward compatible)
-            |  utlx transform script.utlx input.xml -o output.json
-            |
-            |  # Multiple named inputs
-            |  utlx transform script.utlx --input input1=customer.xml --input input2=orders.json -o output.xml
-            |
-            |  # Multiple named outputs
-            |  utlx transform script.utlx -i data.xml --output summary=sum.json --output details=det.xml
+            |Multi-input:
+            |  utlx transform script.utlx --input orders=orders.xml --input customers=customers.json
         """.trimMargin())
     }
 }
