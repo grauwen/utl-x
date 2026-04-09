@@ -19,6 +19,10 @@
 - [Multiple Inputs](language-guide/multiple-inputs-outputs.md)
 - [Universal Schema DSL](language-guide/universal-schema-dsl.md)
 
+## CLI Reference
+
+- [CLI Reference](cli/cli-reference.md)
+
 ## Standard Library
 
 - [Complete Reference (652 functions)](stdlib/stdlib-complete-reference.md)
@@ -33,6 +37,7 @@
 - [Multiple Inputs](examples/multiple-inputs.md)
 - [Real-World Use Cases](examples/real-world-use-cases.md)
 - [Complex Transformations](examples/complex-transformations.md)
+- [25 jq-to-UTL-X Examples](examples/jq-to-utlx-examples.md)
 
 ## Comparisons
 
@@ -40,5 +45,6 @@
 - [vs XSLT](comparison/vs-xslt.md)
 - [vs DataWeave](comparison/vs-dataweave.md)
 - [vs JSONata](comparison/vs-jsonata.md)
+- [vs MapStruct](comparison/vs-mapstruct.md)
 - [DataWeave Detailed Comparison](comparison/dataweave_vs_utilx_comparison.md)
 
