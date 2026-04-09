@@ -546,4 +546,301 @@ class TransformCommandTest {
         val outputContent = output.readText()
         assertTrue(outputContent.contains("hello"), "Should contain transformed data")
     }
+
+    // =========================================================================
+    // Expression Mode (-e) Tests
+    // =========================================================================
+
+    @Test
+    fun `test expression mode - basic field extraction`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"name":"Alice","age":30}""")
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            "-e", "\$input.name",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Expression mode should succeed")
+        assertTrue(output.exists(), "Output file should exist")
+        val content = output.readText().trim()
+        assertTrue(content.contains("Alice"), "Should contain extracted value")
+    }
+
+    @Test
+    fun `test expression mode - default output is JSON`() {
+        val input = tempDir.resolve("input.xml").toFile()
+        input.writeText("<person><name>Alice</name></person>")
+
+        val output = tempDir.resolve("output.txt").toFile()
+
+        val args = arrayOf(
+            "-e", "\$input.person.name",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Expression from XML should succeed")
+        assertTrue(output.exists(), "Output file should exist")
+        val content = output.readText().trim()
+        assertTrue(content.contains("Alice"), "Should contain extracted name")
+        // JSON output: should have quotes
+        assertTrue(content.startsWith("\"") || content.contains("{"), "Output should be JSON format")
+    }
+
+    @Test
+    fun `test expression mode - with --to yaml override`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"name":"Alice","age":30}""")
+
+        val output = tempDir.resolve("output.yaml").toFile()
+
+        val args = arrayOf(
+            "-e", "\$input",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath,
+            "--to", "yaml"
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Expression with --to yaml should succeed")
+        assertTrue(output.exists(), "Output file should exist")
+        val content = output.readText()
+        assertTrue(content.contains("name:"), "Output should be YAML format")
+    }
+
+    @Test
+    fun `test expression mode - function call`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"items":[{"price":10},{"price":20},{"price":30}]}""")
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            "-e", "sum(\$input.items |> map(i => i.price))",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Expression with function should succeed")
+        assertTrue(output.exists(), "Output file should exist")
+        val content = output.readText().trim()
+        assertTrue(content.contains("60"), "Should contain sum result")
+    }
+
+    @Test
+    fun `test expression mode - long form --expression`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"value":42}""")
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            "--expression", "\$input.value",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "--expression long form should succeed")
+        val content = output.readText().trim()
+        assertTrue(content.contains("42"), "Should contain value")
+    }
+
+    // =========================================================================
+    // Raw Output (-r) Tests
+    // =========================================================================
+
+    @Test
+    fun `test raw output - strips quotes from string`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"name":"Alice"}""")
+
+        val output = tempDir.resolve("output.txt").toFile()
+
+        val args = arrayOf(
+            "-e", "\$input.name",
+            "-r",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Raw output should succeed")
+        val content = output.readText().trim()
+        assertEquals("Alice", content, "Raw output should strip quotes")
+    }
+
+    @Test
+    fun `test raw output - long form --raw-output`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"name":"Bob"}""")
+
+        val output = tempDir.resolve("output.txt").toFile()
+
+        val args = arrayOf(
+            "-e", "\$input.name",
+            "--raw-output",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "--raw-output long form should succeed")
+        val content = output.readText().trim()
+        assertEquals("Bob", content, "Raw output should strip quotes")
+    }
+
+    @Test
+    fun `test raw output - number unchanged`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"value":42}""")
+
+        val output = tempDir.resolve("output.txt").toFile()
+
+        val args = arrayOf(
+            "-e", "\$input.value",
+            "-r",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Raw output with number should succeed")
+        val content = output.readText().trim()
+        assertEquals("42", content, "Number should be unchanged in raw mode")
+    }
+
+    @Test
+    fun `test raw output - boolean unchanged`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"active":true}""")
+
+        val output = tempDir.resolve("output.txt").toFile()
+
+        val args = arrayOf(
+            "-e", "\$input.active",
+            "-r",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Raw output with boolean should succeed")
+        val content = output.readText().trim()
+        assertEquals("true", content, "Boolean should be unchanged in raw mode")
+    }
+
+    // =========================================================================
+    // Dot Shorthand Expansion Tests
+    // =========================================================================
+
+    @Test
+    fun `test dot expansion - parseOptions recognizes -e`() {
+        val options = TransformCommand.parseOptions(arrayOf("-e", ".name"), allowIdentityMode = true)
+        assertEquals(".name", options.expression, "Expression should be captured")
+        assertTrue(options.scriptFile == null, "No script file in expression mode")
+    }
+
+    @Test
+    fun `test dot expansion - dot alone becomes identity`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"a":1,"b":2}""")
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            "-e", ".",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath,
+            "--no-pretty"
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Dot identity should succeed")
+        val content = output.readText().trim()
+        assertTrue(content.contains("\"a\"") && content.contains("\"b\""), "Should contain all fields")
+    }
+
+    @Test
+    fun `test dot expansion - dot with function`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"name":"alice"}""")
+
+        val output = tempDir.resolve("output.txt").toFile()
+
+        val args = arrayOf(
+            "-e", "upper(.name)",
+            "-r",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Dot with function should succeed")
+        val content = output.readText().trim()
+        assertEquals("ALICE", content, "Should uppercase via dot shorthand")
+    }
+
+    @Test
+    fun `test dot expansion - explicit dollar input still works`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"x":99}""")
+
+        val output = tempDir.resolve("output.json").toFile()
+
+        val args = arrayOf(
+            "-e", "\$input.x",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success, "Explicit \$input should still work")
+        val content = output.readText().trim()
+        assertTrue(content.contains("99"), "Should contain value")
+    }
+
+    // =========================================================================
+    // Expression + Raw combined
+    // =========================================================================
+
+    @Test
+    fun `test expression with raw and function`() {
+        val input = tempDir.resolve("input.json").toFile()
+        input.writeText("""{"msg":"hello world"}""")
+
+        val output = tempDir.resolve("output.txt").toFile()
+
+        val args = arrayOf(
+            "-e", "upper(.msg)",
+            "-r",
+            "-i", input.absolutePath,
+            "-o", output.absolutePath
+        )
+
+        val result = TransformCommand.execute(args)
+
+        assertTrue(result is CommandResult.Success)
+        val content = output.readText().trim()
+        assertEquals("HELLO WORLD", content)
+    }
 }

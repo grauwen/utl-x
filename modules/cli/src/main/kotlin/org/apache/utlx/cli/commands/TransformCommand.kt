@@ -26,10 +26,12 @@ object TransformCommand {
         val namedInputs: Map<String, File> = emptyMap(),        // Named inputs: input1=file1.xml, input2=file2.json
         val namedOutputs: Map<String, File> = emptyMap(),       // Named outputs: summary=out.json, details=out.xml
         val scriptFile: File? = null,                           // null = identity mode (passthrough)
+        val expression: String? = null,                         // -e inline expression
         val inputFormat: String? = null,
         val outputFormat: String? = null,
         val verbose: Boolean = false,
         val pretty: Boolean = true,
+        val rawOutput: Boolean = false,                         // -r strip quotes from string output
         val captureEnabled: Boolean? = null,  // null = use config, true = force enable, false = force disable
         val debugLevel: DebugConfig.LogLevel? = null,  // Global debug level
         val debugComponents: Set<DebugConfig.Component> = emptySet(),  // Component-specific debug
@@ -76,6 +78,86 @@ object TransformCommand {
             else   -> "json"
         }
     }
+
+    /**
+     * Expand dot shorthand to $input references in -e expressions.
+     * This is a pre-processing step before the expression is wrapped in a UTL-X script.
+     *
+     * Rules:
+     * - "." alone → "$input" (identity)
+     * - ".name" at start → "$input.name"
+     * - "..name" at start → "$input..name" (recursive descent)
+     * - ".name" after (, =>, , or whitespace → "$input.name"
+     * - Dots inside strings are not touched
+     * - "$input.name" is left unchanged
+     */
+    private fun expandDotShorthand(expression: String): String {
+        if (!expression.contains('.')) return expression
+        if (expression.contains("\$input")) return expression // already explicit
+
+        val result = StringBuilder()
+        var i = 0
+        var inString = false
+        var stringChar = ' '
+
+        while (i < expression.length) {
+            val ch = expression[i]
+
+            // Track string boundaries
+            if (!inString && (ch == '"' || ch == '\'')) {
+                inString = true
+                stringChar = ch
+                result.append(ch)
+                i++
+                continue
+            }
+            if (inString) {
+                if (ch == stringChar && (i == 0 || expression[i - 1] != '\\')) {
+                    inString = false
+                }
+                result.append(ch)
+                i++
+                continue
+            }
+
+            // Check for dot that should be expanded
+            if (ch == '.') {
+                // Is this a dot at a position where it starts a path expression?
+                val prevChar = if (i > 0) expression[i - 1] else ' '
+                val isPathStart = i == 0 ||
+                    prevChar == '(' || prevChar == ',' || prevChar == ' ' || prevChar == '\t' ||
+                    prevChar == '\n' || prevChar == '>' // => arrow
+
+                if (isPathStart) {
+                    // Check for .. (recursive descent)
+                    if (i + 1 < expression.length && expression[i + 1] == '.') {
+                        result.append("\$input..")
+                        i += 2
+                    } else if (i + 1 < expression.length && (expression[i + 1].isLetterOrDigit() || expression[i + 1] == '@' || expression[i + 1] == '*')) {
+                        // .name or .@attr or .*
+                        result.append("\$input.")
+                        i++
+                    } else if (i + 1 >= expression.length || expression[i + 1] == ')' || expression[i + 1] == ',' || expression[i + 1] == ' ') {
+                        // Standalone dot = $input
+                        result.append("\$input")
+                        i++
+                    } else {
+                        result.append(ch)
+                        i++
+                    }
+                } else {
+                    // Regular dot (part of a path like obj.name) — leave as-is
+                    result.append(ch)
+                    i++
+                }
+            } else {
+                result.append(ch)
+                i++
+            }
+        }
+
+        return result.toString()
+    }
     
     fun execute(args: Array<String>, identityMode: Boolean = false): CommandResult {
         val options = try {
@@ -100,7 +182,10 @@ object TransformCommand {
         }
 
         if (options.verbose) {
-            if (options.identityMode) {
+            if (options.expression != null) {
+                println("UTL-X Expression Mode")
+                println("Expression: ${options.expression}")
+            } else if (options.identityMode) {
                 println("UTL-X Identity Transform (passthrough with format conversion)")
             } else {
                 println("UTL-X Transform")
@@ -150,11 +235,30 @@ object TransformCommand {
                 ))
             }
 
-            // Step 1: Determine script content (file or synthesized identity)
+            // Step 1: Determine script content (file, expression, or identity)
             val scriptContent: String
             val effectiveOutputFormat: String?
 
-            if (options.identityMode) {
+            if (options.expression != null) {
+                // Expression mode: synthesize script from inline expression
+                val primaryInput = inputs.values.first()
+                val expandedExpression = expandDotShorthand(options.expression)
+
+                // Expression mode defaults to JSON output
+                effectiveOutputFormat = options.outputFormat ?: "json"
+
+                if (options.verbose) {
+                    println("Expression (expanded): $expandedExpression")
+                    println("Output format: $effectiveOutputFormat" +
+                        if (options.outputFormat != null) " (explicit)" else " (default json)")
+                }
+
+                scriptContent = """%utlx 1.0
+input auto
+output $effectiveOutputFormat
+---
+$expandedExpression"""
+            } else if (options.identityMode) {
                 // Identity mode: synthesize a passthrough script with smart format flip
                 val primaryInput = inputs.values.first()
                 val detectedInputFormat = options.inputFormat
@@ -197,20 +301,36 @@ ${"$"}input"""
                 println("Output format: $outputFormat")
             }
 
-            // Write output
+            // Write output (apply raw mode if requested)
+            val finalOutput = if (options.rawOutput) {
+                // Strip surrounding quotes from JSON string values
+                val trimmed = outputData.trim()
+                if (trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
+                    trimmed.substring(1, trimmed.length - 1)
+                        .replace("\\\"", "\"")
+                        .replace("\\n", "\n")
+                        .replace("\\t", "\t")
+                        .replace("\\\\", "\\")
+                } else {
+                    trimmed
+                }
+            } else {
+                outputData
+            }
+
             val outputFilePath = options.outputFile
             if (outputFilePath != null) {
-                outputFilePath.writeText(outputData)
+                outputFilePath.writeText(finalOutput)
                 if (options.verbose) {
                     println("✓ Transformation complete: ${outputFilePath.absolutePath}")
                 }
             } else {
-                println(outputData)
+                println(finalOutput)
             }
 
-            // Step 4: Capture successful execution (for single input only, skip identity mode)
+            // Step 4: Capture successful execution (for single input only, skip identity/expression mode)
             val durationMs = System.currentTimeMillis() - startTime
-            if (!options.hasMultipleInputs && !options.identityMode) {
+            if (!options.hasMultipleInputs && !options.identityMode && options.expression == null && options.scriptFile != null) {
                 val primaryInputData = inputs.values.firstOrNull()
                 val captureInputFormat = primaryInputData?.format ?: "json"
 
@@ -322,10 +442,12 @@ ${"$"}input"""
         val namedInputs = mutableMapOf<String, File>()
         val namedOutputs = mutableMapOf<String, File>()
         var scriptFile: File? = null
+        var expression: String? = null
         var inputFormat: String? = null
         var outputFormat: String? = null
         var verbose = false
         var pretty = true
+        var rawOutput = false
         var captureEnabled: Boolean? = null
         var debugLevel: DebugConfig.LogLevel? = null
         val debugComponents = mutableSetOf<DebugConfig.Component>()
@@ -353,6 +475,12 @@ ${"$"}input"""
                     } else {
                         namedInputs["input"] = File(arg)
                     }
+                }
+                "-e", "--expression" -> {
+                    expression = args[++i]
+                }
+                "-r", "--raw-output" -> {
+                    rawOutput = true
                 }
                 "--input-format", "--from" -> {
                     inputFormat = args[++i]
@@ -419,6 +547,31 @@ ${"$"}input"""
             i++
         }
 
+        // Expression mode: -e provided, no script file needed
+        if (expression != null) {
+            if (expression.isBlank()) {
+                throw IllegalArgumentException("Expression cannot be empty. Usage: utlx -e '<expression>'")
+            }
+            if (scriptFile != null) {
+                throw IllegalArgumentException("Cannot use -e/--expression with a script file. Use one or the other.")
+            }
+            return TransformOptions(
+                namedInputs = namedInputs,
+                namedOutputs = namedOutputs,
+                scriptFile = null,
+                expression = expression,
+                inputFormat = inputFormat,
+                outputFormat = outputFormat,
+                verbose = verbose,
+                pretty = pretty,
+                rawOutput = rawOutput,
+                captureEnabled = captureEnabled,
+                debugLevel = debugLevel,
+                debugComponents = debugComponents,
+                strictTypes = strictTypes
+            )
+        }
+
         // If no script file: identity mode (when allowed) or error
         if (scriptFile == null) {
             if (allowIdentityMode) {
@@ -430,6 +583,7 @@ ${"$"}input"""
                     outputFormat = outputFormat,
                     verbose = verbose,
                     pretty = pretty,
+                    rawOutput = rawOutput,
                     captureEnabled = captureEnabled,
                     debugLevel = debugLevel,
                     debugComponents = debugComponents,
@@ -463,6 +617,7 @@ ${"$"}input"""
             outputFormat = outputFormat,
             verbose = verbose,
             pretty = pretty,
+            rawOutput = rawOutput,
             captureEnabled = captureEnabled,
             debugLevel = debugLevel,
             debugComponents = debugComponents,
