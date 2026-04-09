@@ -3,7 +3,7 @@
 **An open-source, format-agnostic functional transformation language for data transformation.**
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE.md)
-[![Version](https://img.shields.io/badge/version-1.0.0-green)](https://github.com/grauwen/utl-x/releases)
+[![Version](https://img.shields.io/badge/version-1.0.1-green)](https://github.com/grauwen/utl-x/releases)
 [![Documentation](https://img.shields.io/badge/docs-utlx.dev-brightgreen)](https://utl-x.org/docs)
 
 ## Overview
@@ -15,9 +15,10 @@ UTL-X also supports meta data transformation across schema formats: XSD, JSCH (J
 ## Why UTL-X?
 
 - 🔄 **Format Agnostic** - One transformation works with XML, JSON, CSV, YAML, OData
+- 🎯 **jq-like CLI** - `utlx -e '.name' -r` with dot shorthand and raw output
+- 💪 **652 Stdlib Functions** - String, array, math, date, XML, CSV, encoding, financial, and more
 - 🎯 **Functional & Declarative** - Clean, maintainable transformation logic
 - 💪 **Strongly Typed** - Catch errors at compile time
-- ⚡ **High Performance** - Optimized compilation and execution
 - 🔓 **Open Source** - AGPL-3.0, truly free and community-driven
 - 🚀 **Multiple Runtimes** - JVM and GraalVM native binary
 
@@ -243,7 +244,7 @@ Note: Chocolatey package is currently in moderation review. In the meantime, dow
 
 **Direct download (any distro):**
 ```bash
-curl -L https://github.com/grauwen/utl-x/releases/download/v1.0.0/utlx-linux-x64.bin -o utlx
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.0.1/utlx-linux-x64.bin -o utlx
 chmod +x utlx
 sudo mv utlx /usr/local/bin/
 ```
@@ -259,7 +260,7 @@ brew install utlx
 
 ### Download Pre-Built Binaries
 
-Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.0.0):
+Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.0.1):
 
 | Platform | Binary |
 |----------|--------|
@@ -291,7 +292,7 @@ Windows: use `utlx.bat` or `.\utlx.ps1` instead of `./utlx`.
 
 ```bash
 utlx --version
-# UTL-X CLI v1.0.0
+# UTL-X CLI v1.0.1
 ```
 
 ## Quick Start
@@ -359,6 +360,38 @@ cat data.csv | utlx --from csv --to xml
 ```
 
 **How it works:** When no script file is provided, UTL-X performs an identity (passthrough) transform with smart format detection. XML and JSON automatically flip to each other (the most common conversion); CSV and YAML default to JSON output. Use `--to` to override.
+
+### 6. Inline Expressions — Like jq (`-e` / `-r`)
+
+Extract, transform, and query data without writing a script file:
+
+```bash
+# Extract a field (like jq)
+echo '{"name":"Alice","age":30}' | utlx -e '.name'
+# "Alice"
+
+# Raw output — strip quotes for shell scripting (-r)
+echo '{"name":"Alice"}' | utlx -e '.name' -r
+# Alice
+
+# Use in shell variables
+NAME=$(echo '{"name":"Alice"}' | utlx -e '.name' -r)
+
+# Filter arrays
+cat orders.json | utlx -e '. |> filter(o => o.status == "active")'
+
+# Aggregate
+cat sales.json | utlx -e '{total: sum(. |> map(s => s.amount)), count: count(.)}'
+
+# String functions
+echo '{"name":"alice"}' | utlx -e 'upper(.name)' -r
+# ALICE
+
+# Extract from XML, output as JSON
+cat data.xml | utlx -e '.Orders.Order |> map(o => {id: o.@id, total: o.Total})'
+```
+
+In `-e` mode, `.` is shorthand for `$input` — just like jq. Output defaults to JSON.
 
 ## Key Features
 
@@ -543,9 +576,9 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 ## Project Status
 
-**Current Version**: 1.0.0
+**Current Version**: 1.0.1
 
-### What's in 1.0.0
+### What's in 1.0.1
 
 - **UTL-X CLI** (`utlx`) — format-agnostic transformation engine with 652 stdlib functions
 - Identity mode: instant format conversion (`cat data.xml | utlx`)
@@ -559,7 +592,7 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 | Component | Description | Status |
 |-----------|-------------|--------|
-| **UTL-X CLI** (`utlx`) | Transformation engine, format conversion, REPL, 652 stdlib functions | **1.0.0 Released** |
+| **UTL-X CLI** (`utlx`) | Transformation engine, format conversion, REPL, 652 stdlib functions | **1.0.1 Released** |
 | **UTL-X Engine** (`utlxe`) | Pipeline orchestration for multi-step transformations and bundle execution | In Development |
 | **UTL-X IDE Support** (`utlxd`) | Language Server Protocol daemon for VS Code and IDE integration | In Development |
 | **JavaScript Runtime** | Browser/Node.js runtime (~75% stdlib coverage, all major formats) | Future |
