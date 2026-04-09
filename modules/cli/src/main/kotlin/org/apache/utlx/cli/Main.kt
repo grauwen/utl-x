@@ -97,9 +97,13 @@ object Main {
                     if (command.endsWith(".utlx")) {
                         TransformCommand.execute(args)
                     }
+                    // Check if first arg is -e (expression mode)
+                    else if (command in listOf("-e", "--expression")) {
+                        TransformCommand.execute(args)
+                    }
                     // Check if first arg is a flag for identity mode (--to, --from, etc.)
                     else if (command in listOf("--to", "--from", "--output-format", "--input-format",
-                                               "--no-pretty", "--verbose", "-v")) {
+                                               "--no-pretty", "--verbose", "-v", "-r", "--raw-output")) {
                         TransformCommand.execute(args, identityMode = true)
                     }
                     else {
