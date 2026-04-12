@@ -665,5 +665,5 @@ sum($input.Orders.Order
 ## Next Steps
 
 - **Learn functions:** [Functions Guide](functions.md)
-- **Practice with examples:** [Examples](../examples/)
+- **Practice with examples:** [Examples](../examples/README.md)
 - **Stdlib reference:** [652 Functions](../stdlib/stdlib-complete-reference.md)
