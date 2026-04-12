@@ -3,6 +3,6 @@ input xml
 output json
 ---
 {
-  name: input.customer.name,
-  id: input.customer.id
+  name: $input.customer.name,
+  id: $input.customer.id
 }

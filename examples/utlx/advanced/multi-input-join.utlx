@@ -1,39 +1,21 @@
-# Multi-input join example
-
+// Multi-input join example
 %utlx 1.0
 input: orders json, customers json, products json
 output json
 ---
-// Needs validation if correct
-// Create efficient lookup maps
-let customerMap = $customers.customers 
-  |> map(c => [c.id, c])
-  |> reduce((acc, [id, c]) => {...acc, [id]: c}, {}),
-
-let productMap = $products.products
-  |> map(p => [p.id, p])
-  |> reduce((acc, [id, p]) => {...acc, [id]: p}, {})
-
 // Join orders with customers and products
 {
   results: $orders.orders |> map(order => {
-    let customer = customerMap[order.customerId] ?? {
-      name: "Unknown Customer",
-      tier: "Standard"
-    },
-    
-    let product = productMap[order.productId] ?? {
-      name: "Unknown Product",
-      price: 0
-    },
-    
+    let customer = $customers.customers |> filter(c => c.id == order.customerId) |> first(),
+    let product = $products.products |> filter(p => p.id == order.productId) |> first(),
+
     let subtotal = product.price * order.quantity,
     let discount = match customer.tier {
       "Gold" => 0.15,
       "Silver" => 0.10,
       _ => 0
     },
-    
+
     {
       orderId: order.orderId,
       customerName: customer.name,
@@ -46,11 +28,8 @@ let productMap = $products.products
     }
   })
 }
-
-# Run with:
-# utlx transform multi-input-join.utlx \
-#   --input orders=orders.json \
-#   --input customers=customers.json \
-#   --input products=products.json
-
----
+// Run with:
+// utlx transform multi-input-join.utlx \
+//   --input orders=orders.json \
+//   --input customers=customers.json \
+//   --input products=products.json

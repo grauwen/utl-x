@@ -2,9 +2,8 @@
 input auto
 output json
 ---
-
 {
-  upperName: input.name | upper,
-  totalItems: input.items | sum,
-  itemCount: input.items | count
+  upperName: upper($input.name),
+  totalItems: sum($input.items),
+  itemCount: count($input.items)
 }
