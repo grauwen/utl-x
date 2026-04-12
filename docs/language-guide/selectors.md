@@ -140,98 +140,44 @@ $input.items[0].price     // 10.00
 $input.items[1].name      // "Gadget"
 ```
 
-### Negative Indexing (Future)
+### Working with All Elements
+
+UTL-X uses functional operators to work with array elements:
 
 ```utlx
-array[-1]    // Last element
-array[-2]    // Second-to-last element
-```
+// Get all prices from items
+$input.items |> map(i => i.price)        // [10.00, 25.00, 15.00]
 
-### Wildcard Selection
-
-**All elements:**
-```utlx
-array[*]
-```
-
-**Example:**
-```json
-{
-  "items": [
-    {"price": 10.00},
-    {"price": 25.00},
-    {"price": 15.00}
-  ]
-}
-```
-
-```utlx
-$input.items[*]              // All items
-$input.items[*].price        // [10.00, 25.00, 15.00]
-$input.items.*.price         // Same as above (shorthand)
+// Get first and last
+first($input.items)                       // First element
+last($input.items)                        // Last element
 ```
 
 ---
 
 ## Recursive Descent
 
-### .. Operator
+### Recursive Descent (Future)
 
-Find properties at any depth:
+The `..` operator for finding properties at any depth is planned for a future release.
 
-```utlx
-$input..propertyName
-```
-
-**Example:**
-```json
-{
-  "order": {
-    "id": "001",
-    "customer": {
-      "id": "C001",
-      "address": {
-        "id": "A001"
-      }
-    },
-    "items": [
-      {"id": "I001"},
-      {"id": "I002"}
-    ]
-  }
-}
-```
-
-```utlx
-$input..id
-// Result: ["001", "C001", "A001", "I001", "I002"]
-```
-
-**Use cases:**
-- Finding all occurrences of a property
-- Deep searches in nested structures
-- Working with variable structure depths
+In the meantime, use explicit path navigation or user-defined recursive functions.
 
 ---
 
-## Predicates
+## Filtering Arrays
 
-### Filter by Condition
+UTL-X uses functional operators for filtering — this is clearer and more composable than inline predicates.
+
+### filter() — Select Matching Elements
 
 ```utlx
-array[condition]
-```
-
-### Comparison Operators
-
-**Numeric comparisons:**
-```utlx
-$input.items[price > 100]         // Price greater than 100
-$input.items[price >= 100]        // Price 100 or more
-$input.items[price < 50]          // Price less than 50
-$input.items[price <= 50]         // Price 50 or less
-$input.items[price == 100]        // Price exactly 100
-$input.items[price != 100]        // Price not 100
+$input.items |> filter(i => i.price > 100)         // Price greater than 100
+$input.items |> filter(i => i.price >= 100)        // Price 100 or more
+$input.items |> filter(i => i.price < 50)          // Price less than 50
+$input.items |> filter(i => i.price <= 50)         // Price 50 or less
+$input.items |> filter(i => i.price == 100)        // Price exactly 100
+$input.items |> filter(i => i.price != 100)        // Price not 100
 ```
 
 **Example:**
@@ -246,10 +192,10 @@ $input.items[price != 100]        // Price not 100
 ```
 
 ```utlx
-$input.items[price > 100]
+$input.items |> filter(i => i.price > 100)
 // Result: [{"name": "Gadget", "price": 150}]
 
-$input.items[price <= 75]
+$input.items |> filter(i => i.price <= 75)
 // Result: [
 //   {"name": "Widget", "price": 10},
 //   {"name": "Thing", "price": 75}
@@ -259,56 +205,56 @@ $input.items[price <= 75]
 ### String Comparisons
 
 ```utlx
-$input.items[category == "Electronics"]
-$input.items[status != "cancelled"]
-$input.items[name == "Widget"]
+$input.items |> filter(i => i.category == "Electronics")
+$input.items |> filter(i => i.status != "cancelled")
+$input.items |> filter(i => i.name == "Widget")
 ```
 
 ### Logical Operators
 
 **AND operator:**
 ```utlx
-$input.items[price > 50 && price < 150]
-$input.items[category == "Electronics" && inStock == true]
+$input.items |> filter(i => i.price > 50 && i.price < 150)
+$input.items |> filter(i => i.category == "Electronics" && i.inStock == true)
 ```
 
 **OR operator:**
 ```utlx
-$input.items[status == "pending" || status == "processing"]
-$input.items[priority == "high" || priority == "urgent"]
+$input.items |> filter(i => i.status == "pending" || i.status == "processing")
+$input.items |> filter(i => i.priority == "high" || i.priority == "urgent")
 ```
 
 **NOT operator:**
 ```utlx
-$input.items[!(status == "cancelled")]
-$input.items[!inStock]
+$input.items |> filter(i => i.status != "cancelled")
+$input.items |> filter(i => !i.inStock)
 ```
 
 **Complex combinations:**
 ```utlx
-$input.items[(price > 100 || featured == true) && inStock == true]
+$input.items |> filter(i => (i.price > 100 || i.featured == true) && i.inStock == true)
 ```
 
-### Function Calls in Predicates
+### Function Calls in Filters
 
 ```utlx
-$input.items[upper(category) == "ELECTRONICS"]
-$input.items[contains(description, "premium")]
-$input.items[length(name) > 10]
+$input.items |> filter(i => upper(i.category) == "ELECTRONICS")
+$input.items |> filter(i => contains(i.description, "premium"))
+$input.items |> filter(i => length(i.name) > 10)
 ```
 
 ---
 
-## Wildcard Patterns
+## Working with Object Properties
 
-### Property Wildcard
+### Getting Keys and Values
 
-Match any property name:
+Use stdlib functions to work with object properties:
 
 ```utlx
-$input.*                    // All direct children
-$input.order.*             // All properties of order
-$input.*.name              // 'name' property of all children
+keys($input)               // All property names
+values($input)             // All property values
+entries($input)            // Key-value pairs
 ```
 
 **Example:**
@@ -321,23 +267,18 @@ $input.*.name              // 'name' property of all children
 ```
 
 ```utlx
-$input.*
-// Result: All three product objects
-
-$input.*.name
+values($input) |> map(p => p.name)
 // Result: ["Widget", "Gadget", "Thing"]
 
-$input.*.price
+values($input) |> map(p => p.price)
 // Result: [10, 25, 15]
 ```
 
 ---
 
-## Selector Combinations
+## Chaining Selectors and Operators
 
-### Chaining Selectors
-
-Combine multiple selector operations:
+### Combining Path Navigation with Functional Operators
 
 ```utlx
 $input.order.items[price > 100].name
@@ -346,8 +287,8 @@ $input.order.items[price > 100].name
 **Breakdown:**
 1. `$input.order` - Navigate to order
 2. `.items` - Get items array
-3. `[price > 100]` - Filter by price
-4. `.name` - Extract name from each
+3. `|> filter(...)` - Filter by condition
+4. `|> map(...)` - Extract property
 
 **Example:**
 ```json
@@ -364,76 +305,47 @@ $input.order.items[price > 100].name
 ```
 
 ```utlx
-$input.order.items[price > 100].name
+$input.order.items |> filter(i => i.price > 100) |> map(i => i.name)
 // Result: ["Gadget", "Gizmo"]
 ```
 
-### Multiple Predicates
+### Multiple Filters
 
-Apply multiple filters:
+Chain filters with pipeline:
 
 ```utlx
-$input.products[category == "Electronics"][price < 1000][inStock == true]
+$input.products
+  |> filter(p => p.category == "Electronics")
+  |> filter(p => p.price < 1000)
+  |> filter(p => p.inStock == true)
 ```
 
-**Equivalent to:**
+Or combine in one filter:
 ```utlx
-$input.products[
-  category == "Electronics" && 
-  price < 1000 && 
-  inStock == true
-]
-```
-
----
-
-## Context in Selectors
-
-### Current Context
-
-Inside a predicate, use current element properties directly:
-
-```utlx
-$input.items[price > quantity * 10]
-```
-
-Here, `price` and `quantity` refer to properties of the current item being tested.
-
-### Parent Context
-
-Access parent elements (future feature):
-
-```utlx
-$input..item[../category == "Electronics"]
+$input.products |> filter(p =>
+  p.category == "Electronics" &&
+  p.price < 1000 &&
+  p.inStock == true
+)
 ```
 
 ---
 
-## Selector Functions
+## Using Functions in Filters
 
-### exists()
-
-Check if a property exists:
+### Check Property Existence
 
 ```utlx
-$input.items[exists(discount)]      // Items with discount property
-$input.items[!exists(discount)]     // Items without discount
+$input.items |> filter(i => i.discount != null)     // Items with discount
+$input.items |> filter(i => i.discount == null)     // Items without discount
 ```
 
-### contains()
-
-String contains check:
+### String Functions
 
 ```utlx
-$input.items[contains(description, "premium")]
-$input.items[contains(tags, "featured")]
-```
-
-### startsWith() / endsWith()
-
-```utlx
-$input.items[startsWith(sku, "ELEC")]
-$input.items[endsWith(name, "Pro")]
+$input.items |> filter(i => contains(i.description, "premium"))
+$input.items |> filter(i => startsWith(i.sku, "ELEC"))
+$input.items |> filter(i => endsWith(i.name, "Pro"))
 ```
 
 ---
@@ -505,59 +417,48 @@ input csv { headers: false }
 ### Flattening Nested Arrays
 
 ```utlx
-$input.orders[*].items[*]
-// Gets all items from all orders
+// Get all items from all orders
+$input.orders |> map(o => o.items) |> flatten()
 ```
 
 ### Conditional Navigation
 
 ```utlx
-$input.order[status == "active"].items
-// Only navigate to items if order is active
+// Only get items if order is active
+if ($input.order.status == "active") $input.order.items else []
 ```
 
 ### Multi-Level Filtering
 
 ```utlx
-$input.categories[*].products[price > 100]
 // Filter products within each category
+$input.categories |> map(cat =>
+  cat.products |> filter(p => p.price > 100)
+) |> flatten()
 ```
 
 ---
 
-## Performance Considerations
+## Performance: Cache Repeated Selectors
 
-### Efficient Selectors
-
-**✅ Good - Specific paths:**
-```utlx
-$input.order.items[price > 100]
-```
-
-**⚠️ Slower - Recursive search:**
-```utlx
-$input..items
-```
-
-### Caching Results
-
-**❌ Bad - Repeated computation:**
+**❌ Bad — repeated navigation:**
 ```utlx
 {
-  count: count($input.order.items[active == true]),
-  total: sum($input.order.items[active == true].*.price),
-  names: $input.order.items[active == true].*.name
+  let items = $input.order.items,
+  count: count(items |> filter(i => i.active)),
+  total: sum(items |> filter(i => i.active) |> map(i => i.price)),
+  names: items |> filter(i => i.active) |> map(i => i.name)
 }
 ```
 
-**✅ Good - Compute once:**
+**✅ Good — compute once:**
 ```utlx
 {
-  let activeItems = $input.order.items[active == true],
-  
+  let activeItems = $input.order.items |> filter(i => i.active),
+
   count: count(activeItems),
-  total: sum(activeItems.*.price),
-  names: activeItems.*.name
+  total: sum(activeItems |> map(i => i.price)),
+  names: activeItems |> map(i => i.name)
 }
 ```
 
@@ -575,7 +476,7 @@ $input.orders[*].total
 ### Pattern 2: Filter Then Transform
 
 ```utlx
-$input.products[price > 100][*] |> map(p => {
+$input.products |> filter(p => p.price > 100) |> map(p => {
   name: p.name,
   discountPrice: p.price * 0.9
 })
@@ -584,22 +485,15 @@ $input.products[price > 100][*] |> map(p => {
 ### Pattern 3: Nested Filtering
 
 ```utlx
-$input.categories[*].products[featured == true]
+$input.categories |> map(c => c.products |> filter(p => p.featured)) |> flatten()
 // Featured products from all categories
 ```
 
 ### Pattern 4: Conditional Access
 
 ```utlx
-$input.customer.premium.benefits || $input.customer.standard.benefits
+$input.customer?.premium?.benefits ?? $input.customer?.standard?.benefits
 // Try premium first, fallback to standard
-```
-
-### Pattern 5: Deep Search
-
-```utlx
-$input..productCode
-// Find all product codes anywhere in structure
 ```
 
 ---
@@ -629,15 +523,15 @@ if ($input.order.customer != null)
 else 
   "No customer"
 
-// Use recursive search
-$input..name  // Find 'name' anywhere
+// Use safe navigation
+$input.order?.customer?.name ?? "Unknown"
 ```
 
-### Predicate Not Matching
+### Filter Returns Empty
 
 **Problem:**
 ```utlx
-$input.items[price > 100]  // Returns empty array
+$input.items |> filter(i => i.price > 100)  // Returns empty array
 ```
 
 **Causes:**
@@ -648,18 +542,18 @@ $input.items[price > 100]  // Returns empty array
 **Solutions:**
 ```utlx
 // Convert string to number
-$input.items[parseNumber(price) > 100]
+$input.items |> filter(i => parseNumber(i.price) > 100)
 
 // Debug: check what you're comparing
 {
-  _debug: $input.items[*].price,
-  result: $input.items[price > 100]
+  _debug: $input.items |> map(i => i.price),
+  result: $input.items |> filter(i => i.price > 100)
 }
 
 // Check property names
 {
   _keys: keys($input.items[0]),
-  result: $input.items[Price > 100]  // Capital P?
+  result: $input.items |> filter(i => i.Price > 100)  // Capital P?
 }
 ```
 
@@ -693,28 +587,24 @@ $input.Order.@id  // Use @ for attributes
 }
 ```
 
-**Selectors:**
+**Transformations:**
 ```utlx
 // Electronics under $1000 that are in stock
-$input.products[
-  category == "Electronics" && 
-  price < 1000 && 
-  inStock == true
-]
+$input.products |> filter(p =>
+  p.category == "Electronics" &&
+  p.price < 1000 &&
+  p.inStock == true
+)
 
 // Just the names
-$input.products[
-  category == "Electronics" && 
-  price < 1000 && 
-  inStock == true
-].*.name
+$input.products
+  |> filter(p => p.category == "Electronics" && p.price < 1000 && p.inStock)
+  |> map(p => p.name)
 
 // Count matching products
-count($input.products[
-  category == "Electronics" && 
-  price < 1000 && 
-  inStock == true
-])
+count($input.products |> filter(p =>
+  p.category == "Electronics" && p.price < 1000 && p.inStock
+))
 ```
 
 ### Example 2: Order Processing
@@ -729,24 +619,24 @@ count($input.products[
 </Orders>
 ```
 
-**Selectors:**
+**Transformations:**
 ```utlx
 // Pending orders over $100
-$input.Orders.Order[
-  $status == "pending" && 
-  parseNumber($total) > 100
-]
+$input.Orders.Order |> filter(o =>
+  o.@status == "pending" &&
+  parseNumber(o.@total) > 100
+)
 
 // Their IDs
-$input.Orders.Order[
-  $status == "pending" && 
-  parseNumber($total) > 100
-].@id
+$input.Orders.Order
+  |> filter(o => o.@status == "pending" && parseNumber(o.@total) > 100)
+  |> map(o => o.@id)
 
 // Total of pending orders
-sum($input.Orders.Order[
-  $status == "pending"
-] |> map(o => parseNumber(o.@total)))
+sum($input.Orders.Order
+  |> filter(o => o.@status == "pending")
+  |> map(o => parseNumber(o.@total))
+)
 ```
 
 ---
@@ -755,13 +645,19 @@ sum($input.Orders.Order[
 
 | Selector | Description | Example |
 |----------|-------------|---------|
+| Syntax | Description | Example |
+|--------|-------------|---------|
 | `.property` | Property access | `$input.name` |
 | `.@attribute` | Attribute (XML) | `$input.Order.@id` |
 | `[index]` | Array index | `$input.items[0]` |
-| `[*]` | All elements | `$input.items[*]` |
-| `.*` | All properties | `$input.order.*` |
-| `..property` | Recursive search | `$input..productId` |
-| `[condition]` | Filter | `$input.items[price > 100]` |
+| `?.property` | Safe navigation | `$input.order?.customer?.name` |
+| `?? default` | Nullish coalescing | `$input.name ?? "Unknown"` |
+| `\|> filter()` | Filter array | `$input.items \|> filter(i => i.price > 100)` |
+| `\|> map()` | Transform array | `$input.items \|> map(i => i.name)` |
+| `keys()` | Object property names | `keys($input)` |
+| `values()` | Object property values | `values($input)` |
+| `first()` | First element | `first($input.items)` |
+| `last()` | Last element | `last($input.items)` |
 | `.text()` | Text content (XML) | `$input.element.text()` |
 
 ---
@@ -770,8 +666,4 @@ sum($input.Orders.Order[
 
 - **Learn functions:** [Functions Guide](functions.md)
 - **Practice with examples:** [Examples](../examples/)
-- **Read full spec:** [Language Specification](../reference/language-spec.md)
-
----
-
-**Questions?** Ask in [Discussions](https://github.com/grauwen/utl-x/discussions)
+- **Stdlib reference:** [652 Functions](../stdlib/stdlib-complete-reference.md)
