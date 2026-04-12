@@ -23,7 +23,43 @@ This guide will help you install UTL-X on your system.
 
 ## Installation Methods
 
-### Option 1: Build from Source (Recommended)
+### Option 1: Homebrew (macOS / Linux)
+
+```bash
+brew tap grauwen/utlx
+brew install utlx
+utlx --version
+```
+
+### Option 2: Download Pre-Built Binary
+
+Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.0.1):
+
+**macOS (Apple Silicon):**
+```bash
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.0.1/utlx-macos-arm64.bin -o utlx
+chmod +x utlx
+sudo mv utlx /usr/local/bin/
+```
+
+**Linux (x64):**
+```bash
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.0.1/utlx-linux-x64.bin -o utlx
+chmod +x utlx
+sudo mv utlx /usr/local/bin/
+```
+
+**Windows:** Download `utlx-windows-x64.exe` from the [releases page](https://github.com/grauwen/utl-x/releases/tag/v1.0.1).
+
+### Option 3: Windows (Chocolatey)
+
+```bash
+choco install utlx
+```
+
+Note: Chocolatey package is currently in moderation review.
+
+### Option 4: Build from Source
 
 #### 1. Prerequisites
 
@@ -74,11 +110,11 @@ gradlew.bat :modules:cli:jar
 
 **Output:**
 ```
-UTL-X CLI v1.0.0
+UTL-X CLI v1.0.1
 Universal Transformation Language Extended
 ```
 
-The wrapper scripts (`utlx`, `utlx.bat`, `utlx.ps1`) automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-1.0.0.jar`.
+The wrapper scripts (`utlx`, `utlx.bat`, `utlx.ps1`) automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-1.0.1.jar`.
 
 ---
 
@@ -101,16 +137,6 @@ export JAVA_HOME=$GRAALVM_HOME
 See [Native Binary Quick Start](native-binary-quickstart.md) for details.
 
 ---
-
-### Option 3: Package Managers (Planned)
-
-```bash
-# macOS - Homebrew (planned)
-brew install utlx
-
-# Windows - Chocolatey (planned)
-choco install utlx
-```
 
 ---
 
@@ -182,24 +208,30 @@ EOF
 ## CLI Commands
 
 ```bash
-./utlx --help                              # Show all commands
-./utlx --version                           # Show version
+utlx --help                                # Show all commands and flags
+utlx --version                             # Show version
 
-# Identity mode (no script needed)
-cat data.xml | ./utlx                      # XML to JSON (smart flip)
-cat data.json | ./utlx                     # JSON to XML (smart flip)
-cat data.xml | ./utlx --to yaml            # Override output format
+# Expression mode — like jq (no script needed)
+echo '{"name":"Alice"}' | utlx -e '.name'        # Extract field
+echo '{"name":"Alice"}' | utlx -e '.name' -r     # Raw output (no quotes)
+cat data.json | utlx -e '. |> filter(x => x.active)'  # Filter
+cat data.json | utlx -e 'count(.)'               # Count
+
+# Identity mode (format conversion)
+cat data.xml | utlx                        # XML to JSON (smart flip)
+cat data.json | utlx                       # JSON to XML (smart flip)
+cat data.xml | utlx --to yaml             # Override output format
 
 # Script-based transformation
-./utlx transform script.utlx input.xml     # Transform with script
-./utlx script.utlx input.xml               # Implicit transform (same thing)
-./utlx transform script.utlx input.xml -o output.json  # Save to file
+utlx transform script.utlx input.xml      # Transform with script
+utlx script.utlx input.xml                # Implicit transform (same thing)
+utlx transform script.utlx input.xml -o output.json  # Save to file
 
 # Other commands
-./utlx validate script.utlx               # Validate script syntax
-./utlx functions                           # List all 652 stdlib functions
-./utlx functions search xml                # Search functions
-./utlx repl                                # Interactive REPL
+utlx validate script.utlx                 # Validate script syntax
+utlx functions                             # List all 652 stdlib functions
+utlx functions search xml                  # Search functions
+utlx repl                                  # Interactive REPL
 ```
 
 ---
