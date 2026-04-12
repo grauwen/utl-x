@@ -20,7 +20,7 @@ Selectors allow you to navigate and extract data from input structures. They wor
 ### Simple Property Access
 
 ```utlx
-input.property
+$input.property
 ```
 
 **Example - JSON:**
@@ -28,8 +28,8 @@ input.property
 {"name": "Alice", "age": 30}
 ```
 ```utlx
-input.name    // "Alice"
-input.age     // 30
+$input.name    // "Alice"
+$input.age     // 30
 ```
 
 **Example - XML:**
@@ -37,15 +37,15 @@ input.age     // 30
 <person><name>Alice</name><age>30</age></person>
 ```
 ```utlx
-input.person.name    // "Alice"
-input.person.age     // "30" (string)
+$input.person.name    // "Alice"
+$input.person.age     // "30" (string)
 ```
 
 ### Nested Navigation
 
 **Deep property access:**
 ```utlx
-input.level1.level2.level3
+$input.level1.level2.level3
 ```
 
 **Example:**
@@ -62,8 +62,8 @@ input.level1.level2.level3
 }
 ```
 ```utlx
-input.order.customer.name                // "Alice"
-input.order.customer.address.city        // "Springfield"
+$input.order.customer.name                // "Alice"
+$input.order.customer.address.city        // "Springfield"
 ```
 
 ---
@@ -88,9 +88,9 @@ element.@attributeName
 ```
 
 ```utlx
-input.Order.@id                      // "12345"
-input.Order.@date                    // "2026-01-15"
-input.Order.Customer.@email          // "alice@example.com"
+$input.Order.@id                      // "12345"
+$input.Order.@date                    // "2026-01-15"
+$input.Order.Customer.@email          // "alice@example.com"
 ```
 
 ### All Attributes
@@ -98,7 +98,7 @@ input.Order.Customer.@email          // "alice@example.com"
 Get all attributes as an object:
 
 ```utlx
-input.Order.@*
+$input.Order.@*
 ```
 
 **Result:**
@@ -134,10 +134,10 @@ array[2]     // Third element
 ```
 
 ```utlx
-input.items[0]           // {"name": "Widget", "price": 10.00}
-input.items[0].name      // "Widget"
-input.items[0].price     // 10.00
-input.items[1].name      // "Gadget"
+$input.items[0]           // {"name": "Widget", "price": 10.00}
+$input.items[0].name      // "Widget"
+$input.items[0].price     // 10.00
+$input.items[1].name      // "Gadget"
 ```
 
 ### Negative Indexing (Future)
@@ -166,9 +166,9 @@ array[*]
 ```
 
 ```utlx
-input.items[*]              // All items
-input.items[*].price        // [10.00, 25.00, 15.00]
-input.items.*.price         // Same as above (shorthand)
+$input.items[*]              // All items
+$input.items[*].price        // [10.00, 25.00, 15.00]
+$input.items.*.price         // Same as above (shorthand)
 ```
 
 ---
@@ -180,7 +180,7 @@ input.items.*.price         // Same as above (shorthand)
 Find properties at any depth:
 
 ```utlx
-input..propertyName
+$input..propertyName
 ```
 
 **Example:**
@@ -203,7 +203,7 @@ input..propertyName
 ```
 
 ```utlx
-input..id
+$input..id
 // Result: ["001", "C001", "A001", "I001", "I002"]
 ```
 
@@ -226,12 +226,12 @@ array[condition]
 
 **Numeric comparisons:**
 ```utlx
-input.items[price > 100]         // Price greater than 100
-input.items[price >= 100]        // Price 100 or more
-input.items[price < 50]          // Price less than 50
-input.items[price <= 50]         // Price 50 or less
-input.items[price == 100]        // Price exactly 100
-input.items[price != 100]        // Price not 100
+$input.items[price > 100]         // Price greater than 100
+$input.items[price >= 100]        // Price 100 or more
+$input.items[price < 50]          // Price less than 50
+$input.items[price <= 50]         // Price 50 or less
+$input.items[price == 100]        // Price exactly 100
+$input.items[price != 100]        // Price not 100
 ```
 
 **Example:**
@@ -246,10 +246,10 @@ input.items[price != 100]        // Price not 100
 ```
 
 ```utlx
-input.items[price > 100]
+$input.items[price > 100]
 // Result: [{"name": "Gadget", "price": 150}]
 
-input.items[price <= 75]
+$input.items[price <= 75]
 // Result: [
 //   {"name": "Widget", "price": 10},
 //   {"name": "Thing", "price": 75}
@@ -259,42 +259,42 @@ input.items[price <= 75]
 ### String Comparisons
 
 ```utlx
-input.items[category == "Electronics"]
-input.items[status != "cancelled"]
-input.items[name == "Widget"]
+$input.items[category == "Electronics"]
+$input.items[status != "cancelled"]
+$input.items[name == "Widget"]
 ```
 
 ### Logical Operators
 
 **AND operator:**
 ```utlx
-input.items[price > 50 && price < 150]
-input.items[category == "Electronics" && inStock == true]
+$input.items[price > 50 && price < 150]
+$input.items[category == "Electronics" && inStock == true]
 ```
 
 **OR operator:**
 ```utlx
-input.items[status == "pending" || status == "processing"]
-input.items[priority == "high" || priority == "urgent"]
+$input.items[status == "pending" || status == "processing"]
+$input.items[priority == "high" || priority == "urgent"]
 ```
 
 **NOT operator:**
 ```utlx
-input.items[!(status == "cancelled")]
-input.items[!inStock]
+$input.items[!(status == "cancelled")]
+$input.items[!inStock]
 ```
 
 **Complex combinations:**
 ```utlx
-input.items[(price > 100 || featured == true) && inStock == true]
+$input.items[(price > 100 || featured == true) && inStock == true]
 ```
 
 ### Function Calls in Predicates
 
 ```utlx
-input.items[upper(category) == "ELECTRONICS"]
-input.items[contains(description, "premium")]
-input.items[length(name) > 10]
+$input.items[upper(category) == "ELECTRONICS"]
+$input.items[contains(description, "premium")]
+$input.items[length(name) > 10]
 ```
 
 ---
@@ -306,9 +306,9 @@ input.items[length(name) > 10]
 Match any property name:
 
 ```utlx
-input.*                    // All direct children
-input.order.*             // All properties of order
-input.*.name              // 'name' property of all children
+$input.*                    // All direct children
+$input.order.*             // All properties of order
+$input.*.name              // 'name' property of all children
 ```
 
 **Example:**
@@ -321,13 +321,13 @@ input.*.name              // 'name' property of all children
 ```
 
 ```utlx
-input.*
+$input.*
 // Result: All three product objects
 
-input.*.name
+$input.*.name
 // Result: ["Widget", "Gadget", "Thing"]
 
-input.*.price
+$input.*.price
 // Result: [10, 25, 15]
 ```
 
@@ -340,7 +340,7 @@ input.*.price
 Combine multiple selector operations:
 
 ```utlx
-input.order.items[price > 100].name
+$input.order.items[price > 100].name
 ```
 
 **Breakdown:**
@@ -364,7 +364,7 @@ input.order.items[price > 100].name
 ```
 
 ```utlx
-input.order.items[price > 100].name
+$input.order.items[price > 100].name
 // Result: ["Gadget", "Gizmo"]
 ```
 
@@ -373,12 +373,12 @@ input.order.items[price > 100].name
 Apply multiple filters:
 
 ```utlx
-input.products[category == "Electronics"][price < 1000][inStock == true]
+$input.products[category == "Electronics"][price < 1000][inStock == true]
 ```
 
 **Equivalent to:**
 ```utlx
-input.products[
+$input.products[
   category == "Electronics" && 
   price < 1000 && 
   inStock == true
@@ -394,7 +394,7 @@ input.products[
 Inside a predicate, use current element properties directly:
 
 ```utlx
-input.items[price > quantity * 10]
+$input.items[price > quantity * 10]
 ```
 
 Here, `price` and `quantity` refer to properties of the current item being tested.
@@ -404,7 +404,7 @@ Here, `price` and `quantity` refer to properties of the current item being teste
 Access parent elements (future feature):
 
 ```utlx
-input..item[../category == "Electronics"]
+$input..item[../category == "Electronics"]
 ```
 
 ---
@@ -416,8 +416,8 @@ input..item[../category == "Electronics"]
 Check if a property exists:
 
 ```utlx
-input.items[exists(discount)]      // Items with discount property
-input.items[!exists(discount)]     // Items without discount
+$input.items[exists(discount)]      // Items with discount property
+$input.items[!exists(discount)]     // Items without discount
 ```
 
 ### contains()
@@ -425,15 +425,15 @@ input.items[!exists(discount)]     // Items without discount
 String contains check:
 
 ```utlx
-input.items[contains(description, "premium")]
-input.items[contains(tags, "featured")]
+$input.items[contains(description, "premium")]
+$input.items[contains(tags, "featured")]
 ```
 
 ### startsWith() / endsWith()
 
 ```utlx
-input.items[startsWith(sku, "ELEC")]
-input.items[endsWith(name, "Pro")]
+$input.items[startsWith(sku, "ELEC")]
+$input.items[endsWith(name, "Pro")]
 ```
 
 ---
@@ -460,7 +460,7 @@ input xml {
 
 **Get text content:**
 ```utlx
-input.element.text()
+$input.element.text()
 ```
 
 **Example:**
@@ -472,8 +472,8 @@ input.element.text()
 ```
 
 ```utlx
-input.product.name.text()              // "Widget"
-input.product.description.text()       // "A useful widget"
+$input.product.name.text()              // "Widget"
+$input.product.description.text()       // "A useful widget"
 ```
 
 ### CSV Column Access
@@ -505,21 +505,21 @@ input csv { headers: false }
 ### Flattening Nested Arrays
 
 ```utlx
-input.orders[*].items[*]
+$input.orders[*].items[*]
 // Gets all items from all orders
 ```
 
 ### Conditional Navigation
 
 ```utlx
-input.order[status == "active"].items
+$input.order[status == "active"].items
 // Only navigate to items if order is active
 ```
 
 ### Multi-Level Filtering
 
 ```utlx
-input.categories[*].products[price > 100]
+$input.categories[*].products[price > 100]
 // Filter products within each category
 ```
 
@@ -531,12 +531,12 @@ input.categories[*].products[price > 100]
 
 **✅ Good - Specific paths:**
 ```utlx
-input.order.items[price > 100]
+$input.order.items[price > 100]
 ```
 
 **⚠️ Slower - Recursive search:**
 ```utlx
-input..items
+$input..items
 ```
 
 ### Caching Results
@@ -568,14 +568,14 @@ input..items
 ### Pattern 1: Extract All Values
 
 ```utlx
-input.orders[*].total
+$input.orders[*].total
 // Get all order totals
 ```
 
 ### Pattern 2: Filter Then Transform
 
 ```utlx
-input.products[price > 100][*] |> map(p => {
+$input.products[price > 100][*] |> map(p => {
   name: p.name,
   discountPrice: p.price * 0.9
 })
@@ -584,21 +584,21 @@ input.products[price > 100][*] |> map(p => {
 ### Pattern 3: Nested Filtering
 
 ```utlx
-input.categories[*].products[featured == true]
+$input.categories[*].products[featured == true]
 // Featured products from all categories
 ```
 
 ### Pattern 4: Conditional Access
 
 ```utlx
-input.customer.premium.benefits || $input.customer.standard.benefits
+$input.customer.premium.benefits || $input.customer.standard.benefits
 // Try premium first, fallback to standard
 ```
 
 ### Pattern 5: Deep Search
 
 ```utlx
-input..productCode
+$input..productCode
 // Find all product codes anywhere in structure
 ```
 
@@ -610,7 +610,7 @@ input..productCode
 
 **Problem:**
 ```utlx
-input.order.customer.name  // Returns null
+$input.order.customer.name  // Returns null
 ```
 
 **Causes:**
@@ -621,7 +621,7 @@ input.order.customer.name  // Returns null
 **Solutions:**
 ```utlx
 // Add default value
-input.order.customer.name || "Unknown"
+$input.order.customer.name || "Unknown"
 
 // Check existence
 if ($input.order.customer != null) 
@@ -630,14 +630,14 @@ else
   "No customer"
 
 // Use recursive search
-input..name  // Find 'name' anywhere
+$input..name  // Find 'name' anywhere
 ```
 
 ### Predicate Not Matching
 
 **Problem:**
 ```utlx
-input.items[price > 100]  // Returns empty array
+$input.items[price > 100]  // Returns empty array
 ```
 
 **Causes:**
@@ -648,7 +648,7 @@ input.items[price > 100]  // Returns empty array
 **Solutions:**
 ```utlx
 // Convert string to number
-input.items[parseNumber(price) > 100]
+$input.items[parseNumber(price) > 100]
 
 // Debug: check what you're comparing
 {
@@ -667,12 +667,12 @@ input.items[parseNumber(price) > 100]
 
 **Problem:**
 ```utlx
-input.Order.id  // Should be $id
+$input.Order.id  // Should be @id
 ```
 
 **Solution:**
 ```utlx
-input.Order.@id  // Use @ for attributes
+$input.Order.@id  // Use @ for attributes
 ```
 
 ---
@@ -696,14 +696,14 @@ input.Order.@id  // Use @ for attributes
 **Selectors:**
 ```utlx
 // Electronics under $1000 that are in stock
-input.products[
+$input.products[
   category == "Electronics" && 
   price < 1000 && 
   inStock == true
 ]
 
 // Just the names
-input.products[
+$input.products[
   category == "Electronics" && 
   price < 1000 && 
   inStock == true
@@ -732,13 +732,13 @@ count($input.products[
 **Selectors:**
 ```utlx
 // Pending orders over $100
-input.Orders.Order[
+$input.Orders.Order[
   $status == "pending" && 
   parseNumber($total) > 100
 ]
 
 // Their IDs
-input.Orders.Order[
+$input.Orders.Order[
   $status == "pending" && 
   parseNumber($total) > 100
 ].@id
