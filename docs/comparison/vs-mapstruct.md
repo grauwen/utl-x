@@ -18,7 +18,7 @@ They solve **different problems** but often appear in the same integration archi
 | **Runtime** | JVM only | JVM or GraalVM native binary |
 | **Type Safety** | Compile-time (Java types) | Compile-time (UTL-X type system) |
 | **License** | Apache 2.0 | AGPL-3.0 / Commercial |
-| **Standalone CLI** | No (library only) | Yes (\`cat data.xml \| utlx\`) |
+| **Standalone CLI** | No (library only) | Yes (`cat data.xml \| utlx`) |
 | **Format Awareness** | None (works with Java objects) | Built-in parsers for 11 formats |
 | **Schema Support** | None | XSD, JSON Schema, Avro, Protobuf, OData/EDMX |
 | **Stdlib** | N/A (uses Java methods) | 652 built-in functions |
@@ -27,14 +27,14 @@ They solve **different problems** but often appear in the same integration archi
 
 MapStruct excels at **Java-to-Java** object mapping:
 
-\`\`\`java
+```java
 @Mapper
 public interface CustomerMapper {
     @Mapping(source = "emailAddress", target = "email")
     @Mapping(target = "fullName", expression = "java(entity.getFirstName() + \" \" + entity.getLastName())")
     CustomerDTO toDTO(CustomerEntity entity);
 }
-\`\`\`
+```
 
 MapStruct generates the implementation at compile time — zero reflection, zero runtime overhead.
 
@@ -50,38 +50,38 @@ MapStruct generates the implementation at compile time — zero reflection, zero
 
 The same mapping in UTL-X:
 
-\`\`\`bash
+```bash
 echo '{"firstName":"Alice","lastName":"Johnson","emailAddress":"alice@example.com"}' | utlx -e '{
   fullName: .firstName + " " + .lastName,
   email: .emailAddress
 }'
-\`\`\`
+```
 
 **But UTL-X goes further** — the same works with XML, CSV, or YAML input:
 
-\`\`\`bash
+```bash
 # XML input (same expression)
 cat customer.xml | utlx -e '{fullName: .Customer.firstName + " " + .Customer.lastName, email: .Customer.emailAddress}'
 
 # CSV input
 cat customers.csv | utlx -e '. |> map(c => {fullName: c.firstName + " " + c.lastName, email: c.emailAddress})' --from csv
-\`\`\`
+```
 
 ## Real-World Architecture Comparison
 
 ### Typical MapStruct Flow
 
-\`\`\`
+```
 XML File -> JAXB Unmarshal -> Java POJO -> MapStruct -> Java DTO -> Jackson Serialize -> JSON
-\`\`\`
+```
 
 Requires: JAXB annotations, Jackson annotations, MapStruct mapper, Spring wiring, build plugin.
 
 ### Equivalent UTL-X Flow
 
-\`\`\`bash
+```bash
 cat order.xml | utlx -e '{id: .Order.@id, customer: .Order.Customer.Name}' --to json
-\`\`\`
+```
 
 One command. No Java code.
 
@@ -89,7 +89,7 @@ One command. No Java code.
 
 ### MapStruct
 
-\`\`\`java
+```java
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
     @Mapping(source = "orderId", target = "invoiceId")
@@ -98,20 +98,20 @@ public interface OrderMapper {
     @Mapping(target = "itemCount", expression = "java(order.getItems().size())")
     InvoiceDTO toInvoice(OrderEntity order);
 }
-\`\`\`
+```
 
 Plus: POJO classes, getters/setters, Jackson config, JAXB config, Spring wiring.
 
 ### UTL-X
 
-\`\`\`bash
+```bash
 cat order.json | utlx -e '{
   invoiceId: .orderId,
   customerName: .customer.name,
   total: sum(.items |> map(i => i.price * i.quantity)),
   itemCount: count(.items)
 }'
-\`\`\`
+```
 
 Works with XML, JSON, CSV, or YAML input — no POJOs, no annotations, no build plugins.
 
@@ -140,10 +140,10 @@ UTL-X and MapStruct are not mutually exclusive:
 - Use **UTL-X** for external data transformation (file conversion, API integration, ETL)
 - Use **UTL-X CLI** in CI/CD pipelines to validate and transform data before it enters your Java application
 
-\`\`\`bash
+```bash
 # Transform incoming XML to JSON, then feed to your Java service
 cat incoming-order.xml | utlx --to json | curl -X POST -d @- http://localhost:8080/api/orders
-\`\`\`
+```
 
 ## Bottom Line
 
