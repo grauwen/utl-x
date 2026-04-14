@@ -114,7 +114,12 @@ class XMLParser(
         while (peek() != '>' && peek() != '/') {
             val attrName = parseName()
             skipWhitespace()
-            consume('=', "Expected '=' after attribute name")
+            if (peek() == '>') {
+                error("XML parse error at $line:$column - Found '$attrName' after element name '$name'. " +
+                    "This looks like a space inside an element name (e.g., '<$name $attrName>' should be '<$name$attrName>'). " +
+                    "XML element names cannot contain spaces.")
+            }
+            consume('=', "Expected '=' after attribute name '$attrName' in element '$name'")
             skipWhitespace()
             val attrValue = parseAttributeValue()
             attributes[attrName] = attrValue
