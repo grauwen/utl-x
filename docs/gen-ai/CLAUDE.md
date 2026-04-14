@@ -250,12 +250,11 @@ output json     // Output as JSON
 **Universal Path Syntax:**
 ```utlx
 // Works for XML, JSON, CSV
-$input.Order.Customer.Name          // Simple path
-$input.Order.Items[*]               // Array/element iteration
-$input.Order.Items[0]               // Index access
-$input.Order.@id                    // Attribute (XML) / Property (JSON)
-$input..ProductCode                 // Recursive descent
-$input.Order[Total > 1000]          // Predicate filtering
+$input.Order.Customer.Name                              // Simple path
+$input.Order.Items[0]                                   // Index access
+$input.Order.@id                                        // Attribute (XML) / Property (JSON)
+$input.Order.Items |> map(i => i.Name)                  // Extract from all elements
+$input.Order.Items |> filter(i => i.Total > 1000)       // Filter by condition
 ```
 
 **Translation to native format:**
