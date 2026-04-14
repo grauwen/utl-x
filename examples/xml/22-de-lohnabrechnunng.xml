@@ -27,7 +27,7 @@
         <Geburtsdatum>1985-04-15</Geburtsdatum>
         <Steuerklasse>III</Steuerklasse>
         <Sozialversicherungsnummer>12 150485 S 123</Sozialversicherungsnummer>
-        <Krankenvers icherung>AOK Bayern</Krankenkasse>
+        <Krankenkasse>AOK Bayern</Krankenkasse>
     </Arbeitnehmer>
 
     <Bezüge>
