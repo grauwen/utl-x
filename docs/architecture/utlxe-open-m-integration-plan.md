@@ -1,6 +1,6 @@
 # UTLXe Engine Redesign — Open-M Integration Plan
 
-**Status:** Phases A–D implemented, E pending  
+**Status:** All phases (A–E) implemented  
 **Date:** 2026-04-20 (last updated: 2026-04-20)  
 **Relates to:** open-m-go-versus-kotlin-utlx-depends.md, utlxe-engine-architecture.md  
 **Branch:** development (`modules/engine/`)
@@ -25,7 +25,7 @@ UTLXe becomes a **multi-transport, multi-transformation production engine** that
 | Transport: grpc | **Done** (Phase C) | TCP + UDS (epoll on Linux, kqueue on macOS), in-process tests |
 | Proto definitions | **Done** (Phase B) | `proto/utlxe/v1/utlxe.proto` with all messages + gRPC service |
 | Schema validation | **Done** (Phase D) | Pre/post transform validation: JSON Schema, XSD, Avro. STRICT/WARN/SKIP policies. |
-| Concurrency | Pending (Phase E) | Thread pool with correlation IDs for multiplexed stdio-proto |
+| Concurrency | **Done** (Phase E) | Thread pool (--workers), reader/writer/pool threads, correlation ID matching |
 | Strategies | TEMPLATE only | COPY, COMPILED, AUTO planned for Phase 2 |
 
 ### Platform Compatibility
@@ -188,28 +188,37 @@ gRPC service definition:
 | Schema Format | Validator | Library | Status |
 |---|---|---|---|
 | JSON Schema (JSCH) | `JsonSchemaValidator` | `com.networknt:json-schema-validator:1.5.1` | Done |
+| YAML (via JSON Schema) | `YamlSchemaValidator` | Jackson YAML + networknt | Done |
 | XSD | `XsdValidator` | `javax.xml.validation` (JDK built-in) | Done |
 | Avro Schema | `AvroSchemaValidator` | `org.apache.avro:avro:1.11.3` (existing) | Done |
-| TSCH (Table Schema) | — | Custom | Future |
-| OSCH (OData/EDMX) | — | Custom | Future |
-| Protobuf | — | `com.google.protobuf` (existing) | Future |
+| TSCH (Table Schema) | `TableSchemaValidator` | Custom (Jackson) — required, type, enum, pattern, min/max | Done |
+| OSCH (OData/EDMX) | `ODataSchemaValidator` | Custom (Jackson) — nullable, Edm types, maxLength | Done |
+| Protobuf | `ProtobufValidator` | Custom (Jackson) — type, repeated, map validation | Done |
 
 **New dependency:** `com.networknt:json-schema-validator:1.5.1` (~500KB, Apache 2.0). All others use JDK built-ins or existing UTLXe dependencies.
 
-**Tests:** 26 validation tests: 17 SchemaValidator (JSON Schema, XSD, Avro — valid, invalid, parse errors, factory) + 9 ValidationOrchestrator (STRICT/WARN/SKIP, pre/post validation, transformation errors, combined).
+**Tests:** 48 validation tests: 39 SchemaValidator (JSON Schema, YAML, XSD, Avro, TSCH, OSCH, Protobuf — valid, invalid, constraint checks, factory) + 9 ValidationOrchestrator (STRICT/WARN/SKIP, pre/post validation, transformation errors, combined).
 
-### Phase E: Concurrency Model (Multiplexed stdio-proto)
+### Phase E: Concurrency Model (Multiplexed stdio-proto) — DONE
 
 **Goal:** Enable parallel transform execution within a single UTLXe process.
 
-**Implementation:**
-- Worker thread pool (configurable, default = CPU cores)
-- `StdioProtoTransport` dispatches to pool, collects via response queue
-- Correlation ID in ExecuteResponse matches to ExecuteRequest
-- `max_concurrent` per transformation (from LoadTransformationRequest)
-- Backpressure: if worker pool is saturated, reader thread blocks
+**Files changed:**
+- `transport/StdioProtoTransport.kt` — Upgraded from sequential Model 1 to multiplexed Model 2
+- `Main.kt` — `--workers` flag now wired to `StdioProtoTransport(engine, workers=N)`
 
-**Tests:** Concurrent requests test, verify out-of-order response matching.
+**Architecture (3 threads + pool):**
+- **Reader thread** (main): reads envelopes from stdin. Init-time messages (Load, Unload, Health) handled synchronously. Execute/ExecuteBatch dispatched to worker pool.
+- **Worker pool** (`--workers=N`, default = CPU cores): processes Execute requests concurrently. Results go to response queue.
+- **Writer thread**: drains response queue, writes varint-delimited envelopes to stdout. Single writer prevents interleaved messages on the pipe.
+- **`--workers=1`**: no pool created, Execute handled inline on reader thread (Model 1 behavior, zero overhead).
+
+**Key details:**
+- Correlation ID in ExecuteRequest/ExecuteResponse enables the Go wrapper to match out-of-order responses to waiting goroutines
+- Graceful shutdown: worker pool drains in-flight requests (30s timeout), then writer thread receives poison pill
+- Backpressure: `LinkedBlockingQueue` — if pool is saturated, `submit()` queues; if queue grows, JVM memory is the limit (bounded queue possible in future)
+
+**Tests:** 2 new concurrent tests: 10 parallel requests with 4 workers (all processed, all correlation IDs present), 5 requests with 2 workers (correlation ID matching verified).
 
 ---
 
@@ -642,7 +651,7 @@ New modes are additive — they don't change default behavior.
 
 ## 9. Testing Strategy
 
-**Current test count:** 69 engine tests (all passing)
+**Current test count:** 93 engine tests (all passing)
 
 | Test Level | What | How | Status |
 |---|---|---|---|
@@ -650,9 +659,9 @@ New modes are additive — they don't change default behavior.
 | Unit | Registry load/unload/get/metrics | Kotlin JUnit 5 (6 tests) | Done |
 | Unit | TemplateStrategy execute/batch/shutdown | Kotlin JUnit 5 (6 tests) | Done |
 | Unit | StdioPipe read/write/EOF | Kotlin JUnit 5 (8 tests) | Done |
-| Unit | Schema validators: JSON Schema, XSD, Avro, factory | Kotlin JUnit 5 (17 tests) | Done |
+| Unit | Schema validators: JSON Schema, YAML, XSD, Avro, TSCH, OSCH, Protobuf, factory | Kotlin JUnit 5 (39 tests) | Done |
 | Unit | ValidationOrchestrator: STRICT/WARN/SKIP, pre/post, errors | Kotlin JUnit 5 (9 tests) | Done |
-| Integration | StdioProtoTransport: load, execute, batch, unload, health, lifecycle | PipedInputStream/PipedOutputStream (8 tests) | Done |
+| Integration | StdioProtoTransport: load, execute, batch, unload, health, lifecycle, concurrency | PipedInputStream/PipedOutputStream (10 tests) | Done |
 | Integration | GrpcTransport: load, execute, batch, unload, health, lifecycle | grpc-testing in-process server (8 tests) | Done |
 | Integration | HealthEndpoint HTTP | Ktor test host (4 tests) | Done |
 | Performance | Throughput under load | Benchmark: N requests/second, measure p50/p99 latency | Pending |
