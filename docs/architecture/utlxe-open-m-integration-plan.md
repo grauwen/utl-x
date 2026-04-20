@@ -1,6 +1,6 @@
 # UTLXe Engine Redesign — Open-M Integration Plan
 
-**Status:** Phases A–C implemented, D–E pending  
+**Status:** Phases A–D implemented, E pending  
 **Date:** 2026-04-20 (last updated: 2026-04-20)  
 **Relates to:** open-m-go-versus-kotlin-utlx-depends.md, utlxe-engine-architecture.md  
 **Branch:** development (`modules/engine/`)
@@ -24,7 +24,7 @@ UTLXe becomes a **multi-transport, multi-transformation production engine** that
 | Transport: stdio-proto | **Done** (Phase B) | Varint-delimited protobuf over stdin/stdout, sequential Model 1 |
 | Transport: grpc | **Done** (Phase C) | TCP + UDS (epoll on Linux, kqueue on macOS), in-process tests |
 | Proto definitions | **Done** (Phase B) | `proto/utlxe/v1/utlxe.proto` with all messages + gRPC service |
-| Schema validation | Pending (Phase D) | Pre/post transform validation using native format validators |
+| Schema validation | **Done** (Phase D) | Pre/post transform validation: JSON Schema, XSD, Avro. STRICT/WARN/SKIP policies. |
 | Concurrency | Pending (Phase E) | Thread pool with correlation IDs for multiplexed stdio-proto |
 | Strategies | TEMPLATE only | COPY, COMPILED, AUTO planned for Phase 2 |
 
@@ -158,32 +158,45 @@ gRPC service definition:
 
 **Tests:** 8 tests using grpc-testing's in-process server: load, execute, batch, unload, health, error cases, full lifecycle.
 
-### Phase D: Schema Validation (Pre/Post Transform)
+### Phase D: Schema Validation (Pre/Post Transform) — DONE
 
 **Goal:** Add engine-level schema validation as orchestration around transformation, using native format-specific validators.
 
 **Files added:**
-- `validation/SchemaValidator.kt` — interface (validate payload bytes → List<ValidationError>)
+- `validation/SchemaValidator.kt` — interface (validate payload bytes → List<SchemaValidationError>)
 - `validation/SchemaValidatorFactory.kt` — creates validator by schema format
-- `validation/JsonSchemaValidator.kt` — JSON Schema via networknt (new dep)
-- `validation/XsdValidator.kt` — XSD via javax.xml.validation (JDK built-in)
-- `validation/TableSchemaValidator.kt` — TSCH custom (thin)
-- `validation/ODataSchemaValidator.kt` — OSCH custom (using parsed EDMX model)
-- `validation/AvroSchemaValidator.kt` — Avro via GenericDatumReader (existing dep)
-- `validation/ProtobufValidator.kt` — Protobuf via DynamicMessage (existing dep)
+- `validation/JsonSchemaValidator.kt` — JSON Schema (draft-04 through 2020-12) via networknt
+- `validation/XsdValidator.kt` — XSD via javax.xml.validation (JDK built-in, no new deps)
+- `validation/AvroSchemaValidator.kt` — Avro via GenericDatumReader (existing dep via formats:avro)
+- `validation/ValidationOrchestrator.kt` — pre-validate → transform → post-validate flow with ErrorPhase tracking
+- `transport/TransportHandlers.kt` — shared handler logic (extracted from both transports, DRY)
 
 **Key implementation:**
 - Native format-level validation (NOT UDM comparison) — validates raw payload against compiled schema
 - Validators compiled at init time (during LoadTransformation), thread-safe, reusable
-- Pre-compiled validators cached in TransformationInstance
+- Pre-compiled validators cached in TransformationInstance (inputValidator, outputValidator)
+- Validation config passed in `LoadTransformationRequest.config` map: `validate_input`, `validate_output`, `input_schema`, `input_schema_format`, `output_schema`, `output_schema_format`
 - Per-message cost: ~50-500μs depending on format and payload size
 - Field-level error messages with JSONPath/XPath to problematic element
-- Validation errors returned in ExecuteResponse.validation_errors[]
+- Validation errors returned in `ExecuteResponse.validation_errors[]`
+- ErrorPhase tracking: PRE_VALIDATION, TRANSFORMATION, POST_VALIDATION, INTERNAL
 - Policy enforcement: STRICT (reject → PERMANENT error) / WARN (log, continue) / SKIP (no-op)
+- Both StdioProtoTransport and GrpcTransport delegate to shared TransportHandlers for identical behavior
 
-**New dependency:** `com.networknt:json-schema-validator:1.5.x` (~500KB, Apache 2.0) for JSON Schema. All others use JDK built-ins or existing UTLXe dependencies.
+**Supported validators:**
 
-**Tests:** Validate conforming/non-conforming payloads against JSON Schema, XSD, TSCH, and Avro Schema. Test STRICT/WARN/SKIP policy enforcement.
+| Schema Format | Validator | Library | Status |
+|---|---|---|---|
+| JSON Schema (JSCH) | `JsonSchemaValidator` | `com.networknt:json-schema-validator:1.5.1` | Done |
+| XSD | `XsdValidator` | `javax.xml.validation` (JDK built-in) | Done |
+| Avro Schema | `AvroSchemaValidator` | `org.apache.avro:avro:1.11.3` (existing) | Done |
+| TSCH (Table Schema) | — | Custom | Future |
+| OSCH (OData/EDMX) | — | Custom | Future |
+| Protobuf | — | `com.google.protobuf` (existing) | Future |
+
+**New dependency:** `com.networknt:json-schema-validator:1.5.1` (~500KB, Apache 2.0). All others use JDK built-ins or existing UTLXe dependencies.
+
+**Tests:** 26 validation tests: 17 SchemaValidator (JSON Schema, XSD, Avro — valid, invalid, parse errors, factory) + 9 ValidationOrchestrator (STRICT/WARN/SKIP, pre/post validation, transformation errors, combined).
 
 ### Phase E: Concurrency Model (Multiplexed stdio-proto)
 
@@ -629,7 +642,7 @@ New modes are additive — they don't change default behavior.
 
 ## 9. Testing Strategy
 
-**Current test count:** 44 engine tests (all passing)
+**Current test count:** 69 engine tests (all passing)
 
 | Test Level | What | How | Status |
 |---|---|---|---|
@@ -637,6 +650,8 @@ New modes are additive — they don't change default behavior.
 | Unit | Registry load/unload/get/metrics | Kotlin JUnit 5 (6 tests) | Done |
 | Unit | TemplateStrategy execute/batch/shutdown | Kotlin JUnit 5 (6 tests) | Done |
 | Unit | StdioPipe read/write/EOF | Kotlin JUnit 5 (8 tests) | Done |
+| Unit | Schema validators: JSON Schema, XSD, Avro, factory | Kotlin JUnit 5 (17 tests) | Done |
+| Unit | ValidationOrchestrator: STRICT/WARN/SKIP, pre/post, errors | Kotlin JUnit 5 (9 tests) | Done |
 | Integration | StdioProtoTransport: load, execute, batch, unload, health, lifecycle | PipedInputStream/PipedOutputStream (8 tests) | Done |
 | Integration | GrpcTransport: load, execute, batch, unload, health, lifecycle | grpc-testing in-process server (8 tests) | Done |
 | Integration | HealthEndpoint HTTP | Ktor test host (4 tests) | Done |
