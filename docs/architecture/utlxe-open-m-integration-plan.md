@@ -137,7 +137,30 @@ gRPC service definition:
 
 **Tests:** Integration test with gRPC client calling all methods.
 
-### Phase D: Concurrency Model (Multiplexed stdio-proto)
+### Phase D: Schema Validation (Pre/Post Transform)
+
+**Goal:** Add engine-level schema validation as orchestration around transformation.
+
+**Files added:**
+- `validation/SchemaValidator.kt` — interface
+- `validation/JsonSchemaValidator.kt` — JSON Schema (draft-07, 2020-12) via networknt
+- `validation/XsdValidator.kt` — XSD via javax.xml.validation
+- `validation/AvroValidator.kt` — Avro schema validation
+
+**Key implementation:**
+- Validators compiled at init time (during LoadTransformation)
+- Pre-compiled validators cached in TransformationInstance
+- Per-message validation: ~50-500μs depending on schema complexity
+- Validation errors returned in ExecuteResponse.validation_errors[]
+- Policy enforcement: STRICT (reject) / WARN (log, continue) / SKIP (no-op)
+
+**Dependencies added:**
+- `com.networknt:json-schema-validator:1.0.x` (JSON Schema validation)
+- XSD/Avro validation uses existing format module libraries
+
+**Tests:** Validate conforming/non-conforming payloads against JSON Schema and XSD.
+
+### Phase E: Concurrency Model (Multiplexed stdio-proto)
 
 **Goal:** Enable parallel transform execution within a single UTLXe process.
 
@@ -152,7 +175,159 @@ gRPC service definition:
 
 ---
 
-## 5. CLI Interface (Main.kt changes)
+## 5. Schema Validation (Pre/Post Transform)
+
+### 5.1 Design Decision
+
+Validation is an **engine-level orchestration concern** — a pre/post step around the transformation. It is NOT part of the UTL-X language. A `.utlx` script describes structural mapping; validation policy belongs in deployment configuration.
+
+UTLXe already has:
+- Full format ecosystem (JSON Schema, XSD, Avro schema validation libraries)
+- `validationPolicy` in TransformConfig (STRICT, WARN, SKIP)
+- Schema declarations in transform.yaml (input/output schemas)
+
+### 5.2 How Validation Integrates
+
+```
+ExecuteRequest arrives
+        │
+        ▼
+  ┌─────────────────────────────┐
+  │ PRE-VALIDATION               │  validates input against input schema
+  │ (if validate_input = true)   │  using pre-compiled validator
+  │                              │
+  │ STRICT: reject immediately   │  → PERMANENT error in ExecuteResponse
+  │ WARN:   log, continue        │  → validation_errors[] populated
+  │ SKIP:   no validation        │  → zero cost
+  └─────────────────────────────┘
+        │
+        ▼
+  ┌─────────────────────────────┐
+  │ TRANSFORMATION               │  utl-x Program execution
+  │ (TEMPLATE/COPY/COMPILED)     │  utl-x knows nothing about validation
+  └─────────────────────────────┘
+        │
+        ▼
+  ┌─────────────────────────────┐
+  │ POST-VALIDATION              │  validates output against output schema
+  │ (if validate_output = true)  │  catches mapping bugs
+  └─────────────────────────────┘
+        │
+        ▼
+  ExecuteResponse
+    - validation_errors[]: field path + message + severity
+    - error_class: PERMANENT (schema violation)
+```
+
+### 5.3 Init-Time vs Runtime
+
+**Init time (once, at LoadTransformation):**
+- Parse input/output schemas from bundle or from `LoadTransformationRequest.config`
+- Compile schemas into pre-compiled validator objects (resolved $ref pointers, compiled type trees)
+- Cache validators alongside compiled Program in TransformationInstance
+- Schema parse failure → fail fast in LoadTransformationResponse
+
+**Runtime (per message, hot path):**
+- Apply pre-compiled validator to payload bytes — no re-parsing
+- ~50-200μs for JSON Schema, ~100-500μs for XSD — comparable to transform cost
+- Validation errors reported in ExecuteResponse.validation_errors[]
+
+### 5.4 LoadTransformationRequest Changes
+
+```protobuf
+message LoadTransformationRequest {
+  string transformation_id = 1;
+  string utlx_source = 2;
+  string strategy = 3;              // "TEMPLATE", "COPY", "COMPILED", "AUTO"
+  string validation_policy = 4;     // "STRICT", "WARN", "SKIP"
+  int32 max_concurrent = 5;
+  map<string, string> config = 6;
+
+  // Schema validation (optional — only needed if validate_input/output = true)
+  string input_schema = 7;          // JSON Schema, XSD, Avro schema source
+  string input_schema_format = 8;   // "json-schema", "xsd", "avro", "protobuf"
+  string output_schema = 9;         // Output schema source
+  string output_schema_format = 10; // Output schema format
+  bool validate_input = 11;         // Enable pre-validation (default: false)
+  bool validate_output = 12;        // Enable post-validation (default: false)
+}
+```
+
+### 5.5 TransformationInstance with Validators
+
+```kotlin
+data class TransformationInstance(
+    val id: String,
+    val strategy: ExecutionStrategy,
+    val config: TransformConfig,
+    val loadedAt: Instant,
+    val inputValidator: SchemaValidator? = null,   // Pre-compiled, null if validation disabled
+    val outputValidator: SchemaValidator? = null,  // Pre-compiled, null if validation disabled
+    val validateInput: Boolean = false,
+    val validateOutput: Boolean = false,
+    val validationPolicy: ValidationPolicy = ValidationPolicy.STRICT,
+    val executionCount: AtomicLong = AtomicLong(0),
+    val errorCount: AtomicLong = AtomicLong(0)
+)
+
+interface SchemaValidator {
+    fun validate(payload: ByteArray, contentType: String): List<ValidationError>
+}
+
+enum class ValidationPolicy { STRICT, WARN, SKIP }
+```
+
+### 5.6 Execution Flow with Validation
+
+```kotlin
+fun executeWithValidation(instance: TransformationInstance, request: ExecuteRequest): ExecuteResponse {
+    val allErrors = mutableListOf<ValidationError>()
+
+    // PRE-VALIDATION
+    if (instance.validateInput && instance.inputValidator != null) {
+        val inputErrors = instance.inputValidator.validate(request.payload, request.contentType)
+        if (inputErrors.isNotEmpty()) {
+            when (instance.validationPolicy) {
+                STRICT -> return ExecuteResponse(success=false, error_class=PERMANENT, validation_errors=inputErrors)
+                WARN -> allErrors.addAll(inputErrors)  // continue
+                SKIP -> {} // unreachable (validateInput would be false)
+            }
+        }
+    }
+
+    // TRANSFORMATION
+    val result = instance.strategy.execute(String(request.payload, UTF_8))
+
+    // POST-VALIDATION
+    if (instance.validateOutput && instance.outputValidator != null) {
+        val outputErrors = instance.outputValidator.validate(result.output.toByteArray(), ...)
+        if (outputErrors.isNotEmpty()) {
+            when (instance.validationPolicy) {
+                STRICT -> return ExecuteResponse(success=false, error_class=PERMANENT, validation_errors=outputErrors)
+                WARN -> allErrors.addAll(outputErrors)
+                SKIP -> {}
+            }
+        }
+    }
+
+    return ExecuteResponse(success=true, output=result.output, validation_errors=allErrors)
+}
+```
+
+### 5.7 Supported Schema Formats for Validation
+
+| Format | Library | Capability |
+|--------|---------|-----------|
+| JSON Schema (draft-07, 2020-12) | networknt/json-schema-validator | Full draft support |
+| XSD (1.0, 1.1) | javax.xml.validation | Full W3C support |
+| Avro | Apache Avro | Schema compatibility + data validation |
+| Protobuf | protobuf-java descriptors | Message conformance |
+
+These libraries are already in UTLXe's dependency tree (via format modules). Validation is a thin layer on top.
+
+---
+
+## 6. CLI Interface (Main.kt changes)
 
 ### Current:
 ```
@@ -161,33 +336,75 @@ utlxe --bundle <path> [--config <path>] [--port <port>] [--validate]
 
 ### Target:
 ```
-utlxe --bundle <path> [options]            # Bundle mode (Phase 1, backward compat)
-utlxe --mode stdio-proto [options]         # Open-M integration mode (no bundle required)
-utlxe --mode grpc --socket <path>          # gRPC mode on UDS
-utlxe --mode grpc --address <host:port>    # gRPC mode on TCP
+utlxe --bundle <path> [options]            # Bundle mode (standalone, backward compat)
+utlxe --mode stdio-proto [options]         # Open-M integration (wrapper sends transforms via pipe)
+utlxe --mode grpc --socket <path>          # gRPC mode on UDS (sidecar deployments)
+utlxe --mode grpc --address <host:port>    # gRPC mode on TCP (external consumers)
 
 Options:
-  --bundle, -b <path>       Bundle directory (for bundle-mode startup)
+  --bundle, -b <path>       Bundle directory (pre-load transforms from disk)
   --config, -c <path>       Engine config file
   --mode <mode>             Transport mode: stdio-json (default), stdio-proto, grpc
   --socket <path>           Unix socket path (gRPC mode)
   --address <host:port>     TCP address (gRPC mode)
   --port, -p <port>         Health endpoint port (default: 8081)
   --workers <n>             Worker thread pool size (default: CPU cores)
-  --validate                Load and compile bundle, then exit
+  --validate                Load and compile bundle, then exit (no processing)
   --version, -v             Show version
   --help, -h                Show help
 ```
 
-### Mode behaviors:
+### Mode behaviors and --bundle requirement:
 
-| Mode | Init | Runtime |
-|------|------|---------|
-| `stdio-json` (default) | Load from bundle | Read JSON lines from stdin, write to stdout |
-| `stdio-proto` | Wait for LoadTransformation messages on stdin | Process ExecuteRequest, respond with ExecuteResponse |
-| `grpc` | Wait for LoadTransformation RPCs | Process Execute RPCs |
+| Mode | `--bundle` | How transforms are loaded | Init | Runtime |
+|------|-----------|--------------------------|------|---------|
+| `stdio-json` (default) | **REQUIRED** | From disk (bundle directory) at startup | Bundle → compile → READY | Read JSON lines from stdin, execute, write to stdout |
+| `stdio-proto` | **OPTIONAL** | Dynamically via `LoadTransformationRequest` messages from the Go wrapper through the pipe. If `--bundle` also provided, those are pre-loaded at startup (hybrid). | Start transport → wait for Load messages → compile each → READY | Process `ExecuteRequest`, respond with `ExecuteResponse` |
+| `grpc` | **OPTIONAL** | Dynamically via `LoadTransformation` RPC calls. If `--bundle` also provided, those are pre-loaded. | Start gRPC server → wait for Load RPCs → compile each → READY | Process `Execute` RPCs |
 
-**In stdio-proto/grpc modes, `--bundle` is optional.** Transformations are loaded dynamically via LoadTransformation messages. If `--bundle` is provided, its transformations are pre-loaded at startup (hybrid mode).
+**Key distinction:**
+
+- **`stdio-json` (standalone mode):** UTLXe owns its transformations. It reads `.utlx` files from a bundle directory on disk. This is for standalone use, CLI testing, and backward compatibility. The bundle must exist before UTLXe starts.
+
+- **`stdio-proto` / `grpc` (integration mode):** The **caller owns the transformations**. The Go wrapper (or any client) sends the `.utlx` source code in `LoadTransformationRequest` messages at startup. UTLXe compiles and caches them. No disk access needed. This is for production deployment where the wrapper manages lifecycle and knows which mappings are needed from its pipeline descriptor.
+
+**Hybrid mode:** If `--bundle` is provided in stdio-proto/grpc modes, bundle transforms are pre-loaded at startup (before any messages arrive). The caller can then load additional transforms dynamically. This supports scenarios where some transforms are "always needed" (from the bundle) and others are connection-specific (loaded dynamically by the wrapper).
+
+### Startup sequence by mode:
+
+**stdio-json (standalone):**
+```
+1. Parse --bundle path
+2. BundleLoader discovers transforms from disk
+3. Compile all transforms → cache Programs
+4. Open stdin/stdout pipes
+5. Health endpoint → READY
+6. Process message loop
+```
+
+**stdio-proto (Open-M integration):**
+```
+1. Start reader/writer threads on stdin/stdout
+2. Health endpoint → READY (no transforms loaded yet)
+3. Wait for messages from wrapper:
+   - LoadTransformationRequest → compile, cache Program, respond with success/failure
+   - ExecuteRequest → look up cached Program, execute, respond
+   - HealthRequest → respond with current state
+   - UnloadTransformationRequest → remove from registry
+4. Process continuously until pipe closes (pod shutdown)
+```
+
+**grpc (sidecar/external):**
+```
+1. Start gRPC server on UDS or TCP
+2. Health endpoint → READY
+3. Accept RPC calls:
+   - LoadTransformation() → compile, cache, respond
+   - Execute() → look up, execute, respond
+   - Health() → respond
+   - UnloadTransformation() → remove
+4. Serve continuously until shutdown signal
+```
 
 ---
 
