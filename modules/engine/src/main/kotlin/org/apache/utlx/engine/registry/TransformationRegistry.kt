@@ -2,6 +2,7 @@ package org.apache.utlx.engine.registry
 
 import org.apache.utlx.engine.config.TransformConfig
 import org.apache.utlx.engine.strategy.ExecutionStrategy
+import org.apache.utlx.engine.validation.SchemaValidator
 import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -84,7 +85,9 @@ data class TransformationInstance(
     val config: TransformConfig,
     val loadedAt: Instant = Instant.now(),
     val executionCount: AtomicLong = AtomicLong(0),
-    val errorCount: AtomicLong = AtomicLong(0)
+    val errorCount: AtomicLong = AtomicLong(0),
+    val inputValidator: SchemaValidator? = null,
+    val outputValidator: SchemaValidator? = null
 ) {
     fun recordExecution() = executionCount.incrementAndGet()
     fun recordError() = errorCount.incrementAndGet()

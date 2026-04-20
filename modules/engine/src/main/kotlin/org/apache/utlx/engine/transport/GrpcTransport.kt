@@ -1,15 +1,12 @@
 package org.apache.utlx.engine.transport
 
-import com.google.protobuf.ByteString
 import io.grpc.Server
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import io.grpc.netty.shaded.io.netty.channel.EventLoopGroup
 import io.grpc.netty.shaded.io.netty.channel.ServerChannel
 import io.grpc.stub.StreamObserver
 import org.apache.utlx.engine.UtlxEngine
-import org.apache.utlx.engine.config.TransformConfig
 import org.apache.utlx.engine.proto.*
-import org.apache.utlx.engine.registry.TransformationInstance
 import org.apache.utlx.engine.registry.TransformationRegistry
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -75,9 +72,6 @@ class GrpcTransport(
         logger.info("GrpcTransport stopped")
     }
 
-    /**
-     * Returns the port the server is listening on (useful for tests with port 0).
-     */
     fun port(): Int = server?.port ?: -1
 
     private fun buildTcpServer(service: UtlxeServiceImpl, addr: String): Server {
@@ -95,7 +89,6 @@ class GrpcTransport(
     private fun buildUdsServer(service: UtlxeServiceImpl, path: String): Server? {
         return try {
             val socketAddress = io.grpc.netty.shaded.io.netty.channel.unix.DomainSocketAddress(path)
-            // Clean up stale socket file
             File(path).delete()
 
             val os = System.getProperty("os.name", "").lowercase()
@@ -139,216 +132,34 @@ class GrpcTransport(
 
 /**
  * Implementation of the UtlxeService gRPC service.
- * Each RPC method delegates to the engine and registry.
+ * Delegates all logic to TransportHandlers for consistency with StdioProtoTransport.
  */
 class UtlxeServiceImpl(
     private val engine: UtlxEngine,
     private val registry: TransformationRegistry
 ) : UtlxeServiceGrpc.UtlxeServiceImplBase() {
 
-    private val logger = LoggerFactory.getLogger(UtlxeServiceImpl::class.java)
-
     override fun loadTransformation(
         request: LoadTransformationRequest,
         responseObserver: StreamObserver<LoadTransformationResponse>
     ) {
-        val startTime = System.nanoTime()
-
-        try {
-            val id = request.transformationId
-            val source = request.utlxSource
-            val strategyName = request.strategy.ifEmpty { "TEMPLATE" }
-            val validationPolicy = request.validationPolicy.ifEmpty { "SKIP" }
-            val maxConcurrent = if (request.maxConcurrent > 0) request.maxConcurrent else 1
-
-            logger.info("Loading transformation '{}' [strategy={}]", id, strategyName)
-
-            val config = TransformConfig(
-                strategy = strategyName,
-                validationPolicy = validationPolicy,
-                maxConcurrent = maxConcurrent
-            )
-
-            val strategy = engine.createStrategy(config)
-            val parseStart = System.nanoTime()
-            strategy.initialize(source, config)
-            val parseEnd = System.nanoTime()
-
-            val instance = TransformationInstance(
-                name = id,
-                source = source,
-                strategy = strategy,
-                config = config
-            )
-            registry.register(id, instance)
-
-            val totalDuration = (System.nanoTime() - startTime) / 1000
-
-            logger.info("Transformation '{}' loaded in {}μs", id, totalDuration)
-
-            responseObserver.onNext(
-                LoadTransformationResponse.newBuilder()
-                    .setSuccess(true)
-                    .setMetrics(
-                        LoadMetrics.newBuilder()
-                            .setParseDurationUs((parseEnd - parseStart) / 1000)
-                            .setTotalDurationUs(totalDuration)
-                            .build()
-                    )
-                    .build()
-            )
-            responseObserver.onCompleted()
-
-        } catch (e: Exception) {
-            logger.error("Failed to load transformation '{}': {}", request.transformationId, e.message, e)
-            responseObserver.onNext(
-                LoadTransformationResponse.newBuilder()
-                    .setSuccess(false)
-                    .setError(e.message ?: "Unknown error")
-                    .build()
-            )
-            responseObserver.onCompleted()
-        }
+        responseObserver.onNext(TransportHandlers.handleLoadTransformation(request, engine, registry))
+        responseObserver.onCompleted()
     }
 
     override fun execute(
         request: ExecuteRequest,
         responseObserver: StreamObserver<ExecuteResponse>
     ) {
-        val startTime = System.nanoTime()
-
-        val instance = registry.get(request.transformationId)
-        if (instance == null) {
-            responseObserver.onNext(
-                ExecuteResponse.newBuilder()
-                    .setSuccess(false)
-                    .setError("Transformation not found: ${request.transformationId}")
-                    .setErrorClass(ErrorClass.PERMANENT)
-                    .setErrorPhase(ErrorPhase.INTERNAL)
-                    .setCorrelationId(request.correlationId)
-                    .build()
-            )
-            responseObserver.onCompleted()
-            return
-        }
-
-        try {
-            val input = request.payload.toStringUtf8()
-            instance.recordExecution()
-
-            val result = instance.strategy.execute(input)
-            val durationUs = (System.nanoTime() - startTime) / 1000
-
-            val builder = ExecuteResponse.newBuilder()
-                .setSuccess(true)
-                .setOutput(ByteString.copyFromUtf8(result.output))
-                .setCorrelationId(request.correlationId)
-                .setMetrics(
-                    ExecuteMetrics.newBuilder()
-                        .setExecuteDurationUs(durationUs)
-                        .build()
-                )
-
-            result.validationErrors.forEach { err ->
-                builder.addValidationErrors(
-                    org.apache.utlx.engine.proto.ValidationError.newBuilder()
-                        .setMessage(err.message)
-                        .setPath(err.path ?: "")
-                        .setSeverity(err.severity)
-                        .build()
-                )
-            }
-
-            responseObserver.onNext(builder.build())
-            responseObserver.onCompleted()
-
-        } catch (e: Exception) {
-            instance.recordError()
-            val durationUs = (System.nanoTime() - startTime) / 1000
-            logger.error("Execution error for '{}': {}", request.transformationId, e.message)
-
-            responseObserver.onNext(
-                ExecuteResponse.newBuilder()
-                    .setSuccess(false)
-                    .setError(e.message ?: "Unknown error")
-                    .setErrorClass(ErrorClass.PERMANENT)
-                    .setErrorPhase(ErrorPhase.TRANSFORMATION)
-                    .setCorrelationId(request.correlationId)
-                    .setMetrics(
-                        ExecuteMetrics.newBuilder()
-                            .setExecuteDurationUs(durationUs)
-                            .build()
-                    )
-                    .build()
-            )
-            responseObserver.onCompleted()
-        }
+        responseObserver.onNext(TransportHandlers.handleExecute(request, registry))
+        responseObserver.onCompleted()
     }
 
     override fun executeBatch(
         request: ExecuteBatchRequest,
         responseObserver: StreamObserver<ExecuteBatchResponse>
     ) {
-        val instance = registry.get(request.transformationId)
-        val builder = ExecuteBatchResponse.newBuilder()
-
-        if (instance == null) {
-            request.itemsList.forEach { item ->
-                builder.addResults(
-                    ExecuteResponse.newBuilder()
-                        .setSuccess(false)
-                        .setError("Transformation not found: ${request.transformationId}")
-                        .setErrorClass(ErrorClass.PERMANENT)
-                        .setErrorPhase(ErrorPhase.INTERNAL)
-                        .setCorrelationId(item.correlationId)
-                        .build()
-                )
-            }
-            responseObserver.onNext(builder.build())
-            responseObserver.onCompleted()
-            return
-        }
-
-        request.itemsList.forEach { item ->
-            val startTime = System.nanoTime()
-            try {
-                instance.recordExecution()
-                val result = instance.strategy.execute(item.payload.toStringUtf8())
-                val durationUs = (System.nanoTime() - startTime) / 1000
-
-                builder.addResults(
-                    ExecuteResponse.newBuilder()
-                        .setSuccess(true)
-                        .setOutput(ByteString.copyFromUtf8(result.output))
-                        .setCorrelationId(item.correlationId)
-                        .setMetrics(
-                            ExecuteMetrics.newBuilder()
-                                .setExecuteDurationUs(durationUs)
-                                .build()
-                        )
-                        .build()
-                )
-            } catch (e: Exception) {
-                instance.recordError()
-                val durationUs = (System.nanoTime() - startTime) / 1000
-                builder.addResults(
-                    ExecuteResponse.newBuilder()
-                        .setSuccess(false)
-                        .setError(e.message ?: "Unknown error")
-                        .setErrorClass(ErrorClass.PERMANENT)
-                        .setErrorPhase(ErrorPhase.TRANSFORMATION)
-                        .setCorrelationId(item.correlationId)
-                        .setMetrics(
-                            ExecuteMetrics.newBuilder()
-                                .setExecuteDurationUs(durationUs)
-                                .build()
-                        )
-                        .build()
-                )
-            }
-        }
-
-        responseObserver.onNext(builder.build())
+        responseObserver.onNext(TransportHandlers.handleExecuteBatch(request, registry))
         responseObserver.onCompleted()
     }
 
@@ -356,18 +167,7 @@ class UtlxeServiceImpl(
         request: UnloadTransformationRequest,
         responseObserver: StreamObserver<UnloadTransformationResponse>
     ) {
-        val success = registry.unload(request.transformationId)
-        if (success) {
-            logger.info("Unloaded transformation '{}'", request.transformationId)
-        } else {
-            logger.warn("Transformation '{}' not found for unload", request.transformationId)
-        }
-
-        responseObserver.onNext(
-            UnloadTransformationResponse.newBuilder()
-                .setSuccess(success)
-                .build()
-        )
+        responseObserver.onNext(TransportHandlers.handleUnload(request, registry))
         responseObserver.onCompleted()
     }
 
@@ -375,18 +175,7 @@ class UtlxeServiceImpl(
         request: HealthRequest,
         responseObserver: StreamObserver<HealthResponse>
     ) {
-        val totalExecutions = registry.list().sumOf { it.executionCount.get() }
-        val totalErrors = registry.list().sumOf { it.errorCount.get() }
-
-        responseObserver.onNext(
-            HealthResponse.newBuilder()
-                .setState(engine.state.name)
-                .setUptimeMs(engine.uptimeMs())
-                .setLoadedTransformations(registry.size())
-                .setTotalExecutions(totalExecutions)
-                .setTotalErrors(totalErrors)
-                .build()
-        )
+        responseObserver.onNext(TransportHandlers.handleHealth(engine, registry))
         responseObserver.onCompleted()
     }
 }

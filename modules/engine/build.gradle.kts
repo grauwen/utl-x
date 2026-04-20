@@ -48,6 +48,9 @@ dependencies {
     // Required for generated gRPC stubs at compile time
     compileOnly("org.apache.tomcat:annotations-api:6.0.53")
 
+    // Schema validation (Phase D)
+    implementation("com.networknt:json-schema-validator:1.5.1")
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
