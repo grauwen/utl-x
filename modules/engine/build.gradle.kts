@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization") version "1.9.22"
+    id("com.google.protobuf")
     application
 }
 
@@ -36,6 +37,17 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
 
+    // Protobuf (for stdio-proto and grpc transport modes)
+    implementation("com.google.protobuf:protobuf-java:3.25.3")
+    implementation("com.google.protobuf:protobuf-kotlin:3.25.3")
+
+    // gRPC (for grpc transport mode)
+    implementation("io.grpc:grpc-protobuf:1.60.1")
+    implementation("io.grpc:grpc-stub:1.60.1")
+    implementation("io.grpc:grpc-netty-shaded:1.60.1")
+    // Required for generated gRPC stubs at compile time
+    compileOnly("org.apache.tomcat:annotations-api:6.0.53")
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
@@ -62,6 +74,7 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("io.ktor:ktor-server-tests:2.3.7")
     testImplementation("io.ktor:ktor-server-test-host:2.3.7")
+    testImplementation("io.grpc:grpc-testing:1.60.1")
 }
 
 application {
@@ -90,4 +103,22 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.3"
+    }
+    plugins {
+        create("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.60.1"
+        }
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.plugins {
+                create("grpc")
+            }
+        }
+    }
 }

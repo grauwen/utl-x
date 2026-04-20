@@ -1,12 +1,16 @@
 package org.apache.utlx.engine
 
 import org.apache.utlx.engine.config.EngineConfig
+import org.apache.utlx.engine.transport.GrpcTransport
+import org.apache.utlx.engine.transport.StdioJsonTransport
+import org.apache.utlx.engine.transport.StdioProtoTransport
+import org.apache.utlx.engine.transport.TransportServer
 import org.slf4j.LoggerFactory
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
 private val logger = LoggerFactory.getLogger("org.apache.utlx.engine.Main")
-private const val VERSION = "1.0.0-SNAPSHOT"
+private const val VERSION = "1.0.1"
 
 fun main(args: Array<String>) {
     if (args.isEmpty()) {
@@ -18,6 +22,10 @@ fun main(args: Array<String>) {
     var configPath: String? = null
     var portOverride: Int? = null
     var validateOnly = false
+    var mode = "stdio-json"
+    var workers: Int? = null
+    var socketPath: String? = null
+    var grpcAddress: String? = null
 
     var i = 0
     while (i < args.size) {
@@ -42,6 +50,31 @@ fun main(args: Array<String>) {
                     exitWithError("--port must be between 1 and 65535: $portOverride")
                 }
             }
+            "--mode" -> {
+                i++
+                mode = args.getOrNull(i)
+                    ?: exitWithError("--mode requires a value: stdio-json, stdio-proto, grpc")
+                if (mode !in listOf("stdio-json", "stdio-proto", "grpc")) {
+                    exitWithError("Unknown mode: $mode. Valid: stdio-json, stdio-proto, grpc")
+                }
+            }
+            "--workers" -> {
+                i++
+                val workersStr = args.getOrNull(i)
+                    ?: exitWithError("--workers requires a number")
+                workers = workersStr.toIntOrNull()
+                    ?: exitWithError("--workers must be a number: $workersStr")
+            }
+            "--socket" -> {
+                i++
+                socketPath = args.getOrNull(i)
+                    ?: exitWithError("--socket requires a path argument")
+            }
+            "--address" -> {
+                i++
+                grpcAddress = args.getOrNull(i)
+                    ?: exitWithError("--address requires a host:port argument")
+            }
             "--validate" -> {
                 validateOnly = true
             }
@@ -58,21 +91,23 @@ fun main(args: Array<String>) {
         i++
     }
 
-    if (bundlePath == null) {
-        exitWithError("--bundle <path> is required")
+    // Validate: stdio-json requires --bundle; stdio-proto/grpc do not
+    if (mode == "stdio-json" && bundlePath == null) {
+        exitWithError("--bundle <path> is required for stdio-json mode")
     }
 
     try {
         var config = if (configPath != null) {
             EngineConfig.load(Paths.get(configPath))
-        } else {
-            // Try loading engine.yaml from bundle root
+        } else if (bundlePath != null) {
             val bundleConfig = Paths.get(bundlePath).resolve("engine.yaml")
             if (bundleConfig.toFile().exists()) {
                 EngineConfig.load(bundleConfig)
             } else {
                 EngineConfig.default()
             }
+        } else {
+            EngineConfig.default()
         }
 
         if (portOverride != null) {
@@ -81,7 +116,12 @@ fun main(args: Array<String>) {
 
         val engine = UtlxEngine(config)
 
-        engine.initialize(Paths.get(bundlePath))
+        // Initialize: from bundle or empty (for dynamic loading modes)
+        if (bundlePath != null) {
+            engine.initialize(Paths.get(bundlePath))
+        } else {
+            engine.initializeEmpty()
+        }
 
         if (validateOnly) {
             val transformations = engine.registry.list()
@@ -92,13 +132,22 @@ fun main(args: Array<String>) {
             exitProcess(0)
         }
 
+        // Create transport based on --mode
+        val transport: TransportServer = when (mode) {
+            "stdio-json" -> StdioJsonTransport()
+            "stdio-proto" -> StdioProtoTransport(engine)
+            "grpc" -> GrpcTransport(engine, address = grpcAddress, socketPath = socketPath)
+            else -> exitWithError("Unknown mode: $mode")
+        }
+
         // Shutdown hook for graceful drain
         Runtime.getRuntime().addShutdownHook(Thread {
             logger.info("Shutdown signal received")
             engine.stop()
         })
 
-        engine.start()
+        // start() blocks until transport shuts down
+        engine.start(transport)
 
     } catch (e: Exception) {
         logger.error("Engine failed: {}", e.message, e)
@@ -111,23 +160,33 @@ private fun printUsage() {
     println("""
         utlxe — UTL-X Production Runtime Engine v$VERSION
 
-        Usage: utlxe --bundle <path> [options]
+        Usage:
+          utlxe --bundle <path> [options]            Standalone (bundle mode)
+          utlxe --mode stdio-proto [options]          Open-M integration (dynamic loading)
+          utlxe --mode grpc --socket <path> [options] gRPC server mode
 
         Options:
-          --bundle, -b <path>    Path to .utlxp project bundle directory (required)
-          --config, -c <path>    Path to engine.yaml config file (optional)
-          --port,   -p <port>    Health endpoint port override (optional)
+          --bundle, -b <path>    Path to .utlxp project bundle directory
+          --config, -c <path>    Path to engine.yaml config file
+          --mode <mode>          Transport mode: stdio-json (default), stdio-proto, grpc
+          --port,   -p <port>    Health endpoint port override (default: 8081)
+          --workers <n>          Worker thread pool size (default: CPU cores)
+          --socket <path>        Unix Domain Socket path (gRPC mode, Linux)
+          --address <host:port>  TCP address (gRPC mode, default: localhost:9090)
           --validate             Load and compile the bundle, then exit (no processing)
           --version, -v          Print version and exit
           --help, -h             Print this help and exit
 
-        The engine loads transformations from the bundle, connects pipes,
-        and processes messages until a shutdown signal is received.
+        Modes:
+          stdio-json     Line-delimited JSON over stdin/stdout (default, backward compat)
+                         Requires --bundle. Transforms loaded from disk at startup.
 
-        If the health port is already in use, the engine automatically tries
-        up to 10 higher port numbers before failing.
+          stdio-proto    Varint-delimited protobuf over stdin/stdout (Open-M integration)
+                         --bundle optional. Transforms loaded dynamically via
+                         LoadTransformation messages from the caller.
 
-        Phase 1: single transformation, stdin/stdout pipes, TEMPLATE strategy.
+          grpc           gRPC server on Unix Domain Socket or TCP
+                         --bundle optional. Transforms loaded dynamically via RPCs.
     """.trimIndent())
 }
 

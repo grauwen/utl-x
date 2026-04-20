@@ -4,12 +4,11 @@ import org.apache.utlx.engine.bundle.BundleLoader
 import org.apache.utlx.engine.config.EngineConfig
 import org.apache.utlx.engine.config.TransformConfig
 import org.apache.utlx.engine.health.HealthEndpoint
-import org.apache.utlx.engine.pipe.*
 import org.apache.utlx.engine.registry.TransformationInstance
 import org.apache.utlx.engine.registry.TransformationRegistry
-import org.apache.utlx.engine.strategy.ExecutionResult
 import org.apache.utlx.engine.strategy.ExecutionStrategy
 import org.apache.utlx.engine.strategy.TemplateStrategy
+import org.apache.utlx.engine.transport.TransportServer
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
@@ -22,11 +21,15 @@ class UtlxEngine(val config: EngineConfig) {
 
     val registry = TransformationRegistry()
     private var healthEndpoint: HealthEndpoint? = null
-    private var inputPipe: InputPipe? = null
-    private var outputPipe: OutputPipe? = null
+    private var transport: TransportServer? = null
 
     val state: EngineState get() = stateRef.get()
 
+    /**
+     * Initialize from a bundle directory on disk.
+     * Loads ALL transformations from the bundle (Phase 1 single-transform limit removed).
+     * Used by: stdio-json mode (required), stdio-proto/grpc mode (optional pre-loading).
+     */
     fun initialize(bundlePath: Path) {
         val current = stateRef.get()
         require(current == EngineState.CREATED) {
@@ -43,30 +46,24 @@ class UtlxEngine(val config: EngineConfig) {
                 throw IllegalStateException("No transformations found in bundle: $bundlePath")
             }
 
-            // Phase 1: load only the first transformation
-            val (name, source, transformConfig) = discovered.first()
-            logger.info("Loading transformation '{}' with strategy {}", name, transformConfig.strategy)
+            // Load ALL discovered transformations (Phase 1 limit removed)
+            for ((name, source, transformConfig) in discovered) {
+                logger.info("Loading transformation '{}' with strategy {}", name, transformConfig.strategy)
 
-            val strategy = createStrategy(transformConfig)
-            strategy.initialize(source, transformConfig)
+                val strategy = createStrategy(transformConfig)
+                strategy.initialize(source, transformConfig)
 
-            val instance = TransformationInstance(
-                name = name,
-                source = source,
-                strategy = strategy,
-                config = transformConfig
-            )
-            registry.register(name, instance)
-
-            if (discovered.size > 1) {
-                logger.warn(
-                    "Phase 1: only loaded first transformation '{}'. {} additional transformations ignored.",
-                    name, discovered.size - 1
+                val instance = TransformationInstance(
+                    name = name,
+                    source = source,
+                    strategy = strategy,
+                    config = transformConfig
                 )
+                registry.register(name, instance)
             }
 
             stateRef.set(EngineState.READY)
-            logger.info("Engine initialized — {} transformation(s) ready", registry.list().size)
+            logger.info("Engine initialized — {} transformation(s) ready", registry.size())
         } catch (e: Exception) {
             stateRef.set(EngineState.STOPPED)
             logger.error("Engine initialization failed", e)
@@ -74,13 +71,35 @@ class UtlxEngine(val config: EngineConfig) {
         }
     }
 
-    fun start() {
+    /**
+     * Initialize without a bundle (for dynamic-loading transport modes).
+     * The engine starts with an empty registry. Transformations are loaded dynamically
+     * via LoadTransformation messages from the caller.
+     * Used by: stdio-proto mode, grpc mode.
+     */
+    fun initializeEmpty() {
+        val current = stateRef.get()
+        require(current == EngineState.CREATED) {
+            "Cannot initialize engine in state $current (expected CREATED)"
+        }
+        stateRef.set(EngineState.INITIALIZING)
+        logger.info("Initializing engine '{}' (no bundle — dynamic loading mode)", config.engine.name)
+        stateRef.set(EngineState.READY)
+        logger.info("Engine initialized — awaiting LoadTransformation messages")
+    }
+
+    /**
+     * Start the engine with the given transport.
+     * The transport's start() method blocks until shutdown.
+     */
+    fun start(transportServer: TransportServer) {
         val current = stateRef.get()
         require(current == EngineState.READY) {
             "Cannot start engine in state $current (expected READY)"
         }
 
-        logger.info("Starting engine '{}'", config.engine.name)
+        this.transport = transportServer
+        logger.info("Starting engine '{}' with transport {}", config.engine.name, transportServer.javaClass.simpleName)
 
         // Start health endpoint
         try {
@@ -89,49 +108,11 @@ class UtlxEngine(val config: EngineConfig) {
             logger.warn("Failed to start health endpoint: {}", e.message)
         }
 
-        // Phase 1: stdio pipes
-        inputPipe = StdioInputPipe()
-        outputPipe = StdioOutputPipe()
-
         stateRef.set(EngineState.RUNNING)
         logger.info("Engine '{}' is RUNNING", config.engine.name)
 
-        processMessages()
-    }
-
-    private fun processMessages() {
-        val transformation = registry.list().firstOrNull()
-            ?: throw IllegalStateException("No transformations registered")
-
-        val input = inputPipe ?: throw IllegalStateException("Input pipe not connected")
-        val output = outputPipe ?: throw IllegalStateException("Output pipe not connected")
-
-        logger.info("Processing messages via stdin/stdout using transformation '{}'", transformation.name)
-
-        while (state == EngineState.RUNNING) {
-            val message = input.tryRead() ?: break
-
-            try {
-                val result = transformation.strategy.execute(
-                    String(message.payload, Charsets.UTF_8)
-                )
-                val outputMessage = Message(
-                    correlationId = message.correlationId,
-                    payload = result.output.toByteArray(Charsets.UTF_8),
-                    contentType = "application/json",
-                    headers = message.headers
-                )
-                output.write(outputMessage)
-            } catch (e: Exception) {
-                logger.error("Error processing message: {}", e.message, e)
-                val errorMessage = Message(
-                    correlationId = message.correlationId,
-                    payload = """{"error": "${e.message?.replace("\"", "\\\"") ?: "unknown"}"}""".toByteArray(Charsets.UTF_8),
-                    contentType = "application/json"
-                )
-                output.write(errorMessage)
-            }
-        }
+        // Transport.start() blocks until shutdown
+        transportServer.start(registry)
     }
 
     fun stop() {
@@ -143,18 +124,11 @@ class UtlxEngine(val config: EngineConfig) {
         logger.info("Stopping engine '{}'...", config.engine.name)
         stateRef.set(EngineState.DRAINING)
 
-        // Close pipes
-        inputPipe?.close()
-        outputPipe?.close()
+        // Stop transport
+        transport?.stop()
 
-        // Shutdown strategies
-        registry.list().forEach { instance ->
-            try {
-                instance.strategy.shutdown()
-            } catch (e: Exception) {
-                logger.warn("Error shutting down strategy for '{}': {}", instance.name, e.message)
-            }
-        }
+        // Shutdown all strategies
+        registry.shutdownAll()
 
         // Stop health endpoint
         healthEndpoint?.stop()
@@ -165,7 +139,10 @@ class UtlxEngine(val config: EngineConfig) {
 
     fun uptimeMs(): Long = System.currentTimeMillis() - startTime
 
-    private fun createStrategy(config: TransformConfig): ExecutionStrategy {
+    /**
+     * Create an execution strategy by name. Used by both bundle loading and dynamic loading.
+     */
+    fun createStrategy(config: TransformConfig): ExecutionStrategy {
         return when (config.strategy.uppercase()) {
             "TEMPLATE" -> TemplateStrategy()
             // Phase 2+: COPY, COMPILED, AUTO

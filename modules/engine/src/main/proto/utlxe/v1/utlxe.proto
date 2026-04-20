@@ -1,0 +1,149 @@
+syntax = "proto3";
+package utlxe.v1;
+
+option java_package = "org.apache.utlx.engine.proto";
+option java_multiple_files = true;
+option java_outer_classname = "UtlxeProto";
+
+// ─── Init-time messages (called once per transformation at startup) ───
+
+message LoadTransformationRequest {
+  string transformation_id = 1;    // Unique ID (e.g., connection ID from pipeline descriptor)
+  string utlx_source = 2;         // The .utlx mapping definition source code
+  string strategy = 3;            // "TEMPLATE", "COPY", "COMPILED", "AUTO" (default: "AUTO")
+  string validation_policy = 4;   // "STRICT", "WARN", "SKIP" (default: "SKIP")
+  int32 max_concurrent = 5;       // Per-transformation concurrency limit (0 = use engine default)
+  map<string, string> config = 6; // Additional configuration (validation settings, format hints, etc.)
+}
+
+message LoadTransformationResponse {
+  bool success = 1;
+  string error = 2;                         // Non-empty if success=false
+  repeated ValidationError warnings = 3;    // Type-check warnings (non-fatal)
+  LoadMetrics metrics = 4;                  // Compilation timing
+}
+
+message LoadMetrics {
+  int64 parse_duration_us = 1;     // Microseconds for lexer + parser
+  int64 typecheck_duration_us = 2; // Microseconds for type checker
+  int64 total_duration_us = 3;     // Total init time
+}
+
+// ─── Runtime messages (called per message on the hot path) ───
+
+message ExecuteRequest {
+  string transformation_id = 1;    // Which pre-loaded transformation to execute
+  bytes payload = 2;               // The current_payload from MPPM envelope
+  string content_type = 3;         // "application/json", "application/xml", "text/csv", etc.
+  map<string, bytes> named_inputs = 4; // For N-input mappings: named payloads from step window
+  string correlation_id = 5;       // For tracing/debugging and multiplexed response matching
+}
+
+message ExecuteResponse {
+  bool success = 1;
+  bytes output = 2;                         // Transformed payload
+  string output_content_type = 3;           // Output format
+  string error = 4;                         // Non-empty if success=false
+  ErrorClass error_class = 5;               // PERMANENT or TRANSIENT
+  repeated ValidationError validation_errors = 6;
+  ExecuteMetrics metrics = 7;
+  ErrorPhase error_phase = 8;              // WHERE the error occurred
+  string correlation_id = 9;              // Echoed from request (for multiplexed matching)
+}
+
+enum ErrorClass {
+  ERROR_CLASS_UNSPECIFIED = 0;
+  PERMANENT = 1;   // Missing field, type coercion failure — do not retry
+  TRANSIENT = 2;   // Expression error (e.g., division by zero) — retryable
+}
+
+enum ErrorPhase {
+  ERROR_PHASE_UNSPECIFIED = 0;
+  PRE_VALIDATION = 1;     // Input schema validation failed
+  TRANSFORMATION = 2;     // utl-x execution failed
+  POST_VALIDATION = 3;    // Output schema validation failed
+  INTERNAL = 4;           // UTLXe engine error (not payload-related)
+}
+
+message ValidationError {
+  string message = 1;
+  string path = 2;       // JSONPath or XPath to the problematic field
+  string severity = 3;   // "ERROR", "WARNING"
+}
+
+message ExecuteMetrics {
+  int64 execute_duration_us = 1;  // Microseconds for this execution
+}
+
+// ─── Batch execution (same transformation, multiple inputs) ───
+
+message ExecuteBatchRequest {
+  string transformation_id = 1;
+  repeated BatchItem items = 2;
+}
+
+message BatchItem {
+  bytes payload = 1;
+  string content_type = 2;
+  map<string, bytes> named_inputs = 3;
+  string correlation_id = 4;
+}
+
+message ExecuteBatchResponse {
+  repeated ExecuteResponse results = 1;
+}
+
+// ─── Lifecycle messages ───
+
+message UnloadTransformationRequest {
+  string transformation_id = 1;
+}
+
+message UnloadTransformationResponse {
+  bool success = 1;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string state = 1;                  // "READY", "RUNNING", "DRAINING", etc.
+  int64 uptime_ms = 2;
+  int32 loaded_transformations = 3;
+  int64 total_executions = 4;
+  int64 total_errors = 5;
+}
+
+// ─── stdio-proto envelope (not used in gRPC mode) ───
+
+message StdioEnvelope {
+  MessageType type = 1;
+  bytes payload = 2;  // Serialised inner message (one of the types above)
+}
+
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+
+  // Requests (wrapper → UTLXe)
+  LOAD_TRANSFORMATION_REQUEST = 1;
+  EXECUTE_REQUEST = 2;
+  EXECUTE_BATCH_REQUEST = 3;
+  UNLOAD_TRANSFORMATION_REQUEST = 4;
+  HEALTH_REQUEST = 5;
+
+  // Responses (UTLXe → wrapper)
+  LOAD_TRANSFORMATION_RESPONSE = 11;
+  EXECUTE_RESPONSE = 12;
+  EXECUTE_BATCH_RESPONSE = 13;
+  UNLOAD_TRANSFORMATION_RESPONSE = 14;
+  HEALTH_RESPONSE = 15;
+}
+
+// ─── gRPC service definition (for --mode=grpc only) ───
+
+service UtlxeService {
+  rpc LoadTransformation(LoadTransformationRequest) returns (LoadTransformationResponse);
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+  rpc ExecuteBatch(ExecuteBatchRequest) returns (ExecuteBatchResponse);
+  rpc UnloadTransformation(UnloadTransformationRequest) returns (UnloadTransformationResponse);
+  rpc Health(HealthRequest) returns (HealthResponse);
+}

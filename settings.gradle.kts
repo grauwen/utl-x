@@ -84,6 +84,7 @@ pluginManagement {
     plugins {
         kotlin("jvm") version "1.9.22"
         id("org.graalvm.buildtools.native") version "0.10.2"
+        id("com.google.protobuf") version "0.9.4"
     }
 }
 
