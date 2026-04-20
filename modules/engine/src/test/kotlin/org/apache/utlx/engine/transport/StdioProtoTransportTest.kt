@@ -77,7 +77,7 @@ class StdioProtoTransportTest {
                 System.setIn(toTransportIn)
                 System.setOut(PrintStream(fromTransportOut, true))
 
-                val transport = StdioProtoTransport(engine)
+                val transport = StdioProtoTransport(engine, workers = 1)
                 transport.start(engine.registry)
             } finally {
                 System.setIn(originalIn)
@@ -368,5 +368,120 @@ class StdioProtoTransportTest {
         assertTrue(result.getResults(1).success)
         assertEquals("b-1", result.getResults(0).correlationId)
         assertEquals("b-2", result.getResults(1).correlationId)
+    }
+
+    // =========================================================================
+    // Concurrent Execution Tests (workers > 1)
+    // =========================================================================
+
+    private fun startTransportWithWorkers(workerCount: Int) {
+        transportThread = Thread {
+            val originalIn = System.`in`
+            val originalOut = System.out
+            try {
+                System.setIn(toTransportIn)
+                System.setOut(PrintStream(fromTransportOut, true))
+
+                val transport = StdioProtoTransport(engine, workers = workerCount)
+                transport.start(engine.registry)
+            } finally {
+                System.setIn(originalIn)
+                System.setOut(originalOut)
+                try { fromTransportOut.close() } catch (_: Exception) {}
+            }
+        }.also {
+            it.isDaemon = true
+            it.start()
+        }
+    }
+
+    @Test
+    fun `concurrent - multiple execute requests are all processed`() {
+        startTransportWithWorkers(4)
+
+        // Load transformation first
+        sendEnvelope(
+            MessageType.LOAD_TRANSFORMATION_REQUEST,
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("concurrent-tx")
+                .setUtlxSource(identityUtlx)
+                .setStrategy("TEMPLATE")
+                .build()
+        )
+        val loadResp = LoadTransformationResponse.parseFrom(readEnvelope().payload)
+        assertTrue(loadResp.success)
+
+        // Send 10 execute requests rapidly
+        val requestCount = 10
+        for (i in 1..requestCount) {
+            sendEnvelope(
+                MessageType.EXECUTE_REQUEST,
+                ExecuteRequest.newBuilder()
+                    .setTransformationId("concurrent-tx")
+                    .setPayload(ByteString.copyFromUtf8("""{"i": $i}"""))
+                    .setContentType("application/json")
+                    .setCorrelationId("c-$i")
+                    .build()
+            )
+        }
+        toTransportOut.close()
+
+        // Collect all responses (may arrive out of order)
+        val responses = mutableListOf<ExecuteResponse>()
+        for (i in 1..requestCount) {
+            val env = readEnvelope()
+            assertEquals(MessageType.EXECUTE_RESPONSE, env.type)
+            responses.add(ExecuteResponse.parseFrom(env.payload))
+        }
+
+        // All should succeed
+        assertEquals(requestCount, responses.size)
+        assertTrue(responses.all { it.success }, "All concurrent requests should succeed")
+
+        // All correlation IDs should be present (possibly out of order)
+        val correlationIds = responses.map { it.correlationId }.toSet()
+        for (i in 1..requestCount) {
+            assertTrue("c-$i" in correlationIds, "Missing correlation ID c-$i")
+        }
+    }
+
+    @Test
+    fun `concurrent - correlation IDs match responses to requests`() {
+        startTransportWithWorkers(2)
+
+        // Load
+        sendEnvelope(
+            MessageType.LOAD_TRANSFORMATION_REQUEST,
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("corr-tx")
+                .setUtlxSource(identityUtlx)
+                .setStrategy("TEMPLATE")
+                .build()
+        )
+        assertTrue(LoadTransformationResponse.parseFrom(readEnvelope().payload).success)
+
+        // Send 5 requests with distinct correlation IDs
+        for (i in 1..5) {
+            sendEnvelope(
+                MessageType.EXECUTE_REQUEST,
+                ExecuteRequest.newBuilder()
+                    .setTransformationId("corr-tx")
+                    .setPayload(ByteString.copyFromUtf8("""{"val": $i}"""))
+                    .setCorrelationId("req-$i")
+                    .build()
+            )
+        }
+        toTransportOut.close()
+
+        val responses = (1..5).map {
+            ExecuteResponse.parseFrom(readEnvelope().payload)
+        }
+
+        // Each response should have a correlation ID from our request set
+        val ids = responses.map { it.correlationId }.toSet()
+        assertEquals(5, ids.size, "All 5 unique correlation IDs should be present")
+        for (i in 1..5) {
+            assertTrue("req-$i" in ids)
+        }
     }
 }

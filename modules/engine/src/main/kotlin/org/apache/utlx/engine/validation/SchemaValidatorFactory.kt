@@ -24,15 +24,21 @@ object SchemaValidatorFactory {
 
         return when (schemaFormat.lowercase()) {
             "json-schema", "jsch" -> JsonSchemaValidator(schemaSource)
+            "yaml" -> YamlSchemaValidator(schemaSource)
             "xsd" -> XsdValidator(schemaSource)
             "avro" -> AvroSchemaValidator(schemaSource)
+            "tsch" -> TableSchemaValidator(schemaSource)
+            "osch" -> ODataSchemaValidator(schemaSource)
+            "protobuf", "proto" -> ProtobufValidator(schemaSource)
             else -> throw IllegalArgumentException(
                 "Unsupported schema format: '$schemaFormat'. " +
-                "Supported: json-schema, jsch, xsd, avro"
+                "Supported: json-schema, jsch, yaml, xsd, avro, tsch, osch, protobuf"
             )
         }
     }
 
     /** Returns the list of supported schema format identifiers. */
-    fun supportedFormats(): List<String> = listOf("json-schema", "jsch", "xsd", "avro")
+    fun supportedFormats(): List<String> = listOf(
+        "json-schema", "jsch", "yaml", "xsd", "avro", "tsch", "osch", "protobuf", "proto"
+    )
 }

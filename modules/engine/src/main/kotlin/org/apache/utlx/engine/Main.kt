@@ -135,7 +135,7 @@ fun main(args: Array<String>) {
         // Create transport based on --mode
         val transport: TransportServer = when (mode) {
             "stdio-json" -> StdioJsonTransport()
-            "stdio-proto" -> StdioProtoTransport(engine)
+            "stdio-proto" -> StdioProtoTransport(engine, workers = workers ?: Runtime.getRuntime().availableProcessors())
             "grpc" -> GrpcTransport(engine, address = grpcAddress, socketPath = socketPath)
             else -> exitWithError("Unknown mode: $mode")
         }
