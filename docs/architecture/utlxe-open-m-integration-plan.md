@@ -1,7 +1,7 @@
 # UTLXe Engine Redesign — Open-M Integration Plan
 
-**Status:** Implementation Plan  
-**Date:** 2026-04-20  
+**Status:** Phases A–C implemented, D–E pending  
+**Date:** 2026-04-20 (last updated: 2026-04-20)  
 **Relates to:** open-m-go-versus-kotlin-utlx-depends.md, utlxe-engine-architecture.md  
 **Branch:** development (`modules/engine/`)
 
@@ -15,17 +15,29 @@ UTLXe becomes a **multi-transport, multi-transformation production engine** that
 
 ---
 
-## 2. Current State (Phase 1 MVP)
+## 2. Implementation Status
 
-| Aspect | Current | Target |
-|--------|---------|--------|
-| Transformations | Single (first only) | Multiple concurrent |
-| Transport | stdio-json (line-delimited) | stdio-json, stdio-proto, grpc |
-| Concurrency | Single-threaded loop | Thread pool with correlation IDs |
-| Protocol | Unframed JSON lines | Varint-delimited protobuf |
-| IPC mode | N/A (standalone) | Subprocess of Go wrapper |
-| Health | HTTP endpoint | HTTP endpoint (unchanged) |
-| Strategies | TEMPLATE only | TEMPLATE, COPY (Phase 2) |
+| Aspect | Status | Details |
+|--------|--------|---------|
+| Transformations | **Done** (Phase A) | Multiple concurrent transformations, registry with load/unload/metrics |
+| Transport: stdio-json | **Done** (Phase A) | Extracted to StdioJsonTransport, backward compatible |
+| Transport: stdio-proto | **Done** (Phase B) | Varint-delimited protobuf over stdin/stdout, sequential Model 1 |
+| Transport: grpc | **Done** (Phase C) | TCP + UDS (epoll on Linux, kqueue on macOS), in-process tests |
+| Proto definitions | **Done** (Phase B) | `proto/utlxe/v1/utlxe.proto` with all messages + gRPC service |
+| Schema validation | Pending (Phase D) | Pre/post transform validation using native format validators |
+| Concurrency | Pending (Phase E) | Thread pool with correlation IDs for multiplexed stdio-proto |
+| Strategies | TEMPLATE only | COPY, COMPILED, AUTO planned for Phase 2 |
+
+### Platform Compatibility
+
+| Mode | Windows | Linux | macOS |
+|------|---------|-------|-------|
+| `stdio-json` | stdin/stdout | stdin/stdout | stdin/stdout |
+| `stdio-proto` | stdin/stdout | stdin/stdout | stdin/stdout |
+| `grpc --socket` | TCP fallback | UDS (epoll) | UDS (kqueue) |
+| `grpc --address` | TCP | TCP | TCP |
+
+All stdio-based modes use standard process I/O — fully cross-platform with no OS-specific dependencies. UDS for gRPC requires native transport (epoll/kqueue); Windows falls back to TCP automatically.
 
 ---
 
@@ -85,57 +97,66 @@ gRPC service definition:
 
 ## 4. Implementation Phases
 
-### Phase A: Foundation (Transport Abstraction + Multi-Transformation)
+### Phase A: Foundation (Transport Abstraction + Multi-Transformation) — DONE
 
 **Goal:** Refactor processMessages() out of UtlxEngine into a transport abstraction. Remove single-transformation limit.
 
 **Files changed:**
-- `UtlxEngine.kt` — delegate message loop to TransportServer
-- `TransformationRegistry.kt` — add `load()`, `unload()`, `get(id)` methods
-- `transport/TransportServer.kt` — new interface
-- `transport/StdioJsonTransport.kt` — extracted from current code (backward compatible)
+- `UtlxEngine.kt` — transport-agnostic `start(transportServer)`, `initializeEmpty()` for dynamic modes, `createStrategy()` public
+- `TransformationRegistry.kt` — ConcurrentHashMap, `register()`, `unload()`, `get()`, `shutdownAll()`, per-instance metrics (executionCount, errorCount, loadedAt)
+- `transport/TransportServer.kt` — new interface (`start(registry)`, `stop()`, `supportsDynamicLoading`)
+- `transport/StdioJsonTransport.kt` — extracted from current processMessages() (backward compatible)
+- `Main.kt` — `--mode` flag, `--bundle` optional for dynamic modes
 
-**Tests:** Existing tests continue to pass. New tests for multi-transformation registry.
+**Tests:** 12 UtlxEngine tests (7 original + 5 new for multi-transform and initializeEmpty). All 52 existing tests pass.
 
-### Phase B: Proto Definitions + stdio-proto Transport
+### Phase B: Proto Definitions + stdio-proto Transport — DONE
 
 **Goal:** Add protobuf message definitions and implement stdio-proto mode.
 
 **Files added:**
-- `proto/utlxe/v1/utlxe.proto`
-- `transport/StdioProtoTransport.kt`
+- `modules/engine/src/main/proto/utlxe/v1/utlxe.proto` — all message types, enums, gRPC service definition
+- `proto/utlxe/v1/utlxe.proto` — root-level copy for sharing with Go wrapper
+- `transport/StdioProtoTransport.kt` — sequential Model 1 (Phase E adds multiplexing)
 
 **Key implementation details:**
 - Varint-delimited framing using `parseDelimitedFrom()` / `writeDelimitedTo()`
-- Reader thread → worker thread pool → response queue → writer thread
-- Correlation ID based response matching
+- StdioEnvelope routing (MessageType enum) for request/response dispatch
+- Single-threaded sequential processing (Model 1) — sufficient for initial integration
+- Handles: LoadTransformation, Execute, ExecuteBatch, Unload, Health
 - `--mode=stdio-proto` flag in Main.kt
 
 **Dependencies added:**
-- `com.google.protobuf:protobuf-kotlin:3.25.x`
-- Generated Kotlin stubs from `utlxe.proto`
+- `com.google.protobuf:protobuf-java:3.25.3`
+- `com.google.protobuf:protobuf-kotlin:3.25.3`
+- Gradle protobuf plugin (`com.google.protobuf:0.9.4`)
 
-**Tests:** Integration test: spawn UTLXe in stdio-proto mode, send LoadTransformation + Execute via pipe, verify output.
+**Tests:** 8 tests using PipedInputStream/PipedOutputStream to simulate stdin/stdout: load, execute, batch, unload, health, error cases, full lifecycle.
 
-### Phase C: gRPC Transport
+### Phase C: gRPC Transport — DONE
 
 **Goal:** Add gRPC server mode for external consumers and sidecar deployments.
 
 **Files added:**
-- `transport/GrpcTransport.kt`
+- `transport/GrpcTransport.kt` — server lifecycle (TCP + UDS)
+- `transport/UtlxeServiceImpl.kt` (in same file) — implements all 5 UtlxeService RPCs
 
 **Key implementation details:**
-- `--mode=grpc --socket=/path/to/socket` (UDS)
-- `--mode=grpc --address=host:port` (TCP fallback)
-- Implements `UtlxeService` from proto definition
+- `--mode=grpc --socket=/path/to/socket` — UDS via kqueue (macOS) or epoll (Linux)
+- `--mode=grpc --address=host:port` — TCP (all platforms, default `localhost:9090`)
+- Windows: `--socket` falls back to TCP automatically (no UDS native transport)
+- OS detection via reflection — no hard compile-time dependency on epoll or kqueue
+- Implements `UtlxeServiceGrpc.UtlxeServiceImplBase` (Java gRPC stubs)
 - Native HTTP/2 multiplexing (no custom correlation needed)
 
 **Dependencies added:**
-- `io.grpc:grpc-kotlin-stub:1.4.x`
-- `io.grpc:grpc-netty-shaded:1.60.x`
-- `io.grpc:grpc-protobuf:1.60.x`
+- `io.grpc:grpc-protobuf:1.60.1`
+- `io.grpc:grpc-stub:1.60.1`
+- `io.grpc:grpc-netty-shaded:1.60.1` (includes epoll + kqueue native transports)
+- `io.grpc:grpc-testing:1.60.1` (test only)
+- `io.grpc:protoc-gen-grpc-java:1.60.1` (protoc plugin for gRPC stub generation)
 
-**Tests:** Integration test with gRPC client calling all methods.
+**Tests:** 8 tests using grpc-testing's in-process server: load, execute, batch, unload, health, error cases, full lifecycle.
 
 ### Phase D: Schema Validation (Pre/Post Transform)
 
@@ -473,8 +494,8 @@ Options:
   --bundle, -b <path>       Bundle directory (pre-load transforms from disk)
   --config, -c <path>       Engine config file
   --mode <mode>             Transport mode: stdio-json (default), stdio-proto, grpc
-  --socket <path>           Unix socket path (gRPC mode)
-  --address <host:port>     TCP address (gRPC mode)
+  --socket <path>           Unix Domain Socket path (gRPC mode, Linux/macOS)
+  --address <host:port>     TCP address (gRPC mode, default: localhost:9090)
   --port, -p <port>         Health endpoint port (default: 8081)
   --workers <n>             Worker thread pool size (default: CPU cores)
   --validate                Load and compile bundle, then exit (no processing)
@@ -608,14 +629,19 @@ New modes are additive — they don't change default behavior.
 
 ## 9. Testing Strategy
 
-| Test Level | What | How |
-|---|---|---|
-| Unit | Registry load/unload/get | Kotlin unit tests |
-| Unit | StdioProtoTransport request/response | Mock stdin/stdout with byte arrays |
-| Integration | Full lifecycle: spawn → load → execute → shutdown | Process spawn from test, pipe proto messages |
-| Integration | gRPC: connect → load → execute → unload | gRPC test client |
-| Performance | Throughput under load | Benchmark: N requests/second, measure p50/p99 latency |
-| Conformance | Proto compatibility | Go client sends messages, verify Kotlin server processes correctly |
+**Current test count:** 44 engine tests (all passing)
+
+| Test Level | What | How | Status |
+|---|---|---|---|
+| Unit | UtlxEngine state machine, multi-transform, initializeEmpty | Kotlin JUnit 5 (12 tests) | Done |
+| Unit | Registry load/unload/get/metrics | Kotlin JUnit 5 (6 tests) | Done |
+| Unit | TemplateStrategy execute/batch/shutdown | Kotlin JUnit 5 (6 tests) | Done |
+| Unit | StdioPipe read/write/EOF | Kotlin JUnit 5 (8 tests) | Done |
+| Integration | StdioProtoTransport: load, execute, batch, unload, health, lifecycle | PipedInputStream/PipedOutputStream (8 tests) | Done |
+| Integration | GrpcTransport: load, execute, batch, unload, health, lifecycle | grpc-testing in-process server (8 tests) | Done |
+| Integration | HealthEndpoint HTTP | Ktor test host (4 tests) | Done |
+| Performance | Throughput under load | Benchmark: N requests/second, measure p50/p99 latency | Pending |
+| Conformance | Proto compatibility | Go client sends messages, verify Kotlin server processes correctly | Pending |
 
 ---
 
@@ -624,10 +650,10 @@ New modes are additive — they don't change default behavior.
 | Mode | New dependencies | JAR size impact |
 |------|-----------------|-----------------|
 | stdio-json | None | 0 |
-| stdio-proto | protobuf-kotlin (~2MB) | +2MB |
-| grpc | protobuf-kotlin + grpc-kotlin + grpc-netty (~15MB) | +15MB |
+| stdio-proto | protobuf-java + protobuf-kotlin (~2MB) | +2MB |
+| grpc | protobuf-java + protobuf-kotlin + grpc-protobuf + grpc-stub + grpc-netty-shaded (~15MB) | +15MB |
 
-Recommendation: Build separate JARs per mode, or use Gradle feature variants to make gRPC dependencies optional.
+Note: Currently all modes are bundled in a single JAR. Future optimization: use Gradle feature variants to make gRPC dependencies optional for stdio-only deployments.
 
 ---
 
