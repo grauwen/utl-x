@@ -143,22 +143,21 @@ gRPC service definition:
 
 **Files added:**
 - `validation/SchemaValidator.kt` — interface
-- `validation/JsonSchemaValidator.kt` — JSON Schema (draft-07, 2020-12) via networknt
-- `validation/XsdValidator.kt` — XSD via javax.xml.validation
-- `validation/AvroValidator.kt` — Avro schema validation
+- `validation/SchemaValidatorFactory.kt` — creates validator for schema format
+- `validation/UdmSchemaValidator.kt` — validates payload UDM against schema UDM using analysis module logic
 
 **Key implementation:**
 - Validators compiled at init time (during LoadTransformation)
+- Reuses existing format parsers (JSCH, XSD, TSCH, OSCH, Avro, Protobuf) to parse schemas
+- Reuses `modules/analysis/` schema comparison logic for UDM-level validation
 - Pre-compiled validators cached in TransformationInstance
 - Per-message validation: ~50-500μs depending on schema complexity
 - Validation errors returned in ExecuteResponse.validation_errors[]
 - Policy enforcement: STRICT (reject) / WARN (log, continue) / SKIP (no-op)
 
-**Dependencies added:**
-- `com.networknt:json-schema-validator:1.0.x` (JSON Schema validation)
-- XSD/Avro validation uses existing format module libraries
+**No new external dependencies** — all schema parsing and validation uses existing UTL-X format modules and analysis module.
 
-**Tests:** Validate conforming/non-conforming payloads against JSON Schema and XSD.
+**Tests:** Validate conforming/non-conforming payloads against JSON Schema, XSD, and Table Schema.
 
 ### Phase E: Concurrency Model (Multiplexed stdio-proto)
 
@@ -316,14 +315,26 @@ fun executeWithValidation(instance: TransformationInstance, request: ExecuteRequ
 
 ### 5.7 Supported Schema Formats for Validation
 
-| Format | Library | Capability |
-|--------|---------|-----------|
-| JSON Schema (draft-07, 2020-12) | networknt/json-schema-validator | Full draft support |
-| XSD (1.0, 1.1) | javax.xml.validation | Full W3C support |
-| Avro | Apache Avro | Schema compatibility + data validation |
-| Protobuf | protobuf-java descriptors | Message conformance |
+All schema formats that UTL-X supports for **parsing** also support **validation**. No new external libraries needed — the existing format modules already parse these schemas:
 
-These libraries are already in UTLXe's dependency tree (via format modules). Validation is a thin layer on top.
+| Data Format | Schema Format | UTL-X Module | Parser Class | Validation |
+|-------------|--------------|-------------|--------------|-----------|
+| JSON | JSCH (JSON Schema) | `formats/jsch/` | `JSONSchemaParser` | Validate JSON structure against JSON Schema |
+| YAML | JSCH (JSON Schema) | `formats/jsch/` | `JSONSchemaParser` | Same as JSON (YAML → UDM → validate) |
+| XML | XSD | `formats/xsd/` | `XSDParser` | Validate XML structure against XSD |
+| CSV | TSCH (Table Schema) | `formats/tsch/` | `TableSchemaParser` | Validate CSV columns, types, constraints |
+| OData JSON | OSCH (OData/EDMX) | `formats/osch/` | `EDMXParser` | Validate OData entities against EDMX metadata |
+| Avro data | Avro Schema | `formats/avro/` | `AvroSchemaParser` | Validate Avro records against schema |
+| Protobuf data | Proto descriptor | `formats/protobuf/` | `ProtobufSchemaParser` | Validate Protobuf messages against descriptor |
+
+**Validation approach (no new dependencies):**
+
+1. **Init time:** Parse schema using existing parser → produce schema UDM representation
+2. **Runtime:** Parse payload into UDM using existing format parser → compare payload UDM against schema UDM → report mismatches as `ValidationError[]`
+
+The `modules/analysis/` module already has schema comparison logic (used by the daemon for design-time type checking). This same logic can be reused for runtime validation in UTLXe — it compares a data UDM against a schema UDM and reports field-level mismatches.
+
+**Key insight:** UTL-X's Tier 2 schema formats (XSD, JSCH, Avro, Protobuf, OSCH, TSCH) are the **exact** schemas used for validation. Every data format has a corresponding schema format already in UTL-X.
 
 ---
 
