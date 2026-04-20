@@ -236,85 +236,140 @@ ExecuteRequest arrives
 - ~50-200μs for JSON Schema, ~100-500μs for XSD — comparable to transform cost
 - Validation errors reported in ExecuteResponse.validation_errors[]
 
-### 5.4 LoadTransformationRequest Changes
+### 5.4 LoadTransformationRequest — Validation via Config Map
+
+Validation settings are passed in the `config` map of `LoadTransformationRequest`, NOT as dedicated proto fields. This keeps the proto contract stable — new validation options are added without changing the proto schema.
 
 ```protobuf
 message LoadTransformationRequest {
   string transformation_id = 1;
-  string utlx_source = 2;
+  string utlx_source = 2;           // Can be empty for validate-only mode
   string strategy = 3;              // "TEMPLATE", "COPY", "COMPILED", "AUTO"
   string validation_policy = 4;     // "STRICT", "WARN", "SKIP"
   int32 max_concurrent = 5;
-  map<string, string> config = 6;
-
-  // Schema validation (optional — only needed if validate_input/output = true)
-  string input_schema = 7;          // JSON Schema, XSD, Avro schema source
-  string input_schema_format = 8;   // "json-schema", "xsd", "avro", "protobuf"
-  string output_schema = 9;         // Output schema source
-  string output_schema_format = 10; // Output schema format
-  bool validate_input = 11;         // Enable pre-validation (default: false)
-  bool validate_output = 12;        // Enable post-validation (default: false)
+  map<string, string> config = 6;   // Carries all validation settings (see below)
 }
 ```
 
-### 5.5 TransformationInstance with Validators
+**Config map keys for validation:**
 
-```kotlin
-data class TransformationInstance(
-    val id: String,
-    val strategy: ExecutionStrategy,
-    val config: TransformConfig,
-    val loadedAt: Instant,
-    val inputValidator: SchemaValidator? = null,   // Pre-compiled, null if validation disabled
-    val outputValidator: SchemaValidator? = null,  // Pre-compiled, null if validation disabled
-    val validateInput: Boolean = false,
-    val validateOutput: Boolean = false,
-    val validationPolicy: ValidationPolicy = ValidationPolicy.STRICT,
-    val executionCount: AtomicLong = AtomicLong(0),
-    val errorCount: AtomicLong = AtomicLong(0)
-)
+| Key | Values | Default | Purpose |
+|-----|--------|---------|---------|
+| `validate_input` | `"true"`, `"false"` | `"false"` | Enable pre-validation |
+| `validate_output` | `"true"`, `"false"` | `"false"` | Enable post-validation |
+| `input_schema` | Schema source (JSON string, XSD XML, etc.) | — | Input schema content |
+| `input_schema_format` | `"json-schema"`, `"xsd"`, `"avro"`, `"protobuf"`, `"tsch"`, `"osch"` | — | Schema format |
+| `output_schema` | Schema source | — | Output schema content |
+| `output_schema_format` | Same as above | — | Schema format |
 
-interface SchemaValidator {
-    fun validate(payload: ByteArray, contentType: String): List<ValidationError>
+**Validate-only mode (no transformation):**
+
+When `utlx_source` is empty but `validate_input` or `validate_output` is true, UTLXe validates the payload without transforming it. The payload passes through unchanged. This supports Open-M connections with `engine: none` but validation enabled.
+
+### 5.5 ExecuteResponse — Error Phase
+
+```protobuf
+message ExecuteResponse {
+  bool success = 1;
+  bytes output = 2;
+  string output_content_type = 3;
+  string error = 4;                          // Human-readable summary
+  ErrorClass error_class = 5;                // PERMANENT or TRANSIENT
+  repeated ValidationError validation_errors = 6;
+  ExecuteMetrics metrics = 7;
+  ErrorPhase error_phase = 8;               // WHERE the error occurred
 }
 
-enum class ValidationPolicy { STRICT, WARN, SKIP }
+enum ErrorPhase {
+  ERROR_PHASE_UNSPECIFIED = 0;
+  PRE_VALIDATION = 1;     // Input schema validation failed
+  TRANSFORMATION = 2;     // utl-x execution failed
+  POST_VALIDATION = 3;    // Output schema validation failed
+  INTERNAL = 4;           // UTLXe engine error (not payload-related)
+}
 ```
 
-### 5.6 Execution Flow with Validation
+The `error_phase` is critical for debugging:
+- `PRE_VALIDATION` → upstream produced invalid output
+- `TRANSFORMATION` → the `.utlx` expression has a runtime error
+- `POST_VALIDATION` → the mapping definition has a bug (produced invalid output)
+- `INTERNAL` → UTLXe itself had a problem (OOM, thread exhaustion)
+
+### 5.6 Error Classification
+
+| Error | Phase | Classification | Wrapper action |
+|---|---|---|---|
+| Input schema violation | PRE_VALIDATION | PERMANENT | DLQ immediately |
+| Input parse failure | PRE_VALIDATION | PERMANENT | DLQ immediately |
+| Mapping expression error | TRANSFORMATION | Configurable | Per error_class config |
+| Missing mapping input | TRANSFORMATION | PERMANENT | DLQ immediately |
+| Type coercion failure | TRANSFORMATION | PERMANENT | DLQ immediately |
+| Output schema violation | POST_VALIDATION | PERMANENT | DLQ immediately |
+| UTLXe internal error | INTERNAL | TRANSIENT | Retry with backoff |
+| Transformation timeout | TRANSFORMATION | TRANSIENT | Retry or DLQ after max_attempts |
+
+### 5.7 Execution Flow with Validation and Error Phase
 
 ```kotlin
 fun executeWithValidation(instance: TransformationInstance, request: ExecuteRequest): ExecuteResponse {
-    val allErrors = mutableListOf<ValidationError>()
+    val allWarnings = mutableListOf<ValidationError>()
 
     // PRE-VALIDATION
     if (instance.validateInput && instance.inputValidator != null) {
         val inputErrors = instance.inputValidator.validate(request.payload, request.contentType)
         if (inputErrors.isNotEmpty()) {
             when (instance.validationPolicy) {
-                STRICT -> return ExecuteResponse(success=false, error_class=PERMANENT, validation_errors=inputErrors)
-                WARN -> allErrors.addAll(inputErrors)  // continue
-                SKIP -> {} // unreachable (validateInput would be false)
-            }
-        }
-    }
-
-    // TRANSFORMATION
-    val result = instance.strategy.execute(String(request.payload, UTF_8))
-
-    // POST-VALIDATION
-    if (instance.validateOutput && instance.outputValidator != null) {
-        val outputErrors = instance.outputValidator.validate(result.output.toByteArray(), ...)
-        if (outputErrors.isNotEmpty()) {
-            when (instance.validationPolicy) {
-                STRICT -> return ExecuteResponse(success=false, error_class=PERMANENT, validation_errors=outputErrors)
-                WARN -> allErrors.addAll(outputErrors)
+                STRICT -> return ExecuteResponse(
+                    success = false,
+                    error_class = PERMANENT,
+                    error_phase = PRE_VALIDATION,
+                    validation_errors = inputErrors
+                )
+                WARN -> allWarnings.addAll(inputErrors)
                 SKIP -> {}
             }
         }
     }
 
-    return ExecuteResponse(success=true, output=result.output, validation_errors=allErrors)
+    // TRANSFORMATION (or pass-through if validate-only mode)
+    val output = if (instance.strategy != null) {
+        try {
+            instance.strategy.execute(String(request.payload, UTF_8)).output
+        } catch (e: Exception) {
+            return ExecuteResponse(
+                success = false,
+                error_class = if (isTransient(e)) TRANSIENT else PERMANENT,
+                error_phase = TRANSFORMATION,
+                error = e.message
+            )
+        }
+    } else {
+        // Validate-only mode: pass through unchanged
+        String(request.payload, UTF_8)
+    }
+
+    // POST-VALIDATION
+    if (instance.validateOutput && instance.outputValidator != null) {
+        val outputErrors = instance.outputValidator.validate(output.toByteArray(), ...)
+        if (outputErrors.isNotEmpty()) {
+            when (instance.validationPolicy) {
+                STRICT -> return ExecuteResponse(
+                    success = false,
+                    error_class = PERMANENT,
+                    error_phase = POST_VALIDATION,
+                    validation_errors = outputErrors
+                )
+                WARN -> allWarnings.addAll(outputErrors)
+                SKIP -> {}
+            }
+        }
+    }
+
+    return ExecuteResponse(
+        success = true,
+        output = output,
+        validation_errors = allWarnings  // WARN-level errors (non-blocking)
+    )
 }
 ```
 
