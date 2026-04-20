@@ -171,7 +171,7 @@ private fun printUsage() {
           --mode <mode>          Transport mode: stdio-json (default), stdio-proto, grpc
           --port,   -p <port>    Health endpoint port override (default: 8081)
           --workers <n>          Worker thread pool size (default: CPU cores)
-          --socket <path>        Unix Domain Socket path (gRPC mode, Linux)
+          --socket <path>        Unix Domain Socket path (gRPC mode, Linux/macOS)
           --address <host:port>  TCP address (gRPC mode, default: localhost:9090)
           --validate             Load and compile the bundle, then exit (no processing)
           --version, -v          Print version and exit

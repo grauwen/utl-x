@@ -2,10 +2,9 @@ package org.apache.utlx.engine.transport
 
 import com.google.protobuf.ByteString
 import io.grpc.Server
-import io.grpc.ServerBuilder
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
-import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup
-import io.grpc.netty.shaded.io.netty.channel.epoll.EpollServerDomainSocketChannel
+import io.grpc.netty.shaded.io.netty.channel.EventLoopGroup
+import io.grpc.netty.shaded.io.netty.channel.ServerChannel
 import io.grpc.stub.StreamObserver
 import org.apache.utlx.engine.UtlxEngine
 import org.apache.utlx.engine.config.TransformConfig
@@ -25,7 +24,7 @@ import java.util.concurrent.TimeUnit
  *
  * Modes:
  * - TCP: --mode grpc --address host:port
- * - UDS: --mode grpc --socket /path/to/socket (Linux only, falls back to TCP on macOS)
+ * - UDS: --mode grpc --socket /path/to/socket (Linux via epoll, macOS via kqueue)
  */
 class GrpcTransport(
     private val engine: UtlxEngine,
@@ -95,17 +94,40 @@ class GrpcTransport(
 
     private fun buildUdsServer(service: UtlxeServiceImpl, path: String): Server? {
         return try {
-            // UDS requires epoll (Linux only)
             val socketAddress = io.grpc.netty.shaded.io.netty.channel.unix.DomainSocketAddress(path)
             // Clean up stale socket file
             File(path).delete()
 
-            logger.info("Building gRPC UDS server on {}", path)
+            val os = System.getProperty("os.name", "").lowercase()
+            val (channelType, bossGroup, workerGroup) = when {
+                os.contains("linux") -> Triple(
+                    Class.forName("io.grpc.netty.shaded.io.netty.channel.epoll.EpollServerDomainSocketChannel")
+                            as Class<out ServerChannel>,
+                    Class.forName("io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup")
+                        .getConstructor(Int::class.java).newInstance(1) as EventLoopGroup,
+                    Class.forName("io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup")
+                        .getDeclaredConstructor().newInstance() as EventLoopGroup
+                )
+                os.contains("mac") || os.contains("darwin") -> Triple(
+                    Class.forName("io.grpc.netty.shaded.io.netty.channel.kqueue.KQueueServerDomainSocketChannel")
+                            as Class<out ServerChannel>,
+                    Class.forName("io.grpc.netty.shaded.io.netty.channel.kqueue.KQueueEventLoopGroup")
+                        .getConstructor(Int::class.java).newInstance(1) as EventLoopGroup,
+                    Class.forName("io.grpc.netty.shaded.io.netty.channel.kqueue.KQueueEventLoopGroup")
+                        .getDeclaredConstructor().newInstance() as EventLoopGroup
+                )
+                else -> {
+                    logger.warn("UDS not supported on OS '{}', falling back to TCP", os)
+                    return null
+                }
+            }
+
+            logger.info("Building gRPC UDS server on {} ({})", path, if (os.contains("linux")) "epoll" else "kqueue")
             NettyServerBuilder
                 .forAddress(socketAddress)
-                .channelType(EpollServerDomainSocketChannel::class.java)
-                .bossEventLoopGroup(EpollEventLoopGroup(1))
-                .workerEventLoopGroup(EpollEventLoopGroup())
+                .channelType(channelType)
+                .bossEventLoopGroup(bossGroup)
+                .workerEventLoopGroup(workerGroup)
                 .addService(service)
                 .build()
         } catch (e: Exception) {
