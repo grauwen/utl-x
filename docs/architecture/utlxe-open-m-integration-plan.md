@@ -139,25 +139,30 @@ gRPC service definition:
 
 ### Phase D: Schema Validation (Pre/Post Transform)
 
-**Goal:** Add engine-level schema validation as orchestration around transformation.
+**Goal:** Add engine-level schema validation as orchestration around transformation, using native format-specific validators.
 
 **Files added:**
-- `validation/SchemaValidator.kt` — interface
-- `validation/SchemaValidatorFactory.kt` — creates validator for schema format
-- `validation/UdmSchemaValidator.kt` — validates payload UDM against schema UDM using analysis module logic
+- `validation/SchemaValidator.kt` — interface (validate payload bytes → List<ValidationError>)
+- `validation/SchemaValidatorFactory.kt` — creates validator by schema format
+- `validation/JsonSchemaValidator.kt` — JSON Schema via networknt (new dep)
+- `validation/XsdValidator.kt` — XSD via javax.xml.validation (JDK built-in)
+- `validation/TableSchemaValidator.kt` — TSCH custom (thin)
+- `validation/ODataSchemaValidator.kt` — OSCH custom (using parsed EDMX model)
+- `validation/AvroSchemaValidator.kt` — Avro via GenericDatumReader (existing dep)
+- `validation/ProtobufValidator.kt` — Protobuf via DynamicMessage (existing dep)
 
 **Key implementation:**
-- Validators compiled at init time (during LoadTransformation)
-- Reuses existing format parsers (JSCH, XSD, TSCH, OSCH, Avro, Protobuf) to parse schemas
-- Reuses `modules/analysis/` schema comparison logic for UDM-level validation
+- Native format-level validation (NOT UDM comparison) — validates raw payload against compiled schema
+- Validators compiled at init time (during LoadTransformation), thread-safe, reusable
 - Pre-compiled validators cached in TransformationInstance
-- Per-message validation: ~50-500μs depending on schema complexity
+- Per-message cost: ~50-500μs depending on format and payload size
+- Field-level error messages with JSONPath/XPath to problematic element
 - Validation errors returned in ExecuteResponse.validation_errors[]
-- Policy enforcement: STRICT (reject) / WARN (log, continue) / SKIP (no-op)
+- Policy enforcement: STRICT (reject → PERMANENT error) / WARN (log, continue) / SKIP (no-op)
 
-**No new external dependencies** — all schema parsing and validation uses existing UTL-X format modules and analysis module.
+**New dependency:** `com.networknt:json-schema-validator:1.5.x` (~500KB, Apache 2.0) for JSON Schema. All others use JDK built-ins or existing UTLXe dependencies.
 
-**Tests:** Validate conforming/non-conforming payloads against JSON Schema, XSD, and Table Schema.
+**Tests:** Validate conforming/non-conforming payloads against JSON Schema, XSD, TSCH, and Avro Schema. Test STRICT/WARN/SKIP policy enforcement.
 
 ### Phase E: Concurrency Model (Multiplexed stdio-proto)
 
@@ -313,28 +318,85 @@ fun executeWithValidation(instance: TransformationInstance, request: ExecuteRequ
 }
 ```
 
-### 5.7 Supported Schema Formats for Validation
+### 5.7 Validation Approach: Native Format-Level Validators
 
-All schema formats that UTL-X supports for **parsing** also support **validation**. No new external libraries needed — the existing format modules already parse these schemas:
+**Design decision:** Validation uses **native, format-specific validators** — NOT UDM comparison.
 
-| Data Format | Schema Format | UTL-X Module | Parser Class | Validation |
-|-------------|--------------|-------------|--------------|-----------|
-| JSON | JSCH (JSON Schema) | `formats/jsch/` | `JSONSchemaParser` | Validate JSON structure against JSON Schema |
-| YAML | JSCH (JSON Schema) | `formats/jsch/` | `JSONSchemaParser` | Same as JSON (YAML → UDM → validate) |
-| XML | XSD | `formats/xsd/` | `XSDParser` | Validate XML structure against XSD |
-| CSV | TSCH (Table Schema) | `formats/tsch/` | `TableSchemaParser` | Validate CSV columns, types, constraints |
-| OData JSON | OSCH (OData/EDMX) | `formats/osch/` | `EDMXParser` | Validate OData entities against EDMX metadata |
-| Avro data | Avro Schema | `formats/avro/` | `AvroSchemaParser` | Validate Avro records against schema |
-| Protobuf data | Proto descriptor | `formats/protobuf/` | `ProtobufSchemaParser` | Validate Protobuf messages against descriptor |
+**Why NOT UDM-based validation:**
+- UDM is a transformation intermediate — it normalizes data for processing, not for constraint enforcement
+- UDM is lossy — it strips format-specific constraints (regex patterns, ranges, enumerations, facets, minLength, etc.)
+- Comparing UDM trees checks structure ("field exists", "type matches") but NOT constraints ("value matches regex", "number within range", "string length < 50")
+- A UDM comparison would give ~30% of what real schema validation provides
 
-**Validation approach (no new dependencies):**
+**Why native validation:**
+- Purpose-built validation libraries understand ALL constraints per specification
+- Standards-compliant: XSD per W3C spec, JSON Schema per draft-2020-12, Avro per Apache spec
+- Field-level error messages: "field 'email' does not match pattern '^[a-z]+@.*$'" (not just "field is string")
+- No intermediate UDM parse — validate raw payload bytes directly against compiled schema
+- Faster — no UDM conversion step for validation
 
-1. **Init time:** Parse schema using existing parser → produce schema UDM representation
-2. **Runtime:** Parse payload into UDM using existing format parser → compare payload UDM against schema UDM → report mismatches as `ValidationError[]`
+### 5.8 Supported Validators
 
-The `modules/analysis/` module already has schema comparison logic (used by the daemon for design-time type checking). This same logic can be reused for runtime validation in UTLXe — it compares a data UDM against a schema UDM and reports field-level mismatches.
+| Data Format | Schema Format | Validation Library | Notes |
+|-------------|--------------|-------------------|-------|
+| JSON | JSCH (JSON Schema draft-07, 2020-12) | `com.networknt:json-schema-validator` | **New dependency** — full draft support with $ref resolution |
+| YAML | JSCH (JSON Schema) | Same as JSON (YAML parsed to JSON first) | YAML → JSON → validate |
+| XML | XSD (1.0, 1.1) | `javax.xml.validation` (JDK built-in) | No new dependency — JDK provides W3C-compliant XSD validation |
+| CSV | TSCH (Frictionless Table Schema) | Custom (thin layer) | Validates column count, types, required fields, constraints |
+| OData JSON | OSCH (OData/EDMX) | Custom (using parsed EDMX model) | Validates entity types, navigation properties, cardinality |
+| Avro data | Avro Schema | `org.apache.avro.generic.GenericDatumReader` | Already in dependency tree — validates data against schema |
+| Protobuf data | Proto descriptor | `com.google.protobuf.DynamicMessage.parseFrom` | Already in dependency tree — validates against descriptor |
 
-**Key insight:** UTL-X's Tier 2 schema formats (XSD, JSCH, Avro, Protobuf, OSCH, TSCH) are the **exact** schemas used for validation. Every data format has a corresponding schema format already in UTL-X.
+**New dependency required:** Only `com.networknt:json-schema-validator:1.5.x` (~500KB, Apache 2.0 license). All others use JDK built-ins or libraries already in UTLXe's dependency tree.
+
+### 5.9 Init-Time Compilation Per Format
+
+Each validator is compiled at init time from the schema source into a reusable, thread-safe validator object:
+
+```kotlin
+interface SchemaValidator {
+    /** Validate payload bytes against pre-compiled schema. Thread-safe, reusable. */
+    fun validate(payload: ByteArray, contentType: String): List<ValidationError>
+}
+
+class SchemaValidatorFactory {
+    fun create(schemaSource: String, schemaFormat: String): SchemaValidator {
+        return when (schemaFormat) {
+            "json-schema", "jsch" -> JsonSchemaValidator(schemaSource)   // networknt
+            "xsd" -> XsdValidator(schemaSource)                          // javax.xml.validation
+            "tsch" -> TableSchemaValidator(schemaSource)                 // custom
+            "osch" -> ODataSchemaValidator(schemaSource)                 // custom
+            "avro" -> AvroSchemaValidator(schemaSource)                  // apache avro
+            "protobuf", "proto" -> ProtobufValidator(schemaSource)      // protobuf-java
+            else -> throw IllegalArgumentException("Unsupported schema format: $schemaFormat")
+        }
+    }
+}
+```
+
+**Init-time cost (one-time per transformation):**
+
+| Schema format | Compilation cost | What happens |
+|---|---|---|
+| JSON Schema | ~10-50ms | Parse JSON, resolve $ref pointers, build validator tree |
+| XSD | ~50-200ms | Parse XSD, build type system, create javax.xml.validation.Schema |
+| TSCH | ~1-5ms | Parse JSON, extract column definitions |
+| OSCH | ~10-50ms | Parse EDMX XML, build entity type model |
+| Avro | ~5-20ms | Parse Avro JSON schema, build GenericData model |
+| Protobuf | ~5-20ms | Parse .proto descriptor, build DynamicMessage descriptor |
+
+**Runtime cost (per message):**
+
+| Schema format | Validation cost | Payload size assumed |
+|---|---|---|
+| JSON Schema | ~50-200μs | 5KB JSON |
+| XSD | ~100-500μs | 10KB XML |
+| TSCH | ~10-50μs | 1KB CSV row |
+| OSCH | ~50-200μs | 5KB OData JSON |
+| Avro | ~20-100μs | 2KB Avro record |
+| Protobuf | ~10-50μs | 1KB protobuf message |
+
+These are comparable to transformation cost — validation is not a separate bottleneck.
 
 ---
 
