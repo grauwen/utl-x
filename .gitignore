@@ -108,4 +108,12 @@ replay_pid*
 # Examples output
 examples/**/output.*
 
----
+# .NET
+obj/
+*.nupkg
+*.snupkg
+project.assets.json
+*.nuget.g.props
+*.nuget.g.targets
+*.nuget.dgspec.json
+*.nuget.cache
