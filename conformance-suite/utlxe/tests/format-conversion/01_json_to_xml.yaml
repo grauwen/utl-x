@@ -1,0 +1,34 @@
+name: "json_to_xml"
+category: "format-conversion"
+description: "JSON input to XML output — basic structure mapping"
+tags: ["json", "xml", "format-conversion"]
+
+input:
+  format: json
+  data: |
+    {"orderId": "ORD-001", "customer": "Contoso Ltd", "total": 1499.85, "currency": "EUR"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    order: {
+      id: $input.orderId,
+      customer: $input.customer,
+      total: $input.total,
+      currency: $input.currency
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <order>
+      <id>ORD-001</id>
+      <customer>Contoso Ltd</customer>
+      <total>1499.85</total>
+      <currency>EUR</currency>
+    </order>

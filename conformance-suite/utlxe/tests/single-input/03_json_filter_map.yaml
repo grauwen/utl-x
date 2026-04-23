@@ -1,0 +1,40 @@
+name: "json_filter_map"
+category: "single-input"
+description: "Filter and map array elements using lambdas"
+tags: ["json", "filter", "map", "lambda", "array"]
+
+input:
+  format: json
+  data: |
+    {
+      "employees": [
+        {"name": "Alice", "department": "Engineering", "salary": 95000},
+        {"name": "Bob", "department": "Sales", "salary": 72000},
+        {"name": "Charlie", "department": "Engineering", "salary": 110000},
+        {"name": "Diana", "department": "Sales", "salary": 68000},
+        {"name": "Eve", "department": "Engineering", "salary": 125000}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    engineers: filter($input.employees, (e) -> e.department == "Engineering")
+      |> map((e) -> { name: e.name, salary: e.salary }),
+    engineerCount: size(filter($input.employees, (e) -> e.department == "Engineering"))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "engineers": [
+        {"name": "Alice", "salary": 95000},
+        {"name": "Charlie", "salary": 110000},
+        {"name": "Eve", "salary": 125000}
+      ],
+      "engineerCount": 3
+    }

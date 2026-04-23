@@ -1,0 +1,28 @@
+name: "json_let_bindings"
+category: "single-input"
+description: "Let bindings for intermediate calculations"
+tags: ["json", "let", "computation"]
+
+input:
+  format: json
+  data: |
+    {"items": [{"price": 10.00, "qty": 3}, {"price": 25.50, "qty": 2}, {"price": 5.00, "qty": 10}]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    let subtotals = map($input.items, (item) -> item.price * item.qty),
+    let total = sum(subtotals),
+    let itemCount = size($input.items),
+    lineItems: subtotals,
+    total: total,
+    averagePerItem: total / itemCount
+  }
+
+expected:
+  format: json
+  data: |
+    {"lineItems": [30.0, 51.0, 50.0], "total": 131.0, "averagePerItem": 43.666666666666664}

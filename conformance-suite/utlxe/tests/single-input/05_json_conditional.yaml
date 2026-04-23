@@ -1,0 +1,29 @@
+name: "json_conditional"
+category: "single-input"
+description: "Conditional logic with ternary operator"
+tags: ["json", "conditional", "ternary"]
+
+input:
+  format: json
+  data: |
+    {"score": 85, "name": "Student A"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    name: $input.name,
+    score: $input.score,
+    grade: if ($input.score >= 90) "A"
+           else if ($input.score >= 80) "B"
+           else if ($input.score >= 70) "C"
+           else "F",
+    passed: $input.score >= 60
+  }
+
+expected:
+  format: json
+  data: |
+    {"name": "Student A", "score": 85, "grade": "B", "passed": true}

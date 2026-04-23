@@ -1,0 +1,42 @@
+name: "batch_json_transform"
+category: "batch"
+description: "Batch execution — same transformation applied to multiple messages"
+tags: ["batch", "json", "production-stream"]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    name: upperCase($input.name),
+    processed: true
+  }
+
+batch_items:
+  - correlation_id: "msg-001"
+    format: json
+    data: |
+      {"name": "alice"}
+    expected:
+      format: json
+      data: |
+        {"name": "ALICE", "processed": true}
+
+  - correlation_id: "msg-002"
+    format: json
+    data: |
+      {"name": "bob"}
+    expected:
+      format: json
+      data: |
+        {"name": "BOB", "processed": true}
+
+  - correlation_id: "msg-003"
+    format: json
+    data: |
+      {"name": "charlie"}
+    expected:
+      format: json
+      data: |
+        {"name": "CHARLIE", "processed": true}

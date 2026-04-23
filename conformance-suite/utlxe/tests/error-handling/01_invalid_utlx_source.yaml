@@ -1,0 +1,14 @@
+name: "invalid_utlx_source"
+category: "error-handling"
+description: "Loading invalid UTL-X source should fail with compile error"
+tags: ["error", "compile", "load"]
+
+input:
+  format: json
+  data: |
+    {"test": true}
+
+transformation: |
+  this is not valid utlx at all
+
+load_error_expected: true

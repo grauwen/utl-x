@@ -1,0 +1,45 @@
+name: "json_json_merge"
+category: "multi-input"
+description: "Two JSON inputs merged into combined output"
+tags: ["multi-input", "json", "merge"]
+
+inputs:
+  customer:
+    format: json
+    data: |
+      {"name": "Contoso Ltd", "street": "Keizersgracht 100", "city": "Amsterdam", "country": "NL"}
+
+  order:
+    format: json
+    data: |
+      {"id": "ORD-042", "items": [{"product": "Sensor"}, {"product": "Cable"}, {"product": "Kit"}], "total": 450.00}
+
+transformation: |
+  %utlx 1.0
+  input: customer json, order json
+  output json
+  ---
+  {
+    shipment: {
+      recipient: $customer.name,
+      address: concat($customer.street, ", ", $customer.city),
+      country: $customer.country,
+      orderId: $order.id,
+      itemCount: size($order.items),
+      total: $order.total
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "shipment": {
+        "recipient": "Contoso Ltd",
+        "address": "Keizersgracht 100, Amsterdam",
+        "country": "NL",
+        "orderId": "ORD-042",
+        "itemCount": 3,
+        "total": 450.0
+      }
+    }

@@ -1,0 +1,32 @@
+name: "json_to_csv"
+category: "format-conversion"
+description: "JSON array to CSV with headers"
+tags: ["json", "csv", "format-conversion", "map"]
+
+input:
+  format: json
+  data: |
+    [
+      {"name": "Alice", "email": "alice@corp.com", "dept": "Engineering"},
+      {"name": "Bob", "email": "bob@corp.com", "dept": "Sales"},
+      {"name": "Charlie", "email": "charlie@corp.com", "dept": "Engineering"}
+    ]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output csv
+  ---
+  map($input, (row) -> {
+    name: row.name,
+    email: row.email,
+    department: row.dept
+  })
+
+expected:
+  format: csv
+  data: |
+    name,email,department
+    Alice,alice@corp.com,Engineering
+    Bob,bob@corp.com,Sales
+    Charlie,charlie@corp.com,Engineering

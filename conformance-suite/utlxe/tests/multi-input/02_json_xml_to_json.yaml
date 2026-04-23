@@ -1,0 +1,52 @@
+name: "json_xml_to_json"
+category: "multi-input"
+description: "JSON config + XML data merged into JSON output — cross-format multi-input"
+tags: ["multi-input", "json", "xml", "cross-format"]
+skip: true
+skip_reason: "Cross-format multi-input (XML inside JSON envelope) needs format-aware envelope handling"
+
+inputs:
+  config:
+    format: json
+    data: |
+      {"region": "EU", "taxRate": 0.21, "currency": "EUR"}
+
+  invoice:
+    format: xml
+    data: |
+      <?xml version="1.0"?>
+      <invoice>
+        <number>INV-2026-001</number>
+        <subtotal>1000.00</subtotal>
+        <customer>Acme Corp</customer>
+      </invoice>
+
+transformation: |
+  %utlx 1.0
+  input: config json, invoice xml
+  output json
+  ---
+  {
+    let subtotal = number($invoice.invoice.subtotal),
+    let tax = subtotal * $config.taxRate,
+    invoiceNumber: $invoice.invoice.number,
+    customer: $invoice.invoice.customer,
+    region: $config.region,
+    subtotal: subtotal,
+    tax: tax,
+    total: subtotal + tax,
+    currency: $config.currency
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "invoiceNumber": "INV-2026-001",
+      "customer": "Acme Corp",
+      "region": "EU",
+      "subtotal": 1000.0,
+      "tax": 210.0,
+      "total": 1210.0,
+      "currency": "EUR"
+    }

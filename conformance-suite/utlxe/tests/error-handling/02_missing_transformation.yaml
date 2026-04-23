@@ -1,0 +1,14 @@
+name: "missing_transformation"
+category: "error-handling"
+description: "Executing against an unloaded transformation ID should return error"
+tags: ["error", "runtime", "not-found"]
+
+transformation_id: "nonexistent-transform-id"
+
+input:
+  format: json
+  data: |
+    {"test": true}
+
+execute_error_expected: true
+error_message_contains: "not found"

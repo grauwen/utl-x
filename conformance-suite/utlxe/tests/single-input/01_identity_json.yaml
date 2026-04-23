@@ -1,0 +1,21 @@
+name: "identity_json"
+category: "single-input"
+description: "Identity transformation — JSON passthrough"
+tags: ["identity", "json", "basic"]
+
+input:
+  format: json
+  data: |
+    {"name": "Alice", "age": 30, "active": true}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  $input
+
+expected:
+  format: json
+  data: |
+    {"name": "Alice", "age": 30, "active": true}

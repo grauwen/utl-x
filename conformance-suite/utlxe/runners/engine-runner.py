@@ -1,0 +1,639 @@
+#!/usr/bin/env python3
+"""
+UTLXe Engine Conformance Suite Runner
+
+Spawns UTLXe in stdio-proto mode and runs transformation tests via
+varint-delimited protobuf over stdin/stdout.
+
+Usage:
+    python3 engine-runner.py [CATEGORY] [TEST_NAME] [OPTIONS]
+    python3 engine-runner.py                           # Run all tests
+    python3 engine-runner.py single-input              # Run category
+    python3 engine-runner.py single-input identity_json # Run specific test
+    python3 engine-runner.py -v                        # Verbose output
+
+Requires:
+    - Java 17+ on PATH
+    - UTLXe JAR: set UTLXE_JAR_PATH or place at default build location
+    - pip install protobuf pyyaml
+"""
+
+import argparse
+import json
+import os
+import struct
+import subprocess
+import sys
+import time
+import yaml
+from pathlib import Path
+
+# Add generated proto path
+SCRIPT_DIR = Path(__file__).parent
+SUITE_DIR = SCRIPT_DIR.parent
+REPO_ROOT = SUITE_DIR.parent.parent
+TESTS_DIR = SUITE_DIR / "tests"
+
+# Proto imports — generated from utlxe.proto
+# We use raw protobuf wire format to avoid requiring generated stubs.
+# Instead, we build the messages manually using the protobuf library.
+try:
+    from google.protobuf import descriptor_pb2
+    from google.protobuf import descriptor_pool
+    from google.protobuf import symbol_database
+    HAS_PROTOBUF = True
+except ImportError:
+    HAS_PROTOBUF = False
+
+
+class VarintCodec:
+    """Varint encode/decode for protobuf delimited framing."""
+
+    @staticmethod
+    def encode_varint(value):
+        """Encode integer as base-128 varint bytes."""
+        result = bytearray()
+        while value >= 0x80:
+            result.append((value & 0x7F) | 0x80)
+            value >>= 7
+        result.append(value & 0x7F)
+        return bytes(result)
+
+    @staticmethod
+    def decode_varint(stream):
+        """Decode varint from stream. Returns (value, bytes_read) or (-1, 0) on EOF."""
+        result = 0
+        shift = 0
+        for i in range(5):
+            b = stream.read(1)
+            if not b:
+                if i == 0:
+                    return -1, 0  # clean EOF
+                raise IOError("Unexpected EOF in varint")
+            byte = b[0]
+            result |= (byte & 0x7F) << shift
+            if (byte & 0x80) == 0:
+                return result, i + 1
+            shift += 7
+        raise IOError("Varint too long")
+
+
+class StdioProtoClient:
+    """
+    Communicates with UTLXe via varint-delimited protobuf over stdin/stdout.
+
+    Uses raw protobuf encoding without generated stubs — builds messages
+    manually from field numbers and wire types. This keeps the runner
+    dependency-free (only needs the protobuf library, not generated code).
+    """
+
+    # MessageType enum values (from utlxe.proto)
+    LOAD_TRANSFORMATION_REQUEST = 1
+    EXECUTE_REQUEST = 2
+    EXECUTE_BATCH_REQUEST = 3
+    UNLOAD_TRANSFORMATION_REQUEST = 4
+    HEALTH_REQUEST = 5
+    LOAD_TRANSFORMATION_RESPONSE = 11
+    EXECUTE_RESPONSE = 12
+    EXECUTE_BATCH_RESPONSE = 13
+    UNLOAD_TRANSFORMATION_RESPONSE = 14
+    HEALTH_RESPONSE = 15
+
+    def __init__(self, jar_path, workers=1, verbose=False):
+        self.jar_path = jar_path
+        self.workers = workers
+        self.verbose = verbose
+        self.process = None
+
+    def start(self):
+        """Start UTLXe subprocess in stdio-proto mode."""
+        java = self._find_java()
+        cmd = [java, "-jar", str(self.jar_path), "--mode", "stdio-proto", "--workers", str(self.workers)]
+        if self.verbose:
+            print(f"  Starting: {' '.join(cmd)}")
+        self.process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+
+    def stop(self):
+        """Stop UTLXe subprocess."""
+        if self.process:
+            self.process.stdin.close()
+            self.process.wait(timeout=10)
+            self.process = None
+
+    def _find_java(self):
+        java_home = os.environ.get("JAVA_HOME")
+        if java_home:
+            java = os.path.join(java_home, "bin", "java")
+            if os.path.exists(java):
+                return java
+        return "java"
+
+    def _send_envelope(self, msg_type, payload_bytes):
+        """Send a StdioEnvelope (varint-delimited)."""
+        # Build StdioEnvelope: field 1 = type (varint), field 2 = payload (bytes)
+        envelope = b""
+        # Field 1: type (field_number=1, wire_type=0 varint) = tag 0x08
+        envelope += b"\x08" + VarintCodec.encode_varint(msg_type)
+        # Field 2: payload (field_number=2, wire_type=2 length-delimited) = tag 0x12
+        envelope += b"\x12" + VarintCodec.encode_varint(len(payload_bytes)) + payload_bytes
+
+        # Write varint-delimited envelope
+        self.process.stdin.write(VarintCodec.encode_varint(len(envelope)))
+        self.process.stdin.write(envelope)
+        self.process.stdin.flush()
+
+    def _recv_envelope(self):
+        """Read a StdioEnvelope (varint-delimited). Returns (type, payload_bytes)."""
+        length, _ = VarintCodec.decode_varint(self.process.stdout)
+        if length < 0:
+            raise IOError("EOF from UTLXe")
+        data = self.process.stdout.read(length)
+        if len(data) < length:
+            raise IOError(f"Short read: expected {length}, got {len(data)}")
+        return self._parse_envelope(data)
+
+    def _parse_envelope(self, data):
+        """Parse StdioEnvelope fields manually."""
+        msg_type = 0
+        payload = b""
+        pos = 0
+        while pos < len(data):
+            tag = data[pos]
+            pos += 1
+            field_number = tag >> 3
+            wire_type = tag & 0x07
+
+            if wire_type == 0:  # varint
+                value = 0
+                shift = 0
+                while pos < len(data):
+                    b = data[pos]
+                    pos += 1
+                    value |= (b & 0x7F) << shift
+                    if (b & 0x80) == 0:
+                        break
+                    shift += 7
+                if field_number == 1:
+                    msg_type = value
+            elif wire_type == 2:  # length-delimited
+                length = 0
+                shift = 0
+                while pos < len(data):
+                    b = data[pos]
+                    pos += 1
+                    length |= (b & 0x7F) << shift
+                    if (b & 0x80) == 0:
+                        break
+                    shift += 7
+                field_data = data[pos:pos + length]
+                pos += length
+                if field_number == 2:
+                    payload = field_data
+
+        return msg_type, payload
+
+    def _parse_response_fields(self, data):
+        """Parse protobuf message fields into a dict of {field_number: value}."""
+        fields = {}
+        pos = 0
+        while pos < len(data):
+            tag = data[pos]
+            pos += 1
+            field_number = tag >> 3
+            wire_type = tag & 0x07
+
+            if wire_type == 0:  # varint
+                value = 0
+                shift = 0
+                while pos < len(data):
+                    b = data[pos]
+                    pos += 1
+                    value |= (b & 0x7F) << shift
+                    if (b & 0x80) == 0:
+                        break
+                    shift += 7
+                fields[field_number] = value
+            elif wire_type == 2:  # length-delimited
+                length = 0
+                shift = 0
+                while pos < len(data):
+                    b = data[pos]
+                    pos += 1
+                    length |= (b & 0x7F) << shift
+                    if (b & 0x80) == 0:
+                        break
+                    shift += 7
+                fields[field_number] = data[pos:pos + length]
+                pos += length
+            elif wire_type == 5:  # 32-bit fixed
+                fields[field_number] = data[pos:pos + 4]
+                pos += 4
+            elif wire_type == 1:  # 64-bit fixed
+                fields[field_number] = data[pos:pos + 8]
+                pos += 8
+
+        return fields
+
+    def _build_string_field(self, field_number, value):
+        """Build a protobuf string field."""
+        encoded = value.encode("utf-8")
+        tag = (field_number << 3) | 2
+        return VarintCodec.encode_varint(tag) + VarintCodec.encode_varint(len(encoded)) + encoded
+
+    def _build_bytes_field(self, field_number, value):
+        """Build a protobuf bytes field."""
+        tag = (field_number << 3) | 2
+        return VarintCodec.encode_varint(tag) + VarintCodec.encode_varint(len(value)) + value
+
+    def _build_varint_field(self, field_number, value):
+        """Build a protobuf varint field."""
+        tag = (field_number << 3) | 0
+        return VarintCodec.encode_varint(tag) + VarintCodec.encode_varint(value)
+
+    def load_transformation(self, transform_id, utlx_source, strategy="TEMPLATE"):
+        """Send LoadTransformationRequest, return (success, error, metrics_us)."""
+        # Build LoadTransformationRequest
+        payload = b""
+        payload += self._build_string_field(1, transform_id)
+        payload += self._build_string_field(2, utlx_source)
+        payload += self._build_string_field(3, strategy)
+
+        self._send_envelope(self.LOAD_TRANSFORMATION_REQUEST, payload)
+        resp_type, resp_data = self._recv_envelope()
+
+        fields = self._parse_response_fields(resp_data)
+        success = fields.get(1, 0)  # bool as varint
+        error = fields.get(2, b"").decode("utf-8") if 2 in fields else ""
+        return bool(success), error
+
+    def execute(self, transform_id, payload_data, content_type="application/json", correlation_id=""):
+        """Send ExecuteRequest, return (success, output, error, correlation_id)."""
+        req = b""
+        req += self._build_string_field(1, transform_id)
+        req += self._build_bytes_field(2, payload_data.encode("utf-8") if isinstance(payload_data, str) else payload_data)
+        req += self._build_string_field(3, content_type)
+        if correlation_id:
+            req += self._build_string_field(5, correlation_id)
+
+        self._send_envelope(self.EXECUTE_REQUEST, req)
+        resp_type, resp_data = self._recv_envelope()
+
+        fields = self._parse_response_fields(resp_data)
+        success = bool(fields.get(1, 0))
+        output = fields.get(2, b"").decode("utf-8") if 2 in fields else ""
+        error = fields.get(4, b"").decode("utf-8") if 4 in fields else ""
+        corr = fields.get(9, b"").decode("utf-8") if 9 in fields else ""
+        return success, output, error, corr
+
+    def execute_batch(self, transform_id, items):
+        """Send ExecuteBatchRequest, return list of (success, output, error, correlation_id)."""
+        # Build batch items
+        batch_items_bytes = b""
+        for item_data, content_type, corr_id in items:
+            item = b""
+            item += self._build_bytes_field(1, item_data.encode("utf-8") if isinstance(item_data, str) else item_data)
+            item += self._build_string_field(2, content_type)
+            item += self._build_string_field(4, corr_id)
+            # Field 2 of BatchRequest = repeated BatchItem (field_number=2)
+            batch_items_bytes += self._build_bytes_field(2, item)
+
+        req = self._build_string_field(1, transform_id) + batch_items_bytes
+
+        self._send_envelope(self.EXECUTE_BATCH_REQUEST, req)
+        resp_type, resp_data = self._recv_envelope()
+
+        # Parse ExecuteBatchResponse — field 1 = repeated ExecuteResponse
+        results = []
+        fields = self._parse_response_fields(resp_data)
+        # Field 1 is repeated — we need to parse all occurrences
+        pos = 0
+        while pos < len(resp_data):
+            tag = resp_data[pos]
+            pos += 1
+            field_number = tag >> 3
+            wire_type = tag & 0x07
+            if wire_type == 2:
+                length = 0
+                shift = 0
+                while pos < len(resp_data):
+                    b = resp_data[pos]
+                    pos += 1
+                    length |= (b & 0x7F) << shift
+                    if (b & 0x80) == 0:
+                        break
+                    shift += 7
+                field_data = resp_data[pos:pos + length]
+                pos += length
+                if field_number == 1:  # repeated ExecuteResponse
+                    r_fields = self._parse_response_fields(field_data)
+                    results.append((
+                        bool(r_fields.get(1, 0)),
+                        r_fields.get(2, b"").decode("utf-8") if 2 in r_fields else "",
+                        r_fields.get(4, b"").decode("utf-8") if 4 in r_fields else "",
+                        r_fields.get(9, b"").decode("utf-8") if 9 in r_fields else ""
+                    ))
+            elif wire_type == 0:
+                while pos < len(resp_data) and (resp_data[pos] & 0x80):
+                    pos += 1
+                pos += 1
+
+        return results
+
+    def health(self):
+        """Send HealthRequest, return (state, uptime_ms, loaded, executions, errors)."""
+        self._send_envelope(self.HEALTH_REQUEST, b"")
+        resp_type, resp_data = self._recv_envelope()
+        fields = self._parse_response_fields(resp_data)
+        state = fields.get(1, b"").decode("utf-8") if 1 in fields else ""
+        uptime = fields.get(2, 0)
+        loaded = fields.get(3, 0)
+        executions = fields.get(4, 0)
+        errors = fields.get(5, 0)
+        return state, uptime, loaded, executions, errors
+
+
+def compare_json(expected_str, actual_str):
+    """Compare two JSON strings structurally. Returns (match, diff_message)."""
+    try:
+        expected = json.loads(expected_str)
+    except json.JSONDecodeError as e:
+        return False, f"Expected JSON parse error: {e}"
+    try:
+        actual = json.loads(actual_str)
+    except json.JSONDecodeError as e:
+        return False, f"Actual JSON parse error: {e}\nActual output: {actual_str}"
+
+    if expected == actual:
+        return True, ""
+    return False, f"JSON mismatch:\n  Expected: {json.dumps(expected, indent=2)}\n  Actual:   {json.dumps(actual, indent=2)}"
+
+
+def compare_output(expected_str, actual_str, fmt):
+    """Compare expected vs actual output based on format."""
+    expected_str = expected_str.strip()
+    actual_str = actual_str.strip()
+
+    if fmt == "json":
+        return compare_json(expected_str, actual_str)
+    elif fmt == "xml":
+        # Normalize whitespace for XML comparison
+        import re
+        norm_exp = re.sub(r">\s+<", "><", expected_str).strip()
+        norm_act = re.sub(r">\s+<", "><", actual_str).strip()
+        if norm_exp == norm_act:
+            return True, ""
+        return False, f"XML mismatch:\n  Expected: {expected_str}\n  Actual:   {actual_str}"
+    elif fmt == "csv":
+        exp_lines = [l.strip() for l in expected_str.strip().split("\n") if l.strip()]
+        act_lines = [l.strip() for l in actual_str.strip().split("\n") if l.strip()]
+        if exp_lines == act_lines:
+            return True, ""
+        return False, f"CSV mismatch:\n  Expected lines: {exp_lines}\n  Actual lines:   {act_lines}"
+    elif fmt == "yaml":
+        try:
+            exp_obj = yaml.safe_load(expected_str)
+            act_obj = yaml.safe_load(actual_str)
+            if exp_obj == act_obj:
+                return True, ""
+            return False, f"YAML mismatch:\n  Expected: {exp_obj}\n  Actual:   {act_obj}"
+        except Exception as e:
+            return False, f"YAML parse error: {e}"
+    else:
+        if expected_str == actual_str:
+            return True, ""
+        return False, f"Text mismatch:\n  Expected: {expected_str}\n  Actual:   {actual_str}"
+
+
+def run_test(client, test_data, verbose=False):
+    """Run a single test case. Returns (passed, message) or None for skipped."""
+    name = test_data.get("name", "unknown")
+
+    if test_data.get("skip"):
+        return None, f"Skipped: {test_data.get('skip_reason', 'no reason')}"
+
+    transformation = test_data.get("transformation", "")
+    transform_id = test_data.get("transformation_id", f"test-{name}")
+
+    # ── Error test: load should fail ──
+    if test_data.get("load_error_expected"):
+        success, error = client.load_transformation(transform_id, transformation)
+        if not success:
+            return True, "Load correctly failed"
+        return False, "Expected load to fail but it succeeded"
+
+    # ── Error test: execute against missing transform ──
+    if test_data.get("execute_error_expected"):
+        success, output, error, _ = client.execute(transform_id, test_data["input"]["data"])
+        if not success:
+            msg_contains = test_data.get("error_message_contains", "")
+            if msg_contains and msg_contains.lower() not in error.lower():
+                return False, f"Error message '{error}' does not contain '{msg_contains}'"
+            return True, f"Execute correctly failed: {error}"
+        return False, "Expected execute to fail but it succeeded"
+
+    # ── Batch test ──
+    if "batch_items" in test_data:
+        success, error = client.load_transformation(transform_id, transformation)
+        if not success:
+            return False, f"Load failed: {error}"
+
+        items = []
+        for item in test_data["batch_items"]:
+            items.append((item["data"], "application/json", item["correlation_id"]))
+
+        results = client.execute_batch(transform_id, items)
+
+        if len(results) != len(test_data["batch_items"]):
+            return False, f"Expected {len(test_data['batch_items'])} results, got {len(results)}"
+
+        for i, (item_spec, (r_success, r_output, r_error, r_corr)) in enumerate(zip(test_data["batch_items"], results)):
+            if not r_success:
+                return False, f"Batch item {i} failed: {r_error}"
+            expected_data = item_spec["expected"]["data"]
+            expected_fmt = item_spec["expected"]["format"]
+            match, diff = compare_output(expected_data, r_output, expected_fmt)
+            if not match:
+                return False, f"Batch item {i} ({r_corr}): {diff}"
+
+        return True, f"All {len(results)} batch items passed"
+
+    # ── Standard test: load + execute ──
+    # Handle single input or multi-input
+    if "inputs" in test_data:
+        # Multi-input: build JSON envelope
+        envelope = {}
+        for input_name, input_spec in test_data["inputs"].items():
+            input_data = input_spec["data"].strip()
+            if input_spec["format"] == "json":
+                envelope[input_name] = json.loads(input_data)
+            else:
+                envelope[input_name] = input_data
+        payload = json.dumps(envelope)
+    else:
+        payload = test_data["input"]["data"].strip()
+
+    # Load transformation
+    success, error = client.load_transformation(transform_id, transformation)
+    if not success:
+        return False, f"Load failed: {error}"
+
+    # Execute
+    success, output, error, _ = client.execute(transform_id, payload)
+    if not success:
+        return False, f"Execute failed: {error}"
+
+    # Compare output
+    expected_data = test_data["expected"]["data"]
+    expected_fmt = test_data["expected"]["format"]
+    match, diff = compare_output(expected_data, output, expected_fmt)
+    if not match:
+        return False, diff
+
+    return True, "Output matches expected"
+
+
+def find_tests(tests_dir, category=None, test_name=None):
+    """Find all test YAML files, optionally filtered by category and name."""
+    tests = []
+    for yaml_file in sorted(tests_dir.rglob("*.yaml")):
+        if yaml_file.name == "README.md":
+            continue
+        rel = yaml_file.relative_to(tests_dir)
+        cat = str(rel.parent) if str(rel.parent) != "." else ""
+
+        if category and not cat.startswith(category):
+            continue
+
+        with open(yaml_file) as f:
+            try:
+                data = yaml.safe_load(f)
+            except Exception as e:
+                print(f"  Warning: skipping {yaml_file}: {e}")
+                continue
+
+        if data is None:
+            continue
+
+        if test_name and data.get("name") != test_name:
+            continue
+
+        tests.append((yaml_file, data))
+    return tests
+
+
+def find_jar():
+    """Find UTLXe JAR from env or default build location."""
+    env = os.environ.get("UTLXE_JAR_PATH")
+    if env and os.path.exists(env):
+        return env
+
+    # Default build location relative to repo root
+    candidates = list(REPO_ROOT.glob("modules/engine/build/libs/utlxe-*.jar"))
+    if candidates:
+        return str(candidates[0])
+
+    return None
+
+
+def main():
+    parser = argparse.ArgumentParser(description="UTLXe Engine Conformance Suite Runner")
+    parser.add_argument("category", nargs="?", help="Test category (e.g., single-input, format-conversion)")
+    parser.add_argument("test_name", nargs="?", help="Specific test name")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    parser.add_argument("--jar", help="Path to UTLXe JAR")
+    parser.add_argument("--workers", type=int, default=1, help="Worker threads (default: 1)")
+    args = parser.parse_args()
+
+    # Find JAR
+    jar_path = args.jar or find_jar()
+    if not jar_path:
+        print("Error: UTLXe JAR not found.")
+        print("  Set UTLXE_JAR_PATH or build with: ./gradlew :modules:engine:jar")
+        sys.exit(1)
+
+    # Find tests
+    tests = find_tests(TESTS_DIR, args.category, args.test_name)
+    if not tests:
+        print(f"No tests found{' for ' + args.category if args.category else ''}")
+        sys.exit(1)
+
+    print(f"UTLXe Engine Conformance Suite")
+    print(f"JAR: {jar_path}")
+    print(f"Running {len(tests)} test(s)...\n")
+
+    # Start UTLXe
+    client = StdioProtoClient(jar_path, workers=args.workers, verbose=args.verbose)
+    try:
+        client.start()
+        # Wait for engine to be ready
+        time.sleep(2)
+        state, uptime, _, _, _ = client.health()
+        print(f"Engine ready: state={state}, uptime={uptime}ms\n")
+    except Exception as e:
+        print(f"Error starting UTLXe: {e}")
+        sys.exit(1)
+
+    # Run tests
+    passed = 0
+    failed = 0
+    skipped = 0
+    failures = []
+
+    for test_file, test_data in tests:
+        name = test_data.get("name", test_file.stem)
+        category = test_data.get("category", "")
+
+        if args.verbose:
+            print(f"Running: {category}/{name}")
+
+        try:
+            success, message = run_test(client, test_data, verbose=args.verbose)
+            if success is None:
+                skipped += 1
+                print(f"  \u2014 {name} (skipped: {message.replace('Skipped: ', '')})")
+            elif success:
+                passed += 1
+                print(f"  \u2713 {name}")
+                if args.verbose:
+                    print(f"    {message}")
+            else:
+                failed += 1
+                failures.append((name, message))
+                print(f"  \u2717 {name}")
+                print(f"    {message}")
+        except Exception as e:
+            failed += 1
+            failures.append((name, str(e)))
+            print(f"  \u2717 {name}")
+            print(f"    Exception: {e}")
+
+    # Stop engine
+    try:
+        client.stop()
+    except Exception:
+        pass
+
+    # Summary
+    total = passed + failed
+    print(f"\n{'=' * 50}")
+    print(f"Results: {passed}/{total} tests passed" + (f", {skipped} skipped" if skipped else ""))
+    if total > 0:
+        print(f"Success rate: {passed / total * 100:.0f}%")
+
+    if failures:
+        print(f"\n\u2717 {len(failures)} test(s) failed:")
+        for name, msg in failures:
+            print(f"  - {name}: {msg[:100]}")
+        sys.exit(1)
+    else:
+        print(f"\n\u2713 All tests passed!")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

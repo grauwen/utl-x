@@ -1,0 +1,34 @@
+name: "json_to_yaml"
+category: "format-conversion"
+description: "JSON to YAML output"
+tags: ["json", "yaml", "format-conversion"]
+
+input:
+  format: json
+  data: |
+    {"server": "prod-01", "port": 8080, "debug": false, "tags": ["web", "api"]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output yaml
+  ---
+  {
+    config: {
+      server: $input.server,
+      port: $input.port,
+      debug: $input.debug,
+      tags: $input.tags
+    }
+  }
+
+expected:
+  format: yaml
+  data: |
+    config:
+      server: prod-01
+      port: 8080
+      debug: false
+      tags:
+        - web
+        - api
