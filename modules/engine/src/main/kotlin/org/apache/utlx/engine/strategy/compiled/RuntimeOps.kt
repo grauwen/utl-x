@@ -145,6 +145,19 @@ object RuntimeOps {
         return UDM.Array(elements.toList())
     }
 
+    // ── Lambda support ──
+
+    /**
+     * Create a UDM.Lambda wrapping a static method in the generated class.
+     * The method must have signature: static UDM methodName(List<UDM>)
+     * Called by compiled bytecode to construct lambda values at runtime.
+     */
+    @JvmStatic
+    fun makeLambda(clazz: Class<*>, methodName: String): UDM {
+        val method = clazz.getMethod(methodName, List::class.java)
+        return UDM.Lambda { args -> method.invoke(null, args) as UDM }
+    }
+
     // ── Helpers ──
 
     private fun toNumber(udm: UDM): Double? {

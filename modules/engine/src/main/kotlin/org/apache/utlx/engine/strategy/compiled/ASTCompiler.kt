@@ -71,7 +71,7 @@ class ASTCompiler {
         // 0 = this
         // 1 = inputs (Map<String, UDM>)
         // 2+ = let bindings
-        val ctx = CompileContext(mv, localSlot = 2)
+        val ctx = CompileContext(mv, localSlot = 2, classWriter = cw, className = className)
 
         // Compile the body expression — leaves result UDM on stack
         compileExpression(ctx, program.body)
@@ -140,13 +140,18 @@ class ASTCompiler {
     private data class CompileContext(
         val mv: MethodVisitor,
         var localSlot: Int,
-        val locals: MutableMap<String, Int> = mutableMapOf()
+        val locals: MutableMap<String, Int> = mutableMapOf(),
+        val classWriter: ClassWriter? = null,
+        val className: String? = null,
+        var lambdaCounter: Int = 0
     ) {
         fun allocLocal(name: String): Int {
             val slot = localSlot++
             locals[name] = slot
             return slot
         }
+
+        fun nextLambdaName(): String = "lambda_${lambdaCounter++}"
     }
 
     private fun compileExpression(ctx: CompileContext, expr: Expression) {
@@ -167,7 +172,7 @@ class ASTCompiler {
             is Expression.LetBinding -> compileLetBinding(ctx, expr)
             is Expression.FunctionCall -> compileFunctionCall(ctx, expr)
             is Expression.Block -> compileBlock(ctx, expr)
-            is Expression.Lambda -> compileLambdaAsNull(ctx) // placeholder — lambdas need inner classes
+            is Expression.Lambda -> compileLambda(ctx, expr)
             is Expression.Pipe -> compilePipe(ctx, expr)
             is Expression.SafeNavigation -> compileSafeNavigation(ctx, expr)
             else -> throw UnsupportedOperationException("Cannot compile: ${expr::class.simpleName}")
@@ -517,13 +522,64 @@ class ASTCompiler {
         compileExpression(ctx, expr.target)
     }
 
-    // ── Lambda placeholder ──
+    // ── Lambda compilation ──
 
-    private fun compileLambdaAsNull(ctx: CompileContext) {
-        // Lambdas need inner class generation — complex.
-        // For now, return null. This means map/filter with lambdas will
-        // trigger the isCompilable=false check and fall back to interpreter.
-        compileNullLiteral(ctx)
+    /**
+     * Compile a lambda expression.
+     *
+     * Generates a static method in the same class:
+     *   static UDM lambda_N(List<UDM> args) {
+     *       UDM param1 = args.get(0);
+     *       UDM param2 = args.get(1);  // etc.
+     *       return <compiled body>;
+     *   }
+     *
+     * Then at the call site, constructs a UDM.Lambda via RuntimeOps.makeLambda().
+     */
+    private fun compileLambda(ctx: CompileContext, expr: Expression.Lambda) {
+        val cw = ctx.classWriter
+            ?: throw IllegalStateException("ClassWriter not available for lambda compilation")
+        val className = ctx.className
+            ?: throw IllegalStateException("className not available for lambda compilation")
+
+        val lambdaName = ctx.nextLambdaName()
+
+        // Generate static method: static UDM lambda_N(List<UDM>)
+        val lambdaMv = cw.visitMethod(
+            ACC_PUBLIC or ACC_STATIC, lambdaName,
+            "(Ljava/util/List;)$UDM_DESC", null, null)
+        lambdaMv.visitCode()
+
+        // Create a new context for the lambda body
+        // Local slot 0 = args (List<UDM>)
+        val lambdaCtx = CompileContext(lambdaMv, localSlot = 1,
+            locals = mutableMapOf(), classWriter = cw, className = className)
+
+        // Bind parameters: extract from args list by index
+        for (i in expr.parameters.indices) {
+            val paramName = expr.parameters[i].name
+            val slot = lambdaCtx.allocLocal(paramName)
+            lambdaMv.visitVarInsn(ALOAD, 0) // args list
+            lambdaMv.visitLdcInsn(i)
+            lambdaMv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "get",
+                "(I)Ljava/lang/Object;", true)
+            lambdaMv.visitTypeInsn(CHECKCAST, UDM_TYPE)
+            lambdaMv.visitVarInsn(ASTORE, slot)
+        }
+
+        // Compile lambda body
+        compileExpression(lambdaCtx, expr.body)
+
+        lambdaMv.visitInsn(ARETURN)
+        lambdaMv.visitMaxs(0, 0)
+        lambdaMv.visitEnd()
+
+        // At the call site: RuntimeOps.makeLambda(ThisClass.class, "lambda_N")
+        // Push the class reference
+        ctx.mv.visitLdcInsn(org.objectweb.asm.Type.getObjectType(className))
+        ctx.mv.visitLdcInsn(lambdaName)
+        ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "makeLambda",
+            "(Ljava/lang/Class;Ljava/lang/String;)$UDM_DESC", false)
     }
 
     // =========================================================================
