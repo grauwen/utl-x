@@ -32,51 +32,49 @@ class TemplateStrategy : ExecutionStrategy {
     }
 
     override fun execute(input: String): ExecutionResult {
-        return try {
-            val declaredInputs = compiledProgram.header.inputs
-            val inputs: Map<String, TransformationService.InputData>
+        val declaredInputs = compiledProgram.header.inputs
+        val inputs: Map<String, TransformationService.InputData>
 
-            if (declaredInputs.size <= 1) {
-                // Single input: pass stdin payload directly as the named input
-                val inputName = transformConfig.inputs.firstOrNull()?.name
-                    ?: declaredInputs.firstOrNull()?.first
-                    ?: "input"
-                inputs = mapOf(
-                    inputName to TransformationService.InputData(content = input, format = null)
-                )
-            } else {
-                // Multi-input: stdin payload is a JSON envelope where each key
-                // maps to a declared input name. The engine splits the envelope
-                // and feeds each part to the transformation as a separate named input.
-                val mapper = com.fasterxml.jackson.databind.ObjectMapper()
-                val envelope = mapper.readTree(input)
-
-                inputs = declaredInputs.associate { (name, _) ->
-                    val node = envelope.get(name)
-                        ?: throw IllegalArgumentException(
-                            "Envelope missing required input '$name'. " +
-                            "Expected keys: ${declaredInputs.map { it.first }}"
-                        )
-                    name to TransformationService.InputData(
-                        content = mapper.writeValueAsString(node),
-                        format = null
-                    )
-                }
-                logger.debug("Envelope split into {} named inputs: {}", inputs.size, inputs.keys)
-            }
-
-            val (output, _) = transformationService.transform(utlxSource, inputs)
-
-            ExecutionResult(output = output)
-        } catch (e: Exception) {
-            logger.error("Transformation execution failed: {}", e.message)
-            ExecutionResult(
-                output = "",
-                validationErrors = listOf(
-                    ValidationError(message = e.message ?: "Unknown execution error")
-                )
+        if (declaredInputs.size <= 1) {
+            // Single input: pass payload directly as the named input
+            val inputName = transformConfig.inputs.firstOrNull()?.name
+                ?: declaredInputs.firstOrNull()?.first
+                ?: "input"
+            val declaredFormat = declaredInputs.firstOrNull()?.second?.type?.name?.lowercase()
+            inputs = mapOf(
+                inputName to TransformationService.InputData(content = input, format = declaredFormat)
             )
+        } else {
+            // Multi-input: payload is a JSON envelope where each key
+            // maps to a declared input name. The engine splits the envelope
+            // and feeds each part to the transformation as a separate named input.
+            val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+            val envelope = mapper.readTree(input)
+
+            inputs = declaredInputs.associate { (name, formatSpec) ->
+                val node = envelope.get(name)
+                    ?: throw IllegalArgumentException(
+                        "Envelope missing required input '$name'. " +
+                        "Expected keys: ${declaredInputs.map { it.first }}"
+                    )
+                val declaredFormat = formatSpec.type.name.lowercase()
+                // For non-JSON formats, extract raw string; for JSON, serialize the node
+                val content = if (declaredFormat != "json" && node.isTextual) {
+                    node.asText()
+                } else {
+                    mapper.writeValueAsString(node)
+                }
+                name to TransformationService.InputData(
+                    content = content,
+                    format = declaredFormat
+                )
+            }
+            logger.debug("Envelope split into {} named inputs: {}", inputs.size, inputs.keys)
         }
+
+        // Let exceptions propagate — ValidationOrchestrator handles error classification
+        val (output, _) = transformationService.transform(utlxSource, inputs)
+        return ExecutionResult(output = output)
     }
 
     override fun shutdown() {

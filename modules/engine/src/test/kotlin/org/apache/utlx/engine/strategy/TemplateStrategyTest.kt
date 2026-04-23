@@ -5,6 +5,7 @@ import org.apache.utlx.engine.config.TransformConfig
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class TemplateStrategyTest {
@@ -102,7 +103,7 @@ input
     }
 
     @Test
-    fun `execute with invalid input returns validation error`() {
+    fun `execute with invalid input throws exception`() {
         val strategy = TemplateStrategy()
         val source = """%utlx 1.0
 input json
@@ -118,8 +119,9 @@ input
 
         strategy.initialize(source, config)
 
-        val result = strategy.execute("not valid json {{{")
-        assertTrue(result.validationErrors.isNotEmpty() || result.output.isEmpty())
+        assertFailsWith<Exception> {
+            strategy.execute("not valid json {{{")
+        }
     }
 
     @Test

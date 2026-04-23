@@ -43,7 +43,7 @@ class ValidationOrchestratorTest {
     // =========================================================================
 
     @Test
-    fun `SKIP policy - no validation performed`() {
+    fun `SKIP policy - transform succeeds without validators`() {
         val instance = TransformationInstance(
             name = "test",
             source = "",
