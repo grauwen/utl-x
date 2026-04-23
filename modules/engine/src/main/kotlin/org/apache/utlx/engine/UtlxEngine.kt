@@ -6,6 +6,7 @@ import org.apache.utlx.engine.config.TransformConfig
 import org.apache.utlx.engine.health.HealthEndpoint
 import org.apache.utlx.engine.registry.TransformationInstance
 import org.apache.utlx.engine.registry.TransformationRegistry
+import org.apache.utlx.engine.strategy.CompiledStrategy
 import org.apache.utlx.engine.strategy.CopyStrategy
 import org.apache.utlx.engine.strategy.ExecutionStrategy
 import org.apache.utlx.engine.strategy.TemplateStrategy
@@ -147,6 +148,7 @@ class UtlxEngine(val config: EngineConfig) {
         return when (config.strategy.uppercase()) {
             "TEMPLATE" -> TemplateStrategy()
             "COPY" -> CopyStrategy()
+            "COMPILED" -> CompiledStrategy()
             "AUTO" -> {
                 val hasSchema = config.inputs.any { it.schema != null }
                 if (hasSchema) {

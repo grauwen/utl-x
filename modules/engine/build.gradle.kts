@@ -51,6 +51,10 @@ dependencies {
     // Schema validation (Phase D)
     implementation("com.networknt:json-schema-validator:1.5.1")
 
+    // ASM for bytecode generation (COMPILED strategy)
+    implementation("org.ow2.asm:asm:9.7")
+    implementation("org.ow2.asm:asm-commons:9.7")
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
