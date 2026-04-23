@@ -148,6 +148,18 @@ object RuntimeOps {
     // ── Lambda support ──
 
     /**
+     * Invoke a UDM.Lambda with a list of arguments.
+     * Used by compiled bytecode to call user-defined functions stored as local variables.
+     */
+    @JvmStatic
+    fun invokeLambda(lambda: UDM, args: List<UDM>): UDM {
+        if (lambda is UDM.Lambda) {
+            return lambda.apply(args)
+        }
+        throw IllegalArgumentException("Expected Lambda, got ${lambda::class.simpleName}")
+    }
+
+    /**
      * Create a UDM.Lambda wrapping a static method in the generated class.
      * The method must have signature: static UDM methodName(List<UDM>)
      * Called by compiled bytecode to construct lambda values at runtime.

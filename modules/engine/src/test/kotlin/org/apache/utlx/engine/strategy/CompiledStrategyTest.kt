@@ -478,6 +478,26 @@ class CompiledStrategyTest {
     }
 
     @Test
+    fun `user-defined function via let binding`() {
+        val strategy = CompiledStrategy()
+        val source = """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            {
+              let FormatName = (first, last) -> concat(first, " ", last),
+              name: FormatName(${'$'}input.firstName, ${'$'}input.lastName)
+            }
+        """.trimIndent()
+        val config = TransformConfig(strategy = "COMPILED", inputs = listOf(InputSlot(name = "input")))
+        strategy.initialize(source, config)
+
+        val result = strategy.execute("""{"firstName": "Alice", "lastName": "Smith"}""")
+        assertTrue(result.output.contains("Alice Smith"), "User function: ${result.output}")
+    }
+
+    @Test
     fun `invalid input throws exception not silent failure`() {
         val strategy = CompiledStrategy()
         val source = "%utlx 1.0\ninput json\noutput json\n---\n{name: \$input.name}\n"

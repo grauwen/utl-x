@@ -466,28 +466,37 @@ class ASTCompiler {
         }
 
         val funcName = fn.name
-
-        // Push function name first (String arg 1 of StdlibDispatch.call)
-        ctx.mv.visitLdcInsn(funcName)
+        val localSlot = ctx.locals[funcName]
 
         // Build argument list as UDM array
-        ctx.mv.visitLdcInsn(expr.arguments.size)
-        ctx.mv.visitTypeInsn(ANEWARRAY, UDM_TYPE)
-        for (i in expr.arguments.indices) {
-            ctx.mv.visitInsn(DUP)
-            ctx.mv.visitLdcInsn(i)
-            compileExpression(ctx, expr.arguments[i])
-            ctx.mv.visitInsn(AASTORE)
+        val argList = {
+            ctx.mv.visitLdcInsn(expr.arguments.size)
+            ctx.mv.visitTypeInsn(ANEWARRAY, UDM_TYPE)
+            for (i in expr.arguments.indices) {
+                ctx.mv.visitInsn(DUP)
+                ctx.mv.visitLdcInsn(i)
+                compileExpression(ctx, expr.arguments[i])
+                ctx.mv.visitInsn(AASTORE)
+            }
+            ctx.mv.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "asList",
+                "([Ljava/lang/Object;)Ljava/util/List;", false)
         }
 
-        // Convert array to List<UDM>
-        ctx.mv.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "asList",
-            "([Ljava/lang/Object;)Ljava/util/List;", false)
-
-        // Stack is: [String, List] — matches StdlibDispatch.call(String, List)
-        ctx.mv.visitMethodInsn(INVOKESTATIC,
-            "org/apache/utlx/engine/strategy/compiled/StdlibDispatch", "call",
-            "(Ljava/lang/String;Ljava/util/List;)$UDM_DESC", false)
+        if (localSlot != null) {
+            // User-defined function: local variable holds a UDM.Lambda
+            // Push: UDM (lambda), then List (args) → RuntimeOps.invokeLambda(UDM, List)
+            ctx.mv.visitVarInsn(ALOAD, localSlot)
+            argList()
+            ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "invokeLambda",
+                "(${UDM_DESC}Ljava/util/List;)$UDM_DESC", false)
+        } else {
+            // Stdlib function: push name, then args → StdlibDispatch.call(String, List)
+            ctx.mv.visitLdcInsn(funcName)
+            argList()
+            ctx.mv.visitMethodInsn(INVOKESTATIC,
+                "org/apache/utlx/engine/strategy/compiled/StdlibDispatch", "call",
+                "(Ljava/lang/String;Ljava/util/List;)$UDM_DESC", false)
+        }
     }
 
     // ── Block ──
