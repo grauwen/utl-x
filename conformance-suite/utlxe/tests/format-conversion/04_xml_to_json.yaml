@@ -2,8 +2,6 @@ name: "xml_to_json"
 category: "format-conversion"
 description: "XML input to JSON output — XML sent as string payload to engine"
 tags: ["xml", "json", "format-conversion"]
-skip: true
-skip_reason: "XML input via stdio-proto needs format-aware payload handling — tracked for fix"
 
 input:
   format: xml
@@ -25,7 +23,7 @@ transformation: |
     employeeId: $input.employee.id,
     name: $input.employee.name,
     dept: $input.employee.department,
-    salary: number($input.employee.salary)
+    salary: toNumber($input.employee.salary)
   }
 
 expected:
