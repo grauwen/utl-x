@@ -10,8 +10,8 @@ output json
   let rawItems = if (isArray($input.Invoice.LineItems.Item)) $input.Invoice.LineItems.Item
                  else [$input.Invoice.LineItems.Item],
   let lineItems = map(rawItems, (item) -> {
-    let amount = toNumber(item.Amount),
-    let qty = toNumber(item.Quantity),
+    let amount = toNumber(toString(item.Amount)),
+    let qty = toNumber(toString(item.Quantity)),
     let unitPrice = amount / qty,
     {
       description: item.Description,
@@ -23,7 +23,7 @@ output json
   }),
 
   let totalAmount = sum(map(lineItems, (i) -> i.amount)),
-  let vatRate = toNumber($input.Invoice.VATRate),
+  let vatRate = toNumber(toString($input.Invoice.VATRate)),
   let vatAmount = totalAmount * vatRate,
   let grossAmount = totalAmount + vatAmount,
 
