@@ -649,6 +649,58 @@ New modes are additive — they don't change default behavior.
 
 ---
 
+## 8.1 Hot Reload (Zero-Downtime Transformation Updates)
+
+UTLXe supports hot reload of transformations **out of the box** — no restart, no downtime. This works in all transport modes (stdio-proto, gRPC).
+
+### How it works
+
+Send a `LoadTransformationRequest` with the same `transformation_id` and updated `.utlx` source. The registry atomically replaces the old compiled program with the new one:
+
+```
+1. Wrapper sends: LoadTransformationRequest(id="order-transform", utlx_source="...new version...")
+2. UTLXe compiles the new source
+3. Registry overwrites: ConcurrentHashMap.put("order-transform", newInstance)
+4. Next ExecuteRequest for "order-transform" uses the new version
+5. In-flight executions on the old version complete normally (they hold a reference)
+```
+
+### From Go wrapper (Open-M)
+
+```
+// At any time during runtime — no restart needed
+client.LoadTransformation("order-transform", newUtlxSource)
+// All subsequent Execute calls use the updated version
+```
+
+### From C# wrapper (Azure)
+
+```csharp
+// Update a running transformation
+await client.LoadTransformationAsync("order-transform", newUtlxSource);
+// Next ExecuteAsync calls use the new version
+```
+
+### Thread safety
+
+- `TransformationRegistry` uses `ConcurrentHashMap` — the put is atomic
+- In-flight executions hold a reference to the old `TransformationInstance` — they complete on the old version
+- New executions pick up the new version immediately after registration
+- No lock contention between readers and the updater
+
+### What hot reload does NOT provide (and why it's OK)
+
+| Feature | Status | Why not needed |
+|---------|--------|----------------|
+| Version tracking | Not built | The wrapper knows which version it loaded |
+| Rollback | Not built | The wrapper can re-load the previous version |
+| Graceful drain | Not built | ConcurrentHashMap semantics already handle in-flight safely |
+| File watcher | Not built | The wrapper controls deployment, not file system changes |
+
+The wrapper (Go or C#) owns the deployment lifecycle. UTLXe provides the mechanism; the wrapper provides the policy.
+
+---
+
 ## 9. Testing Strategy
 
 **Current test count:** 93 engine tests (all passing)
