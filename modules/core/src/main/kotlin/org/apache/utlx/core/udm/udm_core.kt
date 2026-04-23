@@ -225,45 +225,62 @@ sealed class UDM {
     fun isString(): Boolean = this is Scalar && this.value is String
     fun isNumber(): Boolean = this is Scalar && this.value is Number
     fun isBoolean(): Boolean = this is Scalar && this.value is Boolean
-    
-    // Safe casting methods with better error handling
+
+    /**
+     * Unwrap XML text nodes. XML elements with only text content like
+     * <Name>Alice</Name> are parsed as UDM.Object(properties={_text=Scalar("Alice")}).
+     * This extracts the inner scalar so conversion methods work correctly
+     * regardless of whether the value came from JSON (already a scalar)
+     * or XML (wrapped in an object with _text).
+     */
+    fun unwrapXmlTextNode(): UDM {
+        if (this is Object && properties.size == 1 && properties.containsKey("_text")) {
+            return properties["_text"] ?: this
+        }
+        return this
+    }
+
+    // Safe casting methods — auto-unwrap XML text nodes before conversion
     fun asString(): String {
-        return when (this) {
-            is Scalar -> when (value) {
-                is String -> value
-                is Number -> value.toString()
-                is Boolean -> value.toString()
+        val unwrapped = unwrapXmlTextNode()
+        return when (unwrapped) {
+            is Scalar -> when (unwrapped.value) {
+                is String -> unwrapped.value
+                is Number -> unwrapped.value.toString()
+                is Boolean -> unwrapped.value.toString()
                 null -> ""
-                else -> value.toString()
+                else -> unwrapped.value.toString()
             }
             else -> this.toString()
         }
     }
-    
+
     fun asNumber(): Double {
-        return when (this) {
-            is Scalar -> when (value) {
-                is Number -> value.toDouble()
-                is String -> value.toDoubleOrNull() ?: 0.0
-                is Boolean -> if (value) 1.0 else 0.0
+        val unwrapped = unwrapXmlTextNode()
+        return when (unwrapped) {
+            is Scalar -> when (unwrapped.value) {
+                is Number -> unwrapped.value.toDouble()
+                is String -> unwrapped.value.toDoubleOrNull() ?: 0.0
+                is Boolean -> if (unwrapped.value) 1.0 else 0.0
                 null -> 0.0
                 else -> 0.0
             }
             else -> 0.0
         }
     }
-    
+
     fun asBoolean(): Boolean {
-        return when (this) {
-            is Scalar -> when (value) {
-                is Boolean -> value
-                is Number -> value.toDouble() != 0.0
-                is String -> value.isNotEmpty() && value.lowercase() in listOf("true", "yes", "1")
+        val unwrapped = unwrapXmlTextNode()
+        return when (unwrapped) {
+            is Scalar -> when (unwrapped.value) {
+                is Boolean -> unwrapped.value
+                is Number -> unwrapped.value.toDouble() != 0.0
+                is String -> unwrapped.value.isNotEmpty() && unwrapped.value.lowercase() in listOf("true", "yes", "1")
                 null -> false
                 else -> true
             }
-            is Array -> elements.isNotEmpty()
-            is Object -> properties.isNotEmpty()
+            is Array -> unwrapped.elements.isNotEmpty()
+            is Object -> unwrapped.properties.isNotEmpty()
             else -> true
         }
     }

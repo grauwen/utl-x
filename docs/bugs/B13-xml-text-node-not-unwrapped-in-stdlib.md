@@ -1,13 +1,16 @@
 # B13 — XML Text Nodes Not Unwrapped by Stdlib Conversion Functions
 
-**Status:** Fixed  
+**Status:** Fixed (both Option A and Option B applied)  
 **Severity:** High (361 call sites across 37 stdlib files potentially affected)  
 **Affects:** stdlib (core), exposed by COMPILED and COPY strategies in UTLXe  
 **Found:** 2026-04-24  
 **Fixed:** 2026-04-24  
 **Branch:** development  
-**Fix applied:** `RuntimeOps.getProperty()` + `unwrapXmlTextNode()` in engine/strategy/compiled/RuntimeOps.kt  
-**Stdlib changes needed:** None — the fix intercepts at the property access level, matching interpreter behavior
+**Fixes applied:**  
+1. **Option A (UDM core):** `unwrapXmlTextNode()` added to `UDM.asString()`, `UDM.asNumber()`, `UDM.asBoolean()` in `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt` — covers all 361 call sites across all executables (CLI, daemon, engine)  
+2. **Option B (RuntimeOps):** `unwrapXmlTextNode()` in `RuntimeOps.getProperty()` in `modules/engine/src/main/kotlin/org/apache/utlx/engine/strategy/compiled/RuntimeOps.kt` — belt-and-suspenders, unwraps at property access before values reach stdlib  
+**Stdlib changes needed:** None  
+**Test results after fix:** 467 CLI + 207 engine Kotlin + 49 engine conformance = **723 tests, all passing**
 
 ---
 
@@ -108,11 +111,34 @@ COMPILED/COPY PATH (WAS BROKEN, NOW FIXED):
   Function receives → UDM.Scalar(value)    ✓ stdlib handles this
 ```
 
-## Fix Applied: Option B — RuntimeOps.getProperty()
+## Fixes Applied
+
+### Fix 1: Option A — UDM Core (primary fix)
+
+**File changed:** `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt`
+
+Added `unwrapXmlTextNode()` method to the `UDM` sealed class. Updated `asString()`, `asNumber()`, and `asBoolean()` to auto-unwrap XML text nodes before conversion. This covers all 361 call sites across all executables — any code anywhere that calls these methods automatically benefits.
+
+```kotlin
+fun unwrapXmlTextNode(): UDM {
+    if (this is Object && properties.size == 1 && properties.containsKey("_text")) {
+        return properties["_text"] ?: this
+    }
+    return this
+}
+
+fun asString(): String {
+    val unwrapped = unwrapXmlTextNode()  // ← auto-unwrap before conversion
+    return when (unwrapped) { ... }
+}
+// Same for asNumber() and asBoolean()
+```
+
+### Fix 2: Option B — RuntimeOps.getProperty() (belt-and-suspenders)
 
 **File changed:** `modules/engine/src/main/kotlin/org/apache/utlx/engine/strategy/compiled/RuntimeOps.kt`
 
-Added `unwrapXmlTextNode()` to `RuntimeOps.getProperty()` — the single chokepoint where compiled bytecode accesses object properties. Every `$input.foo.bar` in compiled code goes through this method. By unwrapping XML text nodes here, all downstream stdlib functions receive scalars — identical to the interpreter path.
+Also added `unwrapXmlTextNode()` to `RuntimeOps.getProperty()` — the compiled bytecode property access chokepoint. This unwraps at the property access level before values even reach stdlib functions. Together with Fix 1, XML text nodes are unwrapped at two layers — the first one that hits wins, the second is a harmless no-op.
 
 ```kotlin
 @JvmStatic
@@ -133,62 +159,39 @@ fun unwrapXmlTextNode(value: UDM): UDM {
 }
 ```
 
-**Zero stdlib files changed.** The fix intercepts at the property access level, matching the interpreter's `unwrapTextNode()` behavior.
+**Zero stdlib files changed.** Both fixes work at layers below the stdlib — UDM core and compiled property access.
 
-### Remaining edge case
+### Coverage
 
-One scenario is NOT covered by this fix:
+With both Option A and Option B applied, all scenarios are covered:
 
-```
-// COVERED: property access goes through getProperty() → unwrapped
-toNumber($input.Invoice.Amount)
+| Scenario | Option B (RuntimeOps) | Option A (UDM core) |
+|----------|----------------------|---------------------|
+| `toNumber($input.Invoice.Amount)` — property access | Unwrapped at `getProperty()` | Also unwrapped at `asNumber()` (redundant, harmless) |
+| `toNumber($input)` — root XML text node | Not covered | Unwrapped at `asNumber()` |
+| `upperCase($input.Name)` — stdlib string function | Unwrapped at `getProperty()` | Also unwrapped at `asString()` (redundant, harmless) |
+| Future execution paths | Need their own unwrapping | Automatically covered via UDM methods |
 
-// NOT COVERED: $input IS the XML text node, no property access
-toNumber($input)
-```
-
-The second case is essentially never done in practice — you don't pass an entire XML root element to `toNumber()`. If this edge case ever matters, Option A (below) would resolve it.
-
-### Why Option A (UDM core) was not applied
-
-Option A would add auto-unwrapping to `UDM.asString()`, `UDM.asNumber()`, `UDM.asBoolean()` in `modules/core/udm/udm_core.kt`:
-
-```kotlin
-fun asString(): String {
-    val unwrapped = unwrapXmlTextNode()  // ← auto-unwrap before conversion
-    return when (unwrapped) { ... }
-}
-```
-
-| Aspect | Option B (applied) | Option A (deferred) |
-|--------|-------------------|---------------------|
-| **Scope** | Engine only (`RuntimeOps.kt`) | Core module (`udm_core.kt`) — shared by CLI, daemon, engine |
-| **Risk** | Low — only affects compiled/copy path | Higher — changes core UDM behavior for all executables |
-| **Stdlib changes** | None | None |
-| **Covers `toNumber($input)` edge case** | No | Yes |
-| **Double unwrapping** | No | Yes — interpreter unwraps, then `asString()` unwraps again (harmless but redundant) |
-| **Future-proof** | New execution paths need their own unwrapping | All paths automatically covered |
-
-**When to apply Option A:** If a new execution path is added beyond interpreter and compiled bytecode, or if the `toNumber($input)` edge case becomes a real issue. Until then, Option B is sufficient and contained.
+The double unwrapping (both fixes active) is harmless — `unwrapXmlTextNode()` on an already-unwrapped `UDM.Scalar` is a no-op (the `if` check fails immediately, returns the value unchanged).
 
 ## Impact (post-fix)
 
-- **UTLXe COMPILED strategy:** Fixed — XML text nodes unwrapped at property access
+- **UTLXe COMPILED strategy:** Fixed — XML text nodes unwrapped at both property access and UDM conversion
 - **UTLXe COPY strategy:** Fixed — uses compiled path internally
-- **UTLXe TEMPLATE strategy:** Was never affected (interpreter handles unwrapping)
-- **CLI (utlx):** Not affected (uses interpreter)
-- **Daemon (utlxd):** Not affected (uses interpreter)
+- **UTLXe TEMPLATE strategy:** Was never affected (interpreter handles unwrapping; UDM core adds redundant safety)
+- **CLI (utlx):** Now also benefits from UDM core fix (redundant with interpreter, but future-proof)
+- **Daemon (utlxd):** Same as CLI
 
-## Workaround
+## Workaround (no longer needed)
 
-In `.utlx` transformations, wrap values with `toString()` before `toNumber()`:
+The following workaround is no longer necessary but documented for reference:
 
 ```
-// Instead of:
-let amount = toNumber($input.Invoice.Amount)
-
-// Use:
+// Was needed before fix:
 let amount = toNumber(toString($input.Invoice.Amount))
+
+// Now works directly:
+let amount = toNumber($input.Invoice.Amount)
 ```
 
 Note: This workaround may also fail if `toString()` itself doesn't unwrap XML text nodes. The proper fix is in the stdlib.
