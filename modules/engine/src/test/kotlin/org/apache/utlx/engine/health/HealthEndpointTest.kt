@@ -236,4 +236,40 @@ class HealthEndpointTest {
             blocker.close()
         }
     }
+
+    // --- Prometheus metrics tests ---
+
+    @Test
+    fun `metrics endpoint returns Prometheus text format`() = testApplication {
+        val engine = UtlxEngine(testConfig())
+        application { configureHealth(engine) }
+
+        val response = client.get("/metrics")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        val body = response.bodyAsText()
+        assertTrue(body.contains("# HELP utlxe_up"), "Should have HELP line")
+        assertTrue(body.contains("# TYPE utlxe_up gauge"), "Should have TYPE line")
+        assertTrue(body.contains("utlxe_uptime_seconds"), "Should have uptime metric")
+        assertTrue(body.contains("utlxe_transformations_loaded"), "Should have loaded count")
+        assertTrue(body.contains("utlxe_executions_total"), "Should have executions counter")
+        assertTrue(body.contains("utlxe_errors_total"), "Should have errors counter")
+        assertTrue(body.contains("utlxe_jvm_memory_used_bytes"), "Should have JVM memory")
+        assertTrue(body.contains("utlxe_jvm_threads"), "Should have JVM threads")
+    }
+
+    @Test
+    fun `metrics shows loaded transformations`(@TempDir tempDir: Path) = testApplication {
+        createMinimalBundle(tempDir)
+        val engine = UtlxEngine(testConfig())
+        engine.initialize(tempDir)
+        application { configureHealth(engine) }
+
+        val response = client.get("/metrics")
+        val body = response.bodyAsText()
+
+        assertTrue(body.contains("utlxe_transformations_loaded 1"), "Should show 1 loaded transform")
+        assertTrue(body.contains("utlxe_transformation_executions_total{transformation=\"identity\""),
+            "Should have per-transform metric")
+    }
 }

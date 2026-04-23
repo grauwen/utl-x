@@ -119,6 +119,15 @@ fun Application.configureHealth(engine: UtlxEngine) {
             ))
         }
 
+        // Prometheus metrics endpoint — always on, zero overhead
+        get("/metrics") {
+            val metricsText = MetricsCollector.collect(engine)
+            call.respondText(metricsText, ContentType("text", "plain", listOf(
+                HeaderValueParam("version", "0.0.4"),
+                HeaderValueParam("charset", "utf-8")
+            )))
+        }
+
         get("/health/ready") {
             if (engine.state == EngineState.RUNNING) {
                 call.respond(HttpStatusCode.OK, mapOf(
