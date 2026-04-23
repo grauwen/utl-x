@@ -108,10 +108,28 @@ object RuntimeOps {
 
     @JvmStatic
     fun getProperty(target: UDM, name: String): UDM {
-        return when (target) {
+        val value = when (target) {
             is UDM.Object -> target.properties[name] ?: UDM.Scalar.nullValue()
             else -> UDM.Scalar.nullValue()
         }
+        // Unwrap XML text nodes: <Element>value</Element> is parsed as
+        // UDM.Object({_text: Scalar(value)}). Unwrap to the scalar so
+        // downstream stdlib functions receive the value directly —
+        // same behavior as the interpreter's unwrapTextNode().
+        return unwrapXmlTextNode(value)
+    }
+
+    /**
+     * Unwrap XML text nodes. XML elements with only text content like
+     * <Name>Alice</Name> are parsed as UDM.Object(properties={_text=Scalar("Alice")}).
+     * This function extracts the scalar, matching the interpreter's behavior.
+     */
+    @JvmStatic
+    fun unwrapXmlTextNode(value: UDM): UDM {
+        if (value is UDM.Object && value.properties.size == 1 && value.properties.containsKey("_text")) {
+            return value.properties["_text"] ?: value
+        }
+        return value
     }
 
     @JvmStatic
