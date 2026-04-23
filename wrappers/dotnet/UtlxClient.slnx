@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/UtlxClient/UtlxClient.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/UtlxClient.Tests/UtlxClient.Tests.csproj" />
+  </Folder>
+</Solution>
