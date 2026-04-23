@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Threading.Channels;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,8 @@ namespace Glomidco.Utlx;
 /// <summary>
 /// Client for UTL-X Engine (UTLXe). Spawns UTLXe as a long-running subprocess
 /// and communicates via varint-delimited protobuf over stdin/stdout (stdio-proto mode).
-/// Thread-safe. Keeps the JVM alive for the lifetime of this client.
+/// Thread-safe for concurrent Execute calls (correlation ID-based response matching).
+/// Keeps the JVM alive for the lifetime of this client.
 /// </summary>
 public sealed class UtlxeClient : IAsyncDisposable, IDisposable
 {
@@ -17,7 +19,11 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
     private readonly ILogger _logger;
     private UtlxeProcess? _process;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
-    private readonly Channel<StdioEnvelope> _responseChannel = Channel.CreateUnbounded<StdioEnvelope>();
+    // Sequential channel for init-time messages (Load, Unload, Health) — ordered, one at a time
+    private readonly Channel<StdioEnvelope> _sequentialChannel = Channel.CreateUnbounded<StdioEnvelope>();
+    // Correlation-based dispatch for Execute/ExecuteBatch — supports concurrent out-of-order responses
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<StdioEnvelope>> _pendingRequests = new();
+    private long _correlationCounter;
     private Task? _readerTask;
     private bool _started;
 
@@ -75,7 +81,7 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
             Strategy = strategy
         };
 
-        var resp = await SendAndReceiveAsync(
+        var resp = await SendSequentialAsync(
             MessageType.LoadTransformationRequest, req,
             MessageType.LoadTransformationResponse, ct);
 
@@ -84,6 +90,8 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
 
     /// <summary>
     /// Execute a pre-loaded transformation against a payload.
+    /// Thread-safe — multiple calls can be in flight concurrently when workers &gt; 1.
+    /// Responses are matched by correlation ID for out-of-order delivery.
     /// </summary>
     public async Task<ExecuteResponse> ExecuteAsync(
         string transformationId,
@@ -92,29 +100,31 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
         string? correlationId = null,
         CancellationToken ct = default)
     {
+        var corrId = correlationId ?? GenerateCorrelationId();
         var req = new ExecuteRequest
         {
             TransformationId = transformationId,
             Payload = ByteString.CopyFrom(payload),
             ContentType = contentType,
-            CorrelationId = correlationId ?? ""
+            CorrelationId = corrId
         };
 
-        var resp = await SendAndReceiveAsync(
-            MessageType.ExecuteRequest, req,
-            MessageType.ExecuteResponse, ct);
+        var resp = await SendCorrelatedAsync(
+            MessageType.ExecuteRequest, req, corrId, ct);
 
         return ExecuteResponse.Parser.ParseFrom(resp.Payload);
     }
 
     /// <summary>
     /// Execute a pre-loaded transformation against multiple payloads in one call.
+    /// The entire batch is a single request/response — no correlation ID matching needed.
     /// </summary>
     public async Task<ExecuteBatchResponse> ExecuteBatchAsync(
         string transformationId,
         IReadOnlyList<(byte[] Payload, string ContentType, string CorrelationId)> items,
         CancellationToken ct = default)
     {
+        var batchCorrId = GenerateCorrelationId();
         var req = new ExecuteBatchRequest { TransformationId = transformationId };
         foreach (var (payload, contentType, correlationId) in items)
         {
@@ -126,9 +136,8 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
             });
         }
 
-        var resp = await SendAndReceiveAsync(
-            MessageType.ExecuteBatchRequest, req,
-            MessageType.ExecuteBatchResponse, ct);
+        var resp = await SendCorrelatedAsync(
+            MessageType.ExecuteBatchRequest, req, batchCorrId, ct);
 
         return ExecuteBatchResponse.Parser.ParseFrom(resp.Payload);
     }
@@ -142,7 +151,7 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
     {
         var req = new UnloadTransformationRequest { TransformationId = transformationId };
 
-        var resp = await SendAndReceiveAsync(
+        var resp = await SendSequentialAsync(
             MessageType.UnloadTransformationRequest, req,
             MessageType.UnloadTransformationResponse, ct);
 
@@ -156,7 +165,7 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
     {
         var req = new HealthRequest();
 
-        var resp = await SendAndReceiveAsync(
+        var resp = await SendSequentialAsync(
             MessageType.HealthRequest, req,
             MessageType.HealthResponse, ct);
 
@@ -167,7 +176,14 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
     // Internal: Send/Receive
     // =========================================================================
 
-    private async Task<StdioEnvelope> SendAndReceiveAsync(
+    private string GenerateCorrelationId() =>
+        $"utlx-{Interlocked.Increment(ref _correlationCounter)}";
+
+    /// <summary>
+    /// Send a sequential request (Load, Unload, Health) — responses arrive in order.
+    /// These are init/lifecycle messages that must not be interleaved with concurrent Execute calls.
+    /// </summary>
+    private async Task<StdioEnvelope> SendSequentialAsync(
         MessageType requestType, IMessage request,
         MessageType expectedResponseType, CancellationToken ct)
     {
@@ -180,30 +196,90 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
             Payload = request.ToByteString()
         };
 
-        // Serialize writes (one message at a time on the pipe)
         await _writeLock.WaitAsync(ct);
         try
         {
-            var stream = _process.InputStream;
-            var bytes = envelope.ToByteArray();
-            VarintCodec.WriteVarint32(stream, bytes.Length);
-            await stream.WriteAsync(bytes, ct);
-            await stream.FlushAsync(ct);
+            await WriteEnvelopeAsync(envelope, ct);
         }
         finally
         {
             _writeLock.Release();
         }
 
-        // Read response from channel (background reader puts them there)
-        var response = await _responseChannel.Reader.ReadAsync(ct);
-
-        if (response.Type != expectedResponseType)
-        {
-            _logger.LogWarning("Expected {Expected} but got {Actual}", expectedResponseType, response.Type);
-        }
-
+        // Sequential messages go through the ordered channel
+        var response = await _sequentialChannel.Reader.ReadAsync(ct);
         return response;
+    }
+
+    /// <summary>
+    /// Send a correlated request (Execute, ExecuteBatch) — responses matched by correlation ID.
+    /// Multiple calls can be in flight concurrently; out-of-order responses are dispatched correctly.
+    /// </summary>
+    private async Task<StdioEnvelope> SendCorrelatedAsync(
+        MessageType requestType, IMessage request,
+        string correlationId, CancellationToken ct)
+    {
+        if (_process == null || !_process.IsRunning)
+            throw new UtlxeException("UTLXe process is not running");
+
+        var tcs = new TaskCompletionSource<StdioEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _pendingRequests[correlationId] = tcs;
+
+        var envelope = new StdioEnvelope
+        {
+            Type = requestType,
+            Payload = request.ToByteString()
+        };
+
+        try
+        {
+            await _writeLock.WaitAsync(ct);
+            try
+            {
+                await WriteEnvelopeAsync(envelope, ct);
+            }
+            finally
+            {
+                _writeLock.Release();
+            }
+
+            // Wait for the reader to dispatch our response by correlation ID
+            using var ctr = ct.Register(() => tcs.TrySetCanceled(ct));
+            return await tcs.Task;
+        }
+        finally
+        {
+            _pendingRequests.TryRemove(correlationId, out _);
+        }
+    }
+
+    private async Task WriteEnvelopeAsync(StdioEnvelope envelope, CancellationToken ct)
+    {
+        var stream = _process!.InputStream;
+        var bytes = envelope.ToByteArray();
+        VarintCodec.WriteVarint32(stream, bytes.Length);
+        await stream.WriteAsync(bytes, ct);
+        await stream.FlushAsync(ct);
+    }
+
+    /// <summary>
+    /// Extract correlation ID from an ExecuteResponse or ExecuteBatchResponse payload.
+    /// </summary>
+    private string? ExtractCorrelationId(StdioEnvelope envelope)
+    {
+        try
+        {
+            if (envelope.Type == MessageType.ExecuteResponse)
+            {
+                var resp = ExecuteResponse.Parser.ParseFrom(envelope.Payload);
+                return string.IsNullOrEmpty(resp.CorrelationId) ? null : resp.CorrelationId;
+            }
+        }
+        catch
+        {
+            // Can't parse — fall through
+        }
+        return null;
     }
 
     private async Task ReaderLoop()
@@ -228,7 +304,28 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
                 if (read < length) break; // incomplete
 
                 var envelope = StdioEnvelope.Parser.ParseFrom(buffer);
-                await _responseChannel.Writer.WriteAsync(envelope);
+
+                // Route response: correlated (Execute) or sequential (Load/Unload/Health)
+                if (envelope.Type == MessageType.ExecuteResponse ||
+                    envelope.Type == MessageType.ExecuteBatchResponse)
+                {
+                    var corrId = ExtractCorrelationId(envelope);
+                    if (corrId != null && _pendingRequests.TryRemove(corrId, out var tcs))
+                    {
+                        tcs.TrySetResult(envelope);
+                    }
+                    else
+                    {
+                        // No matching pending request — could be batch response or fallback
+                        // Route to sequential channel as fallback
+                        await _sequentialChannel.Writer.WriteAsync(envelope);
+                    }
+                }
+                else
+                {
+                    // Init-time responses (Load, Unload, Health) — sequential
+                    await _sequentialChannel.Writer.WriteAsync(envelope);
+                }
             }
         }
         catch (Exception ex) when (_process?.IsRunning != true)
@@ -241,7 +338,13 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
         }
         finally
         {
-            _responseChannel.Writer.TryComplete();
+            _sequentialChannel.Writer.TryComplete();
+            // Fault all pending requests
+            foreach (var kvp in _pendingRequests)
+            {
+                kvp.Value.TrySetException(new UtlxeException("UTLXe process exited"));
+            }
+            _pendingRequests.Clear();
         }
     }
 
