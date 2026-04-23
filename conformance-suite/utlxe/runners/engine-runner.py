@@ -549,8 +549,9 @@ def run_throughput_test(client, test_data, verbose=False):
 
     transform_id = f"throughput-{name}"
 
-    # Load transformation
-    success, error = client.load_transformation(transform_id, transformation)
+    # Load transformation (with strategy from test config)
+    strategy = test_data.get("strategy", "TEMPLATE")
+    success, error = client.load_transformation(transform_id, transformation, strategy=strategy)
     if not success:
         return False, f"Load failed: {error}", {}
 
