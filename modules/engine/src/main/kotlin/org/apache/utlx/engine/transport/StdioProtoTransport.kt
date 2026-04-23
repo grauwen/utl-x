@@ -9,35 +9,41 @@ import java.io.BufferedOutputStream
 import java.io.OutputStream
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * StdioProtoTransport — varint-delimited protobuf over stdin/stdout.
  *
- * Protocol: each message is a StdioEnvelope (type + payload) written as
- * varint-delimited bytes using protobuf's writeDelimitedTo/parseDelimitedFrom.
+ * Concurrency model:
+ * - Reader thread (main): reads envelopes from stdin. Init-time messages (Load, Unload, Health)
+ *   handled synchronously. Execute/ExecuteBatch/ExecutePipeline dispatched to worker pool.
+ * - Worker pool: processes requests concurrently. Results go to the response queue.
+ * - Writer thread: drains response queue, writes to stdout (single writer, no interleaving).
  *
- * Concurrency model (Phase E):
- * - Reader thread: reads envelopes from stdin. Init-time messages (Load, Unload, Health)
- *   are handled synchronously on the reader thread. Execute/ExecuteBatch are dispatched
- *   to the worker thread pool.
- * - Worker pool: processes Execute requests concurrently. Results go to the response queue.
- * - Writer thread: drains the response queue and writes to stdout. Single writer prevents
- *   interleaved varint-delimited messages on the pipe.
- * - workers=1 gives sequential Model 1 behavior (no pool overhead).
+ * Back-pressure:
+ * - The response queue is bounded (default: workers * 128).
+ * - When the queue is full, worker threads block on put() — they can't submit more results.
+ * - This causes the worker pool's task queue to fill up.
+ * - When the pool's task queue is full, submitWork() blocks the reader thread.
+ * - When the reader blocks, stdin pipe buffer fills → Go wrapper's write() blocks.
+ * - Pressure propagates: UTLXe → pipe → Go wrapper → upstream source.
+ * - When the writer drains the queue, everything unblocks automatically.
  *
- * Correlation IDs in ExecuteRequest/ExecuteResponse allow the Go wrapper to match
- * out-of-order responses to waiting goroutines.
+ * @param workers Number of worker threads (default: CPU cores). workers=1 → sequential, no pool.
+ * @param queueCapacity Max pending responses before back-pressure kicks in. 0 = unbounded.
  */
 class StdioProtoTransport(
     private val engine: UtlxEngine,
-    private val workers: Int = Runtime.getRuntime().availableProcessors()
+    private val workers: Int = Runtime.getRuntime().availableProcessors(),
+    private val queueCapacity: Int = 0 // 0 = auto (workers * 128)
 ) : TransportServer {
 
     private val logger = LoggerFactory.getLogger(StdioProtoTransport::class.java)
     private val running = AtomicBoolean(false)
-    private val responseQueue = LinkedBlockingQueue<StdioEnvelope>()
+    private lateinit var responseQueue: BlockingQueue<StdioEnvelope>
     private var writerThread: Thread? = null
     private var workerPool: ExecutorService? = null
+    private val backPressureCount = AtomicLong(0)
 
     override val supportsDynamicLoading = true
 
@@ -48,6 +54,10 @@ class StdioProtoTransport(
         val output = BufferedOutputStream(System.out)
 
         val effectiveWorkers = workers.coerceAtLeast(1)
+        val effectiveCapacity = if (queueCapacity > 0) queueCapacity else effectiveWorkers * 128
+
+        // Bounded response queue — back-pressure when full
+        responseQueue = ArrayBlockingQueue(effectiveCapacity)
 
         // Start writer thread — sole owner of stdout
         writerThread = Thread({
@@ -57,18 +67,29 @@ class StdioProtoTransport(
             it.start()
         }
 
-        // Start worker pool for Execute requests
+        // Start worker pool with bounded task queue for back-pressure
         workerPool = if (effectiveWorkers > 1) {
-            Executors.newFixedThreadPool(effectiveWorkers, object : ThreadFactory {
-                private val counter = java.util.concurrent.atomic.AtomicInteger(0)
-                override fun newThread(r: Runnable) = Thread(r, "utlxe-worker-${counter.incrementAndGet()}").also {
-                    it.isDaemon = true
-                }
-            })
+            val taskQueue = ArrayBlockingQueue<Runnable>(effectiveWorkers * 4)
+            ThreadPoolExecutor(
+                effectiveWorkers, effectiveWorkers,
+                60L, TimeUnit.SECONDS,
+                taskQueue,
+                object : ThreadFactory {
+                    private val counter = java.util.concurrent.atomic.AtomicInteger(0)
+                    override fun newThread(r: Runnable) = Thread(r, "utlxe-worker-${counter.incrementAndGet()}").also {
+                        it.isDaemon = true
+                    }
+                },
+                // CallerRunsPolicy: when pool + task queue are full, the reader thread
+                // executes the task itself — this naturally blocks stdin reading (back-pressure)
+                ThreadPoolExecutor.CallerRunsPolicy()
+            )
         } else null // workers=1 → inline execution, no pool overhead
 
-        logger.info("StdioProtoTransport: ready (workers={}{})",
-            effectiveWorkers, if (effectiveWorkers == 1) ", sequential" else ", multiplexed")
+        logger.info("StdioProtoTransport: ready (workers={}{}, queue={})",
+            effectiveWorkers,
+            if (effectiveWorkers == 1) ", sequential" else ", multiplexed",
+            effectiveCapacity)
 
         // Reader loop — runs on the calling thread (main thread)
         while (running.get()) {
@@ -83,8 +104,12 @@ class StdioProtoTransport(
             dispatch(envelope, registry)
         }
 
-        // Shutdown: drain workers, then signal writer to stop
         shutdown()
+
+        if (backPressureCount.get() > 0) {
+            logger.info("StdioProtoTransport: back-pressure triggered {} time(s) during session",
+                backPressureCount.get())
+        }
         logger.info("StdioProtoTransport: message loop ended")
     }
 
@@ -189,6 +214,12 @@ class StdioProtoTransport(
     private fun submitWork(task: () -> Unit) {
         val pool = workerPool
         if (pool != null) {
+            // CallerRunsPolicy: if pool + task queue are full, this runs on the reader thread.
+            // That blocks stdin reading — back-pressure propagates to the caller.
+            if ((pool as ThreadPoolExecutor).queue.remainingCapacity() == 0) {
+                backPressureCount.incrementAndGet()
+                logger.debug("Back-pressure: worker pool task queue full, reader thread will execute task")
+            }
             pool.submit { task() }
         } else {
             // workers=1: execute inline on reader thread (Model 1 behavior)
