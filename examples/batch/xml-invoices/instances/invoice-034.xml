@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026034</InvoiceNumber>
+  <InvoiceDate>2026-04-08</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.077</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>Nordic Systems AB</Name>
+    <TaxID>DE878295151</TaxID>
+    <Country>United States</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-189 Ltd</Name>
+    <Department>HR</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Technical Support (hourly)</Description>
+        <TaxCode>S02</TaxCode>
+        <Quantity>4</Quantity>
+        <Amount>1974.44</Amount>
+      </Item>
+      <Item>
+        <Description>Storage Array Expansion</Description>
+        <TaxCode>H03</TaxCode>
+        <Quantity>12</Quantity>
+        <Amount>36057.36</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>42</Quantity>
+        <Amount>181666.8</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>38</Quantity>
+        <Amount>79737.68</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>ES9121000418450200051332</IBAN>
+    <BIC>CAIXESBB</BIC>
+  </BankDetails>
+</Invoice>

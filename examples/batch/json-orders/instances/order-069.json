@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10069",
+  "orderDate": "2026-04-20T15:26:00Z",
+  "customer": {
+    "firstName": "Sam",
+    "lastName": "Walker",
+    "email": "SAM.WALKER@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Platinum",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 10,
+      "unitPrice": 549.0,
+      "discount": 0,
+      "weight": 6.5
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 2,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 7,
+      "unitPrice": 299.0,
+      "discount": 0.05,
+      "weight": 0.35
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.755
+}

@@ -1,0 +1,80 @@
+{
+  "orderId": "ORD-2026-10038",
+  "orderDate": "2026-04-01T16:12:00Z",
+  "customer": {
+    "firstName": "Hank",
+    "lastName": "Van Dijk",
+    "email": "HANK.VAN DIJK@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Silver",
+    "creditLimit": 5000
+  },
+  "items": [
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 8,
+      "unitPrice": 799.0,
+      "discount": 0.1,
+      "weight": 8.2
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 7,
+      "unitPrice": 119.0,
+      "discount": 0,
+      "weight": 0.05
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 8,
+      "unitPrice": 1299.0,
+      "discount": 0.2,
+      "weight": 3.2
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 3,
+      "unitPrice": 129.0,
+      "discount": 0.05,
+      "weight": 0.8
+    },
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 6,
+      "unitPrice": 799.0,
+      "discount": 0.2,
+      "weight": 8.2
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 6,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    },
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 10,
+      "unitPrice": 449.0,
+      "discount": 0.15,
+      "weight": 15.0
+    },
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 5,
+      "unitPrice": 449.0,
+      "discount": 0.1,
+      "weight": 15.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.72
+}

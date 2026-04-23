@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026092</InvoiceNumber>
+  <InvoiceDate>2026-04-17</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Chen Manufacturing Co.</Name>
+    <TaxID>US501483027</TaxID>
+    <Country>Germany</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-978 SpA</Name>
+    <Department>Marketing</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>94</Quantity>
+        <Amount>198624.82</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>12</Quantity>
+        <Amount>11763.36</Amount>
+      </Item>
+      <Item>
+        <Description>Hardware Maintenance Contract</Description>
+        <TaxCode>S04</TaxCode>
+        <Quantity>53</Quantity>
+        <Amount>197037.04</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>IT60X0542811101000000123456</IBAN>
+    <BIC>UNCRITMM</BIC>
+  </BankDetails>
+</Invoice>

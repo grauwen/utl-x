@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026065</InvoiceNumber>
+  <InvoiceDate>2026-04-18</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Mueller und Soehne GmbH</Name>
+    <TaxID>FR451436694</TaxID>
+    <Country>Germany</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-666 SpA</Name>
+    <Department>HR</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>35</Quantity>
+        <Amount>144854.15</Amount>
+      </Item>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>48</Quantity>
+        <Amount>30769.44</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>7</Quantity>
+        <Amount>6564.25</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>67</Quantity>
+        <Amount>328836.0</Amount>
+      </Item>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>9</Quantity>
+        <Amount>39519.99</Amount>
+      </Item>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>37</Quantity>
+        <Amount>143521.52</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>BE68539007547034</IBAN>
+    <BIC>BPOTBEB1</BIC>
+  </BankDetails>
+</Invoice>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026052</InvoiceNumber>
+  <InvoiceDate>2026-04-27</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>EuroTech GmbH</Name>
+    <TaxID>GB333893106</TaxID>
+    <Country>United Kingdom</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-524 BV</Name>
+    <Department>Procurement</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>89</Quantity>
+        <Amount>416952.54</Amount>
+      </Item>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>59</Quantity>
+        <Amount>280471.84</Amount>
+      </Item>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>75</Quantity>
+        <Amount>4668.0</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>94</Quantity>
+        <Amount>48038.7</Amount>
+      </Item>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>82</Quantity>
+        <Amount>273675.82</Amount>
+      </Item>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>9</Quantity>
+        <Amount>35897.49</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>ES9121000418450200051332</IBAN>
+    <BIC>CAIXESBB</BIC>
+  </BankDetails>
+</Invoice>

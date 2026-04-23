@@ -1,0 +1,17 @@
+name: "batch_xml_compiled_100"
+category: "throughput"
+description: "100 varied XML invoices with COMPILED strategy"
+tags: ["throughput", "batch", "real-world", "xml", "compiled", "100-instances"]
+
+strategy: "COMPILED"
+
+transformation_file: "../../../../examples/batch/xml-invoices/transform.utlx"
+
+burst:
+  count: 100
+  mode: "concurrent"
+  instances_dir: "../../../../examples/batch/xml-invoices/instances"
+  content_type: "application/xml"
+
+throughput_limits:
+  max_total_ms: 30000

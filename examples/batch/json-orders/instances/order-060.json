@@ -1,0 +1,80 @@
+{
+  "orderId": "ORD-2026-10060",
+  "orderDate": "2026-04-02T13:15:00Z",
+  "customer": {
+    "firstName": "Iris",
+    "lastName": "Johnson",
+    "email": "IRIS.JOHNSON@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Gold",
+    "creditLimit": 10000
+  },
+  "items": [
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 4,
+      "unitPrice": 299.0,
+      "discount": 0.2,
+      "weight": 0.35
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 2,
+      "unitPrice": 129.0,
+      "discount": 0.15,
+      "weight": 0.8
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 9,
+      "unitPrice": 129.0,
+      "discount": 0.15,
+      "weight": 0.8
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 1,
+      "unitPrice": 129.0,
+      "discount": 0.05,
+      "weight": 0.8
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 4,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 8,
+      "unitPrice": 699.0,
+      "discount": 0,
+      "weight": 18.0
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 4,
+      "unitPrice": 159.0,
+      "discount": 0.15,
+      "weight": 0.1
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 10,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.069
+}

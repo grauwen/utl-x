@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10095",
+  "orderDate": "2026-04-14T14:52:00Z",
+  "customer": {
+    "firstName": "Sam",
+    "lastName": "Taylor",
+    "email": "SAM.TAYLOR@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Gold",
+    "creditLimit": 50000
+  },
+  "items": [
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 2,
+      "unitPrice": 119.0,
+      "discount": 0,
+      "weight": 0.05
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 7,
+      "unitPrice": 49.95,
+      "discount": 0.15,
+      "weight": 0.15
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 8,
+      "unitPrice": 24.99,
+      "discount": 0.1,
+      "weight": 0.1
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.125
+}

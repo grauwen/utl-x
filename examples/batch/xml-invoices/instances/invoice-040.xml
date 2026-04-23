@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026040</InvoiceNumber>
+  <InvoiceDate>2026-04-23</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Global Supply Corp</Name>
+    <TaxID>US699140867</TaxID>
+    <Country>United States</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-760 SpA</Name>
+    <Department>HR</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>29</Quantity>
+        <Amount>74757.65</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>DE89370400440532013000</IBAN>
+    <BIC>COBADEFFXXX</BIC>
+  </BankDetails>
+</Invoice>

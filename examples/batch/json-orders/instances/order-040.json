@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10040",
+  "orderDate": "2026-04-10T09:53:00Z",
+  "customer": {
+    "firstName": "Xander",
+    "lastName": "Martinez",
+    "email": "XANDER.MARTINEZ@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Platinum",
+    "creditLimit": 10000
+  },
+  "items": [
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 4,
+      "unitPrice": 799.0,
+      "discount": 0.15,
+      "weight": 8.2
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 5,
+      "unitPrice": 299.0,
+      "discount": 0.15,
+      "weight": 0.35
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 9,
+      "unitPrice": 119.0,
+      "discount": 0.1,
+      "weight": 0.05
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.227
+}

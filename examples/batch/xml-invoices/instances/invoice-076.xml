@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026076</InvoiceNumber>
+  <InvoiceDate>2026-04-19</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Rossi Automation SpA</Name>
+    <TaxID>NL289086333</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-885 AG</Name>
+    <Department>Finance</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Storage Array Expansion</Description>
+        <TaxCode>H03</TaxCode>
+        <Quantity>95</Quantity>
+        <Amount>31041.25</Amount>
+      </Item>
+      <Item>
+        <Description>Hardware Maintenance Contract</Description>
+        <TaxCode>S04</TaxCode>
+        <Quantity>74</Quantity>
+        <Amount>313774.8</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>50</Quantity>
+        <Amount>90314.0</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>GB29NWBK60161331926819</IBAN>
+    <BIC>NWBKGB2L</BIC>
+  </BankDetails>
+</Invoice>

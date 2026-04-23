@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10013",
+  "orderDate": "2026-04-23T15:09:00Z",
+  "customer": {
+    "firstName": "Paul",
+    "lastName": "Martinez",
+    "email": "PAUL.MARTINEZ@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Platinum",
+    "creditLimit": 10000
+  },
+  "items": [
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 1,
+      "unitPrice": 189.0,
+      "discount": 0.05,
+      "weight": 0.5
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 8,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 9,
+      "unitPrice": 189.0,
+      "discount": 0.15,
+      "weight": 0.5
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.218
+}

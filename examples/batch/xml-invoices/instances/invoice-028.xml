@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026028</InvoiceNumber>
+  <InvoiceDate>2026-04-01</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Nordic Systems AB</Name>
+    <TaxID>FR675244407</TaxID>
+    <Country>France</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-962 SpA</Name>
+    <Department>Finance</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>48</Quantity>
+        <Amount>16763.04</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>86</Quantity>
+        <Amount>401862.52</Amount>
+      </Item>
+      <Item>
+        <Description>Migration Services</Description>
+        <TaxCode>T05</TaxCode>
+        <Quantity>62</Quantity>
+        <Amount>205434.52</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>1</Quantity>
+        <Amount>2684.45</Amount>
+      </Item>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>2</Quantity>
+        <Amount>265.58</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>GB29NWBK60161331926819</IBAN>
+    <BIC>NWBKGB2L</BIC>
+  </BankDetails>
+</Invoice>

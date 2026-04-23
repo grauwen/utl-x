@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026003</InvoiceNumber>
+  <InvoiceDate>2026-04-05</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>Nordic Systems AB</Name>
+    <TaxID>GB657629251</TaxID>
+    <Country>United Kingdom</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-303 AG</Name>
+    <Department>Research</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>92</Quantity>
+        <Amount>156266.6</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>DE89370400440532013000</IBAN>
+    <BIC>COBADEFFXXX</BIC>
+  </BankDetails>
+</Invoice>

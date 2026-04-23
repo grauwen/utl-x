@@ -1,0 +1,72 @@
+{
+  "orderId": "ORD-2026-10058",
+  "orderDate": "2026-04-01T17:56:00Z",
+  "customer": {
+    "firstName": "Eve",
+    "lastName": "Rossi",
+    "email": "EVE.ROSSI@EXAMPLE.COM",
+    "country": "UK",
+    "tier": "Gold",
+    "creditLimit": 50000
+  },
+  "items": [
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 9,
+      "unitPrice": 699.0,
+      "discount": 0,
+      "weight": 18.0
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 7,
+      "unitPrice": 999.0,
+      "discount": 0,
+      "weight": 1.8
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 9,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 6,
+      "unitPrice": 299.0,
+      "discount": 0.15,
+      "weight": 0.35
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 5,
+      "unitPrice": 24.99,
+      "discount": 0.1,
+      "weight": 0.1
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 6,
+      "unitPrice": 189.0,
+      "discount": 0,
+      "weight": 0.5
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 4,
+      "unitPrice": 159.0,
+      "discount": 0.05,
+      "weight": 0.1
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.915
+}

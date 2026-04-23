@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026085</InvoiceNumber>
+  <InvoiceDate>2026-04-12</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Chen Manufacturing Co.</Name>
+    <TaxID>US516104074</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-257 GmbH</Name>
+    <Department>IT</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>77</Quantity>
+        <Amount>186927.51</Amount>
+      </Item>
+      <Item>
+        <Description>Technical Support (hourly)</Description>
+        <TaxCode>S02</TaxCode>
+        <Quantity>4</Quantity>
+        <Amount>4297.68</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>38</Quantity>
+        <Amount>185684.72</Amount>
+      </Item>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>15</Quantity>
+        <Amount>23645.25</Amount>
+      </Item>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>61</Quantity>
+        <Amount>150732.83</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>34</Quantity>
+        <Amount>17038.42</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>CH9300762011623852957</IBAN>
+    <BIC>UBSWCHZH80A</BIC>
+  </BankDetails>
+</Invoice>

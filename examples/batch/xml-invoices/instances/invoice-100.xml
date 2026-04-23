@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026100</InvoiceNumber>
+  <InvoiceDate>2026-04-25</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Mueller und Soehne GmbH</Name>
+    <TaxID>GB393698307</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-991 Ltd</Name>
+    <Department>Sales</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>41</Quantity>
+        <Amount>177072.85</Amount>
+      </Item>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>100</Quantity>
+        <Amount>45002.0</Amount>
+      </Item>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>81</Quantity>
+        <Amount>399643.47</Amount>
+      </Item>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>82</Quantity>
+        <Amount>27647.94</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>SE4550000000058398257466</IBAN>
+    <BIC>ESSESESS</BIC>
+  </BankDetails>
+</Invoice>

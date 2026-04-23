@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10094",
+  "orderDate": "2026-04-05T11:50:00Z",
+  "customer": {
+    "firstName": "Jack",
+    "lastName": "Chen",
+    "email": "JACK.CHEN@EXAMPLE.COM",
+    "country": "US",
+    "tier": "Gold",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 3,
+      "unitPrice": 24.99,
+      "discount": 0.2,
+      "weight": 0.1
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 9,
+      "unitPrice": 129.0,
+      "discount": 0,
+      "weight": 0.8
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 4,
+      "unitPrice": 999.0,
+      "discount": 0.2,
+      "weight": 1.8
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.361
+}

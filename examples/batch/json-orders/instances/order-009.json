@@ -1,0 +1,48 @@
+{
+  "orderId": "ORD-2026-10009",
+  "orderDate": "2026-04-03T13:01:00Z",
+  "customer": {
+    "firstName": "Frank",
+    "lastName": "Rodriguez",
+    "email": "FRANK.RODRIGUEZ@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Gold",
+    "creditLimit": 50000
+  },
+  "items": [
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 5,
+      "unitPrice": 24.99,
+      "discount": 0.05,
+      "weight": 0.1
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 6,
+      "unitPrice": 159.0,
+      "discount": 0.05,
+      "weight": 0.1
+    },
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 9,
+      "unitPrice": 449.0,
+      "discount": 0.05,
+      "weight": 15.0
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 4,
+      "unitPrice": 999.0,
+      "discount": 0,
+      "weight": 1.8
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.588
+}

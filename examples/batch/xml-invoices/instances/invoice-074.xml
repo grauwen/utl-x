@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026074</InvoiceNumber>
+  <InvoiceDate>2026-04-02</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Chen Manufacturing Co.</Name>
+    <TaxID>GB691297450</TaxID>
+    <Country>United Kingdom</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-130 BV</Name>
+    <Department>HR</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>58</Quantity>
+        <Amount>256531.1</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>79</Quantity>
+        <Amount>246078.68</Amount>
+      </Item>
+      <Item>
+        <Description>Hardware Maintenance Contract</Description>
+        <TaxCode>S04</TaxCode>
+        <Quantity>83</Quantity>
+        <Amount>125393.91</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>FR7630006000011234567890189</IBAN>
+    <BIC>BNPAFRPP</BIC>
+  </BankDetails>
+</Invoice>

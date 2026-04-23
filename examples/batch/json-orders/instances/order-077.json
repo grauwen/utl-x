@@ -1,0 +1,64 @@
+{
+  "orderId": "ORD-2026-10077",
+  "orderDate": "2026-04-19T18:09:00Z",
+  "customer": {
+    "firstName": "Jack",
+    "lastName": "Thomas",
+    "email": "JACK.THOMAS@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Gold",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 10,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 6,
+      "unitPrice": 349.0,
+      "discount": 0,
+      "weight": 12.0
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 2,
+      "unitPrice": 129.0,
+      "discount": 0.1,
+      "weight": 0.8
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 7,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 10,
+      "unitPrice": 49.95,
+      "discount": 0.2,
+      "weight": 0.15
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 6,
+      "unitPrice": 549.0,
+      "discount": 0,
+      "weight": 6.5
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.968
+}

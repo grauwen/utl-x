@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026080</InvoiceNumber>
+  <InvoiceDate>2026-04-06</InvoiceDate>
+  <Currency>GBP</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Mueller und Soehne GmbH</Name>
+    <TaxID>NL472384530</TaxID>
+    <Country>France</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-818 AG</Name>
+    <Department>HR</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Migration Services</Description>
+        <TaxCode>T05</TaxCode>
+        <Quantity>79</Quantity>
+        <Amount>90330.97</Amount>
+      </Item>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>14</Quantity>
+        <Amount>65612.4</Amount>
+      </Item>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>43</Quantity>
+        <Amount>160796.35</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>SE4550000000058398257466</IBAN>
+    <BIC>ESSESESS</BIC>
+  </BankDetails>
+</Invoice>

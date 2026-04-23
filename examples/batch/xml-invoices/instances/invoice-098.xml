@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026098</InvoiceNumber>
+  <InvoiceDate>2026-04-08</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Nordic Systems AB</Name>
+    <TaxID>FR802693852</TaxID>
+    <Country>Germany</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-960 SpA</Name>
+    <Department>Research</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>34</Quantity>
+        <Amount>123748.78</Amount>
+      </Item>
+      <Item>
+        <Description>Storage Array Expansion</Description>
+        <TaxCode>H03</TaxCode>
+        <Quantity>98</Quantity>
+        <Amount>447614.02</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>IT60X0542811101000000123456</IBAN>
+    <BIC>UNCRITMM</BIC>
+  </BankDetails>
+</Invoice>

@@ -1,0 +1,32 @@
+{
+  "orderId": "ORD-2026-10005",
+  "orderDate": "2026-04-16T14:56:00Z",
+  "customer": {
+    "firstName": "Zach",
+    "lastName": "Anderson",
+    "email": "ZACH.ANDERSON@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Silver",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 10,
+      "unitPrice": 799.0,
+      "discount": 0.15,
+      "weight": 8.2
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 4,
+      "unitPrice": 129.0,
+      "discount": 0.15,
+      "weight": 0.8
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.143
+}

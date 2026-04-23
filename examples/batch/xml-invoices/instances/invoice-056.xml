@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026056</InvoiceNumber>
+  <InvoiceDate>2026-04-13</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Alpine Solutions AG</Name>
+    <TaxID>FR421322967</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-223 BV</Name>
+    <Department>Sales</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>14</Quantity>
+        <Amount>7851.9</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>BE68539007547034</IBAN>
+    <BIC>BPOTBEB1</BIC>
+  </BankDetails>
+</Invoice>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026024</InvoiceNumber>
+  <InvoiceDate>2026-04-13</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Tech Solutions Inc.</Name>
+    <TaxID>US855665764</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-292 AG</Name>
+    <Department>Research</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Migration Services</Description>
+        <TaxCode>T05</TaxCode>
+        <Quantity>2</Quantity>
+        <Amount>2196.9</Amount>
+      </Item>
+      <Item>
+        <Description>Hardware Maintenance Contract</Description>
+        <TaxCode>S04</TaxCode>
+        <Quantity>95</Quantity>
+        <Amount>59918.4</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>62</Quantity>
+        <Amount>283741.76</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>AT611904300234573201</IBAN>
+    <BIC>OPSKATWW</BIC>
+  </BankDetails>
+</Invoice>

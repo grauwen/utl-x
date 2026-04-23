@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026021</InvoiceNumber>
+  <InvoiceDate>2026-04-08</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Van Dijk Electronics BV</Name>
+    <TaxID>NL808897689</TaxID>
+    <Country>United States</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-549 Ltd</Name>
+    <Department>Research</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Hardware Maintenance Contract</Description>
+        <TaxCode>S04</TaxCode>
+        <Quantity>94</Quantity>
+        <Amount>272764.5</Amount>
+      </Item>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>77</Quantity>
+        <Amount>298302.62</Amount>
+      </Item>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>42</Quantity>
+        <Amount>51352.14</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>ES9121000418450200051332</IBAN>
+    <BIC>CAIXESBB</BIC>
+  </BankDetails>
+</Invoice>

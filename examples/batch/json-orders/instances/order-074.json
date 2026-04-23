@@ -1,0 +1,64 @@
+{
+  "orderId": "ORD-2026-10074",
+  "orderDate": "2026-04-02T08:23:00Z",
+  "customer": {
+    "firstName": "Sam",
+    "lastName": "Rossi",
+    "email": "SAM.ROSSI@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Silver",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 6,
+      "unitPrice": 699.0,
+      "discount": 0,
+      "weight": 18.0
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 2,
+      "unitPrice": 299.0,
+      "discount": 0.05,
+      "weight": 0.35
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 5,
+      "unitPrice": 299.0,
+      "discount": 0.2,
+      "weight": 0.35
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 10,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 9,
+      "unitPrice": 129.0,
+      "discount": 0,
+      "weight": 0.8
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 8,
+      "unitPrice": 49.95,
+      "discount": 0.05,
+      "weight": 0.15
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.645
+}

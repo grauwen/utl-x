@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10037",
+  "orderDate": "2026-04-16T15:27:00Z",
+  "customer": {
+    "firstName": "Leo",
+    "lastName": "de Vries",
+    "email": "LEO.DE VRIES@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Silver",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 3,
+      "unitPrice": 189.0,
+      "discount": 0.15,
+      "weight": 0.5
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 5,
+      "unitPrice": 149.0,
+      "discount": 0.1,
+      "weight": 0.2
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 9,
+      "unitPrice": 349.0,
+      "discount": 0.2,
+      "weight": 12.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.322
+}

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026051</InvoiceNumber>
+  <InvoiceDate>2026-04-09</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>Nordic Systems AB</Name>
+    <TaxID>NL720005941</TaxID>
+    <Country>Switzerland</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-431 SpA</Name>
+    <Department>Operations</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>13</Quantity>
+        <Amount>9375.21</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>53</Quantity>
+        <Amount>243689.23</Amount>
+      </Item>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>84</Quantity>
+        <Amount>56960.4</Amount>
+      </Item>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>17</Quantity>
+        <Amount>21860.3</Amount>
+      </Item>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>42</Quantity>
+        <Amount>174341.16</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>87</Quantity>
+        <Amount>173466.69</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>ES9121000418450200051332</IBAN>
+    <BIC>CAIXESBB</BIC>
+  </BankDetails>
+</Invoice>

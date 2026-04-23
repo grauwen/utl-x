@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026089</InvoiceNumber>
+  <InvoiceDate>2026-04-05</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>Rossi Automation SpA</Name>
+    <TaxID>GB220816186</TaxID>
+    <Country>United Kingdom</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-844 GmbH</Name>
+    <Department>Marketing</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>36</Quantity>
+        <Amount>94408.56</Amount>
+      </Item>
+      <Item>
+        <Description>Migration Services</Description>
+        <TaxCode>T05</TaxCode>
+        <Quantity>2</Quantity>
+        <Amount>7886.86</Amount>
+      </Item>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>76</Quantity>
+        <Amount>200387.68</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>ES9121000418450200051332</IBAN>
+    <BIC>CAIXESBB</BIC>
+  </BankDetails>
+</Invoice>

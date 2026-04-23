@@ -1,0 +1,17 @@
+name: "batch_json_compiled_100"
+category: "throughput"
+description: "100 varied JSON orders with COMPILED strategy — compare against TEMPLATE"
+tags: ["throughput", "batch", "real-world", "compiled", "100-instances"]
+
+strategy: "COMPILED"
+
+transformation_file: "../../../../examples/batch/json-orders/transform.utlx"
+
+burst:
+  count: 100
+  mode: "concurrent"
+  instances_dir: "../../../../examples/batch/json-orders/instances"
+  content_type: "application/json"
+
+throughput_limits:
+  max_total_ms: 30000

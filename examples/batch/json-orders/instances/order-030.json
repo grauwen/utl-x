@@ -1,0 +1,24 @@
+{
+  "orderId": "ORD-2026-10030",
+  "orderDate": "2026-04-16T08:22:00Z",
+  "customer": {
+    "firstName": "Marcel",
+    "lastName": "Moore",
+    "email": "MARCEL.MOORE@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Gold",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 10,
+      "unitPrice": 699.0,
+      "discount": 0.05,
+      "weight": 18.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.853
+}

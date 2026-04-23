@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026027</InvoiceNumber>
+  <InvoiceDate>2026-04-14</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>Nordic Systems AB</Name>
+    <TaxID>DE920702588</TaxID>
+    <Country>Germany</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-837 AG</Name>
+    <Department>Procurement</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>10</Quantity>
+        <Amount>47286.8</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>ES9121000418450200051332</IBAN>
+    <BIC>CAIXESBB</BIC>
+  </BankDetails>
+</Invoice>

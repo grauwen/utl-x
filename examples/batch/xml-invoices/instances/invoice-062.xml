@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026062</InvoiceNumber>
+  <InvoiceDate>2026-04-17</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Atlantic Trading Ltd</Name>
+    <TaxID>GB472271797</TaxID>
+    <Country>United States</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-966 Ltd</Name>
+    <Department>Engineering</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>78</Quantity>
+        <Amount>25146.42</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>95</Quantity>
+        <Amount>314199.2</Amount>
+      </Item>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>16</Quantity>
+        <Amount>1803.04</Amount>
+      </Item>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>90</Quantity>
+        <Amount>9557.1</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>NL91ABNA0417164300</IBAN>
+    <BIC>ABNANL2A</BIC>
+  </BankDetails>
+</Invoice>

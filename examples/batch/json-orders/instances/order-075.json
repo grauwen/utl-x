@@ -1,0 +1,24 @@
+{
+  "orderId": "ORD-2026-10075",
+  "orderDate": "2026-04-07T13:38:00Z",
+  "customer": {
+    "firstName": "Sophie",
+    "lastName": "Williams",
+    "email": "SOPHIE.WILLIAMS@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Standard",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 10,
+      "unitPrice": 299.0,
+      "discount": 0.15,
+      "weight": 0.35
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.958
+}

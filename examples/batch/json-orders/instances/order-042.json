@@ -1,0 +1,80 @@
+{
+  "orderId": "ORD-2026-10042",
+  "orderDate": "2026-04-15T15:19:00Z",
+  "customer": {
+    "firstName": "Karen",
+    "lastName": "Garcia",
+    "email": "KAREN.GARCIA@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Silver",
+    "creditLimit": 50000
+  },
+  "items": [
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 2,
+      "unitPrice": 999.0,
+      "discount": 0.05,
+      "weight": 1.8
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 2,
+      "unitPrice": 299.0,
+      "discount": 0.1,
+      "weight": 0.35
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 1,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 10,
+      "unitPrice": 549.0,
+      "discount": 0,
+      "weight": 6.5
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 4,
+      "unitPrice": 999.0,
+      "discount": 0,
+      "weight": 1.8
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 7,
+      "unitPrice": 149.0,
+      "discount": 0.1,
+      "weight": 0.2
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 10,
+      "unitPrice": 119.0,
+      "discount": 0,
+      "weight": 0.05
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 9,
+      "unitPrice": 349.0,
+      "discount": 0.05,
+      "weight": 12.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.305
+}

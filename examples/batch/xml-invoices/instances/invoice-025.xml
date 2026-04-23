@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026025</InvoiceNumber>
+  <InvoiceDate>2026-04-19</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Coastal Systems BV</Name>
+    <TaxID>DE380004069</TaxID>
+    <Country>United States</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-345 AG</Name>
+    <Department>IT</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>40</Quantity>
+        <Amount>53789.2</Amount>
+      </Item>
+      <Item>
+        <Description>Storage Array Expansion</Description>
+        <TaxCode>H03</TaxCode>
+        <Quantity>64</Quantity>
+        <Amount>150830.08</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>93</Quantity>
+        <Amount>220780.14</Amount>
+      </Item>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>41</Quantity>
+        <Amount>187613.54</Amount>
+      </Item>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>41</Quantity>
+        <Amount>86056.95</Amount>
+      </Item>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>29</Quantity>
+        <Amount>107856.8</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>ES9121000418450200051332</IBAN>
+    <BIC>CAIXESBB</BIC>
+  </BankDetails>
+</Invoice>

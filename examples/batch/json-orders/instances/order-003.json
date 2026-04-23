@@ -1,0 +1,64 @@
+{
+  "orderId": "ORD-2026-10003",
+  "orderDate": "2026-04-12T13:13:00Z",
+  "customer": {
+    "firstName": "Mona",
+    "lastName": "Williams",
+    "email": "MONA.WILLIAMS@EXAMPLE.COM",
+    "country": "US",
+    "tier": "Gold",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 4,
+      "unitPrice": 119.0,
+      "discount": 0.15,
+      "weight": 0.05
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 1,
+      "unitPrice": 999.0,
+      "discount": 0.15,
+      "weight": 1.8
+    },
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 5,
+      "unitPrice": 799.0,
+      "discount": 0,
+      "weight": 8.2
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 4,
+      "unitPrice": 699.0,
+      "discount": 0.2,
+      "weight": 18.0
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 7,
+      "unitPrice": 999.0,
+      "discount": 0,
+      "weight": 1.8
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 6,
+      "unitPrice": 299.0,
+      "discount": 0,
+      "weight": 0.35
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.702
+}

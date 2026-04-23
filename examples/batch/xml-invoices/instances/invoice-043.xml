@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026043</InvoiceNumber>
+  <InvoiceDate>2026-04-07</InvoiceDate>
+  <Currency>GBP</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Nordic Systems AB</Name>
+    <TaxID>DE856704108</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-665 Ltd</Name>
+    <Department>IT</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>24</Quantity>
+        <Amount>23342.88</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>56</Quantity>
+        <Amount>112455.28</Amount>
+      </Item>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>79</Quantity>
+        <Amount>349285.07</Amount>
+      </Item>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>76</Quantity>
+        <Amount>165398.04</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>GB29NWBK60161331926819</IBAN>
+    <BIC>NWBKGB2L</BIC>
+  </BankDetails>
+</Invoice>

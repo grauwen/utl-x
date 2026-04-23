@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026070</InvoiceNumber>
+  <InvoiceDate>2026-04-23</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>Chen Manufacturing Co.</Name>
+    <TaxID>FR259261469</TaxID>
+    <Country>Germany</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-577 Inc</Name>
+    <Department>HR</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>60</Quantity>
+        <Amount>81707.4</Amount>
+      </Item>
+      <Item>
+        <Description>Technical Support (hourly)</Description>
+        <TaxCode>S02</TaxCode>
+        <Quantity>12</Quantity>
+        <Amount>9962.4</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>39</Quantity>
+        <Amount>161483.79</Amount>
+      </Item>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>78</Quantity>
+        <Amount>19471.14</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>GB29NWBK60161331926819</IBAN>
+    <BIC>NWBKGB2L</BIC>
+  </BankDetails>
+</Invoice>

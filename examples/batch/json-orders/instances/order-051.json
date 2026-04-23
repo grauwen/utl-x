@@ -1,0 +1,32 @@
+{
+  "orderId": "ORD-2026-10051",
+  "orderDate": "2026-04-24T10:26:00Z",
+  "customer": {
+    "firstName": "Bob",
+    "lastName": "Jones",
+    "email": "BOB.JONES@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Gold",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 8,
+      "unitPrice": 699.0,
+      "discount": 0,
+      "weight": 18.0
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 8,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.075
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026046</InvoiceNumber>
+  <InvoiceDate>2026-04-27</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Atlantic Trading Ltd</Name>
+    <TaxID>GB246603034</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-760 Ltd</Name>
+    <Department>Research</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>58</Quantity>
+        <Amount>180732.64</Amount>
+      </Item>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>46</Quantity>
+        <Amount>219034.52</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>FR7630006000011234567890189</IBAN>
+    <BIC>BNPAFRPP</BIC>
+  </BankDetails>
+</Invoice>

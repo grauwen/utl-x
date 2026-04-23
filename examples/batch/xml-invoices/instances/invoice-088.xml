@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026088</InvoiceNumber>
+  <InvoiceDate>2026-04-09</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Global Supply Corp</Name>
+    <TaxID>NL995616775</TaxID>
+    <Country>United States</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-250 GmbH</Name>
+    <Department>Procurement</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>55</Quantity>
+        <Amount>24085.6</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>56</Quantity>
+        <Amount>58772.0</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>GB29NWBK60161331926819</IBAN>
+    <BIC>NWBKGB2L</BIC>
+  </BankDetails>
+</Invoice>

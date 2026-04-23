@@ -1,0 +1,65 @@
+%utlx 1.0
+input xml
+output json
+---
+// Transform XML invoice into a JSON payment instruction
+// Handles: currency conversion, VAT recalculation, payment terms, bank details
+
+{
+  // Handle XML single-element vs array: wrap single item in array
+  let rawItems = if (isArray($input.Invoice.LineItems.Item)) $input.Invoice.LineItems.Item
+                 else [$input.Invoice.LineItems.Item],
+  let lineItems = map(rawItems, (item) -> {
+    let amount = toNumber(item.Amount),
+    let qty = toNumber(item.Quantity),
+    let unitPrice = amount / qty,
+    {
+      description: item.Description,
+      quantity: qty,
+      unitPrice: unitPrice,
+      amount: amount,
+      taxCode: item.TaxCode
+    }
+  }),
+
+  let totalAmount = sum(map(lineItems, (i) -> i.amount)),
+  let vatRate = toNumber($input.Invoice.VATRate),
+  let vatAmount = totalAmount * vatRate,
+  let grossAmount = totalAmount + vatAmount,
+
+  let paymentTermDays = if ($input.Invoice.PaymentTerms == "NET_10") 10
+                        else if ($input.Invoice.PaymentTerms == "NET_30") 30
+                        else if ($input.Invoice.PaymentTerms == "NET_60") 60
+                        else 30,
+
+  paymentInstruction: {
+    reference: concat("PAY-", $input.Invoice.InvoiceNumber),
+    invoiceNumber: $input.Invoice.InvoiceNumber,
+    invoiceDate: $input.Invoice.InvoiceDate,
+    vendor: {
+      name: $input.Invoice.Vendor.Name,
+      taxId: $input.Invoice.Vendor.TaxID,
+      country: $input.Invoice.Vendor.Country
+    },
+    buyer: {
+      name: $input.Invoice.Buyer.Name,
+      department: $input.Invoice.Buyer.Department
+    },
+    lineItems: lineItems,
+    amounts: {
+      netAmount: totalAmount,
+      vatRate: vatRate,
+      vatAmount: vatAmount,
+      grossAmount: grossAmount,
+      currency: $input.Invoice.Currency
+    },
+    payment: {
+      terms: $input.Invoice.PaymentTerms,
+      dueDays: paymentTermDays,
+      bankAccount: $input.Invoice.BankDetails.IBAN,
+      bankBIC: $input.Invoice.BankDetails.BIC
+    },
+    itemCount: size(lineItems),
+    priority: if (grossAmount > 50000) "HIGH" else if (grossAmount > 10000) "MEDIUM" else "LOW"
+  }
+}

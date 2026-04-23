@@ -559,16 +559,27 @@ def generate_burst_payload(template, index, test_data):
     return payload
 
 
-def run_throughput_test(client, test_data, verbose=False):
+def run_throughput_test(client, test_data, verbose=False, test_file_path=None):
     """Run a throughput/burst test. Returns (passed, message, metrics_dict)."""
     name = test_data.get("name", "unknown")
     transformation = test_data.get("transformation", "")
     burst_config = test_data.get("burst", {})
     count = burst_config.get("count", 25)
-    mode = burst_config.get("mode", "sequential")  # sequential or batch
+    mode = burst_config.get("mode", "sequential")  # sequential, batch, or concurrent
     template = burst_config.get("payload_template", '{"index": {{INDEX}}}')
     content_type = burst_config.get("content_type", "application/json")
     limits = test_data.get("throughput_limits", {})
+
+    # Resolve base directory for relative paths
+    base_dir = Path(test_file_path).parent if test_file_path else TESTS_DIR
+
+    # Load transformation from file if specified
+    if "transformation_file" in test_data and not transformation:
+        tf_path = base_dir / test_data["transformation_file"]
+        if tf_path.exists():
+            transformation = tf_path.read_text()
+        else:
+            return False, f"Transformation file not found: {tf_path}", {}
 
     transform_id = f"throughput-{name}"
 
@@ -578,8 +589,19 @@ def run_throughput_test(client, test_data, verbose=False):
     if not success:
         return False, f"Load failed: {error}", {}
 
-    # Generate payloads
-    payloads = [generate_burst_payload(template, i + 1, test_data) for i in range(count)]
+    # Load payloads from instance files if specified, otherwise generate from template
+    instances_dir = burst_config.get("instances_dir")
+    if instances_dir:
+        inst_path = base_dir / instances_dir
+        if not inst_path.exists():
+            return False, f"Instances directory not found: {inst_path}", {}
+        instance_files = sorted(inst_path.glob("*"))[:count]
+        payloads = [f.read_text() for f in instance_files]
+        count = len(payloads)
+        if verbose:
+            print(f"    Loaded {count} instances from {inst_path}")
+    else:
+        payloads = [generate_burst_payload(template, i + 1, test_data) for i in range(count)]
 
     if mode == "batch":
         # ExecuteBatch — single call with all items
@@ -805,7 +827,7 @@ def compare_output(expected_str, actual_str, fmt):
         return False, f"Text mismatch:\n  Expected: {expected_str}\n  Actual:   {actual_str}"
 
 
-def run_test(client, test_data, verbose=False):
+def run_test(client, test_data, verbose=False, test_file_path=None):
     """Run a single test case. Returns (passed, message) or None for skipped."""
     name = test_data.get("name", "unknown")
 
@@ -817,7 +839,7 @@ def run_test(client, test_data, verbose=False):
 
     # ── Throughput/burst test ──
     if "burst" in test_data:
-        return run_throughput_test(client, test_data, verbose=verbose)
+        return run_throughput_test(client, test_data, verbose=verbose, test_file_path=test_file_path)
 
     # ── Strategy parity test ──
     if "strategies" in test_data:
@@ -1101,7 +1123,7 @@ def main():
             print(f"Running: {category}/{name}")
 
         try:
-            result = run_test(client, test_data, verbose=args.verbose)
+            result = run_test(client, test_data, verbose=args.verbose, test_file_path=str(test_file))
             # run_test returns 2-tuple or 3-tuple (throughput tests add metrics)
             if len(result) == 3:
                 success, message, metrics = result

@@ -1,0 +1,48 @@
+{
+  "orderId": "ORD-2026-10061",
+  "orderDate": "2026-04-18T12:51:00Z",
+  "customer": {
+    "firstName": "Yara",
+    "lastName": "Clark",
+    "email": "YARA.CLARK@EXAMPLE.COM",
+    "country": "UK",
+    "tier": "Standard",
+    "creditLimit": 10000
+  },
+  "items": [
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 4,
+      "unitPrice": 699.0,
+      "discount": 0,
+      "weight": 18.0
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 3,
+      "unitPrice": 349.0,
+      "discount": 0.2,
+      "weight": 12.0
+    },
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 10,
+      "unitPrice": 449.0,
+      "discount": 0,
+      "weight": 15.0
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 3,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.661
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026087</InvoiceNumber>
+  <InvoiceDate>2026-04-22</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>Patel Services Ltd</Name>
+    <TaxID>US654928450</TaxID>
+    <Country>United States</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-162 BV</Name>
+    <Department>Research</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>39</Quantity>
+        <Amount>17192.37</Amount>
+      </Item>
+      <Item>
+        <Description>Migration Services</Description>
+        <TaxCode>T05</TaxCode>
+        <Quantity>92</Quantity>
+        <Amount>20415.72</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>SE4550000000058398257466</IBAN>
+    <BIC>ESSESESS</BIC>
+  </BankDetails>
+</Invoice>

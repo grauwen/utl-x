@@ -1,0 +1,64 @@
+{
+  "orderId": "ORD-2026-10050",
+  "orderDate": "2026-04-26T14:24:00Z",
+  "customer": {
+    "firstName": "Olivia",
+    "lastName": "Clark",
+    "email": "OLIVIA.CLARK@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Silver",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 9,
+      "unitPrice": 149.0,
+      "discount": 0.05,
+      "weight": 0.2
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 6,
+      "unitPrice": 299.0,
+      "discount": 0.2,
+      "weight": 0.35
+    },
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 4,
+      "unitPrice": 799.0,
+      "discount": 0.1,
+      "weight": 8.2
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 4,
+      "unitPrice": 189.0,
+      "discount": 0.2,
+      "weight": 0.5
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 7,
+      "unitPrice": 349.0,
+      "discount": 0,
+      "weight": 12.0
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 8,
+      "unitPrice": 129.0,
+      "discount": 0.15,
+      "weight": 0.8
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.495
+}

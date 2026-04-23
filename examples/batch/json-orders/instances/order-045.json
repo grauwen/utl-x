@@ -1,0 +1,80 @@
+{
+  "orderId": "ORD-2026-10045",
+  "orderDate": "2026-04-06T17:27:00Z",
+  "customer": {
+    "firstName": "Wendy",
+    "lastName": "Wilson",
+    "email": "WENDY.WILSON@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Silver",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 2,
+      "unitPrice": 299.0,
+      "discount": 0.1,
+      "weight": 0.35
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 7,
+      "unitPrice": 1299.0,
+      "discount": 0.15,
+      "weight": 3.2
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 10,
+      "unitPrice": 129.0,
+      "discount": 0,
+      "weight": 0.8
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 2,
+      "unitPrice": 1299.0,
+      "discount": 0,
+      "weight": 3.2
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 10,
+      "unitPrice": 159.0,
+      "discount": 0.1,
+      "weight": 0.1
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 5,
+      "unitPrice": 1299.0,
+      "discount": 0.1,
+      "weight": 3.2
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 3,
+      "unitPrice": 1299.0,
+      "discount": 0.05,
+      "weight": 3.2
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 8,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.969
+}

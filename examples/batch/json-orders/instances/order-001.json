@@ -1,0 +1,56 @@
+{
+  "orderId": "ORD-2026-10001",
+  "orderDate": "2026-04-08T16:38:00Z",
+  "customer": {
+    "firstName": "Uma",
+    "lastName": "Brown",
+    "email": "UMA.BROWN@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Silver",
+    "creditLimit": 5000
+  },
+  "items": [
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 4,
+      "unitPrice": 799.0,
+      "discount": 0,
+      "weight": 8.2
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 2,
+      "unitPrice": 24.99,
+      "discount": 0.15,
+      "weight": 0.1
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 9,
+      "unitPrice": 24.99,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 7,
+      "unitPrice": 119.0,
+      "discount": 0,
+      "weight": 0.05
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 2,
+      "unitPrice": 1299.0,
+      "discount": 0,
+      "weight": 3.2
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.716
+}

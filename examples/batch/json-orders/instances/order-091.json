@@ -1,0 +1,64 @@
+{
+  "orderId": "ORD-2026-10091",
+  "orderDate": "2026-04-05T09:15:00Z",
+  "customer": {
+    "firstName": "Leo",
+    "lastName": "Jackson",
+    "email": "LEO.JACKSON@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Silver",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 7,
+      "unitPrice": 119.0,
+      "discount": 0,
+      "weight": 0.05
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 1,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 7,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 3,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 10,
+      "unitPrice": 549.0,
+      "discount": 0.15,
+      "weight": 6.5
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 8,
+      "unitPrice": 349.0,
+      "discount": 0,
+      "weight": 12.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.362
+}

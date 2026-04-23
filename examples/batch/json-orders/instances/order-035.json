@@ -1,0 +1,24 @@
+{
+  "orderId": "ORD-2026-10035",
+  "orderDate": "2026-04-22T14:25:00Z",
+  "customer": {
+    "firstName": "Frank",
+    "lastName": "Wilson",
+    "email": "FRANK.WILSON@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Standard",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 5,
+      "unitPrice": 449.0,
+      "discount": 0.1,
+      "weight": 15.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.076
+}

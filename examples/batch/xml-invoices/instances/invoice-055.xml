@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026055</InvoiceNumber>
+  <InvoiceDate>2026-04-11</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Smith Engineering Ltd</Name>
+    <TaxID>DE108657116</TaxID>
+    <Country>Switzerland</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-843 SpA</Name>
+    <Department>Finance</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>10</Quantity>
+        <Amount>7068.6</Amount>
+      </Item>
+      <Item>
+        <Description>Hardware Maintenance Contract</Description>
+        <TaxCode>S04</TaxCode>
+        <Quantity>67</Quantity>
+        <Amount>228865.97</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>DE89370400440532013000</IBAN>
+    <BIC>COBADEFFXXX</BIC>
+  </BankDetails>
+</Invoice>

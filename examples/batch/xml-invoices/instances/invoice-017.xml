@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026017</InvoiceNumber>
+  <InvoiceDate>2026-04-14</InvoiceDate>
+  <Currency>GBP</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Van Dijk Electronics BV</Name>
+    <TaxID>GB134075063</TaxID>
+    <Country>France</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-567 AG</Name>
+    <Department>Engineering</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>1</Quantity>
+        <Amount>3741.73</Amount>
+      </Item>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>10</Quantity>
+        <Amount>2741.8</Amount>
+      </Item>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>90</Quantity>
+        <Amount>32904.9</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>9</Quantity>
+        <Amount>44382.42</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>DE89370400440532013000</IBAN>
+    <BIC>COBADEFFXXX</BIC>
+  </BankDetails>
+</Invoice>

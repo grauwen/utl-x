@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026097</InvoiceNumber>
+  <InvoiceDate>2026-04-28</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Pacific Innovations Inc</Name>
+    <TaxID>FR644725181</TaxID>
+    <Country>France</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-346 GmbH</Name>
+    <Department>Legal</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>38</Quantity>
+        <Amount>50698.08</Amount>
+      </Item>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>52</Quantity>
+        <Amount>102541.92</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>75</Quantity>
+        <Amount>266620.5</Amount>
+      </Item>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>25</Quantity>
+        <Amount>43717.0</Amount>
+      </Item>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>29</Quantity>
+        <Amount>99970.83</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>61</Quantity>
+        <Amount>276775.91</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>DE89370400440532013000</IBAN>
+    <BIC>COBADEFFXXX</BIC>
+  </BankDetails>
+</Invoice>

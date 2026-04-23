@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026022</InvoiceNumber>
+  <InvoiceDate>2026-04-28</InvoiceDate>
+  <Currency>GBP</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>Van Dijk Electronics BV</Name>
+    <TaxID>NL341961866</TaxID>
+    <Country>France</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-407 Inc</Name>
+    <Department>Engineering</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>7</Quantity>
+        <Amount>34039.88</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>86</Quantity>
+        <Amount>166557.92</Amount>
+      </Item>
+      <Item>
+        <Description>Storage Array Expansion</Description>
+        <TaxCode>H03</TaxCode>
+        <Quantity>41</Quantity>
+        <Amount>143365.93</Amount>
+      </Item>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>20</Quantity>
+        <Amount>30689.0</Amount>
+      </Item>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>97</Quantity>
+        <Amount>263135.78</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>BE68539007547034</IBAN>
+    <BIC>BPOTBEB1</BIC>
+  </BankDetails>
+</Invoice>

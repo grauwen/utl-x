@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026019</InvoiceNumber>
+  <InvoiceDate>2026-04-14</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>Mueller und Soehne GmbH</Name>
+    <TaxID>DE969170578</TaxID>
+    <Country>Switzerland</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-405 BV</Name>
+    <Department>Research</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>45</Quantity>
+        <Amount>36803.25</Amount>
+      </Item>
+      <Item>
+        <Description>Hardware Maintenance Contract</Description>
+        <TaxCode>S04</TaxCode>
+        <Quantity>93</Quantity>
+        <Amount>357043.74</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>GB29NWBK60161331926819</IBAN>
+    <BIC>NWBKGB2L</BIC>
+  </BankDetails>
+</Invoice>

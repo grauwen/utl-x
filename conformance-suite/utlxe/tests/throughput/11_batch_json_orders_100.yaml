@@ -1,0 +1,17 @@
+name: "batch_json_orders_100"
+category: "throughput"
+description: "100 varied JSON orders through complex invoice transformation — real-world throughput"
+tags: ["throughput", "batch", "real-world", "json", "100-instances"]
+
+strategy: "TEMPLATE"
+
+transformation_file: "../../../../examples/batch/json-orders/transform.utlx"
+
+burst:
+  count: 100
+  mode: "concurrent"
+  instances_dir: "../../../../examples/batch/json-orders/instances"
+  content_type: "application/json"
+
+throughput_limits:
+  max_total_ms: 30000

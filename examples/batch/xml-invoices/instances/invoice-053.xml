@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026053</InvoiceNumber>
+  <InvoiceDate>2026-04-26</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.077</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Dubois Consulting SARL</Name>
+    <TaxID>DE206917560</TaxID>
+    <Country>Switzerland</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-606 Inc</Name>
+    <Department>IT</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>63</Quantity>
+        <Amount>248982.3</Amount>
+      </Item>
+      <Item>
+        <Description>Migration Services</Description>
+        <TaxCode>T05</TaxCode>
+        <Quantity>88</Quantity>
+        <Amount>336438.08</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>SE4550000000058398257466</IBAN>
+    <BIC>ESSESESS</BIC>
+  </BankDetails>
+</Invoice>

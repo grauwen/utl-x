@@ -1,0 +1,24 @@
+{
+  "orderId": "ORD-2026-10083",
+  "orderDate": "2026-04-17T13:15:00Z",
+  "customer": {
+    "firstName": "Hank",
+    "lastName": "Van Dijk",
+    "email": "HANK.VAN DIJK@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Silver",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 1,
+      "unitPrice": 189.0,
+      "discount": 0.05,
+      "weight": 0.5
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.375
+}

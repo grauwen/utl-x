@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026030</InvoiceNumber>
+  <InvoiceDate>2026-04-02</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Chen Manufacturing Co.</Name>
+    <TaxID>US202393989</TaxID>
+    <Country>United States</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-678 Ltd</Name>
+    <Department>Finance</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>49</Quantity>
+        <Amount>136507.63</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>82</Quantity>
+        <Amount>7935.96</Amount>
+      </Item>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>11</Quantity>
+        <Amount>27767.3</Amount>
+      </Item>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>83</Quantity>
+        <Amount>326410.78</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>NL91ABNA0417164300</IBAN>
+    <BIC>ABNANL2A</BIC>
+  </BankDetails>
+</Invoice>

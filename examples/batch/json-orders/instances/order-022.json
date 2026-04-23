@@ -1,0 +1,56 @@
+{
+  "orderId": "ORD-2026-10022",
+  "orderDate": "2026-04-06T17:16:00Z",
+  "customer": {
+    "firstName": "Victor",
+    "lastName": "Martinez",
+    "email": "VICTOR.MARTINEZ@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Silver",
+    "creditLimit": 5000
+  },
+  "items": [
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 2,
+      "unitPrice": 699.0,
+      "discount": 0.2,
+      "weight": 18.0
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 6,
+      "unitPrice": 49.95,
+      "discount": 0.15,
+      "weight": 0.15
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 7,
+      "unitPrice": 149.0,
+      "discount": 0.15,
+      "weight": 0.2
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 9,
+      "unitPrice": 699.0,
+      "discount": 0,
+      "weight": 18.0
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 2,
+      "unitPrice": 1299.0,
+      "discount": 0,
+      "weight": 3.2
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.597
+}

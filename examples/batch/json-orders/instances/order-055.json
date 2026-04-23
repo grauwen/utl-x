@@ -1,0 +1,72 @@
+{
+  "orderId": "ORD-2026-10055",
+  "orderDate": "2026-04-26T11:38:00Z",
+  "customer": {
+    "firstName": "Sophie",
+    "lastName": "White",
+    "email": "SOPHIE.WHITE@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Gold",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 6,
+      "unitPrice": 119.0,
+      "discount": 0.1,
+      "weight": 0.05
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 5,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 7,
+      "unitPrice": 699.0,
+      "discount": 0,
+      "weight": 18.0
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 10,
+      "unitPrice": 1299.0,
+      "discount": 0.2,
+      "weight": 3.2
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 1,
+      "unitPrice": 159.0,
+      "discount": 0.1,
+      "weight": 0.1
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 8,
+      "unitPrice": 24.99,
+      "discount": 0.2,
+      "weight": 0.1
+    },
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 5,
+      "unitPrice": 449.0,
+      "discount": 0.2,
+      "weight": 15.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.637
+}

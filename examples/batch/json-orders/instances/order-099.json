@@ -1,0 +1,80 @@
+{
+  "orderId": "ORD-2026-10099",
+  "orderDate": "2026-04-05T09:03:00Z",
+  "customer": {
+    "firstName": "Bob",
+    "lastName": "Garcia",
+    "email": "BOB.GARCIA@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Standard",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 4,
+      "unitPrice": 299.0,
+      "discount": 0,
+      "weight": 0.35
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 3,
+      "unitPrice": 119.0,
+      "discount": 0,
+      "weight": 0.05
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 6,
+      "unitPrice": 699.0,
+      "discount": 0.15,
+      "weight": 18.0
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 6,
+      "unitPrice": 699.0,
+      "discount": 0.05,
+      "weight": 18.0
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 6,
+      "unitPrice": 549.0,
+      "discount": 0.1,
+      "weight": 6.5
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 2,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    },
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 8,
+      "unitPrice": 799.0,
+      "discount": 0,
+      "weight": 8.2
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 8,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.864
+}

@@ -1,0 +1,48 @@
+{
+  "orderId": "ORD-2026-10081",
+  "orderDate": "2026-04-13T16:33:00Z",
+  "customer": {
+    "firstName": "Yara",
+    "lastName": "Dubois",
+    "email": "YARA.DUBOIS@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Gold",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 8,
+      "unitPrice": 49.95,
+      "discount": 0.2,
+      "weight": 0.15
+    },
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 6,
+      "unitPrice": 799.0,
+      "discount": 0.15,
+      "weight": 8.2
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 8,
+      "unitPrice": 119.0,
+      "discount": 0.05,
+      "weight": 0.05
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 5,
+      "unitPrice": 349.0,
+      "discount": 0.2,
+      "weight": 12.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.817
+}

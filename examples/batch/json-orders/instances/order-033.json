@@ -1,0 +1,32 @@
+{
+  "orderId": "ORD-2026-10033",
+  "orderDate": "2026-04-08T18:04:00Z",
+  "customer": {
+    "firstName": "Marcel",
+    "lastName": "Moore",
+    "email": "MARCEL.MOORE@EXAMPLE.COM",
+    "country": "US",
+    "tier": "Gold",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 1,
+      "unitPrice": 299.0,
+      "discount": 0.15,
+      "weight": 0.35
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 1,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.754
+}

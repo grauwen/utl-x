@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026073</InvoiceNumber>
+  <InvoiceDate>2026-04-13</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Tech Solutions Inc.</Name>
+    <TaxID>US565098113</TaxID>
+    <Country>Switzerland</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-302 SpA</Name>
+    <Department>Procurement</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>7</Quantity>
+        <Amount>6170.85</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>NL91ABNA0417164300</IBAN>
+    <BIC>ABNANL2A</BIC>
+  </BankDetails>
+</Invoice>

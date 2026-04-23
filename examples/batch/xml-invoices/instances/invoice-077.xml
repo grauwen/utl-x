@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026077</InvoiceNumber>
+  <InvoiceDate>2026-04-26</InvoiceDate>
+  <Currency>GBP</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Rossi Automation SpA</Name>
+    <TaxID>FR759422189</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-925 SpA</Name>
+    <Department>IT</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>73</Quantity>
+        <Amount>346342.66</Amount>
+      </Item>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>64</Quantity>
+        <Amount>174945.28</Amount>
+      </Item>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>63</Quantity>
+        <Amount>14988.96</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>30</Quantity>
+        <Amount>90846.9</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>68</Quantity>
+        <Amount>164291.4</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>SE4550000000058398257466</IBAN>
+    <BIC>ESSESESS</BIC>
+  </BankDetails>
+</Invoice>

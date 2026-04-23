@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026078</InvoiceNumber>
+  <InvoiceDate>2026-04-26</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Nordic Systems AB</Name>
+    <TaxID>NL886356993</TaxID>
+    <Country>United Kingdom</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-448 SpA</Name>
+    <Department>Sales</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>19</Quantity>
+        <Amount>73779.09</Amount>
+      </Item>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>68</Quantity>
+        <Amount>293101.08</Amount>
+      </Item>
+      <Item>
+        <Description>Technical Support (hourly)</Description>
+        <TaxCode>S02</TaxCode>
+        <Quantity>48</Quantity>
+        <Amount>169798.08</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>51</Quantity>
+        <Amount>150489.78</Amount>
+      </Item>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>39</Quantity>
+        <Amount>64228.71</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>FR7630006000011234567890189</IBAN>
+    <BIC>BNPAFRPP</BIC>
+  </BankDetails>
+</Invoice>

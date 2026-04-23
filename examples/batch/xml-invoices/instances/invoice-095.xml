@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026095</InvoiceNumber>
+  <InvoiceDate>2026-04-15</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.077</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Dubois Consulting SARL</Name>
+    <TaxID>GB370581558</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-762 Ltd</Name>
+    <Department>Finance</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>61</Quantity>
+        <Amount>278282.0</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>23</Quantity>
+        <Amount>69589.95</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>29</Quantity>
+        <Amount>37680.57</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>40</Quantity>
+        <Amount>143122.8</Amount>
+      </Item>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>83</Quantity>
+        <Amount>117288.96</Amount>
+      </Item>
+      <Item>
+        <Description>Migration Services</Description>
+        <TaxCode>T05</TaxCode>
+        <Quantity>49</Quantity>
+        <Amount>209002.15</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>DE89370400440532013000</IBAN>
+    <BIC>COBADEFFXXX</BIC>
+  </BankDetails>
+</Invoice>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026086</InvoiceNumber>
+  <InvoiceDate>2026-04-08</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Coastal Systems BV</Name>
+    <TaxID>GB912239392</TaxID>
+    <Country>United States</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-490 Inc</Name>
+    <Department>Sales</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>29</Quantity>
+        <Amount>121612.66</Amount>
+      </Item>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>8</Quantity>
+        <Amount>6384.8</Amount>
+      </Item>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>86</Quantity>
+        <Amount>45466.48</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>45</Quantity>
+        <Amount>182272.05</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>IT60X0542811101000000123456</IBAN>
+    <BIC>UNCRITMM</BIC>
+  </BankDetails>
+</Invoice>

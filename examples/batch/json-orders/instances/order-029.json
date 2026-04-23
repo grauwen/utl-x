@@ -1,0 +1,56 @@
+{
+  "orderId": "ORD-2026-10029",
+  "orderDate": "2026-04-14T13:34:00Z",
+  "customer": {
+    "firstName": "Iris",
+    "lastName": "Jackson",
+    "email": "IRIS.JACKSON@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Silver",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 5,
+      "unitPrice": 799.0,
+      "discount": 0,
+      "weight": 8.2
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 9,
+      "unitPrice": 129.0,
+      "discount": 0,
+      "weight": 0.8
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 3,
+      "unitPrice": 549.0,
+      "discount": 0,
+      "weight": 6.5
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 3,
+      "unitPrice": 189.0,
+      "discount": 0.15,
+      "weight": 0.5
+    },
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 2,
+      "unitPrice": 799.0,
+      "discount": 0.05,
+      "weight": 8.2
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.062
+}

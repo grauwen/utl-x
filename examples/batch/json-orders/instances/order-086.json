@@ -1,0 +1,48 @@
+{
+  "orderId": "ORD-2026-10086",
+  "orderDate": "2026-04-22T09:33:00Z",
+  "customer": {
+    "firstName": "Paul",
+    "lastName": "Walker",
+    "email": "PAUL.WALKER@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Silver",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 3,
+      "unitPrice": 24.99,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 1,
+      "unitPrice": 189.0,
+      "discount": 0.1,
+      "weight": 0.5
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 4,
+      "unitPrice": 129.0,
+      "discount": 0.1,
+      "weight": 0.8
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 3,
+      "unitPrice": 189.0,
+      "discount": 0.15,
+      "weight": 0.5
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.953
+}

@@ -1,0 +1,56 @@
+{
+  "orderId": "ORD-2026-10054",
+  "orderDate": "2026-04-14T12:29:00Z",
+  "customer": {
+    "firstName": "Sam",
+    "lastName": "Jones",
+    "email": "SAM.JONES@EXAMPLE.COM",
+    "country": "UK",
+    "tier": "Standard",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 5,
+      "unitPrice": 299.0,
+      "discount": 0.15,
+      "weight": 0.35
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 8,
+      "unitPrice": 1299.0,
+      "discount": 0,
+      "weight": 3.2
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 9,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 8,
+      "unitPrice": 999.0,
+      "discount": 0,
+      "weight": 1.8
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 5,
+      "unitPrice": 119.0,
+      "discount": 0.15,
+      "weight": 0.05
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.999
+}

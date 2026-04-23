@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026082</InvoiceNumber>
+  <InvoiceDate>2026-04-08</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.077</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Van Dijk Electronics BV</Name>
+    <TaxID>US798973247</TaxID>
+    <Country>Switzerland</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-270 BV</Name>
+    <Department>Procurement</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Custom Development</Description>
+        <TaxCode>T04</TaxCode>
+        <Quantity>62</Quantity>
+        <Amount>245161.02</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>BE68539007547034</IBAN>
+    <BIC>BPOTBEB1</BIC>
+  </BankDetails>
+</Invoice>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026091</InvoiceNumber>
+  <InvoiceDate>2026-04-27</InvoiceDate>
+  <Currency>CHF</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Van Dijk Electronics BV</Name>
+    <TaxID>FR433879270</TaxID>
+    <Country>France</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-247 AG</Name>
+    <Department>Legal</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>31</Quantity>
+        <Amount>9113.69</Amount>
+      </Item>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>35</Quantity>
+        <Amount>157160.85</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>44</Quantity>
+        <Amount>180226.64</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>BE68539007547034</IBAN>
+    <BIC>BPOTBEB1</BIC>
+  </BankDetails>
+</Invoice>

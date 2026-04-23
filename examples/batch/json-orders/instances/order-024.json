@@ -1,0 +1,64 @@
+{
+  "orderId": "ORD-2026-10024",
+  "orderDate": "2026-04-24T10:39:00Z",
+  "customer": {
+    "firstName": "Charlie",
+    "lastName": "Mueller",
+    "email": "CHARLIE.MUELLER@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Standard",
+    "creditLimit": 50000
+  },
+  "items": [
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 2,
+      "unitPrice": 159.0,
+      "discount": 0.15,
+      "weight": 0.1
+    },
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 5,
+      "unitPrice": 449.0,
+      "discount": 0.1,
+      "weight": 15.0
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 7,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 5,
+      "unitPrice": 189.0,
+      "discount": 0.1,
+      "weight": 0.5
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 4,
+      "unitPrice": 549.0,
+      "discount": 0.05,
+      "weight": 6.5
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 7,
+      "unitPrice": 159.0,
+      "discount": 0.15,
+      "weight": 0.1
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.406
+}

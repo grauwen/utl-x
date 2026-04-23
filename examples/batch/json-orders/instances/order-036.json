@@ -1,0 +1,56 @@
+{
+  "orderId": "ORD-2026-10036",
+  "orderDate": "2026-04-28T14:52:00Z",
+  "customer": {
+    "firstName": "Wendy",
+    "lastName": "Van Dijk",
+    "email": "WENDY.VAN DIJK@EXAMPLE.COM",
+    "country": "UK",
+    "tier": "Platinum",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 10,
+      "unitPrice": 699.0,
+      "discount": 0.2,
+      "weight": 18.0
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 10,
+      "unitPrice": 999.0,
+      "discount": 0.2,
+      "weight": 1.8
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 6,
+      "unitPrice": 1299.0,
+      "discount": 0.1,
+      "weight": 3.2
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 6,
+      "unitPrice": 189.0,
+      "discount": 0,
+      "weight": 0.5
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 6,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.434
+}

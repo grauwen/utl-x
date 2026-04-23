@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026045</InvoiceNumber>
+  <InvoiceDate>2026-04-18</InvoiceDate>
+  <Currency>GBP</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Tech Solutions Inc.</Name>
+    <TaxID>NL622558165</TaxID>
+    <Country>Switzerland</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-456 Inc</Name>
+    <Department>Procurement</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Technical Support (hourly)</Description>
+        <TaxCode>S02</TaxCode>
+        <Quantity>87</Quantity>
+        <Amount>62034.48</Amount>
+      </Item>
+      <Item>
+        <Description>Technical Support (hourly)</Description>
+        <TaxCode>S02</TaxCode>
+        <Quantity>31</Quantity>
+        <Amount>48410.53</Amount>
+      </Item>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>48</Quantity>
+        <Amount>167160.48</Amount>
+      </Item>
+      <Item>
+        <Description>Storage Array Expansion</Description>
+        <TaxCode>H03</TaxCode>
+        <Quantity>50</Quantity>
+        <Amount>106014.0</Amount>
+      </Item>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>74</Quantity>
+        <Amount>144252.64</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>SE4550000000058398257466</IBAN>
+    <BIC>ESSESESS</BIC>
+  </BankDetails>
+</Invoice>

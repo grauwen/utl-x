@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10090",
+  "orderDate": "2026-04-15T17:45:00Z",
+  "customer": {
+    "firstName": "Xander",
+    "lastName": "Moore",
+    "email": "XANDER.MOORE@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Standard",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 5,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 2,
+      "unitPrice": 999.0,
+      "discount": 0,
+      "weight": 1.8
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 5,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.69
+}

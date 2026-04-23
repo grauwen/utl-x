@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026083</InvoiceNumber>
+  <InvoiceDate>2026-04-03</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Nordic Systems AB</Name>
+    <TaxID>GB272769884</TaxID>
+    <Country>Switzerland</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-562 GmbH</Name>
+    <Department>Engineering</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Technical Support (hourly)</Description>
+        <TaxCode>S02</TaxCode>
+        <Quantity>44</Quantity>
+        <Amount>39248.88</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>CH9300762011623852957</IBAN>
+    <BIC>UBSWCHZH80A</BIC>
+  </BankDetails>
+</Invoice>

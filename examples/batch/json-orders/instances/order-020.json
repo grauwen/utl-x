@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10020",
+  "orderDate": "2026-04-11T14:51:00Z",
+  "customer": {
+    "firstName": "Lars",
+    "lastName": "Nakamura",
+    "email": "LARS.NAKAMURA@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Standard",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 4,
+      "unitPrice": 449.0,
+      "discount": 0.2,
+      "weight": 15.0
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 3,
+      "unitPrice": 549.0,
+      "discount": 0.05,
+      "weight": 6.5
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 3,
+      "unitPrice": 1299.0,
+      "discount": 0.15,
+      "weight": 3.2
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.267
+}

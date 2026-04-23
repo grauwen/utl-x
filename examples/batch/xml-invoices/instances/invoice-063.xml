@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026063</InvoiceNumber>
+  <InvoiceDate>2026-04-09</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Pacific Innovations Inc</Name>
+    <TaxID>NL494801749</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-942 SpA</Name>
+    <Department>Operations</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Migration Services</Description>
+        <TaxCode>T05</TaxCode>
+        <Quantity>16</Quantity>
+        <Amount>61897.28</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>43</Quantity>
+        <Amount>173942.74</Amount>
+      </Item>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>68</Quantity>
+        <Amount>24899.56</Amount>
+      </Item>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>74</Quantity>
+        <Amount>233565.46</Amount>
+      </Item>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>59</Quantity>
+        <Amount>152123.83</Amount>
+      </Item>
+      <Item>
+        <Description>Cloud Infrastructure Services</Description>
+        <TaxCode>S01</TaxCode>
+        <Quantity>64</Quantity>
+        <Amount>275445.12</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>CH9300762011623852957</IBAN>
+    <BIC>UBSWCHZH80A</BIC>
+  </BankDetails>
+</Invoice>

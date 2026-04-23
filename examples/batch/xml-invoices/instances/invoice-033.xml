@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026033</InvoiceNumber>
+  <InvoiceDate>2026-04-04</InvoiceDate>
+  <Currency>CHF</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>Patel Services Ltd</Name>
+    <TaxID>GB486458467</TaxID>
+    <Country>France</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-484 BV</Name>
+    <Department>Sales</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>32</Quantity>
+        <Amount>114556.48</Amount>
+      </Item>
+      <Item>
+        <Description>Technical Support (hourly)</Description>
+        <TaxCode>S02</TaxCode>
+        <Quantity>35</Quantity>
+        <Amount>28468.65</Amount>
+      </Item>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>82</Quantity>
+        <Amount>66720.94</Amount>
+      </Item>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>41</Quantity>
+        <Amount>75254.27</Amount>
+      </Item>
+      <Item>
+        <Description>Technical Support (hourly)</Description>
+        <TaxCode>S02</TaxCode>
+        <Quantity>1</Quantity>
+        <Amount>4717.65</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>NL91ABNA0417164300</IBAN>
+    <BIC>ABNANL2A</BIC>
+  </BankDetails>
+</Invoice>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026032</InvoiceNumber>
+  <InvoiceDate>2026-04-12</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Alpine Solutions AG</Name>
+    <TaxID>GB626781451</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-498 SpA</Name>
+    <Department>Research</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>45</Quantity>
+        <Amount>14211.0</Amount>
+      </Item>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>30</Quantity>
+        <Amount>126043.2</Amount>
+      </Item>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>78</Quantity>
+        <Amount>300813.24</Amount>
+      </Item>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>51</Quantity>
+        <Amount>247154.16</Amount>
+      </Item>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>4</Quantity>
+        <Amount>12755.64</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>NL91ABNA0417164300</IBAN>
+    <BIC>ABNANL2A</BIC>
+  </BankDetails>
+</Invoice>

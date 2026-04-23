@@ -1,0 +1,80 @@
+{
+  "orderId": "ORD-2026-10044",
+  "orderDate": "2026-04-27T17:58:00Z",
+  "customer": {
+    "firstName": "Hank",
+    "lastName": "Wilson",
+    "email": "HANK.WILSON@EXAMPLE.COM",
+    "country": "US",
+    "tier": "Silver",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 4,
+      "unitPrice": 999.0,
+      "discount": 0,
+      "weight": 1.8
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 10,
+      "unitPrice": 349.0,
+      "discount": 0.15,
+      "weight": 12.0
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 4,
+      "unitPrice": 349.0,
+      "discount": 0.05,
+      "weight": 12.0
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 9,
+      "unitPrice": 999.0,
+      "discount": 0,
+      "weight": 1.8
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 3,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 3,
+      "unitPrice": 699.0,
+      "discount": 0,
+      "weight": 18.0
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 3,
+      "unitPrice": 1299.0,
+      "discount": 0.2,
+      "weight": 3.2
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 10,
+      "unitPrice": 49.95,
+      "discount": 0.15,
+      "weight": 0.15
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.124
+}

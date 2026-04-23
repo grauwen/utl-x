@@ -1,0 +1,17 @@
+name: "batch_xml_invoices_100"
+category: "throughput"
+description: "100 varied XML invoices through payment instruction transformation — real-world throughput"
+tags: ["throughput", "batch", "real-world", "xml", "100-instances"]
+
+strategy: "TEMPLATE"
+
+transformation_file: "../../../../examples/batch/xml-invoices/transform.utlx"
+
+burst:
+  count: 100
+  mode: "concurrent"
+  instances_dir: "../../../../examples/batch/xml-invoices/instances"
+  content_type: "application/xml"
+
+throughput_limits:
+  max_total_ms: 30000

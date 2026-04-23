@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026094</InvoiceNumber>
+  <InvoiceDate>2026-04-28</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_60</PaymentTerms>
+  <Vendor>
+    <Name>EuroTech GmbH</Name>
+    <TaxID>US937336224</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-131 Ltd</Name>
+    <Department>IT</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>71</Quantity>
+        <Amount>126473.01</Amount>
+      </Item>
+      <Item>
+        <Description>Software Licenses (per user)</Description>
+        <TaxCode>S03</TaxCode>
+        <Quantity>34</Quantity>
+        <Amount>127750.24</Amount>
+      </Item>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>12</Quantity>
+        <Amount>17533.08</Amount>
+      </Item>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>7</Quantity>
+        <Amount>5994.73</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>FR7630006000011234567890189</IBAN>
+    <BIC>BNPAFRPP</BIC>
+  </BankDetails>
+</Invoice>

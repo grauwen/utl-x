@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026007</InvoiceNumber>
+  <InvoiceDate>2026-04-23</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.2</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Rossi Automation SpA</Name>
+    <TaxID>FR928042067</TaxID>
+    <Country>France</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-778 BV</Name>
+    <Department>Research</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Security Audit Services</Description>
+        <TaxCode>S06</TaxCode>
+        <Quantity>70</Quantity>
+        <Amount>126260.4</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>93</Quantity>
+        <Amount>318031.17</Amount>
+      </Item>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>89</Quantity>
+        <Amount>120914.51</Amount>
+      </Item>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>25</Quantity>
+        <Amount>119720.5</Amount>
+      </Item>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>72</Quantity>
+        <Amount>109985.04</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>IT60X0542811101000000123456</IBAN>
+    <BIC>UNCRITMM</BIC>
+  </BankDetails>
+</Invoice>

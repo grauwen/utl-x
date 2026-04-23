@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026009</InvoiceNumber>
+  <InvoiceDate>2026-04-11</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.077</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Patel Services Ltd</Name>
+    <TaxID>DE207586738</TaxID>
+    <Country>United Kingdom</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-377 AG</Name>
+    <Department>Operations</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Hardware Maintenance Contract</Description>
+        <TaxCode>S04</TaxCode>
+        <Quantity>7</Quantity>
+        <Amount>23559.76</Amount>
+      </Item>
+      <Item>
+        <Description>Storage Array Expansion</Description>
+        <TaxCode>H03</TaxCode>
+        <Quantity>29</Quantity>
+        <Amount>93027.07</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>SE4550000000058398257466</IBAN>
+    <BIC>ESSESESS</BIC>
+  </BankDetails>
+</Invoice>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026067</InvoiceNumber>
+  <InvoiceDate>2026-04-17</InvoiceDate>
+  <Currency>GBP</Currency>
+  <VATRate>0.19</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Mueller und Soehne GmbH</Name>
+    <TaxID>FR211614410</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-519 GmbH</Name>
+    <Department>Finance</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Project Management</Description>
+        <TaxCode>T03</TaxCode>
+        <Quantity>85</Quantity>
+        <Amount>162567.6</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>AT611904300234573201</IBAN>
+    <BIC>OPSKATWW</BIC>
+  </BankDetails>
+</Invoice>

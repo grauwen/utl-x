@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026099</InvoiceNumber>
+  <InvoiceDate>2026-04-14</InvoiceDate>
+  <Currency>USD</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Rossi Automation SpA</Name>
+    <TaxID>GB668909764</TaxID>
+    <Country>France</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-328 SpA</Name>
+    <Department>Operations</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Data Analytics Platform</Description>
+        <TaxCode>S05</TaxCode>
+        <Quantity>60</Quantity>
+        <Amount>255810.6</Amount>
+      </Item>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>7</Quantity>
+        <Amount>30370.55</Amount>
+      </Item>
+      <Item>
+        <Description>Backup Solution</Description>
+        <TaxCode>H04</TaxCode>
+        <Quantity>75</Quantity>
+        <Amount>354321.75</Amount>
+      </Item>
+      <Item>
+        <Description>Technical Support (hourly)</Description>
+        <TaxCode>S02</TaxCode>
+        <Quantity>61</Quantity>
+        <Amount>271612.26</Amount>
+      </Item>
+      <Item>
+        <Description>Storage Array Expansion</Description>
+        <TaxCode>H03</TaxCode>
+        <Quantity>16</Quantity>
+        <Amount>69505.76</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>CH9300762011623852957</IBAN>
+    <BIC>UBSWCHZH80A</BIC>
+  </BankDetails>
+</Invoice>

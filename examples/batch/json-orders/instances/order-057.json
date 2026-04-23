@@ -1,0 +1,48 @@
+{
+  "orderId": "ORD-2026-10057",
+  "orderDate": "2026-04-10T13:51:00Z",
+  "customer": {
+    "firstName": "Karen",
+    "lastName": "Dubois",
+    "email": "KAREN.DUBOIS@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Gold",
+    "creditLimit": 5000
+  },
+  "items": [
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 9,
+      "unitPrice": 549.0,
+      "discount": 0,
+      "weight": 6.5
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 9,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 3,
+      "unitPrice": 699.0,
+      "discount": 0,
+      "weight": 18.0
+    },
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 8,
+      "unitPrice": 449.0,
+      "discount": 0.2,
+      "weight": 15.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.963
+}

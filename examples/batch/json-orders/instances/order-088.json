@@ -1,0 +1,24 @@
+{
+  "orderId": "ORD-2026-10088",
+  "orderDate": "2026-04-11T12:32:00Z",
+  "customer": {
+    "firstName": "Olivia",
+    "lastName": "Johnson",
+    "email": "OLIVIA.JOHNSON@EXAMPLE.COM",
+    "country": "US",
+    "tier": "Gold",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 4,
+      "unitPrice": 349.0,
+      "discount": 0,
+      "weight": 12.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.253
+}

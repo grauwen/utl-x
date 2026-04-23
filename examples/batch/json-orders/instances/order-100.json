@@ -1,0 +1,64 @@
+{
+  "orderId": "ORD-2026-10100",
+  "orderDate": "2026-04-08T11:37:00Z",
+  "customer": {
+    "firstName": "Nick",
+    "lastName": "Davis",
+    "email": "NICK.DAVIS@EXAMPLE.COM",
+    "country": "FR",
+    "tier": "Gold",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 10,
+      "unitPrice": 449.0,
+      "discount": 0.15,
+      "weight": 15.0
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 4,
+      "unitPrice": 129.0,
+      "discount": 0.2,
+      "weight": 0.8
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 8,
+      "unitPrice": 549.0,
+      "discount": 0.1,
+      "weight": 6.5
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 8,
+      "unitPrice": 299.0,
+      "discount": 0,
+      "weight": 0.35
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 1,
+      "unitPrice": 299.0,
+      "discount": 0,
+      "weight": 0.35
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 9,
+      "unitPrice": 189.0,
+      "discount": 0.05,
+      "weight": 0.5
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.051
+}

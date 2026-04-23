@@ -1,0 +1,64 @@
+{
+  "orderId": "ORD-2026-10084",
+  "orderDate": "2026-04-27T10:35:00Z",
+  "customer": {
+    "firstName": "Alice",
+    "lastName": "Anderson",
+    "email": "ALICE.ANDERSON@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Gold",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 3,
+      "unitPrice": 349.0,
+      "discount": 0,
+      "weight": 12.0
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 5,
+      "unitPrice": 1299.0,
+      "discount": 0.2,
+      "weight": 3.2
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 3,
+      "unitPrice": 299.0,
+      "discount": 0.2,
+      "weight": 0.35
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 8,
+      "unitPrice": 24.99,
+      "discount": 0.05,
+      "weight": 0.1
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 1,
+      "unitPrice": 119.0,
+      "discount": 0,
+      "weight": 0.05
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 5,
+      "unitPrice": 1299.0,
+      "discount": 0,
+      "weight": 3.2
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.111
+}

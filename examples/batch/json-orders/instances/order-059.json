@@ -1,0 +1,80 @@
+{
+  "orderId": "ORD-2026-10059",
+  "orderDate": "2026-04-21T09:53:00Z",
+  "customer": {
+    "firstName": "Hank",
+    "lastName": "de Vries",
+    "email": "HANK.DE VRIES@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Silver",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 5,
+      "unitPrice": 449.0,
+      "discount": 0.15,
+      "weight": 15.0
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 2,
+      "unitPrice": 189.0,
+      "discount": 0,
+      "weight": 0.5
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 1,
+      "unitPrice": 1299.0,
+      "discount": 0,
+      "weight": 3.2
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 2,
+      "unitPrice": 299.0,
+      "discount": 0,
+      "weight": 0.35
+    },
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 9,
+      "unitPrice": 799.0,
+      "discount": 0,
+      "weight": 8.2
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 8,
+      "unitPrice": 189.0,
+      "discount": 0,
+      "weight": 0.5
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 9,
+      "unitPrice": 159.0,
+      "discount": 0.05,
+      "weight": 0.1
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 3,
+      "unitPrice": 119.0,
+      "discount": 0.05,
+      "weight": 0.05
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.939
+}

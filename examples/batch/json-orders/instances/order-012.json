@@ -1,0 +1,32 @@
+{
+  "orderId": "ORD-2026-10012",
+  "orderDate": "2026-04-01T09:59:00Z",
+  "customer": {
+    "firstName": "Iris",
+    "lastName": "Jackson",
+    "email": "IRIS.JACKSON@EXAMPLE.COM",
+    "country": "UK",
+    "tier": "Gold",
+    "creditLimit": 10000
+  },
+  "items": [
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 9,
+      "unitPrice": 299.0,
+      "discount": 0,
+      "weight": 0.35
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 9,
+      "unitPrice": 1299.0,
+      "discount": 0.2,
+      "weight": 3.2
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.406
+}

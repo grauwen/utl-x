@@ -1,0 +1,83 @@
+%utlx 1.0
+input json
+output json
+---
+// Complex order-to-invoice transformation with business logic:
+// - Line item totals with discount
+// - Tax calculation (tiered by country)
+// - Shipping cost (weight-based + express surcharge)
+// - Customer tier discount
+// - Status determination (credit limit, stock, fraud score)
+
+{
+  let items = map($input.items, (item) -> {
+    let lineTotal = item.quantity * item.unitPrice * (1 - item.discount),
+    {
+      sku: item.sku,
+      product: item.productName,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      discount: item.discount,
+      lineTotal: lineTotal,
+      weight: item.weight * item.quantity
+    }
+  }),
+
+  let subtotal = sum(map(items, (i) -> i.lineTotal)),
+  let totalWeight = sum(map(items, (i) -> i.weight)),
+
+  let taxRate = if ($input.customer.country == "DE") 0.19
+               else if ($input.customer.country == "NL") 0.21
+               else if ($input.customer.country == "FR") 0.20
+               else if ($input.customer.country == "UK") 0.20
+               else if ($input.customer.country == "US") 0.08
+               else 0.15,
+
+  let tierDiscount = if ($input.customer.tier == "Platinum") 0.20
+                     else if ($input.customer.tier == "Gold") 0.15
+                     else if ($input.customer.tier == "Silver") 0.10
+                     else 0.0,
+
+  let discountAmount = subtotal * tierDiscount,
+  let afterDiscount = subtotal - discountAmount,
+  let taxAmount = afterDiscount * taxRate,
+  let shippingBase = if (totalWeight > 50) 25.0 else if (totalWeight > 20) 15.0 else 8.0,
+  let shippingCost = if ($input.express) shippingBase * 2.5 else shippingBase,
+  let freeShipping = afterDiscount > 500,
+  let finalShipping = if (freeShipping) 0 else shippingCost,
+  let total = afterDiscount + taxAmount + finalShipping,
+  let creditOk = total <= $input.customer.creditLimit,
+  let itemCount = size(items),
+  let allInStock = size(filter(items, (i) -> i.quantity > 0)) == itemCount,
+
+  invoice: {
+    invoiceId: concat("INV-", $input.orderId),
+    orderDate: $input.orderDate,
+    customer: {
+      name: concat($input.customer.firstName, " ", $input.customer.lastName),
+      email: lowerCase($input.customer.email),
+      country: $input.customer.country,
+      tier: $input.customer.tier,
+      creditLimit: $input.customer.creditLimit
+    },
+    items: items,
+    pricing: {
+      subtotal: subtotal,
+      tierDiscount: tierDiscount,
+      discountAmount: discountAmount,
+      afterDiscount: afterDiscount,
+      taxRate: taxRate,
+      taxAmount: taxAmount,
+      shipping: finalShipping,
+      freeShipping: freeShipping,
+      total: total
+    },
+    totalWeight: totalWeight,
+    itemCount: itemCount,
+    status: if (!creditOk) "CREDIT_HOLD"
+            else if ($input.fraudScore > 0.7) "FRAUD_REVIEW"
+            else if (!allInStock) "BACKORDER"
+            else "APPROVED",
+    express: $input.express
+  }
+}

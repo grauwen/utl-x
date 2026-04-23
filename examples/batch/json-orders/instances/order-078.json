@@ -1,0 +1,32 @@
+{
+  "orderId": "ORD-2026-10078",
+  "orderDate": "2026-04-05T18:44:00Z",
+  "customer": {
+    "firstName": "Wendy",
+    "lastName": "Mueller",
+    "email": "WENDY.MUELLER@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Gold",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 9,
+      "unitPrice": 49.95,
+      "discount": 0.05,
+      "weight": 0.15
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 6,
+      "unitPrice": 159.0,
+      "discount": 0.2,
+      "weight": 0.1
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.646
+}

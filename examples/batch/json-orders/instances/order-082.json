@@ -1,0 +1,56 @@
+{
+  "orderId": "ORD-2026-10082",
+  "orderDate": "2026-04-15T16:09:00Z",
+  "customer": {
+    "firstName": "Zach",
+    "lastName": "Walker",
+    "email": "ZACH.WALKER@EXAMPLE.COM",
+    "country": "FR",
+    "tier": "Gold",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 8,
+      "unitPrice": 1299.0,
+      "discount": 0.2,
+      "weight": 3.2
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 9,
+      "unitPrice": 129.0,
+      "discount": 0,
+      "weight": 0.8
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 9,
+      "unitPrice": 24.99,
+      "discount": 0.2,
+      "weight": 0.1
+    },
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 5,
+      "unitPrice": 999.0,
+      "discount": 0,
+      "weight": 1.8
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 3,
+      "unitPrice": 349.0,
+      "discount": 0,
+      "weight": 12.0
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.946
+}

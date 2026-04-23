@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10068",
+  "orderDate": "2026-04-11T10:23:00Z",
+  "customer": {
+    "firstName": "Sophie",
+    "lastName": "Jones",
+    "email": "SOPHIE.JONES@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Platinum",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 1,
+      "unitPrice": 24.99,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 9,
+      "unitPrice": 24.99,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 7,
+      "unitPrice": 189.0,
+      "discount": 0.05,
+      "weight": 0.5
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.777
+}

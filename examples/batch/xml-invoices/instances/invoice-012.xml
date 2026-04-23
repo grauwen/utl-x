@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026012</InvoiceNumber>
+  <InvoiceDate>2026-04-06</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Dubois Consulting SARL</Name>
+    <TaxID>US824132709</TaxID>
+    <Country>Netherlands</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-928 GmbH</Name>
+    <Department>IT</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Consulting Services</Description>
+        <TaxCode>T02</TaxCode>
+        <Quantity>44</Quantity>
+        <Amount>174429.2</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>FR7630006000011234567890189</IBAN>
+    <BIC>BNPAFRPP</BIC>
+  </BankDetails>
+</Invoice>

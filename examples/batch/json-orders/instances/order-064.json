@@ -1,0 +1,56 @@
+{
+  "orderId": "ORD-2026-10064",
+  "orderDate": "2026-04-15T11:26:00Z",
+  "customer": {
+    "firstName": "Sam",
+    "lastName": "Clark",
+    "email": "SAM.CLARK@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Standard",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 9,
+      "unitPrice": 299.0,
+      "discount": 0.1,
+      "weight": 0.35
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 2,
+      "unitPrice": 189.0,
+      "discount": 0.2,
+      "weight": 0.5
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 2,
+      "unitPrice": 24.99,
+      "discount": 0.2,
+      "weight": 0.1
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 9,
+      "unitPrice": 159.0,
+      "discount": 0.15,
+      "weight": 0.1
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 4,
+      "unitPrice": 699.0,
+      "discount": 0.05,
+      "weight": 18.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.399
+}

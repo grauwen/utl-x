@@ -1,0 +1,72 @@
+{
+  "orderId": "ORD-2026-10071",
+  "orderDate": "2026-04-04T14:01:00Z",
+  "customer": {
+    "firstName": "Xander",
+    "lastName": "Moore",
+    "email": "XANDER.MOORE@EXAMPLE.COM",
+    "country": "FR",
+    "tier": "Gold",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 4,
+      "unitPrice": 149.0,
+      "discount": 0.1,
+      "weight": 0.2
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 6,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 1,
+      "unitPrice": 189.0,
+      "discount": 0.05,
+      "weight": 0.5
+    },
+    {
+      "sku": "LAPTOP-15",
+      "productName": "ProBook Laptop 15\"",
+      "quantity": 8,
+      "unitPrice": 1299.0,
+      "discount": 0,
+      "weight": 3.2
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 6,
+      "unitPrice": 699.0,
+      "discount": 0.1,
+      "weight": 18.0
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 10,
+      "unitPrice": 189.0,
+      "discount": 0.05,
+      "weight": 0.5
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 7,
+      "unitPrice": 24.99,
+      "discount": 0,
+      "weight": 0.1
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.801
+}

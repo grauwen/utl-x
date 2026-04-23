@@ -1,0 +1,64 @@
+{
+  "orderId": "ORD-2026-10067",
+  "orderDate": "2026-04-25T12:58:00Z",
+  "customer": {
+    "firstName": "Paul",
+    "lastName": "Davis",
+    "email": "PAUL.DAVIS@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Silver",
+    "creditLimit": 15000
+  },
+  "items": [
+    {
+      "sku": "LAPTOP-13",
+      "productName": "UltraBook 13\"",
+      "quantity": 5,
+      "unitPrice": 999.0,
+      "discount": 0.1,
+      "weight": 1.8
+    },
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 7,
+      "unitPrice": 799.0,
+      "discount": 0.2,
+      "weight": 8.2
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 10,
+      "unitPrice": 149.0,
+      "discount": 0.1,
+      "weight": 0.2
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 9,
+      "unitPrice": 159.0,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 5,
+      "unitPrice": 119.0,
+      "discount": 0,
+      "weight": 0.05
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 5,
+      "unitPrice": 549.0,
+      "discount": 0.15,
+      "weight": 6.5
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.006
+}

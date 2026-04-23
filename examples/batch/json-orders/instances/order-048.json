@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10048",
+  "orderDate": "2026-04-04T18:53:00Z",
+  "customer": {
+    "firstName": "Uma",
+    "lastName": "Walker",
+    "email": "UMA.WALKER@EXAMPLE.COM",
+    "country": "UK",
+    "tier": "Silver",
+    "creditLimit": 10000
+  },
+  "items": [
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 9,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    },
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 7,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    },
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 2,
+      "unitPrice": 799.0,
+      "discount": 0.05,
+      "weight": 8.2
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.933
+}

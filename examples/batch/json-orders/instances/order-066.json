@@ -1,0 +1,24 @@
+{
+  "orderId": "ORD-2026-10066",
+  "orderDate": "2026-04-12T09:36:00Z",
+  "customer": {
+    "firstName": "Sophie",
+    "lastName": "Mueller",
+    "email": "SOPHIE.MUELLER@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Gold",
+    "creditLimit": 50000
+  },
+  "items": [
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 10,
+      "unitPrice": 49.95,
+      "discount": 0,
+      "weight": 0.15
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.155
+}

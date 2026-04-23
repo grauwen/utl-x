@@ -1,0 +1,32 @@
+{
+  "orderId": "ORD-2026-10076",
+  "orderDate": "2026-04-17T16:39:00Z",
+  "customer": {
+    "firstName": "Olivia",
+    "lastName": "Brown",
+    "email": "OLIVIA.BROWN@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Silver",
+    "creditLimit": 10000
+  },
+  "items": [
+    {
+      "sku": "WEBCAM-4K",
+      "productName": "4K Webcam",
+      "quantity": 3,
+      "unitPrice": 149.0,
+      "discount": 0,
+      "weight": 0.2
+    },
+    {
+      "sku": "MONITOR-32",
+      "productName": "Ultra-Wide 32\"",
+      "quantity": 8,
+      "unitPrice": 799.0,
+      "discount": 0.05,
+      "weight": 8.2
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.373
+}

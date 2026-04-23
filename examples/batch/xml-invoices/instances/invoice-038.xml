@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026038</InvoiceNumber>
+  <InvoiceDate>2026-04-20</InvoiceDate>
+  <Currency>CHF</Currency>
+  <VATRate>0.08</VATRate>
+  <PaymentTerms>NET_10</PaymentTerms>
+  <Vendor>
+    <Name>Atlantic Trading Ltd</Name>
+    <TaxID>GB179419456</TaxID>
+    <Country>United Kingdom</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-314 BV</Name>
+    <Department>Operations</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>39</Quantity>
+        <Amount>48672.0</Amount>
+      </Item>
+      <Item>
+        <Description>Training &amp; Certification</Description>
+        <TaxCode>T01</TaxCode>
+        <Quantity>20</Quantity>
+        <Amount>71808.4</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>IT60X0542811101000000123456</IBAN>
+    <BIC>UNCRITMM</BIC>
+  </BankDetails>
+</Invoice>

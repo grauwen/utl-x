@@ -1,0 +1,80 @@
+{
+  "orderId": "ORD-2026-10028",
+  "orderDate": "2026-04-21T12:49:00Z",
+  "customer": {
+    "firstName": "Diana",
+    "lastName": "Jackson",
+    "email": "DIANA.JACKSON@EXAMPLE.COM",
+    "country": "FR",
+    "tier": "Gold",
+    "creditLimit": 50000
+  },
+  "items": [
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 9,
+      "unitPrice": 159.0,
+      "discount": 0.1,
+      "weight": 0.1
+    },
+    {
+      "sku": "SSD-1TB",
+      "productName": "1TB NVMe SSD",
+      "quantity": 6,
+      "unitPrice": 119.0,
+      "discount": 0.2,
+      "weight": 0.05
+    },
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 8,
+      "unitPrice": 449.0,
+      "discount": 0.1,
+      "weight": 15.0
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 9,
+      "unitPrice": 699.0,
+      "discount": 0.05,
+      "weight": 18.0
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 9,
+      "unitPrice": 699.0,
+      "discount": 0.05,
+      "weight": 18.0
+    },
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 3,
+      "unitPrice": 449.0,
+      "discount": 0.15,
+      "weight": 15.0
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 8,
+      "unitPrice": 699.0,
+      "discount": 0.05,
+      "weight": 18.0
+    },
+    {
+      "sku": "MOUSE-WL",
+      "productName": "Wireless Mouse",
+      "quantity": 4,
+      "unitPrice": 49.95,
+      "discount": 0.2,
+      "weight": 0.15
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.627
+}

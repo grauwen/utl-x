@@ -1,0 +1,64 @@
+{
+  "orderId": "ORD-2026-10053",
+  "orderDate": "2026-04-28T14:39:00Z",
+  "customer": {
+    "firstName": "Jack",
+    "lastName": "Chen",
+    "email": "JACK.CHEN@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Platinum",
+    "creditLimit": 100000
+  },
+  "items": [
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 1,
+      "unitPrice": 349.0,
+      "discount": 0,
+      "weight": 12.0
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 6,
+      "unitPrice": 129.0,
+      "discount": 0.05,
+      "weight": 0.8
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 4,
+      "unitPrice": 549.0,
+      "discount": 0.1,
+      "weight": 6.5
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 10,
+      "unitPrice": 189.0,
+      "discount": 0.15,
+      "weight": 0.5
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 3,
+      "unitPrice": 349.0,
+      "discount": 0,
+      "weight": 12.0
+    },
+    {
+      "sku": "MONITOR-27",
+      "productName": "4K Monitor 27\"",
+      "quantity": 2,
+      "unitPrice": 549.0,
+      "discount": 0.1,
+      "weight": 6.5
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.498
+}

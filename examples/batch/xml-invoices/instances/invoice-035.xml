@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+  <InvoiceNumber>INV-2026035</InvoiceNumber>
+  <InvoiceDate>2026-04-16</InvoiceDate>
+  <Currency>EUR</Currency>
+  <VATRate>0.21</VATRate>
+  <PaymentTerms>NET_30</PaymentTerms>
+  <Vendor>
+    <Name>Global Supply Corp</Name>
+    <TaxID>NL874059895</TaxID>
+    <Country>Switzerland</Country>
+  </Vendor>
+  <Buyer>
+    <Name>Company-633 Ltd</Name>
+    <Department>HR</Department>
+  </Buyer>
+  <LineItems>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>19</Quantity>
+        <Amount>6900.23</Amount>
+      </Item>
+      <Item>
+        <Description>Network Equipment</Description>
+        <TaxCode>H01</TaxCode>
+        <Quantity>36</Quantity>
+        <Amount>76840.56</Amount>
+      </Item>
+      <Item>
+        <Description>Server Hardware</Description>
+        <TaxCode>H02</TaxCode>
+        <Quantity>10</Quantity>
+        <Amount>18375.7</Amount>
+      </Item>
+  </LineItems>
+  <BankDetails>
+    <IBAN>CH9300762011623852957</IBAN>
+    <BIC>UBSWCHZH80A</BIC>
+  </BankDetails>
+</Invoice>

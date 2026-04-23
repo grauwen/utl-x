@@ -1,0 +1,56 @@
+{
+  "orderId": "ORD-2026-10063",
+  "orderDate": "2026-04-20T10:04:00Z",
+  "customer": {
+    "firstName": "Hank",
+    "lastName": "Walker",
+    "email": "HANK.WALKER@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Silver",
+    "creditLimit": 10000
+  },
+  "items": [
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 1,
+      "unitPrice": 299.0,
+      "discount": 0,
+      "weight": 0.35
+    },
+    {
+      "sku": "HEADSET-NC",
+      "productName": "Noise-Canceling Headset",
+      "quantity": 7,
+      "unitPrice": 299.0,
+      "discount": 0.05,
+      "weight": 0.35
+    },
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 2,
+      "unitPrice": 159.0,
+      "discount": 0.05,
+      "weight": 0.1
+    },
+    {
+      "sku": "CABLE-HDMI",
+      "productName": "HDMI 2.1 Cable 2m",
+      "quantity": 8,
+      "unitPrice": 24.99,
+      "discount": 0,
+      "weight": 0.1
+    },
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 2,
+      "unitPrice": 449.0,
+      "discount": 0,
+      "weight": 15.0
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.624
+}

@@ -1,0 +1,40 @@
+{
+  "orderId": "ORD-2026-10027",
+  "orderDate": "2026-04-26T16:29:00Z",
+  "customer": {
+    "firstName": "Mona",
+    "lastName": "White",
+    "email": "MONA.WHITE@EXAMPLE.COM",
+    "country": "DE",
+    "tier": "Gold",
+    "creditLimit": 5000
+  },
+  "items": [
+    {
+      "sku": "RAM-32GB",
+      "productName": "32GB DDR5 RAM Kit",
+      "quantity": 1,
+      "unitPrice": 159.0,
+      "discount": 0.2,
+      "weight": 0.1
+    },
+    {
+      "sku": "CHAIR-ERGO",
+      "productName": "Ergonomic Office Chair",
+      "quantity": 2,
+      "unitPrice": 699.0,
+      "discount": 0.2,
+      "weight": 18.0
+    },
+    {
+      "sku": "DOCK-USB",
+      "productName": "USB-C Docking Station",
+      "quantity": 4,
+      "unitPrice": 189.0,
+      "discount": 0,
+      "weight": 0.5
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.917
+}

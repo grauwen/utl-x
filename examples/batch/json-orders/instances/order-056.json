@@ -1,0 +1,32 @@
+{
+  "orderId": "ORD-2026-10056",
+  "orderDate": "2026-04-19T13:46:00Z",
+  "customer": {
+    "firstName": "Tina",
+    "lastName": "Rodriguez",
+    "email": "TINA.RODRIGUEZ@EXAMPLE.COM",
+    "country": "FR",
+    "tier": "Silver",
+    "creditLimit": 10000
+  },
+  "items": [
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 1,
+      "unitPrice": 449.0,
+      "discount": 0,
+      "weight": 15.0
+    },
+    {
+      "sku": "STAND-DESK",
+      "productName": "Adjustable Desk Stand",
+      "quantity": 8,
+      "unitPrice": 349.0,
+      "discount": 0,
+      "weight": 12.0
+    }
+  ],
+  "express": true,
+  "fraudScore": 0.91
+}

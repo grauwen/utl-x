@@ -1,0 +1,32 @@
+{
+  "orderId": "ORD-2026-10010",
+  "orderDate": "2026-04-08T12:42:00Z",
+  "customer": {
+    "firstName": "Alice",
+    "lastName": "Williams",
+    "email": "ALICE.WILLIAMS@EXAMPLE.COM",
+    "country": "NL",
+    "tier": "Gold",
+    "creditLimit": 25000
+  },
+  "items": [
+    {
+      "sku": "POWER-UPS",
+      "productName": "UPS 1500VA",
+      "quantity": 1,
+      "unitPrice": 449.0,
+      "discount": 0.2,
+      "weight": 15.0
+    },
+    {
+      "sku": "KEYBOARD-MECH",
+      "productName": "Mechanical Keyboard",
+      "quantity": 2,
+      "unitPrice": 129.0,
+      "discount": 0.1,
+      "weight": 0.8
+    }
+  ],
+  "express": false,
+  "fraudScore": 0.539
+}
