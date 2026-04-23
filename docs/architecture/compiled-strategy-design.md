@@ -394,4 +394,87 @@ Not scheduled for immediate implementation. This document serves as the design r
 
 ---
 
+## 11. Operational Considerations
+
+### 11.1 Init-Time Cost with Many Transformations
+
+Bytecode generation adds ~50ms per transformation on top of the ~35ms for parsing and type-checking. At scale:
+
+| Transformations | Sequential init | Parallel init (8 cores) |
+|----------------|----------------|------------------------|
+| 10 | ~850ms | ~200ms |
+| 50 | ~4.2s | ~600ms |
+| 100 | ~8.5s | ~1.2s |
+| 500 | ~42s | ~5.5s |
+
+**Recommendation:** Compile transformations in parallel at init-time. Each transformation is independent — no shared state during compilation. Use the existing worker pool or a dedicated `ForkJoinPool` for init-time compilation.
+
+For Kubernetes: if init exceeds the liveness probe timeout, increase `initialDelaySeconds` in the pod spec. This is a one-time startup cost — the pod runs for hours/days after.
+
+### 11.2 Hot Reload
+
+Hot reload works with COMPILED — same mechanism as TEMPLATE, but with an extra bytecode generation step:
+
+```
+LoadTransformation("order-transform", newSource)
+    │
+    ▼
+1. Parse new .utlx source            (~35ms)
+2. Type check                         (~5ms)
+3. Generate new bytecode via ASM      (~50ms)
+4. Load new class via fresh classloader
+5. Create new TransformationInstance
+6. Registry.put() — atomic swap (ConcurrentHashMap)
+7. Old instance becomes unreachable
+    │
+    ▼
+In-flight executions on old version complete normally (hold a reference).
+New executions use the new compiled version immediately.
+```
+
+**Metaspace concern:** Each hot reload creates a new class via a new classloader. After hundreds of reloads, JVM Metaspace could grow.
+
+**Mitigation:** Use a dedicated `BytecodeClassLoader` per transformation. When the old transformation instance is GC'd (after all in-flight executions complete), its classloader and generated class become GC-eligible too. The JVM reclaims Metaspace from unloaded classloaders. This is the same mechanism servlet containers (Tomcat, Jetty) use for hot-deploy — proven at scale.
+
+```kotlin
+class BytecodeClassLoader(parent: ClassLoader) : ClassLoader(parent) {
+    fun defineClass(name: String, bytecode: ByteArray): Class<*> {
+        return defineClass(name.replace('/', '.'), bytecode, 0, bytecode.size)
+    }
+}
+// Each transformation gets its own classloader instance.
+// When the transformation is unloaded/replaced, the classloader is eligible for GC.
+```
+
+### 11.3 Bytecode Persistence (Not Recommended)
+
+**Decision: Do NOT persist compiled bytecode to disk.**
+
+| Factor | Persist | Recompile |
+|--------|---------|-----------|
+| Startup time saved | ~50ms per transform | 0 |
+| Cache invalidation | Must hash `.utlx` source and verify — complex | Not needed — always correct |
+| Security | Loading bytecode from disk = untrusted code execution risk | Source compiled in-process — trusted |
+| Stale cache bugs | Real risk (source changed, bytecode didn't) | Impossible |
+| Complexity | File I/O, hash management, error handling for corrupt cache | Zero |
+| Value | Saves seconds of startup on a process that runs for days | — |
+
+The compilation cost is **50ms per transformation**. For a pod that runs for hours or days, saving a few seconds at startup is negligible. The risks of stale/tampered bytecode far outweigh the benefit.
+
+**How others handle this:**
+- Kotlin compiler: recompiles every build (no runtime bytecode cache)
+- Spring Framework: regenerates proxies every startup
+- Groovy scripts: optional cache, known source of bugs — most deployments disable it
+- GraalVM native-image: AOT compilation at build-time, not runtime (different use case)
+
+### 11.4 Graceful Shutdown
+
+Nothing to persist on shutdown. Compiled bytecode is transient — it exists only in memory for the lifetime of the process. On next startup, UTLXe recompiles all transformations from `.utlx` source. This is intentional:
+
+- **Source is the truth.** Bytecode is a derived artifact.
+- **No cache coherency problem.** No possibility of running stale bytecode.
+- **Simple operational model.** Restart = clean state. No cache directories to manage, no disk space to monitor, no corruption to debug.
+
+---
+
 *Design document for UTL-X COMPILED strategy. April 2026.*
