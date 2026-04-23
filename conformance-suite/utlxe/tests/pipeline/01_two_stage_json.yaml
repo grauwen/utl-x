@@ -1,0 +1,42 @@
+name: "two_stage_json_pipeline"
+category: "pipeline"
+description: "Two-stage pipeline: normalize → enrich. Output of stage 1 feeds stage 2 in-process."
+tags: ["pipeline", "chaining", "json"]
+
+pipeline:
+  steps:
+    - id: "normalize"
+      transformation: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {
+          name: lowerCase($input.NAME),
+          email: lowerCase($input.EMAIL),
+          age: $input.AGE
+        }
+
+    - id: "enrich"
+      transformation: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {
+          name: $input.name,
+          email: $input.email,
+          age: $input.age,
+          isAdult: $input.age >= 18,
+          greeting: concat("Hello, ", $input.name, "!")
+        }
+
+input:
+  format: json
+  data: |
+    {"NAME": "ALICE SMITH", "EMAIL": "ALICE@CORP.COM", "AGE": 28}
+
+expected:
+  format: json
+  data: |
+    {"name": "alice smith", "email": "alice@corp.com", "age": 28, "isAdult": true, "greeting": "Hello, alice smith!"}

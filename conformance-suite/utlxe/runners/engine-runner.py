@@ -99,11 +99,13 @@ class StdioProtoClient:
     EXECUTE_BATCH_REQUEST = 3
     UNLOAD_TRANSFORMATION_REQUEST = 4
     HEALTH_REQUEST = 5
+    EXECUTE_PIPELINE_REQUEST = 6
     LOAD_TRANSFORMATION_RESPONSE = 11
     EXECUTE_RESPONSE = 12
     EXECUTE_BATCH_RESPONSE = 13
     UNLOAD_TRANSFORMATION_RESPONSE = 14
     HEALTH_RESPONSE = 15
+    EXECUTE_PIPELINE_RESPONSE = 16
 
     def __init__(self, jar_path, workers=1, verbose=False):
         self.jar_path = jar_path
@@ -361,6 +363,27 @@ class StdioProtoClient:
         executions = fields.get(4, 0)
         errors = fields.get(5, 0)
         return state, uptime, loaded, executions, errors
+
+    def execute_pipeline(self, transformation_ids, payload_data, content_type="application/json", correlation_id=""):
+        """Send ExecutePipelineRequest, return (success, output, error, stages_completed, duration_us)."""
+        req = b""
+        for tid in transformation_ids:
+            req += self._build_string_field(1, tid)
+        req += self._build_bytes_field(2, payload_data.encode("utf-8") if isinstance(payload_data, str) else payload_data)
+        req += self._build_string_field(3, content_type)
+        if correlation_id:
+            req += self._build_string_field(4, correlation_id)
+
+        self._send_envelope(self.EXECUTE_PIPELINE_REQUEST, req)
+        resp_type, resp_data = self._recv_envelope()
+
+        fields = self._parse_response_fields(resp_data)
+        success = bool(fields.get(1, 0))
+        output = fields.get(2, b"").decode("utf-8") if 2 in fields else ""
+        error = fields.get(4, b"").decode("utf-8") if 4 in fields else ""
+        stages = fields.get(9, 0)
+        duration = fields.get(10, 0)
+        return success, output, error, stages, duration
 
     def execute_concurrent_burst(self, transform_id, payloads, content_type="application/json"):
         """
@@ -749,6 +772,35 @@ def run_test(client, test_data, verbose=False):
     # ── Throughput/burst test ──
     if "burst" in test_data:
         return run_throughput_test(client, test_data, verbose=verbose)
+
+    # ── Pipeline test ──
+    if "pipeline" in test_data:
+        pipeline_config = test_data["pipeline"]
+        # Load all transformations in the pipeline
+        for step in pipeline_config["steps"]:
+            step_id = step["id"]
+            step_source = step["transformation"]
+            step_strategy = step.get("strategy", "TEMPLATE")
+            success, error = client.load_transformation(step_id, step_source, strategy=step_strategy)
+            if not success:
+                return False, f"Pipeline load failed for '{step_id}': {error}"
+
+        # Execute pipeline
+        step_ids = [s["id"] for s in pipeline_config["steps"]]
+        payload = test_data.get("input", {}).get("data", "{}").strip()
+        success, output, error, stages, duration = client.execute_pipeline(step_ids, payload)
+
+        if not success:
+            return False, f"Pipeline failed at stage {stages}: {error}"
+
+        # Compare output
+        expected_data = test_data["expected"]["data"]
+        expected_fmt = test_data["expected"]["format"]
+        match, diff = compare_output(expected_data, output, expected_fmt)
+        if not match:
+            return False, diff
+
+        return True, f"Pipeline OK: {stages} stages in {duration}μs"
 
     # ── Error test: load should fail ──
     if test_data.get("load_error_expected"):

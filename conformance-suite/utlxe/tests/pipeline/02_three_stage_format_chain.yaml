@@ -1,0 +1,50 @@
+name: "three_stage_format_chain"
+category: "pipeline"
+description: "Three-stage pipeline: JSON → restructure → to XML → back to JSON. Tests format conversion chaining."
+tags: ["pipeline", "chaining", "format-conversion", "json", "xml"]
+
+pipeline:
+  steps:
+    - id: "restructure"
+      transformation: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {
+          order: {
+            id: $input.orderId,
+            customer: $input.name,
+            total: $input.amount
+          }
+        }
+
+    - id: "to-xml"
+      transformation: |
+        %utlx 1.0
+        input json
+        output xml
+        ---
+        $input
+
+    - id: "xml-to-json"
+      transformation: |
+        %utlx 1.0
+        input xml
+        output json
+        ---
+        {
+          orderId: $input.order.id,
+          customer: $input.order.customer,
+          total: toNumber($input.order.total)
+        }
+
+input:
+  format: json
+  data: |
+    {"orderId": "ORD-001", "name": "Contoso", "amount": 1500}
+
+expected:
+  format: json
+  data: |
+    {"orderId": "ORD-001", "customer": "Contoso", "total": 1500}
