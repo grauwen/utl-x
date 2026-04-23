@@ -148,9 +148,14 @@ class UtlxEngine(val config: EngineConfig) {
             "TEMPLATE" -> TemplateStrategy()
             "COPY" -> CopyStrategy()
             "AUTO" -> {
-                // AUTO: use COPY if schema-driven, TEMPLATE otherwise
-                // For now, default to TEMPLATE until schema detection is smarter
-                TemplateStrategy()
+                val hasSchema = config.inputs.any { it.schema != null }
+                if (hasSchema) {
+                    logger.info("AUTO strategy: schema available → COPY")
+                    CopyStrategy()
+                } else {
+                    logger.info("AUTO strategy: no schema → TEMPLATE")
+                    TemplateStrategy()
+                }
             }
             else -> {
                 logger.warn("Strategy '{}' not yet implemented, falling back to TEMPLATE", config.strategy)
