@@ -1,0 +1,26 @@
+name: "burst_batch_100"
+category: "throughput"
+description: "100 messages via ExecuteBatch — measures batch processing throughput"
+tags: ["throughput", "batch", "high-volume"]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    id: $input.id,
+    processed: true,
+    tag: upperCase($input.tag)
+  }
+
+burst:
+  count: 100
+  mode: "batch"
+  payload_template: |
+    {"id": {{INDEX}}, "tag": "item-{{INDEX}}"}
+  content_type: "application/json"
+
+throughput_limits:
+  max_total_ms: 10000
+  max_p95_ms: 50

@@ -1,0 +1,21 @@
+name: "burst_identity_25"
+category: "throughput"
+description: "25-message burst through identity transformation — baseline throughput"
+tags: ["throughput", "burst", "identity", "baseline"]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  $input
+
+burst:
+  count: 25
+  payload_template: |
+    {"id": {{INDEX}}, "timestamp": "2026-04-22T10:00:00Z", "value": "message-{{INDEX}}"}
+  content_type: "application/json"
+
+throughput_limits:
+  max_total_ms: 5000
+  max_p95_ms: 100

@@ -1,0 +1,30 @@
+name: "burst_transform_25"
+category: "throughput"
+description: "25-message burst through a real transformation with stdlib functions"
+tags: ["throughput", "burst", "stdlib", "realistic"]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    fullName: concat($input.firstName, " ", $input.lastName),
+    email: lowerCase($input.email),
+    age: $input.age,
+    isAdult: $input.age >= 18,
+    category: if ($input.age >= 65) "senior"
+              else if ($input.age >= 18) "adult"
+              else "minor"
+  }
+
+burst:
+  count: 25
+  payload_template: |
+    {"firstName": "User", "lastName": "Nr{{INDEX}}", "email": "USER{{INDEX}}@EXAMPLE.COM", "age": {{AGE}}}
+  age_range: [10, 80]
+  content_type: "application/json"
+
+throughput_limits:
+  max_total_ms: 10000
+  max_p95_ms: 200

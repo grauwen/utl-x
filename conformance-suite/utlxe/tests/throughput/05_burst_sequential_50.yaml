@@ -1,0 +1,28 @@
+name: "burst_sequential_50"
+category: "throughput"
+description: "50 sequential ExecuteRequests — sustained throughput under sequential load"
+tags: ["throughput", "sequential", "sustained"]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    orderId: concat("ORD-", toString($input.seq)),
+    customer: $input.name,
+    total: $input.amount * $input.quantity,
+    currency: "EUR"
+  }
+
+burst:
+  count: 50
+  mode: "sequential"
+  payload_template: |
+    {"seq": {{INDEX}}, "name": "Customer-{{INDEX}}", "amount": 49.99, "quantity": {{QTY}}}
+  qty_range: [1, 20]
+  content_type: "application/json"
+
+throughput_limits:
+  max_total_ms: 15000
+  max_p95_ms: 200

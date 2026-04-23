@@ -2,25 +2,29 @@
 """
 UTLXe Engine Conformance Suite Runner
 
-Spawns UTLXe in stdio-proto mode and runs transformation tests via
-varint-delimited protobuf over stdin/stdout.
+Spawns UTLXe and runs transformation tests. Supports all transport modes:
+  - stdio-proto (default): varint-delimited protobuf over stdin/stdout
+  - stdio-json: line-delimited JSON over stdin/stdout (requires --bundle)
 
 Usage:
     python3 engine-runner.py [CATEGORY] [TEST_NAME] [OPTIONS]
-    python3 engine-runner.py                           # Run all tests
-    python3 engine-runner.py single-input              # Run category
-    python3 engine-runner.py single-input identity_json # Run specific test
-    python3 engine-runner.py -v                        # Verbose output
+    python3 engine-runner.py                             # Run all tests
+    python3 engine-runner.py throughput                   # Run throughput tests
+    python3 engine-runner.py single-input identity_json   # Run specific test
+    python3 engine-runner.py -v --workers 4               # Verbose, 4 workers
+    python3 engine-runner.py --mode stdio-json --bundle /path/to/bundle  # stdio-json mode
 
 Requires:
     - Java 17+ on PATH
     - UTLXe JAR: set UTLXE_JAR_PATH or place at default build location
-    - pip install protobuf pyyaml
+    - pip install pyyaml
 """
 
 import argparse
 import json
+import math
 import os
+import random
 import struct
 import subprocess
 import sys
@@ -357,6 +361,207 @@ class StdioProtoClient:
         return state, uptime, loaded, executions, errors
 
 
+class StdioJsonClient:
+    """
+    Communicates with UTLXe via line-delimited JSON over stdin/stdout.
+    Used for testing the stdio-json transport mode (backward-compatible, bundle-based).
+    """
+
+    def __init__(self, jar_path, bundle_path, verbose=False):
+        self.jar_path = jar_path
+        self.bundle_path = bundle_path
+        self.verbose = verbose
+        self.process = None
+
+    def start(self):
+        java = self._find_java()
+        cmd = [java, "-jar", str(self.jar_path), "--bundle", str(self.bundle_path)]
+        if self.verbose:
+            print(f"  Starting (stdio-json): {' '.join(cmd)}")
+        self.process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+    def stop(self):
+        if self.process:
+            self.process.stdin.close()
+            try:
+                self.process.wait(timeout=10)
+            except Exception:
+                self.process.kill()
+            self.process = None
+
+    def _find_java(self):
+        java_home = os.environ.get("JAVA_HOME")
+        if java_home:
+            java = os.path.join(java_home, "bin", "java")
+            if os.path.exists(java):
+                return java
+        return "java"
+
+    def execute_json(self, payload_str):
+        """Send a JSON line, read a JSON line back. Returns (output_str, duration_ms)."""
+        start = time.perf_counter()
+        self.process.stdin.write(payload_str.strip() + "\n")
+        self.process.stdin.flush()
+        response_line = self.process.stdout.readline()
+        duration_ms = (time.perf_counter() - start) * 1000
+        return response_line.strip(), duration_ms
+
+
+# =========================================================================
+# Throughput metrics
+# =========================================================================
+
+def percentile(sorted_list, pct):
+    """Calculate percentile from a sorted list."""
+    if not sorted_list:
+        return 0
+    k = (len(sorted_list) - 1) * (pct / 100.0)
+    f = math.floor(k)
+    c = math.ceil(k)
+    if f == c:
+        return sorted_list[int(k)]
+    return sorted_list[int(f)] * (c - k) + sorted_list[int(c)] * (k - f)
+
+
+def generate_burst_payload(template, index, test_data):
+    """Generate a single payload from a template with {{INDEX}} and other placeholders."""
+    payload = template.replace("{{INDEX}}", str(index))
+
+    # Age range for person-type tests
+    age_range = test_data.get("burst", {}).get("age_range", [18, 65])
+    age = random.randint(age_range[0], age_range[1])
+    payload = payload.replace("{{AGE}}", str(age))
+
+    # Quantity range
+    qty_range = test_data.get("burst", {}).get("qty_range", [1, 10])
+    qty = random.randint(qty_range[0], qty_range[1])
+    payload = payload.replace("{{QTY}}", str(qty))
+
+    return payload
+
+
+def run_throughput_test(client, test_data, verbose=False):
+    """Run a throughput/burst test. Returns (passed, message, metrics_dict)."""
+    name = test_data.get("name", "unknown")
+    transformation = test_data.get("transformation", "")
+    burst_config = test_data.get("burst", {})
+    count = burst_config.get("count", 25)
+    mode = burst_config.get("mode", "sequential")  # sequential or batch
+    template = burst_config.get("payload_template", '{"index": {{INDEX}}}')
+    content_type = burst_config.get("content_type", "application/json")
+    limits = test_data.get("throughput_limits", {})
+
+    transform_id = f"throughput-{name}"
+
+    # Load transformation
+    success, error = client.load_transformation(transform_id, transformation)
+    if not success:
+        return False, f"Load failed: {error}", {}
+
+    # Generate payloads
+    payloads = [generate_burst_payload(template, i + 1, test_data) for i in range(count)]
+
+    if mode == "batch":
+        # ExecuteBatch — single call with all items
+        items = [(p, content_type, f"b-{i+1}") for i, p in enumerate(payloads)]
+
+        start = time.perf_counter()
+        results = client.execute_batch(transform_id, items)
+        total_ms = (time.perf_counter() - start) * 1000
+
+        # Check all succeeded
+        errors = [r for r in results if not r[0]]
+        if errors:
+            return False, f"{len(errors)} items failed in batch: {errors[0][2]}", {}
+
+        # For batch, we don't have per-item timings from the client side
+        # Report total time and average
+        avg_ms = total_ms / count
+        metrics = {
+            "mode": "batch",
+            "count": count,
+            "total_ms": round(total_ms, 2),
+            "avg_ms": round(avg_ms, 2),
+            "throughput_msg_s": round(count / (total_ms / 1000), 1) if total_ms > 0 else 0,
+        }
+
+    else:
+        # Sequential — individual ExecuteRequests with per-message timing
+        durations_ms = []
+        error_count = 0
+
+        for i, payload in enumerate(payloads):
+            start = time.perf_counter()
+            success, output, error, _ = client.execute(
+                transform_id, payload, content_type, f"seq-{i+1}")
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            durations_ms.append(elapsed_ms)
+
+            if not success:
+                error_count += 1
+                if verbose:
+                    print(f"    Message {i+1} failed: {error}")
+
+        if error_count > 0:
+            return False, f"{error_count}/{count} messages failed", {}
+
+        durations_ms.sort()
+        total_ms = sum(durations_ms)
+
+        metrics = {
+            "mode": "sequential",
+            "count": count,
+            "total_ms": round(total_ms, 2),
+            "avg_ms": round(total_ms / count, 2),
+            "min_ms": round(durations_ms[0], 2),
+            "max_ms": round(durations_ms[-1], 2),
+            "p50_ms": round(percentile(durations_ms, 50), 2),
+            "p95_ms": round(percentile(durations_ms, 95), 2),
+            "p99_ms": round(percentile(durations_ms, 99), 2),
+            "throughput_msg_s": round(count / (total_ms / 1000), 1) if total_ms > 0 else 0,
+        }
+
+    # Check limits
+    limit_violations = []
+    max_total = limits.get("max_total_ms")
+    if max_total and metrics["total_ms"] > max_total:
+        limit_violations.append(f"total {metrics['total_ms']}ms > limit {max_total}ms")
+
+    max_p95 = limits.get("max_p95_ms")
+    if max_p95 and "p95_ms" in metrics and metrics["p95_ms"] > max_p95:
+        limit_violations.append(f"p95 {metrics['p95_ms']}ms > limit {max_p95}ms")
+
+    if limit_violations:
+        return False, f"Throughput limits exceeded: {', '.join(limit_violations)}", metrics
+
+    return True, "Throughput OK", metrics
+
+
+def format_metrics(metrics):
+    """Format metrics dict as a human-readable string."""
+    if not metrics:
+        return ""
+    mode = metrics.get("mode", "?")
+    count = metrics.get("count", 0)
+    total = metrics.get("total_ms", 0)
+    tps = metrics.get("throughput_msg_s", 0)
+
+    parts = [f"{count} msgs in {total}ms ({tps} msg/s)"]
+    if "p50_ms" in metrics:
+        parts.append(f"p50={metrics['p50_ms']}ms p95={metrics['p95_ms']}ms p99={metrics['p99_ms']}ms")
+    if "avg_ms" in metrics:
+        parts.append(f"avg={metrics['avg_ms']}ms")
+    if "min_ms" in metrics:
+        parts.append(f"min={metrics['min_ms']}ms max={metrics['max_ms']}ms")
+    return " | ".join(parts)
+
+
 def compare_json(expected_str, actual_str):
     """Compare two JSON strings structurally. Returns (match, diff_message)."""
     try:
@@ -418,6 +623,10 @@ def run_test(client, test_data, verbose=False):
 
     transformation = test_data.get("transformation", "")
     transform_id = test_data.get("transformation_id", f"test-{name}")
+
+    # ── Throughput/burst test ──
+    if "burst" in test_data:
+        return run_throughput_test(client, test_data, verbose=verbose)
 
     # ── Error test: load should fail ──
     if test_data.get("load_error_expected"):
@@ -547,6 +756,9 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--jar", help="Path to UTLXe JAR")
     parser.add_argument("--workers", type=int, default=1, help="Worker threads (default: 1)")
+    parser.add_argument("--mode", choices=["stdio-proto", "stdio-json"], default="stdio-proto",
+                        help="Transport mode (default: stdio-proto)")
+    parser.add_argument("--bundle", help="Bundle path (required for stdio-json mode)")
     args = parser.parse_args()
 
     # Find JAR
@@ -564,19 +776,33 @@ def main():
 
     print(f"UTLXe Engine Conformance Suite")
     print(f"JAR: {jar_path}")
+    print(f"Mode: {args.mode} (workers={args.workers})")
     print(f"Running {len(tests)} test(s)...\n")
 
     # Start UTLXe
-    client = StdioProtoClient(jar_path, workers=args.workers, verbose=args.verbose)
-    try:
-        client.start()
-        # Wait for engine to be ready
-        time.sleep(2)
-        state, uptime, _, _, _ = client.health()
-        print(f"Engine ready: state={state}, uptime={uptime}ms\n")
-    except Exception as e:
-        print(f"Error starting UTLXe: {e}")
-        sys.exit(1)
+    if args.mode == "stdio-json":
+        if not args.bundle:
+            print("Error: --bundle required for stdio-json mode")
+            sys.exit(1)
+        # stdio-json mode: limited to functional tests only (no dynamic loading)
+        client = StdioJsonClient(jar_path, args.bundle, verbose=args.verbose)
+        try:
+            client.start()
+            time.sleep(2)
+            print(f"Engine ready (stdio-json mode, bundle: {args.bundle})\n")
+        except Exception as e:
+            print(f"Error starting UTLXe: {e}")
+            sys.exit(1)
+    else:
+        client = StdioProtoClient(jar_path, workers=args.workers, verbose=args.verbose)
+        try:
+            client.start()
+            time.sleep(2)
+            state, uptime, _, _, _ = client.health()
+            print(f"Engine ready: state={state}, uptime={uptime}ms\n")
+        except Exception as e:
+            print(f"Error starting UTLXe: {e}")
+            sys.exit(1)
 
     # Run tests
     passed = 0
@@ -592,20 +818,33 @@ def main():
             print(f"Running: {category}/{name}")
 
         try:
-            success, message = run_test(client, test_data, verbose=args.verbose)
+            result = run_test(client, test_data, verbose=args.verbose)
+            # run_test returns 2-tuple or 3-tuple (throughput tests add metrics)
+            if len(result) == 3:
+                success, message, metrics = result
+            else:
+                success, message = result
+                metrics = {}
+
             if success is None:
                 skipped += 1
                 print(f"  \u2014 {name} (skipped: {message.replace('Skipped: ', '')})")
             elif success:
                 passed += 1
-                print(f"  \u2713 {name}")
-                if args.verbose:
-                    print(f"    {message}")
+                if metrics:
+                    print(f"  \u2713 {name}")
+                    print(f"    {format_metrics(metrics)}")
+                else:
+                    print(f"  \u2713 {name}")
+                    if args.verbose:
+                        print(f"    {message}")
             else:
                 failed += 1
                 failures.append((name, message))
                 print(f"  \u2717 {name}")
                 print(f"    {message}")
+                if metrics:
+                    print(f"    {format_metrics(metrics)}")
         except Exception as e:
             failed += 1
             failures.append((name, str(e)))

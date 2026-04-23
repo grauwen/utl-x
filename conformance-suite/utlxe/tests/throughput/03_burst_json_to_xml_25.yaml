@@ -1,0 +1,28 @@
+name: "burst_json_to_xml_25"
+category: "throughput"
+description: "25-message burst with format conversion JSON→XML"
+tags: ["throughput", "burst", "format-conversion", "xml"]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    event: {
+      id: $input.eventId,
+      source: $input.source,
+      severity: $input.severity,
+      message: $input.message
+    }
+  }
+
+burst:
+  count: 25
+  payload_template: |
+    {"eventId": "EVT-{{INDEX}}", "source": "sensor-{{INDEX}}", "severity": "INFO", "message": "Status OK for unit {{INDEX}}"}
+  content_type: "application/json"
+
+throughput_limits:
+  max_total_ms: 10000
+  max_p95_ms: 250
