@@ -104,11 +104,11 @@ class ASTCompiler {
             is Expression.NullLiteral -> true
             is Expression.Identifier -> true
             is Expression.ObjectLiteral -> {
-                expr.properties.all { it.key != null && !it.isSpread && it.computedKey == null && isCompilable(it.value) } &&
+                expr.properties.all { (it.key != null || it.isSpread) && it.computedKey == null && isCompilable(it.value) } &&
                     expr.letBindings.all { isCompilable(it.value) }
             }
             is Expression.ArrayLiteral -> expr.elements.all { isCompilable(it) }
-            is Expression.MemberAccess -> !expr.isAttribute && !expr.isMetadata && isCompilable(expr.target)
+            is Expression.MemberAccess -> isCompilable(expr.target)
             is Expression.IndexAccess -> isCompilable(expr.target) && isCompilable(expr.index)
             is Expression.BinaryOp -> isCompilable(expr.left) && isCompilable(expr.right)
             is Expression.UnaryOp -> isCompilable(expr.operand)
@@ -125,11 +125,10 @@ class ASTCompiler {
             is Expression.Lambda -> isCompilable(expr.body)
             is Expression.Pipe -> isCompilable(expr.source) && isCompilable(expr.target)
             is Expression.SafeNavigation -> isCompilable(expr.target)
-            // Not yet supported
-            is Expression.Match -> false
-            is Expression.TryCatch -> false
-            is Expression.TemplateApplication -> false
-            is Expression.SpreadElement -> false
+            is Expression.Match -> expr.cases.all { isCompilable(it.expression) && (it.guard?.let { g -> isCompilable(g) } ?: true) }
+            is Expression.TryCatch -> isCompilable(expr.tryBlock) && isCompilable(expr.catchBlock)
+            is Expression.SpreadElement -> isCompilable(expr.expression)
+            is Expression.TemplateApplication -> isCompilable(expr.selector)
         }
     }
 
@@ -175,7 +174,10 @@ class ASTCompiler {
             is Expression.Lambda -> compileLambda(ctx, expr)
             is Expression.Pipe -> compilePipe(ctx, expr)
             is Expression.SafeNavigation -> compileSafeNavigation(ctx, expr)
-            else -> throw UnsupportedOperationException("Cannot compile: ${expr::class.simpleName}")
+            is Expression.TryCatch -> compileTryCatch(ctx, expr)
+            is Expression.SpreadElement -> compileExpression(ctx, expr.expression) // spread handled by parent
+            is Expression.Match -> compileMatch(ctx, expr)
+            is Expression.TemplateApplication -> compileExpression(ctx, expr.selector) // passthrough
         }
     }
 
@@ -243,8 +245,13 @@ class ASTCompiler {
     private fun compileMemberAccess(ctx: CompileContext, expr: Expression.MemberAccess) {
         compileExpression(ctx, expr.target)
         ctx.mv.visitLdcInsn(expr.property)
-        ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "getProperty",
-            "(${UDM_DESC}Ljava/lang/String;)$UDM_DESC", false)
+        if (expr.isAttribute) {
+            ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "getAttribute",
+                "(${UDM_DESC}Ljava/lang/String;)$UDM_DESC", false)
+        } else {
+            ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "getProperty",
+                "(${UDM_DESC}Ljava/lang/String;)$UDM_DESC", false)
+        }
     }
 
     private fun compileIndexAccess(ctx: CompileContext, expr: Expression.IndexAccess) {
@@ -292,32 +299,47 @@ class ASTCompiler {
             ctx.mv.visitVarInsn(ASTORE, slot)
         }
 
-        val keys = expr.properties.filter { it.key != null }
-        val count = keys.size
+        // Separate regular properties from spread properties
+        val regularProps = expr.properties.filter { it.key != null && !it.isSpread }
+        val hasSpread = expr.properties.any { it.isSpread }
+
+        // Build the base object from regular properties
+        val count = regularProps.size
 
         // Create String[] for keys
         ctx.mv.visitLdcInsn(count)
         ctx.mv.visitTypeInsn(ANEWARRAY, "java/lang/String")
-        for (i in keys.indices) {
+        for (i in regularProps.indices) {
             ctx.mv.visitInsn(DUP)
             ctx.mv.visitLdcInsn(i)
-            ctx.mv.visitLdcInsn(keys[i].key)
+            ctx.mv.visitLdcInsn(regularProps[i].key)
             ctx.mv.visitInsn(AASTORE)
         }
 
         // Create UDM[] for values
         ctx.mv.visitLdcInsn(count)
         ctx.mv.visitTypeInsn(ANEWARRAY, UDM_TYPE)
-        for (i in keys.indices) {
+        for (i in regularProps.indices) {
             ctx.mv.visitInsn(DUP)
             ctx.mv.visitLdcInsn(i)
-            compileExpression(ctx, keys[i].value)
+            compileExpression(ctx, regularProps[i].value)
             ctx.mv.visitInsn(AASTORE)
         }
 
         // RuntimeOps.buildObject(keys, values)
         ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "buildObject",
             "([Ljava/lang/String;[$UDM_DESC)$UDM_DESC", false)
+
+        // Merge spread properties into the object
+        if (hasSpread) {
+            for (prop in expr.properties) {
+                if (prop.isSpread) {
+                    compileExpression(ctx, prop.value)
+                    ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "spreadIntoObject",
+                        "(${UDM_DESC}${UDM_DESC})$UDM_DESC", false)
+                }
+            }
+        }
     }
 
     private fun compileArrayLiteral(ctx: CompileContext, expr: Expression.ArrayLiteral) {
@@ -589,6 +611,129 @@ class ASTCompiler {
         ctx.mv.visitLdcInsn(lambdaName)
         ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "makeLambda",
             "(Ljava/lang/Class;Ljava/lang/String;)$UDM_DESC", false)
+    }
+
+    // ── Try/Catch ──
+
+    private fun compileTryCatch(ctx: CompileContext, expr: Expression.TryCatch) {
+        val tryStart = Label()
+        val tryEnd = Label()
+        val catchStart = Label()
+        val endLabel = Label()
+
+        ctx.mv.visitTryCatchBlock(tryStart, tryEnd, catchStart, "java/lang/Exception")
+
+        // Try block
+        ctx.mv.visitLabel(tryStart)
+        compileExpression(ctx, expr.tryBlock)
+        ctx.mv.visitLabel(tryEnd)
+        ctx.mv.visitJumpInsn(GOTO, endLabel)
+
+        // Catch block
+        ctx.mv.visitLabel(catchStart)
+        // Exception is on stack — store in local if error variable is declared
+        val errorVar = expr.errorVariable
+        if (errorVar != null) {
+            // Convert exception to UDM.Scalar(message)
+            ctx.mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Exception", "getMessage",
+                "()Ljava/lang/String;", false)
+            ctx.mv.visitTypeInsn(NEW, UDM_SCALAR)
+            ctx.mv.visitInsn(DUP_X1)
+            ctx.mv.visitInsn(SWAP)
+            ctx.mv.visitMethodInsn(INVOKESPECIAL, UDM_SCALAR, "<init>",
+                "(Ljava/lang/Object;)V", false)
+            val slot = ctx.allocLocal(errorVar)
+            ctx.mv.visitVarInsn(ASTORE, slot)
+        } else {
+            ctx.mv.visitInsn(POP) // discard exception
+        }
+        compileExpression(ctx, expr.catchBlock)
+
+        ctx.mv.visitLabel(endLabel)
+    }
+
+    // ── Match ──
+
+    private fun compileMatch(ctx: CompileContext, expr: Expression.Match) {
+        // Evaluate the match value once, store in local
+        compileExpression(ctx, expr.value)
+        val matchSlot = ctx.localSlot++
+        ctx.mv.visitVarInsn(ASTORE, matchSlot)
+
+        val endLabel = Label()
+
+        for (matchCase in expr.cases) {
+            val nextCaseLabel = Label()
+
+            when (val pattern = matchCase.pattern) {
+                is Pattern.Wildcard -> {
+                    // Wildcard always matches — no condition check
+                }
+                is Pattern.Literal -> {
+                    // Compare match value against literal
+                    ctx.mv.visitVarInsn(ALOAD, matchSlot)
+                    when (val litVal = pattern.value) {
+                        is String -> {
+                            ctx.mv.visitTypeInsn(NEW, UDM_SCALAR)
+                            ctx.mv.visitInsn(DUP)
+                            ctx.mv.visitLdcInsn(litVal)
+                            ctx.mv.visitMethodInsn(INVOKESPECIAL, UDM_SCALAR, "<init>",
+                                "(Ljava/lang/Object;)V", false)
+                        }
+                        is Number -> {
+                            ctx.mv.visitTypeInsn(NEW, UDM_SCALAR)
+                            ctx.mv.visitInsn(DUP)
+                            ctx.mv.visitLdcInsn(litVal.toDouble())
+                            ctx.mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf",
+                                "(D)Ljava/lang/Double;", false)
+                            ctx.mv.visitMethodInsn(INVOKESPECIAL, UDM_SCALAR, "<init>",
+                                "(Ljava/lang/Object;)V", false)
+                        }
+                        is Boolean -> {
+                            ctx.mv.visitTypeInsn(NEW, UDM_SCALAR)
+                            ctx.mv.visitInsn(DUP)
+                            ctx.mv.visitLdcInsn(if (litVal) 1 else 0)
+                            ctx.mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf",
+                                "(Z)Ljava/lang/Boolean;", false)
+                            ctx.mv.visitMethodInsn(INVOKESPECIAL, UDM_SCALAR, "<init>",
+                                "(Ljava/lang/Object;)V", false)
+                        }
+                        null -> compileNullLiteral(ctx)
+                        else -> compileNullLiteral(ctx)
+                    }
+                    ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "equal",
+                        "(${UDM_DESC}${UDM_DESC})$UDM_DESC", false)
+                    ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "isTruthy",
+                        "(${UDM_DESC})Z", false)
+                    ctx.mv.visitJumpInsn(IFEQ, nextCaseLabel) // not equal → next case
+                }
+                is Pattern.Variable -> {
+                    // Bind match value to variable name
+                    ctx.mv.visitVarInsn(ALOAD, matchSlot)
+                    val slot = ctx.allocLocal(pattern.name)
+                    ctx.mv.visitVarInsn(ASTORE, slot)
+                }
+            }
+
+            // Guard check (if present)
+            val guard = matchCase.guard
+            if (guard != null) {
+                compileExpression(ctx, guard)
+                ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "isTruthy",
+                    "(${UDM_DESC})Z", false)
+                ctx.mv.visitJumpInsn(IFEQ, nextCaseLabel)
+            }
+
+            // Case body
+            compileExpression(ctx, matchCase.expression)
+            ctx.mv.visitJumpInsn(GOTO, endLabel)
+
+            ctx.mv.visitLabel(nextCaseLabel)
+        }
+
+        // No case matched — return null
+        compileNullLiteral(ctx)
+        ctx.mv.visitLabel(endLabel)
     }
 
     // =========================================================================

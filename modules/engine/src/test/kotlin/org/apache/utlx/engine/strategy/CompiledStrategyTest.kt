@@ -498,6 +498,42 @@ class CompiledStrategyTest {
     }
 
     @Test
+    fun `try-catch handles errors`() {
+        val strategy = CompiledStrategy()
+        // Simple try-catch without nesting inside object literal
+        val source = """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            try { ${'$'}input } catch (e) { "error" }
+        """.trimIndent()
+        val config = TransformConfig(strategy = "COMPILED", inputs = listOf(InputSlot(name = "input")))
+        strategy.initialize(source, config)
+
+        val r1 = strategy.execute("""{"value": 42}""")
+        assertTrue(r1.output.contains("42"), "Should pass through: ${r1.output}")
+    }
+
+    @Test
+    fun `spread operator in object`() {
+        val strategy = CompiledStrategy()
+        val source = """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            { ...${'$'}input.base, extra: "added" }
+        """.trimIndent()
+        val config = TransformConfig(strategy = "COMPILED", inputs = listOf(InputSlot(name = "input")))
+        strategy.initialize(source, config)
+
+        val result = strategy.execute("""{"base": {"name": "Alice", "age": 30}}""")
+        assertTrue(result.output.contains("Alice"), "Spread should include name: ${result.output}")
+        assertTrue(result.output.contains("added"), "Should have extra field: ${result.output}")
+    }
+
+    @Test
     fun `invalid input throws exception not silent failure`() {
         val strategy = CompiledStrategy()
         val source = "%utlx 1.0\ninput json\noutput json\n---\n{name: \$input.name}\n"

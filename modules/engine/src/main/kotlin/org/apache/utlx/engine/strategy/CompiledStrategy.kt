@@ -52,14 +52,20 @@ class CompiledStrategy : ExecutionStrategy {
         compiledProgram = compileSource(source)
 
         // Try to compile AST body to bytecode
-        val compiler = ASTCompiler()
-        transformFunction = compiler.compile(compiledProgram)
+        try {
+            val compiler = ASTCompiler()
+            transformFunction = compiler.compile(compiledProgram)
 
-        if (transformFunction != null) {
-            logger.info("Transformation compiled to JVM bytecode — direct execution enabled")
-        } else {
+            if (transformFunction != null) {
+                logger.info("Transformation compiled to JVM bytecode — direct execution enabled")
+            } else {
+                usingFallback = true
+                logger.info("Transformation uses unsupported AST nodes — falling back to interpreter")
+            }
+        } catch (e: Exception) {
+            // Bytecode generation or class loading failed — fall back to interpreter
             usingFallback = true
-            logger.info("Transformation uses unsupported AST nodes — falling back to interpreter")
+            logger.warn("Bytecode compilation failed ({}), falling back to interpreter", e.message)
         }
     }
 

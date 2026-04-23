@@ -115,6 +115,14 @@ object RuntimeOps {
     }
 
     @JvmStatic
+    fun getAttribute(target: UDM, name: String): UDM {
+        return when (target) {
+            is UDM.Object -> UDM.Scalar(target.attributes[name])
+            else -> UDM.Scalar.nullValue()
+        }
+    }
+
+    @JvmStatic
     fun getIndex(target: UDM, index: Int): UDM {
         return when (target) {
             is UDM.Array -> if (index in target.elements.indices) target.elements[index] else UDM.Scalar.nullValue()
@@ -138,6 +146,18 @@ object RuntimeOps {
             props[keys[i]] = values[i]
         }
         return UDM.Object(props)
+    }
+
+    /**
+     * Merge a spread object's properties into an existing map.
+     * Used by compiled bytecode for { ...obj, key: value } expressions.
+     */
+    @JvmStatic
+    fun spreadIntoObject(target: UDM, spread: UDM): UDM {
+        if (target !is UDM.Object || spread !is UDM.Object) return target
+        val merged = LinkedHashMap(target.properties)
+        merged.putAll(spread.properties)
+        return UDM.Object(merged, target.attributes + spread.attributes, target.name ?: spread.name)
     }
 
     @JvmStatic
