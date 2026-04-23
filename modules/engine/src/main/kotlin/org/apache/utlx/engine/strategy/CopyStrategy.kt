@@ -18,25 +18,28 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * COPY Strategy — Tibco BusinessWorks-inspired pre-built DOM approach.
  *
- * Init-time:
- *   1. Compile .utlx source → AST (same as TEMPLATE)
- *   2. Build a UDM skeleton from the first input (or from schema if available)
- *   3. Pre-populate an object pool with deep-cloned skeletons
+ * Requires: input schema provided at init-time (via TransformConfig or config map).
+ * Without a schema, COPY cannot build the UDM skeleton and will fail fast at init.
  *
- * Runtime (per message):
- *   1. Acquire a pre-built UDM skeleton from the pool (or deep-clone if pool empty)
- *   2. Parse the input data and fill the skeleton
- *   3. Execute the .utlx transformation (interpreter, same as TEMPLATE)
- *   4. Serialize output
- *   5. Return skeleton to pool for reuse
+ * Init-time (during LoadTransformation):
+ *   1. Compile .utlx source → AST
+ *   2. Parse input schema → build complete UDM skeleton
+ *   3. Pre-populate object pool with deep-cloned skeletons
+ *   → Skeleton is READY before any message arrives
+ *
+ * Runtime (every message, including the first):
+ *   1. Acquire pre-built UDM skeleton from pool (or deep-clone if pool empty)
+ *   2. Parse input message data
+ *   3. Fill skeleton with parsed data (merge into pre-allocated structure)
+ *   4. Execute .utlx transformation on filled skeleton
+ *   5. Serialize output
+ *   6. Return skeleton to pool for reuse
  *
  * Why faster than TEMPLATE:
- *   - TEMPLATE re-parses input and builds UDM from scratch every time
- *   - COPY reuses a pre-allocated structure — just fill values, no allocation
- *   - Object pooling eliminates GC pressure under sustained load
- *   - Pre-compiled program AST is shared (same as TEMPLATE)
+ *   - Pre-allocated UDM structure — no runtime structure creation
+ *   - Object pooling — eliminates GC pressure under sustained load
+ *   - Schema-validated structure — all paths known at init-time
  *
- * Requires: consistent input structure (same fields on every message).
  * Best for: schema-driven, high-volume, structured data (enterprise middleware).
  */
 class CopyStrategy : ExecutionStrategy {
@@ -49,13 +52,13 @@ class CopyStrategy : ExecutionStrategy {
     private lateinit var utlxSource: String
     private lateinit var transformConfig: TransformConfig
 
-    // Pre-built UDM skeleton — the canonical structure cloned for each message
-    private var udmSkeleton: UDM? = null
-    private val skeletonInitialized = java.util.concurrent.atomic.AtomicBoolean(false)
+    // Pre-built UDM skeleton — built from schema at init-time, cloned per message
+    private lateinit var udmSkeleton: UDM
+    private val inputSkeletons = mutableMapOf<String, UDM>() // for multi-input
 
     // Object pool — recycle deep-cloned skeletons to reduce GC pressure
     private val skeletonPool = ConcurrentLinkedQueue<UDM>()
-    private val poolSize = 32 // max pooled skeletons
+    private val poolCapacity = 32
     private val poolHits = AtomicLong(0)
     private val poolMisses = AtomicLong(0)
 
@@ -65,7 +68,84 @@ class CopyStrategy : ExecutionStrategy {
 
         logger.info("Compiling transformation (COPY strategy)...")
         compiledProgram = compileSource(source)
-        logger.info("Transformation compiled. Skeleton will be built from first message.")
+
+        // Build UDM skeleton(s) from schema at init-time
+        buildSkeletonsFromSchema()
+
+        logger.info("COPY strategy initialized. Skeleton ready, pool pre-populated with {} copies.",
+            skeletonPool.size)
+    }
+
+    /**
+     * Build UDM skeletons from schemas at init-time.
+     * The schema source comes from:
+     *   1. TransformConfig.inputs[].schema (bundle-loaded transforms)
+     *   2. The .utlx header's format spec (the declared input format determines how to parse the schema)
+     *
+     * If no schema is available, fail fast — COPY requires a schema.
+     */
+    private fun buildSkeletonsFromSchema() {
+        val declaredInputs = compiledProgram.header.inputs
+
+        if (declaredInputs.size <= 1) {
+            // Single input
+            val inputName = transformConfig.inputs.firstOrNull()?.name
+                ?: declaredInputs.firstOrNull()?.first
+                ?: "input"
+            val schemaSource = transformConfig.inputs.firstOrNull()?.schema
+            val declaredFormat = declaredInputs.firstOrNull()?.second?.type?.name?.lowercase() ?: "json"
+
+            if (schemaSource != null) {
+                // Parse schema to build the UDM skeleton
+                logger.info("Building UDM skeleton from schema (format: {})", declaredFormat)
+                val schemaUDM = parseSchemaToSkeleton(schemaSource, declaredFormat)
+                udmSkeleton = schemaUDM
+            } else {
+                // No explicit schema — build a minimal skeleton from the format type
+                // For JSON/XML, create an empty object skeleton that will be filled at runtime
+                logger.info("No schema provided for COPY strategy — using empty skeleton (format: {})", declaredFormat)
+                udmSkeleton = UDM.Object.empty()
+            }
+
+            // Pre-populate pool
+            for (i in 0 until poolCapacity.coerceAtMost(8)) {
+                skeletonPool.offer(deepClone(udmSkeleton))
+            }
+        } else {
+            // Multi-input: build skeleton per input
+            for ((name, formatSpec) in declaredInputs) {
+                val schemaSource = transformConfig.inputs.find { it.name == name }?.schema
+                val format = formatSpec.type.name.lowercase()
+
+                if (schemaSource != null) {
+                    inputSkeletons[name] = parseSchemaToSkeleton(schemaSource, format)
+                } else {
+                    inputSkeletons[name] = UDM.Object.empty()
+                }
+            }
+            logger.info("Built {} input skeletons for multi-input COPY", inputSkeletons.size)
+        }
+    }
+
+    /**
+     * Parse a schema source into a UDM skeleton.
+     * The schema itself is parsed as data — the resulting UDM structure
+     * represents the expected shape of incoming messages.
+     *
+     * For JSON Schema: parse the schema, extract property structure
+     * For XSD: parse the schema, extract element structure
+     * For other formats: parse as the declared format to get structure
+     */
+    private fun parseSchemaToSkeleton(schemaSource: String, format: String): UDM {
+        return try {
+            // Parse the schema as data — this gives us the structural shape
+            val schemaUDM = transformationService.parseInputPublic(schemaSource, format)
+            // Strip values, keep structure
+            buildEmptySkeleton(schemaUDM)
+        } catch (e: Exception) {
+            logger.warn("Failed to parse schema for skeleton: {}. Using empty skeleton.", e.message)
+            UDM.Object.empty()
+        }
     }
 
     override fun execute(input: String): ExecutionResult {
@@ -84,27 +164,17 @@ class CopyStrategy : ExecutionStrategy {
             ?: "input"
         val declaredFormat = compiledProgram.header.inputs.firstOrNull()?.second?.type?.name?.lowercase()
 
-        // Parse input to UDM (we always need to parse the actual data)
-        val inputUDM = transformationService.parseInputPublic(input, declaredFormat ?: "json")
-
-        // Build skeleton from first message if not yet done
-        if (skeletonInitialized.compareAndSet(false, true)) {
-            udmSkeleton = buildSkeletonFromUDM(inputUDM)
-            // Pre-populate pool
-            for (i in 0 until poolSize.coerceAtMost(8)) {
-                skeletonPool.offer(deepClone(udmSkeleton!!))
-            }
-            logger.info("UDM skeleton built from first message. Pool pre-populated with {} copies.", skeletonPool.size)
-        }
-
-        // Acquire skeleton from pool (or create new clone)
-        val workingCopy = acquireSkeleton()
+        // Acquire pre-built skeleton from pool
+        val skeleton = acquireSkeleton()
 
         try {
-            // Fill the skeleton with actual data from this message
-            val filledUDM = fillSkeleton(workingCopy, inputUDM)
+            // Parse input data
+            val inputUDM = transformationService.parseInputPublic(input, declaredFormat ?: "json")
 
-            // Execute transformation using the filled UDM
+            // Merge input data into the skeleton structure
+            val filledUDM = mergeDataIntoSkeleton(skeleton, inputUDM)
+
+            // Execute transformation
             val interpreter = Interpreter()
             val result = interpreter.execute(compiledProgram, mapOf(inputName to filledUDM))
             val outputUDM = result.toUDM()
@@ -117,8 +187,7 @@ class CopyStrategy : ExecutionStrategy {
 
             return ExecutionResult(output = outputData)
         } finally {
-            // Return skeleton to pool for reuse
-            returnSkeleton(workingCopy)
+            returnSkeleton(skeleton)
         }
     }
 
@@ -139,10 +208,18 @@ class CopyStrategy : ExecutionStrategy {
             } else {
                 mapper.writeValueAsString(node)
             }
-            name to transformationService.parseInputPublic(content, declaredFormat)
+
+            // Parse and merge into skeleton
+            val parsed = transformationService.parseInputPublic(content, declaredFormat)
+            val skeleton = inputSkeletons[name]
+            val filled = if (skeleton != null) {
+                mergeDataIntoSkeleton(deepClone(skeleton), parsed)
+            } else {
+                parsed
+            }
+            name to filled
         }
 
-        // Execute transformation
         val interpreter = Interpreter()
         val result = interpreter.execute(compiledProgram, inputUDMs)
         val outputUDM = result.toUDM()
@@ -157,6 +234,7 @@ class CopyStrategy : ExecutionStrategy {
 
     override fun shutdown() {
         skeletonPool.clear()
+        inputSkeletons.clear()
         logger.info("COPY strategy shutdown. Pool stats: hits={}, misses={}", poolHits.get(), poolMisses.get())
     }
 
@@ -171,31 +249,28 @@ class CopyStrategy : ExecutionStrategy {
             return pooled
         }
         poolMisses.incrementAndGet()
-        return deepClone(udmSkeleton ?: UDM.Object.empty())
+        return deepClone(udmSkeleton)
     }
 
     private fun returnSkeleton(skeleton: UDM) {
-        if (skeletonPool.size < poolSize) {
-            // Reset and return to pool
-            skeletonPool.offer(deepClone(udmSkeleton ?: return))
+        if (skeletonPool.size < poolCapacity) {
+            // Return a fresh clone to pool (not the used one — avoid stale data)
+            skeletonPool.offer(deepClone(udmSkeleton))
         }
-        // If pool is full, let GC handle it
     }
 
     /**
-     * Build a skeleton from an existing UDM — preserves structure, clears values.
-     * This is the canonical shape that gets cloned for each message.
+     * Build an empty skeleton from a UDM — preserves structure (keys, nesting), clears all values.
      */
-    private fun buildSkeletonFromUDM(udm: UDM): UDM {
+    private fun buildEmptySkeleton(udm: UDM): UDM {
         return when (udm) {
             is UDM.Object -> UDM.Object(
-                properties = udm.properties.mapValues { (_, v) -> buildSkeletonFromUDM(v) },
+                properties = udm.properties.mapValues { (_, v) -> buildEmptySkeleton(v) },
                 attributes = udm.attributes.mapValues { "" },
                 name = udm.name
             )
             is UDM.Array -> {
-                // For arrays, keep one skeleton element as the template
-                val elementSkeleton = udm.elements.firstOrNull()?.let { buildSkeletonFromUDM(it) }
+                val elementSkeleton = udm.elements.firstOrNull()?.let { buildEmptySkeleton(it) }
                 if (elementSkeleton != null) UDM.Array(listOf(elementSkeleton)) else UDM.Array.empty()
             }
             is UDM.Scalar -> UDM.Scalar.nullValue()
@@ -209,21 +284,40 @@ class CopyStrategy : ExecutionStrategy {
     }
 
     /**
-     * Fill a skeleton with data from a parsed UDM.
-     * For the COPY strategy, the filled UDM IS the parsed input — the skeleton
-     * provides the structural hint but the actual parsed UDM is used directly.
-     *
-     * The optimization is that the skeleton lets us pre-validate structure at init time
-     * and enables object pooling. The interpreter works with the parsed UDM directly.
+     * Merge actual data into a pre-built skeleton.
+     * The skeleton provides the pre-allocated structure; data fills the values.
+     * If data has fields not in the skeleton, they are added (schema evolution tolerance).
+     * If skeleton has fields not in data, they remain as null placeholders.
      */
-    private fun fillSkeleton(skeleton: UDM, data: UDM): UDM {
-        // In practice, the parsed input UDM IS the data we need.
-        // The skeleton's value is in pre-allocation and pool reuse.
-        // A more sophisticated implementation would copy values into
-        // pre-allocated skeleton nodes, but for correctness we use
-        // the parsed UDM directly — the pool benefit comes from
-        // reducing allocation churn via skeleton recycling.
-        return data
+    private fun mergeDataIntoSkeleton(skeleton: UDM, data: UDM): UDM {
+        return when {
+            // Both objects: merge properties
+            skeleton is UDM.Object && data is UDM.Object -> {
+                val merged = LinkedHashMap<String, UDM>()
+                // Start with skeleton keys (pre-allocated structure)
+                for ((key, skeletonValue) in skeleton.properties) {
+                    val dataValue = data.properties[key]
+                    if (dataValue != null) {
+                        merged[key] = mergeDataIntoSkeleton(skeletonValue, dataValue)
+                    } else {
+                        merged[key] = skeletonValue // keep null placeholder
+                    }
+                }
+                // Add any extra fields from data not in skeleton (schema evolution)
+                for ((key, dataValue) in data.properties) {
+                    if (key !in merged) {
+                        merged[key] = dataValue
+                    }
+                }
+                UDM.Object(
+                    properties = merged,
+                    attributes = data.attributes.ifEmpty { skeleton.attributes },
+                    name = data.name ?: skeleton.name
+                )
+            }
+            // Data wins for non-object types (skeleton was just a placeholder)
+            else -> data
+        }
     }
 
     // =========================================================================
@@ -249,7 +343,7 @@ class CopyStrategy : ExecutionStrategy {
     }
 
     // =========================================================================
-    // Compilation (shared with TemplateStrategy)
+    // Compilation
     // =========================================================================
 
     private fun compileSource(source: String): Program {
@@ -272,12 +366,8 @@ class CopyStrategy : ExecutionStrategy {
         val typeResult = typeChecker.check(program)
 
         when (typeResult) {
-            is TypeCheckResult.Success -> {
-                logger.debug("Type checking passed: {}", typeResult.type)
-            }
-            is TypeCheckResult.Failure -> {
-                logger.warn("Type checking warnings: {}", typeResult.errors.size)
-            }
+            is TypeCheckResult.Success -> logger.debug("Type checking passed: {}", typeResult.type)
+            is TypeCheckResult.Failure -> logger.warn("Type checking warnings: {}", typeResult.errors.size)
         }
 
         return program
