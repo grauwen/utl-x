@@ -93,6 +93,28 @@ message ExecuteBatchResponse {
   repeated ExecuteResponse results = 1;
 }
 
+// ─── Pipeline execution (chained transformations, in-process UDM hand-off) ───
+
+message ExecutePipelineRequest {
+  repeated string transformation_ids = 1;  // Ordered list: output of [0] feeds input of [1], etc.
+  bytes payload = 2;                       // Initial input payload
+  string content_type = 3;
+  string correlation_id = 4;
+}
+
+message ExecutePipelineResponse {
+  bool success = 1;
+  bytes output = 2;                         // Final output (from last transformation in chain)
+  string output_content_type = 3;
+  string error = 4;
+  ErrorClass error_class = 5;
+  ErrorPhase error_phase = 6;
+  repeated ValidationError validation_errors = 7;
+  string correlation_id = 8;
+  int32 stages_completed = 9;              // How many transforms completed before error (or total)
+  int64 total_duration_us = 10;            // Wall clock for entire pipeline
+}
+
 // ─── Lifecycle messages ───
 
 message UnloadTransformationRequest {
@@ -129,6 +151,7 @@ enum MessageType {
   EXECUTE_BATCH_REQUEST = 3;
   UNLOAD_TRANSFORMATION_REQUEST = 4;
   HEALTH_REQUEST = 5;
+  EXECUTE_PIPELINE_REQUEST = 6;
 
   // Responses (UTLXe → wrapper)
   LOAD_TRANSFORMATION_RESPONSE = 11;
@@ -136,6 +159,7 @@ enum MessageType {
   EXECUTE_BATCH_RESPONSE = 13;
   UNLOAD_TRANSFORMATION_RESPONSE = 14;
   HEALTH_RESPONSE = 15;
+  EXECUTE_PIPELINE_RESPONSE = 16;
 }
 
 // ─── gRPC service definition (for --mode=grpc only) ───
@@ -145,5 +169,6 @@ service UtlxeService {
   rpc Execute(ExecuteRequest) returns (ExecuteResponse);
   rpc ExecuteBatch(ExecuteBatchRequest) returns (ExecuteBatchResponse);
   rpc UnloadTransformation(UnloadTransformationRequest) returns (UnloadTransformationResponse);
+  rpc ExecutePipeline(ExecutePipelineRequest) returns (ExecutePipelineResponse);
   rpc Health(HealthRequest) returns (HealthResponse);
 }
