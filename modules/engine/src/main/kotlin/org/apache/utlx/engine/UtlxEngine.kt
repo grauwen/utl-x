@@ -6,6 +6,7 @@ import org.apache.utlx.engine.config.TransformConfig
 import org.apache.utlx.engine.health.HealthEndpoint
 import org.apache.utlx.engine.registry.TransformationInstance
 import org.apache.utlx.engine.registry.TransformationRegistry
+import org.apache.utlx.engine.strategy.CopyStrategy
 import org.apache.utlx.engine.strategy.ExecutionStrategy
 import org.apache.utlx.engine.strategy.TemplateStrategy
 import org.apache.utlx.engine.transport.TransportServer
@@ -145,7 +146,12 @@ class UtlxEngine(val config: EngineConfig) {
     fun createStrategy(config: TransformConfig): ExecutionStrategy {
         return when (config.strategy.uppercase()) {
             "TEMPLATE" -> TemplateStrategy()
-            // Phase 2+: COPY, COMPILED, AUTO
+            "COPY" -> CopyStrategy()
+            "AUTO" -> {
+                // AUTO: use COPY if schema-driven, TEMPLATE otherwise
+                // For now, default to TEMPLATE until schema detection is smarter
+                TemplateStrategy()
+            }
             else -> {
                 logger.warn("Strategy '{}' not yet implemented, falling back to TEMPLATE", config.strategy)
                 TemplateStrategy()
