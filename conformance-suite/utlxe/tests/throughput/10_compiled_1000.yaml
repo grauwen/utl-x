@@ -1,0 +1,28 @@
+name: "compiled_strategy_1000"
+category: "throughput"
+description: "1000 messages with COMPILED strategy — compare against TEMPLATE and COPY"
+tags: ["throughput", "concurrent", "compiled-strategy", "1000"]
+
+strategy: "COMPILED"
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    fullName: concat($input.firstName, " ", $input.lastName),
+    email: lowerCase($input.email),
+    isAdult: $input.age >= 18
+  }
+
+burst:
+  count: 1000
+  mode: "concurrent"
+  payload_template: |
+    {"firstName": "User", "lastName": "Nr{{INDEX}}", "email": "USER{{INDEX}}@EXAMPLE.COM", "age": {{AGE}}}
+  age_range: [10, 80]
+  content_type: "application/json"
+
+throughput_limits:
+  max_total_ms: 30000
