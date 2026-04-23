@@ -163,6 +163,14 @@ class UtlxeServiceImpl(
         responseObserver.onCompleted()
     }
 
+    override fun executePipeline(
+        request: ExecutePipelineRequest,
+        responseObserver: StreamObserver<ExecutePipelineResponse>
+    ) {
+        responseObserver.onNext(TransportHandlers.handleExecutePipeline(request, registry))
+        responseObserver.onCompleted()
+    }
+
     override fun unloadTransformation(
         request: UnloadTransformationRequest,
         responseObserver: StreamObserver<UnloadTransformationResponse>

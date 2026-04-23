@@ -165,6 +165,14 @@ class StdioProtoTransport(
                 }
             }
 
+            MessageType.EXECUTE_PIPELINE_REQUEST -> {
+                val req = ExecutePipelineRequest.parseFrom(envelope.payload)
+                submitWork {
+                    val resp = TransportHandlers.handleExecutePipeline(req, registry)
+                    responseQueue.put(wrapResponse(MessageType.EXECUTE_PIPELINE_RESPONSE, resp))
+                }
+            }
+
             else -> {
                 logger.warn("Unknown message type: {}", envelope.type)
                 val resp = ExecuteResponse.newBuilder()

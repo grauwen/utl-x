@@ -229,6 +229,93 @@ object TransportHandlers {
         return builder.build()
     }
 
+    fun handleExecutePipeline(
+        req: ExecutePipelineRequest,
+        registry: TransformationRegistry
+    ): ExecutePipelineResponse {
+        val startTime = System.nanoTime()
+        val transformIds = req.transformationIdsList
+        var currentPayload = req.payload.toStringUtf8()
+        var stagesCompleted = 0
+        val allWarnings = mutableListOf<ValidationError>()
+
+        if (transformIds.isEmpty()) {
+            return ExecutePipelineResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Pipeline requires at least one transformation_id")
+                .setErrorClass(ErrorClass.PERMANENT)
+                .setErrorPhase(ErrorPhase.INTERNAL)
+                .setCorrelationId(req.correlationId)
+                .build()
+        }
+
+        for (transformId in transformIds) {
+            val instance = registry.get(transformId)
+                ?: return ExecutePipelineResponse.newBuilder()
+                    .setSuccess(false)
+                    .setError("Transformation not found: $transformId (stage ${stagesCompleted + 1})")
+                    .setErrorClass(ErrorClass.PERMANENT)
+                    .setErrorPhase(ErrorPhase.INTERNAL)
+                    .setCorrelationId(req.correlationId)
+                    .setStagesCompleted(stagesCompleted)
+                    .build()
+
+            instance.recordExecution()
+            val result = ValidationOrchestrator.execute(instance, currentPayload)
+
+            if (!result.success) {
+                instance.recordError()
+                val durationUs = (System.nanoTime() - startTime) / 1000
+                val builder = ExecutePipelineResponse.newBuilder()
+                    .setSuccess(false)
+                    .setError("Pipeline failed at stage ${stagesCompleted + 1} ($transformId): ${result.error}")
+                    .setErrorClass(ErrorClass.PERMANENT)
+                    .setErrorPhase(mapErrorPhase(result.phase))
+                    .setCorrelationId(req.correlationId)
+                    .setStagesCompleted(stagesCompleted)
+                    .setTotalDurationUs(durationUs)
+                result.validationErrors.forEach { err ->
+                    builder.addValidationErrors(
+                        ValidationError.newBuilder()
+                            .setMessage(err.message)
+                            .setPath(err.path ?: "")
+                            .setSeverity(err.severity)
+                            .build()
+                    )
+                }
+                return builder.build()
+            }
+
+            // Collect warnings
+            result.validationErrors.forEach { err ->
+                allWarnings.add(
+                    ValidationError.newBuilder()
+                        .setMessage(err.message)
+                        .setPath(err.path ?: "")
+                        .setSeverity(err.severity)
+                        .build()
+                )
+            }
+
+            // Output of this stage becomes input of the next (in-process UDM hand-off)
+            currentPayload = result.output ?: ""
+            stagesCompleted++
+        }
+
+        val durationUs = (System.nanoTime() - startTime) / 1000
+
+        val builder = ExecutePipelineResponse.newBuilder()
+            .setSuccess(true)
+            .setOutput(ByteString.copyFromUtf8(currentPayload))
+            .setCorrelationId(req.correlationId)
+            .setStagesCompleted(stagesCompleted)
+            .setTotalDurationUs(durationUs)
+
+        allWarnings.forEach { builder.addValidationErrors(it) }
+
+        return builder.build()
+    }
+
     fun handleUnload(
         req: UnloadTransformationRequest,
         registry: TransformationRegistry
