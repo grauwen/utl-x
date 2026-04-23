@@ -187,7 +187,14 @@ object RuntimeOps {
     @JvmStatic
     fun makeLambda(clazz: Class<*>, methodName: String): UDM {
         val method = clazz.getMethod(methodName, List::class.java)
-        return UDM.Lambda { args -> method.invoke(null, args) as UDM }
+        return UDM.Lambda { args ->
+            try {
+                method.invoke(null, args) as UDM
+            } catch (e: java.lang.reflect.InvocationTargetException) {
+                // Unwrap the reflection wrapper to expose the real error
+                throw e.targetException
+            }
+        }
     }
 
     // ── Helpers ──

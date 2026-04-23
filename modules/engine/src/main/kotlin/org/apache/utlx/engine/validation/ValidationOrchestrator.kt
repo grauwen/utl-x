@@ -54,7 +54,7 @@ object ValidationOrchestrator {
             return ValidationResult(
                 success = false,
                 phase = ErrorPhase.TRANSFORMATION,
-                error = e.message ?: "Transformation failed"
+                error = e.message ?: "${e::class.simpleName}: ${e.stackTrace.firstOrNull()}"
             )
         }
 
