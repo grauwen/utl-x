@@ -1,0 +1,29 @@
+name: "hot_reload_transformation"
+category: "hot-reload"
+description: "Load v1, execute, reload with v2, execute again — output should change"
+tags: ["hot-reload", "lifecycle"]
+
+hot_reload:
+  v1:
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      {version: "v1", name: $input.name}
+    input: |
+      {"name": "Alice"}
+    expected: |
+      {"version": "v1", "name": "Alice"}
+
+  v2:
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      {version: "v2", name: upperCase($input.name)}
+    input: |
+      {"name": "Alice"}
+    expected: |
+      {"version": "v2", "name": "ALICE"}

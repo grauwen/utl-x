@@ -1,0 +1,54 @@
+name: "json_to_yaml_config"
+category: "real-world"
+description: "Transform JSON deployment spec to YAML config — DevOps use case"
+tags: ["real-world", "yaml", "format-conversion", "devops"]
+
+input:
+  format: json
+  data: |
+    {
+      "app": "order-service",
+      "version": "2.1.0",
+      "replicas": 3,
+      "port": 8080,
+      "env": "production",
+      "resources": {"cpu": "500m", "memory": "512Mi"},
+      "features": ["logging", "metrics", "tracing"]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output yaml
+  ---
+  {
+    deployment: {
+      name: $input.app,
+      version: $input.version,
+      replicas: $input.replicas,
+      container: {
+        port: $input.port,
+        resources: $input.resources
+      },
+      environment: $input.env,
+      features: $input.features
+    }
+  }
+
+expected:
+  format: yaml
+  data: |
+    deployment:
+      name: order-service
+      version: 2.1.0
+      replicas: 3
+      container:
+        port: 8080
+        resources:
+          cpu: 500m
+          memory: 512Mi
+      environment: production
+      features:
+        - logging
+        - metrics
+        - tracing

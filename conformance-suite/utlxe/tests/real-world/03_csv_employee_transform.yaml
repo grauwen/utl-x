@@ -1,0 +1,38 @@
+name: "csv_employee_transform"
+category: "real-world"
+description: "Transform JSON employee list to CSV format with computed fields"
+tags: ["real-world", "csv", "format-conversion", "map"]
+
+input:
+  format: json
+  data: |
+    {
+      "employees": [
+        {"id": "E001", "first": "John", "last": "Smith", "dept": "Engineering", "salary": 95000},
+        {"id": "E002", "first": "Sarah", "last": "Johnson", "dept": "Marketing", "salary": 78000},
+        {"id": "E003", "first": "Michael", "last": "Williams", "dept": "Engineering", "salary": 102000},
+        {"id": "E004", "first": "Emily", "last": "Brown", "dept": "Sales", "salary": 67000}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output csv
+  ---
+  map($input.employees, (e) -> {
+    employee_id: e.id,
+    full_name: concat(e.first, " ", e.last),
+    department: e.dept,
+    annual_salary: e.salary,
+    monthly_salary: e.salary / 12
+  })
+
+expected:
+  format: csv
+  data: |
+    employee_id,full_name,department,annual_salary,monthly_salary
+    E001,John Smith,Engineering,95000,7916.666666666667
+    E002,Sarah Johnson,Marketing,78000,6500.0
+    E003,Michael Williams,Engineering,102000,8500.0
+    E004,Emily Brown,Sales,67000,5583.333333333333

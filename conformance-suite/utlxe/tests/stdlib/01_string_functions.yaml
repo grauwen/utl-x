@@ -1,0 +1,41 @@
+name: "stdlib_string_functions"
+category: "stdlib"
+description: "Test string stdlib functions through the engine"
+tags: ["stdlib", "string"]
+
+input:
+  format: json
+  data: |
+    {"text": "Hello World", "email": "USER@EXAMPLE.COM"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    upper: upperCase($input.text),
+    lower: lowerCase($input.text),
+    len: length($input.text),
+    trimmed: trim("  hello  "),
+    contains: contains($input.text, "World"),
+    starts: startsWith($input.text, "Hello"),
+    ends: endsWith($input.text, "World"),
+    replaced: replace($input.text, "World", "UTL-X"),
+    email: lowerCase($input.email)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "upper": "HELLO WORLD",
+      "lower": "hello world",
+      "len": 11,
+      "trimmed": "hello",
+      "contains": true,
+      "starts": true,
+      "ends": true,
+      "replaced": "Hello UTL-X",
+      "email": "user@example.com"
+    }

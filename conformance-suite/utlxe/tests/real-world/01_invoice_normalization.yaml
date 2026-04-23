@@ -1,0 +1,89 @@
+name: "invoice_normalization"
+category: "real-world"
+description: "Normalize an order into an invoice with line totals, tax, and conditional status"
+tags: ["real-world", "invoice", "business-logic", "computation"]
+
+input:
+  format: json
+  data: |
+    {
+      "orderId": "ORD-2026-00451",
+      "currency": "EUR",
+      "taxRate": 0.21,
+      "customer": {
+        "firstName": "Jan",
+        "lastName": "de Vries",
+        "email": "jan@example.nl"
+      },
+      "items": [
+        {"sku": "LAPTOP-15", "name": "Laptop 15 inch", "quantity": 2, "unitPrice": 1299.00, "discount": 0.10},
+        {"sku": "MOUSE-WL", "name": "Wireless Mouse", "quantity": 5, "unitPrice": 49.95, "discount": 0}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    let items = map($input.items, (item) -> {
+      let qty = item.quantity,
+      let price = item.unitPrice,
+      let disc = item.discount,
+      let lineTotal = qty * price * (1 - disc),
+      {
+        sku: item.sku,
+        description: item.name,
+        quantity: qty,
+        unitPrice: price,
+        discount: disc,
+        lineTotal: lineTotal
+      }
+    }),
+    let subtotal = sum(map(items, (i) -> i.lineTotal)),
+    let taxAmount = subtotal * $input.taxRate,
+    let total = subtotal + taxAmount,
+
+    invoice: {
+      invoiceNumber: concat("INV-", $input.orderId),
+      currency: $input.currency,
+      customer: {
+        name: concat($input.customer.firstName, " ", $input.customer.lastName),
+        email: $input.customer.email
+      },
+      lineItems: items,
+      totals: {
+        subtotal: subtotal,
+        taxRate: $input.taxRate,
+        taxAmount: taxAmount,
+        total: total
+      },
+      status: if (total > 10000) "REVIEW_REQUIRED" else "APPROVED"
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "invoice": {
+        "invoiceNumber": "INV-ORD-2026-00451",
+        "currency": "EUR",
+        "customer": {
+          "name": "Jan de Vries",
+          "email": "jan@example.nl"
+        },
+        "lineItems": [
+          {"sku": "LAPTOP-15", "description": "Laptop 15 inch", "quantity": 2, "unitPrice": 1299.0, "discount": 0.1, "lineTotal": 2338.2},
+          {"sku": "MOUSE-WL", "description": "Wireless Mouse", "quantity": 5, "unitPrice": 49.95, "discount": 0, "lineTotal": 249.75}
+        ],
+        "totals": {
+          "subtotal": 2587.95,
+          "taxRate": 0.21,
+          "taxAmount": 543.4695,
+          "total": 3131.4195
+        },
+        "status": "APPROVED"
+      }
+    }

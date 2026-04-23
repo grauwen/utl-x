@@ -1,0 +1,59 @@
+name: "iot_sensor_aggregation"
+category: "real-world"
+description: "Aggregate IoT sensor readings — compute min/max/avg per sensor"
+tags: ["real-world", "iot", "aggregation", "computation"]
+
+input:
+  format: json
+  data: |
+    {
+      "readings": [
+        {"sensor": "temp-01", "value": 22.5, "unit": "C"},
+        {"sensor": "temp-01", "value": 23.1, "unit": "C"},
+        {"sensor": "temp-01", "value": 21.8, "unit": "C"},
+        {"sensor": "humidity-01", "value": 65.2, "unit": "%"},
+        {"sensor": "humidity-01", "value": 67.8, "unit": "%"},
+        {"sensor": "pressure-01", "value": 1013.25, "unit": "hPa"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    let tempReadings = filter($input.readings, (r) -> r.sensor == "temp-01") |> map((r) -> r.value),
+    let humidReadings = filter($input.readings, (r) -> r.sensor == "humidity-01") |> map((r) -> r.value),
+
+    sensorCount: size($input.readings),
+    temperature: {
+      readings: size(tempReadings),
+      min: min(tempReadings),
+      max: max(tempReadings),
+      avg: avg(tempReadings)
+    },
+    humidity: {
+      readings: size(humidReadings),
+      min: min(humidReadings),
+      max: max(humidReadings)
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "sensorCount": 6,
+      "temperature": {
+        "readings": 3,
+        "min": 21.8,
+        "max": 23.1,
+        "avg": 22.466666666666665
+      },
+      "humidity": {
+        "readings": 2,
+        "min": 65.2,
+        "max": 67.8
+      }
+    }

@@ -1,0 +1,35 @@
+name: "stdlib_object_functions"
+category: "stdlib"
+description: "Test object manipulation stdlib functions"
+tags: ["stdlib", "object", "keys", "values", "entries"]
+
+input:
+  format: json
+  data: |
+    {"person": {"name": "Alice", "age": 30, "city": "Amsterdam"}}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    keys: keys($input.person),
+    values: values($input.person),
+    entries: entries($input.person),
+    hasName: hasKey($input.person, "name"),
+    hasMissing: hasKey($input.person, "phone"),
+    keyCount: size(keys($input.person))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "keys": ["name", "age", "city"],
+      "values": ["Alice", 30, "Amsterdam"],
+      "entries": [["name", "Alice"], ["age", 30], ["city", "Amsterdam"]],
+      "hasName": true,
+      "hasMissing": false,
+      "keyCount": 3
+    }

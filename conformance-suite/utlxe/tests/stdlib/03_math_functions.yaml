@@ -1,0 +1,41 @@
+name: "stdlib_math_functions"
+category: "stdlib"
+description: "Test math stdlib functions through the engine"
+tags: ["stdlib", "math"]
+
+input:
+  format: json
+  data: |
+    {"a": 16, "b": 3, "c": -7.5, "d": 2.7182}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    abs: abs($input.c),
+    ceil: ceil($input.d),
+    floor: floor($input.d),
+    round: round($input.d),
+    sqrt: sqrt($input.a),
+    pow: pow($input.b, 3),
+    modulo: $input.a % $input.b,
+    max: max([$input.a, $input.b, $input.c]),
+    min: min([$input.a, $input.b, $input.c])
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "abs": 7.5,
+      "ceil": 3.0,
+      "floor": 2.0,
+      "round": 3.0,
+      "sqrt": 4.0,
+      "pow": 27.0,
+      "modulo": 1.0,
+      "max": 16,
+      "min": -7.5
+    }

@@ -1,0 +1,66 @@
+name: "employee_payroll_summary"
+category: "real-world"
+description: "Transform employee payroll data into a pay stub summary"
+tags: ["real-world", "payroll", "computation", "formatting"]
+
+input:
+  format: json
+  data: |
+    {
+      "employee": {
+        "firstName": "Sarah",
+        "lastName": "Johnson",
+        "department": "Engineering",
+        "jobTitle": "Senior Software Engineer"
+      },
+      "compensation": {
+        "grossPay": 4615.38,
+        "overtimePay": 432.69
+      },
+      "deductions": {
+        "federalTax": 830.77,
+        "stateTax": 276.92,
+        "socialSecurity": 286.15,
+        "medicare": 66.95,
+        "healthInsurance": 150.00,
+        "retirement401k": 461.54
+      },
+      "netPay": 2975.74
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    let totalDeductions = $input.deductions.federalTax + $input.deductions.stateTax +
+      $input.deductions.socialSecurity + $input.deductions.medicare +
+      $input.deductions.healthInsurance + $input.deductions.retirement401k,
+    let totalEarnings = $input.compensation.grossPay + $input.compensation.overtimePay,
+
+    payStub: {
+      employee: concat($input.employee.firstName, " ", $input.employee.lastName),
+      title: $input.employee.jobTitle,
+      department: $input.employee.department,
+      earnings: totalEarnings,
+      deductions: totalDeductions,
+      netPay: $input.netPay,
+      deductionRate: totalDeductions / totalEarnings
+    }
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "payStub": {
+        "employee": "Sarah Johnson",
+        "title": "Senior Software Engineer",
+        "department": "Engineering",
+        "earnings": 5048.07,
+        "deductions": 2072.33,
+        "netPay": 2975.74,
+        "deductionRate": 0.4105192677597578
+      }
+    }

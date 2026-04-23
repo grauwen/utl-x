@@ -1,0 +1,22 @@
+name: "parity_identity"
+category: "strategy-parity"
+description: "Identity passthrough must produce identical output across all strategies"
+tags: ["parity", "identity"]
+strategies: ["TEMPLATE", "COPY", "COMPILED"]
+
+input:
+  format: json
+  data: |
+    {"name": "Alice", "age": 30, "active": true, "tags": ["dev", "admin"]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  $input
+
+expected:
+  format: json
+  data: |
+    {"name": "Alice", "age": 30, "active": true, "tags": ["dev", "admin"]}

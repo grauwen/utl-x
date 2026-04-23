@@ -1,0 +1,43 @@
+name: "stdlib_type_functions"
+category: "stdlib"
+description: "Test type conversion and checking functions"
+tags: ["stdlib", "type", "conversion"]
+
+input:
+  format: json
+  data: |
+    {"numStr": "42", "boolStr": "true", "num": 3.14, "text": "hello"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    toNum: toNumber($input.numStr),
+    toStr: toString($input.num),
+    toBool: toBoolean($input.boolStr),
+    isStr: isString($input.text),
+    isNum: isNumber($input.num),
+    isBool: isBoolean(true),
+    isArr: isArray([1, 2, 3]),
+    isObj: isObject({a: 1}),
+    typeOfStr: typeOf($input.text),
+    typeOfNum: typeOf($input.num)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "toNum": 42,
+      "toStr": "3.14",
+      "toBool": true,
+      "isStr": true,
+      "isNum": true,
+      "isBool": true,
+      "isArr": true,
+      "isObj": true,
+      "typeOfStr": "string",
+      "typeOfNum": "number"
+    }

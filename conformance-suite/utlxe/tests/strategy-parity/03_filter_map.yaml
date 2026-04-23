@@ -1,0 +1,25 @@
+name: "parity_filter_map"
+category: "strategy-parity"
+description: "Filter + map with lambdas must match across strategies"
+tags: ["parity", "filter", "map", "lambda"]
+strategies: ["TEMPLATE", "COPY", "COMPILED"]
+
+input:
+  format: json
+  data: |
+    {"people": [{"name": "Alice", "age": 28}, {"name": "Bob", "age": 15}, {"name": "Charlie", "age": 65}]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    adults: filter($input.people, (p) -> p.age >= 18) |> map((p) -> p.name),
+    count: size(filter($input.people, (p) -> p.age >= 18))
+  }
+
+expected:
+  format: json
+  data: |
+    {"adults": ["Alice", "Charlie"], "count": 2}

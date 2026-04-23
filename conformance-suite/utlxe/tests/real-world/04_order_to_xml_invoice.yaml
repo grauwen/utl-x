@@ -1,0 +1,65 @@
+name: "order_to_xml_invoice"
+category: "real-world"
+description: "Transform JSON order into XML invoice — cross-format business document"
+tags: ["real-world", "xml", "format-conversion", "invoice"]
+
+input:
+  format: json
+  data: |
+    {
+      "orderId": "ORD-2026-100",
+      "customer": "Contoso Ltd",
+      "currency": "EUR",
+      "items": [
+        {"product": "Widget A", "qty": 10, "price": 49.99},
+        {"product": "Widget B", "qty": 5, "price": 199.99}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    let total = sum(map($input.items, (i) -> i.qty * i.price)),
+    Invoice: {
+      InvoiceNumber: concat("INV-", $input.orderId),
+      Customer: $input.customer,
+      Currency: $input.currency,
+      Items: map($input.items, (item) -> {
+        Item: {
+          Product: item.product,
+          Quantity: item.qty,
+          UnitPrice: item.price,
+          LineTotal: item.qty * item.price
+        }
+      }),
+      Total: total
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Invoice>
+      <InvoiceNumber>INV-ORD-2026-100</InvoiceNumber>
+      <Customer>Contoso Ltd</Customer>
+      <Currency>EUR</Currency>
+      <Items>
+        <Item>
+          <Product>Widget A</Product>
+          <Quantity>10</Quantity>
+          <UnitPrice>49.99</UnitPrice>
+          <LineTotal>499.9</LineTotal>
+        </Item>
+        <Item>
+          <Product>Widget B</Product>
+          <Quantity>5</Quantity>
+          <UnitPrice>199.99</UnitPrice>
+          <LineTotal>999.95</LineTotal>
+        </Item>
+      </Items>
+      <Total>1499.85</Total>
+    </Invoice>

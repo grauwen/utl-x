@@ -1,0 +1,31 @@
+name: "hot_reload_strategy_switch"
+category: "hot-reload"
+description: "Load as TEMPLATE, execute, reload as COMPILED, execute — same output"
+tags: ["hot-reload", "strategy-switch"]
+
+hot_reload:
+  v1:
+    strategy: "TEMPLATE"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      {name: concat($input.first, " ", $input.last)}
+    input: |
+      {"first": "Marcel", "last": "Grauwen"}
+    expected: |
+      {"name": "Marcel Grauwen"}
+
+  v2:
+    strategy: "COMPILED"
+    transformation: |
+      %utlx 1.0
+      input json
+      output json
+      ---
+      {name: concat($input.first, " ", $input.last)}
+    input: |
+      {"first": "Marcel", "last": "Grauwen"}
+    expected: |
+      {"name": "Marcel Grauwen"}

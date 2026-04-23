@@ -1,0 +1,27 @@
+name: "parity_restructure"
+category: "strategy-parity"
+description: "Object restructuring with stdlib must match across strategies"
+tags: ["parity", "stdlib", "concat", "lowerCase"]
+strategies: ["TEMPLATE", "COPY", "COMPILED"]
+
+input:
+  format: json
+  data: |
+    {"firstName": "Marcel", "lastName": "Grauwen", "email": "MARCEL@GLOMIDCO.COM", "age": 45}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    fullName: concat($input.firstName, " ", $input.lastName),
+    email: lowerCase($input.email),
+    age: $input.age,
+    isAdult: $input.age >= 18
+  }
+
+expected:
+  format: json
+  data: |
+    {"fullName": "Marcel Grauwen", "email": "marcel@glomidco.com", "age": 45, "isAdult": true}

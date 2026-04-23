@@ -1,0 +1,47 @@
+name: "user_function_discount"
+category: "real-world"
+description: "User-defined function for tiered discount calculation"
+tags: ["real-world", "user-function", "let", "conditional"]
+
+input:
+  format: json
+  data: |
+    {
+      "orders": [
+        {"customer": "Alice", "tier": "Gold", "amount": 5000},
+        {"customer": "Bob", "tier": "Silver", "amount": 1500},
+        {"customer": "Charlie", "tier": "Standard", "amount": 800}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    let CalcDiscount = (tier, amount) ->
+      if (tier == "Gold") amount * 0.15
+      else if (tier == "Silver") amount * 0.10
+      else amount * 0.05,
+
+    results: map($input.orders, (order) -> {
+      let discount = CalcDiscount(order.tier, order.amount),
+      customer: order.customer,
+      tier: order.tier,
+      subtotal: order.amount,
+      discount: discount,
+      total: order.amount - discount
+    })
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "results": [
+        {"customer": "Alice", "tier": "Gold", "subtotal": 5000, "discount": 750.0, "total": 4250.0},
+        {"customer": "Bob", "tier": "Silver", "subtotal": 1500, "discount": 150.0, "total": 1350.0},
+        {"customer": "Charlie", "tier": "Standard", "subtotal": 800, "discount": 40.0, "total": 760.0}
+      ]
+    }

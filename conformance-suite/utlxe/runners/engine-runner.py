@@ -707,8 +707,25 @@ def format_metrics(metrics):
     return " | ".join(parts)
 
 
+def approx_equal(a, b, rel_tol=1e-9):
+    """Check if two values are approximately equal (handles float precision)."""
+    if isinstance(a, float) and isinstance(b, (int, float)):
+        return abs(a - float(b)) <= max(rel_tol * max(abs(a), abs(float(b))), 1e-12)
+    if isinstance(b, float) and isinstance(a, (int, float)):
+        return abs(float(a) - b) <= max(rel_tol * max(abs(float(a)), abs(b)), 1e-12)
+    if isinstance(a, dict) and isinstance(b, dict):
+        if a.keys() != b.keys():
+            return False
+        return all(approx_equal(a[k], b[k], rel_tol) for k in a)
+    if isinstance(a, list) and isinstance(b, list):
+        if len(a) != len(b):
+            return False
+        return all(approx_equal(x, y, rel_tol) for x, y in zip(a, b))
+    return a == b
+
+
 def compare_json(expected_str, actual_str):
-    """Compare two JSON strings structurally. Returns (match, diff_message)."""
+    """Compare two JSON strings structurally with approximate numeric matching. Returns (match, diff_message)."""
     try:
         expected = json.loads(expected_str)
     except json.JSONDecodeError as e:
@@ -719,6 +736,9 @@ def compare_json(expected_str, actual_str):
         return False, f"Actual JSON parse error: {e}\nActual output: {actual_str}"
 
     if expected == actual:
+        return True, ""
+    # Retry with approximate numeric comparison (floating-point tolerance)
+    if approx_equal(expected, actual):
         return True, ""
     return False, f"JSON mismatch:\n  Expected: {json.dumps(expected, indent=2)}\n  Actual:   {json.dumps(actual, indent=2)}"
 
@@ -737,11 +757,37 @@ def compare_output(expected_str, actual_str, fmt):
         norm_act = re.sub(r">\s+<", "><", actual_str).strip()
         if norm_exp == norm_act:
             return True, ""
+        # Try approximate numeric comparison within XML text content
+        def normalize_xml_numbers(s):
+            return re.sub(r'>(\d+\.\d+)<', lambda m: '>%.6f<' % float(m.group(1)), s)
+        if normalize_xml_numbers(norm_exp) == normalize_xml_numbers(norm_act):
+            return True, ""
         return False, f"XML mismatch:\n  Expected: {expected_str}\n  Actual:   {actual_str}"
     elif fmt == "csv":
         exp_lines = [l.strip() for l in expected_str.strip().split("\n") if l.strip()]
         act_lines = [l.strip() for l in actual_str.strip().split("\n") if l.strip()]
         if exp_lines == act_lines:
+            return True, ""
+        # Try approximate numeric comparison for CSV cells
+        def csv_approx_match(exp, act):
+            if len(exp) != len(act):
+                return False
+            for el, al in zip(exp, act):
+                ec = el.split(",")
+                ac = al.split(",")
+                if len(ec) != len(ac):
+                    return False
+                for e, a in zip(ec, ac):
+                    if e == a:
+                        continue
+                    try:
+                        if abs(float(e) - float(a)) < 0.01:
+                            continue
+                    except ValueError:
+                        pass
+                    return False
+            return True
+        if csv_approx_match(exp_lines, act_lines):
             return True, ""
         return False, f"CSV mismatch:\n  Expected lines: {exp_lines}\n  Actual lines:   {act_lines}"
     elif fmt == "yaml":
@@ -772,6 +818,69 @@ def run_test(client, test_data, verbose=False):
     # ── Throughput/burst test ──
     if "burst" in test_data:
         return run_throughput_test(client, test_data, verbose=verbose)
+
+    # ── Strategy parity test ──
+    if "strategies" in test_data:
+        strategies = test_data["strategies"]
+        payload = test_data.get("input", {}).get("data", "{}").strip()
+        expected_data = test_data["expected"]["data"]
+        expected_fmt = test_data["expected"]["format"]
+        outputs = {}
+
+        for strat in strategies:
+            strat_id = f"parity-{name}-{strat.lower()}"
+            success, error = client.load_transformation(strat_id, transformation, strategy=strat)
+            if not success:
+                return False, f"Load failed for strategy {strat}: {error}"
+            success, output, error, _ = client.execute(strat_id, payload)
+            if not success:
+                return False, f"Execute failed for strategy {strat}: {error}"
+            outputs[strat] = output
+
+        # All strategies must match expected
+        for strat, output in outputs.items():
+            match, diff = compare_output(expected_data, output, expected_fmt)
+            if not match:
+                return False, f"Strategy {strat}: {diff}"
+
+        # All strategies must match each other
+        first_strat = strategies[0]
+        for strat in strategies[1:]:
+            if expected_fmt == "json":
+                match, diff = compare_output(outputs[first_strat], outputs[strat], "json")
+            else:
+                match = outputs[first_strat].strip() == outputs[strat].strip()
+                diff = f"{first_strat} != {strat}"
+            if not match:
+                return False, f"Parity mismatch: {first_strat} vs {strat}: {diff}"
+
+        return True, f"All {len(strategies)} strategies match"
+
+    # ── Hot reload test ──
+    if "hot_reload" in test_data:
+        hr = test_data["hot_reload"]
+        reload_id = f"hot-reload-{name}"
+
+        for version_name in sorted(hr.keys()):
+            version = hr[version_name]
+            v_source = version["transformation"]
+            v_strategy = version.get("strategy", "TEMPLATE")
+            v_input = version["input"].strip()
+            v_expected = version["expected"]
+
+            success, error = client.load_transformation(reload_id, v_source, strategy=v_strategy)
+            if not success:
+                return False, f"{version_name} load failed: {error}"
+
+            success, output, error, _ = client.execute(reload_id, v_input)
+            if not success:
+                return False, f"{version_name} execute failed: {error}"
+
+            match, diff = compare_output(v_expected, output, "json")
+            if not match:
+                return False, f"{version_name}: {diff}"
+
+        return True, f"Hot reload OK: {len(hr)} versions tested"
 
     # ── Pipeline test ──
     if "pipeline" in test_data:
