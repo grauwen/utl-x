@@ -126,6 +126,36 @@ public class UtlxeClientIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task CopyStrategy_LoadAndExecute()
+    {
+        var utlx = "%utlx 1.0\ninput json\noutput json\n---\n{name: concat($input.first, \" \", $input.last)}\n";
+        var load = await _client.LoadTransformationAsync("copy-test", utlx, strategy: "COPY");
+        Assert.True(load.Success, $"COPY load failed: {load.Error}");
+
+        var result = await _client.ExecuteAsync(
+            "copy-test",
+            Encoding.UTF8.GetBytes("""{"first": "Marcel", "last": "Grauwen"}"""));
+        Assert.True(result.Success, $"COPY execute failed: {result.Error}");
+        Assert.Contains("Marcel Grauwen", result.Output.ToStringUtf8());
+    }
+
+    [Fact]
+    public async Task CopyStrategy_MultipleExecutions_Reuses_Skeleton()
+    {
+        var utlx = "%utlx 1.0\ninput json\noutput json\n---\n{id: $input.id, done: true}\n";
+        await _client.LoadTransformationAsync("copy-reuse", utlx, strategy: "COPY");
+
+        for (int i = 1; i <= 5; i++)
+        {
+            var result = await _client.ExecuteAsync(
+                "copy-reuse",
+                Encoding.UTF8.GetBytes($"{{\"id\": {i}}}"));
+            Assert.True(result.Success);
+            Assert.Contains($"{i}", result.Output.ToStringUtf8());
+        }
+    }
+
+    [Fact]
     public async Task FullLifecycle_LoadExecuteHealthUnload()
     {
         // Load
