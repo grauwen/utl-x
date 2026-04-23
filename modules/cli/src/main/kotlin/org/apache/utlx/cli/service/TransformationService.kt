@@ -178,6 +178,25 @@ class TransformationService {
     }
 
     /**
+     * Public entry point for parsing input data to UDM. Used by engine strategies.
+     */
+    fun parseInputPublic(data: String, format: String, options: Map<String, Any> = emptyMap()): UDM {
+        return parseInput(data, format, options)
+    }
+
+    /**
+     * Public entry point for serializing UDM to output string. Used by engine strategies.
+     */
+    fun serializeOutputPublic(
+        udm: UDM,
+        format: String,
+        formatSpec: org.apache.utlx.core.ast.FormatSpec,
+        pretty: Boolean = true
+    ): String {
+        return serializeOutput(udm, format, formatSpec, pretty)
+    }
+
+    /**
      * Parse input - extracted from CLI's parseInput (EXACT copy to maintain 100% compatibility)
      */
     private fun parseInput(data: String, format: String, options: Map<String, Any> = emptyMap()): UDM {
