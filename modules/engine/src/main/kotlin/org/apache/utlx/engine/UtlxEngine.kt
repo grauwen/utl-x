@@ -146,7 +146,7 @@ class UtlxEngine(val config: EngineConfig) {
      */
     fun createStrategy(config: TransformConfig): ExecutionStrategy {
         return when (config.strategy.uppercase()) {
-            "TEMPLATE" -> TemplateStrategy()
+            "TEMPLATE", "INTERPRETED" -> TemplateStrategy()
             "COPY" -> CopyStrategy()
             "COMPILED" -> CompiledStrategy()
             "AUTO" -> {

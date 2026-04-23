@@ -6,6 +6,7 @@ import org.objectweb.asm.*
 import org.objectweb.asm.Opcodes.*
 import org.slf4j.LoggerFactory
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -26,6 +27,9 @@ class ASTCompiler {
 
     companion object {
         private val counter = AtomicLong(0)
+        // Compilation cache: SHA256 of source → compiled TransformFunction
+        private val compilationCache = ConcurrentHashMap<String, TransformFunction>()
+
         private const val RUNTIME_OPS = "org/apache/utlx/engine/strategy/compiled/RuntimeOps"
         private const val UDM_TYPE = "org/apache/utlx/core/udm/UDM"
         private const val UDM_DESC = "Lorg/apache/utlx/core/udm/UDM;"
@@ -45,6 +49,15 @@ class ASTCompiler {
         if (!isCompilable(program.body)) {
             logger.info("Expression contains unsupported nodes — falling back to interpreter")
             return null
+        }
+
+        // Check compilation cache — skip bytecode generation if same source was compiled before
+        val sourceHash = program.body.toString().let { src ->
+            MessageDigest.getInstance("SHA-256").digest(src.toByteArray()).joinToString("") { "%02x".format(it) }
+        }
+        compilationCache[sourceHash]?.let { cached ->
+            logger.debug("Compilation cache hit for hash {}", sourceHash.take(12))
+            return cached
         }
 
         val className = "utlx/compiled/Transform_${counter.incrementAndGet()}"
@@ -88,8 +101,10 @@ class ASTCompiler {
         val clazz = loader.defineClass(className.replace('/', '.'), bytecode)
         val instance = clazz.getDeclaredConstructor().newInstance()
 
-        logger.debug("Compiled transformation to {} ({} bytes)", className, bytecode.size)
-        return instance as TransformFunction
+        val transformFunction = instance as TransformFunction
+        compilationCache[sourceHash] = transformFunction
+        logger.debug("Compiled transformation to {} ({} bytes, cached as {})", className, bytecode.size, sourceHash.take(12))
+        return transformFunction
     }
 
     // =========================================================================

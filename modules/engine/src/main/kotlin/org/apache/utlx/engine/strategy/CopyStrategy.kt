@@ -11,6 +11,8 @@ import org.apache.utlx.core.types.TypeCheckResult
 import org.apache.utlx.core.types.TypeChecker
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.engine.config.TransformConfig
+import org.apache.utlx.engine.strategy.compiled.ASTCompiler
+import org.apache.utlx.engine.strategy.compiled.TransformFunction
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicLong
@@ -56,6 +58,9 @@ class CopyStrategy : ExecutionStrategy {
     private lateinit var udmSkeleton: UDM
     private val inputSkeletons = mutableMapOf<String, UDM>() // for multi-input
 
+    // Compiled expression function — null means interpreter fallback
+    private var transformFunction: TransformFunction? = null
+
     // Object pool — recycle deep-cloned skeletons to reduce GC pressure
     private val skeletonPool = ConcurrentLinkedQueue<UDM>()
     private val poolCapacity = 32
@@ -69,11 +74,22 @@ class CopyStrategy : ExecutionStrategy {
         logger.info("Compiling transformation (COPY strategy)...")
         compiledProgram = compileSource(source)
 
+        // Try to compile expression to bytecode (COPY + COMPILED combination)
+        try {
+            val compiler = ASTCompiler()
+            transformFunction = compiler.compile(compiledProgram)
+            if (transformFunction != null) {
+                logger.info("COPY+COMPILED: expression compiled to bytecode")
+            }
+        } catch (e: Exception) {
+            logger.debug("Bytecode compilation failed, using interpreter: {}", e.message)
+        }
+
         // Build UDM skeleton(s) from schema at init-time
         buildSkeletonsFromSchema()
 
-        logger.info("COPY strategy initialized. Skeleton ready, pool pre-populated with {} copies.",
-            skeletonPool.size)
+        logger.info("COPY strategy initialized. Skeleton ready, pool pre-populated with {} copies. Compiled={}",
+            skeletonPool.size, transformFunction != null)
     }
 
     /**
@@ -174,10 +190,13 @@ class CopyStrategy : ExecutionStrategy {
             // Merge input data into the skeleton structure
             val filledUDM = mergeDataIntoSkeleton(skeleton, inputUDM)
 
-            // Execute transformation
-            val interpreter = Interpreter()
-            val result = interpreter.execute(compiledProgram, mapOf(inputName to filledUDM))
-            val outputUDM = result.toUDM()
+            // Execute transformation — compiled bytecode if available, interpreter otherwise
+            val outputUDM = if (transformFunction != null) {
+                transformFunction!!.execute(mapOf(inputName to filledUDM))
+            } else {
+                val interpreter = Interpreter()
+                interpreter.execute(compiledProgram, mapOf(inputName to filledUDM)).toUDM()
+            }
 
             // Serialize output
             val outputFormat = compiledProgram.header.outputFormat.type.name.lowercase()
@@ -220,9 +239,13 @@ class CopyStrategy : ExecutionStrategy {
             name to filled
         }
 
-        val interpreter = Interpreter()
-        val result = interpreter.execute(compiledProgram, inputUDMs)
-        val outputUDM = result.toUDM()
+        // Execute — compiled bytecode if available, interpreter otherwise
+        val outputUDM = if (transformFunction != null) {
+            transformFunction!!.execute(inputUDMs)
+        } else {
+            val interpreter = Interpreter()
+            interpreter.execute(compiledProgram, inputUDMs).toUDM()
+        }
 
         val outputFormat = compiledProgram.header.outputFormat.type.name.lowercase()
         val outputData = transformationService.serializeOutputPublic(
