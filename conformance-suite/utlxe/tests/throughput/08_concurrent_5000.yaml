@@ -1,0 +1,25 @@
+name: "concurrent_5000"
+category: "throughput"
+description: "5000 messages fired concurrently — stress test"
+tags: ["throughput", "concurrent", "stress", "5000"]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    id: $input.id,
+    value: $input.value,
+    done: true
+  }
+
+burst:
+  count: 5000
+  mode: "concurrent"
+  payload_template: |
+    {"id": {{INDEX}}, "value": "payload-{{INDEX}}"}
+  content_type: "application/json"
+
+throughput_limits:
+  max_total_ms: 60000

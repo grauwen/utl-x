@@ -28,9 +28,11 @@ import random
 import struct
 import subprocess
 import sys
+import threading
 import time
 import yaml
 from pathlib import Path
+from collections import defaultdict
 
 # Add generated proto path
 SCRIPT_DIR = Path(__file__).parent
@@ -360,6 +362,94 @@ class StdioProtoClient:
         errors = fields.get(5, 0)
         return state, uptime, loaded, executions, errors
 
+    def execute_concurrent_burst(self, transform_id, payloads, content_type="application/json"):
+        """
+        Fire N execute requests concurrently using writer + reader threads.
+        Returns list of (success, output, error, correlation_id, duration_ms).
+
+        Architecture:
+        - Writer thread: fires all requests as fast as possible (serialized writes to stdin)
+        - Reader thread: reads all responses, matches by correlation ID
+        - Main thread: waits for both to complete, collects results
+        """
+        count = len(payloads)
+        results = {}  # corr_id -> (success, output, error, corr_id, duration_ms)
+        send_times = {}  # corr_id -> time.perf_counter()
+        write_lock = threading.Lock()
+        reader_done = threading.Event()
+        writer_done = threading.Event()
+        errors_list = []
+
+        def writer():
+            """Fire all requests as fast as possible."""
+            try:
+                for i, payload in enumerate(payloads):
+                    corr_id = f"conc-{i+1}"
+                    req = b""
+                    req += self._build_string_field(1, transform_id)
+                    req += self._build_bytes_field(2, payload.encode("utf-8") if isinstance(payload, str) else payload)
+                    req += self._build_string_field(3, content_type)
+                    req += self._build_string_field(5, corr_id)
+
+                    send_times[corr_id] = time.perf_counter()
+                    with write_lock:
+                        self._send_envelope(self.EXECUTE_REQUEST, req)
+            except Exception as e:
+                errors_list.append(f"Writer error: {e}")
+            finally:
+                writer_done.set()
+
+        def reader():
+            """Read all responses and match by correlation ID."""
+            try:
+                received = 0
+                while received < count:
+                    resp_type, resp_data = self._recv_envelope()
+                    recv_time = time.perf_counter()
+                    fields = self._parse_response_fields(resp_data)
+
+                    success = bool(fields.get(1, 0))
+                    output = fields.get(2, b"").decode("utf-8") if 2 in fields else ""
+                    error = fields.get(4, b"").decode("utf-8") if 4 in fields else ""
+                    corr_id = fields.get(9, b"").decode("utf-8") if 9 in fields else ""
+
+                    duration_ms = 0
+                    if corr_id in send_times:
+                        duration_ms = (recv_time - send_times[corr_id]) * 1000
+
+                    results[corr_id] = (success, output, error, corr_id, duration_ms)
+                    received += 1
+            except Exception as e:
+                errors_list.append(f"Reader error: {e}")
+            finally:
+                reader_done.set()
+
+        # Launch both threads
+        wall_start = time.perf_counter()
+        writer_thread = threading.Thread(target=writer, daemon=True)
+        reader_thread = threading.Thread(target=reader, daemon=True)
+        reader_thread.start()
+        writer_thread.start()
+
+        # Wait for completion
+        writer_thread.join(timeout=60)
+        reader_thread.join(timeout=60)
+        wall_ms = (time.perf_counter() - wall_start) * 1000
+
+        if errors_list:
+            return None, errors_list, wall_ms
+
+        # Return results ordered by correlation ID
+        ordered = []
+        for i in range(count):
+            corr_id = f"conc-{i+1}"
+            if corr_id in results:
+                ordered.append(results[corr_id])
+            else:
+                ordered.append((False, "", f"Missing response for {corr_id}", corr_id, 0))
+
+        return ordered, errors_list, wall_ms
+
 
 class StdioJsonClient:
     """
@@ -480,8 +570,6 @@ def run_throughput_test(client, test_data, verbose=False):
         if errors:
             return False, f"{len(errors)} items failed in batch: {errors[0][2]}", {}
 
-        # For batch, we don't have per-item timings from the client side
-        # Report total time and average
         avg_ms = total_ms / count
         metrics = {
             "mode": "batch",
@@ -489,6 +577,39 @@ def run_throughput_test(client, test_data, verbose=False):
             "total_ms": round(total_ms, 2),
             "avg_ms": round(avg_ms, 2),
             "throughput_msg_s": round(count / (total_ms / 1000), 1) if total_ms > 0 else 0,
+        }
+
+    elif mode == "concurrent":
+        # Concurrent — fire all requests from writer thread, read responses on reader thread
+        results, errs, wall_ms = client.execute_concurrent_burst(
+            transform_id, payloads, content_type)
+
+        if errs:
+            return False, f"Concurrent burst errors: {'; '.join(errs)}", {}
+
+        if results is None:
+            return False, "No results from concurrent burst", {}
+
+        error_count = sum(1 for r in results if not r[0])
+        if error_count > 0:
+            first_err = next(r for r in results if not r[0])
+            return False, f"{error_count}/{count} messages failed: {first_err[2]}", {}
+
+        durations_ms = sorted([r[4] for r in results])
+        total_ms = wall_ms  # wall clock for the full burst
+
+        metrics = {
+            "mode": f"concurrent (workers={client.workers})",
+            "count": count,
+            "total_ms": round(total_ms, 2),
+            "wall_ms": round(wall_ms, 2),
+            "avg_ms": round(sum(durations_ms) / count, 2),
+            "min_ms": round(durations_ms[0], 2),
+            "max_ms": round(durations_ms[-1], 2),
+            "p50_ms": round(percentile(durations_ms, 50), 2),
+            "p95_ms": round(percentile(durations_ms, 95), 2),
+            "p99_ms": round(percentile(durations_ms, 99), 2),
+            "throughput_msg_s": round(count / (wall_ms / 1000), 1) if wall_ms > 0 else 0,
         }
 
     else:

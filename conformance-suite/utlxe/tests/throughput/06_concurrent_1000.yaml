@@ -1,0 +1,25 @@
+name: "concurrent_1000"
+category: "throughput"
+description: "1000 messages fired concurrently — writer thread blasts, reader thread collects"
+tags: ["throughput", "concurrent", "high-volume", "1000"]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    id: $input.id,
+    processed: true,
+    tag: upperCase($input.tag)
+  }
+
+burst:
+  count: 1000
+  mode: "concurrent"
+  payload_template: |
+    {"id": {{INDEX}}, "tag": "item-{{INDEX}}"}
+  content_type: "application/json"
+
+throughput_limits:
+  max_total_ms: 30000
