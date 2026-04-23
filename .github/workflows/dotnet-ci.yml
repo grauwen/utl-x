@@ -1,0 +1,68 @@
+name: .NET Wrapper CI
+
+on:
+  push:
+    paths:
+      - 'wrappers/dotnet/**'
+      - 'proto/**'
+    branches: [development, main]
+  pull_request:
+    paths:
+      - 'wrappers/dotnet/**'
+      - 'proto/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    name: Build & Test (.NET wrapper)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Java 17 for building the UTLXe fat JAR
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      # .NET SDK for building the C# wrapper
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+
+      # Build UTLXe fat JAR (required by integration tests)
+      - name: Build UTLXe engine JAR
+        run: ./gradlew :modules:engine:jar
+
+      # Build .NET wrapper
+      - name: Build UtlxClient
+        working-directory: wrappers/dotnet
+        run: dotnet build --configuration Release
+
+      # Build Azure Function sample
+      - name: Build Azure Function sample
+        working-directory: wrappers/dotnet
+        run: dotnet build samples/AzureFunctionSample/AzureFunctionSample.csproj --configuration Release
+
+      # Run tests (unit + integration)
+      - name: Run tests
+        working-directory: wrappers/dotnet
+        env:
+          UTLXE_JAR_PATH: ${{ github.workspace }}/modules/engine/build/libs/utlxe-1.0.0-SNAPSHOT.jar
+        run: dotnet test --configuration Release --logger "trx;LogFileName=results.trx" --results-directory ./test-results
+
+      # Upload test results
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dotnet-test-results
+          path: wrappers/dotnet/test-results/
+
+      # Pack NuGet (verify packaging works)
+      - name: Pack NuGet
+        working-directory: wrappers/dotnet
+        run: dotnet pack src/UtlxClient/UtlxClient.csproj --configuration Release --no-build
