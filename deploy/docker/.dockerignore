@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# Build outputs
+build/
+**/build/
+out/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Node
+node_modules/
+package-lock.json
+
+# Docs (not needed in image)
+docs/
+conformance-suite/
+examples/
+
+# Wrappers (not needed in engine image)
+wrappers/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Gradle cache (use builder's cache)
+.gradle/
+
+# Test data
+test-data/

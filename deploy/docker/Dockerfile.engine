@@ -1,0 +1,60 @@
+# UTLXe Engine Docker Image
+# Multi-stage build: Gradle builds the fat JAR, Alpine JRE runs it
+#
+# Build:   docker build -f deploy/docker/Dockerfile.engine -t utlxe .
+# Run:     docker run -p 8085:8085 -p 8081:8081 utlxe
+# Test:    curl http://localhost:8085/api/health
+#
+# Must be built from the repository root (build context needs all modules)
+
+# ── Stage 1: Build the fat JAR ──
+FROM gradle:8.5-jdk17 AS builder
+
+WORKDIR /build
+
+# Copy build files first (better layer caching)
+COPY build.gradle.kts settings.gradle.kts gradle.properties* ./
+COPY gradle/ gradle/
+
+# Copy all source modules
+COPY modules/ modules/
+COPY formats/ formats/
+COPY stdlib/ stdlib/
+COPY stdlib-security/ stdlib-security/
+COPY schema/ schema/
+COPY proto/ proto/
+
+# Build the engine fat JAR
+RUN gradle :modules:engine:jar --no-daemon --quiet
+
+# ── Stage 2: Minimal runtime ──
+FROM eclipse-temurin:17-jre-jammy
+
+LABEL org.opencontainers.image.title="UTLXe" \
+      org.opencontainers.image.description="UTL-X Production Transformation Engine" \
+      org.opencontainers.image.vendor="Glomidco" \
+      org.opencontainers.image.url="https://github.com/grauwen/utl-x" \
+      org.opencontainers.image.source="https://github.com/grauwen/utl-x"
+
+# Create non-root user for security
+RUN groupadd -r utlxe && useradd -r -g utlxe utlxe
+
+WORKDIR /utlxe
+
+# Copy the fat JAR from builder
+COPY --from=builder /build/modules/engine/build/libs/utlxe-*.jar /utlxe/utlxe.jar
+
+# Set ownership
+RUN chown -R utlxe:utlxe /utlxe
+
+USER utlxe
+
+# Port 8085: HTTP REST API (transformation data plane)
+# Port 8081: Health + Prometheus metrics (probes)
+EXPOSE 8085 8081
+
+# JVM tuning for containerized environments
+ENV JAVA_OPTS="-Xmx2048m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseContainerSupport"
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /utlxe/utlxe.jar $@", "--"]
+CMD ["--mode", "http"]

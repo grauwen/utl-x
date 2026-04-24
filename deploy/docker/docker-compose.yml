@@ -1,0 +1,29 @@
+# UTLXe Engine — Local Development
+#
+# Usage:
+#   cd deploy/docker
+#   docker compose up --build
+#
+# Test:
+#   curl http://localhost:8085/api/health
+#   curl -X POST http://localhost:8085/api/transform \
+#     -H "Content-Type: application/json" \
+#     -d '{"transformationId":"test","utlxSource":"%utlx 1.0\ninput json\noutput json\n---\n$input","payload":"{\"hello\":\"world\"}","strategy":"TEMPLATE"}'
+
+services:
+  utlxe:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.engine
+    ports:
+      - "8085:8085"   # HTTP REST API
+      - "8081:8081"   # Health + Prometheus metrics
+    environment:
+      - JAVA_OPTS=-Xmx1024m -XX:+UseG1GC -XX:+UseContainerSupport
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
