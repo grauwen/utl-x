@@ -2,6 +2,7 @@ package org.apache.utlx.engine
 
 import org.apache.utlx.engine.config.EngineConfig
 import org.apache.utlx.engine.transport.GrpcTransport
+import org.apache.utlx.engine.transport.HttpTransport
 import org.apache.utlx.engine.transport.StdioJsonTransport
 import org.apache.utlx.engine.transport.StdioProtoTransport
 import org.apache.utlx.engine.transport.TransportServer
@@ -26,6 +27,7 @@ fun main(args: Array<String>) {
     var workers: Int? = null
     var socketPath: String? = null
     var grpcAddress: String? = null
+    var httpPort: Int = HttpTransport.DEFAULT_PORT
 
     var i = 0
     while (i < args.size) {
@@ -53,9 +55,9 @@ fun main(args: Array<String>) {
             "--mode" -> {
                 i++
                 mode = args.getOrNull(i)
-                    ?: exitWithError("--mode requires a value: stdio-json, stdio-proto, grpc")
-                if (mode !in listOf("stdio-json", "stdio-proto", "grpc")) {
-                    exitWithError("Unknown mode: $mode. Valid: stdio-json, stdio-proto, grpc")
+                    ?: exitWithError("--mode requires a value: stdio-json, stdio-proto, grpc, http")
+                if (mode !in listOf("stdio-json", "stdio-proto", "grpc", "http")) {
+                    exitWithError("Unknown mode: $mode. Valid: stdio-json, stdio-proto, grpc, http")
                 }
             }
             "--workers" -> {
@@ -74,6 +76,11 @@ fun main(args: Array<String>) {
                 i++
                 grpcAddress = args.getOrNull(i)
                     ?: exitWithError("--address requires a host:port argument")
+            }
+            "--http-port" -> {
+                i++
+                httpPort = args.getOrNull(i)?.toIntOrNull()
+                    ?: exitWithError("--http-port requires a port number")
             }
             "--validate" -> {
                 validateOnly = true
@@ -137,6 +144,7 @@ fun main(args: Array<String>) {
             "stdio-json" -> StdioJsonTransport()
             "stdio-proto" -> StdioProtoTransport(engine, workers = workers ?: Runtime.getRuntime().availableProcessors())
             "grpc" -> GrpcTransport(engine, address = grpcAddress, socketPath = socketPath)
+            "http" -> HttpTransport(engine, port = httpPort)
             else -> exitWithError("Unknown mode: $mode")
         }
 
@@ -164,12 +172,14 @@ private fun printUsage() {
           utlxe --bundle <path> [options]            Standalone (bundle mode)
           utlxe --mode stdio-proto [options]          Open-M integration (dynamic loading)
           utlxe --mode grpc --socket <path> [options] gRPC server mode
+          utlxe --mode http [options]                HTTP REST API mode
 
         Options:
           --bundle, -b <path>    Path to .utlxp project bundle directory
           --config, -c <path>    Path to engine.yaml config file
-          --mode <mode>          Transport mode: stdio-json (default), stdio-proto, grpc
+          --mode <mode>          Transport mode: stdio-json (default), stdio-proto, grpc, http
           --port,   -p <port>    Health endpoint port override (default: 8081)
+          --http-port <port>     HTTP API port (http mode, default: 8085)
           --workers <n>          Worker thread pool size (default: CPU cores)
           --socket <path>        Unix Domain Socket path (gRPC mode, Linux/macOS)
           --address <host:port>  TCP address (gRPC mode, default: localhost:9090)
@@ -187,6 +197,10 @@ private fun printUsage() {
 
           grpc           gRPC server on Unix Domain Socket or TCP
                          --bundle optional. Transforms loaded dynamically via RPCs.
+
+          http           HTTP REST API (for Azure Container Apps, Docker, any HTTP client)
+                         --bundle optional. Transforms loaded dynamically via REST endpoints.
+                         Default port: 8085 (override with --http-port).
     """.trimIndent())
 }
 
