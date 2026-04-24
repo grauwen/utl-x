@@ -29,6 +29,20 @@ param licenseKey string = ''
 @description('Name prefix for resources')
 param namePrefix string = 'utlxe'
 
+@description('Enable Dapr sidecar for messaging integration (Service Bus, Event Hub, etc.)')
+param enableDapr bool = false
+
+@description('Service Bus connection string (required when enableDapr + Service Bus scaler)')
+@secure()
+param serviceBusConnection string = ''
+
+@description('Service Bus input queue name (for KEDA scaling)')
+param inputQueueName string = 'utlx-input'
+
+@description('Scaling mode: http, servicebus, or both')
+@allowed(['http', 'servicebus', 'both'])
+param scalingMode string = 'http'
+
 // JVM heap set to 75% of container memory — leaves room for JVM overhead, GC, Netty buffers
 var jvmHeapMb = {
   '1.0': '768'
@@ -38,6 +52,37 @@ var jvmHeapMb = {
 }
 var javaOpts = '-Xmx${jvmHeapMb[memoryGi]}m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxGCPauseMillis=200'
 
+// Service Bus KEDA scaler (only when scaling mode includes servicebus)
+var serviceBusScaleRule = {
+  name: 'servicebus-scale'
+  custom: {
+    type: 'azure-servicebus'
+    metadata: {
+      queueName: inputQueueName
+      messageCount: '5'
+      activationMessageCount: '1'
+    }
+    auth: [
+      {
+        secretRef: 'servicebus-connection'
+        triggerParameter: 'connection'
+      }
+    ]
+  }
+}
+
+var httpScaleRule = {
+  name: 'http-scale'
+  http: {
+    metadata: {
+      concurrentRequests: '10'
+    }
+  }
+}
+
+// Build scale rules based on scaling mode
+var scaleRules = scalingMode == 'http' ? [httpScaleRule] : scalingMode == 'servicebus' ? [serviceBusScaleRule] : [httpScaleRule, serviceBusScaleRule]
+
 // ── Container App ──
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: '${namePrefix}-app'
@@ -45,6 +90,15 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   properties: {
     managedEnvironmentId: environmentId
     configuration: {
+      // Dapr sidecar — enabled for messaging integration
+      dapr: enableDapr ? {
+        enabled: true
+        appId: '${namePrefix}-app'
+        appPort: 8085
+        appProtocol: 'http'
+      } : {
+        enabled: false
+      }
       // External ingress — accessible from the internet
       ingress: {
         external: true
@@ -53,12 +107,17 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         allowInsecure: false
       }
       // Secrets
-      secrets: [
+      secrets: concat([
         {
           name: 'license-key'
           value: licenseKey
         }
-      ]
+      ], enableDapr && !empty(serviceBusConnection) ? [
+        {
+          name: 'servicebus-connection'
+          value: serviceBusConnection
+        }
+      ] : [])
     }
     template: {
       containers: [
@@ -114,20 +173,11 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           ]
         }
       ]
-      // Scaling rules
+      // Scaling rules — configured based on scalingMode parameter
       scale: {
         minReplicas: minReplicas
         maxReplicas: maxReplicas
-        rules: [
-          {
-            name: 'http-scale'
-            http: {
-              metadata: {
-                concurrentRequests: '10'
-              }
-            }
-          }
-        ]
+        rules: scaleRules
       }
     }
   }

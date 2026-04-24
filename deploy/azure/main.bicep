@@ -45,6 +45,23 @@ param licenseKey string = ''
 @description('Resource name prefix')
 param namePrefix string = 'utlxe'
 
+@description('Enable Dapr sidecar for Service Bus / Event Hub messaging')
+param enableDapr bool = false
+
+@description('Service Bus connection string (required when enableDapr is true)')
+@secure()
+param serviceBusConnection string = ''
+
+@description('Input queue name for Service Bus')
+param inputQueueName string = 'utlx-input'
+
+@description('Output topic name for Service Bus')
+param outputTopicName string = 'utlx-output'
+
+@description('Scaling mode: http (default), servicebus, or both')
+@allowed(['http', 'servicebus', 'both'])
+param scalingMode string = 'http'
+
 // ── Modules ──
 
 module environment 'modules/environment.bicep' = {
@@ -67,6 +84,22 @@ module containerApp 'modules/container-app.bicep' = {
     maxReplicas: maxReplicas
     licenseKey: licenseKey
     namePrefix: namePrefix
+    enableDapr: enableDapr
+    serviceBusConnection: serviceBusConnection
+    inputQueueName: inputQueueName
+    scalingMode: scalingMode
+  }
+}
+
+// Dapr components (Service Bus bindings) — only deployed when Dapr is enabled
+module daprComponents 'modules/dapr-components.bicep' = if (enableDapr) {
+  name: 'dapr-components'
+  params: {
+    environmentId: environment.outputs.environmentId
+    serviceBusConnection: serviceBusConnection
+    inputQueueName: inputQueueName
+    outputTopicName: outputTopicName
+    enableServiceBus: enableDapr && scalingMode != 'http'
   }
 }
 

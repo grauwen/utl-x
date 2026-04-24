@@ -245,6 +245,93 @@ class HttpTransport(
                         totalErrors = resp.totalErrors
                     ))
                 }
+
+                // ── Dapr input binding endpoint ──
+                // Dapr sidecar calls this when a message arrives on a configured input binding
+                // (Service Bus queue, Event Hub, Kafka, etc.)
+                // The binding name is in the URL: /api/dapr/input/{bindingName}
+                // The message payload is in the request body.
+                // The default transformation ID is the binding name (configurable via header).
+                post("/api/dapr/input/{bindingName}") {
+                    val bindingName = call.parameters["bindingName"] ?: "default"
+                    val transformId = call.request.header("X-UTLXe-Transform") ?: bindingName
+                    val outputBinding = call.request.header("X-UTLXe-Output-Binding")
+
+                    // Dapr sends the raw message payload in the body
+                    val payload = call.receiveText()
+                    val contentType = call.request.contentType().toString()
+
+                    logger.debug("Dapr input from binding '{}', transform '{}', payload {} bytes",
+                        bindingName, transformId, payload.length)
+
+                    // Execute the transformation
+                    val execProto = ExecuteRequest.newBuilder()
+                        .setTransformationId(transformId)
+                        .setPayload(ByteString.copyFromUtf8(payload))
+                        .setContentType(contentType)
+                        .setCorrelationId(bindingName)
+                        .build()
+                    val execResp = TransportHandlers.handleExecute(execProto, registry)
+
+                    if (!execResp.success) {
+                        logger.error("Dapr transform failed for binding '{}': {}", bindingName, execResp.error)
+                        call.respond(HttpStatusCode.InternalServerError, mapOf(
+                            "error" to execResp.error,
+                            "binding" to bindingName
+                        ))
+                        return@post
+                    }
+
+                    val output = execResp.output.toStringUtf8()
+
+                    // If output binding is specified, forward the result via Dapr
+                    if (outputBinding != null) {
+                        try {
+                            val daprUrl = "http://localhost:3500/v1.0/bindings/$outputBinding"
+                            val daprPayload = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(mapOf(
+                                "operation" to "create",
+                                "data" to output,
+                                "metadata" to mapOf(
+                                    "source-binding" to bindingName,
+                                    "transform-id" to transformId
+                                )
+                            ))
+
+                            val url = java.net.URL(daprUrl)
+                            val conn = url.openConnection() as java.net.HttpURLConnection
+                            conn.requestMethod = "POST"
+                            conn.setRequestProperty("Content-Type", "application/json")
+                            conn.doOutput = true
+                            conn.connectTimeout = 5000
+                            conn.readTimeout = 10000
+                            conn.outputStream.write(daprPayload.toByteArray())
+                            conn.outputStream.flush()
+                            val daprStatus = conn.responseCode
+                            conn.disconnect()
+
+                            if (daprStatus !in 200..299) {
+                                logger.warn("Dapr output binding '{}' returned status {}", outputBinding, daprStatus)
+                            } else {
+                                logger.debug("Dapr output to binding '{}' succeeded", outputBinding)
+                            }
+                        } catch (e: Exception) {
+                            logger.error("Failed to send to Dapr output binding '{}': {}", outputBinding, e.message)
+                        }
+                    }
+
+                    // Return success to Dapr (acknowledges the message)
+                    call.respond(HttpStatusCode.OK, mapOf(
+                        "success" to true,
+                        "binding" to bindingName,
+                        "outputBinding" to outputBinding,
+                        "durationUs" to (execResp.metrics?.executeDurationUs ?: 0)
+                    ))
+                }
+
+                // Dapr requires this endpoint to discover which bindings the app handles
+                get("/dapr/subscribe") {
+                    call.respond(HttpStatusCode.OK, emptyList<Any>())
+                }
             }
         }.start(wait = false)
 
