@@ -127,10 +127,16 @@ class StdioProtoClient:
         )
 
     def stop(self):
-        """Stop UTLXe subprocess."""
+        """Stop UTLXe subprocess gracefully, force-kill if needed."""
         if self.process:
-            self.process.stdin.close()
-            self.process.wait(timeout=10)
+            try:
+                self.process.stdin.close()
+                self.process.wait(timeout=5)
+            except Exception:
+                pass
+            if self.process.poll() is None:
+                self.process.kill()
+                self.process.wait(timeout=5)
             self.process = None
 
     def _find_java(self):
@@ -571,9 +577,12 @@ class HttpClient:
         if self.process:
             self.process.terminate()
             try:
-                self.process.wait(timeout=10)
+                self.process.wait(timeout=5)
             except Exception:
+                pass
+            if self.process.poll() is None:
                 self.process.kill()
+                self.process.wait(timeout=5)
             self.process = None
 
     def _find_java(self):
