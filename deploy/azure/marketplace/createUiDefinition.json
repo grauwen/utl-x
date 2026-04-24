@@ -1,0 +1,167 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "isWizard": true,
+      "basics": {
+        "description": "Deploy **UTL-X Transformation Engine** into your Azure subscription. Transform JSON, XML, CSV, and YAML messages at 86K+ msg/s with 652 built-in functions.",
+        "subscription": {
+          "resourceProviders": [
+            "Microsoft.App",
+            "Microsoft.OperationalInsights"
+          ]
+        },
+        "location": {
+          "label": "Region",
+          "toolTip": "Azure region for all resources. Choose a region close to your workloads.",
+          "allowedValues": [],
+          "visible": true
+        }
+      }
+    },
+    "basics": [],
+    "steps": [
+      {
+        "name": "engineConfig",
+        "label": "Engine Configuration",
+        "subLabel": {
+          "preValidation": "Configure the transformation engine",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Engine Settings",
+        "elements": [
+          {
+            "name": "infoBox",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "text": "UTL-X transforms data between JSON, XML, CSV, YAML, and OData natively — without converting to XML first. Supports 652 stdlib functions, schema validation, and pipeline chaining.",
+              "style": "Info"
+            }
+          },
+          {
+            "name": "cpuCores",
+            "type": "Microsoft.Common.DropDown",
+            "label": "CPU Cores per instance",
+            "toolTip": "CPU allocation per container instance. Higher values support more concurrent transformations.",
+            "defaultValue": "1.0",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                { "label": "0.5 cores (dev/test)", "value": "0.5" },
+                { "label": "1.0 core (standard)", "value": "1.0" },
+                { "label": "2.0 cores (production)", "value": "2.0" },
+                { "label": "4.0 cores (high throughput)", "value": "4.0" }
+              ]
+            },
+            "visible": true
+          },
+          {
+            "name": "memoryGi",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Memory per instance",
+            "toolTip": "Memory allocation per container instance. XML/JSON transformation expands messages 10-50× in memory. Choose based on your largest message size.",
+            "defaultValue": "2.0",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                { "label": "1 GB — messages up to 50 KB (dev/test)", "value": "1.0" },
+                { "label": "2 GB — messages up to 200 KB (standard)", "value": "2.0" },
+                { "label": "4 GB — messages up to 500 KB (production)", "value": "4.0" },
+                { "label": "8 GB — messages up to 1 MB+ (large payloads)", "value": "8.0" }
+              ]
+            },
+            "visible": true
+          },
+          {
+            "name": "memoryWarning",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "text": "XML and JSON messages expand 10-50× in memory during transformation (UDM parsing). A 100 KB XML message uses ~5-10 MB of heap. With 8 concurrent workers, choose memory accordingly. For messages over 1 MB, use 8 GB.",
+              "style": "Warning"
+            }
+          },
+          {
+            "name": "scalingSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Auto-Scaling",
+            "elements": [
+              {
+                "name": "minReplicas",
+                "type": "Microsoft.Common.Slider",
+                "label": "Minimum instances",
+                "toolTip": "Set to 0 for scale-to-zero (no cost when idle, ~10s cold start). Set to 1 for always-on (recommended for production).",
+                "min": 0,
+                "max": 10,
+                "defaultValue": 1,
+                "showStepMarkers": true,
+                "visible": true
+              },
+              {
+                "name": "maxReplicas",
+                "type": "Microsoft.Common.Slider",
+                "label": "Maximum instances",
+                "toolTip": "Maximum number of instances for auto-scaling under load.",
+                "min": 1,
+                "max": 30,
+                "defaultValue": 5,
+                "showStepMarkers": false,
+                "visible": true
+              }
+            ],
+            "visible": true
+          }
+        ]
+      },
+      {
+        "name": "licenseConfig",
+        "label": "License",
+        "subLabel": {
+          "preValidation": "Enter your license key",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "License Configuration",
+        "elements": [
+          {
+            "name": "licenseInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "text": "A UTL-X license key is required for production use. Visit utlx-lang.org for licensing options. Leave empty for evaluation (14-day trial).",
+              "style": "Warning"
+            }
+          },
+          {
+            "name": "licenseKey",
+            "type": "Microsoft.Common.PasswordBox",
+            "label": {
+              "password": "License Key",
+              "confirmPassword": "Confirm License Key"
+            },
+            "toolTip": "Your UTL-X license key. Leave empty for 14-day evaluation.",
+            "constraints": {
+              "required": false
+            },
+            "options": {
+              "hideConfirmation": true
+            },
+            "visible": true
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "location": "[location()]",
+      "cpuCores": "[steps('engineConfig').cpuCores]",
+      "memoryGi": "[steps('engineConfig').memoryGi]",
+      "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
+      "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
+      "licenseKey": "[steps('licenseConfig').licenseKey]",
+      "containerImage": "ghcr.io/utlx-lang/utlxe:latest",
+      "namePrefix": "utlxe"
+    }
+  }
+}
