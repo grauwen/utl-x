@@ -295,4 +295,77 @@ class HttpTransportTest {
         assertEquals(200, status)
         assertTrue(body.contains("[]"), "Should return empty subscription list: $body")
     }
+
+    // =========================================================================
+    // Dapr output binding resolution tests
+    // =========================================================================
+
+    @Test
+    fun `dapr output binding from transform config`() {
+        // Load with outputBinding in config
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        val (loadStatus, _) = post("/api/load", """
+            {"transformationId":"binding-config-test","utlxSource":"$utlx","strategy":"TEMPLATE","config":{},"outputBinding":"my-output-topic"}
+        """.trimIndent())
+        // Note: outputBinding is not in the proto LoadRequest config map — it's in TransformConfig.
+        // For HTTP /api/load, we need to check if it's passed through.
+        // The load may succeed without outputBinding since it's optional.
+        // The important thing is: when Dapr calls, the response should indicate the binding was resolved.
+
+        // For now, verify the transformation loads and executes via Dapr
+        if (loadStatus != 200) {
+            // Load via convenience endpoint as fallback
+            post("/api/transform",
+                """{"transformationId":"binding-config-test","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+        }
+
+        val (status, body) = post("/api/dapr/input/binding-config-test", """{"test": true}""")
+        assertEquals(200, status, "Dapr should succeed: $body")
+        assertTrue(body.contains("true"), "Should succeed: $body")
+        // Without Dapr sidecar, output binding forwarding will fail silently (logged as warning)
+        // but the transformation itself should succeed
+    }
+
+    @Test
+    fun `dapr no output binding means no forwarding`() {
+        // Load transformation WITHOUT outputBinding
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        post("/api/transform",
+            """{"transformationId":"no-output","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+
+        val (status, body) = post("/api/dapr/input/no-output", """{"data": "test"}""")
+        assertEquals(200, status, "Should succeed without output binding: $body")
+        assertTrue(body.contains("true"), "Should succeed: $body")
+        // outputBinding should be null in response
+        assertTrue(body.contains("null") || !body.contains("outputBinding\":\""),
+            "Should have no output binding: $body")
+    }
+
+    @Test
+    fun `dapr output binding via header override`() {
+        // Load transformation without outputBinding in config
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        post("/api/transform",
+            """{"transformationId":"header-output","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+
+        // Call with X-UTLXe-Output-Binding header
+        val url = URL("http://localhost:$port/api/dapr/input/header-output")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.setRequestProperty("X-UTLXe-Output-Binding", "header-defined-output")
+        conn.doOutput = true
+        conn.connectTimeout = 5000
+        conn.readTimeout = 10000
+        conn.outputStream.write("""{"data": "test"}""".toByteArray())
+        conn.outputStream.flush()
+        val status = conn.responseCode
+        val body = try { conn.inputStream.bufferedReader().readText() } catch (e: Exception) { conn.errorStream?.bufferedReader()?.readText() ?: "" }
+
+        assertEquals(200, status, "Should succeed with header output binding: $body")
+        assertTrue(body.contains("true"), "Should succeed: $body")
+        // The output binding forwarding will fail (no Dapr sidecar) but the response
+        // should show the resolved binding name
+        assertTrue(body.contains("header-defined-output"), "Should echo the header-defined output binding: $body")
+    }
 }

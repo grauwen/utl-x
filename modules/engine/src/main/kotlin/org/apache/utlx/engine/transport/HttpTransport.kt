@@ -255,14 +255,20 @@ class HttpTransport(
                 post("/api/dapr/input/{bindingName}") {
                     val bindingName = call.parameters["bindingName"] ?: "default"
                     val transformId = call.request.header("X-UTLXe-Transform") ?: bindingName
-                    val outputBinding = call.request.header("X-UTLXe-Output-Binding")
+
+                    // Resolve output binding: env var override > transform config > header > none
+                    // Env var: UTLXE_OUTPUT_BINDING_<bindingName>=<outputBinding>
+                    val envOverride = System.getenv("UTLXE_OUTPUT_BINDING_${bindingName.replace("-", "_").uppercase()}")
+                    val configBinding = registry.get(transformId)?.config?.outputBinding
+                    val headerBinding = call.request.header("X-UTLXe-Output-Binding")
+                    val outputBinding = envOverride ?: configBinding ?: headerBinding
 
                     // Dapr sends the raw message payload in the body
                     val payload = call.receiveText()
                     val contentType = call.request.contentType().toString()
 
-                    logger.debug("Dapr input from binding '{}', transform '{}', payload {} bytes",
-                        bindingName, transformId, payload.length)
+                    logger.debug("Dapr input from binding '{}', transform '{}', output '{}', payload {} bytes",
+                        bindingName, transformId, outputBinding ?: "none", payload.length)
 
                     // Execute the transformation
                     val execProto = ExecuteRequest.newBuilder()

@@ -12,7 +12,8 @@ data class TransformConfig(
     val validationPolicy: String = "SKIP",
     val inputs: List<InputSlot> = emptyList(),
     val output: OutputSlot = OutputSlot(),
-    val maxConcurrent: Int = 1
+    val maxConcurrent: Int = 1,
+    val outputBinding: String? = null  // Dapr output binding name (optional)
 ) {
     companion object {
         private val yamlMapper = ObjectMapper(YAMLFactory()).apply {
