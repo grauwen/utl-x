@@ -159,4 +159,140 @@ class HttpTransportTest {
         assertEquals(200, status)
         assertTrue(body.contains("true"), "Should succeed: $body")
     }
+
+    // =========================================================================
+    // Dapr endpoint tests
+    // =========================================================================
+
+    @Test
+    fun `dapr input endpoint transforms message`() {
+        // Load a transformation using the convenience endpoint (proven to work)
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        val (loadStatus, _) = post("/api/transform",
+            """{"transformationId":"dapr-binding","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+        assertEquals(200, loadStatus, "Load should succeed")
+
+        // Dapr calls /api/dapr/input/{bindingName} with raw payload
+        val (status, body) = post("/api/dapr/input/dapr-binding", """{"name": "alice"}""")
+
+        assertEquals(200, status, "Dapr input should succeed: $body")
+        assertTrue(body.contains("true"), "Should succeed: $body")
+        assertTrue(body.contains("dapr-binding"), "Should echo binding name: $body")
+    }
+
+    @Test
+    fun `dapr input with XML payload`() {
+        // Load XML-to-JSON transformation
+        val utlx = "%utlx 1.0\\ninput xml\\noutput json\\n---\\n{id: \$input.order.id, customer: \$input.order.customer}"
+        val (loadStatus, _) = post("/api/transform",
+            """{"transformationId":"dapr-xml","utlxSource":"$utlx","payload":"<order><id>ORD-1</id><customer>Contoso</customer></order>","strategy":"TEMPLATE"}""")
+        assertEquals(200, loadStatus, "Load should succeed")
+
+        // Dapr sends XML message from Service Bus
+        val url = URL("http://localhost:$port/api/dapr/input/dapr-xml")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/xml")
+        conn.doOutput = true
+        conn.connectTimeout = 5000
+        conn.readTimeout = 10000
+        conn.outputStream.write("<order><id>ORD-99</id><customer>Acme</customer></order>".toByteArray())
+        conn.outputStream.flush()
+        val status = conn.responseCode
+        val body = try { conn.inputStream.bufferedReader().readText() } catch (e: Exception) { conn.errorStream?.bufferedReader()?.readText() ?: "" }
+
+        assertEquals(200, status, "Dapr XML input should succeed: $body")
+        assertTrue(body.contains("true"), "Should succeed: $body")
+    }
+
+    @Test
+    fun `dapr input with CSV payload`() {
+        // Load CSV-to-JSON transformation
+        val utlx = "%utlx 1.0\\ninput csv\\noutput json\\n---\\nmap(\$input, (row) -> {name: row.name, dept: row.department})"
+        val (loadStatus, _) = post("/api/transform",
+            """{"transformationId":"dapr-csv","utlxSource":"$utlx","payload":"name,department\nAlice,Engineering","strategy":"TEMPLATE"}""")
+        assertEquals(200, loadStatus, "Load should succeed")
+
+        // Dapr sends CSV message
+        val url = URL("http://localhost:$port/api/dapr/input/dapr-csv")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "text/csv")
+        conn.doOutput = true
+        conn.connectTimeout = 5000
+        conn.readTimeout = 10000
+        conn.outputStream.write("name,department\nBob,Sales\nCharlie,Marketing".toByteArray())
+        conn.outputStream.flush()
+        val status = conn.responseCode
+        val body = try { conn.inputStream.bufferedReader().readText() } catch (e: Exception) { conn.errorStream?.bufferedReader()?.readText() ?: "" }
+
+        assertEquals(200, status, "Dapr CSV input should succeed: $body")
+        assertTrue(body.contains("true"), "Should succeed: $body")
+    }
+
+    @Test
+    fun `dapr input with YAML payload`() {
+        // Load YAML-to-JSON transformation
+        val utlx = "%utlx 1.0\\ninput yaml\\noutput json\\n---\\n{server: \$input.server, port: \$input.port}"
+        val (loadStatus, _) = post("/api/transform",
+            """{"transformationId":"dapr-yaml","utlxSource":"$utlx","payload":"server: prod-01\nport: 8080","strategy":"TEMPLATE"}""")
+        assertEquals(200, loadStatus, "Load should succeed")
+
+        // Dapr sends YAML message
+        val url = URL("http://localhost:$port/api/dapr/input/dapr-yaml")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/yaml")
+        conn.doOutput = true
+        conn.connectTimeout = 5000
+        conn.readTimeout = 10000
+        conn.outputStream.write("server: staging-02\nport: 9090\ndebug: true".toByteArray())
+        conn.outputStream.flush()
+        val status = conn.responseCode
+        val body = try { conn.inputStream.bufferedReader().readText() } catch (e: Exception) { conn.errorStream?.bufferedReader()?.readText() ?: "" }
+
+        assertEquals(200, status, "Dapr YAML input should succeed: $body")
+        assertTrue(body.contains("true"), "Should succeed: $body")
+    }
+
+    @Test
+    fun `dapr input with transform header override`() {
+        // Load a transformation using the convenience endpoint
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        val (loadStatus, _) = post("/api/transform",
+            """{"transformationId":"custom-dapr","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+        assertEquals(200, loadStatus, "Load should succeed")
+
+        // Dapr calls with binding name "queue-1" but header overrides to "custom-dapr"
+        val url = URL("http://localhost:$port/api/dapr/input/queue-1")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.setRequestProperty("X-UTLXe-Transform", "custom-dapr")
+        conn.doOutput = true
+        conn.connectTimeout = 5000
+        conn.readTimeout = 10000
+        conn.outputStream.write("""{"data": "test"}""".toByteArray())
+        conn.outputStream.flush()
+        val status = conn.responseCode
+        val body = conn.inputStream.bufferedReader().readText()
+
+        assertEquals(200, status, "Dapr with header override should succeed: $body")
+        assertTrue(body.contains("true"), "Should succeed: $body")
+    }
+
+    @Test
+    fun `dapr input with unknown transformation returns error`() {
+        val (status, body) = post("/api/dapr/input/nonexistent-binding", """{"data": "test"}""")
+
+        assertEquals(500, status)
+        assertTrue(body.contains("error"), "Should contain error: $body")
+    }
+
+    @Test
+    fun `dapr subscribe endpoint returns empty list`() {
+        val (status, body) = get("/dapr/subscribe")
+        assertEquals(200, status)
+        assertTrue(body.contains("[]"), "Should return empty subscription list: $body")
+    }
 }
