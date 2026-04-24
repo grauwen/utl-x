@@ -526,6 +526,174 @@ class StdioJsonClient:
         return response_line.strip(), duration_ms
 
 
+class HttpClient:
+    """
+    Communicates with UTLXe via HTTP REST API (--mode http).
+    Spawns UTLXe as subprocess, talks via HTTP on localhost.
+    Implements the same interface as StdioProtoClient for test compatibility.
+    """
+
+    def __init__(self, jar_path, port=8085, workers=1, verbose=False):
+        self.jar_path = jar_path
+        self.port = port
+        self.workers = workers
+        self.verbose = verbose
+        self.process = None
+        self.base_url = f"http://localhost:{port}"
+
+    def start(self):
+        java = self._find_java()
+        cmd = [java, "-jar", str(self.jar_path), "--mode", "http",
+               "--http-port", str(self.port), "--workers", str(self.workers)]
+        if self.verbose:
+            print(f"  Starting (http): {' '.join(cmd)}")
+        self.process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        # Wait for HTTP server to start
+        import urllib.request
+        import urllib.error
+        for _ in range(30):
+            time.sleep(0.5)
+            try:
+                req = urllib.request.Request(f"{self.base_url}/api/health")
+                resp = urllib.request.urlopen(req, timeout=2)
+                if resp.status == 200:
+                    return
+            except (urllib.error.URLError, ConnectionRefusedError, OSError):
+                pass
+        raise IOError("HTTP server did not start within 15 seconds")
+
+    def stop(self):
+        if self.process:
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=10)
+            except Exception:
+                self.process.kill()
+            self.process = None
+
+    def _find_java(self):
+        java_home = os.environ.get("JAVA_HOME")
+        if java_home:
+            java = os.path.join(java_home, "bin", "java")
+            if os.path.exists(java):
+                return java
+        return "java"
+
+    def _post(self, path, body_dict):
+        """Send POST request, return parsed JSON response."""
+        import urllib.request
+        data = json.dumps(body_dict).encode("utf-8")
+        req = urllib.request.Request(
+            f"{self.base_url}{path}",
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        try:
+            resp = urllib.request.urlopen(req, timeout=30)
+            return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            return json.loads(e.read().decode("utf-8"))
+
+    def _get(self, path):
+        """Send GET request, return parsed JSON response."""
+        import urllib.request
+        req = urllib.request.Request(f"{self.base_url}{path}")
+        resp = urllib.request.urlopen(req, timeout=10)
+        return json.loads(resp.read().decode("utf-8"))
+
+    def _delete(self, path):
+        """Send DELETE request, return parsed JSON response."""
+        import urllib.request
+        req = urllib.request.Request(f"{self.base_url}{path}", method="DELETE")
+        resp = urllib.request.urlopen(req, timeout=10)
+        return json.loads(resp.read().decode("utf-8"))
+
+    def load_transformation(self, transform_id, utlx_source, strategy="TEMPLATE"):
+        resp = self._post("/api/load", {
+            "transformationId": transform_id,
+            "utlxSource": utlx_source,
+            "strategy": strategy
+        })
+        return resp.get("success", False), resp.get("error", "")
+
+    def execute(self, transform_id, payload_data, content_type="application/json", correlation_id=""):
+        resp = self._post(f"/api/execute/{transform_id}", {
+            "payload": payload_data if isinstance(payload_data, str) else payload_data.decode("utf-8"),
+            "contentType": content_type,
+            "correlationId": correlation_id
+        })
+        return (
+            resp.get("success", False),
+            resp.get("output", ""),
+            resp.get("error", ""),
+            resp.get("correlationId", "")
+        )
+
+    def execute_batch(self, transform_id, items):
+        batch_items = []
+        for item_data, content_type, corr_id in items:
+            batch_items.append({
+                "payload": item_data if isinstance(item_data, str) else item_data.decode("utf-8"),
+                "contentType": content_type,
+                "correlationId": corr_id
+            })
+        resp = self._post(f"/api/execute-batch/{transform_id}", {"items": batch_items})
+        results = []
+        for r in resp.get("results", []):
+            results.append((
+                r.get("success", False),
+                r.get("output", ""),
+                r.get("error", ""),
+                r.get("correlationId", "")
+            ))
+        return results
+
+    def execute_pipeline(self, transformation_ids, payload_data, content_type="application/json", correlation_id=""):
+        resp = self._post("/api/execute-pipeline", {
+            "transformationIds": transformation_ids,
+            "payload": payload_data if isinstance(payload_data, str) else payload_data.decode("utf-8"),
+            "contentType": content_type,
+            "correlationId": correlation_id
+        })
+        return (
+            resp.get("success", False),
+            resp.get("output", ""),
+            resp.get("error", ""),
+            resp.get("stagesCompleted", 0),
+            resp.get("totalDurationUs", 0)
+        )
+
+    def health(self):
+        resp = self._get("/api/health")
+        return (
+            resp.get("state", ""),
+            resp.get("uptimeMs", 0),
+            resp.get("loadedTransformations", 0),
+            resp.get("totalExecutions", 0),
+            resp.get("totalErrors", 0)
+        )
+
+    def execute_concurrent_burst(self, transform_id, payloads, content_type="application/json"):
+        """HTTP doesn't support concurrent burst the same way — run sequentially."""
+        results = []
+        errors_list = []
+        wall_start = time.perf_counter()
+        for i, payload in enumerate(payloads):
+            start = time.perf_counter()
+            success, output, error, corr = self.execute(
+                transform_id, payload, content_type, f"conc-{i+1}")
+            duration_ms = (time.perf_counter() - start) * 1000
+            results.append((success, output, error, f"conc-{i+1}", duration_ms))
+        wall_ms = (time.perf_counter() - wall_start) * 1000
+        return results, errors_list, wall_ms
+
+
 # =========================================================================
 # Throughput metrics
 # =========================================================================
@@ -1054,6 +1222,119 @@ def find_jar():
     return None
 
 
+def run_all_transports(jar_path, tests, args):
+    """
+    Run each test through stdio-proto and HTTP transports in parallel, compare outputs.
+    Both processes start once and stay alive for all tests — no per-test JVM restart.
+    """
+    # Skip throughput/burst tests — they don't have deterministic output
+    functional_tests = [(f, d) for f, d in tests if "burst" not in d and d.get("category") != "throughput"]
+
+    print(f"Mode: ALL TRANSPORTS (parity check)")
+    print(f"Transports: stdio-proto, http")
+    print(f"Functional tests (excluding throughput): {len(functional_tests)}")
+
+    # Start both transport processes once — they stay alive for all tests
+    print(f"\nStarting stdio-proto engine...")
+    proto_client = StdioProtoClient(jar_path, workers=args.workers, verbose=args.verbose)
+    proto_client.start()
+    time.sleep(2)
+    state, uptime, _, _, _ = proto_client.health()
+    print(f"  stdio-proto ready: state={state}, uptime={uptime}ms")
+
+    print(f"Starting http engine (port {args.http_port})...")
+    http_client = HttpClient(jar_path, port=args.http_port, workers=args.workers, verbose=args.verbose)
+    http_client.start()
+    state, uptime, _, _, _ = http_client.health()
+    print(f"  http ready: state={state}, uptime={uptime}ms")
+    print()
+
+    clients = {
+        "stdio-proto": proto_client,
+        "http": http_client,
+    }
+
+    total_passed = 0
+    total_failed = 0
+    total_skipped = 0
+    failures = []
+
+    for test_file, test_data in functional_tests:
+        name = test_data.get("name", test_file.stem)
+
+        if test_data.get("skip"):
+            total_skipped += 1
+            print(f"  \u2014 {name} (skipped)")
+            continue
+
+        # Run through each transport, collect results
+        transport_success = {}
+        transport_messages = {}
+        test_passed = True
+
+        for transport_name, client in clients.items():
+            try:
+                result = run_test(client, test_data, verbose=False, test_file_path=str(test_file))
+                if len(result) == 3:
+                    success, message, _ = result
+                else:
+                    success, message = result
+
+                transport_success[transport_name] = success
+                transport_messages[transport_name] = message
+
+                if success is not None and not success:
+                    test_passed = False
+            except Exception as e:
+                transport_success[transport_name] = False
+                transport_messages[transport_name] = str(e)
+                test_passed = False
+
+        # Check parity: all transports should have same success/failure
+        successes = [v for v in transport_success.values() if v is not None]
+        all_same = len(set(successes)) <= 1
+
+        if test_passed and all_same:
+            total_passed += 1
+            print(f"  \u2713 {name}")
+        else:
+            total_failed += 1
+            detail = " | ".join(f"{t}: {'PASS' if transport_success.get(t) else 'FAIL'}" for t in clients)
+            failures.append((name, detail))
+            print(f"  \u2717 {name}")
+            print(f"    {detail}")
+            for t_name in transport_messages:
+                if not transport_success.get(t_name):
+                    print(f"    {t_name}: {transport_messages[t_name][:100]}")
+
+    # Stop both engines
+    try:
+        proto_client.stop()
+    except Exception:
+        pass
+    try:
+        http_client.stop()
+    except Exception:
+        pass
+
+    # Summary
+    total = total_passed + total_failed
+    print(f"\n{'=' * 60}")
+    print(f"Transport Parity: {total_passed}/{total} tests identical across stdio-proto + http"
+          + (f", {total_skipped} skipped" if total_skipped else ""))
+    if total > 0:
+        print(f"Success rate: {total_passed / total * 100:.0f}%")
+
+    if failures:
+        print(f"\n\u2717 {len(failures)} test(s) with transport parity failures:")
+        for name, msg in failures:
+            print(f"  - {name}: {msg}")
+        sys.exit(1)
+    else:
+        print(f"\n\u2713 All tests produce identical results across all transports!")
+        sys.exit(0)
+
+
 def main():
     parser = argparse.ArgumentParser(description="UTLXe Engine Conformance Suite Runner")
     parser.add_argument("category", nargs="?", help="Test category (e.g., single-input, format-conversion)")
@@ -1061,9 +1342,10 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--jar", help="Path to UTLXe JAR")
     parser.add_argument("--workers", type=int, default=1, help="Worker threads (default: 1)")
-    parser.add_argument("--mode", choices=["stdio-proto", "stdio-json"], default="stdio-proto",
-                        help="Transport mode (default: stdio-proto)")
+    parser.add_argument("--mode", choices=["stdio-proto", "stdio-json", "http", "all"], default="stdio-proto",
+                        help="Transport mode (default: stdio-proto). 'all' runs each test through all transports.")
     parser.add_argument("--bundle", help="Bundle path (required for stdio-json mode)")
+    parser.add_argument("--http-port", type=int, default=18085, help="HTTP port for http mode tests (default: 18085)")
     args = parser.parse_args()
 
     # Find JAR
@@ -1081,6 +1363,12 @@ def main():
 
     print(f"UTLXe Engine Conformance Suite")
     print(f"JAR: {jar_path}")
+
+    if args.mode == "all":
+        # Run all tests through each transport, compare outputs
+        run_all_transports(jar_path, tests, args)
+        return
+
     print(f"Mode: {args.mode} (workers={args.workers})")
     print(f"Running {len(tests)} test(s)...\n")
 
@@ -1089,12 +1377,20 @@ def main():
         if not args.bundle:
             print("Error: --bundle required for stdio-json mode")
             sys.exit(1)
-        # stdio-json mode: limited to functional tests only (no dynamic loading)
         client = StdioJsonClient(jar_path, args.bundle, verbose=args.verbose)
         try:
             client.start()
             time.sleep(2)
             print(f"Engine ready (stdio-json mode, bundle: {args.bundle})\n")
+        except Exception as e:
+            print(f"Error starting UTLXe: {e}")
+            sys.exit(1)
+    elif args.mode == "http":
+        client = HttpClient(jar_path, port=args.http_port, workers=args.workers, verbose=args.verbose)
+        try:
+            client.start()
+            state, uptime, _, _, _ = client.health()
+            print(f"Engine ready (http mode, port {args.http_port}): state={state}, uptime={uptime}ms\n")
         except Exception as e:
             print(f"Error starting UTLXe: {e}")
             sys.exit(1)
