@@ -108,6 +108,9 @@ replay_pid*
 # Examples output
 examples/**/output.*
 
+# Deployment build artifacts
+deploy/dist/
+
 # .NET
 obj/
 *.nupkg
