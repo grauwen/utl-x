@@ -50,6 +50,32 @@ build_bicep() {
     echo "  ARM: $OUTPUT_DIR/mainTemplate.json ($(wc -l < "$OUTPUT_DIR/mainTemplate.json") lines)"
 }
 
+build_marketplace() {
+    echo "=== Packaging Marketplace Artifacts ==="
+    # Compile Bicep first
+    build_bicep
+
+    # Create marketplace package directory
+    MARKETPLACE_DIR="$OUTPUT_DIR/marketplace"
+    mkdir -p "$MARKETPLACE_DIR"
+
+    # Copy artifacts
+    cp "$OUTPUT_DIR/mainTemplate.json" "$MARKETPLACE_DIR/"
+    cp "$REPO_ROOT/deploy/azure/marketplace/createUiDefinition.json" "$MARKETPLACE_DIR/"
+
+    # Create ZIP for Partner Center upload
+    cd "$MARKETPLACE_DIR"
+    zip -q "$OUTPUT_DIR/utlxe-marketplace.zip" mainTemplate.json createUiDefinition.json
+    cd "$REPO_ROOT"
+
+    echo "  Package: $OUTPUT_DIR/utlxe-marketplace.zip"
+    echo "  Contents:"
+    echo "    - mainTemplate.json (ARM template)"
+    echo "    - createUiDefinition.json (deployment wizard)"
+    echo ""
+    echo "  Upload this ZIP to Microsoft Partner Center to publish the Marketplace listing."
+}
+
 # Parse arguments
 if [ $# -eq 0 ]; then
     build_jar
@@ -58,10 +84,11 @@ if [ $# -eq 0 ]; then
 else
     for arg in "$@"; do
         case "$arg" in
-            jar)    build_jar ;;
-            docker) build_docker ;;
-            bicep)  build_bicep ;;
-            *)      echo "Unknown target: $arg. Valid: jar, docker, bicep"; exit 1 ;;
+            jar)         build_jar ;;
+            docker)      build_docker ;;
+            bicep)       build_bicep ;;
+            marketplace) build_marketplace ;;
+            *)           echo "Unknown target: $arg. Valid: jar, docker, bicep, marketplace"; exit 1 ;;
         esac
     done
 fi
