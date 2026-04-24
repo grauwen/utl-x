@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westeurope"
+    },
+    "containerImage": {
+      "value": "ghcr.io/utlx-lang/utlxe:latest"
+    },
+    "cpuCores": {
+      "value": "1.0"
+    },
+    "memoryGi": {
+      "value": "2.0"
+    },
+    "minReplicas": {
+      "value": 1
+    },
+    "maxReplicas": {
+      "value": 5
+    },
+    "licenseKey": {
+      "value": ""
+    },
+    "namePrefix": {
+      "value": "utlxe"
+    }
+  }
+}
