@@ -8,6 +8,7 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -37,7 +38,8 @@ import java.util.concurrent.TimeUnit
 class HttpTransport(
     private val engine: UtlxEngine,
     private val port: Int = DEFAULT_PORT,
-    private val host: String = "0.0.0.0"
+    private val host: String = "0.0.0.0",
+    private val maxRequestBodyBytes: Long = MAX_REQUEST_BODY_BYTES
 ) : TransportServer {
 
     private val logger = LoggerFactory.getLogger(HttpTransport::class.java)
@@ -47,6 +49,9 @@ class HttpTransport(
 
     companion object {
         const val DEFAULT_PORT = 8085
+        // Default 10MB — protects against oversized payloads that would exhaust heap.
+        // XML expands 10-50× in UDM; a 10MB XML payload could use 100-500MB of heap.
+        const val MAX_REQUEST_BODY_BYTES = 10L * 1024 * 1024
     }
 
     override fun start(registry: TransformationRegistry) {
@@ -56,6 +61,19 @@ class HttpTransport(
             install(ContentNegotiation) {
                 jackson {
                     registerModule(kotlinModule())
+                }
+            }
+
+            // Request body size guard — reject oversized payloads before parsing
+            intercept(io.ktor.server.application.ApplicationCallPipeline.Plugins) {
+                val contentLength = call.request.header("Content-Length")?.toLongOrNull()
+                if (contentLength != null && contentLength > maxRequestBodyBytes) {
+                    call.respond(HttpStatusCode.PayloadTooLarge, mapOf(
+                        "error" to "Request body too large: ${contentLength} bytes (max: ${maxRequestBodyBytes})",
+                        "maxBytes" to maxRequestBodyBytes,
+                        "hint" to "XML/JSON expands 10-50× in memory. A 10MB payload could use 100-500MB of heap."
+                    ))
+                    finish()
                 }
             }
 
