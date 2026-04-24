@@ -29,8 +29,14 @@ param licenseKey string = ''
 @description('Name prefix for resources')
 param namePrefix string = 'utlxe'
 
-@description('JVM memory options')
-param javaOpts string = '-Xmx1536m -XX:+UseG1GC -XX:+UseContainerSupport'
+// JVM heap set to 75% of container memory — leaves room for JVM overhead, GC, Netty buffers
+var jvmHeapMb = {
+  '1.0': '768'
+  '2.0': '1536'
+  '4.0': '3072'
+  '8.0': '6144'
+}
+var javaOpts = '-Xmx${jvmHeapMb[memoryGi]}m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxGCPauseMillis=200'
 
 // ── Container App ──
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
