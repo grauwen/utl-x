@@ -22,10 +22,6 @@ param minReplicas int = 1
 @description('Maximum number of instances')
 param maxReplicas int = 5
 
-@description('UTL-X license key')
-@secure()
-param licenseKey string = ''
-
 @description('Name prefix for resources')
 param namePrefix string = 'utlxe'
 
@@ -110,18 +106,13 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         transport: 'http'
         allowInsecure: false
       }
-      // Secrets
-      secrets: concat([
-        {
-          name: 'license-key'
-          value: licenseKey
-        }
-      ], enableDapr && !empty(serviceBusConnection) ? [
+      // Secrets (Service Bus connection when Dapr is enabled)
+      secrets: enableDapr && !empty(serviceBusConnection) ? [
         {
           name: 'servicebus-connection'
           value: serviceBusConnection
         }
-      ] : [])
+      ] : []
     }
     template: {
       containers: [
@@ -138,10 +129,6 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'JAVA_OPTS'
               value: javaOpts
-            }
-            {
-              name: 'UTLX_LICENSE_KEY'
-              secretRef: 'license-key'
             }
           ]
           // Health probes — Container Apps uses these for lifecycle management

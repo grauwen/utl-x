@@ -6,12 +6,15 @@
     "config": {
       "isWizard": true,
       "basics": {
-        "description": "Deploy **UTL-X Transformation Engine** into your Azure subscription. Transform JSON, XML, CSV, and YAML messages at 86K+ msg/s with 652 built-in functions.",
+        "description": "Deploy **UTL-X Transformation Engine** as a managed application in your Azure subscription. Transform JSON, XML, CSV, and YAML messages at 86K+ msg/s with 652 built-in functions.\n\nBilling is handled automatically through your Azure bill. A 14-day free trial is included.",
         "subscription": {
           "resourceProviders": [
             "Microsoft.App",
             "Microsoft.OperationalInsights"
           ]
+        },
+        "resourceGroup": {
+          "allowExisting": false
         },
         "location": {
           "label": "Region",
@@ -97,7 +100,7 @@
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
             "options": {
-              "text": "XML and JSON messages expand 10-50× in memory during transformation (UDM parsing). A 100 KB XML message uses ~5-10 MB of heap. With 8 concurrent workers, choose memory accordingly. For messages over 1 MB, use 8 GB.",
+              "text": "XML and JSON messages expand 10-50x in memory during transformation (UDM parsing). A 100 KB XML message uses ~5-10 MB of heap. With 8 concurrent workers, choose memory accordingly. For messages over 1 MB, use 8 GB.",
               "style": "Warning"
             }
           },
@@ -132,42 +135,6 @@
             "visible": true
           }
         ]
-      },
-      {
-        "name": "licenseConfig",
-        "label": "License",
-        "subLabel": {
-          "preValidation": "Enter your license key",
-          "postValidation": "Done"
-        },
-        "bladeTitle": "License Configuration",
-        "elements": [
-          {
-            "name": "licenseInfo",
-            "type": "Microsoft.Common.InfoBox",
-            "visible": true,
-            "options": {
-              "text": "A UTL-X license key is required for production use. Visit utlx-lang.org for licensing options. Leave empty for evaluation (14-day trial).",
-              "style": "Warning"
-            }
-          },
-          {
-            "name": "licenseKey",
-            "type": "Microsoft.Common.PasswordBox",
-            "label": {
-              "password": "License Key",
-              "confirmPassword": "Confirm License Key"
-            },
-            "toolTip": "Your UTL-X license key. Leave empty for 14-day evaluation.",
-            "constraints": {
-              "required": false
-            },
-            "options": {
-              "hideConfirmation": true
-            },
-            "visible": true
-          }
-        ]
       }
     ],
     "outputs": {
@@ -176,7 +143,6 @@
       "memoryGi": "[steps('engineConfig').memoryGi]",
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
-      "licenseKey": "[steps('licenseConfig').licenseKey]",
       "workers": "[steps('engineConfig').tier]",
       "containerImage": "ghcr.io/utlx-lang/utlxe:latest",
       "namePrefix": "utlxe"

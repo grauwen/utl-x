@@ -1,11 +1,16 @@
 // UTL-X Azure Deployment — Main Template
 //
 // Deploys UTLXe transformation engine as an Azure Container App.
-// One-click deployment for Azure Marketplace Solution Template.
+// Used for Azure Marketplace Managed Application offering.
 //
-// Deploy manually:
+// Deploy manually (for testing outside Marketplace):
 //   az group create -n utlxe-rg -l westeurope
 //   az deployment group create -g utlxe-rg -f deploy/azure/main.bicep
+//
+// Marketplace flow:
+//   Customer clicks "Get It Now" → Microsoft creates a managed resource group
+//   → this template deploys into that group → customer gets the app URL
+//   → Microsoft handles monthly billing (€30/€90/custom per tier)
 //
 // After deployment:
 //   curl https://<output-url>/api/health
@@ -37,10 +42,6 @@ param minReplicas int = 1
 @minValue(1)
 @maxValue(30)
 param maxReplicas int = 5
-
-@description('UTL-X license key')
-@secure()
-param licenseKey string = ''
 
 @description('Resource name prefix')
 param namePrefix string = 'utlxe'
@@ -86,7 +87,6 @@ module containerApp 'modules/container-app.bicep' = {
     memoryGi: memoryGi
     minReplicas: minReplicas
     maxReplicas: maxReplicas
-    licenseKey: licenseKey
     namePrefix: namePrefix
     enableDapr: enableDapr
     serviceBusConnection: serviceBusConnection
