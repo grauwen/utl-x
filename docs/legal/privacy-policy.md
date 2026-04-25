@@ -26,18 +26,7 @@ We have **no access** to the data flowing through your UTL-X deployment. All tra
 
 ## 3. Data We May Collect
 
-### 3.1 License Validation
-
-When a license key is configured, UTL-X may contact a Glomidco license server to validate the key. This request contains:
-
-- License key (hashed)
-- Engine version number
-- Tier (Starter / Professional / Enterprise)
-- A timestamp
-
-This request does **not** contain any business data, transformation logic, or Azure resource identifiers. License validation can be disabled for air-gapped deployments by contacting support.
-
-### 3.2 Marketplace Billing
+### 3.1 Marketplace Billing
 
 When you purchase UTL-X through the Azure Marketplace, Microsoft handles all billing. Microsoft shares the following with us as the publisher:
 
@@ -48,11 +37,11 @@ When you purchase UTL-X through the Azure Marketplace, Microsoft handles all bil
 
 This data is provided by Microsoft under the [Microsoft Publisher Agreement](https://learn.microsoft.com/en-us/partner-center/marketplace/standard-contract) and is used solely for billing reconciliation and customer support.
 
-### 3.3 Support Interactions
+### 3.2 Support Interactions
 
 If you contact us for support (email, GitHub Issues, or Partner Center), we collect the information you voluntarily provide: name, email address, company name, and the technical details of your issue.
 
-### 3.4 Website and Documentation
+### 3.3 Website and Documentation
 
 Our website (utlx-lang.org) and documentation pages may use basic analytics (page views, referrer) to understand usage patterns. No personal data is collected beyond standard web server logs.
 
@@ -78,21 +67,19 @@ Glomidco B.V. is established in The Netherlands and complies with the General Da
 
 | Processing activity | Legal basis |
 |---|---|
-| License validation | Legitimate interest (software license enforcement) |
 | Marketplace billing | Performance of contract |
 | Support interactions | Performance of contract / Consent |
 | Website analytics | Legitimate interest (service improvement) |
 
 ## 6. Data Retention
 
-- **License validation logs**: retained for 12 months, then deleted
 - **Billing records**: retained for 7 years (Dutch fiscal obligation)
 - **Support correspondence**: retained for the duration of your subscription plus 12 months
 - **Website logs**: retained for 90 days
 
 ## 7. Data Transfers
 
-License validation requests are processed on servers in the European Union (West Europe region). We do not transfer personal data outside the EEA. Marketplace billing data is processed by Microsoft under their own data processing terms.
+We do not transfer personal data outside the EEA. Marketplace billing data is processed by Microsoft under their own data processing terms.
 
 ## 8. Your Rights
 
@@ -113,7 +100,6 @@ To exercise any of these rights, contact us at: **privacy@glomidco.com**
 UTL-X is designed so that sensitive data processing happens entirely within your Azure subscription, under your security controls. For the limited data we do process:
 
 - All communications use TLS 1.2+
-- License validation endpoints are authenticated
 - Access to billing data is restricted to authorized personnel
 - We maintain appropriate technical and organizational measures per GDPR Article 32
 
