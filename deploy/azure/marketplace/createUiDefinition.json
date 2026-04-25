@@ -42,6 +42,23 @@
             }
           },
           {
+            "name": "tier",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Tier",
+            "toolTip": "Determines the number of concurrent worker threads per instance. In a typical integration flow, each transformation step uses one worker for the duration of the message — choose based on your expected concurrent message volume.",
+            "defaultValue": "Starter (8 workers)",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                { "label": "Starter (8 workers) — up to 8 concurrent transformations per instance", "value": 8 },
+                { "label": "Professional (32 workers) — up to 32 concurrent transformations per instance", "value": 32 },
+                { "label": "Enterprise (64 workers) — up to 64 concurrent transformations per instance", "value": 64 },
+                { "label": "Enterprise+ (128 workers) — up to 128 concurrent transformations per instance", "value": 128 }
+              ]
+            },
+            "visible": true
+          },
+          {
             "name": "cpuCores",
             "type": "Microsoft.Common.DropDown",
             "label": "CPU Cores per instance",
@@ -160,6 +177,7 @@
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
       "licenseKey": "[steps('licenseConfig').licenseKey]",
+      "workers": "[steps('engineConfig').tier]",
       "containerImage": "ghcr.io/utlx-lang/utlxe:latest",
       "namePrefix": "utlxe"
     }

@@ -62,6 +62,10 @@ param outputTopicName string = 'utlx-output'
 @allowed(['http', 'servicebus', 'both'])
 param scalingMode string = 'http'
 
+@description('Worker threads for transformation processing (determines tier: Starter=8, Professional=32, Enterprise=64+)')
+@allowed([8, 32, 64, 128])
+param workers int = 8
+
 // ── Modules ──
 
 module environment 'modules/environment.bicep' = {
@@ -88,6 +92,7 @@ module containerApp 'modules/container-app.bicep' = {
     serviceBusConnection: serviceBusConnection
     inputQueueName: inputQueueName
     scalingMode: scalingMode
+    workers: workers
   }
 }
 

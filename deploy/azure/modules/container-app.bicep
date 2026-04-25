@@ -43,6 +43,10 @@ param inputQueueName string = 'utlx-input'
 @allowed(['http', 'servicebus', 'both'])
 param scalingMode string = 'http'
 
+@description('Worker threads for transformation processing (Starter: 8, Professional: 32, Enterprise: 64+)')
+@allowed([8, 32, 64, 128])
+param workers int = 8
+
 // JVM heap set to 75% of container memory — leaves room for JVM overhead, GC, Netty buffers
 var jvmHeapMb = {
   '1.0': '768'
@@ -128,6 +132,8 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             cpu: json(cpuCores)
             memory: '${memoryGi}Gi'
           }
+          // Container args: set transport mode and worker count based on tier
+          args: ['--mode', 'http', '--workers', string(workers)]
           env: [
             {
               name: 'JAVA_OPTS'
