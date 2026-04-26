@@ -114,6 +114,12 @@ replay_pid*
 # Examples output
 examples/**/output.*
 
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+
 # Deployment build artifacts (marketplace ZIPs are kept — see negation near line 18)
 
 # .NET
