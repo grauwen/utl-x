@@ -54,6 +54,7 @@ build_marketplace_plan() {
     local plan="$1"
     PLANS_DIR="$REPO_ROOT/deploy/azure/marketplace/plans"
     MARKETPLACE_DIR="$OUTPUT_DIR/marketplace"
+    TRACKING_FILE="$PLANS_DIR/tracking-guids.json"
 
     PLAN_UI="$PLANS_DIR/${plan}-createUiDefinition.json"
     if [ ! -f "$PLAN_UI" ]; then
@@ -69,14 +70,39 @@ build_marketplace_plan() {
     PLAN_DIR="$MARKETPLACE_DIR/$plan"
     mkdir -p "$PLAN_DIR"
 
-    cp "$OUTPUT_DIR/mainTemplate.json" "$PLAN_DIR/"
+    # Inject customer usage attribution tracking resource with literal GUID.
+    # Partner Center requires the tracking deployment name to be a literal string,
+    # not a parameter reference — so we patch the compiled ARM JSON per plan.
+    TRACKING_GUID=$(python3 -c "import json; print(json.load(open('$TRACKING_FILE'))['$plan'])")
+    python3 -c "
+import json, sys
+with open('$OUTPUT_DIR/mainTemplate.json') as f:
+    arm = json.load(f)
+tracking = {
+    'type': 'Microsoft.Resources/deployments',
+    'apiVersion': '2021-04-01',
+    'name': 'pid-${TRACKING_GUID}-partnercenter',
+    'properties': {
+        'mode': 'Incremental',
+        'template': {
+            '\$schema': 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+            'contentVersion': '1.0.0.0',
+            'resources': []
+        }
+    }
+}
+# Remove any existing tracking resource, then add the plan-specific one
+arm['resources'] = [r for r in arm['resources'] if not r.get('name','').startswith('pid-')] + [tracking]
+with open('$PLAN_DIR/mainTemplate.json', 'w') as f:
+    json.dump(arm, f, indent=2)
+"
     cp "$PLAN_UI" "$PLAN_DIR/createUiDefinition.json"
 
     cd "$PLAN_DIR"
     zip -q "$OUTPUT_DIR/utlxe-${plan}.zip" mainTemplate.json createUiDefinition.json
     cd "$REPO_ROOT"
 
-    echo "  Plan: $plan → $OUTPUT_DIR/utlxe-${plan}.zip"
+    echo "  Plan: $plan → $OUTPUT_DIR/utlxe-${plan}.zip (tracking: $TRACKING_GUID)"
 }
 
 build_marketplace() {
