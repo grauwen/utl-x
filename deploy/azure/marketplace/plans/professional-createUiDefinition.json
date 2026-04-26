@@ -19,7 +19,6 @@
         "location": {
           "label": "Region",
           "toolTip": "Azure region for all resources. Choose a region close to your workloads.",
-          "allowedValues": [],
           "visible": true
         }
       }
