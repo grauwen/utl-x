@@ -1,0 +1,137 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "isWizard": true,
+      "basics": {
+        "description": "Deploy **UTL-X Transformation Engine — Enterprise** into your Azure subscription.\n\n**Enterprise plan:** 64 worker threads, up to 30 auto-scaling instances. Handles 100+ integrations at ~300K+ msg/s. Unlimited scaling.\n\nBilling is handled automatically through your Azure bill.",
+        "subscription": {
+          "resourceProviders": [
+            "Microsoft.App",
+            "Microsoft.OperationalInsights"
+          ]
+        },
+        "resourceGroup": {
+          "allowExisting": false
+        },
+        "location": {
+          "label": "Region",
+          "toolTip": "Azure region for all resources. Choose a region close to your workloads.",
+          "allowedValues": [],
+          "visible": true
+        }
+      }
+    },
+    "basics": [],
+    "steps": [
+      {
+        "name": "engineConfig",
+        "label": "Engine Configuration",
+        "subLabel": {
+          "preValidation": "Configure the transformation engine",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Engine Settings",
+        "elements": [
+          {
+            "name": "tierInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "text": "Enterprise plan: 64 concurrent worker threads, up to 30 auto-scaling instances. Full access to all features: JSON, XML, CSV, YAML, OData, 652 stdlib functions, schema validation, pipeline chaining, Dapr messaging integration. Priority support included.",
+              "style": "Info"
+            }
+          },
+          {
+            "name": "cpuCores",
+            "type": "Microsoft.Common.DropDown",
+            "label": "CPU Cores per instance",
+            "toolTip": "CPU allocation per container instance. With 64 workers, 4.0 cores is recommended.",
+            "defaultValue": "4.0 cores (high throughput)",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                { "label": "2.0 cores (standard)", "value": "2.0" },
+                { "label": "4.0 cores (high throughput)", "value": "4.0" }
+              ]
+            },
+            "visible": true
+          },
+          {
+            "name": "memoryGi",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Memory per instance",
+            "toolTip": "Memory allocation per container instance. With 64 workers processing concurrently, 8 GB is recommended.",
+            "defaultValue": "8 GB — messages up to 1 MB+ (large payloads)",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                { "label": "4 GB — messages up to 500 KB", "value": "4.0" },
+                { "label": "8 GB — messages up to 1 MB+ (large payloads)", "value": "8.0" }
+              ]
+            },
+            "visible": true
+          },
+          {
+            "name": "scalingSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Auto-Scaling",
+            "elements": [
+              {
+                "name": "minReplicas",
+                "type": "Microsoft.Common.Slider",
+                "label": "Minimum instances",
+                "toolTip": "Set to 1+ for always-on (recommended for enterprise production).",
+                "min": 1,
+                "max": 10,
+                "defaultValue": 2,
+                "showStepMarkers": true,
+                "visible": true
+              },
+              {
+                "name": "maxReplicas",
+                "type": "Microsoft.Common.Slider",
+                "label": "Maximum instances",
+                "toolTip": "Maximum number of instances for auto-scaling under load.",
+                "min": 1,
+                "max": 30,
+                "defaultValue": 10,
+                "showStepMarkers": false,
+                "visible": true
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "daprSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Messaging Integration (Dapr)",
+            "elements": [
+              {
+                "name": "enableDapr",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "Enable Dapr sidecar for Service Bus / Event Hub messaging",
+                "toolTip": "Enables broker-agnostic messaging via Dapr. Requires a Service Bus or Event Hub connection string.",
+                "visible": true
+              }
+            ],
+            "visible": true
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "location": "[location()]",
+      "cpuCores": "[steps('engineConfig').cpuCores]",
+      "memoryGi": "[steps('engineConfig').memoryGi]",
+      "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
+      "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
+      "workers": 64,
+      "enableDapr": "[steps('engineConfig').daprSection.enableDapr]",
+      "containerImage": "ghcr.io/utlx-lang/utlxe:latest",
+      "namePrefix": "utlxe"
+    }
+  }
+}

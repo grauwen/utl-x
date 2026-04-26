@@ -55,25 +55,35 @@ build_marketplace() {
     # Compile Bicep first
     build_bicep
 
-    # Create marketplace package directory
+    PLANS_DIR="$REPO_ROOT/deploy/azure/marketplace/plans"
     MARKETPLACE_DIR="$OUTPUT_DIR/marketplace"
-    mkdir -p "$MARKETPLACE_DIR"
 
-    # Copy artifacts
-    cp "$OUTPUT_DIR/mainTemplate.json" "$MARKETPLACE_DIR/"
-    cp "$REPO_ROOT/deploy/azure/marketplace/createUiDefinition.json" "$MARKETPLACE_DIR/"
+    # Build one ZIP per plan — each plan has its own createUiDefinition.json
+    # with locked-down workers and maxReplicas values.
+    # The mainTemplate.json (ARM) is shared across all plans.
+    for plan in starter professional enterprise; do
+        PLAN_UI="$PLANS_DIR/${plan}-createUiDefinition.json"
+        if [ ! -f "$PLAN_UI" ]; then
+            echo "  SKIP: $plan (no createUiDefinition found)"
+            continue
+        fi
 
-    # Create ZIP for Partner Center upload
-    cd "$MARKETPLACE_DIR"
-    zip -q "$OUTPUT_DIR/utlxe-marketplace.zip" mainTemplate.json createUiDefinition.json
-    cd "$REPO_ROOT"
+        PLAN_DIR="$MARKETPLACE_DIR/$plan"
+        mkdir -p "$PLAN_DIR"
 
-    echo "  Package: $OUTPUT_DIR/utlxe-marketplace.zip"
-    echo "  Contents:"
-    echo "    - mainTemplate.json (ARM template)"
-    echo "    - createUiDefinition.json (deployment wizard)"
+        cp "$OUTPUT_DIR/mainTemplate.json" "$PLAN_DIR/"
+        cp "$PLAN_UI" "$PLAN_DIR/createUiDefinition.json"
+
+        cd "$PLAN_DIR"
+        zip -q "$OUTPUT_DIR/utlxe-${plan}.zip" mainTemplate.json createUiDefinition.json
+        cd "$REPO_ROOT"
+
+        echo "  Plan: $plan → $OUTPUT_DIR/utlxe-${plan}.zip"
+    done
+
     echo ""
-    echo "  Upload this ZIP to Microsoft Partner Center to publish the Marketplace listing."
+    echo "  Upload each ZIP to its corresponding plan in Microsoft Partner Center."
+    echo "  Each plan has its own workers and scaling limits baked into the wizard."
 }
 
 # Parse arguments

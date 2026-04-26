@@ -1,0 +1,132 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "isWizard": true,
+      "basics": {
+        "description": "Deploy **UTL-X Transformation Engine — Professional** into your Azure subscription.\n\n**Professional plan:** 32 worker threads, up to 10 auto-scaling instances. Handles 50+ integrations at ~160K msg/s.\n\nBilling is handled automatically through your Azure bill. A 14-day free trial is included.",
+        "subscription": {
+          "resourceProviders": [
+            "Microsoft.App",
+            "Microsoft.OperationalInsights"
+          ]
+        },
+        "resourceGroup": {
+          "allowExisting": false
+        },
+        "location": {
+          "label": "Region",
+          "toolTip": "Azure region for all resources. Choose a region close to your workloads.",
+          "allowedValues": [],
+          "visible": true
+        }
+      }
+    },
+    "basics": [],
+    "steps": [
+      {
+        "name": "engineConfig",
+        "label": "Engine Configuration",
+        "subLabel": {
+          "preValidation": "Configure the transformation engine",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Engine Settings",
+        "elements": [
+          {
+            "name": "tierInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "text": "Professional plan: 32 concurrent worker threads, up to 10 auto-scaling instances. Transforms JSON, XML, CSV, YAML, and OData natively with 652 stdlib functions, schema validation, and pipeline chaining. Ideal for production workloads with multiple integration flows.",
+              "style": "Info"
+            }
+          },
+          {
+            "name": "cpuCores",
+            "type": "Microsoft.Common.DropDown",
+            "label": "CPU Cores per instance",
+            "toolTip": "CPU allocation per container instance. With 32 workers, 2.0+ cores is recommended.",
+            "defaultValue": "2.0 cores (production)",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                { "label": "1.0 core (light workloads)", "value": "1.0" },
+                { "label": "2.0 cores (production)", "value": "2.0" },
+                { "label": "4.0 cores (high throughput)", "value": "4.0" }
+              ]
+            },
+            "visible": true
+          },
+          {
+            "name": "memoryGi",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Memory per instance",
+            "toolTip": "Memory allocation per container instance. With 32 workers processing concurrently, 4 GB+ is recommended.",
+            "defaultValue": "4 GB — messages up to 500 KB (production)",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                { "label": "2 GB — messages up to 200 KB (light)", "value": "2.0" },
+                { "label": "4 GB — messages up to 500 KB (production)", "value": "4.0" },
+                { "label": "8 GB — messages up to 1 MB+ (large payloads)", "value": "8.0" }
+              ]
+            },
+            "visible": true
+          },
+          {
+            "name": "memoryWarning",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "text": "XML and JSON messages expand 10-50x in memory during transformation (UDM parsing). With 32 concurrent workers, each processing a message, memory usage scales linearly. For messages over 500 KB, use 8 GB.",
+              "style": "Warning"
+            }
+          },
+          {
+            "name": "scalingSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Auto-Scaling",
+            "elements": [
+              {
+                "name": "minReplicas",
+                "type": "Microsoft.Common.Slider",
+                "label": "Minimum instances",
+                "toolTip": "Set to 0 for scale-to-zero (no cost when idle, ~10s cold start). Set to 1 for always-on (recommended for production).",
+                "min": 0,
+                "max": 10,
+                "defaultValue": 1,
+                "showStepMarkers": true,
+                "visible": true
+              },
+              {
+                "name": "maxReplicas",
+                "type": "Microsoft.Common.Slider",
+                "label": "Maximum instances",
+                "toolTip": "Maximum number of instances for auto-scaling under load. Professional plan supports up to 10.",
+                "min": 1,
+                "max": 10,
+                "defaultValue": 5,
+                "showStepMarkers": false,
+                "visible": true
+              }
+            ],
+            "visible": true
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "location": "[location()]",
+      "cpuCores": "[steps('engineConfig').cpuCores]",
+      "memoryGi": "[steps('engineConfig').memoryGi]",
+      "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
+      "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
+      "workers": 32,
+      "containerImage": "ghcr.io/utlx-lang/utlxe:latest",
+      "namePrefix": "utlxe"
+    }
+  }
+}
