@@ -15,7 +15,11 @@
 # Build directories
 build/
 bin/
-dist/
+# dist/ everywhere except marketplace ZIPs
+**/dist/
+!deploy/dist/
+deploy/dist/**
+!deploy/dist/utlxe-*.zip
 target/
 out/
 *.egg-info/
@@ -65,6 +69,8 @@ htmlcov/
 *.nar
 *.ear
 *.rar
+# Exception: keep marketplace deployment ZIPs
+!deploy/dist/utlxe-*.zip
 
 # Environment files
 .env
@@ -108,8 +114,7 @@ replay_pid*
 # Examples output
 examples/**/output.*
 
-# Deployment build artifacts
-deploy/dist/
+# Deployment build artifacts (marketplace ZIPs are kept — see negation near line 18)
 
 # .NET
 obj/
