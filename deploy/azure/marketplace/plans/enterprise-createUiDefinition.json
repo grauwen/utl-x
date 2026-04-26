@@ -128,6 +128,7 @@
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
       "workers": 64,
+      "trackingGuid": "REPLACE-WITH-ENTERPRISE-PLAN-GUID",
       "enableDapr": "[steps('engineConfig').daprSection.enableDapr]",
       "containerImage": "ghcr.io/utlx-lang/utlxe:latest",
       "namePrefix": "utlxe"

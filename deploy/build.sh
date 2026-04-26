@@ -50,40 +50,43 @@ build_bicep() {
     echo "  ARM: $OUTPUT_DIR/mainTemplate.json ($(wc -l < "$OUTPUT_DIR/mainTemplate.json") lines)"
 }
 
-build_marketplace() {
-    echo "=== Packaging Marketplace Artifacts ==="
-    # Compile Bicep first
-    build_bicep
-
+build_marketplace_plan() {
+    local plan="$1"
     PLANS_DIR="$REPO_ROOT/deploy/azure/marketplace/plans"
     MARKETPLACE_DIR="$OUTPUT_DIR/marketplace"
 
-    # Build one ZIP per plan — each plan has its own createUiDefinition.json
-    # with locked-down workers and maxReplicas values.
-    # The mainTemplate.json (ARM) is shared across all plans.
+    PLAN_UI="$PLANS_DIR/${plan}-createUiDefinition.json"
+    if [ ! -f "$PLAN_UI" ]; then
+        echo "  ERROR: $PLAN_UI not found"
+        exit 1
+    fi
+
+    # Compile Bicep if mainTemplate.json doesn't exist yet
+    if [ ! -f "$OUTPUT_DIR/mainTemplate.json" ]; then
+        build_bicep
+    fi
+
+    PLAN_DIR="$MARKETPLACE_DIR/$plan"
+    mkdir -p "$PLAN_DIR"
+
+    cp "$OUTPUT_DIR/mainTemplate.json" "$PLAN_DIR/"
+    cp "$PLAN_UI" "$PLAN_DIR/createUiDefinition.json"
+
+    cd "$PLAN_DIR"
+    zip -q "$OUTPUT_DIR/utlxe-${plan}.zip" mainTemplate.json createUiDefinition.json
+    cd "$REPO_ROOT"
+
+    echo "  Plan: $plan → $OUTPUT_DIR/utlxe-${plan}.zip"
+}
+
+build_marketplace() {
+    echo "=== Packaging Marketplace Artifacts (all plans) ==="
+    build_bicep
     for plan in starter professional enterprise; do
-        PLAN_UI="$PLANS_DIR/${plan}-createUiDefinition.json"
-        if [ ! -f "$PLAN_UI" ]; then
-            echo "  SKIP: $plan (no createUiDefinition found)"
-            continue
-        fi
-
-        PLAN_DIR="$MARKETPLACE_DIR/$plan"
-        mkdir -p "$PLAN_DIR"
-
-        cp "$OUTPUT_DIR/mainTemplate.json" "$PLAN_DIR/"
-        cp "$PLAN_UI" "$PLAN_DIR/createUiDefinition.json"
-
-        cd "$PLAN_DIR"
-        zip -q "$OUTPUT_DIR/utlxe-${plan}.zip" mainTemplate.json createUiDefinition.json
-        cd "$REPO_ROOT"
-
-        echo "  Plan: $plan → $OUTPUT_DIR/utlxe-${plan}.zip"
+        build_marketplace_plan "$plan"
     done
-
     echo ""
     echo "  Upload each ZIP to its corresponding plan in Microsoft Partner Center."
-    echo "  Each plan has its own workers and scaling limits baked into the wizard."
 }
 
 # Parse arguments
@@ -97,8 +100,11 @@ else
             jar)         build_jar ;;
             docker)      build_docker ;;
             bicep)       build_bicep ;;
-            marketplace) build_marketplace ;;
-            *)           echo "Unknown target: $arg. Valid: jar, docker, bicep, marketplace"; exit 1 ;;
+            marketplace)           build_marketplace ;;
+            marketplace:starter)   echo "=== Packaging Starter ===" ; build_bicep ; build_marketplace_plan starter ;;
+            marketplace:professional) echo "=== Packaging Professional ===" ; build_bicep ; build_marketplace_plan professional ;;
+            marketplace:enterprise)   echo "=== Packaging Enterprise ===" ; build_bicep ; build_marketplace_plan enterprise ;;
+            *)           echo "Unknown target: $arg"; echo "Valid: jar, docker, bicep, marketplace, marketplace:starter, marketplace:professional, marketplace:enterprise"; exit 1 ;;
         esac
     done
 fi

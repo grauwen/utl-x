@@ -124,6 +124,7 @@
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
       "workers": 32,
+      "trackingGuid": "REPLACE-WITH-PROFESSIONAL-PLAN-GUID",
       "containerImage": "ghcr.io/utlx-lang/utlxe:latest",
       "namePrefix": "utlxe"
     }

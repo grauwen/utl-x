@@ -113,6 +113,7 @@
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": 2,
       "workers": 8,
+      "trackingGuid": "44ab35db-fe99-48ef-b182-ffe9d0c919e3",
       "containerImage": "ghcr.io/utlx-lang/utlxe:latest",
       "namePrefix": "utlxe"
     }

@@ -108,6 +108,25 @@ module daprComponents 'modules/dapr-components.bicep' = if (enableDapr) {
   }
 }
 
+// ── Customer Usage Attribution (Microsoft Marketplace tracking) ──
+// This empty deployment lets Microsoft attribute Azure consumption to this Marketplace offer.
+// Each Marketplace plan passes its own tracking GUID via the createUiDefinition outputs.
+
+@description('Partner Center customer usage attribution tracking ID (set per plan)')
+param trackingGuid string = '00000000-0000-0000-0000-000000000000'
+
+resource customerAttribution 'Microsoft.Resources/deployments@2021-04-01' = {
+  name: 'pid-${trackingGuid}-partnercenter'
+  properties: {
+    mode: 'Incremental'
+    template: {
+      '$schema': 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#'
+      contentVersion: '1.0.0.0'
+      resources: []
+    }
+  }
+}
+
 // ── Outputs ──
 
 @description('UTL-X API endpoint URL')
