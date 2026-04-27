@@ -169,15 +169,25 @@ class YAMLSerializer {
             }
 
             is UDM.Object -> {
+                // Unwrap XML text nodes: if object has only _text (no child elements),
+                // return the text value directly instead of the wrapper.
+                // This ensures <Customer>Alice</Customer> outputs as "Alice" not {_text: Alice}
+                if (udm.properties.containsKey("_text") && udm.properties.keys.all { it == "_text" }) {
+                    return convertFromUDM(udm.properties["_text"]!!, options)
+                }
+
                 val map = LinkedHashMap<String, Any?>()
                 udm.properties.forEach { (key, value) ->
                     map[key] = convertFromUDM(value, options)
                 }
 
-                // Add attributes as metadata (if any)
-                if (udm.attributes.isNotEmpty()) {
+                // Add attributes as metadata (if any, excluding xmlns namespace declarations)
+                val realAttributes = udm.attributes.filter { (key, _) ->
+                    !key.startsWith("xmlns") && key != "xmlns"
+                }
+                if (realAttributes.isNotEmpty()) {
                     val attrMap = LinkedHashMap<String, String>()
-                    udm.attributes.forEach { (key, value) ->
+                    realAttributes.forEach { (key, value) ->
                         attrMap["@$key"] = value
                     }
                     map["_attributes"] = attrMap
