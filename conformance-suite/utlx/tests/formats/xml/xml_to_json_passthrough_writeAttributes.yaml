@@ -1,0 +1,49 @@
+name: "xml_to_json_passthrough_writeAttributes"
+category: "formats/xml"
+description: "B14: XML pass-through to JSON with writeAttributes=true — all attributes preserved, leaf text uses #text"
+tags: ["xml", "json", "passthrough", "B14", "writeAttributes", "attributes"]
+
+input:
+  format: xml
+  data: |
+    <Order id="ORD-001">
+      <Customer>Alice</Customer>
+      <Total currency="EUR">299.99</Total>
+      <Status>CONFIRMED</Status>
+      <Sales type="direct"/>
+    </Order>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json {writeAttributes: true}
+  ---
+  $input
+
+expected:
+  format: json
+  data: |
+    {
+      "Order": {
+        "@id": "ORD-001",
+        "Customer": "Alice",
+        "Total": {
+          "@currency": "EUR",
+          "#text": 299.99
+        },
+        "Status": "CONFIRMED",
+        "Sales": {
+          "@type": "direct"
+        }
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created: "2026-04-28"
+  references:
+    - "docs/bugs-fixed/B14-xml-text-node-leaks-into-output-serialization.md"
