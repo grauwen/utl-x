@@ -39,7 +39,8 @@ class YAMLSerializer {
         val dateTimeFormat: DateTimeFormatter = DateTimeFormatter.ISO_INSTANT,
         val maxSimpleKeyLength: Int = 128,
         val splitLines: Boolean = true,
-        val width: Int = 80
+        val width: Int = 80,
+        val writeAttributes: Boolean = false  // When true, leaf text+attribute elements preserve attributes (DataWeave-compatible)
     )
     
     /**
@@ -172,25 +173,28 @@ class YAMLSerializer {
                 // Unwrap XML text nodes: if object has only _text (no child elements),
                 // return the text value directly instead of the wrapper.
                 // This ensures <Customer>Alice</Customer> outputs as "Alice" not {_text: Alice}
+                // Unwrap only when: _text is the only property AND (writeAttributes is off OR no real attributes)
                 if (udm.properties.containsKey("_text") && udm.properties.keys.all { it == "_text" }) {
-                    return convertFromUDM(udm.properties["_text"]!!, options)
+                    val hasRealAttributes = udm.attributes.any { (key, _) ->
+                        !key.startsWith("xmlns") && key != "xmlns"
+                    }
+                    if (!options.writeAttributes || !hasRealAttributes) {
+                        return convertFromUDM(udm.properties["_text"]!!, options)
+                    }
                 }
 
                 val map = LinkedHashMap<String, Any?>()
-                udm.properties.forEach { (key, value) ->
-                    map[key] = convertFromUDM(value, options)
+
+                // Add attributes with @ prefix inline (same convention as JSON serializer)
+                udm.attributes.forEach { (key, value) ->
+                    if (!key.startsWith("xmlns") && key != "xmlns") {
+                        map["@$key"] = value
+                    }
                 }
 
-                // Add attributes as metadata (if any, excluding xmlns namespace declarations)
-                val realAttributes = udm.attributes.filter { (key, _) ->
-                    !key.startsWith("xmlns") && key != "xmlns"
-                }
-                if (realAttributes.isNotEmpty()) {
-                    val attrMap = LinkedHashMap<String, String>()
-                    realAttributes.forEach { (key, value) ->
-                        attrMap["@$key"] = value
-                    }
-                    map["_attributes"] = attrMap
+                // Add regular properties (rename internal _text to #text for output)
+                udm.properties.forEach { (key, value) ->
+                    map[if (key == "_text") "#text" else key] = convertFromUDM(value, options)
                 }
 
                 map

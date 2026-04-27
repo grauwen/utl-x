@@ -342,3 +342,173 @@ class YAMLSerializerTest : DescribeSpec({
 
 // Helper function for comparison
 private infix fun Int.lessThan(other: Int): Boolean = this < other
+
+/**
+ * Tests for XML attribute handling in YAML serialization (B14).
+ * Tests both writeAttributes=false (default) and writeAttributes=true modes.
+ */
+class YAMLSerializerWriteAttributesTest : DescribeSpec({
+
+    // Helper: build a UDM tree simulating XML parse of:
+    // <Order id="ORD-001">
+    //   <Customer>Alice</Customer>
+    //   <Total currency="EUR">299.99</Total>
+    //   <Status>CONFIRMED</Status>
+    //   <Sales type="direct"/>
+    // </Order>
+    fun buildXmlUdm(): UDM {
+        val customer = UDM.Object(
+            properties = mapOf("_text" to UDM.Scalar.string("Alice")),
+            attributes = emptyMap(),
+            name = "Customer"
+        )
+        val total = UDM.Object(
+            properties = mapOf("_text" to UDM.Scalar.number(299.99)),
+            attributes = mapOf("currency" to "EUR"),
+            name = "Total"
+        )
+        val status = UDM.Object(
+            properties = mapOf("_text" to UDM.Scalar.string("CONFIRMED")),
+            attributes = emptyMap(),
+            name = "Status"
+        )
+        val sales = UDM.Object(
+            properties = emptyMap(),
+            attributes = mapOf("type" to "direct"),
+            name = "Sales"
+        )
+        val order = UDM.Object(
+            properties = mapOf(
+                "Customer" to customer,
+                "Total" to total,
+                "Status" to status,
+                "Sales" to sales
+            ),
+            attributes = mapOf("id" to "ORD-001"),
+            name = "Order"
+        )
+        return UDM.Object(properties = mapOf("Order" to order))
+    }
+
+    describe("writeAttributes=false (default)") {
+        val serializer = YAMLSerializer()
+        val options = YAMLSerializer.SerializeOptions()
+
+        it("leaf text without attributes is unwrapped") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            yaml.shouldContain("Customer: Alice")
+        }
+
+        it("leaf text with attributes drops attribute") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            // <Total currency="EUR">299.99</Total> → Total: 299.99
+            yaml.shouldContain("Total: 299")
+            yaml.shouldNotContain("@currency")
+            yaml.shouldNotContain("#text")
+        }
+
+        it("non-leaf attributes preserved with @ prefix inline") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            yaml.shouldContain("'@id': ORD-001")
+        }
+
+        it("self-closing with attribute preserved") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            yaml.shouldContain("'@type': direct")
+        }
+
+        it("no _text in output") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            yaml.shouldNotContain("_text")
+        }
+
+        it("no _attributes block in output") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            yaml.shouldNotContain("_attributes")
+        }
+    }
+
+    describe("writeAttributes=true") {
+        val serializer = YAMLSerializer()
+        val options = YAMLSerializer.SerializeOptions(writeAttributes = true)
+
+        it("leaf text without attributes still unwrapped") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            yaml.shouldContain("Customer: Alice")
+        }
+
+        it("leaf text with attributes preserves attribute") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            // <Total currency="EUR">299.99</Total> → @currency + #text
+            yaml.shouldContain("'@currency': EUR")
+            yaml.shouldContain("'#text': 299")
+        }
+
+        it("non-leaf attributes still preserved") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            yaml.shouldContain("'@id': ORD-001")
+        }
+
+        it("self-closing with attribute still preserved") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            yaml.shouldContain("'@type': direct")
+        }
+
+        it("no _text in output") {
+            val yaml = serializer.serialize(buildXmlUdm(), options)
+            yaml.shouldNotContain("_text")
+        }
+
+        it("xmlns attributes excluded") {
+            val withXmlns = UDM.Object(
+                properties = mapOf("_text" to UDM.Scalar.string("test")),
+                attributes = mapOf("xmlns" to "http://example.com", "xmlns:xsi" to "http://www.w3.org/2001/XMLSchema-instance"),
+                name = "Root"
+            )
+            val root = UDM.Object(properties = mapOf("Root" to withXmlns))
+            val yaml = serializer.serialize(root, options)
+            yaml.shouldNotContain("xmlns")
+            // Should unwrap since only xmlns attributes (no real attributes)
+            yaml.shouldContain("Root: test")
+        }
+    }
+
+    describe("XML round-trip via parser") {
+        it("default mode - parse XML and serialize to YAML") {
+            val xml = "<Order id=\"ORD-001\"><Customer>Alice</Customer><Total currency=\"EUR\">299.99</Total><Sales type=\"direct\"/></Order>"
+            val udm = org.apache.utlx.formats.xml.XMLParser(xml).parse()
+            val yaml = YAMLSerializer().serialize(udm)
+
+            yaml.shouldContain("'@id': ORD-001")
+            yaml.shouldContain("Customer: Alice")
+            yaml.shouldContain("Total: 299")
+            yaml.shouldNotContain("@currency")
+            yaml.shouldContain("'@type': direct")
+        }
+
+        it("writeAttributes mode - parse XML and serialize to YAML") {
+            val xml = "<Order id=\"ORD-001\"><Customer>Alice</Customer><Total currency=\"EUR\">299.99</Total><Sales type=\"direct\"/></Order>"
+            val udm = org.apache.utlx.formats.xml.XMLParser(xml).parse()
+            val yaml = YAMLSerializer().serialize(udm, YAMLSerializer.SerializeOptions(writeAttributes = true))
+
+            yaml.shouldContain("'@id': ORD-001")
+            yaml.shouldContain("Customer: Alice")
+            yaml.shouldContain("'@currency': EUR")
+            yaml.shouldContain("'#text': 299")
+            yaml.shouldContain("'@type': direct")
+        }
+    }
+})
+
+// Kotest helper extensions
+private fun String.shouldContain(substring: String) {
+    if (!this.contains(substring)) {
+        throw AssertionError("Expected string to contain '$substring' but was:\n$this")
+    }
+}
+
+private fun String.shouldNotContain(substring: String) {
+    if (this.contains(substring)) {
+        throw AssertionError("Expected string NOT to contain '$substring' but was:\n$this")
+    }
+}

@@ -1,6 +1,6 @@
 name: "xml_to_yaml_passthrough_with_attributes"
 category: "formats/xml"
-description: "B14: XML pass-through to YAML with attributes — attributes in _attributes block, text nodes unwrapped"
+description: "B14: XML pass-through to YAML with attributes — attributes as @key inline, text nodes unwrapped"
 tags: ["xml", "yaml", "passthrough", "B14", "_text", "attributes"]
 
 input:
@@ -10,6 +10,7 @@ input:
       <Customer>Alice</Customer>
       <Total currency="EUR">299.99</Total>
       <Status>CONFIRMED</Status>
+      <Sales type="direct"/>
     </Order>
 
 transformation: |
@@ -23,11 +24,12 @@ expected:
   format: yaml
   data: |
     Order:
+      '@id': ORD-001
       Customer: Alice
       Total: 299.99
       Status: CONFIRMED
-      _attributes:
-        '@id': ORD-001
+      Sales:
+        '@type': direct
 
 performance_limits:
   max_duration_ms: 100

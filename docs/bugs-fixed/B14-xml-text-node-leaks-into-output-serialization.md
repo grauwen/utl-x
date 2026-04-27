@@ -202,205 +202,149 @@ Order:
     '@id': ORD-001
 ```
 
-### Four problems with current behavior
+### Issues found and fixed (April 28, 2026)
 
-1. **Leaf element attributes are silently dropped** — `currency="EUR"` on `<Total>` disappears in both JSON and YAML
-2. **JSON and YAML use different formats** — JSON puts attributes as `@key` inline properties, YAML puts them in a `_attributes` block
-3. **Non-leaf vs leaf inconsistency** — attributes preserved on parent elements (Order), dropped on leaf text elements (Total)
-4. **The YAML `_attributes` block is a UTL-X invention** — not a recognized standard (see below)
+1. **YAML used non-standard `_attributes` block** — replaced with `@` prefix inline (same as JSON). The `_attributes` convention was a UTL-X invention that no other tool uses. **Fixed.**
+2. **JSON and YAML were inconsistent** — now both use `@` prefix inline for attributes. **Fixed.**
+3. **Internal `_text` key leaked into output** — renamed to `#text` when it appears in output (only when `writeAttributes=true` and element has attributes). **Fixed.**
+4. **Leaf element attributes dropped** — this is **by design** when `writeAttributes=false` (default), matching DataWeave behavior. Configurable via `writeAttributes=true`.
 
-### How we got to the current behavior
+### Current behavior (after all fixes)
 
-The **JSON serializer** was written with `@` prefix for attributes inline with other properties — this follows the widely-used Badgerfish convention. That part is correct.
-
-The **YAML serializer** was written separately and used a `_attributes` nested block instead. This was **not based on any standard** — it was an ad-hoc design choice. There is no "YAML attribute convention" because YAML doesn't have a native concept of attributes (same as JSON). The `_attributes` block is a UTL-X invention that no other tool uses.
-
-The **B14 fix** added `_text` unwrapping for leaf elements, which had the side effect of dropping attributes on those elements because the unwrapping replaces the entire object (including attributes) with just the text value.
-
-### Industry Conventions (JSON)
-
-There are 4 established conventions for XML-to-JSON attribute mapping:
-
-| Convention | Attributes preserved | Attribute prefix | Text content key | Used by |
-|-----------|---------------------|-----------------|-----------------|---------|
-| **Badgerfish** | Yes | `@` | `$` | Java XML libs, .NET Json.NET |
-| **Parker** | **No (dropped)** | N/A | Plain value | Simple converters |
-| **GData** (Google) | Yes | None (collision risk) | `$t` | Google APIs (legacy) |
-| **DataWeave** (MuleSoft) | Yes (opt-in via `writeAttributes`) | `@` | value itself | MuleSoft Anypoint |
-
-### Industry Conventions (YAML)
-
-There is **no established YAML-specific convention** for XML attributes. Tools that convert XML to YAML generally follow the same conventions as JSON because YAML is a superset of JSON. Notable tools:
-
-| Tool | Attribute prefix | Text content key | Notes |
-|------|-----------------|-----------------|-------|
-| **yq** (Mike Farah) | `+@` (default, configurable) | `+content` (configurable) | Most popular CLI tool; uses `+` to avoid collisions |
-| **Site24x7** | `@` | `#text` | Online converter |
-| **ddevtools** | `-` prefix | `#text` | Dash prefix variant |
-| **Most converters** | Drop attributes | Plain value | Parker-style, lossy |
-
-**Key finding:** No tool uses a `_attributes` nested block like UTL-X currently does for YAML. The `_attributes` convention is non-standard and should be replaced.
-
-### DataWeave approach (MuleSoft — closest competitor)
-
-DataWeave uses `@` prefix and offers `writeAttributes=true` as an opt-in writer property. When enabled, attributes appear as `@key` properties at the same level as child elements. When disabled, attributes are accessible in expressions (`payload.Order.@id`) but don't appear in the output.
-
-This is the closest model to what UTL-X should do — attributes always accessible via `@` in expressions, output behavior configurable.
-
-### Proposed Solution: Configurable Attribute Mode
-
-Make attribute output configurable via the `output` declaration. The mode determines how XML attributes appear in JSON **and** YAML output (same behavior for both formats).
-
-#### Syntax
-
-```utlx
-%utlx 1.0
-input xml
-output json xmlattr=preserve
----
-$input
+**Test XML:**
+```xml
+<Order id="ORD-001">
+  <Customer>Alice</Customer>
+  <Total currency="EUR">299.99</Total>
+  <Status>CONFIRMED</Status>
+  <Sales type="direct"/>
+</Order>
 ```
 
-#### Three modes with JSON AND YAML examples
+**Default output (`writeAttributes=false`):**
 
----
-
-**Mode 1: `xmlattr=drop`** (Parker-style — current default after B14)
-
-Attributes on leaf elements are dropped. Attributes on non-leaf elements are dropped too. Cleanest output.
-
-**JSON:**
-```json
-{
-  "Order": {
-    "Customer": "Alice",
-    "Total": 299.99
-  }
-}
-```
-
-**YAML:**
-```yaml
-Order:
-  Customer: Alice
-  Total: 299.99
-```
-
-- Pros: Cleanest output, no XML artifacts in JSON/YAML
-- Cons: Data loss — all attributes gone, not recoverable from output
-- When to use: Consumer doesn't care about XML attributes, only element values
-
----
-
-**Mode 2: `xmlattr=preserve`** (Badgerfish-inspired — recommended for enterprise XML)
-
-All attributes preserved with `@` prefix. Leaf elements with attributes expand to include `#text` for the value. Leaf elements without attributes remain plain values. **Same format for JSON and YAML.**
-
-**JSON:**
-```json
-{
-  "Order": {
-    "@id": "ORD-001",
-    "Customer": "Alice",
-    "Total": {
-      "@currency": "EUR",
-      "#text": 299.99
-    }
-  }
-}
-```
-
-**YAML:**
-```yaml
-Order:
-  '@id': ORD-001
-  Customer: Alice
-  Total:
-    '@currency': EUR
-    '#text': 299.99
-```
-
-- Pros: No data loss, `@` prefix is the de facto standard, consistent between JSON and YAML
-- Cons: Leaf elements with attributes become objects (slightly more complex output)
-- When to use: Enterprise XML (UBL invoices, FHIR, SWIFT ISO 20022) where attributes carry business data
-- Note: `#text` is used instead of `_text` (which is internal UDM) or `$` (which conflicts with UTL-X variable syntax)
-
----
-
-**Mode 3: `xmlattr=inline`** (flat — attributes as sibling properties)
-
-Attributes flattened as `element@attr` sibling properties. Leaf elements stay as plain values. Attributes appear as separate keys.
-
-**JSON:**
+JSON:
 ```json
 {
   "Order": {
     "@id": "ORD-001",
     "Customer": "Alice",
     "Total": 299.99,
-    "Total@currency": "EUR"
+    "Status": "CONFIRMED",
+    "Sales": {
+      "@type": "direct"
+    }
   }
 }
 ```
 
-**YAML:**
+YAML:
 ```yaml
 Order:
   '@id': ORD-001
   Customer: Alice
   Total: 299.99
-  Total@currency: EUR
+  Status: CONFIRMED
+  Sales:
+    '@type': direct
 ```
 
-- Pros: Flat structure, no nested objects for leaf elements
-- Cons: Non-standard key format (`Total@currency`), may confuse consumers, key collision risk
-- When to use: Flat output needed, consumer can handle custom key format
+**Behavior per element type (default `writeAttributes=false`):**
 
----
+| XML element | Output | Attributes | Why |
+|-------------|--------|------------|-----|
+| `<Order id="ORD-001">...</Order>` (non-leaf) | `"@id": "ORD-001"` inline | **Kept** | Has children, not unwrapped |
+| `<Customer>Alice</Customer>` (leaf, no attrs) | `"Alice"` | N/A | Unwrapped to plain value |
+| `<Total currency="EUR">299.99</Total>` (leaf + attr) | `299.99` | **Dropped** | Unwrapped; `writeAttributes=false` |
+| `<Sales type="direct"/>` (self-closing + attr) | `{"@type": "direct"}` | **Kept** | No text content, not unwrapped |
+| `<Status>CONFIRMED</Status>` (leaf, no attrs) | `"CONFIRMED"` | N/A | Unwrapped to plain value |
 
-#### Default behavior decision
+**With `writeAttributes=true`:**
 
-| Option | Default | Rationale |
-|--------|---------|-----------|
-| **`drop`** | Safe, no breaking change | Current behavior. Most JSON/YAML consumers don't expect attributes. Users map explicitly: `$input.Order.Total.@currency` |
-| **`preserve`** | DataWeave-like, no data loss | Enterprise customers expect attributes preserved. Closest to MuleSoft behavior. But makes simple XML verbose |
+The only difference is `<Total currency="EUR">299.99</Total>`:
 
-**Recommendation: `xmlattr=drop` as default** with `preserve` available.
+JSON:
+```json
+"Total": {
+  "@currency": "EUR",
+  "#text": 299.99
+}
+```
 
-Rationale:
-- Zero breaking change risk (current behavior)
-- Most transformations map specific fields — attributes accessible via `$input.field.@attr` regardless of output mode
-- Users doing format conversion with attribute-heavy XML (UBL, FHIR) can opt into `preserve`
-- Follows the principle: simple by default, powerful when needed
+YAML:
+```yaml
+Total:
+  '@currency': EUR
+  '#text': 299.99
+```
 
-#### Regardless of mode: fix YAML consistency
+All other elements behave identically — `writeAttributes` only affects the **leaf text + attribute** case.
 
-Even before implementing configurable modes, the YAML serializer should be fixed to match JSON behavior:
-- **Remove the `_attributes` block** — it's a non-standard UTL-X invention
-- **Use `@` prefix inline** — same as JSON serializer, same as industry convention
-- This is a bug fix, not a feature — the current YAML behavior is inconsistent and non-standard
+### `writeAttributes` option — DataWeave-compatible
 
-#### Implementation notes
+Following MuleSoft DataWeave's naming and semantics:
 
-- The `xmlattr` option is parsed from the `output` declaration header
-- Passed to the JSON/YAML serializer as a configuration option
-- Only affects XML-sourced UDM objects (objects with `attributes` map)
-- JSON-sourced data has no attributes — unaffected
-- The interpreter's `$input.field.@attr` access works regardless of the output mode
-- XML-to-XML output is unaffected (attributes are native in XML)
-- `#text` is the output key for text content when attributes are present (only in `preserve` mode)
-- `_text` remains the internal UDM key (never appears in output after B14 fix)
+| Setting | Default | Behavior |
+|---------|---------|----------|
+| `writeAttributes=false` | **Yes (default)** | Leaf text+attribute elements are unwrapped to plain value, attribute dropped. Non-leaf and self-closing attributes are always kept. |
+| `writeAttributes=true` | No (opt-in) | Leaf text+attribute elements expand to `{"@attr": "val", "#text": value}`. No data loss. |
 
-#### Files to modify
+**Why `false` as default (matching DataWeave):**
+- Most JSON/YAML consumers don't expect or handle XML attributes on text values
+- Clean output is more important than completeness for the common case
+- Users who need attributes are typically doing explicit mapping: `$input.Order.Total.@currency`
+- Zero breaking change risk
+- Enterprise users who need full fidelity opt into `writeAttributes=true`
 
-| File | Change |
-|------|--------|
-| `formats/json/src/main/kotlin/.../json_serializer.kt` | Add `xmlAttributeMode` parameter, implement 3 modes |
-| `formats/yaml/src/main/kotlin/.../YAMLSerializer.kt` | **Immediate: replace `_attributes` block with `@` prefix inline.** Then add `xmlAttributeMode` parameter |
-| `modules/core/src/main/kotlin/.../parser/` | Parse `xmlattr=` from output declaration |
-| `modules/cli/src/main/kotlin/.../TransformCommand.kt` | Pass option through to serializer |
-| Conformance suite | Update attribute tests, add tests for each mode |
-| This document | Update with final decision |
+**Why the name `writeAttributes`:**
+- Same name as DataWeave — users coming from MuleSoft recognize it immediately
+- Same default (`false`) — same semantics
+- No reason to invent a different name
+
+### How we got to the current behavior
+
+The **JSON serializer** was written with `@` prefix for attributes inline with other properties — this follows the widely-used Badgerfish convention.
+
+The **YAML serializer** was written separately and used a `_attributes` nested block instead. This was **not based on any standard** — it was an ad-hoc design choice. No other tool (yq, Site24x7, ddevtools, DataWeave) uses a `_attributes` block. **Fixed April 28, 2026** — YAML now uses `@` prefix inline, consistent with JSON.
+
+The **B14 fix** added `_text` unwrapping for leaf elements, which drops attributes on leaf text elements. This is now **intentional** and matches DataWeave's `writeAttributes=false` default. The `writeAttributes=true` option preserves them.
+
+### Industry Conventions
+
+**JSON conventions for XML attributes:**
+
+| Convention | Attributes | Attribute prefix | Text content key | Used by |
+|-----------|-----------|-----------------|-----------------|---------|
+| **Badgerfish** | Preserved | `@` | `$` | Java XML libs, .NET Json.NET |
+| **Parker** | **Dropped** | N/A | Plain value | Simple converters |
+| **GData** (Google) | Preserved | None (collision risk) | `$t` | Google APIs (legacy) |
+| **DataWeave** (MuleSoft) | Opt-in (`writeAttributes`) | `@` | value itself | MuleSoft Anypoint |
+| **UTL-X** | Opt-in (`writeAttributes`) | `@` | `#text` | Follows DataWeave model |
+
+**YAML conventions for XML attributes:**
+
+There is **no established YAML-specific convention**. Tools follow the same conventions as JSON because YAML is a superset of JSON:
+
+| Tool | Attribute prefix | Text content key | Notes |
+|------|-----------------|-----------------|-------|
+| **yq** (Mike Farah) | `+@` (configurable) | `+content` (configurable) | Most popular CLI tool |
+| **Site24x7** | `@` | `#text` | Online converter |
+| **ddevtools** | `-` prefix | `#text` | Dash prefix variant |
+| **UTL-X** | `@` | `#text` | Same as JSON (consistent) |
+
+### Implementation status
+
+| Change | Status | File |
+|--------|--------|------|
+| YAML `_attributes` block → `@` prefix inline | **Done** | `YAMLSerializer.kt` |
+| JSON and YAML consistent | **Done** | Both serializers |
+| `_text` → `#text` in output | **Done** | Both serializers |
+| `writeAttributes` parameter added | **Done** | `JSONSerializer` + `YAMLSerializer.SerializeOptions` |
+| `writeAttributes=false` default (leaf attrs dropped) | **Done** | `isXmlTextNode()` in both serializers |
+| `writeAttributes=true` preserves leaf attrs | **Done** | `isXmlTextNode()` checks attributes when enabled |
+| Wire `writeAttributes` to `output` declaration syntax | **Pending** | Parser + TransformCommand |
+| Conformance tests for `writeAttributes=true` mode | **Pending** | Conformance suite |
+| Conformance tests for default mode | **Done** | 4 passthrough tests (with/without attributes, JSON/YAML) |
 
 ### Sources
 
@@ -414,4 +358,4 @@ Even before implementing configurable modes, the YAML serializer should be fixed
 
 ---
 
-*B14 fixed April 27, 2026. Root cause: JSON/YAML serializers output raw UDM `_text` wrapper instead of unwrapping. Not a B13 regression — pre-existing since XML parser was written (October 2025). XML attribute handling in output is a separate design decision (documented above, implementation pending).*
+*B14 fixed April 27-28, 2026. Root cause: JSON/YAML serializers output raw UDM `_text` wrapper instead of unwrapping. YAML `_attributes` block replaced with `@` prefix inline (industry standard). `writeAttributes` option added (DataWeave-compatible, default `false`). Not a B13 regression — pre-existing since XML parser was written (October 2025).*
