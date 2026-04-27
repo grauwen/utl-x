@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- HL7 FHIR R4 Patient Bundle - Healthcare standard with extensive attributes -->
+<Bundle xmlns="http://hl7.org/fhir">
+  <id value="patient-bundle-001"/>
+  <type value="searchset"/>
+  <total value="2"/>
+  <link>
+    <relation value="self"/>
+    <url value="https://fhir.hospital.nl/Patient?name=Berg"/>
+  </link>
+  <entry>
+    <fullUrl value="https://fhir.hospital.nl/Patient/12345"/>
+    <resource>
+      <Patient>
+        <id value="12345"/>
+        <meta>
+          <versionId value="3"/>
+          <lastUpdated value="2026-04-15T10:30:00Z"/>
+          <profile value="http://nictiz.nl/fhir/StructureDefinition/nl-core-Patient"/>
+        </meta>
+        <identifier>
+          <use value="official"/>
+          <system value="http://fhir.nl/fhir/NamingSystem/bsn"/>
+          <value value="123456789"/>
+        </identifier>
+        <identifier>
+          <use value="usual"/>
+          <system value="https://hospital.nl/fhir/NamingSystem/patient-id"/>
+          <value value="PAT-12345"/>
+        </identifier>
+        <active value="true"/>
+        <name>
+          <use value="official"/>
+          <family value="van der Berg"/>
+          <given value="Jan"/>
+          <given value="Pieter"/>
+          <prefix value="Dhr."/>
+        </name>
+        <name>
+          <use value="usual"/>
+          <text value="Jan van der Berg"/>
+        </name>
+        <telecom>
+          <system value="phone"/>
+          <value value="+31 6 12345678"/>
+          <use value="mobile"/>
+          <rank value="1"/>
+        </telecom>
+        <telecom>
+          <system value="email"/>
+          <value value="j.vandenberg@email.nl"/>
+          <use value="home"/>
+        </telecom>
+        <telecom>
+          <system value="phone"/>
+          <value value="+31 20 987 6543"/>
+          <use value="work"/>
+          <rank value="2"/>
+        </telecom>
+        <gender value="male"/>
+        <birthDate value="1955-03-12"/>
+        <deceasedBoolean value="false"/>
+        <address>
+          <use value="home"/>
+          <type value="physical"/>
+          <line value="Prinsengracht 456"/>
+          <city value="Amsterdam"/>
+          <district value="Noord-Holland"/>
+          <postalCode value="1016 HX"/>
+          <country value="NL"/>
+          <period>
+            <start value="2010-06-01"/>
+          </period>
+        </address>
+        <maritalStatus>
+          <coding>
+            <system value="http://terminology.hl7.org/CodeSystem/v3-MaritalStatus"/>
+            <code value="M"/>
+            <display value="Married"/>
+          </coding>
+        </maritalStatus>
+        <contact>
+          <relationship>
+            <coding>
+              <system value="http://terminology.hl7.org/CodeSystem/v2-0131"/>
+              <code value="N"/>
+              <display value="Next of kin"/>
+            </coding>
+          </relationship>
+          <name>
+            <use value="official"/>
+            <family value="Jansen"/>
+            <given value="Maria"/>
+            <given value="Anna"/>
+          </name>
+          <telecom>
+            <system value="phone"/>
+            <value value="+31 6 98765432"/>
+            <use value="mobile"/>
+          </telecom>
+        </contact>
+        <communication>
+          <language>
+            <coding>
+              <system value="urn:ietf:bcp:47"/>
+              <code value="nl"/>
+              <display value="Dutch"/>
+            </coding>
+          </language>
+          <preferred value="true"/>
+        </communication>
+        <communication>
+          <language>
+            <coding>
+              <system value="urn:ietf:bcp:47"/>
+              <code value="en"/>
+              <display value="English"/>
+            </coding>
+          </language>
+          <preferred value="false"/>
+        </communication>
+        <generalPractitioner>
+          <reference value="Practitioner/GP-789"/>
+          <display value="Dr. A.B. Pietersen"/>
+        </generalPractitioner>
+        <managingOrganization>
+          <reference value="Organization/AMC-001"/>
+          <display value="Amsterdam UMC"/>
+        </managingOrganization>
+      </Patient>
+    </resource>
+    <search>
+      <mode value="match"/>
+      <score value="1.0"/>
+    </search>
+  </entry>
+  <entry>
+    <fullUrl value="https://fhir.hospital.nl/Patient/12346"/>
+    <resource>
+      <Patient>
+        <id value="12346"/>
+        <meta>
+          <versionId value="1"/>
+          <lastUpdated value="2026-03-20T08:15:00Z"/>
+          <profile value="http://nictiz.nl/fhir/StructureDefinition/nl-core-Patient"/>
+        </meta>
+        <identifier>
+          <use value="official"/>
+          <system value="http://fhir.nl/fhir/NamingSystem/bsn"/>
+          <value value="987654321"/>
+        </identifier>
+        <active value="true"/>
+        <name>
+          <use value="official"/>
+          <family value="van der Berg-Jansen"/>
+          <given value="Sophie"/>
+          <given value="Johanna"/>
+          <prefix value="Mevr."/>
+        </name>
+        <gender value="female"/>
+        <birthDate value="1982-04-15"/>
+        <deceasedBoolean value="false"/>
+        <address>
+          <use value="home"/>
+          <type value="physical"/>
+          <line value="Prinsengracht 456"/>
+          <city value="Amsterdam"/>
+          <postalCode value="1016 HX"/>
+          <country value="NL"/>
+        </address>
+        <generalPractitioner>
+          <reference value="Practitioner/GP-789"/>
+          <display value="Dr. A.B. Pietersen"/>
+        </generalPractitioner>
+      </Patient>
+    </resource>
+    <search>
+      <mode value="match"/>
+      <score value="0.85"/>
+    </search>
+  </entry>
+</Bundle>
