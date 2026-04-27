@@ -268,7 +268,10 @@ class TransformationService {
                     val encoding = formatSpec.options["encoding"] as? String
                     XMLSerializer(prettyPrint = pretty, outputEncoding = encoding).serialize(udm)
                 }
-                "json" -> JSONSerializer(pretty).serialize(udm)
+                "json" -> {
+                    val writeAttrs = formatSpec.options["writeAttributes"] as? Boolean ?: false
+                    JSONSerializer(prettyPrint = pretty, writeAttributes = writeAttrs).serialize(udm)
+                }
                 "odata" -> {
                     val odataOptions = buildMap<String, Any> {
                         formatSpec.options["metadata"]?.let { put("metadata", it) }
@@ -312,7 +315,12 @@ class TransformationService {
                         useThousands = useThousands
                     ).serialize(udm)
                 }
-                "yaml", "yml" -> YAMLSerializer().serialize(udm)
+                "yaml", "yml" -> {
+                    val writeAttrs = formatSpec.options["writeAttributes"] as? Boolean ?: false
+                    YAMLSerializer().serialize(udm, YAMLSerializer.SerializeOptions(
+                        pretty = pretty, writeAttributes = writeAttrs
+                    ))
+                }
                 "xsd" -> {
                     val pattern = (formatSpec.options["pattern"] as? String)?.let {
                         XSDSerializer.XSDPattern.valueOf(it.uppercase().replace("-", "_"))
