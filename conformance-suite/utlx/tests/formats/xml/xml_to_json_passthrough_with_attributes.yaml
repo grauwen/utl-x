@@ -10,6 +10,7 @@ input:
       <Customer>Alice</Customer>
       <Total currency="EUR">299.99</Total>
       <Status>CONFIRMED</Status>
+      <Sales type="direct"/>
     </Order>
 
 transformation: |
@@ -27,7 +28,10 @@ expected:
         "@id": "ORD-001",
         "Customer": "Alice",
         "Total": 299.99,
-        "Status": "CONFIRMED"
+        "Status": "CONFIRMED",
+        "Sales": {
+          "@type": "direct"
+        }
       }
     }
 

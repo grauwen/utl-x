@@ -644,3 +644,172 @@ class JSONConvenienceTest {
                      order2?.get("total")?.asScalar()?.asNumber())
     }
 }
+
+/**
+ * Tests for XML attribute handling in JSON serialization (B14).
+ * Tests both writeAttributes=false (default) and writeAttributes=true modes.
+ */
+class JSONSerializerWriteAttributesTest {
+
+    // Helper: build a UDM tree simulating XML parse of:
+    // <Order id="ORD-001">
+    //   <Customer>Alice</Customer>
+    //   <Total currency="EUR">299.99</Total>
+    //   <Status>CONFIRMED</Status>
+    //   <Sales type="direct"/>
+    // </Order>
+    private fun buildXmlUdm(): UDM {
+        val customer = UDM.Object(
+            properties = mapOf("_text" to UDM.Scalar.string("Alice")),
+            attributes = emptyMap(),
+            name = "Customer"
+        )
+        val total = UDM.Object(
+            properties = mapOf("_text" to UDM.Scalar.number(299.99)),
+            attributes = mapOf("currency" to "EUR"),
+            name = "Total"
+        )
+        val status = UDM.Object(
+            properties = mapOf("_text" to UDM.Scalar.string("CONFIRMED")),
+            attributes = emptyMap(),
+            name = "Status"
+        )
+        val sales = UDM.Object(
+            properties = emptyMap(),
+            attributes = mapOf("type" to "direct"),
+            name = "Sales"
+        )
+        val order = UDM.Object(
+            properties = mapOf(
+                "Customer" to customer,
+                "Total" to total,
+                "Status" to status,
+                "Sales" to sales
+            ),
+            attributes = mapOf("id" to "ORD-001"),
+            name = "Order"
+        )
+        return UDM.Object(properties = mapOf("Order" to order))
+    }
+
+    // ── writeAttributes=false (default) ──
+
+    @Test
+    fun `default - leaf text without attributes is unwrapped`() {
+        val json = JSONSerializer(prettyPrint = false).serialize(buildXmlUdm())
+        // <Customer>Alice</Customer> → "Alice"
+        assertTrue(json.contains("\"Customer\":\"Alice\""), "Customer should be plain string: $json")
+    }
+
+    @Test
+    fun `default - leaf text with attributes drops attribute`() {
+        val json = JSONSerializer(prettyPrint = false).serialize(buildXmlUdm())
+        // <Total currency="EUR">299.99</Total> → 299.99 (currency dropped)
+        assertTrue(json.contains("\"Total\":299"), "Total should be plain number: $json")
+        assertFalse(json.contains("@currency"), "currency attribute should be dropped: $json")
+        assertFalse(json.contains("#text"), "#text should not appear: $json")
+    }
+
+    @Test
+    fun `default - non-leaf attributes preserved`() {
+        val json = JSONSerializer(prettyPrint = false).serialize(buildXmlUdm())
+        // <Order id="ORD-001"> → "@id":"ORD-001"
+        assertTrue(json.contains("\"@id\":\"ORD-001\""), "Order @id should be preserved: $json")
+    }
+
+    @Test
+    fun `default - self-closing with attribute preserved`() {
+        val json = JSONSerializer(prettyPrint = false).serialize(buildXmlUdm())
+        // <Sales type="direct"/> → {"@type":"direct"}
+        assertTrue(json.contains("\"@type\":\"direct\""), "Sales @type should be preserved: $json")
+    }
+
+    @Test
+    fun `default - no _text in output`() {
+        val json = JSONSerializer(prettyPrint = false).serialize(buildXmlUdm())
+        assertFalse(json.contains("_text"), "_text should never appear in output: $json")
+    }
+
+    @Test
+    fun `default - no _attributes in output`() {
+        val json = JSONSerializer(prettyPrint = false).serialize(buildXmlUdm())
+        assertFalse(json.contains("_attributes"), "_attributes should never appear in output: $json")
+    }
+
+    // ── writeAttributes=true ──
+
+    @Test
+    fun `writeAttributes - leaf text without attributes still unwrapped`() {
+        val json = JSONSerializer(prettyPrint = false, writeAttributes = true).serialize(buildXmlUdm())
+        // <Customer>Alice</Customer> → "Alice" (no change)
+        assertTrue(json.contains("\"Customer\":\"Alice\""), "Customer should still be plain string: $json")
+    }
+
+    @Test
+    fun `writeAttributes - leaf text with attributes preserves attribute`() {
+        val json = JSONSerializer(prettyPrint = false, writeAttributes = true).serialize(buildXmlUdm())
+        // <Total currency="EUR">299.99</Total> → {"@currency":"EUR","#text":299.99}
+        assertTrue(json.contains("\"@currency\":\"EUR\""), "currency attribute should be preserved: $json")
+        assertTrue(json.contains("\"#text\":299"), "#text should contain the value: $json")
+    }
+
+    @Test
+    fun `writeAttributes - non-leaf attributes still preserved`() {
+        val json = JSONSerializer(prettyPrint = false, writeAttributes = true).serialize(buildXmlUdm())
+        assertTrue(json.contains("\"@id\":\"ORD-001\""), "Order @id should be preserved: $json")
+    }
+
+    @Test
+    fun `writeAttributes - self-closing with attribute still preserved`() {
+        val json = JSONSerializer(prettyPrint = false, writeAttributes = true).serialize(buildXmlUdm())
+        assertTrue(json.contains("\"@type\":\"direct\""), "Sales @type should be preserved: $json")
+    }
+
+    @Test
+    fun `writeAttributes - no _text in output`() {
+        val json = JSONSerializer(prettyPrint = false, writeAttributes = true).serialize(buildXmlUdm())
+        assertFalse(json.contains("_text"), "_text should never appear in output: $json")
+    }
+
+    @Test
+    fun `writeAttributes - xmlns attributes excluded`() {
+        val withXmlns = UDM.Object(
+            properties = mapOf("_text" to UDM.Scalar.string("test")),
+            attributes = mapOf("xmlns" to "http://example.com", "xmlns:xsi" to "http://www.w3.org/2001/XMLSchema-instance"),
+            name = "Root"
+        )
+        val root = UDM.Object(properties = mapOf("Root" to withXmlns))
+        val json = JSONSerializer(prettyPrint = false, writeAttributes = true).serialize(root)
+        assertFalse(json.contains("xmlns"), "xmlns attributes should be excluded: $json")
+        // Should unwrap since only xmlns attributes (no real attributes)
+        assertTrue(json.contains("\"Root\":\"test\""), "Should unwrap to plain value: $json")
+    }
+
+    // ── XML round-trip via parser ──
+
+    @Test
+    fun `xml parse and serialize - default mode`() {
+        val xml = "<Order id=\"ORD-001\"><Customer>Alice</Customer><Total currency=\"EUR\">299.99</Total><Sales type=\"direct\"/></Order>"
+        val udm = org.apache.utlx.formats.xml.XMLParser(xml).parse()
+        val json = JSONSerializer(prettyPrint = false).serialize(udm)
+
+        assertTrue(json.contains("\"@id\":\"ORD-001\""), "Order @id preserved: $json")
+        assertTrue(json.contains("\"Customer\":\"Alice\""), "Customer unwrapped: $json")
+        assertTrue(json.contains("\"Total\":299"), "Total unwrapped (attr dropped): $json")
+        assertFalse(json.contains("@currency"), "currency dropped in default mode: $json")
+        assertTrue(json.contains("\"@type\":\"direct\""), "Sales @type preserved: $json")
+    }
+
+    @Test
+    fun `xml parse and serialize - writeAttributes mode`() {
+        val xml = "<Order id=\"ORD-001\"><Customer>Alice</Customer><Total currency=\"EUR\">299.99</Total><Sales type=\"direct\"/></Order>"
+        val udm = org.apache.utlx.formats.xml.XMLParser(xml).parse()
+        val json = JSONSerializer(prettyPrint = false, writeAttributes = true).serialize(udm)
+
+        assertTrue(json.contains("\"@id\":\"ORD-001\""), "Order @id preserved: $json")
+        assertTrue(json.contains("\"Customer\":\"Alice\""), "Customer unwrapped: $json")
+        assertTrue(json.contains("\"@currency\":\"EUR\""), "currency preserved: $json")
+        assertTrue(json.contains("\"#text\":299"), "#text for Total: $json")
+        assertTrue(json.contains("\"@type\":\"direct\""), "Sales @type preserved: $json")
+    }
+}

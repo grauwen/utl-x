@@ -16,7 +16,8 @@ import java.io.StringWriter
  */
 class JSONSerializer(
     private val prettyPrint: Boolean = true,
-    private val indent: String = "  "
+    private val indent: String = "  ",
+    private val writeAttributes: Boolean = false  // When true, leaf text+attribute elements preserve attributes (DataWeave-compatible)
 ) {
     /**
      * Serialize UDM to JSON string
@@ -129,8 +130,10 @@ class JSONSerializer(
             allProperties["@$key"] = UDM.Scalar.string(value)
         }
         
-        // Add regular properties
-        allProperties.putAll(obj.properties)
+        // Add regular properties (rename internal _text to #text for output)
+        obj.properties.forEach { (key, value) ->
+            allProperties[if (key == "_text") "#text" else key] = value
+        }
         
         if (allProperties.isEmpty()) {
             writer.write("{}")
@@ -175,7 +178,16 @@ class JSONSerializer(
     private fun isXmlTextNode(obj: UDM.Object): Boolean {
         if (!obj.properties.containsKey("_text")) return false
         // All properties must be _text only (no child elements)
-        return obj.properties.keys.all { it == "_text" }
+        if (!obj.properties.keys.all { it == "_text" }) return false
+        // When writeAttributes is enabled, don't unwrap if element has real attributes —
+        // they need to be output as @key alongside #text
+        if (writeAttributes) {
+            val hasRealAttributes = obj.attributes.any { (key, _) ->
+                !key.startsWith("xmlns") && key != "xmlns"
+            }
+            if (hasRealAttributes) return false
+        }
+        return true
     }
 
     private fun serializeRuntimeValue(value: RuntimeValue, writer: Writer, depth: Int) {
