@@ -113,6 +113,14 @@ class JSONSerializer(
     }
     
     private fun serializeObject(obj: UDM.Object, writer: Writer, depth: Int) {
+        // Unwrap XML text nodes: if object has only _text (and optionally _attributes),
+        // serialize the text value directly instead of the wrapper object.
+        // This ensures <Customer>Alice</Customer> outputs as "Alice" not {"_text":"Alice"}
+        if (isXmlTextNode(obj)) {
+            serializeUDM(obj.properties["_text"]!!, writer, depth)
+            return
+        }
+
         // Combine properties and attributes (attributes with @ prefix)
         val allProperties = mutableMapOf<String, UDM>()
         
@@ -160,6 +168,16 @@ class JSONSerializer(
         writer.write("}")
     }
     
+    /**
+     * Check if a UDM.Object is an XML text node wrapper that should be unwrapped during serialization.
+     * Returns true for objects that have _text as their only real property (ignoring xmlns attributes).
+     */
+    private fun isXmlTextNode(obj: UDM.Object): Boolean {
+        if (!obj.properties.containsKey("_text")) return false
+        // All properties must be _text only (no child elements)
+        return obj.properties.keys.all { it == "_text" }
+    }
+
     private fun serializeRuntimeValue(value: RuntimeValue, writer: Writer, depth: Int) {
         when (value) {
             is RuntimeValue.StringValue -> writer.write(escapeString(value.value))
