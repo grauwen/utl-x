@@ -29,9 +29,7 @@ expected:
     {
       "SAP_Response": {
         "Material": {
-          "MaterialNumber": {
-            "_text": "MAT-001"
-          }
+          "MaterialNumber": "MAT-001"
         }
       }
     }
