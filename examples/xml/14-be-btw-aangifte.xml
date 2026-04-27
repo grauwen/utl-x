@@ -161,7 +161,7 @@
     </IntracommunautaireHandel>
 
     <Betaling>
-        <Uiterste BetalingsDatum>2025-02-20</UitersteBetalingsDatum>
+        <UitersteBetalingsDatum>2025-02-20</UitersteBetalingsDatum>
         <Betalingswijze>DOMICILIERING</Betalingswijze>
         <Rekeningnummer>
             <IBAN>BE68 5390 0754 7034</IBAN>
