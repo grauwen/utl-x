@@ -1,0 +1,51 @@
+name: "xml_to_json_passthrough"
+category: "formats/xml"
+description: "B14: XML pass-through to JSON without attributes must not leak _text wrapper"
+tags: ["xml", "json", "passthrough", "B14", "_text"]
+
+input:
+  format: xml
+  data: |
+    <Order>
+      <Customer>Alice</Customer>
+      <Total>299.99</Total>
+      <Items>
+        <Item>Laptop</Item>
+        <Item>Mouse</Item>
+      </Items>
+      <Notes>Rush delivery</Notes>
+    </Order>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  $input
+
+expected:
+  format: json
+  data: |
+    {
+      "Order": {
+        "Customer": "Alice",
+        "Total": 299.99,
+        "Items": {
+          "Item": [
+            "Laptop",
+            "Mouse"
+          ]
+        },
+        "Notes": "Rush delivery"
+      }
+    }
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created: "2026-04-27"
+  references:
+    - "docs/bugs/B14-xml-text-node-leaks-into-output-serialization.md"

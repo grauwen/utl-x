@@ -1,0 +1,40 @@
+name: "xml_to_yaml_passthrough_with_attributes"
+category: "formats/xml"
+description: "B14: XML pass-through to YAML with attributes — attributes in _attributes block, text nodes unwrapped"
+tags: ["xml", "yaml", "passthrough", "B14", "_text", "attributes"]
+
+input:
+  format: xml
+  data: |
+    <Order id="ORD-001">
+      <Customer>Alice</Customer>
+      <Total currency="EUR">299.99</Total>
+      <Status>CONFIRMED</Status>
+    </Order>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output yaml
+  ---
+  $input
+
+expected:
+  format: yaml
+  data: |
+    Order:
+      Customer: Alice
+      Total: 299.99
+      Status: CONFIRMED
+      _attributes:
+        '@id': ORD-001
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created: "2026-04-27"
+  references:
+    - "docs/bugs/B14-xml-text-node-leaks-into-output-serialization.md"

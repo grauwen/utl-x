@@ -1,0 +1,38 @@
+name: "xml_to_yaml_passthrough"
+category: "formats/xml"
+description: "B14: XML pass-through to YAML without attributes must not leak _text wrapper"
+tags: ["xml", "yaml", "passthrough", "B14", "_text"]
+
+input:
+  format: xml
+  data: |
+    <Order>
+      <Customer>Alice</Customer>
+      <Total>299.99</Total>
+      <Status>CONFIRMED</Status>
+    </Order>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output yaml
+  ---
+  $input
+
+expected:
+  format: yaml
+  data: |
+    Order:
+      Customer: Alice
+      Total: 299.99
+      Status: CONFIRMED
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
+
+metadata:
+  author: "UTL-X Team"
+  created: "2026-04-27"
+  references:
+    - "docs/bugs/B14-xml-text-node-leaks-into-output-serialization.md"
