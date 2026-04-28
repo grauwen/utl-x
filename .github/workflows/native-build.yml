@@ -1,7 +1,8 @@
 name: Build Native Binaries
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:  # Manual trigger
+  workflow_call:      # Called by release.yml
 
 jobs:
   build-native:

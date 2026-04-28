@@ -4,85 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., v1.0.0)'
+        description: 'Release version (e.g., v1.0.2)'
         required: true
         type: string
 
 jobs:
-  build-native:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: linux-x64
-            binary: utlx
-          - os: macos-latest
-            platform: macos-arm64
-            binary: utlx
-          - os: windows-latest
-            platform: windows-x64
-            binary: utlx.exe
+  # Reuse the existing native-build workflow
+  build:
+    uses: ./.github/workflows/native-build.yml
+    secrets: inherit
 
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup JDK 17 (for Gradle toolchain)
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup GraalVM
-        uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: '21'
-          distribution: 'graalvm-community'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          native-image-job-reports: 'true'
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Build native binary (Unix)
-        if: runner.os != 'Windows'
-        run: ./gradlew :modules:cli:nativeCompile
-
-      - name: Build native binary (Windows)
-        if: runner.os == 'Windows'
-        run: .\gradlew.bat :modules:cli:nativeCompile "-Porg.gradle.java.installations.fromEnv=JAVA_HOME_17_X64"
-
-      - name: Test binary (Unix)
-        if: runner.os != 'Windows'
-        run: ./modules/cli/build/native/nativeCompile/${{ matrix.binary }} --version
-
-      - name: Test binary (Windows)
-        if: runner.os == 'Windows'
-        run: .\modules\cli\build\native\nativeCompile\${{ matrix.binary }} --version
-
-      - name: Rename binary for release
-        shell: bash
-        run: |
-          cp modules/cli/build/native/nativeCompile/${{ matrix.binary }} utlx-${{ matrix.platform }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: utlx-${{ matrix.platform }}
-          path: utlx-${{ matrix.platform }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
-
+  # Create release with the built artifacts
   create-release:
-    needs: build-native
+    needs: build
     runs-on: ubuntu-latest
 
     permissions:
@@ -93,6 +27,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f | head -20
+
+      - name: Rename binaries for release
+        run: |
+          cp artifacts/utlx-linux-x64/utlx utlx-linux-x64
+          cp artifacts/utlx-macos-arm64/utlx utlx-macos-arm64
+          cp artifacts/utlx-windows-x64/utlx.exe utlx-windows-x64.exe
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -119,6 +62,6 @@ jobs:
             utlx --version
             ```
           files: |
-            artifacts/utlx-linux-x64/*
-            artifacts/utlx-macos-arm64/*
-            artifacts/utlx-windows-x64/*
+            utlx-linux-x64
+            utlx-macos-arm64
+            utlx-windows-x64.exe
