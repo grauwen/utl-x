@@ -185,15 +185,63 @@ echo '<Order><Customer>Alice</Customer></Order>' | ./utlx --from xml --to json -
 
 ---
 
-## Step 9: Commit and Tag
+## Step 9: Review, Commit and Tag
+
+**Important: The commit and tag MUST be done by the person who initiated the release — not by an automated tool or AI assistant. This is a two-eyes verification pattern: the human reviews every changed file before committing.**
+
+### 9a. Review all changes before committing
+
+```bash
+# List all changed files — should be ~34 files, all version-related
+git diff --stat
+
+# Review actual content — verify only version strings changed, nothing else
+git diff
+
+# Check for anything unexpected
+git status
+```
+
+**What you should see:** Only version string replacements (`PREV` → `X.Y.Z`) in gradle files, source code, wrapper scripts, docs, and CI scripts. No logic changes, no new features, no deletions.
+
+**If anything looks wrong:** Fix it before proceeding. Do NOT commit a release with unexpected changes.
+
+### 9b. Commit
 
 ```bash
 git add -A
-git commit -m "vX.Y.Z release"
+git commit -m "vX.Y.Z release — version bump, docs, and download URLs updated"
+```
+
+**Proposed commit message format:**
+```
+vX.Y.Z release — version bump, docs, and download URLs updated
+
+Changes:
+- Version bumped from PREV to X.Y.Z across all modules
+- README badge, download URLs, and release notes updated
+- Installation docs updated with new download URLs
+- Wrapper scripts updated with new JAR filename
+- CI scripts updated with new JAR filename
+```
+
+### 9c. Run conformance suite (post-commit verification)
+
+```bash
+cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py
+```
+
+All tests must pass. If any fail, fix and amend the commit before tagging.
+
+### 9d. Tag and push
+
+```bash
 git tag -a vX.Y.Z -m "UTL-X vX.Y.Z"
 git push
 git push --tags
 ```
+
+**The tag triggers nothing automatically** — the release workflow is manually dispatched (Step 10). This gives you a chance to verify the tag is on the right commit before building binaries.
 
 ---
 
@@ -213,10 +261,44 @@ Takes ~15-20 minutes.
 
 ---
 
-## Step 11: Verify Release
+## Step 11: Download, Verify and Compute SHA256 Checksums
+
+After the GitHub Actions workflow completes, download **all three binaries** and compute their SHA256 checksums. These are needed for Homebrew, Chocolatey, and integrity verification.
 
 ```bash
-# Check release was created
+# Download all binaries
+mkdir -p /tmp/utlx-release
+gh release download vX.Y.Z -D /tmp/utlx-release/
+
+# Compute SHA256 for ALL binaries
+shasum -a 256 /tmp/utlx-release/utlx-linux-x64
+shasum -a 256 /tmp/utlx-release/utlx-macos-arm64
+shasum -a 256 /tmp/utlx-release/utlx-windows-x64.exe
+```
+
+Save the output — you'll need these hashes for Homebrew and Chocolatey:
+```
+<HASH_LINUX>   utlx-linux-x64
+<HASH_MACOS>   utlx-macos-arm64
+<HASH_WINDOWS>  utlx-windows-x64.exe
+```
+
+### Test each binary
+
+```bash
+# macOS
+chmod +x /tmp/utlx-release/utlx-macos-arm64
+/tmp/utlx-release/utlx-macos-arm64 --version
+echo '<Order><Customer>Alice</Customer></Order>' | /tmp/utlx-release/utlx-macos-arm64 --from xml --to json -e '$input'
+
+# Linux (if on Linux, or skip)
+chmod +x /tmp/utlx-release/utlx-linux-x64
+/tmp/utlx-release/utlx-linux-x64 --version
+```
+
+### Verify release page
+
+```bash
 gh release view vX.Y.Z
 
 # Expected: 3 assets listed
@@ -225,35 +307,22 @@ gh release view vX.Y.Z
 # - utlx-windows-x64.exe
 ```
 
-### Download and test each binary
-
-```bash
-# macOS
-gh release download vX.Y.Z -p "utlx-macos-arm64" -D /tmp/
-chmod +x /tmp/utlx-macos-arm64
-/tmp/utlx-macos-arm64 --version
-echo '<Order><Customer>Alice</Customer></Order>' | /tmp/utlx-macos-arm64 --from xml --to json -e '$input'
-```
-
 ---
 
 ## Step 12: Update Homebrew Tap
 
+The Homebrew formula needs SHA256 hashes for **both macOS and Linux** binaries.
+
 ### If tap repo exists (`github.com/grauwen/homebrew-utlx`):
 
-1. Download the macOS binary and compute SHA256:
-```bash
-shasum -a 256 /tmp/utlx-macos-arm64
-```
-
-2. Update the formula in the tap repo with:
+1. Update `Formula/utlx.rb` with:
    - New version number
-   - New download URL
-   - New SHA256 hash
+   - New download URLs (vX.Y.Z)
+   - New SHA256 hashes (both platforms)
 
-3. Push to tap repo
+2. Push to tap repo
 
-4. Test:
+3. Test:
 ```bash
 brew update
 brew upgrade utlx
@@ -273,14 +342,14 @@ class Utlx < Formula
   on_macos do
     on_arm do
       url "https://github.com/grauwen/utl-x/releases/download/vX.Y.Z/utlx-macos-arm64"
-      sha256 "<SHA256_HASH>"
+      sha256 "<HASH_MACOS>"
     end
   end
 
   on_linux do
     on_intel do
       url "https://github.com/grauwen/utl-x/releases/download/vX.Y.Z/utlx-linux-x64"
-      sha256 "<SHA256_HASH>"
+      sha256 "<HASH_LINUX>"
     end
   end
 
@@ -306,10 +375,12 @@ brew install utlx
 
 ## Step 13: Update Chocolatey (Windows)
 
+The Chocolatey package needs the SHA256 hash for the **Windows** binary (computed in Step 11).
+
 ### If package exists:
 
 1. Update `utlx.nuspec` version
-2. Update download URL and checksum
+2. Update `tools/chocolateyinstall.ps1` with new download URL and `<HASH_WINDOWS>` from Step 11
 3. Pack and push:
 ```powershell
 choco pack
@@ -337,12 +408,20 @@ Create `utlx.nuspec`:
 </package>
 ```
 
-With `tools/chocolateyinstall.ps1`:
+With `tools/chocolateyinstall.ps1` (use `<HASH_WINDOWS>` from Step 11):
 ```powershell
 $url = "https://github.com/grauwen/utl-x/releases/download/vX.Y.Z/utlx-windows-x64.exe"
-$checksum = "<SHA256_HASH>"
+$checksum = "<HASH_WINDOWS>"
 Install-ChocolateyPackage 'utlx' 'exe' '/S' $url -Checksum $checksum -ChecksumType 'sha256'
 ```
+
+### SHA256 usage summary
+
+| Binary | Hash variable | Used by |
+|--------|--------------|---------|
+| `utlx-linux-x64` | `<HASH_LINUX>` | Homebrew (Linux) |
+| `utlx-macos-arm64` | `<HASH_MACOS>` | Homebrew (macOS) |
+| `utlx-windows-x64.exe` | `<HASH_WINDOWS>` | Chocolatey |
 
 ---
 
