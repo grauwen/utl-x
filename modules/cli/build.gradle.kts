@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.apache.utlx"
-version = "1.0.1"
+version = "1.0.2"
 
 dependencies {
     // Internal dependencies

@@ -123,7 +123,7 @@ time utlx --version
 # Real: 0.008s
 
 # JVM JAR
-time java -jar cli-1.0.0.jar --version
+time java -jar cli-1.0.2.jar --version
 # Real: 0.245s
 
 # ~30x faster startup

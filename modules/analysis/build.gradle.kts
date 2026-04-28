@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.apache.utlx.analysis"
-version = "1.0.0"
+version = "1.0.2"
 
 // Repositories managed in settings.gradle.kts
 

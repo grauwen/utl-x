@@ -22,7 +22,7 @@ cd utl-x
 
 # Verify
 ./utlx --version
-# UTL-X CLI v1.0.0
+# UTL-X CLI v1.0.2
 ```
 
 ### Native Binary (Optional)

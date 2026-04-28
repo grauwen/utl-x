@@ -33,7 +33,7 @@ echo "✅ CLI build successful"
 
 # Test the functions command
 echo "4. Testing functions command..."
-java -jar modules/cli/build/libs/cli-1.0.0.jar functions --help || {
+java -jar modules/cli/build/libs/cli-1.0.2.jar functions --help || {
     echo "❌ Functions command failed"
     exit 1
 }
@@ -44,6 +44,6 @@ echo ""
 echo "🎉 All tests passed! Standard library successfully integrated into UTL-X CLI and interpreter."
 echo ""
 echo "Try these commands:"
-echo "  java -jar modules/cli/build/libs/cli-1.0.0.jar functions"
-echo "  java -jar modules/cli/build/libs/cli-1.0.0.jar functions --module string"
-echo "  java -jar modules/cli/build/libs/cli-1.0.0.jar functions --search date"
+echo "  java -jar modules/cli/build/libs/cli-1.0.2.jar functions"
+echo "  java -jar modules/cli/build/libs/cli-1.0.2.jar functions --module string"
+echo "  java -jar modules/cli/build/libs/cli-1.0.2.jar functions --search date"

@@ -11,7 +11,7 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-CLI_JAR="modules/cli/build/libs/cli-1.0.0.jar"
+CLI_JAR="modules/cli/build/libs/cli-1.0.2.jar"
 CLI_NATIVE="modules/cli/build/native/nativeCompile/utlx"
 ITERATIONS=100
 WARMUP_ITERATIONS=10

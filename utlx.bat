@@ -5,7 +5,7 @@ setlocal
 
 REM Get the directory where this script is located
 set "SCRIPT_DIR=%~dp0"
-set "JAR_PATH=%SCRIPT_DIR%modules\cli\build\libs\cli-1.0.1.jar"
+set "JAR_PATH=%SCRIPT_DIR%modules\cli\build\libs\cli-1.0.2.jar"
 
 REM Check if JAR exists
 if not exist "%JAR_PATH%" (
