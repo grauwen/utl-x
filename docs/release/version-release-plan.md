@@ -530,4 +530,97 @@ Consider:
 
 ---
 
+## UTLXe Engine Release (separate from CLI)
+
+The UTLXe production engine and utlxd daemon live on the `development` branch only. They are NOT part of the CLI release on `main`. Engine releases are tagged on `development` with a `utlxe-` prefix.
+
+### Branch and tag strategy
+
+```
+main branch         → CLI releases      → v1.0.2, v1.0.3, ...
+development branch  → UTLXe releases    → utlxe-v1.0.2, utlxe-v1.0.3, ...
+                      (tagged, not merged to main)
+```
+
+### When to release UTLXe
+
+- When engine code changes (transport, strategies, validation, health)
+- When serializer fixes affect the Docker image (e.g., B14)
+- When Azure/GCP Marketplace needs an updated image
+- Version numbers should align with CLI when possible (both v1.0.2)
+
+### UTLXe release steps
+
+**1. Ensure development branch is clean and tested**
+
+```bash
+git switch development
+
+# Run conformance suite (engine tests)
+cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py
+
+# Run Kotlin tests
+./gradlew test
+```
+
+**2. Tag on development (human reviews, human tags — two-eyes pattern)**
+
+```bash
+git tag -a utlxe-vX.Y.Z -m "UTLXe vX.Y.Z"
+git push --tags
+```
+
+**3. Rebuild all JARs**
+
+```bash
+./gradlew :modules:cli:jar :modules:daemon:jar :modules:engine:jar
+```
+
+**4. Rebuild and push Docker image**
+
+```bash
+docker build --platform linux/amd64 -f deploy/docker/Dockerfile.engine -t utlxe:latest .
+docker tag utlxe ghcr.io/utlx-lang/utlxe:latest
+docker tag utlxe ghcr.io/utlx-lang/utlxe:vX.Y.Z
+docker push ghcr.io/utlx-lang/utlxe:latest
+docker push ghcr.io/utlx-lang/utlxe:vX.Y.Z
+```
+
+Note: push both `latest` and a version-specific tag. Azure Marketplace pulls `latest`, but the versioned tag provides reproducibility.
+
+**5. Rebuild Marketplace ZIPs (if Bicep/Terraform templates changed)**
+
+```bash
+./deploy/build.sh marketplace
+```
+
+**6. Verify**
+
+```bash
+# Test Docker image
+docker run --rm -p 8085:8085 ghcr.io/utlx-lang/utlxe:latest --mode http --workers 8 &
+sleep 3
+curl http://localhost:8085/api/health
+docker stop $(docker ps -q --filter ancestor=ghcr.io/utlx-lang/utlxe:latest)
+```
+
+### Files on development that have engine-specific versions
+
+| File | What |
+|------|------|
+| `modules/engine/build.gradle.kts` | `version = "X.Y.Z-SNAPSHOT"` (or release) |
+| `modules/daemon/build.gradle.kts` | `version = "X.Y.Z-SNAPSHOT"` (or release) |
+| `deploy/docker/Dockerfile.engine` | No version (builds from source) |
+
+**SNAPSHOT convention:** Development uses `X.Y.Z-SNAPSHOT` for day-to-day work. When tagging a release, the SNAPSHOT suffix stays — the tag itself marks the release point. This avoids version-bump churn on the development branch.
+
+### Docker image versioning
+
+| Tag | When to use | Pulled by |
+|-----|------------|-----------|
+| `ghcr.io/utlx-lang/utlxe:latest` | Always pushed (current release) | Azure Marketplace deployments |
+| `ghcr.io/utlx-lang/utlxe:vX.Y.Z` | Versioned tag for reproducibility | Customers who pin versions |
+
+---
+
 *Release plan created April 2026. Update this document if new version-dependent files are added.*
