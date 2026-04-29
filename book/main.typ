@@ -87,19 +87,21 @@
 #pagebreak()
 #include "chapters/ch04-getting-started.typ"
 #pagebreak()
-#include "chapters/ch05-the-three-executables.typ"
+#include "chapters/ch05-command-line.typ"
 #pagebreak()
-#include "chapters/ch06-the-ide.typ"
+#include "chapters/ch06-the-three-executables.typ"
 #pagebreak()
-#include "chapters/ch07-language-fundamentals.typ"
+#include "chapters/ch07-the-ide.typ"
 #pagebreak()
-#include "chapters/ch08-universal-data-model.typ"
+#include "chapters/ch08-language-fundamentals.typ"
 #pagebreak()
-#include "chapters/ch09-schema-to-schema-mapping.typ"
+#include "chapters/ch09-universal-data-model.typ"
 #pagebreak()
-#include "chapters/ch10-usdl.typ"
+#include "chapters/ch10-schema-to-schema-mapping.typ"
 #pagebreak()
-#include "chapters/ch11-format-support.typ"
+#include "chapters/ch11-usdl.typ"
+#pagebreak()
+#include "chapters/ch12-format-support.typ"
 #pagebreak()
 
 // ── Part II: The Language ──
@@ -114,19 +116,19 @@
 ]
 #pagebreak()
 
-#include "chapters/ch12-expressions-and-operators.typ"
+#include "chapters/ch13-expressions-and-operators.typ"
 #pagebreak()
-#include "chapters/ch13-functions-and-lambdas.typ"
+#include "chapters/ch14-functions-and-lambdas.typ"
 #pagebreak()
-#include "chapters/ch14-standard-library.typ"
+#include "chapters/ch15-standard-library.typ"
 #pagebreak()
-#include "chapters/ch15-security-library.typ"
+#include "chapters/ch16-security-library.typ"
 #pagebreak()
-#include "chapters/ch16-pattern-matching.typ"
+#include "chapters/ch17-pattern-matching.typ"
 #pagebreak()
-#include "chapters/ch17-schema-validation.typ"
+#include "chapters/ch18-schema-validation.typ"
 #pagebreak()
-#include "chapters/ch18-pipeline-chaining.typ"
+#include "chapters/ch19-pipeline-chaining.typ"
 #pagebreak()
 
 // ── Part III: Formats Deep Dive ──
@@ -141,23 +143,23 @@
 ]
 #pagebreak()
 
-#include "chapters/ch19-xml-transformations.typ"
+#include "chapters/ch20-xml-transformations.typ"
 #pagebreak()
-#include "chapters/ch20-xml-attribute-design.typ"
+#include "chapters/ch21-xml-attribute-design.typ"
 #pagebreak()
-#include "chapters/ch21-json-transformations.typ"
+#include "chapters/ch22-json-transformations.typ"
 #pagebreak()
-#include "chapters/ch22-csv-transformations.typ"
+#include "chapters/ch23-csv-transformations.typ"
 #pagebreak()
-#include "chapters/ch23-yaml-transformations.typ"
+#include "chapters/ch24-yaml-transformations.typ"
 #pagebreak()
-#include "chapters/ch24-odata-transformations.typ"
+#include "chapters/ch25-odata-transformations.typ"
 #pagebreak()
-#include "chapters/ch25-schema-formats.typ"
+#include "chapters/ch26-schema-formats.typ"
 #pagebreak()
-#include "chapters/ch26-xsd-patterns-deep-dive.typ"
+#include "chapters/ch27-xsd-patterns-deep-dive.typ"
 #pagebreak()
-#include "chapters/ch27-cross-format-patterns.typ"
+#include "chapters/ch28-cross-format-patterns.typ"
 #pagebreak()
 
 // ── Part IV: Real-World Applications ──
@@ -172,23 +174,23 @@
 ]
 #pagebreak()
 
-#include "chapters/ch28-enterprise-integration.typ"
+#include "chapters/ch29-enterprise-integration.typ"
 #pagebreak()
-#include "chapters/ch29-engine-lifecycle.typ"
+#include "chapters/ch30-engine-lifecycle.typ"
 #pagebreak()
-#include "chapters/ch30-cloud-deployment.typ"
+#include "chapters/ch31-cloud-deployment.typ"
 #pagebreak()
-#include "chapters/ch31-sdks-and-wrappers.typ"
+#include "chapters/ch32-sdks-and-wrappers.typ"
 #pagebreak()
-#include "chapters/ch32-migration-guides.typ"
+#include "chapters/ch33-migration-guides.typ"
 #pagebreak()
-#include "chapters/ch33-performance-and-optimization.typ"
+#include "chapters/ch34-performance-and-optimization.typ"
 #pagebreak()
-#include "chapters/ch34-message-parsing-and-memory.typ"
+#include "chapters/ch35-message-parsing-and-memory.typ"
 #pagebreak()
-#include "chapters/ch35-logging-and-compliance.typ"
+#include "chapters/ch36-logging-and-compliance.typ"
 #pagebreak()
-#include "chapters/ch36-quality-assurance.typ"
+#include "chapters/ch37-quality-assurance.typ"
 #pagebreak()
 
 // ── Part V: Future Outlook ──
@@ -203,19 +205,19 @@
 ]
 #pagebreak()
 
-#include "chapters/ch37-semantic-validation.typ"
+#include "chapters/ch38-semantic-validation.typ"
 #pagebreak()
-#include "chapters/ch38-api-contracts.typ"
+#include "chapters/ch39-api-contracts.typ"
 #pagebreak()
-#include "chapters/ch39-formats-not-yet-covered.typ"
+#include "chapters/ch40-formats-not-yet-covered.typ"
 #pagebreak()
-#include "chapters/ch40-competitive-landscape.typ"
+#include "chapters/ch41-competitive-landscape.typ"
 #pagebreak()
-#include "chapters/ch41-open-m-teaser.typ"
+#include "chapters/ch42-open-m-teaser.typ"
 #pagebreak()
-#include "chapters/ch42-ai-and-utlx.typ"
+#include "chapters/ch43-ai-and-utlx.typ"
 #pagebreak()
-#include "chapters/ch43-why-kotlin-and-graalvm.typ"
+#include "chapters/ch44-why-kotlin-and-graalvm.typ"
 #pagebreak()
 
 // ── Part VI: Case Studies ──
@@ -230,7 +232,7 @@
 ]
 #pagebreak()
 
-#include "chapters/ch44-case-studies.typ"
+#include "chapters/ch45-case-studies.typ"
 #pagebreak()
 
 // ── Part VII: Reference ──
@@ -245,9 +247,9 @@
 ]
 #pagebreak()
 
-#include "chapters/ch45-grammar-reference.typ"
+#include "chapters/ch46-grammar-reference.typ"
 #pagebreak()
-#include "chapters/ch46-appendices.typ"
+#include "chapters/ch47-appendices.typ"
 #pagebreak()
 
 // ── Part VIII: Standard Library Encyclopedia ──
@@ -262,4 +264,4 @@
 ]
 #pagebreak()
 
-#include "chapters/ch47-stdlib-reference.typ"
+#include "chapters/ch48-stdlib-reference.typ"
