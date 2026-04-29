@@ -207,9 +207,29 @@ let orders = join(
   $input.IDOC.E1EDP01,          // child records
   (header) -> header.BELNR,      // parent key
   (line) -> line.BELNR,          // child key
-  "lines"                        // property name for children
+  "lines"                        // name for the NEW property added to each parent
 )
-// Result: each E1EDK01 now has a "lines" array of matching E1EDP01 records
+```
+
+**How the 5th parameter works:** The string `"lines"` tells `join()` what to **name** the new property it creates on each parent. After `join()`, each E1EDK01 object gains a `.lines` property containing its matched E1EDP01 records:
+
+```
+BEFORE join():   {"BELNR": "ORD-001", "CURRENCY": "EUR"}
+AFTER  join():   {"BELNR": "ORD-001", "CURRENCY": "EUR", "lines": [{...}, {...}]}
+                                                          ^^^^^^
+                                                          Created by join().
+                                                          Name comes from "lines" parameter.
+```
+
+You then use `.lines` in subsequent expressions like any other property:
+
+```utlx
+// After join(), each order has a .lines property you can access:
+map(orders, (order) -> {
+  orderId: order.BELNR,
+  lineCount: count(order.lines),                              // ← .lines exists now
+  total: sum(map(order.lines, (l) -> toNumber(l.MENGE) * toNumber(l.PRICE)))
+})
 ```
 
 This gives you:
@@ -222,11 +242,16 @@ This gives you:
 For multi-level nesting:
 
 ```utlx
-let level1 = join($input.headers, $input.lines, 
+let withLines = join($input.headers, $input.lines,
   (h) -> h.orderId, (l) -> l.orderId, "lines")
-let level2 = join(level1, $input.schedules,
-  (l) -> l.lineId, (s) -> s.lineId, "schedules")
-// Result: headers → lines → schedules (3-level hierarchy from flat data)
+
+// Now each header has .lines — join schedules INTO each line:
+map(withLines, (header) -> {
+  ...header,
+  lines: join(header.lines, $input.schedules,
+    (l) -> l.lineId, (s) -> s.lineId, "schedules")
+})
+// Result: headers[].lines[].schedules[] — 3-level hierarchy from flat data
 ```
 
 ---
