@@ -69,23 +69,72 @@ join(parents, children, parentKey, childKey, childPropertyName) → Array
 | `children` | Array | The child records (e.g., order lines) |
 | `parentKey` | Lambda `(parent) → value` | Function extracting the join key from a parent |
 | `childKey` | Lambda `(child) → value` | Function extracting the join key from a child |
-| `childPropertyName` | String | Property name for the nested children array |
+| `childPropertyName` | String | **The name of the new property** that will be added to each parent object, containing its matched children as an array |
 
 ### Return Value
 
-A new Array where each parent object has an additional property (named by `childPropertyName`) containing an Array of matching children.
+A new Array where each parent object has an **additional property** (named by `childPropertyName`) containing an Array of matching children. The original parent properties are preserved.
+
+### How childPropertyName Works
+
+The 5th parameter is a string that becomes a new property name on each parent object. This is the bridge between the flat structure and the hierarchical output:
+
+```
+BEFORE join():
+  order = {"orderId": "ORD-001", "customer": "Acme"}
+
+AFTER join(..., "lines"):
+  order = {"orderId": "ORD-001", "customer": "Acme", "lines": [{...}, {...}]}
+                                                       ^^^^^^
+                                                       This property was CREATED
+                                                       by join(). Its name comes
+                                                       from the "lines" parameter.
+```
+
+You choose the name. It can be anything meaningful:
+- `"lines"` → `order.lines`
+- `"items"` → `order.items`
+- `"orderLines"` → `order.orderLines`
+- `"children"` → `order.children`
+
+After join(), the new property is accessed with dot notation like any other property.
 
 ### Example
 
 ```utlx
-join(
-  $input.headers,                    // parents
-  $input.lines,                      // children
-  (h) -> h.orderId,                  // parent key extractor
-  (l) -> l.orderId,                  // child key extractor
-  "lines"                            // nested property name
+// Step 1: join creates the hierarchy
+let enrichedOrders = join(
+  $input.orders,                     // parents
+  $input.orderLines,                 // children
+  (order) -> order.orderId,          // parent key: match on orderId
+  (line) -> line.orderId,            // child key: match on orderId
+  "lines"                            // add matched children as "lines" property
+)
+
+// Step 2: use the joined result — each order now HAS a .lines property
+map(enrichedOrders, (order) -> {
+  orderId: order.orderId,
+  customer: order.customer,
+  lineCount: count(order.lines),                              // ← .lines exists now
+  total: sum(map(order.lines, (l) -> l.qty * l.price)),       // ← iterate .lines
+  mostExpensive: sortBy(order.lines, (l) -> -l.price) |> first()
+})
+```
+
+### Design Note: Named Parameters (Future)
+
+The string parameter `"lines"` is not ideal — it's a string that becomes a property name, which feels indirect. With named parameters (not yet in UTL-X), this would read more naturally:
+
+```utlx
+// Hypothetical future syntax with named parameter:
+join($input.orders, $input.orderLines,
+  parentKey: (o) -> o.orderId,
+  childKey: (l) -> l.orderId,
+  as: "lines"                                // ← "as" makes intent clear
 )
 ```
+
+For v1, the positional string parameter is the implementation. The 5-parameter signature is unambiguous — developers learn it once.
 
 ### Multi-Level Nesting
 
