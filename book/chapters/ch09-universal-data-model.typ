@@ -210,11 +210,100 @@ The expression `\$input.Order.Customer` works whether the input is:
 
 Change `input xml` to `input json` in the header — the body stays the same. This is what "format-agnostic" means in practice: the transformation logic is decoupled from the serialization format.
 
+== UDM and Flat/Relational Data
+
+UDM is inherently hierarchical — Objects contain Objects which contain Objects. This mirrors XML and JSON naturally. But not all data is hierarchical.
+
+=== The Flat Data Challenge
+
+Consider SAP IDoc segments exported as XML. Orders and order lines are _siblings_, not nested:
+
+```xml
+<IDOC>
+  <E1EDK01><BELNR>ORD-001</BELNR><CURRENCY>EUR</CURRENCY></E1EDK01>
+  <E1EDP01><BELNR>ORD-001</BELNR><MATNR>Widget</MATNR><MENGE>2</MENGE></E1EDP01>
+  <E1EDP01><BELNR>ORD-001</BELNR><MATNR>Gadget</MATNR><MENGE>1</MENGE></E1EDP01>
+  <E1EDK01><BELNR>ORD-002</BELNR><CURRENCY>USD</CURRENCY></E1EDK01>
+  <E1EDP01><BELNR>ORD-002</BELNR><MATNR>Gizmo</MATNR><MENGE>5</MENGE></E1EDP01>
+</IDOC>
+```
+
+The order lines belong to orders — but the relationship is in the `BELNR` field value, not in the XML structure. UDM parses this as siblings in the same array, with no awareness that `BELNR` is a join key.
+
+This pattern appears in SAP IDocs, EDI/EDIFACT segments, database exports, and any flat file where parent-child relationships are expressed through reference keys rather than nesting.
+
+=== How to Handle It in UTL-X
+
+Use `groupBy` to build a lookup, then `map` to construct the hierarchy:
+
+```utlx
+let headers = $input.IDOC.E1EDK01
+let linesByOrder = groupBy($input.IDOC.E1EDP01, (line) -> line.BELNR)
+
+map(headers, (header) -> {
+  orderId: header.BELNR,
+  currency: header.CURRENCY,
+  lines: map(linesByOrder[header.BELNR] ?? [], (line) -> {
+    product: line.MATNR,
+    quantity: toNumber(line.MENGE)
+  })
+})
+```
+
+The `groupBy` creates an indexed map (O(N) to build), and each header does an O(1) key lookup — efficient even with thousands of records.
+
+For multi-level nesting (header → line → schedule), chain multiple groupBy calls:
+
+```utlx
+let linesByOrder = groupBy($input.lines, (l) -> l.orderId)
+let schedulesByLine = groupBy($input.schedules, (s) -> s.lineId)
+
+map($input.headers, (h) -> {
+  ...h,
+  lines: map(linesByOrder[h.orderId] ?? [], (l) -> {
+    ...l,
+    schedules: schedulesByLine[l.lineId] ?? []
+  })
+})
+```
+
+=== Hierarchical vs Relational: A Design Trade-Off
+
+Tools like IBM's Mercator (later WTX) solved this with an "intermediate card" — a declarative mapping that specifies join keys and cardinalities. The engine then automatically restructures flat data into hierarchies.
+
+UTL-X takes a different approach: the `groupBy` + `map` pattern uses existing language constructs instead of a separate mapping artifact. This is more verbose but more flexible — you can add conditions, transformations, and error handling at each level.
+
+A future `join()` stdlib function could simplify the common case:
+
+```utlx
+let enrichedOrders = join(
+  \$input.IDOC.E1EDK01,           // parent records
+  \$input.IDOC.E1EDP01,           // child records
+  (header) -> header.BELNR,       // parent key extractor
+  (line) -> line.BELNR,           // child key extractor
+  "lines"                         // name for the new property on each parent
+)
+```
+
+The 5th parameter (`"lines"`) is a string that becomes a _new property name_ on each parent object. After `join()`, every E1EDK01 gains a `.lines` property containing its matched E1EDP01 records — you access it with dot notation like any other property:
+
+```utlx
+// After join(), .lines is a regular property:
+map(enrichedOrders, (order) -> {
+  orderId: order.BELNR,
+  lineCount: count(order.lines),
+  total: sum(map(order.lines, (l) -> toNumber(l.MENGE) * toNumber(l.PRICE)))
+})
+```
+
+See the F03 design document and the architecture document on N-to-M mapping for the full analysis, performance characteristics, and multi-level nesting patterns.
+
 == When UDM Matters
 
 Most of the time, you don't think about UDM — you just write `\$input.name` and it works. UDM matters when:
 
 - You're debugging unexpected behavior (especially XML attributes and \_text)
+- You're working with flat/relational data (IDoc segments, CSV with foreign keys)
 - You're optimizing memory usage (UDM expansion factors — see Chapter 35)
 - You're working with the COMPILED strategy (which generates bytecode against UDM types)
 - You're writing a wrapper library (which serializes UDM to/from protobuf)

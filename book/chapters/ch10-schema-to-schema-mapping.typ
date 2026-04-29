@@ -194,7 +194,7 @@ Validate the input _before_ transformation:
 
 ```utlx
 %utlx 1.0
-input json @schema("order-input.json")
+input json {schema: "order-input.json"}
 output xml
 ---
 // transformation body
@@ -209,7 +209,7 @@ Validate the output _after_ transformation:
 ```utlx
 %utlx 1.0
 input json
-output xml @schema("invoice-output.xsd")
+output xml {schema: "invoice-output.xsd"}
 ---
 // transformation body
 ```

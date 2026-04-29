@@ -233,7 +233,11 @@ let total = sum(map($input.items, (i) -> i.price * i.qty))
 }
 ```
 
-Multiple `let` bindings chain naturally — each sees the previous bindings:
+Multiple `let` bindings chain naturally — each sees the previous bindings. But the separator between `let` bindings depends on context. This is one of the few places where UTL-X syntax requires attention:
+
+=== Top-Level: No Separator Needed
+
+At the top level of a .utlx body (outside any braces), `let` bindings are separated by newlines:
 
 ```utlx
 let items = $input.Order.Items.Item
@@ -246,6 +250,64 @@ let tax = total * 0.21
   grandTotal: total + tax
 }
 ```
+
+No commas, no semicolons — just newlines. The final expression (the object literal) is the return value.
+
+=== Inside Object Literals: Commas Required
+
+When `let` bindings appear _inside_ an object literal (between `{` and `}`), they need commas — just like properties:
+
+```utlx
+{
+  let subtotal = 100,
+  let tax = subtotal * 0.08,
+  let total = subtotal + tax,
+
+  subtotal: subtotal,
+  tax: tax,
+  total: total
+}
+```
+
+The commas separate `let` bindings from each other and from the property definitions. Think of `let` inside braces as "object members" — they follow the same comma rules as properties.
+
+=== Inside Lambdas Returning Arrays: Semicolons Required
+
+When `let` bindings are followed by an array (not an object), the parser needs semicolons to distinguish "array return" from "array indexing":
+
+```utlx
+// Inside a map lambda that returns an array:
+items |> map(item => {
+  let price = toNumber(item.Price);
+  let tax = price * 0.08;
+
+  [item.Name, price + tax]
+})
+```
+
+Without semicolons, the parser would read `let tax = price * 0.08[item.Name, ...]` — interpreting the array as an index operation on the let value.
+
+=== Summary of Let Separators
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Context*], [*Separator*], [*Example*],
+  [Top-level (.utlx body)], [Newline], [let x = 1 (newline) let y = 2],
+  [Inside object \{ \}], [Comma], [\{let x = 1, let y = 2, result: x + y\}],
+  [Lambda returning array], [Semicolon], [let x = 1; let y = 2; [x, y]],
+)
+
+When in doubt, use commas inside braces and semicolons inside lambdas. At the top level, newlines are always sufficient.
+
+#block(
+  fill: rgb("#FFF3E0"),
+  inset: 12pt,
+  radius: 4pt,
+  width: 100%,
+)[
+  *Design Note (F02):* The three-separator rule for `let` bindings is a known inconsistency inherited from the parser implementation, not a deliberate language design choice. A future UTL-X version will simplify this to: _newlines are always sufficient_ (the Kotlin model). Commas and semicolons will remain accepted for backward compatibility but will no longer be required. See the F02 design document for details. This section of the book will be updated when the improvement is implemented.
+]
 
 == Conditional Expressions
 

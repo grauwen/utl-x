@@ -245,8 +245,8 @@ USDL schemas can be referenced in transformation headers for validation:
 
 ```utlx
 %utlx 1.0
-input json @schema("customer.usdl")
-output xml @schema("invoice.usdl")
+input json {schema: "customer.usdl"}
+output xml {schema: "invoice.usdl"}
 ---
 // transformation body
 ```
