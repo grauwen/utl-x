@@ -1,4 +1,4 @@
-= Preface
+#heading(numbering: none)[Preface]
 
 == Why This Book
 
@@ -20,14 +20,14 @@
 // - Part II: Language mastery — read sequentially
 // - Part III: Pick the formats you need
 // - Part IV: When you're ready for production
-// - Part V: Keep on your desk as reference
+// - Part V-VIII: Reference and future outlook
 
 == Conventions Used
 
-// - Code examples use `monospace`
+// - Code examples use monospace
 // - Input/output shown side-by-side
 // - Tips, warnings, and notes in callout boxes
-// - All examples runnable with `utlx` CLI
+// - All examples runnable with utlx CLI
 
 == Online Resources
 

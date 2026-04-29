@@ -1,135 +1,207 @@
 = The Three Executables: utlx, utlxd, and utlxe
 
+UTL-X is one language, but it ships as three separate executables. Each is built for a different stage of the development and deployment lifecycle. Understanding which to use — and when — is essential before diving into the language itself.
+
 == One Language, Three Runtimes
-// - UTL-X is one transformation language
-// - Three different executables serve three different purposes
-// - Same parser, same UDM, same stdlib — different deployment models
-// - Choose based on your use case: development, IDE integration, or production
 
-== utlx — The CLI (Command Line Interface)
-// - Purpose: developer tool for writing, testing, and running transformations
-// - When to use: development, scripting, CI/CD pipelines, one-off transformations
-// - Runs on: developer laptop, build server, shell scripts
-// - Distribution: native binary (GraalVM) or JVM JAR
-// - Modes:
-//   - Transform: utlx transform script.utlx input.xml
-//   - Expression: echo '{"name":"Alice"}' | utlx -e '.name' -r
-//   - Identity (flip): cat data.xml | utlx (auto-converts to JSON)
-//   - REPL: utlx repl (interactive mode)
-//   - Validate: utlx validate script.utlx
-//   - Functions: utlx functions --search date
-// - Key characteristics:
-//   - Single invocation per transformation (no persistent process)
-//   - Reads from stdin or files, writes to stdout or files
-//   - GraalVM native: <10ms startup, 40MB memory
-//   - JVM JAR: ~250ms startup, 150MB memory
-//   - Best for: shell pipelines, CI/CD, ad-hoc data conversion
+All three executables share the same core:
 
-== utlxd — The Daemon (IDE Integration)
-// - Purpose: long-running process that serves the VS Code extension and IDE features
-// - When to use: during development, when using the VS Code extension
-// - Runs on: developer laptop (background process)
-// - Distribution: JVM JAR only (not native — needs full reflection for LSP)
-// - Protocol: Language Server Protocol (LSP) over stdio
-// - Features:
-//   - Syntax highlighting and diagnostics (real-time error detection)
-//   - Autocompletion (function names, property paths)
-//   - Hover information (function signatures, type info)
-//   - Go-to-definition
-//   - Live preview (transform as you type)
-//   - Format document
-//   - Code actions (quick fixes)
-// - Key characteristics:
-//   - Long-running process (starts with VS Code, stops when VS Code closes)
-//   - Communicates via LSP with the VS Code extension
-//   - Shares the same parser, interpreter, and stdlib as utlx
-//   - Not used in production — development only
-//   - JVM-only: needs full Kotlin reflection for language features
+- The same ANTLR-based parser (identical grammar, identical AST)
+- The same interpreter (identical expression evaluation)
+- The same Universal Data Model (identical type system)
+- The same 652 standard library functions
+- The same 11 format parsers and serializers
+- The same 7 schema validators
 
-== utlxe — The Engine (Production Runtime)
-// - Purpose: production transformation engine for cloud deployment
-// - When to use: Azure Container Apps, GCP Cloud Run, AWS Fargate, Kubernetes
-// - Runs on: containers in customer's cloud subscription
-// - Distribution: Docker image (ghcr.io/utlx-lang/utlxe)
-// - Transport modes:
-//   - HTTP REST API (--mode http, port 8085)
-//   - gRPC (--mode grpc)
-//   - stdio-proto (--mode stdio-proto, for wrapper integration)
-//   - stdio-json (--mode stdio-json, backward compatible)
-// - Key features:
-//   - Multi-threaded: 8-128 concurrent workers
-//   - Execution strategies: TEMPLATE, COPY, COMPILED, AUTO
-//   - Hot reload: load/update/unload transformations via API without restart
-//   - Schema validation: pre and post validation orchestrator
-//   - Pipeline chaining: multi-step in-process transformation
-//   - Back-pressure: ArrayBlockingQueue + CallerRunsPolicy
-//   - Health probes: /health/live, /health/ready (port 8081)
-//   - Prometheus metrics: request count, latency, error rate
-//   - Dapr integration: Service Bus, Event Hub, Kafka bindings
-// - Key characteristics:
-//   - Long-running process (starts with container, runs indefinitely)
-//   - Designed for throughput: 86K+ msg/s per instance
-//   - Auto-scales via KEDA (Azure) or native scaling (GCP Cloud Run)
-//   - Stateless: can run behind a load balancer without sticky sessions
-//   - Azure Marketplace: Starter ($35/month), Professional ($105/month)
+A transformation that works in one executable works identically in all three. A bug fix in the shared core fixes all three simultaneously. This is by design — the conformance suite (453+ tests) validates behavior across executables.
 
-== Comparison Table
+The difference is in what surrounds the core: how input arrives, how output is delivered, and how the process is managed.
 
-// | Aspect | utlx (CLI) | utlxd (Daemon) | utlxe (Engine) |
-// |--------|-----------|----------------|----------------|
-// | Purpose | Development | IDE integration | Production |
-// | Lifecycle | Single invocation | Long-running | Long-running |
-// | Runtime | Native or JVM | JVM only | JVM (Docker) |
-// | Startup | <10ms (native) | ~1s | ~3s |
-// | Workers | 1 (single-threaded) | 1 | 8-128 |
-// | Protocol | stdin/stdout/files | LSP over stdio | HTTP / gRPC / proto |
-// | Strategies | TEMPLATE only | TEMPLATE only | TEMPLATE, COPY, COMPILED |
-// | Hot reload | No (single run) | Yes (LSP) | Yes (HTTP API) |
-// | Validation | Basic | Real-time diagnostics | Full orchestrator |
-// | Metrics | None | None | Prometheus |
-// | Distribution | brew, choco, binary | VS Code extension | Docker, Marketplace |
-// | Branch | main | development | development |
+// DIAGRAM: Shared core (parser, UDM, stdlib, formats) with three shells (CLI, daemon, engine)
+// Source: part1-foundation.pptx, slide 9
 
-== Architecture: Shared Core, Different Shells
+== utlx — The CLI
 
-// All three executables share:
-// ┌─────────────────────────────────────────────┐
-// │              Shared Core                     │
-// │  ├── Parser (ANTLR grammar → AST)           │
-// │  ├── Interpreter (AST → RuntimeValue)        │
-// │  ├── UDM (Universal Data Model)              │
-// │  ├── Format parsers (XML, JSON, CSV, YAML)   │
-// │  ├── Format serializers (XML, JSON, CSV, YAML)│
-// │  ├── Standard library (652 functions)         │
-// │  └── Schema validators (7 formats)            │
-// └─────────────────────────────────────────────┘
-//           │              │              │
-//     ┌─────┴─────┐  ┌────┴────┐  ┌─────┴──────┐
-//     │   utlx    │  │  utlxd  │  │   utlxe    │
-//     │   CLI     │  │  Daemon │  │   Engine   │
-//     │ stdin/out │  │  LSP    │  │  HTTP/gRPC │
-//     │ native OK │  │  JVM    │  │  Docker    │
-//     └───────────┘  └─────────┘  └────────────┘
-//
-// A bug fix in the shared core (e.g., B13, B14) fixes all three.
-// A new stdlib function is available in all three immediately.
+The command-line interface is for developers. It's the tool you install on your laptop, use in shell scripts, and run in CI/CD pipelines.
+
+*Lifecycle:* single invocation. You run a command, it processes data, it exits. No persistent process, no state between runs.
+
+*Distribution:* native binary (GraalVM) via Homebrew, Chocolatey, or direct download. Also available as a JVM JAR for development.
+
+*Key characteristics:*
+
+#table(
+  columns: (auto, auto),
+  align: (left, left),
+  [Startup time], [< 10ms (native), ~250ms (JVM)],
+  [Memory], [~40 MB (native), ~150 MB (JVM)],
+  [Workers], [1 (single-threaded)],
+  [Protocol], [stdin / stdout / files],
+  [Strategies], [TEMPLATE only],
+  [Hot reload], [No — each run is independent],
+  [Metrics], [None],
+  [Best for], [Development, scripting, CI/CD, one-off conversions],
+)
+
+*Modes:*
+
+- *Transform:* `utlx transform script.utlx input.xml` — run a .utlx file against input data
+- *Expression:* `echo data | utlx -e '.name' -r` — inline one-liner, jq-style
+- *Identity (flip):* `cat data.xml | utlx` — auto-detect format, convert to the complement
+- *REPL:* `utlx repl` — interactive mode for experimentation
+- *Validate:* `utlx validate script.utlx` — check syntax without running
+- *Functions:* `utlx functions --search date` — browse the standard library
+
+The CLI is covered in depth in Chapter 5.
+
+== utlxd — The Daemon
+
+The daemon is the bridge between UTL-X and your IDE. It runs as a background process on your development machine, communicating with the VS Code extension via the Language Server Protocol (LSP).
+
+*Lifecycle:* long-running. Starts when VS Code opens a .utlx file, stops when VS Code closes. Keeps the parsed state of your transformations in memory for instant feedback.
+
+*Distribution:* JVM JAR only. The daemon needs full Kotlin reflection for language features like autocompletion and type inference — GraalVM native image doesn't support this yet.
+
+*Key characteristics:*
+
+#table(
+  columns: (auto, auto),
+  align: (left, left),
+  [Startup time], [~1 second],
+  [Memory], [~200 MB],
+  [Workers], [1 (serves one IDE session)],
+  [Protocol], [LSP over stdio],
+  [Strategies], [TEMPLATE only],
+  [Hot reload], [Yes — re-parses on every keystroke],
+  [Metrics], [None],
+  [Best for], [VS Code extension, IDE integration],
+)
+
+*Features provided to the IDE:*
+
+- *Real-time diagnostics:* syntax errors highlighted as you type — no need to save and run
+- *Autocompletion:* function names (all 652), property paths (from parsed input), keywords
+- *Hover information:* function signatures, parameter types, return types
+- *Live preview:* transformation result updates as you type (with sample data)
+- *Go-to-definition:* navigate to function definitions and variable bindings
+- *Format document:* auto-indent and style your .utlx file
+
+The daemon is not used in production — it's a developer tool. You never deploy utlxd to a server. The IDE chapter (Chapter 7) covers it in detail.
+
+== utlxe — The Engine
+
+The engine is for production. It's a long-running transformation service that accepts messages via HTTP, gRPC, or message brokers, transforms them at high throughput, and returns results.
+
+*Lifecycle:* long-running. Starts with the container, runs indefinitely. Transformations are loaded at startup or hot-reloaded via API.
+
+*Distribution:* Docker image (`ghcr.io/utlx-lang/utlxe`). Available on Azure Marketplace as a managed application.
+
+*Key characteristics:*
+
+#table(
+  columns: (auto, auto),
+  align: (left, left),
+  [Startup time], [~3 seconds (JVM)],
+  [Memory], [512 MB -- 8 GB (configurable)],
+  [Workers], [8--128 concurrent threads],
+  [Protocol], [HTTP REST (8085), gRPC, stdio-proto, stdio-json],
+  [Strategies], [TEMPLATE, COPY, COMPILED, AUTO],
+  [Hot reload], [Yes — load/update/unload via HTTP API],
+  [Metrics], [Prometheus (port 8081)],
+  [Best for], [Cloud deployment, Azure/GCP/AWS Marketplace],
+)
+
+*Transport modes:*
+
+- `--mode http` — HTTP REST API on port 8085. The primary mode for cloud deployment. Endpoints: `/api/transform`, `/api/load`, `/api/execute/\{id\}`, `/api/health`
+- `--mode grpc` — gRPC service for low-latency, binary protocol communication
+- `--mode stdio-proto` — protobuf over stdin/stdout, used by the C\# and Go wrappers
+- `--mode stdio-json` — line-delimited JSON over stdin/stdout, for backward compatibility
+
+*Execution strategies:*
+
+The engine offers four strategies that trade initialization time for runtime performance:
+
+#table(
+  columns: (auto, auto, auto, auto),
+  align: (left, left, left, left),
+  [*Strategy*], [*Init time*], [*Runtime*], [*Best for*],
+  [TEMPLATE], [Instant], [Interprets AST], [Development, simple transforms],
+  [COPY], [Fast (build skeleton)], [Clone + fill], [Schema-driven, predictable structure],
+  [COMPILED], [Slow first time], [JVM bytecode], [Maximum throughput, complex logic],
+  [AUTO], [Depends], [Depends], [Production default (schema → COPY, else → TEMPLATE)],
+)
+
+COMPILED strategy compiles UTL-X expressions to JVM bytecode using the ASM library — the same technology that Java itself uses. This achieves throughput of 86,000+ messages per second on a single instance with 8 workers. Chapter 30 covers the engine lifecycle (design-time, init-time, runtime) and Chapter 34 covers performance tuning.
+
+*Cloud deployment:*
+
+UTLXe is designed for containerized environments:
+
+- Azure Container Apps — available on Azure Marketplace (Starter \$35/month, Professional \$105/month)
+- GCP Cloud Run — Terraform module included, \$44/month
+- AWS ECS/Fargate — CloudFormation template, \$44/month
+- Any Kubernetes cluster — Docker image from `ghcr.io`
+
+Chapter 31 covers cloud deployment in detail.
+
+== Comparison at a Glance
+
+#table(
+  columns: (auto, auto, auto, auto),
+  align: (left, center, center, center),
+  [*Aspect*], [*utlx (CLI)*], [*utlxd (Daemon)*], [*utlxe (Engine)*],
+  [Purpose], [Development], [IDE integration], [Production],
+  [Lifecycle], [Single run], [Long-running], [Long-running],
+  [Runtime], [Native or JVM], [JVM only], [JVM (Docker)],
+  [Startup], [< 10ms], [~1s], [~3s],
+  [Workers], [1], [1], [8--128],
+  [Protocol], [stdin/stdout], [LSP], [HTTP / gRPC / proto],
+  [Strategies], [TEMPLATE], [TEMPLATE], [All four],
+  [Hot reload], [No], [Yes (LSP)], [Yes (API)],
+  [Metrics], [None], [None], [Prometheus],
+  [Distribution], [brew / choco], [VS Code ext], [Docker / Marketplace],
+  [Branch], [main], [development], [development],
+)
+
+== The Wrapper Pattern
+
+What if your application is written in C\#, Go, or Python — not Kotlin/JVM? You don't need to rewrite UTL-X. Instead, you use a _wrapper library_ that spawns UTLXe as a subprocess and communicates via protobuf:
+
+// DIAGRAM: Application (C#/Go/Python) → subprocess spawn → UTLXe (JVM) via stdin/stdout protobuf
+// Source: part1-foundation.pptx, slide 10
+
+The wrapper is 200--300 lines of thin client code. The engine — 100,000+ lines of transformation logic — exists once. All languages get identical behavior, verified by the same 453+ conformance tests.
+
+Available wrappers:
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Language*], [*Status*], [*Use case*],
+  [C\# / .NET], [Built], [Azure Functions, ASP.NET, console apps],
+  [Go], [Built], [Open-M controller, Go microservices],
+  [Python], [Planned], [Data science, Django/Flask, AWS Lambda],
+  [Java / Kotlin], [Native (no wrapper)], [Direct API — UTLXe IS JVM],
+)
+
+Chapter 32 covers SDKs and wrappers in detail.
 
 == When to Use Which
 
-// | Scenario | Use |
-// |----------|-----|
-// | Writing a transformation | utlxd (via VS Code) + utlx (to test) |
-// | One-off data conversion | utlx -e or identity mode |
-// | Shell script pipeline | utlx (native binary) |
-// | CI/CD validation | utlx validate + utlx transform |
-// | Production API | utlxe --mode http |
-// | Azure Service Bus integration | utlxe + Dapr sidecar |
-// | C# / Go application embedding | utlxe --mode stdio-proto (via wrapper) |
-// | Performance testing | utlx (single) or utlxe (throughput) |
+#table(
+  columns: (auto, auto),
+  align: (left, left),
+  [*I want to...*], [*Use*],
+  [Write a transformation], [utlxd (VS Code) + utlx (to test)],
+  [Convert a file quickly], [utlx (identity mode or -e)],
+  [Process files in a shell script], [utlx (native binary)],
+  [Validate syntax in CI/CD], [utlx validate],
+  [Deploy a transformation API], [utlxe --mode http],
+  [Connect to Azure Service Bus], [utlxe + Dapr sidecar],
+  [Embed in a C\# application], [utlxe via C\# wrapper],
+  [Embed in a Go service], [utlxe via Go wrapper],
+  [Run performance benchmarks], [utlxe --mode http with load testing],
+)
 
-== The Wrapper Pattern
-// - C# wrapper: spawns utlxe as subprocess, communicates via stdio-proto
-// - Go wrapper: same pattern, different language
-// - Why: embed UTL-X in .NET / Go applications without JVM dependency in the host
-// - The wrapper handles: process lifecycle, varint framing, correlation IDs, multiplexing
-// - Used for: Azure Functions, Go services, .NET applications
+The typical developer workflow: write in VS Code (utlxd), test on the command line (utlx), deploy to production (utlxe). Same .utlx file at every stage.
