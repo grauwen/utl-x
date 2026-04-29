@@ -130,6 +130,8 @@
 #pagebreak()
 #include "chapters/ch19-pipeline-chaining.typ"
 #pagebreak()
+#include "chapters/ch19a-data-restructuring.typ"
+#pagebreak()
 
 // ── Part III: Formats Deep Dive ──
 
