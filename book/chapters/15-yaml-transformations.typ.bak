@@ -1,0 +1,26 @@
+= YAML and OData
+
+== YAML in UTL-X
+// - YAML is a superset of JSON — same UDM mapping
+// - Multi-document support
+// - Anchor/alias references
+// - Block vs flow style output
+
+== YAML-Specific Patterns
+// - Kubernetes manifest transformation
+// - Docker Compose file manipulation
+// - OpenAPI/Swagger spec processing
+// - CI/CD pipeline configuration (GitHub Actions, GitLab CI)
+// - Helm values.yaml transformation
+
+== OData in UTL-X
+// - OData JSON format (Microsoft ecosystem)
+// - Entity sets and navigation properties
+// - @odata.context, @odata.type metadata
+// - Dynamics 365 / SharePoint / SAP data
+
+== OData-Specific Patterns
+// - Dynamics 365 API response → canonical JSON
+// - SharePoint list data → CSV report
+// - SAP OData → internal format
+// - Power Platform data transformation
