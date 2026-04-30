@@ -1,196 +1,192 @@
-= Formats Not Yet Covered (and Why)
+= Formats Not Yet Covered
 
-== Formats on the Horizon
+UTL-X supports 5 data formats (JSON, XML, CSV, YAML, OData) and 6 schema formats (XSD, JSON Schema, Avro, Protobuf, EDMX, Table Schema). That's 11 formats — more than any competing tool. But the integration world has more formats. This chapter surveys the ones UTL-X does not yet support, explains why, and describes the path to adding them.
 
-UTL-X currently supports 5 data formats (Tier 1) and 6 schema formats (Tier 2). Several important formats are NOT yet supported. This chapter explains each, why they matter, and the path to support.
+== High Priority: EDI / EDIFACT
 
-== TOML (Tom's Obvious Minimal Language)
-// - Configuration format (Rust ecosystem: Cargo.toml, pyproject.toml)
-// - Similar to YAML but stricter (no ambiguous types)
-// - Why not yet: lower priority — YAML covers most config use cases
-// - Effort to add: small (TOML is simpler than YAML)
-// - Would enable: Cargo.toml ↔ package.json ↔ setup.cfg conversions
+EDI (Electronic Data Interchange) is the backbone of logistics, retail, automotive, and government procurement. Two standards dominate:
 
-== JSON-LD (JSON for Linked Data)
-// - W3C standard for linked data in JSON
-// - Used by: Schema.org, Google Knowledge Graph, ActivityPub (Mastodon)
-// - Key difference from JSON: @context, @id, @type, @graph annotations
-// - Semantic web: URIs as identifiers, RDF triples under the hood
-// - Why not yet: specialized use case, complex semantics (RDF reasoning)
-// - Effort to add: medium (parsing is JSON, but @context resolution is complex)
-// - Would enable: Schema.org metadata extraction, linked data pipelines
+- *UN/EDIFACT:* international standard, dominant in Europe. Used for: purchase orders (ORDERS), invoices (INVOIC), despatch advice (DESADV), customs declarations.
+- *ANSI X12:* North American standard. Used for: purchase orders (850), invoices (810), advance ship notices (856).
 
-== HL7 FHIR (Fast Healthcare Interoperability Resources)
-// - Healthcare data exchange standard (see Chapter on FHIR analysis)
-// - XML and JSON representations with different conventions:
-//   - XML: value attributes instead of text content
-//   - JSON: _element convention for extensions, resourceType root
-// - Why not yet as a native format: requires FHIR StructureDefinition knowledge
-//   for type coercion, array handling, and extension convention
-// - Current support: explicit mapping works perfectly (see FHIR analysis doc)
-//   - $input.Patient.id.@value → "12345" (works today)
-// - Effort for native FHIR mode: significant (needs StructureDefinition database)
-// - Future: output json {format: "fhir"} could handle FHIR-specific conventions
+EDI is segment-based — not XML, not JSON. A typical EDIFACT message:
 
-== EDI / EDIFACT (Electronic Data Interchange)
-// - UN/EDIFACT: international EDI standard (dominant in EU)
-// - ANSI X12: North American EDI standard
-// - Used by: logistics, retail, automotive, government procurement
-// - Segment-based: UNH+1+ORDERS:D:96A:UN' (not XML, not JSON)
-// - Why not yet: complex segment/element/composite parsing, thousands of message types
-// - Effort to add: large (parser + segment definitions + validation rules)
-// - Current workaround: EDI → XML (via external tool) → UTL-X → target format
-// - Would enable: direct EDI-to-JSON transformation (huge for logistics)
-// - Competing tools: Smooks (Java), BizTalk (Microsoft), Gentran (IBM)
+```
+UNH+1+ORDERS:D:96A:UN'
+BGM+220+PO-001+9'
+DTM+137:20260501:102'
+NAD+BY+++Acme Corp'
+LIN+1++WIDGET:SA'
+QTY+21:100'
+UNT+7+1'
+```
 
-== HL7 v2 (Health Level Seven Version 2)
-// - Pipe-delimited healthcare messaging standard
-// - Format: MSH|^~\&|SendApp|SendFac|RecvApp|RecvFac|...
-// - Segments: PID (patient), OBR (order), OBX (observation), etc.
-// - Why not yet: specialized parser needed (pipe/caret/tilde delimiters)
-// - Effort to add: medium (well-documented segment structure)
-// - Current workaround: HL7 v2 → JSON (via HAPI/Mirth) → UTL-X → FHIR
-// - Would enable: direct HL7 v2 → FHIR transformation (healthcare holy grail)
+Every segment has a tag (UNH, BGM, DTM), elements separated by `+`, and sub-elements separated by `:`. The segment terminator is `'`.
 
-== Parquet / Arrow (Columnar Data)
-// - Apache Parquet: columnar storage format for big data
-// - Apache Arrow: in-memory columnar format
-// - Used by: Spark, Databricks, Snowflake, BigQuery, pandas
-// - Why not yet: binary format, requires native library (not pure JVM)
-// - Effort to add: large (binary parsing, schema evolution, compression)
-// - Would enable: ETL pipeline integration, data lake transformations
+*Why not yet:* complex parsing (thousands of message types, version-dependent segment definitions), element-level validation rules, composite data elements. Adding EDI properly requires a segment dictionary — not just a parser.
 
-== MessagePack / CBOR (Binary JSON)
-// - MessagePack: binary JSON (smaller, faster than JSON)
-// - CBOR: Concise Binary Object Representation (IETF RFC 8949)
-// - Used by: IoT devices, Redis, embedded systems
-// - Why not yet: lower priority — JSON covers the same structure
-// - Effort to add: small (same data model as JSON, just binary encoding)
-// - Would enable: IoT message transformation without JSON round-trip
+*Effort:* large (parser + segment definitions + validation rules).
 
-== GraphQL
-// - Not a data format but a query language with its own schema system
-// - GraphQL Schema Definition Language (SDL)
-// - Why not yet: GraphQL responses are JSON (already supported)
-// - What could be added: SDL → JSON Schema conversion, query result normalization
-// - Effort: medium (SDL parser, response flattening)
+*Current workaround:* convert EDI to XML using an external tool (Bots, Smooks, or a commercial EDI converter), then process with UTL-X. This works but adds a preprocessing step.
 
-== Apache Thrift
-// - Facebook's RPC framework (predecessor to gRPC)
-// - .thrift IDL files define services and types
-// - Why not yet: declining usage (gRPC/Protobuf won)
-// - Effort: medium (IDL parser similar to Protobuf)
-// - Low priority unless specific customer demand
+*Promising integration path:* reverseXSL (Apache 2.0, Java) is an open-source "anything-to-XML" parser that handles EDIFACT, X12, IATA, SWIFT, and fixed-length records using regex-driven DEF (definition) files. It converts structured text formats to XML via a 4-step process: identify, cut, extract, validate. Since it's Java-based and Apache 2.0 licensed, it could be integrated directly into UTL-X as a pre-parser — `input edi` would invoke reverseXSL with the appropriate DEF file, producing XML that UTL-X transforms further. The DEF file approach is similar in spirit to UTL-X's declarative philosophy: describe the format, let the engine parse it.
 
-== FlatBuffers
-// - Google's serialization format (alternative to Protobuf)
-// - Zero-copy deserialization (no parsing step)
-// - Used by: game engines, Android, performance-critical applications
-// - Why not yet: very specialized, small user base
-// - Effort: large (binary format with offset-based access)
+*Would enable:* direct EDI-to-JSON transformation — eliminating the XML intermediate step. Huge value for logistics and retail integration.
 
-== ORC (Apache Optimized Row Columnar)
-// - Apache ORC: optimized columnar storage format for Hadoop ecosystem
-// - Used by: Apache Hive, Presto, Trino, Spark, data warehouses
-// - Features: built-in indexes, statistics, predicate pushdown, ACID transactions
-// - Why not yet: binary format, Hadoop-specific, overlaps with Parquet use cases
-// - Effort to add: large (binary parsing, stripe/footer structure, compression codecs)
-// - Difference from Parquet: ORC is optimized for Hive workloads (predicate pushdown, ACID);
-//   Parquet is more general-purpose and widely adopted outside Hadoop
-// - Would enable: direct Hive/data warehouse integration, ORC→JSON/CSV for reporting
-// - Current workaround: ORC → CSV/JSON (via Hive/Spark) → UTL-X → target format
+== High Priority: HL7 v2
 
-== RAML (RESTful API Modeling Language)
-// - API description language by MuleSoft (now part of Salesforce)
-// - Used by: MuleSoft Anypoint, API-first development teams
-// - YAML-based syntax but with its own semantics (not just OpenAPI in YAML)
-//
-// Two versions with important differences:
-//
-// RAML 0.8 (legacy):
-//   - Basic !include for splitting files (untyped — includes raw text)
-//   - Schema keyword: `schema:` for inline or external JSON Schema references
-//   - Supports including external JSON Schema files: schema: !include user.json
-//   - No typed fragments — every include is raw text insertion
-//   - No RAML-native type system — relies on JSON Schema for data types
-//
-// RAML 1.0 (current):
-//   - Typed fragments: DataType, Trait, ResourceType, SecurityScheme, Library, etc.
-//     Each fragment has a header declaring its type (e.g., #%RAML 1.0 DataType)
-//   - Native type system: unions, inheritance, facets, examples, annotations
-//     RAML types are more expressive than JSON Schema for common API patterns
-//   - Libraries: reusable collections of types, traits, and resource types
-//   - Overlays and extensions: modify an API spec without changing the original
-//   - JSON Schema inclusion: `type: !include user.json` — RAML 1.0 can include
-//     external JSON Schema files as type definitions. The JSON Schema is treated
-//     as a RAML type (with limitations — no RAML-specific facets on JSON Schema types)
-//   - Both RAML 0.8 and 1.0 support JSON Schema, but 1.0 also has its own type system
-//     that is often preferred because RAML types support inheritance and examples natively
-//
-// RAML fragments (1.0 only) are particularly interesting for UTL-X:
-//   - A DataType fragment is essentially a standalone type definition file
-//   - It looks like a mini-schema: properties, types, constraints, examples
-//   - These are what MuleSoft projects use for defining API contracts
-//   - Converting RAML DataType fragments → JSON Schema / USDL is the key migration path
-//
-// Why not yet: declining relative to OpenAPI 3.x, MuleSoft-centric ecosystem
-// Effort to add: medium (YAML-based parsing, but type system is complex)
-// Key value: RAML type definitions and fragments → JSON Schema / XSD / USDL conversion
-// Would enable: MuleSoft-to-non-MuleSoft API migrations
-// Current workaround: RAML → OAS 3.0 (via oas-raml-converter) → UTL-X → target schema
+HL7 version 2 is the pipe-delimited healthcare messaging standard. Still the most widely deployed health data exchange format in the world — hospitals, labs, pharmacies, and insurance companies send billions of HL7 v2 messages daily.
 
-== JSON Sample Generation (Mock Data)
-// - Given a schema (JSON Schema, XSD, Avro, USDL), generate a sample JSON instance
-// - Use cases:
-//   - API mocking: generate realistic sample responses for testing
-//   - Documentation: show "what does a valid message look like?"
-//   - Test data: seed test suites with conforming instances
-//   - Onboarding: new developers see concrete examples from abstract schemas
-//
-// How it could work in UTL-X:
-//   %utlx 1.0
-//   input jsch                    // or xsd, avro, proto
-//   output json {mode: "sample"}  // generate a sample instance, not transform
-//   ---
-//   $input
-//
-// The serializer would:
-//   - Use %default values where defined
-//   - Use %example values where defined
-//   - Generate realistic fake data for types (string → "example", integer → 42)
-//   - Respect constraints (minLength, pattern, enum → pick first value)
-//   - Generate nested structures following the schema hierarchy
-//   - Handle arrays (generate 1-2 sample items)
-//
-// This is NOT implemented yet but would be a natural extension of the
-// schema-as-data model. The schema already contains types, constraints,
-// and examples — generating a conforming instance is a transformation
-// from schema to data.
-//
-// Current workaround: write a UTL-X transformation that reads the schema
-// and constructs a sample manually:
-//   map($input["%types"], (typeName, typeDef) -> {
-//     [typeName]: mapValues(typeDef["%fields"], (field) ->
-//       field["%default"] ?? field["%example"] ?? sampleForType(field["%type"])
-//     )
-//   })
-//
-// Related tools: json-schema-faker, Prism (Stoplight), WireMock, Faker.js
+```
+MSH|^~\&|SendApp|SendFac|RecvApp|RecvFac|20260501||ADT^A01|MSG001|P|2.5
+PID|||12345^^^MRN||Simpson^Homer^J||19550312|M
+NK1|1|Simpson^Marge|SPO
+PV1|1|I|ICU^Bed3
+```
 
-== Summary: Format Priority Matrix
+Segments (MSH, PID, NK1, PV1) are separated by newlines. Fields are separated by `|`. Components by `^`. Sub-components by `&`. Repetitions by `~`. Escape character `\`.
 
-// | Format | Market demand | Effort | Priority | Current workaround |
-// |--------|-------------|--------|----------|-------------------|
-// | **EDI/EDIFACT** | High (logistics, retail) | Large | Medium | EDI→XML→UTL-X |
-// | **HL7 v2** | High (healthcare) | Medium | Medium | HL7→JSON→UTL-X |
-// | **FHIR native** | Medium (healthcare) | Large | Low | Explicit @value mapping works |
-// | **TOML** | Medium (dev tools) | Small | Low | YAML covers most cases |
-// | **JSON-LD** | Low (semantic web) | Medium | Low | JSON parsing works, @context manual |
-// | **Parquet** | High (big data) | Large | Medium | External tools for conversion |
-// | **MessagePack** | Low (IoT) | Small | Low | JSON round-trip |
-// | **GraphQL SDL** | Medium (API) | Medium | Low | JSON responses already work |
-// | **ORC** | Medium (data warehouses) | Large | Low | ORC→CSV via Hive/Spark |
-// | **RAML** | Medium (MuleSoft) | Medium | Low | RAML→OAS converter |
-// | **JSON Sample Gen** | Medium (testing/mocking) | Small | Medium | Manual transformation |
-// | **Thrift** | Low (declining) | Medium | None | Protobuf preferred |
-// | **FlatBuffers** | Low (games) | Large | None | Too specialized |
+*Why not yet:* specialized parser needed (4 levels of delimiters), segment definitions vary by message type and version (2.3, 2.4, 2.5, 2.7).
+
+*Effort:* medium (well-documented segment structure, many reference implementations).
+
+*Current workaround:* convert HL7 v2 to JSON using HAPI (Java) or Mirth Connect, then transform with UTL-X to FHIR R4. Alternatively, reverseXSL (see EDI section above) can parse HL7 v2 pipe-delimited messages to XML using DEF files — the same tool that handles EDI and IATA formats.
+
+*Would enable:* direct HL7 v2 to FHIR transformation — the "healthcare holy grail" for modernization projects.
+
+== Medium Priority: Parquet / Arrow
+
+Apache Parquet is the columnar storage format for big data — used by Spark, Databricks, Snowflake, BigQuery, and pandas. Apache Arrow is the in-memory columnar format.
+
+*Why not yet:* binary format requiring native libraries (not pure JVM). Complex internal structure: row groups, column chunks, page headers, compression codecs (Snappy, Zstd, LZ4).
+
+*Effort:* large.
+
+*Current workaround:* export Parquet to CSV or JSON via Spark/pandas, then process with UTL-X.
+
+*Would enable:* direct data lake integration — read Parquet files, transform, write back without leaving UTL-X.
+
+== Medium Priority: TOML
+
+Tom's Obvious Minimal Language — the configuration format of the Rust ecosystem (`Cargo.toml`), Python (`pyproject.toml`), and Hugo.
+
+*Why not yet:* lower priority — YAML covers most configuration use cases. TOML is stricter than YAML (no ambiguous types, explicit table syntax) but less widely used in integration.
+
+*Effort:* small (TOML is simpler than YAML, well-defined spec).
+
+*Would enable:* `Cargo.toml` to `package.json` conversion, `pyproject.toml` processing, configuration format migration.
+
+== Low Priority: JSON-LD
+
+JSON for Linked Data — W3C standard for semantic web data in JSON. Used by Schema.org, Google Knowledge Graph, and ActivityPub (Mastodon/Fediverse).
+
+Key difference from JSON: `@context`, `@id`, `@type`, `@graph` annotations that link data to ontologies via URIs.
+
+*Why not yet:* specialized use case. The JSON is parseable today (`input json`), but `@context` resolution (following URIs to load vocabulary definitions) is complex.
+
+*Effort:* medium (parsing is JSON, but context resolution requires HTTP fetching and RDF reasoning).
+
+*Current workaround:* parse as JSON, access `@context`/`@type` with bracket notation.
+
+== Low Priority: MessagePack / CBOR
+
+Binary JSON formats — smaller and faster than text JSON, same data model.
+
+- *MessagePack:* used by Redis, FluentBit, some game servers
+- *CBOR (RFC 8949):* used by IoT devices, WebAuthn, COSE (FIDO2)
+
+*Why not yet:* lower priority — same data model as JSON, just binary encoding.
+
+*Effort:* small (same UDM mapping as JSON, just a different parser/serializer).
+
+*Would enable:* IoT message transformation without JSON round-trip, Redis data processing.
+
+== Low Priority: GraphQL SDL
+
+GraphQL Schema Definition Language — defines types, queries, mutations, and subscriptions.
+
+*Why not yet:* GraphQL responses are JSON (already supported). The SDL is a schema language similar to Protobuf — types, fields, enums, unions.
+
+*Effort:* medium (SDL parser, response flattening for nested queries).
+
+*What could be added:* SDL to JSON Schema conversion, query result normalization.
+
+== Low Priority: ORC (Apache Optimized Row Columnar)
+
+Apache ORC — columnar storage optimized for Hive workloads. Similar to Parquet but with built-in ACID transaction support and predicate pushdown.
+
+*Why not yet:* binary format, Hadoop-specific, overlaps with Parquet use cases.
+
+*Effort:* large.
+
+*Current workaround:* export via Hive/Spark to CSV/JSON.
+
+== Low Priority: RAML
+
+RESTful API Modeling Language by MuleSoft. YAML-based API description with its own type system.
+
+Two versions with important differences:
+
+- *RAML 0.8:* basic `!include` (untyped raw text insertion), `schema:` keyword for external JSON Schema references
+- *RAML 1.0:* typed fragments (DataType, Trait, ResourceType, Library), native type system (unions, inheritance, facets), `type: !include user.json` for JSON Schema inclusion
+
+RAML 1.0 DataType fragments are the key migration artifact — standalone type definitions used across MuleSoft projects. Converting these to JSON Schema or USDL is the primary value for UTL-X.
+
+*Why not yet:* declining relative to OpenAPI 3.x, MuleSoft-centric ecosystem.
+
+*Effort:* medium (YAML-based parsing, but the type system with facets and inheritance is complex).
+
+*Current workaround:* convert RAML to OpenAPI 3.0 via `oas-raml-converter`, then process with UTL-X.
+
+== Potential: JSON Sample Generation (Mock Data)
+
+Not a format but a capability: given a schema, generate a conforming sample instance.
+
+Use cases:
+- *API mocking:* generate realistic sample responses for testing
+- *Documentation:* show "what does a valid message look like?"
+- *Test data:* seed test suites with conforming instances
+- *Onboarding:* new developers see concrete examples from abstract schemas
+
+How it could work:
+
+```utlx
+%utlx 1.0
+input jsch                    // or xsd, avro, proto
+output json {mode: "sample"}  // generate a sample instance
+---
+$input
+```
+
+The serializer would use `%default` and `%example` values where defined, generate realistic fake data for types (`string` to `"example"`, `integer` to `42`), respect constraints (`minLength`, `pattern`, `enum` picks first value), and build nested structures following the schema hierarchy.
+
+Not yet implemented but a natural extension of the schema-as-data model. Related tools: json-schema-faker, Prism (Stoplight), WireMock.
+
+== Declining: Apache Thrift / FlatBuffers
+
+*Apache Thrift:* Facebook's RPC framework (predecessor to gRPC). Declining usage — gRPC/Protobuf won the mindshare battle. Low priority unless specific customer demand.
+
+*FlatBuffers:* Google's zero-copy serialization format. Used in game engines and performance-critical mobile apps. Very specialized, small user base for integration.
+
+== Format Priority Matrix
+
+#table(
+  columns: (auto, auto, auto, auto, auto),
+  align: (left, left, left, left, left),
+  [*Format*], [*Demand*], [*Effort*], [*Priority*], [*Workaround*],
+  [EDI/EDIFACT], [High], [Large], [Medium], [EDI to XML externally],
+  [HL7 v2], [High], [Medium], [Medium], [HL7 to JSON via HAPI/Mirth],
+  [Parquet], [High], [Large], [Medium], [Export via Spark/pandas],
+  [JSON Sample Gen], [Medium], [Small], [Medium], [Manual transformation],
+  [TOML], [Medium], [Small], [Low], [YAML covers most cases],
+  [FHIR native mode], [Medium], [Large], [Low], [`@value` accessor works today],
+  [JSON-LD], [Low], [Medium], [Low], [Parse as JSON, manual `@context`],
+  [MessagePack/CBOR], [Low], [Small], [Low], [JSON round-trip],
+  [GraphQL SDL], [Medium], [Medium], [Low], [JSON responses work],
+  [ORC], [Medium], [Large], [Low], [Export via Hive/Spark],
+  [RAML], [Medium], [Medium], [Low], [RAML to OAS converter],
+  [Thrift], [Low], [Medium], [None], [Protobuf preferred],
+  [FlatBuffers], [Low], [Large], [None], [Too specialized],
+)
+
+The priority reflects both market demand and strategic value. EDI and HL7 v2 would open large markets (logistics and healthcare) currently served by expensive proprietary tools. TOML and MessagePack are small effort with moderate value. The rest have viable workarounds that reduce urgency.

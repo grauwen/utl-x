@@ -1,158 +1,193 @@
-= Why Kotlin and GraalVM (and Why Not Other Languages)
+= Why Kotlin and GraalVM
 
-== Why Kotlin Was the Right Choice
+"Why didn't you write it in Go?" "Why not Rust?" "Why not TypeScript?" These are the most common questions about UTL-X's technology choices. This chapter explains the reasoning — and why the answers matter for users, not just developers.
 
-=== Kotlin's Strengths for UTL-X
-// - **Sealed classes**: perfect for UDM type hierarchy (Scalar, Object, Array, DateTime, ...)
-//   sealed class UDM → when(udm) { is Scalar → ..., is Object → ... }
-//   Compiler enforces exhaustive matching — can't forget a type
-// - **Extension functions**: add methods to existing types without inheritance
-//   fun UDM.asString(): String = ... (clean API, no wrapper classes)
-// - **Null safety**: ?. and ?: built into the language
-//   $input.Order?.Customer?.Name ?? "Unknown" maps directly to Kotlin's type system
-// - **Data classes**: UDM.Object, UDM.Scalar — automatic equals/hashCode/toString
-// - **Coroutines**: async I/O for HTTP transport (Ktor uses coroutines natively)
-// - **Java interop**: 100% compatible — use any Java library (ANTLR, Jackson, Netty)
-// - **ANTLR integration**: Gradle ANTLR plugin works seamlessly for grammar → parser
-// - **Functional style**: map, filter, reduce built into stdlib — natural fit for UTL-X semantics
-// - **JVM ecosystem**: access to 100,000+ Java libraries (XML parsers, crypto, networking)
+== Why Kotlin
 
-=== Kotlin vs Alternatives Considered
-//
-// | Language | Considered? | Why not |
-// |----------|------------|---------|
-// | Java | Yes | Too verbose for parser/AST code, no sealed classes (until Java 17), no null safety |
-// | Scala | Yes | Complex type system, slow compilation, smaller community, SBT build tool |
-// | Go | Yes | No generics (at the time), no sealed types, manual memory management distracts |
-// | Rust | No | Too low-level for a transformation engine, ownership model adds complexity |
-// | Python | No | Too slow for production engine (86K msg/s not achievable), GIL limits concurrency |
-// | TypeScript | Yes | Single-threaded (Node.js), no native compilation path (at the time), limited stdlib |
-// | C\# | Yes | Would limit to .NET ecosystem, less Unix tooling, no GraalVM equivalent |
+Kotlin was chosen for UTL-X because its language features map directly to the problems a transformation engine must solve:
 
-== Why GraalVM on Top of Kotlin
+=== Sealed Classes for the UDM Type Hierarchy
 
-=== GraalVM Native Image
-// - Compiles Kotlin/JVM bytecode → native machine code (no JVM at runtime)
-// - Result: single binary, <10ms startup, 40MB memory
-// - Essential for: CLI tool (utlx), shell pipelines, CI/CD, developer experience
-//
-// Without GraalVM:
-//   $ time java -jar utlx.jar --version
-//   real 0.245s  ← too slow for shell scripts
-//
-// With GraalVM:
-//   $ time ./utlx --version
-//   real 0.008s  ← instant, like any native CLI tool
-//
-// This is why `brew install utlx` gives you a NATIVE binary, not a JAR.
+UTL-X's Universal Data Model has a fixed set of types: Scalar, Object, Array, DateTime, Date, Time, Binary, Lambda. Kotlin's sealed classes enforce this at compile time:
 
-=== GraalVM for Cloud (UTLXe)
-// - Scale-to-zero: GCP Cloud Run restarts containers from zero
-//   JVM: 5-15s cold start (unacceptable for real-time)
-//   GraalVM native: <1s cold start (viable for serverless)
-// - Memory: 40MB vs 150MB (saves 73% — direct cost reduction on cloud)
-// - Currently: UTLXe runs on JVM (native image is Phase 7, deferred)
-// - Why deferred: reflection challenges (Kotlin reflection, ANTLR parser, dynamic class loading)
-// - GraalVM native for UTLXe is the path to true scale-to-zero on Cloud Run
+```kotlin
+sealed class UDM {
+    class Scalar(val value: Any?) : UDM()
+    class Object(val properties: Map<String, UDM>) : UDM()
+    class Array(val elements: List<UDM>) : UDM()
+    class DateTime(val instant: Instant) : UDM()
+    // ...
+}
+```
 
-== Why NOT a JavaScript/TypeScript Version
+The `when` expression with sealed classes guarantees exhaustive matching — the compiler refuses to compile if you forget a type. When a new UDM type is added, every `when` block that handles UDM types shows a compile error until updated. This prevents an entire class of runtime bugs.
 
-=== The Temptation
-// - "JavaScript runs everywhere — browser, Node.js, Deno, Bun, edge functions"
-// - "TypeScript adds types — it's modern and popular"
-// - Many developers know JS/TS — largest potential contributor pool
+=== Null Safety
 
-=== Why It Would Fail
-// 1. **Performance ceiling**: Node.js is single-threaded (event loop)
-//    - 86K msg/s requires 8+ concurrent workers
-//    - Node.js Worker Threads exist but share no memory (serialization overhead)
-//    - V8 is fast for single-threaded work, but UTLXe needs CONCURRENT throughput
-//
-// 2. **No sealed types**: TypeScript discriminated unions are a workaround, not a language feature
-//    - UDM type hierarchy needs exhaustive matching at compile time
-//    - TypeScript's type system is erased at runtime — no runtime type checking
-//
-// 3. **Float precision**: JavaScript has only `number` (IEEE 754 double)
-//    - Financial calculations: 0.1 + 0.2 ≠ 0.3 in JavaScript
-//    - UTL-X handles currencies, tax calculations, invoice totals
-//    - Kotlin/JVM has BigDecimal, Long, Double — proper numeric types
-//
-// 4. **XML parsing**: browser DOM API is different from Node.js parsers
-//    - No single XML parser works across all JS environments
-//    - Namespace handling is inconsistent across implementations
-//    - UTL-X's XML parser is 450 lines of Kotlin — the JS equivalent would be 3x larger
-//
-// 5. **Maintenance burden**: two codebases = two sets of bugs
-//    - Every bug fix in Kotlin must be replicated in JS
-//    - Every new function (652 stdlib!) must be implemented twice
-//    - Behavioral divergence is inevitable — conformance tests would pass differently
+Kotlin's type system distinguishes nullable (`String?`) from non-nullable (`String`) at compile time. This maps directly to UTL-X's safe navigation:
+
+```utlx
+$input.Order?.Customer?.Name ?? "Unknown"
+```
+
+The interpreter's Kotlin code handles this naturally — `?.` and `?:` are native Kotlin operators with the same semantics as UTL-X. The language implementation mirrors the language being implemented.
+
+=== Extension Functions
+
+Add methods to existing types without inheritance or wrapper classes:
+
+```kotlin
+fun UDM.asString(): String = when (this) {
+    is Scalar -> value?.toString() ?: ""
+    else -> throw RuntimeError("Expected string")
+}
+```
+
+This keeps the UDM classes clean (pure data) while providing rich access methods. 652 stdlib functions are registered without bloating the core types.
+
+=== Java Ecosystem
+
+100% Java interoperability means access to:
+- Jackson (JSON parsing, used internally alongside the custom parser)
+- SnakeYAML (YAML parsing)
+- ASM (JVM bytecode generation for the COMPILED strategy)
+- Apache XML Security (XML canonicalization, C14N)
+- Every cryptographic algorithm in the JDK
+
+The JVM ecosystem has 25+ years of battle-tested libraries. UTL-X stands on their shoulders.
+
+=== Functional Style
+
+Kotlin's `map`, `filter`, `reduce`, `flatMap` — and its lambda syntax — are the same paradigm as UTL-X. Writing the interpreter for a functional transformation language in a functional-capable language is natural. The interpreter's Kotlin code reads similarly to the UTL-X code it interprets.
+
+== Why Not Other Languages?
+
+#table(
+  columns: (auto, auto),
+  align: (left, left),
+  [*Language*], [*Why not*],
+  [Java], [Too verbose for parser/AST code. No sealed classes until Java 17 (UTL-X started earlier). No null safety. Same JVM, less expressive.],
+  [Scala], [Complex type system (implicits, macros). Slow compilation. Smaller community. SBT build tool friction.],
+  [Go], [No generics (at the time of decision). No sealed types. No expression-based programming. Great for the controller (Open-M), wrong for the engine.],
+  [Rust], [Too low-level for a transformation engine. Ownership/borrowing model adds complexity to tree manipulation. No garbage collector — UDM trees would need manual lifecycle management.],
+  [Python], [Too slow for production (86K msg/s not achievable). GIL limits concurrency. Dynamic typing makes the interpreter error-prone. Great for the conformance suite runner, wrong for the engine.],
+  [TypeScript], [Single-threaded (Node.js event loop). Float-only numbers (0.1 + 0.2 != 0.3). No native compilation path. Different XML parser in every environment.],
+  [C\#], [Would limit to .NET ecosystem. Less Unix tooling. No GraalVM equivalent for native binary. Good for the wrapper SDK, wrong for the engine.],
+)
+
+Notice: several "wrong for the engine" languages are used elsewhere in the UTL-X ecosystem — Go for Open-M, Python for the conformance suite, C\# for the wrapper SDK. The right language for the right job.
+
+== Why GraalVM
+
+=== Native Image for the CLI
+
+GraalVM compiles Kotlin/JVM bytecode to a native machine binary — no JVM at runtime:
+
+```
+Without GraalVM (JVM JAR):
+  $ time java -jar utlx.jar --version
+  real 0.245s  ← too slow for shell scripts
+
+With GraalVM (native binary):
+  $ time ./utlx --version
+  real 0.008s  ← instant, like any native tool
+```
+
+This is why `brew install utlx` gives you a native binary, not a JAR. For CLI usage — shell scripts, CI/CD pipelines, interactive development — startup time is everything. A 250ms penalty per invocation makes `for f in *.xml; do utlx ...; done` painfully slow. With native: 100 files/second. With JVM: 4 files/second.
+
+Native binary characteristics:
+- Startup: under 10ms
+- Memory: ~40MB resident (vs ~150MB for JVM)
+- Distribution: single file, no JVM installation required
+- Size: ~60MB (includes all format parsers, stdlib, and the GraalVM runtime)
+
+=== JVM for the Engine
+
+UTLXe runs on the standard JVM, not as a native image. This is deliberate — the JVM is actually *faster* for long-running engine workloads:
+
+- *HotSpot JIT:* compiles hot paths to native code at runtime, optimizing based on actual execution patterns
+- *COMPILED strategy:* generates JVM bytecode via ASM — this bytecode benefits from JIT, a native image would not
+- *G1GC:* handles large heaps efficiently for sustained throughput with thousands of concurrent messages
+- *Reflection:* used by SnakeYAML, Jackson, and the stdlib function dispatch — works without configuration on JVM, requires extensive configuration for native image
+
+Native image would save startup time (~250ms → ~10ms), but UTLXe starts once and runs for days. Startup time is irrelevant; sustained throughput matters. The JVM wins.
+
+=== GraalVM for Cloud (Future)
+
+GraalVM native for UTLXe would enable true scale-to-zero on serverless platforms:
+- JVM cold start: 5-15 seconds (too slow for Cloud Run scale-from-zero)
+- Native cold start: under 1 second (viable for serverless)
+- Memory: 40MB vs 150MB (direct cost reduction)
+
+This is deferred due to reflection challenges (Kotlin reflection, dynamic class loading, serialization libraries). When GraalVM's reachability metadata improves, UTLXe native becomes practical.
+
+== Why NOT JavaScript/TypeScript
+
+The most frequently suggested alternative. Here's why it would fail:
+
+=== Performance Ceiling
+
+Node.js is single-threaded (event loop). UTLXe achieves 86K msg/s with 8 concurrent workers processing simultaneously. Node.js Worker Threads exist but share no memory — serialization overhead between threads eliminates the concurrency benefit.
+
+=== Number Precision
+
+JavaScript has only `number` (IEEE 754 double-precision float). Financial calculations break:
+
+```javascript
+0.1 + 0.2 === 0.3  // false (JavaScript)
+```
+
+UTL-X handles currencies, tax calculations, invoice totals. Kotlin/JVM has `Long` (64-bit integer), `Double`, and `BigDecimal` — proper numeric types for financial data.
+
+=== XML Inconsistency
+
+The browser DOM API is different from Node.js XML parsers (xml2js, fast-xml-parser, libxmljs). No single XML parser works across all JS environments. Namespace handling is inconsistent across implementations. UTL-X's XML parser is 450 lines of Kotlin — the JS equivalent would be 3x larger and platform-dependent.
 
 == Why NOT WebAssembly (WASM)
 
 === The Promise
-// - "Compile Kotlin to WASM — run UTL-X in the browser, edge functions, everywhere"
-// - Kotlin/WASM exists (experimental)
-// - WASM runs in: browsers, Cloudflare Workers, Fastly Edge, Wasmer, Wasmtime
 
-=== Why It Doesn't Work (Today)
-// 1. **Date/Time functions fail**: WASM has no system clock access
-//    - now(), today(), parseDate() — 68 date functions depend on platform time
-//    - WASM sandboxes I/O — no file system, no network, no clock
-//    - Would need WASI (WebAssembly System Interface) — not yet standardized across runtimes
-//
-// 2. **Kotlin/WASM is experimental**:
-//    - Reflection: not supported (UTL-X interpreter uses reflection for stdlib dispatch)
-//    - Coroutines: limited support
-//    - Binary size: ~20MB WASM module (too large for edge deployment)
-//    - Compilation: slow, produces unoptimized code
-//
-// 3. **String handling**: WASM uses linear memory — no garbage collector (until WasmGC)
-//    - UTL-X processes thousands of strings per transformation
-//    - Manual memory management for strings in WASM is a nightmare
-//    - WasmGC (garbage collection proposal) helps but is not yet universal
-//
-// 4. **632 stdlib functions**: each needs WASM-compatible implementation
-//    - Crypto functions (md5, sha256): need WASM crypto libraries
-//    - XML parsing: no DOM in WASM, need pure-WASM parser
-//    - File I/O: not available in WASM sandbox
-//
-// Verdict: WASM is 2-3 years away from being viable for UTL-X.
-// When Kotlin/WASM matures + WasmGC is universal → revisit.
+"Compile Kotlin to WASM — run UTL-X in browsers, edge functions, everywhere." Kotlin/WASM exists (experimental).
 
-== Why Multiple Language Implementations Lead to Deviation
+=== Why It Doesn't Work Today
 
-=== The N-Implementation Problem
-// If UTL-X were implemented in Kotlin + JavaScript + Python + Go:
-// - 4 parsers: each handles edge cases differently
-// - 4 interpreters: subtle behavioral differences
-// - 4 × 652 = 2,608 stdlib implementations: guaranteed inconsistency
-// - 4 × 11 format parsers: XML namespace handling WILL differ
-// - 4 conformance suites: tests pass differently on each platform
-//
-// Real-world example: XSLT has multiple implementations
-// (Saxon, Xalan, libxslt, MSXML) — they produce DIFFERENT output
-// for the same stylesheet. This has plagued XML developers for 25 years.
-//
-// UTL-X's design: ONE implementation (Kotlin), accessed via:
-// - Native binary (GraalVM) for CLI
-// - JVM for engine and daemon
-// - Subprocess + protobuf for C#, Go, Python wrappers
-// - HTTP API for any language
-//
-// One implementation = one behavior = one conformance suite = zero deviation.
+- *No system clock:* WASM sandboxes I/O. `now()`, `today()`, `parseDate()` — 68 date functions depend on platform time. Would need WASI (not yet standardized across runtimes).
+- *No reflection:* UTL-X's interpreter uses reflection for stdlib dispatch. Kotlin/WASM doesn't support reflection.
+- *String handling:* WASM uses linear memory with manual allocation. UTL-X processes thousands of strings per transformation. WasmGC (garbage collection) helps but is not universal.
+- *Binary size:* ~20MB WASM module — too large for edge deployment.
+- *652 stdlib functions:* each needs WASM-compatible implementation. Crypto, XML parsing, file I/O — none available in WASM sandbox.
 
-=== The Wrapper Pattern Avoids Deviation
-// Instead of reimplementing UTL-X in each language:
-// ┌─────────┐     ┌─────────────┐
-// │ C# app  │────→│ UTLXe (JVM) │  ← ONE implementation
-// └─────────┘     │ via stdio   │
-// ┌─────────┐     │ or HTTP     │
-// │ Go app  │────→│             │
-// └─────────┘     │             │
-// ┌─────────┐     │             │
-// │ Python  │────→│             │
-// └─────────┘     └─────────────┘
-//
-// The wrapper is 200-300 lines of thin client code.
-// The engine (100,000+ lines of transformation logic) exists ONCE.
-// All languages get identical behavior — verified by 453+ conformance tests.
+WASM is 2-3 years away from being viable for UTL-X. When Kotlin/WASM matures and WasmGC is universal — revisit.
+
+== One Implementation, Zero Deviation
+
+The most important architectural decision: UTL-X has ONE implementation (Kotlin/JVM), accessed through multiple interfaces.
+
+If UTL-X were implemented in Kotlin + JavaScript + Python + Go:
+- 4 parsers handling edge cases differently
+- 4 interpreters with subtle behavioral differences
+- 4 x 652 = 2,608 stdlib implementations with guaranteed inconsistency
+- 4 x 11 format parsers where XML namespace handling WILL differ
+
+Real-world precedent: XSLT has multiple implementations (Saxon, Xalan, libxslt, MSXML). They produce DIFFERENT output for the same stylesheet. This has plagued XML developers for 25 years.
+
+UTL-X's design: one implementation, multiple access paths:
+
+```
+┌─────────┐
+│ C# app  │──→┐
+└─────────┘   │     ┌─────────────┐
+┌─────────┐   │     │             │
+│ Go app  │──→├────→│ UTLXe (JVM) │  ← ONE implementation
+└─────────┘   │     │             │     100,000+ lines
+┌─────────┐   │     │ via stdio,  │     652 functions
+│ Python  │──→┤     │ HTTP, or    │     11 format parsers
+└─────────┘   │     │ direct API  │     470+ conformance tests
+┌─────────┐   │     │             │
+│ Any HTTP│──→┘     └─────────────┘
+└─────────┘
+```
+
+The wrapper is 200-300 lines of thin client code. The engine (100,000+ lines of transformation logic) exists ONCE. All languages get identical behavior — verified by 470+ conformance tests running against the same binary.
+
+One implementation = one behavior = one conformance suite = zero deviation.

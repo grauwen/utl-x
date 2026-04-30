@@ -1,94 +1,362 @@
-= Case Studies and Real-World Use Cases
+= Case Studies and Recipes
+
+This chapter presents real-world integration scenarios and reusable transformation recipes. Each case study shows the architecture, the transformation code, and the results. The recipes are standalone patterns you can copy and adapt.
 
 == Case Study 1: European E-Invoicing (Peppol / UBL)
-// - Company: Dutch wholesale distributor, 200 employees, 850 B2B customers
-// - Challenge: EU Directive 2014/55 — all B2G invoices must be UBL 2.1 XML
-// - Source: Dynamics 365 Business Central (proprietary JSON)
-// - Target: UBL 2.1 XML via Peppol BIS 3.0 network
-// - Architecture: D365 → Service Bus → UTL-X (Container App) → Peppol AP
-// - Transformations: 3 .utlx files (~400 lines total)
-//   - invoice-to-ubl.utlx: JSON → UBL XML (100+ field mappings)
-//   - validate-ubl.utlx: Peppol BIS 3.0 business rules
-//   - route-by-country.utlx: country-specific tax annexes
-// - Results: 2,147 invoices/day, 14ms avg latency, 99.97% Peppol acceptance
-// - Cost: $35/month (Starter) + $50/month Azure compute = $85/month
-// - Savings: $44,000/year vs custom C# code (12 Azure Functions)
-// - Full code walkthrough
 
-== Case Study 2: Healthcare HL7 FHIR Integration
-// - Organization: Dutch academic hospital, 1,200 beds
-// - Challenge: MedMij/VIPP — exchange patient data via FHIR R4
-// - Sources: Lab (HL7 v2), Radiology (DICOM SR), EHR (JSON), Pharmacy (HL7 v2.5)
-// - Target: FHIR R4 Bundles via NUTS network
-// - Architecture: 4 Service Bus queues → UTL-X (Professional) → FHIR Server
-// - Transformations: 8 .utlx files, pipeline chaining (5 steps per message)
-// - Key challenge: FHIR value attribute convention (@value access)
-// - Compliance: GDPR + NEN 7510 by architecture (data stays in tenant)
-// - Results: 8,400 messages/day, 22ms pipeline latency, 32 workers
-// - Cost: $105/month (Professional) + $200/month Azure = $305/month
-// - Savings: $115,000/year vs Rhapsody integration engine
-// - Full code walkthrough
+*Scenario:* A Dutch wholesale distributor (200 employees, 850 B2B customers) must comply with EU Directive 2014/55 — all B2G invoices in UBL 2.1 XML via the Peppol network.
 
-== Case Study 3: Financial Services — SWIFT ISO 20022 Migration
-// - Company: European payment processor
-// - Challenge: SWIFT MX migration deadline — MT (text) → MX (XML ISO 20022)
-// - Source: Legacy MT103 messages (proprietary text format)
-// - Target: pain.001 XML (ISO 20022) for SEPA credit transfers
-// - Architecture: Payment gateway → UTL-X → SWIFT Alliance Lite2
-// - Transformations: MT field parsing → canonical model → pain.001 XML
-// - Validation: ISO 20022 XSD + business rules (amount limits, BIC validation)
-// - Results: 15,000 payments/day, regulatory compliance achieved
-// - Full code walkthrough
+*Source:* Dynamics 365 Business Central (OData JSON).
+*Target:* UBL 2.1 XML, delivered via Peppol BIS 3.0 Access Point.
 
-== Case Study 4: Retail — Multi-Channel Order Processing
-// - Company: Online retailer with 4 sales channels
-// - Sources: Shopify (JSON), WooCommerce (JSON), Amazon (XML), Manual (CSV)
-// - Target: Canonical order format → ERP (JSON) + Warehouse (XML) + Accounting (CSV)
-// - Architecture: per-channel webhook → UTL-X → fan-out to 3 targets
-// - Transformations: 4 input normalizers + 3 output formatters = 7 .utlx files
-// - Challenge: each channel has different product ID format, address structure
-// - Results: unified order processing, single source of truth
-// - Full code walkthrough
+*Architecture:*
 
-== Case Study 5: IoT / Manufacturing — Sensor Data Normalization
-// - Company: Manufacturing plant with 500+ sensors
-// - Sources: OPC-UA (XML), MQTT (JSON), Modbus (CSV), legacy PLC (custom)
-// - Target: Azure IoT Hub (JSON) → Time Series Insights
-// - Architecture: Edge gateway → UTL-X → IoT Hub
-// - Transformations: normalize sensor readings to common telemetry schema
-// - Challenge: different units, different timestamp formats, missing values
-// - Results: unified telemetry, real-time dashboards
-// - Full code walkthrough
+```
+D365 Business Central → Azure Service Bus → UTLXe → Peppol Access Point
+  (OData JSON)           (queue)           (UBL XML)   (AS4 transport)
+```
 
-== Case Study 6: Government — Tax Filing Integration
-// - Organization: National tax authority
-// - Challenge: accept tax returns in multiple formats from different software vendors
-// - Sources: UBL (XML), SBR/XBRL (XML), custom JSON APIs
-// - Target: Internal canonical format + validation + archiving
-// - Architecture: API gateway → UTL-X → validation → storage
-// - Compliance: tax-specific Schematron rules, digital signature verification
-// - Results: multi-vendor interoperability, automated validation
-// - Full code walkthrough
+*Transformation highlights:*
 
-== Azure Marketplace: Getting Started Guide
-// - Step 1: Find UTL-X on Azure Marketplace
-// - Step 2: Choose plan (Starter $35/month or Professional $105/month)
-// - Step 3: Configure (region, CPU, memory, workers)
-// - Step 4: Deploy (one-click)
-// - Step 5: Access the API (health check, load transformation, execute)
-// - Step 6: Connect to Service Bus (optional, via Dapr)
-// - Screenshots of each step
-// - First transformation: curl example
-// - Monitoring: where to find metrics and logs
+```utlx
+%utlx 1.0
+input odata
+output xml
+---
+let inv = $input
+
+function VATCategory(countryCode) {
+  if (countryCode == "NL") "S"
+  else if (contains(["BE", "DE", "FR", "IT", "ES"], countryCode)) "S"
+  else "O"
+}
+
+function FormatAmount(amount, currency) {
+  {"@currencyID": currency, "_text": toString(round(amount * 100) / 100)}
+}
+
+{
+  "Invoice": {
+    "@xmlns": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+    "@xmlns:cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
+    "@xmlns:cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
+
+    "cbc:CustomizationID": "urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0",
+    "cbc:ID": inv.invoicenumber,
+    "cbc:IssueDate": formatDate(now(), "yyyy-MM-dd"),
+    "cbc:InvoiceTypeCode": "380",
+    "cbc:DocumentCurrencyCode": inv.transactioncurrencyid?.isocurrencycode ?? "EUR",
+
+    "cac:InvoiceLine": map(inv.invoice_details ?? [], (line) -> {
+      "cbc:ID": toString(line.sequencenumber ?? 1),
+      "cbc:InvoicedQuantity": {"@unitCode": "EA", "_text": toString(line.quantity ?? 1)},
+      "cbc:LineExtensionAmount": FormatAmount(line.extendedamount ?? 0, "EUR"),
+      "cac:Item": {"cbc:Name": line.productdescription ?? "Product"},
+      "cac:Price": {"cbc:PriceAmount": FormatAmount(line.priceperunit ?? 0, "EUR")}
+    })
+  }
+}
+```
+
+*Results:*
+- 2,147 invoices/day, 14ms average latency
+- 99.97% Peppol Access Point acceptance rate
+- Cost: \$35/month (Starter) + \$50/month Azure compute = \$85/month
+- Savings: \$44,000/year vs previous solution (12 custom Azure Functions in C\#)
+
+== Case Study 2: Healthcare — FHIR Integration
+
+*Scenario:* A Dutch academic hospital (1,200 beds) must exchange patient data via FHIR R4 for the MedMij/VIPP national health information exchange program.
+
+*Sources:* Lab system (HL7 v2 → JSON via Mirth), Radiology (DICOM SR → JSON), EHR (proprietary JSON), Pharmacy (HL7 v2.5 → JSON).
+*Target:* FHIR R4 Bundles via the NUTS network.
+
+*Architecture:*
+
+```
+4 source systems → Service Bus (4 queues) → UTLXe (Professional) → FHIR Server
+                                              5-step pipeline          (NUTS)
+```
+
+*Key transformation — Lab result to FHIR Observation:*
+
+```utlx
+%utlx 1.0
+input json
+output json
+---
+{
+  resourceType: "Observation",
+  id: $input.labResultId,
+  status: "final",
+  category: [{
+    coding: [{
+      system: "http://terminology.hl7.org/CodeSystem/observation-category",
+      code: "laboratory"
+    }]
+  }],
+  code: {
+    coding: [{
+      system: "http://loinc.org",
+      code: $input.loincCode,
+      display: $input.testName
+    }]
+  },
+  subject: {
+    reference: concat("Patient/", $input.patientId)
+  },
+  effectiveDateTime: formatDate(
+    parseDate($input.collectionDate, "yyyyMMddHHmm"), "yyyy-MM-dd'T'HH:mm:ss'Z'"
+  ),
+  valueQuantity: {
+    value: toNumber($input.resultValue),
+    unit: $input.unit,
+    system: "http://unitsofmeasure.org",
+    code: $input.ucumCode
+  },
+  referenceRange: [{
+    low: {value: toNumber($input.refLow), unit: $input.unit},
+    high: {value: toNumber($input.refHigh), unit: $input.unit}
+  }]
+}
+```
+
+*Results:*
+- 8,400 messages/day across 4 source systems
+- 22ms average pipeline latency (5-step pipeline)
+- GDPR + NEN 7510 compliant by architecture (all data stays in hospital's Azure tenant)
+- Cost: \$105/month (Professional) + \$200/month Azure compute
+- Savings: \$115,000/year vs Rhapsody integration engine license
+
+== Case Study 3: Retail — Multi-Channel Order Normalization
+
+*Scenario:* An online retailer with 4 sales channels needs a unified order format for their ERP, warehouse, and accounting systems.
+
+*Sources:* Shopify (JSON), WooCommerce (JSON), Amazon (XML), manual entry (CSV).
+*Target:* canonical order JSON → fan-out to ERP (JSON), warehouse (XML), accounting (CSV).
+
+*Shopify normalizer:*
+
+```utlx
+%utlx 1.0
+input json
+output json
+---
+{
+  orderId: concat("SHOP-", toString($input.id)),
+  source: "shopify",
+  orderDate: $input.created_at,
+  customer: {
+    name: concat($input.customer.first_name, " ", $input.customer.last_name),
+    email: $input.customer.email
+  },
+  lines: map($input.line_items, (item) -> {
+    sku: item.sku,
+    name: item.title,
+    quantity: item.quantity,
+    unitPrice: toNumber(item.price)
+  }),
+  total: toNumber($input.total_price),
+  currency: $input.currency
+}
+```
+
+*Amazon normalizer (XML input):*
+
+```utlx
+%utlx 1.0
+input xml
+output json
+---
+{
+  orderId: concat("AMZ-", $input.Order.AmazonOrderId),
+  source: "amazon",
+  orderDate: $input.Order.PurchaseDate,
+  customer: {
+    name: $input.Order.ShippingAddress.Name,
+    email: null
+  },
+  lines: map($input.Order.OrderItem, (item) -> {
+    sku: item.SellerSKU,
+    name: item.Title,
+    quantity: toNumber(item.QuantityOrdered),
+    unitPrice: toNumber(item.ItemPrice.Amount)
+  }),
+  total: toNumber($input.Order.OrderTotal.Amount),
+  currency: $input.Order.OrderTotal.CurrencyCode
+}
+```
+
+Four normalizers (one per channel) produce the same canonical format. Three output formatters transform the canonical format to ERP, warehouse, and accounting. Total: 7 `.utlx` files.
 
 == Recipes: Common Transformation Patterns
-// - Recipe 1: REST API response flattening (nested JSON → flat CSV)
-// - Recipe 2: XML namespace stripping (complex → clean)
-// - Recipe 3: Date format normalization (US/EU/ISO across formats)
-// - Recipe 4: Currency conversion with lookup table
-// - Recipe 5: Address normalization (different country formats)
-// - Recipe 6: Error response standardization (different APIs → common format)
-// - Recipe 7: CSV regional format conversion (US → EU number format)
-// - Recipe 8: Multi-language content extraction (XML with lang attributes)
-// - Recipe 9: Hierarchical → flat (parent-child denormalization)
-// - Recipe 10: Flat → hierarchical (CSV import → nested JSON/XML)
+
+=== Recipe 1: REST API Response Flattening
+
+Flatten a nested API response to CSV-ready rows:
+
+```utlx
+%utlx 1.0
+input json
+output csv
+---
+flatten(map($input.data, (user) ->
+  map(user.orders, (order) -> {
+    userId: user.id,
+    userName: user.name,
+    orderId: order.id,
+    amount: order.total,
+    date: order.createdAt
+  })
+))
+```
+
+=== Recipe 2: Date Format Normalization
+
+Normalize dates from mixed formats to ISO 8601:
+
+```utlx
+function NormalizeDate(dateStr) {
+  if (dateStr == null) null
+  else if (contains(dateStr, "/")) {
+    if (length(split(dateStr, "/")[2]) == 4)
+      formatDate(parseDate(dateStr, "MM/dd/yyyy"), "yyyy-MM-dd")
+    else
+      formatDate(parseDate(dateStr, "dd/MM/yy"), "yyyy-MM-dd")
+  }
+  else if (contains(dateStr, "-") && length(dateStr) == 10)
+    dateStr
+  else if (contains(dateStr, "T"))
+    substring(dateStr, 0, 10)
+  else dateStr
+}
+
+map($input, (row) -> {
+  ...row,
+  orderDate: NormalizeDate(row.orderDate),
+  shipDate: NormalizeDate(row.shipDate)
+})
+```
+
+=== Recipe 3: Currency Conversion with Lookup
+
+```utlx
+%utlx 1.0
+input: orders json, rates json
+output json
+---
+map($orders, (order) -> {
+  let rate = find($rates, (r) -> r.code == order.currency)
+  ...order,
+  originalAmount: order.amount,
+  originalCurrency: order.currency,
+  amountEUR: round(order.amount * (rate?.rate ?? 1) * 100) / 100,
+  currency: "EUR"
+})
+```
+
+=== Recipe 4: Address Normalization
+
+Different systems format addresses differently. Normalize to a common structure:
+
+```utlx
+function NormalizeAddress(addr) {
+  {
+    line1: addr.street ?? addr.streetAddress ?? addr.address1 ?? addr.Address?.Street ?? "",
+    line2: addr.street2 ?? addr.address2 ?? addr.Address?.Street2 ?? "",
+    city: addr.city ?? addr.City ?? addr.town ?? "",
+    postalCode: addr.zip ?? addr.zipCode ?? addr.postalCode ?? addr.PostalCode ?? "",
+    country: toUpperCase(addr.country ?? addr.countryCode ?? addr.Country ?? "")
+  }
+}
+
+{
+  ....$input,
+  shippingAddress: NormalizeAddress($input.shipping ?? $input.shippingAddress ?? {}),
+  billingAddress: NormalizeAddress($input.billing ?? $input.billingAddress ?? {})
+}
+```
+
+=== Recipe 5: Error Response Standardization
+
+Different APIs return errors in different formats. Normalize to one structure:
+
+```utlx
+function StandardError(input) {
+  {
+    error: true,
+    code: input.error?.code ?? input.errorCode ?? input.status ?? "UNKNOWN",
+    message: input.error?.message ?? input.message ?? input.error_description ?? input.detail ?? "Unknown error",
+    details: input.error?.details ?? input.errors ?? input.validationErrors ?? []
+  }
+}
+
+StandardError($input)
+```
+
+=== Recipe 6: CSV Regional Format Conversion
+
+Convert US CSV (comma decimal) to European CSV (comma delimiter conflicts — use semicolons):
+
+```utlx
+%utlx 1.0
+input csv
+output csv {delimiter: ";", regionalFormat: "european", decimals: 2}
+---
+$input
+```
+
+One line of transformation body. The format options handle the rest — comma decimals, dot thousands, semicolon delimiters.
+
+=== Recipe 7: XML Namespace Stripping
+
+Remove all namespace prefixes from XML for downstream systems that don't handle them:
+
+```utlx
+%utlx 1.0
+input xml
+output json
+---
+function StripPrefix(name) {
+  if (contains(name, ":")) substring(name, indexOf(name, ":") + 1) else name
+}
+
+// Access by original prefixed names, output with clean names
+{
+  invoiceId: $input["cbc:ID"],
+  issueDate: $input["cbc:IssueDate"],
+  customer: $input["cac:AccountingCustomerParty"]["cac:Party"]["cbc:Name"],
+  total: toNumber($input["cac:LegalMonetaryTotal"]["cbc:PayableAmount"])
+}
+```
+
+The transformation accesses elements by their prefixed names (bracket notation) but outputs clean, unprefixed property names.
+
+=== Recipe 8: Conditional Output Format
+
+Same transformation, different output based on a field value:
+
+```utlx
+%utlx 1.0
+input json
+output json
+---
+if ($input.format == "summary") {
+  id: $input.orderId,
+  total: $input.total,
+  items: count($input.lines)
+} else {
+  id: $input.orderId,
+  total: $input.total,
+  lines: map($input.lines, (l) -> {
+    product: l.product,
+    qty: l.qty,
+    price: l.price,
+    lineTotal: l.qty * l.price
+  }),
+  tax: $input.total * 0.21,
+  grandTotal: $input.total * 1.21
+}
+```
+
+The `format` field in the input controls whether the output is a summary or full detail.
