@@ -207,12 +207,44 @@ See Chapter 16 for security library details including encryption, digital signat
 
 == XML Functions (60 functions)
 
-XML-specific operations for encoding, namespace handling, and encoding detection.
+XML-specific operations for encoding, namespace handling, QName manipulation, and canonicalization.
 
 ```utlx
 detectXMLEncoding(xmlString)                    // "UTF-8" or "ISO-8859-1"
 convertXMLEncoding(xmlString, "UTF-8")          // re-encode
 stripBOM(data)                                  // remove byte order mark
+```
+
+=== QName Functions (9)
+
+For decomposing, constructing, and matching XML Qualified Names — essential for namespace-aware processing (UBL, XBRL, SOAP, ISO 20022). See Chapter 21 for usage examples.
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Function*], [*Returns*], [*Example*],
+  [`localName(element)`], [Local name without prefix], [`"Envelope"` from `soap:Envelope`],
+  [`namespacePrefix(element)`], [Prefix only], [`"soap"` from `soap:Envelope`],
+  [`qualifiedName(element)`], [Full prefixed name], [`"soap:Envelope"`],
+  [`namespaceUri(element)`], [Namespace URI], [`"http://schemas.xmlsoap.org/..."`],
+  [`hasNamespace(element)`], [Boolean], [`true` if element has a namespace],
+  [`getNamespaces(element)`], [Map of prefix → URI], [`{"soap": "http://...", "wsa": "http://..."}`],
+  [`createQname(local, uri, prefix?)`], [QName object], [Build QName from parts],
+  [`resolveQname(string, context)`], [QName object], [Resolve `"cbc:ID"` using namespace context],
+  [`matchesQname(element, pattern)`], [Boolean], [Match by string or structured QName],
+)
+
+=== Canonicalization Functions (11)
+
+W3C XML Canonicalization (C14N) for digital signatures, hashing, and round-trip verification. See Chapter 21 for details.
+
+```utlx
+c14n(xml)                          // W3C C14N 1.0 (no comments)
+c14nWithComments(xml)              // C14N 1.0 with comments
+excC14n(xml)                       // Exclusive C14N (SOAP signatures)
+c14nHash(xml)                      // SHA-256 of canonical form
+c14nEquals(xml1, xml2)             // semantic comparison
+c14nFingerprint(xml)               // short fingerprint for logging
 ```
 
 == Other Categories

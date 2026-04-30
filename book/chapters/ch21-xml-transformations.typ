@@ -288,6 +288,81 @@ c14nEquals(original, backToXml)        // true if round-trip is lossless
 
 This is particularly valuable in compliance scenarios (e-invoicing, healthcare) where you must prove that your transformation pipeline does not alter the business content.
 
+== QName Functions (Qualified Names)
+
+XML uses Qualified Names (QNames) to identify elements and attributes within namespaces. A QName like `cbc:InvoiceTypeCode` combines a prefix (`cbc`), a local name (`InvoiceTypeCode`), and an implied namespace URI (`urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2`).
+
+UTL-X provides 9 functions for decomposing, constructing, and matching QNames:
+
+```utlx
+// Decompose a QName
+localName($input.Invoice)              // "Invoice" (without prefix)
+namespacePrefix($input.Invoice)        // "cbc" (prefix only)
+qualifiedName($input.Invoice)          // "cbc:Invoice" (full prefixed name)
+namespaceUri($input.Invoice)           // "urn:oasis:names:..." (namespace URI)
+
+// Check and list namespaces
+hasNamespace($input.Invoice)           // true
+getNamespaces($input.Invoice)          // {"cbc": "urn:oasis:...", "cac": "urn:oasis:..."}
+
+// Construct a QName
+createQname("Invoice", "urn:oasis:names:...", "cbc")
+// → {localName: "Invoice", namespaceUri: "urn:oasis:...", prefix: "cbc", qualifiedName: "cbc:Invoice"}
+
+// Resolve a prefixed name using namespace context
+resolveQname("cbc:Invoice", $input)
+// → {localName: "Invoice", prefix: "cbc", namespaceUri: "urn:oasis:...", qualifiedName: "cbc:Invoice"}
+
+// Match by QName (string or structured)
+matchesQname($input.Invoice, "cbc:Invoice")   // true
+```
+
+These functions are essential for enterprise XML formats where namespace awareness determines correctness — you cannot just compare element names as strings when the same local name appears in different namespaces.
+
+=== XBRL (Financial Reporting)
+
+XBRL (eXtensible Business Reporting Language) is the most namespace-intensive XML format in production use. Every financial fact is identified by a QName — the namespace tells you which taxonomy (US-GAAP, IFRS, local GAAP) defines the concept, and the local name identifies the concept itself:
+
+```xml
+<xbrli:xbrl xmlns:us-gaap="http://fasb.org/us-gaap/2024"
+            xmlns:ifrs="http://xbrl.ifrs.org/taxonomy/2024-03-27">
+  <us-gaap:Revenue contextRef="FY2024" unitRef="USD" decimals="-6">42000000000</us-gaap:Revenue>
+  <us-gaap:NetIncome contextRef="FY2024" unitRef="USD" decimals="-6">15000000000</us-gaap:NetIncome>
+  <ifrs:Revenue contextRef="FY2024" unitRef="EUR" decimals="-6">38000000000</ifrs:Revenue>
+</xbrli:xbrl>
+```
+
+Notice: `us-gaap:Revenue` and `ifrs:Revenue` have the same local name but different namespaces — they are different concepts with different definitions. String comparison (`"Revenue" == "Revenue"`) would wrongly treat them as the same. QName functions handle this correctly:
+
+```utlx
+%utlx 1.0
+input xml
+output json
+---
+let facts = $input["xbrli:xbrl"].*
+
+// Extract all US-GAAP facts (filter by namespace)
+let usgaap = filter(facts, (fact) ->
+  namespaceUri(fact) == "http://fasb.org/us-gaap/2024"
+)
+
+// Build a financial summary from XBRL facts
+map(usgaap, (fact) -> {
+  concept: localName(fact),
+  namespace: namespacePrefix(fact),
+  value: toNumber(fact),
+  context: fact.@contextRef,
+  unit: fact.@unitRef,
+  decimals: toNumber(fact.@decimals)
+})
+```
+
+QName functions are also needed for:
+- *Inline XBRL (iXBRL):* HTML documents with embedded XBRL facts tagged by QName
+- *Taxonomy switching:* mapping from one reporting standard to another (US-GAAP → IFRS)
+- *XBRL validation:* verifying that facts reference valid taxonomy concepts
+- *Regulatory submissions:* SEC (US), ESMA (EU), HMRC (UK) all require XBRL filings
+
 == XML Attributes in JSON/YAML Output
 
 When XML is transformed to JSON or YAML, attributes need special handling because JSON and YAML have no concept of attributes. Chapter 22 covers this in detail. The short version:
