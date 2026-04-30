@@ -14,6 +14,26 @@ $input
 
 The `%usdl 1.0` tag tells UTL-X: "serialize the output using USDL conventions." The transformation body uses standard UTL-X expressions. You can also use USDL on the input side — to read a USDL-formatted schema and convert it to another format.
 
+=== USDL with Tier 1 vs Tier 2 Formats
+
+The `%usdl` tag can appear on any output format — both data formats (Tier 1: JSON, YAML) and schema formats (Tier 2: XSD, Protobuf, Avro, JSON Schema). The meaning differs:
+
+- *On a Tier 2 format* (`output xsd %usdl 1.0`, `output proto %usdl 1.0`): the serializer interprets USDL directives and generates the native schema — XSD XML, a `.proto` file, Avro schema JSON. This is *schema generation*: USDL in, native schema format out.
+
+- *On a Tier 1 format* (`output yaml %usdl 1.0`, `output json %usdl 1.0`): the output is YAML or JSON, and the *content* contains USDL directives (`%namespace`, `%types`, `%fields`) as data properties. This is *schema documentation*: the schema is rendered as human-readable YAML or JSON for inspection, editing, or storage. YAML doesn't become a schema format — it is the *carrier* for schema content.
+
+The Tier 1 USDL pattern is the fastest way to understand any schema:
+
+```utlx
+%utlx 1.0
+input xsd              // read a complex XSD
+output yaml %usdl 1.0  // dump as readable YAML with USDL directives
+---
+$input
+```
+
+The output is a clean YAML file with `%namespace`, `%types`, and `%fields` — readable without tooling, editable in any text editor, diffable in Git.
+
 == The USDL Tier System
 
 USDL organizes its directives in four tiers — from universal concepts that every schema format shares, down to features unique to a single standard:

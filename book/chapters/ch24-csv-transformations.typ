@@ -205,7 +205,15 @@ map($input, (row) -> {
 
 === BOM Handling
 
-Some tools (especially Excel on Windows) prepend a UTF-8 BOM (Byte Order Mark, U+FEFF) to CSV files. UTL-X strips this automatically — no configuration needed. The BOM is detected and removed before parsing begins.
+*On input:* some tools (especially Excel on Windows) prepend a UTF-8 BOM (Byte Order Mark, U+FEFF) to CSV files. UTL-X strips this automatically — no configuration needed. The BOM is detected and removed before parsing begins.
+
+*On output:* use `{bom: true}` to prepend a BOM to the CSV output. This is useful when the target is Excel on Windows, which uses the BOM to detect UTF-8 encoding for non-ASCII characters (accented names, CJK characters, currency symbols):
+
+```utlx
+output csv {bom: true}
+```
+
+Without the BOM, Excel may misinterpret UTF-8 as Windows-1252, turning `ë` into `Ã«` and `€` into garbage. See Chapter 12 for more on BOM across all formats.
 
 === Quoting and Special Characters
 
@@ -334,15 +342,7 @@ Each parent field (orderId, customer) is repeated for every child row — that's
 
 === CSV with BOM for Excel
 
-Excel sometimes needs a BOM to correctly detect UTF-8 encoding, especially for non-ASCII characters (accented names, CJK characters):
-
-```utlx
-%utlx 1.0
-input json
-output csv {bom: true}
----
-$input
-```
+See BOM Handling above — use `output csv {bom: true}`.
 
 === Suppressing Headers
 

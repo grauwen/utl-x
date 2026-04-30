@@ -163,6 +163,12 @@ output yaml {writeAttributes: true}      // preserve XML attributes in output
 
 The `writeAttributes` option is the only YAML-specific output option currently wired from the header. The serializer uses sensible defaults: 2-space indent, 80-character line width, Unix line breaks, block style, Unicode allowed.
 
+=== The `---` Document Start Marker
+
+YAML's `---` document start marker is *not emitted* by default. The serializer has an `explicitStart` option internally (default `false`), but it is not currently exposed as a header option. This means UTL-X YAML output never starts with `---` unless you're using multi-document output via `yamlMergeDocuments()`.
+
+If a downstream system requires the `---` marker, the workaround is to prepend it as a string operation after serialization. In most cases, a missing `---` is not a problem — YAML parsers treat it as optional for single-document files. It is only required when separating multiple documents in one stream.
+
 == YAML-Specific Functions
 
 === parseYaml

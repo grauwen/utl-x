@@ -1,146 +1,225 @@
 = Logging, Observability, and Compliance
 
-== Logging in UTL-X
+Data transformations sit at the most sensitive point in an integration pipeline — they see every field of every message. A payment transformation sees card numbers. A healthcare transformation sees patient records. A financial transformation sees account balances. This makes logging decisions critical: log too much and you violate PCI DSS, GDPR, or HIPAA. Log too little and you can't debug production issues.
 
-=== What UTL-X Logs
-// - Transformation start/end: timestamp, transformation ID, duration
-// - Errors: parse errors, validation failures, runtime exceptions
-// - Health: startup, shutdown, worker pool status
-// - Metrics: request count, latency percentiles, error rate (Prometheus)
-//
-// What UTL-X does NOT log (by default):
-// - Input message content
-// - Output message content
-// - Intermediate UDM state
-// - Field values during transformation
+This chapter covers UTL-X's approach: log metadata (what happened), never data (what was in the message).
+
+== What UTL-X Logs
+
+=== Default Behavior (INFO Level)
+
+UTLXe logs operational events, never message content:
+
+- *Startup:* engine version, loaded transformations, worker count, transport mode
+- *Transformation lifecycle:* load, unload, reload events with transformation ID
+- *Request processing:* transformation ID, duration, success/failure — but NOT the message
+- *Errors:* parse errors, validation failures, runtime exceptions — with field paths, not field values
+- *Health:* worker pool status, memory usage, queue depth
+
+What UTL-X does NOT log by default:
+- Input message content
+- Output message content
+- Intermediate UDM state
+- Field values during transformation
+
+This is safe for PCI DSS, GDPR, HIPAA, and SOX environments without any configuration.
 
 === Log Levels
-// - ERROR: transformation failures, parse errors, unrecoverable issues
-// - WARN: validation warnings (WARN policy), deprecated function usage
-// - INFO: startup, shutdown, transformation load/unload, health status
-// - DEBUG: parser trace, interpreter step-by-step, UDM tree dump
-// - TRACE: every function call, every property access (extremely verbose)
-//
-// Production: INFO (default)
-// Development: DEBUG or TRACE (via --debug, --debug-parser, --debug-interpreter)
-// NEVER in production: DEBUG or TRACE (performance impact + data exposure risk)
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Level*], [*What it logs*], [*When to use*],
+  [ERROR], [Transformation failures, parse errors, unrecoverable issues], [Always on],
+  [WARN], [Validation warnings (WARN policy), deprecated functions], [Always on],
+  [INFO], [Startup, shutdown, load/unload, health, request metadata], [Production (default)],
+  [DEBUG], [Parser trace, interpreter steps, UDM tree structure], [Development only],
+  [TRACE], [Every function call, every property access], [Debugging only],
+)
+
+#block(
+  fill: rgb("#FFEBEE"),
+  inset: 12pt,
+  radius: 4pt,
+  width: 100%,
+)[
+  *Never use DEBUG or TRACE in production.* These levels dump message content — UDM trees, field values, intermediate results — into logs. In a payment or healthcare pipeline, this exposes sensitive data. The performance impact is also severe: TRACE can reduce throughput by 100x.
+]
 
 === Configuring Logging
-// - UTLXe: logback.xml (SLF4J + Logback)
-// - utlx CLI: console output, --verbose flag
-// - Azure Container Apps: stdout → Log Analytics (automatic)
-// - GCP Cloud Run: stdout → Cloud Logging (automatic)
-// - Prometheus metrics: /metrics endpoint on port 8081
 
-== When NOT to Log: Compliance and Data Protection
+*UTLXe:* uses SLF4J + Logback. Configure via `logback.xml` in the container, or override with environment variables:
 
-=== PCI DSS (Payment Card Industry Data Security Standard)
-// PCI DSS Requirement 3: Protect stored cardholder data
-// PCI DSS Requirement 4: Encrypt transmission of cardholder data
-//
-// What you MUST NOT log:
-// - Primary Account Number (PAN): the 16-digit card number
-// - CVV/CVC: the 3-4 digit security code (NEVER stored, period)
-// - Full magnetic stripe data
-// - PIN or PIN block
-//
-// What you MAY log (with care):
-// - Truncated PAN: first 6 and last 4 digits (BIN + last four)
-// - Transaction ID (reference number, not card data)
-// - Timestamp, amount, currency (metadata, not cardholder data)
-//
-// UTL-X implications:
-// - DEBUG logging would expose card data in the UDM tree → NEVER use in payment flows
-// - Transformation errors should NOT include the full input message
-// - Error messages should reference field NAMES, not VALUES
-//   Wrong: "Error: invalid card number 4111-1111-1111-1111"
-//   Right: "Error: field 'cardNumber' failed validation"
+```bash
+# Set log level via environment
+UTLXE_LOG_LEVEL=INFO    # default
+UTLXE_LOG_LEVEL=DEBUG   # development only
+```
+
+*CLI:* console output with `--verbose` flag for additional detail.
+
+*Cloud platforms:* UTLXe logs to stdout. Container platforms capture stdout automatically:
+- Azure Container Apps → Log Analytics
+- GCP Cloud Run → Cloud Logging
+- AWS ECS → CloudWatch Logs
+- Kubernetes → node-level log collection (Fluentd, Fluent Bit, Vector)
+
+== When NOT to Log: Compliance Requirements
+
+=== PCI DSS (Payment Card Industry)
+
+PCI DSS protects cardholder data. If your transformation processes payments:
+
+*Never log:*
+- Primary Account Number (PAN) — the 16-digit card number
+- CVV/CVC — the 3-4 digit security code (must never be stored, period)
+- Full magnetic stripe data
+- PIN or PIN block
+
+*May log (with care):*
+- Truncated PAN: first 6 + last 4 digits (`411111****1111`)
+- Transaction reference ID
+- Timestamp, amount, currency (metadata)
+
+*UTL-X implication:* DEBUG logging exposes card data in the UDM tree. Never enable DEBUG in payment flows. Error messages must reference field names, not values:
+
+```
+Good: "Validation failed: field 'cardNumber' does not match pattern"
+Bad:  "Validation failed: value '4111-1111-1111-1111' does not match pattern"
+```
 
 === GDPR (General Data Protection Regulation)
-// - Personal data: name, email, address, phone, IP, BSN, SSN, health data
-// - Right to erasure: if you log personal data, you must be able to delete it
-// - Data minimization: log only what's necessary
-//
-// UTL-X implications:
-// - Don't enable DEBUG in production with personal data
-// - If logging transformations for auditing, mask PII fields
-// - UTLXe's default (INFO) logs no message content — GDPR-safe
-// - Azure Log Analytics retention: configure to match your GDPR policy
+
+GDPR protects personal data of EU residents. If your transformation processes customer data:
+
+*Personal data includes:* name, email, address, phone, IP address, BSN (Dutch), SSN (US), health data, financial data, location data, biometric data.
+
+*Key obligations:*
+- *Data minimization:* log only what's necessary for the purpose
+- *Right to erasure:* if you log personal data, you must be able to delete it on request
+- *Purpose limitation:* logs collected for debugging can't be used for marketing
+
+*UTL-X implication:* INFO level logs no message content — GDPR-safe by default. If you enable DEBUG for troubleshooting, disable it immediately after and purge the debug logs. Configure log retention to match your GDPR data retention policy.
 
 === HIPAA (Health Insurance Portability and Accountability Act)
-// - Protected Health Information (PHI): patient name, DOB, SSN, diagnoses, medications
-// - Minimum necessary rule: access only what's needed for the task
-// - Audit trail: WHO accessed WHAT, WHEN
-//
-// UTL-X implications:
-// - Healthcare transformations (HL7, FHIR) process PHI
-// - NEVER log input/output messages containing PHI
-// - LOG: transformation ID, timestamp, success/failure (audit trail)
-// - DON'T LOG: patient data, diagnosis codes, medication lists
-// - Azure: use Customer-Managed Keys (CMK) for Log Analytics encryption
 
-=== NEN 7510 (Dutch Healthcare Information Security)
-// - Dutch implementation of ISO 27001 for healthcare
-// - Strict access control, audit logging, data classification
-// - UTL-X in hospital environments: data stays in tenant (no cloud logging to external services)
-// - All processing in the hospital's Azure tenant → NEN 7510 by architecture
+HIPAA protects health information. If your transformation processes HL7, FHIR, or clinical data:
 
-=== SOX (Sarbanes-Oxley Act — Financial)
-// - Financial reporting integrity
-// - Audit trail for data transformations that affect financial reports
-// - LOG: who transformed what, when, which transformation version
-// - DON'T LOG: actual financial data (amounts, account numbers)
+*Protected Health Information (PHI):* patient name, date of birth, SSN, diagnosis codes (ICD-10), medication lists, lab results, insurance IDs.
+
+*Key obligations:*
+- *Minimum necessary:* access only what's needed for the transformation
+- *Audit trail:* log WHO accessed WHAT, WHEN — but not the PHI itself
+- *Encryption:* PHI must be encrypted at rest and in transit
+
+*UTL-X implication:* healthcare transformations process PHI — the transformation itself is fine (it needs to see the data to map it). But logs must never contain PHI. Log the transformation ID, timestamp, and success/failure. Don't log patient names, diagnosis codes, or lab values.
+
+=== NEN 7510 (Dutch Healthcare Security)
+
+Dutch implementation of ISO 27001 for healthcare, required for all Dutch healthcare organizations:
+
+- Strict access control and data classification
+- Audit logging requirements
+- Data must stay within the organization's tenant
+
+UTL-X in hospital environments: deploy UTLXe in the hospital's own Azure tenant. All processing, logging, and data stay within the tenant boundary. No external cloud logging services.
+
+=== SOX (Sarbanes-Oxley — Financial Reporting)
+
+SOX requires audit trails for data that affects financial reports:
+
+- Log: WHO transformed WHAT, WHEN, WHICH transformation version
+- Don't log: actual financial amounts, account numbers, balances
+- Transformation version must be traceable — `.utlx` files in Git with commit hashes
 
 == Designing for Compliance
 
-=== The Principle: Log Metadata, Not Data
-//
-// | Log this | Don't log this |
-// |----------|---------------|
-// | Transformation ID | Input message content |
-// | Timestamp | Output message content |
-// | Duration (ms) | Field values |
-// | Success / failure | PII (name, email, BSN) |
-// | Error message (field name) | Error data (field value) |
-// | Worker ID | Session tokens |
-// | Source system ID | Credentials |
-// | Schema validation result | The data that failed validation |
+=== Principle: Log Metadata, Not Data
+
+#table(
+  columns: (auto, auto),
+  align: (left, left),
+  [*Log this (metadata)*], [*Don't log this (data)*],
+  [Transformation ID], [Input message content],
+  [Timestamp], [Output message content],
+  [Duration (milliseconds)], [Field values],
+  [Success / failure], [PII (name, email, BSN, SSN)],
+  [Error message (field path)], [Error data (field value)],
+  [Worker ID], [Session tokens or API keys],
+  [Source system identifier], [Credentials or passwords],
+  [Schema validation result (pass/fail)], [The data that failed validation],
+  [Message size (bytes)], [Message content],
+  [Input/output format], [Actual payload],
+)
 
 === Audit Logging Pattern
-// For regulated industries, add an audit step to the pipeline:
-//
-// Input → Transform → Validate → Audit Log → Output
-//
-// The audit log step records:
-//   - Transaction ID (correlation)
-//   - Transformation name and version
-//   - Timestamp
-//   - Input format and size (not content)
-//   - Output format and size (not content)
-//   - Validation result (pass/fail, rule names)
-//   - Error details (field names, not values)
-//
-// This provides a full audit trail WITHOUT exposing sensitive data.
+
+For regulated industries, add an audit step to the pipeline:
+
+```
+Input → Transform → Validate → Audit Log → Output
+```
+
+The audit log records:
+- Transaction ID (for correlation across systems)
+- Transformation name and version (Git commit hash)
+- Timestamp (ISO 8601, UTC)
+- Input format and size (not content)
+- Output format and size (not content)
+- Validation result (pass/fail, which rules)
+- Error details (field paths, not values)
+
+This provides a complete audit trail — who, what, when, which version — without exposing a single sensitive value.
 
 === Masking in Error Messages
-// UTL-X error messages should follow this pattern:
-//
-// Good: "Validation failed: field 'customerBSN' does not match pattern NL[0-9]{9}"
-// Bad:  "Validation failed: value '123456789' does not match pattern NL[0-9]{9}"
-//
-// Good: "Type error at $.payment.cardNumber: expected string, got number"
-// Bad:  "Type error: 4111111111111111 is not a string"
-//
-// The transformation developer controls error messages in try/catch blocks.
-// Best practice: catch errors, log field paths, never log field values.
 
-== Prometheus Metrics (Safe by Design)
-// UTLXe exposes metrics on port 8081 — these are SAFE for compliance:
-// - utlx_requests_total: count (no data content)
-// - utlx_request_duration_seconds: latency histogram
-// - utlx_errors_total: error count by type
-// - utlx_workers_active: worker utilization
-// - utlx_transformations_loaded: count of loaded transforms
-//
-// Prometheus metrics contain NO message data — only operational counters.
-// Safe for: PCI DSS, GDPR, HIPAA, NEN 7510, SOX environments.
+Error messages are the most common source of accidental data exposure. UTL-X error messages reference field paths, not values:
+
+```
+Good: "Type error at $.payment.cardNumber: expected string, got number"
+Bad:  "Type error: 4111111111111111 is not a string"
+
+Good: "Validation failed: field 'patient.bsn' does not match pattern"
+Bad:  "Validation failed: '123456789' does not match pattern NL[0-9]{9}"
+```
+
+When writing custom error handling with `try/catch`, follow the same principle:
+
+```utlx
+try {
+  parseDate($input.birthDate, "yyyy-MM-dd")
+} catch {
+  // Good: log what failed, not the value
+  null    // or: error("Invalid date format in field 'birthDate'")
+}
+```
+
+== Prometheus Metrics: Safe by Design
+
+UTLXe's Prometheus metrics (port 8081) contain no message data — only operational counters and histograms:
+
+```
+utlxe_messages_processed_total{transformation="order-to-invoice"}  42531
+utlxe_messages_failed_total{transformation="order-to-invoice"}  12
+utlxe_transformation_duration_seconds_bucket{le="0.01"}  38000
+utlxe_active_workers  6
+utlxe_transformations_loaded  5
+```
+
+These metrics are safe for every compliance regime — PCI DSS, GDPR, HIPAA, NEN 7510, SOX. They tell you how the system is performing without revealing what data it's processing.
+
+== The Security Library Connection
+
+UTL-X's security library (Chapter 16) provides functions for masking, hashing, and encrypting sensitive data *within* transformations. If you need to produce an audit-safe version of the output:
+
+```utlx
+{
+  orderId: $input.orderId,
+  customerName: mask($input.customerName, 3),     // "Ali***"
+  email: hashSHA256($input.email),                // irreversible hash
+  cardNumber: maskPAN($input.cardNumber),          // "411111******1111"
+  total: $input.total                              // non-sensitive, keep as-is
+}
+```
+
+This produces a record that's safe to log, store in a data warehouse, or send to analytics — the sensitive fields are masked or hashed, the business metadata is preserved. See Chapter 16 for the full security function reference.
