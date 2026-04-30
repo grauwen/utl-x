@@ -152,23 +152,64 @@ UTL-X supports conversion between all Tier 2 schema formats:
 
 == Nested Schemas: Include and Import
 
-Real-world schemas are rarely single files. They reference other schemas:
+Real-world schemas are rarely single files. They reference other schemas — sometimes dozens of them. A UBL invoice schema imports common types, which import data types, which import core components. Understanding how these references work is essential for schema-to-schema mapping.
 
-- *XSD:* `<xs:include>` (same namespace) and `<xs:import>` (different namespace)
-- *JSON Schema:* `\$ref` (local and remote references)
-- *Avro:* Named types referenced by name across schemas
-- *Protobuf:* `import "other.proto"`
-- *OpenAPI:* `\$ref` to components/schemas, external files
-- *RAML:* `!include` fragments, libraries, overlays
+=== XSD: Include vs Import
 
-UTL-X handles nested schemas by:
+XSD has two mechanisms for composing schemas, and the difference matters:
 
-+ Resolving references during parsing (following includes/imports)
-+ Building a complete type graph (all types visible)
-+ Making all types available for mapping
-+ Preserving reference structure in output (for round-trip fidelity)
+*`xs:include`* brings components from another schema file into the *same namespace*. The included file either has the same target namespace or no namespace at all (the "chameleon" pattern — it adopts the including schema's namespace). After include, all types are in one namespace as if they were defined in a single file.
 
-This means you can transform a complex, multi-file XSD with imports into a single JSON Schema with \$ref definitions — or vice versa.
+```xml
+<!-- order.xsd — target namespace: urn:example:orders -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="urn:example:orders">
+  <xs:include schemaLocation="common-types.xsd"/>  <!-- same namespace -->
+  <xs:element name="Order" type="OrderType"/>
+</xs:schema>
+```
+
+*`xs:import`* brings components from a *different namespace*. This is how cross-domain schemas are composed — an order schema imports customer types from the CRM namespace, address types from a shared namespace, and country codes from an ISO standard namespace. Each retains its own namespace prefix.
+
+```xml
+<!-- order.xsd — imports from a different namespace -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:cust="urn:example:customers"
+           targetNamespace="urn:example:orders">
+  <xs:import namespace="urn:example:customers"
+             schemaLocation="customer-types.xsd"/>  <!-- different namespace -->
+  <xs:element name="Order">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Customer" type="cust:CustomerType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+```
+
+The rule: `include` = same family (same namespace), `import` = different family (different namespace). Enterprise schemas like UBL and ISO 20022 use both extensively — a typical UBL invoice pulls in 10+ schema files via a chain of includes and imports.
+
+=== Other Format Mechanisms
+
+Each schema format has its own composition mechanism:
+
+- *JSON Schema:* `\$ref` — local (`#/definitions/Address`) and remote (`./address.json#/Address`) references. Draft 2020-12 added `\$dynamicRef` for extensibility.
+- *Avro:* Named types referenced by their full name across schemas. No explicit import — types are resolved by name from the registry.
+- *Protobuf:* `import "other.proto"` — explicit file import. `import public` re-exports for transitive visibility.
+- *OpenAPI:* `\$ref` to `#/components/schemas/...` (local) or external files. Supports splitting a large API spec across files.
+- *RAML:* `!include` for fragments, `uses:` for libraries, overlays and extensions for modular specs.
+
+=== How UTL-X Handles Nested Schemas
+
+UTL-X resolves all references during parsing:
+
++ Follow includes and imports recursively (loading referenced files)
++ Build a complete type graph (all types from all files visible)
++ Make all types available for mapping (regardless of which file defined them)
++ Preserve reference structure in output (for round-trip fidelity)
+
+This means you can transform a complex, multi-file XSD with imports into a single JSON Schema with `\$ref` definitions — or flatten everything into one file. The type graph is the same either way; only the serialization changes.
 
 == JSON Schema to JSON Schema Mapping
 
