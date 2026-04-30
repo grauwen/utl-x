@@ -250,6 +250,124 @@ output json
 
 The `??` chains handle the field name variations across different source systems. Shopify uses `line_items`, WooCommerce uses `items`, SAP uses `orderLines` — the canonical transformation normalizes all of them.
 
+== Workflow and Low-Code Integration
+
+Workflow platforms — Azure Logic Apps, Power Automate, n8n, Make (formerly Integromat), Zapier — are increasingly popular for business automation. They excel at orchestration (trigger on event, call API, send email, update database) but have weak transformation capabilities. Their built-in mapping is typically limited to simple field assignment: drag source field A to target field B.
+
+This breaks down when you need:
+- Format conversion (XML order → JSON API payload)
+- Conditional logic (different VAT rates by country)
+- Array operations (map order lines, filter active items, aggregate totals)
+- Nested restructuring (flat CSV → hierarchical JSON)
+- Cross-field computation (line total = quantity x price)
+
+These are exactly the problems UTL-X solves. The integration pattern: the workflow handles orchestration, UTL-X handles transformation.
+
+=== Pattern: HTTP Action in a Workflow
+
+Most workflow platforms support calling an HTTP endpoint as a step. UTLXe in HTTP mode is that endpoint:
+
+```
+Workflow Step 1: Trigger (new order in Shopify)
+Workflow Step 2: Get order data (Shopify API)
+Workflow Step 3: HTTP POST to UTLXe → transform to UBL invoice XML
+Workflow Step 4: Send invoice to Peppol Access Point
+```
+
+Step 3 is one HTTP call — the workflow sends the Shopify JSON to UTLXe, receives UBL XML back. The transformation logic lives in a `.utlx` file, version-controlled and testable — not embedded in the workflow's visual designer where it's invisible to code review, untestable, and lost when the workflow is deleted.
+
+=== Azure Logic Apps / Power Automate
+
+```
+Logic App Trigger (Service Bus message)
+  → HTTP Action: POST to UTLXe container
+  → Send result to target API
+```
+
+UTLXe runs as a Container App in the same Azure subscription. The Logic App calls it via HTTP — no connector needed, no marketplace dependency. The transformation is external to the workflow: change the `.utlx` file without touching the Logic App.
+
+=== n8n / Make / Zapier
+
+These platforms support "Webhook" or "HTTP Request" actions:
+
+- *n8n:* HTTP Request node → UTLXe endpoint
+- *Make:* HTTP module → UTLXe endpoint
+- *Zapier:* Webhooks by Zapier → UTLXe endpoint
+
+The pattern is identical across platforms: send data, receive transformed data. The workflow doesn't know or care that UTL-X is involved — it's just an HTTP call that returns the right format.
+
+=== Why Not Transform Inside the Workflow?
+
+Workflow platforms offer basic transformation features — "expression builder", "data mapper", "code step." Why not use those?
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Aspect*], [*Workflow built-in*], [*UTL-X external*],
+  [Complexity], [Simple field mapping only], [Any complexity: conditionals, loops, aggregation],
+  [Format support], [JSON only (usually)], [XML, JSON, CSV, YAML, OData],
+  [Testability], [Manual — click through the workflow], [Automated — conformance suite, CI/CD],
+  [Version control], [Workflow export (opaque JSON/YAML)], [`.utlx` files in Git],
+  [Reuse], [Copy-paste between workflows], [Shared `.utlx` library, imported by reference],
+  [Debugging], [Workflow run history (limited)], [IDE with live preview, sample data],
+  [Performance], [Workflow engine overhead per step], [86K msg/s for complex transforms],
+  [Lock-in], [Platform-specific expressions], [Portable across any platform with HTTP],
+)
+
+The sweet spot: use the workflow for what it does well (triggering, routing, API calls, human tasks) and UTL-X for what it does well (data transformation). They complement each other.
+
+== RPA (Robotic Process Automation)
+
+RPA platforms — UiPath, Automation Anywhere, Blue Prism, Power Automate Desktop — automate tasks that involve user interfaces: clicking buttons, reading screens, filling forms, scraping web pages. The data they extract is often unstructured or semi-structured: screen-scraped text, PDF tables, email bodies, Excel exports.
+
+This data almost always needs transformation before it can enter a business system. An invoice number scraped from a PDF needs to become a field in a JSON API call. A table copied from a web page needs to become a CSV import. An email body with order details needs to become a structured XML message.
+
+=== The Pattern: RPA Extracts, UTL-X Transforms
+
+```
+RPA Robot → extracts data (screen scrape, PDF parse, email parse)
+         → raw data (CSV, JSON, unstructured text)
+         → HTTP POST to UTLXe
+         → structured output (JSON for API, XML for ERP, CSV for database)
+         → RPA Robot continues (API call, form fill, database insert)
+```
+
+The RPA robot handles the UI interaction and data extraction. UTL-X handles the structural transformation. The robot doesn't need complex data manipulation logic — it calls UTLXe and gets the right format back.
+
+=== UiPath Integration
+
+UiPath has an HTTP Request activity that calls external APIs:
+
+```
+UiPath Sequence:
+  1. Read PDF Invoice (Document Understanding)
+  2. Extract fields → JSON object
+  3. HTTP Request: POST to UTLXe (JSON → UBL XML)
+  4. Write file: save UBL invoice
+  5. Upload to Peppol Access Point
+```
+
+Step 3 is the transformation — the robot sends extracted invoice data as JSON, receives a compliant UBL XML invoice back. The mapping logic (field names, VAT calculation, country codes) lives in a `.utlx` file, not in UiPath's expression builder.
+
+=== Why RPA Needs External Transformation
+
+RPA platforms have basic data manipulation — assign variables, simple string operations, basic JSON parsing. But they struggle with:
+
+- *Format conversion:* RPA extracts data as JSON or DataTable. Producing XML with namespaces, attributes, and nested structures is beyond most RPA expression builders.
+- *Complex mapping:* conditional fields, cross-reference lookups, array aggregation — these require a transformation language, not a visual variable assignment.
+- *Reusability:* RPA processes are monolithic. Extracting the transformation into a `.utlx` file means the same mapping can be used by multiple robots, workflows, and integrations.
+- *Compliance:* regulated industries need auditable, testable transformations. A `.utlx` file in Git with conformance tests is auditable. Logic embedded in a UiPath sequence is not.
+
+=== Common RPA + UTL-X Scenarios
+
+- *Invoice processing:* robot scrapes invoice PDF → UTL-X transforms to UBL XML → submit to e-invoicing network
+- *Employee onboarding:* robot reads HR email → UTL-X transforms to SAP IDoc → create employee in SAP
+- *Order entry:* robot scrapes web portal → UTL-X normalizes to canonical order format → push to ERP
+- *Report generation:* robot exports database query → UTL-X transforms to CSV with regional formatting → email to finance
+- *Legacy migration:* robot reads legacy screen → UTL-X transforms to new system's API format → POST to modern API
+
+In each case, the robot handles what requires a UI (clicking, typing, navigating). UTL-X handles what requires data intelligence (restructuring, converting, enriching).
+
 == Message Broker Integration
 
 UTLXe connects to message brokers via Dapr sidecars or native transports:

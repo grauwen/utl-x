@@ -65,6 +65,8 @@ XML has features that JSON lacks. Here's how each one translates:
   [Processing instructions], [Dropped], [Not representable in JSON],
 )
 
+To preserve leaf element attributes (like `currency="EUR"` on `<Total>299.99</Total>`), use `output json {writeAttributes: true}`. Chapter 22 covers the attribute handling design in detail.
+
 === Reshaping During Conversion
 
 Usually you don't want a 1:1 XML-to-JSON conversion — you want to reshape:
@@ -260,6 +262,30 @@ $input
 ```
 
 Pass-through is all you need. The only loss: YAML comments and anchors disappear in JSON (JSON has neither). Going JSON to YAML is lossless.
+
+== XML to YAML and YAML to XML
+
+XML to YAML follows the same rules as XML to JSON — the same attribute handling, namespace conventions, and CDATA treatment apply. The only difference is the output serializer:
+
+```utlx
+%utlx 1.0
+input xml
+output yaml
+---
+$input
+```
+
+To preserve leaf element attributes, use `output yaml {writeAttributes: true}` — the same option as JSON. Chapter 22 covers the attribute handling design in detail.
+
+YAML to XML is straightforward — use `@` prefixed properties for attributes and namespace declarations:
+
+```utlx
+%utlx 1.0
+input yaml
+output xml
+---
+$input
+```
 
 == Multi-Format Integration Flows
 
