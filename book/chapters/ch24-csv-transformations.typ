@@ -451,8 +451,7 @@ Read CSV orders, enrich with customer data from JSON:
 
 ```utlx
 %utlx 1.0
-input csv orders
-input json customers
+input: orders csv, customers json
 output csv {regionalFormat: "usa", decimals: 2}
 ---
 map($orders, (order) -> {

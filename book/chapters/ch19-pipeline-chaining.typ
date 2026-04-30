@@ -69,8 +69,7 @@ Before discussing pipelines, it's important to understand multi-input — a sing
 
 ```utlx
 %utlx 1.0
-input json orders
-input json customers
+input: orders json, customers json
 output json
 ---
 map($orders, (order) -> {
