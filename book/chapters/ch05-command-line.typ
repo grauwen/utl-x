@@ -22,7 +22,7 @@ echo '{"name": "Alice", "age": 30}' | utlx -e '.name'
 # "Alice"
 ```
 
-The dot (`.`) is shorthand for `$input`. So `.name` means `$input.name`. This mirrors jq's syntax — deliberately.
+The dot (`.`) is shorthand for `$input`. So `.name` means `$input.name`, and `.` alone means the entire input — the identity expression. This mirrors jq's syntax deliberately: `utlx -e '.'` is the UTL-X equivalent of `jq '.'`.
 
 === Raw Output (-r)
 
@@ -211,7 +211,7 @@ For developers coming from jq, here's how common patterns translate:
   [Sort], [`jq 'sort_by(.name)'`], [`utlx -e 'sortBy($input, (x) -> x.name)'`],
   [Keys], [`jq 'keys'`], [`utlx -e 'keys($input)'`],
   [Sum], [`jq '[.[].price] | add'`], [`utlx -e 'sum(map($input, (x) -> x.price))'`],
-  [Compact], [`jq -c '.'`], [`utlx -e '$input' --no-pretty`],
+  [Compact], [`jq -c '.'`], [`utlx -e '.' --no-pretty`],
 )
 
 The key difference: every UTL-X command above also works with `--from xml`, `--from csv`, or `--from yaml`. jq is JSON-only.
