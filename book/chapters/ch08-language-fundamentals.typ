@@ -96,6 +96,71 @@ $input.Product.@price          // the "price" attribute on <Product>
 
 This is specific to XML input — JSON, CSV, and YAML don't have attributes. See Chapter 21 for XML transformation details and Chapter 22 for the attribute design decisions.
 
+=== Wildcard Access
+
+The `*` selector returns _all_ children or attributes as an array:
+
+```utlx
+$input.IDOC.*              // all child elements of IDOC as an array
+$input.Order.@*            // all attribute values of <Order> as an array
+```
+
+This is name-wildcard navigation — "give me everything at this level." It does not filter by value; it collects all children (or all attributes) into an array.
+
+```utlx
+// XML: <Order id="A" status="open"><Line/><Line/><Line/></Order>
+
+$input.Order.*             // [Line, Line, Line]  — all child elements
+$input.Order.@*            // ["A", "open"]        — all attribute values
+```
+
+Wildcard access is particularly useful for flat data like SAP IDocs, where different segment types are siblings and you need to filter them by name:
+
+```utlx
+let headers = filter($input.IDOC.*, (seg) -> seg._name == "E1EDK01")
+let lines = filter($input.IDOC.*, (seg) -> seg._name == "E1EDP01")
+```
+
+=== Bracket Notation: Indexing Only
+
+Square brackets are for *index access* — by position (number) or by key (string/variable):
+
+```utlx
+$input.items[0]            // first element
+$input.items[2]            // third element
+$input.config["db-host"]   // key with special characters
+let key = "name"
+$input.user[key]           // dynamic key access
+```
+
+Square brackets are NOT for predicate filtering. This is a deliberate design decision:
+
+```utlx
+// DOES NOT WORK — UTL-X has no predicate syntax in brackets:
+$input.items[price > 10]
+
+// CORRECT — use filter() with a lambda:
+filter($input.items, (item) -> item.price > 10)
+```
+
+The full picture of access syntax:
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Syntax*], [*What it does*], [*Type*],
+  [`obj.name`], [Access one property by name], [Navigation],
+  [`obj.*`], [Access ALL properties as array], [Navigation (wildcard)],
+  [`obj.\@id`], [Access one attribute by name], [Navigation (XML)],
+  [`obj.\@*`], [Access ALL attributes as array], [Navigation (XML wildcard)],
+  [`arr\[0\]`], [Access element by position], [Indexing],
+  [`arr\[key\]`], [Access element by dynamic key], [Indexing],
+  [`filter(arr, ...)`], [Keep elements matching condition], [Filtering (function)],
+  [`arr\[x > 10\]`], [Not supported — use filter()], [N/A],
+)
+
+The distinction is clear: `.` navigates by name (with `*` as "all names"), `[]` indexes by position or key, and `filter()` selects by value. These are three separate operations that never overlap.
+
 === Computed Property Names
 
 When the key is dynamic, use square brackets:
