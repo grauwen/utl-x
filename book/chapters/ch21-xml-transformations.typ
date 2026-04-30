@@ -18,8 +18,8 @@ XML elements map to UDM Object properties. Access them with dot notation:
 ```
 
 ```utlx
-\$input.Order.Customer       // "Alice Johnson"
-\$input.Order.Total          // 299.99 (auto-detected as number)
+$input.Order.Customer       // "Alice Johnson"
+$input.Order.Total          // 299.99 (auto-detected as number)
 ```
 
 UTL-X auto-unwraps text content — you get the value directly, not a wrapper object. This is the B13/B14 behavior described in Chapter 9.
@@ -33,16 +33,16 @@ XML attributes use the `\@` prefix:
 ```
 
 ```utlx
-\$input.Product.@id          // "P-001"
-\$input.Product.@price       // "29.99" (string — attributes are always strings)
-\$input.Product.@currency    // "EUR"
-\$input.Product              // "Widget" (text content, auto-unwrapped)
+$input.Product.@id          // "P-001"
+$input.Product.@price       // "29.99" (string — attributes are always strings)
+$input.Product.@currency    // "EUR"
+$input.Product              // "Widget" (text content, auto-unwrapped)
 ```
 
 Note: attribute values are always strings. Use `toNumber()` for numeric attributes:
 
 ```utlx
-toNumber(\$input.Product.@price)    // 29.99 (number)
+toNumber($input.Product.@price)    // 29.99 (number)
 ```
 
 === Repeated Elements
@@ -58,9 +58,9 @@ When an XML element appears multiple times, UTL-X automatically creates an array
 ```
 
 ```utlx
-\$input.Items.Item           // ["Widget", "Gadget", "Gizmo"] (array)
-\$input.Items.Item[0]        // "Widget"
-count(\$input.Items.Item)    // 3
+$input.Items.Item           // ["Widget", "Gadget", "Gizmo"] (array)
+$input.Items.Item[0]        // "Widget"
+count($input.Items.Item)    // 3
 ```
 
 === The Single-Element Problem
@@ -74,14 +74,14 @@ If there's only ONE `Item`, it's parsed as a single object — not an array of o
 ```
 
 ```utlx
-\$input.Items.Item           // "Widget" (NOT ["Widget"])
+$input.Items.Item           // "Widget" (NOT ["Widget"])
 ```
 
 This can break code that expects an array. Solution: use array hints or always wrap with `flatten([...])`:
 
 ```utlx
 // Safe: always treat as array
-let items = if (isArray(\$input.Items.Item)) \$input.Items.Item else [\$input.Items.Item]
+let items = if (isArray($input.Items.Item)) $input.Items.Item else [$input.Items.Item]
 map(items, (i) -> ...)
 ```
 
@@ -92,14 +92,14 @@ The XML parser supports array hints — element names that should always be trea
 Deep access chains naturally:
 
 ```utlx
-\$input.Invoice.AccountingSupplierParty.Party.PartyName.Name
-\$input.Bundle.entry[0].resource.Patient.name[0].family
+$input.Invoice.AccountingSupplierParty.Party.PartyName.Name
+$input.Bundle.entry[0].resource.Patient.name[0].family
 ```
 
 Use safe navigation for optional elements:
 
 ```utlx
-\$input.Invoice?.AccountingCustomerParty?.Party?.Contact?.ElectronicMail
+$input.Invoice?.AccountingCustomerParty?.Party?.Contact?.ElectronicMail
 ```
 
 === Namespace-Prefixed Elements
@@ -117,7 +117,7 @@ XML with namespace prefixes:
 Access with the full prefixed name:
 
 ```utlx
-\$input["cac:AccountingSupplierParty"]["cac:Party"]["cbc:Name"]
+$input["cac:AccountingSupplierParty"]["cac:Party"]["cbc:Name"]
 ```
 
 Bracket notation is required because `:` is not valid in dot notation. This is common in UBL, FHIR, and XBRL documents.
@@ -135,8 +135,8 @@ output xml
 ---
 {
   Order: {
-    Customer: \$input.name,
-    Total: \$input.amount
+    Customer: $input.name,
+    Total: $input.amount
   }
 }
 ```
@@ -160,7 +160,7 @@ Use `\@` prefix in property names:
   Product: {
     @id: "P-001",
     @currency: "EUR",
-    _text: \$input.description
+    _text: $input.description
   }
 }
 ```
@@ -196,8 +196,8 @@ Add XML namespace declarations as attributes:
   Invoice: {
     "@xmlns": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
     "@xmlns:cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
-    "cbc:ID": \$input.invoiceNumber,
-    "cbc:IssueDate": \$input.date
+    "cbc:ID": $input.invoiceNumber,
+    "cbc:IssueDate": $input.date
   }
 }
 ```
@@ -226,8 +226,8 @@ output xml {encoding: "ISO-8859-1"} // legacy systems
 UTL-X can detect and convert between XML encodings:
 
 ```utlx
-detectXMLEncoding(\$input)                        // "UTF-8" or "ISO-8859-1"
-convertXMLEncoding(\$input, "UTF-8")              // re-encode to UTF-8
+detectXMLEncoding($input)                        // "UTF-8" or "ISO-8859-1"
+convertXMLEncoding($input, "UTF-8")              // re-encode to UTF-8
 ```
 
 This is essential when integrating with legacy systems that use ISO-8859-1 or Windows-1252. UTL-X reads any encoding and outputs in the declared encoding.
@@ -246,7 +246,7 @@ When XML is transformed to JSON or YAML, attributes need special handling becaus
 
 ```utlx
 // Strip the SOAP envelope, extract the business payload:
-let body = \$input["soap:Envelope"]["soap:Body"]
+let body = $input["soap:Envelope"]["soap:Body"]
 let payload = body[keys(body)[0]]    // first child of Body = the operation result
 {
   ...payload
@@ -256,7 +256,7 @@ let payload = body[keys(body)[0]]    // first child of Body = the operation resu
 === UBL Invoice (Peppol BIS 3.0)
 
 ```utlx
-let inv = \$input.Invoice
+let inv = $input.Invoice
 {
   invoiceId: inv["cbc:ID"],
   issueDate: inv["cbc:IssueDate"],
@@ -278,7 +278,7 @@ let inv = \$input.Invoice
 FHIR uses `value` attributes instead of text content (see FHIR analysis in the architecture docs):
 
 ```utlx
-let patient = \$input.Patient
+let patient = $input.Patient
 {
   resourceType: "Patient",
   id: patient.id.@value,
@@ -297,10 +297,10 @@ SAP exports IDocs as flat XML segments (see Chapter 20 on data restructuring for
 ```utlx
 // Simple field extraction from IDoc:
 {
-  orderNumber: \$input.IDOC.E1EDK01.BELNR,
-  customer: \$input.IDOC.E1EDK01.KUNNR,
-  currency: \$input.IDOC.E1EDK01.WAERK,
-  lines: map(\$input.IDOC.E1EDP01, (line) -> {
+  orderNumber: $input.IDOC.E1EDK01.BELNR,
+  customer: $input.IDOC.E1EDK01.KUNNR,
+  currency: $input.IDOC.E1EDK01.WAERK,
+  lines: map($input.IDOC.E1EDP01, (line) -> {
     material: line.MATNR,
     quantity: toNumber(line.MENGE),
     price: toNumber(line.NETPR)

@@ -47,8 +47,8 @@ Target expects nested:
 
 ```utlx
 nestBy(
-  \$input.orders,                    // parent array
-  \$input.orderLines,                // child array
+  $input.orders,                    // parent array
+  $input.orderLines,                // child array
   (order) -> order.orderId,          // parent key
   (line) -> line.orderId,            // child key
   "lines"                            // property name for nested children
@@ -73,10 +73,10 @@ map(enrichedOrders, (order) -> {
 Until `nestBy()` is implemented, use `filter()` per parent:
 
 ```utlx
-map(\$input.orders, (order) -> {
+map($input.orders, (order) -> {
   orderId: order.orderId,
   customer: order.customer,
-  lines: filter(\$input.orderLines, (l) -> l.orderId == order.orderId)
+  lines: filter($input.orderLines, (l) -> l.orderId == order.orderId)
 })
 ```
 
@@ -105,7 +105,7 @@ You want: `{orderId: "ORD-001", customerName: "Acme Corp", country: "NL"}` — n
 === The Solution: lookupBy()
 
 ```utlx
-let customer = lookupBy(order.customerId, \$input.customers, (c) -> c.id)
+let customer = lookupBy(order.customerId, $input.customers, (c) -> c.id)
 
 {
   orderId: order.orderId,
@@ -122,7 +122,7 @@ let customer = lookupBy(order.customerId, \$input.customers, (c) -> c.id)
 Use `find()`:
 
 ```utlx
-let customer = find(\$input.customers, (c) -> c.id == order.customerId)
+let customer = find($input.customers, (c) -> c.id == order.customerId)
 ```
 
 Identical result. `lookupBy()` adds the potential for internal caching when used repeatedly inside `map()`.
@@ -148,7 +148,7 @@ No key connects lines to headers. Position is the only relationship: "everything
 === The Solution: chunkBy()
 
 ```utlx
-let groups = chunkBy(\$input.segments, (seg) -> seg.type == "E1EDK01")
+let groups = chunkBy($input.segments, (seg) -> seg.type == "E1EDK01")
 
 map(groups, (chunk) -> {
   header: chunk[0],
@@ -194,7 +194,7 @@ Each parent field must be repeated for every child row.
 input json
 output csv
 ---
-unnest(\$input.orders, "lines")
+unnest($input.orders, "lines")
 ```
 
 One function call. The `"lines"` parameter tells `unnest()` which nested array to expand. Parent fields (orderId, customer) are automatically repeated for each child. The `lines` property itself is removed from the output.
@@ -202,13 +202,13 @@ One function call. The `"lines"` parameter tells `unnest()` which nested array t
 For multi-level flattening, chain:
 
 ```utlx
-\$input.orders |> unnest("lines") |> unnest("schedules")
+$input.orders |> unnest("lines") |> unnest("schedules")
 ```
 
 === Today's Workaround (without unnest)
 
 ```utlx
-flatten(map(\$input.orders, (order) ->
+flatten(map($input.orders, (order) ->
   map(order.lines, (line) -> {
     orderId: order.orderId,
     customer: order.customer,
@@ -224,7 +224,7 @@ Works but requires manually listing parent fields or using spread (which include
 Group flat records into a map by key. Already available in UTL-X.
 
 ```utlx
-groupBy(\$input.employees, (e) -> e.department)
+groupBy($input.employees, (e) -> e.department)
 // {"Engineering": [{...}, {...}], "Sales": [{...}], "Marketing": [{...}]}
 ```
 
@@ -258,7 +258,7 @@ Real integrations often combine multiple patterns:
 
 ```utlx
 // 1. Group sequential segments (chunkBy)
-let orderGroups = chunkBy(\$input.segments, (seg) -> seg.type == "E1EDK01")
+let orderGroups = chunkBy($input.segments, (seg) -> seg.type == "E1EDK01")
 
 // 2. Structure into parent-child (map)
 let orders = map(orderGroups, (chunk) -> {
@@ -268,7 +268,7 @@ let orders = map(orderGroups, (chunk) -> {
 
 // 3. Enrich with customer data (lookupBy)
 map(orders, (order) -> {
-  let customer = lookupBy(order.KUNNR, \$input.customers, (c) -> c.id)
+  let customer = lookupBy(order.KUNNR, $input.customers, (c) -> c.id)
 
   orderId: order.BELNR,
   customer: customer?.name ?? "Unknown",
@@ -286,11 +286,11 @@ Three patterns combined: `chunkBy` (sequential → grouped), `map` (grouped → 
 
 ```utlx
 // 1. Unnest orders → lines
-let flat = unnest(\$input.orders, "lines")
+let flat = unnest($input.orders, "lines")
 
 // 2. Enrich with product descriptions (lookupBy)
 map(flat, (row) -> {
-  let product = lookupBy(row.productCode, \$input.catalog, (p) -> p.code)
+  let product = lookupBy(row.productCode, $input.catalog, (p) -> p.code)
 
   ...row,
   productDescription: product?.description ?? row.productCode,

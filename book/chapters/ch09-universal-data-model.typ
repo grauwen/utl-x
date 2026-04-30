@@ -277,8 +277,8 @@ A future `nestBy()` stdlib function could simplify the common case:
 
 ```utlx
 let enrichedOrders = nestBy(
-  \$input.IDOC.E1EDK01,           // parent records
-  \$input.IDOC.E1EDP01,           // child records
+  $input.IDOC.E1EDK01,           // parent records
+  $input.IDOC.E1EDP01,           // child records
   (header) -> header.BELNR,       // parent key extractor
   (line) -> line.BELNR,           // child key extractor
   "lines"                         // name for the new property on each parent
