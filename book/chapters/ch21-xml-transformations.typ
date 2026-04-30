@@ -373,16 +373,169 @@ When XML is transformed to JSON or YAML, attributes need special handling becaus
 
 == Common XML Patterns
 
-=== SOAP Envelope Parsing
+=== SOAP (Simple Object Access Protocol)
+
+SOAP is still dominant in banking, government, insurance, and healthcare integration. A SOAP message has a fixed envelope structure:
+
+```xml
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:wsa="http://www.w3.org/2005/08/addressing"
+               xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/...">
+  <soap:Header>
+    <wsa:To>https://api.example.com/payments</wsa:To>
+    <wsa:Action>ProcessPayment</wsa:Action>
+    <wsa:MessageID>urn:uuid:550e8400-e29b-41d4-a716-446655440000</wsa:MessageID>
+    <wsse:Security>
+      <wsse:UsernameToken>
+        <wsse:Username>serviceAccount</wsse:Username>
+      </wsse:UsernameToken>
+    </wsse:Security>
+  </soap:Header>
+  <soap:Body>
+    <pay:ProcessPayment xmlns:pay="urn:example:payments">
+      <pay:Amount currency="EUR">1500.00</pay:Amount>
+      <pay:Creditor>Acme Corp</pay:Creditor>
+    </pay:ProcessPayment>
+  </soap:Body>
+</soap:Envelope>
+```
+
+==== Extracting the Business Payload
+
+The most common pattern — strip the envelope and extract the body content:
 
 ```utlx
-// Strip the SOAP envelope, extract the business payload:
 let body = $input["soap:Envelope"]["soap:Body"]
-let payload = body[keys(body)[0]]    // first child of Body = the operation result
+let payload = body[keys(body)[0]]    // first child of Body = the operation
 {
   ...payload
 }
 ```
+
+==== Accessing SOAP Headers
+
+SOAP headers carry routing, security, and transaction metadata. Access them alongside the body:
+
+```utlx
+let envelope = $input["soap:Envelope"]
+let header = envelope["soap:Header"]
+let body = envelope["soap:Body"]
+let payload = body[keys(body)[0]]
+
+{
+  // Metadata from headers
+  destination: header["wsa:To"],
+  action: header["wsa:Action"],
+  messageId: header["wsa:MessageID"],
+  authenticatedUser: header["wsse:Security"]?.["wsse:UsernameToken"]?.["wsse:Username"],
+
+  // Business data from body
+  amount: toNumber(payload["pay:Amount"]),
+  currency: payload["pay:Amount"].@currency,
+  creditor: payload["pay:Creditor"]
+}
+```
+
+Common SOAP headers you'll encounter:
+
+- *WS-Addressing* (`wsa:`) — `To`, `Action`, `MessageID`, `ReplyTo`, `FaultTo` — routing and correlation
+- *WS-Security* (`wsse:`) — `UsernameToken`, `BinarySecurityToken`, `Timestamp` — authentication and signatures
+- *WS-ReliableMessaging* (`wsrm:`) — `Sequence`, `AckRequested` — guaranteed delivery
+- *Custom headers* — application-specific metadata (transaction IDs, tenant identifiers, trace context)
+
+==== SOAP 1.1 vs 1.2
+
+The envelope namespace differs between versions:
+
+```utlx
+// SOAP 1.1
+let body = $input["soap:Envelope"]["soap:Body"]
+// namespace: http://schemas.xmlsoap.org/soap/envelope/
+
+// SOAP 1.2
+let body = $input["soap12:Envelope"]["soap12:Body"]
+// namespace: http://www.w3.org/2003/05/soap-envelope
+
+// Version-agnostic (check which prefix exists):
+let envelope = $input["soap:Envelope"] ?? $input["soap12:Envelope"]
+let body = envelope["soap:Body"] ?? envelope["soap12:Body"]
+```
+
+In practice, the namespace prefix may vary (`soap`, `soapenv`, `SOAP-ENV`, `soap12`). Use `getNamespaces()` to discover what prefix the sender used, or access by position using `.*`:
+
+```utlx
+// Truly prefix-agnostic: get the first (and only) child of root
+let envelope = $input.*[0]
+let header = envelope.*[0]       // first child = Header (if present)
+let body = envelope.*[1]         // second child = Body
+// Note: if no Header, Body is the first child — check with localName()
+```
+
+==== Handling SOAP Faults
+
+SOAP faults are error responses with a structured format:
+
+```xml
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <soap:Fault>
+      <faultcode>soap:Client</faultcode>
+      <faultstring>Invalid payment amount</faultstring>
+      <detail>
+        <errorCode>PAY-001</errorCode>
+        <message>Amount must be positive</message>
+      </detail>
+    </soap:Fault>
+  </soap:Body>
+</soap:Envelope>
+```
+
+```utlx
+let body = $input["soap:Envelope"]["soap:Body"]
+let fault = body["soap:Fault"]
+
+if (fault != null) {
+  error: true,
+  code: fault.faultcode,
+  message: fault.faultstring,
+  detail: fault.detail?.errorCode,
+  detailMessage: fault.detail?.message
+} else {
+  let payload = body[keys(body)[0]]
+  error: false,
+  ...payload
+}
+```
+
+==== Constructing SOAP Requests
+
+Build a SOAP envelope for calling a web service:
+
+```utlx
+%utlx 1.0
+input json
+output xml
+---
+{
+  "soap:Envelope": {
+    "@xmlns:soap": "http://schemas.xmlsoap.org/soap/envelope/",
+    "@xmlns:pay": "urn:example:payments",
+    "soap:Header": {
+      "wsa:To": { "@xmlns:wsa": "http://www.w3.org/2005/08/addressing", "_text": $input.endpoint },
+      "wsa:Action": { "@xmlns:wsa": "http://www.w3.org/2005/08/addressing", "_text": "ProcessPayment" }
+    },
+    "soap:Body": {
+      "pay:ProcessPayment": {
+        "pay:Amount": { "@currency": $input.currency, "_text": toString($input.amount) },
+        "pay:Creditor": $input.creditorName,
+        "pay:IBAN": $input.creditorIban
+      }
+    }
+  }
+}
+```
+
+This transforms a simple JSON payment request into a fully namespaced SOAP envelope with WS-Addressing headers — ready to POST to a SOAP endpoint.
 
 === UBL Invoice (Peppol BIS 3.0)
 
