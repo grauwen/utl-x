@@ -173,16 +173,108 @@ let key = "fullName"
 
 === The Spread Operator
 
-Merge objects with `...`:
+The spread operator (`...`) copies all properties from one object into another. It is one of the most-used features in UTL-X — essential whenever you want to keep most fields and change a few.
+
+==== Basic Usage
 
 ```utlx
 let base = {name: "Alice", age: 30}
 let override = {age: 31, active: true}
 {...base, ...override}
-// produces: {name: "Alice", age: 31, active: true}
+// {name: "Alice", age: 31, active: true}
 ```
 
-Later spreads override earlier ones — `age: 31` wins over `age: 30`.
+Properties from `override` are merged into `base`. When both have the same key (`age`), the *last* one wins — `age: 31` overrides `age: 30`.
+
+==== The "Keep Everything, Change Some" Pattern
+
+This is the dominant use case. You receive an object with 20 fields and need to change 2:
+
+```utlx
+// Without spread: list all 20 fields manually
+{
+  id: $input.id,
+  name: $input.name,
+  email: $input.email,
+  // ... 17 more fields ...
+  status: "CONFIRMED"    // the one field you actually want to change
+}
+
+// With spread: copy everything, override what you need
+{
+  ...$input,
+  status: "CONFIRMED",
+  confirmedAt: now()
+}
+```
+
+If the source adds a new field tomorrow, the spread version picks it up automatically. The manual version silently drops it.
+
+==== Order Matters
+
+Properties are applied left to right. Later values override earlier ones:
+
+```utlx
+{
+  ...$input,          // start with all original fields
+  status: "DONE",     // override status
+  ...$input.extras    // merge in extras (could override status again!)
+}
+```
+
+To ensure your explicit fields always win, put them *after* the spread:
+
+```utlx
+{...$input, status: "DONE"}   // status is always "DONE"
+{status: "DONE", ...$input}   // status is whatever $input.status was!
+```
+
+==== Spread Is Shallow
+
+Spread copies properties one level deep. Nested objects are not cloned — they're referenced:
+
+```utlx
+let order = {id: "A", customer: {name: "Alice", city: "Amsterdam"}}
+
+// This does NOT deep-merge the customer:
+{...order, customer: {city: "Rotterdam"}}
+// Result: {id: "A", customer: {city: "Rotterdam"}}
+// customer.name is GONE — the entire customer object was replaced
+
+// To update a nested field, spread at each level:
+{
+  ...order,
+  customer: {
+    ...order.customer,
+    city: "Rotterdam"
+  }
+}
+// Result: {id: "A", customer: {name: "Alice", city: "Rotterdam"}}
+```
+
+This nested spread pattern is common when transforming YAML configurations — see the Kubernetes manifest example in Chapter 25.
+
+==== Excluding Fields
+
+Spread copies *all* properties — including ones you might not want. There is no built-in "spread except" syntax. To exclude a field, explicitly override it with a new value or restructure:
+
+```utlx
+// Problem: order has a "lines" array you don't want in the flat output
+let order = {id: "A", customer: "Alice", lines: [{...}, {...}]}
+
+// Spread includes "lines" — unwanted:
+{...order, total: 100}
+// {id: "A", customer: "Alice", lines: [...], total: 100}
+
+// Solution: list only the fields you need
+{
+  id: order.id,
+  customer: order.customer,
+  total: 100
+}
+```
+
+This is a conscious trade-off: spread is convenient for "keep most, change some" but not ideal for "keep some, drop most." Use explicit field listing when you need to exclude.
 
 == Arrays
 
