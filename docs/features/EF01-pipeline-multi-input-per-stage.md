@@ -1,4 +1,4 @@
-# F07: Pipeline Multi-Input per Stage (Additional Inputs per Hop)
+# EF01: Pipeline Multi-Input per Stage (Additional Inputs per Hop) - engine feauture
 
 **Status:** Proposed (was task #25 — pending since early development)  
 **Priority:** Medium  
