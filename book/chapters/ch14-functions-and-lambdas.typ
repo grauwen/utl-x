@@ -131,17 +131,155 @@ map($input.employees, (emp) -> {
 
 === filter — Select Matching Elements
 
+`filter` is one of the most-used functions — and one of the most misunderstood. It takes an array and a lambda that returns true or false for each element. Only elements where the lambda returns true are kept:
+
 ```utlx
 filter(array, (element) -> booleanCondition)
 ```
 
-Keeps only elements where the lambda returns true:
+==== Basic Examples
 
 ```utlx
+// Keep orders over 100
 filter($input.orders, (o) -> o.total > 100)
 
+// Keep active admin users
 filter($input.users, (u) -> u.role == "admin" && u.active)
+
+// Keep non-null values
+filter($input.items, (item) -> item != null)
+
+// Keep strings containing "error"
+filter($input.logLines, (line) -> contains(line, "error"))
 ```
+
+==== Common Anti-Pattern: Array Predicate Syntax
+
+If you've used XPath, jq, or JSONPath, you might try this:
+
+```utlx
+// WRONG — this does NOT work in UTL-X:
+$input.items[price > 10]
+$input.orders[status == "ACTIVE"]
+$input.users[age >= 18]
+```
+
+UTL-X does NOT support predicate filtering inside bracket notation. Square brackets are for *index access only* — `$input.items[0]` gets the first element, `$input.items[2]` gets the third.
+
+The correct UTL-X way:
+
+```utlx
+// CORRECT — use filter() with a lambda:
+filter($input.items, (item) -> item.price > 10)
+filter($input.orders, (o) -> o.status == "ACTIVE")
+filter($input.users, (u) -> u.age >= 18)
+```
+
+Why doesn't UTL-X support `$input.items[price > 10]`? Because bracket notation serves one purpose (indexing), and adding predicate filtering would create ambiguity: is `items[x]` an index access (get element at position x) or a filter (keep elements where x is truthy)? UTL-X avoids this ambiguity by keeping indexing and filtering as separate, explicit operations.
+
+==== Common Anti-Pattern: Filtering Then Counting
+
+```utlx
+// INEFFICIENT — filtering twice:
+let activeUsers = filter($input.users, (u) -> u.active)
+let activeCount = count(filter($input.users, (u) -> u.active))
+
+// BETTER — filter once, count the result:
+let activeUsers = filter($input.users, (u) -> u.active)
+let activeCount = count(activeUsers)
+```
+
+Always bind the filter result to a `let` variable if you use it more than once.
+
+==== Common Anti-Pattern: Filter + Map When You Need Both
+
+```utlx
+// COMMON MISTAKE — filtering and mapping separately, losing context:
+let expensiveItems = filter($input.items, (i) -> i.price > 100)
+let expensiveNames = map(expensiveItems, (i) -> i.name)
+// Works, but you've lost the price information
+
+// BETTER — map first (keeping what you need), then filter:
+$input.items
+  |> map((i) -> {name: i.name, price: i.price, category: i.category})
+  |> filter((i) -> i.price > 100)
+
+// OR — filter first, then map (more efficient if most items are filtered out):
+$input.items
+  |> filter((i) -> i.price > 100)
+  |> map((i) -> {name: i.name, price: i.price, category: i.category})
+```
+
+The order (filter-then-map vs map-then-filter) depends on your goal:
+- Filter first when you want to *reduce the dataset* before transforming (fewer items to map)
+- Map first when the *filter condition depends on the transformed data*
+
+==== Multi-Condition Filters
+
+Combine conditions with `&&` (and) and `||` (or):
+
+```utlx
+// AND: all conditions must be true
+filter($input.products, (p) ->
+  p.inStock && p.price < 50 && p.category == "Electronics"
+)
+
+// OR: any condition can be true
+filter($input.events, (e) ->
+  e.severity == "ERROR" || e.severity == "CRITICAL"
+)
+
+// Complex: combine AND and OR with parentheses
+filter($input.orders, (o) ->
+  o.status == "PENDING" && (o.total > 1000 || o.priority == "HIGH")
+)
+```
+
+==== Negation: Exclude Instead of Include
+
+```utlx
+// Keep everything EXCEPT cancelled orders
+filter($input.orders, (o) -> o.status != "CANCELLED")
+
+// Remove null/empty values
+filter($input.tags, (tag) -> tag != null && tag != "")
+
+// Exclude a list of values
+let excluded = ["DRAFT", "CANCELLED", "ARCHIVED"]
+filter($input.orders, (o) -> !contains(excluded, o.status))
+```
+
+==== Filter with Safe Navigation
+
+When the filter property might not exist on every element:
+
+```utlx
+// WRONG — crashes if an element doesn't have "address"
+filter($input.customers, (c) -> c.address.country == "NL")
+
+// CORRECT — safe navigation handles missing properties
+filter($input.customers, (c) -> c.address?.country == "NL")
+
+// ALSO CORRECT — explicit null check
+filter($input.customers, (c) -> c.address != null && c.address.country == "NL")
+```
+
+==== Filter Returns an Array (Always)
+
+`filter` always returns an array — even if zero or one elements match:
+
+```utlx
+let matches = filter($input.items, (i) -> i.id == "X-001")
+// matches is [] if nothing found
+// matches is [{id: "X-001", ...}] if one found
+// matches is [{...}, {...}] if multiple found (duplicates)
+
+// If you want the FIRST match (not an array), use find():
+let match = find($input.items, (i) -> i.id == "X-001")
+// match is the object directly, or null if not found
+```
+
+This is a common confusion: `filter` returns `[item]` (array of one), `find` returns `item` (the object itself or null). Use `filter` when you expect multiple results, `find` when you expect one.
 
 === reduce — Accumulate a Result
 
