@@ -190,7 +190,7 @@ These are *semantic* rules — they involve business logic, cross-field relation
 
 === The Gap
 
-UTL-X currently supports syntactical validation (7 schema validators). Semantic validation — business rules expressed in languages like Schematron, FEEL, or custom assertions — is a planned future capability. Chapter 38 covers the semantic validation vision in detail, including the proposed `assert` syntax:
+UTL-X currently supports syntactical validation (7 schema validators). Semantic validation — business rules expressed in languages like Schematron, FEEL, or custom assertions — is a planned future capability. Chapter 39 covers the semantic validation vision in detail, including the proposed `assert` syntax:
 
 ```utlx
 // Future syntax (not yet implemented):

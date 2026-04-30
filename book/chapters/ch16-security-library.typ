@@ -213,7 +213,7 @@ For files under 50 KB (small images, digital signatures), Base64 is acceptable. 
 
 == What NOT to Log
 
-This topic is covered in depth in Chapter 36 (Logging and Compliance). The short version:
+This topic is covered in depth in Chapter 37 (Logging and Compliance). The short version:
 
 *Never log:* credit card numbers (PCI DSS), patient data (HIPAA/GDPR), passwords, API keys, session tokens, private keys.
 

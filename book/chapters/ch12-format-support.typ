@@ -72,7 +72,7 @@ Schema formats describe the _structure_ of data — types, constraints, cardinal
 The W3C standard for XML validation. Every enterprise XML standard (UBL, HL7, ISO 20022, EDIFACT) ships with XSD.
 
 - *Versions:* 1.0 and 1.1
-- *Patterns:* Russian Doll, Venetian Blind, Salami Slice, Garden of Eden, Swiss Army Knife (Chapter 27)
+- *Patterns:* Russian Doll, Venetian Blind, Salami Slice, Garden of Eden, Swiss Army Knife (Chapter 28)
 - *Features:* complex types, simple types, restrictions, extensions, imports
 
 === JSCH (JSON Schema)

@@ -132,7 +132,7 @@ The engine offers four strategies that trade initialization time for runtime per
   [AUTO], [Depends], [Depends], [Production default (schema → COPY, else → TEMPLATE)],
 )
 
-COMPILED strategy compiles UTL-X expressions to JVM bytecode using the ASM library — the same technology that Java itself uses. This achieves throughput of 86,000+ messages per second on a single instance with 8 workers. Chapter 30 covers the engine lifecycle (design-time, init-time, runtime) and Chapter 34 covers performance tuning.
+COMPILED strategy compiles UTL-X expressions to JVM bytecode using the ASM library — the same technology that Java itself uses. This achieves throughput of 86,000+ messages per second on a single instance with 8 workers. Chapter 31 covers the engine lifecycle (design-time, init-time, runtime) and Chapter 35 covers performance tuning.
 
 *Cloud deployment:*
 
@@ -143,7 +143,7 @@ UTLXe is designed for containerized environments:
 - AWS ECS/Fargate — CloudFormation template, \$44/month
 - Any Kubernetes cluster — Docker image from `ghcr.io`
 
-Chapter 31 covers cloud deployment in detail.
+Chapter 32 covers cloud deployment in detail.
 
 == Comparison at a Glance
 
@@ -185,7 +185,7 @@ Available wrappers:
   [Java / Kotlin], [Native (no wrapper)], [Direct API — UTLXe IS JVM],
 )
 
-Chapter 32 covers SDKs and wrappers in detail.
+Chapter 33 covers SDKs and wrappers in detail.
 
 == When to Use Which
 

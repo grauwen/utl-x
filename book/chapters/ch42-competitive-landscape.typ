@@ -34,7 +34,7 @@
 // - Limitations: XML only, verbose syntax, no JSON/CSV/YAML, steep learning curve
 // - UTL-X advantage: all formats, modern syntax, functional paradigm
 // - Still dominant in: government, banking, healthcare (legacy)
-// - UTL-X migration path: Chapter 22 (Migration from XSLT)
+// - UTL-X migration path: Chapter 34 (Migration from XSLT)
 
 == Enterprise Integration Platforms (iPaaS)
 

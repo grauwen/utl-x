@@ -1,6 +1,6 @@
 = Standard Library Overview
 
-UTL-X ships with 652 built-in functions organized in 18 categories. This chapter provides a guided tour — what each category offers, when you'd use it, and the most important functions in each. The complete reference with signatures and examples for every function is in Part VIII (Chapter 48).
+UTL-X ships with 652 built-in functions organized in 18 categories. This chapter provides a guided tour — what each category offers, when you'd use it, and the most important functions in each. The complete reference with signatures and examples for every function is in Part VIII (Chapter 49).
 
 You don't need to memorize 652 functions. You need to know _what categories exist_ so you can search for the right function when you need it. The IDE's function library and `utlx functions --search` command make discovery easy.
 
@@ -305,7 +305,7 @@ The function library panel in VS Code lets you browse by category and search by 
 
 === In This Book
 
-Chapter 48 (Part VIII) contains the complete reference — every function with its signature, parameter types, return type, description, and a runnable example. Use it as a desk reference.
+Chapter 49 (Part VIII) contains the complete reference — every function with its signature, parameter types, return type, description, and a runnable example. Use it as a desk reference.
 
 == A Note on Naming
 

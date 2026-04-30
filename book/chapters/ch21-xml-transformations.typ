@@ -234,7 +234,7 @@ This is essential when integrating with legacy systems that use ISO-8859-1 or Wi
 
 == XML Attributes in JSON/YAML Output
 
-When XML is transformed to JSON or YAML, attributes need special handling because JSON and YAML have no concept of attributes. Chapter 21 covers this in detail. The short version:
+When XML is transformed to JSON or YAML, attributes need special handling because JSON and YAML have no concept of attributes. Chapter 22 covers this in detail. The short version:
 
 - Non-leaf element attributes: preserved as `\@key` properties (always)
 - Leaf element attributes: dropped by default, preserved with `{writeAttributes: true}`

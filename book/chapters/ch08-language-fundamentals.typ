@@ -94,7 +94,7 @@ $input.Order.@id              // the "id" attribute on <Order>
 $input.Product.@price          // the "price" attribute on <Product>
 ```
 
-This is specific to XML input — JSON, CSV, and YAML don't have attributes. See Chapter 20 for XML transformation details and Chapter 21 for the attribute design decisions.
+This is specific to XML input — JSON, CSV, and YAML don't have attributes. See Chapter 21 for XML transformation details and Chapter 22 for the attribute design decisions.
 
 === Computed Property Names
 

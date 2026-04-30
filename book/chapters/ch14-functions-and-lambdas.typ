@@ -499,4 +499,4 @@ map($input.items, (item) ->
 
 The functions shown in this chapter — `map`, `filter`, `reduce`, `find`, `sortBy`, `groupBy`, `concat`, `sum`, `count`, `unique`, `flatten` — are just the beginning. UTL-X includes 652 functions across 18 categories.
 
-The next chapter provides an overview organized by category. The complete reference with signatures and examples is in Part VIII (Chapter 48).
+The next chapter provides an overview organized by category. The complete reference with signatures and examples is in Part VIII (Chapter 49).

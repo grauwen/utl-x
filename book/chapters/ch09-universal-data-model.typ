@@ -86,7 +86,7 @@ The key design decisions for XML:
 
 *Text content uses \_text.* When an XML element contains only text — like `<Name>Alice</Name>` — the text is stored as a property called `\_text` inside the UDM Object. This is an internal convention that you never see in output (the serializers unwrap it automatically). It exists because UDM Objects store properties as a map, and the text content needs a key.
 
-When you write `\$input.Order.Customer`, UTL-X automatically unwraps the `\_text` and returns "Alice" — not the internal `\{\_text: "Alice"\}` wrapper. This unwrapping was refined through bugs B13 and B14 (see Chapter 21 for the full story).
+When you write `\$input.Order.Customer`, UTL-X automatically unwraps the `\_text` and returns "Alice" — not the internal `\{\_text: "Alice"\}` wrapper. This unwrapping was refined through bugs B13 and B14 (see Chapter 22 for the full story).
 
 *Attributes are separate.* XML attributes are stored in a separate `attributes` map on the UDM Object, not mixed with child element properties. This prevents name collisions — an element could theoretically have both a child element and an attribute with the same name. Access attributes with the `\@` prefix: `\$input.Order.\@id`.
 
@@ -196,7 +196,7 @@ The unwrapping rules:
 - If an Object has `\_text` AND attributes → keep as Object (attributes would be lost)
 - If an Object has child elements → no unwrapping (it's a real object)
 
-These rules were stabilized in bugs B13 (property access unwrapping) and B14 (serializer output unwrapping). Chapter 21 covers the design decisions in detail.
+These rules were stabilized in bugs B13 (property access unwrapping) and B14 (serializer output unwrapping). Chapter 22 covers the design decisions in detail.
 
 == UDM is Format-Agnostic, Transformations are Format-Agnostic
 
@@ -304,7 +304,7 @@ Most of the time, you don't think about UDM — you just write `\$input.name` an
 
 - You're debugging unexpected behavior (especially XML attributes and \_text)
 - You're working with flat/relational data (IDoc segments, CSV with foreign keys)
-- You're optimizing memory usage (UDM expansion factors — see Chapter 35)
+- You're optimizing memory usage (UDM expansion factors — see Chapter 36)
 - You're working with the COMPILED strategy (which generates bytecode against UDM types)
 - You're writing a wrapper library (which serializes UDM to/from protobuf)
 - You're contributing to UTL-X itself (all core logic operates on UDM)
