@@ -268,12 +268,60 @@ This is essentially what Mercator's intermediate card does — but expressed as 
 
 ---
 
+## The Complete Restructuring Toolkit
+
+`nestBy()` solves 1:N parent-child nesting, but real integrations need more. The full set of proposed restructuring functions:
+
+| Function | Pattern | What it does | Feature |
+|----------|---------|-------------|---------|
+| `nestBy()` | Flat → Hierarchical | Nest children under parents by key (1:N) | F03 |
+| `lookupBy()` | Flat → Enriched | Find ONE matching record by key (1:1 enrichment) | F04 |
+| `chunkBy()` | Flat → Grouped | Group sequential records by position (no keys) | F05 |
+| `unnest()` | Hierarchical → Flat | Expand nested children alongside parents (reverse of nestBy) | F06 |
+
+### Naming convention
+
+Functions that take a **lambda** for key extraction use the `By` suffix. Functions that take a plain value do not:
+
+| Function | Takes lambda? | By suffix? |
+|----------|--------------|------------|
+| `nestBy()` | Yes | Yes |
+| `lookupBy()` | Yes | Yes |
+| `chunkBy()` | Yes | Yes |
+| `unnest()` | No (string property name) | No |
+
+### How they combine
+
+A typical SAP IDoc integration uses three of these together:
+
+```utlx
+// 1. Group sequential segments by position (chunkBy — F05)
+let orderGroups = chunkBy($input.segments, (seg) -> seg.type == "E1EDK01")
+
+// 2. Nest lines under headers by key (nestBy — F03)
+let orders = nestBy($input.headers, $input.lines,
+  (h) -> h.BELNR, (l) -> l.BELNR, "lines")
+
+// 3. Enrich with customer data by key (lookupBy — F04)
+map(orders, (order) -> {
+  let customer = lookupBy(order.KUNNR, $input.customers, (c) -> c.id)
+  orderId: order.BELNR,
+  customerName: customer?.name ?? "Unknown",
+  lines: order.lines
+})
+
+// 4. Flatten for CSV export (unnest — F06)
+// unnest(enrichedOrders, "lines")
+```
+
+---
+
 ## Status
 
 - **Current:** `groupBy` + `map` works but is verbose and O(N × M) without groupBy
-- **Proposed:** `nestBy()` stdlib function (F03)
+- **Proposed:** `nestBy()` (F03), `lookupBy()` (F04), `chunkBy()` (F05), `unnest()` (F06)
 - **Not proposed:** full intermediate card system (too complex for the return)
-- **Book coverage:** add to UDM chapter (ch09) and Enterprise Integration chapter (ch29)
+- **Book coverage:** Chapter 19a (Data Restructuring), Chapter 9 (UDM), Chapter 29 (Enterprise Integration)
 
 ---
 

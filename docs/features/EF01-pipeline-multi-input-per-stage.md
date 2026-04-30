@@ -3,7 +3,7 @@
 **Status:** Proposed (was task #25 — pending since early development)  
 **Priority:** Medium  
 **Created:** April 2026  
-**Related:** F03 (join), F04 (lookup), Pipeline Chaining (ch19)
+**Related:** F03 (nestBy), F04 (lookupBy), Pipeline Chaining (ch19)
 
 ---
 
@@ -266,7 +266,7 @@ The difference: `lookupBy()` requires the reference data to be IN the message. P
 
 ### Verdict
 
-**No — multi-step pipelines do NOT solve the N:M problem.** They solve a different problem (external data injection per stage). The N:M problem needs functions (nestBy, lookup, chunkBy, unnest) that operate on in-memory arrays.
+**No — multi-step pipelines do NOT solve the N:M problem.** They solve a different problem (external data injection per stage). The N:M problem needs functions (nestBy, lookupBy, chunkBy, unnest) that operate on in-memory arrays.
 
 **However, F07 COMPLEMENTS F03-F06 beautifully:**
 

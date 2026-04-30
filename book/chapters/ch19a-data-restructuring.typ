@@ -82,7 +82,7 @@ map(\$input.orders, (order) -> {
 
 This works but is O(N times M) — for 500 orders and 5,000 lines, that's 2.5 million comparisons. `nestBy()` does it in 5,500 operations.
 
-== Pattern 2: Record Enrichment (lookup)
+== Pattern 2: Record Enrichment (lookupBy)
 
 You have a record with a reference key and need to add fields from a lookup table — not nest the entire matching record, just extract specific fields.
 
@@ -117,7 +117,7 @@ let customer = lookupBy(order.customerId, \$input.customers, (c) -> c.id)
 
 `lookupBy()` finds the first matching record and returns it. You then pick the fields you need with dot notation. Use `?.` for safety in case no match is found.
 
-=== Today's Workaround (without lookup)
+=== Today's Workaround (without lookupBy)
 
 Use `find()`:
 
@@ -266,7 +266,7 @@ let orders = map(orderGroups, (chunk) -> {
   lines: filter(drop(chunk, 1), (seg) -> seg.type == "E1EDP01")
 })
 
-// 3. Enrich with customer data (lookup)
+// 3. Enrich with customer data (lookupBy)
 map(orders, (order) -> {
   let customer = lookupBy(order.KUNNR, \$input.customers, (c) -> c.id)
 
@@ -280,7 +280,7 @@ map(orders, (order) -> {
 })
 ```
 
-Three patterns combined: `chunkBy` (sequential → grouped), `map` (grouped → hierarchical), `lookup` (enrichment).
+Three patterns combined: `chunkBy` (sequential → grouped), `map` (grouped → hierarchical), `lookupBy` (enrichment).
 
 === Hierarchical → Flat CSV Report
 
@@ -288,7 +288,7 @@ Three patterns combined: `chunkBy` (sequential → grouped), `map` (grouped → 
 // 1. Unnest orders → lines
 let flat = unnest(\$input.orders, "lines")
 
-// 2. Enrich with product descriptions (lookup)
+// 2. Enrich with product descriptions (lookupBy)
 map(flat, (row) -> {
   let product = lookupBy(row.productCode, \$input.catalog, (p) -> p.code)
 

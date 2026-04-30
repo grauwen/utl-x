@@ -65,7 +65,7 @@ Result: {id: "C-42", name: "Acme Corp", country: "NL"}
 
 The difference:
 
-| | join() | lookupBy() |
+| | nestBy() | lookupBy() |
 |---|---|---|
 | **Purpose** | Nest children under parent | Find one matching record |
 | **Result** | Parent + array of children | Single matching record (or null) |
