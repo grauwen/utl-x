@@ -198,7 +198,7 @@ output yaml                              // YAML block style
 
 === Multi-Input
 
-When your transformation needs data from multiple sources:
+When your transformation needs data from multiple sources, use `input:` (with a colon) followed by comma-separated name-format pairs:
 
 ```utlx
 %utlx 1.0
@@ -211,7 +211,54 @@ output json
 }
 ```
 
-Each input gets its own variable name (prefixed with `$`).
+Each input gets its own variable: the name you declare becomes a `$`-prefixed variable in the transformation body. `orders` becomes `$orders`, `customers` becomes `$customers`.
+
+=== Multi-Input Syntax Rules
+
+The header declaration syntax follows a consistent pattern:
+
+```utlx
+// Single input (no name needed — accessed as $input):
+input json
+
+// Single named input (name BEFORE format):
+input orders json
+
+// Multiple inputs (colon required, comma-separated):
+input: orders xml, customers json
+
+// Multiple inputs with options:
+input: orders xml {encoding: "ISO-8859-1"}, customers json
+
+// Multiple inputs on separate lines (comma is the separator, not the line break):
+input:
+  orders xml,
+  customers json,
+  products csv {delimiter: ";"}
+```
+
+#block(
+  fill: rgb("#FFF3E0"),
+  inset: 12pt,
+  radius: 4pt,
+  width: 100%,
+)[
+  *Note the order:* it is always *name then format* — `orders json`, not `json orders`. This reads naturally: "input called orders, in JSON format." The colon after `input:` signals that named inputs follow. Without the colon, `input json` means a single unnamed input in JSON format.
+]
+
+A few things to watch for:
+
+- *Multiple `input` lines are NOT supported.* You cannot write `input orders json` on one line and `input customers json` on the next. Use `input:` with commas instead.
+- *The name must be a plain identifier.* Names like `input1` are valid, though `input: input1 json` reads a bit awkwardly — consider more descriptive names like `orderData` or `customerList`.
+- *Each format can be different.* `input: orders xml, prices csv, config yaml` mixes three formats in one transformation.
+
+When the transformation runs via stdin, the engine expects a JSON envelope where each key matches an input name:
+
+```json
+{"orders": [{"id": "ORD-001"}], "customers": [{"name": "Alice"}]}
+```
+
+The engine splits this envelope by key and routes `orders` to the XML parser and `customers` to the JSON parser. Chapter 19 covers multi-input in the context of pipeline chaining.
 
 == Trying It Out: Five Quick Examples
 
