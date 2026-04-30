@@ -1,159 +1,222 @@
 = Security Library and Message Security
 
-== The UTL-X Security Library (stdlib-security)
-// - Separate module from core stdlib (stdlib-security/)
-// - Cryptographic functions for integration security
-// - Available functions:
-//   - Hash: md5, sha1, sha256, sha512
-//   - HMAC: hmacSha256, hmacSha512
-//   - UUID: uuid, uuidV4, uuidV5
-//   - Encoding: base64Encode, base64Decode, hexEncode, hexDecode
-//   - URL-safe: urlEncode, urlDecode
-// - Future additions: AES encrypt/decrypt, RSA sign/verify, JWS, JWE
+Security in data transformation is often an afterthought — until an audit finds credit card numbers in log files or patient data crossing a network boundary unencrypted. This chapter covers UTL-X's security functions, the practical decisions around message encryption in integration flows, and what should (and absolutely should NOT) happen with sensitive data during transformation.
 
-== Should Messages Be Encrypted in Transit?
+== The Security Library (stdlib-security)
 
-=== Transport-Level Encryption (mTLS)
-// - HTTPS/TLS: encrypts the connection, not the message
-// - mTLS (mutual TLS): both client AND server present certificates
-// - This is the STANDARD for service-to-service communication
-// - Azure Container Apps: HTTPS by default (TLS termination at ingress)
-// - Service Bus: TLS 1.2+ enforced
-// - Dapr: mTLS between sidecars (automatic in Kubernetes)
-//
-// UTL-X receives messages AFTER TLS termination.
-// The message content is in cleartext within the container.
-// This is correct — the transformation NEEDS to read the content.
+UTL-X's security functions live in a separate module (`stdlib-security`) from the main standard library. This separation is deliberate — not every deployment needs cryptographic functions, and keeping them separate reduces the attack surface for environments where crypto is restricted.
 
-=== Message-Level Encryption (End-to-End)
-// - Encrypt the message PAYLOAD, not just the connection
-// - The message remains encrypted even in queues, logs, storage
-// - Only the intended recipient can decrypt
-// - Standards: JWE (JSON Web Encryption), XML Encryption, S/MIME
-//
-// The problem for transformation:
-//   Encrypted message → UTLXe → ???
-//   UTLXe cannot transform what it cannot read.
-//
-// Options:
-// 1. Decrypt → Transform → Re-encrypt (common pattern)
-//    - UTLXe needs access to decryption keys
-//    - Adds complexity (key management, rotation)
-//    - The message is briefly in cleartext in UTLXe's memory
-//
-// 2. Don't encrypt at message level — rely on transport encryption (mTLS)
-//    - Simpler, standard practice
-//    - Message is cleartext within the trusted network
-//    - Risk: message visible in queue/storage (mitigated by access controls)
-//
-// Recommendation: mTLS for transport + access controls for queues/storage.
-// Message-level encryption only when regulations REQUIRE it (e.g., PHI across organizations).
+=== Available Functions
 
-=== Why Encrypt-Transform-Re-encrypt Is a Maintenance Burden
-// - Key management: UTLXe needs keys for EVERY encrypted channel
-// - Key rotation: when keys change, UTLXe must be updated
-// - Certificate lifecycle: certificates expire, must be renewed
-// - Performance: decrypt + encrypt adds ~1-5ms per message
-// - Debugging: encrypted messages cannot be inspected in logs/queues
-// - Error handling: decryption failure vs transformation failure — different error paths
-//
-// In practice, most integration platforms (MuleSoft, Tibco, SAP CPI)
-// do NOT encrypt messages within the integration flow.
-// They rely on transport security (TLS) and access controls.
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Category*], [*Functions*], [*Use case*],
+  [Hash], [md5, sha1, sha256, sha512], [Data integrity, checksums, fingerprinting],
+  [HMAC], [hmacSha256, hmacSha512], [Message authentication, API signing],
+  [UUID], [uuid, uuidV4, uuidV5], [Unique identifiers, correlation IDs],
+  [Base64], [base64Encode, base64Decode], [Binary-to-text encoding],
+  [Hex], [hexEncode, hexDecode], [Byte representation],
+  [URL], [urlEncode, urlDecode, urlEncodeComponent], [URL-safe encoding],
+)
+
+=== Hashing
+
+Hash functions produce a fixed-size fingerprint from arbitrary input. They're one-way — you can't reverse a hash to get the original data.
+
+```utlx
+sha256("sensitive-data")
+// "6f2c7b22f1c4e3a8d9f..."  (64 hex characters, always)
+
+md5($input.document)
+// "5d41402abc4b2a76..."     (32 hex characters)
+```
+
+Common uses in integration:
+- *Deduplication:* hash the message content, compare to previously seen hashes
+- *Integrity verification:* hash before sending, hash after receiving, compare
+- *Anonymization:* hash a customer ID to create a pseudonymous identifier
+- *Cache keys:* hash the transformation source + input to cache compiled results
+
+=== HMAC (Hash-based Message Authentication)
+
+HMAC combines a hash with a secret key — proving both integrity AND authenticity:
+
+```utlx
+hmacSha256("message-body", "shared-secret-key")
+// "a1b2c3d4..."
+
+// Verify: receiver computes the same HMAC with the same key
+// If they match, the message hasn't been tampered with
+```
+
+Common uses:
+- *API authentication:* sign requests for webhook verification (Stripe, GitHub, Shopify)
+- *Message integrity:* ensure messages haven't been modified in transit
+- *Token generation:* create short-lived authentication tokens
+
+=== UUID Generation
+
+```utlx
+uuid()        // "f47ac10b-58cc-4372-a567-0e02b2c3d479" (random v4)
+uuidV4()      // same as uuid()
+```
+
+Common uses:
+- *Correlation IDs:* trace a message through a multi-step pipeline
+- *Idempotency keys:* ensure a message is processed exactly once
+- *Unique identifiers:* generate IDs for new records created by transformation
+
+== Transport Security: mTLS
+
+Before discussing message-level security, let's be clear about what's already handled:
+
+*Transport Layer Security (TLS)* encrypts the connection between two endpoints. Every message UTL-X receives over HTTPS is encrypted in transit. The message content is decrypted at the TLS termination point (the container's ingress) and is in cleartext inside the container.
+
+*Mutual TLS (mTLS)* goes further — both client AND server present certificates, proving identity in both directions. Azure Container Apps supports mTLS. Dapr sidecars use mTLS automatically between services in Kubernetes.
+
+For most integration scenarios, TLS/mTLS is sufficient:
+- Messages are encrypted between endpoints
+- Identity is verified (who sent this message?)
+- No additional encryption needed inside the trusted network
+
+== Message-Level Encryption
+
+=== When It's Required
+
+Some regulations require encryption of the message _payload_ itself — not just the connection:
+
+- *PCI DSS:* cardholder data must be encrypted at rest and in transit
+- *HIPAA:* protected health information (PHI) must be encrypted
+- *NEN 7510:* Dutch healthcare information security standard
+- *Government classified data:* often requires end-to-end encryption
+
+=== The Encrypt-Transform-Re-encrypt Pattern
+
+When message-level encryption is required, the transformation flow becomes:
+
+```
+Encrypted message arrives
+    ↓ decrypt (UTLXe needs the decryption key)
+    ↓ transform (cleartext in memory, briefly)
+    ↓ encrypt (UTLXe needs the encryption key for the target)
+Encrypted message sent
+```
+
+This works but adds complexity:
+- UTLXe needs access to decryption AND encryption keys
+- Key management: rotation, storage, access control
+- Performance: decrypt + encrypt adds 1-5ms per message
+- Debugging: encrypted messages cannot be inspected in logs or queues
+- The message IS in cleartext in UTLXe's memory during transformation — this is unavoidable
+
+=== Why This Is a Maintenance Burden
+
+```
+Keys to manage:           per source × per target = N × M keys
+Certificate lifecycle:    each expires, must be renewed
+Key rotation:             planned rotations, emergency rotations
+Access control:           who can access which keys?
+Audit:                    prove keys are handled correctly
+Testing:                  tests need test keys (not production keys)
+```
+
+For 5 source systems and 3 target systems: 15 key pairs to manage. Each with its own rotation schedule. This is why most integration platforms rely on transport encryption (TLS) and access controls — message-level encryption is reserved for regulated data that truly requires it.
+
+=== Recommendation
+
+Use *transport encryption (TLS/mTLS)* for all communication. Add *message-level encryption* only when regulation specifically requires it (PCI DSS, HIPAA, classified data). Don't encrypt "just in case" — the operational cost is significant and usually unnecessary.
 
 == Digital Signatures and Integrity
 
-=== JCS (JSON Canonicalization Scheme)
-// - RFC 8785: deterministic JSON serialization
-// - Needed for: signing JSON documents (the signature must cover a stable byte sequence)
-// - Problem: JSON allows arbitrary key ordering — same object, different bytes
-// - JCS defines: key sorting, number formatting, string escaping rules
-// - Use case: sign a JSON invoice, verify signature after transformation
-// - UTL-X relevance: when generating signed JSON output, canonical form is needed
+=== When You Need Signatures
 
-=== XML Digital Signatures (XMLDSig)
-// - W3C standard for signing XML documents
-// - Used in: SOAP WS-Security, UBL invoices (Peppol), SAML assertions
-// - Canonicalization (C14N): normalize XML before signing (whitespace, namespace ordering)
-// - UTL-X relevance: transforming signed XML may BREAK the signature
-//   (any change to the signed portion invalidates the signature)
-// - Rule: verify signature BEFORE transformation, re-sign AFTER transformation
+Digital signatures prove two things: *integrity* (the message hasn't been modified) and *authenticity* (the message came from a known sender). They don't encrypt — they verify.
 
-=== JWS (JSON Web Signature)
-// - IETF standard for signing JSON payloads (JWT tokens, API security)
-// - Compact serialization: header.payload.signature
-// - UTL-X can: parse JWT payloads (base64Decode + parseJson)
-// - UTL-X cannot yet: verify JWS signatures (needs crypto library)
-// - Future: jwtVerify(), jwtSign() functions in security library
+Common in:
+- *Peppol e-invoicing:* UBL invoices are digitally signed with XAdES
+- *Banking (ISO 20022):* payment messages signed for non-repudiation
+- *API webhooks:* HMAC signature in HTTP header (simpler than PKI)
+- *JWT tokens:* signed claims for API authentication
 
-== Future Security Functions (Vision)
+=== Impact on Transformation
 
-=== Encryption
-// - aesEncrypt(data, key, mode) → encrypted bytes
-// - aesDecrypt(data, key, mode) → decrypted data
-// - rsaEncrypt(data, publicKey) → encrypted bytes
-// - rsaDecrypt(data, privateKey) → decrypted data
-// - Support for: AES-256-GCM, RSA-OAEP (standard cloud-compatible algorithms)
+*Critical rule:* if you transform a digitally signed message, the signature becomes invalid. The signature covers the exact bytes of the original — any change (even whitespace) breaks it.
 
-=== Signing
-// - jwtSign(payload, key, algorithm) → JWT string
-// - jwtVerify(token, key) → {valid: true, payload: {...}}
-// - xmlSign(document, privateKey, canonicalization) → signed XML
-// - xmlVerifySignature(signedXml, publicKey) → boolean
+The correct flow:
++ Verify the signature (before transformation)
++ Transform the content (signature is now invalid)
++ Re-sign the output (with the sender's key for the target)
 
-=== Key Management Integration
-// - Azure Key Vault: retrieve keys at runtime
-// - GCP Secret Manager: retrieve keys at runtime
-// - AWS KMS: retrieve keys at runtime
-// - Environment variables: for development/testing
-// - NEVER hardcode keys in .utlx files
+This means UTLXe must:
+- Verify signatures on input (pre-validation step)
+- Sign output (post-transformation step)
+- Have access to the appropriate keys
 
-== Large Files: CMIS and Object Storage References
+=== What UTL-X Can Do Today
 
-=== The Problem with Large Payloads
-// - Integration messages should be SMALL (< 1 MB, ideally < 100 KB)
-// - Large files (PDFs, images, ZIPs) should NOT be in the message body
-// - Reasons:
-//   1. Memory: 10 MB XML = 300 MB in UDM (see Message Parsing chapter)
-//   2. Queue limits: Service Bus message max = 256 KB (standard), 100 MB (premium)
-//   3. Performance: serializing/deserializing large payloads is slow
-//   4. Cost: message broker pricing often based on message size
+```utlx
+// HMAC verification (simple API webhooks)
+let expectedSig = hmacSha256($input.body, "webhook-secret")
+if (expectedSig != $input.headers.signature)
+  error("Invalid webhook signature")
+
+// Hash for integrity check
+let contentHash = sha256(renderJson($input))
+{...$input, integrityHash: contentHash}
+```
+
+=== What UTL-X Cannot Do Yet (Future)
+
+- JWS (JSON Web Signature): sign and verify JWT tokens
+- XMLDSig: verify XML digital signatures (XAdES for Peppol)
+- AES encryption/decryption: symmetric encryption
+- RSA sign/verify: asymmetric cryptography
+- Key Vault integration: retrieve keys from Azure Key Vault, GCP Secret Manager
+
+These are documented as future additions to the security library.
+
+== Large Files and Sensitive Data
 
 === The Claim Check Pattern
-// - Store the large file in object storage (S3, Blob Storage, GCS)
-// - Put a REFERENCE in the message (URL, object key, CMIS ID)
-// - The consumer retrieves the file from storage when needed
-//
-// Message (small):
-// {
-//   "invoiceId": "INV-2026-001",
-//   "pdfDocument": {
-//     "storageType": "azure-blob",
-//     "container": "invoices",
-//     "blobName": "INV-2026-001.pdf",
-//     "url": "https://storage.blob.core.windows.net/invoices/INV-2026-001.pdf",
-//     "sizeBytes": 245000,
-//     "contentType": "application/pdf"
-//   }
-// }
-//
-// UTL-X transforms the MESSAGE METADATA — not the file itself.
-// The PDF stays in blob storage. UTL-X maps the reference fields.
 
-=== CMIS (Content Management Interoperability Services)
-// - OASIS standard for document management (Alfresco, SharePoint, OpenText)
-// - Documents referenced by CMIS object ID
-// - UTL-X can: transform CMIS metadata (properties, relationships)
-// - UTL-X cannot: retrieve CMIS content (that's the application's job)
+Sensitive large files (contracts, medical images, financial documents) should NOT travel through the message body. Use the *claim check pattern*:
+
++ Store the file in secure object storage (Azure Blob, S3, GCS) with encryption at rest
++ Put a *reference* in the message (URL, blob name, CMIS object ID)
++ UTL-X transforms the message metadata — not the file content
++ The consuming application retrieves the file from storage using the reference
+
+```utlx
+// Transform the reference, not the file:
+{
+  invoiceId: $input.invoiceId,
+  document: {
+    storageType: "azure-blob",
+    container: "invoices",
+    blobName: concat($input.invoiceId, ".pdf"),
+    url: concat("https://storage.blob.core.windows.net/invoices/", $input.invoiceId, ".pdf")
+  }
+}
+```
 
 === Avoid Base64 Embedding
-// - Anti-pattern: embed binary content as Base64 in XML/JSON messages
-//   <Document encoding="base64">JVBERi0xLjQKJeLjz9MK...</Document>
-// - Problems:
-//   1. 33% size increase (Base64 encoding overhead)
-//   2. UDM stores the entire Base64 string in memory (can be huge)
-//   3. Parsing is slow (long string allocation)
-//   4. Not searchable, not indexable
-// - When acceptable: small files (< 50 KB), inline images in HTML, digital signatures
-// - When NOT acceptable: documents > 100 KB, batch processing, high-throughput pipelines
-// - Rule of thumb: if the Base64 string would be > 100 KB, use a storage reference instead
+
+Embedding binary content as Base64 in messages is an anti-pattern for sensitive data:
+
+- 33% size increase (Base64 overhead)
+- The entire file is in UTL-X memory during transformation
+- The file content may appear in logs, error messages, queue storage
+- No access control — anyone with the message has the file
+
+For files under 50 KB (small images, digital signatures), Base64 is acceptable. For anything larger or sensitive, use the claim check pattern.
+
+== What NOT to Log
+
+This topic is covered in depth in Chapter 36 (Logging and Compliance). The short version:
+
+*Never log:* credit card numbers (PCI DSS), patient data (HIPAA/GDPR), passwords, API keys, session tokens, private keys.
+
+*Always log:* transformation ID, timestamp, duration, success/failure, error field names (not values).
+
+UTL-X's default logging (INFO level) logs no message content — only operational metadata. DEBUG and TRACE levels can expose sensitive data and must NEVER be enabled in production with sensitive workloads.
