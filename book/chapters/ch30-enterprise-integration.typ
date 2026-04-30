@@ -370,7 +370,9 @@ In each case, the robot handles what requires a UI (clicking, typing, navigating
 
 == Message Broker Integration
 
-UTLXe connects to message brokers via Dapr sidecars or native transports:
+UTLXe connects to message brokers via Dapr sidecars or native transports.
+
+*A note on Dapr:* Dapr is a CNCF open-source project — not an Azure product, despite its Microsoft origins. The same Dapr sidecar runs on Azure, AWS, GCP, and any Kubernetes cluster. You change which broker Dapr talks to by swapping a YAML component configuration file — not by changing any UTLXe code or configuration. UTLXe's transformation is completely broker-agnostic: it receives a message from Dapr and returns a result, regardless of whether Dapr pulled it from Azure Service Bus, AWS SQS, GCP Pub/Sub, Apache Kafka, RabbitMQ, or IBM MQ.
 
 === Azure Service Bus
 
@@ -395,6 +397,183 @@ Kafka Topic → Dapr Sidecar → UTLXe → Dapr → Kafka Topic
 ```
 
 Same Dapr pattern as Service Bus. UTLXe doesn't know or care whether the broker is Kafka, Service Bus, or RabbitMQ — Dapr abstracts the transport.
+
+=== AWS SQS and EventBridge
+
+AWS offers several messaging services. The most relevant for UTL-X integration:
+
+*SQS (Simple Queue Service)* — point-to-point message queue:
+
+```
+SQS Queue → Lambda / ECS Task → UTLXe → SQS Queue / API
+```
+
+Two deployment patterns:
+- *Lambda:* an AWS Lambda function receives the SQS message and calls UTLXe via HTTP (UTLXe runs as an ECS service) or via the Python/Node.js wrapper (UTLXe subprocess inside Lambda — cold start is ~3s due to JVM)
+- *ECS/Fargate:* UTLXe container polls SQS directly via Dapr's AWS SQS binding or the AWS SDK embedded in a Java wrapper
+
+*SNS (Simple Notification Service)* — pub/sub fan-out:
+
+```
+SNS Topic → SQS Subscription → UTLXe → target
+          → SQS Subscription → UTLXe → different target (different transform)
+```
+
+SNS fans out to multiple SQS queues, each with its own UTLXe container running a different transformation. One event, multiple output formats — the fan-out pattern from Chapter 19.
+
+*EventBridge* — event-driven routing with content-based filtering:
+
+```
+EventBridge Rule → ECS Task (UTLXe) → Target (API Gateway, SQS, Lambda)
+```
+
+EventBridge rules can filter events by content before invoking UTLXe — only orders over \$1,000, only events from a specific source, only messages matching a pattern. This moves routing logic out of UTL-X and into the AWS infrastructure.
+
+*Amazon MQ* — managed ActiveMQ or RabbitMQ:
+
+```
+Amazon MQ → JMS consumer → UTLXe (in-process Java SDK) → Amazon MQ
+```
+
+Same JMS pattern as described above. Amazon MQ is a managed broker — UTLXe connects via JMS client, no MQ infrastructure to manage.
+
+*Kinesis Data Streams* — high-throughput event streaming (AWS's Kafka equivalent):
+
+```
+Kinesis Stream → Lambda / ECS → UTLXe → Kinesis / S3 / API
+```
+
+For high-volume data pipelines — IoT events, clickstreams, log processing. UTLXe transforms the events before they land in S3, Redshift, or a downstream API.
+
+=== JMS (Java Message Service)
+
+JMS is the enterprise Java messaging standard — used by ActiveMQ, IBM MQ, TIBCO EMS, Oracle AQ, and JBoss/WildFly messaging. Many organizations have years of JMS infrastructure in place.
+
+Since UTLXe is a JVM application, JMS integration uses the Java SDK (Chapter 33) directly — no Dapr, no HTTP, no subprocess. The transformation engine runs in-process inside your JMS consumer:
+
+```java
+// JMS consumer with embedded UTL-X transformation
+MessageConsumer consumer = session.createConsumer(inputQueue);
+MessageProducer producer = session.createProducer(outputQueue);
+
+UtlxEngine engine = new UtlxEngine();
+engine.initialize(bundlePath);
+
+consumer.setMessageListener(message -> {
+    String payload = ((TextMessage) message).getText();
+    String result = engine.execute("order-to-invoice", payload);
+    producer.send(session.createTextMessage(result));
+});
+```
+
+This is the most efficient JMS pattern — zero network overhead, zero serialization overhead. The message goes from JMS → UTL-X → JMS without leaving the JVM.
+
+For organizations that prefer decoupled deployment, the Java stdio wrapper (Chapter 33) works too — your JMS consumer spawns UTLXe as a subprocess and communicates via protobuf. This allows upgrading UTLXe independently from the JMS application.
+
+```
+JMS Queue → Java Consumer → UTLXe (subprocess or in-process) → JMS Queue
+              (your app)        (transformation)                (target)
+```
+
+JMS integration is particularly relevant for:
+- *TIBCO EMS migration:* replace BW mapper activities with UTL-X transformations while keeping the EMS broker
+- *IBM MQ environments:* transform MQ messages (often XML/CSV) to JSON for modern APIs
+- *ActiveMQ/Artemis:* lightweight message transformation without a full ESB
+- *Legacy modernization:* keep the JMS infrastructure, replace the transformation layer
+
+=== IBM MQ with UTL-X
+
+IBM MQ (formerly MQ Series, then WebSphere MQ) is the dominant message broker in banking, insurance, government, and large manufacturing. Organizations have decades of MQ infrastructure — thousands of queues, millions of messages per day, deeply embedded in business processes. Replacing MQ is rarely an option; modernizing the transformation layer on top of it is.
+
+The typical IBM MQ landscape has transformation challenges at every turn:
+
+- *Queue-to-queue transformations:* messages arrive in one format on queue A, must be delivered in another format on queue B. Traditionally done by IBM Integration Bus (IIB/ACE) or custom Java EJBs.
+- *Mainframe integration:* MQ bridges to CICS/IMS on the mainframe. Messages are often fixed-length COBOL copybook format or XML. The modern API expects JSON.
+- *Multi-system routing:* one MQ message triggers updates in SAP (IDoc), Dynamics 365 (OData JSON), and a data warehouse (CSV). Three different output formats from one input.
+- *Regulatory reporting:* financial messages (ISO 20022, SWIFT) flow through MQ and need transformation for regulatory submissions.
+
+UTL-X replaces the transformation component while MQ stays untouched:
+
+```
+                                 ┌→ SAP (IDoc XML)
+IBM MQ Queue → Java Consumer →  ├→ D365 (OData JSON)      ← UTL-X transforms
+  (source)      (MQ client)      └→ Data Warehouse (CSV)
+```
+
+==== Deployment Options
+
+*Option 1: Embedded in MQ client application (direct API)*
+
+```java
+MQQueueManager qmgr = new MQQueueManager("QM1");
+MQQueue inputQueue = qmgr.accessQueue("ORDER.IN", MQOO_INPUT_SHARED);
+MQQueue outputQueue = qmgr.accessQueue("INVOICE.OUT", MQOO_OUTPUT);
+
+UtlxEngine engine = new UtlxEngine();
+engine.initialize(bundlePath);
+
+while (true) {
+    MQMessage msg = new MQMessage();
+    inputQueue.get(msg);
+    String payload = msg.readStringOfByteLength(msg.getMessageLength());
+
+    String result = engine.execute("order-to-invoice", payload);
+
+    MQMessage outMsg = new MQMessage();
+    outMsg.writeString(result);
+    outputQueue.put(outMsg);
+}
+```
+
+Runs alongside MQ client libraries. No additional infrastructure. Suitable for dedicated transformation services.
+
+*Option 2: Container with MQ JMS connector*
+
+```
+IBM MQ → JMS (MQ JMS client) → UTLXe Container → JMS → IBM MQ
+```
+
+UTLXe runs as a container. The JMS connector (IBM's `com.ibm.mq.jakarta.client`) provides the MQ connection. Deployable on Kubernetes, OpenShift (common in MQ shops), or any container platform.
+
+*Option 3: IBM MQ + Dapr*
+
+Dapr has an IBM MQ binding component. UTLXe receives messages via Dapr without any MQ-specific code:
+
+```
+IBM MQ → Dapr (MQ binding) → UTLXe → Dapr → IBM MQ
+```
+
+This is the most decoupled option — UTLXe doesn't know it's talking to MQ. Useful when migrating away from MQ in the future (swap Dapr binding, UTLXe unchanged).
+
+==== Replacing IBM Integration Bus (IIB/ACE)
+
+Many MQ environments use IBM Integration Bus (formerly Message Broker, now App Connect Enterprise) for transformation. IIB/ACE is powerful but expensive (\$50K-200K/year licensing), complex to operate, and uses a proprietary ESQL language for mapping.
+
+UTL-X can replace the transformation component of IIB/ACE:
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Aspect*], [*IBM IIB/ACE*], [*UTL-X + MQ*],
+  [Licensing], [\$50K-200K/year], [Open source (AGPL)],
+  [Transformation language], [ESQL (proprietary)], [UTL-X (open, testable)],
+  [Deployment], [IIB runtime (dedicated server)], [Container (any cloud/on-prem)],
+  [Format support], [XML, JSON, CSV, DFDL], [XML, JSON, CSV, YAML, OData + 6 schema formats],
+  [Testing], [IIB Toolkit (manual)], [Conformance suite (automated CI/CD)],
+  [Throughput], [1,000-10,000 msg/s], [20,000-86,000 msg/s (COMPILED)],
+  [MQ connection], [Native (same product family)], [JMS client or Dapr binding],
+  [Skill availability], [Declining (ESQL expertise rare)], [Growing (functional syntax, familiar to JS/Kotlin devs)],
+)
+
+The migration path: keep MQ, replace IIB/ACE with UTLXe containers, translate ESQL message flows to `.utlx` files. The MQ queues, topics, and routing stay identical — only the transformation layer changes.
+
+=== RabbitMQ
+
+```
+RabbitMQ → Dapr Sidecar → UTLXe → Dapr → RabbitMQ
+```
+
+Same Dapr pattern. Alternatively, use the Java SDK with the RabbitMQ Java client for direct, in-process consumption — same approach as JMS.
 
 == Error Handling in Production
 
