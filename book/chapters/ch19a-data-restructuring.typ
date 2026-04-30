@@ -11,7 +11,7 @@ This chapter covers the complete toolkit for restructuring data in UTL-X: from f
   align: (left, left, left, left),
   [*Pattern*], [*Direction*], [*Function*], [*Status*],
   [Parent-child nesting], [Flat → Hierarchical], [nestBy()], [Proposed (F03)],
-  [Record enrichment], [Flat → Enriched], [lookup()], [Proposed (F04)],
+  [Record enrichment], [Flat → Enriched], [lookupBy()], [Proposed (F04)],
   [Sequential grouping], [Flat → Grouped], [chunkBy()], [Proposed (F05)],
   [Denormalization], [Hierarchical → Flat], [unnest()], [Proposed (F06)],
   [Key-based grouping], [Flat → Map], [groupBy()], [Exists],
@@ -102,10 +102,10 @@ Customer table:
 
 You want: `{orderId: "ORD-001", customerName: "Acme Corp", country: "NL"}` — not a nested customer object.
 
-=== The Solution: lookup()
+=== The Solution: lookupBy()
 
 ```utlx
-let customer = lookup(order.customerId, \$input.customers, (c) -> c.id)
+let customer = lookupBy(order.customerId, \$input.customers, (c) -> c.id)
 
 {
   orderId: order.orderId,
@@ -115,7 +115,7 @@ let customer = lookup(order.customerId, \$input.customers, (c) -> c.id)
 }
 ```
 
-`lookup()` finds the first matching record and returns it. You then pick the fields you need with dot notation. Use `?.` for safety in case no match is found.
+`lookupBy()` finds the first matching record and returns it. You then pick the fields you need with dot notation. Use `?.` for safety in case no match is found.
 
 === Today's Workaround (without lookup)
 
@@ -125,7 +125,7 @@ Use `find()`:
 let customer = find(\$input.customers, (c) -> c.id == order.customerId)
 ```
 
-Identical result. `lookup()` adds the potential for internal caching when used repeatedly inside `map()`.
+Identical result. `lookupBy()` adds the potential for internal caching when used repeatedly inside `map()`.
 
 == Pattern 3: Sequential Grouping (chunkBy)
 
@@ -268,7 +268,7 @@ let orders = map(orderGroups, (chunk) -> {
 
 // 3. Enrich with customer data (lookup)
 map(orders, (order) -> {
-  let customer = lookup(order.KUNNR, \$input.customers, (c) -> c.id)
+  let customer = lookupBy(order.KUNNR, \$input.customers, (c) -> c.id)
 
   orderId: order.BELNR,
   customer: customer?.name ?? "Unknown",
@@ -290,7 +290,7 @@ let flat = unnest(\$input.orders, "lines")
 
 // 2. Enrich with product descriptions (lookup)
 map(flat, (row) -> {
-  let product = lookup(row.productCode, \$input.catalog, (p) -> p.code)
+  let product = lookupBy(row.productCode, \$input.catalog, (p) -> p.code)
 
   ...row,
   productDescription: product?.description ?? row.productCode,
@@ -300,7 +300,7 @@ map(flat, (row) -> {
 // Output as CSV
 ```
 
-Two patterns: `unnest` (hierarchical → flat), `lookup` (enrichment).
+Two patterns: `unnest` (hierarchical → flat), `lookupBy` (enrichment).
 
 == Choosing the Right Pattern
 
@@ -309,12 +309,29 @@ Two patterns: `unnest` (hierarchical → flat), `lookup` (enrichment).
   align: (left, left),
   [*I have / I need*], [*Use*],
   [Flat records with keys → nested parent-child], [nestBy()],
-  [Record with ID → add fields from reference table], [lookup() or find()],
+  [Record with ID → add fields from reference table], [lookupBy() or find()],
   [Sequential segments → groups by header], [chunkBy()],
   [Nested data → flat rows for CSV/database], [unnest()],
   [Flat records → map of key → array], [groupBy()],
   [Array of arrays → single flat array], [flatten()],
   [Conditional children → nest only matching], [filter() then nestBy()],
   [Many-to-many via bridge table], [Two nestBy() calls through bridge],
-  [Composite key matching], [concat() key then join() or lookup()],
+  [Composite key matching], [concat() key then nestBy() or lookupBy()],
+)
+
+== Naming Convention: Why Some Functions End in "By"
+
+The restructuring functions follow a consistent naming convention. Functions that take a *lambda* for key extraction use the `By` suffix — "do X *by* this key function." Functions that take a plain value (string, property name) do not.
+
+#table(
+  columns: (auto, auto, auto, auto),
+  align: (left, left, left, left),
+  [*Function*], [*Takes lambda?*], [*By suffix?*], [*Rationale*],
+  [groupBy()], [Yes], [Yes], [Group _by_ key function],
+  [sortBy()], [Yes], [Yes], [Sort _by_ key function],
+  [nestBy()], [Yes], [Yes], [Nest children _by_ key function],
+  [chunkBy()], [Yes], [Yes], [Chunk _by_ predicate function],
+  [lookupBy()], [Yes], [Yes], [Look up _by_ key function],
+  [unnest()], [No (string)], [No], [Unnest a named property — no key function],
+  [flatten()], [No], [No], [Flatten arrays — no key function],
 )

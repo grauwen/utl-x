@@ -1,9 +1,9 @@
-# F04: lookup() Function — Enrich Records from a Reference Table
+# F04: lookupBy() Function — Enrich Records from a Reference Table
 
 **Status:** Proposed  
 **Priority:** Medium  
 **Created:** April 2026  
-**Related:** F03 (join function), B15 (groupBy index bug)
+**Related:** F03 (nestBy function), B15 (groupBy index bug)
 
 ---
 
@@ -53,10 +53,10 @@ Result: {orderId: "ORD-001", lines: [{...}, {...}, {...}]}
                                 Array of ALL matching children nested as a property
 ```
 
-`lookup()` **finds ONE matching record and extracts fields from it**:
+`lookupBy()` **finds ONE matching record and extracts fields from it**:
 
 ```
-lookup(order, customers, order.customerId, customer.id)
+lookupBy(order, customers, order.customerId, customer.id)
 
 Result: {id: "C-42", name: "Acme Corp", country: "NL"}
          ↑
@@ -65,7 +65,7 @@ Result: {id: "C-42", name: "Acme Corp", country: "NL"}
 
 The difference:
 
-| | join() | lookup() |
+| | join() | lookupBy() |
 |---|---|---|
 | **Purpose** | Nest children under parent | Find one matching record |
 | **Result** | Parent + array of children | Single matching record (or null) |
@@ -77,7 +77,7 @@ The difference:
 ### Signature
 
 ```
-lookup(sourceValue, referenceArray, matchFunction) → Object or null
+lookupBy(sourceValue, referenceArray, matchFunction) → Object or null
 ```
 
 ### Parameters
@@ -95,7 +95,7 @@ The **first matching record** from the reference array, or `null` if no match fo
 ### How It Works — Step by Step
 
 ```utlx
-lookup("C-42", $input.customers, (c) -> c.id)
+lookupBy("C-42", $input.customers, (c) -> c.id)
 ```
 
 1. Take the value `"C-42"` (this is what we're looking for)
@@ -106,10 +106,10 @@ lookup("C-42", $input.customers, (c) -> c.id)
 
 ### Using the Result
 
-After `lookup()` gives you the matching record, you use it with dot notation:
+After `lookupBy()` gives you the matching record, you use it with dot notation:
 
 ```utlx
-let customer = lookup($input.order.customerId, $input.customers, (c) -> c.id)
+let customer = lookupBy($input.order.customerId, $input.customers, (c) -> c.id)
 
 {
   orderId: $input.order.orderId,
@@ -143,7 +143,7 @@ Transformation:
 
 ```utlx
 map($input.orders, (order) -> {
-  let customer = lookup(order.customerId, $input.customers, (c) -> c.id)
+  let customer = lookupBy(order.customerId, $input.customers, (c) -> c.id)
 
   orderId: order.orderId,
   total: order.total,
@@ -174,7 +174,7 @@ Yes! `find()` already exists in the stdlib:
 let customer = find($input.customers, (c) -> c.id == order.customerId)
 ```
 
-This does exactly the same thing. So why propose `lookup()`?
+This does exactly the same thing. So why propose `lookupBy()`?
 
 ### The Problem with find()
 
@@ -186,16 +186,16 @@ find() called 500 times × scans 10,000 customers each time = 5,000,000 comparis
 
 That's O(N × M) — the same performance trap as using `filter()` instead of `join()`.
 
-### What lookup() Adds: Internal Indexing
+### What lookupBy() Adds: Internal Indexing
 
-`lookup()` could be smart about repeated lookups on the same reference array:
+`lookupBy()` could be smart about repeated lookups on the same reference array:
 
 **First call:** builds a hash index internally (O(M) — scan customers once)  
 **Subsequent calls:** O(1) lookup per order (hash map get)  
 **Total:** O(N + M) instead of O(N × M)
 
 ```
-lookup() with internal cache:
+lookupBy() with internal cache:
   First call:  build index on $input.customers by (c) -> c.id  → O(10,000)
   500 lookups: each is O(1) hash map get                        → O(500)
   Total: O(10,500) vs O(5,000,000) with find()
@@ -216,13 +216,13 @@ map($input.orders, (order) -> {
 
 This is the efficient O(N + M) approach — but it's blocked by B15 (groupBy index bug). And even when B15 is fixed, it's verbose: `first(customerIndex[order.customerId] ?? [])` is not readable.
 
-### Verdict: lookup() Is Syntactic Sugar + Future Optimization Path
+### Verdict: lookupBy() Is Syntactic Sugar + Future Optimization Path
 
-For v1, `lookup()` can be implemented as a simple wrapper around `find()` — identical performance, but cleaner API:
+For v1, `lookupBy()` can be implemented as a simple wrapper around `find()` — identical performance, but cleaner API:
 
 ```kotlin
 // Simple implementation (v1):
-"lookup" to { args ->
+"lookupBy" to { args ->
     val searchValue = args[0]
     val refArray = args[1].asArray()
     val keyFn = args[2].asFunction()
@@ -237,25 +237,25 @@ For v2, the engine can add internal caching — detect repeated lookups against 
 
 ### Simple field enrichment
 ```utlx
-let dept = lookup(emp.departmentId, $input.departments, (d) -> d.id)
+let dept = lookupBy(emp.departmentId, $input.departments, (d) -> d.id)
 {...emp, departmentName: dept?.name}
 ```
 
 ### Currency conversion
 ```utlx
-let rate = lookup($input.currency, $input.exchangeRates, (r) -> r.code)
+let rate = lookupBy($input.currency, $input.exchangeRates, (r) -> r.code)
 {amount: $input.amount * (rate?.rate ?? 1), currency: "EUR"}
 ```
 
 ### Code-to-description mapping
 ```utlx
-let country = lookup($input.countryCode, $input.countries, (c) -> c.code)
+let country = lookupBy($input.countryCode, $input.countries, (c) -> c.code)
 {code: $input.countryCode, name: country?.name ?? $input.countryCode}
 ```
 
 ### With fallback for missing matches
 ```utlx
-let product = lookup(line.productCode, $input.catalog, (p) -> p.sku)
+let product = lookupBy(line.productCode, $input.catalog, (p) -> p.sku)
 {
   code: line.productCode,
   description: product?.description ?? "Unknown product",
@@ -264,12 +264,12 @@ let product = lookup(line.productCode, $input.catalog, (p) -> p.sku)
 }
 ```
 
-## lookup() vs nestBy() vs find() — When to Use Which
+## lookupBy() vs nestBy() vs find() — When to Use Which
 
 | Situation | Use | Why |
 |-----------|-----|-----|
 | Nest children under parents (1:N) | `nestBy()` | Creates hierarchy: order.lines[] |
-| Enrich with ONE matching record (1:1) | `lookup()` | Finds one match: customer.name |
+| Enrich with ONE matching record (1:1) | `lookupBy()` | Finds one match: customer.name |
 | Find first match (one-time) | `find()` | Simple search, no caching needed |
 | Filter matches (keep all) | `filter()` | Returns array of ALL matches |
 | Group by key | `groupBy()` | Returns map of key → array |
@@ -278,7 +278,7 @@ let product = lookup(line.productCode, $input.catalog, (p) -> p.sku)
 
 | Task | Effort |
 |------|--------|
-| Implement lookup() in stdlib (simple find wrapper) | 0.5 day |
+| Implement lookupBy() in stdlib (simple find wrapper) | 0.5 day |
 | Unit tests | 0.5 day |
 | Conformance suite tests | 0.5 day |
 | Documentation | 0.5 day |
@@ -294,7 +294,7 @@ Future optimization (internal caching): additional 1-2 days when performance dat
 4. Null search value: handle gracefully
 5. Empty reference array: return null
 6. Used inside map (repeated lookups): correct results
-7. Combined with safe navigation: `lookup(...)?.name`
+7. Combined with safe navigation: `lookupBy(...)?.name`
 8. Real-world: order enrichment with customer data
 
 ---

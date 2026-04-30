@@ -3,7 +3,7 @@
 **Status:** Proposed  
 **Priority:** Medium  
 **Created:** April 2026  
-**Related:** F03 (join), F04 (lookup), B15 (groupBy index bug)
+**Related:** F03 (nestBy), F04 (lookupBy), B15 (groupBy index bug)
 
 ---
 

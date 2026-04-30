@@ -3,7 +3,7 @@
 **Status:** Proposed  
 **Priority:** Medium  
 **Created:** April 2026  
-**Related:** F03 (nestBy — the reverse operation), F04 (lookup), F05 (chunkBy)
+**Related:** F03 (nestBy — the reverse operation), F04 (lookupBy), F05 (chunkBy)
 
 ---
 

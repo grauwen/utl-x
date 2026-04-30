@@ -47,8 +47,8 @@ Problems:
 
 ```utlx
 // One massive .utlx file that does everything
-let customer = lookup(order.customerId, $input.customers, ...)
-let prices = lookup(order.productCode, $input.priceList, ...)
+let customer = lookupBy(order.customerId, $input.customers, ...)
+let prices = lookupBy(order.productCode, $input.priceList, ...)
 // ... 200 lines of interleaved logic
 ```
 
@@ -167,7 +167,7 @@ The `.utlx` transformation at each step uses multi-input syntax to access both:
 input: order json, customers json
 output json
 ---
-let customer = lookup($order.customerId, $customers, (c) -> c.id)
+let customer = lookupBy($order.customerId, $customers, (c) -> c.id)
 {
   ...$order,
   customerName: customer?.name
@@ -187,7 +187,7 @@ The transformation at step 3 (`enrich-with-customer.utlx`) would use multi-input
 input: order json, customers json
 output json
 ---
-let customer = lookup($order.customerId, $customers.customers, (c) -> c.id)
+let customer = lookupBy($order.customerId, $customers.customers, (c) -> c.id)
 
 {
   ...$order,
@@ -249,20 +249,20 @@ These are fundamentally different concerns:
 
 ### Where They Overlap
 
-There IS an overlap: **enrichment**. Both `lookup()` (F04) and pipeline additional inputs (F07) can solve "add customer name to order."
+There IS an overlap: **enrichment**. Both `lookupBy()` (F04) and pipeline additional inputs (F07) can solve "add customer name to order."
 
-With `lookup()` (single-step, reference data in the message):
+With `lookupBy()` (single-step, reference data in the message):
 ```utlx
-let customer = lookup(order.customerId, $input.customers, (c) -> c.id)
+let customer = lookupBy(order.customerId, $input.customers, (c) -> c.id)
 ```
 
 With pipeline additional input (multi-step, reference data from external source):
 ```utlx
 // Step 3, with customers injected:
-let customer = lookup($input.customerId, $customers.customers, (c) -> c.id)
+let customer = lookupBy($input.customerId, $customers.customers, (c) -> c.id)
 ```
 
-The difference: `lookup()` requires the reference data to be IN the message. Pipeline additional inputs let the reference data come from OUTSIDE (a file, an API response, a database query).
+The difference: `lookupBy()` requires the reference data to be IN the message. Pipeline additional inputs let the reference data come from OUTSIDE (a file, an API response, a database query).
 
 ### Verdict
 
@@ -273,7 +273,7 @@ The difference: `lookup()` requires the reference data to be IN the message. Pip
 ```
 Step 1: Parse IDoc → chunkBy() to group segments (F05)
 Step 2: nestBy() lines under headers (F03)
-Step 3: lookup() customer data from CRM (F04) ← additional input: customer table (F07)
+Step 3: lookupBy() customer data from CRM (F04) ← additional input: customer table (F07)
 Step 4: Calculate pricing ← additional input: price list (F07)
 Step 5: unnest() for CSV report (F06)
 ```
