@@ -221,6 +221,189 @@ let merged = yamlDeepMerge(base, overlay)
 
 This is the UTL-X equivalent of Helm's values merging or Kustomize's strategic merge — but as a function you control in your transformation.
 
+== Dynamic Keys
+
+This is one of the most important YAML topics — and it applies equally to JSON. Many real-world YAML files use *data as keys*: server names, environment names, locale codes, feature flags. The keys are not fixed by a schema — they come from the data itself.
+
+=== The Problem
+
+Consider a typical server configuration:
+
+```yaml
+servers:
+  production:
+    host: prod-db.example.com
+    port: 5432
+  staging:
+    host: staging-db.example.com
+    port: 5432
+  development:
+    host: localhost
+    port: 5433
+```
+
+The keys `production`, `staging`, `development` are not fixed — a new environment could appear tomorrow. You cannot write `$input.servers.production` if you don't know the environment names in advance. And you cannot use `map()` because `servers` is an object (with named keys), not an array.
+
+This pattern appears everywhere:
+- *Kubernetes:* annotations and labels are key-value maps with arbitrary keys
+- *i18n files:* locale codes as keys (`en`, `nl`, `de`, `fr`)
+- *Feature flags:* feature names as keys with boolean or config values
+- *Data contracts:* model names as keys with schema definitions
+- *Terraform:* resource names as keys
+
+=== Reading Dynamic Keys
+
+UTL-X provides a complete toolkit for working with objects whose keys are unknown at design time:
+
+```utlx
+// Get all key names as an array
+keys($input.servers)                    // ["production", "staging", "development"]
+
+// Get all values as an array (keys discarded)
+values($input.servers)                  // [{host: "prod-db...", ...}, ...]
+
+// Check if a key exists
+hasKey($input.servers, "production")    // true
+
+// Access by dynamic key (bracket notation)
+let env = "staging"
+$input.servers[env]                     // {host: "staging-db...", port: 5432}
+
+// Wildcard — all values as array
+$input.servers.*                        // [{host: "prod-db...", ...}, ...]
+
+// Get key-value pairs for iteration
+entries($input.servers)
+// [["production", {host: "prod-db..."}], ["staging", {host: "staging-db..."}], ...]
+```
+
+=== Iterating Over Dynamic Keys
+
+The `entries()` function is the key to working with dynamic keys — it converts an object into an array of `[key, value]` pairs that you can `map`, `filter`, and `reduce`:
+
+```utlx
+// List all environments with their hosts
+entries($input.servers) |> map((entry) -> {
+  environment: entry[0],
+  host: entry[1].host,
+  port: entry[1].port
+})
+// [{environment: "production", host: "prod-db...", port: 5432}, ...]
+```
+
+Transform keys and values:
+
+```utlx
+// Transform keys (e.g., uppercase environment names)
+mapKeys($input.servers, (key) -> toUpperCase(key))
+// {PRODUCTION: {...}, STAGING: {...}, DEVELOPMENT: {...}}
+
+// Transform values (e.g., add a computed field)
+mapValues($input.servers, (config) -> {
+  ...config,
+  connectionString: concat("postgres://", config.host, ":", toString(config.port))
+})
+
+// Transform both keys and values
+mapEntries($input.servers, (key, value) -> {
+  key: toUpperCase(key),
+  value: { ...value, env: key }
+})
+```
+
+Filter entries:
+
+```utlx
+// Keep only non-production environments
+filterEntries($input.servers, (key, value) -> key != "production")
+
+// Check if any server uses a non-standard port
+someEntry($input.servers, (key, value) -> value.port != 5432)
+
+// Check if all servers have a host defined
+everyEntry($input.servers, (key, value) -> value.host != null)
+```
+
+=== Generating Dynamic Keys (Output)
+
+When you need to *produce* YAML or JSON with dynamic keys, use `fromEntries()` — it builds an object from an array of `[key, value]` pairs:
+
+```utlx
+%utlx 1.0
+input json
+output yaml
+---
+{
+  servers: fromEntries(
+    map($input.serverList, (server) -> [
+      server.environment,         // dynamic key: "production", "staging", etc.
+      {
+        host: server.host,
+        port: server.port
+      }
+    ])
+  )
+}
+```
+
+Input:
+
+```json
+{"serverList": [
+  {"environment": "production", "host": "prod-db.example.com", "port": 5432},
+  {"environment": "staging", "host": "staging-db.example.com", "port": 5432}
+]}
+```
+
+Output:
+
+```yaml
+servers:
+  production:
+    host: prod-db.example.com
+    port: 5432
+  staging:
+    host: staging-db.example.com
+    port: 5432
+```
+
+The array of servers became an object keyed by environment name. This is the inverse of `entries()` — `entries()` converts object-with-dynamic-keys to array, `fromEntries()` converts array back to object-with-dynamic-keys.
+
+=== Computed Property Names
+
+For simple cases where you need one or two dynamic keys, use computed property names with bracket syntax:
+
+```utlx
+{
+  [$input.environmentName]: {
+    host: $input.host,
+    port: $input.port
+  }
+}
+```
+
+The brackets around `$input.environmentName` evaluate the expression and use the result as the property name. This is the same syntax as JavaScript's computed property names.
+
+=== Dynamic Keys Summary
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Task*], [*Function*], [*Direction*],
+  [Get all keys], [`keys(obj)`], [Read],
+  [Get all values], [`values(obj)`], [Read],
+  [Get key-value pairs], [`entries(obj)`], [Read],
+  [Check key exists], [`hasKey(obj, key)`], [Read],
+  [Access by variable], [`obj[variable]`], [Read],
+  [Access all], [`obj.*`], [Read],
+  [Transform keys], [`mapKeys(obj, fn)`], [Read/Write],
+  [Transform values], [`mapValues(obj, fn)`], [Read/Write],
+  [Transform both], [`mapEntries(obj, fn)`], [Read/Write],
+  [Filter entries], [`filterEntries(obj, fn)`], [Read/Write],
+  [Build from pairs], [`fromEntries(array)`], [Write],
+  [One dynamic key], [`{[expr]: value}`], [Write],
+)
+
 == Common YAML Patterns
 
 === Kubernetes Manifest Transformation
