@@ -34,15 +34,22 @@ This tiering is the key to understanding USDL. Tier 1 and 2 directives work ever
 
 These directives are supported by every schema format:
 
-- *%namespace* — Schema namespace or package: "com.example.orders"
-- *%version* — Schema version: "1.0.0"
-- *%types* — Block containing type definitions
-- *%kind* — Type kind: "object", "enum", "union"
-- *%name* — Type or field name
-- *%type* — Field data type: "string", "integer", "decimal", "boolean", "date", "datetime"
-- *%description* — Human-readable description
-- *%fields* — Block containing field definitions
-- *%values* — Enum values list
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Directive*], [*What it defines*], [*Example*],
+  [\_namespace], [Schema namespace/package], [\_namespace: "com.example.orders"],
+  [\_version], [Schema version], [\_version: "1.0.0"],
+  [\_types], [Type definitions block], [\_types: \{ Customer: \{...\} \}],
+  [\_kind], [Type kind (object, enum, union)], [\_kind: "object"],
+  [\_name], [Type or field name], [\_name: "Customer"],
+  [\_type], [Field data type], [\_type: "string"],
+  [\_description], [Human-readable description], [\_description: "Customer ID"],
+  [\_fields], [Field definitions block], [\_fields: \{ id: \{...\} \}],
+  [\_values], [Enum values], [\_values: \["ACTIVE", "INACTIVE"\]],
+)
+
+Note: directives use the % prefix in actual USDL syntax (shown as \_ in this table for formatting reasons). In your .utlx files, write `%namespace`, `%type`, etc.
 
 === Example: Customer schema using only Tier 1
 
@@ -75,16 +82,25 @@ output json %usdl 1.0
 
 These express constraints and validation rules supported by most formats:
 
-- *%required* — Field is mandatory (all formats)
-- *%nullable* — Field can be null (JSON Schema, Avro, Proto)
-- *%array* — Field is an array (all formats)
-- *%default* — Default value (JSON Schema, Avro, XSD)
-- *%minLength / %maxLength* — String length limits (JSON Schema, XSD)
-- *%pattern* — Regex pattern (JSON Schema, XSD)
-- *%minimum / %maximum* — Number range (JSON Schema, XSD)
-- *%enum* — Allowed values (all formats)
-- *%format* — Semantic format hint like "email" (JSON Schema)
-- *%example* — Example value (JSON Schema, OpenAPI)
+#table(
+  columns: (auto, auto, auto, auto),
+  align: (left, left, left, left),
+  [*Directive*], [*What it constrains*], [*Supported by*], [*Example value*],
+  [\_required], [Field is mandatory], [All formats], [true],
+  [\_nullable], [Field can be null], [JSON Schema, Avro, Proto], [true],
+  [\_array], [Field is an array], [All formats], [true],
+  [\_default], [Default value], [JSON Schema, Avro, XSD], ["EUR"],
+  [\_minLength], [Min string length], [JSON Schema, XSD], [1],
+  [\_maxLength], [Max string length], [JSON Schema, XSD], [255],
+  [\_pattern], [Regex pattern], [JSON Schema, XSD], [see code examples],
+  [\_minimum], [Min number value], [JSON Schema, XSD], [0],
+  [\_maximum], [Max number value], [JSON Schema, XSD], [999999],
+  [\_enum], [Allowed values], [All formats], [see code examples],
+  [\_format], [Semantic format hint], [JSON Schema], ["email"],
+  [\_example], [Example value], [JSON Schema, OpenAPI], [see code examples],
+)
+
+Note: directives use % prefix in actual USDL syntax.
 
 === Example: Customer with Tier 1 + Tier 2 constraints
 
@@ -128,7 +144,16 @@ These target a specific schema format. They express features that only make sens
 
 === Protobuf-Specific
 
-Directives: %fieldNumber, %packed, %oneof, %map, %reserved
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Directive*], [*What it sets*], [*Example value*],
+  [\_fieldNumber], [Protobuf field tag number], [1],
+  [\_packed], [Packed encoding for repeated fields], [true],
+  [\_oneof], [Protobuf oneof group name], ["payment\_method"],
+  [\_map], [Protobuf map type], [true],
+  [\_reserved], [Reserved field numbers], [see code examples],
+)
 
 ```utlx
 %utlx 1.0
@@ -169,7 +194,15 @@ The %fieldNumber directive is Protobuf-specific — it has no meaning in JSON Sc
 
 === Avro-Specific
 
-Directives: %logicalType, %aliases, %precision, %scale
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Directive*], [*What it sets*], [*Example value*],
+  [\_logicalType], [Avro logical type], ["date"],
+  [\_aliases], [Alternative field names], [see code example],
+  [\_precision], [Decimal precision (digits)], [10],
+  [\_scale], [Decimal scale (decimal places)], [2],
+)
 
 ```utlx
 %utlx 1.0
@@ -196,7 +229,16 @@ Generates Avro schema with logical types, decimal precision, and field aliases.
 
 === XSD-Specific
 
-Directives: %elementFormDefault, %attributeFormDefault, %choice, %all
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Directive*], [*What it sets*], [*Example value*],
+  [\_elementFormDefault], [XSD element form], ["qualified"],
+  [\_attributeFormDefault], [XSD attribute form], ["unqualified"],
+  [\_choice], [XSD choice group (xs:choice)], [true],
+  [\_all], [XSD all group (xs:all)], [true],
+  [\_xml], [XML-specific options], [wrapped: true],
+)
 
 ```utlx
 %utlx 1.0
@@ -229,23 +271,96 @@ The %choice directive generates an `xs:choice` group — unique to XSD.
 
 === Database/SQL-Specific
 
-Directives: %primaryKey, %autoIncrement, %foreignKey, %index, %unique, %sqlType
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Directive*], [*What it sets*], [*Example value*],
+  [\_primaryKey], [Primary key field], [true],
+  [\_autoIncrement], [Auto-increment], [true],
+  [\_foreignKey], [Foreign key reference], ["customers.id"],
+  [\_index], [Create index on field], [true],
+  [\_unique], [Unique constraint], [true],
+  [\_sqlType], [Override SQL type], ["VARCHAR(50)"],
+)
 
-These generate DDL (CREATE TABLE) or inform ORM code generators.
+These generate DDL (CREATE TABLE) or inform ORM code generators. Example:
+
+```utlx
+%utlx 1.0
+input auto
+output json %usdl 1.0
+---
+{
+  "%types": {
+    "Customer": {
+      "%kind": "object",
+      "%fields": {
+        "id": { "%type": "integer", "%primaryKey": true, "%autoIncrement": true },
+        "name": { "%type": "string", "%maxLength": 100, "%required": true, "%index": true },
+        "email": { "%type": "string", "%maxLength": 255, "%unique": true },
+        "country": { "%type": "string", "%sqlType": "CHAR(2)" }
+      }
+    },
+    "Order": {
+      "%kind": "object",
+      "%fields": {
+        "id": { "%type": "integer", "%primaryKey": true, "%autoIncrement": true },
+        "customerId": { "%type": "integer", "%foreignKey": "Customer.id", "%index": true },
+        "total": { "%type": "decimal", "%sqlType": "DECIMAL(10,2)" }
+      }
+    }
+  }
+}
+```
 
 === OData-Specific
 
-Directives: %entityType, %navigation, %target, %cardinality
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Directive*], [*What it sets*], [*Example value*],
+  [\_entityType], [OData entity type marker], [true],
+  [\_navigation], [Navigation property], [true],
+  [\_target], [Navigation target entity], ["Orders"],
+  [\_cardinality], [Relationship cardinality], ["many"],
+)
 
-These generate OData EDMX/CSDL metadata documents.
+These generate OData EDMX/CSDL metadata documents. Example:
+
+```utlx
+%utlx 1.0
+input auto
+output osch %usdl 1.0
+---
+{
+  "%namespace": "com.example.crm",
+  "%types": {
+    "Customer": {
+      "%kind": "object",
+      "%entityType": true,
+      "%fields": {
+        "id": { "%type": "integer", "%required": true },
+        "name": { "%type": "string" },
+        "orders": { "%type": "Order", "%navigation": true, "%target": "Orders", "%cardinality": "many" }
+      }
+    }
+  }
+}
+```
 
 == How Tiers Interact During Conversion
 
 When converting USDL to a specific format, each tier is handled differently:
 
-- *Tier 1 (Core):* Always converted — every format supports these
-- *Tier 2 (Common):* Converted when the format supports it, preserved as comment when not
-- *Tier 3 (Format-Specific):* Converted only for the matching format, ignored or commented for others
+#table(
+  columns: (auto, auto),
+  align: (left, left),
+  [*Tier*], [*Behavior during conversion*],
+  [Tier 1 (Core)], [Always converted — every format supports these],
+  [Tier 2 (Common)], [Converted when supported, preserved as comment when not],
+  [Tier 3 (Format-Specific)], [Converted only for the matching format, ignored/commented for others],
+  [Tier 4 (Reserved)], [Passed through as metadata],
+)
 
 Example: converting a schema with `%fieldNumber: 3` and `%pattern: "^[A-Z]+$"`:
 
