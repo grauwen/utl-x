@@ -243,7 +243,7 @@ These are fundamentally different concerns:
 
 | Concern | Mechanism | Example |
 |---------|-----------|---------|
-| Restructure data shape | Functions: join(), unnest(), chunkBy() | Flat orders → nested orders |
+| Restructure data shape | Functions: nestBy(), unnest(), chunkBy() | Flat orders → nested orders |
 | Enrich from external source | Pipeline additional inputs | Add customer name from CRM |
 | Combine multiple sources | Multi-input transformation | Order XML + Customer JSON |
 
@@ -266,13 +266,13 @@ The difference: `lookup()` requires the reference data to be IN the message. Pip
 
 ### Verdict
 
-**No — multi-step pipelines do NOT solve the N:M problem.** They solve a different problem (external data injection per stage). The N:M problem needs functions (join, lookup, chunkBy, unnest) that operate on in-memory arrays.
+**No — multi-step pipelines do NOT solve the N:M problem.** They solve a different problem (external data injection per stage). The N:M problem needs functions (nestBy, lookup, chunkBy, unnest) that operate on in-memory arrays.
 
 **However, F07 COMPLEMENTS F03-F06 beautifully:**
 
 ```
 Step 1: Parse IDoc → chunkBy() to group segments (F05)
-Step 2: join() lines under headers (F03)
+Step 2: nestBy() lines under headers (F03)
 Step 3: lookup() customer data from CRM (F04) ← additional input: customer table (F07)
 Step 4: Calculate pricing ← additional input: price list (F07)
 Step 5: unnest() for CSV report (F06)

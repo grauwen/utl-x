@@ -379,7 +379,7 @@ join(
 
 Read inside out: map to categories, remove duplicates, sort, join with commas.
 
-Note: this is the _string_ `join()` function (2 parameters: array + separator). A different `join()` function for _data restructuring_ (5 parameters: parents, children, parentKey, childKey, propertyName) is proposed as a future addition for flat-to-hierarchical transformation — see Chapter 9 and the F03 design document. The two functions are distinguished by their parameter count.
+Note: this is the _string_ `join()` function (2 parameters: array + separator). For flat-to-hierarchical data restructuring (nesting children under parents by key), a separate function called `nestBy()` is proposed — see Chapter 9 and the F03 design document. The names are deliberately different to avoid confusion: `join()` joins strings, `nestBy()` nests data.
 
 === Combining map and filter
 

@@ -1,4 +1,4 @@
-# F03: join() Function — Relational-to-Hierarchical Restructuring
+# F03: nestBy() Function — Relational-to-Hierarchical Restructuring
 
 **Status:** Proposed  
 **Priority:** Medium  
@@ -9,7 +9,7 @@
 
 ## Summary
 
-Add a `join()` function that restructures flat/relational data into hierarchical data by matching parent and child records on key fields. This is the most common operation when processing SAP IDocs, EDI segments, database exports, and CSV files with foreign key relationships.
+Add a `nestBy()` function that restructures flat/relational data into hierarchical data by matching parent and child records on key fields. This is the most common operation when processing SAP IDocs, EDI segments, database exports, and CSV files with foreign key relationships.
 
 ## The Use Case
 
@@ -58,7 +58,7 @@ For experienced functional programmers this is fine. For integration developers 
 ### Signature
 
 ```
-join(parents, children, parentKey, childKey, childPropertyName) → Array
+nestBy(parents, children, parentKey, childKey, childPropertyName) → Array
 ```
 
 ### Parameters
@@ -80,14 +80,14 @@ A new Array where each parent object has an **additional property** (named by `c
 The 5th parameter is a string that becomes a new property name on each parent object. This is the bridge between the flat structure and the hierarchical output:
 
 ```
-BEFORE join():
+BEFORE nestBy():
   order = {"orderId": "ORD-001", "customer": "Acme"}
 
-AFTER join(..., "lines"):
+AFTER nestBy(..., "lines"):
   order = {"orderId": "ORD-001", "customer": "Acme", "lines": [{...}, {...}]}
                                                        ^^^^^^
                                                        This property was CREATED
-                                                       by join(). Its name comes
+                                                       by nestBy(). Its name comes
                                                        from the "lines" parameter.
 ```
 
@@ -97,13 +97,13 @@ You choose the name. It can be anything meaningful:
 - `"orderLines"` → `order.orderLines`
 - `"children"` → `order.children`
 
-After join(), the new property is accessed with dot notation like any other property.
+After nestBy(), the new property is accessed with dot notation like any other property.
 
 ### Example
 
 ```utlx
 // Step 1: join creates the hierarchy
-let enrichedOrders = join(
+let enrichedOrders = nestBy(
   $input.orders,                     // parents
   $input.orderLines,                 // children
   (order) -> order.orderId,          // parent key: match on orderId
@@ -127,7 +127,7 @@ The string parameter `"lines"` is not ideal — it's a string that becomes a pro
 
 ```utlx
 // Hypothetical future syntax with named parameter:
-join($input.orders, $input.orderLines,
+nestBy($input.orders, $input.orderLines,
   parentKey: (o) -> o.orderId,
   childKey: (l) -> l.orderId,
   as: "lines"                                // ← "as" makes intent clear
@@ -141,10 +141,10 @@ For v1, the positional string parameter is the implementation. The 5-parameter s
 Chain for deeper hierarchies:
 
 ```utlx
-let withLines = join($input.headers, $input.lines,
+let withLines = nestBy($input.headers, $input.lines,
   (h) -> h.orderId, (l) -> l.orderId, "lines")
 
-let withSchedules = join(withLines[*].lines, $input.schedules,
+let withSchedules = nestBy(withLines[*].lines, $input.schedules,
   (l) -> l.lineId, (s) -> s.lineId, "schedules")
 ```
 
@@ -153,20 +153,20 @@ Actually, this doesn't work cleanly — `join` returns a new array of parents wi
 ### Alternative: Nested join
 
 ```utlx
-let result = join($input.headers, $input.lines,
+let result = nestBy($input.headers, $input.lines,
   (h) -> h.orderId, (l) -> l.orderId, "lines")
 
 // For multi-level, map over the result and join children of children
 map(result, (order) -> {
   ...order,
-  lines: join(order.lines, $input.schedules,
+  lines: nestBy(order.lines, $input.schedules,
     (l) -> l.lineId, (s) -> s.lineId, "schedules")
 })
 ```
 
 This works but the multi-level case is still somewhat verbose. The single-level case (which covers 80% of real-world needs) is clean.
 
-## Where Should join() Live?
+## Where Should nestBy() Live?
 
 This is the key architectural question. There are three options:
 
@@ -255,7 +255,7 @@ This is the key architectural question. There are three options:
 
 Start with a pure stdlib function (Option A). It's the simplest to implement, test, and maintain. The function call overhead is negligible for typical data sizes (hundreds to thousands of records).
 
-If profiling shows `join()` is a bottleneck for large datasets (10,000+ records), optimize to Option C — same external behavior, faster internal implementation.
+If profiling shows `nestBy()` is a bottleneck for large datasets (10,000+ records), optimize to Option C — same external behavior, faster internal implementation.
 
 Do NOT use Option B. Adding `join` to the interpreter/compiler treats a data operation as a language construct. `join` is semantically similar to `groupBy` + `map` — it's a library function, not a language keyword.
 
@@ -270,7 +270,7 @@ lookup:  O(1) per parent (hash map)
 Total:   O(N + M)
 ```
 
-### The join() function
+### The nestBy() function
 
 ```
 Build index: O(M) — hash children by key
@@ -287,7 +287,7 @@ For each parent: O(M) to scan all children
 Total:           O(N × M)
 ```
 
-With 1,000 parents and 10,000 children: 10,000,000 comparisons vs 11,000. The `join()` function prevents beginners from falling into this O(N × M) trap.
+With 1,000 parents and 10,000 children: 10,000,000 comparisons vs 11,000. The `nestBy()` function prevents beginners from falling into this O(N × M) trap.
 
 ## Edge Cases
 
@@ -303,12 +303,12 @@ With 1,000 parents and 10,000 children: 10,000,000 comparisons vs 11,000. The `j
 
 ## What About Left/Right/Full/Cross Joins?
 
-The basic `join()` is an **inner-ish join** — all parents are kept, matched children are nested. This covers 95% of integration use cases.
+The basic `nestBy()` is an **inner-ish join** — all parents are kept, matched children are nested. This covers 95% of integration use cases.
 
 For advanced join types, users can compose with existing functions:
 
 ```utlx
-// Left join (keep parents without children) — default behavior of join()
+// Left join (keep parents without children) — default behavior of nestBy()
 // Right join (find orphan children)
 let matchedKeys = map(parents, (p) -> parentKey(p))
 let orphans = filter(children, (c) -> !contains(matchedKeys, childKey(c)))
@@ -316,25 +316,27 @@ let orphans = filter(children, (c) -> !contains(matchedKeys, childKey(c)))
 // Full outer join — combine join result with orphans
 ```
 
-Adding `leftJoin()`, `rightJoin()`, `fullJoin()`, `crossJoin()` is premature. The single `join()` function covers the dominant use case. SQL-style join variants can be added later if demand arises.
+Adding `leftJoin()`, `rightJoin()`, `fullJoin()`, `crossJoin()` is premature. The single `nestBy()` function covers the dominant use case. SQL-style join variants can be added later if demand arises.
 
-## Naming Considerations
+## Naming: Why nestBy() (Not join())
 
-| Name | Precedent | Concern |
+Originally proposed as `join()`, but renamed to `nestBy()` to avoid confusion with the string `join(array, separator)` function that already exists in UTL-X.
+
+| Name considered | Verdict | Reason |
 |------|-----------|---------|
-| `join()` | SQL, Spark, pandas | Conflicts with string `join()` — but UTL-X string join is `join(array, separator)` with different arity |
-| `nestJoin()` | Unique | Clear intent but unfamiliar |
-| `groupJoin()` | C# LINQ | Describes the operation well |
-| `hierarchize()` | WTX-inspired | Too long, unfamiliar |
-| `nest()` | D3.js | Too generic |
+| `join()` | **Rejected** | Conflicts with string join(). Two functions named join() with different meanings is confusing — even with different parameter counts |
+| `nestBy()` | **Chosen** | Reads naturally: "nest children by key." Unique, no collision. Clear intent. |
+| `groupJoin()` | Alternative | C# LINQ precedent. Good but less intuitive. |
+| `nest()` | Too generic | What are you nesting? |
+| `hierarchize()` | Too long | WTX-inspired but unfamiliar |
 
-**Recommendation:** `join()` — same name as every other data tool. The 5-parameter signature (parents, children, parentKey, childKey, propName) is unambiguous. String `join()` has 2 parameters (array, separator) — no collision due to different arity.
+**Decision:** `nestBy()` — reads as "nest orderLines by orderId into lines." No collision with any existing function.
 
 ## Effort Estimate
 
 | Task | Effort |
 |------|--------|
-| Implement `join()` in stdlib | 1 day |
+| Implement `nestBy()` in stdlib | 1 day |
 | Unit tests (Kotlin) | 0.5 day |
 | Conformance suite tests | 0.5 day |
 | Documentation (language guide, book) | 0.5 day |
@@ -430,12 +432,12 @@ Error: Index must be a number or string, got UDMValue
 
 The `groupBy` function returns a map, but the index lookup `linesByOrder[order.orderId]` fails because `order.orderId` is a UDM value, not a native string. This means **the efficient O(N + M) approach doesn't work today** — users are forced to use the O(N × M) filter approach.
 
-This is a bug (or missing feature) in the groupBy/index interaction. The `join()` function would solve this at the root because it handles the indexing internally.
+This is a bug (or missing feature) in the groupBy/index interaction. The `nestBy()` function would solve this at the root because it handles the indexing internally.
 
-### With proposed join() function
+### With proposed nestBy() function
 
 ```utlx
-join(
+nestBy(
   $input.orders,
   $input.orderLines,
   (order) -> order.orderId,
@@ -488,12 +490,12 @@ Total operations: ~25,500
 
 **Problem:** As discovered above, `groupBy` index lookup currently fails with UDM values. This approach doesn't work today.
 
-### Approach 3: join() function — O(N + M + L)
+### Approach 3: nestBy() function — O(N + M + L)
 
 Same algorithmic complexity as Approach 2, but:
 
 ```
-join() internally:
+nestBy() internally:
   1. Iterate children array once: extract key for each child → O(M)
   2. Build HashMap<key, List<child>>: O(M) with O(1) amortized insert
   3. Iterate parents: for each parent, lookup children by key → O(N) with O(1) lookup
@@ -533,32 +535,32 @@ This is well within the memory budget for a 2 GB container with 8 workers: 8 × 
 |----------|-------------------------------|---------------|-----------------|-------------|
 | filter() per level | ~77.5 million | 200-500ms | None (but slow) | Yes |
 | groupBy() + index | ~25,500 | 5-15ms | ~500 KB (index) | **No (bug)** |
-| join() function | ~25,500 | 5-15ms | ~500 KB (index) | Proposed |
+| nestBy() function | ~25,500 | 5-15ms | ~500 KB (index) | Proposed |
 
 ### At scale: 86K msg/s throughput target
 
 - With filter(): 200-500ms per message → max 2-5 msg/s per worker → 16-40 msg/s with 8 workers. **Nowhere near 86K.**
-- With join(): 5-15ms per message → 66-200 msg/s per worker → 530-1,600 msg/s with 8 workers. Acceptable for IDoc batch processing (IDocs don't arrive at 86K/s — typical is 100-1,000/s).
+- With nestBy(): 5-15ms per message → 66-200 msg/s per worker → 530-1,600 msg/s with 8 workers. Acceptable for IDoc batch processing (IDocs don't arrive at 86K/s — typical is 100-1,000/s).
 
-For simple JSON-to-JSON transformations (no join), 86K msg/s is achievable because there's no join overhead. The join() cost is proportional to the number of records in the flat message.
+For simple JSON-to-JSON transformations (no join), 86K msg/s is achievable because there's no join overhead. The nestBy() cost is proportional to the number of records in the flat message.
 
-## Is join() THE Best Solution?
+## Is nestBy() THE Best Solution?
 
-### What join() does well:
+### What nestBy() does well:
 - Single-level parent-child: clean, obvious, one function call
 - Performance: O(N + M) with hash-based index — optimal
 - Memory: references not copies — minimal overhead
 - Readability: intent is clear from the function name and parameters
 - Discoverability: appears in stdlib function search
 
-### What join() does NOT solve perfectly:
+### What nestBy() does NOT solve perfectly:
 
 **Multi-level nesting** requires chaining:
 ```utlx
-let withLines = join(orders, lines, ...)
+let withLines = nestBy(orders, lines, ...)
 map(withLines, (o) -> {
   ...o,
-  lines: join(o.lines, schedules, ...)
+  lines: nestBy(o.lines, schedules, ...)
 })
 ```
 This is workable but not as elegant as a single declarative statement. A `deepJoin()` or recursive join would be cleaner but significantly more complex to design.
@@ -566,7 +568,7 @@ This is workable but not as elegant as a single declarative statement. A `deepJo
 **Composite keys** (joining on multiple fields):
 ```utlx
 // Key is orderId + warehouseId — need to concat or create a composite
-join(orders, lines,
+nestBy(orders, lines,
   (o) -> concat(o.orderId, "|", o.warehouseId),
   (l) -> concat(l.orderId, "|", l.warehouseId),
   "lines")
@@ -574,12 +576,12 @@ join(orders, lines,
 Works but feels hacky. A proper composite key syntax would be:
 ```utlx
 // Hypothetical — NOT proposed
-join(orders, lines, ["orderId", "warehouseId"], "lines")
+nestBy(orders, lines, ["orderId", "warehouseId"], "lines")
 ```
 But this adds complexity. The concat workaround is acceptable for v1.
 
 **Non-key relationships** (parent-child determined by position, not key):
-Some flat formats use sequential position instead of keys — "the next N lines belong to the preceding header." This requires stateful parsing that `join()` can't do. It's a pre-processing step (split the flat stream into keyed records first).
+Some flat formats use sequential position instead of keys — "the next N lines belong to the preceding header." This requires stateful parsing that `nestBy()` can't do. It's a pre-processing step (split the flat stream into keyed records first).
 
 ### Alternatives considered:
 
@@ -611,17 +613,17 @@ join:
 - Pro: clean, declarative, supports multi-level
 - Con: new artifact type, new parser, not composable with UTL-X expressions
 
-**4. The join() function (proposed)**
+**4. The nestBy() function (proposed)**
 - Pro: uses existing language constructs, composable, discoverable, performant
 - Con: multi-level requires chaining, composite keys need workaround
 
 ### Verdict
 
-**join() is the best 80/20 solution.** It solves the dominant use case (single-level parent-child by key) with a clean API, optimal performance, and minimal implementation cost. The 20% edge cases (multi-level, composite keys, positional relationships) are handled by existing UTL-X constructs (map, concat, custom pre-processing).
+**nestBy() is the best 80/20 solution.** It solves the dominant use case (single-level parent-child by key) with a clean API, optimal performance, and minimal implementation cost. The 20% edge cases (multi-level, composite keys, positional relationships) are handled by existing UTL-X constructs (map, concat, custom pre-processing).
 
-The alternatives are either too simple (just fixing the bug leaves users with verbose code) or too complex (SQL syntax, declarative cards). join() hits the sweet spot.
+The alternatives are either too simple (just fixing the bug leaves users with verbose code) or too complex (SQL syntax, declarative cards). nestBy() hits the sweet spot.
 
-**However: the groupBy + index bug should ALSO be fixed** regardless of whether join() is implemented. Users should be able to index a groupBy result with a UDM value. That's a separate bug fix, not dependent on F03.
+**However: the groupBy + index bug should ALSO be fixed** regardless of whether nestBy() is implemented. Users should be able to index a groupBy result with a UDM value. That's a separate bug fix, not dependent on F03.
 
 ## Updated Priority
 
@@ -633,11 +635,11 @@ Given the finding that groupBy + index lookup is broken, the priority of F03 inc
 
 ## Book Impact
 
-- Chapter 9 (UDM): already has the flat data section — add `join()` as the recommended approach
-- Chapter 14 (Standard Library): add `join()` to the Array functions category
-- Chapter 29 (Enterprise Integration): SAP IDoc case study should use `join()`
+- Chapter 9 (UDM): already has the flat data section — add `nestBy()` as the recommended approach
+- Chapter 14 (Standard Library): add `nestBy()` to the Array functions category
+- Chapter 29 (Enterprise Integration): SAP IDoc case study should use `nestBy()`
 - Chapter 48 (stdlib reference): add full documentation
-- Chapter 35 (Message Parsing & Memory): add join() memory analysis
+- Chapter 35 (Message Parsing & Memory): add nestBy() memory analysis
 
 ---
 

@@ -3,13 +3,13 @@
 **Status:** Proposed  
 **Priority:** Medium  
 **Created:** April 2026  
-**Related:** F03 (join — the reverse operation), F04 (lookup), F05 (chunkBy)
+**Related:** F03 (nestBy — the reverse operation), F04 (lookup), F05 (chunkBy)
 
 ---
 
 ## The Problem
 
-You have hierarchical data (nested) and need to produce flat data (one row per child with parent fields repeated). This is the **reverse** of `join()`.
+You have hierarchical data (nested) and need to produce flat data (one row per child with parent fields repeated). This is the **reverse** of `nestBy()`.
 
 ### Example
 
@@ -122,7 +122,7 @@ For each parent in `$input.orders`:
    - Merge parent fields + child fields → `{orderId: "ORD-001", customer: "Acme Corp", currency: "EUR", lineNr: 1, product: "Widget", qty: 10, price: 25.00}`
 4. Collect all merged records into a flat array
 
-The `"lines"` parameter (string) tells `unnest()` which property to expand — same pattern as `join()`. After `unnest()`, the `lines` property is gone — its contents have been flattened into the parent.
+The `"lines"` parameter (string) tells `unnest()` which property to expand — same pattern as `nestBy()`. After `unnest()`, the `lines` property is gone — its contents have been flattened into the parent.
 
 ### Using the Result
 
@@ -171,13 +171,13 @@ $input.orders
 
 Each `unnest()` removes one level of nesting. Two calls flatten a 3-level hierarchy to completely flat records.
 
-## unnest() Is the Reverse of join()
+## unnest() Is the Reverse of nestBy()
 
 These two functions are inverses:
 
 ```
-join()   : flat data  → hierarchical data  (group children under parents)
-unnest() : hierarchical data → flat data   (expand children alongside parents)
+nestBy()  : flat data  → hierarchical data  (group children under parents)
+unnest()  : hierarchical data → flat data   (expand children alongside parents)
 ```
 
 Round-trip:
@@ -187,7 +187,7 @@ Round-trip:
 let flat = [{orderId: "A", product: "Widget"}, {orderId: "A", product: "Gadget"}, {orderId: "B", product: "Gizmo"}]
 
 // Make hierarchical
-let nested = join(uniqueOrders, flat, (o) -> o.orderId, (l) -> l.orderId, "lines")
+let nested = nestBy(uniqueOrders, flat, (o) -> o.orderId, (l) -> l.orderId, "lines")
 
 // Back to flat
 let flatAgain = unnest(nested, "lines")

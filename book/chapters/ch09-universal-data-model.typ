@@ -273,10 +273,10 @@ Tools like IBM's Mercator (later WTX) solved this with an "intermediate card" �
 
 UTL-X takes a different approach: the `groupBy` + `map` pattern uses existing language constructs instead of a separate mapping artifact. This is more verbose but more flexible — you can add conditions, transformations, and error handling at each level.
 
-A future `join()` stdlib function could simplify the common case:
+A future `nestBy()` stdlib function could simplify the common case:
 
 ```utlx
-let enrichedOrders = join(
+let enrichedOrders = nestBy(
   \$input.IDOC.E1EDK01,           // parent records
   \$input.IDOC.E1EDP01,           // child records
   (header) -> header.BELNR,       // parent key extractor
@@ -285,10 +285,10 @@ let enrichedOrders = join(
 )
 ```
 
-The 5th parameter (`"lines"`) is a string that becomes a _new property name_ on each parent object. After `join()`, every E1EDK01 gains a `.lines` property containing its matched E1EDP01 records — you access it with dot notation like any other property:
+The name reads naturally: "nest E1EDP01 records by BELNR into a property called lines." The 5th parameter (`"lines"`) is a string that becomes a _new property name_ on each parent object. After `nestBy()`, every E1EDK01 gains a `.lines` property containing its matched E1EDP01 records — you access it with dot notation like any other property:
 
 ```utlx
-// After join(), .lines is a regular property:
+// After nestBy(), .lines is a regular property:
 map(enrichedOrders, (order) -> {
   orderId: order.BELNR,
   lineCount: count(order.lines),

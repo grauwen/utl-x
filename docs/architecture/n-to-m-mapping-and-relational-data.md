@@ -197,12 +197,12 @@ The intermediate card is NOT code — it's a declarative mapping definition. The
 
 4. **The 80/20 rule** — 80% of transformations are hierarchical-to-hierarchical (XML→JSON, JSON→XML). The flat-to-hierarchical case is important but not dominant.
 
-### Recommendation: Not an intermediate card, but a `join()` function
+### Recommendation: Not an intermediate card, but a `nestBy()` function
 
-Instead of a full declarative card system, add a `join()` stdlib function:
+Instead of a full declarative card system, add a `nestBy()` stdlib function:
 
 ```utlx
-let orders = join(
+let orders = nestBy(
   $input.IDOC.E1EDK01,          // parent records
   $input.IDOC.E1EDP01,          // child records
   (header) -> header.BELNR,      // parent key
@@ -211,20 +211,20 @@ let orders = join(
 )
 ```
 
-**How the 5th parameter works:** The string `"lines"` tells `join()` what to **name** the new property it creates on each parent. After `join()`, each E1EDK01 object gains a `.lines` property containing its matched E1EDP01 records:
+**How the 5th parameter works:** The string `"lines"` tells `nestBy()` what to **name** the new property it creates on each parent. After `nestBy()`, each E1EDK01 object gains a `.lines` property containing its matched E1EDP01 records:
 
 ```
-BEFORE join():   {"BELNR": "ORD-001", "CURRENCY": "EUR"}
-AFTER  join():   {"BELNR": "ORD-001", "CURRENCY": "EUR", "lines": [{...}, {...}]}
-                                                          ^^^^^^
-                                                          Created by join().
-                                                          Name comes from "lines" parameter.
+BEFORE nestBy():   {"BELNR": "ORD-001", "CURRENCY": "EUR"}
+AFTER  nestBy():   {"BELNR": "ORD-001", "CURRENCY": "EUR", "lines": [{...}, {...}]}
+                                                            ^^^^^^
+                                                            Created by nestBy().
+                                                            Name comes from "lines" parameter.
 ```
 
 You then use `.lines` in subsequent expressions like any other property:
 
 ```utlx
-// After join(), each order has a .lines property you can access:
+// After nestBy(), each order has a .lines property you can access:
 map(orders, (order) -> {
   orderId: order.BELNR,
   lineCount: count(order.lines),                              // ← .lines exists now
@@ -233,22 +233,22 @@ map(orders, (order) -> {
 ```
 
 This gives you:
-- Declarative join (parent key, child key, result property name)
+- Declarative nesting (parent key, child key, result property name)
 - O(N + M) performance (hash-based internally)
-- Composable — call `join()` multiple times for multi-level nesting
+- Composable — call `nestBy()` multiple times for multi-level nesting
 - No new language concept — it's just a function
 - Works with any flat data (IDoc, CSV, database exports)
 
 For multi-level nesting:
 
 ```utlx
-let withLines = join($input.headers, $input.lines,
+let withLines = nestBy($input.headers, $input.lines,
   (h) -> h.orderId, (l) -> l.orderId, "lines")
 
-// Now each header has .lines — join schedules INTO each line:
+// Now each header has .lines — nest schedules INTO each line:
 map(withLines, (header) -> {
   ...header,
-  lines: join(header.lines, $input.schedules,
+  lines: nestBy(header.lines, $input.schedules,
     (l) -> l.lineId, (s) -> s.lineId, "schedules")
 })
 // Result: headers[].lines[].schedules[] — 3-level hierarchy from flat data
@@ -262,7 +262,7 @@ UDM is inherently **hierarchical** — Objects contain Objects which contain Obj
 
 The challenge is that UDM doesn't know about *relationships between siblings*. When a flat IDoc is parsed into UDM, the header and line segments are siblings in the same Array. The relationship (BELNR = BELNR) is in the data values, not in the UDM structure.
 
-A `join()` function restructures the UDM tree: it takes sibling arrays and creates a parent-child hierarchy based on key matching. The output is a new UDM tree where the relationships are structural (nested) instead of referential (key-based).
+A `nestBy()` function restructures the UDM tree: it takes sibling arrays and creates a parent-child hierarchy based on key matching. The output is a new UDM tree where the relationships are structural (nested) instead of referential (key-based).
 
 This is essentially what Mercator's intermediate card does — but expressed as a function call rather than a separate mapping artifact.
 
@@ -271,7 +271,7 @@ This is essentially what Mercator's intermediate card does — but expressed as 
 ## Status
 
 - **Current:** `groupBy` + `map` works but is verbose and O(N × M) without groupBy
-- **Proposed:** `join()` stdlib function (F03 candidate)
+- **Proposed:** `nestBy()` stdlib function (F03)
 - **Not proposed:** full intermediate card system (too complex for the return)
 - **Book coverage:** add to UDM chapter (ch09) and Enterprise Integration chapter (ch29)
 

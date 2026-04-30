@@ -59,7 +59,7 @@ import * from dw::core::Arrays
 var customers = [{id: 1, name: "Alice"}, {id: 2, name: "Bob"}]
 var orders = [{customerId: 1, product: "Widget"}, {customerId: 1, product: "Gadget"}]
 
-join(customers, orders, (c) -> c.id, (o) -> o.customerId)
+nestBy(customers, orders, (c) -> c.id, (o) -> o.customerId, "orders")
 // Returns: [{l: customer1, r: order1}, {l: customer1, r: order2}]
 ```
 

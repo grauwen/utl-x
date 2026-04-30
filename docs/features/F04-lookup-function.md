@@ -41,12 +41,12 @@ This happens in almost every integration:
 - Transaction has `currencyCode` → look up exchange rate and symbol
 - Shipment has `countryCode` → look up country name and tax rate
 
-## Why This Is Different from join()
+## Why This Is Different from nestBy()
 
-`join()` (F03) **nests children under a parent**:
+`nestBy()` (F03) **nests children under a parent**:
 
 ```
-join(orders, orderLines, ..., "lines")
+nestBy(orders, orderLines, ..., "lines")
 
 Result: {orderId: "ORD-001", lines: [{...}, {...}, {...}]}
                                 ↑
@@ -264,11 +264,11 @@ let product = lookup(line.productCode, $input.catalog, (p) -> p.sku)
 }
 ```
 
-## lookup() vs join() vs find() — When to Use Which
+## lookup() vs nestBy() vs find() — When to Use Which
 
 | Situation | Use | Why |
 |-----------|-----|-----|
-| Nest children under parents (1:N) | `join()` | Creates hierarchy: order.lines[] |
+| Nest children under parents (1:N) | `nestBy()` | Creates hierarchy: order.lines[] |
 | Enrich with ONE matching record (1:1) | `lookup()` | Finds one match: customer.name |
 | Find first match (one-time) | `find()` | Simple search, no caching needed |
 | Filter matches (keep all) | `filter()` | Returns array of ALL matches |

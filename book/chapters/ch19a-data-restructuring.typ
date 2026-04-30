@@ -10,7 +10,7 @@ This chapter covers the complete toolkit for restructuring data in UTL-X: from f
   columns: (auto, auto, auto, auto),
   align: (left, left, left, left),
   [*Pattern*], [*Direction*], [*Function*], [*Status*],
-  [Parent-child nesting], [Flat → Hierarchical], [join()], [Proposed (F03)],
+  [Parent-child nesting], [Flat → Hierarchical], [nestBy()], [Proposed (F03)],
   [Record enrichment], [Flat → Enriched], [lookup()], [Proposed (F04)],
   [Sequential grouping], [Flat → Grouped], [chunkBy()], [Proposed (F05)],
   [Denormalization], [Hierarchical → Flat], [unnest()], [Proposed (F06)],
@@ -43,10 +43,10 @@ Target expects nested:
  {"orderId": "B", "customer": "Globex", "lines": [{"product": "Gizmo"}]}]
 ```
 
-=== The Solution: join()
+=== The Solution: nestBy()
 
 ```utlx
-join(
+nestBy(
   \$input.orders,                    // parent array
   \$input.orderLines,                // child array
   (order) -> order.orderId,          // parent key
@@ -55,10 +55,10 @@ join(
 )
 ```
 
-The 5th parameter `"lines"` is a string that tells `join()` what to name the new property it creates on each parent. After this call, each order has a `.lines` property containing its matched order lines:
+The name reads naturally: "nest orderLines by orderId into a property called lines." The 5th parameter `"lines"` is a string that tells `nestBy()` what to name the new property it creates on each parent. After this call, each order has a `.lines` property containing its matched order lines:
 
 ```utlx
-let enrichedOrders = join(...)
+let enrichedOrders = nestBy(...)
 
 // Now use order.lines like any property:
 map(enrichedOrders, (order) -> {
@@ -70,7 +70,7 @@ map(enrichedOrders, (order) -> {
 
 === Today's Workaround (without join)
 
-Until `join()` is implemented, use `filter()` per parent:
+Until `nestBy()` is implemented, use `filter()` per parent:
 
 ```utlx
 map(\$input.orders, (order) -> {
@@ -80,7 +80,7 @@ map(\$input.orders, (order) -> {
 })
 ```
 
-This works but is O(N times M) — for 500 orders and 5,000 lines, that's 2.5 million comparisons. `join()` does it in 5,500 operations.
+This works but is O(N times M) — for 500 orders and 5,000 lines, that's 2.5 million comparisons. `nestBy()` does it in 5,500 operations.
 
 == Pattern 2: Record Enrichment (lookup)
 
@@ -164,7 +164,7 @@ Use `reduce()` with manual state tracking — possible but extremely verbose and
 
 == Pattern 4: Denormalization (unnest)
 
-The reverse of `join()` — take nested data and flatten it. Essential for producing CSV, database rows, or flat file output.
+The reverse of `nestBy()` — take nested data and flatten it. Essential for producing CSV, database rows, or flat file output.
 
 === The Problem
 
@@ -308,13 +308,13 @@ Two patterns: `unnest` (hierarchical → flat), `lookup` (enrichment).
   columns: (auto, auto),
   align: (left, left),
   [*I have / I need*], [*Use*],
-  [Flat records with keys → nested parent-child], [join()],
+  [Flat records with keys → nested parent-child], [nestBy()],
   [Record with ID → add fields from reference table], [lookup() or find()],
   [Sequential segments → groups by header], [chunkBy()],
   [Nested data → flat rows for CSV/database], [unnest()],
   [Flat records → map of key → array], [groupBy()],
   [Array of arrays → single flat array], [flatten()],
-  [Conditional children → nest only matching], [filter() then join()],
-  [Many-to-many via bridge table], [Two join() calls through bridge],
+  [Conditional children → nest only matching], [filter() then nestBy()],
+  [Many-to-many via bridge table], [Two nestBy() calls through bridge],
   [Composite key matching], [concat() key then join() or lookup()],
 )

@@ -32,9 +32,9 @@ This pattern appears in:
 - Log files (timestamp line followed by stack trace lines)
 - Bank statements (transaction header + detail lines)
 
-### Why join() Can't Do This
+### Why nestBy() Can't Do This
 
-`join()` requires a key field on both parent and child to match on. Positional data has no key — the relationship is "I come after the header, so I belong to it." There's nothing to match on except position in the sequence.
+`nestBy()` requires a key field on both parent and child to match on. Positional data has no key — the relationship is "I come after the header, so I belong to it." There's nothing to match on except position in the sequence.
 
 ### Why reduce() Can But Shouldn't
 
