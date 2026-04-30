@@ -184,6 +184,24 @@ All format options use the `{key: value}` syntax in the output declaration:
 
 Options are optional — sensible defaults apply when not specified. Multiple options combine: `output csv {delimiter: ";", headers: true, regionalFormat: "european"}`.
 
+== BOM (Byte Order Mark)
+
+A BOM is an invisible character (Unicode U+FEFF) that some tools prepend to text files to signal the encoding. It was designed for UTF-16 (where byte order matters — hence the name), but it's also commonly added to UTF-8 files by Windows tools, especially Excel and Notepad.
+
+The problem: a BOM is invisible in text editors but very much visible to parsers. A JSON file that starts with a BOM contains `\uFEFF{"name": "Alice"}` — the `\uFEFF` before the opening brace causes a parse error in strict parsers. A CSV file with a BOM has an invisible character prepended to the first column header, so `\uFEFFName` doesn't match `Name` in your transformation.
+
+UTL-X handles BOM automatically across all formats:
+
+- *On input:* the JSON, CSV, and YAML parsers detect and strip a leading BOM before parsing. No configuration needed — it just works. You never see the BOM in `$input`.
+- *On output:* CSV can optionally prepend a BOM with `{bom: true}`. This is useful when the output will be opened in Excel on Windows, which uses the BOM to detect UTF-8 encoding for non-ASCII characters (accented names, CJK characters). JSON, XML, and YAML output never includes a BOM.
+
+In practice, BOM issues appear most often when:
+- Receiving CSV files from Windows systems (Excel adds BOM by default)
+- Processing JSON files saved with Windows Notepad
+- Integrating with legacy systems that expect or produce BOM-prefixed files
+
+UTL-X's approach: strip on input (always), add on output (only when explicitly requested for CSV). This matches the W3C recommendation: UTF-8 files should not have a BOM, but parsers should tolerate one.
+
 == What's Next
 
 Part I is complete. You now understand:
