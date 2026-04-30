@@ -232,6 +232,62 @@ convertXMLEncoding($input, "UTF-8")              // re-encode to UTF-8
 
 This is essential when integrating with legacy systems that use ISO-8859-1 or Windows-1252. UTL-X reads any encoding and outputs in the declared encoding.
 
+== XML Canonicalization (C14N)
+
+XML canonicalization produces a deterministic, normalized representation of an XML document. Two XML documents that are semantically identical but differ in whitespace, attribute order, or namespace declarations will produce the same canonical form. This is essential for XML digital signatures (XMLDSig), change detection, and round-trip verification.
+
+UTL-X implements the W3C XML Canonicalization standards:
+
+```utlx
+// Standard C14N (W3C 1.0) — sort attributes, normalize whitespace, remove comments
+c14n($input)
+
+// C14N with comments preserved
+c14nWithComments($input)
+
+// Exclusive C14N — only includes namespaces actually used (ideal for SOAP signatures)
+excC14n($input)
+excC14nWithComments($input)
+
+// C14N 1.1 — handles XML 1.1 features
+c14n11($input)
+c14n11WithComments($input)
+```
+
+=== Hashing and Comparison
+
+For verifying that a transformation preserves XML content — or detecting changes:
+
+```utlx
+// Hash the canonical form (default SHA-256)
+c14nHash($input)                       // "a1b2c3d4..."
+c14nHash($input, "SHA-512")            // different algorithm
+
+// Compare two XML documents semantically (ignoring attribute order, whitespace)
+c14nEquals(xml1, xml2)                 // true if same canonical form
+
+// Generate a fingerprint (shorter than full hash, useful for logging)
+c14nFingerprint($input)
+```
+
+=== Round-Trip Verification
+
+When transforming XML → JSON → XML, you can verify that no data was lost:
+
+```utlx
+// Original XML
+let original = $input
+
+// Transform to JSON and back
+let asJson = renderJson($input)
+let backToXml = parse(asJson, "json")
+
+// Compare canonical forms
+c14nEquals(original, backToXml)        // true if round-trip is lossless
+```
+
+This is particularly valuable in compliance scenarios (e-invoicing, healthcare) where you must prove that your transformation pipeline does not alter the business content.
+
 == XML Attributes in JSON/YAML Output
 
 When XML is transformed to JSON or YAML, attributes need special handling because JSON and YAML have no concept of attributes. Chapter 22 covers this in detail. The short version:
