@@ -13,12 +13,16 @@
   paper: "a4",
   margin: (top: 3cm, bottom: 3cm, left: 2.5cm, right: 2.5cm),
   header: context {
-    if counter(page).get().first() > 2 [
-      #set text(size: 9pt, fill: gray)
-      _UTL-X: Format-Agnostic Data Transformation_
-      #h(1fr)
-      #counter(page).display()
-    ]
+    if counter(page).get().first() > 2 {
+      let elems = query(heading.where(level: 1).before(here()))
+      let chapter-name = if elems.len() > 0 {
+        elems.last().body
+      } else {
+        [UTL-X]
+      }
+      set text(size: 9pt, fill: gray)
+      [#emph(chapter-name) #h(1fr) #counter(page).display()]
+    }
   },
 )
 
