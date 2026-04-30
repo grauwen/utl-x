@@ -34,6 +34,15 @@ $input
 
 The output is a clean YAML file with `%namespace`, `%types`, and `%fields` — readable without tooling, editable in any text editor, diffable in Git.
 
+#block(
+  fill: rgb("#FFF3E0"),
+  inset: 12pt,
+  radius: 4pt,
+  width: 100%,
+)[
+  *Current status (F08):* the USDL pipeline wiring is not yet complete. The building blocks exist — schema parsers, USDL conversion methods, and schema serializers are all implemented — but `TransformationService` does not yet invoke the USDL conversion step. This means `output yaml %usdl 1.0` and Tier 2 → Tier 2 conversions (e.g., `input xsd` / `output jsch`) do not work as described. The stdlib functions (`parseXSDSchema`, `parseJSONSchema`, etc.) perform the USDL conversion individually and do work. See F08 for the implementation plan.
+]
+
 == The USDL Tier System
 
 USDL organizes its directives in four tiers — from universal concepts that every schema format shares, down to features unique to a single standard:
