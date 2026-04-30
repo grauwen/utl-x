@@ -366,12 +366,146 @@ SAP exports IDocs as flat XML segments (see Chapter 20 on data restructuring for
 }
 ```
 
+== CDATA Sections
+
+CDATA (`<![CDATA[...]]>`) is an XML mechanism for including text that would otherwise need escaping. Inside a CDATA section, characters like `<`, `>`, and `&` are treated as literal text, not XML markup:
+
+```xml
+<Script><![CDATA[
+  if (price < 100 && quantity > 0) {
+    discount = price * 0.1;
+  }
+]]></Script>
+```
+
+Without CDATA, the `<` and `&` would need escaping as `&lt;` and `&amp;`. CDATA is common in:
+- Embedded scripts or code snippets in XML configurations
+- HTML content inside XML elements (CMS systems, email templates)
+- SQL queries stored in XML configuration files
+- Log messages with special characters
+
+=== How UTL-X Handles CDATA
+
+On input, CDATA sections are transparent — the parser extracts the content and treats it as plain text. The CDATA markers are stripped:
+
+```utlx
+// Input: <Script><![CDATA[if (x < 10) alert("low");]]></Script>
+$input.Script    // 'if (x < 10) alert("low");'
+```
+
+You work with the text content directly — no CDATA markers, no escaping. The content is a regular string.
+
+=== XML Inside CDATA
+
+A common real-world pattern — not part of the XML standard, but widely used in integration — is embedding XML inside CDATA. The outer XML parser sees the inner XML as plain text, avoiding namespace conflicts and double-parsing:
+
+```xml
+<Message>
+  <Header>
+    <MessageId>MSG-001</MessageId>
+  </Header>
+  <Payload><![CDATA[
+    <Order xmlns="urn:example:orders">
+      <Customer>Acme Corp</Customer>
+      <Total>299.99</Total>
+    </Order>
+  ]]></Payload>
+</Message>
+```
+
+This appears in SOAP envelopes (inner payload wrapped to avoid namespace collisions), message queues (JMS/MQ wrapping XML bodies), SAP PI/PO adapters, API gateway logs, and configuration files that embed XML snippets.
+
+UTL-X handles this naturally — the CDATA content arrives as a string, and you parse it with `parse()`:
+
+```utlx
+// $input.Message.Payload is a string containing XML
+let innerXml = parse($input.Message.Payload, "xml")
+
+// Now navigate the inner XML:
+{
+  messageId: $input.Message.Header.MessageId,
+  customer: innerXml.Order.Customer,
+  total: toNumber(innerXml.Order.Total)
+}
+```
+
+The `parse()` function takes the CDATA string and parses it as XML into a navigable UDM tree. This two-level parsing — outer XML automatically, inner XML explicitly — is the correct approach because UTL-X cannot know whether a CDATA string contains XML, JSON, SQL, or plain text.
+
+The reverse — embedding XML output inside CDATA in another XML document — requires `render()`:
+
+```utlx
+{
+  Message: {
+    Header: { MessageId: "MSG-002" },
+    Payload: render({
+      Order: {
+        Customer: $input.customer,
+        Total: $input.total
+      }
+    }, "xml")    // renders the inner XML as a string
+  }
+}
+```
+
+The inner XML is serialized to a string by `render()`, and the outer XML serializer will entity-escape it (producing `&lt;Order&gt;...` rather than CDATA). The result is semantically identical — any XML parser reads both forms the same way.
+
+If a downstream system specifically requires CDATA markers (some legacy systems check for them), this is a known limitation — UTL-X uses entity escaping on output, not CDATA.
+
+== XML Comments and Processing Instructions
+
+=== Comments
+
+XML comments (`<!-- ... -->`) are *not preserved* during parsing. They are skipped and do not appear in the UDM:
+
+```xml
+<!-- This is an order from Acme Corp -->
+<Order>
+  <Customer>Alice</Customer>  <!-- primary contact -->
+</Order>
+```
+
+After parsing, only the `Order` and `Customer` elements exist. The comments are gone. This is standard behavior for data transformation tools — comments are metadata about the XML document, not part of the data.
+
+If you need to *generate* XML comments in output, this is not currently supported. Comments are a formatting concern, not a data concern.
+
+=== Processing Instructions
+
+XML processing instructions (`<?target data?>`) — like `<?xml-stylesheet type="text/xsl" href="style.xsl"?>` — are also not preserved. They are parsed and discarded. The XML declaration (`<?xml version="1.0" encoding="UTF-8"?>`) is handled separately: it's read for encoding detection and regenerated on output with the declared encoding.
+
+== XML Documentation (xs:annotation)
+
+XSD schemas can include documentation for types and elements using `xs:annotation` and `xs:documentation`:
+
+```xml
+<xs:element name="OrderId">
+  <xs:annotation>
+    <xs:documentation>
+      Unique identifier for the order. Format: ORD-NNNNN.
+      Assigned by the order management system at creation time.
+    </xs:documentation>
+  </xs:annotation>
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="ORD-[0-9]{5}"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:element>
+```
+
+This is not data inside an XML instance — it's metadata inside an XSD schema. UTL-X handles it in two ways:
+
+*Reading:* When parsing an XSD (`input xsd`), documentation is extracted and mapped to the USDL `%description` directive. It becomes part of the schema model and is available for transformation.
+
+*Writing:* When generating XSD (`output xsd {addDocumentation: true}`), USDL `%description` values are emitted as `xs:documentation` elements. Without the option, documentation is omitted for a cleaner schema.
+
+*Converting:* When converting XSD to JSON Schema, `xs:documentation` becomes the `description` keyword. When converting to Avro, it becomes the `doc` field. The USDL tier system maps documentation across all schema formats.
+
 == XML Round-Trip
 
 XML → UDM → XML preserves structure, attributes, namespaces, and text content. The round-trip is not byte-for-byte identical (whitespace and formatting may differ) but is semantically equivalent.
 
-What IS preserved: element names, element order, attributes, attribute values, text content, namespaces, CDATA content.
+What IS preserved: element names, element order, attributes, attribute values, text content, namespaces, CDATA content (as text).
 
-What is NOT preserved: insignificant whitespace, comment nodes, processing instructions, DTD declarations, entity references (resolved during parsing).
+What is NOT preserved: insignificant whitespace, comment nodes, processing instructions, DTD declarations, entity references (resolved during parsing), CDATA markers (content preserved, markers not).
 
-For most integration use cases, this is correct behavior — you care about the data, not the formatting.
+For most integration use cases, this is correct behavior — you care about the data, not the formatting. Use `c14nEquals()` (see XML Canonicalization section above) to verify semantic equivalence.

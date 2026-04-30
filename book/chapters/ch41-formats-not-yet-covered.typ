@@ -89,6 +89,94 @@ UTL-X currently supports 5 data formats (Tier 1) and 6 schema formats (Tier 2). 
 // - Why not yet: very specialized, small user base
 // - Effort: large (binary format with offset-based access)
 
+== ORC (Apache Optimized Row Columnar)
+// - Apache ORC: optimized columnar storage format for Hadoop ecosystem
+// - Used by: Apache Hive, Presto, Trino, Spark, data warehouses
+// - Features: built-in indexes, statistics, predicate pushdown, ACID transactions
+// - Why not yet: binary format, Hadoop-specific, overlaps with Parquet use cases
+// - Effort to add: large (binary parsing, stripe/footer structure, compression codecs)
+// - Difference from Parquet: ORC is optimized for Hive workloads (predicate pushdown, ACID);
+//   Parquet is more general-purpose and widely adopted outside Hadoop
+// - Would enable: direct Hive/data warehouse integration, ORC→JSON/CSV for reporting
+// - Current workaround: ORC → CSV/JSON (via Hive/Spark) → UTL-X → target format
+
+== RAML (RESTful API Modeling Language)
+// - API description language by MuleSoft (now part of Salesforce)
+// - Used by: MuleSoft Anypoint, API-first development teams
+// - YAML-based syntax but with its own semantics (not just OpenAPI in YAML)
+//
+// Two versions with important differences:
+//
+// RAML 0.8 (legacy):
+//   - Basic !include for splitting files (untyped — includes raw text)
+//   - Schema keyword: `schema:` for inline or external JSON Schema references
+//   - Supports including external JSON Schema files: schema: !include user.json
+//   - No typed fragments — every include is raw text insertion
+//   - No RAML-native type system — relies on JSON Schema for data types
+//
+// RAML 1.0 (current):
+//   - Typed fragments: DataType, Trait, ResourceType, SecurityScheme, Library, etc.
+//     Each fragment has a header declaring its type (e.g., #%RAML 1.0 DataType)
+//   - Native type system: unions, inheritance, facets, examples, annotations
+//     RAML types are more expressive than JSON Schema for common API patterns
+//   - Libraries: reusable collections of types, traits, and resource types
+//   - Overlays and extensions: modify an API spec without changing the original
+//   - JSON Schema inclusion: `type: !include user.json` — RAML 1.0 can include
+//     external JSON Schema files as type definitions. The JSON Schema is treated
+//     as a RAML type (with limitations — no RAML-specific facets on JSON Schema types)
+//   - Both RAML 0.8 and 1.0 support JSON Schema, but 1.0 also has its own type system
+//     that is often preferred because RAML types support inheritance and examples natively
+//
+// RAML fragments (1.0 only) are particularly interesting for UTL-X:
+//   - A DataType fragment is essentially a standalone type definition file
+//   - It looks like a mini-schema: properties, types, constraints, examples
+//   - These are what MuleSoft projects use for defining API contracts
+//   - Converting RAML DataType fragments → JSON Schema / USDL is the key migration path
+//
+// Why not yet: declining relative to OpenAPI 3.x, MuleSoft-centric ecosystem
+// Effort to add: medium (YAML-based parsing, but type system is complex)
+// Key value: RAML type definitions and fragments → JSON Schema / XSD / USDL conversion
+// Would enable: MuleSoft-to-non-MuleSoft API migrations
+// Current workaround: RAML → OAS 3.0 (via oas-raml-converter) → UTL-X → target schema
+
+== JSON Sample Generation (Mock Data)
+// - Given a schema (JSON Schema, XSD, Avro, USDL), generate a sample JSON instance
+// - Use cases:
+//   - API mocking: generate realistic sample responses for testing
+//   - Documentation: show "what does a valid message look like?"
+//   - Test data: seed test suites with conforming instances
+//   - Onboarding: new developers see concrete examples from abstract schemas
+//
+// How it could work in UTL-X:
+//   %utlx 1.0
+//   input jsch                    // or xsd, avro, proto
+//   output json {mode: "sample"}  // generate a sample instance, not transform
+//   ---
+//   $input
+//
+// The serializer would:
+//   - Use %default values where defined
+//   - Use %example values where defined
+//   - Generate realistic fake data for types (string → "example", integer → 42)
+//   - Respect constraints (minLength, pattern, enum → pick first value)
+//   - Generate nested structures following the schema hierarchy
+//   - Handle arrays (generate 1-2 sample items)
+//
+// This is NOT implemented yet but would be a natural extension of the
+// schema-as-data model. The schema already contains types, constraints,
+// and examples — generating a conforming instance is a transformation
+// from schema to data.
+//
+// Current workaround: write a UTL-X transformation that reads the schema
+// and constructs a sample manually:
+//   map($input["%types"], (typeName, typeDef) -> {
+//     [typeName]: mapValues(typeDef["%fields"], (field) ->
+//       field["%default"] ?? field["%example"] ?? sampleForType(field["%type"])
+//     )
+//   })
+//
+// Related tools: json-schema-faker, Prism (Stoplight), WireMock, Faker.js
+
 == Summary: Format Priority Matrix
 
 // | Format | Market demand | Effort | Priority | Current workaround |
@@ -101,5 +189,8 @@ UTL-X currently supports 5 data formats (Tier 1) and 6 schema formats (Tier 2). 
 // | **Parquet** | High (big data) | Large | Medium | External tools for conversion |
 // | **MessagePack** | Low (IoT) | Small | Low | JSON round-trip |
 // | **GraphQL SDL** | Medium (API) | Medium | Low | JSON responses already work |
+// | **ORC** | Medium (data warehouses) | Large | Low | ORC→CSV via Hive/Spark |
+// | **RAML** | Medium (MuleSoft) | Medium | Low | RAML→OAS converter |
+// | **JSON Sample Gen** | Medium (testing/mocking) | Small | Medium | Manual transformation |
 // | **Thrift** | Low (declining) | Medium | None | Protobuf preferred |
 // | **FlatBuffers** | Low (games) | Large | None | Too specialized |
