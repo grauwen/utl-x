@@ -1,12 +1,21 @@
 = Schema Validation
 
+#block(
+  fill: rgb("#E3F2FD"),
+  inset: 12pt,
+  radius: 4pt,
+  width: 100%,
+)[
+  *UTLXe engine feature.* Runtime schema validation — validating input and output data against schemas during transformation — is a UTLXe production engine capability. The CLI (`utlx`) does not validate data payloads at runtime. This is a deliberate design decision — see _"Where Validation Lives — and Why"_ below for the reasoning.
+]
+
 A transformation that produces wrong output is worse than one that fails — because wrong output is sent downstream, corrupts data in the target system, and the error is discovered hours or days later. Schema validation catches these errors at transformation time, before they leave UTL-X.
 
 This chapter covers UTL-X's validation capabilities: what schemas are supported, how the validation orchestrator works, and the difference between syntactical and semantic validation.
 
 == Where Validation Lives — and Why
 
-Runtime schema validation — validating input and output data against schemas during transformation — is a *UTLXe engine feature only*. The CLI (`utlx`) does not validate data payloads at runtime. This is not a missing feature. It is a deliberate design decision.
+The CLI does not validate data payloads at runtime. This is not a missing feature. It is a deliberate design decision.
 
 === The CLI Must Accept Anything
 
