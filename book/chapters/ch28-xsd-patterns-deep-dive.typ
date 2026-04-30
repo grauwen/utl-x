@@ -327,3 +327,20 @@ ISO 20022 (SWIFT MX) uses Venetian Blind with strict naming conventions — ever
 === HL7 CDA (Clinical Document Architecture)
 
 Healthcare's CDA uses a mix of Venetian Blind and abstract types for clinical document extensibility. Abstract types (`ActRelationship`, `Participation`) are specialized via restriction — the XSD equivalent of Java interfaces. UTL-X preserves the inheritance structure during conversion.
+
+== XSD Patterns in Integration Tools
+
+Different integration tools generate and consume XSD in different patterns. Knowing which pattern a tool uses helps you choose the right conversion strategy when migrating or integrating:
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Tool*], [*XSD pattern*], [*Notes*],
+  [TIBCO BusinessWorks], [Russian Doll], [BW's schema editor generates deeply nested inline types. One global root element with all types anonymous. Simple to read but no reuse — types are locked inside their parent element. When migrating from BW, convert to Venetian Blind first for cleaner downstream conversion.],
+  [IBM WTX / Mercator], [Venetian Blind], [Named types with explicit type trees. Strong separation between structure and content.],
+  [SAP PI/PO], [Venetian Blind + imports], [IDoc XSDs use named types across multiple imported schema files. Heavy use of `xs:import` for cross-namespace composition.],
+  [MuleSoft DataWeave], [Venetian Blind], [Anypoint Platform generates Venetian Blind from RAML/OAS type definitions.],
+  [Microsoft BizTalk], [Russian Doll (default)], [BizTalk's schema editor defaults to Russian Doll with a flat editor view. Can be configured for other patterns but rarely is.],
+  [Oracle SOA Suite], [Garden of Eden], [Uses both global elements and global types for maximum substitutability in BPEL processes.],
+  [WSO2], [Venetian Blind], [WSDL-first approach with named types.],
+)
