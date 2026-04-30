@@ -64,45 +64,72 @@ sortBy($input.products, (p) -> p.price)
 
 == User-Defined Functions
 
-For logic you want to name and reuse within a transformation, use `def`:
+For logic you want to name and reuse within a transformation, use `function`:
 
 ```utlx
-def calculateTax(amount, rate) = amount * rate / 100
+function CalculateTax(amount, rate) {
+  amount * rate / 100
+}
 
-def formatCurrency(amount, currency) =
+function FormatCurrency(amount, currency) {
   concat(currency, " ", toString(round(amount * 100) / 100))
+}
 
 {
   subtotal: $input.total,
-  tax: calculateTax($input.total, 21),
-  formatted: formatCurrency($input.total * 1.21, "EUR")
+  tax: CalculateTax($input.total, 21),
+  formatted: FormatCurrency($input.total * 1.21, "EUR")
 }
 ```
 
+=== The PascalCase Rule
+
+User-defined function names *must* start with an uppercase letter (PascalCase). The parser enforces this:
+
+```utlx
+function CalculateTax(amount, rate) { amount * rate / 100 }   // ✓ valid
+function calculateTax(amount, rate) { amount * rate / 100 }   // ✗ parser error
+```
+
+If you try `function calculateTax(...)`, the parser rejects it with: _"User-defined functions must start with uppercase letter (PascalCase). Got: 'calculateTax'. Try: 'CalculateTax'."_
+
+Why? UTL-X has 652 built-in stdlib functions, all using camelCase: `map`, `filter`, `groupBy`, `parseDate`, `toNumber`. By requiring user-defined functions to start uppercase, there can never be a collision. When you see `CalculateTax(...)` in a transformation, you know immediately it's user-defined. When you see `parseDate(...)`, you know it's stdlib. No ambiguity, no shadowing, no surprises.
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Name starts with*], [*What it is*], [*Example*],
+  [lowercase], [Built-in stdlib function], [`map`, `filter`, `concat`, `parseDate`],
+  [Uppercase], [User-defined function], [`CalculateTax`, `FormatPhone`, `ValidateVAT`],
+)
+
+The keyword `def` is accepted as a shorthand alias for `function`, but `function` is the standard keyword used throughout UTL-X.
+
 === Function Definitions Are Expressions
 
-A `def` binds a name to a lambda. These are equivalent:
+A `function` definition binds a name to a callable. These are equivalent:
 
 ```utlx
 // Named function
-def double(x) = x * 2
+function Double(x) { x * 2 }
 
-// Lambda bound to a variable
+// Lambda bound to a variable (no naming restriction — lambdas are values)
 let double = (x) -> x * 2
 ```
 
-Both can be called as `double(5)` → `10`. The `def` form is more readable for named functions. The `let` form is useful when passing functions as arguments.
+Both can be called as `Double(5)` or `double(5)` → `10`. The `function` form is more readable for named functions and enforces PascalCase. The `let` form binds a lambda to a variable — variable names follow normal rules (no uppercase requirement).
 
 === Recursive Functions
 
 Functions can call themselves:
 
 ```utlx
-def factorial(n) =
+function Factorial(n) {
   if (n <= 1) 1
-  else n * factorial(n - 1)
+  else n * Factorial(n - 1)
+}
 
-factorial(5)   // 120
+Factorial(5)   // 120
 ```
 
 Use recursion sparingly — deep recursion can exhaust the stack. For most data processing, `map`, `filter`, and `reduce` are better choices.

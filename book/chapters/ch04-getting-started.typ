@@ -296,6 +296,36 @@ echo '<Product id="P-001" price="29.99">Widget</Product>' | utlx --from xml -e '
 
 Each of these runs in under 10 milliseconds on a native binary. That's the UTL-X developer experience: instant feedback, any format.
 
+== Your Own Functions
+
+When a transformation has reusable logic, define your own functions with the `function` keyword:
+
+```utlx
+%utlx 1.0
+input json
+output json
+---
+function ShippingClass(weight) {
+  if (weight > 30) "freight"
+  else if (weight > 5) "parcel"
+  else "letter"
+}
+
+function LineTotal(item) {
+  item.qty * item.price
+}
+
+map($input.items, (item) -> {
+  product: item.name,
+  total: LineTotal(item),
+  shipping: ShippingClass(item.weight)
+})
+```
+
+Notice that user-defined functions start with an *uppercase* letter (`ShippingClass`, `LineTotal`) while built-in functions use lowercase (`map`, `filter`, `concat`). This is enforced by the parser — it prevents your functions from accidentally colliding with any of the 652 built-in stdlib functions. When you see an uppercase name, you know it's yours. When you see lowercase, you know it's built-in.
+
+Chapter 14 covers functions and lambdas in full detail.
+
 == What's Next
 
 You now have UTL-X installed and running. The next chapters cover:
