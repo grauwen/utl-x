@@ -2,9 +2,31 @@
 
 OData (Open Data Protocol) is the REST-based data access standard behind Microsoft's ecosystem: Dynamics 365, SharePoint, Power Platform, Dataverse, and Azure APIs. If you integrate with Microsoft products — or with SAP systems that expose OData services — you will encounter OData JSON.
 
-OData JSON looks like regular JSON but carries metadata annotations: `@odata.context`, `@odata.type`, `@odata.id`. These tell the client about the entity's type, its URL, and where to find the schema. UTL-X understands these annotations natively and can strip, preserve, or generate them as needed.
+OData has evolved through several versions, each with different payload formats:
 
-== OData JSON and UDM
+#table(
+  columns: (auto, auto, auto, auto),
+  align: (left, left, left, left),
+  [*Version*], [*Payload format*], [*Status*], [*UTL-X support*],
+  [OData v1-v3], [XML (Atom/AtomPub)], [Legacy — largely deprecated], [Not supported],
+  [OData v3], [JSON (verbose format)], [Legacy], [Not supported],
+  [*OData v4*], [*JSON with `@odata.*` annotations*], [*Current OASIS standard*], [*Fully supported*],
+)
+
+#block(
+  fill: rgb("#E3F2FD"),
+  inset: 12pt,
+  radius: 4pt,
+  width: 100%,
+)[
+  *UTL-X supports OData v4 JSON only.* This is the current OASIS standard and the format used by all modern Microsoft services (Dynamics 365, Dataverse, Graph API), SAP Gateway, and other OData v4 providers. The older Atom/XML format (OData v1-v3) and the verbose JSON format (OData v3) are not supported — these are effectively deprecated, and services that still use them typically offer a v4 endpoint as well.
+]
+
+OData v4 JSON looks like regular JSON but carries metadata annotations: `@odata.context`, `@odata.type`, `@odata.id`. These tell the client about the entity's type, its URL, and where to find the schema. UTL-X understands these annotations natively and can strip, preserve, or generate them as needed.
+
+If you encounter OData v1-v3 XML (Atom) payloads from a legacy service, parse them as standard XML (`input xml`) and navigate the Atom structure manually. But in practice, this is rare — upgrade the service endpoint to v4 if at all possible.
+
+== OData v4 JSON and UDM
 
 When UTL-X parses OData JSON, it separates the metadata annotations from the business data:
 
