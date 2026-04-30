@@ -205,12 +205,12 @@ For developers coming from jq, here's how common patterns translate:
   [*Task*], [*jq*], [*UTL-X*],
   [Extract field], [`jq '.name'`], [`utlx -e '.name'`],
   [Raw output], [`jq -r '.name'`], [`utlx -e '.name' -r`],
-  [Array length], [`jq '. | length'`], [`utlx -e 'count($input)'`],
-  [Map array], [`jq '[.[] | .name]'`], [`utlx -e 'map($input, (x) -> x.name)'`],
-  [Filter array], [`jq '[.[] | select(.active)]'`], [`utlx -e 'filter($input, (x) -> x.active)'`],
-  [Sort], [`jq 'sort_by(.name)'`], [`utlx -e 'sortBy($input, (x) -> x.name)'`],
-  [Keys], [`jq 'keys'`], [`utlx -e 'keys($input)'`],
-  [Sum], [`jq '[.[].price] | add'`], [`utlx -e 'sum(map($input, (x) -> x.price))'`],
+  [Array length], [`jq '. | length'`], [`utlx -e 'count(.)'`],
+  [Map array], [`jq '[.[] | .name]'`], [`utlx -e 'map(., (x) -> x.name)'`],
+  [Filter array], [`jq '[.[] | select(.active)]'`], [`utlx -e 'filter(., (x) -> x.active)'`],
+  [Sort], [`jq 'sort_by(.name)'`], [`utlx -e 'sortBy(., (x) -> x.name)'`],
+  [Keys], [`jq 'keys'`], [`utlx -e 'keys(.)'`],
+  [Sum], [`jq '[.[].price] | add'`], [`utlx -e 'sum(map(., (x) -> x.price))'`],
   [Compact], [`jq -c '.'`], [`utlx -e '.' --no-pretty`],
 )
 
