@@ -4,6 +4,48 @@ A transformation that produces wrong output is worse than one that fails — bec
 
 This chapter covers UTL-X's validation capabilities: what schemas are supported, how the validation orchestrator works, and the difference between syntactical and semantic validation.
 
+== Where Validation Lives — and Why
+
+Runtime schema validation — validating input and output data against schemas during transformation — is a *UTLXe engine feature only*. The CLI (`utlx`) does not validate data payloads at runtime. This is not a missing feature. It is a deliberate design decision.
+
+=== The CLI Must Accept Anything
+
+The real world is full of malformed messages — missing fields, wrong types, unexpected structures, legacy formats that don't match their own documentation. The CLI's job is to be a workhorse: read whatever comes in, transform it, produce output.
+
+If the CLI rejected non-conforming input, it would be useless for the very situations where UTL-X is needed most — cleaning up, normalizing, and restructuring messy data. A transformation developer needs to _see_ what the bad data looks like, not be told it's invalid.
+
+More fundamentally: *transformation IS the fix.* Often the whole point of writing the transformation is to handle the malformed data — add missing fields, fix types, normalize structures. If the CLI rejected the input, you couldn't write the fix for it. The tool would prevent you from solving the problem it exists to solve.
+
+And schemas lie. In practice, the "official" schema for an API or format is frequently outdated, incomplete, or aspirational. SAP IDoc documentation says a field is mandatory, but production IDocs arrive without it. An API's JSON Schema says `required: ["address"]`, but 30% of real records have no address. The CLI must deal with reality, not the spec.
+
+There is also a discovery workflow to consider. Before you can validate, you need to understand. A developer receiving an unknown IDoc or a partner's XML for the first time needs the CLI to parse it, explore it with `$input.*`, and figure out the actual structure. Validation would block this discovery phase entirely.
+
+=== UTLXe Operates in Middleware Where Validation Is Vital
+
+The engine sits in production pipelines between systems — receiving orders, invoices, payments, patient records. Here, a malformed message that passes through silently can corrupt a downstream database, trigger a wrong payment, or violate regulatory compliance. The validation orchestrator (pre-validate → transform → post-validate) guarantees that only conforming data enters and leaves the pipeline.
+
+Fail-fast saves money. A malformed invoice that passes through UTLXe unchecked might only be caught by the tax authority 30 days later — costing investigation time, penalties, and re-processing. Pre-validation catches it in milliseconds.
+
+Auditability matters. In regulated industries (banking, healthcare, e-invoicing), you need proof that every message was validated. The validation orchestrator creates that audit trail. A CLI session leaves no trace.
+
+And the blast radius is different. The CLI processes one message for one developer. UTLXe processes thousands per second for potentially millions of downstream consumers. The cost of letting a bad message through scales with the audience.
+
+=== The Right Default in the Right Executable
+
+This split mirrors how compilers work. A C compiler will compile code with warnings and let you run it. But a CI/CD pipeline enforces `-Werror` — same tool, different strictness depending on context. UTL-X makes this the default rather than a flag: you don't need developers to remember to turn validation off, or operations teams to remember to turn it on. The right behavior is built into the right executable.
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Aspect*], [*CLI (utlx)*], [*Engine (UTLXe)*],
+  [Purpose], [Development, exploration, testing], [Production middleware],
+  [Input tolerance], [Accept anything], [Validate against schema],
+  [Output checking], [Developer inspects visually], [Post-validation enforces contract],
+  [Bad data], [Let the developer see it and fix it], [Reject it before it propagates],
+  [Schema role], [Static script analysis (`utlx validate`)], [Runtime data validation],
+  [Audience], [One developer], [Thousands of downstream consumers],
+)
+
 == Why Validate?
 
 Consider a Peppol e-invoicing flow. Your transformation maps Dynamics 365 JSON to UBL 2.1 XML. Without validation:
@@ -65,7 +107,11 @@ If pre-validation fails, the transformation never runs — saving compute time a
 
 === Configuring Validation
 
-Validation is configured per transformation. Today this is done via the engine's `TransformConfig`:
+Validation is configured per transformation in the UTLXe engine. There are two ways to attach schemas:
+
+*Via the dynamic load API (protobuf/gRPC):* The transport config map includes `validate_input`, `input_schema`, `input_schema_format` (and the same for output). This is the primary mechanism for runtime validation.
+
+*Via transform.yaml in a bundle:*
 
 ```yaml
 # transform.yaml
@@ -88,7 +134,17 @@ output xml {schema: "invoice-output.xsd"}
 // transformation body
 ```
 
-Both approaches use the same validators and orchestrator — the difference is where the schema reference lives.
+This syntax is parsed today but not yet wired to the validation orchestrator. When F01 is implemented, the same validators will be used — the only difference is where the schema reference lives.
+
+=== CLI Static Validation
+
+The CLI offers a separate validation capability — static analysis of a `.utlx` script against a schema:
+
+```bash
+utlx validate --schema order-output.json transformation.utlx
+```
+
+This checks whether the transformation's _output structure_ (inferred via type analysis) is compatible with the schema. It does NOT validate runtime data — it validates the script itself at compile time. Think of it as type checking: "will this transformation always produce valid output?" rather than "is this specific input valid?"
 
 == Validation Policies
 
