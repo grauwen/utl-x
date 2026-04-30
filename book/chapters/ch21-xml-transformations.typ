@@ -273,6 +273,8 @@ let inv = $input.Invoice
 }
 ```
 
+The bracket notation `inv["cbc:ID"]` is a string-based property lookup — it accesses the child element named `cbc:ID` on the UDM Object. This works exactly like dot notation (`inv.name`) but allows characters that dot notation cannot handle, such as the colon in namespace prefixes. Since UBL elements all have prefixes like `cbc:` and `cac:`, bracket notation with string keys is the only way to navigate them.
+
 === HL7 FHIR XML
 
 FHIR uses `value` attributes instead of text content (see FHIR analysis in the architecture docs):
