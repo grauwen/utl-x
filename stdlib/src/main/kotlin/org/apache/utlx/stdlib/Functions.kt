@@ -9,6 +9,7 @@ import org.apache.utlx.stdlib.math.*
 import org.apache.utlx.stdlib.date.*
 import org.apache.utlx.stdlib.type.*
 import org.apache.utlx.stdlib.objects.*
+import org.apache.utlx.stdlib.restructuring.*
 import org.apache.utlx.stdlib.core.*
 import org.apache.utlx.stdlib.encoding.*
 import org.apache.utlx.stdlib.xml.*
@@ -161,7 +162,10 @@ object StandardLibrary {
     
        // Enhanced array functions
        registerEnhancedArrayFunctions()
-    
+
+       // Data restructuring functions (groupBy, mapGroups, lookupBy)
+       registerDataRestructuringFunctions()
+
        // Financial functions
        registerFinancialFunctions()
 
@@ -1168,12 +1172,9 @@ object StandardLibrary {
     }
     
     /**
-     * Register enhanced array and data restructuring functions
-     * Includes: array aggregation (partition, countBy, sumBy, maxBy, minBy, avgBy)
-     * and data restructuring (groupBy, mapGroups, lookupBy)
+     * Register enhanced array aggregation functions
      */
     private fun registerEnhancedArrayFunctions() {
-        // Array aggregation functions (category: Array)
         register("partition", EnhancedArrayFunctions::partition)
         register("countBy", EnhancedArrayFunctions::countBy)
         register("sumBy", EnhancedArrayFunctions::sumBy)
@@ -1181,11 +1182,17 @@ object StandardLibrary {
         register("minBy", EnhancedArrayFunctions::minBy)
         // register("distinctBy", EnhancedArrayFunctions::distinctBy) // DUPLICATE: distinctBy already registered in ArrayFunctions
         register("avgBy", EnhancedArrayFunctions::avgBy)
+    }
 
-        // Data restructuring functions (category: Data Restructuring)
-        register("groupBy", EnhancedArrayFunctions::groupBy)       // Array → Object (keyed map for O(1) lookup)
-        register("mapGroups", EnhancedArrayFunctions::mapGroups)   // Array → Array (group + transform each group)
-        register("lookupBy", EnhancedArrayFunctions::lookupBy)     // Array → Object or null (find one match by key)
+    /**
+     * Register data restructuring functions (category: Data Restructuring)
+     * These change the SHAPE of data — grouping, lookup, nesting
+     */
+    private fun registerDataRestructuringFunctions() {
+        register("groupBy", DataRestructuringFunctions::groupBy)       // Array → Object (keyed map for O(1) lookup)
+        register("mapGroups", DataRestructuringFunctions::mapGroups)   // Array → Array (group + transform each group)
+        register("lookupBy", DataRestructuringFunctions::lookupBy)     // Array → Object or null (find one match by key)
+        // Future: nestBy (F03), chunkBy (F05), unnest (F06)
     }
     
     /**
