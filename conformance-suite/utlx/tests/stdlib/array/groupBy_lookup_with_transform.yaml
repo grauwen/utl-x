@@ -1,0 +1,64 @@
+name: "groupBy_lookup_with_transform"
+category: "stdlib/array"
+description: "groupBy lookup combined with map to transform the looked-up items"
+tags: ["groupBy", "lookup", "B15", "enrichment"]
+
+input:
+  format: json
+  data: |
+    {
+      "invoices": [
+        {"invoiceId": "INV-001", "customerId": "C-42"},
+        {"invoiceId": "INV-002", "customerId": "C-41"},
+        {"invoiceId": "INV-003", "customerId": "C-42"}
+      ],
+      "customers": [
+        {"id": "C-41", "name": "Globex Inc", "country": "US"},
+        {"id": "C-42", "name": "Acme Corp", "country": "NL"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let customerIndex = groupBy($input.customers, (c) -> c.id)
+
+  map($input.invoices, (inv) -> {
+    invoiceId: inv.invoiceId,
+    customerId: inv.customerId,
+    customerName: first(customerIndex[inv.customerId] ?? [])?.name ?? "Unknown",
+    country: first(customerIndex[inv.customerId] ?? [])?.country ?? "XX"
+  })
+
+expected:
+  format: json
+  data: |
+    [
+      {
+        "invoiceId": "INV-001",
+        "customerId": "C-42",
+        "customerName": "Acme Corp",
+        "country": "NL"
+      },
+      {
+        "invoiceId": "INV-002",
+        "customerId": "C-41",
+        "customerName": "Globex Inc",
+        "country": "US"
+      },
+      {
+        "invoiceId": "INV-003",
+        "customerId": "C-42",
+        "customerName": "Acme Corp",
+        "country": "NL"
+      }
+    ]
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "groupBy as a lookup table — similar to lookupBy() but using existing functions"
+    - "first(groupBy[key]) extracts the single matching record from the group array"
+    - "This pattern will be replaced by lookupBy() when F04 is implemented"

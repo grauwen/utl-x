@@ -1,0 +1,55 @@
+name: "mapGroups_basic"
+category: "stdlib/array"
+description: "mapGroups groups items and transforms each group — the iteration/reporting use case"
+tags: ["mapGroups", "groupBy", "aggregation", "reporting"]
+
+input:
+  format: json
+  data: |
+    [
+      {"name": "Alice", "dept": "Engineering", "salary": 90000},
+      {"name": "Bob", "dept": "Sales", "salary": 60000},
+      {"name": "Carol", "dept": "Engineering", "salary": 85000},
+      {"name": "Diana", "dept": "Sales", "salary": 65000},
+      {"name": "Eve", "dept": "Engineering", "salary": 95000}
+    ]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  mapGroups($input, "dept", group => {
+    department: group.key,
+    headcount: count(group.value),
+    totalSalary: sum(map(group.value, (e) -> e.salary)),
+    avgSalary: avg(map(group.value, (e) -> e.salary)),
+    employees: map(group.value, (e) -> e.name)
+  })
+
+expected:
+  format: json
+  data: |
+    [
+      {
+        "department": "Engineering",
+        "headcount": 3,
+        "totalSalary": 270000,
+        "avgSalary": 90000,
+        "employees": ["Alice", "Carol", "Eve"]
+      },
+      {
+        "department": "Sales",
+        "headcount": 2,
+        "totalSalary": 125000,
+        "avgSalary": 62500,
+        "employees": ["Bob", "Diana"]
+      }
+    ]
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "mapGroups = group + transform in one call"
+    - "group.key = the group key, group.value = array of group members"
+    - "Use mapGroups for reporting/aggregation, use groupBy for O(1) lookup"

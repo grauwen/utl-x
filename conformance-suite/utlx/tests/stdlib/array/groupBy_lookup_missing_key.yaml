@@ -1,0 +1,58 @@
+name: "groupBy_lookup_missing_key"
+category: "stdlib/array"
+description: "groupBy lookup with a key that has no matching items — returns null, use ?? for fallback"
+tags: ["groupBy", "lookup", "B15", "null-handling"]
+
+input:
+  format: json
+  data: |
+    {
+      "employees": [
+        {"name": "Alice", "dept": "Engineering"},
+        {"name": "Bob", "dept": "Engineering"}
+      ],
+      "departments": ["Engineering", "Sales", "Marketing"]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let byDept = groupBy($input.employees, (e) -> e.dept)
+
+  map($input.departments, (dept) -> {
+    department: dept,
+    employees: byDept[dept] ?? [],
+    headcount: count(byDept[dept] ?? [])
+  })
+
+expected:
+  format: json
+  data: |
+    [
+      {
+        "department": "Engineering",
+        "employees": [
+          {"name": "Alice", "dept": "Engineering"},
+          {"name": "Bob", "dept": "Engineering"}
+        ],
+        "headcount": 2
+      },
+      {
+        "department": "Sales",
+        "employees": [],
+        "headcount": 0
+      },
+      {
+        "department": "Marketing",
+        "employees": [],
+        "headcount": 0
+      }
+    ]
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "Tests groupBy lookup where some keys have no matching items"
+    - "The ?? [] pattern provides an empty array fallback for missing groups"

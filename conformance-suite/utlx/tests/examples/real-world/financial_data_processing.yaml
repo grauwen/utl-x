@@ -89,7 +89,7 @@ transformation: |
         })
       },
       
-      spending_by_category: map(groupBy(debits, "category"), group => {
+      spending_by_category: mapGroups(debits, "category", group => {
         category: group.key,
         total_spent: abs(sum(map(group.value, txn => txn.amount))),
         transaction_count: count(group.value),
