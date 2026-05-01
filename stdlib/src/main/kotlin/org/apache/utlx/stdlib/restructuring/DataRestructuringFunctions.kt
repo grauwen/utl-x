@@ -281,4 +281,65 @@ object DataRestructuringFunctions {
 
         return UDM.Array(result)
     }
+
+    @UTLXFunction(
+        description = "Split a flat sequence into chunks by position. A new chunk starts whenever the predicate returns true.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Data Restructuring",
+        parameters = [
+            "array: Flat sequence of records to chunk",
+            "isNewChunkPredicate: Lambda (element) -> boolean — returns true to start a new chunk"
+        ],
+        returns = "Array of arrays — each inner array is a chunk of consecutive elements",
+        example = "chunkBy(segments, (seg) -> seg.type == \"HEADER\") => [[HEADER, LINE, LINE], [HEADER, LINE]]",
+        notes = "For positional/sequential grouping where parent-child is determined by position, not key.\n" +
+                "Use chunkBy for SAP IDocs, EDI segments, log files, bank statements.\n" +
+                "Use nestBy for key-based nesting. Use groupBy for key-based grouping.\n" +
+                "Performance: O(N) — single sequential scan.",
+        tags = ["restructuring", "chunking", "positional", "sequential"],
+        since = "1.0"
+    )
+    fun chunkBy(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw IllegalArgumentException(
+                "chunkBy() requires 2 arguments: array, isNewChunkPredicate. " +
+                "Example: chunkBy(\$input.segments, (seg) -> seg.type == \"E1EDK01\")"
+            )
+        }
+
+        val array = args[0]
+        val predicate = args[1]
+
+        if (array !is UDM.Array) {
+            throw IllegalArgumentException("chunkBy() first argument must be an array")
+        }
+        if (predicate !is UDM.Lambda) {
+            throw IllegalArgumentException("chunkBy() second argument must be a lambda/function")
+        }
+
+        if (array.elements.isEmpty()) {
+            return UDM.Array(emptyList())
+        }
+
+        val chunks = mutableListOf<MutableList<UDM>>()
+        var currentChunk: MutableList<UDM>? = null
+
+        for (element in array.elements) {
+            val isNewChunk = predicate.apply(listOf(element))
+            val startNew = when (isNewChunk) {
+                is UDM.Scalar -> isNewChunk.value == true
+                else -> false
+            }
+
+            if (startNew || currentChunk == null) {
+                currentChunk = mutableListOf()
+                chunks.add(currentChunk)
+            }
+
+            currentChunk.add(element)
+        }
+
+        return UDM.Array(chunks.map { UDM.Array(it) })
+    }
 }
