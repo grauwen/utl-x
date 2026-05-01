@@ -95,23 +95,23 @@ YAML is the human-readable editing layer for schemas. Read any schema as YAML, e
   *Current status (F08):* the USDL enrichment on input (step 1 above) is not yet implemented — Tier 2 parsers do not yet add `%` properties alongside the raw structure. The output side (step 2) is fully implemented — all 6 serializers detect `%types`. See F08 for the implementation plan.
 ]
 
-== The USDL Tier System
+== The USDL Directive Classification
 
-USDL organizes its directives in four tiers — from universal concepts that every schema format shares, down to features unique to a single standard:
+USDL organizes its directives in three levels of portability — from universal concepts that every schema format shares, down to features unique to a single standard:
 
 #table(
   columns: (auto, auto, auto, auto),
   align: (left, left, left, left),
-  [*Tier*], [*Name*], [*What it covers*], [*Applies to*],
-  [Tier 1], [Core], [Types, names, descriptions — the fundamentals], [All formats],
-  [Tier 2], [Common], [Constraints, validation — supported by 80%+], [Most formats],
-  [Tier 3], [Format-Specific], [Features unique to one format family], [One format],
-  [Tier 4], [Reserved], [Future USDL versions], [Planned],
+  [*Level*], [*Scope*], [*What it covers*], [*Applies to*],
+  [Core], [Portable], [Types, names, descriptions — the fundamentals], [All formats],
+  [Shared], [Widespread], [Constraints, validation — supported by 80%+], [Most formats],
+  [Format-native], [Exclusive], [Features unique to one format family], [One format],
+  [Reserved], [Future], [Future USDL versions], [Planned],
 )
 
-This tiering is the key to understanding USDL. Tier 1 and 2 directives work everywhere. Tier 3 directives target a specific output format. When converting USDL to a format that doesn't support a Tier 3 directive, it's preserved as a comment or metadata.
+This classification is the key to understanding USDL. Core and Shared directives work everywhere. Format-native directives target a specific output format. When converting USDL to a format that doesn't support a Format-native directive, it's preserved as a comment or metadata.
 
-== Tier 1: Core Directives (Universal)
+== Core Directives (Universal)
 
 These directives are supported by every schema format:
 
@@ -119,27 +119,25 @@ These directives are supported by every schema format:
   columns: (auto, auto, auto),
   align: (left, left, left),
   [*Directive*], [*What it defines*], [*Example*],
-  [\_namespace], [Schema namespace/package], [\_namespace: "com.example.orders"],
-  [\_version], [Schema version], [\_version: "1.0.0"],
-  [\_types], [Type definitions block], [\_types: \{ Customer: \{...\} \}],
-  [\_kind], [Type kind (object, enum, union)], [\_kind: "object"],
-  [\_name], [Type or field name], [\_name: "Customer"],
-  [\_type], [Field data type], [\_type: "string"],
-  [\_description], [Human-readable description], [\_description: "Customer ID"],
-  [\_fields], [Field definitions block], [\_fields: \{ id: \{...\} \}],
-  [\_values], [Enum values], [\_values: \["ACTIVE", "INACTIVE"\]],
+  [`%namespace`], [Schema namespace/package], [`%namespace: "com.example.orders"`],
+  [`%version`], [Schema version], [`%version: "1.0.0"`],
+  [`%types`], [Type definitions block], [`%types: { Customer: {...} }`],
+  [`%kind`], [Type kind (object, enum, union)], [`%kind: "object"`],
+  [`%name`], [Type or field name], [`%name: "Customer"`],
+  [`%type`], [Field data type], [`%type: "string"`],
+  [`%description`], [Human-readable description], [`%description: "Customer ID"`],
+  [`%fields`], [Field definitions block], [`%fields: { id: {...} }`],
+  [`%values`], [Enum values], [`%values: ["ACTIVE", "INACTIVE"]`],
 )
 
-Note: directives use the % prefix in actual USDL syntax (shown as \_ in this table for formatting reasons). In your .utlx files, write `%namespace`, `%type`, etc.
-
-=== Example: Customer schema using only Tier 1
+=== Example: Customer schema using only Core directives
 
 This works in ALL output formats because every format understands types, names, and descriptions:
 
 ```utlx
 %utlx 1.0
 input auto
-output json %usdl 1.0
+output json
 ---
 {
   "%namespace": "com.example.crm",
@@ -159,7 +157,7 @@ output json %usdl 1.0
 }
 ```
 
-== Tier 2: Common Directives (80%+ Format Support)
+== Shared Directives (Most Formats) (80%+ Format Support)
 
 These express constraints and validation rules supported by most formats:
 
@@ -167,28 +165,27 @@ These express constraints and validation rules supported by most formats:
   columns: (auto, auto, auto, auto),
   align: (left, left, left, left),
   [*Directive*], [*What it constrains*], [*Supported by*], [*Example value*],
-  [\_required], [Field is mandatory], [All formats], [true],
-  [\_nullable], [Field can be null], [JSON Schema, Avro, Proto], [true],
-  [\_array], [Field is an array], [All formats], [true],
-  [\_default], [Default value], [JSON Schema, Avro, XSD], ["EUR"],
-  [\_minLength], [Min string length], [JSON Schema, XSD], [1],
-  [\_maxLength], [Max string length], [JSON Schema, XSD], [255],
-  [\_pattern], [Regex pattern], [JSON Schema, XSD], [see code examples],
-  [\_minimum], [Min number value], [JSON Schema, XSD], [0],
-  [\_maximum], [Max number value], [JSON Schema, XSD], [999999],
-  [\_enum], [Allowed values], [All formats], [see code examples],
-  [\_format], [Semantic format hint], [JSON Schema], ["email"],
-  [\_example], [Example value], [JSON Schema, OpenAPI], [see code examples],
+  [`%required`], [Field is mandatory], [All formats], [true],
+  [`%nullable`], [Field can be null], [JSON Schema, Avro, Proto], [true],
+  [`%array`], [Field is an array], [All formats], [true],
+  [`%default`], [Default value], [JSON Schema, Avro, XSD], ["EUR"],
+  [`%minLength`], [Min string length], [JSON Schema, XSD], [1],
+  [`%maxLength`], [Max string length], [JSON Schema, XSD], [255],
+  [`%pattern`], [Regex pattern], [JSON Schema, XSD], [see code examples],
+  [`%minimum`], [Min number value], [JSON Schema, XSD], [0],
+  [`%maximum`], [Max number value], [JSON Schema, XSD], [999999],
+  [`%enum`], [Allowed values], [All formats], [see code examples],
+  [`%format`], [Semantic format hint], [JSON Schema], ["email"],
+  [`%example`], [Example value], [JSON Schema, OpenAPI], [see code examples],
 )
 
-Note: directives use % prefix in actual USDL syntax.
 
-=== Example: Customer with Tier 1 + Tier 2 constraints
+=== Example: Customer with Core + Shared constraints
 
 ```utlx
 %utlx 1.0
 input auto
-output json %usdl 1.0
+output json
 ---
 {
   "%namespace": "com.example.crm",
@@ -219,27 +216,27 @@ output json %usdl 1.0
 
 Formats that don't support a constraint (e.g., Protobuf has no %pattern) preserve it as a documentation comment.
 
-== Tier 3: Format-Specific Directives
+== Format-Native Directives
 
 These target a specific schema format. They express features that only make sense in one context.
 
-=== Protobuf-Specific
+=== Protobuf-Specific (`proto`)
 
 #table(
   columns: (auto, auto, auto),
   align: (left, left, left),
   [*Directive*], [*What it sets*], [*Example value*],
-  [\_fieldNumber], [Protobuf field tag number], [1],
-  [\_packed], [Packed encoding for repeated fields], [true],
-  [\_oneof], [Protobuf oneof group name], ["payment\_method"],
-  [\_map], [Protobuf map type], [true],
-  [\_reserved], [Reserved field numbers], [see code examples],
+  [`%fieldNumber`], [Protobuf field tag number], [1],
+  [`%packed`], [Packed encoding for repeated fields], [true],
+  [`%oneof`], [Protobuf oneof group name], ["payment_method"],
+  [`%map`], [Protobuf map type], [true],
+  [`%reserved`], [Reserved field numbers], [see code examples],
 )
 
 ```utlx
 %utlx 1.0
 input auto
-output proto %usdl 1.0
+output proto
 ---
 {
   "%namespace": "com.example.orders",
@@ -273,22 +270,22 @@ message Order {
 
 The %fieldNumber directive is Protobuf-specific — it has no meaning in JSON Schema or XSD.
 
-=== Avro-Specific
+=== Avro-Specific (`avro`)
 
 #table(
   columns: (auto, auto, auto),
   align: (left, left, left),
   [*Directive*], [*What it sets*], [*Example value*],
-  [\_logicalType], [Avro logical type], ["date"],
-  [\_aliases], [Alternative field names], [see code example],
-  [\_precision], [Decimal precision (digits)], [10],
-  [\_scale], [Decimal scale (decimal places)], [2],
+  [`%logicalType`], [Avro logical type], ["date"],
+  [`%aliases`], [Alternative field names], [see code example],
+  [`%precision`], [Decimal precision (digits)], [10],
+  [`%scale`], [Decimal scale (decimal places)], [2],
 )
 
 ```utlx
 %utlx 1.0
 input auto
-output avro %usdl 1.0
+output avro
 ---
 {
   "%namespace": "com.example.finance",
@@ -308,23 +305,23 @@ output avro %usdl 1.0
 
 Generates Avro schema with logical types, decimal precision, and field aliases.
 
-=== XSD-Specific
+=== XSD-Specific (`xsd`)
 
 #table(
   columns: (auto, auto, auto),
   align: (left, left, left),
   [*Directive*], [*What it sets*], [*Example value*],
-  [\_elementFormDefault], [XSD element form], ["qualified"],
-  [\_attributeFormDefault], [XSD attribute form], ["unqualified"],
-  [\_choice], [XSD choice group (xs:choice)], [true],
-  [\_all], [XSD all group (xs:all)], [true],
-  [\_xml], [XML-specific options], [wrapped: true],
+  [`%elementFormDefault`], [XSD element form], ["qualified"],
+  [`%attributeFormDefault`], [XSD attribute form], ["unqualified"],
+  [`%choice`], [XSD choice group (xs:choice)], [true],
+  [`%all`], [XSD all group (xs:all)], [true],
+  [`%xml`], [XML-specific options], [wrapped: true],
 )
 
 ```utlx
 %utlx 1.0
 input auto
-output xsd %usdl 1.0
+output xsd
 ---
 {
   "%namespace": "urn:example:invoicing:v1",
@@ -350,26 +347,26 @@ output xsd %usdl 1.0
 
 The %choice directive generates an `xs:choice` group — unique to XSD.
 
-=== Database/SQL-Specific
+=== Database/SQL-Specific (future — no DDL output format yet)
 
 #table(
   columns: (auto, auto, auto),
   align: (left, left, left),
   [*Directive*], [*What it sets*], [*Example value*],
-  [\_primaryKey], [Primary key field], [true],
-  [\_autoIncrement], [Auto-increment], [true],
-  [\_foreignKey], [Foreign key reference], ["customers.id"],
-  [\_index], [Create index on field], [true],
-  [\_unique], [Unique constraint], [true],
-  [\_sqlType], [Override SQL type], ["VARCHAR(50)"],
+  [`%primaryKey`], [Primary key field], [true],
+  [`%autoIncrement`], [Auto-increment], [true],
+  [`%foreignKey`], [Foreign key reference], ["customers.id"],
+  [`%index`], [Create index on field], [true],
+  [`%unique`], [Unique constraint], [true],
+  [`%sqlType`], [Override SQL type], ["VARCHAR(50)"],
 )
 
-These generate DDL (CREATE TABLE) or inform ORM code generators. Example:
+These directives describe database concerns. UTL-X has no `output sql` format — there is no DDL serializer. These directives are preserved as metadata when converting between schema formats, and could be consumed by external code generators or a future DDL output format. They can be included in any USDL schema for documentation purposes. Example:
 
 ```utlx
 %utlx 1.0
 input auto
-output json %usdl 1.0
+output json
 ---
 {
   "%types": {
@@ -394,16 +391,16 @@ output json %usdl 1.0
 }
 ```
 
-=== OData-Specific
+=== OData-Specific (`osch`)
 
 #table(
   columns: (auto, auto, auto),
   align: (left, left, left),
   [*Directive*], [*What it sets*], [*Example value*],
-  [\_entityType], [OData entity type marker], [true],
-  [\_navigation], [Navigation property], [true],
-  [\_target], [Navigation target entity], ["Orders"],
-  [\_cardinality], [Relationship cardinality], ["many"],
+  [`%entityType`], [OData entity type marker], [true],
+  [`%navigation`], [Navigation property], [true],
+  [`%target`], [Navigation target entity], ["Orders"],
+  [`%cardinality`], [Relationship cardinality], ["many"],
 )
 
 These generate OData EDMX/CSDL metadata documents. Example:
@@ -411,7 +408,7 @@ These generate OData EDMX/CSDL metadata documents. Example:
 ```utlx
 %utlx 1.0
 input auto
-output osch %usdl 1.0
+output osch
 ---
 {
   "%namespace": "com.example.crm",
@@ -429,18 +426,52 @@ output osch %usdl 1.0
 }
 ```
 
-== How Tiers Interact During Conversion
+=== JSON Schema-Specific (`jsch`)
 
-When converting USDL to a specific format, each tier is handled differently:
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Directive*], [*What it sets*], [*Example value*],
+  [`%additionalProperties`], [Allow extra properties], [false],
+  [`%prefixItems`], [Tuple validation (array positional types)], [see code examples],
+  [`%contentEncoding`], [Binary content encoding], ["base64"],
+  [`%contentMediaType`], [Content MIME type], ["application/json"],
+  [`%discriminator`], [Polymorphism discriminator field], ["type"],
+  [`%if` / `%then` / `%else`], [Conditional schema application], [see code examples],
+  [`%dependentSchemas`], [Schema dependencies between fields], [see code examples],
+  [`%dependentRequired`], [Required field dependencies], [see code examples],
+)
+
+These are JSON Schema 2020-12 keywords that have no equivalent in XSD, Avro, or Protobuf. When converting to other formats, they are preserved as documentation comments.
+
+=== Table Schema-Specific (`tsch` — Frictionless Data)
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Directive*], [*What it sets*], [*Example value*],
+  [`%missingValues`], [Values treated as null/missing], [see code examples],
+  [`%groupChar`], [Thousands separator for number parsing], [","],
+  [`%decimalChar`], [Decimal separator], ["."],
+  [`%bareNumber`], [Allow non-numeric characters in number fields], [false],
+  [`%trueValues`], [Strings treated as boolean true], [see code examples],
+  [`%falseValues`], [Strings treated as boolean false], [see code examples],
+)
+
+Table Schema directives describe CSV/tabular data conventions — how numbers are formatted, what values mean "missing," and how booleans are represented in text. These are unique to tabular data and have no equivalent in XML or JSON schema formats.
+
+== How Directive Levels Interact During Conversion
+
+When converting USDL to a specific format, each level is handled differently:
 
 #table(
   columns: (auto, auto),
   align: (left, left),
-  [*Tier*], [*Behavior during conversion*],
-  [Tier 1 (Core)], [Always converted — every format supports these],
-  [Tier 2 (Common)], [Converted when supported, preserved as comment when not],
-  [Tier 3 (Format-Specific)], [Converted only for the matching format, ignored/commented for others],
-  [Tier 4 (Reserved)], [Passed through as metadata],
+  [*Level*], [*Behavior during conversion*],
+  [Core], [Always converted — every format supports these],
+  [Shared], [Converted when supported, preserved as comment when not],
+  [Format-native], [Converted only for the matching format, ignored/commented for others],
+  [Reserved], [Passed through as metadata],
 )
 
 Example: converting a schema with `%fieldNumber: 3` and `%pattern: "^[A-Z]+$"`:
@@ -450,7 +481,7 @@ Example: converting a schema with `%fieldNumber: 3` and `%pattern: "^[A-Z]+$"`:
 - *To XSD:* %fieldNumber ignored, %pattern becomes `xs:pattern` (native)
 - *To Avro:* both become metadata properties
 
-This is the power of the tier system: write ONE schema with ALL the information, and each output format takes what it understands.
+This is the power of the classification system: write ONE schema with ALL the information, and each output format takes what it understands.
 
 == Converting Between Formats via USDL
 
@@ -459,7 +490,7 @@ This is the power of the tier system: write ONE schema with ALL the information,
 ```utlx
 %utlx 1.0
 input xsd
-output jsch %usdl 1.0
+output jsch
 ---
 $input
 ```
@@ -469,7 +500,7 @@ $input
 ```utlx
 %utlx 1.0
 input avro
-output proto %usdl 1.0
+output proto
 ---
 $input
 ```
@@ -479,7 +510,7 @@ $input
 ```utlx
 %utlx 1.0
 input xsd
-output yaml %usdl 1.0
+output yaml
 ---
 $input
 ```
@@ -507,7 +538,7 @@ USDL output in YAML is human-readable by design — it serves as documentation w
 ```utlx
 %utlx 1.0
 input xsd
-output yaml %usdl 1.0
+output yaml
 ---
 $input
 ```
@@ -521,10 +552,10 @@ Reading the YAML output, you see field names, types, constraints, and descriptio
   align: (left, center, center, center, center),
   [*Feature*], [*USDL*], [*JSON Schema*], [*XSD*], [*Avro*],
   [Multi-format output], [Yes (all 6)], [JSON only], [XML only], [Avro only],
-  [Tier system], [Yes (4 tiers)], [No], [No], [No],
-  [Format-specific features], [Tier 3], [JSON keywords], [XML facets], [Avro types],
+  [Classification system], [Yes (Core/Shared/Format-native)], [No], [No], [No],
+  [Format-specific features], [Format-native], [JSON keywords], [XML facets], [Avro types],
   [Human-readable], [Very (YAML)], [Moderate], [Low (XML)], [Moderate],
   [Part of UTL-X], [Yes (dialect)], [Standalone], [Standalone], [Standalone],
 )
 
-USDL is not a replacement for JSON Schema or XSD — those have their own ecosystems. USDL is the _bridge_ between them: write schema information once using tiered directives, generate whatever format you need. The Rosetta Stone for schemas — and it lives inside `%utlx 1.0`.
+USDL is not a replacement for JSON Schema or XSD — those have their own ecosystems. USDL is the _bridge_ between them: write schema information once using classified directives, generate whatever format you need. The Rosetta Stone for schemas — and it lives inside `%utlx 1.0`.

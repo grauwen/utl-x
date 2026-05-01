@@ -1,6 +1,6 @@
 = Schema Formats
 
-UTL-X treats schemas as data. An XSD, a JSON Schema, an Avro schema, a Protobuf definition — they are all inputs that can be parsed, transformed, and serialized to a different format. This is what makes schema-to-schema conversion possible: read a schema in one format, the USDL tier system (Chapter 12) normalizes it, and output it in another format.
+UTL-X treats schemas as data. An XSD, a JSON Schema, an Avro schema, a Protobuf definition — they are all inputs that can be parsed, transformed, and serialized to a different format. This is what makes schema-to-schema conversion possible: read a schema in one format, the USDL classification system (Chapter 12) normalizes it, and output it in another format.
 
 Six schema formats are supported, each with a full parser and serializer:
 
@@ -28,10 +28,10 @@ Avro ──→ USDL ──→ Protobuf
 EDMX ──→ USDL ──→ XSD
 ```
 
-USDL's tier system determines what survives the conversion:
-- *Tier 1 (Core):* types, names, descriptions — every format has these, always converted
-- *Tier 2 (Common):* constraints, validation — converted when the target format supports them, otherwise preserved as comments
-- *Tier 3 (Format-specific):* features unique to one format (XSD facets, Protobuf field numbers, Avro logical types) — converted for the matching format, documented for others
+USDL's classification determines what survives the conversion:
+- *Core:* types, names, descriptions — every format has these, always converted
+- *Shared:* constraints, validation — converted when the target format supports them, otherwise preserved as comments
+- *Format-native:* features unique to one format (XSD facets, Protobuf field numbers, Avro logical types) — converted for the matching format, documented for others
 
 This means a schema conversion is never lossy in a destructive way — information that can't be expressed in the target format is preserved as metadata or comments, not silently dropped.
 
@@ -42,7 +42,7 @@ The most complex and feature-rich schema format. XSD defines the structure of XM
 ```utlx
 %utlx 1.0
 input xsd
-output yaml %usdl 1.0
+output yaml
 ---
 $input
 ```
@@ -85,7 +85,7 @@ The schema format for REST APIs and modern web services. JSON Schema validates J
 ```utlx
 %utlx 1.0
 input jsch
-output yaml %usdl 1.0
+output yaml
 ---
 $input
 ```
@@ -119,7 +119,7 @@ Apache Avro is the schema format for data pipelines — Kafka, Spark, Hadoop, an
 ```utlx
 %utlx 1.0
 input avro
-output yaml %usdl 1.0
+output yaml
 ---
 $input
 ```
@@ -153,7 +153,7 @@ Protocol Buffers define the message format for gRPC services and Google APIs. UT
 ```utlx
 %utlx 1.0
 input proto
-output yaml %usdl 1.0
+output yaml
 ---
 $input
 ```
@@ -172,7 +172,7 @@ $input
 
 === Field Number Preservation
 
-Protobuf field numbers are critical for wire compatibility. UTL-X preserves them through USDL's Tier 3 directives:
+Protobuf field numbers are critical for wire compatibility. UTL-X preserves them through USDL's Format-native directives:
 
 ```utlx
 // Input: message Order { string id = 1; double total = 3; }
@@ -210,7 +210,7 @@ The Frictionless Data Table Schema describes the structure of tabular data — c
 ```utlx
 %utlx 1.0
 input tsch
-output yaml %usdl 1.0
+output yaml
 ---
 $input
 ```
@@ -275,7 +275,7 @@ The quickest way to understand any schema:
 ```utlx
 %utlx 1.0
 input xsd          // or jsch, avro, proto, osch, tsch
-output yaml %usdl 1.0
+output yaml
 ---
 $input
 ```

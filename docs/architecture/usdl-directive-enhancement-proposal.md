@@ -176,7 +176,7 @@ object DirectiveRegistry {
 
 #### Phase 2: Populate Guidance Data (Week 2-3)
 
-**Strategy:** Start with Tier 1 (Core) directives, then expand
+**Strategy:** Start with Core directives, then expand
 
 For each directive in USDL10.kt:
 ```kotlin

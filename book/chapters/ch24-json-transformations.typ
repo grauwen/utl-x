@@ -531,7 +531,7 @@ UTL-X can read and write JSON Schema as a data format — treating schema defini
 ```utlx
 %utlx 1.0
 input jsch
-output yaml %usdl 1.0
+output yaml
 ---
 $input
 ```
@@ -550,7 +550,7 @@ output jsch
 $input
 ```
 
-Converts an XSD schema to JSON Schema 2020-12 via the USDL intermediate representation. The USDL tier system (Chapter 12) determines which constraints survive the conversion.
+Converts an XSD schema to JSON Schema 2020-12 via the USDL intermediate representation. The USDL classification system (Chapter 12) determines which constraints survive the conversion.
 
 === Schema Functions
 

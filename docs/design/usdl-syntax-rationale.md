@@ -1031,10 +1031,10 @@ We evaluated schema languages across five categories:
 
 **Why 4 tiers?**
 
-1. **Tier 1 (Core)**: Works for 100% of languages, required for any schema
-2. **Tier 2 (Common)**: Works for 80%+ of languages, highly recommended
-3. **Tier 3 (Format-Specific)**: Works for 20-40% of languages, specialized needs
-4. **Tier 4 (Reserved)**: Future USDL versions, advanced features
+1. **Core**: Works for 100% of languages, required for any schema
+2. **Shared**: Works for 80%+ of languages, highly recommended
+3. **Format-native**: Works for 20-40% of languages, specialized needs
+4. **Reserved**: Future USDL versions, advanced features
 
 **Benefit**: Implement Tier 1+2 now, Tier 3 incrementally, Tier 4 reserved → no breaking changes!
 
@@ -1202,7 +1202,7 @@ output proto %usdl 1.0
 **Why 85% compatibility?**
 - ✅ All Tier 1 directives work
 - ✅ All Tier 2 directives work
-- ✅ Needs Tier 3: `%fieldNumber`, `%packed`, `%oneof`
+- ✅ Needs Format-native: `%fieldNumber`, `%packed`, `%oneof`
 - ⚠️ Protobuf doesn't have built-in constraints (no `%pattern`, `%minimum`)
 - ⚠️ Limited type system (no `%union` like JSON Schema's `oneOf`)
 
@@ -1255,7 +1255,7 @@ output odata %usdl 1.0
 **Why only 60% compatibility?**
 - ✅ All Tier 1 directives work
 - ⚠️ OData is REST/entity-focused, not pure schema
-- ⚠️ Requires many Tier 3 directives: `%entityType`, `%key`, `%navigation`
+- ⚠️ Requires many Format-native directives: `%entityType`, `%key`, `%navigation`
 - ⚠️ Constraints limited compared to JSON Schema
 - ⚠️ No support for complex unions, oneOf, etc.
 
@@ -1439,7 +1439,7 @@ This matrix shows which directives apply to which schema languages:
 
 | Directive | XSD | JSON Schema | Protobuf | SQL | Avro | GraphQL | OData | Thrift | OpenAPI |
 |-----------|-----|-------------|----------|-----|------|---------|-------|--------|---------|
-| **Tier 1 (Core)** |||||||||
+| **Core** |||||||||
 | %namespace | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | %version | ✅ | ✅ | ✅ | ⚠️ | ✅ | ⚠️ | ✅ | ✅ | ✅ |
 | %types | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -1448,7 +1448,7 @@ This matrix shows which directives apply to which schema languages:
 | %type | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | %description | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | %documentation | ✅ | ✅ | ⚠️ | ⚠️ | ✅ | ✅ | ⚠️ | ✅ | ✅ |
-| **Tier 2 (Common)** |||||||||
+| **Shared** |||||||||
 | %fields | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | %values | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | %required | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -1462,7 +1462,7 @@ This matrix shows which directives apply to which schema languages:
 | %maximum | ✅ | ✅ | ❌ | ✅ | ⚠️ | ❌ | ⚠️ | ❌ | ✅ |
 | %enum | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | %format | ⚠️ | ✅ | ❌ | ⚠️ | ⚠️ | ❌ | ⚠️ | ❌ | ✅ |
-| **Tier 3 (Format-Specific)** |||||||||
+| **Format-native** |||||||||
 | %fieldNumber | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | %packed | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ | ❌ |
 | %logicalType | ❌ | ⚠️ | ❌ | ⚠️ | ✅ | ❌ | ❌ | ❌ | ❌ |

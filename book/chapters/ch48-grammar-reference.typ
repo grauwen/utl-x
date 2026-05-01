@@ -44,8 +44,10 @@ Name comes before format. The colon after `input:` signals multiple comma-separa
 ```
 output <format>                                   // basic output
 output <format> {key: value, ...}                 // with options
-output <format> %usdl 1.0                         // with dialect
+output <format> %<dialect> <version>              // with dialect annotation
 ```
+
+The dialect annotation (`%name version`) is a generic mechanism. Currently no dialects have functional behavior — they are parsed and stored but do not change processing. Future dialects may include schema inference or compatibility modes.
 
 === Format Keywords
 
@@ -523,7 +525,7 @@ These are reserved in the header but can be used as identifiers in the body (tho
 
 == USDL Grammar (Universal Schema Definition Language)
 
-USDL is a dialect within UTL-X — not a separate language (see Chapter 12). When `%usdl 1.0` is declared on the output, the data is structured using USDL directives. These directives use the `%` prefix and follow a fixed grammar.
+USDL is a convention within UTL-X — not a separate language (see Chapter 12). USDL directives use the `%` prefix and represent schema information in a format-agnostic way. They are automatically added when parsing schema formats (Tier 2 input) and automatically detected by schema serializers (Tier 2 output).
 
 === USDL Document Structure
 
@@ -563,7 +565,7 @@ field_definition → "{"
   ("%array" ":" BOOLEAN)?
   ("%default" ":" VALUE)?
   ("%example" ":" VALUE)?
-  // Tier 2: Common constraints
+  // Shared: Common constraints
   ("%minLength" ":" NUMBER)?
   ("%maxLength" ":" NUMBER)?
   ("%pattern" ":" STRING)?
@@ -571,7 +573,7 @@ field_definition → "{"
   ("%maximum" ":" NUMBER)?
   ("%enum" ":" "[" VALUE ("," VALUE)* "]")?
   ("%format" ":" STRING)?
-  // Tier 3: Format-specific
+  // Format-native: Format-specific
   ("%fieldNumber" ":" NUMBER)?        // Protobuf
   ("%logicalType" ":" STRING)?        // Avro
   ("%precision" ":" NUMBER)?          // Avro decimal
@@ -584,16 +586,16 @@ field_definition → "{"
 "}"
 ```
 
-=== USDL Tier System
+=== USDL Directive Classification
 
 #table(
   columns: (auto, auto, auto, auto),
   align: (left, left, left, left),
-  [*Tier*], [*Name*], [*Directives*], [*Applies to*],
-  [1], [Core], [`%namespace`, `%version`, `%types`, `%kind`, `%name`, `%type`, `%description`, `%fields`, `%values`], [All formats],
-  [2], [Common], [`%required`, `%nullable`, `%array`, `%default`, `%minLength`, `%maxLength`, `%pattern`, `%minimum`, `%maximum`, `%enum`, `%format`, `%example`], [Most formats],
-  [3], [Format-specific], [`%fieldNumber` (Proto), `%logicalType` (Avro), `%primaryKey` (DB), `%navigation` (OData), `%choice` (XSD), etc.], [One format],
-  [4], [Reserved], [Future USDL versions], [Planned],
+  [*Level*], [*Scope*], [*Directives*], [*Applies to*],
+  [Core], [Portable], [`%namespace`, `%version`, `%types`, `%kind`, `%name`, `%type`, `%description`, `%fields`, `%values`], [All formats],
+  [Shared], [Widespread], [`%required`, `%nullable`, `%array`, `%default`, `%minLength`, `%maxLength`, `%pattern`, `%minimum`, `%maximum`, `%enum`, `%format`, `%example`], [Most formats],
+  [Format-native], [Exclusive], [`%fieldNumber` (Proto), `%logicalType` (Avro), `%primaryKey` (DB), `%navigation` (OData), `%choice` (XSD), etc.], [One format],
+  [Reserved], [Future], [Future USDL versions], [Planned],
 )
 
 === USDL Type Strings
@@ -674,7 +676,7 @@ For type references, use the type name directly: `%type: "CustomerType"` referen
 }
 ```
 
-This USDL document can be converted to JSON Schema, XSD, Avro, Protobuf, or EDMX — the USDL tier system determines what survives in each target format (Chapter 12).
+This USDL document can be converted to JSON Schema, XSD, Avro, Protobuf, or EDMX — the USDL classification system determines what survives in each target format (Chapter 12).
 
 #block(
   fill: rgb("#FFF3E0"),
@@ -682,5 +684,5 @@ This USDL document can be converted to JSON Schema, XSD, Avro, Protobuf, or EDMX
   radius: 4pt,
   width: 100%,
 )[
-  *Note (F08):* the USDL pipeline wiring is not yet complete — `output yaml %usdl 1.0` and Tier 2 → Tier 2 schema conversions do not work as described. The stdlib functions (`parseXSDSchema`, `parseJSONSchema`, etc.) perform USDL conversion individually and do work. See F08 for the implementation plan.
+  *Note (F08):* the USDL pipeline wiring is not yet complete — `output yaml` and Tier 2 → Tier 2 schema conversions do not work as described. The stdlib functions (`parseXSDSchema`, `parseJSONSchema`, etc.) perform USDL conversion individually and do work. See F08 for the implementation plan.
 ]

@@ -726,7 +726,7 @@ This is not data inside an XML instance — it's metadata inside an XSD schema. 
 
 *Writing:* When generating XSD (`output xsd {addDocumentation: true}`), USDL `%description` values are emitted as `xs:documentation` elements. Without the option, documentation is omitted for a cleaner schema.
 
-*Converting:* When converting XSD to JSON Schema, `xs:documentation` becomes the `description` keyword. When converting to Avro, it becomes the `doc` field. The USDL tier system maps documentation across all schema formats.
+*Converting:* When converting XSD to JSON Schema, `xs:documentation` becomes the `description` keyword. When converting to Avro, it becomes the `doc` field. The USDL classification system maps documentation across all schema formats.
 
 == XML Round-Trip
 

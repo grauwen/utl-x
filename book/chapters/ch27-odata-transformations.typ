@@ -222,7 +222,7 @@ OData services publish their schema as EDMX (Entity Data Model XML) — also kno
 ```utlx
 %utlx 1.0
 input osch
-output yaml %usdl 1.0
+output yaml
 ---
 $input
 ```
@@ -268,7 +268,7 @@ output osch
 $input
 ```
 
-The USDL tier system (Chapter 12) handles the translation between formats. OData-specific directives like `%entityType`, `%navigation`, and `%cardinality` are Tier 3 — they map to EDMX natively and become documentation comments in other formats.
+The USDL classification system (Chapter 12) handles the translation between formats. OData-specific directives like `%entityType`, `%navigation`, and `%cardinality` are Format-native — they map to EDMX natively and become documentation comments in other formats.
 
 == Common OData Patterns
 

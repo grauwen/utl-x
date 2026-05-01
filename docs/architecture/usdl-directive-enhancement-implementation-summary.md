@@ -172,7 +172,7 @@ With these changes, calling `/api/usdl/directives/%namespace` now returns:
 
 ## What's NOT Done Yet
 
-### Remaining Tier 1 (Core) Directives - 8 directives
+### Remaining Core Directives - 8 directives
 
 Still need to populate guidance for:
 1. ✅ %namespace (DONE)
@@ -185,13 +185,13 @@ Still need to populate guidance for:
 8. ⏳ %value
 9. ⏳ %documentation
 
-### Tier 2 (Common) Directives - 51 directives
+### Shared Directives - 51 directives
 
 Need to populate all Tier 2 directives with guidance.
 
-### Tier 3 (Format-Specific) Directives - 44 directives
+### Format-native Directives - 44 directives
 
-Need to populate all Tier 3 directives with guidance.
+Need to populate all Format-native directives with guidance.
 
 ### Frontend Integration
 
