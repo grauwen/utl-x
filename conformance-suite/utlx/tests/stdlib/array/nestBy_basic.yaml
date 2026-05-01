@@ -1,0 +1,60 @@
+name: "nestBy_basic"
+category: "stdlib/array"
+description: "F03: nestBy nests order lines under orders by orderId"
+tags: ["nestBy", "restructuring", "F03", "hierarchy", "flat-to-nested"]
+
+input:
+  format: json
+  data: |
+    {
+      "orders": [
+        {"orderId": "ORD-001", "customer": "Acme Corp"},
+        {"orderId": "ORD-002", "customer": "Globex Inc"}
+      ],
+      "orderLines": [
+        {"orderId": "ORD-001", "product": "Widget", "qty": 10, "price": 25},
+        {"orderId": "ORD-001", "product": "Gadget", "qty": 5, "price": 49.99},
+        {"orderId": "ORD-002", "product": "Gizmo", "qty": 3, "price": 15.500}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  nestBy(
+    $input.orders,
+    $input.orderLines,
+    (order) -> order.orderId,
+    (line) -> line.orderId,
+    "lines"
+  )
+
+expected:
+  format: json
+  data: |
+    [
+      {
+        "orderId": "ORD-001",
+        "customer": "Acme Corp",
+        "lines": [
+          {"orderId": "ORD-001", "product": "Widget", "qty": 10, "price": 25},
+          {"orderId": "ORD-001", "product": "Gadget", "qty": 5, "price": 49.99}
+        ]
+      },
+      {
+        "orderId": "ORD-002",
+        "customer": "Globex Inc",
+        "lines": [
+          {"orderId": "ORD-002", "product": "Gizmo", "qty": 3, "price": 15.5}
+        ]
+      }
+    ]
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "F03: nestBy for flat-to-hierarchical — the canonical integration pattern"
+    - "O(N+M) performance — hash index of children, then iterate parents"
+    - "order.lines is the new property created by nestBy"

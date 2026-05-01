@@ -197,4 +197,88 @@ object DataRestructuringFunctions {
 
         return UDM.Scalar(null)
     }
+
+    @UTLXFunction(
+        description = "Nest children under parents by matching keys. Creates a 1:N parent-child hierarchy.",
+        minArgs = 5,
+        maxArgs = 5,
+        category = "Data Restructuring",
+        parameters = [
+            "parents: Array of parent records (e.g., orders)",
+            "children: Array of child records (e.g., order lines)",
+            "parentKeyFn: Lambda extracting the join key from each parent",
+            "childKeyFn: Lambda extracting the join key from each child",
+            "childPropertyName: String name for the new property added to each parent"
+        ],
+        returns = "Array of parent objects, each with a new property containing its matched children",
+        example = "nestBy(orders, lines, (o) -> o.orderId, (l) -> l.orderId, \"lines\")",
+        notes = "Flat-to-hierarchical restructuring — the most common integration pattern.\n" +
+                "Performance: O(N + M) — builds a hash index of children, then iterates parents.\n" +
+                "Parents with no matching children get an empty array.\n" +
+                "The 5th parameter is a string that becomes the property name on each parent.\n" +
+                "Use nestBy for 1:N nesting. Use lookupBy for 1:1 enrichment. Use groupBy for keyed map.",
+        tags = ["restructuring", "nesting", "join", "hierarchy"],
+        since = "1.0"
+    )
+    fun nestBy(args: List<UDM>): UDM {
+        if (args.size < 5) {
+            throw IllegalArgumentException(
+                "nestBy() requires 5 arguments: parents, children, parentKeyFn, childKeyFn, childPropertyName. " +
+                "Example: nestBy(\$input.orders, \$input.lines, (o) -> o.orderId, (l) -> l.orderId, \"lines\")"
+            )
+        }
+
+        val parents = args[0]
+        val children = args[1]
+        val parentKeyFn = args[2]
+        val childKeyFn = args[3]
+        val childPropName = args[4]
+
+        if (parents !is UDM.Array) {
+            throw IllegalArgumentException("nestBy() first argument (parents) must be an array")
+        }
+        if (children !is UDM.Array) {
+            throw IllegalArgumentException("nestBy() second argument (children) must be an array")
+        }
+        if (parentKeyFn !is UDM.Lambda) {
+            throw IllegalArgumentException("nestBy() third argument (parentKeyFn) must be a lambda")
+        }
+        if (childKeyFn !is UDM.Lambda) {
+            throw IllegalArgumentException("nestBy() fourth argument (childKeyFn) must be a lambda")
+        }
+        if (childPropName !is UDM.Scalar || childPropName.value !is String) {
+            throw IllegalArgumentException(
+                "nestBy() fifth argument (childPropertyName) must be a string. " +
+                "Example: \"lines\" — this becomes the property name on each parent."
+            )
+        }
+
+        val propName = childPropName.value as String
+
+        // Step 1: Build hash index of children by key — O(M)
+        val childIndex = mutableMapOf<String, MutableList<UDM>>()
+        children.elements.forEach { child ->
+            val key = childKeyFn.apply(listOf(child)).asString()
+            childIndex.getOrPut(key) { mutableListOf() }.add(child)
+        }
+
+        // Step 2: Iterate parents, attach matched children — O(N) with O(1) lookup per parent
+        val result = parents.elements.map { parent ->
+            if (parent !is UDM.Object) {
+                // Non-object parents pass through unchanged
+                parent
+            } else {
+                val parentKey = parentKeyFn.apply(listOf(parent)).asString()
+                val matchedChildren = childIndex[parentKey] ?: emptyList()
+
+                // Create new object with all parent properties + the children property
+                val newProperties = parent.properties.toMutableMap()
+                newProperties[propName] = UDM.Array(matchedChildren)
+
+                UDM.Object(newProperties, parent.attributes, parent.name, parent.metadata)
+            }
+        }
+
+        return UDM.Array(result)
+    }
 }

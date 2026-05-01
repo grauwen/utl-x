@@ -1,0 +1,50 @@
+name: "nestBy_no_children"
+category: "stdlib/array"
+description: "F03: nestBy with parent that has no matching children — gets empty array"
+tags: ["nestBy", "restructuring", "F03", "edge-case"]
+
+input:
+  format: json
+  data: |
+    {
+      "departments": [
+        {"id": "ENG", "name": "Engineering"},
+        {"id": "SALES", "name": "Sales"},
+        {"id": "HR", "name": "Human Resources"}
+      ],
+      "employees": [
+        {"deptId": "ENG", "name": "Alice"},
+        {"deptId": "ENG", "name": "Bob"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  nestBy(
+    $input.departments,
+    $input.employees,
+    (dept) -> dept.id,
+    (emp) -> emp.deptId,
+    "employees"
+  )
+
+expected:
+  format: json
+  data: |
+    [
+      {"id": "ENG", "name": "Engineering", "employees": [
+        {"deptId": "ENG", "name": "Alice"},
+        {"deptId": "ENG", "name": "Bob"}
+      ]},
+      {"id": "SALES", "name": "Sales", "employees": []},
+      {"id": "HR", "name": "Human Resources", "employees": []}
+    ]
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "Sales and HR have no employees — they get empty arrays, not null"
+    - "This is left-join behavior: all parents kept, children may be empty"
