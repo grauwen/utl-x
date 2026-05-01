@@ -422,17 +422,84 @@ object EnhancedArrayFunctions {
             groups.getOrPut(key) { mutableListOf() }.add(element)
         }
 
-        // Convert to array of {key, value} objects
-        val result = groups.map { (key, elements) ->
-            UDM.Object(mutableMapOf(
+        // Convert to object keyed by group name, values are arrays
+        // This enables indexed access: groupBy(items, ...)[key] → array of matching items
+        val result = groups.mapValues { (_, elements) ->
+            UDM.Array(elements) as UDM
+        }
+
+        return UDM.Object(result)
+    }
+    
+    @UTLXFunction(
+        description = "Group array elements by key and transform each group. Returns array of transformed results.",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Array",
+        parameters = [
+            "array: Input array to group",
+            "keySelector: Key function (lambda) or property name (string)",
+            "transform: Lambda receiving group object with .key and .value properties"
+        ],
+        returns = "Array of transformed group results",
+        example = "mapGroups(employees, \"department\", group => {dept: group.key, count: count(group.value)})",
+        notes = "Groups array elements by key, then applies transform to each group.\n" +
+                "The transform lambda receives {key: groupKey, value: [groupMembers]}.\n" +
+                "Use mapGroups for iteration/reporting. Use groupBy for O(1) lookup.",
+        tags = ["array"],
+        since = "1.0"
+    )
+    fun mapGroups(args: List<UDM>): UDM {
+        if (args.size < 3) {
+            throw IllegalArgumentException(
+                "mapGroups() requires 3 arguments: array, keySelector, transform. " +
+                "Example: mapGroups(items, \"category\", group => {name: group.key, count: count(group.value)})"
+            )
+        }
+
+        val array = args[0]
+        if (array !is UDM.Array) {
+            throw IllegalArgumentException("mapGroups() first argument must be an array")
+        }
+
+        val keySelector = args[1]
+        val transform = args[2]
+        if (transform !is UDM.Lambda) {
+            throw IllegalArgumentException("mapGroups() third argument must be a lambda/function")
+        }
+
+        // Step 1: Group by key (same logic as groupBy)
+        val groups = mutableMapOf<String, MutableList<UDM>>()
+        array.elements.forEach { element ->
+            val key = when {
+                keySelector is UDM.Scalar && keySelector.value is String -> {
+                    val propertyName = keySelector.value as String
+                    when (element) {
+                        is UDM.Object -> element.properties[propertyName]?.asString() ?: "null"
+                        else -> "null"
+                    }
+                }
+                keySelector is UDM.Lambda -> {
+                    val result = keySelector.apply(listOf(element))
+                    result.asString()
+                }
+                else -> "null"
+            }
+            groups.getOrPut(key) { mutableListOf() }.add(element)
+        }
+
+        // Step 2: Transform each group — pass {key, value} to the lambda
+        val results = groups.map { (key, elements) ->
+            val groupObject = UDM.Object(mapOf(
                 "key" to UDM.Scalar(key),
                 "value" to UDM.Array(elements)
             ))
+            transform.apply(listOf(groupObject))
         }
 
-        return UDM.Array(result)
+        return UDM.Array(results)
     }
-    
+
     @UTLXFunction(
         description = "Similar to distinct(), but uses a key function to determine uniqueness.",
         minArgs = 2,

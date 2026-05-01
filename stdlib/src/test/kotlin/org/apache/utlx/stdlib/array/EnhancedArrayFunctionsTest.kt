@@ -179,17 +179,28 @@ class EnhancedArrayFunctionsTest {
 
         val result = EnhancedArrayFunctions.groupBy(listOf(array, keyFunction))
 
-        // groupBy returns an array of {key, value} objects
-        assertTrue(result is UDM.Array)
-        val grouped = result as UDM.Array
+        // B15 fix: groupBy returns an Object keyed by group name
+        assertTrue(result is UDM.Object, "groupBy should return UDM.Object, got ${result::class.simpleName}")
+        val grouped = result as UDM.Object
 
         // Should have 2 groups
-        assertEquals(2, grouped.elements.size)
+        assertEquals(2, grouped.properties.size)
 
         // Check that we have even and odd groups
-        val keys = grouped.elements.map { (it as UDM.Object).properties["key"]?.asString() }
-        assertTrue(keys.contains("even"))
-        assertTrue(keys.contains("odd"))
+        assertTrue(grouped.properties.containsKey("even"))
+        assertTrue(grouped.properties.containsKey("odd"))
+
+        // Verify even group contains 2 and 4
+        val evenGroup = grouped.properties["even"] as UDM.Array
+        assertEquals(2, evenGroup.elements.size)
+        assertTrue(evenGroup.elements.any { (it as UDM.Scalar).value == 2 })
+        assertTrue(evenGroup.elements.any { (it as UDM.Scalar).value == 4 })
+
+        // Verify odd group contains 1 and 3
+        val oddGroup = grouped.properties["odd"] as UDM.Array
+        assertEquals(2, oddGroup.elements.size)
+        assertTrue(oddGroup.elements.any { (it as UDM.Scalar).value == 1 })
+        assertTrue(oddGroup.elements.any { (it as UDM.Scalar).value == 3 })
     }
 
     @Test
@@ -202,9 +213,119 @@ class EnhancedArrayFunctionsTest {
 
         val result = EnhancedArrayFunctions.groupBy(listOf(array, keyFunction))
 
-        // groupBy returns an array of {key, value} objects
-        val grouped = result as UDM.Array
-        assertEquals(0, grouped.elements.size)
+        // B15 fix: groupBy returns an Object (empty for empty input)
+        assertTrue(result is UDM.Object)
+        val grouped = result as UDM.Object
+        assertEquals(0, grouped.properties.size)
+    }
+
+    @Test
+    fun testGroupByIndexAccess() {
+        // B15 test: groupBy result can be indexed by key
+        val array = UDM.Array(listOf(
+            UDM.Object(mapOf("orderId" to UDM.Scalar("A"), "product" to UDM.Scalar("Widget")), emptyMap()),
+            UDM.Object(mapOf("orderId" to UDM.Scalar("A"), "product" to UDM.Scalar("Gadget")), emptyMap()),
+            UDM.Object(mapOf("orderId" to UDM.Scalar("B"), "product" to UDM.Scalar("Gizmo")), emptyMap())
+        ))
+
+        val keyFunction = UDM.Lambda { args ->
+            val obj = args[0] as UDM.Object
+            obj.properties["orderId"] ?: UDM.Scalar("null")
+        }
+
+        val result = EnhancedArrayFunctions.groupBy(listOf(array, keyFunction))
+
+        // Result should be an Object
+        assertTrue(result is UDM.Object)
+        val grouped = result as UDM.Object
+
+        // Should have 2 groups: "A" and "B"
+        assertEquals(2, grouped.properties.size)
+        assertTrue(grouped.properties.containsKey("A"))
+        assertTrue(grouped.properties.containsKey("B"))
+
+        // Group "A" should have 2 elements (Widget, Gadget)
+        val groupA = grouped.properties["A"] as UDM.Array
+        assertEquals(2, groupA.elements.size)
+
+        // Group "B" should have 1 element (Gizmo)
+        val groupB = grouped.properties["B"] as UDM.Array
+        assertEquals(1, groupB.elements.size)
+
+        // Verify content of group B
+        val gizmo = groupB.elements[0] as UDM.Object
+        assertEquals("Gizmo", (gizmo.properties["product"] as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testMapGroups() {
+        // B15: mapGroups groups and transforms — the iteration use case
+        val array = UDM.Array(listOf(
+            UDM.Object(mapOf("dept" to UDM.Scalar("Eng"), "name" to UDM.Scalar("Alice")), emptyMap()),
+            UDM.Object(mapOf("dept" to UDM.Scalar("Sales"), "name" to UDM.Scalar("Bob")), emptyMap()),
+            UDM.Object(mapOf("dept" to UDM.Scalar("Eng"), "name" to UDM.Scalar("Carol")), emptyMap())
+        ))
+
+        // Key selector: group by dept
+        val keySelector = UDM.Scalar("dept")
+
+        // Transform: extract key and count members
+        val transform = UDM.Lambda { args ->
+            val group = args[0] as UDM.Object
+            val key = group.properties["key"] ?: UDM.Scalar("null")
+            val value = group.properties["value"] as UDM.Array
+            UDM.Object(mapOf(
+                "department" to key,
+                "headcount" to UDM.Scalar(value.elements.size)
+            ))
+        }
+
+        val result = EnhancedArrayFunctions.mapGroups(listOf(array, keySelector, transform))
+
+        // Should return an Array of transformed groups
+        assertTrue(result is UDM.Array, "mapGroups should return UDM.Array")
+        val resultArray = result as UDM.Array
+        assertEquals(2, resultArray.elements.size)
+
+        // Find the Eng group
+        val engGroup = resultArray.elements.find {
+            (it as UDM.Object).properties["department"]?.asString() == "Eng"
+        } as UDM.Object
+        assertEquals(2, (engGroup.properties["headcount"] as UDM.Scalar).value)
+
+        // Find the Sales group
+        val salesGroup = resultArray.elements.find {
+            (it as UDM.Object).properties["department"]?.asString() == "Sales"
+        } as UDM.Object
+        assertEquals(1, (salesGroup.properties["headcount"] as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testMapGroupsWithLambdaKey() {
+        // mapGroups with lambda key selector
+        val array = UDM.Array(listOf(
+            UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3), UDM.Scalar(4)
+        ))
+
+        val keySelector = UDM.Lambda { args ->
+            val value = (args[0] as UDM.Scalar).value as Number
+            if (value.toInt() % 2 == 0) UDM.Scalar("even") else UDM.Scalar("odd")
+        }
+
+        val transform = UDM.Lambda { args ->
+            val group = args[0] as UDM.Object
+            val key = group.properties["key"]!!
+            val members = group.properties["value"] as UDM.Array
+            UDM.Object(mapOf(
+                "type" to key,
+                "count" to UDM.Scalar(members.elements.size)
+            ))
+        }
+
+        val result = EnhancedArrayFunctions.mapGroups(listOf(array, keySelector, transform))
+
+        assertTrue(result is UDM.Array)
+        assertEquals(2, (result as UDM.Array).elements.size)
     }
 
     @Test
@@ -451,15 +572,16 @@ class EnhancedArrayFunctionsTest {
 
         val result = EnhancedArrayFunctions.groupBy(listOf(array, keyFunction))
 
-        // groupBy returns an array of {key, value} objects
-        val grouped = result as UDM.Array
-        assertEquals(1, grouped.elements.size)
+        // B15 fix: groupBy returns Object keyed by group name
+        assertTrue(result is UDM.Object)
+        val grouped = result as UDM.Object
+        assertEquals(1, grouped.properties.size)
 
-        val group = grouped.elements[0] as UDM.Object
-        assertEquals("even", (group.properties["key"] as UDM.Scalar).value)
-        val groupArray = group.properties["value"] as UDM.Array
-        assertEquals(1, groupArray.elements.size)
-        assertEquals(42, (groupArray.elements[0] as UDM.Scalar).value)
+        // Single group "even" with one element [42]
+        assertTrue(grouped.properties.containsKey("even"))
+        val evenGroup = grouped.properties["even"] as UDM.Array
+        assertEquals(1, evenGroup.elements.size)
+        assertEquals(42, (evenGroup.elements[0] as UDM.Scalar).value)
     }
 
     @Test
@@ -507,7 +629,7 @@ class EnhancedArrayFunctionsTest {
         assertTrue(countResult is UDM.Scalar)
 
         val groupResult = EnhancedArrayFunctions.groupBy(listOf(array, keyFunction))
-        assertTrue(groupResult is UDM.Array) // groupBy returns array of {key, value} objects
+        assertTrue(groupResult is UDM.Object) // B15 fix: groupBy returns Object keyed by group name
 
         val distinctResult = EnhancedArrayFunctions.distinctBy(listOf(array, keyFunction))
         assertTrue(distinctResult is UDM.Array)
@@ -541,7 +663,7 @@ class EnhancedArrayFunctionsTest {
         assertTrue(countResult is UDM.Scalar)
 
         val groupResult = EnhancedArrayFunctions.groupBy(listOf(array, function))
-        assertTrue(groupResult is UDM.Array) // groupBy returns array of {key, value} objects
+        assertTrue(groupResult is UDM.Object) // B15 fix: groupBy returns Object keyed by group name
 
         val distinctResult = EnhancedArrayFunctions.distinctBy(listOf(array, function))
         assertTrue(distinctResult is UDM.Array)

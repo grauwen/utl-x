@@ -1178,6 +1178,7 @@ object StandardLibrary {
         register("maxBy", EnhancedArrayFunctions::maxBy)
         register("minBy", EnhancedArrayFunctions::minBy)
         register("groupBy", EnhancedArrayFunctions::groupBy)
+        register("mapGroups", EnhancedArrayFunctions::mapGroups)
         // register("distinctBy", EnhancedArrayFunctions::distinctBy) // DUPLICATE: distinctBy already registered in ArrayFunctions
         register("avgBy", EnhancedArrayFunctions::avgBy)
     }

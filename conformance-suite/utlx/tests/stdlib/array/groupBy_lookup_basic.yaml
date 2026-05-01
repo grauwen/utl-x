@@ -1,0 +1,59 @@
+name: "groupBy_lookup_basic"
+category: "stdlib/array"
+description: "groupBy returns an Object that can be indexed by key — the B15 fix"
+tags: ["groupBy", "lookup", "B15", "indexing"]
+
+input:
+  format: json
+  data: |
+    {
+      "orders": [
+        {"orderId": "A", "customer": "Alice"},
+        {"orderId": "B", "customer": "Bob"}
+      ],
+      "orderLines": [
+        {"orderId": "A", "product": "Widget", "qty": 10},
+        {"orderId": "A", "product": "Gadget", "qty": 5},
+        {"orderId": "B", "product": "Gizmo", "qty": 3}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let linesByOrder = groupBy($input.orderLines, (l) -> l.orderId)
+
+  map($input.orders, (order) -> {
+    orderId: order.orderId,
+    customer: order.customer,
+    lines: linesByOrder[order.orderId] ?? []
+  })
+
+expected:
+  format: json
+  data: |
+    [
+      {
+        "orderId": "A",
+        "customer": "Alice",
+        "lines": [
+          {"orderId": "A", "product": "Widget", "qty": 10},
+          {"orderId": "A", "product": "Gadget", "qty": 5}
+        ]
+      },
+      {
+        "orderId": "B",
+        "customer": "Bob",
+        "lines": [
+          {"orderId": "B", "product": "Gizmo", "qty": 3}
+        ]
+      }
+    ]
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "B15: groupBy returns Object for O(1) key lookup"
+    - "This is the efficient flat-to-hierarchical pattern: O(N+M) instead of O(N×M)"

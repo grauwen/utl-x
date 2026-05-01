@@ -20,9 +20,7 @@ transformation: |
   output json
   ---
   {
-    orders: $input
-      |> groupBy(row => row.order_id)
-      |> map(group => {
+    orders: mapGroups($input, row => row.order_id, group => {
            let orderId = group.key,
            let rows = group.value,
 

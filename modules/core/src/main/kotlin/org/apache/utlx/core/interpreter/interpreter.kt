@@ -581,7 +581,24 @@ class Interpreter {
 
     private fun evaluateIndexAccess(expr: Expression.IndexAccess, env: Environment): RuntimeValue {
         val target = evaluate(expr.target, env)
-        val index = evaluate(expr.index, env)
+        val rawIndex = evaluate(expr.index, env)
+
+        // B15 fix: unwrap UDM.Scalar values to native RuntimeValue types for indexing
+        // When the index comes from a UDM property (e.g., order.orderId), it arrives as
+        // RuntimeValue.UDMValue(UDM.Scalar("ORD-001")) — unwrap to RuntimeValue.StringValue("ORD-001")
+        val index = when (rawIndex) {
+            is RuntimeValue.UDMValue -> when (val udm = rawIndex.udm) {
+                is UDM.Scalar -> when (val value = udm.value) {
+                    is String -> RuntimeValue.StringValue(value)
+                    is Number -> RuntimeValue.NumberValue(value.toDouble())
+                    is Boolean -> RuntimeValue.StringValue(value.toString())
+                    null -> RuntimeValue.NullValue
+                    else -> rawIndex
+                }
+                else -> rawIndex
+            }
+            else -> rawIndex
+        }
 
         // Handle both numeric indices (for arrays) and string indices (for object properties)
         return when (index) {
