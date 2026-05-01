@@ -249,4 +249,114 @@ class DataRestructuringFunctionsTest {
         assertTrue(result is UDM.Scalar)
         assertNull((result as UDM.Scalar).value)
     }
+
+    // ── nestBy tests ──
+
+    @Test
+    fun testNestByBasic() {
+        // F03: nest order lines under orders
+        val orders = UDM.Array(listOf(
+            UDM.Object(mapOf("orderId" to UDM.Scalar("A"), "customer" to UDM.Scalar("Alice")), emptyMap()),
+            UDM.Object(mapOf("orderId" to UDM.Scalar("B"), "customer" to UDM.Scalar("Bob")), emptyMap())
+        ))
+        val lines = UDM.Array(listOf(
+            UDM.Object(mapOf("orderId" to UDM.Scalar("A"), "product" to UDM.Scalar("Widget"), "qty" to UDM.Scalar(10)), emptyMap()),
+            UDM.Object(mapOf("orderId" to UDM.Scalar("A"), "product" to UDM.Scalar("Gadget"), "qty" to UDM.Scalar(5)), emptyMap()),
+            UDM.Object(mapOf("orderId" to UDM.Scalar("B"), "product" to UDM.Scalar("Gizmo"), "qty" to UDM.Scalar(3)), emptyMap())
+        ))
+        val parentKeyFn = UDM.Lambda { args -> (args[0] as UDM.Object).properties["orderId"]!! }
+        val childKeyFn = UDM.Lambda { args -> (args[0] as UDM.Object).properties["orderId"]!! }
+
+        val result = DataRestructuringFunctions.nestBy(listOf(orders, lines, parentKeyFn, childKeyFn, UDM.Scalar("lines")))
+
+        assertTrue(result is UDM.Array)
+        val resultArr = result as UDM.Array
+        assertEquals(2, resultArr.elements.size)
+
+        // Order A should have 2 lines
+        val orderA = resultArr.elements[0] as UDM.Object
+        assertEquals("Alice", (orderA.properties["customer"] as UDM.Scalar).value)
+        val linesA = orderA.properties["lines"] as UDM.Array
+        assertEquals(2, linesA.elements.size)
+
+        // Order B should have 1 line
+        val orderB = resultArr.elements[1] as UDM.Object
+        assertEquals("Bob", (orderB.properties["customer"] as UDM.Scalar).value)
+        val linesB = orderB.properties["lines"] as UDM.Array
+        assertEquals(1, linesB.elements.size)
+        assertEquals("Gizmo", ((linesB.elements[0] as UDM.Object).properties["product"] as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testNestByNoMatchingChildren() {
+        // Parent with no children gets empty array
+        val orders = UDM.Array(listOf(
+            UDM.Object(mapOf("orderId" to UDM.Scalar("X"), "customer" to UDM.Scalar("Nobody")), emptyMap())
+        ))
+        val lines = UDM.Array(listOf(
+            UDM.Object(mapOf("orderId" to UDM.Scalar("A"), "product" to UDM.Scalar("Widget")), emptyMap())
+        ))
+        val parentKeyFn = UDM.Lambda { args -> (args[0] as UDM.Object).properties["orderId"]!! }
+        val childKeyFn = UDM.Lambda { args -> (args[0] as UDM.Object).properties["orderId"]!! }
+
+        val result = DataRestructuringFunctions.nestBy(listOf(orders, lines, parentKeyFn, childKeyFn, UDM.Scalar("lines")))
+
+        val orderX = (result as UDM.Array).elements[0] as UDM.Object
+        val linesX = orderX.properties["lines"] as UDM.Array
+        assertEquals(0, linesX.elements.size)  // empty array, not null
+    }
+
+    @Test
+    fun testNestByEmptyChildren() {
+        val orders = UDM.Array(listOf(
+            UDM.Object(mapOf("id" to UDM.Scalar("1")), emptyMap())
+        ))
+        val emptyChildren = UDM.Array(emptyList())
+        val pKey = UDM.Lambda { args -> (args[0] as UDM.Object).properties["id"]!! }
+        val cKey = UDM.Lambda { args -> UDM.Scalar("x") }
+
+        val result = DataRestructuringFunctions.nestBy(listOf(orders, emptyChildren, pKey, cKey, UDM.Scalar("items")))
+
+        val parent = (result as UDM.Array).elements[0] as UDM.Object
+        assertTrue(parent.properties.containsKey("items"))
+        assertEquals(0, (parent.properties["items"] as UDM.Array).elements.size)
+    }
+
+    @Test
+    fun testNestByPreservesParentProperties() {
+        // Verify all original parent properties are preserved
+        val orders = UDM.Array(listOf(
+            UDM.Object(mapOf(
+                "orderId" to UDM.Scalar("A"),
+                "customer" to UDM.Scalar("Alice"),
+                "status" to UDM.Scalar("ACTIVE"),
+                "total" to UDM.Scalar(299.99)
+            ), emptyMap())
+        ))
+        val lines = UDM.Array(emptyList())
+        val pKey = UDM.Lambda { args -> (args[0] as UDM.Object).properties["orderId"]!! }
+        val cKey = UDM.Lambda { args -> UDM.Scalar("x") }
+
+        val result = DataRestructuringFunctions.nestBy(listOf(orders, lines, pKey, cKey, UDM.Scalar("lines")))
+
+        val order = (result as UDM.Array).elements[0] as UDM.Object
+        assertEquals("A", (order.properties["orderId"] as UDM.Scalar).value)
+        assertEquals("Alice", (order.properties["customer"] as UDM.Scalar).value)
+        assertEquals("ACTIVE", (order.properties["status"] as UDM.Scalar).value)
+        assertEquals(299.99, (order.properties["total"] as UDM.Scalar).value)
+        assertTrue(order.properties.containsKey("lines"))  // new property added
+    }
+
+    @Test
+    fun testNestByInvalidArguments() {
+        assertThrows<IllegalArgumentException> {
+            DataRestructuringFunctions.nestBy(listOf(UDM.Array(emptyList())))  // too few args
+        }
+        assertThrows<IllegalArgumentException> {
+            DataRestructuringFunctions.nestBy(listOf(
+                UDM.Scalar("not-array"), UDM.Array(emptyList()),
+                UDM.Lambda { UDM.Scalar("x") }, UDM.Lambda { UDM.Scalar("x") }, UDM.Scalar("prop")
+            ))  // first arg not array
+        }
+    }
 }

@@ -1192,7 +1192,8 @@ object StandardLibrary {
         register("groupBy", DataRestructuringFunctions::groupBy)       // Array → Object (keyed map for O(1) lookup)
         register("mapGroups", DataRestructuringFunctions::mapGroups)   // Array → Array (group + transform each group)
         register("lookupBy", DataRestructuringFunctions::lookupBy)     // Array → Object or null (find one match by key)
-        // Future: nestBy (F03), chunkBy (F05), unnest (F06)
+        register("nestBy", DataRestructuringFunctions::nestBy)         // (parents, children, pKey, cKey, prop) → parents with nested children
+        // Future: chunkBy (F05), unnest (F06)
     }
     
     /**
