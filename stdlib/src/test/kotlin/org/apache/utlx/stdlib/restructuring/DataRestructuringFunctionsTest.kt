@@ -433,4 +433,95 @@ class DataRestructuringFunctionsTest {
             ))  // first arg not array
         }
     }
+
+    // ── unnest tests ──
+
+    @Test
+    fun testUnnestBasic() {
+        // F06: flatten orders with nested lines into flat rows
+        val orders = UDM.Array(listOf(
+            UDM.Object(mapOf(
+                "orderId" to UDM.Scalar("A"),
+                "customer" to UDM.Scalar("Alice"),
+                "lines" to UDM.Array(listOf(
+                    UDM.Object(mapOf("product" to UDM.Scalar("Widget"), "qty" to UDM.Scalar(10)), emptyMap()),
+                    UDM.Object(mapOf("product" to UDM.Scalar("Gadget"), "qty" to UDM.Scalar(5)), emptyMap())
+                ))
+            ), emptyMap()),
+            UDM.Object(mapOf(
+                "orderId" to UDM.Scalar("B"),
+                "customer" to UDM.Scalar("Bob"),
+                "lines" to UDM.Array(listOf(
+                    UDM.Object(mapOf("product" to UDM.Scalar("Gizmo"), "qty" to UDM.Scalar(3)), emptyMap())
+                ))
+            ), emptyMap())
+        ))
+
+        val result = DataRestructuringFunctions.unnest(listOf(orders, UDM.Scalar("lines")))
+
+        assertTrue(result is UDM.Array)
+        val flat = result as UDM.Array
+        assertEquals(3, flat.elements.size)  // 2 + 1 = 3 flat rows
+
+        // First row: order A + Widget
+        val row1 = flat.elements[0] as UDM.Object
+        assertEquals("A", (row1.properties["orderId"] as UDM.Scalar).value)
+        assertEquals("Alice", (row1.properties["customer"] as UDM.Scalar).value)
+        assertEquals("Widget", (row1.properties["product"] as UDM.Scalar).value)
+        assertEquals(10, (row1.properties["qty"] as UDM.Scalar).value)
+        assertNull(row1.properties["lines"])  // child property removed
+
+        // Third row: order B + Gizmo
+        val row3 = flat.elements[2] as UDM.Object
+        assertEquals("B", (row3.properties["orderId"] as UDM.Scalar).value)
+        assertEquals("Gizmo", (row3.properties["product"] as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testUnnestEmptyChildren() {
+        // Parent with empty lines array — excluded from output
+        val orders = UDM.Array(listOf(
+            UDM.Object(mapOf(
+                "orderId" to UDM.Scalar("A"),
+                "lines" to UDM.Array(emptyList())
+            ), emptyMap())
+        ))
+
+        val result = DataRestructuringFunctions.unnest(listOf(orders, UDM.Scalar("lines")))
+
+        assertEquals(0, (result as UDM.Array).elements.size)
+    }
+
+    @Test
+    fun testUnnestMissingProperty() {
+        // Parent without the named property — excluded from output
+        val orders = UDM.Array(listOf(
+            UDM.Object(mapOf("orderId" to UDM.Scalar("A")), emptyMap())
+        ))
+
+        val result = DataRestructuringFunctions.unnest(listOf(orders, UDM.Scalar("lines")))
+
+        assertEquals(0, (result as UDM.Array).elements.size)
+    }
+
+    @Test
+    fun testUnnestChildOverridesParent() {
+        // Child field "id" overrides parent field "id"
+        val data = UDM.Array(listOf(
+            UDM.Object(mapOf(
+                "id" to UDM.Scalar("PARENT-1"),
+                "name" to UDM.Scalar("ParentName"),
+                "children" to UDM.Array(listOf(
+                    UDM.Object(mapOf("id" to UDM.Scalar("CHILD-1"), "value" to UDM.Scalar(42)), emptyMap())
+                ))
+            ), emptyMap())
+        ))
+
+        val result = DataRestructuringFunctions.unnest(listOf(data, UDM.Scalar("children")))
+
+        val row = (result as UDM.Array).elements[0] as UDM.Object
+        assertEquals("CHILD-1", (row.properties["id"] as UDM.Scalar).value)  // child wins
+        assertEquals("ParentName", (row.properties["name"] as UDM.Scalar).value)  // parent preserved
+        assertEquals(42, (row.properties["value"] as UDM.Scalar).value)  // child field
+    }
 }

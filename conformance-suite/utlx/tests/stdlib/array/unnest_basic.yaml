@@ -1,0 +1,49 @@
+name: "unnest_basic"
+category: "stdlib/array"
+description: "F06: unnest flattens nested orders+lines into flat rows for CSV export"
+tags: ["unnest", "restructuring", "F06", "flatten", "denormalize", "csv"]
+
+input:
+  format: json
+  data: |
+    [
+      {
+        "orderId": "ORD-001",
+        "customer": "Acme Corp",
+        "lines": [
+          {"product": "Widget", "qty": 10},
+          {"product": "Gadget", "qty": 5}
+        ]
+      },
+      {
+        "orderId": "ORD-002",
+        "customer": "Globex Inc",
+        "lines": [
+          {"product": "Gizmo", "qty": 3}
+        ]
+      }
+    ]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  unnest($input, "lines")
+
+expected:
+  format: json
+  data: |
+    [
+      {"orderId": "ORD-001", "customer": "Acme Corp", "product": "Widget", "qty": 10},
+      {"orderId": "ORD-001", "customer": "Acme Corp", "product": "Gadget", "qty": 5},
+      {"orderId": "ORD-002", "customer": "Globex Inc", "product": "Gizmo", "qty": 3}
+    ]
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "F06: unnest is the reverse of nestBy — hierarchical to flat"
+    - "Parent fields (orderId, customer) repeated for each child row"
+    - "The 'lines' property is removed — its contents are merged into the parent"
+    - "Ready for CSV output: each row is a flat record"
