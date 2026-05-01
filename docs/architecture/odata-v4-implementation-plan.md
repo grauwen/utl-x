@@ -720,3 +720,60 @@ Frontend (TypeScript):
 4. Round-trip EDMX → UDM → EDMX produces structurally equivalent output
 5. Design-Time mode: EDMX schema → typed field suggestions in autocomplete
 6. USDL with `%entityType`, `%navigation` → valid EDMX generation
+
+---
+
+## Future: OData Stdlib Functions
+
+**Status:** Not planned — document for future consideration when user demand warrants it.  
+**Priority:** Low — the format layer (`input odata` / `output odata`) handles common cases.  
+**Added:** May 2026
+
+### Current State
+
+OData is handled entirely at the format layer:
+- `input odata` — parses OData JSON, extracts `@odata.*` annotations into UDM attributes
+- `output odata {metadata: "full"}` — serializes with OData annotations
+- Annotations accessible via `$input.@["odata.context"]`
+
+There are NO OData-specific stdlib functions. All other formats (JSON, XML, CSV, YAML) have stdlib functions for in-body manipulation. OData does not — because OData JSON IS JSON with naming conventions.
+
+### Why OData Functions Are Not Needed Now
+
+OData operations are solvable with existing functions:
+
+| OData operation | Existing approach |
+|----------------|-------------------|
+| Parse embedded OData string | `parseJson(string)` (annotations stay as properties) |
+| Strip annotations | `filterEntries(obj, (k, v) -> !startsWith(k, "@odata."))` |
+| Check if OData | `hasKey($input, "@odata.context")` |
+| Get next page link | `$input.@["odata.nextLink"]` |
+| Unwrap collection | `$input.value` |
+
+XML/CSV/YAML need stdlib functions because they are structurally different from JSON. OData is JSON with metadata conventions — existing JSON + Object functions cover it.
+
+### Potential Future Functions (When User Demand Exists)
+
+If Dynamics 365 / SAP OData users become a significant segment:
+
+```utlx
+// Parse an OData JSON string — like parseJson but extracts @odata.* into attributes
+parseOData(odataJsonString)
+
+// Check if a value has OData annotations
+isOData($input)                          // true if @odata.context or @odata.type present
+
+// Extract pagination link (or null)
+getODataNextLink($input)                 // @odata.nextLink value or null
+```
+
+Three functions, small effort (~30 lines total). Would appear under an "OData" category in the IDE function builder.
+
+### Decision Criteria
+
+Add OData stdlib functions when:
+- Multiple users request them (Azure Marketplace feedback)
+- Embedded OData strings are a common pattern (OData-inside-JSON)
+- The format layer proves insufficient for a real-world use case
+
+Do NOT add speculatively — the format layer works, and unnecessary functions increase maintenance surface.
