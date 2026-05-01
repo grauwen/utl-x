@@ -349,16 +349,16 @@ object EnhancedArrayFunctions {
     }
     
     @UTLXFunction(
-        description = "Groups array elements by a key function.",
+        description = "Groups array elements by a key function. Returns an Object for O(1) lookup by key.",
         minArgs = 2,
         maxArgs = 2,
-        category = "Array",
+        category = "Data Restructuring",
         parameters = [
-            "array: Input array to process",
-        "keyFunctionArg: Keyfunctionarg value"
+            "array: Input array to group",
+            "keyFunction: Lambda (item) -> key, or string property name"
         ],
-        returns = "an object where keys are the results of the key function",
-        example = "groupBy(...) => result",
+        returns = "an Object keyed by group name — use for O(1) lookup by key",
+        example = "groupBy(items, (i) -> i.dept) => {Eng: [...], Sales: [...]}",
         notes = "Returns an object where keys are the results of the key function\nand values are arrays of elements with that key.\n[1] key function (item) => string key\nExample:\n```\n[1, 2, 3, 4, 5, 6] groupBy (x) => if (x % 2 == 0) \"even\" else \"odd\"\n→ {odd: [1, 3, 5], even: [2, 4, 6]}\n[{city: \"NYC\", name: \"Alice\"}, {city: \"LA\", name: \"Bob\"}, {city: \"NYC\", name: \"Carol\"}]\ngroupBy (x) => x.city\n→ {NYC: [{city: \"NYC\", name: \"Alice\"}, {city: \"NYC\", name: \"Carol\"}],\nLA: [{city: \"LA\", name: \"Bob\"}]}\n[\"apple\", \"apricot\", \"banana\", \"blueberry\"]\ngroupBy (x) => substring(x, 0, 1)\n→ {a: [\"apple\", \"apricot\"], b: [\"banana\", \"blueberry\"]}\n```",
         tags = ["array"],
         since = "1.0"
@@ -435,7 +435,7 @@ object EnhancedArrayFunctions {
         description = "Group array elements by key and transform each group. Returns array of transformed results.",
         minArgs = 3,
         maxArgs = 3,
-        category = "Array",
+        category = "Data Restructuring",
         parameters = [
             "array: Input array to group",
             "keySelector: Key function (lambda) or property name (string)",
@@ -498,6 +498,64 @@ object EnhancedArrayFunctions {
         }
 
         return UDM.Array(results)
+    }
+
+    @UTLXFunction(
+        description = "Find one matching record from a reference array by key. Returns the first match or null.",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Data Restructuring",
+        parameters = [
+            "searchValue: The value to search for (e.g., a customer ID)",
+            "referenceArray: The array to search in (e.g., all customers)",
+            "keyFunction: Lambda that extracts the comparison key from each reference record"
+        ],
+        returns = "The first matching record, or null if no match found",
+        example = "lookupBy(order.customerId, customers, (c) -> c.id) => {id: \"C-42\", name: \"Acme Corp\"}",
+        notes = "1:1 record enrichment — find ONE matching record by key.\n" +
+                "Use lookupBy for enrichment (add customer name to order).\n" +
+                "Use groupBy for 1:N grouping (all lines per order).\n" +
+                "Use nestBy (F03) for nesting children under parents.",
+        tags = ["array", "lookup", "enrichment"],
+        since = "1.0"
+    )
+    fun lookupBy(args: List<UDM>): UDM {
+        if (args.size < 3) {
+            throw IllegalArgumentException(
+                "lookupBy() requires 3 arguments: searchValue, referenceArray, keyFunction. " +
+                "Example: lookupBy(order.customerId, \$input.customers, (c) -> c.id)"
+            )
+        }
+
+        val searchValue = args[0]
+        val referenceArray = args[1]
+        val keyFunction = args[2]
+
+        if (referenceArray !is UDM.Array) {
+            throw IllegalArgumentException(
+                "lookupBy() second argument must be an array (the reference table to search in)"
+            )
+        }
+
+        if (keyFunction !is UDM.Lambda) {
+            throw IllegalArgumentException(
+                "lookupBy() third argument must be a lambda/function (the key extractor)"
+            )
+        }
+
+        // Convert search value to string for comparison
+        val searchKey = searchValue.asString()
+
+        // Find first matching record
+        for (element in referenceArray.elements) {
+            val elementKey = keyFunction.apply(listOf(element)).asString()
+            if (elementKey == searchKey) {
+                return element
+            }
+        }
+
+        // No match found
+        return UDM.Scalar(null)
     }
 
     @UTLXFunction(

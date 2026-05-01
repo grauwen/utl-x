@@ -1,0 +1,43 @@
+name: "lookupBy_no_match"
+category: "stdlib/array"
+description: "F04: lookupBy returns null when no match found — use ?. and ?? for safe access"
+tags: ["lookupBy", "enrichment", "F04", "null-handling"]
+
+input:
+  format: json
+  data: |
+    {
+      "order": {"orderId": "ORD-001", "customerId": "C-99", "total": 100},
+      "customers": [
+        {"id": "C-41", "name": "Globex Inc"},
+        {"id": "C-42", "name": "Acme Corp"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let customer = lookupBy($input.order.customerId, $input.customers, (c) -> c.id)
+
+  {
+    orderId: $input.order.orderId,
+    customerName: customer?.name ?? "Unknown Customer",
+    found: customer != null
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "orderId": "ORD-001",
+      "customerName": "Unknown Customer",
+      "found": false
+    }
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "C-99 does not exist in the customer array"
+    - "lookupBy returns null, ?. prevents error, ?? provides fallback"

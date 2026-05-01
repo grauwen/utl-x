@@ -1168,19 +1168,24 @@ object StandardLibrary {
     }
     
     /**
-     * Register enhanced array functions
-     * Advanced array operations for functional programming
+     * Register enhanced array and data restructuring functions
+     * Includes: array aggregation (partition, countBy, sumBy, maxBy, minBy, avgBy)
+     * and data restructuring (groupBy, mapGroups, lookupBy)
      */
     private fun registerEnhancedArrayFunctions() {
+        // Array aggregation functions (category: Array)
         register("partition", EnhancedArrayFunctions::partition)
         register("countBy", EnhancedArrayFunctions::countBy)
         register("sumBy", EnhancedArrayFunctions::sumBy)
         register("maxBy", EnhancedArrayFunctions::maxBy)
         register("minBy", EnhancedArrayFunctions::minBy)
-        register("groupBy", EnhancedArrayFunctions::groupBy)
-        register("mapGroups", EnhancedArrayFunctions::mapGroups)
         // register("distinctBy", EnhancedArrayFunctions::distinctBy) // DUPLICATE: distinctBy already registered in ArrayFunctions
         register("avgBy", EnhancedArrayFunctions::avgBy)
+
+        // Data restructuring functions (category: Data Restructuring)
+        register("groupBy", EnhancedArrayFunctions::groupBy)       // Array → Object (keyed map for O(1) lookup)
+        register("mapGroups", EnhancedArrayFunctions::mapGroups)   // Array → Array (group + transform each group)
+        register("lookupBy", EnhancedArrayFunctions::lookupBy)     // Array → Object or null (find one match by key)
     }
     
     /**
