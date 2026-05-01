@@ -1,38 +1,90 @@
 = USDL: Universal Schema Definition Language
 
-If UDM is the universal representation for _data_, USDL is the universal representation for _schemas_. Just as UDM lets you write format-agnostic transformations, USDL lets you write format-agnostic schema definitions — one schema that can be converted to XSD, JSON Schema, Avro, Protobuf, or any other schema format.
+If UDM is the universal representation for _data_, USDL is the universal representation for _schemas_. Just as UDM lets you write format-agnostic transformations, USDL lets you write format-agnostic schema definitions — one schema that can be read from any schema format, edited, and written to any other schema format.
 
-*Important:* USDL is NOT a separate language or standalone file format. It is a _dialect_ within UTL-X — a modifier on the output (or input) declaration. A USDL transformation is always a `%utlx 1.0` file:
+== What USDL Is
+
+USDL is NOT a separate language or file format. It is a *convention* — a set of property names starting with `%` that represent schema information in a format-agnostic way:
+
+```utlx
+{
+  "%namespace": "com.example.orders",
+  "%types": {
+    "Order": {
+      "%kind": "object",
+      "%fields": {
+        "id": { "%type": "string", "%required": true },
+        "total": { "%type": "number", "%minimum": 0 }
+      }
+    }
+  }
+}
+```
+
+These `%` properties can live alongside any other data in a UDM tree. The `%` prefix is reserved for USDL — it never collides with raw format properties (XML elements don't start with `%`, JSON keys don't start with `%`, etc.).
+
+== How USDL Works — Automatically
+
+USDL works through three automatic mechanisms. No special tags or declarations are needed.
+
+=== 1. Enrichment (Input — Tier 2 Schema Formats)
+
+When UTL-X reads a schema format (XSD, JSON Schema, Avro, Protobuf, EDMX, Table Schema), the parser automatically *enriches* the UDM with USDL `%` properties alongside the raw structure:
 
 ```utlx
 %utlx 1.0
 input xsd
-output json %usdl 1.0
+output json
 ---
-$input
+// Both views available on the same $input:
+{
+  rawElementName: $input["xs:element"].@name,         // raw XSD access
+  types: $input["%types"],                             // USDL access
+  pattern: $input.^xsdPattern                          // metadata access
+}
 ```
 
-The `%usdl 1.0` tag tells UTL-X: "serialize the output using USDL conventions." The transformation body uses standard UTL-X expressions. You can also use USDL on the input side — to read a USDL-formatted schema and convert it to another format.
+The raw schema structure is preserved AND the USDL abstraction is layered on top. No information loss.
 
-=== USDL with Tier 1 vs Tier 2 Formats
+=== 2. Detection (Output — Tier 2 Schema Serializers)
 
-The `%usdl` tag can appear on any output format — both data formats (Tier 1: JSON, YAML) and schema formats (Tier 2: XSD, Protobuf, Avro, JSON Schema). The meaning differs:
-
-- *On a Tier 2 format* (`output xsd %usdl 1.0`, `output proto %usdl 1.0`): the serializer interprets USDL directives and generates the native schema — XSD XML, a `.proto` file, Avro schema JSON. This is *schema generation*: USDL in, native schema format out.
-
-- *On a Tier 1 format* (`output yaml %usdl 1.0`, `output json %usdl 1.0`): the output is YAML or JSON, and the *content* contains USDL directives (`%namespace`, `%types`, `%fields`) as data properties. This is *schema documentation*: the schema is rendered as human-readable YAML or JSON for inspection, editing, or storage. YAML doesn't become a schema format — it is the *carrier* for schema content.
-
-The Tier 1 USDL pattern is the fastest way to understand any schema:
+All six Tier 2 serializers automatically detect `%types` in the UDM and generate the native schema format:
 
 ```utlx
 %utlx 1.0
-input xsd              // read a complex XSD
-output yaml %usdl 1.0  // dump as readable YAML with USDL directives
+input json
+output xsd
 ---
-$input
+// Write USDL in the body — the XSD serializer detects %types and generates XSD
+{
+  "%namespace": "com.example",
+  "%types": {
+    "Customer": {
+      "%kind": "object",
+      "%fields": {
+        "name": { "%type": "string", "%required": true },
+        "email": { "%type": "string", "%format": "email" }
+      }
+    }
+  }
+}
 ```
 
-The output is a clean YAML file with `%namespace`, `%types`, and `%fields` — readable without tooling, editable in any text editor, diffable in Git.
+The serializer doesn't care HOW `%types` got there — enrichment, data, or literal. It just detects and generates.
+
+=== 3. Carrier (YAML/JSON as Human-Readable Schema)
+
+YAML and JSON naturally carry USDL properties as regular data. This enables a powerful round-trip:
+
+```
+1. Read schema:    input xsd → $input has raw + USDL %types
+2. Dump to YAML:   output yaml → human-readable YAML with %types
+3. Edit:           developer modifies the YAML in a text editor
+4. Read back:      input yaml → %types flows through as data
+5. Generate:       output xsd → serializer sees %types → new XSD
+```
+
+YAML is the human-readable editing layer for schemas. Read any schema as YAML, edit in any text editor, write back as any schema format.
 
 #block(
   fill: rgb("#FFF3E0"),
@@ -40,7 +92,7 @@ The output is a clean YAML file with `%namespace`, `%types`, and `%fields` — r
   radius: 4pt,
   width: 100%,
 )[
-  *Current status (F08):* the USDL pipeline wiring is not yet complete. The building blocks exist — schema parsers, USDL conversion methods, and schema serializers are all implemented — but `TransformationService` does not yet invoke the USDL conversion step. This means `output yaml %usdl 1.0` and Tier 2 → Tier 2 conversions (e.g., `input xsd` / `output jsch`) do not work as described. The stdlib functions (`parseXSDSchema`, `parseJSONSchema`, etc.) perform the USDL conversion individually and do work. See F08 for the implementation plan.
+  *Current status (F08):* the USDL enrichment on input (step 1 above) is not yet implemented — Tier 2 parsers do not yet add `%` properties alongside the raw structure. The output side (step 2) is fully implemented — all 6 serializers detect `%types`. See F08 for the implementation plan.
 ]
 
 == The USDL Tier System
