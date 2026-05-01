@@ -369,9 +369,9 @@ More complex than F03-F06 because it touches the transport layer, not just stdli
 
 ## Book Impact
 
-- Chapter 19 (Pipeline Chaining): update multi-hop section with additional inputs
-- Chapter 19a (Data Restructuring): add combined example showing F03-F07 together
-- Chapter 30 (Engine Lifecycle): update pipeline execution flow
+- Chapter 20 (Pipeline Chaining): update multi-hop section with additional inputs
+- Chapter 21 (Data Restructuring): add combined example showing F03-F07 together
+- Chapter 32 (Engine Lifecycle): update pipeline execution flow
 
 ---
 

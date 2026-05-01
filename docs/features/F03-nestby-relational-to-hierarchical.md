@@ -635,11 +635,11 @@ Given the finding that groupBy + index lookup is broken, the priority of F03 inc
 
 ## Book Impact
 
-- Chapter 9 (UDM): already has the flat data section — add `nestBy()` as the recommended approach
-- Chapter 14 (Standard Library): add `nestBy()` to the Array functions category
-- Chapter 30 (Enterprise Integration): SAP IDoc case study should use `nestBy()`
-- Chapter 49 (stdlib reference): add full documentation
-- Chapter 36 (Message Parsing & Memory): add nestBy() memory analysis
+- Chapter 10 (UDM): already has the flat data section — add `nestBy()` as the recommended approach
+- Chapter 16 (Standard Library): add `nestBy()` to the Array functions category
+- Chapter 31 (Enterprise Integration): SAP IDoc case study should use `nestBy()`
+- Chapter 50 (stdlib reference): add full documentation
+- Chapter 37 (Message Parsing & Memory): add nestBy() memory analysis
 
 ---
 

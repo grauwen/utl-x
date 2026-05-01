@@ -321,7 +321,7 @@ map(orders, (order) -> {
 - **Current:** `groupBy` + `map` works but is verbose and O(N × M) without groupBy
 - **Proposed:** `nestBy()` (F03), `lookupBy()` (F04), `chunkBy()` (F05), `unnest()` (F06)
 - **Not proposed:** full intermediate card system (too complex for the return)
-- **Book coverage:** Chapter 20 (Data Restructuring), Chapter 9 (UDM), Chapter 30 (Enterprise Integration)
+- **Book coverage:** Chapter 21 (Data Restructuring), Chapter 10 (UDM), Chapter 31 (Enterprise Integration)
 
 ---
 
