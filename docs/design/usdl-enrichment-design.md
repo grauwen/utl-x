@@ -286,6 +286,127 @@ With automatic enrichment (Tier 2 parsers) and automatic detection (Tier 2 seria
 
 **Recommendation:** Option 1 for now (keep, harmless). Option 3 opens interesting doors for the future — especially schema inference for Tier 1 data, which would give `%usdl` a real purpose again.
 
+## USDL Enrichment Can Fail — Partial Enrichment and Diagnostics
+
+### When Enrichment Fails
+
+USDL enrichment is a SEPARATE step from UDM parsing. A schema can parse correctly to UDM but fail (fully or partially) to produce USDL. Real-world cases:
+
+| Schema feature | UDM behavior | USDL behavior |
+|---------------|-------------|--------------|
+| `xs:any` wildcard | UDM captures the XML node ✓ | USDL cannot model "any type" — what `%type`? |
+| `xs:redefine` (circular) | UDM is a tree, captures structure ✓ | USDL type resolution may hit infinite loop |
+| `xs:include` / `xs:import` (nested schemas) | UDM captures the XML reference nodes ✓ | USDL must resolve external files — may fail if files not available |
+| JSON Schema `$dynamicRef` | UDM has the JSON property ✓ | USDL can't follow dynamic references at parse time |
+| Avro unions-of-unions (deeply nested) | UDM captures the JSON arrays ✓ | USDL type mapping becomes ambiguous |
+| Protobuf `oneof` with `map` inside | UDM structure fine ✓ | USDL field modeling edge case |
+| Any schema feature the converter doesn't support yet | UDM always works ✓ | USDL converter throws or skips |
+
+The key principle: **enrichment failure should NEVER block the transformation.** The raw UDM is always valid. USDL enrichment is best-effort — produce what you can, report what you couldn't.
+
+### The `%_diagnostics` Directive
+
+When enrichment encounters issues, they should be recorded in a special `%_diagnostics` property on the UDM:
+
+```json
+{
+  "xs:element": { ... },
+  "%types": { ... },
+  "%_diagnostics": {
+    "%_status": "partial",
+    "%_warnings": [
+      {"path": "xs:element[@name='Payload']", "issue": "xs:any wildcard cannot be modeled as USDL type", "fallback": "%type set to 'any'"},
+      {"path": "xs:import[@namespace='urn:external']", "issue": "External schema not available for resolution", "fallback": "Type references preserved as strings"}
+    ],
+    "%_unsupportedFeatures": ["xs:redefine", "xs:any"],
+    "%_enrichmentCoverage": "85%"
+  }
+}
+```
+
+The developer can then:
+- Check `$input["%_diagnostics"]["%_status"]` — `"complete"` or `"partial"`
+- Read `$input["%_diagnostics"]["%_warnings"]` — what couldn't be modeled and what fallback was used
+- Check `$input["%_diagnostics"]["%_unsupportedFeatures"]` — which schema features are not USDL-modeled
+
+### IDE Impact
+
+The IDE currently shows two checkmarks for Tier 2 input: Format ✓ and UDM ✓. With enrichment, add a third:
+
+| Input | Format | UDM | USDL | Meaning |
+|-------|--------|-----|------|---------|
+| JSON data | ✓ | ✓ | — | Tier 1: no USDL applicable |
+| XSD (simple) | ✓ | ✓ | ✓ | Fully parsed + fully enriched |
+| XSD (with `xs:any`) | ✓ | ✓ | ⚠ | Parsed OK, USDL partial — some types modeled as `any` |
+| XSD (with unresolved imports) | ✓ | ✓ | ⚠ | Parsed OK, USDL partial — external types unresolved |
+| XSD (broken XML) | ✗ | — | — | Format error — nothing else applies |
+
+The ⚠ state means: "enrichment worked but with warnings." The developer can still use `%types` for the parts that worked. Hovering over ⚠ shows the diagnostics.
+
+### Tree Browser with USDL
+
+The UDM tree browser shows both raw and USDL nodes:
+
+```
+$input
+├── xs:element              ← raw XSD (format icon)
+│   ├── @name: "Customer"
+│   └── @type: "xs:string"
+├── xs:complexType          ← raw XSD
+│   └── xs:sequence
+├── %types                  ← USDL enrichment (% icon, different color)
+│   └── Order
+│       ├── %kind: "structure"
+│       └── %fields
+│           ├── Customer: {%type: "string"}
+│           └── Total: {%type: "decimal"}
+├── %xsdPattern: "russian-doll"
+└── %_diagnostics           ← enrichment diagnostics (if any issues)
+    └── %_status: "complete"
+```
+
+IDE recommendations:
+- **Visual distinction** — USDL nodes in blue (matching UTL-X brand color), raw nodes in default color
+- **Toggle** — "Show: Raw / USDL / Both" button in the tree header
+- **Collapsed by default** — `%types` section collapsed, expandable on demand
+- **Autocompletion** — when typing `$input.`, suggest BOTH raw and USDL paths, visually distinguished
+- **Diagnostics panel** — if ⚠, show the warnings inline in the tree or in a separate diagnostics tab
+
+### Nested Schemas (xs:include / xs:import)
+
+Nested schemas add complexity to enrichment:
+
+**`xs:include` (same namespace):**
+The included schema's types should be merged into the parent's `%types`. If the included file is available, enrichment resolves the types. If not available (file path not found), enrichment records a diagnostic warning and preserves the `xs:include` reference as-is.
+
+**`xs:import` (different namespace):**
+Imported types belong to a different namespace. In USDL, they could appear as:
+- Separate entries in `%types` with a namespace prefix: `%types: {"ext:Address": {...}}`
+- Or under a `%imports` directive: `%imports: {"urn:external": {types: {...}}}`
+
+If the imported schema file is not available, the type references remain as strings (e.g., `%type: "ext:AddressType"`) with a diagnostic warning.
+
+**Chameleon includes** (no target namespace — adopts parent's namespace):
+These should be resolved and merged into the parent's `%types` transparently. The user shouldn't see them as separate — they become part of the parent schema's types.
+
+### Functions for USDL Diagnostics
+
+```utlx
+// Check if enrichment succeeded:
+$input["%_diagnostics"]["%_status"]              // "complete" or "partial"
+
+// Get warnings:
+$input["%_diagnostics"]["%_warnings"]            // array of warning objects
+
+// Check if a specific feature is unsupported:
+contains($input["%_diagnostics"]["%_unsupportedFeatures"] ?? [], "xs:any")
+
+// Get enrichment coverage percentage:
+$input["%_diagnostics"]["%_enrichmentCoverage"]  // "85%"
+```
+
+No special functions needed — the diagnostics are regular USDL `%` properties accessible with standard UTL-X expressions. The `%_` prefix (percent + underscore) distinguishes diagnostics from schema directives.
+
 ---
 
 *Design document for USDL enrichment. May 2026.*

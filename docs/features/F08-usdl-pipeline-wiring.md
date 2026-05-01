@@ -165,36 +165,117 @@ output jsch
 }
 ```
 
+## Enrichment Diagnostics (`%_diagnostics`)
+
+Enrichment can fail partially. A schema may parse to UDM but have features that can't be modeled in USDL. When this happens, the enrichment records diagnostics:
+
+```json
+{
+  "%_diagnostics": {
+    "%_status": "partial",
+    "%_warnings": [
+      {"path": "xs:element[@name='Payload']", "issue": "xs:any wildcard — type set to 'any'"},
+      {"path": "xs:import[@namespace='urn:ext']", "issue": "External schema not available"}
+    ],
+    "%_unsupportedFeatures": ["xs:redefine", "xs:any"],
+    "%_enrichmentCoverage": "85%"
+  }
+}
+```
+
+### Known USDL Enrichment Edge Cases
+
+| Schema feature | UDM | USDL | Fallback |
+|---------------|-----|------|----------|
+| `xs:any` wildcard | ✓ | ⚠ | `%type: "any"` + warning |
+| `xs:redefine` (circular) | ✓ | ⚠ | Skip circular types + warning |
+| `xs:include` (same namespace) | ✓ | ✓ if file available | Merge included types into `%types` |
+| `xs:import` (different namespace) | ✓ | ⚠ if file not available | Type refs as strings + warning |
+| Chameleon include (no namespace) | ✓ | ✓ | Adopts parent namespace |
+| JSON Schema `$dynamicRef` | ✓ | ⚠ | Preserve as string ref + warning |
+| Avro nested unions | ✓ | ⚠ | Flatten to first non-null type + warning |
+
+### Principle: Enrichment Failure Never Blocks
+
+If `toUSDL()` throws an exception, catch it and:
+1. Set `%_diagnostics.%_status` to `"failed"`
+2. Preserve the raw UDM unchanged (developer can still use `$input["xs:element"]`)
+3. `$input["%types"]` returns null (no USDL available)
+4. IDE shows UDM ✓ USDL ✗
+
+If `toUSDL()` succeeds partially:
+1. Set `%_diagnostics.%_status` to `"partial"`
+2. Include whatever `%types` could be modeled
+3. Record warnings for what couldn't
+4. IDE shows UDM ✓ USDL ⚠
+
+## IDE Impact
+
+### Three-Stage Status for Tier 2 Input
+
+| Format ✓ | UDM ✓ | USDL | Meaning |
+|----------|-------|------|---------|
+| ✓ | ✓ | ✓ | Fully parsed and enriched |
+| ✓ | ✓ | ⚠ | Parsed OK, USDL partial — hover for details |
+| ✓ | ✓ | ✗ | Parsed OK, USDL failed — raw access only |
+| ✗ | — | — | Format parse error |
+
+For Tier 1 input (JSON, XML, CSV, YAML): no USDL indicator shown.
+
+### Tree Browser
+
+USDL nodes appear alongside raw nodes with visual distinction:
+
+```
+$input
+├── xs:element              ← raw (format icon)
+│   └── @name: "Customer"
+├── %types                  ← USDL (% icon, blue)
+│   └── Order
+│       └── %fields
+│           └── Customer: {%type: "string"}
+└── %_diagnostics           ← enrichment status
+    └── %_status: "complete"
+```
+
+Recommendations: toggle (Raw / USDL / Both), USDL collapsed by default, autocompletion shows both paths.
+
 ## Effort Estimate
 
 | Task | Effort |
 |------|--------|
-| XSD parser: merge toUSDL() into parse() | 0.5 day |
-| JSON Schema parser: merge toUSDL() into parse() | 0.5 day |
-| Avro parser: merge toUSDL() into parse() | 0.5 day |
-| Table Schema parser: merge toUSDL() into parse() | 0.5 day |
+| XSD parser: merge toUSDL() into parse() with try/catch | 0.5 day |
+| JSON Schema parser: same | 0.5 day |
+| Avro parser: same | 0.5 day |
+| Table Schema parser: same | 0.5 day |
 | Protobuf parser: preserve raw alongside USDL | 1 day |
 | EDMX parser: preserve raw alongside USDL | 1 day |
-| Update conformance tests (passthrough output includes %) | 1 day |
-| Update book ch12 (USDL is enrichment) | 0.5 day |
-| **Total** | **5-6 days** |
+| `%_diagnostics` reporting infrastructure | 1 day |
+| Update conformance tests | 1 day |
+| Update book ch12 | 0.5 day |
+| IDE: USDL checkmark + tree styling | 1-2 days |
+| **Total** | **7-8 days** |
 
 ## Test Plan
 
-1. `input xsd` → verify `$input["xs:element"]` works (raw) AND `$input["%types"]` works (USDL)
+1. `input xsd` → `$input["xs:element"]` works (raw) AND `$input["%types"]` works (USDL)
 2. `input jsch` → same dual access
 3. `input avro` → same dual access
-4. `input proto` → same dual access (raw .proto structure + USDL)
-5. `input osch` → same dual access (raw EDMX XML + USDL)
+4. `input proto` → same dual access
+5. `input osch` → same dual access
 6. `input tsch` → same dual access
-7. `input xsd` → `output jsch` → passthrough produces valid JSON Schema (serializer reads `%types`)
+7. `input xsd` → `output jsch` → passthrough produces valid JSON Schema
 8. `input jsch` → `output xsd` → passthrough produces valid XSD
-9. `input avro` → `output proto` → cross-format schema conversion
-10. Schema creation from scratch (body literal with `%types`) → all 6 output formats
-11. Existing conformance tests still pass (raw access unchanged)
+9. `input avro` → `output proto` → cross-format conversion
+10. Schema creation from scratch → all 6 output formats
+11. XSD with `xs:any` → `%_diagnostics` shows warning, `%type: "any"` used
+12. XSD with unresolvable `xs:import` → `%_diagnostics` shows warning, types preserved as strings
+13. Broken enrichment → `%_diagnostics.%_status: "failed"`, raw UDM still works
+14. Existing conformance tests still pass
 
 ---
 
 *Feature document F08. Updated May 2026.*
 *Key insight: USDL enrichment (add % alongside raw), not conversion (replace raw with %).*
 *Output side already done. F08 = input side enrichment for all 6 Tier 2 parsers.*
+*Enrichment is best-effort with `%_diagnostics` — failure never blocks the transformation.*
