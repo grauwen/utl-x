@@ -258,7 +258,7 @@ When the transformation runs via stdin, the engine expects a JSON envelope where
 {"orders": [{"id": "ORD-001"}], "customers": [{"name": "Alice"}]}
 ```
 
-The engine splits this envelope by key and routes `orders` to the XML parser and `customers` to the JSON parser. Chapter 19 covers multi-input in the context of pipeline chaining.
+The engine splits this envelope by key and routes `orders` to the XML parser and `customers` to the JSON parser. Chapter 20 covers multi-input in the context of pipeline chaining.
 
 == Trying It Out: Five Quick Examples
 
@@ -324,7 +324,7 @@ map($input.items, (item) -> {
 
 Notice that user-defined functions start with an *uppercase* letter (`ShippingClass`, `LineTotal`) while built-in functions use lowercase (`map`, `filter`, `concat`). This is enforced by the parser — it prevents your functions from accidentally colliding with any of the 652 built-in stdlib functions. When you see an uppercase name, you know it's yours. When you see lowercase, you know it's built-in.
 
-Chapter 14 covers functions and lambdas in full detail.
+Chapter 15 covers functions and lambdas in full detail.
 
 == What's Next
 

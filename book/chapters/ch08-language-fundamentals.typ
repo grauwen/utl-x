@@ -94,7 +94,7 @@ $input.Order.@id              // the "id" attribute on <Order>
 $input.Product.@price          // the "price" attribute on <Product>
 ```
 
-This is specific to XML input — JSON, CSV, and YAML don't have attributes. See Chapter 21 for XML transformation details and Chapter 22 for the attribute design decisions.
+This is specific to XML input — JSON, CSV, and YAML don't have attributes. See Chapter 22 for XML transformation details and Chapter 23 for the attribute design decisions.
 
 === Wildcard Access
 
@@ -153,13 +153,50 @@ The full picture of access syntax:
   [`obj.*`], [Access ALL properties as array], [Navigation (wildcard)],
   [`obj.\@id`], [Access one attribute by name], [Navigation (XML)],
   [`obj.\@*`], [Access ALL attributes as array], [Navigation (XML wildcard)],
+  [`obj.^key`], [Access metadata by key], [Metadata],
   [`arr\[0\]`], [Access element by position], [Indexing],
   [`arr\[key\]`], [Access element by dynamic key], [Indexing],
   [`filter(arr, ...)`], [Keep elements matching condition], [Filtering (function)],
   [`arr\[x > 10\]`], [Not supported — use filter()], [N/A],
 )
 
-The distinction is clear: `.` navigates by name (with `*` as "all names"), `[]` indexes by position or key, and `filter()` selects by value. These are three separate operations that never overlap.
+The distinction is clear: `.` navigates by name (with `*` as "all names"), `@` accesses attributes, `^` accesses metadata, `[]` indexes by position or key, and `filter()` selects by value.
+
+=== Metadata Access (^)
+
+The caret (`^`) prefix accesses *metadata* — internal information about a UDM node that is not part of the data itself. Metadata is set by format parsers during parsing and is never included in the output.
+
+```utlx
+$input.^schemaType              // "xsd-element", "xsd-schema", "jsch-schema", ...
+$input.^xsdPattern              // "russian-doll", "venetian-blind", "salami-slice", ...
+$input.^xsdVersion              // "1.0" or "1.1"
+$input.^xsdGlobalElements       // "1" (count as string)
+$input.^xsdGlobalTypes          // "5"
+$input.^nsContext                // namespace context string
+```
+
+Metadata is read-only and transient — it exists during transformation but is not serialized to the output. It's the parser's way of communicating structural information to the transformation without polluting the data.
+
+The most practical use case is XSD pattern detection:
+
+```utlx
+%utlx 1.0
+input xsd
+output json
+---
+{
+  pattern: $input.^xsdPattern,           // "venetian-blind"
+  version: $input.^xsdVersion,           // "1.0"
+  globalElements: toNumber($input.^xsdGlobalElements ?? "0"),
+  globalTypes: toNumber($input.^xsdGlobalTypes ?? "0"),
+  recommendation: if ($input.^xsdPattern == "russian-doll")
+    "Consider converting to Venetian Blind for better reuse"
+  else
+    "Pattern is suitable for cross-format conversion"
+}
+```
+
+This transformation reads an XSD and produces a pattern analysis report — using metadata that the XSD parser attached during parsing. See Chapter 29 for the full XSD pattern discussion.
 
 === Computed Property Names
 
@@ -252,7 +289,7 @@ let order = {id: "A", customer: {name: "Alice", city: "Amsterdam"}}
 // Result: {id: "A", customer: {name: "Alice", city: "Rotterdam"}}
 ```
 
-This nested spread pattern is common when transforming YAML configurations — see the Kubernetes manifest example in Chapter 25.
+This nested spread pattern is common when transforming YAML configurations — see the Kubernetes manifest example in Chapter 26.
 
 ==== Excluding Fields
 
@@ -305,7 +342,7 @@ last($input.items)    // last item
 
 === Array Operations
 
-Arrays are processed with higher-order functions (Chapter 14 covers these in depth):
+Arrays are processed with higher-order functions (Chapter 15 covers these in depth):
 
 ```utlx
 // Transform each element
