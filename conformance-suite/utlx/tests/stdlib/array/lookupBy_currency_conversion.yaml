@@ -1,0 +1,48 @@
+name: "lookupBy_currency_conversion"
+category: "stdlib/array"
+description: "F04: lookupBy for currency conversion — real-world enrichment pattern"
+tags: ["lookupBy", "enrichment", "F04", "currency", "real-world"]
+
+input:
+  format: json
+  data: |
+    {
+      "invoice": {"amount": 1000, "currency": "USD"},
+      "rates": [
+        {"code": "USD", "rate": 0.92, "name": "US Dollar"},
+        {"code": "GBP", "rate": 1.17, "name": "British Pound"},
+        {"code": "EUR", "rate": 1.00, "name": "Euro"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let rate = lookupBy($input.invoice.currency, $input.rates, (r) -> r.code)
+
+  {
+    originalAmount: $input.invoice.amount,
+    originalCurrency: $input.invoice.currency,
+    currencyName: rate?.name ?? "Unknown",
+    amountEUR: round($input.invoice.amount * (rate?.rate ?? 1) * 100) / 100,
+    targetCurrency: "EUR"
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "originalAmount": 1000,
+      "originalCurrency": "USD",
+      "currencyName": "US Dollar",
+      "amountEUR": 920,
+      "targetCurrency": "EUR"
+    }
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "lookupBy to find the exchange rate for a currency code"
+    - "Real-world pattern: enrich with reference data from a lookup table"

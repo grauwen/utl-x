@@ -4,6 +4,7 @@ import org.apache.utlx.core.udm.UDM
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class EnhancedArrayFunctionsTest {
@@ -326,6 +327,73 @@ class EnhancedArrayFunctionsTest {
 
         assertTrue(result is UDM.Array)
         assertEquals(2, (result as UDM.Array).elements.size)
+    }
+
+    @Test
+    fun testLookupByMatch() {
+        // F04: lookupBy finds the first matching record
+        val customers = UDM.Array(listOf(
+            UDM.Object(mapOf("id" to UDM.Scalar("C-41"), "name" to UDM.Scalar("Globex Inc")), emptyMap()),
+            UDM.Object(mapOf("id" to UDM.Scalar("C-42"), "name" to UDM.Scalar("Acme Corp")), emptyMap()),
+            UDM.Object(mapOf("id" to UDM.Scalar("C-43"), "name" to UDM.Scalar("Initech BV")), emptyMap())
+        ))
+
+        val keyFn = UDM.Lambda { args ->
+            (args[0] as UDM.Object).properties["id"] ?: UDM.Scalar("null")
+        }
+
+        val result = EnhancedArrayFunctions.lookupBy(listOf(UDM.Scalar("C-42"), customers, keyFn))
+
+        assertTrue(result is UDM.Object, "lookupBy should return matching Object")
+        val obj = result as UDM.Object
+        assertEquals("Acme Corp", (obj.properties["name"] as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testLookupByNoMatch() {
+        // F04: lookupBy returns null when no match
+        val customers = UDM.Array(listOf(
+            UDM.Object(mapOf("id" to UDM.Scalar("C-41"), "name" to UDM.Scalar("Globex Inc")), emptyMap())
+        ))
+
+        val keyFn = UDM.Lambda { args ->
+            (args[0] as UDM.Object).properties["id"] ?: UDM.Scalar("null")
+        }
+
+        val result = EnhancedArrayFunctions.lookupBy(listOf(UDM.Scalar("C-99"), customers, keyFn))
+
+        assertTrue(result is UDM.Scalar, "lookupBy should return null scalar for no match")
+        assertNull((result as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testLookupByFirstMatch() {
+        // F04: lookupBy returns FIRST match when multiple exist
+        val items = UDM.Array(listOf(
+            UDM.Object(mapOf("code" to UDM.Scalar("A"), "version" to UDM.Scalar(1)), emptyMap()),
+            UDM.Object(mapOf("code" to UDM.Scalar("A"), "version" to UDM.Scalar(2)), emptyMap()),
+            UDM.Object(mapOf("code" to UDM.Scalar("B"), "version" to UDM.Scalar(1)), emptyMap())
+        ))
+
+        val keyFn = UDM.Lambda { args ->
+            (args[0] as UDM.Object).properties["code"] ?: UDM.Scalar("null")
+        }
+
+        val result = EnhancedArrayFunctions.lookupBy(listOf(UDM.Scalar("A"), items, keyFn))
+
+        assertTrue(result is UDM.Object)
+        assertEquals(1, ((result as UDM.Object).properties["version"] as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testLookupByEmptyArray() {
+        val empty = UDM.Array(emptyList())
+        val keyFn = UDM.Lambda { args -> UDM.Scalar("x") }
+
+        val result = EnhancedArrayFunctions.lookupBy(listOf(UDM.Scalar("anything"), empty, keyFn))
+
+        assertTrue(result is UDM.Scalar)
+        assertNull((result as UDM.Scalar).value)
     }
 
     @Test

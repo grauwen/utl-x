@@ -1,0 +1,50 @@
+name: "lookupBy_basic"
+category: "stdlib/array"
+description: "F04: lookupBy finds one matching record from a reference array by key"
+tags: ["lookupBy", "enrichment", "F04", "lookup"]
+
+input:
+  format: json
+  data: |
+    {
+      "orders": [
+        {"orderId": "ORD-001", "customerId": "C-42", "total": 299.99},
+        {"orderId": "ORD-002", "customerId": "C-41", "total": 150.00},
+        {"orderId": "ORD-003", "customerId": "C-42", "total": 89.50}
+      ],
+      "customers": [
+        {"id": "C-41", "name": "Globex Inc", "country": "US"},
+        {"id": "C-42", "name": "Acme Corp", "country": "NL"},
+        {"id": "C-43", "name": "Initech BV", "country": "DE"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  map($input.orders, (order) -> {
+    let customer = lookupBy(order.customerId, $input.customers, (c) -> c.id),
+
+    orderId: order.orderId,
+    total: order.total,
+    customerName: customer?.name ?? "Unknown",
+    country: customer?.country ?? "XX"
+  })
+
+expected:
+  format: json
+  data: |
+    [
+      {"orderId": "ORD-001", "total": 299.99, "customerName": "Acme Corp", "country": "NL"},
+      {"orderId": "ORD-002", "total": 150, "customerName": "Globex Inc", "country": "US"},
+      {"orderId": "ORD-003", "total": 89.50, "customerName": "Acme Corp", "country": "NL"}
+    ]
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "F04: lookupBy for 1:1 record enrichment"
+    - "customer?.name uses safe navigation in case lookupBy returns null"
+    - "Customer C-42 is looked up twice — same result both times"
