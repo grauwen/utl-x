@@ -1194,7 +1194,7 @@ object StandardLibrary {
         register("lookupBy", DataRestructuringFunctions::lookupBy)     // Array → Object or null (find one match by key)
         register("nestBy", DataRestructuringFunctions::nestBy)         // (parents, children, pKey, cKey, prop) → parents with nested children
         register("chunkBy", DataRestructuringFunctions::chunkBy)       // (array, predicate) → Array of Arrays (positional grouping)
-        // Future: unnest (F06)
+        register("unnest", DataRestructuringFunctions::unnest)         // (array, childProp) → flat Array (reverse of nestBy)
     }
     
     /**

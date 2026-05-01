@@ -342,4 +342,79 @@ object DataRestructuringFunctions {
 
         return UDM.Array(chunks.map { UDM.Array(it) })
     }
+
+    @UTLXFunction(
+        description = "Flatten nested children alongside parent fields. Reverse of nestBy — hierarchical to flat.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Data Restructuring",
+        parameters = [
+            "array: Array of parent objects with nested child arrays",
+            "childPropertyName: String name of the property containing the nested children"
+        ],
+        returns = "Flat array where each child is merged with its parent's fields (child overrides on collision)",
+        example = "unnest(orders, \"lines\") => [{orderId: \"A\", product: \"Widget\", qty: 10}, ...]",
+        notes = "Reverse of nestBy — takes hierarchical data and produces flat rows.\n" +
+                "Parent fields are repeated for each child (denormalization).\n" +
+                "The child property itself is removed from the output.\n" +
+                "Child fields override parent fields on name collision.\n" +
+                "Parents with no/empty/null children are excluded (no rows to produce).\n" +
+                "For multi-level: chain unnest calls: unnest(unnest(data, \"lines\"), \"schedules\")",
+        tags = ["restructuring", "flatten", "denormalize", "csv"],
+        since = "1.0"
+    )
+    fun unnest(args: List<UDM>): UDM {
+        if (args.size < 2) {
+            throw IllegalArgumentException(
+                "unnest() requires 2 arguments: array, childPropertyName. " +
+                "Example: unnest(\$input.orders, \"lines\")"
+            )
+        }
+
+        val array = args[0]
+        val childPropName = args[1]
+
+        if (array !is UDM.Array) {
+            throw IllegalArgumentException("unnest() first argument must be an array")
+        }
+        if (childPropName !is UDM.Scalar || childPropName.value !is String) {
+            throw IllegalArgumentException(
+                "unnest() second argument must be a string (the property name containing nested children)"
+            )
+        }
+
+        val propName = childPropName.value as String
+        val result = mutableListOf<UDM>()
+
+        for (parent in array.elements) {
+            if (parent !is UDM.Object) continue
+
+            // Get the children array from the named property
+            val childrenUdm = parent.properties[propName]
+            val children = when (childrenUdm) {
+                is UDM.Array -> childrenUdm.elements
+                null -> continue  // property doesn't exist — skip parent
+                else -> continue  // property is not an array — skip parent
+            }
+
+            if (children.isEmpty()) continue  // no children — skip parent (no rows to produce)
+
+            // Parent fields WITHOUT the child property
+            val parentFields = parent.properties.filterKeys { it != propName }
+
+            for (child in children) {
+                if (child is UDM.Object) {
+                    // Merge: parent fields + child fields (child overrides on collision)
+                    val merged = parentFields + child.properties
+                    result.add(UDM.Object(merged, parent.attributes, null, parent.metadata))
+                } else {
+                    // Scalar child — just add parent fields + a "value" key
+                    val merged = parentFields + mapOf("value" to child)
+                    result.add(UDM.Object(merged))
+                }
+            }
+        }
+
+        return UDM.Array(result)
+    }
 }
