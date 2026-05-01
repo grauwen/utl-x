@@ -1316,6 +1316,9 @@ object StandardLibrary {
             org.apache.utlx.stdlib.array.EnhancedArrayFunctions::class,
             org.apache.utlx.stdlib.array.JoinFunctions::class,
 
+            // Data restructuring functions
+            org.apache.utlx.stdlib.restructuring.DataRestructuringFunctions::class,
+
             // Math functions
             org.apache.utlx.stdlib.math.MathFunctions::class,
             org.apache.utlx.stdlib.math.ExtendedMathFunctions::class,
