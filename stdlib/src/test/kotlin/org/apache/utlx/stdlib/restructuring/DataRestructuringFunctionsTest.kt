@@ -347,6 +347,80 @@ class DataRestructuringFunctionsTest {
         assertTrue(order.properties.containsKey("lines"))  // new property added
     }
 
+    // ── chunkBy tests ──
+
+    @Test
+    fun testChunkByBasic() {
+        // F05: chunk segments by header type
+        val segments = UDM.Array(listOf(
+            UDM.Object(mapOf("type" to UDM.Scalar("HEADER"), "id" to UDM.Scalar("H1")), emptyMap()),
+            UDM.Object(mapOf("type" to UDM.Scalar("LINE"), "product" to UDM.Scalar("A")), emptyMap()),
+            UDM.Object(mapOf("type" to UDM.Scalar("LINE"), "product" to UDM.Scalar("B")), emptyMap()),
+            UDM.Object(mapOf("type" to UDM.Scalar("HEADER"), "id" to UDM.Scalar("H2")), emptyMap()),
+            UDM.Object(mapOf("type" to UDM.Scalar("LINE"), "product" to UDM.Scalar("C")), emptyMap())
+        ))
+
+        val predicate = UDM.Lambda { args ->
+            val obj = args[0] as UDM.Object
+            UDM.Scalar((obj.properties["type"] as UDM.Scalar).value == "HEADER")
+        }
+
+        val result = DataRestructuringFunctions.chunkBy(listOf(segments, predicate))
+
+        assertTrue(result is UDM.Array)
+        val chunks = result as UDM.Array
+        assertEquals(2, chunks.elements.size)
+
+        // First chunk: header H1 + 2 lines
+        val chunk1 = chunks.elements[0] as UDM.Array
+        assertEquals(3, chunk1.elements.size)
+        assertEquals("H1", ((chunk1.elements[0] as UDM.Object).properties["id"] as UDM.Scalar).value)
+
+        // Second chunk: header H2 + 1 line
+        val chunk2 = chunks.elements[1] as UDM.Array
+        assertEquals(2, chunk2.elements.size)
+        assertEquals("H2", ((chunk2.elements[0] as UDM.Object).properties["id"] as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testChunkByEmptyArray() {
+        val result = DataRestructuringFunctions.chunkBy(listOf(
+            UDM.Array(emptyList()),
+            UDM.Lambda { UDM.Scalar(true) }
+        ))
+
+        assertTrue(result is UDM.Array)
+        assertEquals(0, (result as UDM.Array).elements.size)
+    }
+
+    @Test
+    fun testChunkByNoPredicateMatch() {
+        // No element triggers a new chunk — everything in one chunk
+        val array = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3)))
+        val predicate = UDM.Lambda { UDM.Scalar(false) }
+
+        val result = DataRestructuringFunctions.chunkBy(listOf(array, predicate))
+
+        val chunks = result as UDM.Array
+        assertEquals(1, chunks.elements.size)
+        assertEquals(3, (chunks.elements[0] as UDM.Array).elements.size)
+    }
+
+    @Test
+    fun testChunkByEveryElementIsChunk() {
+        // Every element starts a new chunk
+        val array = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3)))
+        val predicate = UDM.Lambda { UDM.Scalar(true) }
+
+        val result = DataRestructuringFunctions.chunkBy(listOf(array, predicate))
+
+        val chunks = result as UDM.Array
+        assertEquals(3, chunks.elements.size)
+        assertEquals(1, (chunks.elements[0] as UDM.Array).elements.size)
+        assertEquals(1, (chunks.elements[1] as UDM.Array).elements.size)
+        assertEquals(1, (chunks.elements[2] as UDM.Array).elements.size)
+    }
+
     @Test
     fun testNestByInvalidArguments() {
         assertThrows<IllegalArgumentException> {

@@ -1,0 +1,65 @@
+name: "chunkBy_basic"
+category: "stdlib/array"
+description: "F05: chunkBy splits sequential segments into groups by header type"
+tags: ["chunkBy", "restructuring", "F05", "positional", "IDoc"]
+
+input:
+  format: json
+  data: |
+    [
+      {"type": "HEADER", "orderId": "ORD-001", "customer": "Alice"},
+      {"type": "LINE", "product": "Widget", "qty": 10},
+      {"type": "LINE", "product": "Gadget", "qty": 5},
+      {"type": "HEADER", "orderId": "ORD-002", "customer": "Bob"},
+      {"type": "LINE", "product": "Gizmo", "qty": 3},
+      {"type": "HEADER", "orderId": "ORD-003", "customer": "Carol"}
+    ]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let chunks = chunkBy($input, (seg) -> seg.type == "HEADER")
+
+  map(chunks, (chunk) -> {
+    orderId: chunk[0].orderId,
+    customer: chunk[0].customer,
+    lines: map(filter(drop(chunk, 1), (s) -> s.type == "LINE"), (line) -> {
+      product: line.product,
+      qty: line.qty
+    })
+  })
+
+expected:
+  format: json
+  data: |
+    [
+      {
+        "orderId": "ORD-001",
+        "customer": "Alice",
+        "lines": [
+          {"product": "Widget", "qty": 10},
+          {"product": "Gadget", "qty": 5}
+        ]
+      },
+      {
+        "orderId": "ORD-002",
+        "customer": "Bob",
+        "lines": [
+          {"product": "Gizmo", "qty": 3}
+        ]
+      },
+      {
+        "orderId": "ORD-003",
+        "customer": "Carol",
+        "lines": []
+      }
+    ]
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "F05: chunkBy for positional grouping — SAP IDoc, EDI, log files"
+    - "Header ORD-003 has no lines — gets empty array"
+    - "chunk[0] is always the header, drop(chunk, 1) are the children"
