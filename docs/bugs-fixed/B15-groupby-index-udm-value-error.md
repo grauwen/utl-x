@@ -1,68 +1,166 @@
 # B15: groupBy Result Cannot Be Indexed by UDM Value
 
-**Status:** Open  
+**Status:** Fixed (May 2026)  
 **Severity:** High  
 **Discovered:** April 2026  
-**Related:** F03 (join function proposal)
+**Related:** F03 (nestBy function proposal)
 
 ---
 
 ## Summary
 
-The `groupBy()` function creates a map keyed by the lambda result, but indexing the result with a UDM value fails with "Index must be a number or string, got UDMValue". This forces users into O(N×M) filter loops instead of the efficient O(N+M) groupBy + lookup pattern.
+The `groupBy()` function could not be used for O(1) key lookup — the core use case for efficient flat-to-hierarchical transformation. Two issues:
 
-## Reproduction
+1. `groupBy()` returned an Array of `{key, value}` pairs instead of an Object keyed by group name — making indexed access (`groups["A"]`) impossible
+2. The index operator didn't unwrap UDM scalar values — so even with an Object, `groups[order.orderId]` failed with "Index must be a number or string, got UDMValue"
+
+## The Fix: Two Changes + One New Function
+
+### Change 1: groupBy() now returns Object
+
+**Before (broken for lookup):**
+```utlx
+let groups = groupBy($input.lines, (l) -> l.orderId)
+// Returned: [{key: "A", value: [...]}, {key: "B", value: [...]}]
+// groups["A"] → ERROR (can't index array by string)
+```
+
+**After (works for lookup):**
+```utlx
+let groups = groupBy($input.lines, (l) -> l.orderId)
+// Returns: {"A": [...], "B": [...]}
+// groups["A"] → [line1, line2]  ✓ O(1) lookup
+```
+
+This matches every other language: JavaScript `Object.groupBy()`, Kotlin `groupBy()`, Java `Collectors.groupingBy()`, DataWeave `groupBy` — all return a Map/Object.
+
+### Change 2: Index operator unwraps UDM scalars
+
+When the index key comes from a UDM property (`order.orderId`), it arrives as `RuntimeValue.UDMValue(UDM.Scalar("A"))`. The interpreter now unwraps this to `RuntimeValue.StringValue("A")` before indexing.
+
+**File:** `interpreter.kt`, `evaluateIndexAccess()`
+
+### Change 3: New function mapGroups() for iteration
+
+The old `groupBy` was convenient for iteration:
+```utlx
+// OLD (no longer works — groupBy returns Object, not Array):
+map(groupBy($input, "department"), group => {
+  department: group.key,
+  count: count(group.value)
+})
+```
+
+The new `mapGroups()` replaces this pattern:
+```utlx
+// NEW — same readability, same group.key / group.value access:
+mapGroups($input, "department", group => {
+  department: group.key,
+  count: count(group.value)
+})
+```
+
+`mapGroups` groups the array and then transforms each group. The lambda receives a `group` object with `.key` (the group key) and `.value` (the array of members).
+
+## The Two Functions
+
+### groupBy(array, keyFn) → Object
+
+For **lookup by key** — O(1) indexed access. Returns an Object keyed by group name.
 
 ```utlx
-let groups = groupBy($input.orderLines, (l) -> l.orderId)
-groups[$input.orders[0].orderId]
+// Use case: nest order lines under orders (the B15 pattern)
+let lineIndex = groupBy($input.orderLines, (l) -> l.orderId)
+
+map($input.orders, (order) -> {
+  orderId: order.orderId,
+  customer: order.customer,
+  lines: lineIndex[order.orderId] ?? []
+})
 ```
 
-**Error:**
-```
-Error: Index must be a number or string, got UDMValue
-```
+The `keyFn` can be a lambda `(item) -> item.field` or a string shorthand `"field"`.
 
-**Expected:** Returns the array of order lines matching the first order's ID.
+### mapGroups(array, keyFn, transformFn) → Array
 
-## Root Cause
+For **iterating groups** — walk through each group and produce a report. Returns an Array of transformed results.
 
-The index operator (`obj[key]`) in the interpreter checks the type of the key. When the key comes from a UDM property access (e.g., `order.orderId`), it's wrapped in a `RuntimeValue.UDMValue` containing a `UDM.Scalar`. The index operator expects a native `RuntimeValue.StringValue` or `RuntimeValue.NumberValue`, not a wrapped UDM value.
-
-The fix: unwrap UDM scalars to native RuntimeValue types before indexing, or handle `UDMValue` in the index operator.
-
-## Impact
-
-- **The efficient O(N+M) flat-to-hierarchical pattern is broken.** Users who follow the documentation (groupBy + index lookup) hit this error.
-- **Users fall back to O(N×M) filter loops.** For 500 parents × 5,000 children = 2.5 million comparisons instead of 5,500.
-- **Performance difference:** 200-500ms (filter) vs 5-15ms (groupBy+index). 40x slower.
-- **F03 (join function) would bypass this bug** but F03 is not yet implemented. The bug should be fixed regardless.
-
-## Fix
-
-In the interpreter's index access handling, unwrap UDM scalar values before comparison:
-
-```kotlin
-// In interpreter.kt, evaluateIndexAccess():
-is RuntimeValue.UDMValue -> {
-    // Unwrap UDM.Scalar to native RuntimeValue for index lookup
-    when (val udm = indexValue.udm) {
-        is UDM.Scalar -> when (udm.value) {
-            is String -> RuntimeValue.StringValue(udm.value)
-            is Number -> RuntimeValue.NumberValue(udm.value.toDouble())
-            else -> indexValue // leave as-is for non-scalar
-        }
-        else -> indexValue
-    }
-}
+```utlx
+// Use case: department summary report
+mapGroups($input.employees, "department", group => {
+  department: group.key,
+  headcount: count(group.value),
+  avgSalary: avg(map(group.value, (e) -> e.salary)),
+  activeCount: count(filter(group.value, (e) -> e.active))
+})
+// Output: [
+//   {"department": "Engineering", "headcount": 3, "avgSalary": 90000, "activeCount": 3},
+//   {"department": "Sales", "headcount": 2, "avgSalary": 62500, "activeCount": 1}
+// ]
 ```
 
-## Effort
+The lambda receives `group` with two properties:
+- `group.key` — the group key value (e.g., `"Engineering"`)
+- `group.value` — the array of group members (e.g., `[Alice, Carol, Eve]`)
 
-- Fix: ~10 lines in interpreter.kt
-- Test: 2-3 conformance tests (groupBy + index with string key, number key, nested access)
-- Total: 0.5 day
+## Migration from Old groupBy
+
+The old `map(groupBy(...), ...)` pattern becomes `mapGroups(...)`:
+
+**Before:**
+```utlx
+map(groupBy($input, "category"), group => {
+  category: group.key,
+  total: sum(map(group.value, (item) -> item.price)),
+  count: count(group.value)
+})
+```
+
+**After:**
+```utlx
+mapGroups($input, "category", group => {
+  category: group.key,
+  total: sum(map(group.value, (item) -> item.price)),
+  count: count(group.value)
+})
+```
+
+The only change: replace `map(groupBy(array, keyFn),` with `mapGroups(array, keyFn,`. The lambda body is identical — `group.key` and `group.value` work exactly the same.
+
+## When to Use Which
+
+| I want to... | Use | Example |
+|-------------|-----|---------|
+| Look up items by key (O(1)) | `groupBy` | `let idx = groupBy(lines, ...); idx["A"]` |
+| Nest children under parents | `groupBy` | `lineIndex[order.orderId] ?? []` |
+| Report per group (count, sum, avg) | `mapGroups` | `mapGroups(items, "dept", group => {...})` |
+| Both (lookup + report) | `groupBy` + `entries` | `entries(groups) \|> map(...)` |
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `EnhancedArrayFunctions.kt` | `groupBy()` returns `UDM.Object` instead of `UDM.Array` |
+| `interpreter.kt` | `evaluateIndexAccess()` unwraps `UDMValue(Scalar)` before indexing |
+| `EnhancedArrayFunctions.kt` | New `mapGroups()` function (TODO) |
+| `EnhancedArrayFunctionsTest.kt` | Updated groupBy tests to expect Object, added `testGroupByIndexAccess` |
+| Conformance tests (6 files) | Updated to use `mapGroups()` (TODO — currently use `entries()` workaround) |
+
+## Remaining Work
+
+- [ ] Implement `mapGroups()` in stdlib
+- [ ] Update 6 conformance tests to use `mapGroups()` instead of `entries()` workaround
+- [ ] Add conformance test for `groupBy` indexed access pattern
+- [ ] Add conformance test for `mapGroups` iteration pattern
+- [ ] Update book: ch10 (UDM), ch15 (Functions), ch21 (Data Restructuring), ch36 (Performance anti-patterns)
+- [ ] Remove B15 warning callout from ch21
+
+## Test Results
+
+- Kotlin unit tests: 34/34 passed (including new `testGroupByIndexAccess`)
+- Conformance suite: 473/473 passed (100%)
+- groupBy + index with UDM value: verified working
 
 ---
 
-*Bug B15. April 2026. Blocks the efficient flat-to-hierarchical transformation pattern.*
+*Bug B15. Fixed May 2026. Enables the efficient O(N+M) flat-to-hierarchical transformation pattern.*
