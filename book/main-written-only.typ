@@ -66,7 +66,7 @@
 #outline(
   title: [Table of Contents],
   indent: 2em,
-  depth: 3,
+  depth: 2,
 )
 
 #pagebreak()
@@ -277,4 +277,19 @@
 ]
 #pagebreak()
 
+// Exclude ch50 headings from front Table of Contents
+#show heading: set heading(outlined: false)
 #include "chapters/ch50-stdlib-reference.typ"
+
+#pagebreak()
+
+// ── Index (Table of Contents repeated) ──
+// Reset outlined for the index heading itself
+#show heading: set heading(outlined: true)
+
+#outline(
+  title: [Index],
+  indent: 2em,
+  depth: 3,
+  target: heading,
+)
