@@ -1,6 +1,6 @@
 # F09: Accept `#text` as Alias for `_text` in XML Serialization
 
-**Status:** Open  
+**Status:** Implemented (May 2026)  
 **Priority:** High  
 **Created:** May 2026  
 **Related:** B14 (XML text node leak fix), Chapter 29 (XML attribute design)

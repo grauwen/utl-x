@@ -1,0 +1,27 @@
+name: "f09_hash_text_alias"
+category: "formats/xml"
+description: "F09: #text is accepted as alias for _text when constructing XML elements with attributes"
+tags: ["xml", "f09", "text-property"]
+
+input:
+  format: json
+  data: |
+    {"code": "380", "listID": "UNCL1001"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    "Item": {
+      "@listID": $input.listID,
+      "#text": $input.code
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Item listID="UNCL1001">380</Item>

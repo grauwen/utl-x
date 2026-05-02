@@ -694,4 +694,43 @@ class XMLAttributeSyntaxTest {
         assertTrue(xml.contains("price=\"29.99\""))
         assertTrue(xml.contains("inStock=\"true\""))
     }
+
+    // ── F09: #text alias for _text ──
+
+    @Test
+    fun `F09 - hash text produces same XML as underscore text`() {
+        val withHash = UDM.Object(
+            properties = mapOf("#text" to UDM.Scalar("380")),
+            attributes = mapOf("listID" to "UNCL1001"),
+            name = "InvoiceTypeCode"
+        )
+        val withUnderscore = UDM.Object(
+            properties = mapOf("_text" to UDM.Scalar("380")),
+            attributes = mapOf("listID" to "UNCL1001"),
+            name = "InvoiceTypeCode"
+        )
+
+        val serializer = XMLSerializer(prettyPrint = false)
+        val xmlHash = serializer.serialize(withHash)
+        val xmlUnderscore = serializer.serialize(withUnderscore)
+
+        assertEquals(xmlUnderscore, xmlHash)
+        assertTrue(xmlHash.contains(">380</InvoiceTypeCode>"))
+        assertTrue(xmlHash.contains("listID=\"UNCL1001\""))
+    }
+
+    @Test
+    fun `F09 - hash text with child elements`() {
+        val udm = UDM.Object(
+            properties = mapOf(
+                "#text" to UDM.Scalar("mixed content"),
+                "child" to UDM.Scalar("value")
+            ),
+            name = "parent"
+        )
+
+        val xml = XMLSerializer(prettyPrint = false).serialize(udm)
+        assertTrue(xml.contains("mixed content"))
+        assertTrue(xml.contains("<child>value</child>"))
+    }
 }

@@ -150,20 +150,27 @@ class XMLSerializer(
             }
             
             is UDM.Object -> {
+                // F09: normalize #text to _text (accept both as text content marker)
+                val properties = if (udm.properties.containsKey("#text") && !udm.properties.containsKey("_text")) {
+                    udm.properties.mapKeys { (k, _) -> if (k == "#text") "_text" else k }
+                } else {
+                    udm.properties
+                }
+
                 val name = udm.name ?: elementName
                 writeIndent(writer, depth)
                 writer.write("<$name")
-                
+
                 // Write attributes
                 udm.attributes.forEach { (key, value) ->
                     writer.write(" $key=\"")
                     writeEscaped(writer, value)
                     writer.write("\"")
                 }
-                
+
                 // Check if element has content
-                val hasTextProperty = udm.properties.containsKey("_text")
-                val otherProperties = udm.properties.filterKeys { it != "_text" }
+                val hasTextProperty = properties.containsKey("_text")
+                val otherProperties = properties.filterKeys { it != "_text" }
                 
                 when {
                     udm.properties.isEmpty() -> {
@@ -175,7 +182,7 @@ class XMLSerializer(
                     hasTextProperty && otherProperties.isEmpty() -> {
                         // Text-only content
                         writer.write(">")
-                        val textValue = udm.properties["_text"]!!
+                        val textValue = properties["_text"]!!
                         when (textValue) {
                             is UDM.Scalar -> writeEscaped(writer, formatScalarValue(textValue.value))
                             else -> serializeUDM(textValue, writer, depth + 1, "value")
@@ -191,7 +198,7 @@ class XMLSerializer(
                         
                         // Serialize text first if present
                         if (hasTextProperty) {
-                            val textValue = udm.properties["_text"]!!
+                            val textValue = properties["_text"]!!
                             if (textValue is UDM.Scalar) {
                                 writeIndent(writer, depth + 1)
                                 writeEscaped(writer, formatScalarValue(textValue.value))
