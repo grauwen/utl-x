@@ -2086,18 +2086,24 @@ echo '{"tags": ["urgent", "billing", "support"]}' | utlx -e 'includes($input.tag
 }
 ```
 
-=== indexOf(haystack, needle) → number #text(size: 8pt, fill: gray)[(Str/Arr)]
+=== indexOf(array, value) → number #text(size: 8pt, fill: gray)[(Arr)]
 
-Find the position of the FIRST occurrence of a value. Returns -1 if not found. Works for both strings and arrays.
+Find the 0-based position of the FIRST occurrence of a value in an array. Returns -1 if not found.
 
-- `haystack` (required): string or array to search in
-- `needle` (required): value to find
+- `array` (required): array to search in
+- `value` (required): value to find
+
+```bash
+echo '{"items": ["Apple", "Banana", "Cherry"]}' \
+  | utlx -e 'indexOf($input.items, "Banana")'
+# 1 (0-based: Apple=0, Banana=1, Cherry=2)
+```
 
 ```utlx
-indexOf("hello world", "world")          // 6
-indexOf("hello world", "xyz")            // -1 (not found)
-indexOf(["Apple", "Banana", "Cherry"], "Banana")  // 1
-indexOf(["Apple", "Banana", "Cherry"], "Grape")   // -1
+{
+  pos: indexOf($input.items, "Banana"),   // 1 (0-based index)
+  missing: indexOf($input.items, "Grape") // -1 (not found)
+}
 ```
 
 === inflate(data) → binary #text(size: 8pt, fill: gray)[(Bin)]
@@ -2122,7 +2128,11 @@ Log a message at INFO level. Returns null (passthrough for pipeline usage).
 info("Starting transformation")
 let result = map($input.items, (i) -> i.name)
 info(concat("Processed ", toString(count(result)), " items"))
-result
+{
+  items: result
+}
+// Logs: "Starting transformation", "Processed 2 items"
+// Output: {"items": ["A", "B"]}
 ```
 
 === insertAfter(array, index, element) → array #text(size: 8pt, fill: gray)[(Arr)]
