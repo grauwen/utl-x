@@ -8,16 +8,23 @@ This appendix lists the UTL-X standard library functions alphabetically. Each en
 
 #heading(level: 2, outlined: false, numbering: none)[Function Index]
 
-#context {
-  let start-page = here().page()
-  let entries = query(heading.where(level: 3)).filter(h => h.location().page() >= start-page)
-  let cols = ()
-  for entry in entries {
-    let page-num = counter(page).at(entry.location()).first()
-    cols.push([#link(entry.location())[#entry.body] #box(width: 1fr, repeat[.]) #str(page-num)])
-  }
-  set text(size: 9pt)
-  columns(2, gutter: 1em, cols.join(linebreak()))
+#{
+  set text(size: 7.5pt)
+  set par(leading: 0.4em, spacing: 0.4em)
+  show text.where(fill: gray): none
+  columns(3, gutter: 1em, context {
+    let current-page = here().page()
+    let entries = query(heading.where(level: 3)).filter(h => h.location().page() > current-page)
+    for entry in entries {
+      let page-num = counter(page).at(entry.location()).first()
+      grid(
+        columns: (1fr, 2em),
+        rows: (1.1em,),
+        box(clip: true, height: 1.1em, link(entry.location())[#entry.body]),
+        align(right)[#str(page-num)],
+      )
+    }
+  })
 }
 
 #pagebreak()
