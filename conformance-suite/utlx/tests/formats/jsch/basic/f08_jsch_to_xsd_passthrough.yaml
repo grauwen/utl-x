@@ -35,7 +35,7 @@ expected:
       <xs:complexType name="Order">
         <xs:sequence>
           <xs:element name="id" type="xs:string"/>
-          <xs:element name="total" type="xs:number"/>
+          <xs:element name="total" type="xs:double"/>
         </xs:sequence>
       </xs:complexType>
     </xs:schema>

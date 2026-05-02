@@ -206,7 +206,7 @@ class XSDSerializer(
             val required = (fieldUdm.properties["%required"] as? UDM.Scalar)?.value as? Boolean ?: false
             val description = (fieldUdm.properties["%description"] as? UDM.Scalar)?.value as? String
 
-            val elemAttrs = mutableMapOf("name" to name, "type" to "xs:$type")
+            val elemAttrs = mutableMapOf("name" to name, "type" to usdlTypeToXsd(type))
             if (!required) elemAttrs["minOccurs"] = "0"
 
             val elemProps = if (description != null) {
@@ -327,7 +327,7 @@ class XSDSerializer(
                     val required = (fieldUdm.properties["%required"] as? UDM.Scalar)?.value as? Boolean ?: false
                     val description = (fieldUdm.properties["%description"] as? UDM.Scalar)?.value as? String
 
-                    val elemAttrs = mutableMapOf("name" to name, "type" to "xs:$type")
+                    val elemAttrs = mutableMapOf("name" to name, "type" to usdlTypeToXsd(type))
                     if (!required) elemAttrs["minOccurs"] = "0"
 
                     val elemProps = if (description != null) {
@@ -661,6 +661,37 @@ class XSDSerializer(
                 }
             }
             else -> udm
+        }
+    }
+
+    /**
+     * Map USDL type names to valid XSD built-in types.
+     * USDL uses generic type names; XSD requires specific xs: types.
+     */
+    private fun usdlTypeToXsd(usdlType: String): String {
+        return when (usdlType) {
+            "number" -> "xs:double"
+            "integer" -> "xs:integer"
+            "string" -> "xs:string"
+            "boolean" -> "xs:boolean"
+            "date" -> "xs:date"
+            "dateTime" -> "xs:dateTime"
+            "time" -> "xs:time"
+            "decimal" -> "xs:decimal"
+            "float" -> "xs:float"
+            "double" -> "xs:double"
+            "long" -> "xs:long"
+            "int" -> "xs:int"
+            "short" -> "xs:short"
+            "byte" -> "xs:byte"
+            "positiveInteger" -> "xs:positiveInteger"
+            "nonNegativeInteger" -> "xs:nonNegativeInteger"
+            "binary" -> "xs:base64Binary"
+            "anyURI" -> "xs:anyURI"
+            else -> when {
+                usdlType.contains(":") -> usdlType  // already namespace-prefixed (e.g., po:MoneyType)
+                else -> "xs:$usdlType"               // assume XSD built-in
+            }
         }
     }
 }

@@ -1,7 +1,8 @@
 # B16: XSD Serializer Produces Invalid `xs:number` Type
 
-**Status:** Open  
+**Status:** Fixed  
 **Priority:** High  
+**Fixed:** May 2026  
 **Created:** May 2026  
 **Related:** F10 (decimal type mapping)
 
