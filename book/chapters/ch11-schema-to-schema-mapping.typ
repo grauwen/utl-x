@@ -29,8 +29,10 @@ In Tibco BW, SAP CPI, and Azure Logic Apps, the workflow is:
 + The tool generates an XSLT stylesheet
 + Runtime: XML input → XSLT processor → XML output
 
-// DIAGRAM: Source XSD → Visual Mapper → Target XSD → XSLT generated
-// Source: part1-foundation.pptx, slide 14
+#figure(
+  image("../pictures/ch11-schema2schema/xml-transformation-phases.png", width: 90%),
+  caption: [XML transformation phases — Design time: XSD schemas define input/output contracts, XSLT maps between them. Init time: XSLT compiled and cached. Runtime: XML parsed, XSLT applied, XML produced. This model works — but only for XML.]
+)
 
 This works well for XML-to-XML transformations. The problem is: what about JSON?
 
@@ -45,8 +47,10 @@ Most modern APIs use JSON. But the mapping tools above only understand XSD (XML 
 + XML output
 + Convert XML back to JSON
 
-// DIAGRAM: JSON → XML → XSLT → XML → JSON (4 conversions, 2 lossy)
-// Source: part1-foundation.pptx, slide 15
+#figure(
+  image("../pictures/ch11-schema2schema/json-transformation-phases.png", width: 90%),
+  caption: [JSON transformation phases — no standard equivalent to XSLT exists. jq and JSONata fill parts of the gap but have no native schema binding, no cached validators, and no type system. Each tool re-invents the wheel.]
+)
 
 Four conversion steps. Two of them lossy:
 
@@ -60,8 +64,10 @@ This anti-pattern is not theoretical — it's how Azure Logic Apps' Data Mapper,
 
 UTL-X doesn't convert between formats before mapping. The transformation operates on the UDM (Universal Data Model), which represents all formats natively:
 
-// DIAGRAM: Any format → UDM → Transform → UDM → Any format (one parse, one serialize)
-// Source: part1-foundation.pptx, slide 16
+#figure(
+  image("../pictures/ch11-schema2schema/utlx-transformation-phases.png", width: 90%),
+  caption: [UTL-X transformation phases — one processor, all formats. Design time: any format declared, schemas optional. Init time: script compiled to typed AST, UDM models and validators cached. Runtime: parse any input, apply compiled UTL-X, validate and render to any output format.]
+)
 
 - JSON input: parsed directly to UDM (lossless)
 - XML input: parsed directly to UDM (attributes and namespaces preserved)
