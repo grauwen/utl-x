@@ -1,23 +1,34 @@
 == O
 
-=== omit(object, keys) → object / pick(object, keys) → object #text(size: 8pt, fill: gray)[(Obj)]
+=== omit(object, keys) → object #text(size: 8pt, fill: gray)[(Obj)]
 
-`omit`: return object WITHOUT the listed properties. `pick`: return object WITH ONLY the listed properties.
+Return a new object WITHOUT the listed properties.
 
 - `object` (required): the source object
-- `keys` (required): array of property names to omit or keep
+- `keys` (required): array of property names to exclude
 
 ```utlx
 // Given: {"name": "Alice", "email": "alice@example.com", "password": "secret", "role": "admin"}
-
-pick($input, ["name", "email"])
-// Output: {"name": "Alice", "email": "alice@example.com"}
 
 omit($input, ["password"])
 // Output: {"name": "Alice", "email": "alice@example.com", "role": "admin"}
 
 // Use case: strip sensitive fields before logging
 let safe = omit($input, ["password", "apiKey", "token", "secret"])
+```
+
+=== pick(object, keys) → object #text(size: 8pt, fill: gray)[(Obj)]
+
+Return a new object WITH ONLY the listed properties.
+
+- `object` (required): the source object
+- `keys` (required): array of property names to keep
+
+```utlx
+// Given: {"name": "Alice", "email": "alice@example.com", "password": "secret", "role": "admin"}
+
+pick($input, ["name", "email"])
+// Output: {"name": "Alice", "email": "alice@example.com"}
 ```
 
 === osArch #text(size: 8pt, fill: gray)[(TODO)]
@@ -46,32 +57,68 @@ let safe = omit($input, ["password", "apiKey", "token", "secret"])
 
 // TODO
 
-=== parse(string, format?) → value / parseJson(string) → value / parseXml(string) → value / parseYaml(string) → value / parseCsv(string, options?) → array #text(size: 8pt, fill: gray)[(Fmt)]
+=== parse(string, format?) → value #text(size: 8pt, fill: gray)[(Fmt)]
 
-Parse a string embedded within a transformation into a navigable UDM value. Use when a format is a VALUE inside your data (JSON string in a CSV column, XML in a CDATA section).
+Parse a string into a navigable UDM value, auto-detecting format or using the specified format.
 
 - `string` (required): the string to parse
-- `format` (optional for `parse`, default auto-detect): `"json"`, `"xml"`, `"yaml"`, `"csv"`
-- `options` (optional for `parseCsv`): `{headers: false}`, `{delimiter: ";"}`
+- `format` (optional, default auto-detect): `"json"`, `"xml"`, `"yaml"`, `"csv"`
 
 ```utlx
-// Parse JSON embedded in another format:
-let config = parseJson($input.configJson)
-config.database.host                     // "localhost"
-
 // Parse XML from a CDATA section:
 let innerXml = parse($input.Payload, "xml")
 innerXml.Order.Customer                  // "Acme Corp"
-
-// Parse CSV with options:
-let data = parseCsv($input.csvData, {delimiter: ";", headers: true})
-data[0].Name                             // first row, Name column
 
 // Auto-detect format:
 let parsed = parse($input.rawData)       // auto-detects JSON, XML, or YAML
 ```
 
 For normal file processing, use `input json`/`input xml` in the header — these functions are for the embedded-format-as-value case.
+
+=== parseJson(string) → value #text(size: 8pt, fill: gray)[(Fmt)]
+
+Parse a JSON string into a navigable UDM value.
+
+- `string` (required): the JSON string to parse
+
+```utlx
+let config = parseJson($input.configJson)
+config.database.host                     // "localhost"
+```
+
+=== parseXml(string) → value #text(size: 8pt, fill: gray)[(Fmt)]
+
+Parse an XML string into a navigable UDM value.
+
+- `string` (required): the XML string to parse
+
+```utlx
+let doc = parseXml($input.xmlPayload)
+doc.Order.Customer                       // "Acme Corp"
+```
+
+=== parseYaml(string) → value #text(size: 8pt, fill: gray)[(Fmt)]
+
+Parse a YAML string into a navigable UDM value.
+
+- `string` (required): the YAML string to parse
+
+```utlx
+let config = parseYaml($input.yamlConfig)
+config.database.host                     // "localhost"
+```
+
+=== parseCsv(string, options?) → array #text(size: 8pt, fill: gray)[(Fmt)]
+
+Parse a CSV string into an array of rows (objects if headers, arrays if not).
+
+- `string` (required): the CSV string to parse
+- `options` (optional): `{headers: false}`, `{delimiter: ";"}`
+
+```utlx
+let data = parseCsv($input.csvData, {delimiter: ";", headers: true})
+data[0].Name                             // first row, Name column
+```
 
 Also: `render(value, format, pretty?)`, `renderJson(value, pretty?)`, `renderXml(value)`, `renderYaml(value)`, `renderCsv(value)`.
 
@@ -120,17 +167,14 @@ Also: `parseDateTimeWithTimezone(string, pattern, timezone)`.
 
 // TODO
 
-=== parseEUNumber(string) → number / parseUSNumber(string) → number #text(size: 8pt, fill: gray)[(Num)]
+=== parseEUNumber(string) → number #text(size: 8pt, fill: gray)[(Num)]
 
-Parse regional number formats to standard floating-point. See Chapter 25 (CSV).
+Parse a European-formatted number string (dot=thousands, comma=decimal) to a standard number. See Chapter 25 (CSV).
 
 - `string` (required): the formatted number string
 
 ```utlx
 parseEUNumber("1.234,56")               // 1234.56 (European: dot=thousands, comma=decimal)
-parseUSNumber("1,234.56")               // 1234.56 (US: comma=thousands, dot=decimal)
-parseFrenchNumber("1 234,56")            // 1234.56 (French: space=thousands, comma=decimal)
-parseSwissNumber("1'234.56")             // 1234.56 (Swiss: apostrophe=thousands, dot=decimal)
 
 // Use case: CSV from European source
 map($input, (row) -> {
@@ -140,7 +184,19 @@ map($input, (row) -> {
 })
 ```
 
-Also: `renderEUNumber(number)`, `renderUSNumber(number)`, `renderFrenchNumber(number)`, `renderSwissNumber(number)` for the reverse direction.
+Also: `renderEUNumber(number)` for the reverse direction, `parseFrenchNumber(string)`, `parseSwissNumber(string)`.
+
+=== parseUSNumber(string) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Parse a US-formatted number string (comma=thousands, dot=decimal) to a standard number.
+
+- `string` (required): the formatted number string
+
+```utlx
+parseUSNumber("1,234.56")               // 1234.56 (US: comma=thousands, dot=decimal)
+```
+
+Also: `renderUSNumber(number)` for the reverse direction.
 
 === parseFloat #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -390,12 +446,30 @@ reduce($input.transactions, {balance: 0, count: 0}, (acc, tx) -> {
 
 // TODO
 
-=== render(value, format, pretty?) → string / renderJson(value, pretty?) → string #text(size: 8pt, fill: gray)[(Fmt)]
+=== render(value, format, pretty?) → string #text(size: 8pt, fill: gray)[(Fmt)]
 
 Serialize a UDM value to a string in the specified format.
 
 - `value` (required): UDM value to serialize
-- `format` (required for `render`): `"json"`, `"xml"`, `"yaml"`, `"csv"`
+- `format` (required): `"json"`, `"xml"`, `"yaml"`, `"csv"`
+- `pretty` (optional, default false): pretty-print with indentation
+
+```utlx
+render({name: "Alice"}, "json", true)    // pretty-printed JSON
+render({Order: {Id: "1"}}, "xml")        // "<Order><Id>1</Id></Order>"
+
+// Use case: embed XML inside a JSON field (CDATA pattern)
+{
+  messageId: generateUuid(),
+  payload: render($input, "xml")         // XML as a string value
+}
+```
+
+=== renderJson(value, pretty?) → string #text(size: 8pt, fill: gray)[(Fmt)]
+
+Serialize a UDM value to a JSON string.
+
+- `value` (required): UDM value to serialize
 - `pretty` (optional, default false): pretty-print with indentation
 
 ```utlx
@@ -404,15 +478,6 @@ renderJson({name: "Alice", age: 30})
 
 renderJson({name: "Alice", age: 30}, true)
 // Output: '{\n  "name": "Alice",\n  "age": 30\n}'
-
-render({name: "Alice"}, "json", true)    // same as renderJson with pretty
-render({Order: {Id: "1"}}, "xml")        // "<Order><Id>1</Id></Order>"
-
-// Use case: embed XML inside a JSON field (CDATA pattern)
-{
-  messageId: generateUuid(),
-  payload: render($input, "xml")         // XML as a string value
-}
 ```
 
 === renderCsv #text(size: 8pt, fill: gray)[(TODO)]
@@ -431,12 +496,12 @@ render({Order: {Id: "1"}}, "xml")        // "<Order><Id>1</Id></Order>"
 
 // TODO
 
-=== replace(string, search, replacement) → string / replaceRegex(string, regex, replacement) → string #text(size: 8pt, fill: gray)[(Str)]
+=== replace(string, search, replacement) → string #text(size: 8pt, fill: gray)[(Str)]
 
-Replace occurrences in a string. `replace`: literal match. `replaceRegex`: regex match.
+Replace all literal occurrences of a substring.
 
 - `string` (required): the string to modify
-- `search`/`regex` (required): what to find
+- `search` (required): literal substring to find
 - `replacement` (required): what to replace with
 
 ```utlx
@@ -445,7 +510,17 @@ replace("Hello World", "World", "UTL-X")
 
 replace("2026-05-01", "-", "/")
 // Output: "2026/05/01"  (replaces ALL occurrences)
+```
 
+=== replaceRegex(string, regex, replacement) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Replace all occurrences matching a regular expression.
+
+- `string` (required): the string to modify
+- `regex` (required): regular expression pattern
+- `replacement` (required): what to replace with
+
+```utlx
 replaceRegex("Order #123 on 2026-05-01", "[0-9]+", "X")
 // Output: "Order #X on X-X-X"
 
@@ -461,39 +536,57 @@ replaceRegex("  extra   spaces  ", "\\s+", " ")
 
 // TODO
 
-=== reverse(array) → array / reverseString(string) → string #text(size: 8pt, fill: gray)[(Arr/Str)]
+=== reverse(array) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-Reverse the order of elements in an array or characters in a string.
+Reverse the order of elements in an array.
 
-- `array`/`string` (required): the value to reverse
+- `array` (required): the array to reverse
 
 ```utlx
 reverse([1, 2, 3, 4, 5])                // [5, 4, 3, 2, 1]
-reverseString("hello")                   // "olleh"
 
 // Use case: most recent first
 reverse(sortBy($input.events, (e) -> e.timestamp))
+```
+
+=== reverseString(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Reverse the characters in a string.
+
+- `string` (required): the string to reverse
+
+```utlx
+reverseString("hello")                   // "olleh"
 ```
 
 === rightJoin #text(size: 8pt, fill: gray)[(TODO)]
 
 // TODO
 
-=== roundToCents(number) → number / roundToDecimalPlaces(number, places) → number #text(size: 8pt, fill: gray)[(Num)]
+=== roundToCents(number) → number #text(size: 8pt, fill: gray)[(Num)]
 
-Financial rounding.
+Round a number to 2 decimal places (financial rounding for currency).
 
 - `number` (required): the value to round
-- `places` (required for roundToDecimalPlaces): number of decimal places
 
 ```utlx
 roundToCents(29.999)                     // 30.0
 roundToCents(10.004)                     // 10.0
-roundToDecimalPlaces(3.14159, 3)         // 3.142
-roundToDecimalPlaces(100.0, 0)           // 100
 
 // Use case: invoice line total with correct rounding
 let lineTotal = roundToCents(qty * unitPrice)
+```
+
+=== roundToDecimalPlaces(number, places) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Round a number to a specified number of decimal places.
+
+- `number` (required): the value to round
+- `places` (required): number of decimal places
+
+```utlx
+roundToDecimalPlaces(3.14159, 3)         // 3.142
+roundToDecimalPlaces(100.0, 0)           // 100
 ```
 
 === runtimeInfo #text(size: 8pt, fill: gray)[(TODO)]
@@ -526,13 +619,33 @@ let lineTotal = roundToCents(qty * unitPrice)
 
 // TODO
 
-=== sha256(data) → string / sha512(data) → string / sha1(data) → string #text(size: 8pt, fill: gray)[(Sec)]
+=== sha256(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-See `hash` above. Individual functions for the most common algorithms. 1 required parameter each.
+Compute a SHA-256 hash. Returns 64-char hex string. See `hash` for generic algorithm selection.
+
+- `data` (required): string to hash
 
 ```utlx
 sha256("sensitive data")                 // 64-char hex string
+```
+
+=== sha512(data) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Compute a SHA-512 hash. Returns 128-char hex string.
+
+- `data` (required): string to hash
+
+```utlx
 sha512("sensitive data")                 // 128-char hex string
+```
+
+=== sha1(data) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Compute a SHA-1 hash. Returns 40-char hex string. Avoid for security purposes.
+
+- `data` (required): string to hash
+
+```utlx
 sha1("sensitive data")                   // 40-char hex string (avoid for security)
 ```
 
@@ -611,12 +724,11 @@ slice("Hello World", 6)                 // "World"
 
 // TODO
 
-=== sort(array) → array / sortBy(array, keyFn) → array #text(size: 8pt, fill: gray)[(Arr)]
+=== sort(array) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-Sort an array. `sort` uses natural ordering. `sortBy` uses a key extractor.
+Sort an array using natural ordering (numbers ascending, strings alphabetical).
 
 - `array` (required): the array to sort
-- `keyFn` (required for sortBy): lambda `(element) -> sortKey`
 
 ```bash
 echo '[3, 1, 4, 1, 5]' | utlx -e 'sort(.)'
@@ -626,7 +738,16 @@ echo '[3, 1, 4, 1, 5]' | utlx -e 'sort(.)'
 ```utlx
 sort([3, 1, 4, 1, 5, 9])                // [1, 1, 3, 4, 5, 9]
 sort(["banana", "apple", "cherry"])      // ["apple", "banana", "cherry"]
+```
 
+=== sortBy(array, keyFn) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Sort an array using a key extractor function.
+
+- `array` (required): the array to sort
+- `keyFn` (required): lambda `(element) -> sortKey`
+
+```utlx
 // Given: {"products": [
 //   {"name": "Widget", "price": 25},
 //   {"name": "Gadget", "price": 150},
@@ -703,29 +824,46 @@ split("/usr/local/bin", "/")             // ["", "usr", "local", "bin"]
 
 // TODO
 
-=== substring(string, start, end?) → string / substringBefore(string, delimiter) → string / substringAfter(string, delimiter) → string #text(size: 8pt, fill: gray)[(Str)]
+=== substring(string, start, end?) → string #text(size: 8pt, fill: gray)[(Str)]
 
-Extract part of a string. `substring` by index. `substringBefore`/`substringAfter` by delimiter.
+Extract part of a string by index (zero-based).
 
 - `string` (required): the source string
-- `start` (required for substring): starting index (zero-based)
-- `end` (optional for substring): ending index (exclusive)
-- `delimiter` (required for substringBefore/After): the delimiter to search for
+- `start` (required): starting index (zero-based, inclusive)
+- `end` (optional): ending index (exclusive). If omitted, goes to end.
 
 ```utlx
 substring("Hello World", 6)             // "World"
 substring("Hello World", 0, 5)          // "Hello"
-
-substringBefore("user@example.com", "@") // "user"
-substringAfter("user@example.com", "@")  // "example.com"
-
-substringBefore("no-delimiter", "@")     // "no-delimiter" (not found — returns all)
-substringAfter("no-delimiter", "@")      // "" (not found — returns empty)
-
-// Also:
-substringBeforeLast("a.b.c.d", ".")      // "a.b.c"
-substringAfterLast("a.b.c.d", ".")       // "d"
 ```
+
+=== substringBefore(string, delimiter) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Return the part of a string before the first occurrence of a delimiter. Returns the full string if delimiter is not found.
+
+- `string` (required): the source string
+- `delimiter` (required): the delimiter to search for
+
+```utlx
+substringBefore("user@example.com", "@") // "user"
+substringBefore("no-delimiter", "@")     // "no-delimiter" (not found — returns all)
+```
+
+Also: `substringBeforeLast("a.b.c.d", ".")` returns `"a.b.c"`.
+
+=== substringAfter(string, delimiter) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Return the part of a string after the first occurrence of a delimiter. Returns empty string if delimiter is not found.
+
+- `string` (required): the source string
+- `delimiter` (required): the delimiter to search for
+
+```utlx
+substringAfter("user@example.com", "@")  // "example.com"
+substringAfter("no-delimiter", "@")      // "" (not found — returns empty)
+```
+
+Also: `substringAfterLast("a.b.c.d", ".")` returns `"d"`.
 
 === substringAfterLast #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -735,17 +873,27 @@ substringAfterLast("a.b.c.d", ".")       // "d"
 
 // TODO
 
-=== sum(array) → number / sumBy(array, fn) → number #text(size: 8pt, fill: gray)[(Num)]
+=== sum(array) → number #text(size: 8pt, fill: gray)[(Num)]
 
-Sum numeric values. `sum` takes an array of numbers. `sumBy` takes objects with a key extractor.
+Sum all numeric values in an array. Returns 0 for empty arrays.
 
-- `array` (required): array of numbers (sum) or objects (sumBy)
-- `fn` (required for sumBy): lambda `(element) -> number`
+- `array` (required): array of numbers
 
 ```utlx
 sum([10, 20, 30])                        // 60
 sum([])                                  // 0 (empty array)
+```
 
+*Anti-pattern:* `reduce($input.items, 0, (acc, i) -> acc + i.price)` — use `sum(map(...))` or `sumBy()`.
+
+=== sumBy(array, fn) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Sum values extracted from an array of objects using a key function.
+
+- `array` (required): array of objects
+- `fn` (required): lambda `(element) -> number`
+
+```utlx
 // Given: {"items": [{"qty": 2, "price": 25}, {"qty": 5, "price": 10}, {"qty": 1, "price": 100}]}
 
 sumBy($input.items, (i) -> i.qty * i.price)
@@ -755,8 +903,6 @@ sumBy($input.items, (i) -> i.qty * i.price)
 sum(map($input.items, (i) -> i.qty * i.price))
 // Output: 200
 ```
-
-*Anti-pattern:* `reduce($input.items, 0, (acc, i) -> acc + i.price)` — use `sum(map(...))` or `sumBy()`.
 
 === systemPropertiesAll #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -1168,20 +1314,15 @@ unique(map($input.orders, (o) -> o.customerId))
 
 // TODO
 
-=== urlEncode(string) → string / urlDecode(string) → string #text(size: 8pt, fill: gray)[(URL)]
+=== urlEncode(string) → string #text(size: 8pt, fill: gray)[(URL)]
 
-URL-encode/decode strings (percent-encoding per RFC 3986).
+URL-encode a string (percent-encoding per RFC 3986).
 
-- `string` (required): the string to encode or decode
+- `string` (required): the string to encode
 
 ```utlx
 urlEncode("hello world")                 // "hello%20world"
 urlEncode("price=10&currency=EUR")       // "price%3D10%26currency%3DEUR"
-urlDecode("hello%20world")               // "hello world"
-
-// Also available:
-urlEncodeComponent("a=b&c=d")            // encodes & and = too
-urlDecodeComponent("a%3Db%26c%3Dd")      // "a=b&c=d"
 
 // Use case: build a query string
 let qs = join(map(entries($input.params), (e) ->
@@ -1191,7 +1332,19 @@ let qs = join(map(entries($input.params), (e) ->
 buildQueryString($input.params)
 ```
 
-Also: `buildURL(base, path, params)`, `parseURL(url)`, `getHost(url)`, `getPath(url)`, `getQuery(url)`, `getQueryParams(url)`.
+Also: `urlEncodeComponent(string)`, `buildURL(base, path, params)`, `parseURL(url)`, `getHost(url)`, `getPath(url)`, `getQuery(url)`, `getQueryParams(url)`.
+
+=== urlDecode(string) → string #text(size: 8pt, fill: gray)[(URL)]
+
+Decode a URL-encoded string (percent-encoding per RFC 3986).
+
+- `string` (required): the string to decode
+
+```utlx
+urlDecode("hello%20world")               // "hello world"
+```
+
+Also: `urlDecodeComponent(string)`.
 
 === urlEncodeComponent #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -1292,18 +1445,15 @@ filter(windowed($input.events, 2), (pair) -> pair[0].type == pair[1].type)
 
 == X-Z
 
-=== xmlEscape(string) → string / xmlUnescape(string) → string #text(size: 8pt, fill: gray)[(XML)]
+=== xmlEscape(string) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Escape/unescape XML special characters.
+Escape XML special characters (`<`, `>`, `&`, `"`, `'`).
 
-- `string` (required): the string to escape or unescape
+- `string` (required): the string to escape
 
 ```utlx
 xmlEscape("price < 100 & tax > 0")
 // Output: "price &lt; 100 &amp; tax &gt; 0"
-
-xmlUnescape("price &lt; 100 &amp; tax &gt; 0")
-// Output: "price < 100 & tax > 0"
 
 // Use case: safely embed user input in XML output
 {
@@ -1311,6 +1461,17 @@ xmlUnescape("price &lt; 100 &amp; tax &gt; 0")
 }
 
 // Characters escaped: < → &lt;  > → &gt;  & → &amp;  " → &quot;  ' → &apos;
+```
+
+=== xmlUnescape(string) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Unescape XML entity references back to their original characters.
+
+- `string` (required): the string to unescape
+
+```utlx
+xmlUnescape("price &lt; 100 &amp; tax &gt; 0")
+// Output: "price < 100 & tax > 0"
 ```
 
 === xnor #text(size: 8pt, fill: gray)[(TODO)]
@@ -1377,34 +1538,60 @@ xmlUnescape("price &lt; 100 &amp; tax &gt; 0")
 
 // TODO
 
-=== yamlSplitDocuments(yaml) → array / yamlMergeDocuments(docs) → string / yamlPath(yaml, path) → value / yamlSet(yaml, path, value) → value / yamlDelete(yaml, path) → value #text(size: 8pt, fill: gray)[(YAML)]
+=== yamlSplitDocuments(yaml) → array #text(size: 8pt, fill: gray)[(YAML)]
 
-YAML-specific functions for multi-document handling and path-based access. See Chapter 26.
+Split a multi-document YAML string (separated by `---`) into an array of documents. See Chapter 26.
 
-- `yaml` (required): YAML string or UDM value
-- `docs` (required for merge): array of documents
-- `path` (required): dot-separated path string
-- `value` (required for set): value to set at path
+- `yaml` (required): YAML string containing multiple documents
 
 ```utlx
-// Split multi-document YAML (separated by ---):
 let docs = yamlSplitDocuments(multiDocString)
 docs[0]                                  // first document
 docs[1]                                  // second document
+```
 
-// Get a specific document:
-yamlGetDocument(multiDocString, 0)       // first document
+=== yamlMergeDocuments(docs) → string #text(size: 8pt, fill: gray)[(YAML)]
 
-// Merge documents back:
+Merge an array of YAML documents back into a single multi-document string joined with `---` separators.
+
+- `docs` (required): array of documents
+
+```utlx
 yamlMergeDocuments(docs)                 // joined with --- separators
+```
 
-// Path-based access and modification:
+=== yamlPath(yaml, path) → value #text(size: 8pt, fill: gray)[(YAML)]
+
+Access a nested value in a YAML structure using a dot-separated path.
+
+- `yaml` (required): YAML UDM value
+- `path` (required): dot-separated path string
+
+```utlx
 yamlPath($input, "database.host")        // "localhost"
-yamlSet($input, "database.port", 5433)   // returns new structure with port changed
-yamlDelete($input, "database.password")  // returns structure without password
+```
 
-// Check path existence:
-yamlExists($input, "features.experimental")  // true/false
+=== yamlSet(yaml, path, value) → value #text(size: 8pt, fill: gray)[(YAML)]
+
+Return a new YAML structure with the value at the given path replaced.
+
+- `yaml` (required): YAML UDM value
+- `path` (required): dot-separated path string
+- `value` (required): value to set at path
+
+```utlx
+yamlSet($input, "database.port", 5433)   // returns new structure with port changed
+```
+
+=== yamlDelete(yaml, path) → value #text(size: 8pt, fill: gray)[(YAML)]
+
+Return a new YAML structure with the value at the given path removed.
+
+- `yaml` (required): YAML UDM value
+- `path` (required): dot-separated path string
+
+```utlx
+yamlDelete($input, "database.password")  // returns structure without password
 ```
 
 Also: `yamlDeepMerge(obj1, obj2)`, `yamlKeys(obj)`, `yamlValues(obj)`, `yamlSort(obj)`, `yamlValidate(yaml, rules)`, `yamlFilterByKeyPattern(obj, pattern)`.
@@ -1421,29 +1608,48 @@ Also: `yamlDeepMerge(obj1, obj2)`, `yamlKeys(obj)`, `yamlValues(obj)`, `yamlSort
 
 // TODO
 
-=== zip(arr1, arr2) → array / zipWith(arr1, arr2, fn) → array / zipWithIndex(array) → array #text(size: 8pt, fill: gray)[(Arr)]
+=== zip(arr1, arr2) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-Combine two arrays element-by-element. `zip`: pairs. `zipWith`: merged by function. `zipWithIndex`: adds index to each element.
+Combine two arrays element-by-element into pairs. Truncated to the shorter array's length.
 
-- `arr1`, `arr2` (required): arrays to combine (truncated to shorter length)
-- `fn` (required for zipWith): lambda `(elem1, elem2) -> combined`
-- `array` (required for zipWithIndex): the array to index
+- `arr1` (required): first array
+- `arr2` (required): second array
 
 ```utlx
 zip([1, 2, 3], ["a", "b", "c"])
 // Output: [[1, "a"], [2, "b"], [3, "c"]]
-
-zipWith([1, 2, 3], [10, 20, 30], (a, b) -> a + b)
-// Output: [11, 22, 33]
-
-zipWithIndex(["Apple", "Banana", "Cherry"])
-// Output: [["Apple", 0], ["Banana", 1], ["Cherry", 2]]
 
 // Use case: combine two parallel arrays (e.g., headers and values)
 let headers = ["Name", "Age", "City"]
 let row = ["Alice", "30", "Amsterdam"]
 fromEntries(zip(headers, row))
 // Output: {"Name": "Alice", "Age": "30", "City": "Amsterdam"}
+```
+
+Also: `zipAll(arrays)` — zips any number of arrays, `unzip(pairs)` — reverse of zip.
+
+=== zipWith(arr1, arr2, fn) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Combine two arrays element-by-element using a merge function.
+
+- `arr1` (required): first array
+- `arr2` (required): second array
+- `fn` (required): lambda `(elem1, elem2) -> combined`
+
+```utlx
+zipWith([1, 2, 3], [10, 20, 30], (a, b) -> a + b)
+// Output: [11, 22, 33]
+```
+
+=== zipWithIndex(array) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Pair each element with its zero-based index.
+
+- `array` (required): the array to index
+
+```utlx
+zipWithIndex(["Apple", "Banana", "Cherry"])
+// Output: [["Apple", 0], ["Banana", 1], ["Cherry", 2]]
 
 // Use case: add line numbers
 map(zipWithIndex($input.items), (pair) -> {
@@ -1451,8 +1657,6 @@ map(zipWithIndex($input.items), (pair) -> {
   ...pair[0]
 })
 ```
-
-Also: `zipAll(arrays)` — zips any number of arrays, `unzip(pairs)` — reverse of zip, `unzipN(arrays)` — reverse of zipAll.
 
 === zipAll #text(size: 8pt, fill: gray)[(TODO)]
 

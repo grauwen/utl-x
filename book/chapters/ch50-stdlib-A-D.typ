@@ -275,12 +275,11 @@ any($input.orders, (o) -> o.status == "CANCELLED")
 // Output: false (none cancelled)
 ```
 
-=== avg(array) → number / avgBy(array, keyFn) → number #text(size: 8pt, fill: gray)[(Num)]
+=== avg(array) → number #text(size: 8pt, fill: gray)[(Num)]
 
-Average of numeric values. `avg` takes an array of numbers. `avgBy` takes an array of objects and a key extractor.
+Average of numeric values in an array. Returns 0 for empty arrays.
 
-- `array` (required): array of numbers (avg) or objects (avgBy)
-- `keyFn` (required for avgBy): lambda `(element) -> number`
+- `array` (required): array of numbers
 
 ```utlx
 // Given: {"scores": [85, 92, 78, 95, 88]}
@@ -288,32 +287,46 @@ Average of numeric values. `avg` takes an array of numbers. `avgBy` takes an arr
 avg($input.scores)
 // Output: 87.6
 
-// Given: {"products": [{"name": "A", "price": 10}, {"name": "B", "price": 30}, {"name": "C", "price": 20}]}
-
-avgBy($input.products, (p) -> p.price)
-// Output: 20
-
 avg([])
 // Output: 0 (empty array returns 0, not error)
 ```
 
 *Anti-pattern:* `sum(arr) / count(arr)` — crashes on empty arrays (division by zero). Use `avg()` which handles this safely.
 
+=== avgBy(array, keyFn) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Average of values extracted from an array of objects using a key function.
+
+- `array` (required): array of objects
+- `keyFn` (required): lambda `(element) -> number`
+
+```utlx
+// Given: {"products": [{"name": "A", "price": 10}, {"name": "B", "price": 30}, {"name": "C", "price": 20}]}
+
+avgBy($input.products, (p) -> p.price)
+// Output: 20
+```
+
 == B
 
-=== base64Encode(data) → string / base64Decode(string) → string #text(size: 8pt, fill: gray)[(Sec)]
+=== base64Encode(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Encode data to Base64 string / decode Base64 string back to original.
+Encode data to a Base64 string for safe transport (e.g., in URLs or headers).
 
 - `data` (required): string to encode
+
+```utlx
+base64Encode("Hello, World!")
+// Output: "SGVsbG8sIFdvcmxkIQ=="
+```
+
+=== base64Decode(string) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Decode a Base64-encoded string back to its original value.
+
 - `string` (required): Base64-encoded string to decode
 
 ```utlx
-// Encode a value for safe transport (e.g., in URL or header)
-base64Encode("Hello, World!")
-// Output: "SGVsbG8sIFdvcmxkIQ=="
-
-// Decode back
 base64Decode("SGVsbG8sIFdvcmxkIQ==")
 // Output: "Hello, World!"
 
@@ -378,31 +391,48 @@ decoded.sub
 
 == C
 
-=== c14n(xml) → string / c14nHash(xml, algorithm?) → string / c14nEquals(xml1, xml2) → boolean #text(size: 8pt, fill: gray)[(XML)]
+=== c14n(xml) → string #text(size: 8pt, fill: gray)[(XML)]
 
-XML canonicalization (W3C C14N). See Chapter 22 for full details.
+Canonicalize an XML document using W3C C14N (sorted attributes, normalized whitespace). See Chapter 22 for full details.
 
 - `xml` (required): XML UDM value to canonicalize
-- `algorithm` (optional, default `"SHA-256"`): hash algorithm for `c14nHash`
 
 ```utlx
 // Given: XML document with unsorted attributes, whitespace variations
 
 c14n($input)
 // Output: canonical XML string (sorted attributes, normalized whitespace)
+```
 
+Also: `c14nWithComments(xml)`, `excC14n(xml)` (exclusive, for SOAP), `c14n11(xml)` (version 1.1), `c14nFingerprint(xml)` (short hash for logging).
+
+=== c14nHash(xml, algorithm?) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Compute a hash digest of the canonical form of an XML document.
+
+- `xml` (required): XML UDM value to canonicalize and hash
+- `algorithm` (optional, default `"SHA-256"`): hash algorithm (e.g., `"SHA-512"`)
+
+```utlx
 c14nHash($input)
 // Output: "a1b2c3d4e5f6..."  (SHA-256 hex digest of canonical form)
 
 c14nHash($input, "SHA-512")
 // Output: "9b71d224bd62..."  (SHA-512 instead)
+```
 
+=== c14nEquals(xml1, xml2) → boolean #text(size: 8pt, fill: gray)[(XML)]
+
+Compare two XML documents semantically (ignoring formatting differences) by comparing their canonical forms.
+
+- `xml1` (required): first XML UDM value
+- `xml2` (required): second XML UDM value
+
+```utlx
 // Compare two XML documents semantically (ignoring formatting differences)
 c14nEquals(xmlFromSystemA, xmlFromSystemB)
 // Output: true if same content, regardless of attribute order or whitespace
 ```
-
-Also: `c14nWithComments(xml)`, `excC14n(xml)` (exclusive, for SOAP), `c14n11(xml)` (version 1.1), `c14nFingerprint(xml)` (short hash for logging).
 
 === c14n11 #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -766,18 +796,28 @@ contains($input.roles, "superadmin")     // false
 filter($input.orders, (o) -> contains(["ACTIVE", "PENDING"], o.status))
 ```
 
-=== count(array) → number / countBy(array, predicate) → number #text(size: 8pt, fill: gray)[(Arr)]
+=== count(array) → number #text(size: 8pt, fill: gray)[(Arr)]
 
-Count elements. `count` counts all. `countBy` counts those matching a predicate.
+Count all elements in an array.
 
 - `array` (required): the array to count
-- `predicate` (required for countBy): lambda `(element) -> boolean`
 
 ```utlx
 // Given: {"orders": [{"status": "ACTIVE"}, {"status": "CLOSED"}, {"status": "ACTIVE"}]}
 
 count($input.orders)
 // Output: 3
+```
+
+=== countBy(array, predicate) → number #text(size: 8pt, fill: gray)[(Arr)]
+
+Count elements in an array that match a predicate.
+
+- `array` (required): the array to count
+- `predicate` (required): lambda `(element) -> boolean`
+
+```utlx
+// Given: {"orders": [{"status": "ACTIVE"}, {"status": "CLOSED"}, {"status": "ACTIVE"}]}
 
 countBy($input.orders, (o) -> o.status == "ACTIVE")
 // Output: 2
@@ -854,25 +894,37 @@ Also: `csvSort(csv, column, ascending?)`, `csvColumns(csv)`, `csvRows(csv)`, `cs
 
 // TODO
 
-=== dayOfWeek(date) → number / dayOfWeekName(date) → string / dayOfYear(date) → number #text(size: 8pt, fill: gray)[(Date)]
+=== dayOfWeek(date) → number #text(size: 8pt, fill: gray)[(Date)]
 
-Extract date components.
+Return the day of the week as a number (1=Monday, 7=Sunday).
 
 - `date` (required): a date or datetime value
 
 ```utlx
-// Given: {"orderDate": "2026-05-01"}
-let d = parseDate($input.orderDate, "yyyy-MM-dd")
-
+let d = parseDate("2026-05-01", "yyyy-MM-dd")
 dayOfWeek(d)          // 5 (Thursday — 1=Monday, 7=Sunday)
+```
+
+=== dayOfWeekName(date) → string #text(size: 8pt, fill: gray)[(Date)]
+
+Return the day of the week as a name (e.g., "Thursday").
+
+- `date` (required): a date or datetime value
+
+```utlx
+let d = parseDate("2026-05-01", "yyyy-MM-dd")
 dayOfWeekName(d)      // "Thursday"
+```
+
+=== dayOfYear(date) → number #text(size: 8pt, fill: gray)[(Date)]
+
+Return the day number within the year (1-365 or 1-366 for leap years).
+
+- `date` (required): a date or datetime value
+
+```utlx
+let d = parseDate("2026-05-01", "yyyy-MM-dd")
 dayOfYear(d)          // 121 (121st day of 2026)
-day(d)                // 1 (day of month)
-month(d)              // 5
-monthName(d)          // "May"
-year(d)               // 2026
-quarter(d)            // 2 (Q2)
-weekOfYear(d)         // 18
 ```
 
 Also: `daysInMonth(year, month)` → `daysInMonth(2026, 2)` returns `28`. `daysInYear(year)` → `daysInYear(2024)` returns `366` (leap year). `isLeapYear(year)`.
@@ -1042,17 +1094,29 @@ else "Not yet due"
 
 // TODO
 
-=== distinct(array) → array / distinctBy(array, keyFn) → array #text(size: 8pt, fill: gray)[(Arr)]
+=== distinct(array) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-Remove duplicate values. `distinct` uses value equality. `distinctBy` uses a key extractor to determine uniqueness.
+Remove duplicate values from an array using value equality.
 
 - `array` (required): the array to deduplicate
-- `keyFn` (required for distinctBy): lambda `(element) -> key`
 
 ```utlx
 distinct([1, 2, 2, 3, 3, 3])
 // Output: [1, 2, 3]
 
+// Extract unique values from a field:
+distinct(map($input.orders, (o) -> o.customerId))
+// Output: ["C-42", "C-41"]
+```
+
+=== distinctBy(array, keyFn) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Remove duplicate values from an array using a key extractor to determine uniqueness. Keeps the first element for each key.
+
+- `array` (required): the array to deduplicate
+- `keyFn` (required): lambda `(element) -> key`
+
+```utlx
 // Given: {"orders": [
 //   {"id": 1, "customerId": "C-42"},
 //   {"id": 2, "customerId": "C-42"},
@@ -1062,10 +1126,6 @@ distinct([1, 2, 2, 3, 3, 3])
 distinctBy($input.orders, (o) -> o.customerId)
 // Output: [{"id": 1, "customerId": "C-42"}, {"id": 3, "customerId": "C-41"}]
 // (first order per customer kept, duplicates removed)
-
-// Extract unique values from a field:
-distinct(map($input.orders, (o) -> o.customerId))
-// Output: ["C-42", "C-41"]
 ```
 
 === divideBy #text(size: 8pt, fill: gray)[(TODO)]
@@ -1076,12 +1136,12 @@ distinct(map($input.orders, (o) -> o.customerId))
 
 // TODO
 
-=== drop(array, n) → array / take(array, n) → array #text(size: 8pt, fill: gray)[(Arr)]
+=== drop(array, n) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-`drop`: remove the first N elements. `take`: keep only the first N elements.
+Remove the first N elements from an array, returning the rest.
 
 - `array` (required): the source array
-- `n` (required): number of elements
+- `n` (required): number of elements to drop
 
 ```utlx
 // Given: {"items": ["A", "B", "C", "D", "E"]}
@@ -1089,11 +1149,22 @@ distinct(map($input.orders, (o) -> o.customerId))
 drop($input.items, 2)
 // Output: ["C", "D", "E"]  (first 2 removed)
 
-take($input.items, 3)
-// Output: ["A", "B", "C"]  (only first 3 kept)
-
 // Use case: skip CSV header row (when headers: false)
 let dataRows = drop($input, 1)  // skip first row
+```
+
+=== take(array, n) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Keep only the first N elements from an array, discarding the rest.
+
+- `array` (required): the source array
+- `n` (required): number of elements to keep
+
+```utlx
+// Given: {"items": ["A", "B", "C", "D", "E"]}
+
+take($input.items, 3)
+// Output: ["A", "B", "C"]  (only first 3 kept)
 
 // Use case: top 10 results
 let top10 = take(sortBy($input.products, (p) -> -p.sales), 10)

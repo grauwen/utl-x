@@ -36,22 +36,34 @@
 
 // TODO
 
-=== endsWith(string, suffix) → boolean / startsWith(string, prefix) → boolean #text(size: 8pt, fill: gray)[(Str)]
+=== endsWith(string, suffix) → boolean #text(size: 8pt, fill: gray)[(Str)]
 
-Check if a string starts or ends with a given substring.
+Check if a string ends with a given substring.
 
 - `string` (required): the string to test
-- `suffix`/`prefix` (required): the substring to check for
+- `suffix` (required): the substring to check for
 
 ```utlx
-// Given: {"filename": "invoice-2026.xml", "orderId": "ORD-001"}
+// Given: {"filename": "invoice-2026.xml"}
 
 endsWith($input.filename, ".xml")        // true
 endsWith($input.filename, ".json")       // false
-startsWith($input.orderId, "ORD-")       // true
 
 // Use case: filter files by extension
 filter($input.files, (f) -> endsWith(f.name, ".utlx"))
+```
+
+=== startsWith(string, prefix) → boolean #text(size: 8pt, fill: gray)[(Str)]
+
+Check if a string starts with a given substring.
+
+- `string` (required): the string to test
+- `prefix` (required): the substring to check for
+
+```utlx
+// Given: {"orderId": "ORD-001"}
+
+startsWith($input.orderId, "ORD-")       // true
 
 // Use case: validate ID format
 if (!startsWith($input.id, "ORD-")) error("Invalid order ID format")
@@ -65,12 +77,11 @@ if (!startsWith($input.id, "ORD-")) error("Invalid order ID format")
 
 // TODO
 
-=== entries(object) → array / fromEntries(pairs) → object #text(size: 8pt, fill: gray)[(Obj)]
+=== entries(object) → array #text(size: 8pt, fill: gray)[(Obj)]
 
-Convert between objects and `[key, value]` pair arrays. Essential for dynamic key processing. See Chapter 26.
+Decompose an object into an array of `[key, value]` pairs. Essential for dynamic key processing. See Chapter 26.
 
-- `object` (required for entries): the object to decompose
-- `pairs` (required for fromEntries): array of `[key, value]` arrays
+- `object` (required): the object to decompose
 
 ```utlx
 // Given: {"servers": {"prod": {"host": "prod-db"}, "staging": {"host": "stg-db"}}}
@@ -84,29 +95,45 @@ entries($input.servers) |> map((entry) -> {
   host: entry[1].host        // the value's property
 })
 // Output: [{"environment": "prod", "host": "prod-db"}, {"environment": "staging", "host": "stg-db"}]
+```
 
+=== fromEntries(pairs) → object #text(size: 8pt, fill: gray)[(Obj)]
+
+Build an object from an array of `[key, value]` pairs. The inverse of `entries()`.
+
+- `pairs` (required): array of `[key, value]` arrays
+
+```utlx
 // Build an object with dynamic keys:
 fromEntries(map($input.items, (i) -> [i.id, i.name]))
 // Input items: [{id: "A", name: "Widget"}, {id: "B", name: "Gadget"}]
 // Output: {"A": "Widget", "B": "Gadget"}
 ```
 
-=== env(name) → string / envOrDefault(name, default) → string #text(size: 8pt, fill: gray)[(Sys)]
+=== env(name) → string #text(size: 8pt, fill: gray)[(Sys)]
 
-Read environment variables from the host system.
+Read an environment variable from the host system. Returns `null` if not set.
 
 - `name` (required): environment variable name
-- `default` (required for envOrDefault): fallback value if not set
 
 ```utlx
 env("HOME")                              // "/Users/alice"
 env("UNDEFINED_VAR")                     // null
-
-envOrDefault("LOG_LEVEL", "INFO")        // "INFO" if LOG_LEVEL not set
-envOrDefault("DATABASE_URL", "postgres://localhost:5432/mydb")
 ```
 
 Also: `hasEnv(name)` → boolean, `envAll()` → object with all environment variables.
+
+=== envOrDefault(name, default) → string #text(size: 8pt, fill: gray)[(Sys)]
+
+Read an environment variable, returning a default value if not set.
+
+- `name` (required): environment variable name
+- `default` (required): fallback value if the variable is not set
+
+```utlx
+envOrDefault("LOG_LEVEL", "INFO")        // "INFO" if LOG_LEVEL not set
+envOrDefault("DATABASE_URL", "postgres://localhost:5432/mydb")
+```
 
 === envAll #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -235,9 +262,9 @@ filterEntries($input, (key, value) -> key != "password" && key != "temp")
 
 Also: `someEntry(obj, pred)` → true if any entry matches, `everyEntry(obj, pred)` → true if all match, `countEntries(obj, pred)` → count of matching entries.
 
-=== find(array, predicate) → element or null / findIndex(array, predicate) → number #text(size: 8pt, fill: gray)[(Arr)]
+=== find(array, predicate) → element or null #text(size: 8pt, fill: gray)[(Arr)]
 
-`find`: returns the FIRST matching element, or `null`. `findIndex`: returns its index, or `-1`.
+Returns the FIRST element matching a predicate, or `null` if no match.
 
 - `array` (required): the array to search
 - `predicate` (required): lambda `(element) -> boolean`
@@ -254,6 +281,19 @@ find($input.users, (u) -> u.email == "bob@example.com")
 
 find($input.users, (u) -> u.email == "unknown@example.com")
 // Output: null
+```
+
+*Anti-pattern:* `filter($input.users, ...)[0]` — use `find()`. It's cleaner and returns `null` instead of an index-out-of-bounds error on empty results.
+
+=== findIndex(array, predicate) → number #text(size: 8pt, fill: gray)[(Arr)]
+
+Returns the zero-based index of the FIRST matching element, or `-1` if not found.
+
+- `array` (required): the array to search
+- `predicate` (required): lambda `(element) -> boolean`
+
+```utlx
+// Given: {"users": [{"id": 1}, {"id": 2}, {"id": 3}]}
 
 findIndex($input.users, (u) -> u.id == 2)
 // Output: 1 (zero-based index)
@@ -261,8 +301,6 @@ findIndex($input.users, (u) -> u.id == 2)
 findIndex($input.users, (u) -> u.id == 99)
 // Output: -1 (not found)
 ```
-
-*Anti-pattern:* `filter($input.users, ...)[0]` — use `find()`. It's cleaner and returns `null` instead of an index-out-of-bounds error on empty results.
 
 Also: `findLastIndex(array, predicate)` — searches from the end.
 
@@ -499,15 +537,29 @@ formatDate(now(), "yyyy-MM-dd")
 
 // TODO
 
-=== generateUuid() → string / generateUuidV4() → string / generateUuidV7() → string #text(size: 8pt, fill: gray)[(Sys)]
+=== generateUuid() → string #text(size: 8pt, fill: gray)[(Sys)]
 
-Generate universally unique identifiers. v4 is random, v7 is time-ordered (sortable).
-
-No parameters.
+Generate a random UUID (v4). Alias for `generateUuidV4()`.
 
 ```utlx
 generateUuid()        // "550e8400-e29b-41d4-a716-446655440000" (v4 random)
-generateUuidV4()      // same as generateUuid()
+```
+
+Also: `isValidUuid(string)`, `getUuidVersion(string)`.
+
+=== generateUuidV4() → string #text(size: 8pt, fill: gray)[(Sys)]
+
+Generate a random UUID version 4.
+
+```utlx
+generateUuidV4()      // "550e8400-e29b-41d4-a716-446655440000" (random)
+```
+
+=== generateUuidV7() → string #text(size: 8pt, fill: gray)[(Sys)]
+
+Generate a time-ordered UUID version 7 (sortable by creation time).
+
+```utlx
 generateUuidV7()      // "018f6c30-a2b0-7000-8000-000000000001" (time-ordered)
 
 // Use case: generate correlation IDs for messages
@@ -521,7 +573,7 @@ generateUuidV7()      // "018f6c30-a2b0-7000-8000-000000000001" (time-ordered)
 generateUuidV7Batch(5)  // generate 5 sequential v7 UUIDs
 ```
 
-Also: `isValidUuid(string)`, `getUuidVersion(string)`, `isUuidV7(string)`.
+Also: `isUuidV7(string)`.
 
 === generateUuidV7Batch #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -733,9 +785,9 @@ entries(groups) |> map((entry) -> {
 
 // TODO
 
-=== hasKey(object, key) → boolean / containsKey(object, key) → boolean #text(size: 8pt, fill: gray)[(Obj)]
+=== hasKey(object, key) → boolean #text(size: 8pt, fill: gray)[(Obj)]
 
-Check if an object has a property. `containsKey` is an alias.
+Check if an object has a property with the given key name.
 
 - `object` (required): the object to check
 - `key` (required): property name as string
@@ -756,35 +808,73 @@ if (hasKey($input, "shippingAddress")) {
 
 Also: `containsValue(object, value)` — check if any property has a specific value.
 
-=== hash(data, algorithm?) → string / md5(data) → string / sha256(data) → string / sha512(data) → string #text(size: 8pt, fill: gray)[(Sec)]
+=== containsKey(object, key) → boolean #text(size: 8pt, fill: gray)[(Obj)]
 
-Cryptographic hash functions. Return hex-encoded digest string.
+Alias for `hasKey()`. Check if an object has a property with the given key name.
+
+- `object` (required): the object to check
+- `key` (required): property name as string
+
+```utlx
+containsKey($input, "email")             // true
+containsKey($input, "phone")             // false
+```
+
+=== hash(data, algorithm?) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Compute a cryptographic hash with an explicit algorithm. Returns hex-encoded digest string.
 
 - `data` (required): string to hash
-- `algorithm` (optional for `hash`, default `"SHA-256"`): algorithm name (`"MD5"`, `"SHA-1"`, `"SHA-256"`, `"SHA-384"`, `"SHA-512"`, `"SHA3-256"`, `"SHA3-512"`)
+- `algorithm` (optional, default `"SHA-256"`): algorithm name (`"MD5"`, `"SHA-1"`, `"SHA-256"`, `"SHA-384"`, `"SHA-512"`, `"SHA3-256"`, `"SHA3-512"`)
+
+```utlx
+hash("hello", "SHA3-256")
+// Output: "3338be694f50c5f338814986cdf0686453a888b84f424d792af4b9202398f392"
+
+hash("hello", "SHA-256")
+// Output: "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+```
+
+Also: `sha1(data)`, `sha224(data)`, `sha384(data)`, `sha3_256(data)`, `sha3_512(data)`.
+
+=== md5(data) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Compute an MD5 hash. Returns hex-encoded digest string.
+
+- `data` (required): string to hash
+
+```utlx
+md5("hello")
+// Output: "5d41402abc4b2a76b9719d911017c592"
+```
+
+*Anti-pattern:* `md5()` for security — MD5 is cryptographically broken. Use `sha256()` minimum. MD5 is acceptable only for non-security checksums (file deduplication, cache keys).
+
+=== sha256(data) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Compute a SHA-256 hash. Returns hex-encoded digest string.
+
+- `data` (required): string to hash
 
 ```utlx
 sha256("hello")
 // Output: "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
-
-md5("hello")
-// Output: "5d41402abc4b2a76b9719d911017c592"
-
-sha512("hello")
-// Output: "9b71d224bd62f3785d96d46ad3ea3d73..."
-
-// Generic hash with explicit algorithm:
-hash("hello", "SHA3-256")
-// Output: "3338be694f50c5f338814986cdf0686453a888b84f424d792af4b9202398f392"
 
 // Use case: content-addressed caching
 let contentHash = sha256(renderJson($input))
 {...$input, hash: contentHash}
 ```
 
-*Anti-pattern:* `md5()` for security — MD5 is cryptographically broken. Use `sha256()` minimum. MD5 is acceptable only for non-security checksums (file deduplication, cache keys).
+=== sha512(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Also: `sha1(data)`, `sha224(data)`, `sha384(data)`, `sha3_256(data)`, `sha3_512(data)`.
+Compute a SHA-512 hash. Returns hex-encoded digest string.
+
+- `data` (required): string to hash
+
+```utlx
+sha512("hello")
+// Output: "9b71d224bd62f3785d96d46ad3ea3d73..."
+```
 
 === hasNamespace #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -802,27 +892,36 @@ Also: `sha1(data)`, `sha224(data)`, `sha384(data)`, `sha3_256(data)`, `sha3_512(
 
 // TODO
 
-=== hmac(data, key, algorithm) → string / hmacSHA256(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
+=== hmac(data, key, algorithm) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-HMAC (Hash-based Message Authentication Code) for verifying message integrity and authenticity.
+Compute an HMAC (Hash-based Message Authentication Code) with an explicit algorithm. Returns hex-encoded string.
 
 - `data` (required): the message to authenticate
 - `key` (required): the secret key
-- `algorithm` (required for `hmac`): hash algorithm
+- `algorithm` (required): hash algorithm (e.g., `"SHA-256"`, `"SHA-512"`)
+
+```utlx
+hmac("message", "key", "SHA-512")
+// Output: "..." (HMAC-SHA512)
+```
+
+Also: `hmacSHA512(data, key)`, `hmacSHA1(data, key)`, `hmacMD5(data, key)`, `hmacBase64(data, key, algorithm)` (returns Base64 instead of hex).
+
+=== hmacSHA256(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Compute an HMAC-SHA256 for verifying message integrity and authenticity. Returns hex-encoded string.
+
+- `data` (required): the message to authenticate
+- `key` (required): the secret key
 
 ```utlx
 hmacSHA256("message-to-verify", "my-secret-key")
 // Output: "4a8f3d..." (HMAC-SHA256 hex string)
 
-hmac("message", "key", "SHA-512")
-// Output: "..." (HMAC-SHA512)
-
 // Use case: verify webhook signature
 let expectedSig = hmacSHA256($input.body, env("WEBHOOK_SECRET"))
 if (expectedSig != $input.headers.signature) error("Invalid signature")
 ```
-
-Also: `hmacSHA512(data, key)`, `hmacSHA1(data, key)`, `hmacMD5(data, key)`, `hmacBase64(data, key, algorithm)` (returns Base64 instead of hex).
 
 === hmacBase64 #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -1147,21 +1246,42 @@ isString(42)                             // false
 isString(null)                           // false
 ```
 
-=== isDate(value) → boolean / isDateTime(value) → boolean / isTime(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+=== isDate(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
 
-Returns true if the value is a date, datetime, or time respectively.
+Returns true if the value is a date (not a string representation of a date).
 
 - `value` (required): the value to test
 
 ```utlx
 isDate(parseDate("2026-05-01", "yyyy-MM-dd"))       // true
-isDateTime(now())                                     // true
 isDate("2026-05-01")                                  // false (string, not date)
 ```
 
-=== isBlank(value) → boolean / isEmpty(value) → boolean / isDefined(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+=== isDateTime(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
 
-Additional type predicates.
+Returns true if the value is a datetime.
+
+- `value` (required): the value to test
+
+```utlx
+isDateTime(now())                                     // true
+isDateTime("2026-05-01T14:30:00Z")                    // false (string, not datetime)
+```
+
+=== isTime(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is a time value.
+
+- `value` (required): the value to test
+
+```utlx
+isTime(parseTime("14:30:00", "HH:mm:ss"))            // true
+isTime("14:30:00")                                    // false (string, not time)
+```
+
+=== isBlank(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is null, empty string, or whitespace-only.
 
 - `value` (required): the value to test
 
@@ -1170,40 +1290,69 @@ isBlank(null)                            // true
 isBlank("")                              // true
 isBlank("  ")                            // true (whitespace-only)
 isBlank("hello")                         // false
+```
 
+=== isEmpty(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is null, empty string, or empty array.
+
+- `value` (required): the value to test
+
+```utlx
 isEmpty(null)                            // true
 isEmpty("")                              // true
 isEmpty([])                              // true (empty array)
 isEmpty("hello")                         // false
 isEmpty([1])                             // false
+```
 
+=== isDefined(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is not null. Empty strings and zero are considered defined.
+
+- `value` (required): the value to test
+
+```utlx
 isDefined(null)                          // false
 isDefined("")                            // true (empty string IS defined)
 isDefined(0)                             // true (zero IS defined)
 isDefined($input.name)                   // true if field exists and is not null
 ```
 
-=== isLeapYear(year) → boolean / isWeekday(date) → boolean / isWeekend(date) → boolean #text(size: 8pt, fill: gray)[(Date)]
+=== isLeapYear(year) → boolean #text(size: 8pt, fill: gray)[(Date)]
 
-Date predicates.
+Returns true if the given year is a leap year.
 
-- `year` (required for isLeapYear): year number
-- `date` (required for isWeekday/isWeekend): date or datetime
+- `year` (required): year number
 
 ```utlx
 isLeapYear(2024)                         // true (divisible by 4, not by 100, or by 400)
 isLeapYear(2026)                         // false
+```
 
+=== isWeekday(date) → boolean #text(size: 8pt, fill: gray)[(Date)]
+
+Returns true if the date falls on a weekday (Monday through Friday).
+
+- `date` (required): date or datetime
+
+```utlx
 isWeekday(parseDate("2026-05-01", "yyyy-MM-dd"))  // true (Thursday)
-isWeekend(parseDate("2026-05-03", "yyyy-MM-dd"))  // true (Sunday)
 
 // Use case: calculate business days
 let workDays = filter(
   map(range(0, 30), (i) -> addDays(startDate, i)),
   (d) -> isWeekday(d)
 )
+```
 
-isToday(parseDate("2026-05-01", "yyyy-MM-dd"))  // true/false
-isSameDay(date1, date2)                          // true if same calendar day
+=== isWeekend(date) → boolean #text(size: 8pt, fill: gray)[(Date)]
+
+Returns true if the date falls on a weekend (Saturday or Sunday).
+
+- `date` (required): date or datetime
+
+```utlx
+isWeekend(parseDate("2026-05-03", "yyyy-MM-dd"))  // true (Sunday)
 ```
 

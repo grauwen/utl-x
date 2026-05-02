@@ -4,19 +4,38 @@
 
 // TODO
 
-=== jcs(json) → string / canonicalizeJSON(json) → string / jsonEquals(json1, json2) → boolean #text(size: 8pt, fill: gray)[(JSON)]
+=== jcs(json) → string #text(size: 8pt, fill: gray)[(JSON)]
 
 JSON Canonicalization Scheme (RFC 8785). Produces deterministic JSON — identical output regardless of key order or whitespace. See Chapter 24.
 
 - `json` (required): JSON UDM value to canonicalize
-- `json1`, `json2` (required for jsonEquals): two values to compare
 
 ```utlx
 jcs({z: 3, a: 1, m: 2})
 // Output: '{"a":1,"m":2,"z":3}'  (keys sorted, no whitespace)
+```
 
-canonicalizeJSON($input)    // alias for jcs()
+Also: `canonicalJSONHash(json, algorithm?)` (hash the canonical form), `canonicalJSONSize(json)` (byte size), `isCanonicalJSON(string)`.
 
+=== canonicalizeJSON(json) → string #text(size: 8pt, fill: gray)[(JSON)]
+
+Alias for `jcs()`. Produces deterministic JSON using RFC 8785.
+
+- `json` (required): JSON UDM value to canonicalize
+
+```utlx
+canonicalizeJSON($input)
+// Output: '{"a":1,"m":2,"z":3}'  (keys sorted, no whitespace)
+```
+
+=== jsonEquals(json1, json2) → boolean #text(size: 8pt, fill: gray)[(JSON)]
+
+Compare two JSON values semantically, ignoring key order and whitespace.
+
+- `json1` (required): first value to compare
+- `json2` (required): second value to compare
+
+```utlx
 jsonEquals({b: 2, a: 1}, {a: 1, b: 2})
 // Output: true (same content, different key order)
 
@@ -26,8 +45,6 @@ if (!jsonEquals(previousResponse, currentResponse)) {
   hash: canonicalJSONHash(currentResponse)
 }
 ```
-
-Also: `canonicalJSONHash(json, algorithm?)` (hash the canonical form), `canonicalJSONSize(json)` (byte size), `isCanonicalJSON(string)`.
 
 === join(array, separator) → string #text(size: 8pt, fill: gray)[(Str)]
 
@@ -70,9 +87,9 @@ join(["usr", "local", "bin"], "/")
 
 // TODO
 
-=== keys(object) → array / values(object) → array #text(size: 8pt, fill: gray)[(Obj)]
+=== keys(object) → array #text(size: 8pt, fill: gray)[(Obj)]
 
-Get all property names (keys) or all property values from an object. Key order is preserved (insertion order).
+Get all property names (keys) from an object. Key order is preserved (insertion order).
 
 - `object` (required): the object to inspect
 
@@ -81,9 +98,6 @@ Get all property names (keys) or all property values from an object. Key order i
 
 keys($input)
 // Output: ["name", "age", "city"]
-
-values($input)
-// Output: ["Alice", 30, "Amsterdam"]
 
 // Use case: iterate over dynamic keys
 map(keys($input.servers), (env) -> {
@@ -94,6 +108,19 @@ map(keys($input.servers), (env) -> {
 // Use case: check what fields are present
 let fields = keys($input)
 contains(fields, "email")   // true/false
+```
+
+=== values(object) → array #text(size: 8pt, fill: gray)[(Obj)]
+
+Get all property values from an object. Order matches `keys()`.
+
+- `object` (required): the object to inspect
+
+```utlx
+// Given: {"name": "Alice", "age": 30, "city": "Amsterdam"}
+
+values($input)
+// Output: ["Alice", 30, "Amsterdam"]
 ```
 
 == L
@@ -128,9 +155,9 @@ length([])                               // 0
 
 // TODO
 
-=== localName(element) → string / namespaceUri(element) → string / namespacePrefix(element) → string / qualifiedName(element) → string #text(size: 8pt, fill: gray)[(XML)]
+=== localName(element) → string #text(size: 8pt, fill: gray)[(XML)]
 
-QName decomposition — extract parts of an XML qualified name. See Chapter 22 for full details and XBRL examples.
+Extract the local name (without prefix) from an XML qualified name. See Chapter 22.
 
 - `element` (required): XML UDM element
 
@@ -138,14 +165,47 @@ QName decomposition — extract parts of an XML qualified name. See Chapter 22 f
 // Given: <cbc:InvoiceTypeCode xmlns:cbc="urn:oasis:...">380</cbc:InvoiceTypeCode>
 
 localName($input)                        // "InvoiceTypeCode"
-namespacePrefix($input)                  // "cbc"
-qualifiedName($input)                    // "cbc:InvoiceTypeCode"
+```
+
+=== namespaceUri(element) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Extract the namespace URI from an XML element.
+
+- `element` (required): XML UDM element
+
+```utlx
+// Given: <cbc:InvoiceTypeCode xmlns:cbc="urn:oasis:...">380</cbc:InvoiceTypeCode>
+
 namespaceUri($input)                     // "urn:oasis:names:specification:ubl:..."
 
 // Use case: filter XML elements by namespace (XBRL taxonomy)
 let usgaapFacts = filter($input.*, (elem) ->
   namespaceUri(elem) == "http://fasb.org/us-gaap/2024"
 )
+```
+
+=== namespacePrefix(element) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Extract the namespace prefix from an XML element.
+
+- `element` (required): XML UDM element
+
+```utlx
+// Given: <cbc:InvoiceTypeCode xmlns:cbc="urn:oasis:...">380</cbc:InvoiceTypeCode>
+
+namespacePrefix($input)                  // "cbc"
+```
+
+=== qualifiedName(element) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Get the full qualified name (prefix:localName) of an XML element.
+
+- `element` (required): XML UDM element
+
+```utlx
+// Given: <cbc:InvoiceTypeCode xmlns:cbc="urn:oasis:...">380</cbc:InvoiceTypeCode>
+
+qualifiedName($input)                    // "cbc:InvoiceTypeCode"
 ```
 
 Also: `resolveQname(string, context)`, `matchesQname(element, pattern)`, `hasNamespace(element)`.
@@ -186,22 +246,26 @@ Also: `resolveQname(string, context)`, `matchesQname(element, pattern)`, `hasNam
 
 // TODO
 
-=== lowerCase(string) → string / upperCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+=== lowerCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
 
-Full case conversion. Also: `camelCase`, `snakeCase`, `kebabCase`, `pascalCase`, `titleCase`, `dotCase`, `pathCase`, `constantCase`, `slugify`.
+Convert a string to all lowercase.
 
 - `string` (required): the string to convert
 
 ```utlx
 lowerCase("Hello World")                 // "hello world"
+```
+
+Also: `camelCase`, `snakeCase`, `kebabCase`, `pascalCase`, `titleCase`, `dotCase`, `pathCase`, `constantCase`, `slugify`.
+
+=== upperCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Convert a string to all uppercase.
+
+- `string` (required): the string to convert
+
+```utlx
 upperCase("Hello World")                 // "HELLO WORLD"
-camelCase("hello world")                 // "helloWorld"
-snakeCase("helloWorld")                  // "hello_world"
-kebabCase("helloWorld")                  // "hello-world"
-pascalCase("hello world")               // "HelloWorld"
-titleCase("hello world")                // "Hello World"
-constantCase("helloWorld")              // "HELLO_WORLD"
-slugify("Hello World! 123")             // "hello-world-123"
 
 // Use case: normalize API field names
 mapKeys($input, (key) -> camelCase(key))
@@ -245,30 +309,49 @@ map([1, 2, 3], (x) -> x * 2)
 
 *Anti-pattern:* using `map()` to filter — `map(arr, (x) -> if (x.active) x else null)` produces nulls. Use `filter()` to remove, then `map()` to transform.
 
-=== mapEntries(object, fn) → object / mapKeys(object, fn) → object / mapValues(object, fn) → object #text(size: 8pt, fill: gray)[(Obj)]
+=== mapEntries(object, fn) → object #text(size: 8pt, fill: gray)[(Obj)]
 
-Transform object keys and/or values. See Chapter 26 (dynamic keys).
+Transform both keys and values of an object. See Chapter 26 (dynamic keys).
 
 - `object` (required): the object to transform
-- `fn` (required): lambda — `(key, value) -> {key: newKey, value: newValue}` for mapEntries, `(key) -> newKey` for mapKeys, `(value) -> newValue` for mapValues
+- `fn` (required): lambda `(key, value) -> {key: newKey, value: newValue}`
 
 ```utlx
 // Given: {"first_name": "Alice", "last_name": "Johnson", "age": 30}
 
-// Transform keys only (snake_case to camelCase):
-mapKeys($input, (key) -> camelCase(key))
-// Output: {"firstName": "Alice", "lastName": "Johnson", "age": 30}
-
-// Transform values only (stringify everything):
-mapValues($input, (value) -> toString(value))
-// Output: {"first_name": "Alice", "last_name": "Johnson", "age": "30"}
-
-// Transform both:
 mapEntries($input, (key, value) -> {
   key: upperCase(key),
   value: if (isString(value)) upperCase(value) else value
 })
 // Output: {"FIRST_NAME": "ALICE", "LAST_NAME": "JOHNSON", "AGE": 30}
+```
+
+=== mapKeys(object, fn) → object #text(size: 8pt, fill: gray)[(Obj)]
+
+Transform the keys of an object, keeping values unchanged.
+
+- `object` (required): the object to transform
+- `fn` (required): lambda `(key) -> newKey`
+
+```utlx
+// Given: {"first_name": "Alice", "last_name": "Johnson", "age": 30}
+
+mapKeys($input, (key) -> camelCase(key))
+// Output: {"firstName": "Alice", "lastName": "Johnson", "age": 30}
+```
+
+=== mapValues(object, fn) → object #text(size: 8pt, fill: gray)[(Obj)]
+
+Transform the values of an object, keeping keys unchanged.
+
+- `object` (required): the object to transform
+- `fn` (required): lambda `(value) -> newValue`
+
+```utlx
+// Given: {"first_name": "Alice", "last_name": "Johnson", "age": 30}
+
+mapValues($input, (value) -> toString(value))
+// Output: {"first_name": "Alice", "last_name": "Johnson", "age": "30"}
 ```
 
 === mapGroups #text(size: 8pt, fill: gray)[(TODO)]
@@ -323,17 +406,34 @@ Also: `matchesQname(element, pattern)` for XML QName matching (Chapter 22).
 
 // TODO
 
-=== max(array) → number / min(array) → number / maxBy(array, fn) → element / minBy(array, fn) → element #text(size: 8pt, fill: gray)[(Num/Arr)]
+=== max(array) → number #text(size: 8pt, fill: gray)[(Num/Arr)]
 
-Find extremes. `max`/`min` work on numeric arrays. `maxBy`/`minBy` take a key extractor and return the entire element (not just the value).
+Find the maximum value in a numeric array.
 
-- `array` (required): array to search
-- `fn` (required for maxBy/minBy): lambda `(element) -> comparable`
+- `array` (required): array of numbers
 
 ```utlx
 max([3, 1, 4, 1, 5, 9])                 // 9
-min([3, 1, 4, 1, 5, 9])                 // 1
+```
 
+=== min(array) → number #text(size: 8pt, fill: gray)[(Num/Arr)]
+
+Find the minimum value in a numeric array.
+
+- `array` (required): array of numbers
+
+```utlx
+min([3, 1, 4, 1, 5, 9])                 // 1
+```
+
+=== maxBy(array, fn) → element #text(size: 8pt, fill: gray)[(Num/Arr)]
+
+Find the element with the maximum value of a key extractor. Returns the entire element, not just the value.
+
+- `array` (required): array to search
+- `fn` (required): lambda `(element) -> comparable`
+
+```utlx
 // Given: {"products": [
 //   {"name": "Widget", "price": 25},
 //   {"name": "Gadget", "price": 150},
@@ -342,6 +442,21 @@ min([3, 1, 4, 1, 5, 9])                 // 1
 
 maxBy($input.products, (p) -> p.price)
 // Output: {"name": "Gadget", "price": 150}  (the ENTIRE object, not just 150)
+```
+
+=== minBy(array, fn) → element #text(size: 8pt, fill: gray)[(Num/Arr)]
+
+Find the element with the minimum value of a key extractor. Returns the entire element, not just the value.
+
+- `array` (required): array to search
+- `fn` (required): lambda `(element) -> comparable`
+
+```utlx
+// Given: {"products": [
+//   {"name": "Widget", "price": 25},
+//   {"name": "Gadget", "price": 150},
+//   {"name": "Gizmo", "price": 10}
+// ]}
 
 minBy($input.products, (p) -> p.price)
 // Output: {"name": "Gizmo", "price": 10}
@@ -351,24 +466,66 @@ minBy($input.products, (p) -> p.price)
 
 // TODO
 
-=== median(array) → number / mode(array) → number / stdDev(array) → number / variance(array) → number / percentile(array, p) → number #text(size: 8pt, fill: gray)[(Num)]
+=== median(array) → number #text(size: 8pt, fill: gray)[(Num)]
 
-Statistical functions.
+Compute the median (middle value) of a numeric array.
 
 - `array` (required): array of numbers
-- `p` (required for percentile): percentile value 0-100
 
 ```utlx
 // Given: {"scores": [72, 85, 90, 95, 88, 76, 92]}
 
 median($input.scores)                    // 88 (middle value)
-mode([1, 2, 2, 3, 3, 3])                // 3 (most frequent)
-stdDev($input.scores)                    // ~8.5 (standard deviation)
-variance($input.scores)                  // ~72.2
-percentile($input.scores, 90)            // ~94.2 (90th percentile)
-
-// Also: iqr(array) — interquartile range, quartiles(array) — [Q1, Q2, Q3]
 ```
+
+=== mode(array) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Find the most frequently occurring value in a numeric array.
+
+- `array` (required): array of numbers
+
+```utlx
+mode([1, 2, 2, 3, 3, 3])                // 3 (most frequent)
+```
+
+=== stdDev(array) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Compute the standard deviation of a numeric array.
+
+- `array` (required): array of numbers
+
+```utlx
+// Given: {"scores": [72, 85, 90, 95, 88, 76, 92]}
+
+stdDev($input.scores)                    // ~8.5 (standard deviation)
+```
+
+=== variance(array) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Compute the variance of a numeric array.
+
+- `array` (required): array of numbers
+
+```utlx
+// Given: {"scores": [72, 85, 90, 95, 88, 76, 92]}
+
+variance($input.scores)                  // ~72.2
+```
+
+=== percentile(array, p) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Compute the p-th percentile of a numeric array.
+
+- `array` (required): array of numbers
+- `p` (required): percentile value 0-100
+
+```utlx
+// Given: {"scores": [72, 85, 90, 95, 88, 76, 92]}
+
+percentile($input.scores, 90)            // ~94.2 (90th percentile)
+```
+
+Also: `iqr(array)` — interquartile range, `quartiles(array)` — [Q1, Q2, Q3].
 
 === memoryInfo #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -440,21 +597,36 @@ merge({a: 1}, {b: 2}, {c: 3})
 
 // TODO
 
-=== now() → datetime / currentDate() → date / currentTime() → time #text(size: 8pt, fill: gray)[(Date)]
+=== now() → datetime #text(size: 8pt, fill: gray)[(Date)]
 
-Current date and time. No parameters.
+Return the current UTC datetime.
 
 ```utlx
 now()                                    // 2026-05-01T14:30:00Z (UTC datetime)
-currentDate()                            // 2026-05-01 (date only, no time)
-currentTime()                            // 14:30:00 (time only, no date)
 
 // Use case: add timestamp to output
 {
   ...$input,
-  processedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
-  processedDate: formatDate(currentDate(), "yyyy-MM-dd")
+  processedAt: formatDate(now(), "yyyy-MM-dd'T'HH:mm:ss'Z'")
 }
+```
+
+=== currentDate() → date #text(size: 8pt, fill: gray)[(Date)]
+
+Return the current date (no time component).
+
+```utlx
+currentDate()                            // 2026-05-01 (date only, no time)
+
+formatDate(currentDate(), "yyyy-MM-dd")  // "2026-05-01"
+```
+
+=== currentTime() → time #text(size: 8pt, fill: gray)[(Date)]
+
+Return the current time (no date component).
+
+```utlx
+currentTime()                            // 14:30:00 (time only, no date)
 ```
 
 === normalizeSpace(string) → string #text(size: 8pt, fill: gray)[(Str)]
