@@ -14,7 +14,7 @@ e()                                      // 2.718281828459045
 
 === elementPath(element) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Get the XPath-like path of an XML element within its document tree.
+Get the XPath-like path of an XML element within its document tree. See Chapter 22.
 
 - `element` (required): XML UDM element
 
@@ -27,7 +27,7 @@ Get the XPath-like path of an XML element within its document tree.
 
 === encryptAES(data, key, iv) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Encrypts data using AES-128-CBC. Returns Base64-encoded ciphertext.
+Encrypts data using AES-128-CBC. Returns Base64-encoded ciphertext. See Chapter 38.
 
 - `data` (required): plaintext string to encrypt
 - `key` (required): 16-byte encryption key (hex or Base64)
@@ -45,7 +45,7 @@ let iv = generateIV()
 
 === encryptAES256(data, key, iv) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Encrypts data using AES-256-CBC. Requires a 32-byte key.
+Encrypts data using AES-256-CBC. Requires a 32-byte key. See Chapter 38.
 
 - `data` (required): plaintext string to encrypt
 - `key` (required): 32-byte encryption key
@@ -185,7 +185,7 @@ result
 
 === enforceNamespacePrefixes(xml, prefixMap) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Enforces specific namespace prefixes on an XML string, renaming prefixes to match the given mapping.
+Enforces specific namespace prefixes on an XML string, renaming prefixes to match the given mapping. See Chapter 22.
 
 - `xml` (required): XML string to process
 - `prefixMap` (optional): object mapping namespace URIs to desired prefixes
@@ -198,7 +198,7 @@ Enforces specific namespace prefixes on an XML string, renaming prefixes to matc
 
 === entries(object) → array #text(size: 8pt, fill: gray)[(Obj)]
 
-Decompose an object into an array of `[key, value]` pairs. Essential for dynamic key processing. See Chapter 26.
+Decompose an object into an array of `[key, value]` pairs. Essential for dynamic key processing.
 
 - `object` (required): the object to decompose
 
@@ -244,6 +244,10 @@ Read an environment variable from the host system. Returns `null` if not set.
 ```utlx
 env("HOME")                              // "/Users/alice"
 env("UNDEFINED_VAR")                     // null
+{
+  home: env("HOME"),
+  missing: env("UNDEFINED_VAR")
+}
 ```
 
 Also: `hasEnv(name)` → boolean, `envAll()` → object with all environment variables.
@@ -257,7 +261,10 @@ Read an environment variable, returning a default value if not set.
 
 ```utlx
 envOrDefault("LOG_LEVEL", "INFO")        // "INFO" if LOG_LEVEL not set
-envOrDefault("DATABASE_URL", "postgres://localhost:5432/mydb")
+{
+  logLevel: envOrDefault("LOG_LEVEL", "INFO"),
+  dbUrl: envOrDefault("DATABASE_URL", "postgres://localhost:5432/mydb")
+}
 ```
 
 === envAll() → object #text(size: 8pt, fill: gray)[(Sys)]
@@ -329,7 +336,7 @@ try {
 
 === escapeXML(text) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Escapes special XML characters (`<`, `>`, `&`, `"`, `'`) in text without using CDATA.
+Escapes special XML characters (`<`, `>`, `&`, `"`, `'`) in text without using CDATA. See Chapter 22.
 
 - `text` (required): string to escape
 
@@ -385,7 +392,7 @@ echo '{"a": 1, "b": 2, "c": 3}' | utlx -e 'everyEntry($input, (k, v) -> v > 0)'
 
 === excC14n(xml) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Canonicalizes XML using Exclusive Canonical XML (without comments). Used for XML digital signatures.
+Canonicalizes XML using Exclusive Canonical XML (without comments). Used for XML digital signatures. See Chapter 22.
 
 - `xml` (required): XML string to canonicalize
 
@@ -397,7 +404,7 @@ Canonicalizes XML using Exclusive Canonical XML (without comments). Used for XML
 
 === excC14nWithComments(xml) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Canonicalizes XML using Exclusive Canonical XML (with comments preserved).
+Canonicalizes XML using Exclusive Canonical XML (with comments preserved). See Chapter 22.
 
 - `xml` (required): XML string to canonicalize
 
@@ -447,7 +454,7 @@ echo '{"msg": "Hello [world] today"}' | utlx -e 'extractBetween($input.msg, "[",
 
 === extractCDATA(text) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Extracts the content from a CDATA section, stripping the `<![CDATA[` and `]]>` wrappers.
+Extracts the content from a CDATA section, stripping the `<![CDATA[` and `]]>` wrappers. See Chapter 22.
 
 - `text` (required): string containing CDATA section
 
@@ -464,7 +471,7 @@ echo '{"xml": "<![CDATA[Hello & World]]>"}' | utlx -e 'extractCDATA($input.xml)'
 
 === extractTimestampFromUuidV7(uuid) → datetime #text(size: 8pt, fill: gray)[(Sec)]
 
-Extract the embedded timestamp from a UUID v7 value.
+Extract the embedded timestamp from a UUID v7 value. See Chapter 38.
 
 - `uuid` (required): UUID v7 string
 
@@ -621,7 +628,9 @@ first([42])                              // 42
 first([])                                // null
 
 // Use case: get the cheapest product
-first(sortBy($input.products, (p) -> p.price))
+{
+  cheapest: first(sortBy($input.products, (p) -> p.price))
+}
 ```
 
 === formatCurrency(amount, currency?, locale?) → string #text(size: 8pt, fill: gray)[(Fin)]
@@ -665,7 +674,7 @@ echo '{"ts": "2026-05-01T14:30:00Z"}' | utlx -e 'formatDateTimeInTimezone(parseD
 
 === formatEmptyElements(xml, style?) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Formats empty XML elements according to the specified style (self-closing `<br/>` or expanded `<br></br>`).
+Formats empty XML elements according to the specified style (self-closing `<br/>` or expanded `<br></br>`). See Chapter 22.
 
 - `xml` (required): XML string
 - `style` (optional): "self-closing" or "expanded"
@@ -718,7 +727,7 @@ echo '{"n": 3}' | utlx -e 'formatPlural($input.n, "item")'
 
 === fromBase64(encoded) → binary #text(size: 8pt, fill: gray)[(Sec)]
 
-Create binary data from a Base64-encoded string.
+Create binary data from a Base64-encoded string. See Chapter 38.
 
 - `encoded` (required): Base64-encoded string
 
@@ -801,6 +810,9 @@ Convert from dot.case to separate words.
 
 ```utlx
 fromDotCase("config.max.retries")        // "config max retries"
+{
+  words: fromDotCase($input.propertyPath)
+}
 ```
 
 === fromHex(hexString) → binary #text(size: 8pt, fill: gray)[(Str)]
@@ -841,6 +853,9 @@ Convert from PascalCase to separate words.
 
 ```utlx
 fromPascalCase("MyClassName")            // "my class name"
+{
+  label: fromPascalCase($input.className)
+}
 ```
 
 === fromPathCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
@@ -851,6 +866,9 @@ Convert from path/case to separate words.
 
 ```utlx
 fromPathCase("my/path/name")             // "my path name"
+{
+  label: fromPathCase($input.route)
+}
 ```
 
 === fromSnakeCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
@@ -878,6 +896,9 @@ Convert from Title Case to separate lowercase words.
 
 ```utlx
 fromTitleCase("My Title Case")           // "my title case"
+{
+  normalized: fromTitleCase($input.heading)
+}
 ```
 
 === fromUTC(datetime, timezone) → datetime #text(size: 8pt, fill: gray)[(Date)]
@@ -957,7 +978,9 @@ last([42])                               // 42
 last([])                                 // null
 
 // Use case: get the most recent event
-last(sortBy($input.events, (e) -> e.timestamp))
+{
+  latest: last(sortBy($input.events, (e) -> e.timestamp))
+}
 ```
 
 === tail(array) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -973,6 +996,7 @@ tail([])                                 // []
 
 // Use case: skip the header row in a headerless CSV
 let dataRows = tail($input)             // all rows except the first
+{ rows: dataRows }
 ```
 
 === flatMap(array, fn) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -1001,14 +1025,14 @@ Remove one level of array nesting. Each element that is an array is unwrapped; n
 - `array` (required): the nested array to flatten
 
 ```utlx
-flatten([[1, 2], [3, 4], [5]])
-// Output: [1, 2, 3, 4, 5]
-
-flatten([[1, 2], 3, [4, 5]])
-// Output: [1, 2, 3, 4, 5]
-
-flatten([[[1, 2]], [[3]]])
-// Output: [[1, 2], [3]]  (only ONE level removed)
+{
+  flat: flatten([[1, 2], [3, 4], [5]]),
+  // [1, 2, 3, 4, 5]
+  mixed: flatten([[1, 2], 3, [4, 5]]),
+  // [1, 2, 3, 4, 5]
+  oneLevel: flatten([[[1, 2]], [[3]]])
+  // [[1, 2], [3]]  (only ONE level removed)
+}
 ```
 
 === flattenDeep(array) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -1018,19 +1042,19 @@ Remove ALL levels of array nesting, recursively. Produces a completely flat arra
 - `array` (required): the deeply nested array to flatten
 
 ```utlx
-flattenDeep([[1, [2, [3, [4]]]]])
-// Output: [1, 2, 3, 4]
-
-flattenDeep([[[["deep"]]]])
-// Output: ["deep"]
-
-flattenDeep([1, 2, 3])
-// Output: [1, 2, 3]  (already flat — no change)
+{
+  deep: flattenDeep([[1, [2, [3, [4]]]]]),
+  // [1, 2, 3, 4]
+  nested: flattenDeep([[[["deep"]]]]),
+  // ["deep"]
+  flat: flattenDeep([1, 2, 3])
+  // [1, 2, 3]  (already flat — no change)
+}
 ```
 
 === formatDate(date, pattern) → string #text(size: 8pt, fill: gray)[(Date)]
 
-Format a date or datetime as a string using a pattern.
+Format a date or datetime as a string using a pattern. See the Date Format Patterns section later in this chapter.
 
 - `date` (required): date or datetime value
 - `pattern` (required): format pattern string
@@ -1058,7 +1082,7 @@ let dt = parseDate($input.timestamp, "yyyy-MM-dd'T'HH:mm:ss'Z'")
 
 === generateIV() → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Generates a random initialization vector (IV) for use with AES encryption.
+Generates a random initialization vector (IV) for use with AES encryption. See Chapter 38.
 
 ```utlx
 let iv = generateIV()
@@ -1070,7 +1094,7 @@ let iv = generateIV()
 
 === generateKey(bits?) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Generates a random encryption key of the specified bit length.
+Generates a random encryption key of the specified bit length. See Chapter 38.
 
 - `bits` (optional): key length in bits (128 or 256, default 128)
 
@@ -1114,16 +1138,13 @@ generateUuidV7()      // "018f6c30-a2b0-7000-8000-000000000001" (time-ordered)
   timestamp: now(),
   payload: $input
 }
-
-// v7 is sortable by creation time — useful for database primary keys
-generateUuidV7Batch(5)  // generate 5 sequential v7 UUIDs
 ```
 
 Also: `isUuidV7(string)`.
 
 === generateUuidV7Batch(count) → array #text(size: 8pt, fill: gray)[(Sec)]
 
-Generate a batch of UUID v7s with monotonic guarantee (each is greater than the previous).
+Generate a batch of UUID v7s with monotonic guarantee (each is greater than the previous). See Chapter 38.
 
 - `count` (required): number of UUIDs to generate
 
@@ -1176,7 +1197,7 @@ echo '{"url": "https://api.example.com:8080/v1/users?page=1"}' | utlx -e 'getBas
 
 === getBOMBytes(encoding) → binary #text(size: 8pt, fill: gray)[(XML)]
 
-Get the BOM (Byte Order Mark) bytes for a given encoding.
+Get the BOM (Byte Order Mark) bytes for a given encoding. See Chapter 22.
 
 - `encoding` (required): encoding name (e.g., "UTF-8", "UTF-16LE")
 
@@ -1240,7 +1261,7 @@ echo '{"url": "https://api.example.com/v1/users"}' | utlx -e 'getHost($input.url
 
 === getJWSAlgorithm(token) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Gets the algorithm (alg) from a JWS token header.
+Gets the algorithm (alg) from a JWS token header. See Chapter 38.
 
 - `token` (required): JWS/JWT token string
 
@@ -1252,7 +1273,7 @@ Gets the algorithm (alg) from a JWS token header.
 
 === getJWSHeader(token) → object #text(size: 8pt, fill: gray)[(Sec)]
 
-Extracts the complete header from a JWS token as an object.
+Extracts the complete header from a JWS token as an object. See Chapter 38.
 
 - `token` (required): JWS/JWT token string
 
@@ -1265,7 +1286,7 @@ Extracts the complete header from a JWS token as an object.
 
 === getJWSInfo(token) → object #text(size: 8pt, fill: gray)[(Sec)]
 
-Gets information about the JWS token structure (header, payload size, etc.).
+Gets information about the JWS token structure (header, payload size, etc.). See Chapter 38.
 
 - `token` (required): JWS/JWT token string
 
@@ -1277,7 +1298,7 @@ Gets information about the JWS token structure (header, payload size, etc.).
 
 === getJWSKeyId(token) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Gets the Key ID (kid) from a JWS token header.
+Gets the Key ID (kid) from a JWS token header. See Chapter 38.
 
 - `token` (required): JWS/JWT token string
 
@@ -1289,7 +1310,7 @@ Gets the Key ID (kid) from a JWS token header.
 
 === getJWSPayload(token) → object #text(size: 8pt, fill: gray)[(Sec)]
 
-Extracts the payload from a JWS token WITHOUT signature verification.
+Extracts the payload from a JWS token WITHOUT signature verification. See Chapter 38.
 
 - `token` (required): JWS/JWT token string
 
@@ -1301,7 +1322,7 @@ Extracts the payload from a JWS token WITHOUT signature verification.
 
 === getJWSSigningInput(token) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Extracts the signing input (header.payload) from a JWS token for manual verification.
+Extracts the signing input (header.payload) from a JWS token for manual verification. See Chapter 38.
 
 - `token` (required): JWS/JWT token string
 
@@ -1313,7 +1334,7 @@ Extracts the signing input (header.payload) from a JWS token for manual verifica
 
 === getJWSTokenType(token) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Gets the token type (typ) from a JWS token header.
+Gets the token type (typ) from a JWS token header. See Chapter 38.
 
 - `token` (required): JWS/JWT token string
 
@@ -1325,7 +1346,7 @@ Gets the token type (typ) from a JWS token header.
 
 === getJWTAudience(token) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Gets the audience (aud) claim from a JWT token.
+Gets the audience (aud) claim from a JWT token. See Chapter 38.
 
 - `token` (required): JWT token string
 
@@ -1337,7 +1358,7 @@ Gets the audience (aud) claim from a JWT token.
 
 === getJWTClaim(token, claim) → any #text(size: 8pt, fill: gray)[(Sec)]
 
-Gets a specific claim from a JWT token payload.
+Gets a specific claim from a JWT token payload. See Chapter 38.
 
 - `token` (required): JWT token string
 - `claim` (required): claim name (e.g., "sub", "email", custom claims)
@@ -1351,7 +1372,7 @@ Gets a specific claim from a JWT token payload.
 
 === getJWTClaims(token) → object #text(size: 8pt, fill: gray)[(Sec)]
 
-Extracts all claims from a JWT payload WITHOUT verification.
+Extracts all claims from a JWT payload WITHOUT verification. See Chapter 38.
 
 - `token` (required): JWT token string
 
@@ -1366,7 +1387,7 @@ let claims = getJWTClaims($input.token)
 
 === getJWTIssuer(token) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Gets the issuer (iss) claim from a JWT token.
+Gets the issuer (iss) claim from a JWT token. See Chapter 38.
 
 - `token` (required): JWT token string
 
@@ -1378,7 +1399,7 @@ Gets the issuer (iss) claim from a JWT token.
 
 === getJWTSubject(token) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Gets the subject (sub) claim from a JWT token.
+Gets the subject (sub) claim from a JWT token. See Chapter 38.
 
 - `token` (required): JWT token string
 
@@ -1572,7 +1593,7 @@ echo '{"name": "Alice", "age": 30}' | utlx -e 'getType($input.name)'
 
 === getUuidVersion(uuid) → number #text(size: 8pt, fill: gray)[(Sec)]
 
-Get the version number from a UUID string.
+Get the version number from a UUID string. See Chapter 38.
 
 - `uuid` (required): UUID string
 
@@ -1671,7 +1692,7 @@ echo '{"code": "ABC123"}' | utlx -e 'hasAlpha($input.code)'
 
 === hasAttribute(element, name) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-Check if an XML element has a specific attribute.
+Check if an XML element has a specific attribute. See Chapter 22.
 
 - `element` (required): XML UDM element
 - `name` (required): attribute name to check
@@ -1685,7 +1706,7 @@ Check if an XML element has a specific attribute.
 
 === hasBOM(data) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-Check if binary data starts with a BOM (Byte Order Mark).
+Check if binary data starts with a BOM (Byte Order Mark). See Chapter 22.
 
 - `data` (required): binary data to check
 
@@ -1698,7 +1719,7 @@ Check if binary data starts with a BOM (Byte Order Mark).
 
 === hasContent(element) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-Check if an XML element has any content (child elements or text).
+Check if an XML element has any content (child elements or text). See Chapter 22.
 
 - `element` (required): XML UDM element
 
@@ -1754,47 +1775,51 @@ Alias for `hasKey()`. Check if an object has a property with the given key name.
 ```utlx
 containsKey($input, "email")             // true
 containsKey($input, "phone")             // false
+{
+  hasEmail: containsKey($input, "email")
+}
 ```
 
 === hash(data, algorithm?) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute a cryptographic hash with an explicit algorithm. Returns hex-encoded digest string.
+Compute a cryptographic hash with an explicit algorithm. Returns hex-encoded digest string. See Chapter 38.
 
 - `data` (required): string to hash
 - `algorithm` (optional, default `"SHA-256"`): algorithm name (`"MD5"`, `"SHA-1"`, `"SHA-256"`, `"SHA-384"`, `"SHA-512"`, `"SHA3-256"`, `"SHA3-512"`)
 
 ```utlx
-hash("hello", "SHA3-256")
-// Output: "3338be694f50c5f338814986cdf0686453a888b84f424d792af4b9202398f392"
-
-hash("hello", "SHA-256")
-// Output: "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+hash("hello", "SHA3-256")               // "3338be694f50c5f338..."
+hash("hello", "SHA-256")                // "2cf24dba5fb0a30e..."
+{
+  digest: hash($input.payload, "SHA-256")
+}
 ```
 
 Also: `sha1(data)`, `sha224(data)`, `sha384(data)`, `sha3_256(data)`, `sha3_512(data)`.
 
 === md5(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute an MD5 hash. Returns hex-encoded digest string.
+Compute an MD5 hash. Returns hex-encoded digest string. See Chapter 38.
 
 - `data` (required): string to hash
 
 ```utlx
-md5("hello")
-// Output: "5d41402abc4b2a76b9719d911017c592"
+md5("hello")                             // "5d41402abc4b2a76b9719d911017c592"
+{
+  checksum: md5($input.content)
+}
 ```
 
 *Anti-pattern:* `md5()` for security — MD5 is cryptographically broken. Use `sha256()` minimum. MD5 is acceptable only for non-security checksums (file deduplication, cache keys).
 
 === sha256(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute a SHA-256 hash. Returns hex-encoded digest string.
+Compute a SHA-256 hash. Returns hex-encoded digest string. See Chapter 38.
 
 - `data` (required): string to hash
 
 ```utlx
-sha256("hello")
-// Output: "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+sha256("hello")                          // "2cf24dba5fb0a30e..."
 
 // Use case: content-addressed caching
 let contentHash = sha256(renderJson($input))
@@ -1803,18 +1828,20 @@ let contentHash = sha256(renderJson($input))
 
 === sha512(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute a SHA-512 hash. Returns hex-encoded digest string.
+Compute a SHA-512 hash. Returns hex-encoded digest string. See Chapter 38.
 
 - `data` (required): string to hash
 
 ```utlx
-sha512("hello")
-// Output: "9b71d224bd62f3785d96d46ad3ea3d73..."
+sha512("hello")                          // "9b71d224bd62f378..."
+{
+  digest: sha512($input.document)
+}
 ```
 
 === hasNamespace(element, uri) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-Check if an XML element has a specific namespace URI declared.
+Check if an XML element has a specific namespace URI declared. See Chapter 22.
 
 - `element` (required): XML UDM element
 - `uri` (required): namespace URI to check
@@ -1870,38 +1897,40 @@ Encode binary data as a hexadecimal string.
 
 === hmac(data, key, algorithm) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute an HMAC (Hash-based Message Authentication Code) with an explicit algorithm. Returns hex-encoded string.
+Compute an HMAC (Hash-based Message Authentication Code) with an explicit algorithm. Returns hex-encoded string. See Chapter 38.
 
 - `data` (required): the message to authenticate
 - `key` (required): the secret key
 - `algorithm` (required): hash algorithm (e.g., `"SHA-256"`, `"SHA-512"`)
 
 ```utlx
-hmac("message", "key", "SHA-512")
-// Output: "..." (HMAC-SHA512)
+hmac("message", "key", "SHA-512")        // "..." (HMAC-SHA512 hex)
+{
+  signature: hmac($input.body, env("SECRET"), "SHA-256")
+}
 ```
 
 Also: `hmacSHA512(data, key)`, `hmacSHA1(data, key)`, `hmacMD5(data, key)`, `hmacBase64(data, key, algorithm)` (returns Base64 instead of hex).
 
 === hmacSHA256(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute an HMAC-SHA256 for verifying message integrity and authenticity. Returns hex-encoded string.
+Compute an HMAC-SHA256 for verifying message integrity and authenticity. Returns hex-encoded string. See Chapter 38.
 
 - `data` (required): the message to authenticate
 - `key` (required): the secret key
 
 ```utlx
-hmacSHA256("message-to-verify", "my-secret-key")
-// Output: "4a8f3d..." (HMAC-SHA256 hex string)
+hmacSHA256("message-to-verify", "my-secret-key")  // "4a8f3d..."
 
 // Use case: verify webhook signature
 let expectedSig = hmacSHA256($input.body, env("WEBHOOK_SECRET"))
 if (expectedSig != $input.headers.signature) error("Invalid signature")
+{ verified: true, payload: $input.body }
 ```
 
 === hmacBase64(data, key, algorithm) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Computes HMAC and returns the result as Base64-encoded string.
+Computes HMAC and returns the result as Base64-encoded string. See Chapter 38.
 
 - `data` (required): the message to authenticate
 - `key` (required): the secret key
@@ -1915,7 +1944,7 @@ Computes HMAC and returns the result as Base64-encoded string.
 
 === hmacMD5(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Computes HMAC-MD5 hash. Returns hex-encoded string.
+Computes HMAC-MD5 hash. Returns hex-encoded string. See Chapter 38.
 
 - `data` (required): the message
 - `key` (required): the secret key
@@ -1928,7 +1957,7 @@ Computes HMAC-MD5 hash. Returns hex-encoded string.
 
 === hmacSHA1(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Computes HMAC-SHA1 hash. Returns hex-encoded string.
+Computes HMAC-SHA1 hash. Returns hex-encoded string. See Chapter 38.
 
 - `data` (required): the message
 - `key` (required): the secret key
@@ -1941,7 +1970,7 @@ Computes HMAC-SHA1 hash. Returns hex-encoded string.
 
 === hmacSHA384(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Computes HMAC-SHA384 hash. Returns hex-encoded string.
+Computes HMAC-SHA384 hash. Returns hex-encoded string. See Chapter 38.
 
 - `data` (required): the message
 - `key` (required): the secret key
@@ -1954,7 +1983,7 @@ Computes HMAC-SHA384 hash. Returns hex-encoded string.
 
 === hmacSHA512(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Computes HMAC-SHA512 hash. Returns hex-encoded string.
+Computes HMAC-SHA512 hash. Returns hex-encoded string. See Chapter 38.
 
 - `data` (required): the message
 - `key` (required): the secret key
@@ -2256,7 +2285,7 @@ Check if a date is between two other dates (inclusive).
 
 === isCanonicalJSON(json) → boolean #text(size: 8pt, fill: gray)[(JSON)]
 
-Validates that a JSON string is in canonical form per RFC 8785 (JSON Canonicalization Scheme).
+Validates that a JSON string is in canonical form per RFC 8785 (JSON Canonicalization Scheme). See Chapter 24.
 
 - `json` (required): JSON string to validate
 
@@ -2273,7 +2302,7 @@ echo '{"json": "{\"a\":1,\"b\":2}"}' | utlx -e 'isCanonicalJSON($input.json)'
 
 === isCDATA(text) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-Checks if a string is a CDATA section (wrapped in `<![CDATA[...]]>`).
+Checks if a string is a CDATA section (wrapped in `<![CDATA[...]]>`). See Chapter 22.
 
 - `text` (required): string to check
 
@@ -2297,7 +2326,7 @@ Check if the current transformation is running in debug mode.
 
 === isEmptyElement(element) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-Check if an XML element is empty (no children, no text content).
+Check if an XML element is empty (no children, no text content). See Chapter 22.
 
 - `element` (required): XML UDM element
 
@@ -2349,7 +2378,7 @@ Check if binary data is a JAR file.
 
 === isJWSFormat(token) → boolean #text(size: 8pt, fill: gray)[(Sec)]
 
-Checks if a string is in valid JWS format (three Base64URL segments separated by dots).
+Checks if a string is in valid JWS format (three Base64URL segments separated by dots). See Chapter 38.
 
 - `token` (required): string to validate
 
@@ -2362,7 +2391,7 @@ Checks if a string is in valid JWS format (three Base64URL segments separated by
 
 === isJWTExpired(token) → boolean #text(size: 8pt, fill: gray)[(Sec)]
 
-Checks if a JWT is expired based on its `exp` claim.
+Checks if a JWT is expired based on its `exp` claim. See Chapter 38.
 
 - `token` (required): JWT token string
 
@@ -2563,7 +2592,7 @@ isUpperCase("ABC123")                    // true (digits ignored)
 
 === isUuidV7(uuid) → boolean #text(size: 8pt, fill: gray)[(Sec)]
 
-Check if a UUID string is specifically version 7 (time-ordered).
+Check if a UUID string is specifically version 7 (time-ordered). See Chapter 38.
 
 - `uuid` (required): UUID string to check
 
@@ -2652,7 +2681,7 @@ echo '{"url": "https://example.com/path"}' | utlx -e 'isValidURL($input.url)'
 
 === isValidUuid(uuid) → boolean #text(size: 8pt, fill: gray)[(Sec)]
 
-Validate if a string is a properly formatted UUID (any version).
+Validate if a string is a properly formatted UUID (any version). See Chapter 38.
 
 - `uuid` (required): string to validate
 
@@ -2885,10 +2914,12 @@ Returns true if the date falls on a weekday (Monday through Friday).
 isWeekday(parseDate("2026-05-01", "yyyy-MM-dd"))  // true (Thursday)
 
 // Use case: calculate business days
+let startDate = parseDate($input.start, "yyyy-MM-dd")
 let workDays = filter(
   map(range(0, 30), (i) -> addDays(startDate, i)),
   (d) -> isWeekday(d)
 )
+{ businessDays: count(workDays) }
 ```
 
 === isWeekend(date) → boolean #text(size: 8pt, fill: gray)[(Date)]

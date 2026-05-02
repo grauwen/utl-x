@@ -53,6 +53,7 @@ Add namespace declarations to an XML element.
 - `namespaces` (required): object mapping prefix to URI — `{"cbc": "urn:...", "cac": "urn:..."}`
 
 ```utlx
+// See Chapter 22 for XML namespace handling.
 {
   result: addNamespaceDeclarations($input, {
     "cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
@@ -236,6 +237,7 @@ Get a specific attribute value from an XML element by name. Useful when the attr
 
 ```utlx
 // Input: <Order id="ORD-123" status="active">...</Order>
+// See Chapter 22 for XML attribute access (@ operator).
 
 // Preferred: use @ for known attribute names
 {
@@ -257,6 +259,7 @@ Get all attributes from an XML element as a key-value object. Useful for iterati
 
 ```utlx
 // Input: <Product id="P-1" sku="ABC123" category="electronics"/>
+// See Chapter 22 for XML attribute access.
 {
   allAttrs: attributes($input),         // {"id": "P-1", "sku": "ABC123", "category": "electronics"}
   attrCount: count(keys(attributes($input)))  // 3
@@ -522,8 +525,10 @@ Encode data to a Base64 string for safe transport (e.g., in URLs or headers).
 - `data` (required): string to encode
 
 ```utlx
-base64Encode("Hello, World!")
-// Output: "SGVsbG8sIFdvcmxkIQ=="
+{
+  encoded: base64Encode("Hello, World!")
+}
+// Output: {"encoded": "SGVsbG8sIFdvcmxkIQ=="}
 ```
 
 === base64Decode(string) → string #text(size: 8pt, fill: gray)[(Sec)]
@@ -533,14 +538,18 @@ Decode a Base64-encoded string back to its original value.
 - `string` (required): Base64-encoded string to decode
 
 ```utlx
-base64Decode("SGVsbG8sIFdvcmxkIQ==")
-// Output: "Hello, World!"
+{
+  decoded: base64Decode("SGVsbG8sIFdvcmxkIQ==")
+}
+// Output: {"decoded": "Hello, World!"}
 
 // Real-world: decode a Base64-encoded JWT payload
 let payload = split($input.token, ".")[1]
 let decoded = parseJson(base64Decode(payload))
-decoded.sub
-// Output: "user@example.com"
+{
+  subject: decoded.sub
+}
+// Output: {"subject": "user@example.com"}
 ```
 
 === bearing(lat1, lon1, lat2, lon2) → number #text(size: 8pt, fill: gray)[(Geo)]
@@ -797,7 +806,7 @@ echo '<Invoice id="1"><Total>100</Total></Invoice>' \
 
 === c14nEquals(xml1, xml2) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-Compare two XML documents semantically (ignoring formatting differences) by comparing their canonical forms.
+Compare two XML documents semantically (ignoring formatting differences) by comparing their canonical forms. See Chapter 22.
 
 - `xml1` (required): first XML UDM value
 - `xml2` (required): second XML UDM value
@@ -867,6 +876,7 @@ Canonicalize a subset of an XML document selected by XPath expression.
 - `xpath` (required): XPath expression selecting the subset to canonicalize
 
 ```utlx
+// See Chapter 22 for XML canonicalization.
 {
   bodyCanonical: c14nSubset($input, "//soap:Body")
 }
@@ -966,6 +976,7 @@ Canonicalize XML using a specified W3C canonicalization algorithm URI.
 - `algorithm` (required): algorithm URI (e.g., `"http://www.w3.org/2001/10/xml-exc-c14n#"`)
 
 ```utlx
+// See Chapter 22 for XML canonicalization.
 {
   canonical: canonicalizeWithAlgorithm($input, "http://www.w3.org/2001/10/xml-exc-c14n#")
 }
@@ -979,6 +990,7 @@ Canonicalize JSON per RFC 8785 and compute a cryptographic hash of the result.
 - `algorithm` (optional, default `"SHA-256"`): hash algorithm
 
 ```utlx
+// See Chapter 24 for JSON processing.
 {
   digest: canonicalJSONHash(renderJson($input)),
   digest512: canonicalJSONHash(renderJson($input), "SHA-512")
@@ -992,6 +1004,7 @@ Get the size in bytes (UTF-8) of the canonical JSON form.
 - `json` (required): JSON string or UDM value
 
 ```utlx
+// See Chapter 24 for JSON processing.
 {
   sizeBytes: canonicalJSONSize(renderJson($input))
 }
@@ -1054,8 +1067,11 @@ Count the number of child elements in an XML element.
 - `element` (required): XML UDM element
 
 ```utlx
-// Given: <Order><Item/><Item/><Item/></Order>
-childCount($input)    // 3
+// Input: <Order><Item/><Item/><Item/></Order>
+// See Chapter 22 for XML processing.
+{
+  itemCount: childCount($input)    // 3
+}
 ```
 
 === childNames(element) → array #text(size: 8pt, fill: gray)[(XML)]
@@ -1065,8 +1081,11 @@ Get the names of all child elements.
 - `element` (required): XML UDM element
 
 ```utlx
-// Given: <Order><Id>1</Id><Date>2026-05-01</Date><Total>100</Total></Order>
-childNames($input)    // ["Id", "Date", "Total"]
+// Input: <Order><Id>1</Id><Date>2026-05-01</Date><Total>100</Total></Order>
+// See Chapter 22 for XML processing.
+{
+  fields: childNames($input)    // ["Id", "Date", "Total"]
+}
 ```
 
 === chunkBy(array, predicate) → array of arrays #text(size: 8pt, fill: gray)[(Arr)]
@@ -1083,6 +1102,7 @@ echo '{"items": [1, 2, 10, 11, 12, 20, 21]}' \
 ```
 
 ```utlx
+// See Chapter 20 for data restructuring patterns.
 {
   groups: chunkBy($input.records, (r) -> r.isHeader)
 }
@@ -1132,6 +1152,7 @@ Compact a CSV string by removing extra whitespace.
 - `options` (optional): formatting options
 
 ```utlx
+// See Chapter 25 for CSV processing.
 {
   compacted: compactCSV($input.csvData)
 }
@@ -1151,6 +1172,7 @@ echo '{"data": {"name": "Alice", "age": 30}}' | utlx -e 'compactJSON(renderJson(
 ```
 
 ```utlx
+// See Chapter 24 for JSON processing.
 {
   minified: compactJSON(renderJson($input))
 }
@@ -1165,6 +1187,7 @@ Compact an XML string by removing unnecessary whitespace between elements.
 - `indent` (optional): indentation level
 
 ```utlx
+// See Chapter 22 for XML processing.
 {
   minified: compactXML(renderXml($input))
 }
@@ -1180,9 +1203,11 @@ Compare two dates. Returns negative if date1 is before date2, zero if equal, pos
 ```utlx
 let d1 = parseDate("2026-01-01", "yyyy-MM-dd")
 let d2 = parseDate("2026-06-01", "yyyy-MM-dd")
-compareDates(d1, d2)    // negative (d1 is before d2)
-compareDates(d2, d1)    // positive (d2 is after d1)
-compareDates(d1, d1)    // 0 (equal)
+{
+  before: compareDates(d1, d2),    // negative (d1 is before d2)
+  after: compareDates(d2, d1),     // positive (d2 is after d1)
+  equal: compareDates(d1, d1)      // 0 (equal)
+}
 ```
 
 === compoundInterest(principal, rate, periods) → number #text(size: 8pt, fill: gray)[(Fin)]
@@ -1239,8 +1264,10 @@ Check if an object contains a specific value (searches all values).
 
 ```utlx
 let config = {host: "localhost", port: 5432, db: "mydb"}
-containsValue(config, "localhost")   // true
-containsValue(config, "redis")       // false
+{
+  hasLocalhost: containsValue(config, "localhost"),   // true
+  hasRedis: containsValue(config, "redis")           // false
+}
 ```
 
 === convertTimezone(datetime, fromTz, toTz) → datetime #text(size: 8pt, fill: gray)[(Date)]
@@ -1265,12 +1292,13 @@ echo '{"timestamp": "2026-05-01T09:00:00", "fromTz": "America/New_York", "toTz":
 
 === convertXMLEncoding(xml, targetEncoding) → binary #text(size: 8pt, fill: gray)[(XML)]
 
-Convert an XML document to a different character encoding.
+Convert an XML document to a different character encoding. See Chapter 22.
 
 - `xml` (required): XML string or UDM value
 - `targetEncoding` (required): target encoding — `"UTF-8"`, `"ISO-8859-1"`, `"UTF-16"`, etc.
 
 ```utlx
+// See Chapter 22 for XML encoding handling.
 {
   latin1Xml: convertXMLEncoding($input, "ISO-8859-1")
 }
@@ -1308,8 +1336,10 @@ Count entries in an object, optionally filtered by a predicate.
 
 ```utlx
 let obj = {a: 1, b: null, c: 3, d: null}
-countEntries(obj)                             // 4
-countEntries(obj, (k, v) -> v != null)        // 2
+{
+  total: countEntries(obj),                            // 4
+  nonNull: countEntries(obj, (k, v) -> v != null)     // 2
+}
 ```
 
 === createCDATA(content) → string #text(size: 8pt, fill: gray)[(XML)]
@@ -1319,8 +1349,11 @@ Create a CDATA section wrapping the given content.
 - `content` (required): text content to wrap
 
 ```utlx
-createCDATA("<script>alert('hi')</script>")
-// Output: "<![CDATA[<script>alert('hi')</script>]]>"
+// See Chapter 22 for XML processing.
+{
+  wrapped: createCDATA("<script>alert('hi')</script>")
+}
+// Output: {"wrapped": "<![CDATA[<script>alert('hi')</script>]]>"}
 ```
 
 === createSOAPEnvelope(body, header?) → xml #text(size: 8pt, fill: gray)[(XML)]
@@ -1331,6 +1364,7 @@ Create a SOAP envelope with proper namespace prefixes.
 - `header` (optional): XML content for the SOAP Header
 
 ```utlx
+// See Chapter 22 for XML/SOAP processing.
 {
   soapMessage: createSOAPEnvelope($input.requestBody, $input.authHeader)
 }
@@ -1367,8 +1401,10 @@ Add a new column with a default value to all rows in a CSV string.
 
 ```utlx
 let csv = "Name,Age\nAlice,30\nBob,25"
-csvAddColumn(csv, "Status", "active")
-// "Name,Age,Status\nAlice,30,active\nBob,25,active"
+{
+  result: csvAddColumn(csv, "Status", "active")
+}
+// Output: {result: "Name,Age,Status\nAlice,30,active\nBob,25,active"}
 ```
 
 === csvCell(csv, row, column) → string #text(size: 8pt, fill: gray)[(CSV)]
@@ -1381,8 +1417,10 @@ Get a specific cell value by row index and column name.
 
 ```utlx
 let csv = "Name,Age\nAlice,30\nBob,25"
-csvCell(csv, 0, "Name")    // "Alice"
-csvCell(csv, 1, "Age")     // "25"
+{
+  name: csvCell(csv, 0, "Name"),    // "Alice"
+  age: csvCell(csv, 1, "Age")      // "25"
+}
 ```
 
 === csvColumn(csv, name) → array #text(size: 8pt, fill: gray)[(CSV)]
@@ -1394,7 +1432,9 @@ Get all values from a specific column as an array.
 
 ```utlx
 let csv = "Name,Age\nAlice,30\nBob,25\nCharlie,35"
-csvColumn(csv, "Name")     // ["Alice", "Bob", "Charlie"]
+{
+  names: csvColumn(csv, "Name")     // ["Alice", "Bob", "Charlie"]
+}
 ```
 
 === csvColumns(csv) → array #text(size: 8pt, fill: gray)[(CSV)]
@@ -1405,7 +1445,9 @@ Get all column names (headers) from CSV data.
 
 ```utlx
 let csv = "Name,Age,Email\nAlice,30,alice@example.com"
-csvColumns(csv)    // ["Name", "Age", "Email"]
+{
+  headers: csvColumns(csv)    // ["Name", "Age", "Email"]
+}
 ```
 
 === csvRemoveColumns(csv, columns) → string #text(size: 8pt, fill: gray)[(CSV)]
@@ -1417,8 +1459,10 @@ Remove specified columns from a CSV string.
 
 ```utlx
 let csv = "Name,Age,Email,Phone\nAlice,30,a@b.com,555-1234"
-csvRemoveColumns(csv, ["Phone", "Email"])
-// "Name,Age\nAlice,30"
+{
+  stripped: csvRemoveColumns(csv, ["Phone", "Email"])
+}
+// Output: {stripped: "Name,Age\nAlice,30"}
 ```
 
 === csvRow(csv, index, options?) → object #text(size: 8pt, fill: gray)[(CSV)]
@@ -1431,7 +1475,9 @@ Get a specific row by index as an object (keyed by column names).
 
 ```utlx
 let csv = "Name,Age\nAlice,30\nBob,25"
-csvRow(csv, 0)    // {Name: "Alice", Age: "30"}
+{
+  firstRow: csvRow(csv, 0)    // {Name: "Alice", Age: "30"}
+}
 ```
 
 === csvRows(csv) → number #text(size: 8pt, fill: gray)[(CSV)]
@@ -1442,7 +1488,9 @@ Get the number of data rows in a CSV string (excluding header).
 
 ```utlx
 let csv = "Name,Age\nAlice,30\nBob,25\nCharlie,35"
-csvRows(csv)    // 3
+{
+  rowCount: csvRows(csv)    // 3
+}
 ```
 
 === csvSelectColumns(csv, columns) → string #text(size: 8pt, fill: gray)[(CSV)]
@@ -1454,8 +1502,10 @@ Select/project only specific columns from a CSV string.
 
 ```utlx
 let csv = "Name,Age,Email,Phone\nAlice,30,a@b.com,555-1234"
-csvSelectColumns(csv, ["Name", "Email"])
-// "Name,Email\nAlice,a@b.com"
+{
+  projected: csvSelectColumns(csv, ["Name", "Email"])
+}
+// Output: {projected: "Name,Email\nAlice,a@b.com"}
 ```
 
 === csvSort(csv, column, ascending?) → string #text(size: 8pt, fill: gray)[(CSV)]
@@ -1468,8 +1518,10 @@ Sort CSV rows by a specified column.
 
 ```utlx
 let csv = "Name,Age\nCharlie,35\nAlice,30\nBob,25"
-csvSort(csv, "Name", true)
-// "Name,Age\nAlice,30\nBob,25\nCharlie,35"
+{
+  sorted: csvSort(csv, "Name", true)
+}
+// Output: {sorted: "Name,Age\nAlice,30\nBob,25\nCharlie,35"}
 ```
 
 === csvSummarize(csv, options?) → object #text(size: 8pt, fill: gray)[(CSV)]
@@ -1481,8 +1533,11 @@ Calculate summary statistics for numeric CSV columns (count, sum, avg, min, max)
 
 ```utlx
 let csv = "Product,Price,Qty\nA,10,5\nB,20,3\nC,15,8"
-csvSummarize(csv)
-// {Price: {count: 3, sum: 45, avg: 15, min: 10, max: 20}, Qty: {count: 3, sum: 16, ...}}
+{
+  stats: csvSummarize(csv)
+}
+// Output: {stats: {Price: {count: 3, sum: 45, avg: 15, min: 10, max: 20},
+//   Qty: {count: 3, sum: 16, ...}}}
 ```
 
 === csvTranspose(csv, options?, header?, separator?) → string #text(size: 8pt, fill: gray)[(CSV)]
@@ -1496,8 +1551,10 @@ Transpose CSV — swap rows and columns.
 
 ```utlx
 let csv = "Name,Age\nAlice,30\nBob,25"
-csvTranspose(csv)
-// "Name,Alice,Bob\nAge,30,25"
+{
+  transposed: csvTranspose(csv)
+}
+// Output: {transposed: "Name,Alice,Bob\nAge,30,25"}
 ```
 
 === currentDir() → string #text(size: 8pt, fill: gray)[(Sys)]
@@ -1556,10 +1613,12 @@ echo '{"items": ["A", "B", "C", "D", "E", "F", "G"]}' \
 
 ```utlx
 // Batch processing — send items in groups of 100
-map(chunk($input.records, 100), (batch) -> {
-  batchSize: count(batch),
-  items: batch
-})
+{
+  batches: map(chunk($input.records, 100), (batch) -> {
+    batchSize: count(batch),
+    items: batch
+  })
+}
 ```
 
 === coalesce(value1, value2, ...) → value #text(size: 8pt, fill: gray)[(Type)]
@@ -1580,7 +1639,7 @@ echo '{"nickname": null, "displayName": null, "fullName": "Alice Johnson"}' \
 }
 ```
 
-*Note:* for two values, the `??` operator is cleaner: `$input.name ?? "Unknown"`.
+*Note:* for two values, the `??` operator is cleaner: `$input.name ?? "Unknown"` (see Chapter 9).
 
 === compact(array) → array #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -1697,17 +1756,22 @@ Create a structured QName from its parts. See Chapter 22.
 - `prefix` (optional): the namespace prefix
 
 ```utlx
-createQname("Invoice", "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2", "cbc")
-// Output: {
-//   localName: "Invoice",
+// See Chapter 22 for XML namespaces.
+{
+  qname: createQname("Invoice",
+    "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2", "cbc")
+}
+// Output: {qname: {localName: "Invoice",
 //   namespaceUri: "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
-//   prefix: "cbc",
-//   qualifiedName: "cbc:Invoice"
-// }
+//   prefix: "cbc", qualifiedName: "cbc:Invoice"}}
 
 // Without prefix:
-createQname("Order", "urn:example:orders")
-// Output: {localName: "Order", namespaceUri: "urn:example:orders", prefix: "", qualifiedName: "Order"}
+{
+  qname: createQname("Order", "urn:example:orders")
+}
+// Output: {qname: {localName: "Order",
+//   namespaceUri: "urn:example:orders",
+//   prefix: "", qualifiedName: "Order"}}
 ```
 
 === csvFilter(csv, column, operator, value) → string #text(size: 8pt, fill: gray)[(CSV)]
@@ -1720,14 +1784,14 @@ Filter CSV rows by a column condition. Returns a new CSV string. See Chapter 25.
 - `value` (required): value to compare against
 
 ```utlx
-// Given CSV string:
+// See Chapter 25 for CSV processing.
 let csv = "Name,Status,Amount\nAlice,ACTIVE,100\nBob,CLOSED,200\nCharlie,ACTIVE,50"
-
-csvFilter(csv, "Status", "eq", "ACTIVE")
-// Output: "Name,Status,Amount\nAlice,ACTIVE,100\nCharlie,ACTIVE,50"
-
-csvFilter(csv, "Amount", "gt", "75")
-// Output: "Name,Status,Amount\nAlice,ACTIVE,100\nBob,CLOSED,200"
+{
+  active: csvFilter(csv, "Status", "eq", "ACTIVE"),
+  // "Name,Status,Amount\nAlice,ACTIVE,100\nCharlie,ACTIVE,50"
+  highValue: csvFilter(csv, "Amount", "gt", "75")
+  // "Name,Status,Amount\nAlice,ACTIVE,100\nBob,CLOSED,200"
+}
 ```
 
 Also: `csvSort(csv, column, ascending?)`, `csvColumns(csv)`, `csvRows(csv)`, `csvRow(csv, index)`, `csvCell(csv, row, column)`, `csvColumn(csv, name)`, `csvTranspose(csv)`, `csvAddColumn(csv, name, default)`, `csvRemoveColumns(csv, names)`, `csvSelectColumns(csv, names)`, `csvSummarize(csv)`.
@@ -1741,8 +1805,10 @@ Extract the day-of-month component (1-31) from a date.
 - `date` (required): a date or datetime value
 
 ```utlx
-day(parseDate("2026-05-15", "yyyy-MM-dd"))    // 15
-day(now())                                     // current day of month
+{
+  dayOfMonth: day(parseDate("2026-05-15", "yyyy-MM-dd")),    // 15
+  today: day(now())                                          // current day of month
+}
 ```
 
 === dayOfMonth(date) → number #text(size: 8pt, fill: gray)[(Date)]
@@ -1752,7 +1818,9 @@ Alias for `day()`. Extract the day-of-month component (1-31) from a date.
 - `date` (required): a date or datetime value
 
 ```utlx
-dayOfMonth(parseDate("2026-05-15", "yyyy-MM-dd"))    // 15
+{
+  dom: dayOfMonth(parseDate("2026-05-15", "yyyy-MM-dd"))    // 15
+}
 ```
 
 === dayOfWeek(date) → number #text(size: 8pt, fill: gray)[(Date)]
@@ -1763,7 +1831,9 @@ Return the day of the week as a number (1=Monday, 7=Sunday).
 
 ```utlx
 let d = parseDate("2026-05-01", "yyyy-MM-dd")
-dayOfWeek(d)          // 5 (Thursday — 1=Monday, 7=Sunday)
+{
+  weekday: dayOfWeek(d)          // 5 (Thursday — 1=Monday, 7=Sunday)
+}
 ```
 
 === dayOfWeekName(date) → string #text(size: 8pt, fill: gray)[(Date)]
@@ -1774,7 +1844,9 @@ Return the day of the week as a name (e.g., "Thursday").
 
 ```utlx
 let d = parseDate("2026-05-01", "yyyy-MM-dd")
-dayOfWeekName(d)      // "Thursday"
+{
+  weekdayName: dayOfWeekName(d)      // "Thursday"
+}
 ```
 
 === dayOfYear(date) → number #text(size: 8pt, fill: gray)[(Date)]
@@ -1785,7 +1857,9 @@ Return the day number within the year (1-365 or 1-366 for leap years).
 
 ```utlx
 let d = parseDate("2026-05-01", "yyyy-MM-dd")
-dayOfYear(d)          // 121 (121st day of 2026)
+{
+  ordinalDay: dayOfYear(d)          // 121 (121st day of 2026)
+}
 ```
 
 Also: `daysInMonth(year, month)` → `daysInMonth(2026, 2)` returns `28`. `daysInYear(year)` → `daysInYear(2024)` returns `366` (leap year). `isLeapYear(year)`.
@@ -1800,7 +1874,9 @@ Alias for `diffDays()`. Calculate the difference in days between two dates.
 ```utlx
 let start = parseDate("2026-05-01", "yyyy-MM-dd")
 let end = parseDate("2026-05-15", "yyyy-MM-dd")
-daysBetween(start, end)    // 14
+{
+  days: daysBetween(start, end)    // 14
+}
 ```
 
 === daysInMonth(date) → number #text(size: 8pt, fill: gray)[(Date)]
@@ -1810,9 +1886,11 @@ Get the number of days in the month of the given date.
 - `date` (required): a date or datetime value
 
 ```utlx
-daysInMonth(parseDate("2026-02-01", "yyyy-MM-dd"))   // 28
-daysInMonth(parseDate("2024-02-01", "yyyy-MM-dd"))   // 29 (leap year)
-daysInMonth(parseDate("2026-01-15", "yyyy-MM-dd"))   // 31
+{
+  feb2026: daysInMonth(parseDate("2026-02-01", "yyyy-MM-dd")),   // 28
+  feb2024: daysInMonth(parseDate("2024-02-01", "yyyy-MM-dd")),   // 29 (leap year)
+  jan: daysInMonth(parseDate("2026-01-15", "yyyy-MM-dd"))        // 31
+}
 ```
 
 === daysInYear(date) → number #text(size: 8pt, fill: gray)[(Date)]
@@ -1822,8 +1900,10 @@ Get the number of days in the year of the given date (365 or 366 for leap years)
 - `date` (required): a date or datetime value
 
 ```utlx
-daysInYear(parseDate("2026-01-01", "yyyy-MM-dd"))    // 365
-daysInYear(parseDate("2024-01-01", "yyyy-MM-dd"))    // 366 (leap year)
+{
+  y2026: daysInYear(parseDate("2026-01-01", "yyyy-MM-dd")),    // 365
+  y2024: daysInYear(parseDate("2024-01-01", "yyyy-MM-dd"))     // 366 (leap year)
+}
 ```
 
 === debug(value, message?) → value #text(size: 8pt, fill: gray)[(Sys)]
@@ -1850,8 +1930,10 @@ Create a human-readable debug representation of a UDM value (multi-line, indente
 - `indent` (optional): indentation level
 
 ```utlx
-debugPrint($input, "request")
-// "[request] {name: \"Alice\", age: 30, ...}"
+{
+  dump: debugPrint($input, "request")
+}
+// Output: {"dump": "[request] {name: \"Alice\", age: 30, ...}"}
 ```
 
 === debugPrintCompact(value, label?) → string #text(size: 8pt, fill: gray)[(Sys)]
@@ -1862,8 +1944,10 @@ Create a compact single-line debug representation of a UDM value.
 - `label` (optional): label prefix
 
 ```utlx
-debugPrintCompact($input, "payload")
-// "[payload] {name:Alice,age:30}"
+{
+  dump: debugPrintCompact($input, "payload")
+}
+// Output: {"dump": "[payload] {name:Alice,age:30}"}
 ```
 
 === decodeJWS(token) → object #text(size: 8pt, fill: gray)[(Sec)]
@@ -1951,6 +2035,9 @@ Create a deep (recursive) copy of an object. Modifications to the clone do not a
 let original = {nested: {value: 42}}
 let copy = deepClone(original)
 // copy is a fully independent copy — no shared references
+{
+  cloned: copy    // {nested: {value: 42}}
+}
 ```
 
 === deepMerge(obj1, obj2) → object #text(size: 8pt, fill: gray)[(Obj)]
@@ -1963,9 +2050,10 @@ Recursively merge two objects. At each level, properties from `obj2` override `o
 ```utlx
 let base = {server: {host: "localhost", port: 5432, ssl: false}}
 let prod = {server: {host: "prod-db.example.com", ssl: true}}
-
-deepMerge(base, prod)
-// {server: {host: "prod-db.example.com", port: 5432, ssl: true}}
+{
+  config: deepMerge(base, prod)
+}
+// Output: {config: {server: {host: "prod-db.example.com", port: 5432, ssl: true}}}
 // port survived from base — deep merge, not replace
 ```
 
@@ -1983,8 +2071,10 @@ let configs = [
   {server: {host: "staging-db.internal"}},
   {server: {ssl: true}}
 ]
-deepMergeAll(configs)
-// {server: {host: "staging-db.internal", port: 5432, ssl: true}}
+{
+  merged: deepMergeAll(configs)
+}
+// Output: {merged: {server: {host: "staging-db.internal", port: 5432, ssl: true}}}
 ```
 
 === deflate(data) → binary #text(size: 8pt, fill: gray)[(Bin)]
@@ -2035,17 +2125,18 @@ Detect the encoding declared in an XML document's declaration.
 - `xmlString` (required): XML string or UDM value
 
 ```utlx
-// Given: XML with encoding declaration
-// <?xml version="1.0" encoding="ISO-8859-1"?>
-// <Order>...</Order>
+// Input: <?xml version="1.0" encoding="ISO-8859-1"?><Order>...</Order>
+// See Chapter 22 for XML processing.
+{
+  encoding: detectXMLEncoding($input)
+}
+// Output: {"encoding": "ISO-8859-1"}
 
-detectXMLEncoding($input)
-// Output: "ISO-8859-1"
-
-// UTF-8 (default when no declaration):
-// <Order>...</Order>
-detectXMLEncoding($input)
-// Output: "UTF-8"
+// Input: <Order>...</Order>  (no encoding declaration — defaults to UTF-8)
+{
+  encoding: detectXMLEncoding($input)
+}
+// Output: {"encoding": "UTF-8"}
 ```
 
 Also: `convertXMLEncoding(xml, targetEncoding)` re-encodes the document.
@@ -2083,7 +2174,9 @@ Difference in hours between two datetimes.
 ```utlx
 let start = parseDate("2026-05-01T08:00:00", "yyyy-MM-dd'T'HH:mm:ss")
 let end = parseDate("2026-05-01T17:30:00", "yyyy-MM-dd'T'HH:mm:ss")
-diffHours(start, end)    // 9
+{
+  hours: diffHours(start, end)    // 9
+}
 ```
 
 === diffMinutes(datetime1, datetime2) → number #text(size: 8pt, fill: gray)[(Date)]
@@ -2096,7 +2189,9 @@ Difference in minutes between two datetimes.
 ```utlx
 let start = parseDate("2026-05-01T08:00:00", "yyyy-MM-dd'T'HH:mm:ss")
 let end = parseDate("2026-05-01T08:45:00", "yyyy-MM-dd'T'HH:mm:ss")
-diffMinutes(start, end)    // 45
+{
+  minutes: diffMinutes(start, end)    // 45
+}
 ```
 
 === diffMonths(date1, date2) → number #text(size: 8pt, fill: gray)[(Date)]
@@ -2109,7 +2204,9 @@ Difference in months between two dates (approximate whole months).
 ```utlx
 let start = parseDate("2026-01-15", "yyyy-MM-dd")
 let end = parseDate("2026-05-15", "yyyy-MM-dd")
-diffMonths(start, end)    // 4
+{
+  months: diffMonths(start, end)    // 4
+}
 ```
 
 === diffSeconds(datetime1, datetime2) → number #text(size: 8pt, fill: gray)[(Date)]
@@ -2122,7 +2219,9 @@ Difference in seconds between two datetimes.
 ```utlx
 let start = parseDate("2026-05-01T08:00:00", "yyyy-MM-dd'T'HH:mm:ss")
 let end = parseDate("2026-05-01T08:01:30", "yyyy-MM-dd'T'HH:mm:ss")
-diffSeconds(start, end)    // 90
+{
+  seconds: diffSeconds(start, end)    // 90
+}
 ```
 
 === diffWeeks(date1, date2) → number #text(size: 8pt, fill: gray)[(Date)]
@@ -2135,7 +2234,9 @@ Difference in weeks between two dates.
 ```utlx
 let start = parseDate("2026-05-01", "yyyy-MM-dd")
 let end = parseDate("2026-05-22", "yyyy-MM-dd")
-diffWeeks(start, end)    // 3
+{
+  weeks: diffWeeks(start, end)    // 3
+}
 ```
 
 === diffYears(date1, date2) → number #text(size: 8pt, fill: gray)[(Date)]
@@ -2148,7 +2249,9 @@ Difference in years between two dates.
 ```utlx
 let start = parseDate("2020-01-01", "yyyy-MM-dd")
 let end = parseDate("2026-05-01", "yyyy-MM-dd")
-diffYears(start, end)    // 6
+{
+  years: diffYears(start, end)    // 6
+}
 ```
 
 === distance(lat1, lon1, lat2, lon2) → number #text(size: 8pt, fill: gray)[(Geo)]
@@ -2255,7 +2358,9 @@ echo '{"items": ["A", "B", "C", "D", "E"]}' | utlx -e 'drop($input.items, 2)'
 ```utlx
 // Skip CSV header row (when headers: false)
 let dataRows = drop($input, 1)
-map(dataRows, (row) -> { name: row[0], value: row[1] })
+{
+  rows: map(dataRows, (row) -> { name: row[0], value: row[1] })
+}
 ```
 
 === take(array, n) → array #text(size: 8pt, fill: gray)[(Arr)]

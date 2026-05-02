@@ -98,7 +98,7 @@ padRight("hello", 10, ".")              // "hello....."
 
 === parent(element) → element #text(size: 8pt, fill: gray)[(XML)]
 
-Get the parent element of an XML node (if metadata is available).
+Get the parent element of an XML node (if metadata is available). See Chapter 22.
 
 - `element` (required): an XML element
 
@@ -127,7 +127,7 @@ For normal file processing, use `input json`/`input xml` in the header — these
 
 === parseJson(string) → value #text(size: 8pt, fill: gray)[(Fmt)]
 
-Parse a JSON string into a navigable UDM value.
+Parse a JSON string into a navigable UDM value. See Chapter 24.
 
 - `string` (required): the JSON string to parse
 
@@ -138,7 +138,7 @@ config.database.host                     // "localhost"
 
 === parseXml(string) → value #text(size: 8pt, fill: gray)[(Fmt)]
 
-Parse an XML string into a navigable UDM value.
+Parse an XML string into a navigable UDM value. See Chapter 22.
 
 - `string` (required): the XML string to parse
 
@@ -149,7 +149,7 @@ doc.Order.Customer                       // "Acme Corp"
 
 === parseYaml(string) → value #text(size: 8pt, fill: gray)[(Fmt)]
 
-Parse a YAML string into a navigable UDM value.
+Parse a YAML string into a navigable UDM value. See Chapter 26.
 
 - `string` (required): the YAML string to parse
 
@@ -160,7 +160,7 @@ config.database.host                     // "localhost"
 
 === parseCsv(string, options?) → array #text(size: 8pt, fill: gray)[(Fmt)]
 
-Parse a CSV string into an array of rows (objects if headers, arrays if not).
+Parse a CSV string into an array of rows (objects if headers, arrays if not). See Chapter 25.
 
 - `string` (required): the CSV string to parse
 - `options` (optional): `{headers: false}`, `{delimiter: ";"}`
@@ -257,7 +257,7 @@ parseDouble("3.14159")                   // 3.14159
 
 === parseEUNumber(string) → number #text(size: 8pt, fill: gray)[(Num)]
 
-Parse a European-formatted number string (dot=thousands, comma=decimal) to a standard number. See Chapter 25 (CSV).
+Parse a European-formatted number string (dot=thousands, comma=decimal) to a standard number. See Chapter 25.
 
 - `string` (required): the formatted number string
 
@@ -350,7 +350,8 @@ Parse a URL string into its components (protocol, host, port, path, query, fragm
 
 ```bash
 echo '{"url": "https://example.com:8080/api/v1?key=abc#section"}' | utlx -e 'parseURL($input.url)'
-# {"protocol": "https", "host": "example.com", "port": 8080, "path": "/api/v1", "query": "key=abc", "fragment": "section"}
+# {"protocol": "https", "host": "example.com", "port": 8080,
+#  "path": "/api/v1", "query": "key=abc", "fragment": "section"}
 ```
 
 ```utlx
@@ -488,7 +489,7 @@ pow(10, 3)                               // 1000
 
 === prepareForSignature(xml) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Prepare XML for digital signature (XMLDSig) by canonicalizing it.
+Prepare XML for digital signature (XMLDSig) by canonicalizing it. See Chapter 22.
 
 - `xml` (required): XML string to prepare
 
@@ -823,7 +824,7 @@ remove("$1,234.56", ",")                // "$1234.56"
 
 === removeBOM(data) → data #text(size: 8pt, fill: gray)[(XML)]
 
-Remove the Byte Order Mark (BOM) if present at the start of the data.
+Remove the Byte Order Mark (BOM) if present at the start of the data. See Chapter 22.
 
 - `data` (required): binary or string data
 
@@ -875,7 +876,7 @@ render({Order: {Id: "1"}}, "xml")        // "<Order><Id>1</Id></Order>"
 
 === renderJson(value, pretty?) → string #text(size: 8pt, fill: gray)[(Fmt)]
 
-Serialize a UDM value to a JSON string.
+Serialize a UDM value to a JSON string. See Chapter 24.
 
 - `value` (required): UDM value to serialize
 - `pretty` (optional, default false): pretty-print with indentation
@@ -887,7 +888,7 @@ renderJson({name: "Alice", age: 30}, true)  // pretty-printed with newlines
 
 === renderCsv(value) → string #text(size: 8pt, fill: gray)[(CSV)]
 
-Render a UDM array as a CSV string.
+Render a UDM array as a CSV string. See Chapter 25.
 
 - `value` (required): array of objects (each object becomes a row)
 
@@ -898,7 +899,7 @@ renderCsv([{name: "Alice", age: 30}, {name: "Bob", age: 25}])
 
 === renderXml(value) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Render a UDM object as an XML string.
+Render a UDM object as an XML string. See Chapter 22.
 
 - `value` (required): UDM value to serialize
 
@@ -909,7 +910,7 @@ renderXml({Order: {Id: "1", Item: "Widget"}})
 
 === renderYaml(value) → string #text(size: 8pt, fill: gray)[(YAML)]
 
-Render a UDM object as a YAML string.
+Render a UDM object as a YAML string. See Chapter 26.
 
 - `value` (required): UDM value to serialize
 
@@ -971,14 +972,16 @@ replaceWithFunction("hello world", "[a-z]+", (m) -> upper(m))
 
 === resolveQName(qname, namespaces) → object #text(size: 8pt, fill: gray)[(XML)]
 
-Resolve a QName string to a full qualified name with namespace URI.
+Resolve a QName string to a full qualified name with namespace URI. See Chapter 22.
 
 - `qname` (required): qualified name (e.g. `"ns:Element"`)
 - `namespaces` (required): namespace map object
 
 ```utlx
 resolveQName("soap:Envelope", {"soap": "http://schemas.xmlsoap.org/soap/envelope/"})
-// {"localName": "Envelope", "namespaceUri": "http://schemas.xmlsoap.org/soap/envelope/", "prefix": "soap"}
+// {"localName": "Envelope",
+//  "namespaceUri": "http://schemas.xmlsoap.org/soap/envelope/",
+//  "prefix": "soap"}
 ```
 
 === reverse(array) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -1115,7 +1118,7 @@ setPath("https://example.com/old/path", "/api/v2/resource")
 
 === sha224(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute a SHA-224 hash. Returns 56-char hex string.
+Compute a SHA-224 hash. Returns 56-char hex string. See Chapter 38.
 
 - `data` (required): string to hash
 
@@ -1125,7 +1128,7 @@ sha224("sensitive data")                 // 56-char hex string
 
 === sha256(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute a SHA-256 hash. Returns 64-char hex string. See `hash` for generic algorithm selection.
+Compute a SHA-256 hash. Returns 64-char hex string. See `hash` for generic algorithm selection. See Chapter 38.
 
 - `data` (required): string to hash
 
@@ -1135,7 +1138,7 @@ sha256("sensitive data")                 // 64-char hex string
 
 === sha512(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute a SHA-512 hash. Returns 128-char hex string.
+Compute a SHA-512 hash. Returns 128-char hex string. See Chapter 38.
 
 - `data` (required): string to hash
 
@@ -1145,7 +1148,7 @@ sha512("sensitive data")                 // 128-char hex string
 
 === sha1(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute a SHA-1 hash. Returns 40-char hex string. Avoid for security purposes.
+Compute a SHA-1 hash. Returns 40-char hex string. Avoid for security purposes. See Chapter 38.
 
 - `data` (required): string to hash
 
@@ -1155,7 +1158,7 @@ sha1("sensitive data")                   // 40-char hex string (avoid for securi
 
 === sha384(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute a SHA-384 hash. Returns 96-char hex string.
+Compute a SHA-384 hash. Returns 96-char hex string. See Chapter 38.
 
 - `data` (required): string to hash
 
@@ -1165,7 +1168,7 @@ sha384("sensitive data")                 // 96-char hex string
 
 === sha3_256(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute a SHA3-256 hash (if available). Returns 64-char hex string.
+Compute a SHA3-256 hash (if available). Returns 64-char hex string. See Chapter 38.
 
 - `data` (required): string to hash
 
@@ -1175,7 +1178,7 @@ sha3_256("sensitive data")               // 64-char hex string
 
 === sha3_512(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-Compute a SHA3-512 hash (if available). Returns 128-char hex string.
+Compute a SHA3-512 hash (if available). Returns 128-char hex string. See Chapter 38.
 
 - `data` (required): string to hash
 
@@ -1207,7 +1210,7 @@ shiftRight(toBinary("A", "UTF-8"), 2)    // bits shifted right by 2
 
 === shouldUseCDATA(content, threshold?) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-Determine if content should be wrapped in a CDATA section (based on special character count).
+Determine if content should be wrapped in a CDATA section (based on special character count). See Chapter 22.
 
 - `content` (required): the text content to evaluate
 - `threshold` (optional): number of special chars that triggers CDATA
@@ -1488,7 +1491,7 @@ stringOrDefault($input.name, "Unknown")  // "Unknown" if name is null
 
 === stripBOM(string) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Remove the BOM character (U+FEFF) from the beginning of a string.
+Remove the BOM character (U+FEFF) from the beginning of a string. See Chapter 22.
 
 - `string` (required): string that may start with BOM
 
@@ -1661,12 +1664,12 @@ Get the system temporary directory path.
 
 === textContent(element) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Get concatenated text content from an XML element (all text nodes).
+Get concatenated text content from an XML element (all text nodes). See Chapter 22.
 
 - `element` (required): an XML element
 
 ```utlx
-// Given <p>Hello <b>world</b>!</p>
+// Input: <p>Hello <b>world</b>!</p>
 textContent($input.p)                    // "Hello world!"
 ```
 
@@ -2175,7 +2178,7 @@ uncamelize("firstName")                  // "first name"
 
 === unescapeXML(string) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Unescape XML entities (`&lt;`, `&gt;`, `&amp;`, `&quot;`, `&apos;`) back to their characters.
+Unescape XML entities (`&lt;`, `&gt;`, `&amp;`, `&quot;`, `&apos;`) back to their characters. See Chapter 22.
 
 - `string` (required): string with XML entities
 
@@ -2259,7 +2262,7 @@ unique(["apple", "banana", "apple"])     // ["apple", "banana"]
 
 === unnest(array, childKey) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-Flatten nested children alongside parent fields. The reverse of `nestBy` — converts hierarchical data to flat rows.
+Flatten nested children alongside parent fields. The reverse of `nestBy` — converts hierarchical data to flat rows. See Chapter 20.
 
 - `array` (required): array of parent objects containing nested children
 - `childKey` (required): the key holding the children array
@@ -2270,6 +2273,10 @@ echo '{"orders": [{"customer": "Alice", "items": [{"sku": "A1", "qty": 2}, {"sku
 ```
 
 ```utlx
+// Input: [{customer: "Alice",
+//          items: [{sku: "A1", qty: 2}, {sku: "B2", qty: 1}]}]
+// Output: [{customer: "Alice", sku: "A1", qty: 2},
+//          {customer: "Alice", sku: "B2", qty: 1}]
 // Typical use: denormalize order/line-items for flat CSV export
 let flat = unnest($input.orders, "items")
 map(flat, (row) -> {
@@ -2281,7 +2288,7 @@ map(flat, (row) -> {
 
 === unwrapCDATA(string) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Unwrap CDATA section if present, otherwise return the original string.
+Unwrap CDATA section if present, otherwise return the original string. See Chapter 22.
 
 - `string` (required): string that may be wrapped in `<![CDATA[...]]>`
 
@@ -2327,7 +2334,7 @@ unzipN([[1, "a", true], [2, "b", false]])
 
 === updateXMLEncoding(xml, encoding) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Update the encoding declaration in an XML processing instruction.
+Update the encoding declaration in an XML processing instruction. See Chapter 22.
 
 - `xml` (required): XML string
 - `encoding` (required): new encoding name (e.g. `"UTF-16"`)
@@ -2435,7 +2442,7 @@ validateDate("01/05/2026", "dd/MM/yyyy") // true
 
 === validateDigest(xml, expectedDigest) → boolean #text(size: 8pt, fill: gray)[(Sec)]
 
-Validate that an XML digest matches the expected value.
+Validate that an XML digest matches the expected value. See Chapter 38.
 
 - `xml` (required): XML string to validate
 - `expectedDigest` (required): expected hash value
@@ -2447,7 +2454,7 @@ validateDigest($input.signedXml, $input.expectedHash)
 
 === validateEncoding(encoding) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-Check if an encoding name is valid and supported.
+Check if an encoding name is valid and supported. See Chapter 22.
 
 - `encoding` (required): encoding name string
 
@@ -2527,7 +2534,7 @@ wordCase("hello")                        // "Hello"
 
 === wrapIfNeeded(content, threshold?, tag?) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Automatically wrap content in CDATA if it contains enough special characters to benefit.
+Automatically wrap content in CDATA if it contains enough special characters to benefit. See Chapter 22.
 
 - `content` (required): the text content
 - `threshold` (optional): special char count threshold
@@ -2604,7 +2611,7 @@ writeInt64(1000000000)                   // 8 bytes of binary data
 
 === xmlEscape(string) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Escape XML special characters (`<`, `>`, `&`, `"`, `'`).
+Escape XML special characters (`<`, `>`, `&`, `"`, `'`). See Chapter 22.
 
 - `string` (required): the string to escape
 
@@ -2620,7 +2627,7 @@ xmlEscape("price < 100 & tax > 0")         // "price &lt; 100 &amp; tax &gt; 0"
 
 === xmlUnescape(string) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Unescape XML entity references back to their original characters.
+Unescape XML entity references back to their original characters. See Chapter 22.
 
 - `string` (required): the string to unescape
 
@@ -2656,7 +2663,7 @@ xor(false, false)                        // false
 
 === yamlEntries(object) → array #text(size: 8pt, fill: gray)[(YAML)]
 
-Get entries (key-value pairs) from a YAML object as an array of `[key, value]` pairs.
+Get entries (key-value pairs) from a YAML object as an array of `[key, value]` pairs. See Chapter 26.
 
 - `object` (required): YAML object
 
@@ -2667,7 +2674,7 @@ yamlEntries({host: "localhost", port: 5432})
 
 === yamlExists(yaml, path) → boolean #text(size: 8pt, fill: gray)[(YAML)]
 
-Check if a path exists in a YAML structure.
+Check if a path exists in a YAML structure. See Chapter 26.
 
 - `yaml` (required): YAML value
 - `path` (required): dot-separated path
@@ -2678,7 +2685,7 @@ yamlExists($input, "database.host")      // true or false
 
 === yamlFilterByKeyPattern(object, pattern) → object #text(size: 8pt, fill: gray)[(YAML)]
 
-Filter a YAML object, keeping only keys that match a pattern.
+Filter a YAML object, keeping only keys that match a pattern. See Chapter 26.
 
 - `object` (required): YAML object
 - `pattern` (required): regex pattern for keys
@@ -2689,7 +2696,7 @@ yamlFilterByKeyPattern($input, "^db_.*") // keys starting with "db_"
 
 === yamlFindByField(yaml, fieldName) → array #text(size: 8pt, fill: gray)[(YAML)]
 
-Find all values in a YAML structure by field name (recursive search).
+Find all values in a YAML structure by field name (recursive search). See Chapter 26.
 
 - `yaml` (required): YAML value
 - `fieldName` (required): field name to search for
@@ -2700,7 +2707,7 @@ yamlFindByField($input, "version")       // all "version" values in the tree
 
 === yamlFindObjectsWithField(yaml, fieldName) → array #text(size: 8pt, fill: gray)[(YAML)]
 
-Find all objects containing a specific field (recursive search).
+Find all objects containing a specific field (recursive search). See Chapter 26.
 
 - `yaml` (required): YAML value
 - `fieldName` (required): field name to search for
@@ -2712,7 +2719,7 @@ yamlFindObjectsWithField($input, "image")
 
 === yamlFromEntries(entries) → object #text(size: 8pt, fill: gray)[(YAML)]
 
-Create a YAML object from an array of `[key, value]` pairs.
+Create a YAML object from an array of `[key, value]` pairs. See Chapter 26.
 
 - `entries` (required): array of `[key, value]` pairs
 
@@ -2723,7 +2730,7 @@ yamlFromEntries([["host", "localhost"], ["port", 5432]])
 
 === yamlGetDocument(yaml, index) → value #text(size: 8pt, fill: gray)[(YAML)]
 
-Get a specific document from a multi-document YAML by index.
+Get a specific document from a multi-document YAML by index. See Chapter 26.
 
 - `yaml` (required): multi-document YAML string
 - `index` (required): zero-based document index
@@ -2734,7 +2741,7 @@ yamlGetDocument(multiDocYaml, 0)         // first document
 
 === yamlHasRequiredFields(object, fields) → boolean #text(size: 8pt, fill: gray)[(YAML)]
 
-Check if a YAML object has all the required fields.
+Check if a YAML object has all the required fields. See Chapter 26.
 
 - `object` (required): YAML object to check
 - `fields` (required): array of required field names
@@ -2746,7 +2753,7 @@ yamlHasRequiredFields($input, ["apiVersion", "kind", "metadata"])
 
 === yamlKeys(object) → array #text(size: 8pt, fill: gray)[(YAML)]
 
-Get all keys from a YAML object.
+Get all keys from a YAML object. See Chapter 26.
 
 - `object` (required): YAML object
 
@@ -2756,7 +2763,7 @@ yamlKeys($input)                         // ["apiVersion", "kind", "metadata", "
 
 === yamlMerge(obj1, obj2) → object #text(size: 8pt, fill: gray)[(YAML)]
 
-Deep merge two YAML objects. Values from `obj2` override `obj1` for matching keys.
+Deep merge two YAML objects. Values from `obj2` override `obj1` for matching keys. See Chapter 26.
 
 - `obj1` (required): base object
 - `obj2` (required): override object
@@ -2768,7 +2775,7 @@ yamlMerge({a: 1, b: {c: 2}}, {b: {d: 3}})
 
 === yamlMergeAll(objects) → object #text(size: 8pt, fill: gray)[(YAML)]
 
-Merge multiple YAML objects in order (last wins for conflicts).
+Merge multiple YAML objects in order (last wins for conflicts). See Chapter 26.
 
 - `objects` (required): array of objects to merge
 
@@ -2778,7 +2785,7 @@ yamlMergeAll([{a: 1}, {b: 2}, {a: 3}])  // {a: 3, b: 2}
 
 === yamlOmitKeys(object, keys) → object #text(size: 8pt, fill: gray)[(YAML)]
 
-Remove specific keys from a YAML object.
+Remove specific keys from a YAML object. See Chapter 26.
 
 - `object` (required): YAML object
 - `keys` (required): array of keys to remove
@@ -2789,7 +2796,7 @@ yamlOmitKeys($input, ["password", "secret"])
 
 === yamlSelectKeys(object, keys) → object #text(size: 8pt, fill: gray)[(YAML)]
 
-Keep only specific keys from a YAML object.
+Keep only specific keys from a YAML object. See Chapter 26.
 
 - `object` (required): YAML object
 - `keys` (required): array of keys to keep
@@ -2800,7 +2807,7 @@ yamlSelectKeys($input, ["name", "version"])
 
 === yamlSort(object, comparator?) → object #text(size: 8pt, fill: gray)[(YAML)]
 
-Sort YAML object keys alphabetically.
+Sort YAML object keys alphabetically. See Chapter 26.
 
 - `object` (required): YAML object to sort
 - `comparator` (optional): custom comparator function
@@ -2823,7 +2830,7 @@ docs[1]                                  // second document
 
 === yamlMergeDocuments(docs) → string #text(size: 8pt, fill: gray)[(YAML)]
 
-Merge an array of YAML documents back into a single multi-document string joined with `---` separators.
+Merge an array of YAML documents back into a single multi-document string joined with `---` separators. See Chapter 26.
 
 - `docs` (required): array of documents
 
@@ -2833,7 +2840,7 @@ yamlMergeDocuments(docs)                 // joined with --- separators
 
 === yamlPath(yaml, path) → value #text(size: 8pt, fill: gray)[(YAML)]
 
-Access a nested value in a YAML structure using a dot-separated path.
+Access a nested value in a YAML structure using a dot-separated path. See Chapter 26.
 
 - `yaml` (required): YAML UDM value
 - `path` (required): dot-separated path string
@@ -2844,7 +2851,7 @@ yamlPath($input, "database.host")        // "localhost"
 
 === yamlSet(yaml, path, value) → value #text(size: 8pt, fill: gray)[(YAML)]
 
-Return a new YAML structure with the value at the given path replaced.
+Return a new YAML structure with the value at the given path replaced. See Chapter 26.
 
 - `yaml` (required): YAML UDM value
 - `path` (required): dot-separated path string
@@ -2856,7 +2863,7 @@ yamlSet($input, "database.port", 5433)   // returns new structure with port chan
 
 === yamlDelete(yaml, path) → value #text(size: 8pt, fill: gray)[(YAML)]
 
-Return a new YAML structure with the value at the given path removed.
+Return a new YAML structure with the value at the given path removed. See Chapter 26.
 
 - `yaml` (required): YAML UDM value
 - `path` (required): dot-separated path string
@@ -2869,7 +2876,7 @@ Also: `yamlDeepMerge(obj1, obj2)`, `yamlKeys(obj)`, `yamlValues(obj)`, `yamlSort
 
 === yamlValidate(yaml, rules) → object #text(size: 8pt, fill: gray)[(YAML)]
 
-Validate YAML against a set of rules. Returns validation result with errors.
+Validate YAML against a set of rules. Returns validation result with errors. See Chapter 26.
 
 - `yaml` (required): YAML value to validate
 - `rules` (required): validation rules object
@@ -2881,7 +2888,7 @@ yamlValidate($input, {required: ["apiVersion", "kind"]})
 
 === yamlValidateKeyPattern(object, pattern) → boolean #text(size: 8pt, fill: gray)[(YAML)]
 
-Validate that all keys in a YAML object match a given pattern.
+Validate that all keys in a YAML object match a given pattern. See Chapter 26.
 
 - `object` (required): YAML object to validate
 - `pattern` (required): regex pattern that keys must match
@@ -2893,7 +2900,7 @@ yamlValidateKeyPattern($input, "^[a-z][a-zA-Z0-9]*$")
 
 === yamlValues(object) → array #text(size: 8pt, fill: gray)[(YAML)]
 
-Get all values from a YAML object.
+Get all values from a YAML object. See Chapter 26.
 
 - `object` (required): YAML object
 
