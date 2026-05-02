@@ -283,13 +283,20 @@
 
 #pagebreak()
 
-// ── Index (Table of Contents repeated) ──
-// Reset outlined for the index heading itself
+// ── Index (Full Table of Contents) ──
 #show heading: set heading(outlined: true)
 
-#outline(
-  title: [Index],
-  indent: 2em,
-  depth: 3,
-  target: heading,
-)
+#heading(level: 1)[Index]
+
+#context {
+  let entries = query(heading).filter(h => h.body != [Index])
+  for entry in entries {
+    let indent-amount = (entry.level - 1) * 1.5em
+    let page-num = counter(page).at(entry.location()).first()
+    let nums = counter(heading).at(entry.location())
+    let num-str = nums.slice(0, calc.min(entry.level, nums.len())).map(str).join(".")
+    pad(left: indent-amount, bottom: 0.3em)[
+      #link(entry.location())[#num-str #entry.body] #box(width: 1fr, repeat[.]) #str(page-num)
+    ]
+  }
+}
