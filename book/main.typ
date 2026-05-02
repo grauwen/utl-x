@@ -8,7 +8,7 @@
   date: datetime.today(),
 )
 
-#set text(font: "New Computer Modern", size: 11pt)
+#set text(font: "New Computer Modern", size: 10pt)
 #set page(
   paper: "a4",
   margin: (top: 3cm, bottom: 3cm, left: 2.5cm, right: 2.5cm),
