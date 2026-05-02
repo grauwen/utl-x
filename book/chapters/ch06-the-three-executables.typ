@@ -17,8 +17,10 @@ A transformation that works in one executable works identically in all three. A 
 
 The difference is in what surrounds the core: how input arrives, how output is delivered, and how the process is managed.
 
-// DIAGRAM: Shared core (parser, UDM, stdlib, formats) with three shells (CLI, daemon, engine)
-// Source: part1-foundation.pptx, slide 9
+#figure(
+  image("../pictures/ch6-3utlx/three-executables-for-each-usecase.png", width: 100%),
+  caption: [The three UTL-X executables — utlx (CLI tool), utlxd (IDE daemon), and utlxe (production engine). All share the same core; each targets a different use case.]
+)
 
 == utlx — The CLI
 
