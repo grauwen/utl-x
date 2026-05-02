@@ -157,7 +157,7 @@ Every UTL-X transformation file has the same structure:
 
 ```
 ┌─────────────────────────────────┐
-│ %utlx 1.0                      │ ← Version declaration
+│ %utlx 1.0                       │ ← Version declaration
 │ input json                      │ ← Input format
 │ output xml                      │ ← Output format (+ options)
 │ ---                             │ ← Separator
