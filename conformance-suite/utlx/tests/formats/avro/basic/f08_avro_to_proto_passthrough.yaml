@@ -1,0 +1,41 @@
+name: "f08_avro_to_proto_passthrough"
+category: "formats/avro/basic"
+description: "F08: Avro input → verify USDL enrichment enables cross-format conversion"
+tags: ["avro", "proto", "usdl", "f08", "schema-conversion"]
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "namespace": "com.example",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "age", "type": "int"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    usdlTypeName: keys($input["%types"])[0],
+    usdlNamespace: $input["%namespace"],
+    fieldCount: count($input["%types"].Person["%fields"]),
+    rawType: $input.type,
+    rawName: $input.name
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "usdlTypeName": "Person",
+      "usdlNamespace": "com.example",
+      "fieldCount": 2,
+      "rawType": "record",
+      "rawName": "Person"
+    }

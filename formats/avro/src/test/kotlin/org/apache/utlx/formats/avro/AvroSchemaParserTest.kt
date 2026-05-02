@@ -725,4 +725,40 @@ class AvroSchemaParserTest {
         // Verify documentation is preserved
         assertEquals("Customer schema version 2", (customerType.properties["%documentation"] as? UDM.Scalar)?.value)
     }
+
+    // ── F08: USDL Enrichment Tests ──
+
+    @Test
+    fun `F08 - parse produces both raw Avro and USDL properties`() {
+        val avro = """
+            {
+              "type": "record",
+              "name": "Person",
+              "fields": [
+                {"name": "name", "type": "string"},
+                {"name": "age", "type": "int"}
+              ]
+            }
+        """.trimIndent()
+
+        val udm = AvroSchemaParser().parse(avro)
+        assertTrue(udm is UDM.Object)
+        val schema = udm as UDM.Object
+
+        // Raw Avro access still works
+        assertEquals("record", (schema.properties["type"] as? UDM.Scalar)?.value)
+        assertEquals("Person", (schema.properties["name"] as? UDM.Scalar)?.value)
+
+        // USDL % properties are present
+        assertTrue(schema.properties.containsKey("%types"))
+        assertTrue(schema.properties.containsKey("%_diagnostics"))
+
+        // Diagnostics show complete
+        val diagnostics = schema.properties["%_diagnostics"] as UDM.Object
+        assertEquals("complete", (diagnostics.properties["%_status"] as UDM.Scalar).value)
+
+        // USDL types contain Person
+        val types = schema.properties["%types"] as UDM.Object
+        assertTrue(types.properties.containsKey("Person"))
+    }
 }

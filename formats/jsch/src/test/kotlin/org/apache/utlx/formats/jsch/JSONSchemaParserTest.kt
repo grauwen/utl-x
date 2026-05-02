@@ -335,4 +335,53 @@ class JSONSchemaParserTest {
         val description = schema.properties["description"] as? UDM.Scalar
         description?.value shouldBe "Schema for user objects"
     }
+
+    // ── F08: USDL Enrichment Tests ──
+
+    @Test
+    fun `F08 - parse produces both raw JSON Schema and USDL properties`() {
+        val jsch = """
+            {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "integer"}
+              },
+              "required": ["name"]
+            }
+        """.trimIndent()
+
+        val udm = JSONSchemaParser(jsch).parse()
+        udm.shouldBeInstanceOf<UDM.Object>()
+        val schema = udm as UDM.Object
+
+        // Raw JSON Schema access still works
+        (schema.properties["type"] as? UDM.Scalar)?.value shouldBe "object"
+        schema.properties.containsKey("properties") shouldBe true
+
+        // USDL % properties are present
+        schema.properties.containsKey("%types") shouldBe true
+        schema.properties.containsKey("%_diagnostics") shouldBe true
+
+        // Diagnostics show complete
+        val diagnostics = schema.properties["%_diagnostics"] as UDM.Object
+        (diagnostics.properties["%_status"] as UDM.Scalar).value shouldBe "complete"
+    }
+
+    @Test
+    fun `F08 - USDL types contain Root type from JSON Schema`() {
+        val jsch = """
+            {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string"}
+              }
+            }
+        """.trimIndent()
+
+        val udm = JSONSchemaParser(jsch).parse() as UDM.Object
+        val types = udm.properties["%types"] as UDM.Object
+
+        types.properties.containsKey("Root") shouldBe true
+    }
 }

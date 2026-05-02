@@ -1,0 +1,41 @@
+name: "f08_jsch_to_xsd_passthrough"
+category: "formats/jsch/basic"
+description: "F08: JSON Schema input → XSD output via USDL passthrough (reverse of xsd_to_jsch)"
+tags: ["jsch", "xsd", "usdl", "f08", "schema-conversion"]
+
+input:
+  format: jsch
+  data: |
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$defs": {
+        "Order": {
+          "type": "object",
+          "properties": {
+            "id": {"type": "string"},
+            "total": {"type": "number"}
+          },
+          "required": ["id", "total"]
+        }
+      }
+    }
+
+transformation: |
+  %utlx 1.0
+  input jsch
+  output xsd
+  ---
+  $input
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+      <xs:complexType name="Order">
+        <xs:sequence>
+          <xs:element name="id" type="xs:string"/>
+          <xs:element name="total" type="xs:number"/>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:schema>

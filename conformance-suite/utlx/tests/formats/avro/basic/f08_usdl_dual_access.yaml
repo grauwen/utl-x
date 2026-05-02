@@ -1,0 +1,38 @@
+name: "f08_avro_usdl_dual_access"
+category: "formats/avro/basic"
+description: "F08: Avro input has both raw JSON access and USDL % properties"
+tags: ["avro", "usdl", "f08", "enrichment"]
+
+input:
+  format: avro
+  data: |
+    {
+      "type": "record",
+      "name": "Person",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "age", "type": "int"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input avro
+  output json
+  ---
+  {
+    rawType: $input.type,
+    rawName: $input.name,
+    usdlTypeName: keys($input["%types"])[0],
+    diagnosticStatus: $input["%_diagnostics"]["%_status"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "rawType": "record",
+      "rawName": "Person",
+      "usdlTypeName": "Person",
+      "diagnosticStatus": "complete"
+    }

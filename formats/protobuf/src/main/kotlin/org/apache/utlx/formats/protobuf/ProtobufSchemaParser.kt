@@ -45,7 +45,102 @@ class ProtobufSchemaParser {
      */
     fun parse(protoSource: String): UDM {
         val protoFile = parseProtoText(protoSource)
-        return buildUSDLFromProtoFile(protoFile)
+        val usdl = buildUSDLFromProtoFile(protoFile)
+        val rawProperties = buildRawProtoProperties(protoFile)
+
+        // Merge: raw .proto structure + USDL % properties + diagnostics
+        if (usdl is UDM.Object) {
+            val diagnostics = buildEnrichmentDiagnostics("complete", emptyList())
+            return UDM.Object(
+                properties = rawProperties + usdl.properties + diagnostics,
+                attributes = usdl.attributes,
+                name = usdl.name,
+                metadata = usdl.metadata
+            )
+        }
+        return usdl
+    }
+
+    /**
+     * Build raw .proto structure as non-% properties for dual access.
+     * Preserves message names, field names, field numbers, types, enums.
+     */
+    private fun buildRawProtoProperties(protoFile: ProtoFile): Map<String, UDM> {
+        val properties = mutableMapOf<String, UDM>()
+
+        if (protoFile.packageName != null) {
+            properties["package"] = UDM.Scalar(protoFile.packageName)
+        }
+        properties["syntax"] = UDM.Scalar("proto3")
+
+        // Raw messages
+        if (protoFile.messages.isNotEmpty()) {
+            properties["message"] = if (protoFile.messages.size == 1) {
+                buildRawMessage(protoFile.messages[0])
+            } else {
+                UDM.Array(protoFile.messages.map { buildRawMessage(it) })
+            }
+        }
+
+        // Raw enums
+        if (protoFile.enums.isNotEmpty()) {
+            properties["enum"] = if (protoFile.enums.size == 1) {
+                buildRawEnum(protoFile.enums[0])
+            } else {
+                UDM.Array(protoFile.enums.map { buildRawEnum(it) })
+            }
+        }
+
+        return properties
+    }
+
+    private fun buildRawMessage(message: ProtoMessage): UDM {
+        val props = mutableMapOf<String, UDM>(
+            "name" to UDM.Scalar(message.name)
+        )
+        if (message.fields.isNotEmpty()) {
+            props["field"] = UDM.Array(message.fields.map { field ->
+                val fieldProps = mutableMapOf<String, UDM>(
+                    "name" to UDM.Scalar(field.name),
+                    "type" to UDM.Scalar(field.type),
+                    "number" to UDM.Scalar(field.number)
+                )
+                if (field.label == ProtoField.FieldLabel.REPEATED) fieldProps["label"] = UDM.Scalar("repeated")
+                if (field.label == ProtoField.FieldLabel.MAP) fieldProps["label"] = UDM.Scalar("map")
+                if (field.oneofGroup != null) fieldProps["oneofGroup"] = UDM.Scalar(field.oneofGroup)
+                UDM.Object(properties = fieldProps)
+            })
+        }
+        if (message.documentation != null) {
+            props["documentation"] = UDM.Scalar(message.documentation)
+        }
+        return UDM.Object(properties = props)
+    }
+
+    private fun buildRawEnum(enum: ProtoEnum): UDM {
+        val props = mutableMapOf<String, UDM>(
+            "name" to UDM.Scalar(enum.name)
+        )
+        if (enum.values.isNotEmpty()) {
+            props["value"] = UDM.Array(enum.values.map { (name, number) ->
+                UDM.Object(properties = mapOf(
+                    "name" to UDM.Scalar(name),
+                    "number" to UDM.Scalar(number)
+                ))
+            })
+        }
+        if (enum.documentation != null) {
+            props["documentation"] = UDM.Scalar(enum.documentation)
+        }
+        return UDM.Object(properties = props)
+    }
+
+    private fun buildEnrichmentDiagnostics(status: String, warnings: List<String>): Map<String, UDM> {
+        val diag = mutableMapOf<String, UDM>("%_status" to UDM.Scalar(status))
+        if (warnings.isNotEmpty()) {
+            diag["%_warnings"] = UDM.Array(warnings.map { UDM.Scalar(it) })
+        }
+        return mapOf("%_diagnostics" to UDM.Object(properties = diag))
     }
 
     /**

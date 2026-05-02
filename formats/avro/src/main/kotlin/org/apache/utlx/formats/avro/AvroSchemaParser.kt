@@ -29,7 +29,8 @@ class AvroSchemaParser {
     fun parse(schemaJson: String): UDM {
         val jsonParser = JSONParser(schemaJson)
         val udm = jsonParser.parse()
-        return parseSchema(udm)
+        val raw = parseSchema(udm)
+        return enrichWithUSDL(raw)
     }
 
     /**
@@ -38,7 +39,47 @@ class AvroSchemaParser {
     fun parse(inputStream: InputStream): UDM {
         val jsonParser = JSONParser(inputStream.reader())
         val udm = jsonParser.parse()
-        return parseSchema(udm)
+        val raw = parseSchema(udm)
+        return enrichWithUSDL(raw)
+    }
+
+    /**
+     * Enrich raw Avro UDM with USDL % properties.
+     * Enrichment failure never blocks — raw UDM is always preserved.
+     */
+    private fun enrichWithUSDL(raw: UDM): UDM {
+        if (raw !is UDM.Object) return raw
+
+        return try {
+            val usdl = toUSDL(raw)
+            if (usdl !is UDM.Object) return raw
+
+            val usdlProperties = usdl.properties.filter { it.key.startsWith("%") }
+            val diagnostics = buildEnrichmentDiagnostics("complete", emptyList())
+
+            UDM.Object(
+                properties = raw.properties + usdlProperties + diagnostics,
+                attributes = raw.attributes,
+                name = raw.name,
+                metadata = raw.metadata
+            )
+        } catch (e: Exception) {
+            val diagnostics = buildEnrichmentDiagnostics("failed", listOf(e.message ?: "Unknown error"))
+            UDM.Object(
+                properties = raw.properties + diagnostics,
+                attributes = raw.attributes,
+                name = raw.name,
+                metadata = raw.metadata
+            )
+        }
+    }
+
+    private fun buildEnrichmentDiagnostics(status: String, warnings: List<String>): Map<String, UDM> {
+        val diag = mutableMapOf<String, UDM>("%_status" to UDM.Scalar(status))
+        if (warnings.isNotEmpty()) {
+            diag["%_warnings"] = UDM.Array(warnings.map { UDM.Scalar(it) })
+        }
+        return mapOf("%_diagnostics" to UDM.Object(properties = diag))
     }
 
     /**

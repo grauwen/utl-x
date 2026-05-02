@@ -28,14 +28,49 @@ class EDMXParser(
      * Parse EDMX/CSDL XML to UDM with USDL directives
      */
     fun parse(): UDM {
-        // Step 1: Parse as XML using the XML parser
+        // Step 1: Parse as XML using the XML parser (raw EDMX structure)
         val xmlUDM = XMLParser(content).parse()
 
-        // Step 2: Extract EDMX document model from XML UDM
-        val edmxDoc = extractEDMXDocument(xmlUDM)
+        // Step 2: Extract EDMX document model and convert to USDL
+        return try {
+            val edmxDoc = extractEDMXDocument(xmlUDM)
+            val usdl = convertToUSDL(edmxDoc)
 
-        // Step 3: Convert EDMX model to UDM with USDL directives
-        return convertToUSDL(edmxDoc)
+            // Step 3: Merge raw XML structure + USDL % properties
+            if (xmlUDM is UDM.Object && usdl is UDM.Object) {
+                val usdlProps = usdl.properties.filter { it.key.startsWith("%") }
+                val diagnostics = buildEnrichmentDiagnostics("complete", emptyList())
+                UDM.Object(
+                    properties = xmlUDM.properties + usdlProps + diagnostics,
+                    attributes = xmlUDM.attributes,
+                    name = xmlUDM.name,
+                    metadata = xmlUDM.metadata
+                )
+            } else {
+                usdl
+            }
+        } catch (e: Exception) {
+            // Enrichment failed — return raw XML UDM with failed diagnostics
+            if (xmlUDM is UDM.Object) {
+                val diagnostics = buildEnrichmentDiagnostics("failed", listOf(e.message ?: "Unknown error"))
+                UDM.Object(
+                    properties = xmlUDM.properties + diagnostics,
+                    attributes = xmlUDM.attributes,
+                    name = xmlUDM.name,
+                    metadata = xmlUDM.metadata
+                )
+            } else {
+                xmlUDM
+            }
+        }
+    }
+
+    private fun buildEnrichmentDiagnostics(status: String, warnings: List<String>): Map<String, UDM> {
+        val diag = mutableMapOf<String, UDM>("%_status" to UDM.Scalar(status))
+        if (warnings.isNotEmpty()) {
+            diag["%_warnings"] = UDM.Array(warnings.map { UDM.Scalar(it) })
+        }
+        return mapOf("%_diagnostics" to UDM.Object(properties = diag))
     }
 
     /**

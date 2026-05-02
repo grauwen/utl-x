@@ -313,4 +313,39 @@ class TableSchemaParserTest {
             fks!!.elements.size shouldBe 2
         }
     }
+
+    // ── F08: USDL Enrichment Tests ──
+
+    @Test
+    fun `F08 - parse produces both raw Table Schema and USDL properties`() {
+        val tsch = """
+            {
+              "fields": [
+                {"name": "id", "type": "integer", "constraints": {"required": true}},
+                {"name": "name", "type": "string"}
+              ]
+            }
+        """.trimIndent()
+
+        val udm = TableSchemaParser(tsch).parse()
+        udm.shouldBeInstanceOf<UDM.Object>()
+        val schema = udm as UDM.Object
+
+        // Raw Table Schema access still works
+        schema.properties.containsKey("fields") shouldBe true
+        val fields = schema.properties["fields"] as UDM.Array
+        fields.elements.size shouldBe 2
+
+        // USDL % properties are present
+        schema.properties.containsKey("%types") shouldBe true
+        schema.properties.containsKey("%_diagnostics") shouldBe true
+
+        // Diagnostics show complete
+        val diagnostics = schema.properties["%_diagnostics"] as UDM.Object
+        (diagnostics.properties["%_status"] as UDM.Scalar).value shouldBe "complete"
+
+        // USDL types contain Record
+        val types = schema.properties["%types"] as UDM.Object
+        types.properties.containsKey("Record") shouldBe true
+    }
 }

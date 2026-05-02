@@ -1,0 +1,34 @@
+name: "f08_tsch_usdl_dual_access"
+category: "formats/tsch/basic"
+description: "F08: Table Schema input has both raw JSON access and USDL % properties"
+tags: ["tsch", "usdl", "f08", "enrichment"]
+
+input:
+  format: tsch
+  data: |
+    {
+      "fields": [
+        {"name": "id", "type": "integer", "constraints": {"required": true}},
+        {"name": "name", "type": "string"}
+      ]
+    }
+
+transformation: |
+  %utlx 1.0
+  input tsch
+  output json
+  ---
+  {
+    rawFieldCount: count($input.fields),
+    hasUsdlTypes: $input["%types"] != null,
+    diagnosticStatus: $input["%_diagnostics"]["%_status"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "rawFieldCount": 2,
+      "hasUsdlTypes": true,
+      "diagnosticStatus": "complete"
+    }

@@ -526,4 +526,44 @@ class ProtobufSchemaParserTest {
             assert(regeneratedProto.contains("Status status = 3;")) { "Should contain status field" }
         }
     }
+
+    // ── F08: USDL Enrichment Tests ──
+
+    @Test
+    fun `F08 - parse produces both raw proto and USDL properties`() {
+        val proto = """
+            syntax = "proto3";
+            package test;
+            message Person {
+              string name = 1;
+              int32 age = 2;
+            }
+        """.trimIndent()
+
+        val udm = ProtobufSchemaParser().parse(proto)
+        udm.shouldBeInstanceOf<UDM.Object>()
+        val schema = udm as UDM.Object
+
+        // Raw .proto access works
+        schema.properties.containsKey("package") shouldBe true
+        (schema.properties["package"] as UDM.Scalar).value shouldBe "test"
+        schema.properties.containsKey("message") shouldBe true
+
+        // Raw message structure preserved
+        val message = schema.properties["message"] as UDM.Object
+        (message.properties["name"] as UDM.Scalar).value shouldBe "Person"
+
+        // USDL % properties are present
+        schema.properties.containsKey("%types") shouldBe true
+        schema.properties.containsKey("%namespace") shouldBe true
+        schema.properties.containsKey("%_diagnostics") shouldBe true
+
+        // Diagnostics show complete
+        val diagnostics = schema.properties["%_diagnostics"] as UDM.Object
+        (diagnostics.properties["%_status"] as UDM.Scalar).value shouldBe "complete"
+
+        // USDL types contain Person
+        val types = schema.properties["%types"] as UDM.Object
+        types.properties.containsKey("Person") shouldBe true
+    }
 }

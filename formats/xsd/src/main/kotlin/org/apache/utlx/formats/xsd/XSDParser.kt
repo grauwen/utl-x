@@ -71,20 +71,69 @@ class XSDParser(
 
         // Step 3: Unwrap if XMLParser wrapped the document
         // Return the actual xs:schema element, not the wrapper
-        // Check if this is a wrapper object (has null name and contains xs:schema property)
-        if (enhanced is UDM.Object) {
+        val raw = if (enhanced is UDM.Object) {
             val schemaKey = enhanced.properties.keys.firstOrNull { key ->
                 key == "xs:schema" || key == "xsd:schema" || key == "schema"
             }
             if (schemaKey != null && enhanced.properties[schemaKey] is UDM.Object) {
-                // Return the unwrapped schema element
-                return enhanced.properties[schemaKey]!!
+                enhanced.properties[schemaKey]!!
             } else {
+                enhanced
             }
         } else {
+            enhanced
         }
 
-        return enhanced
+        // Step 4: USDL enrichment — add % properties alongside raw structure
+        return enrichWithUSDL(raw)
+    }
+
+    /**
+     * Enrich raw XSD UDM with USDL % properties.
+     * Enrichment failure never blocks — raw UDM is always preserved.
+     */
+    private fun enrichWithUSDL(raw: UDM): UDM {
+        if (raw !is UDM.Object) return raw
+
+        return try {
+            val usdl = toUSDL(raw)
+            if (usdl !is UDM.Object) {
+                return raw
+            }
+
+            // Merge: raw properties + USDL % properties (no collision due to % prefix)
+            val usdlProperties = usdl.properties.filter { it.key.startsWith("%") }
+            val diagnostics = buildEnrichmentDiagnostics("complete", emptyList())
+
+            UDM.Object(
+                properties = raw.properties + usdlProperties + diagnostics,
+                attributes = raw.attributes,
+                name = raw.name,
+                metadata = raw.metadata
+            )
+        } catch (e: Exception) {
+            // Enrichment failed — return raw UDM with failed diagnostics
+            val diagnostics = buildEnrichmentDiagnostics("failed", listOf(e.message ?: "Unknown error"))
+            UDM.Object(
+                properties = raw.properties + diagnostics,
+                attributes = raw.attributes,
+                name = raw.name,
+                metadata = raw.metadata
+            )
+        }
+    }
+
+    /**
+     * Build %_diagnostics object for enrichment status reporting.
+     */
+    private fun buildEnrichmentDiagnostics(status: String, warnings: List<String>): Map<String, UDM> {
+        val diag = mutableMapOf<String, UDM>(
+            "%_status" to UDM.Scalar(status)
+        )
+        if (warnings.isNotEmpty()) {
+            diag["%_warnings"] = UDM.Array(warnings.map { UDM.Scalar(it) })
+        }
+        return mapOf("%_diagnostics" to UDM.Object(properties = diag))
     }
 
     /**

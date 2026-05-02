@@ -1,0 +1,32 @@
+name: "f08_osch_usdl_dual_access"
+category: "formats/osch/basic"
+description: "F08: OData Schema (EDMX) input has both raw XML access and USDL % properties"
+tags: ["osch", "usdl", "f08", "enrichment"]
+
+input:
+  format: osch
+  data: |
+    <?xml version="1.0" encoding="utf-8"?>
+    <edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"><edmx:DataServices><Schema Namespace="Test" xmlns="http://docs.oasis-open.org/odata/ns/edm"><EntityType Name="Person"><Key><PropertyRef Name="id"/></Key><Property Name="id" Type="Edm.Int32" Nullable="false"/><Property Name="name" Type="Edm.String"/></EntityType></Schema></edmx:DataServices></edmx:Edmx>
+
+transformation: |
+  %utlx 1.0
+  input osch
+  output json
+  ---
+  {
+    hasRawEdmx: $input["edmx:Edmx"] != null,
+    usdlTypeName: keys($input["%types"])[0],
+    usdlNamespace: $input["%namespace"],
+    diagnosticStatus: $input["%_diagnostics"]["%_status"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hasRawEdmx": true,
+      "usdlTypeName": "Person",
+      "usdlNamespace": "Test",
+      "diagnosticStatus": "complete"
+    }
