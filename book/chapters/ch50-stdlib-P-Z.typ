@@ -1605,6 +1605,8 @@ Get all Java system properties as an object.
 }
 ```
 
+*Security note:* can be restricted in UTLXe via security policy (Chapter 38) to prevent exfiltration of host configuration in multi-tenant deployments.
+
 === systemProperty(name) → string #text(size: 8pt, fill: gray)[(Sys)]
 
 Get a Java system property by name. Returns null if not set.
@@ -1616,6 +1618,8 @@ Get a Java system property by name. Returns null if not set.
   javaHome: systemProperty("java.home")
 }
 ```
+
+*Security note:* can be restricted in UTLXe via security policy (Chapter 38).
 
 === systemPropertyOrDefault(name, default) → string #text(size: 8pt, fill: gray)[(Sys)]
 
@@ -1629,6 +1633,8 @@ Get a system property with a fallback default value.
   encoding: systemPropertyOrDefault("file.encoding", "UTF-8")
 }
 ```
+
+*Security note:* can be restricted in UTLXe via security policy (Chapter 38).
 
 == T
 
@@ -1661,6 +1667,8 @@ Get the system temporary directory path.
   tmpDir: tempDir()
 }
 ```
+
+*Security note:* can be restricted in UTLXe via security policy (Chapter 38) to prevent revealing host file system paths.
 
 === textContent(element) → string #text(size: 8pt, fill: gray)[(XML)]
 

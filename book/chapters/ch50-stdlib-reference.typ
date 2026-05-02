@@ -6,6 +6,22 @@ This appendix lists the UTL-X standard library functions alphabetically. Each en
 - *Example:* practical, runnable usage
 - *Anti-pattern:* what NOT to do (where applicable)
 
+#heading(level: 2, outlined: false, numbering: none)[Function Index]
+
+#context {
+  let start-page = here().page()
+  let entries = query(heading.where(level: 3)).filter(h => h.location().page() >= start-page)
+  let cols = ()
+  for entry in entries {
+    let page-num = counter(page).at(entry.location()).first()
+    cols.push([#link(entry.location())[#entry.body] #box(width: 1fr, repeat[.]) #str(page-num)])
+  }
+  set text(size: 9pt)
+  columns(2, gutter: 1em, cols.join(linebreak()))
+}
+
+#pagebreak()
+
 #include "ch50-stdlib-A-D.typ"
 #include "ch50-stdlib-E-I.typ"
 #include "ch50-stdlib-J-O.typ"

@@ -242,15 +242,15 @@ Read an environment variable from the host system. Returns `null` if not set.
 - `name` (required): environment variable name
 
 ```utlx
-env("HOME")                              // "/Users/alice"
-env("UNDEFINED_VAR")                     // null
 {
-  home: env("HOME"),
-  missing: env("UNDEFINED_VAR")
+  home: env("HOME"),                     // "/Users/alice"
+  dbHost: env("DB_HOST") ?? "localhost"  // fallback if not set
 }
 ```
 
 Also: `hasEnv(name)` → boolean, `envAll()` → object with all environment variables.
+
+*Security note:* `env()` is unrestricted in the CLI and IDE. In the UTLXe engine, environment variable access can be disabled or restricted via the security policy configuration (Chapter 38) to prevent transformations from reading host secrets in multi-tenant deployments.
 
 === envOrDefault(name, default) → string #text(size: 8pt, fill: gray)[(Sys)]
 
@@ -279,6 +279,8 @@ let allEnv = envAll()
   count: count(entries(allEnv))
 }
 ```
+
+*Security note:* can be restricted in UTLXe via security policy (Chapter 38) to prevent exfiltration of host secrets in multi-tenant deployments.
 
 === environment() → string #text(size: 8pt, fill: gray)[(Sys)]
 
@@ -1742,6 +1744,8 @@ Check if an environment variable exists (is set, even if empty).
   hasSecret: hasEnv("API_SECRET")
 }
 ```
+
+*Security note:* can be restricted in UTLXe via security policy (Chapter 38) to prevent probing for host secrets.
 
 === hasKey(object, key) → boolean #text(size: 8pt, fill: gray)[(Obj)]
 
