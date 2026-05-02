@@ -40,11 +40,12 @@ class EDMXParser(
             if (xmlUDM is UDM.Object && usdl is UDM.Object) {
                 val usdlProps = usdl.properties.filter { it.key.startsWith("%") }
                 val diagnostics = buildEnrichmentDiagnostics("complete", emptyList())
+                val metadata = xmlUDM.metadata + mapOf("__schemaType" to "osch-schema")
                 UDM.Object(
                     properties = xmlUDM.properties + usdlProps + diagnostics,
                     attributes = xmlUDM.attributes,
                     name = xmlUDM.name,
-                    metadata = xmlUDM.metadata
+                    metadata = metadata
                 )
             } else {
                 usdl
