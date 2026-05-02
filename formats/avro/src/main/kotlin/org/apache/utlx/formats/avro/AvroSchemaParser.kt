@@ -57,19 +57,21 @@ class AvroSchemaParser {
             val usdlProperties = usdl.properties.filter { it.key.startsWith("%") }
             val diagnostics = buildEnrichmentDiagnostics("complete", emptyList())
 
+            val enrichedMetadata = raw.metadata + mapOf("__schemaType" to "avro-schema")
             UDM.Object(
                 properties = raw.properties + usdlProperties + diagnostics,
                 attributes = raw.attributes,
                 name = raw.name,
-                metadata = raw.metadata
+                metadata = enrichedMetadata
             )
         } catch (e: Exception) {
             val diagnostics = buildEnrichmentDiagnostics("failed", listOf(e.message ?: "Unknown error"))
+            val enrichedMetadata = raw.metadata + mapOf("__schemaType" to "avro-schema")
             UDM.Object(
                 properties = raw.properties + diagnostics,
                 attributes = raw.attributes,
                 name = raw.name,
-                metadata = raw.metadata
+                metadata = enrichedMetadata
             )
         }
     }

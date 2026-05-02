@@ -51,11 +51,12 @@ class ProtobufSchemaParser {
         // Merge: raw .proto structure + USDL % properties + diagnostics
         if (usdl is UDM.Object) {
             val diagnostics = buildEnrichmentDiagnostics("complete", emptyList())
+            val metadata = usdl.metadata + mapOf("__schemaType" to "proto-schema")
             return UDM.Object(
                 properties = rawProperties + usdl.properties + diagnostics,
                 attributes = usdl.attributes,
                 name = usdl.name,
-                metadata = usdl.metadata
+                metadata = metadata
             )
         }
         return usdl
