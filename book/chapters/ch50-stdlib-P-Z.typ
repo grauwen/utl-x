@@ -1,0 +1,1482 @@
+== O
+
+=== omit(object, keys) → object / pick(object, keys) → object #text(size: 8pt, fill: gray)[(Obj)]
+
+`omit`: return object WITHOUT the listed properties. `pick`: return object WITH ONLY the listed properties.
+
+- `object` (required): the source object
+- `keys` (required): array of property names to omit or keep
+
+```utlx
+// Given: {"name": "Alice", "email": "alice@example.com", "password": "secret", "role": "admin"}
+
+pick($input, ["name", "email"])
+// Output: {"name": "Alice", "email": "alice@example.com"}
+
+omit($input, ["password"])
+// Output: {"name": "Alice", "email": "alice@example.com", "role": "admin"}
+
+// Use case: strip sensitive fields before logging
+let safe = omit($input, ["password", "apiKey", "token", "secret"])
+```
+
+=== osArch #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== osVersion #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== P
+
+=== pad #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== padLeft #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== padRight #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parent #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parse(string, format?) → value / parseJson(string) → value / parseXml(string) → value / parseYaml(string) → value / parseCsv(string, options?) → array #text(size: 8pt, fill: gray)[(Fmt)]
+
+Parse a string embedded within a transformation into a navigable UDM value. Use when a format is a VALUE inside your data (JSON string in a CSV column, XML in a CDATA section).
+
+- `string` (required): the string to parse
+- `format` (optional for `parse`, default auto-detect): `"json"`, `"xml"`, `"yaml"`, `"csv"`
+- `options` (optional for `parseCsv`): `{headers: false}`, `{delimiter: ";"}`
+
+```utlx
+// Parse JSON embedded in another format:
+let config = parseJson($input.configJson)
+config.database.host                     // "localhost"
+
+// Parse XML from a CDATA section:
+let innerXml = parse($input.Payload, "xml")
+innerXml.Order.Customer                  // "Acme Corp"
+
+// Parse CSV with options:
+let data = parseCsv($input.csvData, {delimiter: ";", headers: true})
+data[0].Name                             // first row, Name column
+
+// Auto-detect format:
+let parsed = parse($input.rawData)       // auto-detects JSON, XML, or YAML
+```
+
+For normal file processing, use `input json`/`input xml` in the header — these functions are for the embedded-format-as-value case.
+
+Also: `render(value, format, pretty?)`, `renderJson(value, pretty?)`, `renderXml(value)`, `renderYaml(value)`, `renderCsv(value)`.
+
+=== parseBoolean #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseCurrency #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseDate(string, pattern) → date #text(size: 8pt, fill: gray)[(Date)]
+
+Parse a date or datetime string using a format pattern. See `formatDate` for pattern tokens.
+
+- `string` (required): the date string to parse
+- `pattern` (required): format pattern
+
+```utlx
+parseDate("2026-05-01", "yyyy-MM-dd")
+// Output: date value (May 1, 2026)
+
+parseDate("01/05/2026", "dd/MM/yyyy")
+// Output: date value (May 1, 2026)
+
+parseDate("2026-05-01T14:30:00Z", "yyyy-MM-dd'T'HH:mm:ss'Z'")
+// Output: datetime value
+
+parseDate("May 1, 2026", "MMMM d, yyyy")
+// Output: date value
+
+// Use case: normalize different date formats to ISO
+formatDate(parseDate($input.date, "dd/MM/yyyy"), "yyyy-MM-dd")
+// "15/04/2026" → "2026-04-15"
+```
+
+*Anti-pattern:* assuming date format — `01/02/2026` is January 2nd (US `MM/dd/yyyy`) or February 1st (EU `dd/MM/yyyy`). Always specify the pattern explicitly.
+
+Also: `parseDateTimeWithTimezone(string, pattern, timezone)`.
+
+=== parseDateTimeWithTimezone #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseDouble #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseEUNumber(string) → number / parseUSNumber(string) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Parse regional number formats to standard floating-point. See Chapter 25 (CSV).
+
+- `string` (required): the formatted number string
+
+```utlx
+parseEUNumber("1.234,56")               // 1234.56 (European: dot=thousands, comma=decimal)
+parseUSNumber("1,234.56")               // 1234.56 (US: comma=thousands, dot=decimal)
+parseFrenchNumber("1 234,56")            // 1234.56 (French: space=thousands, comma=decimal)
+parseSwissNumber("1'234.56")             // 1234.56 (Swiss: apostrophe=thousands, dot=decimal)
+
+// Use case: CSV from European source
+map($input, (row) -> {
+  product: row.Product,
+  price: parseEUNumber(row.Price),       // "29,99" → 29.99
+  weight: parseEUNumber(row.Weight)      // "1.500,00" → 1500.0
+})
+```
+
+Also: `renderEUNumber(number)`, `renderUSNumber(number)`, `renderFrenchNumber(number)`, `renderSwissNumber(number)` for the reverse direction.
+
+=== parseFloat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseInt #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseNumber #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseQueryString #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseURL #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== partition(array, predicate) → [matching, nonMatching] #text(size: 8pt, fill: gray)[(Arr)]
+
+Split an array into two: elements that match the predicate, and elements that don't. Returns a 2-element array of arrays.
+
+- `array` (required): the array to partition
+- `predicate` (required): lambda `(element) -> boolean`
+
+```utlx
+// Given: {"orders": [
+//   {"id": 1, "amount": 500},
+//   {"id": 2, "amount": 1500},
+//   {"id": 3, "amount": 200},
+//   {"id": 4, "amount": 3000}
+// ]}
+
+let result = partition($input.orders, (o) -> o.amount > 1000)
+// result[0] = [{"id": 2, ...}, {"id": 4, ...}]  (matching: amount > 1000)
+// result[1] = [{"id": 1, ...}, {"id": 3, ...}]  (non-matching)
+
+// Use case: separate valid from invalid
+let validated = partition($input.records, (r) -> r.email != null && r.name != null)
+{
+  valid: validated[0],
+  invalid: validated[1],
+  validCount: count(validated[0]),
+  invalidCount: count(validated[1])
+}
+```
+
+=== pascalCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== pathCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== percentageChange #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== pi #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== platform #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== pluralize #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== pluralizeWithCount #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== pow #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prepareForSignature #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== presentValue #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrint #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrintCSV #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrintFormat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrintJSON #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrintXML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrintYAML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+
+== Q
+
+=== quarter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== quartiles #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== R
+
+=== random #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readByte #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readDouble #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readFloat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readInt16 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readInt32 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readInt64 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readJarEntry #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readJarManifest #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readZipEntry #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== reduce(array, initial, accumulator) → value #text(size: 8pt, fill: gray)[(Arr)]
+
+Accumulate a single result by processing each element sequentially. The most powerful array function — and the most error-prone.
+
+- `array` (required): the array to reduce
+- `initial` (required): the starting value for the accumulator
+- `accumulator` (required): lambda `(accumulated, element) -> newAccumulated`
+
+```utlx
+// Sum numbers:
+reduce([10, 20, 30], 0, (sum, x) -> sum + x)
+// Step by step: 0→10→30→60.  Output: 60
+
+// Build a comma-separated string:
+reduce(["Alice", "Bob", "Charlie"], "", (acc, name) ->
+  if (acc == "") name else concat(acc, ", ", name)
+)
+// Output: "Alice, Bob, Charlie"
+
+// Build a lookup object from an array:
+// Input: [{"id": "A", "name": "Widget"}, {"id": "B", "name": "Gadget"}]
+reduce($input, {}, (acc, item) -> {
+  ...acc,
+  [item.id]: item.name
+})
+// Output: {"A": "Widget", "B": "Gadget"}
+
+// Count occurrences:
+reduce(["a", "b", "a", "c", "a"], {}, (acc, x) -> {
+  ...acc,
+  [x]: (acc[x] ?? 0) + 1
+})
+// Output: {"a": 3, "b": 1, "c": 1}
+```
+
+*Anti-pattern:* using `reduce` for operations that have dedicated functions:
+
+```utlx
+// BAD — use sum() instead:
+reduce(arr, 0, (acc, x) -> acc + x)
+
+// BAD — use max() instead:
+reduce(arr, 0, (acc, x) -> if (x > acc) x else acc)
+
+// BAD — use join() instead:
+reduce(arr, "", (acc, x) -> concat(acc, x, ","))
+
+// GOOD use of reduce — complex accumulation with no dedicated function:
+reduce($input.transactions, {balance: 0, count: 0}, (acc, tx) -> {
+  balance: acc.balance + tx.amount,
+  count: acc.count + 1
+})
+```
+
+=== reduceEntries #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== regexGroups #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== regexNamedGroups #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== remove #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== removeBOM #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== removeQueryParam #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== removeTax #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== render(value, format, pretty?) → string / renderJson(value, pretty?) → string #text(size: 8pt, fill: gray)[(Fmt)]
+
+Serialize a UDM value to a string in the specified format.
+
+- `value` (required): UDM value to serialize
+- `format` (required for `render`): `"json"`, `"xml"`, `"yaml"`, `"csv"`
+- `pretty` (optional, default false): pretty-print with indentation
+
+```utlx
+renderJson({name: "Alice", age: 30})
+// Output: '{"name":"Alice","age":30}'
+
+renderJson({name: "Alice", age: 30}, true)
+// Output: '{\n  "name": "Alice",\n  "age": 30\n}'
+
+render({name: "Alice"}, "json", true)    // same as renderJson with pretty
+render({Order: {Id: "1"}}, "xml")        // "<Order><Id>1</Id></Order>"
+
+// Use case: embed XML inside a JSON field (CDATA pattern)
+{
+  messageId: generateUuid(),
+  payload: render($input, "xml")         // XML as a string value
+}
+```
+
+=== renderCsv #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== renderXml #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== renderYaml #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== repeat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== replace(string, search, replacement) → string / replaceRegex(string, regex, replacement) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Replace occurrences in a string. `replace`: literal match. `replaceRegex`: regex match.
+
+- `string` (required): the string to modify
+- `search`/`regex` (required): what to find
+- `replacement` (required): what to replace with
+
+```utlx
+replace("Hello World", "World", "UTL-X")
+// Output: "Hello UTL-X"
+
+replace("2026-05-01", "-", "/")
+// Output: "2026/05/01"  (replaces ALL occurrences)
+
+replaceRegex("Order #123 on 2026-05-01", "[0-9]+", "X")
+// Output: "Order #X on X-X-X"
+
+replaceRegex("  extra   spaces  ", "\\s+", " ")
+// Output: " extra spaces "  (collapse whitespace — use normalizeSpace() instead)
+```
+
+=== replaceWithFunction #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== resolveQName #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== reverse(array) → array / reverseString(string) → string #text(size: 8pt, fill: gray)[(Arr/Str)]
+
+Reverse the order of elements in an array or characters in a string.
+
+- `array`/`string` (required): the value to reverse
+
+```utlx
+reverse([1, 2, 3, 4, 5])                // [5, 4, 3, 2, 1]
+reverseString("hello")                   // "olleh"
+
+// Use case: most recent first
+reverse(sortBy($input.events, (e) -> e.timestamp))
+```
+
+=== rightJoin #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== roundToCents(number) → number / roundToDecimalPlaces(number, places) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Financial rounding.
+
+- `number` (required): the value to round
+- `places` (required for roundToDecimalPlaces): number of decimal places
+
+```utlx
+roundToCents(29.999)                     // 30.0
+roundToCents(10.004)                     // 10.0
+roundToDecimalPlaces(3.14159, 3)         // 3.142
+roundToDecimalPlaces(100.0, 0)           // 100
+
+// Use case: invoice line total with correct rounding
+let lineTotal = roundToCents(qty * unitPrice)
+```
+
+=== runtimeInfo #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== S
+
+=== scan #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== seconds #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== setConsoleLogging #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== setLogLevel #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== setPath #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sha224 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sha256(data) → string / sha512(data) → string / sha1(data) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+See `hash` above. Individual functions for the most common algorithms. 1 required parameter each.
+
+```utlx
+sha256("sensitive data")                 // 64-char hex string
+sha512("sensitive data")                 // 128-char hex string
+sha1("sensitive data")                   // 40-char hex string (avoid for security)
+```
+
+=== sha384 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sha3_256 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sha3_512 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== shiftLeft #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== shiftRight #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== shouldUseCDATA #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== simpleInterest #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sin #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== singularize #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sinh #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== slice(value, start, end?) → array or string #text(size: 8pt, fill: gray)[(Arr/Str)]
+
+Extract a portion of an array or string by index. Zero-based.
+
+- `value` (required): array or string
+- `start` (required): starting index (inclusive)
+- `end` (optional): ending index (exclusive). If omitted, goes to end.
+
+```utlx
+slice([10, 20, 30, 40, 50], 1, 4)       // [20, 30, 40] (index 1,2,3)
+slice([10, 20, 30, 40, 50], 2)           // [30, 40, 50] (from index 2 to end)
+slice("Hello World", 6, 11)             // "World"
+slice("Hello World", 6)                 // "World"
+```
+
+=== slugify #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== smartCoerce #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== snakeCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== some #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== someEntry #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sort(array) → array / sortBy(array, keyFn) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Sort an array. `sort` uses natural ordering. `sortBy` uses a key extractor.
+
+- `array` (required): the array to sort
+- `keyFn` (required for sortBy): lambda `(element) -> sortKey`
+
+```bash
+echo '[3, 1, 4, 1, 5]' | utlx -e 'sort(.)'
+# [1, 1, 3, 4, 5]
+```
+
+```utlx
+sort([3, 1, 4, 1, 5, 9])                // [1, 1, 3, 4, 5, 9]
+sort(["banana", "apple", "cherry"])      // ["apple", "banana", "cherry"]
+
+// Given: {"products": [
+//   {"name": "Widget", "price": 25},
+//   {"name": "Gadget", "price": 150},
+//   {"name": "Gizmo", "price": 10}
+// ]}
+
+sortBy($input.products, (p) -> p.price)
+// Output: [Gizmo(10), Widget(25), Gadget(150)] — cheapest first
+
+sortBy($input.products, (p) -> -p.price)
+// Output: [Gadget(150), Widget(25), Gizmo(10)] — most expensive first (negate)
+
+sortBy($input.products, (p) -> p.name)
+// Output: [Gadget, Gizmo, Widget] — alphabetical
+```
+
+=== split(string, separator) → array #text(size: 8pt, fill: gray)[(Str)]
+
+Split a string into an array of substrings.
+
+- `string` (required): the string to split
+- `separator` (required): delimiter string
+
+```utlx
+split("a,b,c", ",")                     // ["a", "b", "c"]
+split("Hello World", " ")               // ["Hello", "World"]
+split("user@example.com", "@")          // ["user", "example.com"]
+
+// Use case: extract domain from email
+let parts = split($input.email, "@")
+parts[1]                                 // "example.com"
+
+// Use case: parse a path
+split("/usr/local/bin", "/")             // ["", "usr", "local", "bin"]
+```
+
+=== splitWithMatches #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sqrt #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startOfDay #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startOfMonth #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startOfQuarter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startOfWeek #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startOfYear #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startTimer #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== stringOrDefault #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== stripBOM #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== substring(string, start, end?) → string / substringBefore(string, delimiter) → string / substringAfter(string, delimiter) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Extract part of a string. `substring` by index. `substringBefore`/`substringAfter` by delimiter.
+
+- `string` (required): the source string
+- `start` (required for substring): starting index (zero-based)
+- `end` (optional for substring): ending index (exclusive)
+- `delimiter` (required for substringBefore/After): the delimiter to search for
+
+```utlx
+substring("Hello World", 6)             // "World"
+substring("Hello World", 0, 5)          // "Hello"
+
+substringBefore("user@example.com", "@") // "user"
+substringAfter("user@example.com", "@")  // "example.com"
+
+substringBefore("no-delimiter", "@")     // "no-delimiter" (not found — returns all)
+substringAfter("no-delimiter", "@")      // "" (not found — returns empty)
+
+// Also:
+substringBeforeLast("a.b.c.d", ".")      // "a.b.c"
+substringAfterLast("a.b.c.d", ".")       // "d"
+```
+
+=== substringAfterLast #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== substringBeforeLast #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sum(array) → number / sumBy(array, fn) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Sum numeric values. `sum` takes an array of numbers. `sumBy` takes objects with a key extractor.
+
+- `array` (required): array of numbers (sum) or objects (sumBy)
+- `fn` (required for sumBy): lambda `(element) -> number`
+
+```utlx
+sum([10, 20, 30])                        // 60
+sum([])                                  // 0 (empty array)
+
+// Given: {"items": [{"qty": 2, "price": 25}, {"qty": 5, "price": 10}, {"qty": 1, "price": 100}]}
+
+sumBy($input.items, (i) -> i.qty * i.price)
+// Output: 200 (2*25 + 5*10 + 1*100)
+
+// Equivalent but verbose:
+sum(map($input.items, (i) -> i.qty * i.price))
+// Output: 200
+```
+
+*Anti-pattern:* `reduce($input.items, 0, (acc, i) -> acc + i.price)` — use `sum(map(...))` or `sumBy()`.
+
+=== systemPropertiesAll #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== systemProperty #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== systemPropertyOrDefault #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== T
+
+=== tan #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== tanh #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== tempDir #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== textContent #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerCheck #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerClear #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerList #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerReset #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerStart #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerStats #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerStop #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timestamp #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== titleCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toArray #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toBase64 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toBinary #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toBoolean(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Convert a value to boolean.
+
+- `value` (required): string, number, or boolean to convert
+
+```utlx
+toBoolean("true")                        // true
+toBoolean("false")                       // false
+toBoolean(1)                             // true
+toBoolean(0)                             // false
+toBoolean("yes")                         // true
+toBoolean("no")                          // false
+```
+
+=== toBytes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toDate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toDegrees #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toHex #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toNumber(value) → number #text(size: 8pt, fill: gray)[(Type)]
+
+Convert a value to a number. Throws an error if the value cannot be parsed.
+
+- `value` (required): string, boolean, or number to convert
+
+```utlx
+toNumber("42")                           // 42
+toNumber("3.14")                         // 3.14
+toNumber(true)                           // 1
+toNumber(false)                          // 0
+toNumber("not-a-number")                 // ERROR — runtime error
+
+// Use case: XML values are always strings — convert for arithmetic
+let quantity = toNumber($input.Order.Quantity)
+let price = toNumber($input.Order.Price)
+{lineTotal: quantity * price}
+```
+
+*Anti-pattern:* `toNumber()` on unvalidated user input without error handling:
+
+```utlx
+// BAD — crashes on invalid input:
+toNumber($input.userProvidedValue)
+
+// GOOD — safe with fallback:
+try { toNumber($input.userProvidedValue) } catch { 0 }
+```
+
+=== toObject #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toRadians #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toString(value) → string #text(size: 8pt, fill: gray)[(Type)]
+
+Convert any value to its string representation.
+
+- `value` (required): any value to convert
+
+```utlx
+toString(42)                             // "42"
+toString(3.14)                           // "3.14"
+toString(true)                           // "true"
+toString(null)                           // "null"
+toString([1, 2])                         // "[1, 2]"
+```
+
+Also: `toDate(value)`, `toArray(value)` (wraps non-array in array), `toObject(value)`, `toBinary(string)`.
+
+=== toTitleCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toUTC #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== trace #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== translate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treeDepth #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treeFilter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treeFind #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treeFlatten #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treeMap #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treePaths #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== trim(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Remove whitespace from both ends of a string.
+
+- `string` (required): the string to trim
+
+```utlx
+trim("   hello   ")                      // "hello"
+
+// Use case: clean up CSV values
+map($input, (row) -> mapValues(row, (v) -> if (isString(v)) trim(v) else v))
+```
+
+=== leftTrim(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Remove whitespace from the LEFT (start) of a string only.
+
+- `string` (required): the string to trim
+
+```utlx
+leftTrim("   hello   ")                  // "hello   "
+```
+
+=== rightTrim(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Remove whitespace from the RIGHT (end) of a string only.
+
+- `string` (required): the string to trim
+
+```utlx
+rightTrim("   hello   ")                 // "   hello"
+```
+
+Also: `normalizeSpace(string)` — trims AND collapses internal whitespace to single spaces.
+
+=== transpose(array2D) → array2D #text(size: 8pt, fill: gray)[(Arr)]
+
+Transpose a 2D array — rows become columns, columns become rows.
+
+- `array2D` (required): array of arrays (all same length)
+
+```utlx
+transpose([[1, 2, 3], [4, 5, 6]])
+// Output: [[1, 4], [2, 5], [3, 6]]
+
+// Use case: pivot table data
+// Input: [["Name", "Q1", "Q2"], ["Alice", 100, 200], ["Bob", 150, 175]]
+transpose($input)
+// Output: [["Name", "Alice", "Bob"], ["Q1", 100, 150], ["Q2", 200, 175]]
+```
+
+=== truncate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== tryCoerce #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== typeOf #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== typeof #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== U
+
+=== udmToJSON #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== udmToXML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== udmToYAML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== uncamelize #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== unescapeXML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== union(arr1, arr2) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Combine two arrays, removing duplicates. Returns all unique values from both.
+
+- `arr1` (required): first array
+- `arr2` (required): second array
+
+```utlx
+union([1, 2, 3], [3, 4, 5])
+// Output: [1, 2, 3, 4, 5]
+
+union(["A", "B"], ["B", "C", "D"])
+// Output: ["A", "B", "C", "D"]
+```
+
+=== intersect(arr1, arr2) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Return values present in BOTH arrays.
+
+- `arr1` (required): first array
+- `arr2` (required): second array
+
+```utlx
+intersect([1, 2, 3], [2, 3, 4])
+// Output: [2, 3]
+
+intersect(["A", "B", "C"], ["X", "Y"])
+// Output: []  (no common elements)
+```
+
+=== difference(arr1, arr2) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Return values in `arr1` that are NOT in `arr2`. Order matters — `difference(a, b)` is not the same as `difference(b, a)`.
+
+- `arr1` (required): the source array
+- `arr2` (required): the array to subtract
+
+```utlx
+difference([1, 2, 3], [2, 3, 4])
+// Output: [1]  (1 is in arr1 but not in arr2)
+
+difference([2, 3, 4], [1, 2, 3])
+// Output: [4]  (4 is in arr2's position but not in arr1)
+
+// Use case: find new and removed items between two snapshots
+let previous = map($input.previousOrders, (o) -> o.id)
+let current = map($input.currentOrders, (o) -> o.id)
+{
+  newOrders: difference(current, previous),
+  removedOrders: difference(previous, current)
+}
+```
+
+=== symmetricDifference(arr1, arr2) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Return values that are in EITHER array but NOT in both. The "exclusive or" of two arrays.
+
+- `arr1` (required): first array
+- `arr2` (required): second array
+
+```utlx
+symmetricDifference([1, 2, 3], [2, 3, 4])
+// Output: [1, 4]  (1 only in arr1, 4 only in arr2)
+
+symmetricDifference([1, 2], [1, 2])
+// Output: []  (identical arrays — nothing is exclusive)
+```
+
+=== unique(array) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Remove duplicate values. Alias for `distinct()`. Preserves first occurrence.
+
+- `array` (required): the array to deduplicate
+
+```utlx
+unique([1, 2, 2, 3, 3, 3])              // [1, 2, 3]
+unique(["apple", "banana", "apple"])     // ["apple", "banana"]
+
+// Use case: collect unique values from a field
+unique(map($input.orders, (o) -> o.customerId))
+// Output: ["C-42", "C-41", "C-43"] (unique customer IDs across all orders)
+```
+
+=== unnest #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== unwrapCDATA #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== unzip #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== unzipArchive #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== unzipN #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== updateXMLEncoding #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== upper #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== uptime #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== urlDecodeComponent #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== urlEncode(string) → string / urlDecode(string) → string #text(size: 8pt, fill: gray)[(URL)]
+
+URL-encode/decode strings (percent-encoding per RFC 3986).
+
+- `string` (required): the string to encode or decode
+
+```utlx
+urlEncode("hello world")                 // "hello%20world"
+urlEncode("price=10&currency=EUR")       // "price%3D10%26currency%3DEUR"
+urlDecode("hello%20world")               // "hello world"
+
+// Also available:
+urlEncodeComponent("a=b&c=d")            // encodes & and = too
+urlDecodeComponent("a%3Db%26c%3Dd")      // "a=b&c=d"
+
+// Use case: build a query string
+let qs = join(map(entries($input.params), (e) ->
+  concat(urlEncode(e[0]), "=", urlEncode(toString(e[1])))
+), "&")
+// Or use the dedicated function:
+buildQueryString($input.params)
+```
+
+Also: `buildURL(base, path, params)`, `parseURL(url)`, `getHost(url)`, `getPath(url)`, `getQuery(url)`, `getQueryParams(url)`.
+
+=== urlEncodeComponent #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== username #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== V-W
+
+=== validateDate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== validateDigest #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== validateEncoding #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== values(object) → array #text(size: 8pt, fill: gray)[(Obj)]
+
+See `keys` above. Returns all property values as an array.
+
+```utlx
+values({name: "Alice", age: 30})         // ["Alice", 30]
+```
+
+=== version #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== warn #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== weekOfYear #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== windowed(array, size) → array of arrays #text(size: 8pt, fill: gray)[(Arr)]
+
+Create a sliding window over an array. Returns overlapping sub-arrays of the given size.
+
+- `array` (required): the source array
+- `size` (required): window size
+
+```utlx
+windowed([1, 2, 3, 4, 5], 3)
+// Output: [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
+
+windowed([1, 2, 3, 4, 5], 2)
+// Output: [[1, 2], [2, 3], [3, 4], [4, 5]]
+
+// Use case: calculate moving average
+let prices = [100, 105, 98, 110, 107]
+map(windowed(prices, 3), (window) -> avg(window))
+// Output: [101, 104.33, 105]  (3-day moving average)
+
+// Use case: detect consecutive duplicates
+filter(windowed($input.events, 2), (pair) -> pair[0].type == pair[1].type)
+```
+
+=== wordCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== wrapIfNeeded #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeByte #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeDouble #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeFloat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeInt16 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeInt32 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeInt64 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== X-Z
+
+=== xmlEscape(string) → string / xmlUnescape(string) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Escape/unescape XML special characters.
+
+- `string` (required): the string to escape or unescape
+
+```utlx
+xmlEscape("price < 100 & tax > 0")
+// Output: "price &lt; 100 &amp; tax &gt; 0"
+
+xmlUnescape("price &lt; 100 &amp; tax &gt; 0")
+// Output: "price < 100 & tax > 0"
+
+// Use case: safely embed user input in XML output
+{
+  Comment: xmlEscape($input.userComment)
+}
+
+// Characters escaped: < → &lt;  > → &gt;  & → &amp;  " → &quot;  ' → &apos;
+```
+
+=== xnor #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== xor #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlEntries #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlExists #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlFilterByKeyPattern #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlFindByField #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlFindObjectsWithField #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlFromEntries #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlGetDocument #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlHasRequiredFields #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlKeys #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlMerge #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlMergeAll #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlOmitKeys #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlSelectKeys #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlSort #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlSplitDocuments(yaml) → array / yamlMergeDocuments(docs) → string / yamlPath(yaml, path) → value / yamlSet(yaml, path, value) → value / yamlDelete(yaml, path) → value #text(size: 8pt, fill: gray)[(YAML)]
+
+YAML-specific functions for multi-document handling and path-based access. See Chapter 26.
+
+- `yaml` (required): YAML string or UDM value
+- `docs` (required for merge): array of documents
+- `path` (required): dot-separated path string
+- `value` (required for set): value to set at path
+
+```utlx
+// Split multi-document YAML (separated by ---):
+let docs = yamlSplitDocuments(multiDocString)
+docs[0]                                  // first document
+docs[1]                                  // second document
+
+// Get a specific document:
+yamlGetDocument(multiDocString, 0)       // first document
+
+// Merge documents back:
+yamlMergeDocuments(docs)                 // joined with --- separators
+
+// Path-based access and modification:
+yamlPath($input, "database.host")        // "localhost"
+yamlSet($input, "database.port", 5433)   // returns new structure with port changed
+yamlDelete($input, "database.password")  // returns structure without password
+
+// Check path existence:
+yamlExists($input, "features.experimental")  // true/false
+```
+
+Also: `yamlDeepMerge(obj1, obj2)`, `yamlKeys(obj)`, `yamlValues(obj)`, `yamlSort(obj)`, `yamlValidate(yaml, rules)`, `yamlFilterByKeyPattern(obj, pattern)`.
+
+=== yamlValidate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlValidateKeyPattern #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlValues #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== zip(arr1, arr2) → array / zipWith(arr1, arr2, fn) → array / zipWithIndex(array) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Combine two arrays element-by-element. `zip`: pairs. `zipWith`: merged by function. `zipWithIndex`: adds index to each element.
+
+- `arr1`, `arr2` (required): arrays to combine (truncated to shorter length)
+- `fn` (required for zipWith): lambda `(elem1, elem2) -> combined`
+- `array` (required for zipWithIndex): the array to index
+
+```utlx
+zip([1, 2, 3], ["a", "b", "c"])
+// Output: [[1, "a"], [2, "b"], [3, "c"]]
+
+zipWith([1, 2, 3], [10, 20, 30], (a, b) -> a + b)
+// Output: [11, 22, 33]
+
+zipWithIndex(["Apple", "Banana", "Cherry"])
+// Output: [["Apple", 0], ["Banana", 1], ["Cherry", 2]]
+
+// Use case: combine two parallel arrays (e.g., headers and values)
+let headers = ["Name", "Age", "City"]
+let row = ["Alice", "30", "Amsterdam"]
+fromEntries(zip(headers, row))
+// Output: {"Name": "Alice", "Age": "30", "City": "Amsterdam"}
+
+// Use case: add line numbers
+map(zipWithIndex($input.items), (pair) -> {
+  lineNumber: pair[1] + 1,
+  ...pair[0]
+})
+```
+
+Also: `zipAll(arrays)` — zips any number of arrays, `unzip(pairs)` — reverse of zip, `unzipN(arrays)` — reverse of zipAll.
+
+=== zipAll #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== zipArchive #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== Functions Not Listed Individually
+
+The following function groups follow the same patterns as their listed counterparts. Use the MCP server (`get_function_info`) or the IDE's function browser for signatures and examples.
+
+- *Geospatial (12):* `distance`, `bearing`, `midpoint`, `destinationPoint`, `boundingBox`, `inCircle`, `inPolygon`, `isValidCoordinates`, `geoBearing`, `geoDistance`, `geoMidpoint`, `geoBounds`
+- *Binary (12):* `binaryConcat`, `binaryEquals`, `binaryLength`, `binarySlice`, `binaryToString`, `readByte`, `readInt16`, `readInt32`, `readInt64`, `writeByte`, `writeInt16`, `writeInt32`
+- *URL (16):* `buildURL`, `parseURL`, `getHost`, `getPath`, `getPort`, `getProtocol`, `getQuery`, `getFragment`, `getQueryParams`, `buildQueryString`, `addQueryParam`, `removeQueryParam`, `getBaseURL`, `getURLPath`, `parseQueryString`, `getExtension`
+- *JWT/JWS (18):* `createJWT`, `verifyJWT`, `decodeJWT`, `getJWTClaim`, `getJWTClaims`, `getJWTIssuer`, `getJWTSubject`, `getJWTAudience`, `isJWTExpired`, `validateJWTStructure`, `decodeJWS`, `getJWSHeader`, `getJWSPayload`, `getJWSAlgorithm`, `getJWSKeyId`, `isJWSFormat`, `getJWSInfo`, `getJWSSigningInput`
+- *Encryption (6):* `encryptAES`, `decryptAES`, `encryptAES256`, `decryptAES256`, `generateKey`, `generateIV`
+- *Compression (6):* `compress`, `decompress`, `gzip`, `gunzip`, `deflate`, `inflate`
+- *Timer/Debug (14):* `timerStart`, `timerStop`, `timerStats`, `timerCheck`, `timerReset`, `timerClear`, `timerList`, `debug`, `debugPrint`, `trace`, `warn`, `info`, `log`, `measure`
+- *Tree (7):* `treeMap`, `treeFilter`, `treeFind`, `treeFlatten`, `treePaths`, `treeDepth`, `mapTree`
+- *Case conversion (12):* `camelCase`, `snakeCase`, `kebabCase`, `pascalCase`, `titleCase`, `dotCase`, `pathCase`, `constantCase`, `wordCase`, `slugify`, `fromCamelCase`, `fromSnakeCase`
+- *Math (12):* `pow`, `sqrt`, `exp`, `ln`, `log10`, `log2`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`
+- *Bitwise (6):* `bitwiseAnd`, `bitwiseOr`, `bitwiseXor`, `bitwiseNot`, `shiftLeft`, `shiftRight`
+- *Financial (6):* `simpleInterest`, `compoundInterest`, `presentValue`, `futureValue`, `calculateTax`, `calculateDiscount`
+
+Total: *692 functions* across 16 categories.

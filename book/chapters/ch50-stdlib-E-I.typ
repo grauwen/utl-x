@@ -1,0 +1,1209 @@
+== E
+
+=== e #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== elementPath #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== encryptAES #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== encryptAES256 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endOfDay #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endOfMonth #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endOfQuarter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endOfWeek #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endOfYear #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endsWith(string, suffix) → boolean / startsWith(string, prefix) → boolean #text(size: 8pt, fill: gray)[(Str)]
+
+Check if a string starts or ends with a given substring.
+
+- `string` (required): the string to test
+- `suffix`/`prefix` (required): the substring to check for
+
+```utlx
+// Given: {"filename": "invoice-2026.xml", "orderId": "ORD-001"}
+
+endsWith($input.filename, ".xml")        // true
+endsWith($input.filename, ".json")       // false
+startsWith($input.orderId, "ORD-")       // true
+
+// Use case: filter files by extension
+filter($input.files, (f) -> endsWith(f.name, ".utlx"))
+
+// Use case: validate ID format
+if (!startsWith($input.id, "ORD-")) error("Invalid order ID format")
+```
+
+=== endTimer #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== enforceNamespacePrefixes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== entries(object) → array / fromEntries(pairs) → object #text(size: 8pt, fill: gray)[(Obj)]
+
+Convert between objects and `[key, value]` pair arrays. Essential for dynamic key processing. See Chapter 26.
+
+- `object` (required for entries): the object to decompose
+- `pairs` (required for fromEntries): array of `[key, value]` arrays
+
+```utlx
+// Given: {"servers": {"prod": {"host": "prod-db"}, "staging": {"host": "stg-db"}}}
+
+entries($input.servers)
+// Output: [["prod", {"host": "prod-db"}], ["staging", {"host": "stg-db"}]]
+
+// Iterate over dynamic keys:
+entries($input.servers) |> map((entry) -> {
+  environment: entry[0],     // the key: "prod", "staging"
+  host: entry[1].host        // the value's property
+})
+// Output: [{"environment": "prod", "host": "prod-db"}, {"environment": "staging", "host": "stg-db"}]
+
+// Build an object with dynamic keys:
+fromEntries(map($input.items, (i) -> [i.id, i.name]))
+// Input items: [{id: "A", name: "Widget"}, {id: "B", name: "Gadget"}]
+// Output: {"A": "Widget", "B": "Gadget"}
+```
+
+=== env(name) → string / envOrDefault(name, default) → string #text(size: 8pt, fill: gray)[(Sys)]
+
+Read environment variables from the host system.
+
+- `name` (required): environment variable name
+- `default` (required for envOrDefault): fallback value if not set
+
+```utlx
+env("HOME")                              // "/Users/alice"
+env("UNDEFINED_VAR")                     // null
+
+envOrDefault("LOG_LEVEL", "INFO")        // "INFO" if LOG_LEVEL not set
+envOrDefault("DATABASE_URL", "postgres://localhost:5432/mydb")
+```
+
+Also: `hasEnv(name)` → boolean, `envAll()` → object with all environment variables.
+
+=== envAll #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== environment #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== equals #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== error(message) → never #text(size: 8pt, fill: gray)[(Sys)]
+
+Throw a runtime error with a message. Stops the transformation.
+
+- `message` (required): error description string
+
+```utlx
+// Validate input before processing:
+if ($input.total < 0) error("Total cannot be negative")
+if ($input.currency == null) error("Currency is required")
+
+// Use in a validation pipeline:
+let amount = toNumber($input.amount)
+if (amount > 1000000) error(concat("Amount exceeds limit: ", toString(amount)))
+
+// Combine with try/catch in the caller:
+try {
+  if ($input.type == "UNKNOWN") error("Unknown order type")
+  // ... process order
+} catch {
+  {error: true, message: "Processing failed"}
+}
+```
+
+=== escapeXML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== every #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== everyEntry #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== excC14n #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== excC14nWithComments #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== exp #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== extractBetween #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== extractCDATA #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== extractTimestampFromUuidV7 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== F
+
+=== filter(array, predicate) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Keep elements that match a predicate. Always returns an array (even if 0 or 1 match).
+
+- `array` (required): the array to filter
+- `predicate` (required): lambda `(element) -> boolean`
+
+```bash
+echo '[{"name":"Alice","active":true},{"name":"Bob","active":false}]' \
+  | utlx -e 'filter(., (u) -> u.active)'
+# [{"name": "Alice", "active": true}]
+```
+
+```utlx
+// Given: {"products": [
+//   {"name": "Widget", "price": 25, "active": true},
+//   {"name": "Gadget", "price": 150, "active": true},
+//   {"name": "Gizmo", "price": 10, "active": false}
+// ]}
+
+filter($input.products, (p) -> p.active)
+// Output: [{"name": "Widget", ...}, {"name": "Gadget", ...}]
+
+filter($input.products, (p) -> p.price > 100 && p.active)
+// Output: [{"name": "Gadget", "price": 150, "active": true}]
+
+filter($input.products, (p) -> p.price > 1000)
+// Output: [] (empty array — no matches, NOT null)
+```
+
+*Anti-pattern:* `$input.products[price > 10]` — bracket predicate syntax does NOT work in UTL-X. Always use `filter()`. See Chapter 8.
+
+*Anti-pattern:* `filter()` when you want ONE result — use `find()` instead (returns the element, not an array).
+
+=== filterEntries(object, predicate) → object #text(size: 8pt, fill: gray)[(Obj)]
+
+Filter object properties by key and/or value. Returns a new object with only matching entries.
+
+- `object` (required): the object to filter
+- `predicate` (required): lambda `(key, value) -> boolean`
+
+```utlx
+// Given: {"name": "Alice", "email": "alice@example.com", "password": "secret", "temp": null}
+
+filterEntries($input, (key, value) -> value != null)
+// Output: {"name": "Alice", "email": "alice@example.com", "password": "secret"}
+
+filterEntries($input, (key, value) -> key != "password" && key != "temp")
+// Output: {"name": "Alice", "email": "alice@example.com"}
+```
+
+Also: `someEntry(obj, pred)` → true if any entry matches, `everyEntry(obj, pred)` → true if all match, `countEntries(obj, pred)` → count of matching entries.
+
+=== find(array, predicate) → element or null / findIndex(array, predicate) → number #text(size: 8pt, fill: gray)[(Arr)]
+
+`find`: returns the FIRST matching element, or `null`. `findIndex`: returns its index, or `-1`.
+
+- `array` (required): the array to search
+- `predicate` (required): lambda `(element) -> boolean`
+
+```utlx
+// Given: {"users": [
+//   {"id": 1, "email": "alice@example.com"},
+//   {"id": 2, "email": "bob@example.com"},
+//   {"id": 3, "email": "alice@example.com"}
+// ]}
+
+find($input.users, (u) -> u.email == "bob@example.com")
+// Output: {"id": 2, "email": "bob@example.com"}  (the object, NOT an array)
+
+find($input.users, (u) -> u.email == "unknown@example.com")
+// Output: null
+
+findIndex($input.users, (u) -> u.id == 2)
+// Output: 1 (zero-based index)
+
+findIndex($input.users, (u) -> u.id == 99)
+// Output: -1 (not found)
+```
+
+*Anti-pattern:* `filter($input.users, ...)[0]` — use `find()`. It's cleaner and returns `null` instead of an index-out-of-bounds error on empty results.
+
+Also: `findLastIndex(array, predicate)` — searches from the end.
+
+=== findAllMatches #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== findLastIndex #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== first(array) → element or null #text(size: 8pt, fill: gray)[(Arr)]
+
+Returns the first element of an array, or `null` if the array is empty.
+
+- `array` (required): the source array
+
+```utlx
+first(["Apple", "Banana", "Cherry"])     // "Apple"
+first([42])                              // 42
+first([])                                // null
+
+// Use case: get the cheapest product
+first(sortBy($input.products, (p) -> p.price))
+```
+
+=== formatCurrency #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== formatDateTimeInTimezone #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== formatEmptyElements #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== formatNumber #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== formatPlural #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromBase64 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromBytes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromCamelCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromCharCode #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromConstantCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromDotCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromHex #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromKebabCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromPascalCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromPathCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromSnakeCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromTitleCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromUTC #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fullOuterJoin #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== futureValue #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== head(array) → element or null #text(size: 8pt, fill: gray)[(Arr)]
+
+Alias for `first()`. Returns the first element of an array, or `null` if empty.
+
+- `array` (required): the source array
+
+```utlx
+head(["Apple", "Banana", "Cherry"])      // "Apple"
+head([])                                 // null
+```
+
+=== last(array) → element or null #text(size: 8pt, fill: gray)[(Arr)]
+
+Returns the last element of an array, or `null` if the array is empty.
+
+- `array` (required): the source array
+
+```utlx
+last(["Apple", "Banana", "Cherry"])      // "Cherry"
+last([42])                               // 42
+last([])                                 // null
+
+// Use case: get the most recent event
+last(sortBy($input.events, (e) -> e.timestamp))
+```
+
+=== tail(array) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Returns everything EXCEPT the first element. Returns an empty array if the input has 0 or 1 elements.
+
+- `array` (required): the source array
+
+```utlx
+tail(["Apple", "Banana", "Cherry"])      // ["Banana", "Cherry"]
+tail(["Apple"])                          // []
+tail([])                                 // []
+
+// Use case: skip the header row in a headerless CSV
+let dataRows = tail($input)             // all rows except the first
+```
+
+=== flatMap(array, fn) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Map each element to an array, then flatten one level. Equivalent to `flatten(map(...))`. Use when each element produces multiple results.
+
+- `array` (required): the array to process
+- `fn` (required): lambda `(element) -> array`
+
+```bash
+echo '{"orders": [{"lines": [1,2]}, {"lines": [3]}]}' \
+  | utlx -e 'flatMap(.orders, (o) -> o.lines)'
+# [1, 2, 3]
+```
+
+```utlx
+// Given: orders with nested line items
+flatMap($input.orders, (o) -> o.lines)
+// All lines from all orders in one flat array
+
+// Equivalent to:
+flatten(map($input.orders, (o) -> o.lines))
+```
+
+=== flatten(array) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Remove one level of array nesting. Each element that is an array is unwrapped; non-array elements are kept as-is.
+
+- `array` (required): the nested array to flatten
+
+```utlx
+flatten([[1, 2], [3, 4], [5]])
+// Output: [1, 2, 3, 4, 5]
+
+flatten([[1, 2], 3, [4, 5]])
+// Output: [1, 2, 3, 4, 5]
+
+flatten([[[1, 2]], [[3]]])
+// Output: [[1, 2], [3]]  (only ONE level removed)
+```
+
+=== flattenDeep(array) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Remove ALL levels of array nesting, recursively. Produces a completely flat array.
+
+- `array` (required): the deeply nested array to flatten
+
+```utlx
+flattenDeep([[1, [2, [3, [4]]]]])
+// Output: [1, 2, 3, 4]
+
+flattenDeep([[[["deep"]]]])
+// Output: ["deep"]
+
+flattenDeep([1, 2, 3])
+// Output: [1, 2, 3]  (already flat — no change)
+```
+
+=== formatDate(date, pattern) → string #text(size: 8pt, fill: gray)[(Date)]
+
+Format a date or datetime as a string using a pattern.
+
+- `date` (required): date or datetime value
+- `pattern` (required): format pattern string
+
+Pattern tokens: `yyyy` (year), `MM` (month 01-12), `dd` (day 01-31), `HH` (hour 00-23), `mm` (minute 00-59), `ss` (second 00-59), `EEEE` (day name), `MMMM` (month name), `EEE` (short day), `MMM` (short month).
+
+```utlx
+// Given: {"timestamp": "2026-05-01T14:30:00Z"}
+let dt = parseDate($input.timestamp, "yyyy-MM-dd'T'HH:mm:ss'Z'")
+
+formatDate(dt, "yyyy-MM-dd")             // "2026-05-01"
+formatDate(dt, "dd/MM/yyyy")             // "01/05/2026"
+formatDate(dt, "dd-MM-yyyy HH:mm")       // "01-05-2026 14:30"
+formatDate(dt, "EEEE, MMMM d, yyyy")     // "Thursday, May 1, 2026"
+formatDate(dt, "yyyy-MM-dd'T'HH:mm:ssXXX")  // ISO 8601 with timezone
+
+// Use case: Peppol invoice date (must be yyyy-MM-dd)
+formatDate(now(), "yyyy-MM-dd")
+```
+
+== G
+
+=== generateIV #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== generateKey #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== generateUuid() → string / generateUuidV4() → string / generateUuidV7() → string #text(size: 8pt, fill: gray)[(Sys)]
+
+Generate universally unique identifiers. v4 is random, v7 is time-ordered (sortable).
+
+No parameters.
+
+```utlx
+generateUuid()        // "550e8400-e29b-41d4-a716-446655440000" (v4 random)
+generateUuidV4()      // same as generateUuid()
+generateUuidV7()      // "018f6c30-a2b0-7000-8000-000000000001" (time-ordered)
+
+// Use case: generate correlation IDs for messages
+{
+  messageId: generateUuidV7(),
+  timestamp: now(),
+  payload: $input
+}
+
+// v7 is sortable by creation time — useful for database primary keys
+generateUuidV7Batch(5)  // generate 5 sequential v7 UUIDs
+```
+
+Also: `isValidUuid(string)`, `getUuidVersion(string)`, `isUuidV7(string)`.
+
+=== generateUuidV7Batch #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== get #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getBaseURL #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getBOMBytes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getCurrencyDecimals #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getFragment #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getHost #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSAlgorithm #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSHeader #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSInfo #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSKeyId #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSPayload #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSSigningInput #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSTokenType #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWTAudience #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWTClaim #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWTClaims #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWTIssuer #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWTSubject #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getLogs #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getNamespaces(element) → object #text(size: 8pt, fill: gray)[(XML)]
+
+Get all namespace declarations from an XML element as a prefix-to-URI map. See Chapter 22.
+
+- `element` (required): XML UDM element
+
+```utlx
+// Given: <Invoice xmlns:cbc="urn:oasis:...:CommonBasicComponents-2"
+//                  xmlns:cac="urn:oasis:...:CommonAggregateComponents-2">
+
+getNamespaces($input.Invoice)
+// Output: {
+//   "cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
+//   "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+// }
+
+// Use case: check which namespaces a document uses
+let ns = getNamespaces($input)
+hasKey(ns, "soap")   // true if SOAP namespace declared
+```
+
+=== getPath #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getPort #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getProtocol #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getQuery #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getQueryParams #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getTimezone #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getTimezoneName #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getTimezoneOffsetHours #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getTimezoneOffsetSeconds #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getType #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getUuidVersion #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== goldenRatio #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== groupBy(array, keyFn) → object #text(size: 8pt, fill: gray)[(Arr)]
+
+Group array elements by a computed key. Returns an object where keys are the group values and values are arrays of matching elements.
+
+- `array` (required): the array to group
+- `keyFn` (required): lambda `(element) -> groupKey`
+
+```utlx
+// Given: {"employees": [
+//   {"name": "Alice", "department": "Engineering"},
+//   {"name": "Bob", "department": "Sales"},
+//   {"name": "Charlie", "department": "Engineering"},
+//   {"name": "Diana", "department": "Sales"},
+//   {"name": "Eve", "department": "Engineering"}
+// ]}
+
+groupBy($input.employees, (e) -> e.department)
+// Output: {
+//   "Engineering": [{"name": "Alice", ...}, {"name": "Charlie", ...}, {"name": "Eve", ...}],
+//   "Sales": [{"name": "Bob", ...}, {"name": "Diana", ...}]
+// }
+
+// Use case: aggregate per group
+let groups = groupBy($input.orders, (o) -> o.status)
+entries(groups) |> map((entry) -> {
+  status: entry[0],
+  count: count(entry[1]),
+  total: sum(map(entry[1], (o) -> o.amount))
+})
+```
+
+=== gunzip #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== gzip #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== H
+
+=== hasAlpha #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasAttribute #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasBOM #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasContent #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasEnv #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasKey(object, key) → boolean / containsKey(object, key) → boolean #text(size: 8pt, fill: gray)[(Obj)]
+
+Check if an object has a property. `containsKey` is an alias.
+
+- `object` (required): the object to check
+- `key` (required): property name as string
+
+```utlx
+// Given: {"name": "Alice", "email": "alice@example.com"}
+
+hasKey($input, "email")                  // true
+hasKey($input, "phone")                  // false
+
+// Use case: conditional processing based on field presence
+if (hasKey($input, "shippingAddress")) {
+  address: $input.shippingAddress
+} else {
+  address: $input.billingAddress
+}
+```
+
+Also: `containsValue(object, value)` — check if any property has a specific value.
+
+=== hash(data, algorithm?) → string / md5(data) → string / sha256(data) → string / sha512(data) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Cryptographic hash functions. Return hex-encoded digest string.
+
+- `data` (required): string to hash
+- `algorithm` (optional for `hash`, default `"SHA-256"`): algorithm name (`"MD5"`, `"SHA-1"`, `"SHA-256"`, `"SHA-384"`, `"SHA-512"`, `"SHA3-256"`, `"SHA3-512"`)
+
+```utlx
+sha256("hello")
+// Output: "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+
+md5("hello")
+// Output: "5d41402abc4b2a76b9719d911017c592"
+
+sha512("hello")
+// Output: "9b71d224bd62f3785d96d46ad3ea3d73..."
+
+// Generic hash with explicit algorithm:
+hash("hello", "SHA3-256")
+// Output: "3338be694f50c5f338814986cdf0686453a888b84f424d792af4b9202398f392"
+
+// Use case: content-addressed caching
+let contentHash = sha256(renderJson($input))
+{...$input, hash: contentHash}
+```
+
+*Anti-pattern:* `md5()` for security — MD5 is cryptographically broken. Use `sha256()` minimum. MD5 is acceptable only for non-security checksums (file deduplication, cache keys).
+
+Also: `sha1(data)`, `sha224(data)`, `sha384(data)`, `sha3_256(data)`, `sha3_512(data)`.
+
+=== hasNamespace #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasNumeric #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hexDecode #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hexEncode #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hmac(data, key, algorithm) → string / hmacSHA256(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+HMAC (Hash-based Message Authentication Code) for verifying message integrity and authenticity.
+
+- `data` (required): the message to authenticate
+- `key` (required): the secret key
+- `algorithm` (required for `hmac`): hash algorithm
+
+```utlx
+hmacSHA256("message-to-verify", "my-secret-key")
+// Output: "4a8f3d..." (HMAC-SHA256 hex string)
+
+hmac("message", "key", "SHA-512")
+// Output: "..." (HMAC-SHA512)
+
+// Use case: verify webhook signature
+let expectedSig = hmacSHA256($input.body, env("WEBHOOK_SECRET"))
+if (expectedSig != $input.headers.signature) error("Invalid signature")
+```
+
+Also: `hmacSHA512(data, key)`, `hmacSHA1(data, key)`, `hmacMD5(data, key)`, `hmacBase64(data, key, algorithm)` (returns Base64 instead of hex).
+
+=== hmacBase64 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hmacMD5 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hmacSHA1 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hmacSHA384 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hmacSHA512 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== homeDir #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hours #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+== I
+
+=== ifThenElse #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== implies #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== includes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== indexOf(haystack, needle) → number #text(size: 8pt, fill: gray)[(Str/Arr)]
+
+Find the position of the FIRST occurrence of a value. Returns -1 if not found. Works for both strings and arrays.
+
+- `haystack` (required): string or array to search in
+- `needle` (required): value to find
+
+```utlx
+indexOf("hello world", "world")          // 6
+indexOf("hello world", "xyz")            // -1 (not found)
+indexOf(["Apple", "Banana", "Cherry"], "Banana")  // 1
+indexOf(["Apple", "Banana", "Cherry"], "Grape")   // -1
+```
+
+=== inflate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== info #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== insertAfter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== insertBefore #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== invert #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== iqr #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isAfter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isAlpha #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isAlphanumeric #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isAscii #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isBefore #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isBetween #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isCanonicalJSON #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isCDATA #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isDebugMode #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isEmptyElement #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isGzipped #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isHexadecimal #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isJarFile #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isJWSFormat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isJWTExpired #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isLeapYearFunc #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isLocalDateTime #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isLowerCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isNotEmpty #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isNumeric #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isPlural #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isPointInCircle #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isPointInPolygon #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isPrintable #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isSameDay #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isSingular #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isToday #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isUpperCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isUuidV7 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidAmount #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidCoordinates #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidCurrency #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidTimezone #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidURL #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidUuid #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isWhitespace #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isZipArchive #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== lastIndexOf(haystack, needle) → number #text(size: 8pt, fill: gray)[(Str/Arr)]
+
+Find the position of the LAST occurrence of a value. Returns -1 if not found.
+
+- `haystack` (required): string or array to search in
+- `needle` (required): value to find
+
+```utlx
+lastIndexOf("abcabc", "bc")              // 4 (last occurrence, not first at 1)
+lastIndexOf(["A", "B", "A", "C"], "A")   // 2 (last A)
+lastIndexOf("hello", "xyz")              // -1
+```
+
+Also: `findIndex(array, predicate)` — find by condition instead of value. `findLastIndex(array, predicate)` — last match by condition.
+
+=== isArray(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is an array.
+
+- `value` (required): the value to test
+
+```utlx
+isArray([1, 2, 3])                       // true
+isArray("hello")                         // false
+isArray($input.items)                    // true if items is an array
+
+// Use case: handle XML single-vs-array ambiguity
+let items = if (isArray($input.Item)) $input.Item else [$input.Item]
+// Ensures items is always an array, even when XML has a single <Item>
+```
+
+=== isBoolean(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is a boolean (`true` or `false`).
+
+- `value` (required): the value to test
+
+```utlx
+isBoolean(true)                          // true
+isBoolean(false)                         // true
+isBoolean("true")                        // false (string, not boolean)
+isBoolean(1)                             // false (number, not boolean)
+```
+
+=== isNull(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is null.
+
+- `value` (required): the value to test
+
+```utlx
+isNull(null)                             // true
+isNull("")                               // false (empty string is not null)
+isNull(0)                                // false (zero is not null)
+isNull($input.optionalField)             // true if field is missing or null
+```
+
+=== isNumber(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is a number (integer or decimal).
+
+- `value` (required): the value to test
+
+```utlx
+isNumber(42)                             // true
+isNumber(3.14)                           // true
+isNumber("42")                           // false (string, not number)
+isNumber(true)                           // false
+```
+
+=== isObject(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is an object (key-value map).
+
+- `value` (required): the value to test
+
+```utlx
+isObject({name: "Alice"})                // true
+isObject([1, 2, 3])                      // false (array, not object)
+isObject("hello")                        // false
+isObject($input)                         // true (root is typically an object)
+```
+
+=== isString(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is a string.
+
+- `value` (required): the value to test
+
+```utlx
+isString("hello")                        // true
+isString(42)                             // false
+isString(null)                           // false
+```
+
+=== isDate(value) → boolean / isDateTime(value) → boolean / isTime(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Returns true if the value is a date, datetime, or time respectively.
+
+- `value` (required): the value to test
+
+```utlx
+isDate(parseDate("2026-05-01", "yyyy-MM-dd"))       // true
+isDateTime(now())                                     // true
+isDate("2026-05-01")                                  // false (string, not date)
+```
+
+=== isBlank(value) → boolean / isEmpty(value) → boolean / isDefined(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Additional type predicates.
+
+- `value` (required): the value to test
+
+```utlx
+isBlank(null)                            // true
+isBlank("")                              // true
+isBlank("  ")                            // true (whitespace-only)
+isBlank("hello")                         // false
+
+isEmpty(null)                            // true
+isEmpty("")                              // true
+isEmpty([])                              // true (empty array)
+isEmpty("hello")                         // false
+isEmpty([1])                             // false
+
+isDefined(null)                          // false
+isDefined("")                            // true (empty string IS defined)
+isDefined(0)                             // true (zero IS defined)
+isDefined($input.name)                   // true if field exists and is not null
+```
+
+=== isLeapYear(year) → boolean / isWeekday(date) → boolean / isWeekend(date) → boolean #text(size: 8pt, fill: gray)[(Date)]
+
+Date predicates.
+
+- `year` (required for isLeapYear): year number
+- `date` (required for isWeekday/isWeekend): date or datetime
+
+```utlx
+isLeapYear(2024)                         // true (divisible by 4, not by 100, or by 400)
+isLeapYear(2026)                         // false
+
+isWeekday(parseDate("2026-05-01", "yyyy-MM-dd"))  // true (Thursday)
+isWeekend(parseDate("2026-05-03", "yyyy-MM-dd"))  // true (Sunday)
+
+// Use case: calculate business days
+let workDays = filter(
+  map(range(0, 30), (i) -> addDays(startDate, i)),
+  (d) -> isWeekday(d)
+)
+
+isToday(parseDate("2026-05-01", "yyyy-MM-dd"))  // true/false
+isSameDay(date1, date2)                          // true if same calendar day
+```
+
