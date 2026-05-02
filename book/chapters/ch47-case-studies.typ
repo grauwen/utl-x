@@ -11,10 +11,15 @@ This chapter presents real-world integration scenarios and reusable transformati
 
 *Architecture:*
 
-```
-D365 Business Central → Azure Service Bus → UTLXe → Peppol Access Point
-  (OData JSON)           (queue)           (UBL XML)   (AS4 transport)
-```
+#figure(
+  image("../pictures/ch47-cases-studies/usecase-1.png", width: 100%),
+  caption: [Use Case 1 — Dynamics 365 → Service Bus → UTL-X Container App → Peppol Access Point. Three hot-reloadable transformations handle invoice mapping, validation, and country-specific routing.]
+)
+
+#figure(
+  image("../pictures/ch47-cases-studies/usecase-t-1.png", width: 100%),
+  caption: [Use Case 1 — The UTL-X transformation in detail: Dynamics 365 JSON input (left), invoice-to-ubl.utlx transformation (center), UBL 2.1 XML output (right).]
+)
 
 *Transformation highlights:*
 
@@ -59,10 +64,16 @@ function FormatAmount(amount, currency) {
 ```
 
 *Results:*
+
+#figure(
+  image("../pictures/ch47-cases-studies/usecase-b-1.png", width: 100%),
+  caption: [Use Case 1 — Business impact: before vs after UTL-X, with production numbers after 6 months.]
+)
+
 - 2,147 invoices/day, 14ms average latency
 - 99.97% Peppol Access Point acceptance rate
-- Cost: \$35/month (Starter) + \$50/month Azure compute = \$85/month
-- Savings: \$44,000/year vs previous solution (12 custom Azure Functions in C\#)
+- Cost: \€85/month (UTL-X + Azure compute)
+- Savings: \€44,000/year vs previous solution (12 custom Azure Functions in C\#)
 
 == Case Study 2: Healthcare — FHIR Integration
 
@@ -73,10 +84,15 @@ function FormatAmount(amount, currency) {
 
 *Architecture:*
 
-```
-4 source systems → Service Bus (4 queues) → UTLXe (Professional) → FHIR Server
-                                              5-step pipeline          (NUTS)
-```
+#figure(
+  image("../pictures/ch47-cases-studies/usecase-2.png", width: 100%),
+  caption: [Use Case 2 — Four source systems (Lab, Radiology, EHR, Pharmacy) → Service Bus → UTL-X Container App → FHIR Server → NUTS Network. All processing stays inside the hospital's Azure tenant for GDPR + NEN 7510 compliance.]
+)
+
+#figure(
+  image("../pictures/ch47-cases-studies/usecase-t-2.png", width: 100%),
+  caption: [Use Case 2 — Transformation detail: HL7 v2.3 OBX message parsed to JSON (left), hl7v2-to-fhir.utlx transformation excerpt (center), FHIR R4 Observation Bundle (right).]
+)
 
 *Key transformation — Lab result to FHIR Observation:*
 
@@ -122,11 +138,17 @@ output json
 ```
 
 *Results:*
+
+#figure(
+  image("../pictures/ch47-cases-studies/usecase-b-2.png", width: 100%),
+  caption: [Use Case 2 — Business impact: before vs after UTL-X, with production numbers after 3 months.]
+)
+
 - 8,400 messages/day across 4 source systems
 - 22ms average pipeline latency (5-step pipeline)
-- GDPR + NEN 7510 compliant by architecture (all data stays in hospital's Azure tenant)
-- Cost: \$105/month (Professional) + \$200/month Azure compute
-- Savings: \$115,000/year vs Rhapsody integration engine license
+- 100% NEN 7510 compliant by architecture (all data stays in hospital's Azure tenant)
+- Cost: \$305/month (UTL-X Professional + Azure compute)
+- Savings: \€115,000/year vs Rhapsody integration engine license
 
 == Case Study 3: Retail — Multi-Channel Order Normalization
 
