@@ -45,17 +45,19 @@
 // ── Title Page ──
 
 #align(center)[
-  #v(4cm)
+  #v(2cm)
+  #image("pictures/utlx-logo-5formats.png", width: 8cm)
+  #v(1cm)
   #text(size: 36pt, weight: "bold", fill: rgb("#003366"))[UTL-X]
   #v(0.5cm)
   #text(size: 18pt, fill: rgb("#666666"))[Format-Agnostic Data Transformation]
   #v(0.3cm)
   #text(size: 14pt, fill: rgb("#999999"))[The Complete Guide]
-  #v(3cm)
+  #v(2cm)
   #text(size: 14pt)[Ir. Marcel A. Grauwen]
   #v(0.5cm)
   #text(size: 11pt, fill: rgb("#999999"))[Creator of UTL-X]
-  #v(4cm)
+  #v(3cm)
   #text(size: 10pt, fill: rgb("#999999"))[Version 1.0 — 2026]
 ]
 
