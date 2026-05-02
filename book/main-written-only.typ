@@ -46,7 +46,7 @@
 
 #align(center)[
   #v(2cm)
-  #image("pictures/utlx-logo-5formats.png", width: 8cm)
+  #image("pictures/utlx-logos/utlx-logo-5formats.png", width: 8cm)
   #v(1cm)
   #text(size: 36pt, weight: "bold", fill: rgb("#003366"))[UTL-X]
   #v(0.5cm)
