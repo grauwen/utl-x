@@ -1,0 +1,32 @@
+name: "f08_xsd_usdl_dual_access"
+category: "formats/xsd/basic"
+description: "F08: XSD input has both raw XSD access and USDL % properties"
+tags: ["xsd", "usdl", "f08", "enrichment"]
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="person" type="xs:string"/>
+    </xs:schema>
+
+transformation: |
+  %utlx 1.0
+  input xsd
+  output json
+  ---
+  {
+    rawElementName: $input["xs:element"].@name,
+    hasUSDL: $input["%_diagnostics"]["%_status"] == "complete",
+    diagnosticStatus: $input["%_diagnostics"]["%_status"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "rawElementName": "person",
+      "hasUSDL": true,
+      "diagnosticStatus": "complete"
+    }

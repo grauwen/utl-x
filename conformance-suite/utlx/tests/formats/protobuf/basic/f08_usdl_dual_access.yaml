@@ -1,0 +1,38 @@
+name: "f08_protobuf_usdl_dual_access"
+category: "formats/protobuf/basic"
+description: "F08: Protobuf input has both raw .proto access and USDL % properties"
+tags: ["protobuf", "usdl", "f08", "enrichment"]
+
+input:
+  format: proto
+  data: |
+    syntax = "proto3";
+    package test;
+    message Person {
+      string name = 1;
+      int32 age = 2;
+    }
+
+transformation: |
+  %utlx 1.0
+  input proto
+  output json
+  ---
+  {
+    rawMessageName: $input.message.name,
+    rawPackage: $input.package,
+    usdlTypeName: keys($input["%types"])[0],
+    usdlNamespace: $input["%namespace"],
+    diagnosticStatus: $input["%_diagnostics"]["%_status"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "rawMessageName": "Person",
+      "rawPackage": "test",
+      "usdlTypeName": "Person",
+      "usdlNamespace": "test",
+      "diagnosticStatus": "complete"
+    }

@@ -105,9 +105,17 @@ class EDMXParserTest {
                 <root><child>data</child></root>
             """.trimIndent()
 
-            assertThrows<IllegalArgumentException> {
-                EDMXParser(xml).parse()
-            }
+            // F08: enrichment failure no longer throws — returns raw XML with failed diagnostics
+            val udm = EDMXParser(xml).parse()
+            udm.shouldBeInstanceOf<UDM.Object>()
+            val result = udm as UDM.Object
+
+            // Raw XML preserved
+            result.properties.containsKey("root") shouldBe true
+
+            // USDL enrichment failed — diagnostics reflect this
+            val diagnostics = result.properties["%_diagnostics"] as UDM.Object
+            (diagnostics.properties["%_status"] as UDM.Scalar).value shouldBe "failed"
         }
     }
 
@@ -754,5 +762,46 @@ class EDMXParserTest {
 
             (activeField.properties["%defaultValue"] as UDM.Scalar).value shouldBe "true"
         }
+    }
+
+    // ── F08: USDL Enrichment Tests ──
+
+    @Test
+    @DisplayName("F08 - parse produces both raw EDMX XML and USDL properties")
+    fun f08DualAccess() {
+        val edmx = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+              <edmx:DataServices>
+                <Schema Namespace="Test" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                  <EntityType Name="Customer">
+                    <Key><PropertyRef Name="id"/></Key>
+                    <Property Name="id" Type="Edm.Int32" Nullable="false"/>
+                    <Property Name="name" Type="Edm.String"/>
+                  </EntityType>
+                </Schema>
+              </edmx:DataServices>
+            </edmx:Edmx>
+        """.trimIndent()
+
+        val udm = EDMXParser(edmx).parse()
+        udm.shouldBeInstanceOf<UDM.Object>()
+        val schema = udm as UDM.Object
+
+        // Raw XML access works — edmx:Edmx element preserved
+        schema.properties.containsKey("edmx:Edmx") shouldBe true
+
+        // USDL % properties are present
+        schema.properties.containsKey("%types") shouldBe true
+        schema.properties.containsKey("%namespace") shouldBe true
+        schema.properties.containsKey("%_diagnostics") shouldBe true
+
+        // Diagnostics show complete
+        val diagnostics = schema.properties["%_diagnostics"] as UDM.Object
+        (diagnostics.properties["%_status"] as UDM.Scalar).value shouldBe "complete"
+
+        // USDL types contain Customer
+        val types = schema.properties["%types"] as UDM.Object
+        types.properties.containsKey("Customer") shouldBe true
     }
 }

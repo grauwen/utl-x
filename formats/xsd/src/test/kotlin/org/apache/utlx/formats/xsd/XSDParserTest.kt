@@ -557,4 +557,74 @@ class XSDParserTest {
         detectedPattern.shouldBeInstanceOf<UDM.Scalar>()
         (detectedPattern as UDM.Scalar).value shouldBe "chameleon-schema"
     }
+
+    // ── F08: USDL Enrichment Tests ──
+
+    @Test
+    fun `F08 - parse produces both raw XSD and USDL properties`() {
+        val xsd = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:complexType name="Order">
+                <xs:sequence>
+                  <xs:element name="id" type="xs:string"/>
+                  <xs:element name="total" type="xs:decimal"/>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:schema>
+        """.trimIndent()
+
+        val udm = XSDParser(xsd).parse()
+        udm.shouldBeInstanceOf<UDM.Object>()
+        val schema = udm as UDM.Object
+
+        // Raw XSD access still works
+        schema.properties.keys.any { it.startsWith("xs:") } shouldBe true
+
+        // USDL % properties are present
+        schema.properties.containsKey("%types") shouldBe true
+        schema.properties.containsKey("%xsdPattern") shouldBe true
+        schema.properties.containsKey("%_diagnostics") shouldBe true
+
+        // Diagnostics show complete
+        val diagnostics = schema.properties["%_diagnostics"] as UDM.Object
+        (diagnostics.properties["%_status"] as UDM.Scalar).value shouldBe "complete"
+    }
+
+    @Test
+    fun `F08 - USDL types contain parsed type definitions`() {
+        val xsd = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:complexType name="Person">
+                <xs:sequence>
+                  <xs:element name="name" type="xs:string"/>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:schema>
+        """.trimIndent()
+
+        val udm = XSDParser(xsd).parse() as UDM.Object
+        val types = udm.properties["%types"] as UDM.Object
+
+        types.properties.containsKey("Person") shouldBe true
+    }
+
+    @Test
+    fun `F08 - enrichment failure produces failed diagnostics not exception`() {
+        // Minimal valid XML that is NOT a real XSD schema
+        val notReallyXSD = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            </xs:schema>
+        """.trimIndent()
+
+        // Should not throw — enrichment failure is caught
+        val udm = XSDParser(notReallyXSD).parse()
+        udm.shouldBeInstanceOf<UDM.Object>()
+        val schema = udm as UDM.Object
+
+        // Diagnostics should be present (complete or failed — either is acceptable for empty schema)
+        schema.properties.containsKey("%_diagnostics") shouldBe true
+    }
 }

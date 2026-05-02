@@ -26,5 +26,16 @@ expected:
       "xs:element": {
         "@name": "person",
         "@type": "xs:string"
+      },
+      "%types": {},
+      "%xsdPattern": "undetectable",
+      "%xsdPatternStats": {
+        "globalElements": 1,
+        "globalTypes": 0,
+        "inlineTypes": 0,
+        "detectedPattern": "undetectable"
+      },
+      "%_diagnostics": {
+        "%_status": "complete"
       }
     }
