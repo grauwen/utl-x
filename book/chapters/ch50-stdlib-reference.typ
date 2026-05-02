@@ -1,4 +1,4 @@
-= Standard Library Reference
+= Standard Library Reference <ch50-stdlib>
 
 This appendix lists the UTL-X standard library functions alphabetically. Each entry shows:
 - *Signature:* `functionName(required, required, optional?)` — parameters with `?` are optional
