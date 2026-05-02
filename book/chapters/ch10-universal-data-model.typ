@@ -275,7 +275,7 @@ Tools like IBM's Mercator (later WTX) solved this with an "intermediate card" â€
 
 UTL-X takes a different approach: the `groupBy` + `map` pattern uses existing language constructs instead of a separate mapping artifact. This is more verbose but more flexible â€” you can add conditions, transformations, and error handling at each level.
 
-A future `nestBy()` stdlib function could simplify the common case:
+The `nestBy()` stdlib function simplifies the common case:
 
 ```utlx
 let enrichedOrders = nestBy(

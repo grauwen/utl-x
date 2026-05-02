@@ -684,5 +684,5 @@ This USDL document can be converted to JSON Schema, XSD, Avro, Protobuf, or EDMX
   radius: 4pt,
   width: 100%,
 )[
-  *Note (F08):* the USDL pipeline wiring is not yet complete — `output yaml` and Tier 2 → Tier 2 schema conversions do not work as described. The stdlib functions (`parseXSDSchema`, `parseJSONSchema`, etc.) perform USDL conversion individually and do work. See F08 for the implementation plan.
+  *Note (F08):* USDL enrichment is implemented. All 6 Tier 2 parsers produce enriched UDM with both raw structure and USDL `%` properties. Tier 2 → Tier 2 schema conversions (e.g., `input xsd` / `output jsch`) work via USDL passthrough. The stdlib functions (`parseXSDSchema`, `parseJSONSchema`, etc.) also work independently.
 ]
