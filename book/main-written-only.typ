@@ -286,17 +286,28 @@
 // ── Index (Full Table of Contents) ──
 #show heading: set heading(outlined: true)
 
-#heading(level: 1)[Index]
+#heading(level: 1, numbering: none)[INDEX]
 
 #context {
-  let entries = query(heading).filter(h => h.body != [Index])
+  let entries = query(heading).filter(h => h.body != [INDEX])
   for entry in entries {
-    let indent-amount = (entry.level - 1) * 1.5em
-    let page-num = counter(page).at(entry.location()).first()
     let nums = counter(heading).at(entry.location())
+    if nums.first() == 0 { continue }
+    let indent-amount = (entry.level - 1) * 2em
+    let page-num = counter(page).at(entry.location()).first()
     let num-str = nums.slice(0, calc.min(entry.level, nums.len())).map(str).join(".")
-    pad(left: indent-amount, bottom: 0.3em)[
-      #link(entry.location())[#num-str #entry.body] #box(width: 1fr, repeat[.]) #str(page-num)
-    ]
+    let body = if entry.level == 1 {
+      strong[#num-str #h(0.5em) #entry.body]
+    } else {
+      [#num-str #h(0.5em) #entry.body]
+    }
+    if entry.level == 1 { v(0.3em) }
+    h(indent-amount)
+    link(entry.location())[#body]
+    h(0.3em)
+    box(width: 1fr, repeat[.#h(0.15em)])
+    h(0.3em)
+    str(page-num)
+    linebreak()
   }
 }
