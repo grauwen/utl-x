@@ -245,17 +245,18 @@ Returns true if ALL elements satisfy the predicate. Returns true for empty array
 - `array` (required): the array to test
 - `predicate` (required): lambda `(element) -> boolean`
 
+```bash
+echo '{"items": [{"price": 10}, {"price": 25}, {"price": 5}]}' \
+  | utlx -e 'all($input.items, (item) -> item.price > 0)'
+# true
+```
+
 ```utlx
-// Given: {"items": [{"price": 10}, {"price": 25}, {"price": 5}]}
-
-all($input.items, (item) -> item.price > 0)
-// Output: true (all prices positive)
-
-all($input.items, (item) -> item.price > 20)
-// Output: false (10 and 5 are not > 20)
-
-all([], (x) -> x > 0)
-// Output: true (vacuously true — no elements to violate)
+{
+  allPositive: all($input.items, (item) -> item.price > 0),
+  allExpensive: all($input.items, (item) -> item.price > 20)
+}
+// Output: {"allPositive": true, "allExpensive": false}
 ```
 
 === any(array, predicate) → boolean #text(size: 8pt, fill: gray)[(Arr)]
@@ -265,14 +266,18 @@ Returns true if at least ONE element satisfies the predicate. Returns false for 
 - `array` (required): the array to test
 - `predicate` (required): lambda `(element) -> boolean`
 
+```bash
+echo '{"orders": [{"status": "PENDING"}, {"status": "SHIPPED"}, {"status": "PENDING"}]}' \
+  | utlx -e 'any($input.orders, (o) -> o.status == "SHIPPED")'
+# true
+```
+
 ```utlx
-// Given: {"orders": [{"status": "PENDING"}, {"status": "SHIPPED"}, {"status": "PENDING"}]}
-
-any($input.orders, (o) -> o.status == "SHIPPED")
-// Output: true (second order is shipped)
-
-any($input.orders, (o) -> o.status == "CANCELLED")
-// Output: false (none cancelled)
+{
+  hasShipped: any($input.orders, (o) -> o.status == "SHIPPED"),
+  hasCancelled: any($input.orders, (o) -> o.status == "CANCELLED")
+}
+// Output: {"hasShipped": true, "hasCancelled": false}
 ```
 
 === avg(array) → number #text(size: 8pt, fill: gray)[(Num)]
@@ -281,14 +286,16 @@ Average of numeric values in an array. Returns 0 for empty arrays.
 
 - `array` (required): array of numbers
 
+```bash
+echo '{"scores": [85, 92, 78, 95, 88]}' | utlx -e 'avg($input.scores)'
+# 87.6
+```
+
 ```utlx
-// Given: {"scores": [85, 92, 78, 95, 88]}
-
-avg($input.scores)
-// Output: 87.6
-
-avg([])
-// Output: 0 (empty array returns 0, not error)
+{
+  averageScore: avg($input.scores),
+  averageEmpty: avg([])                  // 0 (safe on empty arrays)
+}
 ```
 
 *Anti-pattern:* `sum(arr) / count(arr)` — crashes on empty arrays (division by zero). Use `avg()` which handles this safely.
@@ -300,11 +307,17 @@ Average of values extracted from an array of objects using a key function.
 - `array` (required): array of objects
 - `keyFn` (required): lambda `(element) -> number`
 
-```utlx
-// Given: {"products": [{"name": "A", "price": 10}, {"name": "B", "price": 30}, {"name": "C", "price": 20}]}
+```bash
+echo '{"products": [{"name": "A", "price": 10}, {"name": "B", "price": 30}, {"name": "C", "price": 20}]}' \
+  | utlx -e 'avgBy($input.products, (p) -> p.price)'
+# 20
+```
 
-avgBy($input.products, (p) -> p.price)
-// Output: 20
+```utlx
+{
+  avgPrice: avgBy($input.products, (p) -> p.price),
+  avgWeight: avgBy($input.products, (p) -> p.weight)
+}
 ```
 
 == B
@@ -397,11 +410,16 @@ Canonicalize an XML document using W3C C14N (sorted attributes, normalized white
 
 - `xml` (required): XML UDM value to canonicalize
 
-```utlx
-// Given: XML document with unsorted attributes, whitespace variations
+```bash
+echo '<Order id="1" status="new"/>' | utlx -f xml -e 'c14n($input)'
+# canonical XML string (sorted attributes, normalized whitespace)
+```
 
-c14n($input)
-// Output: canonical XML string (sorted attributes, normalized whitespace)
+```utlx
+{
+  canonical: c14n($input),
+  fingerprint: c14nFingerprint($input)
+}
 ```
 
 Also: `c14nWithComments(xml)`, `excC14n(xml)` (exclusive, for SOAP), `c14n11(xml)` (version 1.1), `c14nFingerprint(xml)` (short hash for logging).
@@ -413,12 +431,17 @@ Compute a hash digest of the canonical form of an XML document.
 - `xml` (required): XML UDM value to canonicalize and hash
 - `algorithm` (optional, default `"SHA-256"`): hash algorithm (e.g., `"SHA-512"`)
 
-```utlx
-c14nHash($input)
-// Output: "a1b2c3d4e5f6..."  (SHA-256 hex digest of canonical form)
+```bash
+echo '<Invoice id="1"><Total>100</Total></Invoice>' \
+  | utlx -f xml -e 'c14nHash($input)'
+# "a1b2c3d4e5..."  (SHA-256 hex digest of canonical form)
+```
 
-c14nHash($input, "SHA-512")
-// Output: "9b71d224bd62..."  (SHA-512 instead)
+```utlx
+{
+  digest256: c14nHash($input),
+  digest512: c14nHash($input, "SHA-512")
+}
 ```
 
 === c14nEquals(xml1, xml2) → boolean #text(size: 8pt, fill: gray)[(XML)]
@@ -429,9 +452,10 @@ Compare two XML documents semantically (ignoring formatting differences) by comp
 - `xml2` (required): second XML UDM value
 
 ```utlx
-// Compare two XML documents semantically (ignoring formatting differences)
-c14nEquals(xmlFromSystemA, xmlFromSystemB)
-// Output: true if same content, regardless of attribute order or whitespace
+{
+  match: c14nEquals($input.expected, $input.actual),
+  status: if (c14nEquals($input.expected, $input.actual)) "PASS" else "FAIL"
+}
 ```
 
 === c14n11 #text(size: 8pt, fill: gray)[(TODO)]
@@ -696,13 +720,14 @@ Split an array into sub-arrays of the given size. Last chunk may be smaller.
 - `array` (required): the array to split
 - `size` (required): maximum elements per chunk
 
+```bash
+echo '{"items": ["A", "B", "C", "D", "E", "F", "G"]}' \
+  | utlx -e 'chunk($input.items, 3)'
+# [["A", "B", "C"], ["D", "E", "F"], ["G"]]
+```
+
 ```utlx
-// Given: {"items": ["A", "B", "C", "D", "E", "F", "G"]}
-
-chunk($input.items, 3)
-// Output: [["A", "B", "C"], ["D", "E", "F"], ["G"]]
-
-// Use case: batch processing — send items in groups of 100
+// Batch processing — send items in groups of 100
 map(chunk($input.records, 100), (batch) -> {
   batchSize: count(batch),
   items: batch
@@ -715,14 +740,16 @@ Returns the first non-null argument. Accepts any number of arguments.
 
 - `value1, value2, ...` (variadic): values to check in order
 
+```bash
+echo '{"nickname": null, "displayName": null, "fullName": "Alice Johnson"}' \
+  | utlx -e 'coalesce($input.nickname, $input.displayName, $input.fullName, "Anonymous")'
+# "Alice Johnson"
+```
+
 ```utlx
-// Given: {"nickname": null, "displayName": null, "fullName": "Alice Johnson"}
-
-coalesce($input.nickname, $input.displayName, $input.fullName, "Anonymous")
-// Output: "Alice Johnson" (first non-null)
-
-coalesce(null, null, null)
-// Output: null (all null)
+{
+  name: coalesce($input.nickname, $input.displayName, $input.fullName, "Anonymous")
+}
 ```
 
 *Note:* for two values, the `??` operator is cleaner: `$input.name ?? "Unknown"`.
@@ -733,19 +760,21 @@ Remove null, empty string, and false values from an array.
 
 - `array` (required): the array to compact
 
+```bash
+echo '{"tags": ["urgent", null, "", "review", null, "important"]}' \
+  | utlx -e 'compact($input.tags)'
+# ["urgent", "review", "important"]
+```
+
 ```utlx
-// Given: {"tags": ["urgent", null, "", "review", null, "important"]}
-
-compact($input.tags)
-// Output: ["urgent", "review", "important"]
-
-// Use case: build a list with conditional entries, then compact away the nulls
-compact([
-  $input.name,
-  if ($input.email != null) $input.email else null,
-  if ($input.phone != null) $input.phone else null
-])
-// Output: ["Alice", "alice@example.com"]  (phone was null, removed)
+{
+  contacts: compact([
+    $input.name,
+    $input.email,
+    $input.phone
+  ])
+}
+// null values are removed from the resulting array
 ```
 
 === concat(string1, string2, ...) → string #text(size: 8pt, fill: gray)[(Str)]
@@ -754,26 +783,20 @@ Concatenate any number of strings.
 
 - `string1, string2, ...` (variadic): strings to concatenate
 
-```utlx
-// Given: {"firstName": "Alice", "lastName": "Johnson", "title": "Dr."}
-
-concat($input.title, " ", $input.firstName, " ", $input.lastName)
-// Output: "Dr. Alice Johnson"
-
-// With 2 arguments:
-concat("Order-", toString($input.orderId))
-// Output: "Order-42"
+```bash
+echo '{"title": "Dr.", "firstName": "Alice", "lastName": "Johnson"}' \
+  | utlx -e 'concat($input.title, " ", $input.firstName, " ", $input.lastName)'
+# "Dr. Alice Johnson"
 ```
 
-*Anti-pattern:* building a long string in a loop with `reduce` + `concat` creates N intermediate strings. Use `join(array, separator)` instead:
-
 ```utlx
-// BAD: O(N²) string building
-reduce($input.names, "", (acc, name) -> concat(acc, name, ", "))
-
-// GOOD: O(N) string building
-join($input.names, ", ")
+{
+  fullName: concat($input.title, " ", $input.firstName, " ", $input.lastName),
+  reference: concat("Order-", toString($input.orderId))
+}
 ```
+
+*Anti-pattern:* building long strings with `reduce` + `concat`. Use `join(array, separator)` instead.
 
 === contains(haystack, needle) → boolean #text(size: 8pt, fill: gray)[(Str/Arr)]
 
@@ -782,18 +805,18 @@ Check if a string contains a substring, or an array contains a value.
 - `haystack` (required): the string or array to search in
 - `needle` (required): the value to search for
 
+```bash
+echo '{"roles": ["admin", "editor", "viewer"]}' \
+  | utlx -e 'contains($input.roles, "admin")'
+# true
+```
+
 ```utlx
-// String variant:
-contains("Hello World", "World")         // true
-contains("Hello World", "world")         // false (case-sensitive)
-
-// Array variant:
-// Given: {"roles": ["admin", "editor", "viewer"]}
-contains($input.roles, "admin")          // true
-contains($input.roles, "superadmin")     // false
-
-// Use case: filter by membership
-filter($input.orders, (o) -> contains(["ACTIVE", "PENDING"], o.status))
+{
+  hasWorld: contains("Hello World", "World"),    // true (string variant)
+  isAdmin: contains($input.roles, "admin"),     // true (array variant)
+  activeOrders: filter($input.orders, (o) -> contains(["ACTIVE", "PENDING"], o.status))
+}
 ```
 
 === count(array) → number #text(size: 8pt, fill: gray)[(Arr)]
@@ -802,11 +825,17 @@ Count all elements in an array.
 
 - `array` (required): the array to count
 
-```utlx
-// Given: {"orders": [{"status": "ACTIVE"}, {"status": "CLOSED"}, {"status": "ACTIVE"}]}
+```bash
+echo '{"orders": [{"status": "ACTIVE"}, {"status": "CLOSED"}, {"status": "ACTIVE"}]}' \
+  | utlx -e 'count($input.orders)'
+# 3
+```
 
-count($input.orders)
-// Output: 3
+```utlx
+{
+  totalOrders: count($input.orders),
+  totalItems: count($input.items)
+}
 ```
 
 === countBy(array, predicate) → number #text(size: 8pt, fill: gray)[(Arr)]
@@ -816,26 +845,17 @@ Count elements in an array that match a predicate.
 - `array` (required): the array to count
 - `predicate` (required): lambda `(element) -> boolean`
 
-```utlx
-// Given: {"orders": [{"status": "ACTIVE"}, {"status": "CLOSED"}, {"status": "ACTIVE"}]}
-
-countBy($input.orders, (o) -> o.status == "ACTIVE")
-// Output: 2
+```bash
+echo '{"orders": [{"status": "ACTIVE"}, {"status": "CLOSED"}, {"status": "ACTIVE"}]}' \
+  | utlx -e 'countBy($input.orders, (o) -> o.status == "ACTIVE")'
+# 2
 ```
 
-*Anti-pattern:* calling `count(filter(...))` twice with the same filter:
-
 ```utlx
-// BAD: filters twice
-{
-  activeCount: count(filter($input.orders, (o) -> o.status == "ACTIVE")),
-  activeNames: map(filter($input.orders, (o) -> o.status == "ACTIVE"), (o) -> o.name)
-}
-
-// GOOD: filter once, reuse
 let active = filter($input.orders, (o) -> o.status == "ACTIVE")
 {
   activeCount: count(active),
+  closedCount: countBy($input.orders, (o) -> o.status == "CLOSED"),
   activeNames: map(active, (o) -> o.name)
 }
 ```
@@ -985,25 +1005,15 @@ Recursively merge two objects. At each level, properties from `obj2` override `o
 - `obj2` (required): override object
 
 ```utlx
-// Given: base config + environment override
-let base = {
-  server: {host: "localhost", port: 5432, ssl: false},
-  logging: {level: "INFO", format: "json"}
-}
-let prod = {
-  server: {host: "prod-db.example.com", ssl: true},
-  logging: {level: "WARN"}
-}
+let base = {server: {host: "localhost", port: 5432, ssl: false}}
+let prod = {server: {host: "prod-db.example.com", ssl: true}}
 
 deepMerge(base, prod)
-// Output: {
-//   server: {host: "prod-db.example.com", port: 5432, ssl: true},
-//   logging: {level: "WARN", format: "json"}
-// }
-// Note: port (5432) and format ("json") survived from base — deep merge, not replace
+// {server: {host: "prod-db.example.com", port: 5432, ssl: true}}
+// port survived from base — deep merge, not replace
 ```
 
-*Contrast with spread:* `{...base, ...prod}` would REPLACE the entire `server` object, losing `port`. `deepMerge` preserves nested properties. Also: `deepMergeAll(array)` merges an array of objects sequentially.
+*Contrast with spread:* `{...base, ...prod}` would REPLACE the entire `server` object, losing `port`. `deepMerge` preserves nested properties.
 
 === deepMergeAll #text(size: 8pt, fill: gray)[(TODO)]
 
@@ -1045,25 +1055,25 @@ Also: `convertXMLEncoding(xml, targetEncoding)` re-encodes the document.
 
 === diffDays(date1, date2) → number #text(size: 8pt, fill: gray)[(Date)]
 
-Difference between two dates in the specified unit. Variants: `diffMonths`, `diffYears`, `diffHours`, `diffMinutes`, `diffSeconds`, `diffWeeks`.
+Difference between two dates in days. Variants: `diffMonths`, `diffYears`, `diffHours`, `diffMinutes`, `diffSeconds`, `diffWeeks`.
 
 - `date1` (required): start date
 - `date2` (required): end date
 
+```bash
+echo '{"start": "2026-05-01", "end": "2026-06-15"}' \
+  | utlx -e 'diffDays(parseDate($input.start, "yyyy-MM-dd"), parseDate($input.end, "yyyy-MM-dd"))'
+# 45
+```
+
 ```utlx
-// Given: {"startDate": "2026-05-01", "endDate": "2026-06-15"}
 let start = parseDate($input.startDate, "yyyy-MM-dd")
 let end = parseDate($input.endDate, "yyyy-MM-dd")
-
-diffDays(start, end)                     // 45
-diffWeeks(start, end)                    // 6
-diffMonths(start, end)                   // 1
-
-// Use case: calculate invoice overdue days
-let dueDate = parseDate($input.dueDate, "yyyy-MM-dd")
-let overdueDays = diffDays(dueDate, now())
-if (overdueDays > 0) concat("Overdue by ", toString(overdueDays), " days")
-else "Not yet due"
+{
+  daysBetween: diffDays(start, end),
+  weeksBetween: diffWeeks(start, end),
+  overdue: if (diffDays(end, now()) > 0) "Yes" else "No"
+}
 ```
 
 === diffHours #text(size: 8pt, fill: gray)[(TODO)]
@@ -1100,13 +1110,16 @@ Remove duplicate values from an array using value equality.
 
 - `array` (required): the array to deduplicate
 
-```utlx
-distinct([1, 2, 2, 3, 3, 3])
-// Output: [1, 2, 3]
+```bash
+echo '{"tags": ["a", "b", "a", "c", "b"]}' | utlx -e 'distinct($input.tags)'
+# ["a", "b", "c"]
+```
 
-// Extract unique values from a field:
-distinct(map($input.orders, (o) -> o.customerId))
-// Output: ["C-42", "C-41"]
+```utlx
+{
+  uniqueCustomers: distinct(map($input.orders, (o) -> o.customerId)),
+  uniqueStatuses: distinct(map($input.orders, (o) -> o.status))
+}
 ```
 
 === distinctBy(array, keyFn) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -1116,16 +1129,17 @@ Remove duplicate values from an array using a key extractor to determine uniquen
 - `array` (required): the array to deduplicate
 - `keyFn` (required): lambda `(element) -> key`
 
-```utlx
-// Given: {"orders": [
-//   {"id": 1, "customerId": "C-42"},
-//   {"id": 2, "customerId": "C-42"},
-//   {"id": 3, "customerId": "C-41"}
-// ]}
+```bash
+echo '{"orders": [{"id": 1, "cust": "C-42"}, {"id": 2, "cust": "C-42"}, {"id": 3, "cust": "C-41"}]}' \
+  | utlx -e 'distinctBy($input.orders, (o) -> o.cust)'
+# [{"id": 1, "cust": "C-42"}, {"id": 3, "cust": "C-41"}]
+```
 
-distinctBy($input.orders, (o) -> o.customerId)
-// Output: [{"id": 1, "customerId": "C-42"}, {"id": 3, "customerId": "C-41"}]
-// (first order per customer kept, duplicates removed)
+```utlx
+{
+  onePerCustomer: distinctBy($input.orders, (o) -> o.customerId)
+}
+// keeps first order per customer, removes duplicates
 ```
 
 === divideBy #text(size: 8pt, fill: gray)[(TODO)]
@@ -1143,14 +1157,15 @@ Remove the first N elements from an array, returning the rest.
 - `array` (required): the source array
 - `n` (required): number of elements to drop
 
+```bash
+echo '{"items": ["A", "B", "C", "D", "E"]}' | utlx -e 'drop($input.items, 2)'
+# ["C", "D", "E"]
+```
+
 ```utlx
-// Given: {"items": ["A", "B", "C", "D", "E"]}
-
-drop($input.items, 2)
-// Output: ["C", "D", "E"]  (first 2 removed)
-
-// Use case: skip CSV header row (when headers: false)
-let dataRows = drop($input, 1)  // skip first row
+// Skip CSV header row (when headers: false)
+let dataRows = drop($input, 1)
+map(dataRows, (row) -> { name: row[0], value: row[1] })
 ```
 
 === take(array, n) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -1160,13 +1175,15 @@ Keep only the first N elements from an array, discarding the rest.
 - `array` (required): the source array
 - `n` (required): number of elements to keep
 
+```bash
+echo '{"items": ["A", "B", "C", "D", "E"]}' | utlx -e 'take($input.items, 3)'
+# ["A", "B", "C"]
+```
+
 ```utlx
-// Given: {"items": ["A", "B", "C", "D", "E"]}
-
-take($input.items, 3)
-// Output: ["A", "B", "C"]  (only first 3 kept)
-
-// Use case: top 10 results
-let top10 = take(sortBy($input.products, (p) -> -p.sales), 10)
+{
+  top10: take(sortBy($input.products, (p) -> -p.sales), 10),
+  preview: take($input.items, 5)
+}
 ```
 

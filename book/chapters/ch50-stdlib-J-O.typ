@@ -10,9 +10,9 @@ JSON Canonicalization Scheme (RFC 8785). Produces deterministic JSON — identic
 
 - `json` (required): JSON UDM value to canonicalize
 
-```utlx
-jcs({z: 3, a: 1, m: 2})
-// Output: '{"a":1,"m":2,"z":3}'  (keys sorted, no whitespace)
+```bash
+echo '{"z": 3, "a": 1, "m": 2}' | utlx -e 'jcs($input)'
+# {"a":1,"m":2,"z":3}  (keys sorted, no whitespace)
 ```
 
 Also: `canonicalJSONHash(json, algorithm?)` (hash the canonical form), `canonicalJSONSize(json)` (byte size), `isCanonicalJSON(string)`.
@@ -23,9 +23,9 @@ Alias for `jcs()`. Produces deterministic JSON using RFC 8785.
 
 - `json` (required): JSON UDM value to canonicalize
 
-```utlx
-canonicalizeJSON($input)
-// Output: '{"a":1,"m":2,"z":3}'  (keys sorted, no whitespace)
+```bash
+echo '{"z": 3, "a": 1, "m": 2}' | utlx -e 'canonicalizeJSON($input)'
+# {"a":1,"m":2,"z":3}  (keys sorted, no whitespace)
 ```
 
 === jsonEquals(json1, json2) → boolean #text(size: 8pt, fill: gray)[(JSON)]
@@ -36,13 +36,12 @@ Compare two JSON values semantically, ignoring key order and whitespace.
 - `json2` (required): second value to compare
 
 ```utlx
-jsonEquals({b: 2, a: 1}, {a: 1, b: 2})
-// Output: true (same content, different key order)
+jsonEquals({b: 2, a: 1}, {a: 1, b: 2})  // true (same content, different key order)
 
 // Use case: detect changes between two API responses
-if (!jsonEquals(previousResponse, currentResponse)) {
+if (!jsonEquals($input.previous, $input.current)) {
   changed: true,
-  hash: canonicalJSONHash(currentResponse)
+  hash: canonicalJSONHash($input.current)
 }
 ```
 
@@ -53,22 +52,17 @@ Join array elements into a single string with a separator. This is the *string* 
 - `array` (required): array of values to join (non-strings are converted automatically)
 - `separator` (required): string to insert between elements
 
+```bash
+echo '{"tags": ["urgent", "billing", "review"]}' | utlx -e 'join($input.tags, ", ")'
+# urgent, billing, review
+```
+
 ```utlx
-// Given: {"tags": ["urgent", "billing", "review"]}
-
-join($input.tags, ", ")
-// Output: "urgent, billing, review"
-
-join($input.tags, " | ")
-// Output: "urgent | billing | review"
-
-// Use case: build a CSV line manually
-join([$input.name, toString($input.age), $input.city], ";")
-// Output: "Alice;30;Amsterdam"
-
-// Use case: build a path
-join(["usr", "local", "bin"], "/")
-// Output: "usr/local/bin"
+{
+  label: join($input.tags, " | "),
+  csvLine: join([$input.name, toString($input.age), $input.city], ";"),
+  path: join(["usr", "local", "bin"], "/")
+}
 ```
 
 *Anti-pattern:* `reduce(arr, "", (acc, x) -> concat(acc, x, ", "))` — creates N intermediate strings. `join()` builds the result in one pass.
@@ -93,21 +87,17 @@ Get all property names (keys) from an object. Key order is preserved (insertion 
 
 - `object` (required): the object to inspect
 
+```bash
+echo '{"name": "Alice", "age": 30, "city": "Amsterdam"}' | utlx -e 'keys($input)'
+# ["name", "age", "city"]
+```
+
 ```utlx
-// Given: {"name": "Alice", "age": 30, "city": "Amsterdam"}
-
-keys($input)
-// Output: ["name", "age", "city"]
-
-// Use case: iterate over dynamic keys
+// Iterate over dynamic keys
 map(keys($input.servers), (env) -> {
   environment: env,
   host: $input.servers[env].host
 })
-
-// Use case: check what fields are present
-let fields = keys($input)
-contains(fields, "email")   // true/false
 ```
 
 === values(object) → array #text(size: 8pt, fill: gray)[(Obj)]
@@ -116,11 +106,9 @@ Get all property values from an object. Order matches `keys()`.
 
 - `object` (required): the object to inspect
 
-```utlx
-// Given: {"name": "Alice", "age": 30, "city": "Amsterdam"}
-
-values($input)
-// Output: ["Alice", 30, "Amsterdam"]
+```bash
+echo '{"name": "Alice", "age": 30, "city": "Amsterdam"}' | utlx -e 'values($input)'
+# ["Alice", 30, "Amsterdam"]
 ```
 
 == L
@@ -162,8 +150,6 @@ Extract the local name (without prefix) from an XML qualified name. See Chapter 
 - `element` (required): XML UDM element
 
 ```utlx
-// Given: <cbc:InvoiceTypeCode xmlns:cbc="urn:oasis:...">380</cbc:InvoiceTypeCode>
-
 localName($input)                        // "InvoiceTypeCode"
 ```
 
@@ -174,8 +160,6 @@ Extract the namespace URI from an XML element.
 - `element` (required): XML UDM element
 
 ```utlx
-// Given: <cbc:InvoiceTypeCode xmlns:cbc="urn:oasis:...">380</cbc:InvoiceTypeCode>
-
 namespaceUri($input)                     // "urn:oasis:names:specification:ubl:..."
 
 // Use case: filter XML elements by namespace (XBRL taxonomy)
@@ -191,8 +175,6 @@ Extract the namespace prefix from an XML element.
 - `element` (required): XML UDM element
 
 ```utlx
-// Given: <cbc:InvoiceTypeCode xmlns:cbc="urn:oasis:...">380</cbc:InvoiceTypeCode>
-
 namespacePrefix($input)                  // "cbc"
 ```
 
@@ -203,8 +185,6 @@ Get the full qualified name (prefix:localName) of an XML element.
 - `element` (required): XML UDM element
 
 ```utlx
-// Given: <cbc:InvoiceTypeCode xmlns:cbc="urn:oasis:...">380</cbc:InvoiceTypeCode>
-
 qualifiedName($input)                    // "cbc:InvoiceTypeCode"
 ```
 
@@ -287,24 +267,18 @@ echo '[1, 2, 3]' | utlx -e 'map(., (x) -> x * 2)'
 ```
 
 ```utlx
-// Given: {"items": [{"name": "Widget", "price": 25}, {"name": "Gadget", "price": 50}]}
+{
+  lines: map($input.items, (item) -> {
+    product: item.name,
+    priceWithTax: item.price * 1.21
+  }),
 
-map($input.items, (item) -> {
-  product: item.name,
-  priceWithTax: item.price * 1.21
-})
-// Output: [{"product": "Widget", "priceWithTax": 30.25}, {"product": "Gadget", "priceWithTax": 60.50}]
-
-// With index (second parameter):
-map($input.items, (item, index) -> {
-  lineNumber: index + 1,
-  product: item.name
-})
-// Output: [{"lineNumber": 1, "product": "Widget"}, {"lineNumber": 2, "product": "Gadget"}]
-
-// Simple transformation:
-map([1, 2, 3], (x) -> x * 2)
-// Output: [2, 4, 6]
+  // With index (second parameter):
+  numbered: map($input.items, (item, index) -> {
+    lineNumber: index + 1,
+    product: item.name
+  })
+}
 ```
 
 *Anti-pattern:* using `map()` to filter — `map(arr, (x) -> if (x.active) x else null)` produces nulls. Use `filter()` to remove, then `map()` to transform.
@@ -316,14 +290,9 @@ Transform both keys and values of an object. See Chapter 26 (dynamic keys).
 - `object` (required): the object to transform
 - `fn` (required): lambda `(key, value) -> {key: newKey, value: newValue}`
 
-```utlx
-// Given: {"first_name": "Alice", "last_name": "Johnson", "age": 30}
-
-mapEntries($input, (key, value) -> {
-  key: upperCase(key),
-  value: if (isString(value)) upperCase(value) else value
-})
-// Output: {"FIRST_NAME": "ALICE", "LAST_NAME": "JOHNSON", "AGE": 30}
+```bash
+echo '{"first_name": "Alice", "last_name": "Johnson", "age": 30}' | utlx -e 'mapEntries($input, (key, value) -> {key: upperCase(key), value: if (isString(value)) upperCase(value) else value})'
+# {"FIRST_NAME": "ALICE", "LAST_NAME": "JOHNSON", "AGE": 30}
 ```
 
 === mapKeys(object, fn) → object #text(size: 8pt, fill: gray)[(Obj)]
@@ -333,11 +302,9 @@ Transform the keys of an object, keeping values unchanged.
 - `object` (required): the object to transform
 - `fn` (required): lambda `(key) -> newKey`
 
-```utlx
-// Given: {"first_name": "Alice", "last_name": "Johnson", "age": 30}
-
-mapKeys($input, (key) -> camelCase(key))
-// Output: {"firstName": "Alice", "lastName": "Johnson", "age": 30}
+```bash
+echo '{"first_name": "Alice", "last_name": "Johnson", "age": 30}' | utlx -e 'mapKeys($input, (key) -> camelCase(key))'
+# {"firstName": "Alice", "lastName": "Johnson", "age": 30}
 ```
 
 === mapValues(object, fn) → object #text(size: 8pt, fill: gray)[(Obj)]
@@ -347,11 +314,9 @@ Transform the values of an object, keeping keys unchanged.
 - `object` (required): the object to transform
 - `fn` (required): lambda `(value) -> newValue`
 
-```utlx
-// Given: {"first_name": "Alice", "last_name": "Johnson", "age": 30}
-
-mapValues($input, (value) -> toString(value))
-// Output: {"first_name": "Alice", "last_name": "Johnson", "age": "30"}
+```bash
+echo '{"first_name": "Alice", "last_name": "Johnson", "age": 30}' | utlx -e 'mapValues($input, (value) -> toString(value))'
+# {"first_name": "Alice", "last_name": "Johnson", "age": "30"}
 ```
 
 === mapGroups #text(size: 8pt, fill: gray)[(TODO)]
@@ -433,15 +398,9 @@ Find the element with the maximum value of a key extractor. Returns the entire e
 - `array` (required): array to search
 - `fn` (required): lambda `(element) -> comparable`
 
-```utlx
-// Given: {"products": [
-//   {"name": "Widget", "price": 25},
-//   {"name": "Gadget", "price": 150},
-//   {"name": "Gizmo", "price": 10}
-// ]}
-
-maxBy($input.products, (p) -> p.price)
-// Output: {"name": "Gadget", "price": 150}  (the ENTIRE object, not just 150)
+```bash
+echo '{"products": [{"name": "Widget", "price": 25}, {"name": "Gadget", "price": 150}, {"name": "Gizmo", "price": 10}]}' | utlx -e 'maxBy($input.products, (p) -> p.price)'
+# {"name": "Gadget", "price": 150}  (the ENTIRE object, not just 150)
 ```
 
 === minBy(array, fn) → element #text(size: 8pt, fill: gray)[(Num/Arr)]
@@ -451,15 +410,9 @@ Find the element with the minimum value of a key extractor. Returns the entire e
 - `array` (required): array to search
 - `fn` (required): lambda `(element) -> comparable`
 
-```utlx
-// Given: {"products": [
-//   {"name": "Widget", "price": 25},
-//   {"name": "Gadget", "price": 150},
-//   {"name": "Gizmo", "price": 10}
-// ]}
-
-minBy($input.products, (p) -> p.price)
-// Output: {"name": "Gizmo", "price": 10}
+```bash
+echo '{"products": [{"name": "Widget", "price": 25}, {"name": "Gadget", "price": 150}, {"name": "Gizmo", "price": 10}]}' | utlx -e 'minBy($input.products, (p) -> p.price)'
+# {"name": "Gizmo", "price": 10}
 ```
 
 === measure #text(size: 8pt, fill: gray)[(TODO)]
@@ -472,10 +425,9 @@ Compute the median (middle value) of a numeric array.
 
 - `array` (required): array of numbers
 
-```utlx
-// Given: {"scores": [72, 85, 90, 95, 88, 76, 92]}
-
-median($input.scores)                    // 88 (middle value)
+```bash
+echo '{"scores": [72, 85, 90, 95, 88, 76, 92]}' | utlx -e 'median($input.scores)'
+# 88
 ```
 
 === mode(array) → number #text(size: 8pt, fill: gray)[(Num)]
@@ -494,10 +446,9 @@ Compute the standard deviation of a numeric array.
 
 - `array` (required): array of numbers
 
-```utlx
-// Given: {"scores": [72, 85, 90, 95, 88, 76, 92]}
-
-stdDev($input.scores)                    // ~8.5 (standard deviation)
+```bash
+echo '{"scores": [72, 85, 90, 95, 88, 76, 92]}' | utlx -e 'stdDev($input.scores)'
+# ~8.5
 ```
 
 === variance(array) → number #text(size: 8pt, fill: gray)[(Num)]
@@ -506,10 +457,9 @@ Compute the variance of a numeric array.
 
 - `array` (required): array of numbers
 
-```utlx
-// Given: {"scores": [72, 85, 90, 95, 88, 76, 92]}
-
-variance($input.scores)                  // ~72.2
+```bash
+echo '{"scores": [72, 85, 90, 95, 88, 76, 92]}' | utlx -e 'variance($input.scores)'
+# ~72.2
 ```
 
 === percentile(array, p) → number #text(size: 8pt, fill: gray)[(Num)]
@@ -519,10 +469,9 @@ Compute the p-th percentile of a numeric array.
 - `array` (required): array of numbers
 - `p` (required): percentile value 0-100
 
-```utlx
-// Given: {"scores": [72, 85, 90, 95, 88, 76, 92]}
-
-percentile($input.scores, 90)            // ~94.2 (90th percentile)
+```bash
+echo '{"scores": [72, 85, 90, 95, 88, 76, 92]}' | utlx -e 'percentile($input.scores, 90)'
+# ~94.2 (90th percentile)
 ```
 
 Also: `iqr(array)` — interquartile range, `quartiles(array)` — [Q1, Q2, Q3].
@@ -538,11 +487,8 @@ Shallow merge of objects. Later arguments override earlier ones. Same as spread 
 - `obj1, obj2, ...` (variadic): objects to merge
 
 ```utlx
-merge({a: 1, b: 2}, {b: 3, c: 4})
-// Output: {a: 1, b: 3, c: 4}  (b overridden by second)
-
-merge({a: 1}, {b: 2}, {c: 3})
-// Output: {a: 1, b: 2, c: 3}
+merge({a: 1, b: 2}, {b: 3, c: 4})       // {a: 1, b: 3, c: 4}
+merge({a: 1}, {b: 2}, {c: 3})           // {a: 1, b: 2, c: 3}
 ```
 
 *Note:* for deep (recursive) merge, use `deepMerge(obj1, obj2)`.

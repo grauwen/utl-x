@@ -7,14 +7,16 @@ Return a new object WITHOUT the listed properties.
 - `object` (required): the source object
 - `keys` (required): array of property names to exclude
 
+```bash
+echo '{"name": "Alice", "email": "alice@example.com", "password": "secret", "role": "admin"}' | utlx -e 'omit($input, ["password"])'
+# {"name": "Alice", "email": "alice@example.com", "role": "admin"}
+```
+
 ```utlx
-// Given: {"name": "Alice", "email": "alice@example.com", "password": "secret", "role": "admin"}
-
-omit($input, ["password"])
-// Output: {"name": "Alice", "email": "alice@example.com", "role": "admin"}
-
-// Use case: strip sensitive fields before logging
 let safe = omit($input, ["password", "apiKey", "token", "secret"])
+{
+  sanitized: safe
+}
 ```
 
 === pick(object, keys) → object #text(size: 8pt, fill: gray)[(Obj)]
@@ -24,11 +26,9 @@ Return a new object WITH ONLY the listed properties.
 - `object` (required): the source object
 - `keys` (required): array of property names to keep
 
-```utlx
-// Given: {"name": "Alice", "email": "alice@example.com", "password": "secret", "role": "admin"}
-
-pick($input, ["name", "email"])
-// Output: {"name": "Alice", "email": "alice@example.com"}
+```bash
+echo '{"name": "Alice", "email": "alice@example.com", "password": "secret", "role": "admin"}' | utlx -e 'pick($input, ["name", "email"])'
+# {"name": "Alice", "email": "alice@example.com"}
 ```
 
 === osArch #text(size: 8pt, fill: gray)[(TODO)]
@@ -138,21 +138,16 @@ Parse a date or datetime string using a format pattern. See `formatDate` for pat
 - `pattern` (required): format pattern
 
 ```utlx
-parseDate("2026-05-01", "yyyy-MM-dd")
-// Output: date value (May 1, 2026)
+let d = parseDate($input.date, "dd/MM/yyyy")
+{
+  isoDate: formatDate(d, "yyyy-MM-dd"),
+  display: formatDate(d, "MMMM d, yyyy")
+}
+```
 
-parseDate("01/05/2026", "dd/MM/yyyy")
-// Output: date value (May 1, 2026)
-
-parseDate("2026-05-01T14:30:00Z", "yyyy-MM-dd'T'HH:mm:ss'Z'")
-// Output: datetime value
-
-parseDate("May 1, 2026", "MMMM d, yyyy")
-// Output: date value
-
-// Use case: normalize different date formats to ISO
-formatDate(parseDate($input.date, "dd/MM/yyyy"), "yyyy-MM-dd")
-// "15/04/2026" → "2026-04-15"
+```bash
+echo '{"ts": "2026-05-01T14:30:00Z"}' | utlx -e 'formatDate(parseDate($input.ts, "yyyy-MM-dd'\''T'\''HH:mm:ss'\''Z'\''"), "dd MMM yyyy")'
+# 01 May 2026
 ```
 
 *Anti-pattern:* assuming date format — `01/02/2026` is January 2nd (US `MM/dd/yyyy`) or February 1st (EU `dd/MM/yyyy`). Always specify the pattern explicitly.
@@ -225,19 +220,12 @@ Split an array into two: elements that match the predicate, and elements that do
 - `array` (required): the array to partition
 - `predicate` (required): lambda `(element) -> boolean`
 
+```bash
+echo '{"orders": [{"id": 1, "amount": 500}, {"id": 2, "amount": 1500}, {"id": 3, "amount": 200}]}' | utlx -e 'partition($input.orders, (o) -> o.amount > 1000)'
+# [[{"id": 2, "amount": 1500}], [{"id": 1, "amount": 500}, {"id": 3, "amount": 200}]]
+```
+
 ```utlx
-// Given: {"orders": [
-//   {"id": 1, "amount": 500},
-//   {"id": 2, "amount": 1500},
-//   {"id": 3, "amount": 200},
-//   {"id": 4, "amount": 3000}
-// ]}
-
-let result = partition($input.orders, (o) -> o.amount > 1000)
-// result[0] = [{"id": 2, ...}, {"id": 4, ...}]  (matching: amount > 1000)
-// result[1] = [{"id": 1, ...}, {"id": 3, ...}]  (non-matching)
-
-// Use case: separate valid from invalid
 let validated = partition($input.records, (r) -> r.email != null && r.name != null)
 {
   valid: validated[0],
@@ -381,22 +369,21 @@ reduce([10, 20, 30], 0, (sum, x) -> sum + x)
 reduce(["Alice", "Bob", "Charlie"], "", (acc, name) ->
   if (acc == "") name else concat(acc, ", ", name)
 )
-// Output: "Alice, Bob, Charlie"
+// "Alice, Bob, Charlie"
 
 // Build a lookup object from an array:
-// Input: [{"id": "A", "name": "Widget"}, {"id": "B", "name": "Gadget"}]
 reduce($input, {}, (acc, item) -> {
   ...acc,
   [item.id]: item.name
 })
-// Output: {"A": "Widget", "B": "Gadget"}
+// {"A": "Widget", "B": "Gadget"}
 
 // Count occurrences:
 reduce(["a", "b", "a", "c", "a"], {}, (acc, x) -> {
   ...acc,
   [x]: (acc[x] ?? 0) + 1
 })
-// Output: {"a": 3, "b": 1, "c": 1}
+// {"a": 3, "b": 1, "c": 1}
 ```
 
 *Anti-pattern:* using `reduce` for operations that have dedicated functions:
@@ -473,11 +460,8 @@ Serialize a UDM value to a JSON string.
 - `pretty` (optional, default false): pretty-print with indentation
 
 ```utlx
-renderJson({name: "Alice", age: 30})
-// Output: '{"name":"Alice","age":30}'
-
-renderJson({name: "Alice", age: 30}, true)
-// Output: '{\n  "name": "Alice",\n  "age": 30\n}'
+renderJson({name: "Alice", age: 30})        // '{"name":"Alice","age":30}'
+renderJson({name: "Alice", age: 30}, true)  // pretty-printed with newlines
 ```
 
 === renderCsv #text(size: 8pt, fill: gray)[(TODO)]
@@ -505,11 +489,8 @@ Replace all literal occurrences of a substring.
 - `replacement` (required): what to replace with
 
 ```utlx
-replace("Hello World", "World", "UTL-X")
-// Output: "Hello UTL-X"
-
-replace("2026-05-01", "-", "/")
-// Output: "2026/05/01"  (replaces ALL occurrences)
+replace("Hello World", "World", "UTL-X")   // "Hello UTL-X"
+replace("2026-05-01", "-", "/")             // "2026/05/01" (replaces ALL occurrences)
 ```
 
 === replaceRegex(string, regex, replacement) → string #text(size: 8pt, fill: gray)[(Str)]
@@ -521,11 +502,8 @@ Replace all occurrences matching a regular expression.
 - `replacement` (required): what to replace with
 
 ```utlx
-replaceRegex("Order #123 on 2026-05-01", "[0-9]+", "X")
-// Output: "Order #X on X-X-X"
-
-replaceRegex("  extra   spaces  ", "\\s+", " ")
-// Output: " extra spaces "  (collapse whitespace — use normalizeSpace() instead)
+replaceRegex("Order #123 on 2026-05-01", "[0-9]+", "X")  // "Order #X on X-X-X"
+replaceRegex("  extra   spaces  ", "\\s+", " ")           // " extra spaces "
 ```
 
 === replaceWithFunction #text(size: 8pt, fill: gray)[(TODO)]
@@ -747,21 +725,17 @@ Sort an array using a key extractor function.
 - `array` (required): the array to sort
 - `keyFn` (required): lambda `(element) -> sortKey`
 
+```bash
+echo '{"products": [{"name": "Widget", "price": 25}, {"name": "Gadget", "price": 150}, {"name": "Gizmo", "price": 10}]}' | utlx -e 'sortBy($input.products, (p) -> p.price)'
+# [{"name": "Gizmo", "price": 10}, {"name": "Widget", "price": 25}, {"name": "Gadget", "price": 150}]
+```
+
 ```utlx
-// Given: {"products": [
-//   {"name": "Widget", "price": 25},
-//   {"name": "Gadget", "price": 150},
-//   {"name": "Gizmo", "price": 10}
-// ]}
-
-sortBy($input.products, (p) -> p.price)
-// Output: [Gizmo(10), Widget(25), Gadget(150)] — cheapest first
-
-sortBy($input.products, (p) -> -p.price)
-// Output: [Gadget(150), Widget(25), Gizmo(10)] — most expensive first (negate)
-
-sortBy($input.products, (p) -> p.name)
-// Output: [Gadget, Gizmo, Widget] — alphabetical
+{
+  cheapestFirst: sortBy($input.products, (p) -> p.price),
+  expensiveFirst: sortBy($input.products, (p) -> -p.price),
+  alphabetical: sortBy($input.products, (p) -> p.name)
+}
 ```
 
 === split(string, separator) → array #text(size: 8pt, fill: gray)[(Str)]
@@ -893,15 +867,15 @@ Sum values extracted from an array of objects using a key function.
 - `array` (required): array of objects
 - `fn` (required): lambda `(element) -> number`
 
+```bash
+echo '{"items": [{"qty": 2, "price": 25}, {"qty": 5, "price": 10}, {"qty": 1, "price": 100}]}' | utlx -e 'sumBy($input.items, (i) -> i.qty * i.price)'
+# 200
+```
+
 ```utlx
-// Given: {"items": [{"qty": 2, "price": 25}, {"qty": 5, "price": 10}, {"qty": 1, "price": 100}]}
-
-sumBy($input.items, (i) -> i.qty * i.price)
-// Output: 200 (2*25 + 5*10 + 1*100)
-
-// Equivalent but verbose:
-sum(map($input.items, (i) -> i.qty * i.price))
-// Output: 200
+{
+  orderTotal: sumBy($input.items, (i) -> i.qty * i.price)
+}
 ```
 
 === systemPropertiesAll #text(size: 8pt, fill: gray)[(TODO)]
@@ -1148,13 +1122,13 @@ Transpose a 2D array — rows become columns, columns become rows.
 - `array2D` (required): array of arrays (all same length)
 
 ```utlx
-transpose([[1, 2, 3], [4, 5, 6]])
-// Output: [[1, 4], [2, 5], [3, 6]]
+transpose([[1, 2, 3], [4, 5, 6]])          // [[1, 4], [2, 5], [3, 6]]
+```
 
-// Use case: pivot table data
-// Input: [["Name", "Q1", "Q2"], ["Alice", 100, 200], ["Bob", 150, 175]]
-transpose($input)
-// Output: [["Name", "Alice", "Bob"], ["Q1", 100, 150], ["Q2", 200, 175]]
+```utlx
+{
+  pivoted: transpose($input.table)
+}
 ```
 
 === truncate #text(size: 8pt, fill: gray)[(TODO)]
@@ -1203,11 +1177,8 @@ Combine two arrays, removing duplicates. Returns all unique values from both.
 - `arr2` (required): second array
 
 ```utlx
-union([1, 2, 3], [3, 4, 5])
-// Output: [1, 2, 3, 4, 5]
-
-union(["A", "B"], ["B", "C", "D"])
-// Output: ["A", "B", "C", "D"]
+union([1, 2, 3], [3, 4, 5])                // [1, 2, 3, 4, 5]
+union(["A", "B"], ["B", "C", "D"])          // ["A", "B", "C", "D"]
 ```
 
 === intersect(arr1, arr2) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -1218,11 +1189,8 @@ Return values present in BOTH arrays.
 - `arr2` (required): second array
 
 ```utlx
-intersect([1, 2, 3], [2, 3, 4])
-// Output: [2, 3]
-
-intersect(["A", "B", "C"], ["X", "Y"])
-// Output: []  (no common elements)
+intersect([1, 2, 3], [2, 3, 4])            // [2, 3]
+intersect(["A", "B", "C"], ["X", "Y"])     // [] (no common elements)
 ```
 
 === difference(arr1, arr2) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -1233,13 +1201,11 @@ Return values in `arr1` that are NOT in `arr2`. Order matters — `difference(a,
 - `arr2` (required): the array to subtract
 
 ```utlx
-difference([1, 2, 3], [2, 3, 4])
-// Output: [1]  (1 is in arr1 but not in arr2)
+difference([1, 2, 3], [2, 3, 4])           // [1]
+difference([2, 3, 4], [1, 2, 3])           // [4]
+```
 
-difference([2, 3, 4], [1, 2, 3])
-// Output: [4]  (4 is in arr2's position but not in arr1)
-
-// Use case: find new and removed items between two snapshots
+```utlx
 let previous = map($input.previousOrders, (o) -> o.id)
 let current = map($input.currentOrders, (o) -> o.id)
 {
@@ -1256,11 +1222,8 @@ Return values that are in EITHER array but NOT in both. The "exclusive or" of tw
 - `arr2` (required): second array
 
 ```utlx
-symmetricDifference([1, 2, 3], [2, 3, 4])
-// Output: [1, 4]  (1 only in arr1, 4 only in arr2)
-
-symmetricDifference([1, 2], [1, 2])
-// Output: []  (identical arrays — nothing is exclusive)
+symmetricDifference([1, 2, 3], [2, 3, 4])  // [1, 4]
+symmetricDifference([1, 2], [1, 2])         // [] (identical)
 ```
 
 === unique(array) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -1273,9 +1236,10 @@ Remove duplicate values. Alias for `distinct()`. Preserves first occurrence.
 unique([1, 2, 2, 3, 3, 3])              // [1, 2, 3]
 unique(["apple", "banana", "apple"])     // ["apple", "banana"]
 
-// Use case: collect unique values from a field
-unique(map($input.orders, (o) -> o.customerId))
-// Output: ["C-42", "C-41", "C-43"] (unique customer IDs across all orders)
+// Use case: collect unique customer IDs
+{
+  customers: unique(map($input.orders, (o) -> o.customerId))
+}
 ```
 
 === unnest #text(size: 8pt, fill: gray)[(TODO)]
@@ -1396,19 +1360,16 @@ Create a sliding window over an array. Returns overlapping sub-arrays of the giv
 - `size` (required): window size
 
 ```utlx
-windowed([1, 2, 3, 4, 5], 3)
-// Output: [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
+windowed([1, 2, 3, 4, 5], 3)               // [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
+windowed([1, 2, 3, 4, 5], 2)               // [[1, 2], [2, 3], [3, 4], [4, 5]]
+```
 
-windowed([1, 2, 3, 4, 5], 2)
-// Output: [[1, 2], [2, 3], [3, 4], [4, 5]]
-
-// Use case: calculate moving average
-let prices = [100, 105, 98, 110, 107]
-map(windowed(prices, 3), (window) -> avg(window))
-// Output: [101, 104.33, 105]  (3-day moving average)
-
-// Use case: detect consecutive duplicates
-filter(windowed($input.events, 2), (pair) -> pair[0].type == pair[1].type)
+```utlx
+let prices = $input.dailyPrices
+{
+  movingAvg3day: map(windowed(prices, 3), (w) -> avg(w)),
+  consecutiveDups: filter(windowed($input.events, 2), (pair) -> pair[0].type == pair[1].type)
+}
 ```
 
 === wordCase #text(size: 8pt, fill: gray)[(TODO)]
@@ -1452,15 +1413,13 @@ Escape XML special characters (`<`, `>`, `&`, `"`, `'`).
 - `string` (required): the string to escape
 
 ```utlx
-xmlEscape("price < 100 & tax > 0")
-// Output: "price &lt; 100 &amp; tax &gt; 0"
+xmlEscape("price < 100 & tax > 0")         // "price &lt; 100 &amp; tax &gt; 0"
+```
 
-// Use case: safely embed user input in XML output
+```utlx
 {
   Comment: xmlEscape($input.userComment)
 }
-
-// Characters escaped: < → &lt;  > → &gt;  & → &amp;  " → &quot;  ' → &apos;
 ```
 
 === xmlUnescape(string) → string #text(size: 8pt, fill: gray)[(XML)]
@@ -1470,8 +1429,7 @@ Unescape XML entity references back to their original characters.
 - `string` (required): the string to unescape
 
 ```utlx
-xmlUnescape("price &lt; 100 &amp; tax &gt; 0")
-// Output: "price < 100 & tax > 0"
+xmlUnescape("price &lt; 100 &amp; tax &gt; 0")  // "price < 100 & tax > 0"
 ```
 
 === xnor #text(size: 8pt, fill: gray)[(TODO)]
@@ -1616,14 +1574,15 @@ Combine two arrays element-by-element into pairs. Truncated to the shorter array
 - `arr2` (required): second array
 
 ```utlx
-zip([1, 2, 3], ["a", "b", "c"])
-// Output: [[1, "a"], [2, "b"], [3, "c"]]
+zip([1, 2, 3], ["a", "b", "c"])            // [[1, "a"], [2, "b"], [3, "c"]]
+```
 
-// Use case: combine two parallel arrays (e.g., headers and values)
+```utlx
 let headers = ["Name", "Age", "City"]
 let row = ["Alice", "30", "Amsterdam"]
-fromEntries(zip(headers, row))
-// Output: {"Name": "Alice", "Age": "30", "City": "Amsterdam"}
+{
+  record: fromEntries(zip(headers, row))
+}
 ```
 
 Also: `zipAll(arrays)` — zips any number of arrays, `unzip(pairs)` — reverse of zip.
@@ -1637,8 +1596,7 @@ Combine two arrays element-by-element using a merge function.
 - `fn` (required): lambda `(elem1, elem2) -> combined`
 
 ```utlx
-zipWith([1, 2, 3], [10, 20, 30], (a, b) -> a + b)
-// Output: [11, 22, 33]
+zipWith([1, 2, 3], [10, 20, 30], (a, b) -> a + b)  // [11, 22, 33]
 ```
 
 === zipWithIndex(array) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -1648,10 +1606,10 @@ Pair each element with its zero-based index.
 - `array` (required): the array to index
 
 ```utlx
-zipWithIndex(["Apple", "Banana", "Cherry"])
-// Output: [["Apple", 0], ["Banana", 1], ["Cherry", 2]]
+zipWithIndex(["Apple", "Banana", "Cherry"])  // [["Apple", 0], ["Banana", 1], ["Cherry", 2]]
+```
 
-// Use case: add line numbers
+```utlx
 map(zipWithIndex($input.items), (pair) -> {
   lineNumber: pair[1] + 1,
   ...pair[0]

@@ -43,14 +43,17 @@ Check if a string ends with a given substring.
 - `string` (required): the string to test
 - `suffix` (required): the substring to check for
 
+```bash
+echo '{"filename": "invoice-2026.xml"}' | utlx -e 'endsWith($input.filename, ".xml")'
+# true
+```
+
 ```utlx
-// Given: {"filename": "invoice-2026.xml"}
-
-endsWith($input.filename, ".xml")        // true
-endsWith($input.filename, ".json")       // false
-
-// Use case: filter files by extension
-filter($input.files, (f) -> endsWith(f.name, ".utlx"))
+{
+  isXml: endsWith($input.filename, ".xml"),
+  isJson: endsWith($input.filename, ".json"),
+  utlxFiles: filter($input.files, (f) -> endsWith(f.name, ".utlx"))
+}
 ```
 
 === startsWith(string, prefix) → boolean #text(size: 8pt, fill: gray)[(Str)]
@@ -60,13 +63,17 @@ Check if a string starts with a given substring.
 - `string` (required): the string to test
 - `prefix` (required): the substring to check for
 
+```bash
+echo '{"orderId": "ORD-001"}' | utlx -e 'startsWith($input.orderId, "ORD-")'
+# true
+```
+
 ```utlx
-// Given: {"orderId": "ORD-001"}
-
-startsWith($input.orderId, "ORD-")       // true
-
-// Use case: validate ID format
 if (!startsWith($input.id, "ORD-")) error("Invalid order ID format")
+{
+  validFormat: startsWith($input.orderId, "ORD-"),
+  orderId: $input.orderId
+}
 ```
 
 === endTimer #text(size: 8pt, fill: gray)[(TODO)]
@@ -83,18 +90,19 @@ Decompose an object into an array of `[key, value]` pairs. Essential for dynamic
 
 - `object` (required): the object to decompose
 
+```bash
+echo '{"servers": {"prod": {"host": "prod-db"}, "staging": {"host": "stg-db"}}}' \
+  | utlx -e 'entries($input.servers)'
+# [["prod", {"host": "prod-db"}], ["staging", {"host": "stg-db"}]]
+```
+
 ```utlx
-// Given: {"servers": {"prod": {"host": "prod-db"}, "staging": {"host": "stg-db"}}}
-
-entries($input.servers)
-// Output: [["prod", {"host": "prod-db"}], ["staging", {"host": "stg-db"}]]
-
-// Iterate over dynamic keys:
-entries($input.servers) |> map((entry) -> {
-  environment: entry[0],     // the key: "prod", "staging"
-  host: entry[1].host        // the value's property
-})
-// Output: [{"environment": "prod", "host": "prod-db"}, {"environment": "staging", "host": "stg-db"}]
+{
+  environments: entries($input.servers) |> map((entry) -> {
+    environment: entry[0],
+    host: entry[1].host
+  })
+}
 ```
 
 === fromEntries(pairs) → object #text(size: 8pt, fill: gray)[(Obj)]
@@ -103,11 +111,16 @@ Build an object from an array of `[key, value]` pairs. The inverse of `entries()
 
 - `pairs` (required): array of `[key, value]` arrays
 
+```bash
+echo '{"items": [{"id": "A", "name": "Widget"}, {"id": "B", "name": "Gadget"}]}' \
+  | utlx -e 'fromEntries(map($input.items, (i) -> [i.id, i.name]))'
+# {"A": "Widget", "B": "Gadget"}
+```
+
 ```utlx
-// Build an object with dynamic keys:
-fromEntries(map($input.items, (i) -> [i.id, i.name]))
-// Input items: [{id: "A", name: "Widget"}, {id: "B", name: "Gadget"}]
-// Output: {"A": "Widget", "B": "Gadget"}
+{
+  lookup: fromEntries(map($input.items, (i) -> [i.id, i.name]))
+}
 ```
 
 === env(name) → string #text(size: 8pt, fill: gray)[(Sys)]
@@ -223,20 +236,11 @@ echo '[{"name":"Alice","active":true},{"name":"Bob","active":false}]' \
 ```
 
 ```utlx
-// Given: {"products": [
-//   {"name": "Widget", "price": 25, "active": true},
-//   {"name": "Gadget", "price": 150, "active": true},
-//   {"name": "Gizmo", "price": 10, "active": false}
-// ]}
-
-filter($input.products, (p) -> p.active)
-// Output: [{"name": "Widget", ...}, {"name": "Gadget", ...}]
-
-filter($input.products, (p) -> p.price > 100 && p.active)
-// Output: [{"name": "Gadget", "price": 150, "active": true}]
-
-filter($input.products, (p) -> p.price > 1000)
-// Output: [] (empty array — no matches, NOT null)
+{
+  activeProducts: filter($input.products, (p) -> p.active),
+  premiumActive: filter($input.products, (p) -> p.price > 100 && p.active),
+  overBudget: filter($input.products, (p) -> p.price > 1000)
+}
 ```
 
 *Anti-pattern:* `$input.products[price > 10]` — bracket predicate syntax does NOT work in UTL-X. Always use `filter()`. See Chapter 8.
@@ -250,14 +254,17 @@ Filter object properties by key and/or value. Returns a new object with only mat
 - `object` (required): the object to filter
 - `predicate` (required): lambda `(key, value) -> boolean`
 
+```bash
+echo '{"name": "Alice", "email": "alice@example.com", "password": "secret", "temp": null}' \
+  | utlx -e 'filterEntries(., (key, value) -> value != null)'
+# {"name": "Alice", "email": "alice@example.com", "password": "secret"}
+```
+
 ```utlx
-// Given: {"name": "Alice", "email": "alice@example.com", "password": "secret", "temp": null}
-
-filterEntries($input, (key, value) -> value != null)
-// Output: {"name": "Alice", "email": "alice@example.com", "password": "secret"}
-
-filterEntries($input, (key, value) -> key != "password" && key != "temp")
-// Output: {"name": "Alice", "email": "alice@example.com"}
+{
+  nonNull: filterEntries($input, (key, value) -> value != null),
+  safe: filterEntries($input, (key, value) -> key != "password" && key != "temp")
+}
 ```
 
 Also: `someEntry(obj, pred)` → true if any entry matches, `everyEntry(obj, pred)` → true if all match, `countEntries(obj, pred)` → count of matching entries.
@@ -269,18 +276,17 @@ Returns the FIRST element matching a predicate, or `null` if no match.
 - `array` (required): the array to search
 - `predicate` (required): lambda `(element) -> boolean`
 
+```bash
+echo '{"users": [{"id": 1, "email": "alice@example.com"}, {"id": 2, "email": "bob@example.com"}]}' \
+  | utlx -e 'find($input.users, (u) -> u.email == "bob@example.com")'
+# {"id": 2, "email": "bob@example.com"}
+```
+
 ```utlx
-// Given: {"users": [
-//   {"id": 1, "email": "alice@example.com"},
-//   {"id": 2, "email": "bob@example.com"},
-//   {"id": 3, "email": "alice@example.com"}
-// ]}
-
-find($input.users, (u) -> u.email == "bob@example.com")
-// Output: {"id": 2, "email": "bob@example.com"}  (the object, NOT an array)
-
-find($input.users, (u) -> u.email == "unknown@example.com")
-// Output: null
+{
+  bob: find($input.users, (u) -> u.email == "bob@example.com"),
+  unknown: find($input.users, (u) -> u.email == "unknown@example.com")
+}
 ```
 
 *Anti-pattern:* `filter($input.users, ...)[0]` — use `find()`. It's cleaner and returns `null` instead of an index-out-of-bounds error on empty results.
@@ -292,14 +298,17 @@ Returns the zero-based index of the FIRST matching element, or `-1` if not found
 - `array` (required): the array to search
 - `predicate` (required): lambda `(element) -> boolean`
 
+```bash
+echo '{"users": [{"id": 1}, {"id": 2}, {"id": 3}]}' \
+  | utlx -e 'findIndex($input.users, (u) -> u.id == 2)'
+# 1
+```
+
 ```utlx
-// Given: {"users": [{"id": 1}, {"id": 2}, {"id": 3}]}
-
-findIndex($input.users, (u) -> u.id == 2)
-// Output: 1 (zero-based index)
-
-findIndex($input.users, (u) -> u.id == 99)
-// Output: -1 (not found)
+{
+  position: findIndex($input.users, (u) -> u.id == 2),
+  missing: findIndex($input.users, (u) -> u.id == 99)
+}
 ```
 
 Also: `findLastIndex(array, predicate)` — searches from the end.
@@ -462,12 +471,9 @@ echo '{"orders": [{"lines": [1,2]}, {"lines": [3]}]}' \
 ```
 
 ```utlx
-// Given: orders with nested line items
-flatMap($input.orders, (o) -> o.lines)
-// All lines from all orders in one flat array
-
-// Equivalent to:
-flatten(map($input.orders, (o) -> o.lines))
+{
+  allLines: flatMap($input.orders, (o) -> o.lines)
+}
 ```
 
 === flatten(array) → array #text(size: 8pt, fill: gray)[(Arr)]
@@ -513,18 +519,21 @@ Format a date or datetime as a string using a pattern.
 
 Pattern tokens: `yyyy` (year), `MM` (month 01-12), `dd` (day 01-31), `HH` (hour 00-23), `mm` (minute 00-59), `ss` (second 00-59), `EEEE` (day name), `MMMM` (month name), `EEE` (short day), `MMM` (short month).
 
+```bash
+echo '{"timestamp": "2026-05-01T14:30:00Z"}' \
+  | utlx -e 'formatDate(parseDate($input.timestamp, "yyyy-MM-dd'\''T'\''HH:mm:ss'\''Z'\''"), "dd/MM/yyyy")'
+# "01/05/2026"
+```
+
 ```utlx
-// Given: {"timestamp": "2026-05-01T14:30:00Z"}
 let dt = parseDate($input.timestamp, "yyyy-MM-dd'T'HH:mm:ss'Z'")
-
-formatDate(dt, "yyyy-MM-dd")             // "2026-05-01"
-formatDate(dt, "dd/MM/yyyy")             // "01/05/2026"
-formatDate(dt, "dd-MM-yyyy HH:mm")       // "01-05-2026 14:30"
-formatDate(dt, "EEEE, MMMM d, yyyy")     // "Thursday, May 1, 2026"
-formatDate(dt, "yyyy-MM-dd'T'HH:mm:ssXXX")  // ISO 8601 with timezone
-
-// Use case: Peppol invoice date (must be yyyy-MM-dd)
-formatDate(now(), "yyyy-MM-dd")
+{
+  isoDate: formatDate(dt, "yyyy-MM-dd"),
+  european: formatDate(dt, "dd/MM/yyyy"),
+  withTime: formatDate(dt, "dd-MM-yyyy HH:mm"),
+  human: formatDate(dt, "EEEE, MMMM d, yyyy"),
+  invoiceDate: formatDate(now(), "yyyy-MM-dd")
+}
 ```
 
 == G
@@ -662,18 +671,12 @@ Get all namespace declarations from an XML element as a prefix-to-URI map. See C
 - `element` (required): XML UDM element
 
 ```utlx
-// Given: <Invoice xmlns:cbc="urn:oasis:...:CommonBasicComponents-2"
-//                  xmlns:cac="urn:oasis:...:CommonAggregateComponents-2">
-
-getNamespaces($input.Invoice)
-// Output: {
-//   "cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
-//   "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
-// }
-
-// Use case: check which namespaces a document uses
-let ns = getNamespaces($input)
-hasKey(ns, "soap")   // true if SOAP namespace declared
+let ns = getNamespaces($input.Invoice)
+{
+  namespaces: ns,
+  isSoap: hasKey(ns, "soap"),
+  hasCommonBasic: hasKey(ns, "cbc")
+}
 ```
 
 === getPath #text(size: 8pt, fill: gray)[(TODO)]
@@ -731,28 +734,22 @@ Group array elements by a computed key. Returns an object where keys are the gro
 - `array` (required): the array to group
 - `keyFn` (required): lambda `(element) -> groupKey`
 
+```bash
+echo '{"employees": [{"name": "Alice", "dept": "Eng"}, {"name": "Bob", "dept": "Sales"}]}' \
+  | utlx -e 'groupBy($input.employees, (e) -> e.dept)'
+# {"Eng": [{"name": "Alice", "dept": "Eng"}], "Sales": [{"name": "Bob", "dept": "Sales"}]}
+```
+
 ```utlx
-// Given: {"employees": [
-//   {"name": "Alice", "department": "Engineering"},
-//   {"name": "Bob", "department": "Sales"},
-//   {"name": "Charlie", "department": "Engineering"},
-//   {"name": "Diana", "department": "Sales"},
-//   {"name": "Eve", "department": "Engineering"}
-// ]}
-
-groupBy($input.employees, (e) -> e.department)
-// Output: {
-//   "Engineering": [{"name": "Alice", ...}, {"name": "Charlie", ...}, {"name": "Eve", ...}],
-//   "Sales": [{"name": "Bob", ...}, {"name": "Diana", ...}]
-// }
-
-// Use case: aggregate per group
 let groups = groupBy($input.orders, (o) -> o.status)
-entries(groups) |> map((entry) -> {
-  status: entry[0],
-  count: count(entry[1]),
-  total: sum(map(entry[1], (o) -> o.amount))
-})
+{
+  byStatus: groups,
+  summary: entries(groups) |> map((entry) -> {
+    status: entry[0],
+    count: count(entry[1]),
+    total: sum(map(entry[1], (o) -> o.amount))
+  })
+}
 ```
 
 === gunzip #text(size: 8pt, fill: gray)[(TODO)]
@@ -792,13 +789,12 @@ Check if an object has a property with the given key name.
 - `object` (required): the object to check
 - `key` (required): property name as string
 
+```bash
+echo '{"name": "Alice", "email": "alice@example.com"}' | utlx -e 'hasKey($input, "email")'
+# true
+```
+
 ```utlx
-// Given: {"name": "Alice", "email": "alice@example.com"}
-
-hasKey($input, "email")                  // true
-hasKey($input, "phone")                  // false
-
-// Use case: conditional processing based on field presence
 if (hasKey($input, "shippingAddress")) {
   address: $input.shippingAddress
 } else {
