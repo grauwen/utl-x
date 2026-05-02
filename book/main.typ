@@ -69,6 +69,9 @@
   depth: 2,
 )
 
+#v(1em)
+#link(<ch50-stdlib>)[LIBRARY REFERENCE #h(0.3em) #box(width: 1fr, repeat[.#h(0.15em)]) #h(0.3em) #context{str(counter(page).at(locate(<ch50-stdlib>)).first())}]
+
 #pagebreak()
 
 // ── Preface ──
