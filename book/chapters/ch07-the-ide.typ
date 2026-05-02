@@ -2,7 +2,7 @@
 
 While the CLI is powerful for quick transformations and scripting, professional integration development happens in an IDE. UTL-X provides a VS Code extension backed by the utlxd daemon, giving you real-time feedback, autocompletion, and live preview as you write transformations.
 
-This chapter describes the IDE experience and the design-time workflow. If you're using UTL-X purely from the command line, you can skip ahead to Chapter 8 — but the IDE will make you significantly more productive.
+This chapter describes the IDE experience and its two modes: Runtime mode and Design-time mode. If you're using UTL-X purely from the command line, you can skip ahead to Chapter 8 — but the IDE will make you significantly more productive.
 
 == Installing the VS Code Extension
 
@@ -15,65 +15,224 @@ The UTL-X extension is available from the VS Code marketplace:
 
 The extension automatically starts the utlxd daemon when you open a .utlx file. No manual configuration needed — the daemon manages its own lifecycle.
 
+== Two Modes: Runtime and Design-Time
+
+The IDE operates in two distinct modes, each serving a different workflow:
+
+=== Runtime Mode (Tier 1)
+
+Runtime mode is the IDE's default — a graphical overlay on top of the UTL-X CLI. It provides:
+
+- A three-panel layout: Input, Transformation, Output
+- Syntax highlighting, autocompletion, and real-time error diagnostics
+- Live preview: as you type, the transformation runs against sample input and shows the result
+- The function library browser for all 652 stdlib functions
+- The UDM tree browser showing parsed input structure
+
+In Runtime mode, you _experiment_. You paste sample data, write a `.utlx` transformation, and see the output instantly. There is no schema awareness — you work with the data as-is, guided by the live preview. This is how you prototype transformations, explore unfamiliar data structures, and iterate quickly.
+
+#figure(
+  image("../pictures/ch7 IDE/iIDE-utlx-1.png", width: 100%),
+  caption: [Runtime Mode — JSON input (left), UTL-X transformation (center), XML output (right). The blue "Runtime Mode" badge indicates the active mode.]
+)
+
+Runtime mode is essentially the CLI with a GUI on top. The utlxd daemon runs the same parser and interpreter as `utlx`, but does so on every keystroke and pipes the result to the output panel.
+
+=== Design-Time Mode
+
+Design-time mode is for professional schema-driven development. The key difference: _both the input schema and output schema are known in advance_. Your job is to write the `.utlx` that bridges the gap between them.
+
+This distinction is fundamental and worth understanding clearly, because it is easy to confuse what the IDE shows at design-time with what UTL-X processes at runtime.
+
+==== What happens at runtime
+
+At runtime — whether in the CLI, the IDE's Runtime mode, or the UTLXe production engine — UTL-X processes *instance documents*. An instance document is a concrete message: a specific JSON object, a specific XML file, a specific CSV with actual rows of data. These are always Tier 1 formats (JSON, XML, CSV, YAML). The `.utlx` transformation receives an instance document as `$input` and produces an instance document as output.
+
+```utlx
+%utlx 1.0
+input json          // ← receives a JSON instance document
+output xml          // ← produces an XML instance document
+---
+// $input is a concrete JSON object like {"orderId": "ORD-42", "total": 299.99}
+```
+
+This is true even when you are transforming data that _conforms_ to a schema. The schema is not the input — the instance is.
+
+==== What happens at design-time
+
+At design-time, the IDE adds a layer _above_ the instance level. You provide the *schemas* that describe the input and output contracts — an XSD, a JSON Schema, an Avro schema, a Protobuf definition. The IDE uses these schemas to show you the _structure_ of the data: what fields exist, what types they have, which are required, what constraints apply.
+
+This is the schema-to-schema perspective. The IDE displays the input schema structure on the left and the output schema structure on the right. Your job is to write the `.utlx` transformation that maps from one to the other.
+
+```
+Input Schema                     .utlx Transformation              Output Schema
+─────────────                    ─────────────────────              ─────────────
+JSON Schema:                     %utlx 1.0                         XSD:
+{                                input json                         <xs:element name="Order">
+  "orderId": string (required)   output xml                           <xs:element name="id"
+  "customer": {                  ---                                     type="xs:string"/>
+    "name": string               <Order>                              <xs:element name="customer"
+    "email": string                <id>{$input.orderId}</id>              type="xs:string"/>
+  }                                <customer>                         <xs:element name="total"
+  "total": number                    {$input.customer.name}              type="xs:decimal"/>
+}                                  </customer>                      </xs:element>
+                                   <total>{$input.total}</total>
+                                 </Order>
+```
+
+But here is the critical point: *the schema is not the runtime input*. When this transformation runs in production, `$input` will not contain a JSON Schema — it will contain a concrete JSON object like `{"orderId": "ORD-42", "customer": {"name": "Alice"}, "total": 299.99}`. The schemas are a design-time aid that the IDE uses to guide you; they are never passed to the transformation engine.
+
+==== Why this distinction matters
+
+Consider a common enterprise scenario: you need to transform purchase orders from a supplier's JSON API into UBL XML invoices for your ERP system.
+
+*Without Design-time mode (Runtime mode only):*
+- You paste a sample JSON purchase order in the input panel
+- You write the transformation by trial and error
+- You have no way of knowing if your XML output is valid UBL — you are guessing at the target structure
+- If the supplier adds a new field next month, you won't know about it until a message fails
+
+*With Design-time mode:*
+- You load the supplier's JSON Schema (from their API documentation) as the input schema
+- You load the UBL XSD as the output schema
+- The IDE shows you _every_ field on both sides: what's required, what's optional, what types are expected
+- As you map fields, the IDE validates that your output conforms to UBL — missing required elements are flagged immediately
+- Completeness tracking shows which target fields you haven't mapped yet
+
+The schemas make the transformation _provably correct_ before a single production message flows through it.
+
+==== Tier 1 vs Tier 2: which mode applies
+
+Design-time mode is exclusively for *Tier 1 to Tier 1* mapping — transforming instance documents (JSON, XML, CSV, YAML) while using schemas as structural guides. The schemas help you build the transformation but are not the runtime input or output.
+
+The moment either the input or output is a *Tier 2 format* (a schema itself — XSD, JSON Schema, Avro, Protobuf, OData Schema, Table Schema), only Runtime mode applies. You are no longer mapping instances guided by schemas — you are processing schemas _as data_. This is a fundamentally different operation.
+
+UTL-X supports all four combinations:
+
+#table(
+  columns: (auto, auto, auto, auto),
+  align: (left, left, left, left),
+  [*Input*], [*Output*], [*Mode*], [*Example*],
+  [Tier 1], [Tier 1], [Design-time or Runtime], [JSON purchase order → XML UBL invoice],
+  [Tier 1], [Tier 2], [Runtime only], [CSV spreadsheet with field definitions → XSD schema generation],
+  [Tier 2], [Tier 1], [Runtime only], [Extract type names and field counts from an XSD → JSON report],
+  [Tier 2], [Tier 2], [Runtime only], [Convert Avro schema → Protobuf definition (Chapter 28)],
+)
+
+*Tier 1 → Tier 1 (Design-time or Runtime):* The most common case. A JSON message arrives, you transform it to XML. Both sides are instance documents. In Design-time mode, schemas guide you. In Runtime mode, you work directly with sample data. Either mode works.
+
+*Tier 1 → Tier 2 (Runtime only):* The input is an instance document, but the output is a schema. For example: a CSV spreadsheet describing database columns (field name, type, nullable) is transformed into an XSD or JSON Schema. The CSV is Tier 1 data; the output is a Tier 2 schema. There is no "output schema" for the IDE to validate against — the output IS a schema. Only Runtime mode makes sense.
+
+```utlx
+%utlx 1.0
+input csv                // Tier 1: spreadsheet with column definitions
+output xsd               // Tier 2: generate an XSD from the metadata
+---
+// $input is CSV rows like: name,type,required
+//                          orderId,string,true
+//                          total,decimal,true
+$input
+```
+
+*Tier 2 → Tier 1 (Runtime only):* The input is a schema, and you extract information from it into a regular data format. For example: read an XSD schema and produce a JSON report listing all type names, field counts, and constraints. The XSD is parsed as data (Tier 2 input); the output is a plain JSON document (Tier 1). No design-time schema-to-schema perspective applies — the input IS a schema.
+
+```utlx
+%utlx 1.0
+input xsd                // Tier 2: an XSD schema as input
+output json              // Tier 1: extract schema metadata as JSON
+---
+{
+  typeCount: count(keys($input["%types"])),
+  types: keys($input["%types"])
+}
+```
+
+*Tier 2 → Tier 2 (Runtime only):* Schema-to-schema conversion — the input is a schema in one format and the output is a schema in another. See Chapter 28 for full coverage.
+
+```utlx
+%utlx 1.0
+input xsd                // Tier 2: XSD schema
+output jsch              // Tier 2: convert to JSON Schema
+---
+$input
+```
+
+==== Summary: Design-time vs Runtime
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Concept*], [*Design-time (IDE)*], [*Runtime (utlx / utlxe / IDE Runtime mode)*],
+  [Input], [Schema as structural guide], [Instance document or schema as data],
+  [Output], [Schema as validation target], [Instance document or schema as data],
+  [Applicable formats], [Tier 1 → Tier 1 only], [Any combination (T1→T1, T1→T2, T2→T1, T2→T2)],
+  [Purpose], [Guide the developer, validate correctness], [Process real messages or schemas],
+  [`$input`], [Sample data (for live preview)], [Actual production message or schema],
+  [Schemas], [Displayed as structural guides], [Not present (optionally validated by utlxe)],
+)
+
+==== What the IDE provides in Design-time mode
+
+- *Schema-to-schema perspective:* the input and output structures are displayed side-by-side, derived from their schemas (XSD, JSON Schema, Avro, Protobuf, Table Schema, OData Schema)
+- *Output validation:* the IDE checks your transformation output against the declared output schema in real-time
+- *Completeness tracking:* unmapped target fields are flagged — you can see at a glance which parts of the output contract are not yet covered
+- *Scaffolding:* the IDE can generate a transformation skeleton with all target fields, placeholder expressions, and TODO comments for fields requiring business logic
+- *Type checking:* source-to-target type mismatches are highlighted (e.g., mapping a string where an integer is expected)
+
+This is how Tibco BW, SAP CPI, and MuleSoft approach mapping — define the contracts first, then build the transformation. UTL-X does this for _all_ schema formats, not just XML/XSD.
+
+#figure(
+  image("../pictures/ch7 IDE/iIDE-utlx-4.png", width: 100%),
+  caption: [Design-Time Mode — JSON Schema on the input side (left), inferred output schema (right). The green "Design Time Mode" badge indicates schema-to-schema mapping is active. Note: the schemas guide the developer; at runtime, `$input` receives instance documents, not schemas.]
+)
+
+=== When to Use Which Mode
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Scenario*], [*Mode*], [*Why*],
+  [Exploring unfamiliar data], [Runtime], [No schema yet — discover the structure first],
+  [Quick format conversion], [Runtime], [Paste input, write mapping, done],
+  [Enterprise integration project], [Design-time], [Contracts are known — validate against them],
+  [Building a mapping between two APIs], [Design-time], [Both schemas available from OpenAPI/XSD],
+  [Debugging a failing transformation], [Runtime], [Paste the failing message, see what happens],
+  [Handoff to production (utlxe)], [Design-time], [Ensures output matches the production contract],
+)
+
 == The Three-Panel Layout
 
-The UTL-X IDE experience is built around three panels, visible simultaneously:
+Both modes share the same visual layout:
 
 // DIAGRAM: Three-panel IDE layout — Input (left), Transform (center), Output (right)
 // Source: part1-foundation.pptx, slide 11
 
-*Left panel — Input:* paste or load sample input data. Select the format (XML, JSON, CSV, YAML, OData). This is your test data — what the transformation will process.
+*Left panel — Input:* paste or load sample input data (Runtime mode) or display the input schema structure (Design-time mode). Select the format (XML, JSON, CSV, YAML, OData).
 
 *Center panel — Transformation:* the .utlx editor with syntax highlighting, autocompletion, and real-time error diagnostics. This is where you write your transformation logic.
 
-*Right panel — Output:* the live preview of the transformation result. Updates automatically as you type in the center panel. Shows the output in the declared format (JSON, XML, CSV, YAML).
+*Right panel — Output:* the live preview of the transformation result (Runtime mode) or the expected output schema with validation status (Design-time mode).
 
-This three-panel workflow — Input, Transform, Output — is the core of UTL-X development. You see the input, you write the logic, you see the output. No save-compile-run cycle. No switching between terminal and editor. Everything is visible at once.
+== The IDE vs UTLXe
 
-== Design-Time vs Runtime
+The IDE and the UTLXe production engine serve different purposes — they are not the same runtime:
 
-Understanding the difference between design-time and runtime is crucial for UTL-X development:
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Aspect*], [*IDE (utlxd)*], [*Production Engine (utlxe)*],
+  [Purpose], [Develop and test .utlx files], [Execute .utlx files at scale],
+  [Input], [Sample data pasted by developer], [Live messages from Kafka, HTTP, file system],
+  [Concurrency], [Single transformation at a time], [8–128 workers processing in parallel],
+  [Validation], [Optional schema check in Design-time mode], [Enforced schema validation per pipeline config],
+  [Output], [Displayed in output panel], [Routed to target system (API, queue, file)],
+  [Metrics], [None], [Prometheus counters, histograms, health probes],
+  [Lifecycle], [Starts/stops with VS Code], [Long-running daemon or container],
+)
 
-*Design-time* is when you write the transformation:
-- You're in VS Code, editing a .utlx file
-- utlxd parses your code on every keystroke
-- The IDE shows errors, completions, and live preview
-- You work with _sample data_ — representative examples, not production messages
-- You can experiment freely — nothing is deployed, nothing is production
+The `.utlx` file is the common artifact. You create it in the IDE, test it with sample data, validate it against schemas — then deploy it _unchanged_ to utlxe. No compilation, no packaging, no build step. The source IS the production artifact.
 
-*Runtime* is when the transformation executes in production:
-- utlxe runs the compiled transformation against real messages
-- 8--128 workers process messages concurrently
-- Schema validation enforces contracts
-- Prometheus metrics track throughput and errors
-- There is no IDE — the transformation is a deployed artifact
-
-What you create at design-time deploys _unchanged_ to runtime. The .utlx file you write in VS Code is the exact same file that utlxe loads in production. No compilation step, no packaging, no build process — the source IS the artifact.
-
-== Schema-Driven Development
-
-The most productive way to use the IDE is _schema-driven development_: define the input and output schemas first, then write the transformation to connect them.
-
-=== The Professional Approach
-
-+ *Define the input schema:* what does the source data look like? (XSD, JSON Schema, Avro, etc.)
-+ *Define the output schema:* what must the target data look like?
-+ *Load both schemas in the IDE:* the UDM tree browser shows both structures side-by-side
-+ *Write the transformation:* map fields from input to output, guided by the schemas
-+ *Validate:* the IDE checks the output against the target schema in real-time
-
-This is how Tibco BW, SAP CPI, and MuleSoft work — but they limit you to XML (XSLT). UTL-X does schema-driven development for _all_ formats: JSON Schema, XSD, Avro, Protobuf, Table Schema, and OData Schema.
-
-=== Scaffolding
-
-When both input and output schemas are defined, the IDE can generate a transformation skeleton:
-
-- All target fields listed with placeholder expressions
-- Type conversions where source and target types differ
-- Array mappings where cardinality differs
-- TODO comments for fields requiring business logic
-
-You fill in the actual mapping logic. Scaffolding accelerates development — it's not a replacement for writing transformations, but it eliminates the boilerplate of creating the output structure manually.
+See Chapter 32 for the UTLXe engine lifecycle, Chapter 33 for cloud deployment, and Chapter 19 for the production engine header and configuration.
 
 == The UDM Tree Browser
 
@@ -94,9 +253,7 @@ Each node in the tree shows:
   - YAML: anchor/alias references
   - OData: \@odata.type, navigation properties
 
-Click a node to insert the accessor path into the transformation editor. For example, clicking the "Name" node under "Customer" inserts `\$input.Customer.Name` at the cursor position. This eliminates typos and speeds up field mapping.
-
-Expand and collapse nodes to navigate deep structures. Search within the tree to find specific fields in large documents.
+Click a node to insert the accessor path into the transformation editor. For example, clicking the "Name" node under "Customer" inserts `$input.Customer.Name` at the cursor position. This eliminates typos and speeds up field mapping.
 
 == The Function Library
 
@@ -107,7 +264,28 @@ The function library panel lets you browse all 652 standard library functions wi
 - *Function details:* name, signature (parameter types and return type), description, example
 - *Click to insert:* click a function name to insert a call template at the cursor
 
-For example, searching "date" shows: now(), today(), parseDate(), formatDate(), addDays(), dateDiff(), and more — with signatures and examples for each.
+For example, searching "date" shows: `now()`, `today()`, `parseDate()`, `formatDate()`, `addDays()`, `diffDays()`, and more — with signatures and examples for each.
+
+#figure(
+  image("../pictures/ch7 IDE/iIDE-utlx-6.png", width: 90%),
+  caption: [The Function Builder — Standard Library tab showing all 18 function categories with counts. Select a category to browse functions, view signatures, and insert them into the editor.]
+)
+
+The Function Builder has three tabs:
+
+- *Standard Library:* browse all 652 functions by category
+- *Available Inputs:* shows the fields available from `$input` with their detected types — useful for exploring unfamiliar data structures without switching to the tree browser
+- *Operators:* browse all UTL-X operators (logical, pipe, safe navigation, nullish coalescing, lambda arrow, spread) with descriptions
+
+#figure(
+  image("../pictures/ch7 IDE/iIDE-utlx-7.png", width: 90%),
+  caption: [Available Inputs tab — shows input fields with their detected types (array, string, number, integer). Click a field to insert its accessor path.]
+)
+
+#figure(
+  image("../pictures/ch7 IDE/iIDE-utlx-8.png", width: 90%),
+  caption: [Operators tab — browse logical operators, pipe, safe navigation, nullish coalescing, lambda arrow, and spread with descriptions.]
+)
 
 == Real-Time Diagnostics
 
@@ -116,7 +294,7 @@ The IDE shows errors as you type, without saving or running:
 - *Syntax errors:* missing brackets, invalid keywords, unterminated strings — highlighted with red underlines and error messages
 - *Unknown functions:* calling a function that doesn't exist in the stdlib — immediately flagged
 - *Type warnings:* passing a string where a number is expected (when detectable from context)
-- *Schema violations:* when output doesn't match the declared output schema
+- *Schema violations:* (Design-time mode) when output doesn't match the declared output schema
 
 Errors appear in the Problems panel (Ctrl+Shift+M) with line numbers and descriptions. Click an error to jump to the offending line.
 
@@ -124,22 +302,22 @@ Errors appear in the Problems panel (Ctrl+Shift+M) with line numbers and descrip
 
 The IDE provides context-aware autocompletion:
 
-- *After \$input. :* property names from the parsed input data (if sample data is loaded)
+- *After `$input.` :* property names from the parsed input data (Runtime mode) or from the input schema (Design-time mode)
 - *After a function name and parenthesis:* parameter hints showing expected types
-- *At the start of an expression:* function names, keywords (if, let, def, match, try)
-- *Inside an object literal:* available property names from the output schema (if loaded)
+- *At the start of an expression:* function names, keywords (`if`, `let`, `match`, `try`)
+- *Inside an object literal:* available property names from the output schema (Design-time mode)
 
 Autocompletion uses the utlxd daemon's real-time understanding of your transformation — it's not a static word list but a live analysis of the AST and available data.
 
 == The Header Editor
 
-The .utlx header (the part above the separator) can be edited visually:
+The .utlx header (the part above the `---` separator) can be edited visually:
 
 - *Input format:* dropdown to select XML, JSON, CSV, YAML, OData
 - *Output format:* dropdown with format-specific options
-- *Output options:* checkboxes and fields for options like writeAttributes, encoding, delimiter
+- *Output options:* checkboxes and fields for options like `writeAttributes`, `encoding`, `delimiter`
 - *Multi-input:* add or remove named inputs with their formats
-- *Schema references:* attach input and output validation schemas
+- *Schema references:* attach input and output validation schemas (Design-time mode)
 
 The header editor generates the header block — you can always switch to text editing if you prefer manual control.
 
@@ -164,7 +342,7 @@ The header editor generates the header block — you can always switch to text e
 
 *Use the live preview.* Don't run transformations from the terminal during development. The live preview updates on every keystroke — you see the output change as you type. This is faster than any save-compile-run cycle.
 
-*Work schema-first.* If you have schemas for both input and output, load them. The IDE validates your output in real-time, catching contract violations before you even save the file.
+*Work schema-first when schemas exist.* If you have schemas for both input and output, switch to Design-time mode and load them. The IDE validates your output in real-time, catching contract violations before you even save the file.
 
 *Browse functions, don't memorize.* With 652 functions, nobody remembers them all. Use the function library search. Type what you want to do — "convert date", "filter array", "encrypt" — and the library shows relevant functions.
 
