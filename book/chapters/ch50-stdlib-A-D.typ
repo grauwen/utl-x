@@ -29,18 +29,21 @@ acos(0)        // 1.5707963267948966 (π/2)
 acos(-1)       // 3.141592653589793 (π)
 ```
 
-=== addBOM(data, encoding) → binary #text(size: 8pt, fill: gray)[(XML)]
+=== addBOM(data) → binary #text(size: 8pt, fill: gray)[(Bin)]
 
-Prepend a Byte Order Mark (BOM) to binary data for the specified encoding.
+Prepend a Byte Order Mark (BOM) to binary data. Detects encoding from the data.
 
 - `data` (required): binary data to prepend BOM to
-- `encoding` (required): encoding type — `"UTF-8"`, `"UTF-16LE"`, `"UTF-16BE"`
 
 ```utlx
+// Programmatic BOM insertion for binary file construction
+let fileBytes = toBinary($input.content, "UTF-8")
 {
-  withBOM: addBOM(toBinary($input.xml, "UTF-8"), "UTF-8")
+  withBOM: addBOM(fileBytes)
 }
 ```
+
+*Note:* for normal output, prefer the header option `output csv {bom: true}` (Chapter 25) which handles BOM automatically. Use `addBOM()` only when constructing raw binary content programmatically.
 
 === addNamespaceDeclarations(xml, namespaces) → xml #text(size: 8pt, fill: gray)[(XML)]
 
@@ -118,21 +121,29 @@ echo '{"dob": "1990-03-15"}' | utlx -e 'age(parseDate($input.dob, "yyyy-MM-dd"))
 
 === analyzeString(string, pattern) → object #text(size: 8pt, fill: gray)[(Str)]
 
-Analyze a string against a regex pattern, returning detailed match information including groups and positions.
+Analyze a string against a regex pattern, returning match status and captured groups.
 
 - `string` (required): the string to analyze
-- `pattern` (required): regex pattern
+- `pattern` (required): regex pattern with capture groups
+
+Returns: `{match: boolean, groups: [string...], start: number, end: number}`
 
 ```bash
 echo '{"email": "user@example.com"}' \
   | utlx -e 'analyzeString($input.email, "(.+)@(.+)\\.(.+)")'
-# {match: true, groups: ["user", "example", "com"], ...}
+# {"match": true, "groups": ["user", "example", "com"], "start": 0, "end": 16}
 ```
 
 ```utlx
+// Input: {"date": "2026-05-01"}
+let result = analyzeString($input.date, "^(\\d{4})-(\\d{2})-(\\d{2})$")
+// result = {match: true, groups: ["2026", "05", "01"], start: 0, end: 10}
 {
-  analysis: analyzeString($input.value, "^(\\d{4})-(\\d{2})-(\\d{2})$")
+  valid: result.match,              // true
+  year: if (result.match) result.groups[0] else null,   // "2026"
+  month: if (result.match) result.groups[1] else null   // "05"
 }
+// Output: {"valid": true, "year": "2026", "month": "05"}
 ```
 
 === and(values...) → boolean #text(size: 8pt, fill: gray)[(Type)]
@@ -141,10 +152,18 @@ Logical AND — returns true only if all arguments are truthy.
 
 - `values` (variadic): boolean values to combine
 
+```bash
+echo '{"active": true, "verified": true, "paid": false}' \
+  | utlx -e 'and($input.active, $input.verified, $input.paid)'
+# false (all must be true, but paid is false)
+```
+
 ```utlx
-and(true, true, true)     // true
-and(true, false, true)    // false
-and($input.active, $input.verified, $input.paid)
+// Input: {"active": true, "verified": true, "paid": true}
+{
+  canShip: and($input.active, $input.verified, $input.paid),  // true
+  canRefund: and($input.paid, $input.delivered)               // false if delivered is null
+}
 ```
 
 === asin(number) → number #text(size: 8pt, fill: gray)[(Num)]
@@ -210,30 +229,38 @@ atan2(-1, 0)   // -1.5707963267948966 (-π/2 — -90°)
 
 === attribute(element, name) → string #text(size: 8pt, fill: gray)[(XML)]
 
-Get a specific attribute value from an XML element.
+Get a specific attribute value from an XML element by name. Useful when the attribute name is dynamic (stored in a variable). For static attribute access, prefer the `@` operator: `$input.@id`.
 
 - `element` (required): XML UDM element
-- `name` (required): attribute name
+- `name` (required): attribute name (string)
 
 ```utlx
-// Given: <Order id="ORD-123" status="active">...</Order>
+// Input: <Order id="ORD-123" status="active">...</Order>
+
+// Preferred: use @ for known attribute names
 {
-  orderId: attribute($input, "id"),
-  status: attribute($input, "status")
+  orderId: $input.@id,                  // "ORD-123"
+  status: $input.@status                // "active"
 }
-// Output: {"orderId": "ORD-123", "status": "active"}
+
+// Use attribute() when the name is dynamic (e.g. from input data)
+{
+  value: attribute($input, $input.lookupField)   // attribute name from data
+}
 ```
 
 === attributes(element) → object #text(size: 8pt, fill: gray)[(XML)]
 
-Get all attributes from an XML element as a key-value object.
+Get all attributes from an XML element as a key-value object. Useful for iterating or spreading all attributes. For accessing individual attributes, prefer `$input.@name`.
 
 - `element` (required): XML UDM element
 
 ```utlx
-// Given: <Product id="P-1" sku="ABC123" category="electronics"/>
-attributes($input)
-// Output: {"id": "P-1", "sku": "ABC123", "category": "electronics"}
+// Input: <Product id="P-1" sku="ABC123" category="electronics"/>
+{
+  allAttrs: attributes($input),         // {"id": "P-1", "sku": "ABC123", "category": "electronics"}
+  attrCount: count(keys(attributes($input)))  // 3
+}
 ```
 
 === availableProcessors() → number #text(size: 8pt, fill: gray)[(Sys)]
