@@ -2217,9 +2217,7 @@ Remove whitespace from both ends of a string.
 - `string` (required): the string to trim
 
 ```utlx
-trim("  hello  ")                        // "hello"
-trim("\t hello \n")                      // "hello"
-trim("hello")                            // "hello" (no change)
+trim("   hello   ")                      // "hello"
 
 // Use case: clean up CSV values
 map($input, (row) -> mapValues(row, (v) -> if (isString(v)) trim(v) else v))
@@ -2232,8 +2230,7 @@ Remove whitespace from the LEFT (start) of a string only.
 - `string` (required): the string to trim
 
 ```utlx
-leftTrim("  hello  ")                    // "hello  "
-leftTrim("hello")                        // "hello" (no change)
+leftTrim("   hello   ")                  // "hello   "
 ```
 
 === rightTrim(string) → string #text(size: 8pt, fill: gray)[(Str)]
@@ -2243,8 +2240,7 @@ Remove whitespace from the RIGHT (end) of a string only.
 - `string` (required): the string to trim
 
 ```utlx
-rightTrim("  hello  ")                   // "  hello"
-rightTrim("hello")                       // "hello" (no change)
+rightTrim("   hello   ")                 // "   hello"
 ```
 
 Also: `normalizeSpace(string)` — trims AND collapses internal whitespace to single spaces.
