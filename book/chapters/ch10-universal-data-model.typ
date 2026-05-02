@@ -20,8 +20,10 @@ With N formats, that's N × (N-1) conversion paths — each with its own edge ca
 
 UDM eliminates this by providing one common tree structure:
 
-// DIAGRAM: N formats all converting to/from UDM (star topology, UDM in center)
-// Source: part1-foundation.pptx, slide 13
+#figure(
+  image("../pictures/ch10-udm/tier1-data-transformation-showing-udm.png", width: 100%),
+  caption: [Tier 1 data transformation — all input formats (XML, JSON, CSV, YAML, OData) are parsed into UDM. The transformation operates on UDM. The result is rendered to the chosen output format.]
+)
 
 Every input format is parsed into UDM. Every transformation operates on UDM. Every output format is serialized from UDM. The transformation never touches raw XML tags or JSON braces — it works with the _meaning_ of the data.
 
@@ -297,6 +299,30 @@ map(enrichedOrders, (order) -> {
 ```
 
 See the F03 design document and the architecture document on N-to-M mapping for the full analysis, performance characteristics, and multi-level nesting patterns.
+
+== UDM and Schema Formats (Tier 2)
+
+The diagrams above show Tier 1 data transformations — instance documents (JSON, XML, CSV, YAML, OData) parsed into UDM. But UTL-X also handles Tier 2 schema formats: XSD, JSON Schema, Avro, Protobuf, OData Schema (EDMX), and Table Schema.
+
+When a Tier 2 format is the input, the parser produces UDM enriched with USDL directives (`%types`, `%fields`, `%kind`) — see Chapter 12. The transformation can then work with both the raw schema structure and the normalized USDL properties.
+
+#figure(
+  image("../pictures/ch10-udm/tier2-meta-data-transformation.png", width: 100%),
+  caption: [Tier 2 schema transformation — schema formats (JSON Schema, XSD, Table Schema, OData Schema, Protobuf, Avro) are parsed into UDM + USDL. The transformation can convert between any schema format pair.]
+)
+
+Schema-to-schema conversion (e.g., `input xsd` / `output jsch`) works because USDL normalizes all schema concepts — types, fields, constraints — into a common vocabulary, just as UDM normalizes all data formats into a common tree.
+
+=== Combined Transformations: Tier 1 + Tier 2
+
+In some scenarios, a transformation receives both instance data (Tier 1) and schema metadata (Tier 2) as inputs. For example, a multi-input transformation might read a JSON message alongside its JSON Schema to produce validated, enriched output — or the output itself might be a schema format.
+
+#figure(
+  image("../pictures/ch10-udm/tier1-tier2-combined-transformation.png", width: 100%),
+  caption: [Combined transformation — Tier 1 instance data and Tier 2 schema metadata are parsed into UDM (with USDL for Tier 2). The output can be either a Tier 1 data format or a Tier 2 schema format.]
+)
+
+This flexibility means UTL-X handles not just data transformation but also schema generation (CSV metadata → XSD), schema inspection (XSD → JSON report), and data-plus-schema pipelines — all using the same language and the same UDM foundation.
 
 == When UDM Matters
 
