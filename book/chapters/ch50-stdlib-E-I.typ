@@ -1,40 +1,134 @@
 == E
 
-=== e #text(size: 8pt, fill: gray)[(TODO)]
+=== e() → number #text(size: 8pt, fill: gray)[(Num)]
 
-// TODO
+Returns Euler's number (approximately 2.71828182845904523536).
 
-=== elementPath #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+e()                                      // 2.718281828459045
+{
+  euler: e(),
+  expGrowth: e() ** $input.rate
+}
+```
 
-// TODO
+=== elementPath(element) → string #text(size: 8pt, fill: gray)[(XML)]
 
-=== encryptAES #text(size: 8pt, fill: gray)[(TODO)]
+Get the XPath-like path of an XML element within its document tree.
 
-// TODO
+- `element` (required): XML UDM element
 
-=== encryptAES256 #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  path: elementPath($input.Invoice.Lines.Line),
+  debug: elementPath($input.root.child)
+}
+```
 
-// TODO
+=== encryptAES(data, key, iv) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-=== endOfDay #text(size: 8pt, fill: gray)[(TODO)]
+Encrypts data using AES-128-CBC. Returns Base64-encoded ciphertext.
 
-// TODO
+- `data` (required): plaintext string to encrypt
+- `key` (required): 16-byte encryption key (hex or Base64)
+- `iv` (required): initialization vector
 
-=== endOfMonth #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+let key = generateKey(128)
+let iv = generateIV()
+{
+  encrypted: encryptAES($input.secret, key, iv),
+  key: key,
+  iv: iv
+}
+```
 
-// TODO
+=== encryptAES256(data, key, iv) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-=== endOfQuarter #text(size: 8pt, fill: gray)[(TODO)]
+Encrypts data using AES-256-CBC. Requires a 32-byte key.
 
-// TODO
+- `data` (required): plaintext string to encrypt
+- `key` (required): 32-byte encryption key
+- `iv` (required): initialization vector
 
-=== endOfWeek #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+let key = generateKey(256)
+let iv = generateIV()
+{
+  encrypted: encryptAES256($input.payload, key, iv),
+  key: key,
+  iv: iv
+}
+```
 
-// TODO
+=== endOfDay(date) → datetime #text(size: 8pt, fill: gray)[(Date)]
 
-=== endOfYear #text(size: 8pt, fill: gray)[(TODO)]
+Get the end of day (23:59:59.999) for a given date.
 
-// TODO
+- `date` (required): date or datetime
+
+```bash
+echo '{"date": "2026-05-01"}' | utlx -e 'endOfDay(parseDate($input.date, "yyyy-MM-dd"))'
+# "2026-05-01T23:59:59.999"
+```
+
+```utlx
+{
+  dayEnd: endOfDay(now()),
+  deadline: endOfDay(parseDate($input.dueDate, "yyyy-MM-dd"))
+}
+```
+
+=== endOfMonth(date) → datetime #text(size: 8pt, fill: gray)[(Date)]
+
+Get the last moment of the last day of the month.
+
+- `date` (required): date or datetime
+
+```utlx
+{
+  monthEnd: endOfMonth(now()),
+  invoiceDue: endOfMonth(parseDate($input.invoiceDate, "yyyy-MM-dd"))
+}
+```
+
+=== endOfQuarter(date) → datetime #text(size: 8pt, fill: gray)[(Date)]
+
+Get the last moment of the last day of the quarter.
+
+- `date` (required): date or datetime
+
+```utlx
+{
+  quarterEnd: endOfQuarter(now()),
+  reportDeadline: endOfQuarter(parseDate($input.date, "yyyy-MM-dd"))
+}
+```
+
+=== endOfWeek(date) → datetime #text(size: 8pt, fill: gray)[(Date)]
+
+Get the end of the week (Sunday 23:59:59.999).
+
+- `date` (required): date or datetime
+
+```utlx
+{
+  weekEnd: endOfWeek(now())
+}
+```
+
+=== endOfYear(date) → datetime #text(size: 8pt, fill: gray)[(Date)]
+
+Get the last moment of December 31 for the given date's year.
+
+- `date` (required): date or datetime
+
+```utlx
+{
+  yearEnd: endOfYear(now()),
+  fiscalEnd: endOfYear(parseDate($input.startDate, "yyyy-MM-dd"))
+}
+```
 
 === endsWith(string, suffix) → boolean #text(size: 8pt, fill: gray)[(Str)]
 
@@ -76,13 +170,31 @@ if (!startsWith($input.id, "ORD-")) error("Invalid order ID format")
 }
 ```
 
-=== endTimer #text(size: 8pt, fill: gray)[(TODO)]
+=== endTimer(label) → number #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Logs elapsed time since `startTimer()` was called with the same label. Returns elapsed milliseconds.
 
-=== enforceNamespacePrefixes #text(size: 8pt, fill: gray)[(TODO)]
+- `label` (required): timer label (must match a previous `startTimer` call)
 
-// TODO
+```utlx
+startTimer("transform")
+let result = map($input.items, (i) -> { name: upperCase(i.name) })
+endTimer("transform")
+result
+```
+
+=== enforceNamespacePrefixes(xml, prefixMap) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Enforces specific namespace prefixes on an XML string, renaming prefixes to match the given mapping.
+
+- `xml` (required): XML string to process
+- `prefixMap` (optional): object mapping namespace URIs to desired prefixes
+
+```utlx
+{
+  normalized: enforceNamespacePrefixes($input.xml)
+}
+```
 
 === entries(object) → array #text(size: 8pt, fill: gray)[(Obj)]
 
@@ -148,17 +260,48 @@ envOrDefault("LOG_LEVEL", "INFO")        // "INFO" if LOG_LEVEL not set
 envOrDefault("DATABASE_URL", "postgres://localhost:5432/mydb")
 ```
 
-=== envAll #text(size: 8pt, fill: gray)[(TODO)]
+=== envAll() → object #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Get all environment variables as a key-value object.
 
-=== environment #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+let allEnv = envAll()
+{
+  home: allEnv.HOME,
+  path: allEnv.PATH,
+  count: count(entries(allEnv))
+}
+```
 
-// TODO
+=== environment() → string #text(size: 8pt, fill: gray)[(Sys)]
 
-=== equals #text(size: 8pt, fill: gray)[(TODO)]
+Get the current environment name (e.g., "development", "production").
 
-// TODO
+```utlx
+{
+  env: environment(),
+  isProduction: environment() == "production"
+}
+```
+
+=== equals(a, b) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Deep equality comparison of two values. Works for all types including objects and arrays.
+
+- `a` (required): first value
+- `b` (required): second value
+
+```bash
+echo '{"a": [1,2,3], "b": [1,2,3]}' | utlx -e 'equals($input.a, $input.b)'
+# true
+```
+
+```utlx
+{
+  same: equals($input.expected, $input.actual),
+  match: equals($input.config, $input.defaults)
+}
+```
 
 === error(message) → never #text(size: 8pt, fill: gray)[(Sys)]
 
@@ -184,41 +327,158 @@ try {
 }
 ```
 
-=== escapeXML #text(size: 8pt, fill: gray)[(TODO)]
+=== escapeXML(text) → string #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Escapes special XML characters (`<`, `>`, `&`, `"`, `'`) in text without using CDATA.
 
-=== every #text(size: 8pt, fill: gray)[(TODO)]
+- `text` (required): string to escape
 
-// TODO
+```bash
+echo '{"text": "price < 100 & qty > 0"}' | utlx -e 'escapeXML($input.text)'
+# "price &lt; 100 &amp; qty &gt; 0"
+```
 
-=== everyEntry #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  safeText: escapeXML($input.userInput)
+}
+```
 
-// TODO
+=== every(array, predicate) → boolean #text(size: 8pt, fill: gray)[(Arr)]
 
-=== excC14n #text(size: 8pt, fill: gray)[(TODO)]
+Check if ALL elements in an array satisfy a predicate. Returns `true` for empty arrays.
 
-// TODO
+- `array` (required): the array to test
+- `predicate` (required): lambda `(element) -> boolean`
 
-=== excC14nWithComments #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"scores": [85, 92, 78, 95]}' | utlx -e 'every($input.scores, (s) -> s >= 70)'
+# true
+```
 
-// TODO
+```utlx
+{
+  allPassing: every($input.scores, (s) -> s >= 70),
+  allActive: every($input.users, (u) -> u.active),
+  allPositive: every($input.amounts, (a) -> a > 0)
+}
+```
 
-=== exp #text(size: 8pt, fill: gray)[(TODO)]
+=== everyEntry(object, predicate) → boolean #text(size: 8pt, fill: gray)[(Obj)]
 
-// TODO
+Check if ALL entries in an object satisfy a predicate. The predicate receives key and value.
 
-=== extractBetween #text(size: 8pt, fill: gray)[(TODO)]
+- `object` (required): the object to test
+- `predicate` (required): lambda `(key, value) -> boolean`
 
-// TODO
+```bash
+echo '{"a": 1, "b": 2, "c": 3}' | utlx -e 'everyEntry($input, (k, v) -> v > 0)'
+# true
+```
 
-=== extractCDATA #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  allPositive: everyEntry($input.metrics, (k, v) -> v > 0),
+  allNonNull: everyEntry($input, (k, v) -> v != null)
+}
+```
 
-// TODO
+=== excC14n(xml) → string #text(size: 8pt, fill: gray)[(XML)]
 
-=== extractTimestampFromUuidV7 #text(size: 8pt, fill: gray)[(TODO)]
+Canonicalizes XML using Exclusive Canonical XML (without comments). Used for XML digital signatures.
 
-// TODO
+- `xml` (required): XML string to canonicalize
+
+```utlx
+{
+  canonical: excC14n($input.xml)
+}
+```
+
+=== excC14nWithComments(xml) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Canonicalizes XML using Exclusive Canonical XML (with comments preserved).
+
+- `xml` (required): XML string to canonicalize
+
+```utlx
+{
+  canonical: excC14nWithComments($input.xml)
+}
+```
+
+=== exp(x) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Returns e raised to the power of x (e^x).
+
+- `x` (required): the exponent
+
+```bash
+echo '{"rate": 0.05}' | utlx -e 'exp($input.rate)'
+# 1.0512710963760241
+```
+
+```utlx
+{
+  growth: exp($input.rate * $input.years),
+  eSquared: exp(2)
+}
+```
+
+=== extractBetween(string, start, end) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Extract the substring between two delimiter strings.
+
+- `string` (required): the source string
+- `start` (required): the start delimiter
+- `end` (required): the end delimiter
+
+```bash
+echo '{"msg": "Hello [world] today"}' | utlx -e 'extractBetween($input.msg, "[", "]")'
+# "world"
+```
+
+```utlx
+{
+  tag: extractBetween($input.xml, "<name>", "</name>"),
+  token: extractBetween($input.header, "Bearer ", " ")
+}
+```
+
+=== extractCDATA(text) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Extracts the content from a CDATA section, stripping the `<![CDATA[` and `]]>` wrappers.
+
+- `text` (required): string containing CDATA section
+
+```bash
+echo '{"xml": "<![CDATA[Hello & World]]>"}' | utlx -e 'extractCDATA($input.xml)'
+# "Hello & World"
+```
+
+```utlx
+{
+  content: extractCDATA($input.rawField)
+}
+```
+
+=== extractTimestampFromUuidV7(uuid) → datetime #text(size: 8pt, fill: gray)[(Sec)]
+
+Extract the embedded timestamp from a UUID v7 value.
+
+- `uuid` (required): UUID v7 string
+
+```bash
+echo '{"id": "018f6c30-a2b0-7000-8000-000000000001"}' | utlx -e 'extractTimestampFromUuidV7($input.id)'
+# "2024-05-21T..."
+```
+
+```utlx
+{
+  createdAt: extractTimestampFromUuidV7($input.messageId),
+  age: diffHours(now(), extractTimestampFromUuidV7($input.messageId))
+}
+```
 
 == F
 
@@ -313,13 +573,41 @@ echo '{"users": [{"id": 1}, {"id": 2}, {"id": 3}]}' \
 
 Also: `findLastIndex(array, predicate)` — searches from the end.
 
-=== findAllMatches #text(size: 8pt, fill: gray)[(TODO)]
+=== findAllMatches(string, pattern) → array #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Finds all matches of a regex pattern and returns them with positions.
 
-=== findLastIndex #text(size: 8pt, fill: gray)[(TODO)]
+- `string` (required): the string to search
+- `pattern` (required): regex pattern
 
-// TODO
+```bash
+echo '{"text": "Order ORD-001 and ORD-002 shipped"}' | utlx -e 'findAllMatches($input.text, "ORD-\\d+")'
+# [{"match": "ORD-001", "start": 6}, {"match": "ORD-002", "start": 18}]
+```
+
+```utlx
+{
+  orderIds: findAllMatches($input.text, "ORD-\\d+") |> map((m) -> m.match)
+}
+```
+
+=== findLastIndex(array, predicate) → number #text(size: 8pt, fill: gray)[(Arr)]
+
+Find the index of the LAST element matching a predicate, or `-1` if not found.
+
+- `array` (required): the array to search
+- `predicate` (required): lambda `(element) -> boolean`
+
+```bash
+echo '{"items": ["A", "B", "A", "C"]}' | utlx -e 'findLastIndex($input.items, (x) -> x == "A")'
+# 2
+```
+
+```utlx
+{
+  lastActive: findLastIndex($input.users, (u) -> u.active)
+}
+```
 
 === first(array) → element or null #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -336,85 +624,315 @@ first([])                                // null
 first(sortBy($input.products, (p) -> p.price))
 ```
 
-=== formatCurrency #text(size: 8pt, fill: gray)[(TODO)]
+=== formatCurrency(amount, currency?, locale?) → string #text(size: 8pt, fill: gray)[(Fin)]
 
-// TODO
+Formats a number as currency with locale-specific formatting.
 
-=== formatDateTimeInTimezone #text(size: 8pt, fill: gray)[(TODO)]
+- `amount` (required): numeric amount
+- `currency` (optional): ISO 4217 currency code (e.g., "USD", "EUR")
+- `locale` (optional): locale for formatting (e.g., "en-US", "de-DE")
 
-// TODO
+```bash
+echo '{"amount": 1234.5}' | utlx -e 'formatCurrency($input.amount, "USD", "en-US")'
+# "$1,234.50"
+```
 
-=== formatEmptyElements #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  price: formatCurrency($input.total, "EUR", "de-DE"),
+  usd: formatCurrency($input.amount, "USD", "en-US")
+}
+```
 
-// TODO
+=== formatDateTimeInTimezone(datetime, timezone) → string #text(size: 8pt, fill: gray)[(Date)]
 
-=== formatNumber #text(size: 8pt, fill: gray)[(TODO)]
+Format a datetime value displayed in a specific timezone.
 
-// TODO
+- `datetime` (required): datetime value
+- `timezone` (required): timezone ID (e.g., "America/New_York")
 
-=== formatPlural #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"ts": "2026-05-01T14:30:00Z"}' | utlx -e 'formatDateTimeInTimezone(parseDate($input.ts, "yyyy-MM-dd'\''T'\''HH:mm:ss'\''Z'\''"), "America/New_York")'
+# "2026-05-01T10:30:00-04:00"
+```
 
-// TODO
+```utlx
+{
+  localTime: formatDateTimeInTimezone(now(), "Europe/Amsterdam"),
+  userTime: formatDateTimeInTimezone(now(), $input.userTimezone)
+}
+```
 
-=== fromBase64 #text(size: 8pt, fill: gray)[(TODO)]
+=== formatEmptyElements(xml, style?) → string #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Formats empty XML elements according to the specified style (self-closing `<br/>` or expanded `<br></br>`).
 
-=== fromBytes #text(size: 8pt, fill: gray)[(TODO)]
+- `xml` (required): XML string
+- `style` (optional): "self-closing" or "expanded"
 
-// TODO
+```utlx
+{
+  selfClosing: formatEmptyElements($input.xml, "self-closing"),
+  expanded: formatEmptyElements($input.xml, "expanded")
+}
+```
 
-=== fromCamelCase #text(size: 8pt, fill: gray)[(TODO)]
+=== formatNumber(number, pattern?) → string #text(size: 8pt, fill: gray)[(Num)]
 
-// TODO
+Format a number using a pattern string.
 
-=== fromCharCode #text(size: 8pt, fill: gray)[(TODO)]
+- `number` (required): number to format
+- `pattern` (optional): format pattern (e.g., `"#,##0.00"`)
 
-// TODO
+```bash
+echo '{"amount": 1234567.891}' | utlx -e 'formatNumber($input.amount, "#,##0.00")'
+# "1,234,567.89"
+```
 
-=== fromConstantCase #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  formatted: formatNumber($input.price, "#,##0.00"),
+  integer: formatNumber($input.qty, "#,##0"),
+  percent: formatNumber($input.rate * 100, "0.0")
+}
+```
 
-// TODO
+=== formatPlural(count, word) → string #text(size: 8pt, fill: gray)[(Str)]
 
-=== fromDotCase #text(size: 8pt, fill: gray)[(TODO)]
+Creates a formatted string with count and correctly pluralized word.
 
-// TODO
+- `count` (required): numeric count
+- `word` (required): singular form of the word
 
-=== fromHex #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"n": 3}' | utlx -e 'formatPlural($input.n, "item")'
+# "3 items"
+```
 
-// TODO
+```utlx
+{
+  summary: formatPlural(count($input.errors), "error"),
+  files: formatPlural($input.fileCount, "file")
+}
+```
 
-=== fromKebabCase #text(size: 8pt, fill: gray)[(TODO)]
+=== fromBase64(encoded) → binary #text(size: 8pt, fill: gray)[(Sec)]
 
-// TODO
+Create binary data from a Base64-encoded string.
 
-=== fromPascalCase #text(size: 8pt, fill: gray)[(TODO)]
+- `encoded` (required): Base64-encoded string
 
-// TODO
+```bash
+echo '{"data": "SGVsbG8gV29ybGQ="}' | utlx -e 'toString(fromBase64($input.data))'
+# "Hello World"
+```
 
-=== fromPathCase #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  decoded: toString(fromBase64($input.encodedPayload))
+}
+```
 
-// TODO
+=== fromBytes(byteArray) → binary #text(size: 8pt, fill: gray)[(Bin)]
 
-=== fromSnakeCase #text(size: 8pt, fill: gray)[(TODO)]
+Create binary data from a byte array (array of integers 0-255).
 
-// TODO
+- `byteArray` (required): array of byte values
 
-=== fromTitleCase #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  binary: fromBytes([72, 101, 108, 108, 111])
+}
+```
 
-// TODO
+=== fromCamelCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
 
-=== fromUTC #text(size: 8pt, fill: gray)[(TODO)]
+Convert from camelCase to separate words.
 
-// TODO
+- `string` (required): camelCase string
 
-=== fullOuterJoin #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"name": "myVariableName"}' | utlx -e 'fromCamelCase($input.name)'
+# "my variable name"
+```
 
-// TODO
+```utlx
+{
+  words: fromCamelCase($input.fieldName)
+}
+```
 
-=== futureValue #text(size: 8pt, fill: gray)[(TODO)]
+=== fromCharCode(code) → string #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Create a string from a Unicode character code (code point).
+
+- `code` (required): integer code point
+
+```utlx
+fromCharCode(65)                         // "A"
+fromCharCode(8364)                       // "€"
+{
+  char: fromCharCode($input.code)
+}
+```
+
+=== fromConstantCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Convert from CONSTANT_CASE to separate words.
+
+- `string` (required): CONSTANT_CASE string
+
+```bash
+echo '{"name": "MAX_RETRY_COUNT"}' | utlx -e 'fromConstantCase($input.name)'
+# "max retry count"
+```
+
+```utlx
+{
+  readable: fromConstantCase($input.envVar)
+}
+```
+
+=== fromDotCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Convert from dot.case to separate words.
+
+- `string` (required): dot.case string
+
+```utlx
+fromDotCase("config.max.retries")        // "config max retries"
+```
+
+=== fromHex(hexString) → binary #text(size: 8pt, fill: gray)[(Str)]
+
+Create binary data from a hexadecimal string.
+
+- `hexString` (required): hex-encoded string
+
+```utlx
+{
+  data: fromHex($input.hexPayload),
+  text: toString(fromHex("48656c6c6f"))
+}
+```
+
+=== fromKebabCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Convert from kebab-case to separate words.
+
+- `string` (required): kebab-case string
+
+```bash
+echo '{"slug": "my-page-title"}' | utlx -e 'fromKebabCase($input.slug)'
+# "my page title"
+```
+
+```utlx
+{
+  title: titleCase(fromKebabCase($input.slug))
+}
+```
+
+=== fromPascalCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Convert from PascalCase to separate words.
+
+- `string` (required): PascalCase string
+
+```utlx
+fromPascalCase("MyClassName")            // "my class name"
+```
+
+=== fromPathCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Convert from path/case to separate words.
+
+- `string` (required): path/case string
+
+```utlx
+fromPathCase("my/path/name")             // "my path name"
+```
+
+=== fromSnakeCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Convert from snake_case to separate words.
+
+- `string` (required): snake_case string
+
+```bash
+echo '{"col": "first_name"}' | utlx -e 'fromSnakeCase($input.col)'
+# "first name"
+```
+
+```utlx
+{
+  label: titleCase(fromSnakeCase($input.columnName))
+}
+```
+
+=== fromTitleCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Convert from Title Case to separate lowercase words.
+
+- `string` (required): Title Case string
+
+```utlx
+fromTitleCase("My Title Case")           // "my title case"
+```
+
+=== fromUTC(datetime, timezone) → datetime #text(size: 8pt, fill: gray)[(Date)]
+
+Convert a UTC datetime to a local datetime in the specified timezone.
+
+- `datetime` (required): UTC datetime
+- `timezone` (required): target timezone ID (e.g., "America/New_York")
+
+```bash
+echo '{"utc": "2026-05-01T14:00:00Z"}' | utlx -e 'fromUTC(parseDate($input.utc, "yyyy-MM-dd'\''T'\''HH:mm:ss'\''Z'\''"), "Europe/Amsterdam")'
+# "2026-05-01T16:00:00+02:00"
+```
+
+```utlx
+{
+  localTime: fromUTC(now(), "Asia/Tokyo")
+}
+```
+
+=== fullOuterJoin(left, right, leftKey, rightKey) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Full outer join -- returns all items from both arrays, with `null` for non-matching sides.
+
+- `left` (required): left array
+- `right` (required): right array
+- `leftKey` (required): lambda to extract join key from left elements
+- `rightKey` (required): lambda to extract join key from right elements
+
+```utlx
+let employees = [{id: 1, name: "Alice"}, {id: 2, name: "Bob"}]
+let salaries = [{empId: 1, amount: 5000}, {empId: 3, amount: 6000}]
+{
+  joined: fullOuterJoin(employees, salaries, (e) -> e.id, (s) -> s.empId)
+}
+```
+
+=== futureValue(presentValue, rate, periods) → number #text(size: 8pt, fill: gray)[(Fin)]
+
+Calculates the future value of a present amount given compound interest.
+
+- `presentValue` (required): current amount
+- `rate` (required): interest rate per period (e.g., 0.05 for 5%)
+- `periods` (required): number of compounding periods
+
+```bash
+echo '{"pv": 1000, "rate": 0.05, "years": 10}' | utlx -e 'futureValue($input.pv, $input.rate, $input.years)'
+# 1628.89
+```
+
+```utlx
+{
+  futureAmount: futureValue($input.principal, $input.annualRate, $input.years)
+}
+```
 
 === head(array) → element or null #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -538,13 +1056,32 @@ let dt = parseDate($input.timestamp, "yyyy-MM-dd'T'HH:mm:ss'Z'")
 
 == G
 
-=== generateIV #text(size: 8pt, fill: gray)[(TODO)]
+=== generateIV() → string #text(size: 8pt, fill: gray)[(Sec)]
 
-// TODO
+Generates a random initialization vector (IV) for use with AES encryption.
 
-=== generateKey #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+let iv = generateIV()
+{
+  iv: iv,
+  encrypted: encryptAES($input.data, $input.key, iv)
+}
+```
 
-// TODO
+=== generateKey(bits?) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Generates a random encryption key of the specified bit length.
+
+- `bits` (optional): key length in bits (128 or 256, default 128)
+
+```utlx
+let key128 = generateKey(128)
+let key256 = generateKey(256)
+{
+  aes128key: key128,
+  aes256key: key256
+}
+```
 
 === generateUuid() → string #text(size: 8pt, fill: gray)[(Sys)]
 
@@ -584,85 +1121,286 @@ generateUuidV7Batch(5)  // generate 5 sequential v7 UUIDs
 
 Also: `isUuidV7(string)`.
 
-=== generateUuidV7Batch #text(size: 8pt, fill: gray)[(TODO)]
+=== generateUuidV7Batch(count) → array #text(size: 8pt, fill: gray)[(Sec)]
 
-// TODO
+Generate a batch of UUID v7s with monotonic guarantee (each is greater than the previous).
 
-=== get #text(size: 8pt, fill: gray)[(TODO)]
+- `count` (required): number of UUIDs to generate
 
-// TODO
+```bash
+echo '{"n": 3}' | utlx -e 'generateUuidV7Batch($input.n)'
+# ["018f6c30-a2b0-7000-...", "018f6c30-a2b0-7001-...", "018f6c30-a2b0-7002-..."]
+```
 
-=== getBaseURL #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  batchIds: generateUuidV7Batch(10)
+}
+```
 
-// TODO
+=== get(object, path) → any #text(size: 8pt, fill: gray)[(Obj)]
 
-=== getBOMBytes #text(size: 8pt, fill: gray)[(TODO)]
+Gets a value from an object or array by key or index.
 
-// TODO
+- `object` (required): object or array
+- `path` (required): key name (string) or index (number)
 
-=== getCurrencyDecimals #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"items": ["a", "b", "c"]}' | utlx -e 'get($input.items, 1)'
+# "b"
+```
 
-// TODO
+```utlx
+{
+  second: get($input.items, 1),
+  name: get($input, "name")
+}
+```
 
-=== getFragment #text(size: 8pt, fill: gray)[(TODO)]
+=== getBaseURL(url) → string #text(size: 8pt, fill: gray)[(URL)]
 
-// TODO
+Get the base URL (protocol + host + port) from a URL string.
 
-=== getHost #text(size: 8pt, fill: gray)[(TODO)]
+- `url` (required): URL string
 
-// TODO
+```bash
+echo '{"url": "https://api.example.com:8080/v1/users?page=1"}' | utlx -e 'getBaseURL($input.url)'
+# "https://api.example.com:8080"
+```
 
-=== getJWSAlgorithm #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  base: getBaseURL($input.endpoint)
+}
+```
 
-// TODO
+=== getBOMBytes(encoding) → binary #text(size: 8pt, fill: gray)[(XML)]
 
-=== getJWSHeader #text(size: 8pt, fill: gray)[(TODO)]
+Get the BOM (Byte Order Mark) bytes for a given encoding.
 
-// TODO
+- `encoding` (required): encoding name (e.g., "UTF-8", "UTF-16LE")
 
-=== getJWSInfo #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  bom: getBOMBytes("UTF-8")
+}
+```
 
-// TODO
+=== getCurrencyDecimals(currency) → number #text(size: 8pt, fill: gray)[(Fin)]
 
-=== getJWSKeyId #text(size: 8pt, fill: gray)[(TODO)]
+Gets the number of decimal places for a currency code (ISO 4217).
 
-// TODO
+- `currency` (required): ISO 4217 currency code
 
-=== getJWSPayload #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"cur": "JPY"}' | utlx -e 'getCurrencyDecimals($input.cur)'
+# 0
+```
 
-// TODO
+```utlx
+{
+  usdDecimals: getCurrencyDecimals("USD"),   // 2
+  jpyDecimals: getCurrencyDecimals("JPY")    // 0
+}
+```
 
-=== getJWSSigningInput #text(size: 8pt, fill: gray)[(TODO)]
+=== getFragment(url) → string #text(size: 8pt, fill: gray)[(URL)]
 
-// TODO
+Get the fragment (hash) portion from a URL string.
 
-=== getJWSTokenType #text(size: 8pt, fill: gray)[(TODO)]
+- `url` (required): URL string
 
-// TODO
+```bash
+echo '{"url": "https://example.com/page#section2"}' | utlx -e 'getFragment($input.url)'
+# "section2"
+```
 
-=== getJWTAudience #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  fragment: getFragment($input.url)
+}
+```
 
-// TODO
+=== getHost(url) → string #text(size: 8pt, fill: gray)[(URL)]
 
-=== getJWTClaim #text(size: 8pt, fill: gray)[(TODO)]
+Get the host from a URL string.
 
-// TODO
+- `url` (required): URL string
 
-=== getJWTClaims #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"url": "https://api.example.com/v1/users"}' | utlx -e 'getHost($input.url)'
+# "api.example.com"
+```
 
-// TODO
+```utlx
+{
+  host: getHost($input.endpoint)
+}
+```
 
-=== getJWTIssuer #text(size: 8pt, fill: gray)[(TODO)]
+=== getJWSAlgorithm(token) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-// TODO
+Gets the algorithm (alg) from a JWS token header.
 
-=== getJWTSubject #text(size: 8pt, fill: gray)[(TODO)]
+- `token` (required): JWS/JWT token string
 
-// TODO
+```utlx
+{
+  algorithm: getJWSAlgorithm($input.token)   // "RS256"
+}
+```
 
-=== getLogs #text(size: 8pt, fill: gray)[(TODO)]
+=== getJWSHeader(token) → object #text(size: 8pt, fill: gray)[(Sec)]
 
-// TODO
+Extracts the complete header from a JWS token as an object.
+
+- `token` (required): JWS/JWT token string
+
+```utlx
+{
+  header: getJWSHeader($input.token)
+  // {"alg": "RS256", "typ": "JWT", "kid": "key-1"}
+}
+```
+
+=== getJWSInfo(token) → object #text(size: 8pt, fill: gray)[(Sec)]
+
+Gets information about the JWS token structure (header, payload size, etc.).
+
+- `token` (required): JWS/JWT token string
+
+```utlx
+{
+  info: getJWSInfo($input.token)
+}
+```
+
+=== getJWSKeyId(token) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Gets the Key ID (kid) from a JWS token header.
+
+- `token` (required): JWS/JWT token string
+
+```utlx
+{
+  keyId: getJWSKeyId($input.token)
+}
+```
+
+=== getJWSPayload(token) → object #text(size: 8pt, fill: gray)[(Sec)]
+
+Extracts the payload from a JWS token WITHOUT signature verification.
+
+- `token` (required): JWS/JWT token string
+
+```utlx
+{
+  payload: getJWSPayload($input.token)
+}
+```
+
+=== getJWSSigningInput(token) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Extracts the signing input (header.payload) from a JWS token for manual verification.
+
+- `token` (required): JWS/JWT token string
+
+```utlx
+{
+  signingInput: getJWSSigningInput($input.token)
+}
+```
+
+=== getJWSTokenType(token) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Gets the token type (typ) from a JWS token header.
+
+- `token` (required): JWS/JWT token string
+
+```utlx
+{
+  type: getJWSTokenType($input.token)        // "JWT"
+}
+```
+
+=== getJWTAudience(token) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Gets the audience (aud) claim from a JWT token.
+
+- `token` (required): JWT token string
+
+```utlx
+{
+  audience: getJWTAudience($input.token)
+}
+```
+
+=== getJWTClaim(token, claim) → any #text(size: 8pt, fill: gray)[(Sec)]
+
+Gets a specific claim from a JWT token payload.
+
+- `token` (required): JWT token string
+- `claim` (required): claim name (e.g., "sub", "email", custom claims)
+
+```utlx
+{
+  email: getJWTClaim($input.token, "email"),
+  role: getJWTClaim($input.token, "role")
+}
+```
+
+=== getJWTClaims(token) → object #text(size: 8pt, fill: gray)[(Sec)]
+
+Extracts all claims from a JWT payload WITHOUT verification.
+
+- `token` (required): JWT token string
+
+```utlx
+let claims = getJWTClaims($input.token)
+{
+  subject: claims.sub,
+  issuer: claims.iss,
+  expiry: claims.exp
+}
+```
+
+=== getJWTIssuer(token) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Gets the issuer (iss) claim from a JWT token.
+
+- `token` (required): JWT token string
+
+```utlx
+{
+  issuer: getJWTIssuer($input.token)
+}
+```
+
+=== getJWTSubject(token) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Gets the subject (sub) claim from a JWT token.
+
+- `token` (required): JWT token string
+
+```utlx
+{
+  subject: getJWTSubject($input.token)
+}
+```
+
+=== getLogs() → array #text(size: 8pt, fill: gray)[(Sys)]
+
+Retrieves all log entries that have been recorded during the current transformation.
+
+```utlx
+info("Processing started")
+let result = map($input.items, (i) -> i.name)
+info("Processing complete")
+{
+  result: result,
+  logs: getLogs()
+}
+```
 
 === getNamespaces(element) → object #text(size: 8pt, fill: gray)[(XML)]
 
@@ -679,53 +1417,187 @@ let ns = getNamespaces($input.Invoice)
 }
 ```
 
-=== getPath #text(size: 8pt, fill: gray)[(TODO)]
+=== getPath(url) → string #text(size: 8pt, fill: gray)[(URL)]
 
-// TODO
+Get the path component from a URL string.
 
-=== getPort #text(size: 8pt, fill: gray)[(TODO)]
+- `url` (required): URL string
 
-// TODO
+```bash
+echo '{"url": "https://api.example.com/v1/users/123"}' | utlx -e 'getPath($input.url)'
+# "/v1/users/123"
+```
 
-=== getProtocol #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  path: getPath($input.endpoint)
+}
+```
 
-// TODO
+=== getPort(url) → number #text(size: 8pt, fill: gray)[(URL)]
 
-=== getQuery #text(size: 8pt, fill: gray)[(TODO)]
+Get the port number from a URL string.
 
-// TODO
+- `url` (required): URL string
 
-=== getQueryParams #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"url": "https://api.example.com:8443/v1"}' | utlx -e 'getPort($input.url)'
+# 8443
+```
 
-// TODO
+```utlx
+{
+  port: getPort($input.url)
+}
+```
 
-=== getTimezone #text(size: 8pt, fill: gray)[(TODO)]
+=== getProtocol(url) → string #text(size: 8pt, fill: gray)[(URL)]
 
-// TODO
+Get the protocol/scheme from a URL string.
 
-=== getTimezoneName #text(size: 8pt, fill: gray)[(TODO)]
+- `url` (required): URL string
 
-// TODO
+```bash
+echo '{"url": "https://example.com"}' | utlx -e 'getProtocol($input.url)'
+# "https"
+```
 
-=== getTimezoneOffsetHours #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  protocol: getProtocol($input.url),
+  isSecure: getProtocol($input.url) == "https"
+}
+```
 
-// TODO
+=== getQuery(url) → string #text(size: 8pt, fill: gray)[(URL)]
 
-=== getTimezoneOffsetSeconds #text(size: 8pt, fill: gray)[(TODO)]
+Get the query string from a URL (without the leading `?`).
 
-// TODO
+- `url` (required): URL string
 
-=== getType #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"url": "https://example.com/search?q=hello&page=2"}' | utlx -e 'getQuery($input.url)'
+# "q=hello&page=2"
+```
 
-// TODO
+```utlx
+{
+  queryString: getQuery($input.url)
+}
+```
 
-=== getUuidVersion #text(size: 8pt, fill: gray)[(TODO)]
+=== getQueryParams(url) → object #text(size: 8pt, fill: gray)[(URL)]
 
-// TODO
+Get query parameters from a URL as a key-value object.
 
-=== goldenRatio #text(size: 8pt, fill: gray)[(TODO)]
+- `url` (required): URL string
 
-// TODO
+```bash
+echo '{"url": "https://example.com/search?q=hello&page=2"}' | utlx -e 'getQueryParams($input.url)'
+# {"q": "hello", "page": "2"}
+```
+
+```utlx
+{
+  params: getQueryParams($input.url),
+  searchTerm: getQueryParams($input.url).q
+}
+```
+
+=== getTimezone(datetime) → string #text(size: 8pt, fill: gray)[(Date)]
+
+Get the timezone offset string from a datetime value.
+
+- `datetime` (required): datetime with timezone
+
+```utlx
+{
+  offset: getTimezone(now())              // "+02:00"
+}
+```
+
+=== getTimezoneName() → string #text(size: 8pt, fill: gray)[(Date)]
+
+Get the timezone name/ID for the current system.
+
+```utlx
+{
+  tz: getTimezoneName()                  // "Europe/Amsterdam"
+}
+```
+
+=== getTimezoneOffsetHours(datetime, timezone?) → number #text(size: 8pt, fill: gray)[(Date)]
+
+Get the timezone offset in hours for a given datetime or timezone.
+
+- `datetime` (required): datetime value
+- `timezone` (optional): timezone ID
+
+```utlx
+{
+  offsetHours: getTimezoneOffsetHours(now(), "America/New_York")  // -4 or -5
+}
+```
+
+=== getTimezoneOffsetSeconds(datetime) → number #text(size: 8pt, fill: gray)[(Date)]
+
+Get the timezone offset in seconds for a datetime value.
+
+- `datetime` (required): datetime with timezone
+
+```utlx
+{
+  offsetSecs: getTimezoneOffsetSeconds(now())   // 7200 for +02:00
+}
+```
+
+=== getType(value) → string #text(size: 8pt, fill: gray)[(Type)]
+
+Returns the type of a value as a string ("string", "number", "boolean", "array", "object", "null", "date", "datetime").
+
+- `value` (required): the value to inspect
+
+```bash
+echo '{"name": "Alice", "age": 30}' | utlx -e 'getType($input.name)'
+# "string"
+```
+
+```utlx
+{
+  nameType: getType($input.name),         // "string"
+  ageType: getType($input.age),           // "number"
+  itemsType: getType($input.items)        // "array"
+}
+```
+
+=== getUuidVersion(uuid) → number #text(size: 8pt, fill: gray)[(Sec)]
+
+Get the version number from a UUID string.
+
+- `uuid` (required): UUID string
+
+```bash
+echo '{"id": "550e8400-e29b-41d4-a716-446655440000"}' | utlx -e 'getUuidVersion($input.id)'
+# 4
+```
+
+```utlx
+{
+  version: getUuidVersion($input.correlationId)
+}
+```
+
+=== goldenRatio() → number #text(size: 8pt, fill: gray)[(Num)]
+
+Returns the golden ratio (approximately 1.61803398874989484820).
+
+```utlx
+goldenRatio()                            // 1.618033988749895
+{
+  ratio: goldenRatio(),
+  scaled: $input.width * goldenRatio()
+}
+```
 
 === groupBy(array, keyFn) → object #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -752,35 +1624,103 @@ let groups = groupBy($input.orders, (o) -> o.status)
 }
 ```
 
-=== gunzip #text(size: 8pt, fill: gray)[(TODO)]
+=== gunzip(data) → binary #text(size: 8pt, fill: gray)[(Bin)]
 
-// TODO
+Decompress gzip-compressed binary data.
 
-=== gzip #text(size: 8pt, fill: gray)[(TODO)]
+- `data` (required): gzip-compressed binary
 
-// TODO
+```utlx
+{
+  decompressed: gunzip($input.compressedPayload)
+}
+```
+
+=== gzip(data) → binary #text(size: 8pt, fill: gray)[(Bin)]
+
+Compress binary data using gzip.
+
+- `data` (required): binary data to compress
+
+```utlx
+{
+  compressed: gzip(toBinary($input.largeText)),
+  encoded: base64Encode(gzip(toBinary($input.payload)))
+}
+```
 
 == H
 
-=== hasAlpha #text(size: 8pt, fill: gray)[(TODO)]
+=== hasAlpha(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Returns true if the string contains at least one alphabetic character.
 
-=== hasAttribute #text(size: 8pt, fill: gray)[(TODO)]
+- `string` (required): string to check
 
-// TODO
+```bash
+echo '{"code": "ABC123"}' | utlx -e 'hasAlpha($input.code)'
+# true
+```
 
-=== hasBOM #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  hasLetters: hasAlpha($input.value),
+  numericOnly: !hasAlpha($input.code)
+}
+```
 
-// TODO
+=== hasAttribute(element, name) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-=== hasContent #text(size: 8pt, fill: gray)[(TODO)]
+Check if an XML element has a specific attribute.
 
-// TODO
+- `element` (required): XML UDM element
+- `name` (required): attribute name to check
 
-=== hasEnv #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  hasId: hasAttribute($input.element, "id"),
+  hasClass: hasAttribute($input.element, "class")
+}
+```
 
-// TODO
+=== hasBOM(data) → boolean #text(size: 8pt, fill: gray)[(XML)]
+
+Check if binary data starts with a BOM (Byte Order Mark).
+
+- `data` (required): binary data to check
+
+```utlx
+{
+  hasBom: hasBOM($input.fileData),
+  clean: if (hasBOM($input.fileData)) removeBOM($input.fileData) else $input.fileData
+}
+```
+
+=== hasContent(element) → boolean #text(size: 8pt, fill: gray)[(XML)]
+
+Check if an XML element has any content (child elements or text).
+
+- `element` (required): XML UDM element
+
+```utlx
+{
+  hasBody: hasContent($input.element),
+  emptyNodes: filter($input.nodes, (n) -> !hasContent(n))
+}
+```
+
+=== hasEnv(name) → boolean #text(size: 8pt, fill: gray)[(Sys)]
+
+Check if an environment variable exists (is set, even if empty).
+
+- `name` (required): environment variable name
+
+```utlx
+{
+  hasDatabase: hasEnv("DATABASE_URL"),
+  hasSecret: hasEnv("API_SECRET")
+}
+```
 
 === hasKey(object, key) → boolean #text(size: 8pt, fill: gray)[(Obj)]
 
@@ -872,21 +1812,61 @@ sha512("hello")
 // Output: "9b71d224bd62f3785d96d46ad3ea3d73..."
 ```
 
-=== hasNamespace #text(size: 8pt, fill: gray)[(TODO)]
+=== hasNamespace(element, uri) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Check if an XML element has a specific namespace URI declared.
 
-=== hasNumeric #text(size: 8pt, fill: gray)[(TODO)]
+- `element` (required): XML UDM element
+- `uri` (required): namespace URI to check
 
-// TODO
+```utlx
+{
+  hasSoap: hasNamespace($input.root, "http://schemas.xmlsoap.org/soap/envelope/"),
+  hasUBL: hasNamespace($input.Invoice, "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2")
+}
+```
 
-=== hexDecode #text(size: 8pt, fill: gray)[(TODO)]
+=== hasNumeric(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Returns true if the string contains at least one numeric digit.
 
-=== hexEncode #text(size: 8pt, fill: gray)[(TODO)]
+- `string` (required): string to check
 
-// TODO
+```bash
+echo '{"code": "ABC123"}' | utlx -e 'hasNumeric($input.code)'
+# true
+```
+
+```utlx
+{
+  hasDigits: hasNumeric($input.password),
+  alphaOnly: !hasNumeric($input.name)
+}
+```
+
+=== hexDecode(hex) → binary #text(size: 8pt, fill: gray)[(Bin)]
+
+Decode a hex-encoded string to binary data.
+
+- `hex` (required): hex string to decode
+
+```utlx
+{
+  data: hexDecode($input.hexPayload)
+}
+```
+
+=== hexEncode(data) → string #text(size: 8pt, fill: gray)[(Bin)]
+
+Encode binary data as a hexadecimal string.
+
+- `data` (required): binary data to encode
+
+```utlx
+{
+  hex: hexEncode(toBinary($input.text))
+}
+```
 
 === hmac(data, key, algorithm) → string #text(size: 8pt, fill: gray)[(Sec)]
 
@@ -919,47 +1899,159 @@ let expectedSig = hmacSHA256($input.body, env("WEBHOOK_SECRET"))
 if (expectedSig != $input.headers.signature) error("Invalid signature")
 ```
 
-=== hmacBase64 #text(size: 8pt, fill: gray)[(TODO)]
+=== hmacBase64(data, key, algorithm) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-// TODO
+Computes HMAC and returns the result as Base64-encoded string.
 
-=== hmacMD5 #text(size: 8pt, fill: gray)[(TODO)]
+- `data` (required): the message to authenticate
+- `key` (required): the secret key
+- `algorithm` (required): hash algorithm (e.g., "SHA-256")
 
-// TODO
+```utlx
+{
+  signature: hmacBase64($input.payload, env("SECRET"), "SHA-256")
+}
+```
 
-=== hmacSHA1 #text(size: 8pt, fill: gray)[(TODO)]
+=== hmacMD5(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-// TODO
+Computes HMAC-MD5 hash. Returns hex-encoded string.
 
-=== hmacSHA384 #text(size: 8pt, fill: gray)[(TODO)]
+- `data` (required): the message
+- `key` (required): the secret key
 
-// TODO
+```utlx
+{
+  hash: hmacMD5($input.message, $input.key)
+}
+```
 
-=== hmacSHA512 #text(size: 8pt, fill: gray)[(TODO)]
+=== hmacSHA1(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-// TODO
+Computes HMAC-SHA1 hash. Returns hex-encoded string.
 
-=== homeDir #text(size: 8pt, fill: gray)[(TODO)]
+- `data` (required): the message
+- `key` (required): the secret key
 
-// TODO
+```utlx
+{
+  hash: hmacSHA1($input.message, $input.key)
+}
+```
 
-=== hours #text(size: 8pt, fill: gray)[(TODO)]
+=== hmacSHA384(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
 
-// TODO
+Computes HMAC-SHA384 hash. Returns hex-encoded string.
+
+- `data` (required): the message
+- `key` (required): the secret key
+
+```utlx
+{
+  hash: hmacSHA384($input.message, $input.key)
+}
+```
+
+=== hmacSHA512(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Computes HMAC-SHA512 hash. Returns hex-encoded string.
+
+- `data` (required): the message
+- `key` (required): the secret key
+
+```utlx
+{
+  hash: hmacSHA512($input.message, $input.key)
+}
+```
+
+=== homeDir() → string #text(size: 8pt, fill: gray)[(Sys)]
+
+Get the current user's home directory path.
+
+```utlx
+homeDir()                                // "/Users/alice" or "/home/alice"
+{
+  home: homeDir()
+}
+```
+
+=== hours(datetime) → number #text(size: 8pt, fill: gray)[(Date)]
+
+Extract the hours component (0-23) from a datetime value.
+
+- `datetime` (required): datetime value
+
+```bash
+echo '{"ts": "2026-05-01T14:30:00Z"}' | utlx -e 'hours(parseDate($input.ts, "yyyy-MM-dd'\''T'\''HH:mm:ss'\''Z'\''"))'
+# 14
+```
+
+```utlx
+{
+  hour: hours(now()),
+  isBusinessHours: hours(now()) >= 9 && hours(now()) < 17
+}
+```
 
 == I
 
-=== ifThenElse #text(size: 8pt, fill: gray)[(TODO)]
+=== ifThenElse(condition, thenValue, elseValue) → any #text(size: 8pt, fill: gray)[(Type)]
 
-// TODO
+Inline if-then-else conditional expression. Returns `thenValue` if condition is true, otherwise `elseValue`.
 
-=== implies #text(size: 8pt, fill: gray)[(TODO)]
+- `condition` (required): boolean condition
+- `thenValue` (required): value if true
+- `elseValue` (required): value if false
 
-// TODO
+```bash
+echo '{"age": 20}' | utlx -e 'ifThenElse($input.age >= 18, "adult", "minor")'
+# "adult"
+```
 
-=== includes #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  status: ifThenElse($input.active, "ACTIVE", "INACTIVE"),
+  label: ifThenElse($input.count > 0, concat(toString($input.count), " items"), "empty")
+}
+```
 
-// TODO
+=== implies(a, b) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Logical implication (material conditional). Returns `false` only when `a` is true and `b` is false.
+
+- `a` (required): antecedent boolean
+- `b` (required): consequent boolean
+
+```utlx
+implies(true, true)                      // true
+implies(true, false)                     // false
+implies(false, true)                     // true
+implies(false, false)                    // true
+
+{
+  valid: implies($input.isPremium, $input.hasSubscription)
+}
+```
+
+=== includes(array, value) → boolean #text(size: 8pt, fill: gray)[(Arr)]
+
+Check if an array contains a specific value (strict equality).
+
+- `array` (required): array to search
+- `value` (required): value to find
+
+```bash
+echo '{"tags": ["urgent", "billing", "support"]}' | utlx -e 'includes($input.tags, "urgent")'
+# true
+```
+
+```utlx
+{
+  isUrgent: includes($input.tags, "urgent"),
+  isVIP: includes($input.roles, "VIP")
+}
+```
 
 === indexOf(haystack, needle) → number #text(size: 8pt, fill: gray)[(Str/Arr)]
 
@@ -975,177 +2067,634 @@ indexOf(["Apple", "Banana", "Cherry"], "Banana")  // 1
 indexOf(["Apple", "Banana", "Cherry"], "Grape")   // -1
 ```
 
-=== inflate #text(size: 8pt, fill: gray)[(TODO)]
+=== inflate(data) → binary #text(size: 8pt, fill: gray)[(Bin)]
 
-// TODO
+Decompress Deflate-compressed binary data.
 
-=== info #text(size: 8pt, fill: gray)[(TODO)]
+- `data` (required): deflate-compressed binary
 
-// TODO
+```utlx
+{
+  decompressed: inflate($input.compressedData)
+}
+```
 
-=== insertAfter #text(size: 8pt, fill: gray)[(TODO)]
+=== info(message) → null #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Log a message at INFO level. Returns null (passthrough for pipeline usage).
 
-=== insertBefore #text(size: 8pt, fill: gray)[(TODO)]
+- `message` (required): message to log
 
-// TODO
+```utlx
+info("Starting transformation")
+let result = map($input.items, (i) -> i.name)
+info(concat("Processed ", toString(count(result)), " items"))
+result
+```
 
-=== invert #text(size: 8pt, fill: gray)[(TODO)]
+=== insertAfter(array, index, element) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-// TODO
+Insert an element after the specified index in an array.
 
-=== iqr #text(size: 8pt, fill: gray)[(TODO)]
+- `array` (required): source array
+- `index` (required): position after which to insert
+- `element` (required): element to insert
 
-// TODO
+```bash
+echo '{"items": ["a", "b", "d"]}' | utlx -e 'insertAfter($input.items, 1, "c")'
+# ["a", "b", "c", "d"]
+```
 
-=== isAfter #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  updated: insertAfter($input.steps, 2, {name: "validation", order: 3})
+}
+```
 
-// TODO
+=== insertBefore(array, index, element) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-=== isAlpha #text(size: 8pt, fill: gray)[(TODO)]
+Insert an element before the specified index in an array.
 
-// TODO
+- `array` (required): source array
+- `index` (required): position before which to insert
+- `element` (required): element to insert
 
-=== isAlphanumeric #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"items": ["a", "c", "d"]}' | utlx -e 'insertBefore($input.items, 1, "b")'
+# ["a", "b", "c", "d"]
+```
 
-// TODO
+```utlx
+{
+  updated: insertBefore($input.items, 0, "first")
+}
+```
 
-=== isAscii #text(size: 8pt, fill: gray)[(TODO)]
+=== invert(object) → object #text(size: 8pt, fill: gray)[(Obj)]
 
-// TODO
+Invert an object by swapping keys and values. Values become keys and keys become values.
 
-=== isBefore #text(size: 8pt, fill: gray)[(TODO)]
+- `object` (required): object to invert
 
-// TODO
+```bash
+echo '{"US": "United States", "GB": "United Kingdom"}' | utlx -e 'invert($input)'
+# {"United States": "US", "United Kingdom": "GB"}
+```
 
-=== isBetween #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  countryByName: invert($input.codeToName)
+}
+```
 
-// TODO
+=== iqr(numbers) → number #text(size: 8pt, fill: gray)[(Num)]
 
-=== isCanonicalJSON #text(size: 8pt, fill: gray)[(TODO)]
+Calculate the interquartile range (IQR = Q3 - Q1) of a numeric array.
 
-// TODO
+- `numbers` (required): array of numbers
 
-=== isCDATA #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"data": [1, 3, 5, 7, 9, 11, 13]}' | utlx -e 'iqr($input.data)'
+# 8
+```
 
-// TODO
+```utlx
+{
+  spread: iqr($input.values),
+  outlierThreshold: iqr($input.values) * 1.5
+}
+```
 
-=== isDebugMode #text(size: 8pt, fill: gray)[(TODO)]
+=== isAfter(date1, date2) → boolean #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Check if the first date is after the second date.
 
-=== isEmptyElement #text(size: 8pt, fill: gray)[(TODO)]
+- `date1` (required): date to compare
+- `date2` (required): reference date
 
-// TODO
+```utlx
+{
+  isOverdue: isAfter(now(), parseDate($input.dueDate, "yyyy-MM-dd")),
+  isExpired: isAfter(now(), $input.expiresAt)
+}
+```
 
-=== isGzipped #text(size: 8pt, fill: gray)[(TODO)]
+=== isAlpha(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Returns true if the string contains only alphabetic characters (A-Z, a-z, Unicode letters).
 
-=== isHexadecimal #text(size: 8pt, fill: gray)[(TODO)]
+- `string` (required): string to test
 
-// TODO
+```bash
+echo '{"name": "Alice"}' | utlx -e 'isAlpha($input.name)'
+# true
+```
 
-=== isJarFile #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  validName: isAlpha($input.firstName),
+  hasSpecialChars: !isAlpha($input.input)
+}
+```
 
-// TODO
+=== isAlphanumeric(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
 
-=== isJWSFormat #text(size: 8pt, fill: gray)[(TODO)]
+Returns true if the string contains only alphanumeric characters (A-Z, a-z, 0-9, Unicode letters).
 
-// TODO
+- `string` (required): string to test
 
-=== isJWTExpired #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+isAlphanumeric("Hello123")               // true
+isAlphanumeric("Hello 123")              // false (contains space)
+{
+  validCode: isAlphanumeric($input.productCode)
+}
+```
 
-// TODO
+=== isAscii(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
 
-=== isLeapYearFunc #text(size: 8pt, fill: gray)[(TODO)]
+Returns true if the string contains only ASCII characters (code points 0-127).
 
-// TODO
+- `string` (required): string to test
 
-=== isLocalDateTime #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+isAscii("Hello!")                        // true
+isAscii("cafe\u0301")                    // false (contains accent)
+{
+  asciiSafe: isAscii($input.text)
+}
+```
 
-// TODO
+=== isBefore(date1, date2) → boolean #text(size: 8pt, fill: gray)[(Date)]
 
-=== isLowerCase #text(size: 8pt, fill: gray)[(TODO)]
+Check if the first date is before the second date.
 
-// TODO
+- `date1` (required): date to compare
+- `date2` (required): reference date
 
-=== isNotEmpty #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  notYetDue: isBefore(now(), parseDate($input.dueDate, "yyyy-MM-dd")),
+  isPast: isBefore($input.eventDate, now())
+}
+```
 
-// TODO
+=== isBetween(date, start, end) → boolean #text(size: 8pt, fill: gray)[(Date)]
 
-=== isNumeric #text(size: 8pt, fill: gray)[(TODO)]
+Check if a date is between two other dates (inclusive).
 
-// TODO
+- `date` (required): date to test
+- `start` (required): range start date
+- `end` (required): range end date
 
-=== isPlural #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  inRange: isBetween(now(), $input.startDate, $input.endDate),
+  inQ1: isBetween($input.date, parseDate("2026-01-01", "yyyy-MM-dd"), parseDate("2026-03-31", "yyyy-MM-dd"))
+}
+```
 
-// TODO
+=== isCanonicalJSON(json) → boolean #text(size: 8pt, fill: gray)[(JSON)]
 
-=== isPointInCircle #text(size: 8pt, fill: gray)[(TODO)]
+Validates that a JSON string is in canonical form per RFC 8785 (JSON Canonicalization Scheme).
 
-// TODO
+- `json` (required): JSON string to validate
 
-=== isPointInPolygon #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"json": "{\"a\":1,\"b\":2}"}' | utlx -e 'isCanonicalJSON($input.json)'
+# true
+```
 
-// TODO
+```utlx
+{
+  isCanonical: isCanonicalJSON(renderJson($input))
+}
+```
 
-=== isPrintable #text(size: 8pt, fill: gray)[(TODO)]
+=== isCDATA(text) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Checks if a string is a CDATA section (wrapped in `<![CDATA[...]]>`).
 
-=== isSameDay #text(size: 8pt, fill: gray)[(TODO)]
+- `text` (required): string to check
 
-// TODO
+```utlx
+{
+  isCdata: isCDATA($input.xmlField),
+  content: if (isCDATA($input.field)) extractCDATA($input.field) else $input.field
+}
+```
 
-=== isSingular #text(size: 8pt, fill: gray)[(TODO)]
+=== isDebugMode() → boolean #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Check if the current transformation is running in debug mode.
 
-=== isToday #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  debug: isDebugMode(),
+  extra: if (isDebugMode()) { logs: getLogs() } else null
+}
+```
 
-// TODO
+=== isEmptyElement(element) → boolean #text(size: 8pt, fill: gray)[(XML)]
 
-=== isUpperCase #text(size: 8pt, fill: gray)[(TODO)]
+Check if an XML element is empty (no children, no text content).
 
-// TODO
+- `element` (required): XML UDM element
 
-=== isUuidV7 #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  isEmpty: isEmptyElement($input.node),
+  nonEmpty: filter($input.elements, (e) -> !isEmptyElement(e))
+}
+```
 
-// TODO
+=== isGzipped(data) → boolean #text(size: 8pt, fill: gray)[(Bin)]
 
-=== isValidAmount #text(size: 8pt, fill: gray)[(TODO)]
+Check if binary data is gzip-compressed (by checking magic bytes).
 
-// TODO
+- `data` (required): binary data to check
 
-=== isValidCoordinates #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  compressed: isGzipped($input.payload),
+  content: if (isGzipped($input.data)) gunzip($input.data) else $input.data
+}
+```
 
-// TODO
+=== isHexadecimal(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
 
-=== isValidCurrency #text(size: 8pt, fill: gray)[(TODO)]
+Returns true if the string contains only valid hexadecimal characters (0-9, A-F, a-f).
 
-// TODO
+- `string` (required): string to test
 
-=== isValidTimezone #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+isHexadecimal("1a2b3c")                  // true
+isHexadecimal("xyz")                     // false
+{
+  validHex: isHexadecimal($input.colorCode)
+}
+```
 
-// TODO
+=== isJarFile(data) → boolean #text(size: 8pt, fill: gray)[(Bin)]
 
-=== isValidURL #text(size: 8pt, fill: gray)[(TODO)]
+Check if binary data is a JAR file.
 
-// TODO
+- `data` (required): binary data to check
 
-=== isValidUuid #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  isJar: isJarFile($input.fileData)
+}
+```
 
-// TODO
+=== isJWSFormat(token) → boolean #text(size: 8pt, fill: gray)[(Sec)]
 
-=== isWhitespace #text(size: 8pt, fill: gray)[(TODO)]
+Checks if a string is in valid JWS format (three Base64URL segments separated by dots).
 
-// TODO
+- `token` (required): string to validate
 
-=== isZipArchive #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  validFormat: isJWSFormat($input.token),
+  canDecode: isJWSFormat($input.authHeader)
+}
+```
 
-// TODO
+=== isJWTExpired(token) → boolean #text(size: 8pt, fill: gray)[(Sec)]
+
+Checks if a JWT is expired based on its `exp` claim.
+
+- `token` (required): JWT token string
+
+```utlx
+{
+  expired: isJWTExpired($input.token),
+  needsRefresh: isJWTExpired($input.accessToken)
+}
+```
+
+=== isLeapYearFunc(year) → boolean #text(size: 8pt, fill: gray)[(Date)]
+
+Check if a year is a leap year.
+
+- `year` (required): year number
+
+```utlx
+isLeapYearFunc(2024)                     // true
+isLeapYearFunc(2026)                     // false
+{
+  leap: isLeapYearFunc(year(now()))
+}
+```
+
+=== isLocalDateTime(value) → boolean #text(size: 8pt, fill: gray)[(Date)]
+
+Check if a value is a local datetime (datetime without timezone information).
+
+- `value` (required): value to test
+
+```utlx
+{
+  isLocal: isLocalDateTime($input.timestamp)
+}
+```
+
+=== isLowerCase(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
+
+Returns true if all alphabetic characters in the string are lowercase. Non-alphabetic characters are ignored.
+
+- `string` (required): string to test
+
+```utlx
+isLowerCase("hello")                     // true
+isLowerCase("Hello")                     // false
+isLowerCase("hello123")                  // true (digits ignored)
+{
+  isLower: isLowerCase($input.code)
+}
+```
+
+=== isNotEmpty(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Checks if a value is not empty (inverse of isEmpty). Returns true for non-null, non-empty values.
+
+- `value` (required): value to test
+
+```utlx
+isNotEmpty("hello")                      // true
+isNotEmpty("")                           // false
+isNotEmpty(null)                         // false
+isNotEmpty([1, 2])                       // true
+{
+  hasName: isNotEmpty($input.name),
+  hasItems: isNotEmpty($input.items)
+}
+```
+
+=== isNumeric(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
+
+Returns true if the string contains only numeric digits (0-9).
+
+- `string` (required): string to test
+
+```bash
+echo '{"zip": "12345"}' | utlx -e 'isNumeric($input.zip)'
+# true
+```
+
+```utlx
+{
+  validZip: isNumeric($input.zipCode),
+  numericId: isNumeric($input.id)
+}
+```
+
+=== isPlural(word) → boolean #text(size: 8pt, fill: gray)[(Str)]
+
+Checks if a word is in plural form.
+
+- `word` (required): word to check
+
+```utlx
+isPlural("cats")                         // true
+isPlural("cat")                          // false
+isPlural("children")                     // true
+```
+
+=== isPointInCircle(lat, lon, centerLat, centerLon, radiusKm) → boolean #text(size: 8pt, fill: gray)[(Geo)]
+
+Checks if a point is within a circular radius from a center point.
+
+- `lat` (required): point latitude
+- `lon` (required): point longitude
+- `centerLat` (required): circle center latitude
+- `centerLon` (required): circle center longitude
+- `radiusKm` (required): radius in kilometers
+
+```utlx
+{
+  inRange: isPointInCircle($input.lat, $input.lon, 52.3676, 4.9041, 10),
+  nearStore: isPointInCircle($input.userLat, $input.userLon, $input.storeLat, $input.storeLon, 5)
+}
+```
+
+=== isPointInPolygon(lat, lon, polygon) → boolean #text(size: 8pt, fill: gray)[(Geo)]
+
+Checks if a point is inside a polygon using the ray casting algorithm.
+
+- `lat` (required): point latitude
+- `lon` (required): point longitude
+- `polygon` (required): array of [lat, lon] coordinate pairs
+
+```utlx
+let zone = [[52.0, 4.0], [52.5, 4.0], [52.5, 5.0], [52.0, 5.0]]
+{
+  inZone: isPointInPolygon($input.lat, $input.lon, zone)
+}
+```
+
+=== isPrintable(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
+
+Returns true if the string contains only printable characters (letters, digits, punctuation, spaces).
+
+- `string` (required): string to test
+
+```utlx
+isPrintable("Hello, World!")             // true
+isPrintable("Hello\x00World")            // false (contains null byte)
+{
+  safe: isPrintable($input.userInput)
+}
+```
+
+=== isSameDay(date1, date2) → boolean #text(size: 8pt, fill: gray)[(Date)]
+
+Check if two dates fall on the same calendar day (ignoring time).
+
+- `date1` (required): first date
+- `date2` (required): second date
+
+```utlx
+{
+  sameDay: isSameDay($input.created, $input.modified),
+  createdToday: isSameDay($input.created, now())
+}
+```
+
+=== isSingular(word) → boolean #text(size: 8pt, fill: gray)[(Str)]
+
+Checks if a word is in singular form.
+
+- `word` (required): word to check
+
+```utlx
+isSingular("cat")                        // true
+isSingular("cats")                       // false
+isSingular("child")                      // true
+```
+
+=== isToday(date) → boolean #text(size: 8pt, fill: gray)[(Date)]
+
+Check if a date is today.
+
+- `date` (required): date to check
+
+```utlx
+{
+  isNew: isToday($input.createdAt),
+  todayOrders: filter($input.orders, (o) -> isToday(o.date))
+}
+```
+
+=== isUpperCase(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
+
+Returns true if all alphabetic characters in the string are uppercase. Non-alphabetic characters are ignored.
+
+- `string` (required): string to test
+
+```utlx
+isUpperCase("HELLO")                     // true
+isUpperCase("Hello")                     // false
+isUpperCase("ABC123")                    // true (digits ignored)
+{
+  isUpper: isUpperCase($input.countryCode)
+}
+```
+
+=== isUuidV7(uuid) → boolean #text(size: 8pt, fill: gray)[(Sec)]
+
+Check if a UUID string is specifically version 7 (time-ordered).
+
+- `uuid` (required): UUID string to check
+
+```utlx
+{
+  isV7: isUuidV7($input.messageId),
+  canExtractTime: isUuidV7($input.id)
+}
+```
+
+=== isValidAmount(amount) → boolean #text(size: 8pt, fill: gray)[(Fin)]
+
+Validates if an amount is within acceptable range (finite, not NaN).
+
+- `amount` (required): numeric value to validate
+
+```utlx
+{
+  valid: isValidAmount($input.total),
+  canProcess: isValidAmount($input.payment) && $input.payment > 0
+}
+```
+
+=== isValidCoordinates(lat, lon) → boolean #text(size: 8pt, fill: gray)[(Geo)]
+
+Checks if coordinates are valid (latitude -90 to 90, longitude -180 to 180).
+
+- `lat` (required): latitude value
+- `lon` (required): longitude value
+
+```utlx
+{
+  valid: isValidCoordinates($input.lat, $input.lon)
+}
+```
+
+=== isValidCurrency(code) → boolean #text(size: 8pt, fill: gray)[(Fin)]
+
+Validates if a currency code is valid according to ISO 4217.
+
+- `code` (required): currency code string (e.g., "USD", "EUR")
+
+```bash
+echo '{"currency": "USD"}' | utlx -e 'isValidCurrency($input.currency)'
+# true
+```
+
+```utlx
+{
+  valid: isValidCurrency($input.currencyCode),
+  error: if (!isValidCurrency($input.currency)) "Invalid currency" else null
+}
+```
+
+=== isValidTimezone(timezone) → boolean #text(size: 8pt, fill: gray)[(Date)]
+
+Check if a timezone ID string is valid.
+
+- `timezone` (required): timezone ID to validate
+
+```utlx
+isValidTimezone("America/New_York")      // true
+isValidTimezone("Invalid/Zone")          // false
+{
+  valid: isValidTimezone($input.userTimezone)
+}
+```
+
+=== isValidURL(url) → boolean #text(size: 8pt, fill: gray)[(URL)]
+
+Validate if a string is a well-formed URL.
+
+- `url` (required): string to validate
+
+```bash
+echo '{"url": "https://example.com/path"}' | utlx -e 'isValidURL($input.url)'
+# true
+```
+
+```utlx
+{
+  valid: isValidURL($input.website),
+  links: filter($input.urls, (u) -> isValidURL(u))
+}
+```
+
+=== isValidUuid(uuid) → boolean #text(size: 8pt, fill: gray)[(Sec)]
+
+Validate if a string is a properly formatted UUID (any version).
+
+- `uuid` (required): string to validate
+
+```bash
+echo '{"id": "550e8400-e29b-41d4-a716-446655440000"}' | utlx -e 'isValidUuid($input.id)'
+# true
+```
+
+```utlx
+{
+  valid: isValidUuid($input.correlationId),
+  error: if (!isValidUuid($input.id)) "Invalid UUID format" else null
+}
+```
+
+=== isWhitespace(string) → boolean #text(size: 8pt, fill: gray)[(Str)]
+
+Returns true if the string contains only whitespace characters (spaces, tabs, newlines).
+
+- `string` (required): string to test
+
+```utlx
+isWhitespace("   ")                      // true
+isWhitespace(" \t\n ")                   // true
+isWhitespace("  a  ")                    // false
+{
+  blank: isWhitespace($input.field)
+}
+```
+
+=== isZipArchive(data) → boolean #text(size: 8pt, fill: gray)[(Bin)]
+
+Check if binary data is a zip archive (by checking magic bytes).
+
+- `data` (required): binary data to check
+
+```utlx
+{
+  isZip: isZipArchive($input.fileData),
+  entries: if (isZipArchive($input.data)) listZipEntries($input.data) else []
+}
+```
 
 === lastIndexOf(haystack, needle) → number #text(size: 8pt, fill: gray)[(Str/Arr)]
 
@@ -1351,4 +2900,3 @@ Returns true if the date falls on a weekend (Saturday or Sunday).
 ```utlx
 isWeekend(parseDate("2026-05-03", "yyyy-MM-dd"))  // true (Sunday)
 ```
-

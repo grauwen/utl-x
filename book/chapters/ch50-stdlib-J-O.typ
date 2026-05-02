@@ -1,8 +1,14 @@
 == J
 
-=== javaVersion #text(size: 8pt, fill: gray)[(TODO)]
+=== javaVersion() → string #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Get the Java/JVM version string of the runtime.
+
+```utlx
+{
+  runtime: javaVersion()              // "21.0.2"
+}
+```
 
 === jcs(json) → string #text(size: 8pt, fill: gray)[(JSON)]
 
@@ -67,19 +73,56 @@ echo '{"tags": ["urgent", "billing", "review"]}' | utlx -e 'join($input.tags, ",
 
 *Anti-pattern:* `reduce(arr, "", (acc, x) -> concat(acc, x, ", "))` — creates N intermediate strings. `join()` builds the result in one pass.
 
-=== joinToString #text(size: 8pt, fill: gray)[(TODO)]
+=== joinToString(array, separator?) → string #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Join array elements into a string with optional separator (defaults to `","`). Alias-style alternative to `join()`.
 
-=== joinWith #text(size: 8pt, fill: gray)[(TODO)]
+- `array` (required): array of values to join
+- `separator` (optional): delimiter string, defaults to `","`
 
-// TODO
+```bash
+echo '["a", "b", "c"]' | utlx -e 'joinToString($input, " - ")'
+# a - b - c
+```
+
+=== joinWith(left, right, leftKeyFn, rightKeyFn, combinerFn) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Inner join two arrays by key with a custom combiner function. Unlike `join()` which returns `{l, r}` pairs, `joinWith` lets you shape the output.
+
+- `left` (required): left array
+- `right` (required): right array
+- `leftKeyFn` (required): lambda extracting key from left items
+- `rightKeyFn` (required): lambda extracting key from right items
+- `combinerFn` (required): lambda `(leftItem, rightItem) -> result`
+
+```utlx
+let customers = [{id: 1, name: "Alice"}, {id: 2, name: "Bob"}]
+let orders = [{customerId: 1, product: "Widget"}]
+
+joinWith(customers, orders,
+  (c) -> c.id, (o) -> o.customerId,
+  (c, o) -> {name: c.name, product: o.product}
+)
+// [{name: "Alice", product: "Widget"}]
+```
 
 == K
 
-=== kebabCase #text(size: 8pt, fill: gray)[(TODO)]
+=== kebabCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Convert a string to kebab-case (lowercase words separated by hyphens).
+
+- `string` (required): the string to convert
+
+```bash
+echo '"orderLineItem"' | utlx -e 'kebabCase($input)'
+# order-line-item
+```
+
+```utlx
+kebabCase("OrderLineItem")              // "order-line-item"
+kebabCase("some_snake_case")            // "some-snake-case"
+```
 
 === keys(object) → array #text(size: 8pt, fill: gray)[(Obj)]
 
@@ -113,9 +156,23 @@ echo '{"name": "Alice", "age": 30, "city": "Amsterdam"}' | utlx -e 'values($inpu
 
 == L
 
-=== leftJoin #text(size: 8pt, fill: gray)[(TODO)]
+=== leftJoin(left, right, leftKeyFn, rightKeyFn) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-// TODO
+Left join -- returns all items from the left array, with matching items from the right (or `null` for non-matches).
+
+- `left` (required): left array (all items preserved)
+- `right` (required): right array
+- `leftKeyFn` (required): lambda extracting key from left items
+- `rightKeyFn` (required): lambda extracting key from right items
+
+```utlx
+let customers = [{id: 1, name: "Alice"}, {id: 2, name: "Bob"}]
+let orders = [{customerId: 1, product: "Widget"}]
+
+leftJoin(customers, orders, (c) -> c.id, (o) -> o.customerId)
+// [{l: {id: 1, name: "Alice"}, r: {customerId: 1, product: "Widget"}},
+//  {l: {id: 2, name: "Bob"}, r: null}]
+```
 
 === length(value) → number #text(size: 8pt, fill: gray)[(Str/Arr)]
 
@@ -131,17 +188,43 @@ length("")                               // 0
 length([])                               // 0
 ```
 
-=== listJarEntries #text(size: 8pt, fill: gray)[(TODO)]
+=== listJarEntries(jarData) → array #text(size: 8pt, fill: gray)[(Bin)]
 
-// TODO
+List all entries (file paths) in a JAR file.
 
-=== listZipEntries #text(size: 8pt, fill: gray)[(TODO)]
+- `jarData` (required): binary JAR data
 
-// TODO
+```utlx
+{
+  entries: listJarEntries($input.jar)
+  // ["META-INF/MANIFEST.MF", "com/example/Main.class", ...]
+}
+```
 
-=== ln #text(size: 8pt, fill: gray)[(TODO)]
+=== listZipEntries(zipData) → array #text(size: 8pt, fill: gray)[(Bin)]
 
-// TODO
+List all entries (file paths) in a ZIP archive.
+
+- `zipData` (required): binary ZIP data
+
+```utlx
+{
+  files: listZipEntries($input.archive)
+  // ["readme.txt", "data/orders.csv", "data/customers.csv"]
+}
+```
+
+=== ln(number) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Natural logarithm (base _e_).
+
+- `number` (required): positive number
+
+```utlx
+ln(1)                                    // 0
+ln(e())                                  // 1
+ln(10)                                   // ~2.302585
+```
 
 === localName(element) → string #text(size: 8pt, fill: gray)[(XML)]
 
@@ -190,41 +273,125 @@ qualifiedName($input)                    // "cbc:InvoiceTypeCode"
 
 Also: `resolveQname(string, context)`, `matchesQname(element, pattern)`, `hasNamespace(element)`.
 
-=== log #text(size: 8pt, fill: gray)[(TODO)]
+=== log(number, base?) → number #text(size: 8pt, fill: gray)[(Num)]
 
-// TODO
+Logarithm with optional base. Without base, defaults to natural logarithm (base _e_).
 
-=== log10 #text(size: 8pt, fill: gray)[(TODO)]
+- `number` (required): positive number
+- `base` (optional): logarithm base (default: _e_)
 
-// TODO
+```utlx
+log(100, 10)                             // 2
+log(8, 2)                                // 3
+log(e())                                 // 1 (natural log)
+```
 
-=== log2 #text(size: 8pt, fill: gray)[(TODO)]
+=== log10(number) → number #text(size: 8pt, fill: gray)[(Num)]
 
-// TODO
+Base-10 logarithm.
 
-=== logCount #text(size: 8pt, fill: gray)[(TODO)]
+- `number` (required): positive number
 
-// TODO
+```utlx
+log10(1000)                              // 3
+log10(1)                                 // 0
+```
 
-=== logPretty #text(size: 8pt, fill: gray)[(TODO)]
+=== log2(number) → number #text(size: 8pt, fill: gray)[(Num)]
 
-// TODO
+Base-2 logarithm.
 
-=== logSize #text(size: 8pt, fill: gray)[(TODO)]
+- `number` (required): positive number
 
-// TODO
+```utlx
+log2(8)                                  // 3
+log2(1024)                               // 10
+```
 
-=== logType #text(size: 8pt, fill: gray)[(TODO)]
+=== logCount(value) → value #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Log the count/length of a value to stderr and pass the value through unchanged. Useful for debugging pipelines.
 
-=== lookupBy #text(size: 8pt, fill: gray)[(TODO)]
+- `value` (required): array, string, or object to count
 
-// TODO
+```utlx
+{
+  items: logCount($input.orders)         // logs "count: 42" to stderr, passes array through
+}
+```
 
-=== lower #text(size: 8pt, fill: gray)[(TODO)]
+=== logPretty(value) → value #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Log a pretty-printed representation of a value to stderr and pass the value through unchanged.
+
+- `value` (required): any value to inspect
+
+```utlx
+{
+  result: logPretty($input.payload)      // logs formatted JSON to stderr, passes value through
+}
+```
+
+=== logSize(value) → value #text(size: 8pt, fill: gray)[(Sys)]
+
+Log the byte size of a value to stderr and pass the value through unchanged.
+
+- `value` (required): any value to measure
+
+```utlx
+{
+  output: logSize($input.document)       // logs "size: 4096 bytes" to stderr, passes value through
+}
+```
+
+=== logType(value) → value #text(size: 8pt, fill: gray)[(Sys)]
+
+Log the type of a value to stderr and pass the value through unchanged.
+
+- `value` (required): any value to inspect
+
+```utlx
+{
+  data: logType($input.field)            // logs "type: string" to stderr, passes value through
+}
+```
+
+=== lookupBy(searchValue, referenceArray, keyFn) → element | null #text(size: 8pt, fill: gray)[(Arr)]
+
+Find one matching record from a reference array by key. Returns the first match or `null`. The go-to function for 1:1 enrichment -- adding data from a lookup table to each record.
+
+- `searchValue` (required): the value to search for (e.g., a customer ID)
+- `referenceArray` (required): the array to search in (e.g., all customers)
+- `keyFn` (required): lambda extracting the comparison key from each reference record
+
+```utlx
+// Enrich order lines with product names from a product catalog
+let products = $input.products           // [{sku: "W-01", name: "Widget"}, ...]
+
+{
+  orders: map($input.orders, (order) -> {
+    ...order,
+    productName: lookupBy(order.sku, products, (p) -> p.sku).name
+  })
+}
+```
+
+```bash
+echo '{"id": "C-42", "customers": [{"id": "C-42", "name": "Acme"}]}' | utlx -e 'lookupBy($input.id, $input.customers, (c) -> c.id)'
+# {"id": "C-42", "name": "Acme"}
+```
+
+*Choosing the right function:* `lookupBy` for 1:1 enrichment, `groupBy` for O(1) keyed map, `nestBy` for 1:N parent-child nesting.
+
+=== lower(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Alias for `lowerCase()`. Convert a string to all lowercase.
+
+- `string` (required): the string to convert
+
+```utlx
+lower("Hello World")                     // "hello world"
+```
 
 === lowerCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
 
@@ -319,13 +486,49 @@ echo '{"first_name": "Alice", "last_name": "Johnson", "age": 30}' | utlx -e 'map
 # {"first_name": "Alice", "last_name": "Johnson", "age": "30"}
 ```
 
-=== mapGroups #text(size: 8pt, fill: gray)[(TODO)]
+=== mapGroups(array, keySelector, transform) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-// TODO
+Group array elements by key and transform each group. Returns an array of transformed results -- ideal for reporting and aggregation.
 
-=== mapTree #text(size: 8pt, fill: gray)[(TODO)]
+- `array` (required): input array to group
+- `keySelector` (required): lambda `(item) -> key` or string property name
+- `transform` (required): lambda receiving `{key, value}` group object
 
-// TODO
+```utlx
+// Summarize sales by region
+let sales = $input.orders  // [{region: "EU", amount: 100}, {region: "US", amount: 200}, ...]
+
+{
+  summary: mapGroups(sales, "region", (group) -> {
+    region: group.key,
+    count: count(group.value),
+    total: sum(map(group.value, (o) -> o.amount))
+  })
+  // [{region: "EU", count: 3, total: 450}, {region: "US", count: 2, total: 380}]
+}
+```
+
+```bash
+echo '[{"dept":"Eng","name":"Alice"},{"dept":"Eng","name":"Bob"},{"dept":"Sales","name":"Carol"}]' | utlx -e 'mapGroups($input, "dept", (g) -> {dept: g.key, headcount: count(g.value)})'
+# [{"dept":"Eng","headcount":2},{"dept":"Sales","headcount":1}]
+```
+
+*Difference from `groupBy`:* `groupBy` returns an Object (keyed map for O(1) lookup); `mapGroups` returns an Array (for iteration/reporting).
+
+=== mapTree(data, transformer) → object | array #text(size: 8pt, fill: gray)[(Obj)]
+
+Recursively transform all values in a nested structure (objects and arrays) by applying a transformer function. Walks the entire tree depth-first.
+
+- `data` (required): nested object or array to traverse
+- `transformer` (required): lambda `(value, path) -> newValue`
+
+```utlx
+// Uppercase all string values, no matter how deeply nested
+mapTree($input, (v, p) ->
+  if (typeOf(v) == "string") upperCase(v) else v
+)
+// {a: "HELLO", b: {c: "WORLD"}} from {a: "hello", b: {c: "world"}}
+```
 
 === mask(string, visibleChars) → string #text(size: 8pt, fill: gray)[(Sec)]
 
@@ -367,9 +570,17 @@ if (!matches($input.vatId, "^[A-Z]{2}[0-9]{9}B[0-9]{2}$"))
 
 Also: `matchesQname(element, pattern)` for XML QName matching (Chapter 22).
 
-=== matchesWhole #text(size: 8pt, fill: gray)[(TODO)]
+=== matchesWhole(string, pattern) → boolean #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Test if a string matches a pattern completely (entire string must match, not just a substring). Equivalent to anchoring with `^...$`.
+
+- `string` (required): the string to test
+- `pattern` (required): regular expression pattern
+
+```utlx
+matchesWhole("abc123", "[a-z]+[0-9]+")   // true (whole string matches)
+matchesWhole("abc123xyz", "[a-z]+[0-9]+") // false (trailing "xyz" prevents full match)
+```
 
 === max(array) → number #text(size: 8pt, fill: gray)[(Num/Arr)]
 
@@ -415,9 +626,21 @@ echo '{"products": [{"name": "Widget", "price": 25}, {"name": "Gadget", "price":
 # {"name": "Gizmo", "price": 10}
 ```
 
-=== measure #text(size: 8pt, fill: gray)[(TODO)]
+=== measure(fn) → object #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Measure execution time of an expression. Returns an object with the result and elapsed time.
+
+- `fn` (required): lambda `() -> value` to measure
+
+```utlx
+let m = measure(() -> map($input.items, (x) -> x * 2))
+// m = {result: [...], elapsed: 12.5, unit: "ms"}
+
+{
+  data: m.result,
+  timing: m.elapsed
+}
+```
 
 === median(array) → number #text(size: 8pt, fill: gray)[(Num)]
 
@@ -476,9 +699,16 @@ echo '{"scores": [72, 85, 90, 95, 88, 76, 92]}' | utlx -e 'percentile($input.sco
 
 Also: `iqr(array)` — interquartile range, `quartiles(array)` — [Q1, Q2, Q3].
 
-=== memoryInfo #text(size: 8pt, fill: gray)[(TODO)]
+=== memoryInfo() → object #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Get JVM memory information in bytes. Returns an object with `maxMemory`, `totalMemory`, `freeMemory`, and `usedMemory`.
+
+```utlx
+{
+  mem: memoryInfo()
+  // {maxMemory: 4294967296, totalMemory: 2147483648, freeMemory: 1073741824, usedMemory: 1073741824}
+}
+```
 
 === merge(obj1, obj2, ...) → object #text(size: 8pt, fill: gray)[(Obj)]
 
@@ -493,55 +723,168 @@ merge({a: 1}, {b: 2}, {c: 3})           // {a: 1, b: 2, c: 3}
 
 *Note:* for deep (recursive) merge, use `deepMerge(obj1, obj2)`.
 
-=== midpoint #text(size: 8pt, fill: gray)[(TODO)]
+=== midpoint(lat1, lon1, lat2, lon2) → object #text(size: 8pt, fill: gray)[(Geo)]
 
-// TODO
+Calculate the geographic midpoint between two coordinates using the Haversine formula.
 
-=== minutes #text(size: 8pt, fill: gray)[(TODO)]
+- `lat1` (required): latitude of first point
+- `lon1` (required): longitude of first point
+- `lat2` (required): latitude of second point
+- `lon2` (required): longitude of second point
 
-// TODO
+```utlx
+midpoint(37.7749, -122.4194, 34.0522, -118.2437)
+// {lat: 35.9135, lon: -120.3315}
+```
 
-=== month #text(size: 8pt, fill: gray)[(TODO)]
+=== minutes(datetime) → number #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Extract the minutes component (0-59) from a datetime or time value.
 
-=== monthName #text(size: 8pt, fill: gray)[(TODO)]
+- `datetime` (required): datetime or time value
 
-// TODO
+```utlx
+minutes(parseDate("2026-05-01T14:35:00Z"))  // 35
+```
+
+=== month(date) → number #text(size: 8pt, fill: gray)[(Date)]
+
+Extract the month component (1-12) from a date or datetime value.
+
+- `date` (required): date or datetime value
+
+```utlx
+month(parseDate("2026-05-01"))           // 5
+```
+
+=== monthName(date) → string #text(size: 8pt, fill: gray)[(Date)]
+
+Get the full month name from a date or datetime value.
+
+- `date` (required): date or datetime value
+
+```utlx
+monthName(parseDate("2026-05-01"))       // "May"
+monthName(parseDate("2026-12-25"))       // "December"
+```
 
 == N
 
-=== nand #text(size: 8pt, fill: gray)[(TODO)]
+=== nand(a, b) → boolean #text(size: 8pt, fill: gray)[(Type)]
 
-// TODO
+Logical NAND (NOT AND). Returns `true` unless both arguments are `true`.
 
-=== nestBy #text(size: 8pt, fill: gray)[(TODO)]
+- `a` (required): first boolean
+- `b` (required): second boolean
 
-// TODO
+```utlx
+nand(true, true)                         // false
+nand(true, false)                        // true
+nand(false, false)                       // true
+```
 
-=== nodeType #text(size: 8pt, fill: gray)[(TODO)]
+=== nestBy(parents, children, parentKeyFn, childKeyFn, childProperty) → array #text(size: 8pt, fill: gray)[(Arr)]
 
-// TODO
+Nest children under parents by matching keys. Creates a 1:N parent-child hierarchy -- the most common flat-to-hierarchical integration pattern. Performance is O(N+M) using a hash index.
 
-=== none #text(size: 8pt, fill: gray)[(TODO)]
+- `parents` (required): array of parent records
+- `children` (required): array of child records
+- `parentKeyFn` (required): lambda extracting the join key from each parent
+- `childKeyFn` (required): lambda extracting the join key from each child
+- `childProperty` (required): string name for the new property on each parent
 
-// TODO
+```utlx
+// Nest order lines under their orders
+let orders = $input.orders     // [{orderId: "O-1", customer: "Alice"}, {orderId: "O-2", customer: "Bob"}]
+let lines = $input.lines       // [{orderId: "O-1", sku: "W-01"}, {orderId: "O-1", sku: "G-02"}, {orderId: "O-2", sku: "W-01"}]
 
-=== nor #text(size: 8pt, fill: gray)[(TODO)]
+nestBy(orders, lines, (o) -> o.orderId, (l) -> l.orderId, "lines")
+// [
+//   {orderId: "O-1", customer: "Alice", lines: [{orderId: "O-1", sku: "W-01"}, {orderId: "O-1", sku: "G-02"}]},
+//   {orderId: "O-2", customer: "Bob",   lines: [{orderId: "O-2", sku: "W-01"}]}
+// ]
+```
 
-// TODO
+```bash
+echo '{"depts":[{"id":"D1","name":"Eng"}],"emps":[{"dept":"D1","name":"Alice"},{"dept":"D1","name":"Bob"}]}' | utlx -e 'nestBy($input.depts, $input.emps, (d) -> d.id, (e) -> e.dept, "members")'
+# [{"id":"D1","name":"Eng","members":[{"dept":"D1","name":"Alice"},{"dept":"D1","name":"Bob"}]}]
+```
 
-=== normalizeBOM #text(size: 8pt, fill: gray)[(TODO)]
+*Inverse:* `unnest(array, "children")` flattens the hierarchy back to a flat array.
 
-// TODO
+=== nodeType(node) → string #text(size: 8pt, fill: gray)[(XML)]
 
-=== normalizeXMLEncoding #text(size: 8pt, fill: gray)[(TODO)]
+Get the node type of an XML UDM node (element, attribute, text, etc.).
 
-// TODO
+- `node` (required): XML UDM node
 
-=== not #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+nodeType($input)                         // "element"
+```
 
-// TODO
+=== none(array, predicate) → boolean #text(size: 8pt, fill: gray)[(Arr)]
+
+Check if no elements in the array match the predicate (all return `false`). Opposite of `some()`.
+
+- `array` (required): array to test
+- `predicate` (required): lambda `(element) -> boolean`
+
+```utlx
+none([1, 2, 3], (x) -> x > 10)          // true (no element > 10)
+none([1, 2, 3], (x) -> x > 2)           // false (3 > 2)
+```
+
+=== nor(a, b) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Logical NOR (NOT OR). Returns `true` only when both arguments are `false`.
+
+- `a` (required): first boolean
+- `b` (required): second boolean
+
+```utlx
+nor(false, false)                        // true
+nor(true, false)                         // false
+nor(false, true)                         // false
+```
+
+=== normalizeBOM(data, targetEncoding, addBom) → binary #text(size: 8pt, fill: gray)[(XML)]
+
+Convert binary data to a target encoding with BOM (Byte Order Mark) handling.
+
+- `data` (required): binary data to convert
+- `targetEncoding` (required): target encoding (e.g., `"UTF-8"`, `"UTF-16"`)
+- `addBom` (required): boolean -- whether to add BOM to the output
+
+```utlx
+{
+  output: normalizeBOM($input.xmlBytes, "UTF-8", false)
+}
+```
+
+=== normalizeXMLEncoding(xml, targetEncoding) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Auto-detect the encoding of an XML string and convert it to a target encoding. Also updates the XML declaration.
+
+- `xml` (required): XML string to re-encode
+- `targetEncoding` (required): target encoding (e.g., `"UTF-8"`)
+
+```utlx
+{
+  normalized: normalizeXMLEncoding($input.xmlPayload, "UTF-8")
+}
+```
+
+=== not(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Logical NOT. Negates a boolean value.
+
+- `value` (required): boolean value
+
+```utlx
+not(true)                                // false
+not(false)                               // true
+not(isEmpty($input.name))                // true if name is non-empty
+```
 
 === now() → datetime #text(size: 8pt, fill: gray)[(Date)]
 
@@ -587,7 +930,21 @@ normalizeSpace("line1\n  line2\t\tline3") // "line1 line2 line3"
 normalizeSpace("")                        // ""
 ```
 
-=== numberOrDefault #text(size: 8pt, fill: gray)[(TODO)]
+=== numberOrDefault(value, default) → number #text(size: 8pt, fill: gray)[(Type)]
 
-// TODO
+Safely convert a value to a number, returning the default if conversion fails or the value is null.
+
+- `value` (required): value to convert
+- `default` (required): fallback number if conversion fails
+
+```bash
+echo '{"qty": "abc", "price": "19.99"}' | utlx -e '{qty: numberOrDefault($input.qty, 0), price: numberOrDefault($input.price, 0)}'
+# {"qty": 0, "price": 19.99}
+```
+
+```utlx
+numberOrDefault("42", 0)                 // 42
+numberOrDefault(null, -1)                // -1
+numberOrDefault("not-a-number", 0)       // 0
+```
 

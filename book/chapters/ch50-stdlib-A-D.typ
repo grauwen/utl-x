@@ -17,69 +17,235 @@ abs(42)       // 42 (positive unchanged)
 abs(0)        // 0
 ```
 
-=== acos #text(size: 8pt, fill: gray)[(TODO)]
+=== acos(number) → number #text(size: 8pt, fill: gray)[(Num)]
 
-// TODO
+Arc cosine (inverse cosine). Returns angle in radians.
 
-=== addBOM #text(size: 8pt, fill: gray)[(TODO)]
+- `number` (required): value between -1 and 1
 
-// TODO
+```utlx
+acos(1)        // 0.0
+acos(0)        // 1.5707963267948966 (π/2)
+acos(-1)       // 3.141592653589793 (π)
+```
 
-=== addNamespaceDeclarations #text(size: 8pt, fill: gray)[(TODO)]
+=== addBOM(data, encoding) → binary #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Prepend a Byte Order Mark (BOM) to binary data for the specified encoding.
 
-=== addQueryParam #text(size: 8pt, fill: gray)[(TODO)]
+- `data` (required): binary data to prepend BOM to
+- `encoding` (required): encoding type — `"UTF-8"`, `"UTF-16LE"`, `"UTF-16BE"`
 
-// TODO
+```utlx
+{
+  withBOM: addBOM(toBinary($input.xml, "UTF-8"), "UTF-8")
+}
+```
 
-=== addTax #text(size: 8pt, fill: gray)[(TODO)]
+=== addNamespaceDeclarations(xml, namespaces) → xml #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Add namespace declarations to an XML element.
 
-=== age #text(size: 8pt, fill: gray)[(TODO)]
+- `xml` (required): XML UDM value
+- `namespaces` (required): object mapping prefix to URI — `{"cbc": "urn:...", "cac": "urn:..."}`
 
-// TODO
+```utlx
+{
+  result: addNamespaceDeclarations($input, {
+    "cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
+    "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+  })
+}
+```
 
-=== analyzeString #text(size: 8pt, fill: gray)[(TODO)]
+=== addQueryParam(url, name, value) → string #text(size: 8pt, fill: gray)[(URL)]
 
-// TODO
+Add a query parameter to a URL string.
 
-=== and #text(size: 8pt, fill: gray)[(TODO)]
+- `url` (required): the base URL
+- `name` (required): parameter name
+- `value` (required): parameter value
 
-// TODO
+```bash
+echo '{"baseUrl": "https://api.example.com/search", "term": "hello world"}' \
+  | utlx -e 'addQueryParam($input.baseUrl, "q", $input.term)'
+# "https://api.example.com/search?q=hello+world"
+```
 
-=== asin #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  url: addQueryParam(addQueryParam($input.baseUrl, "page", "1"), "limit", "50")
+}
+```
 
-// TODO
+=== addTax(amount, rate) → number #text(size: 8pt, fill: gray)[(Fin)]
 
-=== assert #text(size: 8pt, fill: gray)[(TODO)]
+Calculate total amount including tax.
 
-// TODO
+- `amount` (required): net amount before tax
+- `rate` (required): tax rate as decimal (e.g., 0.21 for 21%)
 
-=== assertEqual #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"price": 100, "vatRate": 0.21}' | utlx -e 'addTax($input.price, $input.vatRate)'
+# 121.0
+```
 
-// TODO
+```utlx
+{
+  netPrice: $input.price,
+  totalWithVAT: addTax($input.price, 0.21)
+}
+```
 
-=== atan #text(size: 8pt, fill: gray)[(TODO)]
+=== age(birthdate, referenceDate?) → number #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Calculate age in whole years from a birthdate. Uses today if no reference date provided.
 
-=== atan2 #text(size: 8pt, fill: gray)[(TODO)]
+- `birthdate` (required): date of birth
+- `referenceDate` (optional): date to calculate age at (defaults to today)
 
-// TODO
+```bash
+echo '{"dob": "1990-03-15"}' | utlx -e 'age(parseDate($input.dob, "yyyy-MM-dd"))'
+# 36
+```
 
-=== attribute #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  age: age(parseDate($input.dateOfBirth, "yyyy-MM-dd")),
+  isMinor: age(parseDate($input.dateOfBirth, "yyyy-MM-dd")) < 18
+}
+```
 
-// TODO
+=== analyzeString(string, pattern) → object #text(size: 8pt, fill: gray)[(Str)]
 
-=== attributes #text(size: 8pt, fill: gray)[(TODO)]
+Analyze a string against a regex pattern, returning detailed match information including groups and positions.
 
-// TODO
+- `string` (required): the string to analyze
+- `pattern` (required): regex pattern
 
-=== availableProcessors #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"email": "user@example.com"}' \
+  | utlx -e 'analyzeString($input.email, "(.+)@(.+)\\.(.+)")'
+# {match: true, groups: ["user", "example", "com"], ...}
+```
 
-// TODO
+```utlx
+{
+  analysis: analyzeString($input.value, "^(\\d{4})-(\\d{2})-(\\d{2})$")
+}
+```
+
+=== and(values...) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Logical AND — returns true only if all arguments are truthy.
+
+- `values` (variadic): boolean values to combine
+
+```utlx
+and(true, true, true)     // true
+and(true, false, true)    // false
+and($input.active, $input.verified, $input.paid)
+```
+
+=== asin(number) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Arc sine (inverse sine). Returns angle in radians.
+
+- `number` (required): value between -1 and 1
+
+```utlx
+asin(0)        // 0.0
+asin(1)        // 1.5707963267948966 (π/2)
+asin(-1)       // -1.5707963267948966 (-π/2)
+```
+
+=== assert(condition, message?) → null #text(size: 8pt, fill: gray)[(Sys)]
+
+Assert that a condition is true. Throws an error with the message if condition is false.
+
+- `condition` (required): boolean expression to verify
+- `message` (optional): error message if assertion fails
+
+```utlx
+assert(count($input.items) > 0, "Input must have at least one item")
+assert($input.amount >= 0, "Amount cannot be negative")
+```
+
+=== assertEqual(actual, expected) → null #text(size: 8pt, fill: gray)[(Sys)]
+
+Assert two values are equal. Throws an error showing both values if they differ.
+
+- `actual` (required): the value to test
+- `expected` (required): the expected value
+
+```utlx
+assertEqual(count($input.items), 3)
+assertEqual($input.status, "ACTIVE")
+```
+
+=== atan(number) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Arc tangent (inverse tangent). Returns angle in radians.
+
+- `number` (required): any numeric value
+
+```utlx
+atan(0)        // 0.0
+atan(1)        // 0.7853981633974483 (π/4)
+atan(-1)       // -0.7853981633974483 (-π/4)
+```
+
+=== atan2(y, x) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Two-argument arc tangent. Converts Cartesian coordinates (x, y) to polar angle in radians.
+
+- `y` (required): y-coordinate
+- `x` (required): x-coordinate
+
+```utlx
+atan2(1, 1)    // 0.7853981633974483 (π/4 — 45°)
+atan2(0, -1)   // 3.141592653589793 (π — 180°)
+atan2(-1, 0)   // -1.5707963267948966 (-π/2 — -90°)
+```
+
+=== attribute(element, name) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Get a specific attribute value from an XML element.
+
+- `element` (required): XML UDM element
+- `name` (required): attribute name
+
+```utlx
+// Given: <Order id="ORD-123" status="active">...</Order>
+{
+  orderId: attribute($input, "id"),
+  status: attribute($input, "status")
+}
+// Output: {"orderId": "ORD-123", "status": "active"}
+```
+
+=== attributes(element) → object #text(size: 8pt, fill: gray)[(XML)]
+
+Get all attributes from an XML element as a key-value object.
+
+- `element` (required): XML UDM element
+
+```utlx
+// Given: <Product id="P-1" sku="ABC123" category="electronics"/>
+attributes($input)
+// Output: {"id": "P-1", "sku": "ABC123", "category": "electronics"}
+```
+
+=== availableProcessors() → number #text(size: 8pt, fill: gray)[(Sys)]
+
+Get the number of available CPU cores/processors on the current system.
+
+```utlx
+{
+  cpuCores: availableProcessors()
+}
+// Output: {"cpuCores": 8}
+```
 
 === Date Format Patterns #text(size: 8pt, fill: gray)[(Date — Reference)]
 
@@ -350,57 +516,215 @@ decoded.sub
 // Output: "user@example.com"
 ```
 
-=== bearing #text(size: 8pt, fill: gray)[(TODO)]
+=== bearing(lat1, lon1, lat2, lon2) → number #text(size: 8pt, fill: gray)[(Geo)]
 
-// TODO
+Calculate the initial bearing (forward azimuth) from point1 to point2 in degrees (0-360).
 
-=== binaryConcat #text(size: 8pt, fill: gray)[(TODO)]
+- `lat1` (required): latitude of origin point
+- `lon1` (required): longitude of origin point
+- `lat2` (required): latitude of destination point
+- `lon2` (required): longitude of destination point
 
-// TODO
+```bash
+echo '{"from": {"lat": 52.37, "lon": 4.90}, "to": {"lat": 48.86, "lon": 2.35}}' \
+  | utlx -e 'bearing($input.from.lat, $input.from.lon, $input.to.lat, $input.to.lon)'
+# 210.5 (degrees — roughly southwest)
+```
 
-=== binaryEquals #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  heading: bearing($input.origin.lat, $input.origin.lon, $input.dest.lat, $input.dest.lon)
+}
+```
 
-// TODO
+=== binaryConcat(binary1, binary2, ...) → binary #text(size: 8pt, fill: gray)[(Bin)]
 
-=== binaryLength #text(size: 8pt, fill: gray)[(TODO)]
+Concatenate multiple binary values into a single binary.
 
-// TODO
+- `binary1` (required): first binary segment
+- `binary2` (required): second binary segment
+- `...` (optional): additional binary segments
 
-=== binarySlice #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+let header = toBinary("HDR:", "UTF-8")
+let payload = toBinary($input.data, "UTF-8")
+{
+  frame: binaryConcat(header, payload)
+}
+```
 
-// TODO
+=== binaryEquals(binary1, binary2) → boolean #text(size: 8pt, fill: gray)[(Bin)]
 
-=== binaryToString #text(size: 8pt, fill: gray)[(TODO)]
+Compare two binary values for byte-level equality.
 
-// TODO
+- `binary1` (required): first binary
+- `binary2` (required): second binary
 
-=== bitwiseAnd #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  match: binaryEquals(toBinary("hello", "UTF-8"), toBinary("hello", "UTF-8")),
+  differ: binaryEquals(toBinary("hello", "UTF-8"), toBinary("world", "UTF-8"))
+}
+// Output: {"match": true, "differ": false}
+```
 
-// TODO
+=== binaryLength(binary) → number #text(size: 8pt, fill: gray)[(Bin)]
 
-=== bitwiseNot #text(size: 8pt, fill: gray)[(TODO)]
+Get the length of a binary value in bytes.
 
-// TODO
+- `binary` (required): binary data
 
-=== bitwiseOr #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  sizeBytes: binaryLength(toBinary($input.content, "UTF-8"))
+}
+```
 
-// TODO
+=== binarySlice(binary, start, end) → binary #text(size: 8pt, fill: gray)[(Bin)]
 
-=== bitwiseXor #text(size: 8pt, fill: gray)[(TODO)]
+Extract a subsequence of bytes from binary data.
 
-// TODO
+- `binary` (required): source binary
+- `start` (required): start byte offset (0-based)
+- `end` (required): end byte offset (exclusive)
 
-=== boundingBox #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+let data = toBinary("Hello World", "UTF-8")
+{
+  first5: binaryToString(binarySlice(data, 0, 5), "UTF-8"),
+  rest: binaryToString(binarySlice(data, 6, 11), "UTF-8")
+}
+// Output: {"first5": "Hello", "rest": "World"}
+```
 
-// TODO
+=== binaryToString(binary, encoding) → string #text(size: 8pt, fill: gray)[(Bin)]
 
-=== buildQueryString #text(size: 8pt, fill: gray)[(TODO)]
+Decode binary data to a string using the specified character encoding.
 
-// TODO
+- `binary` (required): binary data to decode
+- `encoding` (required): character encoding — `"UTF-8"`, `"ISO-8859-1"`, `"US-ASCII"`, etc.
 
-=== buildURL #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  text: binaryToString(base64Decode($input.payload), "UTF-8")
+}
+```
 
-// TODO
+=== bitwiseAnd(binary1, binary2) → binary #text(size: 8pt, fill: gray)[(Bin)]
+
+Perform bitwise AND on two binary values.
+
+- `binary1` (required): first operand
+- `binary2` (required): second operand (same length)
+
+```utlx
+let mask = fromHex("FF00FF00")
+let data = fromHex("AABBCCDD")
+{
+  masked: toHex(bitwiseAnd(data, mask))
+}
+// Output: {"masked": "aa00cc00"}
+```
+
+=== bitwiseNot(binary) → binary #text(size: 8pt, fill: gray)[(Bin)]
+
+Perform bitwise NOT (inversion) on a binary value.
+
+- `binary` (required): binary data to invert
+
+```utlx
+{
+  inverted: toHex(bitwiseNot(fromHex("FF00")))
+}
+// Output: {"inverted": "00ff"}
+```
+
+=== bitwiseOr(binary1, binary2) → binary #text(size: 8pt, fill: gray)[(Bin)]
+
+Perform bitwise OR on two binary values.
+
+- `binary1` (required): first operand
+- `binary2` (required): second operand (same length)
+
+```utlx
+{
+  combined: toHex(bitwiseOr(fromHex("AA00"), fromHex("0055")))
+}
+// Output: {"combined": "aa55"}
+```
+
+=== bitwiseXor(binary1, binary2) → binary #text(size: 8pt, fill: gray)[(Bin)]
+
+Perform bitwise XOR on two binary values.
+
+- `binary1` (required): first operand
+- `binary2` (required): second operand (same length)
+
+```utlx
+{
+  xored: toHex(bitwiseXor(fromHex("AAFF"), fromHex("55FF")))
+}
+// Output: {"xored": "ff00"}
+```
+
+=== boundingBox(coordinates) → object #text(size: 8pt, fill: gray)[(Geo)]
+
+Calculate the bounding box (min/max latitude and longitude) for an array of coordinates.
+
+- `coordinates` (required): array of `{lat, lon}` objects
+
+```bash
+echo '{"points": [{"lat": 52.37, "lon": 4.90}, {"lat": 48.86, "lon": 2.35}, {"lat": 51.51, "lon": -0.13}]}' \
+  | utlx -e 'boundingBox($input.points)'
+# {"minLat": 48.86, "maxLat": 52.37, "minLon": -0.13, "maxLon": 4.90}
+```
+
+```utlx
+{
+  bounds: boundingBox($input.locations)
+}
+```
+
+=== buildQueryString(params) → string #text(size: 8pt, fill: gray)[(URL)]
+
+Build a URL query string from an object of key-value pairs.
+
+- `params` (required): object with parameter names and values
+
+```bash
+echo '{"page": 2, "limit": 50, "sort": "name"}' \
+  | utlx -e 'buildQueryString($input)'
+# "page=2&limit=50&sort=name"
+```
+
+```utlx
+{
+  queryString: buildQueryString({q: $input.search, page: "1", format: "json"})
+}
+```
+
+=== buildURL(components) → string #text(size: 8pt, fill: gray)[(URL)]
+
+Build a complete URL from its component parts.
+
+- `components` (required): object with `protocol`, `host`, `port?`, `path?`, `query?`, `fragment?`
+
+```bash
+echo '{"host": "api.example.com", "path": "/v2/users"}' \
+  | utlx -e 'buildURL({protocol: "https", host: $input.host, path: $input.path, query: {active: "true"}})'
+# "https://api.example.com/v2/users?active=true"
+```
+
+```utlx
+{
+  endpoint: buildURL({
+    protocol: "https",
+    host: $input.apiHost,
+    path: concat("/api/v1/", $input.resource),
+    query: {format: "json"}
+  })
+}
+```
 
 == C
 
@@ -458,61 +782,193 @@ Compare two XML documents semantically (ignoring formatting differences) by comp
 }
 ```
 
-=== c14n11 #text(size: 8pt, fill: gray)[(TODO)]
+=== c14n11(xml) → string #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Canonicalize XML using Canonical XML 1.1 (without comments). Handles xml:id and other 1.1-specific features.
 
-=== c14n11WithComments #text(size: 8pt, fill: gray)[(TODO)]
+- `xml` (required): XML UDM value
 
-// TODO
+```utlx
+{
+  canonical: c14n11($input)
+}
+```
 
-=== c14nFingerprint #text(size: 8pt, fill: gray)[(TODO)]
+=== c14n11WithComments(xml) → string #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Canonicalize XML using Canonical XML 1.1 with comments preserved.
 
-=== c14nPhysical #text(size: 8pt, fill: gray)[(TODO)]
+- `xml` (required): XML UDM value
 
-// TODO
+```utlx
+{
+  canonical: c14n11WithComments($input)
+}
+```
 
-=== c14nSubset #text(size: 8pt, fill: gray)[(TODO)]
+=== c14nFingerprint(xml) → string #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Create a short hash fingerprint of the canonical form of XML. Useful for deduplication and logging.
 
-=== c14nWithComments #text(size: 8pt, fill: gray)[(TODO)]
+- `xml` (required): XML UDM value
 
-// TODO
+```utlx
+{
+  fingerprint: c14nFingerprint($input),
+  isDuplicate: c14nFingerprint($input) == $input.lastSeen
+}
+```
 
-=== calculateDiscount #text(size: 8pt, fill: gray)[(TODO)]
+=== c14nPhysical(xml, options?) → string #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Canonicalize XML using Physical Canonical XML (preserves physical structure more faithfully).
 
-=== calculateTax #text(size: 8pt, fill: gray)[(TODO)]
+- `xml` (required): XML UDM value
+- `options` (optional): canonicalization options
 
-// TODO
+```utlx
+{
+  physical: c14nPhysical($input)
+}
+```
 
-=== camelCase #text(size: 8pt, fill: gray)[(TODO)]
+=== c14nSubset(xml, xpath) → string #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Canonicalize a subset of an XML document selected by XPath expression.
 
-=== camelize #text(size: 8pt, fill: gray)[(TODO)]
+- `xml` (required): XML UDM value
+- `xpath` (required): XPath expression selecting the subset to canonicalize
 
-// TODO
+```utlx
+{
+  bodyCanonical: c14nSubset($input, "//soap:Body")
+}
+```
 
-=== canCoerce #text(size: 8pt, fill: gray)[(TODO)]
+=== c14nWithComments(xml) → string #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Canonicalize XML using Canonical XML 1.0 with comments preserved.
 
-=== canonicalizeWithAlgorithm #text(size: 8pt, fill: gray)[(TODO)]
+- `xml` (required): XML UDM value
 
-// TODO
+```utlx
+{
+  canonical: c14nWithComments($input)
+}
+```
 
-=== canonicalJSONHash #text(size: 8pt, fill: gray)[(TODO)]
+=== calculateDiscount(price, rate) → number #text(size: 8pt, fill: gray)[(Fin)]
 
-// TODO
+Calculate the price after applying a percentage discount.
 
-=== canonicalJSONSize #text(size: 8pt, fill: gray)[(TODO)]
+- `price` (required): original price
+- `rate` (required): discount rate as decimal (e.g., 0.10 for 10%)
 
-// TODO
+```bash
+echo '{"price": 200, "discount": 0.15}' | utlx -e 'calculateDiscount($input.price, $input.discount)'
+# 170.0
+```
+
+```utlx
+{
+  originalPrice: $input.price,
+  discountedPrice: calculateDiscount($input.price, 0.10)
+}
+```
+
+=== calculateTax(amount, rate) → number #text(size: 8pt, fill: gray)[(Fin)]
+
+Calculate the tax amount for a given amount and rate (returns only the tax portion, not the total).
+
+- `amount` (required): taxable amount
+- `rate` (required): tax rate as decimal (e.g., 0.21 for 21%)
+
+```bash
+echo '{"subtotal": 500, "vatRate": 0.21}' | utlx -e 'calculateTax($input.subtotal, $input.vatRate)'
+# 105.0
+```
+
+```utlx
+{
+  subtotal: $input.amount,
+  tax: calculateTax($input.amount, 0.21),
+  total: addTax($input.amount, 0.21)
+}
+```
+
+=== camelCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Convert a string to camelCase.
+
+- `string` (required): the string to convert
+
+```utlx
+camelCase("hello world")        // "helloWorld"
+camelCase("some-kebab-case")    // "someKebabCase"
+camelCase("SCREAMING_SNAKE")    // "screamingSnake"
+```
+
+=== camelize(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Alias for `camelCase()`. Convert a string to camelCase. Prefer `camelCase()`.
+
+- `string` (required): the string to convert
+
+```utlx
+camelize("my_field_name")       // "myFieldName"
+```
+
+=== canCoerce(value, targetType) → boolean #text(size: 8pt, fill: gray)[(Type)]
+
+Check if a value can be coerced to a target type without error.
+
+- `value` (required): the value to test
+- `targetType` (required): target type as string — `"number"`, `"boolean"`, `"date"`, etc.
+
+```utlx
+canCoerce("123", "number")      // true
+canCoerce("abc", "number")      // false
+canCoerce("true", "boolean")    // true
+```
+
+=== canonicalizeWithAlgorithm(xml, algorithm) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Canonicalize XML using a specified W3C canonicalization algorithm URI.
+
+- `xml` (required): XML UDM value
+- `algorithm` (required): algorithm URI (e.g., `"http://www.w3.org/2001/10/xml-exc-c14n#"`)
+
+```utlx
+{
+  canonical: canonicalizeWithAlgorithm($input, "http://www.w3.org/2001/10/xml-exc-c14n#")
+}
+```
+
+=== canonicalJSONHash(json, algorithm?) → string #text(size: 8pt, fill: gray)[(JSON)]
+
+Canonicalize JSON per RFC 8785 and compute a cryptographic hash of the result.
+
+- `json` (required): JSON string or UDM value
+- `algorithm` (optional, default `"SHA-256"`): hash algorithm
+
+```utlx
+{
+  digest: canonicalJSONHash(renderJson($input)),
+  digest512: canonicalJSONHash(renderJson($input), "SHA-512")
+}
+```
+
+=== canonicalJSONSize(json) → number #text(size: 8pt, fill: gray)[(JSON)]
+
+Get the size in bytes (UTF-8) of the canonical JSON form.
+
+- `json` (required): JSON string or UDM value
+
+```utlx
+{
+  sizeBytes: canonicalJSONSize(renderJson($input))
+}
+```
 
 === capitalize(string) → string #text(size: 8pt, fill: gray)[(Str)]
 
@@ -539,149 +995,494 @@ ceil(-3.2)      // -3 (towards zero for negatives)
 ceil(4.0)       // 4 (already integer)
 ```
 
-=== charAt #text(size: 8pt, fill: gray)[(TODO)]
+=== charAt(string, index) → string #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Get the character at a specific index (0-based).
 
-=== charCodeAt #text(size: 8pt, fill: gray)[(TODO)]
+- `string` (required): the source string
+- `index` (required): position (0-based)
 
-// TODO
+```utlx
+charAt("Hello", 0)    // "H"
+charAt("Hello", 4)    // "o"
+```
 
-=== childCount #text(size: 8pt, fill: gray)[(TODO)]
+=== charCodeAt(string, index) → number #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Get the Unicode code point of the character at a specific index.
 
-=== childNames #text(size: 8pt, fill: gray)[(TODO)]
+- `string` (required): the source string
+- `index` (required): position (0-based)
 
-// TODO
+```utlx
+charCodeAt("A", 0)    // 65
+charCodeAt("a", 0)    // 97
+charCodeAt("€", 0)    // 8364
+```
 
-=== chunkBy #text(size: 8pt, fill: gray)[(TODO)]
+=== childCount(element) → number #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Count the number of child elements in an XML element.
 
-=== clearLogs #text(size: 8pt, fill: gray)[(TODO)]
+- `element` (required): XML UDM element
 
-// TODO
+```utlx
+// Given: <Order><Item/><Item/><Item/></Order>
+childCount($input)    // 3
+```
 
-=== coerce #text(size: 8pt, fill: gray)[(TODO)]
+=== childNames(element) → array #text(size: 8pt, fill: gray)[(XML)]
 
-// TODO
+Get the names of all child elements.
 
-=== coerceAll #text(size: 8pt, fill: gray)[(TODO)]
+- `element` (required): XML UDM element
 
-// TODO
+```utlx
+// Given: <Order><Id>1</Id><Date>2026-05-01</Date><Total>100</Total></Order>
+childNames($input)    // ["Id", "Date", "Total"]
+```
 
-=== compactCSV #text(size: 8pt, fill: gray)[(TODO)]
+=== chunkBy(array, predicate) → array of arrays #text(size: 8pt, fill: gray)[(Arr)]
 
-// TODO
+Split a flat sequence into chunks. A new chunk starts whenever the predicate returns true.
 
-=== compactJSON #text(size: 8pt, fill: gray)[(TODO)]
+- `array` (required): the array to split
+- `predicate` (required): lambda `(element) -> boolean` — true starts a new chunk
 
-// TODO
+```bash
+echo '{"items": [1, 2, 10, 11, 12, 20, 21]}' \
+  | utlx -e 'chunkBy($input.items, (x) -> x >= 10 and x % 10 == 0)'
+# [[1, 2], [10, 11, 12], [20, 21]]
+```
 
-=== compactXML #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  groups: chunkBy($input.records, (r) -> r.isHeader)
+}
+```
 
-// TODO
+=== clearLogs() → null #text(size: 8pt, fill: gray)[(Sys)]
 
-=== compareDates #text(size: 8pt, fill: gray)[(TODO)]
+Clear all accumulated log entries from the log buffer.
 
-// TODO
+```utlx
+clearLogs()
+// all previous log entries are discarded
+```
 
-=== compoundInterest #text(size: 8pt, fill: gray)[(TODO)]
+=== coerce(value, targetType, default?) → value #text(size: 8pt, fill: gray)[(Type)]
 
-// TODO
+Coerce a value to a target type, returning a default if coercion fails.
 
-=== compress #text(size: 8pt, fill: gray)[(TODO)]
+- `value` (required): value to coerce
+- `targetType` (required): target type — `"number"`, `"boolean"`, `"string"`, `"date"`
+- `default` (optional): fallback value on failure
 
-// TODO
+```utlx
+coerce("123", "number", 0)       // 123
+coerce("abc", "number", 0)       // 0 (fallback)
+coerce("true", "boolean", false) // true
+```
 
-=== constantCase #text(size: 8pt, fill: gray)[(TODO)]
+=== coerceAll(array, targetType, default?) → array #text(size: 8pt, fill: gray)[(Type)]
 
-// TODO
+Coerce all values in an array to a target type.
 
-=== containsValue #text(size: 8pt, fill: gray)[(TODO)]
+- `array` (required): array of values to coerce
+- `targetType` (required): target type — `"number"`, `"boolean"`, `"string"`
+- `default` (optional): fallback value for failed coercions
 
-// TODO
+```utlx
+coerceAll(["1", "2", "three", "4"], "number", 0)
+// [1, 2, 0, 4]
+```
 
-=== convertTimezone #text(size: 8pt, fill: gray)[(TODO)]
+=== compactCSV(csv, options?) → string #text(size: 8pt, fill: gray)[(CSV)]
 
-// TODO
+Compact a CSV string by removing extra whitespace.
 
-=== convertXMLEncoding #text(size: 8pt, fill: gray)[(TODO)]
+- `csv` (required): CSV string to compact
+- `options` (optional): formatting options
 
-// TODO
+```utlx
+{
+  compacted: compactCSV($input.csvData)
+}
+```
 
-=== cos #text(size: 8pt, fill: gray)[(TODO)]
+=== compactJSON(json, options?, indent?) → string #text(size: 8pt, fill: gray)[(JSON)]
 
-// TODO
+Compact a JSON string by removing all unnecessary whitespace.
 
-=== cosh #text(size: 8pt, fill: gray)[(TODO)]
+- `json` (required): JSON string to compact
+- `options` (optional): formatting options
+- `indent` (optional): indentation level
 
-// TODO
+```bash
+echo '{"data": {"name": "Alice", "age": 30}}' | utlx -e 'compactJSON(renderJson($input))'
+# {"name":"Alice","age":30}
+```
 
-=== countEntries #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  minified: compactJSON(renderJson($input))
+}
+```
 
-// TODO
+=== compactXML(xml, options?, indent?) → string #text(size: 8pt, fill: gray)[(XML)]
 
-=== createCDATA #text(size: 8pt, fill: gray)[(TODO)]
+Compact an XML string by removing unnecessary whitespace between elements.
 
-// TODO
+- `xml` (required): XML string to compact
+- `options` (optional): formatting options
+- `indent` (optional): indentation level
 
-=== createSOAPEnvelope #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  minified: compactXML(renderXml($input))
+}
+```
 
-// TODO
+=== compareDates(date1, date2) → number #text(size: 8pt, fill: gray)[(Date)]
 
-=== crossJoin #text(size: 8pt, fill: gray)[(TODO)]
+Compare two dates. Returns negative if date1 is before date2, zero if equal, positive if after.
 
-// TODO
+- `date1` (required): first date
+- `date2` (required): second date
 
-=== csvAddColumn #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+let d1 = parseDate("2026-01-01", "yyyy-MM-dd")
+let d2 = parseDate("2026-06-01", "yyyy-MM-dd")
+compareDates(d1, d2)    // negative (d1 is before d2)
+compareDates(d2, d1)    // positive (d2 is after d1)
+compareDates(d1, d1)    // 0 (equal)
+```
 
-// TODO
+=== compoundInterest(principal, rate, periods) → number #text(size: 8pt, fill: gray)[(Fin)]
 
-=== csvCell #text(size: 8pt, fill: gray)[(TODO)]
+Calculate compound interest (total amount after compounding).
 
-// TODO
+- `principal` (required): initial amount
+- `rate` (required): interest rate per period as decimal
+- `periods` (required): number of compounding periods
 
-=== csvColumn #text(size: 8pt, fill: gray)[(TODO)]
+```bash
+echo '{"principal": 1000, "rate": 0.05, "years": 10}' \
+  | utlx -e 'compoundInterest($input.principal, $input.rate, $input.years)'
+# 1628.89 (approximately)
+```
 
-// TODO
+```utlx
+{
+  futureValue: compoundInterest($input.principal, $input.annualRate, $input.years)
+}
+```
 
-=== csvColumns #text(size: 8pt, fill: gray)[(TODO)]
+=== compress(data, algorithm?) → binary #text(size: 8pt, fill: gray)[(Bin)]
 
-// TODO
+Compress binary data using the specified algorithm.
 
-=== csvRemoveColumns #text(size: 8pt, fill: gray)[(TODO)]
+- `data` (required): binary data to compress
+- `algorithm` (optional, default `"gzip"`): compression algorithm — `"gzip"`, `"deflate"`
 
-// TODO
+```utlx
+{
+  compressed: base64Encode(compress(toBinary($input.payload, "UTF-8"), "gzip"))
+}
+```
 
-=== csvRow #text(size: 8pt, fill: gray)[(TODO)]
+=== constantCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
 
-// TODO
+Convert a string to CONSTANT_CASE (uppercase with underscores).
 
-=== csvRows #text(size: 8pt, fill: gray)[(TODO)]
+- `string` (required): the string to convert
 
-// TODO
+```utlx
+constantCase("hello world")        // "HELLO_WORLD"
+constantCase("camelCase")          // "CAMEL_CASE"
+constantCase("some-kebab-case")    // "SOME_KEBAB_CASE"
+```
 
-=== csvSelectColumns #text(size: 8pt, fill: gray)[(TODO)]
+=== containsValue(object, value) → boolean #text(size: 8pt, fill: gray)[(Obj)]
 
-// TODO
+Check if an object contains a specific value (searches all values).
 
-=== csvSort #text(size: 8pt, fill: gray)[(TODO)]
+- `object` (required): object to search
+- `value` (required): value to find
 
-// TODO
+```utlx
+let config = {host: "localhost", port: 5432, db: "mydb"}
+containsValue(config, "localhost")   // true
+containsValue(config, "redis")       // false
+```
 
-=== csvSummarize #text(size: 8pt, fill: gray)[(TODO)]
+=== convertTimezone(datetime, fromTz, toTz) → datetime #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Convert a datetime from one timezone to another.
 
-=== csvTranspose #text(size: 8pt, fill: gray)[(TODO)]
+- `datetime` (required): the datetime value to convert
+- `fromTz` (required): source timezone (e.g., `"America/New_York"`)
+- `toTz` (required): target timezone (e.g., `"Europe/Amsterdam"`)
 
-// TODO
+```bash
+echo '{"timestamp": "2026-05-01T09:00:00", "fromTz": "America/New_York", "toTz": "Europe/Amsterdam"}' \
+  | utlx -e 'formatDate(convertTimezone(parseDate($input.timestamp, "yyyy-MM-dd'\''T'\''HH:mm:ss"), $input.fromTz, $input.toTz), "HH:mm")'
+# "15:00"
+```
 
-=== currentDir #text(size: 8pt, fill: gray)[(TODO)]
+```utlx
+{
+  localTime: convertTimezone(now(), "UTC", "Europe/Amsterdam")
+}
+```
 
-// TODO
+=== convertXMLEncoding(xml, targetEncoding) → binary #text(size: 8pt, fill: gray)[(XML)]
+
+Convert an XML document to a different character encoding.
+
+- `xml` (required): XML string or UDM value
+- `targetEncoding` (required): target encoding — `"UTF-8"`, `"ISO-8859-1"`, `"UTF-16"`, etc.
+
+```utlx
+{
+  latin1Xml: convertXMLEncoding($input, "ISO-8859-1")
+}
+```
+
+=== cos(radians) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Cosine of an angle in radians.
+
+- `radians` (required): angle in radians
+
+```utlx
+cos(0)         // 1.0
+cos(pi())      // -1.0
+cos(pi() / 2)  // ~0.0 (very small number due to floating point)
+```
+
+=== cosh(number) → number #text(size: 8pt, fill: gray)[(Num)]
+
+Hyperbolic cosine.
+
+- `number` (required): input value
+
+```utlx
+cosh(0)        // 1.0
+cosh(1)        // 1.5430806348152437
+```
+
+=== countEntries(object, predicate?) → number #text(size: 8pt, fill: gray)[(Obj)]
+
+Count entries in an object, optionally filtered by a predicate.
+
+- `object` (required): the object to count entries of
+- `predicate` (optional): lambda `(key, value) -> boolean`
+
+```utlx
+let obj = {a: 1, b: null, c: 3, d: null}
+countEntries(obj)                             // 4
+countEntries(obj, (k, v) -> v != null)        // 2
+```
+
+=== createCDATA(content) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Create a CDATA section wrapping the given content.
+
+- `content` (required): text content to wrap
+
+```utlx
+createCDATA("<script>alert('hi')</script>")
+// Output: "<![CDATA[<script>alert('hi')</script>]]>"
+```
+
+=== createSOAPEnvelope(body, header?) → xml #text(size: 8pt, fill: gray)[(XML)]
+
+Create a SOAP envelope with proper namespace prefixes.
+
+- `body` (required): XML content for the SOAP Body
+- `header` (optional): XML content for the SOAP Header
+
+```utlx
+{
+  soapMessage: createSOAPEnvelope($input.requestBody, $input.authHeader)
+}
+```
+
+=== crossJoin(array1, array2) → array #text(size: 8pt, fill: gray)[(Arr)]
+
+Cartesian product of two arrays — every combination of elements from both.
+
+- `array1` (required): first array
+- `array2` (required): second array
+
+```bash
+echo '{"sizes": ["S", "M", "L"], "colors": ["red", "blue"]}' \
+  | utlx -e 'crossJoin($input.sizes, $input.colors)'
+# [["S","red"],["S","blue"],["M","red"],["M","blue"],["L","red"],["L","blue"]]
+```
+
+```utlx
+{
+  variants: map(crossJoin($input.sizes, $input.colors), (pair) -> {
+    size: pair[0], color: pair[1]
+  })
+}
+```
+
+=== csvAddColumn(csv, name, defaultValue) → string #text(size: 8pt, fill: gray)[(CSV)]
+
+Add a new column with a default value to all rows in a CSV string.
+
+- `csv` (required): CSV string
+- `name` (required): new column name
+- `defaultValue` (required): default value for all rows
+
+```utlx
+let csv = "Name,Age\nAlice,30\nBob,25"
+csvAddColumn(csv, "Status", "active")
+// "Name,Age,Status\nAlice,30,active\nBob,25,active"
+```
+
+=== csvCell(csv, row, column) → string #text(size: 8pt, fill: gray)[(CSV)]
+
+Get a specific cell value by row index and column name.
+
+- `csv` (required): CSV string
+- `row` (required): row index (0-based, excluding header)
+- `column` (required): column name
+
+```utlx
+let csv = "Name,Age\nAlice,30\nBob,25"
+csvCell(csv, 0, "Name")    // "Alice"
+csvCell(csv, 1, "Age")     // "25"
+```
+
+=== csvColumn(csv, name) → array #text(size: 8pt, fill: gray)[(CSV)]
+
+Get all values from a specific column as an array.
+
+- `csv` (required): CSV string
+- `name` (required): column name
+
+```utlx
+let csv = "Name,Age\nAlice,30\nBob,25\nCharlie,35"
+csvColumn(csv, "Name")     // ["Alice", "Bob", "Charlie"]
+```
+
+=== csvColumns(csv) → array #text(size: 8pt, fill: gray)[(CSV)]
+
+Get all column names (headers) from CSV data.
+
+- `csv` (required): CSV string
+
+```utlx
+let csv = "Name,Age,Email\nAlice,30,alice@example.com"
+csvColumns(csv)    // ["Name", "Age", "Email"]
+```
+
+=== csvRemoveColumns(csv, columns) → string #text(size: 8pt, fill: gray)[(CSV)]
+
+Remove specified columns from a CSV string.
+
+- `csv` (required): CSV string
+- `columns` (required): array of column names to remove
+
+```utlx
+let csv = "Name,Age,Email,Phone\nAlice,30,a@b.com,555-1234"
+csvRemoveColumns(csv, ["Phone", "Email"])
+// "Name,Age\nAlice,30"
+```
+
+=== csvRow(csv, index, options?) → object #text(size: 8pt, fill: gray)[(CSV)]
+
+Get a specific row by index as an object (keyed by column names).
+
+- `csv` (required): CSV string
+- `index` (required): row index (0-based, excluding header)
+- `options` (optional): parsing options
+
+```utlx
+let csv = "Name,Age\nAlice,30\nBob,25"
+csvRow(csv, 0)    // {Name: "Alice", Age: "30"}
+```
+
+=== csvRows(csv) → number #text(size: 8pt, fill: gray)[(CSV)]
+
+Get the number of data rows in a CSV string (excluding header).
+
+- `csv` (required): CSV string
+
+```utlx
+let csv = "Name,Age\nAlice,30\nBob,25\nCharlie,35"
+csvRows(csv)    // 3
+```
+
+=== csvSelectColumns(csv, columns) → string #text(size: 8pt, fill: gray)[(CSV)]
+
+Select/project only specific columns from a CSV string.
+
+- `csv` (required): CSV string
+- `columns` (required): array of column names to keep
+
+```utlx
+let csv = "Name,Age,Email,Phone\nAlice,30,a@b.com,555-1234"
+csvSelectColumns(csv, ["Name", "Email"])
+// "Name,Email\nAlice,a@b.com"
+```
+
+=== csvSort(csv, column, ascending?) → string #text(size: 8pt, fill: gray)[(CSV)]
+
+Sort CSV rows by a specified column.
+
+- `csv` (required): CSV string
+- `column` (required): column name to sort by
+- `ascending` (optional, default `true`): sort direction
+
+```utlx
+let csv = "Name,Age\nCharlie,35\nAlice,30\nBob,25"
+csvSort(csv, "Name", true)
+// "Name,Age\nAlice,30\nBob,25\nCharlie,35"
+```
+
+=== csvSummarize(csv, options?) → object #text(size: 8pt, fill: gray)[(CSV)]
+
+Calculate summary statistics for numeric CSV columns (count, sum, avg, min, max).
+
+- `csv` (required): CSV string
+- `options` (optional): summarization options
+
+```utlx
+let csv = "Product,Price,Qty\nA,10,5\nB,20,3\nC,15,8"
+csvSummarize(csv)
+// {Price: {count: 3, sum: 45, avg: 15, min: 10, max: 20}, Qty: {count: 3, sum: 16, ...}}
+```
+
+=== csvTranspose(csv, options?, header?, separator?) → string #text(size: 8pt, fill: gray)[(CSV)]
+
+Transpose CSV — swap rows and columns.
+
+- `csv` (required): CSV string
+- `options` (optional): formatting options
+- `header` (optional): include header row
+- `separator` (optional): field separator
+
+```utlx
+let csv = "Name,Age\nAlice,30\nBob,25"
+csvTranspose(csv)
+// "Name,Alice,Bob\nAge,30,25"
+```
+
+=== currentDir() → string #text(size: 8pt, fill: gray)[(Sys)]
+
+Get the current working directory path.
+
+```utlx
+{
+  workingDir: currentDir()
+}
+// Output: {"workingDir": "/home/user/project"}
+```
 
 === floor(number) → integer #text(size: 8pt, fill: gray)[(Num)]
 
@@ -906,13 +1707,26 @@ Also: `csvSort(csv, column, ascending?)`, `csvColumns(csv)`, `csvRows(csv)`, `cs
 
 == D
 
-=== day #text(size: 8pt, fill: gray)[(TODO)]
+=== day(date) → number #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Extract the day-of-month component (1-31) from a date.
 
-=== dayOfMonth #text(size: 8pt, fill: gray)[(TODO)]
+- `date` (required): a date or datetime value
 
-// TODO
+```utlx
+day(parseDate("2026-05-15", "yyyy-MM-dd"))    // 15
+day(now())                                     // current day of month
+```
+
+=== dayOfMonth(date) → number #text(size: 8pt, fill: gray)[(Date)]
+
+Alias for `day()`. Extract the day-of-month component (1-31) from a date.
+
+- `date` (required): a date or datetime value
+
+```utlx
+dayOfMonth(parseDate("2026-05-15", "yyyy-MM-dd"))    // 15
+```
 
 === dayOfWeek(date) → number #text(size: 8pt, fill: gray)[(Date)]
 
@@ -949,53 +1763,168 @@ dayOfYear(d)          // 121 (121st day of 2026)
 
 Also: `daysInMonth(year, month)` → `daysInMonth(2026, 2)` returns `28`. `daysInYear(year)` → `daysInYear(2024)` returns `366` (leap year). `isLeapYear(year)`.
 
-=== daysBetween #text(size: 8pt, fill: gray)[(TODO)]
+=== daysBetween(date1, date2) → number #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Alias for `diffDays()`. Calculate the difference in days between two dates.
 
-=== daysInMonth #text(size: 8pt, fill: gray)[(TODO)]
+- `date1` (required): start date
+- `date2` (required): end date
 
-// TODO
+```utlx
+let start = parseDate("2026-05-01", "yyyy-MM-dd")
+let end = parseDate("2026-05-15", "yyyy-MM-dd")
+daysBetween(start, end)    // 14
+```
 
-=== daysInYear #text(size: 8pt, fill: gray)[(TODO)]
+=== daysInMonth(date) → number #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Get the number of days in the month of the given date.
 
-=== debug #text(size: 8pt, fill: gray)[(TODO)]
+- `date` (required): a date or datetime value
 
-// TODO
+```utlx
+daysInMonth(parseDate("2026-02-01", "yyyy-MM-dd"))   // 28
+daysInMonth(parseDate("2024-02-01", "yyyy-MM-dd"))   // 29 (leap year)
+daysInMonth(parseDate("2026-01-15", "yyyy-MM-dd"))   // 31
+```
 
-=== debugPrint #text(size: 8pt, fill: gray)[(TODO)]
+=== daysInYear(date) → number #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Get the number of days in the year of the given date (365 or 366 for leap years).
 
-=== debugPrintCompact #text(size: 8pt, fill: gray)[(TODO)]
+- `date` (required): a date or datetime value
 
-// TODO
+```utlx
+daysInYear(parseDate("2026-01-01", "yyyy-MM-dd"))    // 365
+daysInYear(parseDate("2024-01-01", "yyyy-MM-dd"))    // 366 (leap year)
+```
 
-=== decodeJWS #text(size: 8pt, fill: gray)[(TODO)]
+=== debug(value, message?) → value #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Log a value at DEBUG level and pass it through (does not consume the value).
 
-=== decodeJWT #text(size: 8pt, fill: gray)[(TODO)]
+- `value` (required): value to log and return
+- `message` (optional): label for the log entry
 
-// TODO
+```utlx
+{
+  result: debug($input.amount, "processing amount")
+}
+// logs: [DEBUG] processing amount: 150.00
+// output: {"result": 150.00}
+```
 
-=== decompress #text(size: 8pt, fill: gray)[(TODO)]
+=== debugPrint(value, label?, indent?) → string #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Create a human-readable debug representation of a UDM value (multi-line, indented).
 
-=== decryptAES #text(size: 8pt, fill: gray)[(TODO)]
+- `value` (required): value to represent
+- `label` (optional): label prefix
+- `indent` (optional): indentation level
 
-// TODO
+```utlx
+debugPrint($input, "request")
+// "[request] {name: \"Alice\", age: 30, ...}"
+```
 
-=== decryptAES256 #text(size: 8pt, fill: gray)[(TODO)]
+=== debugPrintCompact(value, label?) → string #text(size: 8pt, fill: gray)[(Sys)]
 
-// TODO
+Create a compact single-line debug representation of a UDM value.
 
-=== deepClone #text(size: 8pt, fill: gray)[(TODO)]
+- `value` (required): value to represent
+- `label` (optional): label prefix
 
-// TODO
+```utlx
+debugPrintCompact($input, "payload")
+// "[payload] {name:Alice,age:30}"
+```
+
+=== decodeJWS(token) → object #text(size: 8pt, fill: gray)[(Sec)]
+
+Decode a JWS (JSON Web Signature) token WITHOUT verifying the signature. Returns header and payload.
+
+- `token` (required): JWS token string
+
+```utlx
+{
+  decoded: decodeJWS($input.token),
+  algorithm: decodeJWS($input.token).header.alg
+}
+```
+
+=== decodeJWT(token) → object #text(size: 8pt, fill: gray)[(Sec)]
+
+Decode a JWT token WITHOUT verification. Returns header, payload (claims), and signature.
+
+- `token` (required): JWT token string
+
+```bash
+echo '{"token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMSJ9.sig"}' \
+  | utlx -e 'decodeJWT($input.token).payload.sub'
+# "user1"
+```
+
+```utlx
+let jwt = decodeJWT($input.authToken)
+{
+  subject: jwt.payload.sub,
+  issuer: jwt.payload.iss,
+  expired: jwt.payload.exp < timestamp()
+}
+```
+
+=== decompress(data, algorithm?) → binary #text(size: 8pt, fill: gray)[(Bin)]
+
+Decompress binary data using the specified algorithm.
+
+- `data` (required): compressed binary data
+- `algorithm` (optional, default `"gzip"`): decompression algorithm — `"gzip"`, `"deflate"`
+
+```utlx
+{
+  content: binaryToString(decompress(base64Decode($input.compressedPayload), "gzip"), "UTF-8")
+}
+```
+
+=== decryptAES(data, key, iv) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Decrypt data using AES-128-CBC.
+
+- `data` (required): Base64-encoded encrypted data
+- `key` (required): 16-byte encryption key (Base64 or hex)
+- `iv` (required): 16-byte initialization vector (Base64 or hex)
+
+```utlx
+{
+  plaintext: decryptAES($input.encrypted, $input.key, $input.iv)
+}
+```
+
+=== decryptAES256(data, key, iv) → string #text(size: 8pt, fill: gray)[(Sec)]
+
+Decrypt data using AES-256-CBC (requires 32-byte key).
+
+- `data` (required): Base64-encoded encrypted data
+- `key` (required): 32-byte encryption key (Base64 or hex)
+- `iv` (required): 16-byte initialization vector (Base64 or hex)
+
+```utlx
+{
+  plaintext: decryptAES256($input.ciphertext, $input.key256, $input.iv)
+}
+```
+
+=== deepClone(object) → object #text(size: 8pt, fill: gray)[(Obj)]
+
+Create a deep (recursive) copy of an object. Modifications to the clone do not affect the original.
+
+- `object` (required): the object to clone
+
+```utlx
+let original = {nested: {value: 42}}
+let copy = deepClone(original)
+// copy is a fully independent copy — no shared references
+```
 
 === deepMerge(obj1, obj2) → object #text(size: 8pt, fill: gray)[(Obj)]
 
@@ -1015,21 +1944,62 @@ deepMerge(base, prod)
 
 *Contrast with spread:* `{...base, ...prod}` would REPLACE the entire `server` object, losing `port`. `deepMerge` preserves nested properties.
 
-=== deepMergeAll #text(size: 8pt, fill: gray)[(TODO)]
+=== deepMergeAll(objects) → object #text(size: 8pt, fill: gray)[(Obj)]
 
-// TODO
+Deep merge multiple objects in order (later objects override earlier ones at each nesting level).
 
-=== deflate #text(size: 8pt, fill: gray)[(TODO)]
+- `objects` (required): array of objects to merge
 
-// TODO
+```utlx
+let configs = [
+  {server: {host: "localhost", port: 5432}},
+  {server: {host: "staging-db.internal"}},
+  {server: {ssl: true}}
+]
+deepMergeAll(configs)
+// {server: {host: "staging-db.internal", port: 5432, ssl: true}}
+```
 
-=== destinationPoint #text(size: 8pt, fill: gray)[(TODO)]
+=== deflate(data) → binary #text(size: 8pt, fill: gray)[(Bin)]
 
-// TODO
+Compress data using raw Deflate algorithm (no gzip header/trailer).
 
-=== detectBOM #text(size: 8pt, fill: gray)[(TODO)]
+- `data` (required): binary data to compress
 
-// TODO
+```utlx
+{
+  deflated: base64Encode(deflate(toBinary($input.payload, "UTF-8")))
+}
+```
+
+=== destinationPoint(lat, lon, bearing, distance) → object #text(size: 8pt, fill: gray)[(Geo)]
+
+Calculate a destination point given a starting point, bearing, and distance.
+
+- `lat` (required): starting latitude
+- `lon` (required): starting longitude
+- `bearing` (required): bearing in degrees (0-360)
+- `distance` (required): distance in kilometers
+
+```utlx
+{
+  destination: destinationPoint(52.37, 4.90, 180, 100)
+}
+// Output: {"lat": 51.47, "lon": 4.90} (approximately 100km due south)
+```
+
+=== detectBOM(binary) → string #text(size: 8pt, fill: gray)[(XML)]
+
+Detect the Byte Order Mark type from binary data. Returns the encoding name or null if no BOM found.
+
+- `binary` (required): binary data to inspect
+
+```utlx
+{
+  bomType: detectBOM($input.rawData)
+}
+// Output: {"bomType": "UTF-8"} or {"bomType": null}
+```
 
 === detectXMLEncoding(xmlString) → string #text(size: 8pt, fill: gray)[(XML)]
 
@@ -1076,33 +2046,104 @@ let end = parseDate($input.endDate, "yyyy-MM-dd")
 }
 ```
 
-=== diffHours #text(size: 8pt, fill: gray)[(TODO)]
+=== diffHours(datetime1, datetime2) → number #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Difference in hours between two datetimes.
 
-=== diffMinutes #text(size: 8pt, fill: gray)[(TODO)]
+- `datetime1` (required): start datetime
+- `datetime2` (required): end datetime
 
-// TODO
+```utlx
+let start = parseDate("2026-05-01T08:00:00", "yyyy-MM-dd'T'HH:mm:ss")
+let end = parseDate("2026-05-01T17:30:00", "yyyy-MM-dd'T'HH:mm:ss")
+diffHours(start, end)    // 9
+```
 
-=== diffMonths #text(size: 8pt, fill: gray)[(TODO)]
+=== diffMinutes(datetime1, datetime2) → number #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Difference in minutes between two datetimes.
 
-=== diffSeconds #text(size: 8pt, fill: gray)[(TODO)]
+- `datetime1` (required): start datetime
+- `datetime2` (required): end datetime
 
-// TODO
+```utlx
+let start = parseDate("2026-05-01T08:00:00", "yyyy-MM-dd'T'HH:mm:ss")
+let end = parseDate("2026-05-01T08:45:00", "yyyy-MM-dd'T'HH:mm:ss")
+diffMinutes(start, end)    // 45
+```
 
-=== diffWeeks #text(size: 8pt, fill: gray)[(TODO)]
+=== diffMonths(date1, date2) → number #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Difference in months between two dates (approximate whole months).
 
-=== diffYears #text(size: 8pt, fill: gray)[(TODO)]
+- `date1` (required): start date
+- `date2` (required): end date
 
-// TODO
+```utlx
+let start = parseDate("2026-01-15", "yyyy-MM-dd")
+let end = parseDate("2026-05-15", "yyyy-MM-dd")
+diffMonths(start, end)    // 4
+```
 
-=== distance #text(size: 8pt, fill: gray)[(TODO)]
+=== diffSeconds(datetime1, datetime2) → number #text(size: 8pt, fill: gray)[(Date)]
 
-// TODO
+Difference in seconds between two datetimes.
+
+- `datetime1` (required): start datetime
+- `datetime2` (required): end datetime
+
+```utlx
+let start = parseDate("2026-05-01T08:00:00", "yyyy-MM-dd'T'HH:mm:ss")
+let end = parseDate("2026-05-01T08:01:30", "yyyy-MM-dd'T'HH:mm:ss")
+diffSeconds(start, end)    // 90
+```
+
+=== diffWeeks(date1, date2) → number #text(size: 8pt, fill: gray)[(Date)]
+
+Difference in weeks between two dates.
+
+- `date1` (required): start date
+- `date2` (required): end date
+
+```utlx
+let start = parseDate("2026-05-01", "yyyy-MM-dd")
+let end = parseDate("2026-05-22", "yyyy-MM-dd")
+diffWeeks(start, end)    // 3
+```
+
+=== diffYears(date1, date2) → number #text(size: 8pt, fill: gray)[(Date)]
+
+Difference in years between two dates.
+
+- `date1` (required): start date
+- `date2` (required): end date
+
+```utlx
+let start = parseDate("2020-01-01", "yyyy-MM-dd")
+let end = parseDate("2026-05-01", "yyyy-MM-dd")
+diffYears(start, end)    // 6
+```
+
+=== distance(lat1, lon1, lat2, lon2) → number #text(size: 8pt, fill: gray)[(Geo)]
+
+Calculate the distance in kilometers between two geographic coordinates using the Haversine formula.
+
+- `lat1` (required): latitude of point 1
+- `lon1` (required): longitude of point 1
+- `lat2` (required): latitude of point 2
+- `lon2` (required): longitude of point 2
+
+```bash
+echo '{"from": {"lat": 52.37, "lon": 4.90}, "to": {"lat": 48.86, "lon": 2.35}}' \
+  | utlx -e 'distance($input.from.lat, $input.from.lon, $input.to.lat, $input.to.lon)'
+# 430.5 (approximately — Amsterdam to Paris in km)
+```
+
+```utlx
+{
+  distanceKm: distance($input.origin.lat, $input.origin.lon, $input.dest.lat, $input.dest.lon)
+}
+```
 
 === distinct(array) → array #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -1142,13 +2183,35 @@ echo '{"orders": [{"id": 1, "cust": "C-42"}, {"id": 2, "cust": "C-42"}, {"id": 3
 // keeps first order per customer, removes duplicates
 ```
 
-=== divideBy #text(size: 8pt, fill: gray)[(TODO)]
+=== divideBy(object, n) → array #text(size: 8pt, fill: gray)[(Obj)]
 
-// TODO
+Divide an object into sub-objects each containing at most N key-value pairs.
 
-=== dotCase #text(size: 8pt, fill: gray)[(TODO)]
+- `object` (required): object to split
+- `n` (required): max entries per sub-object
 
-// TODO
+```bash
+echo '{"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}' | utlx -e 'divideBy($input, 2)'
+# [{"a": 1, "b": 2}, {"c": 3, "d": 4}, {"e": 5}]
+```
+
+```utlx
+{
+  batches: divideBy($input.config, 3)
+}
+```
+
+=== dotCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
+
+Convert a string to dot.case (lowercase words separated by dots).
+
+- `string` (required): the string to convert
+
+```utlx
+dotCase("hello world")        // "hello.world"
+dotCase("camelCase")          // "camel.case"
+dotCase("SCREAMING_SNAKE")    // "screaming.snake"
+```
 
 === drop(array, n) → array #text(size: 8pt, fill: gray)[(Arr)]
 
