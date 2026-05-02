@@ -208,9 +208,9 @@ Producer API                        Consumer API
      │ response (schema A)                │ request (schema B)
      ▼                                    │
   ┌──────────────────────────────────────────┐
-  │           UTL-X Transformation            │
-  │    input: schema A → output: schema B     │
-  │    + validation against both schemas      │
+  │           UTL-X Transformation           │
+  │    input: schema A → output: schema B    │
+  │    + validation against both schemas     │
   └──────────────────────────────────────────┘
 ```
 
