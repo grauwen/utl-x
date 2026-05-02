@@ -25,6 +25,70 @@ abs(42)       // 42 (positive unchanged)
 abs(0)        // 0
 ```
 
+=== acos #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== addBOM #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== addNamespaceDeclarations #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== addQueryParam #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== addTax #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== age #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== analyzeString #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== and #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== asin #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== assert #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== assertEqual #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== atan #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== atan2 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== attribute #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== attributes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== availableProcessors #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === Date Format Patterns #text(size: 8pt, fill: gray)[(Date — Reference)]
 
 Before the date functions: UTL-X uses Java's `DateTimeFormatter` pattern tokens. Case matters — `MM` is months, `mm` is minutes:
@@ -268,6 +332,58 @@ decoded.sub
 // Output: "user@example.com"
 ```
 
+=== bearing #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== binaryConcat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== binaryEquals #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== binaryLength #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== binarySlice #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== binaryToString #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== bitwiseAnd #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== bitwiseNot #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== bitwiseOr #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== bitwiseXor #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== boundingBox #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== buildQueryString #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== buildURL #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == C
 
 === c14n(xml) → string / c14nHash(xml, algorithm?) → string / c14nEquals(xml1, xml2) → boolean #text(size: 8pt, fill: gray)[(XML)]
@@ -296,6 +412,62 @@ c14nEquals(xmlFromSystemA, xmlFromSystemB)
 
 Also: `c14nWithComments(xml)`, `excC14n(xml)` (exclusive, for SOAP), `c14n11(xml)` (version 1.1), `c14nFingerprint(xml)` (short hash for logging).
 
+=== c14n11 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== c14n11WithComments #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== c14nFingerprint #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== c14nPhysical #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== c14nSubset #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== c14nWithComments #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== calculateDiscount #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== calculateTax #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== camelCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== camelize #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== canCoerce #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== canonicalizeWithAlgorithm #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== canonicalJSONHash #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== canonicalJSONSize #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === capitalize(string) → string #text(size: 8pt, fill: gray)[(Str)]
 
 Capitalize the first letter of a string. Only affects the first character.
@@ -320,6 +492,150 @@ ceil(3.9)       // 4
 ceil(-3.2)      // -3 (towards zero for negatives)
 ceil(4.0)       // 4 (already integer)
 ```
+
+=== charAt #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== charCodeAt #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== childCount #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== childNames #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== chunkBy #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== clearLogs #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== coerce #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== coerceAll #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== compactCSV #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== compactJSON #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== compactXML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== compareDates #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== compoundInterest #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== compress #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== constantCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== containsValue #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== convertTimezone #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== convertXMLEncoding #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== cos #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== cosh #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== countEntries #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== createCDATA #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== createSOAPEnvelope #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== crossJoin #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvAddColumn #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvCell #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvColumn #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvColumns #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvRemoveColumns #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvRow #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvRows #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvSelectColumns #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvSort #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvSummarize #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== csvTranspose #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== currentDir #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === floor(number) → integer #text(size: 8pt, fill: gray)[(Num)]
 
@@ -538,6 +854,14 @@ Also: `csvSort(csv, column, ascending?)`, `csvColumns(csv)`, `csvRows(csv)`, `cs
 
 == D
 
+=== day #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== dayOfMonth #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === dayOfWeek(date) → number / dayOfWeekName(date) → string / dayOfYear(date) → number #text(size: 8pt, fill: gray)[(Date)]
 
 Extract date components.
@@ -560,6 +884,54 @@ weekOfYear(d)         // 18
 ```
 
 Also: `daysInMonth(year, month)` → `daysInMonth(2026, 2)` returns `28`. `daysInYear(year)` → `daysInYear(2024)` returns `366` (leap year). `isLeapYear(year)`.
+
+=== daysBetween #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== daysInMonth #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== daysInYear #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== debug #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== debugPrint #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== debugPrintCompact #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== decodeJWS #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== decodeJWT #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== decompress #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== decryptAES #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== decryptAES256 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== deepClone #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === deepMerge(obj1, obj2) → object #text(size: 8pt, fill: gray)[(Obj)]
 
@@ -588,6 +960,22 @@ deepMerge(base, prod)
 ```
 
 *Contrast with spread:* `{...base, ...prod}` would REPLACE the entire `server` object, losing `port`. `deepMerge` preserves nested properties. Also: `deepMergeAll(array)` merges an array of objects sequentially.
+
+=== deepMergeAll #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== deflate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== destinationPoint #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== detectBOM #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === detectXMLEncoding(xmlString) → string #text(size: 8pt, fill: gray)[(XML)]
 
@@ -634,6 +1022,34 @@ if (overdueDays > 0) concat("Overdue by ", toString(overdueDays), " days")
 else "Not yet due"
 ```
 
+=== diffHours #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== diffMinutes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== diffMonths #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== diffSeconds #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== diffWeeks #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== diffYears #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== distance #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === distinct(array) → array / distinctBy(array, keyFn) → array #text(size: 8pt, fill: gray)[(Arr)]
 
 Remove duplicate values. `distinct` uses value equality. `distinctBy` uses a key extractor to determine uniqueness.
@@ -660,6 +1076,14 @@ distinct(map($input.orders, (o) -> o.customerId))
 // Output: ["C-42", "C-41"]
 ```
 
+=== divideBy #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== dotCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === drop(array, n) → array / take(array, n) → array #text(size: 8pt, fill: gray)[(Arr)]
 
 `drop`: remove the first N elements. `take`: keep only the first N elements.
@@ -685,6 +1109,42 @@ let top10 = take(sortBy($input.products, (p) -> -p.sales), 10)
 
 == E
 
+=== e #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== elementPath #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== encryptAES #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== encryptAES256 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endOfDay #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endOfMonth #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endOfQuarter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endOfWeek #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== endOfYear #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === endsWith(string, suffix) → boolean / startsWith(string, prefix) → boolean #text(size: 8pt, fill: gray)[(Str)]
 
 Check if a string starts or ends with a given substring.
@@ -705,6 +1165,14 @@ filter($input.files, (f) -> endsWith(f.name, ".utlx"))
 // Use case: validate ID format
 if (!startsWith($input.id, "ORD-")) error("Invalid order ID format")
 ```
+
+=== endTimer #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== enforceNamespacePrefixes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === entries(object) → array / fromEntries(pairs) → object #text(size: 8pt, fill: gray)[(Obj)]
 
@@ -749,6 +1217,18 @@ envOrDefault("DATABASE_URL", "postgres://localhost:5432/mydb")
 
 Also: `hasEnv(name)` → boolean, `envAll()` → object with all environment variables.
 
+=== envAll #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== environment #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== equals #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === error(message) → never #text(size: 8pt, fill: gray)[(Sys)]
 
 Throw a runtime error with a message. Stops the transformation.
@@ -772,6 +1252,42 @@ try {
   {error: true, message: "Processing failed"}
 }
 ```
+
+=== escapeXML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== every #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== everyEntry #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== excC14n #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== excC14nWithComments #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== exp #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== extractBetween #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== extractCDATA #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== extractTimestampFromUuidV7 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 == F
 
@@ -859,6 +1375,14 @@ findIndex($input.users, (u) -> u.id == 99)
 
 Also: `findLastIndex(array, predicate)` — searches from the end.
 
+=== findAllMatches #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== findLastIndex #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === first(array) → element or null #text(size: 8pt, fill: gray)[(Arr)]
 
 Returns the first element of an array, or `null` if the array is empty.
@@ -873,6 +1397,86 @@ first([])                                // null
 // Use case: get the cheapest product
 first(sortBy($input.products, (p) -> p.price))
 ```
+
+=== formatCurrency #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== formatDateTimeInTimezone #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== formatEmptyElements #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== formatNumber #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== formatPlural #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromBase64 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromBytes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromCamelCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromCharCode #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromConstantCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromDotCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromHex #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromKebabCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromPascalCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromPathCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromSnakeCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromTitleCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fromUTC #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== fullOuterJoin #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== futureValue #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === head(array) → element or null #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -996,6 +1600,14 @@ formatDate(now(), "yyyy-MM-dd")
 
 == G
 
+=== generateIV #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== generateKey #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === generateUuid() → string / generateUuidV4() → string / generateUuidV7() → string #text(size: 8pt, fill: gray)[(Sys)]
 
 Generate universally unique identifiers. v4 is random, v7 is time-ordered (sortable).
@@ -1020,6 +1632,86 @@ generateUuidV7Batch(5)  // generate 5 sequential v7 UUIDs
 
 Also: `isValidUuid(string)`, `getUuidVersion(string)`, `isUuidV7(string)`.
 
+=== generateUuidV7Batch #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== get #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getBaseURL #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getBOMBytes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getCurrencyDecimals #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getFragment #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getHost #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSAlgorithm #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSHeader #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSInfo #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSKeyId #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSPayload #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSSigningInput #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWSTokenType #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWTAudience #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWTClaim #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWTClaims #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWTIssuer #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getJWTSubject #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getLogs #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === getNamespaces(element) → object #text(size: 8pt, fill: gray)[(XML)]
 
 Get all namespace declarations from an XML element as a prefix-to-URI map. See Chapter 22.
@@ -1040,6 +1732,54 @@ getNamespaces($input.Invoice)
 let ns = getNamespaces($input)
 hasKey(ns, "soap")   // true if SOAP namespace declared
 ```
+
+=== getPath #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getPort #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getProtocol #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getQuery #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getQueryParams #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getTimezone #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getTimezoneName #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getTimezoneOffsetHours #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getTimezoneOffsetSeconds #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getType #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== getUuidVersion #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== goldenRatio #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === groupBy(array, keyFn) → object #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -1072,7 +1812,35 @@ entries(groups) |> map((entry) -> {
 })
 ```
 
+=== gunzip #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== gzip #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == H
+
+=== hasAlpha #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasAttribute #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasBOM #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasContent #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasEnv #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === hasKey(object, key) → boolean / containsKey(object, key) → boolean #text(size: 8pt, fill: gray)[(Obj)]
 
@@ -1127,6 +1895,22 @@ let contentHash = sha256(renderJson($input))
 
 Also: `sha1(data)`, `sha224(data)`, `sha384(data)`, `sha3_256(data)`, `sha3_512(data)`.
 
+=== hasNamespace #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hasNumeric #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hexDecode #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hexEncode #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === hmac(data, key, algorithm) → string / hmacSHA256(data, key) → string #text(size: 8pt, fill: gray)[(Sec)]
 
 HMAC (Hash-based Message Authentication Code) for verifying message integrity and authenticity.
@@ -1149,7 +1933,47 @@ if (expectedSig != $input.headers.signature) error("Invalid signature")
 
 Also: `hmacSHA512(data, key)`, `hmacSHA1(data, key)`, `hmacMD5(data, key)`, `hmacBase64(data, key, algorithm)` (returns Base64 instead of hex).
 
+=== hmacBase64 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hmacMD5 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hmacSHA1 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hmacSHA384 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hmacSHA512 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== homeDir #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== hours #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == I
+
+=== ifThenElse #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== implies #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== includes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === indexOf(haystack, needle) → number #text(size: 8pt, fill: gray)[(Str/Arr)]
 
@@ -1164,6 +1988,178 @@ indexOf("hello world", "xyz")            // -1 (not found)
 indexOf(["Apple", "Banana", "Cherry"], "Banana")  // 1
 indexOf(["Apple", "Banana", "Cherry"], "Grape")   // -1
 ```
+
+=== inflate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== info #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== insertAfter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== insertBefore #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== invert #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== iqr #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isAfter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isAlpha #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isAlphanumeric #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isAscii #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isBefore #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isBetween #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isCanonicalJSON #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isCDATA #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isDebugMode #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isEmptyElement #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isGzipped #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isHexadecimal #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isJarFile #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isJWSFormat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isJWTExpired #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isLeapYearFunc #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isLocalDateTime #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isLowerCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isNotEmpty #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isNumeric #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isPlural #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isPointInCircle #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isPointInPolygon #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isPrintable #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isSameDay #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isSingular #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isToday #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isUpperCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isUuidV7 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidAmount #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidCoordinates #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidCurrency #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidTimezone #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidURL #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isValidUuid #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isWhitespace #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== isZipArchive #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === lastIndexOf(haystack, needle) → number #text(size: 8pt, fill: gray)[(Str/Arr)]
 
@@ -1322,6 +2318,10 @@ isSameDay(date1, date2)                          // true if same calendar day
 
 == J
 
+=== javaVersion #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === jcs(json) → string / canonicalizeJSON(json) → string / jsonEquals(json1, json2) → boolean #text(size: 8pt, fill: gray)[(JSON)]
 
 JSON Canonicalization Scheme (RFC 8785). Produces deterministic JSON — identical output regardless of key order or whitespace. See Chapter 24.
@@ -1374,7 +2374,19 @@ join(["usr", "local", "bin"], "/")
 
 *Anti-pattern:* `reduce(arr, "", (acc, x) -> concat(acc, x, ", "))` — creates N intermediate strings. `join()` builds the result in one pass.
 
+=== joinToString #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== joinWith #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == K
+
+=== kebabCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === keys(object) → array / values(object) → array #text(size: 8pt, fill: gray)[(Obj)]
 
@@ -1404,6 +2416,10 @@ contains(fields, "email")   // true/false
 
 == L
 
+=== leftJoin #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === length(value) → number #text(size: 8pt, fill: gray)[(Str/Arr)]
 
 Length of a string (character count) or array (element count). Alias for `count()` on arrays.
@@ -1417,6 +2433,18 @@ length([1, 2, 3])                        // 3
 length("")                               // 0
 length([])                               // 0
 ```
+
+=== listJarEntries #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== listZipEntries #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== ln #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === localName(element) → string / namespaceUri(element) → string / namespacePrefix(element) → string / qualifiedName(element) → string #text(size: 8pt, fill: gray)[(XML)]
 
@@ -1439,6 +2467,42 @@ let usgaapFacts = filter($input.*, (elem) ->
 ```
 
 Also: `resolveQname(string, context)`, `matchesQname(element, pattern)`, `hasNamespace(element)`.
+
+=== log #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== log10 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== log2 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== logCount #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== logPretty #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== logSize #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== logType #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== lookupBy #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== lower #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === lowerCase(string) → string / upperCase(string) → string #text(size: 8pt, fill: gray)[(Str)]
 
@@ -1525,6 +2589,14 @@ mapEntries($input, (key, value) -> {
 // Output: {"FIRST_NAME": "ALICE", "LAST_NAME": "JOHNSON", "AGE": 30}
 ```
 
+=== mapGroups #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== mapTree #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === mask(string, visibleChars) → string #text(size: 8pt, fill: gray)[(Sec)]
 
 Mask a string, keeping only the first N characters visible. For PII protection in logs and reports. See Chapter 38.
@@ -1565,6 +2637,10 @@ if (!matches($input.vatId, "^[A-Z]{2}[0-9]{9}B[0-9]{2}$"))
 
 Also: `matchesQname(element, pattern)` for XML QName matching (Chapter 22).
 
+=== matchesWhole #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === max(array) → number / min(array) → number / maxBy(array, fn) → element / minBy(array, fn) → element #text(size: 8pt, fill: gray)[(Num/Arr)]
 
 Find extremes. `max`/`min` work on numeric arrays. `maxBy`/`minBy` take a key extractor and return the entire element (not just the value).
@@ -1589,6 +2665,10 @@ minBy($input.products, (p) -> p.price)
 // Output: {"name": "Gizmo", "price": 10}
 ```
 
+=== measure #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === median(array) → number / mode(array) → number / stdDev(array) → number / variance(array) → number / percentile(array, p) → number #text(size: 8pt, fill: gray)[(Num)]
 
 Statistical functions.
@@ -1608,6 +2688,10 @@ percentile($input.scores, 90)            // ~94.2 (90th percentile)
 // Also: iqr(array) — interquartile range, quartiles(array) — [Q1, Q2, Q3]
 ```
 
+=== memoryInfo #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === merge(obj1, obj2, ...) → object #text(size: 8pt, fill: gray)[(Obj)]
 
 Shallow merge of objects. Later arguments override earlier ones. Same as spread but as a function.
@@ -1624,7 +2708,55 @@ merge({a: 1}, {b: 2}, {c: 3})
 
 *Note:* for deep (recursive) merge, use `deepMerge(obj1, obj2)`.
 
+=== midpoint #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== minutes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== month #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== monthName #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == N
+
+=== nand #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== nestBy #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== nodeType #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== none #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== nor #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== normalizeBOM #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== normalizeXMLEncoding #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== not #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === now() → datetime / currentDate() → date / currentTime() → time #text(size: 8pt, fill: gray)[(Date)]
 
@@ -1655,6 +2787,10 @@ normalizeSpace("line1\n  line2\t\tline3") // "line1 line2 line3"
 normalizeSpace("")                        // ""
 ```
 
+=== numberOrDefault #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == O
 
 === omit(object, keys) → object / pick(object, keys) → object #text(size: 8pt, fill: gray)[(Obj)]
@@ -1676,6 +2812,14 @@ omit($input, ["password"])
 // Use case: strip sensitive fields before logging
 let safe = omit($input, ["password", "apiKey", "token", "secret"])
 ```
+
+=== osArch #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== osVersion #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 == M
 
@@ -1779,6 +2923,22 @@ omit($input, ["password", "secret"])     // remove sensitive fields
 
 == P
 
+=== pad #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== padLeft #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== padRight #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parent #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === parse(string, format?) → value / parseJson(string) → value / parseXml(string) → value / parseYaml(string) → value / parseCsv(string, options?) → array #text(size: 8pt, fill: gray)[(Fmt)]
 
 Parse a string embedded within a transformation into a navigable UDM value. Use when a format is a VALUE inside your data (JSON string in a CSV column, XML in a CDATA section).
@@ -1807,6 +2967,14 @@ let parsed = parse($input.rawData)       // auto-detects JSON, XML, or YAML
 For normal file processing, use `input json`/`input xml` in the header — these functions are for the embedded-format-as-value case.
 
 Also: `render(value, format, pretty?)`, `renderJson(value, pretty?)`, `renderXml(value)`, `renderYaml(value)`, `renderCsv(value)`.
+
+=== parseBoolean #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseCurrency #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === parseDate(string, pattern) → date #text(size: 8pt, fill: gray)[(Date)]
 
@@ -1837,6 +3005,14 @@ formatDate(parseDate($input.date, "dd/MM/yyyy"), "yyyy-MM-dd")
 
 Also: `parseDateTimeWithTimezone(string, pattern, timezone)`.
 
+=== parseDateTimeWithTimezone #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseDouble #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === parseEUNumber(string) → number / parseUSNumber(string) → number #text(size: 8pt, fill: gray)[(Num)]
 
 Parse regional number formats to standard floating-point. See Chapter 25 (CSV).
@@ -1858,6 +3034,26 @@ map($input, (row) -> {
 ```
 
 Also: `renderEUNumber(number)`, `renderUSNumber(number)`, `renderFrenchNumber(number)`, `renderSwissNumber(number)` for the reverse direction.
+
+=== parseFloat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseInt #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseNumber #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseQueryString #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== parseURL #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === partition(array, predicate) → [matching, nonMatching] #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -1888,7 +3084,122 @@ let validated = partition($input.records, (r) -> r.email != null && r.name != nu
 }
 ```
 
+=== pascalCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== pathCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== percentageChange #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== pi #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== platform #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== pluralize #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== pluralizeWithCount #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== pow #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prepareForSignature #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== presentValue #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrint #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrintCSV #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrintFormat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrintJSON #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrintXML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== prettyPrintYAML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+
+== Q
+
+=== quarter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== quartiles #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == R
+
+=== random #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readByte #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readDouble #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readFloat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readInt16 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readInt32 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readInt64 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readJarEntry #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readJarManifest #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== readZipEntry #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === reduce(array, initial, accumulator) → value #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -1944,6 +3255,34 @@ reduce($input.transactions, {balance: 0, count: 0}, (acc, tx) -> {
 })
 ```
 
+=== reduceEntries #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== regexGroups #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== regexNamedGroups #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== remove #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== removeBOM #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== removeQueryParam #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== removeTax #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === render(value, format, pretty?) → string / renderJson(value, pretty?) → string #text(size: 8pt, fill: gray)[(Fmt)]
 
 Serialize a UDM value to a string in the specified format.
@@ -1969,6 +3308,22 @@ render({Order: {Id: "1"}}, "xml")        // "<Order><Id>1</Id></Order>"
 }
 ```
 
+=== renderCsv #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== renderXml #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== renderYaml #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== repeat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === replace(string, search, replacement) → string / replaceRegex(string, regex, replacement) → string #text(size: 8pt, fill: gray)[(Str)]
 
 Replace occurrences in a string. `replace`: literal match. `replaceRegex`: regex match.
@@ -1991,6 +3346,14 @@ replaceRegex("  extra   spaces  ", "\\s+", " ")
 // Output: " extra spaces "  (collapse whitespace — use normalizeSpace() instead)
 ```
 
+=== replaceWithFunction #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== resolveQName #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === reverse(array) → array / reverseString(string) → string #text(size: 8pt, fill: gray)[(Arr/Str)]
 
 Reverse the order of elements in an array or characters in a string.
@@ -2004,6 +3367,10 @@ reverseString("hello")                   // "olleh"
 // Use case: most recent first
 reverse(sortBy($input.events, (e) -> e.timestamp))
 ```
+
+=== rightJoin #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === roundToCents(number) → number / roundToDecimalPlaces(number, places) → number #text(size: 8pt, fill: gray)[(Num)]
 
@@ -2022,7 +3389,35 @@ roundToDecimalPlaces(100.0, 0)           // 100
 let lineTotal = roundToCents(qty * unitPrice)
 ```
 
+=== runtimeInfo #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == S
+
+=== scan #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== seconds #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== setConsoleLogging #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== setLogLevel #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== setPath #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sha224 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === sha256(data) → string / sha512(data) → string / sha1(data) → string #text(size: 8pt, fill: gray)[(Sec)]
 
@@ -2033,6 +3428,46 @@ sha256("sensitive data")                 // 64-char hex string
 sha512("sensitive data")                 // 128-char hex string
 sha1("sensitive data")                   // 40-char hex string (avoid for security)
 ```
+
+=== sha384 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sha3_256 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sha3_512 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== shiftLeft #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== shiftRight #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== shouldUseCDATA #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== simpleInterest #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sin #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== singularize #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sinh #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === slice(value, start, end?) → array or string #text(size: 8pt, fill: gray)[(Arr/Str)]
 
@@ -2048,6 +3483,26 @@ slice([10, 20, 30, 40, 50], 2)           // [30, 40, 50] (from index 2 to end)
 slice("Hello World", 6, 11)             // "World"
 slice("Hello World", 6)                 // "World"
 ```
+
+=== slugify #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== smartCoerce #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== snakeCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== some #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== someEntry #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === sort(array) → array / sortBy(array, keyFn) → array #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -2101,6 +3556,46 @@ parts[1]                                 // "example.com"
 split("/usr/local/bin", "/")             // ["", "usr", "local", "bin"]
 ```
 
+=== splitWithMatches #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== sqrt #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startOfDay #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startOfMonth #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startOfQuarter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startOfWeek #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startOfYear #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== startTimer #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== stringOrDefault #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== stripBOM #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === substring(string, start, end?) → string / substringBefore(string, delimiter) → string / substringAfter(string, delimiter) → string #text(size: 8pt, fill: gray)[(Str)]
 
 Extract part of a string. `substring` by index. `substringBefore`/`substringAfter` by delimiter.
@@ -2125,6 +3620,14 @@ substringBeforeLast("a.b.c.d", ".")      // "a.b.c"
 substringAfterLast("a.b.c.d", ".")       // "d"
 ```
 
+=== substringAfterLast #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== substringBeforeLast #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === sum(array) → number / sumBy(array, fn) → number #text(size: 8pt, fill: gray)[(Num)]
 
 Sum numeric values. `sum` takes an array of numbers. `sumBy` takes objects with a key extractor.
@@ -2148,7 +3651,83 @@ sum(map($input.items, (i) -> i.qty * i.price))
 
 *Anti-pattern:* `reduce($input.items, 0, (acc, i) -> acc + i.price)` — use `sum(map(...))` or `sumBy()`.
 
+=== systemPropertiesAll #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== systemProperty #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== systemPropertyOrDefault #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == T
+
+=== tan #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== tanh #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== tempDir #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== textContent #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerCheck #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerClear #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerList #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerReset #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerStart #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerStats #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timerStop #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== timestamp #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== titleCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toArray #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toBase64 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toBinary #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === toBoolean(value) → boolean #text(size: 8pt, fill: gray)[(Type)]
 
@@ -2164,6 +3743,22 @@ toBoolean(0)                             // false
 toBoolean("yes")                         // true
 toBoolean("no")                          // false
 ```
+
+=== toBytes #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toDate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toDegrees #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toHex #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === toNumber(value) → number #text(size: 8pt, fill: gray)[(Type)]
 
@@ -2194,6 +3789,14 @@ toNumber($input.userProvidedValue)
 try { toNumber($input.userProvidedValue) } catch { 0 }
 ```
 
+=== toObject #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toRadians #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === toString(value) → string #text(size: 8pt, fill: gray)[(Type)]
 
 Convert any value to its string representation.
@@ -2209,6 +3812,46 @@ toString([1, 2])                         // "[1, 2]"
 ```
 
 Also: `toDate(value)`, `toArray(value)` (wraps non-array in array), `toObject(value)`, `toBinary(string)`.
+
+=== toTitleCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== toUTC #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== trace #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== translate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treeDepth #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treeFilter #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treeFind #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treeFlatten #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treeMap #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== treePaths #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === trim(string) → string #text(size: 8pt, fill: gray)[(Str)]
 
@@ -2261,7 +3904,43 @@ transpose($input)
 // Output: [["Name", "Alice", "Bob"], ["Q1", 100, 150], ["Q2", 200, 175]]
 ```
 
+=== truncate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== tryCoerce #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== typeOf #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== typeof #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == U
+
+=== udmToJSON #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== udmToXML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== udmToYAML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== uncamelize #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== unescapeXML #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === union(arr1, arr2) → array #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -2346,6 +4025,42 @@ unique(map($input.orders, (o) -> o.customerId))
 // Output: ["C-42", "C-41", "C-43"] (unique customer IDs across all orders)
 ```
 
+=== unnest #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== unwrapCDATA #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== unzip #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== unzipArchive #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== unzipN #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== updateXMLEncoding #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== upper #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== uptime #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== urlDecodeComponent #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === urlEncode(string) → string / urlDecode(string) → string #text(size: 8pt, fill: gray)[(URL)]
 
 URL-encode/decode strings (percent-encoding per RFC 3986).
@@ -2371,7 +4086,27 @@ buildQueryString($input.params)
 
 Also: `buildURL(base, path, params)`, `parseURL(url)`, `getHost(url)`, `getPath(url)`, `getQuery(url)`, `getQueryParams(url)`.
 
+=== urlEncodeComponent #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== username #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == V-W
+
+=== validateDate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== validateDigest #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== validateEncoding #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === values(object) → array #text(size: 8pt, fill: gray)[(Obj)]
 
@@ -2380,6 +4115,18 @@ See `keys` above. Returns all property values as an array.
 ```utlx
 values({name: "Alice", age: 30})         // ["Alice", 30]
 ```
+
+=== version #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== warn #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== weekOfYear #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === windowed(array, size) → array of arrays #text(size: 8pt, fill: gray)[(Arr)]
 
@@ -2404,6 +4151,38 @@ map(windowed(prices, 3), (window) -> avg(window))
 filter(windowed($input.events, 2), (pair) -> pair[0].type == pair[1].type)
 ```
 
+=== wordCase #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== wrapIfNeeded #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeByte #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeDouble #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeFloat #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeInt16 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeInt32 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== writeInt64 #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 == X-Z
 
 === xmlEscape(string) → string / xmlUnescape(string) → string #text(size: 8pt, fill: gray)[(XML)]
@@ -2426,6 +4205,70 @@ xmlUnescape("price &lt; 100 &amp; tax &gt; 0")
 
 // Characters escaped: < → &lt;  > → &gt;  & → &amp;  " → &quot;  ' → &apos;
 ```
+
+=== xnor #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== xor #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlEntries #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlExists #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlFilterByKeyPattern #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlFindByField #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlFindObjectsWithField #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlFromEntries #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlGetDocument #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlHasRequiredFields #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlKeys #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlMerge #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlMergeAll #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlOmitKeys #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlSelectKeys #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlSort #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 === yamlSplitDocuments(yaml) → array / yamlMergeDocuments(docs) → string / yamlPath(yaml, path) → value / yamlSet(yaml, path, value) → value / yamlDelete(yaml, path) → value #text(size: 8pt, fill: gray)[(YAML)]
 
@@ -2459,6 +4302,18 @@ yamlExists($input, "features.experimental")  // true/false
 
 Also: `yamlDeepMerge(obj1, obj2)`, `yamlKeys(obj)`, `yamlValues(obj)`, `yamlSort(obj)`, `yamlValidate(yaml, rules)`, `yamlFilterByKeyPattern(obj, pattern)`.
 
+=== yamlValidate #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlValidateKeyPattern #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== yamlValues #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
 === zip(arr1, arr2) → array / zipWith(arr1, arr2, fn) → array / zipWithIndex(array) → array #text(size: 8pt, fill: gray)[(Arr)]
 
 Combine two arrays element-by-element. `zip`: pairs. `zipWith`: merged by function. `zipWithIndex`: adds index to each element.
@@ -2491,6 +4346,14 @@ map(zipWithIndex($input.items), (pair) -> {
 ```
 
 Also: `zipAll(arrays)` — zips any number of arrays, `unzip(pairs)` — reverse of zip, `unzipN(arrays)` — reverse of zipAll.
+
+=== zipAll #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
+
+=== zipArchive #text(size: 8pt, fill: gray)[(TODO)]
+
+// TODO
 
 == Functions Not Listed Individually
 
