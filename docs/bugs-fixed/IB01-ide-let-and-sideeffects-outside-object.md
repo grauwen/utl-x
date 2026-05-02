@@ -1,9 +1,9 @@
-# DB01: UTLXd — `let` bindings outside object body fail
+# IB01: IDE — `let` bindings and side-effect statements handling
 
 **Status:** Open  
 **Priority:** Medium  
 **Created:** May 2026  
-**Component:** utlxd (IDE daemon)
+**Component:** IDE (TypeScript client or utlxd daemon — root cause TBD)
 
 ---
 
