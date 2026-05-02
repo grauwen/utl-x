@@ -112,7 +112,7 @@ Everything else is _truthy_, including empty arrays `[]` and empty objects `{}`.
   align: (left, left, left, left),
   [*Operator*], [*Name*], [*Example*], [*Result*],
   [`&&`], [Logical AND (short-circuit)], [`true && false`], [`false`],
-  [`\|\|`], [Logical OR (short-circuit)], [`true \|\| false`], [`true`],
+  [`||`], [Logical OR (short-circuit)], [`true || false`], [`true`],
   [`!`], [Logical NOT], [`!true`], [`false`],
 )
 
@@ -306,10 +306,10 @@ From highest to lowest precedence. Higher precedence binds tighter:
   [6], [Comparison: `<` `>` `<=` `>=`], [Left],
   [7], [Equality: `==` `!=`], [Left],
   [8], [Logical AND: `&&`], [Left],
-  [9], [Logical OR: `\|\|`], [Left],
+  [9], [Logical OR: `||`], [Left],
   [10], [Nullish coalescing: `??`], [Left],
   [11], [Ternary: `? :`], [Right],
-  [12], [Pipe: `\|>`], [Left],
+  [12], [Pipe: `|>`], [Left],
   [13 (lowest)], [Conditional: `if/else`], [Right],
 )
 
