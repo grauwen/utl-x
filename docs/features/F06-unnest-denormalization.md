@@ -1,6 +1,6 @@
 # F06: unnest() Function — Hierarchical to Flat (Denormalization)
 
-**Status:** Proposed  
+**Status:** Implemented (May 2026)  
 **Priority:** Medium  
 **Created:** April 2026  
 **Related:** F03 (nestBy — the reverse operation), F04 (lookupBy), F05 (chunkBy)

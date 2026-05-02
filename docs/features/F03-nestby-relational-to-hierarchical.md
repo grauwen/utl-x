@@ -1,6 +1,6 @@
 # F03: nestBy() Function — Relational-to-Hierarchical Restructuring
 
-**Status:** Proposed  
+**Status:** Implemented (May 2026)  
 **Priority:** Medium  
 **Created:** April 2026  
 **Related:** N-to-M mapping architecture document, F02 (let binding consistency)

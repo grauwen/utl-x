@@ -1,6 +1,6 @@
 # F04: lookupBy() Function — Enrich Records from a Reference Table
 
-**Status:** Proposed  
+**Status:** Implemented (May 2026)  
 **Priority:** Medium  
 **Created:** April 2026  
 **Related:** F03 (nestBy function), B15 (groupBy index bug)

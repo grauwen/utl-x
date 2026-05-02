@@ -1,6 +1,6 @@
 # F05: chunkBy() Function — Positional/Sequential Grouping
 
-**Status:** Proposed  
+**Status:** Implemented (May 2026)  
 **Priority:** Medium  
 **Created:** April 2026  
 **Related:** F03 (nestBy), F04 (lookupBy), B15 (groupBy index bug)

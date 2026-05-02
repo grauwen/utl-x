@@ -1,6 +1,6 @@
 # F08: USDL Enrichment — Schema Input with Dual Access
 
-**Status:** Design finalized — implementation pending  
+**Status:** Implemented (May 2026)  
 **Priority:** High  
 **Created:** April 2026  
 **Updated:** May 2026 (enrichment approach replaces conversion approach)  
