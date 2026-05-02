@@ -37,9 +37,21 @@ Input: `{"items": [{"name": "A"}, {"name": "B"}]}`
 - **utlxd IDE:** ✗ fails — `map() requires array as first argument`
 - **`info()` alone (no `let`):** ✅ works in utlxd
 
+Additionally, `info()` inside the object body also fails — the IDE always expects `key: value` pairs and does not accept bare side-effect statements within `{ }`.
+
+```utlx
+// Also fails in utlxd:
+{
+  info("test")           // ✗ IDE expects key: value, not bare statement
+  items: $input.items
+}
+```
+
 ## Analysis
 
-The error suggests utlxd does not properly scope `$input` within `let` bindings that appear outside the output object. The IDE's execution path likely evaluates `let` bindings in a context where `$input` is not yet available or is null.
+Two related issues in utlxd:
+1. `let` bindings outside the output object cannot access `$input` — the IDE's execution path likely evaluates them in a context where `$input` is not yet available or is null.
+2. Side-effect statements inside `{ }` are rejected — the IDE parser expects only `key: value` pairs within object bodies, not bare expressions.
 
 ## Workaround
 
