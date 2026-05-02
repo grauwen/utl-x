@@ -77,6 +77,7 @@
 // ── Preface ──
 
 #include "chapters/ch00-preface.typ"
+#show heading: set heading(numbering: "1.1")
 #pagebreak()
 
 // ── Part I: Foundation ──
