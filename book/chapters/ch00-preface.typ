@@ -1,5 +1,7 @@
 #heading(numbering: none)[Preface]
 
+#show heading: set heading(numbering: none)
+
 == Why This Book
 
 // TODO: Write personal story of creating UTL-X
