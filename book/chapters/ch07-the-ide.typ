@@ -32,7 +32,7 @@ IDE Runtime is the IDE's default mode — a graphical overlay on top of the UTL-
 In IDE Runtime, you _experiment_. You paste sample data, write a `.utlx` transformation, and see the output instantly. There is no schema awareness — you work with the data as-is, guided by the live preview. This is how you prototype transformations, explore unfamiliar data structures, and iterate quickly.
 
 #figure(
-  image("../pictures/ch7 IDE/iIDE-utlx-1.png", width: 100%),
+  image("../pictures/ch7-IDE/iIDE-utlx-1.png", width: 100%),
   caption: [IDE Runtime — JSON input (left), UTL-X transformation (center), XML output (right). The blue "Runtime Mode" badge indicates IDE Runtime is active.]
 )
 
@@ -182,7 +182,7 @@ $input
 This is how Tibco BW, SAP CPI, and MuleSoft approach mapping — define the contracts first, then build the transformation. UTL-X does this for _all_ schema formats, not just XML/XSD.
 
 #figure(
-  image("../pictures/ch7 IDE/iIDE-utlx-4.png", width: 100%),
+  image("../pictures/ch7-IDE/iIDE-utlx-4.png", width: 100%),
   caption: [IDE Design Time — JSON Schema on the input side (left), inferred output schema (right). The green "Design Time Mode" badge indicates IDE Design Time is active. The schemas guide the developer; at runtime, `$input` receives instance documents, not schemas.]
 )
 
@@ -267,7 +267,7 @@ The function library panel lets you browse all 652 standard library functions wi
 For example, searching "date" shows: `now()`, `today()`, `parseDate()`, `formatDate()`, `addDays()`, `diffDays()`, and more — with signatures and examples for each.
 
 #figure(
-  image("../pictures/ch7 IDE/iIDE-utlx-6.png", width: 90%),
+  image("../pictures/ch7-IDE/iIDE-utlx-6.png", width: 90%),
   caption: [The Function Builder — Standard Library tab showing all 18 function categories with counts. Select a category to browse functions, view signatures, and insert them into the editor.]
 )
 
@@ -278,12 +278,12 @@ The Function Builder has three tabs:
 - *Operators:* browse all UTL-X operators (logical, pipe, safe navigation, nullish coalescing, lambda arrow, spread) with descriptions
 
 #figure(
-  image("../pictures/ch7 IDE/iIDE-utlx-7.png", width: 90%),
+  image("../pictures/ch7-IDE/iIDE-utlx-7.png", width: 90%),
   caption: [Available Inputs tab — shows input fields with their detected types (array, string, number, integer). Click a field to insert its accessor path.]
 )
 
 #figure(
-  image("../pictures/ch7 IDE/iIDE-utlx-8.png", width: 90%),
+  image("../pictures/ch7-IDE/iIDE-utlx-8.png", width: 90%),
   caption: [Operators tab — browse logical operators, pipe, safe navigation, nullish coalescing, lambda arrow, and spread with descriptions.]
 )
 
