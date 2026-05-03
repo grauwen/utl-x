@@ -63,6 +63,48 @@
 
 #pagebreak()
 
+// ── Copyright / Colophon Page ──
+
+#set text(size: 9pt)
+#v(1fr)
+
+*UTL-X: Format-Agnostic Data Transformation — The Complete Guide*
+
+Copyright \u{00A9} 2026 Ir. Marcel A. Grauwen. All rights reserved.
+
+Published by GLOMIDCO B.V., The Netherlands
+
+ISBN 978-90-819728-1-9
+
+First edition, 2026.
+
+No part of this publication may be reproduced, stored in a retrieval system, or transmitted in any form or by any means without the prior written permission of the author, except for brief quotations in reviews and critical articles.
+
+UTL-X is open source software. The language specification, CLI tool, and standard library are freely available at `https://github.com/grauwen/utl-x`.
+
+Typeset with Typst in New Computer Modern.
+
+#set text(size: 10pt)
+#pagebreak()
+
+// ── About the Author ──
+
+#heading(numbering: none, outlined: false)[About the Author]
+
+#show heading: set heading(numbering: none)
+
+*Ir. Marcel A. Grauwen* is a Dutch software engineer and architect with over twenty-five years of experience in enterprise integration, data transformation, and middleware platforms.
+
+He has designed and built integration solutions on Tibco BusinessWorks, MuleSoft, SAP CPI, Azure Logic Apps, and IBM Integration Bus — and grew increasingly frustrated with the fundamental limitation they all shared: format-specific transformation logic tied to vendor platforms.
+
+UTL-X was born from that frustration. The idea was simple: one transformation language that works on all data formats, runs anywhere, and belongs to no vendor. Marcel designed the language, built the runtime (CLI, IDE daemon, and production engine), wrote the 652-function standard library, and created the USDL schema classification system.
+
+Before UTL-X, Marcel held senior engineering and architecture roles in financial services, logistics, and healthcare integration — domains where data formats are many, schemas are strict, and getting the mapping wrong has real consequences.
+
+Marcel holds an Ir. degree (Master of Science in Engineering) and is based in the Netherlands.
+
+#pagebreak()
+
 // ── Table of Contents ──
 
 #outline(
