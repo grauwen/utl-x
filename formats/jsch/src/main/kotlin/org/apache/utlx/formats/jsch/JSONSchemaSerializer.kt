@@ -179,6 +179,10 @@ class JSONSchemaSerializer(
                         val jsonSchemaType = mapUSDLTypeToJSONSchema(type)
 
                         val fieldProps = mutableMapOf<String, UDM>("type" to UDM.Scalar(jsonSchemaType))
+                        // F10: add "format": "decimal" for decimal types (preserves precision info)
+                        if (type == "decimal") {
+                            fieldProps["format"] = UDM.Scalar("decimal")
+                        }
                         if (fieldDesc != null) {
                             fieldProps["_description"] = UDM.Scalar(fieldDesc)
                         }

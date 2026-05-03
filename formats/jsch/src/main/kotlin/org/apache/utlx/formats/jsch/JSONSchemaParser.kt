@@ -351,6 +351,7 @@ class JSONSchemaParser(private val source: Reader) {
      */
     private fun convertToUSDLType(typeDef: UDM.Object): UDM {
         val type = (typeDef.properties["type"] as? UDM.Scalar)?.value?.toString()
+        val format = (typeDef.properties["format"] as? UDM.Scalar)?.value?.toString()
         val description = (typeDef.properties["description"] as? UDM.Scalar)?.value?.toString()
 
         // Check for enum
@@ -384,9 +385,15 @@ class JSONSchemaParser(private val source: Reader) {
         }
 
         // Default: primitive type
+        // F10: "format": "decimal" overrides type to USDL "decimal"
+        val usdlType = if (format == "decimal" && (type == "string" || type == "number")) {
+            "decimal"
+        } else {
+            jsonSchemaTypeToUSDL(type ?: "string")
+        }
         val typeProps = mutableMapOf<String, UDM>(
             "%kind" to UDM.Scalar("primitive"),
-            "%type" to UDM.Scalar(jsonSchemaTypeToUSDL(type ?: "string"))
+            "%type" to UDM.Scalar(usdlType)
         )
         if (description != null) {
             typeProps["%documentation"] = UDM.Scalar(description)
@@ -432,6 +439,7 @@ class JSONSchemaParser(private val source: Reader) {
      */
     private fun propertyToUSDLField(name: String, prop: UDM.Object, isRequired: Boolean): UDM {
         val type = (prop.properties["type"] as? UDM.Scalar)?.value?.toString() ?: "string"
+        val format = (prop.properties["format"] as? UDM.Scalar)?.value?.toString()
         val description = (prop.properties["description"] as? UDM.Scalar)?.value?.toString()
         val isArray = type == "array"
 
@@ -440,6 +448,9 @@ class JSONSchemaParser(private val source: Reader) {
             val items = prop.properties["items"] as? UDM.Object
             val itemType = (items?.properties?.get("type") as? UDM.Scalar)?.value?.toString() ?: "string"
             jsonSchemaTypeToUSDL(itemType)
+        } else if (format == "decimal" && (type == "string" || type == "number")) {
+            // F10: "format": "decimal" → USDL "decimal" (preserves precision)
+            "decimal"
         } else {
             jsonSchemaTypeToUSDL(type)
         }

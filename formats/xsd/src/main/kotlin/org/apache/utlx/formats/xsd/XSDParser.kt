@@ -879,8 +879,9 @@ class XSDParser(
 
         return when (bareType) {
             "string" -> "string"
-            "int", "integer" -> "integer"
-            "long" -> "long"
+            "int", "integer", "short", "positiveInteger", "nonNegativeInteger", "negativeInteger", "nonPositiveInteger", "unsignedInt", "unsignedShort", "unsignedByte" -> "integer"
+            "long", "unsignedLong" -> "long"
+            "decimal" -> "decimal"  // F10: preserve decimal precision — NOT "number"
             "float" -> "number"
             "double" -> "double"
             "boolean" -> "boolean"
@@ -888,7 +889,7 @@ class XSDParser(
             "date" -> "date"
             "dateTime" -> "datetime"
             "time" -> "time"
-            else -> bareType  // Pass through complex types
+            else -> bareType  // Pass through complex types (e.g., po:MoneyType)
         }
     }
 
