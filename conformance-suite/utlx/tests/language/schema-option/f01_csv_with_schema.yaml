@@ -1,0 +1,22 @@
+name: "f01_csv_with_schema"
+category: "language/schema-option"
+description: "F01: input csv with {schema: ...} and other options combined"
+tags: ["f01", "schema", "csv", "header"]
+
+input:
+  format: csv
+  data: |
+    name,age
+    Alice,30
+
+transformation: |
+  %utlx 1.0
+  input csv {headers: true, schema: "people.tsch.json"}
+  output json
+  ---
+  $input
+
+expected:
+  format: json
+  data: |
+    [{"name": "Alice", "age": 30}]

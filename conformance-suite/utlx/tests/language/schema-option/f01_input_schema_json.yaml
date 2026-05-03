@@ -1,0 +1,24 @@
+name: "f01_input_schema_json"
+category: "language/schema-option"
+description: "F01: input json with {schema: ...} option is accepted by parser"
+tags: ["f01", "schema", "json", "header"]
+
+input:
+  format: json
+  data: |
+    {"name": "Alice", "age": 30}
+
+transformation: |
+  %utlx 1.0
+  input json {schema: "order-schema.json"}
+  output json
+  ---
+  {
+    name: $input.name
+    age: $input.age
+  }
+
+expected:
+  format: json
+  data: |
+    {"name": "Alice", "age": 30}

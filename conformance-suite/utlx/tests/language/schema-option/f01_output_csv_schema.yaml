@@ -1,0 +1,22 @@
+name: "f01_output_csv_schema"
+category: "language/schema-option"
+description: "F01: schema option accepted on CSV output"
+tags: ["f01", "schema", "csv", "output"]
+
+input:
+  format: json
+  data: |
+    [{"name": "Alice", "age": 30}]
+
+transformation: |
+  %utlx 1.0
+  input json
+  output csv {schema: "people.tsch.json", headers: true}
+  ---
+  $input
+
+expected:
+  format: csv
+  data: |
+    name,age
+    Alice,30

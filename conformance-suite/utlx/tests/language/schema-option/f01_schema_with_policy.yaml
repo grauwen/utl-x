@@ -1,0 +1,23 @@
+name: "f01_schema_with_policy"
+category: "language/schema-option"
+description: "F01: schema with validationPolicy option is accepted by parser"
+tags: ["f01", "schema", "policy", "header"]
+
+input:
+  format: json
+  data: |
+    {"amount": 100}
+
+transformation: |
+  %utlx 1.0
+  input json {schema: "input.json", validationPolicy: "strict"}
+  output json {schema: "output.json", validationPolicy: "warn"}
+  ---
+  {
+    total: $input.amount * 1.21
+  }
+
+expected:
+  format: json
+  data: |
+    {"total": 121}

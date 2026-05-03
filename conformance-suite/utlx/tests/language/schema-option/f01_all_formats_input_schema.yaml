@@ -1,0 +1,43 @@
+name: "f01_all_formats_input_schema"
+category: "language/schema-option"
+description: "F01: schema option accepted on all Tier 1 input formats"
+tags: ["f01", "schema", "all-formats", "input"]
+
+inputs:
+  orders:
+    format: json
+    data: |
+      {"id": 1}
+  invoices:
+    format: xml
+    data: |
+      <invoice><id>1</id></invoice>
+  report:
+    format: csv
+    data: |
+      id,name
+      1,Alice
+  config:
+    format: yaml
+    data: |
+      id: 1
+
+transformation: |
+  %utlx 1.0
+  input: orders json {schema: "orders.json"},
+         invoices xml {schema: "invoices.xsd"},
+         report csv {schema: "report.tsch.json", headers: true},
+         config yaml {schema: "config.json"}
+  output json
+  ---
+  {
+    orderId: $orders.id
+    invoiceId: $invoices.invoice.id
+    reportName: $report[0].name
+    configId: $config.id
+  }
+
+expected:
+  format: json
+  data: |
+    {"orderId": 1, "invoiceId": 1, "reportName": "Alice", "configId": 1}
