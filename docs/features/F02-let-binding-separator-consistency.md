@@ -262,13 +262,18 @@ Chapter 8 (Language Fundamentals) currently has a section explaining the three-s
 
 ## Test Plan
 
-1. All existing 453+ conformance tests pass unchanged (backward compatibility)
+1. All existing 495+ conformance tests pass unchanged (backward compatibility)
 2. New tests: `let` with newlines inside object literals (no commas)
 3. New tests: `let` with newlines before array return (no semicolons)
 4. New tests: `let` with semicolons on single line (still works)
 5. New tests: `let` with commas (still works, deprecated)
 6. New tests: the `[` ambiguity case — newline before `[` = array, same line = index
 7. Error message test: clear error if the ambiguity is detected
+8. New tests: `let` bindings OUTSIDE `{ }` — `let` before the output object must continue to work (this pattern works in CLI/utlxe today; see IB01 for the known IDE issue). Critical to verify the newline-sensitivity changes don't break this case:
+   - `let x = $input.field` ↵ `{result: x}` — must work
+   - `info("msg")` ↵ `let x = 1` ↵ `{result: x}` — side-effect + let + object
+   - `let x = 1` ↵ `let y = x + 1` ↵ `[x, y]` — let chain returning array
+   - `let x = 1` ↵ `x + 1` — let returning bare expression (no object)
 
 ## Files to Change
 
