@@ -113,14 +113,14 @@ class LintCommandTest {
     @Test
     fun `test lint with syntax error shows helpful message`() {
         val script = tempDir.resolve("invalid.utlx").toFile()
+        // F02: newlines between properties are now valid, so use a real syntax error
         script.writeText("""
             %utlx 1.0
             input json
             output json
             ---
             {
-              name: input.name
-              email: input.email
+              name: input.name +
             }
         """.trimIndent())
 
