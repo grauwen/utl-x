@@ -44,21 +44,37 @@
 
 // ── Title Page ──
 
+// GLOMIDCO top-left (matching XBRL book)
+#text(size: 24pt, weight: "bold", fill: rgb("#CC0000"))[GLOMIDCO]
+#v(0.3cm)
+#line(length: 100%, stroke: 1.5pt + rgb("#CC0000"))
+#v(0.8cm)
+
+// Logo centered
 #align(center)[
-  #v(2cm)
-  #image("pictures/utlx-logos/utlx-logo-5formats.png", width: 8cm)
-  #v(1cm)
+  #image("pictures/utlx-logos/utlx-logo-5formats.png", width: 10cm)
+]
+
+#v(0.5cm)
+#line(length: 100%, stroke: 1.5pt + rgb("#CC0000"))
+#v(0.5cm)
+
+// Title and subtitle
+#align(center)[
   #text(size: 36pt, weight: "bold", fill: rgb("#003366"))[UTL-X]
-  #v(0.5cm)
-  #text(size: 16pt, fill: rgb("#666666"))[One Language, All Formats]
   #v(0.3cm)
-  #text(size: 11pt, fill: rgb("#999999"))[Data Mapping and Transformation Across XML, JSON, CSV, YAML, OData, and Beyond]
-  #v(2cm)
-  #text(size: 14pt)[Ir. Marcel A. Grauwen]
+  #text(size: 16pt, fill: rgb("#666666"), style: "italic")[One Language, All Formats]
   #v(0.5cm)
-  #text(size: 11pt, fill: rgb("#999999"))[Creator of UTL-X]
-  #v(3cm)
-  #text(size: 10pt, fill: rgb("#999999"))[Version 1.0 — 2026]
+  #text(size: 11pt)[Data Mapping and Transformation Across XML, JSON, CSV, YAML, OData, and Beyond]
+]
+
+#v(1fr)
+
+// Author
+#align(center)[
+  #text(size: 14pt)[Ir. Marcel A. Grauwen]
+  #v(0.3cm)
+  #text(size: 9pt, fill: rgb("#999999"))[First Edition — 2026]
 ]
 
 #pagebreak()
@@ -99,7 +115,7 @@ He has designed and built integration solutions on Tibco BusinessWorks, MuleSoft
 
 UTL-X was born from that frustration. The idea was simple: one transformation language that works on all data formats, runs anywhere, and belongs to no vendor. Marcel designed the language, built the runtime (CLI, IDE daemon, and production engine), wrote the 652-function standard library, and created the USDL schema classification system.
 
-Before UTL-X, Marcel held senior engineering and architecture roles in financial services, logistics, and healthcare integration — domains where data formats are many, schemas are strict, and getting the mapping wrong has real consequences.
+Before UTL-X, Marcel held senior engineering and architecture roles in financial services, energy and utilities, logistics, and the semiconductor equipment industry — including many years of integration work for ASML, the world's leading lithography machine manufacturer. These are domains where data formats are many, schemas are strict, and getting the mapping wrong has real consequences.
 
 Marcel holds an Ir. degree (Master of Science in Engineering) and is based in the Netherlands.
 
@@ -363,45 +379,55 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
 
 // ── Back Page ──
 
-#align(center)[
-  #v(2cm)
-  #image("pictures/utlx-logos/utlx-logo-5formats.png", width: 5cm)
-  #v(0.8cm)
-  #text(size: 14pt, weight: "bold", fill: rgb("#003366"))[UTL-X: One Language, All Formats]
-  #v(0.5cm)
-]
-
-#set text(size: 10pt)
-
-#block(inset: (left: 2cm, right: 2cm))[
-Integration mapping hasn't meaningfully advanced in a decade. XSLT works — for XML. The moment your source or target is JSON, CSV, or YAML, you are on your own.
-
-UTL-X eliminates that tax. One transformation language, all formats, open source.
+#set page(fill: rgb("#CC0000"))
+#set text(fill: white, size: 10pt)
 
 #v(0.5cm)
 
-*What you will learn:*
+#text(size: 18pt, weight: "bold")[UTL-X: One Language, All Formats]
+
+#v(0.6cm)
+
+Integration mapping hasn't meaningfully advanced in a decade. XSLT works — for XML. The moment your source or target is JSON, CSV, or YAML, you are on your own. UTL-X eliminates that tax. One transformation language, all formats, open source.
+
+#v(0.4cm)
+
+This book covers:
 
 - The Universal Data Model (UDM) — how UTL-X makes all formats interchangeable
-- Writing transformations that work on XML, JSON, CSV, YAML, and OData without rewriting
-- Schema-to-schema conversion across XSD, JSON Schema, Avro, Protobuf, and more via USDL
-- The three executables: `utlx` (CLI), `utlxd` (IDE daemon), `utlxe` (production engine)
-- 652 standard library functions — from string manipulation to XML canonicalization
+- Writing transformations across XML, JSON, CSV, YAML, and OData
+- Schema-to-schema conversion via USDL (XSD, JSON Schema, Avro, Protobuf)
+- The three executables: utlx (CLI), utlxd (IDE), utlxe (production engine)
+- 652 standard library functions with examples
 - Production deployment on Azure with Kafka, Prometheus, and hot-reload
 - Data restructuring: groupBy, nestBy, lookupBy, chunkBy, unnest
-- Two complete case studies: European e-invoicing (Peppol/UBL) and healthcare (HL7 FHIR)
+- Case studies: European e-invoicing (Peppol/UBL) and healthcare (HL7 FHIR)
 
-#v(0.5cm)
+#v(0.4cm)
 
-*Who this book is for:* integration developers, data engineers, architects evaluating open alternatives to MuleSoft or Tibco, and anyone building multi-format transformation pipelines.
-]
+Written for integration developers, data engineers, and architects who are tired of maintaining separate transformation tools for every format. Whether you are migrating from XSLT, evaluating alternatives to MuleSoft or Tibco, or building multi-format ETL pipelines — this book shows you how.
 
 #v(1fr)
 
-#align(center)[
-  #image("pictures/isbn-barcode.png", width: 5cm)
-  #v(0.3cm)
-  #text(size: 9pt, fill: rgb("#999999"))[
-    ISBN 978-90-819728-1-9 #h(2em) Published by GLOMIDCO B.V., The Netherlands #h(2em) 2026
+#line(length: 100%, stroke: 0.5pt + white)
+
+#v(0.4cm)
+
+#grid(
+  columns: (1fr, auto),
+  gutter: 1cm,
+  [
+    #text(weight: "bold", size: 11pt)[GLOMIDCO B.V.] \
+    The Netherlands \
+    Web: www.glomidco.com
+
+    #v(0.3cm)
+
+    #text(size: 8pt)[GLOMIDCO B.V. is a technology company specialising in enterprise integration, data transformation, and middleware solutions.]
+  ],
+  [
+    #block(fill: white, inset: 6pt, radius: 3pt)[
+      #image("pictures/isbn-barcode.png", width: 4cm)
+    ]
   ]
-]
+)
