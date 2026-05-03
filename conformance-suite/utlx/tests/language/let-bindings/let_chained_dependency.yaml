@@ -1,0 +1,28 @@
+name: "let_chained_dependency"
+category: "language/let-bindings"
+description: "let bindings where each depends on the previous (chained computation)"
+tags: ["let", "syntax", "chained", "f02-baseline"]
+
+input:
+  format: json
+  data: |
+    {"price": 100, "taxRate": 0.21}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let subtotal = $input.price
+  let tax = subtotal * $input.taxRate
+  let total = subtotal + tax
+  {
+    subtotal: subtotal,
+    tax: tax,
+    total: total
+  }
+
+expected:
+  format: json
+  data: |
+    {"subtotal": 100, "tax": 21, "total": 121}
