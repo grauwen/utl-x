@@ -147,7 +147,67 @@ Use recursion sparingly — deep recursion can exhaust the stack. For most data 
 
 == Higher-Order Functions
 
-Higher-order functions take other functions as arguments. UTL-X's standard library is built on this pattern. Here are the essential ones:
+A higher-order function is a function that takes another function as an argument. Instead of telling the function _what value_ to use, you tell it _what logic_ to apply — and it applies that logic to each element, each key, or each step.
+
+If you come from XSLT, this concept doesn't exist there — XSLT uses `xsl:for-each` and template matching instead. If you come from SQL, think of `WHERE` as a filter and `SELECT` as a map — but written as functions you can compose. If you come from JavaScript, Python, or Kotlin, you already know this pattern.
+
+The core idea: *data stays in the array, logic is passed in as a lambda.*
+
+```utlx
+// Traditional loop thinking: "go through each order, check if active, collect results"
+// Higher-order thinking: "filter orders by active status"
+filter($input.orders, (o) -> o.status == "ACTIVE")
+
+// Traditional: "go through each item, calculate tax, build new list"
+// Higher-order: "map items to items-with-tax"
+map($input.items, (item) -> {
+  name: item.name
+  priceWithTax: item.price * 1.21
+})
+```
+
+UTL-X's standard library includes these higher-order functions:
+
+#table(
+  columns: (auto, auto, auto, auto),
+  align: (left, left, left, left),
+  [*Function*], [*Lambda returns*], [*Result*], [*Use case*],
+  [`map`], [new value], [transformed array], [Transform each element],
+  [`filter`], [boolean], [subset of array], [Keep matching elements],
+  [`find`], [boolean], [first match or null], [Find one element],
+  [`findIndex`], [boolean], [index or -1], [Find position],
+  [`reduce`], [new accumulator], [single value], [Sum, concatenate, aggregate],
+  [`sortBy`], [comparable value], [sorted array], [Custom sort order],
+  [`groupBy`], [key value], [object of groups], [Group by computed key],
+  [`mapGroups`], [new value], [transformed groups], [Process each group],
+  [`any`], [boolean], [boolean], [At least one matches?],
+  [`all`], [boolean], [boolean], [Every element matches?],
+  [`none`], [boolean], [boolean], [No element matches?],
+  [`flatMap`], [array], [flattened array], [Map + flatten],
+  [`mapKeys`], [new key], [transformed object], [Rename object keys],
+  [`mapValues`], [new value], [transformed object], [Transform object values],
+  [`mapEntries`], [new entry], [transformed object], [Transform both key and value],
+  [`filterEntries`], [boolean], [subset of object], [Filter object properties],
+  [`lookupBy`], [key value], [enriched array], [Enrich from reference data],
+  [`nestBy`], [key value], [nested array], [Build parent-child hierarchy],
+  [`chunkBy`], [group key], [chunked array], [Positional grouping],
+)
+
+Any user-defined function can also be higher-order — if it accepts a function parameter and calls it:
+
+```utlx
+// User-defined higher-order function
+function ApplyToAll(items, transform) {
+  map(items, (item) -> transform(item))
+}
+
+// Usage:
+ApplyToAll($input.prices, (p) -> round(p * 1.21, 2))
+```
+
+This is standard functional programming — functions are values that can be passed around, stored in variables, and applied dynamically.
+
+The essential higher-order functions are:
 
 === map — Transform Each Element
 
@@ -318,6 +378,47 @@ let match = find($input.items, (i) -> i.id == "X-001")
 ```
 
 This is a common confusion: `filter` returns `[item]` (array of one), `find` returns `item` (the object itself or null). Use `filter` when you expect multiple results, `find` when you expect one.
+
+==== Lambda Return Types: Objects vs Bare Expressions
+
+A subtle but important distinction: lambdas that return *objects* behave differently from lambdas that return *bare expressions*. This matters for `filter`, `find`, `sortBy`, and `any`/`all` — functions that expect a boolean or comparable value from the lambda.
+
+```utlx
+// WRONG — returns an object, not a boolean:
+filter($input.items, (x) -> {
+  let threshold = 100
+  result: x.price > threshold
+})
+// This does NOT filter! The lambda returns {"result": true} — an object.
+// Any non-null object is truthy, so ALL items pass the filter.
+
+// CORRECT — return a bare expression:
+filter($input.items, (x) -> x.price > 100)
+
+// CORRECT — with let, use let...in for bare expression return:
+filter($input.items, (x) -> (let threshold = 100 in x.price > threshold))
+```
+
+The rule is simple:
+- *`map`* — lambda returns an object → use `{ }` with properties (this is the common case)
+- *`filter`*, *`find`*, *`any`*, *`all`* — lambda returns a boolean → use a bare expression, NOT `{ }`
+- *`sortBy`* — lambda returns a comparable value → use a bare expression
+- *`reduce`* — lambda returns the new accumulator → can be either, depending on what you accumulate
+
+When you need `let` bindings in a `filter` or `sortBy` lambda, use the `let...in` form which returns a bare value:
+
+```utlx
+// let...in returns the expression after "in" — not an object
+filter($input.orders, (o) -> (
+  let minDate = parseDate("2026-01-01", "yyyy-MM-dd")
+  in isAfter(parseDate(o.date, "yyyy-MM-dd"), minDate)
+))
+
+sortBy($input.items, (item) -> (
+  let score = item.rating * item.reviews
+  in -score
+))
+```
 
 === reduce — Accumulate a Result
 
