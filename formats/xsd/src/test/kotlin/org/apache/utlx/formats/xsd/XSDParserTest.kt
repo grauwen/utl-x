@@ -627,4 +627,68 @@ class XSDParserTest {
         // Diagnostics should be present (complete or failed — either is acceptable for empty schema)
         schema.properties.containsKey("%_diagnostics") shouldBe true
     }
+
+    // ── F10: Decimal Type Mapping Tests ──
+
+    @Test
+    fun `F10 - xs decimal maps to USDL decimal type`() {
+        val xsd = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:complexType name="Invoice">
+                <xs:sequence>
+                  <xs:element name="amount" type="xs:decimal"/>
+                  <xs:element name="name" type="xs:string"/>
+                  <xs:element name="count" type="xs:integer"/>
+                  <xs:element name="rate" type="xs:double"/>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:schema>
+        """.trimIndent()
+
+        val udm = XSDParser(xsd).parse() as UDM.Object
+        val types = udm.properties["%types"] as UDM.Object
+        val fields = (types.properties["Invoice"] as UDM.Object).properties["%fields"] as UDM.Array
+
+        // xs:decimal → "decimal" (NOT "number" or "string")
+        val amountField = fields.elements[0] as UDM.Object
+        (amountField.properties["%type"] as UDM.Scalar).value shouldBe "decimal"
+
+        // xs:string → "string"
+        val nameField = fields.elements[1] as UDM.Object
+        (nameField.properties["%type"] as UDM.Scalar).value shouldBe "string"
+
+        // xs:integer → "integer"
+        val countField = fields.elements[2] as UDM.Object
+        (countField.properties["%type"] as UDM.Scalar).value shouldBe "integer"
+
+        // xs:double → "double"
+        val rateField = fields.elements[3] as UDM.Object
+        (rateField.properties["%type"] as UDM.Scalar).value shouldBe "double"
+    }
+
+    @Test
+    fun `F10 - xs positiveInteger maps to integer`() {
+        val xsd = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:complexType name="Item">
+                <xs:sequence>
+                  <xs:element name="qty" type="xs:positiveInteger"/>
+                  <xs:element name="seq" type="xs:nonNegativeInteger"/>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:schema>
+        """.trimIndent()
+
+        val udm = XSDParser(xsd).parse() as UDM.Object
+        val types = udm.properties["%types"] as UDM.Object
+        val fields = (types.properties["Item"] as UDM.Object).properties["%fields"] as UDM.Array
+
+        val qtyField = fields.elements[0] as UDM.Object
+        (qtyField.properties["%type"] as UDM.Scalar).value shouldBe "integer"
+
+        val seqField = fields.elements[1] as UDM.Object
+        (seqField.properties["%type"] as UDM.Scalar).value shouldBe "integer"
+    }
 }

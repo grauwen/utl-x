@@ -84,4 +84,38 @@ class USDLToJSONSchemaTest {
         assertTrue(jsonSchema.contains("\"enum\""))
         assertTrue(jsonSchema.contains("\"pending\""))
     }
+
+    // ── F10: Decimal Type Output ──
+
+    @Test
+    fun `F10 - USDL decimal type produces format decimal in JSON Schema`() {
+        val usdl = UDM.Object(properties = mapOf(
+            "%types" to UDM.Object(properties = mapOf(
+                "Invoice" to UDM.Object(properties = mapOf(
+                    "%kind" to UDM.Scalar("structure"),
+                    "%fields" to UDM.Array(listOf(
+                        UDM.Object(properties = mapOf(
+                            "%name" to UDM.Scalar("amount"),
+                            "%type" to UDM.Scalar("decimal"),
+                            "%required" to UDM.Scalar(true)
+                        )),
+                        UDM.Object(properties = mapOf(
+                            "%name" to UDM.Scalar("rate"),
+                            "%type" to UDM.Scalar("number")
+                        ))
+                    ))
+                ))
+            ))
+        ))
+
+        val serializer = JSONSchemaSerializer()
+        val jsonSchema = serializer.serialize(usdl)
+
+        // decimal → "type": "string", "format": "decimal"
+        assertTrue(jsonSchema.contains("\"format\""), "Should contain format field")
+        assertTrue(jsonSchema.contains("\"decimal\""), "Should contain decimal value")
+
+        // number → "type": "number" (no format)
+        assertTrue(jsonSchema.contains("\"number\""), "Should contain number type for rate")
+    }
 }
