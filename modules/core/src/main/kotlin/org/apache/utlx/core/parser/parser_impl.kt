@@ -876,7 +876,9 @@ class Parser(
                     }
                     Expression.MemberAccess(expr, property, isAttribute, isMetadata, Location.from(previous()))
                 }
-                match(TokenType.LBRACKET) -> {
+                // F02: [ on same line = index access; [ on new line = stop (array literal)
+                check(TokenType.LBRACKET) && !hasNewlineBefore() -> {
+                    advance() // consume [
                     val index = parseExpression()
                     consume(TokenType.RBRACKET, "Expected ']'")
                     Expression.IndexAccess(expr, index, Location.from(previous()))
@@ -1028,16 +1030,18 @@ class Parser(
                     else -> throw error("Unexpected expression type from let/function: ${letExpr::class.simpleName}")
                 }
 
-                // In blocks, let bindings and function definitions should be terminated with semicolon or comma
-                // to prevent ambiguity with subsequent expressions (especially arrays)
-                // If there are let bindings and more content follows, require separator
+                // F02: Accept newline, semicolon, or comma as separator after let/function in blocks
                 if (!check(TokenType.RBRACE) &&
                     !check(TokenType.LET) &&
                     !check(TokenType.FUNCTION) &&
                     !check(TokenType.DEF)) {
-                    // More content follows that's not another let/function - require separator
-                    if (!match(TokenType.SEMICOLON) && !match(TokenType.COMMA)) {
-                        throw error("Expected ';' or ',' after let binding or function definition in block expression")
+                    // More content follows that's not another let/function
+                    // Accept newline as implicit separator (F02), or explicit ; or ,
+                    if (!hasNewlineBefore() && !match(TokenType.SEMICOLON) && !match(TokenType.COMMA)) {
+                        throw error("Expected newline, ';' or ',' after let binding or function definition in block expression")
+                    } else {
+                        // Consume optional explicit separator even if newline already separated
+                        match(TokenType.COMMA) || match(TokenType.SEMICOLON)
                     }
                 } else {
                     // Optional separator between let bindings/functions or before closing brace
@@ -1163,7 +1167,8 @@ class Parser(
                     val value = parseExpression()
 
                     properties.add(Property(key, value, Location.from(previous()), isAttribute))
-                } while (match(TokenType.COMMA))
+                // F02: accept newline or comma between properties
+                } while (match(TokenType.COMMA) || (hasNewlineBefore() && !check(TokenType.RBRACE)))
             }
         }
 
@@ -1607,6 +1612,15 @@ class Parser(
     
     private fun previous(): Token {
         return tokens[current - 1]
+    }
+
+    /**
+     * F02: Check if the current token is on a different line than the previous token.
+     * Used for newline-sensitive parsing — newlines act as implicit separators.
+     */
+    private fun hasNewlineBefore(): Boolean {
+        if (current == 0) return false
+        return peek().line > previous().line
     }
     
     private fun consume(type: TokenType, message: String): Token {

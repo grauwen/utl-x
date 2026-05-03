@@ -1,0 +1,25 @@
+name: "f02_map_let_newlines"
+category: "language/let-bindings"
+description: "F02: map with let bindings and properties separated by newlines in lambda body"
+tags: ["let", "syntax", "map", "lambda", "newline", "f02"]
+
+input:
+  format: json
+  data: |
+    {"items": [{"price": 10, "qty": 2}, {"price": 20, "qty": 3}]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  map($input.items, (item) -> {
+    let total = item.price * item.qty
+    product: total
+    doubled: total * 2
+  })
+
+expected:
+  format: json
+  data: |
+    [{"product": 20, "doubled": 40}, {"product": 60, "doubled": 120}]
