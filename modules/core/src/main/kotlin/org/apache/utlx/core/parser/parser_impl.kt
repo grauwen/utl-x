@@ -1368,7 +1368,8 @@ class Parser(
 
                 cases.add(MatchCase(pattern, guard, expression, Location.from(caseStartToken)))
 
-            } while (match(TokenType.COMMA))
+            // F02: accept newline or comma between match cases
+            } while (match(TokenType.COMMA) || (hasNewlineBefore() && !check(TokenType.RBRACE)))
         }
 
         consume(TokenType.RBRACE, "Expected '}' after match cases")

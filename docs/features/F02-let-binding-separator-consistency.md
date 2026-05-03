@@ -200,7 +200,7 @@ Estimated effort: 2-4 days of parser work + updating all affected tests.
 | Commas required between properties inside `{}` | Newlines sufficient |
 | Semicolons required before `[]` return | Newlines sufficient |
 
-### Implementation (4 changes in parser_impl.kt)
+### Implementation (5 changes in parser_impl.kt)
 
 1. **`hasNewlineBefore()` helper** — checks if current token is on a different line than previous token using existing `Token.line` field. No lexer change needed.
 
@@ -210,7 +210,36 @@ Estimated effort: 2-4 days of parser work + updating all affected tests.
 
 4. **`parsePostfix()` bracket disambiguation** (~line 879) — `[` on same line = index access; `[` on new line = stop (array literal). Changed from `match(LBRACKET)` to `check(LBRACKET) && !hasNewlineBefore()`.
 
-All higher-order functions (map, filter, find, flatMap, sortBy, reduce, groupBy, nestBy, lookupBy, etc.) benefit automatically — the fix is in the shared object literal parser.
+5. **`parseMatchExpression()` case separator** (~line 1371) — accept newline between match cases: `while (match(COMMA) || (hasNewlineBefore() && !check(RBRACE)))`.
+
+All higher-order functions (map, filter, find, flatMap, sortBy, reduce, groupBy, nestBy, lookupBy, etc.) benefit automatically — the fix is in the shared object literal parser. Match expressions also benefit from change 5.
+
+### Verified patterns
+
+Stacked multi-line `let` definitions work without commas — both at top level and inside `{ }`:
+
+```utlx
+// Three multi-line lets stacked inside { } — no commas needed
+{
+  let header = {
+    version: "1.0"
+    timestamp: "2026-05-03"
+  }
+  let lineItems = map($input.items, (item) -> {
+    product: item.name
+    total: item.price * item.qty
+  })
+  let summary = {
+    count: count(lineItems)
+    grandTotal: sumBy(lineItems, (l) -> l.total)
+  }
+  header: header
+  items: lineItems
+  summary: summary
+}
+```
+
+Before F02, this required commas after each `let` binding and between properties. Now newlines are sufficient everywhere.
 
 ### Backward Compatibility
 
