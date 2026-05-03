@@ -1,0 +1,24 @@
+name: "let_single_binding"
+category: "language/let-bindings"
+description: "Single let binding before object return"
+tags: ["let", "syntax", "basic", "f02-baseline"]
+
+input:
+  format: json
+  data: |
+    {"name": "Alice"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let greeting = concat("Hello, ", $input.name)
+  {
+    message: greeting
+  }
+
+expected:
+  format: json
+  data: |
+    {"message": "Hello, Alice"}

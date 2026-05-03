@@ -275,16 +275,48 @@ Chapter 8 (Language Fundamentals) currently has a section explaining the three-s
    - `let x = 1` ↵ `let y = x + 1` ↵ `[x, y]` — let chain returning array
    - `let x = 1` ↵ `x + 1` — let returning bare expression (no object)
 
+## Baseline Tests (added May 2026)
+
+Conformance tests in `conformance-suite/utlx/tests/language/let-bindings/` document the current behavior as a baseline before F02 implementation.
+
+### Tests that PASS today (must continue to pass after F02):
+
+| Test | Pattern | Description |
+|------|---------|-------------|
+| `let_before_object_newlines` | `let a = ...` ↵ `let b = ...` ↵ `{...}` | Top-level let with newlines before object |
+| `let_inside_object_commas` | `{let a = ..., let b = ..., result: ...}` | Let inside object with commas (backward compat) |
+| `let_bare_expression_return` | `let a = ...` ↵ `a + 1` | Let returning bare expression (no object) |
+| `let_chained_dependency` | `let a` ↵ `let b = f(a)` ↵ `let c = f(b)` ↵ `{...}` | Chained lets where each depends on previous |
+| `let_single_binding` | `let x = ...` ↵ `{...}` | Single let before object |
+| `let_in_lambda_commas` | `map(arr, (x) -> {let y = ..., result: y})` | Let inside lambda with commas (backward compat) |
+
+### Patterns that FAIL today (must pass after F02):
+
+These are NOT in the conformance suite (runner doesn't support `skip`). Add them as passing tests when F02 is implemented.
+
+| Pattern | Current error | F02 fix |
+|---------|--------------|---------|
+| `{let a = 1` ↵ `let b = 2` ↵ `result: a + b}` | `Expected ';' or ',' after let binding` | Newlines accepted inside `{ }` |
+| `let a = 1` ↵ `let b = 2` ↵ `[a, b]` | `Expected ']'` (parser treats `[` as index on `2`) | Newline before `[` = array literal |
+| `map(arr, (x) -> {let y = x * 2` ↵ `result: y})` | `Expected ';' or ','` | Newlines accepted in lambda object body |
+
+### Pattern that works in CLI but fails in IDE (IB01 — separate issue):
+
+| Pattern | CLI | IDE |
+|---------|-----|-----|
+| `info("msg")` ↵ `let x = $input.val` ↵ `{result: x}` | ✅ Works | ✗ `$input` not available |
+
 ## Files to Change
 
 | File | Change |
 |------|--------|
 | `parser_impl.kt` | Newline-sensitive `[` parsing, remove comma requirement for let in objects |
 | `lexer_impl.kt` | May need to track newlines as significant tokens (like Go/Kotlin) |
-| Conformance suite | Add 5-10 new tests |
+| Conformance suite | Add the 3 "currently failing" tests as passing + keep 6 baseline tests |
 | `docs/language-guide/syntax.md` | Update let binding documentation |
 | Book chapter 8 | Simplify (remove three-separator explanation) |
 
 ---
 
-*Feature document F02. April 2026. Priority: fix before first Marketplace user.*
+*Feature document F02. April 2026. Updated May 2026 with baseline tests.*
+*Priority: fix before first Marketplace user.*

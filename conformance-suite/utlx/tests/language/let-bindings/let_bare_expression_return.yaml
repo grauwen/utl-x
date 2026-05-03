@@ -1,0 +1,21 @@
+name: "let_bare_expression_return"
+category: "language/let-bindings"
+description: "let binding followed by bare expression return (no object wrapper)"
+tags: ["let", "syntax", "newline", "f02-baseline"]
+
+input:
+  format: json
+  data: |
+    {"x": 10}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let a = $input.x
+  a + 1
+
+expected:
+  format: json
+  data: 11

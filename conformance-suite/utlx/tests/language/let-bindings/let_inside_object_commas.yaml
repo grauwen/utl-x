@@ -1,0 +1,25 @@
+name: "let_inside_object_commas"
+category: "language/let-bindings"
+description: "let bindings inside object body, separated by commas (current required syntax)"
+tags: ["let", "syntax", "comma", "f02-baseline"]
+
+input:
+  format: json
+  data: |
+    {"x": 10}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    let a = $input.x,
+    let b = a * 2,
+    result: a + b
+  }
+
+expected:
+  format: json
+  data: |
+    {"result": 30}

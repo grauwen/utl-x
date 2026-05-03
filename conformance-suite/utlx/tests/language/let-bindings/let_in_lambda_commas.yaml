@@ -1,0 +1,21 @@
+name: "let_in_lambda_commas"
+category: "language/let-bindings"
+description: "let binding inside lambda returning object, comma-separated (current required syntax)"
+tags: ["let", "syntax", "lambda", "comma", "f02-baseline"]
+
+input:
+  format: json
+  data: |
+    {"items": [1, 2, 3]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  map($input.items, (x) -> {let doubled = x * 2, result: doubled})
+
+expected:
+  format: json
+  data: |
+    [{"result": 2}, {"result": 4}, {"result": 6}]
