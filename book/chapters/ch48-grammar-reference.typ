@@ -155,12 +155,14 @@ null                // null value
 
 == Object Construction
 
+Properties are separated by commas or newlines. Commas are required on the same line; newlines are sufficient across lines.
+
 ```
 {
-  key: value,                    // identifier key
-  "key-with-dashes": value,      // string key (for special characters)
-  [dynamicKey]: value,           // computed key (expression in brackets)
-  ...otherObject,                // spread operator
+  key: value                     // identifier key (newline separates from next)
+  "key-with-dashes": value       // string key (for special characters)
+  [dynamicKey]: value            // computed key (expression in brackets)
+  ...otherObject                 // spread operator
   ...if (cond) {k: v} else {}   // conditional spread
 }
 ```
@@ -254,62 +256,60 @@ function CalculateShipping(weight, country) {
   align: (left, left, left),
   [*Where*], [*Visible to*], [*Example*],
   [Top of body], [Everything below in the body], [`let tax = 0.21`],
-  [Inside object `{}`], [Properties in that object], [`{ let x = ...; a: x }`],
-  [Inside lambda], [That lambda invocation only], [`(item) -> { let x = ...; ... }`],
-  [Inside function body], [That function call only], [`function F(n) { let x = ...; ... }`],
-  [Inside `if/else`], [That branch only], [`if (...) { let x = ...; x } else ...`],
+  [Inside object `{}`], [Properties in that object], [`{let x = ...` ↵ `a: x}`],
+  [Inside lambda], [That lambda invocation only], [`(item) -> {let x = ...` ↵ `...}`],
+  [Inside function body], [That function call only], [`function F(n) {let x = ...` ↵ `...}`],
+  [Inside `if/else`], [That branch only], [`if (...) {let x = ...` ↵ `x} else ...`],
 )
 
-=== Let Binding Separators (Known Inconsistency — F02)
+=== Separators: Commas and Newlines
 
-#block(
-  fill: rgb("#FFF3E0"),
-  inset: 12pt,
-  radius: 4pt,
-  width: 100%,
-)[
-  *Known issue.* The `let` binding requires different separators depending on context. This is a parser artifact, not a design choice, and is planned to be fixed before significant user adoption (F02).
-]
+UTL-X uses newline-sensitive parsing for separators. The rule is simple:
 
-The current rules:
+- *Same line:* commas are required between properties, let bindings, or array elements
+- *Different lines:* newlines are sufficient — commas are optional
 
 #table(
   columns: (auto, auto, auto),
   align: (left, left, left),
-  [*Context*], [*Separator*], [*Example*],
-  [Top-level body], [Newline (nothing)], [`let x = 1` then newline then `let y = 2`],
-  [Inside object `{}`], [Comma], [`{let x = 1, let y = 2, result: x + y}`],
-  [Lambda returning array], [Semicolon], [`(i) -> { let x = 1; let y = 2; [x, y] }`],
+  [*Context*], [*Same line*], [*Different lines*],
+  [Object properties], [`{a: 1, b: 2}`], [`{` ↵ `a: 1` ↵ `b: 2` ↵ `}`],
+  [Let bindings in object], [`{let x = 1, y: x}`], [`{` ↵ `let x = 1` ↵ `y: x` ↵ `}`],
+  [Let before array return], [N/A], [`let x = 1` ↵ `[x, x + 1]`],
+  [Array elements], [`[1, 2, 3]`], [Commas required (arrays stay comma-separated)],
+  [Function arguments], [`map(arr, fn)`], [Commas required],
 )
 
-*Why this happens:*
-- Top-level: the parser treats newlines as implicit separators — natural and convenient
-- Inside objects: the parser reuses the object-member rule where everything is comma-separated (properties, let bindings, spreads)
-- Before arrays: without a semicolon, `let y = 20[x, y]` is ambiguous — is `[x, y]` indexing `20` or a separate array expression? The semicolon forces the parser to end the `let`
-
-*The proposed fix (F02):* adopt the Kotlin model — newlines are always sufficient, semicolons are optional (for single-line usage), commas are never used with `let`:
+The `[` bracket on a new line is treated as an *array literal*, not an index operator. This resolves the ambiguity between `let x = 20[arr]` (index) and `let x = 20` followed by `[arr]` (array):
 
 ```utlx
-// Top-level — no change (already works)
-let x = 10
-let y = 20
-{result: x + y}
+let x = arr[0]    // same line: index access
+let x = arr
+[0, 1, 2]         // new line: array literal (not index)
+```
 
-// Inside object — PROPOSED: newline instead of comma
+This parsing model follows Kotlin and Go — newlines act as implicit separators where syntactically unambiguous.
+
+```utlx
+// Multi-line object — no commas needed
 {
   let customer = find($input.customers, (c) -> c.id == $input.customerId)
-  orderId: $input.id,
+  orderId: $input.id
   customerName: customer?.name
 }
 
-// Lambda with array — PROPOSED: newline instead of semicolon
+// Lambda body — no commas needed
 map($input.items, (item) -> {
   let total = item.qty * item.price
-  [item.name, total]
+  name: item.name
+  total: total
 })
+
+// Single-line — commas required
+{orderId: $input.id, total: $input.amount}
 ```
 
-Until F02 is implemented, use the current separators as documented in the table above. The comma-in-object and semicolon-before-array rules are consistent within their contexts — they just differ across contexts.
+Commas are always accepted — existing code with commas continues to work unchanged.
 
 == Function Definitions
 
