@@ -1,0 +1,28 @@
+name: "f01_output_xml_schema"
+category: "language/schema-option"
+description: "F01: schema option accepted on XML output"
+tags: ["f01", "schema", "xml", "output"]
+
+input:
+  format: json
+  data: |
+    {"name": "Alice"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml {schema: "person.xsd", encoding: "UTF-8"}
+  ---
+  {
+    person: {
+      name: $input.name
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <person>
+      <name>Alice</name>
+    </person>

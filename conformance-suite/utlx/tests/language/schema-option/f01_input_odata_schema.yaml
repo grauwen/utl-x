@@ -1,0 +1,24 @@
+name: "f01_input_odata_schema"
+category: "language/schema-option"
+description: "F01: schema option accepted on OData input"
+tags: ["f01", "schema", "odata", "input"]
+
+input:
+  format: json
+  data: |
+    {"@odata.context": "https://example.com/$metadata", "Name": "Alice", "Age": 30}
+
+transformation: |
+  %utlx 1.0
+  input odata {schema: "metadata.edmx"}
+  output json
+  ---
+  {
+    name: $input.Name
+    age: $input.Age
+  }
+
+expected:
+  format: json
+  data: |
+    {"name": "Alice", "age": 30}

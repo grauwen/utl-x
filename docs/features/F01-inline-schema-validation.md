@@ -1,8 +1,9 @@
 # F01: Inline Schema Validation in Header Declaration
 
-**Status:** Not implemented  
+**Status:** Implemented (May 2026) — parser accepts `{schema: "..."}` syntax; validation wiring is EF02  
 **Priority:** Medium  
-**Created:** April 2026
+**Created:** April 2026  
+**Updated:** May 2026
 
 ---
 
@@ -97,17 +98,43 @@ Use the existing `{schema: "path"}` syntax. Reasons:
 
 The `@schema(...)` syntax from the book draft should be corrected to `{schema: "..."}`.
 
-## Implementation Plan
+## Architecture Constraint
 
-### What needs to change
+**The CLI module (`modules/cli`) must NOT depend on the engine module (`modules/engine`).** The CLI is the lightweight, standalone tool. The engine depends on the CLI (not the other way around). Adding `cli → engine` would create a circular dependency.
 
-| File | Change |
-|------|--------|
-| `TransformationService.kt` | Extract `schema` from `formatSpec.options`, resolve file path, invoke validator |
-| `ValidationOrchestrator.kt` | Already exists — wire the schema from options to the orchestrator |
-| `SchemaValidatorFactory.kt` | Already exists — create validator from schema file |
-| Parser (`parser_impl.kt`) | **No change needed** — `{schema: "..."}` already parses as a string option |
-| AST (`ast_nodes.kt`) | **No change needed** — `FormatSpec.options` already holds the value |
+This means:
+- The `SchemaValidator` interface, `SchemaValidatorFactory`, and all validator implementations currently live in `modules/engine` — they are NOT available to the CLI
+- F01 validation logic for the CLI must either:
+  - (a) Live in `modules/core` (shared by both CLI and engine), or
+  - (b) Be implemented directly in `modules/cli` without referencing engine code
+- EF02 (engine adaptation) separately wires the same `{schema: "..."}` header option into the engine's existing `ValidationOrchestrator` — that's a separate commit
+
+### Architecture decision: CLI does NOT validate
+
+The CLI (`modules/cli`) must NOT depend on the engine (`modules/engine`). The engine depends on the CLI — adding the reverse would create a circular dependency. Validation is a production concern — the CLI is a development tool.
+
+The `SchemaValidator` interface, `SchemaValidatorFactory`, and all validator implementations stay in `modules/engine`. They are NOT moved to core. Core stays clean: parser, interpreter, UDM, AST.
+
+### What F01 covers
+
+F01 is the **header syntax** — the parser accepts `{schema: "file"}` as a format option. This is already implemented by the existing `parseFormatOptions()` in `parser_impl.kt` which handles arbitrary `{key: value}` pairs. No code changes needed.
+
+| Component | Behavior |
+|-----------|----------|
+| **Parser** (`modules/core`) | Accepts `{schema: "..."}` — stores in `FormatSpec.options`. No change needed. |
+| **CLI** (`modules/cli`) | Ignores `schema` option — no validation, no file lookup. The CLI is for development. |
+| **Engine** (`modules/engine`) | Reads `FormatSpec.options["schema"]` and wires into `ValidationOrchestrator`. This is **EF02**. |
+| **IDE** (`modules/daemon`) | Reads schema for Design Time mode validation. Separate concern. |
+
+### What was verified
+
+- `input json {schema: "order.json"}` — parses correctly ✅
+- `input xml {schema: "invoice.xsd"}` — parses correctly ✅
+- `input csv {schema: "table.tsch.json"}` — parses correctly ✅
+- `input yaml {schema: "config.json"}` — parses correctly ✅
+- `output json {schema: "output.json"}` — parses correctly ✅
+- `input json {schema: "order.json", validationPolicy: "strict"}` — parses correctly ✅
+- Schema file does NOT need to exist for CLI to work — it's metadata only ✅
 
 ### Logic
 

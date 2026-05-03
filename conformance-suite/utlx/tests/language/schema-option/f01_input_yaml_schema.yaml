@@ -1,0 +1,25 @@
+name: "f01_input_yaml_schema"
+category: "language/schema-option"
+description: "F01: schema option accepted on YAML input"
+tags: ["f01", "schema", "yaml", "input"]
+
+input:
+  format: yaml
+  data: |
+    name: Alice
+    age: 30
+
+transformation: |
+  %utlx 1.0
+  input yaml {schema: "person-schema.json"}
+  output json
+  ---
+  {
+    greeting: concat("Hello, ", $input.name)
+    years: $input.age
+  }
+
+expected:
+  format: json
+  data: |
+    {"greeting": "Hello, Alice", "years": 30}

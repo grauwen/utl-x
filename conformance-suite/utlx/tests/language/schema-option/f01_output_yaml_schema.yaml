@@ -1,0 +1,28 @@
+name: "f01_output_yaml_schema"
+category: "language/schema-option"
+description: "F01: schema option accepted on YAML output"
+tags: ["f01", "schema", "yaml", "output"]
+
+input:
+  format: json
+  data: |
+    {"name": "Alice", "age": 30}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output yaml {schema: "person.json"}
+  ---
+  {
+    person: {
+      name: $input.name
+      age: $input.age
+    }
+  }
+
+expected:
+  format: yaml
+  data: |
+    person:
+      name: Alice
+      age: 30

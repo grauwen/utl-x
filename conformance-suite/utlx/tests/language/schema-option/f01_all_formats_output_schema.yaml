@@ -1,0 +1,23 @@
+name: "f01_all_formats_output_schema"
+category: "language/schema-option"
+description: "F01: schema option accepted on output for JSON format"
+tags: ["f01", "schema", "output"]
+
+input:
+  format: json
+  data: |
+    {"name": "Alice"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json {schema: "output-contract.json", validationPolicy: "strict"}
+  ---
+  {
+    greeting: concat("Hello, ", $input.name)
+  }
+
+expected:
+  format: json
+  data: |
+    {"greeting": "Hello, Alice"}
