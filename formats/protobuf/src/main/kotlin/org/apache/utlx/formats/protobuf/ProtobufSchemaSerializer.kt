@@ -291,6 +291,9 @@ class ProtobufSchemaSerializer {
             }
             "number" -> "double"
             "float" -> "float"
+            "decimal" -> "string"  // F10: Proto3 has no decimal — use string to preserve precision
+            "double" -> "double"
+            "long" -> "int64"
             else -> usdlType // Assume it's a message or enum name
         }
     }

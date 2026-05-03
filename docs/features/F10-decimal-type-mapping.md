@@ -1,6 +1,6 @@
 # F10: Improve xs:decimal → JSON Schema Type Mapping
 
-**Status:** Open  
+**Status:** Implemented (May 2026)  
 **Priority:** Medium  
 **Created:** May 2026  
 **Related:** F08 (USDL enrichment), Chapter 28 (Schema Formats), Chapter 29 (XSD Patterns)

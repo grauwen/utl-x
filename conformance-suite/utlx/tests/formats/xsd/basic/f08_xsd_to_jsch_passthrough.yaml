@@ -36,7 +36,8 @@ expected:
               "type": "string"
             },
             "total": {
-              "type": "string"
+              "type": "string",
+              "format": "decimal"
             }
           },
           "required": [

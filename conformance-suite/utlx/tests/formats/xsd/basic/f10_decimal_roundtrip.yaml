@@ -1,0 +1,38 @@
+name: "f10_decimal_roundtrip"
+category: "formats/xsd/basic"
+description: "F10: xs:decimal round-trips through JSON Schema preserving precision semantics"
+tags: ["xsd", "jsch", "decimal", "f10", "roundtrip"]
+
+input:
+  format: xsd
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:complexType name="Invoice">
+        <xs:sequence>
+          <xs:element name="amount" type="xs:decimal"/>
+          <xs:element name="name" type="xs:string"/>
+          <xs:element name="count" type="xs:integer"/>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:schema>
+
+transformation: |
+  %utlx 1.0
+  input xsd
+  output json
+  ---
+  {
+    decimalType: $input["%types"].Invoice["%fields"][0]["%type"],
+    stringType: $input["%types"].Invoice["%fields"][1]["%type"],
+    integerType: $input["%types"].Invoice["%fields"][2]["%type"]
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "decimalType": "decimal",
+      "stringType": "string",
+      "integerType": "integer"
+    }
