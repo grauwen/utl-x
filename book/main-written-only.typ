@@ -3,7 +3,7 @@
 // Watch:   typst watch main.typ utlx-book.pdf
 
 #set document(
-  title: "UTL-X: Format-Agnostic Data Transformation",
+  title: "UTL-X: One Language, All Formats",
   author: "Ir. Marcel A. Grauwen",
   date: datetime.today(),
 )
@@ -50,9 +50,9 @@
   #v(1cm)
   #text(size: 36pt, weight: "bold", fill: rgb("#003366"))[UTL-X]
   #v(0.5cm)
-  #text(size: 18pt, fill: rgb("#666666"))[Format-Agnostic Data Transformation]
+  #text(size: 16pt, fill: rgb("#666666"))[One Language, All Formats]
   #v(0.3cm)
-  #text(size: 14pt, fill: rgb("#999999"))[The Complete Guide]
+  #text(size: 11pt, fill: rgb("#999999"))[Data Mapping and Transformation Across XML, JSON, CSV, YAML, OData, and Beyond]
   #v(2cm)
   #text(size: 14pt)[Ir. Marcel A. Grauwen]
   #v(0.5cm)
@@ -68,7 +68,7 @@
 #set text(size: 9pt)
 #v(1fr)
 
-*UTL-X: Format-Agnostic Data Transformation — The Complete Guide*
+*UTL-X: One Language, All Formats — Data Mapping and Transformation Across XML, JSON, CSV, YAML, OData, and Beyond*
 
 Copyright \u{00A9} 2026 Ir. Marcel A. Grauwen. All rights reserved.
 
