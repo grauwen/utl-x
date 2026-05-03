@@ -1,6 +1,6 @@
 # F02: Let Binding Separator Consistency
 
-**Status:** Design decision needed  
+**Status:** Implemented (May 2026)  
 **Priority:** High (breaking change — fix before significant user adoption)  
 **Created:** April 2026  
 **Urgency:** Before Azure Marketplace gains live users
@@ -190,14 +190,27 @@ Estimated effort: 2-4 days of parser work + updating all affected tests.
 - Semicolons as optional single-line separators: still work
 - Top-level behavior: unchanged (already newline-based)
 
-### What Changes
+### What Changed (Implemented May 2026)
 
-| Before (current) | After (proposed) |
-|-------------------|------------------|
+| Before | After |
+|--------|-------|
 | `{let x = 1, let y = 2, result: x + y}` | `{let x = 1` ↵ `let y = 2` ↵ `result: x + y}` |
 | `let x = 1; let y = 2; [x, y]` | `let x = 1` ↵ `let y = 2` ↵ `[x, y]` |
-| Commas required inside `{}` | Commas only between properties |
-| Semicolons required before `[]` | Newline sufficient |
+| Commas required between let bindings inside `{}` | Newlines sufficient |
+| Commas required between properties inside `{}` | Newlines sufficient |
+| Semicolons required before `[]` return | Newlines sufficient |
+
+### Implementation (4 changes in parser_impl.kt)
+
+1. **`hasNewlineBefore()` helper** — checks if current token is on a different line than previous token using existing `Token.line` field. No lexer change needed.
+
+2. **`parseObjectLiteral()` let separator** (~line 1039) — accept newline as implicit separator after let/function bindings, in addition to `;` and `,`.
+
+3. **`parseObjectLiteral()` property separator** (~line 1170) — the `do...while(match(COMMA))` loop now also continues on newline: `while (match(COMMA) || (hasNewlineBefore() && !check(RBRACE)))`.
+
+4. **`parsePostfix()` bracket disambiguation** (~line 879) — `[` on same line = index access; `[` on new line = stop (array literal). Changed from `match(LBRACKET)` to `check(LBRACKET) && !hasNewlineBefore()`.
+
+All higher-order functions (map, filter, find, flatMap, sortBy, reduce, groupBy, nestBy, lookupBy, etc.) benefit automatically — the fix is in the shared object literal parser.
 
 ### Backward Compatibility
 
@@ -290,15 +303,14 @@ Conformance tests in `conformance-suite/utlx/tests/language/let-bindings/` docum
 | `let_single_binding` | `let x = ...` ↵ `{...}` | Single let before object |
 | `let_in_lambda_commas` | `map(arr, (x) -> {let y = ..., result: y})` | Let inside lambda with commas (backward compat) |
 
-### Patterns that FAIL today (must pass after F02):
+### Previously failing patterns (now passing after F02 implementation):
 
-These are NOT in the conformance suite (runner doesn't support `skip`). Add them as passing tests when F02 is implemented.
-
-| Pattern | Current error | F02 fix |
-|---------|--------------|---------|
-| `{let a = 1` ↵ `let b = 2` ↵ `result: a + b}` | `Expected ';' or ',' after let binding` | Newlines accepted inside `{ }` |
-| `let a = 1` ↵ `let b = 2` ↵ `[a, b]` | `Expected ']'` (parser treats `[` as index on `2`) | Newline before `[` = array literal |
-| `map(arr, (x) -> {let y = x * 2` ↵ `result: y})` | `Expected ';' or ','` | Newlines accepted in lambda object body |
+| Test | Pattern | Status |
+|------|---------|--------|
+| `f02_let_inside_object_newlines` | `{let a = 1` ↵ `let b = 2` ↵ `result: a + b}` | ✅ Passing |
+| `f02_let_before_array_newlines` | `let a = 1` ↵ `let b = 2` ↵ `[a, b]` | ✅ Passing |
+| `f02_let_in_lambda_newlines` | `map(arr, (x) -> {let y = x * 2` ↵ `result: y})` | ✅ Passing |
+| `f02_map_let_newlines` | `map(items, (i) -> {let t = ...` ↵ `prop: t` ↵ `prop2: t * 2})` | ✅ Passing |
 
 ### Pattern that works in CLI but fails in IDE (IB01 — separate issue):
 
@@ -306,17 +318,23 @@ These are NOT in the conformance suite (runner doesn't support `skip`). Add them
 |---------|-----|-----|
 | `info("msg")` ↵ `let x = $input.val` ↵ `{result: x}` | ✅ Works | ✗ `$input` not available |
 
-## Files to Change
+## Files Changed
 
 | File | Change |
 |------|--------|
-| `parser_impl.kt` | Newline-sensitive `[` parsing, remove comma requirement for let in objects |
-| `lexer_impl.kt` | May need to track newlines as significant tokens (like Go/Kotlin) |
-| Conformance suite | Add the 3 "currently failing" tests as passing + keep 6 baseline tests |
-| `docs/language-guide/syntax.md` | Update let binding documentation |
-| Book chapter 8 | Simplify (remove three-separator explanation) |
+| `modules/core/src/main/kotlin/.../parser/parser_impl.kt` | Added `hasNewlineBefore()`, modified `parseObjectLiteral()` (2 places), modified `parsePostfix()` |
+| `modules/core/src/test/kotlin/.../parser/F02LetBindingSeparatorTest.kt` | 15 Kotlin parser unit tests |
+| `conformance-suite/utlx/tests/language/let-bindings/` | 10 conformance tests (6 baseline + 4 F02) |
+| `lexer_impl.kt` | **No change needed** — Token.line already exists |
+
+## Test Coverage
+
+- **15 Kotlin parser unit tests** (F02LetBindingSeparatorTest.kt)
+- **10 conformance suite tests** (language/let-bindings/)
+- **505 total conformance tests** — all pass
+- **All Kotlin tests** — all pass
 
 ---
 
-*Feature document F02. April 2026. Updated May 2026 with baseline tests.*
-*Priority: fix before first Marketplace user.*
+*Feature document F02. April 2026. Implemented May 2026.*
+

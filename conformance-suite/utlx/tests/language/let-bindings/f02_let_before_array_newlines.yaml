@@ -1,0 +1,23 @@
+name: "f02_let_before_array_newlines"
+category: "language/let-bindings"
+description: "F02: let bindings before array return separated by newlines (the [ ambiguity resolved)"
+tags: ["let", "syntax", "array", "newline", "f02"]
+
+input:
+  format: json
+  data: |
+    {"x": 10}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let a = $input.x
+  let b = a + 1
+  [a, b]
+
+expected:
+  format: json
+  data: |
+    [10, 11]

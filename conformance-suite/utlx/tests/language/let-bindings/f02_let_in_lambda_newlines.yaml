@@ -1,0 +1,24 @@
+name: "f02_let_in_lambda_newlines"
+category: "language/let-bindings"
+description: "F02: let inside lambda with newlines only (no commas)"
+tags: ["let", "syntax", "lambda", "newline", "f02"]
+
+input:
+  format: json
+  data: |
+    {"items": [1, 2, 3]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  map($input.items, (x) -> {
+    let doubled = x * 2
+    result: doubled
+  })
+
+expected:
+  format: json
+  data: |
+    [{"result": 2}, {"result": 4}, {"result": 6}]
