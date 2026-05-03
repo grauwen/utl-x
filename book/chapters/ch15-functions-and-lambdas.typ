@@ -443,6 +443,41 @@ reduce(["Alice", "Bob", "Charlie"], "", (acc, name) ->
 reduce($input.scores, 0, (max, s) -> if (s > max) s else max)
 ```
 
+==== MapReduce in UTL-X
+
+If you come from Hadoop, Spark, or streaming architectures, you know the MapReduce pattern: first *map* each element independently (parallelizable), then *reduce* the results into a single aggregate. UTL-X does not have a dedicated `mapReduce()` function — because `map()` piped into `reduce()` already IS mapReduce:
+
+```utlx
+// MapReduce: compute total revenue from orders
+$input.orders
+  |> map((o) -> o.quantity * o.unitPrice)     // map phase: extract line totals
+  |> reduce(0, (acc, lineTotal) -> acc + lineTotal)  // reduce phase: sum them
+// Output: 4250.00
+```
+
+The pipe operator (`|>`) makes the two phases read naturally as a pipeline — map first, then reduce. This is the same data flow as a Hadoop job, a Spark RDD chain, or a Kafka Streams topology, but expressed in a single UTL-X expression.
+
+For common aggregations, UTL-X provides pre-built map+reduce combinations that are shorter and more readable:
+
+```utlx
+// These are all mapReduce under the hood:
+sumBy($input.orders, (o) -> o.quantity * o.unitPrice)   // sum
+avgBy($input.orders, (o) -> o.total)                    // average
+maxBy($input.orders, (o) -> o.total)                    // max (returns the object)
+countBy($input.orders, (o) -> o.status == "SHIPPED")    // conditional count
+```
+
+When the built-in aggregations are not enough — when you need a custom accumulator shape — use the full `map |> reduce` pattern:
+
+```utlx
+// Custom aggregation: group totals by currency
+$input.orders |> reduce({}, (acc, order) -> {
+  ...acc,
+  [order.currency]: (acc[order.currency] ?? 0) + order.total
+})
+// Output: {"EUR": 3200, "USD": 1050, "GBP": 890}
+```
+
 === find — First Match
 
 ```utlx
