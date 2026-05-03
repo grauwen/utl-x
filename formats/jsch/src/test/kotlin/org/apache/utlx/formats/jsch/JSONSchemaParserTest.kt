@@ -384,4 +384,36 @@ class JSONSchemaParserTest {
 
         types.properties.containsKey("Root") shouldBe true
     }
+
+    // ── F10: Decimal Format Detection ──
+
+    @Test
+    fun `F10 - format decimal detected as USDL decimal type`() {
+        val jsch = """
+            {
+              "type": "object",
+              "properties": {
+                "amount": {"type": "string", "format": "decimal"},
+                "name": {"type": "string"},
+                "count": {"type": "integer"}
+              }
+            }
+        """.trimIndent()
+
+        val udm = JSONSchemaParser(jsch).parse() as UDM.Object
+        val types = udm.properties["%types"] as UDM.Object
+        val fields = (types.properties["Root"] as UDM.Object).properties["%fields"] as UDM.Array
+
+        // "type": "string", "format": "decimal" → USDL "decimal"
+        val amountField = fields.elements[0] as UDM.Object
+        (amountField.properties["%type"] as UDM.Scalar).value shouldBe "decimal"
+
+        // "type": "string" (no format) → USDL "string"
+        val nameField = fields.elements[1] as UDM.Object
+        (nameField.properties["%type"] as UDM.Scalar).value shouldBe "string"
+
+        // "type": "integer" → USDL "integer"
+        val countField = fields.elements[2] as UDM.Object
+        (countField.properties["%type"] as UDM.Scalar).value shouldBe "integer"
+    }
 }
