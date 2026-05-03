@@ -44,38 +44,45 @@
 
 // ── Title Page ──
 
-// GLOMIDCO top-left (matching XBRL book)
-#text(size: 24pt, weight: "bold", fill: rgb("#CC0000"))[GLOMIDCO]
-#v(0.3cm)
-#line(length: 100%, stroke: 1.5pt + rgb("#CC0000"))
-#v(0.8cm)
+#page(margin: 0pt, fill: luma(242))[
+#set par(spacing: 0pt)
+#set block(spacing: 0pt)
+// Top section — single image, no seams
+#image("pictures/coverpage/cover-top-hires.png", width: 100%)
 
-// Logo centered
-#align(center)[
-  #image("pictures/utlx-logos/utlx-logo-5formats.png", width: 10cm)
+// 4. UTL-X title + logo area — light gray background
+#block(fill: luma(242), width: 100%, inset: (x: 1.5cm, top: 0.1cm, bottom: 0.5cm))[
+  #align(center)[
+    #text(size: 80pt, weight: "bold", font: "Arial", fill: rgb("#333333"))[UTL]#text(size: 80pt, weight: "bold", font: "Arial", fill: rgb("#CC0000"))[X]
+    #v(0.4cm)
+    #text(size: 16pt, style: "italic", fill: rgb("#333333"))[#text(weight: "bold")[U]niversal #text(weight: "bold")[T]ransformation #text(weight: "bold")[L]anguage e#text(weight: "bold", fill: rgb("#CC0000"))[X]tended]
+    #v(0.5cm)
+    #image("pictures/utlx-logos/utlx-logo-5formats-red.png", width: 13cm)
+  ]
 ]
 
-#v(0.5cm)
-#line(length: 100%, stroke: 1.5pt + rgb("#CC0000"))
-#v(0.5cm)
-
-// Title and subtitle
-#align(center)[
-  #text(size: 36pt, weight: "bold", fill: rgb("#003366"))[UTL-X]
-  #v(0.3cm)
-  #text(size: 16pt, fill: rgb("#666666"), style: "italic")[One Language, All Formats]
-  #v(0.5cm)
-  #text(size: 11pt)[Data Mapping and Transformation Across XML, JSON, CSV, YAML, OData, and Beyond]
+// 5. Subtitle bar — book title
+#block(width: 100%, inset: (x: 1.5cm, y: 0.6cm))[
+  #align(center)[
+    #text(size: 15pt, weight: "bold")[One Language, All Formats]
+    #v(0.6cm)
+    #text(size: 13pt)[Data Mapping and Transformation Across XML, JSON, CSV, YAML, OData, and Beyond]
+  ]
 ]
 
+// 6. Author area
+#v(1fr)
+#align(center)[
+  #text(size: 13pt)[Ir. Marcel A. Grauwen]
+]
 #v(1fr)
 
-// Author
+// 7. Footer
 #align(center)[
-  #text(size: 14pt)[Ir. Marcel A. Grauwen]
-  #v(0.3cm)
-  #text(size: 9pt, fill: rgb("#999999"))[First Edition — 2026]
+  #text(size: 8pt, fill: rgb("#AAAAAA"))[First Edition — 2026]
 ]
+#v(0.5cm)
+] // end of #page(margin: 0pt)
 
 #pagebreak()
 
