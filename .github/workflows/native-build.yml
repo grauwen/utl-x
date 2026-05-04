@@ -58,13 +58,58 @@ jobs:
         if: runner.os == 'Windows'
         run: .\gradlew.bat :modules:cli:nativeCompile "-Porg.gradle.java.installations.fromEnv=JAVA_HOME_17_X64"
 
-      - name: Test binary (Unix)
+      - name: Validate native binary (Unix)
         if: runner.os != 'Windows'
-        run: ./modules/cli/build/native/nativeCompile/${{ matrix.binary }} --version
+        run: |
+          UTLX=./modules/cli/build/native/nativeCompile/${{ matrix.binary }}
+          chmod +x $UTLX
 
-      - name: Test binary (Windows)
+          echo "=== 1. Version ==="
+          $UTLX --version
+
+          echo "=== 2. Basic JSON transformation ==="
+          echo '{"name": "Alice"}' | $UTLX -e 'concat("Hello, ", $input.name)'
+
+          echo "=== 3. XML input ==="
+          echo '<Order><Customer>Alice</Customer></Order>' | $UTLX --from xml --to json -e '$input'
+
+          echo "=== 4. CSV input ==="
+          printf 'name,age\nAlice,30' | $UTLX --from csv -e '$input'
+
+          echo "=== 5. YAML input ==="
+          echo 'name: Alice' | $UTLX --from yaml -e '$input.name'
+
+          echo "=== 6. Hash function ==="
+          echo '{"data": "hello"}' | $UTLX -e 'sha256($input.data)'
+
+          echo "=== 7. Base64 ==="
+          echo '{"msg": "Hello"}' | $UTLX -e 'base64Encode($input.msg)'
+
+          echo "=== 8. XSD enrichment (F08) ==="
+          echo '<?xml version="1.0"?><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="test" type="xs:string"/></xs:schema>' | $UTLX --input-format xsd -e '$input["%_diagnostics"]["%_status"]'
+
+          echo "=== 9. Newline separators (F02) ==="
+          printf '%%utlx 1.0\ninput json\noutput json\n---\n{\n  let a = 10\n  let b = a * 2\n  result: a + b\n}' > /tmp/f02test.utlx
+          echo '{}' | $UTLX /tmp/f02test.utlx
+
+          echo "=== 10. User-defined function ==="
+          printf '%%utlx 1.0\ninput json\noutput json\n---\nfunction Double(n) { n * 2 }\nDouble($input.x)' > /tmp/functest.utlx
+          echo '{"x": 5}' | $UTLX /tmp/functest.utlx
+
+          echo "=== All native binary tests passed ==="
+
+      - name: Validate native binary (Windows)
         if: runner.os == 'Windows'
-        run: .\modules\cli\build\native\nativeCompile\${{ matrix.binary }} --version
+        run: |
+          $UTLX = ".\modules\cli\build\native\nativeCompile\${{ matrix.binary }}"
+
+          Write-Host "=== 1. Version ==="
+          & $UTLX --version
+
+          Write-Host "=== 2. Basic JSON ==="
+          echo '{"name": "Alice"}' | & $UTLX -e 'concat(\"Hello, \", $input.name)'
+
+          Write-Host "=== All native binary tests passed ==="
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

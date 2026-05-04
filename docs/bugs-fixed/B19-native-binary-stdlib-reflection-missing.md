@@ -1,6 +1,6 @@
 # B19: Native Binary — Stdlib Functions Fail Due to Missing Reflection Config
 
-**Status:** Open (fix attempted, awaiting rebuild verification)  
+**Status:** Fix attempted (2 commits) — awaiting rebuild verification  
 **Priority:** Critical (most stdlib functions broken in native binary)  
 **Created:** May 2026  
 **Related:** B17 (resource bundle — fixed), B18 (Node.js deprecation — separate)
@@ -47,13 +47,19 @@ val executeMethod = stdlibFunction.javaClass.getMethod("execute", List::class.ja
 
 The `stdlibFunction.javaClass` returns anonymous/lambda wrapper classes generated at runtime. GraalVM native-image cannot predict which classes these will be, so it doesn't register them for reflection.
 
-## Fix Attempted
+## Fixes Applied
 
+### Commit 1: Reflection + resource config
 1. Added `StandardLibrary`, `Functions`, `UTLXFunction`, `Interpreter` to `reflect-config.json`
 2. Added `org.apache.utlx.stdlib` to `--initialize-at-build-time` in `build.gradle.kts`
-3. Added explicit `-H:ReflectionConfigurationFiles` path in `build.gradle.kts`
+3. Added Apache XML Security resource bundle to `resource-config.json` (B17)
 
-These may not be sufficient — the dynamic wrapper classes may need broader registration.
+### Commit 2: Remove broken build arg
+- Removed `-H:ReflectionConfigurationFiles=src/main/resources/META-INF/native-image/reflect-config.json` from `build.gradle.kts`
+- This path was resolved relative to the native-image working directory (not the project root), causing build failure
+- The `reflect-config.json` in `META-INF/native-image/` is auto-discovered from the classpath — no explicit path needed
+
+These fixes may not be sufficient — the dynamic wrapper classes returned by `stdlibFunction.javaClass` may need broader registration. Awaiting rebuild verification.
 
 ## Potential Full Fix
 
@@ -85,7 +91,25 @@ Option B is the most robust — it removes the root cause rather than patching t
 
 ## Verification
 
-After fix, run the 12-point native binary validation checklist (Step 11 in release plan). All 12 tests must pass.
+### Manual: Step 11 in release plan
+After fix, run the 12-point native binary validation checklist (Step 11 in `docs/release/version-release-plan.md`). All tests must pass.
+
+### Automated: GitHub Actions workflow
+The native-build workflow (`.github/workflows/native-build.yml`) now runs a 10-point validation checklist after each native binary build, BEFORE uploading artifacts. If any test fails, the build fails and no broken binary is published.
+
+Tests embedded in workflow:
+1. `--version` — binary starts
+2. `concat()` — stdlib function via reflection
+3. XML input — XML parser in native
+4. CSV input — CSV parser in native
+5. YAML input — YAML parser in native
+6. `sha256()` — crypto in native
+7. `base64Encode()` — encoding in native
+8. XSD enrichment — F08 USDL in native
+9. F02 newline separators — parser change in native
+10. User-defined function — function definition in native
+
+This prevents a repeat of B17/B19 — broken binaries are caught at build time, not after release.
 
 ---
 
