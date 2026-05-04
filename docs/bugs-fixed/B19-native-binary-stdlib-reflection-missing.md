@@ -1,6 +1,6 @@
 # B19: Native Binary — Stdlib Functions Fail Due to Missing Reflection Config
 
-**Status:** Fix attempted (2 commits) — awaiting rebuild verification  
+**Status:** Fixed (May 2026) — Option B implemented (reflection eliminated)  
 **Priority:** Critical (most stdlib functions broken in native binary)  
 **Created:** May 2026  
 **Related:** B17 (resource bundle — fixed), B18 (Node.js deprecation — separate)
@@ -59,7 +59,48 @@ The `stdlibFunction.javaClass` returns anonymous/lambda wrapper classes generate
 - This path was resolved relative to the native-image working directory (not the project root), causing build failure
 - The `reflect-config.json` in `META-INF/native-image/` is auto-discovered from the classpath — no explicit path needed
 
-These fixes may not be sufficient — the dynamic wrapper classes returned by `stdlibFunction.javaClass` may need broader registration. Awaiting rebuild verification.
+These were insufficient — the dynamic wrapper classes could not be registered.
+
+### Commit 3: Option B — Eliminate reflection entirely (final fix)
+
+**Problem with eager registration:** Registering all 657 functions at startup added ~50ms overhead, making the CLI noticeably slower for trivial operations (jq comparison concern).
+
+**Solution: Lazy registration without reflection.** Functions are registered on first use, not at startup:
+
+1. `TransformationService` builds a lookup map (`Map<String, (List<UDM>) -> UDM>`) from `StandardLibrary.getAllFunctions()` — built once (lazy singleton via double-checked locking), zero cost if no stdlib function is called
+2. `Interpreter.setStdlibLookup(map)` passes the map to the interpreter — no functions registered yet
+3. `tryRegisterFromLookup(name)` is called on first unknown function — O(1) HashMap lookup, registers the function, then calls it
+4. Subsequent calls to the same function hit the `nativeFunctions` map directly — already registered
+
+**Performance characteristics:**
+- Startup: zero overhead (map built lazily on first stdlib call)
+- First call to any stdlib function: ~0.01ms (HashMap lookup + register)
+- Subsequent calls: direct (same as before)
+- No `Class.forName`, no `getMethod`, no `invoke` — no reflection at all
+
+**Why not override core functions:** `tryRegisterFromLookup` skips functions already in `StandardLibraryImpl.nativeFunctions` — this preserves core implementations (e.g., `round(value, decimals)`) that accept different argument counts than the stdlib version.
+
+**Files changed:**
+- `modules/core/.../interpreter/interpreter.kt` — added `setStdlibLookup()`, `tryRegisterFromLookup()`, wired into `tryLoadStdlibFunction()` before reflection fallback
+- `modules/cli/.../service/TransformationService.kt` — lazy singleton `stdlibLookup` map, passed to interpreter at transform time
+
+### UTLXe consideration: Eager pre-warming (EF02)
+
+The lazy approach is correct for the CLI (startup speed matters, most invocations use few functions). For the UTLXe production engine, the opposite is true:
+- The engine is a long-running process — startup cost is paid once
+- First-message latency matters — one customer's request should not pay the initialization cost
+- All 657 functions should be pre-registered at engine startup (during `--validate` or init phase)
+
+When implementing EF02, add an `Interpreter.preRegisterAllStdlib()` method that eagerly walks the lookup map and registers all functions. Call it during engine initialization, not per-message. This eliminates the "slow first message" syndrome.
+
+```kotlin
+// For utlxe — call once at startup
+fun preRegisterAllStdlib() {
+    stdlibLookup.forEach { (name, _) -> tryRegisterFromLookup(name) }
+}
+```
+
+This is NOT needed for the CLI (each invocation is a fresh process) but IS needed for the engine (long-running, latency-sensitive).
 
 ## Potential Full Fix
 

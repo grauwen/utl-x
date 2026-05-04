@@ -47,6 +47,29 @@ import org.apache.utlx.formats.yaml.YAMLSerializer
  */
 class TransformationService {
 
+    companion object {
+        // B19: Lazy stdlib lookup — built once on first use, zero startup cost
+        @Volatile
+        private var stdlibLookup: Map<String, (List<UDM>) -> UDM>? = null
+
+        private fun ensureStdlibLookup() {
+            if (stdlibLookup == null) {
+                synchronized(this) {
+                    if (stdlibLookup == null) {
+                        try {
+                            val functions = org.apache.utlx.stdlib.StandardLibrary.getAllFunctions()
+                            stdlibLookup = functions.mapValues { (_, func) ->
+                                { args: List<UDM> -> func.execute(args) }
+                            }
+                        } catch (e: Exception) {
+                            stdlibLookup = emptyMap()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Input data (just content and format - no file I/O here)
      */
@@ -98,6 +121,12 @@ class TransformationService {
 
         // Step 3: Execute transformation
         val interpreter = Interpreter()
+
+        // B19 fix: Make stdlib functions available without reflection.
+        // Build lookup map once (lazy — no startup cost), register on first use.
+        ensureStdlibLookup()
+        interpreter.setStdlibLookup(stdlibLookup!!)
+
         val result = interpreter.execute(program, inputUDMs)
         val outputUDM = result.toUDM()
 

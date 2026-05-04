@@ -141,6 +141,51 @@ class Interpreter {
     }
 
     /**
+     * Register an external stdlib function that operates on UDM values.
+     * Called by CLI/engine layers to register all stdlib functions at startup,
+     * avoiding reflective loading at runtime (B19 — GraalVM native-image compatibility).
+     */
+    /**
+     * B19: Set the stdlib lookup map for lazy registration.
+     * Functions are registered on first use, not at startup — zero startup cost.
+     * No reflection needed — the lookup map contains direct function references.
+     */
+    private var stdlibLookup: Map<String, (List<UDM>) -> UDM> = emptyMap()
+
+    fun setStdlibLookup(lookup: Map<String, (List<UDM>) -> UDM>, eager: Boolean = false) {
+        stdlibLookup = lookup
+        if (eager) {
+            // Pre-register all functions now — eliminates first-call latency.
+            // Use for long-running processes (utlxe) where startup cost is acceptable.
+            lookup.keys.forEach { name -> tryRegisterFromLookup(name) }
+        }
+    }
+
+    /**
+     * Try to find and register a stdlib function from the lookup map (no reflection).
+     * Called lazily on first use of each function — O(1) HashMap lookup.
+     */
+    private fun tryRegisterFromLookup(name: String): Boolean {
+        val execute = stdlibLookup[name] ?: return false
+        // Don't override functions already registered by StandardLibraryImpl
+        if (StandardLibraryImpl.nativeFunctions.containsKey(name)) return true
+
+        val wrapper: (List<RuntimeValue>) -> RuntimeValue = { args ->
+            val udmArgs = args.map { runtimeValueToUDM(it) }
+            val result = execute(udmArgs)
+            udmToRuntimeValue(result)
+        }
+        StandardLibraryImpl.nativeFunctions[name] = wrapper
+        val functionValue = RuntimeValue.FunctionValue(
+            parameters = listOf(),
+            body = Expression.NullLiteral(Location(0, 0)),
+            closure = globalEnv
+        )
+        globalEnv.define(name, functionValue)
+        return true
+    }
+
+    /**
      * Execute a program with input data (single input - backward compatible)
      */
     fun execute(program: Program, inputData: UDM): RuntimeValue {
@@ -1020,7 +1065,15 @@ class Interpreter {
      * Dynamic function loader - attempts to load stdlib functions on demand
      */
     private fun tryLoadStdlibFunction(functionName: String, arguments: List<Expression>, env: Environment, location: Location): RuntimeValue {
-        // Try direct function invocation first for problematic functions, then fall back to registry
+        // B19: Try lazy lookup registration first (no reflection, GraalVM safe)
+        if (tryRegisterFromLookup(functionName)) {
+            // Function now registered — re-evaluate the call
+            val args = arguments.map { evaluate(it, env) }
+            val nativeImpl = StandardLibraryImpl.nativeFunctions[functionName]
+            if (nativeImpl != null) return nativeImpl(args)
+        }
+
+        // Try direct function invocation for problematic functions, then fall back to registry
         try {
             return tryDirectFunctionInvocation(functionName, arguments, env, location)
         } catch (e: RuntimeError) {
