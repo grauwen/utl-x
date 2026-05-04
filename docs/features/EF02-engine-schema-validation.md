@@ -23,21 +23,36 @@ Two places can now declare validation schemas:
 ### Precedence rule: Header wins, config is fallback
 
 ```
-Effective schema = header.schema ?? config.schema
-Effective policy = header.validationPolicy ?? config.validationPolicy ?? "strict"
+Effective schema = config.schema ?? header.schema
+Effective policy = config.validationPolicy ?? header.validationPolicy ?? "strict"
 ```
 
-**Rationale:** The header is version-controlled with the transformation — it's the developer's intent. The config is operational override. If both exist, the developer's declaration takes priority. To operationally disable validation without modifying the `.utlx` file, the config can set `validationPolicy: "skip"`.
+**Rationale:** The config is the operational override — set by the ops team at deployment time. The header is the developer's default — set at development time. Config wins because:
 
-### Override: config can force policy
+- Ops must be able to disable validation in staging without modifying `.utlx` files
+- Ops must be able to tighten validation in production beyond what the developer declared
+- Ops must be able to substitute a different schema version without redeploying transformations
+- This matches how every production system works — deployment config trumps source code settings
+
+The header serves as the **default** — if no config override exists, the developer's declaration applies. This means a `.utlx` file with `{schema: "order.json"}` works out of the box in the engine, but ops can override it per environment.
+
+### Examples
 
 ```yaml
-# TransformConfig — operational override
+# TransformConfig — ops relaxes validation for staging
 validation:
-  policyOverride: "warn"   # forces all schemas to warn-only (regardless of header)
+  validationPolicy: "warn"    # overrides header's "strict" — log warnings, don't reject
+
+# TransformConfig — ops substitutes schema for a different version
+validation:
+  inputSchema: "schemas/order-v2.json"   # overrides header's "order.json"
+
+# TransformConfig — ops disables validation entirely
+validation:
+  validationPolicy: "skip"    # no validation, even if header declares a schema
 ```
 
-This allows ops to relax validation in non-production environments without touching `.utlx` files.
+If no `validation` section exists in the config, the header declarations apply unchanged.
 
 ## 2. Bundle Resolution
 
