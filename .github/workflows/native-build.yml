@@ -99,14 +99,43 @@ jobs:
 
       - name: Validate native binary (Windows)
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
           $UTLX = ".\modules\cli\build\native\nativeCompile\${{ matrix.binary }}"
 
           Write-Host "=== 1. Version ==="
           & $UTLX --version
 
-          Write-Host "=== 2. Basic JSON ==="
-          echo '{"name": "Alice"}' | & $UTLX -e 'concat(\"Hello, \", $input.name)'
+          Write-Host "=== 2. Basic JSON transformation ==="
+          '{"name": "Alice"}' | & $UTLX -e 'concat("Hello, ", $input.name)'
+
+          Write-Host "=== 3. XML input ==="
+          '<Order><Customer>Alice</Customer></Order>' | & $UTLX --from xml --to json -e '$input'
+
+          Write-Host "=== 4. CSV input ==="
+          "name,age`nAlice,30" | & $UTLX --from csv -e '$input'
+
+          Write-Host "=== 5. YAML input ==="
+          'name: Alice' | & $UTLX --from yaml -e '$input.name'
+
+          Write-Host "=== 6. Hash function ==="
+          '{"data": "hello"}' | & $UTLX -e 'sha256($input.data)'
+
+          Write-Host "=== 7. Base64 ==="
+          '{"msg": "Hello"}' | & $UTLX -e 'base64Encode($input.msg)'
+
+          Write-Host "=== 8. XSD enrichment (F08) ==="
+          '<?xml version="1.0"?><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="test" type="xs:string"/></xs:schema>' | & $UTLX --input-format xsd -e '$input["%_diagnostics"]["%_status"]'
+
+          Write-Host "=== 9. Newline separators (F02) ==="
+          $utlxScript = "%utlx 1.0`ninput json`noutput json`n---`n{`n  let a = 10`n  let b = a * 2`n  result: a + b`n}"
+          Set-Content -Path "$env:TEMP\f02test.utlx" -Value $utlxScript -Encoding UTF8NoBOM
+          '{}' | & $UTLX "$env:TEMP\f02test.utlx"
+
+          Write-Host "=== 10. User-defined function ==="
+          $funcScript = "%utlx 1.0`ninput json`noutput json`n---`nfunction Double(n) { n * 2 }`nDouble(`$input.x)"
+          Set-Content -Path "$env:TEMP\functest.utlx" -Value $funcScript -Encoding UTF8NoBOM
+          '{"x": 5}' | & $UTLX "$env:TEMP\functest.utlx"
 
           Write-Host "=== All native binary tests passed ==="
 
