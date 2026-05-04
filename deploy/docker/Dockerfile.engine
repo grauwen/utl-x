@@ -53,8 +53,18 @@ USER utlxe
 # Port 8081: Health + Prometheus metrics (probes)
 EXPOSE 8085 8081
 
-# JVM tuning for containerized environments
-ENV JAVA_OPTS="-Xmx2048m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseContainerSupport"
+# JVM tuning for containerized environments:
+#   -XX:+UseContainerSupport   Respect cgroup memory limits (not host memory)
+#   -XX:+AlwaysPreTouch        Allocate heap pages at startup — fail fast if not enough RAM
+#   -XX:+UseG1GC               G1 garbage collector — good for large heaps with pause targets
+#   -XX:MaxGCPauseMillis=200   Target max GC pause
+#
+# Heap size is dynamic — set via UTLXE_HEAP_SIZE env var (default: 1536m for Starter 2GB container)
+#   Starter (2 GB container):      UTLXE_HEAP_SIZE=1536m  (75% of 2 GB)
+#   Professional (4 GB container):  UTLXE_HEAP_SIZE=3072m  (75% of 4 GB)
+#   Enterprise (8 GB container):    UTLXE_HEAP_SIZE=6144m  (75% of 8 GB)
+ENV UTLXE_HEAP_SIZE="1536m"
+ENV JAVA_OPTS="-XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseContainerSupport -XX:+AlwaysPreTouch"
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /utlxe/utlxe.jar $@", "--"]
+ENTRYPOINT ["sh", "-c", "java -Xmx${UTLXE_HEAP_SIZE} $JAVA_OPTS -jar /utlxe/utlxe.jar $@", "--"]
 CMD ["--mode", "http"]
