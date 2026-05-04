@@ -135,5 +135,29 @@
   {
     "name": "kotlin.Metadata",
     "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.utlx.stdlib.StandardLibrary",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.stdlib.Functions",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.stdlib.Functions$UTLXFunction",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.core.interpreter.Interpreter",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
   }
 ]

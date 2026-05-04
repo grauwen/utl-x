@@ -85,14 +85,15 @@ graalvmNative {
             buildArgs.addAll(
                 "--no-fallback",
                 "--strict-image-heap",
-                "--initialize-at-build-time=kotlin,kotlinx,ch.qos.logback,org.slf4j,org.xml.sax,org.apache.xml.security",
+                "--initialize-at-build-time=kotlin,kotlinx,ch.qos.logback,org.slf4j,org.xml.sax,org.apache.xml.security,org.apache.utlx.stdlib",
                 "--report-unsupported-elements-at-runtime",
                 "-H:+ReportExceptionStackTraces",
                 "-H:+AddAllCharsets",
                 "--enable-url-protocols=http,https",
                 "--allow-incomplete-classpath",
                 "-march=native",
-                "-R:MaxHeapSize=256m"
+                "-R:MaxHeapSize=256m",
+                "-H:ReflectionConfigurationFiles=src/main/resources/META-INF/native-image/reflect-config.json"
             )
             
             // Add verbose output for debugging
