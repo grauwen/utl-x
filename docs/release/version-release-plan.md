@@ -286,15 +286,79 @@ Save the output — you'll need these hashes for Homebrew and Chocolatey:
 ### Test each binary
 
 ```bash
-# macOS
+# macOS (if on macOS)
 chmod +x /tmp/utlx-release/utlx-macos-arm64
-/tmp/utlx-release/utlx-macos-arm64 --version
-echo '<Order><Customer>Alice</Customer></Order>' | /tmp/utlx-release/utlx-macos-arm64 --from xml --to json -e '$input'
+UTLX=/tmp/utlx-release/utlx-macos-arm64
 
-# Linux (if on Linux, or skip)
-chmod +x /tmp/utlx-release/utlx-linux-x64
-/tmp/utlx-release/utlx-linux-x64 --version
+# Linux (if on Linux)
+# chmod +x /tmp/utlx-release/utlx-linux-x64
+# UTLX=/tmp/utlx-release/utlx-linux-x64
 ```
+
+### Native binary validation checklist
+
+Run ALL of these against the native binary. GraalVM native-image can silently exclude
+resources, reflection targets, or serialization config that the JVM version handles fine.
+A partial failure (like B17 — missing XML Security bundle) blocks ALL transformations.
+
+```bash
+# 1. Version check
+$UTLX --version
+# Expected: UTL-X CLI vX.Y.Z
+
+# 2. Basic JSON transformation (tests core interpreter)
+echo '{"name": "Alice"}' | $UTLX -e 'concat("Hello, ", $input.name)'
+# Expected: "Hello, Alice"
+
+# 3. XML input (tests XML parser)
+echo '<Order><Customer>Alice</Customer></Order>' | $UTLX --from xml --to json -e '$input'
+# Expected: {"Order":{"Customer":"Alice"}}
+
+# 4. CSV input (tests CSV parser)
+printf 'name,age\nAlice,30' | $UTLX --from csv -e '$input'
+# Expected: [{"name":"Alice","age":30}]
+
+# 5. YAML input (tests YAML parser)
+echo 'name: Alice' | $UTLX --from yaml -e '$input.name'
+# Expected: "Alice"
+
+# 6. XML canonicalization (tests Apache XML Security — B17 regression)
+echo '<doc><b/><a/></doc>' | $UTLX --from xml -e 'c14n($input)'
+# Expected: canonical XML string (not null, not crash)
+
+# 7. Hash function (tests crypto libraries in native image)
+echo '{"data": "hello"}' | $UTLX -e 'sha256($input.data)'
+# Expected: SHA-256 hex string
+
+# 8. Date function (tests java.time in native image)
+echo '{"date": "2026-05-01"}' | $UTLX -e 'parseDate($input.date, "yyyy-MM-dd")'
+# Expected: date value (not crash)
+
+# 9. Base64 (tests encoding in native image)
+echo '{"msg": "Hello"}' | $UTLX -e 'base64Encode($input.msg)'
+# Expected: "SGVsbG8="
+
+# 10. Schema format input — XSD (tests F08 enrichment in native)
+echo '<?xml version="1.0"?><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="test" type="xs:string"/></xs:schema>' | $UTLX --input-format xsd -e '$input["%_diagnostics"]["%_status"]'
+# Expected: "complete"
+
+# 11. Newline separators work (tests F02 parser change)
+echo '{"x": 10}' | $UTLX -e '{
+let a = $input.x
+let b = a * 2
+result: a + b
+}'
+# Expected: {"result":30}
+
+# 12. User-defined function (tests function definition in native)
+echo '{"x": 5}' | $UTLX -e 'function Double(n) { n * 2 }
+Double($input.x)'
+# Expected: 10
+```
+
+**If ANY test fails:** the native binary has a GraalVM configuration gap. Do NOT release until fixed.
+Common causes: missing resource bundles, missing reflection config, missing serialization config.
+The JVM version (`java -jar cli-X.Y.Z.jar`) is the fallback — it always works.
 
 ### Verify release page
 
@@ -505,18 +569,20 @@ chmod +x /tmp/utlx
 | 25 | `README.md` | Badge, URLs, heading, version text |
 | 26 | `docs/getting-started/installation.md` | URLs, version output, JAR path |
 | 27 | `docs/comparison/vs-cel.md` | Footer version |
+| 28 | `QUICKSTART.md` | Heading version |
+| 29 | `docs/examples/jq-to-utlx-examples.md` | Download URL |
 
 ### Should update (scripts, CI — or make version-agnostic)
 
 | # | File | What to change |
 |---|------|---------------|
-| 28 | `.github/workflows/cli-ci.yml` | `cli-X.Y.Z.jar` (line ~75) |
-| 29 | `scripts/test_stdlib_integration.sh` | `cli-X.Y.Z.jar` |
-| 30 | `scripts/test-cli-comprehensive.sh` | `cli-X.Y.Z.jar` + `"UTL-X vX.Y.Z"` |
-| 31 | `scripts/cli_build_script.sh` | `cli-X.Y.Z.jar` |
-| 32 | `scripts/benchmark-cli.sh` | `cli-X.Y.Z.jar` |
-| 33 | `conformance-suite/utlx/runners/validation-runner.py` | `cli-X.Y.Z.jar` |
-| 34 | `docs/getting-started/native-binary-quickstart.md` | `cli-X.Y.Z.jar` |
+| 30 | `.github/workflows/cli-ci.yml` | `cli-X.Y.Z.jar` (line ~75) |
+| 31 | `scripts/test_stdlib_integration.sh` | `cli-X.Y.Z.jar` |
+| 32 | `scripts/test-cli-comprehensive.sh` | `cli-X.Y.Z.jar` + `"UTL-X vX.Y.Z"` |
+| 33 | `scripts/cli_build_script.sh` | `cli-X.Y.Z.jar` |
+| 34 | `scripts/benchmark-cli.sh` | `cli-X.Y.Z.jar` |
+| 35 | `conformance-suite/utlx/runners/validation-runner.py` | `cli-X.Y.Z.jar` |
+| 36 | `docs/getting-started/native-binary-quickstart.md` | `cli-X.Y.Z.jar` |
 
 ---
 
@@ -527,99 +593,6 @@ Consider:
 2. **Wrapper scripts use wildcards**: `cli-*.jar` instead of exact version (validate only one JAR exists)
 3. **Release script**: Automate the find/replace of version strings across all files
 4. **Changelog generation**: `git log vPREV..HEAD --oneline` for auto-generated release notes
-
----
-
-## UTLXe Engine Release (separate from CLI)
-
-The UTLXe production engine and utlxd daemon live on the `development` branch only. They are NOT part of the CLI release on `main`. Engine releases are tagged on `development` with a `utlxe-` prefix.
-
-### Branch and tag strategy
-
-```
-main branch         → CLI releases      → v1.0.2, v1.0.3, ...
-development branch  → UTLXe releases    → utlxe-v1.0.2, utlxe-v1.0.3, ...
-                      (tagged, not merged to main)
-```
-
-### When to release UTLXe
-
-- When engine code changes (transport, strategies, validation, health)
-- When serializer fixes affect the Docker image (e.g., B14)
-- When Azure/GCP Marketplace needs an updated image
-- Version numbers should align with CLI when possible (both v1.0.2)
-
-### UTLXe release steps
-
-**1. Ensure development branch is clean and tested**
-
-```bash
-git switch development
-
-# Run conformance suite (engine tests)
-cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py
-
-# Run Kotlin tests
-./gradlew test
-```
-
-**2. Tag on development (human reviews, human tags — two-eyes pattern)**
-
-```bash
-git tag -a utlxe-vX.Y.Z -m "UTLXe vX.Y.Z"
-git push --tags
-```
-
-**3. Rebuild all JARs**
-
-```bash
-./gradlew :modules:cli:jar :modules:daemon:jar :modules:engine:jar
-```
-
-**4. Rebuild and push Docker image**
-
-```bash
-docker build --platform linux/amd64 -f deploy/docker/Dockerfile.engine -t utlxe:latest .
-docker tag utlxe ghcr.io/utlx-lang/utlxe:latest
-docker tag utlxe ghcr.io/utlx-lang/utlxe:vX.Y.Z
-docker push ghcr.io/utlx-lang/utlxe:latest
-docker push ghcr.io/utlx-lang/utlxe:vX.Y.Z
-```
-
-Note: push both `latest` and a version-specific tag. Azure Marketplace pulls `latest`, but the versioned tag provides reproducibility.
-
-**5. Rebuild Marketplace ZIPs (if Bicep/Terraform templates changed)**
-
-```bash
-./deploy/build.sh marketplace
-```
-
-**6. Verify**
-
-```bash
-# Test Docker image
-docker run --rm -p 8085:8085 ghcr.io/utlx-lang/utlxe:latest --mode http --workers 8 &
-sleep 3
-curl http://localhost:8085/api/health
-docker stop $(docker ps -q --filter ancestor=ghcr.io/utlx-lang/utlxe:latest)
-```
-
-### Files on development that have engine-specific versions
-
-| File | What |
-|------|------|
-| `modules/engine/build.gradle.kts` | `version = "X.Y.Z-SNAPSHOT"` (or release) |
-| `modules/daemon/build.gradle.kts` | `version = "X.Y.Z-SNAPSHOT"` (or release) |
-| `deploy/docker/Dockerfile.engine` | No version (builds from source) |
-
-**SNAPSHOT convention:** Development uses `X.Y.Z-SNAPSHOT` for day-to-day work. When tagging a release, the SNAPSHOT suffix stays — the tag itself marks the release point. This avoids version-bump churn on the development branch.
-
-### Docker image versioning
-
-| Tag | When to use | Pulled by |
-|-----|------------|-----------|
-| `ghcr.io/utlx-lang/utlxe:latest` | Always pushed (current release) | Azure Marketplace deployments |
-| `ghcr.io/utlx-lang/utlxe:vX.Y.Z` | Versioned tag for reproducibility | Customers who pin versions |
 
 ---
 
