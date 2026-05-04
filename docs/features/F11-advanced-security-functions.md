@@ -77,6 +77,48 @@ Proposed functions:
 3. **RSA** — foundation for XMLDSig and general crypto
 4. **Key Vault** — production deployment concern (EF-level)
 
+## Kotlin Libraries and GraalVM Compatibility
+
+### Libraries
+
+| Feature | Library | Already a dependency? |
+|---------|---------|:---:|
+| JWS signing | Nimbus JOSE+JWT or `java.security` | No — add |
+| XMLDSig/XAdES | Apache XML Security (`xmlsec`) | Yes — already used for C14N |
+| RSA sign/verify | `java.security.Signature` (JDK built-in) | Yes — no dependency needed |
+| Key Vault | Azure SDK / GCP SDK / AWS SDK | No — add per cloud |
+
+### GraalVM Native Image Risk Assessment
+
+UTL-X ships as a GraalVM native binary for the CLI. B17/B19 showed that GraalVM strips resources and reflection targets that the JVM handles transparently. Each F11 feature has different risk:
+
+| Feature | GraalVM risk | Details |
+|---------|:---:|---------|
+| JWS signing | Medium | Nimbus JOSE+JWT uses reflection for JSON parsing. Would need `reflect-config.json` entries. Alternative: use `java.security` directly (lower risk). |
+| XMLDSig/XAdES | High | Apache XML Security already caused B17 (resource bundles). Signature verification loads additional classes dynamically — key factories, transform algorithms, canonicalization providers. Will need extensive native-image resource and reflection config. Add XMLDSig to the 10-point build validation checklist. |
+| RSA sign/verify | Low | `java.security.Signature` is well-supported in GraalVM native image. JDK crypto providers work out of the box. Bouncy Castle (if needed) requires provider registration. |
+| Key Vault | **Not viable for native CLI** | Azure/GCP/AWS SDKs are massive (50+ MB), reflection-heavy, and pull in HTTP clients with complex initialization. These should be **JVM/engine-only** — available in UTLXe but NOT in the native CLI binary. |
+
+### Architecture Constraint
+
+Key Vault integration must be implemented in the engine module (`modules/engine`), NOT in core or stdlib. This keeps the native CLI binary lean and avoids pulling cloud SDK dependencies into the GraalVM native image.
+
+For the CLI, secrets should be passed via environment variables (`env("API_KEY")`) or command-line arguments — not fetched from cloud vaults at transformation time.
+
+### Build Validation
+
+When implementing XMLDSig and JWS signing, extend the native binary validation checklist (`.github/workflows/native-build.yml`) with:
+
+```bash
+# XMLDSig verification (F11)
+echo '<signed-xml/>' | $UTLX --from xml -e 'verifyXMLSignature($input)'
+
+# JWS signing (F11)
+echo '{"sub":"user"}' | $UTLX -e 'signJWS($input, "test-key", "HS256")'
+```
+
+This prevents a repeat of B17/B19 — native binary issues are caught at build time.
+
 ## Effort Estimate
 
 | Task | Effort |
