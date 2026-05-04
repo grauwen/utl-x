@@ -62,7 +62,7 @@ This book is organised in eight parts. You do not need to read it linearly — b
 
 == A Note on Versions
 
-This book covers UTL-X v1.0.1. The CLI tool (`utlx`) and its 652 standard library functions are stable. The production engine (`utlxe`) and IDE daemon (`utlxd`) are in active development; chapters covering those components reflect their state at time of writing and may evolve. The language itself — the transformation syntax, the UDM, the type system — is stable and the core focus of this book.
+This book covers UTL-X v1.1.0. The CLI tool (`utlx`) and its 650+ standard library functions are stable. The production engine (`utlxe`) and IDE daemon (`utlxd`) are in active development; chapters covering those components reflect their state at time of writing and may evolve. The language itself — the transformation syntax, the UDM, the type system — is stable and the core focus of this book.
 
 All examples in this book can be run with the free, open source UTL-X binaries available at:
 

@@ -46,7 +46,7 @@ Separation of concerns:
   [WHEN to process (scheduling, triggers)], [HOW to transform (expressions, functions)],
   [Error handling (retry, dead-letter)], [Data validation (schema, assertions)],
   [Monitoring and audit trail], [Format conversion and enrichment],
-  [Connector management], [652 stdlib functions],
+  [Connector management], [650+ stdlib functions],
 )
 
 Each does one thing well. UTL-X can be used WITHOUT Open-M (standalone CLI, engine, Docker). Open-M can use other transformation engines — but UTL-X is the default.
@@ -128,7 +128,7 @@ Open-M is written in Go — lightweight, fast startup, single binary, native Kub
 Why Go for the controller and Kotlin/JVM for the engine?
 
 - *Controller (Go):* needs fast startup, low memory, native Kubernetes client, lightweight HTTP server. Go excels here.
-- *Engine (Kotlin/JVM):* needs 652 stdlib functions, schema validation, bytecode compilation, SnakeYAML/Jackson parsers. The JVM ecosystem provides these.
+- *Engine (Kotlin/JVM):* needs 650+ stdlib functions, schema validation, bytecode compilation, SnakeYAML/Jackson parsers. The JVM ecosystem provides these.
 
 The Go wrapper bridges them — the controller spawns UTLXe as a subprocess and communicates via the uniform SDK interface (Chapter 34).
 

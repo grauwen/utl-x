@@ -43,7 +43,7 @@ fun UDM.asString(): String = when (this) {
 }
 ```
 
-This keeps the UDM classes clean (pure data) while providing rich access methods. 652 stdlib functions are registered without bloating the core types.
+This keeps the UDM classes clean (pure data) while providing rich access methods. 650+ stdlib functions are registered without bloating the core types.
 
 === Java Ecosystem
 
@@ -96,10 +96,28 @@ With GraalVM (native binary):
 This is why `brew install utlx` gives you a native binary, not a JAR. For CLI usage — shell scripts, CI/CD pipelines, interactive development — startup time is everything. A 250ms penalty per invocation makes `for f in *.xml; do utlx ...; done` painfully slow. With native: 100 files/second. With JVM: 4 files/second.
 
 Native binary characteristics:
-- Startup: under 10ms
+- Startup: ~7ms (comparable to jq)
 - Memory: ~40MB resident (vs ~150MB for JVM)
 - Distribution: single file, no JVM installation required
-- Size: ~60MB (includes all format parsers, stdlib, and the GraalVM runtime)
+- Size: ~84MB (includes all format parsers, 650+ stdlib functions, and the GraalVM runtime)
+
+=== GraalVM Challenges and How They Were Solved
+
+GraalVM native-image performs ahead-of-time compilation — it strips everything not statically reachable. This creates challenges for a dynamic language runtime like UTL-X:
+
+*Resource bundles:* The Apache XML Security library loads resource bundles dynamically via `ResourceBundle.getBundle()`. GraalVM's static analysis doesn't detect this. The fix: explicitly list resource bundles in `resource-config.json`.
+
+*Reflection:* UTL-X's 650+ stdlib functions were originally loaded via Java reflection (`Class.forName` → `getMethod` → `invoke`). This worked on the JVM but failed silently in native image — GraalVM couldn't predict which classes would be accessed reflectively.
+
+The solution: *eliminate reflection entirely*. Instead of reflective dispatch, the CLI registers all stdlib functions as direct function references at startup — using a lazy registration pattern:
+
+- A lookup map is built once (on first stdlib call, not at startup — zero startup cost)
+- When a function is called for the first time, the map provides a direct reference (HashMap lookup, no reflection)
+- Subsequent calls go through the registered reference directly
+
+This approach is faster than reflection on JVM too, and works identically on native image. The `Interpreter.setStdlibLookup(map, eager)` API supports both lazy (CLI) and eager (engine) modes — the engine can pre-register all functions at startup to avoid first-call latency in production.
+
+The 10-point native binary validation checklist (embedded in the GitHub Actions build workflow) runs automatically on all three platforms (Linux, macOS, Windows) before release — preventing broken binaries from being published.
 
 === JVM for the Engine
 
@@ -108,7 +126,7 @@ UTLXe runs on the standard JVM, not as a native image. This is deliberate — th
 - *HotSpot JIT:* compiles hot paths to native code at runtime, optimizing based on actual execution patterns
 - *COMPILED strategy:* generates JVM bytecode via ASM — this bytecode benefits from JIT, a native image would not
 - *G1GC:* handles large heaps efficiently for sustained throughput with thousands of concurrent messages
-- *Reflection:* used by SnakeYAML, Jackson, and the stdlib function dispatch — works without configuration on JVM, requires extensive configuration for native image
+- *Eager stdlib loading:* the engine calls `setStdlibLookup(map, eager = true)` at startup, pre-registering all 650+ functions — no first-message latency penalty
 
 Native image would save startup time (~250ms → ~10ms), but UTLXe starts once and runs for days. Startup time is irrelevant; sustained throughput matters. The JVM wins.
 
@@ -155,7 +173,7 @@ The browser DOM API is different from Node.js XML parsers (xml2js, fast-xml-pars
 - *No reflection:* UTL-X's interpreter uses reflection for stdlib dispatch. Kotlin/WASM doesn't support reflection.
 - *String handling:* WASM uses linear memory with manual allocation. UTL-X processes thousands of strings per transformation. WasmGC (garbage collection) helps but is not universal.
 - *Binary size:* ~20MB WASM module — too large for edge deployment.
-- *652 stdlib functions:* each needs WASM-compatible implementation. Crypto, XML parsing, file I/O — none available in WASM sandbox.
+- *650+ stdlib functions:* each needs WASM-compatible implementation. Crypto, XML parsing, file I/O — none available in WASM sandbox.
 
 WASM is 2-3 years away from being viable for UTL-X. When Kotlin/WASM matures and WasmGC is universal — revisit.
 
@@ -166,7 +184,7 @@ The most important architectural decision: UTL-X has ONE implementation (Kotlin/
 If UTL-X were implemented in Kotlin + JavaScript + Python + Go:
 - 4 parsers handling edge cases differently
 - 4 interpreters with subtle behavioral differences
-- 4 x 652 = 2,608 stdlib implementations with guaranteed inconsistency
+- 4 x 650+ = 2,600+ stdlib implementations with guaranteed inconsistency
 - 4 x 11 format parsers where XML namespace handling WILL differ
 
 Real-world precedent: XSLT has multiple implementations (Saxon, Xalan, libxslt, MSXML). They produce DIFFERENT output for the same stylesheet. This has plagued XML developers for 25 years.
@@ -180,14 +198,14 @@ UTL-X's design: one implementation, multiple access paths:
 ┌─────────┐   │     │             │
 │ Go app  │──→├────→│ UTLXe (JVM) │  ← ONE implementation
 └─────────┘   │     │             │     100,000+ lines
-┌─────────┐   │     │ via stdio,  │     652 functions
+┌─────────┐   │     │ via stdio,  │     650+ functions
 │ Python  │──→┤     │ HTTP, or    │     11 format parsers
-└─────────┘   │     │ direct API  │     470+ conformance tests
+└─────────┘   │     │ direct API  │     500+ conformance tests
 ┌─────────┐   │     │             │
 │ Any HTTP│──→┘     └─────────────┘
 └─────────┘
 ```
 
-The wrapper is 200-300 lines of thin client code. The engine (100,000+ lines of transformation logic) exists ONCE. All languages get identical behavior — verified by 470+ conformance tests running against the same binary.
+The wrapper is 200-300 lines of thin client code. The engine (100,000+ lines of transformation logic) exists ONCE. All languages get identical behavior — verified by 500+ conformance tests running against the same binary.
 
 One implementation = one behavior = one conformance suite = zero deviation.

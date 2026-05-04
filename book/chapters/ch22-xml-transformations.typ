@@ -22,7 +22,7 @@ $input.Order.Customer       // "Alice Johnson"
 $input.Order.Total          // 299.99 (auto-detected as number)
 ```
 
-UTL-X auto-unwraps text content — you get the value directly, not a wrapper object. This is the B13/B14 behavior described in Chapter 10.
+UTL-X auto-unwraps text content — you get the value directly, not a wrapper object. This behavior is described in Chapter 10.
 
 === Attribute Access
 

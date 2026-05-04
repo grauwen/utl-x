@@ -9,11 +9,11 @@ All three executables share the same core:
 - The same ANTLR-based parser (identical grammar, identical AST)
 - The same interpreter (identical expression evaluation)
 - The same Universal Data Model (identical type system)
-- The same 652 standard library functions
+- The same 650+ standard library functions
 - The same 11 format parsers and serializers
 - The same 7 schema validators
 
-A transformation that works in one executable works identically in all three. A bug fix in the shared core fixes all three simultaneously. This is by design — the conformance suite (453+ tests) validates behavior across executables.
+A transformation that works in one executable works identically in all three. A bug fix in the shared core fixes all three simultaneously. This is by design — the conformance suite (500+ tests) validates behavior across executables.
 
 The difference is in what surrounds the core: how input arrives, how output is delivered, and how the process is managed.
 
@@ -82,7 +82,7 @@ The daemon is the bridge between UTL-X and your IDE. It runs as a background pro
 *Features provided to the IDE:*
 
 - *Real-time diagnostics:* syntax errors highlighted as you type — no need to save and run
-- *Autocompletion:* function names (all 652), property paths (from parsed input), keywords
+- *Autocompletion:* function names (all 650+), property paths (from parsed input), keywords
 - *Hover information:* function signatures, parameter types, return types
 - *Live preview:* transformation result updates as you type (with sample data)
 - *Go-to-definition:* navigate to function definitions and variable bindings
@@ -173,7 +173,7 @@ What if your application is written in C\#, Go, or Python — not Kotlin/JVM? Yo
 // DIAGRAM: Application (C#/Go/Python) → subprocess spawn → UTLXe (JVM) via stdin/stdout protobuf
 // Source: part1-foundation.pptx, slide 10
 
-The wrapper is 200--300 lines of thin client code. The engine — 100,000+ lines of transformation logic — exists once. All languages get identical behavior, verified by the same 453+ conformance tests.
+The wrapper is 200--300 lines of thin client code. The engine — 100,000+ lines of transformation logic — exists once. All languages get identical behavior, verified by the same 500+ conformance tests.
 
 Available wrappers:
 

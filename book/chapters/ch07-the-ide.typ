@@ -26,7 +26,7 @@ IDE Runtime is the IDE's default mode — a graphical overlay on top of the UTL-
 - A three-panel layout: Input, Transformation, Output
 - Syntax highlighting, autocompletion, and real-time error diagnostics
 - Live preview: as you type, the transformation runs against sample input and shows the result
-- The function library browser for all 652 stdlib functions
+- The function library browser for all 650+ stdlib functions
 - The UDM tree browser showing parsed input structure
 
 In IDE Runtime, you _experiment_. You paste sample data, write a `.utlx` transformation, and see the output instantly. There is no schema awareness — you work with the data as-is, guided by the live preview. This is how you prototype transformations, explore unfamiliar data structures, and iterate quickly.
@@ -257,7 +257,7 @@ Click a node to insert the accessor path into the transformation editor. For exa
 
 == The Function Library
 
-The function library panel lets you browse all 652 standard library functions without leaving the editor:
+The function library panel lets you browse all 650+ standard library functions without leaving the editor:
 
 - *Browse by category:* 18 categories (String, Array, Math, Date, Type, Encoding, XML, JSON, CSV, YAML, Security, Binary, Financial, Geospatial, Utility, Object, Core, Other)
 - *Search:* type a keyword to find functions by name or description
@@ -273,7 +273,7 @@ For example, searching "date" shows: `now()`, `today()`, `parseDate()`, `formatD
 
 The Function Builder has three tabs:
 
-- *Standard Library:* browse all 652 functions by category
+- *Standard Library:* browse all 650+ functions by category
 - *Available Inputs:* shows the fields available from `$input` with their detected types — useful for exploring unfamiliar data structures without switching to the tree browser
 - *Operators:* browse all UTL-X operators (logical, pipe, safe navigation, nullish coalescing, lambda arrow, spread) with descriptions
 
@@ -344,6 +344,6 @@ The header editor generates the header block — you can always switch to text e
 
 *Work schema-first when schemas exist.* If you have schemas for both input and output, switch to IDE Design Time and load them. The IDE validates your output in real-time, catching contract violations before you even save the file.
 
-*Browse functions, don't memorize.* With 652 functions, nobody remembers them all. Use the function library search. Type what you want to do — "convert date", "filter array", "encrypt" — and the library shows relevant functions.
+*Browse functions, don't memorize.* With 650+ functions, nobody remembers them all. Use the function library search. Type what you want to do — "convert date", "filter array", "encrypt" — and the library shows relevant functions.
 
 *Trust the red underlines.* If the IDE shows an error, fix it before moving on. Real-time diagnostics catch 90% of issues that would otherwise only surface at runtime.

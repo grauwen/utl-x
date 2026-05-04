@@ -7,15 +7,15 @@ This chapter covers the complete toolkit for restructuring data in UTL-X: from f
 == The Six Restructuring Patterns
 
 #table(
-  columns: (auto, auto, auto, auto),
-  align: (left, left, left, left),
-  [*Pattern*], [*Direction*], [*Function*], [*Status*],
-  [Parent-child nesting], [Flat → Hierarchical], [nestBy()], [Proposed (F03)],
-  [Record enrichment], [Flat → Enriched], [lookupBy()], [Proposed (F04)],
-  [Sequential grouping], [Flat → Grouped], [chunkBy()], [Proposed (F05)],
-  [Denormalization], [Hierarchical → Flat], [unnest()], [Proposed (F06)],
-  [Key-based grouping], [Flat → Map], [groupBy()], [Exists],
-  [Array flattening], [Nested → Flat], [flatten()], [Exists],
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [*Pattern*], [*Direction*], [*Function*],
+  [Parent-child nesting], [Flat → Hierarchical], [`nestBy()`],
+  [Record enrichment], [Flat → Enriched], [`lookupBy()`],
+  [Sequential grouping], [Flat → Grouped], [`chunkBy()`],
+  [Denormalization], [Hierarchical → Flat], [`unnest()`],
+  [Key-based grouping], [Flat → Map], [`groupBy()`],
+  [Array flattening], [Nested → Flat], [`flatten()`],
 )
 
 // DIAGRAM: Six patterns as arrows between "Flat", "Hierarchical", "Grouped", "Enriched"
@@ -236,7 +236,7 @@ Use `groupBy` when you want a map (key → array) rather than a nested hierarchy
   radius: 4pt,
   width: 100%,
 )[
-  *Known Issue (B15):* `groupBy()` currently cannot be indexed with a UDM value — `groups[order.orderId]` fails with "Index must be a number or string." This bug blocks the efficient groupBy + index pattern. Use `filter()` as a workaround until B15 is fixed.
+  `groupBy()` returns an Object — use key-based lookup for O(1) access: `groups[order.orderId]`.
 ]
 
 == Pattern 6: Array Flattening (flatten — exists)

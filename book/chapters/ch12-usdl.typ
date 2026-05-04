@@ -92,7 +92,7 @@ YAML is the human-readable editing layer for schemas. Read any schema as YAML, e
   radius: 4pt,
   width: 100%,
 )[
-  *Status (F08):* USDL enrichment is fully implemented. All 6 Tier 2 parsers add `%` properties alongside the raw structure on input. All 6 serializers detect `%types` on output. Both raw and USDL access work simultaneously: `$input["xs:element"]` (raw) and `$input["%types"]` (USDL). Enrichment failure never blocks — `$input["%_diagnostics"]["%_status"]` reports `"complete"`, `"partial"`, or `"failed"`.
+   USDL enrichment is fully implemented. All 6 Tier 2 parsers add `%` properties alongside the raw structure on input. All 6 serializers detect `%types` on output. Both raw and USDL access work simultaneously: `$input["xs:element"]` (raw) and `$input["%types"]` (USDL). Enrichment failure never blocks — `$input["%_diagnostics"]["%_status"]` reports `"complete"`, `"partial"`, or `"failed"`.
 ]
 
 == The USDL Directive Classification
@@ -519,7 +519,7 @@ Outputs the schema as clean, readable YAML with USDL directives — useful for d
 
 == USDL for Validation
 
-USDL schemas can be referenced for transformation validation (see F01 for the planned inline syntax):
+USDL schemas can be referenced for transformation validation:
 
 ```utlx
 %utlx 1.0

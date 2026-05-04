@@ -88,7 +88,7 @@ The key design decisions for XML:
 
 *Text content uses \_text.* When an XML element contains only text — like `<Name>Alice</Name>` — the text is stored as a property called `_text` inside the UDM Object. This is an internal convention that you never see in output (the serializers unwrap it automatically). It exists because UDM Objects store properties as a map, and the text content needs a key.
 
-When you write `$input.Order.Customer`, UTL-X automatically unwraps the `_text` and returns "Alice" — not the internal `{_text: "Alice"}` wrapper. This unwrapping was refined through bugs B13 and B14 (see Chapter 23 for the full story).
+When you write `$input.Order.Customer`, UTL-X automatically unwraps the `_text` and returns "Alice" — not the internal `{_text: "Alice"}` wrapper. This unwrapping is described in detail in Chapter 23.
 
 *Attributes are separate.* XML attributes are stored in a separate `attributes` map on the UDM Object, not mixed with child element properties. This prevents name collisions — an element could theoretically have both a child element and an attribute with the same name. Access attributes with the `@` prefix: `$input.Order.@id`.
 
@@ -198,7 +198,7 @@ The unwrapping rules:
 - If an Object has `_text` AND attributes → keep as Object (attributes would be lost)
 - If an Object has child elements → no unwrapping (it's a real object)
 
-These rules were stabilized in bugs B13 (property access unwrapping) and B14 (serializer output unwrapping). Chapter 23 covers the design decisions in detail.
+Chapter 23 covers the design decisions behind these rules in detail.
 
 == UDM is Format-Agnostic, Transformations are Format-Agnostic
 
@@ -298,7 +298,7 @@ map(enrichedOrders, (order) -> {
 })
 ```
 
-See the F03 design document and the architecture document on N-to-M mapping for the full analysis, performance characteristics, and multi-level nesting patterns.
+See Chapter 21 (Data Restructuring) for the full analysis, performance characteristics, and multi-level nesting patterns.
 
 == UDM and Schema Formats (Tier 2)
 

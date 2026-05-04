@@ -79,7 +79,7 @@ Every cell shows whether the conversion is direct (pass-through works), needs ma
   [Output formats], [XML (text output for others)], [All 11 formats natively],
   [Paradigm], [Template matching (push)], [Functional expressions (pull)],
   [Syntax], [XML (verbose)], [Concise, JSON-like],
-  [Functions], [XPath 2.0/3.0 functions], [652 stdlib functions],
+  [Functions], [XPath 2.0/3.0 functions], [650+ stdlib functions (superset of XPath 2.0, partial XPath 3.0)],
   [User functions], [Named templates], [`function` with PascalCase],
   [Variables], [`xsl:variable` (immutable)], [`let` (immutable)],
   [Schema validation], [XSD only], [7 schema formats],
@@ -104,7 +104,7 @@ Every cell shows whether the conversion is direct (pass-through works), needs ma
   [Schema formats], [JSON Schema, XSD], [7 formats (+ USDL bridge)],
   [Production engine], [Mule Runtime], [UTLXe (86K msg/s)],
   [Version control], [Embedded in Mule app], [`.utlx` files in Git],
-  [Conformance suite], [No], [470+ tests],
+  [Conformance suite], [No], [500+ tests],
 )
 
 === UTL-X vs jq
@@ -122,7 +122,7 @@ Every cell shows whether the conversion is direct (pass-through works), needs ma
   [User functions], [`def f: ...;`], [`function F(...) { ... }`],
   [Schema validation], [No], [7 formats],
   [Production engine], [No], [UTLXe],
-  [Stdlib functions], [~50], [652],
+  [Stdlib functions], [~50], [650+],
   [XML support], [No], [Full (namespaces, attributes, C14N)],
 )
 
@@ -186,7 +186,8 @@ Every cell shows whether the conversion is direct (pass-through works), needs ma
   [*Version*], [*Date*], [*Highlights*],
   [1.0.0], [April 2026], [Initial release. CLI, daemon, engine. 5 data formats, 6 schema formats, 652 stdlib functions.],
   [1.0.1], [April 2026], [CLI enhancements: `-e` expression mode, identity flip, `--from`/`--to` flags.],
-  [1.0.2], [April 2026], [Bug fixes: B13 (XML text unwrapping in UDM), B14 (XML `_text` leaking into JSON/YAML output). New: `writeAttributes` option, `#text` key for text content, `@` prefix consistency for JSON and YAML.],
+  [1.0.2], [April 2026], [Bug fixes: XML text unwrapping in UDM, `_text` leaking into JSON/YAML output. New: `writeAttributes` option, `#text` key for text content, `@` prefix consistency for JSON and YAML.],
+  [1.1.0], [May 2026], [Major feature release. Newline separators (commas optional in multi-line objects and match cases). Data restructuring functions: nestBy, lookupBy, chunkBy, unnest. USDL enrichment for all 6 Tier 2 parsers. groupBy returns Object + mapGroups. `#text` alias for `_text`. `xs:decimal` type mapping with JSON Schema `"format": "decimal"`. GraalVM native binary fixes — 650+ stdlib functions work in native image. Native binary startup ~7ms.],
 )
 
 == Appendix G: License

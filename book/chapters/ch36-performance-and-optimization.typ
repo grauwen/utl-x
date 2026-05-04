@@ -150,7 +150,7 @@ This gives you requests/second, latency percentiles (p50, p95, p99), and error r
 
 === Conformance Suite as Benchmark
 
-The conformance suite (470+ tests) can be run in throughput mode to establish a baseline:
+The conformance suite (500+ tests) can be run in throughput mode to establish a baseline:
 
 ```bash
 python3 conformance-suite/run_tests.py --benchmark
@@ -235,7 +235,7 @@ map($input.orders, (order) ->
 )
 ```
 
-When `nestBy()` (F03) is implemented, it handles the indexing automatically.
+`nestBy()` handles the indexing automatically.
 
 === Avoid: Repeated Computation
 

@@ -133,7 +133,7 @@ output:
   schema: "invoice-output.xsd"
 ```
 
-A future enhancement (F01) will allow inline schema declaration in the .utlx header:
+Schema references can be declared inline in the `.utlx` header using the `{schema: "file"}` option:
 
 ```utlx
 %utlx 1.0
@@ -143,7 +143,7 @@ output xml {schema: "invoice-output.xsd"}
 // transformation body
 ```
 
-This syntax is parsed today but not yet wired to the validation orchestrator. When F01 is implemented, the same validators will be used — the only difference is where the schema reference lives.
+This syntax is accepted by the parser and makes the `.utlx` file self-documenting — the schema contract is version-controlled alongside the transformation. The CLI ignores the schema option (it is a development tool — you see the output yourself). The UTLXe production engine uses it to validate input and output against the declared schemas at runtime.
 
 === CLI Static Validation
 
@@ -295,7 +295,7 @@ For now, semantic rules must be expressed as part of the transformation logic �
 
 == Validation and the Conformance Suite
 
-The UTL-X conformance suite (453+ tests) validates transformation correctness — not schema compliance. These are different concerns:
+The UTL-X conformance suite (500+ tests) validates transformation correctness — not schema compliance. These are different concerns:
 
 - *Conformance tests:* "Does this transformation produce the expected output?" (functional correctness)
 - *Schema validation:* "Does this output match the contract?" (structural compliance)

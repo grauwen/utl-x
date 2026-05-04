@@ -9,7 +9,7 @@ UTL-X's testing strategy is designed to catch these errors before they reach pro
 UTL-X uses layered testing — each layer catches different classes of bugs:
 
 ```
-Layer 5: Conformance Suite (Python, 470+ tests)
+Layer 5: Conformance Suite (Python, 500+ tests)
   └── Layer 4: Integration Tests (Kotlin)
        └── Layer 3: Module Tests (Kotlin)
             └── Layer 2: Format Tests (Kotlin)
@@ -49,7 +49,7 @@ Test each format parser and serializer independently. Every format module has it
 ./gradlew :formats:test          # all formats
 ```
 
-These catch format-specific regressions. When B14 (XML `_text` leaking into JSON output) was fixed, format tests caught the behavior change immediately.
+These catch format-specific regressions. When the XML `_text` serialization leak was fixed, format tests caught the behavior change immediately.
 
 == Layer 3: Module Tests
 
@@ -116,7 +116,7 @@ expected:
   data: '{"Order":{"Customer":"Alice"}}'
 ```
 
-470+ tests cover:
+500+ tests cover:
 - *Formats:* every format pair (XML→JSON, JSON→CSV, YAML→XML, etc.)
 - *Stdlib:* function behavior (string operations, math, date/time, arrays, objects)
 - *Examples:* real-world transformations (orders, invoices, IDoc, FHIR)
@@ -161,7 +161,7 @@ This runs the transformation normally AND saves a conformance test YAML file wit
   radius: 4pt,
   width: 100%,
 )[
-  *Warning: auto-captured tests cement current behavior.* They validate what IS, not what SHOULD BE. If the output has a bug, the test captures the bug as "expected" — and the test passes, hiding the bug. Always review auto-captured tests manually before trusting them. This was learned the hard way with B14: auto-captured tests had `_text` in expected output, which cemented the bug as "correct" behavior.
+  *Warning: auto-captured tests cement current behavior.* They validate what IS, not what SHOULD BE. If the output has a bug, the test captures the bug as "expected" — and the test passes, hiding the bug. Always review auto-captured tests manually before trusting them. This was learned the hard way: auto-captured tests had `_text` in expected output, which cemented the bug as "correct" behavior.
 ]
 
 Auto-capture is valuable for:
@@ -237,4 +237,4 @@ Every PR must pass:
 - Full conformance suite (layer 5)
 - No new test failures (regressions blocked)
 
-This ensures that no code reaches the main branch without passing 470+ tests across all formats, functions, and patterns.
+This ensures that no code reaches the main branch without passing 500+ tests across all formats, functions, and patterns.

@@ -36,8 +36,8 @@ Why does `_text` exist? UDM Objects store properties as a `Map<String, UDM>`. Th
 When you write `$input.Total`, UTL-X automatically unwraps `_text` and returns the value `299.99` directly. You never need to write `$input.Total._text` — the unwrapping is invisible.
 
 This was refined through two bug fixes:
-- *B13:* `_text` was not auto-unwrapped during property access — fixed so `$input.Total` returns `299.99`, not `{_text: 299.99}`
-- *B14:* `_text` leaked into JSON/YAML output — fixed so serializers unwrap it before writing
+-  `_text` was not auto-unwrapped during property access — fixed so `$input.Total` returns `299.99`, not `{_text: 299.99}`
+-  `_text` leaked into JSON/YAML output — fixed so serializers unwrap it before writing
 
 After these fixes, `_text` is a pure internal implementation detail.
 

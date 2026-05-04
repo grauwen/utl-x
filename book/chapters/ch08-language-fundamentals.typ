@@ -500,7 +500,7 @@ When in doubt, use commas inside braces and semicolons inside lambdas. At the to
   radius: 4pt,
   width: 100%,
 )[
-  *Design Note (F02):* The three-separator rule for `let` bindings is a known inconsistency inherited from the parser implementation, not a deliberate language design choice. A future UTL-X version will simplify this to: _newlines are always sufficient_ (the Kotlin model). Commas and semicolons will remain accepted for backward compatibility but will no longer be required. See the F02 design document for details. This section of the book will be updated when the improvement is implemented.
+  *Note:* Newlines are sufficient as separators between `let` bindings, between properties, and between match cases. Commas and semicolons are also accepted (backward compatible) but not required when entries are on separate lines. See Chapter 48 (Grammar Reference) for the full separator rules.
 ]
 
 == Conditional Expressions

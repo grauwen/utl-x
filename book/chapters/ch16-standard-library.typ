@@ -1,8 +1,8 @@
 = Standard Library Overview
 
-UTL-X ships with 652 built-in functions organized in 18 categories. This chapter provides a guided tour — what each category offers, when you'd use it, and the most important functions in each. The complete reference with signatures and examples for every function is in Part VIII (Chapter 50).
+UTL-X ships with 650+ built-in functions organized in 18 categories. This chapter provides a guided tour — what each category offers, when you'd use it, and the most important functions in each. The complete reference with signatures and examples for every function is in Part VIII (Chapter 50).
 
-You don't need to memorize 652 functions. You need to know _what categories exist_ so you can search for the right function when you need it. The IDE's function library and `utlx functions --search` command make discovery easy.
+You don't need to memorize 650+ functions. You need to know _what categories exist_ so you can search for the right function when you need it. The IDE's function library and `utlx functions --search` command make discovery easy.
 
 == String Functions (83 functions)
 
@@ -321,7 +321,7 @@ values(object)                                 // ["Alice", 30]
 
 == Finding the Right Function
 
-With 652 functions, discovery matters more than memorization.
+With 650+ functions, discovery matters more than memorization.
 
 === In the CLI
 
