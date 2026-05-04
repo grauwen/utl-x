@@ -3,7 +3,7 @@
 **An open-source, format-agnostic functional transformation language for data transformation.**
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE.md)
-[![Version](https://img.shields.io/badge/version-1.0.2-green)](https://github.com/grauwen/utl-x/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-green)](https://github.com/grauwen/utl-x/releases)
 [![Documentation](https://img.shields.io/badge/docs-utlx.dev-brightgreen)](https://utl-x.org/docs)
 
 ## Overview
@@ -244,7 +244,7 @@ Note: Chocolatey package is currently in moderation review. In the meantime, dow
 
 **Direct download (any distro):**
 ```bash
-curl -L https://github.com/grauwen/utl-x/releases/download/v1.0.2/utlx-linux-x64.bin -o utlx
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.1.0/utlx-linux-x64.bin -o utlx
 chmod +x utlx
 sudo mv utlx /usr/local/bin/
 ```
@@ -260,7 +260,7 @@ brew install utlx
 
 ### Download Pre-Built Binaries
 
-Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.0.2):
+Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.1.0):
 
 | Platform | Binary |
 |----------|--------|
@@ -292,7 +292,7 @@ Windows: use `utlx.bat` or `.\utlx.ps1` instead of `./utlx`.
 
 ```bash
 utlx --version
-# UTL-X CLI v1.0.2
+# UTL-X CLI v1.1.0
 ```
 
 ## Quick Start
@@ -576,9 +576,9 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 ## Project Status
 
-**Current Version**: 1.0.2
+**Current Version**: 1.1.0
 
-### What's in 1.0.2
+### What's in 1.1.0
 
 - Bug fixes: B13 (XML text node unwrapping) and B14 (XML attributes in JSON/YAML output)
 - XML-to-JSON/YAML pass-through now produces clean output without internal `_text` wrappers
@@ -601,7 +601,7 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 | Component | Description | Status |
 |-----------|-------------|--------|
-| **UTL-X CLI** (`utlx`) | Transformation engine, format conversion, REPL, 652 stdlib functions | **1.0.2 Released** |
+| **UTL-X CLI** (`utlx`) | Transformation engine, format conversion, REPL, 652 stdlib functions | **1.1.0 Released** |
 | **UTL-X Engine** (`utlxe`) | Pipeline orchestration for multi-step transformations and bundle execution | In Development |
 | **UTL-X IDE Support** (`utlxd`) | Language Server Protocol daemon for VS Code and IDE integration | In Development |
 | **JavaScript Runtime** | Browser/Node.js runtime (~75% stdlib coverage, all major formats) | Future |

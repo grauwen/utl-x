@@ -247,4 +247,4 @@ This is the cleanest visual signal of the boundary. If your environment already 
 
 ---
 
-*Last updated: April 2026 — UTL-X v1.0.2*
+*Last updated: April 2026 — UTL-X v1.1.0*

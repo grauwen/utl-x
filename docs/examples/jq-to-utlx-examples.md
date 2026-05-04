@@ -350,6 +350,6 @@ cat response.json | utlx --to odata > data.odata.json
 brew tap grauwen/utlx && brew install utlx
 
 # Linux
-curl -L https://github.com/grauwen/utl-x/releases/download/v1.0.2/utlx-linux-x64.bin -o utlx
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.1.0/utlx-linux-x64.bin -o utlx
 chmod +x utlx && sudo mv utlx /usr/local/bin/
 ```

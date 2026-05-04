@@ -33,23 +33,23 @@ utlx --version
 
 ### Option 2: Download Pre-Built Binary
 
-Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.0.2):
+Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.1.0):
 
 **macOS (Apple Silicon):**
 ```bash
-curl -L https://github.com/grauwen/utl-x/releases/download/v1.0.2/utlx-macos-arm64.bin -o utlx
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.1.0/utlx-macos-arm64.bin -o utlx
 chmod +x utlx
 sudo mv utlx /usr/local/bin/
 ```
 
 **Linux (x64):**
 ```bash
-curl -L https://github.com/grauwen/utl-x/releases/download/v1.0.2/utlx-linux-x64.bin -o utlx
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.1.0/utlx-linux-x64.bin -o utlx
 chmod +x utlx
 sudo mv utlx /usr/local/bin/
 ```
 
-**Windows:** Download `utlx-windows-x64.exe` from the [releases page](https://github.com/grauwen/utl-x/releases/tag/v1.0.2).
+**Windows:** Download `utlx-windows-x64.exe` from the [releases page](https://github.com/grauwen/utl-x/releases/tag/v1.1.0).
 
 ### Option 3: Windows (Chocolatey)
 
@@ -110,11 +110,11 @@ gradlew.bat :modules:cli:jar
 
 **Output:**
 ```
-UTL-X CLI v1.0.2
+UTL-X CLI v1.1.0
 Universal Transformation Language Extended
 ```
 
-The wrapper scripts (`utlx`, `utlx.bat`, `utlx.ps1`) automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-1.0.2.jar`.
+The wrapper scripts (`utlx`, `utlx.bat`, `utlx.ps1`) automatically locate and run the compiled JAR file at `modules/cli/build/libs/cli-1.1.0.jar`.
 
 ---
 
