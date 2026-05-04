@@ -505,18 +505,20 @@ chmod +x /tmp/utlx
 | 25 | `README.md` | Badge, URLs, heading, version text |
 | 26 | `docs/getting-started/installation.md` | URLs, version output, JAR path |
 | 27 | `docs/comparison/vs-cel.md` | Footer version |
+| 28 | `QUICKSTART.md` | Heading version |
+| 29 | `docs/examples/jq-to-utlx-examples.md` | Download URL |
 
 ### Should update (scripts, CI — or make version-agnostic)
 
 | # | File | What to change |
 |---|------|---------------|
-| 28 | `.github/workflows/cli-ci.yml` | `cli-X.Y.Z.jar` (line ~75) |
-| 29 | `scripts/test_stdlib_integration.sh` | `cli-X.Y.Z.jar` |
-| 30 | `scripts/test-cli-comprehensive.sh` | `cli-X.Y.Z.jar` + `"UTL-X vX.Y.Z"` |
-| 31 | `scripts/cli_build_script.sh` | `cli-X.Y.Z.jar` |
-| 32 | `scripts/benchmark-cli.sh` | `cli-X.Y.Z.jar` |
-| 33 | `conformance-suite/utlx/runners/validation-runner.py` | `cli-X.Y.Z.jar` |
-| 34 | `docs/getting-started/native-binary-quickstart.md` | `cli-X.Y.Z.jar` |
+| 30 | `.github/workflows/cli-ci.yml` | `cli-X.Y.Z.jar` (line ~75) |
+| 31 | `scripts/test_stdlib_integration.sh` | `cli-X.Y.Z.jar` |
+| 32 | `scripts/test-cli-comprehensive.sh` | `cli-X.Y.Z.jar` + `"UTL-X vX.Y.Z"` |
+| 33 | `scripts/cli_build_script.sh` | `cli-X.Y.Z.jar` |
+| 34 | `scripts/benchmark-cli.sh` | `cli-X.Y.Z.jar` |
+| 35 | `conformance-suite/utlx/runners/validation-runner.py` | `cli-X.Y.Z.jar` |
+| 36 | `docs/getting-started/native-binary-quickstart.md` | `cli-X.Y.Z.jar` |
 
 ---
 
