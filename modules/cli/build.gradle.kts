@@ -92,8 +92,7 @@ graalvmNative {
                 "--enable-url-protocols=http,https",
                 "--allow-incomplete-classpath",
                 "-march=native",
-                "-R:MaxHeapSize=256m",
-                "-H:ReflectionConfigurationFiles=src/main/resources/META-INF/native-image/reflect-config.json"
+                "-R:MaxHeapSize=256m"
             )
             
             // Add verbose output for debugging
