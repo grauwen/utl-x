@@ -286,15 +286,79 @@ Save the output — you'll need these hashes for Homebrew and Chocolatey:
 ### Test each binary
 
 ```bash
-# macOS
+# macOS (if on macOS)
 chmod +x /tmp/utlx-release/utlx-macos-arm64
-/tmp/utlx-release/utlx-macos-arm64 --version
-echo '<Order><Customer>Alice</Customer></Order>' | /tmp/utlx-release/utlx-macos-arm64 --from xml --to json -e '$input'
+UTLX=/tmp/utlx-release/utlx-macos-arm64
 
-# Linux (if on Linux, or skip)
-chmod +x /tmp/utlx-release/utlx-linux-x64
-/tmp/utlx-release/utlx-linux-x64 --version
+# Linux (if on Linux)
+# chmod +x /tmp/utlx-release/utlx-linux-x64
+# UTLX=/tmp/utlx-release/utlx-linux-x64
 ```
+
+### Native binary validation checklist
+
+Run ALL of these against the native binary. GraalVM native-image can silently exclude
+resources, reflection targets, or serialization config that the JVM version handles fine.
+A partial failure (like B17 — missing XML Security bundle) blocks ALL transformations.
+
+```bash
+# 1. Version check
+$UTLX --version
+# Expected: UTL-X CLI vX.Y.Z
+
+# 2. Basic JSON transformation (tests core interpreter)
+echo '{"name": "Alice"}' | $UTLX -e 'concat("Hello, ", $input.name)'
+# Expected: "Hello, Alice"
+
+# 3. XML input (tests XML parser)
+echo '<Order><Customer>Alice</Customer></Order>' | $UTLX --from xml --to json -e '$input'
+# Expected: {"Order":{"Customer":"Alice"}}
+
+# 4. CSV input (tests CSV parser)
+printf 'name,age\nAlice,30' | $UTLX --from csv -e '$input'
+# Expected: [{"name":"Alice","age":30}]
+
+# 5. YAML input (tests YAML parser)
+echo 'name: Alice' | $UTLX --from yaml -e '$input.name'
+# Expected: "Alice"
+
+# 6. XML canonicalization (tests Apache XML Security — B17 regression)
+echo '<doc><b/><a/></doc>' | $UTLX --from xml -e 'c14n($input)'
+# Expected: canonical XML string (not null, not crash)
+
+# 7. Hash function (tests crypto libraries in native image)
+echo '{"data": "hello"}' | $UTLX -e 'sha256($input.data)'
+# Expected: SHA-256 hex string
+
+# 8. Date function (tests java.time in native image)
+echo '{"date": "2026-05-01"}' | $UTLX -e 'parseDate($input.date, "yyyy-MM-dd")'
+# Expected: date value (not crash)
+
+# 9. Base64 (tests encoding in native image)
+echo '{"msg": "Hello"}' | $UTLX -e 'base64Encode($input.msg)'
+# Expected: "SGVsbG8="
+
+# 10. Schema format input — XSD (tests F08 enrichment in native)
+echo '<?xml version="1.0"?><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="test" type="xs:string"/></xs:schema>' | $UTLX --input-format xsd -e '$input["%_diagnostics"]["%_status"]'
+# Expected: "complete"
+
+# 11. Newline separators work (tests F02 parser change)
+echo '{"x": 10}' | $UTLX -e '{
+let a = $input.x
+let b = a * 2
+result: a + b
+}'
+# Expected: {"result":30}
+
+# 12. User-defined function (tests function definition in native)
+echo '{"x": 5}' | $UTLX -e 'function Double(n) { n * 2 }
+Double($input.x)'
+# Expected: 10
+```
+
+**If ANY test fails:** the native binary has a GraalVM configuration gap. Do NOT release until fixed.
+Common causes: missing resource bundles, missing reflection config, missing serialization config.
+The JVM version (`java -jar cli-X.Y.Z.jar`) is the fallback — it always works.
 
 ### Verify release page
 
