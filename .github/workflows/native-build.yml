@@ -24,10 +24,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup JDK 17 (for Gradle toolchain)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -41,7 +41,7 @@ jobs:
           native-image-job-reports: 'true'
 
       - name: Cache Gradle packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -141,7 +141,7 @@ jobs:
           Write-Host "=== All native binary tests passed ==="
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: utlx-${{ matrix.platform }}
           path: modules/cli/build/native/nativeCompile/${{ matrix.binary }}

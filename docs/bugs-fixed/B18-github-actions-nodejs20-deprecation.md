@@ -1,6 +1,6 @@
 # B18: GitHub Actions — Node.js 20 Deprecation Warning
 
-**Status:** Open  
+**Status:** Fixed (May 2026)  
 **Priority:** Medium  
 **Created:** May 2026  
 **Deadline:** Before June 2, 2026 (forced migration) / September 16, 2026 (removal)
