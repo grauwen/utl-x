@@ -27,10 +27,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
         java-version: '17'
@@ -54,7 +54,7 @@ jobs:
     
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-results-jar
         path: modules/cli/build/reports/tests/test/
@@ -65,7 +65,7 @@ jobs:
         ./scripts/test-cli-comprehensive.sh
     
     - name: Upload JAR artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: utlx-cli-jar
         path: modules/cli/build/libs/cli-*.jar
@@ -93,7 +93,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     
     - name: Set up GraalVM
       uses: graalvm/setup-graalvm@v1
@@ -135,7 +135,7 @@ jobs:
         .\modules\cli\build\native\nativeCompile\utlx.exe --help
     
     - name: Upload native binary
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ matrix.artifact-name }}
         path: |
@@ -156,16 +156,16 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
         java-version: '17'
     
     - name: Download JAR artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: utlx-cli-jar
         path: modules/cli/build/libs/
@@ -257,10 +257,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
         java-version: '17'
@@ -294,16 +294,16 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
         java-version: '17'
     
     - name: Download JAR artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: utlx-cli-jar
         path: modules/cli/build/libs/
@@ -369,7 +369,7 @@ jobs:
     
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
     
     - name: List artifacts
       run: |
@@ -392,7 +392,7 @@ jobs:
         echo "- Windows x64 binary: Available" >> release-summary.md
     
     - name: Upload release summary
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: release-summary
         path: release-summary.md
