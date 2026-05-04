@@ -97,15 +97,15 @@ UTLXe's `ValidationOrchestrator` runs validation in a sandwich pattern around th
 ```
 ┌──────────────────────────────────────────────────┐
 │ 1. PRE-VALIDATION                                │
-│    Validate input data against input schema       │
-│    → Fail fast if input is invalid                │
+│    Validate input data against input schema      │
+│    → Fail fast if input is invalid               │
 ├──────────────────────────────────────────────────┤
-│ 2. TRANSFORMATION                                 │
-│    Execute the .utlx transformation               │
+│ 2. TRANSFORMATION                                │
+│    Execute the .utlx transformation              │
 ├──────────────────────────────────────────────────┤
-│ 3. POST-VALIDATION                                │
-│    Validate output data against output schema     │
-│    → Catch mapping bugs before output leaves      │
+│ 3. POST-VALIDATION                               │
+│    Validate output data against output schema    │
+│    → Catch mapping bugs before output leaves     │
 └──────────────────────────────────────────────────┘
 ```
 
