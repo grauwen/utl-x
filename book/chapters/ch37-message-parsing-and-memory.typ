@@ -85,6 +85,47 @@ UDM in memory (~500+ bytes):
 
 XML is the worst case because every element — even a leaf like `<Name>Alice</Name>` — becomes a UDM Object with a properties HashMap, an attributes HashMap (even if empty), and a name String. JSON is more efficient because it has no attributes, no namespaces, and no element names to store.
 
+=== Worked Example: A 50 KB UBL Invoice
+
+To make the expansion factor concrete, consider a typical Peppol UBL invoice — 50 KB of XML with 20 line items:
+
+```
+On disk (50 KB XML):
+  <?xml version="1.0" encoding="UTF-8"?>
+  <Invoice xmlns="urn:oasis:names:...">       20 bytes namespace URI
+    <cbc:ID>INV-2026-001</cbc:ID>             stored as: name + text + namespace
+    <cbc:IssueDate>2026-05-04</cbc:IssueDate>
+    ...
+    <cac:InvoiceLine> × 20 lines              each line: ~10 elements
+      <cbc:ID>1</cbc:ID>                      each element → UDM.Object + HashMap
+      <cbc:InvoicedQuantity>2</cbc:InvoicedQuantity>
+      <cbc:LineExtensionAmount currencyID="EUR">50.00</cbc:LineExtensionAmount>
+      ...                                     ← attributes stored separately
+    </cac:InvoiceLine>
+  </Invoice>
+
+In memory (UDM tree — estimated 1.5 MB):
+  Root UDM.Object                              48 bytes (object header + references)
+    properties HashMap                         48 bytes + 16 entries × 32 bytes
+      "Invoice" → UDM.Object                   48 bytes
+        attributes: {"xmlns": "urn:..."}       48 bytes HashMap + 80 bytes entry
+        properties HashMap                     48 bytes + entries
+          "cbc:ID" → UDM.Object                48 + 48 + 80 bytes (text unwrapped at access)
+          "cbc:IssueDate" → UDM.Object         similar
+          "cac:InvoiceLine" → UDM.Array        48 bytes + array of 20 Objects
+            [0] → UDM.Object                   48 + HashMap + 10 child properties
+              "cbc:LineExtensionAmount"         48 + attributes HashMap (currencyID)
+                attributes: {"currencyID":"EUR"}  48 + 32 + 40 bytes
+                _text: "50.00"                 48 + 40 bytes
+            [1] → UDM.Object ...               × 20 items
+
+  Total: ~1.5 MB (30x expansion from 50 KB)
+```
+
+The overhead comes from: HashMap per element (~96 bytes minimum even when empty), String headers (40+ bytes per string), Object headers (16 bytes each), and attribute maps allocated even when elements have no attributes.
+
+For this invoice, one UTLXe worker processes it in ~5ms. Eight workers handle 1,600 invoices/second. Memory per worker: ~3 MB (input UDM + output UDM + intermediate values). Total container need: well under 512 MB.
+
 === Real-World Memory Examples
 
 #table(
@@ -138,16 +179,156 @@ UDM expansion would require 4+ GB for a single message — no room for workers, 
 
 UTL-X is a *transformation tool*, not a *big data tool*. Different scales need different tools.
 
+=== "Why Not Just Use 1 GB Messages?"
+
+A common question: "My server has 64 GB of RAM — can't I just process a 1 GB XML file?"
+
+The answer is no, and it is not just about memory — it is about *three walls* you hit simultaneously:
+
+*Wall 1: Memory expansion.* A 1 GB XML file expands to 30-50 GB in UDM. No single JVM can hold this. Even with 64 GB physical RAM, the JVM's garbage collector cannot efficiently manage a 50 GB heap — GC pauses become seconds to minutes.
+
+*Wall 2: Parse time.* Parsing is O(n) — linear in message size. A 1 KB message parses in microseconds. A 1 GB message takes minutes just to build the UDM tree, before any transformation logic runs.
+
+*Wall 3: GC pressure.* The JVM's garbage collector must track every object in the heap. A 50 KB message creates ~1,000 objects. A 50 MB message creates ~1,000,000 objects. A 1 GB message creates ~20,000,000 objects. GC pause duration grows with object count — not linearly, but with increasing overhead as the heap grows.
+
+=== CPU Time: Linear, Not Exponential
+
+Good news: transformation time scales *linearly* with message size, not exponentially. Processing a message twice as large takes roughly twice as long — not four times:
+
 #table(
-  columns: (auto, auto, auto, auto),
-  align: (left, left, left, left),
-  [*Message size*], [*Feasibility*], [*Workers (2GB)*], [*Approach*],
-  [Under 100 KB], [Excellent], [8-32], [Standard UTL-X],
-  [100 KB - 1 MB], [Good], [8], [Standard, monitor memory],
-  [1 MB - 10 MB], [Feasible], [2-4], [More memory, fewer workers],
-  [10 MB - 50 MB], [Marginal], [1], [Consider splitting first],
-  [Over 50 MB], [Not feasible], [--], [Use streaming/big data tools],
+  columns: (auto, auto, auto, auto, auto),
+  align: (left, left, left, left, left),
+  [*Message size*], [*Parse time*], [*Transform time*], [*Total*], [*Scaling*],
+  [1 KB], [< 1ms], [< 1ms], [~1ms], [baseline],
+  [10 KB], [~1ms], [~1ms], [~2ms], [2x size → 2x time],
+  [100 KB], [~5ms], [~5ms], [~10ms], [10x size → 10x time],
+  [1 MB], [~30ms], [~20ms], [~50ms], [linear],
+  [10 MB], [~300ms], [~200ms], [~500ms], [linear],
+  [50 MB], [~2s], [~1s], [~3s], [linear],
+  [100 MB], [~5s], [~3s], [~8s], [linear — but GC pauses add unpredictability],
 )
+
+The transformation itself (evaluating the UTL-X body) is O(n) — it visits each element once. Functions like `map`, `filter`, `groupBy` are linear. Even `sortBy` is O(n log n). There are no O(n²) operations in normal transformations.
+
+*However:* at large sizes, the bottleneck shifts from CPU to memory management. GC pauses become unpredictable — a 50 MB message might process in 3 seconds or 8 seconds depending on when GC triggers. This is why the "Not Recommended" boundary exists: not because CPU time is exponential, but because GC behavior becomes non-deterministic.
+
+=== The Real Boundaries
+
+#table(
+  columns: (auto, auto, auto, auto, auto, auto),
+  align: (left, left, left, left, left, left),
+  [*Message size*], [*UDM memory*], [*Objects created*], [*Feasibility*], [*Workers (4GB)*], [*Approach*],
+  [Under 10 KB], [< 200 KB], [~500], [Excellent], [8-32], [Standard UTL-X],
+  [10-100 KB], [0.2-5 MB], [500-50K], [Excellent], [8-16], [Standard],
+  [100 KB-1 MB], [5-50 MB], [50K-500K], [Good], [4-8], [Monitor memory],
+  [1-10 MB], [50-500 MB], [500K-5M], [Feasible], [2-4], [More memory, fewer workers],
+  [10-50 MB], [0.5-2.5 GB], [5M-25M], [Marginal], [1], [Split first if possible],
+  [50-100 MB], [2.5-5 GB], [25M-50M], [Risky], [1], [Dedicated 8GB+ container],
+  [Over 100 MB], [5+ GB], [50M+], [Not feasible], [--], [Streaming or big data tools],
+)
+
+For the vast majority of integration workloads — API messages, events, orders, invoices, FHIR bundles, IDoc segments — messages are under 1 MB. UTL-X handles these effortlessly. The 50+ MB range is for bulk data exports, full database dumps, or log files — these belong in streaming pipelines (Kafka Streams, Spark, Dataflow), not in a transformation tool.
+
+=== When to Split Instead of Grow
+
+If your messages are large because they contain arrays of independent records, split before transforming:
+
+```utlx
+// Instead of transforming a 50 MB file with 10,000 orders:
+// Split into individual orders (each ~5 KB), transform each separately.
+// UTLXe's pipeline chaining handles this natively.
+```
+
+A 50 MB file with 10,000 orders → 10,000 × 5 KB messages → each processes in ~2ms → total: 20 seconds with 8 workers. Same data, no memory problem, predictable latency per message.
+
+== The Poison Message Problem
+
+A single oversized message can crash the entire JVM — taking down all workers and all in-flight transformations. This is the *poison message* scenario:
+
+```
+Normal operation:
+  Worker 1: processing 50 KB invoice     ✓ (3 MB UDM)
+  Worker 2: processing 80 KB order       ✓ (4 MB UDM)
+  Worker 3: processing 20 KB event       ✓ (1 MB UDM)
+  Free heap: 1.5 GB
+
+Poison message arrives (2 GB XML file):
+  Worker 4: starts parsing 2 GB XML...
+    → UDM expansion: 2 GB × 30 = 60 GB needed
+    → JVM heap limit: 2 GB
+    → java.lang.OutOfMemoryError
+    → JVM CRASHES
+    → Workers 1, 2, 3 also die (shared JVM)
+    → All in-flight messages lost
+```
+
+This is not theoretical. In enterprise integration, a partner accidentally sends a database dump instead of a single order. A batch system sends an entire day's data as one message. A test system sends production data without pagination.
+
+=== Defense: Input Size Limits
+
+UTLXe should reject messages above a configurable size limit *before* parsing:
+
+```yaml
+# TransformConfig
+limits:
+  maxInputSize: 10485760    # 10 MB — reject anything larger
+  maxInputSizeAction: "reject"  # or "dead-letter"
+```
+
+The check happens on raw bytes — before UDM expansion, before memory allocation. A 2 GB message is rejected in microseconds, not after consuming all heap trying to parse it.
+
+Without this check, a single malformed or oversized message can take down a production engine that normally handles thousands of messages per second.
+
+=== Defense: Worker Isolation (Future)
+
+A more robust approach: run each worker in a memory-limited sandbox. If one worker exceeds its allocation, only that worker dies — not the entire JVM. This requires either:
+- Separate JVM processes per worker (overhead but safe)
+- JVM memory regions per thread (not supported by standard JVMs)
+- Container-level isolation (one transformation per container — Kubernetes pod pattern)
+
+For now, input size limits are the practical defense.
+
+== Swap: Never Use It
+
+Operating system swap (paging memory to disk) is catastrophic for UTL-X workloads. Never enable swap on a UTLXe host.
+
+*Why swap destroys performance:*
+
+The JVM's garbage collector must scan the entire heap to find live objects. When part of the heap is on disk (swapped out), every GC scan triggers disk I/O — turning a 10ms GC pause into a 10-second pause. The GC doesn't know which pages are swapped; it touches them all.
+
+```
+Without swap (heap fits in RAM):
+  GC pause: 10-50ms
+  Transformation: 5ms
+  Total: 15-55ms per message
+
+With swap (heap partially on disk):
+  GC pause: 5-30 SECONDS (disk I/O on every scan)
+  Transformation: 5ms (if data is in RAM) or 500ms+ (if swapped)
+  Total: 5-30 SECONDS per message — 1000x slower
+```
+
+Swap makes the problem worse, not better. The system appears to have enough memory (no OutOfMemoryError) but performance degrades by orders of magnitude. This is harder to diagnose than a clean crash — the engine appears to be "running" but latency is catastrophic.
+
+=== Container Configuration
+
+For Kubernetes / Azure Container Apps:
+
+```yaml
+# Disable swap in container spec
+resources:
+  limits:
+    memory: "4Gi"      # hard limit — container killed if exceeded
+  requests:
+    memory: "4Gi"      # guaranteed — no overcommit
+
+# JVM configuration (in Dockerfile or env)
+JAVA_OPTS: "-Xmx3g -XX:+UseContainerSupport -XX:+AlwaysPreTouch"
+```
+
+`-XX:+AlwaysPreTouch` forces the JVM to allocate all heap pages at startup — this ensures the OS commits real RAM, not virtual memory. If the container doesn't have enough physical memory, it fails immediately at startup instead of degrading slowly under load.
+
+`-XX:+UseContainerSupport` tells the JVM to respect container memory limits (cgroup) rather than looking at host memory. Without this, a JVM in a 4 GB container on a 64 GB host might try to use 16 GB of heap — and get killed by the OOM killer.
 
 == Memory Sizing Formula
 
