@@ -166,15 +166,19 @@ let contentHash = sha256(renderJson($input))
 {...$input, integrityHash: contentHash}
 ```
 
+=== What UTL-X Already Has
+
+- *JWS/JWT:* decode, inspect, and extract claims from JWT and JWS tokens (`decodeJWT`, `decodeJWS`, `getJWTClaim`, `getJWSHeader`, `getJWSPayload`, `isJWTExpired`, and more)
+- *AES encryption:* symmetric encrypt/decrypt with AES-128 and AES-256 (`encryptAES`, `decryptAES`, `encryptAES256`, `decryptAES256`, `generateKey`, `generateIV`)
+- *Hashing:* SHA-256, SHA-512, SHA-1, SHA-384, SHA-224, SHA3, MD5, HMAC variants
+- *Masking:* PII protection (`mask`, `sha256` for irreversible hashing)
+
 === What UTL-X Cannot Do Yet (Future)
 
-- JWS (JSON Web Signature): sign and verify JWT tokens
-- XMLDSig: verify XML digital signatures (XAdES for Peppol)
-- AES encryption/decryption: symmetric encryption
-- RSA sign/verify: asymmetric cryptography
-- Key Vault integration: retrieve keys from Azure Key Vault, GCP Secret Manager
-
-These are documented as future additions to the security library.
+- *JWS signing and verification:* creating signed tokens and verifying signatures (decode/inspect is available, but signing requires private key management)
+- *XMLDSig / XAdES:* XML digital signature verification — required for Peppol e-invoicing compliance
+- *RSA sign/verify:* asymmetric cryptography for digital signatures
+- *Key Vault integration:* retrieve keys and secrets from Azure Key Vault, GCP Secret Manager, AWS Secrets Manager
 
 == Large Files and Sensitive Data
 
