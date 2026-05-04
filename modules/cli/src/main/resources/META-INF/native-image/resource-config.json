@@ -9,8 +9,15 @@
       },
       {
         "pattern": "META-INF/services/.*"
+      },
+      {
+        "pattern": "org/apache/xml/security/resource/.*"
       }
     ]
   },
-  "bundles": []
+  "bundles": [
+    {
+      "name": "org.apache.xml.security.resource.xmlsecurity"
+    }
+  ]
 }
