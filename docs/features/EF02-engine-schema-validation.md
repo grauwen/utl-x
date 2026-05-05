@@ -20,12 +20,21 @@ Two places can now declare validation schemas:
 | `.utlx` header | `input json {schema: "order.json"}` |
 | `TransformConfig` YAML | `inputValidation: {schema: "order.json", policy: "strict"}` |
 
-### Precedence rule: Header wins, config is fallback
+### Precedence rule: Config wins, header is fallback, runtime override trumps all
+
+Three places can declare validation policy (plus a runtime override from EF03):
 
 ```
-Effective schema = config.schema ?? header.schema
-Effective policy = config.validationPolicy ?? header.validationPolicy ?? "strict"
+Effective schema = runtimeOverride.schema ?? config.schema ?? header.schema
+Effective policy = runtimeOverride.policy ?? config.validationPolicy ?? header.validationPolicy ?? "strict"
 ```
+
+| Level | Set by | Persists across restart | Example |
+|-------|--------|:-----------------------:|---------|
+| Runtime override (EF03) | Ops via Admin API | No (ephemeral) | `POST /admin/transformations/{name}/validation {"policy":"off"}` |
+| `transform.yaml` config | Ops at deploy time | Yes (on disk) | `inputValidation: {policy: "strict"}` |
+| `.utlx` header | Developer at dev time | Yes (in source) | `input json {schema: "order.json"}` |
+| Default | — | — | `"strict"` |
 
 **Rationale:** The config is the operational override — set by the ops team at deployment time. The header is the developer's default — set at development time. Config wins because:
 
@@ -33,6 +42,8 @@ Effective policy = config.validationPolicy ?? header.validationPolicy ?? "strict
 - Ops must be able to tighten validation in production beyond what the developer declared
 - Ops must be able to substitute a different schema version without redeploying transformations
 - This matches how every production system works — deployment config trumps source code settings
+
+The runtime override (EF03) is the top-level emergency lever — disable validation immediately during an incident without touching config files. It is ephemeral: on container restart, the override is gone and the config/header policy applies again. See [EF03: Bundle Management API](EF03-bundle-management-api.md) for details.
 
 The header serves as the **default** — if no config override exists, the developer's declaration applies. This means a `.utlx` file with `{schema: "order.json"}` works out of the box in the engine, but ops can override it per environment.
 
