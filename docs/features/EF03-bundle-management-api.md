@@ -132,6 +132,23 @@ curl -X POST -H "X-Admin-Key: $KEY" \
 
 The customer can add or update the config later via `POST /admin/transformations/{name}/config` without recompiling the transformation source.
 
+## Architecture Decision: Transformation Names Are Unique
+
+**Decision:** Each transformation name must be unique within a container. Uploading a transformation with an existing name **replaces** it (upsert semantics).
+
+The name is the identity — it maps to a directory under `/utlxe/data/transformations/{name}/` and to the data plane URL `POST /api/transform/{name}`. Duplicate names would create ambiguity: which transformation does the request hit?
+
+**Scenarios that seem to need duplicates, and their solutions:**
+
+| Scenario | Seems like you need... | Better solution |
+|----------|----------------------|-----------------|
+| Canary / A/B testing | v1 and v2 of same name | Two container instances behind Azure traffic splitting (90/10) |
+| Multi-tenant | Same name, different logic per tenant | Separate container per tenant, or naming convention: `tenantA-invoice-to-ubl` |
+| Regional variants | EU and US versions | Different names: `invoice-to-ubl-eu`, `invoice-to-ubl-us`. Or separate containers per region. |
+| Large org, many teams | Risk of naming collisions | Team-prefixed names: `finance-invoice-to-ubl`, `logistics-invoice-to-ubl` |
+
+Every scenario is better solved by **different names** or **different containers**. The uniqueness constraint pushes toward good architecture — one concern per container, names that reflect purpose.
+
 ---
 
 ## Design
