@@ -100,6 +100,7 @@ The most common pattern. Messages arrive on a Service Bus queue, get transformed
     _seq("SB-In", "Dapr", comment: "1. AMQP 1.0 / TLS :5671\ndeliver (peek-lock:\nmessage locked, not removed)", disable-src: true, enable-dst: true)
     _note("right", pos: "SB-In", "message locked\nno reply yet —\ncomplete or\nabandon later")
     _seq("Dapr", "UTLXe", comment: "2. HTTP POST :8085\n/api/dapr/input/orders-in\n{JSON}", enable-dst: true)
+    _note("right", pos: "Dapr", "Dapr input binding\n binds queue name to\n /api/dapr/input/orders-in")
     _seq("UTLXe", "UTLXe", comment: "3. Parse → Transform\n→ Serialize")
     _seq("UTLXe", "Dapr", comment: "4. HTTP POST :3500\n/v1.0/bindings/orders-out\n(new connection)", enable-dst: true)
     _seq("Dapr", "SB-Out", comment: "5. AMQP 1.0 / TLS :5671\nsend to output queue", enable-dst: true)
@@ -126,21 +127,65 @@ Step by step:
 
 No Azure SDK, no connection code, no retry logic in UTLXe. Dapr handles the AMQP connection to Service Bus (port 5671, TLS), peek-lock management, authentication, retries, and dead-letter routing. The customer configures only *what* to connect to --- never *how*. Chapter 4 walks through the complete setup.
 
-Dapr connects to Service Bus using YAML component definitions:
+==== Rainy day: transformation fails
+
+When UTLXe cannot transform a message (null reference, type mismatch, schema validation failure), it returns HTTP 500 instead of 200. This triggers the retry and dead-letter path:
+
+#{set text(size: 6pt); figure(
+  chronos.diagram({
+    import chronos: *
+    _par("SB-In", display-name: "Service Bus (input queue)")
+    _par("Dapr", display-name: "Dapr Sidecar")
+    _par("UTLXe", display-name: "UTLXe :8085")
+    _par("DLQ", display-name: "Dead-Letter Queue")
+    _seq("SB-In", "Dapr", comment: "1. AMQP deliver\n(peek-lock)", enable-dst: true)
+    _seq("Dapr", "UTLXe", comment: "2. HTTP POST :8085\n/api/dapr/input/orders-in", enable-dst: true)
+    _seq("UTLXe", "UTLXe", comment: "3. Transform FAILS\n(e.g. null reference)")
+    _seq("UTLXe", "Dapr", comment: "4. HTTP 500 Error\n{error details}", dashed: true, disable-src: true)
+    _seq("Dapr", "SB-In", comment: "5. AMQP abandon\n(unlock message)", disable-src: true, enable-dst: true)
+    _seq("SB-In", "SB-In", comment: "delivery count++\nmessage visible again", disable-dst: true)
+    _note("right", pos: "SB-In", "Service Bus retries\ndelivery (up to\nmaxDeliveryCount)")
+    _seq("SB-In", "Dapr", comment: "... retry attempts ...", enable-dst: true)
+    _seq("Dapr", "UTLXe", comment: "still fails", enable-dst: true)
+    _seq("UTLXe", "Dapr", comment: "HTTP 500", dashed: true, disable-src: true)
+    _seq("Dapr", "SB-In", comment: "abandon again", disable-src: true, enable-dst: true)
+    _seq("SB-In", "DLQ", comment: "maxDeliveryCount exceeded\n→ move to dead-letter queue", disable-src: true, enable-dst: true)
+    _seq("DLQ", "DLQ", comment: "message preserved\nfor investigation", disable-dst: true)
+  }),
+  caption: [Rainy day: transformation fails → retry → dead-letter queue],
+)}
+
+When a transformation fails:
+- UTLXe returns HTTP 500 with error details (line number, error message).
+- Dapr *abandons* the message on Service Bus --- the peek-lock is released, and the message becomes visible again.
+- Service Bus increments the delivery count and redelivers the message.
+- After `maxDeliveryCount` attempts (configurable on the queue, default 10), Service Bus moves the message to the *dead-letter queue* (DLQ).
+- The DLQ preserves the original message for investigation. Use the Admin API (`GET /admin/transformations/{name}/errors`) to see recent error details.
+
+The Event Hub rainy day is simpler: there is no dead-letter queue. If UTLXe returns 500, Dapr does not checkpoint the offset. The event is redelivered on the next consumer restart. Persistent failures require manual intervention (pause the transformation, fix, resume).
+
+Dapr connects to Service Bus using YAML component definitions. The *component name* determines which UTLXe transformation is called --- Dapr uses the name as the URL path, and UTLXe looks up a transformation with that name:
 
 ```yaml
-# Dapr input binding — Service Bus queue
+# Dapr input binding — component name "orders-in"
 componentType: bindings.azure.servicebusqueues
 metadata:
   - name: connectionString
     secretRef: servicebus-connection
   - name: queueName
     value: "incoming-orders"
+  - name: route              # tells Dapr which UTLXe endpoint to call
+    value: "/api/dapr/input/orders-in"
 scopes: [utlxe]
 ```
 
+The `route` metadata is the key configuration: it tells Dapr to call `POST localhost:8085/api/dapr/input/orders-in` when a message arrives on the `incoming-orders` queue. UTLXe extracts the last path segment (`orders-in`) and looks up a transformation with that name.
+
+If the transformation has a different name than the binding, use the `X-UTLXe-Transform` header override in the Dapr metadata.
+
 ```yaml
-# Dapr output binding — Service Bus queue
+# Dapr output binding — component name "orders-out"
+# UTLXe calls POST localhost:3500/v1.0/bindings/orders-out
 componentType: bindings.azure.servicebusqueues
 metadata:
   - name: connectionString
@@ -149,6 +194,19 @@ metadata:
     value: "processed-orders"
 scopes: [utlxe]
 ```
+
+The output binding has no `route` --- UTLXe calls Dapr's standard binding API at `localhost:3500/v1.0/bindings/{componentName}`. The component name (`orders-out`) is configured in the transformation's `transform.yaml` as `outputBinding: orders-out`.
+
+The complete wiring:
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Configuration*], [*Where*], [*Connects*],
+  [`route: /api/dapr/input/orders-in`], [Dapr input component], [Service Bus queue → UTLXe transformation `orders-in`],
+  [`outputBinding: orders-out`], [UTLXe transform.yaml], [UTLXe → Dapr output binding `orders-out`],
+  [`queueName: processed-orders`], [Dapr output component], [Dapr output binding → Service Bus output queue],
+  [`appPort: 8085`], [Container App Dapr config], [Dapr sidecar → UTLXe HTTP port],
+)
 
 #pagebreak()
 
@@ -225,6 +283,25 @@ curl -X POST \
 ```
 
 No Dapr, no Service Bus. A direct HTTPS call, a transformed response. Azure ingress handles TLS --- UTLXe receives plain HTTP on localhost:8085.
+
+==== Rainy day: direct HTTP error
+
+#{set text(size: 6pt); figure(
+  chronos.diagram({
+    import chronos: *
+    _par("Client", display-name: "HTTP Client (external)")
+    _par("Ingress", display-name: "Azure Ingress (HTTPS :443)")
+    _par("UTLXe", display-name: "UTLXe (HTTP localhost:8085)")
+    _seq("Client", "Ingress", comment: "1. HTTPS POST :443\n/api/transform/invoice-to-ubl\n{JSON}", enable-dst: true)
+    _seq("Ingress", "UTLXe", comment: "2. HTTP POST :8085", enable-dst: true)
+    _seq("UTLXe", "UTLXe", comment: "3. Transform FAILS\n(e.g. null reference)")
+    _seq("UTLXe", "Ingress", comment: "4. HTTP 500\n{error, line, message}", dashed: true, disable-src: true)
+    _seq("Ingress", "Client", comment: "5. HTTPS 500\n{error details}", dashed: true, disable-src: true)
+  }),
+  caption: [Rainy day: direct HTTP --- error returned to client],
+)}
+
+With direct HTTP, the error goes straight back to the caller. There is no retry, no dead-letter queue --- the client decides what to do (retry, log, alert). The error response includes the transformation name, line number, and error message.
 
 === The Transformation
 
