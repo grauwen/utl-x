@@ -189,12 +189,16 @@ JSON to XML:
 input json
 output xml
 ---
-<Invoice>
-  <ID>{$input.orderId}</ID>
-  <Amount>{$input.total}</Amount>
-  <Currency>{$input.currency}</Currency>
-</Invoice>
+{
+  Invoice: {
+    ID: $input.orderId,
+    Amount: $input.total,
+    Currency: $input.currency
+  }
+}
 ```
+
+The XML serializer produces `<Invoice><ID>12345</ID><Amount>250.0</Amount>...</Invoice>` from this object. You write objects --- the format system handles serialization.
 
 XML to JSON:
 
@@ -257,35 +261,35 @@ A complete transformation that converts a Dynamics 365 Business Central order in
 input json
 output xml
 ---
-let order = $input
+{
+  let order = $input
+  let subtotal = reduce(order.lines, 0,
+    (sum, line) -> sum + line.quantity * line.unitPrice)
+  let tax = subtotal * 0.21
 
-let lines = map(order.lines, (line) -> {
-  let lineTotal = line.quantity * line.unitPrice
-  <InvoiceLine>
-    <ID>{line.lineNumber}</ID>
-    <Quantity>{line.quantity}</Quantity>
-    <UnitPrice>{line.unitPrice}</UnitPrice>
-    <LineTotal>{round(lineTotal, 2)}</LineTotal>
-  </InvoiceLine>
-})
-
-let subtotal = reduce(order.lines, 0,
-  (sum, line) -> sum + line.quantity * line.unitPrice)
-let tax = subtotal * 0.21
-
-<Invoice>
-  <ID>{concat("INV-", order.orderNumber)}</ID>
-  <IssueDate>{formatDate(now(), "yyyy-MM-dd")}</IssueDate>
-  <CustomerName>{order.customer.name}</CustomerName>
-  <Currency>{order.currency}</Currency>
-  <InvoiceLines>{lines}</InvoiceLines>
-  <Subtotal>{round(subtotal, 2)}</Subtotal>
-  <Tax>{round(tax, 2)}</Tax>
-  <Total>{round(subtotal + tax, 2)}</Total>
-</Invoice>
+  Invoice: {
+    ID: concat("INV-", order.orderNumber),
+    IssueDate: formatDate(now(), "yyyy-MM-dd"),
+    CustomerName: order.customer.name,
+    Currency: order.currency,
+    InvoiceLines: {
+      InvoiceLine: map(order.lines, (line) -> {
+        ID: line.lineNumber,
+        Quantity: line.quantity,
+        UnitPrice: line.unitPrice,
+        LineTotal: round(line.quantity * line.unitPrice, 2)
+      })
+    },
+    Subtotal: round(subtotal, 2),
+    Tax: round(tax, 2),
+    Total: round(subtotal + tax, 2)
+  }
+}
 ```
 
-This transformation demonstrates property access, array iteration with `map`, aggregation with `reduce`, string concatenation, date formatting, arithmetic, and XML output construction.
+The XML serializer produces the UBL structure from this object. You write objects with property names that become element names --- the format system handles the rest.
+
+This transformation demonstrates property access, array iteration with `map`, aggregation with `reduce`, string concatenation, date formatting, and arithmetic.
 
 == Where to Learn More
 
