@@ -988,6 +988,88 @@ sequenceDiagram
     Data-->>App: 503 Service Unavailable (paused)
 ```
 
+## Transport capability matrix
+
+Not all management capabilities make sense for all transports. The HTTP Admin API is the full management surface. gRPC and stdio-proto get a subset — only what the wrapper program genuinely needs.
+
+| Capability | HTTP Admin (:8081) | HTTP Data (:8085) | gRPC | stdio-proto |
+|-----------|:------------------:|:-----------------:|:----:|:-----------:|
+| **Core** | | | | |
+| Load transformation | `POST /admin/transformations/{name}` | — | `LoadTransformation` (exists) | `LoadTransformationRequest` (exists) |
+| Execute | — | `POST /api/transform/{name}` | `Execute` (exists) | `ExecuteRequest` (exists) |
+| Remove transformation | `DELETE /admin/transformations/{name}` | — | `RemoveTransformation` (**add**) | `RemoveTransformationRequest` (**add**) |
+| List transformations | `GET /admin/transformations` | `GET /api/transformations` | `ListTransformations` (**add**) | `ListTransformationsRequest` (**add**) |
+| Test transformation | `POST .../test` | — | `TestTransformation` (**add**) | `TestTransformationRequest` (**add**) |
+| **Bundle management** | | | | |
+| Upload ZIP bundle | `POST /admin/bundle` | — | — | — |
+| Export ZIP bundle | `GET /admin/bundle` | — | — | — |
+| Validate bundle (dry run) | `POST /admin/bundle/validate` | — | — | — |
+| **Schema management** | | | | |
+| Upload schema | `POST /admin/schemas/{name}` | — | — | — |
+| List/get/delete schemas | `GET/DELETE /admin/schemas/...` | — | — | — |
+| **Operational** | | | | |
+| Pause/resume | `POST .../pause\|resume` | — | — | — |
+| Validation override | `POST .../validation` | — | — | — |
+| Error ring buffer | `GET .../errors` | — | — | — |
+| Engine info | `GET /admin/info` | — | — | — |
+| Config update | `GET/POST /admin/config` | — | — | — |
+
+### Why gRPC/proto don't need the full surface
+
+| Capability | Why not needed in gRPC/proto |
+|-----------|------------------------------|
+| Bundle ZIP upload | Wrapper sends source code inline in `LoadTransformation` — no ZIP needed |
+| Schema management | Wrapper resolves schemas itself and sends config with `LoadTransformation` |
+| Pause/resume | Wrapper controls its own flow — it simply stops calling `Execute` |
+| Validation override | Wrapper sets validation policy in the config it sends with `LoadTransformation` |
+| Error ring buffer | Wrapper gets errors back in every `ExecuteResponse` — no need to query later |
+| Engine info | Wrapper knows what it loaded — it manages the lifecycle |
+
+### Three new RPCs for gRPC/proto
+
+```protobuf
+// Add to utlxe.proto service definition
+
+rpc RemoveTransformation(RemoveTransformationRequest) returns (RemoveTransformationResponse);
+rpc ListTransformations(ListTransformationsRequest) returns (ListTransformationsResponse);
+rpc TestTransformation(TestTransformationRequest) returns (TestTransformationResponse);
+
+message RemoveTransformationRequest {
+  string name = 1;
+}
+message RemoveTransformationResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListTransformationsRequest {}
+message ListTransformationsResponse {
+  repeated TransformationInfo transformations = 1;
+}
+message TransformationInfo {
+  string name = 1;
+  string strategy = 2;
+  string status = 3;          // "ready", "paused"
+  int64 messages_processed = 4;
+}
+
+message TestTransformationRequest {
+  string name = 1;
+  bytes input = 2;            // sample input (JSON/XML/CSV)
+  string input_format = 3;    // "json", "xml", "csv"
+}
+message TestTransformationResponse {
+  bool success = 1;
+  bytes output = 2;           // transformation result
+  string error = 3;           // error message if failed
+  int32 duration_ms = 4;
+}
+```
+
+For `stdio-proto`, the same messages are added to the varint-delimited protocol as new message types in the request/response envelope.
+
+---
+
 ## Implementation notes
 
 ### Where it lives
@@ -1006,6 +1088,9 @@ The management API is a new `AdminEndpoint` alongside `HealthEndpoint` in `modul
 | `modules/engine/.../UtlxEngine.kt` | Wire admin endpoint, startup scan of data dir, test execution path |
 | `modules/engine/.../health/HealthEndpoint.kt` | Add `ready` field to health response |
 | `modules/engine/.../transport/HttpTransport.kt` | Add `GET /api/transformations` discovery endpoint on data plane |
+| `modules/engine/.../transport/GrpcTransport.kt` | Add `RemoveTransformation`, `ListTransformations`, `TestTransformation` RPCs |
+| `modules/engine/.../transport/StdioProtoTransport.kt` | Add Remove, List, Test message handling |
+| `proto/utlxe.proto` | Add 3 new RPC definitions + message types |
 | `deploy/docker/Dockerfile.engine` | Add `VOLUME /utlxe/data` and `UTLXE_ADMIN_KEY` env |
 
 ### What already exists
@@ -1014,17 +1099,26 @@ The management API is a new `AdminEndpoint` alongside `HealthEndpoint` in `modul
 - `TransformationRegistry` — holds compiled transformations (needs atomic replace)
 - `HealthEndpoint` — Javalin HTTP server on 8081 (add `AdminEndpoint` alongside)
 - Hot compilation — engine already compiles `.utlx` at startup (reuse for dynamic uploads)
+- `GrpcTransport` — gRPC server with `LoadTransformation` and `Execute` RPCs (extend with 3 new RPCs)
+- `StdioProtoTransport` — varint-delimited protocol with Load and Execute messages (extend with 3 new message types)
 
 ## Effort estimate
 
 | Task | Effort |
 |------|--------|
+| **HTTP Admin API** | |
 | AdminEndpoint: transformation endpoints (upload, list, delete) | 2 days |
 | AdminEndpoint: schema endpoints (upload, list, delete) | 1 day |
 | AdminEndpoint: bundle endpoints (ZIP upload, export, validate) | 1 day |
 | AdminEndpoint: test endpoint (execute with sample input) | 1 day |
 | AdminEndpoint: operational endpoints (info, pause/resume, errors, config) | 1.5 days |
+| AdminEndpoint: validation override endpoints | 0.5 day |
 | Data plane: discovery endpoint (`GET /api/transformations`) | 0.5 day |
+| **gRPC / stdio-proto** | |
+| Proto definition: 3 new RPCs + message types | 0.5 day |
+| GrpcTransport: RemoveTransformation, ListTransformations, TestTransformation | 1 day |
+| StdioProtoTransport: Remove, List, Test message handling | 1 day |
+| **Shared** | |
 | ZIP bundle parsing and extraction | 0.5 day |
 | Hot-swap in TransformationRegistry (atomic replace) | 1 day |
 | Pause/resume state machine in TransformationRegistry | 0.5 day |
@@ -1033,8 +1127,8 @@ The management API is a new `AdminEndpoint` alongside `HealthEndpoint` in `modul
 | Startup scan of `/utlxe/data/` directory | 0.5 day |
 | Readiness probe enhancement | 0.5 day |
 | Bicep template: optional Azure Files mount | 0.5 day |
-| Tests | 2 days |
-| **Total** | **~13 days** |
+| Tests (HTTP + gRPC + proto) | 2.5 days |
+| **Total** | **~16 days** |
 
 ## Customer workflows (end to end)
 
