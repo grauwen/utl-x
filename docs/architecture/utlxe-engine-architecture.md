@@ -694,6 +694,18 @@ The engine supports adding, removing, and updating individual transformations wi
 
 This is critical for zero-downtime deployments in Kubernetes.
 
+### Management API (EF03)
+
+The engine exposes an admin REST API on the health port (8081) for deploying, updating, and removing transformations and schemas at runtime. There is no mode switch — the admin API and data plane are always active simultaneously. Live updates are safe because hot-swap is atomic: in-flight messages drain on the old version, new messages use the new version.
+
+The management API supports two workflows:
+- **Batch:** Upload a complete `.zip` bundle (`POST /admin/bundle`)
+- **Incremental:** Deploy individual transformations (`POST /admin/transformations/{name}`) and schemas (`POST /admin/schemas/{filename}`)
+
+A `.utlx` file can be deployed alone — the `transform.yaml` config is optional (sensible defaults apply). Schemas are shared resources, stored separately from transformations and resolved at validation time.
+
+See [EF03: Bundle Management API](../../docs/features/EF03-bundle-management-api.md) for the full design.
+
 ### Health & Metrics
 
 **Health endpoint** (HTTP `/health`):
@@ -985,21 +997,44 @@ UTL-X transformations are **purely functional** — no file I/O, no network call
 
 ## 12. Deployment Formats
 
-| Format | Use Case | Notes |
-|--------|----------|-------|
-| **Fat JAR** | Traditional JVM deployment | `java -jar utlxe.jar --bundle order-processing.utlxp` |
-| **Docker image** | Containerized deployment | Base: Eclipse Temurin JRE 21 |
-| **GraalVM native image** | Fast startup, low memory | Phase 4; requires reflection config |
-| **Kubernetes Helm chart** | Orchestrated deployment | Health probes, HPA, ConfigMaps |
+| Format | Use Case | Bundle Delivery | Notes |
+|--------|----------|-----------------|-------|
+| **Fat JAR** | Traditional JVM deployment | `--bundle` flag (local directory) | `java -jar utlxe.jar --bundle order-processing.utlxp` |
+| **Docker image (self-managed)** | Containerized deployment | Baked into image or volume mount | Base: Eclipse Temurin JRE 17 |
+| **Docker image (Azure Marketplace)** | Pre-built managed container | Admin API (EF03) | No custom image needed |
+| **Kubernetes Helm chart** | Orchestrated deployment | `--bundle` or Admin API | Health probes, HPA, ConfigMaps |
 
-### Docker Example
+### Bundle Delivery Methods
+
+| Method | How | When to use |
+|--------|-----|-------------|
+| **`--bundle` flag** | Point to local directory at startup | Self-managed: bundle baked into image or mounted as volume |
+| **Admin API** (EF03) | `POST /admin/bundle` or individual endpoints on :8081 | Azure Marketplace: customer uploads via HTTP after deployment |
+| **Combined** | `--bundle` for base, Admin API for overrides | Hybrid: base bundle from image, runtime updates via API |
+
+See [EF03: Bundle Management API](../../docs/features/EF03-bundle-management-api.md) for the Admin API design.
+
+### Docker Example (self-managed)
 
 ```dockerfile
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:17-jre-jammy
 COPY utlxe.jar /app/utlxe.jar
 COPY order-processing.utlxp /app/bundle.utlxp
-EXPOSE 8081 9090
-ENTRYPOINT ["java", "-jar", "/app/utlxe.jar", "--bundle", "/app/bundle.utlxp"]
+EXPOSE 8085 8081
+ENTRYPOINT ["java", "-jar", "/app/utlxe.jar", "--bundle", "/app/bundle.utlxp", "--mode", "http"]
+```
+
+### Docker Example (Azure Marketplace — no bundle at startup)
+
+```dockerfile
+# Pre-built image — customer uploads transformations via Admin API
+FROM eclipse-temurin:17-jre-jammy
+COPY utlxe.jar /app/utlxe.jar
+VOLUME /utlxe/data
+EXPOSE 8085 8081
+ENTRYPOINT ["java", "-jar", "/app/utlxe.jar", "--mode", "http"]
+# Container starts with zero transformations
+# Customer deploys via: POST /admin/bundle on :8081
 ```
 
 ### Kubernetes Example
@@ -1049,7 +1084,7 @@ spec:
 | **Threading** | Single | Multi-session | Pooled, configurable |
 | **Memory** | Allocate-and-exit | Session-scoped | Pooled, budgeted |
 | **Monitoring** | Exit code | LSP diagnostics | Health, metrics, JMX |
-| **Hot Reload** | N/A | File watcher | Per-transformation reload |
+| **Hot Reload** | N/A | File watcher | Per-transformation reload + Admin API (EF03) |
 | **Deployment** | Native image | Fat JAR | Fat JAR, Docker, K8s, native |
 | **Config** | CLI flags | daemon.yaml | engine.yaml + per-transformation transform.yaml |
 | **Typical Latency** | N/A (batch) | N/A (interactive) | 5–25 ms/msg (strategy-dependent) |

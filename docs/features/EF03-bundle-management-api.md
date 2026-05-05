@@ -41,6 +41,52 @@ If transformations need different scaling, different configs, or different SLAs,
 
 The single-bundle model keeps the mental model simple: upload replaces everything. The per-transformation endpoints (`POST /admin/transformations/{name}`) handle incremental updates without the overhead of multi-bundle management.
 
+## Architecture Decision: No Modes — Admin and Data Plane Always On
+
+**Decision:** There is no "design mode" or "running mode." The admin API (port 8081) and the data plane (port 8085) are always active simultaneously.
+
+**Why not a mode switch?**
+
+The admin API is **operational management** (deploying, updating, removing transformations), not design time. Design time is what `utlxd` (the IDE daemon) does — schema analysis, live preview, autocompletion. The admin API is closer to `kubectl apply` than to an IDE.
+
+| Activity | Tool | Port | When |
+|----------|------|------|------|
+| Write and test a transformation | `utlxd` (IDE) | — | Development |
+| Deploy a transformation to production | Admin API | 8081 | Operations |
+| Process messages | Data plane | 8085 | Runtime |
+
+A mode switch would force a choice:
+
+| Hypothetical mode | Admin API | Data plane | Problem |
+|-------------------|-----------|------------|---------|
+| "Design" | Enabled | Disabled | Messages queue up or get rejected — SLA violation |
+| "Running" | Disabled | Enabled | Can't deploy updates without switching mode — downtime |
+| "Both" | Enabled | Enabled | This is just... always on. No mode needed. |
+
+The only combination that makes sense is "both enabled."
+
+**Live updates are safe because of atomic hot-swap:**
+
+1. **Hot-swap a transformation** — new version compiled, atomically replaces old in the registry. In-flight messages drain on the old version (they hold a reference). New messages use the new version. Zero downtime.
+2. **Upload a new schema** — schemas are resolved at validation time (per message), not at compile time. Replacing a schema file takes effect on the next message. No recompile, no restart.
+3. **Add a new transformation** — appears in the registry, immediately available. Existing transformations unaffected.
+4. **Remove a transformation** — removed from registry. New requests get 404. In-flight messages complete normally.
+5. **Full bundle replace** — atomic swap of the entire registry.
+
+**The only guard is compilation validation:** a bad upload is rejected with a 400 response and error details. The running system is untouched. The `POST /admin/bundle/validate` endpoint (dry run) exists for CI/CD pipelines that want to validate before deploying.
+
+**Dependency warnings (not blocks):**
+
+| Scenario | Behavior |
+|----------|----------|
+| Upload transformation referencing a schema not yet uploaded | Compilation succeeds (schema is runtime). Response includes: `"warnings": ["referenced schema 'order.xsd' not found"]` |
+| Delete a schema referenced by transformations | Schema removed. Response includes: `"warnings": ["schema 'order.xsd' is referenced by 2 transformations"]` |
+| Replace schema with incompatible version | Next messages may fail validation. Customer's responsibility — same as updating an XSD in any system. |
+
+The API warns but does not block on dependency issues. The customer knows their deployment order. Blocking creates rigidity; warnings create awareness.
+
+---
+
 ## Architecture Decision: Schemas as Shared Resources
 
 **Decision:** Schemas are top-level resources, not embedded in transformation directories.

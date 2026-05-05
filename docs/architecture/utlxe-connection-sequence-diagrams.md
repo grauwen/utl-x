@@ -1,7 +1,8 @@
 # UTLXe Connection Sequence Diagrams
 
 **All supported connection scenarios with Mermaid sequence diagrams**  
-*Version 1.0 — May 2026*
+*Version 1.1 — May 2026*  
+*Added: Diagram 2b — Bundle Management API (EF03)*
 
 ---
 
