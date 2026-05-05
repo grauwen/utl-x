@@ -185,6 +185,191 @@ The management API runs on the existing health/admin port, separate from the dat
 | `POST` | `/admin/schemas/{filename}` | Upload or replace a schema file |
 | `DELETE` | `/admin/schemas/{filename}` | Remove a schema |
 
+#### Testing endpoint
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/admin/transformations/{name}/test` | Run a transformation with sample input, return output or error |
+
+Send a test message through a deployed transformation without touching the data plane. Essential for verifying a newly uploaded transformation before routing real traffic.
+
+```json
+// Request
+POST /admin/transformations/invoice-to-ubl/test
+Content-Type: application/json
+
+{"orderId": "12345", "amount": 100.00, "customer": {"name": "Acme Corp"}}
+
+// Success response
+{
+  "status": "ok",
+  "output": {"Invoice": {"ID": "12345", "BuyerParty": {"Name": "Acme Corp"}, ...}},
+  "duration_ms": 3
+}
+
+// Failure response
+{
+  "status": "error",
+  "error": "Null reference: $input.customer.address",
+  "line": 14,
+  "column": 22
+}
+```
+
+The test endpoint uses the same compiled transformation as the data plane — the result is exactly what a real message would produce. The difference: test calls are not counted in Prometheus metrics and do not affect `messages_processed` counters.
+
+#### Operational endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/admin/info` | Engine version, uptime, config, persistence mode |
+| `POST` | `/admin/transformations/{name}/pause` | Stop processing for this transformation (503 on data plane) |
+| `POST` | `/admin/transformations/{name}/resume` | Resume processing |
+| `GET` | `/admin/transformations/{name}/errors` | Recent errors (ring buffer, last 100) |
+| `GET` | `/admin/config` | View current engine configuration |
+| `POST` | `/admin/config` | Update engine configuration (partial, runtime-safe fields only) |
+
+#### Validation override endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/admin/transformations/{name}/validation` | Get effective validation state (policy, source, config default) |
+| `POST` | `/admin/transformations/{name}/validation` | Set a runtime validation override (does not modify config on disk) |
+| `DELETE` | `/admin/transformations/{name}/validation` | Remove runtime override (reverts to config/header default) |
+
+Runtime validation overrides are ephemeral — they don't touch the `transform.yaml` on disk. On container restart, the override is gone and the config-file or header policy applies again. This is an incident management tool: disable validation immediately, investigate, fix the schema or data, then remove the override.
+
+```json
+// Disable validation during an incident
+POST /admin/transformations/invoice-to-ubl/validation
+{"policy": "off"}
+
+→ 200 OK
+{"policy": "off", "source": "runtime-override", "config_policy": "strict", "header_policy": "strict"}
+
+// Check current effective state
+GET /admin/transformations/invoice-to-ubl/validation
+
+→ 200 OK
+{
+  "effective_policy": "off",
+  "source": "runtime-override",
+  "config_policy": "strict",
+  "header_policy": "strict"
+}
+
+// Remove override — back to config/header default
+DELETE /admin/transformations/invoice-to-ubl/validation
+
+→ 200 OK
+{"effective_policy": "strict", "source": "config"}
+```
+
+**Precedence chain (highest wins):**
+
+```
+runtime override  →  transform.yaml config  →  .utlx header  →  default (off)
+   (ephemeral)         (on disk, EF03)         (in source)      (no validation)
+```
+
+This extends the EF02 precedence model with a new top-level override. The runtime override is the only level that is ephemeral — all others persist across restarts.
+
+**Engine info** — basic operational visibility:
+
+```json
+GET /admin/info
+
+{
+  "version": "1.0.1",
+  "uptime_seconds": 86400,
+  "mode": "http",
+  "workers": 4,
+  "heap_max_mb": 1536,
+  "data_dir": "/utlxe/data",
+  "persistence": "volume-backed",
+  "admin_key_set": true,
+  "transformations": 3,
+  "schemas": 2,
+  "ready": true
+}
+```
+
+**Pause / resume** — stop processing for a specific transformation without removing it. When paused:
+- Data plane returns 503 for that transformation (others continue)
+- Dapr/Service Bus messages are not acknowledged (they retry or go to DLQ)
+- The transformation stays compiled and on disk — resume is instant
+- `GET /admin/transformations/{name}` shows `"status": "paused"`
+
+This fills the gap between "everything is fine" and "delete the transformation." During an incident, you pause the problematic transformation, investigate, fix, upload a new version, then resume.
+
+**Recent errors** — ring buffer of the last N errors per transformation:
+
+```json
+GET /admin/transformations/invoice-to-ubl/errors?limit=20
+
+{
+  "errors": [
+    {
+      "timestamp": "2026-05-05T14:32:01Z",
+      "message": "Null reference: $input.customer.address",
+      "line": 14,
+      "input_preview": "{\"orderId\":\"12345\",\"customer\":{\"name\":\"Acme\"}}"
+    },
+    {
+      "timestamp": "2026-05-05T14:32:03Z",
+      "message": "Schema validation failed: 'amount' is required",
+      "input_preview": "{\"orderId\":\"12346\",\"customer\":{...}}"
+    }
+  ],
+  "total_errors": 47,
+  "showing": 20
+}
+```
+
+Prometheus gives error counters but not the actual messages. This endpoint provides quick diagnosis without digging through container logs. The `input_preview` is truncated (first 200 characters) to avoid exposing full message payloads.
+
+**Engine config** — view and update runtime-safe configuration:
+
+```json
+GET /admin/config
+
+{
+  "maxInputSize": "5MB",
+  "workers": 4,
+  "healthPort": 8081,
+  "dataPort": 8085
+}
+
+POST /admin/config
+{"maxInputSize": "10MB"}
+
+→ 200 OK {"updated": ["maxInputSize"], "restart_required": []}
+```
+
+Only a subset of config fields are safe to change at runtime. Fields that require restart (like port numbers) are accepted but flagged in the response: `"restart_required": ["healthPort"]`.
+
+#### Data plane discovery (port 8085)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/transformations` | List available transformations (no admin key required) |
+
+Client applications need to discover what transformations are available. This endpoint is on the data plane (8085) and does not require authentication — it's part of the public API.
+
+```json
+GET /api/transformations
+
+{
+  "transformations": [
+    {"name": "invoice-to-ubl", "status": "ready", "input": "json", "output": "xml"},
+    {"name": "validate-order", "status": "ready", "input": "json", "output": "json"},
+    {"name": "enrich-order", "status": "paused", "input": "json", "output": "json"}
+  ]
+}
+```
+
+This makes the data plane self-describing. A client connecting for the first time can discover available transformations without out-of-band knowledge.
+
 ### Two deployment workflows
 
 #### Batch workflow: ZIP upload
@@ -586,12 +771,14 @@ The management API is a new `AdminEndpoint` alongside `HealthEndpoint` in `modul
 
 | File | Change |
 |------|--------|
-| New: `modules/engine/.../admin/AdminEndpoint.kt` | All `/admin/*` routes |
-| `modules/engine/.../registry/TransformationRegistry.kt` | Add `replaceAll()` and `remove()` for hot-swap |
+| New: `modules/engine/.../admin/AdminEndpoint.kt` | All `/admin/*` routes (bundle, transformations, schemas, test, operational) |
+| New: `modules/engine/.../admin/ErrorRingBuffer.kt` | Per-transformation ring buffer of recent errors (last 100) |
+| `modules/engine/.../registry/TransformationRegistry.kt` | Add `replaceAll()`, `remove()`, `pause()`, `resume()` for hot-swap and operational control |
 | `modules/engine/.../bundle/BundleLoader.kt` | Add `loadFromZip(inputStream)` alongside existing `load(path)` |
-| `modules/engine/.../config/EngineConfig.kt` | Add `adminKey`, `dataDir` config fields |
-| `modules/engine/.../UtlxEngine.kt` | Wire admin endpoint, startup scan of data dir |
+| `modules/engine/.../config/EngineConfig.kt` | Add `adminKey`, `dataDir` config fields; runtime-safe update support |
+| `modules/engine/.../UtlxEngine.kt` | Wire admin endpoint, startup scan of data dir, test execution path |
 | `modules/engine/.../health/HealthEndpoint.kt` | Add `ready` field to health response |
+| `modules/engine/.../transport/HttpTransport.kt` | Add `GET /api/transformations` discovery endpoint on data plane |
 | `deploy/docker/Dockerfile.engine` | Add `VOLUME /utlxe/data` and `UTLXE_ADMIN_KEY` env |
 
 ### What already exists
@@ -608,14 +795,19 @@ The management API is a new `AdminEndpoint` alongside `HealthEndpoint` in `modul
 | AdminEndpoint: transformation endpoints (upload, list, delete) | 2 days |
 | AdminEndpoint: schema endpoints (upload, list, delete) | 1 day |
 | AdminEndpoint: bundle endpoints (ZIP upload, export, validate) | 1 day |
+| AdminEndpoint: test endpoint (execute with sample input) | 1 day |
+| AdminEndpoint: operational endpoints (info, pause/resume, errors, config) | 1.5 days |
+| Data plane: discovery endpoint (`GET /api/transformations`) | 0.5 day |
 | ZIP bundle parsing and extraction | 0.5 day |
 | Hot-swap in TransformationRegistry (atomic replace) | 1 day |
+| Pause/resume state machine in TransformationRegistry | 0.5 day |
+| Error ring buffer per transformation | 0.5 day |
 | Admin key authentication middleware | 0.5 day |
 | Startup scan of `/utlxe/data/` directory | 0.5 day |
 | Readiness probe enhancement | 0.5 day |
 | Bicep template: optional Azure Files mount | 0.5 day |
-| Tests | 1.5 days |
-| **Total** | **~9 days** |
+| Tests | 2 days |
+| **Total** | **~13 days** |
 
 ## Customer workflows (end to end)
 
