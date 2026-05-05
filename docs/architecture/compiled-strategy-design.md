@@ -411,9 +411,11 @@ Bytecode generation adds ~50ms per transformation on top of the ~35ms for parsin
 
 For Kubernetes: if init exceeds the liveness probe timeout, increase `initialDelaySeconds` in the pod spec. This is a one-time startup cost — the pod runs for hours/days after.
 
+Compilation also happens at **upload time** when transformations are deployed via the Admin API (see [EF03: Bundle Management API](../../docs/features/EF03-bundle-management-api.md)). The same compilation pipeline runs — `POST /admin/transformations/{name}` triggers parse → type check → bytecode generation → atomic swap. If compilation fails, the upload is rejected (400) and the running transformation is untouched. The test endpoint (`POST /admin/transformations/{name}/test`) allows verifying the compiled result with sample input before routing real traffic.
+
 ### 11.2 Hot Reload
 
-Hot reload works with COMPILED — same mechanism as TEMPLATE, but with an extra bytecode generation step:
+Hot reload works with COMPILED — same mechanism as TEMPLATE, but with an extra bytecode generation step. This is used both by the internal `LoadTransformation` messages (stdio-proto, gRPC) and by the Admin API (`POST /admin/transformations/{name}`):
 
 ```
 LoadTransformation("order-transform", newSource)

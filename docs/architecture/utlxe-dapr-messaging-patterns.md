@@ -251,14 +251,16 @@ The schema is compiled once at startup. Every message from Service Bus benefits 
 
 ## 5. Deployment: Bundle + Dapr
 
-The recommended production deployment pattern:
+Two deployment patterns depending on how the customer manages their transformations:
+
+### Pattern A: Pre-loaded bundle (self-managed)
 
 ```bash
 utlxe --mode http --bundle /utlxe/bundle
 ```
 
 This combines:
-- **`--bundle`**: loads transformations + schemas at startup (init-time compilation, skeleton building)
+- **`--bundle`**: loads transformations + schemas at startup (init-time compilation)
 - **`--mode http`**: serves Dapr input binding requests + direct HTTP API calls
 
 ```
@@ -279,9 +281,49 @@ This combines:
 └─────────────────────────────────────────────────────┘
 ```
 
-The bundle directory is mounted as a volume in the Docker container or baked into the image at build time.
+The bundle directory is baked into a custom image or mounted as a volume.
 
-### Docker with bundle:
+### Pattern B: Admin API (Azure Marketplace — recommended)
+
+```bash
+utlxe --mode http
+```
+
+No `--bundle` flag. Transformations are uploaded at runtime via the Admin API on port 8081. The container starts empty and becomes ready after the first bundle upload. See [EF03: Bundle Management API](../../docs/features/EF03-bundle-management-api.md).
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Azure Container App                                  │
+│                                                      │
+│  ┌────────────┐     ┌──────────────────────────┐    │
+│  │ Dapr       │────→│ UTLXe (--mode http)      │    │
+│  │ Sidecar    │     │                           │    │
+│  │            │←────│ Port 8085: Data plane     │    │
+│  └────────────┘     │ Port 8081: Admin API +    │    │
+│        ↑            │           Health/Metrics  │    │
+│        │            │                           │    │
+│  Service Bus        │ Uploaded via Admin API:   │    │
+│  queue/topic        │  POST /admin/bundle       │    │
+│                     │  POST /admin/transformations│   │
+│                     │  POST /admin/schemas       │    │
+│                     └──────────────────────────┘    │
+│                              ↕                       │
+│                     ┌──────────────────────────┐    │
+│                     │ Azure Files (optional)    │    │
+│                     │ /utlxe/data/ mount        │    │
+│                     │ (survives restarts)       │    │
+│                     └──────────────────────────┘    │
+└─────────────────────────────────────────────────────┘
+```
+
+With Pattern B:
+- Customer uploads transformations and schemas via `POST /admin/bundle` or individual endpoints
+- Kubernetes readiness probe waits for `ready=true` before routing Dapr traffic
+- Transformations can be updated at runtime (hot-swap, zero downtime)
+- Optional Azure Files mount at `/utlxe/data/` for persistence across restarts
+- Validation can be toggled at runtime via `POST /admin/transformations/{name}/validation`
+
+### Docker (Pattern A — self-managed):
 
 ```dockerfile
 FROM ghcr.io/utlx-lang/utlxe:latest
@@ -289,21 +331,22 @@ COPY my-bundle/ /utlxe/bundle/
 CMD ["--mode", "http", "--bundle", "/utlxe/bundle"]
 ```
 
-### Bicep with volume mount:
+### Bicep (Pattern B — Azure Marketplace with Admin API):
 
 ```bicep
-// Mount Azure Files share as bundle volume
+// Container starts empty — transformations uploaded via Admin API
 containers: [{
   name: 'utlxe'
   image: containerImage
-  args: ['--mode', 'http', '--bundle', '/utlxe/bundle']
+  args: ['--mode', 'http']
+  env: [{ name: 'UTLXE_ADMIN_KEY', secretRef: 'admin-key' }]
   volumeMounts: [{
-    volumeName: 'bundle'
-    mountPath: '/utlxe/bundle'
+    volumeName: 'bundle-storage'
+    mountPath: '/utlxe/data'            // persistent storage (optional)
   }]
 }]
 volumes: [{
-  name: 'bundle'
+  name: 'bundle-storage'
   storageName: 'bundle-share'
   storageType: 'AzureFile'
 }]

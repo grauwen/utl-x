@@ -532,6 +532,7 @@ Options:
 | `stdio-json` (default) | **REQUIRED** | From disk (bundle directory) at startup | Bundle → compile → READY | Read JSON lines from stdin, execute, write to stdout |
 | `stdio-proto` | **OPTIONAL** | Dynamically via `LoadTransformationRequest` messages from the Go wrapper through the pipe. If `--bundle` also provided, those are pre-loaded at startup (hybrid). | Start transport → wait for Load messages → compile each → READY | Process `ExecuteRequest`, respond with `ExecuteResponse` |
 | `grpc` | **OPTIONAL** | Dynamically via `LoadTransformation` RPC calls. If `--bundle` also provided, those are pre-loaded. | Start gRPC server → wait for Load RPCs → compile each → READY | Process `Execute` RPCs |
+| `http` | **OPTIONAL** | Via Admin API (`POST /admin/bundle` or `/admin/transformations/{name}`) on port 8081. If `--bundle` also provided, those are pre-loaded at startup. | Start HTTP servers → scan `/utlxe/data/` → accept API uploads → READY | Process HTTP requests on port 8085 |
 
 **Key distinction:**
 
@@ -539,7 +540,9 @@ Options:
 
 - **`stdio-proto` / `grpc` (integration mode):** The **caller owns the transformations**. The Go wrapper (or any client) sends the `.utlx` source code in `LoadTransformationRequest` messages at startup. UTLXe compiles and caches them. No disk access needed. This is for production deployment where the wrapper manages lifecycle and knows which mappings are needed from its pipeline descriptor.
 
-**Hybrid mode:** If `--bundle` is provided in stdio-proto/grpc modes, bundle transforms are pre-loaded at startup (before any messages arrive). The caller can then load additional transforms dynamically. This supports scenarios where some transforms are "always needed" (from the bundle) and others are connection-specific (loaded dynamically by the wrapper).
+- **`http` (Azure Marketplace / standalone HTTP):** Transformations are managed via the Admin REST API on port 8081 (see [EF03: Bundle Management API](../../docs/features/EF03-bundle-management-api.md)). Customers upload bundles or individual transformations and schemas at runtime. The container can start empty and become ready after the first upload. Optional Azure Files mount at `/utlxe/data/` for persistence across restarts.
+
+**Hybrid mode:** If `--bundle` is provided in stdio-proto/grpc/http modes, bundle transforms are pre-loaded at startup (before any messages arrive). The caller can then load additional transforms dynamically. This supports scenarios where some transforms are "always needed" (from the bundle) and others are connection-specific (loaded dynamically by the wrapper or uploaded via Admin API).
 
 ### Startup sequence by mode:
 
