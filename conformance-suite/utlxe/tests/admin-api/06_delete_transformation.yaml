@@ -1,0 +1,39 @@
+name: "delete_transformation"
+category: "admin-api"
+description: "Upload transformation, delete it, verify 404 on data plane"
+tags: ["admin-api", "delete", "lifecycle"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_transformation
+      name: "temp-transform"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        $input
+
+    - action: execute
+      name: "temp-transform"
+      input:
+        format: json
+        data: |
+          {"test": true}
+      expected:
+        format: json
+        data: |
+          {"test": true}
+
+    - action: delete_transformation
+      name: "temp-transform"
+
+    - action: execute
+      name: "temp-transform"
+      input:
+        format: json
+        data: |
+          {"test": true}
+      expected_error:
+        status: 404

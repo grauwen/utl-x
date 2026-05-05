@@ -1,0 +1,46 @@
+name: "schema_upload"
+category: "admin-api"
+description: "Upload a shared schema, then upload a transformation referencing it"
+tags: ["admin-api", "schema", "shared-resource"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_schema
+      filename: "order.json"
+      content: |
+        {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": ["orderId", "amount"],
+          "properties": {
+            "orderId": {"type": "string"},
+            "amount": {"type": "number", "minimum": 0}
+          }
+        }
+
+    - action: list_schemas
+      expected:
+        - filename: "order.json"
+
+    - action: upload_transformation
+      name: "process-order"
+      source: |
+        %utlx 1.0
+        input json {schema: "order.json"}
+        output json
+        ---
+        {processed: true, id: $input.orderId, total: $input.amount}
+
+    - action: test_transformation
+      name: "process-order"
+      input:
+        format: json
+        data: |
+          {"orderId": "ORD-001", "amount": 99.95}
+      expected:
+        status: "ok"
+        output:
+          format: json
+          data: |
+            {"processed": true, "id": "ORD-001", "total": 99.95}

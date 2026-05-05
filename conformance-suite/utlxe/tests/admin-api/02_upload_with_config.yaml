@@ -1,0 +1,36 @@
+name: "upload_with_config"
+category: "admin-api"
+description: "Upload .utlx with explicit transform.yaml config via Admin API"
+tags: ["admin-api", "upload", "config"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_transformation
+      name: "order-transform"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {orderId: $input.id, total: $input.quantity * $input.price}
+      config:
+        strategy: COMPILED
+        maxConcurrent: 4
+
+    - action: list_transformations
+      expected:
+        - name: "order-transform"
+          strategy: "COMPILED"
+          status: "ready"
+
+    - action: execute
+      name: "order-transform"
+      input:
+        format: json
+        data: |
+          {"id": "ORD-001", "quantity": 3, "price": 25.00}
+      expected:
+        format: json
+        data: |
+          {"orderId": "ORD-001", "total": 75.0}

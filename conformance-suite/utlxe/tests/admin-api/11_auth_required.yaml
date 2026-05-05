@@ -1,0 +1,31 @@
+name: "auth_required"
+category: "admin-api"
+description: "Verify admin endpoints require X-Admin-Key, health endpoints do not"
+tags: ["admin-api", "auth", "security"]
+transport: http
+
+admin_api:
+  steps:
+    - action: request_without_key
+      method: POST
+      path: "/admin/transformations/test"
+      expected_error:
+        status: 403
+
+    - action: request_without_key
+      method: GET
+      path: "/admin/transformations"
+      expected_error:
+        status: 403
+
+    - action: request_without_key
+      method: GET
+      path: "/health"
+      expected:
+        status: 200
+
+    - action: request_without_key
+      method: GET
+      path: "/metrics"
+      expected:
+        status: 200

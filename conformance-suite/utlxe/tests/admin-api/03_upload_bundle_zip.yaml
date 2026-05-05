@@ -1,0 +1,53 @@
+name: "upload_bundle_zip"
+category: "admin-api"
+description: "Upload a ZIP bundle with multiple transformations, then execute each"
+tags: ["admin-api", "bundle", "zip"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_bundle
+      transformations:
+        normalize:
+          source: |
+            %utlx 1.0
+            input json
+            output json
+            ---
+            {name: trim($input.name), email: lowerCase($input.email)}
+        validate:
+          source: |
+            %utlx 1.0
+            input json
+            output json
+            ---
+            {valid: contains($input.email, "@"), data: $input}
+
+    - action: list_transformations
+      expected:
+        - name: "normalize"
+          status: "ready"
+        - name: "validate"
+          status: "ready"
+
+    - action: execute
+      name: "normalize"
+      input:
+        format: json
+        data: |
+          {"name": "  Alice  ", "email": "ALICE@EXAMPLE.COM"}
+      expected:
+        format: json
+        data: |
+          {"name": "Alice", "email": "alice@example.com"}
+
+    - action: execute
+      name: "validate"
+      input:
+        format: json
+        data: |
+          {"email": "alice@example.com"}
+      expected:
+        format: json
+        data: |
+          {"valid": true, "data": {"email": "alice@example.com"}}

@@ -1,0 +1,33 @@
+name: "test_endpoint"
+category: "admin-api"
+description: "Upload transformation, test via admin test endpoint before routing real traffic"
+tags: ["admin-api", "test", "verification"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_transformation
+      name: "invoice"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {
+          invoiceId: concat("INV-", $input.orderId),
+          amount: $input.total,
+          currency: $input.currency
+        }
+
+    - action: test_transformation
+      name: "invoice"
+      input:
+        format: json
+        data: |
+          {"orderId": "12345", "total": 250.00, "currency": "EUR"}
+      expected:
+        status: "ok"
+        output:
+          format: json
+          data: |
+            {"invoiceId": "INV-12345", "amount": 250.0, "currency": "EUR"}

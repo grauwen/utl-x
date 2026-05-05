@@ -1,0 +1,47 @@
+name: "update_transformation"
+category: "admin-api"
+description: "Upload v1, execute, upload v2 (hot-swap), execute again — output changes"
+tags: ["admin-api", "hot-swap", "update"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_transformation
+      name: "greeting"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {message: concat("Hello, ", $input.name)}
+
+    - action: execute
+      name: "greeting"
+      input:
+        format: json
+        data: |
+          {"name": "Alice"}
+      expected:
+        format: json
+        data: |
+          {"message": "Hello, Alice"}
+
+    - action: upload_transformation
+      name: "greeting"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {message: concat("Hi, ", upperCase($input.name), "!")}
+
+    - action: execute
+      name: "greeting"
+      input:
+        format: json
+        data: |
+          {"name": "Alice"}
+      expected:
+        format: json
+        data: |
+          {"message": "Hi, ALICE!"}

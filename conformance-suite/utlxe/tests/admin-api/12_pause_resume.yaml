@@ -1,0 +1,53 @@
+name: "pause_resume"
+category: "admin-api"
+description: "Pause a transformation (503 on data plane), resume (works again)"
+tags: ["admin-api", "pause", "resume", "operational"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_transformation
+      name: "greet"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {hello: $input.name}
+
+    - action: execute
+      name: "greet"
+      input:
+        format: json
+        data: |
+          {"name": "Alice"}
+      expected:
+        format: json
+        data: |
+          {"hello": "Alice"}
+
+    - action: pause_transformation
+      name: "greet"
+
+    - action: execute
+      name: "greet"
+      input:
+        format: json
+        data: |
+          {"name": "Alice"}
+      expected_error:
+        status: 503
+
+    - action: resume_transformation
+      name: "greet"
+
+    - action: execute
+      name: "greet"
+      input:
+        format: json
+        data: |
+          {"name": "Alice"}
+      expected:
+        format: json
+        data: |
+          {"hello": "Alice"}

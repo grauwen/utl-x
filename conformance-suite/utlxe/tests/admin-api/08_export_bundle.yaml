@@ -1,0 +1,38 @@
+name: "export_bundle"
+category: "admin-api"
+description: "Build up a bundle via API, export as ZIP, verify contents"
+tags: ["admin-api", "bundle", "export"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_schema
+      filename: "order.json"
+      content: |
+        {"type": "object", "properties": {"id": {"type": "string"}}}
+
+    - action: upload_transformation
+      name: "transform-a"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {a: $input.id}
+
+    - action: upload_transformation
+      name: "transform-b"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {b: $input.id}
+
+    - action: export_bundle
+      expected:
+        contains_schemas:
+          - "order.json"
+        contains_transformations:
+          - "transform-a"
+          - "transform-b"

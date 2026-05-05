@@ -1,0 +1,37 @@
+name: "discovery_endpoint"
+category: "admin-api"
+description: "Upload transformations, verify data plane discovery endpoint lists them"
+tags: ["admin-api", "discovery", "data-plane"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_transformation
+      name: "alpha"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        $input
+
+    - action: upload_transformation
+      name: "beta"
+      source: |
+        %utlx 1.0
+        input json
+        output xml
+        ---
+        <result>{$input.value}</result>
+
+    - action: discover_transformations
+      port: 8085
+      expected:
+        - name: "alpha"
+          status: "ready"
+          input: "json"
+          output: "json"
+        - name: "beta"
+          status: "ready"
+          input: "json"
+          output: "xml"

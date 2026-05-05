@@ -1,0 +1,27 @@
+name: "upload_single_utlx"
+category: "admin-api"
+description: "Upload a single .utlx file via Admin API, then execute on data plane"
+tags: ["admin-api", "upload", "basic"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_transformation
+      name: "greeting"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {greeting: concat("Hello, ", $input.name, "!")}
+
+    - action: execute
+      name: "greeting"
+      input:
+        format: json
+        data: |
+          {"name": "Alice"}
+      expected:
+        format: json
+        data: |
+          {"greeting": "Hello, Alice!"}

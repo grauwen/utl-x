@@ -1,0 +1,23 @@
+name: "engine_info"
+category: "admin-api"
+description: "Verify GET /admin/info returns engine version, uptime, transformation count"
+tags: ["admin-api", "info", "operational"]
+transport: http
+
+admin_api:
+  steps:
+    - action: upload_transformation
+      name: "dummy"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        $input
+
+    - action: get_info
+      expected:
+        version_present: true
+        transformations: 1
+        ready: true
+        admin_key_set: true
