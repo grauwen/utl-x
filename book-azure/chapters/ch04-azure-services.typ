@@ -1,174 +1,347 @@
 = Connecting to Azure Services
 
-UTLXe integrates with Azure messaging services through a Dapr sidecar. Dapr handles the connection to Service Bus, Event Hub, and other Azure services, while UTLXe focuses on the transformation logic. This chapter covers the most common integration patterns.
+This chapter walks through every step of connecting UTLXe to Azure Service Bus and Event Hub. Each section is a complete, self-contained walkthrough --- from creating the Azure resources to sending the first message through UTLXe.
 
-== How Dapr Works with UTLXe
+== Prerequisites
 
-Dapr runs as a sidecar container alongside UTLXe in the same Container App. It acts as a message broker adapter:
+Before you begin, you need:
 
-+ A message arrives on Azure Service Bus (or Event Hub).
-+ Dapr receives the message and forwards it to UTLXe via HTTP: `POST /api/dapr/input/{bindingName}`.
-+ UTLXe transforms the message.
-+ UTLXe sends the result back to Dapr: `POST http://localhost:3500/v1.0/bindings/{outputBinding}`.
-+ Dapr delivers the transformed message to the output queue or topic.
-+ UTLXe acknowledges the original message (HTTP 200), and Dapr completes it on Service Bus.
+- An Azure subscription.
+- The Azure CLI installed (`az` command). Install from `https://docs.microsoft.com/en-us/cli/azure/install-azure-cli`.
+- A deployed UTLXe Container App (see Chapter 2: Quick Start).
+- The UTLXe admin key (`UTLXE_ADMIN_KEY`) configured on the container.
 
-UTLXe never connects directly to Service Bus or Event Hub. Dapr abstracts the messaging infrastructure, which means the same UTLXe container works with different messaging systems by changing only the Dapr configuration.
+All commands in this chapter use the Azure CLI. Where relevant, the equivalent Azure Portal steps are noted.
 
-== Azure Service Bus
+== Walkthrough: Service Bus Queue to Queue
 
-=== Receiving from a Queue
+This walkthrough connects an Azure Service Bus input queue to UTLXe, transforms messages, and sends results to an output queue.
 
-Configure a Dapr input binding that delivers messages to UTLXe. The binding name maps to the transformation name.
-
-Dapr component (`servicebus-input.yaml`):
-
-```yaml
-apiVersion: dapr.io/v1alpha1
-kind: Component
-metadata:
-  name: orders-in
-spec:
-  type: bindings.azure.servicebusqueues
-  metadata:
-    - name: connectionString
-      secretKeyRef:
-        name: servicebus-connection
-        key: connectionString
-    - name: queueName
-      value: "incoming-orders"
-    - name: maxConcurrentHandlers
-      value: "10"
-```
-
-When a message arrives on the `incoming-orders` queue, Dapr calls `POST /api/dapr/input/orders-in` on UTLXe. UTLXe looks up a transformation named `orders-in` (or uses the `X-UTLXe-Transform` header to specify a different one) and processes the message.
-
-=== Sending to a Queue
-
-Configure a Dapr output binding for the transformed messages:
-
-```yaml
-apiVersion: dapr.io/v1alpha1
-kind: Component
-metadata:
-  name: orders-out
-spec:
-  type: bindings.azure.servicebusqueues
-  metadata:
-    - name: connectionString
-      secretKeyRef:
-        name: servicebus-connection
-        key: connectionString
-    - name: queueName
-      value: "processed-orders"
-```
-
-In the transformation's `transform.yaml`, specify the output binding:
-
-```yaml
-strategy: COMPILED
-outputBinding: orders-out
-```
-
-After transformation, UTLXe automatically sends the result to Dapr's output binding, which delivers it to the `processed-orders` queue.
-
-=== Topics and Subscriptions
-
-For publish/subscribe patterns, use Service Bus topics instead of queues. The Dapr component type changes to `bindings.azure.servicebustopics`, but the UTLXe integration is identical --- Dapr delivers messages the same way.
-
-=== Dead-Letter Queue
-
-When a transformation fails, UTLXe returns HTTP 500 to Dapr. Dapr abandons the message on Service Bus, which increments its delivery count. After the maximum number of retries (configured on the Service Bus queue), the message moves to the dead-letter queue.
-
-You can inspect recent errors via the Admin API:
+=== Step 1: Create the Service Bus Namespace and Queues
 
 ```bash
-curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/orders-in/errors
+# Variables — adjust to your environment
+RESOURCE_GROUP="myResourceGroup"
+LOCATION="westeurope"
+SB_NAMESPACE="sb-utlxe-demo"
+
+# Create the Service Bus namespace
+az servicebus namespace create \
+  --name $SB_NAMESPACE \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --sku Standard
+
+# Create the input queue
+az servicebus queue create \
+  --name incoming-orders \
+  --namespace-name $SB_NAMESPACE \
+  --resource-group $RESOURCE_GROUP
+
+# Create the output queue
+az servicebus queue create \
+  --name processed-orders \
+  --namespace-name $SB_NAMESPACE \
+  --resource-group $RESOURCE_GROUP
 ```
 
-This returns the last 100 errors with timestamps, error messages, and a preview of the input that caused the failure.
+_Portal alternative:_ In the Azure Portal, go to "Create a resource" > "Service Bus" > fill in namespace name, resource group, region, and Standard tier. Then open the namespace and click "+ Queue" twice to create `incoming-orders` and `processed-orders`.
 
-== Azure Event Hub
+=== Step 2: Get the Connection String
 
-Event Hub integration follows the same pattern as Service Bus, with a different Dapr component type.
+```bash
+# Get the connection string for the Dapr component
+az servicebus namespace authorization-rule keys list \
+  --name RootManageSharedAccessKey \
+  --namespace-name $SB_NAMESPACE \
+  --resource-group $RESOURCE_GROUP \
+  --query primaryConnectionString -o tsv
+```
 
-Input binding (`eventhub-input.yaml`):
+Copy the connection string. You will store it as a secret in the Container App environment.
+
+=== Step 3: Store the Connection String as a Secret
+
+```bash
+CONTAINER_APP="utlxe"
+CONTAINER_ENV="my-container-env"
+
+# Store as a secret in the Container App
+az containerapp secret set \
+  --name $CONTAINER_APP \
+  --resource-group $RESOURCE_GROUP \
+  --secrets servicebus-connection="<paste connection string>"
+```
+
+_Portal alternative:_ Open the Container App > "Secrets" > "+ Add" > name: `servicebus-connection`, value: paste the connection string.
+
+=== Step 4: Configure the Dapr Input Component
+
+Enable Dapr on the Container App and add the input binding component:
+
+```bash
+# Enable Dapr on the Container App (if not already enabled)
+az containerapp dapr enable \
+  --name $CONTAINER_APP \
+  --resource-group $RESOURCE_GROUP \
+  --dapr-app-id utlxe \
+  --dapr-app-port 8085
+
+# Create the Dapr component for the input queue
+az containerapp env dapr-component set \
+  --name $CONTAINER_ENV \
+  --resource-group $RESOURCE_GROUP \
+  --dapr-component-name orders-in \
+  --yaml dapr-input.yaml
+```
+
+Create `dapr-input.yaml`:
 
 ```yaml
-apiVersion: dapr.io/v1alpha1
-kind: Component
+componentType: bindings.azure.servicebusqueues
+version: v1
 metadata:
-  name: events-in
-spec:
-  type: bindings.azure.eventhubs
-  metadata:
-    - name: connectionString
-      secretKeyRef:
-        name: eventhub-connection
-        key: connectionString
-    - name: consumerGroup
-      value: "utlxe-consumer"
-    - name: storageAccountName
-      value: "stcheckpoints"
-    - name: storageContainerName
-      value: "checkpoints"
+  - name: connectionString
+    secretRef: servicebus-connection
+  - name: queueName
+    value: "incoming-orders"
+scopes:
+  - utlxe
 ```
 
-Event Hub uses consumer groups and checkpointing for partition management. Dapr handles checkpointing automatically --- UTLXe does not need to manage offsets.
+_Portal alternative:_ Open the Container App Environment > "Dapr components" > "+ Add" > component name: `orders-in`, type: `bindings.azure.servicebusqueues`. Add metadata: `connectionString` (secret reference: `servicebus-connection`), `queueName`: `incoming-orders`. Scope to `utlxe`.
 
-Output binding:
+=== Step 5: Configure the Dapr Output Component
+
+```bash
+az containerapp env dapr-component set \
+  --name $CONTAINER_ENV \
+  --resource-group $RESOURCE_GROUP \
+  --dapr-component-name orders-out \
+  --yaml dapr-output.yaml
+```
+
+Create `dapr-output.yaml`:
 
 ```yaml
-apiVersion: dapr.io/v1alpha1
-kind: Component
+componentType: bindings.azure.servicebusqueues
+version: v1
 metadata:
-  name: events-out
-spec:
-  type: bindings.azure.eventhubs
-  metadata:
-    - name: connectionString
-      secretKeyRef:
-        name: eventhub-connection
-        key: connectionString
+  - name: connectionString
+    secretRef: servicebus-connection
+  - name: queueName
+    value: "processed-orders"
+scopes:
+  - utlxe
 ```
 
-== Direct HTTP (Without Dapr)
+=== Step 6: Upload the Transformation
 
-Not all integrations require Dapr. For simple request/response patterns, clients can call the data plane directly:
+Create `orders-in.utlx` --- the transformation name must match the Dapr input component name (`orders-in`):
+
+```
+%utlx 1.0
+input json
+output json
+---
+{
+  processedOrderId: concat("PROC-", $input.orderId),
+  customer: upperCase($input.customerName),
+  total: round($input.quantity * $input.unitPrice, 2),
+  processedAt: now()
+}
+```
+
+Upload it with the output binding configured:
+
+```bash
+# Upload the transformation
+curl -X POST \
+  -H "X-Admin-Key: $ADMIN_KEY" \
+  -F "source=@orders-in.utlx" \
+  http://<admin-ip>:8081/admin/transformations/orders-in
+
+# Optionally set the output binding via config
+curl -X POST \
+  -H "X-Admin-Key: $ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"outputBinding": "orders-out"}' \
+  http://<admin-ip>:8081/admin/transformations/orders-in/config
+```
+
+=== Step 7: Test the Transformation
+
+Before sending real messages, test with sample input:
+
+```bash
+curl -X POST \
+  -H "X-Admin-Key: $ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"orderId":"ORD-001","customerName":"Acme Corp","quantity":5,"unitPrice":24.50}' \
+  http://<admin-ip>:8081/admin/transformations/orders-in/test
+```
+
+Expected response:
+
+```json
+{
+  "status": "ok",
+  "output": {
+    "processedOrderId": "PROC-ORD-001",
+    "customer": "ACME CORP",
+    "total": 122.5,
+    "processedAt": "2026-05-05T14:30:00Z"
+  },
+  "duration_ms": 2
+}
+```
+
+=== Step 8: Send a Message to Service Bus
+
+```bash
+# Send a test message to the input queue
+az servicebus queue send \
+  --name incoming-orders \
+  --namespace-name $SB_NAMESPACE \
+  --resource-group $RESOURCE_GROUP \
+  --body '{"orderId":"ORD-001","customerName":"Acme Corp","quantity":5,"unitPrice":24.50}'
+```
+
+_Portal alternative:_ Open the Service Bus namespace > "incoming-orders" queue > "Service Bus Explorer" > "Send message" > paste the JSON body > click "Send".
+
+=== Step 9: Check the Output Queue
+
+```bash
+# Peek at the output queue
+az servicebus queue peek \
+  --name processed-orders \
+  --namespace-name $SB_NAMESPACE \
+  --resource-group $RESOURCE_GROUP
+```
+
+You should see the transformed message:
+
+```json
+{
+  "processedOrderId": "PROC-ORD-001",
+  "customer": "ACME CORP",
+  "total": 122.5,
+  "processedAt": "2026-05-05T14:30:05Z"
+}
+```
+
+The complete flow is now working: Service Bus input queue → Dapr → UTLXe → Dapr → Service Bus output queue.
+
+=== What Happens on Failure
+
+If the transformation fails (for example, a required field is missing), UTLXe returns HTTP 500 to Dapr. Dapr does not acknowledge the message on Service Bus. Service Bus retries delivery based on the queue's retry policy. After the maximum number of retries, the message moves to the dead-letter queue.
+
+Check recent errors:
+
+```bash
+curl -H "X-Admin-Key: $ADMIN_KEY" \
+  http://<admin-ip>:8081/admin/transformations/orders-in/errors
+```
+
+== Walkthrough: Event Hub
+
+Event Hub uses the same pattern with a different Dapr component type. Only the differences from the Service Bus walkthrough are shown.
+
+=== Create the Event Hub
+
+```bash
+EH_NAMESPACE="eh-utlxe-demo"
+
+az eventhubs namespace create \
+  --name $EH_NAMESPACE \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --sku Standard
+
+az eventhubs eventhub create \
+  --name incoming-events \
+  --namespace-name $EH_NAMESPACE \
+  --resource-group $RESOURCE_GROUP \
+  --partition-count 4
+
+# Storage account for checkpointing
+az storage account create \
+  --name stutlxecheckpoint \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --sku Standard_LRS
+
+az storage container create \
+  --name checkpoints \
+  --account-name stutlxecheckpoint
+```
+
+=== Dapr Component
+
+Create `dapr-eventhub-input.yaml`:
+
+```yaml
+componentType: bindings.azure.eventhubs
+version: v1
+metadata:
+  - name: connectionString
+    secretRef: eventhub-connection
+  - name: consumerGroup
+    value: "utlxe-consumer"
+  - name: storageAccountName
+    value: "stutlxecheckpoint"
+  - name: storageContainerName
+    value: "checkpoints"
+  - name: storageAccountKey
+    secretRef: storage-account-key
+scopes:
+  - utlxe
+```
+
+The transformation is identical to the Service Bus example --- UTLXe does not know or care whether the message came from Service Bus or Event Hub.
+
+== Direct HTTP (No Dapr)
+
+For synchronous request/response patterns, clients call UTLXe directly on port 8085. No Dapr configuration is needed.
 
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -d @order.json \
-  http://<ingress>:8085/api/transform/invoice-to-ubl
+  -d '{"orderId":"ORD-001","customerName":"Acme Corp","quantity":5,"unitPrice":24.50}' \
+  http://<ingress-url>:8085/api/transform/orders-in
 ```
 
-This is suitable for:
+The response is the transformed message, returned synchronously. This is suitable for:
+
 - API gateway integration --- transform requests or responses inline.
 - Batch processing --- send messages from a script or pipeline.
-- Testing and development --- call the transformation directly.
+- Testing and development.
+
+No Dapr component, no Service Bus, no queue configuration. Just HTTP in, HTTP out.
 
 == Worked Example: Dynamics 365 to Peppol
 
-A complete end-to-end flow for the European e-invoicing scenario:
+A complete end-to-end flow for European e-invoicing:
 
-+ *Dynamics 365 Business Central* publishes an invoice as OData JSON to a Service Bus queue.
++ *Dynamics 365 Business Central* publishes an invoice as OData JSON to a Service Bus queue (using D365's built-in Service Bus integration).
 + *Dapr* delivers the message to UTLXe.
-+ *UTLXe* runs three chained transformations:
-  - `invoice-to-ubl` --- converts D365 JSON to UBL 2.1 XML.
-  - `validate-ubl` --- validates the UBL against Peppol BIS 3.0 rules.
-  - `route-by-country` --- adds country-specific tax rules.
-+ *UTLXe* sends the final UBL XML to Dapr's output binding.
-+ *Dapr* publishes to an output Service Bus topic.
-+ A *Peppol Access Point* consumes from the topic and delivers the invoice via AS4.
++ *UTLXe* runs the `invoice-to-ubl` transformation --- converting D365 JSON to UBL 2.1 XML with Peppol BIS 3.0 compliance.
++ *Dapr* publishes the UBL XML to an output Service Bus topic.
++ A *Peppol Access Point* subscribes to the topic and delivers the invoice via AS4.
 
-All three transformations are uploaded as a single bundle:
+The transformation, Dapr components, and Service Bus resources are configured following the same steps shown in this chapter. The only difference is the `.utlx` content --- which maps D365 fields to UBL elements.
 
-```bash
-curl -X POST -H "X-Admin-Key: $KEY" \
-  -F "file=@peppol-bundle.zip" \
-  http://<admin>:8081/admin/bundle
-```
+== Summary: What You Configure Where
 
-The bundle contains the three `.utlx` files, their `transform.yaml` configs specifying the pipeline order, and the UBL and Peppol schemas for validation.
+#table(
+  columns: (auto, auto, 1fr),
+  [*What*], [*Where*], [*How*],
+  [Service Bus / Event Hub], [Azure Portal or CLI], [`az servicebus` / `az eventhubs` commands],
+  [Connection string], [Container App secrets], [`az containerapp secret set`],
+  [Dapr input binding], [Container App Environment], [Dapr component YAML via CLI or Portal],
+  [Dapr output binding], [Container App Environment], [Dapr component YAML via CLI or Portal],
+  [Transformation], [UTLXe Admin API], [`POST /admin/transformations/{name}`],
+  [Output binding reference], [UTLXe Admin API], [`POST /admin/transformations/{name}/config`],
+)
+
+The Azure resources and Dapr components are configured once. The transformations can be updated at any time without changing the infrastructure.

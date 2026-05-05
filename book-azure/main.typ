@@ -128,10 +128,12 @@ Typeset with Typst in New Computer Modern.
   #v(0.5cm)
   #text(size: 18pt, fill: rgb("#666666"))[Getting Started]
   #v(1cm)
-  #text(size: 12pt, fill: rgb("#999999"))[Deploy, write your first transformation, and learn the Admin API]
+  #text(size: 12pt, fill: rgb("#999999"))[Why UTLXe, and how to get started]
 ]
 #pagebreak()
 
+#include "chapters/ch00-why-utlxe.typ"
+#pagebreak()
 #include "chapters/ch01-quick-start.typ"
 #pagebreak()
 #include "chapters/ch02-writing-transformations.typ"
