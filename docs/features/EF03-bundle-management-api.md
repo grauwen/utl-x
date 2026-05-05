@@ -1127,8 +1127,81 @@ The management API is a new `AdminEndpoint` alongside `HealthEndpoint` in `modul
 | Startup scan of `/utlxe/data/` directory | 0.5 day |
 | Readiness probe enhancement | 0.5 day |
 | Bicep template: optional Azure Files mount | 0.5 day |
-| Tests (HTTP + gRPC + proto) | 2.5 days |
-| **Total** | **~16 days** |
+| **Testing** | |
+| Kotlin: AdminEndpointTest (upload, list, delete, bundle ZIP, export) | 1 day |
+| Kotlin: AdminSchemaTest, AdminTestEndpointTest | 0.5 day |
+| Kotlin: AdminPauseResumeTest, AdminValidationOverrideTest | 0.5 day |
+| Kotlin: AdminAuthTest, AdminInfoTest, AdminConfigTest | 0.5 day |
+| Kotlin: AdminErrorRingBufferTest, DataPlaneDiscoveryTest | 0.5 day |
+| Kotlin: BundleLoaderZipTest, StartupScanTest | 0.5 day |
+| Kotlin: GrpcRemoveListTestTest, StdioProtoRemoveListTestTest | 0.5 day |
+| Python: admin-api conformance tests (12 YAML tests + HttpAdminClient) | 1 day |
+| **Total** | **~19 days** |
+
+## Test plan
+
+### Principle: Kotlin for logic, Python for wire format
+
+| Layer | Technology | What it tests | Why |
+|-------|-----------|---------------|-----|
+| **Kotlin unit/integration tests** | JUnit 5 + in-process Javalin/gRPC | All Admin API logic, edge cases, auth, error paths, concurrency | Fast (~ms per test), no subprocess, CI-friendly, deterministic |
+| **Python conformance tests** | YAML definitions + `engine-runner.py` | End-to-end HTTP wire format against real UTLXe process | Validates real subprocess behavior, HTTP serialization, multi-step flows |
+
+### Kotlin tests (new files in `modules/engine/src/test/`)
+
+| Test file | What it covers |
+|-----------|---------------|
+| `AdminEndpointTest.kt` | Upload .utlx alone, upload with config, upload ZIP bundle, export bundle as ZIP, list transformations, delete transformation, validate (dry run). Tests use in-process Javalin on test port. |
+| `AdminSchemaTest.kt` | Schema upload, list, get, delete. Verify schema shared across multiple transformations. Update schema without recompiling transformations. |
+| `AdminTestEndpointTest.kt` | `POST /admin/transformations/{name}/test` — success returns output + duration, failure returns error + line number. Test calls not counted in metrics. |
+| `AdminPauseResumeTest.kt` | Pause → data plane returns 503. Resume → data plane works. Pause doesn't remove from disk or registry. List shows `"status": "paused"`. |
+| `AdminValidationOverrideTest.kt` | Set runtime override → effective policy changes. Delete override → reverts to config. Override is ephemeral (not written to disk). Precedence: override > config > header. |
+| `AdminAuthTest.kt` | Missing `X-Admin-Key` → 403. Wrong key → 403. Correct key → 200. Health endpoints (`/health`, `/metrics`) remain unauthenticated. `UTLXE_ADMIN_KEY` not set → all admin endpoints return 403. |
+| `AdminInfoTest.kt` | `GET /admin/info` returns version, uptime, transformation count, ready flag, persistence mode. |
+| `AdminConfigTest.kt` | `GET /admin/config` returns current config. `POST /admin/config` updates runtime-safe fields. Non-runtime fields flagged as `restart_required`. |
+| `AdminErrorRingBufferTest.kt` | Errors collected per transformation. Ring buffer wraps at 100. Different transformations have isolated buffers. Error includes timestamp, message, line, input preview (truncated). |
+| `DataPlaneDiscoveryTest.kt` | `GET /api/transformations` on :8085 lists available transformations with name, status, input/output format. Shows paused transformations. No admin key required. |
+| `BundleLoaderZipTest.kt` | `loadFromZip()` extracts transformations/ and schemas/. Missing `transform.yaml` → defaults applied. Invalid .utlx in ZIP → rejected, nothing written. |
+| `StartupScanTest.kt` | Engine starts, finds existing transformations in data dir → compiles and registers. Empty data dir → starts with zero transformations, `ready=false`. |
+| `GrpcRemoveListTestTest.kt` | `RemoveTransformation` RPC removes from registry. `ListTransformations` returns names + strategies + status. `TestTransformation` executes without affecting metrics. |
+| `StdioProtoRemoveListTestTest.kt` | Same 3 operations via varint-delimited protobuf messages over piped streams. |
+
+### Python conformance tests (new category: `admin-api/`)
+
+12 YAML test definitions in `conformance-suite/utlxe/tests/admin-api/`:
+
+| Test | Actions |
+|------|---------|
+| `01_upload_single_utlx.yaml` | Upload .utlx → execute on data plane |
+| `02_upload_with_config.yaml` | Upload .utlx + config → list shows strategy → execute |
+| `03_upload_bundle_zip.yaml` | Upload ZIP with 2 transformations → list both → execute each |
+| `04_test_endpoint.yaml` | Upload → test with sample input → verify output |
+| `05_update_transformation.yaml` | Upload v1 → execute → upload v2 → execute → different output |
+| `06_delete_transformation.yaml` | Upload → execute → delete → execute → 404 |
+| `07_schema_upload.yaml` | Upload schema → upload transformation referencing it → test |
+| `08_export_bundle.yaml` | Build up bundle via API → export ZIP → verify contents |
+| `09_discovery_endpoint.yaml` | Upload transformations → `GET /api/transformations` on :8085 |
+| `10_engine_info.yaml` | Upload → `GET /admin/info` → verify version, count, ready |
+| `11_auth_required.yaml` | Admin endpoints need key (403), health endpoints don't (200) |
+| `12_pause_resume.yaml` | Upload → execute → pause → 503 → resume → execute |
+
+The Python runner needs a new `HttpAdminClient` class that:
+1. Starts UTLXe with `--mode http --http-port {test_port}` and `UTLXE_ADMIN_KEY` env var
+2. Waits for health on admin port
+3. Implements admin API calls: upload transformation, upload schema, upload bundle, list, delete, test, pause, resume, info, discovery
+4. Implements data plane calls: execute, discover transformations
+5. Uses `requests` library for HTTP (replaces the manual protobuf wire format used by other test categories)
+
+### What is NOT tested in the conformance suite
+
+| Concern | Why not | How it's tested instead |
+|---------|---------|----------------------|
+| Azure Files volume mount | Infrastructure, not application | Bicep template deployment test |
+| Container restart persistence | Requires container orchestrator | Manual integration test / Azure DevOps pipeline |
+| Concurrent upload + execute | Complex timing, better in Kotlin | `AdminEndpointTest.kt` with parallel threads |
+| Metaspace after many hot-swaps | Long-running concern | Separate soak test / monitoring |
+
+---
 
 ## Customer workflows (end to end)
 
