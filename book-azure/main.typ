@@ -11,7 +11,7 @@
 #set text(font: "New Computer Modern", size: 10pt)
 #set page(
   paper: "a4",
-  margin: (top: 3cm, bottom: 3cm, left: 2.5cm, right: 2.5cm),
+  margin: (top: 3cm, bottom: 3cm, left: 2cm, right: 2cm),
   header: context {
     if counter(page).get().first() > 2 {
       let current-page = here().page()
@@ -35,11 +35,12 @@
 #set par(justify: true)
 
 // Code block styling
-#show raw.where(block: true): block.with(
+#show raw.where(block: true): it => block(
   fill: luma(245),
   inset: 10pt,
   radius: 4pt,
   width: 100%,
+  text(size: 8.5pt, it),
 )
 
 // ── Title Page ──
@@ -120,18 +121,6 @@ Typeset with Typst in New Computer Modern.
 
 #pagebreak()
 
-// ── Part I: Getting Started ──
-
-#align(center)[
-  #v(6cm)
-  #text(size: 28pt, weight: "bold", fill: rgb("#0078D4"))[Part I]
-  #v(0.5cm)
-  #text(size: 18pt, fill: rgb("#666666"))[Getting Started]
-  #v(1cm)
-  #text(size: 12pt, fill: rgb("#999999"))[Why UTLXe, and how to get started]
-]
-#pagebreak()
-
 #include "chapters/ch00-why-utlxe.typ"
 #pagebreak()
 #include "chapters/ch01-quick-start.typ"
@@ -140,36 +129,10 @@ Typeset with Typst in New Computer Modern.
 #pagebreak()
 #include "chapters/ch03-admin-api.typ"
 #pagebreak()
-
-// ── Part II: Integration ──
-
-#align(center)[
-  #v(6cm)
-  #text(size: 28pt, weight: "bold", fill: rgb("#0078D4"))[Part II]
-  #v(0.5cm)
-  #text(size: 18pt, fill: rgb("#666666"))[Integration]
-  #v(1cm)
-  #text(size: 12pt, fill: rgb("#999999"))[Connect to Azure services and monitor your deployment]
-]
-#pagebreak()
-
 #include "chapters/ch04-azure-services.typ"
 #pagebreak()
 #include "chapters/ch05-monitoring.typ"
 #pagebreak()
-
-// ── Part III: Production ──
-
-#align(center)[
-  #v(6cm)
-  #text(size: 28pt, weight: "bold", fill: rgb("#0078D4"))[Part III]
-  #v(0.5cm)
-  #text(size: 18pt, fill: rgb("#666666"))[Production]
-  #v(1cm)
-  #text(size: 12pt, fill: rgb("#999999"))[Operations, scaling, security, and automation]
-]
-#pagebreak()
-
 #include "chapters/ch06-operations.typ"
 #pagebreak()
 #include "chapters/ch07-persistence-and-scaling.typ"
@@ -180,17 +143,6 @@ Typeset with Typst in New Computer Modern.
 #pagebreak()
 #include "chapters/ch10-troubleshooting.typ"
 #pagebreak()
-
-// ── Appendices ──
-
-#align(center)[
-  #v(6cm)
-  #text(size: 28pt, weight: "bold", fill: rgb("#0078D4"))[Appendices]
-  #v(0.5cm)
-  #text(size: 18pt, fill: rgb("#666666"))[Reference Material]
-]
-#pagebreak()
-
 #include "chapters/appendix-a-api-reference.typ"
 #pagebreak()
 #include "chapters/appendix-b-config-reference.typ"
