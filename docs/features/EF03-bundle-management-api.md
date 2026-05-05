@@ -788,7 +788,7 @@ In both cases, UTLXe code is identical — it reads and writes `/utlxe/data/`. T
 
 ## Sequence diagrams
 
-### Batch workflow (ZIP bundle upload)
+### 1. Batch workflow (ZIP bundle upload)
 
 ```mermaid
 ---
@@ -797,29 +797,31 @@ config:
   theme: neutral
 ---
 sequenceDiagram
-    participant Customer as Customer<br/>CI/CD Pipeline
+    participant CICD as Customer<br/>CI/CD Pipeline
     participant Admin as UTLXe<br/>:8081 (admin)
     participant Engine as UTLXe<br/>Engine Core
     participant Data as UTLXe<br/>:8085 (data)
+    participant App as Client<br/>Application
 
     Note over Admin: Container starts (empty)
 
-    Customer->>Admin: POST /admin/bundle<br/>X-Admin-Key: ***<br/>[bundle.zip]
+    CICD->>Admin: POST /admin/bundle<br/>X-Admin-Key: ***<br/>[bundle.zip]
     Admin->>Admin: Extract ZIP
     Admin->>Admin: Store schemas to /utlxe/data/schemas/
     Admin->>Engine: Compile all .utlx files
     Engine-->>Admin: Compilation result
     Admin->>Admin: Write to /utlxe/data/transformations/
-    Admin-->>Customer: 200 OK<br/>{"status":"deployed", ...}
+    Admin-->>CICD: 200 OK<br/>{"status":"deployed",<br/>"transformations": 3}
 
-    Note over Data: Transformations now available
+    Note over Data: Health: ready=true<br/>Kubernetes routes traffic
 
-    Data->>Engine: POST /api/transform/invoice-to-ubl<br/>{input JSON}
-    Engine->>Engine: Transform
+    App->>Data: POST /api/transform/invoice-to-ubl<br/>{input JSON}
+    Data->>Engine: Execute transformation
     Engine-->>Data: {output UBL XML}
+    Data-->>App: 200 OK
 ```
 
-### API-first workflow (incremental build)
+### 2. API-first workflow (incremental build)
 
 ```mermaid
 ---
@@ -850,6 +852,140 @@ sequenceDiagram
     Note over Dev,Admin: Export for version control
     Dev->>Admin: GET /admin/bundle
     Admin-->>Dev: [bundle.zip]
+```
+
+### 3. Deploy → Test → Go live
+
+The most important operational flow: upload a transformation, test it with sample input, then let real traffic through.
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+sequenceDiagram
+    participant Ops as Ops Engineer
+    participant Admin as UTLXe<br/>:8081 (admin)
+    participant Engine as UTLXe<br/>Engine Core
+    participant Data as UTLXe<br/>:8085 (data)
+    participant App as Client<br/>Application
+
+    Ops->>Admin: POST /admin/transformations/invoice-to-ubl<br/>[invoice-to-ubl.utlx]
+    Admin->>Engine: Compile
+    Engine-->>Admin: Compiled OK
+    Admin-->>Ops: 200 OK {"status":"deployed"}
+
+    Note over Ops,Admin: Test before real traffic
+    Ops->>Admin: POST /admin/transformations/invoice-to-ubl/test<br/>{"orderId":"TEST-001", "amount":100}
+    Admin->>Engine: Execute (not counted in metrics)
+    Engine-->>Admin: {"Invoice":{"ID":"TEST-001",...}}
+    Admin-->>Ops: 200 OK {"status":"ok", "duration_ms":3}
+
+    Note over Data: Verified — real traffic can flow
+
+    App->>Data: POST /api/transform/invoice-to-ubl<br/>{real order}
+    Data->>Engine: Execute
+    Engine-->>Data: {UBL XML}
+    Data-->>App: 200 OK
+```
+
+### 4. Incident: pause, fix, resume
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+sequenceDiagram
+    participant Ops as Ops Engineer
+    participant Admin as UTLXe<br/>:8081 (admin)
+    participant Engine as UTLXe<br/>Engine Core
+    participant Data as UTLXe<br/>:8085 (data)
+    participant App as Client<br/>Application
+
+    Note over App,Data: Transformation is producing errors
+
+    Ops->>Admin: GET /admin/transformations/invoice-to-ubl/errors
+    Admin-->>Ops: [{"message":"Null ref: $input.customer.address",<br/>"line":14, ...}]
+
+    Ops->>Admin: POST /admin/transformations/invoice-to-ubl/pause
+    Admin->>Engine: Mark as paused
+    Admin-->>Ops: 200 OK
+
+    App->>Data: POST /api/transform/invoice-to-ubl
+    Data-->>App: 503 Service Unavailable<br/>(Dapr/Service Bus: message not acked → retry later)
+
+    Note over Ops,Admin: Fix and re-deploy
+    Ops->>Admin: POST /admin/transformations/invoice-to-ubl<br/>[fixed .utlx]
+    Admin->>Engine: Compile → hot-swap
+    Admin-->>Ops: 200 OK
+
+    Ops->>Admin: POST /admin/transformations/invoice-to-ubl/test<br/>{test input with customer.address}
+    Admin-->>Ops: 200 OK {"status":"ok"}
+
+    Ops->>Admin: POST /admin/transformations/invoice-to-ubl/resume
+    Admin->>Engine: Mark as ready
+    Admin-->>Ops: 200 OK
+
+    App->>Data: POST /api/transform/invoice-to-ubl
+    Data->>Engine: Execute (fixed version)
+    Engine-->>Data: {correct output}
+    Data-->>App: 200 OK
+```
+
+### 5. Volume-backed restart (persistence)
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+sequenceDiagram
+    participant Azure as Azure<br/>Container Apps
+    participant UTLXe as UTLXe Container
+    participant FS as Azure File Share<br/>/utlxe/data/
+
+    Note over Azure,FS: First deployment
+    Azure->>UTLXe: Start container
+    Azure->>FS: Mount file share at /utlxe/data/
+    UTLXe->>FS: Scan /utlxe/data/ → empty
+    Note over UTLXe: Health: ready=false
+    Note over UTLXe: (customer uploads bundle via API)
+    UTLXe->>FS: Write transformations + schemas
+    Note over UTLXe: Health: ready=true
+
+    Note over Azure: Container crashes or restarts
+
+    Azure->>UTLXe: Start new container instance
+    Azure->>FS: Mount same file share at /utlxe/data/
+    UTLXe->>FS: Scan /utlxe/data/ → found 3 transformations
+    UTLXe->>UTLXe: Compile all .utlx files
+    Note over UTLXe: Health: ready=true<br/>(automatic, no re-upload needed)
+```
+
+### 6. Client discovery on data plane
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+sequenceDiagram
+    participant App as Client<br/>Application
+    participant Data as UTLXe<br/>:8085 (data)
+
+    App->>Data: GET /api/transformations
+    Data-->>App: {"transformations":[<br/>{"name":"invoice-to-ubl","status":"ready","input":"json","output":"xml"},<br/>{"name":"validate-order","status":"ready","input":"json","output":"json"},<br/>{"name":"enrich-order","status":"paused","input":"json","output":"json"}]}
+
+    App->>Data: POST /api/transform/invoice-to-ubl<br/>{order JSON}
+    Data-->>App: 200 OK {UBL XML}
+
+    App->>Data: POST /api/transform/enrich-order<br/>{order JSON}
+    Data-->>App: 503 Service Unavailable (paused)
 ```
 
 ## Implementation notes
