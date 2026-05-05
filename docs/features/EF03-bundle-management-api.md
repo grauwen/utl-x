@@ -674,6 +674,45 @@ This means:
 
 ## Azure Marketplace integration
 
+### How volume mounts work (separation of concerns)
+
+The volume mount is configured at the **infrastructure level** (Bicep template), not by the container. UTLXe has no mount API, executes no unix commands, and is completely unaware of whether `/utlxe/data/` is a local directory or a network mount. It uses standard Java file I/O (`java.nio.file.Files`) to read and write — nothing else.
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Azure Container Apps Platform                        │
+│                                                      │
+│  1. Creates Azure File Share (if enabled)            │
+│  2. Mounts it at /utlxe/data BEFORE container starts │
+│                                                      │
+│  ┌───────────────────────────────────────────┐       │
+│  │ UTLXe Container                           │       │
+│  │                                           │       │
+│  │  /utlxe/utlxe.jar    ← container layer   │       │
+│  │  /utlxe/data/         ← just a directory  │       │
+│  │    schemas/             (JVM reads/writes  │       │
+│  │    transformations/      via java.nio —    │       │
+│  │                          no mount commands,│       │
+│  │                          no unix syscalls) │       │
+│  └──────────────┬────────────────────────────┘       │
+│                 │                                     │
+│                 │ /utlxe/data/ transparently          │
+│                 │ points to:                          │
+│                 ▼                                     │
+│  ┌───────────────────────────────────────────┐       │
+│  │ Azure File Share (SMB)                    │       │
+│  │ Storage Account: stutlxe{uniqueId}        │       │
+│  │ Share name: utlxe-bundle                  │       │
+│  └───────────────────────────────────────────┘       │
+└─────────────────────────────────────────────────────┘
+```
+
+This is the same mechanism as Kubernetes `PersistentVolumeClaim` — the orchestrator mounts the volume, the container just sees a directory. No security implications for the JVM.
+
+**What UTLXe does (application level):** reads and writes files in `/utlxe/data/` via `java.nio.file.Files`.
+
+**What the Bicep template does (infrastructure level):** creates the storage account, file share, and volume mount configuration. The container never participates in the mount process.
+
 ### createUiDefinition.json
 
 Add an optional "Persistent storage" toggle:
@@ -687,13 +726,65 @@ Add an optional "Persistent storage" toggle:
 ### Bicep template changes
 
 When persistent storage is enabled:
-- Create an Azure Storage Account + File Share
-- Mount the File Share at `/utlxe/data/` in the Container App
-- Set `UTLXE_ADMIN_KEY` from a generated secret (stored in the Storage Account or passed via Container App secrets)
 
-When disabled:
+```bicep
+// 1. Storage account
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+  name: 'stutlxe${uniqueString(resourceGroup().id)}'
+  location: location
+  sku: { name: 'Standard_LRS' }
+  kind: 'StorageV2'
+}
+
+// 2. File share
+resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-01-01' = {
+  name: '${storageAccount.name}/default/utlxe-bundle'
+  properties: { shareQuota: 1 }    // 1 GB — bundles are small
+}
+
+// 3. Container App storage reference
+resource containerAppStorage 'Microsoft.App/managedEnvironments/storages@2023-05-01' = {
+  parent: managedEnvironment
+  name: 'bundle-storage'
+  properties: {
+    azureFile: {
+      accountName: storageAccount.name
+      accountKey: storageAccount.listKeys().keys[0].value
+      shareName: 'utlxe-bundle'
+      accessMode: 'ReadWrite'
+    }
+  }
+}
+
+// 4. Container App with volume mount
+resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
+  properties: {
+    template: {
+      containers: [{
+        name: 'utlxe'
+        image: 'ghcr.io/utlx-lang/utlxe:latest'
+        volumeMounts: [{
+          volumeName: 'bundle-storage'
+          mountPath: '/utlxe/data'          // ← this is all UTLXe sees
+        }]
+      }]
+      volumes: [{
+        name: 'bundle-storage'
+        storageName: 'bundle-storage'
+        storageType: 'AzureFile'
+      }]
+    }
+  }
+}
+```
+
+When persistent storage is disabled:
 - No storage account created
-- Customer uses CI/CD re-deploy pattern or ephemeral mode
+- No volume mount configured
+- `/utlxe/data/` is a regular container directory (ephemeral)
+- Customer uses CI/CD re-deploy pattern or manual upload after each restart
+
+In both cases, UTLXe code is identical — it reads and writes `/utlxe/data/`. The only difference is whether the platform mounted external storage there.
 
 ## Sequence diagrams
 
