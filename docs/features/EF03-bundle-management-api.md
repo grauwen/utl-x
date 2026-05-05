@@ -336,45 +336,139 @@ If `UTLXE_ADMIN_KEY` is not set, the management API returns 403 on all endpoints
 
 The health endpoints (`/health`, `/metrics`) remain unauthenticated — they are read-only and needed by Kubernetes probes and Prometheus.
 
-## Persistence
+## On-Disk Layout
 
-Uploaded transformations and schemas are written to a local directory (`/utlxe/data/`). Three persistence tiers depending on the customer's deployment:
+There is no "bundle file." The bundle is a **directory structure** — the on-disk state under `/utlxe/data/` IS the bundle. Every API call that modifies the bundle writes to this directory immediately.
 
 ```
-/utlxe/data/
-  schemas/              ← shared schema files
-  transformations/      ← transformation directories
-    {name}/
-      {name}.utlx
-      transform.yaml    (if provided)
+/utlxe/data/                                    ← this IS "the bundle"
+  schemas/                                       ← shared schema files
+    order.xsd
+    invoice.json
+  transformations/                               ← one subdirectory per transformation
+    invoice-to-ubl/
+      invoice-to-ubl.utlx                       ← the transformation source
+      transform.yaml                             ← config (absent = defaults apply)
+    validate-order/
+      validate-order.utlx
 ```
 
-| Tier | Persistence | Configuration |
-|------|------------|---------------|
-| **Ephemeral** | Lost on container restart | Default — no volume mount. Fine for dev/test or CI/CD re-deploy patterns. |
-| **Volume-backed** | Survives restarts | Azure Files mounted at `/utlxe/data/`. Bicep template offers this as an option. |
-| **CI/CD re-deploy** | External system of record | Customer's pipeline calls `POST /admin/bundle` after each container start. Readiness probe waits until bundle is loaded. |
+### What each API call writes to disk
 
-### Startup behavior
+| API call | Disk effect |
+|----------|-------------|
+| `POST /admin/transformations/invoice-to-ubl` (single .utlx) | Creates `transformations/invoice-to-ubl/invoice-to-ubl.utlx` |
+| `POST /admin/transformations/invoice-to-ubl` (.utlx + config) | Creates `.utlx` + `transform.yaml` in that directory |
+| `POST /admin/transformations/invoice-to-ubl/config` (config only) | Creates or replaces `transform.yaml` in existing directory |
+| `POST /admin/schemas/order.xsd` | Creates `schemas/order.xsd` |
+| `POST /admin/bundle` (ZIP upload) | **Replaces** entire `/utlxe/data/` content with ZIP contents |
+| `GET /admin/bundle` (export) | Zips up `/utlxe/data/` and returns it — no disk change |
+| `DELETE /admin/transformations/invoice-to-ubl` | Removes directory `transformations/invoice-to-ubl/` |
+| `DELETE /admin/schemas/order.xsd` | Removes `schemas/order.xsd` |
+| `DELETE /admin/bundle` | Empties `/utlxe/data/` — back to zero transformations |
 
-On startup, UTLXe checks `/utlxe/data/`:
-- If the directory contains transformations and/or schemas (from a previous upload + volume mount) → load them automatically
-- If empty → start with zero transformations, wait for API upload
-- If `--bundle` flag is also provided → load from `--bundle` path first, then accept API uploads as overrides
+The in-memory `TransformationRegistry` always mirrors the on-disk state. A write to disk and a registry update happen as a single operation — if compilation fails, neither the disk nor the registry change.
 
-### Readiness probe
+## Persistence: Surviving Container Restarts
 
-The existing `/health` endpoint should distinguish between "running but no transformations" and "running with transformations loaded":
+Docker containers have an **ephemeral filesystem**. When a container restarts (crash, scale-to-zero, redeployment), everything written inside the container is lost. This means `/utlxe/data/` is wiped clean unless external storage is mounted.
+
+### Three persistence tiers
+
+| Tier | How it works | Restart behavior | When to use |
+|------|-------------|------------------|-------------|
+| **Volume-backed** | Azure Files mounted at `/utlxe/data/` | Transformations survive — loaded automatically on startup | **Recommended for Azure Marketplace** |
+| **CI/CD re-deploy** | No volume mount. Pipeline uploads bundle after each start | Pipeline detects `ready: false`, uploads, waits for `ready: true` | Customers with mature CI/CD pipelines |
+| **Ephemeral** | No volume, no pipeline. Manual upload | Lost on restart — must re-upload manually | Dev/test only |
+
+### Volume-backed persistence (recommended)
+
+When Azure Files is mounted at `/utlxe/data/`, the directory lives on a network file share, not inside the container:
+
+```
+Container filesystem (ephemeral):
+  /utlxe/utlxe.jar                   ← from Docker image, rebuilt on restart
+
+Mount point (persistent — Azure File Share):
+  /utlxe/data/                        ← survives restarts
+    schemas/
+      order.xsd
+    transformations/
+      invoice-to-ubl/
+        invoice-to-ubl.utlx
+        transform.yaml
+```
+
+On restart, UTLXe scans `/utlxe/data/`, finds the transformations from the previous session, compiles them, and becomes ready. Zero manual intervention.
+
+### CI/CD re-deploy persistence
+
+The bundle lives in the CI/CD system (git repo, artifact store). The container is truly stateless — the pipeline is the source of truth:
+
+```
+Container starts → /utlxe/data/ is empty → health: ready=false
+  ↓
+CI/CD detects ready=false → POST /admin/bundle with bundle.zip
+  ↓
+UTLXe compiles → health: ready=true → Kubernetes routes traffic
+```
+
+## Startup Sequence
+
+The startup sequence is the same regardless of persistence tier:
+
+```
+Container starts
+  │
+  ├── 1. Start Javalin HTTP server on :8081
+  │     ├── Health endpoint:  GET /health  → {"status":"UP", "transformations":0, "ready":false}
+  │     ├── Metrics endpoint: GET /metrics → (Prometheus counters, all zero)
+  │     └── Admin API:        POST/GET/DELETE /admin/* → accepting requests
+  │
+  ├── 2. Scan /utlxe/data/
+  │     ├── If transformations found (volume mount from previous session):
+  │     │     ├── Compile all .utlx files
+  │     │     ├── Register in TransformationRegistry
+  │     │     └── Health: {"status":"UP", "transformations":3, "ready":true}
+  │     │
+  │     └── If empty (first start, or ephemeral, or CI/CD pattern):
+  │           └── Health: {"status":"UP", "transformations":0, "ready":false}
+  │              (waiting for API upload)
+  │
+  ├── 3. If --bundle flag provided:
+  │     ├── Load from --bundle path (in addition to /utlxe/data/)
+  │     └── --bundle transformations are read-only base; API uploads override
+  │
+  ├── 4. Start data plane on :8085
+  │     └── Kubernetes readiness probe checks ready=true before routing traffic
+  │
+  └── 5. Running — both admin API and data plane active simultaneously
+        ├── Admin API accepts uploads/updates/deletes at any time
+        └── Data plane processes messages (only when ready=true)
+```
+
+### Readiness vs. liveness
+
+| Probe | Endpoint | Checks | Used by |
+|-------|----------|--------|---------|
+| **Liveness** | `GET /health` | `status == "UP"` (process is alive) | Kubernetes — restart if dead |
+| **Readiness** | `GET /health` | `ready == true` (transformations compiled) | Kubernetes — route traffic only when ready |
 
 ```json
-// No transformations loaded yet
+// Container just started, no transformations yet
 {"status": "UP", "transformations": 0, "ready": false}
 
-// Transformations loaded and compiled
+// After bundle upload or volume-mount scan
 {"status": "UP", "transformations": 3, "ready": true}
+
+// After DELETE /admin/bundle (all removed)
+{"status": "UP", "transformations": 0, "ready": false}
 ```
 
-Kubernetes readiness probe can check for `ready: true` to avoid routing traffic before transformations are deployed. The liveness probe checks only `status: UP`.
+This means:
+- A container that just started but hasn't received its bundle yet: **alive but not ready** (no traffic routed)
+- A container with compiled transformations: **alive and ready** (traffic routed)
+- A container where all transformations were deleted: **alive but not ready** (traffic stops until new upload)
 
 ## Azure Marketplace integration
 
