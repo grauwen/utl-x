@@ -457,6 +457,11 @@ class CompilationCache {
 3. Create optimized execution plan
 4. Set up memory pools
 
+Init-time runs in three situations:
+- **Startup with `--bundle`:** BundleLoader discovers transformations from disk, compiles all
+- **Startup with `/utlxe/data/` scan:** If a previous session wrote transformations to the data directory (e.g., via Admin API with Azure Files persistence), they are loaded and compiled automatically — see [EF03: Bundle Management API](../../docs/features/EF03-bundle-management-api.md)
+- **Runtime upload:** When a transformation is uploaded via the Admin API (`POST /admin/transformations/{name}`), the same init-time pipeline runs for that single transformation — parse, compile, optimize, atomic swap into the registry
+
 **Key Insight:** In production, we process millions of messages with the **same schema**:
 
 ```
