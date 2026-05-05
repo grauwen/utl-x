@@ -22,7 +22,7 @@ admin_api:
         input json
         output xml
         ---
-        <result>{$input.value}</result>
+        {result: $input.value}
 
     - action: discover_transformations
       port: 8085
