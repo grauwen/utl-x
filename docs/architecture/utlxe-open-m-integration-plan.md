@@ -86,12 +86,15 @@ Contains (as defined in open-m-go-versus-kotlin-utlx-depends.md Section 6.3):
 - `ExecuteRequest/Response` — runtime hot-path
 - `ExecuteBatchRequest/Response` — batch processing
 - `UnloadTransformationRequest/Response` — dynamic removal
+- `ListTransformationsRequest/Response` — discover loaded transformations (EF03)
+- `TestTransformationRequest/Response` — test with sample input, not counted in metrics (EF03)
 - `HealthRequest/Response` — health check
 - `ErrorClass` enum — PERMANENT vs TRANSIENT
 - `ValidationError`, `LoadMetrics`, `ExecuteMetrics`
 
 gRPC service definition:
 - `service UtlxeService { ... }` — for grpc mode only
+- Includes `ListTransformations` and `TestTransformation` RPCs (EF03 — transport capability parity)
 
 ---
 
@@ -565,6 +568,8 @@ Options:
    - ExecuteRequest → look up cached Program, execute, respond
    - HealthRequest → respond with current state
    - UnloadTransformationRequest → remove from registry
+   - ListTransformationsRequest → return names, strategies, status (EF03)
+   - TestTransformationRequest → execute with sample input, return result (EF03)
 4. Process continuously until pipe closes (pod shutdown)
 ```
 
@@ -577,6 +582,8 @@ Options:
    - Execute() → look up, execute, respond
    - Health() → respond
    - UnloadTransformation() → remove
+   - ListTransformations() → return loaded transformations (EF03)
+   - TestTransformation() → execute with sample input, not counted in metrics (EF03)
 4. Serve continuously until shutdown signal
 ```
 
