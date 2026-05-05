@@ -10,6 +10,11 @@
 The simplest scenario — a client sends a transformation request via HTTP and receives the result synchronously.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant Client
     participant UTLXe
@@ -29,6 +34,11 @@ sequenceDiagram
 Production mode — transformations are loaded at startup from a bundle. Each request specifies which transformation to use.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant Client
     participant UTLXe
@@ -52,6 +62,11 @@ sequenceDiagram
 Event-driven — messages arrive from Service Bus, are transformed, and forwarded to an output topic/queue.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant SB as Azure Service Bus
     participant Dapr as Dapr Sidecar
@@ -74,6 +89,11 @@ sequenceDiagram
 High-throughput streaming — messages from Event Hub partitions are processed and forwarded.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant EH as Azure Event Hub
     participant Dapr as Dapr Sidecar
@@ -96,6 +116,11 @@ sequenceDiagram
 Direct Kafka integration (without Dapr) for on-premise or multi-cloud deployments.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant KIn as Kafka Input Topic
     participant UTLXe
@@ -116,6 +141,11 @@ sequenceDiagram
 CLI-style integration — UTLXe reads from stdin, writes to stdout. Used for scripting, CI/CD, and process piping.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant Source as Source Process<br/>(curl, cat, etc.)
     participant UTLXe
@@ -135,6 +165,11 @@ sequenceDiagram
 For .NET, Go, and Python wrappers — communication via Protocol Buffers over stdio or gRPC.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant App as .NET/Go/Python App
     participant Wrapper as Language Wrapper
@@ -156,6 +191,11 @@ sequenceDiagram
 Multiple transformations chained — output of one feeds input of next via in-process queues.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant Input as Input Source
     participant T1 as Stage 1<br/>parse-order.utlx
@@ -178,6 +218,11 @@ sequenceDiagram
 Single transformation consuming from multiple sources simultaneously.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant Orders as Order Queue
     participant Customers as Customer API
@@ -203,6 +248,11 @@ sequenceDiagram
 Prometheus metrics scraping and Kubernetes liveness/readiness probes.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant K8s as Kubernetes
     participant Prom as Prometheus
@@ -228,6 +278,11 @@ sequenceDiagram
 Error handling flow — failed transformations are routed to dead-letter queue.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant SB as Service Bus
     participant Dapr as Dapr Sidecar
@@ -257,6 +312,11 @@ sequenceDiagram
 End-to-end flow for the European e-invoicing case study.
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 sequenceDiagram
     participant D365 as Dynamics 365<br/>Business Central
     participant SB1 as Service Bus<br/>Input Queue
