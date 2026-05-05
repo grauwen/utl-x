@@ -181,7 +181,7 @@ scopes: [utlxe]
 
 The `route` metadata is the key configuration: it tells Dapr to call `POST localhost:8085/api/dapr/input/orders-in` when a message arrives on the `incoming-orders` queue. UTLXe extracts the last path segment (`orders-in`) and looks up a transformation with that name.
 
-If the transformation has a different name than the binding, use the `X-UTLXe-Transform` header override in the Dapr metadata.
+The `route` is also how you map a queue to a differently-named transformation. If the queue is `incoming-orders` but the transformation is called `normalize-order`, set `route: /api/dapr/input/normalize-order`.
 
 ```yaml
 # Dapr output binding — component name "orders-out"
@@ -207,6 +207,67 @@ The complete wiring:
   [`queueName: processed-orders`], [Dapr output component], [Dapr output binding → Service Bus output queue],
   [`appPort: 8085`], [Container App Dapr config], [Dapr sidecar → UTLXe HTTP port],
 )
+
+==== How UTLXe knows the output binding
+
+The output binding name (`orders-out`) is not passed by Dapr in the input call. It is pre-configured on the UTLXe side, in the transformation's `transform.yaml`:
+
+```yaml
+outputBinding: orders-out
+```
+
+UTLXe resolves the output binding from three sources (highest priority first): an environment variable override (`UTLXE_OUTPUT_BINDING_ORDERS_IN`), the `transform.yaml` config, or an `X-UTLXe-Output-Binding` HTTP header. The most common is the config file.
+
+==== Concurrency and correlation
+
+When multiple messages are processed concurrently (multiple Dapr calls to UTLXe at the same time), there is no correlation problem. Each message is handled on its own pair of HTTP connections:
+
+```
+Worker 1:  conn A: Dapr──POST :8085──>UTLXe (open)
+           conn B: UTLXe──POST :3500──>Dapr (new, independent)
+           conn A: UTLXe──200 OK──>Dapr (same TCP connection)
+
+Worker 2:  conn C: Dapr──POST :8085──>UTLXe (open)
+           conn D: UTLXe──POST :3500──>Dapr (new, independent)
+           conn C: UTLXe──200 OK──>Dapr (same TCP connection)
+```
+
+HTTP is connection-based --- the 200 response goes back on the *same TCP connection* that Dapr opened. There is no cross-worker confusion. The output binding call (connection B/D) is completely independent --- Dapr does not need to match it to the input. The only thing that determines the input message's fate (complete vs. abandon) is the HTTP status code returned on the original connection.
+
+If message ordering matters, set `maxConcurrentHandlers: 1` in the Dapr input component metadata, or use Service Bus sessions. But that is a Service Bus concern, not a UTLXe or Dapr correlation concern.
+
+==== Message tracing and correlation
+
+In production, you need to trace which input message produced which output message. UTLXe preserves the following metadata across the transformation:
+
+UTLXe implements the standard messaging triad:
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*ID*], [*Constant?*], [*What happens*],
+  [`MessageId`], [No], [New UUID generated for each output message.],
+  [`CorrelationId`], [Yes], [Preserved from input. Links all messages in the same business process.],
+  [`CausationId`], [No], [Set to the input's `MessageId`. Links each output to its immediate cause.],
+  [`traceparent`], [—], [W3C Trace Context forwarded. Azure Monitor shows the full distributed trace.],
+)
+
+In a multi-step chain, the `CorrelationId` stays constant while the `CausationId` traces the parent:
+
+```
+Producer:   MessageId=A  CorrelationId=saga-1  CausationId=null
+UTLXe:      MessageId=B  CorrelationId=saga-1  CausationId=A
+Next step:  MessageId=C  CorrelationId=saga-1  CausationId=B
+```
+
+Every processed message is logged with all three IDs:
+
+```
+INFO [orders-in] MessageId=msg-456 CorrelationId=saga-1
+     → transformed in 3ms → output MessageId=msg-789
+     CausationId=msg-456
+```
+
+Error entries in the Admin API (`GET /admin/transformations/{name}/errors`) also include all three IDs, so you can correlate a failed transformation back to the specific input message on Service Bus.
 
 #pagebreak()
 
@@ -278,8 +339,21 @@ For synchronous request/response patterns --- API gateways, batch scripts, testi
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
+  -H "X-Message-Id: req-789" \
+  -H "X-Correlation-Id: saga-1" \
+  -H "X-Causation-Id: prev-456" \
   -d '{"orderNumber":"12345","amount":200.00}' \
   https://myapp.azurecontainerapps.io/api/transform/invoice-to-ubl
+```
+
+Direct HTTP clients can send `X-Message-Id`, `X-Correlation-Id`, and `X-Causation-Id` headers for traceability. If `X-Message-Id` is omitted, UTLXe generates a UUID --- every request is traceable, even ad-hoc curl calls. The response echoes the correlation headers:
+
+```
+HTTP/1.1 200 OK
+X-Message-Id: out-new-uuid
+X-Correlation-Id: saga-1
+X-Causation-Id: req-789
+X-Transform-Duration-Ms: 3
 ```
 
 No Dapr, no Service Bus. A direct HTTPS call, a transformed response. Azure ingress handles TLS --- UTLXe receives plain HTTP on localhost:8085.
