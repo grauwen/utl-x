@@ -91,7 +91,7 @@ The API warns but does not block on dependency issues. The customer knows their 
 
 **Decision:** Schemas are top-level resources, not embedded in transformation directories.
 
-A schema like `order.xsd` may be referenced by multiple transformations (`invoice-to-ubl`, `validate-order`, `enrich-order`). Embedding schemas inside each transformation directory creates copies that must stay in sync — a maintenance hazard.
+A schema like `order.xsd` may be referenced by multiple transformations (`invoice-to-ubl`, `order-enrichment`, `enrich-order`). Embedding schemas inside each transformation directory creates copies that must stay in sync — a maintenance hazard.
 
 Instead, schemas live in a shared `schemas/` directory and are uploaded independently:
 
@@ -103,8 +103,8 @@ Instead, schemas live in a shared `schemas/` directory and are uploaded independ
   transformations/
     invoice-to-ubl/
       invoice-to-ubl.utlx  (header: input json {schema: "order.xsd"})
-    validate-order/
-      validate-order.utlx  (header: input json {schema: "order.xsd"})
+    order-enrichment/
+      order-enrichment.utlx  (header: input json {schema: "order.xsd"})
 ```
 
 Updating a schema does **not** recompile transformations — schemas are resolved at validation time, not compile time. This means a schema update takes effect immediately for the next message without any downtime.
@@ -362,7 +362,7 @@ GET /api/transformations
 {
   "transformations": [
     {"name": "invoice-to-ubl", "status": "ready", "input": "json", "output": "xml"},
-    {"name": "validate-order", "status": "ready", "input": "json", "output": "json"},
+    {"name": "order-enrichment", "status": "ready", "input": "json", "output": "json"},
     {"name": "enrich-order", "status": "paused", "input": "json", "output": "json"}
   ]
 }
@@ -403,9 +403,9 @@ curl -X POST -H "X-Admin-Key: $KEY" \
   http://admin:8081/admin/transformations/invoice-to-ubl
 
 curl -X POST -H "X-Admin-Key: $KEY" \
-  -F "source=@validate-order.utlx" \
+  -F "source=@order-enrichment.utlx" \
   -F "config=@transform.yaml" \
-  http://admin:8081/admin/transformations/validate-order
+  http://admin:8081/admin/transformations/order-enrichment
 
 # Step 3: Export the assembled bundle for version control
 curl -H "X-Admin-Key: $KEY" \
@@ -498,7 +498,7 @@ Full bundle upload (`POST /admin/bundle`) follows the same pattern but replaces 
       "avg_transform_ms": 2.3
     },
     {
-      "name": "validate-order",
+      "name": "order-enrichment",
       "strategy": "COMPILED",
       "status": "ready",
       "config": "defaults",
@@ -551,8 +551,8 @@ There is no "bundle file." The bundle is a **directory structure** — the on-di
     invoice-to-ubl/
       invoice-to-ubl.utlx                       ← the transformation source
       transform.yaml                             ← config (absent = defaults apply)
-    validate-order/
-      validate-order.utlx
+    order-enrichment/
+      order-enrichment.utlx
 ```
 
 ### What each API call writes to disk
@@ -979,7 +979,7 @@ sequenceDiagram
     participant Data as UTLXe<br/>:8085 (data)
 
     App->>Data: GET /api/transformations
-    Data-->>App: {"transformations":[<br/>{"name":"invoice-to-ubl","status":"ready","input":"json","output":"xml"},<br/>{"name":"validate-order","status":"ready","input":"json","output":"json"},<br/>{"name":"enrich-order","status":"paused","input":"json","output":"json"}]}
+    Data-->>App: {"transformations":[<br/>{"name":"invoice-to-ubl","status":"ready","input":"json","output":"xml"},<br/>{"name":"order-enrichment","status":"ready","input":"json","output":"json"},<br/>{"name":"enrich-order","status":"paused","input":"json","output":"json"}]}
 
     App->>Data: POST /api/transform/invoice-to-ubl<br/>{order JSON}
     Data-->>App: 200 OK {UBL XML}
