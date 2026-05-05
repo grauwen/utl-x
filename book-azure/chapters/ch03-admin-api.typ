@@ -99,12 +99,11 @@ bundle.zip
   transformations/
     invoice-to-ubl/
       invoice-to-ubl.utlx
-      transform.yaml
-    validate-order/
-      validate-order.utlx
+    order-enrichment/
+      order-enrichment.utlx
 ```
 
-The `schemas/` directory and `transform.yaml` files are optional. The `.utlx` source is the only required file per transformation.
+The `schemas/` directory is optional. Each transformation directory requires only the `.utlx` source file. A `transform.yaml` can be added alongside the `.utlx` to override defaults (strategy, validation policy, output binding) --- but it is not required.
 
 == Managing Schemas
 
@@ -257,7 +256,7 @@ curl http://<ingress>:8085/api/transformations
 {
   "transformations": [
     {"name": "invoice-to-ubl", "status": "ready", "input": "json", "output": "xml"},
-    {"name": "validate-order", "status": "ready", "input": "json", "output": "json"}
+    {"name": "order-enrichment", "status": "ready", "input": "json", "output": "json"}
   ]
 }
 ```

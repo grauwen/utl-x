@@ -105,9 +105,8 @@ The on-disk state under `/utlxe/data/`. Written by the Admin API, read at startu
   transformations/
     invoice-to-ubl/
       invoice-to-ubl.utlx
-      transform.yaml
-    validate-order/
-      validate-order.utlx
+    order-enrichment/
+      order-enrichment.utlx
 ```
 
 If Azure Files is mounted at `/utlxe/data/`, this directory survives container restarts.

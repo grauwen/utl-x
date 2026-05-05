@@ -23,7 +23,8 @@ Mount point (persistent):
     transformations/
       invoice-to-ubl/
         invoice-to-ubl.utlx
-        transform.yaml
+      order-enrichment/
+        order-enrichment.utlx
 ```
 
 On restart, UTLXe scans `/utlxe/data/`, finds the transformations from the previous session, compiles them, and becomes ready. Zero manual intervention.

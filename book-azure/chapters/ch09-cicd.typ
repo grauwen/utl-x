@@ -25,9 +25,8 @@ my-transformations/
   transformations/
     invoice-to-ubl/
       invoice-to-ubl.utlx
-      transform.yaml
-    validate-order/
-      validate-order.utlx
+    order-enrichment/
+      order-enrichment.utlx
   test-data/
     invoice-to-ubl/
       input.json
