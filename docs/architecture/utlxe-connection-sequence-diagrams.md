@@ -29,9 +29,9 @@ sequenceDiagram
 
 ---
 
-## 2. HTTP with Pre-loaded Bundle
+## 2. HTTP with Pre-loaded Bundle (--bundle flag)
 
-Production mode — transformations are loaded at startup from a bundle. Each request specifies which transformation to use.
+Self-managed mode — transformations are baked into the image or mounted from a volume. The `--bundle` flag points to a local directory.
 
 ```mermaid
 ---
@@ -42,7 +42,7 @@ config:
 sequenceDiagram
     participant Client
     participant UTLXe
-    participant Bundle as Transformation Bundle
+    participant Bundle as Transformation Bundle<br/>(local directory)
 
     Note over UTLXe,Bundle: Startup (once)
     UTLXe->>Bundle: Load & compile all .utlx files
@@ -53,6 +53,47 @@ sequenceDiagram
     UTLXe->>UTLXe: Lookup cached "invoice-to-ubl"
     UTLXe->>UTLXe: Parse → Transform → Serialize
     UTLXe->>Client: 200 OK<br/>{output: UBL 2.1 XML}
+```
+
+---
+
+## 2b. Bundle Upload via Management API (EF03)
+
+Azure Marketplace mode — the customer uploads transformation bundles via the admin API on port 8081. No custom image or volume mount required.
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+sequenceDiagram
+    participant CICD as Customer<br/>CI/CD Pipeline
+    participant Admin as UTLXe :8081<br/>(admin)
+    participant Engine as UTLXe Engine
+    participant Data as UTLXe :8085<br/>(data plane)
+    participant App as Client Application
+
+    Note over Admin: Container starts (empty)
+
+    CICD->>Admin: POST /admin/bundle<br/>X-Admin-Key: ***<br/>[bundle.zip]
+    Admin->>Admin: Extract ZIP, validate
+    Admin->>Engine: Compile all .utlx files
+    Engine-->>Admin: Compiled OK (342ms)
+    Admin->>Admin: Write to /utlxe/data/
+    Admin-->>CICD: 200 OK<br/>{"status":"deployed",<br/>"transformations": 3}
+
+    Note over Data: Ready for traffic
+
+    App->>Data: POST /api/transform/invoice-to-ubl<br/>{input JSON}
+    Data->>Engine: Execute transformation
+    Engine-->>Data: {output UBL XML}
+    Data-->>App: 200 OK
+
+    Note over CICD,Admin: Update single transformation
+    CICD->>Admin: POST /admin/transformations/invoice-to-ubl<br/>[updated .utlx + config]
+    Admin->>Engine: Compile → atomic hot-swap
+    Admin-->>CICD: 200 OK (zero downtime)
 ```
 
 ---
