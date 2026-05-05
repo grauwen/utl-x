@@ -1,83 +1,294 @@
 = Writing Transformations
 
-_A crash course in UTL-X — just enough to write production transformations. For the complete language reference, see the companion book "UTL-X: One Language, All Formats."_
+This chapter teaches enough UTL-X to write production transformations. It is not the complete language reference --- for that, see the companion book _UTL-X: One Language, All Formats_. Here you learn the patterns that cover ninety percent of real-world integration scenarios.
 
 == The .utlx File Structure
 
-// Header (format declarations) + body (transformation expression)
-// %utlx 1.0
-// input json
-// output json
-// ---
-// { ... transformation body ... }
+Every transformation has two parts: a header that declares the input and output formats, and a body that defines the transformation logic. They are separated by `---`.
+
+```
+%utlx 1.0
+input json
+output json
+---
+{
+  orderId: $input.id,
+  customer: $input.buyer.name,
+  total: $input.amount
+}
+```
+
+The header tells UTLXe how to parse the incoming message and how to serialize the output. The body is an expression that produces the output from the input.
 
 == Property Access
 
-// $input.customer.name
-// $input.items[0].price
-// $input.@id (XML attributes)
+Access input fields with dot notation. The special variable `$input` refers to the incoming message.
+
+```
+$input.customer.name          // nested property
+$input.items[0].price         // array index (0-based)
+$input.@id                    // XML attribute
+$input.order.item[2].@qty     // attribute on indexed element
+```
+
+If a property does not exist, the result is `null` --- no error is thrown.
 
 == Object Construction
 
-// {
-//   orderId: $input.id,
-//   customer: $input.buyer.name,
-//   total: $input.amount
-// }
+Curly braces create new objects. Each line is a key-value pair.
 
-== Arrays: map, filter, reduce
+```
+{
+  orderId: $input.id,
+  customer: $input.buyer.name,
+  total: $input.quantity * $input.unitPrice
+}
+```
 
-// map($input.items, (item) -> { name: item.product, price: item.unitPrice * item.qty })
-// filter($input.items, (item) -> item.price > 100)
-// reduce($input.items, 0, (acc, item) -> acc + item.price)
+The spread operator copies all properties from an existing object:
 
-== Conditionals
+```
+{
+  ...$input,
+  processed: true,
+  processedAt: now()
+}
+```
 
-// if ($input.total > 1000) "premium" else "standard"
-// match $input.status { "A" -> "Active", "I" -> "Inactive", _ -> "Unknown" }
+This produces the original input with two additional fields.
 
 == Let Bindings
 
-// {
-//   let subtotal = reduce($input.items, 0, (acc, i) -> acc + i.price)
-//   let tax = subtotal * 0.21
-//   subtotal: subtotal,
-//   tax: tax,
-//   total: subtotal + tax
-// }
+Use `let` to name intermediate values. This avoids repetition and makes transformations readable.
+
+```
+{
+  let subtotal = reduce($input.items, 0, (acc, i) -> acc + i.price)
+  let tax = subtotal * 0.21
+  let shipping = if (subtotal > 100) 0 else 9.95
+
+  subtotal: subtotal,
+  tax: round(tax, 2),
+  shipping: shipping,
+  total: round(subtotal + tax + shipping, 2)
+}
+```
+
+== Conditionals
+
+The `if` expression chooses between two values:
+
+```
+if ($input.total > 1000) "premium" else "standard"
+```
+
+For multiple branches, use `match`:
+
+```
+match $input.status {
+  "A" -> "Active",
+  "I" -> "Inactive",
+  "S" -> "Suspended",
+  _ -> "Unknown"
+}
+```
+
+The underscore `_` is the catch-all pattern.
+
+== Array Operations
+
+Arrays are transformed with higher-order functions. The three most common are `map`, `filter`, and `reduce`.
+
+*map* --- transform each element:
+
+```
+map($input.items, (item) -> {
+  name: item.product,
+  total: item.quantity * item.unitPrice
+})
+```
+
+*filter* --- keep elements matching a condition:
+
+```
+filter($input.items, (item) -> item.price > 100)
+```
+
+*reduce* --- aggregate to a single value:
+
+```
+reduce($input.items, 0, (sum, item) -> sum + item.price)
+```
+
+These compose naturally:
+
+```
+$input.orders
+  | filter(_, (o) -> o.status == "active")
+  | map(_, (o) -> {id: o.id, total: o.amount})
+  | sortBy(_, (o) -> o.total)
+```
+
+The pipe operator `|` passes the result of each step to the next. The underscore `_` is a placeholder for the piped value.
 
 == Common Standard Library Functions
 
-// String: concat, upperCase, lowerCase, trim, replace, contains, startsWith, substring, length
-// Array: map, filter, reduce, find, sortBy, groupBy, flatMap, size, first, last
-// Math: round, floor, ceil, abs, min, max
-// Date: now, formatDate, parseDate
-// Type: toString, toNumber, toBoolean, isNull, typeOf
+UTL-X has over 650 standard library functions. The ones you will use most often:
+
+=== Strings
+
+#table(
+  columns: (auto, 1fr),
+  [`concat(a, b, c)`], [Concatenate strings],
+  [`upperCase(s)` / `lowerCase(s)`], [Case conversion],
+  [`trim(s)`], [Remove leading and trailing whitespace],
+  [`replace(s, old, new)`], [Replace substring],
+  [`contains(s, sub)`], [Check if string contains substring],
+  [`substring(s, start, end)`], [Extract substring],
+  [`length(s)`], [String length],
+  [`split(s, delimiter)`], [Split string into array],
+  [`startsWith(s, prefix)`], [Check prefix],
+)
+
+=== Arrays
+
+#table(
+  columns: (auto, 1fr),
+  [`map(arr, fn)`], [Transform each element],
+  [`filter(arr, fn)`], [Keep matching elements],
+  [`reduce(arr, init, fn)`], [Aggregate to single value],
+  [`find(arr, fn)`], [First matching element],
+  [`sortBy(arr, fn)`], [Sort by key],
+  [`groupBy(arr, fn)`], [Group by key],
+  [`flatMap(arr, fn)`], [Map and flatten],
+  [`size(arr)`], [Array length],
+  [`first(arr)` / `last(arr)`], [First or last element],
+)
+
+=== Math and Type
+
+#table(
+  columns: (auto, 1fr),
+  [`round(n, decimals)`], [Round to decimal places],
+  [`floor(n)` / `ceil(n)`], [Floor or ceiling],
+  [`abs(n)` / `min(a, b)` / `max(a, b)`], [Absolute value, min, max],
+  [`toString(v)` / `toNumber(v)`], [Type conversion],
+  [`isNull(v)`], [Null check],
+  [`now()`], [Current timestamp],
+  [`formatDate(d, pattern)`], [Format a date],
+)
 
 == Multi-Format Transformations
 
-// input json → output xml
-// input xml → output json
-// input csv → output json
-// The header declares formats; the body works with the universal data model
+The header declares formats. The body works the same regardless of whether the input is JSON, XML, CSV, or YAML --- UTL-X operates on the Universal Data Model (UDM), which is format-agnostic.
+
+JSON to XML:
+
+```
+%utlx 1.0
+input json
+output xml
+---
+<Invoice>
+  <ID>{$input.orderId}</ID>
+  <Amount>{$input.total}</Amount>
+  <Currency>{$input.currency}</Currency>
+</Invoice>
+```
+
+XML to JSON:
+
+```
+%utlx 1.0
+input xml
+output json
+---
+{
+  orderId: $input.Invoice.ID,
+  total: toNumber($input.Invoice.Amount),
+  currency: $input.Invoice.Currency
+}
+```
+
+CSV to JSON:
+
+```
+%utlx 1.0
+input csv {header: true}
+output json
+---
+map($input, (row) -> {
+  name: row.Name,
+  email: lowerCase(row.Email),
+  active: row.Status == "A"
+})
+```
 
 == User-Defined Functions
 
-// function discount(amount, tier) {
-//   match tier {
-//     "gold" -> amount * 0.9,
-//     "silver" -> amount * 0.95,
-//     _ -> amount
-//   }
-// }
+Define reusable logic with `function`:
+
+```
+function discount(amount, tier) {
+  match tier {
+    "gold" -> amount * 0.10,
+    "silver" -> amount * 0.05,
+    _ -> 0
+  }
+}
+
+{
+  let disc = discount($input.total, $input.customerTier)
+  orderId: $input.id,
+  subtotal: $input.total,
+  discount: round(disc, 2),
+  total: round($input.total - disc, 2)
+}
+```
+
+Functions are defined before the main expression. They can call other functions and use all standard library functions.
 
 == Worked Example: Invoice Transformation
 
-// Complete example: Dynamics 365 JSON → UBL 2.1 XML
-// Shows: property mapping, array iteration, conditional logic, date formatting
+A complete transformation that converts a Dynamics 365 Business Central order into a simplified UBL-like invoice:
+
+```
+%utlx 1.0
+input json
+output xml
+---
+let order = $input
+
+let lines = map(order.lines, (line) -> {
+  let lineTotal = line.quantity * line.unitPrice
+  <InvoiceLine>
+    <ID>{line.lineNumber}</ID>
+    <Quantity>{line.quantity}</Quantity>
+    <UnitPrice>{line.unitPrice}</UnitPrice>
+    <LineTotal>{round(lineTotal, 2)}</LineTotal>
+  </InvoiceLine>
+})
+
+let subtotal = reduce(order.lines, 0,
+  (sum, line) -> sum + line.quantity * line.unitPrice)
+let tax = subtotal * 0.21
+
+<Invoice>
+  <ID>{concat("INV-", order.orderNumber)}</ID>
+  <IssueDate>{formatDate(now(), "yyyy-MM-dd")}</IssueDate>
+  <CustomerName>{order.customer.name}</CustomerName>
+  <Currency>{order.currency}</Currency>
+  <InvoiceLines>{lines}</InvoiceLines>
+  <Subtotal>{round(subtotal, 2)}</Subtotal>
+  <Tax>{round(tax, 2)}</Tax>
+  <Total>{round(subtotal + tax, 2)}</Total>
+</Invoice>
+```
+
+This transformation demonstrates property access, array iteration with `map`, aggregation with `reduce`, string concatenation, date formatting, arithmetic, and XML output construction.
 
 == Where to Learn More
 
-// - Full language reference: "UTL-X: One Language, All Formats" (companion book)
-// - Standard library: 650+ functions documented in ch16/ch17 of the companion book
-// - Examples: github.com/grauwen/utl-x/examples/
+- The complete language specification, including pattern matching, recursive functions, and the full operator table, is in the companion book _UTL-X: One Language, All Formats_.
+- The standard library reference (all 650+ functions with examples) is in chapters 16 and 17 of the companion book.
+- Example transformations are available in the project repository under `examples/`.

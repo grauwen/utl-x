@@ -1,71 +1,108 @@
-= Appendix A: Admin API Reference
+= Appendix A: API Reference
 
-_Complete reference for all Admin API endpoints on port 8081 and data plane endpoints on port 8085._
+This appendix lists every endpoint on both ports with request format, response format, and status codes.
 
 == Authentication
 
-// All /admin/* endpoints require: X-Admin-Key: {value of UTLXE_ADMIN_KEY}
-// /health and /metrics do not require authentication
-// /api/* endpoints on port 8085 do not require authentication
+All `/admin/*` endpoints require the header `X-Admin-Key: {value}`. The value must match the `UTLXE_ADMIN_KEY` environment variable. If the variable is not set, all admin endpoints return 403.
 
-== Bundle Endpoints
+The `/health`, `/metrics`, and `/api/*` endpoints do not require authentication.
 
-// POST   /admin/bundle              Upload ZIP bundle (replaces everything)
-// GET    /admin/bundle              Export current state as ZIP
-// DELETE /admin/bundle              Remove all transformations and schemas
-// POST   /admin/bundle/validate     Upload and validate without deploying (dry run)
+== Admin Port (8081)
 
-== Transformation Endpoints
+=== Bundle Endpoints
 
-// GET    /admin/transformations                      List all
-// GET    /admin/transformations/{name}               Details (config, status, metrics, source)
-// POST   /admin/transformations/{name}               Deploy or update (.utlx required, config optional)
-// POST   /admin/transformations/{name}/config        Update config only (no recompile)
-// DELETE /admin/transformations/{name}               Remove
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`POST`], [`/admin/bundle`], [Upload a `.zip` bundle. Replaces all transformations and schemas atomically.],
+  [`GET`], [`/admin/bundle`], [Export the current state as a downloadable `.zip`.],
+  [`DELETE`], [`/admin/bundle`], [Remove all transformations and schemas. Returns to empty state.],
+  [`POST`], [`/admin/bundle/validate`], [Upload and validate without deploying (dry run).],
+)
 
-== Testing Endpoint
+=== Transformation Endpoints
 
-// POST   /admin/transformations/{name}/test          Execute with sample input (not counted in metrics)
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`GET`], [`/admin/transformations`], [List all deployed transformations with status and metrics.],
+  [`GET`], [`/admin/transformations/{name}`], [Get details: config, compile status, metrics, source.],
+  [`POST`], [`/admin/transformations/{name}`], [Deploy or update. Accepts `multipart/form-data` with `source` (required) and `config` (optional).],
+  [`POST`], [`/admin/transformations/{name}/config`], [Update config only. No recompile.],
+  [`DELETE`], [`/admin/transformations/{name}`], [Remove a single transformation.],
+)
 
-== Operational Endpoints
+=== Testing Endpoint
 
-// POST   /admin/transformations/{name}/pause         Stop processing (503 on data plane)
-// POST   /admin/transformations/{name}/resume        Resume processing
-// GET    /admin/transformations/{name}/errors         Recent errors (ring buffer, last 100)
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`POST`], [`/admin/transformations/{name}/test`], [Execute with sample input. Returns output or error. Not counted in metrics.],
+)
 
-== Validation Override Endpoints
+=== Operational Endpoints
 
-// GET    /admin/transformations/{name}/validation    Effective validation state
-// POST   /admin/transformations/{name}/validation    Set runtime override (ephemeral)
-// DELETE /admin/transformations/{name}/validation    Remove override (revert to config)
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`GET`], [`/admin/info`], [Engine version, uptime, config, persistence mode, transformation count.],
+  [`POST`], [`/admin/transformations/{name}/pause`], [Stop processing. Data plane returns 503. Transformation stays compiled.],
+  [`POST`], [`/admin/transformations/{name}/resume`], [Resume processing.],
+  [`GET`], [`/admin/transformations/{name}/errors`], [Recent errors (ring buffer, last 100). Accepts `?limit=N`.],
+  [`GET`], [`/admin/config`], [View current engine configuration.],
+  [`POST`], [`/admin/config`], [Update runtime-safe configuration fields.],
+)
 
-== Schema Endpoints
+=== Validation Override Endpoints
 
-// GET    /admin/schemas                              List all schemas
-// GET    /admin/schemas/{filename}                   Download a schema file
-// POST   /admin/schemas/{filename}                   Upload or replace a schema
-// DELETE /admin/schemas/{filename}                   Remove a schema
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`GET`], [`/admin/transformations/{name}/validation`], [Get effective validation state (policy, source, config default).],
+  [`POST`], [`/admin/transformations/{name}/validation`], [Set a runtime override. Body: `{"policy":"off"}`. Ephemeral --- not persisted.],
+  [`DELETE`], [`/admin/transformations/{name}/validation`], [Remove override. Revert to config or header default.],
+)
 
-== Engine Endpoints
+=== Schema Endpoints
 
-// GET    /admin/info                                 Version, uptime, config, status
-// GET    /admin/config                               Current engine configuration
-// POST   /admin/config                               Update runtime-safe config fields
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`GET`], [`/admin/schemas`], [List all uploaded schemas with filename and size.],
+  [`GET`], [`/admin/schemas/{filename}`], [Download a schema file.],
+  [`POST`], [`/admin/schemas/{filename}`], [Upload or replace a schema. Accepts `multipart/form-data` with `file`.],
+  [`DELETE`], [`/admin/schemas/{filename}`], [Remove a schema.],
+)
 
-== Health Endpoints (no authentication)
+=== Health Endpoints (no authentication)
 
-// GET    /health                                     Status, transformation count, ready flag
-// GET    /metrics                                    Prometheus metrics
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`GET`], [`/health`], [Returns status, transformation count, and ready flag.],
+  [`GET`], [`/metrics`], [Prometheus metrics in text exposition format.],
+)
 
-== Data Plane Endpoints (port 8085, no authentication)
+== Data Plane Port (8085)
 
-// GET    /api/transformations                        List available transformations (discovery)
-// POST   /api/transform/{name}                       Execute transformation
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`GET`], [`/api/transformations`], [List available transformations (discovery). No authentication.],
+  [`POST`], [`/api/transform/{name}`], [Execute a transformation. Body is the input message. Content-Type header determines format.],
+)
 
-== Response Codes
+== Response Status Codes
 
-// 200  Success
-// 400  Bad request (compilation error, invalid input)
-// 403  Forbidden (missing or wrong admin key)
-// 404  Transformation not found
-// 503  Transformation paused
+#table(
+  columns: (auto, 1fr),
+  [*Code*], [*Meaning*],
+  [200], [Success.],
+  [400], [Bad request --- compilation error, invalid input, malformed ZIP.],
+  [403], [Forbidden --- missing or wrong `X-Admin-Key`, or key not configured.],
+  [404], [Transformation not found.],
+  [413], [Message too large --- exceeds `maxInputSize`.],
+  [500], [Transformation runtime error (null reference, type mismatch, etc.).],
+  [503], [Transformation is paused.],
+)
