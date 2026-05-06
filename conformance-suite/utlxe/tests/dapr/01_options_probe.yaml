@@ -1,0 +1,22 @@
+name: "options_probe"
+category: "dapr"
+description: "Verify UTLXe responds 200 to Dapr OPTIONS startup probe for any binding name"
+tags: ["dapr", "startup", "options"]
+transport: dapr
+
+dapr:
+  steps:
+    - action: options_probe
+      binding_name: "orders-in"
+      expected:
+        status: 200
+
+    - action: options_probe
+      binding_name: "nonexistent-binding"
+      expected:
+        status: 200
+
+    - action: options_probe
+      binding_name: "any-name-at-all"
+      expected:
+        status: 200

@@ -1,0 +1,16 @@
+# Dapr input binding — local Redis (replaces Azure Service Bus for local testing)
+# Messages sent to this binding trigger POST /orders-in on UTLXe
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: orders-in
+spec:
+  type: bindings.redis
+  version: v1
+  metadata:
+    - name: redisHost
+      value: "localhost:6379"
+    - name: redisPassword
+      value: ""
+    - name: route
+      value: "/orders-in"

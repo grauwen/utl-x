@@ -1,0 +1,16 @@
+name: "missing_transformation"
+category: "dapr"
+description: "Dapr delivers message for a binding with no uploaded transformation — expect 500"
+tags: ["dapr", "error-handling", "missing"]
+transport: dapr
+
+dapr:
+  steps:
+    - action: dapr_invoke_binding
+      binding_name: "nonexistent-transform"
+      input:
+        format: json
+        data: |
+          {"test": true}
+      expected:
+        status: 500

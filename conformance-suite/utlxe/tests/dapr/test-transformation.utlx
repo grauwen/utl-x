@@ -1,0 +1,10 @@
+%utlx 1.0
+input json
+output json
+---
+{
+  processedOrderId: concat("PROC-", $input.orderId),
+  customer: upperCase($input.customerName),
+  total: round($input.quantity * $input.unitPrice, 2),
+  processedAt: now()
+}

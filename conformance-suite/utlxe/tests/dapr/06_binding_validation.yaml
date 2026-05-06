@@ -1,0 +1,39 @@
+name: "binding_validation"
+category: "dapr"
+description: "Verify the /admin/dapr/bindings endpoint shows matched and missing bindings"
+tags: ["dapr", "admin", "validation", "ef05"]
+transport: dapr
+
+dapr:
+  steps:
+    # Dapr probes two bindings at startup
+    - action: options_probe
+      binding_name: "orders-in"
+      expected:
+        status: 200
+
+    - action: options_probe
+      binding_name: "invoices-in"
+      expected:
+        status: 200
+
+    # Upload only one transformation
+    - action: upload_transformation
+      name: "orders-in"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        $input
+
+    # Check binding validation
+    - action: get_dapr_bindings
+      expected:
+        bindings:
+          - binding: "orders-in"
+            status: "matched"
+          - binding: "invoices-in"
+            status: "MISSING"
+        matched: 1
+        missing: 1

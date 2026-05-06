@@ -1,0 +1,31 @@
+name: "metadata_headers"
+category: "dapr"
+description: "Verify UTLXe reads Service Bus metadata headers (metadata.MessageId, metadata.CorrelationId)"
+tags: ["dapr", "correlation", "ef04"]
+transport: dapr
+
+dapr:
+  steps:
+    - action: upload_transformation
+      name: "orders-in"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        $input
+
+    - action: dapr_invoke_binding
+      binding_name: "orders-in"
+      headers:
+        metadata.MessageId: "a1b2c3d4-5678-7abc-def0-111111111111"
+        metadata.CorrelationId: "550e8400-e29b-71d4-a716-446655440000"
+      input:
+        format: json
+        data: |
+          {"test": true}
+      expected:
+        status: 200
+        log_contains:
+          - "MessageId=a1b2c3d4"
+          - "CorrelationId=550e8400"

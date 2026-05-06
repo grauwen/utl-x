@@ -1,0 +1,42 @@
+name: "input_binding_delivery"
+category: "dapr"
+description: "Upload transformation, send message via Dapr input binding, verify transformation executes"
+tags: ["dapr", "input-binding", "service-bus"]
+transport: dapr
+
+dapr:
+  steps:
+    - action: upload_transformation
+      name: "orders-in"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {
+          processedOrderId: concat("PROC-", $input.orderId),
+          customer: upperCase($input.customerName),
+          total: round($input.quantity * $input.unitPrice, 2)
+        }
+
+    - action: dapr_invoke_binding
+      binding_name: "orders-in"
+      input:
+        format: json
+        data: |
+          {"orderId":"ORD-001","customerName":"Acme Corp","quantity":5,"unitPrice":24.50}
+      expected:
+        status: 200
+
+    - action: test_transformation
+      name: "orders-in"
+      input:
+        format: json
+        data: |
+          {"orderId":"ORD-001","customerName":"Acme Corp","quantity":5,"unitPrice":24.50}
+      expected:
+        status: "ok"
+        output:
+          format: json
+          data: |
+            {"processedOrderId":"PROC-ORD-001","customer":"ACME CORP","total":122.5}

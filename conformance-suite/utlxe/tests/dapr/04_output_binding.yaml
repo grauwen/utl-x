@@ -1,0 +1,31 @@
+name: "output_binding"
+category: "dapr"
+description: "Transformation with outputBinding configured — verify UTLXe calls Dapr output binding"
+tags: ["dapr", "output-binding"]
+transport: dapr
+
+dapr:
+  steps:
+    - action: upload_transformation
+      name: "orders-in"
+      source: |
+        %utlx 1.0
+        input json
+        output json
+        ---
+        {
+          processedOrderId: concat("PROC-", $input.orderId),
+          total: $input.quantity * $input.unitPrice
+        }
+      config:
+        outputBinding: orders-out
+
+    - action: dapr_invoke_binding
+      binding_name: "orders-in"
+      input:
+        format: json
+        data: |
+          {"orderId":"ORD-001","quantity":5,"unitPrice":24.50}
+      expected:
+        status: 200
+        output_binding_called: "orders-out"

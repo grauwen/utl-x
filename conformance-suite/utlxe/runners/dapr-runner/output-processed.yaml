@@ -1,0 +1,14 @@
+# Dapr output binding — local Redis (replaces Azure Service Bus for local testing)
+# UTLXe calls POST localhost:3500/v1.0/bindings/orders-out to send transformed messages
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: orders-out
+spec:
+  type: bindings.redis
+  version: v1
+  metadata:
+    - name: redisHost
+      value: "localhost:6379"
+    - name: redisPassword
+      value: ""
