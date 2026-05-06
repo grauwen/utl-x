@@ -246,7 +246,7 @@ class HttpTransport(
                     val transformations = registry.list().map { tx ->
                         mapOf(
                             "name" to tx.name,
-                            "status" to "ready",
+                            "status" to if (tx.paused) "paused" else "ready",
                             "strategy" to tx.strategy.name
                         )
                     }
@@ -327,6 +327,18 @@ class HttpTransport(
             return
         }
 
+        // EF03: Return 503 if transformation is paused
+        if (instance.paused) {
+            logger.info("Dapr binding '{}' — transformation '{}' is paused", bindingName, transformId)
+            call.respond(HttpStatusCode.ServiceUnavailable, mapOf(
+                "success" to false,
+                "error" to "Transformation '$transformId' is paused",
+                "error_code" to "TRANSFORMATION_NOT_FOUND",
+                "binding" to bindingName
+            ))
+            return
+        }
+
         // Resolve output binding: env var > transform config > header > none
         val envOverride = System.getenv("UTLXE_OUTPUT_BINDING_${bindingName.replace("-", "_").uppercase()}")
         val configBinding = instance.config.outputBinding
@@ -373,6 +385,14 @@ class HttpTransport(
         if (!execResp.success) {
             logger.error("[{}] MessageId={} CorrelationId={} FAILED: {}",
                 transformId, incomingMessageId, incomingCorrelationId, execResp.error)
+            // EF03: Record error in ring buffer
+            instance.recordErrorDetail(org.apache.utlx.engine.registry.ErrorEntry(
+                message = execResp.error ?: "Unknown error",
+                phase = execResp.errorPhase?.name,
+                messageId = incomingMessageId,
+                correlationId = incomingCorrelationId,
+                inputPreview = payload.take(200)
+            ))
             call.respond(HttpStatusCode.InternalServerError, mapOf(
                 "success" to false,
                 "error" to execResp.error,

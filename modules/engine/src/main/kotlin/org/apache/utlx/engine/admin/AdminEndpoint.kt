@@ -75,7 +75,7 @@ fun configureAdmin(
                     mapOf(
                         "name" to tx.name,
                         "strategy" to tx.strategy.name,
-                        "status" to "ready",
+                        "status" to if (tx.paused) "paused" else "ready",
                         "deployed_at" to tx.loadedAt.toString(),
                         "messages_processed" to tx.executionCount.get(),
                         "errors" to tx.errorCount.get()
@@ -354,6 +354,146 @@ fun configureAdmin(
                 ))
             }
 
+            // ── Pause transformation ──
+            post("/transformations/{name}/pause") {
+                val name = call.parameters["name"] ?: ""
+                val tx = registry.get(name)
+                if (tx == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found",
+                        "error_code" to "TRANSFORMATION_NOT_FOUND"
+                    ))
+                    return@post
+                }
+                tx.paused = true
+                logger.info("Admin: paused transformation '{}'", name)
+                call.respond(HttpStatusCode.OK, mapOf("success" to true, "name" to name, "status" to "paused"))
+            }
+
+            // ── Resume transformation ──
+            post("/transformations/{name}/resume") {
+                val name = call.parameters["name"] ?: ""
+                val tx = registry.get(name)
+                if (tx == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found",
+                        "error_code" to "TRANSFORMATION_NOT_FOUND"
+                    ))
+                    return@post
+                }
+                tx.paused = false
+                logger.info("Admin: resumed transformation '{}'", name)
+                call.respond(HttpStatusCode.OK, mapOf("success" to true, "name" to name, "status" to "ready"))
+            }
+
+            // ── Error ring buffer ──
+            get("/transformations/{name}/errors") {
+                val name = call.parameters["name"] ?: ""
+                val tx = registry.get(name)
+                if (tx == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found",
+                        "error_code" to "TRANSFORMATION_NOT_FOUND"
+                    ))
+                    return@get
+                }
+                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+                val errors = tx.recentErrors.take(limit).map { err ->
+                    mapOf(
+                        "timestamp" to err.timestamp.toString(),
+                        "message" to err.message,
+                        "line" to err.line,
+                        "phase" to err.phase,
+                        "message_id" to err.messageId,
+                        "correlation_id" to err.correlationId,
+                        "input_preview" to err.inputPreview
+                    )
+                }
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "errors" to errors,
+                    "total_errors" to tx.errorCount.get(),
+                    "showing" to errors.size
+                ))
+            }
+
+            // ── Bundle validate (dry run) ──
+            post("/bundle/validate") {
+                val zipBytes = call.receive<ByteArray>()
+                var found = 0
+                val errors = mutableListOf<String>()
+
+                try {
+                    ZipInputStream(ByteArrayInputStream(zipBytes)).use { zis ->
+                        var entry = zis.nextEntry
+                        while (entry != null) {
+                            val path = entry.name
+                            if (!entry.isDirectory && path.endsWith(".utlx") && path.startsWith("transformations/")) {
+                                val parts = path.removePrefix("transformations/").split("/")
+                                if (parts.size == 2) {
+                                    val name = parts[0]
+                                    val source = zis.readBytes().toString(Charsets.UTF_8)
+                                    // Try to compile without registering
+                                    try {
+                                        val strategy = engine.createStrategy(
+                                            org.apache.utlx.engine.config.TransformConfig(strategy = "COMPILED")
+                                        )
+                                        strategy.initialize(source, org.apache.utlx.engine.config.TransformConfig())
+                                        strategy.shutdown()
+                                        found++
+                                    } catch (e: Exception) {
+                                        errors.add("$name: ${e.message}")
+                                    }
+                                }
+                            }
+                            zis.closeEntry()
+                            entry = zis.nextEntry
+                        }
+                    }
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "status" to "invalid",
+                        "error" to "Invalid ZIP: ${e.message}"
+                    ))
+                    return@post
+                }
+
+                if (errors.isNotEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "status" to "invalid",
+                        "valid" to found,
+                        "errors" to errors
+                    ))
+                } else if (found == 0) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "status" to "invalid",
+                        "error" to "No transformations found in ZIP"
+                    ))
+                } else {
+                    call.respond(HttpStatusCode.OK, mapOf(
+                        "status" to "valid",
+                        "transformations" to found
+                    ))
+                }
+            }
+
+            // ── Dapr binding validation ──
+            get("/dapr/bindings") {
+                // Compare Dapr-probed bindings against loaded transformations
+                val httpTransport = engine.dataDir  // Access probed bindings via transport if available
+                // For now, list transformations and their status
+                val transformations = registry.list().map { tx ->
+                    mapOf(
+                        "name" to tx.name,
+                        "status" to if (tx.paused) "paused" else "ready",
+                        "messages_processed" to tx.executionCount.get(),
+                        "errors" to tx.errorCount.get()
+                    )
+                }
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "transformations" to transformations
+                ))
+            }
+
             // ── Engine info ──
             get("/info") {
                 call.respond(HttpStatusCode.OK, mapOf(
@@ -361,7 +501,9 @@ fun configureAdmin(
                     "uptime_seconds" to engine.uptimeMs() / 1000,
                     "transformations" to registry.list().size,
                     "ready" to (engine.state == org.apache.utlx.engine.EngineState.RUNNING && registry.list().isNotEmpty()),
-                    "admin_key_set" to adminKey.isNotEmpty()
+                    "admin_key_set" to adminKey.isNotEmpty(),
+                    "data_dir" to dataDir,
+                    "persistence" to if (dataDir != null) "disk" else "memory-only"
                 ))
             }
         }

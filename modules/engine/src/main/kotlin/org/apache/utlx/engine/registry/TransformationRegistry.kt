@@ -87,8 +87,31 @@ data class TransformationInstance(
     val executionCount: AtomicLong = AtomicLong(0),
     val errorCount: AtomicLong = AtomicLong(0),
     val inputValidator: SchemaValidator? = null,
-    val outputValidator: SchemaValidator? = null
+    val outputValidator: SchemaValidator? = null,
+    @Volatile var paused: Boolean = false,
+    val recentErrors: java.util.concurrent.ConcurrentLinkedDeque<ErrorEntry> = java.util.concurrent.ConcurrentLinkedDeque()
 ) {
+    companion object {
+        const val MAX_ERROR_RING_SIZE = 100
+    }
     fun recordExecution() = executionCount.incrementAndGet()
     fun recordError() = errorCount.incrementAndGet()
+    fun recordErrorDetail(error: ErrorEntry) {
+        recentErrors.addFirst(error)
+        while (recentErrors.size > MAX_ERROR_RING_SIZE) {
+            recentErrors.removeLast()
+        }
+        recordError()
+    }
 }
+
+/** Error ring buffer entry — stored per transformation, limited to 100. */
+data class ErrorEntry(
+    val timestamp: Instant = Instant.now(),
+    val message: String,
+    val line: Int? = null,
+    val phase: String? = null,
+    val messageId: String? = null,
+    val correlationId: String? = null,
+    val inputPreview: String? = null
+)

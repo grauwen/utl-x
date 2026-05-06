@@ -448,4 +448,109 @@ class AdminEndpointTest {
         assertEquals(400, status)
         assertTrue(body.contains("rejected"), "Should say rejected: $body")
     }
+
+    // ── Pause / Resume tests ──
+
+    @Test
+    fun `pause and resume transformation`() {
+        val source = """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            ${'$'}input
+        """.trimIndent()
+        adminPost("/admin/transformations/pausable", source)
+
+        // Pause
+        val (pauseStatus, pauseBody) = adminPost("/admin/transformations/pausable/pause", "")
+        assertEquals(200, pauseStatus, "Pause failed: $pauseBody")
+        assertTrue(pauseBody.contains("paused"), "Should say paused: $pauseBody")
+
+        // List shows paused
+        val (_, listBody) = adminGet("/admin/transformations")
+        assertTrue(listBody.contains("paused"), "List should show paused: $listBody")
+
+        // Resume
+        val (resumeStatus, resumeBody) = adminPost("/admin/transformations/pausable/resume", "")
+        assertEquals(200, resumeStatus, "Resume failed: $resumeBody")
+        assertTrue(resumeBody.contains("ready"), "Should say ready: $resumeBody")
+    }
+
+    @Test
+    fun `pause nonexistent returns 404`() {
+        val (status, _) = adminPost("/admin/transformations/ghost/pause", "")
+        assertEquals(404, status)
+    }
+
+    // ── Error ring buffer tests ──
+
+    @Test
+    fun `errors endpoint returns empty list for healthy transformation`() {
+        val source = """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            ${'$'}input
+        """.trimIndent()
+        adminPost("/admin/transformations/healthy", source)
+
+        val (status, body) = adminGet("/admin/transformations/healthy/errors")
+        assertEquals(200, status)
+        assertTrue(body.contains("\"errors\":[]") || body.contains("\"errors\" : []") || body.contains("\"showing\":0") || body.contains("\"showing\" : 0"),
+            "Should have empty errors: $body")
+    }
+
+    @Test
+    fun `errors endpoint for nonexistent returns 404`() {
+        val (status, _) = adminGet("/admin/transformations/ghost/errors")
+        assertEquals(404, status)
+    }
+
+    // ── Bundle validate (dry run) tests ──
+
+    @Test
+    fun `validate valid bundle returns ok`() {
+        val zip = createBundleZip(mapOf(
+            "valid-a" to """
+                %utlx 1.0
+                input json
+                output json
+                ---
+                ${'$'}input
+            """.trimIndent()
+        ))
+        val (status, body) = adminPostZip("/admin/bundle/validate", zip)
+        assertEquals(200, status, "Validate failed: $body")
+        assertTrue(body.contains("valid"), "Should say valid: $body")
+    }
+
+    @Test
+    fun `validate invalid bundle returns errors`() {
+        val zip = createBundleZip(mapOf(
+            "bad" to "not valid utlx"
+        ))
+        val (status, body) = adminPostZip("/admin/bundle/validate", zip)
+        assertEquals(400, status)
+        assertTrue(body.contains("invalid"), "Should say invalid: $body")
+    }
+
+    // ── Dapr binding validation ──
+
+    @Test
+    fun `dapr bindings endpoint returns transformation list`() {
+        val source = """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            ${'$'}input
+        """.trimIndent()
+        adminPost("/admin/transformations/dapr-test", source)
+
+        val (status, body) = adminGet("/admin/dapr/bindings")
+        assertEquals(200, status)
+        assertTrue(body.contains("dapr-test"), "Should list dapr-test: $body")
+    }
 }
