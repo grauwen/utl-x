@@ -33,7 +33,12 @@ options("/{bindingName}") {
 }
 ```
 
-**Why always 200?** The Admin API (EF03) allows uploading transformations at any time — before or after container start. The Dapr OPTIONS probe happens once at startup. If UTLXe returns 404 for a not-yet-uploaded transformation, the binding is permanently deactivated. By responding 200 always, Dapr activates the binding immediately. Messages arriving before the transformation exists trigger Service Bus retry (500 → abandon → redeliver). Once the transformation is uploaded, the next delivery succeeds.
+**Why always 200 to OPTIONS?** The Admin API (EF03) allows uploading transformations at any time — before or after container start. The Dapr OPTIONS probe happens once at startup. If UTLXe returns 404 for a not-yet-uploaded transformation, the binding is permanently deactivated. By responding 200 always, Dapr activates the binding immediately.
+
+**503 for messages before bundle is loaded (not 500):** When Dapr delivers a message (POST) but the transformation is not yet uploaded, UTLXe returns **503 Service Unavailable** — not 500. Per the bootstrap document (`docs/dapr/utlx-bundle-bootstrap.md`), 503 means "not ready yet, try again later." Dapr abandons the message, Service Bus retries. Once the transformation is uploaded, the next retry succeeds. The 503/500 distinction matters:
+
+- **503** = transformation not loaded yet → Dapr retries → eventually succeeds
+- **500** = transformation failed at runtime (null reference, type error) → Dapr retries → likely fails again → dead-letter after maxDeliveryCount
 
 ### 2. Route path mismatch (CRITICAL)
 
