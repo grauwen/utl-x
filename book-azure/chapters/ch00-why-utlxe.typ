@@ -581,3 +581,35 @@ Use Azure Functions or Logic Apps instead when:
 - The integration involves orchestration (multi-step, conditional branching, human approval).
 - The transformation is trivial (rename one field) and doesn't justify a dedicated engine.
 - You need to call external APIs as part of the transformation (UTLXe is stateless and does not make outbound API calls during transformation).
+
+== Migrating from BizTalk Server
+
+Microsoft BizTalk Server is approaching end of life. The SBMP protocol for Azure Service Bus retires September 30, 2026 --- breaking BizTalk deployments that use the default Service Bus adapter. BizTalk 2020 extended support ends April 2030. Organizations running BizTalk are actively looking for a migration path.
+
+UTLXe replaces the *transformation* piece of BizTalk --- the pipeline component and XSLT/\.NET map. It does not replace BizTalk's adapters, MessageBox, or orchestrations. Those migrate to Logic Apps Standard. The transformation logic --- the part that took years to get right --- migrates to UTLXe.
+
+=== The three-step migration
+
++ *Today:* Drop UTLXe into existing BizTalk pipelines. Replace XSLT maps and custom \.NET maps with `.utlx` transformations. No change to adapters, MessageBox, or orchestrations. The customer keeps running BizTalk, but their transformation logic is now portable.
+
++ *Migration window (2026--2030):* Migrate adapters and orchestrations to Logic Apps Standard at whatever pace fits the business. The transformation logic moves unchanged --- the same `.utlx` files that ran inside BizTalk now run inside Logic Apps Standard custom functions or behind a UTLXe sidecar on Azure Container Apps.
+
++ *Steady state:* Logic Apps Standard for orchestration, UTLXe for transformation, optionally Dapr for cross-cloud portability. The customer's transformation IP is decoupled from their host platform forever.
+
+=== Why this matters
+
+The transformation logic is the most valuable and most fragile part of an integration. It encodes business rules, field mappings, tax calculations, format-specific quirks, and partner-specific exceptions. Rewriting it in a new language (DataWeave, Liquid, C\#) is expensive and risky.
+
+UTLXe lets the customer *extract* the transformation logic into a portable, testable, version-controlled format --- and then move the host underneath it. BizTalk today, Logic Apps tomorrow, Kubernetes next year. The `.utlx` files stay the same.
+
+=== Integration paths
+
+#table(
+  columns: (auto, 1fr),
+  [*BizTalk pipeline*], [A \.NET SDK shim (`UtlxEngine.BizTalk`) implements `IComponent`. Drop into a pipeline stage, set the bundle and rule name, done. Same SDK that runs the engine subprocess over stdin/stdout protobuf.],
+  [*Logic Apps Standard*], [A custom \.NET 8 function (`UtlxEngine.LogicApps`) calls UTLXe via the SDK. Register with dependency injection, invoke from any workflow action.],
+  [*Azure Container Apps*], [UTLXe runs as a container with Dapr sidecar. Messages arrive from Service Bus or Event Hub, get transformed, and are forwarded. No \.NET code needed --- just `.utlx` files and YAML configuration.],
+  [*Direct HTTP*], [Any application calls UTLXe via REST. No SDK, no Dapr, no BizTalk --- just HTTP in, HTTP out.],
+)
+
+All four paths use the same `.utlx` transformations, the same engine binary, the same proto contract. A transformation tested in one path works identically in all others.
