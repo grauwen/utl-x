@@ -464,6 +464,37 @@ When a transformation is uploaded:
 
 Full bundle upload (`POST /admin/bundle`) follows the same pattern but replaces all transformations atomically.
 
+### Error codes (wire-protocol parity)
+
+All HTTP error responses include the `error_code` field from the proto `ErrorCode` enum, serialized as a string. This ensures SDK consumers (EF08) see the same error codes regardless of transport.
+
+```json
+// HTTP 500 — transformation runtime error
+{
+  "success": false,
+  "error": "Null reference: $input.customer.address",
+  "error_code": "TRANSFORMATION_FAILED",
+  "error_class": "PERMANENT",
+  "error_phase": "TRANSFORMATION"
+}
+
+// HTTP 404 — transformation not found
+{
+  "success": false,
+  "error": "Transformation 'orders-in' not found",
+  "error_code": "TRANSFORMATION_NOT_FOUND"
+}
+
+// HTTP 503 — no bundle loaded (Dapr delivery before upload)
+{
+  "success": false,
+  "error": "No transformation loaded for binding 'orders-in'",
+  "error_code": "BUNDLE_NOT_LOADED"
+}
+```
+
+See `utlxe-engine-architecture.md` "Wire-Protocol Parity" principle and `proto/utlxe/v1/utlxe.proto` `ErrorCode` enum for the full list.
+
 ### Response format
 
 ```json
