@@ -334,6 +334,34 @@ All new fields are sequential and additive — fully backward compatible. Existi
 
 The existing `correlation_id` field (5 on request, 9 on response) remains unchanged — it serves double duty as both the business CorrelationId and the multiplexed response matcher for stdio-proto mode.
 
+### Additional proto fields (from SAP/BizTalk analysis)
+
+The following fields were added to the proto based on cross-host analysis (SAP CPI, BizTalk, Logic Apps, Dapr/CloudEvents). They extend the tracing and metadata story:
+
+**`ExecuteRequest`:**
+- `parameters` (10) — transformation input parameters, accessible as `$params.key` in .utlx
+- `metadata_forwarding` (11) — controls which metadata keys pass through (`ALL`, `NONE`, `CORRELATION`)
+- `tracestate` (12) — W3C Trace Context vendor extensions (companion to `traceparent`)
+
+**`ExecuteResponse`:**
+- `error_code` (13) — specific error code (`TRANSFORMATION_NOT_FOUND`, `BUNDLE_NOT_LOADED`, etc.)
+- `output_metadata` (14) — rule-emitted business metadata (`OutputMetadata` message: `application_id`, `message_type`, `custom_status`, `custom_identifiers`, `sender`, `receiver`)
+
+**`BatchItem`:**
+- `parameters` (8), `traceparent` (9), `tracestate` (10) — per-item trace context and parameters
+
+**`ExecutePipelineRequest`:**
+- `parameters` (10), `tracestate` (11)
+
+**`ExecutePipelineResponse`:**
+- `error_code` (14), `output_metadata` (15)
+
+**New messages:** `LoadBundleRequest`/`Response`, `UnloadBundleRequest`/`Response`, `OutputMetadata`
+
+**New enums:** `ErrorCode` (10 specific codes), `MetadataForwarding`
+
+See [Proto Reference](../../docs/sdk/proto-reference.md) for the complete field-by-field documentation.
+
 ## Files to modify
 
 | File | Change |

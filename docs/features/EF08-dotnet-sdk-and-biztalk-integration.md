@@ -332,6 +332,75 @@ Specifically:
 - `ErrorCode` enum values are used as strings in HTTP JSON (`"TRANSFORMATION_NOT_FOUND"`) and as proto enum values in the SDK (`ErrorCode.TransformationNotFound` in C#)
 - `parameters` map is available on both transports — HTTP via JSON body field, proto via `map<string, string>`
 - `TransformResult` in the SDK maps 1:1 to `ExecuteResponse` in the proto and to the JSON response body in HTTP
+- `OutputMetadata` is a typed object in C# (`result.OutputMetadata.ApplicationId`) and a nested JSON object in HTTP (`{"output_metadata": {"application_id": "PO-12345"}}`)
+- `MetadataForwarding` is an enum in C# and a string in HTTP
+- `tracestate` is passed alongside `traceparent` on all transports (W3C Trace Context completeness)
+
+### SDK `TransformResult` — full field mapping
+
+```csharp
+public class TransformResult
+{
+    public bool Success { get; set; }
+    public byte[] Output { get; set; }
+    public string OutputContentType { get; set; }
+    public string Error { get; set; }
+    public ErrorClass ErrorClass { get; set; }
+    public ErrorPhase ErrorPhase { get; set; }
+    public ErrorCode ErrorCode { get; set; }
+    public List<ValidationError> ValidationErrors { get; set; }
+    public long DurationUs { get; set; }
+
+    // Messaging triad
+    public string MessageId { get; set; }        // new UUIDv7 for output
+    public string CorrelationId { get; set; }    // echoed from request
+    public string CausationId { get; set; }      // = input's MessageId
+
+    // Forwarded properties
+    public Dictionary<string, string> Metadata { get; set; }
+
+    // Rule-emitted business metadata (from OutputMetadata proto message)
+    public OutputMetadataResult OutputMetadata { get; set; }
+}
+
+public class OutputMetadataResult
+{
+    public string ApplicationId { get; set; }       // PO number, IDoc number
+    public string MessageType { get; set; }         // "CanonicalOrder.v3"
+    public string CustomStatus { get; set; }        // "FALLBACK_RULE_USED"
+    public Dictionary<string, string> CustomIdentifiers { get; set; }
+    public string Sender { get; set; }
+    public string Receiver { get; set; }
+}
+```
+
+The BizTalk shim maps `OutputMetadata` to BizTalk context properties:
+
+```csharp
+// In UtlxTransformComponent.Execute()
+if (result.OutputMetadata != null)
+{
+    if (result.OutputMetadata.ApplicationId != null)
+        inMsg.Context.Write("ApplicationId", "utlxe", result.OutputMetadata.ApplicationId);
+    foreach (var (key, value) in result.OutputMetadata.CustomIdentifiers)
+        inMsg.Context.Write(key, "utlxe", value);
+}
+```
+
+The CPI adapter maps `OutputMetadata` to SAP exchange properties:
+
+```java
+// In CPI custom adapter
+if (response.hasOutputMetadata()) {
+    exchange.setProperty("SAP_ApplicationID", response.getOutputMetadata().getApplicationId());
+    exchange.setProperty("SAP_MessageType", response.getOutputMetadata().getMessageType());
+    for (var entry : response.getOutputMetadata().getCustomIdentifiersMap().entrySet()) {
+        messageLog.addCustomHeaderProperty(entry.getKey(), entry.getValue());
+    }
+}
+```
+
+See [Proto Reference](../../docs/sdk/proto-reference.md) for the complete proto documentation.
 
 ## Build pipeline changes
 
