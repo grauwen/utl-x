@@ -29,6 +29,34 @@ message LoadMetrics {
   int64 total_duration_us = 3;     // Total init time
 }
 
+// ─── Bundle operations (load/unload an entire bundle of transformations + schemas) ───
+
+message LoadBundleRequest {
+  string bundle_id = 1;                   // Bundle identifier (e.g., "orders-v3")
+  bytes bundle_data = 2;                  // ZIP contents (inline upload)
+  string bundle_uri = 3;                  // URI to fetch from (alternative to inline: blob://, file://)
+}
+
+message LoadBundleResponse {
+  bool success = 1;
+  string error = 2;
+  string version = 3;                     // Bundle version (from engine.yaml or auto-generated)
+  string checksum = 4;                    // SHA-256 of the bundle
+  int32 transformations_loaded = 5;
+  repeated string transformation_ids = 6; // Names of transformations in the bundle
+  LoadMetrics metrics = 7;
+}
+
+message UnloadBundleRequest {
+  string bundle_id = 1;
+}
+
+message UnloadBundleResponse {
+  bool success = 1;
+  string error = 2;
+  int32 transformations_unloaded = 3;
+}
+
 // ─── Runtime messages (called per message on the hot path) ───
 
 message ExecuteRequest {
@@ -41,6 +69,9 @@ message ExecuteRequest {
   string causation_id = 7;         // MessageId of the message that caused this one (immediate parent)
   map<string, string> metadata = 8; // Custom properties to forward (e.g., Service Bus custom properties)
   string traceparent = 9;          // W3C Trace Context (optional, for distributed tracing)
+  map<string, string> parameters = 10; // Transformation input parameters (accessible as $params.key in .utlx)
+                                       // BizTalk: IBaseMessage.Context properties
+                                       // Logic Apps: workflow action parameters
 }
 
 message ExecuteResponse {
@@ -56,6 +87,7 @@ message ExecuteResponse {
   string message_id = 10;                 // New UUID for this output message
   string causation_id = 11;              // Set to input's message_id (immediate parent)
   map<string, string> metadata = 12;     // Forwarded custom properties (if metadataForwarding != none)
+  ErrorCode error_code = 13;             // Specific, actionable error code
 }
 
 enum ErrorClass {
@@ -70,6 +102,20 @@ enum ErrorPhase {
   TRANSFORMATION = 2;     // utl-x execution failed
   POST_VALIDATION = 3;    // Output schema validation failed
   INTERNAL = 4;           // UTLXe engine error (not payload-related)
+}
+
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+  TRANSFORMATION_NOT_FOUND = 1;      // transformation_id doesn't exist in the registry
+  BUNDLE_NOT_LOADED = 2;             // bundle_id not loaded
+  INPUT_PARSE_FAILED = 3;            // payload can't be parsed (bad JSON/XML/CSV)
+  INPUT_VALIDATION_FAILED = 4;       // input doesn't match schema (pre-validation)
+  TRANSFORMATION_FAILED = 5;         // runtime error in .utlx (null ref, type mismatch, etc.)
+  OUTPUT_VALIDATION_FAILED = 6;      // output doesn't match schema (post-validation)
+  OUTPUT_SERIALIZATION_FAILED = 7;   // output can't be serialized to target format
+  MAX_CONCURRENT_EXCEEDED = 8;       // maxConcurrent limit reached, request rejected
+  MAX_INPUT_SIZE_EXCEEDED = 9;       // payload exceeds maxInputSize
+  INTERNAL_ERROR = 10;               // engine-internal error (not payload-related)
 }
 
 message ValidationError {
@@ -94,10 +140,10 @@ message BatchItem {
   string content_type = 2;
   map<string, bytes> named_inputs = 3;
   string correlation_id = 4;
-  // Messaging triad
   string message_id = 5;
   string causation_id = 6;
   map<string, string> metadata = 7;
+  map<string, string> parameters = 8;  // Transformation input parameters per batch item
 }
 
 message ExecuteBatchResponse {
@@ -121,6 +167,7 @@ message ExecutePipelineRequest {
   map<string, string> metadata = 7;        // Custom properties to forward
   string traceparent = 8;                  // W3C Trace Context
   map<string, PipelineStageInputs> stage_inputs = 9; // EF01: additional inputs per stage, keyed by transformation_id
+  map<string, string> parameters = 10; // Transformation input parameters (shared across all stages)
 }
 
 message ExecutePipelineResponse {
@@ -134,10 +181,10 @@ message ExecutePipelineResponse {
   string correlation_id = 8;
   int32 stages_completed = 9;              // How many transforms completed before error (or total)
   int64 total_duration_us = 10;            // Wall clock for entire pipeline
-  // EF04: Messaging triad — final output identity
   string message_id = 11;                 // New UUID for the final output
   string causation_id = 12;              // MessageId of the last stage's input
   map<string, string> metadata = 13;     // Forwarded custom properties
+  ErrorCode error_code = 14;             // Specific error code (if failed)
 }
 
 // ─── Lifecycle messages ───
@@ -177,6 +224,8 @@ enum MessageType {
   UNLOAD_TRANSFORMATION_REQUEST = 4;
   HEALTH_REQUEST = 5;
   EXECUTE_PIPELINE_REQUEST = 6;
+  LOAD_BUNDLE_REQUEST = 7;
+  UNLOAD_BUNDLE_REQUEST = 8;
 
   // Responses (UTLXe → wrapper)
   LOAD_TRANSFORMATION_RESPONSE = 11;
@@ -185,15 +234,26 @@ enum MessageType {
   UNLOAD_TRANSFORMATION_RESPONSE = 14;
   HEALTH_RESPONSE = 15;
   EXECUTE_PIPELINE_RESPONSE = 16;
+  LOAD_BUNDLE_RESPONSE = 17;
+  UNLOAD_BUNDLE_RESPONSE = 18;
 }
 
 // ─── gRPC service definition (for --mode=grpc only) ───
 
 service UtlxeService {
+  // Transformation lifecycle
   rpc LoadTransformation(LoadTransformationRequest) returns (LoadTransformationResponse);
+  rpc UnloadTransformation(UnloadTransformationRequest) returns (UnloadTransformationResponse);
+
+  // Bundle lifecycle
+  rpc LoadBundle(LoadBundleRequest) returns (LoadBundleResponse);
+  rpc UnloadBundle(UnloadBundleRequest) returns (UnloadBundleResponse);
+
+  // Execution
   rpc Execute(ExecuteRequest) returns (ExecuteResponse);
   rpc ExecuteBatch(ExecuteBatchRequest) returns (ExecuteBatchResponse);
-  rpc UnloadTransformation(UnloadTransformationRequest) returns (UnloadTransformationResponse);
   rpc ExecutePipeline(ExecutePipelineRequest) returns (ExecutePipelineResponse);
+
+  // Health
   rpc Health(HealthRequest) returns (HealthResponse);
 }
