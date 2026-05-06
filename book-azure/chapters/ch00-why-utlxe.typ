@@ -83,7 +83,92 @@ Key points:
 
 #import "@preview/chronos:0.3.0"
 
+=== Startup: How Dapr and UTLXe Initialize
+
+Before any messages flow, the Dapr sidecar and UTLXe go through a startup handshake. This happens once when the container starts. Note that transformations may not be uploaded yet at this point --- the Admin API accepts uploads at any time.
+
+#{set text(size: 6pt); figure(
+  chronos.diagram({
+    import chronos: *
+    _par("Azure", display-name: "Azure Container Apps")
+    _par("Dapr", display-name: "Dapr Sidecar\nlocalhost:3500")
+    _par("UTLXe", display-name: "UTLXe\n:8081 admin + :8085 data")
+    _par("SB", display-name: "Service Bus")
+    _par("Ops", display-name: "Operator\n(CI/CD)")
+
+    _seq("Azure", "Dapr", comment: "1. Start sidecar", enable-dst: true)
+    _seq("Azure", "UTLXe", comment: "2. Start UTLXe", enable-dst: true)
+    _seq("UTLXe", "UTLXe", comment: "3. Start :8081\n(admin + health)")
+    _seq("UTLXe", "UTLXe", comment: "4. Scan /utlxe/data/\n(load if volume-backed)")
+    _seq("UTLXe", "UTLXe", comment: "5. Start :8085\n(data plane)")
+    _seq("Dapr", "UTLXe", comment: "6. OPTIONS /orders-in\n(Dapr binding probe:\ndo you handle bindings?)")
+    _seq("UTLXe", "Dapr", comment: "7. 200 OK\n(always — UTLXe accepts\nall binding probes)", dashed: true)
+    _seq("Dapr", "SB", comment: "8. AMQP 1.0 / TLS :5671\nopen connection to queue", enable-dst: true)
+    _seq("SB", "Dapr", comment: "9. Connected", dashed: true, disable-src: true)
+    _note("right", pos: "Dapr", "Binding active.\nDapr ready.")
+    _seq("Ops", "UTLXe", comment: "10. POST :8081\n/admin/transformations/orders-in\n(upload .utlx)", enable-dst: true)
+    _seq("UTLXe", "UTLXe", comment: "11. Compile transformation")
+    _seq("UTLXe", "Ops", comment: "12. 200 OK\n{deployed}", dashed: true, disable-src: true)
+    _note("right", pos: "UTLXe", "Health: ready=true\nTransformations loaded.\nReady for messages.")
+  }),
+  caption: [Startup sequence: Dapr probe, Admin API upload, then ready for messages],
+)}
+
+Step by step:
+
++ Azure Container Apps starts both containers in the same pod (UTLXe and Dapr sidecar).
++ UTLXe starts the admin API on port 8081 --- health checks, metrics, and bundle management are immediately available.
++ UTLXe scans `/utlxe/data/` --- if Azure Files is mounted with transformations from a previous session, they are compiled now.
++ UTLXe starts the data plane on port 8085.
++ Dapr sends an `OPTIONS /orders-in` probe to port 8085. This is Dapr asking: "Do you handle bindings?" The `OPTIONS` method is an HTTP verb (like GET or POST) used to check capabilities.
++ UTLXe responds 200 OK --- *always*, regardless of whether the `orders-in` transformation exists yet. This tells Dapr "yes, I handle bindings." The actual transformation check happens when the first message arrives.
++ Dapr opens an AMQP connection to the Service Bus queue.
++ The operator (or CI/CD pipeline) uploads the transformation via the Admin API: `POST :8081/admin/transformations/orders-in`.
++ UTLXe compiles the transformation and reports `ready: true`.
+
+*Why does UTLXe always respond 200 to the OPTIONS probe?* Because the Admin API upload (step 10) may happen after Dapr's probe (step 6). If UTLXe returned 404 for a not-yet-uploaded transformation, the binding would never activate --- and the operator couldn't fix it without restarting the container. By responding 200 always, Dapr activates the binding immediately. Messages that arrive before the transformation is uploaded get a 500 response, which triggers Service Bus retry. Once the transformation is uploaded, the next retry succeeds.
+
+==== Multiple queues, multiple bindings
+
+When you have multiple queues, each queue is a separate Dapr component. Dapr probes each one at startup:
+
+```
+OPTIONS /orders-in      → 200 OK (binding activated)
+OPTIONS /invoices-in    → 200 OK (binding activated)
+OPTIONS /returns-in     → 200 OK (binding activated)
+```
+
+Each binding maps to a transformation with the same name. The customer uploads all transformations via the Admin API (or as a bundle):
+
+#table(
+  columns: (auto, auto, auto),
+  [*Service Bus queue*], [*Dapr component*], [*UTLXe transformation*],
+  [`incoming-orders`], [`orders-in`], [`orders-in.utlx`],
+  [`incoming-invoices`], [`invoices-in`], [`invoices-in.utlx`],
+  [`incoming-returns`], [`returns-in`], [`returns-in.utlx`],
+)
+
+To verify the binding matches, use the validation endpoint:
+
+```bash
+curl -H "X-Admin-Key: $KEY" http://<admin>:8081/admin/dapr/bindings
+```
+
+```json
+{
+  "bindings": [
+    {"binding": "orders-in", "transformation": "orders-in", "status": "matched"},
+    {"binding": "invoices-in", "transformation": "invoices-in", "status": "matched"},
+    {"binding": "returns-in", "transformation": null, "status": "MISSING"}
+  ]
+}
+```
+
+A `MISSING` status means Dapr activated the binding but no transformation was uploaded for it. Messages on that queue will fail (500) until the transformation is uploaded.
+
 #pagebreak()
+
+The following scenarios show the steady-state message flow --- after startup is complete.
 
 === Scenario 1: Azure Service Bus via Dapr
 
