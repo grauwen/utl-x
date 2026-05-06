@@ -94,7 +94,7 @@ message BatchItem {
   string content_type = 2;
   map<string, bytes> named_inputs = 3;
   string correlation_id = 4;
-  // EF04: Messaging triad per batch item
+  // Messaging triad
   string message_id = 5;
   string causation_id = 6;
   map<string, string> metadata = 7;
@@ -106,16 +106,21 @@ message ExecuteBatchResponse {
 
 // ─── Pipeline execution (chained transformations, in-process UDM hand-off) ───
 
+// Additional inputs for a specific pipeline stage (keyed by transformation_id in the request)
+message PipelineStageInputs {
+  map<string, bytes> additional_inputs = 1; // Named inputs for this stage (e.g., "customers" → JSON, "pricelist" → CSV)
+}
+
 message ExecutePipelineRequest {
   repeated string transformation_ids = 1;  // Ordered list: output of [0] feeds input of [1], etc.
   bytes payload = 2;                       // Initial input payload
   string content_type = 3;
   string correlation_id = 4;
-  // EF04: Messaging triad for pipeline entry
-  string message_id = 5;
-  string causation_id = 6;
-  map<string, string> metadata = 7;
-  string traceparent = 8;
+  string message_id = 5;                   // UUIDv7 — unique for this pipeline invocation
+  string causation_id = 6;                 // UUIDv7 — parent's MessageId
+  map<string, string> metadata = 7;        // Custom properties to forward
+  string traceparent = 8;                  // W3C Trace Context
+  map<string, PipelineStageInputs> stage_inputs = 9; // EF01: additional inputs per stage, keyed by transformation_id
 }
 
 message ExecutePipelineResponse {
