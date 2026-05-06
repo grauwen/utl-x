@@ -272,14 +272,85 @@ Options:
 
 W3C Trace Context (`traceparent`) is always forwarded regardless of this setting — it is infrastructure, not business data.
 
+## Proto/gRPC changes
+
+The messaging triad must be available on all transports, not just HTTP/Dapr. The proto definition (`utlxe.proto`) has been updated:
+
+**`ExecuteRequest`** — new fields (sequential after existing field 5):
+- `message_id` (6) — caller sets, or UTLXe generates UUID
+- `causation_id` (7) — MessageId of the message that caused this one
+- `metadata` (8) — custom properties to forward
+- `traceparent` (9) — W3C Trace Context
+
+**`ExecuteResponse`** — new fields (sequential after existing field 9):
+- `message_id` (10) — new UUID for the output message
+- `causation_id` (11) — set to input's message_id
+- `metadata` (12) — forwarded custom properties
+
+**`BatchItem`** — new fields (sequential after existing field 4): `message_id` (5), `causation_id` (6), `metadata` (7)
+
+**`ExecutePipelineRequest`** — new fields (sequential after existing field 4): `message_id` (5), `causation_id` (6), `metadata` (7), `traceparent` (8)
+
+**`ExecutePipelineResponse`** — new fields (sequential after existing field 10): `message_id` (11), `causation_id` (12), `metadata` (13)
+
+All new fields are sequential and additive — fully backward compatible. Existing wrappers that don't set the new fields still work (empty strings, UTLXe generates UUIDs).
+
+The existing `correlation_id` field (5 on request, 9 on response) remains unchanged — it serves double duty as both the business CorrelationId and the multiplexed response matcher for stdio-proto mode.
+
 ## Files to modify
 
 | File | Change |
 |------|--------|
+| `proto/utlxe/v1/utlxe.proto` | Add message_id, causation_id, metadata, traceparent fields (done) |
 | `modules/engine/.../transport/HttpTransport.kt` | Read incoming metadata/headers, propagate to output binding call, forward traceparent |
+| `modules/engine/.../transport/GrpcTransport.kt` | Read/set new proto fields, generate output MessageId, set CausationId |
+| `modules/engine/.../transport/StdioProtoTransport.kt` | Same as gRPC — read/set new fields in Execute messages |
 | `modules/engine/.../config/TransformConfig.kt` | Add `metadataForwarding` field (all/correlation/none) |
-| `modules/engine/.../admin/ErrorRingBuffer.kt` (EF03) | Store MessageId and CorrelationId per error entry |
-| Structured logging throughout | Include MessageId and CorrelationId in all log entries |
+| `modules/engine/.../admin/ErrorRingBuffer.kt` (EF03) | Store MessageId, CorrelationId, CausationId per error entry |
+| Structured logging throughout | Include MessageId, CorrelationId, CausationId in all log entries |
+
+Note: the proto file exists once at `proto/utlxe/v1/utlxe.proto` (project root). The engine's Gradle build references it via `sourceSets { main { proto { srcDir("${rootProject.projectDir}/proto") } } }`. No copies.
+
+## SDK and wrapper impact
+
+The proto change adds new fields to `ExecuteRequest`, `ExecuteResponse`, `BatchItem`, `ExecutePipelineRequest`, and `ExecutePipelineResponse`. Every SDK and wrapper that uses the proto must be updated.
+
+| SDK / Wrapper | Language | Action required |
+|---------------|----------|----------------|
+| UTLXe engine | Kotlin/Java | Regenerate proto stubs (`./gradlew generateProto`). Update `GrpcTransport.kt` and `StdioProtoTransport.kt` to read/set new fields. |
+| Go wrapper (Open-M) | Go | Regenerate Go stubs from `proto/utlxe/v1/utlxe.proto` (`protoc --go_out`). Update `Execute()` calls to pass `MessageId`, `CorrelationId`, `CausationId`. |
+| Python conformance runner | Python | Uses manual protobuf wire format (no generated stubs). Update `engine-runner.py` to include new fields in `ExecuteRequest` serialization. |
+| Future .NET SDK | C# | Generate C# stubs from the proto. New fields available from the start. |
+| Future Python SDK | Python | Generate Python stubs from the proto. New fields available from the start. |
+
+**Backward compatibility:** The new fields are additive. An old SDK that doesn't set the new fields still works — UTLXe receives empty strings and generates UUIDs. An old SDK receiving a response with the new fields ignores them (standard protobuf forward compatibility). But to *use* tracing, the SDK must be recompiled against the updated proto.
+
+**Recommended SDK update pattern:**
+
+```go
+// Go wrapper — before EF04
+resp, err := client.Execute(&ExecuteRequest{
+    TransformationId: "orders-in",
+    Payload:          payload,
+    ContentType:      "application/json",
+    CorrelationId:    correlationId,
+})
+
+// Go wrapper — after EF04
+resp, err := client.Execute(&ExecuteRequest{
+    TransformationId: "orders-in",
+    Payload:          payload,
+    ContentType:      "application/json",
+    CorrelationId:    correlationId,         // preserved across chain
+    MessageId:        uuid.NewString(),      // unique per message
+    CausationId:      incomingMessageId,     // parent's MessageId
+    Traceparent:      incomingTraceparent,   // W3C distributed trace
+})
+
+// Response now includes output identity
+fmt.Printf("Output MessageId: %s, CausationId: %s\n",
+    resp.MessageId, resp.CausationId)
+```
 
 ## What the output message looks like on Service Bus
 
@@ -337,14 +408,23 @@ Azure Monitor shows the complete distributed trace: producer → Service Bus →
 
 | Task | Effort |
 |------|--------|
+| **HTTP/Dapr transport** | |
 | Read incoming Dapr metadata (headers/body) | 0.5 day |
-| Propagate metadata to output binding call | 0.5 day |
+| Propagate messaging triad + metadata to output binding call | 0.5 day |
 | Forward W3C Trace Context (traceparent/tracestate) | 0.5 day |
+| Direct HTTP: read X-Message-Id/X-Correlation-Id/X-Causation-Id, return in response | 0.5 day |
+| **gRPC/proto transport** | |
+| GrpcTransport: read/set new proto fields, generate output MessageId, set CausationId | 0.5 day |
+| StdioProtoTransport: same for varint-delimited protocol | 0.5 day |
+| **SDKs and wrappers** | |
+| Go wrapper: regenerate stubs, update Execute() calls | 0.5 day |
+| Python conformance runner: update manual proto serialization | 0.5 day |
+| **Shared** | |
 | metadataForwarding config option | 0.5 day |
-| Structured logging with MessageId/CorrelationId | 0.5 day |
-| Error ring buffer: add MessageId/CorrelationId | 0.5 day |
-| Tests | 1 day |
-| **Total** | **~4 days** |
+| Structured logging with MessageId/CorrelationId/CausationId | 0.5 day |
+| Error ring buffer: add MessageId/CorrelationId/CausationId | 0.5 day |
+| Tests (HTTP + gRPC + proto + Go wrapper) | 1.5 days |
+| **Total** | **~7.5 days** |
 
 ## Relationship to other features
 
