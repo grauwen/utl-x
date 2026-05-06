@@ -19,15 +19,21 @@ Validation of UTLXe's Dapr integration against the Dapr 1.17 specification revea
 
 **Our current state:** UTLXe does not handle `OPTIONS` requests. Input bindings may not activate depending on how Dapr handles unrecognized routes.
 
-**Fix:** Add an OPTIONS handler for all Dapr input binding routes:
+**Fix:** Add an OPTIONS handler that always responds 200 for any binding name:
 
 ```kotlin
 // In HttpTransport.kt
 options("/{bindingName}") {
-    // Dapr startup probe — return 200 to activate this binding
+    // Dapr startup probe — always 200, regardless of whether transformation exists.
+    // Reason: the Admin API upload may happen AFTER Dapr's probe.
+    // If we return 404 here, the binding never activates and the operator
+    // can't fix it without restarting the container.
+    // Messages arriving before the transformation is uploaded get 500 (retry).
     call.respond(HttpStatusCode.OK)
 }
 ```
+
+**Why always 200?** The Admin API (EF03) allows uploading transformations at any time — before or after container start. The Dapr OPTIONS probe happens once at startup. If UTLXe returns 404 for a not-yet-uploaded transformation, the binding is permanently deactivated. By responding 200 always, Dapr activates the binding immediately. Messages arriving before the transformation exists trigger Service Bus retry (500 → abandon → redeliver). Once the transformation is uploaded, the next delivery succeeds.
 
 ### 2. Route path mismatch (CRITICAL)
 
@@ -101,7 +107,52 @@ if (daprEnabled) {
 
 This is a best-effort check — UTLXe should not fail to start if the sidecar is slow. But it prevents a window where UTLXe reports `ready: true` while the sidecar is still initializing.
 
-### 5. Dapr gRPC as future option (LOW — document only)
+### 6. Dapr binding validation endpoint (MEDIUM)
+
+**Problem:** When the customer has N queues, they need N Dapr components AND N transformations. The naming must match (component route = transformation name). A typo or missing upload means messages arrive but no transformation handles them — silent 500 errors until someone checks the error log.
+
+**Fix:** UTLXe tracks which OPTIONS probes Dapr sent at startup and exposes a validation endpoint that cross-checks against loaded transformations:
+
+```
+GET /admin/dapr/bindings
+
+{
+  "bindings": [
+    {"binding": "orders-in", "transformation": "orders-in", "status": "matched"},
+    {"binding": "invoices-in", "transformation": "invoices-in", "status": "matched"},
+    {"binding": "returns-in", "transformation": null, "status": "MISSING"}
+  ],
+  "matched": 2,
+  "missing": 1
+}
+```
+
+Implementation:
+- UTLXe records every OPTIONS probe path in a `Set<String>` (the Dapr binding names)
+- The validation endpoint compares this set against the `TransformationRegistry`
+- `matched` = binding name exists in the registry
+- `MISSING` = Dapr probed for it but no transformation is uploaded
+
+This catches mismatches immediately — the operator can see which transformations need to be uploaded. The health endpoint should also reflect this:
+
+```json
+{
+  "status": "UP",
+  "transformations": 2,
+  "dapr_bindings_probed": 3,
+  "dapr_bindings_unmatched": 1,
+  "ready": true
+}
+```
+
+A warning log is emitted when a POST arrives for a binding that has no matching transformation:
+
+```
+WARN  Dapr binding "returns-in" received message but no transformation is loaded.
+      Upload via: POST /admin/transformations/returns-in
+```
+
+### 7. Dapr gRPC as future option (LOW — document only)
 
 **What Dapr supports:** App-to-sidecar communication can use gRPC on port 50001 instead of HTTP on port 3500. For input bindings, Dapr calls the app using its own `AppCallback.OnBindingEvent` RPC (Dapr's proto, not ours).
 
@@ -140,24 +191,29 @@ Dapr gRPC (if added later) would be a third interface using Dapr's own proto —
 
 | File | Change |
 |------|--------|
-| `modules/engine/.../transport/HttpTransport.kt` | Add `OPTIONS /{bindingName}` handler, add `POST /{bindingName}` route (Dapr default), fix metadata header prefix |
+| `modules/engine/.../transport/HttpTransport.kt` | Add `OPTIONS /{bindingName}` handler (always 200), add `POST /{bindingName}` route, fix metadata header prefix, track probed binding names |
 | `modules/engine/.../UtlxEngine.kt` | Add optional sidecar health check at startup |
+| New: `modules/engine/.../admin/DaprBindingTracker.kt` | `Set<String>` of probed binding names, validation against TransformationRegistry |
+| `modules/engine/.../health/HealthEndpoint.kt` | Add `dapr_bindings_probed` and `dapr_bindings_unmatched` to health response |
 | `docs/features/EF04-message-correlation-and-tracing.md` | Fix metadata header names to include `metadata.` prefix format |
-| `docs/architecture/utlxe-dapr-messaging-patterns.md` | Add startup handshake (OPTIONS probe), document route paths |
+| `docs/architecture/utlxe-dapr-messaging-patterns.md` | Add startup handshake (OPTIONS probe), document route paths, multi-binding |
 | `docs/architecture/utlxe-engine-architecture.md` | Add Dapr gRPC as future option in transport section |
-| `book-azure/chapters/ch00-why-utlxe.typ` | Fix route explanation, add startup handshake to diagrams |
-| `book-azure/chapters/ch04-azure-services.typ` | Remove explicit `route` metadata from Dapr YAML — default path now works |
+| `book-azure/chapters/ch00-why-utlxe.typ` | Startup diagram with Admin API, multi-binding explanation |
+| `book-azure/chapters/ch04-azure-services.typ` | Multi-queue walkthrough, binding validation endpoint |
 
 ## Effort estimate
 
 | Task | Effort |
 |------|--------|
-| OPTIONS handler + root path registration | 0.5 day |
+| OPTIONS handler + root path registration (always 200) | 0.5 day |
+| Dapr binding tracker (record probed names) | 0.5 day |
+| Validation endpoint (`GET /admin/dapr/bindings`) | 0.5 day |
+| Health endpoint: binding match counts | 0.5 day |
 | Metadata header prefix handling (with/without `metadata.`) | 0.5 day |
 | Sidecar health check at startup | 0.5 day |
 | Tests | 0.5 day |
 | Documentation updates (EF04, architecture docs, book) | 1 day |
-| **Total** | **~3 days** |
+| **Total** | **~4.5 days** |
 
 ## Updated implementation order
 
