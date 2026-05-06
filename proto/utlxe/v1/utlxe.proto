@@ -65,13 +65,13 @@ message ExecuteRequest {
   string content_type = 3;         // "application/json", "application/xml", "text/csv", etc.
   map<string, bytes> named_inputs = 4; // For N-input mappings: named payloads from step window
   string correlation_id = 5;       // Business correlation ID — preserved across the entire chain
-  string message_id = 6;           // Unique ID for this message (caller sets, or UTLXe generates UUID)
-  string causation_id = 7;         // MessageId of the message that caused this one (immediate parent)
-  map<string, string> metadata = 8; // Custom properties to forward (e.g., Service Bus custom properties)
-  string traceparent = 9;          // W3C Trace Context (optional, for distributed tracing)
+  string message_id = 6;           // UUIDv7 — unique ID for this message (caller sets, or engine generates)
+  string causation_id = 7;         // UUIDv7 — MessageId of the message that caused this one
+  map<string, string> metadata = 8; // Custom properties to forward (e.g., Service Bus, CPI exchange, Kafka headers)
+  string traceparent = 9;          // W3C Trace Context traceparent header
   map<string, string> parameters = 10; // Transformation input parameters (accessible as $params.key in .utlx)
-                                       // BizTalk: IBaseMessage.Context properties
-                                       // Logic Apps: workflow action parameters
+  MetadataForwarding metadata_forwarding = 11; // Controls which metadata keys pass through to output
+  string tracestate = 12;          // W3C Trace Context tracestate header (vendor extensions)
 }
 
 message ExecuteResponse {
@@ -86,8 +86,33 @@ message ExecuteResponse {
   string correlation_id = 9;              // Echoed from request (for multiplexed matching)
   string message_id = 10;                 // New UUID for this output message
   string causation_id = 11;              // Set to input's message_id (immediate parent)
-  map<string, string> metadata = 12;     // Forwarded custom properties (if metadataForwarding != none)
+  map<string, string> metadata = 12;     // Forwarded custom properties (controlled by metadata_forwarding)
   ErrorCode error_code = 13;             // Specific, actionable error code
+  OutputMetadata output_metadata = 14;   // Rule-emitted business metadata (typed, host-neutral)
+}
+
+// Rule-emitted output metadata. Distinct from the flat `metadata` map (which is
+// pass-through of input properties). This shape carries business-meaningful
+// identifiers that host adapters map to host-specific scopes:
+//   CPI:       application_id → SAP_ApplicationID, message_type → SAP_MessageType
+//   BizTalk:   application_id → promoted property, custom_identifiers → context
+//   Dapr:      application_id → CloudEvents ce-subject, message_type → ce-type
+//   Kafka:     custom_identifiers → message headers
+message OutputMetadata {
+  string application_id = 1;             // Business document ID (PO number, IDoc number, invoice ID)
+  string message_type = 2;              // Logical type the rule produced ("CanonicalOrder.v3", "DEBMAS05")
+  string custom_status = 3;             // Non-fatal status ("FALLBACK_RULE_USED", "PARTIAL_MATCH")
+  map<string, string> custom_identifiers = 4; // Additional searchable IDs (DeliveryNumber, CustomerNumber)
+  string sender = 5;                    // Logical sender (resolved from payload, e.g., EDI ISA06)
+  string receiver = 6;                  // Logical receiver (resolved from payload, e.g., EDI ISA08)
+}
+
+// Controls which input metadata keys pass through to the output.
+enum MetadataForwarding {
+  METADATA_FORWARDING_UNSPECIFIED = 0;  // Engine default (forward all)
+  METADATA_FORWARD_ALL = 1;            // Forward all input metadata to output
+  METADATA_FORWARD_NONE = 2;           // Drop all input metadata (only output_metadata survives)
+  METADATA_FORWARD_CORRELATION = 3;    // Forward only correlation/message/causation IDs, drop rest
 }
 
 enum ErrorClass {
@@ -143,7 +168,9 @@ message BatchItem {
   string message_id = 5;
   string causation_id = 6;
   map<string, string> metadata = 7;
-  map<string, string> parameters = 8;  // Transformation input parameters per batch item
+  map<string, string> parameters = 8;
+  string traceparent = 9;             // W3C Trace Context per batch item (each item = own span)
+  string tracestate = 10;             // W3C Trace Context vendor extensions
 }
 
 message ExecuteBatchResponse {
@@ -168,6 +195,7 @@ message ExecutePipelineRequest {
   string traceparent = 8;                  // W3C Trace Context
   map<string, PipelineStageInputs> stage_inputs = 9; // EF01: additional inputs per stage, keyed by transformation_id
   map<string, string> parameters = 10; // Transformation input parameters (shared across all stages)
+  string tracestate = 11;             // W3C Trace Context vendor extensions
 }
 
 message ExecutePipelineResponse {
@@ -185,6 +213,7 @@ message ExecutePipelineResponse {
   string causation_id = 12;              // MessageId of the last stage's input
   map<string, string> metadata = 13;     // Forwarded custom properties
   ErrorCode error_code = 14;             // Specific error code (if failed)
+  OutputMetadata output_metadata = 15;   // Rule-emitted business metadata (from last pipeline stage)
 }
 
 // ─── Lifecycle messages ───
