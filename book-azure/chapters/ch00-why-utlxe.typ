@@ -253,18 +253,20 @@ UTLXe implements the standard messaging triad:
 
 In a multi-step chain, the `CorrelationId` stays constant while the `CausationId` traces the parent:
 
+All IDs are UUIDv7 (RFC 9562) --- time-ordered with an embedded timestamp, so IDs are sortable by creation time:
+
 ```
-Producer:   MessageId=A  CorrelationId=saga-1  CausationId=null
-UTLXe:      MessageId=B  CorrelationId=saga-1  CausationId=A
-Next step:  MessageId=C  CorrelationId=saga-1  CausationId=B
+Producer:   MessageId=UUID-A  CorrelationId=UUID-CORR  CausationId=(none)
+UTLXe:      MessageId=UUID-B  CorrelationId=UUID-CORR  CausationId=UUID-A
+Next step:  MessageId=UUID-C  CorrelationId=UUID-CORR  CausationId=UUID-B
 ```
 
 Every processed message is logged with all three IDs:
 
 ```
-INFO [orders-in] MessageId=msg-456 CorrelationId=saga-1
-     → transformed in 3ms → output MessageId=msg-789
-     CausationId=msg-456
+INFO [orders-in] MessageId=UUID-A  CorrelationId=UUID-CORR
+     → transformed in 3ms → output MessageId=UUID-B
+     CausationId=UUID-A
 ```
 
 Error entries in the Admin API (`GET /admin/transformations/{name}/errors`) also include all three IDs, so you can correlate a failed transformation back to the specific input message on Service Bus.
@@ -339,9 +341,9 @@ For synchronous request/response patterns --- API gateways, batch scripts, testi
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -H "X-Message-Id: req-789" \
-  -H "X-Correlation-Id: saga-1" \
-  -H "X-Causation-Id: prev-456" \
+  -H "X-Message-Id: <UUID-A>" \
+  -H "X-Correlation-Id: <UUID-CORR>" \
+  -H "X-Causation-Id: <UUID-PREV>" \
   -d '{"orderNumber":"12345","amount":200.00}' \
   https://myapp.azurecontainerapps.io/api/transform/invoice-to-ubl
 ```
@@ -350,9 +352,9 @@ Direct HTTP clients can send `X-Message-Id`, `X-Correlation-Id`, and `X-Causatio
 
 ```
 HTTP/1.1 200 OK
-X-Message-Id: out-new-uuid
-X-Correlation-Id: saga-1
-X-Causation-Id: req-789
+X-Message-Id: <UUID-B>
+X-Correlation-Id: <UUID-CORR>
+X-Causation-Id: <UUID-A>
 X-Transform-Duration-Ms: 3
 ```
 
