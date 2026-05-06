@@ -164,7 +164,9 @@ When a transformation fails:
 
 The Event Hub rainy day is simpler: there is no dead-letter queue. If UTLXe returns 500, Dapr does not checkpoint the offset. The event is redelivered on the next consumer restart. Persistent failures require manual intervention (pause the transformation, fix, resume).
 
-Dapr connects to Service Bus using YAML component definitions. The *component name* determines which UTLXe transformation is called --- Dapr uses the name as the URL path, and UTLXe looks up a transformation with that name:
+Dapr connects to Service Bus using YAML component definitions. The *component name* determines which UTLXe transformation is called --- Dapr posts to `/{component-name}` on the app port, and UTLXe looks up a transformation with that name.
+
+At startup, Dapr sends an `OPTIONS /{component-name}` probe to verify UTLXe is listening. UTLXe responds with 200, and Dapr activates the binding. No `route` metadata is needed --- the component name IS the route.
 
 ```yaml
 # Dapr input binding — component name "orders-in"
@@ -174,18 +176,16 @@ metadata:
     secretRef: servicebus-connection
   - name: queueName
     value: "incoming-orders"
-  - name: route              # tells Dapr which UTLXe endpoint to call
-    value: "/api/dapr/input/orders-in"
+  - name: route
+    value: "/orders-in"       # binds this queue to transformation "orders-in"
 scopes: [utlxe]
 ```
 
-The `route` metadata is the key configuration: it tells Dapr to call `POST localhost:8085/api/dapr/input/orders-in` when a message arrives on the `incoming-orders` queue. UTLXe extracts the last path segment (`orders-in`) and looks up a transformation with that name.
-
-The `route` is also how you map a queue to a differently-named transformation. If the queue is `incoming-orders` but the transformation is called `normalize-order`, set `route: /api/dapr/input/normalize-order`.
+The `route` metadata makes the binding explicit: queue `incoming-orders` → route `/orders-in` → transformation `orders-in`. Without it, Dapr uses the component name as the path (same result, but implicit). The `route` is recommended because it makes the binding visible in one place --- you can read the YAML and know exactly which transformation handles this queue.
 
 ```yaml
 # Dapr output binding — component name "orders-out"
-# UTLXe calls POST localhost:3500/v1.0/bindings/orders-out
+# UTLXe calls: POST localhost:3500/v1.0/bindings/orders-out
 componentType: bindings.azure.servicebusqueues
 metadata:
   - name: connectionString
@@ -195,15 +195,15 @@ metadata:
 scopes: [utlxe]
 ```
 
-The output binding has no `route` --- UTLXe calls Dapr's standard binding API at `localhost:3500/v1.0/bindings/{componentName}`. The component name (`orders-out`) is configured in the transformation's `transform.yaml` as `outputBinding: orders-out`.
+The output binding name (`orders-out`) is configured in the transformation's `transform.yaml` as `outputBinding: orders-out`. UTLXe calls Dapr's standard binding API at `localhost:3500/v1.0/bindings/orders-out`.
 
 The complete wiring:
 
 #table(
   columns: (auto, auto, 1fr),
   [*Configuration*], [*Where*], [*Connects*],
-  [`route: /api/dapr/input/orders-in`], [Dapr input component], [Service Bus queue → UTLXe transformation `orders-in`],
-  [`outputBinding: orders-out`], [UTLXe transform.yaml], [UTLXe → Dapr output binding `orders-out`],
+  [`route: /orders-in`], [Dapr input component], [Service Bus queue → `POST /orders-in` → UTLXe transformation `orders-in`],
+  [`outputBinding: orders-out`], [UTLXe transform.yaml], [UTLXe → `POST :3500/v1.0/bindings/orders-out` → Dapr],
   [`queueName: processed-orders`], [Dapr output component], [Dapr output binding → Service Bus output queue],
   [`appPort: 8085`], [Container App Dapr config], [Dapr sidecar → UTLXe HTTP port],
 )
