@@ -239,4 +239,88 @@ class PipelineTest {
         assertTrue(output.contains("ALICE"))
         assertTrue(output.contains("final"))
     }
+
+    @Test
+    fun `EF01 pipeline with additional inputs per stage`() {
+        // Stage 1: simple passthrough (no additional inputs)
+        loadTransform("parse-order", """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            { orderId: ${'$'}input.id, amount: ${'$'}input.amount }
+        """.trimIndent())
+
+        // Stage 2: enrich with customer data (additional input: customers)
+        // Multi-input transformation — expects $input (pipeline flow) + $customers
+        loadTransform("enrich-order", """
+            %utlx 1.0
+            input: input json, customers json
+            output json
+            ---
+            {
+              orderId: ${'$'}input.orderId,
+              amount: ${'$'}input.amount,
+              customerName: find(${'$'}customers, (c) -> c.id == ${'$'}input.orderId).name
+            }
+        """.trimIndent())
+
+        val customerData = """[{"id":"ORD-1","name":"Acme Corp"},{"id":"ORD-2","name":"Contoso"}]"""
+
+        val resp = stub.executePipeline(
+            ExecutePipelineRequest.newBuilder()
+                .addTransformationIds("parse-order")
+                .addTransformationIds("enrich-order")
+                .setPayload(ByteString.copyFromUtf8("""{"id":"ORD-1","amount":250.00}"""))
+                .setCorrelationId("ef01-test")
+                .putStageInputs("enrich-order",
+                    PipelineStageInputs.newBuilder()
+                        .putAdditionalInputs("customers", ByteString.copyFromUtf8(customerData))
+                        .build()
+                )
+                .build()
+        )
+
+        assertTrue(resp.success, "Pipeline with stage_inputs failed: ${resp.error}")
+        assertEquals(2, resp.stagesCompleted)
+        assertEquals("ef01-test", resp.correlationId)
+
+        val output = resp.output.toStringUtf8()
+        assertTrue(output.contains("ORD-1"), "Should contain orderId: $output")
+        assertTrue(output.contains("Acme Corp"), "Should contain enriched customer name: $output")
+        assertTrue(output.contains("250"), "Should contain amount: $output")
+    }
+
+    @Test
+    fun `EF01 pipeline stage without additional inputs works unchanged`() {
+        loadTransform("step-a", """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            { x: ${'$'}input.v * 2 }
+        """.trimIndent())
+
+        loadTransform("step-b", """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            { result: ${'$'}input.x + 1 }
+        """.trimIndent())
+
+        // No stage_inputs — should work exactly as before
+        val resp = stub.executePipeline(
+            ExecutePipelineRequest.newBuilder()
+                .addTransformationIds("step-a")
+                .addTransformationIds("step-b")
+                .setPayload(ByteString.copyFromUtf8("""{"v": 10}"""))
+                .build()
+        )
+
+        assertTrue(resp.success, "Pipeline without stage_inputs failed: ${resp.error}")
+        assertEquals(2, resp.stagesCompleted)
+        val output = resp.output.toStringUtf8()
+        assertTrue(output.contains("21"), "Should be (10*2)+1=21: $output")
+    }
 }

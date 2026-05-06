@@ -261,7 +261,33 @@ object TransportHandlers {
                     .build()
 
             instance.recordExecution()
-            val result = ValidationOrchestrator.execute(instance, currentPayload)
+
+            // EF01: If this stage has additional inputs, construct a multi-input envelope
+            val stageInputs = req.stageInputsMap[transformId]
+            val effectivePayload = if (stageInputs != null && stageInputs.additionalInputsCount > 0) {
+                // Build JSON envelope: {"input": <current>, "customers": <additional>, ...}
+                val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+                val envelope = mapper.createObjectNode()
+                envelope.set<com.fasterxml.jackson.databind.JsonNode>(
+                    "input", mapper.readTree(currentPayload)
+                )
+                stageInputs.additionalInputsMap.forEach { (name, bytes) ->
+                    val content = bytes.toStringUtf8()
+                    try {
+                        envelope.set<com.fasterxml.jackson.databind.JsonNode>(name, mapper.readTree(content))
+                    } catch (_: Exception) {
+                        // Non-JSON additional input (CSV, XML) — wrap as text node
+                        envelope.put(name, content)
+                    }
+                }
+                logger.debug("Pipeline stage '{}' with additional inputs: {}", transformId,
+                    stageInputs.additionalInputsMap.keys)
+                envelope.toString()
+            } else {
+                currentPayload
+            }
+
+            val result = ValidationOrchestrator.execute(instance, effectivePayload)
 
             if (!result.success) {
                 instance.recordError()
