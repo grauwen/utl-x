@@ -42,14 +42,14 @@ fun main(args: Array<String>) {
                 configPath = args.getOrNull(i)
                     ?: exitWithError("--config requires a path argument")
             }
-            "--port", "-p" -> {
+            "--admin-port" -> {
                 i++
                 val portStr = args.getOrNull(i)
-                    ?: exitWithError("--port requires a port number")
+                    ?: exitWithError("--admin-port requires a port number")
                 portOverride = portStr.toIntOrNull()
-                    ?: exitWithError("--port value must be a number: $portStr")
+                    ?: exitWithError("--admin-port value must be a number: $portStr")
                 if (portOverride !in 1..65535) {
-                    exitWithError("--port must be between 1 and 65535: $portOverride")
+                    exitWithError("--admin-port must be between 1 and 65535: $portOverride")
                 }
             }
             "--mode" -> {
@@ -178,8 +178,8 @@ private fun printUsage() {
           --bundle, -b <path>    Path to .utlxp project bundle directory
           --config, -c <path>    Path to engine.yaml config file
           --mode <mode>          Transport mode: stdio-json (default), stdio-proto, grpc, http
-          --port,   -p <port>    Health endpoint port override (default: 8081)
-          --http-port <port>     HTTP API port (http mode, default: 8085)
+          --admin-port <port>    Admin API + health + metrics port (default: 8081)
+          --http-port <port>     HTTP data plane port (http mode, default: 8085)
           --workers <n>          Worker thread pool size (default: CPU cores)
           --socket <path>        Unix Domain Socket path (gRPC mode, Linux/macOS)
           --address <host:port>  TCP address (gRPC mode, default: localhost:9090)

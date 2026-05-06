@@ -241,6 +241,20 @@ class HttpTransport(
                     call.respond(HttpStatusCode.OK, mapOf("success" to resp.success))
                 }
 
+                // ── EF03: Data plane discovery (no auth required) ──
+                get("/api/transformations") {
+                    val transformations = registry.list().map { tx ->
+                        mapOf(
+                            "name" to tx.name,
+                            "status" to "ready",
+                            "strategy" to tx.strategy.name
+                        )
+                    }
+                    call.respond(HttpStatusCode.OK, mapOf(
+                        "transformations" to transformations
+                    ))
+                }
+
                 // ── Health (data plane) ──
                 get("/api/health") {
                     val resp = TransportHandlers.handleHealth(engine, registry)
