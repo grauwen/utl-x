@@ -708,7 +708,7 @@ See [EF03: Bundle Management API](../../docs/features/EF03-bundle-management-api
 
 ### Interface Architecture
 
-UTLXe has two interface categories. They serve different consumers and cannot be consolidated:
+UTLXe has two interface categories. They serve different consumers and cannot be consolidated. The proto definition (`proto/utlxe/v1/utlxe.proto`) is the single source of truth for all transports. See [Proto Reference](../../docs/sdk/proto-reference.md) for the complete field-by-field documentation.
 
 | Interface | Proto | Consumers | Transport |
 |-----------|-------|-----------|-----------|
