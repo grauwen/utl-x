@@ -1244,5 +1244,71 @@ curl -H "X-Admin-Key: $KEY" .../admin/bundle -o my-bundle.zip
 
 ---
 
-*Feature EF03. May 2026. Design document.*
+## Alignment with Bootstrap Document
+
+Validation against `docs/dapr/utlx-bundle-bootstrap.md` identified the following gaps and corrections:
+
+### Corrected: 503 (not 500) for missing bundle
+
+When a Dapr binding delivers a message but no transformation is loaded, UTLXe must return **503 Service Unavailable** (not 500 Internal Server Error). 503 means "not ready yet, try again later" — semantically correct. Dapr retries on 503, and Service Bus abandons with proper retry counting toward `maxDeliveryCount`.
+
+- OPTIONS probe → 200 (route exists, handler registered)
+- POST with message, no transformation → **503** (bundle not loaded)
+- POST with message, transformation exists → 200 or 500 (depending on transform result)
+
+### Missing: Bundle versioning
+
+Add `GET /admin/bundle/version`:
+
+```json
+{
+  "version": "v3",
+  "checksum": "sha256:a1b2c3...",
+  "loaded_at": "2026-05-06T14:30:00Z",
+  "transformations": 3,
+  "schemas": 2
+}
+```
+
+Include bundle version in health endpoint so monitoring can detect replica drift:
+
+```json
+{"status": "UP", "transformations": 3, "ready": true, "bundle_version": "v3", "bundle_checksum": "sha256:a1b2c3..."}
+```
+
+### Missing: Multi-replica bundle propagation (Pattern C)
+
+For multi-replica deployments, uploading a bundle to one replica does not propagate to others. The bootstrap document describes a Dapr-based solution:
+
+1. Admin API writes bundle to local PVC
+2. Admin API writes through to shared blob store (via Dapr output binding to Azure Blob)
+3. Admin API publishes `bundle.updated` event to Dapr pub/sub topic
+4. Other replicas subscribe, re-fetch from blob, hot-swap
+
+This requires:
+- A Dapr blob storage binding component (`bindings.azure.storageblobs`)
+- A Dapr pub/sub component for the `bundle.updated` topic
+- UTLXe subscribes to `bundle.updated` via `/dapr/subscribe`
+
+For single-replica Marketplace Starter, this is not needed (one replica, PVC is enough). For Professional with multiple replicas, this becomes important.
+
+**Recommendation:** Implement Pattern A (empty-start + admin API + PVC) for go-live. Add Pattern C (Dapr blob propagation) as a post-launch enhancement for multi-replica scenarios.
+
+### Missing: Startup decision tree
+
+The bootstrap document recommends a three-step fallback:
+
+```
+Pod starts → Check PVC → Check Dapr blob binding → Wait for Admin API
+```
+
+Current design has only: PVC → Admin API wait. The Dapr blob fallback step should be added for production resilience — a new replica can auto-fetch the bundle from blob storage without operator intervention.
+
+### Missing: Init container pattern
+
+For GitOps/immutable-infrastructure teams, the bundle can be pre-seeded from blob storage via a Kubernetes init container. This is an alternative to the Admin API for teams that prefer "everything in the manifest." Document as an advanced option, not the default.
+
+---
+
+*Feature EF03. May 2026. Design document.
 *Key insight: the engine already supports dynamic loading internally — EF03 is the REST surface that exposes it to Azure Marketplace customers.*
