@@ -151,6 +151,16 @@ Every scenario is better solved by **different names** or **different containers
 
 ---
 
+## Architecture Decision: Parallel Transports and Source Tagging
+
+All transports (HTTP, gRPC, stdio-proto) can run simultaneously, sharing the same `TransformationRegistry`. HTTP port 8085 serves both Dapr and direct clients — they share the same bundle. The Admin API on port 8081 is the persistent management path (writes to disk). gRPC/proto `LoadTransformation` is the ephemeral management path (memory only, wrapper re-sends after restart).
+
+Each transformation is tagged with its source (`ADMIN_API`, `GRPC`, `STDIO_PROTO`) to prevent silent conflicts. gRPC cannot overwrite an Admin API-managed transformation — the overwrite is blocked with an explicit error.
+
+See [EF07: Parallel Transports](EF07-parallel-transports.md) for the full design: thread safety, ownership rules, source tagging, port allocation, shutdown coordination, and CLI changes.
+
+---
+
 ## Design
 
 ### Management API (port 8081)
