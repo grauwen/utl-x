@@ -15,7 +15,9 @@ import io.ktor.server.routing.*
 import org.apache.utlx.engine.UtlxEngine
 import org.apache.utlx.engine.proto.*
 import org.apache.utlx.engine.registry.TransformationRegistry
+import org.apache.utlx.engine.util.UuidV7
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 /**
@@ -45,7 +47,13 @@ class HttpTransport(
     private val logger = LoggerFactory.getLogger(HttpTransport::class.java)
     private var server: ApplicationEngine? = null
 
+    // EF05: Track which bindings Dapr probed at startup (for /admin/dapr/bindings validation)
+    private val daprProbedBindings = ConcurrentHashMap.newKeySet<String>()
+
     override val supportsDynamicLoading = true
+
+    /** EF05: Get the set of Dapr binding names that were probed via OPTIONS. */
+    fun getDaprProbedBindings(): Set<String> = daprProbedBindings.toSet()
 
     companion object {
         const val DEFAULT_PORT = 8085
@@ -246,95 +254,27 @@ class HttpTransport(
                     ))
                 }
 
-                // ── Dapr input binding endpoint ──
-                // Dapr sidecar calls this when a message arrives on a configured input binding
-                // (Service Bus queue, Event Hub, Kafka, etc.)
-                // The binding name is in the URL: /api/dapr/input/{bindingName}
-                // The message payload is in the request body.
-                // The default transformation ID is the binding name (configurable via header).
-                post("/api/dapr/input/{bindingName}") {
-                    val bindingName = call.parameters["bindingName"] ?: "default"
-                    val transformId = call.request.header("X-UTLXe-Transform") ?: bindingName
-
-                    // Resolve output binding: env var override > transform config > header > none
-                    // Env var: UTLXE_OUTPUT_BINDING_<bindingName>=<outputBinding>
-                    val envOverride = System.getenv("UTLXE_OUTPUT_BINDING_${bindingName.replace("-", "_").uppercase()}")
-                    val configBinding = registry.get(transformId)?.config?.outputBinding
-                    val headerBinding = call.request.header("X-UTLXe-Output-Binding")
-                    val outputBinding = envOverride ?: configBinding ?: headerBinding
-
-                    // Dapr sends the raw message payload in the body
-                    val payload = call.receiveText()
-                    val contentType = call.request.contentType().toString()
-
-                    logger.debug("Dapr input from binding '{}', transform '{}', output '{}', payload {} bytes",
-                        bindingName, transformId, outputBinding ?: "none", payload.length)
-
-                    // Execute the transformation
-                    val execProto = ExecuteRequest.newBuilder()
-                        .setTransformationId(transformId)
-                        .setPayload(ByteString.copyFromUtf8(payload))
-                        .setContentType(contentType)
-                        .setCorrelationId(bindingName)
-                        .build()
-                    val execResp = TransportHandlers.handleExecute(execProto, registry)
-
-                    if (!execResp.success) {
-                        logger.error("Dapr transform failed for binding '{}': {}", bindingName, execResp.error)
-                        call.respond(HttpStatusCode.InternalServerError, mapOf(
-                            "error" to execResp.error,
-                            "binding" to bindingName
-                        ))
-                        return@post
-                    }
-
-                    val output = execResp.output.toStringUtf8()
-
-                    // If output binding is specified, forward the result via Dapr
-                    if (outputBinding != null) {
-                        try {
-                            val daprUrl = "http://localhost:3500/v1.0/bindings/$outputBinding"
-                            val daprPayload = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(mapOf(
-                                "operation" to "create",
-                                "data" to output,
-                                "metadata" to mapOf(
-                                    "source-binding" to bindingName,
-                                    "transform-id" to transformId
-                                )
-                            ))
-
-                            val url = java.net.URL(daprUrl)
-                            val conn = url.openConnection() as java.net.HttpURLConnection
-                            conn.requestMethod = "POST"
-                            conn.setRequestProperty("Content-Type", "application/json")
-                            conn.doOutput = true
-                            conn.connectTimeout = 5000
-                            conn.readTimeout = 10000
-                            conn.outputStream.write(daprPayload.toByteArray())
-                            conn.outputStream.flush()
-                            val daprStatus = conn.responseCode
-                            conn.disconnect()
-
-                            if (daprStatus !in 200..299) {
-                                logger.warn("Dapr output binding '{}' returned status {}", outputBinding, daprStatus)
-                            } else {
-                                logger.debug("Dapr output to binding '{}' succeeded", outputBinding)
-                            }
-                        } catch (e: Exception) {
-                            logger.error("Failed to send to Dapr output binding '{}': {}", outputBinding, e.message)
-                        }
-                    }
-
-                    // Return success to Dapr (acknowledges the message)
-                    call.respond(HttpStatusCode.OK, mapOf(
-                        "success" to true,
-                        "binding" to bindingName,
-                        "outputBinding" to outputBinding,
-                        "durationUs" to (execResp.metrics?.executeDurationUs ?: 0)
-                    ))
+                // ── EF05: Dapr OPTIONS probe handler ──
+                // Dapr sends OPTIONS /{bindingName} at startup to check if the app handles this binding.
+                // Always respond 200 — transformations may be uploaded later via Admin API.
+                options("/{bindingName}") {
+                    val bindingName = call.parameters["bindingName"] ?: "unknown"
+                    daprProbedBindings.add(bindingName)
+                    logger.info("Dapr OPTIONS probe for binding '{}' — accepted", bindingName)
+                    call.respond(HttpStatusCode.OK)
                 }
 
-                // Dapr requires this endpoint to discover which bindings the app handles
+                // ── EF05: Dapr default root path for input binding delivery ──
+                // Dapr delivers messages to POST /{component-name} by default.
+                // Also keep /api/dapr/input/{bindingName} for backward compatibility.
+                post("/{bindingName}") {
+                    handleDaprInput(call, registry)
+                }
+                post("/api/dapr/input/{bindingName}") {
+                    handleDaprInput(call, registry)
+                }
+
+                // Dapr pub/sub subscription endpoint
                 get("/dapr/subscribe") {
                     call.respond(HttpStatusCode.OK, emptyList<Any>())
                 }
@@ -345,6 +285,164 @@ class HttpTransport(
 
         // Block until shutdown (same contract as other transports)
         Thread.currentThread().join()
+    }
+
+    /**
+     * EF04 + EF05: Dapr input binding handler.
+     * Shared by POST /{bindingName} and POST /api/dapr/input/{bindingName}.
+     *
+     * Reads correlation metadata from Dapr headers (EF04),
+     * returns 503 if transformation not loaded (EF05),
+     * propagates traceparent/tracestate to output binding (EF04),
+     * forwards messaging triad and custom properties to output (EF04).
+     */
+    private suspend fun handleDaprInput(call: ApplicationCall, registry: TransformationRegistry) {
+        val bindingName = call.parameters["bindingName"] ?: "default"
+        val transformId = call.request.header("X-UTLXe-Transform") ?: bindingName
+
+        // EF05: Return 503 if transformation not loaded (not 500 — it's "not ready yet")
+        val instance = registry.get(transformId)
+        if (instance == null) {
+            logger.warn("Dapr binding '{}' — no transformation '{}' loaded. Upload via Admin API.", bindingName, transformId)
+            call.respond(HttpStatusCode.ServiceUnavailable, mapOf(
+                "success" to false,
+                "error" to "No transformation loaded for binding '$transformId'",
+                "error_code" to "BUNDLE_NOT_LOADED",
+                "binding" to bindingName
+            ))
+            return
+        }
+
+        // Resolve output binding: env var > transform config > header > none
+        val envOverride = System.getenv("UTLXE_OUTPUT_BINDING_${bindingName.replace("-", "_").uppercase()}")
+        val configBinding = instance.config.outputBinding
+        val headerBinding = call.request.header("X-UTLXe-Output-Binding")
+        val outputBinding = envOverride ?: configBinding ?: headerBinding
+
+        // Dapr sends the raw message payload in the body
+        val payload = call.receiveText()
+        val contentType = call.request.contentType().toString()
+
+        // EF04: Read correlation metadata from Dapr headers (metadata.* prefix per Dapr convention)
+        val incomingMessageId = call.request.header("metadata.MessageId")
+            ?: call.request.header("MessageId")
+            ?: UuidV7.generate()
+        val incomingCorrelationId = call.request.header("metadata.CorrelationId")
+            ?: call.request.header("CorrelationId")
+            ?: ""
+        val incomingCausationId = call.request.header("metadata.CausationId")
+            ?: call.request.header("CausationId")
+            ?: ""
+        val traceparent = call.request.header("traceparent") ?: ""
+        val tracestate = call.request.header("tracestate") ?: ""
+
+        logger.info("[{}] MessageId={} CorrelationId={} CausationId={} binding={} payload={}B",
+            transformId, incomingMessageId, incomingCorrelationId, incomingCausationId,
+            bindingName, payload.length)
+
+        // Build the execute request with full messaging triad
+        val execProto = ExecuteRequest.newBuilder()
+            .setTransformationId(transformId)
+            .setPayload(ByteString.copyFromUtf8(payload))
+            .setContentType(contentType)
+            .setCorrelationId(incomingCorrelationId)
+            .setMessageId(incomingMessageId)
+            .setCausationId(incomingCausationId)
+            .setTraceparent(traceparent)
+            .setTracestate(tracestate)
+            .build()
+        val execResp = TransportHandlers.handleExecute(execProto, registry)
+
+        // Generate output message ID (UUIDv7)
+        val outputMessageId = UuidV7.generate()
+
+        if (!execResp.success) {
+            logger.error("[{}] MessageId={} CorrelationId={} FAILED: {}",
+                transformId, incomingMessageId, incomingCorrelationId, execResp.error)
+            call.respond(HttpStatusCode.InternalServerError, mapOf(
+                "success" to false,
+                "error" to execResp.error,
+                "error_code" to "TRANSFORMATION_FAILED",
+                "binding" to bindingName,
+                "message_id" to outputMessageId,
+                "correlation_id" to incomingCorrelationId,
+                "causation_id" to incomingMessageId
+            ))
+            return
+        }
+
+        val output = execResp.output.toStringUtf8()
+
+        // EF04: Forward transformed result to Dapr output binding with messaging triad
+        if (outputBinding != null) {
+            try {
+                val daprUrl = "http://localhost:3500/v1.0/bindings/$outputBinding"
+
+                // Build output metadata including messaging triad
+                val outputMetadata = mutableMapOf(
+                    "source-binding" to bindingName,
+                    "transform-id" to transformId,
+                    "MessageId" to outputMessageId,
+                    "CausationId" to incomingMessageId
+                )
+                if (incomingCorrelationId.isNotEmpty()) {
+                    outputMetadata["CorrelationId"] = incomingCorrelationId
+                }
+
+                // Forward custom properties from input (metadata.* headers)
+                call.request.headers.entries().forEach { (key, values) ->
+                    if (key.startsWith("metadata.") && key !in listOf(
+                            "metadata.MessageId", "metadata.CorrelationId", "metadata.CausationId")) {
+                        outputMetadata[key.removePrefix("metadata.")] = values.first()
+                    }
+                }
+
+                val daprPayload = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(mapOf(
+                    "operation" to "create",
+                    "data" to output,
+                    "metadata" to outputMetadata
+                ))
+
+                val url = java.net.URL(daprUrl)
+                val conn = url.openConnection() as java.net.HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json")
+                // EF04: Propagate W3C Trace Context to output binding
+                if (traceparent.isNotEmpty()) conn.setRequestProperty("traceparent", traceparent)
+                if (tracestate.isNotEmpty()) conn.setRequestProperty("tracestate", tracestate)
+                conn.doOutput = true
+                conn.connectTimeout = 5000
+                conn.readTimeout = 10000
+                conn.outputStream.write(daprPayload.toByteArray())
+                conn.outputStream.flush()
+                val daprStatus = conn.responseCode
+                conn.disconnect()
+
+                if (daprStatus !in 200..299) {
+                    logger.warn("Dapr output binding '{}' returned status {}", outputBinding, daprStatus)
+                } else {
+                    logger.debug("[{}] output to binding '{}' succeeded. OutputMessageId={}",
+                        transformId, outputBinding, outputMessageId)
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to send to Dapr output binding '{}': {}", outputBinding, e.message)
+            }
+        }
+
+        logger.info("[{}] MessageId={} → OutputMessageId={} CorrelationId={} in {}us",
+            transformId, incomingMessageId, outputMessageId, incomingCorrelationId,
+            execResp.metrics?.executeDurationUs ?: 0)
+
+        // Return success to Dapr (acknowledges the message)
+        call.respond(HttpStatusCode.OK, mapOf(
+            "success" to true,
+            "binding" to bindingName,
+            "outputBinding" to outputBinding,
+            "message_id" to outputMessageId,
+            "correlation_id" to incomingCorrelationId,
+            "causation_id" to incomingMessageId,
+            "durationUs" to (execResp.metrics?.executeDurationUs ?: 0)
+        ))
     }
 
     override fun stop() {

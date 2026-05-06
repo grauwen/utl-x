@@ -37,6 +37,9 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
 
+    // UUID v7 generation (RFC 9562) — Apache 2.0, by FasterXML/Jackson author
+    implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
+
     // Protobuf (for stdio-proto and grpc transport modes)
     implementation("com.google.protobuf:protobuf-java:3.25.3")
     implementation("com.google.protobuf:protobuf-kotlin:3.25.3")

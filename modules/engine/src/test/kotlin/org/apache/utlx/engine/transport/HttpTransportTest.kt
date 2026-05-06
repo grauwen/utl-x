@@ -282,11 +282,12 @@ class HttpTransportTest {
     }
 
     @Test
-    fun `dapr input with unknown transformation returns error`() {
+    fun `dapr input with unknown transformation returns 503`() {
+        // EF05: 503 Service Unavailable (not 500) — transformation not loaded yet
         val (status, body) = post("/api/dapr/input/nonexistent-binding", """{"data": "test"}""")
 
-        assertEquals(500, status)
-        assertTrue(body.contains("error"), "Should contain error: $body")
+        assertEquals(503, status)
+        assertTrue(body.contains("BUNDLE_NOT_LOADED"), "Should contain error code: $body")
     }
 
     @Test
